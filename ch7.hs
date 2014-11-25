@@ -42,6 +42,11 @@ map' f (x:xs) = f x : map' f xs
 map'' :: (a -> b) -> [a] -> [b]
 map'' f = foldr ((:).f) []
 
+map2 :: (a -> b) -> [a] -> [b]
+map2 f = foldr (\x xs -> f x : xs) []
+
+map3 :: (a -> b) -> [a] -> [b]
+map3 f = foldr (\x -> (f x:) ) []
 
 filter1 :: (a -> Bool) -> [a] -> [a]
 filter1 f [] = []
@@ -61,9 +66,12 @@ filter3 :: (a -> Bool) -> [a] -> [a]
 filter3 f [] = []
 filter3 f (x:xs) = helper f x ++ filter3 f xs 
 
-helper2 :: (a -> Bool) -> [a] -> [a]
-helper2 f (x:xs) = if (f x) then x:xs else xs
+helper2 :: (a -> Bool) -> a -> [a] -> [a]
+helper2 f x xs = if (f x) then x:xs else xs
 
+filter4 :: (a -> Bool) -> [a] -> [a]
+filter4 f [] = []
+filter4 f (x:xs) = helper2 f x (filter4 f xs) 
 
 filter5 :: (a -> Bool) -> [a] -> [a]
 filter5 f = foldr (\x xs -> if f x then x:xs else xs) []
@@ -71,7 +79,3 @@ filter5 f = foldr (\x xs -> if f x then x:xs else xs) []
 filter6 :: (a -> Bool) -> [a] -> [a]
 filter6 f = foldr (\x -> if f x then (x:) else id) []
 
-interleave :: [a] -> [a] -> [a]
-interleave xs     []     = xs
-interleave []     ys     = ys
-interleave (x:xs) (y:ys) = x : y : interleave xs ys
