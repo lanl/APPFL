@@ -1,3 +1,5 @@
+-- Ch7 exercises from Graham Hutton's Programming in Haskell
+
 import Data.Char 
 
 fp :: (a -> b) -> (a -> Bool) -> [a] -> [b]

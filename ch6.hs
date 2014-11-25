@@ -1,3 +1,4 @@
+-- Ch6 exercises from Graham Hutton's Programming in Haskell
 
 import Prelude hiding((*),(^),(!!))
 

@@ -1,3 +1,5 @@
+-- Ch2 exercises from Graham Hutton's Programming in Haskell
+
 q = "abc"
 
 

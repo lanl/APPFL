@@ -1,3 +1,5 @@
+-- Ch1 exercises from Graham Hutton's Programming in Haskell
+
 s = [2,3,4]
 q = [5,9,1,8,2,7,3,6,4]
 w = [2,2,3,1,1]

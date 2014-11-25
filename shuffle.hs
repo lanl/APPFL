@@ -1,3 +1,4 @@
+-- Playing with card shuffle math
 
 interleave :: [a] -> [a] -> [a]
 interleave xs     []     = xs

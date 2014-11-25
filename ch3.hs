@@ -1,3 +1,5 @@
+-- Ch3 exercises from Graham Hutton's Programming in Haskell
+
 q1 = ['a', 'b', 'c']
 q2 = ('a', 'b', 'c')
 q3 = [(False, '0'), (True, '1')]

@@ -1,3 +1,5 @@
+-- Ch4 exercises from Graham Hutton's Programming in Haskell
+
 q = [1,2,3,4,5,6]
 
 halve xs = (take l xs, drop l xs)

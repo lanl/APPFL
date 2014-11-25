@@ -1,3 +1,5 @@
+-- Ch5 exercises from Graham Hutton's Programming in Haskell
+
 import Data.Char
 
 sqs :: Int -> [Int]
