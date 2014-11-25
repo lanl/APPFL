@@ -4,18 +4,14 @@ interleave xs     []     = xs
 interleave []     ys     = ys
 interleave (x:xs) (y:ys) = x : y : interleave xs ys
 
-concatp :: [(a,a)] -> [a]
-concatp [] = []
-concatp ((x,y):xs) = x:y:concatp xs
-
 outshuffle :: [a] -> [a]
-outshuffle xs = concatp (zip (take n xs) (drop n xs)) where n = (length xs) `div` 2
+outshuffle xs = interleave (take n xs) (drop n xs) where n = (length xs) `div` 2
 
 inshuffle :: [a] -> [a]
-inshuffle xs = concatp (zip (drop n xs) (take n xs)) where n = (length xs) `div` 2
+inshuffle xs = interleave (drop n xs) (take n xs) where n = (length xs) `div` 2
 
 oddshuffle :: [a] -> [a]
-oddshuffle xs = concatp (zip (take n xs) (drop (n+1) xs)) ++ [xs!!n] where n = (length xs) `div` 2
+oddshuffle xs = interleave  (take n xs) (drop n xs) where n = 1 + (length xs) `div` 2
 
 inn :: Int -> [Int]
 inn n = inshuffle [1..n]
