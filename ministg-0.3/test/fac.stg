@@ -1,0 +1,9 @@
+fac = FUN (x -> 
+         case eqInt x zero of {
+            True -> one;
+            False -> let { s = THUNK(subInt x one);
+                           rec = THUNK(fac s) }
+                     in multInt x rec
+         });
+
+main = THUNK (fac seven) 
