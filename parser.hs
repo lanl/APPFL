@@ -70,4 +70,33 @@ ret :: Parser b a -> c -> Parser b c
 p `ret` v = p `using` (const v) 
 
 -- 2.4 Example
+{-
+expn = ((term `sequ` literal '+' `xthen` term) `using` plus) `alt`
+       ((term `sequ` literal '-' `xthen` term) `using` minus) `alt`
+       term 
+
+term = ((factor `sequ` literal '*' `xthen` factor) `using` times) 
+--`alt`
+--       ((factor `sequ` literal '/' `xthen` factor) `using` divide) `alt`
+--       factor
+-}
+factor = (number `using` value) 
+--`alt`
+--         (literal '(' `xthen` expn `thenx` literal ')')
+
+
+value :: String -> Int
+value xs = read xs :: Int
+
+plus :: Num a => (a, a) -> a
+plus (x,y) = x + y
+
+minus :: Num a => (a, a) -> a
+minus (x,y) = x - y
+
+times :: Num a => (a, a) -> a
+times (x,y) = x * y
+
+divide :: Integral a => (a, a) -> a
+divide (x,y) = x `div` y
 
