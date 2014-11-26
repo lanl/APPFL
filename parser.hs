@@ -70,33 +70,40 @@ ret :: Parser b a -> c -> Parser b c
 p `ret` v = p `using` (const v) 
 
 -- 2.4 Example
-{-
-expn = ((term `sequ` literal '+' `xthen` term) `using` plus) `alt`
-       ((term `sequ` literal '-' `xthen` term) `using` minus) `alt`
-       term 
 
-term = ((factor `sequ` literal '*' `xthen` factor) `using` times) 
+
+data Expr = Num Int | Add Expr Expr | Sub Expr Expr 
+		    | Mul Expr Expr | Div Expr Expr 
+		    deriving (Show)
+
+--expn = ((term `sequ` literal '+' `xthen` term) `using` plus) `alt`
+--       ((term `sequ` literal '-' `xthen` term) `using` minus) 
+-- `alt`
+--       term 
+
+--term = ((factor `sequ` literal '*' `xthen` factor) `using` times) 
 --`alt`
---       ((factor `sequ` literal '/' `xthen` factor) `using` divide) `alt`
+--       ((factor `sequ` literal '/' `xthen` factor) `using` divide) 
+--`alt`
 --       factor
--}
+
+factor :: [Char] -> [(Expr, [Char])]
 factor = (number `using` value) 
---`alt`
+-- `alt`
 --         (literal '(' `xthen` expn `thenx` literal ')')
 
+value :: String -> Expr 
+value xs = Num (read xs :: Int)
 
-value :: String -> Int
-value xs = read xs :: Int
+plus :: (Expr, Expr) -> Expr
+plus (x,y) = Add x y
 
-plus :: Num a => (a, a) -> a
-plus (x,y) = x + y
+minus :: (Expr, Expr) -> Expr
+minus (x,y) = Sub x y
 
-minus :: Num a => (a, a) -> a
-minus (x,y) = x - y
+times :: (Expr, Expr) -> Expr
+times (x,y) = Mul x y
 
-times :: Num a => (a, a) -> a
-times (x,y) = x * y
-
-divide :: Integral a => (a, a) -> a
-divide (x,y) = x `div` y
+divide :: (Expr, Expr) -> Expr
+divide (x,y) = Div x y
 
