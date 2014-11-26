@@ -93,6 +93,36 @@ uncurry' f = \(x,y) -> f x y
 cfst = curry fst
 fst' = uncurry (curry fst)
 
+unfold :: (a -> Bool) -> (a -> b) -> (a -> a) -> a -> [b]
+unfold p h t x | p x = []
+	       | otherwise = h x : unfold p h t (t x) 
 
- 
+int2bin :: Int -> [Bit]
+int2bin 0 = []
+int2bit n = n `mod` 2: int2bin(n `div` 2)
+
+int2bin' :: Int -> [Bit]
+int2bin' = unfold (==0) (`mod`2) (`div`2)
+
+type Bit = Int
+
+chop8  :: [Bit] -> [[Bit]]
+chop8 [] = []
+chop8 bits = take 8 bits:chop8(drop 8 bits)
+
+chop8'  :: [Bit] -> [[Bit]]
+chop8' = unfold null (take 8) (drop 8)
+
+mapu :: (a -> b) -> [a] -> [b]
+mapu f  = unfold null (\(x:xs) -> f x) tail 
+
+mapu' :: (a -> b) -> [a] -> [b]
+mapu' f  = unfold null (f . head) tail 
+
+iterate' :: (a -> a) -> a -> [a]
+iterate' f = unfold (\x -> False) id f
+
+iterate'' :: (a -> a) -> a -> [a]
+iterate'' f = unfold (const False) id f
+
 
