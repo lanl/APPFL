@@ -35,7 +35,7 @@ alt :: Parser b a -> Parser b a -> Parser b a
 sequ :: Parser b a -> Parser b c -> Parser b (a,c)
 (p1 `sequ` p2) inp = [((v1,v2),out2) | (v1,out1) <- p1 inp, (v2,out2) <- p2 out1]
 
--- 2.3 Manipulationg values
+-- 2.3 Manipulating values
 
 using :: Parser b a -> (a -> c) -> Parser b c
 (p `using` f) inp = [(f v,out) | (v,out) <- p inp]
@@ -119,4 +119,36 @@ times (x,y) = Mul x y
 
 divide :: (Expr, Expr) -> Expr
 divide (x,y) = Div x y
+
+-- evaluator
+
+eexpn :: Parser Char Int
+eexpn = ((eterm `thenx` literal '+' `sequ` eterm) `using` eplus) `alt`
+       ((eterm `thenx` literal '-' `sequ` eterm) `using` eminus) `alt`
+       eterm 
+
+eterm :: Parser Char Int
+eterm = ((efactor `thenx` literal '*' `sequ` efactor) `using` etimes) `alt`
+       ((efactor `thenx` literal '/' `sequ` efactor) `using` edivide) `alt`
+       efactor
+
+efactor :: Parser Char Int 
+efactor = (number `using` evalue) `alt`
+         (literal '(' `xthen` eexpn `thenx` literal ')')
+
+evalue :: String -> Int 
+evalue xs = read xs :: Int
+
+eplus :: (Int, Int) -> Int
+eplus (x,y) = x + y
+
+eminus :: (Int, Int) -> Int
+eminus (x,y) = x - y
+
+etimes :: (Int, Int) -> Int
+etimes (x,y) = x * y
+
+edivide :: (Int, Int) -> Int 
+edivide (x,y) = x `div` y
+
 
