@@ -81,3 +81,18 @@ filter5 f = foldr (\x xs -> if f x then x:xs else xs) []
 filter6 :: (a -> Bool) -> [a] -> [a]
 filter6 f = foldr (\x -> if f x then (x:) else id) []
 
+dec2int :: [Int] -> Int
+dec2int = foldl (\x y -> y + 10*x) 0
+
+curry' :: ((a,b) -> c) -> (a->b->c)
+curry' f = \x y -> f (x,y) 
+
+uncurry' :: (a->b->c) -> ((a,b) -> c)
+uncurry' f = \(x,y) -> f x y 
+
+cfst = curry fst
+fst' = uncurry (curry fst)
+
+
+ 
+
