@@ -76,21 +76,34 @@ data Expr = Num Int | Add Expr Expr | Sub Expr Expr
 		    | Mul Expr Expr | Div Expr Expr 
 		    deriving (Show)
 
---expn = ((term `sequ` literal '+' `xthen` term) `using` plus) `alt`
---       ((term `sequ` literal '-' `xthen` term) `using` minus) 
--- `alt`
---       term 
+expn :: Parser Char Expr
+expn = ((term `thenx` literal '+' `sequ` term) `using` plus) `alt`
+       ((term `thenx` literal '-' `sequ` term) `using` minus) `alt`
+       term 
 
---term = ((factor `sequ` literal '*' `xthen` factor) `using` times) 
---`alt`
---       ((factor `sequ` literal '/' `xthen` factor) `using` divide) 
---`alt`
---       factor
+term :: Parser Char Expr
+term = ((factor `thenx` literal '*' `sequ` factor) `using` times) `alt`
+       ((factor `thenx` literal '/' `sequ` factor) `using` divide) `alt`
+       factor
 
-factor :: [Char] -> [(Expr, [Char])]
-factor = (number `using` value) 
--- `alt`
---         (literal '(' `xthen` expn `thenx` literal ')')
+factor :: Parser Char Expr
+factor = (number `using` value) `alt`
+         (literal '(' `xthen` expn `thenx` literal ')')
+
+-- in the paper they do it more like (with some missing ())
+expn' :: Parser Char Expr
+expn' = ((term' `sequ` (literal '+' `xthen` term')) `using` plus) `alt`
+       ((term' `sequ` (literal '-' `xthen` term')) `using` minus) `alt`
+       term' 
+
+term' :: Parser Char Expr
+term' = ((factor' `sequ` (literal '*' `xthen` factor')) `using` times) `alt`
+       ((factor' `sequ` (literal '/' `xthen` factor')) `using` divide) `alt`
+       factor'
+
+factor' :: Parser Char Expr
+factor' = (number `using` value) `alt`
+         (literal '(' `xthen` expn' `thenx` literal ')')
 
 value :: String -> Expr 
 value xs = Num (read xs :: Int)
