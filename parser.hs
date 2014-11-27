@@ -151,4 +151,34 @@ etimes (x,y) = x * y
 edivide :: (Int, Int) -> Int 
 edivide (x,y) = x `div` y
 
+-- 3.1 Free-format input
+
+nibble :: Parser Char b -> Parser Char b
+nibble p = white `xthen` (p `thenx` white)
+	where white = many (any' literal " \t\n")
+
+any' :: (b -> Parser a c) -> [b] -> Parser a c
+any' p = foldr (alt . p) failure
+
+symbol :: [Char] -> Parser Char [Char]
+symbol = nibble . string
+
+-- 3.3 The offside combinator
+
+type Pos b = (b, (Int,Int))
+
+satisfy' :: (b->Bool) -> Parser (Pos b) b
+satisfy' p [] = failure []
+satisfy' p (x:xs)
+        | p a = succeed a xs
+        | otherwise = failure xs
+          where (a,(r,c)) = x
+
+offside :: Parser (Pos b) a -> Parser (Pos b) a
+offside p inp = [(v,inpOFF) | (v,[]) <- p inpON]
+	where
+		inpON = takeWhile (onside (head inp)) inp
+		inpOFF = drop (length inpON) inp
+		onside (a,(r,c)) (b,(r',c')) = r'>r && c'>c
+
 
