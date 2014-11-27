@@ -19,6 +19,7 @@ literal :: Eq b => b -> Parser (Pos b) b
 literal x = satisfy (==x)
 
 -- 2.2  Combinators
+
 alt :: Parser b a -> Parser b a -> Parser b a
 (p1 `alt` p2) inp = p1 inp ++ p2 inp
 
@@ -39,6 +40,16 @@ many p = ((p `sequ` many p) `using` cons ) `alt` (succeed [])
 
 some :: Parser b a -> Parser b [a]
 some p = (p `sequ` many p) `using` cons
+
+number :: Parser (Pos Char) [Char]
+number = some (satisfy isDigit)
+
+word :: Parser (Pos Char) [Char]
+word = some (satisfy isAlpha)
+
+string :: Eq b => [b] -> Parser (Pos b) [b]
+string [] = succeed []
+string (x:xs) = (literal x `sequ` string xs) `using` cons
 
 -- 3.1 Free-format input
 any' :: (b -> Parser a c) -> [b] -> Parser a c
@@ -76,10 +87,17 @@ tok :: Parser (Pos Char) [Char] -> Tag -> Parser (Pos Char) (Pos Token)
 (p `tok` t) inp = [(((t,xs),(r,c)),out) | (xs,out) <- p inp]
 	          where (x,(r,c)) = head inp
 
-lex :: [(Parser (Pos Char) [Char],Tag)] -> Parser (Pos Char) [Pos Token]
-lex = many . (foldr op failure)
+lex' :: [(Parser (Pos Char) [Char],Tag)] -> Parser (Pos Char) [Pos Token]
+lex' = many . (foldr op failure)
 	where (p,t) `op` xs = (p `tok` t) `alt` xs	
-{-
+
 lexer :: Parser (Pos Char) [Pos Token]
-lexer = lex [(some (any' literal " \t\n"), Junk),
--}
+lexer = lex' [(some (any' literal " \t\n"), Junk),
+		(string "where", Symbol),
+		(word, Ident),
+		(number, Number),
+		( any' string ["(",")","="], Symbol)]
+
+-- 4.4 Scanning
+
+
