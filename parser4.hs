@@ -51,6 +51,12 @@ string :: Eq b => [b] -> Parser (Pos b) [b]
 string [] = succeed []
 string (x:xs) = (literal x `sequ` string xs) `using` cons
 
+xthen :: Parser b a -> Parser b c -> Parser b c
+p1 `xthen` p2 = (p1 `sequ` p2) `using` snd
+
+thenx :: Parser b a -> Parser b c -> Parser b a
+p1 `thenx` p2 = (p1 `sequ` p2) `using` fst
+
 -- 3.1 Free-format input
 any' :: (b -> Parser a c) -> [b] -> Parser a c
 any' p = foldr (alt . p) failure
@@ -66,6 +72,14 @@ satisfy p (x:xs)
         | otherwise = failure xs
           where (a,(r,c)) = x
 
+offside :: Parser (Pos b) a -> Parser (Pos b) a
+offside p inp = [(v,inpOFF) | (v,[]) <- p inpON]
+        where
+                inpON = takeWhile (onside (head inp)) inp
+                inpOFF = drop (length inpON) inp
+                onside (a,(r,c)) (b,(r',c')) = r'>r && c'>c
+
+
 -- 4.1 Example language
 
 type Var = [Char]
@@ -79,7 +93,7 @@ data Expn = VAR Var | NUM Int | APPLY Expn Expn
 
 -- 4.3 Lexical Analysis
 
-data Tag = Ident | Number | Symbol | Junk
+data Tag = Ident | Number | Symbol | Junk deriving (Eq,Show)
 
 type Token = (Tag,[Char])
 
@@ -100,4 +114,45 @@ lexer = lex' [(some (any' literal " \t\n"), Junk),
 
 -- 4.4 Scanning
 
+strip :: [Pos Token] -> [Pos Token]
+strip = filter ((/=Junk).fst.fst)
 
+-- 4.5 Syntax analysis
+
+kind :: Tag -> Parser (Pos Token) [Char]
+kind t = (satisfy ((==t).fst)) `using` snd
+
+lit :: [Char] -> Parser (Pos Token) [Char]
+lit xs = literal (Symbol,xs) `using` snd
+
+prog :: Parser (Pos Token) Script
+prog = many defn `using` SCRIPT
+
+defn :: Parser (Pos Token) Def
+defn = (some (kind Ident) `sequ` (lit "=" `xthen` offside body)) `using` defnFN
+
+body :: Parser (Pos Token) Expn
+body = (expr `sequ` (( lit "where" `xthen` some defn) `opt` [])) `using` bodyFN
+
+expr :: Parser (Pos Token) Expn
+expr = some prim `using` (foldl1 APPLY) 
+
+prim :: Parser (Pos Token) Expn
+prim = (kind Ident `using` VAR) `alt`
+       (kind Number `using` numFN) `alt`
+       (lit "(" `xthen` (expr `thenx` lit ")"))
+
+opt:: Parser b a -> a -> Parser b a
+p `opt` v = p `alt` (succeed v)
+
+defnFN :: ([Var], Expn) -> Def
+defnFN (f:xs,e) = DEF f xs e
+
+numFN :: String -> Expn
+numFN xs = NUM (read xs :: Int)
+
+bodyFN :: (Expn, [Def]) -> Expn
+bodyFN (e,[]) = e
+bodyFN (e,d:ds) = e `WHERE` (d:ds)
+
+-- 4.6 The complete parser 
