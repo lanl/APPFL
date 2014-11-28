@@ -179,6 +179,6 @@ offside p inp = [(v,inpOFF) | (v,[]) <- p inpON]
 	where
 		inpON = takeWhile (onside (head inp)) inp
 		inpOFF = drop (length inpON) inp
-		onside (a,(r,c)) (b,(r',c')) = r'>r && c'>c
+		onside (a,(r,c)) (b,(r',c')) = r'>=r && c'>=c
 
 

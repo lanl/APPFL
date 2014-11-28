@@ -77,8 +77,7 @@ offside p inp = [(v,inpOFF) | (v,[]) <- p inpON]
         where
                 inpON = takeWhile (onside (head inp)) inp
                 inpOFF = drop (length inpON) inp
-                onside (a,(r,c)) (b,(r',c')) = r'>r && c'>c
-
+                onside (a,(r,c)) (b,(r',c')) = r'>=r && c'>=c
 
 -- 4.1 Example language
 
@@ -141,9 +140,7 @@ prog :: Parser (Pos Token) Script
 prog = many defn `using` Script
 
 defn :: Parser (Pos Token) Def
--- todo: offside is broken
---defn = (some (kind Ident) `sequ` (lit "=" `xthen` offside body)) `using` defnFN
-defn = (some (kind Ident) `sequ` (lit "=" `xthen` body)) `using` defnFN
+defn = (some (kind Ident) `sequ` (lit "=" `xthen` offside body)) `using` defnFN
 
 body :: Parser (Pos Token) Expn
 body = (expr `sequ` (( lit "where" `xthen` some defn) `opt` [])) `using` bodyFN
