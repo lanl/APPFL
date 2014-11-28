@@ -84,14 +84,26 @@ offside p inp = [(v,inpOFF) | (v,[]) <- p inpON]
 
 type Var = [Char]
 
-data Script = SCRIPT [Def] deriving (Show)
+data Script = Script [Def] deriving (Show)
 
-data Def = DEF Var [Var] Expn deriving (Show)
+data Def = Def Var [Var] Expn deriving (Show)
 
-data Expn = VAR Var | NUM Int | APPLY Expn Expn 
-		| WHERE Expn [Def] deriving (Show)
+data Expn = Var Var | Num Int | Apply Expn Expn 
+		| Where Expn [Def] deriving (Show)
 
--- 4.3 Lexical Analysis
+-- 4.2 Layout analysis
+
+prelex :: [Char] -> [Pos Char]
+prelex = pl (0,0)
+    where
+        pl (r,c) [] = []
+        pl (r,c) (x:xs) 
+            | x == '\t' = (x,(r,c)) : pl (r, tab c) xs
+            | x == '\n' = (x,(r,c)) : pl (r+1, 0) xs
+            | otherwise = (x,(r,c)) : pl (r, c+1) xs
+        tab c = ((c `div` 8)+1)*8		
+
+-- 4.3 Lexical analysis
 
 data Tag = Ident | Number | Symbol | Junk deriving (Eq,Show)
 
@@ -126,19 +138,21 @@ lit :: [Char] -> Parser (Pos Token) [Char]
 lit xs = literal (Symbol,xs) `using` snd
 
 prog :: Parser (Pos Token) Script
-prog = many defn `using` SCRIPT
+prog = many defn `using` Script
 
 defn :: Parser (Pos Token) Def
-defn = (some (kind Ident) `sequ` (lit "=" `xthen` offside body)) `using` defnFN
+-- todo: offside is broken
+--defn = (some (kind Ident) `sequ` (lit "=" `xthen` offside body)) `using` defnFN
+defn = (some (kind Ident) `sequ` (lit "=" `xthen` body)) `using` defnFN
 
 body :: Parser (Pos Token) Expn
 body = (expr `sequ` (( lit "where" `xthen` some defn) `opt` [])) `using` bodyFN
 
 expr :: Parser (Pos Token) Expn
-expr = some prim `using` (foldl1 APPLY) 
+expr = some prim `using` (foldl1 Apply) 
 
 prim :: Parser (Pos Token) Expn
-prim = (kind Ident `using` VAR) `alt`
+prim = (kind Ident `using` Var) `alt`
        (kind Number `using` numFN) `alt`
        (lit "(" `xthen` (expr `thenx` lit ")"))
 
@@ -146,13 +160,17 @@ opt:: Parser b a -> a -> Parser b a
 p `opt` v = p `alt` (succeed v)
 
 defnFN :: ([Var], Expn) -> Def
-defnFN (f:xs,e) = DEF f xs e
+defnFN (f:xs,e) = Def f xs e
 
 numFN :: String -> Expn
-numFN xs = NUM (read xs :: Int)
+numFN xs = Num (read xs :: Int)
 
 bodyFN :: (Expn, [Def]) -> Expn
 bodyFN (e,[]) = e
-bodyFN (e,d:ds) = e `WHERE` (d:ds)
+bodyFN (e,d:ds) = e `Where` (d:ds)
 
--- 4.6 The complete parser 
+-- 4.6 The complete parser
+
+parse :: [Char] -> Script
+parse = fst.head.prog.strip.fst.head.lexer.prelex
+
