@@ -1,5 +1,8 @@
 -- Playing with card shuffle math
 
+import Data.List 
+import Data.Maybe
+
 interleave :: [a] -> [a] -> [a]
 interleave xs     []     = xs
 interleave []     ys     = ys
@@ -32,6 +35,13 @@ apply f n m = f (apply f n (m-1))
 -- find how many shuffles till cards are in order again
 check :: ([Int] -> [Int]) -> Int -> Int 
 check f n = head [m | m <-[1..n], apply f n m == [1..n]]
+
+-- same using Map
+check' :: ([Int] -> [Int]) -> Int -> Int 
+check' f n =  1 + fromJust (findIndex (==[1..n]) (map (apply f n) [1..n]))
+
+check'' :: ([Int] -> [Int]) -> Int -> Int 
+check'' f n =  1 + fromJust (elemIndex [1..n] (map (apply f n) [1..n]))
 
 -- find how many shuffles till cards are in order again
 -- for all shuffle types for deck lengths 1..n
