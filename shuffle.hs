@@ -37,15 +37,18 @@ check f n = head [m | m <-[1..n], apply f n m == [1..n]]
 
 -- same using Map
 check' :: ([Int] -> [Int]) -> Int -> Int 
-check' f n =  1 + fromJust (findIndex (==[1..n]) (map (apply f n) [1..n]))
+check' f n =  1 + fromJust (findIndex (==[1..n]) shufflemap)
+	where shufflemap = map (apply f n) [1..n]
 
 check'' :: ([Int] -> [Int]) -> Int -> Int 
-check'' f n =  1 + fromJust (elemIndex [1..n] (map (apply f n) [1..n]))
+check'' f n =  1 + fromJust (elemIndex ns shufflemap)
+	where ns = [1..n]
+	      shufflemap = map (apply f n) ns
 
 -- find how many shuffles till cards are in order again
 -- for all shuffle types for deck lengths 1..n
 shuffler :: Int -> [(Int, Int, Int)]
-shuffler n = [ (m,s1 m, s2 m) | m<-[1..n]]
+shuffler n = [ (m, s1 m, s2 m) | m<-[1..n]]
 		where s1 m | even m = check inshuffle m
 			   | otherwise = s3 m
 		      s2 m | even m = check outshuffle m
@@ -62,7 +65,7 @@ outMultOrder n = head [k | k<-[1..n], 2^k `mod` (n-1) == 1]
 outMultOrder' :: Integral a => a -> a
 outMultOrder' 2 = 1  --special case
 outMultOrder' n | odd n = error "not even"
-outMultOrder' n = head (filter (\k -> 2^k `mod` (n-1) == 1) [1..n]) 
+outMultOrder' n = head $ filter (\k -> 2^k `mod` (n-1) == 1) [1..n] 
 
 -- for inshuffle number of shuffles is smallest 2^k =1 (mod n+1)
 inMultOrder :: Integral a => a -> a
@@ -76,11 +79,9 @@ oddMultOrder n | even n = error "not odd"
 oddMultOrder n = head [k | k<-[1..n], 2^k `mod` n == 1]
 
 shuffler' :: Integral a => a -> [(a, a, a)]	
-shuffler' n = [ (m,s1 m, s2 m) | m<-[1..n]]
-		where s1 m | even m = inMultOrder m
-			   | otherwise = s3 m
-		      s2 m | even m = outMultOrder m
-			   | otherwise = s3 m
-                      s3 m = oddMultOrder m
+shuffler' n = [ (m, s1 m, s2 m) | m<-[1..n]]
+		where s1 m = if even m then inMultOrder m else s3 m
+		      s2 m = if even m then outMultOrder m else s3 m
+                      s3 = oddMultOrder
 
 
