@@ -49,4 +49,55 @@ longChains'' n = filter (\all@(x:xs) -> length all > x) (map chain [1..n])
 flipl :: (a -> b -> c) -> b -> a -> c  
 flipl f = \x y -> f y x 
 
+sum' :: (Num a) => [a] -> a  
+sum' xs = foldl (\acc x -> acc + x) 0 xs 
+
+sum'' :: (Num a) => [a] -> a  
+sum'' = foldl (+) 0 
+
+elem' :: (Eq a) => a -> [a] -> Bool  
+elem' y ys = foldl (\acc x -> if x == y then True else acc) False ys  
+
+elem'' :: (Eq a) => a -> [a] -> Bool  
+elem'' y = foldl (\acc x -> if x == y then True else acc) False  
+
+elem''' :: (Eq a) => a -> [a] -> Bool  
+elem''' y = foldl (\acc x -> case () of _ | x == y -> True | otherwise -> acc) False  
+
+mapr :: (a -> b) -> [a] -> [b]  
+mapr f xs = foldr (\x acc -> f x : acc) [] xs  
+
+mapr' :: (a -> b) -> [a] -> [b]  
+mapr' f = foldr (\x acc -> f x : acc) [] 
+
+mapl :: (a -> b) -> [a] -> [b]  
+mapl f xs = foldl (\acc x -> acc ++ [f x]) [] xs
+
+mapl' :: (a -> b) -> [a] -> [b]  
+mapl' f = foldl (\acc x -> acc ++ [f x]) [] 
+
+maximum' :: (Ord a) => [a] -> a  
+maximum' = foldr1 (\x acc -> if x > acc then x else acc)  
+ 
+reverse' :: [a] -> [a]  
+reverse' = foldl (\acc x -> x : acc) []  
+
+reverse'' :: [a] -> [a]  
+reverse'' = foldl (flip (:)) []
+  
+product' :: (Num a) => [a] -> a  
+product' = foldr1 (*)  
+  
+filter' :: (a -> Bool) -> [a] -> [a]  
+filter' p = foldr (\x acc -> if p x then x : acc else acc) []  
+  
+filter'' :: (a -> Bool) -> [a] -> [a]  
+filter'' p = foldr (\x -> if p x then (x:) else id) []  
+
+head' :: [a] -> a  
+head' = foldr1 (\x _ -> x)  
+  
+last' :: [a] -> a  
+last' = foldl1 (\_ x -> x)
+
 
