@@ -48,6 +48,11 @@ check'' f n =  1 + fromJust (elemIndex ns shufflemap)
 	where ns = [1..n]
 	      shufflemap = map (apply f n) ns
 
+-- check using iterate rather than apply
+checki :: ([Int] -> [Int]) -> Int -> Int
+checki f n = head [m | m <- ns, (iterate f ns) !! m == ns]
+                where ns = [1..n]
+
 -- find how many shuffles till cards are in order again
 -- for all shuffle types for deck lengths 1..n
 shuffler :: Int -> [(Int, Int, Int)]
