@@ -8,6 +8,9 @@ interleave xs     []     = xs
 interleave []     ys     = ys
 interleave (x:xs) (y:ys) = x : y : interleave xs ys
 
+interleave' :: [a] -> [a] -> [a]
+interleave' xs ys = concat $ zipWith (\x y -> [x] ++ [y]) xs ys
+ 
 outshuffle :: [a] -> [a]
 outshuffle xs = interleave (take n xs) (drop n xs) where n = (length xs) `div` 2
 
