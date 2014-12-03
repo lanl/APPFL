@@ -136,6 +136,16 @@ iterate' f = unfold (\x -> False) id f
 iterate'' :: (a -> a) -> a -> [a]
 iterate'' f = unfold (const False) id f
 
+-- using scanl
+iterater :: (a -> a) -> a -> [a]
+iterater f a = a : iterater f (f a)
+
+iterates :: (Num a, Enum a) => (a -> a) -> a -> [a]
+iterates f a = scanl (\_ y -> f y) a [0..]
+
+iterates' :: (Num a, Enum a) => (a -> a) -> a -> [a]
+iterates' f a = scanl (\_ -> f)  a [0..]
+
 -- Ex 8
 
 bin2int :: [Bit] -> Int
