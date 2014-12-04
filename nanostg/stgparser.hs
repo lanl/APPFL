@@ -42,12 +42,9 @@ data Program = Program [Declaration] deriving (Show)
 
 data Primitive = Add | Sub | Mul | Div deriving (Show)
 
-
---
-
-
-lit :: [Char] -> Parser (Pos Token) [Char]
-lit xs = literal (Symbol,xs) `using` snd
+-- lit from parser4
+sym :: [Char] -> Parser (Pos Token) [Char]
+sym xs = literal (Symbol,xs) `using` snd
 
 atom :: Parser (Pos Token) Atom
 atom = (kind Number `using` numFN) `alt`
@@ -55,4 +52,5 @@ atom = (kind Number `using` numFN) `alt`
  
 numFN :: String -> Atom
 numFN xs = Literal (Int (read xs :: Int))
+
 
