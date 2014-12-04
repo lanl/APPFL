@@ -1,7 +1,7 @@
 module Parser
 ( Parser
 , Pos
-, Tag(Ident,Number,Symbol,Junk)
+, Tag(..)
 , Token
 , succeed
 , failure
