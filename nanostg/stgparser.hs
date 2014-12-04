@@ -1,5 +1,7 @@
 -- stg like parser
 
+import Parser 
+
 -- Syntax from "Making a Fast Curry..." by Simon Marlow and Simon Peyton Jones
 -- pg 4
 
@@ -39,4 +41,18 @@ data Declaration = Declaration Variable Object deriving (Show)
 data Program = Program [Declaration] deriving (Show)
 
 data Primitive = Add | Sub | Mul | Div deriving (Show)
+
+
+--
+
+
+lit :: [Char] -> Parser (Pos Token) [Char]
+lit xs = literal (Symbol,xs) `using` snd
+
+atom :: Parser (Pos Token) Atom
+atom = (kind Number `using` numFN) `alt`
+       (kind Ident `using` Variable)
+ 
+numFN :: String -> Atom
+numFN xs = Literal (Int (read xs :: Int))
 
