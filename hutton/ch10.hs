@@ -45,7 +45,8 @@ occurss m (Leaf n) = m == n
 occurss m (Node l n r) | m == n = True
                        | m < n = occurss m l
                        | otherwise = occurss m r
- 
+
+-- one compare vs. possibly 2 
 occurss' :: Int -> Tree -> Bool
 occurss' m (Leaf n) = m == n
 occurss' m (Node l n r) | o == EQ = True
@@ -57,7 +58,35 @@ occurss'' :: Int -> Tree -> Bool
 occurss'' m (Leaf n) = m == n
 occurss'' m (Node l n r) = case compare m n of
                              EQ -> True
-                             LT -> occurss' m l
-                             GT -> occurss' m r
+                             LT -> occurss'' m l
+                             GT -> occurss'' m r
+
+--Ex 3
+
+data BTree = BLeaf Int | BNode BTree BTree deriving (Show)
+
+bt = BNode(BNode (BLeaf 1) (BLeaf 2)) (BNode (BLeaf 3) (BLeaf 4))
+
+ubt = BNode (BNode(BNode (BLeaf 1) (BLeaf 2)) (BNode (BLeaf 3) (BLeaf 4)))
+        (BNode (BLeaf 5) (BLeaf 6))
+
+flatten :: BTree -> [Int]
+flatten (BLeaf n) = [n]
+flatten (BNode l r) = flatten l ++ flatten r
+
+nLeaf :: BTree -> Int
+nLeaf = length . flatten
+
+nLeaf' :: BTree -> Int
+nLeaf' (BLeaf _) = 1
+nLeaf' (BNode l r) = nLeaf' l + nLeaf' r 
+
+balanced :: BTree -> Bool
+balanced (BLeaf _) = True
+balanced (BNode l r) = diff <= 1 && balanced l && balanced r
+                       where diff = abs(nLeaf l - nLeaf r) 
+                     
+  
+
 
 
