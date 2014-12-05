@@ -98,8 +98,9 @@ balance xs = BNode (balance ls) (balance rs)
                    
 --Ex 5 see ch10-5.lhs
 
-  
-  
+--Ex 6  
+
+--Ex 7 see ch10-7.lhs
 
 
 
