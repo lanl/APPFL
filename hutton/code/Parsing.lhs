@@ -7,6 +7,7 @@ Graham Hutton, Cambridge University Press, 2007.
 > 
 > import Data.Char
 > import Control.Monad
+> import Control.Applicative hiding(many)
 >
 > infixr 5 +++
 
@@ -15,11 +16,22 @@ The monad of parsers
 
 > newtype Parser a              =  P (String -> [(a,String)])
 >
+> instance Functor Parser where
+>    fmap = liftM
+>
+> instance Applicative Parser where
+>    pure  = return
+>    (<*>) = ap
+>
 > instance Monad Parser where
 >    return v                   =  P (\inp -> [(v,inp)])
 >    p >>= f                    =  P (\inp -> case parse p inp of
 >                                                []        -> []
 >                                                [(v,out)] -> parse (f v) out)
+>
+> instance Alternative Parser where
+>    (<|>) = mplus
+>    empty = mzero
 > 
 > instance MonadPlus Parser where
 >    mzero                      =  P (\inp -> [])
