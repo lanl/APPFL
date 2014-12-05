@@ -85,8 +85,22 @@ balanced :: BTree -> Bool
 balanced (BLeaf _) = True
 balanced (BNode l r) = diff <= 1 && balanced l && balanced r
                        where diff = abs(nLeaf l - nLeaf r) 
-                     
-  
+                   
+--Ex 4
+
+spliter :: [a] -> ([a],[a])
+spliter xs = (take n xs, drop n xs) where n = (length xs) `div` 2
+
+balance :: [Int] -> BTree
+balance [x] = BLeaf x 
+balance xs = BNode (balance ls) (balance rs) 
+             where (ls,rs) = spliter xs
+                   
+--Ex 5 see ch10-5.lhs
+
+--Ex 6  
+
+--Ex 7 see ch10-7.lhs
 
 
 
