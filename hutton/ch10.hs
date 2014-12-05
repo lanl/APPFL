@@ -98,9 +98,26 @@ balance xs = BNode (balance ls) (balance rs)
                    
 --Ex 5 see ch10-5.lhs
 
---Ex 6  
+--Ex 6 bparser.lhs is start
 
 --Ex 7 see ch10-7.lhs
 
+--Ex 8
 
+data MyMaybe a = MyNothing | MyJust a  
+
+instance Monad MyMaybe where
+    return x = MyJust x
+   
+    MyNothing >>= f = MyNothing
+    (MyJust x) >>= f = f x
+
+data MyList a = Empty | Cons a (MyList a) deriving (Show, Eq, Ord)  
+
+mymap :: (a -> b) -> MyList a -> MyList b
+mymap f Empty = Empty
+mymap f (Cons x xs) = Cons (f x) (mymap f xs)
+
+instance Monad MyList where
+    return x = Cons x Empty
 
