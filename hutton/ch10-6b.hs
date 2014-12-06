@@ -143,7 +143,7 @@ lexit = many . (foldr op failure)
 
 lexer :: Parser Char [Token]
 lexer = lexit [(some (any' literal " \t\n"), Junk),
-               (any' string ["=>","->","||","&&","=="], Symbol),
+               (any' string ["=>","->","||","&&","==", "!=", "/="], Symbol),
                (any' string ["(",")","=","|","^","&","!","-"], Symbol),
                (word, Ident)]
 
@@ -161,6 +161,8 @@ char = satisfy isAlpha
 prop :: Parser Token Prop
 prop =  ((term `thenx` lit "=" `sequ` term) `using` equ) `alt`
         ((term `thenx` lit "==" `sequ` term) `using` equ) `alt`
+        ((term `thenx` lit "!=" `sequ` term) `using` nequ) `alt`
+        ((term `thenx` lit "/=" `sequ` term) `using` nequ) `alt`
         term 
 
 term :: Parser Token Prop
@@ -202,6 +204,9 @@ disj (x,y) = Or x y
 equ :: (Prop, Prop) -> Prop
 equ (x,y) = Equ x y
 
+nequ :: (Prop, Prop) -> Prop
+nequ (x,y) = Not (Equ x y)
+
 parse = fst.head.prop.strip.fst.head.lexer
 
 check = isTaut.parse
@@ -219,4 +224,9 @@ p5' = "-A ^ -B = -(A | B)"
 
 p6 = "T = -F"
 p6' = "t = !f"
+
+p7 = "T /= F"
+
+p8 = "!A & !B != !(A || B)"
+
 
