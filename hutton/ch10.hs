@@ -98,7 +98,7 @@ balance xs = BNode (balance ls) (balance rs)
                    
 --Ex 5 see ch10-5.lhs
 
---Ex 6 bparser.lhs is start
+--Ex 6 see ch10-6.hs
 
 --Ex 7 see ch10-7.lhs
 

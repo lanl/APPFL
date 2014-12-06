@@ -106,11 +106,14 @@ char :: Parser Char Char
 char = satisfy isAlpha
 
 prop :: Parser Char Prop
-prop =  ((factor `thenx` literal '&' `sequ` factor) `using` conj) `alt`
+prop =  ((term `thenx` literal '=' `sequ` term) `using` equ) `alt`
+        term 
+
+term :: Parser Char Prop
+term =  ((factor `thenx` literal '&' `sequ` factor) `using` conj) `alt`
         ((factor `thenx` literal '-' `sequ` factor) `using` imply) `alt`
         ((factor `thenx` literal '|' `sequ` factor) `using` disj) `alt`
-        ((factor `thenx` literal '=' `sequ` factor) `using` equ) `alt`
-        factor 
+        factor
 
 factor :: Parser Char Prop
 factor = (char `using` var) `alt`
