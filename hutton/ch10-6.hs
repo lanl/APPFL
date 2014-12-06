@@ -11,6 +11,8 @@ data Prop                     =  Const Bool
                                |  Not Prop
                                |  And Prop Prop
                                |  Imply Prop Prop
+                               |  Or Prop Prop
+                               |  Equ Prop Prop
                                deriving (Show)
 
 type Subst                    =  Assoc Char Bool
@@ -26,6 +28,8 @@ eval s (Var x)                =  find x s
 eval s (Not p)                =  not (eval s p)
 eval s (And p q)              =  eval s p && eval s q
 eval s (Imply p q)            =  eval s p <= eval s q
+eval s (Or p q)               =  eval s p || eval s q
+eval s (Equ p q)              =  eval s p == eval s q
 
 vars                          :: Prop -> [Char]
 vars (Const _)                =  []
@@ -33,6 +37,8 @@ vars (Var x)                  =  [x]
 vars (Not p)                  =  vars p
 vars (And p q)                =  vars p ++ vars q
 vars (Imply p q)              =  vars p ++ vars q
+vars (Or p q)                 =  vars p ++ vars q
+vars (Equ p q)                =  vars p ++ vars q
 
 bools                         :: Int -> [[Bool]]
 bools 0                       =  [[]]
@@ -100,15 +106,16 @@ char :: Parser Char Char
 char = satisfy isAlpha
 
 prop :: Parser Char Prop
-prop =  (( literal '!' `xthen` factor) `using` neg) `alt`
-        ((factor `thenx` literal '&' `sequ` factor) `using` conj) `alt`
+prop =  ((factor `thenx` literal '&' `sequ` factor) `using` conj) `alt`
         ((factor `thenx` literal '-' `sequ` factor) `using` imply) `alt`
+        ((factor `thenx` literal '|' `sequ` factor) `using` disj) `alt`
+        ((factor `thenx` literal '=' `sequ` factor) `using` equ) `alt`
         factor 
-        
 
 factor :: Parser Char Prop
 factor = (char `using` var) `alt`
-         (literal '(' `xthen` prop `thenx` literal ')')
+         (literal '(' `xthen` prop `thenx` literal ')') `alt`
+         (( literal '!' `xthen` factor) `using` neg)
 
 var :: Char -> Prop
 var 'T' = Const True
@@ -124,9 +131,20 @@ conj (x,y) = And x y
 imply :: (Prop, Prop) -> Prop
 imply (x,y) = Imply x y
 
-parse = fst.head.prop
+disj :: (Prop, Prop) -> Prop
+disj (x,y) = Or x y
+
+equ :: (Prop, Prop) -> Prop
+equ (x,y) = Equ x y
+
+strip :: String -> String
+strip = filter (not.isSpace)  
+
+parse = fst.head.prop.strip
 
 check = isTaut.parse
 
-p1 = "A&!(A)"
-p2 = "(A&B)-A"
+p1 = "A & !A"
+p2 = "(A & B) - A"
+
+
