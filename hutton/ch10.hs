@@ -128,6 +128,13 @@ mymap :: (a -> b) -> MyList a -> MyList b
 mymap f Empty = Empty
 mymap f (Cons x xs) = Cons (f x) (mymap f xs)
 
+mycat :: MyList a -> MyList a -> MyList a
+mycat (Cons x xs) ys = Cons x (mycat xs ys)
+
+myconcat :: MyList (MyList a) -> MyList a 
+myconcat Empty = Empty
+myconcat (Cons x xs) = mycat x (myconcat xs)
+
 instance Functor MyList where
     fmap = liftM
 
@@ -137,8 +144,6 @@ instance Applicative MyList where
 
 instance Monad MyList where
     return x = Cons x Empty
-    -- MyList a -> (a -> MyList b) -> MyList b
-    Empty >>= f = Empty
---    xs >>= f =  mymap f xs
+    xs >>= f = myconcat $ mymap f xs
 
     
