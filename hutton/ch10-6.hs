@@ -1,3 +1,5 @@
+-- Tautology parser
+
 --Tautology checker example from section 10.4 of Programming in Haskell,
 --Graham Hutton, Cambridge University Press, 2007.
 

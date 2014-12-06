@@ -1,5 +1,8 @@
 -- Ch10 exercises from Graham Hutton's Programming in Haskell
 
+import Control.Applicative (Applicative(..))
+import Control.Monad       (liftM, ap)
+
 -- 10.3
 
 data Nat = Zero | Succ Nat deriving (Show)
@@ -98,13 +101,20 @@ balance xs = BNode (balance ls) (balance rs)
                    
 --Ex 5 see ch10-5.lhs
 
---Ex 6 see ch10-6.hs
+--Ex 6 see ch10-6.hs, ch10-6b.hs
 
 --Ex 7 see ch10-7.lhs
 
 --Ex 8
 
 data MyMaybe a = MyNothing | MyJust a  
+
+instance Functor MyMaybe where
+    fmap = liftM
+ 
+instance Applicative MyMaybe where
+    pure  = return
+    (<*>) = ap
 
 instance Monad MyMaybe where
     return x = MyJust x
@@ -118,6 +128,17 @@ mymap :: (a -> b) -> MyList a -> MyList b
 mymap f Empty = Empty
 mymap f (Cons x xs) = Cons (f x) (mymap f xs)
 
+instance Functor MyList where
+    fmap = liftM
+
+instance Applicative MyList where
+    pure  = return
+    (<*>) = ap
+
 instance Monad MyList where
     return x = Cons x Empty
+    -- MyList a -> (a -> MyList b) -> MyList b
+    Empty >>= f = Empty
+--    xs >>= f =  mymap f xs
 
+    

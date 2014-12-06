@@ -1,3 +1,5 @@
+-- Tautology parser w/ lexer
+
 --Tautology checker example from section 10.4 of Programming in Haskell,
 --Graham Hutton, Cambridge University Press, 2007.
 
@@ -123,8 +125,6 @@ any' p = foldr (alt . p) failure
 
 -- Scanning
 
---strip :: String -> String
---strip = filter (not.isSpace)
 strip :: [Token] -> [Token]
 strip = filter ((/=Junk).fst)
 
@@ -143,9 +143,9 @@ lexit = many . (foldr op failure)
 
 lexer :: Parser Char [Token]
 lexer = lexit [(some (any' literal " \t\n"), Junk),
-               (string "->", Symbol),
-               (word, Ident),
-               (any' string ["(",")","=","|","&"], Symbol)]
+               (any' string ["=>","->","||","&&","=="], Symbol),
+               (any' string ["(",")","=","|","^","&","!","-"], Symbol),
+               (word, Ident)]
 
 -- Syntax analysis
 
@@ -158,34 +158,34 @@ lit xs = literal (Symbol,xs) `using` snd
 char :: Parser Char Char
 char = satisfy isAlpha
 
--- fst $ head $ foo $ strip $ fst $ head $ lexer "A"
-foo :: Parser Token Prop
-foo = kind Ident `using` varT
-
-prop :: Parser Char Prop
-prop =  ((term `thenx` literal '=' `sequ` term) `using` equ) `alt`
+prop :: Parser Token Prop
+prop =  ((term `thenx` lit "=" `sequ` term) `using` equ) `alt`
+        ((term `thenx` lit "==" `sequ` term) `using` equ) `alt`
         term 
 
-term :: Parser Char Prop
-term =  ((factor `thenx` literal '&' `sequ` factor) `using` conj) `alt`
-        ((factor `thenx` literal '-' `sequ` factor) `using` imply) `alt`
-        ((factor `thenx` literal '-' `sequ` factor) `using` disj) `alt`
+term :: Parser Token Prop
+term = ((factor `thenx` lit "&" `sequ` factor) `using` conj) `alt`
+       ((factor `thenx` lit "^" `sequ` factor) `using` conj) `alt`
+       ((factor `thenx` lit "&&" `sequ` factor) `using` conj) `alt`
+       ((factor `thenx` lit "=>" `sequ` factor) `using` imply) `alt`
+       ((factor `thenx` lit "->" `sequ` factor) `using` imply) `alt`
+       ((factor `thenx` lit "|" `sequ` factor) `using` disj) `alt`
+       ((factor `thenx` lit "||" `sequ` factor) `using` disj) `alt`
         factor
 
-factor :: Parser Char Prop
-factor = (char `using` var) `alt`
-         (literal '(' `xthen` prop `thenx` literal ')') `alt`
-         (( literal '!' `xthen` factor) `using` neg)
+factor :: Parser Token Prop
+factor = (kind Ident `using` var) `alt`
+          (lit "(" `xthen` prop `thenx` lit ")") `alt`
+          ((lit "!" `xthen` factor) `using` neg) `alt`
+          ((lit "-" `xthen` factor) `using` neg)
 
-var :: Char -> Prop
-var 'T' = Const True
-var 'F' = Const False
-var x = Var x
-
-varT :: [Char] -> Prop
-varT "T" = Const True
-varT "F" = Const False
-varT [x] = Var x
+var :: [Char] -> Prop
+var "T" = Const True
+var "F" = Const False
+var "t" = Const True
+var "f" = Const False
+var [x] = Var x
+var _   = error("bad variable")
 
 neg :: Prop -> Prop
 neg x = Not x
@@ -202,11 +202,21 @@ disj (x,y) = Or x y
 equ :: (Prop, Prop) -> Prop
 equ (x,y) = Equ x y
 
---parse = fst.head.prop.strip
+parse = fst.head.prop.strip.fst.head.lexer
 
---check = isTaut.parse
+check = isTaut.parse
 
-p1 = "A & !A"
-p2 = "(A & B) - A"
+p1' = "A & !A"
+p1 = "A ^ !A"
+p2' = "(A && B) => A"
+p2 = "(A ^ B) => A"
+p3 = "A => (A ^ B)"
+p4 = "(A ^ (A => B)) => B"
+p4' = "(A ^ (A => B)) -> B"
 
+p5 = "!A & !B = !(A || B)"
+p5' = "-A ^ -B = -(A | B)"
+
+p6 = "T = -F"
+p6' = "t = !f"
 
