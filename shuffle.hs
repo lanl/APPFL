@@ -1,7 +1,9 @@
--- Playing with card shuffle math
+--Playing with card shuffle math
 
-import Data.List 
+import Data.List
 import Data.Maybe
+import System.IO
+import System.Environment
 
 interleave :: [a] -> [a] -> [a]
 interleave xs     []     = xs
@@ -44,12 +46,12 @@ check f n = head [m | m <-[1..n], apply f n m == [1..n]]
 -- same using Map
 check' :: ([Int] -> [Int]) -> Int -> Int 
 check' f n =  1 + fromJust (findIndex (==[1..n]) shufflemap)
-	where shufflemap = map (apply f n) [1..n]
+    where shufflemap = map (apply f n) [1..n]
 
 check'' :: ([Int] -> [Int]) -> Int -> Int 
 check'' f n =  1 + fromJust (elemIndex ns shufflemap)
-	where ns = [1..n]
-	      shufflemap = map (apply f n) ns
+    where ns = [1..n]
+          shufflemap = map (apply f n) ns
 
 -- check using iterate rather than apply
 checki :: ([Int] -> [Int]) -> Int -> Int
@@ -60,11 +62,11 @@ checki f n = head [m | m <- ns, (iterate f ns) !! m == ns]
 -- for all shuffle types for deck lengths 1..n
 shuffler :: Int -> [(Int, Int, Int)]
 shuffler n = [ (m, s1 m, s2 m) | m<-[1..n]]
-		where s1 m | even m = check inshuffle m
-			   | otherwise = s3 m
-		      s2 m | even m = check outshuffle m
-			   | otherwise = s3 m
-                      s3 m = check oddshuffle m
+        where s1 m | even m = check inshuffle m
+               | otherwise = s3 m
+              s2 m | even m = check outshuffle m
+               | otherwise = s3 m
+              s3 m = check oddshuffle m
 
 -- for outshuffle number of shuffles is smallest 2^k =1 (mod n-1)
 outMultOrder :: Integral a => a -> a
@@ -89,10 +91,17 @@ oddMultOrder 1 = 1 --special case
 oddMultOrder n | even n = error "not odd"
 oddMultOrder n = head [k | k<-[1..n], 2^k `mod` n == 1]
 
-shuffler' :: Integral a => a -> [(a, a, a)]	
+shuffler' :: Integral a => a -> [(a, a, a)] 
 shuffler' n = [ (m, s1 m, s2 m) | m<-[1..n]]
-		where s1 m = if even m then inMultOrder m else s3 m
-		      s2 m = if even m then outMultOrder m else s3 m
-                      s3 = oddMultOrder
+              where s1 = \m -> if even m then inMultOrder m else oddMultOrder m
+                    s2 = \m -> if even m then outMultOrder m else oddMultOrder  m
 
+format :: Show a => [(a,a,a)] -> String
+format xs = concat $ 
+            [ show a ++ " " ++ show b ++ " " ++ show c ++ "\n"
+            | (a,b,c) <- xs]
+
+main = do
+  args <- getArgs
+  writeFile "shuffle.out" (format $ shuffler' (read $ head args)) 
 
