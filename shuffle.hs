@@ -101,7 +101,20 @@ format xs = concat $
             [ show a ++ " " ++ show b ++ " " ++ show c ++ "\n"
             | (a,b,c) <- xs]
 
+
+-- only do out shuffle 
+outshuffler :: Integral a => a -> a -> [(a, a)]
+outshuffler start end = [ (m, outMultOrder m) | m<-[n1,n1+2..end]]
+                where n1 = if even start then start else start+1
+
+outformat :: Show a => [(a,a)] -> String
+outformat xs = concat $ [ show a ++ " " ++ show b ++ "\n" | (a,b) <- xs]
+
 main = do
   args <- getArgs
-  writeFile "shuffle.out" (format $ shuffler' (read $ head args)) 
+  let start = read $ head args
+  let end = read $ head $ drop 1 args
+  let file = head $ drop 2 args
+  writeFile file (outformat $ outshuffler start end)
+
 
