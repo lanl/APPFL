@@ -54,3 +54,16 @@ numFN :: String -> Atom
 numFN xs = Literal (Int (read xs :: Int))
 
 
+{-
+expression :: Parser (Pos Token) Expression
+expression =
+
+
+
+functionCall :: Parser (Pos Token) Expression
+functionCall =  
+-}
+
+
+
+
