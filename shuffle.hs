@@ -113,8 +113,8 @@ outformat xs = concat $ [ show a ++ " " ++ show b ++ "\n" | (a,b) <- xs]
 main = do
   args <- getArgs
   let start = read $ head args
-  let end = read $ head $ drop 1 args
-  let file = head $ drop 2 args
+      end = read $ head $ drop 1 args
+      file = head $ drop 2 args
   writeFile file (outformat $ outshuffler start end)
 
 
