@@ -46,6 +46,10 @@ data Primitive = Add | Sub | Mul | Div deriving (Show)
 sym :: [Char] -> Parser (Pos Token) [Char]
 sym xs = literal (Symbol,xs) `using` snd
 
+kind :: Tag -> Parser (Pos Token) [Char]
+kind t = (satisfy ((==t).fst)) `using` snd
+
+
 atom :: Parser (Pos Token) Atom
 atom = (kind Number `using` numFN) `alt`
        (kind Ident `using` Variable)

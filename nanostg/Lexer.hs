@@ -1,3 +1,14 @@
+module Lexer
+( Tag(..)
+, Token
+, prelex
+, lexer
+, strip
+) where
+
+
+import Parser 
+
 prelex :: [Char] -> [Pos Char]
 prelex = pl (0,0)
     where
@@ -25,8 +36,20 @@ lexit = many . (foldr op failure)
 lexer :: Parser (Pos Char) [Pos Token]
 lexer = lexit [(some (any' literal " \t\n"), Junk),
                 (string "let", Symbol),
+                (string "in", Symbol),
                 (string "case", Symbol),
+                (string "of", Symbol),
+                (string "FUN", Symbol),
+                (string "PAP", Symbol),
+                (string "CON", Symbol),
+                (string "THUNK", Symbol),
+                (string "BLACKHOLE", Symbol),
+                ( any' string ["(",")","=","{","}",";"], Symbol),
+                ( any' string ["+#","-#","*#","/#"], Symbol),
                 (word, Ident),
-                (number, Number),
-                ( any' string ["(",")","="], Symbol)]
+                (number, Number)]
+-- 4.4 Scanning
+
+strip :: [Pos Token] -> [Pos Token]
+strip = filter ((/=Junk).fst.fst)
 
