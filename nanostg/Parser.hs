@@ -1,114 +1,87 @@
-module Parser
-( Parser
-, Pos
-, succeed
-, failure
-, literal
-, alt
-, then'
-, using
-, many
-, some
-, number
-, word
-, string
-, char
-, uchar
-, xthen
-, thenx
-, any'
-, satisfy
-, offside
-) where
+-- stg like parser
+
+import Parsing
+import Lexer
+
+-- Syntax from "Making a Fast Curry..." by Simon Marlow and Simon Peyton Jones
+-- pg 4
+
+type Variable = String
+
+type Constructor = String
+
+-- Skip floating point for now
+data Literal = Int Int deriving (Show)
+
+-- Literal or Varaible
+data Atom = Literal Literal | Variable Variable deriving (Show)
+
+-- Deal with possible unknown arity
+type FunctionArity = Maybe Int
+
+data Expression = Atom Atom
+                | FunctionCall Variable FunctionArity [Atom]
+                | SatPrimCall Primitive [Atom] 
+                | Let Variable Object Expression
+                | Case Expression [Alternative]
+                deriving (Show)
+               
+data Alternative = Alt Constructor [Variable] Expression
+                 | DefaultAlt Variable Expression
+                 deriving (Show)
+                 
+data Object = FUN [Variable] Expression
+            | PAP Variable [Atom]
+            | CON Constructor [Atom]
+            | THUNK Expression
+            | BLACKHOLE
+            deriving (Show)
+
+data Declaration = Declaration Variable Object deriving (Show)
+
+data Program = Program [Declaration] deriving (Show)
+
+data Primitive = Add | Sub | Mul | Div deriving (Show)
+
+sym :: [Char] -> Parser (Pos Token) [Char]
+sym xs = literal (Symbol,xs) `using` snd
+
+obj :: [Char] -> Parser (Pos Token) [Char]
+obj xs = literal (Obj,xs) `using` snd
+
+kind :: Tag -> Parser (Pos Token) [Char]
+kind t = (satisfy ((==t).fst)) `using` snd
 
 
--- From "Higher-Order Functions for Parsing" Graham Hutton 
--- Section 4 Miranda like parser
+atom :: Parser (Pos Token) Atom
+atom = (kind Number `using` numFN) `alt`
+       (kind Ident `using` Variable)
+ 
+numFN :: String -> Atom
+numFN xs = Literal (Int (read xs :: Int))
 
-import Data.Char
+constructor :: Parser (Pos Token) Constructor
+constructor = kind Construct --`using` conFn
 
--- 2 Parsing Using Combinators
+conFn :: String -> Constructor
+conFn xs = xs
 
-type Parser b a = [b] -> [(a,[b])]
+{-
+expression :: Parser (Pos Token) Expression
+expression =
 
--- 2.1 Primitive parsers
 
-succeed :: a -> Parser b a
-succeed v inp = [(v,inp)]
 
-failure :: Parser b a
-failure inp = []
+functionCall :: Parser (Pos Token) Expression
+functionCall =  
 
-literal :: Eq b => b -> Parser (Pos b) b
-literal x = satisfy (==x)
+-- only doing "CON" case for now
+object :: Parser (Pos Token) Object
+object = (obj "CON" `xthen` constructor `then'` many atom) `using` objFN 
 
--- 2.2  Combinators
+declaration :: Parser (Pos Token) Declaration
+declaration = (kind Ident `thenx` sym "=" `then'` object) 
+                `using` declFN
 
-alt :: Parser b a -> Parser b a -> Parser b a
-(p1 `alt` p2) inp = p1 inp ++ p2 inp
 
--- then
-then' :: Parser b a -> Parser b c -> Parser b (a,c)
-(p1 `then'` p2) inp = [((v1,v2),out2) | (v1,out1) <- p1 inp, (v2,out2) <- p2 out1]
-
--- 2.3 Manipulating values
-
-using :: Parser b a -> (a -> c) -> Parser b c
-(p `using` f) inp = [(f v,out) | (v,out) <- p inp]
-
-cons :: (a, [a]) -> [a]
-cons (x,xs) = x:xs
-
-many :: Parser b a -> Parser b [a]
-many p = ((p `then'` many p) `using` cons ) `alt` (succeed [])
-
-some :: Parser b a -> Parser b [a]
-some p = (p `then'` many p) `using` cons
-
-one :: Parser b a -> Parser b [a]
-one p = (p `then'` succeed []) `using` cons
-
-number :: Parser (Pos Char) [Char]
-number = some (satisfy isDigit)
-
-word :: Parser (Pos Char) [Char]
-word = some (satisfy isAlpha)
-
-string :: Eq b => [b] -> Parser (Pos b) [b]
-string [] = succeed []
-string (x:xs) = (literal x `then'` string xs) `using` cons
-
-char :: Parser (Pos Char) [Char]
-char = one (satisfy isAlpha)
-
-uchar :: Parser (Pos Char) [Char]
-uchar = one (satisfy isUpper)
-
-xthen :: Parser b a -> Parser b c -> Parser b c
-p1 `xthen` p2 = (p1 `then'` p2) `using` snd
-
-thenx :: Parser b a -> Parser b c -> Parser b a
-p1 `thenx` p2 = (p1 `then'` p2) `using` fst
-
--- 3.1 Free-format input
-any' :: (b -> Parser a c) -> [b] -> Parser a c
-any' p = foldr (alt . p) failure
-
--- 3.3 The offside combinator
-
-type Pos b = (b, (Int,Int))
-
-satisfy :: (b->Bool) -> Parser (Pos b) b
-satisfy p [] = failure []
-satisfy p (x:xs)
-        | p a = succeed a xs
-        | otherwise = failure xs
-          where (a,(r,c)) = x
-
-offside :: Parser (Pos b) a -> Parser (Pos b) a
-offside p inp = [(v,inpOFF) | (v,[]) <- p inpON]
-        where
-                inpON = takeWhile (onside (head inp)) inp
-                inpOFF = drop (length inpON) inp
-                onside (a,(r,c)) (b,(r',c')) = r'>=r && c'>=c
-
+-}

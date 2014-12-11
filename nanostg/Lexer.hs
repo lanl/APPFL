@@ -7,7 +7,7 @@ module Lexer
 ) where
 
 
-import Parser 
+import Parsing
 
 prelex :: [Char] -> [Pos Char]
 prelex = pl (0,0)
@@ -21,7 +21,8 @@ prelex = pl (0,0)
 
 -- 4.3 Lexical analysis
 
-data Tag = Ident | Number | Symbol | Constructor | Junk deriving (Eq,Show)
+data Tag = Ident | Number | Symbol | 
+           Construct | Obj | Junk deriving (Eq,Show)
 
 type Token = (Tag,[Char])
 
@@ -39,14 +40,14 @@ lexer = lexit [(some (any' literal " \t\n"), Junk),
                 (string "in", Symbol),
                 (string "case", Symbol),
                 (string "of", Symbol),
-                (string "FUN", Symbol),
-                (string "PAP", Symbol),
-                (string "CON", Symbol),
-                (string "THUNK", Symbol),
-                (string "BLACKHOLE", Symbol),
+                (string "FUN", Obj),
+                (string "PAP", Obj),
+                (string "CON", Obj),
+                (string "THUNK", Obj),
+                (string "BLACKHOLE", Obj),
                 ( any' string ["(",")","=","{","}",";"], Symbol),
                 ( any' string ["+#","-#","*#","/#"], Symbol),
-                (uchar, Constructor),
+                (uchar, Construct),
                 (word, Ident),
                 (number, Number)]
 -- 4.4 Scanning
