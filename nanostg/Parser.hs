@@ -12,6 +12,8 @@ module Parser
 , number
 , word
 , string
+, char
+, uchar
 , xthen
 , thenx
 , any'
@@ -63,6 +65,9 @@ many p = ((p `then'` many p) `using` cons ) `alt` (succeed [])
 some :: Parser b a -> Parser b [a]
 some p = (p `then'` many p) `using` cons
 
+one :: Parser b a -> Parser b [a]
+one p = (p `then'` succeed []) `using` cons
+
 number :: Parser (Pos Char) [Char]
 number = some (satisfy isDigit)
 
@@ -72,6 +77,14 @@ word = some (satisfy isAlpha)
 string :: Eq b => [b] -> Parser (Pos b) [b]
 string [] = succeed []
 string (x:xs) = (literal x `then'` string xs) `using` cons
+
+char :: Parser (Pos Char) [Char]
+--char = satisfy (\xs -> isUpper(head xs))
+char = one (satisfy isAlpha)
+
+uchar :: Parser (Pos Char) [Char]
+--uchar = satisfy (\xs -> length xs == 1 && isUpper(head xs))
+uchar = one (satisfy isUpper)
 
 xthen :: Parser b a -> Parser b c -> Parser b c
 p1 `xthen` p2 = (p1 `then'` p2) `using` snd
