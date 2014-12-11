@@ -46,7 +46,7 @@ lexer = lexit [(some (any' literal " \t\n"), Junk),
                 (string "BLACKHOLE", Symbol),
                 ( any' string ["(",")","=","{","}",";"], Symbol),
                 ( any' string ["+#","-#","*#","/#"], Symbol),
-                --(uchar, Constructor),
+                (uchar, Constructor),
                 (word, Ident),
                 (number, Number)]
 -- 4.4 Scanning

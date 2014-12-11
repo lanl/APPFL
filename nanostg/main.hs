@@ -1,3 +1,5 @@
 import Lexer
 
-test = strip.fst.head.lexer.prelex
+teststring = "one = CON(I 1);"
+
+testlex = strip.fst.head.lexer.prelex

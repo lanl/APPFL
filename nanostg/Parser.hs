@@ -79,11 +79,9 @@ string [] = succeed []
 string (x:xs) = (literal x `then'` string xs) `using` cons
 
 char :: Parser (Pos Char) [Char]
---char = satisfy (\xs -> isUpper(head xs))
 char = one (satisfy isAlpha)
 
 uchar :: Parser (Pos Char) [Char]
---uchar = satisfy (\xs -> length xs == 1 && isUpper(head xs))
 uchar = one (satisfy isUpper)
 
 xthen :: Parser b a -> Parser b c -> Parser b c
