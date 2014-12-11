@@ -1,3 +1,7 @@
+module Parser
+( declaration -- for testing
+) where
+
 -- stg like parser
 
 import Parsing
@@ -60,10 +64,13 @@ atom = (kind Number `using` numFN) `alt`
 numFN :: String -> Atom
 numFN xs = Literal (Int (read xs :: Int))
 
-
--- only doing "CON" case for now
+-- only doing "CON"/"PAP" cases for now
 object :: Parser (Pos Token) Object
-object = (obj "CON" `xthen` kind Construct `then'` many atom) `using` conFN 
+object = ((obj "PAP" `xthen` sym "(" `xthen` kind Ident 
+            `then'` many atom `thenx` sym ")") `using` papFN) 
+         `alt`
+         ((obj "CON" `xthen` sym "(" `xthen` kind Construct 
+            `then'` many atom `thenx` sym ")") `using` conFN) 
 
 funFN :: ([Variable], Expression) -> Object
 funFN (vs, e) = FUN vs e
@@ -85,9 +92,6 @@ declFN (v,o) = Declaration v o
 expression :: Parser (Pos Token) Expression
 expression =
 
-
-
 functionCall :: Parser (Pos Token) Expression
 functionCall =  
-
 -}
