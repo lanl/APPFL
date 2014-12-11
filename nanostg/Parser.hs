@@ -60,11 +60,26 @@ atom = (kind Number `using` numFN) `alt`
 numFN :: String -> Atom
 numFN xs = Literal (Int (read xs :: Int))
 
-constructor :: Parser (Pos Token) Constructor
-constructor = kind Construct --`using` conFn
 
-conFn :: String -> Constructor
-conFn xs = xs
+-- only doing "CON" case for now
+object :: Parser (Pos Token) Object
+object = (obj "CON" `xthen` kind Construct `then'` many atom) `using` conFN 
+
+funFN :: ([Variable], Expression) -> Object
+funFN (vs, e) = FUN vs e
+
+papFN :: (Variable, [Atom]) -> Object
+papFN (v, as) = PAP v as
+
+conFN :: (Constructor, [Atom]) -> Object
+conFN (c,as) = CON c as 
+
+declaration :: Parser (Pos Token) Declaration
+declaration = (kind Ident `thenx` sym "=" `then'` object) 
+                `using` declFN
+
+declFN :: (Variable, Object) -> Declaration
+declFN (v,o) = Declaration v o
 
 {-
 expression :: Parser (Pos Token) Expression
@@ -74,14 +89,5 @@ expression =
 
 functionCall :: Parser (Pos Token) Expression
 functionCall =  
-
--- only doing "CON" case for now
-object :: Parser (Pos Token) Object
-object = (obj "CON" `xthen` constructor `then'` many atom) `using` objFN 
-
-declaration :: Parser (Pos Token) Declaration
-declaration = (kind Ident `thenx` sym "=" `then'` object) 
-                `using` declFN
-
 
 -}
