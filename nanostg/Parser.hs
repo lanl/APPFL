@@ -74,7 +74,7 @@ object = ((obj "PAP" `xthen` sym "(" `xthen` kind Ident
          ((obj "CON" `xthen` sym "(" `xthen` kind Construct 
             `then'` many atom `thenx` sym ")") `using` conFN) 
          `alt`
-         ((obj "ERROR") `using` errorFN)
+         ((obj "ERROR") `using` (\_ -> ERROR))
 
 funFN :: ([Variable], Expression) -> Object
 funFN (vs, e) = FUN vs e
@@ -84,9 +84,6 @@ papFN (v, as) = PAP v as
 
 conFN :: (Constructor, [Atom]) -> Object
 conFN (c,as) = CON c as 
-
-errorFN a -> Object
-errorFN _ = ERROR
 
 declaration :: Parser (Pos Token) Declaration
 declaration = (kind Ident `thenx` sym "=" `then'` object `thenx` sym ";") 

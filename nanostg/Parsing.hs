@@ -12,6 +12,7 @@ module Parsing
 , number
 , word
 , string
+, ufstring
 , char
 , uchar
 , xthen
@@ -83,6 +84,13 @@ char = one (satisfy isAlpha)
 
 uchar :: Parser (Pos Char) [Char]
 uchar = one (satisfy isUpper)
+
+-- first char is Upper rest alpha
+ufstring :: Parser (Pos Char) [Char]
+ufstring = (one (satisfy isUpper) `then'` many (satisfy isAlpha)) `using` ufstringFN
+
+ufstringFN :: ([a], [a]) -> [a]
+ufstringFN (xs,ys) = xs ++ ys
 
 xthen :: Parser b a -> Parser b c -> Parser b c
 p1 `xthen` p2 = (p1 `then'` p2) `using` snd

@@ -48,7 +48,7 @@ lexer = lexit [(some (any' literal " \t\n"), Junk),
                 (string "ERROR", Obj),
                 ( any' string ["(",")","=","{","}",";"], Symbol),
                 ( any' string ["+#","-#","*#","/#"], Symbol),
-                (uchar, Construct),
+                (ufstring, Construct),
                 (word, Ident),
                 (number, Number)]
 -- 4.4 Scanning
