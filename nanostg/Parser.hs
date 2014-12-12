@@ -1,5 +1,6 @@
 module Parser
-( declaration -- for testing
+( program
+, declaration -- for testing
 ) where
 
 -- stg like parser
@@ -67,7 +68,7 @@ numFN xs = Literal (Int (read xs :: Int))
 -- only doing "CON"/"PAP" cases for now
 object :: Parser (Pos Token) Object
 object = ((obj "PAP" `xthen` sym "(" `xthen` kind Ident 
-            `then'` many atom `thenx` sym ")") `using` papFN) 
+            `then'` some atom `thenx` sym ")") `using` papFN) 
          `alt`
          ((obj "CON" `xthen` sym "(" `xthen` kind Construct 
             `then'` many atom `thenx` sym ")") `using` conFN) 
@@ -82,11 +83,14 @@ conFN :: (Constructor, [Atom]) -> Object
 conFN (c,as) = CON c as 
 
 declaration :: Parser (Pos Token) Declaration
-declaration = (kind Ident `thenx` sym "=" `then'` object) 
+declaration = (kind Ident `thenx` sym "=" `then'` object `thenx` sym ";") 
                 `using` declFN
 
 declFN :: (Variable, Object) -> Declaration
 declFN (v,o) = Declaration v o
+
+program :: Parser (Pos Token) Program
+program = (some declaration) `using` Program
 
 {-
 expression :: Parser (Pos Token) Expression
