@@ -58,13 +58,16 @@ obj xs = literal (Obj,xs) `using` snd
 kind :: Tag -> Parser (Pos Token) [Char]
 kind t = (satisfy ((==t).fst)) `using` snd
 
-
 atom :: Parser (Pos Token) Atom
 atom = (kind Number `using` numFN) `alt`
        (kind Ident `using` Variable)
  
 numFN :: String -> Atom
 numFN xs = Literal (Int (read xs :: Int))
+
+-- only doing atom
+expression :: Parser (Pos Token) Expression
+expression = atom `using` Atom
 
 -- only doing "CON"/"PAP"/"ERROR" cases for now
 object :: Parser (Pos Token) Object
@@ -73,6 +76,10 @@ object = ((obj "PAP" `xthen` sym "(" `xthen` kind Ident
          `alt`
          ((obj "CON" `xthen` sym "(" `xthen` kind Construct 
             `then'` many atom `thenx` sym ")") `using` conFN) 
+         `alt`
+         ((obj "FUN" `xthen` sym "(" `xthen` some (kind Ident) 
+            `thenx` sym "->" `then'` expression `thenx` sym ")") 
+            `using` funFN)
          `alt`
          ((obj "ERROR") `using` (\_ -> ERROR))
 
@@ -96,8 +103,6 @@ program :: Parser (Pos Token) Program
 program = (some declaration) `using` Program
 
 {-
-expression :: Parser (Pos Token) Expression
-expression =
 
 functionCall :: Parser (Pos Token) Expression
 functionCall =  

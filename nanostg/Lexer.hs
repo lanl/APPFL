@@ -47,7 +47,7 @@ lexer = lexit [(some (any' literal " \t\n"), Junk),
                 (string "BLACKHOLE", Obj),
                 (string "ERROR", Obj),
                 ( any' string ["(",")","=","{","}",";"], Symbol),
-                ( any' string ["+#","-#","*#","/#"], Symbol),
+                ( any' string ["->", "+#","-#","*#","/#"], Symbol),
                 (ufstring, Construct),
                 (word, Ident),
                 (number, Number)]
