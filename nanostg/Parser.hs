@@ -40,6 +40,7 @@ data Object = FUN [Variable] Expression
             | CON Constructor [Atom]
             | THUNK Expression
             | BLACKHOLE
+            | ERROR
             deriving (Show)
 
 data Declaration = Declaration Variable Object deriving (Show)
@@ -65,13 +66,15 @@ atom = (kind Number `using` numFN) `alt`
 numFN :: String -> Atom
 numFN xs = Literal (Int (read xs :: Int))
 
--- only doing "CON"/"PAP" cases for now
+-- only doing "CON"/"PAP"/"ERROR" cases for now
 object :: Parser (Pos Token) Object
 object = ((obj "PAP" `xthen` sym "(" `xthen` kind Ident 
             `then'` some atom `thenx` sym ")") `using` papFN) 
          `alt`
          ((obj "CON" `xthen` sym "(" `xthen` kind Construct 
             `then'` many atom `thenx` sym ")") `using` conFN) 
+         `alt`
+         ((obj "ERROR") `using` errorFN)
 
 funFN :: ([Variable], Expression) -> Object
 funFN (vs, e) = FUN vs e
@@ -81,6 +84,9 @@ papFN (v, as) = PAP v as
 
 conFN :: (Constructor, [Atom]) -> Object
 conFN (c,as) = CON c as 
+
+errorFN a -> Object
+errorFN _ = ERROR
 
 declaration :: Parser (Pos Token) Declaration
 declaration = (kind Ident `thenx` sym "=" `then'` object `thenx` sym ";") 
