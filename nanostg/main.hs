@@ -13,6 +13,9 @@ fun2 = "apply = FUN(f x -> f x);"
 
 let1 = "let { result = CON (I x) } in result"
 
+case1 = "case list of {Nil -> nil}"
+case2 = "case list of {foo -> nil}"
+
 testlex = strip.fst.head.lexer.prelex
 
 testparse = fst.head.program.strip.fst.head.lexer.prelex

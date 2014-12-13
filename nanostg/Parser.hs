@@ -66,7 +66,6 @@ atom = (kind Number `using` numFN) `alt`
 numFN :: String -> Atom
 numFN xs = Literal (Int (read xs :: Int))
 
--- only doing atom, functioncall, primcall
 expression :: Parser (Pos Token) Expression
 expression = ((kind Ident `then'` some atom) `using` funcallFN)
              `alt`
@@ -75,6 +74,10 @@ expression = ((kind Ident `then'` some atom) `using` funcallFN)
              ((sym "let" `xthen` sym "{" `xthen` kind Ident `thenx` 
              sym "=" `then'` object `thenx` sym "}" `thenx` sym "in" 
              `then'` expression) `using` letFN)
+             `alt`
+             ((sym "case" `xthen` expression `thenx` sym "of" `thenx`
+             sym "{" `then'` alternative `then'` many semialternative 
+             `thenx` sym "}" ) `using` caseFN)
              `alt`
              (atom `using` Atom) 
              -- want atom last otherwise funccall could get parsed as atom 
@@ -93,7 +96,31 @@ primcallFN (p,as) | p == "plus#" = SatPrimCall Add as
 letFN :: ((Variable, Object), Expression) -> Expression
 letFN ((v,o),e) = Let v o e
 
--- only doing "CON"/"PAP"/"ERROR" cases for now
+caseFN :: ((Expression, Alternative), [Alternative]) -> Expression
+caseFN ((e,a),as) = Case e (a:as) 
+
+alternative :: Parser (Pos Token) Alternative
+alternative = ((kind Ident `thenx` sym "->" `then'` expression)
+              `using` defAltFN)
+              `alt`
+              ((kind Construct `then'` many (kind Ident) `thenx`
+              sym "->" `then'` expression) `using` altFN )
+ 
+semialternative :: Parser (Pos Token) Alternative
+semialternative = ((kind Ident `thenx` sym "->" `then'` expression
+                  `thenx` sym ";") `using` defAltFN)
+                  `alt`
+                  ((kind Construct `then'` many (kind Ident) `thenx`
+                  sym "->" `then'` expression `thenx` sym ";")
+                  `using` altFN)
+
+altFN :: ((Constructor, [Variable]), Expression) -> Alternative
+altFN ((c,vs),e) = Alt c vs e
+
+defAltFN :: (Variable, Expression) -> Alternative
+defAltFN (v,e) = DefaultAlt v e
+
+-- need to do THUNK
 object :: Parser (Pos Token) Object
 object = ((obj "PAP" `xthen` sym "(" `xthen` kind Ident 
             `then'` some atom `thenx` sym ")") `using` papFN) 
@@ -120,15 +147,15 @@ declaration :: Parser (Pos Token) Declaration
 declaration = (kind Ident `thenx` sym "=" `then'` object) 
                 `using` declFN
 
-semidecl :: Parser (Pos Token) Declaration
-semidecl = (sym ";" `xthen` kind Ident `thenx` sym "=" `then'` object) 
+semideclaration :: Parser (Pos Token) Declaration
+semideclaration = (sym ";" `xthen` kind Ident `thenx` sym "=" `then'` object) 
                 `using` declFN
 
 declFN :: (Variable, Object) -> Declaration
 declFN (v,o) = Declaration v o
 
 program :: Parser (Pos Token) Program
-program = (declaration `then'` many semidecl) `using` progFN
+program = (declaration `then'` many semideclaration) `using` progFN
 
 progFN :: (Declaration, [Declaration]) -> Program
 progFN (a,b) = Program (a:b)
