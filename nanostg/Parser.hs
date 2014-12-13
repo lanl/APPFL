@@ -72,6 +72,10 @@ expression = ((kind Ident `then'` some atom) `using` funcallFN)
              `alt`
              ((kind Prim `then'` some atom) `using` primcallFN)
              `alt` 
+             ((sym "let" `xthen` sym "{" `xthen` kind Ident `thenx` 
+             sym "=" `then'` object `thenx` sym "}" `thenx` sym "in" 
+             `then'` expression) `using` letFN)
+             `alt`
              (atom `using` Atom) 
              -- want atom last otherwise funccall could get parsed as atom 
 
@@ -85,6 +89,9 @@ primcallFN (p,as) | p == "plus#" = SatPrimCall Add as
                   | p == "sub#" = SatPrimCall Sub as
                   | p == "mult#" = SatPrimCall Mul as
                   | p == "eq#" = SatPrimCall Eq as
+
+letFN :: ((Variable, Object), Expression) -> Expression
+letFN ((v,o),e) = Let v o e
 
 -- only doing "CON"/"PAP"/"ERROR" cases for now
 object :: Parser (Pos Token) Object
