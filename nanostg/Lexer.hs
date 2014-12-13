@@ -21,8 +21,8 @@ prelex = pl (0,0)
 
 -- 4.3 Lexical analysis
 
-data Tag = Ident | Number | Symbol | 
-           Construct | Obj | Junk deriving (Eq,Show)
+data Tag = Ident | Number | Symbol | Junk | 
+           Construct | Obj | Prim deriving (Eq,Show)
 
 type Token = (Tag,[Char])
 
@@ -47,7 +47,8 @@ lexer = lexit [(some (any' literal " \t\n"), Junk),
                 (string "BLACKHOLE", Obj),
                 (string "ERROR", Obj),
                 ( any' string ["(",")","=","{","}",";"], Symbol),
-                ( any' string ["->", "+#","-#","*#","/#"], Symbol),
+                ( any' string ["->"], Symbol),
+                ( any' string ["plus#", "sub#", "mult#", "eq#"], Prim),
                 (ufstring, Construct),
                 (word, Ident),
                 (number, Number)]

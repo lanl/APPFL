@@ -17,3 +17,5 @@ testlex = strip.fst.head.lexer.prelex
 testparse = fst.head.program.strip.fst.head.lexer.prelex
 
 testdeclparse = fst.head.declaration.strip.fst.head.lexer.prelex
+
+testexprparse = fst.head.expression.strip.fst.head.lexer.prelex

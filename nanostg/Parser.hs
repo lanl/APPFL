@@ -1,6 +1,7 @@
 module Parser
 ( program
 , declaration -- for testing
+, expression -- for testing
 ) where
 
 -- stg like parser
@@ -47,7 +48,7 @@ data Declaration = Declaration Variable Object deriving (Show)
 
 data Program = Program [Declaration] deriving (Show)
 
-data Primitive = Add | Sub | Mul | Div deriving (Show)
+data Primitive = Add | Sub | Mul | Eq deriving (Show)
 
 sym :: [Char] -> Parser (Pos Token) [Char]
 sym xs = literal (Symbol,xs) `using` snd
@@ -65,15 +66,25 @@ atom = (kind Number `using` numFN) `alt`
 numFN :: String -> Atom
 numFN xs = Literal (Int (read xs :: Int))
 
--- only doing atom, functioncall
+-- only doing atom, functioncall, primcall
 expression :: Parser (Pos Token) Expression
-expression = (atom `using` Atom)
+expression = ((kind Ident `then'` some atom) `using` funcallFN)
              `alt`
-             ((kind Ident `then'` some atom) `using` funcallFN)
+             ((kind Prim `then'` some atom) `using` primcallFN)
+             `alt` 
+             (atom `using` Atom) 
+             -- want atom last otherwise funccall could get parsed as atom 
 
 -- not sure what to do w/ arity yet            
 funcallFN :: (Variable, [Atom]) -> Expression
 funcallFN (f,as) = FunctionCall f Nothing as
+
+-- only doing some primitives
+primcallFN :: (String, [Atom]) -> Expression
+primcallFN (p,as) | p == "plus#" = SatPrimCall Add as
+                  | p == "sub#" = SatPrimCall Sub as
+                  | p == "mult#" = SatPrimCall Mul as
+                  | p == "eq#" = SatPrimCall Eq as
 
 -- only doing "CON"/"PAP"/"ERROR" cases for now
 object :: Parser (Pos Token) Object
