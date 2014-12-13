@@ -65,9 +65,15 @@ atom = (kind Number `using` numFN) `alt`
 numFN :: String -> Atom
 numFN xs = Literal (Int (read xs :: Int))
 
--- only doing atom
+-- only doing atom, functioncall
 expression :: Parser (Pos Token) Expression
-expression = atom `using` Atom
+expression = (atom `using` Atom)
+             `alt`
+             ((kind Ident `then'` some atom) `using` funcallFN)
+
+-- not sure what to do w/ arity yet            
+funcallFN :: (Variable, [Atom]) -> Expression
+funcallFN (f,as) = FunctionCall f Nothing as
 
 -- only doing "CON"/"PAP"/"ERROR" cases for now
 object :: Parser (Pos Token) Object
@@ -102,8 +108,3 @@ declFN (v,o) = Declaration v o
 program :: Parser (Pos Token) Program
 program = (some declaration) `using` Program
 
-{-
-
-functionCall :: Parser (Pos Token) Expression
-functionCall =  
--}
