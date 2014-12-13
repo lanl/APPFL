@@ -110,12 +110,19 @@ conFN :: (Constructor, [Atom]) -> Object
 conFN (c,as) = CON c as 
 
 declaration :: Parser (Pos Token) Declaration
-declaration = (kind Ident `thenx` sym "=" `then'` object `thenx` sym ";") 
+declaration = (kind Ident `thenx` sym "=" `then'` object) 
+                `using` declFN
+
+semidecl :: Parser (Pos Token) Declaration
+semidecl = (sym ";" `xthen` kind Ident `thenx` sym "=" `then'` object) 
                 `using` declFN
 
 declFN :: (Variable, Object) -> Declaration
 declFN (v,o) = Declaration v o
 
 program :: Parser (Pos Token) Program
-program = (some declaration) `using` Program
+program = (declaration `then'` many semidecl) `using` progFN
+
+progFN :: (Declaration, [Declaration]) -> Program
+progFN (a,b) = Program (a:b)
 

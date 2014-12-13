@@ -11,6 +11,7 @@ prelude1 = "error = ERROR;\n unit = CON(Unit);\n true = CON(True);\n false = CON
 fun1 = "const = FUN(x y -> x);"
 fun2 = "apply = FUN(f x -> f x);"
 
+let1 = "let { result = CON (I x) } in result"
 
 testlex = strip.fst.head.lexer.prelex
 
