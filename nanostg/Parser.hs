@@ -107,11 +107,11 @@ alternative = ((kind Ident `thenx` sym "->" `then'` expression)
               sym "->" `then'` expression) `using` altFN )
  
 semialternative :: Parser (Pos Token) Alternative
-semialternative = ((kind Ident `thenx` sym "->" `then'` expression
-                  `thenx` sym ";") `using` defAltFN)
+semialternative = ((sym ";" `xthen` kind Ident `thenx` sym "->" 
+                  `then'` expression) `using` defAltFN)
                   `alt`
-                  ((kind Construct `then'` many (kind Ident) `thenx`
-                  sym "->" `then'` expression `thenx` sym ";")
+                  ((sym ";" `xthen` kind Construct `then'` many (kind Ident) 
+                  `thenx` sym "->" `then'` expression)
                   `using` altFN)
 
 altFN :: ((Constructor, [Variable]), Expression) -> Alternative
@@ -120,7 +120,6 @@ altFN ((c,vs),e) = Alt c vs e
 defAltFN :: (Variable, Expression) -> Alternative
 defAltFN (v,e) = DefaultAlt v e
 
--- need to do THUNK
 object :: Parser (Pos Token) Object
 object = ((obj "PAP" `xthen` sym "(" `xthen` kind Ident 
             `then'` some atom `thenx` sym ")") `using` papFN) 
@@ -131,6 +130,8 @@ object = ((obj "PAP" `xthen` sym "(" `xthen` kind Ident
          ((obj "FUN" `xthen` sym "(" `xthen` some (kind Ident) 
             `thenx` sym "->" `then'` expression `thenx` sym ")") 
             `using` funFN)
+         `alt`
+         ((obj "THUNK" `xthen` expression) `using` THUNK)
          `alt`
          ((obj "ERROR") `using` (\_ -> ERROR))
 
