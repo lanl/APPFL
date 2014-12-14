@@ -56,6 +56,9 @@ sym xs = literal (Symbol,xs) `using` snd
 obj :: [Char] -> Parser (Pos Token) [Char]
 obj xs = literal (Obj,xs) `using` snd
 
+key :: [Char] -> Parser (Pos Token) [Char]
+key xs = literal (Keyword,xs) `using` snd
+
 kind :: Tag -> Parser (Pos Token) [Char]
 kind t = (satisfy ((==t).fst)) `using` snd
 
@@ -71,11 +74,11 @@ expression = ((kind Ident `then'` some atom) `using` funcallFN)
              `alt`
              ((kind Prim `then'` some atom) `using` primcallFN)
              `alt` 
-             ((sym "let" `xthen` sym "{" `xthen` kind Ident `thenx` 
-             sym "=" `then'` object `thenx` sym "}" `thenx` sym "in" 
+             ((key "let" `xthen` sym "{" `xthen` kind Ident `thenx` 
+             sym "=" `then'` object `thenx` sym "}" `thenx` key "in" 
              `then'` expression) `using` letFN)
              `alt`
-             ((sym "case" `xthen` expression `thenx` sym "of" `thenx`
+             ((key "case" `xthen` expression `thenx` key "of" `thenx`
              sym "{" `then'` alternative `then'` many semialternative 
              `thenx` sym "}" ) `using` caseFN)
              `alt`

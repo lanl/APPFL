@@ -21,7 +21,7 @@ prelex = pl (0,0)
 
 -- 4.3 Lexical analysis
 
-data Tag = Ident | Number | Symbol | Junk | 
+data Tag = Ident | Number | Symbol | Junk | Keyword |
            Construct | Obj | Prim deriving (Eq,Show)
 
 type Token = (Tag,[Char])
@@ -36,10 +36,10 @@ lexit = many . (foldr op failure)
 
 lexer :: Parser (Pos Char) [Pos Token]
 lexer = lexit [(some (any' literal " \t\n"), Junk),
-                (string "let", Symbol),
-                (string "in", Symbol),
-                (string "case", Symbol),
-                (string "of", Symbol),
+                (string "let", Keyword),
+                (string "in", Keyword),
+                (string "case", Keyword),
+                (string "of", Keyword),
                 (string "FUN", Obj),
                 (string "PAP", Obj),
                 (string "CON", Obj),
@@ -52,6 +52,7 @@ lexer = lexit [(some (any' literal " \t\n"), Junk),
                 (ufstring, Construct),
                 (word, Ident),
                 (number, Number)]
+
 -- 4.4 Scanning
 
 strip :: [Pos Token] -> [Pos Token]
