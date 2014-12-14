@@ -79,8 +79,8 @@ expression = ((kind Ident `then'` some atom) `using` funcallFN)
              `then'` expression) `using` letFN)
              `alt`
              ((key "case" `xthen` expression `thenx` key "of" `thenx`
-             sym "{" `then'` alternative `then'` many semialternative 
-             `thenx` sym "}" ) `using` caseFN)
+             sym "{" `then'` alternative `then'` many (sym ";" `xthen`
+             alternative) `thenx` sym "}" ) `using` caseFN)
              `alt`
              (atom `using` Atom) 
              -- want atom last otherwise funccall could get parsed as atom 
@@ -109,14 +109,6 @@ alternative = ((kind Ident `thenx` sym "->" `then'` expression)
               ((kind Construct `then'` many (kind Ident) `thenx`
               sym "->" `then'` expression) `using` altFN )
  
-semialternative :: Parser (Pos Token) Alternative
-semialternative = ((sym ";" `xthen` kind Ident `thenx` sym "->" 
-                  `then'` expression) `using` defAltFN)
-                  `alt`
-                  ((sym ";" `xthen` kind Construct `then'` many (kind Ident) 
-                  `thenx` sym "->" `then'` expression)
-                  `using` altFN)
-
 altFN :: ((Constructor, [Variable]), Expression) -> Alternative
 altFN ((c,vs),e) = Alt c vs e
 
@@ -151,15 +143,11 @@ declaration :: Parser (Pos Token) Declaration
 declaration = (kind Ident `thenx` sym "=" `then'` object) 
                 `using` declFN
 
-semideclaration :: Parser (Pos Token) Declaration
-semideclaration = (sym ";" `xthen` kind Ident `thenx` sym "=" `then'` object) 
-                `using` declFN
-
 declFN :: (Variable, Object) -> Declaration
 declFN (v,o) = Declaration v o
 
 program :: Parser (Pos Token) Program
-program = (declaration `then'` many semideclaration) `using` progFN
+program = (declaration `then'` many (sym ";" `xthen` declaration)) `using` progFN
 
 progFN :: (Declaration, [Declaration]) -> Program
 progFN (a,b) = Program (a:b)
