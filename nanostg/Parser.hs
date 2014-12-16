@@ -2,6 +2,14 @@ module Parser
 ( program
 , declaration -- for testing
 , expression -- for testing
+, Literal(..)
+, Atom(..)
+, Expression(..)
+, Alternative(..)
+, Object(..)
+, Declaration(..)
+, Program(..)
+, Primitive(..)
 ) where
 
 -- stg like parser
