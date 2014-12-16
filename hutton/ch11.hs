@@ -35,4 +35,9 @@ isChoice ::  Eq a => [a] -> [a] ->Bool
 isChoice xs [] = False
 isChoice [] ys = True
 isChoice (x:xs) ys = if elem x ys then isChoice xs (removefirst x ys) else False
- 
+
+--Ex 4: see ch11-4.lhs
+
+--Ex 5: see ch11-5.lhs
+
+
