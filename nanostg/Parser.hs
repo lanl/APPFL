@@ -126,7 +126,8 @@ object = ((obj "PAP" `xthen` sym "(" `xthen` kind Ident
             `thenx` sym "->" `then'` expression `thenx` sym ")") 
             `using` funFN)
          `alt`
-         ((obj "THUNK" `xthen` expression) `using` THUNK)
+         ((obj "THUNK" `xthen` sym "(" `xthen` expression 
+         `thenx` sym ")") `using` THUNK)
          `alt`
          ((obj "ERROR") `using` (\_ -> ERROR))
 

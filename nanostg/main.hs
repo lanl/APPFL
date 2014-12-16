@@ -18,6 +18,9 @@ let1 = "let { result = CON (I x) } in result"
 case1 = "case list of {Nil -> nil}"
 case2 = "case list of {foo -> nil}"
 
+add1 = "main = THUNK(plus# 1 2);"
+add2 = "one = CON(I 1);\n two = CON(I 2);\n plusInt = FUN(x y ->\n case x of {\n I i -> case y of {\n I j -> case plus# i j of {\n x -> let { result = CON (I x) } in result }}});\n main = THUNK(plusInt one two);"
+
 testlex = strip.fst.head.lexer.prelex
 
 testparse = fst.head.program.strip.fst.head.lexer.prelex
