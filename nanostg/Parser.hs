@@ -2,6 +2,8 @@ module Parser
 ( program
 , declaration -- for testing
 , expression -- for testing
+, Variable
+, Constructor
 , Literal(..)
 , Atom(..)
 , Expression(..)
