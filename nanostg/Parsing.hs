@@ -11,8 +11,9 @@ module Parsing
 , some
 , number
 , word
+, varname
 , string
-, ufstring
+, conname
 , char
 , uchar
 , xthen
@@ -60,6 +61,9 @@ using :: Parser b a -> (a -> c) -> Parser b c
 cons :: (a, [a]) -> [a]
 cons (x,xs) = x:xs
 
+append :: ([a], [a]) -> [a]
+append (xs,ys) = xs ++ ys
+
 many :: Parser b a -> Parser b [a]
 many p = ((p `then'` many p) `using` cons ) `alt` (succeed [])
 
@@ -75,6 +79,16 @@ number = some (satisfy isDigit)
 word :: Parser (Pos Char) [Char]
 word = some (satisfy isAlpha)
 
+-- first char is lower rest alphaNum
+varname :: Parser (Pos Char) [Char]
+varname = (one (satisfy isLower) `then'` many (satisfy isAlphaNum)) 
+          `using` append
+
+-- first char is upper rest alphaNum
+conname :: Parser (Pos Char) [Char]
+conname = (one (satisfy isUpper) `then'` many (satisfy isAlphaNum)) 
+          `using` append
+
 string :: Eq b => [b] -> Parser (Pos b) [b]
 string [] = succeed []
 string (x:xs) = (literal x `then'` string xs) `using` cons
@@ -84,13 +98,6 @@ char = one (satisfy isAlpha)
 
 uchar :: Parser (Pos Char) [Char]
 uchar = one (satisfy isUpper)
-
--- first char is Upper rest alpha
-ufstring :: Parser (Pos Char) [Char]
-ufstring = (one (satisfy isUpper) `then'` many (satisfy isAlpha)) `using` ufstringFN
-
-ufstringFN :: ([a], [a]) -> [a]
-ufstringFN (xs,ys) = xs ++ ys
 
 xthen :: Parser b a -> Parser b c -> Parser b c
 p1 `xthen` p2 = (p1 `then'` p2) `using` snd

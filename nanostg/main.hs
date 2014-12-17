@@ -21,6 +21,9 @@ case2 = "case list of {foo -> nil}"
 
 add1 = "main = THUNK(plus# 1 2);"
 add2 = "one = CON(I 1);\n two = CON(I 2);\n plusInt = FUN(x y ->\n case x of {\n I i -> case y of {\n I j -> case plus# i j of {\n x -> let { result = CON (I x) } in result }}});\n main = THUNK(plusInt one two);"
+add3 = "main = THUNK(case plus# 1 2 of {\n x -> let { result = CON(I x) } in result\n });"
+
+list = "nil = CON(Nil);\n zero = CON (I 0);\n one = CON(I 1);\n list1 = CON(Cons zero nil);\n main = CON(Cons one list1);"
 
 testlex = strip.fst.head.lexer.prelex
 

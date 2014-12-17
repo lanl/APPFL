@@ -26,9 +26,11 @@ evalProg (Program ds) s = concat [evalDecl d s | d <- ds]
 
 evalDecl :: Declaration -> State -> String
 evalDecl (Declaration "main" o) s = evalObj o s
+evalDecl (Declaration v o) s = error "TODO"
 
 evalObj :: Object -> State -> String
 evalObj (THUNK e) s = evalExpr e s
+evalObj (CON c as) s = error "TODO"
 
 evalExpr :: Expression -> State -> String
 evalExpr (Atom a) s = show (evalAtom a s)

@@ -49,8 +49,8 @@ lexer = lexit [(some (any' literal " \t\n"), Junk),
                 ( any' string ["(",")","=","{","}",";"], Symbol),
                 ( any' string ["->"], Symbol),
                 ( any' string ["plus#", "sub#", "mult#", "eq#"], Prim),
-                (ufstring, Construct),
-                (word, Ident),
+                (conname, Construct),
+                (varname, Ident),
                 (number, Number)]
 
 -- 4.4 Scanning
