@@ -31,7 +31,14 @@ evalObj :: Object -> State -> String
 evalObj (THUNK e) s = evalExpr e s
 
 evalExpr :: Expression -> State -> String
-evalExpr (SatPrimCall Add as) s = show (evalAtom (head as) s + evalAtom (last as) s) 
+evalExpr (Atom a) s = show (evalAtom a s)
+evalExpr (SatPrimCall p as) s = evalPrim p (evalAtom (head as) s) 
+                                (evalAtom (last as) s) 
+evalExpr (Let v o e) (h,fv) = evalExpr e (newh,fv)
+                              where newh = M.insert v o h
+
+evalPrim :: Primitive -> Int -> Int -> String
+evalPrim p x y | p == Add = show (x + y)
 
 evalAtom :: Atom -> State -> Int
 evalAtom (Literal x) _ = evalLiteral x

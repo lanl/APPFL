@@ -58,7 +58,7 @@ data Declaration = Declaration Variable Object deriving (Show)
 
 data Program = Program [Declaration] deriving (Show)
 
-data Primitive = Add | Sub | Mul | Eq deriving (Show)
+data Primitive = Add | Sub | Mul | Eq deriving (Eq,Show)
 
 sym :: [Char] -> Parser (Pos Token) [Char]
 sym xs = literal (Symbol,xs) `using` snd
