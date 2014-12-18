@@ -21,7 +21,7 @@ prelex = pl (0,0)
 
 -- 4.3 Lexical analysis
 
-data Tag = Ident | Number | Symbol | Junk | Keyword |
+data Tag = Ident | Integer | Floating | Symbol | Junk | Keyword |
            Construct | Obj | Prim deriving (Eq,Show)
 
 type Token = (Tag,[Char])
@@ -52,7 +52,8 @@ lexer = lexit [(some (any' literal " \t\n"), Junk),
                 ( any' string ["plus#", "sub#", "mult#", "eq#"], Prim),
                 (conname, Construct),
                 (varname, Ident),
-                (number, Number)]
+                (floating, Floating), -- want floating before integer
+                (number, Integer)]
 
 -- 4.4 Scanning
 

@@ -10,6 +10,7 @@ module Parsing
 , many
 , some
 , number
+, floating
 , word
 , varname
 , string
@@ -76,6 +77,19 @@ one p = (p `then'` succeed []) `using` cons
 
 number :: Parser (Pos Char) [Char]
 number = some (satisfy isDigit)
+
+-- does not deal with 1.2.3 
+floating :: Parser (Pos Char) [Char]
+floating = ((some (satisfy isDigit) `then'` some (satisfy isDigitOrDot))
+           `alt`
+           (one (satisfy (=='.')) `then'` some (satisfy isDigit)) 
+           `alt`
+           (some (satisfy isDigit) `then'` one (satisfy (=='.'))))
+           `using` append 
+
+isDigitOrDot :: Char -> Bool
+isDigitOrDot '.' = True
+isDigitOrDot c = isDigit c
 
 word :: Parser (Pos Char) [Char]
 word = some (satisfy isAlpha)

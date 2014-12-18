@@ -26,8 +26,7 @@ type Variable = String
 
 type Constructor = String
 
--- Skip floating point for now
-data Literal = Int Int deriving (Eq, Show)
+data Literal = Int Int | Double Double deriving (Eq, Show)
 
 -- Literal or Varaible
 data Atom = Literal Literal | Variable Variable deriving (Eq,Show)
@@ -73,11 +72,15 @@ kind :: Tag -> Parser (Pos Token) [Char]
 kind t = (satisfy ((==t).fst)) `using` snd
 
 atom :: Parser (Pos Token) Atom
-atom = (kind Number `using` numFN) `alt`
+atom = (kind Integer `using` intFN) `alt`
+       (kind Floating `using` doubleFN) `alt`
        (kind Ident `using` Variable)
  
-numFN :: String -> Atom
-numFN xs = Literal (Int (read xs :: Int))
+intFN :: String -> Atom
+intFN xs = Literal (Int (read xs :: Int))
+
+doubleFN :: String -> Atom
+doubleFN xs = Literal (Double (read xs :: Double))
 
 expression :: Parser (Pos Token) Expression
 expression = ((kind Ident `then'` some atom) `using` funcallFN)
