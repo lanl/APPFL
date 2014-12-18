@@ -14,6 +14,7 @@ module Parsing
 , varname
 , string
 , conname
+, comment
 , char
 , uchar
 , xthen
@@ -88,6 +89,11 @@ varname = (one (satisfy isLower) `then'` many (satisfy isAlphaNum))
 conname :: Parser (Pos Char) [Char]
 conname = (one (satisfy isUpper) `then'` many (satisfy isAlphaNum)) 
           `using` append
+
+-- start of comment really should be # in col 0 
+comment :: Parser (Pos Char) [Char]
+comment = (one (satisfy (=='!')) `thenx` many (satisfy (/='\n')) 
+          `then'` one (satisfy (=='\n'))) `using` append
 
 string :: Eq b => [b] -> Parser (Pos b) [b]
 string [] = succeed []

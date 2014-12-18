@@ -27,10 +27,10 @@ type Variable = String
 type Constructor = String
 
 -- Skip floating point for now
-data Literal = Int Int deriving (Show)
+data Literal = Int Int deriving (Eq, Show)
 
 -- Literal or Varaible
-data Atom = Literal Literal | Variable Variable deriving (Show)
+data Atom = Literal Literal | Variable Variable deriving (Eq,Show)
 
 -- Deal with possible unknown arity
 type FunctionArity = Maybe Int
@@ -40,11 +40,11 @@ data Expression = Atom Atom
                 | SatPrimCall Primitive [Atom] 
                 | Let Variable Object Expression
                 | Case Expression [Alternative]
-                deriving (Show)
+                deriving (Eq,Show)
                
 data Alternative = Alt Constructor [Variable] Expression
                  | DefaultAlt Variable Expression
-                 deriving (Show)
+                 deriving (Eq,Show)
                  
 data Object = FUN [Variable] Expression
             | PAP Variable [Atom]
@@ -52,7 +52,7 @@ data Object = FUN [Variable] Expression
             | THUNK Expression
             | BLACKHOLE
             | ERROR
-            deriving (Show)
+            deriving (Eq,Show)
 
 data Declaration = Declaration Variable Object deriving (Show)
 

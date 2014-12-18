@@ -36,6 +36,7 @@ lexit = many . (foldr op failure)
 
 lexer :: Parser (Pos Char) [Pos Token]
 lexer = lexit [(some (any' literal " \t\n"), Junk),
+                (comment, Junk),
                 (string "let", Keyword),
                 (string "in", Keyword),
                 (string "case", Keyword),

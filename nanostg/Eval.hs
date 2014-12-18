@@ -1,13 +1,17 @@
+-- This is more me trying to figure out what to do than anything useful...
+
 module Eval
 ( eval
 ) where
 
 import Data.Map as M hiding (map)
+import Data.Maybe
+import Data.List
 import Parser
 
 type Heap = M.Map Variable Object
-type FreeVars = [Variable]
-type State = (Heap, FreeVars)
+type Stack = [Variable]
+type State = (Heap, Stack)
 
 initState :: [Declaration] -> State
 initState ds = (initHeap(ds), [])
@@ -18,34 +22,40 @@ initHeap ds = M.fromList (map declFN ds)
 declFN :: Declaration -> (Variable, Object)
 declFN (Declaration v o) = (v,o)
 
+lookupHeap :: Variable -> Heap -> Object
+lookupHeap v h | lookup == Nothing = error "can't find var" 
+               | otherwise = fromJust lookup
+                where lookup = M.lookup v h
+
 eval :: Program -> String
 eval prog@(Program ds) = evalProg prog (initState ds)
 
 evalProg :: Program -> State -> String
-evalProg (Program ds) s = concat [evalDecl d s | d <- ds]
+evalProg (Program ds) s@(h,st) = evalObj (lookupHeap "main" h) s
 
+{- don't need
 evalDecl :: Declaration -> State -> String
-evalDecl (Declaration "main" o) s = evalObj o s
-evalDecl (Declaration v o) s = error "TODO"
+evalDecl (Declaration v o) (h,st) = evalObj o (newh,st) 
+                                  where newh = M.insert v o h
+-}
 
 evalObj :: Object -> State -> String
 evalObj (THUNK e) s = evalExpr e s
-evalObj (CON c as) s = error "TODO"
+evalObj (CON c as) s =  "(" ++ c ++ " " ++ intercalate " " [evalAtom a s | a <- as] ++ ")"
 
 evalExpr :: Expression -> State -> String
-evalExpr (Atom a) s = show (evalAtom a s)
-evalExpr (SatPrimCall p as) s = evalPrim p (evalAtom (head as) s) 
-                                (evalAtom (last as) s) 
-evalExpr (Let v o e) (h,fv) = evalExpr e (newh,fv)
+evalExpr (Atom a) s = evalAtom a s
+evalExpr (SatPrimCall p as) s = evalPrim p as s
+evalExpr (Let v o e) (h,st) = evalExpr e (newh,st)
                               where newh = M.insert v o h
 
-evalPrim :: Primitive -> Int -> Int -> String
-evalPrim p x y | p == Add = show (x + y)
+evalPrim :: Primitive -> [Atom] -> State -> String
+evalPrim p (x1:x2:xs) s | p == Add = show (read (evalAtom x1 s) + read (evalAtom x2 s))
 
-evalAtom :: Atom -> State -> Int
+evalAtom :: Atom -> State -> String
 evalAtom (Literal x) _ = evalLiteral x
-evalAtom (Variable x) s = error "TODO"
+evalAtom (Variable x) s@(h,st) = evalObj (lookupHeap x h) s
 
-evalLiteral :: Literal -> Int
-evalLiteral (Int x) = x
+evalLiteral :: Literal -> String
+evalLiteral (Int x) = show x
 
