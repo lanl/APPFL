@@ -10,17 +10,25 @@ import Data.List
 import Parser
 
 type Heap = M.Map Variable Object
-type Stack = [Variable]
-type State = (Heap, Stack)
+type State = (Heap, [Variable])
 
 initState :: [Declaration] -> State
-initState ds = (initHeap(ds), [])
+initState ds = (initHeap(ds), initFreeVars)
 
 initHeap :: [Declaration] -> Heap
 initHeap ds = M.fromList (map declFN ds)
 
 declFN :: Declaration -> (Variable, Object)
 declFN (Declaration v o) = (v,o)
+
+initFreeVars :: [Variable]
+initFreeVars = ['$':show i | i <- [0..]]
+
+spliter :: [a] -> [(a,a)]
+spliter(x:y:zs) = (x,y):spliter zs
+
+split :: [(a,a)] -> ([a],[a])
+split xs = (map fst xs, map snd xs) 
 
 lookupHeap :: Variable -> Heap -> Object
 lookupHeap v h | lookup == Nothing = error "can't find var" 
