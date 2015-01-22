@@ -1,3 +1,7 @@
+-- TODO: 
+-- letrec: turn into nested let?
+-- data types
+
 module Parser
 ( program
 , declaration -- for testing

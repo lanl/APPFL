@@ -1,5 +1,3 @@
--- This is more me trying to figure out what to do than anything useful...
-
 module Eval
 ( eval
 ) where
@@ -47,11 +45,18 @@ evalMain :: Object -> Heap -> FreshVars -> (String, Heap)
 evalMain (THUNK e) h fv = evalExpr e h fv
 evalMain o h fv = error "bad main"
 
+evalLiteral :: Literal -> String
+evalLiteral (Int x) = show x
+
+evalAtom:: Atom -> Heap -> FreshVars -> (String, Heap)
+evalAtom (Literal x) h fv = (evalLiteral x, h)
+evalAtom (Variable x) h fv = evalObj (lookupHeap x h) h fv
+
 evalExpr ::  Expression -> Heap -> FreshVars -> (String, Heap)
 evalExpr (Atom a) h fv = evalAtom a h fv
 evalExpr (FunctionCall f k as) h fv = evalFunctionCall f k as h fv
 evalExpr (SatPrimCall op as) h fv = evalSatPrimCall op as h fv
-evalExpr (Let v o e) h fv = error "Let not Done"
+evalExpr (Let v o e) h fv = evalLet v o e h fv
 evalExpr (Case e as) h fv = error "Case not Done"
 
 evalFunctionCall :: Variable -> FunctionArity -> [Atom] -> Heap -> FreshVars -> (String, Heap)
@@ -60,10 +65,25 @@ evalFunctionCall = error "functioncall not done"
 evalSatPrimCall :: Primitive -> [Atom] -> Heap -> FreshVars -> (String, Heap)
 evalSatPrimCall  = error "SatPrimCall not done"
 
-evalAtom:: Atom -> Heap -> FreshVars -> (String, Heap)
-evalAtom = error "atom not done"
+evalLet :: Variable -> Object -> Expression -> Heap -> FreshVars -> (String, Heap)
+-- make freshvar, replace var in expr, make heap object
+evalLet = error "Let not done" 
 
-{-
+evalCase :: Expression -> [Alternative] -> Heap -> FreshVars -> (String, Heap)
+evalCase  = error "Case not done" 
+
+evalObj :: Object -> Heap -> FreshVars -> (String, Heap)
+evalObj (FUN vs e) h fv = error "FUN Obj not done"
+evalObj (PAP v as) h fv = error "PAP Obj not done"
+evalObj (CON c as) h fv = evalCON c as h fv
+evalObj (THUNK e) h fv =  error "THUNK Obj not done" 
+
+-- simple CON evaluation as we don't have data types yet
+evalCON :: Constructor -> [Atom] -> Heap -> FreshVars -> (String, Heap)
+evalCON c as h fv = (con, h)
+                   where con = "(" ++ c ++ " " ++ intercalate " " [fst $ evalAtom a h fv | a <- as] ++ ")"
+
+{- old
 evalProg :: Program -> State -> String
 evalProg (Program ds) s@(h,st) = evalObj (lookupHeap "main" h) s
 
