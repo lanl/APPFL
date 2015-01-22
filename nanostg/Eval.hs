@@ -10,19 +10,25 @@ import Data.List
 import Parser
 
 type Heap = M.Map Variable Object
-type State = (Heap, [Variable])
+type FreshVars = [Variable]
 
-initState :: [Declaration] -> State
-initState ds = (initHeap(ds), initFreeVars)
-
+-- setup heap and add Decls to it
 initHeap :: [Declaration] -> Heap
 initHeap ds = M.fromList (map declFN ds)
 
 declFN :: Declaration -> (Variable, Object)
 declFN (Declaration v o) = (v,o)
 
-initFreeVars :: [Variable]
-initFreeVars = ['$':show i | i <- [0..]]
+lookupHeap :: Variable -> Heap -> Object
+lookupHeap v h | lookup == Nothing = error "can't find var" 
+               | otherwise = fromJust lookup
+                where lookup = M.lookup v h
+
+updateHeap :: Heap -> Variable -> Object -> Heap
+updateHeap h v o = M.insert v o h 
+
+initFreshVars :: FreshVars
+initFreshVars = ['$':show i | i <- [0..]]
 
 spliter :: [a] -> [(a,a)]
 spliter(x:y:zs) = (x,y):spliter zs
@@ -30,22 +36,22 @@ spliter(x:y:zs) = (x,y):spliter zs
 split :: [(a,a)] -> ([a],[a])
 split xs = (map fst xs, map snd xs) 
 
-lookupHeap :: Variable -> Heap -> Object
-lookupHeap v h | lookup == Nothing = error "can't find var" 
-               | otherwise = fromJust lookup
-                where lookup = M.lookup v h
-
 eval :: Program -> String
-eval prog@(Program ds) = evalProg prog (initState ds)
+eval prog@(Program ds) = fst $ evalProg prog (initHeap ds) initFreshVars
 
+evalProg :: Program -> Heap -> FreshVars -> (String, Heap)
+evalProg (Program ds) h fv = evalObj (lookupHeap "main" h) h fv
+
+evalObj :: Object -> Heap -> FreshVars -> (String, Heap)
+evalObj = error "not done"
+
+{-
 evalProg :: Program -> State -> String
 evalProg (Program ds) s@(h,st) = evalObj (lookupHeap "main" h) s
 
-{- don't need
 evalDecl :: Declaration -> State -> String
 evalDecl (Declaration v o) (h,st) = evalObj o (newh,st) 
                                   where newh = M.insert v o h
--}
 
 evalObj :: Object -> State -> String
 evalObj (THUNK e) s = evalExpr e s
@@ -66,4 +72,4 @@ evalAtom (Variable x) s@(h,st) = evalObj (lookupHeap x h) s
 
 evalLiteral :: Literal -> String
 evalLiteral (Int x) = show x
-
+-}
