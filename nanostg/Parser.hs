@@ -6,6 +6,7 @@ module Parser
 , Constructor
 , Literal(..)
 , Atom(..)
+, FunctionArity(..)
 , Expression(..)
 , Alternative(..)
 , Object(..)

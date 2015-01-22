@@ -40,10 +40,28 @@ eval :: Program -> String
 eval prog@(Program ds) = fst $ evalProg prog (initHeap ds) initFreshVars
 
 evalProg :: Program -> Heap -> FreshVars -> (String, Heap)
-evalProg (Program ds) h fv = evalObj (lookupHeap "main" h) h fv
+evalProg (Program ds) h fv = evalMain (lookupHeap "main" h) h fv
 
-evalObj :: Object -> Heap -> FreshVars -> (String, Heap)
-evalObj = error "not done"
+-- assume for now that main is a THUNK and evaluate it
+evalMain :: Object -> Heap -> FreshVars -> (String, Heap)
+evalMain (THUNK e) h fv = evalExpr e h fv
+evalMain o h fv = error "bad main"
+
+evalExpr ::  Expression -> Heap -> FreshVars -> (String, Heap)
+evalExpr (Atom a) h fv = evalAtom a h fv
+evalExpr (FunctionCall f k as) h fv = evalFunctionCall f k as h fv
+evalExpr (SatPrimCall op as) h fv = evalSatPrimCall op as h fv
+evalExpr (Let v o e) h fv = error "Let not Done"
+evalExpr (Case e as) h fv = error "Case not Done"
+
+evalFunctionCall :: Variable -> FunctionArity -> [Atom] -> Heap -> FreshVars -> (String, Heap)
+evalFunctionCall = error "functioncall not done"
+
+evalSatPrimCall :: Primitive -> [Atom] -> Heap -> FreshVars -> (String, Heap)
+evalSatPrimCall  = error "SatPrimCall not done"
+
+evalAtom:: Atom -> Heap -> FreshVars -> (String, Heap)
+evalAtom = error "atom not done"
 
 {-
 evalProg :: Program -> State -> String
