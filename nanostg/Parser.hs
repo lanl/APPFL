@@ -31,7 +31,7 @@ type Variable = String
 
 type Constructor = String
 
-data Literal = Int Int | Double Double deriving (Eq, Show)
+data Literal = Int Int | Double Double deriving (Eq, Show, Read)
 
 -- Literal or Varaible
 data Atom = Literal Literal | Variable Variable deriving (Eq,Show)
