@@ -58,7 +58,7 @@ evalExpr (Atom a) h fv = evalAtom a h fv
 evalExpr (FunctionCall f k as) h fv = evalFunctionCall f k as h fv
 evalExpr (SatPrimCall op as) h fv = evalSatPrimCall op as h fv
 evalExpr (Let v o e) h fv = evalLet v o e h fv
-evalExpr (Case e as) h fv = error "Case not Done"
+evalExpr (Case e as) h fv = evalCase e as h fv
 
 evalFunctionCall :: Variable -> FunctionArity -> [Atom] -> Heap -> FreshVars -> (String, Heap)
 evalFunctionCall = error "functioncall not done"
@@ -70,10 +70,21 @@ evalSatPrimCall p (a1:a2:as) h fv | p == Add = (show (read x1 + read x2), h)
 
 evalLet :: Variable -> Object -> Expression -> Heap -> FreshVars -> (String, Heap)
 -- todo: make freshvar, replace var in expr, make heap object
-evalLet v o e h fv = ("", updateHeap h v o)
+evalLet v o e h fv = (debug, h') 
+                     where h' = updateHeap h v o
+                           (s,h2) = evalObj o h' fv 
+                           debug = v ++ "=" ++ s 
 
 evalCase :: Expression -> [Alternative] -> Heap -> FreshVars -> (String, Heap)
-evalCase  = error "Case not done" 
+evalCase e (a:as) h fv = (s,he)
+                    where (value,he)  = evalExpr e h fv
+                          (s,ha) = evalAlternative a value he fv -- only doing first alt so far 
+                   
+
+evalAlternative :: Alternative -> String -> Heap -> FreshVars -> (String, Heap)
+evalAlternative (DefaultAlt n e) v h fv = error "no alt"
+                                        
+                           
 
 evalObj :: Object -> Heap -> FreshVars -> (String, Heap)
 evalObj (FUN vs e) h fv = error "FUN Obj not done"
@@ -86,31 +97,3 @@ evalCON :: Constructor -> [Atom] -> Heap -> FreshVars -> (String, Heap)
 evalCON c as h fv = (con, h)
                    where con = "(" ++ c ++ " " ++ intercalate " " [fst $ evalAtom a h fv | a <- as] ++ ")"
 
-{- old
-evalProg :: Program -> State -> String
-evalProg (Program ds) s@(h,st) = evalObj (lookupHeap "main" h) s
-
-evalDecl :: Declaration -> State -> String
-evalDecl (Declaration v o) (h,st) = evalObj o (newh,st) 
-                                  where newh = M.insert v o h
-
-evalObj :: Object -> State -> String
-evalObj (THUNK e) s = evalExpr e s
-evalObj (CON c as) s =  "(" ++ c ++ " " ++ intercalate " " [evalAtom a s | a <- as] ++ ")"
-
-evalExpr :: Expression -> State -> String
-evalExpr (Atom a) s = evalAtom a s
-evalExpr (SatPrimCall p as) s = evalPrim p as s
-evalExpr (Let v o e) (h,st) = evalExpr e (newh,st)
-                              where newh = M.insert v o h
-
-evalPrim :: Primitive -> [Atom] -> State -> String
-evalPrim p (x1:x2:xs) s | p == Add = show (read (evalAtom x1 s) + read (evalAtom x2 s))
-
-evalAtom :: Atom -> State -> String
-evalAtom (Literal x) _ = evalLiteral x
-evalAtom (Variable x) s@(h,st) = evalObj (lookupHeap x h) s
-
-evalLiteral :: Literal -> String
-evalLiteral (Int x) = show x
--}
