@@ -15,6 +15,7 @@ fun1 = "const = FUN(x y -> x);"
 fun2 = "apply = FUN(f x -> f x);"
 
 let1 = "let { result = CON (I x) } in result"
+let2 = "main = THUNK(let { result = CON (I x) } in result)"
 
 case1 = "case list of {Nil -> nil}"
 case2 = "case list of {foo -> nil}"

@@ -40,9 +40,10 @@ eval prog@(Program ds) = fst $ evalProg prog (initHeap ds) initFreshVars
 evalProg :: Program -> Heap -> FreshVars -> (String, Heap)
 evalProg (Program ds) h fv = evalMain (lookupHeap "main" h) h fv
 
--- assume for now that main is a THUNK and evaluate it
+-- assume for now that main is a THUNK or CON and evaluate it
 evalMain :: Object -> Heap -> FreshVars -> (String, Heap)
 evalMain (THUNK e) h fv = evalExpr e h fv
+evalMain (CON c as) h fv = evalCON c as h fv
 evalMain o h fv = error "bad main"
 
 evalLiteral :: Literal -> String
@@ -63,11 +64,13 @@ evalFunctionCall :: Variable -> FunctionArity -> [Atom] -> Heap -> FreshVars -> 
 evalFunctionCall = error "functioncall not done"
 
 evalSatPrimCall :: Primitive -> [Atom] -> Heap -> FreshVars -> (String, Heap)
-evalSatPrimCall  = error "SatPrimCall not done"
+evalSatPrimCall p (a1:a2:as) h fv | p == Add = (show (read x1 + read x2), h)
+                                          where (x1,h1) = evalAtom a1 h fv
+                                                (x2,h2) = evalAtom a2 h fv
 
 evalLet :: Variable -> Object -> Expression -> Heap -> FreshVars -> (String, Heap)
--- make freshvar, replace var in expr, make heap object
-evalLet = error "Let not done" 
+-- todo: make freshvar, replace var in expr, make heap object
+evalLet v o e h fv = ("", updateHeap h v o)
 
 evalCase :: Expression -> [Alternative] -> Heap -> FreshVars -> (String, Heap)
 evalCase  = error "Case not done" 
