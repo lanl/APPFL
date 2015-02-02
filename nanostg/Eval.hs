@@ -79,20 +79,22 @@ evalLet v o e h fv = (debug, h')
 
 evalCase :: Expression -> [Alternative] -> Heap -> FreshVars -> (Output, Heap)
 evalCase e (a:as) h fv = (s,he)
-                    where (v,he)  = evalExpr e h fv
-                          lookup = M.lookup v h 
-                          --v is a literal or a pointer (todo: heap from evalObj)
-                          value = if lookup == Nothing then v else fst $ evalObj (fromJust lookup) h fv
-                          lit = read value
-                          (s,ha) = evalAlternative a lit he fv -- only doing first alt so far 
+                         where (v,he)  = evalExpr e h fv
+                                -- v is a literal/pointer or constructor
+                               -- check if it is a pointer
+                               lookup = M.lookup v h 
+                               -- todo: deal w/ heap from evalObj
+                               value = if lookup == Nothing then v else fst $ evalObj (fromJust lookup) h fv
+                               str = read value
+                               (s,ha) = evalAlternative a str he fv -- only doing first alt so far
                    
 
-evalAlternative :: Alternative -> Literal -> Heap -> FreshVars -> (Output, Heap)
-evalAlternative (DefaultAlt v e) lit h fv = evalDefaultAlt v e lit h fv
-evalAlternative (Alt c vs e) lit h fv = error "no alt"
+evalAlternative :: Alternative -> String -> Heap -> FreshVars -> (Output, Heap)
+evalAlternative (DefaultAlt v e) s h fv = evalDefaultAlt v e s h fv
+evalAlternative (Alt c vs e) con h fv = error "no alt"
 
-evalDefaultAlt = error "no defalt" 
-                                        
+evalDefaultAlt v e s h fv = error "no def alt" 
+                           
 evalObj :: Object -> Heap -> FreshVars -> (Output, Heap)
 evalObj (FUN vs e) h fv = error "FUN Obj not done"
 evalObj (PAP v as) h fv = error "PAP Obj not done"
@@ -104,3 +106,18 @@ evalCON :: Constructor -> [Atom] -> Heap -> FreshVars -> (Output, Heap)
 evalCON c as h fv = (con, h)
                    where con = "(" ++ c ++ " " ++ intercalate " " [fst $ evalAtom a h fv | a <- as] ++ ")"
 
+-- replace a variable in a expression
+replace :: Variable -> Variable -> Expression -> Expression
+replace vin vout (Atom a) = Atom (replaceAtom vin vout a) 
+replace vin vout (Let v o e) = Let v' o' e' 
+                               where v' = if v == vin then vout else v 
+                                     o' = replaceObj vin vout o
+                                     e' = replace vin vout e 
+replace _ _ e = e
+
+replaceAtom:: Variable -> Variable -> Atom -> Atom
+replaceAtom vin vout (Variable x) | x == vin = Variable vout 
+replaceAtom _ _ a = a
+                                       
+replaceObj:: Variable -> Variable -> Object -> Object
+replaceObj vin vout (CON c as) = CON c [replaceAtom vin vout a | a <-as ]
