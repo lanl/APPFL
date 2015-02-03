@@ -9,6 +9,7 @@ import Parser
 
 type Heap = M.Map Variable Object
 type FreshVars = [Variable]
+type BoundVars = [Variable]
 type Output = String
 
 -- setup heap and add Decls to it
@@ -106,18 +107,41 @@ evalCON :: Constructor -> [Atom] -> Heap -> FreshVars -> (Output, Heap)
 evalCON c as h fv = (con, h)
                    where con = "(" ++ c ++ " " ++ intercalate " " [fst $ evalAtom a h fv | a <- as] ++ ")"
 
--- replace a variable in a expression
-replace :: Variable -> Variable -> Expression -> Expression
-replace vin vout (Atom a) = Atom (replaceAtom vin vout a) 
-replace vin vout (Let v o e) = Let v' o' e' 
-                               where v' = if v == vin then vout else v 
-                                     o' = replaceObj vin vout o
-                                     e' = replace vin vout e 
-replace _ _ e = e
+-- replace a non-bound variable in a expression
+replaceExpr :: Variable -> Variable -> BoundVars -> Expression -> (Expression, BoundVars)
+replaceExpr vin vout bvs (Atom a) = (Atom (replaceAtom vin vout bvs a), bvs)
+replaceExpr vin vout bvs (FunctionCall f k as) = (FunctionCall f k as', bvs)
+                                                 where as' = replaceAtoms vin vout bvs as
+replaceExpr vin vout bvs (SatPrimCall op as) = (SatPrimCall op as, bvs)
+                                               where as' = replaceAtoms vin vout bvs as
+replaceExpr vin vout bvs (Let v o e) = (Let v o' e', bvse ++ bvso) 
+                                       where bvs' = v:bvs
+                                             (o', bvso) = replaceObj vin vout bvs' o
+                                             (e', bvse) = replaceExpr vin vout bvs' e
+replaceExpr vin vout bvs (Case e alts) = (Case e' alts', bvso ++ bvsa)
+                                         where (e', bvso) = replaceExpr vin vout bvs e
+                                               (alts', bvsa) = replaceAlts vin vout bvs alts
 
-replaceAtom:: Variable -> Variable -> Atom -> Atom
-replaceAtom vin vout (Variable x) | x == vin = Variable vout 
-replaceAtom _ _ a = a
+replaceAtom :: Variable -> Variable -> BoundVars -> Atom -> Atom
+replaceAtom vin vout bvs (Variable x) | x == vin && (notElem vin bvs) = Variable vout 
+replaceAtom _ _ _ a = a
+
+replaceAtoms :: Variable -> Variable -> BoundVars -> [Atom] -> [Atom] 
+replaceAtoms vin vout bvs as = [replaceAtom vin vout bvs a | a <-as ]
+
+{-
+replaceAlt :: Variable -> Variable -> BoundVars -> Alternative -> (Alternative,BoundVars)
+replaceAlt vin vout bvs (DefaultAlt v e) = (DefaultAlt v e', bvs')
+                                           where (e',bvs') = replaceExpr
+replaceAlt vin vout bvs (Alt c vs e) = (Alt c vs e
+-}
+
+replaceAlts :: Variable -> Variable -> BoundVars -> [Alternative] -> ([Alternative],BoundVars)
+replaceAlts vin vout bvs alts = error "no replace Alts yet"
                                        
-replaceObj:: Variable -> Variable -> Object -> Object
-replaceObj vin vout (CON c as) = CON c [replaceAtom vin vout a | a <-as ]
+replaceObj:: Variable -> Variable -> BoundVars -> Object -> (Object, BoundVars)
+replaceObj vin vout bvs (FUN vs e) = error "no replace FUN yet"
+replaceObj vin vout bvs (PAP f as) = error "no replace PAP yet"
+replaceObj vin vout bvs (CON c as) = (CON c (replaceAtoms vin vout bvs as), bvs)
+replaceObj vin vout bvs (THUNK e) = error "no replace THUNK yet"
+
