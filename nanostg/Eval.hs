@@ -1,5 +1,6 @@
 module Eval
 ( eval
+, replaceExpr -- debug
 ) where
 
 import Data.Map as M hiding (map)
@@ -94,7 +95,8 @@ evalAlternative :: Alternative -> String -> Heap -> FreshVars -> (Output, Heap)
 evalAlternative (DefaultAlt v e) s h fv = evalDefaultAlt v e s h fv
 evalAlternative (Alt c vs e) con h fv = error "no alt"
 
-evalDefaultAlt v e s h fv = error "no def alt" 
+evalDefaultAlt :: Variable -> Expression -> String -> Heap -> FreshVars -> (Output, Heap)
+evalDefaultAlt v e s h fv = error "no default alt" 
                            
 evalObj :: Object -> Heap -> FreshVars -> (Output, Heap)
 evalObj (FUN vs e) h fv = error "FUN Obj not done"
@@ -129,15 +131,15 @@ replaceAtom _ _ _ a = a
 replaceAtoms :: Variable -> Variable -> BoundVars -> [Atom] -> [Atom] 
 replaceAtoms vin vout bvs as = [replaceAtom vin vout bvs a | a <-as ]
 
-{-
 replaceAlt :: Variable -> Variable -> BoundVars -> Alternative -> (Alternative,BoundVars)
 replaceAlt vin vout bvs (DefaultAlt v e) = (DefaultAlt v e', bvs')
-                                           where (e',bvs') = replaceExpr
-replaceAlt vin vout bvs (Alt c vs e) = (Alt c vs e
--}
+                                           where (e',bvs') = replaceExpr vin vout bvs e
+replaceAlt vin vout bvs (Alt c vs e) = error "no Alt yet"
 
+-- only doing first alt
 replaceAlts :: Variable -> Variable -> BoundVars -> [Alternative] -> ([Alternative],BoundVars)
-replaceAlts vin vout bvs alts = error "no replace Alts yet"
+replaceAlts vin vout bvs alts = ([alt],bvs')
+                               where (alt,bvs') = replaceAlt vin vout bvs (head alts)
                                        
 replaceObj:: Variable -> Variable -> BoundVars -> Object -> (Object, BoundVars)
 replaceObj vin vout bvs (FUN vs e) = error "no replace FUN yet"
