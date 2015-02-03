@@ -39,10 +39,12 @@ split :: [(a,a)] -> ([a],[a])
 split xs = (map fst xs, map snd xs) 
 
 eval :: Program -> Output
-eval prog@(Program ds) = fst $ evalProg prog (initHeap ds) initFreshVars
+eval prog@(Program ds) 
+    = fst $ evalProg prog (initHeap ds) initFreshVars
 
 evalProg :: Program -> Heap -> FreshVars -> (Output, Heap)
-evalProg (Program ds) h fv = evalMain (lookupHeap "main" h) h fv
+evalProg (Program ds) h fv 
+    = evalMain (lookupHeap "main" h) h fv
 
 -- assume for now that main is a THUNK or CON and evaluate it
 evalMain :: Object -> Heap -> FreshVars -> (Output, Heap)
@@ -59,8 +61,10 @@ evalAtom (Variable x) h fv = evalObj (lookupHeap x h) h fv
 
 evalExpr ::  Expression -> Heap -> FreshVars -> (Output, Heap)
 evalExpr (Atom a) h fv = evalAtom a h fv
-evalExpr (FunctionCall f k as) h fv = evalFunctionCall f k as h fv
-evalExpr (SatPrimCall op as) h fv = evalSatPrimCall op as h fv
+evalExpr (FunctionCall f k as) h fv 
+    = evalFunctionCall f k as h fv
+evalExpr (SatPrimCall op as) h fv 
+    = evalSatPrimCall op as h fv
 evalExpr (Let v o e) h fv = evalLet v o e h fv
 evalExpr (Case e as) h fv = evalCase e as h fv
 
@@ -68,27 +72,30 @@ evalFunctionCall :: Variable -> FunctionArity -> [Atom] -> Heap -> FreshVars -> 
 evalFunctionCall = error "functioncall not done"
 
 evalSatPrimCall :: Primitive -> [Atom] -> Heap -> FreshVars -> (Output, Heap)
-evalSatPrimCall p (a1:a2:as) h fv | p == Add = (show (read x1 + read x2), h)
-                                          where (x1,h1) = evalAtom a1 h fv
-                                                (x2,h2) = evalAtom a2 h fv
+evalSatPrimCall p (a1:a2:as) h fv 
+    | p == Add = (show (read x1 + read x2), h)
+               where (x1,h1) = evalAtom a1 h fv
+                     (x2,h2) = evalAtom a2 h fv
 
 evalLet :: Variable -> Object -> Expression -> Heap -> FreshVars -> (Output, Heap)
 -- todo: make freshvar, replace var in expr, make heap object
-evalLet v o e h fv = (debug, h') 
-                     where h' = updateHeap h v o
-                           (s,h2) = evalObj o h' fv 
-                           debug = v ++ "=" ++ s 
+evalLet v o e h fv 
+    = (debug, h') 
+    where h' = updateHeap h v o
+          (s,h2) = evalObj o h' fv 
+          debug = v ++ "=" ++ s 
 
 evalCase :: Expression -> [Alternative] -> Heap -> FreshVars -> (Output, Heap)
-evalCase e (a:as) h fv = (s,he)
-                         where (v,he)  = evalExpr e h fv
-                                -- v is a literal/pointer or constructor
-                               -- check if it is a pointer
-                               lookup = M.lookup v h 
-                               -- todo: deal w/ heap from evalObj
-                               value = if lookup == Nothing then v else fst $ evalObj (fromJust lookup) h fv
-                               str = read value
-                               (s,ha) = evalAlternative a str he fv -- only doing first alt so far
+evalCase e (a:as) h fv 
+    = (s,he)
+    where (v,he)  = evalExpr e h fv
+          -- v is a literal/pointer or constructor
+          -- check if it is a pointer
+          lookup = M.lookup v h 
+          -- todo: deal w/ heap from evalObj
+          value = if lookup == Nothing then v else fst $ evalObj (fromJust lookup) h fv
+          str = read value
+          (s,ha) = evalAlternative a str he fv -- only doing first alt so far
                    
 
 evalAlternative :: Alternative -> String -> Heap -> FreshVars -> (Output, Heap)
@@ -106,10 +113,14 @@ evalObj (THUNK e) h fv =  error "THUNK Obj not done"
 
 -- simple CON evaluation as we don't have data types yet
 evalCON :: Constructor -> [Atom] -> Heap -> FreshVars -> (Output, Heap)
-evalCON c as h fv = (con, h)
-                   where con = "(" ++ c ++ " " ++ intercalate " " [fst $ evalAtom a h fv | a <- as] ++ ")"
+evalCON c as h fv 
+    = (con, h)
+    where con = "(" ++ c ++ " " ++ intercalate " " [fst $ evalAtom a h fv | a <- as] ++ ")"
 
 -- replace a non-bound variable in a expression
+-- todo: should BoundVars be a map rather than a list? (to deal with dups)
+-- todo: should (Variable -> Atom) be a list of pairs so we could do
+-- multiple subs at once? or a map?? 
 replaceExpr :: Variable -> Atom -> BoundVars -> Expression -> (Expression, BoundVars)
 replaceExpr var atom bvs (Atom a) 
     = (Atom (replaceAtom var atom bvs a), bvs)
