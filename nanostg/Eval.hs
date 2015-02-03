@@ -1,6 +1,6 @@
 module Eval
 ( eval
-, replaceExpr -- debug
+, replaceAtom -- debug
 ) where
 
 import Data.Map as M hiding (map)
@@ -110,40 +110,66 @@ evalCON c as h fv = (con, h)
                    where con = "(" ++ c ++ " " ++ intercalate " " [fst $ evalAtom a h fv | a <- as] ++ ")"
 
 -- replace a non-bound variable in a expression
-replaceExpr :: Variable -> Variable -> BoundVars -> Expression -> (Expression, BoundVars)
-replaceExpr vin vout bvs (Atom a) = (Atom (replaceAtom vin vout bvs a), bvs)
-replaceExpr vin vout bvs (FunctionCall f k as) = (FunctionCall f k as', bvs)
-                                                 where as' = replaceAtoms vin vout bvs as
-replaceExpr vin vout bvs (SatPrimCall op as) = (SatPrimCall op as, bvs)
-                                               where as' = replaceAtoms vin vout bvs as
-replaceExpr vin vout bvs (Let v o e) = (Let v o' e', bvse ++ bvso) 
-                                       where bvs' = v:bvs
-                                             (o', bvso) = replaceObj vin vout bvs' o
-                                             (e', bvse) = replaceExpr vin vout bvs' e
-replaceExpr vin vout bvs (Case e alts) = (Case e' alts', bvso ++ bvsa)
-                                         where (e', bvso) = replaceExpr vin vout bvs e
-                                               (alts', bvsa) = replaceAlts vin vout bvs alts
+replaceExpr :: Variable -> Atom -> BoundVars -> Expression -> (Expression, BoundVars)
+replaceExpr var atom bvs (Atom a) 
+    = (Atom (replaceAtom var atom bvs a), bvs)
 
-replaceAtom :: Variable -> Variable -> BoundVars -> Atom -> Atom
-replaceAtom vin vout bvs (Variable x) | x == vin && (notElem vin bvs) = Variable vout 
-replaceAtom _ _ _ a = a
+replaceExpr var atom bvs (FunctionCall f k as) 
+    = (FunctionCall f k as', bvs)
+    where as' = replaceAtoms var atom bvs as 
 
-replaceAtoms :: Variable -> Variable -> BoundVars -> [Atom] -> [Atom] 
-replaceAtoms vin vout bvs as = [replaceAtom vin vout bvs a | a <-as ]
+replaceExpr var atom bvs (SatPrimCall op as) 
+    = (SatPrimCall op as, bvs)
+    where as' = replaceAtoms var atom bvs as
 
-replaceAlt :: Variable -> Variable -> BoundVars -> Alternative -> (Alternative,BoundVars)
-replaceAlt vin vout bvs (DefaultAlt v e) = (DefaultAlt v e', bvs')
-                                           where (e',bvs') = replaceExpr vin vout bvs e
-replaceAlt vin vout bvs (Alt c vs e) = error "no Alt yet"
+replaceExpr var atom bvs (Let v o e) 
+    = (Let v o' e', bvse ++ bvso) 
+    where bvs' = v:bvs
+          (o', bvso) = replaceObj var atom bvs' o
+          (e', bvse) = replaceExpr var atom bvs' e
 
--- only doing first alt
-replaceAlts :: Variable -> Variable -> BoundVars -> [Alternative] -> ([Alternative],BoundVars)
-replaceAlts vin vout bvs alts = ([alt],bvs')
-                               where (alt,bvs') = replaceAlt vin vout bvs (head alts)
-                                       
-replaceObj:: Variable -> Variable -> BoundVars -> Object -> (Object, BoundVars)
-replaceObj vin vout bvs (FUN vs e) = error "no replace FUN yet"
-replaceObj vin vout bvs (PAP f as) = error "no replace PAP yet"
-replaceObj vin vout bvs (CON c as) = (CON c (replaceAtoms vin vout bvs as), bvs)
-replaceObj vin vout bvs (THUNK e) = error "no replace THUNK yet"
+replaceExpr var atom bvs (Case e alts) 
+    = (Case e' alts', bvso ++ bvsa)
+    where (e', bvso) = replaceExpr var atom bvs e
+          (alts', bvsa) = replaceAlts var atom bvs alts
+
+replaceAtom :: Variable -> Atom -> BoundVars -> Atom -> Atom
+replaceAtom var atom bvs (Variable x) | x == var && (notElem var bvs) = atom
+replaceAtom var _ _ _ = Variable var 
+-- test
+-- >replaceAtom "result" (Literal (Int 3)) [] (Variable "result")
+-- Literal (Int 3)
+-- > replaceAtom "result" (Literal (Int 3)) ["result"] (Variable "result")
+-- Variable "result"
+
+replaceAtoms :: Variable -> Atom -> BoundVars -> [Atom] -> [Atom] 
+replaceAtoms var atom bvs as 
+    = [replaceAtom var atom bvs a | a <-as ]
+
+replaceAlt :: Variable -> Atom -> BoundVars -> Alternative -> (Alternative,BoundVars)
+replaceAlt var atom bvs (DefaultAlt v e) 
+    = (DefaultAlt v e', bvs')
+    where (e',bvs') = replaceExpr var atom bvs e
+
+replaceAlt var atom bvs (Alt c vs e) 
+    = error "no Alt yet"
+
+-- todo: only doing first alt of list for now
+replaceAlts :: Variable -> Atom -> BoundVars -> [Alternative] -> ([Alternative],BoundVars)
+replaceAlts var atom bvs alts 
+    = ([alt],bvs')
+    where (alt,bvs') = replaceAlt var atom bvs (head alts)
+
+replaceObj:: Variable -> Atom -> BoundVars -> Object -> (Object, BoundVars)
+replaceObj var atom bvs (FUN vs e) 
+    = error "no replace FUN yet"
+
+replaceObj var atom bvs (PAP f as) 
+    = error "no replace PAP yet"
+
+replaceObj var atom bvs (CON c as) 
+    = (CON c (replaceAtoms var atom bvs as), bvs)
+
+replaceObj var atom bvs (THUNK e) 
+    = error "no replace THUNK yet"
 
