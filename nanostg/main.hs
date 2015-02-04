@@ -16,6 +16,9 @@ fun2 = "apply = FUN(f x -> f x);"
 
 let1 = "let { result = CON (I x) } in result"
 let2 = "main = THUNK(let { result = CON (I 7) } in result)"
+let3 = "main = THUNK(let { result = CON (I 7); } in result)"
+
+letrec = "main = FUN(l1 l2 ->\n case l1 of\n { Nil -> l2;\n Cons hd tl -> let { rec = THUNK(append tl l2);\n result = CON(Cons hd rec) }\n in result });"
 
 case1 = "case list of {Nil -> nil}"
 case2 = "case list of {foo -> nil}"

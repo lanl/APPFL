@@ -42,7 +42,7 @@ type FunctionArity = Maybe Int
 data Expression = Atom Atom
                 | FunctionCall Variable FunctionArity [Atom]
                 | SatPrimCall Primitive [Atom] 
-                | Let Variable Object Expression
+                | Let [(Variable,Object)] Expression
                 | Case Expression [Alternative]
                 deriving (Eq,Show)
                
@@ -87,14 +87,14 @@ intFN xs = Literal (Int (read xs :: Int))
 doubleFN :: String -> Atom
 doubleFN xs = Literal (Double (read xs :: Double))
 
+
 expression :: Parser (Pos Token) Expression
 expression = ((kind Ident `then'` some atom) `using` funcallFN)
              `alt`
              ((kind Prim `then'` some atom) `using` primcallFN)
              `alt` 
-             ((key "let" `xthen` sym "{" `xthen` kind Ident `thenx` 
-             sym "=" `then'` object `thenx` sym "}" `thenx` key "in" 
-             `then'` expression) `using` letFN)
+             ((key "let" `xthen` sym "{" `xthen` some vo
+             `thenx` sym "}" `thenx` key "in" `then'` expression) `using` letFN)
              `alt`
              ((key "case" `xthen` expression `thenx` key "of" `thenx`
              sym "{" `then'` alternative `then'` many (sym ";" `xthen`
@@ -114,8 +114,13 @@ primcallFN (p,as) | p == "plus#" = SatPrimCall Add as
                   | p == "mult#" = SatPrimCall Mul as
                   | p == "eq#" = SatPrimCall Eq as
 
-letFN :: ((Variable, Object), Expression) -> Expression
-letFN ((v,o),e) = Let v o e
+vo :: Parser (Pos Token) (Variable, Object)
+vo = (kind Ident `thenx` sym "=" `then'` object) 
+     `alt`
+     (kind Ident `thenx` sym "=" `then'` object `thenx` sym ";")
+
+letFN :: ([(Variable, Object)], Expression) -> Expression
+letFN (vos,e) = Let vos e
 
 caseFN :: ((Expression, Alternative), [Alternative]) -> Expression
 caseFN ((e,a),as) = Case e (a:as) 

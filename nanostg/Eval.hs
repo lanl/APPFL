@@ -65,7 +65,7 @@ evalExpr (FunctionCall f k as) h fv
     = evalFunctionCall f k as h fv
 evalExpr (SatPrimCall op as) h fv 
     = evalSatPrimCall op as h fv
-evalExpr (Let v o e) h fv = evalLet v o e h fv
+evalExpr (Let vos e) h fv = evalLet vos e h fv
 evalExpr (Case e as) h fv = evalCase e as h fv
 
 evalFunctionCall :: Variable -> FunctionArity -> [Atom] -> Heap -> FreshVars -> (Output, Heap)
@@ -77,11 +77,12 @@ evalSatPrimCall p (a1:a2:as) h fv
                where (x1,h1) = evalAtom a1 h fv
                      (x2,h2) = evalAtom a2 h fv
 
-evalLet :: Variable -> Object -> Expression -> Heap -> FreshVars -> (Output, Heap)
+evalLet :: [(Variable,Object)] -> Expression -> Heap -> FreshVars -> (Output, Heap)
 -- todo: make freshvar, replace var in expr, make heap object
-evalLet v o e h fv 
+evalLet vos e h fv 
     = (debug, h') 
-    where h' = updateHeap h v o
+    where (v,o) = head vos -- only doing first let for now
+          h' = updateHeap h v o
           (s,h2) = evalObj o h' fv 
           debug = v ++ "=" ++ s 
 
@@ -133,11 +134,13 @@ replaceExpr var atom bvs (SatPrimCall op as)
     = (SatPrimCall op as, bvs)
     where as' = replaceAtoms var atom bvs as
 
-replaceExpr var atom bvs (Let v o e) 
-    = (Let v o' e', bvse ++ bvso) 
-    where bvs' = v:bvs
+replaceExpr var atom bvs (Let vos e) 
+    = (Let vos' e', bvse ++ bvso) 
+    where (v,o) = head vos -- only doing first let for now
+          bvs' = v:bvs
           (o', bvso) = replaceObj var atom bvs' o
           (e', bvse) = replaceExpr var atom bvs' e
+          vos' = [(v,o')] -- hack for now as only doing first let
 
 replaceExpr var atom bvs (Case e alts) 
     = (Case e' alts', bvso ++ bvsa)
