@@ -129,7 +129,8 @@ class Replace a where replace :: Variable -> Atom -> BoundVars -> a -> (a, Bound
 
 instance Replace Expression where
   replace var atom bvs (Atom a) 
-    = (Atom (fst $ replace var atom bvs a), bvs)
+    = (Atom a', bvs)
+    where (a',_) = replace var atom bvs a
 
   replace var atom bvs (FunctionCall f k as) 
     = (FunctionCall f k as', bvs)
@@ -158,7 +159,7 @@ instance Replace Atom where
 
 instance Replace [Atom] where
   replace var atom bvs as 
-    = ([fst (replace var atom bvs a) | a <-as ], bvs)
+    = ([fst $ replace var atom bvs a | a <-as ], bvs)
 
 instance Replace Alternative where
   replace var atom bvs (DefaultAlt v e) 
