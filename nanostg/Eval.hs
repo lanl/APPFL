@@ -1,6 +1,8 @@
+{-# LANGUAGE FlexibleInstances #-}
+
 module Eval
 ( eval
-, replaceAtom -- debug
+, replace -- debug
 ) where
 
 import Data.Map as M hiding (map)
@@ -121,69 +123,67 @@ evalCON c as h fv
 -- replace a non-bound variable in a expression
 -- todo: should BoundVars be a map rather than a list? (to deal with dups)
 -- todo: should (Variable -> Atom) be a list of pairs so we could do
--- multiple subs at once? or a map?? 
-replaceExpr :: Variable -> Atom -> BoundVars -> Expression -> (Expression, BoundVars)
-replaceExpr var atom bvs (Atom a) 
-    = (Atom (replaceAtom var atom bvs a), bvs)
+-- multiple subs at once? or a map??
 
-replaceExpr var atom bvs (FunctionCall f k as) 
+class Replace a where replace :: Variable -> Atom -> BoundVars -> a -> (a, BoundVars)
+
+instance Replace Expression where
+  replace var atom bvs (Atom a) 
+    = (Atom (fst $ replace var atom bvs a), bvs)
+
+  replace var atom bvs (FunctionCall f k as) 
     = (FunctionCall f k as', bvs)
-    where as' = replaceAtoms var atom bvs as 
+    where (as',_) = replace var atom bvs as 
 
-replaceExpr var atom bvs (SatPrimCall op as) 
+  replace var atom bvs (SatPrimCall op as) 
     = (SatPrimCall op as, bvs)
-    where as' = replaceAtoms var atom bvs as
+    where (as',_) = replace var atom bvs as
 
-replaceExpr var atom bvs (Let vos e) 
+  replace var atom bvs (Let vos e) 
     = (Let vos' e', bvse ++ bvso) 
-    where (v,o) = head vos -- only doing first let for now
+    where (v,o) = head vos -- todo: only doing first let for now
           bvs' = v:bvs
-          (o', bvso) = replaceObj var atom bvs' o
-          (e', bvse) = replaceExpr var atom bvs' e
+          (o', bvso) = replace var atom bvs' o
+          (e', bvse) = replace var atom bvs' e
           vos' = [(v,o')] -- hack for now as only doing first let
 
-replaceExpr var atom bvs (Case e alts) 
+  replace var atom bvs (Case e alts) 
     = (Case e' alts', bvso ++ bvsa)
-    where (e', bvso) = replaceExpr var atom bvs e
-          (alts', bvsa) = replaceAlts var atom bvs alts
+    where (e', bvso) = replace var atom bvs e
+          (alts', bvsa) = replace var atom bvs alts
 
-replaceAtom :: Variable -> Atom -> BoundVars -> Atom -> Atom
-replaceAtom var atom bvs (Variable x) | x == var && (notElem var bvs) = atom
-replaceAtom var _ _ _ = Variable var 
--- test
--- >replaceAtom "result" (Literal (Int 3)) [] (Variable "result")
--- Literal (Int 3)
--- > replaceAtom "result" (Literal (Int 3)) ["result"] (Variable "result")
--- Variable "result"
+instance Replace Atom where
+  replace var atom bvs (Variable x) | x == var && (notElem var bvs) = (atom, bvs)
+  replace var _ bvs _ = (Variable var, bvs) 
 
-replaceAtoms :: Variable -> Atom -> BoundVars -> [Atom] -> [Atom] 
-replaceAtoms var atom bvs as 
-    = [replaceAtom var atom bvs a | a <-as ]
+instance Replace [Atom] where
+  replace var atom bvs as 
+    = ([fst (replace var atom bvs a) | a <-as ], bvs)
 
-replaceAlt :: Variable -> Atom -> BoundVars -> Alternative -> (Alternative,BoundVars)
-replaceAlt var atom bvs (DefaultAlt v e) 
+instance Replace Alternative where
+  replace var atom bvs (DefaultAlt v e) 
     = (DefaultAlt v e', bvs')
-    where (e',bvs') = replaceExpr var atom bvs e
+    where (e',bvs') = replace var atom bvs e
 
-replaceAlt var atom bvs (Alt c vs e) 
+  replace var atom bvs (Alt c vs e) 
     = error "no Alt yet"
 
 -- todo: only doing first alt of list for now
-replaceAlts :: Variable -> Atom -> BoundVars -> [Alternative] -> ([Alternative],BoundVars)
-replaceAlts var atom bvs alts 
+instance Replace [Alternative] where
+  replace var atom bvs alts 
     = ([alt],bvs')
-    where (alt,bvs') = replaceAlt var atom bvs (head alts)
+    where (alt,bvs') = replace var atom bvs (head alts)
 
-replaceObj:: Variable -> Atom -> BoundVars -> Object -> (Object, BoundVars)
-replaceObj var atom bvs (FUN vs e) 
+instance Replace Object where
+  replace var atom bvs (FUN vs e) 
     = error "no replace FUN yet"
 
-replaceObj var atom bvs (PAP f as) 
+  replace var atom bvs (PAP f as) 
     = error "no replace PAP yet"
 
-replaceObj var atom bvs (CON c as) 
-    = (CON c (replaceAtoms var atom bvs as), bvs)
+  replace var atom bvs (CON c as) 
+    = (CON c (fst $ replace var atom bvs as), bvs)
 
-replaceObj var atom bvs (THUNK e) 
+  replace var atom bvs (THUNK e) 
     = error "no replace THUNK yet"
 
