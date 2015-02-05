@@ -132,8 +132,7 @@ instance Replace Expression where
 
   replace r bvs (FunctionCall f k as) 
     = FunctionCall f k as'
-    where bvs' = f:bvs --f is boundvar?
-          as' = replace r bvs' as 
+    where as' = replace r bvs as 
 
   replace r bvs (SatPrimCall op as) 
     = SatPrimCall op as
@@ -160,6 +159,10 @@ instance Replace Atom where
 instance Replace [Atom] where
   replace r bvs as 
     = [replace r bvs a | a <-as ]
+
+instance Replace Variable where
+  replace (vin, Variable vout) bvs v 
+    = if v == vin && (notElem vin bvs) then vout else v
 
 -- need to update boundvars
 instance Replace Alternative where
