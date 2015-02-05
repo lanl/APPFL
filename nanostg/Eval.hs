@@ -121,70 +121,71 @@ evalCON c as h fv
     where con = "(" ++ c ++ " " ++ intercalate " " [fst $ evalAtom a h fv | a <- as] ++ ")"
 
 -- replace a non-bound variable in a expression
--- todo: should BoundVars be a map rather than a list? (to deal with dups)
--- todo: should (Variable -> Atom) be a list of pairs so we could do
--- multiple subs at once? or a map??
 
-class Replace a where replace :: Variable -> Atom -> BoundVars -> a -> (a, BoundVars)
+type Replacement = (Variable, Atom) --todo make list?
+
+class Replace a where replace ::  Replacement -> BoundVars -> a -> a
 
 instance Replace Expression where
-  replace var atom bvs (Atom a) 
-    = (Atom a', bvs)
-    where (a',_) = replace var atom bvs a
+  replace r bvs (Atom a) 
+    = Atom (replace r bvs a)
 
-  replace var atom bvs (FunctionCall f k as) 
-    = (FunctionCall f k as', bvs)
-    where (as',_) = replace var atom bvs as 
+  replace r bvs (FunctionCall f k as) 
+    = FunctionCall f k as'
+    where bvs' = f:bvs --f is boundvar?
+          as' = replace r bvs' as 
 
-  replace var atom bvs (SatPrimCall op as) 
-    = (SatPrimCall op as, bvs)
-    where (as',_) = replace var atom bvs as
+  replace r bvs (SatPrimCall op as) 
+    = SatPrimCall op as
+    where as' = replace r bvs as
 
-  replace var atom bvs (Let vos e) 
-    = (Let vos' e', bvse ++ bvso) 
+  -- need to update boundvars
+  replace r bvs (Let vos e) 
+    = Let vos' e' 
     where (v,o) = head vos -- todo: only doing first let for now
           bvs' = v:bvs
-          (o', bvso) = replace var atom bvs' o
-          (e', bvse) = replace var atom bvs' e
+          o' = replace r bvs' o
+          e' = replace r bvs' e
           vos' = [(v,o')] -- hack for now as only doing first let
 
-  replace var atom bvs (Case e alts) 
-    = (Case e' alts', bvso ++ bvsa)
-    where (e', bvso) = replace var atom bvs e
-          (alts', bvsa) = replace var atom bvs alts
+  replace r bvs (Case e alts) 
+    = Case e' alts'
+    where e' = replace r bvs e
+          alts' = replace r bvs alts
 
 instance Replace Atom where
-  replace var atom bvs (Variable x) | x == var && (notElem var bvs) = (atom, bvs)
-  replace var _ bvs _ = (Variable var, bvs) 
+  replace (var, atom) bvs (Variable x) | x == var && (notElem var bvs) = atom
+  replace (var, atom) bvs x = x -- return original
 
 instance Replace [Atom] where
-  replace var atom bvs as 
-    = ([fst $ replace var atom bvs a | a <-as ], bvs)
+  replace r bvs as 
+    = [replace r bvs a | a <-as ]
 
+-- need to update boundvars
 instance Replace Alternative where
-  replace var atom bvs (DefaultAlt v e) 
-    = (DefaultAlt v e', bvs')
-    where (e',bvs') = replace var atom bvs e
+  replace r bvs (DefaultAlt v e) 
+    = DefaultAlt v e'
+    where e' = replace r bvs e
 
-  replace var atom bvs (Alt c vs e) 
+  replace r bvs (Alt c vs e) 
     = error "no Alt yet"
 
 -- todo: only doing first alt of list for now
 instance Replace [Alternative] where
-  replace var atom bvs alts 
-    = ([alt],bvs')
-    where (alt,bvs') = replace var atom bvs (head alts)
+  replace r bvs alts 
+    = [replace r bvs (head alts)]
 
 instance Replace Object where
-  replace var atom bvs (FUN vs e) 
+  -- need update boundvars
+  replace r bvs (FUN vs e) 
     = error "no replace FUN yet"
 
-  replace var atom bvs (PAP f as) 
-    = error "no replace PAP yet"
+  replace r bvs (PAP f as) 
+    = PAP f (replace r bvs as)
 
-  replace var atom bvs (CON c as) 
-    = (CON c (fst $ replace var atom bvs as), bvs)
+  replace r bvs (CON c as) 
+    = CON c (replace r bvs as)
 
-  replace var atom bvs (THUNK e) 
-    = error "no replace THUNK yet"
+  replace r bvs (THUNK e) 
+    = THUNK (replace r bvs e)
 
