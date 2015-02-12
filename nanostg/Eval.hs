@@ -8,6 +8,7 @@ module Eval
 import Data.Map as M hiding (map)
 import Data.Maybe
 import Data.List
+import Data.Char
 import Parser
 
 type Heap = M.Map Variable Object
@@ -23,7 +24,7 @@ declFN :: Declaration -> (Variable, Object)
 declFN (Declaration v o) = (v,o)
 
 lookupHeap :: Variable -> Heap -> Object
-lookupHeap v h | lookup == Nothing = error "can't find var" 
+lookupHeap v h | lookup == Nothing = error ("can't find var " ++ v)
                | otherwise = fromJust lookup
                 where lookup = M.lookup v h
 
@@ -55,6 +56,7 @@ evalMain (CON c as) h fv = evalCON c as h fv
 evalMain o h fv = error "bad main"
 
 evalLiteral :: Literal -> Output
+--evalLiteral (Int x) =   "I#" ++ show x
 evalLiteral (Int x) =  show x
 
 evalAtom:: Atom -> Heap -> FreshVars -> (Output, Heap)
@@ -82,7 +84,7 @@ evalSatPrimCall p (a1:a2:as) h fv
 evalLet :: [(Variable,Object)] -> Expression -> Heap -> FreshVars -> (Output, Heap)
 -- todo: make freshvar, replace var in expr, make heap object
 evalLet vos e h fv 
-    = (debug, h') 
+    = (s, h') 
     where (v,o) = head vos -- only doing first let for now
           h' = updateHeap h v o
           (s,h2) = evalObj o h' fv 
@@ -90,24 +92,35 @@ evalLet vos e h fv
 
 evalCase :: Expression -> [Alternative] -> Heap -> FreshVars -> (Output, Heap)
 evalCase e (a:as) h fv 
-    = (s,he)
-    where (v,he)  = evalExpr e h fv
-          -- v is a literal/pointer or constructor
-          -- check if it is a pointer
-          lookup = M.lookup v h 
-          -- todo: deal w/ heap from evalObj
-          value = if lookup == Nothing then v else fst $ evalObj (fromJust lookup) h fv
-          str = read value
-          (s,ha) = evalAlternative a str he fv -- only doing first alt so far
-                   
+    = (s ,he)
+    where (y@(x:xs),he) = evalExpr e h fv
+          isValue = isUpper x
+          lookup = M.lookup y h
+          isLit = lookup == Nothing
+          debug = if isValue then "value " else
+                    if isLit then "literal " else "variable " 
+          
+          -- only deal w/ literal
+          (s,h') = evalAlternative a y he fv -- only doing first alt so far 
 
 evalAlternative :: Alternative -> String -> Heap -> FreshVars -> (Output, Heap)
 evalAlternative (DefaultAlt v e) s h fv = evalDefaultAlt v e s h fv
 evalAlternative (Alt c vs e) con h fv = error "no alt"
 
 evalDefaultAlt :: Variable -> Expression -> String -> Heap -> FreshVars -> (Output, Heap)
-evalDefaultAlt v e s h fv = error "no default alt" 
-                           
+-- replace v w/ y in e
+evalDefaultAlt v e (x:xs) h fv = (out, h')
+                                 where isValue = isUpper x
+                                       a = if isValue then error "Value!" else makeAtom (x:xs) h
+                                       e' = replace (v,a) [] e 
+                                       (out, h') = evalExpr e' h fv
+
+--we must be evaling to far if we have to do this.. 
+makeAtom :: String -> Heap -> Atom
+makeAtom y h = if isLit then Literal (Int (read y)) else (Variable y)
+                  where  lookup = M.lookup y h
+                         isLit = lookup == Nothing
+
 evalObj :: Object -> Heap -> FreshVars -> (Output, Heap)
 evalObj (FUN vs e) h fv = error "FUN Obj not done"
 evalObj (PAP v as) h fv = error "PAP Obj not done"
@@ -168,10 +181,11 @@ instance Replace Variable where
 instance Replace Alternative where
   replace r bvs (DefaultAlt v e) 
     = DefaultAlt v e'
-    where e' = replace r bvs e
+    where e' = replace r (v:bvs) e
 
   replace r bvs (Alt c vs e) 
-    = error "no Alt yet"
+    = Alt c vs e'
+    where e' = replace r (vs++bvs) e
 
 -- todo: only doing first alt of list for now
 instance Replace [Alternative] where
