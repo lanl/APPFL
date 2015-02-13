@@ -5,7 +5,7 @@ module Eval
 , replace -- debug
 ) where
 
-import Data.Map as M hiding (map, filter)
+import Data.Map as M hiding (map, filter, split)
 import Data.Maybe
 import Data.List
 import Data.Char
@@ -13,6 +13,7 @@ import Parser
 
 type Heap = M.Map Variable Object
 type FreshVars = [Variable]
+type State = (Heap, FreshVars)
 type BoundVars = [Variable]
 type Output = String
 type Lets = [(Variable, Object)]
@@ -42,50 +43,55 @@ spliter(x:y:zs) = (x,y):spliter zs
 split :: [(a,a)] -> ([a],[a])
 split xs = (map fst xs, map snd xs) 
 
+getFresh :: FreshVars -> (Variable, FreshVars)
+getFresh fv = (head fv1, fv2)
+            where (fv1,fv2) = split $ spliter fv
+           
 eval :: Program -> Output
 eval prog@(Program ds) 
-    = fst $ evalProg prog (initHeap ds) initFreshVars
+    = fst $ evalProg prog (initHeap ds, initFreshVars)
 
-evalProg :: Program -> Heap -> FreshVars -> (Output, Heap)
-evalProg (Program ds) h fv 
-    = evalMain (lookupHeap "main" h) h fv
+evalProg :: Program -> State -> (Output, State)
+evalProg (Program ds) st@(h,fv)
+    = evalMain (lookupHeap "main" h) st 
 
 -- assume for now that main is a THUNK or CON and evaluate it
-evalMain :: Object -> Heap -> FreshVars -> (Output, Heap)
-evalMain (THUNK e) h fv = (showExpression e', h') 
-                        where (e',h') = evalExpression e h fv
-evalMain (CON c as) h fv = (showCON c as', h) 
-                         where as' = [fst $ evalAtom a h fv | a <- as] 
-evalMain o h fv = error "bad main"
+evalMain :: Object -> State -> (Output, State)
+evalMain (THUNK e) st = (showExpression e', st') 
+                              where (e', st') = evalExpression e st
+evalMain (CON c as) st = (showCON c as', st) 
+                         where as' = [fst $ evalAtom a st | a <- as] 
+evalMain o st = error "bad main"
 
-evalExpression :: Expression -> Heap -> FreshVars -> (Expression, Heap)
-evalExpression (Atom a) h fv = (Atom a', h')
-                             where (a',h') = evalAtom a h fv 
-evalExpression (Let ls e) h fv = evalLet ls e h fv
+evalExpression :: Expression -> State -> (Expression, State)
+evalExpression (Atom a) st = (Atom a', st')
+                             where (a',st') = evalAtom a st
+evalExpression (Let ls e) st = evalLet ls e st
 
 
-evalAtom :: Atom -> Heap -> FreshVars -> (Atom, Heap)
-evalAtom (Literal x) h fv = (Literal x, h)
-evalAtom (Variable x) h fv = (Variable x', h')
-                           where (obj, h') = evalObject (lookupHeap x h) h fv
-                                 x' = showObject obj 
+evalAtom :: Atom -> State -> (Atom, State)
+evalAtom (Literal x) st = (Literal x, st)
+evalAtom (Variable x) st@(h,fv) = (Variable x', st')
+                                where (obj, st') = evalObject (lookupHeap x h) st
+                                      x' = showObject obj 
 
-evalObject :: Object -> Heap -> FreshVars -> (Object, Heap)
-evalObject (FUN vs e) h fv = error "FUN Obj not done"
-evalObject (PAP v as) h fv = error "PAP Obj not done"
-evalObject (CON c as) h fv = (CON c as', h)
-                           where as' = [fst $ evalAtom a h fv | a <- as]
-evalObject (THUNK e) h fv =  error "THUNK Obj not done"
+evalObject :: Object -> State -> (Object, State)
+evalObject (FUN vs e) st = error "FUN Obj not done"
+evalObject (PAP v as) st = error "PAP Obj not done"
+evalObject (CON c as) st = (CON c as', st)
+                           where as' = [fst $ evalAtom a st | a <- as]
+evalObject (THUNK e) st =  error "THUNK Obj not done"
 
-evalLet :: [(Variable,Object)] -> Expression -> Heap -> FreshVars -> (Expression, Heap)
--- todo: make freshvar, replace var in expr, make heap object
-evalLet ls e h fv 
-    = (e', h') 
+evalLet :: [(Variable,Object)] -> Expression -> State -> (Expression, State)
+evalLet ls e st@(h,fv)
+    = (e2, (h2, fv2)) 
     where (v,o) = head ls -- only doing first let for now
-          h' = updateHeap h v o
-          (o', h2) = evalObject o h' fv
-          a = Variable $ showObject o'
-          e' = replace (v,a) [] e
+          (v', fv1) = getFresh fv
+          a = Variable v'
+          h1 = updateHeap h v' o
+          e1 = replace (v,a) [] e
+          -- as a test eval here really only should do this in case stmt
+          (e2, (h2,fv2)) = evalExpression e1 (h1,fv1)   
 
 showExpression :: Expression -> Output
 showExpression (Atom a) = showAtom a
