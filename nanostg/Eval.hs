@@ -5,7 +5,7 @@ module Eval
 , replace -- debug
 ) where
 
-import Data.Map as M hiding (map)
+import Data.Map as M hiding (map, filter)
 import Data.Maybe
 import Data.List
 import Data.Char
@@ -105,7 +105,20 @@ evalCase e (a:as) h fv
 
 evalAlternative :: Alternative -> String -> Heap -> FreshVars -> (Output, Heap)
 evalAlternative (DefaultAlt v e) s h fv = evalDefaultAlt v e s h fv
-evalAlternative (Alt c vs e) con h fv = error "no alt"
+evalAlternative (Alt c vs e) s h fv = evalAlt c vs e s h fv 
+
+evalAlt :: Constructor -> [Variable] -> Expression -> String -> Heap -> FreshVars -> (Output, Heap)
+evalAlt c vs e s h fv = (debug, h)
+                           where debug = "alt " ++ c ++ show vs ++ " " ++ stripParen s 
+
+
+
+stripParen :: String -> String
+stripParen = stripChars "()" 
+
+stripChars :: String -> String -> String
+stripChars = filter . flip notElem
+
 
 evalDefaultAlt :: Variable -> Expression -> String -> Heap -> FreshVars -> (Output, Heap)
 -- replace v w/ y in e
