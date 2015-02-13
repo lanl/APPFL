@@ -15,6 +15,7 @@ type Heap = M.Map Variable Object
 type FreshVars = [Variable]
 type BoundVars = [Variable]
 type Output = String
+type Lets = [(Variable, Object)]
 
 -- setup heap and add Decls to it
 initHeap :: [Declaration] -> Heap
@@ -51,17 +52,64 @@ evalProg (Program ds) h fv
 
 -- assume for now that main is a THUNK or CON and evaluate it
 evalMain :: Object -> Heap -> FreshVars -> (Output, Heap)
-evalMain (THUNK e) h fv = evalExpr e h fv
-evalMain (CON c as) h fv = evalCON c as h fv
+evalMain (THUNK e) h fv = (showExpression e', h') 
+                        where (e',h') = evalExpression e h fv
+evalMain (CON c as) h fv = (showCON c as', h) 
+                         where as' = [fst $ evalAtom a h fv | a <- as] 
 evalMain o h fv = error "bad main"
 
-evalLiteral :: Literal -> Output
+evalExpression :: Expression -> Heap -> FreshVars -> (Expression, Heap)
+evalExpression (Atom a) h fv = (Atom a', h')
+                             where (a',h') = evalAtom a h fv 
+evalExpression (Let ls e) h fv = evalLet ls e h fv
+
+
+evalAtom :: Atom -> Heap -> FreshVars -> (Atom, Heap)
+evalAtom (Literal x) h fv = (Literal x, h)
+evalAtom (Variable x) h fv = (Variable x', h')
+                           where (obj, h') = evalObject (lookupHeap x h) h fv
+                                 x' = showObject obj 
+
+evalObject :: Object -> Heap -> FreshVars -> (Object, Heap)
+evalObject (FUN vs e) h fv = error "FUN Obj not done"
+evalObject (PAP v as) h fv = error "PAP Obj not done"
+evalObject (CON c as) h fv = (CON c as', h)
+                           where as' = [fst $ evalAtom a h fv | a <- as]
+evalObject (THUNK e) h fv =  error "THUNK Obj not done"
+
+evalLet :: [(Variable,Object)] -> Expression -> Heap -> FreshVars -> (Expression, Heap)
+-- todo: make freshvar, replace var in expr, make heap object
+evalLet ls e h fv 
+    = (e', h') 
+    where (v,o) = head ls -- only doing first let for now
+          h' = updateHeap h v o
+          (o', h2) = evalObject o h' fv
+          a = Variable $ showObject o'
+          e' = replace (v,a) [] e
+
+showExpression :: Expression -> Output
+showExpression (Atom a) = showAtom a
+
+showAtom :: Atom -> Output
+showAtom (Literal (Int x)) = show x
+showAtom (Variable x) = x
+
+showObject :: Object -> Output
+showObject (CON c as) = showCON c as
+
+showCON :: Constructor -> [Atom] -> Output
+showCON c as = "(" ++ c ++ " " ++ intercalate " " [showAtom a | a <- as] ++ ")"
+
+
+{-
+evalLiteral : Literal -> Outputtom a) h fv = evalAtom a h fv
 --evalLiteral (Int x) =   "I#" ++ show x
 evalLiteral (Int x) =  show x
 
 evalAtom:: Atom -> Heap -> FreshVars -> (Output, Heap)
 evalAtom (Literal x) h fv = (evalLiteral x, h)
 evalAtom (Variable x) h fv = evalObj (lookupHeap x h) h fv
+
 
 evalExpr ::  Expression -> Heap -> FreshVars -> (Output, Heap)
 evalExpr (Atom a) h fv = evalAtom a h fv
@@ -112,7 +160,6 @@ evalAlt c vs e s h fv = (debug, h)
                            where debug = "alt " ++ c ++ show vs ++ " " ++ stripParen s 
 
 
-
 stripParen :: String -> String
 stripParen = stripChars "()" 
 
@@ -145,7 +192,7 @@ evalCON :: Constructor -> [Atom] -> Heap -> FreshVars -> (Output, Heap)
 evalCON c as h fv 
     = (con, h)
     where con = "(" ++ c ++ " " ++ intercalate " " [fst $ evalAtom a h fv | a <- as] ++ ")"
-
+-}
 -- replace a non-bound variable in a expression
 
 type Replacement = (Variable, Atom) --todo make list?

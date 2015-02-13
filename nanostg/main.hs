@@ -30,6 +30,12 @@ add4 = "one = CON(I 1);\n two = CON(I 2);\n main = THUNK(case one of {\n I i -> 
 
 list = "nil = CON(Nil);\n zero = CON (I 0);\n one = CON(I 1);\n list1 = CON(Cons zero nil);\n main = CON(Cons one list1);"
 
+--eval tests
+testatomliteral = "main = THUNK(1)"
+testmaincon = "main = CON(I 1)"
+testatomvariable = "one = CON(I 1);\n main = THUNK(one)"
+testlet = "main = THUNK(let { result = CON (I 7) } in result)"
+
 testlex = strip.fst.head.lexer.prelex
 
 testparse = fst.head.program.strip.fst.head.lexer.prelex
