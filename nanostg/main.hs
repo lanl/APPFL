@@ -35,6 +35,7 @@ testatomliteral = "main = THUNK(1)"
 testmaincon = "main = CON(I 1)"
 testatomvariable = "one = CON(I 1);\n main = THUNK(one)"
 testlet = "main = THUNK(let { result = CON (I 7) } in result)"
+testsatprimadd = "main = THUNK(plus# 1 2);"
 
 testlex = strip.fst.head.lexer.prelex
 

@@ -67,7 +67,8 @@ evalExpression :: Expression -> State -> (Expression, State)
 evalExpression (Atom a) st = (Atom a', st')
                              where (a',st') = evalAtom a st
 evalExpression (Let ls e) st = evalLet ls e st
-
+evalExpression (Case e as) st = evalCase e as st 
+evalExpression (SatPrimCall op as) st = evalSatPrimCall op as st
 
 evalAtom :: Atom -> State -> (Atom, State)
 evalAtom (Literal x) st = (Literal x, st)
@@ -92,6 +93,22 @@ evalLet ls e st@(h,fv)
           e1 = replace (v,a) [] e
           -- as a test eval here really only should do this in case stmt
           (e2, (h2,fv2)) = evalExpression e1 (h1,fv1)   
+
+evalCase :: Expression -> [Alternative] -> State -> (Expression, State)
+evalCase e (a:as) st@(h,fv)
+    = (e',st')
+    where (e', st'@(h',fv')) = evalExpression e st
+    -- e' is an atom
+    
+--evalAlternative :: Alternative -> Expression -> State -> (Expression, State)
+--evalAlternative (DefaultAlt v e) s h fv = evalDefaultAlt v e s h fv
+--evalAlternative (Alt c vs e) s h fv = evalAlt c vs e s h fv
+
+evalSatPrimCall :: Primitive -> [Atom] -> State -> (Expression, State)
+evalSatPrimCall p (a1:a2:as) st 
+    | p == Add = (Atom $ Literal $ Int (x1+x2), st)
+               where x1 = read (showAtom a1) :: Int  
+                     x2 = read (showAtom a2) :: Int 
 
 showExpression :: Expression -> Output
 showExpression (Atom a) = showAtom a
