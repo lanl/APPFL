@@ -110,6 +110,12 @@ evalSatPrimCall p (a1:a2:as) st
                where x1 = read (showAtom a1) :: Int  
                      x2 = read (showAtom a2) :: Int 
 
+matchAlt :: Construtor -> [Alternative] -> [([Variable, Expression)]
+matchAlt c as = error "no match alt"
+
+matchDefaultAlt :: [Alternative] ->  [([Variable, Expression)]
+matchDefaultAlt as = error "no match def alt"
+
 showExpression :: Expression -> Output
 showExpression (Atom a) = showAtom a
 
