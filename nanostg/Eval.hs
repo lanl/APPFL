@@ -95,26 +95,43 @@ evalLet ls e st@(h,fv)
           (e2, (h2,fv2)) = evalExpression e1 (h1,fv1)   
 
 evalCase :: Expression -> [Alternative] -> State -> (Expression, State)
-evalCase e (a:as) st@(h,fv)
-    = (e',st')
-    where (e', st'@(h',fv')) = evalExpression e st
-    -- e' is an atom
-    
---evalAlternative :: Alternative -> Expression -> State -> (Expression, State)
---evalAlternative (DefaultAlt v e) s h fv = evalDefaultAlt v e s h fv
---evalAlternative (Alt c vs e) s h fv = evalAlt c vs e s h fv
+-- CaseCon
+evalCase (Atom (Variable v)) alts st 
+    = error "no casecon"
 
+-- CaseAny
+evalCase (Atom v) alts st@(h,fv)
+    | isLiteral v || isValue v h = error "no caseany"
+
+evalCase e alts st@(h,fv)
+    = (e2, st2)
+    where (e1, st1) = evalExpression e st
+          --e' is atom now?
+          (e2, st2) = evalCase e1 alts st1
+
+isLiteral :: Atom -> Bool
+isLiteral (Literal _) = True
+isLiteral _ = False     
+
+isValue :: Atom -> Heap -> Bool
+isValue (Variable v) h 
+    = if M.lookup v h == Nothing then False else True
+    
 evalSatPrimCall :: Primitive -> [Atom] -> State -> (Expression, State)
 evalSatPrimCall p (a1:a2:as) st 
     | p == Add = (Atom $ Literal $ Int (x1+x2), st)
                where x1 = read (showAtom a1) :: Int  
                      x2 = read (showAtom a2) :: Int 
 
-matchAlt :: Construtor -> [Alternative] -> [([Variable, Expression)]
-matchAlt c as = error "no match alt"
+matchAlt :: Constructor -> [Alternative] -> [([Variable], Expression)]
+matchAlt c1 ((Alt c2 xs e):alts) 
+    = if c1 == c2 then [(xs, e)] else matchAlt c1 alts
+matchAlt _ _ = [] 
 
-matchDefaultAlt :: [Alternative] ->  [([Variable, Expression)]
-matchDefaultAlt as = error "no match def alt"
+matchDefaultAlt :: [Alternative] ->  [(Variable, Expression)]
+matchDefaultAlt ((Alt _ _ _ ):alts) = matchDefaultAlt alts
+matchDefaultAlt ((DefaultAlt v e):alts) = [(v,e)]
+matchDefaultAlt _ = []
 
 showExpression :: Expression -> Output
 showExpression (Atom a) = showAtom a
