@@ -123,7 +123,7 @@ evalCase e alts st@(h,fv)
     where (e1, st1) = evalExpression e st
           --e' is atom now?
           (e2, st2) = evalCase e1 alts st1
-          debug = "top e "  ++ showExpression e
+          debug = "top case e "  ++ showExpression e
 
 isLiteral :: Atom -> Bool
 isLiteral (Literal _) = True
@@ -145,7 +145,7 @@ isCON _ = False
 evalSatPrimCall :: Primitive -> [Atom] -> State -> (Expression, State)
 evalSatPrimCall p (a1:a2:as) st 
     | p == Add = (Atom $ Literal $ Int (x1+x2), st)
-               where x1 = read b1:: Int  
+               where x1 = read b1 :: Int  
                      x2 = read b2 :: Int 
                      b1 = showAtom $ fst $ evalAtom a1 st
                      b2 = showAtom $ fst $ evalAtom a2 st
@@ -189,7 +189,7 @@ instance Replace Expression where
     where as' = replace r bvs as 
 
   replace r bvs (SatPrimCall op as) 
-    = SatPrimCall op as
+    = SatPrimCall op as'
     where as' = replace r bvs as
 
   -- need to update boundvars
