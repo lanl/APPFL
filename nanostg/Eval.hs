@@ -146,8 +146,11 @@ evalSatPrimCall p (a1:a2:as) st
                      b2 = showAtom $ fst $ evalAtom a2 st
 
 evalFunctionCall :: Variable -> FunctionArity -> [Atom] -> State -> (Expression, State)
-evalFunctionCall f k as st = error "no function call yet"
-                           
+evalFunctionCall f k as st@(h,fv) 
+    = evalExpression e1 st
+    where Just (FUN xs e)  = M.lookup f h
+          reps = zip xs as
+          e1 = replaceMany reps [] e  
 
 matchAlt :: Constructor -> [Alternative] -> Maybe ([Variable], Expression)
 matchAlt c1 ((Alt c2 xs e):alts) 
