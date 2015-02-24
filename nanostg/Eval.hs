@@ -68,6 +68,7 @@ evalExpression (Atom a) st = (Atom a', st')
                              where (a',st') = evalAtom a st
 evalExpression (Let ls e) st = evalLet ls e st
 evalExpression (Case e as) st = evalCase e as st 
+   --error ("eval expr " ++ showExpression e) 
 evalExpression (SatPrimCall op as) st = evalSatPrimCall op as st
 
 evalAtom :: Atom -> State -> (Atom, State)
@@ -85,30 +86,44 @@ evalObject (THUNK e) st =  error "THUNK Obj not done"
 
 evalLet :: [(Variable,Object)] -> Expression -> State -> (Expression, State)
 evalLet ls e st@(h,fv)
+--    = (e1, (h1, fv1)) 
     = (e2, (h2, fv2)) 
     where (v,o) = head ls -- only doing first let for now
           (v', fv1) = getFresh fv
           a = Variable v'
           h1 = updateHeap h v' o
           e1 = replace (v,a) [] e
-          -- as a test eval here really only should do this in case stmt
+          -- for now eval here really only should do this in case stmt???
           (e2, (h2,fv2)) = evalExpression e1 (h1,fv1)   
 
 evalCase :: Expression -> [Alternative] -> State -> (Expression, State)
 -- CaseCon
 evalCase (Atom (Variable v)) alts st@(h,fv)
-    | isCON obj =  error "no casecon"
+    | isCON obj = error debug --(e1, st) 
                 where obj = M.lookup v h
-                      (Just as) = getCONAtoms obj 
+                      Just (c, as) = getCON obj 
+                      Just (xs,e) = matchAlt c alts 
+                      -- list of replacements
+                      reps = zip xs as
+                      -- only doing first arg of constructor for now
+                      rep = head reps
+                      e1 = replace rep [] e  -- NOT WORKING!
+                      debug = "e: " ++ showExpression e ++ "\n x:" ++ fst rep ++ " a: " ++ showAtom (snd rep) ++ "\n e1: " ++ showExpression e1                     
+                      
 -- CaseAny
 evalCase (Atom v) alts st@(h,fv)
-    | isLiteral v || isValue v h = error "no caseany"
+    | isLiteral v || isValue v h = error "case any" --evalExpression e1 st
 
+                                 where Just (x,e) = matchDefaultAlt alts
+                                       e1 = replace (x,v) [] e
+      
+                              
 evalCase e alts st@(h,fv)
-    = (e2, st2)
+    = error debug --(e2, st2)
     where (e1, st1) = evalExpression e st
           --e' is atom now?
           (e2, st2) = evalCase e1 alts st1
+          debug = "top e "  ++ showExpression e
 
 isLiteral :: Atom -> Bool
 isLiteral (Literal _) = True
@@ -119,13 +134,9 @@ isValue (Variable v) h
     = if M.lookup v h == Nothing then False else True
 isValue (Literal _) _ = False
 
-getCONAtoms :: Maybe Object -> Maybe [Atom]
-getCONAtoms (Just (CON _ as )) = Just as
-getCONAtoms _ = Nothing 
-
-isConstructor :: Atom -> Heap -> Bool
-isConstructor (Variable v) h = isCON (M.lookup v h)
-isConstructor (Literal _) _ = False 
+getCON :: Maybe Object -> Maybe (Constructor, [Atom])
+getCON (Just (CON c as )) = Just (c,as)
+getCON _ = Nothing 
 
 isCON :: Maybe Object -> Bool
 isCON (Just (CON _  _)) = True
@@ -134,21 +145,25 @@ isCON _ = False
 evalSatPrimCall :: Primitive -> [Atom] -> State -> (Expression, State)
 evalSatPrimCall p (a1:a2:as) st 
     | p == Add = (Atom $ Literal $ Int (x1+x2), st)
-               where x1 = read (showAtom a1) :: Int  
-                     x2 = read (showAtom a2) :: Int 
+               where x1 = read b1:: Int  
+                     x2 = read b2 :: Int 
+                     b1 = showAtom $ fst $ evalAtom a1 st
+                     b2 = showAtom $ fst $ evalAtom a2 st
 
-matchAlt :: Constructor -> [Alternative] -> [([Variable], Expression)]
+
+matchAlt :: Constructor -> [Alternative] -> Maybe ([Variable], Expression)
 matchAlt c1 ((Alt c2 xs e):alts) 
-    = if c1 == c2 then [(xs, e)] else matchAlt c1 alts
-matchAlt _ _ = [] 
+    = if c1 == c2 then Just (xs, e) else matchAlt c1 alts
+matchAlt _ _ = Nothing
 
-matchDefaultAlt :: [Alternative] ->  [(Variable, Expression)]
+matchDefaultAlt :: [Alternative] ->  Maybe (Variable, Expression)
 matchDefaultAlt ((Alt _ _ _ ):alts) = matchDefaultAlt alts
-matchDefaultAlt ((DefaultAlt v e):alts) = [(v,e)]
-matchDefaultAlt _ = []
+matchDefaultAlt ((DefaultAlt v e):alts) = Just (v,e)
+matchDefaultAlt _ = Nothing
 
 showExpression :: Expression -> Output
-showExpression (Atom a) = showAtom a
+--showExpression (Atom a) = showAtom a
+showExpression e = "debug " ++ show e
 
 showAtom :: Atom -> Output
 showAtom (Literal (Int x)) = show x
@@ -160,100 +175,6 @@ showObject (CON c as) = showCON c as
 showCON :: Constructor -> [Atom] -> Output
 showCON c as = "(" ++ c ++ " " ++ intercalate " " [showAtom a | a <- as] ++ ")"
 
-
-{-
-evalLiteral : Literal -> Outputtom a) h fv = evalAtom a h fv
---evalLiteral (Int x) =   "I#" ++ show x
-evalLiteral (Int x) =  show x
-
-evalAtom:: Atom -> Heap -> FreshVars -> (Output, Heap)
-evalAtom (Literal x) h fv = (evalLiteral x, h)
-evalAtom (Variable x) h fv = evalObj (lookupHeap x h) h fv
-
-
-evalExpr ::  Expression -> Heap -> FreshVars -> (Output, Heap)
-evalExpr (Atom a) h fv = evalAtom a h fv
-evalExpr (FunctionCall f k as) h fv 
-    = evalFunctionCall f k as h fv
-evalExpr (SatPrimCall op as) h fv 
-    = evalSatPrimCall op as h fv
-evalExpr (Let vos e) h fv = evalLet vos e h fv
-evalExpr (Case e as) h fv = evalCase e as h fv
-
-evalFunctionCall :: Variable -> FunctionArity -> [Atom] -> Heap -> FreshVars -> (Output, Heap)
-evalFunctionCall = error "functioncall not done"
-
-evalSatPrimCall :: Primitive -> [Atom] -> Heap -> FreshVars -> (Output, Heap)
-evalSatPrimCall p (a1:a2:as) h fv 
-    | p == Add = (show (read x1 + read x2), h)
-               where (x1,h1) = evalAtom a1 h fv
-                     (x2,h2) = evalAtom a2 h fv
-
-evalLet :: [(Variable,Object)] -> Expression -> Heap -> FreshVars -> (Output, Heap)
--- todo: make freshvar, replace var in expr, make heap object
-evalLet vos e h fv 
-    = (s, h') 
-    where (v,o) = head vos -- only doing first let for now
-          h' = updateHeap h v o
-          (s,h2) = evalObj o h' fv 
-          debug = v ++ "=" ++ s 
-
-evalCase :: Expression -> [Alternative] -> Heap -> FreshVars -> (Output, Heap)
-evalCase e (a:as) h fv 
-    = (s ,he)
-    where (y@(x:xs),he) = evalExpr e h fv
-          isValue = isUpper x
-          lookup = M.lookup y h
-          isLit = lookup == Nothing
-          debug = if isValue then "value " else
-                    if isLit then "literal " else "variable " 
-          
-          -- only deal w/ literal
-          (s,h') = evalAlternative a y he fv -- only doing first alt so far 
-
-evalAlternative :: Alternative -> String -> Heap -> FreshVars -> (Output, Heap)
-evalAlternative (DefaultAlt v e) s h fv = evalDefaultAlt v e s h fv
-evalAlternative (Alt c vs e) s h fv = evalAlt c vs e s h fv 
-
-evalAlt :: Constructor -> [Variable] -> Expression -> String -> Heap -> FreshVars -> (Output, Heap)
-evalAlt c vs e s h fv = (debug, h)
-                           where debug = "alt " ++ c ++ show vs ++ " " ++ stripParen s 
-
-
-stripParen :: String -> String
-stripParen = stripChars "()" 
-
-stripChars :: String -> String -> String
-stripChars = filter . flip notElem
-
-
-evalDefaultAlt :: Variable -> Expression -> String -> Heap -> FreshVars -> (Output, Heap)
--- replace v w/ y in e
-evalDefaultAlt v e (x:xs) h fv = (out, h')
-                                 where isValue = isUpper x
-                                       a = if isValue then error "Value!" else makeAtom (x:xs) h
-                                       e' = replace (v,a) [] e 
-                                       (out, h') = evalExpr e' h fv
-
---we must be evaling to far if we have to do this.. 
-makeAtom :: String -> Heap -> Atom
-makeAtom y h = if isLit then Literal (Int (read y)) else (Variable y)
-                  where  lookup = M.lookup y h
-                         isLit = lookup == Nothing
-
-evalObj :: Object -> Heap -> FreshVars -> (Output, Heap)
-evalObj (FUN vs e) h fv = error "FUN Obj not done"
-evalObj (PAP v as) h fv = error "PAP Obj not done"
-evalObj (CON c as) h fv = evalCON c as h fv
-evalObj (THUNK e) h fv =  error "THUNK Obj not done" 
-
--- simple CON evaluation as we don't have data types yet
-evalCON :: Constructor -> [Atom] -> Heap -> FreshVars -> (Output, Heap)
-evalCON c as h fv 
-    = (con, h)
-    where con = "(" ++ c ++ " " ++ intercalate " " [fst $ evalAtom a h fv | a <- as] ++ ")"
--}
--- replace a non-bound variable in a expression
 
 type Replacement = (Variable, Atom) --todo make list?
 
