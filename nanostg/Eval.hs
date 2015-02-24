@@ -96,9 +96,10 @@ evalLet ls e st@(h,fv)
 
 evalCase :: Expression -> [Alternative] -> State -> (Expression, State)
 -- CaseCon
-evalCase (Atom (Variable v)) alts st 
-    = error "no casecon"
-
+evalCase (Atom (Variable v)) alts st@(h,fv)
+    | isCON obj =  error "no casecon"
+                where obj = M.lookup v h
+                      (Just as) = getCONAtoms obj 
 -- CaseAny
 evalCase (Atom v) alts st@(h,fv)
     | isLiteral v || isValue v h = error "no caseany"
@@ -116,6 +117,19 @@ isLiteral _ = False
 isValue :: Atom -> Heap -> Bool
 isValue (Variable v) h 
     = if M.lookup v h == Nothing then False else True
+isValue (Literal _) _ = False
+
+getCONAtoms :: Maybe Object -> Maybe [Atom]
+getCONAtoms (Just (CON _ as )) = Just as
+getCONAtoms _ = Nothing 
+
+isConstructor :: Atom -> Heap -> Bool
+isConstructor (Variable v) h = isCON (M.lookup v h)
+isConstructor (Literal _) _ = False 
+
+isCON :: Maybe Object -> Bool
+isCON (Just (CON _  _)) = True
+isCON _ = False   
     
 evalSatPrimCall :: Primitive -> [Atom] -> State -> (Expression, State)
 evalSatPrimCall p (a1:a2:as) st 
