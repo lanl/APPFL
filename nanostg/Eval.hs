@@ -68,7 +68,6 @@ evalExpression (Atom a) st = (Atom a', st')
                              where (a',st') = evalAtom a st
 evalExpression (Let ls e) st = evalLet ls e st
 evalExpression (Case e as) st = evalCase e as st 
-   --error ("eval expr " ++ showExpression e) 
 evalExpression (SatPrimCall op as) st = evalSatPrimCall op as st
 
 evalAtom :: Atom -> State -> (Atom, State)
@@ -86,20 +85,19 @@ evalObject (THUNK e) st =  error "THUNK Obj not done"
 
 evalLet :: [(Variable,Object)] -> Expression -> State -> (Expression, State)
 evalLet ls e st@(h,fv)
---    = (e1, (h1, fv1)) 
-    = (e2, (h2, fv2)) 
+   = (e2, (h2, fv2)) 
     where (v,o) = head ls -- only doing first let for now
           (v', fv1) = getFresh fv
           a = Variable v'
           h1 = updateHeap h v' o
           e1 = replace (v,a) [] e
-          -- for now eval here really only should do this in case stmt???
+          -- should we evalExpression here?
           (e2, (h2,fv2)) = evalExpression e1 (h1,fv1)   
 
 evalCase :: Expression -> [Alternative] -> State -> (Expression, State)
 -- CaseCon
 evalCase (Atom (Variable v)) alts st@(h,fv)
-    | isCON obj = error debug --(e1, st) 
+    | isCON obj = evalExpression e1 st 
                 where obj = M.lookup v h
                       Just (c, as) = getCON obj 
                       Just (xs,e) = matchAlt c alts 
@@ -107,21 +105,19 @@ evalCase (Atom (Variable v)) alts st@(h,fv)
                       reps = zip xs as
                       -- only doing first arg of constructor for now
                       rep = head reps
-                      e1 = replace rep [] e  -- NOT WORKING!
-                      debug = "e: " ++ showExpression e ++ "\n x:" ++ fst rep ++ " a: " ++ showAtom (snd rep) ++ "\n e1: " ++ showExpression e1                     
+                      e1 = replace rep [] e  
                       
 -- CaseAny
 evalCase (Atom v) alts st@(h,fv)
-    | isLiteral v || isValue v h = error "case any" --evalExpression e1 st
-
+    | isLiteral v || isValue v h = evalExpression e1 st
                                  where Just (x,e) = matchDefaultAlt alts
                                        e1 = replace (x,v) [] e
       
-                              
+-- Case                              
 evalCase e alts st@(h,fv)
-    = error debug --(e2, st2)
+    = (e2, st2)
     where (e1, st1) = evalExpression e st
-          --e' is atom now?
+          --e1 is atom now?
           (e2, st2) = evalCase e1 alts st1
           debug = "top case e "  ++ showExpression e
 
@@ -162,7 +158,7 @@ matchDefaultAlt ((DefaultAlt v e):alts) = Just (v,e)
 matchDefaultAlt _ = Nothing
 
 showExpression :: Expression -> Output
---showExpression (Atom a) = showAtom a
+showExpression (Atom a) = showAtom a
 showExpression e = "debug " ++ show e
 
 showAtom :: Atom -> Output
