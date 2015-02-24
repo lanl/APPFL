@@ -25,6 +25,7 @@ case2 = "case list of {foo -> nil}"
 
 add1 = "main = THUNK(plus# 1 2);"
 add2 = "one = CON(I 1);\n two = CON(I 2);\n plusInt = FUN(x y ->\n case x of {\n I i -> case y of {\n I j -> case plus# i j of {\n x -> let { result = CON (I x) } in result }}});\n main = THUNK(plusInt one two);"
+add2b = "one = CON(I 1);\n two = CON(I 2);\n plusInt = FUN(x y ->\n case x of {\n I i -> case y of {\n I j -> case plus# i j of {\n z -> let { result = CON (I z) } in result }}});\n main = THUNK(plusInt one two);"
 add3 = "main = THUNK(case plus# 1 2 of {\n x -> let { result = CON(I x) } in result\n });"
 add4 = "one = CON(I 1);\n two = CON(I 2);\n main = THUNK(case one of {\n I i -> case two of {\n I j -> case plus# i j of {\n x -> let { result = CON (I x) } in result }}});"
 

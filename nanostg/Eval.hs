@@ -69,6 +69,7 @@ evalExpression (Atom a) st = (Atom a', st')
 evalExpression (Let ls e) st = evalLet ls e st
 evalExpression (Case e as) st = evalCase e as st 
 evalExpression (SatPrimCall op as) st = evalSatPrimCall op as st
+evalExpression (FunctionCall v k as) st = evalFunctionCall v k as st
 
 evalAtom :: Atom -> State -> (Atom, State)
 evalAtom (Literal x) st = (Literal x, st)
@@ -103,9 +104,7 @@ evalCase (Atom (Variable v)) alts st@(h,fv)
                       Just (xs,e) = matchAlt c alts 
                       -- list of replacements
                       reps = zip xs as
-                      -- only doing first arg of constructor for now
-                      rep = head reps
-                      e1 = replace rep [] e  
+                      e1 = replaceMany reps [] e  
                       
 -- CaseAny
 evalCase (Atom v) alts st@(h,fv)
@@ -113,11 +112,11 @@ evalCase (Atom v) alts st@(h,fv)
                                  where Just (x,e) = matchDefaultAlt alts
                                        e1 = replace (x,v) [] e
       
--- Case                              
+-- Case/Ret                              
 evalCase e alts st@(h,fv)
     = (e2, st2)
     where (e1, st1) = evalExpression e st
-          --e1 is atom now?
+          --e1 is atom now (either literal or pointer to heap object)
           (e2, st2) = evalCase e1 alts st1
           debug = "top case e "  ++ showExpression e
 
@@ -146,6 +145,9 @@ evalSatPrimCall p (a1:a2:as) st
                      b1 = showAtom $ fst $ evalAtom a1 st
                      b2 = showAtom $ fst $ evalAtom a2 st
 
+evalFunctionCall :: Variable -> FunctionArity -> [Atom] -> State -> (Expression, State)
+evalFunctionCall f k as st = error "no function call yet"
+                           
 
 matchAlt :: Constructor -> [Alternative] -> Maybe ([Variable], Expression)
 matchAlt c1 ((Alt c2 xs e):alts) 
@@ -172,7 +174,12 @@ showCON :: Constructor -> [Atom] -> Output
 showCON c as = "(" ++ c ++ " " ++ intercalate " " [showAtom a | a <- as] ++ ")"
 
 
-type Replacement = (Variable, Atom) --todo make list?
+type Replacement = (Variable, Atom)
+
+replaceMany :: [Replacement] -> BoundVars -> Expression -> Expression
+replaceMany (r:rs) bvs e = replaceMany rs bvs e'
+                         where e' = replace r bvs e
+replaceMany [] _ e = e
 
 class Replace a where replace ::  Replacement -> BoundVars -> a -> a
 
