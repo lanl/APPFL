@@ -1,3 +1,5 @@
+-- Parsing 'library' from "Higher-Order Functions for Parsing" Graham Hutton 
+
 module Parsing
 ( Parser
 , Pos
@@ -26,7 +28,6 @@ module Parsing
 ) where
 
 
--- From "Higher-Order Functions for Parsing" Graham Hutton 
 -- Section 4 Miranda like parser
 
 import Data.Char

@@ -1,68 +1,15 @@
--- TODO: 
--- letrec: turn into nested let?
--- data types
 
 module Parser
 ( program
 , declaration -- for testing
 , expression -- for testing
-, Variable
-, Constructor
-, Literal(..)
-, Atom(..)
-, FunctionArity(..)
-, Expression(..)
-, Alternative(..)
-, Object(..)
-, Declaration(..)
-, Program(..)
-, Primitive(..)
 ) where
 
 -- stg like parser
 
-import Parsing
+import AST
 import Lexer
-
--- Syntax from "Making a Fast Curry..." by Simon Marlow and Simon Peyton Jones
--- pg 
-
-type Variable = String
-
-type Constructor = String
-
-data Literal = Int Int | Double Double deriving (Eq, Show, Read)
-
--- Literal or Varaible
-data Atom = Literal Literal | Variable Variable deriving (Eq, Show, Read)
-
--- Deal with possible unknown arity
-type FunctionArity = Maybe Int
-
-data Expression = Atom Atom
-                | FunctionCall Variable FunctionArity [Atom]
-                | SatPrimCall Primitive [Atom] 
-                | Let [(Variable,Object)] Expression
-                | Case Expression [Alternative]
-                deriving (Eq, Show, Read)
-               
-data Alternative = Alt Constructor [Variable] Expression
-                 | DefaultAlt Variable Expression
-                 deriving (Eq, Show, Read)
-                 
-data Object = FUN [Variable] Expression
-            | PAP Variable [Atom]
-            | CON Constructor [Atom]
-            | THUNK Expression
-            | BLACKHOLE
-            | ERROR
-            deriving (Eq, Show, Read)
-
-data Declaration = Declaration Variable Object deriving (Show)
-
-data Program = Program [Declaration] deriving (Show)
-
-data Primitive = Add | Sub | Mul | Div | Eq deriving (Eq, Show, Read)
+import Parsing
 
 sym :: [Char] -> Parser (Pos Token) [Char]
 sym xs = literal (Symbol,xs) `using` snd

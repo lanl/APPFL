@@ -1,3 +1,5 @@
+-- Lexer for stg like lang.
+
 module Lexer
 ( Tag(..)
 , Token
