@@ -49,7 +49,7 @@ lexer = lexit [(some (any' literal " \t\n"), Junk),
                 (string "ERROR", Obj),
                 ( any' string ["(",")","=","{","}",";"], Symbol),
                 ( any' string ["->"], Symbol),
-                ( any' string ["plus#", "sub#", "mult#", "eq#"], Prim),
+                ( any' string ["plus#", "sub#", "mult#", "div#", "eq#"], Prim),
                 (conname, Construct),
                 (varname, Ident),
                 (floating, Floating), -- want floating before integer

@@ -140,6 +140,9 @@ isCON _ = False
 evalSatPrimCall :: Primitive -> [Atom] -> State -> (Expression, State)
 evalSatPrimCall p (a1:a2:as) st 
     | p == Add = (Atom $ Literal $ Int (x1+x2), st)
+    | p == Sub = (Atom $ Literal $ Int (x1-x2), st)
+    | p == Mul = (Atom $ Literal $ Int (x1*x2), st)
+    | p == Div = (Atom $ Literal $ Int (div x1 x2), st)
                where x1 = read b1 :: Int  
                      x2 = read b2 :: Int 
                      b1 = showAtom $ fst $ evalAtom a1 st

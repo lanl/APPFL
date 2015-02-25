@@ -62,7 +62,7 @@ data Declaration = Declaration Variable Object deriving (Show)
 
 data Program = Program [Declaration] deriving (Show)
 
-data Primitive = Add | Sub | Mul | Eq deriving (Eq, Show, Read)
+data Primitive = Add | Sub | Mul | Div | Eq deriving (Eq, Show, Read)
 
 sym :: [Char] -> Parser (Pos Token) [Char]
 sym xs = literal (Symbol,xs) `using` snd
@@ -112,6 +112,7 @@ primcallFN :: (String, [Atom]) -> Expression
 primcallFN (p,as) | p == "plus#" = SatPrimCall Add as
                   | p == "sub#" = SatPrimCall Sub as
                   | p == "mult#" = SatPrimCall Mul as
+                  | p == "div#" = SatPrimCall Div as
                   | p == "eq#" = SatPrimCall Eq as
 
 vo :: Parser (Pos Token) (Variable, Object)
