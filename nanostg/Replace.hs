@@ -1,3 +1,4 @@
+-- replace a variable w/ an atom in an expression
 {-# LANGUAGE FlexibleInstances #-}
 
 module Replace

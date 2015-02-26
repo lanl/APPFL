@@ -1,4 +1,4 @@
-{-# LANGUAGE FlexibleInstances #-}
+-- start of big-step interpreter for stg-like lang.
 
 module Eval
 ( eval
