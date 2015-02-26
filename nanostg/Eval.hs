@@ -15,7 +15,6 @@ type Heap = M.Map Variable Object
 type FreshVars = [Variable]
 type State = (Heap, FreshVars)
 type Output = String
-type Lets = [(Variable, Object)]
 
 -- setup heap and add Decls to it
 initHeap :: [Declaration] -> Heap

@@ -34,11 +34,12 @@ instance Replace Expression where
   -- need to update boundvars
   replace r bvs (Let vos e) 
     = Let vos' e' 
-    where (v,o) = head vos -- todo: only doing first let for now
-          bvs' = v:bvs
-          o' = replace r bvs' o
+    where vs = map fst vos 
+          os = map snd vos
+          bvs' = bvs ++ vs
+          os' = [replace r bvs' o | o <-os]
           e' = replace r bvs' e
-          vos' = [(v,o')] -- hack for now as only doing first let
+          vos' = zip vs os'
 
   replace r bvs (Case e alts) 
     = Case e' alts'
@@ -67,15 +68,14 @@ instance Replace Alternative where
     = Alt c vs e'
     where e' = replace r (vs++bvs) e
 
--- todo: only doing first alt of list for now
 instance Replace [Alternative] where
   replace r bvs alts 
-    = [replace r bvs (head alts)]
+    = [replace r bvs alt | alt <-alts]
 
 instance Replace Object where
   -- need update boundvars
   replace r bvs (FUN vs e) 
-    = error "no replace FUN yet"
+    = FUN vs (replace r (bvs++vs) e)
 
   replace r bvs (PAP f as) 
     = PAP f (replace r bvs as)
