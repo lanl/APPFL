@@ -12,7 +12,10 @@ module AST
 , Declaration(..)
 , Program(..)
 , Primitive(..)
+, display
 ) where
+
+import Data.List
 
 -- Syntax from "Making a Fast Curry..." by Simon Marlow and Simon Peyton Jones
 -- pg 
@@ -53,4 +56,20 @@ data Declaration = Declaration Variable Object deriving (Show)
 data Program = Program [Declaration] deriving (Show)
 
 data Primitive = Add | Sub | Mul | Div | Eq deriving (Eq, Show, Read)
+
+-- display functions
+class Display a where display :: a -> String
+
+instance Display Expression where
+    display (Atom a) = display a
+    display e = error ("Non atom expression " ++ show e)
+    
+instance Display Atom where
+    display (Literal (Int x)) = show x
+    display (Variable x) = x
+
+instance Display Object where
+    display (CON c as) 
+        =  "(" ++ c ++ " " ++ intercalate " " [display a | a <- as] ++ ")"
+    display e = error ("show non CON object " ++ show e)
 

@@ -6,7 +6,6 @@ module Eval
 
 import Data.Map as M hiding (map, filter, split)
 import Data.Maybe
-import Data.List
 import Data.Char
 import AST
 import Replace
@@ -50,7 +49,7 @@ eval prog@(Program ds)
 
 evalProgram :: Program -> State -> (Output, State)
 evalProgram (Program ds) st
-      = (showExpression e2, st2) 
+      = (display e2, st2) 
       where (e1, st1) = evalExpression (Atom (Variable "main")) st
             -- e' is a atom here
             (e2,st2) = evalFinalExpression e1 st1
@@ -58,7 +57,7 @@ evalProgram (Program ds) st
 evalFinalExpression :: Expression -> State -> (Expression, State)
 evalFinalExpression (Atom a) st = (Atom a', st')
                                where (a',st') = evalAtom a st
-evalFinalExpression e _ = error ("non atom expression " ++  showExpression e)
+evalFinalExpression e _ = error ("non atom expression " ++  display e)
 
 -- Update
 evalUpdate :: Variable -> Expression -> State -> State
@@ -114,10 +113,10 @@ evalExpression (SatPrimCall op (a1:a2:as)) st
     | op == Div = (Atom $ Literal $ Int (div x1 x2), st)
                where x1 = read b1 :: Int  
                      x2 = read b2 :: Int 
-                     b1 = showAtom $ fst $ evalAtom a1 st
-                     b2 = showAtom $ fst $ evalAtom a2 st
+                     b1 = display $ fst $ evalAtom a1 st
+                     b2 = display $ fst $ evalAtom a2 st
 
--- FunctionCall Expression
+-- Knowncall Expression
 evalExpression (FunctionCall f k as) st@(h,fv) 
     = evalExpression e1 st
     where Just (FUN xs e)  = M.lookup f h
@@ -132,7 +131,7 @@ evalAtom :: Atom -> State -> (Atom, State)
 evalAtom (Literal x) st = (Literal x, st)
 evalAtom (Variable x) st@(h,fv) = (Variable x', st')
                                 where (obj, st') = evalObject (lookupHeap x h) st
-                                      x' = showObject obj 
+                                      x' = display obj 
 
 evalObject :: Object -> State -> (Object, State)
 evalObject (CON c as) st = (CON c as', st)
@@ -173,19 +172,4 @@ matchDefaultAlt :: [Alternative] ->  Maybe (Variable, Expression)
 matchDefaultAlt ((Alt _ _ _ ):alts) = matchDefaultAlt alts
 matchDefaultAlt ((DefaultAlt v e):alts) = Just (v,e)
 matchDefaultAlt _ = Nothing
-
-showExpression :: Expression -> Output
-showExpression (Atom a) = showAtom a
-showExpression e = "debug " ++ show e
-
-showAtom :: Atom -> Output
-showAtom (Literal (Int x)) = show x
-showAtom (Variable x) = x
-
-showObject :: Object -> Output
-showObject (CON c as) = showCON c as
-showObject _ = "show non CON object"
-
-showCON :: Constructor -> [Atom] -> Output
-showCON c as = "(" ++ c ++ " " ++ intercalate " " [showAtom a | a <- as] ++ ")"
 
