@@ -53,21 +53,17 @@ evalProgram (Program ds) st
       = (showExpression e2, st2) 
       where (e1, st1) = evalExpression (Atom (Variable "main")) st
             -- e' is a atom here
-            (e2,st2) = evalFinalAtomExpression e1 st1
+            (e2,st2) = evalFinalExpression e1 st1
 
-evalFinalAtomExpression :: Expression -> State -> (Expression, State)
-evalFinalAtomExpression (Atom a) st = (Atom a', st')
+evalFinalExpression :: Expression -> State -> (Expression, State)
+evalFinalExpression (Atom a) st = (Atom a', st')
                                where (a',st') = evalAtom a st
-evalAtomExpression e _ = error ("non atom expression " ++  showExpression e)
+evalFinalExpression e _ = error ("non atom expression " ++  showExpression e)
 
 -- Update
 evalUpdate :: Variable -> Expression -> State -> State
 evalUpdate x (Atom (Variable y)) st@(h,fv) 
     = (updateHeap h x (lookupHeap y h), fv)
--- we could get a literal as well? 
--- if so make into CON
---evalUpdate x (Atom (Literal y)) st@(h,fv) 
---    = (updateHeap h x (CON "I" [Literal y]), fv) 
 
 evalExpression :: Expression -> State -> (Expression, State)
 
@@ -79,14 +75,9 @@ evalExpression (Atom (Variable x)) st@(h,fv)
                         h1 = updateHeap h x BLACKHOLE
                         (e1, st1) = evalExpression e (h1,fv)
   
---evalExpression (Atom a) st = (Atom a', st')
---                           where (a',st') = evalAtom a st
-
 -- Let Expression
 evalExpression (Let ls e) st@(h,fv)  
---   = evalExpression e1 (h1,fv1)   -- should we evalExpression here?
     = (e1, (h1,fv1))
---    = error ("let " ++ show e1 ++ " heap " ++ show h1) 
     where (v,o) = head ls -- only doing first let for now
           (v', fv1) = getFresh fv
           a = Variable v'
@@ -133,7 +124,7 @@ evalExpression (FunctionCall f k as) st@(h,fv)
           reps = zip xs as
           e1 = replaceMany reps [] e  
 
--- default do nothing
+-- default if no rules apply just return the expression unchanged
 evalExpression e st = (e,st)
 
 
@@ -144,11 +135,9 @@ evalAtom (Variable x) st@(h,fv) = (Variable x', st')
                                       x' = showObject obj 
 
 evalObject :: Object -> State -> (Object, State)
-evalObject (FUN vs e) st = error "FUN Obj not done"
-evalObject (PAP v as) st = error "PAP Obj not done"
 evalObject (CON c as) st = (CON c as', st)
                            where as' = [fst $ evalAtom a st | a <- as]
-evalObject (THUNK e) st =  error "THUNK Obj not done"
+evalObject _ _ =  error "eval Non CON object"
 
 isLiteral :: Atom -> Bool
 isLiteral (Literal _) = True
@@ -195,6 +184,7 @@ showAtom (Variable x) = x
 
 showObject :: Object -> Output
 showObject (CON c as) = showCON c as
+showObject _ = "show non CON object"
 
 showCON :: Constructor -> [Atom] -> Output
 showCON c as = "(" ++ c ++ " " ++ intercalate " " [showAtom a | a <- as] ++ ")"
