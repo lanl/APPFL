@@ -62,8 +62,18 @@ evalMain (CON c as) st = (showCON c as', st)
 evalMain o st = error "bad main"
 
 evalExpression :: Expression -> State -> (Expression, State)
+
+-- THUNK 
+evalExpression (Atom (Variable v)) st@(h,fv) 
+    | isTHUNK obj = error "thunk"
+                  where obj = M.lookup v h
+                        Just e = getTHUNK obj
+                        e' = evalExpression e st
+                        --h1 = updateHeap h v 
+  
 evalExpression (Atom a) st = (Atom a', st')
-                             where (a',st') = evalAtom a st
+                           where (a',st') = evalAtom a st
+
 -- Let Expression
 evalExpression (Let ls e) st@(h,fv)  
    = evalExpression e1 (h1,fv1)   -- should we evalExpression here?
@@ -113,6 +123,7 @@ evalExpression (FunctionCall f k as) st@(h,fv)
           reps = zip xs as
           e1 = replaceMany reps [] e  
 
+
 evalAtom :: Atom -> State -> (Atom, State)
 evalAtom (Literal x) st = (Literal x, st)
 evalAtom (Variable x) st@(h,fv) = (Variable x', st')
@@ -142,7 +153,14 @@ getCON _ = Nothing
 isCON :: Maybe Object -> Bool
 isCON (Just (CON _  _)) = True
 isCON _ = False   
+
+getTHUNK :: Maybe Object -> Maybe Expression 
+getTHUNK (Just (THUNK e)) = Just e
+getTHUNK _ = Nothing 
     
+isTHUNK :: Maybe Object -> Bool
+isTHUNK (Just (THUNK _)) = True
+isTHUNK _ = False   
 
 matchAlt :: Constructor -> [Alternative] -> Maybe ([Variable], Expression)
 matchAlt c1 ((Alt c2 xs e):alts) 
