@@ -64,8 +64,39 @@ evalMain o st = error "bad main"
 evalExpression :: Expression -> State -> (Expression, State)
 evalExpression (Atom a) st = (Atom a', st')
                              where (a',st') = evalAtom a st
-evalExpression (Let ls e) st = evalLet ls e st
-evalExpression (Case e as) st = evalCase e as st 
+-- Let Expression
+evalExpression (Let ls e) st@(h,fv)  
+   = (e2, (h2, fv2)) 
+    where (v,o) = head ls -- only doing first let for now
+          (v', fv1) = getFresh fv
+          a = Variable v'
+          h1 = updateHeap h v' o
+          e1 = replace (v,a) [] e
+          -- should we evalExpression here?
+          (e2, (h2,fv2)) = evalExpression e1 (h1,fv1)   
+
+-- CaseCon Expression
+evalExpression (Case (Atom (Variable v)) alts) st@(h,fv) 
+    | isCON obj = evalExpression e1 st 
+                where obj = M.lookup v h
+                      Just (c, as) = getCON obj 
+                      Just (xs,e) = matchAlt c alts 
+                      -- list of replacements
+                      reps = zip xs as
+                      e1 = replaceMany reps [] e  
+                      
+-- CaseAny Expression
+evalExpression (Case (Atom v) alts) st@(h,fv) 
+    | isLiteral v || isValue v h = evalExpression e1 st
+                                 where Just (x,e) = matchDefaultAlt alts
+                                       e1 = replace (x,v) [] e
+      
+-- Case Expression
+evalExpression (Case e alts) st@(h,fv) 
+    = evalExpression (Case e1 alts) st1
+    where (e1, st1) = evalExpression e st
+          --e1 is atom now (either literal or pointer to heap object)
+
 evalExpression (SatPrimCall op as) st = evalSatPrimCall op as st
 evalExpression (FunctionCall v k as) st = evalFunctionCall v k as st
 
@@ -82,16 +113,6 @@ evalObject (CON c as) st = (CON c as', st)
                            where as' = [fst $ evalAtom a st | a <- as]
 evalObject (THUNK e) st =  error "THUNK Obj not done"
 
-evalLet :: [(Variable,Object)] -> Expression -> State -> (Expression, State)
-evalLet ls e st@(h,fv)
-   = (e2, (h2, fv2)) 
-    where (v,o) = head ls -- only doing first let for now
-          (v', fv1) = getFresh fv
-          a = Variable v'
-          h1 = updateHeap h v' o
-          e1 = replace (v,a) [] e
-          -- should we evalExpression here?
-          (e2, (h2,fv2)) = evalExpression e1 (h1,fv1)   
 
 evalCase :: Expression -> [Alternative] -> State -> (Expression, State)
 -- CaseCon
