@@ -66,14 +66,12 @@ evalExpression (Atom a) st = (Atom a', st')
                              where (a',st') = evalAtom a st
 -- Let Expression
 evalExpression (Let ls e) st@(h,fv)  
-   = (e2, (h2, fv2)) 
+   = evalExpression e1 (h1,fv1)   -- should we evalExpression here?
     where (v,o) = head ls -- only doing first let for now
           (v', fv1) = getFresh fv
           a = Variable v'
           h1 = updateHeap h v' o
           e1 = replace (v,a) [] e
-          -- should we evalExpression here?
-          (e2, (h2,fv2)) = evalExpression e1 (h1,fv1)   
 
 -- CaseCon Expression
 evalExpression (Case (Atom (Variable v)) alts) st@(h,fv) 
@@ -97,8 +95,23 @@ evalExpression (Case e alts) st@(h,fv)
     where (e1, st1) = evalExpression e st
           --e1 is atom now (either literal or pointer to heap object)
 
-evalExpression (SatPrimCall op as) st = evalSatPrimCall op as st
-evalExpression (FunctionCall v k as) st = evalFunctionCall v k as st
+-- Saturated Primitive Expression
+evalExpression (SatPrimCall op (a1:a2:as)) st 
+    | op == Add = (Atom $ Literal $ Int (x1+x2), st)
+    | op == Sub = (Atom $ Literal $ Int (x1-x2), st)
+    | op == Mul = (Atom $ Literal $ Int (x1*x2), st)
+    | op == Div = (Atom $ Literal $ Int (div x1 x2), st)
+               where x1 = read b1 :: Int  
+                     x2 = read b2 :: Int 
+                     b1 = showAtom $ fst $ evalAtom a1 st
+                     b2 = showAtom $ fst $ evalAtom a2 st
+
+-- FunctionCall Expression
+evalExpression (FunctionCall f k as) st@(h,fv) 
+    = evalExpression e1 st
+    where Just (FUN xs e)  = M.lookup f h
+          reps = zip xs as
+          e1 = replaceMany reps [] e  
 
 evalAtom :: Atom -> State -> (Atom, State)
 evalAtom (Literal x) st = (Literal x, st)
@@ -112,32 +125,6 @@ evalObject (PAP v as) st = error "PAP Obj not done"
 evalObject (CON c as) st = (CON c as', st)
                            where as' = [fst $ evalAtom a st | a <- as]
 evalObject (THUNK e) st =  error "THUNK Obj not done"
-
-
-evalCase :: Expression -> [Alternative] -> State -> (Expression, State)
--- CaseCon
-evalCase (Atom (Variable v)) alts st@(h,fv)
-    | isCON obj = evalExpression e1 st 
-                where obj = M.lookup v h
-                      Just (c, as) = getCON obj 
-                      Just (xs,e) = matchAlt c alts 
-                      -- list of replacements
-                      reps = zip xs as
-                      e1 = replaceMany reps [] e  
-                      
--- CaseAny
-evalCase (Atom v) alts st@(h,fv)
-    | isLiteral v || isValue v h = evalExpression e1 st
-                                 where Just (x,e) = matchDefaultAlt alts
-                                       e1 = replace (x,v) [] e
-      
--- Case/Ret                              
-evalCase e alts st@(h,fv)
-    = (e2, st2)
-    where (e1, st1) = evalExpression e st
-          --e1 is atom now (either literal or pointer to heap object)
-          (e2, st2) = evalCase e1 alts st1
-          debug = "top case e "  ++ showExpression e
 
 isLiteral :: Atom -> Bool
 isLiteral (Literal _) = True
@@ -156,23 +143,6 @@ isCON :: Maybe Object -> Bool
 isCON (Just (CON _  _)) = True
 isCON _ = False   
     
-evalSatPrimCall :: Primitive -> [Atom] -> State -> (Expression, State)
-evalSatPrimCall p (a1:a2:as) st 
-    | p == Add = (Atom $ Literal $ Int (x1+x2), st)
-    | p == Sub = (Atom $ Literal $ Int (x1-x2), st)
-    | p == Mul = (Atom $ Literal $ Int (x1*x2), st)
-    | p == Div = (Atom $ Literal $ Int (div x1 x2), st)
-               where x1 = read b1 :: Int  
-                     x2 = read b2 :: Int 
-                     b1 = showAtom $ fst $ evalAtom a1 st
-                     b2 = showAtom $ fst $ evalAtom a2 st
-
-evalFunctionCall :: Variable -> FunctionArity -> [Atom] -> State -> (Expression, State)
-evalFunctionCall f k as st@(h,fv) 
-    = evalExpression e1 st
-    where Just (FUN xs e)  = M.lookup f h
-          reps = zip xs as
-          e1 = replaceMany reps [] e  
 
 matchAlt :: Constructor -> [Alternative] -> Maybe ([Variable], Expression)
 matchAlt c1 ((Alt c2 xs e):alts) 
