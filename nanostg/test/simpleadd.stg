@@ -1,0 +1,3 @@
+main = THUNK(case plus# 1 2 of {
+    x -> let { result = CON(I x) } in result
+});

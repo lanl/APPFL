@@ -6,6 +6,7 @@ module Lexer
 , prelex
 , lexer
 , strip
+, lexString 
 ) where
 
 
@@ -62,3 +63,6 @@ lexer = lexit [(some (any' literal " \t\n"), Junk),
 strip :: [Pos Token] -> [Pos Token]
 strip = filter ((/=Junk).fst.fst)
 
+-- full lexer
+lexString :: [Char] -> [Parsing.Pos Token]
+lexString = strip.fst.head.lexer.prelex

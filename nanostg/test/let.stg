@@ -1,0 +1,1 @@
+main = THUNK(let { result = CON (I 7) } in result)

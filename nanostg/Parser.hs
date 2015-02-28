@@ -1,8 +1,7 @@
 
 module Parser
 ( program
-, declaration -- for testing
-, expression -- for testing
+, parseString
 ) where
 
 -- stg like parser
@@ -123,4 +122,8 @@ program = (declaration `then'` many (sym ";" `xthen` declaration)) `using` progF
 
 progFN :: (Declaration, [Declaration]) -> Program
 progFN (a,b) = Program (a:b)
+
+-- full parser 
+parseString :: [Char] -> AST.Program
+parseString = fst.head.program.strip.fst.head.lexer.prelex
 

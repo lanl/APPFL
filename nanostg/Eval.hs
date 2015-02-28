@@ -2,12 +2,14 @@
 
 module Eval
 ( eval
+, evalString
 ) where
 
 import Data.Map as M hiding (map, filter, split)
 import Data.Maybe
 import Data.Char
 import AST
+import Parser
 import Replace
 
 type Heap = M.Map Variable Object
@@ -42,7 +44,10 @@ split xs = (map fst xs, map snd xs)
 getFresh :: FreshVars -> (Variable, FreshVars)
 getFresh fv = (head fv1, fv2)
             where (fv1,fv2) = split $ spliter fv
-           
+          
+evalString :: [Char] -> Eval.Output
+evalString = eval.parseString
+ 
 eval :: Program -> Output
 eval prog@(Program ds) 
     = fst $ evalProgram prog (initHeap ds, initFreshVars)
