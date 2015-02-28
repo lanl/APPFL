@@ -24,10 +24,9 @@ declFN :: Declaration -> (Variable, Object)
 declFN (Declaration v o) = (v,o)
 
 lookupHeap :: Variable -> Heap -> Object
-lookupHeap v h | lookup == Nothing = error ("can't find var " ++ v)
+lookupHeap v h | lookup == Nothing = error ("can't find var " ++ v ++ " in " ++ show h)
                | otherwise = fromJust lookup
                 where lookup = M.lookup v h
-
 
 updateHeap :: Heap -> Variable -> Object -> Heap
 updateHeap h v o = M.insert v o h 
@@ -47,36 +46,47 @@ getFresh fv = (head fv1, fv2)
            
 eval :: Program -> Output
 eval prog@(Program ds) 
-    = fst $ evalProg prog (initHeap ds, initFreshVars)
+    = fst $ evalProgram prog (initHeap ds, initFreshVars)
 
-evalProg :: Program -> State -> (Output, State)
-evalProg (Program ds) st@(h,fv)
-    = evalMain (lookupHeap "main" h) st 
+evalProgram :: Program -> State -> (Output, State)
+evalProgram (Program ds) st
+      = (showExpression e2, st2) 
+      where (e1, st1) = evalExpression (Atom (Variable "main")) st
+            -- e' is a atom here
+            (e2,st2) = evalFinalAtomExpression e1 st1
 
--- assume for now that main is a THUNK or CON and evaluate it
-evalMain :: Object -> State -> (Output, State)
-evalMain (THUNK e) st = (showExpression e', st') 
-                              where (e', st') = evalExpression e st
-evalMain (CON c as) st = (showCON c as', st) 
-                         where as' = [fst $ evalAtom a st | a <- as] 
-evalMain o st = error "bad main"
+evalFinalAtomExpression :: Expression -> State -> (Expression, State)
+evalFinalAtomExpression (Atom a) st = (Atom a', st')
+                               where (a',st') = evalAtom a st
+evalAtomExpression e _ = error ("non atom expression " ++  showExpression e)
+
+-- Update
+evalUpdate :: Variable -> Expression -> State -> State
+evalUpdate x (Atom (Variable y)) st@(h,fv) 
+    = (updateHeap h x (lookupHeap y h), fv)
+-- we could get a literal as well? 
+-- if so make into CON
+--evalUpdate x (Atom (Literal y)) st@(h,fv) 
+--    = (updateHeap h x (CON "I" [Literal y]), fv) 
 
 evalExpression :: Expression -> State -> (Expression, State)
 
 -- THUNK 
-evalExpression (Atom (Variable v)) st@(h,fv) 
-    | isTHUNK obj = error "thunk"
-                  where obj = M.lookup v h
+evalExpression (Atom (Variable x)) st@(h,fv) 
+    | isTHUNK obj = (e1, evalUpdate x e1 st1)
+                  where obj = M.lookup x h
                         Just e = getTHUNK obj
-                        e' = evalExpression e st
-                        --h1 = updateHeap h v 
+                        h1 = updateHeap h x BLACKHOLE
+                        (e1, st1) = evalExpression e (h1,fv)
   
-evalExpression (Atom a) st = (Atom a', st')
-                           where (a',st') = evalAtom a st
+--evalExpression (Atom a) st = (Atom a', st')
+--                           where (a',st') = evalAtom a st
 
 -- Let Expression
 evalExpression (Let ls e) st@(h,fv)  
-   = evalExpression e1 (h1,fv1)   -- should we evalExpression here?
+--   = evalExpression e1 (h1,fv1)   -- should we evalExpression here?
+    = (e1, (h1,fv1))
+--    = error ("let " ++ show e1 ++ " heap " ++ show h1) 
     where (v,o) = head ls -- only doing first let for now
           (v', fv1) = getFresh fv
           a = Variable v'
@@ -122,6 +132,9 @@ evalExpression (FunctionCall f k as) st@(h,fv)
     where Just (FUN xs e)  = M.lookup f h
           reps = zip xs as
           e1 = replaceMany reps [] e  
+
+-- default do nothing
+evalExpression e st = (e,st)
 
 
 evalAtom :: Atom -> State -> (Atom, State)
