@@ -1,0 +1,10 @@
+one = CON(I 1);
+
+eqInt = FUN(x y ->
+           case x of
+              { I i ->
+                  case y of
+                     { I j -> case eq# i j of
+                                 { x -> intToBool# x }}});
+
+main = THUNK(eqInt one one);

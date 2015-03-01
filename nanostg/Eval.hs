@@ -65,13 +65,14 @@ evalProgram :: Program -> State -> (Output, State)
 evalProgram (Program ds) st
       = (display e2, st2) 
       where (e1, st1) = evalExpression (Atom (Variable "main")) st
-            -- e1 is a atom here?
-            (e2,st2) = evalFinalExpression e1 st1
+            (e2,st2) = evalSubExpression e1 st1
 
-evalFinalExpression :: Expression -> State -> (Expression, State)
-evalFinalExpression (Atom a) st = (Atom a', st')
+evalSubExpression :: Expression -> State -> (Expression, State)
+evalSubExpression (Atom a) st = (Atom a', st')
                                where (a',st') = evalAtom a st
-evalFinalExpression e _ = error ("non atom expression " ++  display e)
+-- not atom try again
+evalSubExpression e st = evalSubExpression e' st'
+                       where (e',st') = evalExpression e st
 
 -- Update
 evalUpdate :: Variable -> Expression -> State -> State
@@ -89,7 +90,7 @@ evalExpression (Atom (Variable x)) st@(h,fv)
                         h1 = updateHeapVar h x BLACKHOLE
                         (e1, st1) = evalExpression e (h1,fv)
   
--- Let Expression
+-- Let Expression (only 1 let)
 evalExpression (Let ((v,o):ls) e) st@(h,fv)  
     | ls == [] = (e1, (h1,fv1))
     where (v', fv1) = getFreshVar fv
@@ -133,7 +134,7 @@ evalExpression (Case e alts) st@(h,fv)
           --e1 is atom now (either literal or pointer to heap object)
 
 -- Saturated Primitive Expression
-evalExpression (SatPrimCall op (a1:a2:as)) st 
+evalExpression (SatPrimCall op as) st 
     | op == Add = (Atom $ Literal $ Int (x1+x2), st)
     | op == Sub = (Atom $ Literal $ Int (x1-x2), st)
     | op == Mul = (Atom $ Literal $ Int (x1*x2), st)
@@ -144,9 +145,10 @@ evalExpression (SatPrimCall op (a1:a2:as)) st
     | op == GreaterThan = (Atom $ Literal $ Int (compareop (>) x1 x2), st) 
     | op == LessThanOrEqual = (Atom $ Literal $ Int (compareop (<=) x1 x2), st) 
     | op == GreaterThanOrEqual = (Atom $ Literal $ Int (compareop (>=) x1 x2), st) 
-    | op == IntToBool = error "no intToBool yet"
-               where x1 = read (display $ fst $ evalAtom a1 st) :: Int  
-                     x2 = read (display $ fst $ evalAtom a2 st) :: Int 
+    | op == IntToBool = evalBool (head as) st
+               where x1 = read (display $ fst $ evalAtom (head as) st) :: Int  
+                     x2 = read (display $ fst $ evalAtom (as !! 1) st) :: Int 
+                     
 
 -- Knowncall Expression
 evalExpression (FunctionCall f k as) st@(h,fv) 
@@ -156,8 +158,19 @@ evalExpression (FunctionCall f k as) st@(h,fv)
           e1 = replaceMany reps [] e  
 
 -- default if no rules apply just return the expression unchanged
+-- todo: need a way to terminate if this is the case
 evalExpression e st = (e,st)
 
+-- In this case we need to make a True or False constructor
+-- add it to the heap and return the (fresh) variable that points to it
+evalBool :: Atom -> State -> (Expression, State) 
+evalBool (Literal (Int x)) st@(h,fv) 
+    = (a1,(h1,fv1)) 
+    where (v, fv1) = getFreshVar fv
+          -- [] at the end as bool constructor takes no args
+          newobj = CON (if x == 1 then "True" else "False") []
+          h1 = updateHeapVar h v newobj
+          a1 = Atom $ Variable v
 
 evalAtom :: Atom -> State -> (Atom, State)
 evalAtom (Literal x) st = (Literal x, st)

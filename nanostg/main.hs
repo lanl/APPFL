@@ -40,6 +40,8 @@ evalTestFiles =
     , "test/bool.stg"
     , "test/tree.stg"
     , "test/seq.stg"
+    , "test/eqinttrue.stg"
+    , "test/eqintfalse.stg"
     ]
 
 evalTests :: IO ()
