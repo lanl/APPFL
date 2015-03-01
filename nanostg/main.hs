@@ -33,7 +33,8 @@ evalTestFiles =
     "test/simpleadd.stg", 
     "test/partadd.stg", 
     "test/fulladd.stg", 
-    "test/fulladd2.stg" 
+    "test/fulladd2.stg",
+    "test/list.stg" 
     ]
 
 evalTests :: IO ()

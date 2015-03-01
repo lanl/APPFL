@@ -1,0 +1,25 @@
+! not working yet (letrec)
+zero = CON(I 0);
+one = CON(I 1);
+seven = CON(I 7);
+
+subInt = FUN(x y ->
+           case x of
+              { I i ->
+                  case y of
+                     { I j -> case sub# i j of
+                                 { x -> let { result = CON (I x) } in result }}});
+multInt = FUN(x y ->
+   case x of { 
+      I i -> case y of { 
+               I j -> case mult# i j of { 
+                         x -> let { result = CON (I x) } in result }}});
+fac = FUN (x -> 
+         case eqInt x zero of {
+            True -> one;
+            False -> let { s = THUNK(subInt x one);
+                           rec = THUNK(fac s) }
+                     in multInt x rec
+         });
+
+main = THUNK (fac seven) 
