@@ -1,4 +1,5 @@
-! not working yet (letrec)
+! not working yet (let w/ expression that is function call)
+unit = CON(Unit);
 zero = CON(I 0);
 one = CON(I 1);
 append = FUN(l1 l2 ->
@@ -11,7 +12,9 @@ forcelist = FUN(list ->
    case list of {
       Nil -> unit;
       Cons h t -> let { rec = THUNK(forcelist t) } in seq h rec });
+
 seq = FUN(x y -> case x of { z -> y });
+
 list1 = CON(Cons one nil);
 list2 = CON(Cons one list1);
 list3 = CON(Cons zero list2);

@@ -65,7 +65,7 @@ evalProgram :: Program -> State -> (Output, State)
 evalProgram (Program ds) st
       = (display e2, st2) 
       where (e1, st1) = evalExpression (Atom (Variable "main")) st
-            -- e' is a atom here
+            -- e1 is a atom here?
             (e2,st2) = evalFinalExpression e1 st1
 
 evalFinalExpression :: Expression -> State -> (Expression, State)
@@ -77,6 +77,7 @@ evalFinalExpression e _ = error ("non atom expression " ++  display e)
 evalUpdate :: Variable -> Expression -> State -> State
 evalUpdate x (Atom (Variable y)) st@(h,fv) 
     = (updateHeapVar h x (lookupHeap y h), fv)
+evalUpdate x e st = error ("bad update " ++ x ++ " " ++ show e) 
 
 evalExpression :: Expression -> State -> (Expression, State)
 
@@ -90,7 +91,7 @@ evalExpression (Atom (Variable x)) st@(h,fv)
   
 -- Let Expression
 evalExpression (Let ((v,o):ls) e) st@(h,fv)  
-    | ls == [] = (e1, (h1,fv1))
+    | ls == [] = (e1, (h1,fv1)) --or evalExpression e1 (h1,fv1)???
     where (v', fv1) = getFreshVar fv
           a = Variable v'
           e1 = replace (v,a) [] e
@@ -99,6 +100,7 @@ evalExpression (Let ((v,o):ls) e) st@(h,fv)
 -- Letrec Expression
 evalExpression (Let ls e) st@(h,fv)  
     = (e1, (h1,fv1))
+--      = error ("letrec os " ++ show os1 ++ " e " ++ show e1)
     where (vs,os) = unzip ls
           (vs1,fv1) = getFreshVars (length ls) fv
           as = [Variable v | v <- vs1]
@@ -195,5 +197,5 @@ matchAlt _ _ = Nothing
 matchDefaultAlt :: [Alternative] ->  Maybe (Variable, Expression)
 matchDefaultAlt ((Alt _ _ _ ):alts) = matchDefaultAlt alts
 matchDefaultAlt ((DefaultAlt v e):alts) = Just (v,e)
-matchDefaultAlt _ = Nothing
+matchDefaultAlt alts = error ("matchDefaultAlt " ++ show alts)  
 

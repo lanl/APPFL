@@ -1,4 +1,4 @@
-! not working yet (foldr)
+! not working yet (foldl (let w/ expression that is function call))
 nil = CON(Nil);
 zero = CON(I 0);
 one = CON(I 1);

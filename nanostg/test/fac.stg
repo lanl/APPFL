@@ -14,6 +14,13 @@ multInt = FUN(x y ->
       I i -> case y of { 
                I j -> case mult# i j of { 
                          x -> let { result = CON (I x) } in result }}});
+eqInt = FUN(x y ->
+           case x of
+              { I i ->
+                  case y of
+                     { I j -> case eq# i j of
+                                 { x -> intToBool# x }}});
+
 fac = FUN (x -> 
          case eqInt x zero of {
             True -> one;
