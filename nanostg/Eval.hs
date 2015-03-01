@@ -100,7 +100,6 @@ evalExpression (Let ((v,o):ls) e) st@(h,fv)
 -- Letrec Expression
 evalExpression (Let ls e) st@(h,fv)  
     = (e1, (h1,fv1))
---      = error ("letrec os " ++ show os1 ++ " e " ++ show e1)
     where (vs,os) = unzip ls
           (vs1,fv1) = getFreshVars (length ls) fv
           as = [Variable v | v <- vs1]
@@ -203,7 +202,6 @@ matchAlt :: Constructor -> [Alternative] -> Maybe ([Variable], Expression)
 matchAlt c1 (a@(Alt c2 xs e):alts) 
     = if c1 == c2 then Just (xs, e) else matchAlt c1 alts
 matchAlt c alts = Nothing
---error ("matchAlt " ++ c ++ " " ++ show alts) 
 
 matchDefaultAlt :: [Alternative] ->  Maybe (Variable, Expression)
 matchDefaultAlt ((Alt _ _ _ ):alts) = matchDefaultAlt alts

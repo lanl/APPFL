@@ -12,9 +12,6 @@ type BoundVars = [Variable]
 
 type Replacement = (Variable, Atom)
 
---type Decl = (Variable, Object)
-
-
 class ReplaceMany a where replaceMany ::  [Replacement] -> BoundVars -> a -> a
 
 instance ReplaceMany Expression where
@@ -22,15 +19,6 @@ instance ReplaceMany Expression where
     = replaceMany rs bvs e'
     where e' = replace r bvs e
   replaceMany [] _ e = e
-
-{-
-instance ReplaceMany [Decl] where
-  replaceMany (r:rs) bvs vos 
-    = replaceMany rs bvs vos'
-    where (vs,os) = unzip vos
-          vos' = zip vs [replace r bvs o | o <-os]
-  replaceMany [] _ vos = vos
--}
 
 instance ReplaceMany [Object] where
   replaceMany (r:rs) bvs os 

@@ -9,7 +9,6 @@ module Lexer
 , lexString 
 ) where
 
-
 import Parsing
 
 prelex :: [Char] -> [Pos Char]
