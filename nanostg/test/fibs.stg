@@ -1,0 +1,41 @@
+! fibs = 1 : 1 : zipWith (+) fibs (tail fibs)
+
+one = CON(I 1);
+five = CON(I 5);
+
+tail = FUN(xs -> case xs of { Cons hd tl -> tl });
+
+zipWith = FUN(f list1 list2 ->
+   case list1 of {
+      Nil -> nil;
+      Cons h1 t1 -> 
+         case list2 of {
+            Nil -> nil;
+            Cons h2 t2 ->
+               let { newHead = THUNK(f h1 h2); 
+                     newTail = THUNK(zipWith f t1 t2);
+                     result = CON(Cons newHead newTail)
+               } in result
+         }
+   });
+
+plusInt = FUN(x y ->
+   case x of { 
+      I i -> case y of { 
+               I j -> case plus# i j of { 
+                         x -> let { result = CON (I x) } in result }}});
+
+forcelist = FUN(list ->
+   case list of {
+      Nil -> unit;
+      Cons h t -> let { rec = THUNK(forcelist t) } in seq h rec });
+
+fibs = THUNK(let { tailFibs = THUNK(tail fibs);
+                   zippedList = THUNK(zipWith plusInt fibs tailFibs);
+                   tailList = CON(Cons one zippedList);
+                   list = CON(Cons one tailList)
+             } in list);
+
+main = THUNK( let { result = THUNK(take five fibs);
+                    f = THUNK(forcelist result)
+                  } in seq f result)
