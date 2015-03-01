@@ -80,13 +80,16 @@ evalExpression (Atom (Variable x)) st@(h,fv)
                         (e1, st1) = evalExpression e (h1,fv)
   
 -- Let Expression
-evalExpression (Let ls e) st@(h,fv)  
-    = (e1, (h1,fv1))
-    where (v,o) = head ls -- only doing first let for now
-          (v', fv1) = getFresh fv
+evalExpression (Let ((v,o):ls) e) st@(h,fv)  
+    | ls == [] = (e1, (h1,fv1))
+    where (v', fv1) = getFresh fv
           a = Variable v'
           h1 = updateHeap h v' o
           e1 = replace (v,a) [] e
+
+-- Letrec Expression
+evalExpression (Let ls e) st@(h,fv)  
+    = error "no letrec"
 
 -- CaseCon Expression
 evalExpression (Case (Atom (Variable v)) alts) st@(h,fv) 

@@ -12,6 +12,8 @@ type BoundVars = [Variable]
 
 type Replacement = (Variable, Atom)
 
+type Lets = [(Variable, Object)]
+
 replaceMany :: [Replacement] -> BoundVars -> Expression -> Expression
 replaceMany (r:rs) bvs e = replaceMany rs bvs e'
                          where e' = replace r bvs e
