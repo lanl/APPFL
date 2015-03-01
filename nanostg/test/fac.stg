@@ -1,4 +1,4 @@
-! not working yet (letrec)
+! not working yet #eq intToBool#
 zero = CON(I 0);
 one = CON(I 1);
 seven = CON(I 7);

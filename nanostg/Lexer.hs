@@ -39,6 +39,7 @@ lexit = many . (foldr op failure)
 lexer :: Parser (Pos Char) [Pos Token]
 lexer = lexit [(some (any' literal " \t\n"), Junk),
                 (comment, Junk),
+                ( any' string ["plus#", "sub#", "mult#", "div#", "eq#", "neq#", "lt#", "gt#","lte#", "gte#", "intToBool#"], Prim), -- want intToBool before in...
                 (string "let", Keyword),
                 (string "in", Keyword),
                 (string "case", Keyword),
@@ -51,7 +52,6 @@ lexer = lexit [(some (any' literal " \t\n"), Junk),
                 (string "ERROR", Obj),
                 ( any' string ["(",")","=","{","}",";"], Symbol),
                 ( any' string ["->"], Symbol),
-                ( any' string ["plus#", "sub#", "mult#", "div#", "eq#"], Prim),
                 (conname, Construct),
                 (varname, Ident),
                 (floating, Floating), -- want floating before integer

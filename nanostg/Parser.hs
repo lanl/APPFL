@@ -53,13 +53,18 @@ expression = ((kind Ident `then'` some atom) `using` funcallFN)
 funcallFN :: (Variable, [Atom]) -> Expression
 funcallFN (f,as) = FunctionCall f Nothing as
 
--- only doing some primitives
 primcallFN :: (String, [Atom]) -> Expression
 primcallFN (p,as) | p == "plus#" = SatPrimCall Add as
                   | p == "sub#" = SatPrimCall Sub as
                   | p == "mult#" = SatPrimCall Mul as
                   | p == "div#" = SatPrimCall Div as
-                  | p == "eq#" = SatPrimCall Eq as
+                  | p == "eq#" = SatPrimCall Equal as
+                  | p == "neq#" = SatPrimCall NotEqual as
+                  | p == "lt#" = SatPrimCall LessThan as
+                  | p == "gt#" = SatPrimCall GreaterThan as
+                  | p == "lte#" = SatPrimCall LessThanOrEqual as
+                  | p == "gte#" = SatPrimCall GreaterThanOrEqual as
+                  | p == "intToBool#" = SatPrimCall IntToBool as
 
 vo :: Parser (Pos Token) (Variable, Object)
 vo = (kind Ident `thenx` sym "=" `then'` object) 

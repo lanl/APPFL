@@ -138,10 +138,15 @@ evalExpression (SatPrimCall op (a1:a2:as)) st
     | op == Sub = (Atom $ Literal $ Int (x1-x2), st)
     | op == Mul = (Atom $ Literal $ Int (x1*x2), st)
     | op == Div = (Atom $ Literal $ Int (div x1 x2), st)
-               where x1 = read b1 :: Int  
-                     x2 = read b2 :: Int 
-                     b1 = display $ fst $ evalAtom a1 st
-                     b2 = display $ fst $ evalAtom a2 st
+    | op == Equal = (Atom $ Literal $ Int (compareop (==) x1 x2), st) 
+    | op == NotEqual = (Atom $ Literal $ Int (compareop (/=) x1 x2), st) 
+    | op == LessThan = (Atom $ Literal $ Int (compareop (<) x1 x2), st) 
+    | op == GreaterThan = (Atom $ Literal $ Int (compareop (>) x1 x2), st) 
+    | op == LessThanOrEqual = (Atom $ Literal $ Int (compareop (<=) x1 x2), st) 
+    | op == GreaterThanOrEqual = (Atom $ Literal $ Int (compareop (>=) x1 x2), st) 
+    | op == IntToBool = error "no intToBool yet"
+               where x1 = read (display $ fst $ evalAtom a1 st) :: Int  
+                     x2 = read (display $ fst $ evalAtom a2 st) :: Int 
 
 -- Knowncall Expression
 evalExpression (FunctionCall f k as) st@(h,fv) 
@@ -207,4 +212,7 @@ matchDefaultAlt :: [Alternative] ->  Maybe (Variable, Expression)
 matchDefaultAlt ((Alt _ _ _ ):alts) = matchDefaultAlt alts
 matchDefaultAlt ((DefaultAlt v e):alts) = Just (v,e)
 matchDefaultAlt alts = error ("matchDefaultAlt " ++ show alts)  
+
+compareop ::  (Int -> Int -> Bool) -> Int -> Int -> Int
+compareop op x y = if op x y then 1 else 0 
 

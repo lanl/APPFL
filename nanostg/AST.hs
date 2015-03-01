@@ -55,7 +55,11 @@ data Declaration = Declaration Variable Object deriving (Show)
 
 data Program = Program [Declaration] deriving (Show)
 
-data Primitive = Add | Sub | Mul | Div | Eq deriving (Eq, Show, Read)
+data Primitive = Add | Sub | Mul | Div 
+               | Equal | NotEqual 
+               | LessThan | GreaterThan 
+               | LessThanOrEqual | GreaterThanOrEqual 
+               | IntToBool deriving (Eq, Show, Read)
 
 -- display functions
 class Display a where display :: a -> String
