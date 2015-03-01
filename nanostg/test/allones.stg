@@ -1,0 +1,5 @@
+! infinite list
+one = CON(I 1);
+ones = CON(Cons one ones);
+main = THUNK(ones);
+

@@ -1,0 +1,6 @@
+zero = CON(I 0);
+one = CON(I 1);
+
+seq = FUN(x y -> case x of { z -> y });
+
+main = THUNK(seq zero one)

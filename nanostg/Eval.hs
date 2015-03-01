@@ -91,7 +91,7 @@ evalExpression (Atom (Variable x)) st@(h,fv)
   
 -- Let Expression
 evalExpression (Let ((v,o):ls) e) st@(h,fv)  
-    | ls == [] = (e1, (h1,fv1)) --or evalExpression e1 (h1,fv1)???
+    | ls == [] = (e1, (h1,fv1))
     where (v', fv1) = getFreshVar fv
           a = Variable v'
           e1 = replace (v,a) [] e
@@ -110,11 +110,13 @@ evalExpression (Let ls e) st@(h,fv)
           h1 = updateHeapVars h vs1 os1
 
 -- CaseCon Expression
+-- if is constructor and no match then fall though to caseAny
 evalExpression (Case (Atom (Variable v)) alts) st@(h,fv) 
-    | isCON obj = evalExpression e1 st 
+    | isCON obj && match /= Nothing = evalExpression e1 st 
                 where obj = M.lookup v h
                       Just (c, as) = getCON obj 
-                      Just (xs,e) = matchAlt c alts 
+                      match = matchAlt c alts 
+                      Just (xs,e) = match
                       -- list of replacements
                       reps = zip xs as
                       e1 = replaceMany reps [] e  
@@ -170,8 +172,16 @@ isLiteral _ = False
 
 isValue :: Atom -> Heap -> Bool
 isValue (Variable v) h 
-    = if M.lookup v h == Nothing then False else True
+    = if obj == Nothing then False else isValueObj obj
+    where obj = M.lookup v h
 isValue (Literal _) _ = False
+
+-- FUN, PAP, CON are Values
+isValueObj :: Maybe Object -> Bool
+isValueObj (Just (FUN _ _)) = True
+isValueObj (Just (PAP _ _)) = True
+isValueObj (Just (CON _ _)) = True
+isValueObj _ = False
 
 getCON :: Maybe Object -> Maybe (Constructor, [Atom])
 getCON (Just (CON c as )) = Just (c,as)
@@ -190,9 +200,10 @@ isTHUNK (Just (THUNK _)) = True
 isTHUNK _ = False   
 
 matchAlt :: Constructor -> [Alternative] -> Maybe ([Variable], Expression)
-matchAlt c1 ((Alt c2 xs e):alts) 
+matchAlt c1 (a@(Alt c2 xs e):alts) 
     = if c1 == c2 then Just (xs, e) else matchAlt c1 alts
-matchAlt _ _ = Nothing
+matchAlt c alts = Nothing
+--error ("matchAlt " ++ c ++ " " ++ show alts) 
 
 matchDefaultAlt :: [Alternative] ->  Maybe (Variable, Expression)
 matchDefaultAlt ((Alt _ _ _ ):alts) = matchDefaultAlt alts

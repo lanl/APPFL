@@ -38,6 +38,8 @@ evalTestFiles =
     , "test/letrec.stg"
     , "test/letrec2.stg"
     , "test/bool.stg"
+    , "test/tree.stg"
+    , "test/seq.stg"
     ]
 
 evalTests :: IO ()
