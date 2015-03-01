@@ -29,8 +29,13 @@ lookupHeap v h | lookup == Nothing = error ("can't find var " ++ v ++ " in " ++ 
                | otherwise = fromJust lookup
                 where lookup = M.lookup v h
 
-updateHeap :: Heap -> Variable -> Object -> Heap
-updateHeap h v o = M.insert v o h 
+updateHeapVar :: Heap -> Variable -> Object -> Heap
+updateHeapVar h v o = M.insert v o h 
+
+-- do a bunch of vars at once
+updateHeapVars :: Heap -> [Variable] -> [Object] -> Heap
+updateHeapVars h (v:vs) (o:os) = updateHeapVars (M.insert v o h) vs os
+updateHeapVars h [] [] = h 
 
 initFreshVars :: FreshVars
 initFreshVars = ['$':show i | i <- [0..]]
@@ -41,10 +46,14 @@ spliter(x:y:zs) = (x,y):spliter zs
 split :: [(a,a)] -> ([a],[a])
 split xs = (map fst xs, map snd xs) 
 
-getFresh :: FreshVars -> (Variable, FreshVars)
-getFresh fv = (head fv1, fv2)
+getFreshVars :: Int -> FreshVars -> ([Variable], FreshVars)
+getFreshVars n fv = (take n fv1, fv2)
             where (fv1,fv2) = split $ spliter fv
-          
+
+getFreshVar :: FreshVars -> (Variable, FreshVars)
+getFreshVar fv = (v,fv1)  
+               where ([v],fv1) = getFreshVars 1 fv
+
 evalString :: [Char] -> Eval.Output
 evalString = eval.parseString
  
@@ -67,7 +76,7 @@ evalFinalExpression e _ = error ("non atom expression " ++  display e)
 -- Update
 evalUpdate :: Variable -> Expression -> State -> State
 evalUpdate x (Atom (Variable y)) st@(h,fv) 
-    = (updateHeap h x (lookupHeap y h), fv)
+    = (updateHeapVar h x (lookupHeap y h), fv)
 
 evalExpression :: Expression -> State -> (Expression, State)
 
@@ -76,20 +85,27 @@ evalExpression (Atom (Variable x)) st@(h,fv)
     | isTHUNK obj = (e1, evalUpdate x e1 st1)
                   where obj = M.lookup x h
                         Just e = getTHUNK obj
-                        h1 = updateHeap h x BLACKHOLE
+                        h1 = updateHeapVar h x BLACKHOLE
                         (e1, st1) = evalExpression e (h1,fv)
   
 -- Let Expression
 evalExpression (Let ((v,o):ls) e) st@(h,fv)  
     | ls == [] = (e1, (h1,fv1))
-    where (v', fv1) = getFresh fv
+    where (v', fv1) = getFreshVar fv
           a = Variable v'
-          h1 = updateHeap h v' o
           e1 = replace (v,a) [] e
+          h1 = updateHeapVar h v' o
 
 -- Letrec Expression
 evalExpression (Let ls e) st@(h,fv)  
-    = error "no letrec"
+    = (e1, (h1,fv1))
+    where (vs,os) = unzip ls
+          (vs1,fv1) = getFreshVars (length ls) fv
+          as = [Variable v | v <- vs1]
+          reps = zip vs as
+          os1 = replaceMany reps [] os
+          e1 = replaceMany reps [] e
+          h1 = updateHeapVars h vs1 os1
 
 -- CaseCon Expression
 evalExpression (Case (Atom (Variable v)) alts) st@(h,fv) 

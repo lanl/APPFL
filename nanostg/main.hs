@@ -25,16 +25,18 @@ evalFiles filenames = do
         ["\n" ++ x ++ "> " ++ evalString x | x <- input]
 
 evalTestFiles =
-    [ "test/atomliteral.stg",
-    "test/maincon.stg", 
-    "test/atomvariable.stg", 
-    "test/let.stg", 
-    "test/satprimadd.stg", 
-    "test/simpleadd.stg", 
-    "test/partadd.stg", 
-    "test/fulladd.stg", 
-    "test/fulladd2.stg",
-    "test/list.stg" 
+    [ "test/atomliteral.stg"
+    , "test/maincon.stg" 
+    , "test/atomvariable.stg" 
+    , "test/let.stg" 
+    , "test/satprimadd.stg" 
+    , "test/simpleadd.stg" 
+    , "test/partadd.stg" 
+    , "test/fulladd.stg" 
+    , "test/fulladd2.stg"
+    , "test/list.stg"
+    , "test/letrec.stg"
+    , "test/letrec2.stg"
     ]
 
 evalTests :: IO ()

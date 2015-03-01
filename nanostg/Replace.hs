@@ -12,12 +12,30 @@ type BoundVars = [Variable]
 
 type Replacement = (Variable, Atom)
 
-type Lets = [(Variable, Object)]
+--type Decl = (Variable, Object)
 
-replaceMany :: [Replacement] -> BoundVars -> Expression -> Expression
-replaceMany (r:rs) bvs e = replaceMany rs bvs e'
-                         where e' = replace r bvs e
-replaceMany [] _ e = e
+
+class ReplaceMany a where replaceMany ::  [Replacement] -> BoundVars -> a -> a
+
+instance ReplaceMany Expression where
+  replaceMany (r:rs) bvs e 
+    = replaceMany rs bvs e'
+    where e' = replace r bvs e
+  replaceMany [] _ e = e
+
+{-
+instance ReplaceMany [Decl] where
+  replaceMany (r:rs) bvs vos 
+    = replaceMany rs bvs vos'
+    where (vs,os) = unzip vos
+          vos' = zip vs [replace r bvs o | o <-os]
+  replaceMany [] _ vos = vos
+-}
+
+instance ReplaceMany [Object] where
+  replaceMany (r:rs) bvs os 
+    = replaceMany rs bvs [replace r bvs o | o <-os]
+  replaceMany [] _ os = os
 
 class Replace a where replace ::  Replacement -> BoundVars -> a -> a
 
@@ -36,8 +54,7 @@ instance Replace Expression where
   -- need to update boundvars
   replace r bvs (Let vos e) 
     = Let vos' e' 
-    where vs = map fst vos 
-          os = map snd vos
+    where (vs,os) = unzip vos 
           bvs' = bvs ++ vs
           os' = [replace r bvs' o | o <-os]
           e' = replace r bvs' e
