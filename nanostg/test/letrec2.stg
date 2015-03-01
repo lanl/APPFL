@@ -1,0 +1,4 @@
+! test ordering
+main = THUNK(let { x = CON (I 2);
+                   result = CON(Cons x y); 
+                   y = CON(I 4); } in result)
