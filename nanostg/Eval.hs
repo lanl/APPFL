@@ -63,32 +63,31 @@ eval prog@(Program ds)
 
 evalProgram :: Program -> State -> (Output, State)
 evalProgram (Program ds) st
-      = (display e2, st2) 
-      where (e1, st1) = evalExpression (Atom (Variable "main")) st
-            (e2,st2) = evalSubExpression e1 st1
+      = (display e1, st1) 
+      where (e1, st1) = evalLoop (Atom (Variable "main")) st
 
-evalSubExpression :: Expression -> State -> (Expression, State)
-evalSubExpression (Atom a) st = (Atom a', st')
-                               where (a',st') = evalAtom a st
--- not atom try again
-evalSubExpression e st = evalSubExpression e' st'
-                       where (e',st') = evalExpression e st
+evalLoop :: Expression -> State -> (Expression, State)
+evalLoop (Atom a) st@(h,fv) | isLiteral a || isValue a h 
+  = (Atom a', st')
+  where (a',st') = evalAtom a st
+-- not Literal or Value try again
+evalLoop e st = evalLoop e' st'
+              where (e',st') = evalExpression e st
 
 -- Update
 evalUpdate :: Variable -> Expression -> State -> State
 evalUpdate x (Atom (Variable y)) st@(h,fv) 
     = (updateHeapVar h x (lookupHeap y h), fv)
-evalUpdate x e st = error ("bad update " ++ x ++ " " ++ show e) 
+evalUpdate x e st = st -- do nothing
 
 evalExpression :: Expression -> State -> (Expression, State)
 
 -- THUNK 
 evalExpression (Atom (Variable x)) st@(h,fv) 
-    | isTHUNK obj = (e1, evalUpdate x e1 st1)
+    | isTHUNK obj = (e, evalUpdate x e (h1,fv))
                   where obj = M.lookup x h
                         Just e = getTHUNK obj
                         h1 = updateHeapVar h x BLACKHOLE
-                        (e1, st1) = evalExpression e (h1,fv)
   
 -- Let Expression (only 1 let)
 evalExpression (Let ((v,o):ls) e) st@(h,fv)  
@@ -112,7 +111,7 @@ evalExpression (Let ls e) st@(h,fv)
 -- CaseCon Expression
 -- if is constructor and no match then fall though to caseAny
 evalExpression (Case (Atom (Variable v)) alts) st@(h,fv) 
-    | isCON obj && match /= Nothing = evalExpression e1 st 
+    | isCON obj && match /= Nothing = (e1,st) 
                 where obj = M.lookup v h
                       Just (c, as) = getCON obj 
                       match = matchAlt c alts 
@@ -122,15 +121,15 @@ evalExpression (Case (Atom (Variable v)) alts) st@(h,fv)
                       e1 = replaceMany reps [] e  
                       
 -- CaseAny Expression
-evalExpression (Case (Atom v) alts) st@(h,fv) 
-    | isLiteral v || isValue v h = evalExpression e1 st
+evalExpression (Case (Atom a) alts) st@(h,fv) 
+    | isLiteral a || isValue a h = (e1, st) 
                                  where Just (x,e) = matchDefaultAlt alts
-                                       e1 = replace (x,v) [] e
+                                       e1 = replace (x,a) [] e
       
 -- Case Expression
 evalExpression (Case e alts) st@(h,fv) 
-    = evalExpression (Case e1 alts) st1
-    where (e1, st1) = evalExpression e st
+    = ((Case e1 alts), st1)
+    where (e1, st1) = evalLoop e st
           --e1 is atom now (either literal or pointer to heap object)
 
 -- Saturated Primitive Expression
@@ -157,9 +156,9 @@ evalExpression (FunctionCall f k as) st@(h,fv)
           reps = zip xs as
           e1 = replaceMany reps [] e  
 
--- default if no rules apply just return the expression unchanged
--- todo: need a way to terminate if this is the case
-evalExpression e st = (e,st)
+-- if no rules apply 
+evalExpression e st = error ("no eval rule for " ++ show e)
+
 
 -- In this case we need to make a True or False constructor
 -- add it to the heap and return the (fresh) variable that points to it
@@ -181,7 +180,7 @@ evalAtom (Variable x) st@(h,fv) = (Variable x', st')
 evalObject :: Object -> State -> (Object, State)
 evalObject (CON c as) st = (CON c as', st)
                            where as' = [fst $ evalAtom a st | a <- as]
-evalObject _ _ =  error "eval Non CON object"
+evalObject o _ =  error ("eval Non CON object" ++ show o)
 
 isLiteral :: Atom -> Bool
 isLiteral (Literal _) = True

@@ -1,4 +1,5 @@
-! not working #eq intToBool#
+! not working
+zero = CON(I 0);
 one = CON(I 1);
 five = CON(I 5);
 
