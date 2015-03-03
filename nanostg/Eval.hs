@@ -78,7 +78,7 @@ evalLoop e st = evalLoop e' st'
 evalUpdate :: Variable -> Expression -> State -> State
 evalUpdate x (Atom (Variable y)) st@(h,fv) 
     = (updateHeapVar h x (lookupHeap y h), fv)
-evalUpdate x e st = st -- do nothing
+evalUpdate x e st = st 
 
 evalExpression :: Expression -> State -> (Expression, State)
 
@@ -152,7 +152,8 @@ evalExpression (SatPrimCall op as) st
 -- Knowncall Expression
 evalExpression (FunctionCall f k as) st@(h,fv) 
     = evalExpression e1 st
-    where Just (FUN xs e)  = M.lookup f h
+    where lookup = if M.lookup f h /= Nothing then M.lookup f h else error ("knowncall lookup failed for " ++ show f ++ " in heap " ++ show h)
+          Just (FUN xs e) = lookup 
           reps = zip xs as
           e1 = replaceMany reps [] e  
 
