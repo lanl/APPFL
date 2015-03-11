@@ -59,7 +59,7 @@ DEFUN0(Unit) {
   STGRETURN0();
   ENDFUN;
 }
-// each contstructor has a single infotab entry
+// each constructor has a single infotab entry
 InfoTab it_Unit =
   { .name               = "Unit",
     .entryCode          = &Unit,
@@ -249,7 +249,7 @@ void derefStgCurVal() {
 
 DEFUN0(alts1) {
   Obj cont = stgPopCont();
-  // scrutinee is alway stgCurVal
+  // scrutinee is always stgCurVal
   // chase down any indirection
   derefStgCurVal();
   // winging it here, not exactly canonical

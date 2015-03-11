@@ -26,7 +26,7 @@ void initCmm() {
     mmap( NULL,                   // void *address, NULL => no preference
 	  cmmStackSize,           // size_t length
 	  PROT_READ | PROT_WRITE, // int protect, write may require read
-	  MAP_PRIVATE | MAP_ANONYMOUS, // int flags
+	  MAP_PRIVATE | MAP_ANON, // int flags
 	  -1,                     // int filedes
 	  0 );                    // off_t offset
 
