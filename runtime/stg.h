@@ -25,6 +25,7 @@ typedef enum {
   CALLCONT, 
   FUNCONT        // for strict evaluation
 } ObjType;
+const char *objTypeNames[FUNCONT+1];
 
 struct _Obj;
 struct _InfoTab;
@@ -51,7 +52,7 @@ typedef struct {
 /*
   payload
     FUN - free variables
-    PAP - free variables, bound arguments
+    PAP - free variables, initial arguments
     CON - arguments (includes free variables)
     THUNK - free variables
     BLACKHOLE - n/a
@@ -81,12 +82,12 @@ typedef struct {
 
 typedef struct {
   int arity;
-  // curry paper suggest that we need type info
+  // curry paper suggests that we need type info
 } FUNfields;
 
 typedef struct {
   int tag;
-  int argCount;
+  int argCount;  // change this to "arity"
 } CONfields;
 
 typedef struct {
@@ -98,7 +99,8 @@ typedef struct {
 
 // InfoTab
 struct _InfoTab {
-  char name[32];
+  char name[32];  // for debugging
+  int fvCount;    // lexically determined
   CmmFnPtr entryCode;
   ObjType objType; // kind of object, tag for union
   LayoutInfo layout;
@@ -142,11 +144,28 @@ inline Obj stgPopCont() {
 # define STGCALL1(f,v1)				\
   CALL1_0(f,v1)
 
+# define STGCALL2(f,v1,v2)			\
+  CALL2_0(f,v1,v2)
+
 #define STGJUMP0(f)				\
   JUMP0(f)
 
+#define STGJUMP1(f,v1)				\
+  JUMP1(f,v1)
+
+#define STGJUMP2(f,v1,v2)			\
+  JUMP2(f,v1,v2)
+
+// return through continuation stack
 #define STGRETURN0()				\
   JUMP0(((Obj *)stgSP)->infoPtr->entryCode)
+
+// no explicit return value stack
+#define STGRETURN1(r)				\
+  do {						\
+    stgCurVal = r;				\
+    JUMP0(((Obj *)stgSP)->infoPtr->entryCode);	\
+  } while(0)
 
 
 

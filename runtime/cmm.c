@@ -14,7 +14,7 @@
 
 const size_t cmmStackSize = (size_t)4*(size_t)(1024*1024*1024);
 
-extern PtrOrLiteral _POP();
+// extern PtrOrLiteral _POP();
 
 extern void _PUSH(PtrOrLiteral V);
 
@@ -26,7 +26,7 @@ void initCmm() {
     mmap( NULL,                   // void *address, NULL => no preference
 	  cmmStackSize,           // size_t length
 	  PROT_READ | PROT_WRITE, // int protect, write may require read
-	  MAP_PRIVATE | MAP_ANON, // int flags
+	  MAP_PRIVATE | MAP_ANONYMOUS, // int flags
 	  -1,                     // int filedes
 	  0 );                    // off_t offset
 

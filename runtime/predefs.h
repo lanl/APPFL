@@ -16,7 +16,6 @@ typedef enum {
   TagRight = 7
 } TagVal;
 
-extern void initPredefs();
 
 // every manifest heap object is introduced by a "let" so has
 // a name.  However, for a CON(C,...) we can use the same InfoTab
@@ -24,20 +23,8 @@ extern void initPredefs();
 // name rather than uniqued version of name of variable bound to
 // Also true for known functions?
 
-extern FnPtr stgShowResultCont();
-extern Obj sho_stgShowResultCont;
-
-//extern FnPtr stgCallCont();
-//extern Obj sho_stgCallCont;
-
-extern Obj sho_main_unit;
-extern Obj sho_main1;
-extern Obj sho_main2;
-extern Obj sho_mainfail;
-extern Obj sho_main3;
-
-extern FnPtr program();
-
+extern void initPredefs();
+extern FnPtr start();
 extern void initInfoTabs();
 
 #endif

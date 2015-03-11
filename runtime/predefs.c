@@ -59,7 +59,7 @@ DEFUN0(Unit) {
   STGRETURN0();
   ENDFUN;
 }
-// each constructor has a single infotab entry
+// each contstructor has a single infotab entry
 InfoTab it_Unit =
   { .name               = "Unit",
     .entryCode          = &Unit,
@@ -169,11 +169,11 @@ DEFUN1(y, self) {
   ENDFUN;
 }
 
-InfoTab it_y =
-  { .name               = "y",
-    .entryCode          = &y,
-    .objType            = THUNK
-  };
+InfoTab it_y = {
+  .name               = "y",
+  .entryCode          = &y,
+  .objType            = THUNK
+};
 
 DEFUN1(z, self) {
   // THUNK
@@ -249,7 +249,7 @@ void derefStgCurVal() {
 
 DEFUN0(alts1) {
   Obj cont = stgPopCont();
-  // scrutinee is always stgCurVal
+  // scrutinee is alway stgCurVal
   // chase down any indirection
   derefStgCurVal();
   // winging it here, not exactly canonical
@@ -300,7 +300,7 @@ InfoTab it_Right =
   };
 
 #define POLHO(HO) ((PtrOrLiteral) {.argType = HEAPOBJ, .op = HO })
-
+#define POLLIT(L) ((PtrOrLiteral) {.argType = INT,     .i = L   })
 
 DEFUN1(main3, self) {
   stgThunk(self);
@@ -340,12 +340,251 @@ Obj sho_main3 =
   };
 
 // ****************************************************************
-// mainfail = THUNK(mainfail)
+
+Obj *derefHO(Obj *op) {
+  while (op->objType == INDIRECT)
+    op = op->payload[0].op;
+  return op;
+}
+
+Obj* derefPoL(PtrOrLiteral f) {
+  assert(f.argType == HEAPOBJ && "derefPoL: not a HEAPOBJ");
+  return derefHO(f.op);
+}
+
+DEFUN2(stgApplyPap1, f, x1) {
+  // now our predefined function/macro approach breaks down somewhat
+  // since we don't statically know the arity of the PAP's underlying
+  // function and we don't want a giant switch, so explicitly push onto stack
+  fprintf(stderr, "stgApplyPap1");
+  assert(f.argType == HEAPOBJ && f.op->objType == PAP);
+  assert(f.op->infoPtr->funFields.arity == f.op->argCount + 1); // 1 is Pap1
+  _PUSH(x1); // push last arg
+  for (int i = f.op->infoPtr->fvCount + // skip past free variables
+	       f.op->argCount - 1;      // index of last arg
+            // i != -1;  WRONG, must have left some crap on the stack
+               i != f.op->infoPtr->fvCount - 1;
+       i--) _PUSH(f.op->payload[i]);
+  _PUSH(f);  // push self
+  STGJUMP0(f.op->infoPtr->entryCode);
+  ENDFUN;
+}
+
+DEFUN2(stgApply1, f, x1) {
+  f.op = derefPoL(f);
+
+  switch (f.op->objType) {
+
+  case THUNK: { // seems like it would be more efficient to do while(THUNK)
+    fprintf(stderr, "stgApply1 THUNK\n");
+    Obj callCont = {.infoPtr = &it_stgCallCont, .payload[0] = x1};
+    stgPushCont(callCont);
+    STGCALL1(f.op->infoPtr->entryCode, f);  // result in stgCurVal
+    f = stgCurVal;  // new f
+    callCont = stgPopCont();
+    x1 = callCont.payload[0];
+    STGJUMP2(stgApply1, f, x1);
+    break;
+  } // case THUNK
+
+  case FUN: {
+    switch(f.op->infoPtr->funFields.arity) {
+    case 1: { //just right
+      fprintf(stderr, "stgApply1 FUN just right\n");
+      STGJUMP2(f.op->infoPtr->entryCode, f, x1);
+      break;
+    } // case 1
+    default: { // arity > 1, too few args
+      fprintf(stderr, "stgApply1 FUN too few args\n");
+      // build a PAP -- CAREFUL, COULD TRIGGER GC
+      // need to solve this problem for "let" in general
+      // one solution would be to have GC only possibly triggered by STGCALL
+      Obj *pap = stgNewHeapObj();
+      *pap = *f.op;  // quick and dirty
+      pap->objType = PAP;
+      pap->argCount = 1;
+      pap->payload[pap->infoPtr->fvCount] = x1; // just after the fvs
+      STGRETURN1(POLHO(pap));
+      break;
+    } // default
+    } // switch
+  } // case FUN
+
+  case PAP: {
+    switch(f.op->infoPtr->funFields.arity - f.op->argCount) {
+    case 1: { // just right
+      fprintf(stderr, "stgApply1 PAP just right\n");
+      STGJUMP2(stgApplyPap1, f, x1);
+      break;
+    } // case 1
+    default: { // too few args
+      fprintf(stderr, "stgApply1 PAP too few args\n");
+      f.op->payload[f.op->infoPtr->fvCount + f.op->argCount] = x1;  // reuse PAP for now
+      f.op->argCount += 1;
+      STGRETURN1(f);
+      break;
+    } // default
+    } // switch
+  } // case PAP
+
+  default: {
+    fprintf(stderr, "stgApply not a THUNK, FUN, or PAP\n");
+    exit(0);
+  } // default
+  }  // switch
+  ENDFUN;
+}
+
+// ****************************************************************
+// try a generic stgApply function...
+
+void callContSave(int argc, PtrOrLiteral argv[]) {
+  Obj callCont;
+  callCont.infoPtr = &it_stgCallCont;
+  callCont.payload[0] = (PtrOrLiteral) {.argType = INT, .i = argc};
+  for (int i = 0; i != argc; i++) callCont.payload[i+1] = argv[i];
+  stgPushCont(callCont);
+}
+
+void callContRestore(PtrOrLiteral argv[]) {
+  Obj callCont;
+  callCont = stgPopCont();
+  assert(callCont.payload[0].argType == INT);
+  for (int i = 0; i != callCont.payload[0].i; i++) argv[i] = callCont.payload[i+1];
+}
+
+// argv points to the beginning of the arg list, but push backwards...
+void pushargs(int argc, PtrOrLiteral argv[]) {
+  for (int i = argc-1; i != -1; i--) _PUSH(argv[i]);
+}
+// ...and pop forwards
+void popargs(int argc, PtrOrLiteral argv[]) {
+  for (int i = 0; i != argc; i++) _POP(argv[i]);
+}
+
+void copyargs(PtrOrLiteral *dest, const PtrOrLiteral *src, int count) {
+  for (int i = 0; i != count; i++) dest[i] = src[i];
+}
+
+#include "stgapply.c"
+
+// ****************************************************************
+
+// id = FUN( x -> x );
+DEFUN2(id, self, x) {
+  // x
+  STGRETURN1(x);
+  ENDFUN;
+}
+InfoTab it_id = {
+  .name = "id",
+  .entryCode = &id,
+  .objType = FUN,
+  .funFields.arity = 1
+};
+Obj sho_id = {
+  .objType = FUN,
+  .infoPtr = &it_id
+};
+
+// main4 =
+//   THUNK( id unit )
+
+DEFUN1(main4, self) {
+  stgThunk(self);
+  // id and unit are top-level
+  STGJUMP2(stgApply1, POLHO(&sho_id), POLHO(&sho_unit));
+  ENDFUN;
+}
+InfoTab it_main4 =
+  { .name               = "main4",
+    .entryCode          = &main4,
+    .objType            = THUNK
+  };
+Obj sho_main4 =
+  { .objType = THUNK,
+    .infoPtr = &it_main4,
+  };
+
+// ****************************************************************
+// constf = FUN( x y -> x );
+DEFUN3(constf, self, x, y) {
+  // x
+  fprintf(stderr, "constf here\n");
+  STGRETURN1(x);
+  ENDFUN;
+}
+InfoTab it_constf = {
+  .name = "constf",
+  .entryCode = &constf,
+  .objType = FUN,
+  .fvCount = 0,
+  .funFields.arity = 2
+};
+Obj sho_constf = {
+  .objType = FUN,
+  .infoPtr = &it_constf
+};
+
+// const_one = THUNK(constf one)
+DEFUN1(const_one, self) {
+  fprintf(stderr, "THUNK(constf one) here\n");
+  stgThunk(self);
+  // constf and one are top-level
+
+  // STGJUMP2(stgApply1, POLHO(&sho_constf), POLHO(&sho_one));
+
+  _PUSH(POLHO(&sho_one));
+  PtrOrLiteral N = {.argType = INT, .i = 1};
+  STGJUMP2(stgApply, N, POLHO(&sho_constf));
+
+  ENDFUN;
+}
+InfoTab it_const_one =
+  { .name               = "const_one",
+    .entryCode          = &const_one,
+    .objType            = THUNK,
+    .fvCount            = 0,
+  };
+Obj sho_const_one =
+  { .objType = THUNK,
+    .infoPtr = &it_const_one,
+  };
+
+// main5 =
+//   THUNK( const_one unit )
+
+DEFUN1(main5, self) {
+  fprintf(stderr, "THUNK(const_one unit) here\n");
+  stgThunk(self);
+  // constf and unit are top-level
+
+  // STGJUMP2(stgApply1, POLHO(&sho_const_one), POLHO(&sho_unit));
+
+  _PUSH(POLHO(&sho_unit));
+  PtrOrLiteral N = {.argType = INT, .i = 1};
+  STGJUMP2(stgApply, N, POLHO(&sho_const_one));
+
+  ENDFUN;
+}
+InfoTab it_main5 =
+  { .name               = "main5",
+    .entryCode          = &main5,
+    .objType            = THUNK,
+    .fvCount            = 0,
+  };
+Obj sho_main5 =
+  { .objType = THUNK,
+    .infoPtr = &it_main5,
+  };
+
+// ****************************************************************
+// mainfail = THUNK(mainfail) - this works but displaying the heap doesn't detect cycles
+Obj sho_mainfail;
 
 DEFUN1(mainfail, self) {
   stgThunk(self);
   stgCurVal = (PtrOrLiteral) { .argType = HEAPOBJ, .op = &sho_mainfail };
-
   STGRETURN0();
   ENDFUN;
 }
@@ -369,7 +608,24 @@ void initPredefs() {
   stgStatObj[stgStatObjCount++] = &sho_main_unit;
   stgStatObj[stgStatObjCount++] = &sho_main1;
   stgStatObj[stgStatObjCount++] = &sho_main3;
+  stgStatObj[stgStatObjCount++] = &sho_main5;
+  stgStatObj[stgStatObjCount++] = &sho_main4;
+  stgStatObj[stgStatObjCount++] = &sho_id;
+  stgStatObj[stgStatObjCount++] = &sho_constf;
   stgStatObj[stgStatObjCount++] = &sho_mainfail;
+}
+
+DEFUN0(start) {
+  stgPushCont(sho_stgShowResultCont);
+  stgCurVal = (PtrOrLiteral){.argType = HEAPOBJ, .op = &sho_main5};
+  while (stgCurVal.argType == HEAPOBJ &&
+	 stgCurVal.op->objType == THUNK) {
+    stgPushCont((Obj){.infoPtr = &it_stgCallCont});
+    STGCALL1(stgCurVal.op->infoPtr->entryCode, stgCurVal);
+    stgPopCont();
+  }
+  STGRETURN0(); // return through stgShowResultCont
+  ENDFUN;
 }
 
 /*

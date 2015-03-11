@@ -21,6 +21,21 @@ void *stgStack = NULL;
 void *stgSP = NULL;
 PtrOrLiteral stgCurVal;  // current value STG register
 
+const char *objTypeNames[] = {
+  "FUN", 
+  "PAP", 
+  "CON",
+  "THUNK",
+  "BLACKHOLE",
+  "INDIRECT",
+  "UPDCONT", 
+  "CASECONT", 
+  "CALLCONT", 
+  "FUNCONT"
+};
+
+
+
 Obj* stgNewHeapObj() {
   Obj *curp = (Obj *)stgHP;
   stgHP = (Obj *)stgHP + 1;
@@ -30,30 +45,32 @@ Obj* stgNewHeapObj() {
 void showStgObj(Obj *p) {
   Obj o = *p;
   InfoTab it = *o.infoPtr;
-  fprintf(stderr, "name %s\n", it.name);
+  fprintf(stderr, "%s %s %s ", objTypeNames[o.objType], 
+	  objTypeNames[it.objType], it.name);
   switch (o.objType) {
   case FUN:
-    fprintf(stderr,"FUN\n");
+    fprintf(stderr,"\n");
     break;
 
   case PAP:
-    fprintf(stderr,"PAP\n");
+    fprintf(stderr,"\n");
     break;
 
   case CON:
-    fprintf(stderr,"CON %d\n", it.conFields.tag );
+    //    fprintf(stderr,"tag %d\n", it.conFields.tag );
+    fprintf(stderr,"tag %d\n", it.conFields.tag );
     break;
 
   case THUNK:
-    fprintf(stderr,"THUNK\n");
+    fprintf(stderr,"\n");
     break;
 
   case BLACKHOLE:
-    fprintf(stderr,"BLACKHOLE\n");
+    fprintf(stderr,"\n");
     break;
 
   case UPDCONT:
-    fprintf(stderr,"UPDCONT\n");
+    fprintf(stderr,"\n");
     break;
 
   case INDIRECT:
@@ -62,15 +79,15 @@ void showStgObj(Obj *p) {
     break;
 
   case CASECONT:
-    fprintf(stderr,"CASECONT\n");
+    fprintf(stderr,"\n");
     break;
 
   case CALLCONT:
-    fprintf(stderr,"CALLCONT\n");
+    fprintf(stderr,"\n");
     break;
 
   case FUNCONT:
-    fprintf(stderr,"FUNCONT\n");
+    fprintf(stderr,"\n");
     break;
 
   default:
@@ -88,7 +105,7 @@ void showStgVal(PtrOrLiteral v) {
     fprintf(stderr,"DOUBLE %f\n", v.d);
     break;
   case HEAPOBJ:
-    fprintf(stderr,"HEAPOBJ %p\n", v.op);
+    fprintf(stderr,"HEAPOBJ %p ", v.op);
     showStgObj(v.op);
     break;
   default:
@@ -128,7 +145,7 @@ void initStg() {
     mmap( NULL,                   // void *address, NULL => no preference
 	  stgHeapSize,           // size_t length
 	  PROT_READ | PROT_WRITE, // int protect, write may require read
-	  MAP_PRIVATE | MAP_ANON, // int flags
+	  MAP_PRIVATE | MAP_ANONYMOUS, // int flags
 	  -1,                     // int filedes
 	  0 );                    // off_t offset
 
@@ -142,7 +159,7 @@ void initStg() {
     mmap( NULL,                   // void *address, NULL => no preference
 	  stgStackSize,           // size_t length
 	  PROT_READ | PROT_WRITE, // int protect, write may require read
-	  MAP_PRIVATE | MAP_ANON, // int flags
+	  MAP_PRIVATE | MAP_ANONYMOUS,  // int flags
 	  -1,                     // int filedes
 	  0 );                    // off_t offset
 

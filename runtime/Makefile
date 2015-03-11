@@ -1,5 +1,5 @@
 CC=gcc
-CFLAGS=-c -Wall -std=gnu99 -I/usr/include/malloc
+CFLAGS=-c -std=gnu99 -Wall -Wno-unused-but-set-variable 
 LDFLAGS=
 HEADERS=stg.h cmm.h predefs.h stgcmm.h
 SOURCES=main.c predefs.c stg.c cmm.c stgcmm.c

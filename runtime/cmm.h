@@ -64,11 +64,19 @@ extern void initCmm();
     _POPVALS1(R1);				\
   } while (0)
 
-#define CALL1_1(R1,F,P1)			\
+#define CALL2_0(F,P1,P2)			\
   do {						\
-    _PUSHVALS1(P1);				\
+    _PUSHVALS2(P1,P2);				\
     _CALL(F);					\
-    _POPVALS1(R1);				\
+    _POPVALS0();				\
+  } while (0)
+
+
+#define CALL3_0(F,P1,P2,P3)			\
+  do {						\
+    _PUSHVALS3(P1,P2,P3);			\
+    _CALL(F);					\
+    _POPVALS0();				\
   } while (0)
 
 
@@ -101,6 +109,18 @@ extern void initCmm();
     _JUMP(F);					\
   } while (0)
 
+#define JUMP3(F,V1,V2,V3)			\
+  do {						\
+    _PUSHVALS3(V1,V2,V3);			\
+    _JUMP(F);					\
+  } while (0)
+
+#define JUMP4(F,V1,V2,V3,V4)			\
+  do {						\
+    _PUSHVALS4(V1,V2,V3,V4);			\
+    _JUMP(F);					\
+  } while (0)
+
 // DEFUN#args(argnames)
 
 #define DEFUN0(F)				\
@@ -116,6 +136,16 @@ extern void initCmm();
   FnPtr F() {					\
   PtrOrLiteral P1, P2;				\
   _POPVALS2(P1,P2);					
+
+#define DEFUN3(F,P1,P2,P3)			\
+  FnPtr F() {					\
+  PtrOrLiteral P1, P2, P3;			\
+  _POPVALS3(P1,P2,P3);					
+
+#define DEFUN4(F,P1,P2,P3,P4)			\
+  FnPtr F() {					\
+  PtrOrLiteral P1, P2, P3, P4;			\
+  _POPVALS4(P1,P2,P3,P4);					
 
 #define ENDFUN }
 
@@ -139,18 +169,32 @@ extern void _cmmCall(CmmFnPtr f);
 extern const size_t cmmStackSize;
 
 inline void _PUSH(PtrOrLiteral V) {
+  fprintf(stderr, "_PUSH() ");			
+  showStgVal(V);				
   cmmSP = ((char *)cmmSP) - sizeof(PtrOrLiteral);
   assert(cmmSP >= cmmStack);
   *((PtrOrLiteral *)cmmSP) = V;
 }
 
+/*
 inline PtrOrLiteral _POP() {
   assert((char *)cmmSP + sizeof(PtrOrLiteral) <= (char *)cmmStack + cmmStackSize);
   PtrOrLiteral v = *((PtrOrLiteral *)cmmSP);
   cmmSP = (char *)cmmSP + sizeof(PtrOrLiteral);
   return v;
 }
+*/
 
+#define _POP(V)								\
+  do {									\
+    fprintf(stderr, "_POP() ");						\
+    assert((char *)cmmSP + sizeof(PtrOrLiteral) <=			\
+	   (char *)cmmStack + cmmStackSize);				\
+    PtrOrLiteral v = *((PtrOrLiteral *)cmmSP);				\
+    showStgVal(v);							\
+    cmmSP = (char *)cmmSP + sizeof(PtrOrLiteral);			\
+    V = v;								\
+  } while (0)
 
 #define _RETURN() return NULL
 
@@ -166,13 +210,28 @@ inline PtrOrLiteral _POP() {
 
 #define _POPVALS1(L1)				\
   do {						\
-    L1 = _POP();				\
+    _POP(L1);					\
   } while (0)
 
 #define _POPVALS2(L1,L2)			\
   do {						\
-    L1 = _POP();				\
-    L2 = _POP();				\
+    _POP(L1);				\
+    _POP(L2);				\
+  } while (0)
+
+#define _POPVALS3(L1,L2,L3)			\
+  do {						\
+    _POP(L1);					\
+    _POP(L2);					\
+    _POP(L3);				\
+  } while (0)
+
+#define _POPVALS4(L1,L2,L3,L4)			\
+  do {						\
+    _POP(L1);				\
+    _POP(L2);				\
+    _POP(L3);				\
+    _POP(L4);				\
   } while (0)
 
 // PUSHVALSN(P1,...,PN), N >= 0
@@ -188,6 +247,21 @@ inline PtrOrLiteral _POP() {
 
 #define _PUSHVALS2(L1,L2)			\
   do {						\
+      _PUSH(L2);				\
+      _PUSH(L1);				\
+  } while (0)
+
+#define _PUSHVALS3(L1,L2,L3)			\
+  do {						\
+      _PUSH(L3);				\
+      _PUSH(L2);				\
+      _PUSH(L1);				\
+  } while (0)
+
+#define _PUSHVALS4(L1,L2,L3,L4)			\
+  do {						\
+      _PUSH(L4);				\
+      _PUSH(L3);				\
       _PUSH(L2);				\
       _PUSH(L1);				\
   } while (0)
