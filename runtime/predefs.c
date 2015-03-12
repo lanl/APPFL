@@ -334,7 +334,8 @@ casedefault:
 InfoTab it_alts1 =
   { .name               = "alts1",
     .entryCode          = &alts1,
-    .objType            = CASECONT
+    .fvCount            = 1,
+    .objType            = CASECONT,
   };
 
 DEFUN1(main3, self) {

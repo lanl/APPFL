@@ -39,7 +39,7 @@ typedef void (*vvfp)();
 typedef vvfp (*FnPtr)();
 typedef FnPtr (*CmmFnPtr)();
 
-// PtrOrLiteral -- pointer to heap object or literal value
+// PtrOrLiteral -- literal value or pointer to heap object 
 typedef struct {
   ArgType argType;        // superfluous, for sanity checking
   union {
@@ -70,9 +70,9 @@ typedef struct {
 // they'll be variably-sized and self-describing
 
 struct _Obj {
+  InfoTab *infoPtr;         // canonical location of ObjType field
   ObjType objType;          // to distinguish PAP, FUN, BLACKHOLE, INDIRECT
   int argCount;             // for PAP, how many args already applied to?
-  InfoTab *infoPtr;         // canonical location of ObjType field
   PtrOrLiteral payload[16]; // fixed for now
 };
 

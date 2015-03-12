@@ -7,6 +7,7 @@
 void callContSave(int argc, PtrOrLiteral argv[]) {
   Obj callCont;
   callCont.infoPtr = &it_stgCallCont;
+  callCont.objType = CALLCONT;
   callCont.payload[0] = (PtrOrLiteral) {.argType = INT, .i = argc};
   for (int i = 0; i != argc; i++) callCont.payload[i+1] = argv[i];
   stgPushCont(callCont);
@@ -15,6 +16,7 @@ void callContSave(int argc, PtrOrLiteral argv[]) {
 void callContRestore(PtrOrLiteral argv[]) {
   Obj callCont;
   callCont = stgPopCont();
+  assert(callCont.objType == CALLCONT);
   assert(callCont.payload[0].argType == INT);
   for (int i = 0; i != callCont.payload[0].i; i++) argv[i] = callCont.payload[i+1];
 }
@@ -48,7 +50,6 @@ DEFUN0(whiteHole) {
 // place to go when we're done this continuation is special, dropping 
 // from stg land back to cmm land via RETURN0() rather than STGRETURN(0)
 
-
 DEFUN0(stgShowResultCont) {
   fprintf(stderr,"done!\n");
   stgPopCont();  // clean up
@@ -65,6 +66,7 @@ InfoTab it_stgShowResultCont =
 Obj sho_stgShowResultCont = {
   .infoPtr = &it_stgShowResultCont,
   .objType = CALLCONT,
+  .payload[0] = {0},
 };
 
 // ****************************************************************
