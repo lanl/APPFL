@@ -6,6 +6,7 @@
 #include "stg.h"
 #include "cmm.h"
 #include "stgcmm.h"
+#include "stgutils.h"
 #include "predefs.h"
 
 /*
@@ -22,90 +23,109 @@
   and patterns.
 */
 
-DEFUN0(whiteHole) {
-  fprintf(stderr,"in whiteHole, something not initialized somewhere, exiting\n");
-  exit(0);
-  RETURN0();
-  ENDFUN;
-}
-
 // ****************************************************************
+// constructors
+// these could overlap--make distinct for debugging purposes now
+//
+// nullary constructors:  these could have SHO as an optimization
+//   skip that for now?
 
-// since we always jump through the top of the stg stack we need some
-// place to go when we're done
-// this continuation is special, dropping from stg land to cmm land via RETURN0()
-DEFUN0(stgShowResultCont) {
-  fprintf(stderr,"done!\n");
-  stgPopCont();  // clean up
-  fprintf(stderr,"The answer is\n");
-  showStgVal(stgCurVal);  
-  RETURN0();
-  ENDFUN;
-}
-InfoTab it_stgShowResultCont =
-  { .name               = "stgShowResultCont",
-    .entryCode          = &stgShowResultCont,
-    .objType            = CALLCONT
-  };
-Obj sho_stgShowResultCont = {
-  .infoPtr = &it_stgShowResultCont
-};
+typedef enum {
+  TagUnit  = 0,
+  TagFalse = 1,
+  TagTrue  = 2,
+  TagI     = 3,
+  TagLeft  = 4,
+  TagRight = 5,
+  TagNil   = 6,
+  TagCons  = 7,
+} TagVal;
 
-// ****************************************************************
+// Each constructor has a single infotab entry.  This works because
+// constructors are always saturated and InfoTab.fvCount
 
-// unit = CON(Unit)
-DEFUN0(Unit) {
-  fprintf(stderr, "Unit here, this should not happen!\n");
-  STGRETURN0();
-  ENDFUN;
-}
-// each contstructor has a single infotab entry
+// CON(Unit)
 InfoTab it_Unit =
   { .name               = "Unit",
-    .entryCode          = &Unit,
+    .entryCode          = &whiteHole,
     .objType            = CON,
     .conFields.tag      = TagUnit,
-    .conFields.argCount = 0
-  };
-Obj sho_unit =
-  { .objType = CON,
-    .infoPtr = &it_Unit
+    .conFields.argCount = 0,
   };
 
-
-// ****************************************************************
-// main_unit = 
-//  THUNK(unit)
-
-DEFUN1(main_unit, self) {
-  //THUNK
-  stgThunk(self);
-  // unit
-  stgCurVal = (PtrOrLiteral) { .argType = HEAPOBJ, .op = &sho_unit };
-  STGRETURN0();
-  ENDFUN;
-}
-InfoTab it_main_unit =
-  { .name               = "main_unit",
-    .entryCode          = &main_unit,
-    .objType            = THUNK
-  };
-Obj sho_main_unit =
-  { .objType = THUNK,
-    .infoPtr = &it_main_unit,
+// CON(False)
+InfoTab it_False =
+  { .name               = "False",
+    .entryCode          = &whiteHole,
+    .objType            = CON,
+    .conFields.tag      = TagFalse,
+    .conFields.argCount = 0,
   };
 
-// ****************************************************************
+// CON(True)
+InfoTab it_True =
+  { .name               = "True",
+    .entryCode          = &whiteHole,
+    .objType            = CON,
+    .conFields.tag      = TagTrue,
+    .conFields.argCount = 0,
+  };
 
-// CON I
+// CON(I _)
 InfoTab it_I =
   { .name               = "I",
     .entryCode          = &whiteHole,
     .objType            = CON,
     .conFields.tag      = TagI,
-    .conFields.argCount = 1
+    .conFields.argCount = 1,
   };
 
+// CON(Left _)
+InfoTab it_Left =
+  { .name               = "Left",
+    .entryCode          = &whiteHole,
+    .objType            = CON,
+    .conFields.tag      = TagLeft,
+    .conFields.argCount = 1,
+  };
+
+// CON(Right _)
+InfoTab it_Right =
+  { .name               = "Left",
+    .entryCode          = &whiteHole,
+    .objType            = CON,
+    .conFields.tag      = TagRight,
+    .conFields.argCount = 1,
+  };
+
+// CON(Nil)
+InfoTab it_Nil =
+  { .name               = "Nil",
+    .entryCode          = &whiteHole,
+    .objType            = CON,
+    .conFields.tag      = TagNil,
+    .conFields.argCount = 0,
+  };
+
+// CON(Cons _ _)
+InfoTab it_Cons =
+  { .name               = "Cons",
+    .entryCode          = &whiteHole,
+    .objType            = CON,
+    .conFields.tag      = TagCons,
+    .conFields.argCount = 2,
+  };
+
+// ****************************************************************
+// TLDs
+//
+// by definition TLDs have no free variables--heap offsets are static
+
+// unit = CON(Unit)
+Obj sho_unit =
+  { .objType = CON,
+    .infoPtr = &it_Unit,
+  };
 
 // one = CON(I 1)
 Obj sho_one = 
@@ -123,7 +143,42 @@ Obj sho_two =
     .payload[0].i = 2
   };
 
-#define STGHEAPAT(n) ((Obj*)stgHP + (n))
+// true = CON(True)
+Obj sho_true = 
+  { .objType = CON,
+    .infoPtr = &it_True,
+  };
+
+// false = CON(False)
+Obj sho_false = 
+  { .objType = CON,
+    .infoPtr = &it_False,
+  };
+
+// ****************************************************************
+// main_thunk_unit = 
+//  THUNK(unit)
+
+DEFUN1(main_thunk_unit, self) {
+  //THUNK
+  stgThunk(self);
+  // unit
+  stgCurVal = (PtrOrLiteral) { .argType = HEAPOBJ, .op = &sho_unit };
+  STGRETURN0();
+  ENDFUN;
+}
+InfoTab it_main_thunk_unit =
+  { .name               = "main_thunk_unit",
+    .entryCode          = &main_thunk_unit,
+    .objType            = THUNK,
+    .fvCount            = 0,
+  };
+Obj sho_main_thunk_unit =
+  { .objType = THUNK,
+    .infoPtr = &it_main_thunk_unit,
+  };
+
+// ****************************************************************
 
 // ****************************************************************
 // main1 = 
@@ -147,7 +202,8 @@ DEFUN1(main1, self) {
 InfoTab it_main1 =
   { .name               = "main1",
     .entryCode          = &main1,
-    .objType            = THUNK
+    .objType            = THUNK,
+    .fvCount = 0,
   };
 Obj sho_main1 =
   { .objType = THUNK,
@@ -158,7 +214,8 @@ Obj sho_main1 =
 // main2 = 
 //   THUNK(let { x = CON (I 3);          x -3
 //               y = THUNK( x );         y -2
-//               z = THUNK( y ) } in z)  z -1
+//               z = THUNK( y ) }        z -1
+//         in z)
 
 DEFUN1(y, self) {
   // THUNK
@@ -172,7 +229,8 @@ DEFUN1(y, self) {
 InfoTab it_y = {
   .name               = "y",
   .entryCode          = &y,
-  .objType            = THUNK
+  .objType            = THUNK,
+  .fvCount            = 1,
 };
 
 DEFUN1(z, self) {
@@ -187,7 +245,8 @@ DEFUN1(z, self) {
 InfoTab it_z =
   { .name               = "z",
     .entryCode          = &z,
-    .objType            = THUNK
+    .objType            = THUNK,
+    .fvCount            = 1,
   };
 
 DEFUN1(main2, self) {
@@ -229,7 +288,7 @@ InfoTab it_main2 =
 Obj sho_main2 =
   { .objType = THUNK,
     .infoPtr = &it_main2,
-       };
+  };
 
 // ****************************************************************
 // main3 = 
@@ -240,12 +299,7 @@ Obj sho_main2 =
 //           Right y -> y;
 //           x -> x
 //         })
-// gotta love the typing--hey, it's polymorphic!
-
-void derefStgCurVal() {
-  while (stgCurVal.argType == HEAPOBJ && stgCurVal.op->objType == INDIRECT)
-    stgCurVal = stgCurVal.op->payload[0];
-}
+// gotta love the typing--hey, it's superpolymorphic!
 
 DEFUN0(alts1) {
   Obj cont = stgPopCont();
@@ -283,25 +337,6 @@ InfoTab it_alts1 =
     .objType            = CASECONT
   };
 
-InfoTab it_Left =
-  { .name               = "Left",
-    .entryCode          = &whiteHole,
-    .objType            = CON,
-    .conFields.tag      = TagLeft,
-    .conFields.argCount = 1
-  };
-
-InfoTab it_Right =
-  { .name               = "Right",
-    .entryCode          = &whiteHole,
-    .objType            = CON,
-    .conFields.tag      = TagRight,
-    .conFields.argCount = 1
-  };
-
-#define POLHO(HO) ((PtrOrLiteral) {.argType = HEAPOBJ, .op = HO })
-#define POLLIT(L) ((PtrOrLiteral) {.argType = INT,     .i = L   })
-
 DEFUN1(main3, self) {
   stgThunk(self);
   // let { left = CON(Left one)
@@ -322,7 +357,7 @@ DEFUN1(main3, self) {
   stgPushCont( (Obj) { 
       .objType = CASECONT,
 	.infoPtr = &it_alts1,
-	.payload[0] = POLHO(STGHEAPAT(-1)) });     // stash right
+	.payload[0] = HOTOPL(STGHEAPAT(-1)) });     // stash right
   // left
   stgCurVal = (PtrOrLiteral) {.argType = HEAPOBJ,
 				 .op = STGHEAPAT(-2) };
@@ -338,135 +373,6 @@ Obj sho_main3 =
   { .objType = THUNK,
     .infoPtr = &it_main3,
   };
-
-// ****************************************************************
-
-Obj *derefHO(Obj *op) {
-  while (op->objType == INDIRECT)
-    op = op->payload[0].op;
-  return op;
-}
-
-Obj* derefPoL(PtrOrLiteral f) {
-  assert(f.argType == HEAPOBJ && "derefPoL: not a HEAPOBJ");
-  return derefHO(f.op);
-}
-
-DEFUN2(stgApplyPap1, f, x1) {
-  // now our predefined function/macro approach breaks down somewhat
-  // since we don't statically know the arity of the PAP's underlying
-  // function and we don't want a giant switch, so explicitly push onto stack
-  fprintf(stderr, "stgApplyPap1");
-  assert(f.argType == HEAPOBJ && f.op->objType == PAP);
-  assert(f.op->infoPtr->funFields.arity == f.op->argCount + 1); // 1 is Pap1
-  _PUSH(x1); // push last arg
-  for (int i = f.op->infoPtr->fvCount + // skip past free variables
-	       f.op->argCount - 1;      // index of last arg
-            // i != -1;  WRONG, must have left some crap on the stack
-               i != f.op->infoPtr->fvCount - 1;
-       i--) _PUSH(f.op->payload[i]);
-  _PUSH(f);  // push self
-  STGJUMP0(f.op->infoPtr->entryCode);
-  ENDFUN;
-}
-
-DEFUN2(stgApply1, f, x1) {
-  f.op = derefPoL(f);
-
-  switch (f.op->objType) {
-
-  case THUNK: { // seems like it would be more efficient to do while(THUNK)
-    fprintf(stderr, "stgApply1 THUNK\n");
-    Obj callCont = {.infoPtr = &it_stgCallCont, .payload[0] = x1};
-    stgPushCont(callCont);
-    STGCALL1(f.op->infoPtr->entryCode, f);  // result in stgCurVal
-    f = stgCurVal;  // new f
-    callCont = stgPopCont();
-    x1 = callCont.payload[0];
-    STGJUMP2(stgApply1, f, x1);
-    break;
-  } // case THUNK
-
-  case FUN: {
-    switch(f.op->infoPtr->funFields.arity) {
-    case 1: { //just right
-      fprintf(stderr, "stgApply1 FUN just right\n");
-      STGJUMP2(f.op->infoPtr->entryCode, f, x1);
-      break;
-    } // case 1
-    default: { // arity > 1, too few args
-      fprintf(stderr, "stgApply1 FUN too few args\n");
-      // build a PAP -- CAREFUL, COULD TRIGGER GC
-      // need to solve this problem for "let" in general
-      // one solution would be to have GC only possibly triggered by STGCALL
-      Obj *pap = stgNewHeapObj();
-      *pap = *f.op;  // quick and dirty
-      pap->objType = PAP;
-      pap->argCount = 1;
-      pap->payload[pap->infoPtr->fvCount] = x1; // just after the fvs
-      STGRETURN1(POLHO(pap));
-      break;
-    } // default
-    } // switch
-  } // case FUN
-
-  case PAP: {
-    switch(f.op->infoPtr->funFields.arity - f.op->argCount) {
-    case 1: { // just right
-      fprintf(stderr, "stgApply1 PAP just right\n");
-      STGJUMP2(stgApplyPap1, f, x1);
-      break;
-    } // case 1
-    default: { // too few args
-      fprintf(stderr, "stgApply1 PAP too few args\n");
-      f.op->payload[f.op->infoPtr->fvCount + f.op->argCount] = x1;  // reuse PAP for now
-      f.op->argCount += 1;
-      STGRETURN1(f);
-      break;
-    } // default
-    } // switch
-  } // case PAP
-
-  default: {
-    fprintf(stderr, "stgApply not a THUNK, FUN, or PAP\n");
-    exit(0);
-  } // default
-  }  // switch
-  ENDFUN;
-}
-
-// ****************************************************************
-// try a generic stgApply function...
-
-void callContSave(int argc, PtrOrLiteral argv[]) {
-  Obj callCont;
-  callCont.infoPtr = &it_stgCallCont;
-  callCont.payload[0] = (PtrOrLiteral) {.argType = INT, .i = argc};
-  for (int i = 0; i != argc; i++) callCont.payload[i+1] = argv[i];
-  stgPushCont(callCont);
-}
-
-void callContRestore(PtrOrLiteral argv[]) {
-  Obj callCont;
-  callCont = stgPopCont();
-  assert(callCont.payload[0].argType == INT);
-  for (int i = 0; i != callCont.payload[0].i; i++) argv[i] = callCont.payload[i+1];
-}
-
-// argv points to the beginning of the arg list, but push backwards...
-void pushargs(int argc, PtrOrLiteral argv[]) {
-  for (int i = argc-1; i != -1; i--) _PUSH(argv[i]);
-}
-// ...and pop forwards
-void popargs(int argc, PtrOrLiteral argv[]) {
-  for (int i = 0; i != argc; i++) _POP(argv[i]);
-}
-
-void copyargs(PtrOrLiteral *dest, const PtrOrLiteral *src, int count) {
-  for (int i = 0; i != count; i++) dest[i] = src[i];
-}
-
-#include "stgapply.c"
 
 // ****************************************************************
 
@@ -493,7 +399,7 @@ Obj sho_id = {
 DEFUN1(main4, self) {
   stgThunk(self);
   // id and unit are top-level
-  STGJUMP2(stgApply1, POLHO(&sho_id), POLHO(&sho_unit));
+  STGJUMP2(stgApply1, HOTOPL(&sho_id), HOTOPL(&sho_unit));
   ENDFUN;
 }
 InfoTab it_main4 =
@@ -531,13 +437,7 @@ DEFUN1(const_one, self) {
   fprintf(stderr, "THUNK(constf one) here\n");
   stgThunk(self);
   // constf and one are top-level
-
-  // STGJUMP2(stgApply1, POLHO(&sho_constf), POLHO(&sho_one));
-
-  _PUSH(POLHO(&sho_one));
-  PtrOrLiteral N = {.argType = INT, .i = 1};
-  STGJUMP2(stgApply, N, POLHO(&sho_constf));
-
+  STGAPPLY1(HOTOPL(&sho_constf), HOTOPL(&sho_one));
   ENDFUN;
 }
 InfoTab it_const_one =
@@ -558,13 +458,7 @@ DEFUN1(main5, self) {
   fprintf(stderr, "THUNK(const_one unit) here\n");
   stgThunk(self);
   // constf and unit are top-level
-
-  // STGJUMP2(stgApply1, POLHO(&sho_const_one), POLHO(&sho_unit));
-
-  _PUSH(POLHO(&sho_unit));
-  PtrOrLiteral N = {.argType = INT, .i = 1};
-  STGJUMP2(stgApply, N, POLHO(&sho_const_one));
-
+  STGAPPLY1(HOTOPL(&sho_const_one), HOTOPL(&sho_unit));
   ENDFUN;
 }
 InfoTab it_main5 =
@@ -579,7 +473,8 @@ Obj sho_main5 =
   };
 
 // ****************************************************************
-// mainfail = THUNK(mainfail) - this works but displaying the heap doesn't detect cycles
+// mainfail = THUNK(mainfail) - this works but displaying the heap doesn't 
+// correctly detect cycles
 Obj sho_mainfail;
 
 DEFUN1(mainfail, self) {
@@ -588,7 +483,6 @@ DEFUN1(mainfail, self) {
   STGRETURN0();
   ENDFUN;
 }
-
 InfoTab it_mainfail =
   { .name               = "mainfail",
     .entryCode          = &mainfail,
@@ -605,7 +499,7 @@ void initPredefs() {
   stgStatObj[stgStatObjCount++] = &sho_unit;
   stgStatObj[stgStatObjCount++] = &sho_one;
   stgStatObj[stgStatObjCount++] = &sho_two;
-  stgStatObj[stgStatObjCount++] = &sho_main_unit;
+  stgStatObj[stgStatObjCount++] = &sho_main_thunk_unit;
   stgStatObj[stgStatObjCount++] = &sho_main1;
   stgStatObj[stgStatObjCount++] = &sho_main3;
   stgStatObj[stgStatObjCount++] = &sho_main5;
@@ -615,8 +509,10 @@ void initPredefs() {
   stgStatObj[stgStatObjCount++] = &sho_mainfail;
 }
 
+// Note this definition not only handles THUNKs returning THUNKs,
+// but also the general case of e.g. main = CON(I 1)
 DEFUN0(start) {
-  stgPushCont(sho_stgShowResultCont);
+  stgPushCont(sho_stgShowResultCont);  // nothing to save or restore
   stgCurVal = (PtrOrLiteral){.argType = HEAPOBJ, .op = &sho_main5};
   while (stgCurVal.argType == HEAPOBJ &&
 	 stgCurVal.op->objType == THUNK) {
@@ -624,60 +520,13 @@ DEFUN0(start) {
     STGCALL1(stgCurVal.op->infoPtr->entryCode, stgCurVal);
     stgPopCont();
   }
+  if (stgCurVal.argType == HEAPOBJ && 
+      stgCurVal.op->objType == BLACKHOLE) {
+    fprintf(stderr, "infinite loop detected in start!\n");
+    exit(0);
+  }
+
   STGRETURN0(); // return through stgShowResultCont
   ENDFUN;
 }
 
-/*
-DEFUN2(primAdd, x, y) {
-
-  ENDFUN;
-}
-
-// main3 = 
-//   let { x = CON (I 3);
-//         f = FUN y -> x }
-//   in f x
-InfoTab it_main3 =
-  { .name               = "main3",
-    .entryCode          = &main3,
-    .objType            = THUNK
-  };
-
-Obj sho_main3 =
-  { .objType = THUNK,
-    .infoPtr = &it_main3,
-  };
-
-// main3 = 
-//   let { xx = CON (I 3);
-//         ff = FUN (y -> x) }
-//   in ff xx
-
-InfoTab it_ff =
-  { .name               = "ff",
-    .entryCode          = &ff,
-    .objType            = FUN,
-    .funFields.arity    = 1
-  };
-
-DEFUN0(ff) {
-  ENDFUN;
-}
-
-DEFUN0(main3) {
-  Obj *x = stgNewHeapObj();
-  *x = (Obj) 
-    { .objType = CON,
-      .infoPtr = &it_I,
-      .payload[0] = (PtrOrLiteral) {.argType = INT, .i = 3}
-    };
-  // in x
-  stgCurVal = (PtrOrLiteral) { .argType = HEAPOBJ, .op = x };
-  CmmFnPtr go = ((Obj *)stgSP)->infoPtr->entryCode;
-  fprintf(stderr,"leaving main3\n");
-  JUMP0(  ((CMMVal) { .valTag = CMMFP, .cmmFP = (FnPtr)go }) );
-  ENDFUN;
-}
-
-*/

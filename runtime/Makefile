@@ -1,8 +1,8 @@
 CC=gcc
 CFLAGS=-c -std=gnu99 -Wall -Wno-unused-but-set-variable 
 LDFLAGS=
-HEADERS=stg.h cmm.h predefs.h stgcmm.h
-SOURCES=main.c predefs.c stg.c cmm.c stgcmm.c
+HEADERS=stg.h cmm.h predefs.h stgcmm.h stgutils.h
+SOURCES=main.c predefs.c stg.c cmm.c stgcmm.c stgutils.c
 OBJECTS=$(SOURCES:.c=.o)
 EXECUTABLE=main
 

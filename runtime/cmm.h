@@ -80,6 +80,14 @@ extern void initCmm();
   } while (0)
 
 
+#define CALL4_0(F,P1,P2,P3,P4)			\
+  do {						\
+    _PUSHVALS4(P1,P2,P3,P4);			\
+    _CALL(F);					\
+    _POPVALS0();				\
+  } while (0)
+
+
 #define RETURN0()				\
   do {						\
     _RETURN();					\
