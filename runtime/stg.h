@@ -1,6 +1,7 @@
 #ifndef stg_h
 #define stg_h
 #include <stdint.h>
+#include <stddef.h>
 #include <assert.h>
 
 //------ stack and heap objects

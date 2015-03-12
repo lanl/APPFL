@@ -12,6 +12,8 @@
 #include <malloc.h>  // for memalign()
 
 #include "stg.h"
+#include "gc.h"
+
 extern void stgPushCont(Obj c);
 extern Obj stgPopCont();
 
@@ -124,9 +126,10 @@ void showStgHeap() {
     showStgObj(stgStatObj[i]);
     fprintf(stderr,"\n");
   }
+  void *currentStgHeap = HeapSpace ? stgHeap + (stgHeapSize)/2 : stgHeap;
   fprintf(stderr,"\nSTG heap:\n\n");
   for (Obj *p = ((Obj *) stgHP) - 1;
-       p >= (Obj *)stgHeap;
+       p >= (Obj *)currentStgHeap;
        p--) {showStgObj(p); fprintf(stderr,"\n");}
 }
 
@@ -141,11 +144,11 @@ void showStgStack() {
 }
 
 void initStg() {
-  stgHeap = 
+  stgHeap =
     mmap( NULL,                   // void *address, NULL => no preference
 	  stgHeapSize,           // size_t length
 	  PROT_READ | PROT_WRITE, // int protect, write may require read
-	  MAP_PRIVATE | MAP_ANONYMOUS, // int flags
+	  MAP_PRIVATE | MAP_ANON, // int flags
 	  -1,                     // int filedes
 	  0 );                    // off_t offset
 
@@ -153,13 +156,14 @@ void initStg() {
     fprintf(stderr,"mmap stg heap failed!!\n"); 
     exit(1);
   }
+
   stgHP = stgHeap; // first free address
 
   stgStack = 
     mmap( NULL,                   // void *address, NULL => no preference
 	  stgStackSize,           // size_t length
 	  PROT_READ | PROT_WRITE, // int protect, write may require read
-	  MAP_PRIVATE | MAP_ANONYMOUS,  // int flags
+	  MAP_PRIVATE | MAP_ANON,  // int flags
 	  -1,                     // int filedes
 	  0 );                    // off_t offset
 
@@ -183,4 +187,5 @@ void initStg() {
     *q++ = i;
   }
   */
+
 }
