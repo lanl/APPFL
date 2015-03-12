@@ -121,7 +121,7 @@ PAP
 
 The PAP infoPtr points is its underlying FUN infoTab entry.  Thus objType =
 PAP but infoPtr->objType = FUN.  The the number of free variables is still
-infoPtr->fvCount.
+infoPtr->fvCount. argCount is the number of arguments already applied.
 
 CON
 
