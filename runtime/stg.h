@@ -40,7 +40,7 @@ typedef void (*vvfp)();
 typedef vvfp (*FnPtr)();
 typedef FnPtr (*CmmFnPtr)();
 
-// PtrOrLiteral -- pointer to heap object or literal value
+// PtrOrLiteral -- literal value or pointer to heap object 
 typedef struct {
   ArgType argType;        // superfluous, for sanity checking
   union {
@@ -71,9 +71,9 @@ typedef struct {
 // they'll be variably-sized and self-describing
 
 struct _Obj {
+  InfoTab *infoPtr;         // canonical location of ObjType field
   ObjType objType;          // to distinguish PAP, FUN, BLACKHOLE, INDIRECT
   int argCount;             // for PAP, how many args already applied to?
-  InfoTab *infoPtr;         // canonical location of ObjType field
   PtrOrLiteral payload[16]; // fixed for now
 };
 
@@ -148,6 +148,12 @@ inline Obj stgPopCont() {
 # define STGCALL2(f,v1,v2)			\
   CALL2_0(f,v1,v2)
 
+# define STGCALL3(f,v1,v2,v3)			\
+  CALL3_0(f,v1,v2,v3)
+
+# define STGCALL4(f,v1,v2,v3,v4)		\
+  CALL4_0(f,v1,v2,v3,v4)
+
 #define STGJUMP0(f)				\
   JUMP0(f)
 
@@ -157,6 +163,26 @@ inline Obj stgPopCont() {
 #define STGJUMP2(f,v1,v2)			\
   JUMP2(f,v1,v2)
 
+#define STGJUMP3(f,v1,v2,v3)			\
+  JUMP3(f,v1,v2,v3)
+
+#define STGJUMP4(f,v1,v2,v3,v4)			\
+  JUMP4(f,v1,v2,v3,v4)
+
+#define STGJUMP5(f,v1,v2,v3,v4,v5)		\
+  JUMP5(f,v1,v2,v3,v4,v5)
+
+#define STGJUMP6(f,v1,v2,v3,v4,v5,v6)		\
+  JUMP6(f,v1,v2,v3,v4,v5,v6)
+
+#define STGJUMP7(f,v1,v2,v3,v4,v5,v6,v7)	\
+  JUMP7(f,v1,v2,v3,v4,v5,v6,v7)
+
+#define STGJUMP8(f,v1,v2,v3,v4,v5,v6,v7,v8)	\
+  JUMP8(f,v1,v2,v3,v4,v5,v6,v7,v8)
+
+
+// are these good places to check for BLACKHOLE?
 // return through continuation stack
 #define STGRETURN0()				\
   JUMP0(((Obj *)stgSP)->infoPtr->entryCode)
@@ -168,6 +194,42 @@ inline Obj stgPopCont() {
     JUMP0(((Obj *)stgSP)->infoPtr->entryCode);	\
   } while(0)
 
+
+#define STGAPPLY1(f,v1)				\
+  do {						\
+    PtrOrLiteral N = {.argType = INT, .i = 1};	\
+    STGJUMP3(stgApply,N,f,v1);			\
+  } while(0)
+
+#define STGAPPLY2(f,v1,v2)			\
+  do {						\
+    PtrOrLiteral N = {.argType = INT, .i = 2};	\
+    STGJUMP4(stgApply,N,f,v1,v2);		\
+  } while(0)
+
+#define STGAPPLY3(f,v1,v2,v3)			\
+  do {						\
+    PtrOrLiteral N = {.argType = INT, .i = 3};	\
+    STGJUMP5(stgApply,N,f,v1,v2,v3);		\
+  } while(0)
+
+#define STGAPPLY4(f,v1,v2,v3,v4)		\
+  do {						\
+    PtrOrLiteral N = {.argType = INT, .i = 4};	\
+    STGJUMP6(stgApply,N,f,v1,v2,v3,v4);		\
+  } while(0)
+
+#define STGAPPLY5(f,v1,v2,v3,v4,v5)		\
+  do {						\
+    PtrOrLiteral N = {.argType = INT, .i = 5};	\
+    STGJUMP7(stgApply,N,f,v1,v2,v3,v4,v5);	\
+  } while(0)
+
+#define STGAPPLY6(f,v1,v2,v3,v4,v5,v6)		\
+  do {						\
+    PtrOrLiteral N = {.argType = INT, .i = 6};	\
+    STGJUMP8(stgApply,N,f,v1,v2,v3,v4,v5,v6);	\
+  } while(0)
 
 
 

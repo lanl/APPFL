@@ -13,10 +13,10 @@ extern InfoTab it_stgCallCont;
 
 inline void stgThunk(PtrOrLiteral self) {
   stgPushCont( (Obj) {		
-      .objType = UPDCONT,		
-	.infoPtr = &it_stgUpdateCont,	
-	.payload[0] = self		
-	});				
+    .objType = UPDCONT,		
+    .infoPtr = &it_stgUpdateCont,	
+    .payload[0] = self		
+  });				
   self.op->objType = BLACKHOLE;	
 }
 
