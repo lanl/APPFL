@@ -12,7 +12,6 @@
 #include <malloc.h>  // for memalign()
 
 #include "stg.h"
-#include "gc.h"
 
 extern void stgPushCont(Obj c);
 extern Obj stgPopCont();
@@ -125,10 +124,9 @@ void showStgHeap() {
     showStgObj(stgStatObj[i]);
     fprintf(stderr,"\n");
   }
-  void *currentStgHeap = HeapSpace ? stgHeap + (stgHeapSize)/2 : stgHeap;
   fprintf(stderr,"\nSTG heap:\n\n");
   for (Obj *p = ((Obj *) stgHP) - 1;
-       p >= (Obj *)currentStgHeap;
+       p >= (Obj *)stgHeap;
        p--) {showStgObj(p); fprintf(stderr,"\n");}
 }
 

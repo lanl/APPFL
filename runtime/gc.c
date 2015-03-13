@@ -1,11 +1,31 @@
+#include <stdio.h>
+#include <assert.h>
+#include <stdbool.h>
+
 #include "gc.h"
 #include "stg.h"
 
-bool HeapSpace = false;
+void *to=NULL, *from=NULL;
+void *scan=NULL, *free=NULL;
 
-// what half is pointer in (-1 for not in heap)
-int stgHeapHalf(void *ptr) {
-  if (ptr < stgHeap || (char *)ptr >= (char *)stgHeap + stgHeapSize) return -1;
-  return ((char *)ptr >=  (char *)stgHeap + stgHeapSize/2 ) ? 1 : 0;
+void initGc(void) {
+  assert(stgHeap && "heap not defined"); 
+  from = stgHeap;
+  to = (char *)stgHeap + stgHeapSize/2;
+  scan = to;
+  free = to;
 }
+
+void swapPtrs(void) {
+  assert( scan == free && "swapPtrs called when gc not finished");
+  stgHeap = to;
+  stgHP = free;
+  to = from;
+  from = stgHP;
+}
+
+bool isFrom(void *p) {
+  return (p >= from && (char *)p < (char *)from + stgHeapSize/2); 
+}
+
 
