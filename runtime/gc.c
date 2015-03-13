@@ -7,6 +7,7 @@
 #include "stg.h"
 #include "stgutils.h"
 
+
 const float gcThreshold=0.0;
 
 void *toPtr=NULL, *fromPtr=NULL;
@@ -20,8 +21,8 @@ void initGc(void) {
   assert(stgHeap && "heap not defined"); 
   fromPtr = stgHeap;
   toPtr = (char *)stgHeap + stgHeapSize/2;
-  freePtr = toPtr;
   scanPtr = toPtr;
+  freePtr = toPtr;
 }
 
 void swapPtrs(void) {
@@ -111,7 +112,6 @@ void processObj(Obj *p) {
     assert (false && "bad obj type");
   }
 }
-
 
 
 void gc(void) {
