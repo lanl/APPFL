@@ -70,7 +70,7 @@ its first field will be the info pointer.  For now it's a named field,
 A PAP's info pointer is its underlying FUN info pointer.  The number of valid
 PtrOrLiterals in a PAP grows dynamically as it applied to successively more
 arguments.  Thus we include a field in the object itself indicating how many
-of this arguments it currently has.
+of these arguments it currently has.
 
 struct _Obj;
 
@@ -88,7 +88,7 @@ All HOs have three parts (using Obj field names, not the field name C types):
 
 Obj type
 -------------------------------------------------------------
-| infoPtr | objType | argCount |          payload           |
+| infoPtr | objType |    N/A   |          payload           |
 -------------------------------------------------------------
 
 While the ObjType is also in the InfoTab, we choose to have a dedicated field
@@ -107,47 +107,59 @@ i.e. PtrOrLiterals to HOs, starting at payload[0].
 
                                | payload 
 -----------------------------------------------------------------------------
-| infoPtr | objType | argCount | free variables                             |
+| infoPtr | objType |    N/A   | free variables                             |
 -----------------------------------------------------------------------------
 
-The number of free variables is in infoPtr->fvCount.  objType = FUN and
-infoPtr->objType = FUN.
+infoPtr->fvCount is number of free variables
+objType = FUN
+infoPtr->objType = FUN
 
 PAP
-
+                               | payload 
 -----------------------------------------------------------------------------
 | infoPtr | objType | argCount | free variables | args already applied      |
 -----------------------------------------------------------------------------
 
-The PAP infoPtr points is its underlying FUN infoTab entry.  Thus objType =
-PAP but infoPtr->objType = FUN.  The the number of free variables is still
-infoPtr->fvCount. argCount is the number of arguments already applied.
+The PAP infoPtr points is its underlying FUN infoTab entry, so
+objType = PAP 
+infoPtr->objType = FUN
+infoPtr->fvCount = number of free variables 
+argCount = number of arguments already applied
 
 CON
 
                                | payload 
 -----------------------------------------------------------------------------
-| infoPtr | objType | argCount | arguments                                  |
+| infoPtr | objType |    N/A   | args                                       |
 -----------------------------------------------------------------------------
 
-The number of arguments is infoPtr->conFields.argCount, objType = CON and
-infoPtr->objType = CON.
+infoPtr->conFields.argCount = number of args 
+infoPtr->objType = CON
+
 
 THUNK
-
                                | payload 
 -----------------------------------------------------------------------------
-| infoPtr | objType | argCount | free variables                             |
+| infoPtr | objType |    N/A   | free variables                             |
 -----------------------------------------------------------------------------
 
-The number of free variables is infoPtr->fvCount.  objType = THUNK and
-infoPtr->objType = THUNK.
+objType = THUNK
+infoPtr->objType = THUNK
+infoPtr->fvCount = number of free variables
 
 BLACKHOLE
 
+                               | payload 
+-----------------------------------------------------------------------------
+| infoPtr | objType |    N/A   | free variables (they're still live!)       |
+-----------------------------------------------------------------------------
+
 Black holes only come from THUNKs.  For convenience and arguable efficiency,
 a BLACKHOLE will be created by simply overwriting objType with value BLACKHOLE,
-so infoPtr->objType = THUNK.
+
+objType = BLACKHOLE
+infoPtr->objType = THUNK
+infoPtr->fvCount = number of free variables
 
 INDIRECT
 
@@ -156,10 +168,13 @@ INDIRECT
 | infoPtr | objType | argCount | ptr to some other object                   |
 -----------------------------------------------------------------------------
 
-INDIRECTs arise from BLACKHOLEs being updated.  The THUNK object is reused, so
-infoPtr->objType = THUNK and we will simply set objType = INDIRECT.
+INDIRECTs arise from BLACKHOLEs being updated.  The THUNK object is again
+reused, so 
 
-For now, payload[0] is the pointer to the next object in the indirect chain.
+objType = INDIRECT
+infoPtr->objType = THUNK
+infoPtr->fvCount = ***NO LONGER VALID, THE FREE VARS ARE NO LONGER LIVE***
+payload[0] = the pointer to the next object in the indirect chain.
 
 
 
@@ -194,6 +209,39 @@ Obj* derefPoL(PtrOrLiteral f) {
   return derefHO(f.op);
 }
 
+typedef enum {
+  // heap objects
+  ...
+  // stack objects
+  ...
+  // garbage collection
+  FORWARD
+} ObjType;
+
+We have an ObjType value for the sole use of the GC.  If objtype = FORWARD,
+the object is assumed to have been already copied to the "to" space (or
+somewhere, depending on GC scheme), so its HO pointers and infoPtr have been
+copied, so it it is safe to use payload[0] as the forwarding pointer.
+
+A prototypical sequence of events would be
+
+1) Copy object from "from" space to "to" space
+2) from_space_object->objType assigned FORWARD
+3) from_space_object->payload[0] assigned to_space_object
+
+Steps 2 and 3 could occur in either order.
+
+FORWARD
+                               | payload 
+-----------------------------------------------------------------------------
+| infoPtr | objType | argCount | ptr to new self in "to" space              |
+-----------------------------------------------------------------------------
+
+objType = FORWARD
+payload[0] is pointer to new self in "to" space
+
+
+
 
 Static Heap Objects
 
@@ -225,6 +273,8 @@ typedef enum {
   CASECONT, 
   CALLCONT, 
   FUNCONT        // for strict evaluation
+  //
+  ...
 } ObjType;
 
 The layout of continuation stack objects is as follows.

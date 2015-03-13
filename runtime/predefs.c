@@ -517,7 +517,9 @@ DEFUN0(start) {
   stgCurVal = (PtrOrLiteral){.argType = HEAPOBJ, .op = &sho_main5};
   while (stgCurVal.argType == HEAPOBJ &&
 	 stgCurVal.op->objType == THUNK) {
-    stgPushCont((Obj){.infoPtr = &it_stgCallCont});
+    stgPushCont((Obj){.infoPtr = &it_stgCallCont,
+	              .objType = CALLCONT,
+	              .payload[0] = {0}});
     STGCALL1(stgCurVal.op->infoPtr->entryCode, stgCurVal);
     stgPopCont();
   }

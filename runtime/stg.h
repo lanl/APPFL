@@ -23,9 +23,11 @@ typedef enum {
   UPDCONT, 
   CASECONT, 
   CALLCONT, 
-  FUNCONT        // for strict evaluation
+  FUNCONT,        // for strict evaluation
+  // garbage collection
+  FORWARD
 } ObjType;
-const char *objTypeNames[FUNCONT+1];
+const char *objTypeNames[FORWARD+1];
 
 struct _Obj;
 struct _InfoTab;

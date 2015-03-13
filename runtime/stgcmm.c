@@ -24,7 +24,8 @@ DEFUN0(stgUpdateCont) {
 InfoTab it_stgUpdateCont =
   { .name               = "stgUpdateCont",
     .entryCode          = &stgUpdateCont,
-    .objType            = UPDCONT
+    .objType            = UPDCONT,
+    .fvCount            = 1, // implied, so hopefully code won't use this
   };
 Obj sho_stgUpdateCont = {
   .infoPtr = &it_stgUpdateCont

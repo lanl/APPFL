@@ -31,10 +31,9 @@ const char *objTypeNames[] = {
   "UPDCONT", 
   "CASECONT", 
   "CALLCONT", 
-  "FUNCONT"
+  "FUNCONT",
+  "FORWARD",
 };
-
-
 
 Obj* stgNewHeapObj() {
   Obj *curp = (Obj *)stgHP;
