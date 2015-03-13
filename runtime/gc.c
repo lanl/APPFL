@@ -13,9 +13,14 @@ const float gcThreshold=0.0;
 void *toPtr=NULL, *fromPtr=NULL;
 void *scanPtr=NULL, *freePtr=NULL;
 
-size_t sizeofObj(Obj *p) {
+// wrapper functions
+static inline size_t sizeofObj(Obj *p) {
   return sizeof(Obj);
 }
+
+
+
+// end of wrappers
 
 void initGc(void) {
   assert(stgHeap && "heap not defined"); 
@@ -33,7 +38,7 @@ void swapPtrs(void) {
   fromPtr = stgHP;
 }
 
-bool isFrom(void *p) {
+static inline bool isFrom(void *p) {
   return (p >= fromPtr && (char *)p < (char *)fromPtr + stgHeapSize/2); 
 }
 
@@ -43,6 +48,7 @@ void updatePtr(PtrOrLiteral f) {
 		if(p->objType == FORWARD) {
 			p = p->payload[0].op;
 		} else {
+            fprintf(stderr, "copy a %s from->to\n", objTypeNames[p->objType]); 
 			memcpy(freePtr, p, sizeofObj(p));
 			p->objType = FORWARD;
 			p->payload[0].op = freePtr;
@@ -83,11 +89,10 @@ void processObj(Obj *p) {
     }
     break;
   case THUNK:
+  case BLACKHOLE:
     for(i=0; i<it.fvCount; i++) {
       updatePtr(o.payload[i]);
     }
-    break;
-  case BLACKHOLE:
     break;
   case INDIRECT:
     updatePtr(o.payload[0]);
