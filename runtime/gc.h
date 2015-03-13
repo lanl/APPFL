@@ -3,5 +3,6 @@
 
 void initGc(void);
 
- 
+void gc(void);
+
 #endif
