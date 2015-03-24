@@ -1,0 +1,100 @@
+error = ERROR;
+unit = CON(Unit);
+true = CON(True);
+false = CON(False);
+nil = CON(Nil);
+zero = CON(I 0);
+one = CON(I 1);
+two = CON(I 2);
+three = CON(I 3);
+four = CON(I 4);
+five = CON(I 5);
+six = CON(I 6);
+seven = CON(I 7);
+eight = CON(I 8);
+nine = CON(I 9);
+ten = CON(I 10);
+
+multInt = FUN(x y ->
+   case x of { 
+      I i -> case y of { 
+               I j -> case mult# i j of { 
+                         x -> let { result = CON (I x) } in result }}});
+
+plusInt = FUN(x y ->
+   case x of { 
+      I i -> case y of { 
+               I j -> case plus# i j of { 
+                         x -> let { result = CON (I x) } in result }}});
+
+subInt = FUN(x y ->
+           case x of
+              { I i ->
+                  case y of
+                     { I j -> case sub# i j of
+                                 { x -> let { result = CON (I x) } in result }}});
+
+eqInt = FUN(x y ->
+           case x of
+              { I i ->
+                  case y of
+                     { I j -> case eq# i j of
+                                 { x -> intToBool# x }}});
+
+append = FUN(l1 l2 ->
+            case l1 of
+               { Nil -> l2;
+                 Cons hd tl -> let { rec = THUNK(append tl l2);
+                                     result = CON(Cons hd rec) }
+                               in result });
+
+const = FUN(x y -> x);
+apply = FUN(f x -> f x);
+
+map = FUN(f list ->
+   case list of {
+      Nil -> nil;
+      Cons h t -> let { x = THUNK(f h); rec = THUNK(map f t); res = CON(Cons x rec) } in res
+   });
+
+take = FUN(n xs ->
+   case eqInt n zero of
+      { True -> nil;
+        False -> case xs of
+                 { Nil -> nil;
+                   Cons hd tl -> let { m = THUNK(subInt n one);
+                                       rec = THUNK(take m tl);
+                                       result = CON(Cons hd rec) } in result }});
+
+head = FUN(xs -> case xs of { Cons hd tl -> hd });
+tail = FUN(xs -> case xs of { Cons hd tl -> tl });
+
+foldl = FUN(f acc list ->
+   case list of {
+      Nil -> acc;
+      Cons h t -> let { newAcc = THUNK(f acc h) } in foldl f newAcc t 
+   });
+
+# lazy sum with a well-known space leak
+sum = FUN(list -> foldl plusInt zero list);
+
+zipWith = FUN(f list1 list2 ->
+   case list1 of {
+      Nil -> nil;
+      Cons h1 t1 -> 
+         case list2 of {
+            Nil -> nil;
+            Cons h2 t2 ->
+               let { newHead = THUNK(f h1 h2); 
+                     newTail = THUNK(zipWith f t1 t2);
+                     result = CON(Cons newHead newTail)
+               } in result
+         }
+   });
+
+seq = FUN(x y -> case x of { z -> y });
+
+forcelist = FUN(list ->
+   case list of {
+      Nil -> unit;
+      Cons h t -> let { rec = THUNK(forcelist t) } in seq h rec });
