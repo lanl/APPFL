@@ -1,0 +1,35 @@
+module Lexer (
+
+) where
+
+import ParseComb
+import Scanner
+
+data Tag = Number 
+         | Ident 
+         | Keyword
+         | Ctor
+         | Obj
+         | Symbol
+         | Primop
+           deriving(Show, Eq)
+
+type Token = (Tag, [Char])
+
+
+lexer :: [Lexeme] -> [Token]
+lexer = map trans
+
+trans :: Lexeme -> Token
+trans (ScanNum, str) = (Number, str)
+trans (ScanSym, str) = (Symbol, str)
+trans (ScanIdent, str) =
+    if elem str ["FUN","PAP","CON","THUNK","BLACKHOLE"] then (Obj, str)
+    else if elem str ["let", "in", "case", "of"] then (Keyword, str)
+    else if isupper (head str) then (Ctor, str)
+    else if (last str) == '#' then (Primop, str)
+    else (Ident, str)
+
+
+
+

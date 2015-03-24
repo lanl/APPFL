@@ -1,0 +1,217 @@
+{-# LANGUAGE TypeSynonymInstances #-}
+{-# LANGUAGE FlexibleInstances #-}
+
+module Rename (
+  renameDefs,
+  setfvs
+) where
+
+
+import Prelude
+import Parser
+import Data.List
+
+--import Control.Monad.State.Lazy
+
+newtype State s a = State (s -> (a, s))
+
+state :: (s -> (a, s)) -> State s a
+state x = State x
+
+runState :: State s a -> s -> (a, s)
+runState (State f) x = f x
+
+instance Monad (State s) where
+    return x = state (\st -> (x, st))
+    act >>= k = state $ \st -> 
+                          let (x, st') = runState act st
+                          in runState (k x) st'
+
+get = State $ \s -> (s,s)
+
+put newState = State $ \s -> ((), newState)  
+
+type NameSupply = [String]
+nameSupply = [ show i | i <- [1..]]
+
+-- only have to get into the monad one time, here
+suffixname v = State $ \(x:xs, used) -> 
+                        if elem v used then (v++x, (xs, (v++x):used))
+                        else (v, (x:xs, v:used))
+
+suffixnames = mapM suffixname
+
+-- uniquify obj names, systematically renaming 
+
+-- no need to flail in the monad at Atom level
+nameAtom (Var v) tt = Var $ condrepl v tt
+nameAtom (Lit l) tt = Lit l
+nameAtoms as tt = map ((flip nameAtom) tt) as
+
+renameDefs defs =
+  let (defs', namesupply') = runState (nameDefs defs []) (nameSupply, [])
+  in defs'
+
+-- this is the tricky one because they're all in the same letrec scope
+-- need to figure out how to do circular programs with the state monad involved
+nameDefs defs tt = 
+    do
+      let (names, objs) = unzip defs
+      names' <- suffixnames names
+      let tt' = (zip names names') ++ tt
+      objs' <- mapM ((flip nameObj) tt') objs
+      return $ zip names' objs'
+      
+nameExpr (ELet fvs defs e) tt =
+    do
+      let names = map fst defs
+      defs' <- nameDefs defs tt
+      let names' = map fst defs'
+      e' <- nameExpr e ((zip names names')++tt)
+      return (ELet fvs defs' e')
+
+nameExpr (ECase fvs e alts) tt =
+    do
+      e' <- nameExpr e tt
+      alts' <- mapM ((flip nameAlt) tt) alts
+      return (ECase fvs e' alts')
+
+nameExpr (EAtom fvs a) tt =
+    return $ EAtom fvs (nameAtom a tt)
+
+nameExpr (EFCall fvs f as) tt =
+    let f' = condrepl f tt
+        as' = nameAtoms as tt in
+    return (EFCall fvs f' as')
+
+nameExpr (EPrimop fvs p as) tt =
+    let as' = nameAtoms as tt in
+    return (EPrimop fvs p as')
+
+
+nameAlt (ACon fvs c vs e) tt = 
+    do
+      e' <- nameExpr e (dropall vs tt)
+      return (ACon fvs c vs e')
+
+nameAlt (ADef fvs v e) tt = 
+    do
+      e' <- nameExpr e (dropall [v] tt)
+      return (ADef fvs v e')
+
+nameObj (FUN fvs vs e) tt =
+    do
+      e' <- nameExpr e (dropall vs tt)
+      return (FUN fvs vs e')
+
+nameObj (THUNK fvs e) tt =
+    do
+      e' <- nameExpr e tt
+      return (THUNK fvs e')
+
+nameObj (PAP fvs f as) tt =
+    let f' = condrepl f tt
+        as' = nameAtoms as tt in
+    return (PAP fvs f' as')
+
+nameObj (CON fvs c as) tt =
+    return (CON fvs c $ nameAtoms as tt)
+
+nameObj BLACKHOLE tt = return BLACKHOLE
+
+-- drop all references to vs in map tt
+-- there's a fold in here...
+
+dropall [] tt = tt
+dropall vs [] = [] -- shortcut
+dropall (v:vs) tt = dropall vs (filter ((/=v).fst) tt)
+
+condrepl v tt = case lookup v tt of
+                  Just v' -> v'
+                  Nothing -> v
+
+-- *****************************************************
+
+-- after rename, make the fvs meaningful
+
+class FVs a where fvsof :: a -> [Var]
+
+instance FVs Atom where
+    fvsof (Var v) = [v]
+    fvsof (Lit l) = []
+
+instance FVs [Atom] where
+    fvsof as = nub $ concatMap fvsof as
+
+class SetFVs a where setfvs :: a -> ([Var], a)
+
+instance SetFVs Expr where
+    setfvs (EAtom _ a) = 
+        let myfvs = fvsof a
+        in (myfvs, EAtom myfvs a)
+
+    setfvs (EFCall _ f as) = 
+        let myfvs = nub $ f : (fvsof as)  -- nub superfluous if typed
+        in (myfvs, EFCall myfvs f as)
+
+    setfvs (EPrimop _ p as) = 
+        let myfvs = fvsof as 
+        in (myfvs, EPrimop myfvs p as)
+
+    setfvs (ELet _ defs e) = 
+        let (defsfvs, defs') = setfvs defs
+            defslhs = map fst defs'
+            (efvs, e') = setfvs e
+            myfvs = nub $ defsfvs ++ (efvs \\ defslhs)
+        in (myfvs, ELet myfvs defs' e')
+
+    setfvs (ECase _ e alts) = 
+        let (altsfvs, alts') = setfvs alts
+            (efvs, e') = setfvs e
+            myfvs = nub $ efvs ++ altsfvs
+        in (myfvs, ECase myfvs e' alts')
+
+instance SetFVs Alt where
+    setfvs (ACon _ c vs e) = 
+        let (efvs, e') = setfvs e
+            myfvs = efvs \\ vs
+        in (myfvs, ACon myfvs c vs e')
+    setfvs (ADef _ v e) = 
+        let (efvs, e') = setfvs e
+            myfvs = efvs \\ [v]
+        in  (myfvs, ADef myfvs v e')
+
+instance SetFVs [Alt] where
+    setfvs alts =
+        let (altsfvss, alts') = unzip $ map setfvs alts
+        in (nub $ concat altsfvss, alts')
+
+instance SetFVs Obj where
+    setfvs (FUN _ vs e) = 
+        let (efvs, e') = setfvs e
+            myfvs = efvs \\ vs
+        in (myfvs, FUN myfvs vs e')
+
+    setfvs (PAP _ f as) = 
+        let asfvs = fvsof as
+            myfvs = nub $ f : asfvs -- nub superfluous, like EFCall
+        in (myfvs, PAP myfvs f as)
+
+    setfvs (CON _ c as) = 
+        let myfvs = fvsof as
+        in (myfvs, CON myfvs c as)
+
+    setfvs (THUNK _ e) = 
+        let (myfvs, e') = setfvs e
+        in (myfvs, THUNK myfvs e')
+
+--only interesting for non-recursive let
+--instance SetFVs Def where
+--    setfvs (v, o) = (setfvs o) \\ [v]
+
+instance SetFVs [Def] where
+    setfvs defs = 
+        let (vs, os) = unzip defs 
+            (osfvss, os') = unzip $ map setfvs os
+            osfvs = nub $ concat osfvss
+        in (osfvs \\ vs, zip vs os')
