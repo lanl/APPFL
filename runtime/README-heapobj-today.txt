@@ -133,7 +133,7 @@ CON
 | infoPtr | objType |    N/A   | args                                       |
 -----------------------------------------------------------------------------
 
-infoPtr->conFields.argCount = number of args 
+infoPtr->conFields.arity = number of args 
 infoPtr->objType = CON
 
 

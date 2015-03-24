@@ -7,6 +7,8 @@
 #include "stg.h"
 #include "stgutils.h"
 
+const bool DEBUG = false;
+
 // fraction of total heap used before gc runs.
 const float gcThreshold=0.0;
 
@@ -18,7 +20,7 @@ static inline size_t sizeofObj(Obj *p) { return sizeof(Obj); }
 static inline size_t countFreevars(Obj *p) { return p->infoPtr->fvCount; }
 static inline size_t startPAPargs(Obj *p) { return countFreevars(p); }
 static inline size_t endPAPargs(Obj *p) { return countFreevars(p) + p->argCount; }
-static inline size_t countCONargs(Obj *p) { return p->infoPtr->conFields.argCount; }
+static inline size_t countCONargs(Obj *p) { return p->infoPtr->conFields.arity; }
 static inline size_t startCallargs(Obj *p) { return 1; }
 static inline size_t endCallargs(Obj *p) { return p->payload[0].i + 1; }
 static inline bool isHeap(Obj *p, size_t index) {
@@ -50,9 +52,10 @@ void updatePtr(PtrOrLiteral f) {
   Obj *p = derefPoL(f);
   if (isFrom(p)) {
     if(p->objType == FORWARD) {
+      fprintf(stderr, "already copied\n");
       p = p->payload[0].op;
     } else {
-      fprintf(stderr, "copy a %s from->to\n", objTypeNames[p->objType]);
+      if (DEBUG) fprintf(stderr, "copy a %s from->to\n", objTypeNames[p->objType]);
       memcpy(freePtr, p, sizeofObj(p));
       p->objType = FORWARD;
       p->payload[0].op = freePtr;
@@ -134,7 +137,7 @@ void gc(void) {
     return;
   }
 
-  fprintf(stderr,"start gc\n");
+  if (DEBUG) fprintf(stderr,"start gc\n");
 
   // all SHO's
   for(int i=0; i<stgStatObjCount; i++) {
@@ -155,6 +158,14 @@ void gc(void) {
      scanPtr = (char *)scanPtr + sizeofObj(scanPtr);
    }
 
+   if (DEBUG) {
+     fprintf(stderr, "old heap\n");
+     showStgHeap();
+   }
    swapPtrs();
-   fprintf(stderr,"end gc\n");
+   if (DEBUG) {
+     fprintf(stderr, "new heap\n");
+     showStgHeap();
+     fprintf(stderr,"end gc\n");
+   }
 }

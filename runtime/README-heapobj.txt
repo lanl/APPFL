@@ -105,7 +105,7 @@ CON
 | infoPtr | objType |        arguments              |
 -----------------------------------------------------
 
-The number of arguments is infoPtr->conFields.argCount, objType = CON and
+The number of arguments is infoPtr->conFields.arity, objType = CON and
 infoPtr->objType = CON.
 
 THUNK
