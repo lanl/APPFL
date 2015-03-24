@@ -90,6 +90,10 @@ void showStgObj(Obj *p) {
     fprintf(stderr,"\n");
     break;
 
+  case FORWARD:
+    fprintf(stderr,"\n");
+    break;
+
   default:
     fprintf(stderr,"default in showStgObj!\n");
     exit(1);
