@@ -100,11 +100,22 @@ DEFUN2(stgApply, N, f) {
     fprintf(stderr, "stgApply THUNK\n");
     // thunks don't take args (eval-apply)
     callContSave(argc, argv);
+
+    /* THIS IS WRONG, MUST PUSH A CALLCONT EVERY TIME
     do {
       STGCALL1(f.op->infoPtr->entryCode, f);  // result in stgCurVal
       f = stgCurVal;  // new f
       f.op = derefPoL(f);
     } while (f.op->objType == THUNK);
+    */
+
+    /* do this
+    STGCALL1(f.op->infoPtr->entryCode, f);  // result in stgCurVal
+      or do the following to save all the pushing and popping
+    */
+    STGEVAL(f);
+
+
     // restore args
     callContRestore(argv);
     // now pass the args

@@ -21,3 +21,4 @@ inline void stgThunk(PtrOrLiteral self) {
 }
 
 #endif
+

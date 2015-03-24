@@ -50,7 +50,7 @@ InfoTab it_Unit =
     .entryCode          = &whiteHole,
     .objType            = CON,
     .conFields.tag      = TagUnit,
-    .conFields.argCount = 0,
+    .conFields.arity = 0,
   };
 
 // CON(False)
@@ -59,7 +59,7 @@ InfoTab it_False =
     .entryCode          = &whiteHole,
     .objType            = CON,
     .conFields.tag      = TagFalse,
-    .conFields.argCount = 0,
+    .conFields.arity = 0,
   };
 
 // CON(True)
@@ -68,7 +68,7 @@ InfoTab it_True =
     .entryCode          = &whiteHole,
     .objType            = CON,
     .conFields.tag      = TagTrue,
-    .conFields.argCount = 0,
+    .conFields.arity = 0,
   };
 
 // CON(I _)
@@ -77,7 +77,7 @@ InfoTab it_I =
     .entryCode          = &whiteHole,
     .objType            = CON,
     .conFields.tag      = TagI,
-    .conFields.argCount = 1,
+    .conFields.arity = 1,
   };
 
 // CON(Left _)
@@ -86,7 +86,7 @@ InfoTab it_Left =
     .entryCode          = &whiteHole,
     .objType            = CON,
     .conFields.tag      = TagLeft,
-    .conFields.argCount = 1,
+    .conFields.arity = 1,
   };
 
 // CON(Right _)
@@ -95,7 +95,7 @@ InfoTab it_Right =
     .entryCode          = &whiteHole,
     .objType            = CON,
     .conFields.tag      = TagRight,
-    .conFields.argCount = 1,
+    .conFields.arity = 1,
   };
 
 // CON(Nil)
@@ -104,7 +104,7 @@ InfoTab it_Nil =
     .entryCode          = &whiteHole,
     .objType            = CON,
     .conFields.tag      = TagNil,
-    .conFields.argCount = 0,
+    .conFields.arity = 0,
   };
 
 // CON(Cons _ _)
@@ -113,7 +113,7 @@ InfoTab it_Cons =
     .entryCode          = &whiteHole,
     .objType            = CON,
     .conFields.tag      = TagCons,
-    .conFields.argCount = 2,
+    .conFields.arity = 2,
   };
 
 // ****************************************************************
@@ -302,15 +302,18 @@ Obj sho_main2 =
 // gotta love the typing--hey, it's superpolymorphic!
 
 DEFUN0(alts1) {
-  Obj cont = stgPopCont();
   // scrutinee is alway stgCurVal
-  // chase down any indirection
-  derefStgCurVal();
+  // chase down any indirection--lets require that eval was nice to us
+  // derefStgCurVal();
   // winging it here, not exactly canonical
+  // and let's require that this be part of the eval process
+  /*
   if (stgCurVal.argType == HEAPOBJ && stgCurVal.op->objType == BLACKHOLE) {
     fprintf(stderr, "down a black hole!\n");
     exit(0);
   }
+  */
+  Obj cont = stgPopCont();
   if (stgCurVal.argType != HEAPOBJ ||
       stgCurVal.op->objType != CON ) goto casedefault;
   switch(stgCurVal.op->infoPtr->conFields.tag) {
@@ -359,9 +362,11 @@ DEFUN1(main3, self) {
       .objType = CASECONT,
 	.infoPtr = &it_alts1,
 	.payload[0] = HOTOPL(STGHEAPAT(-1)) });     // stash right
-  // left
-  stgCurVal = (PtrOrLiteral) {.argType = HEAPOBJ,
-				 .op = STGHEAPAT(-2) };
+  // left of
+  // rule for var is deposit in stgCurVal
+  stgCurVal = (PtrOrLiteral) {.argType = HEAPOBJ, .op = STGHEAPAT(-2) };
+  // rule for case is to evaluate whatever expression e left behind
+  STGEVAL(stgCurVal);
   STGRETURN0(); // return through casecont, could just pop it and inline
   ENDFUN;
 }
@@ -514,6 +519,8 @@ void initPredefs() {
 // but also the general case of e.g. main = CON(I 1)
 DEFUN0(start) {
   stgPushCont(sho_stgShowResultCont);  // nothing to save or restore
+
+  /*
   stgCurVal = (PtrOrLiteral){.argType = HEAPOBJ, .op = &sho_main5};
   while (stgCurVal.argType == HEAPOBJ &&
 	 stgCurVal.op->objType == THUNK) {
@@ -528,6 +535,9 @@ DEFUN0(start) {
     fprintf(stderr, "infinite loop detected in start!\n");
     exit(0);
   }
+  */
+
+  STGEVAL(((PtrOrLiteral){.argType = HEAPOBJ, .op = &sho_main3}));
 
   STGRETURN0(); // return through stgShowResultCont
   ENDFUN;

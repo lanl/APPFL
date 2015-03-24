@@ -37,10 +37,9 @@ DEFUN0(stgCallCont) {
   RETURN0();
   ENDFUN;
 }
-
 InfoTab it_stgCallCont =
   { .name               = "stgCallCont",
     .entryCode          = &stgCallCont,
-    .objType            = CALLCONT
+    .objType            = CALLCONT,
+    .fvCount            = -1,  // call conts are self describing
   };
-

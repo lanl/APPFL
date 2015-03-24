@@ -27,4 +27,26 @@ FnPtr stgApply1();
 
 #define STGHEAPAT(n) ((Obj*)stgHP + (n))
 
+// evaluate in place
+#define STGEVAL(e)				\
+do {						\
+  stgCurVal = e;				\
+  derefStgCurVal();				\
+  while (stgCurVal.argType == HEAPOBJ &&	\
+	 stgCurVal.op->objType == THUNK) {		\
+    stgPushCont((Obj){.infoPtr = &it_stgCallCont,	\
+	              .objType = CALLCONT,		\
+	              .payload[0] = {0}});		\
+    STGCALL1(stgCurVal.op->infoPtr->entryCode, stgCurVal); \
+    stgPopCont();					   \
+    derefStgCurVal();				\
+  }						\
+  if (stgCurVal.argType == HEAPOBJ &&           \
+      stgCurVal.op->objType == BLACKHOLE) {     \
+    fprintf(stderr, "infinite loop detected in start!\n"); \
+    exit(0);                                    \
+  }                                             \
+} while (0)
+
+
 #endif

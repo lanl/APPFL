@@ -53,19 +53,7 @@ typedef struct {
 } PtrOrLiteral;
 
 /*
-  payload
-    FUN - free variables
-    PAP - free variables, initial arguments
-    CON - arguments (includes free variables)
-    THUNK - free variables
-    BLACKHOLE - n/a
-    //
-    INDIRECT - pointer to next node in chain
-    //
-    UPDCONT  - pointer to HO to update
-    CASECONT - free variables
-    CALLCONT - in theory arguments (includes free variables), in practice???
-    FUNCONT  - the function (?) and args (not yet evaluated?)
+  payload -- see README
 */
 
 // stack or heap object
@@ -76,11 +64,11 @@ struct _Obj {
   InfoTab *infoPtr;         // canonical location of ObjType field
   ObjType objType;          // to distinguish PAP, FUN, BLACKHOLE, INDIRECT
   int argCount;             // for PAP, how many args already applied to?
-  PtrOrLiteral payload[16]; // fixed for now
+  char ident[64];           // temporary, just for tracing
+  PtrOrLiteral payload[32]; // fixed for now
 };
 
 typedef struct {
-  //
 } LayoutInfo;
 
 typedef struct {
@@ -90,7 +78,8 @@ typedef struct {
 
 typedef struct {
   int tag;
-  int argCount;  // change this to "arity"
+  int arity;
+  char conName[64];
 } CONfields;
 
 typedef struct {
