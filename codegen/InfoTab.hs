@@ -92,6 +92,112 @@ instance DefsOf [Def a] [Def a] where
     defsOf = concatMap defsOf
 
 
+-- ****************************************************************
+
+newtype State s a = State (s -> (a, s))
+
+state :: (s -> (a, s)) -> State s a
+state x = State x
+
+runState :: State s a -> s -> (a, s)
+runState (State f) x = f x
+
+instance Monad (State s) where
+    return x = state (\st -> (x, st))
+    act >>= k = state $ \st -> 
+                          let (x, st') = runState act st
+                          in runState (k x) st'
+
+get = State $ \s -> (s,s)
+
+put newState = State $ \s -> ((), newState)  
+
+-- replace freevars md with infoTab md and set unique constructor tags
+setITsCons :: [Def [Var]] -> [Def InfoTab]
+setITsCons defs =
+    let (defs', _) = runState (setITs defs) [] 
+    in defs'
+
+-- here "a" is "Def [Var]",   "Expr [Var]", etc. 
+--  and "b" is "Def InfoTab", "Expr InfoTab" etc.
+-- and [(String, Int)] is the state, the map String constructors to Int tags
+class SetITs a b where 
+    setITs :: a -> State [(String, Int)] b
+
+instance SetITs [Def [Var]] [Def InfoTab] where
+    setITs = mapM
+
+instance SetITs (Def [Var]) (Def InfoTab) where
+    setITs d@(v, o) = 
+        do
+          it = makeIT d
+          -- do the con tag
+          return (v, o{md = it})
+
+instance SetITs (Expr [Var]) (Expr InfoTab) where
+    setITs (ELet myfvs defs e) = 
+        do
+          defs' <- setITs defs
+          e'    <- setITs e
+          return (ELet (JustFVs {fvs = myfvs}) defs' e') 
+
+    setITs (ECase myfvs e alts) = 
+        do
+          e' <- setITs e
+          alts' <- mapM setITs alts
+          return (ECase (JustFVs {fvs = myfvs}) e' alts')
+
+    -- EAtom, EFCall, EPrimop, this is getting obscure...
+    setITs e = return (e{emd = JustFVs{fvs = emd e}}) 
+
+instance SetITs (Alt [Var]) (Alt InfoTab) where
+    setITs (ACon myfvs c vs e) = 
+        do
+          e' = setITs e
+          return (ACon (JustFVs{fvs = myfvs}) c vs e')
+    setITs (ADef myfvs v e) = 
+        do
+          e' = setITs e
+          return (ADef (JustFVs{fvs = myfvs}) c vs e')
+
+
+instance SetITs (Obj [Var]) (Obj InfoTab) where
+    setITs (FUN myfvs vs e) = 
+        let (efvs, e') = setITs (\\ vs) e -- shadow vs in tlds
+            myfvs = efvs \\ vs
+        in (myfvs, FUN myfvs vs e')
+
+    -- PAP introduces a var
+    setITs (PAP myfvs f as) = 
+        let asfvs = fvsof as
+            myfvs = (nub $ f : asfvs) \\ -- like EFCall
+        in (myfvs, PAP myfvs f as)
+
+    setITs (CON myfvs c as) = 
+        let myfvs = fvsof as
+        in (myfvs, CON myfvs c as)
+
+    setITs (THUNK myfvs e) = 
+        let (myfvs, e') = setITs e
+        in (myfvs, THUNK myfvs e')
+
+    setITs (BLACKHOLE myfvs) = 
+        ([], BLACKHOLE [])
+
+--only interesting for non-recursive let
+--instance SetITs Def where
+--    setITs tlds (v, o) = (setITs tlds o) \\ [v]
+-}
+
+-- ****************************************************************
+
+
+
+
+
+
+
+
 type Ctor = (String, Int, String) -- ("Cons", 2, "NP")
 
 data InfoTab = 
@@ -116,6 +222,7 @@ data InfoTab =
   | Blackhole { name :: String,
                 fvs :: [Var],
                 entryCode :: String}
+  | JustFVs { fvs :: [Var] }
 
 makeConTags contags [] = []
 makeConTags contags (c@(Con {}):cs) =
@@ -130,7 +237,7 @@ makeITs = (makeConTags []) . (map makeIT) . defsOf
 
 makeITcom it (v, o) =
     it { name = v,
-         InfoTab.fvs = Parser.fvs o,
+         fvs = md o,
          entryCode = "&" ++ showITType it ++ "_" ++ v
        }
 
@@ -181,7 +288,7 @@ InfoTab it_z =
 showIT it =
     "InfoTab it_" ++ name it ++ " = \n" ++
     "  { .name                = " ++ show (name it) ++ ",\n" ++
-    "    .fvCount             = " ++ show (length $ InfoTab.fvs it) ++ ",\n" ++
+    "    .fvCount             = " ++ show (length $ fvs it) ++ ",\n" ++
     "    .entryCode           = " ++ entryCode it ++ ",\n" ++
     showITspec it ++
     "  };\n"

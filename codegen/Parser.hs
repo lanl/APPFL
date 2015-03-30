@@ -169,22 +169,22 @@ data Atom = Var Var
           | Lit Int
             deriving(Eq,Show)
 
-data Expr a = EAtom a Atom
-            | EFCall a Var [Atom]
-            | EPrimop a Primop [Atom]
-            | ELet a [Def a] (Expr a)
-            | ECase a (Expr a) [Alt a]
+data Expr a = EAtom {emd :: a, ea :: Atom}
+            | EFCall {emd :: a, ev :: Var, eas :: [Atom]}
+            | EPrimop {emd :: a, eprimop :: Primop, eas :: [Atom]}
+            | ELet {emd :: a, edefs :: [Def a], ee :: Expr a}
+            | ECase {emd :: a, ee :: Expr a, ealts :: [Alt a]}
               deriving(Eq,Show)
 
 data Alt a = ACon a Con [Var] (Expr a)
            | ADef a Var (Expr a)
              deriving(Eq,Show)
 
-data Obj a = FUN {fvs :: a, vs :: [Var], e :: (Expr a)}
-           | PAP {fvs :: a, f :: Var, as :: [Atom]}
-           | CON {fvs :: a, c :: Con, as :: [Atom]}
-           | THUNK {fvs :: a, e :: (Expr a)}
-           | BLACKHOLE {fvs :: a} -- this is kind of stupid but convenient
+data Obj a = FUN {md :: a, vs :: [Var], e :: (Expr a)}
+           | PAP {md :: a, f :: Var, as :: [Atom]}
+           | CON {md :: a, c :: Con, as :: [Atom]}
+           | THUNK {md :: a, e :: (Expr a)}
+           | BLACKHOLE {md :: a} -- this is kind of stupid but convenient
              deriving(Eq,Show)
 
 -- type Token = (Tag, [Char])

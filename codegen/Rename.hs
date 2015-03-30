@@ -32,9 +32,6 @@ get = State $ \s -> (s,s)
 
 put newState = State $ \s -> ((), newState)  
 
-type NameSupply = [String]
-nameSupply = [ show i | i <- [1..]]
-
 isNum c = c >= '0' && c <= '9'
 
 withsuff s [] = error "this should never happen"
@@ -63,7 +60,7 @@ nameAtom (Lit l) tt = Lit l
 nameAtoms as tt = map ((flip nameAtom) tt) as
 
 renameDefs defs =
-  -- preserve top-level names
+  -- preserve top-level names--names is initial state
   let (names, objs) = unzip defs
       (objs', _) = runState (nameObjs objs []) names
   in zip names objs'
@@ -71,8 +68,31 @@ renameDefs defs =
 -- this is the tricky one because they're all in the same letrec scope
 -- need to figure out how to do circular programs with the state monad involved
 
-nameDefs :: [(Var, Obj a)] -> [(Var, Var)] -> State [Var] [(Var, Obj a)]
+nameObjs :: [Obj a] -> [(Var, Var)] -> State [Var] [Obj a]
+nameObjs objs tt = mapM ((flip nameObj) tt) objs
 
+nameObj (FUN md vs e) tt =
+    do
+      e' <- nameExpr e (dropall vs tt)
+      return (FUN md vs e')
+
+nameObj (THUNK md e) tt =
+    do
+      e' <- nameExpr e tt
+      return (THUNK md e')
+
+nameObj (PAP md f as) tt =
+    let f' = condrepl f tt
+        as' = nameAtoms as tt in
+    return (PAP md f' as')
+
+nameObj (CON md c as) tt =
+    return (CON md c $ nameAtoms as tt)
+
+nameObj (BLACKHOLE md) tt = return (BLACKHOLE md)
+
+--          Defs a  -> subst map    -> State usednames [Def a]
+nameDefs :: [Def a] -> [(Var, Var)] -> State [Var]     [Def a]
 nameDefs defs tt = 
     do
       let (names, objs) = unzip defs
@@ -117,28 +137,6 @@ nameAlt (ADef md v e) tt =
     do
       e' <- nameExpr e (dropall [v] tt)
       return (ADef md v e')
-
-nameObj (FUN md vs e) tt =
-    do
-      e' <- nameExpr e (dropall vs tt)
-      return (FUN md vs e')
-
-nameObj (THUNK md e) tt =
-    do
-      e' <- nameExpr e tt
-      return (THUNK md e')
-
-nameObj (PAP md f as) tt =
-    let f' = condrepl f tt
-        as' = nameAtoms as tt in
-    return (PAP md f' as')
-
-nameObj (CON md c as) tt =
-    return (CON md c $ nameAtoms as tt)
-
-nameObj (BLACKHOLE md) tt = return (BLACKHOLE md)
-
-nameObjs objs tt = mapM ((flip nameObj) tt) objs
 
 -- drop all references to vs in map tt
 -- there's a fold in here...
