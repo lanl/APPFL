@@ -8,7 +8,6 @@ module Parser (
   Expr(..),
   Alt(..),
   Obj(..),
-  Def,
   parser,
   -- showDefs,
 ) where
@@ -125,72 +124,69 @@ instance Unparser [Alt [Var]] where
         concatMap (unparser n) alts
 
 instance Unparser (Obj [Var]) where
-    unparser n (FUN fvs vs e) = 
+    unparser n (FUN fvs vs e _) = 
         let ss = [showFVs fvs ++ "FUN( " ++ intercalate " " vs ++ " ->"] ++
                  unparser 2 e ++
                  ["%)"]
         in indents n ss
 
-    unparser n (PAP fvs f as) = 
+    unparser n (PAP fvs f as _) = 
         let ss = [showFVs fvs ++ "PAP( " ++ f ++ " " ++ showas as ++ " )"]
         in indents n ss
 
-    unparser n (CON fvs c as) = 
+    unparser n (CON fvs c as _) = 
         let ss = [showFVs fvs ++ "CON( " ++ c ++ " " ++ showas as ++ " )"]
         in indents n ss
 
-    unparser n (THUNK fvs e) = 
+    unparser n (THUNK fvs e _) = 
         let ss = [showFVs fvs ++ "THUNK( %"] ++
                  unparser 7 e ++
                  ["% )"]
         in indents n ss
 
-    unparser n (BLACKHOLE fvs) =
+    unparser n (BLACKHOLE _ _) =
         indents n ["BLACKHOLE"]
 
-instance Unparser [Def [Var]] where
+instance Unparser [Obj [Var]] where
     -- unparser n defs = intercalate ["\n"] $ map (unparser n) defs
-    unparser n defs = concatMap (unparser n) defs
+    unparser n defs = concatMap (unparserdef n) defs
 
-instance Unparser (Def [Var]) where
-    unparser n (v,o) =
-        let ss = [ v ++ " = %" ] ++
-                 unparser 2 o
-        in indents n ss
+unparserdef n o =
+    let ss = [ oname o ++ " = %" ] ++
+             unparser 2 o
+    in indents n ss
 
 -- Parser
 
 type Var = String
 type Con = String
-type Name = String
-type Def a = (Var, Obj a)
 
 data Atom = Var Var
           | Lit Int
             deriving(Eq,Show)
 
-data Expr a = EAtom {emd :: a, ea :: Atom}
-            | EFCall {emd :: a, ev :: Var, eas :: [Atom]}
+data Expr a = EAtom   {emd :: a, ea :: Atom}
+            | EFCall  {emd :: a, ev :: Var, eas :: [Atom]}
             | EPrimop {emd :: a, eprimop :: Primop, eas :: [Atom]}
-            | ELet {emd :: a, edefs :: [Def a], ee :: Expr a}
-            | ECase {emd :: a, ee :: Expr a, ealts :: [Alt a]}
+            | ELet    {emd :: a, edefs :: [Obj a], ee :: Expr a}
+            | ECase   {emd :: a, ee :: Expr a, ealts :: [Alt a]}
               deriving(Eq,Show)
 
 data Alt a = ACon a Con [Var] (Expr a)
            | ADef a Var (Expr a)
              deriving(Eq,Show)
 
-data Obj a = FUN {md :: a, vs :: [Var], e :: (Expr a)}
-           | PAP {md :: a, f :: Var, as :: [Atom]}
-           | CON {md :: a, c :: Con, as :: [Atom]}
-           | THUNK {md :: a, e :: (Expr a)}
-           | BLACKHOLE {md :: a} -- this is kind of stupid but convenient
+data Obj a = FUN   {omd :: a, vs :: [Var],   e :: (Expr a), oname :: String}
+           | PAP   {omd :: a, f  :: Var,     as :: [Atom],  oname :: String}
+           | CON   {omd :: a, c  :: Con,     as :: [Atom],  oname :: String}
+           | THUNK {omd :: a, e  :: (Expr a)             ,  oname :: String}
+           | BLACKHOLE {omd :: a                         ,  oname :: String}
              deriving(Eq,Show)
 
 -- type Token = (Tag, [Char])
 -- type Parser a b = [a] -> [(b, [a])]
 
-parser :: [Char] -> [(Def ())]
+parser :: [Char] -> [Obj ()]
 parser inp = case (defsp $ lexer inp) of
                [] ->  error "parser failed"
                xs -> fst $ head xs
@@ -222,13 +218,14 @@ conp _ = failp []
 atomp :: Parser Token Atom
 atomp = (nump `usingp` Lit) `altp` (varp `usingp` Var)
 
-defsp :: Parser Token [(String, Obj ())]
+defsp :: Parser Token [Obj ()]
 defsp = sepbyp defp (symkindp SymSemi)
 
-defp :: Parser Token (String, Obj ())
+defp :: Parser Token (Obj ())
 defp = varp `thenp` 
        cutp "defp_1" 
        (symkindp SymBind `xthenp` (cutp "defp_2" objp))
+       `usingp` \(v,o) -> o{oname = v}
 
 objp :: Parser Token (Obj ())
 objp = funobjp `altp`
@@ -238,18 +235,18 @@ objp = funobjp `altp`
        blackholeobjp
 
 blackholeobjp :: Parser Token (Obj ())
-blackholeobjp = objkindp OBLACKHOLE `usingp` const (BLACKHOLE ())
+blackholeobjp = objkindp OBLACKHOLE `usingp` const (BLACKHOLE () "")
 
 thunkobjp = objkindp OTHUNK `xthenp` cutp "thunkobjp_1"
             (symkindp SymLParen `xthenp`  cutp "thunkobjp_2"
              (exprp  `thenxp` cutp "thunkobjp_3"
               (symkindp SymRParen)))
-            `usingp` THUNK ()
+            `usingp` \e ->  THUNK () e ""
 
 conobjp = (objkindp OCON `xthenp` 
           (symkindp SymLParen`xthenp` 
            (conp `thenp` (manyp atomp `thenxp` symkindp SymRParen))))
-         `usingp` uncurry (CON ())
+         `usingp` \(c,as) -> CON () c as ""
 
 funobjp = (objkindp OFUN `xthenp` cutp "funobjp_1"
           (symkindp SymLParen `xthenp` cutp "funobjp_2"
@@ -257,14 +254,14 @@ funobjp = (objkindp OFUN `xthenp` cutp "funobjp_1"
             (symkindp SymArrow `xthenp` cutp "funobjp_4"
              (exprp `thenxp` cutp "funobjp_5"
               (symkindp SymRParen))))))
-         `usingp` uncurry (FUN ())
+         `usingp` \(f,as) -> FUN () f as ""
 
 papobjp = (objkindp OPAP `xthenp` 
           (symkindp SymLParen `xthenp` 
            (varp `thenp` 
             (somep atomp `thenxp` 
              symkindp SymRParen))))
-         `usingp` uncurry (PAP ())
+         `usingp` \(p,as) -> (PAP () p as "")
 
 exprp =        eprimopp   -- preceed efcallp, primops are just distinguished vars
         `altp` efcallp
