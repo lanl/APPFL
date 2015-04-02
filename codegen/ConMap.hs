@@ -1,6 +1,7 @@
 -- build a map from constructor names -> (arity,tag)
 
 {-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE NamedFieldPuns #-}
 
 module ConMap (
   getConMap
@@ -36,27 +37,22 @@ arityOk (Just (arity,tag )) arity' | arity == arity' = True
 class BuildConMap t where build :: t -> ConMap -> ConMap
 
 instance BuildConMap [Obj a] where
-  build (o:os) map = build os map'
-                   where map' = build o map
+  build (o:os) map = build os (build o map)
   build [] map = map
 
 instance BuildConMap (Obj a) where
-  build (FUN _ vs e _) map = build e map
-  build (PAP _ f as _) map = map
-  build (CON _ c as _) map = insert c (length as) map
-  build (THUNK _ e _) map = build e map
-  build (BLACKHOLE _ _) map = map
+  build (FUN {vs, e}) map = build e map
+  build (CON {c, as}) map = insert c (length as) map
+  build (THUNK {e}) map = build e map
+  build _ map = map
 
 instance BuildConMap (Expr a) where
-  build (EAtom _ ea) map = map
-  build (EFCall _ ev eas) map = map
-  build (EPrimop _ eprimop eas) map = map
-  build (ELet _ objs ee) map = build objs map
-  build (ECase _ ee ealts) map = build ealts (build ee map)
+  build (ELet {edefs, ee}) map = build edefs map
+  build (ECase {ee, ealts}) map = build ealts (build ee map)
+  build _ map = map
             
 instance BuildConMap [Alt a] where
-  build (alt:alts) map = build alts map'
-                       where map' = build alt map
+  build (alt:alts) map = build alts (build alt map)
   build [] map = map
 
 instance BuildConMap (Alt a) where
