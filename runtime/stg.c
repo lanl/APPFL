@@ -13,8 +13,8 @@
 
 #include "stg.h"
 
-extern void stgPushCont(Obj c);
-extern Obj stgPopCont();
+extern void stgPushCont(Cont c);
+extern Cont stgPopCont();
 
 void *stgHeap = NULL;
 void *stgHP = NULL;
@@ -137,12 +137,13 @@ void showStgHeap() {
 const size_t stgHeapSize  = (size_t)4*(size_t)(1024*1024*1024);
 const size_t stgStackSize  = (size_t)4*(size_t)(1024*1024*1024);
 
-void showStgStack() {
-  fprintf(stderr,"\nSTG stack:\n\n");
-  for (Obj *p = ((Obj *) stgSP);
-       p < (Obj *)((char *)stgStack + stgStackSize);
-       p++) showStgObj(p);
-}
+void showStgStack() {}
+// void showStgStack() {
+//   fprintf(stderr,"\nSTG stack:\n\n");
+//   for (Obj *p = ((Obj *) stgSP);
+//        p < (Obj *)((char *)stgStack + stgStackSize);
+//        p++) showStgObj(p);
+// }
 
 void initStg() {
   stgHeap =

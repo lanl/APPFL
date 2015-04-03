@@ -5,8 +5,8 @@
 #include "stgutils.h"
 
 void callContSave(int argc, PtrOrLiteral argv[]) {
-  Obj callCont;
-  callCont.infoPtr = &it_stgCallCont;
+  Cont callCont;
+  callCont.retAddr = &stgCallCont;
   callCont.objType = CALLCONT;
   callCont.payload[0] = (PtrOrLiteral) {.argType = INT, .i = argc};
   for (int i = 0; i != argc; i++) callCont.payload[i+1] = argv[i];
@@ -14,7 +14,7 @@ void callContSave(int argc, PtrOrLiteral argv[]) {
 }
 
 void callContRestore(PtrOrLiteral argv[]) {
-  Obj callCont;
+  Cont callCont;
   callCont = stgPopCont();
   assert(callCont.objType == CALLCONT);
   assert(callCont.payload[0].argType == INT);
@@ -58,13 +58,9 @@ DEFUN0(stgShowResultCont) {
   RETURN0();
   ENDFUN;
 }
-InfoTab it_stgShowResultCont =
-  { .name               = "stgShowResultCont",
-    .entryCode          = &stgShowResultCont,
-    .objType            = CALLCONT,
-  };
-Obj sho_stgShowResultCont = {
-  .infoPtr = &it_stgShowResultCont,
+// just one of these
+Cont showResultCont = {
+  .retAddr = &stgShowResultCont,
   .objType = CALLCONT,
   .payload[0] = {0},
 };
@@ -259,7 +255,7 @@ DEFUN2(stgApply1, f, x1) {
 
   case THUNK: { // seems like it would be more efficient to do while(THUNK)
     fprintf(stderr, "stgApply1 THUNK\n");
-    Obj callCont = {.infoPtr = &it_stgCallCont, .payload[0] = x1};
+    Cont callCont = {.retAddr = &stgCallCont, .payload[0] = x1};
     stgPushCont(callCont);
     STGCALL1(f.op->infoPtr->entryCode, f);  // result in stgCurVal
     f = stgCurVal;  // new f

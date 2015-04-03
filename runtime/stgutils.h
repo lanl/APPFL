@@ -17,7 +17,7 @@ void derefStgCurVal();
 FnPtr whiteHole();
 
 FnPtr stgShowResultCont();
-Obj sho_stgShowResultCont;
+Cont showResultCont;
 
 FnPtr stgApply();
 FnPtr stgApply1();
@@ -34,7 +34,7 @@ do {						\
   derefStgCurVal();				\
   while (stgCurVal.argType == HEAPOBJ &&	\
 	 stgCurVal.op->objType == THUNK) {		\
-    stgPushCont((Obj){.infoPtr = &it_stgCallCont,	\
+    stgPushCont((Cont){.retAddr = &stgCallCont,	\
 	              .objType = CALLCONT,		\
 	              .payload[0] = {0}});		\
     STGCALL1(stgCurVal.op->infoPtr->entryCode, stgCurVal); \

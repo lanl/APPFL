@@ -172,8 +172,8 @@ data Expr a = EAtom   {emd :: a, ea :: Atom}
             | ECase   {emd :: a, ee :: Expr a, ealts :: [Alt a]}
               deriving(Eq,Show)
 
-data Alt a = ACon a Con [Var] (Expr a)
-           | ADef a Var (Expr a)
+data Alt a = ACon {amd :: a, ac :: Con, avs :: [Var], ae :: Expr a}
+           | ADef {amd :: a,            av :: Var,    ae :: Expr a}
              deriving(Eq,Show)
 
 data Obj a = FUN   {omd :: a, vs :: [Var],   e :: (Expr a), oname :: String}

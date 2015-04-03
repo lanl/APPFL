@@ -5,16 +5,12 @@
 #include "cmm.h"
 
 extern FnPtr stgUpdateCont();
-extern InfoTab it_stgUpdateCont;
-extern Obj sho_stgUpdateCont;
-
 extern FnPtr stgCallCont();
-extern InfoTab it_stgCallCont;
 
 inline void stgThunk(PtrOrLiteral self) {
-  stgPushCont( (Obj) {		
+  stgPushCont( (Cont) {		
+    .retAddr = &stgUpdateCont,	
     .objType = UPDCONT,		
-    .infoPtr = &it_stgUpdateCont,	
     .payload[0] = self		
   });				
   self.op->objType = BLACKHOLE;	

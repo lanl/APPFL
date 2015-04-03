@@ -163,7 +163,7 @@ DEFUN1(main_thunk_unit, self) {
   //THUNK
   stgThunk(self);
   // unit
-  stgCurVal = (PtrOrLiteral) { .argType = HEAPOBJ, .op = &sho_unit };
+  stgCurVal = HOTOPL(&sho_unit);
   STGRETURN0();
   ENDFUN;
 }
@@ -191,11 +191,10 @@ DEFUN1(main1, self) {
   *x = (Obj) 
     { .objType = CON,
       .infoPtr = &it_I,
-      .payload[0] = (PtrOrLiteral) {.argType = INT, .i = 3}
+      .payload[0] = INTTOPL(3),
     };
   // in x
-  stgCurVal = (PtrOrLiteral) { .argType = HEAPOBJ, .op = STGHEAPAT(-1) };
-
+  stgCurVal = HOTOPL(STGHEAPAT(-1));
   STGRETURN0();
   ENDFUN;
 }
@@ -256,26 +255,24 @@ DEFUN1(main2, self) {
   *x = (Obj) 
     { .objType = CON,
       .infoPtr = &it_I,
-      .payload[0] = (PtrOrLiteral) {.argType = INT, .i = 3}
+      .payload[0] = INTTOPL(3),
     };
   // y = THUNK( x );
   Obj *y = stgNewHeapObj();
   *y = (Obj) 
     { .objType = THUNK,
       .infoPtr = &it_y,
-      .payload[0] = (PtrOrLiteral) { .argType = HEAPOBJ, 
-				     .op = STGHEAPAT(-2) }
+      .payload[0] = HOTOPL(STGHEAPAT(-2)),
     };
   // z = THUNK( y )
   Obj *z = stgNewHeapObj();
   *z = (Obj) 
     { .objType = THUNK,
       .infoPtr = &it_z,
-      .payload[0] = (PtrOrLiteral) { .argType = HEAPOBJ, 
-				     .op = STGHEAPAT(-2) }
+      .payload[0] = HOTOPL(STGHEAPAT(-2)),
     };
   // in z
-  stgCurVal = (PtrOrLiteral) { .argType = HEAPOBJ, .op = STGHEAPAT(-1) };
+  stgCurVal = HOTOPL(STGHEAPAT(-1));
 
   STGRETURN0();
   ENDFUN;
@@ -313,22 +310,22 @@ DEFUN0(alts1) {
     exit(0);
   }
   */
-  Obj cont = stgPopCont();
+  Cont cont = stgPopCont();
+  PtrOrLiteral ctor = stgCurVal;
   if (stgCurVal.argType != HEAPOBJ ||
       stgCurVal.op->objType != CON ) goto casedefault;
-  switch(stgCurVal.op->infoPtr->conFields.tag) {
+  switch(ctor.op->infoPtr->conFields.tag) {
   case TagLeft:
     // variable saved in casecont
     stgCurVal = cont.payload[0];
     STGRETURN0();
   case TagRight:
     // from constructor
-    stgCurVal = stgCurVal.op->payload[0];
+    stgCurVal = ctor.op->payload[0];
     STGRETURN0();
   default:
 casedefault:
-    // naive compiler
-    stgCurVal = stgCurVal;
+    stgCurVal = ctor;
     STGRETURN0();
   }
   ENDFUN;
@@ -348,26 +345,26 @@ DEFUN1(main3, self) {
   *left = (Obj) 
     { .objType = CON,
       .infoPtr = &it_Left,
-      .payload[0] = (PtrOrLiteral) {.argType = HEAPOBJ, .op = &sho_one}
+      .payload[0] = HOTOPL(&sho_one),
     };
   // right = CON(Right two)} in
   Obj *right = stgNewHeapObj();
   *right = (Obj) 
     { .objType = CON,
       .infoPtr = &it_Right,
-      .payload[0] = (PtrOrLiteral) {.argType = HEAPOBJ, .op = &sho_two}
-	 };
+      .payload[0] = HOTOPL(&sho_two),
+    };
   // case 
-  stgPushCont( (Obj) { 
-      .objType = CASECONT,
-	.infoPtr = &it_alts1,
-	.payload[0] = HOTOPL(STGHEAPAT(-1)) });     // stash right
+  stgPushCont( (Cont)
+	       { .objType = CASECONT,
+		   .retAddr = &alts1,
+		   .payload[0] = HOTOPL(STGHEAPAT(-1)) });     // stash right
   // left of
   // rule for var is deposit in stgCurVal
   stgCurVal = (PtrOrLiteral) {.argType = HEAPOBJ, .op = STGHEAPAT(-2) };
   // rule for case is to evaluate whatever expression e left behind
   STGEVAL(stgCurVal);
-  STGRETURN0(); // return through casecont, could just pop it and inline
+  STGRETURN0(); // return through casecont if didn't already jump
   ENDFUN;
 }
 InfoTab it_main3 =
@@ -518,7 +515,7 @@ void initPredefs() {
 // Note this definition not only handles THUNKs returning THUNKs,
 // but also the general case of e.g. main = CON(I 1)
 DEFUN0(start) {
-  stgPushCont(sho_stgShowResultCont);  // nothing to save or restore
+  stgPushCont(showResultCont);  // nothing to save or restore
 
   /*
   stgCurVal = (PtrOrLiteral){.argType = HEAPOBJ, .op = &sho_main5};

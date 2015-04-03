@@ -4,6 +4,7 @@ import Lexer(Primop)
 import Prelude
 import Parser
 import Rename
+import SetFVs
 import InfoTab
 
 import Data.List

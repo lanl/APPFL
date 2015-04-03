@@ -69,6 +69,12 @@ struct _Obj {
 };
 
 typedef struct {
+  CmmFnPtr retAddr;         // no need for an infotab
+  ObjType objType;          // for sanity checking
+  PtrOrLiteral payload[32]; // fixed for now
+} Cont;
+
+typedef struct {
 } LayoutInfo;
 
 typedef struct {
@@ -117,16 +123,16 @@ extern Obj* stgNewHeapObj();
 extern void showStgStack();
 extern void showStgVal(PtrOrLiteral);
 
-inline void stgPushCont(Obj c) {
-  stgSP = (char *)stgSP - sizeof(Obj);
+inline void stgPushCont(Cont c) {
+  stgSP = (char *)stgSP - sizeof(Cont);
   assert(stgSP >= stgStack);
-  *(Obj *)stgSP = c;
+  *(Cont *)stgSP = c;
 }
 
-inline Obj stgPopCont() {
-  assert((char *)stgSP + sizeof(Obj) <= (char *) stgStack + stgStackSize);
-  Obj o = *(Obj *)stgSP;
-  stgSP = (char *)stgSP + sizeof(Obj);
+inline Cont stgPopCont() {
+  assert((char *)stgSP + sizeof(Cont) <= (char *) stgStack + stgStackSize);
+  Cont o = *(Cont *)stgSP;
+  stgSP = (char *)stgSP + sizeof(Cont);
   return o;
 }
 
@@ -176,13 +182,13 @@ inline Obj stgPopCont() {
 // are these good places to check for BLACKHOLE?
 // return through continuation stack
 #define STGRETURN0()				\
-  JUMP0(((Obj *)stgSP)->infoPtr->entryCode)
+  STGJUMP0(((Cont *)stgSP)->retAddr)
 
 // no explicit return value stack
 #define STGRETURN1(r)				\
   do {						\
     stgCurVal = r;				\
-    JUMP0(((Obj *)stgSP)->infoPtr->entryCode);	\
+    STGJUMP0(((Cont *)stgSP)->retAddr);		\
   } while(0)
 
 
@@ -228,7 +234,7 @@ inline Obj stgPopCont() {
 /*
 define STGRETURN1(o)				\
   do {						\
-  JUMP1(((Obj *)stgSP)->infoPtr->entryCode, o) \
+  JUMP1(((Cont *)stgSP)->infoPtr->entryCode, o) \
   } while (0)
 */
 
