@@ -1,0 +1,24 @@
+name:           codegen
+version:        0.1
+cabal-version:  >=1.2
+build-type:     Simple
+author:         
+data-files:     
+                CodeGen.hs, 
+                ConMap.hs, 
+                HeapObj.hs, 
+                InfoTab.hs, 
+                Lexer.hs, 
+                ParseComb.hs, 
+                Parser.hs, 
+                Rename.hs, 
+                Scanner.hs, 
+                SetFVs.hs, 
+                stgc.hs
+
+executable codegen
+  hs-source-dirs:  . 
+  main-is:         stgc.hs
+  build-depends:   base >= 4
+  ghc-options:     -Wall
+
