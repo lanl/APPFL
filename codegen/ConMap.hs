@@ -15,47 +15,48 @@ import Parser
 type ConMap = Map.Map Con (Int, Int)
 
 getConMap :: [Obj a] -> ConMap
-getConMap objs = tagit $ build objs Map.empty
-
-getConMap' :: [Obj a] -> ConMap
-getConMap' objs = snd $ runState tagit4 map
+getConMap objs = snd $ runState tagit map
               where map = build objs Map.empty
+              
+              
+getConMap' :: [Obj a] -> ConMap
+getConMap' objs = snd $ runState (getConMapState objs) Map.empty           
+              
+getConMapState :: [Obj a] -> State ConMap ()
+getConMapState objs = do
+                        build' objs
+                        tagit
+               
 
 -- add increasing tags to map entries
-tagit :: ConMap -> ConMap
-tagit map = snd $ Map.mapAccum f 0 map
-          where f s (a,t) = (s+1, (a, s));
-
-tagit2 :: State ConMap ()
-tagit2 = state (\map -> ((), snd $ Map.mapAccum f 0 map))
-          where f s (a,t) = (s+1, (a, s));
-
-tagit3 :: State ConMap ()
-tagit3 = do
-            map <- get
-            put $ snd $ Map.mapAccum f 0 map
-              where f s (a,t) = (s+1, (a, s));
-              
-tagit4 :: State ConMap ()
-tagit4 = do
-            map <- get
-            let f s (a,t) = (s+1, (a, s));
-            put $ snd $ Map.mapAccum f 0 map
+tagit :: State ConMap ()
+tagit = do
+          map <- get
+          let f s (a,t) = (s+1, (a, s));
+          put $ snd $ Map.mapAccum f 0 map
       
 
-
--- insert map entry and check arity
+-- insert map entry if it does not exist, if it exists check arity
 insert :: Con -> Int -> ConMap -> ConMap
-insert c arity map = if arityOk (Map.lookup c map) arity
-                     then (Map.insert c (arity, undefined) map)
-                     else error "CON arity mismatch"
+insert c arity map = case Map.lookup c map of
+                        Nothing -> Map.insert c (arity, undefined) map
+                        (Just (arity',tag)) -> if (arity == arity') 
+                                               then map 
+                                               else error "CON arity mismatch!"
 
--- check that either there is no entry for this CON yet
--- or that its arity matches the previous entry
-arityOk :: Maybe (Int,Int) -> Int -> Bool
-arityOk (Nothing) _ = True
-arityOk (Just (arity,tag )) arity' | arity == arity' = True
-                                   | otherwise = False
+
+-- insert map entry if it does not exist, if it exists check arity
+insertM :: Con -> Int -> State ConMap ()
+insertM c arity = do 
+                    map <- get
+                    case Map.lookup c map of
+                      Nothing -> put $ Map.insert c (arity, undefined) map
+                      (Just (arity',tag)) -> if (arity == arity') 
+                                             then return () 
+                                             else error "CON arity mismatch!"
+
+insert' :: Con -> Int -> ConMap -> ConMap
+insert' c arity map = snd $ runState (insertM c arity) map
 
 class BuildConMap t where build :: t -> ConMap -> ConMap
 
@@ -65,7 +66,7 @@ instance BuildConMap [Obj a] where
 
 instance BuildConMap (Obj a) where
   build (FUN {vs, e}) map = build e map
-  build (CON {c, as}) map = insert c (length as) map
+  build (CON {c, as}) map = insert' c (length as) map
   build (THUNK {e}) map = build e map
   build _ map = map
 
@@ -79,6 +80,40 @@ instance BuildConMap [Alt a] where
   build [] map = map
 
 instance BuildConMap (Alt a) where
-  build (ACon _ c vs e) map = build e (insert c (length vs) map)
+  build (ACon _ c vs e) map = build e (insert' c (length vs) map)
   build (ADef _ v e) map = build e map
+  
+  
+class BuildConMap' t where build' :: t -> State ConMap ()
+
+instance BuildConMap' [Obj a] where
+  build' (o:os) = do 
+                   build' o
+                   build' os
+  build' [] = return ()
+
+instance BuildConMap' (Obj a) where
+  build' (FUN {vs, e}) = build' e
+  build' (CON {c, as}) = insertM c (length as)
+  build' (THUNK {e}) =  build' e
+  build' _ = return ()
+
+instance BuildConMap' (Expr a) where
+  build' (ELet {edefs, ee}) =  build' edefs 
+  build' (ECase {ee, ealts})= do
+                                build' ee
+                                build' ealts
+  build' _ = return ()
+
+instance BuildConMap' [Alt a] where
+  build' (alt:alts) = do 
+                        build' alt
+                        build' alts
+  build' [] = return ()
+
+instance BuildConMap' (Alt a) where
+  build' (ACon _ c vs e) = do
+                             insertM c (length vs)
+                             build' e
+  build' (ADef _ v e) = build' e 
 
