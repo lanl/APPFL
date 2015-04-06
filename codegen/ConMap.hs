@@ -1,12 +1,13 @@
 -- build a map from constructor names -> (arity,tag)
 
 {-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE NamedFieldPuns #-}
+{-# LANGUAGE NamedFieldPuns    #-}
 
 module ConMap (
   getConMap
 ) where
 
+import Control.Monad.State
 import qualified Data.Map as Map
 
 import Parser
@@ -16,10 +17,32 @@ type ConMap = Map.Map Con (Int, Int)
 getConMap :: [Obj a] -> ConMap
 getConMap objs = tagit $ build objs Map.empty
 
+getConMap' :: [Obj a] -> ConMap
+getConMap' objs = snd $ runState tagit4 map
+              where map = build objs Map.empty
+
 -- add increasing tags to map entries
 tagit :: ConMap -> ConMap
 tagit map = snd $ Map.mapAccum f 0 map
           where f s (a,t) = (s+1, (a, s));
+
+tagit2 :: State ConMap ()
+tagit2 = state (\map -> ((), snd $ Map.mapAccum f 0 map))
+          where f s (a,t) = (s+1, (a, s));
+
+tagit3 :: State ConMap ()
+tagit3 = do
+            map <- get
+            put $ snd $ Map.mapAccum f 0 map
+              where f s (a,t) = (s+1, (a, s));
+              
+tagit4 :: State ConMap ()
+tagit4 = do
+            map <- get
+            let f s (a,t) = (s+1, (a, s));
+            put $ snd $ Map.mapAccum f 0 map
+      
+
 
 -- insert map entry and check arity
 insert :: Con -> Int -> ConMap -> ConMap
@@ -50,7 +73,7 @@ instance BuildConMap (Expr a) where
   build (ELet {edefs, ee}) map = build edefs map
   build (ECase {ee, ealts}) map = build ealts (build ee map)
   build _ map = map
-            
+
 instance BuildConMap [Alt a] where
   build (alt:alts) map = build alts (build alt map)
   build [] map = map
@@ -58,4 +81,4 @@ instance BuildConMap [Alt a] where
 instance BuildConMap (Alt a) where
   build (ACon _ c vs e) map = build e (insert c (length vs) map)
   build (ADef _ v e) map = build e map
- 
+
