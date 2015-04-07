@@ -39,7 +39,7 @@ instance BuildConMap (Obj a) where
   build _ = return ()
 
 instance BuildConMap (Expr a) where
-  build (ELet {edefs, ee}) =  build edefs 
+  build (ELet {edefs, ee}) =  build edefs >> build ee
   build (ECase {ee, ealts}) = build ee >> build ealts
   build _ = return ()
 
