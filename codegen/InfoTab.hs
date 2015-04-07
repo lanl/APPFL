@@ -102,7 +102,7 @@ itsOf = (map omd) . objsOf
 -- and [(String, Int)] is the state, the map String constructors to Int tags
 
 class SetITs a b where 
-    setITs :: (Map String (Int,Int)) -> a -> b
+    setITs :: Map String (Int,Int) -> a -> b
 
 instance SetITs [Obj [Var]] [Obj InfoTab] where
     setITs conmap = map (setITs conmap)
@@ -118,7 +118,7 @@ instance SetITs (Expr [Var]) (Expr InfoTab) where
         let
           e' = setITs conmap e
           alts' = map (setITs conmap) alts
-        in ECase (ConMap{fvs = myfvs, conMap = conmap}) e' alts'
+        in ECase (JustFVs{fvs = myfvs}) e' alts'
 
     -- EAtom, EFCall, EPrimop, this doesn't work
     -- setITs conmap e = e{emd = JustFVs {fvs = emd e}}
@@ -136,7 +136,7 @@ instance SetITs (Alt [Var]) (Alt InfoTab) where
     setITs conmap (ACon myfvs c vs e) = 
         ACon (ConMap{fvs = myfvs, conMap = conmap}) c vs (setITs conmap e)
     setITs conmap (ADef myfvs v e) = 
-        ADef (ConMap{fvs = myfvs, conMap = conmap}) v (setITs conmap e)
+        ADef (JustFVs{fvs = myfvs}) v (setITs conmap e)
 
 instance SetITs (Obj [Var]) (Obj InfoTab) where
     setITs conmap o@(FUN myfvs vs e n) = 
@@ -158,7 +158,7 @@ instance SetITs (Obj [Var]) (Obj InfoTab) where
 -- ****************************************************************
 
 -- could factor some of this but generates warnings
-makeIT :: (Map String (Int,Int)) -> (Obj [Var]) -> InfoTab
+makeIT :: Map String (Int,Int) -> Obj [Var] -> InfoTab
 makeIT contab o@(FUN fvs vs e n) = 
     Fun { arity = length vs,
           name = n,
