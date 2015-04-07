@@ -33,8 +33,7 @@ Alt default var:  "stgCurVal, bind it"
 -}
 
 module CodeGen(
-  cgo,
-  cge
+  cgObjs
 ) where
 
 import Parser
@@ -44,8 +43,8 @@ import HeapObj
 import Prelude
 import Data.List(intercalate,nub)
 
---import Data.Map (Map)
---import qualified Data.Map as Map
+import Data.Map (Map)
+import qualified Data.Map as Map
 
 newtype State s a = State (s -> (a, s))
 
@@ -231,13 +230,6 @@ cge_sm env (ECase it e alts) =
 --   ENDFUN;
 -- }
 
--- fake for now
-conMap c = case c of
-             "I" -> 0
-             "Nil" -> 1
-             "Cons" -> 2
-             x -> error $ x ++ "not in conMap"
-
 -- get into monad
 newsuffix = State $ \i -> (show i, i+1)
 
@@ -273,7 +265,10 @@ cgalt_sm env (ACon it c vs e) =
         env' = eenv ++ env
     in do
       (inline, func) <- cge_sm env e
-      let code = "case " ++ show (conMap c) ++ ":\n" ++
+      let (arity, tag) = case Map.lookup c (conMap it) of
+                           Nothing -> error "conMap lookup error"
+                           Just x -> x
+      let code = "case " ++ show tag ++ ":\n" ++
                  inline ++
                  "STGRETURN0()"
       return (code, func)

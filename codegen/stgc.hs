@@ -4,8 +4,10 @@ import Lexer(Primop)
 import Prelude
 import Parser
 import Rename
+import ConMap
 import SetFVs
 import InfoTab
+import CodeGen
 
 import Data.List
 import System.Environment
@@ -18,11 +20,15 @@ import System.IO
 
 doit prog = 
     let defs0 = parser prog
-        defs1 = renameDefs defs0
+        defs1 = renameObjs defs0
         defs2 = setFVsDefs defs1
-        infoTabs = makeITs defs2
+        conmap = getConMap defs2
+        defs3 = setITs conmap defs2 :: [Obj InfoTab]
+        (forwards, fundefs) = cgObjs defs3
+        in intercalate "\n\n" (forwards ++ fundefs)
+
 --    in showDefs defs2 ++
-    in intercalate "\n\n" (map showIT infoTabs)
+--    in intercalate "\n\n" (map showIT infoTabs)
 
 stgc arg =
   do

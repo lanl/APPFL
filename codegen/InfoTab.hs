@@ -33,7 +33,6 @@ import qualified Data.Set as Set
 -- for layout information, for garbage collection, when we no longer have a
 -- discriminator for PtrOrLiteral -- mostly worry about this later
 
-type Ctor = (String, Int, String) -- ("Cons", 2, "NP")
 
 data InfoTab = 
     Fun { 
@@ -62,10 +61,12 @@ data InfoTab =
     { name :: String,
       fvs :: [Var],
       entryCode :: String }
+  -- this is an umbrella for expressions for now -- need to factor this better
   | JustFVs { 
       fvs :: [Var] }
-      -- entryCode :: String future possibility
-
+  | ConMap { 
+      fvs :: [Var],
+      conMap :: Map.Map Con (Int, Int) } -- just for case, alt      
 
 class ObjsOf a b where 
     objsOf :: a -> b
@@ -117,10 +118,11 @@ instance SetITs (Expr [Var]) (Expr InfoTab) where
         let
           e' = setITs conmap e
           alts' = map (setITs conmap) alts
-        in ECase (JustFVs{fvs = myfvs}) e' alts'
+        in ECase (ConMap{fvs = myfvs, conMap = conmap}) e' alts'
 
     -- EAtom, EFCall, EPrimop, this doesn't work
-    --    setITs conmap e = e{emd = JustFVs {fvs = emd e}}
+    -- setITs conmap e = e{emd = JustFVs {fvs = emd e}}
+
     setITs conmap (EAtom myfvs a) = 
         EAtom (JustFVs{fvs = myfvs}) a
 
@@ -132,9 +134,9 @@ instance SetITs (Expr [Var]) (Expr InfoTab) where
 
 instance SetITs (Alt [Var]) (Alt InfoTab) where
     setITs conmap (ACon myfvs c vs e) = 
-        ACon (JustFVs{fvs = myfvs}) c vs (setITs conmap e)
+        ACon (ConMap{fvs = myfvs, conMap = conmap}) c vs (setITs conmap e)
     setITs conmap (ADef myfvs v e) = 
-        ADef (JustFVs{fvs = myfvs}) v (setITs conmap e)
+        ADef (ConMap{fvs = myfvs, conMap = conmap}) v (setITs conmap e)
 
 instance SetITs (Obj [Var]) (Obj InfoTab) where
     setITs conmap o@(FUN myfvs vs e n) = 
