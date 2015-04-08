@@ -304,7 +304,7 @@ cgalt env (ADef it v e) =
 --     { .objType = THUNK,
 --       .infoPtr = &it_y,
 --       .payload[0] = (PtrOrLiteral) { .argType = HEAPOBJ, 
--- 				     .op = STGHEAPAT(-2) }
+--                                      .op = STGHEAPAT(-2) }
 --     };
 -- return (size, inline code)
 
