@@ -3,3 +3,4 @@ sandbox/ministg-0.3/src/trace
 *.o
 *.hi
 *~
+._*

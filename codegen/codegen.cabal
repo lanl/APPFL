@@ -6,6 +6,7 @@ author:
 data-files:     
                 CodeGen.hs, 
                 ConMap.hs, 
+                ConMap2.hs, 
                 HeapObj.hs, 
                 InfoTab.hs, 
                 Lexer.hs, 
@@ -19,6 +20,9 @@ data-files:
 executable codegen
   hs-source-dirs:  . 
   main-is:         stgc.hs
-  build-depends:   base >= 4
+  build-depends:   
+                   base >= 4,
+                   containers,
+                   mtl
   ghc-options:     -Wall
 
