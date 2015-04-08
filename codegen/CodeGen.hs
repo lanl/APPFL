@@ -64,6 +64,12 @@ get = State $ \s -> (s,s)
 
 put newState = State $ \s -> ((), newState)  
 
+liftM   :: (Monad m) => (a1 -> r) -> m a1 -> m r
+liftM f m1              = do { x1 <- m1; return (f x1) }
+
+concatMapM        :: (Monad m) => (a -> m [b]) -> [a] -> m [b]
+concatMapM f xs   =  liftM concat (mapM f xs)
+
 data RVal = SHO           -- static heap obj
           | HO Int        -- heap obj, Int is size, count back
           | FP            -- formal param, use name as is
@@ -93,7 +99,14 @@ lu v ((_, HO size) : xs) n =
     lu v xs (n+size)
 
 lu v (x : xs) n = lu v xs n
-      
+
+
+indent i xs = (take i $ repeat ' ') ++ indent' i xs
+    where
+      indent' i ('\n':x:xs) = '\n' : (take i $ repeat ' ') ++ indent' i (x:xs)
+      indent' i "\n"        = "\n"
+      indent' i (x:xs)      = x : indent' i xs
+      indent' i ""          = ""
 
 -- CG Atom, Var ************************************************************
 
@@ -104,6 +117,8 @@ cga env (Lit i) = "HOTOLIT(" ++ show i ++ ")"
 cga env (Var v) = cgv env v
 
 -- CG in the state monad ***************************************************
+--   need a fresh variable supply, should have made Alts a proper
+--   data declaration
 -- CG of objects produces no inline code
 --   FUN and THUNK produce a DEFUN
 --   all objects produce a (S)HO
@@ -113,98 +128,94 @@ cgObjs :: [Obj InfoTab] -> ([String],[String])
 cgObjs objs =
     let tlnames = map (name . omd) objs
         env = zip tlnames $ repeat SHO
-        (funcs, _) = runState (cgos_sm env objs) 0  
+        (funcs, _) = runState (cgos env objs) 0  
         (forwards, fundefs) = unzip funcs
     in (forwards, fundefs)
 
 -- return [(forward,fundef)], will be unzipped at top level
 
-cgos_sm :: Env -> [Obj InfoTab] -> State Int [(String, String)]
-cgos_sm env objs = 
-    do xss <- mapM (cgo_sm env) objs
-       return $ concat xss
+cgos :: Env -> [Obj InfoTab] -> State Int [(String, String)]
+cgos env = concatMapM (cgo env)
 
-cgo_sm :: Env -> Obj InfoTab -> State Int [(String, String)]
-cgo_sm env (FUN it vs e name) =
+cgo :: Env -> Obj InfoTab -> State Int [(String, String)]
+cgo env (FUN it vs e name) =
     do 
       let env' = zip (fvs it) (map FV [0..]) ++ 
                  zip vs (repeat FP) ++
                  env
-      (inline, funcs) <- cge_sm env' e
+      (inline, funcs) <- cge env' e
       let forward = "FnPtr " ++ name ++ "();"
       let func =
             "DEFUN" ++ show (length vs + 1) ++ "(" ++ 
             name ++ ", self, " ++
             intercalate ", " vs ++
             ") {\n" ++
-            "  fprintf(stderr, \"" ++ name ++ " here\\n\")" ++
-            inline ++
+            "  fprintf(stderr, \"" ++ name ++ " here\\n\");\n" ++
+               indent 2 inline ++
             "  STGRETURN0();\n" ++  -- in case inline doesn't jump somewhere else
             "  ENDFUN;\n}"
       return $ (forward, func) : funcs
 
-cgo_sm env (PAP it f as name) =
+cgo env (PAP it f as name) =
     return []
 
-cgo_sm env (CON it c as name) =
+cgo env (CON it c as name) =
     return []
 
-cgo_sm env (THUNK it e name) =
+cgo env (THUNK it e name) =
     do 
       let env' = zip (fvs it) (map FV [0..]) ++ env
-      (inline, funcs) <- cge_sm env' e
+      (inline, funcs) <- cge env' e
       let forward = "FnPtr " ++ name ++ "();"
       let func =
             "DEFUN1(" ++ name ++ ", self) {\n" ++
-            "  fprintf(stderr, \"" ++ name ++ " here\\n\")" ++
+            "  fprintf(stderr, \"" ++ name ++ " here\\n\");" ++
             "  stgThunk(self);\n" ++
-            inline ++
+            indent 2 inline ++
             "  STGRETURN0();\n" ++  -- in case inline doesn't jump somewhere else
             "  ENDFUN;\n}"
       return $ (forward, func) : funcs
 
-cgo_sm env (BLACKHOLE {}) =
+cgo env (BLACKHOLE {}) =
     return []
 
 -- ****************************************************************
 -- return (inline code, [(forward, fundef)])
-cge_sm :: Env -> Expr InfoTab -> State Int (String, [(String, String)])
-cge_sm env (EAtom it l@(Lit _)) =
+cge :: Env -> Expr InfoTab -> State Int (String, [(String, String)])
+cge env (EAtom it l@(Lit _)) =
     return ("stgCurVal = " ++ cga env l ++ ";\n", [])
 
-cge_sm env (EAtom it v@(Var _)) = 
+cge env (EAtom it v@(Var _)) = 
     let inline = "stgCurVal = " ++ cga env v ++ ";\n" ++
                  "STGEVAL(stgCurVal);\n"
     in return (inline, [])
 
+cge env (EFCall it f as) = 
+    let inline = "STGAPPLY" ++ show (length as) ++ "(" ++
+                 intercalate ", " (cgv env f : map (cga env) as) ++ 
+                 ");\n"
+    in return (inline, [])
 
-cge_sm env (EFCall it f as) = 
-    let code = "STGAPPLY" ++ show (length as) ++ "(\n" ++
-               intercalate "," (cgv env f : map (cga env) as) ++ 
-               ");\n"
-    in return (code, [])
+cge env (EPrimop{}) = return ("cge(EPrimop) not implemented\n", [])
 
-
-cge_sm env (EPrimop{}) = return ("cge(EPrimop) not implemented\n", [])
-
-cge_sm env (ELet it os e) =
+cge env (ELet it os e) =
     let names = map oname os
         env'  = zip names (map HO (scanr (flip (-)) 0 sizes)) ++ env
         (sizes, buildcodes) = unzip $ map (buildHeapObj env') os
     in do
-      ofunc <- cgos_sm env' os
-      (einline, efunc) <- cge_sm env' e
+      ofunc <- cgos env' os
+      (einline, efunc) <- cge env' e
       return (concat buildcodes ++ einline,
               ofunc ++ efunc)
         
-cge_sm env (ECase it e alts) = 
-    do (ecode, efunc) <- cge_sm env e
-       afunc <- cgalts_sm env alts
+cge env (ECase it e alts) = 
+    do (ecode, efunc) <- cge env e
+       afunc <- cgalts env alts
        let afvs = concatMap (fvs . amd) alts
        let pre = "stgPushCont( (Cont)\n" ++
-                 "{ .retAddr = &alts1,\n" ++
-                 loadPayloadFVs env afvs ++
-                 "});\n"
+                 "  { .retAddr = &alts1,\n" ++
+                      indent 4 (loadPayloadFVs env afvs) ++
+                 "  });\n"
        return (pre ++ ecode, efunc ++ afunc)
               
 -- CG Alts ************************************************************
@@ -234,23 +245,23 @@ cge_sm env (ECase it e alts) =
 newsuffix = State $ \i -> (show i, i+1)
 
 -- returns just function definitions
-cgalts_sm :: [(Var, RVal)] -> [Alt InfoTab] -> State Int [(String,String)]
-cgalts_sm env alts = 
+cgalts :: [(Var, RVal)] -> [Alt InfoTab] -> State Int [(String,String)]
+cgalts env alts = 
     let altenv = zip (nub $ concatMap (fvs . amd) alts)
                      [ CC "cont" i | i <- [0..] ]
         env' = altenv ++ env
     in do
       suf <- newsuffix
       let forward = "FnPtr " ++ "alts" ++ suf ++ "();"
-      codefuncs <- mapM (cgalt_sm env') alts
+      codefuncs <- mapM (cgalt env') alts
       let (codes, funcss) = unzip codefuncs
       let code = "DEFUN0(alts" ++ suf ++ ") {\n" ++
                  "  Cont cont = stgPopCont();\n" ++
                  "  PtrOrLiteral ctor = stgCurVal;\n" ++
                  "  if (stgCurVal.argType != HEAPOBJ ||\n" ++
-                 "    stgCurVal.op->objType != CON ) goto casedefault;\n" ++
-                 "  switch(ctor.op->infoPtr->conFields.tag) {" ++
-                 concat codes ++
+                 "      stgCurVal.op->objType != CON ) goto casedefault;\n" ++
+                 "  switch(ctor.op->infoPtr->conFields.tag) {\n" ++
+                      indent 4 (concat codes) ++
                  "  default:\n" ++
                  "  casedefault:\n" ++
                  "    stgCurVal = ctor;\n" ++
@@ -260,133 +271,29 @@ cgalts_sm env alts =
                  "}\n"
       return $ (forward, code) : concat funcss
 
-cgalt_sm env (ACon it c vs e) =
+cgalt env (ACon it c vs e) =
     let eenv = zip vs (map AC [0..])
         env' = eenv ++ env
     in do
-      (inline, func) <- cge_sm env e
+      (inline, func) <- cge env' e
       let (arity, tag) = case Map.lookup c (conMap it) of
                            Nothing -> error "conMap lookup error"
                            Just x -> x
       let code = "case " ++ show tag ++ ":\n" ++
-                 inline ++
-                 "STGRETURN0()"
+                    indent 2 inline ++
+                 "  STGRETURN0();\n"
       return (code, func)
               
-cgalt_sm env (ADef it v e) =
+cgalt env (ADef it v e) =
     let env' = (v, AD) : env
     in do
-      (inline, func) <- cge_sm env e
-      let code = "  default:\n" ++
+      (inline, func) <- cge env' e
+      let code = "default:\n" ++
                  "casedefault:\n" ++
-                 inline ++
-                 "STGRETURN0()"
+                    indent 2 inline ++
+                 "  STGRETURN0();\n"
       return (code, func)
 
--- CG Expr ************************************************************
--- cgE 
--- cgE :: Bool -> Env -> Expr InfoTab -> ( inline :: String, [Func] )
--- type Func = (forward :: String, funccode :: String)
-
-cge :: Bool -> Env -> Expr InfoTab -> (String, [(String, String)])
-
-cge boxed env (EAtom it l@(Lit _)) =
-    ("stgCurVal = " ++ cga env l ++ ";\n", [])
-
--- this is broken for unboxed values because of the discriminator
-cge boxed env (EAtom it v@(Var _)) = 
-    let inline = "stgCurVal = " ++ cga env v ++ ";\n" ++
-                 if boxed then "STGEVAL(stgCurVal);\n" else ""
-    in (inline, [])
-
-
-cge boxed env (EFCall it f as) = 
-    let code = "STGAPPLY" ++ show (length as) ++ "(\n" ++
-               intercalate "," (cgv env f : map (cga env) as) ++ 
-               ");\n"
-    in (code, [])
-
-
-cge boxed env (EPrimop{}) = ("cge(EPrimop) not implemented\n", [])
-
-cge boxed env (ELet it os e) =
-    let names = map oname os
-        env'  = zip names (map HO (scanr (flip (-)) 0 sizes)) ++ env
-        (sizes, buildcodes) = unzip $ map (buildHeapObj env') os
-        (oinlines, offuncs) = unzip $ map (cgo True env') os
-        (einline, effunc)   = cge boxed env' e
-    in (concat oinlines ++ einline, concat offuncs ++ effunc)
-        
--- stgPushCont( (Cont)
---	       { .retAddr = &alts1,
---        	 .objType = CASECONT,
---		 .payload[0] = HOTOPL(STGHEAPAT(-1)) 
---               });
-
-cge boxed env (ECase it e alts) = 
-    let (ecode, efunc) = cge boxed env e
-        (acode, afunc) = cgalts boxed env alts
-        pre = "stgPushCont( (Cont)\n" ++
-              "{ .retAddr = &alts1,\n" ++
-              loadPayloadFVs env (fvs it) ++
-              "});\n"
-    in (ecode ++ acode, efunc ++ afunc)
-              
--- CG Alts ************************************************************
-
-cgalts boxed env alts = ("alts not implemented", [])
-
--- CG Obj ************************************************************
-
--- DEFUN1(main5, self) {
---   fprintf(stderr, "THUNK(const_one unit) here\n");
---   stgThunk(self);
---   // constf and unit are top-level
---   STGAPPLY1(HOTOPL(&sho_const_one), HOTOPL(&sho_unit));
---   STGRETURN0();
---   ENDFUN;
--- }
--- return (inline code, [function defns])
-cgo boxed env (FUN it vs e name) =
-    let env' = zip (fvs it) (map FV [0..]) ++ env
-        (inline, funcs) = cge boxed env' e
-        forward = "FnPtr " ++ name ++ "();"
-        func =
-            "DEFUN1(" ++ name ++ ", self) {\n" ++
-            "  fprintf(stderr, \"" ++ name ++ " here\\n\")" ++
-            inline ++
-            "  STGRETURN0();\n" ++  -- in case inline doesn't jump somewhere else
-            "  ENDFUN;\n}"
-    in ("", funcs ++ [(forward, func)])
-
-cgo boxed env (PAP it f as name) = 
-    ("", [])
-
-cgo boxed env (CON it c as name) =
-    ("", [])
-
-cgo boxed env (THUNK it e name) = 
-    let env' = zip (fvs it) (map FV [0..]) ++ env
-        (inline, funcs) = cge boxed env' e
-        forward = "FnPtr " ++ name ++ "();"
-        func =
-            "DEFUN1(" ++ name ++ ", self) {\n" ++
-            "  fprintf(stderr, \"" ++ name ++ " here\\n\")" ++
-            "  stgThunk(self);\n" ++
-            inline ++
-            "  STGRETURN0();\n" ++  -- in case inline doesn't jump somewhere else
-            "  ENDFUN;\n}"
-    in ("", funcs ++ [(forward, func)])
-
--- BH's should be commoned
-cgo boxed env (BLACKHOLE it name) = 
-    let forward = "FnPtr " ++ name ++ "();"
-        func =
-            "DEFUN1(" ++ name ++ ", self) {\n" ++
-            "  fprintf(stderr, \"" ++ name ++ " here, exiting!\\n\")" ++
-            "  exit(0);\n" ++
-            "  ENDFUN;\n}"
-    in ("", [(forward, func)])
 
 -- ****************************************************************
 -- build heap object (bho) is only invoked by 'let' so TLDs not built
@@ -411,20 +318,19 @@ buildHeapObj env o =
     let (size, rval) = heapObjRVal env o
         name = oname o
         code =
-            "  Obj *" ++ name ++ " = stgNewHeapObj();\n" ++
-            "  *" ++ name ++ " = " ++ rval  ++ ";"
+            "Obj *" ++ name ++ " = stgNewHeapObj();\n" ++
+            "*" ++ name ++ " = " ++ rval  ++ ";\n"
     in (size, code)
 
 heapObjRVal env o =
     let (size, guts) = bho env o
         name = oname o
         code =
-            "  (Obj)\n" ++
-            "    { .objType = " ++ showObjType (omd o) ++ ",\n" ++
-            "      .infoPtr = &it_" ++ name ++ ",\n" ++
-            "      .ident = \"" ++ name ++ "\"," ++
-            guts ++
-            "    }"
+            "(Obj) { .objType = " ++ showObjType (omd o) ++ ",\n" ++
+            "        .infoPtr = &it_" ++ name ++ ",\n" ++
+            "        .ident = \"" ++ name ++ "\",\n" ++
+                     indent 8 guts ++
+            "      }"
     in (size, code)
 
 bho env (FUN it vs e name) =
@@ -446,12 +352,12 @@ bho env (BLACKHOLE it name) = (1,"")
 
 
 loadPayloadFVs env fvs =
-    concat ["    .payload[" ++ show i ++ "] = " ++ cgv env v ++ ",\n"
+    concat [".payload[" ++ show i ++ "] = " ++ cgv env v ++ ",\n"
             | (i,v) <- indexFrom 0 fvs ]
 
 -- load atoms into payload starting at index ind
 loadPayloadAtoms env as ind =
-    concat ["    .payload[" ++ show i ++ "] = " ++ cga env a ++ ",\n"
+    concat [".payload[" ++ show i ++ "] = " ++ cga env a ++ ",\n"
             | (i,a) <- indexFrom ind as]
 
 
