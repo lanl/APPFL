@@ -209,9 +209,9 @@ cge env (ELet it os e) =
       return (concat buildcodes ++ einline,
               ofunc ++ efunc)
         
-cge env (ECase it e (Alts _ alts _)) = 
+cge env (ECase it e a@(Alts _ alts _)) = 
     do (ecode, efunc) <- cge env e
-       afunc <- cgalts env alts
+       afunc <- cgalts env a
        let afvs = concatMap (fvs . amd) alts
        let pre = "stgPushCont( (Cont)\n" ++
                  "  { .retAddr = &alts1,\n" ++
@@ -242,21 +242,17 @@ cge env (ECase it e (Alts _ alts _)) =
 --   ENDFUN;
 -- }
 
--- get into monad
-newsuffix = State $ \i -> (show i, i+1)
-
 -- returns just function definitions
-cgalts :: [(Var, RVal)] -> [Alt InfoTab] -> State Int [(String,String)]
-cgalts env alts = 
+cgalts :: [(Var, RVal)] -> (Alts InfoTab) -> State Int [(String,String)]
+cgalts env (Alts _ alts name) = 
     let altenv = zip (nub $ concatMap (fvs . amd) alts)
                      [ CC "cont" i | i <- [0..] ]
         env' = altenv ++ env
     in do
-      suf <- newsuffix
-      let forward = "FnPtr " ++ "alts" ++ suf ++ "();"
+      let forward = "FnPtr " ++ name ++ "();"
       codefuncs <- mapM (cgalt env') alts
       let (codes, funcss) = unzip codefuncs
-      let code = "DEFUN0(alts" ++ suf ++ ") {\n" ++
+      let code = "DEFUN0("++ name ++ ") {\n" ++
                  "  Cont cont = stgPopCont();\n" ++
                  "  PtrOrLiteral ctor = stgCurVal;\n" ++
                  "  if (stgCurVal.argType != HEAPOBJ ||\n" ++
