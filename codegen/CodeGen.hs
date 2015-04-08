@@ -318,9 +318,9 @@ cge boxed env (ELet it os e) =
     in (concat oinlines ++ einline, concat offuncs ++ effunc)
         
 -- stgPushCont( (Cont)
---	       { .retAddr = &alts1,
---        	 .objType = CASECONT,
---		 .payload[0] = HOTOPL(STGHEAPAT(-1)) 
+--               { .retAddr = &alts1,
+--                 .objType = CASECONT,
+--                 .payload[0] = HOTOPL(STGHEAPAT(-1)) 
 --               });
 
 cge boxed env (ECase it e alts) = 
@@ -397,7 +397,7 @@ cgo boxed env (BLACKHOLE it name) =
 --     { .objType = THUNK,
 --       .infoPtr = &it_y,
 --       .payload[0] = (PtrOrLiteral) { .argType = HEAPOBJ, 
--- 				     .op = STGHEAPAT(-2) }
+--                                      .op = STGHEAPAT(-2) }
 --     };
 -- return (size, inline code)
 

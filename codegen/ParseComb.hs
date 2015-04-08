@@ -42,8 +42,8 @@ failp inp = []
 -- predicate first element of input list
 satisfyp :: (a -> Bool) -> Parser a a
 satisfyp p [] = failp []
-satisfyp p (x:xs) | p x		= succeedp x xs
-	  	  | otherwise	= failp xs
+satisfyp p (x:xs) | p x                = succeedp x xs
+                    | otherwise        = failp xs
 
 -- match first element of list
 literalp :: Eq b => b -> Parser b b
