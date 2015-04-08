@@ -80,6 +80,9 @@ instance ObjsOf (Expr a) [Obj a] where
 instance ObjsOf (Alt a) [Obj a] where
     objsOf (ACon _ c vs e) = objsOf e
     objsOf (ADef _ v e)    = objsOf e
+    
+instance ObjsOf (Alts a) [Obj a] where
+    objsOf (Alts _ alts _) = objsOf alts
 
 instance ObjsOf [Alt a] [Obj a] where
     objsOf = concatMap objsOf
@@ -118,7 +121,7 @@ instance SetITs (Expr [Var]) (Expr InfoTab) where
     setITs (ECase myfvs e alts) = 
         let
           e' = setITs e
-          alts' = map setITs alts
+          alts' = setITs alts
         in ECase (JustFVs{fvs = myfvs}) e' alts'
 
     -- EAtom, EFCall, EPrimop, this doesn't work
@@ -132,6 +135,11 @@ instance SetITs (Expr [Var]) (Expr InfoTab) where
 
     setITs (EPrimop myfvs p as) =
         EPrimop (JustFVs{fvs = myfvs}) p as
+
+instance SetITs (Alts [Var]) (Alts InfoTab) where
+    setITs (Alts myfvs alts name) = 
+       let alts' = map setITs alts
+       in Alts (JustFVs {fvs = myfvs}) alts' name
 
 instance SetITs (Alt [Var]) (Alt InfoTab) where
     setITs (ACon myfvs c vs e) = 
