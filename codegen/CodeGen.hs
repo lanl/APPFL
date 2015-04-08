@@ -209,7 +209,7 @@ cge env (ELet it os e) =
       return (concat buildcodes ++ einline,
               ofunc ++ efunc)
         
-cge env (ECase it e alts) = 
+cge env (ECase it e (Alts _ alts _)) = 
     do (ecode, efunc) <- cge env e
        afunc <- cgalts env alts
        let afvs = concatMap (fvs . amd) alts
