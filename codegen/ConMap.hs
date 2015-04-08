@@ -43,6 +43,9 @@ instance BuildConMap (Expr a) where
   build (ECase {ee, ealts}) = build ee >> build ealts
   build _ = return ()
 
+instance BuildConMap (Alts a) where
+  build (Alts {alts}) = build alts
+
 instance BuildConMap [Alt a] where
   build (alt:alts) = build alt >> build alts
   build [] = return ()
