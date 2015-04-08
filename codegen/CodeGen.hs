@@ -64,8 +64,8 @@ get = State $ \s -> (s,s)
 
 put newState = State $ \s -> ((), newState)  
 
-liftM   :: (Monad m) => (a1 -> r) -> m a1 -> m r
-liftM f m1              = do { x1 <- m1; return (f x1) }
+liftM   :: (Monad m) => (a -> r) -> m a -> m r
+liftM f m              = do { x <- m; return (f x) }
 
 concatMapM        :: (Monad m) => (a -> m [b]) -> [a] -> m [b]
 concatMapM f xs   =  liftM concat (mapM f xs)
@@ -88,7 +88,7 @@ lu v [] _ = error $ "lu " ++ v ++ " failed"
 lu v ((v',k):_) n | v == v' =
     case k of
       SHO     -> "HOTOPL(&sho_" ++ v ++ ")"
-      HO size -> "HOTOPL(&((Obj*)TOH_ptr)[-" ++ show (n + size) ++ "]"
+      HO off  -> "HOTOPL(&((Obj*)TOH_ptr)[" ++ show off ++ "]"
       FP      -> v
       CC cc i -> cc ++ ".payload[" ++ show i ++ "]"
       FV i    -> "self.op->payload[" ++ show i ++ "]"
@@ -110,7 +110,8 @@ indent i xs = (take i $ repeat ' ') ++ indent' i xs
 
 -- CG Atom, Var ************************************************************
 
-cgv env v = "HOTOPL(" ++ getEnvRef v env ++ ")"
+--cgv env v = "HOTOPL(" ++ getEnvRef v env ++ ")"
+cgv env v = getEnvRef v env
 
 cga :: Env -> Atom -> String
 cga env (Lit i) = "HOTOLIT(" ++ show i ++ ")"
@@ -326,7 +327,8 @@ heapObjRVal env o =
     let (size, guts) = bho env o
         name = oname o
         code =
-            "(Obj) { .objType = " ++ showObjType (omd o) ++ ",\n" ++
+            "(Obj) \n" ++
+            "      { .objType = " ++ showObjType (omd o) ++ ",\n" ++
             "        .infoPtr = &it_" ++ name ++ ",\n" ++
             "        .ident = \"" ++ name ++ "\",\n" ++
                      indent 8 guts ++
@@ -341,7 +343,7 @@ bho env (PAP it f as name) =
 
 bho env (CON it c as name) = 
     let size = 1
-        code = concat ["    .payload[" ++ show i ++ "] = " ++ cga env a ++ ",\n"
+        code = concat [".payload[" ++ show i ++ "] = " ++ cga env a ++ ",\n"
                        | (i,a) <- indexFrom 0 as ]
     in (size, code)
 
