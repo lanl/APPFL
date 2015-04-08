@@ -16,14 +16,14 @@ import InfoTab
 type ConMap = Map.Map Con (Int, Int)
  
 setConMap objs =
-    let (objs', ( _, conmap)) = runState (build objs) (conmap, Map.empty)
+    let (objs', (_ , conmap)) = runState (build objs) (conmap, Map.empty)
     in objs'
 
 insert c arity cmap =
     case Map.lookup c cmap of
       Nothing -> Map.insert c (arity, Map.size cmap) cmap
-      (Just (arity',tag)) -> if (arity == arity') then cmap 
-                             else error "CON arity mismatch!"
+      Just (arity',tag) -> if (arity == arity') then cmap 
+                           else error "CON arity mismatch!"
 
 -- the first ConMap is read-only
 class BuildConMap t where 
@@ -36,9 +36,11 @@ instance BuildConMap (Obj InfoTab) where
     build o@(FUN {e}) = do
       e' <- build e
       return o{e = e'}
+
     build o@(THUNK {e}) = do
       e' <- build e
       return o{e = e'}
+
     build o@(CON {c, as}) = do
       (mapread, mapwrite) <- get
       let mapwrite' = insert c (length as) mapwrite
@@ -48,6 +50,7 @@ instance BuildConMap (Obj InfoTab) where
       let md' = md{tag = t}
       let o' = o{omd = md'}
       return o'
+
     build o = return o     -- PAP, BLACKHOLE
 
 instance BuildConMap (Expr InfoTab) where
@@ -55,10 +58,12 @@ instance BuildConMap (Expr InfoTab) where
       edefs' <- build edefs
       ee' <- build ee
       return e{edefs = edefs', ee = ee'}
+
     build e@(ECase {ee, ealts}) = do
       ee' <- build ee
       ealts' <- build ealts
       return e{ee = ee', ealts = ealts'}
+
     build o = return o -- EAtom, EFCall, EPrimop
 
 instance BuildConMap [Alt InfoTab] where
