@@ -209,21 +209,16 @@ cge env (ELet it os e) =
       return (concat buildcodes ++ einline,
               ofunc ++ efunc)
         
-cge env (ECase it e a@(Alts _ alts _)) = 
+cge env (ECase it e a@(Alts _ alts name)) = 
     do (ecode, efunc) <- cge env e
        afunc <- cgalts env a
        let afvs = concatMap (fvs . amd) alts
-       -- THIS IS A TERRIBLE HACK
-       let altsName = getAltsName afunc
-       -- END TERRRIBLE HACK
-
+   
        let pre = "stgPushCont( (Cont)\n" ++
-                 "  { .retAddr = &" ++ altsName ++ ",\n" ++
+                 "  { .retAddr = &" ++ name ++ ",\n" ++
                       indent 4 (loadPayloadFVs env afvs) ++
                  "  });\n"
        return (pre ++ ecode, efunc ++ afunc)
-       
-getAltsName = (takeWhile (/='(')) . drop 6 . fst . head
        
 -- CG Alts ************************************************************
 -- DEFUN0(alts1) {
