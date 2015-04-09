@@ -112,7 +112,7 @@ nameExpr (ELet md objs e) tt =
 nameExpr (ECase md e alts) tt =
     do
       e' <- nameExpr e tt
-      alts' <- mapM ((flip nameAlt) tt) alts
+      alts' <- nameAlts alts tt
       return (ECase md e' alts')
 
 nameExpr (EAtom md a) tt =
@@ -127,6 +127,11 @@ nameExpr (EPrimop md p as) tt =
     let as' = nameAtoms as tt in
     return (EPrimop md p as')
 
+nameAlts (Alts md alts name) tt =
+    do 
+      name' <- suffixname name
+      alts' <- mapM ((flip nameAlt) tt) alts
+      return (Alts md alts' name')
 
 nameAlt (ACon md c vs e) tt = 
     do

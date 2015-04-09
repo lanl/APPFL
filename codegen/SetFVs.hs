@@ -1,5 +1,5 @@
-{-# LANGUAGE TypeSynonymInstances #-}
-{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE TypeSynonymInstances  #-}
+{-# LANGUAGE FlexibleInstances     #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 
 module SetFVs (
@@ -76,6 +76,11 @@ instance SetFVs (Alt a) (Alt [Var]) where
         let (efvs, e') = setfvs (tlds \\ [v]) e
             myfvs = efvs \\ [v]
         in  (myfvs, ADef myfvs v e')
+
+instance SetFVs (Alts a) (Alts [Var]) where
+    setfvs tlds (Alts _ alts name) = 
+        let (fvs, alts') = setfvs tlds alts
+        in (fvs, Alts fvs alts' name)
 
 instance SetFVs [Alt a] [Alt [Var]] where
     setfvs tlds alts =

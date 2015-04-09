@@ -1,5 +1,6 @@
 {-# LANGUAGE TypeSynonymInstances #-}
-{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE FlexibleInstances    #-}
+{-# LANGUAGE NamedFieldPuns       #-}
 
 module Parser (
   Var,
@@ -7,6 +8,7 @@ module Parser (
   Atom(..),
   Expr(..),
   Alt(..),
+  Alts(..),
   Obj(..),
   parser,
   -- showDefs,
@@ -119,8 +121,8 @@ instance Unparser (Alt [Var]) where
                  unparser (4 + length v) e
         in indents n ss
 
-instance Unparser [Alt [Var]] where
-    unparser n alts =
+instance Unparser (Alts [Var]) where
+    unparser n (Alts {alts}) = 
         concatMap (unparser n) alts
 
 instance Unparser (Obj [Var]) where
@@ -169,12 +171,15 @@ data Expr a = EAtom   {emd :: a, ea :: Atom}
             | EFCall  {emd :: a, ev :: Var, eas :: [Atom]}
             | EPrimop {emd :: a, eprimop :: Primop, eas :: [Atom]}
             | ELet    {emd :: a, edefs :: [Obj a], ee :: Expr a}
-            | ECase   {emd :: a, ee :: Expr a, ealts :: [Alt a]}
+            | ECase   {emd :: a, ee :: Expr a, ealts :: Alts a}
               deriving(Eq,Show)
 
 data Alt a = ACon {amd :: a, ac :: Con, avs :: [Var], ae :: Expr a}
            | ADef {amd :: a,            av :: Var,    ae :: Expr a}
              deriving(Eq,Show)
+
+data Alts a = Alts {altsmd :: a, alts :: [Alt a], aname :: String}
+              deriving(Eq,Show)
 
 data Obj a = FUN   {omd :: a, vs :: [Var],   e :: (Expr a), oname :: String}
            | PAP   {omd :: a, f  :: Var,     as :: [Atom],  oname :: String}
@@ -288,9 +293,12 @@ ecasep = (kwkindp KWcase `xthenp` cutp "ecasep_1"                -- case
           (exprp `thenp` cutp "ecasep_2"                          -- expr
            (kwkindp KWof `xthenp`  cutp "ecasep_3"                 -- of
             (symkindp SymLBrace `xthenp`  cutp "ecasep_4"         -- 
-             (sepbyp alternp (symkindp SymSemi) `thenxp` cutp "ecasep_5"
+             (alternsp `thenxp` cutp "ecasep_5"
               (symkindp SymRBrace)))))) 
          `usingp` uncurry (ECase ())
+
+alternsp = sepbyp alternp (symkindp SymSemi) 
+           `usingp` \alts -> Alts () alts "alts"
             
 alternp = aconp `altp` adefp
 
@@ -304,4 +312,5 @@ adefp = (varp `thenp`
          (symkindp SymArrow `xthenp`
           exprp))
         `usingp` uncurry (ADef ())
+
 

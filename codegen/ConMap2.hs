@@ -66,6 +66,12 @@ instance BuildConMap (Expr InfoTab) where
 
     build o = return o -- EAtom, EFCall, EPrimop
 
+
+instance BuildConMap (Alts InfoTab) where
+    build a@(Alts {alts}) = do
+       alts' <- build alts
+       return a{alts = alts'}
+
 instance BuildConMap [Alt InfoTab] where
     build = mapM build
 
