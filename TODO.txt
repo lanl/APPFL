@@ -15,7 +15,12 @@ Add identifiers# (or #identifiers) and constants# (e.g. 1#, True#)
 
 Add case#, field to ECase for boxed/unboxed
 
-Add a field to Expr and Obj for type info
+Add a field to Exp, Obj, Alt, Alts, Atom (?), Var (?), Lit (?) for type info
+
+Wish list:  
+
+ - strictness analyzer
+ - type inferencer
 
 David Ringo
 -----------
