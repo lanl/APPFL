@@ -3,6 +3,8 @@ Kei/Dean
 
 Make HOs and continuations variable-sized.
 
+Change comment symbol from "#" to Haskell "--", fix tests/examples, Prelude
+
 Add ADT defs
 
 Don't generate C switch for "case e of x -> e"
@@ -38,6 +40,7 @@ Warmup:
 
 Language extensions:
 
+  - remove CON(), THUNK(), etc. syntax
   - allow unsaturated constructors
   - allow constructor application to be unsaturated (primop?)
   - allow constructor and function arguments to be arbitrary expressions

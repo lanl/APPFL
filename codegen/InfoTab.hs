@@ -70,6 +70,14 @@ data InfoTab =
 class ObjsOf a b where 
     objsOf :: a -> b
 
+instance ObjsOf [Obj a] [Obj a] where
+    objsOf = concatMap objsOf
+
+instance ObjsOf (Obj a) [Obj a] where
+    objsOf o@(FUN _ vs e n) = o : objsOf e
+    objsOf o@(THUNK _ e n)  = o : objsOf e
+    objsOf o              = [o] -- PAP, CON, BLACKHOLE
+
 instance ObjsOf (Expr a) [Obj a] where
     objsOf (ELet _ defs e)  = (objsOf defs) ++ (objsOf e)
     objsOf (ECase _ e alts) = (objsOf e) ++ (objsOf alts)
@@ -80,14 +88,6 @@ instance ObjsOf (Alt a) [Obj a] where
     objsOf (ADef _ v e)    = objsOf e
 
 instance ObjsOf [Alt a] [Obj a] where
-    objsOf = concatMap objsOf
-
-instance ObjsOf (Obj a) [Obj a] where
-    objsOf o@(FUN _ vs e n) = o : objsOf e
-    objsOf o@(THUNK _ e n)  = o : objsOf e
-    objsOf o              = [o] -- PAP, CON, BLACKHOLE
-
-instance ObjsOf [Obj a] [Obj a] where
     objsOf = concatMap objsOf
 
 itsOf :: [Obj InfoTab] -> [InfoTab]
@@ -207,7 +207,7 @@ showITType CON {} = "con"
 showITType THUNK {} = "tnk"
 showITType BLACKHOLE {} = "bhl"
 
-showITs os = concatMap showIT $ objsOf os
+showITs os = concatMap showIT $ itsOf os
 
 {-
 InfoTab it_z =
