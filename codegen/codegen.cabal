@@ -4,25 +4,38 @@ cabal-version:  >=1.2
 build-type:     Simple
 author:         
 data-files:     
-                CodeGen.hs, 
-                ConMap.hs, 
-                ConMap2.hs, 
-                HeapObj.hs, 
-                InfoTab.hs, 
-                Lexer.hs, 
-                ParseComb.hs, 
-                Parser.hs, 
-                Rename.hs, 
-                Scanner.hs, 
-                SetFVs.hs, 
+                CodeGen.hs,
+                ConMap.hs,
+                ConMap2.hs,
+                HeapObj.hs,
+                InfoTab.hs,
+                Lexer.hs,
+                ParseComb.hs,
+                Parser.hs,
+                Rename.hs,
+                Scanner.hs,
+                SetFVs.hs,
                 stgc.hs
 
 executable codegen
-  hs-source-dirs:  . 
+  hs-source-dirs:  .
   main-is:         stgc.hs
   build-depends:   
                    base >= 4,
                    containers,
                    mtl
   ghc-options:     -Wall
+
+test-suite test
+  type:            exitcode-stdio-1.0
+  main-is:         test.hs
+  ghc-options:     -Wall -rtsopts
+  build-depends:   base >= 4, tasty > 0.10, tasty-hunit, HUnit, tasty-quickcheck, QuickCheck
+  other-modules:   
+                  Parser,
+                  ParserTest,
+                  Rename,
+                  RenameTest
+  hs-source-dirs:  
+                  .,tests
 
