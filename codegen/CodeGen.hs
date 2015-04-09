@@ -213,12 +213,18 @@ cge env (ECase it e alts) =
     do (ecode, efunc) <- cge env e
        afunc <- cgalts env alts
        let afvs = concatMap (fvs . amd) alts
+       -- THIS IS A TERRIBLE HACK
+       let altsName = getAltsName afunc
+       -- END TERRRIBLE HACK
+
        let pre = "stgPushCont( (Cont)\n" ++
-                 "  { .retAddr = &alts1,\n" ++
+                 "  { .retAddr = &" ++ altsName ++ ",\n" ++
                       indent 4 (loadPayloadFVs env afvs) ++
                  "  });\n"
        return (pre ++ ecode, efunc ++ afunc)
-              
+       
+getAltsName = (takeWhile (/='(')) . drop 6 . fst . head
+       
 -- CG Alts ************************************************************
 -- DEFUN0(alts1) {
 --   Cont cont = stgPopCont();
@@ -263,10 +269,6 @@ cgalts env alts =
                  "      stgCurVal.op->objType != CON ) goto casedefault;\n" ++
                  "  switch(ctor.op->infoPtr->conFields.tag) {\n" ++
                       indent 4 (concat codes) ++
-                 "  default:\n" ++
-                 "  casedefault:\n" ++
-                 "    stgCurVal = ctor;\n" ++
-                 "    STGRETURN0();\n" ++
                  "  }\n" ++
                  "  ENDFUN;\n" ++
                  "}\n"

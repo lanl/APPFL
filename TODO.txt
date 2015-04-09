@@ -1,0 +1,40 @@
+Kei/Dean
+--------
+
+Make HOs and continuations variable-sized.
+
+Add ADT defs
+
+Don't generate C switch for "case e of x -> e"
+
+Don't generate separate C function/casecont for simple "e" in "case e of"
+
+Do the known calls optimization
+
+Add identifiers# (or #identifiers) and constants# (e.g. 1#, True#)
+
+Add case#, field to ECase for boxed/unboxed
+
+Add a field to Expr and Obj for type info
+
+David Ringo
+-----------
+
+Warmup:
+
+  Analysis to determine whether "e" in "case e of" is simple, i.e. does
+    not cause heap allocation (does not contain EFCall or ELet)
+
+  Check if case has default alternative, if not add
+    "x -> errorCaseAltsNotExhaustive x"
+
+  Check if case actually needs a default alternative
+    Prerequisite:  need ADT defs
+
+Language extensions:
+
+  - allow unsaturated constructors
+  - allow constructor application to be unsaturated (primop?)
+  - allow constructor and function arguments to be arbitrary expressions
+  - allow default case "_"
+

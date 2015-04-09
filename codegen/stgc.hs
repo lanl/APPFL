@@ -24,9 +24,12 @@ doit prog =
         defs1 = renameObjs defs0
         defs2 = setFVsDefs defs1
         defs3 = setITs defs2 :: [Obj InfoTab]
-        defs4 = setConMap defs3
+        defs4 = setConMap defs3 
+        infotab = showITs defs4
         (forwards, fundefs) = cgObjs defs4
-    in intercalate "\n\n" (forwards ++ fundefs)
+    in intercalate "\n" forwards ++ 
+       infotab ++
+       intercalate "\n\n" fundefs
            
 --    in showDefs defs2 ++
 --    in intercalate "\n\n" (map showIT infoTabs)

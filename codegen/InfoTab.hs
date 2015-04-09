@@ -5,7 +5,7 @@
 module InfoTab(
   InfoTab(..),
   setITs,
-  showIT,
+  showITs,
   showITType,
   showObjType
 ) where
@@ -29,9 +29,7 @@ import qualified Data.Set as Set
   every Expr, Alt, Obj has metadata, e.g. name, freevars
 -}
 
--- IMPORTANT REALIZATION:  need an infoTab entry for each CON(C N P P N) combination
--- for layout information, for garbage collection, when we no longer have a
--- discriminator for PtrOrLiteral -- mostly worry about this later
+
 
 
 data InfoTab = 
@@ -209,7 +207,7 @@ showITType CON {} = "con"
 showITType THUNK {} = "tnk"
 showITType BLACKHOLE {} = "bhl"
 
-
+showITs os = concatMap showIT $ objsOf os
 
 {-
 InfoTab it_z =

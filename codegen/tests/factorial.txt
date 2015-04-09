@@ -1,0 +1,51 @@
+
+fac = FUN(i ->
+  case i of {
+    I i# ->
+      case# eqInt# i# 0# of      -- returning boxed True
+        True -> let {res = CON(I 1#)} in res
+        x -> case# (-#) i# 1# of
+               im1# -> let { im1 = CON(I im1#) } in
+                         case fac im1 of
+			   f1 -> mul i f1
+
+fac# = FUN(i# ->
+  case# eqInt# i# 0# of           -- returning True#
+    True# -> 1#                   -- assume matching on unboxed constants
+    _     -> case# (-#) i# 1# of
+               im1# -> case# fac# im1# of
+                         f1# -> (*#) i# f1#
+
+then "fac" is much simplified and boxed intermediate values are not created.
+This would generate quite efficient code, but I'm guessing that even with
+fac# as a known call gcc or Clang would not be able to remove the recursion as
+it can for straight C because we use our own stack.
+
+(To think about:  for strict calls could use the C stack--would need to
+implement strictness analysis.)
+
+Let's define an expression "e" as _simple_ if its evaluation does not result
+in heap allocation.  This may be determined simply by observing that "e" does
+not contain "ELet" or "EFCall", or increasingly more precisely by program
+analysis; in the latter case the evaluation order may be important.
+
+If "e" is simple then the CG for "case e of" can be simplified:
+
+-- a separate function for Alts need not be created
+-- a CCont need not be created
+
+Discussion of "case#":
+
+If only primops or unboxed variables are allowed as the scrutinee then
+the scrutinee is always simple.  However, as soon as functions such
+as "fac#" above are allowed this is no longer the case (while not true
+for "fac#", such a function could result in heap allocation).
+
+User-level functions taking/returning unboxed values:
+
+If we make this first-class in the language then interfacing to C
+becomes straightforward.
+
+If a function is strict in an argument that argument can be unboxed, but we
+really only want to do this for types that have only unary constructors.
+Once again we need type information.
