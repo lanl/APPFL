@@ -12,6 +12,7 @@ unitTests :: TestTree
 unitTests = testGroup "Scanner Unit tests"
     [ goldenVsString "Scanner comments" "tests/Scanner/comments.gold" comments
     , goldenVsString "Scanner add" "tests/Scanner/add.gold" add
+    , goldenVsString "Scanner unboxed" "tests/Scanner/unboxed.gold" unboxed
     ]
 
 comments :: IO ByteString
@@ -23,3 +24,8 @@ add :: IO ByteString
 add = do
         input <- IO.readFile "tests/Scanner/add.stg"
         return $ fromString $ show $ scanner input
+
+unboxed :: IO ByteString
+unboxed = do
+            input <- IO.readFile "tests/Scanner/unboxed.stg"
+            return $ fromString $ show $ scanner input

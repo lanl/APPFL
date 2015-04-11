@@ -1,0 +1,22 @@
+FnPtr main();InfoTab it_one = 
+  { .name                = "one",
+    .fvCount             = 0,
+    .entryCode           = &con_one,
+    .objType             = CON,
+    .conFields.arity     = 1,
+    .conFields.tag       = 0,
+    .conFields.conName   = "I",
+  };
+InfoTab it_main = 
+  { .name                = "main",
+    .fvCount             = 0,
+    .entryCode           = &tnk_main,
+    .objType             = THUNK,
+  };
+DEFUN1(main, self) {
+  fprintf(stderr, "main here\n");  stgThunk(self);
+  stgCurVal = HOTOPL(&sho_one);
+  STGEVAL(stgCurVal);
+  STGRETURN0();
+  ENDFUN;
+}

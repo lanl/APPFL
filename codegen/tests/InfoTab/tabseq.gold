@@ -1,0 +1,7 @@
+InfoTab it_seq = 
+  { .name                = "seq",
+    .fvCount             = 0,
+    .entryCode           = &fun_seq,
+    .objType             = FUN,
+    .funFields.arity     = 2,
+  };
