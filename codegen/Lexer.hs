@@ -39,6 +39,7 @@ data Token = Number Int
            | PO Primop
            deriving(Show, Eq)
 
+bigtab :: [(String, Token)]
 bigtab = 
     [("->",        Sym SymArrow),
      ("(",         Sym SymLParen),
@@ -68,7 +69,8 @@ lexer :: [Char] -> [Token]
 lexer = map trans . scanner
 
 trans :: Lexeme -> Token
-trans (ScanNum, str) = Number (read str)
+trans (ScanNum, str) | last str == '#' = Number (read $ init str)
+                     | otherwise = Number (read str)
 
 trans (ScanSym, str) = 
     case lookupassoc bigtab str of
@@ -84,8 +86,11 @@ trans (ScanIdent, str) =
           else if isLower (head str) then
                    Ident str
                else error $ "trans:  what is \"" ++ str ++ "\""
+               
+trans (ScanJunk, str) = error $ "trans: junk \"" ++ str ++ "\""
 
-lookupassoc [] k = Nothing
+lookupassoc :: Eq a1 => [(a1, a)] -> a1 -> Maybe a
+lookupassoc [] _ = Nothing
 lookupassoc ((k',v):kvs) k | k == k' = Just v
                            | otherwise = lookupassoc kvs k
 

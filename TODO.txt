@@ -3,8 +3,6 @@ Kei/Dean
 
 Make HOs and continuations variable-sized.
 
-Change comment symbol from "#" to Haskell "--", fix tests/examples, Prelude
-
 Add ADT defs
 
 Don't generate C switch for "case e of x -> e"

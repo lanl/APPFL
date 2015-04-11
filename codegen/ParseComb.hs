@@ -8,6 +8,8 @@ module ParseComb (
   thenp,
   cutp,
   usingp,
+  onep,
+  optlp,
   manyp,
   somep,
   maybep,
@@ -37,11 +39,11 @@ succeedp :: b -> Parser a b -- b -> [a] -> [(b,[a])]
 succeedp v inp = [(v, inp)]
 
 failp :: Parser a b
-failp inp = []
+failp _ = []
 
 -- predicate first element of input list
 satisfyp :: (a -> Bool) -> Parser a a
-satisfyp p [] = failp []
+satisfyp _ [] = failp []
 satisfyp p (x:xs) | p x                = succeedp x xs
                     | otherwise        = failp xs
 
@@ -58,6 +60,7 @@ thenp :: Parser t1 t2 -> Parser t1 t3 -> Parser t1 (t2, t3)
 (p1 `thenp` p2) inp = [((v1, v2),out2) | (v1, out1) <- p1 inp, (v2, out2) <- p2 out1]
 
 -- cut
+cutp :: Show a => String -> ([a] -> [t]) -> [a] -> [t]
 cutp msg p inp =
     case p inp of
       [] -> error ("cut error \"" ++ msg ++ "\" at \"" ++ concatMap show (take 15 inp))
@@ -68,6 +71,7 @@ usingp :: Parser t1 t2 -> (t2 -> t3) -> Parser t1 t3
 (p `usingp` f) inp = [(f v,out) | (v,out) <- p inp]
 
 -- uncurrieed cons
+ucons :: (a, [a]) -> [a]
 ucons (x,xs) = x:xs
 
 -- match list
@@ -75,13 +79,20 @@ listp :: Eq a => [a] -> Parser a [a]
 listp [] = succeedp []
 listp (x:xs) = (literalp x `thenp` listp xs) `usingp` ucons
 
+
 -- zero or more
 manyp :: Parser a b -> Parser a [b]
 manyp p = ((p `thenp` manyp p) `usingp` ucons) `altp` (succeedp [])
 
--- zero or one
+-- one 
+onep :: Parser a b -> Parser a [b]
+onep p = (p `thenp` succeedp []) `usingp` ucons
 
--- optp :: Parser a b -> b -> Parser a b
+-- zero or one
+optlp :: Parser a b -> Parser a [b]
+optlp p = (onep p) `altp` (succeedp [])
+
+optp :: Parser a b -> b -> Parser a b
 p `optp` v = p `altp` (succeedp v)
 
 -- optp p = p `altp` (succeedp [])
@@ -96,8 +107,8 @@ maybep p = (p `usingp` Just) `altp` (succeedp Nothing)
 
 -- replace result
 returnp :: Parser t1 t2 -> t3 -> Parser t1 t3
-returnp p v = p `usingp` (const v)
-    where const x y = x
+returnp p v = p `usingp` (constp v)
+    where constp x _ = x
 
 -- discard first result
 xthenp :: Parser t1 t2 -> Parser t1 t3 -> Parser t1 t3
@@ -119,22 +130,27 @@ anyp ps = foldr altp failp ps
 sepbyp :: Parser t1 t3 -> Parser t1 t2 -> Parser t1 [t3]
 sepbyp p1 p2 = p1 `thenp` (manyp (p2 `xthenp` p1)) `usingp` uncurry (:)
 
+exactp :: (t -> [(t1, String)]) -> t -> [(t1, String)]
 exactp p inp =
     case p inp of
       [] -> error "ParseComb.exactp error, empty result"
       res@((parsed, residual):_) -> 
           case residual of
-            (x:xs) -> error ("ParseComb.exactp error, crap left at end" ++ residual)
+            (x:xs) -> error ("ParseComb.exactp error, crap left at end" ++ (x:xs))
             _ -> res
 
 -- alphabetic
 
+alphap :: Parser Char Char
 alphap = satisfyp isAlpha
 
+numeralp :: Parser Char Char
 numeralp = satisfyp isDigit
 
+alphaornumeralp :: Parser Char Char
 alphaornumeralp = satisfyp isAlphaNum
 
+whitep :: Parser Char Char
 whitep = satisfyp isSpace
 
 

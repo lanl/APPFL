@@ -53,11 +53,14 @@ import Data.List
 
 -- in the spirit of intercalate
 
-precalate s [] = []
+precalate :: [a] -> [[a]] -> [a]
+precalate _ [] = []
 precalate s (s':ss) = s ++ s' ++ precalate s ss
 
+dropspaces :: String -> String
 dropspaces = dropWhile (==' ')
 
+interpolate :: String -> String
 interpolate ('%':'%':s) = interpolate $ '%':s
 interpolate ('%':'\n':'%':'%':s) = interpolate $ '%':'\n':'%':s
 interpolate ('%':'\n':'%':s) = interpolate $ dropspaces s
@@ -66,20 +69,26 @@ interpolate ('\n':'%':s) = interpolate $ dropspaces s
 interpolate (c:s) = c : interpolate s
 interpolate [] = []
 
+showDefs :: Unparser a => a -> String
 showDefs defs = interpolate $ intercalate "\n" $ unparser 0 defs
 
-indent n s@('%':_) = s
+indent :: Int -> String -> String
+indent _ s@('%':_) = s
 indent n s = (take n $ repeat ' ') ++ s
 
+indents :: Int -> [String] -> [String]
 indents n ss = map (indent n) ss
 
 -- instance Unparser n Atom where
+showa :: Atom -> Var
 showa (Var v) = v
 showa (Lit l) = show l
 
 -- instance Unparser [Atom] where
+showas :: [Atom] -> String
 showas as = intercalate " " $ map showa as
 
+showFVs :: [String] -> String
 showFVs vs = "[" ++ intercalate " " vs ++ "] "
 
 class Unparser a where unparser :: Int -> a -> [String]
@@ -91,7 +100,7 @@ instance Unparser (Expr [Var]) where
     unparser n (EFCall fvs f as) = 
         indents n [showFVs fvs ++ f ++ " " ++ showas as]
 
-    unparser n (EPrimop fvs p as) = 
+    unparser n (EPrimop fvs _ as) = 
         indents n [showFVs fvs ++ "PRIMOP " ++ showas as]
 
     unparser n (ELet fvs defs e) = 
@@ -196,15 +205,19 @@ parser inp = case (defsp $ lexer inp) of
                [] ->  error "parser failed"
                xs -> fst $ head xs
 
+primopp :: [Token] -> [(Primop, [Token])]
 primopp ((PO po):xs) = succeedp po xs
 primopp _ = failp []
 
+symkindp :: Symbol -> [Token] -> [(Symbol, [Token])]
 symkindp s1 ((Sym s2):xs) | s1 == s2 = succeedp s1 xs
 symkindp _ _ = failp []
 
+objkindp :: Object -> [Token] -> [(Object, [Token])]
 objkindp o1 ((Obj o2):xs) | o1 == o2 = succeedp o1 xs
 objkindp _ _ = failp []
 
+kwkindp :: Keyword -> [Token] -> [(Keyword, [Token])]
 kwkindp k1 ((KW k2):xs) | k1 == k2 = succeedp k1 xs
 kwkindp _ _ = failp []
 
@@ -242,17 +255,20 @@ objp = funobjp `altp`
 blackholeobjp :: Parser Token (Obj ())
 blackholeobjp = objkindp OBLACKHOLE `usingp` const (BLACKHOLE () "")
 
+thunkobjp :: Parser Token (Obj ())
 thunkobjp = objkindp OTHUNK `xthenp` cutp "thunkobjp_1"
             (symkindp SymLParen `xthenp`  cutp "thunkobjp_2"
              (exprp  `thenxp` cutp "thunkobjp_3"
               (symkindp SymRParen)))
             `usingp` \e ->  THUNK () e ""
 
+conobjp :: Parser Token (Obj ())
 conobjp = (objkindp OCON `xthenp` 
           (symkindp SymLParen`xthenp` 
            (conp `thenp` (manyp atomp `thenxp` symkindp SymRParen))))
          `usingp` \(c,as) -> CON () c as ""
 
+funobjp :: Parser Token (Obj ())
 funobjp = (objkindp OFUN `xthenp` cutp "funobjp_1"
           (symkindp SymLParen `xthenp` cutp "funobjp_2"
            (somep varp `thenp` cutp "funobjp_3"
@@ -261,6 +277,7 @@ funobjp = (objkindp OFUN `xthenp` cutp "funobjp_1"
               (symkindp SymRParen))))))
          `usingp` \(f,as) -> FUN () f as ""
 
+papobjp :: Parser Token (Obj ())
 papobjp = (objkindp OPAP `xthenp` 
           (symkindp SymLParen `xthenp` 
            (varp `thenp` 
@@ -268,19 +285,24 @@ papobjp = (objkindp OPAP `xthenp`
              symkindp SymRParen))))
          `usingp` \(p,as) -> (PAP () p as "")
 
+exprp :: Parser Token (Expr ())
 exprp =        eprimopp   -- preceed efcallp, primops are just distinguished vars
         `altp` efcallp
         `altp` eletp 
         `altp` ecasep
         `altp` eatomp
 
+eatomp :: Parser Token (Expr ())
 eatomp = atomp `usingp` (EAtom ())
 
+efcallp :: Parser Token (Expr ())
 efcallp = (varp `thenp` somep atomp) 
           `usingp` uncurry (EFCall ())
 
+eprimopp :: Parser Token (Expr ())
 eprimopp = (primopp `thenp` somep atomp) `usingp` uncurry (EPrimop ())
 
+eletp :: Parser Token (Expr ())
 eletp = (kwkindp KWlet `xthenp` cutp "eletp_1"
          (symkindp SymLBrace `xthenp`  cutp "eletp_2"
           (defsp `thenp`  cutp "eletp_3"       -- [def]
@@ -289,6 +311,7 @@ eletp = (kwkindp KWlet `xthenp` cutp "eletp_1"
              exprp)))))         -- expr
         `usingp` uncurry (ELet ())
           
+ecasep :: Parser Token (Expr ())
 ecasep = (kwkindp KWcase `xthenp` cutp "ecasep_1"                -- case
           (exprp `thenp` cutp "ecasep_2"                          -- expr
            (kwkindp KWof `xthenp`  cutp "ecasep_3"                 -- of
@@ -297,17 +320,21 @@ ecasep = (kwkindp KWcase `xthenp` cutp "ecasep_1"                -- case
               (symkindp SymRBrace)))))) 
          `usingp` uncurry (ECase ())
 
+alternsp :: Parser Token (Alts ())
 alternsp = sepbyp alternp (symkindp SymSemi) 
            `usingp` \alts -> Alts () alts "alts"
             
+alternp :: Parser Token (Alt ())
 alternp = aconp `altp` adefp
 
+aconp :: Parser Token (Alt ())
 aconp = conp `thenp` 
         (manyp varp `thenp` 
          (symkindp SymArrow `xthenp` 
           exprp)) 
         `usingp` \(c,(vs,e)) -> ACon () c vs e
 
+adefp :: Parser Token (Alt ())
 adefp = (varp `thenp`
          (symkindp SymArrow `xthenp`
           exprp))
