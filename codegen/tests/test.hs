@@ -1,9 +1,9 @@
 module Main where
-import qualified Scanner.Test
 import qualified Parser.Test
 import qualified Rename.Test
+import qualified Scanner.Test
 
-import Test.Tasty
+import           Test.Tasty
 
 main :: IO()
 main = defaultMain tests
