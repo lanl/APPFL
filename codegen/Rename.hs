@@ -6,40 +6,20 @@ module Rename (
   renameObjs,
 ) where
 
-
 import Prelude
 import Parser
-import Data.List
+import State
+import Data.Char (isDigit)
 
---import Control.Monad.State.Lazy
-
-newtype State s a = State (s -> (a, s))
-
-state :: (s -> (a, s)) -> State s a
-state x = State x
-
-runState :: State s a -> s -> (a, s)
-runState (State f) x = f x
-
-instance Monad (State s) where
-    return x = state (\st -> (x, st))
-    act >>= k = state $ \st -> 
-                          let (x, st') = runState act st
-                          in runState (k x) st'
-
-get = State $ \s -> (s,s)
-
-put newState = State $ \s -> ((), newState)  
-
-isNum c = c >= '0' && c <= '9'
-
-withsuff s [] = error "this should never happen"
+withsuff :: String -> [String] -> (String, String)
+withsuff _ [] = error "this should never happen"
 withsuff s (x:xs) = 
     let (h,t) = splitAt (length s) x in
-    if h == s && t /= [] && head t == '_' && all isNum (tail t) then
+    if h == s && t /= [] && head t == '_' && all isDigit (tail t) then
         (h, tail t)
     else withsuff s xs
           
+nextv :: String -> [String] -> String
 nextv s used =
     if not $ elem (s ++ "_0") used then s ++ "_0"
     else -- find most recent
@@ -47,17 +27,23 @@ nextv s used =
         in base ++ "_" ++ show (read suff + 1)
 
 -- only have to get into the monad one time, here
+suffixname :: String -> State [String] String
 suffixname v = State $ \used -> let nv = nextv v used in (nv, nv:used)
 
+suffixnames :: [String] -> State [String] [String]
 suffixnames = mapM suffixname
 
 -- uniquify obj names, systematically renaming 
 
 -- no need to flail in the monad at Atom level
+nameAtom :: Atom -> [(Var, Var)] -> Atom
 nameAtom (Var v) tt = Var $ condrepl v tt
-nameAtom (Lit l) tt = Lit l
+nameAtom (Lit l) _ = Lit l
+
+nameAtoms :: [Atom] -> [(Var, Var)] -> [Atom]
 nameAtoms as tt = map ((flip nameAtom) tt) as
 
+renameObjs :: [Obj a] -> [Obj a]
 renameObjs objs =
   -- preserve top-level names--
   let (objs', _) = runState (topNameObjs objs []) []
@@ -70,6 +56,8 @@ topNameObjs :: [Obj a] -> [(Var, Var)] -> State [Var] [Obj a]
 topNameObjs objs tt = mapM ((flip nameObj) tt) objs
 
 -- do name substitution at [Obj] level so top-level names can be preserved
+
+nameObjs :: [Obj a] -> [(String, String)] -> State [String] [Obj a]
 nameObjs objs tt =
     do
       let names = map oname objs
@@ -79,6 +67,7 @@ nameObjs objs tt =
       objs'' <- mapM ((flip nameObj) tt') objs'
       return objs''
 
+nameObj :: Obj a -> [(String, String)] -> State [String] (Obj a)
 nameObj (FUN md vs e name) tt =
     do
       e' <- nameExpr e (dropall vs tt)
@@ -101,6 +90,7 @@ nameObj (CON md c as name) tt =
 nameObj (BLACKHOLE md name) tt = 
     return (BLACKHOLE md name)
 
+nameExpr :: Expr a -> [(Var, String)] -> State [String] (Expr a)
 nameExpr (ELet md objs e) tt =
     do
       let names = map oname objs
@@ -127,6 +117,7 @@ nameExpr (EPrimop md p as) tt =
     let as' = nameAtoms as tt in
     return (EPrimop md p as')
 
+nameAlts :: Alts a -> [(Var, String)] -> State [String] (Alts a)
 nameAlts (Alts md alts name) tt =
     do 
       name' <- suffixname name
@@ -146,10 +137,12 @@ nameAlt (ADef md v e) tt =
 -- drop all references to vs in map tt
 -- there's a fold in here...
 
+dropall :: Eq b => [b] -> [(b, b1)] -> [(b, b1)]
 dropall [] tt = tt
-dropall vs [] = [] -- shortcut
+dropall _ [] = [] -- shortcut
 dropall (v:vs) tt = dropall vs (filter ((/=v).fst) tt)
 
+condrepl :: Eq b => b -> [(b, b)] -> b
 condrepl v tt = case lookup v tt of
                   Just v' -> v'
                   Nothing -> v

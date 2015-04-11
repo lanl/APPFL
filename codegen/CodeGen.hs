@@ -39,36 +39,13 @@ module CodeGen(
 import Parser
 import InfoTab
 import HeapObj
+import State
 
 import Prelude
 import Data.List(intercalate,nub)
 
 import Data.Map (Map)
 import qualified Data.Map as Map
-
-newtype State s a = State (s -> (a, s))
-
-state :: (s -> (a, s)) -> State s a
-state x = State x
-
-runState :: State s a -> s -> (a, s)
-runState (State f) x = f x
-
-instance Monad (State s) where
-    return x = state (\st -> (x, st))
-    act >>= k = state $ \st -> 
-                          let (x, st') = runState act st
-                          in runState (k x) st'
-
-get = State $ \s -> (s,s)
-
-put newState = State $ \s -> ((), newState)  
-
-liftM   :: (Monad m) => (a -> r) -> m a -> m r
-liftM f m              = do { x <- m; return (f x) }
-
-concatMapM        :: (Monad m) => (a -> m [b]) -> [a] -> m [b]
-concatMapM f xs   =  liftM concat (mapM f xs)
 
 data RVal = SHO           -- static heap obj
           | HO Int        -- heap obj, Int is size, count back
