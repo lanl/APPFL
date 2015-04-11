@@ -30,12 +30,13 @@ test-suite test
   type:            exitcode-stdio-1.0
   main-is:         test.hs
   ghc-options:     -Wall -rtsopts
-  build-depends:   base >= 4, tasty > 0.10, tasty-hunit, HUnit, tasty-quickcheck, QuickCheck
+  build-depends:   
+                   base >= 4, tasty > 0.10, tasty-hunit, HUnit, tasty-quickcheck, tasty-golden, QuickCheck,
+                   bytestring
   other-modules:   
+                  Scanner,
                   Parser,
-                  ParserTest,
-                  Rename,
-                  RenameTest
+                  Rename
   hs-source-dirs:  
                   .,tests
 

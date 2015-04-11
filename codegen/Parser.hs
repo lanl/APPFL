@@ -11,7 +11,7 @@ module Parser (
   Alts(..),
   Obj(..),
   parser,
-  -- showDefs,
+  showDefs,
 ) where
 
 import Lexer
