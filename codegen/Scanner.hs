@@ -54,16 +54,19 @@ scanner :: [Char] -> [Lexeme]
 scanner = filter ((/=ScanJunk) . fst) . fst . head . scannerp . uncomments
 
 -- hack
-uncomments = unlines . (map uncomment) . lines
+uncomments = unlines . (map uncommentLine) . lines
 
-uncomment [] = []
-uncomment ('#':xs) = []
-uncomment (x:xs) | isAlpha x    = x : uncommenta xs
-                 | otherwise    = x : uncomment xs
+-- ministg style: # in col 0 is comment
+uncommentLine :: String -> String
+uncommentLine [] = []
+uncommentLine ('#':_) = []
+uncommentLine xs = uncommentInline xs
 
--- any character is allowed to follow an isAlpha
-uncommenta [] = []
-uncommenta (x:xs) | isAlpha x = x : uncommenta xs
-                  | otherwise = x : uncomment xs
+-- haskell style: "--" rest of line is comment
+uncommentInline :: String -> String
+uncommentInline [] = []
+uncommentInline ('-':'-':_) = []
+uncommentInline (x:xs) = x : uncommentInline xs
+
 
 
