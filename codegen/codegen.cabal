@@ -24,12 +24,12 @@ executable codegen
                    base >= 4,
                    containers,
                    mtl
-  ghc-options:     -Wall
+  ghc-options: -W -fno-warn-unused-binds -fno-warn-unused-matches -fno-warn-unused-imports
 
 test-suite test
   type:            exitcode-stdio-1.0
   main-is:         test.hs
-  ghc-options:     -Wall -rtsopts
+  ghc-options:     -W -fno-warn-unused-binds -fno-warn-unused-matches -fno-warn-unused-imports -rtsopts
   build-depends:   
                    base >= 4, tasty > 0.10, tasty-hunit, HUnit, tasty-quickcheck, tasty-golden, QuickCheck,
                    bytestring

@@ -208,12 +208,14 @@ showObjType Pap {} = "PAP"
 showObjType Con {} = "CON"
 showObjType Thunk {} = "THUNK"
 showObjType Blackhole {} = "BLACKHOLE"
+showObjType _ = error "bad ObjType"
 
 showITType FUN {} = "fun"
 showITType PAP {} = "pap"
 showITType CON {} = "con"
 showITType THUNK {} = "tnk"
 showITType BLACKHOLE {} = "bhl"
+showITTType _ = error "bad ITType"
 
 showITs os = concatMap showIT $ itsOf os
 
@@ -254,7 +256,7 @@ showITspec it@(Thunk {}) =
 showITspec it@(Blackhole {}) = 
     "    .objType             = BLACKHOLE,\n"
 
-
+showITspec _ = error "bad ITspec"
 
       
 
