@@ -1,0 +1,3 @@
+# ministg style comment
+one = CON(I 1); -- haskell style inline comment
+main = THUNK(one);

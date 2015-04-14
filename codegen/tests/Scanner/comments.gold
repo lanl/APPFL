@@ -1,0 +1,1 @@
+[(ScanIdent,"one"),(ScanSym,"="),(ScanIdent,"CON"),(ScanSym,"("),(ScanIdent,"I"),(ScanNum,"1"),(ScanSym,")"),(ScanSym,";"),(ScanIdent,"main"),(ScanSym,"="),(ScanIdent,"THUNK"),(ScanSym,"("),(ScanIdent,"one"),(ScanSym,")"),(ScanSym,";")]

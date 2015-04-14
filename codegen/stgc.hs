@@ -1,6 +1,6 @@
 -- stgc "tests/Prelude.stg"
 
-import Lexer(Primop)
+import AST(Primop)
 import Prelude
 import Parser
 import Rename

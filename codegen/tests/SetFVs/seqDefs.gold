@@ -1,0 +1,3 @@
+seq = [] FUN( x y ->
+    [x y] case [x] x
+    of { [y] z -> [y] y})

@@ -3,4 +3,6 @@ sandbox/ministg-0.3/src/trace
 *.o
 *.hi
 *~
+#mac os crud
 ._*
+.DS_Store

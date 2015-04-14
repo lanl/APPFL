@@ -9,8 +9,6 @@ module Scanner (
 ) where
 
 import ParseComb
-import Data.Char(isAlpha,isDigit)
-
 
 -- the unary minus problem must be handled at the parsing level
 data ScanTag = ScanNum
@@ -21,15 +19,20 @@ data ScanTag = ScanNum
 
 type Lexeme = (ScanTag, [Char])
 
+identp :: Parser Char String
 identp = alphap `thenp` manyp alphaornumeralp `usingp` uncurry (:)
 
+identdecorp :: Parser Char String
 identdecorp = 
-    identp `thenp` (       (listp "#")
+    identp `thenp` ((optlp (literalp '#'))
                     `altp` (manyp (literalp '\'')))       
-    `usingp` uncurry (++)
+                    `usingp` uncurry (++)
 
-natnump = somep numeralp
-
+natnump :: Parser Char String
+natnump = somep numeralp `thenp` (optlp (literalp '#'))
+          `usingp` uncurry (++)
+     
+whitespacep :: Parser Char String
 whitespacep = somep whitep
 
 
@@ -40,6 +43,7 @@ scanp :: [(Parser Char [Char], ScanTag)] -> Parser Char [Lexeme]
 scanp = manyp . (foldr op failp)
        where (p,t) `op` xs = (p `scp` t) `altp` xs
 
+stgSyms :: [String]
 stgSyms = ["->", "{", "}", ";", "\\", "(", ")", "=", "|"]
 
 scannerp :: Parser Char [Lexeme]
@@ -54,16 +58,20 @@ scanner :: [Char] -> [Lexeme]
 scanner = filter ((/=ScanJunk) . fst) . fst . head . scannerp . uncomments
 
 -- hack
-uncomments = unlines . (map uncomment) . lines
+uncomments :: String -> String
+uncomments = unlines . (map uncommentLine) . lines
 
-uncomment [] = []
-uncomment ('#':xs) = []
-uncomment (x:xs) | isAlpha x    = x : uncommenta xs
-                 | otherwise    = x : uncomment xs
+-- ministg style: # in col 0 is comment
+uncommentLine :: String -> String
+uncommentLine [] = []
+uncommentLine ('#':_) = []
+uncommentLine xs = uncommentInline xs
 
--- any character is allowed to follow an isAlpha
-uncommenta [] = []
-uncommenta (x:xs) | isAlpha x = x : uncommenta xs
-                  | otherwise = x : uncomment xs
+-- haskell style: "--" rest of line is comment
+uncommentInline :: String -> String
+uncommentInline [] = []
+uncommentInline ('-':'-':_) = []
+uncommentInline (x:xs) = x : uncommentInline xs
+
 
 

@@ -1,0 +1,5 @@
+To use the tasty test framework:
+
+cabal install tasty tasty-golden tasty-quickcheck tasty-hunit tasty-ant-xml
+
+cabal test

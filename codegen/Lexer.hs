@@ -2,13 +2,13 @@ module Lexer (
   Token(..),
   Keyword(..),
   Object(..),
-  Primop(..),
   Symbol(..),
   lexer
 ) where
 
 import Data.Char(isLower,isUpper)
 import Scanner
+import AST
 
 data Keyword = KWlet 
              | KWin 
@@ -19,13 +19,6 @@ data Keyword = KWlet
 
 data Object = OFUN | OPAP | OCON | OTHUNK | OBLACKHOLE deriving(Eq,Show)
 
-data Primop = Pplus 
-            | Psub 
-            | Pmult
-            | Peq
-            | PintToBool
-              deriving(Eq,Show)
-
 data Symbol = SymArrow 
             | SymLParen 
             | SymRParen 
@@ -33,7 +26,7 @@ data Symbol = SymArrow
             | SymLBrace 
             | SymRBrace 
             | SymSemi
-            | SymVert
+            | SymPipe
               deriving (Eq,Show)
 
 data Token = Number Int 
@@ -45,6 +38,7 @@ data Token = Number Int
            | PO Primop
            deriving(Show, Eq)
 
+bigtab :: [(String, Token)]
 bigtab = 
     [("->",        Sym SymArrow),
      ("(",         Sym SymLParen),
@@ -53,8 +47,7 @@ bigtab =
      ("{",         Sym SymLBrace),
      ("}",         Sym SymRBrace),
      (";",         Sym SymSemi),
-     ("|",         Sym SymVert),
-
+     ("|",         Sym SymPipe),
      ("FUN",       Obj OFUN),
      ("CON",       Obj OCON),
      ("PAP",       Obj OPAP),
@@ -79,7 +72,8 @@ lexer :: [Char] -> [Token]
 lexer = map trans . scanner
 
 trans :: Lexeme -> Token
-trans (ScanNum, str) = Number (read str)
+trans (ScanNum, str) | last str == '#' = Number (read $ init str)
+                     | otherwise = Number (read str)
 
 trans (ScanSym, str) = 
     case lookupassoc bigtab str of
@@ -95,8 +89,11 @@ trans (ScanIdent, str) =
           else if isLower (head str) then
                    Ident str
                else error $ "trans:  what is \"" ++ str ++ "\""
+               
+trans (ScanJunk, str) = error $ "trans: junk \"" ++ str ++ "\""
 
-lookupassoc [] k = Nothing
+lookupassoc :: Eq a1 => [(a1, a)] -> a1 -> Maybe a
+lookupassoc [] _ = Nothing
 lookupassoc ((k',v):kvs) k | k == k' = Just v
                            | otherwise = lookupassoc kvs k
 
