@@ -1,5 +1,8 @@
-To use the tasty test framework:
+To setup the tasty test framework:
 
 cabal install tasty tasty-golden tasty-quickcheck tasty-hunit tasty-ant-xml
+cabal configure --enable-test
 
+then run:
+cabal build
 cabal test

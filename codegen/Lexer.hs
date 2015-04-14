@@ -26,7 +26,7 @@ data Symbol = SymArrow
             | SymLBrace 
             | SymRBrace 
             | SymSemi
-            | SymPipe
+            | SymVert
               deriving (Eq,Show)
 
 data Token = Number Int 
@@ -47,7 +47,7 @@ bigtab =
      ("{",         Sym SymLBrace),
      ("}",         Sym SymRBrace),
      (";",         Sym SymSemi),
-     ("|",         Sym SymPipe),
+     ("|",         Sym SymVert),
      ("FUN",       Obj OFUN),
      ("CON",       Obj OCON),
      ("PAP",       Obj OPAP),
