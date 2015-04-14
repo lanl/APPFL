@@ -2,6 +2,8 @@ Kei/Dean
 --------
 
 Make HOs and continuations variable-sized.
+ - then there is no need for two stacks (actually there isn't right now),
+     fix this
 
 Change comment symbol from "#" to Haskell "--", fix tests/examples, Prelude
 
@@ -28,6 +30,8 @@ David Ringo
 -----------
 
 Warmup:
+
+  Write a chunk of the GHC prelude in STG
 
   Analysis to determine whether "e" in "case e of" is simple, i.e. does
     not cause heap allocation (does not contain EFCall or ELet)

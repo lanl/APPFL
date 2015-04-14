@@ -10,7 +10,12 @@ module Lexer (
 import Data.Char(isLower,isUpper)
 import Scanner
 
-data Keyword = KWlet | KWin | KWcase | KWof deriving(Eq,Show)
+data Keyword = KWlet 
+             | KWin 
+             | KWcase 
+             | KWof 
+             | KWdata
+               deriving(Eq,Show)
 
 data Object = OFUN | OPAP | OCON | OTHUNK | OBLACKHOLE deriving(Eq,Show)
 
@@ -28,6 +33,7 @@ data Symbol = SymArrow
             | SymLBrace 
             | SymRBrace 
             | SymSemi
+            | SymVert
               deriving (Eq,Show)
 
 data Token = Number Int 
@@ -47,15 +53,20 @@ bigtab =
      ("{",         Sym SymLBrace),
      ("}",         Sym SymRBrace),
      (";",         Sym SymSemi),
+     ("|",         Sym SymVert),
+
      ("FUN",       Obj OFUN),
      ("CON",       Obj OCON),
      ("PAP",       Obj OPAP),
      ("THUNK",     Obj OTHUNK),
      ("ERROR",     Obj OBLACKHOLE),  -- for compatibility with BJP's ministg
+
      ("let",       KW KWlet), 
      ("in",        KW KWin), 
      ("case",      KW KWcase), 
      ("of",        KW KWof),
+     ("data",      KW KWdata),
+
      ("plus#",     PO Pplus), 
      ("sub#",      PO Psub),
      ("mult#",     PO Pmult),

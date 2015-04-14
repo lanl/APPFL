@@ -16,7 +16,9 @@ module Parser (
 
 import Lexer
 import ParseComb
+import ADT
 import Data.List
+
 
 {-  grammar
 
@@ -51,113 +53,6 @@ import Data.List
 
 -}
 
--- in the spirit of intercalate
-
-precalate s [] = []
-precalate s (s':ss) = s ++ s' ++ precalate s ss
-
-dropspaces = dropWhile (==' ')
-
-interpolate ('%':'%':s) = interpolate $ '%':s
-interpolate ('%':'\n':'%':'%':s) = interpolate $ '%':'\n':'%':s
-interpolate ('%':'\n':'%':s) = interpolate $ dropspaces s
-interpolate ('%':'\n':s) = interpolate $ dropspaces s
-interpolate ('\n':'%':s) = interpolate $ dropspaces s
-interpolate (c:s) = c : interpolate s
-interpolate [] = []
-
-showDefs defs = interpolate $ intercalate "\n" $ unparser 0 defs
-
-indent n s@('%':_) = s
-indent n s = (take n $ repeat ' ') ++ s
-
-indents n ss = map (indent n) ss
-
--- instance Unparser n Atom where
-showa (Var v) = v
-showa (Lit l) = show l
-
--- instance Unparser [Atom] where
-showas as = intercalate " " $ map showa as
-
-showFVs vs = "[" ++ intercalate " " vs ++ "] "
-
-class Unparser a where unparser :: Int -> a -> [String]
-
-instance Unparser (Expr [Var]) where
-    unparser n (EAtom fvs a) = 
-        indents n [showFVs fvs ++ showa a]
-
-    unparser n (EFCall fvs f as) = 
-        indents n [showFVs fvs ++ f ++ " " ++ showas as]
-
-    unparser n (EPrimop fvs p as) = 
-        indents n [showFVs fvs ++ "PRIMOP " ++ showas as]
-
-    unparser n (ELet fvs defs e) = 
-        let ss = [showFVs fvs ++ "let { %"] ++
-                 unparser 6 defs ++
-                 ["} in %"] ++
-                 unparser 5 e
-        in indents n ss
-
-    unparser n (ECase fvs e alts) = 
-        let ss = [showFVs fvs ++ "case %"] ++ 
-                 unparser 5 e ++
-                 ["of { %"] ++
-                 unparser 5 alts ++
-                 ["%}"]
-        in indents n ss
-
-instance Unparser (Alt [Var]) where
-    unparser n (ACon fvs c vs e) = 
-        let line = showFVs fvs ++ c ++ precalate " " vs ++ " -> %"
-            ss = [line] ++
-                 unparser (length line - 1) e
-        in indents n ss
-
-    unparser n (ADef fvs v e) = 
-        let ss = [showFVs fvs ++ v ++ " -> %"] ++
-                 unparser (4 + length v) e
-        in indents n ss
-
-instance Unparser (Alts [Var]) where
-    unparser n (Alts {alts}) = 
-        concatMap (unparser n) alts
-
-instance Unparser (Obj [Var]) where
-    unparser n (FUN fvs vs e _) = 
-        let ss = [showFVs fvs ++ "FUN( " ++ intercalate " " vs ++ " ->"] ++
-                 unparser 2 e ++
-                 ["%)"]
-        in indents n ss
-
-    unparser n (PAP fvs f as _) = 
-        let ss = [showFVs fvs ++ "PAP( " ++ f ++ " " ++ showas as ++ " )"]
-        in indents n ss
-
-    unparser n (CON fvs c as _) = 
-        let ss = [showFVs fvs ++ "CON( " ++ c ++ " " ++ showas as ++ " )"]
-        in indents n ss
-
-    unparser n (THUNK fvs e _) = 
-        let ss = [showFVs fvs ++ "THUNK( %"] ++
-                 unparser 7 e ++
-                 ["% )"]
-        in indents n ss
-
-    unparser n (BLACKHOLE _ _) =
-        indents n ["BLACKHOLE"]
-
-instance Unparser [Obj [Var]] where
-    -- unparser n defs = intercalate ["\n"] $ map (unparser n) defs
-    unparser n defs = concatMap (unparserdef n) defs
-
-unparserdef n o =
-    let ss = [ oname o ++ " = %" ] ++
-             unparser 2 o
-    in indents n ss
-
 -- Parser
 
 type Var = String
@@ -190,6 +85,50 @@ data Obj a = FUN   {omd :: a, vs :: [Var],   e :: (Expr a), oname :: String}
 
 -- type Token = (Tag, [Char])
 -- type Parser a b = [a] -> [(b, [a])]
+
+--- layer for adding ADT defs
+--  obsoletes parser, defsp
+
+{-
+  
+-}
+
+data ObjData = ODObj (Obj ())
+             | ODData Monotype
+
+parse :: [Char] -> [ObjData]
+parse inp = case defdatsp $ lexer inp of
+               [] ->  error "parser failed"
+               xs -> fst $ head xs
+
+{-
+  <con> is capitalized <var>
+
+  <defdats> ::= <defdat> (";" <defdat>)*
+
+  <defdat>  ::= <def> | <data>
+
+  <data> ::= "data" <con> <var>* "=" <condef> ("|" <condef>)*
+
+  <condef> ::= <con> (<con> | <var>)*
+-}
+
+defdatsp = sepbyp defdatp (symkindp SymSemi)
+
+defdatp = (defp `usingp` ODObj) `altp` (datap `usingp` ODData)
+
+datap = kwkindp KWdata `xthenp`
+        (conp `thenp`
+         ((manyp varp) `thenp`
+          (symkindp SymBind `xthenp`
+           (sepbyp condefp (symkindp SymVert)))))
+         `usingp` \(t,(vs,defs)) -> mono t vs defs
+
+mono x y z = error ""
+
+condefp = error ""
+
+--- end layer for adding ADT defs
 
 parser :: [Char] -> [Obj ()]
 parser inp = case (defsp $ lexer inp) of
@@ -313,4 +252,112 @@ adefp = (varp `thenp`
           exprp))
         `usingp` uncurry (ADef ())
 
+
+-- unparser ****************************************************************
+-- in the spirit of intercalate
+
+precalate s [] = []
+precalate s (s':ss) = s ++ s' ++ precalate s ss
+
+dropspaces = dropWhile (==' ')
+
+interpolate ('%':'%':s) = interpolate $ '%':s
+interpolate ('%':'\n':'%':'%':s) = interpolate $ '%':'\n':'%':s
+interpolate ('%':'\n':'%':s) = interpolate $ dropspaces s
+interpolate ('%':'\n':s) = interpolate $ dropspaces s
+interpolate ('\n':'%':s) = interpolate $ dropspaces s
+interpolate (c:s) = c : interpolate s
+interpolate [] = []
+
+showDefs defs = interpolate $ intercalate "\n" $ unparser 0 defs
+
+indent n s@('%':_) = s
+indent n s = (take n $ repeat ' ') ++ s
+
+indents n ss = map (indent n) ss
+
+-- instance Unparser n Atom where
+showa (Var v) = v
+showa (Lit l) = show l
+
+-- instance Unparser [Atom] where
+showas as = intercalate " " $ map showa as
+
+showFVs vs = "[" ++ intercalate " " vs ++ "] "
+
+class Unparser a where unparser :: Int -> a -> [String]
+
+instance Unparser (Expr [Var]) where
+    unparser n (EAtom fvs a) = 
+        indents n [showFVs fvs ++ showa a]
+
+    unparser n (EFCall fvs f as) = 
+        indents n [showFVs fvs ++ f ++ " " ++ showas as]
+
+    unparser n (EPrimop fvs p as) = 
+        indents n [showFVs fvs ++ "PRIMOP " ++ showas as]
+
+    unparser n (ELet fvs defs e) = 
+        let ss = [showFVs fvs ++ "let { %"] ++
+                 unparser 6 defs ++
+                 ["} in %"] ++
+                 unparser 5 e
+        in indents n ss
+
+    unparser n (ECase fvs e alts) = 
+        let ss = [showFVs fvs ++ "case %"] ++ 
+                 unparser 5 e ++
+                 ["of { %"] ++
+                 unparser 5 alts ++
+                 ["%}"]
+        in indents n ss
+
+instance Unparser (Alt [Var]) where
+    unparser n (ACon fvs c vs e) = 
+        let line = showFVs fvs ++ c ++ precalate " " vs ++ " -> %"
+            ss = [line] ++
+                 unparser (length line - 1) e
+        in indents n ss
+
+    unparser n (ADef fvs v e) = 
+        let ss = [showFVs fvs ++ v ++ " -> %"] ++
+                 unparser (4 + length v) e
+        in indents n ss
+
+instance Unparser (Alts [Var]) where
+    unparser n (Alts {alts}) = 
+        concatMap (unparser n) alts
+
+instance Unparser (Obj [Var]) where
+    unparser n (FUN fvs vs e _) = 
+        let ss = [showFVs fvs ++ "FUN( " ++ intercalate " " vs ++ " ->"] ++
+                 unparser 2 e ++
+                 ["%)"]
+        in indents n ss
+
+    unparser n (PAP fvs f as _) = 
+        let ss = [showFVs fvs ++ "PAP( " ++ f ++ " " ++ showas as ++ " )"]
+        in indents n ss
+
+    unparser n (CON fvs c as _) = 
+        let ss = [showFVs fvs ++ "CON( " ++ c ++ " " ++ showas as ++ " )"]
+        in indents n ss
+
+    unparser n (THUNK fvs e _) = 
+        let ss = [showFVs fvs ++ "THUNK( %"] ++
+                 unparser 7 e ++
+                 ["% )"]
+        in indents n ss
+
+    unparser n (BLACKHOLE _ _) =
+        indents n ["BLACKHOLE"]
+
+instance Unparser [Obj [Var]] where
+    -- unparser n defs = intercalate ["\n"] $ map (unparser n) defs
+    unparser n defs = concatMap (unparserdef n) defs
+
+unparserdef n o =
+    let ss = [ oname o ++ " = %" ] ++
+             unparser 2 o
+    in indents n ss
 

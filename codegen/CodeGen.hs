@@ -88,7 +88,7 @@ lu v [] _ = error $ "lu " ++ v ++ " failed"
 lu v ((v',k):_) n | v == v' =
     case k of
       SHO     -> "HOTOPL(&sho_" ++ v ++ ")"
-      HO off  -> "HOTOPL(&((Obj*)TOH_ptr)[" ++ show off ++ "]"
+      HO off  -> "HOTOPL(&((Obj*)TOH_ptr)[" ++ show off ++ "])"
       FP      -> v
       CC cc i -> cc ++ ".payload[" ++ show i ++ "]"
       FV i    -> "self.op->payload[" ++ show i ++ "]"

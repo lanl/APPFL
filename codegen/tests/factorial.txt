@@ -34,6 +34,8 @@ If "e" is simple then the CG for "case e of" can be simplified:
 -- a separate function for Alts need not be created
 -- a CCont need not be created
 
+**** for single-constructor data types we don't need a C switch
+
 Discussion of "case#":
 
 If only primops or unboxed variables are allowed as the scrutinee then
