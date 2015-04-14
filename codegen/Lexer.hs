@@ -2,24 +2,18 @@ module Lexer (
   Token(..),
   Keyword(..),
   Object(..),
-  Primop(..),
   Symbol(..),
   lexer
 ) where
 
 import Data.Char(isLower,isUpper)
 import Scanner
+import AST
 
-data Keyword = KWlet | KWin | KWcase | KWof deriving(Eq,Show)
+data Keyword = KWlet | KWin | KWcase | KWof | KWdata deriving(Eq,Show)
 
 data Object = OFUN | OPAP | OCON | OTHUNK | OBLACKHOLE deriving(Eq,Show)
 
-data Primop = Pplus 
-            | Psub 
-            | Pmult
-            | Peq
-            | PintToBool
-              deriving(Eq,Show)
 
 data Symbol = SymArrow 
             | SymLParen 
@@ -28,6 +22,7 @@ data Symbol = SymArrow
             | SymLBrace 
             | SymRBrace 
             | SymSemi
+            | SymPipe
               deriving (Eq,Show)
 
 data Token = Number Int 
@@ -48,6 +43,7 @@ bigtab =
      ("{",         Sym SymLBrace),
      ("}",         Sym SymRBrace),
      (";",         Sym SymSemi),
+     ("|",         Sym SymPipe),
      ("FUN",       Obj OFUN),
      ("CON",       Obj OCON),
      ("PAP",       Obj OPAP),
@@ -57,6 +53,7 @@ bigtab =
      ("in",        KW KWin), 
      ("case",      KW KWcase), 
      ("of",        KW KWof),
+     ("data",      KW KWdata),
      ("plus#",     PO Pplus), 
      ("sub#",      PO Psub),
      ("mult#",     PO Pmult),

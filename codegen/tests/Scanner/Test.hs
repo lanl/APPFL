@@ -13,6 +13,7 @@ unitTests = testGroup "Scanner Unit tests"
     [ goldenVsString "Scanner comments" "tests/Scanner/comments.gold" comments
     , goldenVsString "Scanner add" "tests/Scanner/add.gold" add
     , goldenVsString "Scanner unboxed" "tests/Scanner/unboxed.gold" unboxed
+     , goldenVsString "Scanner ADT" "tests/Scanner/adt.gold" adt
     ]
 
 comments :: IO ByteString
@@ -29,3 +30,8 @@ unboxed :: IO ByteString
 unboxed = do
             input <- IO.readFile "tests/Scanner/unboxed.stg"
             return $ fromString $ show $ scanner input
+            
+adt :: IO ByteString
+adt = do
+        input <- IO.readFile "tests/Scanner/adt.stg"
+        return $ fromString $ show $ scanner input

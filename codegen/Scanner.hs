@@ -44,7 +44,7 @@ scanp = manyp . (foldr op failp)
        where (p,t) `op` xs = (p `scp` t) `altp` xs
 
 stgSyms :: [String]
-stgSyms = ["->", "{", "}", ";", "\\", "(", ")", "="]
+stgSyms = ["->", "{", "}", ";", "\\", "(", ")", "=", "|"]
 
 scannerp :: Parser Char [Lexeme]
 scannerp = 
