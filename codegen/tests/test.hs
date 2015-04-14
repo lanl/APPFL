@@ -9,9 +9,12 @@ import qualified Scanner.Test
 import qualified SetFVs.Test
 
 import           Test.Tasty
+import 	         Test.Tasty.Ingredients.Basic
+import 	         Test.Tasty.Runners.AntXML
 
 main :: IO()
-main = defaultMain tests
+main = defaultMainWithIngredients 
+       [antXMLRunner,listingTests,consoleTestReporter] tests
 
 tests :: TestTree
 tests = testGroup "Tests" [ Scanner.Test.unitTests

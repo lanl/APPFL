@@ -13,8 +13,8 @@ import           Data.String
 
 unitTests :: TestTree
 unitTests = testGroup "InfoTab Unit tests"
-    [ goldenVsString "infotab seq" "tests/Infotab/seq.gold" setinfoseq
-    , goldenVsString "infotab seq" "tests/Infotab/tabseq.gold" showinfoseq
+    [ goldenVsString "set infotab seq" "tests/InfoTab/seq.gold" setinfoseq
+    , goldenVsString "show infotab seq" "tests/InfoTab/tabseq.gold" showinfoseq
     ]
     
 seqdefs :: [Obj [Var]]

@@ -15,7 +15,7 @@ import qualified Data.List as List
 
 unitTests :: TestTree
 unitTests = testGroup "Codegen Unit tests"
-    [ goldenVsString "codegen one" "tests/Codegen/one.gold" cgone
+    [ goldenVsString "codegen one" "tests/CodeGen/one.gold" cgone
     ]
     
 defsVars :: [Obj [Var]]
