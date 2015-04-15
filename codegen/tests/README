@@ -1,8 +1,30 @@
 To setup the tasty test framework:
 
 cabal install tasty tasty-golden tasty-quickcheck tasty-hunit tasty-ant-xml
-cabal configure --enable-test
+cabal configure --enable-tests
 
 then run:
-cabal build
 cabal test
+
+to clean and rerun:
+cabal test
+
+Appendix:
+
+I now have a taste of what cabal-hell is about... This worked fine on 2 machines
+but then I got into a mess on the 3rd. After cabal clean I would have to 
+reconfigure. Using the ghc packages on ubuntu is a mistake, use the generic 
+linux binaries from haskell.org
+
+Cleanup:
+apt-get remove haskell-platform
+rm -rf ~/.cabal
+rm -rf ~/.ghc
+cd / 
+tar xf haskell-platform-2014.2.0.0-unknown-linux-x86_64.tar.gz
+/usr/local/haskell/ghc-7.8.3-x86_64/bin/activate-hs 
+cabal update
+cabal install tasty 
+cabal install tasty-golden tasty-quickcheck 
+cabal install tasty-hunit tasty-ant-xml
+
