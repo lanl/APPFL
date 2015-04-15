@@ -96,15 +96,19 @@ data Primop = Pplus
               deriving(Eq,Show)
               
 data TopDecl = TopDecl SimpleType [Constr]
+               deriving(Eq,Show)
 
 data SimpleType = SimpleType Con [TyVar]              
-             
+                  deriving(Eq,Show)             
+
 data Constr = Constr Con [Type]
+              deriving(Eq,Show)
 
 data Type = TTyVar TyVar 
           | TCon Con
           | TSimpleType SimpleType
+            deriving(Eq,Show)
 
-data TyVar = String
+type TyVar = String
        
              

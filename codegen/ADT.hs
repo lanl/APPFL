@@ -7,6 +7,8 @@ module ADT (
   Ctors
 ) where
 
+import AST
+
 {-
   Ref:  Unboxed Values as First-Class Citizens
   
@@ -32,7 +34,7 @@ data Monotype = MBoxed Boxedtype
               | MUnboxed Unboxedtype
                 deriving(Eq,Show)
 
-data Boxedtype = BVar Char
+data Boxedtype = BVar TyVar
                | BFun Monotype Monotype
                | BTCon [Monotype] Ctors -- SPJ paper says [Boxedtype]--typo?
                  deriving(Eq,Show)
