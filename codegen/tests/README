@@ -17,10 +17,11 @@ reconfigure. Using the ghc packages on ubuntu is a mistake, use the generic
 linux binaries from haskell.org
 
 Cleanup:
-apt-get remove haskell-platform
+apt-get remove haskell-platform libghc*
 rm -rf ~/.cabal
 rm -rf ~/.ghc
 cd / 
+rm -rf /usr/lib/ghc/
 tar xf haskell-platform-2014.2.0.0-unknown-linux-x86_64.tar.gz
 /usr/local/haskell/ghc-7.8.3-x86_64/bin/activate-hs 
 cabal update
