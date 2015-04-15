@@ -5,6 +5,8 @@ import           SetFVs
 import           InfoTab
 import           ConMap2
 import           CodeGen
+import           HeapObj
+import           Boilerplate
 
 import           Test.Tasty
 import           Test.Tasty.Golden
@@ -20,16 +22,20 @@ unitTests = testGroup "Codegen Unit tests"
     
 defsVars :: [Obj [Var]]
 defsVars = setFVsDefs $ renameObjs $ parser 
-          "one = CON(I 1); main=THUNK(one);"
+          "one = CON(I 1); main = THUNK(one);"
          
 defsInfoTab :: [Obj InfoTab]
 defsInfoTab =  setConMap (setITs defsVars :: [Obj InfoTab])
         
 source :: String
 source = let  (forwards, fundefs) = cgObjs defsInfoTab
-    in List.intercalate "\n" forwards ++ 
-       showITs defsInfoTab ++
-       List.intercalate "\n\n" fundefs
+              shos = showSHOs defsInfoTab
+    in header ++
+       List.intercalate "\n" forwards ++ "\n" ++
+       showITs defsInfoTab ++ "\n" ++ 
+       showSHOs defsInfoTab ++ "\n" ++ 
+       List.intercalate "\n\n" fundefs ++
+       footer
 
 cgone :: IO ByteString
 cgone = return $ fromString source

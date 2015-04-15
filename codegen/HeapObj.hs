@@ -40,10 +40,9 @@ import Prelude
 -- HOs come from InfoTabs
 showHOcom it =
     "(Obj) {\n" ++
-    "  .infoPtr   = &InfoTab it_" ++ name it ++ ",\n" ++
+    "  .infoPtr   = &it_" ++ name it ++ ",\n" ++
     "  .objType   = " ++ showObjType it      ++ ",\n" ++
-    "  .ident     = " ++ show (name it)      ++ ",\n" ++
-    "  };\n"
+    "  .ident     = " ++ show (name it)      ++ ",\n" 
 
 showSHOs :: [Obj InfoTab] -> String
 showSHOs = (concatMap showSHO) . (map omd)
@@ -53,7 +52,8 @@ showSHO it =
     in
       "Obj sho_" ++ name it ++ " =\n" ++
       showHOcom it ++
-      showSHOspec itName it
+      showSHOspec itName it ++
+      "  };\n\n"
 
 showSHOspec itName it@(Fun {}) = 
     itName ++ ".funFields.arity = " ++ show (arity it) ++ ";\n"
@@ -68,7 +68,7 @@ showSHOspec itName it@(Thunk {}) = ""
 showSHOspec itName it@(Blackhole {}) = ""
 
 payload itName as =
-  concat [ itName ++ ".payload[ " ++ show i ++ " ] = " ++ ptrOrLitSHO a ++ ";\n"
+  concat ["  .payload[" ++ show i ++ "] = " ++ ptrOrLitSHO a 
            | (i,a) <- zip [0..] as ]
 
 ptrOrLitSHO a =

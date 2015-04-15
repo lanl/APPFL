@@ -1,4 +1,14 @@
-FnPtr main();InfoTab it_one = 
+#include <stdio.h>
+#include <assert.h>
+#include "stg.h"
+#include "stgutils.h"
+#include "cmm.h"
+#include "stgcmm.h"
+#include "predefs.h"
+#include "gc.h"
+
+FnPtr tnk_main();
+InfoTab it_one = 
   { .name                = "one",
     .fvCount             = 0,
     .entryCode           = &con_one,
@@ -13,10 +23,43 @@ InfoTab it_main =
     .entryCode           = &tnk_main,
     .objType             = THUNK,
   };
-DEFUN1(main, self) {
+
+Obj sho_one =
+(Obj) {
+  .infoPtr   = &it_one,
+  .objType   = CON,
+  .ident     = "one",
+  .payload[0] = (PtrOrLiteral) { .argType = INT, .i = 1 }
+  };
+
+Obj sho_main =
+(Obj) {
+  .infoPtr   = &it_main,
+  .objType   = THUNK,
+  .ident     = "main",
+  };
+
+
+DEFUN1(tnk_main, self) {
   fprintf(stderr, "main here\n");  stgThunk(self);
   stgCurVal = HOTOPL(&sho_one);
   STGEVAL(stgCurVal);
   STGRETURN0();
   ENDFUN;
 }
+DEFUN0(startit) {
+  stgPushCont(showResultCont);
+  STGEVAL(((PtrOrLiteral){.argType = HEAPOBJ, .op = &sho_main}));
+  STGRETURN0();
+  ENDFUN;
+}
+
+int main (int argc, char **argv) {
+  initStg();
+  initCmm();
+  initPredefs();
+  initGc();
+  CALL0_0(startit);
+  return 0;
+}
+
