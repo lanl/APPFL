@@ -6,6 +6,7 @@
 #include "stgcmm.h"
 #include "gc.h"
 
+void registerSHOs();
 FnPtr tnk_main();
 InfoTab it_one = 
   { .name                = "one",
@@ -28,7 +29,8 @@ Obj sho_one =
   .infoPtr   = &it_one,
   .objType   = CON,
   .ident     = "one",
-  .payload[ 0 ] = { .argType = INT, .i = 1 },
+    .payload[ 0 ].argType = INT,
+    .payload[ 0 ].i = 1,
   };
 Obj sho_main =
 {
@@ -37,9 +39,15 @@ Obj sho_main =
   .ident     = "main",
   };
 
+void registerSHOs() {
+  stgStatObj[stgStatObjCount++] = &sho_one;
+  stgStatObj[stgStatObjCount++] = &sho_main;
+}
+
+
 DEFUN1(tnk_main, self) {
   fprintf(stderr, "main here\n");  stgThunk(self);
-  stgCurVal = HOTOPL(&sho_one)/* one */;
+  stgCurVal = HOTOPL(&sho_one);
   STGEVAL(stgCurVal);
   STGRETURN0();
   ENDFUN;

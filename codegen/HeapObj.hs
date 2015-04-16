@@ -28,7 +28,8 @@ Obj sho_one =
 -}
 
 module HeapObj (
-  showSHOs
+  showSHOs,
+  shoNames
 ) where
 
 import AST
@@ -45,6 +46,9 @@ import Prelude
 
 -- HOs come from InfoTabs
 
+shoNames :: [Obj InfoTab] -> [String]
+shoNames = map (("sho_" ++) . name . omd)
+
 showSHOs :: [Obj InfoTab] -> String
 showSHOs = (concatMap showSHO) . (map omd)
 
@@ -59,20 +63,26 @@ showHO it =
        showSHOspec it ++
     "  };\n"
 
-showSHOspec it@(Fun {}) = 
-    "  .funFields.arity = " ++ show (arity it) ++ ",\n"
+showSHOspec it@(Fun {}) = ""
 
 showSHOspec it@(Pap {}) = ""
 
-showSHOspec it@(Con {}) = payload $ args it
+showSHOspec it@(Con {}) = payloads $ args it
 
 showSHOspec it@(Thunk {}) = ""
 
 showSHOspec it@(Blackhole {}) = ""
 
-payload as =
-  concat [ "  .payload[ " ++ show i ++ " ] = " ++ ptrOrLitSHO a ++ ",\n"
-           | (i,a) <- zip [0..] as ]
+payloads as = concatMap payload $ zip [0..] as
+
+payload (ind, Lit i) = 
+    "    .payload[ " ++ show ind ++ " ].argType = INT,\n" ++
+    "    .payload[ " ++ show ind ++ " ].i = " ++ show i ++ ",\n"
+
+-- for SHOs atoms that are variables must be SHOs, so not unboxed
+payload (ind, Var v) = 
+    "    .payload[ " ++ show ind ++ " ].argType = HEAPOBJ,\n" ++
+    "    .payload[ " ++ show ind ++ " ].op = &sho_" ++ v ++ ",\n"
 
 ptrOrLitSHO a =
     "{ " ++

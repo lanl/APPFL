@@ -13,6 +13,7 @@ stgc arg =
     putStrLn prog
     hClose ifd
     writeFile (arg++".c") prog
+    writeFile "../runtime/userprog.c" prog
 
 main = 
     do
