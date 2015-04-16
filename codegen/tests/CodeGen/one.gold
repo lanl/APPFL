@@ -24,14 +24,14 @@ InfoTab it_main =
   };
 
 Obj sho_one =
-(Obj) {
+{
   .infoPtr   = &it_one,
   .objType   = CON,
   .ident     = "one",
-  .payload[ 0 ] = (PtrOrLiteral) { .argType = INT, .i = 1 },
+  .payload[ 0 ] = { .argType = INT, .i = 1 },
   };
 Obj sho_main =
-(Obj) {
+{
   .infoPtr   = &it_main,
   .objType   = THUNK,
   .ident     = "main",

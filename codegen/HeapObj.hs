@@ -52,7 +52,7 @@ showSHO it =
     "Obj sho_" ++ name it ++ " =\n" ++ showHO it
 
 showHO it =
-    "(Obj) {\n" ++
+    "{\n" ++
     "  .infoPtr   = &it_" ++ name it ++ ",\n" ++
     "  .objType   = " ++ showObjType it      ++ ",\n" ++
     "  .ident     = " ++ show (name it)      ++ ",\n" ++
@@ -75,7 +75,7 @@ payload as =
            | (i,a) <- zip [0..] as ]
 
 ptrOrLitSHO a =
-    "(PtrOrLiteral) { " ++
+    "{ " ++
     case a of
       Lit i -> ".argType = INT, .i = " ++ show i
       Var v -> ".argType = HEAPOBJ, .op = &sho_" ++ v   -- these must be global
