@@ -56,11 +56,11 @@ showSHO it =
     "Obj sho_" ++ name it ++ " =\n" ++ showHO it
 
 showHO it =
---    "(Obj) {\n" ++
-    "  { .infoPtr   = &it_" ++ name it ++ ",\n" ++
-    "    .objType   = " ++ showObjType it      ++ ",\n" ++
-    "    .ident     = " ++ show (name it)      ++ ",\n" ++
-         showSHOspec it ++
+    "{\n" ++
+    "  .infoPtr   = &it_" ++ name it ++ ",\n" ++
+    "  .objType   = " ++ showObjType it      ++ ",\n" ++
+    "  .ident     = " ++ show (name it)      ++ ",\n" ++
+       showSHOspec it ++
     "  };\n"
 
 showSHOspec it@(Fun {}) = ""
@@ -85,7 +85,7 @@ payload (ind, Var v) =
     "    .payload[ " ++ show ind ++ " ].op = &sho_" ++ v ++ ",\n"
 
 ptrOrLitSHO a =
-    "(PtrOrLiteral) { " ++
+    "{ " ++
     case a of
       Lit i -> ".argType = INT, .i = " ++ show i
       Var v -> ".argType = HEAPOBJ, .op = &sho_" ++ v   -- these must be global
