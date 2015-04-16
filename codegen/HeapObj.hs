@@ -44,6 +44,7 @@ import Prelude
 --   };
 
 -- HOs come from InfoTabs
+
 showSHOs :: [Obj InfoTab] -> String
 showSHOs = (concatMap showSHO) . (map omd)
 

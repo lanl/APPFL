@@ -4,17 +4,21 @@ cabal-version:  >=1.2
 build-type:     Simple
 author:         
 data-files:     
-                CodeGen.hs,
-                ConMap.hs,
-                ConMap2.hs,
-                HeapObj.hs,
-                InfoTab.hs,
-                Lexer.hs,
-                ParseComb.hs,
-                Parser.hs,
-                Rename.hs,
-                Scanner.hs,
-                SetFVs.hs,
+                ADT.hs, 
+                Analysis.hs, 
+                AST.hs, 
+                CodeGen.hs, 
+                ConMap.hs, 
+                ConMap2.hs, 
+                HeapObj.hs, 
+                InfoTab.hs, 
+                Lexer.hs, 
+                ParseComb.hs, 
+                Parser.hs, 
+                Rename.hs, 
+                Scanner.hs, 
+                SetFVs.hs, 
+                State.hs, 
                 stgc.hs
 
 executable codegen

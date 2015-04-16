@@ -145,9 +145,9 @@ cgo env (THUNK it e name) =
     do 
       let env' = zip (fvs it) (map FV [0..]) ++ env
       (inline, funcs) <- cge env' e
-      let forward = "FnPtr " ++ name ++ "();"
+      let forward = "FnPtr tnk_" ++ name ++ "();"
       let func =
-            "DEFUN1(" ++ name ++ ", self) {\n" ++
+            "DEFUN1(tnk_" ++ name ++ ", self) {\n" ++
             "  fprintf(stderr, \"" ++ name ++ " here\\n\");" ++
             "  stgThunk(self);\n" ++
             indent 2 inline ++
