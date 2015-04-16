@@ -36,7 +36,7 @@ module CodeGen(
   cgObjs
 ) where
 
-import Parser
+import AST
 import InfoTab
 import HeapObj
 import State
@@ -92,8 +92,11 @@ indent i xs = (take i $ repeat ' ') ++ indent' i xs
 cgv env v = getEnvRef v env ++ "/* " ++ v ++ " */"
 
 cga :: Env -> Atom -> String
-cga env (Lit i) = "HOTOLIT(" ++ show i ++ ")"
+cga env (Lit i) = "(PtrOrLiteral){.argType = INT, .i = " ++ show i ++ " }"
 cga env (Var v) = cgv env v
+
+cgUBa env (Lit i) = show i
+cgUBa env (Var v) = "(" ++ cgv env v ++ ").i"
 
 -- CG in the state monad ***************************************************
 --   need a fresh variable supply, should have made Alts a proper
@@ -175,7 +178,22 @@ cge env (EFCall it f as) =
                  ");\n"
     in return (inline, [])
 
-cge env (EPrimop{}) = return ("cge(EPrimop) not implemented\n", [])
+cge env (EPrimop it op as) = 
+    let inline = if op `elem` [Padd, Psub, Pmul, Pieq] then
+                     "stgCurVal.argType.argType = INT;\n" ++
+                     "stgCurVal.i = " ++ cgUBa env (as !! 0) ++
+                     case op of
+                       Padd -> " + "
+                       Psub -> " - "
+                       Pmul -> " * "
+                       Pieq -> " - "
+                     ++ cgUBa env (as !! 1) ++ ";\n"
+                 else case op of
+                   PintToBool ->
+                       "stgCurVal = " ++
+                       cgUBa env (as !! 0) ++ "?" ++ getEnvRef "True"  env ++
+                                              ":" ++ getEnvRef "False" env ++ ";\n"
+    in return (inline, [])
 
 cge env (ELet it os e) =
     let names = map oname os
@@ -192,7 +210,10 @@ cge env (ECase _ e a@(Alts italts alts name)) =
        afunc <- cgalts env a
        let pre = "stgPushCont( (Cont)\n" ++
                  "  { .retAddr = &" ++ name ++ ",\n" ++
-                 "    // load payload with FVs " ++ intercalate " " (fvs italts) ++ "\n" ++
+                 (if fvs italts == [] then
+                    "    // no FVs\n"
+                  else
+                    "    // load payload with FVs " ++ intercalate " " (fvs italts) ++ "\n") ++
                       indent 4 (loadPayloadFVs env (fvs italts)) ++
                  "  });\n"
        return (pre ++ ecode, efunc ++ afunc)

@@ -60,10 +60,10 @@ bigtab =
      ("of",        KW KWof),
      ("data",      KW KWdata),
 
-     ("plus#",     PO Pplus), 
+     ("plus#",     PO Padd), 
      ("sub#",      PO Psub),
-     ("mult#",     PO Pmult),
-     ("eq#",       PO Peq),
+     ("mult#",     PO Pmul),
+     ("eq#",       PO Pieq),
      ("intToBool#",PO PintToBool)
     ]
              

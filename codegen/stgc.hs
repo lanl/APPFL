@@ -22,7 +22,9 @@ import System.IO
 --     State [[Char]] [([Char], Obj)]
 
 -- need a better way, like reading from a .h file
-stgRTSGlobals = [ "stg_case_not_exhaustive" ]
+stgRTSGlobals = [ "stg_case_not_exhaustive",
+                  "True",  -- sho_True
+                  "False"] -- sho_False
 
 doit prog = 
     let defs0 = parser prog

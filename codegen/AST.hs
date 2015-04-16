@@ -88,10 +88,10 @@ data Obj a = FUN   {omd :: a, vs :: [Var],   e :: (Expr a), oname :: String}
            | BLACKHOLE {omd :: a                         ,  oname :: String}
              deriving(Eq,Show)
              
-data Primop = Pplus 
+data Primop = Padd 
             | Psub 
-            | Pmult
-            | Peq
+            | Pmul
+            | Pieq
             | PintToBool
               deriving(Eq,Show)
               
