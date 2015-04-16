@@ -10,7 +10,7 @@ FnPtr tnk_main();
 InfoTab it_one = 
   { .name                = "one",
     .fvCount             = 0,
-    .entryCode           = &whiteHole,
+    .entryCode           = &stg_constructorcall,
     .objType             = CON,
     .conFields.arity     = 1,
     .conFields.tag       = 0,
@@ -28,9 +28,8 @@ Obj sho_one =
   .infoPtr   = &it_one,
   .objType   = CON,
   .ident     = "one",
-  .payload[0] = (PtrOrLiteral) { .argType = INT, .i = 1 }
+  .payload[ 0 ] = (PtrOrLiteral) { .argType = INT, .i = 1 },
   };
-
 Obj sho_main =
 (Obj) {
   .infoPtr   = &it_main,
@@ -38,10 +37,9 @@ Obj sho_main =
   .ident     = "main",
   };
 
-
 DEFUN1(tnk_main, self) {
   fprintf(stderr, "main here\n");  stgThunk(self);
-  stgCurVal = HOTOPL(&sho_one);
+  stgCurVal = HOTOPL(&sho_one)/* one */;
   STGEVAL(stgCurVal);
   STGRETURN0();
   ENDFUN;

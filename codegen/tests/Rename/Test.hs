@@ -1,6 +1,6 @@
 module Rename.Test where
-import           Parser
-import           Rename
+
+import           TestUtils
 
 import           Test.Tasty
 import           Test.Tasty.Golden
@@ -14,6 +14,6 @@ unitTests = testGroup "Rename Unit tests"
     ]
 
 renameseq :: IO ByteString
-renameseq = return $ fromString $ show $ renameObjs
-            $ parser "seq = FUN(x y -> case x of { z -> y });"
+renameseq = return $ fromString $ show $ renamer
+            "seq = FUN(x y -> case x of { z -> y });"
 

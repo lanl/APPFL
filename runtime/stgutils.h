@@ -15,6 +15,7 @@ Obj* derefPoL(PtrOrLiteral f);
 void derefStgCurVal();
 
 FnPtr whiteHole();
+FnPtr stg_constructorcall();
 
 FnPtr stgShowResultCont();
 Cont showResultCont;
