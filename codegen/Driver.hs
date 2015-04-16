@@ -1,4 +1,4 @@
-module TestUtils (
+module Driver (
   renamer,
   normalizer,
   freevarer,
@@ -19,8 +19,17 @@ import           SetFVs
 
 import           Data.List
 
+-- nameDefs
+--  :: [([Char], Obj)] ->
+--     [([Char], [Char])] ->
+--     State [[Char]] [([Char], Obj)]
+
+
+-- need a better way, like reading from a .h file
 stgRTSGlobals :: [String]
-stgRTSGlobals = [ "stg_case_not_exhaustive" ]
+stgRTSGlobals = [ "stg_case_not_exhaustive",
+                  "True",  -- sho_True
+                  "False"] -- sho_False
 
 renamer :: String -> [Obj ()]
 renamer = renameObjs . parser
@@ -50,3 +59,4 @@ codegener inp = let defs = conmaper inp
                     sho ++ "\n" ++
                     intercalate "\n\n" fundefs ++
                     footer
+                   

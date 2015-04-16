@@ -1,5 +1,5 @@
 module SetFVs.Test where
-import           TestUtils
+import           Driver
 import           Parser
 
 import           Test.Tasty

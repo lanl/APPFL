@@ -1,6 +1,6 @@
 module Rename.Test where
 
-import           TestUtils
+import           Driver
 
 import           Test.Tasty
 import           Test.Tasty.Golden
