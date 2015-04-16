@@ -254,7 +254,7 @@ cge env (ECase _ e a@(Alts italts alts name)) =
 
 -- returns just function definitions
 cgalts :: [(Var, RVal)] -> (Alts InfoTab) -> State Int [(String,String)]
-cgalts env (Alts _ alts name) = 
+cgalts env (Alts it alts name) = 
     let altenv = zip (nub $ concatMap (fvs . amd) alts)
                      [ CC "cont" i | i <- [0..] ]
         env' = altenv ++ env
@@ -263,7 +263,9 @@ cgalts env (Alts _ alts name) =
       codefuncs <- mapM (cgalt env') alts
       let (codes, funcss) = unzip codefuncs
       let code = "DEFUN0("++ name ++ ") {\n" ++
-                 "  Cont cont = stgPopCont();\n" ++
+                 (if length (fvs it) > 0 then 
+                    "  Cont cont = "
+                  else "") ++      "stgPopCont();\n" ++
                  "  PtrOrLiteral scrutinee = stgCurVal;\n" ++
                  "  if (scrutinee.argType != HEAPOBJ ||\n" ++
                  "      scrutinee.op->objType != CON ) goto casedefault;\n" ++
