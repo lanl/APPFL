@@ -21,7 +21,7 @@ $(LIB) : $(OBJECTS)
 	ar -rcs $(LIB) $(OBJECTS)
 
 main: main.o predefs.o $(LIB)
-	$(CC) $(LDFLAGS) $(OBJECTS) main.o predefs.o -o $@ -L -lruntime
+	$(CC) $(LDFLAGS) $(OBJECTS) main.o predefs.o -o $@ -L. -lruntime
 
 one: one.o $(LIB)
 	$(CC) $(LDFLAGS) $(OBJECTS) one.o -o $@ -L. -lruntime
