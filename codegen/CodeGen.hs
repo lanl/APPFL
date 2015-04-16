@@ -66,7 +66,8 @@ lu v [] _ = error $ "lu " ++ v ++ " failed"
 lu v ((v',k):_) n | v == v' =
     case k of
       SHO     -> "HOTOPL(&sho_" ++ v ++ ")"
-      HO off  -> "HOTOPL(&((Obj*)TOH_ptr)[" ++ show off ++ "])"
+      -- HOTOPL(STGHEAPAT(-1))
+      HO off  -> "HOTOPL(STGHEAPAT(" ++ show off ++ "))"
       FP      -> v
       CC cc i -> cc ++ ".payload[" ++ show i ++ "]"
       FV i    -> "self.op->payload[" ++ show i ++ "]"
@@ -89,7 +90,7 @@ indent i xs = (take i $ repeat ' ') ++ indent' i xs
 -- CG Atom, Var ************************************************************
 
 --cgv env v = "HOTOPL(" ++ getEnvRef v env ++ ")"
-cgv env v = getEnvRef v env ++ "/* " ++ v ++ " */"
+cgv env v = getEnvRef v env -- ++ "/* " ++ v ++ " */"
 
 cga :: Env -> Atom -> String
 cga env (Lit i) = "(PtrOrLiteral){.argType = INT, .i = " ++ show i ++ " }"
@@ -108,11 +109,19 @@ cgUBa env (Var v) = "(" ++ cgv env v ++ ").i"
 
 cgObjs :: [Obj InfoTab] -> [String] -> ([String],[String])
 cgObjs objs runtimeGlobals =
-    let tlnames = map (name . omd) objs ++ runtimeGlobals
+    let tlnames = runtimeGlobals ++ map (name . omd) objs
         env = zip tlnames $ repeat SHO
         (funcs, _) = runState (cgos env objs) 0  
         (forwards, fundefs) = unzip funcs
-    in (forwards, fundefs)
+        (forward, fundef) = statObjFun objs
+    in (forward:forwards, fundef:fundefs)
+
+statObjFun objs = 
+    ("void registerSHOs();",
+     "void registerSHOs() {\n" ++
+        concat [ "  stgStatObj[stgStatObjCount++] = &" ++ s ++ ";\n" 
+                 | s <- shoNames objs ] ++
+     "}\n")
 
 -- return [(forward,fundef)], will be unzipped at top level
 
@@ -182,7 +191,7 @@ cge env (EFCall it f as) =
 
 cge env (EPrimop it op as) = 
     let inline = if op `elem` [Padd, Psub, Pmul, Pieq] then
-                     "stgCurVal.argType.argType = INT;\n" ++
+                     "stgCurVal.argType = INT;\n" ++
                      "stgCurVal.i = " ++ cgUBa env (as !! 0) ++
                      case op of
                        Padd -> " + "
@@ -235,8 +244,8 @@ cge env (ECase _ e a@(Alts italts alts name)) =
 --     // from constructor
 --     stgCurVal = scrutinee.op->payload[0];
 --     STGRETURN0();
---   default:
 --   casedefault:
+--   default:
 --     stgCurVal = scrutinee;
 --     STGRETURN0();
 --   }
@@ -273,19 +282,21 @@ cgalt env (ACon it c vs e) =
       let (arity, tag) = case Map.lookup c (conMap it) of
                            Nothing -> error "conMap lookup error"
                            Just x -> x
-      let code = "case " ++ show tag ++ ":\n" ++
+      let code = "case " ++ show tag ++ ": {\n" ++
                     indent 2 inline ++
-                 "  STGRETURN0();\n"
+                 "  STGRETURN0();\n" ++
+                 "}\n"
       return (code, func)
               
 cgalt env (ADef it v e) =
     let env' = (v, AD) : env
     in do
       (inline, func) <- cge env' e
-      let code = "default:\n" ++
-                 "casedefault:\n" ++
+      let code = "casedefault:\n" ++
+                 "default: {\n" ++
                     indent 2 inline ++
-                 "  STGRETURN0();\n"
+                 "  STGRETURN0();\n" ++
+                 "}\n"
       return (code, func)
 
 

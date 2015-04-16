@@ -93,6 +93,7 @@ instance ObjsOf (Alts a) [Obj a] where
 instance ObjsOf [Alt a] [Obj a] where
     objsOf = concatMap objsOf
 
+
 itsOf :: [Obj InfoTab] -> [InfoTab]
 itsOf = (map omd) . objsOf
 

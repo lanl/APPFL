@@ -515,6 +515,8 @@ void initPredefs() {
 // Note this definition not only handles THUNKs returning THUNKs,
 // but also the general case of e.g. main = CON(I 1)
 DEFUN0(start) {
+  initPredefs();
+
   stgPushCont(showResultCont);  // nothing to save or restore
 
   /*

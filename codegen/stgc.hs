@@ -36,10 +36,12 @@ doit prog =
         infotab = showITs defs4
         sho = showSHOs defs4
         (forwards, fundefs) = cgObjs defs4 stgRTSGlobals
+
     in intercalate "\n" forwards ++ "\n\n" ++
        infotab ++ "\n" ++
        sho ++ "\n" ++
        intercalate "\n\n" fundefs
+       
            
 --    in showDefs defs2 ++
 --    in intercalate "\n\n" (map showIT infoTabs)
@@ -51,7 +53,7 @@ stgc arg =
     let prog = doit source
     putStrLn prog
     hClose ifd
-    writeFile (arg++".c") prog
+    writeFile "../runtime/userprog.c" prog
 
 main = 
     do

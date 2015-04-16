@@ -57,8 +57,9 @@ void showStgObj(Obj *p) {
     break;
 
   case CON:
-    //    fprintf(stderr,"tag %d\n", it.conFields.tag );
-    fprintf(stderr,"tag %d\n", it.conFields.tag );
+    fprintf(stderr,"tag, arity %d, %d\n", it.conFields.tag, it.conFields.arity );
+    for (int i = 0; i != it.conFields.arity; i++)
+      showStgVal(o.payload[i]);    
     break;
 
   case THUNK:

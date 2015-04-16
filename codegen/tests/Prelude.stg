@@ -1,3 +1,6 @@
+
+main = THUNK(multInt eight nine);
+
 error = ERROR;
 unit = CON(Unit);
 true = CON(True);
