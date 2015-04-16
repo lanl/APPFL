@@ -48,7 +48,8 @@ append = FUN(l1 l2 ->
                                      result = CON(Cons hd rec) }
                                in result });
 
-const = FUN(x y -> x);
+constf = FUN(x y -> x);
+
 apply = FUN(f x -> f x);
 
 map = FUN(f list ->

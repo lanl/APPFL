@@ -54,6 +54,7 @@ data RVal = SHO           -- static heap obj
           | FV Int        -- free var, self->payload[Int]
           | AC Int        -- alt con, use name as is?
           | AD            -- alt def, use name as is?
+            deriving(Eq,Show)
 
 type Env = [(String, RVal)]
 
@@ -69,8 +70,8 @@ lu v ((v',k):_) n | v == v' =
       FP      -> v
       CC cc i -> cc ++ ".payload[" ++ show i ++ "]"
       FV i    -> "self.op->payload[" ++ show i ++ "]"
-      AC i    -> "ctor.op->payload[" ++ show i ++ "]"
-      AD      -> "ctor"
+      AC i    -> "scrutinee.op->payload[" ++ show i ++ "]"
+      AD      -> "scrutinee"
 
 lu v ((_, HO size) : xs) n =
     lu v xs (n+size)
@@ -88,7 +89,7 @@ indent i xs = (take i $ repeat ' ') ++ indent' i xs
 -- CG Atom, Var ************************************************************
 
 --cgv env v = "HOTOPL(" ++ getEnvRef v env ++ ")"
-cgv env v = getEnvRef v env
+cgv env v = getEnvRef v env ++ "/* " ++ v ++ " */"
 
 cga :: Env -> Atom -> String
 cga env (Lit i) = "HOTOLIT(" ++ show i ++ ")"
@@ -102,9 +103,9 @@ cga env (Var v) = cgv env v
 --   all objects produce a (S)HO
 -- for CG, objects are heap allocated only by let
 
-cgObjs :: [Obj InfoTab] -> ([String],[String])
-cgObjs objs =
-    let tlnames = map (name . omd) objs
+cgObjs :: [Obj InfoTab] -> [String] -> ([String],[String])
+cgObjs objs runtimeGlobals =
+    let tlnames = map (name . omd) objs ++ runtimeGlobals
         env = zip tlnames $ repeat SHO
         (funcs, _) = runState (cgos env objs) 0  
         (forwards, fundefs) = unzip funcs
@@ -186,35 +187,34 @@ cge env (ELet it os e) =
       return (concat buildcodes ++ einline,
               ofunc ++ efunc)
         
-cge env (ECase it e a@(Alts _ alts name)) = 
+cge env (ECase _ e a@(Alts italts alts name)) = 
     do (ecode, efunc) <- cge env e
        afunc <- cgalts env a
-       let afvs = concatMap (fvs . amd) alts
-   
        let pre = "stgPushCont( (Cont)\n" ++
                  "  { .retAddr = &" ++ name ++ ",\n" ++
-                      indent 4 (loadPayloadFVs env afvs) ++
+                 "    // load payload with FVs " ++ intercalate " " (fvs italts) ++ "\n" ++
+                      indent 4 (loadPayloadFVs env (fvs italts)) ++
                  "  });\n"
        return (pre ++ ecode, efunc ++ afunc)
        
 -- CG Alts ************************************************************
 -- DEFUN0(alts1) {
 --   Cont cont = stgPopCont();
---   PtrOrLiteral ctor = stgCurVal;
---   if (stgCurVal.argType != HEAPOBJ ||
---       stgCurVal.op->objType != CON ) goto casedefault;
---   switch(ctor.op->infoPtr->conFields.tag) {
+--   PtrOrLiteral scrutinee = stgCurVal;
+--   if (scrutinee.argType != HEAPOBJ ||
+--       scrutinee.op->objType != CON ) goto casedefault;
+--   switch(scrutinee.op->infoPtr->conFields.tag) {
 --   case TagLeft:
 --     // variable saved in casecont
 --     stgCurVal = cont.payload[0];
 --     STGRETURN0();
 --   case TagRight:
 --     // from constructor
---     stgCurVal = ctor.op->payload[0];
+--     stgCurVal = scrutinee.op->payload[0];
 --     STGRETURN0();
 --   default:
 --   casedefault:
---     stgCurVal = ctor;
+--     stgCurVal = scrutinee;
 --     STGRETURN0();
 --   }
 --   ENDFUN;
@@ -232,10 +232,10 @@ cgalts env (Alts _ alts name) =
       let (codes, funcss) = unzip codefuncs
       let code = "DEFUN0("++ name ++ ") {\n" ++
                  "  Cont cont = stgPopCont();\n" ++
-                 "  PtrOrLiteral ctor = stgCurVal;\n" ++
-                 "  if (stgCurVal.argType != HEAPOBJ ||\n" ++
-                 "      stgCurVal.op->objType != CON ) goto casedefault;\n" ++
-                 "  switch(ctor.op->infoPtr->conFields.tag) {\n" ++
+                 "  PtrOrLiteral scrutinee = stgCurVal;\n" ++
+                 "  if (scrutinee.argType != HEAPOBJ ||\n" ++
+                 "      scrutinee.op->objType != CON ) goto casedefault;\n" ++
+                 "  switch(scrutinee.op->infoPtr->conFields.tag) {\n" ++
                       indent 4 (concat codes) ++
                  "  }\n" ++
                  "  ENDFUN;\n" ++

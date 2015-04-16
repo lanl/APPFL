@@ -31,44 +31,46 @@ module HeapObj (
   showSHOs
 ) where
 
-import Parser
+import AST
 import InfoTab
-
 import Prelude
 
+-- // two = CON(I 2)
+-- Obj sho_two = 
+--   { .objType = CON,
+--     .infoPtr = &it_I,
+--     .payload[0].argType = INT,
+--     .payload[0].i = 2
+--   };
 
 -- HOs come from InfoTabs
-showHOcom it =
-    "(Obj) {\n" ++
-    "  .infoPtr   = &InfoTab it_" ++ name it ++ ",\n" ++
-    "  .objType   = " ++ showObjType it      ++ ",\n" ++
-    "  .ident     = " ++ show (name it)      ++ ",\n" ++
-    "  };\n"
-
 showSHOs :: [Obj InfoTab] -> String
 showSHOs = (concatMap showSHO) . (map omd)
 
 showSHO it = 
-    let itName = name it 
-    in
-      "Obj sho_" ++ name it ++ " =\n" ++
-      showHOcom it ++
-      showSHOspec itName it
+    "Obj sho_" ++ name it ++ " =\n" ++ showHO it
 
-showSHOspec itName it@(Fun {}) = 
-    itName ++ ".funFields.arity = " ++ show (arity it) ++ ";\n"
+showHO it =
+    "(Obj) {\n" ++
+    "  .infoPtr   = &it_" ++ name it ++ ",\n" ++
+    "  .objType   = " ++ showObjType it      ++ ",\n" ++
+    "  .ident     = " ++ show (name it)      ++ ",\n" ++
+       showSHOspec it ++
+    "  };\n"
 
-showSHOspec itName it@(Pap {}) = ""
+showSHOspec it@(Fun {}) = 
+    "  .funFields.arity = " ++ show (arity it) ++ ",\n"
 
-showSHOspec itName it@(Con {}) =
-    payload itName $ args it
+showSHOspec it@(Pap {}) = ""
 
-showSHOspec itName it@(Thunk {}) = ""
+showSHOspec it@(Con {}) = payload $ args it
 
-showSHOspec itName it@(Blackhole {}) = ""
+showSHOspec it@(Thunk {}) = ""
 
-payload itName as =
-  concat [ itName ++ ".payload[ " ++ show i ++ " ] = " ++ ptrOrLitSHO a ++ ";\n"
+showSHOspec it@(Blackhole {}) = ""
+
+payload as =
+  concat [ "  .payload[ " ++ show i ++ " ] = " ++ ptrOrLitSHO a ++ ",\n"
            | (i,a) <- zip [0..] as ]
 
 ptrOrLitSHO a =
@@ -76,4 +78,4 @@ ptrOrLitSHO a =
     case a of
       Lit i -> ".argType = INT, .i = " ++ show i
       Var v -> ".argType = HEAPOBJ, .op = &sho_" ++ v   -- these must be global
-    ++ " }\n"
+    ++ " }"

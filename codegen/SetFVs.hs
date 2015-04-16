@@ -15,12 +15,13 @@ import Data.List
 -- after rename, make the fvs meaningful
 -- TLDs are not considered free vars in expressions
 
-setFVsDefs :: [Obj a] -> [Obj [Var]] -- monomorphism restriction
-setFVsDefs defs = case setfvs (map oname defs) defs of
-                    ([], defs') -> defs'
-                    _ -> error "free variables in outermost scope!"
+setFVsDefs :: [Obj a] -> [String] -> [Obj [Var]] -- monomorphism restriction
+setFVsDefs defs runtimeGlobals
+    = case setfvs (map oname defs ++ runtimeGlobals) defs of
+        ([], defs') -> defs'
+        (fvs, _) -> error $ "top level free variables:  " ++  intercalate " " fvs
 
-
+-- the two base cases are the f in function calls and Var v
 class FVs a where fvsof :: [Var] -> a -> [Var]
 
 instance FVs Atom where

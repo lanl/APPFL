@@ -50,7 +50,7 @@ append = FUN(l1 l2 ->
                                      result = CON(Cons hd rec) }
                                in result });
 
-const = FUN(x y -> x);
+constf = FUN(x y -> x);
 apply = FUN(f x -> f x);
 
 map = FUN(f list ->
@@ -113,7 +113,7 @@ mainappend = THUNK(let { f = THUNK(forcelist list5)} in seq f list5);
 
 ## apply.stg
 twentytwo = CON(I 22);
-mainapply = THUNK(apply const true twentytwo);
+mainapply = THUNK(apply constf true twentytwo);
 
 ## docs.stg
 nil = CON(Nil);
@@ -127,12 +127,6 @@ plusInt = FUN(x y ->
       I i -> case y of {
                I j -> case plus# i j of {
                          x -> let { result = CON (I x) } in result }}});
- 
-foldl = FUN(f acc list ->
-   case list of {
-      Nil -> acc;
-      Cons h t -> let { newAcc = THUNK(f acc h) } in foldl f newAcc t
-   });
  
 # lazy sum with a well-known space leak
 sum = FUN(list -> foldl plusInt zero list);
@@ -173,12 +167,12 @@ mainfibs = THUNK( let { result = THUNK(take five fibs);
 # this should crash with a blackhole.
 mainloop = THUNK(main);
 
-# in Haskell: main = head (map const [7,2,1]) 10 
+# in Haskell: main = head (map constf [7,2,1]) 10 
 
 list1 = CON(Cons one nil);
 list2 = CON(Cons two list1);
 list3 = CON(Cons seven list2);
-main = THUNK(let { mc = THUNK(map const list3);
+main1 = THUNK(let { mc = THUNK(map constf list3);
                    constSeven = THUNK(head mc)
                  } in constSeven ten);
 pzero = CON(Z);
@@ -187,10 +181,10 @@ list1 = CON(Cons pone nil);
 list2 = CON(Cons pone list1);
 list3 = CON(Cons pone list2);
 list4 = CON(Cons pone list3); 
-consttrue = PAP(const true);
-main = THUNK( let { result = THUNK(map const list4);
-                    f = THUNK(forcelist result) 
-                  } in seq f result );
+consttrue = PAP(constf true);
+main2 = THUNK( let { result = THUNK(map constf list4);
+                     f = THUNK(forcelist result) 
+                   } in seq f result );
 
 nil = CON(Nil);
 zero = CON(J 0);
@@ -204,31 +198,24 @@ plusInt = FUN(x y ->
                J j -> case plus# i j of {
                          x -> let { result = CON (J x) } in result }}});
  
-foldl = FUN(f acc list ->
-   case list of {
-      Nil -> acc;
-      Cons h t -> let { newAcc = THUNK(f acc h) } in foldl f newAcc t
-   });
- 
-# lazy sum with a well-known space leak
-sum = FUN(list -> foldl plusInt zero list);
- 
 list1 = CON(Cons one nil);
 list2 = CON(Cons two list1);
 list3 = CON(Cons three list2);
  
-main = THUNK(sum list3);
+main3 = THUNK(sum list3);
 foo = CON(Foo);
 end = CON(End);
-main = THUNK(
+
+main4 = THUNK(
    case foo of { Bar -> end; x -> error }
 );
 ones = CON(Cons one ones);
-main = THUNK(ones);
+
+main5 = THUNK(ones);
 
 # haskell: main = let x = 1 + 2 in seq x (foo x)
-main = THUNK(let {x = THUNK(plusInt one two);
-                  res = THUNK(foo x)} in seq x res);
+main6 = THUNK(let {x = THUNK(plusInt one two);
+                   res = THUNK(foo x)} in seq x res);
 
 # compare with
 # haskell: main = foo (1 + 2)
@@ -239,26 +226,16 @@ foo = FUN(x -> three);
 list1 = CON(Cons one nil);
 list2 = CON(Cons error list1);
 list3 = CON(Cons three list2);
-main = THUNK(sum list3);
-list1 = CON(Cons one nil);
-list2 = CON(Cons two list1);
-list3 = CON(Cons three list2);
-main = THUNK(sum list3);
-multInt = FUN(x y ->
-   case x of { 
-      I i -> case y of { 
-               I j -> case mult# i j of { 
-                         x -> let { result = CON (I x) } in result }}});
-
-const = FUN(x y -> x);
-apply = FUN(f x -> f x);
+main7 = THUNK(sum list3);
 
 ones = CON(Cons one ones);
-main = THUNK(let { result = THUNK(take three ones);
+
+main7 = THUNK(let { result = THUNK(take three ones);
                    f = THUNK(forcelist result)} in seq f result );
+
 leaf = CON(Leaf);    # just out of the blue
 
 branch = FUN(l r -> let { result = CON(Branch l r) } in result);
 
-main = THUNK(branch one two);
+main8 = THUNK(branch one two);
  

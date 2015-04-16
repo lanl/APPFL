@@ -26,7 +26,7 @@ import AST
 
 -}
 
-data Polytype = PPoly Char Polytype  -- curried forall
+data Polytype = PPoly TyVar Polytype  -- curried forall
               | PMono Monotype
                 deriving(Eq,Show)
 
@@ -44,5 +44,6 @@ data Unboxedtype = UInt
                  | UTCon [Monotype] Ctors -- ditto
                    deriving(Eq,Show)
 
-type Ctors = [(String, [Monotype])]
+type Ctors = [(Con, [Monotype])]
 
+-- translate TopDecl to Monotype (then close to Polytype?)

@@ -17,7 +17,13 @@ Add identifiers# (or #identifiers) and constants# (e.g. 1#, True#)
 
 Add case#, field to ECase for boxed/unboxed
 
-Add a field to Exp, Obj, Alt, Alts, Atom (?), Var (?), Lit (?) for type info
+Add a metadata field to Exp, Obj, Alt, Alts, Atom (?), Var (?), Lit (?) for type info
+
+Unique (v.) manifest constants
+  - w/constructor I
+  - at top level, any constructor
+  - at all depths, any constructor
+
 
 Wish list:  
 
@@ -31,6 +37,8 @@ Warmup:
 
   Write a chunk of the GHC prelude in STG
 
+  Top-level duplicate name checker
+
   Analysis to determine whether "e" in "case e of" is simple, i.e. does
     not cause heap allocation (does not contain EFCall or ELet)
 
@@ -42,6 +50,7 @@ Warmup:
 
 Language extensions:
 
+  - recognize e.g. "1" as boxed manifest constant, generate AST for
   - remove CON(), THUNK(), etc. syntax
   - allow unsaturated constructors
   - allow constructor application to be unsaturated (primop?)

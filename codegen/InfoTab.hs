@@ -187,7 +187,8 @@ makeIT o@(CON fvs c as n) =
           args = as,
           name = n,
           fvs = fvs,
-          entryCode = showITType o ++ "_" ++ n
+--          entryCode = showITType o ++ "_" ++ n
+          entryCode = "stg_constructorcall"
         }
 
 makeIT o@(THUNK fvs e n) =

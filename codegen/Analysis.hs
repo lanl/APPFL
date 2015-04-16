@@ -3,7 +3,8 @@
 {-# LANGUAGE NamedFieldPuns       #-}
 
 module Analysis(
-  isSimple
+  isSimple,
+  normalize,
 ) where
 
 import Parser
@@ -31,34 +32,43 @@ instance IsSimple (Alt a) where
 --   be done early
 
 class Normalize a where
-  normalize :: a -> a  --should that be a -> b?  which won't work with field names?
+  normalize :: a -> a --should that be a -> b? which won't work with field names?
 
-instance Normalize (Expr a)
+instance Normalize (Expr a) where
   normalize e@EAtom{} = e
   normalize e@EFCall{} = e
   normalize e@EPrimop{} = e
   normalize e@ELet{ee, edefs} = e{ee = normalize ee, edefs = normalize edefs}
   normalize e@ECase{ee, ealts} = e{ee = normalize ee, ealts = normalize ealts}
 
-instance normalize (Alts a) where
+instance Normalize (Alts a) where
   normalize a@Alts{alts} = 
     -- if no ADef add one
     -- if ADef followed by ACons we could remove them
-    let alts' = 
-      if noADef alts then
-          alts ++ 
-          [ADef{av = "x", 
-                ae = EFCall{ev = "stg_case_not_exhaustive", eas = ["x"]}}]
-      else alts
-    in alts'{ae = normalize ae}
-            
+    let alts' = if noADef alts then
+                    alts ++ 
+                   [ADef{amd = error "altsmd not initialized",
+                         av = "x", 
+                         ae = EFCall{emd = error "emd not initialized",
+                                     ev = "stg_case_not_exhaustive", 
+                                     eas = [Var "x"]}}]
+                else alts
+    in a{alts = map normalize alts'}
 
-instance normalize (Alt a) where
-  normalize a@alt = normalize $ ae alt
+instance Normalize (Alt a) where
+  normalize a = a{ae = normalize $ ae a}
 
-instance normalize (Obj a) where
+instance Normalize (Obj a) where
   normalize o@FUN{e} = o{e = normalize e}
   normalize o@THUNK{e} = o{e = normalize e}
   -- PAP, CON, BH
   normalize o = o
+
+instance Normalize [Obj a] where
+  normalize = map normalize
+
+noADef = all notADef
+         where
+           notADef ADef{} = False
+           notADef _      = True
 
