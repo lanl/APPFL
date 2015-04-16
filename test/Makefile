@@ -1,12 +1,13 @@
 STGC=../codegen/dist/build/stgc/stgc 
 RUNTIMEDIR=../runtime
+CFLAGS=-std=gnu99
 all = one
 
-one: 
-	$(CC) one.stg.c -o $@ -L$(RUNTIMEDIR) -I$(RUNTIMEDIR) -lruntime
+one: one.stg.c
+	$(CC) $(CFLAGS) one.stg.c -o $@ -L$(RUNTIMEDIR) -I$(RUNTIMEDIR) -lruntime
 
 %.stg.c: %.stg
-	$(STGC) $<
+	$(STGC) one.stg
 
 clean:
-	rm -f one
+	rm -f one one.stg.c
