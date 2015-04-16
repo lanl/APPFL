@@ -4,14 +4,13 @@
 #include "stgutils.h"
 #include "cmm.h"
 #include "stgcmm.h"
-#include "predefs.h"
 #include "gc.h"
 
 FnPtr tnk_main();
 InfoTab it_one = 
   { .name                = "one",
     .fvCount             = 0,
-    .entryCode           = &con_one,
+    .entryCode           = &whiteHole,
     .objType             = CON,
     .conFields.arity     = 1,
     .conFields.tag       = 0,
@@ -47,7 +46,7 @@ DEFUN1(tnk_main, self) {
   STGRETURN0();
   ENDFUN;
 }
-DEFUN0(startit) {
+DEFUN0(start) {
   stgPushCont(showResultCont);
   STGEVAL(((PtrOrLiteral){.argType = HEAPOBJ, .op = &sho_main}));
   STGRETURN0();
@@ -57,9 +56,8 @@ DEFUN0(startit) {
 int main (int argc, char **argv) {
   initStg();
   initCmm();
-  initPredefs();
   initGc();
-  CALL0_0(startit);
+  CALL0_0(start);
   return 0;
 }
 
