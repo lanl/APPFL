@@ -1,8 +1,6 @@
 module ConMap.Test where
-import           Parser
-import           Rename
-import           SetFVs
-import           InfoTab
+
+import           TestUtils
 import           ConMap
 
 import           Test.Tasty
@@ -16,10 +14,8 @@ unitTests = testGroup "ConMap Unit tests"
     [ goldenVsString "conmap one" "tests/ConMap/mapone.gold" mapone
     ]
     
-seqdefs :: [Obj [Var]]
-seqdefs = setFVsDefs $ renameObjs $ parser 
-         "one = CON(I 1); main=THUNK(one);"
-         
+inp = "one = CON(I 1); main=THUNK(one);"
+             
 mapone :: IO ByteString
 mapone = return $ fromString $ show $ 
-                getConMap (setITs seqdefs :: [Obj InfoTab])
+                getConMap $ infotaber inp

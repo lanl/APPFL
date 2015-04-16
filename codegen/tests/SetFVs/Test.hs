@@ -1,7 +1,6 @@
 module SetFVs.Test where
+import           TestUtils
 import           Parser
-import           Rename
-import           SetFVs
 
 import           Test.Tasty
 import           Test.Tasty.Golden
@@ -15,10 +14,11 @@ unitTests = testGroup "SetFvs Unit tests"
     , goldenVsString "ShowDefs seq" "tests/SetFVs/seqDefs.gold" showseq
     ]
     
+inp :: String
+inp = "seq = FUN(x y -> case x of { z -> y });"
+    
 setFVseq :: IO ByteString
-setFVseq = return $ fromString $ show $ setFVsDefs
-           $ renameObjs $ parser "seq = FUN(x y -> case x of { z -> y });"
+setFVseq = return $ fromString $ show $ freevarer inp 
 
 showseq :: IO ByteString
-showseq = return $ fromString $ showDefs $ setFVsDefs
-           $ renameObjs $ parser "seq = FUN(x y -> case x of { z -> y });"
+showseq = return $ fromString $ showDefs $ freevarer inp

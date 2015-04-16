@@ -120,16 +120,17 @@ cgos :: Env -> [Obj InfoTab] -> State Int [(String, String)]
 cgos env = concatMapM (cgo env)
 
 cgo :: Env -> Obj InfoTab -> State Int [(String, String)]
-cgo env (FUN it vs e name) =
+cgo env o@(FUN it vs e name) =
     do 
       let env' = zip (fvs it) (map FV [0..]) ++ 
                  zip vs (repeat FP) ++
                  env
       (inline, funcs) <- cge env' e
-      let forward = "FnPtr " ++ name ++ "();"
+      let name' = showITType o ++ "_" ++ name
+      let forward = "FnPtr " ++ name' ++ "();"
       let func =
             "DEFUN" ++ show (length vs + 1) ++ "(" ++ 
-            name ++ ", self, " ++
+            name' ++ ", self, " ++
             intercalate ", " vs ++
             ") {\n" ++
             "  fprintf(stderr, \"" ++ name ++ " here\\n\");\n" ++
@@ -144,13 +145,14 @@ cgo env (PAP it f as name) =
 cgo env (CON it c as name) =
     return []
 
-cgo env (THUNK it e name) =
+cgo env o@(THUNK it e name) =
     do 
       let env' = zip (fvs it) (map FV [0..]) ++ env
       (inline, funcs) <- cge env' e
-      let forward = "FnPtr tnk_" ++ name ++ "();"
+      let name' = showITType o ++ "_" ++ name
+      let forward = "FnPtr " ++ name' ++ "();"
       let func =
-            "DEFUN1(tnk_" ++ name ++ ", self) {\n" ++
+            "DEFUN1(" ++ name' ++ ", self) {\n" ++
             "  fprintf(stderr, \"" ++ name ++ " here\\n\");" ++
             "  stgThunk(self);\n" ++
             indent 2 inline ++

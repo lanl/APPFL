@@ -1,9 +1,6 @@
 module InfoTab.Test where
-import           Parser
-import           Rename
-import           SetFVs
+import           TestUtils
 import           InfoTab
-import           ConMap2
 
 import           Test.Tasty
 import           Test.Tasty.Golden
@@ -17,13 +14,11 @@ unitTests = testGroup "InfoTab Unit tests"
     , goldenVsString "show infotab seq" "tests/InfoTab/tabseq.gold" showinfoseq
     ]
     
-seqdefs :: [Obj [Var]]
-seqdefs = setFVsDefs $ renameObjs $ parser 
-         "seq = FUN(x y -> case x of { z -> y });"
-         
+inp = "seq = FUN(x y -> case x of { z -> y });"
+             
 setinfoseq :: IO ByteString
-setinfoseq = return $ fromString $ show (setITs seqdefs :: [Obj InfoTab])
+setinfoseq = return $ fromString $ show $ infotaber inp
 
 showinfoseq :: IO ByteString
-showinfoseq = return $ fromString $ showITs $ 
-                setConMap (setITs seqdefs :: [Obj InfoTab])
+showinfoseq = return $ fromString $ showITs $ conmaper inp
+           

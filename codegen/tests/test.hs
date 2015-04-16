@@ -9,8 +9,8 @@ import qualified Scanner.Test
 import qualified SetFVs.Test
 
 import           Test.Tasty
-import 	         Test.Tasty.Ingredients.Basic
-import 	         Test.Tasty.Runners.AntXML
+import                  Test.Tasty.Ingredients.Basic
+import                  Test.Tasty.Runners.AntXML
 
 main :: IO()
 main = defaultMainWithIngredients 
@@ -26,3 +26,4 @@ tests = testGroup "Tests" [ Scanner.Test.unitTests
                           , ConMap.Test.unitTests
                           , CodeGen.Test.unitTests
                           ]
+                          

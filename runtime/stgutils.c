@@ -45,6 +45,13 @@ DEFUN0(whiteHole) {
   ENDFUN;
 }
 
+DEFUN0(stg_constructorcall) {
+  fprintf(stderr,"placeholder\n");
+  exit(0);
+  RETURN0();
+  ENDFUN;
+}
+
 // ****************************************************************
 // since we always jump through the top of the stg stack we need some
 // place to go when we're done this continuation is special, dropping 
