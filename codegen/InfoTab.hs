@@ -187,7 +187,8 @@ makeIT o@(CON fvs c as n) =
           args = as,
           name = n,
           fvs = fvs,
-          entryCode = showITType o ++ "_" ++ n
+          --entryCode = showITType o ++ "_" ++ n
+          entryCode = "whiteHole" -- this is how it was in the by hand CG
         }
 
 makeIT o@(THUNK fvs e n) =
