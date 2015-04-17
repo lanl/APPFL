@@ -1,6 +1,6 @@
 module ConMap.Test where
 
-import           TestUtils
+import           Driver
 import           ConMap
 
 import           Test.Tasty

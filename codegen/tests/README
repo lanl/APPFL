@@ -17,7 +17,7 @@ reconfigure. Using the ghc packages on ubuntu is a mistake, use the generic
 linux binaries from haskell.org
 
 Cleanup:
-apt-get remove haskell-platform libghc*
+apt-get remove haskell-platform ghc cabal-install alex happy libghc*
 rm -rf ~/.cabal
 rm -rf ~/.ghc
 cd / 

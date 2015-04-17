@@ -1,5 +1,5 @@
 module InfoTab.Test where
-import           TestUtils
+import           Driver
 import           InfoTab
 
 import           Test.Tasty

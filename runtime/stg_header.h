@@ -7,6 +7,7 @@
 #include "cmm.h"
 #include "stgcmm.h"
 #include "stgutils.h"
+#include "gc.h"
 #include "stgmain.h"
 
 // CON(False)
@@ -58,17 +59,4 @@ Obj sho_stg_case_not_exhaustive = {
   .infoPtr = &it_stg_case_not_exhaustive,
 };
 
-// user progream including registerSHOs() and sho_main()
-#include "userprog.c"
-
-DEFUN0(start) {
-  registerSHOs();  // in userprog.c
-
-  stgPushCont(showResultCont);  // nothing to save or restore
-
-  STGEVAL(((PtrOrLiteral){.argType = HEAPOBJ, .op = &sho_main}));
-
-  STGRETURN0(); // return through stgShowResultCont
-  ENDFUN;
-}
 

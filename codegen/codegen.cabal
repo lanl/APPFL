@@ -1,35 +1,34 @@
-name:           codegen
+name:           stgc
 version:        0.1
-cabal-version:  >=1.2
+cabal-version:  >= 1.2
 build-type:     Simple
-author:         
+author:         LANL
 data-files:     
-                ADT.hs, 
-                Analysis.hs, 
-                AST.hs, 
-                CodeGen.hs, 
-                ConMap.hs, 
-                ConMap2.hs, 
-                HeapObj.hs, 
-                InfoTab.hs, 
-                Lexer.hs, 
-                ParseComb.hs, 
-                Parser.hs, 
-                Rename.hs, 
-                Scanner.hs, 
-                SetFVs.hs, 
-                State.hs, 
+                ADT.hs,
+                Analysis.hs,
+                AST.hs,
+                Boilerplate.hs,
+                CodeGen.hs,
+                ConMap.hs,
+                ConMap2.hs,
+                Driver.hs,
+                HeapObj.hs,
+                InfoTab.hs,
+                Lexer.hs,
+                ParseComb.hs,
+                Parser.hs,
+                Rename.hs,
+                Scanner.hs,
+                SetFVs.hs,
+                State.hs,
                 stgc.hs
-
-executable codegen
+                
+executable stgc
   hs-source-dirs:  .
   main-is:         stgc.hs
-  build-depends:   
-                   base >= 4,
-                   containers,
-                   mtl
-  ghc-options: -W -fno-warn-unused-binds -fno-warn-unused-matches -fno-warn-unused-imports
-
+  build-depends:   base >= 4, containers, mtl
+  ghc-options:     -W -fno-warn-unused-binds -fno-warn-unused-matches -fno-warn-unused-imports
+ 
 test-suite test
   type:            exitcode-stdio-1.0
   main-is:         test.hs
@@ -49,4 +48,5 @@ test-suite test
                   CodeGen
   hs-source-dirs:  
                   .,tests
+
 
