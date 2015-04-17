@@ -1,11 +1,4 @@
-#include <stdio.h>
-#include <assert.h>
-#include "stg.h"
-#include "stgutils.h"
-#include "cmm.h"
-#include "stgcmm.h"
-#include "gc.h"
-
+#include "stg_header.h"
 void registerSHOs();
 FnPtr tnk_main();
 InfoTab it_one = 
@@ -53,6 +46,7 @@ DEFUN1(tnk_main, self) {
   ENDFUN;
 }
 DEFUN0(start) {
+  registerSHOs();
   stgPushCont(showResultCont);
   STGEVAL(((PtrOrLiteral){.argType = HEAPOBJ, .op = &sho_main}));
   STGRETURN0();
@@ -64,6 +58,7 @@ int main (int argc, char **argv) {
   initCmm();
   initGc();
   CALL0_0(start);
+  showStgHeap();
   return 0;
 }
 
