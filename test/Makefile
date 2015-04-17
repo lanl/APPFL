@@ -1,17 +1,12 @@
-STGC=../codegen/dist/build/stgc/stgc 
-RUNTIMEDIR=../runtime
-CFLAGS=-std=gnu99
+STGCC=../bin/stgcc
 
 all: one mult
 
-one: one.stg.c
-	$(CC) $(CFLAGS) one.stg.c -o $@ -L$(RUNTIMEDIR) -I$(RUNTIMEDIR) -lruntime
+one: one.stg
+	$(STGCC) one.stg $@ 
 
-mult: mult.stg.c
-	$(CC) $(CFLAGS) mult.stg.c -o $@ -L$(RUNTIMEDIR) -I$(RUNTIMEDIR) -lruntime
-
-%.stg.c: %.stg
-	$(STGC) $< > /dev/null 2>&1
+mult: mult.stg
+	$(STGCC) mult.stg $@ 
 
 clean:
-	rm -f one one.stg.c mult.stg.c
+	rm -f one mult 
