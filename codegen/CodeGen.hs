@@ -162,7 +162,7 @@ cgo env o@(THUNK it e name) =
       let forward = "FnPtr " ++ name' ++ "();"
       let func =
             "DEFUN1(" ++ name' ++ ", self) {\n" ++
-            "  fprintf(stderr, \"" ++ name ++ " here\\n\");" ++
+            "  fprintf(stderr, \"" ++ name ++ " here\\n\");\n" ++
             "  stgThunk(self);\n" ++
             indent 2 inline ++
             "  STGRETURN0();\n" ++  -- in case inline doesn't jump somewhere else

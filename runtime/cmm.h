@@ -129,6 +129,30 @@ extern void initCmm();
     _JUMP(F);					\
   } while (0)
 
+#define JUMP5(F,V1,V2,V3,V4,V5)			\
+  do {						\
+    _PUSHVALS5(V1,V2,V3,V4,V5);			\
+    _JUMP(F);					\
+  } while (0)
+
+#define JUMP6(F,V1,V2,V3,V4,V5,V6)		\
+  do {						\
+    _PUSHVALS6(V1,V2,V3,V4,V5,V6);		\
+    _JUMP(F);					\
+  } while (0)
+
+#define JUMP7(F,V1,V2,V3,V4,V5,V6,V7)		\
+  do {						\
+    _PUSHVALS7(V1,V2,V3,V4,V5,V6,V7);		\
+    _JUMP(F);					\
+  } while (0)
+
+#define JUMP8(F,V1,V2,V3,V4,V5,V6,V7,V8)	\
+  do {						\
+    _PUSHVALS8(V1,V2,V3,V4,V5,V6,V7,V8);	\
+    _JUMP(F);					\
+  } while (0)
+
 // DEFUN#args(argnames)
 
 #define DEFUN0(F)				\
@@ -268,6 +292,48 @@ inline PtrOrLiteral _POP() {
 
 #define _PUSHVALS4(L1,L2,L3,L4)			\
   do {						\
+      _PUSH(L4);				\
+      _PUSH(L3);				\
+      _PUSH(L2);				\
+      _PUSH(L1);				\
+  } while (0)
+
+#define _PUSHVALS5(L1,L2,L3,L4,L5)		\
+  do {						\
+      _PUSH(L5);				\
+      _PUSH(L4);				\
+      _PUSH(L3);				\
+      _PUSH(L2);				\
+      _PUSH(L1);				\
+  } while (0)
+
+#define _PUSHVALS6(L1,L2,L3,L4,L5,L6)		\
+  do {						\
+      _PUSH(L6);				\
+      _PUSH(L5);				\
+      _PUSH(L4);				\
+      _PUSH(L3);				\
+      _PUSH(L2);				\
+      _PUSH(L1);				\
+  } while (0)
+
+#define _PUSHVALS7(L1,L2,L3,L4,L5,L6,L7)	\
+  do {						\
+      _PUSH(L7);				\
+      _PUSH(L6);				\
+      _PUSH(L5);				\
+      _PUSH(L4);				\
+      _PUSH(L3);				\
+      _PUSH(L2);				\
+      _PUSH(L1);				\
+  } while (0)
+
+#define _PUSHVALS8(L1,L2,L3,L4,L5,L6,L7,L8)	\
+  do {						\
+      _PUSH(L8);				\
+      _PUSH(L7);				\
+      _PUSH(L6);				\
+      _PUSH(L5);				\
       _PUSH(L4);				\
       _PUSH(L3);				\
       _PUSH(L2);				\
