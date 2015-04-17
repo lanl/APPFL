@@ -19,7 +19,7 @@ setFVsDefs :: [Obj a] -> [String] -> [Obj [Var]] -- monomorphism restriction
 setFVsDefs defs runtimeGlobals
     = case setfvs (map oname defs ++ runtimeGlobals) defs of
         ([], defs') -> defs'
-        (fvs, _) -> error $ "top level free variables:  " ++  intercalate " " fvs
+        (fvs, _) -> error $ "SetFVs.setFVsDefs:  top level free variables:  " ++  intercalate " " fvs
 
 -- the two base cases are the f in function calls and Var v
 class FVs a where fvsof :: [Var] -> a -> [Var]

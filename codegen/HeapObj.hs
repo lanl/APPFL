@@ -49,11 +49,18 @@ import Prelude
 shoNames :: [Obj InfoTab] -> [String]
 shoNames = map (("sho_" ++) . name . omd)
 
-showSHOs :: [Obj InfoTab] -> String
-showSHOs = (concatMap showSHO) . (map omd)
+-- return list of forwards (static declarations) and (static) definitions
+showSHOs :: [Obj InfoTab] -> (String,String)
+showSHOs objs = 
+    let (forwards, defs) = unzip $ map (showSHO . omd) objs
+    in (concat forwards, concat defs)
+    
 
-showSHO it = 
-    "Obj sho_" ++ name it ++ " =\n" ++ showHO it
+-- maybe should use "static" instead of "extern"
+showSHO it =
+    let base = "Obj sho_" ++ name it
+    in ("extern " ++ base ++ ";\n", 
+                     base ++ " =\n" ++ showHO it)
 
 showHO it =
     "{\n" ++

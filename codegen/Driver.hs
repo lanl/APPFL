@@ -69,12 +69,13 @@ conmaper = setConMap . infotaber
 codegener :: String -> String
 codegener inp = let defs = conmaper inp
                     infotab = showITs defs
-                    sho = showSHOs defs
-                    (forwards, fundefs) = cgObjs defs stgRTSGlobals
+                    (shoForward, shoDef) = showSHOs defs
+                    (funForwards, funDefs) = cgObjs defs stgRTSGlobals
                  in header ++
-                    intercalate "\n" forwards ++ "\n" ++
+                    intercalate "\n" funForwards ++ "\n" ++
                     infotab ++ "\n" ++
-                    sho ++ "\n" ++
-                    intercalate "\n\n" fundefs ++
+                    shoForward ++ "\n" ++
+                    shoDef ++ "\n" ++
+                    intercalate "\n\n" funDefs ++
                     footer
                    

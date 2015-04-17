@@ -59,4 +59,21 @@ Obj sho_stg_case_not_exhaustive = {
   .infoPtr = &it_stg_case_not_exhaustive,
 };
 
+// BLACKHOLE = THUNK();
+DEFUN1(bhl_error, self) {
+  fprintf(stderr, "bhl_error!\n");
+  exit(0);
+  ENDFUN;
+}
+InfoTab it_bhl_error = {
+  .name = "bhl_error",
+  .entryCode = &bhl_error,
+  .objType = THUNK,
+  .fvCount = 0,
+};
+Obj sho_bhl_error = {
+  .objType = THUNK,
+  .infoPtr = &it_bhl_error,
+};
+
 

@@ -1,11 +1,26 @@
 
-main = THUNK(multInt three four);
+main = THUNK(main1);
 
--- error = ERROR;
--- unit = CON(Unit);
+main1 = THUNK(multInt three four);
+
+## append.stg
+list1 = CON(Cons one nil);
+list2 = CON(Cons one list1);
+list3 = CON(Cons zero list2);
+-- list4 = THUNK(append list3 list3);
+-- list5 = THUNK(append list4 list4);
+-- mainappend = THUNK(let { f = THUNK(forcelist list5)} in seq f list5);
+
+
+
+
+## prelude.stg
+
+error = ERROR;
+unit = CON(Unit);
 -- true = CON(True);
 -- false = CON(False);
--- nil = CON(Nil);
+nil = CON(Nil);
 
 zero = CON(I 0);
 one = CON(I 1);
