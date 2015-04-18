@@ -7,7 +7,6 @@ data-files:
                 ADT.hs,
                 Analysis.hs,
                 AST.hs,
-                Boilerplate.hs,
                 CodeGen.hs,
                 ConMap.hs,
                 ConMap2.hs,

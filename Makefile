@@ -8,6 +8,7 @@ runtime: FORCE
 
 test: FORCE 
 	cd test && $(MAKE)
+	cd codegen && cabal test
 
 clean: FORCE
 	cd codegen && cabal clean

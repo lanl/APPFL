@@ -13,6 +13,11 @@ if [ "$#" -eq 0 ]; then
   exit 1
 fi
 
+if [ "${2::1}" == "-" ]; then
+  $STGC $1 $2
+  exit 0;
+fi
+
 $STGC $1 /tmp/$1.$$.c
 
 if [ "$#" -eq 1 ]; then

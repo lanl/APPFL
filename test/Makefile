@@ -1,5 +1,5 @@
 STGCC=../bin/stgcc
-BINS=add append apply bool docs eqintfalse eqinttrue fac let letrec main mult one seq 
+BINS=add append apply bool docs eqintfalse eqinttrue fac let letrec list main map mult one seq tree 
 
 all: 
 	@for bin in $(BINS); \
