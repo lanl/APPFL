@@ -1,3 +1,13 @@
+/*
+File included at top of every program generated
+by the stgc codegenerator. 
+
+Maybe stgc.h would be a better name.
+*/
+
+#ifndef stg_header_h
+#define stg_header_h
+
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -8,14 +18,21 @@
 #include "stgcmm.h"
 #include "stgutils.h"
 #include "gc.h"
-#include "stgmain.h"
+
+// every manifest heap object is introduced by a "let" so has
+// a name.  However, for a CON(C,...) we can use the same InfoTab
+// entry for each manifest occurrence, so we'll use the constructor
+// name rather than uniqued version of name of variable bound to
+// Also true for known functions?
+
+extern FnPtr start();
 
 // CON(False)
 InfoTab it_False =
   { .name               = "False",
     .entryCode          = &whiteHole,
     .objType            = CON,
-    .conFields.tag      = 100,
+    .conFields.tag      = 0, // must match what is in ConMap2.hs!
     .conFields.arity = 0,
   };
 
@@ -30,7 +47,7 @@ InfoTab it_True =
   { .name               = "True",
     .entryCode          = &whiteHole,
     .objType            = CON,
-    .conFields.tag      = 101,
+    .conFields.tag      = 1, // must match what is in ConMap2.hs!
     .conFields.arity = 0,
   };
 
@@ -76,4 +93,4 @@ Obj sho_bhl_error = {
   .infoPtr = &it_bhl_error,
 };
 
-
+#endif

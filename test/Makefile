@@ -1,12 +1,17 @@
 STGCC=../bin/stgcc
+BINS=add append apply bool docs eqintfalse eqinttrue fac let letrec main mult one seq 
 
-all: one mult
+all: 
+	@for bin in $(BINS); \
+	do \
+		$(STGCC) $${bin}.stg $${bin} || exit $$?; \
+	done 
 
-one: one.stg
-	$(STGCC) one.stg $@ 
-
-mult: mult.stg
-	$(STGCC) mult.stg $@ 
+run:
+	@for bin in $(BINS); \
+	do \
+		./$${bin} || exit $$?; \
+	done 
 
 clean:
-	rm -f one mult 
+	rm -f $(BINS)

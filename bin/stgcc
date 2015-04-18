@@ -9,15 +9,15 @@ RUNTIMEDIR=$DIR/../runtime
 FLAGS="-std=gnu99 -L$RUNTIMEDIR -I$RUNTIMEDIR -lruntime"
 
 if [ "$#" -eq 0 ]; then
-  echo "usage $0 infile [outfile]"
+  echo "usage: $0 infile [outfile]"
   exit 1
 fi
 
-$STGC $1 /tmp/stg.$$.c
+$STGC $1 /tmp/$1.$$.c
 
 if [ "$#" -eq 1 ]; then
-  gcc /tmp/stg.$$.c $FLAGS
+  gcc /tmp/$1.$$.c $FLAGS
 else
-  gcc /tmp/stg.$$.c -o $2 $FLAGS
+  gcc /tmp/$1.$$.c -o $2 $FLAGS
 
 fi

@@ -197,7 +197,7 @@ cge env (EPrimop it op as) =
                        Padd -> " + "
                        Psub -> " - "
                        Pmul -> " * "
-                       Pieq -> " - "
+                       Pieq -> " == "
                      ++ cgUBa env (as !! 1) ++ ";\n"
                  else case op of
                    PintToBool ->
