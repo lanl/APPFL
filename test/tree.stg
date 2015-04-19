@@ -1,9 +1,10 @@
-one = CON(I 1);
-two = CON(I 2);
-
 leaf = CON(Leaf);    -- just out of the blue
 
 branch = FUN(l r -> let { result = CON(Branch l r) } in result);
 
-main = THUNK(branch one two)
+output = THUNK(branch one two);
 
+-- test left
+left = FUN(xs -> case xs of {Branch l r -> l});
+l = THUNK(left output);
+main = THUNK(eqInt l one):

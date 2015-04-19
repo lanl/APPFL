@@ -1,11 +1,12 @@
-STGCC=../bin/stgcc
-BINS=add append apply bool docs eqintfalse eqinttrue fac let letrec list main map mult one seq tree 
+STGCC=../driver/stgcc
+BINS=add append apply bool docs eqintfalse eqinttrue fac let letrec list map mult one seq tree 
 
 all: 
 	@for bin in $(BINS); \
 	do \
 		$(STGCC) $${bin}.stg $${bin} || exit $$?; \
 	done 
+	$(STGCC) main.stg main -no-prelude
 
 run:
 	@for bin in $(BINS); \
@@ -14,4 +15,4 @@ run:
 	done 
 
 clean:
-	rm -f $(BINS)
+	rm -f main $(BINS)

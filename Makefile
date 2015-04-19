@@ -1,3 +1,6 @@
+build_dir := $(CURDIR)/build
+test_dir := $(CURDIR)/test
+
 all: codegen runtime
 
 codegen: FORCE
@@ -10,10 +13,16 @@ test: FORCE
 	cd test && $(MAKE)
 	cd codegen && cabal test
 
+ctest: FORCE
+	@((test -d $(build_dir)) || (mkdir $(build_dir)))
+	@echo "*** Creating cmake build directory: $(build_dir)"
+	@(cd $(build_dir); cmake $(cmake_flags) $(test_dir))
+	cd $(build_dir) && $(MAKE) test
+
 clean: FORCE
 	cd codegen && cabal clean
 	cd runtime && $(MAKE) clean
 	cd test && $(MAKE) clean
-
+	rm -rf $(build_dir)
 
 FORCE:

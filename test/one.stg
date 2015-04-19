@@ -1,1 +1,3 @@
-one = CON(I 1); main = THUNK(one);
+output = THUNK(one);
+
+main = THUNK(eqInt output one);

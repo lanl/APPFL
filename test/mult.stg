@@ -1,10 +1,4 @@
-three = CON(I 3);
-four = CON(I 4);
+output = THUNK(multInt three four);
 
-main = THUNK(multInt three four);
-
-multInt = FUN(x y ->
-   case x of { 
-      I i -> case y of { 
-               I j -> case mult# i j of { 
-                         x -> let { result = CON (I x) } in result }}});
+result = CON(I 12);
+main = THUNK(eqInt output result);

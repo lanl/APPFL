@@ -1,6 +1,3 @@
-zero = CON(I 0);
-one = CON(I 1);
+output = THUNK(seq zero one);
 
-seq = FUN(x y -> case x of { z -> y });
-
-main = THUNK(seq zero one)
+main = THUNK(eqInt output one);

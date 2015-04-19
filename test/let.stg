@@ -1,1 +1,4 @@
-main = THUNK(let { result = CON (I 7) } in result)
+output = THUNK(let { result = CON (I 7) } in result);
+
+main = THUNK(eqInt output seven);
+
