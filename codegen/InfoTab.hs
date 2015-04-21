@@ -171,14 +171,16 @@ makeIT o@(FUN fvs vs e n) =
     Fun { arity = length vs,
           name = n,
           fvs = fvs,
-          entryCode = showITType o ++ "_" ++ n
+--          entryCode = showITType o ++ "_" ++ n
+          entryCode = "fun_" ++ n
         }
 
 makeIT o@(PAP fvs f as n) =
     Pap { args = as,
           name = n,
           fvs = fvs,
-          entryCode = showITType o ++ "_" ++ n
+--          entryCode = showITType o ++ "_" ++ n
+          entryCode = "fun_" ++ n
         }
 
 makeIT o@(CON fvs c as n) =
@@ -195,13 +197,15 @@ makeIT o@(CON fvs c as n) =
 makeIT o@(THUNK fvs e n) =
     Thunk { name = n,
             fvs = fvs,
-            entryCode = showITType o ++ "_" ++ n
+--            entryCode = showITType o ++ "_" ++ n
+            entryCode = "fun_" ++ n
           }
 
 makeIT o@(BLACKHOLE fvs n) =
     Blackhole { name = n,
                 fvs = fvs,
-                entryCode = showITType o ++ "_" ++ n
+--                entryCode = showITType o ++ "_" ++ n
+                entryCode = "fun_" ++ n
               }
 
 
@@ -212,12 +216,13 @@ showObjType Thunk {} = "THUNK"
 showObjType Blackhole {} = "BLACKHOLE"
 showObjType _ = error "bad ObjType"
 
-showITType FUN {} = "fun"
-showITType PAP {} = "pap"
-showITType CON {} = "con"
-showITType THUNK {} = "tnk"
-showITType BLACKHOLE {} = "bhl"
-showITTType _ = error "bad ITType"
+showITType _ = "sho"
+-- showITType FUN {} = "ofun"
+-- showITType PAP {} = "opap"
+-- showITType CON {} = "ocon"
+-- showITType THUNK {} = "otnk"
+-- showITType BLACKHOLE {} = "obhl"
+-- showITTType _ = error "bad ITType"
 
 showITs os = concatMap showIT $ itsOf os
 

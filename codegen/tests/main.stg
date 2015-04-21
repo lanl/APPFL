@@ -1,8 +1,6 @@
 
 main = THUNK(main1);
 
-main1 = THUNK(multInt three four);
-
 ## append.stg
 list1 = CON(Cons one nil);
 list2 = CON(Cons one list1);

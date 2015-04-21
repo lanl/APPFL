@@ -3,12 +3,14 @@
 {-# LANGUAGE NamedFieldPuns       #-}
 
 module Analysis(
-  isSimple,
+--  isSimple,
   normalize,
 ) where
 
 import Parser
 
+{-
+-- isSimple means will not do heap allocation
 class IsSimple a where
   isSimple :: a -> Bool
 
@@ -24,6 +26,7 @@ instance IsSimple (Alts a) where
 
 instance IsSimple (Alt a) where
   isSimple alt = isSimple $ ae alt
+-}
 
 -- normalize could do many things, for right now it provides a default
 -- case alt if needed (in the absence of type information that means if
@@ -45,7 +48,7 @@ instance Normalize (Alts a) where
   normalize a@Alts{alts} = 
     -- if no ADef add one
     -- if ADef followed by ACons we could remove them
-    let alts' = if noADef alts then
+    let alts' = if not (areExhaustive alts) then
                     alts ++ 
                    [ADef{amd = error "altsmd not initialized",
                          av = "x", 
@@ -67,8 +70,12 @@ instance Normalize (Obj a) where
 instance Normalize [Obj a] where
   normalize = map normalize
 
-noADef = all notADef
-         where
-           notADef ADef{} = False
-           notADef _      = True
+areExhaustive = (any isConI) `pfOr` (any isADef)
 
+isADef ADef{} = True
+isADef _      = False
+
+isConI ACon{ac} | ac == "I" = True
+isConI _                    = False
+
+pfOr p1 p2 x = (p1 x) || (p2 x)

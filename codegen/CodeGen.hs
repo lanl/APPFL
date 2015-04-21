@@ -40,6 +40,7 @@ import AST
 import InfoTab
 import HeapObj
 import State
+import Analysis
 
 import Prelude
 import Data.List(intercalate,nub)
@@ -52,8 +53,8 @@ data RVal = SHO           -- static heap obj
           | FP            -- formal param, use name as is
           | CC String Int -- named case continuation
           | FV Int        -- free var, self->payload[Int]
-          | AC Int        -- alt con, use name as is?
-          | AD            -- alt def, use name as is?
+          | AC Var Int    -- alt con
+          | AD Var        -- alt def
             deriving(Eq,Show)
 
 type Env = [(String, RVal)]
@@ -71,8 +72,8 @@ lu v ((v',k):_) n | v == v' =
       FP      -> v
       CC cc i -> cc ++ ".payload[" ++ show i ++ "]"
       FV i    -> "self.op->payload[" ++ show i ++ "]"
-      AC i    -> "scrutinee.op->payload[" ++ show i ++ "]"
-      AD      -> "scrutinee"
+      AC v i  -> v ++ ".payload[" ++ show i ++ "]"
+      AD v    -> v ++ ".payload[0]"
 
 lu v ((_, HO size) : xs) n =
     lu v xs (n+size)
@@ -135,11 +136,12 @@ cgo env o@(FUN it vs e name) =
                  zip vs (repeat FP) ++
                  env
       (inline, funcs) <- cge env' e
-      let name' = showITType o ++ "_" ++ name
-      let forward = "FnPtr " ++ name' ++ "();"
+--      let name' = showITType o ++ "_" ++ name
+--      let forward = "FnPtr " ++ name' ++ "();"
+      let forward = "FnPtr fun_" ++ name ++ "();"
       let func =
-            "DEFUN" ++ show (length vs + 1) ++ "(" ++ 
-            name' ++ ", self, " ++
+            "DEFUN" ++ show (length vs + 1) ++ "(fun_" ++ 
+            name ++ ", self, " ++
             intercalate ", " vs ++
             ") {\n" ++
             "  fprintf(stderr, \"" ++ name ++ " here\\n\");\n" ++
@@ -158,10 +160,11 @@ cgo env o@(THUNK it e name) =
     do 
       let env' = zip (fvs it) (map FV [0..]) ++ env
       (inline, funcs) <- cge env' e
-      let name' = showITType o ++ "_" ++ name
-      let forward = "FnPtr " ++ name' ++ "();"
+--      let name' = showITType o ++ "_" ++ name
+--      let forward = "FnPtr " ++ name' ++ "();"
+      let forward = "FnPtr fun_" ++ name ++ "();"
       let func =
-            "DEFUN1(" ++ name' ++ ", self) {\n" ++
+            "DEFUN1(" ++ name ++ ", self) {\n" ++
             "  fprintf(stderr, \"" ++ name ++ " here\\n\");\n" ++
             "  stgThunk(self);\n" ++
             indent 2 inline ++
@@ -215,10 +218,10 @@ cge env (ELet it os e) =
       (einline, efunc) <- cge env' e
       return (concat buildcodes ++ einline,
               ofunc ++ efunc)
-        
+
 cge env (ECase _ e a@(Alts italts alts name)) = 
     do (ecode, efunc) <- cge env e
-       afunc <- cgalts env a
+       (acode, afunc) <- cgalts env a
        let pre = "stgPushCont( (Cont)\n" ++
                  "  { .retAddr = &" ++ name ++ ",\n" ++
                  (if fvs italts == [] then
@@ -227,14 +230,12 @@ cge env (ECase _ e a@(Alts italts alts name)) =
                     "    // load payload with FVs " ++ intercalate " " (fvs italts) ++ "\n") ++
                       indent 4 (loadPayloadFVs env (fvs italts)) ++
                  "  });\n"
-       return (pre ++ ecode, efunc ++ afunc)
+       return (pre ++ ecode ++ acode, efunc ++ afunc)
        
 -- CG Alts ************************************************************
 -- DEFUN0(alts1) {
 --   Cont cont = stgPopCont();
 --   PtrOrLiteral scrutinee = stgCurVal;
---   if (scrutinee.argType != HEAPOBJ ||
---       scrutinee.op->objType != CON ) goto casedefault;
 --   switch(scrutinee.op->infoPtr->conFields.tag) {
 --   case TagLeft:
 --     // variable saved in casecont
@@ -244,7 +245,6 @@ cge env (ECase _ e a@(Alts italts alts name)) =
 --     // from constructor
 --     stgCurVal = scrutinee.op->payload[0];
 --     STGRETURN0();
---   casedefault:
 --   default:
 --     stgCurVal = scrutinee;
 --     STGRETURN0();
@@ -252,53 +252,57 @@ cge env (ECase _ e a@(Alts italts alts name)) =
 --   ENDFUN;
 -- }
 
--- returns just function definitions
-cgalts :: [(Var, RVal)] -> (Alts InfoTab) -> State Int [(String,String)]
+-- ADef only or unary sum => no C switch
 cgalts env (Alts it alts name) = 
-    let altenv = zip (nub $ concatMap (fvs . amd) alts)
-                     [ CC "cont" i | i <- [0..] ]
+    let contName = "ccont_" ++ name
+        altenv = zip (fvs it) [ CC contName i | i <- [0..] ]
         env' = altenv ++ env
+        forward = "FnPtr " ++ name ++ "();"
     in do
-      let forward = "FnPtr " ++ name ++ "();"
-      codefuncs <- mapM (cgalt env') alts
+      let switch = length alts > 1
+      codefuncs <- mapM (cgalt env' switch contName) alts
       let (codes, funcss) = unzip codefuncs
-      let code = "DEFUN0("++ name ++ ") {\n" ++
-                 (if length (fvs it) > 0 then 
-                    "  Cont cont = "
-                  else "") ++      "stgPopCont();\n" ++
-                 "  PtrOrLiteral scrutinee = stgCurVal;\n" ++
-                 "  if (scrutinee.argType != HEAPOBJ ||\n" ++
-                 "      scrutinee.op->objType != CON ) goto casedefault;\n" ++
-                 "  switch(scrutinee.op->infoPtr->conFields.tag) {\n" ++
-                      indent 4 (concat codes) ++
-                 "  }\n" ++
-                 "  ENDFUN;\n" ++
-                 "}\n"
-      return $ (forward, code) : concat funcss
+      let fun = "DEFUN0("++ name ++ ") {\n" ++
+                -- actually need the ccont?
+                -- any fvs in the expressions on the rhs's?
+                (if (length $ nub $ concatMap (fvs . emd . ae) alts) > 0 then 
+                     "  Cont " ++ contName ++ " = "
+                 else "  ") ++                      "stgPopCont();\n" ++
+                (if switch then
+                   "  switch(stgCurVal.op->infoPtr->conFields.tag) {\n" ++
+                        indent 4 (concat codes) ++
+                   "  }\n" 
+                 else indent 2 $ concat codes) ++
+                "  ENDFUN;\n" ++
+                "}\n"
+      return ("", (forward, fun) : concat funcss)
 
-cgalt env (ACon it c vs e) =
-    let eenv = zip vs (map AC [0..])
+cgalt env switch contName (ACon it c vs e) =
+    let eenv = zip vs (map (AC contName) [0..])
         env' = eenv ++ env
     in do
       (inline, func) <- cge env' e
       let (arity, tag) = case Map.lookup c (conMap it) of
                            Nothing -> error "conMap lookup error"
                            Just x -> x
-      let code = "case " ++ show tag ++ ": {\n" ++
-                    indent 2 inline ++
-                 "  STGRETURN0();\n" ++
-                 "}\n"
+      let code = if switch then
+                     "case " ++ show tag ++ ": {\n" ++
+                        indent 2 inline ++
+                     "  STGRETURN0();\n" ++
+                     "}\n"
+                 else inline ++ "STGRETURN0();\n"
       return (code, func)
               
-cgalt env (ADef it v e) =
-    let env' = (v, AD) : env
+cgalt env switch contName (ADef it v e) =
+    let env' = (v, AD contName) : env
     in do
       (inline, func) <- cge env' e
-      let code = "casedefault:\n" ++
-                 "default: {\n" ++
-                    indent 2 inline ++
-                 "  STGRETURN0();\n" ++
-                 "}\n"
+      let code = if switch then
+                     "default: {\n" ++
+                        indent 2 inline ++
+                     "  STGRETURN0();\n" ++
+                     "}\n"
+                 else inline ++ "STGRETURN0();\n"
       return (code, func)
 
 

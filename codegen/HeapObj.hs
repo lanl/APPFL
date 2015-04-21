@@ -47,20 +47,20 @@ import Prelude
 -- HOs come from InfoTabs
 
 shoNames :: [Obj InfoTab] -> [String]
-shoNames = map (("sho_" ++) . name . omd)
+shoNames = map (\o -> showITType o ++ "_" ++ (name . omd) o)
 
 -- return list of forwards (static declarations) and (static) definitions
 showSHOs :: [Obj InfoTab] -> (String,String)
 showSHOs objs = 
-    let (forwards, defs) = unzip $ map (showSHO . omd) objs
+    let (forwards, defs) = unzip $ map showSHO objs
     in (concat forwards, concat defs)
     
 
 -- maybe should use "static" instead of "extern"
-showSHO it =
-    let base = "Obj sho_" ++ name it
+showSHO o =
+    let base = "Obj " ++ showITType o ++ "_" ++ (name . omd) o
     in ("extern " ++ base ++ ";\n", 
-                     base ++ " =\n" ++ showHO it)
+                     base ++ " =\n" ++ showHO (omd o))
 
 showHO it =
     "{\n" ++
