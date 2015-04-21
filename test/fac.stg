@@ -1,0 +1,12 @@
+fac = FUN (x -> 
+         case eqInt x zero of {
+            True -> one;
+            False -> let { s = THUNK(subInt x one);
+                           rec = THUNK(fac s) }
+                     in multInt x rec
+         });
+
+output = THUNK (fac seven);
+
+result = CON(I 5040);
+main = THUNK(eqInt output result);

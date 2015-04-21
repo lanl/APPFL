@@ -1,4 +1,5 @@
 -- stgc "tests/Prelude.stg"
+import Parser
 import Driver
 
 import Data.List
@@ -21,9 +22,10 @@ stgcout infile outfile =
     ifd <- openFile infile ReadMode
     source <- hGetContents ifd
     let prog = codegener source
-    if outfile == "-" then
-      writeFile (infile++".c") prog
-      else writeFile outfile prog
+    case outfile of
+      "-"            -> writeFile (infile++".c") (codegener source)
+      "-dump-parse"  -> writeFile (infile++".dump") (show $ parser source)
+      _              -> writeFile outfile (codegener source)
 
 main :: IO ()
 main = 

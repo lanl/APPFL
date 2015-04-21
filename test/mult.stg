@@ -1,1 +1,4 @@
-../codegen/tests/main.stg
+output = THUNK(multInt three four);
+
+result = CON(I 12);
+main = THUNK(eqInt output result);

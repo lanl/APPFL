@@ -1,0 +1,36 @@
+project(stgc_test)
+  
+  cmake_minimum_required(VERSION 2.8.12.2)
+  set(DART_TESTING_TIMEOUT "5" CACHE STRING "" FORCE)
+  include(CTest)
+
+  set(STGCC "../driver/stgcc")
+  set(SRC_DIR ${CMAKE_SOURCE_DIR})
+  set(BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR})
+
+  file(GLOB ALL_SRCS *.stg)
+
+  foreach (test ${ALL_SRCS})
+    get_filename_component(tname ${test} NAME_WE) 
+    if(tname STREQUAL "main")
+       set(bname build_${tname})
+       add_test(${bname} ${STGCC} ${SRC_DIR}/${tname}.stg ${tname} -no-prelude)
+       add_test(${tname} ${BINARY_DIR}/${tname} 2>&1)
+       set_tests_properties(${tname} PROPERTIES DEPENDS ${bname})
+    elseif(tname STREQUAL "eqintfalse")
+       set(bname build_${tname})
+       add_test(${bname} ${STGCC} ${SRC_DIR}/${tname}.stg ${tname})
+       add_test(${tname} ${BINARY_DIR}/${tname} 2>&1)
+       set_tests_properties(${tname} PROPERTIES DEPENDS ${bname})
+       set_tests_properties(${tname} PROPERTIES PASS_REGULAR_EXPRESSION
+       "The answer is[\r\n\t ]*HEAPOBJ [0-9abcedfx]* CON CON False tag, arity 0, 0")
+    else()
+       set(bname build_${tname})
+       add_test(${bname} ${STGCC} ${SRC_DIR}/${tname}.stg ${tname})
+       add_test(${tname} ${BINARY_DIR}/${tname} 2>&1)
+       set_tests_properties(${tname} PROPERTIES DEPENDS ${bname})
+       set_tests_properties(${tname} PROPERTIES PASS_REGULAR_EXPRESSION
+       "The answer is[\r\n\t ]*HEAPOBJ [0-9abcedfx]* CON CON [tT]rue tag, arity 1, 0")
+    endif()
+  endforeach(test)
+

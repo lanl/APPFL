@@ -1,11 +1,11 @@
 CC=gcc
 CFLAGS=-c -std=gnu99 -I/usr/include/malloc
 LDFLAGS=
-HEADERS=stg.h cmm.h stgmain.h stgcmm.h stgutils.h gc.h
+HEADERS=stg.h cmm.h stgcmm.h stgutils.h gc.h
 SOURCES=stg.c cmm.c stgcmm.c stgutils.c gc.c
 OBJECTS=$(SOURCES:.c=.o)
 LIB=libruntime.a
-ALL=$(LIB) one mymain
+ALL=$(LIB) main mymain
 
 UNAME := $(shell uname)
 ifeq ($(UNAME), Linux)
@@ -14,14 +14,13 @@ else
 CFLAGS+=-Wno-unused-const-variable 
 endif
 
-
 all: $(ALL) 
 
 $(LIB) : $(OBJECTS)
 	ar -rcs $(LIB) $(OBJECTS)
 
-one: one.o $(LIB) stg_header.h
-	$(CC) $(LDFLAGS) $(OBJECTS) one.o -o $@ -L. -lruntime
+main: main.o $(LIB) predefs.o predefs.h stg_header.h
+	$(CC) $(LDFLAGS) $(OBJECTS) main.o predefs.o -o $@ -L. -lruntime
 
 mymain: userprog.o $(LIB) stg_header.h
 	$(CC) $(LDFLAGS) $(OBJECTS) userprog.o -o $@ -L. -lruntime

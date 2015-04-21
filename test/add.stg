@@ -1,0 +1,3 @@
+output = THUNK(plusInt three four);
+
+main = THUNK(eqInt output seven);

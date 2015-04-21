@@ -7,7 +7,7 @@ InfoTab it_one =
     .entryCode           = &stg_constructorcall,
     .objType             = CON,
     .conFields.arity     = 1,
-    .conFields.tag       = 0,
+    .conFields.tag       = 2,
     .conFields.conName   = "I",
   };
 InfoTab it_main = 
@@ -16,6 +16,9 @@ InfoTab it_main =
     .entryCode           = &tnk_main,
     .objType             = THUNK,
   };
+
+extern Obj sho_one;
+extern Obj sho_main;
 
 Obj sho_one =
 {
@@ -39,7 +42,8 @@ void registerSHOs() {
 
 
 DEFUN1(tnk_main, self) {
-  fprintf(stderr, "main here\n");  stgThunk(self);
+  fprintf(stderr, "main here\n");
+  stgThunk(self);
   stgCurVal = HOTOPL(&sho_one);
   STGEVAL(stgCurVal);
   STGRETURN0();

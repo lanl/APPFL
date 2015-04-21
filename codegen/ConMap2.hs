@@ -14,9 +14,14 @@ import Parser
 import InfoTab
 
 type ConMap = Map.Map Con (Int, Int)
+
+-- these tags must match what is in stg_header.h
+initConMap :: ConMap
+initConMap = Map.insert "True" (0,1) 
+            $ Map.insert "False" (0,0) Map.empty
  
 setConMap objs =
-    let (objs', (_ , conmap)) = runState (build objs) (conmap, Map.empty)
+    let (objs', (_ , conmap)) = runState (build objs) (conmap, initConMap)
     in objs'
 
 insert c arity cmap =

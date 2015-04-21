@@ -1,0 +1,6 @@
+list1 = CON(Cons zero nil);
+output = CON(Cons one list1);
+
+-- test head
+hout = THUNK(head output);
+main = THUNK(eqInt hout one);
