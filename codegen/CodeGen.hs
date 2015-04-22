@@ -72,8 +72,8 @@ lu v ((v',k):_) n | v == v' =
       FP      -> v
       CC cc i -> cc ++ ".payload[" ++ show i ++ "]"
       FV i    -> "self.op->payload[" ++ show i ++ "]"
-      AC v i  -> v ++ ".payload[" ++ show i ++ "]"
-      AD v    -> v ++ ".payload[0]"
+      AC v i  -> v ++ "->payload[" ++ show i ++ "]"
+      AD v    -> v
 
 lu v ((_, HO size) : xs) n =
     lu v xs (n+size)
@@ -164,7 +164,7 @@ cgo env o@(THUNK it e name) =
 --      let forward = "FnPtr " ++ name' ++ "();"
       let forward = "FnPtr fun_" ++ name ++ "();"
       let func =
-            "DEFUN1(" ++ name ++ ", self) {\n" ++
+            "DEFUN1(fun_" ++ name ++ ", self) {\n" ++
             "  fprintf(stderr, \"" ++ name ++ " here\\n\");\n" ++
             "  stgThunk(self);\n" ++
             indent 2 inline ++
@@ -255,12 +255,13 @@ cge env (ECase _ e a@(Alts italts alts name)) =
 -- ADef only or unary sum => no C switch
 cgalts env (Alts it alts name) = 
     let contName = "ccont_" ++ name
+        scrutName = "scrut_" ++ name
         altenv = zip (fvs it) [ CC contName i | i <- [0..] ]
         env' = altenv ++ env
         forward = "FnPtr " ++ name ++ "();"
     in do
       let switch = length alts > 1
-      codefuncs <- mapM (cgalt env' switch contName) alts
+      codefuncs <- mapM (cgalt env' switch scrutName) alts
       let (codes, funcss) = unzip codefuncs
       let fun = "DEFUN0("++ name ++ ") {\n" ++
                 -- actually need the ccont?
@@ -268,6 +269,7 @@ cgalts env (Alts it alts name) =
                 (if (length $ nub $ concatMap (fvs . emd . ae) alts) > 0 then 
                      "  Cont " ++ contName ++ " = "
                  else "  ") ++                      "stgPopCont();\n" ++
+                "  PtrOrLiteral " ++ scrutName ++ " = stgCurVal;\n" ++
                 (if switch then
                    "  switch(stgCurVal.op->infoPtr->conFields.tag) {\n" ++
                         indent 4 (concat codes) ++
@@ -277,8 +279,8 @@ cgalts env (Alts it alts name) =
                 "}\n"
       return ("", (forward, fun) : concat funcss)
 
-cgalt env switch contName (ACon it c vs e) =
-    let eenv = zip vs (map (AC contName) [0..])
+cgalt env switch scrutName (ACon it c vs e) =
+    let eenv = zip vs (map (AC $ scrutName ++ ".op") [0..])
         env' = eenv ++ env
     in do
       (inline, func) <- cge env' e
@@ -293,8 +295,8 @@ cgalt env switch contName (ACon it c vs e) =
                  else inline ++ "STGRETURN0();\n"
       return (code, func)
               
-cgalt env switch contName (ADef it v e) =
-    let env' = (v, AD contName) : env
+cgalt env switch scrutName (ADef it v e) =
+    let env' = (v, AD scrutName) : env
     in do
       (inline, func) <- cge env' e
       let code = if switch then
