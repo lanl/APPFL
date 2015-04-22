@@ -23,7 +23,7 @@ fi
 if [ "$3" == "-no-prelude" ]; then
   $STGC $1 /tmp/$NAME.$$.c
 else 
-  (echo "#include \"$DIR/Prelude.stg"\"; cat $1) \
+  (echo "#include \"$DIR/Prelude.stg"\"; sed 's/^#/--/g' $1) \
     | cpp -E -P > /tmp/$NAME.$$.stg
   $STGC /tmp/$NAME.$$.stg /tmp/$NAME.$$.c
 fi  

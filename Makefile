@@ -17,7 +17,7 @@ ctest: FORCE
 	@((test -d $(build_dir)) || (mkdir $(build_dir)))
 	@echo "*** Creating cmake build directory: $(build_dir)"
 	@(cd $(build_dir); cmake $(cmake_flags) $(test_dir))
-	cd $(build_dir) && $(MAKE) test
+	@(cd $(build_dir); ARGS="-D ExperimentalTest --no-compress-output" $(MAKE) test; cp Testing/`head -n 1 Testing/TAG`/Test.xml ./CTestResults.xml)
 
 clean: FORCE
 	cd codegen && cabal clean

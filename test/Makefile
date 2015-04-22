@@ -6,7 +6,6 @@ all:
 	do \
 		$(STGCC) $${bin}.stg $${bin} || exit $$?; \
 	done 
-	$(STGCC) main.stg main -no-prelude
 
 run:
 	@for bin in $(BINS); \
