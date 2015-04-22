@@ -11,7 +11,7 @@ module InfoTab(
 ) where
 
 import Prelude
-import Parser
+import AST
 import Data.List(nub,(\\))
 
 import Data.Map (Map)

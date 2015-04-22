@@ -43,7 +43,6 @@ test-suite test
                   SetFVs,
                   InfoTab,
                   ConMap,
-                  ConMap2,
                   CodeGen
   hs-source-dirs:  
                   .,tests

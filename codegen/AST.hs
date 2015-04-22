@@ -7,11 +7,6 @@ module AST (
   Alts(..),
   Obj(..),
   Primop(..),
-  TopDecl(..),
-  SimpleType(..),
-  Constr(..),
-  Type(..),
-  TyVar
 ) where
 
 {-  grammar
@@ -44,19 +39,6 @@ module AST (
        |  <var> "->" <expr>
 
 <arity> ::= <pos> | "_"
-
-
-Algebraic Datatypes:
-
-<topdecl> ::= data <simpletype> [= <constrs>]
-
-<simpletype> ::= <con> <tyvar_1> ... <tyvar_k>  (k >= 0)
- 
-<constrs> ::= <constr_1> "|" ... "|" <constr_n>     (n >= 1)
-
-<constr> ::= <con>  <atype_1> ... <atype_k>     (arity con = k, k >= 0)
-
-<atype> ::= <tyvar> | <con> | "(" <simpletype> ")"
 
 -}
 
@@ -95,20 +77,5 @@ data Primop = Padd
             | PintToBool
               deriving(Eq,Show)
               
-data TopDecl = TopDecl SimpleType [Constr]
-               deriving(Eq,Show)
-
-data SimpleType = SimpleType Con [TyVar]              
-                  deriving(Eq,Show)             
-
-data Constr = Constr Con [Type]
-              deriving(Eq,Show)
-
-data Type = TTyVar TyVar 
-          | TCon Con
-          | TSimpleType SimpleType
-            deriving(Eq,Show)
-
-type TyVar = String
        
              

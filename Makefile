@@ -9,8 +9,9 @@ codegen: FORCE
 runtime: FORCE 
 	cd runtime && $(MAKE)
 
-test: FORCE 
-	cd test && $(MAKE)
+test: tastytest ctest
+
+tastytest: FORCE 
 	cd codegen && cabal test
 
 ctest: FORCE

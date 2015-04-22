@@ -1,15 +1,32 @@
 
 module ADT (
+  ObjData(..),
+  TopDecl(..),
+  Constr(..),
+  Constrs,
+  TyVar,
   Polytype(..),
   Monotype(..),
   Boxedtype(..),
   Unboxedtype(..),
-  Ctors
 ) where
 
 import AST
 
 {-
+  Algebraic Datatypes:
+    
+  Ref : https://www.haskell.org/onlinereport/haskell2010/haskellch4.html#x10-680004.2
+    
+  <topdecl> ::= data <polytype> = <constrs>    
+    
+  <polytype> ::= <con> <tyvar_1> ... <tyvar_k>  (k >= 0) they call this "simpletype"
+     
+  <constrs> ::= <constr_1> "|" ... "|" <constr_n>     (n >= 1)
+    
+  <constr> ::= <con>  <monotype_1> ... <monotype_k>     (arity con = k, k >= 0)
+
+
   Ref:  Unboxed Values as First-Class Citizens
   
   Polytype      \sigma ::=  \forall \alpha . \sigma | \tau
@@ -26,6 +43,19 @@ import AST
 
 -}
 
+data ObjData = ODObj (Obj ())
+             | ODData Polytype
+
+data TopDecl = TopDecl Polytype Constrs
+               deriving(Eq,Show)
+
+data Constr = Constr Con [Monotype]
+              deriving(Eq,Show)
+
+type Constrs = [Constr]              
+
+type TyVar = String
+
 data Polytype = PPoly TyVar Polytype  -- curried forall
               | PMono Monotype
                 deriving(Eq,Show)
@@ -36,14 +66,12 @@ data Monotype = MBoxed Boxedtype
 
 data Boxedtype = BVar TyVar
                | BFun Monotype Monotype
-               | BTCon [Monotype] Ctors -- SPJ paper says [Boxedtype]--typo?
+               | BTCon Con [Monotype]  -- SPJ paper says [Boxedtype]--typo?
                  deriving(Eq,Show)
 
 data Unboxedtype = UInt
                  | UDouble
-                 | UTCon [Monotype] Ctors -- ditto
+                 | UTCon Con [Monotype]  -- ditto
                    deriving(Eq,Show)
 
-type Ctors = [(Con, [Monotype])]
 
--- translate TopDecl to Monotype (then close to Polytype?)

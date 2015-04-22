@@ -11,7 +11,7 @@ stgc arg =
   do
     ifd <- openFile arg ReadMode
     source <- hGetContents ifd
-    let prog = codegener source
+    let prog = codegener source True
     putStrLn prog
     hClose ifd
     writeFile "../runtime/userprog.c" prog
@@ -21,11 +21,10 @@ stgcout infile outfile =
   do
     ifd <- openFile infile ReadMode
     source <- hGetContents ifd
-    let prog = codegener source
     case outfile of
-      "-"            -> writeFile (infile++".c") (codegener source)
+      "-"            -> writeFile (infile++".c") (codegener source False)
       "-dump-parse"  -> writeFile (infile++".dump") (show $ parser source)
-      _              -> writeFile outfile (codegener source)
+      _              -> writeFile outfile (codegener source False)
 
 main :: IO ()
 main = 

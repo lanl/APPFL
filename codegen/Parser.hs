@@ -3,13 +3,6 @@
 {-# LANGUAGE NamedFieldPuns       #-}
 
 module Parser (
-  Var,
-  Con,
-  Atom(..),
-  Expr(..),
-  Alt(..),
-  Alts(..),
-  Obj(..),
   parser,
   showDefs,
 ) where
@@ -61,12 +54,8 @@ import Data.List
 --- layer for adding ADT defs
 --  obsoletes parser, defsp
 
-{-
-  
--}
 
-data ObjData = ODObj (Obj ())
-             | ODData Monotype
+
 
 parse :: [Char] -> [ObjData]
 parse inp = case defdatsp $ lexer inp of
@@ -102,8 +91,15 @@ condefp = error ""
 
 --- end layer for adding ADT defs
 
+undata :: ObjData -> Obj()
+undata (ODObj o) = o
+undata _ = error "ADT not finished"
+
 parser :: [Char] -> [Obj ()]
-parser inp = case (defsp $ lexer inp) of
+parser inp = map undata (parserd inp)
+
+parserd :: [Char] -> [ObjData]
+parserd inp = case (defdatsp $ lexer inp) of
                [] ->  error "parser failed"
                xs -> fst $ head xs
 
