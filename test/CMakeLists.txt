@@ -23,14 +23,13 @@ project(stgc_test)
        add_test(${tname} ${BINARY_DIR}/${tname} 2>&1)
        set_tests_properties(${tname} PROPERTIES DEPENDS ${bname})
        set_tests_properties(${tname} PROPERTIES PASS_REGULAR_EXPRESSION
-       "The answer is[\r\n\t ]*HEAPOBJ [0-9abcedfx]* CON CON False tag, arity 0, 0")
+       "The answer is[\r\n\t ]*HEAPOBJ [0-9abcedfx]* CON CON False tag 0 arity 0")
     else()
        set(bname build_${tname})
        add_test(${bname} ${STGCC} ${SRC_DIR}/${tname}.stg ${tname})
        add_test(${tname} ${BINARY_DIR}/${tname} 2>&1)
        set_tests_properties(${tname} PROPERTIES DEPENDS ${bname})
        set_tests_properties(${tname} PROPERTIES PASS_REGULAR_EXPRESSION
-       "The answer is[\r\n\t ]*HEAPOBJ [0-9abcedfx]* CON CON [tT]rue tag, arity 1, 0")
+       "The answer is[\r\n\t ]*HEAPOBJ [0-9abcedfx]* CON CON [tT]rue tag 1 arity 0")
     endif()
   endforeach(test)
-

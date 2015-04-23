@@ -193,13 +193,13 @@ cge env (EFCall it f as) =
     in return (inline, [])
 
 cge env (EPrimop it op as) = 
-    let inline = if op `elem` [Padd, Psub, Pmul, Pieq] then
+    let inline = if op `elem` [Piadd, Pisub, Pimul, Pieq] then
                      "stgCurVal.argType = INT;\n" ++
                      "stgCurVal.i = " ++ cgUBa env (as !! 0) ++
                      case op of
-                       Padd -> " + "
-                       Psub -> " - "
-                       Pmul -> " * "
+                       Piadd -> " + "
+                       Pisub -> " - "
+                       Pimul -> " * "
                        Pieq -> " == "
                      ++ cgUBa env (as !! 1) ++ ";\n"
                  else case op of
