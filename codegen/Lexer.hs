@@ -62,8 +62,7 @@ bigtab =
 
      ("plus#",     PO Piadd), 
      ("sub#",      PO Pisub),
-<<<<<<< HEAD
-     ("mul#",      PO Pimul),
+     ("mult#",     PO Pimul),
      ("div#",      PO Pidiv),
      ("mod#",      PO Pimod),
 
@@ -72,9 +71,6 @@ bigtab =
      ("min#",      PO Pimax),
      ("max#",      PO Pimin),
     
-=======
-     ("mult#",     PO Pimul),
->>>>>>> 5f4666606a67fcca7a2f9019ed9a6daecb87eee4
      ("eq#",       PO Pieq),
      ("ne#",       PO Pine),
      ("lt#",       PO Pilt),
