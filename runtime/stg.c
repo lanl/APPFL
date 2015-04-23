@@ -42,7 +42,34 @@ Obj* stgNewHeapObj() {
   return curp;
 }
 
+const int showDepthLimit = 100;
+int depth;
+Obj *stack[100];
+int stackp;
+
+
+void showStgObjRec(Obj *p);
+
 void showStgObj(Obj *p) {
+  depth = 0;
+  showStgObjRec(p);
+}
+
+void showStgObjRec(Obj *p) {
+
+  // depth check first
+  if (depth+1 >= showDepthLimit) {
+    fprintf(stderr, "******showStgObjRec depth exceeded\n");
+    return;
+  }
+  for (int i=0; i != depth; i++) {
+    if (p == stack[i]) {
+      fprintf(stderr, "   ***cycle\n");
+      return;
+    }
+  }
+  stack[depth++] = p;
+
   Obj o = *p;
   InfoTab it = *o.infoPtr;
   fprintf(stderr, "%s %s %s ", objTypeNames[o.objType], 
@@ -57,7 +84,7 @@ void showStgObj(Obj *p) {
     break;
 
   case CON:
-    fprintf(stderr,"tag, arity %d, %d\n", it.conFields.tag, it.conFields.arity );
+    fprintf(stderr,"tag %d arity %d\n", it.conFields.tag, it.conFields.arity );
     for (int i = 0; i != it.conFields.arity; i++)
       showStgVal(o.payload[i]);    
     break;
@@ -99,6 +126,7 @@ void showStgObj(Obj *p) {
     fprintf(stderr,"default in showStgObj!\n");
     exit(1);
   }
+  depth--;
 }
 
 void showStgVal(PtrOrLiteral v) {
@@ -111,7 +139,7 @@ void showStgVal(PtrOrLiteral v) {
     break;
   case HEAPOBJ:
     fprintf(stderr,"HEAPOBJ %p ", v.op);
-    showStgObj(v.op);
+    showStgObjRec(v.op);
     break;
   default:
     fprintf(stderr,"undefined PtrOrLiteral.tag!\n");
