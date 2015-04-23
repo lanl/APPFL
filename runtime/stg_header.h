@@ -19,6 +19,8 @@ Maybe stgc.h would be a better name.
 #include "stgutils.h"
 #include "gc.h"
 
+#include "cruntime.h"
+
 // every manifest heap object is introduced by a "let" so has
 // a name.  However, for a CON(C,...) we can use the same InfoTab
 // entry for each manifest occurrence, so we'll use the constructor
@@ -27,34 +29,35 @@ Maybe stgc.h would be a better name.
 
 extern FnPtr start();
 
-// CON(False)
-InfoTab it_False =
-  { .name               = "False",
-    .entryCode          = &whiteHole,
+// false = CON(False)
+InfoTab it_false =
+  { .name               = "false",
+    .entryCode          = &stg_constructorcall,
     .objType            = CON,
     .conFields.tag      = 0, // must match what is in ConMap2.hs!
-    .conFields.arity = 0,
+    .conFields.arity    = 0,
+    .conFields.conName  = "False"
   };
 
 // false = CON(False)
-Obj sho_False = 
+Obj sho_false = 
   { .objType = CON,
-    .infoPtr = &it_False,
-  };
-
-// CON(True)
-InfoTab it_True =
-  { .name               = "True",
-    .entryCode          = &whiteHole,
-    .objType            = CON,
-    .conFields.tag      = 1, // must match what is in ConMap2.hs!
-    .conFields.arity = 0,
+    .infoPtr = &it_false,
   };
 
 // true = CON(True)
-Obj sho_True = 
+InfoTab it_true =
+  { .name               = "true",
+    .entryCode          = &stg_constructorcall,
+    .objType            = CON,
+    .conFields.tag      = 1, // must match what is in ConMap2.hs!
+    .conFields.arity = 0,
+    .conFields.conName  = "True"
+  };
+
+Obj sho_true = 
   { .objType = CON,
-    .infoPtr = &it_True,
+    .infoPtr = &it_true,
   };
 
 // stg_case_not_exhaustive = FUN( x ->  );
@@ -77,20 +80,22 @@ Obj sho_stg_case_not_exhaustive = {
 };
 
 // BLACKHOLE = THUNK();
-DEFUN1(bhl_error, self) {
-  fprintf(stderr, "bhl_error!\n");
+DEFUN1(stg_error, self) {
+  fprintf(stderr, "fun_error (BLACKHOLE)!\n");
   exit(0);
   ENDFUN;
 }
-InfoTab it_bhl_error = {
-  .name = "bhl_error",
-  .entryCode = &bhl_error,
-  .objType = THUNK,
-  .fvCount = 0,
-};
-Obj sho_bhl_error = {
-  .objType = THUNK,
-  .infoPtr = &it_bhl_error,
-};
+
+// InfoTab it_error = {
+//   .name = "stg_error",
+//   .entryCode = &fun_error,
+//   .objType = THUNK,
+//   .fvCount = 0,
+// };
+// 
+// Obj sho_error = {
+//   .objType = THUNK,
+//   .infoPtr = &it_error,
+// };
 
 #endif

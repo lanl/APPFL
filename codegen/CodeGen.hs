@@ -193,21 +193,43 @@ cge env (EFCall it f as) =
     in return (inline, [])
 
 cge env (EPrimop it op as) = 
-    let inline = if op `elem` [Padd, Psub, Pmul, Pieq] then
-                     "stgCurVal.argType = INT;\n" ++
-                     "stgCurVal.i = " ++ cgUBa env (as !! 0) ++
-                     case op of
-                       Padd -> " + "
-                       Psub -> " - "
-                       Pmul -> " * "
-                       Pieq -> " == "
-                     ++ cgUBa env (as !! 1) ++ ";\n"
-                 else case op of
+    let arg0 = cgUBa env (as !! 0)
+        arg1 = cgUBa env (as !! 1)
+        inline = case op of
+                   Piadd -> cInfix " + "
+                   Pisub -> cInfix " - "
+                   Pimul -> cInfix " * "
+                   Pidiv -> cInfix " / "
+                   Pimod -> cInfix " % "
+                   Pieq ->  cInfix " == "
+                   Pine ->  cInfix " != "
+                   Pilt ->  cInfix " < "
+                   Pile ->  cInfix " <= "
+                   Pigt ->  cInfix " > "
+                   Pige ->  cInfix " >= "
+
+                   Pineg -> cPrefix " -"
+
+                   Pimin -> cBinFun "imin"
+                   Pimax -> cBinFun "imax"
+
                    PintToBool ->
                        "stgCurVal = " ++
-                       cgUBa env (as !! 0) ++ "?" ++ getEnvRef "True"  env ++
-                                              ":" ++ getEnvRef "False" env ++ ";\n"
+                       arg0 ++ "?" ++ getEnvRef "true"  env ++
+                               ":" ++ getEnvRef "false" env ++ ";\n"
+
+        cPrefix op =  "stgCurVal.argType = INT;\n" ++
+                     "stgCurVal.i = " ++ op ++ arg0 ++ ";\n"
+
+        cInfix op =  "stgCurVal.argType = INT;\n" ++
+                     "stgCurVal.i = " ++ arg0 ++ op ++ arg1 ++ ";\n"
+
+        cBinFun fun = "stgCurVal.argType = INT;\n" ++
+                      "stgCurVal.i = " ++ fun ++ "(" ++ arg0 ++ ", " ++ arg1 ++ ");\n"
+
+
     in return (inline, [])
+
 
 cge env (ELet it os e) =
     let names = map oname os

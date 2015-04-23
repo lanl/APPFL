@@ -44,7 +44,7 @@ do {						\
   }						\
   if (stgCurVal.argType == HEAPOBJ &&           \
       stgCurVal.op->objType == BLACKHOLE) {     \
-    fprintf(stderr, "infinite loop detected in start!\n"); \
+    fprintf(stderr, "infinite loop detected in STGEVAL!\n"); \
     exit(0);                                    \
   }                                             \
 } while (0)
