@@ -46,8 +46,8 @@ footer = "\nDEFUN0(start) {\n" ++
 -- need a better way, like reading from a .h file
 stgRTSGlobals :: [String]
 stgRTSGlobals = [ "stg_case_not_exhaustive",
-                  "True",  -- sho_True
-                  "False"] -- sho_False
+                  "true",  -- sho_True
+                  "false"] -- sho_False
 
 renamer :: String -> [Obj ()]
 renamer = renameObjs . parser

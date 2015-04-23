@@ -205,7 +205,7 @@ makeIT o@(BLACKHOLE fvs n) =
     Blackhole { name = n,
                 fvs = fvs,
 --                entryCode = showITType o ++ "_" ++ n
-                entryCode = "fun_" ++ n
+                entryCode = "stg_error"
               }
 
 
