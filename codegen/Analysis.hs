@@ -7,7 +7,7 @@ module Analysis(
   normalize,
 ) where
 
-import Parser
+import AST
 
 {-
 -- isSimple means will not do heap allocation

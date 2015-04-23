@@ -1,4 +1,4 @@
-error = ERROR;
+--error = ERROR;
 unit = CON(Unit);
 true = CON(True);
 false = CON(False);

@@ -1,6 +1,6 @@
 #include "stg_header.h"
 void registerSHOs();
-FnPtr tnk_main();
+FnPtr fun_main();
 InfoTab it_one = 
   { .name                = "one",
     .fvCount             = 0,
@@ -13,7 +13,7 @@ InfoTab it_one =
 InfoTab it_main = 
   { .name                = "main",
     .fvCount             = 0,
-    .entryCode           = &tnk_main,
+    .entryCode           = &fun_main,
     .objType             = THUNK,
   };
 
@@ -41,7 +41,7 @@ void registerSHOs() {
 }
 
 
-DEFUN1(tnk_main, self) {
+DEFUN1(fun_main, self) {
   fprintf(stderr, "main here\n");
   stgThunk(self);
   stgCurVal = HOTOPL(&sho_one);

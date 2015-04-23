@@ -7,7 +7,7 @@ module Rename (
 ) where
 
 import Prelude
-import Parser
+import AST
 import State
 import Data.Char (isDigit)
 

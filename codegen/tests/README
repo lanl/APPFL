@@ -7,25 +7,39 @@ then run:
 cabal test
 
 to clean and rerun:
-cabal test
+cabal clean
+
+If the install fails do not use -force-reinstalls instead:
+
+first try:
+
+cabal install tasty tasty-golden tasty-quickcheck tasty-hunit tasty-ant-xml  --constraint mtl==2.1.3.1
+
+if you see warnings about incompatable packages when running cabal test then try:
+
+as root:
+ghc-pkg unregister regex-compat
+ghc-pkg unregister regex-posix
+ghc-pkg unregister regex-base
+as user:
+rm -rf ~/.cabal
+rm -rf ~/.ghc
+cabal update
+cabal install tasty tasty-golden tasty-quickcheck tasty-hunit tasty-ant-xml  --constraint mtl==2.1.3.1
+
 
 Appendix:
 
-I now have a taste of what cabal-hell is about... This worked fine on 2 machines
-but then I got into a mess on the 3rd. After cabal clean I would have to 
-reconfigure. Using the ghc packages on ubuntu is a mistake, use the generic 
-linux binaries from haskell.org
+the ghc packages on ubuntu are out of date. Using them, after cabal clean
+I would have to reconfigure.  (I now have a taste of what cabal-hell is about...)
+Use the generic linux binaries from haskell.org
 
 Cleanup:
 apt-get remove haskell-platform ghc cabal-install alex happy libghc*
 rm -rf ~/.cabal
 rm -rf ~/.ghc
-cd / 
+cd /
 rm -rf /usr/lib/ghc/
 tar xf haskell-platform-2014.2.0.0-unknown-linux-x86_64.tar.gz
-/usr/local/haskell/ghc-7.8.3-x86_64/bin/activate-hs 
-cabal update
-cabal install tasty 
-cabal install tasty-golden tasty-quickcheck 
-cabal install tasty-hunit tasty-ant-xml
+/usr/local/haskell/ghc-7.8.3-x86_64/bin/activate-hs
 

@@ -10,7 +10,7 @@ module ConMap (
 import Control.Monad.State
 import qualified Data.Map as Map
 
-import Parser
+import AST
 
 type ConMap = Map.Map Con (Int, Int)
  

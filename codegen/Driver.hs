@@ -8,6 +8,7 @@ module Driver (
 ) where
 
 import           Analysis
+import           AST
 import           CodeGen
 import           ConMap2
 import           InfoTab
@@ -20,22 +21,23 @@ import           Data.List
 header :: String
 header = "#include \"stg_header.h\"\n"
         
-footer :: String
-footer = "\nDEFUN0(start) {\n" ++
-         "  registerSHOs();\n" ++
-         "  stgPushCont(showResultCont);\n" ++
-         "  STGEVAL(((PtrOrLiteral){.argType = HEAPOBJ, .op = &sho_main}));\n" ++
-         "  STGRETURN0();\n" ++
-         "  ENDFUN;\n" ++
-         "}\n\n" ++
-         "int main (int argc, char **argv) {\n" ++
-         "  initStg();\n" ++
-         "  initCmm();\n" ++
-         "  initGc();\n" ++
-         "  CALL0_0(start);\n" ++
-         "  showStgHeap();\n" ++
-         "  return 0;\n" ++
-         "}\n\n"
+footer :: Bool -> String
+footer v = 
+  let top = "\nDEFUN0(start) {\n" ++
+            "  registerSHOs();\n" ++
+            "  stgPushCont(showResultCont);\n" ++
+            "  STGEVAL(((PtrOrLiteral){.argType = HEAPOBJ, .op = &sho_main}));\n" ++
+            "  STGRETURN0();\n" ++
+            "  ENDFUN;\n" ++
+            "}\n\n" ++
+            "int main (int argc, char **argv) {\n" ++
+            "  initStg();\n" ++
+            "  initCmm();\n" ++
+            "  initGc();\n" ++
+            "  CALL0_0(start);\n"
+      bot = "  return 0;\n" ++ "}\n\n"
+  in if v then top ++ "  showStgHeap();\n" ++ bot else top ++ bot
+           
 
 -- nameDefs
 --  :: [([Char], Obj)] ->
@@ -66,16 +68,16 @@ infotaber inp = let defs = freevarer inp
 conmaper :: String -> [Obj InfoTab]
 conmaper = setConMap . infotaber
 
-codegener :: String -> String
-codegener inp = let defs = conmaper inp
-                    infotab = showITs defs
-                    (shoForward, shoDef) = showSHOs defs
-                    (funForwards, funDefs) = cgObjs defs stgRTSGlobals
+codegener :: String -> Bool -> String
+codegener inp v = let defs = conmaper inp
+                      infotab = showITs defs
+                      (shoForward, shoDef) = showSHOs defs
+                      (funForwards, funDefs) = cgObjs defs stgRTSGlobals
                  in header ++
                     intercalate "\n" funForwards ++ "\n" ++
                     infotab ++ "\n" ++
                     shoForward ++ "\n" ++
                     shoDef ++ "\n" ++
                     intercalate "\n\n" funDefs ++
-                    footer
+                    footer v
                    

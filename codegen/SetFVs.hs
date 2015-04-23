@@ -7,7 +7,7 @@ module SetFVs (
 ) where
 
 import Prelude
-import Parser
+import AST
 import Data.List
 
 -- *****************************************************
