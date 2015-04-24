@@ -13,7 +13,7 @@ typedef enum {          // superfluous, for sanity checking
 } ArgType;
 
 typedef enum {
-  // heap objects
+  // heap and stack objects
   FUN, 
   PAP, 
   CON,
@@ -71,6 +71,7 @@ struct _Obj {
 typedef struct {
   CmmFnPtr retAddr;         // no need for an infotab
   ObjType objType;          // for sanity checking
+  char ident[64];           // temporary, just for tracing
   PtrOrLiteral payload[32]; // fixed for now
 } Cont;
 
@@ -99,7 +100,7 @@ typedef struct {
 struct _InfoTab {
   char name[32];  // for debugging
   int fvCount;    // lexically determined
-  CmmFnPtr entryCode;
+  CmmFnPtr entryCode; 
   ObjType objType; // kind of object, tag for union
   LayoutInfo layout;
   union {

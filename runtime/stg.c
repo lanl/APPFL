@@ -12,6 +12,7 @@
 #include <malloc.h>  // for memalign()
 
 #include "stg.h"
+#include "cmm.h"
 
 extern void stgPushCont(Cont c);
 extern Cont stgPopCont();
@@ -42,20 +43,152 @@ Obj* stgNewHeapObj() {
   return curp;
 }
 
-const int showDepthLimit = 100;
+void showStgObjPretty(Obj *p);
+void showStgObjDebug(Obj *p);
+
+void showStgObj(Obj *p) {
+  showStgObjPretty(p);
+  // showStgObjDebug(Obj *p)
+}
+void showStgValDebug(PtrOrLiteral v);
+void showStgValPretty(PtrOrLiteral v);
+
+void showStgVal(PtrOrLiteral v) {
+  showStgValPretty(v);
+  // showStgValDebug(v);
+}
+
+
+// ****************************************************************
+
+const int showDepthLimit = 1000;
 int depth;
-Obj *stack[100];
+Obj *stack[1000];
 int stackp;
 
 
-void showStgObjRec(Obj *p);
-
-void showStgObj(Obj *p) {
+void showStgObjRecDebug(Obj *p);
+void showStgObjDebug(Obj *p) {
   depth = 0;
-  showStgObjRec(p);
+  showStgObjRecDebug(p);
 }
 
-void showStgObjRec(Obj *p) {
+void showStgObjRecPretty(Obj *p);
+void showStgObjPretty(Obj *p) {
+  depth = 0;
+  showStgObjRecPretty(p);
+  fprintf(stderr,"\n");
+}
+
+void showStgCont(Cont *c) {
+  switch (c->objType) {
+  case UPDCONT:
+    fprintf(stderr,"UPDCONT  %s\n", c->ident);
+    return;
+
+  case CASECONT:
+    fprintf(stderr,"CASECONT %s\n", c->ident);
+    return;
+
+  case CALLCONT:
+    fprintf(stderr,"CALLCONT %s\n", c->ident);
+    return;
+
+  case FUNCONT:
+    fprintf(stderr,"FUNCONT  %s\n", c->ident);
+    return;
+
+  default:
+    fprintf(stderr,"showStgCont default case!\n");
+    exit(0);
+  }
+}
+
+void showStgObjRecPretty(Obj *p) {
+
+  // depth check first
+  if (depth+1 >= showDepthLimit) {
+    fprintf(stderr, "******showStgObjRec depth exceeded\n");
+    return;
+  }
+  Obj o = *p;
+
+  InfoTab it = *o.infoPtr;
+
+  for (int i=0; i != depth; i++) {
+    if (p == stack[i]) {
+      fprintf(stderr, "((%s))", it.name);
+      return;
+    }
+  }
+  stack[depth++] = p;
+
+  switch (o.objType) {
+  case FUN:
+  case PAP:
+  case THUNK:
+  case BLACKHOLE:
+    if (strcmp(it.name, o.ident)) {
+      fprintf(stderr, "mismatch in infotab and object name!\n");
+      exit(0);
+    }
+    fprintf(stderr, "%s = <%s %s>", o.ident, 
+                                    objTypeNames[o.objType], 
+	                            objTypeNames[it.objType]);
+    break;
+
+  case CON:
+    if (strcmp(it.name, o.ident)) {
+      fprintf(stderr, "mismatch in infotab and object name!\n");
+      exit(0);
+    }
+    fprintf(stderr, "%s = %s", o.ident, it.conFields.conName );
+    int arity = it.conFields.arity;
+    if (arity > 0) {
+      if (arity > 1) fprintf(stderr, "(");
+      else fprintf(stderr, " ");
+      showStgValPretty(o.payload[0]);
+      for (int i = 1; i < arity; i++) {
+	fprintf(stderr, ", ");
+	showStgValPretty(o.payload[i]);
+      }
+      if (arity > 1) fprintf(stderr, ")");
+    }
+    break;
+
+  case INDIRECT:
+    showStgObjRecPretty(o.payload[0].op);
+    break;
+
+  case FORWARD:
+    break;
+
+  default:
+    fprintf(stderr,"default in showStgObj!\n");
+    exit(1);
+  }
+  depth--;
+}
+
+void showStgValPretty(PtrOrLiteral v) {
+  switch (v.argType) {
+  case INT:
+    fprintf(stderr,"%d", v.i);
+    break;
+  case DOUBLE:
+    fprintf(stderr,"%f", v.d);
+    break;
+  case HEAPOBJ:
+    showStgObjRecPretty(v.op);
+    break;
+  default:
+    fprintf(stderr,"undefined PtrOrLiteral.tag!\n");
+    exit(0);
+  }
+}
+
+
+void showStgObjRecDebug(Obj *p) {
 
   // depth check first
   if (depth+1 >= showDepthLimit) {
@@ -71,6 +204,7 @@ void showStgObjRec(Obj *p) {
   stack[depth++] = p;
 
   Obj o = *p;
+
   InfoTab it = *o.infoPtr;
   fprintf(stderr, "%s %s %s ", objTypeNames[o.objType], 
 	  objTypeNames[it.objType], it.name);
@@ -86,7 +220,7 @@ void showStgObjRec(Obj *p) {
   case CON:
     fprintf(stderr,"tag %d arity %d\n", it.conFields.tag, it.conFields.arity );
     for (int i = 0; i != it.conFields.arity; i++)
-      showStgVal(o.payload[i]);    
+      showStgValDebug(o.payload[i]);    
     break;
 
   case THUNK:
@@ -97,25 +231,9 @@ void showStgObjRec(Obj *p) {
     fprintf(stderr,"\n");
     break;
 
-  case UPDCONT:
-    fprintf(stderr,"\n");
-    break;
-
   case INDIRECT:
     fprintf(stderr,"INDIRECT to\n");
-    showStgObj(o.payload[0].op);
-    break;
-
-  case CASECONT:
-    fprintf(stderr,"\n");
-    break;
-
-  case CALLCONT:
-    fprintf(stderr,"\n");
-    break;
-
-  case FUNCONT:
-    fprintf(stderr,"\n");
+    showStgObjRecDebug(o.payload[0].op);
     break;
 
   case FORWARD:
@@ -129,7 +247,7 @@ void showStgObjRec(Obj *p) {
   depth--;
 }
 
-void showStgVal(PtrOrLiteral v) {
+void showStgValDebug(PtrOrLiteral v) {
   switch (v.argType) {
   case INT:
     fprintf(stderr,"INT %d\n", v.i);
@@ -139,7 +257,7 @@ void showStgVal(PtrOrLiteral v) {
     break;
   case HEAPOBJ:
     fprintf(stderr,"HEAPOBJ %p ", v.op);
-    showStgObjRec(v.op);
+    showStgObjRecDebug(v.op);
     break;
   default:
     fprintf(stderr,"undefined PtrOrLiteral.tag!\n");
@@ -151,6 +269,16 @@ void showStgVal(PtrOrLiteral v) {
 size_t stgStatObjCount;
 Obj * stgStatObj[100];
 
+// void showStgStack() {}
+void showStgStack() {
+  fprintf(stderr,"\nSTG stack:\n\n");
+  for (Cont *p = ((Cont *) stgSP);
+       p < (Cont *)((char *)stgStack + stgStackSize);
+       p++) {
+    showStgCont(p);
+  }
+}
+
 void showStgHeap() {
   fprintf(stderr,"\nSTG static objects:\n\n");
   for (int i = 0; i != stgStatObjCount; i++) {
@@ -161,18 +289,11 @@ void showStgHeap() {
   for (Obj *p = ((Obj *) stgHP) - 1;
        p >= (Obj *)stgHeap;
        p--) {showStgObj(p); fprintf(stderr,"\n");}
+  showStgStack();
 }
 
 const size_t stgHeapSize  = (size_t)4*(size_t)(1024*1024*1024);
 const size_t stgStackSize  = (size_t)4*(size_t)(1024*1024*1024);
-
-void showStgStack() {}
-// void showStgStack() {
-//   fprintf(stderr,"\nSTG stack:\n\n");
-//   for (Obj *p = ((Obj *) stgSP);
-//        p < (Obj *)((char *)stgStack + stgStackSize);
-//        p++) showStgObj(p);
-// }
 
 void initStg() {
   stgHeap =
