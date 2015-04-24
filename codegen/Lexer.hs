@@ -31,6 +31,7 @@ data Symbol = SymArrow
 
 data Token = Number Int 
            | Ident String
+           | UBIdent String -- unboxed 
            | KW Keyword
            | Ctor String
            | UBCtor String -- unboxed 
@@ -100,12 +101,15 @@ trans (ScanIdent, str) =
       Just o -> o
       Nothing ->
           if isUpper (head str) then
-              if tail str == "#" then
+              if last str == '#' then
                   UBCtor str
               else 
                   Ctor str
           else if isLower (head str) then
-                   Ident str
+              if last str == '#' then
+                  UBIdent str
+              else
+                  Ident str
                else error $ "trans:  what is \"" ++ str ++ "\""
                
 trans (ScanJunk, str) = error $ "trans: junk \"" ++ str ++ "\""

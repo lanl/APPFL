@@ -2,7 +2,11 @@
 module ADT (
   ObjData(..),
   TyCon(..),
+  BoxedTyCon(..),
+  UnboxedTyCon(..),
   DataCon(..),
+  BoxedDataCon(..),
+  UnboxedDataCon(..),
   TyVar,
   Polytype(..),
   Monotype(..),
@@ -37,13 +41,27 @@ import AST
 
 data ObjData = ODObj (Obj ())
              | ODData TyCon
-             deriving(Eq,Show)
-
-data TyCon = TyCon Con [TyVar] [DataCon]
                deriving(Eq,Show)
 
-data DataCon = DataCon Con [Monotype]
-              deriving(Eq,Show)
+data TyCon = TyBoxed BoxedTyCon
+           | TyUnboxed UnboxedTyCon
+             deriving(Eq,Show)
+           
+data BoxedTyCon = BoxedTyCon Con [TyVar] [DataCon]
+                  deriving(Eq,Show)
+               
+data UnboxedTyCon = UnboxedTyCon Con [TyVar] [DataCon]
+                    deriving(Eq,Show)
+
+data DataCon = DBoxed BoxedDataCon
+             | DUnboxed UnboxedDataCon
+               deriving(Eq,Show)
+
+data BoxedDataCon = BoxedDataCon Con [Monotype]
+                    deriving(Eq,Show)
+                    
+data UnboxedDataCon = UnboxedDataCon Con [Monotype]
+                      deriving(Eq,Show)
 
 type TyVar = String
 
@@ -60,8 +78,8 @@ data Boxedtype = BTyVar TyVar
                | BTyCon Con [Boxedtype]  
                  deriving(Eq,Show)
 
-data Unboxedtype = UInt
-                 | UDouble
+data Unboxedtype = UInt Int
+                 | UDouble Double
                  | UTyCon Con [Boxedtype] 
                    deriving(Eq,Show)
 
