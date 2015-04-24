@@ -113,47 +113,20 @@ instance BuildConMap [ObjData] where
   build [] = return ()
 
 instance BuildConMap ObjData where
-  build (ODData tycon) = insert tycon
+  build (ODData tycon) = build tycon
   build _ = return ()
 
-insert :: TyCon -> State TyConMap ()
-insert (TyBoxed (BoxedTyCon con tyvars _))
+instance BuildConMap TyCon where
+  build (TyBoxed (BoxedTyCon con tyvars _)) 
+    = insert con (length tyvars) True
+  build (TyUnboxed (UnboxedTyCon con tyvars _)) 
+    = insert con (length tyvars) False
+  
+insert :: String -> Int -> Bool -> State TyConMap ()
+insert con arity boxed
   = do
       cmap <- get
-      put $ Map.insert con (length tyvars, True) cmap
-insert (TyUnboxed (UnboxedTyCon con tyvars _)) 
- = do
-      cmap <- get
-      put $ Map.insert con (length tyvars, False) cmap
-
-{-
-pobjdata :: ObjData -> ObjData
-pobjdata (ODData tycon) = ODData (ptycon tycon)
-pobjdata x = x
-
-ptycon :: TyCon -> TyCon
-ptycon x = x
--}
+      put $ Map.insert con (arity, boxed) cmap
 
 
-{-           
-monop :: Parser Token Monotype
-monop = (boxedp `usingp` MBoxed) `altp` 
-        (unboxedp `usingp` MUnboxed)
-
-boxedp :: Parser Token Boxedtype
-boxedp = (varp `usingp` BTyVar)  `altp` bconstrp --`altp` bfunp
-
-bconstrp :: Parser Token Boxedtype
-bconstrp = conp `thenp` manyp boxedp `usingp` uncurry BTyCon
-
-bfunp :: Parser Token Boxedtype
-bfunp = error "function type not supported"
-
-unboxedp :: Parser Token Unboxedtype
-unboxedp = (nump `usingp` UInt) `altp` ubconstrp
-
-ubconstrp :: Parser Token Unboxedtype
-ubconstrp = conp `thenp` manyp boxedp `usingp` uncurry UTyCon
--}
 
