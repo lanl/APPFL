@@ -1,7 +1,7 @@
 --error = ERROR;
 unit = CON(Unit);
-true = CON(True);
-false = CON(False);
+--true = CON(True);
+--false = CON(False);
 nil = CON(Nil);
 zero = CON(I 0);
 one = CON(I 1);

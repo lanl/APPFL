@@ -1,9 +1,8 @@
 
 module ADT (
   ObjData(..),
-  TopDecl(..),
-  Constr(..),
-  Constrs,
+  TyCon(..),
+  DataCon(..),
   TyVar,
   Polytype(..),
   Monotype(..),
@@ -16,18 +15,11 @@ import AST
 {-
   Algebraic Datatypes:
     
-  Ref : https://www.haskell.org/onlinereport/haskell2010/haskellch4.html#x10-680004.2
-    
-  <topdecl> ::= data <polytype> = <constrs>    
-    
-  <polytype> ::= <con> <tyvar_1> ... <tyvar_k>  (k >= 0) they call this "simpletype"
-     
-  <constrs> ::= <constr_1> "|" ... "|" <constr_n>     (n >= 1)
-    
-  <constr> ::= <con>  <monotype_1> ... <monotype_k>     (arity con = k, k >= 0)
-
-
   Ref:  Unboxed Values as First-Class Citizens
+  
+  data Def:
+  data \Chi \alpha_1 .. \alpha_t =
+  c_1 \tau_11 .. \tau_1a_1 | ... | c_n \tau_n1 .. \tau_na_1
   
   Polytype      \sigma ::=  \forall \alpha . \sigma | \tau
 
@@ -44,15 +36,15 @@ import AST
 -}
 
 data ObjData = ODObj (Obj ())
-             | ODData Polytype
+             | ODData TyCon
+             deriving(Eq,Show)
 
-data TopDecl = TopDecl Polytype Constrs
+data TyCon = TyCon Con [TyVar] [DataCon]
                deriving(Eq,Show)
 
-data Constr = Constr Con [Monotype]
+data DataCon = DataCon Con [Monotype]
+--data DataCon = DataCon Con [Boxedtype]
               deriving(Eq,Show)
-
-type Constrs = [Constr]              
 
 type TyVar = String
 
@@ -62,16 +54,17 @@ data Polytype = PPoly TyVar Polytype  -- curried forall
 
 data Monotype = MBoxed Boxedtype
               | MUnboxed Unboxedtype
+              | MNil
                 deriving(Eq,Show)
 
-data Boxedtype = BVar TyVar
+data Boxedtype = BTyVar TyVar
                | BFun Monotype Monotype
-               | BTCon Con [Monotype]  -- SPJ paper says [Boxedtype]--typo?
+               | BTyCon Con [Boxedtype]  
                  deriving(Eq,Show)
 
 data Unboxedtype = UInt
                  | UDouble
-                 | UTCon Con [Monotype]  -- ditto
+                 | UTyCon Con [Boxedtype] 
                    deriving(Eq,Show)
 
 

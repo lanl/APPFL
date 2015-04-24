@@ -5,6 +5,7 @@
 module Parser (
   parser,
   showDefs,
+  parse -- debug
 ) where
 
 import AST
@@ -55,8 +56,6 @@ import Data.List
 --  obsoletes parser, defsp
 
 
-
-
 parse :: [Char] -> [ObjData]
 parse inp = case defdatsp $ lexer inp of
                [] ->  error "parser failed"
@@ -71,35 +70,53 @@ parse inp = case defdatsp $ lexer inp of
 
   <data> ::= "data" <con> <var>* "=" <condef> ("|" <condef>)*
 
-  <condef> ::= <con> (<con> | <var>)*
+  <condef> ::= <con> (<monotype>)*
 -}
 
+defdatsp :: Parser Token [ObjData]
 defdatsp = sepbyp defdatp (symkindp SymSemi)
 
+defdatp :: Parser Token ObjData
 defdatp = (defp `usingp` ODObj) `altp` (datap `usingp` ODData)
 
+datap :: Parser Token TyCon
 datap = kwkindp KWdata `xthenp`
         (conp `thenp`
          ((manyp varp) `thenp`
           (symkindp SymBind `xthenp`
            (sepbyp condefp (symkindp SymVert)))))
-         `usingp` \(t,(vs,defs)) -> mono t vs defs
+         `usingp` \(t,(vs,defs)) -> TyCon t vs defs
 
-mono x y z = error ""
 
-condefp = error ""
+condefp :: Parser Token DataCon
+condefp =  ((conp `thenp` manyp (boxedp `usingp` MBoxed))
+           `altp`
+           (ubconp `thenp` manyp (unboxedp `usingp` MUnboxed)))
+           `usingp` uncurry DataCon
+
+
+ubconp :: Parser Token String
+ubconp ((UBCtor c) : xs) = succeedp c xs
+ubconp _ = failp []
+
+boxedp :: Parser Token Boxedtype
+boxedp = (varp `usingp` BTyVar)  `altp` btyconp
+
+btyconp :: Parser Token Boxedtype
+btyconp = conp `thenp` manyp boxedp `usingp` uncurry BTyCon
+
+unboxedp :: Parser Token Unboxedtype
+unboxedp = ubtyconp
+
+ubtyconp :: Parser Token Unboxedtype
+ubtyconp = ubconp `thenp` manyp boxedp `usingp` uncurry UTyCon
+
 
 --- end layer for adding ADT defs
 
-undata :: ObjData -> Obj()
-undata (ODObj o) = o
-undata _ = error "ADT not finished"
 
 parser :: [Char] -> [Obj ()]
-parser inp = map undata (parserd inp)
-
-parserd :: [Char] -> [ObjData]
-parserd inp = case (defdatsp $ lexer inp) of
+parser inp = case (defsp $ lexer inp) of
                [] ->  error "parser failed"
                xs -> fst $ head xs
 

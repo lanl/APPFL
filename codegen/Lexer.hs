@@ -33,6 +33,7 @@ data Token = Number Int
            | Ident String
            | KW Keyword
            | Ctor String
+           | UBCtor String -- unboxed 
            | Obj Object
            | Sym Symbol
            | PO Primop
@@ -98,8 +99,11 @@ trans (ScanIdent, str) =
     case lookupassoc bigtab str of
       Just o -> o
       Nothing ->
-          if isUpper (head str) then 
-              Ctor str
+          if isUpper (head str) then
+              if tail str == "#" then
+                  UBCtor str
+              else 
+                  Ctor str
           else if isLower (head str) then
                    Ident str
                else error $ "trans:  what is \"" ++ str ++ "\""
