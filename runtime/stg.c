@@ -123,25 +123,28 @@ void showStgObjRecPretty(Obj *p) {
   }
   stack[depth++] = p;
 
+  if (o.objType != BLACKHOLE && 
+      o.objType != INDIRECT &&
+      o.objType != FORWARD &&
+      o.objType != it.objType) {
+    fprintf(stderr, "mismatch in infotab and object type!");
+    exit(0);
+  }
+  if (strcmp(it.name, o.ident)) {
+      fprintf(stderr, "mismatch in infotab and object name!\n");
+      exit(0);
+  }
+
+
   switch (o.objType) {
   case FUN:
   case PAP:
   case THUNK:
   case BLACKHOLE:
-    if (strcmp(it.name, o.ident)) {
-      fprintf(stderr, "mismatch in infotab and object name!\n");
-      exit(0);
-    }
-    fprintf(stderr, "%s = <%s %s>", o.ident, 
-                                    objTypeNames[o.objType], 
-	                            objTypeNames[it.objType]);
+    fprintf(stderr, "%s = <%s>", o.ident, objTypeNames[o.objType]);
     break;
 
   case CON:
-    if (strcmp(it.name, o.ident)) {
-      fprintf(stderr, "mismatch in infotab and object name!\n");
-      exit(0);
-    }
     fprintf(stderr, "%s = %s", o.ident, it.conFields.conName );
     int arity = it.conFields.arity;
     if (arity > 0) {
@@ -157,10 +160,12 @@ void showStgObjRecPretty(Obj *p) {
     break;
 
   case INDIRECT:
+    fprintf(stderr, "%s --> ", o.ident );
     showStgObjRecPretty(o.payload[0].op);
     break;
 
   case FORWARD:
+    fprintf(stderr, "???FORWARD???" );
     break;
 
   default:
