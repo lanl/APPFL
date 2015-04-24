@@ -1,3 +1,4 @@
+{-# LANGUAGE FlexibleInstances #-}
 
 module ADT (
   ObjData(..),
@@ -7,14 +8,22 @@ module ADT (
   DataCon(..),
   BoxedDataCon(..),
   UnboxedDataCon(..),
+  Simpletype(..),
   TyVar,
   Polytype(..),
   Monotype(..),
   Boxedtype(..),
   Unboxedtype(..),
+  addtymap,
 ) where
 
 import AST
+
+import Control.Monad.State
+import qualified Data.Map as Map
+
+-- TyCon name to arity, boxed/unboxed
+type TyConMap = Map.Map String (Int, Bool)
 
 {-
   Algebraic Datatypes:
@@ -39,10 +48,11 @@ import AST
 
 -}
 
+
 data ObjData = ODObj (Obj ())
              | ODData TyCon
                deriving(Eq,Show)
-
+ 
 data TyCon = TyBoxed BoxedTyCon
            | TyUnboxed UnboxedTyCon
              deriving(Eq,Show)
@@ -57,11 +67,18 @@ data DataCon = DBoxed BoxedDataCon
              | DUnboxed UnboxedDataCon
                deriving(Eq,Show)
 
-data BoxedDataCon = BoxedDataCon Con [Monotype]
+data BoxedDataCon = BoxedDataCon Con [Simpletype]
                     deriving(Eq,Show)
                     
-data UnboxedDataCon = UnboxedDataCon Con [Monotype]
+data UnboxedDataCon = UnboxedDataCon Con [Simpletype]
                       deriving(Eq,Show)
+                      
+data Simpletype = STyVar TyVar
+                | SInt Int
+                | SDouble Double
+                | SFun Simpletype Simpletype
+                | STyCon Con [Simpletype]
+                  deriving(Eq,Show)
 
 type TyVar = String
 
@@ -83,4 +100,60 @@ data Unboxedtype = UInt Int
                  | UTyCon Con [Boxedtype] 
                    deriving(Eq,Show)
 
+addtymap :: [ObjData] -> ([ObjData], TyConMap)
+addtymap inp = (inp, buildtymap inp)
+
+buildtymap :: [ObjData] -> TyConMap
+buildtymap objs = execState (build objs) Map.empty
+
+class BuildConMap t where build :: t -> State TyConMap ()
+
+instance BuildConMap [ObjData] where
+  build (o:os) =  build o >> build os 
+  build [] = return ()
+
+instance BuildConMap ObjData where
+  build (ODData tycon) = insert tycon
+  build _ = return ()
+
+insert :: TyCon -> State TyConMap ()
+insert (TyBoxed (BoxedTyCon con tyvars _))
+  = do
+      cmap <- get
+      put $ Map.insert con (length tyvars, True) cmap
+insert (TyUnboxed (UnboxedTyCon con tyvars _)) 
+ = do
+      cmap <- get
+      put $ Map.insert con (length tyvars, False) cmap
+
+{-
+pobjdata :: ObjData -> ObjData
+pobjdata (ODData tycon) = ODData (ptycon tycon)
+pobjdata x = x
+
+ptycon :: TyCon -> TyCon
+ptycon x = x
+-}
+
+
+{-           
+monop :: Parser Token Monotype
+monop = (boxedp `usingp` MBoxed) `altp` 
+        (unboxedp `usingp` MUnboxed)
+
+boxedp :: Parser Token Boxedtype
+boxedp = (varp `usingp` BTyVar)  `altp` bconstrp --`altp` bfunp
+
+bconstrp :: Parser Token Boxedtype
+bconstrp = conp `thenp` manyp boxedp `usingp` uncurry BTyCon
+
+bfunp :: Parser Token Boxedtype
+bfunp = error "function type not supported"
+
+unboxedp :: Parser Token Unboxedtype
+unboxedp = (nump `usingp` UInt) `altp` ubconstrp
+
+ubconstrp :: Parser Token Unboxedtype
+ubconstrp = conp `thenp` manyp boxedp `usingp` uncurry UTyCon
+-}
 

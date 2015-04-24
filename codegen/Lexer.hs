@@ -15,6 +15,7 @@ data Keyword = KWlet
              | KWcase 
              | KWof 
              | KWdata
+             | KWunboxed
                deriving(Eq,Show)
 
 data Object = OFUN | OPAP | OCON | OTHUNK | OBLACKHOLE deriving(Eq,Show)
@@ -26,15 +27,13 @@ data Symbol = SymArrow
             | SymLBrace 
             | SymRBrace 
             | SymSemi
-            | SymVert
+            | SymPipe
               deriving (Eq,Show)
 
 data Token = Number Int 
            | Ident String
-           | UBIdent String -- unboxed 
            | KW Keyword
            | Ctor String
-           | UBCtor String -- unboxed 
            | Obj Object
            | Sym Symbol
            | PO Primop
@@ -49,7 +48,7 @@ bigtab =
      ("{",         Sym SymLBrace),
      ("}",         Sym SymRBrace),
      (";",         Sym SymSemi),
-     ("|",         Sym SymVert),
+     ("|",         Sym SymPipe),
      ("FUN",       Obj OFUN),
      ("CON",       Obj OCON),
      ("PAP",       Obj OPAP),
@@ -61,6 +60,7 @@ bigtab =
      ("case",      KW KWcase), 
      ("of",        KW KWof),
      ("data",      KW KWdata),
+     ("unboxed",   KW KWunboxed),
 
      ("plus#",     PO Piadd), 
      ("sub#",      PO Pisub),
@@ -101,14 +101,8 @@ trans (ScanIdent, str) =
       Just o -> o
       Nothing ->
           if isUpper (head str) then
-              if last str == '#' then
-                  UBCtor str
-              else 
                   Ctor str
           else if isLower (head str) then
-              if last str == '#' then
-                  UBIdent str
-              else
                   Ident str
                else error $ "trans:  what is \"" ++ str ++ "\""
                

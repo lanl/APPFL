@@ -5,7 +5,6 @@
 module Parser (
   parser,
   showDefs,
-  parse -- debug
 ) where
 
 import AST
@@ -13,6 +12,9 @@ import Lexer
 import ParseComb
 import ADT
 import Data.List
+
+import Control.Monad.State
+import qualified Data.Map as Map
 
 {-  grammar
 
@@ -55,12 +57,11 @@ import Data.List
 --- layer for adding ADT defs
 --  obsoletes parser, defsp
 
-
 parse :: [Char] -> [ObjData]
 parse inp = case defdatsp $ lexer inp of
                [] ->  error "parser failed"
                xs -> fst $ head xs
-
+               
 defdatsp :: Parser Token [ObjData]
 defdatsp = sepbyp defdatp (symkindp SymSemi)
 
@@ -73,20 +74,20 @@ tyconp = (btyconp `usingp` TyBoxed) `altp`
 
 btyconp :: Parser Token BoxedTyCon  
 btyconp = kwkindp KWdata `xthenp`
-        (bconp `thenp`
+        (conp `thenp`
          ((manyp varp) `thenp`
           (symkindp SymBind `xthenp`
            (sepbyp (bdataconp `usingp` DBoxed)  
-            (symkindp SymVert)))))
+            (symkindp SymPipe)))))
          `usingp` \(t,(vs,defs)) -> BoxedTyCon t vs defs
  
 ubtyconp :: Parser Token UnboxedTyCon        
-ubtyconp = kwkindp KWdata `xthenp`
-        (ubconp `thenp`
+ubtyconp = kwkindp KWdata `xthenp` kwkindp KWunboxed `xthenp`
+        (conp `thenp`
          ((manyp varp) `thenp`
           (symkindp SymBind `xthenp`
            (sepbyp (ubdataconp `usingp` DUnboxed) 
-            (symkindp SymVert)))))
+            (symkindp SymPipe)))))
          `usingp` \(t,(vs,defs)) -> UnboxedTyCon t vs defs
 
 dataconp :: Parser Token DataCon
@@ -94,33 +95,17 @@ dataconp = (bdataconp `usingp` DBoxed) `altp`
            (ubdataconp `usingp` DUnboxed)
 
 bdataconp :: Parser Token BoxedDataCon
-bdataconp =  (bconp `thenp` manyp monop)
+bdataconp =  (conp `thenp` manyp simplep)
              `usingp` uncurry BoxedDataCon
 
 ubdataconp :: Parser Token UnboxedDataCon
-ubdataconp =  (ubconp `thenp` manyp monop)
+ubdataconp =  (conp `thenp` manyp simplep)
               `usingp` uncurry UnboxedDataCon
-           
-monop :: Parser Token Monotype
-monop = (boxedp `usingp` MBoxed) `altp` 
-        (unboxedp `usingp` MUnboxed)
-
-boxedp :: Parser Token Boxedtype
-boxedp = (varp `usingp` BTyVar)  `altp` bconstrp --`altp` bfunp
-
-bconstrp :: Parser Token Boxedtype
-bconstrp = bconp `thenp` manyp boxedp `usingp` uncurry BTyCon
-
-bfunp :: Parser Token Boxedtype
-bfunp = error "function type not supported"
-
-unboxedp :: Parser Token Unboxedtype
-unboxedp = (nump `usingp` UInt) `altp` ubconstrp
-
-ubconstrp :: Parser Token Unboxedtype
-ubconstrp = ubconp `thenp` manyp boxedp `usingp` uncurry UTyCon
-
-
+              
+simplep :: Parser Token Simpletype
+simplep = (varp `usingp` STyVar) `altp`
+          (nump `usingp` SInt) `altp`
+          ((conp `thenp` manyp simplep) `usingp` uncurry STyCon)
 --- end layer for adding ADT defs
 
 
@@ -150,26 +135,12 @@ nump ((Number i) : xs) = succeedp i xs
 nump _ = failp []
 
 varp :: Parser Token String
-varp = bvarp `altp` ubvarp
-
-bvarp :: Parser Token String
-bvarp ((Ident s) : xs) = succeedp s xs
-bvarp _ = failp []
-
-ubvarp :: Parser Token String
-ubvarp ((UBIdent s) : xs) = succeedp s xs
-ubvarp _ = failp []
+varp ((Ident s) : xs) = succeedp s xs
+varp _ = failp []
 
 conp :: Parser Token String
-conp = bconp `altp` ubconp
-
-bconp :: Parser Token String
-bconp ((Ctor c) : xs) = succeedp c xs
-bconp _ = failp []
-
-ubconp :: Parser Token String
-ubconp ((UBCtor c) : xs) = succeedp c xs
-ubconp _ = failp []
+conp ((Ctor c) : xs) = succeedp c xs
+conp _ = failp []
 
 atomp :: Parser Token Atom
 atomp = (nump `usingp` Lit) `altp` (varp `usingp` Var)
