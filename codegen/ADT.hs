@@ -43,7 +43,6 @@ data TyCon = TyCon Con [TyVar] [DataCon]
                deriving(Eq,Show)
 
 data DataCon = DataCon Con [Monotype]
---data DataCon = DataCon Con [Boxedtype]
               deriving(Eq,Show)
 
 type TyVar = String
@@ -54,7 +53,6 @@ data Polytype = PPoly TyVar Polytype  -- curried forall
 
 data Monotype = MBoxed Boxedtype
               | MUnboxed Unboxedtype
-              | MNil
                 deriving(Eq,Show)
 
 data Boxedtype = BTyVar TyVar
