@@ -13,9 +13,6 @@ import ParseComb
 import ADT
 import Data.List
 
-import Control.Monad.State
-import qualified Data.Map as Map
-
 {-  grammar
 
 <var> :: C syntax, more or less

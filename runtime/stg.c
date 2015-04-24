@@ -127,12 +127,16 @@ void showStgObjRecPretty(Obj *p) {
       o.objType != INDIRECT &&
       o.objType != FORWARD &&
       o.objType != it.objType) {
-    fprintf(stderr, "mismatch in infotab and object type!");
-    exit(0);
+        fprintf(stderr, "mismatch in infotab and object type! %d != %d\n",
+        		o.objType, it.objType);
+        exit(0);
   }
   if (strcmp(it.name, o.ident)) {
-      fprintf(stderr, "mismatch in infotab and object name!\n");
-      exit(0);
+	  if (strcmp(it.name, "true") != 0 && strcmp(it.name, "false") != 0 ) {
+        fprintf(stderr, "mismatch in infotab and object name! %s != %s\n",
+        		it.name, o.ident);
+        exit(0);
+	  }
   }
 
 
