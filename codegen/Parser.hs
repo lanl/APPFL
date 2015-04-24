@@ -95,13 +95,16 @@ dataconp = (bdataconp `usingp` DBoxed) `altp`
            (ubdataconp `usingp` DUnboxed)
 
 bdataconp :: Parser Token BoxedDataCon
-bdataconp =  (conp `thenp` manyp simplep)
+bdataconp =  (conp `thenp` manyp monop)
              `usingp` uncurry BoxedDataCon
 
 ubdataconp :: Parser Token UnboxedDataCon
-ubdataconp =  (conp `thenp` manyp simplep)
+ubdataconp =  (conp `thenp` manyp monop)
               `usingp` uncurry UnboxedDataCon
-              
+         
+monop :: Parser Token Monotype
+monop = simplep `usingp` MSimple
+         
 simplep :: Parser Token Simpletype
 simplep = (varp `usingp` STyVar) `altp`
           (nump `usingp` SInt) `altp`

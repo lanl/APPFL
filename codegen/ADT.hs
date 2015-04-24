@@ -67,28 +67,31 @@ data DataCon = DBoxed BoxedDataCon
              | DUnboxed UnboxedDataCon
                deriving(Eq,Show)
 
-data BoxedDataCon = BoxedDataCon Con [Simpletype]
+data BoxedDataCon = BoxedDataCon Con [Monotype]
                     deriving(Eq,Show)
                     
-data UnboxedDataCon = UnboxedDataCon Con [Simpletype]
+data UnboxedDataCon = UnboxedDataCon Con [Monotype]
                       deriving(Eq,Show)
                       
-data Simpletype = STyVar TyVar
-                | SInt Int
-                | SDouble Double
-                | SFun Simpletype Simpletype
-                | STyCon Con [Simpletype]
-                  deriving(Eq,Show)
-
 type TyVar = String
 
 data Polytype = PPoly TyVar Polytype  -- curried forall
               | PMono Monotype
                 deriving(Eq,Show)
 
-data Monotype = MBoxed Boxedtype
+data Monotype = MSimple Simpletype
+              | MBoxed Boxedtype
               | MUnboxed Unboxedtype
                 deriving(Eq,Show)
+
+-- simpletype is used on first pass
+-- it is then converted to Boxed/Unboxed                 
+data Simpletype = STyVar TyVar
+                | SInt Int
+                | SDouble Double
+                | SFun Simpletype Simpletype
+                | STyCon Con [Simpletype]
+                  deriving(Eq,Show)
 
 data Boxedtype = BTyVar TyVar
                | BFun Monotype Monotype
