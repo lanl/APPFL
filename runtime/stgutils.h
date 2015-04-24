@@ -34,17 +34,20 @@ do {						\
   stgCurVal = e;				\
   derefStgCurVal();				\
   while (stgCurVal.argType == HEAPOBJ &&	\
-	 stgCurVal.op->objType == THUNK) {		\
-    stgPushCont((Cont){.retAddr = &stgCallCont,	\
-	              .objType = CALLCONT,		\
-	              .payload[0] = {0}});		\
+	 stgCurVal.op->objType == THUNK) {	\
+    Cont cont = {.retAddr = &stgCallCont,	\
+	              .objType = CALLCONT,	\
+                      .payload[0] = {0}};	\
+    strcpy(cont.ident, stgCurVal.op->ident);    \
+    stgPushCont(cont);			        \
     STGCALL1(stgCurVal.op->infoPtr->entryCode, stgCurVal); \
-    stgPopCont();					   \
+    stgPopCont();			        \
     derefStgCurVal();				\
   }						\
   if (stgCurVal.argType == HEAPOBJ &&           \
       stgCurVal.op->objType == BLACKHOLE) {     \
     fprintf(stderr, "infinite loop detected in STGEVAL!\n"); \
+    showStgHeap();			        \
     exit(0);                                    \
   }                                             \
 } while (0)

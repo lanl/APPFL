@@ -202,7 +202,7 @@ extern const size_t cmmStackSize;
 
 inline void _PUSH(PtrOrLiteral V) {
   fprintf(stderr, "_PUSH() ");			
-  showStgVal(V);				
+  showStgVal(V);   fprintf(stderr, "\n");
   cmmSP = ((char *)cmmSP) - sizeof(PtrOrLiteral);
   assert(cmmSP >= cmmStack);
   *((PtrOrLiteral *)cmmSP) = V;
@@ -223,7 +223,7 @@ inline PtrOrLiteral _POP() {
     assert((char *)cmmSP + sizeof(PtrOrLiteral) <=			\
 	   (char *)cmmStack + cmmStackSize);				\
     PtrOrLiteral v = *((PtrOrLiteral *)cmmSP);				\
-    showStgVal(v);							\
+    showStgVal(v); fprintf(stderr, "\n");				\
     cmmSP = (char *)cmmSP + sizeof(PtrOrLiteral);			\
     V = v;								\
   } while (0)

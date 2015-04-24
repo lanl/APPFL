@@ -281,6 +281,8 @@ DEFUN3(fun_seq, self, x, y) {
   fprintf(stderr, "seq here\n");
   stgPushCont( (Cont)
     { .retAddr = &alts_0,
+      .objType = CASECONT,
+      .ident = "CCont for alts_0",
       // load payload with FVs y
       .payload[0] = y,
     });
@@ -304,6 +306,8 @@ DEFUN3(fun_eqInt, self, x, y) {
   fprintf(stderr, "eqInt here\n");
   stgPushCont( (Cont)
     { .retAddr = &alts_1,
+      .objType = CASECONT,
+      .ident = "CCont for alts_1",
       // load payload with FVs y
       .payload[0] = y,
     });
@@ -318,6 +322,8 @@ DEFUN0(alts_1) {
   PtrOrLiteral scrut_alts_1 = stgCurVal;
   stgPushCont( (Cont)
     { .retAddr = &alts_2,
+      .objType = CASECONT,
+      .ident = "CCont for alts_2",
       // load payload with FVs i
       .payload[0] = scrut_alts_1.op->payload[0],
     });
@@ -333,6 +339,8 @@ DEFUN0(alts_2) {
   PtrOrLiteral scrut_alts_2 = stgCurVal;
   stgPushCont( (Cont)
     { .retAddr = &alts_3,
+      .objType = CASECONT,
+      .ident = "CCont for alts_3",
       // no FVs
         });
   stgCurVal.argType = INT;
@@ -355,6 +363,8 @@ DEFUN3(fun_subInt, self, x, y) {
   fprintf(stderr, "subInt here\n");
   stgPushCont( (Cont)
     { .retAddr = &alts_4,
+      .objType = CASECONT,
+      .ident = "CCont for alts_4",
       // load payload with FVs y
       .payload[0] = y,
     });
@@ -369,6 +379,8 @@ DEFUN0(alts_4) {
   PtrOrLiteral scrut_alts_4 = stgCurVal;
   stgPushCont( (Cont)
     { .retAddr = &alts_5,
+      .objType = CASECONT,
+      .ident = "CCont for alts_5",
       // load payload with FVs i
       .payload[0] = scrut_alts_4.op->payload[0],
     });
@@ -384,6 +396,8 @@ DEFUN0(alts_5) {
   PtrOrLiteral scrut_alts_5 = stgCurVal;
   stgPushCont( (Cont)
     { .retAddr = &alts_6,
+      .objType = CASECONT,
+      .ident = "CCont for alts_6",
       // no FVs
         });
   stgCurVal.argType = INT;
@@ -414,6 +428,8 @@ DEFUN2(fun_forcelist, self, list) {
   fprintf(stderr, "forcelist here\n");
   stgPushCont( (Cont)
     { .retAddr = &alts_7,
+      .objType = CASECONT,
+      .ident = "CCont for alts_7",
       // no FVs
         });
   stgCurVal = list;
@@ -463,6 +479,8 @@ DEFUN3(fun_take, self, n, xs) {
   fprintf(stderr, "take here\n");
   stgPushCont( (Cont)
     { .retAddr = &alts_8,
+      .objType = CASECONT,
+      .ident = "CCont for alts_8",
       // load payload with FVs xs n
       .payload[0] = xs,
       .payload[1] = n,
@@ -484,6 +502,8 @@ DEFUN0(alts_8) {
     case 0: {
       stgPushCont( (Cont)
         { .retAddr = &alts_9,
+          .objType = CASECONT,
+          .ident = "CCont for alts_9",
           // load payload with FVs n
           .payload[0] = ccont_alts_8.payload[1],
         });
@@ -586,7 +606,7 @@ DEFUN1(fun_main, self) {
 DEFUN1(fun_result_2, self) {
   fprintf(stderr, "result_2 here\n");
   stgThunk(self);
-  STGAPPLY2(HOTOPL(&sho_take), HOTOPL(&sho_three), HOTOPL(&sho_ones));
+  STGAPPLY2(HOTOPL(&sho_take), HOTOPL(&sho_one), HOTOPL(&sho_ones));
   STGRETURN0();
   ENDFUN;
 }

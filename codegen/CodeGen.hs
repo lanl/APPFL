@@ -241,11 +241,13 @@ cge env (ELet it os e) =
       return (concat buildcodes ++ einline,
               ofunc ++ efunc)
 
-cge env (ECase _ e a@(Alts italts alts name)) = 
+cge env (ECase _ e a@(Alts italts alts aname)) = 
     do (ecode, efunc) <- cge env e
        (acode, afunc) <- cgalts env a
        let pre = "stgPushCont( (Cont)\n" ++
-                 "  { .retAddr = &" ++ name ++ ",\n" ++
+                 "  { .retAddr = &" ++ aname ++ ",\n" ++
+                 "    .objType = CASECONT,\n" ++
+                 "    .ident = \"CCont for " ++ aname ++ "\",\n" ++
                  (if fvs italts == [] then
                     "    // no FVs\n"
                   else

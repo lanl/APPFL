@@ -3,11 +3,13 @@
 #include <stdlib.h>
 
 #include "stgutils.h"
+#include "stg.h"
 
 void callContSave(int argc, PtrOrLiteral argv[]) {
-  Cont callCont;
-  callCont.retAddr = &stgCallCont;
-  callCont.objType = CALLCONT;
+  Cont callCont = { .retAddr = &stgCallCont,
+                    .objType = CALLCONT,
+                    .ident = "callContSave"
+                  };
   callCont.payload[0] = (PtrOrLiteral) {.argType = INT, .i = argc};
   for (int i = 0; i != argc; i++) callCont.payload[i+1] = argv[i];
   stgPushCont(callCont);
@@ -69,6 +71,7 @@ DEFUN0(stgShowResultCont) {
 Cont showResultCont = {
   .retAddr = &stgShowResultCont,
   .objType = CALLCONT,
+  .ident = "showResultCont",
   .payload[0] = {0},
 };
 
@@ -224,6 +227,7 @@ DEFUN2(stgApply, N, f) {
 
   case BLACKHOLE: {
     fprintf(stderr, "infinite loop detected in stgApply!\n");
+    showStgHeap();
     exit(0);
   } // case BLACKHOLE
 
