@@ -76,7 +76,8 @@ btyconp = kwkindp KWdata `xthenp`
         (bconp `thenp`
          ((manyp varp) `thenp`
           (symkindp SymBind `xthenp`
-           (sepbyp dataconp (symkindp SymVert)))))
+           (sepbyp (bdataconp `usingp` DBoxed)  
+            (symkindp SymVert)))))
          `usingp` \(t,(vs,defs)) -> BoxedTyCon t vs defs
  
 ubtyconp :: Parser Token UnboxedTyCon        
@@ -84,7 +85,8 @@ ubtyconp = kwkindp KWdata `xthenp`
         (ubconp `thenp`
          ((manyp varp) `thenp`
           (symkindp SymBind `xthenp`
-           (sepbyp dataconp (symkindp SymVert)))))
+           (sepbyp (ubdataconp `usingp` DUnboxed) 
+            (symkindp SymVert)))))
          `usingp` \(t,(vs,defs)) -> UnboxedTyCon t vs defs
 
 dataconp :: Parser Token DataCon
