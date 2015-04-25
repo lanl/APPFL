@@ -178,16 +178,17 @@ cgo env (BLACKHOLE {}) =
 -- ****************************************************************
 -- return (inline code, [(forward, fundef)])
 cge :: Env -> Expr InfoTab -> State Int (String, [(String, String)])
-cge env (EAtom it l@(Lit _)) =
-    return ("stgCurVal = " ++ cga env l ++ ";\n", [])
+cge env (EAtom it a@(Lit i)) =
+    return ("stgCurVal = " ++ cga env a ++ "; " ++ "// " ++ show i ++ "\n", [])
 
-cge env (EAtom it v@(Var _)) = 
-    let inline = "stgCurVal = " ++ cga env v ++ ";\n" ++
-                 "STGEVAL(stgCurVal);\n"
+cge env (EAtom it a@(Var v)) = 
+    let inline = "stgCurVal = " ++ cga env a ++ "; " ++ "// " ++ v ++ "\n" 
+                 -- this is wrong! ++ "STGEVAL(stgCurVal);\n"
     in return (inline, [])
 
 cge env (EFCall it f as) = 
-    let inline = "STGAPPLY" ++ show (length as) ++ "(" ++
+    let inline = "// " ++ f ++ " " ++ showas as ++ "\n" ++
+                 "STGAPPLY" ++ show (length as) ++ "(" ++
                  intercalate ", " (cgv env f : map (cga env) as) ++ 
                  ");\n"
     in return (inline, [])
@@ -233,12 +234,13 @@ cge env (EPrimop it op as) =
 
 cge env (ELet it os e) =
     let names = map oname os
-        env'  = zip names (map HO (scanr (flip (-)) 0 sizes)) ++ env
-        (sizes, buildcodes) = unzip $ map (buildHeapObj env') os
+        offsets = scanr (flip (-)) 0 sizes
+        env'  = zip names (map HO offsets) ++ env
+        (sizes, decls, buildcodes) = unzip3 $ map (buildHeapObj env') os
     in do
       ofunc <- cgos env' os
       (einline, efunc) <- cge env' e
-      return (concat buildcodes ++ einline,
+      return (concat decls ++ concat buildcodes ++ einline,
               ofunc ++ efunc)
 
 cge env (ECase _ e a@(Alts italts alts aname)) = 
@@ -251,11 +253,12 @@ cge env (ECase _ e a@(Alts italts alts aname)) =
                  (if fvs italts == [] then
                     "    // no FVs\n"
                   else
-                    "    // load payload with FVs " ++ intercalate " " (fvs italts) ++ "\n") ++
-                      indent 4 (loadPayloadFVs env (fvs italts)) ++
+                    "    // load payload with FVs " ++ 
+                            intercalate " " (fvs italts) ++ "\n") ++
+                         indent 4 (loadPayloadFVs env (fvs italts)) ++
                  "  });\n"
        return (pre ++ ecode ++ acode, efunc ++ afunc)
-       
+
 -- CG Alts ************************************************************
 -- DEFUN0(alts1) {
 --   Cont cont = stgPopCont();
@@ -288,6 +291,8 @@ cgalts env (Alts it alts name) =
       codefuncs <- mapM (cgalt env' switch scrutName) alts
       let (codes, funcss) = unzip codefuncs
       let fun = "DEFUN0("++ name ++ ") {\n" ++
+                -- tricky:  scrutinee might not be evaluated
+                "  STGEVAL(stgCurVal);\n" ++
                 -- actually need the ccont?
                 -- any fvs in the expressions on the rhs's?
                 (if (length $ nub $ concatMap (fvs . emd . ae) alts) > 0 then 
@@ -311,7 +316,8 @@ cgalt env switch scrutName (ACon it c vs e) =
       let (arity, tag) = case Map.lookup c (conMap it) of
                            Nothing -> error "conMap lookup error"
                            Just x -> x
-      let code = if switch then
+      let code = "// " ++ c ++ " " ++ intercalate " " vs ++ " ->\n" ++
+                 if switch then
                      "case " ++ show tag ++ ": {\n" ++
                         indent 2 inline ++
                      "  STGRETURN0();\n" ++
@@ -323,7 +329,8 @@ cgalt env switch scrutName (ADef it v e) =
     let env' = (v, AD scrutName) : env
     in do
       (inline, func) <- cge env' e
-      let code = if switch then
+      let code = "// " ++ v ++ " ->\n" ++
+                 if switch then
                      "default: {\n" ++
                         indent 2 inline ++
                      "  STGRETURN0();\n" ++
@@ -354,10 +361,9 @@ cgalt env switch scrutName (ADef it v e) =
 buildHeapObj env o =
     let (size, rval) = heapObjRVal env o
         name = oname o
-        code =
-            "Obj *" ++ name ++ " = stgNewHeapObj();\n" ++
-            "*" ++ name ++ " = " ++ rval  ++ ";\n"
-    in (size, code)
+        decl = "Obj *" ++ name ++ " = stgNewHeapObj();\n"
+        code = "*" ++ name ++ " = " ++ rval  ++ ";\n"
+    in (size, decl, code)
 
 heapObjRVal env o =
     let (size, guts) = bho env o
@@ -379,7 +385,8 @@ bho env (PAP it f as name) =
 
 bho env (CON it c as name) = 
     let size = 1
-        code = concat [".payload[" ++ show i ++ "] = " ++ cga env a ++ ",\n"
+        code = concat [".payload[" ++ show i ++ "] = " ++ 
+                       cga env a ++ ", // " ++ showa a ++ "\n"
                        | (i,a) <- indexFrom 0 as ]
     in (size, code)
 
@@ -390,13 +397,19 @@ bho env (BLACKHOLE it name) = (1,"")
 
 
 loadPayloadFVs env fvs =
-    concat [".payload[" ++ show i ++ "] = " ++ cgv env v ++ ",\n"
+    concat [".payload[" ++ show i ++ "] = " ++ 
+            cgv env v ++ ", // " ++ v ++ "\n"
             | (i,v) <- indexFrom 0 fvs ]
 
 -- load atoms into payload starting at index ind
 loadPayloadAtoms env as ind =
-    concat [".payload[" ++ show i ++ "] = " ++ cga env a ++ ",\n"
+    concat [".payload[" ++ show i ++ "] = " ++ 
+            cga env a ++ ", //" ++ showa a ++ "\n"
             | (i,a) <- indexFrom ind as]
 
+showas as = intercalate " " $ map showa as
+
+showa (Var v) = v
+showa (Lit i) = show i
 
 indexFrom i xs = zip [i..] xs

@@ -47,6 +47,8 @@ do {						\
   if (stgCurVal.argType == HEAPOBJ &&           \
       stgCurVal.op->objType == BLACKHOLE) {     \
     fprintf(stderr, "infinite loop detected in STGEVAL!\n"); \
+    showStgVal(stgCurVal);			\
+    fprintf(stderr, "\n");			\
     showStgHeap();			        \
     exit(0);                                    \
   }                                             \

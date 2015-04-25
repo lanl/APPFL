@@ -127,12 +127,13 @@ void showStgObjRecPretty(Obj *p) {
       o.objType != INDIRECT &&
       o.objType != FORWARD &&
       o.objType != it.objType) {
-    fprintf(stderr, "mismatch in infotab and object type!");
-    exit(0);
+    //    fprintf(stderr, "mismatch in infotab and object type!  ");
+    //    fprintf(stderr, "%s  %s\n", objTypeNames[it.objType], objTypeNames[o.objType]);
+    //    exit(0);
   }
   if (strcmp(it.name, o.ident)) {
-      fprintf(stderr, "mismatch in infotab and object name!\n");
-      exit(0);
+    //      fprintf(stderr, "mismatch in infotab and object name!\n");
+    //      exit(0);
   }
 
 
@@ -169,8 +170,8 @@ void showStgObjRecPretty(Obj *p) {
     break;
 
   default:
-    fprintf(stderr,"default in showStgObj!\n");
-    exit(1);
+    fprintf(stderr,"********* default in showStgObj!\n");
+    // exit(0);
   }
   depth--;
 }
