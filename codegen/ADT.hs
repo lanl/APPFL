@@ -1,16 +1,29 @@
+{-# LANGUAGE FlexibleInstances #-}
 
 module ADT (
   ObjData(..),
   TyCon(..),
+  BoxedTyCon(..),
+  UnboxedTyCon(..),
   DataCon(..),
+  BoxedDataCon(..),
+  UnboxedDataCon(..),
+  Simpletype(..),
   TyVar,
   Polytype(..),
   Monotype(..),
   Boxedtype(..),
   Unboxedtype(..),
+  addtymap,
 ) where
 
 import AST
+
+import Control.Monad.State
+import qualified Data.Map as Map
+
+-- TyCon name to arity, boxed/unboxed
+type TyConMap = Map.Map String (Int, Bool)
 
 {-
   Algebraic Datatypes:
@@ -35,34 +48,88 @@ import AST
 
 -}
 
+
 data ObjData = ODObj (Obj ())
              | ODData TyCon
+               deriving(Eq,Show)
+ 
+data TyCon = TyBoxed BoxedTyCon
+           | TyUnboxed UnboxedTyCon
              deriving(Eq,Show)
+           
+data BoxedTyCon = BoxedTyCon Con [TyVar] [DataCon]
+                  deriving(Eq,Show)
+               
+data UnboxedTyCon = UnboxedTyCon Con [TyVar] [DataCon]
+                    deriving(Eq,Show)
 
-data TyCon = TyCon Con [TyVar] [DataCon]
+data DataCon = DBoxed BoxedDataCon
+             | DUnboxed UnboxedDataCon
                deriving(Eq,Show)
 
-data DataCon = DataCon Con [Monotype]
-              deriving(Eq,Show)
-
+data BoxedDataCon = BoxedDataCon Con [Monotype]
+                    deriving(Eq,Show)
+                    
+data UnboxedDataCon = UnboxedDataCon Con [Monotype]
+                      deriving(Eq,Show)
+                      
 type TyVar = String
 
 data Polytype = PPoly TyVar Polytype  -- curried forall
               | PMono Monotype
                 deriving(Eq,Show)
 
-data Monotype = MBoxed Boxedtype
+data Monotype = MSimple Simpletype
+              | MBoxed Boxedtype
               | MUnboxed Unboxedtype
                 deriving(Eq,Show)
+
+-- simpletype is used on first pass
+-- it is then converted to Boxed/Unboxed                 
+data Simpletype = STyVar TyVar
+                | SInt Int
+                | SDouble Double
+                | SFun Simpletype Simpletype
+                | STyCon Con [Simpletype]
+                  deriving(Eq,Show)
 
 data Boxedtype = BTyVar TyVar
                | BFun Monotype Monotype
                | BTyCon Con [Boxedtype]  
                  deriving(Eq,Show)
 
-data Unboxedtype = UInt
-                 | UDouble
+data Unboxedtype = UInt Int
+                 | UDouble Double
                  | UTyCon Con [Boxedtype] 
                    deriving(Eq,Show)
+
+addtymap :: [ObjData] -> ([ObjData], TyConMap)
+addtymap inp = (inp, buildtymap inp)
+
+buildtymap :: [ObjData] -> TyConMap
+buildtymap objs = execState (build objs) Map.empty
+
+class BuildConMap t where build :: t -> State TyConMap ()
+
+instance BuildConMap [ObjData] where
+  build (o:os) =  build o >> build os 
+  build [] = return ()
+
+instance BuildConMap ObjData where
+  build (ODData tycon) = build tycon
+  build _ = return ()
+
+instance BuildConMap TyCon where
+  build (TyBoxed (BoxedTyCon con tyvars _)) 
+    = insert con (length tyvars) True
+  build (TyUnboxed (UnboxedTyCon con tyvars _)) 
+    = insert con (length tyvars) False
+  
+insert :: String -> Int -> Bool -> State TyConMap ()
+insert con arity boxed
+  = do
+      cmap <- get
+      put $ Map.insert con (arity, boxed) cmap
+
 
 

@@ -1,4 +1,4 @@
 data Tree a = Leaf a | Branch (Tree a) (Tree a);
 data Bool = False | True;
 data List a = Nil | Cons a (List a);
-data UBool# = False# | True#;
+data unboxed Bool# = False# | True#;

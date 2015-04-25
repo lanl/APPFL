@@ -1,0 +1,57 @@
+
+repminlist =
+  FUN( xs ->
+       let {
+         mlist = THUNK( rep m xs );
+         m = THUNK( case mlist of {
+	              Pair m xxx -> m } );
+         list = THUNK( case mlist of {
+	                 Pair xxx list -> list 
+                       } 
+                ) 
+       }
+       in list 
+  );
+
+rep =
+  FUN( m xs ->
+       case xs of {
+         Nil ->
+           let {res = CON(Pair error nil)} in res ;
+         Cons y ys ->
+           case ys of {
+	     Nil -> let { mlist = CON(Con m nil);
+                          res   = CON(Pair y mlist) }
+                    in res;
+             xxx -> case rep m ys of {
+	              Pair mp list -> 
+                       let { res1 = THUNK(intMin mp y);
+                             res2 = CON(Cons m list);
+                             res = CON(Pair res1 res2) }
+##                       in let {res = CON(Pair res1 res2)}
+                          in res
+                    }
+           }
+       }
+  );
+
+intMin = FUN( x y -> x );
+
+error = ERROR;
+unit = CON(Unit);
+
+one = CON(I 1);
+
+nil   = CON(Nil);
+list1 = CON(Cons one nil);
+
+seq = FUN(x y -> case x of { z -> y });
+
+forcelist = FUN(list ->
+   case list of {
+      Nil -> unit;
+      Cons h t -> let { rec = THUNK(forcelist t) } in seq h rec });
+
+main = THUNK(let {result = THUNK(repminlist list1);
+                  f = THUNK(forcelist result)}
+             in seq f result)
