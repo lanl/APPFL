@@ -44,8 +44,7 @@ void registerSHOs() {
 DEFUN1(fun_main, self) {
   fprintf(stderr, "main here\n");
   stgThunk(self);
-  stgCurVal = HOTOPL(&sho_one);
-  STGEVAL(stgCurVal);
+  stgCurVal = HOTOPL(&sho_one); // one
   STGRETURN0();
   ENDFUN;
 }
