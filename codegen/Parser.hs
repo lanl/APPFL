@@ -98,14 +98,15 @@ bdataconp =  (conp `thenp` manyp monop)
 ubdataconp :: Parser Token UnboxedDataCon
 ubdataconp =  (conp `thenp` manyp monop)
               `usingp` uncurry UnboxedDataCon
-         
+     
 monop :: Parser Token Monotype
-monop = simplep `usingp` MSimple
-         
-simplep :: Parser Token Simpletype
-simplep = (varp `usingp` STyVar) `altp`
-          (nump `usingp` SInt) `altp`
-          ((conp `thenp` manyp simplep) `usingp` uncurry STyCon)
+monop = atyp `usingp` Mono
+          
+atyp :: Parser Token Atype
+atyp = (varp `usingp` ATyVar) `altp`
+          (nump `usingp` AInt) `altp`
+          ((conp `thenp` manyp atyp) `usingp` uncurry ATyCon)      
+          
 --- end layer for adding ADT defs
 
 
