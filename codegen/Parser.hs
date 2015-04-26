@@ -5,6 +5,7 @@
 module Parser (
   parser,
   showDefs,
+  parse --debug
 ) where
 
 import AST
@@ -100,7 +101,9 @@ ubdataconp =  (conp `thenp` manyp monop)
               `usingp` uncurry UnboxedDataCon
      
 monop :: Parser Token Monotype
-monop = atyp `usingp` Mono
+monop = (((symkindp SymLParen)  `xthenp` atyp
+        `thenxp` (symkindp SymRParen)) `altp`
+        atyp) `usingp` Mono
           
 atyp :: Parser Token Atype
 atyp = (varp `usingp` ATyVar) `altp`

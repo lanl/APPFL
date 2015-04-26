@@ -1,4 +1,5 @@
 module Main where
+import qualified ADT.Test
 import qualified CodeGen.Test
 import qualified ConMap.Test
 import qualified InfoTab.Test
@@ -20,6 +21,7 @@ tests :: TestTree
 tests = testGroup "Tests" [ Scanner.Test.unitTests
                           , Lexer.Test.unitTests
                           , Parser.Test.unitTests
+                          , ADT.Test.unitTests
                           , Rename.Test.unitTests
                           , SetFVs.Test.unitTests
                           , InfoTab.Test.unitTests

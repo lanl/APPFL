@@ -14,11 +14,12 @@ module ADT (
   Monotype(..),
   Boxedtype(..),
   Unboxedtype(..),
-  addtymap,
+  updatedata
 ) where
 
 import AST
 
+import Data.Maybe
 import Control.Monad.State
 import qualified Data.Map as Map
 
@@ -121,43 +122,57 @@ data Unboxedtype = UInt Int
                    
 -- update Atype -> Boxed/Unboxed 
 
-class Update t where update :: t -> TyConMap -> t              
-                  
-instance Update [ObjData] where
-  update (o:os) m =  (update o m) : (update os m)
-  update [] _ = []
+class Update t where update :: TyConMap -> t -> t              
+
+instance Update a => Update [a] where
+  update = map . update
 
 instance Update ObjData where
-  update (ODData tycon) m = ODData(update tycon m)
-  update x _ = x
+  update m (ODData tycon) = ODData(update m tycon)
+  update _ x  = x
 
 instance Update TyCon where
-  update (TyBoxed (BoxedTyCon c tvs dcs)) m = 
-    TyBoxed (BoxedTyCon c tvs (update dcs m))
-  update (TyUnboxed (UnboxedTyCon c tvs dcs)) m =
-    TyUnboxed (UnboxedTyCon c tvs (update dcs m))
-
-instance Update [DataCon] where
-  update (dc:dcs) m =  (update dc m) : (update dcs m)
-  update [] _ = []   
+  update m (TyBoxed (BoxedTyCon c tvs dcs)) = 
+    TyBoxed (BoxedTyCon c tvs (update m dcs))
+  update m (TyUnboxed (UnboxedTyCon c tvs dcs)) =
+    TyUnboxed (UnboxedTyCon c tvs (update m dcs))
 
 instance Update DataCon where 
-  update (DBoxed (BoxedDataCon c mts)) m = 
-    DBoxed (BoxedDataCon c (update mts m))
-  update (DUnboxed (UnboxedDataCon c mts)) m = 
-    DUnboxed (UnboxedDataCon c (update mts m))
-
-instance Update [Monotype] where
-  update (mt:mts) m =  (update mt m) : (update mts m)
-  update [] _ = []
+  update m (DBoxed (BoxedDataCon c mts)) = 
+    DBoxed (BoxedDataCon c (update m mts))
+  update m (DUnboxed (UnboxedDataCon c mts)) = 
+    DUnboxed (UnboxedDataCon c (update m mts))
 
 instance Update Monotype where
-  update (Mono ty) m = error "wip"
+  update m (Mono ty) = if isboxed m ty 
+                       then MBoxed (makeboxed ty) 
+                       else MUnboxed (makeunboxed ty)
   update _ _ = error "non atype"
+
+makeboxed :: Atype -> Boxedtype
+makeboxed (ATyVar x) = BTyVar x
+makeboxed (AInt _) = error "can't convert to boxed"
+makeboxed (ADouble _) = error "can't convert to boxed"
+makeboxed (AFun x y) = error "no fun types yet"
+makeboxed (ATyCon c xs) = BTyCon c (map makeboxed xs)
+
+makeunboxed :: Atype -> Unboxedtype
+makeunboxed (ATyVar _) = error "can't convert to unboxed"
+makeunboxed (AInt x) = UInt x
+makeunboxed (ADouble x) = UDouble x
+makeunboxed (AFun _ _) = error "can't convert to unboxed"
+makeunboxed (ATyCon c xs) = UTyCon c (map makeboxed xs)
   
-  
-addtymap :: [ObjData] -> ([ObjData], TyConMap)
-addtymap inp = (inp, buildtymap inp)
+isboxed :: TyConMap -> Atype -> Bool  
+isboxed _ (ATyVar _) = True
+isboxed _ (AInt _) = False
+isboxed _ (ADouble _) = False
+isboxed _ (AFun _ _) = True
+isboxed m (ATyCon c _) = let lookup = Map.lookup c m
+                         in (isNothing lookup || snd (fromJust lookup))
+
+updatedata :: [ObjData] -> [ObjData]
+updatedata inp = update (buildtymap inp) inp 
 
 buildtymap :: [ObjData] -> TyConMap
 buildtymap objs = execState (build objs) Map.empty
@@ -165,8 +180,7 @@ buildtymap objs = execState (build objs) Map.empty
 class BuildConMap t where build :: t -> State TyConMap ()
 
 instance BuildConMap [ObjData] where
-  build (o:os) =  build o >> build os 
-  build [] = return ()
+  build = mapM_ build
 
 instance BuildConMap ObjData where
   build (ODData tycon) = build tycon
@@ -180,9 +194,8 @@ instance BuildConMap TyCon where
   
 insert :: String -> Int -> Bool -> State TyConMap ()
 insert con arity boxed
-  = do
-      cmap <- get
-      put $ Map.insert con (arity, boxed) cmap
+  = modify $ Map.insert con (arity, boxed) 
+      
 
 
 
