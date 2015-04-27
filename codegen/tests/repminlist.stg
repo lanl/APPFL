@@ -4,14 +4,13 @@ repminlist =
        let {
          mlist = THUNK( rep m xs );
          m = THUNK( case mlist of {
-	              Pair m xxx -> m } );
-         list = THUNK( case mlist of {
-	                 Pair xxx list -> list 
-                       } 
-                ) 
-       }
-       in list 
-  );
+	              Pair m xxx -> m 
+                    } 
+                  )
+       } in case mlist of {
+	      Pair yyy list -> list
+            } 
+     );
 
 rep =
   FUN( m xs ->
@@ -27,9 +26,8 @@ rep =
 	              Pair mp list -> 
                        let { res1 = THUNK(intMin mp y);
                              res2 = CON(Cons m list);
-                             res = CON(Pair res1 res2) }
-##                       in let {res = CON(Pair res1 res2)}
-                          in res
+                             res = CON(Pair res1 res2)
+                           } in res
                     }
            }
        }
@@ -38,6 +36,7 @@ rep =
 intMin = FUN( x y -> x );
 
 error = ERROR;
+
 unit = CON(Unit);
 
 one = CON(I 1);

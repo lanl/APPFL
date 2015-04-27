@@ -4,7 +4,6 @@ FnPtr fun_repminlist();
 FnPtr fun_mlist_0();
 FnPtr fun_m_0();
 FnPtr alts_0();
-FnPtr fun_list_0();
 FnPtr alts_1();
 FnPtr fun_rep();
 FnPtr alts_2();
@@ -37,12 +36,6 @@ InfoTab it_m_0 =
   { .name                = "m_0",
     .fvCount             = 1,
     .entryCode           = &fun_m_0,
-    .objType             = THUNK,
-  };
-InfoTab it_list_0 = 
-  { .name                = "list_0",
-    .fvCount             = 1,
-    .entryCode           = &fun_list_0,
     .objType             = THUNK,
   };
 InfoTab it_rep = 
@@ -295,27 +288,26 @@ DEFUN2(fun_repminlist, self, xs) {
   fprintf(stderr, "repminlist here\n");
   Obj *mlist_0 = stgNewHeapObj();
   Obj *m_0 = stgNewHeapObj();
-  Obj *list_0 = stgNewHeapObj();
   *mlist_0 = (Obj) 
         { .objType = THUNK,
           .infoPtr = &it_mlist_0,
           .ident = "mlist_0",
-          .payload[0] = HOTOPL(STGHEAPAT(-2)), // m_0
+          .payload[0] = HOTOPL(STGHEAPAT(-1)), // m_0
           .payload[1] = xs, // xs
         };
   *m_0 = (Obj) 
         { .objType = THUNK,
           .infoPtr = &it_m_0,
           .ident = "m_0",
-          .payload[0] = HOTOPL(STGHEAPAT(-3)), // mlist_0
+          .payload[0] = HOTOPL(STGHEAPAT(-2)), // mlist_0
         };
-  *list_0 = (Obj) 
-        { .objType = THUNK,
-          .infoPtr = &it_list_0,
-          .ident = "list_0",
-          .payload[0] = HOTOPL(STGHEAPAT(-3)), // mlist_0
-        };
-  stgCurVal = HOTOPL(STGHEAPAT(-1)); // list_0
+  stgPushCont( (Cont)
+    { .retAddr = &alts_1,
+      .objType = CASECONT,
+      .ident = "CCont for alts_1",
+      // no FVs
+        });
+  stgCurVal = HOTOPL(STGHEAPAT(-2)); // mlist_0
   STGRETURN0();
   ENDFUN;
 }
@@ -364,26 +356,12 @@ DEFUN0(alts_0) {
 }
 
 
-DEFUN1(fun_list_0, self) {
-  fprintf(stderr, "list_0 here\n");
-  stgThunk(self);
-  stgPushCont( (Cont)
-    { .retAddr = &alts_1,
-      .objType = CASECONT,
-      .ident = "CCont for alts_1",
-      // no FVs
-        });
-  stgCurVal = self.op->payload[0]; // mlist_0
-  STGRETURN0();
-  ENDFUN;
-}
-
 DEFUN0(alts_1) {
   STGEVAL(stgCurVal);
   Cont ccont_alts_1 = stgPopCont();
   PtrOrLiteral scrut_alts_1 = stgCurVal;
   switch(stgCurVal.op->infoPtr->conFields.tag) {
-    // Pair xxx list ->
+    // Pair yyy list ->
     case 2: {
       stgCurVal = scrut_alts_1.op->payload[1]; // list
       STGRETURN0();
