@@ -291,6 +291,7 @@ cgalts env (Alts it alts name) =
       codefuncs <- mapM (cgalt env' switch scrutName) alts
       let (codes, funcss) = unzip codefuncs
       let fun = "DEFUN0("++ name ++ ") {\n" ++
+                "  fprintf(stderr, \"" ++ name ++ " here\\n\");\n" ++
                 -- tricky:  scrutinee might not be evaluated
                 "  STGEVAL(stgCurVal);\n" ++
                 -- actually need the ccont?
