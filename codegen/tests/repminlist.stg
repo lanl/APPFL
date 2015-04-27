@@ -33,16 +33,17 @@ rep =
        }
   );
 
-##  minInt = FUN(x y ->
-##     case x of { 
-##        I i -> case y of { 
-##                 I j -> case le# i j of { 
-##                           True -> x;
-##  			 False -> y }}});
+minInt = FUN(x y ->
+   case x of { 
+      I i -> case y of {
+               I j -> case le# i j of { 
+                        ub -> case intToBool# ub of {
+			        True -> x;
+			        False -> y }}}});
 
 ## minInt = FUN( x y -> x );
 
-minInt = FUN( x y -> case x of {x -> x} );
+## minInt = FUN( x y -> case x of {x -> x} );
 
 error = ERROR;
 
@@ -65,4 +66,6 @@ forcelist = FUN(list ->
 
 main = THUNK(let {result = THUNK(repminlist list212);
                   f = THUNK(forcelist result)}
-             in seq f result)
+             in seq f result);
+
+main2 = THUNK(minInt one two)
