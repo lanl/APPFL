@@ -203,7 +203,7 @@ instance BuildConMaps DataCon where
   build (DBoxed (BoxedDataCon con mts)) = 
     dataconinsert con (length mts) True
   build (DUnboxed (UnboxedDataCon con mts)) = 
-    dataconinsert con (length mts) True
+    dataconinsert con (length mts) False
   
 dataconinsert :: String -> Int -> Bool -> State ConMaps ()
 dataconinsert con arity boxed 
