@@ -2,18 +2,16 @@
 
 module ADT (
   ObjData(..),
+  Boxedness(..),
   TyCon(..),
-  BoxedTyCon(..),
-  UnboxedTyCon(..),
   DataCon(..),
-  BoxedDataCon(..),
-  UnboxedDataCon(..),
   Atype(..),
   TyVar,
   Polytype(..),
   Monotype(..),
   Boxedtype(..),
   Unboxedtype(..),
+  buildconmaps,
   updatedata
 ) where
 
@@ -24,9 +22,9 @@ import Control.Monad.State
 import qualified Data.Map as Map
 
 -- TyCon name to arity, tag, boxed/unboxed
-type TyConMap = Map.Map String (Int, Int, Bool)
+type TyConMap = Map.Map String (Int, Int, Boxedness)
 -- map data constructor to (arity, tag, boxedness) TODO: add tycon?
-type DataConMap = Map.Map String (Int, Int, Bool)
+type DataConMap = Map.Map String (Int, Int, Boxedness)
 type ConMaps = (TyConMap, DataConMap)
 
 
@@ -43,14 +41,14 @@ type ConMaps = (TyConMap, DataConMap)
   \c_x -- data constructor
   
   and unboxed version on pg 26
-  data \Chi# \alpha_1 .. \alpha_t =
+  data unboxed \Chi# \alpha_1 .. \alpha_t =
   c_1# \tau_11 .. \tau_1a_1 | ... | c_n# \tau_n1 .. \tau_na_1
   
   Polytype      \sigma ::=  \forall \alpha . \sigma | \tau
 
   Monotype      \tau   ::=  \pi | \nu
 
-  Boxed type    \pi    ::=  \alpa                   Type variable
+  Boxed type    \pi    ::=  \alpha                   Type variable
                         |   \tau -> \tau             Function type
                         |   \Chi \tau_1 ... \tau_n   Parameterized boxed data type, SPJ says \pi
 
@@ -61,34 +59,24 @@ type ConMaps = (TyConMap, DataConMap)
 -}
 
 
-data ObjData = ODObj (Obj ())
+data ObjData a = ODObj (Obj a)
              | ODData TyCon
                deriving(Eq,Show)
+
+data Boxedness = Boxed | Unboxed deriving(Eq,Show)
  
-data TyCon = TyBoxed BoxedTyCon
-           | TyUnboxed UnboxedTyCon
+-- Boxed: data \Chi \alpha_1 .. \alpha_t =
+-- c_1 \tau_11 .. \tau_1a_1 | ... | c_n \tau_n1 .. \tau_na_1  
+-- Unboxed: data unboxed \Chi# \alpha_1 .. \alpha_t =
+-- c_1# \tau_11 .. \tau_1a_1 | ... | c_n# \tau_n1 .. \tau_na_1   
+data TyCon = TyCon Boxedness Con [TyVar] [DataCon]
              deriving(Eq,Show)
              
--- data \Chi \alpha_1 .. \alpha_t =
--- c_1 \tau_11 .. \tau_1a_1 | ... | c_n \tau_n1 .. \tau_na_1           
-data BoxedTyCon = BoxedTyCon Con [TyVar] [DataCon]
-                  deriving(Eq,Show)
-               
--- data \Chi# \alpha_1 .. \alpha_t =
--- c_1# \tau_11 .. \tau_1a_1 | ... | c_n# \tau_n1 .. \tau_na_1   
-data UnboxedTyCon = UnboxedTyCon Con [TyVar] [DataCon]
-                    deriving(Eq,Show)
-
-data DataCon = DBoxed BoxedDataCon
-             | DUnboxed UnboxedDataCon
+-- Boxed True: c_x \tau_x1 .. \tau_xa_1 
+-- Boxed False: c_x# \tau_x1 .. \tau_xa_1  
+data DataCon = DataCon Boxedness Con [Monotype]
                deriving(Eq,Show)
--- c_x \tau_x1 .. \tau_xa_1 
-data BoxedDataCon = BoxedDataCon Con [Monotype]
-                    deriving(Eq,Show)
-          
--- c_x# \tau_x1 .. \tau_xa_1                     
-data UnboxedDataCon = UnboxedDataCon Con [Monotype]
-                      deriving(Eq,Show)
+
 -- \alpha                     
 type TyVar = String
 
@@ -131,24 +119,20 @@ class Update t where update :: TyConMap -> t -> t
 instance Update a => Update [a] where
   update = map . update
 
-instance Update ObjData where
+instance Update (ObjData a) where
   update m (ODData tycon) = ODData(update m tycon)
   update _ x  = x
 
 instance Update TyCon where
-  update m (TyBoxed (BoxedTyCon c tvs dcs)) = 
-    TyBoxed (BoxedTyCon c tvs (update m dcs))
-  update m (TyUnboxed (UnboxedTyCon c tvs dcs)) =
-    TyUnboxed (UnboxedTyCon c tvs (update m dcs))
-
+  update m (TyCon boxed c tvs dcs) = 
+    TyCon boxed c tvs (update m dcs)
+ 
 instance Update DataCon where 
-  update m (DBoxed (BoxedDataCon c mts)) = 
-    DBoxed (BoxedDataCon c (update m mts))
-  update m (DUnboxed (UnboxedDataCon c mts)) = 
-    DUnboxed (UnboxedDataCon c (update m mts))
+  update m (DataCon boxed c mts) = 
+    DataCon boxed c (update m mts)
 
 instance Update Monotype where
-  update m (Mono ty) = if isboxed m ty 
+  update m (Mono ty) = if (isboxed m ty == Boxed)
                        then MBoxed (makeboxed ty) 
                        else MUnboxed (makeunboxed ty)
   update _ _ = error "non atype"
@@ -167,19 +151,21 @@ makeunboxed (ADouble x) = UDouble x
 makeunboxed (AFun _ _) = error "can't convert to unboxed"
 makeunboxed (ATyCon c xs) = UTyCon c (map makeboxed xs)
   
-isboxed :: TyConMap -> Atype -> Bool  
-isboxed _ (ATyVar _) = True
-isboxed _ (AInt _) = False
-isboxed _ (ADouble _) = False
-isboxed _ (AFun _ _) = True
+isboxed :: TyConMap -> Atype -> Boxedness  
+isboxed _ (ATyVar _) = Boxed
+isboxed _ (AInt _) = Unboxed
+isboxed _ (ADouble _) = Unboxed
+isboxed _ (AFun _ _) = Boxed
 isboxed m (ATyCon c _) = let lookup = Map.lookup c m
-                         in (isNothing lookup || (\(a,t,b) -> b) (fromJust lookup))
+                           in if (isNothing lookup) then Boxed --default boxed for now
+                              else (\(a,t,b) -> b) (fromJust lookup)
 
-updatedata :: [ObjData] -> ([ObjData], ConMaps)
+updatedata :: [ObjData a] -> ([ObjData a], ConMaps)
 updatedata inp = (update (fst conmaps) inp, conmaps)
                  where conmaps = buildconmaps inp
 
-buildconmaps :: [ObjData] -> ConMaps
+
+buildconmaps :: [ObjData a] -> ConMaps
 buildconmaps objs = execState (build objs) (Map.empty, Map.empty)
 
 class BuildConMaps t where build :: t -> State ConMaps ()
@@ -187,36 +173,31 @@ class BuildConMaps t where build :: t -> State ConMaps ()
 instance BuildConMaps a => BuildConMaps [a] where
   build = mapM_ build
 
-instance BuildConMaps ObjData where
+instance BuildConMaps (ObjData a) where
   build (ODData tycon) = build tycon
   build _ = return ()
 
 instance BuildConMaps TyCon where
-  build (TyBoxed (BoxedTyCon con tyvars dcons)) 
+  build (TyCon boxed con tyvars dcons) 
     = tmap >> build dcons
-    where tmap = tyconinsert con (length tyvars) True 
-  build (TyUnboxed (UnboxedTyCon con tyvars dcons)) 
-    = tmap >> build dcons
-    where tmap = tyconinsert con (length tyvars) False
-    
+    where tmap = tyconinsert con (length tyvars) boxed 
+     
 instance BuildConMaps DataCon where
-  build (DBoxed (BoxedDataCon con mts)) = 
-    dataconinsert con (length mts) True
-  build (DUnboxed (UnboxedDataCon con mts)) = 
-    dataconinsert con (length mts) False
+  build (DataCon boxed con mts) = 
+    dataconinsert con (length mts) boxed
   
-dataconinsert :: String -> Int -> Bool -> State ConMaps ()
+dataconinsert :: String -> Int -> Boxedness -> State ConMaps ()
 dataconinsert con arity boxed 
   = do 
       (tmap, dmap) <- get
       put (tmap, Map.insert con (arity, Map.size dmap, boxed) dmap)
   
-tyconinsert :: String -> Int -> Bool -> State ConMaps ()
+tyconinsert :: String -> Int -> Boxedness -> State ConMaps ()
 tyconinsert con arity boxed
   = do 
       (tmap, dmap) <- get
       put (Map.insert con (arity, Map.size tmap, boxed) tmap, dmap)
-      
+     
 
 
 

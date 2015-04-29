@@ -55,50 +55,43 @@ import Data.List
 --- layer for adding ADT defs
 --  obsoletes parser, defsp
 
-parse :: [Char] -> [ObjData]
+parse :: [Char] -> [ObjData ()]
 parse inp = case defdatsp $ lexer inp of
                [] ->  error "parser failed"
                xs -> fst $ head xs
                
-defdatsp :: Parser Token [ObjData]
+defdatsp :: Parser Token [ObjData ()]
 defdatsp = sepbyp defdatp (symkindp SymSemi)
 
-defdatp :: Parser Token ObjData
+defdatp :: Parser Token (ObjData ())
 defdatp = (defp `usingp` ODObj) `altp` (tyconp `usingp` ODData)
 
 tyconp :: Parser Token TyCon
-tyconp = (btyconp `usingp` TyBoxed) `altp` 
-         (ubtyconp `usingp` TyUnboxed)
+tyconp = (kwkindp KWdata `xthenp` kwkindp KWunboxed `xthenp` ubtyconp)
+         `altp` (kwkindp KWdata `xthenp` btyconp)
 
-btyconp :: Parser Token BoxedTyCon  
-btyconp = kwkindp KWdata `xthenp`
-        (conp `thenp`
-         ((manyp varp) `thenp`
-          (symkindp SymBind `xthenp`
-           (sepbyp (bdataconp `usingp` DBoxed)  
-            (symkindp SymPipe)))))
-         `usingp` \(t,(vs,defs)) -> BoxedTyCon t vs defs
+btyconp :: Parser Token TyCon  
+btyconp = (conp `thenp`
+           ((manyp varp) `thenp`
+            (symkindp SymBind `xthenp`
+             (sepbyp bdataconp (symkindp SymPipe)))))
+          `usingp` \(t,(vs,defs)) -> TyCon Boxed t vs defs
  
-ubtyconp :: Parser Token UnboxedTyCon        
-ubtyconp = kwkindp KWdata `xthenp` kwkindp KWunboxed `xthenp`
-        (conp `thenp`
-         ((manyp varp) `thenp`
-          (symkindp SymBind `xthenp`
-           (sepbyp (ubdataconp `usingp` DUnboxed) 
-            (symkindp SymPipe)))))
-         `usingp` \(t,(vs,defs)) -> UnboxedTyCon t vs defs
+ubtyconp :: Parser Token TyCon        
+ubtyconp = (conp `thenp`
+            ((manyp varp) `thenp`
+             (symkindp SymBind `xthenp`
+              (sepbyp ubdataconp (symkindp SymPipe)))))
+           `usingp` \(t,(vs,defs)) -> TyCon Unboxed t vs defs
 
-dataconp :: Parser Token DataCon
-dataconp = (bdataconp `usingp` DBoxed) `altp` 
-           (ubdataconp `usingp` DUnboxed)
 
-bdataconp :: Parser Token BoxedDataCon
+bdataconp :: Parser Token DataCon
 bdataconp =  (conp `thenp` manyp monop)
-             `usingp` uncurry BoxedDataCon
+             `usingp` \(c,ms) -> DataCon Boxed c ms
 
-ubdataconp :: Parser Token UnboxedDataCon
+ubdataconp :: Parser Token DataCon
 ubdataconp =  (conp `thenp` manyp monop)
-              `usingp` uncurry UnboxedDataCon
+              `usingp` \(c,ms) -> DataCon Unboxed c ms
      
 monop :: Parser Token Monotype
 monop = (((symkindp SymLParen)  `xthenp` atyp
