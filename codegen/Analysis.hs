@@ -49,12 +49,20 @@ instance Normalize (Alts a) where
     -- if no ADef add one
     -- if ADef followed by ACons we could remove them
     let alts' = if not (areExhaustive alts) then
-                    alts ++ 
-                   [ADef{amd = error "altsmd not initialized",
-                         av = "x", 
-                         ae = EFCall{emd = error "emd not initialized",
-                                     ev = "stg_case_not_exhaustive", 
-                                     eas = [Var "x"]}}]
+                    let fcall = EFCall{emd = error "emd not initialized",
+                                       ev = "stg_case_not_exhaustive", 
+                                       eas = [Var "x"]}
+                    in
+                      alts ++ 
+                      [ADef{amd = error "altsmd not initialized",
+                            av = "x", 
+--                          ae = fcall
+                            ae = ELet{emd = error "emd not initialized",
+                                      edefs = [THUNK{omd = error "emd not initialized",
+                                                     e = fcall,
+                                                     oname = aname a ++ "_exhaust"}],
+                                     ee = EAtom{emd = error "emd not initialized",
+                                                ea = Var $ aname a ++ "_exhaust"}}}]
                 else alts
     in a{alts = map normalize alts'}
 

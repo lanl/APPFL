@@ -15,9 +15,8 @@ repminlist2 xs =
     let mlist = rep2 m xs
         m = case mlist of
               (m, xxx) -> m
-        list = case mlist of
-                 (xxx_, list) -> list
-    in list
+    in case mlist of
+         (yyy, list) -> list
 
 rep2 m xs = 
     case xs of
@@ -26,3 +25,4 @@ rep2 m xs =
                     []   -> (y , [m])
                     xxx  -> case rep2 m ys of
                               (m', list) -> (min m' y, m : list)
+

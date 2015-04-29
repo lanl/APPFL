@@ -68,7 +68,7 @@ lu v ((v',k):_) n | v == v' =
     case k of
       SHO     -> "HOTOPL(&sho_" ++ v ++ ")"
       -- HOTOPL(STGHEAPAT(-1))
-      HO off  -> "HOTOPL(STGHEAPAT(" ++ show off ++ "))"
+      HO size -> "HOTOPL(STGHEAPAT(" ++ show (-(size + n)) ++ "))"
       FP      -> v
       CC cc i -> cc ++ ".payload[" ++ show i ++ "]"
       FV i    -> "self.op->payload[" ++ show i ++ "]"
@@ -234,8 +234,8 @@ cge env (EPrimop it op as) =
 
 cge env (ELet it os e) =
     let names = map oname os
-        offsets = scanr (flip (-)) 0 sizes
-        env'  = zip names (map HO offsets) ++ env
+--        offsets = scanr (flip (-)) 0 sizes
+        env'  = (reverse $ zip names (map HO sizes)) ++ env
         (sizes, decls, buildcodes) = unzip3 $ map (buildHeapObj env') os
     in do
       ofunc <- cgos env' os
@@ -291,6 +291,7 @@ cgalts env (Alts it alts name) =
       codefuncs <- mapM (cgalt env' switch scrutName) alts
       let (codes, funcss) = unzip codefuncs
       let fun = "DEFUN0("++ name ++ ") {\n" ++
+                "  fprintf(stderr, \"" ++ name ++ " here\\n\");\n" ++
                 -- tricky:  scrutinee might not be evaluated
                 "  STGEVAL(stgCurVal);\n" ++
                 -- actually need the ccont?

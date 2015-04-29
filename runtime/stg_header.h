@@ -62,8 +62,10 @@ Obj sho_true =
 
 // stg_case_not_exhaustive = FUN( x ->  );
 DEFUN2(stg_case_not_exhaustive, self, x) {
-  fprintf(stderr, "stg_case_not_exhaustive!\n");
-  // display x
+  fprintf(stderr, "stg_case_not_exhaustive: ");
+  showStgVal(x);
+  fprintf(stderr, "\n");
+  showStgHeap();
   exit(0);
   ENDFUN;
 }
@@ -77,6 +79,7 @@ InfoTab it_stg_case_not_exhaustive = {
 Obj sho_stg_case_not_exhaustive = {
   .objType = FUN,
   .infoPtr = &it_stg_case_not_exhaustive,
+  .ident = "stg_case_not_exhaustive",
 };
 
 // BLACKHOLE = THUNK();

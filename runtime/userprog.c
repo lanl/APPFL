@@ -4,22 +4,32 @@ FnPtr fun_repminlist();
 FnPtr fun_mlist_0();
 FnPtr fun_m_0();
 FnPtr alts_0();
-FnPtr fun_list_0();
+FnPtr fun_alts_0_exhaust();
 FnPtr alts_1();
+FnPtr fun_alts_1_exhaust();
 FnPtr fun_rep();
 FnPtr alts_2();
 FnPtr alts_3();
 FnPtr alts_4();
 FnPtr fun_res1_0();
-FnPtr fun_intMin();
-FnPtr fun_seq();
+FnPtr fun_alts_4_exhaust();
+FnPtr fun_alts_2_exhaust();
+FnPtr fun_minInt();
 FnPtr alts_5();
-FnPtr fun_forcelist();
 FnPtr alts_6();
+FnPtr alts_7();
+FnPtr alts_8();
+FnPtr fun_alts_8_exhaust();
+FnPtr fun_seq();
+FnPtr alts_9();
+FnPtr fun_forcelist();
+FnPtr alts_10();
 FnPtr fun_rec_0();
+FnPtr fun_alts_10_exhaust();
 FnPtr fun_main();
 FnPtr fun_result_0();
 FnPtr fun_f_0();
+FnPtr fun_main2();
 InfoTab it_repminlist = 
   { .name                = "repminlist",
     .fvCount             = 0,
@@ -39,10 +49,16 @@ InfoTab it_m_0 =
     .entryCode           = &fun_m_0,
     .objType             = THUNK,
   };
-InfoTab it_list_0 = 
-  { .name                = "list_0",
+InfoTab it_alts_0_exhaust = 
+  { .name                = "alts_0_exhaust",
     .fvCount             = 1,
-    .entryCode           = &fun_list_0,
+    .entryCode           = &fun_alts_0_exhaust,
+    .objType             = THUNK,
+  };
+InfoTab it_alts_1_exhaust = 
+  { .name                = "alts_1_exhaust",
+    .fvCount             = 1,
+    .entryCode           = &fun_alts_1_exhaust,
     .objType             = THUNK,
   };
 InfoTab it_rep = 
@@ -67,8 +83,8 @@ InfoTab it_mlist_1 =
     .entryCode           = &stg_constructorcall,
     .objType             = CON,
     .conFields.arity     = 2,
-    .conFields.tag       = 5,
-    .conFields.conName   = "Con",
+    .conFields.tag       = 4,
+    .conFields.conName   = "Cons",
   };
 InfoTab it_res_1 = 
   { .name                = "res_1",
@@ -103,12 +119,30 @@ InfoTab it_res_2 =
     .conFields.tag       = 2,
     .conFields.conName   = "Pair",
   };
-InfoTab it_intMin = 
-  { .name                = "intMin",
+InfoTab it_alts_4_exhaust = 
+  { .name                = "alts_4_exhaust",
+    .fvCount             = 1,
+    .entryCode           = &fun_alts_4_exhaust,
+    .objType             = THUNK,
+  };
+InfoTab it_alts_2_exhaust = 
+  { .name                = "alts_2_exhaust",
+    .fvCount             = 1,
+    .entryCode           = &fun_alts_2_exhaust,
+    .objType             = THUNK,
+  };
+InfoTab it_minInt = 
+  { .name                = "minInt",
     .fvCount             = 0,
-    .entryCode           = &fun_intMin,
+    .entryCode           = &fun_minInt,
     .objType             = FUN,
     .funFields.arity     = 2,
+  };
+InfoTab it_alts_8_exhaust = 
+  { .name                = "alts_8_exhaust",
+    .fvCount             = 1,
+    .entryCode           = &fun_alts_8_exhaust,
+    .objType             = THUNK,
   };
 InfoTab it_error = 
   { .name                = "error",
@@ -131,7 +165,16 @@ InfoTab it_one =
     .entryCode           = &stg_constructorcall,
     .objType             = CON,
     .conFields.arity     = 1,
-    .conFields.tag       = 7,
+    .conFields.tag       = 5,
+    .conFields.conName   = "I",
+  };
+InfoTab it_two = 
+  { .name                = "two",
+    .fvCount             = 0,
+    .entryCode           = &stg_constructorcall,
+    .objType             = CON,
+    .conFields.arity     = 1,
+    .conFields.tag       = 5,
     .conFields.conName   = "I",
   };
 InfoTab it_nil = 
@@ -143,8 +186,26 @@ InfoTab it_nil =
     .conFields.tag       = 3,
     .conFields.conName   = "Nil",
   };
-InfoTab it_list1 = 
-  { .name                = "list1",
+InfoTab it_list2 = 
+  { .name                = "list2",
+    .fvCount             = 0,
+    .entryCode           = &stg_constructorcall,
+    .objType             = CON,
+    .conFields.arity     = 2,
+    .conFields.tag       = 4,
+    .conFields.conName   = "Cons",
+  };
+InfoTab it_list12 = 
+  { .name                = "list12",
+    .fvCount             = 0,
+    .entryCode           = &stg_constructorcall,
+    .objType             = CON,
+    .conFields.arity     = 2,
+    .conFields.tag       = 4,
+    .conFields.conName   = "Cons",
+  };
+InfoTab it_list212 = 
+  { .name                = "list212",
     .fvCount             = 0,
     .entryCode           = &stg_constructorcall,
     .objType             = CON,
@@ -172,6 +233,12 @@ InfoTab it_rec_0 =
     .entryCode           = &fun_rec_0,
     .objType             = THUNK,
   };
+InfoTab it_alts_10_exhaust = 
+  { .name                = "alts_10_exhaust",
+    .fvCount             = 1,
+    .entryCode           = &fun_alts_10_exhaust,
+    .objType             = THUNK,
+  };
 InfoTab it_main = 
   { .name                = "main",
     .fvCount             = 0,
@@ -190,18 +257,28 @@ InfoTab it_f_0 =
     .entryCode           = &fun_f_0,
     .objType             = THUNK,
   };
+InfoTab it_main2 = 
+  { .name                = "main2",
+    .fvCount             = 0,
+    .entryCode           = &fun_main2,
+    .objType             = THUNK,
+  };
 
 extern Obj sho_repminlist;
 extern Obj sho_rep;
-extern Obj sho_intMin;
+extern Obj sho_minInt;
 extern Obj sho_error;
 extern Obj sho_unit;
 extern Obj sho_one;
+extern Obj sho_two;
 extern Obj sho_nil;
-extern Obj sho_list1;
+extern Obj sho_list2;
+extern Obj sho_list12;
+extern Obj sho_list212;
 extern Obj sho_seq;
 extern Obj sho_forcelist;
 extern Obj sho_main;
+extern Obj sho_main2;
 
 Obj sho_repminlist =
 {
@@ -215,11 +292,11 @@ Obj sho_rep =
   .objType   = FUN,
   .ident     = "rep",
   };
-Obj sho_intMin =
+Obj sho_minInt =
 {
-  .infoPtr   = &it_intMin,
+  .infoPtr   = &it_minInt,
   .objType   = FUN,
-  .ident     = "intMin",
+  .ident     = "minInt",
   };
 Obj sho_error =
 {
@@ -241,21 +318,49 @@ Obj sho_one =
     .payload[ 0 ].argType = INT,
     .payload[ 0 ].i = 1,
   };
+Obj sho_two =
+{
+  .infoPtr   = &it_two,
+  .objType   = CON,
+  .ident     = "two",
+    .payload[ 0 ].argType = INT,
+    .payload[ 0 ].i = 2,
+  };
 Obj sho_nil =
 {
   .infoPtr   = &it_nil,
   .objType   = CON,
   .ident     = "nil",
   };
-Obj sho_list1 =
+Obj sho_list2 =
 {
-  .infoPtr   = &it_list1,
+  .infoPtr   = &it_list2,
   .objType   = CON,
-  .ident     = "list1",
+  .ident     = "list2",
+    .payload[ 0 ].argType = HEAPOBJ,
+    .payload[ 0 ].op = &sho_two,
+    .payload[ 1 ].argType = HEAPOBJ,
+    .payload[ 1 ].op = &sho_nil,
+  };
+Obj sho_list12 =
+{
+  .infoPtr   = &it_list12,
+  .objType   = CON,
+  .ident     = "list12",
     .payload[ 0 ].argType = HEAPOBJ,
     .payload[ 0 ].op = &sho_one,
     .payload[ 1 ].argType = HEAPOBJ,
-    .payload[ 1 ].op = &sho_nil,
+    .payload[ 1 ].op = &sho_list2,
+  };
+Obj sho_list212 =
+{
+  .infoPtr   = &it_list212,
+  .objType   = CON,
+  .ident     = "list212",
+    .payload[ 0 ].argType = HEAPOBJ,
+    .payload[ 0 ].op = &sho_two,
+    .payload[ 1 ].argType = HEAPOBJ,
+    .payload[ 1 ].op = &sho_list12,
   };
 Obj sho_seq =
 {
@@ -275,19 +380,29 @@ Obj sho_main =
   .objType   = THUNK,
   .ident     = "main",
   };
+Obj sho_main2 =
+{
+  .infoPtr   = &it_main2,
+  .objType   = THUNK,
+  .ident     = "main2",
+  };
 
 void registerSHOs() {
   stgStatObj[stgStatObjCount++] = &sho_repminlist;
   stgStatObj[stgStatObjCount++] = &sho_rep;
-  stgStatObj[stgStatObjCount++] = &sho_intMin;
+  stgStatObj[stgStatObjCount++] = &sho_minInt;
   stgStatObj[stgStatObjCount++] = &sho_error;
   stgStatObj[stgStatObjCount++] = &sho_unit;
   stgStatObj[stgStatObjCount++] = &sho_one;
+  stgStatObj[stgStatObjCount++] = &sho_two;
   stgStatObj[stgStatObjCount++] = &sho_nil;
-  stgStatObj[stgStatObjCount++] = &sho_list1;
+  stgStatObj[stgStatObjCount++] = &sho_list2;
+  stgStatObj[stgStatObjCount++] = &sho_list12;
+  stgStatObj[stgStatObjCount++] = &sho_list212;
   stgStatObj[stgStatObjCount++] = &sho_seq;
   stgStatObj[stgStatObjCount++] = &sho_forcelist;
   stgStatObj[stgStatObjCount++] = &sho_main;
+  stgStatObj[stgStatObjCount++] = &sho_main2;
 }
 
 
@@ -295,27 +410,26 @@ DEFUN2(fun_repminlist, self, xs) {
   fprintf(stderr, "repminlist here\n");
   Obj *mlist_0 = stgNewHeapObj();
   Obj *m_0 = stgNewHeapObj();
-  Obj *list_0 = stgNewHeapObj();
   *mlist_0 = (Obj) 
         { .objType = THUNK,
           .infoPtr = &it_mlist_0,
           .ident = "mlist_0",
-          .payload[0] = HOTOPL(STGHEAPAT(-2)), // m_0
+          .payload[0] = HOTOPL(STGHEAPAT(-1)), // m_0
           .payload[1] = xs, // xs
         };
   *m_0 = (Obj) 
         { .objType = THUNK,
           .infoPtr = &it_m_0,
           .ident = "m_0",
-          .payload[0] = HOTOPL(STGHEAPAT(-3)), // mlist_0
+          .payload[0] = HOTOPL(STGHEAPAT(-2)), // mlist_0
         };
-  *list_0 = (Obj) 
-        { .objType = THUNK,
-          .infoPtr = &it_list_0,
-          .ident = "list_0",
-          .payload[0] = HOTOPL(STGHEAPAT(-3)), // mlist_0
-        };
-  stgCurVal = HOTOPL(STGHEAPAT(-1)); // list_0
+  stgPushCont( (Cont)
+    { .retAddr = &alts_1,
+      .objType = CASECONT,
+      .ident = "CCont for alts_1",
+      // no FVs
+        });
+  stgCurVal = HOTOPL(STGHEAPAT(-2)); // mlist_0
   STGRETURN0();
   ENDFUN;
 }
@@ -344,6 +458,7 @@ DEFUN1(fun_m_0, self) {
 }
 
 DEFUN0(alts_0) {
+  fprintf(stderr, "alts_0 here\n");
   STGEVAL(stgCurVal);
   Cont ccont_alts_0 = stgPopCont();
   PtrOrLiteral scrut_alts_0 = stgCurVal;
@@ -355,8 +470,14 @@ DEFUN0(alts_0) {
     }
     // x ->
     default: {
-      // stg_case_not_exhaustive x
-      STGAPPLY1(HOTOPL(&sho_stg_case_not_exhaustive), scrut_alts_0);
+      Obj *alts_0_exhaust = stgNewHeapObj();
+      *alts_0_exhaust = (Obj) 
+            { .objType = THUNK,
+              .infoPtr = &it_alts_0_exhaust,
+              .ident = "alts_0_exhaust",
+              .payload[0] = scrut_alts_0, // x
+            };
+      stgCurVal = HOTOPL(STGHEAPAT(-1)); // alts_0_exhaust
       STGRETURN0();
     }
   }
@@ -364,40 +485,51 @@ DEFUN0(alts_0) {
 }
 
 
-DEFUN1(fun_list_0, self) {
-  fprintf(stderr, "list_0 here\n");
+DEFUN1(fun_alts_0_exhaust, self) {
+  fprintf(stderr, "alts_0_exhaust here\n");
   stgThunk(self);
-  stgPushCont( (Cont)
-    { .retAddr = &alts_1,
-      .objType = CASECONT,
-      .ident = "CCont for alts_1",
-      // no FVs
-        });
-  stgCurVal = self.op->payload[0]; // mlist_0
+  // stg_case_not_exhaustive x
+  STGAPPLY1(HOTOPL(&sho_stg_case_not_exhaustive), self.op->payload[0]);
   STGRETURN0();
   ENDFUN;
 }
 
 DEFUN0(alts_1) {
+  fprintf(stderr, "alts_1 here\n");
   STGEVAL(stgCurVal);
   Cont ccont_alts_1 = stgPopCont();
   PtrOrLiteral scrut_alts_1 = stgCurVal;
   switch(stgCurVal.op->infoPtr->conFields.tag) {
-    // Pair xxx list ->
+    // Pair yyy list ->
     case 2: {
       stgCurVal = scrut_alts_1.op->payload[1]; // list
       STGRETURN0();
     }
     // x ->
     default: {
-      // stg_case_not_exhaustive x
-      STGAPPLY1(HOTOPL(&sho_stg_case_not_exhaustive), scrut_alts_1);
+      Obj *alts_1_exhaust = stgNewHeapObj();
+      *alts_1_exhaust = (Obj) 
+            { .objType = THUNK,
+              .infoPtr = &it_alts_1_exhaust,
+              .ident = "alts_1_exhaust",
+              .payload[0] = scrut_alts_1, // x
+            };
+      stgCurVal = HOTOPL(STGHEAPAT(-1)); // alts_1_exhaust
       STGRETURN0();
     }
   }
   ENDFUN;
 }
 
+
+DEFUN1(fun_alts_1_exhaust, self) {
+  fprintf(stderr, "alts_1_exhaust here\n");
+  stgThunk(self);
+  // stg_case_not_exhaustive x
+  STGAPPLY1(HOTOPL(&sho_stg_case_not_exhaustive), self.op->payload[0]);
+  STGRETURN0();
+  ENDFUN;
+}
 
 DEFUN3(fun_rep, self, m, xs) {
   fprintf(stderr, "rep here\n");
@@ -414,6 +546,7 @@ DEFUN3(fun_rep, self, m, xs) {
 }
 
 DEFUN0(alts_2) {
+  fprintf(stderr, "alts_2 here\n");
   STGEVAL(stgCurVal);
   Cont ccont_alts_2 = stgPopCont();
   PtrOrLiteral scrut_alts_2 = stgCurVal;
@@ -447,8 +580,14 @@ DEFUN0(alts_2) {
     }
     // x ->
     default: {
-      // stg_case_not_exhaustive x
-      STGAPPLY1(HOTOPL(&sho_stg_case_not_exhaustive), scrut_alts_2);
+      Obj *alts_2_exhaust = stgNewHeapObj();
+      *alts_2_exhaust = (Obj) 
+            { .objType = THUNK,
+              .infoPtr = &it_alts_2_exhaust,
+              .ident = "alts_2_exhaust",
+              .payload[0] = scrut_alts_2, // x
+            };
+      stgCurVal = HOTOPL(STGHEAPAT(-1)); // alts_2_exhaust
       STGRETURN0();
     }
   }
@@ -457,6 +596,7 @@ DEFUN0(alts_2) {
 
 
 DEFUN0(alts_3) {
+  fprintf(stderr, "alts_3 here\n");
   STGEVAL(stgCurVal);
   Cont ccont_alts_3 = stgPopCont();
   PtrOrLiteral scrut_alts_3 = stgCurVal;
@@ -502,6 +642,7 @@ DEFUN0(alts_3) {
 
 
 DEFUN0(alts_4) {
+  fprintf(stderr, "alts_4 here\n");
   STGEVAL(stgCurVal);
   Cont ccont_alts_4 = stgPopCont();
   PtrOrLiteral scrut_alts_4 = stgCurVal;
@@ -537,8 +678,14 @@ DEFUN0(alts_4) {
     }
     // x ->
     default: {
-      // stg_case_not_exhaustive x
-      STGAPPLY1(HOTOPL(&sho_stg_case_not_exhaustive), scrut_alts_4);
+      Obj *alts_4_exhaust = stgNewHeapObj();
+      *alts_4_exhaust = (Obj) 
+            { .objType = THUNK,
+              .infoPtr = &it_alts_4_exhaust,
+              .ident = "alts_4_exhaust",
+              .payload[0] = scrut_alts_4, // x
+            };
+      stgCurVal = HOTOPL(STGHEAPAT(-1)); // alts_4_exhaust
       STGRETURN0();
     }
   }
@@ -549,15 +696,145 @@ DEFUN0(alts_4) {
 DEFUN1(fun_res1_0, self) {
   fprintf(stderr, "res1_0 here\n");
   stgThunk(self);
-  // intMin mp y
-  STGAPPLY2(HOTOPL(&sho_intMin), self.op->payload[0], self.op->payload[1]);
+  // minInt mp y
+  STGAPPLY2(HOTOPL(&sho_minInt), self.op->payload[0], self.op->payload[1]);
   STGRETURN0();
   ENDFUN;
 }
 
-DEFUN3(fun_intMin, self, x, y) {
-  fprintf(stderr, "intMin here\n");
+DEFUN1(fun_alts_4_exhaust, self) {
+  fprintf(stderr, "alts_4_exhaust here\n");
+  stgThunk(self);
+  // stg_case_not_exhaustive x
+  STGAPPLY1(HOTOPL(&sho_stg_case_not_exhaustive), self.op->payload[0]);
+  STGRETURN0();
+  ENDFUN;
+}
+
+DEFUN1(fun_alts_2_exhaust, self) {
+  fprintf(stderr, "alts_2_exhaust here\n");
+  stgThunk(self);
+  // stg_case_not_exhaustive x
+  STGAPPLY1(HOTOPL(&sho_stg_case_not_exhaustive), self.op->payload[0]);
+  STGRETURN0();
+  ENDFUN;
+}
+
+DEFUN3(fun_minInt, self, x, y) {
+  fprintf(stderr, "minInt here\n");
+  stgPushCont( (Cont)
+    { .retAddr = &alts_5,
+      .objType = CASECONT,
+      .ident = "CCont for alts_5",
+      // load payload with FVs y x
+      .payload[0] = y, // y
+      .payload[1] = x, // x
+    });
   stgCurVal = x; // x
+  STGRETURN0();
+  ENDFUN;
+}
+
+DEFUN0(alts_5) {
+  fprintf(stderr, "alts_5 here\n");
+  STGEVAL(stgCurVal);
+  Cont ccont_alts_5 = stgPopCont();
+  PtrOrLiteral scrut_alts_5 = stgCurVal;
+  // I i ->
+  stgPushCont( (Cont)
+    { .retAddr = &alts_6,
+      .objType = CASECONT,
+      .ident = "CCont for alts_6",
+      // load payload with FVs i x y
+      .payload[0] = scrut_alts_5.op->payload[0], // i
+      .payload[1] = ccont_alts_5.payload[1], // x
+      .payload[2] = ccont_alts_5.payload[0], // y
+    });
+  stgCurVal = ccont_alts_5.payload[0]; // y
+  STGRETURN0();
+  ENDFUN;
+}
+
+
+DEFUN0(alts_6) {
+  fprintf(stderr, "alts_6 here\n");
+  STGEVAL(stgCurVal);
+  Cont ccont_alts_6 = stgPopCont();
+  PtrOrLiteral scrut_alts_6 = stgCurVal;
+  // I j ->
+  stgPushCont( (Cont)
+    { .retAddr = &alts_7,
+      .objType = CASECONT,
+      .ident = "CCont for alts_7",
+      // load payload with FVs x y
+      .payload[0] = ccont_alts_6.payload[1], // x
+      .payload[1] = ccont_alts_6.payload[2], // y
+    });
+  stgCurVal.argType = INT;
+  stgCurVal.i = (ccont_alts_6.payload[0]).i <= (scrut_alts_6.op->payload[0]).i;
+  STGRETURN0();
+  ENDFUN;
+}
+
+
+DEFUN0(alts_7) {
+  fprintf(stderr, "alts_7 here\n");
+  STGEVAL(stgCurVal);
+  Cont ccont_alts_7 = stgPopCont();
+  PtrOrLiteral scrut_alts_7 = stgCurVal;
+  // ub ->
+  stgPushCont( (Cont)
+    { .retAddr = &alts_8,
+      .objType = CASECONT,
+      .ident = "CCont for alts_8",
+      // load payload with FVs x y
+      .payload[0] = ccont_alts_7.payload[0], // x
+      .payload[1] = ccont_alts_7.payload[1], // y
+    });
+  stgCurVal = (scrut_alts_7).i?HOTOPL(&sho_true):HOTOPL(&sho_false);
+  STGRETURN0();
+  ENDFUN;
+}
+
+
+DEFUN0(alts_8) {
+  fprintf(stderr, "alts_8 here\n");
+  STGEVAL(stgCurVal);
+  Cont ccont_alts_8 = stgPopCont();
+  PtrOrLiteral scrut_alts_8 = stgCurVal;
+  switch(stgCurVal.op->infoPtr->conFields.tag) {
+    // True  ->
+    case 1: {
+      stgCurVal = ccont_alts_8.payload[0]; // x
+      STGRETURN0();
+    }
+    // False  ->
+    case 0: {
+      stgCurVal = ccont_alts_8.payload[1]; // y
+      STGRETURN0();
+    }
+    // x ->
+    default: {
+      Obj *alts_8_exhaust = stgNewHeapObj();
+      *alts_8_exhaust = (Obj) 
+            { .objType = THUNK,
+              .infoPtr = &it_alts_8_exhaust,
+              .ident = "alts_8_exhaust",
+              .payload[0] = scrut_alts_8, // x
+            };
+      stgCurVal = HOTOPL(STGHEAPAT(-1)); // alts_8_exhaust
+      STGRETURN0();
+    }
+  }
+  ENDFUN;
+}
+
+
+DEFUN1(fun_alts_8_exhaust, self) {
+  fprintf(stderr, "alts_8_exhaust here\n");
+  stgThunk(self);
+  // stg_case_not_exhaustive x
+  STGAPPLY1(HOTOPL(&sho_stg_case_not_exhaustive), self.op->payload[0]);
   STGRETURN0();
   ENDFUN;
 }
@@ -565,9 +842,9 @@ DEFUN3(fun_intMin, self, x, y) {
 DEFUN3(fun_seq, self, x, y) {
   fprintf(stderr, "seq here\n");
   stgPushCont( (Cont)
-    { .retAddr = &alts_5,
+    { .retAddr = &alts_9,
       .objType = CASECONT,
-      .ident = "CCont for alts_5",
+      .ident = "CCont for alts_9",
       // load payload with FVs y
       .payload[0] = y, // y
     });
@@ -576,12 +853,13 @@ DEFUN3(fun_seq, self, x, y) {
   ENDFUN;
 }
 
-DEFUN0(alts_5) {
+DEFUN0(alts_9) {
+  fprintf(stderr, "alts_9 here\n");
   STGEVAL(stgCurVal);
-  Cont ccont_alts_5 = stgPopCont();
-  PtrOrLiteral scrut_alts_5 = stgCurVal;
+  Cont ccont_alts_9 = stgPopCont();
+  PtrOrLiteral scrut_alts_9 = stgCurVal;
   // z ->
-  stgCurVal = ccont_alts_5.payload[0]; // y
+  stgCurVal = ccont_alts_9.payload[0]; // y
   STGRETURN0();
   ENDFUN;
 }
@@ -590,9 +868,9 @@ DEFUN0(alts_5) {
 DEFUN2(fun_forcelist, self, list) {
   fprintf(stderr, "forcelist here\n");
   stgPushCont( (Cont)
-    { .retAddr = &alts_6,
+    { .retAddr = &alts_10,
       .objType = CASECONT,
-      .ident = "CCont for alts_6",
+      .ident = "CCont for alts_10",
       // no FVs
         });
   stgCurVal = list; // list
@@ -600,10 +878,11 @@ DEFUN2(fun_forcelist, self, list) {
   ENDFUN;
 }
 
-DEFUN0(alts_6) {
+DEFUN0(alts_10) {
+  fprintf(stderr, "alts_10 here\n");
   STGEVAL(stgCurVal);
-  Cont ccont_alts_6 = stgPopCont();
-  PtrOrLiteral scrut_alts_6 = stgCurVal;
+  Cont ccont_alts_10 = stgPopCont();
+  PtrOrLiteral scrut_alts_10 = stgCurVal;
   switch(stgCurVal.op->infoPtr->conFields.tag) {
     // Nil  ->
     case 3: {
@@ -617,16 +896,22 @@ DEFUN0(alts_6) {
             { .objType = THUNK,
               .infoPtr = &it_rec_0,
               .ident = "rec_0",
-              .payload[0] = scrut_alts_6.op->payload[1], // t
+              .payload[0] = scrut_alts_10.op->payload[1], // t
             };
       // seq h rec_0
-      STGAPPLY2(HOTOPL(&sho_seq), scrut_alts_6.op->payload[0], HOTOPL(STGHEAPAT(-1)));
+      STGAPPLY2(HOTOPL(&sho_seq), scrut_alts_10.op->payload[0], HOTOPL(STGHEAPAT(-1)));
       STGRETURN0();
     }
     // x ->
     default: {
-      // stg_case_not_exhaustive x
-      STGAPPLY1(HOTOPL(&sho_stg_case_not_exhaustive), scrut_alts_6);
+      Obj *alts_10_exhaust = stgNewHeapObj();
+      *alts_10_exhaust = (Obj) 
+            { .objType = THUNK,
+              .infoPtr = &it_alts_10_exhaust,
+              .ident = "alts_10_exhaust",
+              .payload[0] = scrut_alts_10, // x
+            };
+      stgCurVal = HOTOPL(STGHEAPAT(-1)); // alts_10_exhaust
       STGRETURN0();
     }
   }
@@ -639,6 +924,15 @@ DEFUN1(fun_rec_0, self) {
   stgThunk(self);
   // forcelist t
   STGAPPLY1(HOTOPL(&sho_forcelist), self.op->payload[0]);
+  STGRETURN0();
+  ENDFUN;
+}
+
+DEFUN1(fun_alts_10_exhaust, self) {
+  fprintf(stderr, "alts_10_exhaust here\n");
+  stgThunk(self);
+  // stg_case_not_exhaustive x
+  STGAPPLY1(HOTOPL(&sho_stg_case_not_exhaustive), self.op->payload[0]);
   STGRETURN0();
   ENDFUN;
 }
@@ -668,8 +962,8 @@ DEFUN1(fun_main, self) {
 DEFUN1(fun_result_0, self) {
   fprintf(stderr, "result_0 here\n");
   stgThunk(self);
-  // repminlist list1
-  STGAPPLY1(HOTOPL(&sho_repminlist), HOTOPL(&sho_list1));
+  // repminlist list212
+  STGAPPLY1(HOTOPL(&sho_repminlist), HOTOPL(&sho_list212));
   STGRETURN0();
   ENDFUN;
 }
@@ -679,6 +973,15 @@ DEFUN1(fun_f_0, self) {
   stgThunk(self);
   // forcelist result_0
   STGAPPLY1(HOTOPL(&sho_forcelist), self.op->payload[0]);
+  STGRETURN0();
+  ENDFUN;
+}
+
+DEFUN1(fun_main2, self) {
+  fprintf(stderr, "main2 here\n");
+  stgThunk(self);
+  // minInt one two
+  STGAPPLY2(HOTOPL(&sho_minInt), HOTOPL(&sho_one), HOTOPL(&sho_two));
   STGRETURN0();
   ENDFUN;
 }

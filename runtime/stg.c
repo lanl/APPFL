@@ -135,7 +135,7 @@ void showStgObjRecPretty(Obj *p) {
   }
   if (strcmp(it.name, o.ident)) {
 	  if (strcmp(it.name, "true") != 0 && strcmp(it.name, "false") != 0 ) {
-        fprintf(stderr, "mismatch in infotab and object name! %s != %s\n",
+        fprintf(stderr, "mismatch in infotab and object names \"%s\" != \"%s\"\n",
         		it.name, o.ident);
         exit(0);
 	  }
