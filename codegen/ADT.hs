@@ -23,8 +23,8 @@ import qualified Data.Map as Map
 
 -- TyCon name to arity, tag, boxed/unboxed
 type TyConMap = Map.Map String (Int, Int, Boxedness)
--- map data constructor to (arity, tag, boxedness) TODO: add tycon?
-type DataConMap = Map.Map String (Int, Int, Boxedness)
+-- map data constructor to (arity, tag, boxedness, tyconname) 
+type DataConMap = Map.Map String (Int, Int, Boxedness, Con)
 type ConMaps = (TyConMap, DataConMap)
 
 
@@ -169,9 +169,13 @@ buildconmaps :: [ObjData a] -> ConMaps
 buildconmaps objs = execState (build objs) (Map.empty, Map.empty)
 
 class BuildConMaps t where build :: t -> State ConMaps ()
-
+                           build = buildS []
+                           buildS :: String -> t -> State ConMaps()
+                           buildS _ = build
+                           
 instance BuildConMaps a => BuildConMaps [a] where
   build = mapM_ build
+  buildS = mapM_ . buildS
 
 instance BuildConMaps (ObjData a) where
   build (ODData tycon) = build tycon
@@ -179,18 +183,18 @@ instance BuildConMaps (ObjData a) where
 
 instance BuildConMaps TyCon where
   build (TyCon boxed con tyvars dcons) 
-    = tmap >> build dcons
+    = tmap >> buildS con dcons
     where tmap = tyconinsert con (length tyvars) boxed 
      
 instance BuildConMaps DataCon where
-  build (DataCon boxed con mts) = 
-    dataconinsert con (length mts) boxed
+  buildS tycon (DataCon boxed con mts) = 
+    dataconinsert con (length mts) boxed tycon
   
-dataconinsert :: String -> Int -> Boxedness -> State ConMaps ()
-dataconinsert con arity boxed 
+dataconinsert :: String -> Int -> Boxedness -> Con -> State ConMaps ()
+dataconinsert con arity boxed tycon
   = do 
       (tmap, dmap) <- get
-      put (tmap, Map.insert con (arity, Map.size dmap, boxed) dmap)
+      put (tmap, Map.insert con (arity, Map.size dmap, boxed, tycon) dmap)
   
 tyconinsert :: String -> Int -> Boxedness -> State ConMaps ()
 tyconinsert con arity boxed
