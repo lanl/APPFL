@@ -14,6 +14,11 @@ module ADT (
   TyConMap,
   DataConMap,
   ConMaps,
+  onObjs,
+  getObjs,
+  getDatas,
+  splitDefs,
+  unsplitDefs,
   updatedata
 ) where
 
@@ -214,3 +219,24 @@ isboxed m (ATyCon c _) = let lookup = Map.lookup c m
                                 error "unknown type constructor used"
                               else (\(a,t,b) -> b) (fromJust lookup)
 
+-- helper functions
+
+-- take a function on Objs and apply to Defs
+onObjs f ds = let (ts, os) = splitDefs ds
+              in unsplitDefs (ts, f os)
+                
+splitDefs :: [Def a] -> ([TyCon], [Obj a])
+splitDefs d = (getDatas d, getObjs d)
+
+unsplitDefs :: ([TyCon], [Obj a]) -> [Def a]
+unsplitDefs (ts,os) = map DataDef ts ++ map ObjDef os
+
+getObjs :: [Def a] -> [Obj a]
+getObjs = concatMap getObj
+          where getObj (ObjDef o) = [o]
+                getObj (DataDef _) = []
+
+getDatas :: [Def a] -> [TyCon]
+getDatas = concatMap getData
+           where getData (ObjDef o) = []
+                 getData (DataDef t) = [t]

@@ -4,12 +4,17 @@
 
 module Rename (
   renameObjs,
+  renameDefs
 ) where
 
 import Prelude
 import AST
+import ADT
 import State
 import Data.Char (isDigit)
+
+renameDefs :: [Def a] -> [Def a]
+renameDefs = onObjs renameObjs
 
 withsuff :: String -> [String] -> (String, String)
 withsuff _ [] = error "this should never happen"

@@ -5,7 +5,6 @@
 module Parser (
   parser,
   showDefs,
-  parsermaps, -- debug
   parse --debug
 ) where
 
@@ -55,10 +54,6 @@ import Data.List
 
 --- layer for adding ADT defs
 --  obsoletes parser, defsp
-
--- parse and build conmaps
-parsermaps :: [Char] -> ([Def ()], ConMaps)
-parsermaps = updatedata . parse
 
 parse :: [Char] -> [Def ()]
 parse inp = case defdatsp $ lexer inp of
