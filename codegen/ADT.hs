@@ -21,13 +21,6 @@ import Data.Maybe
 import Control.Monad.State
 import qualified Data.Map as Map
 
--- TyCon name to arity, tag, boxed/unboxed
-type TyConMap = Map.Map String (Int, Int, Boxedness)
--- map data constructor to (arity, tag, boxedness, tyconname) 
-type DataConMap = Map.Map String (Int, Int, Boxedness, Con)
-type ConMaps = (TyConMap, DataConMap)
-
-
 {-
   Algebraic Datatypes:
     
@@ -111,9 +104,60 @@ data Unboxedtype = UInt Int
                  | UDouble Double
                  | UTyCon Con [Boxedtype] 
                    deriving(Eq,Show)
-                   
--- update Atype -> Boxed/Unboxed 
 
+-- Type constr name to arity, tag, boxed/unboxed
+type TyConMap = Map.Map String (Int, Int, Boxedness)
+-- Data constr name to (arity, tag, boxedness, type constr name) 
+type DataConMap = Map.Map String (Int, Int, Boxedness, Con)
+type ConMaps = (TyConMap, DataConMap)
+         
+ -- starting tycon map
+tyconmap :: TyConMap
+tyconmap = Map.insert "Bool#" (0,0, Unboxed) 
+               Map.empty
+
+-- starting datacon map
+dataconmap :: DataConMap
+dataconmap = Map.insert "True" (0, 1, Unboxed, "Bool#") 
+           $ Map.insert "False" (0, 0, Unboxed, "Bool#") 
+             Map.empty
+
+buildconmaps :: [ObjData a] -> ConMaps
+buildconmaps objs = execState (build [] objs) 
+                    (tyconmap, dataconmap)
+
+class BuildConMaps t where build :: String -> t -> State ConMaps()
+                                                    
+instance BuildConMaps a => BuildConMaps [a] where
+  build = mapM_ . build
+
+instance BuildConMaps (ObjData a) where
+  build _ (ODData tycon) = build [] tycon
+  build _ _ = return ()
+
+instance BuildConMaps TyCon where
+  build _ (TyCon boxed con tyvars dcons) 
+    = tyconinsert con (length tyvars) boxed >> 
+      build con dcons
+     
+instance BuildConMaps DataCon where
+  build tycon (DataCon boxed con mts) = 
+    dataconinsert con (length mts) boxed tycon
+  
+dataconinsert :: String -> Int -> Boxedness -> Con -> State ConMaps ()
+dataconinsert con arity boxed tycon
+  = do 
+      (tmap, dmap) <- get
+      put (tmap, Map.insert con (arity, Map.size dmap, boxed, tycon) dmap)
+  
+tyconinsert :: String -> Int -> Boxedness -> State ConMaps ()
+tyconinsert con arity boxed
+  = do 
+      (tmap, dmap) <- get
+      put (Map.insert con (arity, Map.size tmap, boxed) tmap, dmap)        
+                   
+
+-- update Atype -> Boxed/Unboxed 
 class Update t where update :: TyConMap -> t -> t              
 
 instance Update a => Update [a] where
@@ -163,45 +207,3 @@ isboxed m (ATyCon c _) = let lookup = Map.lookup c m
 updatedata :: [ObjData a] -> ([ObjData a], ConMaps)
 updatedata inp = (update (fst conmaps) inp, conmaps)
                  where conmaps = buildconmaps inp
-
-
-buildconmaps :: [ObjData a] -> ConMaps
-buildconmaps objs = execState (build objs) (Map.empty, Map.empty)
-
-class BuildConMaps t where build :: t -> State ConMaps ()
-                           build = buildS []
-                           buildS :: String -> t -> State ConMaps()
-                           buildS _ = build
-                           
-instance BuildConMaps a => BuildConMaps [a] where
-  build = mapM_ build
-  buildS = mapM_ . buildS
-
-instance BuildConMaps (ObjData a) where
-  build (ODData tycon) = build tycon
-  build _ = return ()
-
-instance BuildConMaps TyCon where
-  build (TyCon boxed con tyvars dcons) 
-    = tmap >> buildS con dcons
-    where tmap = tyconinsert con (length tyvars) boxed 
-     
-instance BuildConMaps DataCon where
-  buildS tycon (DataCon boxed con mts) = 
-    dataconinsert con (length mts) boxed tycon
-  
-dataconinsert :: String -> Int -> Boxedness -> Con -> State ConMaps ()
-dataconinsert con arity boxed tycon
-  = do 
-      (tmap, dmap) <- get
-      put (tmap, Map.insert con (arity, Map.size dmap, boxed, tycon) dmap)
-  
-tyconinsert :: String -> Int -> Boxedness -> State ConMaps ()
-tyconinsert con arity boxed
-  = do 
-      (tmap, dmap) <- get
-      put (Map.insert con (arity, Map.size tmap, boxed) tmap, dmap)
-     
-
-
-
