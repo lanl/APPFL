@@ -5,6 +5,7 @@
 module Parser (
   parser,
   showDefs,
+  parsermaps, -- debug
   parse --debug
 ) where
 
@@ -55,16 +56,20 @@ import Data.List
 --- layer for adding ADT defs
 --  obsoletes parser, defsp
 
-parse :: [Char] -> [ObjData ()]
+-- parse and build conmaps
+parsermaps :: [Char] -> ([Def ()], ConMaps)
+parsermaps = updatedata . parse
+
+parse :: [Char] -> [Def ()]
 parse inp = case defdatsp $ lexer inp of
                [] ->  error "parser failed"
                xs -> fst $ head xs
                
-defdatsp :: Parser Token [ObjData ()]
+defdatsp :: Parser Token [Def ()]
 defdatsp = sepbyp defdatp (symkindp SymSemi)
 
-defdatp :: Parser Token (ObjData ())
-defdatp = (defp `usingp` ODObj) `altp` (tyconp `usingp` ODData)
+defdatp :: Parser Token (Def ())
+defdatp = (defp `usingp` ObjDef) `altp` (tyconp `usingp` DataDef)
 
 tyconp :: Parser Token TyCon
 tyconp = (kwkindp KWdata `xthenp` kwkindp KWunboxed `xthenp` ubtyconp)
@@ -87,11 +92,11 @@ ubtyconp = (conp `thenp`
 
 bdataconp :: Parser Token DataCon
 bdataconp =  (conp `thenp` manyp monop)
-             `usingp` \(c,ms) -> DataCon Boxed c ms
+             `usingp` uncurry (DataCon Boxed)
 
 ubdataconp :: Parser Token DataCon
 ubdataconp =  (conp `thenp` manyp monop)
-              `usingp` \(c,ms) -> DataCon Unboxed c ms
+              `usingp` uncurry (DataCon Unboxed)
      
 monop :: Parser Token Monotype
 monop = (((symkindp SymLParen)  `xthenp` atyp

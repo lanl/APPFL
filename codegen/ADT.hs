@@ -1,7 +1,7 @@
 {-# LANGUAGE FlexibleInstances #-}
 
 module ADT (
-  ObjData(..),
+  Def(..),
   Boxedness(..),
   TyCon(..),
   DataCon(..),
@@ -11,7 +11,9 @@ module ADT (
   Monotype(..),
   Boxedtype(..),
   Unboxedtype(..),
-  buildconmaps,
+  TyConMap,
+  DataConMap,
+  ConMaps,
   updatedata
 ) where
 
@@ -52,8 +54,8 @@ import qualified Data.Map as Map
 -}
 
 
-data ObjData a = ODObj (Obj a)
-             | ODData TyCon
+data Def a = ObjDef (Obj a)
+             | DataDef TyCon
                deriving(Eq,Show)
 
 data Boxedness = Boxed | Unboxed deriving(Eq,Show)
@@ -113,26 +115,33 @@ type ConMaps = (TyConMap, DataConMap)
          
  -- starting tycon map
 tyconmap :: TyConMap
-tyconmap = Map.insert "Bool#" (0,0, Unboxed) 
-               Map.empty
+tyconmap = Map.insert "Bool" (0,0, Boxed) 
+         $ Map.insert "Int" (0,1, Boxed) 
+           Map.empty
 
 -- starting datacon map
+-- these tags must match what is in stg_header.h
 dataconmap :: DataConMap
-dataconmap = Map.insert "True" (0, 1, Unboxed, "Bool#") 
-           $ Map.insert "False" (0, 0, Unboxed, "Bool#") 
+dataconmap = Map.insert "False" (0, 0, Boxed, "Bool") 
+           $ Map.insert "True" (0, 1, Boxed, "Bool") 
+           $ Map.insert "I" (1, 2, Boxed, "Int") 
              Map.empty
 
-buildconmaps :: [ObjData a] -> ConMaps
+buildconmaps :: [Def a] -> ConMaps
 buildconmaps objs = execState (build [] objs) 
                     (tyconmap, dataconmap)
+                    
+updatedata :: [Def a] -> ([Def a], ConMaps)
+updatedata inp = (update (fst conmaps) inp, conmaps)
+                 where conmaps = buildconmaps inp
 
 class BuildConMaps t where build :: String -> t -> State ConMaps()
                                                     
 instance BuildConMaps a => BuildConMaps [a] where
   build = mapM_ . build
 
-instance BuildConMaps (ObjData a) where
-  build _ (ODData tycon) = build [] tycon
+instance BuildConMaps (Def a) where
+  build _ (DataDef tycon) = build [] tycon
   build _ _ = return ()
 
 instance BuildConMaps TyCon where
@@ -163,8 +172,8 @@ class Update t where update :: TyConMap -> t -> t
 instance Update a => Update [a] where
   update = map . update
 
-instance Update (ObjData a) where
-  update m (ODData tycon) = ODData(update m tycon)
+instance Update (Def a) where
+  update m (DataDef tycon) = DataDef(update m tycon)
   update _ x  = x
 
 instance Update TyCon where
@@ -179,7 +188,7 @@ instance Update Monotype where
   update m (Mono ty) = if (isboxed m ty == Boxed)
                        then MBoxed (makeboxed ty) 
                        else MUnboxed (makeunboxed ty)
-  update _ _ = error "non atype"
+  update _ _ = error "can't update non atype"
 
 makeboxed :: Atype -> Boxedtype
 makeboxed (ATyVar x) = BTyVar x
@@ -201,9 +210,7 @@ isboxed _ (AInt _) = Unboxed
 isboxed _ (ADouble _) = Unboxed
 isboxed _ (AFun _ _) = Boxed
 isboxed m (ATyCon c _) = let lookup = Map.lookup c m
-                           in if (isNothing lookup) then Boxed --default boxed for now
+                           in if (isNothing lookup) then 
+                                error "unknown type constructor used"
                               else (\(a,t,b) -> b) (fromJust lookup)
 
-updatedata :: [ObjData a] -> ([ObjData a], ConMaps)
-updatedata inp = (update (fst conmaps) inp, conmaps)
-                 where conmaps = buildconmaps inp
