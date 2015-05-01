@@ -4,7 +4,7 @@
 
 module Parser (
   parser,
-  showDefs,
+  showObjs,
   parse --debug
 ) where
 
@@ -269,7 +269,7 @@ interpolate ('\n':'%':s) = interpolate $ dropspaces s
 interpolate (c:s) = c : interpolate s
 interpolate [] = []
 
-showDefs defs = interpolate $ intercalate "\n" $ unparser 0 defs
+showObjs objs = interpolate $ intercalate "\n" $ unparser 0 objs
 
 indent n s@('%':_) = s
 indent n s = (take n $ repeat ' ') ++ s

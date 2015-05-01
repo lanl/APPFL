@@ -311,7 +311,7 @@ cgalt env switch scrutName (ACon it c vs e) =
         env' = eenv ++ env
     in do
       (inline, func) <- cge env' e
-      let (arity, tag) = case Map.lookup c (conMap it) of
+      let (arity, tag,_,_) = case Map.lookup c (dconMap it) of
                            Nothing -> error "conMap lookup error"
                            Just x -> x
       let code = "// " ++ c ++ " " ++ intercalate " " vs ++ " ->\n" ++

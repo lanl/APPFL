@@ -1,4 +1,5 @@
 module InfoTab.Test where
+import           ADT
 import           Driver
 import           InfoTab
 
@@ -20,5 +21,5 @@ setinfoseq :: IO ByteString
 setinfoseq = return $ fromString $ show $ infotaber inp
 
 showinfoseq :: IO ByteString
-showinfoseq = return $ fromString $ showITs $ conmaper inp
+showinfoseq = return $ fromString $ showITs $ getObjs $ conmaper inp
            

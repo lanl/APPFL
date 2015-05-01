@@ -1,4 +1,6 @@
-leaf = CON(Leaf);    -- just out of the blue
+data ITree = Leaf | Branch (ITree) (ITree);
+ 
+leaf = CON(Leaf);   
 
 branch = FUN(l r -> let { result = CON(Branch l r) } in result);
 

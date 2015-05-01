@@ -1,1 +1,1 @@
-fromList [("I",(1,0))]
+[ObjDef (CON {omd = Con {name = "one", fvs = [], entryCode = "stg_constructorcall", args = [LitI 1], arity = 1, con = "I", tag = 2}, c = "I", as = [LitI 1], oname = "one"}),ObjDef (THUNK {omd = Thunk {name = "main", fvs = [], entryCode = "fun_main"}, e = EAtom {emd = JustFVs {fvs = []}, ea = Var "one"}, oname = "main"})]

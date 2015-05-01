@@ -24,9 +24,10 @@ updateIT objs = runState (update objs)
      
 check c arity cmap =
     case Map.lookup c cmap of
-      Nothing -> error "use of unknown constructor"
+      Nothing -> error ("use of unknown constructor " ++ c)
       Just (arity',_,_,_) -> if arity == arity' then cmap  
-                             else error "CON arity mismatch!"
+                             else error ("CON arity mismatch! for " 
+                              ++ c ++ " " ++ show arity ++ " != " ++ show arity')
 
 class ConMaps2IT t where 
     update :: t -> State ConMaps t
