@@ -45,8 +45,12 @@ module AST (
 type Var = String
 type Con = String
 
-data Atom = Var Var
-          | Lit Int
+data Atom = Var  Var
+          | LitI Int
+          | LitB Bool
+          | LitF Float
+          | LitD Double
+          | LitC Char
             deriving(Eq,Show)
 
 data Expr a = EAtom   {emd :: a, ea :: Atom}

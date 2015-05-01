@@ -3,12 +3,16 @@
 #include <stdint.h>
 #include <stddef.h>
 #include <assert.h>
+#include <stdbool.h>
 
 //------ stack and heap objects
 
 typedef enum {          // superfluous, for sanity checking
   INT, 
-  DOUBLE, 
+  DOUBLE,
+  BOOL,
+  FLOAT,
+  CHAR, 
   HEAPOBJ 
 } ArgType;
 
@@ -48,6 +52,9 @@ typedef struct {
   union {
     int i;
     double d;
+    float f;
+    bool b;
+    char c;
     Obj *op;
   };
 } PtrOrLiteral;
@@ -180,7 +187,6 @@ inline Cont stgPopCont() {
   JUMP8(f,v1,v2,v3,v4,v5,v6,v7,v8)
 
 
-// are these good places to check for BLACKHOLE?
 // return through continuation stack
 #define STGRETURN0()				\
   STGJUMP0(((Cont *)stgSP)->retAddr)

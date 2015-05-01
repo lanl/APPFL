@@ -20,7 +20,7 @@ import Data.List
 
 <con> :: start with uppercase
 
-<lit> ::= int[eger]
+<lit> ::= int[eger] | "true#" | "false#"
 
 <atom> ::= <lit> | <var>
 
@@ -131,6 +131,10 @@ nump :: Parser Token Int
 nump ((Number i) : xs) = succeedp i xs
 nump _ = failp []
 
+boolp :: Parser Token Bool
+boolp ((Boolean i) : xs) = succeedp i xs
+boolp _ = failp []
+
 varp :: Parser Token String
 varp ((Ident s) : xs) = succeedp s xs
 varp _ = failp []
@@ -140,7 +144,9 @@ conp ((Ctor c) : xs) = succeedp c xs
 conp _ = failp []
 
 atomp :: Parser Token Atom
-atomp = (nump `usingp` Lit) `altp` (varp `usingp` Var)
+atomp = (nump `usingp` LitI) `altp` 
+        (varp `usingp` Var)  `altp`
+        (boolp `usingp` LitB)
 
 defsp :: Parser Token [Obj ()]
 defsp = sepbyp defp (symkindp SymSemi)
@@ -272,7 +278,10 @@ indents n ss = map (indent n) ss
 
 -- instance Unparser n Atom where
 showa (Var v) = v
-showa (Lit l) = show l
+showa (LitI i) = show i
+showa (LitB False) = "false#"
+showa (LitB True) = "true#"
+
 
 -- instance Unparser [Atom] where
 showas as = intercalate " " $ map showa as

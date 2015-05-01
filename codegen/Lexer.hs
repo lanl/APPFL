@@ -37,6 +37,7 @@ data Token = Number Int
            | Obj Object
            | Sym Symbol
            | PO Primop
+           | Boolean Bool
            deriving(Show, Eq)
 
 bigtab :: [(String, Token)]
@@ -80,7 +81,10 @@ bigtab =
      ("gt#",       PO Pigt),
      ("ge#",       PO Pigt),
 
-     ("intToBool#",PO PintToBool)
+     ("intToBool#",PO PintToBool),
+
+     ("true#",     Boolean True),
+     ("false#",    Boolean False)
     ]
              
 
@@ -92,12 +96,12 @@ trans (ScanNum, str) | last str == '#' = Number (read $ init str)
                      | otherwise = Number (read str)
 
 trans (ScanSym, str) = 
-    case lookupassoc bigtab str of
+    case lookup str bigtab of
       Nothing -> error "trans error"
       Just s -> s
 
 trans (ScanIdent, str) = 
-    case lookupassoc bigtab str of
+    case lookup str bigtab of
       Just o -> o
       Nothing ->
           if isUpper (head str) then
@@ -107,11 +111,6 @@ trans (ScanIdent, str) =
                else error $ "trans:  what is \"" ++ str ++ "\""
                
 trans (ScanJunk, str) = error $ "trans: junk \"" ++ str ++ "\""
-
-lookupassoc :: Eq a1 => [(a1, a)] -> a1 -> Maybe a
-lookupassoc [] _ = Nothing
-lookupassoc ((k',v):kvs) k | k == k' = Just v
-                           | otherwise = lookupassoc kvs k
 
 
 

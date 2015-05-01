@@ -189,6 +189,16 @@ void showStgValPretty(PtrOrLiteral v) {
   case DOUBLE:
     fprintf(stderr,"%f", v.d);
     break;
+  case BOOL:
+    if (v.b) fprintf(stderr,"true#");
+    else fprintf(stderr,"false#");
+    break;
+  case FLOAT:
+    fprintf(stderr,"%f", v.f);
+    break;
+  case CHAR:
+    fprintf(stderr,"%c", v.c);
+    break;
   case HEAPOBJ:
     showStgObjRecPretty(v.op);
     break;

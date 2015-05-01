@@ -86,9 +86,26 @@ showSHOspec it@(ConMap {}) = ""
 
 payloads as = concatMap payload $ zip [0..] as
 
-payload (ind, Lit i) = 
+payload (ind, LitI i) = 
     "    .payload[ " ++ show ind ++ " ].argType = INT,\n" ++
     "    .payload[ " ++ show ind ++ " ].i = " ++ show i ++ ",\n"
+
+payload (ind, LitB b) = 
+    "    .payload[ " ++ show ind ++ " ].argType = BOOL,\n" ++
+    "    .payload[ " ++ show ind ++ " ].b = " ++ 
+    (if b then "true" else "false") ++ ",\n"
+
+payload (ind, LitD d) = 
+    "    .payload[ " ++ show ind ++ " ].argType = DOUBLE,\n" ++
+    "    .payload[ " ++ show ind ++ " ].d = " ++ show d ++ ",\n"
+
+payload (ind, LitF d) = 
+    "    .payload[ " ++ show ind ++ " ].argType = FLOAT,\n" ++
+    "    .payload[ " ++ show ind ++ " ].f = " ++ show d ++ ",\n"
+
+payload (ind, LitC c) = 
+    "    .payload[ " ++ show ind ++ " ].argType = CHAR,\n" ++
+    "    .payload[ " ++ show ind ++ " ].f = " ++ show c ++ ",\n"
 
 -- for SHOs atoms that are variables must be SHOs, so not unboxed
 payload (ind, Var v) = 
@@ -98,6 +115,10 @@ payload (ind, Var v) =
 ptrOrLitSHO a =
     "{ " ++
     case a of
-      Lit i -> ".argType = INT, .i = " ++ show i
+      LitI i -> ".argType = INT, .i = " ++ show i
+      LitB b -> ".argType = BOOL, .b = " ++ (if b then "true" else "false")
+      LitD d -> ".argType = DOUBLE, .d = " ++ show d
+      LitF f -> ".argType = FLOAT, .f = " ++ show f
+      LitC c -> ".argType = CHAR, .c = " ++ show c
       Var v -> ".argType = HEAPOBJ, .op = &sho_" ++ v   -- these must be global
     ++ " }"

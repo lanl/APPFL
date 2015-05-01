@@ -37,7 +37,7 @@ class FVs a where fvsof :: [Var] -> a -> [Var]
 
 instance FVs Atom where
     fvsof tlds (Var v) = if elem v tlds then [] else [v]
-    fvsof tlds (Lit l) = []
+    fvsof tlds _ = []
 
 instance FVs [Atom] where
     fvsof tlds as = nub $ concatMap (fvsof tlds) as

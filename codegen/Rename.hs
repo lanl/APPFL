@@ -43,7 +43,7 @@ suffixnames = mapM suffixname
 -- no need to flail in the monad at Atom level
 nameAtom :: Atom -> [(Var, Var)] -> Atom
 nameAtom (Var v) tt = Var $ condrepl v tt
-nameAtom (Lit l) _ = Lit l
+nameAtom x _ = x
 
 nameAtoms :: [Atom] -> [(Var, Var)] -> [Atom]
 nameAtoms as tt = map ((flip nameAtom) tt) as
