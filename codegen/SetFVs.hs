@@ -3,7 +3,6 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 
 module SetFVs (
-  setFVsObjs,
   setFVsDefs
 ) where
 

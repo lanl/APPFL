@@ -5,7 +5,6 @@
 module Parser (
   parser,
   showObjs,
-  parse --debug
 ) where
 
 import AST
@@ -53,10 +52,9 @@ import Data.List
 -- type Parser a b = [a] -> [(b, [a])]
 
 --- layer for adding ADT defs
---  obsoletes parser, defsp
 
-parse :: [Char] -> [Def ()]
-parse inp = case defdatsp $ lexer inp of
+parser :: [Char] -> [Def ()]
+parser inp = case defdatsp $ lexer inp of
                [] ->  error "parser failed"
                xs -> fst $ head xs
                
@@ -104,12 +102,6 @@ atyp = (varp `usingp` ATyVar) `altp`
           ((conp `thenp` manyp atyp) `usingp` uncurry ATyCon)      
           
 --- end layer for adding ADT defs
-
-
-parser :: [Char] -> [Obj ()]
-parser inp = case (defsp $ lexer inp) of
-               [] ->  error "parser failed"
-               xs -> fst $ head xs
 
 primopp :: [Token] -> [(Primop, [Token])]
 primopp ((PO po):xs) = succeedp po xs

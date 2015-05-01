@@ -53,7 +53,7 @@ stgRTSGlobals = [ "stg_case_not_exhaustive",
                   "false"] -- sho_False
 
 renamer :: String -> [Def ()]
-renamer = renameDefs . parse
+renamer = renameDefs . parser
 
 normalizer :: String -> [Def ()]
 normalizer = normalize . renamer
