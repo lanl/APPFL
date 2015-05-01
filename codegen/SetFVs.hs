@@ -36,12 +36,6 @@ deadCode fvsdefs =
 
 -- after rename, make the fvs meaningful
 -- TLDs are not considered free vars in expressions
-{-
-setFVsDefs :: [Def a] -> [String] -> [Def [Var]]
-setFVsDefs defs runtimeGlobals = 
-    let (ts, os) = splitDefs defs
-    in unsplitDefs (ts, setFVsObjs' os runtimeGlobals)
--}
 
 setFVsDefs :: [String] -> [Def a] -> [Def [Var]]
 setFVsDefs runtimeGlobals = onObjs (setFVsObjs runtimeGlobals)

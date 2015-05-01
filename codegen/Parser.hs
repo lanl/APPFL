@@ -98,7 +98,8 @@ monop = (((symkindp SymLParen)  `xthenp` atyp
           
 atyp :: Parser Token Atype
 atyp = (varp `usingp` ATyVar) `altp`
-          (nump `usingp` AInt) `altp`
+          ((bikindp UBInt) `usingp` const AInt) `altp`
+          ((bikindp UBDouble) `usingp` const ADouble) `altp`
           ((conp `thenp` manyp atyp) `usingp` uncurry ATyCon)      
           
 --- end layer for adding ADT defs
@@ -118,6 +119,10 @@ objkindp _ _ = failp []
 kwkindp :: Keyword -> [Token] -> [(Keyword, [Token])]
 kwkindp k1 ((KW k2):xs) | k1 == k2 = succeedp k1 xs
 kwkindp _ _ = failp []
+
+bikindp :: Builtin -> [Token] -> [(Builtin, [Token])]
+bikindp b1 ((BI b2):xs) | b1 == b2 = succeedp b1 xs
+bikindp _ _ = failp []
 
 nump :: Parser Token Int
 nump ((Number i) : xs) = succeedp i xs

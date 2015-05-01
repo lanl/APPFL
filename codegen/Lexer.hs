@@ -3,12 +3,14 @@ module Lexer (
   Keyword(..),
   Object(..),
   Symbol(..),
+  Builtin(..),
   lexer
 ) where
 
 import Data.Char(isLower,isUpper)
 import Scanner
 import AST
+import ADT
 
 data Keyword = KWlet 
              | KWin 
@@ -29,6 +31,10 @@ data Symbol = SymArrow
             | SymSemi
             | SymPipe
               deriving (Eq,Show)
+              
+data Builtin = UBInt
+             | UBDouble             
+               deriving (Eq,Show)           
 
 data Token = Number Int 
            | Ident String
@@ -38,6 +44,7 @@ data Token = Number Int
            | Sym Symbol
            | PO Primop
            | Boolean Bool
+           | BI Builtin
            deriving(Show, Eq)
 
 bigtab :: [(String, Token)]
@@ -84,7 +91,10 @@ bigtab =
      ("intToBool#",PO PintToBool),
 
      ("true#",     Boolean True),
-     ("false#",    Boolean False)
+     ("false#",    Boolean False),
+     
+     ("Int#",      BI UBInt),
+     ("Double#",   BI UBDouble)
     ]
              
 

@@ -97,8 +97,8 @@ data Monotype = Mono Atype
 -- also atype from haskell 2010 standard
 -- https://www.haskell.org/onlinereport/haskell2010/haskellch4.html#x10-680004.2
 data Atype = ATyVar TyVar
-           | AInt Int
-           | ADouble Double
+           | AInt
+           | ADouble
            | AFun Atype Atype
            | ATyCon Con [Atype]
              deriving(Eq,Show)              
@@ -109,8 +109,8 @@ data Boxedtype = BTyVar TyVar
                | BTyCon Con [Boxedtype]  
                  deriving(Eq,Show)
 -- \nu
-data Unboxedtype = UInt Int
-                 | UDouble Double
+data Unboxedtype = UInt 
+                 | UDouble
                  | UTyCon Con [Boxedtype] 
                    deriving(Eq,Show)
 
@@ -130,6 +130,7 @@ tyconmap :: TyConMap
 tyconmap = Map.insert "Bool" (TyConParam 0 0 Boxed)
          $ Map.insert "Int"  (TyConParam 0 1 Boxed)
          $ Map.insert "List" (TyConParam 1 2 Boxed)
+         $ Map.insert "Int#"  (TyConParam 0 3 Boxed)
            Map.empty
 
 -- starting datacon map
@@ -215,22 +216,22 @@ instance Update Monotype where
 
 makeboxed :: Atype -> Boxedtype
 makeboxed (ATyVar x) = BTyVar x
-makeboxed (AInt _) = error "can't convert to boxed"
-makeboxed (ADouble _) = error "can't convert to boxed"
+makeboxed (AInt) = error "can't convert to boxed"
+makeboxed (ADouble) = error "can't convert to boxed"
 makeboxed (AFun x y) = error "no fun types yet"
 makeboxed (ATyCon c xs) = BTyCon c (map makeboxed xs)
 
 makeunboxed :: Atype -> Unboxedtype
 makeunboxed (ATyVar _) = error "can't convert to unboxed"
-makeunboxed (AInt x) = UInt x
-makeunboxed (ADouble x) = UDouble x
+makeunboxed (AInt) = UInt
+makeunboxed (ADouble) = UDouble
 makeunboxed (AFun _ _) = error "can't convert to unboxed"
 makeunboxed (ATyCon c xs) = UTyCon c (map makeboxed xs)
   
 isboxed :: TyConMap -> Atype -> Boxedness  
 isboxed _ (ATyVar _) = Boxed
-isboxed _ (AInt _) = Unboxed
-isboxed _ (ADouble _) = Unboxed
+isboxed _ (AInt) = Unboxed
+isboxed _ (ADouble) = Unboxed
 isboxed _ (AFun _ _) = Boxed
 isboxed m (ATyCon c _) = let lookup = Map.lookup c m
                            in if (isNothing lookup) then 
