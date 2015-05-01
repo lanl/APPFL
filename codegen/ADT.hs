@@ -11,7 +11,9 @@ module ADT (
   Monotype(..),
   Boxedtype(..),
   Unboxedtype(..),
+  TyConParam(..),
   TyConMap,
+  DataConParam(..),
   DataConMap,
   ConMaps,
   onObjs,
@@ -113,27 +115,32 @@ data Unboxedtype = UInt Int
                    deriving(Eq,Show)
 
 -- Type constr name to arity, tag, boxed/unboxed
-type TyConMap = Map.Map String (Int, Int, Boxedness)
--- Data constr name to (arity, tag, boxedness, type constr name) 
-type DataConMap = Map.Map String (Int, Int, Boxedness, Con)
+data TyConParam = TyConParam {tarity :: Int, ttag :: Int, tboxed :: Boxedness}
+                  deriving(Eq,Show)
+type TyConMap = Map.Map String TyConParam
+
+-- Data constr name to (arity, tag, boxedness, type constr name)
+data DataConParam = DataConParam {darity :: Int, dtag :: Int, dboxed :: Boxedness, dtycon :: Con} 
+                    deriving(Eq,Show)
+type DataConMap = Map.Map String DataConParam
 type ConMaps = (TyConMap, DataConMap)
          
  -- starting tycon map
 tyconmap :: TyConMap
-tyconmap = Map.insert "Bool" (0,0, Boxed) 
-         $ Map.insert "Int" (0,1, Boxed) 
-         $ Map.insert "IList" (0,2, Boxed) 
+tyconmap = Map.insert "Bool" (TyConParam 0 0 Boxed)
+         $ Map.insert "Int"  (TyConParam 0 1 Boxed)
+         $ Map.insert "List" (TyConParam 1 2 Boxed)
            Map.empty
 
 -- starting datacon map
 -- these tags must match what is in stg_header.h
 dataconmap :: DataConMap
-dataconmap = Map.insert "False" (0, 0, Boxed, "Bool") 
-           $ Map.insert "True" (0, 1, Boxed, "Bool") 
-           $ Map.insert "I" (1, 2, Boxed, "Int") 
-           $ Map.insert "Unit" (0, 3, Boxed, "Unit")
-           $ Map.insert "Nil" (0, 4, Boxed, "IList") 
-           $ Map.insert "Cons" (2, 5, Boxed, "IList")
+dataconmap = Map.insert "False" (DataConParam 0 0 Boxed "Bool") 
+           $ Map.insert "True"  (DataConParam 0 1 Boxed "Bool") 
+           $ Map.insert "I"     (DataConParam 1 2 Boxed "Int") 
+           $ Map.insert "Unit"  (DataConParam 0 3 Boxed "Unit")
+           $ Map.insert "Nil"   (DataConParam 0 4 Boxed "List") 
+           $ Map.insert "Cons"  (DataConParam 2 5 Boxed "List")
              Map.empty
 
 buildconmaps :: [Def a] -> ConMaps
@@ -166,13 +173,20 @@ dataconinsert :: String -> Int -> Boxedness -> Con -> State ConMaps ()
 dataconinsert con arity boxed tycon
   = do 
       (tmap, dmap) <- get
-      put (tmap, Map.insert con (arity, Map.size dmap, boxed, tycon) dmap)
+      put (tmap, Map.insert con DataConParam{darity = arity, 
+                                             dtag = Map.size dmap, 
+                                             dboxed = boxed, 
+                                             dtycon = tycon} 
+                                             dmap)
   
 tyconinsert :: String -> Int -> Boxedness -> State ConMaps ()
 tyconinsert con arity boxed
   = do 
       (tmap, dmap) <- get
-      put (Map.insert con (arity, Map.size tmap, boxed) tmap, dmap)        
+      put (Map.insert con TyConParam{tarity = arity, 
+                                     ttag = Map.size tmap, 
+                                     tboxed = boxed}
+                                     tmap, dmap)        
                    
 
 -- update Atype -> Boxed/Unboxed 
@@ -221,7 +235,7 @@ isboxed _ (AFun _ _) = Boxed
 isboxed m (ATyCon c _) = let lookup = Map.lookup c m
                            in if (isNothing lookup) then 
                                 error "unknown type constructor used"
-                              else (\(a,t,b) -> b) (fromJust lookup)
+                              else (\(TyConParam{tboxed=b}) -> b) (fromJust lookup)
 
 -- helper functions
 

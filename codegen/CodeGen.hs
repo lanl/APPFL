@@ -32,10 +32,13 @@ Alt default var:  "stgCurVal, bind it"
 
 -}
 
+{-# LANGUAGE NamedFieldPuns    #-}
+
 module CodeGen(
   cgObjs
 ) where
 
+import ADT
 import AST
 import InfoTab
 import HeapObj
@@ -311,12 +314,12 @@ cgalt env switch scrutName (ACon it c vs e) =
         env' = eenv ++ env
     in do
       (inline, func) <- cge env' e
-      let (arity, tag,_,_) = case Map.lookup c (dconMap it) of
+      let (DataConParam{dtag}) = case Map.lookup c (dconMap it) of
                            Nothing -> error "conMap lookup error"
                            Just x -> x
       let code = "// " ++ c ++ " " ++ intercalate " " vs ++ " ->\n" ++
                  if switch then
-                     "case " ++ show tag ++ ": {\n" ++
+                     "case " ++ show dtag ++ ": {\n" ++
                         indent 2 inline ++
                      "  STGRETURN0();\n" ++
                      "}\n"
