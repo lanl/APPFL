@@ -3,20 +3,31 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 
 module SetFVs (
-  setFVsDefs,
+  setFVsObjs,
+  setFVsDefs
 ) where
 
 import Prelude
 import AST
+import ADT
 import Data.List
 
 -- *****************************************************
 
 -- after rename, make the fvs meaningful
 -- TLDs are not considered free vars in expressions
+{-
+setFVsDefs :: [Def a] -> [String] -> [Def [Var]]
+setFVsDefs defs runtimeGlobals = 
+    let (ts, os) = splitDefs defs
+    in unsplitDefs (ts, setFVsObjs' os runtimeGlobals)
+-}
 
-setFVsDefs :: [Obj a] -> [String] -> [Obj [Var]] -- monomorphism restriction
-setFVsDefs defs runtimeGlobals
+setFVsDefs :: [String] -> [Def a] -> [Def [Var]]
+setFVsDefs = onObjs . setFVsObjs 
+
+setFVsObjs :: [String] -> [Obj a] -> [Obj [Var]] -- monomorphism restriction
+setFVsObjs runtimeGlobals defs 
     = case setfvs (map oname defs ++ runtimeGlobals) defs of
         ([], defs') -> defs'
         (fvs, _) -> error $ "SetFVs.setFVsDefs:  top level free variables:  " ++  intercalate " " fvs

@@ -222,6 +222,7 @@ isboxed m (ATyCon c _) = let lookup = Map.lookup c m
 -- helper functions
 
 -- take a function on Objs and apply to Defs
+onObjs :: ([Obj a] -> [Obj b]) -> [Def a] -> [Def b]
 onObjs f ds = let (ts, os) = splitDefs ds
               in unsplitDefs (ts, f os)
                 

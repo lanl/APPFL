@@ -8,6 +8,7 @@ module Analysis(
 ) where
 
 import AST
+import ADT
 
 {-
 -- isSimple means will not do heap allocation
@@ -77,7 +78,10 @@ instance Normalize (Obj a) where
 
 instance Normalize [Obj a] where
   normalize = map normalize
-
+  
+instance Normalize [Def a] where
+  normalize = onObjs normalize
+  
 areExhaustive = (any isConI) `pfOr` (any isADef)
 
 isADef ADef{} = True
