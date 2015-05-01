@@ -90,19 +90,17 @@ indent i xs = (take i $ repeat ' ') ++ indent' i xs
 
 -- CG Atom, Var ************************************************************
 
---cgv env v = "HOTOPL(" ++ getEnvRef v env ++ ")"
 cgv env v = getEnvRef v env -- ++ "/* " ++ v ++ " */"
 
 cga :: Env -> Atom -> String
-cga env (Lit i) = "(PtrOrLiteral){.argType = INT, .i = " ++ show i ++ " }"
+cga env (LitI i) = "(PtrOrLiteral){.argType = INT,    .i = " ++ show i ++ " }"
+cga env (LitB b) = "(PtrOrLiteral){.argType = BOOL,   .b = " ++ (if b then "true" else "false") ++ " }"
+cga env (LitD d) = "(PtrOrLiteral){.argType = DOUBLE, .d = " ++ show d ++ " }"
+cga env (LitF f) = "(PtrOrLiteral){.argType = FLOAT,  .f = " ++ show f ++ " }"
+cga env (LitC c) = "(PtrOrLiteral){.argType = CHAR,   .c = " ++ show c ++ " }"
 cga env (Var v) = cgv env v
 
-cgUBa env (Lit i) = show i
-cgUBa env (Var v) = "(" ++ cgv env v ++ ").i"
-
 -- CG in the state monad ***************************************************
---   need a fresh variable supply, should have made Alts a proper
---   data declaration
 -- CG of objects produces no inline code
 --   FUN and THUNK produce a DEFUN
 --   all objects produce a (S)HO
@@ -176,15 +174,18 @@ cgo env (BLACKHOLE {}) =
     return []
 
 -- ****************************************************************
+
+cgUBa env (Var v)  t   =  "(" ++ cgv env v ++ ")." ++ t
+cgUBa env (LitI i) "i" = show i
+cgUBa env (LitB b) "b" = if b then "true" else "false"
+cgUBa env (LitD d) "d" = show d
+cgUBa env (LitF f) "f" = show f
+cgUBa env (LitC c) "c" = show c
+
 -- return (inline code, [(forward, fundef)])
 cge :: Env -> Expr InfoTab -> State Int (String, [(String, String)])
-cge env (EAtom it a@(Lit i)) =
-    return ("stgCurVal = " ++ cga env a ++ "; " ++ "// " ++ show i ++ "\n", [])
-
-cge env (EAtom it a@(Var v)) = 
-    let inline = "stgCurVal = " ++ cga env a ++ "; " ++ "// " ++ v ++ "\n" 
-                 -- this is wrong! ++ "STGEVAL(stgCurVal);\n"
-    in return (inline, [])
+cge env (EAtom it a) =
+    return ("stgCurVal = " ++ cga env a ++ "; " ++ "// " ++ showa a ++ "\n", [])
 
 cge env (EFCall it f as) = 
     let inline = "// " ++ f ++ " " ++ showas as ++ "\n" ++
@@ -194,47 +195,43 @@ cge env (EFCall it f as) =
     in return (inline, [])
 
 cge env (EPrimop it op as) = 
-    let arg0 = cgUBa env (as !! 0)
+    let arg0 = cgUBa env (as !! 0) -- these take a type indicator
         arg1 = cgUBa env (as !! 1)
         inline = case op of
-                   Piadd -> cInfix " + "
-                   Pisub -> cInfix " - "
-                   Pimul -> cInfix " * "
-                   Pidiv -> cInfix " / "
-                   Pimod -> cInfix " % "
-                   Pieq ->  cInfix " == "
-                   Pine ->  cInfix " != "
-                   Pilt ->  cInfix " < "
-                   Pile ->  cInfix " <= "
-                   Pigt ->  cInfix " > "
-                   Pige ->  cInfix " >= "
+                   Piadd -> cInfixIII " + "
+                   Pisub -> cInfixIII " - "
+                   Pimul -> cInfixIII " * "
+                   Pidiv -> cInfixIII " / "
+                   Pimod -> cInfixIII " % "
+                   Pieq ->  cInfixIII " == "
+                   Pine ->  cInfixIII " != "
+                   Pilt ->  cInfixIII " < "
+                   Pile ->  cInfixIII " <= "
+                   Pigt ->  cInfixIII " > "
+                   Pige ->  cInfixIII " >= "
 
-                   Pineg -> cPrefix " -"
+                   Pineg -> cPrefixII " -"
 
-                   Pimin -> cBinFun "imin"
-                   Pimax -> cBinFun "imax"
+                   Pimin -> cFunIII "imin"
+                   Pimax -> cFunIII "imax"
 
                    PintToBool ->
                        "stgCurVal = " ++
-                       arg0 ++ "?" ++ getEnvRef "true"  env ++
-                               ":" ++ getEnvRef "false" env ++ ";\n"
+                       arg0 "i" ++ "?" ++ getEnvRef "true"  env ++
+                                   ":" ++ getEnvRef "false" env ++ ";\n"
 
-        cPrefix op =  "stgCurVal.argType = INT;\n" ++
-                     "stgCurVal.i = " ++ op ++ arg0 ++ ";\n"
+        cPrefixII op =  "stgCurVal.argType = INT;\n" ++
+                        "stgCurVal.i = " ++ op ++ arg0 "i" ++ ";\n"
 
-        cInfix op =  "stgCurVal.argType = INT;\n" ++
-                     "stgCurVal.i = " ++ arg0 ++ op ++ arg1 ++ ";\n"
+        cInfixIII op =  "stgCurVal.argType = INT;\n" ++
+                        "stgCurVal.i = " ++ arg0 "i" ++ op ++ arg1 "i" ++ ";\n"
 
-        cBinFun fun = "stgCurVal.argType = INT;\n" ++
-                      "stgCurVal.i = " ++ fun ++ "(" ++ arg0 ++ ", " ++ arg1 ++ ");\n"
-
-
+        cFunIII fun = "stgCurVal.argType = INT;\n" ++
+                      "stgCurVal.i = " ++ fun ++ "(" ++ arg0 "i" ++ ", " ++ arg1 "i" ++ ");\n"
     in return (inline, [])
-
 
 cge env (ELet it os e) =
     let names = map oname os
---        offsets = scanr (flip (-)) 0 sizes
         env'  = (reverse $ zip names (map HO sizes)) ++ env
         (sizes, decls, buildcodes) = unzip3 $ map (buildHeapObj env') os
     in do
@@ -411,6 +408,10 @@ loadPayloadAtoms env as ind =
 showas as = intercalate " " $ map showa as
 
 showa (Var v) = v
-showa (Lit i) = show i
+showa (LitI i) = show i
+showa (LitB b) = if b then "true#" else "false#"
+showa (LitF f) = show f
+showa (LitD d) = show d
+showa (LitC c) = show c
 
 indexFrom i xs = zip [i..] xs
