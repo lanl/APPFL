@@ -1,8 +1,15 @@
-sandbox/ministg-0.3/src/trace
 *.swp
 *.o
+*.a
 *.hi
 *~
 #mac os crud
 ._*
 .DS_Store
+#cmake crud
+build
+#ministg crud
+sandbox/ministg-0.3/src/trace
+#runtime crud
+runtime/main
+runtime/mymain
