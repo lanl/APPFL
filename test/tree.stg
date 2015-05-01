@@ -1,4 +1,4 @@
-data ITree = Leaf | Branch (ITree) (ITree);
+data Tree a = Leaf | Branch (Tree a) (Tree a);
  
 leaf = CON(Leaf);   
 

@@ -25,9 +25,9 @@ updateIT objs = runState (update objs)
 check c arity cmap =
     case Map.lookup c cmap of
       Nothing -> error ("use of unknown constructor " ++ c)
-      Just (arity',_,_,_) -> if arity == arity' then cmap  
-                             else error ("CON arity mismatch! for " 
-                              ++ c ++ " " ++ show arity ++ " != " ++ show arity')
+      Just (DataConParam{darity}) -> if arity == darity then cmap  
+                                     else error ("CON arity mismatch! for " 
+                                     ++ c ++ " " ++ show arity ++ " != " ++ show arity)
 
 class ConMaps2IT t where 
     update :: t -> State ConMaps t
@@ -47,9 +47,9 @@ instance ConMaps2IT (Obj InfoTab) where
     update o@(CON {c, as}) = do
       (tmap,dmap) <- get
       let dmap' = check c (length as) dmap
-      let Just (a,t,_,_) = Map.lookup c dmap'
+      let Just (DataConParam{dtag}) = Map.lookup c dmap'
       let md = omd o  -- could do a one-liner...
-      let md' = md{tag = t}
+      let md' = md{tag = dtag}
       let o' = o{omd = md'}
       return o'
 
