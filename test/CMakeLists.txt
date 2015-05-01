@@ -1,7 +1,7 @@
 project(stgc_test)
   
   cmake_minimum_required(VERSION 2.8.12.2)
-  set(DART_TESTING_TIMEOUT "5" CACHE STRING "" FORCE)
+  set(DART_TESTING_TIMEOUT "15" CACHE STRING "" FORCE)
   include(CTest)
 
   set(STGCC "../driver/stgcc")

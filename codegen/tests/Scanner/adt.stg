@@ -1,5 +1,4 @@
 data Tree a = Leaf a | Branch (Tree a) (Tree a);
-data Bool = False | True;
 data List a = Nil | Cons a (List a);
 data unboxed Bool# = False# | True#;
-data Dep = A Bool# | B Bool#;
+data Dep = A Tree Int | B List Bool
