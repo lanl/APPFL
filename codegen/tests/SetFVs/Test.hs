@@ -1,4 +1,5 @@
 module SetFVs.Test where
+import           ADT
 import           Driver
 import           Parser
 
@@ -21,4 +22,4 @@ setFVseq :: IO ByteString
 setFVseq = return $ fromString $ show $ freevarer inp 
 
 showseq :: IO ByteString
-showseq = return $ fromString $ showDefs $ freevarer inp
+showseq = return $ fromString $ showObjs $ getObjs $ freevarer inp

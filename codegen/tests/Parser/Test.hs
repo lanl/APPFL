@@ -19,7 +19,7 @@ unitTests = testGroup "Parser Unit tests"
 parser1 :: Assertion
 parser1 = let
     ins = "one=CON(I 1);"
-    outs = "[CON {omd = (), c = \"I\", as = [Lit 1], oname = \"one\"}]"
+    outs = "[ObjDef (CON {omd = (), c = \"I\", as = [LitI 1], oname = \"one\"})]"
     in show (parser ins) @?= outs
 
 parser2 :: IO ByteString

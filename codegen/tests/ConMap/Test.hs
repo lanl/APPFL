@@ -1,7 +1,7 @@
 module ConMap.Test where
 
 import           Driver
-import           ConMap
+import           ConMaps2IT
 
 import           Test.Tasty
 import           Test.Tasty.Golden
@@ -18,4 +18,4 @@ inp = "one = CON(I 1); main=THUNK(one);"
              
 mapone :: IO ByteString
 mapone = return $ fromString $ show $ 
-                getConMap $ infotaber inp
+                conmaps2IT  $ infotaber inp

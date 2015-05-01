@@ -3,7 +3,6 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 
 module Rename (
-  renameObjs,
   renameDefs
 ) where
 

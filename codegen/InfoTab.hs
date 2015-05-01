@@ -65,8 +65,8 @@ data InfoTab =
       fvs :: [Var] }
   | ConMap { 
       fvs :: [Var],
-      conMap ::  Map.Map Con (Int, Int), -- just for ACon
-      dconMap :: DataConMap } -- work in progress not used 
+      tconMap :: TyConMap, -- work in progress not used 
+      dconMap :: DataConMap } 
     deriving(Eq,Show)   
 
 class ObjsOf a b where 
@@ -109,6 +109,9 @@ itsOf = (map omd) . objsOf
 class SetITs a b where 
     setITs :: a -> b
 
+instance SetITs [Def [Var]] [Def InfoTab] where
+   setITs = onObjs setITs
+
 instance SetITs [Obj [Var]] [Obj InfoTab] where
     setITs = map setITs
 
@@ -144,7 +147,8 @@ instance SetITs (Alts [Var]) (Alts InfoTab) where
 
 instance SetITs (Alt [Var]) (Alt InfoTab) where
     setITs (ACon myfvs c vs e) = 
-        ACon (ConMap{fvs = myfvs, conMap = Map.empty, dconMap = Map.empty}) c vs (setITs e)
+        ACon (ConMap{fvs = myfvs, dconMap = Map.empty, 
+          tconMap = Map.empty}) c vs (setITs e)
     setITs (ADef myfvs v e) = 
         ADef (JustFVs{fvs = myfvs}) v (setITs e)
 

@@ -122,6 +122,7 @@ type ConMaps = (TyConMap, DataConMap)
 tyconmap :: TyConMap
 tyconmap = Map.insert "Bool" (0,0, Boxed) 
          $ Map.insert "Int" (0,1, Boxed) 
+         $ Map.insert "IList" (0,2, Boxed) 
            Map.empty
 
 -- starting datacon map
@@ -130,6 +131,9 @@ dataconmap :: DataConMap
 dataconmap = Map.insert "False" (0, 0, Boxed, "Bool") 
            $ Map.insert "True" (0, 1, Boxed, "Bool") 
            $ Map.insert "I" (1, 2, Boxed, "Int") 
+           $ Map.insert "Unit" (0, 3, Boxed, "Unit")
+           $ Map.insert "Nil" (0, 4, Boxed, "IList") 
+           $ Map.insert "Cons" (2, 5, Boxed, "IList")
              Map.empty
 
 buildconmaps :: [Def a] -> ConMaps
@@ -222,6 +226,7 @@ isboxed m (ATyCon c _) = let lookup = Map.lookup c m
 -- helper functions
 
 -- take a function on Objs and apply to Defs
+onObjs :: ([Obj a] -> [Obj b]) -> [Def a] -> [Def b]
 onObjs f ds = let (ts, os) = splitDefs ds
               in unsplitDefs (ts, f os)
                 

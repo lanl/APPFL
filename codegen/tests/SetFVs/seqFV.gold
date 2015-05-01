@@ -1,1 +1,1 @@
-[FUN {omd = [], vs = ["x","y"], e = ECase {emd = ["x","y"], ee = EAtom {emd = ["x"], ea = Var "x"}, ealts = Alts {altsmd = ["y"], alts = [ADef {amd = ["y"], av = "z", ae = EAtom {emd = ["y"], ea = Var "y"}}], aname = "alts_0"}}, oname = "seq"}]
+[ObjDef (FUN {omd = [], vs = ["x","y"], e = ECase {emd = ["x","y"], ee = EAtom {emd = ["x"], ea = Var "x"}, ealts = Alts {altsmd = ["y"], alts = [ADef {amd = ["y"], av = "z", ae = EAtom {emd = ["y"], ea = Var "y"}}], aname = "alts_0"}}, oname = "seq"})]
