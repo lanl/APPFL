@@ -9,4 +9,4 @@ output = THUNK(branch one two);
 -- test left
 left = FUN(xs -> case xs of {Branch l r -> l});
 l = THUNK(left output);
-main = THUNK(eqInt l one):
+main = THUNK(eqInt l one);

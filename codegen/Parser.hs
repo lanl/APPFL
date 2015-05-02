@@ -56,10 +56,13 @@ import Data.List
 parser :: [Char] -> [Def ()]
 parser inp = case defdatsp $ lexer inp of
                [] ->  error "parser failed"
-               xs -> fst $ head xs
+               xs -> if snd (head xs) /= [] 
+                     then error ("leftover input on parse: " ++ show (snd $ head xs))
+                     else fst $ head xs
                
 defdatsp :: Parser Token [Def ()]
-defdatsp = sepbyp defdatp (symkindp SymSemi)
+defdatsp = (sepbyp defdatp (symkindp SymSemi) `thenxp` symkindp SymSemi)
+           `altp` (sepbyp defdatp (symkindp SymSemi))
 
 defdatp :: Parser Token (Def ())
 defdatp = (defp `usingp` ObjDef) `altp` (tyconp `usingp` DataDef)
@@ -82,7 +85,6 @@ ubtyconp = (conp `thenp`
               (sepbyp ubdataconp (symkindp SymPipe)))))
            `usingp` \(t,(vs,defs)) -> TyCon Unboxed t vs defs
 
-
 bdataconp :: Parser Token DataCon
 bdataconp =  (conp `thenp` manyp monop)
              `usingp` uncurry (DataCon Boxed)
@@ -92,15 +94,19 @@ ubdataconp =  (conp `thenp` manyp monop)
               `usingp` uncurry (DataCon Unboxed)
      
 monop :: Parser Token Monotype
-monop = (((symkindp SymLParen)  `xthenp` atyp
-        `thenxp` (symkindp SymRParen)) `altp`
-        atyp) `usingp` Mono
-          
+monop = ((symkindp SymLParen `xthenp` atyp
+        `thenxp` symkindp SymRParen) `altp`
+         atyp) `usingp` Mono
+ 
 atyp :: Parser Token Atype
 atyp = (varp `usingp` ATyVar) `altp`
-          ((bikindp UBInt) `usingp` const AInt) `altp`
-          ((bikindp UBDouble) `usingp` const ADouble) `altp`
-          ((conp `thenp` manyp atyp) `usingp` uncurry ATyCon)      
+          (bikindp UBInt `usingp` const AInt) `altp`
+          (bikindp UBDouble `usingp` const ADouble) `altp`
+          ((conp `thenp` manyp atyp) `usingp` uncurry ATyCon) `altp`
+          -- require parens on function type or we get into a loop
+          ((symkindp SymLParen `xthenp` atyp `thenxp`
+           symkindp SymArrow `thenp` atyp `thenxp` symkindp SymRParen)
+           `usingp` uncurry AFun)
           
 --- end layer for adding ADT defs
 

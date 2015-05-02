@@ -211,25 +211,25 @@ instance Update DataCon where
     DataCon boxed c (update m mts)
 
 instance Update Monotype where
-  update m (Mono ty) = if (isboxed m ty == Boxed)
-                       then MBoxed (makeboxed ty) 
-                       else MUnboxed (makeunboxed ty)
+  update m (Mono ty) = if isboxed m ty == Boxed
+                       then MBoxed (makeboxed m ty) 
+                       else MUnboxed (makeunboxed m ty)
   update _ ty = ty -- type is already boxed/unboxed, shound never happen
 
-makeboxed :: Atype -> Boxedtype
-makeboxed (ATyVar x) = BTyVar x
-makeboxed (AInt) = error "can't convert Int# to boxed"
-makeboxed (ADouble) = error "can't convert Double# to boxed"
-makeboxed (AFun x y) = error "no fun types yet"
-makeboxed (ATyCon c xs) = BTyCon c (map makeboxed xs)
+makeboxed :: TyConMap -> Atype -> Boxedtype
+makeboxed _ (ATyVar x) = BTyVar x
+makeboxed _ (AInt) = error "can't convert Int# to boxed"
+makeboxed _ (ADouble) = error "can't convert Double# to boxed"
+makeboxed m (AFun x y) = BFun (update m (Mono x)) (update m (Mono y))
+makeboxed m (ATyCon c xs) = BTyCon c (map (makeboxed m) xs)
 
-makeunboxed :: Atype -> Unboxedtype
-makeunboxed (ATyVar a) = error ("can't convert " ++ a ++ " to unboxed")
-makeunboxed (AInt) = UInt
-makeunboxed (ADouble) = UDouble
-makeunboxed (AFun x y) = error ("can't convert function "
+makeunboxed :: TyConMap -> Atype -> Unboxedtype
+makeunboxed _ (ATyVar a) = error ("can't convert " ++ a ++ " to unboxed")
+makeunboxed _ (AInt) = UInt
+makeunboxed _ (ADouble) = UDouble
+makeunboxed _ (AFun x y) = error ("can't convert function "
                          ++ show x ++ " -> " ++ show y ++ " to unboxed")
-makeunboxed (ATyCon c xs) = UTyCon c (map makeboxed xs)
+makeunboxed m (ATyCon c xs) = UTyCon c (map (makeboxed m) xs)
   
 isboxed :: TyConMap -> Atype -> Boxedness  
 isboxed _ (ATyVar _) = Boxed
