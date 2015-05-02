@@ -130,7 +130,7 @@ tyconmap :: TyConMap
 tyconmap = Map.insert "Bool" (TyConParam 0 0 Boxed)
          $ Map.insert "Int"  (TyConParam 0 1 Boxed)
          $ Map.insert "List" (TyConParam 1 2 Boxed)
-         $ Map.insert "Int#"  (TyConParam 0 3 Boxed)
+         $ Map.insert "Int#"  (TyConParam 0 3 Unboxed)
            Map.empty
 
 -- starting datacon map
