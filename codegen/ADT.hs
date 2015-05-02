@@ -127,21 +127,23 @@ type ConMaps = (TyConMap, DataConMap)
          
  -- starting tycon map
 tyconmap :: TyConMap
-tyconmap = Map.insert "Bool" (TyConParam 0 0 Boxed)
-         $ Map.insert "Int"  (TyConParam 0 1 Boxed)
-         $ Map.insert "List" (TyConParam 1 2 Boxed)
-         $ Map.insert "Int#"  (TyConParam 0 3 Unboxed)
+tyconmap = Map.insert "Bool#" (TyConParam 0 0 Unboxed)
+         $ Map.insert "Int#"  (TyConParam 0 1 Unboxed)
+         $ Map.insert "Bool"  (TyConParam 0 2 Boxed) -- data Bool = B Bool#
+         $ Map.insert "Int"   (TyConParam 0 3 Boxed) -- data Int = I Int#
+         $ Map.insert "List"  (TyConParam 1 4 Boxed) -- data List a = Nil | Cons a (List a)
            Map.empty
 
 -- starting datacon map
 -- these tags must match what is in stg_header.h
 dataconmap :: DataConMap
-dataconmap = Map.insert "False" (DataConParam 0 0 Boxed "Bool") 
-           $ Map.insert "True"  (DataConParam 0 1 Boxed "Bool") 
-           $ Map.insert "I"     (DataConParam 1 2 Boxed "Int") 
-           $ Map.insert "Unit"  (DataConParam 0 3 Boxed "Unit")
-           $ Map.insert "Nil"   (DataConParam 0 4 Boxed "List") 
-           $ Map.insert "Cons"  (DataConParam 2 5 Boxed "List")
+dataconmap = Map.insert "False" (DataConParam 0 0 Unboxed "Bool#") 
+           $ Map.insert "True"  (DataConParam 0 1 Unboxed "Bool#") 
+           $ Map.insert "B"     (DataConParam 1 2 Boxed "Bool") 
+           $ Map.insert "I"     (DataConParam 1 3 Boxed "Int") 
+           $ Map.insert "Unit"  (DataConParam 0 4 Boxed "Unit")
+           $ Map.insert "Nil"   (DataConParam 0 5 Boxed "List") 
+           $ Map.insert "Cons"  (DataConParam 2 6 Boxed "List")
              Map.empty
 
 buildconmaps :: [Def a] -> ConMaps
@@ -212,20 +214,21 @@ instance Update Monotype where
   update m (Mono ty) = if (isboxed m ty == Boxed)
                        then MBoxed (makeboxed ty) 
                        else MUnboxed (makeunboxed ty)
-  update _ _ = error "can't update non atype"
+  update _ ty = ty -- type is already boxed/unboxed, shound never happen
 
 makeboxed :: Atype -> Boxedtype
 makeboxed (ATyVar x) = BTyVar x
-makeboxed (AInt) = error "can't convert to boxed"
-makeboxed (ADouble) = error "can't convert to boxed"
+makeboxed (AInt) = error "can't convert Int# to boxed"
+makeboxed (ADouble) = error "can't convert Double# to boxed"
 makeboxed (AFun x y) = error "no fun types yet"
 makeboxed (ATyCon c xs) = BTyCon c (map makeboxed xs)
 
 makeunboxed :: Atype -> Unboxedtype
-makeunboxed (ATyVar _) = error "can't convert to unboxed"
+makeunboxed (ATyVar a) = error ("can't convert " ++ a ++ " to unboxed")
 makeunboxed (AInt) = UInt
 makeunboxed (ADouble) = UDouble
-makeunboxed (AFun _ _) = error "can't convert to unboxed"
+makeunboxed (AFun x y) = error ("can't convert function "
+                         ++ show x ++ " -> " ++ show y ++ " to unboxed")
 makeunboxed (ATyCon c xs) = UTyCon c (map makeboxed xs)
   
 isboxed :: TyConMap -> Atype -> Boxedness  
@@ -235,7 +238,7 @@ isboxed _ (ADouble) = Unboxed
 isboxed _ (AFun _ _) = Boxed
 isboxed m (ATyCon c _) = let lookup = Map.lookup c m
                            in if (isNothing lookup) then 
-                                error "unknown type constructor used"
+                                error ("unknown type constructor " ++ c ++ " used")
                               else (\(TyConParam{tboxed=b}) -> b) (fromJust lookup)
 
 -- helper functions
