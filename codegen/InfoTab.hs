@@ -1,6 +1,7 @@
 {-# LANGUAGE TypeSynonymInstances #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE NamedFieldPuns    #-}
 
 module InfoTab(
   InfoTab(..),
@@ -30,9 +31,6 @@ import qualified Data.Set as Set
   every Expr, Alt, Obj has metadata, e.g. name, freevars
 -}
 
-
-
-
 data InfoTab = 
     Fun { 
       typ :: Polytype,
@@ -45,7 +43,8 @@ data InfoTab =
       name :: String,
       fvs :: [Var],
       entryCode :: String,
-      args     :: [Atom] }
+      args     :: [Atom],
+      knownCall :: Maybe InfoTab} -- of the FUN
   | Con { 
       typ :: Polytype,
       name :: String,
@@ -65,22 +64,27 @@ data InfoTab =
       name :: String,
       fvs :: [Var],
       entryCode :: String }
-  -- this is an umbrella for expressions for now -- need to factor this better
   | ITAtom { 
       typ :: Polytype,
-      fvs :: [Var] }
+      fvs :: [Var],
+      noHeapAlloc :: Bool }
   | ITFCall { 
       typ :: Polytype,
-      fvs :: [Var] }
+      fvs :: [Var],
+      noHeapAlloc :: Bool,
+      knownCall :: Maybe InfoTab } -- of the FUN
   | ITPrimop { 
       typ :: Polytype,
-      fvs :: [Var] }
+      fvs :: [Var],
+      noHeapAlloc :: Bool }
   | ITLet { 
       typ :: Polytype,
-      fvs :: [Var] }
+      fvs :: [Var],
+      noHeapAlloc :: Bool }
   | ITCase { 
       typ :: Polytype,
-      fvs :: [Var] }
+      fvs :: [Var],
+      noHeapAlloc :: Bool }
   | ITAlt { 
       typ :: Polytype,
       fvs :: [Var],
@@ -103,8 +107,8 @@ instance ObjsOf (Obj a) [Obj a] where
     objsOf o              = [o] -- PAP, CON, BLACKHOLE
 
 instance ObjsOf (Expr a) [Obj a] where
-    objsOf (ELet _ defs e)  = (objsOf defs) ++ (objsOf e)
-    objsOf (ECase _ e alts) = (objsOf e) ++ (objsOf alts)
+    objsOf ELet{edefs, ee}  = (objsOf edefs) ++ (objsOf ee)
+    objsOf ECase{ee, ealts} = (objsOf ee) ++ (objsOf ealts)
     objsOf _ = [] -- EAtom, EFCall, EPrimop
 
 instance ObjsOf (Alt a) [Obj a] where
@@ -144,25 +148,25 @@ instance SetITs (Expr [Var]) (Expr InfoTab) where
         let
           defs' = setITs defs
           e'    = setITs e
-        in ELet (ITLet {fvs = myfvs, typ = typUndef}) defs' e'
+        in ELet (ITLet {fvs = myfvs, typ = typUndef, noHeapAlloc = False}) defs' e'
 
     setITs (ECase myfvs e alts) = 
         let
           e' = setITs e
           alts' = setITs alts
-        in ECase (ITCase{fvs = myfvs, typ = typUndef}) e' alts'
+        in ECase (ITCase{fvs = myfvs, typ = typUndef, noHeapAlloc = False}) e' alts'
 
     -- EAtom, EFCall, EPrimop, this doesn't work
     -- setITs e = e{emd = JustFVs {fvs = emd e}}
 
     setITs (EAtom myfvs a) = 
-        EAtom (ITAtom{fvs = myfvs, typ = typUndef}) a
+        EAtom (ITAtom{fvs = myfvs, typ = typUndef, noHeapAlloc = False}) a
 
     setITs (EFCall myfvs f as) =
-        EFCall (ITFCall{fvs = myfvs, typ = typUndef}) f as
+        EFCall (ITFCall{fvs = myfvs, typ = typUndef, noHeapAlloc = False, knownCall = Nothing}) f as
 
     setITs (EPrimop myfvs p as) =
-        EPrimop (ITPrimop{fvs = myfvs, typ = typUndef}) p as
+        EPrimop (ITPrimop{fvs = myfvs, typ = typUndef, noHeapAlloc = False}) p as
 
 instance SetITs (Alts [Var]) (Alts InfoTab) where
     setITs (Alts myfvs alts name) = 
@@ -217,7 +221,8 @@ makeIT o@(PAP fvs f as n) =
           fvs = fvs,
           typ = typUndef,
 --          entryCode = showITType o ++ "_" ++ n
-          entryCode = "fun_" ++ n
+          entryCode = "fun_" ++ n,
+          knownCall = Nothing
         }
 
 makeIT o@(CON fvs c as n) =

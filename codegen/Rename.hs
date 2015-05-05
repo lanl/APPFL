@@ -1,6 +1,7 @@
 {-# LANGUAGE TypeSynonymInstances #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE NamedFieldPuns    #-}
 
 module Rename (
   renameDefs
@@ -95,31 +96,31 @@ nameObj (BLACKHOLE md name) tt =
     return (BLACKHOLE md name)
 
 nameExpr :: Expr a -> [(Var, String)] -> State [String] (Expr a)
-nameExpr (ELet md objs e) tt =
+nameExpr e@ELet{edefs, ee} tt =
     do
-      let names = map oname objs
-      objs' <- nameObjs objs tt
-      let names' = map oname objs'
-      e' <- nameExpr e ((zip names names')++tt)
-      return (ELet md objs' e')
+      let names = map oname edefs
+      edefs' <- nameObjs edefs tt
+      let names' = map oname edefs'
+      ee' <- nameExpr ee ((zip names names')++tt)
+      return e{edefs = edefs', ee = ee'}
 
-nameExpr (ECase md e alts) tt =
+nameExpr e@ECase{ee, ealts} tt =
     do
-      e' <- nameExpr e tt
-      alts' <- nameAlts alts tt
-      return (ECase md e' alts')
+      ee' <- nameExpr ee tt
+      ealts' <- nameAlts ealts tt
+      return e{ee = ee', ealts = ealts'}
 
-nameExpr (EAtom md a) tt =
-    return $ EAtom md (nameAtom a tt)
+nameExpr e@EAtom{ea} tt =
+    return $ e{ea = nameAtom ea tt}
 
-nameExpr (EFCall md f as) tt =
-    let f' = condrepl f tt
-        as' = nameAtoms as tt in
-    return (EFCall md f' as')
+nameExpr e@EFCall{ev, eas} tt =
+    let ev' = condrepl ev tt
+        eas' = nameAtoms eas tt in
+    return e{ev = ev', eas = eas'}
 
-nameExpr (EPrimop md p as) tt =
-    let as' = nameAtoms as tt in
-    return (EPrimop md p as')
+nameExpr e@EPrimop{eas} tt =
+    let eas' = nameAtoms eas tt in
+    return e{eas = eas'}
 
 nameAlts :: Alts a -> [(Var, String)] -> State [String] (Alts a)
 nameAlts (Alts md alts name) tt =
