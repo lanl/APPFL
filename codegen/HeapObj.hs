@@ -80,9 +80,7 @@ showSHOspec it@(Thunk {}) = ""
 
 showSHOspec it@(Blackhole {}) = ""
 
-showSHOspec it@(JustFVs {}) = ""
-
-showSHOspec it@(ConMap {}) = ""
+showSHOspec it = ""
 
 payloads as = concatMap payload $ zip [0..] as
 
