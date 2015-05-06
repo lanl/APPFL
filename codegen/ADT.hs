@@ -214,7 +214,7 @@ instance Update Monotype where
   update m (Mono ty) = if isboxed m ty == Boxed
                        then MBoxed (makeboxed m ty) 
                        else MUnboxed (makeunboxed m ty)
-  update _ ty = ty -- type is already boxed/unboxed, shound never happen
+  update _ ty = ty -- type is already boxed/unboxed, shoud never happen
 
 makeboxed :: TyConMap -> Atype -> Boxedtype
 makeboxed _ (ATyVar x) = BTyVar x
@@ -261,5 +261,5 @@ getObjs = concatMap getObj
 
 getDatas :: [Def a] -> [TyCon]
 getDatas = concatMap getData
-           where getData (ObjDef o) = []
+           where getData (ObjDef _) = []
                  getData (DataDef t) = [t]

@@ -76,12 +76,13 @@ instance Normalize (Obj a) where
   -- PAP, CON, BH
   normalize o = o
 
-instance Normalize [Obj a] where
-  normalize = map normalize
+instance Normalize (Def a) where
+  normalize (ObjDef o) = ObjDef(normalize o)
+  normalize d = d
   
-instance Normalize [Def a] where
-  normalize = onObjs normalize
-  
+instance Normalize a => Normalize [a] where
+  normalize = map normalize 
+ 
 areExhaustive = (any isConI) `pfOr` (any isADef)
 
 isADef ADef{} = True
