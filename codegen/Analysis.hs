@@ -9,6 +9,9 @@ module Analysis(
 
 import AST
 import ADT
+import InfoTab
+import qualified Data.Map as Map
+import Data.List(foldl')
 
 {-
 -- isSimple means will not do heap allocation
@@ -42,7 +45,7 @@ instance Normalize (Expr a) where
   normalize e@EAtom{} = e
   normalize e@EFCall{} = e
   normalize e@EPrimop{} = e
-  normalize e@ELet{ee, edefs} = e{ee = normalize ee, edefs = normalize edefs}
+  normalize e@ELet{edefs, ee} = e{ee = normalize ee, edefs = normalize edefs}
   normalize e@ECase{ee, ealts} = e{ee = normalize ee, ealts = normalize ealts}
 
 instance Normalize (Alts a) where
@@ -92,3 +95,140 @@ isConI ACon{ac} | ac == "I" = True
 isConI _                    = False
 
 pfOr p1 p2 x = (p1 x) || (p2 x)
+
+
+-- set known calls in EFCall, PAP
+
+class SetKnownCalls a where
+  setKnownCalls :: Map.Map Var InfoTab -> a -> a
+
+instance SetKnownCalls (Expr InfoTab) where
+  setKnownCalls itMap e@EAtom{} = e
+
+  setKnownCalls itMap e@EFCall{emd, ev} = e{emd = emd{knownCall = Map.lookup ev itMap}}
+
+  setKnownCalls itMap e@EPrimop{} = e
+
+  setKnownCalls itMap e@ELet{edefs, ee} = 
+      let itMap' = Map.union (Map.fromList [(oname o, omd o) | o@(FUN{}) <- edefs]) itMap
+      in e{edefs = map (setKnownCalls itMap') edefs, ee = setKnownCalls itMap' ee}
+
+  setKnownCalls itMap e@ECase{ee, ealts} = 
+      e{ee = setKnownCalls itMap ee, ealts = setKnownCalls itMap ealts}
+
+instance SetKnownCalls (Alts InfoTab) where
+    setKnownCalls itMap a@Alts{alts} = a{alts = map (setKnownCalls itMap) alts}
+
+instance SetKnownCalls (Alt InfoTab) where
+    setKnownCalls itMap a@(ACon{avs, ae}) = 
+        let itMap' = foldl' (flip Map.delete) itMap avs
+        in a{ae = setKnownCalls itMap' ae}
+    setKnownCalls itMap a@(ADef{av, ae}) = 
+        a{ae = setKnownCalls (Map.delete av itMap) ae}
+
+instance SetKnownCalls (Obj InfoTab) where
+    setKnownCalls itMap (o@FUN{vs, e}) =
+        let itMap' = foldl' (flip Map.delete) itMap vs
+        in o{e = setKnownCalls itMap' e}
+
+    setKnownCalls itMap (o@PAP{omd, f}) = o{omd = omd{knownCall = Map.lookup f itMap}}
+
+    setKnownCalls itMap (o@CON{}) = o
+
+    setKnownCalls itMap (o@THUNK{e}) = o{e = setKnownCalls itMap e}
+
+    setKnownCalls itMap (o@BLACKHOLE{}) = o
+
+
+-- determine whether each expression could cause heap allocation
+-- order True > False, then least fixed point, i.e. start with positive assumption
+-- could construct domain equations but just do traversals
+
+class SetNoHeapAllocTrue a where
+  setNoHeapAllocTrue :: a -> a
+
+instance SetNoHeapAllocTrue (Expr InfoTab) where
+  setNoHeapAllocTrue e@EAtom{emd} = e{emd = emd{noHeapAlloc = True}}
+
+  setNoHeapAllocTrue e@EFCall{emd} = e{emd = emd{noHeapAlloc = True}}
+
+  setNoHeapAllocTrue e@EPrimop{emd} = e{emd = emd{noHeapAlloc = True}}
+
+  setNoHeapAllocTrue e@ELet{emd, edefs, ee} = 
+      e{emd = emd{noHeapAlloc = True},
+        edefs = map setNoHeapAllocTrue edefs,
+        ee = setNoHeapAllocTrue ee}
+
+  setNoHeapAllocTrue e@ECase{emd, ee, ealts} = 
+      e{emd = emd{noHeapAlloc = True},
+        ee = setNoHeapAllocTrue ee, 
+        ealts = setNoHeapAllocTrue ealts}
+
+instance SetNoHeapAllocTrue (Alts InfoTab) where
+    setNoHeapAllocTrue (a@Alts{altsmd, alts}) =
+        a{altsmd = altsmd{noHeapAlloc = True},
+          alts = map setNoHeapAllocTrue alts}
+
+instance SetNoHeapAllocTrue (Obj InfoTab) where
+    setNoHeapAllocTrue (o@FUN{omd, e}) =
+        o{omd = omd{noHeapAlloc = True},
+          e = setNoHeapAllocTrue e}
+
+    setNoHeapAllocTrue (o@PAP{omd}) = o{omd = omd{noHeapAlloc = True}}
+
+    setNoHeapAllocTrue (o@CON{omd}) = o{omd = omd{noHeapAlloc = True}}
+
+    setNoHeapAllocTrue (o@THUNK{omd, e}) = 
+        o{omd = omd{noHeapAlloc = True},
+          e = setNoHeapAllocTrue e}
+
+    setNoHeapAllocTrue (o@BLACKHOLE{omd}) = o{omd = omd{noHeapAlloc = True}}
+
+instance SetNoHeapAllocTrue (Alt InfoTab) where
+    setNoHeapAllocTrue a@ACon{amd, ae} =
+        a{amd = amd{noHeapAlloc = True},
+          ae = setNoHeapAllocTrue ae}
+
+-- abstract interpretation!
+-- env maps variables of boxed type to
+-- Alt-bound
+-- Let-bound
+-- lambda-bound
+
+-- Bool return value indicated whether any change, i.e. reached fixed point
+
+data Binding = AB              -- Alt bound
+             | FB              -- FUN bound
+             | LB InfoTab      -- ELet bound
+
+type Env = [(Var, Binding)]
+
+exam v [] = Nothing
+exam v ((v',_):bs) | v /= v' = exam v bs
+exam v _ | last v == '#' = Just True -- it's unboxed
+exam v ((_, x):_) =
+    case x of
+      AB -> Just False  -- Alt bound => don't know
+      FB -> Just False  -- FUN bound => don't know
+      LB it -> Just $ noHeapAlloc it
+
+class AI a where
+    ai :: Env -> a -> (a, Bool)
+
+instance AI (Expr InfoTab) where
+    ai env e@EAtom{emd, ea} | not $ noHeapAlloc emd = (e, False)
+    ai env e@EAtom{emd, ea} | LitI{} <- ea = (e, False)
+    ai env e@EAtom{emd, ea} | Var v  <- ea =
+        case exam v env of
+          Nothing -> error "free variable in ai"
+          Just b -> let prev = noHeapAlloc emd
+                    in (e{emd = emd{noHeapAlloc = b}}, b /= prev)
+
+    ai env e@EFCall{emd, ev, eas} =
+        let prev = noHeapAlloc emd
+        in case knownCall emd of
+             Nothing -> (e{emd = emd{noHeapAlloc = False}}, prev /= False) -- clearer
+             Just it -> if arity it /= length eas then -- under- or over-saturated
+                            (e{emd = emd{noHeapAlloc = False}}, prev /= False)
+                        else let funnoa = noHeapAlloc it in
+                            (e{emd = emd{noHeapAlloc = funnoa}}, prev /= funnoa)

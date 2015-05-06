@@ -53,11 +53,11 @@ data Atom = Var  Var
           | LitC Char
             deriving(Eq,Show)
 
-data Expr a = EAtom   {emd :: a, ea :: Atom}
-            | EFCall  {emd :: a, ev :: Var, eas :: [Atom]}
-            | EPrimop {emd :: a, eprimop :: Primop, eas :: [Atom]}
-            | ELet    {emd :: a, edefs :: [Obj a], ee :: Expr a}
-            | ECase   {emd :: a, ee :: Expr a, ealts :: Alts a}
+data Expr a = EAtom   {emd :: a,                    ea :: Atom} --,      ename::String}
+            | EFCall  {emd :: a, ev :: Var,         eas :: [Atom]} --,   ename::String}
+            | EPrimop {emd :: a, eprimop :: Primop, eas :: [Atom]} --,   ename::String}
+            | ELet    {emd :: a, edefs :: [Obj a],  ee :: Expr a} --,    ename::String}
+            | ECase   {emd :: a, ee :: Expr a,      ealts :: Alts a} --, ename::String}
               deriving(Eq,Show)
 
 data Alt a = ACon {amd :: a, ac :: Con, avs :: [Var], ae :: Expr a}
