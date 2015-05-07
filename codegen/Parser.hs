@@ -59,10 +59,14 @@ parser inp = case defdatsp $ lexer inp of
                xs -> if snd (head xs) /= [] 
                      then error ("leftover input on parse: " ++ show (snd $ head xs))
                      else fst $ head xs
-               
+
+-- backtracks to the beginning if no SymSemi               
+-- defdatsp :: Parser Token [Def ()]
+-- defdatsp = (sepbyp defdatp (symkindp SymSemi) `thenxp` symkindp SymSemi)
+--           `altp` (sepbyp defdatp (symkindp SymSemi))
+
 defdatsp :: Parser Token [Def ()]
-defdatsp = (sepbyp defdatp (symkindp SymSemi) `thenxp` symkindp SymSemi)
-           `altp` (sepbyp defdatp (symkindp SymSemi))
+defdatsp = sepbyp defdatp (symkindp SymSemi) `thenxp` optlp (symkindp SymSemi)
 
 defdatp :: Parser Token (Def ())
 defdatp = (defp `usingp` ObjDef) `altp` (tyconp `usingp` DataDef)
@@ -152,7 +156,7 @@ atomp = (nump `usingp` LitI) `altp`
         (boolp `usingp` LitB)
 
 defsp :: Parser Token [Obj ()]
-defsp = sepbyp defp (symkindp SymSemi)
+defsp = sepbyp defp (symkindp SymSemi) `thenxp` optlp (symkindp SymSemi)
 
 defp :: Parser Token (Obj ())
 defp = varp `thenp` 

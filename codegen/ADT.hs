@@ -52,11 +52,11 @@ import qualified Data.Map as Map
 
   Boxed type    \pi    ::=  \alpha                   Type variable
                         |   \tau -> \tau             Function type
-                        |   \Chi \tau_1 ... \tau_n   Parameterized boxed data type, SPJ says \pi
+                        |   \Chi \pi_1 ... \pi_n   Parameterized boxed data type
 
   Unboxed type \nu     ::=  Int#
                         |   Double#
-                        |   \Chi# \tau_1 ... \tau_n   Parameterized unboxed data type, SPJ says \pi
+                        |   \Chi# \pi_1 ... \pi_n   Parameterized unboxed data type
 
 -}
 
