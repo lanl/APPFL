@@ -3,12 +3,11 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 
 module SetFVs (
-  setFVsDefs
+  setFVsObjs
 ) where
 
 import Prelude
 import AST
-import ADT
 import Data.List
 
 -- *****************************************************
@@ -36,9 +35,6 @@ deadCode fvsdefs =
 
 -- after rename, make the fvs meaningful
 -- TLDs are not considered free vars in expressions
-
-setFVsDefs :: [String] -> [Def a] -> [Def [Var]]
-setFVsDefs runtimeGlobals = onObjs (setFVsObjs runtimeGlobals)
 
 setFVsObjs :: [String] -> [Obj a] -> [Obj [Var]] -- monomorphism restriction
 setFVsObjs runtimeGlobals defs

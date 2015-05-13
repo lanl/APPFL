@@ -80,10 +80,6 @@ instance Normalize (Obj a) where
   -- PAP, CON, BH
   normalize o = o
 
-instance Normalize (Def a) where
-  normalize (ObjDef o) = ObjDef(normalize o)
-  normalize d = d
-  
 instance Normalize a => Normalize [a] where
   normalize = map normalize 
  

@@ -23,7 +23,7 @@ stgcout infile outfile =
     source <- hGetContents ifd
     case outfile of
       "-"            -> writeFile (infile++".c") (codegener source False)
-      "-dump-parse"  -> writeFile (infile++".dump") (show $ parser source)
+      "-dump-parse"  -> writeFile (infile++".dump") (show $ parse source)
       _              -> writeFile outfile (codegener source False)
 
 main :: IO ()

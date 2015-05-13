@@ -137,9 +137,6 @@ typUndef = error "typ undefined in infotab"
 class SetITs a b where 
     setITs :: a -> b
 
-instance SetITs [Def [Var]] [Def InfoTab] where
-   setITs = onObjs setITs
-
 instance SetITs [Obj [Var]] [Obj InfoTab] where
     setITs = map setITs
 

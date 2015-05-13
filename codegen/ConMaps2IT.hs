@@ -12,7 +12,6 @@ import qualified Data.Map as Map
 import AST
 import ADT
 import InfoTab
-import Parser
 
 conmaps2IT defs = let (defs',conmaps) = updatedata defs
                       (ts, os) = splitDefs defs'

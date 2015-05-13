@@ -56,22 +56,27 @@ stgRTSGlobals = [ "stg_case_not_exhaustive",
                   "False#" 
                 ] ++ map fst primopTab -- from AST.hs
 
-renamer :: String -> [Def ()]
-renamer = renameDefs . parser
+parser :: String -> ([TyCon], [Obj ()])
+parser = parse
 
-normalizer :: String -> [Def ()]
-normalizer = normalize . renamer
+renamer :: String -> ([TyCon], [Obj ()])
+renamer inp = let (tyCons, objs) = parser inp
+              in (tyCons, renameObjs objs)
 
-freevarer :: String -> [Def [Var]]
-freevarer inp = let defs = normalizer inp
-                in setFVsDefs stgRTSGlobals defs
+normalizer :: String -> ([TyCon], [Obj ()])
+normalizer inp = let (tyCons, objs) = renamer inp
+                 in (tyCons, normalize objs)
 
-infotaber :: String -> [Def InfoTab]
-infotaber inp = let defs = freevarer inp
-                in setITs defs :: [Def InfoTab]
+freevarer :: String -> ([TyCon], [Obj [Var]])
+freevarer inp = let (tyCons, objs) = normalizer inp
+                in (tyCons, setFVsObjs stgRTSGlobals objs)
+
+infotaber :: String -> ([TyCon], [Obj InfoTab])
+infotaber inp = let (tyCons, objs) = freevarer inp
+                in (tyCons, setITs objs :: [Obj InfoTab])
 
 conmaper :: String -> [Def InfoTab]
-conmaper = conmaps2IT . infotaber
+conmaper = conmaps2IT . unsplitDefs . infotaber
 
 -- typer :: String -> [Def InfoTab]
 -- typer = setTypes . conmaper

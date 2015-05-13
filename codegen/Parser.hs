@@ -3,7 +3,7 @@
 {-# LANGUAGE NamedFieldPuns       #-}
 
 module Parser (
-  parser,
+  parse,
   showObjs,
 ) where
 
@@ -53,12 +53,12 @@ import Data.List
 
 --- layer for adding ADT defs
 
-parser :: [Char] -> [Def ()]
-parser inp = case defdatsp $ lexer inp of
+parse :: [Char] ->  ([TyCon], [Obj ()])
+parse inp = case defdatsp $ lexer inp of
                [] ->  error "parser failed"
                xs -> if snd (head xs) /= [] 
                      then error ("leftover input on parse: " ++ show (snd $ head xs))
-                     else fst $ head xs
+                     else splitDefs $ fst $ head xs
 
 defdatsp :: Parser Token [Def ()]
 defdatsp = sepbyp defdatp (symkindp SymSemi) `thenxp` optlp (symkindp SymSemi)
