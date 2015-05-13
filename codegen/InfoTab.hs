@@ -132,8 +132,8 @@ itsOf = (map omd) . objsOf
 --  and "b" is "Def InfoTab", "Expr InfoTab" etc.
 -- and [(String, Int)] is the state, the map String constructors to Int tags
 
--- typUndef = error "typ set undefined in InfoTab.hs"
-typUndef = PPoly [] (MBoxed (BTyCon "Z" []))
+typUndef = error "typ set undefined in InfoTab.hs"
+-- typUndef = PPoly [] (MBoxed (BTyCon "Z" []))
 
 class SetITs a b where 
     setITs :: a -> b
