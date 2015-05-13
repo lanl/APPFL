@@ -20,11 +20,12 @@ data ScanTag = ScanNum
 type Lexeme = (ScanTag, [Char])
 
 identp :: Parser Char String
-identp = alphap `thenp` manyp alphaornumeralp `usingp` uncurry (:)
+identp = alphap `thenp` manyp alphanumus `usingp` uncurry (:)
 
 identdecorp :: Parser Char String
 identdecorp = 
-    identp `thenp` ((optlp (literalp '#'))
+--    identp `thenp` ((optlp (literalp '#'))
+    identp `thenp` ((listsubp "#" "_h")
                     `altp` (manyp (literalp '\'')))       
                     `usingp` uncurry (++)
 

@@ -3,7 +3,7 @@ module Lexer (
   Keyword(..),
   Object(..),
   Symbol(..),
-  Builtin(..),
+  BuiltinType(..),
   lexer
 ) where
 
@@ -32,19 +32,21 @@ data Symbol = SymArrow
             | SymPipe
               deriving (Eq,Show)
               
-data Builtin = UBInt
-             | UBDouble             
-               deriving (Eq,Show)           
+data BuiltinType = UBInt
+                 | UBDouble             
+                 | UBBool             
+                   deriving (Eq,Show)           
 
-data Token = Number Int 
+data Token = BIInt Int
+           | BIBool Bool  -- True#, False# live here for now
+           | BIDouble Double
            | Ident String
            | KW Keyword
            | Ctor String
            | Obj Object
            | Sym Symbol
            | PO Primop
-           | Boolean Bool
-           | BI Builtin
+           | BIT BuiltinType
            deriving(Show, Eq)
 
 bigtab :: [(String, Token)]
@@ -70,31 +72,11 @@ bigtab =
      ("data",      KW KWdata),
      ("unboxed",   KW KWunboxed),
 
-     ("plus#",     PO Piadd), 
-     ("sub#",      PO Pisub),
-     ("mult#",     PO Pimul),
-     ("div#",      PO Pidiv),
-     ("mod#",      PO Pimod),
-
-     ("neg#",      PO Pineg),
-
-     ("min#",      PO Pimax),
-     ("max#",      PO Pimin),
-    
-     ("eq#",       PO Pieq),
-     ("ne#",       PO Pine),
-     ("lt#",       PO Pilt),
-     ("le#",       PO Pile),
-     ("gt#",       PO Pigt),
-     ("ge#",       PO Pigt),
-
-     ("intToBool#",PO PintToBool),
-
-     ("true#",     Boolean True),
-     ("false#",    Boolean False),
+--     ("True#",     BIBool True),
+--     ("False#",    BIBool False),
      
-     ("Int#",      BI UBInt),
-     ("Double#",   BI UBDouble)
+     ("Int#",      BIT UBInt),
+     ("Double#",   BIT UBDouble)
     ]
              
 
@@ -102,8 +84,8 @@ lexer :: [Char] -> [Token]
 lexer = map trans . scanner
 
 trans :: Lexeme -> Token
-trans (ScanNum, str) | last str == '#' = Number (read $ init str)
-                     | otherwise = Number (read str)
+trans (ScanNum, str) | last str == '#' = BIInt (read $ init str)
+                     | otherwise = BIInt (read str)
 
 trans (ScanSym, str) = 
     case lookup str bigtab of

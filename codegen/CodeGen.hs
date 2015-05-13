@@ -96,11 +96,11 @@ indent i xs = (take i $ repeat ' ') ++ indent' i xs
 cgv env v = getEnvRef v env -- ++ "/* " ++ v ++ " */"
 
 cga :: Env -> Atom -> String
-cga env (LitI i) = "(PtrOrLiteral){.argType = INT,    .i = " ++ show i ++ " }"
-cga env (LitB b) = "(PtrOrLiteral){.argType = BOOL,   .b = " ++ (if b then "true" else "false") ++ " }"
-cga env (LitD d) = "(PtrOrLiteral){.argType = DOUBLE, .d = " ++ show d ++ " }"
-cga env (LitF f) = "(PtrOrLiteral){.argType = FLOAT,  .f = " ++ show f ++ " }"
-cga env (LitC c) = "(PtrOrLiteral){.argType = CHAR,   .c = " ++ show c ++ " }"
+cga env (LitI i) = "((PtrOrLiteral){.argType = INT,    .i = " ++ show i ++ " })"
+cga env (LitB b) = "((PtrOrLiteral){.argType = BOOL,   .b = " ++ (if b then "true" else "false") ++ " }"
+cga env (LitD d) = "((PtrOrLiteral){.argType = DOUBLE, .d = " ++ show d ++ " })"
+cga env (LitF f) = "((PtrOrLiteral){.argType = FLOAT,  .f = " ++ show f ++ " })"
+cga env (LitC c) = "((PtrOrLiteral){.argType = CHAR,   .c = " ++ show c ++ " })"
 cga env (Var v) = cgv env v
 
 -- CG in the state monad ***************************************************
@@ -206,27 +206,31 @@ cge env (EPrimop it op as) =
                    Pimul -> cInfixIII " * "
                    Pidiv -> cInfixIII " / "
                    Pimod -> cInfixIII " % "
-                   Pieq ->  cInfixIII " == "
-                   Pine ->  cInfixIII " != "
-                   Pilt ->  cInfixIII " < "
-                   Pile ->  cInfixIII " <= "
-                   Pigt ->  cInfixIII " > "
-                   Pige ->  cInfixIII " >= "
+
+                   Pieq ->  cInfixIIB " == "
+                   Pine ->  cInfixIIB " != "
+                   Pilt ->  cInfixIIB " < "
+                   Pile ->  cInfixIIB " <= "
+                   Pigt ->  cInfixIIB " > "
+                   Pige ->  cInfixIIB " >= "
 
                    Pineg -> cPrefixII " -"
 
                    Pimin -> cFunIII "imin"
                    Pimax -> cFunIII "imax"
-
+{-
                    PintToBool ->
                        "stgCurVal = " ++
                        arg0 "i" ++ "?" ++ getEnvRef "true"  env ++
                                    ":" ++ getEnvRef "false" env ++ ";\n"
-
+-}
         cPrefixII op =  "stgCurVal.argType = INT;\n" ++
                         "stgCurVal.i = " ++ op ++ arg0 "i" ++ ";\n"
 
         cInfixIII op =  "stgCurVal.argType = INT;\n" ++
+                        "stgCurVal.i = " ++ arg0 "i" ++ op ++ arg1 "i" ++ ";\n"
+
+        cInfixIIB op =  "stgCurVal.argType = BOOL;\n" ++
                         "stgCurVal.i = " ++ arg0 "i" ++ op ++ arg1 "i" ++ ";\n"
 
         cFunIII fun = "stgCurVal.argType = INT;\n" ++

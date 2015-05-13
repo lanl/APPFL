@@ -50,7 +50,11 @@ footer v =
 stgRTSGlobals :: [String]
 stgRTSGlobals = [ "stg_case_not_exhaustive",
                   "true",  -- sho_True
-                  "false"] -- sho_False
+                  "false",  -- sho_False
+
+                  "True#",  
+                  "False#" 
+                ] ++ map fst primopTab -- from AST.hs
 
 renamer :: String -> [Def ()]
 renamer = renameDefs . parser
@@ -68,6 +72,9 @@ infotaber inp = let defs = freevarer inp
 
 conmaper :: String -> [Def InfoTab]
 conmaper = conmaps2IT . infotaber
+
+-- typer :: String -> [Def InfoTab]
+-- typer = setTypes . conmaper
 
 codegener :: String -> Bool -> String
 codegener inp v = let defs = conmaper inp

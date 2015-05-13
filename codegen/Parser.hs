@@ -60,11 +60,6 @@ parser inp = case defdatsp $ lexer inp of
                      then error ("leftover input on parse: " ++ show (snd $ head xs))
                      else fst $ head xs
 
--- backtracks to the beginning if no SymSemi               
--- defdatsp :: Parser Token [Def ()]
--- defdatsp = (sepbyp defdatp (symkindp SymSemi) `thenxp` symkindp SymSemi)
---           `altp` (sepbyp defdatp (symkindp SymSemi))
-
 defdatsp :: Parser Token [Def ()]
 defdatsp = sepbyp defdatp (symkindp SymSemi) `thenxp` optlp (symkindp SymSemi)
 
@@ -114,10 +109,6 @@ atyp = (varp `usingp` ATyVar) `altp`
           
 --- end layer for adding ADT defs
 
-primopp :: [Token] -> [(Primop, [Token])]
-primopp ((PO po):xs) = succeedp po xs
-primopp _ = failp []
-
 symkindp :: Symbol -> [Token] -> [(Symbol, [Token])]
 symkindp s1 ((Sym s2):xs) | s1 == s2 = succeedp s1 xs
 symkindp _ _ = failp []
@@ -130,16 +121,16 @@ kwkindp :: Keyword -> [Token] -> [(Keyword, [Token])]
 kwkindp k1 ((KW k2):xs) | k1 == k2 = succeedp k1 xs
 kwkindp _ _ = failp []
 
-bikindp :: Builtin -> [Token] -> [(Builtin, [Token])]
-bikindp b1 ((BI b2):xs) | b1 == b2 = succeedp b1 xs
+bikindp :: BuiltinType -> [Token] -> [(BuiltinType, [Token])]
+bikindp b1 ((BIT b2):xs) | b1 == b2 = succeedp b1 xs
 bikindp _ _ = failp []
 
 nump :: Parser Token Int
-nump ((Number i) : xs) = succeedp i xs
+nump ((BIInt i) : xs) = succeedp i xs
 nump _ = failp []
 
 boolp :: Parser Token Bool
-boolp ((Boolean i) : xs) = succeedp i xs
+boolp (BIBool i : xs) = succeedp i xs
 boolp _ = failp []
 
 varp :: Parser Token String
@@ -205,7 +196,7 @@ papobjp = (objkindp OPAP `xthenp`
          `usingp` \(p,as) -> (PAP () p as "")
 
 exprp :: Parser Token (Expr ())
-exprp =        eprimopp   -- preceed efcallp, primops are just distinguished vars
+exprp =        eprimopp   -- precede efcallp, primops are just distinguished vars
         `altp` efcallp
         `altp` eletp 
         `altp` ecasep
@@ -217,6 +208,17 @@ eatomp = atomp `usingp` (EAtom ())
 efcallp :: Parser Token (Expr ())
 efcallp = (varp `thenp` somep atomp) 
           `usingp` uncurry (EFCall ())
+
+primopp :: [Token] -> [(Primop, [Token])]
+primopp inp = case varp inp of
+                [] -> failp []
+                [(v,inp')] -> 
+                    case lookup v primopTab of
+                      Nothing -> failp []
+                      Just p -> [(p,inp')]
+
+-- primopp ((PO po):xs) = succeedp po xs
+-- primopp _ = failp []
 
 eprimopp :: Parser Token (Expr ())
 eprimopp = (primopp `thenp` somep atomp) `usingp` uncurry (EPrimop ())
@@ -235,7 +237,7 @@ ecasep = (kwkindp KWcase `xthenp` cutp "ecasep_1"                -- case
           (exprp `thenp` cutp "ecasep_2"                          -- expr
            (kwkindp KWof `xthenp`  cutp "ecasep_3"                 -- of
             (symkindp SymLBrace `xthenp`  cutp "ecasep_4"         -- 
-             (alternsp `thenxp` cutp "ecasep_5"
+             (alternsp `thenxp` cutp "ecasep_5:  } expected instead of "
               (symkindp SymRBrace)))))) 
          `usingp` uncurry (ECase ())
 
@@ -286,8 +288,8 @@ indents n ss = map (indent n) ss
 -- instance Unparser n Atom where
 showa (Var v) = v
 showa (LitI i) = show i
-showa (LitB False) = "false#"
-showa (LitB True) = "true#"
+showa (LitB False) = "False#"
+showa (LitB True) = "True#"
 
 
 -- instance Unparser [Atom] where

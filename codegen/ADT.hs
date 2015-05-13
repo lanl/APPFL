@@ -56,7 +56,8 @@ import qualified Data.Map as Map
 
   Unboxed type \nu     ::=  Int#
                         |   Double#
-                        |   \Chi# \pi_1 ... \pi_n   Parameterized unboxed data type
+                        |   Bool#
+                        |   \Chi# \pi_1 ... \pi_n   Parameterized boxed data type
 
 -}
 
@@ -82,7 +83,7 @@ data DataCon = DataCon Boxedness Con [Monotype]
 -- \alpha                     
 type TyVar = String
 
-data Polytype = PPoly TyVar Polytype  -- curried forall
+data Polytype = PPoly [TyVar] Monotype  -- uncurried forall
               | PMono Monotype
                 deriving(Eq,Show)
                 
@@ -111,18 +112,27 @@ data Boxedtype = BTyVar TyVar
 -- \nu
 data Unboxedtype = UInt 
                  | UDouble
+                 | UBool
                  | UTyCon Con [Boxedtype] 
                    deriving(Eq,Show)
 
 -- Type constr name to arity, tag, boxed/unboxed
-data TyConParam = TyConParam {tarity :: Int, ttag :: Int, tboxed :: Boxedness}
+data TyConParam = TyConParam {tarity :: Int, 
+                              ttag :: Int, 
+                              tboxed :: Boxedness}
                   deriving(Eq,Show)
+
 type TyConMap = Map.Map String TyConParam
 
 -- Data constr name to (arity, tag, boxedness, type constr name)
-data DataConParam = DataConParam {darity :: Int, dtag :: Int, dboxed :: Boxedness, dtycon :: Con} 
+data DataConParam = DataConParam {darity :: Int, 
+                                  dtag :: Int, 
+                                  dboxed :: Boxedness, 
+                                  dtycon :: Con} 
                     deriving(Eq,Show)
+
 type DataConMap = Map.Map String DataConParam
+
 type ConMaps = (TyConMap, DataConMap)
          
  -- starting tycon map
@@ -137,8 +147,8 @@ tyconmap = Map.insert "Bool#" (TyConParam 0 0 Unboxed)
 -- starting datacon map
 -- these tags must match what is in stg_header.h
 dataconmap :: DataConMap
-dataconmap = Map.insert "False" (DataConParam 0 0 Unboxed "Bool#") 
-           $ Map.insert "True"  (DataConParam 0 1 Unboxed "Bool#") 
+dataconmap = Map.insert "False_h" (DataConParam 0 0 Unboxed "Bool#") 
+           $ Map.insert "True_h"  (DataConParam 0 1 Unboxed "Bool#") 
            $ Map.insert "B"     (DataConParam 1 2 Boxed "Bool") 
            $ Map.insert "I"     (DataConParam 1 3 Boxed "Int") 
            $ Map.insert "Unit"  (DataConParam 0 4 Boxed "Unit")

@@ -7,6 +7,7 @@ module AST (
   Alts(..),
   Obj(..),
   Primop(..),
+  primopTab,
 ) where
 
 {-  grammar
@@ -73,7 +74,13 @@ data Obj a = FUN   {omd :: a, vs :: [Var],   e :: (Expr a), oname :: String}
            | THUNK {omd :: a, e  :: (Expr a)             ,  oname :: String}
            | BLACKHOLE {omd :: a                         ,  oname :: String}
              deriving(Eq,Show)
-             
+
+-- when calculating free variables we need an enclosing environment that
+-- includes the known primops.  This will allow proper scoping.  As such
+-- we initially parse EPrimops as EFCalls, then transform and check saturation
+-- here.  We only need to distinguish EPrimop from EFCall because special
+-- code is generated for them.
+
 data Primop = Piadd 
             | Pisub 
             | Pimul
@@ -91,9 +98,25 @@ data Primop = Piadd
 
             | Pimax
             | Pimin
-
-            | PintToBool
               deriving(Eq,Show)
-              
-       
-             
+
+-- these are the C names, not STG names
+primopTab = 
+    [("iplus_h",  Piadd), 
+     ("isub_h",   Pisub),
+     ("imul_h",   Pimul),
+     ("idiv_h",   Pidiv),
+     ("imod_h",   Pimod),
+    
+     ("ieq_h",    Pieq),
+     ("ine_h",    Pine),
+     ("ilt_h",    Pilt),
+     ("ile_h",    Pile),
+     ("igt_h",    Pigt),
+     ("ige_h",    Pige),
+
+     ("ineg_h",   Pineg),
+
+     ("imin_h",   Pimax),
+     ("imax_h",   Pimin)
+    ]

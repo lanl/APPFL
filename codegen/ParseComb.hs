@@ -22,16 +22,19 @@ module ParseComb (
   anymapp,
   optp,
   exactp,
+  listsubp,
 
 -- string/char specific
 
   alphap,
   numeralp,
   alphaornumeralp,
+  alphanumus,
   whitep,
 ) where
 
 import Data.Char
+import Data.List
 
 type Parser input result = [input] -> [(result,[input])]
 
@@ -63,7 +66,7 @@ thenp :: Parser t1 t2 -> Parser t1 t3 -> Parser t1 (t2, t3)
 cutp :: Show a => String -> ([a] -> [t]) -> [a] -> [t]
 cutp msg p inp =
     case p inp of
-      [] -> error ("cut error \"" ++ msg ++ "\" at \"" ++ concatMap show (take 15 inp))
+      [] -> error $ "cut error " ++ msg ++ " " ++ (intercalate " " $ map show $ take 15 inp)
       r -> r
 
 -- just transform output
@@ -79,6 +82,12 @@ listp :: Eq a => [a] -> Parser a [a]
 listp [] = succeedp []
 listp (x:xs) = (literalp x `thenp` listp xs) `usingp` ucons
 
+-- match list and substitute
+listsubp xs sub inp =
+    case listp xs inp of
+      [] -> failp []
+      [(_, inp')] -> [(sub, inp')]
+      _ -> error "listsubp this should be impossible"
 
 -- zero or more
 manyp :: Parser a b -> Parser a [b]
@@ -149,6 +158,8 @@ numeralp = satisfyp isDigit
 
 alphaornumeralp :: Parser Char Char
 alphaornumeralp = satisfyp isAlphaNum
+
+alphanumus = satisfyp isAlphaNum `altp` satisfyp (=='_')
 
 whitep :: Parser Char Char
 whitep = satisfyp isSpace

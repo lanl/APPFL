@@ -5,6 +5,7 @@
 module Analysis(
 --  isSimple,
   normalize,
+  setTypes,
 ) where
 
 import AST
@@ -232,3 +233,61 @@ instance AI (Expr InfoTab) where
                             (e{emd = emd{noHeapAlloc = False}}, prev /= False)
                         else let funnoa = noHeapAlloc it in
                             (e{emd = emd{noHeapAlloc = funnoa}}, prev /= funnoa)
+
+
+-- quickie boxedness propagation
+
+boxed = PPoly (error "no var here") $ error "shouldn't be examining type"
+
+unboxed = PMono $ MUnboxed $ error "shouldn't be examining type"
+
+isBoxedId v = take 2 (reverse v) /= "h_"
+
+class SetTypes a where
+  setTypes :: a -> a
+
+instance SetTypes (Expr InfoTab) where
+
+  setTypes e@EAtom{emd, ea} =
+      case ea of
+        Var v -> e{emd = emd{typ = if isBoxedId v then boxed else unboxed}}
+        _     -> e{emd = emd{typ = unboxed}}
+
+  setTypes e@EFCall{emd, ev} = 
+      e{emd = emd{typ = if isBoxedId ev then boxed else unboxed}}
+
+  setTypes e@EPrimop{emd} = e{emd = emd{typ = unboxed}}
+
+  setTypes e@ELet{emd = mymd, edefs, ee} = -- can't be noun and verb
+      let edefs' = map setTypes edefs
+          ee' = setTypes ee
+          typ' = typ $ emd ee'
+          emd' = mymd{typ = typ'}
+      in e{emd = emd', edefs = edefs', ee = ee'}
+
+  setTypes e@ECase{emd = mymd, ee, ealts} =
+      let ealts' = setTypes ealts
+          ee' = setTypes ee
+          typ' = typ $ emd ee'
+          emd' = mymd{typ = typ'}
+      in e{emd = emd', ee = ee', ealts = ealts'}
+
+instance SetTypes (Alts InfoTab) where
+  setTypes as@Alts{altsmd = mymd, alts} = 
+      let alts' = map setTypes alts
+          typ' = typ $ amd $ head alts  -- they better be all the same
+          altsmd' = mymd{typ = typ'}
+      in as{altsmd = altsmd', alts = alts'}
+          
+instance SetTypes (Obj InfoTab) where
+    setTypes o@FUN{omd, e} =
+        let e' = setTypes e
+        in o{omd=omd{typ = typ $ emd e'}, e = e'}
+
+instance SetTypes (Alt InfoTab) where
+  setTypes a =
+      let ae' = setTypes (ae a)
+          typ' = typ $ emd ae'
+          amd' = (amd a){typ = typ'}
+      in a{amd = amd', ae = ae'}
+

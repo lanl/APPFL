@@ -41,8 +41,10 @@ suffixnames = mapM suffixname
 -- uniquify obj names, systematically renaming 
 
 -- no need to flail in the monad at Atom level
+nameVar v tt = condrepl v tt
+
 nameAtom :: Atom -> [(Var, Var)] -> Atom
-nameAtom (Var v) tt = Var $ condrepl v tt
+nameAtom (Var v) tt = Var $ nameVar v tt 
 nameAtom x _ = x
 
 nameAtoms :: [Atom] -> [(Var, Var)] -> [Atom]
@@ -84,7 +86,7 @@ nameObj (THUNK md e name) tt =
       return (THUNK md e' name)
 
 nameObj (PAP md f as name) tt =
-    let f' = condrepl f tt
+    let f' = nameVar f tt
         as' = nameAtoms as tt
     in
       return (PAP md f' as' name)
@@ -114,7 +116,7 @@ nameExpr e@EAtom{ea} tt =
     return $ e{ea = nameAtom ea tt}
 
 nameExpr e@EFCall{ev, eas} tt =
-    let ev' = condrepl ev tt
+    let ev' = nameVar ev tt
         eas' = nameAtoms eas tt in
     return e{ev = ev', eas = eas'}
 
