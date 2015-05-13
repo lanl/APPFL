@@ -75,11 +75,13 @@ infotaber :: String -> ([TyCon], [Obj InfoTab])
 infotaber inp = let (tyCons, objs) = freevarer inp
                 in (tyCons, setITs objs :: [Obj InfoTab])
 
-conmaper :: String -> [Def InfoTab]
-conmaper = conmaps2IT . unsplitDefs . infotaber
+-- real type inference would be after conmaper
+typer :: String -> ([TyCon], [Obj InfoTab])
+typer inp = let (tyCons, objs) = infotaber inp
+            in (tyCons, setTypes objs)
 
--- typer :: String -> [Def InfoTab]
--- typer = setTypes . conmaper
+conmaper :: String -> [Def InfoTab]
+conmaper = conmaps2IT . unsplitDefs . typer
 
 codegener :: String -> Bool -> String
 codegener inp v = let defs = conmaper inp

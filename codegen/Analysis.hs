@@ -275,11 +275,6 @@ instance SetTypes (Alts InfoTab) where
           altsmd' = mymd{typ = typ'}
       in as{altsmd = altsmd', alts = alts'}
           
-instance SetTypes (Obj InfoTab) where
-    setTypes o@FUN{omd, e} =
-        let e' = setTypes e
-        in o{omd=omd{typ = typ $ emd e'}, e = e'}
-
 instance SetTypes (Alt InfoTab) where
   setTypes a =
       let ae' = setTypes (ae a)
@@ -287,3 +282,10 @@ instance SetTypes (Alt InfoTab) where
           amd' = (amd a){typ = typ'}
       in a{amd = amd', ae = ae'}
 
+instance SetTypes (Obj InfoTab) where
+    setTypes o@FUN{omd, e} =
+        let e' = setTypes e
+        in o{omd=omd{typ = typ $ emd e'}, e = e'}
+
+instance SetTypes [Obj InfoTab] where
+    setTypes = map setTypes
