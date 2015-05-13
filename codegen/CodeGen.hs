@@ -248,8 +248,9 @@ cge env (ELet it os e) =
               ofunc ++ efunc)
 
 cge env (ECase _ e a@(Alts italts alts aname)) = 
+    let eboxed = case typ $ emd e of PPoly _ _ -> True; _ -> False in
     do (ecode, efunc) <- cge env e
-       (acode, afunc) <- cgalts env a
+       (acode, afunc) <- cgalts env a eboxed
        let pre = "stgPushCont( (Cont)\n" ++
                  "  { .retAddr = &" ++ aname ++ ",\n" ++
                  "    .objType = CASECONT,\n" ++
@@ -263,28 +264,8 @@ cge env (ECase _ e a@(Alts italts alts aname)) =
                  "  });\n"
        return (pre ++ ecode ++ acode, efunc ++ afunc)
 
--- CG Alts ************************************************************
--- DEFUN0(alts1) {
---   Cont cont = stgPopCont();
---   PtrOrLiteral scrutinee = stgCurVal;
---   switch(scrutinee.op->infoPtr->conFields.tag) {
---   case TagLeft:
---     // variable saved in casecont
---     stgCurVal = cont.payload[0];
---     STGRETURN0();
---   case TagRight:
---     // from constructor
---     stgCurVal = scrutinee.op->payload[0];
---     STGRETURN0();
---   default:
---     stgCurVal = scrutinee;
---     STGRETURN0();
---   }
---   ENDFUN;
--- }
-
 -- ADef only or unary sum => no C switch
-cgalts env (Alts it alts name) = 
+cgalts env (Alts it alts name) boxed = 
     let contName = "ccont_" ++ name
         scrutName = "scrut_" ++ name
         altenv = zip (fvs it) [ CC contName i | i <- [0..] ]
@@ -296,8 +277,11 @@ cgalts env (Alts it alts name) =
       let (codes, funcss) = unzip codefuncs
       let fun = "DEFUN0("++ name ++ ") {\n" ++
                 "  fprintf(stderr, \"" ++ name ++ " here\\n\");\n" ++
-                -- tricky:  scrutinee might not be evaluated
-                "  STGEVAL(stgCurVal);\n" ++
+                -- scrutinee might not be evaluated if boxed
+                (if boxed then 
+                     "  // boxed scrutinee\n" ++
+                     "  STGEVAL(stgCurVal);\n"
+                 else "  // unboxed scrutinee\n") ++
                 -- actually need the ccont?
                 -- any fvs in the expressions on the rhs's?
                 (if (length $ nub $ concatMap (fvs . emd . ae) alts) > 0 then 
@@ -305,9 +289,13 @@ cgalts env (Alts it alts name) =
                  else "  ") ++                      "stgPopCont();\n" ++
                 "  PtrOrLiteral " ++ scrutName ++ " = stgCurVal;\n" ++
                 (if switch then
-                   "  switch(stgCurVal.op->infoPtr->conFields.tag) {\n" ++
-                        indent 4 (concat codes) ++
-                   "  }\n" 
+                     (if boxed then
+                          "  switch(stgCurVal.op->infoPtr->conFields.tag) {\n"
+                      else 
+                          "  switch(stgCurVal.i) {\n"
+                     ) ++
+                     indent 4 (concat codes) ++
+                   "  }\n"
                  else indent 2 $ concat codes) ++
                 "  ENDFUN;\n" ++
                 "}\n"

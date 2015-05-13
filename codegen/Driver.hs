@@ -4,6 +4,7 @@ module Driver (
   freevarer,
   infotaber,
   conmaper,
+  typer,
   codegener
 ) where
 

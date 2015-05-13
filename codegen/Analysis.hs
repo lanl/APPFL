@@ -233,24 +233,25 @@ instance AI (Expr InfoTab) where
 
 -- quickie boxedness propagation
 
-boxed = PPoly (error "no var here") $ error "shouldn't be examining type"
+boxed = PPoly [] $ (MBoxed (BTyCon "Z" []))
 
-unboxed = PMono $ MUnboxed $ error "shouldn't be examining type"
+unboxed = PMono $ MUnboxed $ UInt
 
 isBoxedId v = take 2 (reverse v) /= "h_"
+
+typeByName n = if isBoxedId n then boxed else unboxed
 
 class SetTypes a where
   setTypes :: a -> a
 
 instance SetTypes (Expr InfoTab) where
-
   setTypes e@EAtom{emd, ea} =
       case ea of
-        Var v -> e{emd = emd{typ = if isBoxedId v then boxed else unboxed}}
+        Var v -> e{emd = emd{typ = typeByName v}}
         _     -> e{emd = emd{typ = unboxed}}
 
   setTypes e@EFCall{emd, ev} = 
-      e{emd = emd{typ = if isBoxedId ev then boxed else unboxed}}
+      e{emd = emd{typ = typeByName ev}}
 
   setTypes e@EPrimop{emd} = e{emd = emd{typ = unboxed}}
 
@@ -283,9 +284,30 @@ instance SetTypes (Alt InfoTab) where
       in a{amd = amd', ae = ae'}
 
 instance SetTypes (Obj InfoTab) where
-    setTypes o@FUN{omd, e} =
+    setTypes o@FUN{omd, e, oname} =
         let e' = setTypes e
-        in o{omd=omd{typ = typ $ emd e'}, e = e'}
+            typ' = typ $ emd e'
+        in if typeByName oname /= typ' then
+               error "setTypes mismatch FUN"
+           else o{omd = omd{typ = typ'}, e = e'}
+
+    setTypes o@PAP{omd, f, oname} =
+        let t1 = typeByName oname
+            t2 = typeByName f
+        in if t1 /= t2 then
+               error "setTypes mismatch PAP"
+           else o{omd = omd{typ = t1}}
+
+    setTypes o@CON{omd} = o{omd = omd{typ = boxed}}
+
+    setTypes o@THUNK{omd, e} =
+        let e' = setTypes e
+            typ' = typ $ emd e
+        in if typ' /= boxed then
+           error "setTypes unboxed THUNK"
+       else o{omd = omd{typ = typ'}}
+
+    setTypes o@BLACKHOLE{omd} = o{omd = omd{typ = boxed}}
 
 instance SetTypes [Obj InfoTab] where
     setTypes = map setTypes

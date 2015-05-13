@@ -118,6 +118,7 @@ DEFUN2(fun_fac, self, i) {
 
 DEFUN0(alts_0) {
   fprintf(stderr, "alts_0 here\n");
+  // boxed scrutinee
   STGEVAL(stgCurVal);
   Cont ccont_alts_0 = stgPopCont();
   PtrOrLiteral scrut_alts_0 = stgCurVal;
@@ -137,7 +138,7 @@ DEFUN0(alts_0) {
 
 DEFUN0(alts_1) {
   fprintf(stderr, "alts_1 here\n");
-  STGEVAL(stgCurVal);
+  // unboxed scrutinee
   Cont ccont_alts_1 = stgPopCont();
   PtrOrLiteral scrut_alts_1 = stgCurVal;
   // x_h ->
@@ -171,10 +172,10 @@ DEFUN2(fun_fac_h, self, i_h) {
 
 DEFUN0(alts_2) {
   fprintf(stderr, "alts_2 here\n");
-  STGEVAL(stgCurVal);
+  // unboxed scrutinee
   Cont ccont_alts_2 = stgPopCont();
   PtrOrLiteral scrut_alts_2 = stgCurVal;
-  switch(stgCurVal.op->infoPtr->conFields.tag) {
+  switch(stgCurVal.i) {
     // True_h  ->
     case 1: {
       stgCurVal = ((PtrOrLiteral){.argType = INT,    .i = 1 }); // 1
@@ -212,7 +213,7 @@ DEFUN0(alts_2) {
 
 DEFUN0(alts_3) {
   fprintf(stderr, "alts_3 here\n");
-  STGEVAL(stgCurVal);
+  // unboxed scrutinee
   Cont ccont_alts_3 = stgPopCont();
   PtrOrLiteral scrut_alts_3 = stgCurVal;
   // im1_h ->
@@ -232,7 +233,7 @@ DEFUN0(alts_3) {
 
 DEFUN0(alts_4) {
   fprintf(stderr, "alts_4 here\n");
-  STGEVAL(stgCurVal);
+  // unboxed scrutinee
   Cont ccont_alts_4 = stgPopCont();
   PtrOrLiteral scrut_alts_4 = stgCurVal;
   // f1_h ->
