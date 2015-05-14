@@ -17,4 +17,4 @@ unitTests = testGroup "ADT Unit tests"
 adt:: IO ByteString
 adt = do
         input <- IO.readFile "tests/ADT/adt.stg"
-        return $ fromString $ show $ updatedata $ parser input
+        return $ fromString $ show $ updatedata $ unsplitDefs $ parse input

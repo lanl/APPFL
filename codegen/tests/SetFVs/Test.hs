@@ -22,4 +22,4 @@ setFVseq :: IO ByteString
 setFVseq = return $ fromString $ show $ freevarer inp 
 
 showseq :: IO ByteString
-showseq = return $ fromString $ showObjs $ getObjs $ freevarer inp
+showseq = return $ fromString $ showObjs $ snd $ freevarer inp

@@ -19,13 +19,13 @@ unitTests = testGroup "Parser Unit tests"
 parser1 :: Assertion
 parser1 = let
     ins = "one=CON(I 1);"
-    outs = "[ObjDef (CON {omd = (), c = \"I\", as = [LitI 1], oname = \"one\"})]"
-    in show (parser ins) @?= outs
+    outs = "([],[CON {omd = (), c = \"I\", as = [LitI 1], oname = \"one\"}])"
+    in show (parse ins) @?= outs
 
 parser2 :: IO ByteString
-parser2 = return $ fromString $ show $ parser "two = CON(I 2);"
+parser2 = return $ fromString $ show $ parse "two = CON(I 2);"
 
 parser2file :: IO ByteString
 parser2file = do
                 input <- IO.readFile "tests/Parser/con2.stg"
-                return $ fromString $ show $ parser input
+                return $ fromString $ show $ parse input

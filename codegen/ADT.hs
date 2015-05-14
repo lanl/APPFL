@@ -1,4 +1,5 @@
 {-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE NamedFieldPuns    #-}
 
 module ADT (
   Def(..),
@@ -119,7 +120,8 @@ data Unboxedtype = UInt
 -- Type constr name to arity, tag, boxed/unboxed
 data TyConParam = TyConParam {tarity :: Int, 
                               ttag :: Int, 
-                              tboxed :: Boxedness}
+                              tboxed :: Boxedness,
+                              tdatacons :: [Con]}
                   deriving(Eq,Show)
 
 type TyConMap = Map.Map String TyConParam
@@ -137,11 +139,11 @@ type ConMaps = (TyConMap, DataConMap)
          
  -- starting tycon map
 tyconmap :: TyConMap
-tyconmap = Map.insert "Bool#" (TyConParam 0 0 Unboxed)
-         $ Map.insert "Int#"  (TyConParam 0 1 Unboxed)
-         $ Map.insert "Bool"  (TyConParam 0 2 Boxed) -- data Bool = B Bool#
-         $ Map.insert "Int"   (TyConParam 0 3 Boxed) -- data Int = I Int#
-         $ Map.insert "List"  (TyConParam 1 4 Boxed) -- data List a = Nil | Cons a (List a)
+tyconmap = Map.insert "Bool#" (TyConParam 0 0 Unboxed ["False_h","True_h"])
+         $ Map.insert "Int_h"  (TyConParam 0 1 Unboxed [])
+         $ Map.insert "Bool"  (TyConParam 0 2 Boxed ["B"]) -- data Bool = B Bool#
+         $ Map.insert "Int"   (TyConParam 0 3 Boxed ["I"]) -- data Int = I Int#
+         $ Map.insert "List"  (TyConParam 1 4 Boxed ["Nil","Cons"]) -- data List a = Nil | Cons a (List a)
            Map.empty
 
 -- starting datacon map
@@ -186,19 +188,29 @@ dataconinsert :: String -> Int -> Boxedness -> Con -> State ConMaps ()
 dataconinsert con arity boxed tycon
   = do 
       (tmap, dmap) <- get
-      put (tmap, Map.insert con DataConParam{darity = arity, 
+      let dmap' = Map.insert con DataConParam{darity = arity, 
                                              dtag = Map.size dmap, 
                                              dboxed = boxed, 
                                              dtycon = tycon} 
-                                             dmap)
-  
+                                             dmap
+      -- update tycon w/ this data con                                       
+      let Just (TyConParam {tarity, ttag, tboxed, tdatacons}) = Map.lookup tycon tmap                                        
+      let tmap' = Map.insert tycon TyConParam{tarity = tarity, 
+                                     ttag = ttag, 
+                                     tboxed = tboxed,
+                                     tdatacons = (con:tdatacons)}
+                                     tmap
+      put(tmap',dmap')
+    
+    
 tyconinsert :: String -> Int -> Boxedness -> State ConMaps ()
-tyconinsert con arity boxed
+tyconinsert con arity boxed 
   = do 
       (tmap, dmap) <- get
       put (Map.insert con TyConParam{tarity = arity, 
                                      ttag = Map.size tmap, 
-                                     tboxed = boxed}
+                                     tboxed = boxed,
+                                     tdatacons = []}
                                      tmap, dmap)        
                    
 

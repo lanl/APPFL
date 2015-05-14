@@ -1,1 +1,1 @@
-[ObjDef (CON {omd = (), c = "I", as = [LitI 2], oname = "two"})]
+([],[CON {omd = (), c = "I", as = [LitI 2], oname = "two"}])

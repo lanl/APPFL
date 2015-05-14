@@ -18,5 +18,5 @@ inp = "seq = FUN(x y -> case x of { z -> y });"
              
 
 showinfoseq :: IO ByteString
-showinfoseq = return $ fromString $ showITs $ getObjs $ infotaber inp
+showinfoseq = return $ fromString $ showITs $ snd $ infotaber inp
            
