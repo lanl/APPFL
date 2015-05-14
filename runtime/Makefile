@@ -5,7 +5,7 @@ HEADERS=stg.h cmm.h stgcmm.h stgutils.h gc.h
 SOURCES=stg.c cmm.c stgcmm.c stgutils.c gc.c
 OBJECTS=$(SOURCES:.c=.o)
 LIB=libruntime.a
-ALL=$(LIB) main mymain
+ALL=$(LIB) main 
 
 UNAME := $(shell uname)
 ifeq ($(UNAME), Linux)
