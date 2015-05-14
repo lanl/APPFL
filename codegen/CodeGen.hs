@@ -284,7 +284,8 @@ cgalts env (Alts it alts name) boxed =
                  else "  // unboxed scrutinee\n") ++
                 -- actually need the ccont?
                 -- any fvs in the expressions on the rhs's?
-                (if (length $ nub $ concatMap (fvs . emd . ae) alts) > 0 then 
+--                (if (length $ nub $ concatMap (fvs . emd . ae) alts) > 0 then 
+                (if (length $ fvs it) > 0 then 
                      "  Cont " ++ contName ++ " = "
                  else "  ") ++                      "stgPopCont();\n" ++
                 "  PtrOrLiteral " ++ scrutName ++ " = stgCurVal;\n" ++

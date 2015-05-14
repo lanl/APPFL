@@ -1,6 +1,7 @@
 {-# LANGUAGE TypeSynonymInstances #-}
 {-# LANGUAGE FlexibleInstances    #-}
 {-# LANGUAGE NamedFieldPuns       #-}
+{-# LANGUAGE RecordWildCards      #-} -- implies DisambiguateFieldRecords
 
 module Analysis(
 --  isSimple,
@@ -241,21 +242,27 @@ isBoxedId v = take 2 (reverse v) /= "h_"
 
 typeByName n = if isBoxedId n then boxed else unboxed
 
+-- trying out some of the named field tricks
+
 class SetTypes a where
   setTypes :: a -> a
 
 instance SetTypes (Expr InfoTab) where
-  setTypes e@EAtom{emd, ea} =
-      case ea of
-        Var v -> e{emd = emd{typ = typeByName v}}
-        _     -> e{emd = emd{typ = unboxed}}
+  setTypes EAtom{emd = mymd, ..} =
+      let emd = case ea of
+                  Var v -> mymd{typ = typeByName v}
+                  _     -> mymd{typ = unboxed}
+      in EAtom{..}
 
-  setTypes e@EFCall{emd, ev} = 
-      e{emd = emd{typ = typeByName ev}}
+  setTypes EFCall{emd = mymd, ..} = 
+      let emd = mymd{typ = typeByName ev}
+      in EFCall{..}
 
-  setTypes e@EPrimop{emd} = e{emd = emd{typ = unboxed}}
+  setTypes e@EPrimop{emd = mymd, ..} = 
+      let emd = mymd{typ = unboxed}
+      in EPrimop{..}
 
-  setTypes e@ELet{emd = mymd, edefs, ee} = -- can't be noun and verb
+  setTypes e@ELet{emd = mymd, edefs, ee} =
       let edefs' = map setTypes edefs
           ee' = setTypes ee
           typ' = typ $ emd ee'
@@ -265,14 +272,14 @@ instance SetTypes (Expr InfoTab) where
   setTypes e@ECase{emd = mymd, ee, ealts} =
       let ealts' = setTypes ealts
           ee' = setTypes ee
-          typ' = typ $ emd ee'
+          typ' = typ $ altsmd ealts'
           emd' = mymd{typ = typ'}
       in e{emd = emd', ee = ee', ealts = ealts'}
 
 instance SetTypes (Alts InfoTab) where
   setTypes as@Alts{altsmd = mymd, alts} = 
       let alts' = map setTypes alts
-          typ' = typ $ amd $ head alts  -- they better be all the same
+          typ' = typ $ amd $ head alts'  -- they better be all the same
           altsmd' = mymd{typ = typ'}
       in as{altsmd = altsmd', alts = alts'}
           
@@ -302,7 +309,7 @@ instance SetTypes (Obj InfoTab) where
 
     setTypes o@THUNK{omd, e} =
         let e' = setTypes e
-            typ' = typ $ emd e
+            typ' = typ $ emd e'
         in if typ' /= boxed then
            error "setTypes unboxed THUNK"
        else o{omd = omd{typ = typ'}}
