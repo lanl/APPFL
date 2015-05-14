@@ -12,11 +12,10 @@ import qualified Data.Map as Map
 import AST
 import ADT
 import InfoTab
-
-conmaps2IT defs = let (defs',conmaps) = updatedata defs
-                      (ts, os) = splitDefs defs'
-                      os' = fst $ updateIT os conmaps
-                  in unsplitDefs(ts,os')
+                 
+conmaps2IT (tycons, objs) = let (tycons', conmaps) = updateTycons tycons
+                                objs' = fst $ updateIT objs conmaps
+                            in (tycons', objs')
                          
 updateIT :: ConMaps2IT a => a -> ConMaps -> (a, ConMaps)
 updateIT objs = runState (update objs) 
@@ -66,7 +65,6 @@ instance ConMaps2IT (Expr InfoTab) where
       return e{ee = ee', ealts = ealts'}
 
     update o = return o -- EAtom, EFCall, EPrimop
-
 
 instance ConMaps2IT (Alts InfoTab) where
     update a@(Alts {alts}) = do

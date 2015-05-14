@@ -60,6 +60,19 @@ parse inp = case defdatsp $ lexer inp of
                      then error ("leftover input on parse: " ++ show (snd $ head xs))
                      else splitDefs $ fst $ head xs
 
+splitDefs :: [Def a] -> ([TyCon], [Obj a])
+splitDefs d = (getDatas d, getObjs d)
+                   
+getObjs :: [Def a] -> [Obj a]
+getObjs = concatMap getObj
+          where getObj (ObjDef o) = [o]
+                getObj (DataDef _) = []
+
+getDatas :: [Def a] -> [TyCon]
+getDatas = concatMap getData
+           where getData (ObjDef _) = []
+                 getData (DataDef t) = [t]
+
 defdatsp :: Parser Token [Def ()]
 defdatsp = sepbyp defdatp (symkindp SymSemi) `thenxp` optlp (symkindp SymSemi)
 

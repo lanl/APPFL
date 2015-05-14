@@ -17,12 +17,7 @@ module ADT (
   DataConParam(..),
   DataConMap,
   ConMaps,
-  onObjs,
-  getObjs,
-  getDatas,
-  splitDefs,
-  unsplitDefs,
-  updatedata
+  updateTycons
 ) where
 
 import AST
@@ -158,22 +153,19 @@ dataconmap = Map.insert "False_h" (DataConParam 0 0 Unboxed "Bool#")
            $ Map.insert "Cons"  (DataConParam 2 6 Boxed "List")
              Map.empty
 
-buildconmaps :: [Def a] -> ConMaps
+buildconmaps :: [TyCon] -> ConMaps
 buildconmaps objs = execState (build [] objs) 
                     (tyconmap, dataconmap)
                     
-updatedata :: [Def a] -> ([Def a], ConMaps)
-updatedata inp = (update (fst conmaps) inp, conmaps)
+                    
+updateTycons :: [TyCon] -> ([TyCon], ConMaps)                   
+updateTycons inp = (update (fst conmaps) inp, conmaps)
                  where conmaps = buildconmaps inp
 
 class BuildConMaps t where build :: String -> t -> State ConMaps()
                                                     
 instance BuildConMaps a => BuildConMaps [a] where
   build = mapM_ . build
-
-instance BuildConMaps (Def a) where
-  build _ (DataDef tycon) = build [] tycon
-  build _ _ = return ()
 
 instance BuildConMaps TyCon where
   build _ (TyCon boxed con tyvars dcons) 
@@ -263,25 +255,3 @@ isboxed m (ATyCon c _) = let lookup = Map.lookup c m
                                 error ("unknown type constructor " ++ c ++ " used")
                               else (\(TyConParam{tboxed=b}) -> b) (fromJust lookup)
 
--- helper functions
-
--- take a function on Objs and apply to Defs
-onObjs :: ([Obj a] -> [Obj b]) -> [Def a] -> [Def b]
-onObjs f ds = let (ts, os) = splitDefs ds
-              in unsplitDefs (ts, f os)
-                
-splitDefs :: [Def a] -> ([TyCon], [Obj a])
-splitDefs d = (getDatas d, getObjs d)
-
-unsplitDefs :: ([TyCon], [Obj a]) -> [Def a]
-unsplitDefs (ts,os) = map DataDef ts ++ map ObjDef os
-
-getObjs :: [Def a] -> [Obj a]
-getObjs = concatMap getObj
-          where getObj (ObjDef o) = [o]
-                getObj (DataDef _) = []
-
-getDatas :: [Def a] -> [TyCon]
-getDatas = concatMap getData
-           where getData (ObjDef _) = []
-                 getData (DataDef t) = [t]

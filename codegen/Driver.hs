@@ -81,12 +81,11 @@ typer :: String -> ([TyCon], [Obj InfoTab])
 typer inp = let (tyCons, objs) = infotaber inp
             in (tyCons, setTypes objs)
 
-conmaper :: String -> [Def InfoTab]
-conmaper = conmaps2IT . unsplitDefs . typer
+conmaper :: String -> ([TyCon], [Obj InfoTab])
+conmaper = conmaps2IT . typer
 
 codegener :: String -> Bool -> String
-codegener inp v = let defs = conmaper inp
-                      objs = getObjs defs
+codegener inp v = let (tycons, objs) = conmaper inp
                       infotab = showITs objs
                       (shoForward, shoDef) = showSHOs objs
                       (funForwards, funDefs) = cgObjs objs stgRTSGlobals

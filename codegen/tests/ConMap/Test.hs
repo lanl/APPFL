@@ -19,5 +19,5 @@ unitTests = testGroup "ConMap Unit tests"
 inp = "one = CON(I 1); main=THUNK(one);"
              
 mapone :: IO ByteString
-mapone = return $ fromString $ showITs $ getObjs $ 
-                conmaps2IT  $ unsplitDefs $ typer inp
+mapone = return $ fromString $ showITs $ snd $ 
+                conmaps2IT $ typer inp
