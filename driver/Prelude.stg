@@ -17,29 +17,30 @@ ten = CON(I 10);
 
 multInt = FUN(x y ->
    case x of { 
-      I i -> case y of { 
-               I j -> case mult# i j of { 
-                         x -> let { result = CON (I x) } in result }}});
+      I i# -> case y of { 
+               I j# -> case imul# i# j# of { 
+                         x# -> let { result = CON (I x#) } in result }}});
 
 plusInt = FUN(x y ->
    case x of { 
-      I i -> case y of { 
-               I j -> case plus# i j of { 
-                         x -> let { result = CON (I x) } in result }}});
+      I i# -> case y of { 
+               I j# -> case iplus# i# j# of { 
+                         x# -> let { result = CON (I x#) } in result }}});
 
 subInt = FUN(x y ->
            case x of
-              { I i ->
+              { I i# ->
                   case y of
-                     { I j -> case sub# i j of
-                                 { x -> let { result = CON (I x) } in result }}});
+                     { I j# -> case isub# i# j# of
+                                 { x# -> let { result = CON (I x#) } in result }}});
 
 eqInt = FUN(x y ->
            case x of
-              { I i ->
+              { I i# ->
                   case y of
-                     { I j -> case eq# i j of
-                                 { x -> intToBool# x }}});
+                     { I j# -> case ieq# i# j# of
+                                 { False# -> false;
+                                   True# -> true  }}});
 
 append = FUN(l1 l2 ->
             case l1 of
@@ -59,8 +60,8 @@ map = FUN(f list ->
 
 take = FUN(n xs ->
    case eqInt n zero of
-      { True -> nil;
-        False -> case xs of
+      { True# -> nil;
+        False# -> case xs of
                  { Nil -> nil;
                    Cons hd tl -> let { m = THUNK(subInt n one);
                                        rec = THUNK(take m tl);
