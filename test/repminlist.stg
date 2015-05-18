@@ -36,11 +36,10 @@ rep =
 
 minInt = FUN(x y ->
    case x of { 
-      I i -> case y of {
-               I j -> case le# i j of { 
-                        ub -> case intToBool# ub of {
-			        True -> x;
-			        False -> y }}}});
+      I i# -> case y of {
+               I j# -> case ile# i# j# of { 
+			        True# -> x;
+			        False# -> y }}});
 
 list2 = CON(Cons two nil);
 list12 = CON(Cons one list2);
