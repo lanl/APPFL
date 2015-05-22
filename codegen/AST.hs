@@ -98,6 +98,8 @@ data Primop = Piadd
 
             | Pimax
             | Pimin
+            -- the following are deprecated
+            | PintToBool
               deriving(Eq,Show)
 
 -- these are the C names, not STG names
@@ -118,5 +120,8 @@ primopTab =
      ("ineg_h",   Pineg),
 
      ("imin_h",   Pimax),
-     ("imax_h",   Pimin)
+     ("imax_h",   Pimin),
+
+     -- the following are deprecated
+     ("intToBool_h", PintToBool)
     ]

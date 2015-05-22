@@ -76,9 +76,9 @@ data Polytype = PPoly [TyVar] Monotype
               | PMono Monotype
                 deriving(Eq,Show)
                 
-data Monotype = MTyVar TyVar
-              | MTyFun Monotype Monotype
-              | MTyCon Bool Con [Monotype]
+data Monotype = MVar TyVar
+              | MFun Monotype Monotype
+              | MCon Bool Con [Monotype]
                 deriving(Eq,Show)
 
 -- Type constr name to arity, tag, boxed/unboxed

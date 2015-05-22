@@ -218,12 +218,12 @@ cge env (EPrimop it op as) =
 
                    Pimin -> cFunIII "imin"
                    Pimax -> cFunIII "imax"
-{-
+
                    PintToBool ->
                        "stgCurVal = " ++
                        arg0 "i" ++ "?" ++ getEnvRef "true"  env ++
                                    ":" ++ getEnvRef "false" env ++ ";\n"
--}
+
         cPrefixII op =  "stgCurVal.argType = INT;\n" ++
                         "stgCurVal.i = " ++ op ++ arg0 "i" ++ ";\n"
 
