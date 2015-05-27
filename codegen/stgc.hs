@@ -4,11 +4,36 @@ import Parser
 import Driver
 
 import Data.List
+import Data.List.Split
 import System.Console.GetOpt
 import System.Environment
 import System.IO
 import System.Process
 import Data.Maybe
+
+-- build a.out from stg and run it
+eval :: String -> IO()
+eval input = do 
+               build input
+               system("./a.out") 
+               return ()
+
+-- build a.out from stg
+build :: String -> IO()
+build input = let update x = x {optInput = Just input}
+              in compile (update defaultOptions) "." "../runtime"
+
+-- generate c code from stg
+stgc :: String -> IO ()
+stgc arg =
+  do
+    ifd <- openFile arg ReadMode
+    source <- hGetContents ifd
+    let prog = codegener source True
+    putStrLn prog
+    hClose ifd
+    writeFile "../runtime/userprog.c" prog
+
 
 data Options = Options
     { optVerbose     :: Bool
@@ -55,9 +80,6 @@ compilerOpts argv =
 checkOpts :: Options -> Options
 checkOpts (Options {optInput}) = error ""
 
-stgcc :: String -> IO()
-stgcc input = let update x = x {optInput = Just input}
-              in compile (update defaultOptions) "../driver" "../runtime"
 
 compile :: Options -> String -> String -> IO ()
 compile  (Options {optVerbose, optDumpParse, optNoPrelude, optOutput, optInput}) preludeDir runtimeDir = 
@@ -79,34 +101,15 @@ compile  (Options {optVerbose, optDumpParse, optNoPrelude, optOutput, optInput})
                  system ("gcc " ++ coutput ++ " -o " ++ (fromJust optOutput) ++ flags)
                  return ()   
               
-stgc :: String -> IO ()
-stgc arg =
-  do
-    ifd <- openFile arg ReadMode
-    source <- hGetContents ifd
-    let prog = codegener source True
-    putStrLn prog
-    hClose ifd
-    writeFile "../runtime/userprog.c" prog
-
-stgcout :: String -> String -> IO ()    
-stgcout infile outfile =
-  do
-    ifd <- openFile infile ReadMode
-    source <- hGetContents ifd
-    case outfile of
-      "-"            -> writeFile (infile++".c") (codegener source False)
-      "-dump-parse"  -> writeFile (infile++".dump") (show $ parse source)
-      _              -> writeFile outfile (codegener source False)
-
 main :: IO ()
 main = 
     do
+      binaryPath <- getExecutablePath
+      let binaryDir = intercalate "/" $ init $ splitOn "/" binaryPath
       args <- getArgs
-      name <- getProgName
-      case length args of
-        0 -> error ("usage: " ++ name ++ " infile [outfile]")
-        1 -> stgc $ head args
-        _ -> stgcout (head args)  (args !! 1)
+      (opts, args') <- compilerOpts args
+      -- weird path stuff is because cabal puts binary in dist/build/stgc/stgc
+      compile opts (binaryDir ++ "/../../../") (binaryDir ++ "/../../../../runtime")
+      
       
 

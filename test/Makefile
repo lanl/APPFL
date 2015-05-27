@@ -14,4 +14,4 @@ run:
 	done 
 
 clean:
-	rm -f main $(BINS)
+	rm -f main $(BINS) *.c
