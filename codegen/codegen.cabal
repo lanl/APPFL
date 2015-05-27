@@ -8,7 +8,9 @@ executable stgc
   hs-source-dirs:  .
   main-is:         stgc.hs
   ghc-options:     -W -fno-warn-unused-binds -fno-warn-unused-matches -fno-warn-unused-imports
-  build-depends:   base >= 4, containers, mtl
+  build-depends:   
+                   base >= 4, containers, mtl,
+                   process
   
 test-suite test
   type:            exitcode-stdio-1.0
