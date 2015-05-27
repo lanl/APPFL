@@ -1,29 +1,37 @@
-{-# LANGUAGE NamedFieldPuns    #-}
+{-# LANGUAGE NamedFieldPuns #-}
 
-import Parser
-import Driver
+import           Driver
+import           Parser
 
-import Data.List
-import Data.List.Split
-import System.Console.GetOpt
-import System.Environment
-import System.IO
-import System.Process
-import Data.Maybe
+import           Data.List
+import           Data.List.Split
+import           Data.Maybe
+import           System.Console.GetOpt
+import           System.Environment
+import           System.Exit
+import           System.IO
+import           System.Process
 
 -- build a.out from stg and run it
 eval :: String -> IO()
-eval input = do 
+eval input = do
                build input
-               system("./a.out") 
+               system("./a.out")
                return ()
 
 -- build a.out from stg
 build :: String -> IO()
-build input = let update x = x {optInput = Just input}
-              in compile (update defaultOptions) "." "../runtime"
+build input = buildit input True
 
 -- generate c code from stg
+stg2c :: String -> IO()
+stg2c input = buildit input False
+
+buildit :: String -> Bool -> IO()
+buildit input gcc = let update x = x {optInput = Just input}
+                    in compile (update defaultOptions) "." "../runtime" gcc
+
+-- generate c code from stg (no prelude)
 stgc :: String -> IO ()
 stgc arg =
   do
@@ -34,28 +42,32 @@ stgc arg =
     hClose ifd
     writeFile "../runtime/userprog.c" prog
 
-
 data Options = Options
-    { optVerbose     :: Bool
-    , optDumpParse   :: Bool
-    , optNoPrelude   :: Bool
-    , optOutput      :: Maybe FilePath
-    , optInput       :: Maybe FilePath
+    { optVerbose   :: Bool
+    , optHelp      :: Bool
+    , optDumpParse :: Bool
+    , optNoPrelude :: Bool
+    , optOutput    :: Maybe FilePath
+    , optInput     :: Maybe FilePath
     } deriving Show
 
 defaultOptions       = Options
     { optVerbose     = False
+    , optHelp        = False
     , optDumpParse   = False
     , optNoPrelude   = False
     , optInput       = Nothing
     , optOutput      = Just "a.out"
     }
 
---options :: [OptDescr (Options -> Options)]
+options :: [OptDescr (Options -> Options)]
 options =
     [ Option ['v']     ["verbose"]
         (NoArg (\ opts -> opts { optVerbose = True }))
         "debug output on stderr"
+    , Option ['?', 'h'] ["help"]
+        (NoArg (\ opts -> opts { optHelp = True }))
+        "show help"
     , Option ['d'] ["dump-parse"]
         (NoArg (\ opts -> opts { optDumpParse = True }))
         "parser output only"
@@ -70,46 +82,52 @@ options =
         "input FILE"
     ]
 
+header = "Usage: stgc [OPTION...] files..."
+
 compilerOpts :: [String] -> IO (Options, [String])
 compilerOpts argv =
       case getOpt Permute options argv of
          (o,n,[]  ) -> return (foldl (flip id) defaultOptions o, n)
          (_,_,errs) -> ioError (userError (concat errs ++ usageInfo header options))
-      where header = "Usage: stgc [OPTION...] files..."
 
-checkOpts :: Options -> Options
-checkOpts (Options {optInput}) = error ""
+checkOpts :: Options -> IO ()
+checkOpts (Options {optHelp, optInput}) =
+  do
+    case optHelp of
+      True -> ioError (userError (usageInfo header options))
+      False -> do
+                 case optInput of
+                   Nothing -> ioError (userError ("No input files\n" ++ usageInfo header options))
+                   _ -> return ()
 
-
-compile :: Options -> String -> String -> IO ()
-compile  (Options {optVerbose, optDumpParse, optNoPrelude, optOutput, optInput}) preludeDir runtimeDir = 
-  do 
+compile :: Options -> String -> String -> Bool -> IO ()
+compile  (Options {optVerbose, optDumpParse, optNoPrelude, optOutput, optInput}) preludeDir runtimeDir gcc =
+  do
     let input = fromJust optInput
     ifd <- openFile input ReadMode
     src <- hGetContents ifd
     pfd <- openFile (preludeDir ++ "/Prelude.stg") ReadMode
     prelude <- hGetContents pfd
-    let source = if optNoPrelude then src 
-                 else prelude ++ src 
-                 
+    let source = if optNoPrelude then src
+                 else prelude ++ src
+
     case optDumpParse of
       True  -> writeFile (input ++ ".dump") (show $ parse source)
-      False -> do 
+      False -> do
                  let coutput = input ++ ".c"
                  let flags = " -std=gnu99 -L" ++ runtimeDir ++ " -I" ++ runtimeDir ++ " -lruntime"
                  writeFile coutput (codegener source optVerbose)
-                 system ("gcc " ++ coutput ++ " -o " ++ (fromJust optOutput) ++ flags)
-                 return ()   
-              
+                 if gcc then system ("gcc " ++ coutput ++ " -o " ++ (fromJust optOutput) ++ flags) else return ExitSuccess
+                 return ()
+
 main :: IO ()
-main = 
+main =
     do
       binaryPath <- getExecutablePath
       let binaryDir = intercalate "/" $ init $ splitOn "/" binaryPath
       args <- getArgs
       (opts, args') <- compilerOpts args
+      checkOpts opts
       -- weird path stuff is because cabal puts binary in dist/build/stgc/stgc
-      compile opts (binaryDir ++ "/../../../") (binaryDir ++ "/../../../../runtime")
-      
-      
+      compile opts (binaryDir ++ "/../../../") (binaryDir ++ "/../../../../runtime") True
 
