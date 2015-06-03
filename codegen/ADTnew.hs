@@ -17,6 +17,7 @@ module ADTnew (
 
 import AST
 
+import Data.List(intercalate)
 import Data.Maybe
 import Control.Monad.State
 import qualified Data.Map as Map
@@ -74,12 +75,23 @@ type TyVar = String
 
 data Polytype = PPoly [TyVar] Monotype
               | PMono Monotype
-                deriving(Eq,Show)
+                deriving(Eq,Ord)
                 
 data Monotype = MVar TyVar
               | MFun Monotype Monotype
               | MCon Bool Con [Monotype]
-                deriving(Eq,Show)
+                deriving(Eq,Ord)
+
+instance Show Polytype where
+    show (PPoly [] m) = show m
+    show (PPoly xs m) = "forall " ++ (intercalate "," xs) ++ "." ++ show m
+
+instance Show Monotype where
+    show (MVar v) = v
+    show (MFun m1@(MFun _ _) m2) = "(" ++ show m1 ++ ") -> " ++ show m2
+    show (MFun m1 m2) = show m1 ++ " -> " ++ show m2
+    show (MCon boxed con ms) = con ++ (if boxed then " [B] " else " [U] ") ++
+                               intercalate " " (map show ms)
 
 -- Type constr name to arity, tag, boxed/unboxed
 data TyConParam = TyConParam {tarity :: Int, 

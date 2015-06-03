@@ -100,16 +100,16 @@ data LExpr = LLitI   Monotype Int
 
 -- need a fresh variable supply
 
-freshTyVar :: State Int TyVar
+freshTyVar :: State Int Monotype
 freshTyVar = 
     do i <- get
        put $ i+1
-       return $ 't':show i
+       return $ MVar $ 't':show i
 
 instantiate :: Polytype -> State Int Monotype
 instantiate (PPoly as m) =
-    do as' <- mapM (const freshTyVar) as
-       let s = Map.fromList $ zip as $ map MVar as'
+    do ms <- mapM (const freshTyVar) as
+       let s = Map.fromList $ zip as ms
        return $ apply s m
 
 generalize :: TypeEnv -> Monotype -> Polytype
@@ -143,8 +143,7 @@ algW env (LVar _ v) =
 algW env (LApp _ e1 e2) =
     do (e1', s1, m1) <- algW env e1
        (e2', s2, m2) <- algW (apply s1 env) e2
-       v <- freshTyVar
-       let tv = MVar v
+       tv <- freshTyVar
        let s3 = unify (apply s2 m1) (MFun m2 tv)
        let m3 = apply s3 tv
        let s4 = s3 `compose` s2 `compose` s1
@@ -153,8 +152,7 @@ algW env (LApp _ e1 e2) =
               m3)
 
 algW env (LLam _ x e) = 
-    do v <- freshTyVar
-       let tv = MVar v
+    do tv <- freshTyVar
        let env' = extendEnv (x, PPoly [] tv) env
        (e1, s1, m1) <- algW env' e
        return (LLam m1 x e1, 
@@ -175,9 +173,8 @@ algW env (LLetrec _ defs e) =
 
 algW env (LFix _ e) =
     do (e1, s1, t1) <- algW env e
-       v <- freshTyVar
-       let tv = MVar v
-           s2 = unify (MFun tv tv) t1
+       tv <- freshTyVar
+       let s2 = unify (MFun tv tv) t1
            t2 = apply s1 tv
        return (LFix t2 e1,
                s2,
