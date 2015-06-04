@@ -2,7 +2,7 @@ module ConMap.Test where
 
 import           ADT
 import           Driver
-import           ConMaps2IT
+import           ConMaps
 import           InfoTab
 
 import           Test.Tasty
@@ -20,4 +20,4 @@ inp = "one = CON(I 1); main=THUNK(one);"
              
 mapone :: IO ByteString
 mapone = return $ fromString $ showITs $ snd $ 
-                conmaps2IT $ typer inp
+                setConmaps $ typer inp

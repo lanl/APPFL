@@ -1,121 +1,22 @@
+
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE NamedFieldPuns    #-}
 
-module ADTnew (
-  Def(..),
-  TyCon(..),
-  DataCon(..),
-  TyVar,
-  Polytype(..),
-  Monotype(..),
-  TyConParam(..),
-  TyConMap,
-  DataConParam(..),
-  DataConMap,
-  ConMaps,
+module ConMaps (
+  setConmaps,
   updateTycons
 ) where
 
-import AST
-
-import Data.List(intercalate)
 import Data.Maybe
 import Control.Monad.State
 import qualified Data.Map as Map
 
-{-
-  Algebraic Datatypes:
-    
-  Ref:  Unboxed Values as First-Class Citizens
-  
-  data Def (pg 6):
-  data \Chi \alpha_1 .. \alpha_t =
-  c_1 \tau_11 .. \tau_1a_1 | ... | c_n \tau_n1 .. \tau_na_1
-  
-  \Chi -- type constructor
-  \c_x -- data constructor
-  
-  and unboxed version on pg 26
-  data unboxed \Chi# \alpha_1 .. \alpha_t =
-  c_1# \tau_11 .. \tau_1a_1 | ... | c_n# \tau_n1 .. \tau_na_1
-  
-  Polytype      \sigma ::=  \forall \alpha . \sigma 
-                        |   \tau
-
-  Monotype      \tau   ::=  \pi | \nu
-
-  Boxed type    \pi    ::=  \alpha                   Type variable
-                        |   \tau -> \tau             Function type
-                        |   \Chi \pi_1 ... \pi_n   Parameterized boxed data type
-
-  Unboxed type  \nu     ::=  Int#
-                        |   Double#
-                        |   Bool#
-                        |   \Chi# \pi_1 ... \pi_n   Parameterized boxed data type
-
--}
+import AST
+import ADT
+import InfoTab
 
 
-data Def a = ObjDef (Obj a)
-           | DataDef TyCon
-             deriving(Eq,Show)
-
--- Boxed: data \Chi \alpha_1 .. \alpha_t =
--- c_1 \tau_11 .. \tau_1a_1 | ... | c_n \tau_n1 .. \tau_na_1  
--- Unboxed: data unboxed \Chi# \alpha_1 .. \alpha_t =
--- c_1# \tau_11 .. \tau_1a_1 | ... | c_n# \tau_n1 .. \tau_na_1   
-data TyCon = TyCon Bool Con [TyVar] [DataCon]
-             deriving(Eq,Show)
-             
--- Boxed True: c_x \tau_x1 .. \tau_xa_1 
--- Boxed False: c_x# \tau_x1 .. \tau_xa_1  
-data DataCon = DataCon Bool Con [Monotype]
-               deriving(Eq,Show)
-
-type TyVar = String
-
-data Polytype = PPoly [TyVar] Monotype
-              | PMono Monotype
-                deriving(Eq,Ord)
-                
-data Monotype = MVar TyVar
-              | MFun Monotype Monotype
-              | MCon Bool Con [Monotype]
-                deriving(Eq,Ord)
-
-instance Show Polytype where
-    show (PPoly [] m) = show m
-    show (PPoly xs m) = "forall " ++ (intercalate "," xs) ++ "." ++ show m
-    show (PMono m) = show m
-
-instance Show Monotype where
-    show (MVar v) = v
-    show (MFun m1@(MFun _ _) m2) = "(" ++ show m1 ++ ") -> " ++ show m2
-    show (MFun m1 m2) = show m1 ++ " -> " ++ show m2
-    show (MCon boxed con ms) = con ++ (if boxed then " [B] " else " [U] ") ++
-                               intercalate " " (map show ms)
-
--- Type constr name to arity, tag, boxed/unboxed
-data TyConParam = TyConParam {tarity :: Int, 
-                              ttag :: Int, 
-                              tboxed :: Bool,
-                              tdatacons :: [Con]}
-                  deriving(Eq,Show)
-
-type TyConMap = Map.Map String TyConParam
-
--- Data constr name to (arity, tag, boxedness, type constr name)
-data DataConParam = DataConParam {darity :: Int, 
-                                  dtag :: Int, 
-                                  dboxed :: Bool, 
-                                  dtycon :: Con} 
-                    deriving(Eq,Show)
-
-type DataConMap = Map.Map String DataConParam
-
-type ConMaps = (TyConMap, DataConMap)
-         
- -- starting tycon map
+-- starting tycon map
 tyconmap :: TyConMap
 tyconmap = Map.insert "Bool#" (TyConParam 0 0 False ["False_h","True_h"])
          $ Map.insert "Int_h"  (TyConParam 0 1 False [])
@@ -214,4 +115,79 @@ isboxed m c  = let lookup = Map.lookup c m
                            in if (isNothing lookup) then 
                                 error ("unknown type constructor " ++ c ++ " used")
                               else (\(TyConParam{tboxed=b}) -> b) (fromJust lookup)   
- 
+
+                 
+setConmaps (tycons, objs) = let (tycons', conmaps) = updateTycons tycons
+                                objs' = fst $ updateIT objs conmaps
+                            in (tycons', objs')
+                         
+updateIT :: ConMaps2IT a => a -> ConMaps -> (a, ConMaps)
+updateIT objs = runState (updateit objs) 
+     
+check c arity cmap =
+    case Map.lookup c cmap of
+      Nothing -> error ("use of unknown constructor " ++ c)
+      Just (DataConParam{darity}) -> if arity == darity then cmap  
+                                     else error ("CON arity mismatch! for " 
+                                     ++ c ++ " " ++ show arity ++ " != " ++ show arity)
+
+class ConMaps2IT t where 
+    updateit :: t -> State ConMaps t
+     
+instance ConMaps2IT [Obj InfoTab] where
+    updateit = mapM updateit
+
+instance ConMaps2IT (Obj InfoTab) where
+    updateit o@(FUN {e}) = do
+      e' <- updateit e
+      return o{e = e'}
+
+    updateit o@(THUNK {e}) = do
+      e' <- updateit e
+      return o{e = e'}
+
+    updateit o@(CON {c, as}) = do
+      (tmap,dmap) <- get
+      let dmap' = check c (length as) dmap
+      let Just (DataConParam{dtag}) = Map.lookup c dmap'
+      let md = omd o  -- could do a one-liner...
+      let md' = md{tag = dtag}
+      let o' = o{omd = md'}
+      return o'
+
+    updateit o = return o     -- PAP, BLACKHOLE
+
+instance ConMaps2IT (Expr InfoTab) where
+    updateit e@(ELet {edefs, ee}) = do
+      edefs' <- updateit edefs
+      ee' <- updateit ee
+      return e{edefs = edefs', ee = ee'}
+
+    updateit e@(ECase {ee, ealts}) = do
+      ee' <- updateit ee
+      ealts' <- updateit ealts
+      return e{ee = ee', ealts = ealts'}
+
+    updateit o = return o -- EAtom, EFCall, EPrimop
+
+instance ConMaps2IT (Alts InfoTab) where
+    updateit a@(Alts {alts}) = do
+       alts' <- updateit alts
+       return a{alts = alts'}
+
+instance ConMaps2IT [Alt InfoTab] where
+    updateit = mapM updateit
+
+instance ConMaps2IT (Alt InfoTab) where
+  updateit a@(ACon {ac, avs, ae}) = do
+      (tmap, dmap) <- get
+      let dmap' = check ac (length avs) dmap 
+      ae' <- updateit ae
+      let md = amd a -- yes we could roll 3 lines into 1, but we won't
+      let md' = md{dconMap = dmap', tconMap = tmap}
+      return a{amd = md', ae = ae'}
+
+  updateit a@(ADef {ae}) = do
+      ae' <- updateit ae
+      return a{ae = ae'}
+

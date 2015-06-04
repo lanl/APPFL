@@ -10,7 +10,7 @@ module Analysis(
 ) where
 
 import AST
-import ADTnew
+import ADT
 import InfoTab
 import qualified Data.Map as Map
 import Data.List(foldl')

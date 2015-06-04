@@ -1,7 +1,7 @@
 {-# LANGUAGE TypeSynonymInstances #-}
 {-# LANGUAGE FlexibleInstances #-}
 
-import ADTnew
+import ADT
 import AST
 import Data.Set (Set)
 import qualified Data.Set as Set

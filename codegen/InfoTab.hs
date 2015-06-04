@@ -13,7 +13,7 @@ module InfoTab(
 
 import Prelude
 import AST
-import ADTnew
+import ADT
 import Data.List(nub,(\\))
 
 import Data.Map (Map)

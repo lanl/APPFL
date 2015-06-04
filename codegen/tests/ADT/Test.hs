@@ -1,5 +1,6 @@
 module ADT.Test where
-import           ADTnew
+import           ADT
+import           ConMaps
 import           Parser
 
 import           Test.Tasty

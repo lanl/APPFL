@@ -10,7 +10,7 @@ module Parser (
 import AST
 import Lexer
 import ParseComb
-import ADTnew
+import ADT
 import Data.List
 
 {-  grammar

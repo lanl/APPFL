@@ -3,7 +3,7 @@
 {-# LANGUAGE NamedFieldPuns       #-}
 {-# LANGUAGE ParallelListComp     #-}
 
-import ADTnew
+import ADT
 import AST
 import Data.Set (Set)
 import qualified Data.Set as Set
