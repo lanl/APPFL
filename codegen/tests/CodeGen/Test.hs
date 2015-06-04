@@ -13,7 +13,7 @@ unitTests = testGroup "Codegen Unit tests"
     [ goldenVsString "codegen one" "tests/CodeGen/one.gold" cgone
     ]
     
-inp = "one = CON(I 1); main = THUNK(one);"    
+inp = "data Int = I Int#; one = CON(I 1); main = THUNK(one);"    
 
 cgone :: IO ByteString
 cgone = return $ fromString $ codegener inp True

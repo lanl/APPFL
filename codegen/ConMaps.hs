@@ -17,23 +17,17 @@ import InfoTab
 
 -- starting tycon map
 tyconmap :: TyConMap
-tyconmap = Map.insert "Bool#" (TyConParam 0 0 False ["False_h","True_h"])
+tyconmap = Map.insert "Bool_h" (TyConParam 0 0 False ["False_h","True_h"])
          $ Map.insert "Int_h"  (TyConParam 0 1 False [])
-         $ Map.insert "Bool"  (TyConParam 0 2 True ["B"]) -- data Bool = B Bool#
-         $ Map.insert "Int"   (TyConParam 0 3 True ["I"]) -- data Int = I Int#
-         $ Map.insert "List"  (TyConParam 1 4 True ["Nil","Cons"]) -- data List a = Nil | Cons a (List a)
            Map.empty
 
 -- starting datacon map
 -- these tags must match what is in stg_header.h
 dataconmap :: DataConMap
-dataconmap = Map.insert "False_h" (DataConParam 0 0 False "Bool#") 
-           $ Map.insert "True_h"  (DataConParam 0 1 False "Bool#") 
-           $ Map.insert "B"     (DataConParam 1 2 True "Bool") 
-           $ Map.insert "I"     (DataConParam 1 3 True "Int") 
-           $ Map.insert "Unit"  (DataConParam 0 4 True "Unit")
-           $ Map.insert "Nil"   (DataConParam 0 5 True "List") 
-           $ Map.insert "Cons"  (DataConParam 2 6 True "List")
+dataconmap = Map.insert "False_h" (DataConParam 0 0 False "Bool_h") 
+           $ Map.insert "True_h"  (DataConParam 0 1 False "Bool_h") 
+           $ Map.insert "Unit"  (DataConParam 0 2 True "Unit")
+           
              Map.empty
 
 setConmaps :: ConMaps2IT t => ([TyCon], t) -> ([TyCon], t)
