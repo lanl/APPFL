@@ -115,11 +115,14 @@ type ConMaps = (TyConMap, DataConMap)
          
  -- starting tycon map
 tyconmap :: TyConMap
-tyconmap = Map.insert "Bool#" (TyConParam 0 0 False ["False_h","True_h"])
+tyconmap = Map.insert "Bool#"  (TyConParam 0 0 False ["False_h","True_h"])
+         $ Map.insert "Bool_h" (TyConParam 0 2 True ["B"]) -- data Bool = B Bool#
+         $ Map.insert "Bool"   (TyConParam 0 2 True ["B"]) -- data Bool = B Bool#
+         $ Map.insert "Int#"   (TyConParam 0 1 False [])
          $ Map.insert "Int_h"  (TyConParam 0 1 False [])
-         $ Map.insert "Bool"  (TyConParam 0 2 True ["B"]) -- data Bool = B Bool#
-         $ Map.insert "Int"   (TyConParam 0 3 True ["I"]) -- data Int = I Int#
-         $ Map.insert "List"  (TyConParam 1 4 True ["Nil","Cons"]) -- data List a = Nil | Cons a (List a)
+         $ Map.insert "Int"    (TyConParam 0 3 True ["I"]) -- data Int = I Int#
+         -- data List a = Nil | Cons a (List a)
+         $ Map.insert "List"   (TyConParam 1 4 True ["Nil","Cons"])
            Map.empty
 
 -- starting datacon map
@@ -127,9 +130,9 @@ tyconmap = Map.insert "Bool#" (TyConParam 0 0 False ["False_h","True_h"])
 dataconmap :: DataConMap
 dataconmap = Map.insert "False_h" (DataConParam 0 0 False "Bool#") 
            $ Map.insert "True_h"  (DataConParam 0 1 False "Bool#") 
-           $ Map.insert "B"     (DataConParam 1 2 True "Bool") 
-           $ Map.insert "I"     (DataConParam 1 3 True "Int") 
-           $ Map.insert "Unit"  (DataConParam 0 4 True "Unit")
-           $ Map.insert "Nil"   (DataConParam 0 5 True "List") 
-           $ Map.insert "Cons"  (DataConParam 2 6 True "List")
+           $ Map.insert "B"       (DataConParam 1 2 True "Bool") 
+           $ Map.insert "I"       (DataConParam 1 3 True "Int") 
+           $ Map.insert "Unit"    (DataConParam 0 4 True "Unit")
+           $ Map.insert "Nil"     (DataConParam 0 5 True "List") 
+           $ Map.insert "Cons"    (DataConParam 2 6 True "List")
              Map.empty
