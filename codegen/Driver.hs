@@ -12,7 +12,7 @@ import           ADT
 import           Analysis
 import           AST
 import           CodeGen
-import           ConMaps2IT
+import           ConMaps
 import           InfoTab
 import           HeapObj
 import           Parser
@@ -82,7 +82,7 @@ typer inp = let (tyCons, objs) = infotaber inp
             in (tyCons, setTypes objs)
 
 conmaper :: String -> ([TyCon], [Obj InfoTab])
-conmaper = conmaps2IT . typer
+conmaper = setConmaps . typer
 
 codegener :: String -> Bool -> String
 codegener inp v = let (tycons, objs) = conmaper inp

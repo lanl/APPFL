@@ -81,23 +81,23 @@ data Obj a = FUN   {omd :: a, vs :: [Var],   e :: (Expr a), oname :: String}
 -- here.  We only need to distinguish EPrimop from EFCall because special
 -- code is generated for them.
 
-data Primop = Piadd 
+data Primop = Piadd -- Int -> Int -> Int
             | Pisub 
             | Pimul
             | Pidiv
             | Pimod
+            | Pimax
+            | Pimin
 
-            | Pieq
+            | Pieq -- Int -> Int -> Bool
             | Pine
             | Pilt
             | Pile
             | Pigt
             | Pige
 
-            | Pineg
+            | Pineg -- Int -> Int
 
-            | Pimax
-            | Pimin
             -- the following are deprecated
             | PintToBool
               deriving(Eq,Show)

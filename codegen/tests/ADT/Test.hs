@@ -1,5 +1,6 @@
 module ADT.Test where
 import           ADT
+import           ConMaps
 import           Parser
 
 import           Test.Tasty
@@ -17,4 +18,4 @@ unitTests = testGroup "ADT Unit tests"
 adt:: IO ByteString
 adt = do
         input <- IO.readFile "tests/ADT/adt.stg"
-        return $ fromString $ show $ updateTycons $ fst $ parse input
+        return $ fromString $ show $ buildConmaps $ fst $ parse input
