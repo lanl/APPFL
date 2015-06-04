@@ -38,7 +38,7 @@ module CodeGen(
   cgObjs
 ) where
 
-import ADT
+import ADTnew
 import AST
 import InfoTab
 import HeapObj

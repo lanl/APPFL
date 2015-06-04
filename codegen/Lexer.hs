@@ -10,7 +10,7 @@ module Lexer (
 import Data.Char(isLower,isUpper)
 import Scanner
 import AST
-import ADT
+--import ADT
 
 data Keyword = KWlet 
              | KWin 

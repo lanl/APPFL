@@ -10,7 +10,7 @@ import Control.Monad.State
 import qualified Data.Map as Map
 
 import AST
-import ADT
+import ADTnew
 import InfoTab
                  
 conmaps2IT (tycons, objs) = let (tycons', conmaps) = updateTycons tycons

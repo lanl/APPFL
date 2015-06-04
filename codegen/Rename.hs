@@ -9,7 +9,7 @@ module Rename (
 
 import Prelude
 import AST
-import ADT
+--import ADT
 import State
 import Data.Char (isDigit)
 

@@ -10,7 +10,7 @@ module Parser (
 import AST
 import Lexer
 import ParseComb
-import ADT
+import ADTnew
 import Data.List
 
 {-  grammar
@@ -80,46 +80,33 @@ defdatp :: Parser Token (Def ())
 defdatp = (defp `usingp` ObjDef) `altp` (tyconp `usingp` DataDef)
 
 tyconp :: Parser Token TyCon
-tyconp = (kwkindp KWdata `xthenp` kwkindp KWunboxed `xthenp` ubtyconp)
-         `altp` (kwkindp KWdata `xthenp` btyconp)
+tyconp = (kwkindp KWdata `xthenp` kwkindp KWunboxed `xthenp` tycon False)
+         `altp` (kwkindp KWdata `xthenp` tycon True)
 
-btyconp :: Parser Token TyCon  
-btyconp = (conp `thenp`
-           ((manyp varp) `thenp`
-            (symkindp SymBind `xthenp`
-             (sepbyp bdataconp (symkindp SymPipe)))))
-          `usingp` \(t,(vs,defs)) -> TyCon Boxed t vs defs
+tycon :: Bool -> Parser Token TyCon  
+tycon boxed = (conp `thenp`
+                 ((manyp varp) `thenp`
+                  (symkindp SymBind `xthenp`
+                   (sepbyp (dataconp boxed) (symkindp SymPipe)))))
+                 `usingp` \(t,(vs,defs)) -> TyCon boxed t vs defs
  
-ubtyconp :: Parser Token TyCon        
-ubtyconp = (conp `thenp`
-            ((manyp varp) `thenp`
-             (symkindp SymBind `xthenp`
-              (sepbyp ubdataconp (symkindp SymPipe)))))
-           `usingp` \(t,(vs,defs)) -> TyCon Unboxed t vs defs
+dataconp :: Bool -> Parser Token DataCon
+dataconp boxed = (conp `thenp` manyp (monop boxed))
+                 `usingp` uncurry (DataCon boxed)
 
-bdataconp :: Parser Token DataCon
-bdataconp =  (conp `thenp` manyp monop)
-             `usingp` uncurry (DataCon Boxed)
+monop :: Bool -> Parser Token Monotype
+monop boxed = ((symkindp SymLParen `xthenp` (mono boxed)
+              `thenxp` symkindp SymRParen) `altp`
+              (mono boxed)) 
 
-ubdataconp :: Parser Token DataCon
-ubdataconp =  (conp `thenp` manyp monop)
-              `usingp` uncurry (DataCon Unboxed)
-     
-monop :: Parser Token Monotype
-monop = ((symkindp SymLParen `xthenp` atyp
-        `thenxp` symkindp SymRParen) `altp`
-         atyp) `usingp` Mono
- 
-atyp :: Parser Token Atype
-atyp = (varp `usingp` ATyVar) `altp`
-          (bikindp UBInt `usingp` const AInt) `altp`
-          (bikindp UBDouble `usingp` const ADouble) `altp`
-          ((conp `thenp` manyp atyp) `usingp` uncurry ATyCon) `altp`
-          -- require parens on function type or we get into a loop
-          ((symkindp SymLParen `xthenp` atyp `thenxp`
-           symkindp SymArrow `thenp` atyp `thenxp` symkindp SymRParen)
-           `usingp` uncurry AFun)
-          
+mono :: Bool -> Parser Token Monotype
+mono boxed = (varp `usingp` MVar) `altp`
+              ((conp `thenp` manyp (monop boxed)) `usingp` uncurry (MCon undefined)) `altp`
+               -- require parens on function type or we get into a loop
+               ((symkindp SymLParen `xthenp` monop boxed `thenxp`
+               symkindp SymArrow `thenp` monop boxed `thenxp` symkindp SymRParen)
+               `usingp` uncurry MFun)
+
 --- end layer for adding ADT defs
 
 symkindp :: Symbol -> [Token] -> [(Symbol, [Token])]

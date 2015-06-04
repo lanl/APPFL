@@ -8,7 +8,7 @@ module Driver (
   codegener
 ) where
 
-import           ADT
+import           ADTnew
 import           Analysis
 import           AST
 import           CodeGen

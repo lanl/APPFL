@@ -12,7 +12,8 @@ module ADTnew (
   TyConMap,
   DataConParam(..),
   DataConMap,
-  ConMaps
+  ConMaps,
+  updateTycons
 ) where
 
 import AST
@@ -85,6 +86,7 @@ data Monotype = MVar TyVar
 instance Show Polytype where
     show (PPoly [] m) = show m
     show (PPoly xs m) = "forall " ++ (intercalate "," xs) ++ "." ++ show m
+    show (PMono m) = show m
 
 instance Show Monotype where
     show (MVar v) = v
@@ -133,3 +135,83 @@ dataconmap = Map.insert "False_h" (DataConParam 0 0 False "Bool#")
            $ Map.insert "Nil"   (DataConParam 0 5 True "List") 
            $ Map.insert "Cons"  (DataConParam 2 6 True "List")
              Map.empty
+
+buildconmaps :: [TyCon] -> ConMaps
+buildconmaps objs = execState (build [] objs) 
+                    (tyconmap, dataconmap)
+                                        
+updateTycons :: [TyCon] -> ([TyCon], ConMaps)                   
+updateTycons inp = (update (fst conmaps) inp, conmaps)
+                 where conmaps = buildconmaps inp
+
+class BuildConMaps t where build :: String -> t -> State ConMaps()
+                                                    
+instance BuildConMaps a => BuildConMaps [a] where
+  build = mapM_ . build
+
+instance BuildConMaps TyCon where
+  build _ (TyCon boxed con tyvars dcons) 
+    = tyconinsert con (length tyvars) boxed >> 
+      build con dcons
+     
+instance BuildConMaps DataCon where
+  build tycon (DataCon boxed con mts) = 
+    dataconinsert con (length mts) boxed tycon
+  
+dataconinsert :: String -> Int -> Bool -> Con -> State ConMaps ()
+dataconinsert con arity boxed tycon
+  = do 
+      (tmap, dmap) <- get
+      let dmap' = Map.insert con DataConParam{darity = arity, 
+                                             dtag = Map.size dmap, 
+                                             dboxed = boxed, 
+                                             dtycon = tycon} 
+                                             dmap
+      -- update tycon w/ this data con                                       
+      let Just (TyConParam {tarity, ttag, tboxed, tdatacons}) = Map.lookup tycon tmap                                        
+      let tmap' = Map.insert tycon TyConParam{tarity = tarity, 
+                                     ttag = ttag, 
+                                     tboxed = tboxed,
+                                     tdatacons = (con:tdatacons)}
+                                     tmap
+      put(tmap',dmap')
+    
+    
+tyconinsert :: String -> Int -> Bool -> State ConMaps ()
+tyconinsert con arity boxed 
+  = do 
+      (tmap, dmap) <- get
+      put (Map.insert con TyConParam{tarity = arity, 
+                                     ttag = Map.size tmap, 
+                                     tboxed = boxed,
+                                     tdatacons = []}
+                                     tmap, dmap)     
+                                     
+class Update t where update :: TyConMap -> t -> t              
+
+instance Update a => Update [a] where
+  update = map . update
+
+instance Update (Def a) where
+  update m (DataDef tycon) = DataDef(update m tycon)
+  update _ x  = x
+
+instance Update TyCon where
+  update m (TyCon boxed c tvs dcs) = 
+    TyCon boxed c tvs (update m dcs)
+ 
+instance Update DataCon where 
+  update m (DataCon boxed c mts) = 
+    DataCon boxed c (update m mts)
+
+instance Update Monotype where
+  update m (MVar x) = MVar x
+  update m (MFun x y) = MFun (update m x) (update m y)
+  update m (MCon _ c xs) = MCon (isboxed m c) c (update m xs)
+
+isboxed :: TyConMap -> Con -> Bool
+isboxed m c  = let lookup = Map.lookup c m
+                           in if (isNothing lookup) then 
+                                error ("unknown type constructor " ++ c ++ " used")
+                              else (\(TyConParam{tboxed=b}) -> b) (fromJust lookup)   
+ 

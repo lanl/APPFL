@@ -1,5 +1,5 @@
 module ADT.Test where
-import           ADT
+import           ADTnew
 import           Parser
 
 import           Test.Tasty
