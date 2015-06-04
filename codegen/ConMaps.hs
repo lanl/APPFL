@@ -4,7 +4,7 @@
 
 module ConMaps (
   setConmaps,
-  updateTycons
+  buildConmaps
 ) where
 
 import Data.Maybe
@@ -14,7 +14,6 @@ import qualified Data.Map as Map
 import AST
 import ADT
 import InfoTab
-
 
 -- starting tycon map
 tyconmap :: TyConMap
@@ -37,13 +36,15 @@ dataconmap = Map.insert "False_h" (DataConParam 0 0 False "Bool#")
            $ Map.insert "Cons"  (DataConParam 2 6 True "List")
              Map.empty
 
-buildconmaps :: [TyCon] -> ConMaps
-buildconmaps objs = execState (build [] objs) 
-                    (tyconmap, dataconmap)
-                                        
-updateTycons :: [TyCon] -> ([TyCon], ConMaps)                   
-updateTycons inp = (update (fst conmaps) inp, conmaps)
-                 where conmaps = buildconmaps inp
+setConmaps :: ConMaps2IT t => ([TyCon], t) -> ([TyCon], t)
+setConmaps (tycons, objs) = let (tycons', conmaps) = buildConmaps tycons
+                                objs' = fst $ runState (updateit objs) conmaps
+                            in (tycons', objs')
+
+ -- from TyCons build the ConMaps                                       
+buildConmaps :: [TyCon] -> ([TyCon], ConMaps)                   
+buildConmaps inp = (update (fst conmaps) inp, conmaps)
+                 where conmaps = execState (build [] inp) (tyconmap, dataconmap)
 
 class BuildConMaps t where build :: String -> t -> State ConMaps()
                                                     
@@ -87,7 +88,8 @@ tyconinsert con arity boxed
                                      tboxed = boxed,
                                      tdatacons = []}
                                      tmap, dmap)     
-                                     
+
+--update boxedness of MCons                                     
 class Update t where update :: TyConMap -> t -> t              
 
 instance Update a => Update [a] where
@@ -117,13 +119,7 @@ isboxed m c  = let lookup = Map.lookup c m
                               else (\(TyConParam{tboxed=b}) -> b) (fromJust lookup)   
 
                  
-setConmaps (tycons, objs) = let (tycons', conmaps) = updateTycons tycons
-                                objs' = fst $ updateIT objs conmaps
-                            in (tycons', objs')
-                         
-updateIT :: ConMaps2IT a => a -> ConMaps -> (a, ConMaps)
-updateIT objs = runState (updateit objs) 
-     
+check :: String -> Int -> DataConMap -> DataConMap
 check c arity cmap =
     case Map.lookup c cmap of
       Nothing -> error ("use of unknown constructor " ++ c)
