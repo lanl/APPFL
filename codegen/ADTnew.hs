@@ -12,7 +12,9 @@ module ADTnew (
   TyConMap,
   DataConParam(..),
   DataConMap,
-  ConMaps
+  ConMaps,
+  dataconmap,
+  tyconmap
 ) where
 
 import AST

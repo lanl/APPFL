@@ -18,6 +18,7 @@ import           HeapObj
 import           Parser
 import           Rename
 import           SetFVs
+import           HMStg
 
 import           Data.List
 header :: String
@@ -64,6 +65,11 @@ renamer :: String -> ([TyCon], [Obj ()])
 renamer inp = let (tyCons, objs) = parser inp
               in (tyCons, renameObjs objs)
 
+-- a branch for testing
+hm :: String -> [Obj Monotype]
+hm = let (tyCons, objs) = renamer inp
+     in (tyCons, hmstg tycons objs)
+
 normalizer :: String -> ([TyCon], [Obj ()])
 normalizer inp = let (tyCons, objs) = renamer inp
                  in (tyCons, normalize objs)
@@ -83,6 +89,8 @@ typer inp = let (tyCons, objs) = infotaber inp
 
 conmaper :: String -> ([TyCon], [Obj InfoTab])
 conmaper = setConmaps . typer
+
+
 
 codegener :: String -> Bool -> String
 codegener inp v = let (tycons, objs) = conmaper inp
