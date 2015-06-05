@@ -94,20 +94,20 @@ instance Show Monotype where
     show (MCon boxed con ms) = con ++ (if boxed then " [B] " else " [U] ") ++
                                intercalate " " (map show ms)
 
--- Type constr name to arity, tag, boxed/unboxed
 data TyConParam = TyConParam {tarity :: Int, 
                               ttag :: Int, 
                               tboxed :: Bool,
-                              tdatacons :: [Con]}
+                              tdatacons :: [Con],
+                              tycon :: TyCon}
                   deriving(Eq,Show)
 
 type TyConMap = Map.Map String TyConParam
 
--- Data constr name to (arity, tag, boxedness, type constr name)
 data DataConParam = DataConParam {darity :: Int, 
                                   dtag :: Int, 
                                   dboxed :: Bool, 
-                                  dtycon :: Con} 
+                                  dtycon :: Con,
+                                  datacon :: DataCon} 
                     deriving(Eq,Show)
 
 type DataConMap = Map.Map String DataConParam

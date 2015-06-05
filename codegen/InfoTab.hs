@@ -88,7 +88,7 @@ data InfoTab =
   | ITAlt { 
       typ :: Polytype,
       fvs :: [Var],
-      tconMap :: TyConMap, -- work in progress not used 
+      tconMap :: TyConMap, 
       dconMap :: DataConMap } 
   | ITAlts { 
       typ :: Polytype,

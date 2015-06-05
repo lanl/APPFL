@@ -80,11 +80,11 @@ defdatp :: Parser Token (Def ())
 defdatp = (defp `usingp` ObjDef) `altp` (tyconp `usingp` DataDef)
 
 tyconp :: Parser Token TyCon
-tyconp = (kwkindp KWdata `xthenp` kwkindp KWunboxed `xthenp` tycon False)
-         `altp` (kwkindp KWdata `xthenp` tycon True)
+tyconp = (kwkindp KWdata `xthenp` kwkindp KWunboxed `xthenp` tyconp' False)
+         `altp` (kwkindp KWdata `xthenp` tyconp' True)
 
-tycon :: Bool -> Parser Token TyCon  
-tycon boxed = (conp `thenp`
+tyconp' :: Bool -> Parser Token TyCon  
+tyconp' boxed = (conp `thenp`
                  ((manyp varp) `thenp`
                   (symkindp SymBind `xthenp`
                    (sepbyp (dataconp boxed) (symkindp SymPipe)))))
@@ -95,12 +95,12 @@ dataconp boxed = (conp `thenp` manyp (monop boxed))
                  `usingp` uncurry (DataCon boxed)
 
 monop :: Bool -> Parser Token Monotype
-monop boxed = ((symkindp SymLParen `xthenp` (mono boxed)
+monop boxed = ((symkindp SymLParen `xthenp` (monop' boxed)
               `thenxp` symkindp SymRParen) `altp`
-              (mono boxed)) 
+              (monop' boxed)) 
 
-mono :: Bool -> Parser Token Monotype
-mono boxed = (varp `usingp` MVar) `altp`
+monop' :: Bool -> Parser Token Monotype
+monop' boxed = (varp `usingp` MVar) `altp`
               ((conp `thenp` manyp (monop boxed)) `usingp` uncurry (MCon undefined)) `altp`
                -- require parens on function type or we get into a loop
                ((symkindp SymLParen `xthenp` monop boxed `thenxp`
