@@ -16,7 +16,7 @@ unitTests = testGroup "ConMap Unit tests"
     [ goldenVsString "conmap one" "tests/ConMap/mapone.gold" mapone
     ]
     
-inp = "one = CON(I 1); main=THUNK(one);"
+inp = "data Int = I Int#; one = CON(I 1); main=THUNK(one);"
              
 mapone :: IO ByteString
 mapone = return $ fromString $ showITs $ snd $ 

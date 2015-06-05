@@ -1,7 +1,12 @@
+--data unboxed Bool# = False# | True#;
+data Bool = B Bool#;
+data Int = I Int#;
+data List a = Nil | Cons a (List a);
+
 error = ERROR;
 unit = CON(Unit);
---true = CON(True);
---false = CON(False);
+true = CON(True);
+false = CON(False);
 nil = CON(Nil);
 zero = CON(I 0);
 one = CON(I 1);

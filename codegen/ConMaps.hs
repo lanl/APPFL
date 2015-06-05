@@ -15,25 +15,25 @@ import AST
 import ADT
 import InfoTab
 
+-- starting tycon/datacon maps
+falseDatacon = DataCon False "False_h" []
+trueDatacon = DataCon False "True_h" []
+unitDatacon = DataCon False "Unit" []
+boolTycon = TyCon False "Bool_h" [] [falseDatacon,trueDatacon]
+intTycon = TyCon False "Int_h" [] []
+
 -- starting tycon map
 tyconmap :: TyConMap
-tyconmap = Map.insert "Bool#" (TyConParam 0 0 False ["False_h","True_h"])
-         $ Map.insert "Int_h"  (TyConParam 0 1 False [])
-         $ Map.insert "Bool"  (TyConParam 0 2 True ["B"]) -- data Bool = B Bool#
-         $ Map.insert "Int"   (TyConParam 0 3 True ["I"]) -- data Int = I Int#
-         $ Map.insert "List"  (TyConParam 1 4 True ["Nil","Cons"]) -- data List a = Nil | Cons a (List a)
+tyconmap = Map.insert "Bool_h" (TyConParam 0 0 False ["False_h","True_h"] boolTycon)
+         $ Map.insert "Int_h"  (TyConParam 0 1 False [] intTycon)
            Map.empty
 
 -- starting datacon map
 -- these tags must match what is in stg_header.h
 dataconmap :: DataConMap
-dataconmap = Map.insert "False_h" (DataConParam 0 0 False "Bool#") 
-           $ Map.insert "True_h"  (DataConParam 0 1 False "Bool#") 
-           $ Map.insert "B"     (DataConParam 1 2 True "Bool") 
-           $ Map.insert "I"     (DataConParam 1 3 True "Int") 
-           $ Map.insert "Unit"  (DataConParam 0 4 True "Unit")
-           $ Map.insert "Nil"   (DataConParam 0 5 True "List") 
-           $ Map.insert "Cons"  (DataConParam 2 6 True "List")
+dataconmap = Map.insert "False_h" (DataConParam 0 0 False "Bool_h" falseDatacon) 
+           $ Map.insert "True_h"  (DataConParam 0 1 False "Bool_h" trueDatacon) 
+           $ Map.insert "Unit"  (DataConParam 0 2 True "Unit" unitDatacon)
              Map.empty
 
 setConmaps :: ConMaps2IT t => ([TyCon], t) -> ([TyCon], t)
@@ -41,10 +41,13 @@ setConmaps (tycons, objs) = let (tycons', conmaps) = buildConmaps tycons
                                 objs' = fst $ runState (updateit objs) conmaps
                             in (tycons', objs')
 
- -- from TyCons build the ConMaps                                       
+ -- from TyCons build the ConMaps 
+ -- This is a bit strange, we first build the maps, then update the 
+ -- boxedness of the tycons, then rebuild the maps w/ the updated tycons.                                      
 buildConmaps :: [TyCon] -> ([TyCon], ConMaps)                   
-buildConmaps inp = (update (fst conmaps) inp, conmaps)
-                 where conmaps = execState (build [] inp) (tyconmap, dataconmap)
+buildConmaps inp = (tycons, execState (build [] tycons) (tyconmap, dataconmap))
+                 where tycons = update (fst conmaps) inp
+                       conmaps = execState (build [] inp) (tyconmap, dataconmap)
 
 class BuildConMaps t where build :: String -> t -> State ConMaps()
                                                     
@@ -52,41 +55,45 @@ instance BuildConMaps a => BuildConMaps [a] where
   build = mapM_ . build
 
 instance BuildConMaps TyCon where
-  build _ (TyCon boxed con tyvars dcons) 
-    = tyconinsert con (length tyvars) boxed >> 
+  build _ tycon@(TyCon boxed con tyvars dcons) 
+    = tyconinsert con (length tyvars) boxed tycon >> 
       build con dcons
      
 instance BuildConMaps DataCon where
-  build tycon (DataCon boxed con mts) = 
-    dataconinsert con (length mts) boxed tycon
+  build tycon datacon@(DataCon boxed con mts) = 
+    dataconinsert con (length mts) boxed tycon datacon
   
-dataconinsert :: String -> Int -> Bool -> Con -> State ConMaps ()
-dataconinsert con arity boxed tycon
+ 
+dataconinsert :: String -> Int -> Bool -> Con -> DataCon -> State ConMaps ()
+dataconinsert con arity boxed tcon dcon
   = do 
       (tmap, dmap) <- get
       let dmap' = Map.insert con DataConParam{darity = arity, 
                                              dtag = Map.size dmap, 
                                              dboxed = boxed, 
-                                             dtycon = tycon} 
+                                             dtycon = tcon,
+                                             datacon = dcon} 
                                              dmap
       -- update tycon w/ this data con                                       
-      let Just (TyConParam {tarity, ttag, tboxed, tdatacons}) = Map.lookup tycon tmap                                        
-      let tmap' = Map.insert tycon TyConParam{tarity = tarity, 
+      let Just (TyConParam {tarity, ttag, tboxed, tdatacons, tycon}) = Map.lookup tcon tmap                                        
+      let tmap' = Map.insert tcon TyConParam{tarity = tarity, 
                                      ttag = ttag, 
                                      tboxed = tboxed,
-                                     tdatacons = (con:tdatacons)}
+                                     tdatacons = (con:tdatacons),
+                                     tycon = tycon}
                                      tmap
       put(tmap',dmap')
+  
     
-    
-tyconinsert :: String -> Int -> Bool -> State ConMaps ()
-tyconinsert con arity boxed 
+tyconinsert :: String -> Int -> Bool -> TyCon -> State ConMaps ()
+tyconinsert con arity boxed tcon
   = do 
       (tmap, dmap) <- get
       put (Map.insert con TyConParam{tarity = arity, 
                                      ttag = Map.size tmap, 
                                      tboxed = boxed,
-                                     tdatacons = []}
+                                     tdatacons = [],
+                                     tycon = tcon}
                                      tmap, dmap)     
 
 --update boxedness of MCons                                     

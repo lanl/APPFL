@@ -1,5 +1,7 @@
+data Bool = B Bool#;
+data Int = I Int#;
 data MyTree a = MyLeaf a | MyBranch (MyTree a) (MyTree a);
 data MyList a = MyNil | MyCons a (MyList a);
 data unboxed MyBool# = MyFalse# | MyTrue#;
-data Dep = A (MyTree Int) | B (MyList Bool);
+data Dep = ACon (MyTree Int) | BCon (MyList Bool);
 data MyInt = MyI Int#;
