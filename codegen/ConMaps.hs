@@ -18,13 +18,12 @@ import InfoTab
 -- starting tycon/datacon maps
 falseDatacon = DataCon False "False_h" []
 trueDatacon = DataCon False "True_h" []
-unitDatacon = DataCon False "Unit" []
 boolTycon = TyCon False "Bool_h" [] [falseDatacon,trueDatacon]
 intTycon = TyCon False "Int_h" [] []
 
--- starting tycon map
+-- starting tycon map (just the builtin unboxed types)
 tyconmap :: TyConMap
-tyconmap = Map.insert "Bool_h" (TyConParam 0 0 False ["False_h","True_h"] boolTycon)
+tyconmap = Map.insert "Bool_h" (TyConParam 0 0 False ["False_h","True_h"] boolTycon) --data unboxed Bool# = False# | True#;
          $ Map.insert "Int_h"  (TyConParam 0 1 False [] intTycon)
            Map.empty
 
@@ -33,7 +32,6 @@ tyconmap = Map.insert "Bool_h" (TyConParam 0 0 False ["False_h","True_h"] boolTy
 dataconmap :: DataConMap
 dataconmap = Map.insert "False_h" (DataConParam 0 0 False "Bool_h" falseDatacon) 
            $ Map.insert "True_h"  (DataConParam 0 1 False "Bool_h" trueDatacon) 
-           $ Map.insert "Unit"  (DataConParam 0 2 True "Unit" unitDatacon)
              Map.empty
 
 setConmaps :: ConMaps2IT t => ([TyCon], t) -> ([TyCon], t)
