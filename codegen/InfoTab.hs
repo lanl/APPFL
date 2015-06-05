@@ -33,20 +33,20 @@ import qualified Data.Set as Set
 
 data InfoTab = 
     Fun { 
-      typ :: Polytype,
+      typ :: Monotype,
       name :: String,
       fvs :: [Var],
       entryCode :: String,
       arity :: Int}      
   | Pap { 
-      typ :: Polytype,
+      typ :: Monotype,
       name :: String,
       fvs :: [Var],
       entryCode :: String,
       args     :: [Atom],
       knownCall :: Maybe InfoTab} -- of the FUN
   | Con { 
-      typ :: Polytype,
+      typ :: Monotype,
       name :: String,
       fvs :: [Var],
       entryCode :: String,
@@ -55,43 +55,43 @@ data InfoTab =
       con :: String, -- actual constructor name, not object name
       tag :: Int }
   | Thunk { 
-      typ :: Polytype,
+      typ :: Monotype,
       name :: String,
       fvs :: [Var],
       entryCode :: String }
   | Blackhole {
-      typ :: Polytype,
+      typ :: Monotype,
       name :: String,
       fvs :: [Var],
       entryCode :: String }
   | ITAtom { 
-      typ :: Polytype,
+      typ :: Monotype,
       fvs :: [Var],
       noHeapAlloc :: Bool }
   | ITFCall { 
-      typ :: Polytype,
+      typ :: Monotype,
       fvs :: [Var],
       noHeapAlloc :: Bool,
       knownCall :: Maybe InfoTab } -- of the FUN
   | ITPrimop { 
-      typ :: Polytype,
+      typ :: Monotype,
       fvs :: [Var],
       noHeapAlloc :: Bool }
   | ITLet { 
-      typ :: Polytype,
+      typ :: Monotype,
       fvs :: [Var],
       noHeapAlloc :: Bool }
   | ITCase { 
-      typ :: Polytype,
+      typ :: Monotype,
       fvs :: [Var],
       noHeapAlloc :: Bool }
   | ITAlt { 
-      typ :: Polytype,
+      typ :: Monotype,
       fvs :: [Var],
       tconMap :: TyConMap, 
       dconMap :: DataConMap } 
   | ITAlts { 
-      typ :: Polytype,
+      typ :: Monotype,
       fvs :: [Var] }
     deriving(Eq,Show)   
 

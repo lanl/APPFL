@@ -248,10 +248,11 @@ cge env (ELet it os e) =
               ofunc ++ efunc)
 
 cge env (ECase _ e a@(Alts italts alts aname)) = 
-    let eboxed = case typ $ emd e of PPoly _ _ -> True; _ -> False in
-    do (ecode, efunc) <- cge env e
-       (acode, afunc) <- cgalts env a eboxed
-       let pre = "stgPushCont( (Cont)\n" ++
+    let eboxed = case typ $ emd e of MCon False _ _ -> False
+                                     _              -> True
+    in do (ecode, efunc) <- cge env e
+          (acode, afunc) <- cgalts env a eboxed
+          let pre = "stgPushCont( (Cont)\n" ++
                  "  { .retAddr = &" ++ aname ++ ",\n" ++
                  "    .objType = CASECONT,\n" ++
                  "    .ident = \"CCont for " ++ aname ++ "\",\n" ++
@@ -262,7 +263,7 @@ cge env (ECase _ e a@(Alts italts alts aname)) =
                             intercalate " " (fvs italts) ++ "\n") ++
                          indent 4 (loadPayloadFVs env (fvs italts)) ++
                  "  });\n"
-       return (pre ++ ecode ++ acode, efunc ++ afunc)
+          return (pre ++ ecode ++ acode, efunc ++ afunc)
 
 -- ADef only or unary sum => no C switch
 cgalts env (Alts it alts name) boxed = 

@@ -234,9 +234,11 @@ instance AI (Expr InfoTab) where
 
 -- quickie boxedness propagation
 
-boxed = PPoly [] $ (MCon True "Z" [])
+-- boxed = PPoly [] $ (MCon True "Z" [])
+boxed = (MCon True "Z" [])
 
-unboxed = PMono $ (MCon False "Int#" [])
+-- unboxed = PMono $ (MCon False "Int#" [])
+unboxed = (MCon False "Int#" [])
 
 isBoxedId v = take 2 (reverse v) /= "h_"
 
