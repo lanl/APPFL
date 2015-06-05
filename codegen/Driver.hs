@@ -66,9 +66,9 @@ renamer inp = let (tyCons, objs) = parser inp
               in (tyCons, renameObjs objs)
 
 -- a branch for testing
-hm :: String -> [Obj Monotype]
-hm = let (tyCons, objs) = renamer inp
-     in (tyCons, hmstg tycons objs)
+--hm :: String -> [Obj Monotype]
+--hm = let (tyCons, objs) = renamer inp
+--     in (tyCons, hmstg tycons objs)
 
 normalizer :: String -> ([TyCon], [Obj ()])
 normalizer inp = let (tyCons, objs) = renamer inp
