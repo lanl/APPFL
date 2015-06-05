@@ -18,7 +18,7 @@ import           HeapObj
 import           Parser
 import           Rename
 import           SetFVs
-import           HMStg
+--import           HMStg
 
 import           Data.List
 header :: String
