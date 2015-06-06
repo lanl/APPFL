@@ -1,4 +1,4 @@
---data unboxed Bool# = False# | True#;
+data Unit = Unit;
 data Bool = B Bool#;
 data Int = I Int#;
 data List a = Nil | Cons a (List a);

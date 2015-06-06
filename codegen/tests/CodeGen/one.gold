@@ -13,7 +13,7 @@ InfoTab it_one =
     .entryCode           = &stg_constructorcall,
     .objType             = CON,
     .conFields.arity     = 1,
-    .conFields.tag       = 3,
+    .conFields.tag       = 2,
     .conFields.conName   = "I",
   };
 
