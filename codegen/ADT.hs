@@ -106,7 +106,7 @@ type TyConMap = Map.Map String TyConParam
 data DataConParam = DataConParam {darity :: Int, 
                                   dtag :: Int, 
                                   dboxed :: Bool, 
-                                  dtycon :: Con,
+                                  dtycon :: Con, -- type constructor name
                                   datacon :: DataCon} 
                     deriving(Eq,Show)
 
