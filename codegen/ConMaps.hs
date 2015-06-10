@@ -152,9 +152,10 @@ instance ConMaps2IT (Obj InfoTab) where
       let dmap' = check c (length as) dmap
       let Just (DataConParam{dtag}) = Map.lookup c dmap'
       let md = omd o  -- could do a one-liner...
-      let md' = md{tag = dtag}
-      let o' = o{omd = md'}
-      return o'
+      (tmap, dmap) <- get
+      let dmap' = check c (length as) dmap
+      let md' = md{tag = dtag, dconMap = dmap', tconMap = tmap}
+      return o{omd = md'}
 
     updateit o = return o     -- PAP, BLACKHOLE
 

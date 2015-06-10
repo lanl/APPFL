@@ -12,7 +12,8 @@ module ADT (
   TyConMap,
   DataConParam(..),
   DataConMap,
-  ConMaps
+  ConMaps,
+  getTyConDefFromConstructor
 ) where
 
 import AST
@@ -113,6 +114,16 @@ data DataConParam = DataConParam {darity :: Int,
 type DataConMap = Map.Map String DataConParam
 
 type ConMaps = (TyConMap, DataConMap)
+
+-- given a TyConMap, DataConMap and a data constructor C,
+-- return the data constructor definition
+
+getTyConDefFromConstructor dconMap tconMap con = 
+    let Just dataConParam = Map.lookup con dconMap :: Maybe DataConParam
+        tyConName = dtycon dataConParam :: Con
+        Just tyConParam = Map.lookup tyConName tconMap :: Maybe TyConParam
+    in tycon tyConParam :: TyCon
+
          
  
  

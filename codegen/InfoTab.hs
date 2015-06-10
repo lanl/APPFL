@@ -53,7 +53,9 @@ data InfoTab =
       args :: [Atom],
       arity :: Int,
       con :: String, -- actual constructor name, not object name
-      tag :: Int }
+      tag :: Int,
+      tconMap :: TyConMap,
+      dconMap :: DataConMap }
   | Thunk { 
       typ :: Monotype,
       name :: String,
@@ -75,7 +77,7 @@ data InfoTab =
       knownCall :: Maybe InfoTab } -- of the FUN
   | ITPrimop { 
       typ :: Monotype,
-      fvs :: [Var],
+      fvs :: [Var], 
       noHeapAlloc :: Bool }
   | ITLet { 
       typ :: Monotype,
@@ -232,7 +234,9 @@ makeIT o@(CON fvs c as n) =
           fvs = fvs,
           typ = typUndef,
 --          entryCode = showITType o ++ "_" ++ n
-          entryCode = "stg_constructorcall"
+          entryCode = "stg_constructorcall",
+          dconMap = error "ADef dconMap undefined",
+          tconMap = error "ADef tconMap undefined"
         }
 
 makeIT o@(THUNK fvs e n) =
