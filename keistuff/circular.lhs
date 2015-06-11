@@ -23,15 +23,18 @@
     }
 
 \title{Circular Programming Example}
+\author{Kei Davis}
 \date{April 1, 2015}
 \begin{document}
 \maketitle
 
 \noindent The classic example of circular programming in a pure non-strict
 functional language is the solution to the \emph{repmin} problem:
-\begin{quote}
-Given a binary tree $T$\/ with integer values at the leaves, create a tree of
-the same shape with leaf values all equal to the minimal leaf value of $T$.
+
+\begin{quote} 
+Given a binary tree $T$\/ with integer values at the leaves,
+create a tree of the same shape with all leaf values equal to the minimal leaf
+value of $T$ \emph{with only one traversal of} $T$.  
 \end{quote}
 
 Here's a simple analog of an example that came up in actual programming.
@@ -107,7 +110,8 @@ offset of \texttt{z} before that element is reached by the \texttt{map}.
 To try this just load this document source into ghci and type \texttt{cgletrec defs}.
 
 My observation is that circular programming can look even more like magic
-when plumbing is hidden in a monad and the circular dependencies flow
+when the plumbing is hidden in a monad and the circular dependencies flow
 through that plumbing---here it's quite exposed with all the \emph{map},
-\emph{zip}, \emph{unzip}, and pairing/unpairing.
+\emph{zip}, \emph{unzip}, and pairing/unpairing.  Rhetorical question: is
+hiding magic in hidden plumbing good programming practice?
 \end{document}

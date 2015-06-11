@@ -81,6 +81,9 @@ data Polytype = PPoly [TyVar] Monotype
 data Monotype = MVar TyVar
               | MFun Monotype Monotype
               | MCon Bool Con [Monotype]
+              | MPrimInt
+              | MPrimDouble
+              | MPrimBool
                 deriving(Eq,Ord)
 
 instance Show Polytype where

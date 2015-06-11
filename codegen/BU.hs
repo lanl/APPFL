@@ -44,10 +44,12 @@ instance Substitutable Monotype where
     freevars (MVar v)     = Set.singleton v
     freevars (MFun m1 m2) = Set.union (freevars m1) (freevars m2)
     freevars (MCon boxed con ms) = foldr Set.union Set.empty $ map freevars ms
+    freevars _ = Set.empty
 
     apply s m@(MVar tv)         = Map.findWithDefault m tv s
     apply s (MFun m1 m2)        = MFun (apply s m1) (apply s m2)
     apply s (MCon boxed con ms) = MCon boxed con $ map (apply s) ms
+    apply s _                   = error "substituting for a primitive type?"
 
 instance Substitutable [Monotype] where
     freevars = foldr (Set.union . freevars) Set.empty
@@ -78,6 +80,12 @@ unify (MCon b1 c1 ms1) (MCon b2 c2 ms2)
     | b1 /= b2 = error "unify boxedness mismatch!"
     | c1 /= c2 = error "unify constructor mismatch!"
     | otherwise = unifys ms1 ms2
+
+-- if they're equal there's nothing to do
+unify m1 m2 | m1 == m2 = idSubst
+-- unify MPrimInt MPrimInt = idSubst
+-- unify MPrimDouble MPrimDoubleInt = idSubst
+-- unify MPrimBool MPrimBool = idSubst
 
 unifys [] [] = idSubst
 unifys (x:xs) [] = error "unifys length mismatch!"

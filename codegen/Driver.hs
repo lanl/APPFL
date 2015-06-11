@@ -18,9 +18,11 @@ import           HeapObj
 import           Parser
 import           Rename
 import           SetFVs
---import           HMStg
-
+import           HMStg
 import           Data.List
+
+import System.IO
+
 header :: String
 header = "#include \"stg_header.h\"\n"
         
@@ -87,9 +89,19 @@ typer :: String -> ([TyCon], [Obj InfoTab])
 typer inp = let (tyCons, objs) = infotaber inp
             in (tyCons, setTypes objs)
 
-conmaper :: String -> ([TyCon], [Obj InfoTab])
-conmaper = setConmaps . typer
+-- conmaper :: String -> ([TyCon], [Obj InfoTab])
+-- conmaper = setConmaps . typer
 
+conmaper :: String -> ([TyCon], [Obj InfoTab])
+conmaper = setConmaps . infotaber
+
+typecheck inp = let (tycons, objs) = conmaper inp
+                in hmstg objs
+tctest arg =
+  do
+    ifd <- openFile arg ReadMode
+    source <- hGetContents ifd
+    return $ typecheck source
 
 
 codegener :: String -> Bool -> String
