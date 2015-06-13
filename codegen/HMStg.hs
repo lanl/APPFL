@@ -112,39 +112,51 @@ instance DV (Expr InfoTab) (Expr InfoTab) where
            ealts <- dv ealts
            return ECase{..} -- error type already embedded
 
-instance DV (Obj InfoTab) (Obj InfoTab) where
-    dv o@FUN{..} =
-        do ts <- freshMonoVars (length vs) -- one for each arg
-           let m = MCon True "hack" ts  --hack, just hold them
-           e' <- dv e
-           return $ setTyp m o{e=e'}  --what's the precedence, if it mattered?
-
 instance DV (Alts InfoTab) (Alts InfoTab) where
     dv Alts{..} =
         do alts <- mapM dv alts
            return Alts{..}
 
 instance DV (Alt InfoTab) (Alt InfoTab) where
-    dv a@ADef{} =
-        do m <- freshMonoVar
-           return $ setTyp m a
+    dv ADef{..} =
+        do ae <- dv ae
+           return ADef{..}
            
-    dv a@ACon{amd=it,..} =
-        let dConMap = dconMap it :: DataConMap
-            tConMap = tconMap it :: TyConMap
-            Just dataConParam = Map.lookup ac dConMap :: Maybe DataConParam
-            tyConName = dtycon dataConParam :: Con
-            Just tyConParam = Map.lookup tyConName tConMap :: Maybe TyConParam
-            TyCon boxed tcon tvs dcs = tycon tyConParam :: TyCon
-        -- get constructor defn
-            [m] = [ m | DataCon b c m <- dcs, c == ac ]
+    dv a@ACon{amd,ac,ae} =
+        do ae' <- dv ae
+           -- stash type constructor TC b1 .. bn, bi fresh
+           let TyCon boxed tcon tvs dcs = 
+                   getTyConDefFromConstructor (dconMap amd) (tconMap amd) ac
+           ntvs <- freshMonoVars $ length tvs
+           let m = MCon boxed tcon ntvs
+           return $ setTyp m a{ae = ae'}
+
+instance DV (Obj InfoTab) (Obj InfoTab) where
+    dv o@FUN{vs,e} =
+        do bs <- freshMonoVars (length vs) -- one for each arg
+           let m = MCon True "hack" bs  --hack, just hold them
+           e' <- dv e
+           return $ setTyp m o{e=e'}  --what's the precedence, if it mattered?
+
+    dv o@PAP{f,as} = 
+        do retMono <- freshMonoVar -- return type
+           ms <- mapM getMono as
+           let m = foldr MFun retMono ms
+           return $ setTyp m o
+
+    dv o@CON{omd,c,as} = 
+        -- stash type constructor TC b1 .. bn, bi fresh
+        let TyCon boxed tcon tvs dcs = 
+                getTyConDefFromConstructor (dconMap omd) (tconMap omd) c
         in do ntvs <- freshMonoVars $ length tvs
-              let subst = Map.fromList $ zip tvs ntvs
-              -- hack:  this is the instantiation of a type constructor,
-              -- i.e. a list of monotypes, one for each xi in 
-              -- pattern C x1 .. xn
-              let instantiation = MCon boxed ac (apply subst m)
-              return $ setTyp instantiation a
+              let m = MCon boxed tcon ntvs
+              return $ setTyp m o
+
+
+
+    dv o@THUNK{e} =
+        do e' <- dv e
+           return o{e = e'}
 
 class BU a where
     bu :: (Set.Set Monotype) -> a -> (Assumptions, Constraints, a)
@@ -160,10 +172,11 @@ instance BU (Expr InfoTab) where
          Set.empty,
          e) -- EAtom monotype set in dv
 
-    bu mtvs e@EFCall{emd = ITFCall{typ},ev} =
-        (Set.singleton (ev, typ), -- mixture of fresh vars and monoXtype
-         Set.empty,
-         e) -- EFCall monotypes set in dv
+    bu mtvs e@EFCall{emd = ITFCall{typ},ev,eas} =
+        let (m,ms) = unfoldr typ -- m is return type
+        in (Set.fromList $ (ev, typ) : [ (v, t) | (Var v, t) <- zip eas ms ],
+            Set.empty,
+            e) -- EFCall monotypes set in dv
 
     bu mtvs e@EPrimop{emd = ITPrimop{typ}, eprimop, eas} =
         let (m,ms) = unfoldr typ -- get atoms assocs, m is result type
@@ -187,21 +200,19 @@ instance BU (Expr InfoTab) where
 
     bu mtvs e@ECase{ee,ealts} =
         let (asee, csee, ee')    = bu mtvs ee
-            (asas, csas, ealts') = butAlts (getTyp ee) mtvs ealts
+            (asas, csas, ealts') = butAlts (getTyp ee') mtvs ealts
             talts = getTyp ealts
         in (Set.union asee asas,
-            csee `Set.union` csas 
-                 `Set.union` Set.singleton (EqC (getTyp ee') talts),
+            csee `Set.union` csas,
             setTyp talts e{ee = ee',
                            ealts = ealts'})
 
 buRec mtvs os =
     let (ass, css, os') = unzip3 $ map (bu mtvs) os
-        ias = zip [0..] ass
-        ixts = zip3 [0..] (map oname os) (map getTyp os')
+        xts = zip (map oname os) (map getTyp os')
         ncs = Set.fromList
-              [ if (i==j) then EqC t' t else ImpC t' mtvs t |
-                (i,x,t) <- ixts, (j,as) <- ias, (x',t') <- Set.toList as, x==x' ]
+              [ EqC t' t |
+                (x,t) <- xts, as <- ass, (x',t') <- Set.toList as, x==x' ]
         cs = foldr Set.union ncs css
         as = foldr Set.union Set.empty ass
     in (as, cs, os')
@@ -215,22 +226,65 @@ buIn mtvs xts e =
 butAlts t0 mtvs e@Alts{alts} =
       let (ass, css, alts') = unzip3 $ map (butAlt t0 mtvs) alts
           (a:as) = alts'
-          cs = Set.fromList [EqC (getTyp a) (getTyp a') | a'<-as]
+          ncs = Set.fromList [EqC (getTyp a) (getTyp a') | a'<-as]
       in (foldr1 Set.union ass,
-          foldr Set.union cs css,
+          foldr Set.union ncs css,
           setTyp (getTyp $ head alts') e{alts = alts'}) -- any one will do
 
 butAlt t0 mtvs e@ADef{av,ae} =
-    let (as, cs, ae') = bu mtvs ae  -- av monomorphic or polymorphic???
+    -- av monomorphic:  mtvs and EqC
+    let (as, cs, ae') = bu (Set.union mtvs $ Set.singleton (MVar av)) ae  
         ncs = Set.fromList [ EqC t0 t | (x,t) <- Set.toList as, x == av ]
     in (dropAss av as,
         Set.union cs ncs,
         setTyp (getTyp ae') e{ae = ae'})
 
-butAlt t0 mtvs e@ACon{} = error ""
+butAlt t0 mtvs e@ACon{amd,ac,avs,ae} =
+    let -- instantiate type constructor definition
+        -- get type constructor definition
+        TyCon boxed tcon tvs dcs = 
+            getTyConDefFromConstructor (dconMap amd) (tconMap amd) ac
+        -- get data constructor definition C [Monotype]
+        [ms] = [ ms | DataCon b c ms <- dcs, c == ac ] -- ms :: [Monotype]
+        -- instantiate those Monotypes 
+        MCon boxed' c ntvs = getTyp e --stashed by dv
+        subst = Map.fromList $ zip tvs ntvs
+        tis = apply subst ms
+        xtis = zip avs tis
+        -- note ntvs == freeVars tis (as sets) so ntvs are new mtvs
+        (as,cs,ae') = bu (Set.union mtvs $ Set.fromList ntvs) ae
+        ncs = Set.fromList $ (EqC t0 $ getTyp e) : 
+                             [ EqC ti t' | (xi,ti) <- xtis, 
+                                           (x,t') <- Set.toList as, 
+                                           x == xi ]
+    in (foldr dropAss as avs,
+        Set.union cs ncs,
+        setTyp (getTyp ae') e{ae = ae'})
 
 instance BU (Obj InfoTab) where
-  bu = error ""
+  bu mtvs o@FUN{vs,e} = 
+      -- get new type vars for args
+      let MCon _ _ ntvs = getTyp o
+          (as,cs,e') = bu (Set.union mtvs $ Set.fromList ntvs) e
+          xbis = zip vs ntvs
+          ncs = Set.fromList [EqC t' bi | (xi,bi) <- xbis, (x,t') <- Set.toList as]
+          typ = foldr MFun (getTyp e') ntvs
+      in (foldr dropAss as vs,
+          Set.union cs ncs,
+          setTyp typ o{e = e'})
+
+  bu mtvs o@PAP{f,as} =
+      let typ = getTyp o
+          (m,ms) = unfoldr typ
+      in (Set.fromList $ (f,typ) : [ (v, t) | (Var v, t) <- zip as ms ],
+          Set.empty,
+          o)
+
+  bu mtvs CON{} = error ""
+
+  bu mtvs o@THUNK{e} =
+      let (as,cs,e') = bu mtvs e
+      in (as, cs, setTyp (getTyp e') o{e = e'})
 
 
   
