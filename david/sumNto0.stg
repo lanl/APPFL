@@ -1,0 +1,64 @@
+[1 of 1] Compiling Sum0             ( sum0.hs, sum0.o )
+
+==================== STG syntax: ====================
+Sum0.f
+  :: forall a_ani.
+     (GHC.Classes.Eq a_ani, GHC.Num.Num a_ani) =>
+     a_ani -> a_ani
+[GblId, Arity=3, Caf=NoCafRefs, Unf=OtherCon []] =
+    \r [$dEq_snS $dNum_snU eta_so8]
+        let {
+          f1_so2 [Occ=LoopBreaker] :: a_anm -> a_anm
+          [LclId, Arity=1, Unf=OtherCon []] =
+              sat-only \r [n_snT]
+                  let {
+                    sat_soa :: a_anm
+                    [LclId] =
+                        \u []
+                            let {
+                              sat_snW :: GHC.Integer.Type.Integer
+                              [LclId] =
+                                  NO_CCS GHC.Integer.Type.S#! [0];
+                            } in  GHC.Num.fromInteger $dNum_snU sat_snW;
+                  } in 
+                    case GHC.Classes.== $dEq_snS n_snT sat_soa of _ {
+                      GHC.Types.False ->
+                          let {
+                            sat_so9 :: a_anm
+                            [LclId] =
+                                \u []
+                                    let {
+                                      sat_so5 :: a_anm
+                                      [LclId] =
+                                          \u []
+                                              let {
+                                                sat_so3 :: a_anm
+                                                [LclId] =
+                                                    \u []
+                                                        let {
+                                                          sat_so0 :: GHC.Integer.Type.Integer
+                                                          [LclId] =
+                                                              NO_CCS GHC.Integer.Type.S#! [1];
+                                                        } in  GHC.Num.fromInteger $dNum_snU sat_so0;
+                                              } in  GHC.Num.- $dNum_snU n_snT sat_so3;
+                                    } in  f1_so2 sat_so5;
+                          } in  GHC.Num.+ $dNum_snU n_snT sat_so9;
+                      GHC.Types.True ->
+                          let {
+                            sat_sob :: GHC.Integer.Type.Integer
+                            [LclId] =
+                                NO_CCS GHC.Integer.Type.S#! [0];
+                          } in  GHC.Num.fromInteger $dNum_snU sat_sob;
+                    };
+        } in  f1_so2 eta_so8;
+SRT(Sum0.f): []
+Sum0.A :: forall a_aeI. a_aeI -> Sum0.A a_aeI
+[GblId[DataCon],
+ Arity=1,
+ Caf=NoCafRefs,
+ Str=DmdType Tm,
+ Unf=OtherCon []] =
+    \r [eta_B1] Sum0.A [eta_B1];
+SRT(Sum0.A): []
+
+
