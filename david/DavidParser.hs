@@ -2,9 +2,10 @@
 
 module DavidParser
 (
-  ScanState,
   Parser,
-  testReadComments, 
+  testReadComments,
+  readComments,
+  stripComments,
   cons,              -- uncurried (:)
   accept,            -- accept x for any input  
   reject,            -- reject any input, return []
@@ -32,13 +33,15 @@ module DavidParser
   acceptOneAsList,
   acceptUntil,
   remove
-  
 ) where
          
 import ADT
 import AST
-import Data.List (lines)
+import Data.List
 import Data.Char
+import Data.Either
+import Data.Maybe
+import Control.Monad -- for testing
 import Debug.Trace
 
 type Parser inp val = [inp] -> [(val, [inp])]
@@ -247,6 +250,11 @@ instance Show ScanState where
   show (Quote s) = "\nQUOTE::\n " ++ s
 
 
+-- CHANGED 6-16: Place appropriate whitespace in comment strings
+-- This preserves line and column information for tokenizer
+-- The choice to do the substitution here is for efficiency and simplicity
+-- (probably better than traversing the list of data structures and
+-- mapping the whitespace substitution appropriately)
 readComments inp = aux [(Top "")] inp
   where
     -- Ending in Block Comment or Quote state implies uneven delimiter counts
@@ -260,9 +268,9 @@ readComments inp = aux [(Top "")] inp
     
     -- pattern match everything else based on accumulator head and beginning sequence of input
     -- Top level state: match comment start characters or double quote, then default
-    aux all@(Top {}:xs) ('{':'-':cs) = aux (BComment 1 "-{":all) cs
+    aux all@(Top {}:xs) ('{':'-':cs) = aux (BComment 1 "  ":all) cs
     aux all@(Top {}:xs) ('"':cs) = aux (Quote "\"":all) cs
-    aux all@(Top {}:xs) ('-':'-':cs) = aux (LComment "--":all) cs
+    aux all@(Top {}:xs) ('-':'-':cs) = aux (LComment "  ":all) cs
     aux (Top s:xs) (c:cs) = aux (Top (c:s):xs) cs
 
     -- Quote state: match escape sequence or terminating quote, then default
@@ -276,12 +284,18 @@ readComments inp = aux [(Top "")] inp
     -- Block Comment state: match nested comment (increment depth) or terminating
     -- char sequence (decrementing depth appropriately or reverting to Top state)
     -- then default
-    aux (BComment d s:xs) ('{':'-':cs) = aux (BComment (d + 1) ('-':'{':s):xs) cs
+    aux (BComment d s:xs) ('{':'-':cs) = aux (BComment (d + 1) (' ':' ':s):xs) cs
     aux (BComment d s:xs) ('-':'}':cs) = case d of
-                                            1 -> aux (Top "":BComment 0 ('}':'-':s):xs) cs
-                                            _ -> aux (BComment (d - 1) ('}':'-':s):xs) cs
-    aux (BComment d s:xs) (c:cs) = aux (BComment d (c:s):xs) cs
+                                            1 -> aux (Top "":BComment 0 (' ':' ':s):xs) cs
+                                            _ -> aux (BComment (d - 1) (' ':' ':s):xs) cs
+    aux (BComment d s:xs) (c:cs) = case c of
+                                    '\n' -> aux (BComment d ('\n':s):xs) cs
+                                    _ -> aux (BComment d (' ':s):xs) cs
 
     -- Line Comment state : match EOL char to terminate, then default
     aux (LComment s:xs) ('\n':cs) = aux (Top "":LComment ('\n':s):xs) cs
-    aux (LComment s:xs) (c:cs) = aux (LComment (c:s):xs) cs
+    aux (LComment s:xs) (c:cs) = aux (LComment (' ':s):xs) cs
+
+
+stripComments :: String -> String
+stripComments = concatMap str . readComments
