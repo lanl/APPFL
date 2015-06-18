@@ -16,7 +16,7 @@ module ADT (
   getTyConDefFromConstructor
 ) where
 
-import AST
+import AST(Con,BuiltinType,Obj)
 
 import Data.List(intercalate)
 --import Data.Maybe
@@ -57,8 +57,8 @@ import qualified Data.Map as Map
 
 
 data Def a = ObjDef (Obj a)
-           | DataDef TyCon
-             deriving(Eq,Show)
+          | DataDef TyCon
+            deriving(Eq,Show)
 
 -- Boxed: data \Chi \alpha_1 .. \alpha_t =
 -- c_1 \tau_11 .. \tau_1a_1 | ... | c_n \tau_n1 .. \tau_na_1  
@@ -81,9 +81,7 @@ data Polytype = PPoly [TyVar] Monotype
 data Monotype = MVar TyVar
               | MFun Monotype Monotype
               | MCon Bool Con [Monotype]
-              | MPrimInt
-              | MPrimDouble
-              | MPrimBool
+              | MPrim BuiltinType
                 deriving(Eq,Ord)
 
 instance Show Polytype where
@@ -97,6 +95,7 @@ instance Show Monotype where
     show (MFun m1 m2) = show m1 ++ " -> " ++ show m2
     show (MCon boxed con ms) = con ++ (if boxed then " [B] " else " [U] ") ++
                                intercalate " " (map show ms)
+    show (MPrim p) = show p
 
 data TyConParam = TyConParam {tarity :: Int, 
                               ttag :: Int, 

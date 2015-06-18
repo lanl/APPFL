@@ -11,6 +11,7 @@ module Driver (
 import           ADT
 import           Analysis
 import           AST
+import           SCC
 import           CodeGen
 import           ConMaps
 import           InfoTab
@@ -20,7 +21,6 @@ import           Rename
 import           SetFVs
 import           HMStg
 import           Data.List
-
 import System.IO
 
 header :: String
@@ -89,11 +89,8 @@ typer :: String -> ([TyCon], [Obj InfoTab])
 typer inp = let (tyCons, objs) = infotaber inp
             in (tyCons, setTypes objs)
 
--- conmaper :: String -> ([TyCon], [Obj InfoTab])
--- conmaper = setConmaps . typer
-
 conmaper :: String -> ([TyCon], [Obj InfoTab])
-conmaper = setConmaps . infotaber
+conmaper = setConmaps . typer
 
 typecheck inp = let (tycons, objs) = conmaper inp
                 in hmstg objs
@@ -101,7 +98,7 @@ tctest arg =
   do
     ifd <- openFile arg ReadMode
     source <- hGetContents ifd
-    return $ typecheck source
+    typecheck source
 
 
 codegener :: String -> Bool -> String

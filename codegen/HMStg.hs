@@ -13,10 +13,12 @@ import ADT
 import AST
 import InfoTab
 import BU
+import SCC
 import Data.Set (Set)
 import qualified Data.Set as Set
 import qualified Data.Map as Map
 import Control.Monad.State
+import Data.List (intercalate)
 
 -- newtype State s a = State (s -> (a, s))
 
@@ -32,25 +34,30 @@ import Control.Monad.State
 -- EFCall - emd is function type
 
 -- this is the entry point
-hmstg ::  [Obj InfoTab] -> 
-          ([Assumption], [(TyVar, Monotype)], [Constraint], [Obj InfoTab])
+hmstg ::  [Obj InfoTab] -> IO()
+--          ([Assumption], [(TyVar, Monotype)], [Constraint], String)
 
 hmstg os0 = 
     let (os1,i1) = runState (dv os0) 0
-        (as,cs,os2) = buRec Set.empty os1
+        (as,cs,os2) = buRec Set.empty os1 :: (Set.Set Assumption,
+                                              Set.Set Constraint,
+                                              [Obj InfoTab])
         (subst, _) = runState (solve cs) i1
+    in putStrLn $ showObjs (backSub subst os2)
+{-
     in (Set.toList as,
         Map.toList subst,
         apply subst $ Set.toList cs,
-        backSub subst os2)
+        "\n\n" ++ showObjs (backSub subst os2))
+-}
 
 -- distribute fresh type variables, monomorphic type variables, for BU in advance
 
 errTyp = error "typ not defined"
 
 getMono (Var v)  = freshMonoVar
-getMono (LitI _) = return MPrimInt
-getMono (LitB _) = return MPrimBool
+getMono (LitI _) = return $ MPrim UBInt
+getMono (LitB _) = return $ MPrim UBBool
 
 
 class SetTyp a where
@@ -97,10 +104,16 @@ instance DV (Expr InfoTab) (Expr InfoTab) where
 
     dv e@EPrimop{..} =
         let retMono = case eprimop of
-                        Piadd -> MPrimInt
-                        Pisub -> MPrimInt
+                        Piadd -> MPrim UBInt
+                        Pisub -> MPrim UBInt
+                        Pimul -> MPrim UBInt
+                        Pidiv -> MPrim UBInt
+                        Pimod -> MPrim UBInt
+                        Pimax -> MPrim UBInt
+                        Pimin -> MPrim UBInt
 
-                        Pieq  -> MPrimBool
+                        Pieq  -> MPrim UBBool
+                        x -> error $ "dv Eprimop" ++ show x
                         -- etc.
 
         in do ms <- mapM getMono eas
@@ -193,22 +206,18 @@ instance BU (Expr InfoTab) where
     bu mtvs e@EPrimop{emd = ITPrimop{typ}, eprimop, eas} =
         let (m,ms) = unfoldr typ -- get atoms assocs, m is result type
             pts = case eprimop of
-                    Piadd -> [MPrimInt,MPrimInt]
-                    Pisub -> [MPrimInt,MPrimInt]
-                    Pieq  -> [MPrimInt,MPrimInt]
+                    Piadd -> [MPrim UBInt, MPrim UBInt]
+                    Pisub -> [MPrim UBInt, MPrim UBInt]
+                    Pimul -> [MPrim UBInt, MPrim UBInt]
+                    Pidiv -> [MPrim UBInt, MPrim UBInt]
+                    Pimod -> [MPrim UBInt, MPrim UBInt]
+                    Pimax -> [MPrim UBInt, MPrim UBInt]
+                    Pimin -> [MPrim UBInt, MPrim UBInt]
+                    Pieq  -> [MPrim UBInt, MPrim UBInt]
+                    x -> error $ "bu EPrimop" ++ show x
             as = Set.fromList [(v,m) | (Var v, m) <- zzip eas ms] --drop LitX cases
             cs = Set.fromList [EqC m1 m2 | m1 <- ms | m2 <- pts]
         in (as, cs, setTyp m e)
-
-    bu mtvs e@ELet{edefs,ee} = 
-        let (as, cs, edefs') = buRec mtvs edefs
-            xts = map2 oname getTyp edefs'
-            onames = map fst xts
-            (asee, csee, ee') = buIn mtvs xts ee
-        in (foldr dropAss (Set.union as asee) onames,
-            Set.union cs csee,
-            setTyp (getTyp ee') e{edefs = edefs',
-                                  ee = ee'})
 
     bu mtvs e@ECase{ee,ealts} =
         let (asee, csee, ee')    = bu mtvs ee
@@ -218,21 +227,52 @@ instance BU (Expr InfoTab) where
             setTyp (getTyp ealts') e{ee = ee',
                                      ealts = ealts'})
 
+    bu mtvs e@ELet{edefs,ee} = 
+        -- get strongly connected components
+        let fvss = map (Set.fromList . truefvs . omd) edefs
+            onamel = map oname edefs
+            localfvll = map Set.toList $ map (Set.intersection (Set.fromList onamel)) fvss
+            sccnames = scc $ zip onamel localfvll -- sccnames is list of lists of onames
+            nameobjm = Map.fromList $ zip onamel edefs
+            sccobjs = map (map (lookupOrElse nameobjm)) sccnames
+            -- do the context free part            
+            (asee, csee, ee') = bu mtvs ee
+            -- (asdefs, csdefs, edefs') = unzip3 $ map (bu mtvs) edefs'
+            (as, cs, edefs') = foldr f (asee, csee, []) sccobjs
+        in (as, cs, setTyp (getTyp ee') e{edefs = edefs', ee = ee'})
+            where
+              f defs (as, cs, ds) =
+                  let (asdefs, csdefs, defs') = buRec mtvs defs
+                      xts = map2 oname getTyp defs'
+                      (as', ncs) = buIn mtvs xts as
+                  in (Set.union asdefs as',
+                      csdefs `Set.union` cs `Set.union` ncs,
+                      defs'++ds)
+
+lookupOrElse m k =
+    case Map.lookup k m of
+      Nothing -> error "HMStg this shouldn't happen"
+      Just x  -> x
+
+--buRec discharges assumptions about the objects it defines
 buRec mtvs os =
     let (ass, css, os') = unzip3 $ map (bu mtvs) os
         xts = map2 oname getTyp os'
+        onames = map fst xts
         ncs = Set.fromList
               [ EqC t' t |
                 (x,t) <- xts, as <- ass, (x',t') <- Set.toList as, x==x' ]
-        cs = foldr Set.union ncs css
-        as = foldr Set.union Set.empty ass
-    in (as, cs, os')
+    in (foldr dropAss (foldr1 Set.union ass) onames, 
+        foldr Set.union ncs css, 
+        os')
 
-buIn mtvs xts e = 
-    let (as, cs, e') = bu mtvs e
+-- buIn takes: mtvs, an environment of x:t, and a set of assumptions as
+--    returns: as\xi, i.e. assumptions with xi discharged, set of constraints
+buIn mtvs xts as = 
+    let xi = map fst xts
         ncs = Set.fromList [ ImpC t' mtvs t 
                              | (x,t) <- xts, (x',t') <- Set.toList as, x == x' ]
-    in (as, Set.union cs ncs, e')
+    in (foldr dropAss as xi, ncs)
 
 butAlts t0 mtvs e@Alts{alts} =
       let (ass, css, alts') = unzip3 $ map (butAlt t0 mtvs) alts
@@ -314,9 +354,8 @@ instance BU (Obj InfoTab) where
       (Set.empty, Set.empty, o) -- typ as fresh var set in dv
 
 -- m is rightmost element
-unfoldr m@(MVar _) = (m,[])
-unfoldr m@(MCon{}) = (m,[])
 unfoldr (MFun m1 m2) = let (m,ms) = unfoldr m2 in (m, m1:ms)
+unfoldr m = (m,[])
 
 class BackSub a where
     backSub :: Subst -> a -> a
@@ -349,6 +388,7 @@ instance BackSub (Alt InfoTab) where
         setTyp (apply s $ getTyp a) a{ae = backSub s $ ae a}
 
 
+
 -- utilities
 map2 f g = map (\x -> (f x, g x))
 
@@ -356,3 +396,113 @@ map2 f g = map (\x -> (f x, g x))
 zzip [] [] = []
 zzip (a:as) (b:bs) = (a,b) : zip as bs
 zzip _ _ = error "zzip on lists of differing lengths"
+
+class PP a where
+    pp :: a -> String
+
+-- unparser ****************************************************************
+-- in the spirit of intercalate
+
+precalate s [] = []
+precalate s (s':ss) = s ++ s' ++ precalate s ss
+
+dropspaces = dropWhile (==' ')
+
+interpolate ('%':'%':s) = interpolate $ '%':s
+interpolate ('%':'\n':'%':'%':s) = interpolate $ '%':'\n':'%':s
+interpolate ('%':'\n':'%':s) = interpolate $ dropspaces s
+interpolate ('%':'\n':s) = interpolate $ dropspaces s
+interpolate ('\n':'%':s) = interpolate $ dropspaces s
+interpolate (c:s) = c : interpolate s
+interpolate [] = []
+
+showObjs objs = interpolate $ intercalate "\n" $ ppstg 0 objs
+
+indent n s@('%':_) = s
+indent n s = (take n $ repeat ' ') ++ s
+
+indents n ss = map (indent n) ss
+
+instance Show InfoTab where
+    show it = show $ typ it
+
+-- instance Ppstg [Atom] where
+showas as = intercalate " " $ map show as
+
+showFVs vs = "[" ++ intercalate " " vs ++ "] "
+
+class Ppstg a where ppstg :: Int -> a -> [String]
+
+instance Show a => Ppstg (Expr a) where
+    ppstg n (EAtom emd a) = 
+        indents n [show emd ++ show a]
+
+    ppstg n (EFCall emd f as) = 
+        indents n [show emd ++ f ++ " " ++ showas as]
+
+    ppstg n (EPrimop emd p as) = 
+        indents n [show emd ++ "PRIMOP " ++ showas as]
+
+    ppstg n (ELet emd defs e) = 
+        let ss = [show emd ++ "let { %"] ++
+                 ppstg 6 defs ++
+                 ["} in %"] ++
+                 ppstg 5 e
+        in indents n ss
+
+    ppstg n (ECase emd e alts) = 
+        let ss = [show emd ++ "case %"] ++ 
+                 ppstg 5 e ++
+                 ["of { %"] ++
+                 ppstg 5 alts ++
+                 ["%}"]
+        in indents n ss
+
+instance Show a => Ppstg (Alt a) where
+    ppstg n (ACon amd c vs e) = 
+        let line = show amd ++ c ++ precalate " " vs ++ " -> %"
+            ss = [line] ++
+                 ppstg (length line - 1) e
+        in indents n ss
+
+    ppstg n (ADef amd v e) = 
+        let ss = [show amd ++ v ++ " -> %"] ++
+                 ppstg (4 + length v) e
+        in indents n ss
+
+instance Show a => Ppstg (Alts a) where
+    ppstg n (Alts {alts}) = 
+        concatMap (ppstg n) alts
+
+instance Show a => Ppstg (Obj a) where
+    ppstg n (FUN omd vs e _) = 
+        let ss = [show omd ++ "FUN( " ++ intercalate " " vs ++ " ->"] ++
+                 ppstg 2 e ++
+                 ["%)"]
+        in indents n ss
+
+    ppstg n (PAP omd f as _) = 
+        let ss = [show omd ++ "PAP( " ++ f ++ " " ++ showas as ++ " )"]
+        in indents n ss
+
+    ppstg n (CON omd c as _) = 
+        let ss = [show omd ++ "CON( " ++ c ++ " " ++ showas as ++ " )"]
+        in indents n ss
+
+    ppstg n (THUNK omd e _) = 
+        let ss = [show omd ++ "THUNK( %"] ++
+                 ppstg 7 e ++
+                 ["% )"]
+        in indents n ss
+
+    ppstg n (BLACKHOLE _ _) =
+        indents n ["BLACKHOLE"]
+
+instance Show a => Ppstg [Obj a] where
+    -- ppstg n defs = intercalate ["\n"] $ map (ppstg n) defs
+    ppstg n defs = concatMap (ppstgdef n) defs
+
+ppstgdef n o =
+    let ss = [ oname o ++ " = %" ] ++
+             ppstg 2 o
+    in indents n ss

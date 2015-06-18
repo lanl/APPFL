@@ -23,15 +23,15 @@ intTycon = TyCon False "Int_h" [] []
 
 -- starting tycon map (just the builtin unboxed types)
 tyconmap :: TyConMap
-tyconmap = Map.insert "Bool_h" (TyConParam 0 0 False ["False_h","True_h"] boolTycon) --data unboxed Bool# = False# | True#;
+tyconmap = Map.insert "Bool_h" (TyConParam 0 0 False ["false_h","true_h"] boolTycon) --data unboxed Bool# = false# | true#;
          $ Map.insert "Int_h"  (TyConParam 0 1 False [] intTycon)
            Map.empty
 
 -- starting datacon map
 -- these tags must match what is in stg_header.h
 dataconmap :: DataConMap
-dataconmap = Map.insert "False_h" (DataConParam 0 0 False "Bool_h" falseDatacon) 
-           $ Map.insert "True_h"  (DataConParam 0 1 False "Bool_h" trueDatacon) 
+dataconmap = Map.insert "false_h" (DataConParam 0 0 False "Bool_h" falseDatacon) 
+           $ Map.insert "true_h"  (DataConParam 0 1 False "Bool_h" trueDatacon) 
              Map.empty
 
 setConmaps :: ConMaps2IT t => ([TyCon], t) -> ([TyCon], t)

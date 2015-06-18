@@ -36,12 +36,14 @@ data InfoTab =
       typ :: Monotype,
       name :: String,
       fvs :: [Var],
+      truefvs :: [Var],
       entryCode :: String,
       arity :: Int}      
   | Pap { 
       typ :: Monotype,
       name :: String,
       fvs :: [Var],
+      truefvs :: [Var],
       entryCode :: String,
       args     :: [Atom],
       knownCall :: Maybe InfoTab} -- of the FUN
@@ -49,6 +51,7 @@ data InfoTab =
       typ :: Monotype,
       name :: String,
       fvs :: [Var],
+      truefvs :: [Var],
       entryCode :: String,
       args :: [Atom],
       arity :: Int,
@@ -60,42 +63,51 @@ data InfoTab =
       typ :: Monotype,
       name :: String,
       fvs :: [Var],
+      truefvs :: [Var],
       entryCode :: String }
   | Blackhole {
       typ :: Monotype,
       name :: String,
       fvs :: [Var],
+      truefvs :: [Var],
       entryCode :: String }
   | ITAtom { 
       typ :: Monotype,
       fvs :: [Var],
+      truefvs :: [Var],
       noHeapAlloc :: Bool }
   | ITFCall { 
       typ :: Monotype,
       fvs :: [Var],
+      truefvs :: [Var],
       noHeapAlloc :: Bool,
       knownCall :: Maybe InfoTab } -- of the FUN
   | ITPrimop { 
       typ :: Monotype,
       fvs :: [Var], 
+      truefvs :: [Var],
       noHeapAlloc :: Bool }
   | ITLet { 
       typ :: Monotype,
       fvs :: [Var],
+      truefvs :: [Var],
       noHeapAlloc :: Bool }
   | ITCase { 
       typ :: Monotype,
       fvs :: [Var],
+      truefvs :: [Var],
       noHeapAlloc :: Bool }
   | ITAlt { 
       typ :: Monotype,
       fvs :: [Var],
+      truefvs :: [Var],
       tconMap :: TyConMap, 
       dconMap :: DataConMap } 
   | ITAlts { 
       typ :: Monotype,
-      fvs :: [Var] }
-    deriving(Eq,Show)   
+      fvs :: [Var],
+      truefvs :: [Var] }
+    deriving(Eq)   
 
 class ObjsOf a b where 
     objsOf :: a -> b
@@ -140,98 +152,119 @@ typUndef = error "typ set undefined in InfoTab.hs"
 class SetITs a b where 
     setITs :: a -> b
 
-instance SetITs [Obj [Var]] [Obj InfoTab] where
+instance SetITs [Obj ([Var],[Var])] [Obj InfoTab] where
     setITs = map setITs
 
-instance SetITs (Expr [Var]) (Expr InfoTab) where
-    setITs (ELet myfvs defs e) = 
+instance SetITs (Expr ([Var],[Var])) (Expr InfoTab) where
+    setITs (ELet (myfvs,mytruefvs) defs e) = 
         let
           defs' = setITs defs
           e'    = setITs e
-        in ELet (ITLet {fvs = myfvs, typ = typUndef, noHeapAlloc = False}) defs' e'
+        in ELet (ITLet {fvs = myfvs, 
+                        truefvs = mytruefvs, 
+                        typ = typUndef, 
+                        noHeapAlloc = False}) defs' e'
 
-    setITs (ECase myfvs e alts) = 
+    setITs (ECase (myfvs,mytruefvs) e alts) = 
         let
           e' = setITs e
           alts' = setITs alts
-        in ECase (ITCase{fvs = myfvs, typ = typUndef, noHeapAlloc = False}) e' alts'
+        in ECase (ITCase{fvs = myfvs, 
+                         truefvs = mytruefvs, 
+                         typ = typUndef, 
+                         noHeapAlloc = False}) e' alts'
 
     -- EAtom, EFCall, EPrimop, this doesn't work
     -- setITs e = e{emd = JustFVs {fvs = emd e}}
 
-    setITs (EAtom myfvs a) = 
-        EAtom (ITAtom{fvs = myfvs, typ = typUndef, noHeapAlloc = False}) a
+    setITs (EAtom (myfvs,mytruefvs) a) = 
+        EAtom (ITAtom{fvs = myfvs, 
+                      truefvs = mytruefvs, 
+                      typ = typUndef, 
+                      noHeapAlloc = False}) a
 
-    setITs (EFCall myfvs f as) =
-        EFCall (ITFCall{fvs = myfvs, typ = typUndef, noHeapAlloc = False, knownCall = Nothing}) f as
+    setITs (EFCall (myfvs,mytruefvs) f as) =
+        EFCall (ITFCall{fvs = myfvs, 
+                        truefvs = mytruefvs, 
+                        typ = typUndef, 
+                        noHeapAlloc = False, 
+                        knownCall = Nothing}) f as
 
-    setITs (EPrimop myfvs p as) =
-        EPrimop (ITPrimop{fvs = myfvs, typ = typUndef, noHeapAlloc = False}) p as
+    setITs (EPrimop (myfvs,mytruefvs) p as) =
+        EPrimop (ITPrimop{fvs = myfvs, 
+                          truefvs = mytruefvs, 
+                          typ = typUndef, 
+                          noHeapAlloc = False}) p as
 
-instance SetITs (Alts [Var]) (Alts InfoTab) where
-    setITs (Alts myfvs alts name) = 
+instance SetITs (Alts ([Var],[Var])) (Alts InfoTab) where
+    setITs (Alts (myfvs,mytruefvs) alts name) = 
        let alts' = map setITs alts
-       in Alts (ITAlts {fvs = myfvs, typ = typUndef}) alts' name
+       in Alts (ITAlts {fvs = myfvs, 
+                        truefvs = mytruefvs, 
+                        typ = typUndef}) alts' name
 
-instance SetITs (Alt [Var]) (Alt InfoTab) where
-    setITs (ACon myfvs c vs e) = 
-        ACon (ITAlt{fvs = myfvs, 
+instance SetITs (Alt ([Var],[Var])) (Alt InfoTab) where
+    setITs (ACon (myfvs,mytruefvs) c vs e) = 
+        ACon (ITAlt{fvs = myfvs, truefvs = mytruefvs, 
                     typ = typUndef,
                     dconMap = Map.empty, 
                     tconMap = Map.empty}) c vs (setITs e)
-    setITs (ADef myfvs v e) = 
-        ADef (ITAlt{fvs = myfvs, 
+    setITs (ADef (myfvs,mytruefvs) v e) = 
+        ADef (ITAlt{fvs = myfvs, truefvs = mytruefvs, 
                     typ = typUndef,
                     dconMap = error "ADef dconMap undefined",
                     tconMap = error "ADef tconMap undefined"}) v (setITs e)
 
-instance SetITs (Obj [Var]) (Obj InfoTab) where
-    setITs o@(FUN myfvs vs e n) = 
+instance SetITs (Obj ([Var],[Var])) (Obj InfoTab) where
+    setITs o@(FUN (myfvs,mytruefvs) vs e n) = 
         FUN (makeIT o) vs (setITs e) n
 
-    setITs o@(PAP myfvs f as n) = 
+    setITs o@(PAP (myfvs,mytruefvs) f as n) = 
         PAP (makeIT o) f as n
 
-    setITs o@(CON myfvs c as n) = 
+    setITs o@(CON (myfvs,mytruefvs) c as n) = 
         CON (makeIT o) c as n
 
-    setITs o@(THUNK myfvs e n) = 
+    setITs o@(THUNK (myfvs,mytruefvs) e n) = 
         THUNK (makeIT o) (setITs e) n
 
-    setITs o@(BLACKHOLE myfvs n) = 
+    setITs o@(BLACKHOLE (myfvs,mytruefvs) n) = 
         BLACKHOLE (makeIT o) n
 
 
 -- ****************************************************************
 
 -- could factor some of this but generates warnings
-makeIT :: Obj [Var] -> InfoTab
-makeIT o@(FUN fvs vs e n) = 
+makeIT :: Obj ([Var],[Var]) -> InfoTab
+makeIT o@(FUN (fvs,truefvs) vs e n) = 
     Fun { arity = length vs,
           name = n,
           fvs = fvs,
+          truefvs = truefvs,
           typ = typUndef,
 --          entryCode = showITType o ++ "_" ++ n
           entryCode = "fun_" ++ n
         }
 
-makeIT o@(PAP fvs f as n) =
+makeIT o@(PAP (fvs,truefvs) f as n) =
     Pap { args = as,
           name = n,
           fvs = fvs,
+          truefvs = truefvs,
           typ = typUndef,
 --          entryCode = showITType o ++ "_" ++ n
           entryCode = "fun_" ++ n,
           knownCall = Nothing
         }
 
-makeIT o@(CON fvs c as n) =
+makeIT o@(CON (fvs,truefvs) c as n) =
     Con { con = c,
           tag = -1, -- this gets set later
           arity = length as,
           args = as,
           name = n,
           fvs = fvs,
+          truefvs = truefvs,
           typ = typUndef,
 --          entryCode = showITType o ++ "_" ++ n
           entryCode = "stg_constructorcall",
@@ -239,18 +272,20 @@ makeIT o@(CON fvs c as n) =
           tconMap = error "ADef tconMap undefined"
         }
 
-makeIT o@(THUNK fvs e n) =
+makeIT o@(THUNK (fvs,truefvs) e n) =
     Thunk { name = n,
             fvs = fvs,
+            truefvs = truefvs,
             typ = typUndef,
 --            entryCode = showITType o ++ "_" ++ n
             entryCode = "fun_" ++ n
           }
 
-makeIT o@(BLACKHOLE fvs n) =
+makeIT o@(BLACKHOLE (fvs,truefvs) n) =
     Blackhole { name = n,
                 typ = typUndef,
                 fvs = fvs,
+                truefvs = truefvs,
 --                entryCode = showITType o ++ "_" ++ n
                 entryCode = "stg_error"
               }

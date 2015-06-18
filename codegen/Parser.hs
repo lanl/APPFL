@@ -60,19 +60,14 @@ parse inp = case defdatsp $ lexer inp of
                      then error ("leftover input on parse: " ++ show (snd $ head xs))
                      else splitDefs $ fst $ head xs
 
-splitDefs :: [Def a] -> ([TyCon], [Obj a])
-splitDefs d = (getDatas d, getObjs d)
-                   
-getObjs :: [Def a] -> [Obj a]
-getObjs = concatMap getObj
-          where getObj (ObjDef o) = [o]
-                getObj (DataDef _) = []
-
-getDatas :: [Def a] -> [TyCon]
-getDatas = concatMap getData
-           where getData (ObjDef _) = []
-                 getData (DataDef t) = [t]
-
+splitDefs xs = (getDatas xs, getObjs xs)
+getObjs [] = []
+getObjs (ObjDef x : xs) = x : getObjs xs
+getObjs (_:xs) = getObjs xs
+getDatas [] = []
+getDatas (DataDef x : xs) = x : getDatas xs
+getDatas (_:xs) = getDatas xs
+ 
 defdatsp :: Parser Token [Def ()]
 defdatsp = sepbyp defdatp (symkindp SymSemi) `thenxp` optlp (symkindp SymSemi)
 
@@ -80,8 +75,9 @@ defdatp :: Parser Token (Def ())
 defdatp = (defp `usingp` ObjDef) `altp` (tyconp `usingp` DataDef)
 
 tyconp :: Parser Token TyCon
-tyconp = (kwkindp KWdata `xthenp` kwkindp KWunboxed `xthenp` tyconp' False)
-         `altp` (kwkindp KWdata `xthenp` tyconp' True)
+tyconp = kwkindp KWdata `xthenp` 
+          (kwkindp KWunboxed `xthenp` tyconp' False
+         `altp` tyconp' True)
 
 tyconp' :: Bool -> Parser Token TyCon  
 tyconp' boxed = (conp `thenp`
@@ -95,9 +91,8 @@ dataconp boxed = (conp `thenp` manyp (monop boxed))
                  `usingp` uncurry (DataCon boxed)
 
 monop :: Bool -> Parser Token Monotype
-monop boxed = ((symkindp SymLParen `xthenp` (monop' boxed)
-              `thenxp` symkindp SymRParen) `altp`
-              (monop' boxed)) 
+monop boxed = (symkindp SymLParen `xthenp` monop' boxed `thenxp` symkindp SymRParen) 
+              `altp` monop' boxed
 
 monop' :: Bool -> Parser Token Monotype
 monop' boxed = (varp `usingp` MVar) `altp`
@@ -288,8 +283,8 @@ indents n ss = map (indent n) ss
 -- instance Unparser n Atom where
 showa (Var v) = v
 showa (LitI i) = show i
-showa (LitB False) = "False#"
-showa (LitB True) = "True#"
+showa (LitB False) = "false#"
+showa (LitB True) = "true#"
 
 
 -- instance Unparser [Atom] where
