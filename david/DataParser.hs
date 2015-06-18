@@ -1,3 +1,5 @@
+{-# LANGUAGE NamedFieldPuns #-}
+
 {-
 data type declaration grammar goes here
 
@@ -7,55 +9,65 @@ from STG code as a basis (i.e. a little hacky)
 -}
 
 import DavidParser
-import AST
+import Tokenizer
 import ADT
-import Data.Char
 
 -- make it easy to group parsed and unparsed input together for later filtration
-data Parsed a = Parsed (Def a) | Unparsed String deriving (Show)
+data Parsed a = Parsed (Def ()) | Unparsed a deriving (Show)
 
---parse = manyGreedy (orEx dataDecl
+testParse fileName =
+  do
+    file <- readFile fileName
+    let ((parsed,_):_) = parse $ tokenize file
+    mapM_ (putStrLn.show) parsed
+    return ()
 
-dataDecl = litString "data" `xthen` boxedDecl `orEx` unboxedDecl `using` (either id id) `thenx` manyWhite `thenx` (literal ';')
+failTok p m inp = case p inp of
+  [] -> error $
+        "\nError" ++ (if null inp then ":" else " at " ++ show (head inp) ++":") ++ m
+  x  -> x
 
-boxedDecl :: Parser Char (Parsed a)
-boxedDecl = boxedConID `ordered` tyVars `thenx` eqSym `ordered` boxedConstrs `using` f
-  where f ((con, tyVars), dataCons) = Parsed (DataDef (TyCon True con tyVars dataCons))
-
--- match the type constructor name for a boxed constructor
-boxedConID :: Parser Char Con
-boxedConID = conID
--- consider a lookahead here? boxedDecl requires that eqSym follow boxedCon, which should
--- ensure that no '#' following the ID exists, but there is an incongruence between this
--- definition and what really *should* consitute a valid boxed type constructor name
-
--- upper case character followed by adjacent alphanumerics.
--- TODO: Worry about other valid symbols?
-conID = uprChr `ordered` manyGreedy alphaNum `using` cons
-
-unboxedCon :: Parser Char Con
-unboxedCon = conID `ordered` litString "#" `using` (uncurry (++)) 
-
-uprChr = satisfy isUpper
-alphaNum = satisfy isAlphaNum
-
-tyVars :: Parser Char [TyVar]
-tyVars = manyGreedy (someWhite `xthen` tyVar)
-
-tyVar = satisfy isLower `ordered` manyGreedy alphaNum `using` cons
-
-boxedConstrs :: Parser Char [DataCon]
-boxedConstrs = accept [DataCon True "DataConName" [MVar "TyVar Name"]] -- placeholder
-
-unboxedDecl :: Parser Char (Parsed a)
-unboxedDecl = unboxedCon `ordered` tyVars `thenx` eqSym `ordered` unboxedConstrs `using` f
-  where f ((con, tyVars), dataCons) = Parsed (DataDef (TyCon False con tyVars dataCons))
-
-unboxedConstrs :: Parser Char [DataCon]
-unboxedConstrs = accept [DataCon False "DataConName#" [MVar "TyVar Name"]] -- placeholder
+parse = defs `thenx` (failTok eofP "EOF not found")
+defs = manyGreedy $ (dataDecl `orEx` notEOF) `using` (either Parsed Unparsed)
+  where notEOF inp = case inp of
+          (TokEOF{}:_) -> reject inp
+          (i:is)       -> accept i is
+          []           -> reject inp
+        
 
 
-eqSym = literal '=' `between` manyWhite
-whiteSp = anyEq " \n\t"
-manyWhite = manyGreedy whiteSp
-someWhite = someGreedy whiteSp
+dataDecl = dataP `xthen` tyConP `thenx` eqP `ordered` dataConP `thenx` scP `using` f
+  where f = DataDef . (uncurry ($))
+
+{- todo: implement cuts
+
+fail hard at several levels or only at "atomic" level?
+ - if all subparts pass, whole should pass
+ - more meaningful messages at lower levels
+
+fail in
+beforeVars if conNameP doesn't match
+datacon    if conNameP doesn't match
+arrowPart  if arrowP matches but following monoTyp does not
+
+-}
+
+tyConP = beforeVars `ordered` tyVars `using` (uncurry ($))
+  where
+    tyVars = optionally (manyGreedy varP) [] 
+    beforeVars = boxityP `ordered` conNameP `using` (uncurry TyCon)
+    boxityP = optionally (rsvP "unboxed" `using` (const False)) True
+    
+
+dataConP = datacon `ordered` optionally (barP `xthen` dataConP) [] `using` cons
+  where
+    datacon = conNameP `ordered` manyGreedy monoTyp `using` (uncurry DataCon)
+    monoTyp = mVar `orEx` nestedMT `using` (either id id)
+    nestedMT = inparens mFun `orEx` mCon `using` (either id id)
+    mFun = monoTyp `ordered` arrowPart `using` (uncurry MFun)
+    arrowPart = someGreedy (arrowP `xthen` monoTyp) `using` (foldr1 MFun)
+    mCon = simpleCon `orEx` inparens complexCon `using` (either ($[]) id)
+    simpleCon = conNameP `using` MCon
+    complexCon = conNameP `ordered` (manyGreedy monoTyp) `using` (uncurry MCon)
+    mVar = varP `orEx` inparens monoTyp `using` (either MVar id)
+
