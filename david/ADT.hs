@@ -58,19 +58,20 @@ import qualified Data.Map as Map
 
 data Def a = ObjDef (Obj a)
            | DataDef TyCon
-             deriving(Eq,Show)
+             deriving(Eq, Show)
 
 -- Boxed: data \Chi \alpha_1 .. \alpha_t =
 -- c_1 \tau_11 .. \tau_1a_1 | ... | c_n \tau_n1 .. \tau_na_1  
 -- Unboxed: data unboxed \Chi# \alpha_1 .. \alpha_t =
 -- c_1# \tau_11 .. \tau_1a_1 | ... | c_n# \tau_n1 .. \tau_na_1   
 data TyCon = TyCon Bool Con [TyVar] [DataCon]
-             deriving(Eq,Show)
-             
+             deriving(Eq, Show)
+
+                     
 -- Boxed True: c_x \tau_x1 .. \tau_xa_1 
 -- Boxed False: c_x# \tau_x1 .. \tau_xa_1  
 data DataCon = DataCon Con [Monotype] -- Removed Bool field
-               deriving(Eq,Show)
+               deriving(Eq, Show)
 
 type TyVar = String
 

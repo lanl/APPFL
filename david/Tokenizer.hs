@@ -3,24 +3,27 @@
 module Tokenizer
 (
   Token(..),
+  primopTable,
   tokenize,
   tokP,
   tokP1,
   tokP2,
   rsvP,
   conNameP,
-  varP,
+  varNameP,
+  intP,
+  fltP,
   dataP,
-  lparen,
-  rparen,
-  lbrace,
-  rbrace,
   arrowP,
   eqP,
   barP,
   scP,
   eofP,
-  inparens
+  primP,
+  inparensP,
+  inbraces,
+  failTok,
+  notEOF
 ) where
 
 import AST
@@ -146,9 +149,12 @@ reserveds =
     "case", "of", "let", "in", "data", "unboxed",
     "{", "}", "(", ")", ";", "|", "="
   ]
+  
 primops = fst $ unzip primopTable
 isReserved = flip elem $ reserveds
 isPrimop = flip elem $ primops
+
+                
                                         
 testTokenizer fileName = do
   file <- readFile fileName
@@ -293,8 +299,23 @@ conNameP :: Parser Token String
 conNameP = tokP2 (TokCon) `using` tks
 
 -- Match variable token, accept its String
-varP :: Parser Token String
-varP = tokP2 (TokId) `using` tks
+varNameP :: Parser Token String
+varNameP = tokP2 (TokId) `using` tks
+
+-- Match Integer Token, accept Int
+intP :: Parser Token Int
+intP = tokP2 (TokInt) `using` ivl
+
+
+-- Match Float Token, accept Float
+fltP :: Parser Token Float
+fltP = tokP2 (TokFlt) `using` fvl
+
+-- Match Primop Token, accept Primop
+primP :: Parser Token Primop
+primP = tokP2 (TokPrim) `using` getPrimop
+  where getPrimop (TokPrim s _) =
+          snd . head $ filter ((== s).fst) primopTable
 
 -- match common reserved symbols/words
 dataP = rsvP "data"
@@ -311,5 +332,20 @@ scP = rsvP ";"
 eofP = tokP1 (TokEOF)
 
 -- Given a parser, match parens surrounding what it would match
-inparens :: Parser Token v -> Parser Token v
-inparens p = xthenx lparen p rparen
+inparensP :: Parser Token v -> Parser Token v
+inparensP p = xthenx lparen p rparen
+
+-- similar, for braces,
+inbraces :: Parser Token v -> Parser Token v
+inbraces p = xthenx lbrace p rbrace
+
+
+failTok p m inp = case p inp of
+  [] -> error $
+        "\nError" ++ (if null inp then ":" else " at " ++ show (head inp) ++":") ++ m
+  x  -> x
+
+notEOF inp = case inp of
+              (TokEOF{}:_) -> reject inp
+              (i:is)       -> accept i is
+              []           -> reject inp
