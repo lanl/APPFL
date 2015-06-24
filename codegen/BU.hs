@@ -81,13 +81,13 @@ unify (MFun l r) (MFun l' r') = unifys [l,r] [l',r']
 
 unify m1@(MCon b1 c1 ms1) m2@(MCon b2 c2 ms2)
     | b1 /= b2 = error $ "unify boxedness mismatch! "  ++ show m1 ++ " " ++ show m2
-    | c1 /= c2 = error "unify constructor mismatch!"
+    | c1 /= c2 = error $ "unify constructor mismatch! " ++ show c1 ++ " " ++ show c2
     | otherwise = unifys ms1 ms2
 
 unify (MPrim UBInt) (MCon False "Int_h" []) = idSubst
 unify (MCon False "Int_h" []) (MPrim UBInt) = idSubst
-unify (MPrim UBBool) (MCon False "Bool_h" []) = idSubst
-unify (MCon False "Bool_h" []) (MPrim UBBool) = idSubst
+-- unify (MPrim UBBool) (MCon False "Bool_h" []) = idSubst
+-- unify (MCon False "Bool_h" []) (MPrim UBBool) = idSubst
 
 -- if they're equal there's nothing to do
 unify m1 m2 | m1 == m2 = idSubst
@@ -134,6 +134,7 @@ instantiate (PPoly as m) =
        let s = Map.fromList $ zip as ms
        return $ apply s m
 
+generalize :: Substitutable a => a -> Monotype -> Polytype
 generalize ms t = 
     let as = Set.toList $ Set.difference (freevars t) (freevars ms)
     in PPoly as t

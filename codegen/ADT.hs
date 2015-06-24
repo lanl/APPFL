@@ -84,6 +84,9 @@ data Monotype = MVar TyVar
               | MPrim BuiltinType
                 deriving(Eq,Ord)
 
+
+precalate s ss = concatMap (s++) ss
+
 instance Show Polytype where
     show (PPoly [] m) = show m
     show (PPoly xs m) = "forall " ++ (intercalate "," xs) ++ "." ++ show m
@@ -93,8 +96,9 @@ instance Show Monotype where
     show (MVar v) = v
     show (MFun m1@(MFun _ _) m2) = "(" ++ show m1 ++ ") -> " ++ show m2
     show (MFun m1 m2) = show m1 ++ " -> " ++ show m2
-    show (MCon boxed con ms) = con ++ (if boxed then " [B] " else " [U] ") ++
-                               intercalate " " (map show ms)
+    show (MCon boxed con ms) = con ++ 
+                               (if boxed then " [B] " else " [U] ") ++
+                               "(" ++ intercalate ") (" (map show ms) ++ ")"
     show (MPrim p) = show p
 
 data TyConParam = TyConParam {tarity :: Int, 
@@ -123,7 +127,11 @@ type ConMaps = (TyConMap, DataConMap)
 getTyConDefFromConstructor dconMap tconMap con = 
     let Just dataConParam = Map.lookup con dconMap :: Maybe DataConParam
         tyConName = dtycon dataConParam :: Con
-        Just tyConParam = Map.lookup tyConName tconMap :: Maybe TyConParam
+        tyConParam = case Map.lookup tyConName tconMap of
+                       Just x -> x
+                       Nothing -> error $ "getTyConDefFromConstructor: no such " 
+                                          ++ tyConName
+        -- Just tyConParam = Map.lookup tyConName tconMap :: Maybe TyConParam
     in tycon tyConParam :: TyCon
 
          

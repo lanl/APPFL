@@ -1,12 +1,12 @@
 data Unit = Unit;
-data Bool = B Bool#;
 data Int = I Int#;
 data List a = Nil | Cons a (List a);
+data Int = I Int#;
+data Bool = False | True;
+
 
 error = ERROR;
 unit = CON(Unit);
-true = CON(B true#);
-false = CON(B false#);
 nil = CON(Nil);
 zero = CON(I 0);
 one = CON(I 1);
@@ -19,6 +19,17 @@ seven = CON(I 7);
 eight = CON(I 8);
 nine = CON(I 9);
 ten = CON(I 10);
+
+false = CON(False);
+true = CON(True);
+
+eqInt = FUN(x y ->
+           case x of
+              { I i# ->
+                  case y of
+                     { I j# -> case ieq# i# j# of
+                                 { 0 -> false;
+                                   x -> true }}});
 
 multInt = FUN(x y ->
    case x of { 
@@ -68,3 +79,86 @@ foldl = FUN(f acc list ->
 -- lazy sum with a well-known space leak
 sum = FUN(list -> foldl plusInt zero list);
 
+zipWith = FUN(f list1 list2 ->
+   case list1 of {
+      Nil -> nil;
+      Cons h1 t1 -> 
+         case list2 of {
+            Nil -> nil;
+            Cons h2 t2 ->
+               let { newHead = THUNK(f h1 h2); 
+                     newTail = THUNK(zipWith f t1 t2);
+                     result = CON(Cons newHead newTail)
+               } in result
+         }
+   });
+
+seq = FUN(x y -> case x of { z -> y });
+
+forcelist = FUN(list ->
+   case list of {
+      Nil -> unit;
+      Cons h t -> let { rec = THUNK(forcelist t) } in seq h rec });
+
+take = FUN(n xs ->
+   case eqInt n zero of
+      { True -> nil;
+        False -> case xs of
+                 { Nil -> nil;
+                   Cons hd tl -> let { m = THUNK(subInt n one);
+                                       rec = THUNK(take m tl);
+                                       result = CON(Cons hd rec) } in result }});
+
+data Pair a b = Pair a b;
+
+repminlist =
+  FUN( xs ->
+       let {
+         mlist = THUNK( rep m xs );
+         m = THUNK( case mlist of {
+	              Pair m xxx -> m 
+                    } 
+                  )
+       } in case mlist of {
+	      Pair yyy list -> list
+            } 
+     );
+
+rep =
+  FUN( m xs ->
+       case xs of {
+         Nil ->
+           let {res = CON(Pair error nil)} in res ;
+         Cons y ys ->
+           case ys of {
+	     Nil -> let { mlist = CON(Cons m nil);
+                          res   = CON(Pair y mlist) }
+                    in res;
+             xxx -> case rep m ys of {
+	              Pair mp list -> 
+                       let { res1 = THUNK(minInt mp y);
+                             res2 = CON(Cons m list);
+                             res = CON(Pair res1 res2)
+                           } in res
+                    }
+           }
+       }
+  );
+
+minInt = FUN(x y ->
+   case x of { 
+      I i# -> case y of {
+               I j# -> case ile# i# j# of { 
+	                 0 -> y;
+			 q -> x }}});
+
+
+list2 = CON(Cons two nil);
+list12 = CON(Cons one list2);
+list212 = CON(Cons two list12);
+
+main3 = THUNK(let {result = THUNK(repminlist list212);
+                  f = THUNK(forcelist result)}
+             in seq f result);
+
+main2 = THUNK(minInt one two)

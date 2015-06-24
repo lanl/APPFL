@@ -6,6 +6,7 @@
 {-# LANGUAGE RecordWildCards      #-}
 
 module HMStg (
+  hmstgdebug,
   hmstg
 ) where
 
@@ -14,7 +15,6 @@ import AST
 import InfoTab
 import BU
 import SCC
-import Data.Set (Set)
 import qualified Data.Set as Set
 import qualified Data.Map as Map
 import Control.Monad.State
@@ -34,16 +34,24 @@ import Data.List (intercalate)
 -- EFCall - emd is function type
 
 -- this is the entry point
-hmstg ::  [Obj InfoTab] -> IO()
+hmstgdebug ::  [Obj InfoTab] -> IO()
 --          ([Assumption], [(TyVar, Monotype)], [Constraint], String)
 
 hmstg os0 = 
     let (os1,i1) = runState (dv os0) 0
-        (as,cs,os2) = buRec Set.empty os1 :: (Set.Set Assumption,
-                                              Set.Set Constraint,
-                                              [Obj InfoTab])
+        (as,cs,os2) = buNest Set.empty os1 :: (Set.Set Assumption,
+                                               Set.Set Constraint,
+                                               [Obj InfoTab])
         (subst, _) = runState (solve cs) i1
-    in putStrLn $ showObjs (backSub subst os2)
+    in co Set.empty $ backSub subst os2
+
+hmstgdebug os0 = 
+    let (os1,i1) = runState (dv os0) 0
+        (as,cs,os2) = buNest Set.empty os1 :: (Set.Set Assumption,
+                                               Set.Set Constraint,
+                                               [Obj InfoTab])
+        (subst, _) = runState (solve cs) i1
+    in putStrLn $ showObjs (co Set.empty $ backSub subst os2)
 {-
     in (Set.toList as,
         Map.toList subst,
@@ -65,7 +73,7 @@ class SetTyp a where
     getTyp :: a -> Monotype
 
 instance SetTyp (Expr InfoTab) where
-    -- is there a more idiomatic way to do this?
+    -- is there a more idiomatic way to do this?--if emd = omd etc.?
     setTyp m e = let it = emd e
                      it' = it{typ = m}
                  in e{emd = it'}
@@ -89,6 +97,37 @@ instance SetTyp (Obj InfoTab) where
                  in e{omd = it'}
     getTyp = typ . omd
 
+
+class SetCTyp a where
+    setCTyp :: Polytype -> a -> a
+    getCTyp :: a -> Polytype
+
+instance SetCTyp (Expr InfoTab) where
+    -- is there a more idiomatic way to do this?--if emd = omd etc.?
+    setCTyp m e = let it = emd e
+                      it' = it{ctyp = m}
+                  in e{emd = it'}
+    getCTyp = ctyp . emd
+
+instance SetCTyp (Alts InfoTab) where
+    setCTyp m e = let it = altsmd e
+                      it' = it{ctyp = m}
+                  in e{altsmd = it'}
+    getCTyp = ctyp . altsmd
+
+instance SetCTyp (Alt InfoTab) where
+    setCTyp m e = let it = amd e
+                      it' = it{ctyp = m}
+                  in e{amd = it'}
+    getCTyp = ctyp . amd
+
+instance SetCTyp (Obj InfoTab) where
+    setCTyp m e = let it = omd e
+                      it' = it{ctyp = m}
+                  in e{omd = it'}
+    getCTyp = ctyp . omd
+
+
 class DV a b where
     dv :: a -> State Int b
 
@@ -111,9 +150,9 @@ instance DV (Expr InfoTab) (Expr InfoTab) where
                         Pimod -> MPrim UBInt
                         Pimax -> MPrim UBInt
                         Pimin -> MPrim UBInt
-
-                        Pieq  -> MPrim UBBool
-                        x -> error $ "dv Eprimop" ++ show x
+                        Pieq  -> MPrim UBInt
+                        Pile  -> MPrim UBInt
+                        x -> error $ "HMStg.dv Eprimop " ++ show x
                         -- etc.
 
         in do ms <- mapM getMono eas
@@ -214,7 +253,8 @@ instance BU (Expr InfoTab) where
                     Pimax -> [MPrim UBInt, MPrim UBInt]
                     Pimin -> [MPrim UBInt, MPrim UBInt]
                     Pieq  -> [MPrim UBInt, MPrim UBInt]
-                    x -> error $ "bu EPrimop" ++ show x
+                    Pile  -> [MPrim UBInt, MPrim UBInt]
+                    x -> error $ "HMSth.bu EPrimop " ++ show x
             as = Set.fromList [(v,m) | (Var v, m) <- zzip eas ms] --drop LitX cases
             cs = Set.fromList [EqC m1 m2 | m1 <- ms | m2 <- pts]
         in (as, cs, setTyp m e)
@@ -224,22 +264,26 @@ instance BU (Expr InfoTab) where
             (asas, csas, ealts') = butAlts (getTyp ee') mtvs ealts
         in (Set.union asee asas,
             csee `Set.union` csas,
-            setTyp (getTyp ealts') e{ee = ee',
-                                     ealts = ealts'})
+            setTyp (getTyp ealts') e{ee = ee', ealts = ealts'})
 
     bu mtvs e@ELet{edefs,ee} = 
+        let (asdefs, csdefs, edefs') = buNest mtvs edefs
+            (asee, csee, ee') = bu mtvs ee
+            xts = map2 oname getTyp edefs'
+            (asee', cseen) = buIn mtvs xts asee
+        in (Set.union asdefs asee',
+            csdefs `Set.union` csee `Set.union` cseen,
+            setTyp (getTyp ee') e{edefs = edefs', ee = ee'})
+
+buNest mtvs os = 
         -- get strongly connected components
-        let fvss = map (Set.fromList . truefvs . omd) edefs
-            onamel = map oname edefs
+        let fvss = map (Set.fromList . truefvs . omd) os
+            onamel = map oname os
             localfvll = map Set.toList $ map (Set.intersection (Set.fromList onamel)) fvss
             sccnames = scc $ zip onamel localfvll -- sccnames is list of lists of onames
-            nameobjm = Map.fromList $ zip onamel edefs
+            nameobjm = Map.fromList $ zip onamel os
             sccobjs = map (map (lookupOrElse nameobjm)) sccnames
-            -- do the context free part            
-            (asee, csee, ee') = bu mtvs ee
-            -- (asdefs, csdefs, edefs') = unzip3 $ map (bu mtvs) edefs'
-            (as, cs, edefs') = foldr f (asee, csee, []) sccobjs
-        in (as, cs, setTyp (getTyp ee') e{edefs = edefs', ee = ee'})
+        in foldr f (Set.empty, Set.empty, []) sccobjs
             where
               f defs (as, cs, ds) =
                   let (asdefs, csdefs, defs') = buRec mtvs defs
@@ -248,11 +292,6 @@ instance BU (Expr InfoTab) where
                   in (Set.union asdefs as',
                       csdefs `Set.union` cs `Set.union` ncs,
                       defs'++ds)
-
-lookupOrElse m k =
-    case Map.lookup k m of
-      Nothing -> error "HMStg this shouldn't happen"
-      Just x  -> x
 
 --buRec discharges assumptions about the objects it defines
 buRec mtvs os =
@@ -273,6 +312,11 @@ buIn mtvs xts as =
         ncs = Set.fromList [ ImpC t' mtvs t 
                              | (x,t) <- xts, (x',t') <- Set.toList as, x == x' ]
     in (foldr dropAss as xi, ncs)
+
+lookupOrElse m k =
+    case Map.lookup k m of
+      Nothing -> error "HMStg this shouldn't happen"
+      Just x  -> x
 
 butAlts t0 mtvs e@Alts{alts} =
       let (ass, css, alts') = unzip3 $ map (butAlt t0 mtvs) alts
@@ -296,7 +340,13 @@ butAlt t0 mtvs e@ACon{amd,ac,avs,ae} =
         TyCon boxed tcon tvs dcs = 
             getTyConDefFromConstructor (dconMap amd) (tconMap amd) ac
         -- get data constructor definition C [Monotype]
-        [ms] = [ ms | DataCon b c ms <- dcs, c == ac ] -- ms :: [Monotype]
+        -- [ms] = [ ms | DataCon b c ms <- dcs, c == ac ] -- ms :: [Monotype]
+        ms = case [ ms | DataCon b c ms <- dcs, c == ac ] of
+               [ms] -> ms
+               _ -> error $ "butAlt: not finding " ++ ac ++ " in " ++ show dcs ++
+                    "\ndconMap: " ++ show (dconMap amd) ++ 
+                    "\ntconMap: " ++ show (tconMap amd)
+
         -- instantiate those Monotypes 
         MCon boxed' c ntvs = getTyp e --stashed by dv
         subst = Map.fromList $ zzip tvs ntvs
@@ -388,6 +438,59 @@ instance BackSub (Alt InfoTab) where
         setTyp (apply s $ getTyp a) a{ae = backSub s $ ae a}
 
 
+-- close over free type variables
+-- type variables closed at an outer scope (bvs) cannot be closed in an inner scope
+-- ovs - "open variables"
+
+class CO a where
+    co :: Set.Set TyVar -> a -> a
+
+instance CO a => CO [a] where
+    co bvs = map $ co bvs
+
+instance CO (Obj InfoTab) where
+    co bvs o = 
+        let m = getTyp o
+            fvs = freevars m
+            ovs = Set.difference fvs bvs
+            o' = setCTyp (PPoly (Set.toList ovs) m) o
+            bvs' = Set.union bvs ovs
+        in case o' of
+             o@FUN{e} -> o{e = co bvs' e}
+             o@THUNK{e} -> o{e = co bvs' e}
+             _ -> o'
+
+instance CO (Expr InfoTab) where
+    co bvs e =
+        let m = getTyp e
+            fvs = freevars m
+            ovs = Set.difference fvs bvs
+            e' = setCTyp (PPoly (Set.toList ovs) m) e
+            bvs' = Set.union bvs ovs
+        in case e' of
+             e@ELet{edefs,ee} -> e{edefs = co bvs' edefs, ee = co bvs' ee}
+             e@ECase{ee, ealts} -> e{ee = co bvs' ee, ealts = co bvs' ealts}
+             _ -> e'
+
+instance CO (Alts InfoTab) where
+    co bvs as@Alts{alts} = 
+        let m = getTyp as
+            fvs = freevars m
+            ovs = Set.difference fvs bvs
+            as' = setCTyp (PPoly (Set.toList ovs) m) as
+            bvs' = Set.union bvs ovs
+        in as'{alts = co bvs' alts}
+
+instance CO (Alt InfoTab) where
+    co bvs a =
+        let m = getTyp a
+            fvs = freevars m
+            ovs = Set.difference fvs bvs
+            a' = setCTyp (PPoly (Set.toList ovs) m) a
+            bvs' = Set.union bvs ovs
+        in a'{ae = co bvs' $ ae a}
+
+
 
 -- utilities
 map2 f g = map (\x -> (f x, g x))
@@ -424,7 +527,8 @@ indent n s = (take n $ repeat ' ') ++ s
 indents n ss = map (indent n) ss
 
 instance Show InfoTab where
-    show it = show $ typ it
+--    show it = show (ctyp it)
+    show it = show (truefvs it)
 
 -- instance Ppstg [Atom] where
 showas as = intercalate " " $ map show as
@@ -435,23 +539,23 @@ class Ppstg a where ppstg :: Int -> a -> [String]
 
 instance Show a => Ppstg (Expr a) where
     ppstg n (EAtom emd a) = 
-        indents n [show emd ++ show a]
+        indents n [show emd ++ " " ++ show a]
 
     ppstg n (EFCall emd f as) = 
-        indents n [show emd ++ f ++ " " ++ showas as]
+        indents n [show emd ++ " " ++ f ++ " " ++ showas as]
 
     ppstg n (EPrimop emd p as) = 
-        indents n [show emd ++ "PRIMOP " ++ showas as]
+        indents n [show emd ++ " PRIMOP " ++ show p ++ " " ++ showas as]
 
     ppstg n (ELet emd defs e) = 
-        let ss = [show emd ++ "let { %"] ++
+        let ss = [show emd ++ " let { %"] ++
                  ppstg 6 defs ++
                  ["} in %"] ++
                  ppstg 5 e
         in indents n ss
 
     ppstg n (ECase emd e alts) = 
-        let ss = [show emd ++ "case %"] ++ 
+        let ss = [show emd ++ " case %"] ++ 
                  ppstg 5 e ++
                  ["of { %"] ++
                  ppstg 5 alts ++
@@ -460,13 +564,13 @@ instance Show a => Ppstg (Expr a) where
 
 instance Show a => Ppstg (Alt a) where
     ppstg n (ACon amd c vs e) = 
-        let line = show amd ++ c ++ precalate " " vs ++ " -> %"
+        let line = show amd ++ " " ++ c ++ precalate " " vs ++ " -> %"
             ss = [line] ++
                  ppstg (length line - 1) e
         in indents n ss
 
     ppstg n (ADef amd v e) = 
-        let ss = [show amd ++ v ++ " -> %"] ++
+        let ss = [show amd ++ " " ++ v ++ " -> %"] ++
                  ppstg (4 + length v) e
         in indents n ss
 
@@ -476,27 +580,27 @@ instance Show a => Ppstg (Alts a) where
 
 instance Show a => Ppstg (Obj a) where
     ppstg n (FUN omd vs e _) = 
-        let ss = [show omd ++ "FUN( " ++ intercalate " " vs ++ " ->"] ++
+        let ss = [show omd ++ " FUN( " ++ intercalate " " vs ++ " ->"] ++
                  ppstg 2 e ++
                  ["%)"]
         in indents n ss
 
     ppstg n (PAP omd f as _) = 
-        let ss = [show omd ++ "PAP( " ++ f ++ " " ++ showas as ++ " )"]
+        let ss = [show omd ++ " PAP( " ++ f ++ " " ++ showas as ++ " )"]
         in indents n ss
 
     ppstg n (CON omd c as _) = 
-        let ss = [show omd ++ "CON( " ++ c ++ " " ++ showas as ++ " )"]
+        let ss = [show omd ++ " CON( " ++ c ++ " " ++ showas as ++ " )"]
         in indents n ss
 
     ppstg n (THUNK omd e _) = 
-        let ss = [show omd ++ "THUNK( %"] ++
+        let ss = [show omd ++ " THUNK( %"] ++
                  ppstg 7 e ++
                  ["% )"]
         in indents n ss
 
-    ppstg n (BLACKHOLE _ _) =
-        indents n ["BLACKHOLE"]
+    ppstg n (BLACKHOLE omd _) =
+        indents n [show omd ++ " BLACKHOLE"]
 
 instance Show a => Ppstg [Obj a] where
     -- ppstg n defs = intercalate ["\n"] $ map (ppstg n) defs

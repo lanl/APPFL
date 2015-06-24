@@ -34,6 +34,7 @@ import qualified Data.Set as Set
 data InfoTab = 
     Fun { 
       typ :: Monotype,
+      ctyp :: Polytype,
       name :: String,
       fvs :: [Var],
       truefvs :: [Var],
@@ -41,6 +42,7 @@ data InfoTab =
       arity :: Int}      
   | Pap { 
       typ :: Monotype,
+      ctyp :: Polytype,
       name :: String,
       fvs :: [Var],
       truefvs :: [Var],
@@ -49,6 +51,7 @@ data InfoTab =
       knownCall :: Maybe InfoTab} -- of the FUN
   | Con { 
       typ :: Monotype,
+      ctyp :: Polytype,
       name :: String,
       fvs :: [Var],
       truefvs :: [Var],
@@ -61,50 +64,59 @@ data InfoTab =
       dconMap :: DataConMap }
   | Thunk { 
       typ :: Monotype,
+      ctyp :: Polytype,
       name :: String,
       fvs :: [Var],
       truefvs :: [Var],
       entryCode :: String }
   | Blackhole {
       typ :: Monotype,
+      ctyp :: Polytype,
       name :: String,
       fvs :: [Var],
       truefvs :: [Var],
       entryCode :: String }
   | ITAtom { 
       typ :: Monotype,
+      ctyp :: Polytype,
       fvs :: [Var],
       truefvs :: [Var],
       noHeapAlloc :: Bool }
   | ITFCall { 
       typ :: Monotype,
+      ctyp :: Polytype,
       fvs :: [Var],
       truefvs :: [Var],
       noHeapAlloc :: Bool,
       knownCall :: Maybe InfoTab } -- of the FUN
   | ITPrimop { 
       typ :: Monotype,
+      ctyp :: Polytype,
       fvs :: [Var], 
       truefvs :: [Var],
       noHeapAlloc :: Bool }
   | ITLet { 
       typ :: Monotype,
+      ctyp :: Polytype,
       fvs :: [Var],
       truefvs :: [Var],
       noHeapAlloc :: Bool }
   | ITCase { 
       typ :: Monotype,
+      ctyp :: Polytype,
       fvs :: [Var],
       truefvs :: [Var],
       noHeapAlloc :: Bool }
   | ITAlt { 
       typ :: Monotype,
+      ctyp :: Polytype,
       fvs :: [Var],
       truefvs :: [Var],
       tconMap :: TyConMap, 
       dconMap :: DataConMap } 
   | ITAlts { 
       typ :: Monotype,
+      ctyp :: Polytype,
       fvs :: [Var],
       truefvs :: [Var] }
     deriving(Eq)   
@@ -147,6 +159,7 @@ itsOf = (map omd) . objsOf
 -- and [(String, Int)] is the state, the map String constructors to Int tags
 
 typUndef = error "typ set undefined in InfoTab.hs"
+ctypUndef = error "ctyp set undefined in InfoTab.hs"
 -- typUndef = PPoly [] (MBoxed (BTyCon "Z" []))
 
 class SetITs a b where 
@@ -163,6 +176,7 @@ instance SetITs (Expr ([Var],[Var])) (Expr InfoTab) where
         in ELet (ITLet {fvs = myfvs, 
                         truefvs = mytruefvs, 
                         typ = typUndef, 
+                        ctyp = ctypUndef, 
                         noHeapAlloc = False}) defs' e'
 
     setITs (ECase (myfvs,mytruefvs) e alts) = 
@@ -172,6 +186,7 @@ instance SetITs (Expr ([Var],[Var])) (Expr InfoTab) where
         in ECase (ITCase{fvs = myfvs, 
                          truefvs = mytruefvs, 
                          typ = typUndef, 
+                         ctyp = ctypUndef, 
                          noHeapAlloc = False}) e' alts'
 
     -- EAtom, EFCall, EPrimop, this doesn't work
@@ -181,12 +196,14 @@ instance SetITs (Expr ([Var],[Var])) (Expr InfoTab) where
         EAtom (ITAtom{fvs = myfvs, 
                       truefvs = mytruefvs, 
                       typ = typUndef, 
+                      ctyp = ctypUndef, 
                       noHeapAlloc = False}) a
 
     setITs (EFCall (myfvs,mytruefvs) f as) =
         EFCall (ITFCall{fvs = myfvs, 
                         truefvs = mytruefvs, 
                         typ = typUndef, 
+                        ctyp = ctypUndef, 
                         noHeapAlloc = False, 
                         knownCall = Nothing}) f as
 
@@ -194,6 +211,7 @@ instance SetITs (Expr ([Var],[Var])) (Expr InfoTab) where
         EPrimop (ITPrimop{fvs = myfvs, 
                           truefvs = mytruefvs, 
                           typ = typUndef, 
+                          ctyp = ctypUndef, 
                           noHeapAlloc = False}) p as
 
 instance SetITs (Alts ([Var],[Var])) (Alts InfoTab) where
@@ -201,17 +219,20 @@ instance SetITs (Alts ([Var],[Var])) (Alts InfoTab) where
        let alts' = map setITs alts
        in Alts (ITAlts {fvs = myfvs, 
                         truefvs = mytruefvs, 
-                        typ = typUndef}) alts' name
+                        typ = typUndef,
+                        ctyp = ctypUndef}) alts' name
 
 instance SetITs (Alt ([Var],[Var])) (Alt InfoTab) where
     setITs (ACon (myfvs,mytruefvs) c vs e) = 
         ACon (ITAlt{fvs = myfvs, truefvs = mytruefvs, 
                     typ = typUndef,
+                    ctyp = ctypUndef,
                     dconMap = Map.empty, 
                     tconMap = Map.empty}) c vs (setITs e)
     setITs (ADef (myfvs,mytruefvs) v e) = 
         ADef (ITAlt{fvs = myfvs, truefvs = mytruefvs, 
                     typ = typUndef,
+                    ctyp = ctypUndef,
                     dconMap = error "ADef dconMap undefined",
                     tconMap = error "ADef tconMap undefined"}) v (setITs e)
 
@@ -242,6 +263,7 @@ makeIT o@(FUN (fvs,truefvs) vs e n) =
           fvs = fvs,
           truefvs = truefvs,
           typ = typUndef,
+          ctyp = ctypUndef,
 --          entryCode = showITType o ++ "_" ++ n
           entryCode = "fun_" ++ n
         }
@@ -252,6 +274,7 @@ makeIT o@(PAP (fvs,truefvs) f as n) =
           fvs = fvs,
           truefvs = truefvs,
           typ = typUndef,
+          ctyp = ctypUndef,
 --          entryCode = showITType o ++ "_" ++ n
           entryCode = "fun_" ++ n,
           knownCall = Nothing
@@ -266,6 +289,7 @@ makeIT o@(CON (fvs,truefvs) c as n) =
           fvs = fvs,
           truefvs = truefvs,
           typ = typUndef,
+          ctyp = ctypUndef,
 --          entryCode = showITType o ++ "_" ++ n
           entryCode = "stg_constructorcall",
           dconMap = error "ADef dconMap undefined",
@@ -277,6 +301,7 @@ makeIT o@(THUNK (fvs,truefvs) e n) =
             fvs = fvs,
             truefvs = truefvs,
             typ = typUndef,
+            ctyp = ctypUndef,
 --            entryCode = showITType o ++ "_" ++ n
             entryCode = "fun_" ++ n
           }
@@ -284,6 +309,7 @@ makeIT o@(THUNK (fvs,truefvs) e n) =
 makeIT o@(BLACKHOLE (fvs,truefvs) n) =
     Blackhole { name = n,
                 typ = typUndef,
+                ctyp = ctypUndef,
                 fvs = fvs,
                 truefvs = truefvs,
 --                entryCode = showITType o ++ "_" ++ n

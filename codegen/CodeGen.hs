@@ -207,12 +207,12 @@ cge env (EPrimop it op as) =
                    Pidiv -> cInfixIII " / "
                    Pimod -> cInfixIII " % "
 
-                   Pieq ->  cInfixIIB " == "
-                   Pine ->  cInfixIIB " != "
-                   Pilt ->  cInfixIIB " < "
-                   Pile ->  cInfixIIB " <= "
-                   Pigt ->  cInfixIIB " > "
-                   Pige ->  cInfixIIB " >= "
+                   Pieq ->  cInfixIII " == "
+                   Pine ->  cInfixIII " != "
+                   Pilt ->  cInfixIII " < "
+                   Pile ->  cInfixIII " <= "
+                   Pigt ->  cInfixIII " > "
+                   Pige ->  cInfixIII " >= "
 
                    Pineg -> cPrefixII " -"
 
@@ -249,6 +249,7 @@ cge env (ELet it os e) =
 
 cge env (ECase _ e a@(Alts italts alts aname)) = 
     let eboxed = case typ $ emd e of MCon False _ _ -> False
+                                     MPrim _        -> False
                                      _              -> True
     in do (ecode, efunc) <- cge env e
           (acode, afunc) <- cgalts env a eboxed

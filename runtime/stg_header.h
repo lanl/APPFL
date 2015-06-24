@@ -29,6 +29,7 @@ Maybe stgc.h would be a better name.
 
 extern FnPtr start();
 
+/*
 // false = CON(False)
 InfoTab it_false =
   { .name               = "false",
@@ -59,7 +60,7 @@ Obj sho_true =
   { .objType = CON,
     .infoPtr = &it_true,
   };
-
+*/
 // stg_case_not_exhaustive = FUN( x ->  );
 DEFUN2(stg_case_not_exhaustive, self, x) {
   fprintf(stderr, "stg_case_not_exhaustive: ");
