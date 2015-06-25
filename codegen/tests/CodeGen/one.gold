@@ -31,8 +31,9 @@ Obj sho_one =
   .infoPtr   = &it_one,
   .objType   = CON,
   .ident     = "one",
-    .payload[ 0 ].argType = INT,
-    .payload[ 0 ].i = 1,
+  .payload = {
+{.argType = INT, .i = 1},
+},
   };
 
 void registerSHOs() {

@@ -165,7 +165,7 @@ DEFUN2(stgApply, N, f) {
     // excess < 0, too few args
     } else { 
       fprintf(stderr, "stgApply FUN too few args\n");
-      Obj *pap = stgNewHeapObj();
+      Obj *pap = stgNewHeapObj(32);                       //WIP -dp
       *pap = *f.op;  // quick and dirty
       pap->objType = PAP;
       // copy args to just after fvs
@@ -288,7 +288,7 @@ DEFUN2(stgApply1, f, x1) {
       // build a PAP -- CAREFUL, COULD TRIGGER GC
       // need to solve this problem for "let" in general
       // one solution would be to have GC only possibly triggered by STGCALL
-      Obj *pap = stgNewHeapObj();
+      Obj *pap = stgNewHeapObj(32);                                            // WIP -dp
       *pap = *f.op;  // quick and dirty
       pap->objType = PAP;
       pap->argCount = 1;

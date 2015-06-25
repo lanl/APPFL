@@ -37,9 +37,12 @@ const char *objTypeNames[] = {
   "FORWARD",
 };
 
-Obj* stgNewHeapObj() {
+
+// TODO: 64 bit align
+Obj* stgNewHeapObj(int payloadSize) {
   Obj *curp = (Obj *)stgHP;
   stgHP = (Obj *)stgHP + 1;
+  //stgHP = (Obj *)((char *)stgHP + sizeof(Obj) + payloadSize*sizeof(PtrOrLiteral));
   return curp;
 }
 
@@ -203,7 +206,7 @@ void showStgValPretty(PtrOrLiteral v) {
     showStgObjRecPretty(v.op);
     break;
   default:
-    fprintf(stderr,"undefined PtrOrLiteral.tag!\n");
+    fprintf(stderr,"undefined PtrOrLiteral.tag! tag=%d\n", v.argType);
     exit(0);
   }
 }

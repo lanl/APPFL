@@ -252,18 +252,22 @@ cge env (ECase _ e a@(Alts italts alts aname)) =
                                      _              -> True
     in do (ecode, efunc) <- cge env e
           (acode, afunc) <- cgalts env a eboxed
-          let pre = "stgPushCont( (Cont)\n" ++
+          let name  = "ccont_" ++ aname
+              pre = "Cont " ++ name ++ " =\n" ++
                  "  { .retAddr = &" ++ aname ++ ",\n" ++
                  "    .objType = CASECONT,\n" ++
-                 "    .ident = \"CCont for " ++ aname ++ "\",\n" ++
+                 "    .ident = \"CCont for " ++ aname ++ "\",\n" ++ 
+                 "  };\n" ++
                  (if fvs italts == [] then
                     "    // no FVs\n"
                   else
                     "    // load payload with FVs " ++ 
                             intercalate " " (fvs italts) ++ "\n") ++
-                         indent 4 (loadPayloadFVs env (fvs italts)) ++
-                 "  });\n"
-          return (pre ++ ecode ++ acode, efunc ++ afunc)
+                         indent 2 (loadPayloadFVs2 env (fvs italts) name)
+                
+                 
+              cont = "stgPushCont(" ++ name ++ ");\n"
+          return (pre ++ cont ++ ecode ++ acode, efunc ++ afunc)
 
 -- ADef only or unary sum => no C switch
 cgalts env (Alts it alts name) boxed = 
@@ -356,8 +360,8 @@ cgalt env switch scrutName (ADef it v e) =
 buildHeapObj env o =
     let (size, rval) = heapObjRVal env o
         name = oname o
-        decl = "Obj *" ++ name ++ " = stgNewHeapObj();\n"
-        code = "*" ++ name ++ " = " ++ rval  ++ ";\n"
+        decl = "Obj *" ++ name ++ " = stgNewHeapObj(" ++ show size ++ ");\n"
+        code = "*" ++ name ++ " = " ++ rval  -- ++ ";\n"
     in (size, decl, code)
 
 heapObjRVal env o =
@@ -368,38 +372,44 @@ heapObjRVal env o =
             "      { .objType = " ++ showObjType (omd o) ++ ",\n" ++
             "        .infoPtr = &it_" ++ name ++ ",\n" ++
             "        .ident = \"" ++ name ++ "\",\n" ++
-                     indent 8 guts ++
-            "      }"
+            "      };\n" ++ guts
     in (size, code)
 
 bho env (FUN it vs e name) =
-    (1, loadPayloadFVs env (fvs it))
+    (1, loadPayloadFVs env (fvs it) name )
 
 bho env (PAP it f as name) =
-    (1, loadPayloadFVs env (fvs it) ++ loadPayloadAtoms env as (length $ fvs it))
+    (1, loadPayloadFVs env (fvs it)  name ++ loadPayloadAtoms env as (length $ fvs it) name)
 
 bho env (CON it c as name) = 
     let size = 1
-        code = concat [".payload[" ++ show i ++ "] = " ++ 
-                       cga env a ++ ", // " ++ showa a ++ "\n"
+        code = concat [name ++ "->payload[" ++ show i ++ "] = " ++ 
+                       cga env a ++ "; // " ++ showa a ++ "\n"
                        | (i,a) <- indexFrom 0 as ]
     in (size, code)
 
 bho env (THUNK it e name) =
-    (1, loadPayloadFVs env (fvs it))
+    (1, loadPayloadFVs env (fvs it) name)
 
 bho env (BLACKHOLE it name) = (1,"")
 
 
-loadPayloadFVs env fvs =
-    concat [".payload[" ++ show i ++ "] = " ++ 
-            cgv env v ++ ", // " ++ v ++ "\n"
+--TODO: ptr vs  non-ptr
+loadPayloadFVs2 env fvs name =
+    concat [name ++ ".payload[" ++ show i ++ "] = " ++ 
+            cgv env v ++ "; // " ++ v ++ "\n"
+            | (i,v) <- indexFrom 0 fvs ]
+
+
+loadPayloadFVs env fvs name =
+    concat [name ++ "->payload[" ++ show i ++ "] = " ++ 
+            cgv env v ++ "; // " ++ v ++ "\n"
             | (i,v) <- indexFrom 0 fvs ]
 
 -- load atoms into payload starting at index ind
-loadPayloadAtoms env as ind =
-    concat [".payload[" ++ show i ++ "] = " ++ 
-            cga env a ++ ", //" ++ showa a ++ "\n"
+loadPayloadAtoms env as ind name =
+    concat [name ++ "->payload[" ++ show i ++ "] = " ++ 
+            cga env a ++ "; //" ++ showa a ++ "\n"
             | (i,a) <- indexFrom ind as]
 
 showas as = intercalate " " $ map showa as
@@ -411,4 +421,5 @@ showa (LitF f) = show f
 showa (LitD d) = show d
 showa (LitC c) = show c
 
+indexFrom :: Int -> [a] -> [(Int, a)]
 indexFrom i xs = zip [i..] xs
