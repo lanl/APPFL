@@ -23,7 +23,7 @@ ctest: FORCE
 clean: FORCE
 	cd codegen && cabal clean
 	cd runtime && $(MAKE) clean
-	cd test && $(MAKE) clean
+	@(cd test && rm -f *.stg.c 2>/dev/null)
 	rm -rf $(build_dir)
 
 FORCE:
