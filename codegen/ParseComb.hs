@@ -7,6 +7,7 @@ module ParseComb (
   altp,
   thenp,
   cutp,
+  errorp,
   usingp,
   onep,
   optlp,
@@ -68,6 +69,9 @@ cutp msg p inp =
     case p inp of
       [] -> error $ "cut error " ++ msg ++ " " ++ (intercalate " " $ map show $ take 15 inp)
       r -> r
+
+errorp msg inp =
+    error $ "errorp: " ++ msg ++ " " ++ (intercalate " " $ map show $ take 15 inp)
 
 -- just transform output
 usingp :: Parser t1 t2 -> (t2 -> t3) -> Parser t1 t3

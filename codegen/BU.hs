@@ -15,12 +15,15 @@ module BU (
   solve
 ) where
 
-import AST
+import AST(BuiltinType(..)) -- for hack in unify
+
 import ADT
 import Data.Set (Set)
 import qualified Data.Set as Set
 import qualified Data.Map as Map
 import Control.Monad.State
+-- import AST(Var) -- shouldn't depend on AST
+type Var = String
 
 type Subst = Map.Map TyVar Monotype 
 idSubst = Map.empty
@@ -44,10 +47,12 @@ instance Substitutable Monotype where
     freevars (MVar v)     = Set.singleton v
     freevars (MFun m1 m2) = Set.union (freevars m1) (freevars m2)
     freevars (MCon boxed con ms) = foldr Set.union Set.empty $ map freevars ms
+    freevars _ = Set.empty
 
     apply s m@(MVar tv)         = Map.findWithDefault m tv s
     apply s (MFun m1 m2)        = MFun (apply s m1) (apply s m2)
     apply s (MCon boxed con ms) = MCon boxed con $ map (apply s) ms
+    apply s m                   = m
 
 instance Substitutable [Monotype] where
     freevars = foldr (Set.union . freevars) Set.empty
@@ -74,10 +79,19 @@ unify t (MVar v) = bind v t
 -- just a special type constructor
 unify (MFun l r) (MFun l' r') = unifys [l,r] [l',r']
 
-unify (MCon b1 c1 ms1) (MCon b2 c2 ms2)
-    | b1 /= b2 = error "unify boxedness mismatch!"
-    | c1 /= c2 = error "unify constructor mismatch!"
+unify m1@(MCon b1 c1 ms1) m2@(MCon b2 c2 ms2)
+    | b1 /= b2 = error $ "unify boxedness mismatch! "  ++ show m1 ++ " " ++ show m2
+    | c1 /= c2 = error $ "unify constructor mismatch! " ++ show c1 ++ " " ++ show c2
     | otherwise = unifys ms1 ms2
+
+unify (MPrim UBInt) (MCon False "Int_h" []) = idSubst
+unify (MCon False "Int_h" []) (MPrim UBInt) = idSubst
+-- unify (MPrim UBBool) (MCon False "Bool_h" []) = idSubst
+-- unify (MCon False "Bool_h" []) (MPrim UBBool) = idSubst
+
+-- if they're equal there's nothing to do
+unify m1 m2 | m1 == m2 = idSubst
+            | otherwise = error $ "unify:  can't unify " ++ show m1 ++ " " ++ show m2
 
 unifys [] [] = idSubst
 unifys (x:xs) [] = error "unifys length mismatch!"
@@ -120,6 +134,7 @@ instantiate (PPoly as m) =
        let s = Map.fromList $ zip as ms
        return $ apply s m
 
+generalize :: Substitutable a => a -> Monotype -> Polytype
 generalize ms t = 
     let as = Set.toList $ Set.difference (freevars t) (freevars ms)
     in PPoly as t
@@ -169,7 +184,7 @@ instance ActiveVars Constraint where
 instance ActiveVars [Constraint] where
     activeVars cs = foldr Set.union Set.empty $ map activeVars cs
 
-type Assumption = (Var, Monotype) -- really just TyVar?
+type Assumption = (Var, Monotype)
 
 -- Set, not Map, because a var may have multiple assumptions
 -- alternatively, Map.Map Var (Set.Set Monotype)

@@ -3,7 +3,6 @@ module Lexer (
   Keyword(..),
   Object(..),
   Symbol(..),
-  BuiltinType(..),
   lexer
 ) where
 
@@ -31,13 +30,8 @@ data Symbol = SymArrow
             | SymPipe
               deriving (Eq,Show)
               
-data BuiltinType = UBInt
-                 | UBDouble             
-                 | UBBool             
-                   deriving (Eq,Show)           
-
 data Token = BIInt Int
-           | BIBool Bool  -- True#, False# live here for now
+--           | BIBool Bool  -- true#, false# live here for now
            | BIDouble Double
            | Ident String
            | KW Keyword
@@ -71,10 +65,11 @@ bigtab =
      ("data",      KW KWdata),
      ("unboxed",   KW KWunboxed),
 
---     ("True#",     BIBool True),
---     ("False#",    BIBool False),
+--     ("true_h",    BIBool True),
+--     ("false_h",   BIBool False),
      
      ("Int#",      BIT UBInt),
+     ("Bool#",     BIT UBBool),
      ("Double#",   BIT UBDouble)
     ]
              
