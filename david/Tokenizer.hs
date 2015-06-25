@@ -5,29 +5,10 @@ module Tokenizer
   Token(..),
   primopTable,
   tokenize,
-  tokP,
-  tokP1,
-  tokP2,
-  rsvP,
-  conNameP,
-  varNameP,
-  intP,
-  fltP,
-  dataP,
-  arrowP,
-  eqP,
-  barP,
-  scP,
-  eofP,
-  primP,
-  inparensP,
-  inbraces,
-  failTok,
-  notEOF
+  stripComments
 ) where
 
 import AST
-import DavidParser
 import Data.Char
 import Control.Monad
 
@@ -153,14 +134,7 @@ reserveds =
 primops = fst $ unzip primopTable
 isReserved = flip elem $ reserveds
 isPrimop = flip elem $ primops
-
-                
-                                        
-testTokenizer fileName = do
-  file <- readFile fileName
-  mapM_ (putStrLn.show) (tokenize file)
-  return ()
-
+                                                       
 tokenize :: String -> [Token]
 tokenize ls = aux None (0,0) (stripComments ls) []
   where
@@ -185,7 +159,7 @@ tokenize ls = aux None (0,0) (stripComments ls) []
           _    -> aux None newPs xs (fromTokenState st:toks)
 
 
-    -- reserved defined in table above. They always terminate a token-in-progress
+    -- reserved defined in table above. Single chars always terminate a token-in-progress
       | isReserved [x] =
         let sym = TokRsv [x] (l,c) in
          case st of
@@ -210,7 +184,7 @@ tokenize ls = aux None (0,0) (stripComments ls) []
                         "\nRead " ++ show x)
 
 
-    -- single two-char non-alpha keyword (I think). This could be generalized for others
+    -- only two-char non-alpha keyword (I think). This could be generalized for others
     -- might need a new class of token-in-progress, depending on the characters
       | arrowHead xl =
         let arw = TokRsv (take 2 xl) (l,c) in
@@ -231,7 +205,10 @@ tokenize ls = aux None (0,0) (stripComments ls) []
     {- not sure how to handle this yet
     thoughts:
        in haskell: read ".12" :: Float --> no parse
-                   1 + .12 --> compile time error
+                   read "12." :: Float --> no parse
+                   1 + .12 --> compile error
+                   1 + 12. --> compile xerror
+                   
        is this due to the many roles '.' plays in haskell?
        (Module "accessor", function composition, numeric decimal point)
        GHC dumps STG code with *lots* of Module access via '.'
@@ -266,6 +243,7 @@ tokenize ls = aux None (0,0) (stripComments ls) []
       | otherwise = TokId x
 
 
+{-
 --------------------------------- Parsers for Tokens ---------------------------
 
 
@@ -349,3 +327,4 @@ notEOF inp = case inp of
               (TokEOF{}:_) -> reject inp
               (i:is)       -> accept i is
               []           -> reject inp
+-}

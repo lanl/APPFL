@@ -73,7 +73,6 @@ prog       ::= <def>*  -- is an empty program still a valid program? I think so.
 
 
 
-The simple Parser combinators are at the end of the file
 
 -}
 module DavidParser
@@ -103,22 +102,48 @@ module DavidParser
   between,
   optionally,
 ) where
-         
 
-type Parser inp val = [inp] -> [(val, [inp])]
-
-
-
-
-
-
-
-
-
--------------------------------- general Parser combinators ------------------------
+import Tokenizer
+import AST
+import ADT
+import qualified Data.Map as Map
+import Data.List (groupBy)
 
 -- uncurried cons is used on several occasions to combine the results of ordered parsers
 cons = uncurry (:)
+
+-- make it easy to group parsed and unparsed input together for later filtration
+data Parsed a b = Parsed a | Unparsed b deriving (Show)
+type Parser inp val = [inp] -> [(val, [inp])]
+
+
+fromParsed :: [Parsed a b] -> ([a],[b])
+fromParsed =
+  let f x (ps, us) = case x of
+        (Parsed p)   -> (p:ps, us)
+        (Unparsed u) -> (ps, u:us)
+  in foldr f ([],[])
+
+catAdjParsed = map catParsed . groupParsed
+
+groupParsed =
+  let f (Parsed _) (Parsed _)     = True
+      f (Unparsed _) (Unparsed _) = True
+      f _ _                           = False
+  in groupBy f
+
+-- The following two functions 
+-- from a list of Parsed objects, concatenate all the Parsed values into list inside a
+-- single Parsed object
+catParsed :: [Parsed a b] -> (Parsed [a] c)
+catParsed = Parsed . fst . fromParsed
+
+-- from a list of Parsed objects, concatenate all the Unparsed values into a list inside
+-- a single Unparsed object
+catUnparsed :: [Parsed a b] -> (Parsed c [b])
+catUnparsed = Unparsed . snd . fromParsed
+
+-------------------------------- general Parser combinators ------------------------
 
 
 -- accept parser returns its arguments (value "parsed") and the entire input
@@ -241,3 +266,294 @@ optionally p alt inp = case p inp of
   [] -> accept alt inp
   x -> x
 
+
+-- "sequencing" parser, from the parsing chapter in Hutton's Programming in Haskell
+-- this can be used like a more general form of the ordered parser by defining f
+-- as a lambda and nesting sequences therein until, at the "bottom" lambda expression,
+-- all the bound variables from the lambdas (the result returned by the parser on the left
+-- of the sequencing operator) may be used to compose some kind of output
+-- e.g.
+-- literal 'a' >>> \v1 -> literal 'b' >>> \v2 -> accept (v1, v2)
+-- describes a parser that matches "ab" and returns it as a tuple ('a','b')
+(>>>) :: Parser i v1 -> (v1 -> Parser i v2) -> Parser i v2
+p >>> f = \i -> case p i of
+                 [] -> reject i
+                 ((v,o):_) -> (f v) o
+
+-- cutP accepts a parser and an error message and fails hard, displaying the message
+-- and some context information if the parser does not match input
+cutP :: Show i => Parser i v -> String -> Parser i v
+cutP p m inp = case p inp of
+  [] -> error $
+        "\nError" ++ (if null inp then ":" else " at " ++ show (head inp) ++":") ++ m
+  x  -> x
+                 
+----------------------------- Parsers for Tokens ---------------------------
+
+
+tokP :: Token -> Parser Token Token
+tokP _ [] = reject []
+tokP t1 (t2:inp) =
+  case (t1,t2) of
+   (TokInt _ _  , TokInt _ _ ) -> accept t2 inp
+   (TokFlt _ _  , TokFlt _ _ ) -> accept t2 inp
+   (TokId _ _   , TokId _ _  ) -> accept t2 inp
+   (TokCon _ _  , TokCon _ _ ) -> accept t2 inp
+   (TokPrim _ _ , TokPrim _ _) -> accept t2 inp
+   (TokRsv x _  , TokRsv y _ ) -> if x == y then accept t2 inp else reject inp
+   (TokEOF _    , TokEOF _   ) -> accept t2 inp
+   _                           -> reject inp
+
+
+-- hacky way of ignoring warnings when simply trying to match equality in Token
+-- data constructors (don't want to make instance of Eq for this)
+tokP1 :: (a -> Token) -> Parser Token Token
+tokP1 t = tokP $ t undefined
+tokP2 :: (a -> b -> Token) -> Parser Token Token
+tokP2 t = tokP1 $ t undefined
+
+-- Match a TokRsv with string s
+rsvP :: String -> Parser Token Token
+rsvP s = tokP1 $ TokRsv s
+
+-- Match constructor token, accept its String
+conNameP :: Parser Token String
+conNameP = tokP2 (TokCon) `using` tks
+
+-- Match variable token, accept its String
+varNameP :: Parser Token String
+varNameP = tokP2 (TokId) `using` tks
+
+-- Match Integer Token, accept Int
+intP :: Parser Token Int
+intP = tokP2 (TokInt) `using` ivl
+
+-- Match Float Token, accept Float
+fltP :: Parser Token Float
+fltP = tokP2 (TokFlt) `using` fvl
+
+-- Match Primop Token, accept Primop
+primP :: Parser Token Primop
+primP = tokP2 (TokPrim) `using` getPrimop
+  where getPrimop (TokPrim s _) =
+          snd . head $ filter ((== s).fst) primopTable
+
+-- match common reserved symbols/words
+dataP = rsvP "data"
+lparenP = rsvP "("
+rparenP = rsvP ")"
+lbraceP = rsvP "{"
+rbraceP = rsvP "}"
+arrowP = rsvP "->"
+eqP = rsvP "="
+barP = rsvP "|"
+scP = rsvP ";"
+
+-- match EOF Token
+eofP = tokP1 (TokEOF)
+
+-- Given a parser, match parens surrounding what it would match
+inparensP :: Parser Token v -> Parser Token v
+inparensP p = xthenx lparenP p rparenP
+
+-- similar, for braces,
+inbracesP :: Parser Token v -> Parser Token v
+inbracesP p = xthenx lbraceP p rbraceP
+
+-- accept anything that a parser does not match
+notP :: Parser i v -> Parser i i
+notP _ [] = reject []
+notP p ii@(i:is) = case p ii of
+              [] -> accept i is
+              x  -> reject ii
+
+
+---------------------------- Object Parsing -------------------------------
+
+prog = many'
+       (orExList [
+           objDefSC `using` (Parsed . (:[]) . ObjDef),
+           dataDefP `using` (Parsed . (:[]) . DataDef),
+           notP eofP `using` (Unparsed. (:[]))
+           ]
+       )
+       `thenx` cutP eofP "EOF not found"
+       
+     
+objDefP =
+  varNameP >>> \name ->
+  eqP >>> \_ ->
+  objP >>> \f -> accept $ f name
+
+objDefSC = objDefP `thenx` scP -- semicolon at end
+
+objP :: Parser Token (String -> Obj ())
+objP = orExList [funP, papP, conP, thunkP, errorP]
+
+-- helper abstracts the TokRsv "CAPS" lparenP [definition] rparenP pattern
+objPat name p = rsvP name `xthen` (inparensP p)
+
+funP :: Parser Token (String -> Obj ())
+funP = objPat "FUN" $
+       some' varNameP >>> \v1 ->
+       arrowP >>> \_ ->
+       exprP >>> \v2 ->
+                  accept $ FUN () v1 v2
+
+papP :: Parser Token (String -> Obj ())
+papP = objPat "PAP" $
+       varNameP >>> \f ->
+       many' atomP >>> \atoms ->
+                        accept $ PAP () f atoms 
+                     
+
+conP :: Parser Token (String -> Obj ())
+conP = objPat "CON" $
+       conNameP >>> \nm ->
+       many' atomP >>> \atoms ->
+                        accept $ CON () nm atoms
+
+thunkP :: Parser Token (String -> Obj ())
+thunkP = objPat "THUNK" $
+         exprP >>> \e ->
+                    accept $ THUNK () e
+
+errorP :: Parser Token (String -> Obj ())
+errorP = rsvP "ERROR" >>> \_ -> accept $ BLACKHOLE ()
+
+exprP :: Parser Token (Expr ())
+exprP = orExList [eFCallP, eAtomP, ePrimopP, eLetP, eCaseP]
+
+eAtomP = atomP `using` (EAtom ())
+
+atomP :: Parser Token Atom
+atomP = orExList [
+  varNameP `using` Var,
+  intP `using` LitI,
+  --boolP `using` LitB,
+  fltP `using` LitF
+  --dblP `using` LitD,
+  --chrP `using` LitC
+  ]
+
+eFCallP :: Parser Token (Expr ())
+eFCallP =
+  varNameP >>> \fn ->
+  some' atomP >>> \args ->
+                   accept $ EFCall () fn args
+
+ePrimopP :: Parser Token (Expr ())
+ePrimopP =
+  primP >>> \op ->
+  some' atomP >>> \args ->
+                   accept $ EPrimop () op args
+
+eLetP :: Parser Token (Expr ())
+eLetP =
+  rsvP "let" >>> \_ ->
+  lbraceP >>> \_ ->
+  objDefP >>> \d ->
+  many' (scP `xthen` objDefP) >>> \ds ->
+  rbraceP >>> \_ ->
+  rsvP "in" >>> \_ ->
+  exprP >>> \exp ->
+             accept $ ELet () (d:ds) exp
+
+
+eCaseP =
+  rsvP "case" >>> \_ ->
+  exprP >>> \exp ->
+  rsvP "of" >>> \_ ->
+  lbraceP >>> \_ ->
+  altsP >>> \alts ->
+  rbraceP >>> \_ ->
+               accept $ ECase () exp alts
+  
+altsP =
+  let name = error "this alts not given a name!"
+  in
+   altP >>> \a ->
+   many' (scP `xthen` altP) >>> \as ->
+                                 accept $ Alts () (a:as) name
+
+altP =
+   orExList [varNameP >>> \v ->
+                          accept $ ADef () v,
+             conNameP >>> \con ->
+             many' varNameP >>> \vs ->
+                                 accept $ ACon () con vs
+            ] >>> \alt ->
+   arrowP >>> \_ ->
+   exprP >>> \exp ->
+              accept $ alt exp -- apply pap'd Alt constructor to Expr
+
+
+
+---------------------------- DataDef parsing ---------------------------
+
+
+dataDefP =
+  dataP >>> \_ ->
+  optionally (rsvP "unboxed" `using` (const False)) True >>> \boxed ->
+  conNameP >>> \con ->
+  many' varNameP >>> \tyvars ->
+  dataConP >>> \dc ->
+  many' (barP `xthen` dataConP) >>> \dcs ->
+                                     accept $ TyCon boxed con tyvars (dc:dcs)
+                    
+dataConP =
+  conNameP >>> \con ->
+  many' monoTypP >>> \mTypes ->
+                      accept $ DataCon con mTypes
+
+monoTypP = orExList [mVarP, mFunP, mConP, inparensP monoTypP]
+
+mVarP = varNameP `using` MVar
+
+mFunP =
+  inparensP $
+  monoTypP >>> \m ->
+  some' (arrowP `xthen` monoTypP) >>> \ms ->
+                                      accept $ foldr1 MFun (m:ms)
+                                      
+mConP = orExList [conNameP >>> \con ->
+                                accept $ MCon con [],
+                  lparenP >>> \_ ->
+                  conNameP >>> \con ->
+                  many' monoTypP >>> \mts ->
+                                      accept $ MCon con mts]
+                               
+                                
+
+
+
+{- old functions for building Params objects and ConMaps
+toParamPairs t@(TyCon boxed tnm vars dCons) =
+  let tPair =
+        (tnm,
+         TyConParam { tarity = length vars,
+                      ttag   = error "no tag set",
+                      tboxed = boxed,
+                      tdatacons = map dName dCons,
+                      tycon = t})
+      dHelp tyName boxed d@(DataCon dnm mtypes) =
+        (dnm,
+         DataConParam { darity = length mtypes,
+                        dtag = error "no tag set",
+                        dboxed = boxed,
+                        dtycon = tyName,
+                        datacon = d})
+      dPairs = map (dHelp tnm boxed) dCons
+      dName (DataCon n _) = n
+  in
+   (tPair, dPairs)
+
+
+toConMaps tycons =
+  let
+    pairs = map toParamPairs tycons
+    tconMap = Map.fromList $ map fst pairs
+    dconMap = Map.fromList $ concatMap snd pairs
+  in
+   (tconMap, dconMap)
+-}
