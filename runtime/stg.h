@@ -91,17 +91,34 @@ typedef struct {
 } FUNfields;
 
 typedef struct {
+} PAPfields;
+
+typedef struct {
   int tag;
   int arity;
   char conName[64];
 } CONfields;
 
 typedef struct {
-} PAPfields;
+  //
+} THUNKfields;
 
 typedef struct {
   //
-} THUNKfields;
+} UPDCONTfields;
+
+typedef struct {
+  //
+} CASECONTfields;
+
+typedef struct {
+  //
+} CALLCONTfields;
+
+typedef struct {
+  //
+} FUNCONTfields;
+
 
 // InfoTab
 struct _InfoTab {
@@ -115,6 +132,10 @@ struct _InfoTab {
     PAPfields papFields;
     CONfields conFields;
     THUNKfields thunkFields;
+    UPDCONTfields updcontFields;
+    CASECONTfields casecontFields;
+    CALLCONTfields callcontFields;
+    FUNCONTfields funcontFields;
   };
 };
 

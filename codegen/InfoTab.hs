@@ -119,6 +119,10 @@ data InfoTab =
       ctyp :: Polytype,
       fvs :: [Var],
       truefvs :: [Var] }
+  | ITUpdcont, 
+  | ITCasecont, 
+  | ITCallcont, 
+  | ITFuncont,
     deriving(Eq)   
 
 class ObjsOf a b where 
