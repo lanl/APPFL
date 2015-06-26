@@ -1,0 +1,5 @@
+output = THUNK(let { result = THUNK(plusInt x y);
+                   x = CON (I 2);
+                   y = CON(I 4); } in result);
+
+main = THUNK(eqInt output six);
