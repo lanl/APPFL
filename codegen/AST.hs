@@ -8,6 +8,8 @@ module AST (
   Obj(..),
   Primop(..),
   primopTab,
+  show,
+  BuiltinType(..)
 ) where
 
 {-  grammar
@@ -43,6 +45,13 @@ module AST (
 
 -}
 
+-- not really the place for this, maybe need to factor
+-- the common types into a module
+data BuiltinType = UBInt
+                 | UBDouble             
+                 | UBBool             
+                   deriving (Eq,Show,Ord)           
+
 type Var = String
 type Con = String
 
@@ -52,7 +61,16 @@ data Atom = Var  Var
           | LitF Float
           | LitD Double
           | LitC Char
-            deriving(Eq,Show)
+            deriving(Eq)
+
+instance Show Atom where
+    show (Var v) = v
+    show (LitI i) = show i
+    show (LitB False) = "false#"
+    show (LitB True) = "true#"
+    show (LitF f) = show f ++ "(f)"
+    show (LitD d) = show d ++ "(d)"
+    show (LitC c) = [c]
 
 data Expr a = EAtom   {emd :: a,                    ea :: Atom} --,      ename::String}
             | EFCall  {emd :: a, ev :: Var,         eas :: [Atom]} --,   ename::String}

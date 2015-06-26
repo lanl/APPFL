@@ -1,7 +1,5 @@
 output = THUNK(let { x = CON (I 2);
                    y = CON(I 4);
-                   result = CON(Cons x y) } in result);
+                   result = THUNK(plusInt x y) } in result);
 
--- test head
-hout = THUNK(head output);
-main = THUNK(eqInt hout two);
+main = THUNK(eqInt output six);

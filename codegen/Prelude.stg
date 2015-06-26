@@ -1,12 +1,11 @@
 data Unit = Unit;
-data Bool = B Bool#;
 data Int = I Int#;
 data List a = Nil | Cons a (List a);
+data Bool = False | True;
+
 
 error = ERROR;
 unit = CON(Unit);
-true = CON(True);
-false = CON(False);
 nil = CON(Nil);
 zero = CON(I 0);
 one = CON(I 1);
@@ -20,11 +19,23 @@ eight = CON(I 8);
 nine = CON(I 9);
 ten = CON(I 10);
 
+false = CON(False);
+true = CON(True);
+
+eqInt = FUN(x y ->
+           case x of
+              { I i# ->
+                  case y of
+                     { I j# -> case ieq# i# j# of
+                                 { 0 -> false;
+                                   x -> true }}});
+
 multInt = FUN(x y ->
    case x of { 
       I i# -> case y of { 
                I j# -> case imul# i# j# of { 
                          x# -> let { result = CON (I x#) } in result }}});
+
 
 plusInt = FUN(x y ->
    case x of { 
@@ -38,14 +49,6 @@ subInt = FUN(x y ->
                   case y of
                      { I j# -> case isub# i# j# of
                                  { x# -> let { result = CON (I x#) } in result }}});
-
-eqInt = FUN(x y ->
-           case x of
-              { I i# ->
-                  case y of
-                     { I j# -> case ieq# i# j# of
-                                 { False# -> false;
-                                   True# -> true  }}});
 
 append = FUN(l1 l2 ->
             case l1 of
@@ -62,15 +65,6 @@ map = FUN(f list ->
       Nil -> nil;
       Cons h t -> let { x = THUNK(f h); rec = THUNK(map f t); res = CON(Cons x rec) } in res
    });
-
-take = FUN(n xs ->
-   case eqInt n zero of
-      { True# -> nil;
-        False# -> case xs of
-                 { Nil -> nil;
-                   Cons hd tl -> let { m = THUNK(subInt n one);
-                                       rec = THUNK(take m tl);
-                                       result = CON(Cons hd rec) } in result }});
 
 head = FUN(xs -> case xs of { Cons hd tl -> hd });
 tail = FUN(xs -> case xs of { Cons hd tl -> tl });
@@ -104,3 +98,13 @@ forcelist = FUN(list ->
    case list of {
       Nil -> unit;
       Cons h t -> let { rec = THUNK(forcelist t) } in seq h rec });
+
+take = FUN(n xs ->
+   case eqInt n zero of
+      { True -> nil;
+        False -> case xs of
+                 { Nil -> nil;
+                   Cons hd tl -> let { m = THUNK(subInt n one);
+                                       rec = THUNK(take m tl);
+                                       result = CON(Cons hd rec) } in result }});
+

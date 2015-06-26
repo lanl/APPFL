@@ -11,6 +11,7 @@ module Driver (
 import           ADT
 import           Analysis
 import           AST
+import           SCC
 import           CodeGen
 import           ConMaps
 import           InfoTab
@@ -18,9 +19,10 @@ import           HeapObj
 import           Parser
 import           Rename
 import           SetFVs
---import           HMStg
-
+import           HMStg
 import           Data.List
+import System.IO
+
 header :: String
 header = "#include \"stg_header.h\"\n"
         
@@ -74,7 +76,7 @@ normalizer :: String -> ([TyCon], [Obj ()])
 normalizer inp = let (tyCons, objs) = renamer inp
                  in (tyCons, normalize objs)
 
-freevarer :: String -> ([TyCon], [Obj [Var]])
+freevarer :: String -> ([TyCon], [Obj ([Var],[Var])])
 freevarer inp = let (tyCons, objs) = normalizer inp
                 in (tyCons, setFVsObjs stgRTSGlobals objs)
 
@@ -90,10 +92,19 @@ typer inp = let (tyCons, objs) = infotaber inp
 conmaper :: String -> ([TyCon], [Obj InfoTab])
 conmaper = setConmaps . typer
 
+typechecker inp = let (tycons, objs) = conmaper inp
+                  in (tycons, hmstg objs)
+
+tctest arg =
+  do
+    ifd <- openFile arg ReadMode
+    source <- hGetContents ifd
+    let (tycons, objs) = conmaper source
+    hmstgdebug objs
 
 
 codegener :: String -> Bool -> String
-codegener inp v = let (tycons, objs) = conmaper inp
+codegener inp v = let (tycons, objs) = typechecker inp
                       infotab = showITs objs
                       (shoForward, shoDef) = showSHOs objs
                       (funForwards, funDefs) = cgObjs objs stgRTSGlobals

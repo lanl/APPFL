@@ -60,19 +60,14 @@ parse inp = case defdatsp $ lexer inp of
                      then error ("leftover input on parse: " ++ show (snd $ head xs))
                      else splitDefs $ fst $ head xs
 
-splitDefs :: [Def a] -> ([TyCon], [Obj a])
-splitDefs d = (getDatas d, getObjs d)
-                   
-getObjs :: [Def a] -> [Obj a]
-getObjs = concatMap getObj
-          where getObj (ObjDef o) = [o]
-                getObj (DataDef _) = []
-
-getDatas :: [Def a] -> [TyCon]
-getDatas = concatMap getData
-           where getData (ObjDef _) = []
-                 getData (DataDef t) = [t]
-
+splitDefs xs = (getDatas xs, getObjs xs)
+getObjs [] = []
+getObjs (ObjDef x : xs) = x : getObjs xs
+getObjs (_:xs) = getObjs xs
+getDatas [] = []
+getDatas (DataDef x : xs) = x : getDatas xs
+getDatas (_:xs) = getDatas xs
+ 
 defdatsp :: Parser Token [Def ()]
 defdatsp = sepbyp defdatp (symkindp SymSemi) `thenxp` optlp (symkindp SymSemi)
 
@@ -80,8 +75,9 @@ defdatp :: Parser Token (Def ())
 defdatp = (defp `usingp` ObjDef) `altp` (tyconp `usingp` DataDef)
 
 tyconp :: Parser Token TyCon
-tyconp = (kwkindp KWdata `xthenp` kwkindp KWunboxed `xthenp` tyconp' False)
-         `altp` (kwkindp KWdata `xthenp` tyconp' True)
+tyconp = kwkindp KWdata `xthenp` 
+          (kwkindp KWunboxed `xthenp` tyconp' False
+         `altp` tyconp' True)
 
 tyconp' :: Bool -> Parser Token TyCon  
 tyconp' boxed = (conp `thenp`
@@ -95,9 +91,8 @@ dataconp boxed = (conp `thenp` manyp (monop boxed))
                  `usingp` uncurry (DataCon boxed)
 
 monop :: Bool -> Parser Token Monotype
-monop boxed = ((symkindp SymLParen `xthenp` (monop' boxed)
-              `thenxp` symkindp SymRParen) `altp`
-              (monop' boxed)) 
+monop boxed = (symkindp SymLParen `xthenp` monop' boxed `thenxp` symkindp SymRParen) 
+              `altp` monop' boxed
 
 monop' :: Bool -> Parser Token Monotype
 monop' boxed = (varp `usingp` MVar) `altp`
@@ -129,9 +124,9 @@ nump :: Parser Token Int
 nump ((BIInt i) : xs) = succeedp i xs
 nump _ = failp []
 
-boolp :: Parser Token Bool
-boolp (BIBool i : xs) = succeedp i xs
-boolp _ = failp []
+--boolp :: Parser Token Bool
+--boolp (BIBool i : xs) = succeedp i xs
+--boolp _ = failp []
 
 varp :: Parser Token String
 varp ((Ident s) : xs) = succeedp s xs
@@ -139,12 +134,13 @@ varp _ = failp []
 
 conp :: Parser Token String
 conp ((Ctor c) : xs) = succeedp c xs
+conp ((BIInt i) : xs) = succeedp (show i) xs
 conp _ = failp []
 
 atomp :: Parser Token Atom
 atomp = (nump `usingp` LitI) `altp` 
-        (varp `usingp` Var)  `altp`
-        (boolp `usingp` LitB)
+        (varp `usingp` Var)  -- `altp`
+--        (boolp `usingp` LitB)
 
 defsp :: Parser Token [Obj ()]
 defsp = sepbyp defp (symkindp SymSemi) `thenxp` optlp (symkindp SymSemi)
@@ -173,10 +169,11 @@ thunkobjp = objkindp OTHUNK `xthenp` cutp "thunkobjp_1"
             `usingp` \e ->  THUNK () e ""
 
 conobjp :: Parser Token (Obj ())
-conobjp = (objkindp OCON `xthenp` 
-          (symkindp SymLParen`xthenp` 
-           (conp `thenp` (manyp atomp `thenxp` symkindp SymRParen))))
-         `usingp` \(c,as) -> CON () c as ""
+conobjp = (objkindp OCON `xthenp` cutp "( expected" 
+          (symkindp SymLParen`xthenp` cutp "constructor expected"
+           (conp `thenp` cutp "atom or ) expected"
+            (manyp atomp `thenxp` symkindp SymRParen))))
+          `usingp` \(c,as) -> CON () c as ""
 
 funobjp :: Parser Token (Obj ())
 funobjp = (objkindp OFUN `xthenp` cutp "funobjp_1"
@@ -288,8 +285,8 @@ indents n ss = map (indent n) ss
 -- instance Unparser n Atom where
 showa (Var v) = v
 showa (LitI i) = show i
-showa (LitB False) = "False#"
-showa (LitB True) = "True#"
+showa (LitB False) = "false#"
+showa (LitB True) = "true#"
 
 
 -- instance Unparser [Atom] where
@@ -297,66 +294,70 @@ showas as = intercalate " " $ map showa as
 
 showFVs vs = "[" ++ intercalate " " vs ++ "] "
 
-class Unparser a where unparser :: Int -> a -> [String]
+instance Show [Var] where
+    show = showFVs
 
-instance Unparser (Expr [Var]) where
+class Unparser a where 
+    unparser :: Int -> a -> [String]
+
+instance Show a => Unparser (Expr a) where
     unparser n (EAtom fvs a) = 
-        indents n [showFVs fvs ++ showa a]
+        indents n [show fvs ++ showa a]
 
     unparser n (EFCall fvs f as) = 
-        indents n [showFVs fvs ++ f ++ " " ++ showas as]
+        indents n [show fvs ++ f ++ " " ++ showas as]
 
     unparser n (EPrimop fvs p as) = 
-        indents n [showFVs fvs ++ "PRIMOP " ++ showas as]
+        indents n [show fvs ++ "PRIMOP " ++ showas as]
 
     unparser n (ELet fvs defs e) = 
-        let ss = [showFVs fvs ++ "let { %"] ++
+        let ss = [show fvs ++ "let { %"] ++
                  unparser 6 defs ++
                  ["} in %"] ++
                  unparser 5 e
         in indents n ss
 
     unparser n (ECase fvs e alts) = 
-        let ss = [showFVs fvs ++ "case %"] ++ 
+        let ss = [show fvs ++ "case %"] ++ 
                  unparser 5 e ++
                  ["of { %"] ++
                  unparser 5 alts ++
                  ["%}"]
         in indents n ss
 
-instance Unparser (Alt [Var]) where
+instance Show a => Unparser (Alt a) where
     unparser n (ACon fvs c vs e) = 
-        let line = showFVs fvs ++ c ++ precalate " " vs ++ " -> %"
+        let line = show fvs ++ c ++ precalate " " vs ++ " -> %"
             ss = [line] ++
                  unparser (length line - 1) e
         in indents n ss
 
     unparser n (ADef fvs v e) = 
-        let ss = [showFVs fvs ++ v ++ " -> %"] ++
+        let ss = [show fvs ++ v ++ " -> %"] ++
                  unparser (4 + length v) e
         in indents n ss
 
-instance Unparser (Alts [Var]) where
-    unparser n (Alts {alts}) = 
+instance Show a => Unparser (Alts a) where
+    unparser n (Alts fvs alts _) = 
         concatMap (unparser n) alts
 
-instance Unparser (Obj [Var]) where
+instance Show a => Unparser (Obj a) where
     unparser n (FUN fvs vs e _) = 
-        let ss = [showFVs fvs ++ "FUN( " ++ intercalate " " vs ++ " ->"] ++
+        let ss = [show fvs ++ "FUN( " ++ intercalate " " vs ++ " ->"] ++
                  unparser 2 e ++
                  ["%)"]
         in indents n ss
 
     unparser n (PAP fvs f as _) = 
-        let ss = [showFVs fvs ++ "PAP( " ++ f ++ " " ++ showas as ++ " )"]
+        let ss = [show fvs ++ "PAP( " ++ f ++ " " ++ showas as ++ " )"]
         in indents n ss
 
     unparser n (CON fvs c as _) = 
-        let ss = [showFVs fvs ++ "CON( " ++ c ++ " " ++ showas as ++ " )"]
+        let ss = [show fvs ++ "CON( " ++ c ++ " " ++ showas as ++ " )"]
         in indents n ss
 
     unparser n (THUNK fvs e _) = 
-        let ss = [showFVs fvs ++ "THUNK( %"] ++
+        let ss = [show fvs ++ "THUNK( %"] ++
                  unparser 7 e ++
                  ["% )"]
         in indents n ss
@@ -364,7 +365,7 @@ instance Unparser (Obj [Var]) where
     unparser n (BLACKHOLE _ _) =
         indents n ["BLACKHOLE"]
 
-instance Unparser [Obj [Var]] where
+instance Show a => Unparser [Obj a] where
     -- unparser n defs = intercalate ["\n"] $ map (unparser n) defs
     unparser n defs = concatMap (unparserdef n) defs
 

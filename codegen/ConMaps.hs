@@ -16,23 +16,27 @@ import ADT
 import InfoTab
 
 -- starting tycon/datacon maps
-falseDatacon = DataCon False "False_h" []
-trueDatacon = DataCon False "True_h" []
-boolTycon = TyCon False "Bool_h" [] [falseDatacon,trueDatacon]
-intTycon = TyCon False "Int_h" [] []
+--falseDatacon = DataCon False "False_h" []
+--trueDatacon = DataCon False "True_h" []
+zeroDatacon = DataCon False "0" []
+oneDatacon = DataCon False "1" []
+
+-- boolTycon = TyCon False "Bool_h" [] [falseDatacon,trueDatacon]
+intTycon = TyCon False "Int_h" [] [zeroDatacon,oneDatacon]
 
 -- starting tycon map (just the builtin unboxed types)
 tyconmap :: TyConMap
-tyconmap = Map.insert "Bool_h" (TyConParam 0 0 False ["False_h","True_h"] boolTycon) --data unboxed Bool# = False# | True#;
-         $ Map.insert "Int_h"  (TyConParam 0 1 False [] intTycon)
+tyconmap = -- Map.insert "Bool_h" (TyConParam 0 0 False ["false_h","true_h"] boolTycon)$
+           Map.insert "Int_h"  (TyConParam 0 0 False [show i | i <- [0..100]] intTycon)
            Map.empty
 
 -- starting datacon map
 -- these tags must match what is in stg_header.h
 dataconmap :: DataConMap
-dataconmap = Map.insert "False_h" (DataConParam 0 0 False "Bool_h" falseDatacon) 
-           $ Map.insert "True_h"  (DataConParam 0 1 False "Bool_h" trueDatacon) 
-             Map.empty
+dataconmap = 
+    Map.fromList [(show i, 
+                   DataConParam 0 i False "Int_h" (DataCon False (show i) []))
+                   | i <- [0..100]]
 
 setConmaps :: ConMaps2IT t => ([TyCon], t) -> ([TyCon], t)
 setConmaps (tycons, objs) = let (tycons', conmaps) = buildConmaps tycons
@@ -47,7 +51,7 @@ buildConmaps inp = (tycons, execState (build [] tycons) (tyconmap, dataconmap))
                  where tycons = update (fst conmaps) inp
                        conmaps = execState (build [] inp) (tyconmap, dataconmap)
 
-class BuildConMaps t where build :: String -> t -> State ConMaps()
+class BuildConMaps t where build :: String -> t -> State ConMaps ()
                                                     
 instance BuildConMaps a => BuildConMaps [a] where
   build = mapM_ . build

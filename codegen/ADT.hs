@@ -16,7 +16,7 @@ module ADT (
   getTyConDefFromConstructor
 ) where
 
-import AST
+import AST(Con,BuiltinType,Obj)
 
 import Data.List(intercalate)
 --import Data.Maybe
@@ -57,8 +57,8 @@ import qualified Data.Map as Map
 
 
 data Def a = ObjDef (Obj a)
-           | DataDef TyCon
-             deriving(Eq,Show)
+          | DataDef TyCon
+            deriving(Eq,Show)
 
 -- Boxed: data \Chi \alpha_1 .. \alpha_t =
 -- c_1 \tau_11 .. \tau_1a_1 | ... | c_n \tau_n1 .. \tau_na_1  
@@ -81,7 +81,11 @@ data Polytype = PPoly [TyVar] Monotype
 data Monotype = MVar TyVar
               | MFun Monotype Monotype
               | MCon Bool Con [Monotype]
+              | MPrim BuiltinType
                 deriving(Eq,Ord)
+
+
+precalate s ss = concatMap (s++) ss
 
 instance Show Polytype where
     show (PPoly [] m) = show m
@@ -92,8 +96,10 @@ instance Show Monotype where
     show (MVar v) = v
     show (MFun m1@(MFun _ _) m2) = "(" ++ show m1 ++ ") -> " ++ show m2
     show (MFun m1 m2) = show m1 ++ " -> " ++ show m2
-    show (MCon boxed con ms) = con ++ (if boxed then " [B] " else " [U] ") ++
-                               intercalate " " (map show ms)
+    show (MCon boxed con ms) = con ++ 
+                               (if boxed then " [B] " else " [U] ") ++
+                               "(" ++ intercalate ") (" (map show ms) ++ ")"
+    show (MPrim p) = show p
 
 data TyConParam = TyConParam {tarity :: Int, 
                               ttag :: Int, 
@@ -121,7 +127,11 @@ type ConMaps = (TyConMap, DataConMap)
 getTyConDefFromConstructor dconMap tconMap con = 
     let Just dataConParam = Map.lookup con dconMap :: Maybe DataConParam
         tyConName = dtycon dataConParam :: Con
-        Just tyConParam = Map.lookup tyConName tconMap :: Maybe TyConParam
+        tyConParam = case Map.lookup tyConName tconMap of
+                       Just x -> x
+                       Nothing -> error $ "getTyConDefFromConstructor: no such " 
+                                          ++ tyConName
+        -- Just tyConParam = Map.lookup tyConName tconMap :: Maybe TyConParam
     in tycon tyConParam :: TyCon
 
          
