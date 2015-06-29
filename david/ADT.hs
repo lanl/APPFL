@@ -13,6 +13,7 @@ module ADT (
   DataConParam(..),
   DataConMap,
   ConMaps,
+  Con,
   getTyConDefFromConstructor
 ) where
 
@@ -20,8 +21,10 @@ import AST
 
 import Data.List(intercalate, (\\), find)
 import Data.Maybe (fromJust)
---import Control.Monad.State
+import Data.Char (isNumber)
 import qualified Data.Map as Map
+import PPrint
+--import Control.Monad.State
 
 {-
   Algebraic Datatypes:
@@ -128,81 +131,38 @@ getTyConDefFromConstructor dconMap tconMap con =
     in tycon tyConParam :: TyCon
 
 
+--------------- ADT Pretty Printing -----------------------
 
-----------------------------  Alternative interface to ConMap idea ---------------------------
+instance PPrint Monotype where
+  toDoc (MVar c) = text c
+  toDoc (MFun m1@MFun{} m2) = parens (toDoc m1) <+> arw <+> toDoc m2
+  toDoc (MFun m1 m2) = toDoc m1 <+> arw <+> toDoc m2
+  toDoc (MCon c ms) = (if null ms then (empty <>) else parens)
+                      (text c <+> hsep (map toDoc ms))
 
-type CMap = Map.Map Con TyCon
+  
+instance PPrint DataCon where
+  toDoc (DataCon con mTypes) = text con <+> hsep (map toDoc mTypes)
 
-toCMap tycons =
-  let tab = concatMap (\t-> zip (map dConName $ tycDCons t) (repeat t)) tycons
-  in Map.fromList tab
-      
-      
-conArity name conmap =
-  let cons = luDCons name conmap
-      (DataCon _ mtypes) = getDConInList name cons
-  in length mtypes
+instance PPrint TyCon where
+  toDoc (TyCon boxed name vars dCons) =
+    let
+      barify (x:xs) = x : (foldr ((:) . (bar<+>)) [] xs)
 
-getDConInList name cons = fromJust $ find ((==name).dConName) cons
+      lh = 
+        (if boxed then empty else text "unboxed") <+>
+        text name <+> hsep (map text vars) <+> equals
 
-dConName (DataCon n _) = n
+      -- nest 2 has the somewhat strange effect of "dedenting" by 2 here
+      -- not sure why
+      rh = vcat $ barify $ map ((nest 2).toDoc) dCons
 
+    in lh <+> rh
 
--- Given a list of Cons, check if they exhaust all the DataCon constructors
--- for their associated TyCon.
--- The head of the list is used to lookup the TyCon, but otherwise, validity
--- of constructors is *not* checked. (yet)
--- i.e. if given ["A","B","C"] as Cons and a TyCon has been made from
--- data T = A | B,
--- consExhaust will return True
-consExhaust :: [Con] -> CMap -> Bool
-consExhaust [] _ = False
-consExhaust cc@(c:cs) conmap =
-  let cons = luDCons c conmap
-  in  null $ map dConName cons \\ cc
+instance PPrint a => PPrint (Def a) where
+  toDoc (DataDef t) = text "data" <+> toDoc t
+  toDoc (ObjDef o) = toDoc o
 
--- Given a Con, get the list of DataCons associated with it
-luDCons :: Con -> CMap -> [DataCon]
-luDCons con conmap = tycDCons $ luTCon con conmap
+instance PPrint a => PPrint [Def a] where
+  toDoc xs = vcat $ punctuate semi $ map toDoc xs
 
-
--- Pull DataCons out of a TyCon
-tycDCons :: TyCon -> [DataCons]
-tycDCons (TyCon _ _ _ cons) = cons
-
-
--- Lookup a DataCon in the CMap by Con
-luDCon :: Con -> CMap -> DataCon
-luDCon name conmap = getDConInList name $ luDCons name conmap
-
--- lookup TyCon info by con in the CMap
--- info is a triple of the form
--- (TyCon name, TyCon vars, MonoTypes of the DataCon name given)
-luTConInfo :: Con -> CMap -> (Con,[TyVar],[MonoType])
-luTConInfo name conmap =
-   let (TyCon _ tname vars cons) = luTCon name conmap
-       (DataCon _ mTypes) = getDConInList name cons
-   in (tname, vars, mTypes)
-
--- lookup a TyCon by Con in the CMap
-luTCon :: Con -> CMap -> TyCon
-luTCon name conmap
-  | isBuiltInType name = getBuiltInType name
-  | otherwise = case Map.lookup name conmap of
-                 Nothing -> error "constructor not in conmap"
-                (Just t) -> t
-
-
--- Pending
-isBuildInType :: Con -> Bool
-isBuiltInType = const False
-getBuiltInType :: Con -> TyCon
-getBuildInType = undefined -- TyCon False "Int#" [] [DataCon "Int# []]
-
-
-
-
-
-         
- 
- 
