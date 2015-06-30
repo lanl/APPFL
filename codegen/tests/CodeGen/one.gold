@@ -1,31 +1,25 @@
 #include "stg_header.h"
 void registerSHOs();
 FnPtr fun_main();
-InfoTab it_main = 
-  { .name                = "main",
-    .fvCount             = 0,
-    .entryCode           = &fun_main,
-    .objType             = THUNK,
-  };
 InfoTab it_one = 
   { .name                = "one",
     .fvCount             = 0,
     .entryCode           = &stg_constructorcall,
     .objType             = CON,
     .conFields.arity     = 1,
-    .conFields.tag       = 2,
+    .conFields.tag       = 101,
     .conFields.conName   = "I",
   };
-
-extern Obj sho_main;
-extern Obj sho_one;
-
-Obj sho_main =
-{
-  .infoPtr   = &it_main,
-  .objType   = THUNK,
-  .ident     = "main",
+InfoTab it_main = 
+  { .name                = "main",
+    .fvCount             = 0,
+    .entryCode           = &fun_main,
+    .objType             = THUNK,
   };
+
+extern Obj sho_one;
+extern Obj sho_main;
+
 Obj sho_one =
 {
   .infoPtr   = &it_one,
@@ -34,10 +28,16 @@ Obj sho_one =
     .payload[ 0 ].argType = INT,
     .payload[ 0 ].i = 1,
   };
+Obj sho_main =
+{
+  .infoPtr   = &it_main,
+  .objType   = THUNK,
+  .ident     = "main",
+  };
 
 void registerSHOs() {
-  stgStatObj[stgStatObjCount++] = &sho_main;
   stgStatObj[stgStatObjCount++] = &sho_one;
+  stgStatObj[stgStatObjCount++] = &sho_main;
 }
 
 

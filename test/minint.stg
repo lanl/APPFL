@@ -1,10 +1,9 @@
-
 minInt = FUN(x y ->
    case x of { 
       I i# -> case y of {
                I j# -> case ile# i# j# of { 
-			        True# -> x;
-			        False# -> y }}});
+                        0 -> y;
+                        q -> x }}});
 
 output = THUNK(minInt two three);
 main = THUNK(eqInt output two);

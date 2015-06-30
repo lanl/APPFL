@@ -5,7 +5,7 @@ HEADERS=stg.h cmm.h stgcmm.h stgutils.h gc.h
 SOURCES=stg.c cmm.c stgcmm.c stgutils.c gc.c
 OBJECTS=$(SOURCES:.c=.o)
 LIB=libruntime.a
-ALL=$(LIB) main 
+ALL=$(LIB) 
 
 UNAME := $(shell uname)
 ifeq ($(UNAME), Linux)
@@ -18,9 +18,6 @@ all: $(ALL)
 
 $(LIB) : $(OBJECTS)
 	ar -rcs $(LIB) $(OBJECTS)
-
-main: main.o $(LIB) predefs.o predefs.h stg_header.h
-	$(CC) $(LDFLAGS) $(OBJECTS) main.o predefs.o -o $@ -L. -lruntime
 
 mymain: userprog.o $(LIB) stg_header.h
 	$(CC) $(LDFLAGS) $(OBJECTS) userprog.o -o $@ -L. -lruntime
