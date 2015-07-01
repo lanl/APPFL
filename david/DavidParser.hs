@@ -271,7 +271,8 @@ objDefSC :: Parser Token (Obj ())
 objDefSC = objDefP `thenx` semiP -- semicolon at end
 
 -- helper abstracts the TokRsv "CAPS" lparenP [definition] rparenP pattern
-objPat name p = rsvP name `xthen` (inparensP p)
+objPat name p = rsvP name `xthen`
+                (inparensP $ tokcutP "Expected valid object definition in parentheses" p)
 
 
 -- parse a function definition,
@@ -282,6 +283,7 @@ funP = objPat "FUN" $
        some' varNameP >>> \v1 ->
        tokcutP "Expected '->' to initiate function body" $
        arrowP >>> \_ ->
+       tokcutP "Expected valid expression in function body"
        exprP >>> \v2 ->
                   accept $ FUN () v1 v2
 
@@ -310,6 +312,7 @@ conP = objPat "CON" $
 -- accept a partially applied THUNK constructor
 thunkP :: Parser Token (String -> Obj ())
 thunkP = objPat "THUNK" $
+         tokcutP "Expected valid expression in thunk body"
          exprP >>> \e ->
                     accept $ THUNK () e
 
@@ -335,6 +338,7 @@ eAtomP = atomP `using` (EAtom ())
 eFCallP :: Parser Token (Expr ())
 eFCallP =
   varNameP >>> \fn ->
+  tokcutP "Expected one or more atoms as arguments to a function" $
   some' atomP >>> \args ->
                    accept $ EFCall () fn args
 
@@ -400,7 +404,7 @@ altP =
    tokcutP "Expected a '->' symbol after an alt's pattern"
    arrowP >>> \_ ->
    exprP >>> \exp ->
-              accept $ alt exp -- apply pap'd Alt constructor to Expr
+              accept $ alt exp -- fully apply Alt constructor to Expr
 
 
 -- parse an atom (variable or literal)
@@ -421,12 +425,17 @@ atomP = orExList [
 tyConP :: Parser Token TyCon
 tyConP =
   rsvP "data" >>> \_ ->
+
   optionally (rsvP "unboxed" `using` (const False)) True >>> \boxed ->
+  
   tokcutP "Expected valid constructor name in datatype declaration" $
   conNameP >>> \con ->
+  
   many' varNameP >>> \tyvars ->
+
   tokcutP "Expected '=' Token to bind datatype declaration"
   eqP >>> \_ ->
+
   tokcutP "Expected one or more data constructor definitions separated by '|'" $
   sepByP dataConP barP >>> \dcs ->
                             accept $ TyCon boxed con tyvars dcs
@@ -436,9 +445,12 @@ tyConP =
 dataConP :: Parser Token DataCon
 dataConP =
   conNameP >>> \con ->
+
   isNextP (orExList [semiP, eofP, barP]) >>> \b ->
-  -- this feels hacky and wrong
+
+  -- this feels hacky and wrong, but allows for a slightly better error message
   if b then accept $ DataCon con []
+
   else tokcutP "Expected valid monotypes in data constructor" $
        some' monoTypP >>> \mTypes ->
                            accept $ DataCon con mTypes
@@ -680,11 +692,16 @@ cutP m p inp = case p inp of
   [] -> error m
   x  -> x                 
 
+
+-- try to parse with given parser, but don't consume input
+-- if parser fails, peekP also fails
 peekP :: Parser i v -> Parser i v
 peekP p inp = case p inp of
                [] -> reject inp
                xs -> [(x,inp) | (x,_) <- xs]
 
+-- look ahead and don't consume input,
+-- accept True if given parser succeeds, False otherwise
 isNextP :: Parser i v -> Parser i Bool
 isNextP p inp =
   let b = not $ null $ p inp

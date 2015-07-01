@@ -1,6 +1,8 @@
 {-# LANGUAGE NamedFieldPuns #-}
 
-import           ConMaps
+-------------------------- MODIFIED 6.30 - David ---------------------------
+import           CMap
+
 import           Driver
 import           Parser
 
@@ -115,7 +117,9 @@ compile  (Options {optVerbose, optDumpParse, optNoPrelude, optOutput, optInput})
     case optDumpParse of
       True  -> do 
                  let (tycons, objs) = parse source
-                 writeFile (input ++ ".dump") ((show $ buildConmaps $ tycons) ++ (show objs))
+-------------------------- MODIFIED 6.30 - David ---------------------------
+                 writeFile (input ++ ".dump") ((show $ toCMap $ tycons) ++ (show objs))
+--                 writeFile (input ++ ".dump") ((show $ buildConmaps $ tycons) ++ (show objs))
       False -> do
                  let coutput = input ++ ".c"
                  let flags = " -std=gnu99 -L" ++ runtimeDir ++ " -I" ++ runtimeDir ++ " -lruntime"

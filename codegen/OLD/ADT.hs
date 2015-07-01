@@ -13,18 +13,15 @@ module ADT (
   DataConParam(..),
   DataConMap,
   ConMaps,
-  Con,
   getTyConDefFromConstructor
 ) where
 
-import AST
+import AST(Con,BuiltinType,Obj)
 
-import Data.List(intercalate, (\\), find)
-import Data.Maybe (fromJust)
-import Data.Char (isNumber)
-import qualified Data.Map as Map
-import PPrint
+import Data.List(intercalate)
+--import Data.Maybe
 --import Control.Monad.State
+import qualified Data.Map as Map
 
 {-
   Algebraic Datatypes:
@@ -60,22 +57,20 @@ import PPrint
 
 
 data Def a = ObjDef (Obj a)
-           | DataDef TyCon
-             deriving(Eq, Show)
+          | DataDef TyCon
+            deriving(Eq,Show)
 
 -- Boxed: data \Chi \alpha_1 .. \alpha_t =
 -- c_1 \tau_11 .. \tau_1a_1 | ... | c_n \tau_n1 .. \tau_na_1  
 -- Unboxed: data unboxed \Chi# \alpha_1 .. \alpha_t =
 -- c_1# \tau_11 .. \tau_1a_1 | ... | c_n# \tau_n1 .. \tau_na_1   
 data TyCon = TyCon Bool Con [TyVar] [DataCon]
-             deriving(Eq, Show)
-
-                     
+             deriving(Eq,Show)
+             
 -- Boxed True: c_x \tau_x1 .. \tau_xa_1 
 -- Boxed False: c_x# \tau_x1 .. \tau_xa_1  
-data DataCon = DataCon Con [Monotype] -- Removed Bool field
-               deriving(Eq, Show)
-
+data DataCon = DataCon Bool Con [Monotype]
+               deriving(Eq,Show)
 
 type TyVar = String
 
@@ -85,8 +80,12 @@ data Polytype = PPoly [TyVar] Monotype
                 
 data Monotype = MVar TyVar
               | MFun Monotype Monotype
-              | MCon Con [Monotype] -- Removed Bool field
+              | MCon Bool Con [Monotype]
+              | MPrim BuiltinType
                 deriving(Eq,Ord)
+
+
+precalate s ss = concatMap (s++) ss
 
 instance Show Polytype where
     show (PPoly [] m) = show m
@@ -95,11 +94,12 @@ instance Show Polytype where
 
 instance Show Monotype where
     show (MVar v) = v
-    show (MFun m1@(MFun _ _) m2) = "(" ++ show m1 ++ ") -> " ++ show m2      
-    show (MFun m1 m2) = show m1 ++ " -> " ++ show m2 
-    show (MCon con ms) = con ++ " " ++ intercalate " " (map show ms) -- modified (no boxed)
-
-
+    show (MFun m1@(MFun _ _) m2) = "(" ++ show m1 ++ ") -> " ++ show m2
+    show (MFun m1 m2) = show m1 ++ " -> " ++ show m2
+    show (MCon boxed con ms) = con ++ 
+                               (if boxed then " [B] " else " [U] ") ++
+                               "(" ++ intercalate ") (" (map show ms) ++ ")"
+    show (MPrim p) = show p
 
 data TyConParam = TyConParam {tarity :: Int, 
                               ttag :: Int, 
@@ -127,42 +127,13 @@ type ConMaps = (TyConMap, DataConMap)
 getTyConDefFromConstructor dconMap tconMap con = 
     let Just dataConParam = Map.lookup con dconMap :: Maybe DataConParam
         tyConName = dtycon dataConParam :: Con
-        Just tyConParam = Map.lookup tyConName tconMap :: Maybe TyConParam
+        tyConParam = case Map.lookup tyConName tconMap of
+                       Just x -> x
+                       Nothing -> error $ "getTyConDefFromConstructor: no such " 
+                                          ++ tyConName
+        -- Just tyConParam = Map.lookup tyConName tconMap :: Maybe TyConParam
     in tycon tyConParam :: TyCon
 
-
---------------- ADT Pretty Printing -----------------------
-
-instance PPrint Monotype where
-  toDoc (MVar c) = text c
-  toDoc (MFun m1@MFun{} m2) = parens (toDoc m1) <+> arw <+> toDoc m2
-  toDoc (MFun m1 m2) = toDoc m1 <+> arw <+> toDoc m2
-  toDoc (MCon c ms) = (if null ms then (empty <>) else parens)
-                      (text c <+> hsep (map toDoc ms))
-
-  
-instance PPrint DataCon where
-  toDoc (DataCon con mTypes) = text con <+> hsep (map toDoc mTypes)
-
-instance PPrint TyCon where
-  toDoc (TyCon boxed name vars dCons) =
-    let
-      barify (x:xs) = x : (foldr ((:) . (bar<+>)) [] xs)
-
-      lh = 
-        (if boxed then empty else text "unboxed") <+>
-        text name <+> hsep (map text vars) <+> equals
-
-      -- nest 2 has the somewhat strange effect of "dedenting" by 2 here
-      -- not sure why
-      rh = vcat $ barify $ map ((nest 2).toDoc) dCons
-
-    in lh <+> rh
-
-instance PPrint a => PPrint (Def a) where
-  toDoc (DataDef t) = text "data" <+> toDoc t
-  toDoc (ObjDef o) = toDoc o
-
-instance PPrint a => PPrint [Def a] where
-  toDoc xs = vcat $ punctuate semi $ map toDoc xs
-
+         
+ 
+ 

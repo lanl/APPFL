@@ -1,10 +1,12 @@
-{-# LANGUAGE TypeSynonymInstances #-}
-{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE TypeSynonymInstances  #-}
+{-# LANGUAGE FlexibleInstances     #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
-{-# LANGUAGE NamedFieldPuns    #-}
+{-# LANGUAGE NamedFieldPuns        #-}
+{-# LANGUAGE TupleSections         #-}
 
 module InfoTab(
   InfoTab(..),
+  setCMaps,
   setITs,
   showITs,
   showITType,
@@ -14,6 +16,7 @@ module InfoTab(
 import Prelude
 import AST
 import ADT
+import CMap
 import Data.List(nub,(\\))
 
 import Data.Map (Map)
@@ -60,8 +63,10 @@ data InfoTab =
       arity :: Int,
       con :: String, -- actual constructor name, not object name
       tag :: Int,
-      tconMap :: TyConMap,
-      dconMap :: DataConMap }
+-------------------------- MODIFIED 6.30 - David ---------------------------
+      cmap :: CMap }
+--      tconMap :: TyConMap,
+--      dconMap :: DataConMap }
   | Thunk { 
       typ :: Monotype,
       ctyp :: Polytype,
@@ -112,8 +117,10 @@ data InfoTab =
       ctyp :: Polytype,
       fvs :: [Var],
       truefvs :: [Var],
-      tconMap :: TyConMap, 
-      dconMap :: DataConMap } 
+-------------------------- MODIFIED 6.30 - David ---------------------------      
+      cmap :: CMap }
+--      tconMap :: TyConMap,
+--      dconMap :: DataConMap }
   | ITAlts { 
       typ :: Monotype,
       ctyp :: Polytype,
@@ -233,14 +240,18 @@ instance SetITs (Alt ([Var],[Var])) (Alt InfoTab) where
         ACon (ITAlt{fvs = myfvs, truefvs = mytruefvs, 
                     typ = typUndef,
                     ctyp = ctypUndef,
-                    dconMap = Map.empty, 
-                    tconMap = Map.empty}) c vs (setITs e)
+-------------------------- MODIFIED 6.30 - David ---------------------------                               
+                    cmap = Map.empty}) c vs (setITs e)
+--                    tconMap = Map.empty,
+--                    dconMap = Map.empty}) c vs (setITs e)
     setITs (ADef (myfvs,mytruefvs) v e) = 
         ADef (ITAlt{fvs = myfvs, truefvs = mytruefvs, 
                     typ = typUndef,
                     ctyp = ctypUndef,
-                    dconMap = error "ADef dconMap undefined",
-                    tconMap = error "ADef tconMap undefined"}) v (setITs e)
+-------------------------- MODIFIED 6.30 - David ---------------------------
+                    cmap = error "ADef CMap undefined"}) v (setITs e)
+--                    tconMap = error "ADef tconMap undefined"}) v (setITs e)
+--                    dconMap = error "ADef dconMap undefined"}) v (setITs e)
 
 instance SetITs (Obj ([Var],[Var])) (Obj InfoTab) where
     setITs o@(FUN (myfvs,mytruefvs) vs e n) = 
@@ -298,8 +309,10 @@ makeIT o@(CON (fvs,truefvs) c as n) =
           ctyp = ctypUndef,
 --          entryCode = showITType o ++ "_" ++ n
           entryCode = "stg_constructorcall",
-          dconMap = error "ADef dconMap undefined",
-          tconMap = error "ADef tconMap undefined"
+-------------------------- MODIFIED 6.30 - David ---------------------------
+          cmap = error "ADef CMap undefined"  -- ADef? Not CON ?
+--          dconMap = error "ADef dconMap undefined",
+--          tconMap = error "ADef tconMap undefined"
         }
 
 makeIT o@(THUNK (fvs,truefvs) e n) =
@@ -381,4 +394,65 @@ showITspec _ = error "bad ITspec"
 
       
 
+setCMaps :: ([TyCon], [Obj InfoTab]) -> ([TyCon], [Obj InfoTab])
+setCMaps (tycs, objs) = (tycs, addCMapToITs (toCMap tycs) objs)
 
+addCMapToITs :: CMap -> [Obj InfoTab] -> [Obj Infotab]
+addCMapToITs cmap objs =
+  let tagTab = zip (map fst $ Map.toList cmap) [0..] -- simple indices for tags
+
+  in map (setITs . (cmap,tagTab,)) objs --TupleSections extension permits this
+
+
+-- [(Int,Con)] pairs yield a unique tagging scheme
+-- (taken from Map.toList indices)
+type CMapTrip a = (CMap, [(Int,Con)], a)
+
+instance SetITs (CMapTrip (Obj InfoTab)) (Obj Infotab) where
+  setITs (cmap,tagTab,obj) = case obj of
+
+    o@FUN{e} ->
+      o{ e = setITs (cmap,tagTab,e) }
+
+    o@THUNK{e} ->
+      o{ e = setITs (cmap,tagTab,e) }
+
+    o@CON{omd, c} ->
+      let
+        (Just contag) = lookup c tagTab -- grab tag, error on lookup is good?
+        omd' = omd{tag = contag,
+                   cmap = cmap} -- add tag and cmap to InfoTab
+      in
+       o{omd = omd'}
+
+    o -> o --  BLACKHOLE and PAP don't need modification
+
+instance SetITs (CMapTrip (Expr InfoTab)) (Expr Infotab) where
+  setITs (cmap,tagTab,expr) = case expr of
+
+    e@ECase{ee, ealts} ->
+      e{ ee    = setITs (cmap,tagTab,ee),
+         ealts = setITs (cmap,tagTab,ealts) }
+
+    e@ELet{ee, edefs} ->
+      e{ ee    = setITs (cmap,tagTab,ee),
+         edefs = map (setITs . (cmap,tagTab,)) edefs }
+      
+    e -> e -- EAtom, EFCall, EPrimop don't need modification
+
+instance SetITs (CMapTrip (Alts InfoTab)) (Alts Infotab) where
+  setITs trip@(cmap,tagTab,a@Alts{alts}) =
+    a{ alts = map (setITs.(cmap,tagTab,)) alts}
+    
+instance SetITs (CMapTrip (Alt InfoTab)) (Alt Infotab) where
+  setITs trip@(cmap,tagTab,alt) = case alt of
+
+    a@ACon{amd, ac, ae} ->
+      let
+        amd' = amd{cmap = cmap}
+      in
+       a{ amd = amd',
+          ae = setITs (cmap,tagTab,ae) }
+
+    a@ADef{ae} ->
+      a { ae = setITs (cmap,tagTab,ae) }

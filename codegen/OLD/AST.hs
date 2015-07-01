@@ -1,5 +1,3 @@
-{-# LANGUAGE NamedFieldPuns #-}
-
 module AST (
   Var,
   Con,
@@ -13,9 +11,6 @@ module AST (
   show,
   BuiltinType(..)
 ) where
-
-import PPrint
-import Data.List (find)
 
 {-  grammar
 
@@ -148,89 +143,3 @@ primopTab =
      -- the following are deprecated
      ("intToBool_h", PintToBool)
     ]
-
-stgPrimName p =
-  case find ((==p).snd) primopTab of
-   Nothing -> error $ "primop lookup failed for " ++ show p
-   Just x -> reverse ('#' : (drop 2 $ reverse $ fst x))
-     
-instance PPrint Atom where
-  toDoc (Var v)  = text v
-  toDoc (LitI i) = int i
-  toDoc (LitF f) = float f
-  toDoc x        = text $ show x -- not expecting other literals yet
-
-
-instance PPrint Primop where
-  toDoc = text.stgPrimName 
-
-instance PPrint a => PPrint (Alt a) where
-  toDoc ACon{amd, ac, avs, ae} =
-    toDoc amd $+$
-    text ac <+> (hsep $ map text avs) <+> arw <+> toDoc ae
-
-  toDoc ADef{amd, av, ae} =
-    toDoc amd $+$
-    text av <+> arw <+> toDoc ae
-
-instance PPrint a => PPrint (Alts a) where
-  toDoc Alts{altsmd, alts} = -- Note aname field is *not* in use here
-    toDoc altsmd $+$
-    (vcat $ punctuate semi $ map toDoc alts)
-
-instance PPrint a => PPrint (Expr a) where
-  toDoc EAtom{emd, ea} =
-    toDoc emd $+$
-    toDoc ea
-
-  toDoc EFCall{emd, ev, eas} =
-    toDoc emd $+$
-    text ev <+> (hsep $ map toDoc eas)
-
-  toDoc EPrimop{emd, eprimop, eas} =
-    toDoc emd $+$
-    toDoc eprimop <+> (hsep $ map toDoc eas)
-
-  toDoc ELet{emd, edefs, ee} =
-    toDoc emd $+$
-    text "let" <+> lbrace $+$
-    (nest 2 $ vcat $ punctuate semi $ map toDoc edefs) <> rbrace $+$
-    text "in" <+> toDoc ee
-
-  toDoc ECase{emd, ee, ealts} =
-    toDoc emd $+$
-    text "case" <+> toDoc ee <+> text "of" <+> lbrace $+$
-    (nest 2 $ toDoc ealts) <> rbrace
-
-
-instance PPrint a => PPrint (Obj a) where
-  toDoc FUN{omd, vs, e, oname} =
-    toDoc omd $+$
-    text oname <+> equals <+> text "FUN" <>
-    parens ((hsep $ map text vs) <+> arw $+$ nest ident (toDoc e))
-    where ident = length vs + (sum $ map length vs) -- aligns expr with arrow
-
-  toDoc PAP{omd, f, as, oname} =
-    toDoc omd $+$
-    text oname <+> equals <+> text "PAP" <>
-    parens (text f <+> (hsep $ map toDoc as))
-
-  toDoc CON{omd, c, as, oname} =
-    toDoc omd $+$
-    text oname <+> equals <+> text "CON" <>
-    parens (text c <+> (hsep $ map toDoc as))
-
-  toDoc THUNK{omd, e, oname} =
-    toDoc omd $+$
-    text oname <+> equals <+> text "THUNK" <>
-    parens (toDoc e)
-
-  toDoc BLACKHOLE{omd, oname} =
-    toDoc omd $+$
-    text oname <+> equals <+> text "ERROR"
-
-
--- () metadata = empty document
--- empty is the identity Doc for the associative pretty printing operators
-instance PPrint () where
-  toDoc () = empty

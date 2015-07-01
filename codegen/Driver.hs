@@ -13,7 +13,8 @@ import           Analysis
 import           AST
 import           SCC
 import           CodeGen
-import           ConMaps
+import           CMap
+--import           ConMaps
 import           InfoTab
 import           HeapObj
 import           Parser
@@ -90,7 +91,9 @@ typer inp = let (tyCons, objs) = infotaber inp
             in (tyCons, setTypes objs)
 
 conmaper :: String -> ([TyCon], [Obj InfoTab])
-conmaper = setConmaps . typer
+-------------------------- MODIFIED 6.30 - David ---------------------------
+conmaper = setCMaps . typer
+--conmaper = setConmaps . typer
 
 typechecker inp = let (tycons, objs) = conmaper inp
                   in (tycons, hmstg objs)
