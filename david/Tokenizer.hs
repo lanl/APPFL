@@ -1,5 +1,6 @@
 {-# LANGUAGE NamedFieldPuns #-}
 
+
 module Tokenizer
 (
   Token(..),
@@ -11,6 +12,7 @@ module Tokenizer
 import AST
 import Data.Char
 import Control.Monad
+import PPrint
 
 ------------------------- Comment Stripper ------------------------------
 data ScanState =
@@ -97,13 +99,16 @@ data TokenState =  StrTok {tS::String, tP::Pos} |
                    None
                 deriving (Show)
 
+instance PPrint Token where
+  toDoc = text.show
 
 instance Show Token where
-   show (TokInt i p) = bracketize i p
-   show (TokFlt i p) = bracketize i p
-   show (TokEOF   p) = "{EOF " ++ show p ++ "}"
-   show tok          = bracketize (tks tok) (pos tok)
-bracketize a b = '{' : show a ++ " " ++ show b ++ "}"
+  show (TokInt i p) = bracketize i $ showpos p
+  show (TokFlt i p) = bracketize i $ showpos p
+  show (TokEOF   p) = "{EOF @ " ++ showpos p ++ "}"
+  show tok          = bracketize (tks tok) $ showpos (pos tok)
+bracketize a b = "{" ++ show a ++ " @ " ++ b ++ "}"
+showpos (l,c) = "(ln:" ++ show l ++ "," ++ "col:" ++ show c ++ ")"
 
 primopTable =
   [
@@ -233,7 +238,7 @@ tokenize ls = aux None (0,0) (stripComments ls) []
       _            -> error $ "should never see this... caused by " ++ show st
 
     fromNum cs
-      | elem '.' cs = TokFlt (read cs :: Float)
+      | elem '.' cs = TokFlt (read cs :: Float) -- not really used?
       | otherwise = TokInt (read cs :: Int)
 
     fromString x
@@ -241,90 +246,3 @@ tokenize ls = aux None (0,0) (stripComments ls) []
       | isPrimop x = TokPrim x
       | isUpper $ head x = TokCon x
       | otherwise = TokId x
-
-
-{-
---------------------------------- Parsers for Tokens ---------------------------
-
-
-tokP :: Token -> Parser Token Token
-tokP _ [] = reject []
-tokP t1 (t2:inp) =
-  case (t1,t2) of
-   (TokInt _ _  , TokInt _ _ ) -> accept t2 inp
-   (TokFlt _ _  , TokFlt _ _ ) -> accept t2 inp
-   (TokId _ _   , TokId _ _  ) -> accept t2 inp
-   (TokCon _ _  , TokCon _ _ ) -> accept t2 inp
-   (TokPrim _ _ , TokPrim _ _) -> accept t2 inp
-   (TokRsv x _  , TokRsv y _ ) -> if x == y then accept t2 inp else reject inp
-   (TokEOF _    , TokEOF _   ) -> accept t2 inp
-   _                           -> reject inp
-
-
--- hacky way of ignoring warnings when simply trying matching equality in Token
--- data constructors
-tokP1 :: (a -> Token) -> Parser Token Token
-tokP1 t = tokP $ t undefined
-tokP2 :: (a -> b -> Token) -> Parser Token Token
-tokP2 t = tokP1 $ t undefined
-
--- Match a TokRsv with string s
-rsvP :: String -> Parser Token Token
-rsvP s = tokP1 $ TokRsv s
-
--- Match constructor token, accept its String
-conNameP :: Parser Token String
-conNameP = tokP2 (TokCon) `using` tks
-
--- Match variable token, accept its String
-varNameP :: Parser Token String
-varNameP = tokP2 (TokId) `using` tks
-
--- Match Integer Token, accept Int
-intP :: Parser Token Int
-intP = tokP2 (TokInt) `using` ivl
-
-
--- Match Float Token, accept Float
-fltP :: Parser Token Float
-fltP = tokP2 (TokFlt) `using` fvl
-
--- Match Primop Token, accept Primop
-primP :: Parser Token Primop
-primP = tokP2 (TokPrim) `using` getPrimop
-  where getPrimop (TokPrim s _) =
-          snd . head $ filter ((== s).fst) primopTable
-
--- match common reserved symbols/words
-dataP = rsvP "data"
-lparen = rsvP "("
-rparen = rsvP ")"
-lbrace = rsvP "{"
-rbrace = rsvP "}"
-arrowP = rsvP "->"
-eqP = rsvP "="
-barP = rsvP "|"
-scP = rsvP ";"
-
--- match EOF Token
-eofP = tokP1 (TokEOF)
-
--- Given a parser, match parens surrounding what it would match
-inparensP :: Parser Token v -> Parser Token v
-inparensP p = xthenx lparen p rparen
-
--- similar, for braces,
-inbraces :: Parser Token v -> Parser Token v
-inbraces p = xthenx lbrace p rbrace
-
-
-failTok p m inp = case p inp of
-  [] -> error $
-        "\nError" ++ (if null inp then ":" else " at " ++ show (head inp) ++":") ++ m
-  x  -> x
-
-notEOF inp = case inp of
-              (TokEOF{}:_) -> reject inp
-              (i:is)       -> accept i is
-              []           -> reject inp
--}
