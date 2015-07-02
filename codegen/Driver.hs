@@ -1,10 +1,11 @@
 module Driver (
+  tokenizer,
+  parser,
   renamer,
   normalizer,
   freevarer,
   infotaber,
   conmaper,
-  typer,
   codegener
 ) where
 
@@ -13,10 +14,12 @@ import           Analysis
 import           AST
 import           SCC
 import           CodeGen
+-- MODIFIED 6.30 - David ----------------------------------------
 import           CMap
 --import           ConMaps
 import           InfoTab
 import           HeapObj
+import           Tokenizer
 import           Parser
 import           Rename
 import           SetFVs
@@ -61,8 +64,11 @@ stgRTSGlobals = [ "stg_case_not_exhaustive",
                   "False#" 
                 ] ++ map fst primopTab -- from AST.hs
 
+tokenizer :: String -> [Token]
+tokenizer = tokenize
+
 parser :: String -> ([TyCon], [Obj ()])
-parser = parse
+parser = parse . tokenizer
 
 renamer :: String -> ([TyCon], [Obj ()])
 renamer inp = let (tyCons, objs) = parser inp
@@ -85,14 +91,16 @@ infotaber :: String -> ([TyCon], [Obj InfoTab])
 infotaber inp = let (tyCons, objs) = freevarer inp
                 in (tyCons, setITs objs :: [Obj InfoTab])
 
+-- MODIFIED 7.1 - David ----------------------------------------
+-- assumption is that this typer is not actually useful now
 -- real type inference would be after conmaper
-typer :: String -> ([TyCon], [Obj InfoTab])
-typer inp = let (tyCons, objs) = infotaber inp
-            in (tyCons, setTypes objs)
+--typer :: String -> ([TyCon], [Obj InfoTab])
+--typer inp = let (tyCons, objs) = infotaber inp
+--            in (tyCons, setTypes objs)
 
 conmaper :: String -> ([TyCon], [Obj InfoTab])
--------------------------- MODIFIED 6.30 - David ---------------------------
-conmaper = setCMaps . typer
+-- MODIFIED 6.30 - David ----------------------------------------
+conmaper = setCMaps . infotaber
 --conmaper = setConmaps . typer
 
 typechecker inp = let (tycons, objs) = conmaper inp

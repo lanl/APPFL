@@ -11,7 +11,6 @@ module SetFVs (
 
 import Prelude
 import AST
-import Parser(showObjs)
 import qualified Data.List as List
 import qualified Data.Set as Set
 
@@ -112,7 +111,7 @@ toplevel rtgs defs =
     in case myfvl of
          [] -> deadCode defs'
          fvs -> error $ "SetFVs.setFVsDefs:  top level free variables:  " ++  
-                        List.intercalate " " fvs ++ "\n\n" ++ showObjs defs'
+                        List.intercalate " " fvs ++ "\n\n" ++ show defs'
 
 -- vars introduced by EFCall f, PAP f, and EAtom Var v
 -- scope introduced by FUN vs, x ->, C xi ->

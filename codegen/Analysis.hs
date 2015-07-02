@@ -2,11 +2,11 @@
 {-# LANGUAGE FlexibleInstances    #-}
 {-# LANGUAGE NamedFieldPuns       #-}
 {-# LANGUAGE RecordWildCards      #-} -- implies DisambiguateFieldRecords
+{-# LANGUAGE PatternGuards        #-}
 
 module Analysis(
 --  isSimple,
   normalize,
-  setTypes,
 ) where
 
 import AST
@@ -231,6 +231,8 @@ instance AI (Expr InfoTab) where
                         else let funnoa = noHeapAlloc it in
                             (e{emd = emd{noHeapAlloc = funnoa}}, prev /= funnoa)
 
+-- MODIFIED 7.1 - David ----------------------------------------
+{-
 
 -- quickie boxedness propagation
 
@@ -320,3 +322,4 @@ instance SetTypes (Obj InfoTab) where
 
 instance SetTypes [Obj InfoTab] where
     setTypes = map setTypes
+-}

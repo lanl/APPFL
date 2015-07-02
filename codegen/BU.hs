@@ -46,12 +46,12 @@ instance Substitutable Polytype where
 instance Substitutable Monotype where
     freevars (MVar v)     = Set.singleton v
     freevars (MFun m1 m2) = Set.union (freevars m1) (freevars m2)
-    freevars (MCon boxed con ms) = foldr Set.union Set.empty $ map freevars ms
+    freevars (MCon con ms) = foldr Set.union Set.empty $ map freevars ms
     freevars _ = Set.empty
 
     apply s m@(MVar tv)         = Map.findWithDefault m tv s
     apply s (MFun m1 m2)        = MFun (apply s m1) (apply s m2)
-    apply s (MCon boxed con ms) = MCon boxed con $ map (apply s) ms
+    apply s (MCon con ms) = MCon con $ map (apply s) ms
     apply s m                   = m
 
 instance Substitutable [Monotype] where
@@ -79,13 +79,18 @@ unify t (MVar v) = bind v t
 -- just a special type constructor
 unify (MFun l r) (MFun l' r') = unifys [l,r] [l',r']
 
-unify m1@(MCon b1 c1 ms1) m2@(MCon b2 c2 ms2)
-    | b1 /= b2 = error $ "unify boxedness mismatch! "  ++ show m1 ++ " " ++ show m2
+-- MODIFIED 7.1 - David ----------------------------------------
+unify m1@(MCon c1 ms1) m2@(MCon c2 ms2)
+--unify m1@(MCon b1 c1 ms1) m2@(MCon b2 c2 ms2)
+--    | b1 /= b2 = error $ "unify boxedness mismatch! "  ++ show m1 ++ " " ++ show m2
     | c1 /= c2 = error $ "unify constructor mismatch! " ++ show c1 ++ " " ++ show c2
     | otherwise = unifys ms1 ms2
 
-unify (MPrim UBInt) (MCon False "Int_h" []) = idSubst
-unify (MCon False "Int_h" []) (MPrim UBInt) = idSubst
+-- MODIFIED 7.1 David ----------------------------------------                  
+unify (MPrim UBInt) (MCon "Int_h" []) = idSubst
+unify (MCon "Int_h" []) (MPrim UBInt) = idSubst
+--unify (MPrim UBInt) (MCon False "Int_h" []) = idSubst
+--unify (MCon False "Int_h" []) (MPrim UBInt) = idSubst
 -- unify (MPrim UBBool) (MCon False "Bool_h" []) = idSubst
 -- unify (MCon False "Bool_h" []) (MPrim UBBool) = idSubst
 

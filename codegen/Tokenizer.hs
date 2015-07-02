@@ -96,18 +96,22 @@ data Token = TokInt  {ivl::Int,    pos::Pos} |
 
 data TokenState =  StrTok {tS::String, tP::Pos} |
                    NumTok {tS::String, tP::Pos} |
-                   None
-                deriving (Show)
+                   None   {            tP::Pos} -- useful to have position for error messages
+
+instance PPrint TokenState where
+  toDoc StrTok {tS, tP} = brackets $ text "String-type token:" <+> text (show tS) <+> text (showpos tP)
+  toDoc NumTok {tS, tP} = brackets $ text "Numeric-type token:" <+> text (show tS) <+> text (showpos tP)
+  toDoc None{tP}        = brackets $ text "No token in progress:" <+> text (showpos tP)
 
 instance PPrint Token where
   toDoc = text.show
 
 instance Show Token where
-  show (TokInt i p) = bracketize i $ showpos p
-  show (TokFlt i p) = bracketize i $ showpos p
-  show (TokEOF   p) = "{EOF @ " ++ showpos p ++ "}"
-  show tok          = bracketize (tks tok) $ showpos (pos tok)
-bracketize a b = "{" ++ show a ++ " @ " ++ b ++ "}"
+  show (TokInt i p) = bracketize (show i) (showpos p)
+  show (TokFlt i p) = bracketize (show i) (showpos p)
+  show (TokEOF   p) = bracketize "EOF" (showpos p)
+  show tok          = bracketize (tks tok) (showpos $ pos tok)
+bracketize a b = "{" ++ a ++ " @ " ++ b ++ "}"
 showpos (l,c) = "(ln:" ++ show l ++ "," ++ "col:" ++ show c ++ ")"
 
 primopTable =
@@ -137,21 +141,27 @@ reserveds =
   ]
   
 primops = fst $ unzip primopTable
-isReserved = flip elem $ reserveds
-isPrimop = flip elem $ primops
+isReserved = flip elem reserveds
+isPrimop = flip elem primops
+
+isIdSym x = isAlphaNum x ||
+            elem x ".#_"
+
+tokErr t m = error $ show $
+             text "Tokenization error with token" <+> toDoc t $+$
+             text m
                                                        
 tokenize :: String -> [Token]
-tokenize ls = aux None (0,0) (stripComments ls) []
+tokenize ls = aux (None (0,0)) (0,0) (stripComments ls) []
   where
     aux :: TokenState -> Pos -> String -> [Token] -> [Token]
     
     -- base case, finalize any token in progress, add EOF
-    -- Should tokenizer expect a literal '\NUL' or assume usage of readFile or similar?
     aux st ps [] toks =
       let eof = TokEOF ps in
        case st of
-        None -> reverse (eof:toks)
-        _    -> reverse (eof:fromTokenState st:toks)
+        None {} -> reverse (eof:toks)
+        _       -> reverse (eof:fromTokenState st:toks)
 
     -- recursive case, match on input, then tokenizing state
     aux st (l,c) xl@(x:xs) toks
@@ -160,82 +170,96 @@ tokenize ls = aux None (0,0) (stripComments ls) []
       | isSpace x =
         let newPs = if x == '\n' then (l+1,0) else (l,c+1) in
          case st of
-          None -> aux None newPs xs toks
-          _    -> aux None newPs xs (fromTokenState st:toks)
+          None {} -> aux (None newPs) newPs xs toks
+          _       -> aux (None newPs) newPs xs (fromTokenState st:toks)
 
 
-    -- reserved defined in table above. Single chars always terminate a token-in-progress
+    -- reserved defined in table above. Single reserved chars always terminate a token-in-progress
       | isReserved [x] =
-        let sym = TokRsv [x] (l,c) in
+        let
+          sym   = TokRsv [x] (l,c)
+          newPs = (l,c+1)
+        in
          case st of
-          None -> aux None (l,c+1) xs (sym:toks)
-          _    -> aux None (l,c+1) xs (sym:fromTokenState st:toks)
-        
+          None {} -> aux (None newPs) newPs xs (sym:toks)
+          _       -> aux (None newPs) newPs xs (sym:fromTokenState st:toks)
+
+
+    -- special case for '.':
+         -- must only appear in a NumTok once, not at the start or end
+         -- cannot start a token (yet)
+         -- currently 
+      | x == '.' =
+        case st of
+        NumTok {tS} | elem '.' tS
+                      -> tokErr st "Not expecting more than one '.' inside a numeric token"
+
+                    | null xs || -- don't want to look for head at end of input
+                      not (isDigit $ head xs) -- must be a number following the '.'
+                      -> tokErr st "not expecting '.' to terminate a numeric token"
+                      
+                    | otherwise
+                      -> aux st {tS = x:tS} (l,c+1) xs toks
+                         
+        None {}     ->  tokErr st "Not expecting '.' to open a token yet"
+
+        StrTok {tS} -> aux st {tS = x:tS} (l,c+1) xs toks
+
 
     -- digits start/continue numeric tokens, are valid inside constructors and identifiers
       | isDigit x =
         case st of
-         None -> aux (NumTok [x] (l,c)) (l,c+1) xs toks
-         _    -> aux st{tS = x:(tS st)} (l,c+1) xs toks -- accept digits mid-token
+         None {} -> aux (NumTok [x] (l,c)) (l,c+1) xs toks
 
-    -- alphabetic characters are only valid in Stringy things
-      | isAlpha x =
+         -- accept digits mid-token, whether numeric or stringy
+         _       -> aux st{tS = x:(tS st)} (l,c+1) xs toks 
+
+
+    -- match on valid identifier symbols
+      | isIdSym x =
         case st of
-         None        -> aux (StrTok [x] (l,c)) (l,c+1) xs toks
+         None {}     -> aux (StrTok [x] (l,c)) (l,c+1) xs toks
          StrTok {tS} -> aux st{tS = x:tS} (l,c+1) xs toks
-         NumTok _ _  -> error
-                       ("\nError at " ++ show (l,c) ++
-                        "\nexpected digit, '.', or number-terminating character." ++
-                        "\nRead " ++ show x)
+         NumTok _ _  -> tokErr st $
+                        "expected digit, '.', or number-terminating character. Got " ++ show x
 
 
     -- only two-char non-alpha keyword (I think). This could be generalized for others
     -- might need a new class of token-in-progress, depending on the characters
       | arrowHead xl =
-        let arw = TokRsv (take 2 xl) (l,c) in
+        let
+          arw = TokRsv (take 2 xl) (l,c)
+          newPs = (l,c+2)
+        in
          case st of
-          None -> aux None (l,c+2) (tail xs) (arw:toks)
-          _    -> aux None (l,c+2) (tail xs) (arw:fromTokenState st:toks)
+          None {} -> aux (None newPs) newPs (tail xs) (arw:toks)
+          _       -> aux (None newPs) newPs (tail xs) (arw:fromTokenState st:toks)
 
 
     -- only valid as a non-beginning part of an identifier or constructor
     -- if found outside of such, should it be read as a comment in the comment stripper?
-      | x == '#' =
-        case st of
-        StrTok {tS} -> aux st{tS=x:tS} (l,c+1) xs toks
-        _           -> error
-                       ("\nError at " ++ show (l,c) ++
-                        "\nNot expecting '#' outside some form of identifier")
+    -- MODIFIED 7.1, currently allowing '#' symbol in identifiers everywhere
+--      | x == '#' =
+--        case st of
+--        StrTok {tS} -> aux st{tS=x:tS} (l,c+1) xs toks
+--        _           -> error
+--                       ("\nError at " ++ show (l,c) ++
+--                        "\nNot expecting '#' outside some form of identifier")
         
-    {- not sure how to handle this yet
-    thoughts:
-       in haskell: read ".12" :: Float --> no parse
-                   read "12." :: Float --> no parse
-                   1 + .12 --> compile error
-                   1 + 12. --> compile xerror
-                   
-       is this due to the many roles '.' plays in haskell?
-       (Module "accessor", function composition, numeric decimal point)
-       GHC dumps STG code with *lots* of Module access via '.'
-    -}        
-      | x == '.' =
-        case st of
-        NumTok {tS} -> aux st{tS=x:tS} (l,c+1) xs toks
-        _           -> error $
-                       "\nError at " ++ show (l,c) ++
-                       "\nNot expecting '.' outside numerals yet..."
-
-      | otherwise = error $
-                    "\nError at " ++ show (l,c) ++
-                    "\nDidn't match " ++ show x
+    -- give some kind of meaningful error message if something unexpected is read
+      | otherwise = tokErr st $
+                    "Couldn't match " ++ show x
    
     arrowHead ('-':'>':x) = True
     arrowHead _ = False
+
     fromTokenState st =
       case st of
       NumTok cs ps  -> fromNum (reverse cs) ps
-      StrTok cs ps -> fromString (reverse cs) ps
-      _            -> error $ "should never see this... caused by " ++ show st
+      StrTok cs ps  -> fromString (reverse cs) ps
+      _             -> tokErr st $
+                       "should never see this error message\n" ++
+                       "trying to parse Token from invalid TokState object."
 
     fromNum cs
       | elem '.' cs = TokFlt (read cs :: Float) -- not really used?

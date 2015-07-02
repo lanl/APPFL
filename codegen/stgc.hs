@@ -1,11 +1,9 @@
 {-# LANGUAGE NamedFieldPuns #-}
 
 -------------------------- MODIFIED 6.30 - David ---------------------------
-import           CMap
 
 import           Driver
-import           Parser
-
+import           CMap
 import           Data.List
 import           Data.List.Split
 import           Data.Maybe
@@ -116,7 +114,7 @@ compile  (Options {optVerbose, optDumpParse, optNoPrelude, optOutput, optInput})
 
     case optDumpParse of
       True  -> do 
-                 let (tycons, objs) = parse source
+                 let (tycons, objs) = parser source
 -------------------------- MODIFIED 6.30 - David ---------------------------
                  writeFile (input ++ ".dump") ((show $ toCMap $ tycons) ++ (show objs))
 --                 writeFile (input ++ ".dump") ((show $ buildConmaps $ tycons) ++ (show objs))

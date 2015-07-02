@@ -112,7 +112,6 @@ instance (PPrint a, PPrint b) => PPrint (Parsed a b) where
     bcomment $ text "UNPARSED:" $+$ toDoc b
 
 
-
 -- make it easy to group parsed and unparsed input together for later filtration
 data Parsed a b = Parsed a | Unparsed b deriving (Show)
 
@@ -196,7 +195,9 @@ rsvP s = tokP1 $ TokRsv s
 
 -- Match constructor token, accept its String
 conNameP :: Parser Token String
-conNameP = tokP2 (TokCon) `using` tks
+conNameP = tokP2 (TokCon) `using` (subHash . tks)
+  where
+    subHash = \str -> if last str == '#' then init str ++ "_h" else str
 
 -- Match variable token, accept its String
 varNameP :: Parser Token String
@@ -318,8 +319,7 @@ errorP = rsvP "ERROR" >>> \_ -> accept $ BLACKHOLE ()
 
 -- parse an expression, accept an Expr () object
 exprP :: Parser Token (Expr ())
-exprP = tokcutP "Expected a function call, atom, primop, let expr, or case expr" $
-        orExList [eFCallP, eAtomP, ePrimopP, eLetP, eCaseP]
+exprP = orExList [eFCallP, eAtomP, ePrimopP, eLetP, eCaseP]
 
 
 -- parse an atom expression
@@ -331,7 +331,6 @@ eAtomP = atomP `using` (EAtom ())
 eFCallP :: Parser Token (Expr ())
 eFCallP =
   varNameP >>> \fn ->
-  tokcutP "Expected one or more atoms as arguments to a function" $
   some' atomP >>> \args ->
                    accept $ EFCall () fn args
 
@@ -360,6 +359,7 @@ eLetP =
 
 
 -- parse a case expression
+eCaseP :: Parser Token (Expr ())
 eCaseP =
   rsvP "case" >>> \_ ->
   exprP >>> \exp ->
@@ -377,7 +377,7 @@ eCaseP =
 altsP :: Parser Token (Alts ())               
 altsP =
   let
-    name = error "this alts not given a name!" 
+    name = "alts" --error "this alts not given a name!" 
   in
    tokcutP "Expected one or more alts separated by semicolons" $
    sepByP' altP semiP >>> \alts ->

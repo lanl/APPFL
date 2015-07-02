@@ -1,6 +1,6 @@
-{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE FlexibleInstances    #-}
 {-# LANGUAGE TypeSynonymInstances #-}
-
+{-# LANGUAGE OverlappingInstances #-}
 
 ----------------------------  Alternative interface to ConMap idea ----------------------
 -- Originally had a container for TyCons with an internal Assoc list of Con --> Arity,
@@ -15,6 +15,7 @@ module CMap
   luDCon,
   luTConInfo,
   luTCon,
+  isBoxedTCon,
   CMap
 ) where
 
@@ -52,6 +53,8 @@ getDConInList name cons = fromJust $ find ((==name).dConName) cons
 dConName :: DataCon -> Con
 dConName (DataCon n _) = n
 
+tConName :: TyCon -> Con
+tConName (TyCon _ n _ _) = n
 
 -- Given a list of Cons, check if they exhaust all the DataCon constructors
 -- for their associated TyCon.
@@ -80,6 +83,16 @@ tycDCons (TyCon _ _ _ cons) = cons
 luDCon :: Con -> CMap -> DataCon
 luDCon name conmap = getDConInList name $ luDCons name conmap
 
+
+-- check boxedness of a TyCon name
+isBoxedTCon :: Con -> CMap -> Bool
+isBoxedTCon c cmap =
+  let tcons = map snd $ Map.toList cmap
+  in case find ((== c) . tConName) tcons of
+      Just (TyCon boxed _ _ _) -> boxed
+      Nothing                  -> error $
+                                  "TyCon for " ++ c ++ " not found in CMap"
+                               
 
 -- lookup TyCon info by con in the CMap
 -- info is a triple of the form
@@ -113,9 +126,12 @@ isBuiltInType :: Con -> Bool
 isBuiltInType = isInt -- or others?
 
 getBuiltInType :: Con -> TyCon
-getBuiltInType c | isInt c   = intTyCon
+getBuiltInType c | isInt c   = makeIntTyCon c
                  | otherwise = error "builtin TyCon not found!"
       
+
+makeIntTyCon :: Con -> TyCon
+makeIntTyCon c = TyCon False "Int_h" [] [DataCon c []]
 
 
 instance Show CMap where
@@ -125,8 +141,8 @@ instance Show CMap where
 instance PPrint CMap where
   toDoc m =
     let
-      f (con, tyc) = text con <+> arw <+> tyDoc tyc
-      tyDoc (TyCon b n vs dcs) = text "name:" <+> text n $+$
+      f (con, tyc) = text con <+> arw $+$ (nest 4 $ tyDoc tyc)
+      tyDoc (TyCon b n vs dcs) = text "TyCon name:" <+> text n $+$
                                  text "boxed:" <+> boolean b $+$
                                  text "TyVars:" <+> varDoc vs $+$
                                  text "DataCons:" <+> dcsDoc dcs

@@ -40,6 +40,7 @@ module CodeGen(
 
 import ADT
 import AST
+import CMap
 import InfoTab
 import HeapObj
 import State
@@ -233,8 +234,8 @@ cge env (EPrimop it op as) =
         cInfixIIB op =  "stgCurVal.argType = BOOL;\n" ++
                         "stgCurVal.i = " ++ arg0 "i" ++ op ++ arg1 "i" ++ ";\n"
 
-        cFunIII fun = "stgCurVal.argType = INT;\n" ++
-                      "stgCurVal.i = " ++ fun ++ "(" ++ arg0 "i" ++ ", " ++ arg1 "i" ++ ");\n"
+        cFunIII fun  =  "stgCurVal.argType = INT;\n" ++
+                        "stgCurVal.i = " ++ fun ++ "(" ++ arg0 "i" ++ ", " ++ arg1 "i" ++ ");\n"
     in return (inline, [])
 
 cge env (ELet it os e) =
@@ -247,10 +248,11 @@ cge env (ELet it os e) =
       return (concat decls ++ concat buildcodes ++ einline,
               ofunc ++ efunc)
 
-cge env (ECase _ e a@(Alts italts alts aname)) = 
-    let eboxed = case typ $ emd e of MCon False _ _ -> False
-                                     MPrim _        -> False
-                                     _              -> True
+cge env (ECase md e a@(Alts italts alts aname)) = 
+    let eboxed = case typ $ emd e of MPrim _  -> False
+                                     MCon c _ -> isBoxedTCon c $ cmap md
+                                     _        -> True
+                                     
     in do (ecode, efunc) <- cge env e
           (acode, afunc) <- cgalts env a eboxed
           let pre = "stgPushCont( (Cont)\n" ++
@@ -309,9 +311,11 @@ cgalt env switch scrutName (ACon it c vs e) =
         env' = eenv ++ env
     in do
       (inline, func) <- cge env' e
-      let (DataConParam{dtag}) = case Map.lookup c (dconMap it) of
-                           Nothing -> error "conMap lookup error"
-                           Just x -> x
+-- MODIFIED 7.1 - David ----------------------------------------
+      let dtag = tag it
+--      let (DataConParam{dtag}) = case Map.lookup c (dconMap it) of
+--                           Nothing -> error "conMap lookup error"
+--                           Just x -> x
       let code = "// " ++ c ++ " " ++ intercalate " " vs ++ " ->\n" ++
                  if switch then
                      "case " ++ show dtag ++ ": {\n" ++
@@ -413,3 +417,4 @@ showa (LitD d) = show d
 showa (LitC c) = show c
 
 indexFrom i xs = zip [i..] xs
+    

@@ -8,13 +8,7 @@ module ADT (
   TyVar,
   Polytype(..),
   Monotype(..),
-  TyConParam(..),
-  TyConMap,
-  DataConParam(..),
-  DataConMap,
-  ConMaps,
   Con,
-  getTyConDefFromConstructor
 ) where
 
 import AST
@@ -86,6 +80,7 @@ data Polytype = PPoly [TyVar] Monotype
 data Monotype = MVar TyVar
               | MFun Monotype Monotype
               | MCon Con [Monotype] -- Removed Bool field
+              | MPrim BuiltinType
                 deriving(Eq,Ord)
 
 instance Show Polytype where
@@ -98,37 +93,7 @@ instance Show Monotype where
     show (MFun m1@(MFun _ _) m2) = "(" ++ show m1 ++ ") -> " ++ show m2      
     show (MFun m1 m2) = show m1 ++ " -> " ++ show m2 
     show (MCon con ms) = con ++ " " ++ intercalate " " (map show ms) -- modified (no boxed)
-
-
-
-data TyConParam = TyConParam {tarity :: Int, 
-                              ttag :: Int, 
-                              tboxed :: Bool,
-                              tdatacons :: [Con],
-                              tycon :: TyCon}
-                  deriving(Eq,Show)
-
-type TyConMap = Map.Map String TyConParam
-
-data DataConParam = DataConParam {darity :: Int, 
-                                  dtag :: Int, 
-                                  dboxed :: Bool, 
-                                  dtycon :: Con, -- type constructor name
-                                  datacon :: DataCon} 
-                    deriving(Eq,Show)
-
-type DataConMap = Map.Map String DataConParam
-
-type ConMaps = (TyConMap, DataConMap)
-
--- given a TyConMap, DataConMap and a data constructor C,
--- return the data constructor definition
-
-getTyConDefFromConstructor dconMap tconMap con = 
-    let Just dataConParam = Map.lookup con dconMap :: Maybe DataConParam
-        tyConName = dtycon dataConParam :: Con
-        Just tyConParam = Map.lookup tyConName tconMap :: Maybe TyConParam
-    in tycon tyConParam :: TyCon
+    show (MPrim p) = show p
 
 
 --------------- ADT Pretty Printing -----------------------
@@ -139,6 +104,10 @@ instance PPrint Monotype where
   toDoc (MFun m1 m2) = toDoc m1 <+> arw <+> toDoc m2
   toDoc (MCon c ms) = (if null ms then (empty <>) else parens)
                       (text c <+> hsep (map toDoc ms))
+  toDoc (MPrim p) = case p of
+    UBInt    -> text "Int#"
+    UBDouble -> text "Double#"
+    UBBool   -> text "Bool#"
 
   
 instance PPrint DataCon where
