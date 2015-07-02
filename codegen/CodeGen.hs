@@ -266,7 +266,7 @@ cge env (ECase _ e a@(Alts italts alts aname)) =
                   else
                     "    // load payload with FVs " ++ 
                             intercalate " " (fvs italts) ++ "\n") ++
-                         indent 2 (loadPayloadFVs2 env (fvs italts) name)
+                         indent 2 (loadPayloadFVs env (fvs italts) name False)
                 
                  
               cont = "stgPushCont(" ++ name ++ ");\n"
@@ -363,7 +363,6 @@ cgalt env switch scrutName (ADef it v e) =
 buildHeapObj env o =
     let (size, rval) = heapObjRVal env o
         name = oname o
-        --decl = "Obj *" ++ name ++ " = stgNewHeapObj(" ++ show size ++ " - sizeof(VarObj));\n" 
         decl = "Obj *" ++ name ++ " = stgNewHeapObj(" ++ show size ++ ");\n" 
         code = "*" ++ name ++ " = " ++ rval  -- ++ ";\n"
     in (size, decl, code)
@@ -376,40 +375,34 @@ heapObjRVal env o =
             "      { .objType = " ++ showObjType (omd o) ++ ",\n" ++
             "        .infoPtr = &it_" ++ name ++ ",\n" ++
             "        .ident = \"" ++ name ++ "\",\n" ++
+         --   "        .payloadSize = " ++ show size ++ ",\n" ++
             "      };\n" ++ guts
     in (size, code)
 
---objsize = 592
-objsize = 32
+
+payloadsize = 32
 
 bho env (FUN it vs e name) =
-    (objsize, loadPayloadFVs env (fvs it) name )
+    (payloadsize, loadPayloadFVs env (fvs it) name True )
 
 bho env (PAP it f as name) =
-    (objsize, loadPayloadFVs env (fvs it)  name ++ loadPayloadAtoms env as (length $ fvs it) name)
+    (payloadsize, loadPayloadFVs env (fvs it) name True ++ loadPayloadAtoms env as (length $ fvs it) name)
 
 bho env (CON it c as name) = 
-    let size = objsize
+    let size = payloadsize
         code = concat [name ++ "->payload[" ++ show i ++ "] = " ++ 
                        cga env a ++ "; // " ++ showa a ++ "\n"
                        | (i,a) <- indexFrom 0 as ]
     in (size, code)
 
 bho env (THUNK it e name) =
-    (objsize, loadPayloadFVs env (fvs it) name)
+    (payloadsize, loadPayloadFVs env (fvs it) name True)
 
-bho env (BLACKHOLE it name) = (objsize,"")
+bho env (BLACKHOLE it name) = (payloadsize,"")
 
-
---TODO: ptr vs  non-ptr
-loadPayloadFVs2 env fvs name =
-    concat [name ++ ".payload[" ++ show i ++ "] = " ++ 
-            cgv env v ++ "; // " ++ v ++ "\n"
-            | (i,v) <- indexFrom 0 fvs ]
-
-
-loadPayloadFVs env fvs name =
-    concat [name ++ "->payload[" ++ show i ++ "] = " ++ 
+loadPayloadFVs env fvs name ptr =
+    concat [name ++ (if ptr then "->" else ".") ++
+            "payload[" ++ show i ++ "] = " ++ 
             cgv env v ++ "; // " ++ v ++ "\n"
             | (i,v) <- indexFrom 0 fvs ]
 
