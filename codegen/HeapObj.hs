@@ -58,7 +58,7 @@ showSHOs objs =
 
 -- maybe should use "static" instead of "extern"
 showSHO o =
-    let base = "StaticObj " ++ showITType o ++ "_" ++ (name . omd) o
+    let base = "Obj " ++ showITType o ++ "_" ++ (name . omd) o
     in ("extern " ++ base ++ ";\n", 
                      base ++ " =\n" ++ showHO (omd o))
 

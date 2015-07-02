@@ -125,7 +125,7 @@ cgObjs objs runtimeGlobals =
 statObjFun objs = 
     ("void registerSHOs();",
      "void registerSHOs() {\n" ++
-        concat [ "  stgStatObj[stgStatObjCount++] = (Obj*)(&" ++ s ++ ");\n" 
+        concat [ "  stgStatObj[stgStatObjCount++] = &" ++ s ++ ";\n" 
                  | s <- shoNames objs ] ++
      "}\n")
 
