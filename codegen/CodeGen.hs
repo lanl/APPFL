@@ -65,6 +65,8 @@ type Env = [(String, RVal)]
 getEnvRef :: String -> Env -> String
 getEnvRef v env = lu v env 0 0
 
+-- first Int is total number of payload elements
+-- second Int is total number of Objs 
 lu :: String -> Env -> Int -> Int -> String
 lu v [] _ _ = error $ "lu " ++ v ++ " failed"
 
@@ -123,7 +125,7 @@ cgObjs objs runtimeGlobals =
 statObjFun objs = 
     ("void registerSHOs();",
      "void registerSHOs() {\n" ++
-        concat [ "  stgStatObj[stgStatObjCount++] = &" ++ s ++ ";\n" 
+        concat [ "  stgStatObj[stgStatObjCount++] = (Obj*)(&" ++ s ++ ");\n" 
                  | s <- shoNames objs ] ++
      "}\n")
 

@@ -27,7 +27,7 @@ FnPtr stgApply1();
 #define INTTOPL(L) ((PtrOrLiteral) {.argType = INT,     .i = L   })
 
 // NP = number of PtrOrLiterals NO = Number of Objs
-#define STGHEAPAT(NP,NO) ((char*)stgHP - (NP*sizeof(PtrOrLiteral)) - (NO*sizeof(VarObj)))
+#define STGHEAPAT(NP,NO) ((char*)stgHP - (NP*sizeof(PtrOrLiteral)) - (NO*sizeof(Obj)))
 
 // evaluate in place
 #define STGEVAL(e)				\

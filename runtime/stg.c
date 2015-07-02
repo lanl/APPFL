@@ -42,8 +42,8 @@ const char *objTypeNames[] = {
 Obj* stgNewHeapObj(int payloadSize) {
   Obj *curp = (Obj *)stgHP;
   //stgHP = (Obj *)stgHP + 1;
-  //printf("payload = %d obj = %d varobj = %d, %d\n", payloadSize, sizeof(Obj), sizeof(VarObj) + 32*sizeof(PtrOrLiteral), sizeof(VarObj) + payloadSize*sizeof(PtrOrLiteral));
-  stgHP = (Obj *)((char *)stgHP + sizeof(VarObj) + payloadSize*sizeof(PtrOrLiteral));
+  //printf("payload = %d obj = %d varobj = %d, %d\n", payloadSize, sizeof(Obj), sizeof(VarObj), sizeof(VarObj) + payloadSize*sizeof(PtrOrLiteral));
+  stgHP = (Obj *)((char *)stgHP + sizeof(Obj) + payloadSize*sizeof(PtrOrLiteral));
   return curp;
 }
 
