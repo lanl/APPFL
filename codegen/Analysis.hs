@@ -94,6 +94,35 @@ isConI _                    = False
 
 pfOr p1 p2 x = (p1 x) || (p2 x)
 
+funPapITmaps os = Map.fromList [(name it, it) | it <- filter isFunOrPapIT $ itsOf os]
+                  where
+                    isFunOrPapIt Pap{} = True
+                    isFunOrPapIt Fun{} = True
+                    isFunOrPapIt _ False
+
+doitTop os = 
+  let fix0 = Map.fromList [(name it, True) | it <- funPapITmaps os]
+  in doit fix0 os
+
+doit fixn os =
+    let fixn' = iter fixn os in
+    case fixn' == fixn of
+      True -> error $ show fixn
+      False -> doit fixn' os
+
+class Iter a where
+    iter :: Map.Map Var Bool -> a -> Map.Map Var Bool
+
+
+class HA a where
+    ha :: Map.Map Var Bool -> a -> Bool
+
+-- invert sense:  True if may cause heap allocation when evaluated
+instance HA (Expr InfoTab) where
+    ha fpmap (EAtom{ea = LitI{}}) = False
+    ha fpmap (EAtom{ea = Var{}, emd{typ}}) = isBoxedMonotype typ
+
+    ha (EFCall
 
 -- set known calls in EFCall, PAP
 
@@ -137,55 +166,6 @@ instance SetKnownCalls (Obj InfoTab) where
 
     setKnownCalls itMap (o@BLACKHOLE{}) = o
 
-
--- determine whether each expression could cause heap allocation
--- order True > False, then least fixed point, i.e. start with positive assumption
--- could construct domain equations but just do traversals
-
-class SetNoHeapAllocTrue a where
-  setNoHeapAllocTrue :: a -> a
-
-instance SetNoHeapAllocTrue (Expr InfoTab) where
-  setNoHeapAllocTrue e@EAtom{emd} = e{emd = emd{noHeapAlloc = True}}
-
-  setNoHeapAllocTrue e@EFCall{emd} = e{emd = emd{noHeapAlloc = True}}
-
-  setNoHeapAllocTrue e@EPrimop{emd} = e{emd = emd{noHeapAlloc = True}}
-
-  setNoHeapAllocTrue e@ELet{emd, edefs, ee} = 
-      e{emd = emd{noHeapAlloc = True},
-        edefs = map setNoHeapAllocTrue edefs,
-        ee = setNoHeapAllocTrue ee}
-
-  setNoHeapAllocTrue e@ECase{emd, ee, ealts} = 
-      e{emd = emd{noHeapAlloc = True},
-        ee = setNoHeapAllocTrue ee, 
-        ealts = setNoHeapAllocTrue ealts}
-
-instance SetNoHeapAllocTrue (Alts InfoTab) where
-    setNoHeapAllocTrue (a@Alts{altsmd, alts}) =
-        a{altsmd = altsmd{noHeapAlloc = True},
-          alts = map setNoHeapAllocTrue alts}
-
-instance SetNoHeapAllocTrue (Obj InfoTab) where
-    setNoHeapAllocTrue (o@FUN{omd, e}) =
-        o{omd = omd{noHeapAlloc = True},
-          e = setNoHeapAllocTrue e}
-
-    setNoHeapAllocTrue (o@PAP{omd}) = o{omd = omd{noHeapAlloc = True}}
-
-    setNoHeapAllocTrue (o@CON{omd}) = o{omd = omd{noHeapAlloc = True}}
-
-    setNoHeapAllocTrue (o@THUNK{omd, e}) = 
-        o{omd = omd{noHeapAlloc = True},
-          e = setNoHeapAllocTrue e}
-
-    setNoHeapAllocTrue (o@BLACKHOLE{omd}) = o{omd = omd{noHeapAlloc = True}}
-
-instance SetNoHeapAllocTrue (Alt InfoTab) where
-    setNoHeapAllocTrue a@ACon{amd, ae} =
-        a{amd = amd{noHeapAlloc = True},
-          ae = setNoHeapAllocTrue ae}
 
 -- abstract interpretation!
 -- env maps variables of boxed type to

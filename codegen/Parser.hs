@@ -230,10 +230,10 @@ eletp = (kwkindp KWlet `xthenp` cutp "eletp_1"
         `usingp` uncurry (ELet ())
           
 ecasep :: Parser Token (Expr ())
-ecasep = (kwkindp KWcase `xthenp` cutp "ecasep_1"                -- case
-          (exprp `thenp` cutp "ecasep_2"                          -- expr
-           (kwkindp KWof `xthenp`  cutp "ecasep_3"                 -- of
-            (symkindp SymLBrace `xthenp`  cutp "ecasep_4"         -- 
+ecasep = (kwkindp KWcase `xthenp` cutp "ecasep_1"                   -- case
+          (exprp `thenp` cutp "ecasep_2:  'of' expected instead of" -- expr
+           (kwkindp KWof `xthenp`  cutp "ecasep_3"                   -- of
+            (symkindp SymLBrace `xthenp`  cutp "ecasep_4"         
              (alternsp `thenxp` cutp "ecasep_5:  } expected instead of "
               (symkindp SymRBrace)))))) 
          `usingp` uncurry (ECase ())

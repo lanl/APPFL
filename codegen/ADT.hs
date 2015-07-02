@@ -13,7 +13,8 @@ module ADT (
   DataConParam(..),
   DataConMap,
   ConMaps,
-  getTyConDefFromConstructor
+  getTyConDefFromConstructor,
+  isBoxedMonotype
 ) where
 
 import AST(Con,BuiltinType,Obj)
@@ -100,6 +101,10 @@ instance Show Monotype where
                                (if boxed then " [B] " else " [U] ") ++
                                "(" ++ intercalate ") (" (map show ms) ++ ")"
     show (MPrim p) = show p
+
+isBoxedMonotype MVar{} = True
+isBoxedMonotype MFun{} = True
+isBoxedMonotype (MCon boxed _ _) = boxed
 
 data TyConParam = TyConParam {tarity :: Int, 
                               ttag :: Int, 

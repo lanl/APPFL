@@ -276,42 +276,6 @@ instance MakeIT (Obj ([Var],[Var])) where
                     entryCode = "stg_error"
                   }
 
-instance MakeIT (Expr ([Var],[Var])) where
-    makeIT ELet{emd = (fvs,truefvs)} = 
-        ITLet {fvs = fvs, 
-               truefvs = truefvs, 
-               typ = typUndef, 
-               ctyp = ctypUndef, 
-               noHeapAlloc = False}
-
-    makeIT ECase{emd = (fvs,truefvs)} = 
-        ITCase{fvs = fvs, 
-               truefvs = truefvs, 
-               typ = typUndef, 
-               ctyp = ctypUndef, 
-               noHeapAlloc = False}
-    makeIT EAtom{emd = (fvs,truefvs)} = 
-        ITAtom{fvs = fvs, 
-               truefvs = truefvs, 
-               typ = typUndef, 
-               ctyp = ctypUndef, 
-               noHeapAlloc = False}
-
-    makeIT EFCall{emd = (fvs,truefvs)} = 
-        ITFCall{fvs = fvs, 
-                truefvs = truefvs, 
-                typ = typUndef, 
-                ctyp = ctypUndef, 
-                noHeapAlloc = False, 
-                knownCall = Nothing}
-
-    makeIT EPrimop{emd = (fvs,truefvs)} = 
-        ITPrimop{fvs = fvs, 
-                 truefvs = truefvs, 
-                 typ = typUndef, 
-                 ctyp = ctypUndef, 
-                 noHeapAlloc = False}
-
 instance MakeIT (Alts ([Var],[Var])) where
     makeIT Alts{altsmd = (fvs,truefvs), aname} = 
         ITAlts {fvs = fvs, 
