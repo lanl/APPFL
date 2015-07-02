@@ -26,7 +26,8 @@ FnPtr stgApply1();
 #define HOTOPL(HO) ((PtrOrLiteral) {.argType = HEAPOBJ, .op = (HO) })
 #define INTTOPL(L) ((PtrOrLiteral) {.argType = INT,     .i = L   })
 
-#define STGHEAPAT(n) ((Obj*)stgHP + (n))
+// NP = number of PtrOrLiterals NO = Number of Objs
+#define STGHEAPAT(NP,NO) ((char*)stgHP - (NP*sizeof(PtrOrLiteral)) - (NO*sizeof(VarObj)))
 
 // evaluate in place
 #define STGEVAL(e)				\
