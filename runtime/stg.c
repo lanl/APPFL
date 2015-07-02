@@ -41,8 +41,8 @@ const char *objTypeNames[] = {
 // TODO: 64 bit align
 Obj* stgNewHeapObj(int payloadSize) {
   Obj *curp = (Obj *)stgHP;
-  stgHP = (Obj *)stgHP + 1;
-  //stgHP = (Obj *)((char *)stgHP + sizeof(Obj) + payloadSize*sizeof(PtrOrLiteral));
+  //printf("payload = %d obj = %d varobj = %d, %d\n", payloadSize, sizeof(Obj), sizeof(VarObj), sizeof(VarObj) + payloadSize*sizeof(PtrOrLiteral));
+  stgHP = (Obj *)((char *)stgHP + sizeof(Obj) + payloadSize*sizeof(PtrOrLiteral));
   return curp;
 }
 
@@ -114,9 +114,8 @@ void showStgObjRecPretty(Obj *p) {
     fprintf(stderr, "******showStgObjRec depth exceeded\n");
     return;
   }
-  Obj o = *p;
 
-  InfoTab it = *o.infoPtr;
+  InfoTab it = *(p->infoPtr);
 
   for (int i=0; i != depth; i++) {
     if (p == stack[i]) {
@@ -126,51 +125,51 @@ void showStgObjRecPretty(Obj *p) {
   }
   stack[depth++] = p;
 
-  if (o.objType != BLACKHOLE && 
-      o.objType != INDIRECT &&
-      o.objType != FORWARD &&
-      o.objType != it.objType) {
-	    if(!(o.objType == PAP && it.objType == FUN)) {
+  if (p->objType != BLACKHOLE &&
+      p->objType != INDIRECT &&
+      p->objType != FORWARD &&
+      p->objType != it.objType) {
+	    if(!(p->objType == PAP && it.objType == FUN)) {
           fprintf(stderr, "mismatch in infotab and object type! %d != %d\n",
-        		o.objType, it.objType);
+        		p->objType, it.objType);
           exit(0);
 	    }
   }
-  if (strcmp(it.name, o.ident)) {
+  if (strcmp(it.name, p->ident)) {
 	  if (strcmp(it.name, "true") != 0 && strcmp(it.name, "false") != 0 ) {
         fprintf(stderr, "mismatch in infotab and object names \"%s\" != \"%s\"\n",
-        		it.name, o.ident);
+        		it.name, p->ident);
         exit(0);
 	  }
   }
 
 
-  switch (o.objType) {
+  switch (p->objType) {
   case FUN:
   case PAP:
   case THUNK:
   case BLACKHOLE:
-    fprintf(stderr, "%s = <%s>", o.ident, objTypeNames[o.objType]);
+    fprintf(stderr, "%s = <%s>", p->ident, objTypeNames[p->objType]);
     break;
 
   case CON:
-    fprintf(stderr, "%s = %s", o.ident, it.conFields.conName );
+    fprintf(stderr, "%s = %s", p->ident, it.conFields.conName );
     int arity = it.conFields.arity;
     if (arity > 0) {
       if (arity > 1) fprintf(stderr, "(");
       else fprintf(stderr, " ");
-      showStgValPretty(o.payload[0]);
+      showStgValPretty(p->payload[0]);
       for (int i = 1; i < arity; i++) {
-	fprintf(stderr, ", ");
-	showStgValPretty(o.payload[i]);
+	    fprintf(stderr, ", ");
+	    showStgValPretty(p->payload[i]);
       }
       if (arity > 1) fprintf(stderr, ")");
     }
     break;
 
   case INDIRECT:
-    fprintf(stderr, "%s --> ", o.ident );
-    showStgObjRecPretty(o.payload[0].op);
+    fprintf(stderr, "%s --> ", p->ident );
+    showStgObjRecPretty(p->payload[0].op);
     break;
 
   case FORWARD:
@@ -207,7 +206,7 @@ void showStgValPretty(PtrOrLiteral v) {
     break;
   default:
     fprintf(stderr,"undefined PtrOrLiteral.tag! tag=%d\n", v.argType);
-    exit(0);
+    exit(1);
   }
 }
 
@@ -227,12 +226,12 @@ void showStgObjRecDebug(Obj *p) {
   }
   stack[depth++] = p;
 
-  Obj o = *p;
 
-  InfoTab it = *o.infoPtr;
-  fprintf(stderr, "%s %s %s ", objTypeNames[o.objType], 
+
+  InfoTab it = *(p->infoPtr);
+  fprintf(stderr, "%s %s %s ", objTypeNames[p->objType],
 	  objTypeNames[it.objType], it.name);
-  switch (o.objType) {
+  switch (p->objType) {
   case FUN:
     fprintf(stderr,"\n");
     break;
@@ -244,7 +243,7 @@ void showStgObjRecDebug(Obj *p) {
   case CON:
     fprintf(stderr,"tag %d arity %d\n", it.conFields.tag, it.conFields.arity );
     for (int i = 0; i != it.conFields.arity; i++)
-      showStgValDebug(o.payload[i]);    
+      showStgValDebug(p->payload[i]);
     break;
 
   case THUNK:
@@ -257,7 +256,7 @@ void showStgObjRecDebug(Obj *p) {
 
   case INDIRECT:
     fprintf(stderr,"INDIRECT to\n");
-    showStgObjRecDebug(o.payload[0].op);
+    showStgObjRecDebug(p->payload[0].op);
     break;
 
   case FORWARD:
@@ -310,9 +309,11 @@ void showStgHeap() {
     fprintf(stderr,"\n");
   }
   fprintf(stderr,"\nSTG heap:\n\n");
+/*
   for (Obj *p = ((Obj *) stgHP) - 1;
        p >= (Obj *)stgHeap;
        p--) {showStgObj(p); fprintf(stderr,"\n");}
+*/
   showStgStack();
 }
 

@@ -52,7 +52,7 @@ import Data.Map (Map)
 import qualified Data.Map as Map
 
 data RVal = SHO           -- static heap obj
-          | HO Int        -- heap obj, Int is size, count back
+          | HO Int        -- heap obj,  payload size
           | FP            -- formal param, use name as is
           | CC String Int -- named case continuation
           | FV Int        -- free var, self->payload[Int]
@@ -63,25 +63,29 @@ data RVal = SHO           -- static heap obj
 type Env = [(String, RVal)]
 
 getEnvRef :: String -> Env -> String
-getEnvRef v env = lu v env 0
+getEnvRef v env = lu v env 0 0
 
-lu v [] _ = error $ "lu " ++ v ++ " failed"
+-- first Int is total number of payload elements
+-- second Int is total number of Objs 
+lu :: String -> Env -> Int -> Int -> String
+lu v [] _ _ = error $ "lu " ++ v ++ " failed"
 
-lu v ((v',k):_) n | v == v' =
+lu v ((v',k):_) size' n | v == v' =
     case k of
       SHO     -> "HOTOPL(&sho_" ++ v ++ ")"
       -- HOTOPL(STGHEAPAT(-1))
-      HO size -> "HOTOPL(STGHEAPAT(" ++ show (-(size + n)) ++ "))"
+      --HO size -> "HOTOPL(STGHEAPAT(" ++ show (-(size + n)) ++ "))"
+      HO size -> "HOTOPL((Obj *)STGHEAPAT(" ++ show (size+size') ++ "," ++ show (n+1) ++ "))"
       FP      -> v
       CC cc i -> cc ++ ".payload[" ++ show i ++ "]"
       FV i    -> "self.op->payload[" ++ show i ++ "]"
       AC v i  -> v ++ "->payload[" ++ show i ++ "]"
       AD v    -> v
 
-lu v ((_, HO size) : xs) n =
-    lu v xs (n+size)
+lu v ((_, HO size) : xs) size' n =
+    lu v xs (size'+size) (n+1)
 
-lu v (x : xs) n = lu v xs n
+lu v (x : xs) size n = lu v xs size n
 
 
 indent i xs = (take i $ repeat ' ') ++ indent' i xs
@@ -361,7 +365,8 @@ cgalt env switch scrutName (ADef it v e) =
 buildHeapObj env o =
     let (size, rval) = heapObjRVal env o
         name = oname o
-        decl = "Obj *" ++ name ++ " = stgNewHeapObj(" ++ show size ++ ");\n"
+        --decl = "Obj *" ++ name ++ " = stgNewHeapObj(" ++ show size ++ " - sizeof(VarObj));\n" 
+        decl = "Obj *" ++ name ++ " = stgNewHeapObj(" ++ show size ++ ");\n" 
         code = "*" ++ name ++ " = " ++ rval  -- ++ ";\n"
     in (size, decl, code)
 
@@ -376,23 +381,26 @@ heapObjRVal env o =
             "      };\n" ++ guts
     in (size, code)
 
+--objsize = 592
+objsize = 32
+
 bho env (FUN it vs e name) =
-    (1, loadPayloadFVs env (fvs it) name )
+    (objsize, loadPayloadFVs env (fvs it) name )
 
 bho env (PAP it f as name) =
-    (1, loadPayloadFVs env (fvs it)  name ++ loadPayloadAtoms env as (length $ fvs it) name)
+    (objsize, loadPayloadFVs env (fvs it)  name ++ loadPayloadAtoms env as (length $ fvs it) name)
 
 bho env (CON it c as name) = 
-    let size = 1
+    let size = objsize
         code = concat [name ++ "->payload[" ++ show i ++ "] = " ++ 
                        cga env a ++ "; // " ++ showa a ++ "\n"
                        | (i,a) <- indexFrom 0 as ]
     in (size, code)
 
 bho env (THUNK it e name) =
-    (1, loadPayloadFVs env (fvs it) name)
+    (objsize, loadPayloadFVs env (fvs it) name)
 
-bho env (BLACKHOLE it name) = (1,"")
+bho env (BLACKHOLE it name) = (objsize,"")
 
 
 --TODO: ptr vs  non-ptr

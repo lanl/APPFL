@@ -67,14 +67,24 @@ typedef struct {
 // in a proper implementation there will be no such struct declaration--
 // they'll be variably-sized and self-describing
 
+/*
+// temp hack just used for sizeof()
+typedef struct {
+  InfoTab *infoPtr;         // canonical location of ObjType field
+  ObjType objType;          // to distinguish PAP, FUN, BLACKHOLE, INDIRECT
+  int argCount;             // for PAP, how many args already applied to?
+  char ident[64];           // temporary, just for tracing
+  PtrOrLiteral payload[];
+} VarObj;
+*/
 
 struct _Obj {
   InfoTab *infoPtr;         // canonical location of ObjType field
   ObjType objType;          // to distinguish PAP, FUN, BLACKHOLE, INDIRECT
   int argCount;             // for PAP, how many args already applied to?
   char ident[64];           // temporary, just for tracing
-  PtrOrLiteral payload[32];
-  //PtrOrLiteral payload[];
+  //PtrOrLiteral payload[32];
+  PtrOrLiteral payload[];
 };
 
 typedef struct {
@@ -85,7 +95,7 @@ typedef struct {
 } Cont;
 
 typedef struct {
-  int objSize; //should we use objsize or payload size?
+  int payloadSize;
 } LayoutInfo;
 
 typedef struct {
