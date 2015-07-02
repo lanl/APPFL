@@ -214,6 +214,15 @@ tokenize ls = aux (None (0,0)) (0,0) (stripComments ls) []
          -- accept digits mid-token, whether numeric or stringy
          _       -> aux st{tS = x:(tS st)} (l,c+1) xs toks 
 
+    -- only valid as a non-beginning part of an identifier or constructor
+    -- if found outside of such, should it be read as a comment in the comment stripper?
+    -- MODIFIED 7.1, currently allowing '#' symbol in identifiers everywhere
+--      | x == '#' =
+--        case st of
+--        StrTok {tS} -> aux st{tS= x:tS} (l,c+1) xs toks
+--        _           -> error
+--                       ("\nError at " ++ show (l,c) ++
+--                        "\nNot expecting '#' outside some form of identifier")
 
     -- match on valid identifier symbols
       | isIdSym x =
@@ -236,15 +245,6 @@ tokenize ls = aux (None (0,0)) (0,0) (stripComments ls) []
           _       -> aux (None newPs) newPs (tail xs) (arw:fromTokenState st:toks)
 
 
-    -- only valid as a non-beginning part of an identifier or constructor
-    -- if found outside of such, should it be read as a comment in the comment stripper?
-    -- MODIFIED 7.1, currently allowing '#' symbol in identifiers everywhere
---      | x == '#' =
---        case st of
---        StrTok {tS} -> aux st{tS=x:tS} (l,c+1) xs toks
---        _           -> error
---                       ("\nError at " ++ show (l,c) ++
---                        "\nNot expecting '#' outside some form of identifier")
         
     -- give some kind of meaningful error message if something unexpected is read
       | otherwise = tokErr st $

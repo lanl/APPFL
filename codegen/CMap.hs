@@ -15,6 +15,7 @@ module CMap
   luDCon,
   luTConInfo,
   luTCon,
+  luConTag,
   isBoxedTCon,
   CMap
 ) where
@@ -86,12 +87,15 @@ luDCon name conmap = getDConInList name $ luDCons name conmap
 
 -- check boxedness of a TyCon name
 isBoxedTCon :: Con -> CMap -> Bool
-isBoxedTCon c cmap =
-  let tcons = map snd $ Map.toList cmap
-  in case find ((== c) . tConName) tcons of
-      Just (TyCon boxed _ _ _) -> boxed
-      Nothing                  -> error $
-                                  "TyCon for " ++ c ++ " not found in CMap"
+isBoxedTCon c cmap
+  | c == "Int_h" = True
+  | otherwise    =
+      let tcons = map snd $ Map.toList cmap
+      in
+       case find ((== c) . tConName) tcons of
+        Just (TyCon boxed _ _ _) -> boxed
+        Nothing                  -> error $
+                                    "TyCon for " ++ c ++ " not found in CMap"
                                
 
 -- lookup TyCon info by con in the CMap
@@ -110,6 +114,16 @@ luTCon name conmap
   | otherwise = case Map.lookup name conmap of
                  Nothing -> error "constructor not in conmap"
                  (Just t) -> t
+
+luConTag :: Con -> CMap -> String
+luConTag c cmap | isBuiltInType c = c
+                | otherwise       =
+                  let tab = zip (map dConName $ luDCons c cmap) [0..]
+                  in case lookup c tab of
+                      Just n -> show n
+                      Nothing -> error $ "Tag lookup failing in CMap for " ++ c
+                      
+
 
 isInt :: String -> Bool
 isInt = and . (map isNumber)

@@ -1,3 +1,4 @@
+
 {-# LANGUAGE TypeSynonymInstances  #-}
 {-# LANGUAGE FlexibleInstances     #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
@@ -251,7 +252,8 @@ instance MakeIT (Obj ([Var],[Var])) where
 
     makeIT o@(CON (fvs,truefvs) c as n) =
         Con { con = c,
-              tag = -1, -- this gets set later
+-- MODIFIED 7.2 - David ----------------------------------------
+-- OLD              tag = -1, -- this gets set later
               arity = length as,
               args = as,
               name = n,
@@ -263,8 +265,8 @@ instance MakeIT (Obj ([Var],[Var])) where
               entryCode = "stg_constructorcall",
 -- MODIFIED 6.30 - David ----------------------------------------
               cmap = error "ADef cmap undefined"
---              dconMap = error "ADef dconMap undefined",
---              tconMap = error "ADef tconMap undefined"
+-- OLD              dconMap = error "ADef dconMap undefined",
+-- OLD              tconMap = error "ADef tconMap undefined"
             }
 
     makeIT o@(THUNK (fvs,truefvs) e n) =
@@ -300,9 +302,10 @@ instance MakeIT (Expr ([Var],[Var])) where
                truefvs = truefvs, 
                typ = typUndef, 
                ctyp = ctypUndef,
-               noHeapAlloc = False,
 -- MODIFIED 7.1 - David ----------------------------------------
+               noHeapAlloc = False,
                cmap = Map.empty}
+-- OLD               noHeapAlloc = False}
     makeIT EAtom{emd = (fvs,truefvs)} = 
         ITAtom{fvs = fvs, 
                truefvs = truefvs, 
@@ -342,8 +345,8 @@ instance MakeIT (Alt ([Var],[Var])) where
               ctyp = ctypUndef,
 -- MODIFIED 7.1 - David ----------------------------------------
               cmap = Map.empty}
---              dconMap = Map.empty, 
---              tconMap = Map.empty}
+-- OLD              dconMap = Map.empty, 
+-- OLD              tconMap = Map.empty}
 
     makeIT ADef{amd = (fvs,truefvs)} = 
         ITAlt{fvs = fvs, 
@@ -352,8 +355,8 @@ instance MakeIT (Alt ([Var],[Var])) where
               ctyp = ctypUndef,
 -- MODIFIED 6.30 - David ----------------------------------------
               cmap = error "ADef cmap set undefined in InfoTab.hs"}
---              dconMap = error "ADef dconMap set undefined in InfoTab.hs",
---              tconMap = error "ADef tconMap set undefined in InfoTab.hs"}
+-- OLD              dconMap = error "ADef dconMap set undefined in InfoTab.hs",
+-- OLD              tconMap = error "ADef tconMap set undefined in InfoTab.hs"}
 
 
 showObjType Fun {} = "FUN"
@@ -407,7 +410,9 @@ showIT it@(Con {}) =
     "    .entryCode           = &" ++ entryCode it ++ ",\n" ++
     "    .objType             = CON,\n" ++
     "    .conFields.arity     = " ++ show (arity it) ++ ",\n" ++
-    "    .conFields.tag       = " ++ show (tag it) ++ ",\n" ++
+-- MODIFIED 7.2 - David ----------------------------------------
+    "    .conFields.tag       = " ++ luConTag (con it) (cmap it) ++ ",\n" ++
+-- OLD    "    .conFields.tag       = " ++ show (tag it) ++ ",\n" ++
     "    .conFields.conName   = " ++ show (con it) ++ ",\n" ++
     "  };\n"
         
@@ -438,76 +443,56 @@ showIT _ = ""
 
       
 -- MODIFIED 6.30 - David ----------------------------------------
--- code below replaces code from ConMaps.hs to add tags to CON
--- infotabs and set the CMaps in CON and ACon infotabs
+-- code below replaces code from ConMaps.hs to set the CMaps in
+-- CON and ACon infotabs for typechecker and codegen lookups
 
 
 setCMaps :: ([TyCon], [Obj InfoTab]) -> ([TyCon], [Obj InfoTab])
 setCMaps (tycs, objs) = (tycs, addCMapToITs (toCMap tycs) objs)
 
 addCMapToITs :: CMap -> [Obj InfoTab] -> [Obj InfoTab]
-addCMapToITs cmap objs =
-  let tagTab = zip (map fst $ Map.toList cmap) [0..] :: [(Con,Int)] -- simple indices for tags
-
-  in map (setITs . (cmap,tagTab,)) objs --TupleSections extension permits this
+addCMapToITs cmap objs =  map (setITs . (cmap,)) objs --TupleSections extension functionality
 
 
--- [(Int,Con)] pairs yield a unique tagging scheme
--- (taken from Map.toList indices)
-type CMapTrip a = (CMap, [(Con,Int)], a)
-
-instance SetITs (CMapTrip (Obj InfoTab)) (Obj InfoTab) where
-  setITs (cmap,tagTab,obj) = case obj of
+instance SetITs (CMap,(Obj InfoTab)) (Obj InfoTab) where
+  setITs (cmap,obj) = case obj of
 
     o@FUN{e} ->
-      o{ e = setITs (cmap,tagTab,e) }
+      o{ e = setITs (cmap,e) }
 
     o@THUNK{e} ->
-      o{ e = setITs (cmap,tagTab,e) }
+      o{ e = setITs (cmap,e) }
 
     o@CON{omd, c} ->
-      let
-        (Just contag) = lookup c tagTab -- grab tag, error on lookup is good?
-        omd'          = omd{tag  = contag,
-                            cmap = cmap} -- add tag and cmap to InfoTab
-      in
-       o{omd = omd'}
+      o{omd = omd{ cmap = cmap } }
 
     o -> o --  BLACKHOLE and PAP don't need modification
 
-instance SetITs (CMapTrip (Expr InfoTab)) (Expr InfoTab) where
-  setITs (cmap,tagTab,expr) = case expr of
+instance SetITs (CMap, (Expr InfoTab)) (Expr InfoTab) where
+  setITs (cmap,expr) = case expr of
 
     e@ECase{ee, ealts, emd} ->
-      e{ ee    = setITs (cmap,tagTab,ee),
-         ealts = setITs (cmap,tagTab,ealts),
-         emd   = emd {cmap = cmap} }
+      e{ ee    = setITs (cmap,ee),
+         ealts = setITs (cmap,ealts),
+         emd   = emd { cmap = cmap } }
 
     e@ELet{ee, edefs} ->
-      e{ ee    = setITs (cmap,tagTab,ee),
-         edefs = map (setITs . (cmap,tagTab,)) edefs }
+      e{ ee    = setITs (cmap,ee),
+         edefs = map (setITs . (cmap,)) edefs }
       
     e -> e -- EAtom, EFCall, EPrimop don't need modification
 
-instance SetITs (CMapTrip (Alts InfoTab)) (Alts InfoTab) where
-  setITs (cmap,tagTab,a@Alts{alts}) =
-    a{ alts = map (setITs . (cmap,tagTab,)) alts}
+instance SetITs (CMap, (Alts InfoTab)) (Alts InfoTab) where
+  setITs (cmap,a@Alts{alts}) =
+    a{ alts = map (setITs . (cmap,)) alts}
     
-instance SetITs (CMapTrip (Alt InfoTab)) (Alt InfoTab) where
-  setITs (cmap,tagTab,alt) = case alt of
+instance SetITs (CMap, (Alt InfoTab)) (Alt InfoTab) where
+  setITs (cmap, alt) = case alt of
 
     a@ACon{amd, ac, ae} ->
-      let
-        conTag = case luTCon ac cmap of
-          TyCon False "Int_h"
-          Just t -> t
-          Nothing | -> error $ "setCMaps: could not find " ++ ac ++ " in tagTab"
-        amd'        = amd{tag  = conTag,
-                          cmap = cmap}
-      in
-       a{ amd = amd',
-          ae = setITs (cmap,tagTab,ae) }
+      a{ amd = amd{cmap = cmap},
+         ae = setITs (cmap,ae) }
 
     a@ADef{ae} ->
-      a { ae = setITs (cmap,tagTab,ae) }
+      a { ae = setITs (cmap,ae) }
 

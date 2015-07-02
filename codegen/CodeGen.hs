@@ -312,16 +312,18 @@ cgalt env switch scrutName (ACon it c vs e) =
     in do
       (inline, func) <- cge env' e
 -- MODIFIED 7.1 - David ----------------------------------------
-      let dtag = tag it
---      let (DataConParam{dtag}) = case Map.lookup c (dconMap it) of
---                           Nothing -> error "conMap lookup error"
---                           Just x -> x
+      let tag = luConTag c $ cmap it -- ConTags returned as Strings!
+-- OLD      let (DataConParam{dtag}) = case Map.lookup c (dconMap it) of
+-- OLD                          Nothing -> error "conMap lookup error"
+-- OLD                          Just x -> x
       let code = "// " ++ c ++ " " ++ intercalate " " vs ++ " ->\n" ++
                  if switch then
-                     "case " ++ show dtag ++ ": {\n" ++
-                        indent 2 inline ++
-                     "  STGRETURN0();\n" ++
-                     "}\n"
+-- MODIFIED 7.1 - David ----------------------------------------
+                   "case " ++ tag ++ ": {\n" ++
+-- OLD                    "case " ++ show dtag ++ ": {\n" ++
+                   indent 2 inline ++
+                   "  STGRETURN0();\n" ++
+                   "}\n"
                  else inline ++ "STGRETURN0();\n"
       return (code, func)
               

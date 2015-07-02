@@ -193,15 +193,15 @@ tokP2 t = tokP1 $ t undefined
 rsvP :: String -> Parser Token Token
 rsvP s = tokP1 $ TokRsv s
 
+subHash xs = concatMap (\x -> if x == '#' then "_h" else [x]) xs
+
 -- Match constructor token, accept its String
 conNameP :: Parser Token String
-conNameP = tokP2 (TokCon) `using` (subHash . tks)
-  where
-    subHash = \str -> if last str == '#' then init str ++ "_h" else str
+conNameP = tokP2 (TokCon) `using` (subHash.tks)
 
 -- Match variable token, accept its String
 varNameP :: Parser Token String
-varNameP = tokP2 (TokId) `using` tks
+varNameP = tokP2 (TokId) `using` (subHash.tks)
 
 -- Match Integer Token, accept Int
 intP :: Parser Token Int

@@ -1,4 +1,4 @@
-x{xfxf-# LANGUAGE TypeSynonymInstances  #-}
+{-# LANGUAGE TypeSynonymInstances  #-}
 {-# LANGUAGE FlexibleInstances     #-}
 {-# LANGUAGE NamedFieldPuns        #-}
 {-# LANGUAGE ParallelListComp      #-}
