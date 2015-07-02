@@ -88,7 +88,7 @@ luDCon name conmap = getDConInList name $ luDCons name conmap
 -- check boxedness of a TyCon name
 isBoxedTCon :: Con -> CMap -> Bool
 isBoxedTCon c cmap
-  | c == "Int_h" = True
+  | c == "Int_h" = False
   | otherwise    =
       let tcons = map snd $ Map.toList cmap
       in
