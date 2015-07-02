@@ -73,8 +73,6 @@ lu v [] _ _ = error $ "lu " ++ v ++ " failed"
 lu v ((v',k):_) size' n | v == v' =
     case k of
       SHO     -> "HOTOPL(&sho_" ++ v ++ ")"
-      -- HOTOPL(STGHEAPAT(-1))
-      --HO size -> "HOTOPL(STGHEAPAT(" ++ show (-(size + n)) ++ "))"
       HO size -> "HOTOPL((Obj *)STGHEAPAT(" ++ show (size+size') ++ "," ++ show (n+1) ++ "))"
       FP      -> v
       CC cc i -> cc ++ ".payload[" ++ show i ++ "]"
