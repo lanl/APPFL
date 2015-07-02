@@ -70,40 +70,43 @@ showHO it =
        showSHOspec it ++
     "  };\n"
 
-showSHOspec it@(Fun {}) = ""
+showSHOspec it@(Fun {}) = payloads []
 
-showSHOspec it@(Pap {}) = ""
+showSHOspec it@(Pap {}) = payloads []
 
 showSHOspec it@(Con {}) = payloads $ args it
 
-showSHOspec it@(Thunk {}) = ""
+showSHOspec it@(Thunk {}) = payloads []
 
-showSHOspec it@(Blackhole {}) = ""
+showSHOspec it@(Blackhole {}) = payloads []
 
 showSHOspec it = ""
 
 -- TODO make indent lib function and use here.
-payloads as = "  .payload = {\n" ++ (concatMap payload $ zip [0..] as) ++ "},\n"
+-- TODO don't hardwire max size 32 here
+payloads as = let ps = concatMap payload as
+                  pad = concat $ replicate (32-length(as)) "0,"
+              in "  .payload = {\n" ++ ps ++ pad ++ "},\n"
 
 
-payload (ind, LitI i) = 
+payload (LitI i) = 
     "{.argType = INT, .i = " ++ show i ++ "},\n"
 
-payload (ind, LitB b) = 
+payload (LitB b) = 
     "{.argType = BOOL, .b = " ++
     (if b then "true" else "false") ++ "},\n"
 
-payload (ind, LitD d) = 
+payload (LitD d) = 
     "{.argType = DOUBLE, .i = " ++ show d ++ "},\n"
 
-payload (ind, LitF d) = 
+payload (LitF d) = 
     "{.argType = FLOAT, .i = " ++ show d ++ "},\n"
 
-payload (ind, LitC c) = 
+payload (LitC c) = 
     "{.argType = CHAR, .i = " ++ show c ++ "},\n"
    
 -- for SHOs atoms that are variables must be SHOs, so not unboxed
-payload (ind, Var v) = 
+payload (Var v) = 
     "{.argType = HEAPOBJ, .op = &sho_" ++ v ++ "},\n"
 
 ptrOrLitSHO a =
