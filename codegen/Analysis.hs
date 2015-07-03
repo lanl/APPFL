@@ -94,6 +94,7 @@ isConI _                    = False
 
 pfOr p1 p2 x = (p1 x) || (p2 x)
 
+{-
 funPapITmaps os = Map.fromList [(name it, it) | it <- filter isFunOrPapIT $ itsOf os]
                   where
                     isFunOrPapIt Pap{} = True
@@ -123,7 +124,7 @@ instance HA (Expr InfoTab) where
     ha fpmap (EAtom{ea = Var{}, emd{typ}}) = isBoxedMonotype typ
 
     ha (EFCall
-
+-}
 -- set known calls in EFCall, PAP
 
 class SetKnownCalls a where
