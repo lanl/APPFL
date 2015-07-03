@@ -186,11 +186,11 @@ instance DV (Alt InfoTab) (Alt InfoTab) where
            let TyCon boxed tcon tvs dcs = 
 -- MODIFIED 6.30 - David----------------------------------------
                  luTCon ac $ cmap amd -- NEW
---                 gettTyConDefFromConstructor (dconMap amd) (tconMap amd) ac
+-- OLD                 gettTyConDefFromConstructor (dconMap amd) (tconMap amd) ac
            ntvs <- freshMonoVars $ length tvs
 -- MODIFIED 6.30 - David ----------------------------------------
            let m = MCon tcon ntvs
---           let m = MCon boxed tcon ntvs
+-- OLD           let m = MCon boxed tcon ntvs
            return $ setTyp m a{ae = ae'}
 
 instance DV (Obj InfoTab) (Obj InfoTab) where
@@ -198,7 +198,7 @@ instance DV (Obj InfoTab) (Obj InfoTab) where
         do bs <- freshMonoVars (length vs) -- one for each arg
 -- MODIFIED 6.30 - David ----------------------------------------
            let m = MCon "hack" bs  --hack, just hold them        
---           let m = MCon True "hack" bs  --hack, just hold them
+-- OLD           let m = MCon True "hack" bs  --hack, just hold them
            e' <- dv e
            return $ setTyp m o{e=e'}  --what's the precedence, if it mattered?
 
@@ -214,12 +214,12 @@ instance DV (Obj InfoTab) (Obj InfoTab) where
         let TyCon boxed tcon tvs dcs =
 -- MODIFIED 6.30 - David ----------------------------------------
               luTCon c $ cmap omd
---              getTyConDefFromConstructor (dconMap omd) (tconMap omd) c
+-- OLD              getTyConDefFromConstructor (dconMap omd) (tconMap omd) c
         in do ntvs <- freshMonoVars $ length tvs
               asts <- mapM getMono as -- may be zero of them
 -- MODIFIED 6.30 - David ----------------------------------------
               let hack = MFun (MCon tcon ntvs) (MCon "hack2" asts)
---              let hack = MFun (MCon boxed tcon ntvs) (MCon True "hack2" asts)
+-- OLD              let hack = MFun (MCon boxed tcon ntvs) (MCon True "hack2" asts)
               return $ setTyp hack o
 
     dv o@THUNK{e} =
@@ -351,24 +351,24 @@ butAlt t0 mtvs e@ACon{amd,ac,avs,ae} =
         TyCon boxed tcon tvs dcs =
 -- MODIFIED 6.30 - David ----------------------------------------
             luTCon ac $ cmap amd
---            getTyConDefFromConstructor (dconMap amd) (tconMap amd) ac
+-- OLD            getTyConDefFromConstructor (dconMap amd) (tconMap amd) ac
         -- get data constructor definition C [Monotype]
         -- [ms] = [ ms | DataCon b c ms <- dcs, c == ac ] -- ms :: [Monotype]
 -- MODIFIED 7.1 - David ----------------------------------------
         ms = case [ ms | DataCon c ms <- dcs, c == ac] of
---        ms = case [ ms | DataCon b c ms <- dcs, c == ac ] of
+-- OLD        ms = case [ ms | DataCon b c ms <- dcs, c == ac ] of
                [ms] -> ms
                _ -> error $ "butAlt: not finding " ++ ac ++ " in " ++ show dcs ++
 -- MODIFIED 6.30 - David ----------------------------------------
                     " for TyCon: " ++ tcon ++
                      "\nCMap:\n" ++ show (cmap amd)
---                     " ++ show (dconMap amd) ++ 
---                     "\ntconMap: " ++ show (tconMap amd)
+-- OLD                     " ++ show (dconMap amd) ++ 
+-- OLD                     "\ntconMap: " ++ show (tconMap amd)
 
         -- instantiate those Monotypes
 --  MODIFIED 6.30 - David ----------------------------------------
         MCon c ntvs = getTyp e --stashed by dv        
---        MCon boxed' c ntvs = getTyp e --stashed by dv
+-- OLD        MCon boxed' c ntvs = getTyp e --stashed by dv
         subst = Map.fromList $ zzip tvs ntvs
         tis = apply subst ms
         xtis = zzip avs tis
@@ -387,7 +387,7 @@ instance BU (Obj InfoTab) where
       -- get new type vars for args
 -- MODIFIED 6.30 - David ----------------------------------------
     let MCon "hack" ntvs = getTyp o
---    let MCon _ "hack" ntvs = getTyp o
+-- OLD    let MCon _ "hack" ntvs = getTyp o
         (as,cs,e') = bu (Set.union mtvs $ Set.fromList ntvs) e
         ncs = Set.fromList [EqC t' bi | (xi,bi) <- zzip vs ntvs, 
                             (x,t') <- Set.toList as,
@@ -414,10 +414,9 @@ instance BU (Obj InfoTab) where
         [ms] = [ ms | DataCon c' ms <- dcs, c == c' ]
         -- instantiate those Monotypes
         MFun typ@(MCon tcon' ntvs) (MCon "hack2" asts) = getTyp o        
---          getTyConDefFromConstructor (dconMap omd) (tconMap omd) c
-
---        [ms] = [ ms | DataCon b c' ms <- dcs, c == c' ] -- ms :: [Monotype]
---        MFun typ@(MCon boxed' tcon' ntvs) (MCon True "hack2" asts) = getTyp o
+-- OLD          getTyConDefFromConstructor (dconMap omd) (tconMap omd) c
+-- OLD        [ms] = [ ms | DataCon b c' ms <- dcs, c == c' ] -- ms :: [Monotype]
+-- OLD        MFun typ@(MCon boxed' tcon' ntvs) (MCon True "hack2" asts) = getTyp o
         subst = Map.fromList $ zzip tvs ntvs
         ms' = apply subst ms
       in (Set.fromList [(v,m) | (Var v, m) <- zzip as ms'], --drop LitX cases

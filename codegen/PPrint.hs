@@ -10,6 +10,8 @@ module PPrint
   lcomment,
   bcomment,
   boolean,
+  listText,
+  brackList,
   PPrint,
   module Text.PrettyPrint
 ) where
@@ -33,3 +35,7 @@ bcomment d = text "{-" <+> (nest 3 d) $+$ text "-}"
 
 boolean :: Bool -> Doc
 boolean = text . show
+
+brackList = brackets . hsep . punctuate comma
+
+listText = brackList . map text

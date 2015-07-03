@@ -6,6 +6,8 @@ module Driver (
   freevarer,
   infotaber,
   conmaper,
+  typechecker,
+  knowncaller,
   codegener
 ) where
 
@@ -16,6 +18,7 @@ import           SCC
 import           CodeGen
 -- MODIFIED 6.30 - David ----------------------------------------
 import           CMap
+import           DAnalysis
 --import           ConMaps
 import           InfoTab
 import           HeapObj
@@ -26,6 +29,7 @@ import           SetFVs
 import           HMStg
 import           Data.List
 import System.IO
+import qualified Data.Map as Map
 
 header :: String
 header = "#include \"stg_header.h\"\n"
@@ -103,8 +107,25 @@ conmaper :: String -> ([TyCon], [Obj InfoTab])
 conmaper = setCMaps . infotaber
 --conmaper = setConmaps . typer
 
+
 typechecker inp = let (tycons, objs) = conmaper inp
                   in (tycons, hmstg objs)
+
+
+knowncaller inp  = let (tycons, objs) =  typechecker inp
+                   in (tycons, propKnownCalls objs)
+
+makeEnv inp = let (tycons, objs) = typechecker inp
+              in (tycons, addDefsToEnv objs Map.empty)
+                
+
+tester ftest fprint file =
+  do
+    inp <- readFile file
+    let tup = ftest inp
+    fprint tup
+    return ()
+
 
 tctest arg =
   do
@@ -115,7 +136,7 @@ tctest arg =
 
 
 codegener :: String -> Bool -> String
-codegener inp v = let (tycons, objs) = typechecker inp
+codegener inp v = let (tycons, objs) = knowncaller inp
                       infotab = showITs objs
                       (shoForward, shoDef) = showSHOs objs
                       (funForwards, funDefs) = cgObjs objs stgRTSGlobals

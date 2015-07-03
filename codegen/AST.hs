@@ -1,5 +1,5 @@
-{-# LANGUAGE NamedFieldPuns #-}
-
+{-# LANGUAGE NamedFieldPuns  #-}
+{-# LANGUAGE RecordWildCards #-}
 module AST (
   Var,
   Con,
@@ -11,6 +11,7 @@ module AST (
   Primop(..),
   primopTab,
   show,
+  objListDoc,
   BuiltinType(..)
 ) where
 
@@ -234,3 +235,146 @@ instance PPrint a => PPrint (Obj a) where
 -- empty is the identity Doc for the associative pretty printing operators
 instance PPrint () where
   toDoc () = empty
+
+objListDoc :: (PPrint a) => [Obj a] -> Doc
+objListDoc objs = vcat $ map rawDocObj objs
+
+rawDocObj o = case o of
+  FUN{..} -> braces
+             (text "FUN:" $+$
+              nest 2
+              (text "name:" <+> text oname $+$
+               text "vars:" <+> listText vs $+$                        
+               text "metadata:" $+$
+               nest 2 (toDoc omd) $+$
+               text "expr:" $+$
+               nest 2 (rawDocExpr e)
+              )
+             )
+  PAP{..} -> braces 
+             (text "PAP:" $+$
+              nest 2
+              (text "name:" <+> text oname $+$
+               text "function:" <+> text f $+$
+               text "args:" <+> brackList (map rawDocAtom as) $+$
+               text "metadata:" $+$
+               nest 2 (toDoc omd)
+              )
+             )
+  CON{..} -> braces
+             (text "CON:" $+$
+              nest 2
+              (text "name:" <+> text oname $+$
+               text "datacon:" <+> text c $+$
+               text "args:" <+> brackList (map rawDocAtom as) $+$
+               text "metadata:" $+$
+               nest 2 (toDoc omd)
+              )
+             )
+  THUNK{..} -> braces
+               (text "THUNK:" $+$
+                nest 2
+                (text "name:" <+> text oname $+$
+                 text "metadata:" $+$
+                 nest 2 (toDoc omd) $+$
+                 text "expression:" $+$
+                 nest 2 (rawDocExpr e)
+                )
+               )
+  BLACKHOLE{..} -> braces
+                   (text "BLACKHOLE" $+$
+                    nest 2
+                    (text "name:" <+> text oname $+$
+                     text "metadata:" $+$
+                     nest 2 (toDoc omd)
+                    )
+                   )
+
+rawDocExpr e = case e of
+  EAtom{..} -> braces
+               (text "EAtom:" $+$
+                nest 2
+                (text "atom:" <+> rawDocAtom ea $+$
+                 text "metadata:" $+$
+                 nest 2 (toDoc emd)
+                )
+               )
+  EFCall{..} -> braces
+                (text "EFCall:" $+$
+                 nest 2
+                 (text "function:" <+> text ev $+$
+                  text "args:" <+> brackList (map rawDocAtom eas) $+$
+                  text "metadata:" $+$
+                  nest 2 (toDoc emd)
+                 )
+                )
+  EPrimop{..} -> braces
+                 (text "EPrimop:" $+$
+                  nest 2
+                  (text "primop:" <+> rawDocPrimop eprimop $+$
+                   text "args:" <+> brackList (map rawDocAtom eas) $+$
+                   text "metadata" $+$
+                   nest 2 (toDoc emd)
+                  )
+                 )
+  ELet{..} -> braces
+              (text "ELet:" $+$
+               nest 2
+               (text "metadata:" $+$
+                nest 2 (toDoc emd) $+$
+                text "definitions:" $+$
+                nest 2 (objListDoc edefs) $+$
+                text "expression:" $+$
+                nest 2 (rawDocExpr ee)
+               )
+              )
+  ECase{..} -> braces
+               (text "ECase:" $+$
+                nest 2
+                (text "metadata:" $+$
+                 nest 2 (toDoc emd) $+$
+                 text "scrutinee:" $+$
+                 nest 2 (rawDocExpr ee) $+$
+                 text "alts:" $+$
+                 nest 2 (rawDocAlts ealts)
+                )
+               )
+
+rawDocAlts Alts{..} = braces
+                      (text "Alts:" $+$
+                       nest 2
+                       (text "name:" <+> text aname $+$
+                        text "metadata:" $+$ 
+                        nest 2 (toDoc altsmd) $+$
+                        text "alt defs:" $+$
+                        nest 2 (vcat (map rawDocAlt alts))
+                       )
+                      )
+
+rawDocAlt a = case a of
+  ACon{..} -> braces
+              (text "ACon:" $+$
+               nest 2
+               (text "datacon:" <+> text ac $+$
+                text "vars:" <+> listText avs $+$
+                text "metadata:" $+$
+                nest 2 (toDoc amd) $+$
+                text "expression:" $+$
+                nest 2 (rawDocExpr ae)
+               )
+              )
+  ADef{..} -> braces
+              (text "ADef:" $+$
+               nest 2
+               (text "var:" <+> text av $+$
+                text "metadata:" $+$
+                nest 2 (toDoc amd) $+$
+                text "expression:" $+$
+                nest 2 (rawDocExpr ae)
+               )
+              )
+rawDocPrimop = toDoc              
+rawDocAtom = toDoc
+               
+               
+              

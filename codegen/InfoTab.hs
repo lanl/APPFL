@@ -1,4 +1,4 @@
-
+{-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE TypeSynonymInstances  #-}
 {-# LANGUAGE FlexibleInstances     #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
@@ -16,6 +16,7 @@ module InfoTab(
 ) where
 
 import Prelude
+import PPrint
 import AST
 import ADT
 import CMap
@@ -121,9 +122,9 @@ data InfoTab =
       ctyp :: Polytype,
       fvs :: [Var],
       truefvs :: [Var],
--- MODIFIED 6.30 - David ----------------------------------------
-      tag :: Int, -- same tag as Con: Unique val representing DataCon
+-- MODIFIED 7.2 - David ----------------------------------------
       cmap :: CMap }
+--      tag :: Int,
 --      tconMap :: TyConMap, 
 --      dconMap :: DataConMap } 
   | ITAlts { 
@@ -496,3 +497,42 @@ instance SetITs (CMap, (Alt InfoTab)) (Alt InfoTab) where
     a@ADef{ae} ->
       a { ae = setITs (cmap,ae) }
 
+instance PPrint InfoTab where
+ toDoc it = text "Infotab:" <+> itName $+$
+            nest 2 (
+              text "typ:" <+> toDoc (typ it) $+$
+              itExtras )
+   where
+     makeName n = text "name:" <+> text n
+     makeKCDoc kc = case kc of
+       Just it' -> text "known call to" <+> text (name it')
+       Nothing  -> text "unknown call"
+     makeHADoc nha = text "noHeapAlloc:" <+> boolean nha   
+     (itName, itExtras) =
+           case it of
+             Fun{..} ->
+               (text "Fun", makeName name)
+             Pap{..} ->
+               (text "Pap", makeName name)
+             Con{..} ->
+               (text "Con", makeName name)
+             Thunk{..} ->
+               (text "Thunk", makeName name)
+             Blackhole{..} ->
+               (text "Blackhole", makeName name)
+             ITAtom{..} ->
+               (text "ITAtom", makeHADoc noHeapAlloc)
+             ITFCall{..} ->
+               (text "ITFCall", makeHADoc noHeapAlloc $+$ makeKCDoc knownCall)
+             ITPrimop{..} ->
+               (text "ITPrimop", makeHADoc noHeapAlloc)
+             ITLet{..} ->
+               (text "ITLet", makeHADoc noHeapAlloc)
+             ITCase{..} ->
+               (text "ITCase", makeHADoc noHeapAlloc)
+             ITAlt{..} ->
+               (text "ITAlt", empty)
+             ITAlts{..} ->
+               (text "ITAlts", makeName name)
+             _ -> (text "Other InfoTab",empty)
+  

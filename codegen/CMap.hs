@@ -110,7 +110,7 @@ luTConInfo name conmap =
 -- lookup a TyCon by Con in the CMap
 luTCon :: Con -> CMap -> TyCon
 luTCon name conmap
-  | isBuiltInType name = getBuiltInType name -- Short circuit built in literals as constructors?
+  | isBuiltInType name = getBuiltInType name
   | otherwise = case Map.lookup name conmap of
                  Nothing -> error "constructor not in conmap"
                  (Just t) -> t
@@ -140,10 +140,15 @@ isBuiltInType :: Con -> Bool
 isBuiltInType = isInt -- or others?
 
 getBuiltInType :: Con -> TyCon
-getBuiltInType c | isInt c   = makeIntTyCon c
+getBuiltInType c | isInt c   = makeIntTyCon c 
                  | otherwise = error "builtin TyCon not found!"
       
-
+-- have to make a TyCon with at least a DataCon whose constructor
+-- matches the query for the typechecker to build the correct
+-- types.
+-- (empty MonoType list is what it needs here, but it finds it
+-- by looking through the DataCons of the TyCon until it finds
+-- one whose name matches what it looked up)
 makeIntTyCon :: Con -> TyCon
 makeIntTyCon c = TyCon False "Int_h" [] [DataCon c []]
 

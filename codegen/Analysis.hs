@@ -1,3 +1,4 @@
+{-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE TypeSynonymInstances #-}
 {-# LANGUAGE FlexibleInstances    #-}
 {-# LANGUAGE NamedFieldPuns       #-}
@@ -230,6 +231,29 @@ instance AI (Expr InfoTab) where
                             (e{emd = emd{noHeapAlloc = False}}, prev /= False)
                         else let funnoa = noHeapAlloc it in
                             (e{emd = emd{noHeapAlloc = funnoa}}, prev /= funnoa)
+
+--------------------------------------------------------------------------------
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 -- MODIFIED 7.1 - David ----------------------------------------
 {-

@@ -108,3 +108,11 @@ take = FUN(n xs ->
                                        rec = THUNK(take m tl);
                                        result = CON(Cons hd rec) } in result }});
 
+
+
+-- testing THUNKs as PAPs for knowncall analysis
+mapOnes = THUNK(let { make1 = PAP (const 1);
+		      func = PAP(map make1) }
+		      in func);
+
+mapOnes1 = FUN(ls -> let {ret = THUNK(mapOnes ls)} in ret)	      	
