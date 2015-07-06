@@ -44,6 +44,7 @@ import InfoTab
 import HeapObj
 import State
 import Analysis
+import Util
 
 import Prelude
 import Data.List(intercalate,nub)
@@ -84,14 +85,6 @@ lu v ((_, HO size) : xs) size' n =
     lu v xs (size'+size) (n+1)
 
 lu v (x : xs) size n = lu v xs size n
-
-
-indent i xs = (take i $ repeat ' ') ++ indent' i xs
-    where
-      indent' i ('\n':x:xs) = '\n' : (take i $ repeat ' ') ++ indent' i (x:xs)
-      indent' i "\n"        = "\n"
-      indent' i (x:xs)      = x : indent' i xs
-      indent' i ""          = ""
 
 -- CG Atom, Var ************************************************************
 
@@ -375,7 +368,7 @@ heapObjRVal env o =
             "      { .objType = " ++ showObjType (omd o) ++ ",\n" ++
             "        .infoPtr = &it_" ++ name ++ ",\n" ++
             "        .ident = \"" ++ name ++ "\",\n" ++
-         --   "        .payloadSize = " ++ show size ++ ",\n" ++
+            "        .payloadSize = " ++ show size ++ ",\n" ++
             "      };\n" ++ guts
     in (size, code)
 

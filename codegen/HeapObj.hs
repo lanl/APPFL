@@ -35,6 +35,7 @@ module HeapObj (
 import AST
 import InfoTab
 import Prelude
+import Util
 
 -- // two = CON(I 2)
 -- Obj sho_two = 
@@ -67,6 +68,7 @@ showHO it =
     "  .infoPtr   = &it_" ++ name it ++ ",\n" ++
     "  .objType   = " ++ showObjType it      ++ ",\n" ++
     "  .ident     = " ++ show (name it)      ++ ",\n" ++
+    "  .payloadSize = 32,\n" ++
        showSHOspec it ++
     "  };\n"
 
@@ -82,12 +84,9 @@ showSHOspec it@(Blackhole {}) = payloads []
 
 showSHOspec it = ""
 
--- TODO make indent lib function and use here.
--- TODO don't hardwire max size 32 here
-payloads as = let ps = concatMap payload as
-                  pad = concat $ replicate (32-length(as)) "0,"
-              in "  .payload = {\n" ++ ps ++ pad ++ "},\n"
-
+payloads as = let ps = indent 4 $ concatMap payload as
+                  pad = indent 4 $ concat $ replicate (maxPayload-length(as)) "0,"
+              in  indent 2 ".payload = {\n" ++ ps ++ pad ++ "},\n"
 
 payload (LitI i) = 
     "{.argType = INT, .i = " ++ show i ++ "},\n"

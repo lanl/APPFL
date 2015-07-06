@@ -25,15 +25,19 @@ Obj sho_one =
   .infoPtr   = &it_one,
   .objType   = CON,
   .ident     = "one",
+  .payloadSize = 32,
   .payload = {
-{.argType = INT, .i = 1},
-},
+    {.argType = INT, .i = 1},
+    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,},
   };
 Obj sho_main =
 {
   .infoPtr   = &it_main,
   .objType   = THUNK,
   .ident     = "main",
+  .payloadSize = 32,
+  .payload = {
+        0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,},
   };
 
 void registerSHOs() {

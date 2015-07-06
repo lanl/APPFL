@@ -73,6 +73,7 @@ struct _Obj {
   ObjType objType;          // to distinguish PAP, FUN, BLACKHOLE, INDIRECT
   int argCount;             // for PAP, how many args already applied to?
   char ident[64];           // temporary, just for tracing
+  int payloadSize;          // this should really be in infotab?
   PtrOrLiteral payload[];
 };
 

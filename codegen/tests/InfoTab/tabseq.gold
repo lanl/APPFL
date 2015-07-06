@@ -5,3 +5,8 @@ InfoTab it_seq =
     .objType             = FUN,
     .funFields.arity     = 2,
   };
+InfoTab it_alts_0 = 
+  { .name                = "alts_0",
+    .fvCount             = 1,
+    .entryCode           = &alts_0,
+  };
