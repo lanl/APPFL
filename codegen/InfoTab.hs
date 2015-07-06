@@ -1,4 +1,4 @@
-{-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE RecordWildCards       #-}
 {-# LANGUAGE TypeSynonymInstances  #-}
 {-# LANGUAGE FlexibleInstances     #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
@@ -513,7 +513,7 @@ instance PPrint InfoTab where
              Fun{..} ->
                (text "Fun", makeName name)
              Pap{..} ->
-               (text "Pap", makeName name)
+               (text "Pap", makeName name $+$ makeKCDoc knownCall)
              Con{..} ->
                (text "Con", makeName name)
              Thunk{..} ->

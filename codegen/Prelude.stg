@@ -110,9 +110,19 @@ take = FUN(n xs ->
 
 
 
--- testing THUNKs as PAPs for knowncall analysis
-mapOnes = THUNK(let { make1 = PAP (const 1);
-		      func = PAP(map make1) }
-		      in func);
+-- testing THUNKs as for knowncall analysis
 
-mapOnes1 = FUN(ls -> let {ret = THUNK(mapOnes ls)} in ret)	      	
+f2 = THUNK(let {f = THUNK(f1)} in f);
+
+f1 = THUNK(fun1);
+
+-- scrutinee of both of these cases should be identified as known calls
+-- to fun1
+t1 = THUNK(case f1 2 3 of { x -> x}); 
+t2 = THUNK(case f2 2 3 of { x -> x});
+
+-- expression in let (x 1 2) should identify x as a known call to fun1
+t3 = THUNK(case f2 of { x -> let {y = PAP(x)} in x 1 2});
+
+fun1 = FUN(x y -> x);
+
