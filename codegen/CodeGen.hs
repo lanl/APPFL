@@ -259,7 +259,7 @@ cge env (ECase _ e a@(Alts italts alts aname)) =
                   else
                     "    // load payload with FVs " ++ 
                             intercalate " " (fvs italts) ++ "\n") ++
-                         indent 2 (loadPayloadFVs env (fvs italts) name False)
+                         indent 2 (snd (loadPayloadFVs env (fvs italts) name False))
                 
                  
               cont = "stgPushCont(" ++ name ++ ");\n"
@@ -373,31 +373,31 @@ heapObjRVal env o =
     in (size, code)
 
 
-payloadsize = 32
+bho env (FUN it vs e name) = 
+    loadPayloadFVs env (fvs it) name True
 
-bho env (FUN it vs e name) =
-    (payloadsize, loadPayloadFVs env (fvs it) name True )
-
+-- TODO: the size here should be based on the FUN rather than being maxPayload
 bho env (PAP it f as name) =
-    (payloadsize, loadPayloadFVs env (fvs it) name True ++ loadPayloadAtoms env as (length $ fvs it) name)
+    (maxPayload, snd (loadPayloadFVs env (fvs it) name True) ++ loadPayloadAtoms env as (length $ fvs it) name)
 
 bho env (CON it c as name) = 
-    let size = payloadsize
-        code = concat [name ++ "->payload[" ++ show i ++ "] = " ++ 
+    let ps = [name ++ "->payload[" ++ show i ++ "] = " ++ 
                        cga env a ++ "; // " ++ showa a ++ "\n"
                        | (i,a) <- indexFrom 0 as ]
-    in (size, code)
+    in (length ps, concat ps)
 
 bho env (THUNK it e name) =
-    (payloadsize, loadPayloadFVs env (fvs it) name True)
-
-bho env (BLACKHOLE it name) = (payloadsize,"")
+    loadPayloadFVs env (fvs it) name True
+    
+bho env (BLACKHOLE it name) = (0,"")
 
 loadPayloadFVs env fvs name ptr =
-    concat [name ++ (if ptr then "->" else ".") ++
+    let ps = [name ++ (if ptr then "->" else ".") ++
             "payload[" ++ show i ++ "] = " ++ 
             cgv env v ++ "; // " ++ v ++ "\n"
             | (i,v) <- indexFrom 0 fvs ]
+        len = length ps
+    in (if len > 0 then len else 1, concat ps)
 
 -- load atoms into payload starting at index ind
 loadPayloadAtoms env as ind name =
