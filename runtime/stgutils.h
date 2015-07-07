@@ -18,7 +18,8 @@ FnPtr whiteHole();
 FnPtr stg_constructorcall();
 
 FnPtr stgShowResultCont();
-Cont showResultCont;
+// Cont showResultCont;
+Obj showResultCont;
 
 FnPtr stgApply();
 FnPtr stgApply1();
@@ -29,7 +30,8 @@ FnPtr stgApply1();
 #define STGHEAPAT(n) ((Obj*)stgHP + (n))
 
 // evaluate in place
-#define STGEVAL(e)				\
+/*
+define STGEVAL(e)				\
 do {						\
   stgCurVal = e;				\
   derefStgCurVal();				\
@@ -38,6 +40,32 @@ do {						\
     Cont cont = {.retAddr = &stgCallCont,	\
 	              .objType = CALLCONT,	\
                       .payload[0] = {0}};	\
+    strcpy(cont.ident, stgCurVal.op->ident);    \
+    stgPushCont(cont);			        \
+    STGCALL1(stgCurVal.op->infoPtr->entryCode, stgCurVal); \
+    stgPopCont();			        \
+    derefStgCurVal();				\
+  }						\
+  if (stgCurVal.argType == HEAPOBJ &&           \
+      stgCurVal.op->objType == BLACKHOLE) {     \
+    fprintf(stderr, "infinite loop detected in STGEVAL!\n"); \
+    showStgVal(stgCurVal);			\
+    fprintf(stderr, "\n");			\
+    showStgHeap();			        \
+    exit(0);                                    \
+  }                                             \
+} while (0)
+*/
+
+#define STGEVAL(e)				\
+do {						\
+  stgCurVal = e;				\
+  derefStgCurVal();				\
+  while (stgCurVal.argType == HEAPOBJ &&	\
+	 stgCurVal.op->objType == THUNK) {	\
+    Obj cont = {.infoPtr = &it_stgCallCont,	\
+	        .objType = CALLCONT,		\
+                .payload[0] = {0}};		\
     strcpy(cont.ident, stgCurVal.op->ident);    \
     stgPushCont(cont);			        \
     STGCALL1(stgCurVal.op->infoPtr->entryCode, stgCurVal); \

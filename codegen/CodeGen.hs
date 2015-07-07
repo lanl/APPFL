@@ -253,8 +253,21 @@ cge env (ECase _ e a@(Alts italts alts aname)) =
                                      _              -> True
     in do (ecode, efunc) <- cge env e
           (acode, afunc) <- cgalts env a eboxed
+{-
           let pre = "stgPushCont( (Cont)\n" ++
                  "  { .retAddr = &" ++ aname ++ ",\n" ++
+                 "    .objType = CASECONT,\n" ++
+                 "    .ident = \"CCont for " ++ aname ++ "\",\n" ++
+                 (if fvs italts == [] then
+                    "    // no FVs\n"
+                  else
+                    "    // load payload with FVs " ++ 
+                            intercalate " " (fvs italts) ++ "\n") ++
+                         indent 4 (loadPayloadFVs env (fvs italts)) ++
+                 "  });\n"
+-}
+          let pre = "stgPushCont( (Obj)\n" ++
+                 "  { .infoPtr = &it_" ++ aname ++ ",\n" ++
                  "    .objType = CASECONT,\n" ++
                  "    .ident = \"CCont for " ++ aname ++ "\",\n" ++
                  (if fvs italts == [] then
@@ -288,7 +301,12 @@ cgalts env (Alts it alts name) boxed =
                 -- any fvs in the expressions on the rhs's?
 --                (if (length $ nub $ concatMap (fvs . emd . ae) alts) > 0 then 
                 (if (length $ fvs it) > 0 then 
+{-
                      "  Cont " ++ contName ++ " = "
+                 else "  ") ++                      "stgPopCont();\n" ++
+                "  PtrOrLiteral " ++ scrutName ++ " = stgCurVal;\n" ++
+-}
+                     "  Obj " ++ contName ++ " = "
                  else "  ") ++                      "stgPopCont();\n" ++
                 "  PtrOrLiteral " ++ scrutName ++ " = stgCurVal;\n" ++
                 (if switch then

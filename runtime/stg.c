@@ -14,8 +14,8 @@
 #include "stg.h"
 #include "cmm.h"
 
-extern void stgPushCont(Cont c);
-extern Cont stgPopCont();
+extern void stgPushCont(Obj c);
+extern Obj  stgPopCont();
 
 void *stgHeap = NULL;
 void *stgHP = NULL;
@@ -80,7 +80,7 @@ void showStgObjPretty(Obj *p) {
   fprintf(stderr,"\n");
 }
 
-void showStgCont(Cont *c) {
+void showStgCont(Obj *c) {
   switch (c->objType) {
   case UPDCONT:
     fprintf(stderr,"UPDCONT  %s\n", c->ident);
@@ -291,6 +291,7 @@ size_t stgStatObjCount;
 Obj * stgStatObj[100];
 
 // void showStgStack() {}
+/*
 void showStgStack() {
   fprintf(stderr,"\nSTG stack:\n\n");
   for (Cont *p = ((Cont *) stgSP);
@@ -298,6 +299,12 @@ void showStgStack() {
        p++) {
     showStgCont(p);
   }
+}
+*/
+
+void showStgStack() {
+  //  fprintf(stderr,"\nSTG stack:\n\n");
+  fprintf(stderr,"\nSTG stack:  commented out!\n\n");
 }
 
 void showStgHeap() {

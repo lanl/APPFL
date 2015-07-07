@@ -14,6 +14,6 @@ cd# = FUN(n# a# -> case n# of {
                                       np# -> cd# np# ap#
                                     }}});
 
-ilarge = CON(I 1000000000);
+ilarge = CON(I 10000);
 
 main = THUNK(cd ilarge);

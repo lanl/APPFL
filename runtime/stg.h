@@ -75,12 +75,14 @@ struct _Obj {
   PtrOrLiteral payload[32]; // fixed for now
 };
 
+/*
 typedef struct {
   CmmFnPtr retAddr;         // no need for an infotab
   ObjType objType;          // for sanity checking
   char ident[64];           // temporary, just for tracing
   PtrOrLiteral payload[32]; // fixed for now
 } Cont;
+*/
 
 typedef struct {
 } LayoutInfo;
@@ -152,6 +154,7 @@ extern Obj* stgNewHeapObj();
 extern void showStgStack();
 extern void showStgVal(PtrOrLiteral);
 
+/*
 inline void stgPushCont(Cont c) {
   stgSP = (char *)stgSP - sizeof(Cont);
   assert(stgSP >= stgStack);
@@ -162,6 +165,21 @@ inline Cont stgPopCont() {
   assert((char *)stgSP + sizeof(Cont) <= (char *) stgStack + stgStackSize);
   Cont o = *(Cont *)stgSP;
   stgSP = (char *)stgSP + sizeof(Cont);
+  return o;
+}
+*/
+
+
+inline void stgPushCont(Obj c) {
+  stgSP = (char *)stgSP - sizeof(Obj);
+  assert(stgSP >= stgStack);
+  *(Obj *)stgSP = c;
+}
+
+inline Obj stgPopCont() {
+  assert((char *)stgSP + sizeof(Obj) <= (char *) stgStack + stgStackSize);
+  Obj o = *(Obj *)stgSP;
+  stgSP = (char *)stgSP + sizeof(Obj);
   return o;
 }
 
@@ -209,14 +227,26 @@ inline Cont stgPopCont() {
 
 
 // return through continuation stack
-#define STGRETURN0()				\
+/*
+define STGRETURN0()				\
   STGJUMP0(((Cont *)stgSP)->retAddr)
+*/
+
+#define STGRETURN0()				\
+  STGJUMP0(((Obj *)stgSP)->infoPtr->entryCode)
 
 // no explicit return value stack
-#define STGRETURN1(r)				\
+/*
+define STGRETURN1(r)				\
   do {						\
     stgCurVal = r;				\
     STGJUMP0(((Cont *)stgSP)->retAddr);		\
+  } while(0)
+*/
+#define STGRETURN1(r)				\
+  do {						\
+    stgCurVal = r;				\
+    STGRETURN0();				\
   } while(0)
 
 
