@@ -88,12 +88,12 @@ normalizer inp = let (tyCons, objs) = renamer inp
                  in (tyCons, normalize objs)
 
 freevarer :: String -> ([TyCon], [Obj ([Var],[Var])])
-freevarer inp = let (tyCons, objs) = normalizer inp
-                in (tyCons, setFVsObjs stgRTSGlobals objs)
+freevarer inp = let (tycons, objs) = normalizer inp
+                in (tycons, setFVsObjs stgRTSGlobals objs)
 
 infotaber :: String -> ([TyCon], [Obj InfoTab])
-infotaber inp = let (tyCons, objs) = freevarer inp
-                in (tyCons, setITs objs :: [Obj InfoTab])
+infotaber inp = let (tycons, objs) = freevarer inp
+                in (tycons, setITs objs :: [Obj InfoTab])
 
 -- MODIFIED 7.1 - David ----------------------------------------
 -- assumption is that this typer is not actually useful now
@@ -114,6 +114,9 @@ typechecker inp = let (tycons, objs) = conmaper inp
 
 knowncaller inp  = let (tycons, objs) =  typechecker inp
                    in (tycons, propKnownCalls objs)
+
+heapchecker inp = let (tycons, objs) = knowncaller inp
+                  in (tycons, setHeapAllocs objs $ toCMap tycons)
 
 makeEnv inp = let (tycons, objs) = typechecker inp
               in (tycons, addDefsToEnv objs Map.empty)

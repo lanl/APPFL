@@ -79,8 +79,8 @@ unify t (MVar v) = bind v t
 -- just a special type constructor
 unify (MFun l r) (MFun l' r') = unifys [l,r] [l',r']
 
--- MODIFIED 7.1 - David ----------------------------------------
 unify m1@(MCon c1 ms1) m2@(MCon c2 ms2)
+-- MODIFIED 7.1 - David ----------------------------------------
 --unify m1@(MCon b1 c1 ms1) m2@(MCon b2 c2 ms2)
 --    | b1 /= b2 = error $ "unify boxedness mismatch! "  ++ show m1 ++ " " ++ show m2
     | c1 /= c2 = error $ "unify constructor mismatch! " ++ show c1 ++ " " ++ show c2

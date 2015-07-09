@@ -1,10 +1,12 @@
 {-# LANGUAGE NamedFieldPuns       #-}
 {-# LANGUAGE FlexibleInstances    #-}
 {-# LANGUAGE OverlappingInstances #-}
+{-# LANGUAGE TupleSections        #-}
 
 module DAnalysis
 (exhaustCases,
  propKnownCalls,
+ setHeapAllocs,
  addDefsToEnv)
 where
 
@@ -34,7 +36,7 @@ type Env = Map.Map Var InfoTab
 
 
 -- remove entries from the Env matching a list of Var keys
-deleteAll :: [k] -> Map k v -> Map k v
+deleteAll :: Ord k => [k] -> Map.Map k v -> Map.Map k v
 deleteAll vs env = foldr (Map.delete) env vs
 
 
@@ -164,55 +166,159 @@ propCallsAlt env expr a = case a of
        
 
 type FunMap = Map.Map Var Bool
+
+class SetHAs a where
+  setHAs :: FunMap -> CMap -> a -> a
+
+setHeapAllocs :: [Obj InfoTab] -> CMap -> [Obj InfoTab]
+setHeapAllocs defs cmap =
+  let
+    fmp = addDefsToMap defs Map.empty cmap
+  in
+   map (setHAs fmp cmap) defs
+
+instance SetHAs (Obj InfoTab) where
+  setHAs fmp cmap o = case o of
+    FUN{vs, e} ->
+      let e' = setHAs (deleteAll vs fmp) cmap e
+      in o { e = e' }
+
+    THUNK{e} ->
+      let e' = setHAs fmp cmap e
+      in o { e = e' }
+
+    _  -> o
+
+instance SetHAs (Expr InfoTab) where
+  setHAs fmp cmap e = case e of
+    EAtom{emd} ->
+      let emd' = emd {noHeapAlloc = not $ growsHeap fmp cmap e}
+      in e { emd = emd' }
+
+    ECase{emd, ee, ealts} ->
+      let
+        ee' = setHAs fmp cmap ee
+        emd' = emd {noHeapAlloc = not $ growsHeap fmp cmap e}
+        ealts' = setHAs fmp cmap ealts
+      in
+       e{ emd = emd',
+          ee = ee',
+          ealts = ealts' }
+
+    ELet{emd, ee, edefs} ->
+      let
+        fmp' = addDefsToMap edefs fmp cmap
+        ee' = setHAs fmp' cmap ee
+        emd' = emd { noHeapAlloc = False } -- Let exprs always grow heap
+        edefs' = map (setHAs fmp' cmap) edefs
+      in
+       e{ emd = emd',
+          ee = ee',
+          edefs = edefs' }
+
+    EFCall{emd} ->
+      let
+        fHA = not $ growsHeap fmp cmap e
+        vsHA = case typ emd of
+          MFun
+        emd' = emd {noHeapAlloc = not $ growsHeap fmp cmap e}
+      in e { emd = emd' }
+
+    _ ->
+      let emd' = (emd e) {noHeapAlloc = not $ growsHeap fmp cmap e}
+      in e { emd = emd' }
+
+instance SetHAs (Alts InfoTab) where
+  setHAs fmp cmap a@Alts{alts} =
+    let alts' = map (setHAs fmp cmap) alts
+    in a { alts = alts' }
+
+
+instance SetHAs (Alt InfoTab) where
+  setHAs fmp cmap a = case a of
+
+    ADef{av, ae} ->
+      let
+        fmp' = Map.delete av fmp
+        ae' = setHAs fmp' cmap ae
+      in
+       a { ae = ae' }
+
+    ACon{avs, ae} ->
+      let
+        fmp' = deleteAll avs fmp
+        ae' = setHAs fmp' cmap ae
+      in
+       a { ae = ae' }
+      
+
 class GrowsHeap a where
   growsHeap :: FunMap -> CMap -> a -> Bool
-
+  
 instance GrowsHeap (Expr InfoTab) where
   growsHeap funmap cmap expr = case expr of
-    
+
     EAtom{emd, ea} ->
       case ea of
        Var v -> case typ emd of
                  MCon c _ -> isBoxedTCon c cmap
                  MPrim _  -> False
                  _ -> True
-       _ -> False     
+       _ -> False -- literals are unboxed
 
-    ELet{emd, edefs, ee} ->
+    ELet{} -> True
+
+    ECase{ee, ealts = Alts{alts}} ->
       let
-        funs'  = addDefsToMap edefs funmap
-        edefs' = noGrowHeapObj funs' cmap edefs
-        ee     = noGrowHeapObj
-        emd'   = 
+        eGH = growsHeap funmap cmap ee
+        aGH = or $ map (growsHeap funmap cmap) alts
+      in
+       eGH || aGH
 
-          
+    -- TODO: Check knownCall hereish (or in setHAs?)
+    EFCall{ev} -> case Map.lookup ev funmap of 
+      Just b -> b
+      Nothing -> True -- assume unknown function grows heap
+
+    _ -> False
+
+instance GrowsHeap (Alt InfoTab) where
+  growsHeap fmp cmap a = case a of
+    ADef{av, ae}  -> growsHeap (Map.delete av fmp) cmap ae
+    ACon{avs, ae} -> growsHeap (deleteAll avs fmp) cmap ae
+                 
 
 addDefsToMap defs funmap cmap =
   let
-    funmap' = deleteAll (map oname defs) fmp
-      Map.union $ Map.fromList $ map ((,True) . oname) $ filter isFun defs
+    fmp  = deleteAll (map oname defs) funmap -- remove shadowed bindings 
+    toAdd = Map.fromList $ map ((,False) . oname) $ filter isFun defs -- FUNs to add
+    fmp' = Map.union toAdd fmp 
     isFun o = case o of
       FUN{} -> True
-      --PAP{} -> True
+--      PAP{} -> True -- don't want PAPs for now
       _ -> False
     
-    foldfunc = \def fmp ->
-      case def of
-       FUN{vs, e, oname} ->
-         Map.insert oname (growsHeap (deleteAll vs fmp) cmap e) fmp
-       PAP{f, oname} -> case Map.lookup f fmp of
-                         Just b -> Map.insert oname b fmp
-                         Nothing -> fmp
-       _ -> fmp
+    foldfunc def fmp = case def of
 
+      FUN{vs, e, oname} ->
+        Map.insert oname (growsHeap (deleteAll vs fmp) cmap e) fmp
+
+      _ -> fmp
+
+    -- iterate until fixed point is found
     fixDefs defs fmp =
       let fmp' = foldr foldfunc fmp defs in
-       case fmp == fmp' of
-        False -> fixDefs defs fmp'
-        True  ->
+       if fmp == fmp'
+       then fmp'
+       else fixDefs defs fmp'
+  in
+   fixDefs defs fmp'
       
        
-        
+
+
+
+
 
 
 
@@ -270,17 +376,6 @@ defAult :: String -> Alt a
 defAult name =
   let
     mdErr s = error $ s ++ " metadeta not set!"
-    fcal = EFCall{emd   = mdErr "EFCall",
-                  ev    = "stg_case_not_exhaustive",
-                  eas   = [Var "x"]}
-    eatm = EAtom {emd   = mdErr "EAtom",
-                  ea    = Var (name ++ "_exhaust")}
-    thnk = THUNK {omd   = mdErr "THUNK",
-                  e     = fcal,
-                  oname = name ++ "_exhaust"}
-    letx = ELet  {emd   = mdErr "ELet",
-                  edefs = [thnk],
-                  ee    = eatm}
-  in ADef{amd = mdErr "ADef",
-          av  = "x",
-          ae  = letx}
+    fcal = EFCall{emd   = mdErr "EFCall"}
+  in
+   undefined

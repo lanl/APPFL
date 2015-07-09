@@ -507,32 +507,48 @@ instance PPrint InfoTab where
      makeKCDoc kc = case kc of
        Just it' -> text "known call to" <+> text (name it')
        Nothing  -> text "unknown call"
-     makeHADoc nha = text "noHeapAlloc:" <+> boolean nha   
+     makeHADoc nha = text "noHeapAlloc:" <+> boolean nha
+     freevsDoc vs = text "fvs:" <+> listText vs
+     trufreevsDoc vs = text "truefvs:" <+> listText vs
+     frvarsDoc vs tvs = freevsDoc vs $+$ trufreevsDoc tvs
      (itName, itExtras) =
            case it of
              Fun{..} ->
-               (text "Fun", makeName name)
+               (text "Fun", makeName name $+$
+                            frvarsDoc fvs truefvs)
              Pap{..} ->
-               (text "Pap", makeName name $+$ makeKCDoc knownCall)
+               (text "Pap", makeName name $+$
+                            makeKCDoc knownCall $+$
+                            frvarsDoc fvs truefvs)
              Con{..} ->
-               (text "Con", makeName name)
+               (text "Con", makeName name $+$
+                            frvarsDoc fvs truefvs)
              Thunk{..} ->
-               (text "Thunk", makeName name)
+               (text "Thunk", makeName name $+$
+                              frvarsDoc fvs truefvs)
              Blackhole{..} ->
-               (text "Blackhole", makeName name)
+               (text "Blackhole", makeName name $+$
+                                  frvarsDoc fvs truefvs)
              ITAtom{..} ->
-               (text "ITAtom", makeHADoc noHeapAlloc)
+               (text "ITAtom", makeHADoc noHeapAlloc $+$
+                               frvarsDoc fvs truefvs)
              ITFCall{..} ->
-               (text "ITFCall", makeHADoc noHeapAlloc $+$ makeKCDoc knownCall)
+               (text "ITFCall", makeHADoc noHeapAlloc $+$
+                                makeKCDoc knownCall $+$
+                                frvarsDoc fvs truefvs)
              ITPrimop{..} ->
-               (text "ITPrimop", makeHADoc noHeapAlloc)
+               (text "ITPrimop", makeHADoc noHeapAlloc $+$
+                                 frvarsDoc fvs truefvs)
              ITLet{..} ->
-               (text "ITLet", makeHADoc noHeapAlloc)
+               (text "ITLet", makeHADoc noHeapAlloc $+$
+                              frvarsDoc fvs truefvs)
              ITCase{..} ->
-               (text "ITCase", makeHADoc noHeapAlloc)
+               (text "ITCase", makeHADoc noHeapAlloc $+$
+                               frvarsDoc fvs truefvs)
              ITAlt{..} ->
-               (text "ITAlt", empty)
+               (text "ITAlt", frvarsDoc fvs truefvs)
              ITAlts{..} ->
-               (text "ITAlts", makeName name)
+               (text "ITAlts", makeName name $+$
+                               frvarsDoc fvs truefvs)
              _ -> (text "Other InfoTab",empty)
   
