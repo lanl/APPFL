@@ -47,11 +47,13 @@ instance Substitutable Monotype where
     freevars (MVar v)     = Set.singleton v
     freevars (MFun m1 m2) = Set.union (freevars m1) (freevars m2)
     freevars (MCon boxed con ms) = foldr Set.union Set.empty $ map freevars ms
+    freevars (MPVar v)     = Set.singleton v
     freevars _ = Set.empty
 
-    apply s m@(MVar tv)         = Map.findWithDefault m tv s
+    apply s m@(MPVar tv)         = Map.findWithDefault m tv s
     apply s (MFun m1 m2)        = MFun (apply s m1) (apply s m2)
     apply s (MCon boxed con ms) = MCon boxed con $ map (apply s) ms
+    apply s m@(MVar tv)        = Map.findWithDefault m tv s
     apply s m                   = m
 
 instance Substitutable [Monotype] where
@@ -67,14 +69,25 @@ occursCheck v t = Set.member v $ freevars t
 
 -- bind var to monotype in a substitution if passes occurs check
 bind :: TyVar -> Monotype -> Subst
-bind v t | MVar v == t   = idSubst
+bind v t | MPVar v == t    = idSubst
+         | MVar v == t     = idSubst
          | occursCheck v t = error "infinite type!"
          | otherwise       = Map.singleton v t
 
 unify :: Monotype -> Monotype -> Subst
 
-unify (MVar v) t = bind v t
+-- unify unboxed and poly -> error
+unify (MPVar p) (MPrim u) = error $ "cannot unify unboxed type " ++ show u ++ " with polymorphic type variable"
+unify (MPrim u) (MPVar p) = error $ "cannot unify unboxed type " ++ show u ++ " with polymorphic type variable"
+unify (MPVar p) c@(MCon False _ _) = error $ "cannot unify unboxed type " ++ show c ++ " with polymorphic type variable"
+unify c@(MCon False _ _) (MPVar p) = error $ "cannot unify unboxed type " ++ show c ++ " with polymorphic type variable"
+
+-- replace least specified--uncommitted--before committed poly
 unify t (MVar v) = bind v t
+unify (MVar v) t = bind v t
+
+unify (MPVar v) t = bind v t
+unify t (MPVar v) = bind v t
 
 -- just a special type constructor
 unify (MFun l r) (MFun l' r') = unifys [l,r] [l',r']
@@ -86,8 +99,6 @@ unify m1@(MCon b1 c1 ms1) m2@(MCon b2 c2 ms2)
 
 unify (MPrim UBInt) (MCon False "Int_h" []) = idSubst
 unify (MCon False "Int_h" []) (MPrim UBInt) = idSubst
--- unify (MPrim UBBool) (MCon False "Bool_h" []) = idSubst
--- unify (MCon False "Bool_h" []) (MPrim UBBool) = idSubst
 
 -- if they're equal there's nothing to do
 unify m1 m2 | m1 == m2 = idSubst
@@ -101,13 +112,6 @@ unifys (x:xs) (y:ys) =
         s2 = unifys (map (apply s1) xs) (map (apply s1) ys)
     in compose s2 s1
 
-indent i xs = (take i $ repeat ' ') ++ indent' i xs
-    where
-      indent' i ('\n':x:xs) = '\n' : (take i $ repeat ' ') ++ indent' i (x:xs)
-      indent' i "\n"        = "\n"
-      indent' i (x:xs)      = x : indent' i xs
-      indent' i ""          = ""
-
 -- need a fresh variable supply
 
 freshTyVar :: State Int TyVar
@@ -115,6 +119,19 @@ freshTyVar =
     do i <- get
        put $ i+1
        return $ 't':show i
+
+
+freshPolyVar :: State Int Monotype
+freshPolyVar =
+    do v <- freshTyVar
+       return $ MPVar v
+
+freshPolyVars 0 = return []
+freshPolyVars n = 
+    do
+      v <- freshPolyVar
+      vs <- freshPolyVars (n-1)
+      return $ v:vs
 
 freshMonoVar :: State Int Monotype
 freshMonoVar =
@@ -130,14 +147,24 @@ freshMonoVars n =
 
 instantiate :: Polytype -> State Int Monotype
 instantiate (PPoly as m) =
-    do ms <- mapM (const freshMonoVar) as
+    do ms <- mapM (const freshPolyVar) as
        let s = Map.fromList $ zip as ms
        return $ apply s m
 
+monoToPoly as m@(MVar v) | Set.member v as = MPVar v
+                         | otherwise = m
+monoToPoly as (MFun a b) = MFun (monoToPoly as a) (monoToPoly as b)
+monoToPoly as (MCon b c ms) = MCon b c $ map (monoToPoly as) ms
+monoToPoly as m@MPrim{} = m
+monoToPoly as m@MPVar{} = m
+
 generalize :: Substitutable a => a -> Monotype -> Polytype
 generalize ms t = 
-    let as = Set.toList $ Set.difference (freevars t) (freevars ms)
-    in PPoly as t
+    let as = Set.difference (freevars t) (freevars ms)
+    -- necessary?  as in t become MPVar--not necessary, just skating on thin ice
+    --    t' = monoToPoly as t
+        t' = t
+    in PPoly (Set.toList as) t'
 
 -- Assumptions & Constraints
 

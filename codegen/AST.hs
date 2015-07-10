@@ -49,7 +49,6 @@ module AST (
 -- the common types into a module
 data BuiltinType = UBInt
                  | UBDouble             
-                 | UBBool             
                    deriving (Eq,Show,Ord)           
 
 type Var = String

@@ -90,7 +90,7 @@ typer inp = let (tyCons, objs) = infotaber inp
             in (tyCons, setTypes objs)
 
 conmaper :: String -> ([TyCon], [Obj InfoTab])
-conmaper = setConmaps . typer
+conmaper = setConmaps . infotaber
 
 typechecker inp = let (tycons, objs) = conmaper inp
                   in (tycons, hmstg objs)
