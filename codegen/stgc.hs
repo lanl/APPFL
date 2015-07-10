@@ -30,7 +30,9 @@ stg2c input = buildit input False
 
 buildit :: String -> Bool -> IO()
 buildit input gcc = let update x = x {optInput = Just input}
-                    in compile (update defaultOptions) "." "../runtime" gcc
+                        -- assumes we are in codegen dir
+                        buildDir = "../build"
+                    in compile (update defaultOptions) (buildDir ++ "/etc") (buildDir ++ "/lib") (buildDir ++ "/include") gcc
 
 -- generate c code from stg (no prelude)
 stgc :: String -> IO ()
@@ -101,8 +103,8 @@ checkOpts (Options {optHelp, optInput}) =
                    Nothing -> ioError (userError ("No input files\n" ++ usageInfo header options))
                    _ -> return ()
 
-compile :: Options -> String -> String -> Bool -> IO ()
-compile  (Options {optVerbose, optDumpParse, optNoPrelude, optOutput, optInput}) preludeDir runtimeDir gcc =
+compile :: Options -> String -> String -> String -> Bool -> IO ()
+compile  (Options {optVerbose, optDumpParse, optNoPrelude, optOutput, optInput}) preludeDir rtLibDir rtIncDir gcc =
   do
     let input = fromJust optInput
     ifd <- openFile input ReadMode
@@ -118,7 +120,7 @@ compile  (Options {optVerbose, optDumpParse, optNoPrelude, optOutput, optInput})
                  writeFile (input ++ ".dump") ((show $ buildConmaps $ tycons) ++ (show objs))
       False -> do
                  let coutput = input ++ ".c"
-                 let flags = " -std=gnu99 -L" ++ runtimeDir ++ " -I" ++ runtimeDir ++ " -lruntime"
+                 let flags = " -std=gnu99 -L" ++ rtLibDir ++ " -I" ++ rtIncDir ++ " -lruntime"
                  writeFile coutput (codegener source optVerbose)
                  if gcc then system ("gcc " ++ coutput ++ " -o " ++ (fromJust optOutput) ++ flags) else return ExitSuccess
                  return ()
@@ -132,5 +134,5 @@ main =
       (opts, args') <- compilerOpts args
       checkOpts opts
       -- weird path stuff is because cabal puts binary in dist/build/stgc/stgc
-      compile opts (binaryDir ++ "/../../../") (binaryDir ++ "/../../../../runtime") True
+      compile opts (binaryDir ++ "/../etc") (binaryDir ++ "/../lib") (binaryDir ++ "/../include")True
 

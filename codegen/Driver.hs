@@ -24,7 +24,7 @@ import           Data.List
 import System.IO
 
 header :: String
-header = "#include \"stg_header.h\"\n"
+header = "#include \"stgc.h\"\n"
         
 footer :: Bool -> String
 footer v = 

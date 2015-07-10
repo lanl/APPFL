@@ -1,3 +1,4 @@
+#Deprecated use make runtime at top level
 CC=gcc
 CFLAGS=-c -std=gnu99 -I/usr/include/malloc
 LDFLAGS=

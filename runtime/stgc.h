@@ -1,8 +1,6 @@
 /*
 File included at top of every program generated
 by the stgc codegenerator. 
-
-Maybe stgc.h would be a better name.
 */
 
 #ifndef stg_header_h
@@ -29,38 +27,6 @@ Maybe stgc.h would be a better name.
 
 extern FnPtr start();
 
-/*
-// false = CON(False)
-InfoTab it_false =
-  { .name               = "false",
-    .entryCode          = &stg_constructorcall,
-    .objType            = CON,
-    .conFields.tag      = 0, // must match what is in ConMap2.hs!
-    .conFields.arity    = 0,
-    .conFields.conName  = "False"
-  };
-
-// false = CON(False)
-Obj sho_false = 
-  { .objType = CON,
-    .infoPtr = &it_false,
-  };
-
-// true = CON(True)
-InfoTab it_true =
-  { .name               = "true",
-    .entryCode          = &stg_constructorcall,
-    .objType            = CON,
-    .conFields.tag      = 1, // must match what is in ConMap2.hs!
-    .conFields.arity = 0,
-    .conFields.conName  = "True"
-  };
-
-Obj sho_true = 
-  { .objType = CON,
-    .infoPtr = &it_true,
-  };
-*/
 // stg_case_not_exhaustive = FUN( x ->  );
 DEFUN2(stg_case_not_exhaustive, self, x) {
   fprintf(stderr, "stg_case_not_exhaustive: ");
@@ -89,17 +55,5 @@ DEFUN1(stg_error, self) {
   exit(0);
   ENDFUN;
 }
-
-// InfoTab it_error = {
-//   .name = "stg_error",
-//   .entryCode = &fun_error,
-//   .objType = THUNK,
-//   .fvCount = 0,
-// };
-// 
-// Obj sho_error = {
-//   .objType = THUNK,
-//   .infoPtr = &it_error,
-// };
 
 #endif

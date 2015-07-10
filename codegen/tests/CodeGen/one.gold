@@ -1,4 +1,4 @@
-#include "stg_header.h"
+#include "stgc.h"
 void registerSHOs();
 FnPtr fun_main();
 InfoTab it_one = 
