@@ -192,15 +192,15 @@ cge env (EAtom it a) =
     return ("stgCurVal = " ++ cga env a ++ "; " ++ "// " ++ showa a ++ "\n", [])
 
 cge env (EFCall it f as) = 
-    let inline = "// " ++ f ++ " " ++ showas as ++ "\n" ++
+    let inline = "// " ++ f ++ " " ++ showas (map ea as) ++ "\n" ++
                  "STGAPPLY" ++ show (length as) ++ "(" ++
-                 intercalate ", " (cgv env f : map (cga env) as) ++ 
+                 intercalate ", " (cgv env f : map ((cga env) . ea) as) ++ 
                  ");\n"
     in return (inline, [])
 
 cge env (EPrimop it op as) = 
-    let arg0 = cgUBa env (as !! 0) -- these take a type indicator
-        arg1 = cgUBa env (as !! 1)
+    let arg0 = cgUBa env (ea $ as !! 0) -- these take a type indicator
+        arg1 = cgUBa env (ea $ as !! 1)
         inline = case op of
                    Piadd -> cInfixIII " + "
                    Pisub -> cInfixIII " - "

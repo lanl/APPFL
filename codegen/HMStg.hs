@@ -136,11 +136,18 @@ instance DV (Expr InfoTab) (Expr InfoTab) where
     dv e@EAtom{ea} =
         do m <- getMono ea
            return $ setTyp m e
-    dv e@EFCall{..} = 
+
+    -- Both EFCall and EPrimop types are set as a function of the types
+    -- set in their arguments.  I think this may be redundant, if BU is
+    -- properly modified
+    -- (changed per assumption above)
+    dv e@EFCall{eas} = 
         do retMono <- freshMonoVar -- return type
-           ms <- mapM getMono eas   -- arg types
-           let m = foldr MFun retMono ms -- function type = fresh vars + concrete
-           return $ setTyp m e
+           eas' <- mapM dv eas -- setTyp(s) of args
+           let --ms = map (typ . emd) eas'   -- use those types to make MFun
+              -- m = foldr MFun retMono ms -- function type = fresh vars + concrete
+               e' = e{eas = eas'}
+           return $ setTyp retMono e'
 
     dv e@EPrimop{..} =
         let retMono = case eprimop of
@@ -156,9 +163,11 @@ instance DV (Expr InfoTab) (Expr InfoTab) where
                         x -> error $ "HMStg.dv Eprimop " ++ show x
                         -- etc.
 
-        in do ms <- mapM getMono eas
-              let m = foldr MFun retMono ms
-              return $ setTyp m e
+        in do eas' <- mapM dv eas -- setTyp(s) of Primop args
+              let --ms = map getTyp eas' -- use those types to make MFun
+                 -- m = foldr MFun retMono ms
+                  e' = e{eas = eas'}
+              return $ setTyp retMono e'
 
     dv e@ELet{..} =
         do edefs <- mapM dv edefs
@@ -248,13 +257,18 @@ instance BU (Expr InfoTab) where
          e) -- EAtom monotype set in dv
 
     bu mtvs e@EFCall{emd = ITFCall{typ},ev,eas} =
-        let (m,ms) = unfoldr typ -- m is return type
-        in (Set.fromList $ (ev, typ) : [ (v,m) | (Var v, m) <- zzip eas ms ],
+        let (ass, _, eas') = unzip3 $ map (bu mtvs) eas
+          --(m,ms) = unfoldr typ -- m is return type
+        in --(Set.fromList $ (ev, typ) : [ (v,m) | (Var v, m) <- zzip eas ms ],
+           (Set.unions ass,
             Set.empty,
-            setTyp m e)
+            e) -- EFCall monotype set in dv
 
     bu mtvs e@EPrimop{emd = ITPrimop{typ}, eprimop, eas} =
-        let (m,ms) = unfoldr typ -- get atoms assocs, m is result type
+-- MODIFIED 7.9 -       
+        let (ass, _, eas') = unzip3 $ map (bu mtvs) eas
+            as = Set.unions ass
+--            (m,ms) = unfoldr typ -- get atoms assocs, m is result type
             pts = case eprimop of
                     Piadd -> [MPrim UBInt, MPrim UBInt]
                     Pisub -> [MPrim UBInt, MPrim UBInt]
@@ -265,10 +279,12 @@ instance BU (Expr InfoTab) where
                     Pimin -> [MPrim UBInt, MPrim UBInt]
                     Pieq  -> [MPrim UBInt, MPrim UBInt]
                     Pile  -> [MPrim UBInt, MPrim UBInt]
-                    x -> error $ "HMSth.bu EPrimop " ++ show x
-            as = Set.fromList [(v,m) | (Var v, m) <- zzip eas ms] --drop LitX cases
-            cs = Set.fromList [EqC m1 m2 | m1 <- ms | m2 <- pts]
-        in (as, cs, setTyp m e)
+                    x -> error $ "HMStg.bu EPrimop " ++ show x
+--            as = Set.fromList [(v,m) | (Var v, m) <- zzip eas ms] --drop LitX cases
+-- MODIFIED 7.9 constraints m1 taken from assumptions about args to primop
+-- Right idea?
+            cs = Set.fromList [EqC m1 m2 | (_,m1) <- Set.toList as | m2 <- pts]
+        in (as, cs, e) -- EPrimop monotype set in dv
 
     bu mtvs e@ECase{ee,ealts} =
         let (asee, csee, ee')    = bu mtvs ee

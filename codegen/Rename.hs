@@ -112,12 +112,16 @@ nameExpr e@EAtom{ea} tt =
     return $ e{ea = nameAtom ea tt}
 
 nameExpr e@EFCall{ev, eas} tt =
-    let ev' = nameVar ev tt
-        eas' = nameAtoms eas tt in
-    return e{ev = ev', eas = eas'}
+   do
+     let ev' = nameVar ev tt
+-- MODIFIED 7.9 - EFCall.eas :: [Expr a]        
+     eas' <- mapM (flip nameExpr tt) eas 
+     return e{ev = ev', eas = eas'}
 
 nameExpr e@EPrimop{eas} tt =
-    let eas' = nameAtoms eas tt in
+-- MODIFIED 7.9 - EPrimop.eas :: [Expr a]
+  do
+    eas' <- mapM (flip nameExpr tt) eas
     return e{eas = eas'}
 
 nameAlts :: Alts a -> [(Var, String)] -> State [String] (Alts a)

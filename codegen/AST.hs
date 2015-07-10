@@ -78,9 +78,11 @@ instance Show Atom where
     show (LitD d) = show d ++ "(d)"
     show (LitC c) = [c]
 
+-- 7.9 EFCalls (and EPrimops, for consistency) changed to accept Expr args.
+-- Parser (and other traversals) should enforce use of *only* EAtom as args
 data Expr a = EAtom   {emd :: a,                    ea :: Atom} --,      ename::String}
-            | EFCall  {emd :: a, ev :: Var,         eas :: [Atom]} --,   ename::String}
-            | EPrimop {emd :: a, eprimop :: Primop, eas :: [Atom]} --,   ename::String}
+            | EFCall  {emd :: a, ev :: Var,         eas :: [Expr a]} --,   ename::String}
+            | EPrimop {emd :: a, eprimop :: Primop, eas :: [Expr a]} --,   ename::String}
             | ELet    {emd :: a, edefs :: [Obj a],  ee :: Expr a} --,    ename::String}
             | ECase   {emd :: a, ee :: Expr a,      ealts :: Alts a} --, ename::String}
               deriving(Eq,Show)
@@ -303,7 +305,8 @@ rawDocExpr e = case e of
                 (text "EFCall:" $+$
                  nest 2
                  (text "function:" <+> text ev $+$
-                  text "args:" <+> brackList (map rawDocAtom eas) $+$
+                  -- 7.9 changed, grab atoms from eas (same in primop below)
+                  text "args:" <+> brackList (map (rawDocAtom.ea) eas) $+$ 
                   text "metadata:" $+$
                   nest 2 (toDoc emd)
                  )
@@ -312,7 +315,7 @@ rawDocExpr e = case e of
                  (text "EPrimop:" $+$
                   nest 2
                   (text "primop:" <+> rawDocPrimop eprimop $+$
-                   text "args:" <+> brackList (map rawDocAtom eas) $+$
+                   text "args:" <+> brackList (map (rawDocAtom.ea) eas) $+$
                    text "metadata" $+$
                    nest 2 (toDoc emd)
                   )

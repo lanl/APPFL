@@ -120,17 +120,17 @@ primopTable =
     ("isub#",    Pisub),
     ("imul#",    Pimul),
     ("idiv#",    Pidiv),
-    --("imod#",    Pimod),
-    --("imax#",    Pimax), 
-    ("ieq#",     Pieq)--,
-    --("ine#",     Pine),
-    --("ilt#",     Pilt),
-    --("ile#",     Pile),
-    --("igt#",     Pigt),
-    --("ige#",     Pige),
-    --("ineg#",    Pineg),           
-    --("imin#",    Pimax),
-    --("imax#",    Pimin),
+    ("imod#",    Pimod),
+    ("imax#",    Pimax), 
+    ("ieq#",     Pieq),
+    ("ine#",     Pine),
+    ("ilt#",     Pilt),
+    ("ile#",     Pile),
+    ("igt#",     Pigt),
+    ("ige#",     Pige),
+    ("ineg#",    Pineg),           
+    ("imin#",    Pimax),
+    ("imax#",    Pimin)
   ]
 
 reserveds =

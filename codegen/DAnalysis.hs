@@ -216,12 +216,11 @@ instance SetHAs (Expr InfoTab) where
           ee = ee',
           edefs = edefs' }
 
-    EFCall{emd} ->
+    EFCall{emd, eas} ->
       let
         fHA = not $ growsHeap fmp cmap e
-        vsHA = case typ emd of
-          MFun
-        emd' = emd {noHeapAlloc = not $ growsHeap fmp cmap e}
+        vsHA = or $ map (growsHeap fmp cmap) eas
+        emd' = emd {noHeapAlloc = not $ fHA || vsHA}
       in e { emd = emd' }
 
     _ ->

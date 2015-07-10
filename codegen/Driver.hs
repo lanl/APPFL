@@ -12,13 +12,14 @@ module Driver (
 ) where
 
 import           ADT
-import           Analysis
 import           AST
+import           Analysis
 import           SCC
 import           CodeGen
 -- MODIFIED 6.30 - David ----------------------------------------
 import           CMap
 import           DAnalysis
+import           PPrint
 --import           ConMaps
 import           InfoTab
 import           HeapObj
@@ -121,6 +122,12 @@ heapchecker inp = let (tycons, objs) = knowncaller inp
 makeEnv inp = let (tycons, objs) = typechecker inp
               in (tycons, addDefsToEnv objs Map.empty)
                 
+
+--printObjsVerbose :: ([TyCon], [Obj a]) -> IO () 
+printObjsVerbose (tycons, objs) = print $ objListDoc objs
+
+unparse (tycons, objs) =
+  print $ toDoc $ (map DataDef tycons) ++ (map ObjDef objs)
 
 tester ftest fprint file =
   do

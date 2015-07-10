@@ -189,11 +189,11 @@ instance SetITs (Expr ([Var],[Var])) (Expr InfoTab) where
     setITs e@(EAtom emd a) = 
         EAtom (makeIT e) a
 
-    setITs e@(EFCall emd f as) =
-        EFCall (makeIT e) f as
+    setITs e@(EFCall emd f eas) =
+        EFCall (makeIT e) f $ map setITs eas
 
-    setITs e@(EPrimop emd p as) =
-        EPrimop (makeIT e) p as 
+    setITs e@(EPrimop emd p eas) =
+        EPrimop (makeIT e) p $ map setITs eas 
 
 instance SetITs (Alts ([Var],[Var])) (Alts InfoTab) where
     setITs as@(Alts altsmd alts name) = 

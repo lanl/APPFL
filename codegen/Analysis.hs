@@ -57,8 +57,10 @@ instance Normalize (Alts a) where
     -- if ADef followed by ACons we could remove them
     let alts' = if not (areExhaustive alts) then
                     let fcall = EFCall{emd = error "emd not initialized",
-                                       ev = "stg_case_not_exhaustive", 
-                                       eas = [Var "x"]}
+                                       ev = "stg_case_not_exhaustive",
+-- MODIFIED 7.9 - eas :: [EAtom a]                                       
+                                       eas = [EAtom{emd = error "end not initialized",
+                                                    ea = Var "x"}]}
                     in
                       alts ++ 
                       [ADef{amd = error "altsmd not initialized",
@@ -149,9 +151,11 @@ class SetNoHeapAllocTrue a where
 instance SetNoHeapAllocTrue (Expr InfoTab) where
   setNoHeapAllocTrue e@EAtom{emd} = e{emd = emd{noHeapAlloc = True}}
 
-  setNoHeapAllocTrue e@EFCall{emd} = e{emd = emd{noHeapAlloc = True}}
+  setNoHeapAllocTrue e@EFCall{emd, eas} = e{emd = emd{noHeapAlloc = True},
+                                            eas = map setNoHeapAllocTrue eas}
 
-  setNoHeapAllocTrue e@EPrimop{emd} = e{emd = emd{noHeapAlloc = True}}
+  setNoHeapAllocTrue e@EPrimop{emd, eas} = e{emd = emd{noHeapAlloc = True},
+                                             eas = map setNoHeapAllocTrue eas}
 
   setNoHeapAllocTrue e@ELet{emd, edefs, ee} = 
       e{emd = emd{noHeapAlloc = True},

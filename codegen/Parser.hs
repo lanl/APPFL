@@ -319,8 +319,19 @@ errorP = rsvP "ERROR" >>> \_ -> accept $ BLACKHOLE ()
 
 -- parse an expression, accept an Expr () object
 exprP :: Parser Token (Expr ())
-exprP = orExList [eFCallP, eAtomP, ePrimopP, eLetP, eCaseP]
+exprP = orExList
+        [eFCallP, eAtomP, ePrimopP, eLetP, eCaseP, inparensP exprP]
 
+
+-- parse an expression argument to a function call or primop
+-- the preference in this list is different from exprP to
+-- accept EAtoms before EFCalls/EPrimops. This makes function
+-- application tightly bound as in Haskell.
+-- Not in use currently. EFCalls and EPrimops still look for
+-- atoms but map EAtom across
+exprArgP :: Parser Token (Expr ())
+exprArgP = orExList
+           [eAtomP, eLetP, eCaseP, eFCallP, ePrimopP, inparensP exprP]
 
 -- parse an atom expression
 eAtomP :: Parser Token (Expr ())
@@ -332,7 +343,7 @@ eFCallP :: Parser Token (Expr ())
 eFCallP =
   varNameP >>> \fn ->
   some' atomP >>> \args ->
-                   accept $ EFCall () fn args
+                   accept $ EFCall () fn $ map (EAtom ()) args
 
 -- parse a primitive operation expression (e.g. isub# 1# 2#)
 ePrimopP :: Parser Token (Expr ())
@@ -340,7 +351,7 @@ ePrimopP =
   primP >>> \op ->
   tokcutP "Expected one or more atoms as arguments to a primop" $
   some' atomP >>> \args ->
-                   accept $ EPrimop () op args
+                   accept $ EPrimop () op $ map (EAtom ()) args
 
 -- parse a let expression
 eLetP :: Parser Token (Expr ())
