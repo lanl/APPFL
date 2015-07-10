@@ -98,11 +98,11 @@ data Alt a = ACon {amd :: a, ac :: Con, avs :: [Var], ae :: Expr a}
 data Alts a = Alts {altsmd :: a, alts :: [Alt a], aname :: String}
               deriving(Eq,Show)
 
-data Obj a = FUN   {omd :: a, vs :: [Var],   e :: (Expr a), oname :: String}
-           | PAP   {omd :: a, f  :: Var,     as :: [Atom],  oname :: String}
-           | CON   {omd :: a, c  :: Con,     as :: [Atom],  oname :: String}
-           | THUNK {omd :: a, e  :: (Expr a)             ,  oname :: String}
-           | BLACKHOLE {omd :: a                         ,  oname :: String}
+data Obj a = FUN   {omd :: a, vs :: [Var],   e :: Expr a , oname :: String}
+           | PAP   {omd :: a, f  :: Var,     as :: [Atom], oname :: String}
+           | CON   {omd :: a, c  :: Con,     as :: [Atom], oname :: String}
+           | THUNK {omd :: a, e  :: Expr a               , oname :: String}
+           | BLACKHOLE {omd :: a                         , oname :: String}
              deriving(Eq,Show)
 
 -- when calculating free variables we need an enclosing environment that

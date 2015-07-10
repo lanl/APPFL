@@ -8,7 +8,7 @@ module ADT (
   TyVar,
   Polytype(..),
   Monotype(..),
-  Con,
+  Con
 ) where
 
 import AST
@@ -94,7 +94,6 @@ instance Show Monotype where
     show (MFun m1 m2) = show m1 ++ " -> " ++ show m2 
     show (MCon con ms) = con ++ " " ++ intercalate " " (map show ms) -- modified (no boxed)
     show (MPrim p) = show p
-
 
 --------------- ADT Pretty Printing -----------------------
 

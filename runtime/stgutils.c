@@ -3,31 +3,8 @@
 #include <stdlib.h>
 
 #include "stgutils.h"
+#include "stgcmm.h"
 #include "stg.h"
-
-void callContSave(int argc, PtrOrLiteral argv[]) {
-  Cont callCont = { .retAddr = &stgCallCont,
-                    .objType = CALLCONT,
-                    .ident = "callContSave"
-                  };
-  callCont.payload[0] = (PtrOrLiteral) {.argType = INT, .i = argc};
-  for (int i = 0; i != argc; i++) callCont.payload[i+1] = argv[i];
-  stgPushCont(callCont);
-}
-
-void callContRestore(PtrOrLiteral argv[]) {
-  Cont callCont;
-  callCont = stgPopCont();
-  assert(callCont.objType == CALLCONT);
-  assert(callCont.payload[0].argType == INT);
-  for (int i = 0; i != callCont.payload[0].i; i++) argv[i] = callCont.payload[i+1];
-}
-
-Obj *derefHO(Obj *op) {
-  while (op->objType == INDIRECT)
-    op = op->payload[0].op;
-  return op;
-}
 
 Obj* derefPoL(PtrOrLiteral f) {
   assert(f.argType == HEAPOBJ && "derefPoL: not a HEAPOBJ");
@@ -40,6 +17,12 @@ void derefStgCurVal() {
 // is this a good place to check for BLACKHOLE?
 }
 
+Obj *derefHO(Obj *op) {
+  while (op->objType == INDIRECT)
+    op = op->payload[0].op;
+  return op;
+}
+
 DEFUN0(whiteHole) {
   fprintf(stderr,"in whiteHole, something not right or initialized somewhere, exiting\n");
   exit(0);
@@ -48,10 +31,51 @@ DEFUN0(whiteHole) {
 }
 
 DEFUN0(stg_constructorcall) {
-  fprintf(stderr,"placeholder\n");
+  fprintf(stderr,"we are not using the call-everything convention!\n");
   exit(0);
   RETURN0();
   ENDFUN;
+}
+
+/*
+void callContSave(int argc, PtrOrLiteral argv[]) {
+  Cont callCont = { .retAddr = &stgCallCont,
+                    .objType = CALLCONT,
+                    .ident = "callContSave"
+                  };
+  callCont.payload[0] = (PtrOrLiteral) {.argType = INT, .i = argc};
+  for (int i = 0; i != argc; i++) 
+    callCont.payload[i+1] = argv[i];
+  stgPushCont(callCont);
+}
+
+void callContRestore(PtrOrLiteral argv[]) {
+  Cont callCont;
+  callCont = stgPopCont();
+  assert(callCont.objType == CALLCONT);
+  assert(callCont.payload[0].argType == INT);
+  for (int i = 0; i != callCont.payload[0].i; i++) 
+    argv[i] = callCont.payload[i+1];
+}
+*/
+
+void callContSave(int argc, PtrOrLiteral argv[]) {
+  Obj callCont = { .infoPtr = &it_stgCallCont,
+		   .objType = CALLCONT,
+		   .ident = "callContSave",
+                 };
+  callCont.payload[0] = (PtrOrLiteral) {.argType = INT, .i = argc};
+  for (int i = 0; i != argc; i++) 
+    callCont.payload[i+1] = argv[i];
+  stgPushCont(callCont);
+}
+
+void callContRestore(PtrOrLiteral argv[]) {
+  Obj callCont = stgPopCont();
+  assert(callCont.objType == CALLCONT);
+  assert(callCont.payload[0].argType == INT);
+  for (int i = 0; i != callCont.payload[0].i; i++) 
+    argv[i] = callCont.payload[i+1];
 }
 
 // ****************************************************************
@@ -67,9 +91,25 @@ DEFUN0(stgShowResultCont) {
   RETURN0();
   ENDFUN;
 }
+
+InfoTab it_stgShowResultCont =
+  { .name       = "stgShowResultCont",
+    .fvCount    = 0,
+    .entryCode  = &stgShowResultCont,
+    .objType    = CALLCONT,
+  };
+
 // just one of these
+/*
 Cont showResultCont = {
   .retAddr = &stgShowResultCont,
+  .objType = CALLCONT,
+  .ident = "showResultCont",
+  .payload[0] = {0},
+};
+*/
+Obj showResultCont = {
+  .infoPtr = &it_stgShowResultCont,
   .objType = CALLCONT,
   .ident = "showResultCont",
   .payload[0] = {0},
@@ -240,7 +280,7 @@ DEFUN2(stgApply, N, f) {
 
 // ****************************************************************
 // early instance of stgApply
-
+/*
 DEFUN2(stgApplyPap1, f, x1) {
   // now our predefined function/macro approach breaks down somewhat
   // since we don't statically know the arity of the PAP's underlying
@@ -323,5 +363,4 @@ DEFUN2(stgApply1, f, x1) {
   }  // switch
   ENDFUN;
 }
-
-
+*/

@@ -5,22 +5,13 @@
 #include "cmm.h"
 #include "string.h"
 
-extern FnPtr stgUpdateCont();
+extern void stgThunk(PtrOrLiteral self);
+
 extern FnPtr stgCallCont();
+extern InfoTab it_stgCallCont;
 
-inline void stgThunk(PtrOrLiteral self) {
-  assert(self.argType == HEAPOBJ && "stgThunk:  not HEAPOJ\n");
-  Cont ccont = {		
-    .retAddr = &stgUpdateCont,	
-    .objType = UPDCONT,
-    .payload[0] = self		
-  };
-  // should make all .idents (char *)
-  strcpy(ccont.ident, self.op->ident);
-
-  stgPushCont(ccont);				
-  self.op->objType = BLACKHOLE;	
-}
+extern FnPtr stgUpdateCont();
+extern InfoTab it_stgUpdateCont;
 
 #endif
 

@@ -21,17 +21,18 @@ fac = FUN(n ->
             }
   });
 
+ubbapply1 = 
+  FUN(f# n -> case n of {
+                I n# -> case f# n# of {
+                          res# -> let {res = CON(I res#)}
+			          in res }});
+ 
+
 i12 = CON(I 12);
 
-main = THUNK(let {
-       		 ret = THUNK(fac i12);
-		 dead = THUNK(test 2);}
-		 in ret);
+main1 = THUNK(fac i12);
 
-test = FUN(x -> case x of {
-       	     	  1 -> 0 });
-
-
+main = THUNK(ubbapply1 fac# i12)
 
 
     
