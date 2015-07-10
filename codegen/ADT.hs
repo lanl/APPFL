@@ -83,6 +83,8 @@ data Monotype = MVar TyVar
               | MFun Monotype Monotype
               | MCon Bool Con [Monotype]
               | MPrim BuiltinType
+              | MPVar TyVar -- should be used only in BU.hs
+              | MPhony
                 deriving(Eq,Ord)
 
 
@@ -95,12 +97,14 @@ instance Show Polytype where
 
 instance Show Monotype where
     show (MVar v) = v
+    show (MPVar v) = "p_" ++ v
     show (MFun m1@(MFun _ _) m2) = "(" ++ show m1 ++ ") -> " ++ show m2
     show (MFun m1 m2) = show m1 ++ " -> " ++ show m2
     show (MCon boxed con ms) = con ++ 
                                (if boxed then " [B] " else " [U] ") ++
                                "(" ++ intercalate ") (" (map show ms) ++ ")"
     show (MPrim p) = show p
+    show MPhony = "phonyType"
 
 isBoxedMonotype MVar{} = True
 isBoxedMonotype MFun{} = True
