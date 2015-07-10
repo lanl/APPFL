@@ -21,6 +21,12 @@ $ make runtime
 ---------------------------------------
 Using the compiler from inside ghci:
 
+build runtime:
+
+$ make runtime
+
+start ghci: 
+
 $ cd codegen
 $ ghci
 Prelude> :l stgc
@@ -53,7 +59,7 @@ this will also generate test/one.stg.c
 
 compile a .stg.c file:
 
-$ gcc test/one.stg.c -o one2 -L build/lib -I build/include -lruntime -std=gnu99
+$ gcc test/one.stg.c -o one -L build/lib -I build/include -lruntime -std=gnu99
 
 
 
