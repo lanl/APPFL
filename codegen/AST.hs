@@ -9,10 +9,14 @@ module AST (
   Alts(..),
   Obj(..),
   Primop(..),
+  BuiltinType(..),
   primopTab,
   show,
   objListDoc,
-  BuiltinType(..)
+  rawDocObj,
+  rawDocExpr,
+  rawDocAlts,
+  rawDocAlt,
 ) where
 
 import PPrint

@@ -99,8 +99,8 @@ data TokenState =  StrTok {tS::String, tP::Pos} |
                    None   {            tP::Pos} -- useful to have position for error messages
 
 instance PPrint TokenState where
-  toDoc StrTok {tS, tP} = brackets $ text "String-type token:" <+> text (show tS) <+> text (showpos tP)
-  toDoc NumTok {tS, tP} = brackets $ text "Numeric-type token:" <+> text (show tS) <+> text (showpos tP)
+  toDoc StrTok {tS, tP} = brackets $ text "String-type token:" <+> text (show $ reverse tS) <+> text (showpos tP)
+  toDoc NumTok {tS, tP} = brackets $ text "Numeric-type token:" <+> text (show $ reverse tS) <+> text (showpos tP)
   toDoc None{tP}        = brackets $ text "No token in progress:" <+> text (showpos tP)
 
 instance PPrint Token where
@@ -145,7 +145,7 @@ isReserved = flip elem reserveds
 isPrimop = flip elem primops
 
 isIdSym x = isAlphaNum x ||
-            elem x ".#_"
+            elem x ".#_'"
 
 tokErr t m = error $ show $
              text "Tokenization error with token" <+> toDoc t $+$

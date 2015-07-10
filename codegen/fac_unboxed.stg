@@ -23,7 +23,13 @@ fac = FUN(n ->
 
 i12 = CON(I 12);
 
-main = THUNK(fac i12)
+main = THUNK(let {
+       		 ret = THUNK(fac i12);
+		 dead = THUNK(test 2);}
+		 in ret);
+
+test = FUN(x -> case x of {
+       	     	  1 -> 0 });
 
 
 

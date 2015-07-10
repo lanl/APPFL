@@ -26,6 +26,7 @@ import qualified Data.Map as Map
 import Data.Maybe (fromJust)
 import Data.List ((\\), find)
 import Data.Char (isNumber)
+import Debug.Trace
 
 type CMap = Map.Map Con TyCon
 
@@ -66,9 +67,11 @@ tConName (TyCon _ n _ _) = n
 -- consExhaust will return True
 consExhaust :: [Con] -> CMap -> Bool
 consExhaust [] _ = False
-consExhaust cc@(c:cs) conmap =
-  let cons = luDCons c conmap
-  in  null $ map dConName cons \\ cc
+consExhaust cc@(c:cs) conmap
+  | isBuiltInType c = False -- assume Int# and Double# cannot be enumerated
+  | otherwise = 
+      let cons = luDCons c conmap
+      in  null $ map dConName cons \\ cc
 
 -- Given a Con and CMap, get the list of DataCons associated with it
 luDCons :: Con -> CMap -> [DataCon]

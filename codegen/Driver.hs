@@ -86,7 +86,7 @@ renamer inp = let (tyCons, objs) = parser inp
 
 normalizer :: String -> ([TyCon], [Obj ()])
 normalizer inp = let (tyCons, objs) = renamer inp
-                 in (tyCons, normalize objs)
+                 in (tyCons, exhaustCases (toCMap tyCons) objs)
 
 freevarer :: String -> ([TyCon], [Obj ([Var],[Var])])
 freevarer inp = let (tycons, objs) = normalizer inp
@@ -116,12 +116,10 @@ typechecker inp = let (tycons, objs) = conmaper inp
 knowncaller inp  = let (tycons, objs) =  typechecker inp
                    in (tycons, propKnownCalls objs)
 
-heapchecker inp = let (tycons, objs) = knowncaller inp
+heapchecker inp = let (tycons, objs) = typechecker inp
                   in (tycons, setHeapAllocs objs $ toCMap tycons)
 
-makeEnv inp = let (tycons, objs) = typechecker inp
-              in (tycons, addDefsToEnv objs Map.empty)
-                
+               
 
 --printObjsVerbose :: ([TyCon], [Obj a]) -> IO () 
 printObjsVerbose (tycons, objs) = print $ objListDoc objs
@@ -146,7 +144,7 @@ tctest arg =
 
 
 codegener :: String -> Bool -> String
-codegener inp v = let (tycons, objs) = knowncaller inp
+codegener inp v = let (tycons, objs) = heapchecker inp
                       infotab = showITs objs
                       (shoForward, shoDef) = showSHOs objs
                       (funForwards, funDefs) = cgObjs objs stgRTSGlobals

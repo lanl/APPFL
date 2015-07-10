@@ -136,3 +136,4 @@ main =
       -- weird path stuff is because cabal puts binary in dist/build/stgc/stgc
       compile opts (binaryDir ++ "/../../../") (binaryDir ++ "/../../../../runtime") True
 
+    

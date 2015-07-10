@@ -6,8 +6,7 @@
 module DAnalysis
 (exhaustCases,
  propKnownCalls,
- setHeapAllocs,
- addDefsToEnv)
+ setHeapAllocs)
 where
 
 import ADT
@@ -16,6 +15,7 @@ import InfoTab
 import CMap
 import PPrint
 import qualified Data.Map as Map
+import Data.List (group)
 import Debug.Trace
 
 
@@ -32,34 +32,60 @@ import Debug.Trace
 -- the heap, naive analysis would suggest the scrutinee does not either,
 -- but that would be wrong, due to the letexpr in g
 
-type Env = Map.Map Var InfoTab
+-- KCMap: Knowncall map of Function Name to Fun InfoTab
+type KCMap = Map.Map Var InfoTab
 
 
--- remove entries from the Env matching a list of Var keys
+-- remove entries from the KCMap matching a list of Var keys
 deleteAll :: Ord k => [k] -> Map.Map k v -> Map.Map k v
 deleteAll vs env = foldr (Map.delete) env vs
 
 
 -- Check an expression to see if it evaluates to a known function and return
 -- that function's InfoTab in Maybe form, if so.
--- This could use some reorganization, probably
-knownFunExprIT :: Env -> Expr InfoTab -> Maybe InfoTab
+-- This isn't terribly useful: expressions will rarely evaluate to known
+-- functions.  The only example I can think of that might be useful
+-- would be case-dependent partial application of the same function
+-- e.g.
+-- case e of {
+--   val1 -> f val1;
+--   val2 -> f val2;
+--   x    -> f defaultVal; }
+--
+-- Note that heap allocation analysis currently does not depend on this,
+-- but it could at some point, and this analysis could break it by hiding
+-- let expressions "inside" function calls that have been identified as
+-- known
+-- e.g.
+-- f = FUN(a -> e) -- assume f does not grow heap
+-- t = THUNK(let {x = THUNK(f)} in x )
+-- main = THUNK(t arg)
+-- here t could be identified as a known call to f, which
+-- might have the result of identifying the expression in
+-- in main's THUNK as not causing heap allocation, which it clearly should
+knownFunExprIT :: KCMap -> Expr InfoTab -> Maybe InfoTab
 knownFunExprIT env e =
   let
     -- check Alts in Alts block with only one alternative, bind ADef var if
-    -- necessary in Env and examine Alt expression for known function
-    checkAlts env e [ADef{av, ae}] = case knownFunExprIT env e of
+    -- necessary in KCMap and examine Alt expression for known function
+    checkAlts env e alts = case group $ map (checkAlt env e) alts of
+      -- if group produces a list of one list, all in that list are equal
+      [its] -> head its
+      _ -> Nothing
+
+    -- check single alt  
+    checkAlt env e ADef{av, ae} = case knownFunExprIT env e of
       Just it -> knownFunExprIT (Map.insert av it env) ae
       Nothing -> knownFunExprIT env ae
-    -- must delete bindings in Con from Env before lookup
-    checkAlts env _ [ACon{avs, ae}] = knownFunExprIT (deleteAll avs env) ae
+    -- must delete bindings in Con from KCMap before lookup
+    checkAlt env _ ACon{avs, ae} = knownFunExprIT (deleteAll avs env) ae
+    
 
-    -- remove let bindings from env. Add bindings for any object that
+    -- remove let bindings from map. Add bindings for any object that
     -- evaluates to a known function f, e.g. PAP(f) or THUNK(e) where e == f
-    -- Can't use addDefsToEnv, because we don't want local FUN definitions
+    -- Can't use addDefsToKCMap, because we don't want local FUN definitions
     -- added. They would then be considered known functions and could misrepresent
     -- the letexpr as a known function.
-    -- Not currently in use. Let exprs not examined.
     addLetDefs env defs =
       let env' = deleteAll (map oname defs) env
           fun THUNK{e, oname} env = case knownFunExprIT env e of
@@ -82,9 +108,7 @@ knownFunExprIT env e =
                                                 | otherwise -> Nothing
                               _ -> Nothing
 
---    ignore Let exprs, since it's self defeating given the purpose of
---    identifying known functions (let exprs always grow heap, regardless
---    of what they evaluate to)
+--    This will break heap allocation analysis if it depends on known calls
 --    ELet  {edefs, ee} ->  knownFunExprIT (addLetDefs env edefs) ee
                                                      
     _ -> Nothing
@@ -93,11 +117,11 @@ knownFunExprIT env e =
 propKnownCalls :: [Obj InfoTab] -> [Obj InfoTab]
 propKnownCalls objs =
   let
-    env = addDefsToEnv objs Map.empty
+    env = addDefsToKCMap objs Map.empty
   in
     map (propCallsObj env) objs
   
-addDefsToEnv defs env =
+addDefsToKCMap defs env =
   let
     f FUN{omd, oname} env = Map.insert oname omd env
     f THUNK{e, oname} env = case knownFunExprIT env e of
@@ -113,10 +137,10 @@ addDefsToEnv defs env =
     -- fix it
     case env == env' of
      True -> env
-     False -> addDefsToEnv defs env'
+     False -> addDefsToKCMap defs env'
 
 
-propCallsObj :: Env -> Obj InfoTab -> Obj InfoTab
+propCallsObj :: KCMap -> Obj InfoTab -> Obj InfoTab
 propCallsObj env o = case o of
 
   FUN{e, vs}    -> o { e = propCallsExpr env e }
@@ -129,12 +153,12 @@ propCallsObj env o = case o of
   _ -> o
     
 
-propCallsExpr :: Env -> Expr InfoTab -> Expr InfoTab
+propCallsExpr :: KCMap -> Expr InfoTab -> Expr InfoTab
 propCallsExpr env e = case e of
 
   ELet{edefs, ee} ->
     let
-      env' = addDefsToEnv edefs env
+      env' = addDefsToKCMap edefs env
       edefs' = map (propCallsObj env') edefs
       ee' = propCallsExpr env' ee
     in  e{ee = ee', edefs = edefs'}
@@ -151,55 +175,68 @@ propCallsExpr env e = case e of
   _ -> e
 
 
-propCallsAlt :: Env -> Expr InfoTab -> Alt InfoTab -> Alt InfoTab
-propCallsAlt env expr a = case a of
+propCallsAlt :: KCMap -> Expr InfoTab -> Alt InfoTab -> Alt InfoTab
+propCallsAlt env scrut a = case a of
   
   ACon{amd, avs, ae} ->
-    let env' = foldr Map.delete env avs
+    let env' = deleteAll avs env
     in a{ ae = propCallsExpr env' ae }
   
   ADef{amd, av, ae}  -> 
-    let env' = case knownFunExprIT env expr of
-          Just it -> Map.insert av it env -- if ee is known function, bind var in env
+    let env' = case knownFunExprIT env scrut of
+          Just it -> Map.insert av it env -- if scrut is known function, bind var in env
           Nothing -> Map.delete av env -- else honor shadowing and delete it
     in a { ae = propCallsExpr env' ae}
        
 
 type FunMap = Map.Map Var Bool
 
-class SetHAs a where
-  setHAs :: FunMap -> CMap -> a -> a
+class SetHA a where
+  setHA :: FunMap -> CMap -> a -> a
+  getHA :: a -> Bool
 
 setHeapAllocs :: [Obj InfoTab] -> CMap -> [Obj InfoTab]
 setHeapAllocs defs cmap =
   let
     fmp = addDefsToMap defs Map.empty cmap
   in
-   map (setHAs fmp cmap) defs
+   map (setHA fmp cmap) defs
 
-instance SetHAs (Obj InfoTab) where
-  setHAs fmp cmap o = case o of
+instance SetHA (Obj InfoTab) where
+  setHA fmp cmap o = case o of
     FUN{vs, e} ->
-      let e' = setHAs (deleteAll vs fmp) cmap e
+      let e' = setHA (deleteAll vs fmp) cmap e
       in o { e = e' }
 
     THUNK{e} ->
-      let e' = setHAs fmp cmap e
+      let e' = setHA fmp cmap e
       in o { e = e' }
 
     _  -> o
 
-instance SetHAs (Expr InfoTab) where
-  setHAs fmp cmap e = case e of
+  getHA o = case o of
+    FUN{e}   -> getHA e
+    THUNK{e} -> getHA e
+    _ -> error $ "DAnalysis.getHA " ++ (show $ rawDocObj o)
+
+instance SetHA (Expr InfoTab) where
+  setHA fmp cmap e = case e of
     EAtom{emd} ->
-      let emd' = emd {noHeapAlloc = not $ growsHeap fmp cmap e}
+      let nha = case typ emd of
+                 MCon c _ -> not $ isBoxedTCon c cmap
+                 MPrim _  -> True
+                 -- MVar => polymorphic => boxed
+                 -- MFun => PAP created dynamically? => boxed
+                 _        -> False
+          emd' = emd {noHeapAlloc = nha}
       in e { emd = emd' }
 
     ECase{emd, ee, ealts} ->
       let
-        ee' = setHAs fmp cmap ee
-        emd' = emd {noHeapAlloc = not $ growsHeap fmp cmap e}
-        ealts' = setHAs fmp cmap ealts
+        ee' = setHA fmp cmap ee
+        ealts' = setHA fmp cmap ealts
+        nha = getHA ee' && getHA ealts'
+        emd' = emd {noHeapAlloc = nha}
       in
        e{ emd = emd',
           ee = ee',
@@ -208,89 +245,74 @@ instance SetHAs (Expr InfoTab) where
     ELet{emd, ee, edefs} ->
       let
         fmp' = addDefsToMap edefs fmp cmap
-        ee' = setHAs fmp' cmap ee
+        ee' = setHA fmp' cmap ee
+        edefs' = map (setHA fmp' cmap) edefs
         emd' = emd { noHeapAlloc = False } -- Let exprs always grow heap
-        edefs' = map (setHAs fmp' cmap) edefs
       in
        e{ emd = emd',
           ee = ee',
           edefs = edefs' }
 
-    EFCall{emd, eas} ->
+    EFCall{emd, ev, eas} ->
       let
-        fHA = not $ growsHeap fmp cmap e
-        vsHA = or $ map (growsHeap fmp cmap) eas
-        emd' = emd {noHeapAlloc = not $ fHA || vsHA}
+        eas' = map (setHA fmp cmap) eas
+        fnha = case knownCall emd of
+          Just it -> 
+            case Map.lookup (name it) fmp of
+             Just b -> b 
+             Nothing -> False -- unknown function may grow heap
+          Nothing ->
+            -- this works independently of knownCall analysis (for simple tests)
+            -- it shouldn't break anything in its presence either, I think.
+            case Map.lookup ev fmp of
+             Just b -> b
+             Nothing -> False
+             
+        nha = fnha -- and (fnha:map getHA eas') -- ignoring args for now
+        emd' = emd {noHeapAlloc = nha}
       in e { emd = emd' }
 
-    _ ->
-      let emd' = (emd e) {noHeapAlloc = not $ growsHeap fmp cmap e}
+    EPrimop{emd, eas} ->
+      let eas' = map (setHA fmp cmap) eas -- for consistency
+          nha = and $ map getHA eas -- for consistency
+          emd' = emd {noHeapAlloc = True} -- hack, typechecker not working?
       in e { emd = emd' }
 
-instance SetHAs (Alts InfoTab) where
-  setHAs fmp cmap a@Alts{alts} =
-    let alts' = map (setHAs fmp cmap) alts
+  getHA = noHeapAlloc.emd
+    
+
+instance SetHA (Alts InfoTab) where
+  setHA fmp cmap a@Alts{alts} =
+    let alts' = map (setHA fmp cmap) alts
     in a { alts = alts' }
 
+  getHA Alts{alts} = and $ map getHA alts
 
-instance SetHAs (Alt InfoTab) where
-  setHAs fmp cmap a = case a of
+
+instance SetHA (Alt InfoTab) where
+  setHA fmp cmap a = case a of
 
     ADef{av, ae} ->
       let
         fmp' = Map.delete av fmp
-        ae' = setHAs fmp' cmap ae
+        ae' = setHA fmp' cmap ae
       in
        a { ae = ae' }
 
     ACon{avs, ae} ->
       let
         fmp' = deleteAll avs fmp
-        ae' = setHAs fmp' cmap ae
+        ae' = setHA fmp' cmap ae
       in
        a { ae = ae' }
+
+  getHA = getHA . ae
       
-
-class GrowsHeap a where
-  growsHeap :: FunMap -> CMap -> a -> Bool
-  
-instance GrowsHeap (Expr InfoTab) where
-  growsHeap funmap cmap expr = case expr of
-
-    EAtom{emd, ea} ->
-      case ea of
-       Var v -> case typ emd of
-                 MCon c _ -> isBoxedTCon c cmap
-                 MPrim _  -> False
-                 _ -> True
-       _ -> False -- literals are unboxed
-
-    ELet{} -> True
-
-    ECase{ee, ealts = Alts{alts}} ->
-      let
-        eGH = growsHeap funmap cmap ee
-        aGH = or $ map (growsHeap funmap cmap) alts
-      in
-       eGH || aGH
-
-    -- TODO: Check knownCall hereish (or in setHAs?)
-    EFCall{ev} -> case Map.lookup ev funmap of 
-      Just b -> b
-      Nothing -> True -- assume unknown function grows heap
-
-    _ -> False
-
-instance GrowsHeap (Alt InfoTab) where
-  growsHeap fmp cmap a = case a of
-    ADef{av, ae}  -> growsHeap (Map.delete av fmp) cmap ae
-    ACon{avs, ae} -> growsHeap (deleteAll avs fmp) cmap ae
-                 
 
 addDefsToMap defs funmap cmap =
   let
     fmp  = deleteAll (map oname defs) funmap -- remove shadowed bindings 
-    toAdd = Map.fromList $ map ((,False) . oname) $ filter isFun defs -- FUNs to add
+    toAdd = Map.fromList $ map ((,True) . oname) $ filter isFun defs -- FUNs to add
     fmp' = Map.union toAdd fmp 
     isFun o = case o of
       FUN{} -> True
@@ -300,44 +322,20 @@ addDefsToMap defs funmap cmap =
     foldfunc def fmp = case def of
 
       FUN{vs, e, oname} ->
-        Map.insert oname (growsHeap (deleteAll vs fmp) cmap e) fmp
+        Map.insert oname (getHA def) fmp
 
       _ -> fmp
 
     -- iterate until fixed point is found
     fixDefs defs fmp =
-      let fmp' = foldr foldfunc fmp defs in
+      let
+          fmp' = foldr foldfunc fmp $ map (setHA fmp cmap) defs in
        if fmp == fmp'
        then fmp'
        else fixDefs defs fmp'
   in
    fixDefs defs fmp'
       
-       
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -349,16 +347,23 @@ exhaustCases cmap = map (exhaustObj cmap)
 exhaustObj :: CMap -> Obj a -> Obj a
 exhaustObj cmap obj =
   case obj of
-   ff@FUN{e} -> ff{e = exhaustExpr cmap e}
-   tt@THUNK{e} -> tt{e = exhaustExpr cmap e}
-   _ -> obj
+   FUN{e} -> obj {e = exhaustExpr cmap e}
+   THUNK{e} -> obj {e = exhaustExpr cmap e}
+   PAP{} -> obj
+   CON{} -> obj
+   BLACKHOLE{} -> obj
    
 exhaustExpr :: CMap -> Expr a -> Expr a
 exhaustExpr cmap expr =
   case expr of
-   el@ELet{edefs, ee} -> el{edefs = exhaustCases cmap edefs, ee = exhaustExpr cmap ee}
-   ec@ECase{ealts} -> ec{ealts = exhaustAlts cmap ealts}
-   _ -> expr
+   ELet{edefs, ee} -> expr {edefs = exhaustCases cmap edefs,
+                            ee = exhaustExpr cmap ee}
+                      
+   ECase{ealts} -> expr {ealts = exhaustAlts cmap ealts}
+   
+   EAtom{}   -> expr
+   EPrimop{} -> expr
+   EFCall{}  -> expr
 
 exhaustAlts :: CMap -> Alts a -> Alts a
 exhaustAlts cmap aa@Alts{alts, aname} =
@@ -367,7 +372,7 @@ exhaustAlts cmap aa@Alts{alts, aname} =
       isACon x = case x of ACon{} -> True; _ -> False
       newAlts = if not (null adefs) || consExhaust (map ac acons) cmap
                 then alts
-                else alts ++ [defAult "exh"]  --get it?
+                else alts ++ [defAult aname]  --get it?
   in aa{alts = newAlts}
 
 
@@ -375,6 +380,20 @@ defAult :: String -> Alt a
 defAult name =
   let
     mdErr s = error $ s ++ " metadeta not set!"
-    fcal = EFCall{emd   = mdErr "EFCall"}
-  in
-   undefined
+    arg   = EAtom{emd = mdErr "EAtom",
+                  ea  = Var "x"}
+    fcall = EFCall{emd = mdErr "EFCall",
+                   ev  = "stg_case_not_exhaustive",
+                   eas = [arg]}
+    thunk = THUNK{omd   = mdErr "THUNK",
+                  e     = fcall,
+                  oname = name ++ "_exhaust"}
+    letee = EAtom{emd = mdErr "EAtom",
+                  ea  = Var $ oname thunk}
+    elet  = ELet{emd   = mdErr "ELet",
+                 edefs = [thunk],
+                 ee    = letee}
+  in ADef {amd = mdErr "ADef",
+           av  = "x",
+           ae  = elet}
+   
