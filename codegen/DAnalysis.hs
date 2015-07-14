@@ -192,24 +192,24 @@ propCallsAlt env scrut a = case a of
 type FunMap = Map.Map Var Bool
 
 class SetHA a where
-  setHA :: FunMap -> CMap -> a -> a
+  setHA :: FunMap -> a -> a
   getHA :: a -> Bool
 
-setHeapAllocs :: [Obj InfoTab] -> CMap -> [Obj InfoTab]
-setHeapAllocs defs cmap =
+setHeapAllocs :: [Obj InfoTab] -> [Obj InfoTab]
+setHeapAllocs defs =
   let
-    fmp = addDefsToMap defs Map.empty cmap
+    fmp = addDefsToMap defs Map.empty
   in
-   map (setHA fmp cmap) defs
+   map (setHA fmp) defs
 
 instance SetHA (Obj InfoTab) where
-  setHA fmp cmap o = case o of
+  setHA fmp o = case o of
     FUN{vs, e} ->
-      let e' = setHA (deleteAll vs fmp) cmap e
+      let e' = setHA (deleteAll vs fmp) e
       in o { e = e' }
 
     THUNK{e} ->
-      let e' = setHA fmp cmap e
+      let e' = setHA fmp e
       in o { e = e' }
 
     _  -> o
@@ -220,12 +220,12 @@ instance SetHA (Obj InfoTab) where
     _ -> error $ "DAnalysis.getHA " ++ (show $ rawDocObj o)
 
 instance SetHA (Expr InfoTab) where
-  setHA fmp cmap e = case e of
+  setHA fmp e = case e of
     EAtom{emd} ->
       let nha = case typ emd of
-                 MCon c _ -> not $ isBoxedTCon c cmap
-                 MPrim _  -> True
-                 -- MVar => polymorphic => boxed
+                 MCon b c _ -> b
+                 MPrim _    -> True
+                 -- MVar => polymorphic => boxed?
                  -- MFun => PAP created dynamically? => boxed
                  _        -> False
           emd' = emd {noHeapAlloc = nha}
@@ -233,8 +233,8 @@ instance SetHA (Expr InfoTab) where
 
     ECase{emd, ee, ealts} ->
       let
-        ee' = setHA fmp cmap ee
-        ealts' = setHA fmp cmap ealts
+        ee' = setHA fmp ee
+        ealts' = setHA fmp ealts
         nha = getHA ee' && getHA ealts'
         emd' = emd {noHeapAlloc = nha}
       in
@@ -244,9 +244,9 @@ instance SetHA (Expr InfoTab) where
 
     ELet{emd, ee, edefs} ->
       let
-        fmp' = addDefsToMap edefs fmp cmap
-        ee' = setHA fmp' cmap ee
-        edefs' = map (setHA fmp' cmap) edefs
+        fmp' = addDefsToMap edefs fmp
+        ee' = setHA fmp' ee
+        edefs' = map (setHA fmp') edefs
         emd' = emd { noHeapAlloc = False } -- Let exprs always grow heap
       in
        e{ emd = emd',
@@ -255,7 +255,7 @@ instance SetHA (Expr InfoTab) where
 
     EFCall{emd, ev, eas} ->
       let
-        eas' = map (setHA fmp cmap) eas
+        eas' = map (setHA fmp) eas
         fnha = case knownCall emd of
           Just it -> 
             case Map.lookup (name it) fmp of
@@ -273,7 +273,7 @@ instance SetHA (Expr InfoTab) where
       in e { emd = emd' }
 
     EPrimop{emd, eas} ->
-      let eas' = map (setHA fmp cmap) eas -- for consistency
+      let eas' = map (setHA fmp) eas -- for consistency
           nha = and $ map getHA eas -- for consistency
           emd' = emd {noHeapAlloc = True} -- hack, typechecker not working?
       in e { emd = emd' }
@@ -282,34 +282,34 @@ instance SetHA (Expr InfoTab) where
     
 
 instance SetHA (Alts InfoTab) where
-  setHA fmp cmap a@Alts{alts} =
-    let alts' = map (setHA fmp cmap) alts
+  setHA fmp a@Alts{alts} =
+    let alts' = map (setHA fmp) alts
     in a { alts = alts' }
 
   getHA Alts{alts} = and $ map getHA alts
 
 
 instance SetHA (Alt InfoTab) where
-  setHA fmp cmap a = case a of
+  setHA fmp a = case a of
 
     ADef{av, ae} ->
       let
         fmp' = Map.delete av fmp
-        ae' = setHA fmp' cmap ae
+        ae' = setHA fmp' ae
       in
        a { ae = ae' }
 
     ACon{avs, ae} ->
       let
         fmp' = deleteAll avs fmp
-        ae' = setHA fmp' cmap ae
+        ae' = setHA fmp' ae
       in
        a { ae = ae' }
 
   getHA = getHA . ae
       
 
-addDefsToMap defs funmap cmap =
+addDefsToMap defs funmap =
   let
     fmp  = deleteAll (map oname defs) funmap -- remove shadowed bindings 
     toAdd = Map.fromList $ map ((,True) . oname) $ filter isFun defs -- FUNs to add
@@ -329,15 +329,13 @@ addDefsToMap defs funmap cmap =
     -- iterate until fixed point is found
     fixDefs defs fmp =
       let
-          fmp' = foldr foldfunc fmp $ map (setHA fmp cmap) defs in
+          fmp' = foldr foldfunc fmp $ map (setHA fmp) defs in
        if fmp == fmp'
        then fmp'
        else fixDefs defs fmp'
   in
    fixDefs defs fmp'
       
-
-
 
 
 

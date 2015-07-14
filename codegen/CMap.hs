@@ -34,8 +34,9 @@ type CMap = Map.Map Con TyCon
 -- Construct the CMap from a list of TyCons
 toCMap :: [TyCon] -> CMap
 toCMap tycons =
-  let tab = concatMap (\t-> zip (map dConName $ tycDCons t) (repeat t)) tycons
+  let tab = concatMap (\t-> zip (map dataConName $ getDataCons t) (repeat t)) tycons
   in Map.fromList tab
+
 
 -- Lookup the arity of a DataCon by name     
 conArity :: Con -> CMap -> Int      
@@ -48,15 +49,8 @@ conArity name conmap
 
 -- From a Con, find the DataCon it belongs to
 getDConInList :: Con -> [DataCon] -> DataCon
-getDConInList name cons = fromJust $ find ((==name).dConName) cons
+getDConInList name cons = fromJust $ find ((==name).dataConName) cons
 
-
--- retrieve the Con of a DataCon
-dConName :: DataCon -> Con
-dConName (DataCon n _) = n
-
-tConName :: TyCon -> Con
-tConName (TyCon _ n _ _) = n
 
 -- Given a list of Cons, check if they exhaust all the DataCon constructors
 -- for their associated TyCon.
@@ -71,22 +65,16 @@ consExhaust cc@(c:cs) conmap
   | isBuiltInType c = False -- assume Int# and Double# cannot be enumerated
   | otherwise = 
       let cons = luDCons c conmap
-      in  null $ map dConName cons \\ cc
+      in  null $ map dataConName cons \\ cc
 
 -- Given a Con and CMap, get the list of DataCons associated with it
 luDCons :: Con -> CMap -> [DataCon]
-luDCons con conmap = tycDCons $ luTCon con conmap
-
-
--- retrieve DataCons from a TyCon
-tycDCons :: TyCon -> [DataCon]
-tycDCons (TyCon _ _ _ cons) = cons
+luDCons con conmap = getDataCons $ luTCon con conmap
 
 
 -- Lookup a DataCon in the CMap by Con
 luDCon :: Con -> CMap -> DataCon
 luDCon name conmap = getDConInList name $ luDCons name conmap
-
 
 -- check boxedness of a TyCon name
 isBoxedTCon :: Con -> CMap -> Bool
@@ -95,7 +83,7 @@ isBoxedTCon c cmap
   | otherwise    =
       let tcons = map snd $ Map.toList cmap
       in
-       case find ((== c) . tConName) tcons of
+       case find ((== c) . tyConName) tcons of
         Just (TyCon boxed _ _ _) -> boxed
         Nothing                  -> error $
                                     "TyCon for " ++ c ++ " not found in CMap"
@@ -115,18 +103,17 @@ luTCon :: Con -> CMap -> TyCon
 luTCon name conmap
   | isBuiltInType name = getBuiltInType name
   | otherwise = case Map.lookup name conmap of
-                 Nothing -> error "constructor not in conmap"
+                 Nothing -> error $ "constructor " ++ name ++ " not in conmap"
                  (Just t) -> t
 
 luConTag :: Con -> CMap -> String
 luConTag c cmap | isBuiltInType c = c
                 | otherwise       =
-                  let tab = zip (map dConName $ luDCons c cmap) [0..]
+                  let tab = zip (map dataConName $ luDCons c cmap) [0..]
                   in case lookup c tab of
                       Just n -> show n
                       Nothing -> error $ "Tag lookup failing in CMap for " ++ c
                       
-
 
 isInt :: String -> Bool
 isInt = and . (map isNumber)
@@ -143,17 +130,16 @@ isBuiltInType :: Con -> Bool
 isBuiltInType = isInt -- or others?
 
 getBuiltInType :: Con -> TyCon
-getBuiltInType c | isInt c   = makeIntTyCon c 
-                 | otherwise = error "builtin TyCon not found!"
-      
+getBuiltInType c
 -- have to make a TyCon with at least a DataCon whose constructor
 -- matches the query for the typechecker to build the correct
 -- types.
 -- (empty MonoType list is what it needs here, but it finds it
 -- by looking through the DataCons of the TyCon until it finds
 -- one whose name matches what it looked up)
-makeIntTyCon :: Con -> TyCon
-makeIntTyCon c = TyCon False "Int_h" [] [DataCon c []]
+  | isInt c   = makeIntTyCon c 
+  | otherwise = error "builtin TyCon not found!"
+      
 
 
 instance Show CMap where

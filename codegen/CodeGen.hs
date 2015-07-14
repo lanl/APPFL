@@ -249,9 +249,9 @@ cge env (ELet it os e) =
               ofunc ++ efunc)
 
 cge env (ECase md e a@(Alts italts alts aname)) = 
-    let eboxed = case typ $ emd e of MPrim _  -> False
-                                     MCon c _ -> isBoxedTCon c $ cmap md
-                                     _        -> True
+    let eboxed = case typ $ emd e of MPrim _    -> False
+                                     MCon b c _ -> b
+                                     _          -> True
                                      
     in do (ecode, efunc) <- cge env e
           (acode, afunc) <- cgalts env a eboxed

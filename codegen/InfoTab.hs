@@ -452,10 +452,12 @@ showIT _ = ""
 
 
 setCMaps :: ([TyCon], [Obj InfoTab]) -> ([TyCon], [Obj InfoTab])
-setCMaps (tycs, objs) = (tycs, addCMapToITs (toCMap tycs) objs)
+setCMaps (tycons, objs) =
+  let cmap = toCMap tycons
+  in (tycons, addCMapToITs cmap objs)
 
 addCMapToITs :: CMap -> [Obj InfoTab] -> [Obj InfoTab]
-addCMapToITs cmap objs =  map (setITs . (cmap,)) objs --TupleSections extension functionality
+addCMapToITs cmap objs =  map (setITs . (cmap,)) objs
 
 
 instance SetITs (CMap,(Obj InfoTab)) (Obj InfoTab) where

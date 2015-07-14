@@ -2,7 +2,7 @@ module Driver (
   tokenizer,
   parser,
   renamer,
-  normalizer,
+  defaultcaser,
   freevarer,
   infotaber,
   conmaper,
@@ -68,59 +68,64 @@ stgRTSGlobals = [ "stg_case_not_exhaustive",
                   "False#" 
                 ] ++ map fst primopTab -- from AST.hs
 
+
+-- strip comments, tokenize input
+-- includes basic checking for valid characters and character strings
 tokenizer :: String -> [Token]
 tokenizer = tokenize
 
+
+-- parse tokenized input
+-- checks for valid syntax
 parser :: String -> ([TyCon], [Obj ()])
 parser = parse . tokenizer
 
+
+-- set boxity in Monotypes of TyCon DataCons
+boxer :: String -> ([TyCon], [Obj ()])
+boxer inp = let (tycons, objs) = parser inp
+            in (boxMTypes tycons, objs)
+
 renamer :: String -> ([TyCon], [Obj ()])
-renamer inp = let (tyCons, objs) = parser inp
-              in (tyCons, renameObjs objs)
+renamer inp = let (tycons, objs) = boxer inp
+              in (tycons, renameObjs objs)
 
--- a branch for testing
---hm :: String -> [Obj Monotype]
---hm = let (tyCons, objs) = renamer inp
---     in (tyCons, hmstg tycons objs)
 
-normalizer :: String -> ([TyCon], [Obj ()])
-normalizer inp = let (tyCons, objs) = renamer inp
-                 in (tyCons, exhaustCases (toCMap tyCons) objs)
+-- generate default cases in Alts blocks that need them
+-- The ordering here is important to allow the freevarer and
+-- infotaber steps to properly handle the newly generated ADef
+-- objects
+-- might be worth starting to pass CMap around starting here
+-- (currently generated again when setting CMaps in InfoTabs)
+defaultcaser :: String -> ([TyCon], [Obj ()])
+defaultcaser inp = let (tycons, objs) = renamer inp
+                 in (tycons, exhaustCases (toCMap tycons) objs)
 
 freevarer :: String -> ([TyCon], [Obj ([Var],[Var])])
-freevarer inp = let (tycons, objs) = normalizer inp
+freevarer inp = let (tycons, objs) = defaultcaser inp
                 in (tycons, setFVsObjs stgRTSGlobals objs)
 
 infotaber :: String -> ([TyCon], [Obj InfoTab])
 infotaber inp = let (tycons, objs) = freevarer inp
                 in (tycons, setITs objs :: [Obj InfoTab])
 
--- MODIFIED 7.1 - David ----------------------------------------
--- assumption is that this typer is not actually useful now
--- real type inference would be after conmaper
---typer :: String -> ([TyCon], [Obj InfoTab])
---typer inp = let (tyCons, objs) = infotaber inp
---            in (tyCons, setTypes objs)
-
 conmaper :: String -> ([TyCon], [Obj InfoTab])
--- MODIFIED 6.30 - David ----------------------------------------
-conmaper = setCMaps . infotaber
---conmaper = setConmaps . typer
-
+conmaper inp = let (tycons, objs) = infotaber inp
+               in setCMaps (tycons, objs)
 
 typechecker inp = let (tycons, objs) = conmaper inp
                   in (tycons, hmstg objs)
 
 
-knowncaller inp  = let (tycons, objs) =  typechecker inp
+knowncaller inp  = let (tycons, objs) = typechecker inp
                    in (tycons, propKnownCalls objs)
 
-heapchecker inp = let (tycons, objs) = typechecker inp
-                  in (tycons, setHeapAllocs objs $ toCMap tycons)
+heapchecker inp = let (tycons, objs) = knowncaller inp
+                  in (tycons, setHeapAllocs objs)
 
                
 
---printObjsVerbose :: ([TyCon], [Obj a]) -> IO () 
+printObjsVerbose3 (tycons, objs, cmap) = printObjsVerbose (tycons, objs)
 printObjsVerbose (tycons, objs) = print $ objListDoc objs
 
 unparse (tycons, objs) =

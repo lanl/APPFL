@@ -46,13 +46,14 @@ instance Substitutable Polytype where
 instance Substitutable Monotype where
     freevars (MVar v)     = Set.singleton v
     freevars (MFun m1 m2) = Set.union (freevars m1) (freevars m2)
-    freevars (MCon con ms) = foldr Set.union Set.empty $ map freevars ms
+    freevars (MCon _ con ms) = foldr Set.union Set.empty $ map freevars ms
     freevars (MPVar v)     = Set.singleton v
     freevars _ = Set.empty
 
     apply s m@(MPVar tv)         = Map.findWithDefault m tv s
     apply s (MFun m1 m2)        = MFun (apply s m1) (apply s m2)
-    apply s (MCon con ms) = MCon con $ map (apply s) ms    apply s m@(MVar tv)        = Map.findWithDefault m tv s
+    apply s (MCon b con ms) = MCon b con $ map (apply s) ms
+    apply s m@(MVar tv)        = Map.findWithDefault m tv s
     apply s m                   = m
 
 instance Substitutable [Monotype] where
