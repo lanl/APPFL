@@ -30,7 +30,6 @@ import           SetFVs
 import           HMStg
 import           Data.List
 import System.IO
-import qualified Data.Map as Map
 
 header :: String
 header = "#include \"stg_header.h\"\n"

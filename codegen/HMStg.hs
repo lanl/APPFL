@@ -38,6 +38,7 @@ import Data.List (intercalate)
 hmstgdebug ::  [Obj InfoTab] -> IO()
 --          ([Assumption], [(TyVar, Monotype)], [Constraint], String)
 
+
 hmstg os0 = 
     let (os1,i1) = runState (dv os0) 0
         (as,cs,os2) = buNest Set.empty os1 :: (Set.Set Assumption,
@@ -54,6 +55,16 @@ hmstgdebug os0 =
         (subst, _) = runState (solve cs) i1
     in putStrLn $ showObjs (co Set.empty $ backSub subst os2)
 {-
+hmstgdebug os0 = 
+    let (os1,i1) = runState (dv os0) 0
+        (as,cs,os2) = buNest Set.empty os1 :: (Set.Set Assumption,
+                                               Set.Set Constraint,
+                                               [Obj InfoTab])
+        (subst, _) = runState (solve cs) i1
+    in putStrLn $ show (Set.toList as) ++ show (Set.toList cs) ++ showObjs os2
+-}
+
+{-
     in (Set.toList as,
         Map.toList subst,
         apply subst $ Set.toList cs,
@@ -66,8 +77,6 @@ errTyp = error "typ not defined"
 
 getMono (Var v)  = freshMonoVar
 getMono (LitI _) = return $ MPrim UBInt
-getMono (LitB _) = return $ MPrim UBBool
-
 
 class SetTyp a where
     setTyp :: Monotype -> a -> a
@@ -302,6 +311,10 @@ instance BU (Expr InfoTab) where
             csdefs `Set.union` csee `Set.union` cseen,
             setTyp (getTyp ee') e{edefs = edefs', ee = ee'})
 
+buNest :: Set.Set Monotype
+       -> [Obj InfoTab]
+       -> (Set.Set (String, Monotype), Set.Set Constraint, [Obj InfoTab])
+
 buNest mtvs os = 
         -- get strongly connected components
         let fvss = map (Set.fromList . truefvs . omd) os
@@ -310,6 +323,7 @@ buNest mtvs os =
             sccnames = scc $ zip onamel localfvll -- sccnames is list of lists of onames
             nameobjm = Map.fromList $ zip onamel os
             sccobjs = map (map (lookupOrElse nameobjm)) sccnames
+--        in error $ show sccobjs
         in foldr f (Set.empty, Set.empty, []) sccobjs
             where
               f defs (as, cs, ds) =
@@ -450,6 +464,14 @@ instance BU (Obj InfoTab) where
 unfoldr (MFun m1 m2) = let (m,ms) = unfoldr m2 in (m, m1:ms)
 unfoldr m = (m,[])
 
+
+-- MPVar is just for type inference
+polyToMono m@(MVar _) = m
+polyToMono (MFun a b) = MFun (polyToMono a) (polyToMono b)
+polyToMono (MCon b c ms) = MCon b c $ map (polyToMono) ms
+polyToMono m@MPrim{} = m
+polyToMono (MPVar v) = MVar v
+
 class BackSub a where
     backSub :: Subst -> a -> a
 
@@ -458,7 +480,7 @@ instance BackSub a => BackSub [a] where
 
 instance BackSub (Obj InfoTab) where
     backSub s o = 
-        let o' = setTyp (apply s $ getTyp o) o
+        let o' = setTyp (polyToMono $ apply s $ getTyp o) o
         in case o' of
              o@FUN{e} -> o{e = backSub s e}
              o@THUNK{e} -> o{e = backSub s e}
@@ -466,7 +488,7 @@ instance BackSub (Obj InfoTab) where
 
 instance BackSub (Expr InfoTab) where
     backSub s e =
-        let e' = setTyp (apply s $ getTyp e) e
+        let e' = setTyp (polyToMono $ apply s $ getTyp e) e
         in case e' of
              e@ELet{edefs,ee} -> e{edefs = backSub s edefs, ee = backSub s ee}
              e@ECase{ee, ealts} -> e{ee = backSub s ee, ealts = backSub s ealts}
@@ -474,11 +496,11 @@ instance BackSub (Expr InfoTab) where
 
 instance BackSub (Alts InfoTab) where
     backSub s as@Alts{alts} = 
-        setTyp (apply s $ getTyp as) as{alts = backSub s alts}
+        setTyp (polyToMono $ apply s $ getTyp as) as{alts = backSub s alts}
 
 instance BackSub (Alt InfoTab) where
     backSub s a =
-        setTyp (apply s $ getTyp a) a{ae = backSub s $ ae a}
+        setTyp (polyToMono $ apply s $ getTyp a) a{ae = backSub s $ ae a}
 
 
 -- close over free type variables
@@ -570,8 +592,9 @@ indent n s = (take n $ repeat ' ') ++ s
 indents n ss = map (indent n) ss
 
 instance Show InfoTab where
+    show it = show (typ it)
 --    show it = show (ctyp it)
-    show it = show (truefvs it)
+--    show it = show (truefvs it)
 
 -- instance Ppstg [Atom] where
 showas as = intercalate " " $ map show as

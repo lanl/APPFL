@@ -11,7 +11,7 @@ module ADT (
   Con
 ) where
 
-import AST
+import AST(Con,BuiltinType,Obj)
 
 import Data.List(intercalate, (\\), find)
 import Data.Maybe (fromJust)
@@ -62,14 +62,12 @@ data Def a = ObjDef (Obj a)
 -- Unboxed: data unboxed \Chi# \alpha_1 .. \alpha_t =
 -- c_1# \tau_11 .. \tau_1a_1 | ... | c_n# \tau_n1 .. \tau_na_1   
 data TyCon = TyCon Bool Con [TyVar] [DataCon]
-             deriving(Eq, Show)
-
-                     
+             deriving(Eq,Show)
+             
 -- Boxed True: c_x \tau_x1 .. \tau_xa_1 
 -- Boxed False: c_x# \tau_x1 .. \tau_xa_1  
-data DataCon = DataCon Con [Monotype] -- Removed Bool field
-               deriving(Eq, Show)
-
+data DataCon = DataCon Bool Con [Monotype]
+               deriving(Eq,Show)
 
 type TyVar = String
 
@@ -81,7 +79,12 @@ data Monotype = MVar TyVar
               | MFun Monotype Monotype
               | MCon Con [Monotype] -- Removed Bool field
               | MPrim BuiltinType
+              | MPVar TyVar -- should be used only in BU.hs
+              | MPhony
                 deriving(Eq,Ord)
+
+
+precalate s ss = concatMap (s++) ss
 
 instance Show Polytype where
     show (PPoly [] m) = show m
@@ -90,6 +93,7 @@ instance Show Polytype where
 
 instance Show Monotype where
     show (MVar v) = v
+    show (MPVar v) = "p_" ++ v
     show (MFun m1@(MFun _ _) m2) = "(" ++ show m1 ++ ") -> " ++ show m2      
     show (MFun m1 m2) = show m1 ++ " -> " ++ show m2 
     show (MCon con ms) = con ++ " " ++ intercalate " " (map show ms) -- modified (no boxed)

@@ -69,20 +69,11 @@ typedef struct {
 
 struct _Obj {
   InfoTab *infoPtr;         // canonical location of ObjType field
-  ObjType objType;          // to distinguish PAP, FUN, BLACKHOLE, INDIRECT
+  ObjType objType;          // to distinguish PAP, FUN, BLACKHOLE, INDIRECT, FORWARD
   int argCount;             // for PAP, how many args already applied to?
   char ident[64];           // temporary, just for tracing
   PtrOrLiteral payload[32]; // fixed for now
 };
-
-/*
-typedef struct {
-  CmmFnPtr retAddr;         // no need for an infotab
-  ObjType objType;          // for sanity checking
-  char ident[64];           // temporary, just for tracing
-  PtrOrLiteral payload[32]; // fixed for now
-} Cont;
-*/
 
 typedef struct {
 } LayoutInfo;
@@ -153,22 +144,6 @@ extern void showStgHeap();
 extern Obj* stgNewHeapObj();
 extern void showStgStack();
 extern void showStgVal(PtrOrLiteral);
-
-/*
-inline void stgPushCont(Cont c) {
-  stgSP = (char *)stgSP - sizeof(Cont);
-  assert(stgSP >= stgStack);
-  *(Cont *)stgSP = c;
-}
-
-inline Cont stgPopCont() {
-  assert((char *)stgSP + sizeof(Cont) <= (char *) stgStack + stgStackSize);
-  Cont o = *(Cont *)stgSP;
-  stgSP = (char *)stgSP + sizeof(Cont);
-  return o;
-}
-*/
-
 
 inline void stgPushCont(Obj c) {
   stgSP = (char *)stgSP - sizeof(Obj);

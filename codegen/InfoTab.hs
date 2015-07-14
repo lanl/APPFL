@@ -170,8 +170,11 @@ instance ITsOf (Alts a) [a] where
 
 -- ****************************************************************
 
-typUndef = error "typ set undefined in InfoTab.hs"
-ctypUndef = error "ctyp set undefined in InfoTab.hs"
+-- typUndef = error "typ set undefined in InfoTab.hs"
+-- ctypUndef = error "ctyp set undefined in InfoTab.hs"
+typUndef = MPhony
+ctypUndef = PPoly [] MPhony
+
 
 class SetITs a b where 
     setITs :: a -> b
