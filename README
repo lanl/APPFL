@@ -1,0 +1,67 @@
+build notes:
+
+to build full compiler:
+
+$ make
+
+to run normal tests:
+
+$ make ctest
+
+to run all tests:
+(note this requires installation of tasty test framework 
+which is a bit of a pain. see codegen/tests/README)
+
+$ make test
+
+to just build runtime:
+
+$ make runtime
+
+---------------------------------------
+Using the compiler from inside ghci:
+
+build runtime:
+
+$ make runtime
+
+start ghci: 
+
+$ cd codegen
+$ ghci
+Prelude> :l stgc
+...
+*Main>
+
+To build and run a stg file:
+
+*Main>  eval "../test/one.stg"
+
+To generate a.out (in codegen dir):
+
+*Main> build "../test/one.stg"
+
+To generate c file (in same location as stg file
+in this case ../test/one.stg.c)
+
+*Main> stg2c "../test/one.stg"
+
+----------------------------------------
+Using the compiler from the command line:
+
+build the stgc binary (starting at top level):
+
+$ make
+
+$ ./build/bin/stgc -c test/one.stg -o one
+
+this will also generate test/one.stg.c
+
+compile a .stg.c file:
+
+$ gcc test/one.stg.c -o one -L build/lib -I build/include -lruntime -std=gnu99
+
+
+
+
+

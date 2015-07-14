@@ -4,8 +4,8 @@ project(stgc_test)
   set(DART_TESTING_TIMEOUT "15" CACHE STRING "" FORCE)
   include(CTest)
 
-  set(STGCC "../codegen/dist/build/stgc/stgc")
-  set(SRC_DIR ${CMAKE_SOURCE_DIR})
+  set(STGCC "${CMAKE_CURRENT_BINARY_DIR}/../bin/stgc")
+  set(SRC_DIR ${CMAKE_SOURCE_DIR}/test)
   set(BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR})
 
   file(GLOB ALL_SRCS *.stg)
