@@ -1,0 +1,3 @@
+-- missing semicolon
+output = THUNK(one)
+main = THUNK(eqInt output one);

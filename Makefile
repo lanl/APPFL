@@ -34,6 +34,7 @@ ctest_: FORCE
 clean: FORCE
 	@(cd codegen && cabal clean)
 	@(cd test && rm -f *.stg.c 2>/dev/null)
+	@(cd test/error && rm -f *.stg.c 2>/dev/null)
 	@(rm -rf $(build_dir))
 
 FORCE:

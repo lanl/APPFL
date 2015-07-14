@@ -28,3 +28,5 @@ project(stgc_test)
        "The answer is[\r\n\t ]*true = True")
     endif()
   endforeach(test)
+
+  add_subdirectory(error)

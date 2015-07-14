@@ -1,0 +1,3 @@
+-- undefiend var
+main = THUNK(a);
+
