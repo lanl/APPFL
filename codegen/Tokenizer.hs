@@ -145,7 +145,7 @@ isReserved = flip elem reserveds
 isPrimop = flip elem primops
 
 isIdSym x = isAlphaNum x ||
-            elem x ".#_'"
+            elem x "#_"
 
 tokErr t m = error $ show $
              text "Tokenization error with token" <+> toDoc t $+$
@@ -201,9 +201,9 @@ tokenize ls = aux (None (0,0)) (0,0) (stripComments ls) []
                     | otherwise
                       -> aux st {tS = x:tS} (l,c+1) xs toks
                          
-        None {}     ->  tokErr st "Not expecting '.' to open a token yet"
+        _     ->  tokErr st "Not expecting '.' outside numeric types (yet)"
 
-        StrTok {tS} -> aux st {tS = x:tS} (l,c+1) xs toks
+--        StrTok {tS} -> aux st {tS = x:tS} (l,c+1) xs toks
 
 
     -- digits start/continue numeric tokens, are valid inside constructors and identifiers

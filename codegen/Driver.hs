@@ -13,14 +13,11 @@ module Driver (
 
 import           ADT
 import           AST
-import           Analysis
 import           SCC
 import           CodeGen
--- MODIFIED 6.30 - David ----------------------------------------
 import           CMap
-import           DAnalysis
+import           Analysis
 import           PPrint
---import           ConMaps
 import           InfoTab
 import           HeapObj
 import           Tokenizer
@@ -124,10 +121,10 @@ heapchecker inp = let (tycons, objs) = knowncaller inp
                   in (tycons, setHeapAllocs objs)
 
                
-
-printObjsVerbose3 (tycons, objs, cmap) = printObjsVerbose (tycons, objs)
 printObjsVerbose (tycons, objs) = print $ objListDoc objs
 
+
+-- this is currently not a perfect unparse.
 unparse (tycons, objs) =
   print $ toDoc $ (map DataDef tycons) ++ (map ObjDef objs)
 

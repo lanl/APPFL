@@ -65,11 +65,7 @@ data InfoTab =
       args :: [Atom],
       arity :: Int,
       con :: String, -- actual constructor name, not object name
-      tag :: Int,
--- MODIFIED 6.30 - David ----------------------------------------
       cmap :: CMap }
---      tconMap :: TyConMap,
---      dconMap :: DataConMap }
   | Thunk { 
       typ :: Monotype,
       ctyp :: Polytype,
@@ -115,18 +111,13 @@ data InfoTab =
       fvs :: [Var],
       truefvs :: [Var],
       noHeapAlloc :: Bool,
--- MODIFIED 7.1 - David ----------------------------------------      
       cmap :: CMap}
   | ITAlt { 
       typ :: Monotype,
       ctyp :: Polytype,
       fvs :: [Var],
       truefvs :: [Var],
--- MODIFIED 7.2 - David ----------------------------------------
       cmap :: CMap }
---      tag :: Int,
---      tconMap :: TyConMap, 
---      dconMap :: DataConMap } 
   | ITAlts { 
       typ :: Monotype,
       ctyp :: Polytype,
@@ -256,8 +247,6 @@ instance MakeIT (Obj ([Var],[Var])) where
 
     makeIT o@(CON (fvs,truefvs) c as n) =
         Con { con = c,
--- MODIFIED 7.2 - David ----------------------------------------
--- OLD              tag = -1, -- this gets set later
               arity = length as,
               args = as,
               name = n,
@@ -267,10 +256,7 @@ instance MakeIT (Obj ([Var],[Var])) where
               ctyp = ctypUndef,
     --          entryCode = showITType o ++ "_" ++ n
               entryCode = "stg_constructorcall",
--- MODIFIED 6.30 - David ----------------------------------------
               cmap = error "ADef cmap undefined"
--- OLD              dconMap = error "ADef dconMap undefined",
--- OLD              tconMap = error "ADef tconMap undefined"
             }
 
     makeIT o@(THUNK (fvs,truefvs) e n) =
@@ -306,10 +292,9 @@ instance MakeIT (Expr ([Var],[Var])) where
                truefvs = truefvs, 
                typ = typUndef, 
                ctyp = ctypUndef,
--- MODIFIED 7.1 - David ----------------------------------------
                noHeapAlloc = False,
                cmap = Map.empty}
--- OLD               noHeapAlloc = False}
+
     makeIT EAtom{emd = (fvs,truefvs)} = 
         ITAtom{fvs = fvs, 
                truefvs = truefvs, 
@@ -347,20 +332,14 @@ instance MakeIT (Alt ([Var],[Var])) where
               truefvs = truefvs, 
               typ = typUndef,
               ctyp = ctypUndef,
--- MODIFIED 7.1 - David ----------------------------------------
               cmap = Map.empty}
--- OLD              dconMap = Map.empty, 
--- OLD              tconMap = Map.empty}
 
     makeIT ADef{amd = (fvs,truefvs)} = 
         ITAlt{fvs = fvs, 
               truefvs = truefvs, 
               typ = typUndef,
               ctyp = ctypUndef,
--- MODIFIED 6.30 - David ----------------------------------------
               cmap = error "ADef cmap set undefined in InfoTab.hs"}
--- OLD              dconMap = error "ADef dconMap set undefined in InfoTab.hs",
--- OLD              tconMap = error "ADef tconMap set undefined in InfoTab.hs"}
 
 
 showObjType Fun {} = "FUN"
@@ -414,9 +393,7 @@ showIT it@(Con {}) =
     "    .entryCode           = &" ++ entryCode it ++ ",\n" ++
     "    .objType             = CON,\n" ++
     "    .conFields.arity     = " ++ show (arity it) ++ ",\n" ++
--- MODIFIED 7.2 - David ----------------------------------------
     "    .conFields.tag       = " ++ luConTag (con it) (cmap it) ++ ",\n" ++
--- OLD    "    .conFields.tag       = " ++ show (tag it) ++ ",\n" ++
     "    .conFields.conName   = " ++ show (con it) ++ ",\n" ++
     "  };\n"
         

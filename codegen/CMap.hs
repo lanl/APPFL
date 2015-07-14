@@ -106,6 +106,8 @@ luTCon name conmap
                  Nothing -> error $ "constructor " ++ name ++ " not in conmap"
                  (Just t) -> t
 
+
+-- Tags are returned as Strings for switch statements in codegen
 luConTag :: Con -> CMap -> String
 luConTag c cmap | isBuiltInType c = c
                 | otherwise       =
@@ -117,13 +119,6 @@ luConTag c cmap | isBuiltInType c = c
 
 isInt :: String -> Bool
 isInt = and . (map isNumber)
-
-
--- last word was that "1" would be regarded as constructor for unboxed int
--- e.g. data unboxed Int_h = 1 | 2 | ...
--- should the DataCons just be an infinite list? error?
-intTyCon :: TyCon
-intTyCon = TyCon False "Int_h" [] []
 
 -- Pending
 isBuiltInType :: Con -> Bool
@@ -152,10 +147,8 @@ instance PPrint CMap where
       f (con, tyc) = text con <+> arw $+$ (nest 4 $ tyDoc tyc)
       tyDoc (TyCon b n vs dcs) = text "TyCon name:" <+> text n $+$
                                  text "boxed:" <+> boolean b $+$
-                                 text "TyVars:" <+> varDoc vs $+$
-                                 text "DataCons:" <+> dcsDoc dcs
-      varDoc vars = brackets $ hsep $ punctuate comma $ map text vars
-      dcsDoc dcs = brackets $ vcat $ punctuate comma $ map toDoc dcs
+                                 text "TyVars:" <+> listText vs $+$
+                                 text "DataCons:" <+> brackList (map toDoc dcs)
     in vcat $ map f $ Map.toList m
         
     

@@ -193,7 +193,9 @@ tokP2 t = tokP1 $ t undefined
 rsvP :: String -> Parser Token Token
 rsvP s = tokP1 $ TokRsv s
 
-subHash xs = concatMap (\x -> if x == '#' then "_h" else [x]) xs
+subHash [] = []
+subHash ('#':xs) = "_h" ++ subHash xs
+subHash (x:xs) = x : subHash xs
 
 -- Match constructor token, accept its String
 conNameP :: Parser Token String
