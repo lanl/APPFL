@@ -102,7 +102,7 @@ unify (MCon False "Int_h" []) (MPrim UBInt) = idSubst
 
 -- if they're equal there's nothing to do
 unify m1 m2 | m1 == m2 = idSubst
-            | otherwise = error $ "unify:  can't unify " ++ show m1 ++ " " ++ show m2
+            | otherwise = error $ "unify:  can't unify " ++ show m1 ++ " with " ++ show m2
 
 unifys [] [] = idSubst
 unifys (x:xs) [] = error "unifys length mismatch!"

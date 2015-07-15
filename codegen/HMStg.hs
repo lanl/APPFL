@@ -395,7 +395,7 @@ instance BU (Obj InfoTab) where
           (m,ms) = unfoldr typ
       in (Set.fromList $ (f,typ) : [ (v, t) | (Var v, t) <- zzip as ms ],
           Set.empty,
-          o)
+          setTyp m o)
 
   bu mtvs o@CON{omd,c,as} = 
       let
