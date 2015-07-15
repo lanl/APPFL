@@ -217,6 +217,7 @@ primP :: Parser Token Primop
 primP = tokP2 (TokPrim) `using` getPrimop
   where getPrimop (TokPrim s _) =
           snd . head $ filter ((== s).fst) primopTable
+        getPrimop _ = error "Parser.primP"
 
 -- match common reserved symbols/words
 dataP = rsvP "data"

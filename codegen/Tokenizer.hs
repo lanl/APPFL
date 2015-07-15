@@ -74,6 +74,8 @@ readComments inp = aux [(Top "")] inp
     aux (LComment s:xs) ('\n':cs) = aux (Top "":LComment ('\n':s):xs) cs
     aux (LComment s:xs) (c:cs) = aux (LComment (' ':s):xs) cs
 
+    aux states input = error "Tokenizer.readComments (aux): pattern fallthrough"
+
 
 stripComments :: String -> String
 stripComments = concatMap str . readComments

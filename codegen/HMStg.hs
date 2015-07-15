@@ -77,6 +77,7 @@ errTyp = error "typ not defined"
 
 getMono (Var v)  = freshMonoVar
 getMono (LitI _) = return $ MPrim UBInt
+getMono a        = error $ "HMStg.getMono: " ++ show a
 
 class SetTyp a where
     setTyp :: Monotype -> a -> a
@@ -263,10 +264,8 @@ instance BU (Expr InfoTab) where
             e{eas=eas'}) -- EFCall monotype set in dv
 
     bu mtvs e@EPrimop{emd = ITPrimop{typ}, eprimop, eas} =
--- MODIFIED 7.9 -       
         let (ass, _, eas') = unzip3 $ map (bu mtvs) eas
             as = Set.unions ass
---            (m,ms) = unfoldr typ -- get atoms assocs, m is result type
             pts = case eprimop of
                     Piadd -> [MPrim UBInt, MPrim UBInt]
                     Pisub -> [MPrim UBInt, MPrim UBInt]
@@ -278,9 +277,6 @@ instance BU (Expr InfoTab) where
                     Pieq  -> [MPrim UBInt, MPrim UBInt]
                     Pile  -> [MPrim UBInt, MPrim UBInt]
                     x -> error $ "HMStg.bu EPrimop " ++ show x
---            as = Set.fromList [(v,m) | (Var v, m) <- zzip eas ms] --drop LitX cases
--- MODIFIED 7.9 constraints m1 taken from assumptions about args to primop
--- Right idea?
             cs = Set.fromList [EqC m1 m2 | (_,m1) <- Set.toList as | m2 <- pts]
         in (as, cs, e) -- EPrimop monotype set in dv
 
@@ -299,6 +295,8 @@ instance BU (Expr InfoTab) where
         in (Set.union asdefs asee',
             csdefs `Set.union` csee `Set.union` cseen,
             setTyp (getTyp ee') e{edefs = edefs', ee = ee'})
+
+    bu mtvs e = error $ "HMStg.bu Expr: " ++ show e
 
 buNest :: Set.Set Monotype
        -> [Obj InfoTab]
@@ -451,6 +449,7 @@ polyToMono (MFun a b) = MFun (polyToMono a) (polyToMono b)
 polyToMono (MCon b c ms) = MCon b c $ map (polyToMono) ms
 polyToMono m@MPrim{} = m
 polyToMono (MPVar v) = MVar v
+polyToMono m = error $ "HMStg.polyToMono: " ++ show m
 
 class BackSub a where
     backSub :: Subst -> a -> a
@@ -464,7 +463,7 @@ instance BackSub (Obj InfoTab) where
         in case o' of
              o@FUN{e} -> o{e = backSub s e}
              o@THUNK{omd, e} | isBoxed $ typ omd -> o{e = backSub s e}
-                             | otherwise -> error "cannot have unboxed thunk"
+                             | otherwise -> error "THUNKs must evaluate to boxed types"
              _ -> o'
 
 instance BackSub (Expr InfoTab) where

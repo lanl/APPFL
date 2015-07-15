@@ -150,6 +150,7 @@ instantiate (PPoly as m) =
     do ms <- mapM (const freshPolyVar) as
        let s = Map.fromList $ zip as ms
        return $ apply s m
+instantiate p = error $ "HMStg.instantiate p=" ++ show p
 
 monoToPoly as m@(MVar v) | Set.member v as = MPVar v
                          | otherwise = m
@@ -157,6 +158,8 @@ monoToPoly as (MFun a b) = MFun (monoToPoly as a) (monoToPoly as b)
 monoToPoly as (MCon b c ms) = MCon b c $ map (monoToPoly as) ms
 monoToPoly as m@MPrim{} = m
 monoToPoly as m@MPVar{} = m
+monoToPoly as m = error $
+                  "HMStg.monoToPoly: m=" ++ show m
 
 generalize :: Substitutable a => a -> Monotype -> Polytype
 generalize ms t = 

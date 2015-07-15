@@ -175,8 +175,8 @@ any = FUN(p xs -> case xs of {
 
 -- odd# :: Int# -> Bool
 odd# = FUN(i# -> case imod# i# 2 of {
-       	     	0 -> false;
-		x -> true; });
+       	     	 0 -> false;
+		 x -> true});
 
 
 -- even# :: Int# -> Bool
@@ -194,18 +194,8 @@ even = THUNK(compose not odd);
 -- not :: Bool -> Bool
 not = FUN(b -> case b of {
       	       False -> true;
-	       True  -> false;});
+	       True  -> false});
 
 
 -- compose :: (b -> c) -> (a -> b) -> a -> c
 compose = FUN(f g x -> case g x of { r -> f r});
-
-
-ones = THUNK(repeat one);
-nils = THUNK(replicate ten nil);
-trus = THUNK(replicate ten true);
-list = THUNK(replicate three one);
-slist = THUNK(filter even list);
-notnull = THUNK(compose not null);
-
-main = THUNK(replicate ten two);

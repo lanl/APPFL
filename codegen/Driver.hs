@@ -9,6 +9,7 @@ module Driver (
   typechecker,
   knowncaller,
   heapchecker,
+  tctest,
   tester,
   printObjsVerbose,
   codegener

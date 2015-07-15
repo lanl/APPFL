@@ -185,6 +185,8 @@ cgUBa env (LitB b) "b" = if b then "true" else "false"
 cgUBa env (LitD d) "d" = show d
 cgUBa env (LitF f) "f" = show f
 cgUBa env (LitC c) "c" = show c
+cgUBa env a t = error $
+                "Codegen.cgUBa: a=" ++ show a ++ " t=" ++ t
 
 -- return (inline code, [(forward, fundef)])
 cge :: Env -> Expr InfoTab -> State Int (String, [(String, String)])

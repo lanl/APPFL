@@ -164,6 +164,7 @@ instance Show Monotype where
                               then "[B] "
                               else "[U] ") ++ intercalate " " (map show ms)
     show (MPrim p) = show p
+    show MPhony = "MPhony"
 
 --------------- ADT Pretty Printing -----------------------
 
@@ -176,6 +177,7 @@ instance PPrint Monotype where
   toDoc (MPrim p) = case p of
     UBInt    -> text "Int#"
     UBDouble -> text "Double#"
+  toDoc m = error $ "ADT.toDoc (Monotype) m=" ++ show m
 
   
 instance PPrint DataCon where
@@ -184,15 +186,13 @@ instance PPrint DataCon where
 instance PPrint TyCon where
   toDoc (TyCon boxed name vars dCons) =
     let
-      barify (x:xs) = x : (foldr ((:) . (bar<+>)) [] xs)
-
       lh = 
         (if boxed then empty else text "unboxed") <+>
         text name <+> hsep (map text vars) <+> equals
 
       -- nest 2 has the somewhat strange effect of "dedenting" by 2 here
       -- not sure why
-      rh = vcat $ barify $ map ((nest 2).toDoc) dCons
+      rh = vcat $ prepunctuate bar $ map ((nest 2).toDoc) dCons
 
     in lh <+> rh
 

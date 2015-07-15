@@ -1,3 +1,4 @@
+
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE TypeSynonymInstances #-}
 {-# LANGUAGE NamedFieldPuns #-}
@@ -12,6 +13,7 @@ module PPrint
   boolean,
   listText,
   brackList,
+  prepunctuate,
   PPrint,
   module Text.PrettyPrint
 ) where
@@ -40,6 +42,9 @@ brackList = brackets . hsep . punctuate comma
 braceList = braces . hsep . punctuate comma
 
 listText = brackList . map text
+
+prepunctuate _ [] = []
+prepunctuate d (x:xs) = x : map (d<>) xs
 
 
 instance (PPrint a) => PPrint (Set.Set a) where
