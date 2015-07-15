@@ -1,6 +1,7 @@
 {-# LANGUAGE TypeSynonymInstances #-}
 {-# LANGUAGE FlexibleInstances    #-}
 {-# LANGUAGE NamedFieldPuns       #-}
+{-# LANGUAGE PatternGuards        #-}
 {-# LANGUAGE RecordWildCards      #-} -- implies DisambiguateFieldRecords
 
 module Analysis(

@@ -1,3 +1,4 @@
+{-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE NamedFieldPuns    #-}
 
@@ -13,6 +14,7 @@ module ADT (
   DataConParam(..),
   DataConMap,
   ConMaps,
+  ppConMaps,
   getTyConDefFromConstructor,
   isBoxedMonotype
 ) where
@@ -23,6 +25,7 @@ import Data.List(intercalate)
 --import Data.Maybe
 --import Control.Monad.State
 import qualified Data.Map as Map
+import Text.PrettyPrint
 
 {-
   Algebraic Datatypes:
@@ -146,3 +149,35 @@ getTyConDefFromConstructor dconMap tconMap con =
          
  
  
+
+ppConMaps (tmap, dmap) = show $
+                         text "TyConMap:" $+$
+                         nest 2 (brackets $ ppTmap tmap) $+$
+                         text "DataConMap" $+$
+                         ppDmap dmap
+
+ppTmap tmap =
+  let assoc = Map.toList tmap
+      ppEntry (s, tcParam) = case tcParam of
+        TyConParam{..} ->
+          text (s ++ "-->") $+$
+          (nest 2 $ braces $
+           text "tarity:" <+> int tarity $+$
+           text "ttag:" <+> int ttag $+$
+           text "tboxed:" <+> text (show tboxed) $+$
+           text "tdatacons:" <+> brackets (hsep $ punctuate comma $ map text tdatacons) $+$
+           text "tycon:" <+> text (show tycon))
+  in vcat $ map ppEntry assoc
+
+ppDmap dmap =
+  let assoc = Map.toList dmap
+      ppEntry (s, dcParam) = case dcParam of
+        DataConParam{..} ->
+          text (s ++ "-->") $+$
+          (nest 2 $ braces $
+           text "darity:" <+> int darity $+$
+           text "dtag:" <+> int dtag $+$
+           text "dboxed:" <+> text (show dboxed) $+$
+           text "dtycon:" <+> text (show dtycon) $+$
+           text "datacon:" <+> text (show datacon))
+  in vcat $ map ppEntry assoc  
