@@ -108,21 +108,104 @@ take = FUN(n xs ->
                                        rec = THUNK(take m tl);
                                        result = CON(Cons hd rec) } in result }});
 
+-- make infinite homogenous lists!
+repeat = FUN(x -> let { next = THUNK(repeat x) } in cons x next);
+
+-- make arbitrarily long homogenous lists!
+replicate = FUN(n x -> let {list = THUNK(repeat x)} in take n list);
+
+-- seq a list
+strictList = FUN(xs ->
+      	     	    case xs of {
+       	    	    	 Nil -> nil;
+	    	  	 Cons h t -> case strictList t of {
+	    	     	           	  x -> cons h x }});
+
+-- construct a Cons cell
+cons = FUN(h t -> let {r = CON(Cons h t)} in r);
+
+-- remove n elements from the head of a list
+drop = FUN(n xs -> case eqInt n zero of {
+       	     	   	      True -> xs;
+			      False -> case xs of {
+       	     	   	      	       	    Nil -> nil;
+					    Cons h t -> let {m = THUNK(subInt n one)}
+					    	     	in drop m t }});
+
+-- is a list empty?
+null = FUN(xs -> case xs of {
+       	      	      Nil -> true;
+		      x   -> false});
 
 
--- testing THUNKs as for knowncall analysis
+-- take all but the last element of a list
+-- init :: List a -> List a
+init = FUN(xs -> case xs of {
+       	      	      Nil -> nil;
+		      Cons h t -> case null t of {
+		      	       	       True -> nil;
+				       False ->	let { l = THUNK(init t) } in cons h l }});
 
-f2 = THUNK(let {f = THUNK(f1)} in f);
+-- keep all the elements in a list that satisfy a predicate
+-- filter :: (a -> Bool) -> List a -> List a
+filter = FUN(p xs -> case xs of {
+       	       	     Nil -> nil;
+		     Cons h t -> let {tail = THUNK(filter p t)} in 
+		     	      	     case p h of {
+		     	  	     True -> cons h tail;
+				     False -> tail }});
 
-f1 = THUNK(fun1);
 
--- scrutinee of both of these cases should be identified as known calls
--- to fun1
-t1 = THUNK(case f1 2 3 of { x -> x}); 
-t2 = THUNK(case f2 2 3 of { x -> x});
+-- check if all elements of a list satisfy a predicate
+-- all :: (a -> Bool) -> List a -> Bool
+all = FUN(p xs -> case xs of {
+      	       	  Nil -> true;
+		  Cons h t -> case p h of {
+		       	      False -> false;
+			      True -> all p t}});
 
--- expression in let (x 1 2) should identify x as a known call to fun1
-t3 = THUNK(case f2 of { x -> let {y = PAP(x)} in x 1 2});
+-- check if any elements of a list satisfy a predicate
+-- any :: (a -> Bool) -> List a -> Bool
+any = FUN(p xs -> case xs of {
+      	       	  Nil -> false;
+		  Cons h t -> case p h of {
+		       	      True -> true;
+			      False -> any p t}});
 
-fun1 = FUN(x y -> x);
 
+-- odd# :: Int# -> Bool
+odd# = FUN(i# -> case imod# i# 2 of {
+       	     	0 -> false;
+		x -> true; });
+
+
+-- even# :: Int# -> Bool
+even# = FUN(i# -> case odd# i# of { x -> not x });
+
+
+-- odd :: Int -> Bool
+odd = FUN(i -> case i of { I i# -> odd# i# });
+
+
+-- even :: Int -> Bool
+even = THUNK(compose not odd);
+
+
+-- not :: Bool -> Bool
+not = FUN(b -> case b of {
+      	       False -> true;
+	       True  -> false;});
+
+
+-- compose :: (b -> c) -> (a -> b) -> a -> c
+compose = FUN(f g x -> case g x of { r -> f r});
+
+
+ones = THUNK(repeat one);
+nils = THUNK(replicate ten nil);
+trus = THUNK(replicate ten true);
+list = THUNK(replicate three one);
+slist = THUNK(filter even list);
+notnull = THUNK(compose not null);
+
+main = THUNK(replicate ten two);

@@ -41,77 +41,6 @@ deleteAll :: Ord k => [k] -> Map.Map k v -> Map.Map k v
 deleteAll vs env = foldr (Map.delete) env vs
 
 
--- Check an expression to see if it evaluates to a known function and return
--- that function's InfoTab in Maybe form, if so.
--- This isn't terribly useful: expressions will rarely evaluate to known
--- functions.  The only example I can think of that might be useful
--- would be case-dependent partial application of the same function
--- e.g.
--- case e of {
---   val1 -> f val1;
---   val2 -> f val2;
---   x    -> f defaultVal; }
---
--- Note that heap allocation analysis currently does not depend on this,
--- but it could at some point, and this analysis could break it by hiding
--- let expressions "inside" function calls that have been identified as
--- known
--- e.g.
--- f = FUN(a -> e) -- assume f does not grow heap
--- t = THUNK(let {x = THUNK(f)} in x )
--- main = THUNK(t arg)
--- here t could be identified as a known call to f, which
--- might have the result of identifying the expression in
--- in main's THUNK as not causing heap allocation, which it clearly should
-knownFunExprIT :: KCMap -> Expr InfoTab -> Maybe InfoTab
-knownFunExprIT env e =
-  let
-    -- check Alts in Alts block with only one alternative, bind ADef var if
-    -- necessary in KCMap and examine Alt expression for known function
-    checkAlts env e alts = case group $ map (checkAlt env e) alts of
-      -- if group produces a list of one list, all in that list are equal
-      [its] -> head its
-      _ -> Nothing
-
-    -- check single alt  
-    checkAlt env e ADef{av, ae} = case knownFunExprIT env e of
-      Just it -> knownFunExprIT (Map.insert av it env) ae
-      Nothing -> knownFunExprIT env ae
-    -- must delete bindings in Con from KCMap before lookup
-    checkAlt env _ ACon{avs, ae} = knownFunExprIT (deleteAll avs env) ae
-    
-
-    -- remove let bindings from map. Add bindings for any object that
-    -- evaluates to a known function f, e.g. PAP(f) or THUNK(e) where e == f
-    -- Can't use addDefsToKCMap, because we don't want local FUN definitions
-    -- added. They would then be considered known functions and could misrepresent
-    -- the letexpr as a known function.
-    addLetDefs env defs =
-      let env' = deleteAll (map oname defs) env
-          fun THUNK{e, oname} env = case knownFunExprIT env e of
-            Just it -> Map.insert oname it env
-            Nothing -> env
-          fun PAP{f, as = [], oname} env = case Map.lookup f env of
-            Just it -> Map.insert oname it env
-            Nothing -> env
-          fun _ env = env
-      in
-       foldr fun env' defs
-  in
-   case e of
-    EAtom {ea = Var v} -> Map.lookup v env
-   
-    ECase {ee, ealts = Alts{alts}} -> checkAlts env ee alts
-
-    EFCall {emd, ev, eas} -> case Map.lookup ev env of
-                              Just i@Fun{arity} | length eas < arity -> Just i
-                                                | otherwise -> Nothing
-                              _ -> Nothing
-
---    This will break heap allocation analysis if it depends on known calls
---    ELet  {edefs, ee} ->  knownFunExprIT (addLetDefs env edefs) ee
-                                                     
-    _ -> Nothing
 
 
 propKnownCalls :: [Obj InfoTab] -> [Obj InfoTab]
@@ -312,11 +241,11 @@ instance SetHA (Alt InfoTab) where
 addDefsToMap defs funmap =
   let
     fmp  = deleteAll (map oname defs) funmap -- remove shadowed bindings 
-    toAdd = Map.fromList $ map ((,True) . oname) $ filter isFun defs -- FUNs to add
+    toAdd = Map.fromList $ map ((,True) . oname) $ filter isFun defs
     fmp' = Map.union toAdd fmp 
     isFun o = case o of
       FUN{} -> True
---      PAP{} -> True -- don't want PAPs for now
+--      PAP{} -> -- don't want PAPs for now
       _ -> False
     
     foldfunc def fmp = case def of
@@ -336,6 +265,10 @@ addDefsToMap defs funmap =
   in
    fixDefs defs fmp'
       
+
+
+                                              
+
 
 
 
@@ -370,12 +303,12 @@ exhaustAlts cmap aa@Alts{alts, aname} =
       isACon x = case x of ACon{} -> True; _ -> False
       newAlts = if not (null adefs) || consExhaust (map ac acons) cmap
                 then alts
-                else alts ++ [defAult aname]  --get it?
+                else alts ++ [defAlt aname]  --get it?
   in aa{alts = newAlts}
 
 
-defAult :: String -> Alt a
-defAult name =
+defAlt :: String -> Alt a
+defAlt name =
   let
     mdErr s = error $ s ++ " metadeta not set!"
     arg   = EAtom{emd = mdErr "EAtom",
@@ -394,4 +327,79 @@ defAult name =
   in ADef {amd = mdErr "ADef",
            av  = "x",
            ae  = elet}
+
+
+
+
+     
+-- Check an expression to see if it evaluates to a known function and return
+-- that function's InfoTab in Maybe form, if so.
+-- This isn't terribly useful: expressions will rarely evaluate to known
+-- functions.  The only example I can think of that might be useful
+-- would be case-dependent partial application of the same function
+-- e.g.
+-- case e of {
+--   val1 -> f val1;
+--   val2 -> f val2;
+--   x    -> f defaultVal; }
+--
+-- Note that heap allocation analysis currently does not depend on this,
+-- but it could at some point, and this analysis could break it by hiding
+-- let expressions "inside" function calls that have been identified as
+-- known
+-- e.g.
+-- f = FUN(a -> e) -- assume f does not grow heap
+-- t = THUNK(let {x = THUNK(f)} in x )
+-- main = THUNK(t arg)
+-- here t could be identified as a known call to f, which
+-- might have the result of identifying the expression in
+-- in main's THUNK as not causing heap allocation, which it clearly should
+knownFunExprIT :: KCMap -> Expr InfoTab -> Maybe InfoTab
+knownFunExprIT env e =
+  let
+    -- check Alts in Alts block with only one alternative, bind ADef var if
+    -- necessary in KCMap and examine Alt expression for known function
+    checkAlts env e alts = case group $ map (checkAlt env e) alts of
+      -- if group produces a list of one list, all in that list are equal
+      [its] -> head its
+      _ -> Nothing
+
+    -- check single alt  
+    checkAlt env e ADef{av, ae} = case knownFunExprIT env e of
+      Just it -> knownFunExprIT (Map.insert av it env) ae
+      Nothing -> knownFunExprIT env ae
+    -- must delete bindings in Con from KCMap before lookup
+    checkAlt env _ ACon{avs, ae} = knownFunExprIT (deleteAll avs env) ae
+    
+
+    -- remove let bindings from map. Add bindings for any object that
+    -- evaluates to a known function f, e.g. PAP(f) or THUNK(e) where e == f
+    -- Can't use addDefsToKCMap, because we don't want local FUN definitions
+    -- added. They would then be considered known functions and could misrepresent
+    -- the letexpr as a known function.
+    addLetDefs env defs =
+      let env' = deleteAll (map oname defs) env
+          fun THUNK{e, oname} env = case knownFunExprIT env e of
+            Just it -> Map.insert oname it env
+            Nothing -> env
+          fun PAP{f, as = [], oname} env = case Map.lookup f env of
+            Just it -> Map.insert oname it env
+            Nothing -> env
+          fun _ env = env
+      in
+       foldr fun env' defs
+  in
+   case e of
+    EAtom {ea = Var v} -> Map.lookup v env
    
+    ECase {ee, ealts = Alts{alts}} -> checkAlts env ee alts
+
+    EFCall {emd, ev, eas} -> case Map.lookup ev env of
+                              Just i@Fun{arity} | length eas < arity -> Just i
+                                                | otherwise -> Nothing
+                              _ -> Nothing
+
+--    This will break heap allocation analysis if it depends on known calls
+--    ELet  {edefs, ee} ->  knownFunExprIT (addLetDefs env edefs) ee
+                                                     
+    _ -> Nothing

@@ -14,7 +14,7 @@ set(name semi)
 set(tname error_${name})
 add_test(${tname} ${STGCC} -c ${SRC_DIR}/${name}.stg 2>&1)
 set_property(TEST ${tname} PROPERTY PASS_REGULAR_EXPRESSION 
-    "EOF not found")
+    "Expected semicolon or EOF after object definition")
 set_property(TEST ${tname} PROPERTY WILL_FAIL) 
 
 set(name adt1)
@@ -85,4 +85,11 @@ set(tname error_${name})
 add_test(${tname} ${STGCC} -c ${SRC_DIR}/${name}.stg 2>&1)
 set_property(TEST ${tname} PROPERTY PASS_REGULAR_EXPRESSION 
     "constructor J not in conmap")
+set_property(TEST ${tname} PROPERTY WILL_FAIL) 
+
+set(name polyUnboxed)
+set(tname error_${name})
+add_test(${tname} ${STGCC} -c ${SRC_DIR}/${name}.stg 2>&1)
+set_property(TEST ${tname} PROPERTY PASS_REGULAR_EXPRESSION 
+    "cannot unify unboxed type UBInt with polymorphic type variable")
 set_property(TEST ${tname} PROPERTY WILL_FAIL) 

@@ -14,7 +14,8 @@ module ADT (
   getDataCons,
   makeIntTyCon,
   makeDoubleTyCon,
-  boxMTypes
+  boxMTypes,
+  isBoxed
 ) where
 
 import AST(Con,BuiltinType(..),Obj)
@@ -88,6 +89,16 @@ data Monotype = MVar TyVar
               | MPVar TyVar -- should be used only in BU.hs
               | MPhony
                 deriving(Eq,Ord)
+
+isBoxed :: Monotype -> Bool
+isBoxed m = case m of
+  MVar{}     -> True -- polymorphic
+  MFun{}     -> True -- expr / obj :: MFun --> PAP created --> boxed
+  MCon b _ _ -> b
+  MPrim{}    -> False
+  MPVar{}    -> True
+  _          -> error "ADT.isBoxed: MPhony passed?"
+  
 
 -- set Monotype boxity in TyCons (this should be done before CMaps are built
 -- for InfoTabs

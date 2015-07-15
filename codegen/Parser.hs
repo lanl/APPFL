@@ -122,9 +122,8 @@ parse :: [Token] -> ([TyCon], [Obj ()]) -- (ObjDefs, DataDefs)
 parse = splitDefs . fst . head . prog
 
 prog :: Parser Token [Def ()]
-prog = tokcutP
-       "Expected top level object and data definitions separated by semicolons" $
-       sepByP' defP semiP `thenx` (tokcutP "EOF not found" eofP)
+prog = sepByP' defP semiP `thenx`
+       tokcutP "Expected semicolon or EOF after object definition" eofP
 
 defP :: Parser Token (Def ())
 defP = orExList [objDefP `using` ObjDef, tyConP `using` DataDef]

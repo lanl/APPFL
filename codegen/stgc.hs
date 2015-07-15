@@ -18,6 +18,7 @@ eval :: String -> IO()
 eval input = do
                build input
                system("./a.out")
+               putStrLn ""
                return ()
 
 -- build a.out from stg

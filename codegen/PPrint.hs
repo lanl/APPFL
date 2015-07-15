@@ -18,7 +18,7 @@ module PPrint
        
 
 import Text.PrettyPrint
-import qualified Data.Map as Map (toList)
+import qualified Data.Set as Set
 import Data.List (find)
 
 
@@ -37,5 +37,13 @@ boolean :: Bool -> Doc
 boolean = text . show
 
 brackList = brackets . hsep . punctuate comma
+braceList = braces . hsep . punctuate comma
 
 listText = brackList . map text
+
+
+instance (PPrint a) => PPrint (Set.Set a) where
+  toDoc s = braceList (map toDoc $ Set.toList s)
+
+instance PPrint String where
+  toDoc = text

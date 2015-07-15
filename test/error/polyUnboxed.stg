@@ -1,0 +1,5 @@
+id = FUN(x -> x);
+-- should fail unification
+fun = FUN(x -> id 1);
+
+main = THUNK(id);

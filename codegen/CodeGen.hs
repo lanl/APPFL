@@ -189,18 +189,22 @@ cgUBa env (LitC c) "c" = show c
 -- return (inline code, [(forward, fundef)])
 cge :: Env -> Expr InfoTab -> State Int (String, [(String, String)])
 cge env (EAtom it a) =
-    return ("stgCurVal = " ++ cga env a ++ "; " ++ "// " ++ showa a ++ "\n", [])
+  let tpCmnt = "// type: " ++ show (typ it) ++ "\n"
+  in
+   return (tpCmnt ++ "stgCurVal = " ++ cga env a ++ "; " ++ "// " ++ showa a ++ "\n", [])
 
 cge env (EFCall it f as) = 
-    let inline = "// " ++ f ++ " " ++ showas (map ea as) ++ "\n" ++
-                 "STGAPPLY" ++ show (length as) ++ "(" ++
-                 intercalate ", " (cgv env f : map ((cga env) . ea) as) ++ 
-                 ");\n"
-    in return (inline, [])
+  let inline = "// " ++ f ++ " " ++ showas (map ea as) ++ "\n" ++
+               "STGAPPLY" ++ show (length as) ++ "(" ++
+               intercalate ", " (cgv env f : map ((cga env) . ea) as) ++ 
+               ");\n"
+      tpCmnt = "// type: " ++ show (typ it) ++ "\n"
+  in return (tpCmnt ++ inline, [])
 
 cge env (EPrimop it op as) = 
     let arg0 = cgUBa env (ea $ as !! 0) -- these take a type indicator
         arg1 = cgUBa env (ea $ as !! 1)
+        tpCmnt = "// type: " ++ show (typ it) ++ "\n"
         inline = case op of
                    Piadd -> cInfixIII " + "
                    Pisub -> cInfixIII " - "
@@ -236,22 +240,24 @@ cge env (EPrimop it op as) =
 
         cFunIII fun  =  "stgCurVal.argType = INT;\n" ++
                         "stgCurVal.i = " ++ fun ++ "(" ++ arg0 "i" ++ ", " ++ arg1 "i" ++ ");\n"
-    in return (inline, [])
+    in return (tpCmnt ++ inline, [])
 
 cge env (ELet it os e) =
     let names = map oname os
         env'  = (reverse $ zip names (map HO sizes)) ++ env
         (sizes, decls, buildcodes) = unzip3 $ map (buildHeapObj env') os
+        tpCmnt = "// type: " ++ show (typ it) ++ "\n"
     in do
       ofunc <- cgos env' os
       (einline, efunc) <- cge env' e
-      return (concat decls ++ concat buildcodes ++ einline,
+      return (tpCmnt ++ concat decls ++ concat buildcodes ++ einline,
               ofunc ++ efunc)
 
 cge env (ECase md e a@(Alts italts alts aname)) = 
     let eboxed = case typ $ emd e of MPrim _    -> False
                                      MCon b c _ -> b
                                      _          -> True
+        tpCmnt = "// type: " ++ show (typ md) ++ "\n"
                                      
     in do (ecode, efunc) <- cge env e
           (acode, afunc) <- cgalts env a eboxed
@@ -279,7 +285,7 @@ cge env (ECase md e a@(Alts italts alts aname)) =
                             intercalate " " (fvs italts) ++ "\n") ++
                          indent 4 (loadPayloadFVs env (fvs italts)) ++
                  "  });\n"
-          return (pre ++ ecode ++ acode, efunc ++ afunc)
+          return (tpCmnt ++ pre ++ ecode ++ acode, efunc ++ afunc)
 
 -- ADef only or unary sum => no C switch
 cgalts env (Alts it alts name) boxed = 

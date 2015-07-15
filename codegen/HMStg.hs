@@ -146,16 +146,10 @@ instance DV (Expr InfoTab) (Expr InfoTab) where
         do m <- getMono ea
            return $ setTyp m e
 
-    -- Both EFCall and EPrimop types are set as a function of the types
-    -- set in their arguments.  I think this may be redundant, if BU is
-    -- properly modified
-    -- (changed per assumption above)
     dv e@EFCall{eas} = 
         do retMono <- freshMonoVar -- return type
            eas' <- mapM dv eas -- setTyp(s) of args
-           let --ms = map (typ . emd) eas'   -- use those types to make MFun
-              -- m = foldr MFun retMono ms -- function type = fresh vars + concrete
-               e' = e{eas = eas'}
+           let e' = e{eas = eas'}
            return $ setTyp retMono e'
 
     dv e@EPrimop{..} =
@@ -260,13 +254,13 @@ instance BU (Expr InfoTab) where
          Set.empty,
          e) -- EAtom monotype set in dv
 
-    bu mtvs e@EFCall{emd = ITFCall{typ},ev,eas} =
+    bu mtvs e@EFCall{ev,eas} =
         let (ass, _, eas') = unzip3 $ map (bu mtvs) eas
-          --(m,ms) = unfoldr typ -- m is return type
-        in --(Set.fromList $ (ev, typ) : [ (v,m) | (Var v, m) <- zzip eas ms ],
-           (Set.unions ass,
+            ftyp = foldr MFun (typ $ emd e) $ map (typ . emd) eas
+            fas = Set.singleton (ev, ftyp)
+        in (Set.unions $ fas:ass,
             Set.empty,
-            e) -- EFCall monotype set in dv
+            e{eas=eas'}) -- EFCall monotype set in dv
 
     bu mtvs e@EPrimop{emd = ITPrimop{typ}, eprimop, eas} =
 -- MODIFIED 7.9 -       
@@ -425,7 +419,7 @@ instance BU (Obj InfoTab) where
           (m,ms) = unfoldr typ
       in (Set.fromList $ (f,typ) : [ (v, t) | (Var v, t) <- zzip as ms ],
           Set.empty,
-          o)
+          setTyp m o)
 
   bu mtvs o@CON{omd,c,as} = 
       let
@@ -469,16 +463,19 @@ instance BackSub (Obj InfoTab) where
         let o' = setTyp (polyToMono $ apply s $ getTyp o) o
         in case o' of
              o@FUN{e} -> o{e = backSub s e}
-             o@THUNK{e} -> o{e = backSub s e}
+             o@THUNK{omd, e} | isBoxed $ typ omd -> o{e = backSub s e}
+                             | otherwise -> error "cannot have unboxed thunk"
              _ -> o'
 
 instance BackSub (Expr InfoTab) where
     backSub s e =
         let e' = setTyp (polyToMono $ apply s $ getTyp e) e
         in case e' of
-             e@ELet{edefs,ee} -> e{edefs = backSub s edefs, ee = backSub s ee}
+             e@ELet{edefs,ee}   -> e{edefs = backSub s edefs, ee = backSub s ee}
              e@ECase{ee, ealts} -> e{ee = backSub s ee, ealts = backSub s ealts}
-             _ -> e'
+             e@EPrimop{eas}     -> e{eas = map (backSub s) eas}
+             e@EFCall{eas}      -> e{eas = map (backSub s) eas}
+             EAtom{}            -> e'
 
 instance BackSub (Alts InfoTab) where
     backSub s as@Alts{alts} = 
@@ -519,9 +516,11 @@ instance CO (Expr InfoTab) where
             e' = setCTyp (PPoly (Set.toList ovs) m) e
             bvs' = Set.union bvs ovs
         in case e' of
-             e@ELet{edefs,ee} -> e{edefs = co bvs' edefs, ee = co bvs' ee}
+             e@ELet{edefs,ee}   -> e{edefs = co bvs' edefs, ee = co bvs' ee}
              e@ECase{ee, ealts} -> e{ee = co bvs' ee, ealts = co bvs' ealts}
-             _ -> e'
+             e@EPrimop{eas}     -> e{eas = map (co bvs') eas}
+             e@EFCall{eas}      -> e{eas = map (co bvs') eas}
+             EAtom{}            -> e'
 
 instance CO (Alts InfoTab) where
     co bvs as@Alts{alts} = 

@@ -10,6 +10,7 @@ module AST (
   Obj(..),
   Primop(..),
   BuiltinType(..),
+  rmPrelude,
   primopTab,
   show,
   objListDoc,
@@ -20,7 +21,7 @@ module AST (
 ) where
 
 import PPrint
-import Data.List (find)
+import Data.List (find, (\\))
 
 {-  grammar
 
@@ -154,6 +155,51 @@ primopTab =
      -- the following are deprecated
      ("intToBool_h", PintToBool)
     ]
+
+
+preludeObjNames =
+  ["error",
+   "unit",
+   "nil",
+   "zero",
+   "one",
+   "two",
+   "three",
+   "four",
+   "five",
+   "six",
+   "seven",
+   "eight",
+   "nine",
+   "ten",
+   "false",
+   "true",
+   "eqInt",
+   "multInt",
+   "plusInt",
+   "subInt",
+   "append",
+   "const",
+   "apply",
+   "map",
+   "head",
+   "tail",
+   "foldl",
+   "sum",
+   "zipWith",
+   "seq",
+   "forcelist",
+   "take"]
+
+
+-- functions for removing some or all standard Prelude objects from the 
+-- list of objects in a parsed STG program.  Useful for debugging.
+rmPrelude :: [Obj a] -> [Obj a]
+rmPrelude = rmPreludeLess []
+rmPreludeLess :: [Var] -> [Obj a] -> [Obj a]
+rmPreludeLess keeps =
+  let objs = preludeObjNames \\ keeps
+  in filter (not . (`elem` objs) . oname)
 
 stgPrimName p =
   case find ((==p).snd) primopTab of
@@ -309,7 +355,7 @@ rawDocExpr e = case e of
                  nest 2
                  (text "function:" <+> text ev $+$
                   -- 7.9 changed, grab atoms from eas (same in primop below)
-                  text "args:" <+> brackList (map (rawDocAtom.ea) eas) $+$ 
+                  text "args:" <+> (brackets $ vcat $ punctuate comma $ map rawDocExpr eas) $+$ 
                   text "metadata:" $+$
                   nest 2 (toDoc emd)
                  )
@@ -318,7 +364,7 @@ rawDocExpr e = case e of
                  (text "EPrimop:" $+$
                   nest 2
                   (text "primop:" <+> rawDocPrimop eprimop $+$
-                   text "args:" <+> brackList (map (rawDocAtom.ea) eas) $+$
+                   text "args:" <+> (brackets $ vcat $ punctuate comma $ map rawDocExpr eas) $+$
                    text "metadata" $+$
                    nest 2 (toDoc emd)
                   )
@@ -381,6 +427,5 @@ rawDocAlt a = case a of
               )
 rawDocPrimop = toDoc              
 rawDocAtom = toDoc
-               
-               
+
               

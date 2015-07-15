@@ -8,6 +8,9 @@ module Driver (
   conmaper,
   typechecker,
   knowncaller,
+  heapchecker,
+  tester,
+  printObjsVerbose,
   codegener
 ) where
 
@@ -26,7 +29,7 @@ import           Rename
 import           SetFVs
 import           HMStg
 import           Data.List
-import System.IO
+import           System.IO
 
 header :: String
 header = "#include \"stgc.h\"\n"
@@ -145,7 +148,7 @@ tctest arg =
 
 
 codegener :: String -> Bool -> String
-codegener inp v = let (tycons, objs) = heapchecker inp
+codegener inp v = let (tycons, objs) =  heapchecker inp
                       infotab = showITs objs
                       (shoForward, shoDef) = showSHOs objs
                       (funForwards, funDefs) = cgObjs objs stgRTSGlobals

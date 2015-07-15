@@ -11,6 +11,7 @@ module SetFVs (
 
 import Prelude
 import AST
+import PPrint
 import qualified Data.List as List
 import qualified Data.Set as Set
 
@@ -111,8 +112,9 @@ toplevel rtgs defs =
         myfvl = Set.toList $ Set.unions myfvls
     in case myfvl of
          [] -> deadCode defs'
-         fvs -> error $ "SetFVs.setFVsDefs:  top level free variables:  " ++  
-                        List.intercalate " " fvs ++ "\n\n" ++ show defs'
+         fvs -> error $
+                "SetFVs.setFVsDefs:  top level free variables:  " ++
+                List.intercalate " " fvs ++ "\n\n" ++ show (objListDoc $ rmPrelude defs')
 
 -- vars introduced by EFCall f, PAP f, and EAtom Var v
 -- scope introduced by FUN vs, x ->, C xi ->
@@ -234,4 +236,8 @@ instance SetFVs (Obj a) (Obj (Set.Set Var, Set.Set Var)) where
 
 instance SetFVs a b => SetFVs [a] [b] where
     setfvs tlds = map (setfvs tlds)
+
+instance PPrint (Set.Set Var, Set.Set Var) where
+  toDoc (fvs, tfvs) = parens (text "fvs:" <+> toDoc fvs <> comma <+> text "tfvs:" <+> toDoc tfvs)
+
 
