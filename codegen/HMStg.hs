@@ -46,6 +46,7 @@ hmstg os0 =
         (subst, _) = runState (solve cs) i1
     in co Set.empty $ backSub subst os2
 
+--{-
 hmstgdebug os0 = 
     let (os1,i1) = runState (dv os0) 0
         (as,cs,os2) = buNest Set.empty os1 :: (Set.Set Assumption,
@@ -53,6 +54,12 @@ hmstgdebug os0 =
                                                [Obj InfoTab])
         (subst, _) = runState (solve cs) i1
     in putStrLn $ showObjs (co Set.empty $ backSub subst os2)
+---}
+{-
+hmstgdebug os0 = 
+    let (os1,i1) = runState (dv os0) 0 :: ([Obj InfoTab], Int)
+    in putStrLn $ showObjs (co Set.empty os1)
+-}
 {-
 hmstgdebug os0 = 
     let (os1,i1) = runState (dv os0) 0
