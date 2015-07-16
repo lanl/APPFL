@@ -5,7 +5,9 @@ module Driver (
   infotaber,
   conmaper,
   typer,
-  codegener
+  codegener,
+  tctest,
+  conmaptest
 ) where
 
 import           ADT
@@ -102,6 +104,14 @@ tctest arg =
     let (tycons, objs) = conmaper source
     hmstgdebug objs
 
+conmaptest arg =
+  do
+   f <- readFile arg
+   let (_, os) = typechecker f
+   putStrLn $ maybe "no map found in objs" ppConMaps (getmap os)
+
+
+   
 
 codegener :: String -> Bool -> String
 codegener inp v = let (tycons, objs) = typechecker inp
@@ -116,3 +126,6 @@ codegener inp v = let (tycons, objs) = typechecker inp
                     intercalate "\n\n" funDefs ++
                     footer v
                   
+
+
+
