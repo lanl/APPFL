@@ -131,8 +131,8 @@ primopTable =
     ("igt#",     Pigt),
     ("ige#",     Pige),
     ("ineg#",    Pineg),           
-    ("imin#",    Pimax),
-    ("imax#",    Pimin)
+    ("imin#",    Pimin),
+    ("imax#",    Pimax)
   ]
 
 reserveds =

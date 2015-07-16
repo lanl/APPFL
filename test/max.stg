@@ -1,0 +1,11 @@
+maxInt = FUN(x y ->
+           case x of
+              { I i# ->
+                  case y of
+                     { I j# -> case imax# i# j# of
+                                 { x# -> let { result = CON (I x#) } in result }}});
+
+output = THUNK(maxInt two seven);
+
+main = THUNK(eqInt output seven);
+
