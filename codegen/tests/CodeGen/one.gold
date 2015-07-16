@@ -7,7 +7,7 @@ InfoTab it_one =
     .entryCode           = &stg_constructorcall,
     .objType             = CON,
     .conFields.arity     = 1,
-    .conFields.tag       = 101,
+    .conFields.tag       = 0,
     .conFields.conName   = "I",
   };
 InfoTab it_main = 
@@ -44,6 +44,7 @@ void registerSHOs() {
 DEFUN1(fun_main, self) {
   fprintf(stderr, "main here\n");
   stgThunk(self);
+  // type: Int[B] 
   stgCurVal = HOTOPL(&sho_one); // one
   STGRETURN0();
   ENDFUN;
