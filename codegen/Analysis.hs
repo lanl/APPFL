@@ -2,6 +2,8 @@
 {-# LANGUAGE FlexibleInstances    #-}
 {-# LANGUAGE OverlappingInstances #-}
 {-# LANGUAGE TupleSections        #-}
+{-# LANGUAGE PatternGuards        #-}
+{-# LANGUAGE RecordWildCards      #-} -- implies DisambiguateFieldRecords
 
 module Analysis
 (exhaustCases,

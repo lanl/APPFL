@@ -67,12 +67,13 @@ showHO it =
     "  .infoPtr   = &it_" ++ name it ++ ",\n" ++
     "  .objType   = " ++ showObjType it      ++ ",\n" ++
     "  .ident     = " ++ show (name it)      ++ ",\n" ++
-       showSHOspec it ++
+    showSHOspec it ++
     "  };\n"
 
 showSHOspec it@(Fun {}) = ""
 
-showSHOspec it@(Pap {}) = ""
+showSHOspec it@(Pap {}) = "  .argCount  = " ++ show (length $ args it) ++ ",\n" ++
+                          (payloads $ args it)
 
 showSHOspec it@(Con {}) = payloads $ args it
 

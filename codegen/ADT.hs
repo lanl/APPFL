@@ -1,3 +1,4 @@
+{-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE NamedFieldPuns    #-}
 
@@ -25,7 +26,6 @@ import Data.Maybe (fromJust)
 import Data.Char (isNumber)
 import qualified Data.Map as Map
 import PPrint
---import Control.Monad.State
 
 {-
   Algebraic Datatypes:

@@ -41,6 +41,7 @@ void registerSHOs() {
 }
 
 
+// Int[B] 
 DEFUN1(fun_main, self) {
   fprintf(stderr, "main here\n");
   stgThunk(self);

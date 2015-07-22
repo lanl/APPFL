@@ -102,7 +102,7 @@ unify (MCon False "Int_h" []) (MPrim UBInt) = idSubst
 
 -- if they're equal there's nothing to do
 unify m1 m2 | m1 == m2 = idSubst
-            | otherwise = error $ "unify:  can't unify " ++ show m1 ++ " " ++ show m2
+            | otherwise = error $ "unify:  can't unify " ++ show m1 ++ " with " ++ show m2
 
 unifys [] [] = idSubst
 unifys (x:xs) [] = error "unifys length mismatch!"
@@ -177,8 +177,8 @@ data Constraint = EqC  Monotype Monotype
                   deriving (Eq, Ord)
 
 instance Show Constraint where
-    show (EqC m1 m2) = "EqC " ++ show m1 ++ " " ++ show m2
-    show (ExpC m p) = "ExpC " ++ show m ++ " " ++ show p
+    show (EqC m1 m2) = "EqC " ++ show m1 ++ " , " ++ show m2
+    show (ExpC m p) = "ExpC " ++ show m ++ " , " ++ show p
     show (ImpC m1 ms m2) = "ImpC " ++ show m1 ++ " " ++ 
                            show (Set.toList ms) ++ " " ++ show m2
 
@@ -227,6 +227,7 @@ dropAss x as = Set.fromList [ (x', a) | (x', a) <- Set.toList as, x /= x' ]
 
 solve :: Constraints -> State Int Subst
 solve cs = solve1 (Set.toList cs) [] False
+-- solve cs = error $ show $ Set.toList cs
 
 solve1 :: [Constraint] -> [Constraint] -> Bool -> State Int Subst
 solve1 [] [] _ = return idSubst
@@ -244,7 +245,7 @@ solve1 (ExpC t p : cs) ys _ =
 
 solve1 (c@(ImpC t1 ms t2) : cs) ys progress = 
     if Set.null $ (freevars t2 `Set.difference` freevars ms) 
-                  `Set.intersection` activeVars cs
+                  `Set.intersection` activeVars (cs ++ ys)
     then solve1 (ExpC t1 (generalize ms t2) : cs) ys True
     else solve1 cs (c:ys) progress
       
