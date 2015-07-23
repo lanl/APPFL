@@ -258,10 +258,10 @@ DEFUN2(stgApply, N, f) {
       fprintf(stderr, "stgApply1 PAP too few args\n");
       Obj *pap = stgNewHeapObj();
       *pap = *f.op;  // quick and dirty
-      copyargs(&pap.op->payload[pap.op->infoPtr->fvCount + pap.op->argCount],
+      copyargs(&pap->payload[pap->infoPtr->fvCount + pap->argCount],
 	       argv, argc);
-      pap.op->argCount += argc;
-      STGRETURN1(pap);
+      pap->argCount += argc;
+      STGRETURN1(HOTOPL(pap));
     } // if excess
   } // case PAP
 
