@@ -2,7 +2,8 @@ data Unit = Unit;
 data Int = I Int#;
 data List a = Nil | Cons a (List a);
 data Bool = False | True;
-
+data Tupl2 a b = TP2 a b;
+data Tupl3 a b c = TP3 a b c;
 
 error = ERROR;
 unit = CON(Unit);
@@ -22,6 +23,61 @@ ten = CON(I 10);
 false = CON(False);
 true = CON(True);
 
+
+-------------- Primop Aliases  ----------------------------
+-- allows treatment of primops as functions
+
+_iplus = FUN(a# b# -> iplus# a# b#);
+_isub  = FUN(a# b# -> isub# a# b#);
+_imul  = FUN(a# b# -> imul# a# b#);
+_idiv  = FUN(a# b# -> idiv# a# b#);
+_imod  = FUN(a# b# -> imod# a# b#);
+_ieq   = FUN(a# b# -> ieq# a# b#);
+_ine   = FUN(a# b# -> ine# a# b#);
+_ilt   = FUN(a# b# -> ilt# a# b#);
+_ile   = FUN(a# b# -> ile# a# b#);
+_igt   = FUN(a# b# -> igt# a# b#);
+_ige   = FUN(a# b# -> ige# a# b#);
+_imin  = FUN(a# b# -> imin# a# b#);
+_imax  = FUN(a# b# -> imax# a# b#);
+_ineg  = FUN(a# -> ineg# a#);
+
+
+-------------- Constructor functions -----------------------
+
+-- construct a Cons cell
+-- cons :: a -> List a -> List a
+cons = FUN(h t -> let {r = CON(Cons h t)} in r);
+
+
+-- construct a boxed Int (from Int#)
+-- int :: Int# -> Int
+int = FUN(i# -> let {i = CON(I i#)} in i);
+
+
+-- construct a size-2 tuple
+-- tupl2 :: a -> b -> Tupl2 a b
+tupl2 = FUN(a b -> let {t = CON(TP2 a b)} in t);
+
+fst = FUN(t2 -> 
+    case t2 of {
+      TP2 a b -> a});
+snd = FUN(t2 ->
+    case t2 of {
+      TP2 a b -> b});
+      	     
+
+-- construct a size-3 tuple
+-- tupl3 :: a -> b -> c -> Tupl3 a b c
+tupl3 = FUN(a b c -> let {t = CON(TP3 a b c)} in t);
+
+
+
+-------------- Boxed Int arithmetic ------------------------
+-- Caveat Computor: 32-bit Ints underly boxed ints
+
+-- check boxed Ints for equality
+-- eqInt :: Int -> Int -> Bool
 eqInt = FUN(x y ->
            case x of
               { I i# ->
@@ -30,6 +86,9 @@ eqInt = FUN(x y ->
                                  { 0 -> false;
                                    x -> true }}});
 
+
+-- multiply boxed Ints
+-- multInt :: Int -> Int -> Int
 multInt = FUN(x y ->
    case x of { 
       I i# -> case y of { 
@@ -37,12 +96,17 @@ multInt = FUN(x y ->
                          x# -> let { result = CON (I x#) } in result }}});
 
 
+-- add boxed Ints
+-- plusInt :: Int -> Int -> Int
 plusInt = FUN(x y ->
    case x of { 
       I i# -> case y of { 
                I j# -> case iplus# i# j# of { 
                          x# -> let { result = CON (I x#) } in result }}});
 
+
+-- subtract boxed Ints | subInt x y = Haskell(x - y)
+-- subInt :: Int -> Int -> Int
 subInt = FUN(x y ->
            case x of
               { I i# ->
@@ -50,6 +114,63 @@ subInt = FUN(x y ->
                      { I j# -> case isub# i# j# of
                                  { x# -> let { result = CON (I x#) } in result }}});
 
+-- modulus operation for boxed Ints | modInt a b == Haskell(a `mod` b)
+-- modInt :: Int -> Int -> Int
+modInt = FUN(x y -> 
+       	     case x of {
+	       I x# -> 
+	         case y of {
+		   I y# -> 
+		     case imod# x# y# of {
+		       r# -> int r#}}});
+       	       	 
+
+_intPrimop = FUN(op a b -> 
+       	   case a of {
+	     I a# -> 
+               case b of {
+	         I b# -> case op a# b# of {
+		   r# -> int r#}}});
+
+
+_intComp = FUN(op a b ->
+	 case _intPrimop op a b of {
+	   I x# -> 
+	     case x# of {
+	       0 -> false;
+	       x -> true;}});
+
+intLE = THUNK(_intComp _ile);
+
+minInt = FUN(a b -> 
+       case intLE a b of {
+       	 True -> a;
+	 False -> b;});
+       	 
+		  
+
+
+-- calcuate greatest common divisor of two unboxed ints
+-- gcd# :: Int# -> Int# -> Int#
+gcd# = FUN(a# b# -> case b# of {
+       	      	      0 -> a#;
+		      x -> case imod# a# b# of { r# -> gcd# b# r# }});
+
+
+-- calculate the greatest common divisor of two boxed ints
+-- gcd :: Int -> Int -> Int
+gcd = FUN(a b -> case a of {
+      	      	   I a# -> case b of {
+		     	     I b# -> case gcd# a# b# of {
+			       	       r# -> int r# }}});
+
+
+
+----------- List operations ----------------------------------
+
+
+-- append two lists (elements of first precede elements of second)
+-- append :: List a -> List a -> List a
 append = FUN(l1 l2 ->
             case l1 of
                { Nil -> l2;
@@ -57,27 +178,91 @@ append = FUN(l1 l2 ->
                                      result = CON(Cons hd rec) }
                                in result });
 
-const = FUN(x y -> x);
-apply = FUN(f x -> f x);
 
+-- apply a function to all elements of a list
+-- map :: (a -> b) -> List a -> List b
 map = FUN(f list ->
    case list of {
       Nil -> nil;
       Cons h t -> let { x = THUNK(f h); rec = THUNK(map f t); res = CON(Cons x rec) } in res
    });
 
+
+-- take the first element of a list
+-- head :: List a -> a
 head = FUN(xs -> case xs of { Cons hd tl -> hd });
+
+
+-- remove the first element of a list
+-- tail :: List a -> List a
 tail = FUN(xs -> case xs of { Cons hd tl -> tl });
 
+
+-- fold a function through a list, from left to right with accumulator
+-- foldl :: (b -> a -> b) -> b -> List a -> b
 foldl = FUN(f acc list ->
    case list of {
       Nil -> acc;
       Cons h t -> let { newAcc = THUNK(f acc h) } in foldl f newAcc t 
    });
 
--- lazy sum with a well-known space leak
-sum = FUN(list -> foldl plusInt zero list);
 
+-- fold a function through a list, from right to left
+-- foldr :: (a -> b -> b) -> b -> List a -> b
+foldr = FUN(f sd list ->
+      case list of {
+      	Nil -> sd;
+        Cons h t -> let { res = THUNK(foldr f sd t) } in f h res });
+
+-- calculate length of a list
+-- length :: List a -> Int
+length = FUN(xs -> 
+       case _length xs 0 of {
+         r# -> int r#});
+
+
+-- tail recursive, non-heap-growing helper for length
+_length = FUN(xs ac# -> 
+	case xs of {
+	  Nil -> ac#;
+	  Cons h t -> 
+	    case iplus# ac# 1 of {
+	      r# -> _length t r#}});
+
+
+-- forcelist: seq elements of a list, return unit
+-- forcelist :: List a -> Unit
+forcelist = FUN(list ->
+   case list of {
+      Nil -> unit;
+      Cons h t -> let { rec = THUNK(forcelist t) } in seq h rec });
+
+-- take n objects from a list, starting at the head
+-- take :: Int -> List a -> List a
+take = FUN(n xs ->
+   case eqInt n zero of
+      { True -> nil;
+        False -> case xs of
+                 { Nil -> nil;
+                   Cons hd tl -> let { m = THUNK(subInt n one);
+                                       rec = THUNK(take m tl);
+                                       result = CON(Cons hd rec) } in result }});
+
+-- remove n elements from the head of a list
+-- drop :: Int -> List a -> List a
+drop = FUN(n xs -> 
+     case eqInt n zero of {
+       True -> xs;
+       False -> 
+         case xs of {
+           Nil -> nil;
+	   Cons h t -> 
+             let {m = THUNK(subInt n one)} 
+	     	 in drop m t }});
+
+
+-- zip two lists together element-wise with a combining function
+-- zipWith :: (a -> b -> c) -> List a -> List b -> List c
 zipWith = FUN(f list1 list2 ->
    case list1 of {
       Nil -> nil;
@@ -92,47 +277,23 @@ zipWith = FUN(f list1 list2 ->
          }
    });
 
-seq = FUN(x y -> case x of { z -> y });
 
-forcelist = FUN(list ->
-   case list of {
-      Nil -> unit;
-      Cons h t -> let { rec = THUNK(forcelist t) } in seq h rec });
+-- zip two lists element-wise into a list of Tuples 
+-- zip :: List a -> List b -> List (Tupl2 a b)
+zip = THUNK(zipWith tupl2);
 
-take = FUN(n xs ->
-   case eqInt n zero of
-      { True -> nil;
-        False -> case xs of
-                 { Nil -> nil;
-                   Cons hd tl -> let { m = THUNK(subInt n one);
-                                       rec = THUNK(take m tl);
-                                       result = CON(Cons hd rec) } in result }});
 
--- make infinite homogenous lists!
-repeat = FUN(x -> let { next = THUNK(repeat x) } in cons x next);
-
--- make arbitrarily long homogenous lists!
-replicate = FUN(n x -> let {list = THUNK(repeat x)} in take n list);
-
--- seq a list
+-- lazy sum with a well-known space leak
+-- de-thunk a list by scrutinizing each of its elements
+-- strictList :: List a -> List a
 strictList = FUN(xs ->
       	     	    case xs of {
        	    	    	 Nil -> nil;
 	    	  	 Cons h t -> case strictList t of {
 	    	     	           	  x -> cons h x }});
 
--- construct a Cons cell
-cons = FUN(h t -> let {r = CON(Cons h t)} in r);
-
--- remove n elements from the head of a list
-drop = FUN(n xs -> case eqInt n zero of {
-       	     	   	      True -> xs;
-			      False -> case xs of {
-       	     	   	      	       	    Nil -> nil;
-					    Cons h t -> let {m = THUNK(subInt n one)}
-					    	     	in drop m t }});
-
 -- is a list empty?
+-- null :: List a -> Bool
 null = FUN(xs -> case xs of {
        	      	      Nil -> true;
 		      x   -> false});
@@ -171,6 +332,37 @@ any = FUN(p xs -> case xs of {
 		  Cons h t -> case p h of {
 		       	      True -> true;
 			      False -> any p t}});
+
+
+-- add the elements of a list of boxed Ints
+-- sum :: List Int -> Int
+sum = FUN(list -> foldl plusInt zero list);
+
+
+-- constant function, return first argument
+-- const :: a -> b -> a
+const = FUN(x y -> x);
+
+
+-- apply a function to an argument
+-- apply :: (a -> b) -> a -> b
+apply = FUN(f x -> f x);
+
+
+-- scrutinize an object to force evaluation, return arbitrary (specified) value
+-- seq :: a -> b -> b
+seq = FUN(x y -> case x of { z -> y });
+
+
+-- make an infinite list of a repeated element
+-- repeat :: a -> List a
+repeat = FUN(x -> let { next = THUNK(repeat x) } in cons x next);
+
+
+-- make a finite length list of a repeated element
+-- replicate :: Int -> a -> List a
+replicate = FUN(n x -> let {list = THUNK(repeat x)} in take n list);
+
 
 
 -- odd# :: Int# -> Bool

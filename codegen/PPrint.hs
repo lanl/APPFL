@@ -1,4 +1,5 @@
 
+
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE TypeSynonymInstances #-}
 {-# LANGUAGE NamedFieldPuns #-}
@@ -52,3 +53,5 @@ instance (PPrint a) => PPrint (Set.Set a) where
 
 instance PPrint String where
   toDoc = text
+
+

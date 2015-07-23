@@ -47,6 +47,7 @@ hmstg os0 =
         (subst, _) = runState (solve cs) i1
     in co Set.empty $ backSub subst os2
 
+--{-
 hmstgdebug os0 = 
     let (os1,i1) = runState (dv os0) 0
         (as,cs,os2) = buNest Set.empty os1 :: (Set.Set Assumption,
@@ -54,6 +55,12 @@ hmstgdebug os0 =
                                                [Obj InfoTab])
         (subst, _) = runState (solve cs) i1
     in putStrLn $ showObjs (co Set.empty $ backSub subst os2)
+---}
+{-
+hmstgdebug os0 = 
+    let (os1,i1) = runState (dv os0) 0 :: ([Obj InfoTab], Int)
+    in putStrLn $ showObjs (co Set.empty os1)
+-}
 {-
 hmstgdebug os0 = 
     let (os1,i1) = runState (dv os0) 0
@@ -162,8 +169,13 @@ instance DV (Expr InfoTab) (Expr InfoTab) where
                         Pimod -> MPrim UBInt
                         Pimax -> MPrim UBInt
                         Pimin -> MPrim UBInt
+                        Pineg -> MPrim UBInt
                         Pieq  -> MPrim UBInt
+                        Pine  -> MPrim UBInt
                         Pile  -> MPrim UBInt
+                        Pilt  -> MPrim UBInt
+                        Pige  -> MPrim UBInt
+                        Pigt  -> MPrim UBInt
                         x -> error $ "HMStg.dv Eprimop " ++ show x
                         -- etc.
 
@@ -274,8 +286,13 @@ instance BU (Expr InfoTab) where
                     Pimod -> [MPrim UBInt, MPrim UBInt]
                     Pimax -> [MPrim UBInt, MPrim UBInt]
                     Pimin -> [MPrim UBInt, MPrim UBInt]
+                    Pineg -> [MPrim UBInt, MPrim UBInt]
+                    Pine  -> [MPrim UBInt, MPrim UBInt]
                     Pieq  -> [MPrim UBInt, MPrim UBInt]
                     Pile  -> [MPrim UBInt, MPrim UBInt]
+                    Pilt  -> [MPrim UBInt, MPrim UBInt]
+                    Pigt  -> [MPrim UBInt, MPrim UBInt]
+                    Pige  -> [MPrim UBInt, MPrim UBInt]
                     x -> error $ "HMStg.bu EPrimop " ++ show x
             cs = Set.fromList [EqC m1 m2 | (_,m1) <- Set.toList as | m2 <- pts]
         in (as, cs, e) -- EPrimop monotype set in dv

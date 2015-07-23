@@ -142,6 +142,7 @@ cgo env o@(FUN it vs e name) =
 --      let forward = "FnPtr " ++ name' ++ "();"
       let forward = "FnPtr fun_" ++ name ++ "();"
       let func =
+            "// " ++ show (ctyp it) ++ "\n" ++
             "DEFUN" ++ show (length vs + 1) ++ "(fun_" ++ 
             name ++ ", self, " ++
             intercalate ", " vs ++
@@ -166,6 +167,7 @@ cgo env o@(THUNK it e name) =
 --      let forward = "FnPtr " ++ name' ++ "();"
       let forward = "FnPtr fun_" ++ name ++ "();"
       let func =
+            "// " ++ show (ctyp it) ++ "\n" ++
             "DEFUN1(fun_" ++ name ++ ", self) {\n" ++
             "  fprintf(stderr, \"" ++ name ++ " here\\n\");\n" ++
             "  stgThunk(self);\n" ++
@@ -300,7 +302,8 @@ cgalts env (Alts it alts name) boxed =
       let switch = length alts > 1
       codefuncs <- mapM (cgalt env' switch scrutName) alts
       let (codes, funcss) = unzip codefuncs
-      let fun = "DEFUN0("++ name ++ ") {\n" ++
+      let fun = "// " ++ show (ctyp it) ++ "\n" ++
+                "DEFUN0("++ name ++ ") {\n" ++
                 "  fprintf(stderr, \"" ++ name ++ " here\\n\");\n" ++
                 -- scrutinee might not be evaluated if boxed
                 (if boxed then 

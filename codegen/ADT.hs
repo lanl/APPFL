@@ -1,3 +1,4 @@
+{-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE NamedFieldPuns    #-}
 
@@ -97,7 +98,7 @@ isBoxed m = case m of
   MCon b _ _ -> b
   MPrim{}    -> False
   MPVar{}    -> True
-  _          -> error "ADT.isBoxed: MPhony passed?"
+  m          -> error $ "ADT.isBoxed called with " ++ show m
   
 
 -- set Monotype boxity in TyCons (this should be done before CMaps are built
@@ -157,12 +158,11 @@ instance Show Polytype where
 instance Show Monotype where
     show (MVar v) = v
     show (MPVar v) = "p_" ++ v
-    show (MFun m1@(MFun _ _) m2) = "(" ++ show m1 ++ ") -> " ++ show m2      
-    show (MFun m1 m2) = show m1 ++ " -> " ++ show m2 
-    show (MCon bxt con ms) = con ++
-                             (if bxt
-                              then "[B] "
-                              else "[U] ") ++ intercalate " " (map show ms)
+    show (MFun m1@(MFun _ _) m2) = "(" ++ show m1 ++ ") -> " ++ show m2
+    show (MFun m1 m2) = show m1 ++ " -> " ++ show m2
+    show (MCon boxed con ms) = con ++ 
+                               (if boxed then " [B] " else " [U] ") ++
+                               "(" ++ intercalate ") (" (map show ms) ++ ")"
     show (MPrim p) = show p
     show MPhony = "MPhony"
 

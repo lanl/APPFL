@@ -241,7 +241,7 @@ instance MakeIT (Obj ([Var],[Var])) where
               typ = typUndef,
               ctyp = ctypUndef,
     --          entryCode = showITType o ++ "_" ++ n
-              entryCode = "fun_" ++ n,
+              entryCode = "fun_" ++ f,
               knownCall = Nothing
             }
 
@@ -383,7 +383,6 @@ showIT it@(Pap {}) =
     "    .fvCount             = " ++ show (length $ fvs it) ++ ",\n" ++
     "    .entryCode           = &" ++ entryCode it ++ ",\n" ++
     "    .objType             = PAP,\n" ++
-    "    .argCount            = " ++ show (length $ args it) ++ ",\n" ++
     "  };\n"
         
 showIT it@(Con {}) =

@@ -14,12 +14,18 @@ import           System.IO
 import           System.Process
 
 -- build a.out from stg and run it
+_eval :: String -> Bool -> IO()
+_eval input showerr = do
+  build input
+  let erStr = if showerr then "" else " &2>/dev/null"
+  system("./a.out"++erStr)
+  putStrLn ""
+  return ()
+
 eval :: String -> IO()
-eval input = do
-               build input
-               system("./a.out")
-               putStrLn ""
-               return ()
+eval i = _eval i True
+
+evalNoErr i = _eval i False
 
 -- build a.out from stg
 build :: String -> IO()

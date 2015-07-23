@@ -25,7 +25,7 @@ import           PPrint
 import           InfoTab
 import           HeapObj
 import           Tokenizer
-import           Parser
+import           STGParser
 import           Rename
 import           SetFVs
 import           HMStg
@@ -160,4 +160,4 @@ codegener inp v = let (tycons, objs) =  heapchecker inp
                     shoDef ++ "\n" ++
                     intercalate "\n\n" funDefs ++
                     footer v
-                  
+
