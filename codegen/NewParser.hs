@@ -35,8 +35,8 @@ prog       ::= <def>*  -- is an empty program still a valid program? I think so.
 <expr>     ::= <atom>
              | <funCall>
              | <primop> <atom>+
-             | "let" "{" <letDefs> "}" "in" <expr>
-             | "case" <expr> "of" "{" <alts> "}"
+             | "let" <letDefs> "in" <expr>
+             | "case" <expr> "of" <alts>
 
 <funCall>  ::= <var> <atom>+
 
@@ -89,7 +89,7 @@ data Int = I Int#
 implying only unboxed ints can be used to construct it.
 -}
 
-module STGParser
+module Parser
 (
   Parsed(..),
   parse,
@@ -97,8 +97,7 @@ module STGParser
 ) where
 
 import Tokenizer
-import AST
-import ADT
+import ASTz
 import qualified Data.Map as Map
 import Data.List (groupBy)
 import PPrint
@@ -118,28 +117,29 @@ data Parsed a b = Parsed a | Unparsed b deriving (Show)
 -- type pseudonym for Parsers
 type Parser inp val = [inp] -> [(val, [inp])]
 
-parse :: [Token] -> ([TyCon], [Obj ()]) -- (ObjDefs, DataDefs)
-parse = splitDefs . fst . head . prog
+parse :: [Token] -> [Defn]
+parse =  fst . head . prog
 
-prog :: Parser Token [Def ()]
-prog = sepByP' defP semiP `thenx`
-       tokcutP "Expected semicolon or EOF after object definition" eofP
+prog :: Parser Token [Defn]
+prog = many defP `thenx`
+       tokcutP "Expected EOF at end of program" eofP
 
-defP :: Parser Token (Def ())
-defP = orExList [objDefP `using` ObjDef, tyConP `using` DataDef]
+defP :: Parser Token Defn
+defP = orExList [oDefP, dDefP, tDefP]
 
 
-splitDefs :: [Def a] -> ([TyCon], [Obj a])
+splitDefs :: [Defn] -> ([Defn],[Defn],[Defn])
 splitDefs =
-  let f x (ts, os) = case x of
-        (DataDef t) -> (t:ts, os)
-        (ObjDef o)  -> (ts, o:os)
-  in foldr f ([],[])
+  let f x (dds, tds, ods) = case x of
+        DDefn{} -> (x:dds, tds, ods)
+        TDefn{} -> (dds, x:tds, ods)
+        ODefn{} -> (dds, tds, x:ods)
+  in foldr f ([],[],[])
 
-parseDBG :: String -> [Parsed [Def()] Token]
+parseDBG :: String -> [Parsed [Defn] Token]
 parseDBG = fst . head . progDBG . tokenize
 
-progDBG :: Parser Token [Parsed [Def()] Token]
+progDBG :: Parser Token [Parsed [Defn] Token]
 progDBG = many' (orExList [sepByP' defP semiP `using` Parsed,
                            notP eofP `using` Unparsed])
           `thenx` (tokcutP "EOF not found" eofP)
@@ -229,17 +229,25 @@ arrowP = rsvP "->"
 eqP = rsvP "="
 barP = rsvP "|"
 semiP = rsvP ";"
+lambdaP = rsvP "\\"
+
+-- optional braces (for let defs and case clauses)
+optBracesP p =
+  isNextP lbraceP >>> \b ->
+  if not b
+  then p
+  else inbracesP p       
 
 -- match EOF Token
 eofP = tokP1 (TokEOF)
 
 -- Given a parser, match parens surrounding what it would match
 inparensP :: Parser Token v -> Parser Token v
-inparensP p = xthenx lparenP p rparenP
+inparensP p = xthenx lparenP p $ tokcutP "Expected closing paren" rparenP
 
 -- similar, for braces,
 inbracesP :: Parser Token v -> Parser Token v
-inbracesP p = xthenx lbraceP p rbraceP
+inbracesP p = xthenx lbraceP p $ tokcutP "Expected closing brace" rbraceP
 
 -- specialized cutp
 tokcutP msg p inp = cutP (show $
@@ -248,170 +256,125 @@ tokcutP msg p inp = cutP (show $
                   text msg)
                   p inp
 
-        
+---------------------------- Type Annotation Parsing ---------------------
+
+tDefP :: Parser Token Defn
+tDefP =
+  varNameP >>> \name ->
+  doubleColonP >>> \_ ->
+  monoTypP >>> \mtyp ->
+                accept $ TDefn name mtyp
+  
+
+
+                    
 ---------------------------- Object Parsing -------------------------------
 
--- Parse an Object definition (no semicolon) as Obj ()
-objDefP :: Parser Token (Obj ())              
-objDefP =
+-- Parse an Object definition 
+oDefP :: Parser Token Defn              
+oDefP =
   varNameP >>> \name ->
+  many funPatP >>> \pats ->
   eqP >>> \_ ->
-  tokcutP "Expected object definition"
-  (orExList
-   [funP, papP, conP, thunkP, errorP]) >>> \obj -> -- partially applied Obj constructor
-                                          accept $ obj name -- apply name to constructor
+  tokcutP "Expected valid expression on rhs of object definition"
+  exprP >>> \exp ->
+  tokcutP "Expected semicolon to terminate object definition"
+  semiP >>> \_ ->
+             accept $   -- if args occur on lhs, build function expression
+             ODefn name (if null pats
+                         then exp
+                         else (EFn pats exp)) Nothing
 
 
--- Parse an Object definition (with semicolon) as Obj ()
-objDefSC :: Parser Token (Obj ())
-objDefSC = objDefP `thenx` semiP -- semicolon at end
-
--- helper abstracts the TokRsv "CAPS" lparenP [definition] rparenP pattern
-objPat name p = rsvP name `xthen`
-                (inparensP $ tokcutP "Expected valid object definition in parentheses" p)
 
 
--- parse a function definition,
--- accept partially applied FUN constructor
-funP :: Parser Token (String -> Obj ())
-funP = objPat "FUN" $
-       tokcutP "Expected 1 or more valid function variables" $
-       some' varNameP >>> \v1 ->
-       tokcutP "Expected '->' to initiate function body" $
-       arrowP >>> \_ ->
-       tokcutP "Expected valid expression in function body"
-       exprP >>> \v2 ->
-                  accept $ FUN () v1 v2
-
-
--- parse a partially applied function application,
--- accept partially applied PAP constructor
-papP :: Parser Token (String -> Obj ())
-papP = objPat "PAP" $
-       tokcutP "Expected a variable followed by one or more atoms to form a PAP"
-       varNameP >>> \f ->
-       many' atomP >>> \atoms ->
-                        accept $ PAP () f atoms 
-
-
--- parse a constructor application,
--- accept partially applied CON constructor
-conP :: Parser Token (String -> Obj ())
-conP = objPat "CON" $
-       tokcutP "Expected a valid constructor name"
-       conNameP >>> \nm ->
-       many' atomP >>> \atoms ->
-                        accept $ CON () nm atoms
-
-
--- parse a thunk object,
--- accept a partially applied THUNK constructor
-thunkP :: Parser Token (String -> Obj ())
-thunkP = objPat "THUNK" $
-         tokcutP "Expected valid expression in thunk body"
-         exprP >>> \e ->
-                    accept $ THUNK () e
-
-
--- parse an Error/Blackhole object,
--- accept partially applied BLACKHOLE constructor
-errorP :: Parser Token (String -> Obj ())
-errorP = rsvP "ERROR" >>> \_ -> accept $ BLACKHOLE ()
-
-
--- parse an expression, accept an Expr () object
-exprP :: Parser Token (Expr ())
-exprP = orExList
-        [eFCallP, eAtomP, ePrimopP, eLetP, eCaseP, inparensP exprP]
-
-
--- parse an expression argument to a function call or primop
--- the preference in this list is different from exprP to
--- accept EAtoms before EFCalls/EPrimops. This makes function
--- application tightly bound as in Haskell.
--- Not in use currently. EFCalls and EPrimops still look for
--- atoms but map EAtom across
-exprArgP :: Parser Token (Expr ())
-exprArgP = orExList
-           [eAtomP, eLetP, eCaseP, eFCallP, ePrimopP, inparensP exprP]
+-- parse an expression, accept an Exp object
+exprP :: Parser Token Exp
+exprP =
+  let mults = some $
+              orExList
+              [eAtomP, inparensP exprP] >>> \es ->
+                                             accept $ foldl1 EAp exprs                             
+-- if only one Exp is parsed, foldl1 leaves it unchanged,
+-- otherwise left-associative application is parsed, so
+-- e1 e2 e3 e4 == ((((e1) e2) e3) e4)
+-- let, case and lambda expressions are all treated slightly differently
+-- to conform with haskell parsing of application
+-- case (+) of f -> f; 1 2 produces a compile error (even with braces in alts)
+-- but surrounding it with parens makes the application parse correctly
+  in orExList
+     [eLetP, eCaseP, eFunP, mults]
+                      
+-- parse an anonymous function expression
+-- should behave as in Haskell, with everything to the right
+-- of the arrow being considered the body of the lambda unless parenthesized
+eFunP :: Parser Token Exp
+eFunP =
+  lambdaP >>> \_ ->
+  tokcutP "Expected one or more pattern bindings in lambda expression" $
+  some funPatP >>> \pats ->
+  tokCutP "Expected '->' to precede lambda body" $
+  arrowP >>> \_ ->
+  tokCutP "Expected valid expression in lambda body"
+  exprP >>> \exp ->
+             accept $ EFn pats exp
 
 -- parse an atom expression
-eAtomP :: Parser Token (Expr ())
-eAtomP = atomP `using` (EAtom ())
+eAtomP :: Parser Token Exp
+eAtomP = atomP `using` EAt
 
-
--- parse a function call expression
-eFCallP :: Parser Token (Expr ())
-eFCallP =
-  varNameP >>> \fn ->
-  some' atomP >>> \args ->
-                   accept $ EFCall () fn $ map (EAtom ()) args
-
--- parse a primitive operation expression (e.g. isub# 1# 2#)
-ePrimopP :: Parser Token (Expr ())
-ePrimopP =
-  primP >>> \op ->
-  tokcutP "Expected one or more atoms as arguments to a primop" $
-  some' atomP >>> \args ->
-                   accept $ EPrimop () op $ map (EAtom ()) args
 
 -- parse a let expression
-eLetP :: Parser Token (Expr ())
+eLetP :: Parser Token Exp
 eLetP =
-  rsvP "let" >>> \_ ->
-  tokcutP "Expected a left brace to open the declaration block of a let expr"
-  lbraceP >>> \_ ->
-  tokcutP "Expected one or more declarations for a let expr" $
-  sepByP' objDefP semiP >>> \defs ->
-  tokcutP "Expected a right brace to close the declaration block of a let expr"
-  rbraceP >>> \_ ->
-  tokcutP "Expected 'in' Token to open a let expr's sub expression" $
-  rsvP "in" >>> \_ ->
-  exprP >>> \exp ->
-             accept $ ELet () defs exp
+   rsvP "let" >>> \_ ->
+   optBracesP $
+   tokcutP "Expected one or more declarations for a let expr" $
+   many $ orExList [oDefP, tDefP] >>> \defs ->
+   tokcutP "Expected 'in' to open a let expr's sub expression" $
+   rsvP "in" >>> \_ ->
+   exprP >>> \exp ->
+              accept $ ELt defs exp
 
 
 -- parse a case expression
-eCaseP :: Parser Token (Expr ())
+eCaseP :: Parser Token Exp
 eCaseP =
   rsvP "case" >>> \_ ->
   exprP >>> \exp ->
   tokcutP "Expected 'of' Token to close the scrutinee of a case expr" $
   rsvP "of" >>> \_ ->
-  tokcutP "Expected left brace to open the alt block of a case expr"
-  lbraceP >>> \_ ->
-  altsP >>> \alts ->
-  tokcutP "Expected right brace to close the alt block of a case expr"
-  rbraceP >>> \_ ->
-               accept $ ECase () exp alts
-
-
--- parse an Alts section in a case expression, accept an Alts object
-altsP :: Parser Token (Alts ())               
-altsP =
-  let
-    name = "alts" --error "this alts not given a name!" 
-  in
-   tokcutP "Expected one or more alts separated by semicolons" $
-   sepByP' altP semiP >>> \alts ->
-                             accept $ Alts () alts name
+  opBracesP $ some clauseP >>> \cls ->
+                                accept $ ECs exp cls
 
 
 -- parse a case expression alternative, accept an Alt object
-altP :: Parser Token (Alt ())
-altP =
-  let aconNameP = orExList [intP `using` show, conNameP] in
-   orExList [varNameP >>> \v ->
-                          accept $ ADef () v,
-             aconNameP >>> \con ->
-             many' varNameP >>> \vs ->
-                                 accept $ ACon () con vs
-            ] >>> \alt ->
-   tokcutP "Expected a '->' symbol after an alt's pattern"
-   arrowP >>> \_ ->
-   exprP >>> \exp ->
-              accept $ alt exp -- fully apply Alt constructor to Expr
+clauseP :: Parser Token (Pattern, Exp)
+clauseP =
+  casePatP >>> \pat ->
+  tokcutP "Expected a '->' symbol after a clause's pattern"
+  arrowP >>> \_ ->
+  exprP >>> \exp ->
+  tokcutP "Expected a semicolon to terminate a clause's body"
+  semiP >>> \_ ->
+             accept (pat, exp)
 
+
+casePatP :: Parser Token Pattern
+casePatP = orExList [conPatP, varPatP]
+
+funPatP :: Parser Token Pattern
+funPatP = orExList [inParens conPatP, varPatP]
+
+conPatP :: Parser Token Pattern
+conPatP =
+  orExList [conNameP, intP ` ] >>> \c ->
+  many funPatP >>> \pats ->
+                    accept $ Match c pats
+
+varPatP :: Parser Token Pattern
+varPatP = varNameP `using` Default
+  
 
 -- parse an atom (variable or literal)
 atomP :: Parser Token Atom
@@ -428,28 +391,34 @@ atomP = orExList [
 
 
 -- parse a data definition accepting the TyCon object that describes it
-tyConP :: Parser Token TyCon
-tyConP =
+dDefP :: Parser Token Defn
+dDefP =
   rsvP "data" >>> \_ ->
 
-  optionally (rsvP "unboxed" `using` (const False)) True >>> \boxed ->
+  optP (rsvP "unboxed" `using` (const False)) True >>> \boxed ->
   
   tokcutP "Expected valid constructor name in datatype declaration" $
   conNameP >>> \con ->
   
-  many' varNameP >>> \tyvars ->
+  many' varNameP >>> \vars ->
 
   tokcutP "Expected '=' Token to bind datatype declaration"
   eqP >>> \_ ->
 
   tokcutP "Expected one or more data constructor definitions separated by '|'" $
-  sepByP dataConP barP >>> \dcs ->
-                            accept $ TyCon boxed con tyvars dcs
+  sepByP constrP barP >>> \dcs ->
+
+  tokcutP "Expected semicolon to terminate datatype definition"
+  semiP >>> \_ ->
+             let mvs = map MVar vars
+                 mtyp = MCon boxed con mvs
+                 def = DDefn mtyp dcs
+             in accept def
 
 
 -- parse a data constructor as a DataCon object
-dataConP :: Parser Token DataCon
-dataConP =
+constrP :: Parser Token Constr
+constrP =
   conNameP >>> \con ->
 
   isNextP (orExList [semiP, eofP, barP]) >>> \b ->
@@ -459,7 +428,7 @@ dataConP =
 
   else tokcutP "Expected valid monotypes in data constructor" $
        some' monoTypP >>> \mTypes ->
-                           accept $ DataCon con mTypes
+                           accept $ Constr con mTypes
 
 
 -- parse a monotype in a data constructor as a Monotype object
@@ -497,38 +466,6 @@ mConP =
                                
                                 
 
-
-
-{- old functions for building Params objects and ConMaps
-toParamPairs t@(TyCon boxed tnm vars dCons) =
-  let tPair =
-        (tnm,
-         TyConParam { tarity = length vars,
-                      ttag   = error "no tag set",
-                      tboxed = boxed,
-                      tdatacons = map dName dCons,
-                      tycon = t})
-      dHelp tyName boxed d@(DataCon dnm mtypes) =
-        (dnm,
-         DataConParam { darity = length mtypes,
-                        dtag = error "no tag set",
-                        dboxed = boxed,
-                        dtycon = tyName,
-                        datacon = d})
-      dPairs = map (dHelp tnm boxed) dCons
-      dName (DataCon n _) = n
-  in
-   (tPair, dPairs)
-
-
-toConMaps tycons =
-  let
-    pairs = map toParamPairs tycons
-    tconMap = Map.fromList $ map fst pairs
-    dconMap = Map.fromList $ concatMap snd pairs
-  in
-   (tconMap, dconMap)
--}
 -------------------------------- general Parser combinators ------------------------
 
 
@@ -659,7 +596,7 @@ sepByP p1 p2 =
                              accept (x:xs)
 
 -- same as sepByP, optionally including a final separator
-sepByP' p1 p2 = sepByP p1 p2 `thenx` (optionally p2 undefined)
+sepByP' p1 p2 = sepByP p1 p2 `thenx` (optP p2 undefined)
 
 -- same as sepByP, but forcing at least one separation match, e.g.
 -- p1 p2 p1 [p1 p2 p1 p2 ... p1]
@@ -669,13 +606,12 @@ sepByP1 p1 p2 =
   p1 >>> \x ->
           accept (x:xs)
 
-
 -- Parser that follows the Maybe pattern.
 -- if the given parser succeeds, it returns as normal,
 -- otherwise, the alternative is returned with no input
 -- consumed
-optionally :: Parser i v -> v -> Parser i v
-optionally p alt inp = case p inp of
+optP :: Parser i v -> v -> Parser i v
+optP p alt inp = case p inp of
   [] -> accept alt inp
   x -> x
 
@@ -714,3 +650,4 @@ isNextP :: Parser i v -> Parser i Bool
 isNextP p inp =
   let b = not $ null $ p inp
   in accept b inp
+    
