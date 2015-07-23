@@ -256,12 +256,12 @@ DEFUN2(stgApply, N, f) {
       // excess < 0, too few args
     } else {
       fprintf(stderr, "stgApply1 PAP too few args\n");
-      // for now re-use the PAP object
-      // add new args to PAP after fvs and existing args
-      copyargs(&f.op->payload[f.op->infoPtr->fvCount + f.op->argCount],
+      Obj *pap = stgNewHeapObj();
+      *pap = *f.op;  // quick and dirty
+      copyargs(&pap->payload[pap->infoPtr->fvCount + pap->argCount],
 	       argv, argc);
-      f.op->argCount += argc;
-      STGRETURN1(f);
+      pap->argCount += argc;
+      STGRETURN1(HOTOPL(pap));
     } // if excess
   } // case PAP
 
