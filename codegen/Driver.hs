@@ -25,7 +25,7 @@ import           PPrint
 import           InfoTab
 import           HeapObj
 import           Tokenizer
-import           STGParser
+import           Parser
 import           Rename
 import           SetFVs
 import           HMStg

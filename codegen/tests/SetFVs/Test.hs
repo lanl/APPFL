@@ -1,7 +1,6 @@
 module SetFVs.Test where
-import           ADT
 import           Driver
-import           Parser
+import           HMStg
 
 import           Test.Tasty
 import           Test.Tasty.Golden

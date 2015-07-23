@@ -7,7 +7,8 @@
 
 module HMStg (
   hmstgdebug,
-  hmstg
+  hmstg,
+  showObjs
 ) where
 
 import ADT

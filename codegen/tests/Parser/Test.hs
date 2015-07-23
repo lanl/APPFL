@@ -1,5 +1,5 @@
 module Parser.Test where
-import           Parser
+import           Driver
 
 import           Test.Tasty
 import           Test.Tasty.Golden
@@ -20,12 +20,12 @@ parser1 :: Assertion
 parser1 = let
     ins = "one=CON(I 1);"
     outs = "([],[CON {omd = (), c = \"I\", as = [1], oname = \"one\"}])"
-    in show (parse ins) @?= outs
+    in show (parser ins) @?= outs
 
 parser2 :: IO ByteString
-parser2 = return $ fromString $ show $ parse "two = CON(I 2);"
+parser2 = return $ fromString $ show $ parser "two = CON(I 2);"
 
 parser2file :: IO ByteString
 parser2file = do
                 input <- IO.readFile "tests/Parser/con2.stg"
-                return $ fromString $ show $ parse input
+                return $ fromString $ show $ parser input

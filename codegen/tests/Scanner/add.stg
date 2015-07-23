@@ -1,6 +1,0 @@
-one = CON(I 1);
-two = CON(I 2);
-main = THUNK(case one of {
-    I i -> case two of {
-        I j -> case plus# i j of {
-             x -> let { result = CON (I x) } in result }}});
