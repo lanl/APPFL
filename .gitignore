@@ -13,3 +13,5 @@ sandbox/ministg-0.3/src/trace
 #runtime crud
 runtime/main
 runtime/mymain
+#emacs temp files
+\#*\#
