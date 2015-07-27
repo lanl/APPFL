@@ -106,10 +106,10 @@ import PPrint
 
 
 instance (PPrint a, PPrint b) => PPrint (Parsed a b) where
-  toDoc (Parsed a) =
-    (lcomment $ text "PARSED:") $+$ toDoc a
-  toDoc (Unparsed b) =
-    bcomment $ text "UNPARSED:" $+$ toDoc b
+  pprint (Parsed a) =
+    (lcomment $ text "PARSED:") $+$ pprint a
+  pprint (Unparsed b) =
+    bcomment $ text "UNPARSED:" $+$ pprint b
 
 
 -- make it easy to group parsed and unparsed input together for later filtration
@@ -244,7 +244,7 @@ inbracesP p = xthenx lbraceP p rbraceP
 -- specialized cutp
 tokcutP msg p inp = cutP (show $
                   text "Parse error:" <+>
-                  (if not $ null inp then toDoc $ head inp else text "end of input:") $+$
+                  (if not $ null inp then pprint $ head inp else text "end of input:") $+$
                   text msg)
                   p inp
 

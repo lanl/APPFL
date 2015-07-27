@@ -131,7 +131,7 @@ printObjsVerbose (tycons, objs) = print $ objListDoc objs
 
 -- this is currently not a perfect unparse.
 unparse (tycons, objs) =
-  print $ toDoc $ (map DataDef tycons) ++ (map ObjDef objs)
+  print $ pprint $ (map DataDef tycons) ++ (map ObjDef objs)
 
 tester ftest fprint file =
   do
