@@ -4,14 +4,12 @@ project(runtime)
   set(rt_hdrs cmm.h
               gc.h
               stg.h
-              stgcmm.h
               stgutils.h
     )
 
   set(rt_srcs cmm.c
               gc.c
               stg.c
-              stgcmm.c
               stgutils.c
     )
 

@@ -4,7 +4,6 @@
 
 #include "stg.h"
 #include "cmm.h"
-#include "stgcmm.h"
 #include "predefs.h"
 #include "gc.h"
 

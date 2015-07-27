@@ -389,5 +389,4 @@ not = FUN(b -> case b of {
 	       True  -> false});
 
 
--- compose :: (b -> c) -> (a -> b) -> a -> c
-compose = FUN(f g x -> case g x of { r -> f r});
+compose = FUN(f g x -> let { r = THUNK(g x); } in f g);

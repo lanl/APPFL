@@ -13,7 +13,6 @@ by the stgc codegenerator.
 
 #include "stg.h"
 #include "cmm.h"
-#include "stgcmm.h"
 #include "stgutils.h"
 #include "gc.h"
 
@@ -36,6 +35,7 @@ DEFUN2(stg_case_not_exhaustive, self, x) {
   exit(0);
   ENDFUN;
 }
+
 InfoTab it_stg_case_not_exhaustive = {
   .name = "stg_case_not_exhaustive",
   .entryCode = &stg_case_not_exhaustive,
@@ -43,6 +43,7 @@ InfoTab it_stg_case_not_exhaustive = {
   .fvCount = 0,
   .funFields.arity = 1,
 };
+
 Obj sho_stg_case_not_exhaustive = {
   .objType = FUN,
   .infoPtr = &it_stg_case_not_exhaustive,

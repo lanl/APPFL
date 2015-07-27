@@ -14,9 +14,6 @@
 #include "stg.h"
 #include "cmm.h"
 
-extern void stgPushCont(Obj c);
-extern Obj  stgPopCont();
-
 void *stgHeap = NULL;
 void *stgHP = NULL;
 void *stgStack = NULL;
@@ -37,10 +34,96 @@ const char *objTypeNames[] = {
   "FORWARD",
 };
 
-Obj* stgNewHeapObj() {
-  Obj *curp = (Obj *)stgHP;
-  stgHP = (Obj *)stgHP + 1;
-  return curp;
+Obj *stgAllocCont(InfoTab *itp) {
+  assert( itp->objType != CALLCONT &&
+          "stgAllocCont: itp->objType == CALLCONT" );
+  int payloadSize = itp->layoutInfo.payloadSize;
+  size_t objSize = sizeof(Obj) + payloadSize * sizeof(PtrOrLiteral);
+  fprintf(stderr, "allocating continuation with payloadSize %d\n", payloadSize);
+  showIT(itp);
+  stgSP = (char *)stgSP - objSize;
+  assert(stgSP >= stgStack);
+  Obj *objp = (Obj *)stgSP;
+  objp->infoPtr = itp;
+  objp->objType = itp->objType;
+  objp->argCount = 0;  // for PAP, this will go
+  strcpy(objp->ident, itp->name);  // may be overwritten
+  return objp;
+}
+
+// this is still a hack:  we need the whole family of stgApply functions
+// and an analogous set of infoTabs with correct layout info for
+// CALLCONTs; alternatively, CALLCONTs could be more self-describing like PAPs
+// for now payload[0].i == argc, the number of subsequent args
+Obj *stgAllocCallCont2(InfoTab *itp, int argc) {
+  assert(itp->objType == CALLCONT && 
+	 "stgAllocCallCont: itp->objType != CALLCONT");
+  size_t objSize = sizeof(Obj) + (argc + 1) * sizeof(PtrOrLiteral);
+  fprintf(stderr, "allocating call continuation with argc %d\n", argc);
+  showIT(itp);
+  stgSP = (char *)stgSP - objSize;
+  assert(stgSP >= stgStack);
+  Obj *objp = (Obj *)stgSP;
+  objp->infoPtr = itp;
+  objp->objType = itp->objType;
+  objp->argCount = 0;  // for PAP, this will go
+  objp->payload[0] = (PtrOrLiteral) {.argType = INT, .i = argc};
+  strcpy(objp->ident, itp->name);  // may be overwritten
+  return objp;
+}
+
+// TODO: 64 bit align
+// return pointer to popped cont
+// NOTE:  stgAllocCont with invalidate this pointer!
+// CALLCONT is special
+Obj *stgPopCont() {
+  Obj *retVal = (Obj *)stgSP;
+  // this isn't robust for multiple reasons
+  assert( retVal->infoPtr->objType >= UPDCONT &&
+          retVal->infoPtr->objType <= FUNCONT);
+  int payloadSize;
+  if (retVal->infoPtr->objType == CALLCONT) {
+    payloadSize = retVal->payload[0].i + 1;
+    fprintf(stderr, "popping call continuation with argc %d\n", payloadSize-1);
+  } else {
+    payloadSize = retVal->infoPtr->layoutInfo.payloadSize;
+    fprintf(stderr, "popping continuation with payloadSize %d\n", payloadSize);
+  }
+  size_t objSize = sizeof(Obj) + payloadSize * sizeof(PtrOrLiteral);
+  showIT(retVal->infoPtr);
+  assert((char *)retVal + objSize <= (char *)stgStack + stgStackSize);
+  stgSP = (char *)retVal + objSize;
+  return retVal;
+}
+
+Obj* stgNewHeapObj(InfoTab *itp) {
+  fprintf(stderr, "stgNewHeapObj: "); showIT(itp);
+  int payloadSize = itp->layoutInfo.payloadSize;
+  size_t objSize = sizeof(Obj) + payloadSize * sizeof(PtrOrLiteral);
+  Obj *objp = (Obj *)stgHP;
+  stgHP = (char *)stgHP + objSize;
+  objp->infoPtr = itp;
+  objp->objType = itp->objType;
+  objp->argCount = 0;  // for PAP, this will go
+  strcpy(objp->ident, itp->name);  // may be overwritten
+  fprintf(stderr, "stgNewHeapObj: "); showStgObj(objp);
+  return objp;
+}
+
+// PAP is special
+Obj* stgNewHeapPAP(InfoTab *itp, int argc) {
+  assert(itp->objType == FUN && "stgNewHeapPap:  itp->objType != FUN" );
+  fprintf(stderr, "stgNewHeapPap: "); showIT(itp);
+  size_t objSize = sizeof(Obj) + (argc + 1) * sizeof(PtrOrLiteral);
+  Obj *objp = (Obj *)stgHP;
+  stgHP = (char *)stgHP + objSize;
+  objp->infoPtr = itp;
+  objp->objType = PAP;
+  objp->argCount = argc;  // for PAP, this will go
+  objp->payload[0] = (PtrOrLiteral) {.argType = INT, .i = argc};
+  strcpy(objp->ident, itp->name);  // may be overwritten
+  fprintf(stderr, "stgNewHeapPAP: "); showStgObj(objp);
+  return objp;
 }
 
 void showStgObjPretty(Obj *p);
@@ -58,6 +141,15 @@ void showStgVal(PtrOrLiteral v) {
   // showStgValDebug(v);
 }
 
+void showIT(InfoTab *itp) {
+  fprintf(stderr, "showIT: %s %s, fvCount %d", 
+	  objTypeNames[itp->objType], 
+	  itp->name, 
+	  itp->fvCount);
+  if (itp->objType != CALLCONT)
+    fprintf(stderr, ", layoutInfo.payloadSize %d", itp->layoutInfo.payloadSize);
+  fprintf(stderr, "\n");
+}  
 
 // ****************************************************************
 
@@ -105,15 +197,15 @@ void showStgCont(Obj *c) {
 }
 
 void showStgObjRecPretty(Obj *p) {
-
+  // fprintf(stderr, "showStgObjRecPretty()\n");
   // depth check first
   if (depth+1 >= showDepthLimit) {
     fprintf(stderr, "******showStgObjRec depth exceeded\n");
     return;
   }
-  Obj o = *p;
 
-  InfoTab it = *o.infoPtr;
+  InfoTab it = *(p->infoPtr);
+  // fprintf(stderr, "showStgObjRecPretty() past deref 1\n");
 
   for (int i=0; i != depth; i++) {
     if (p == stack[i]) {
@@ -123,51 +215,49 @@ void showStgObjRecPretty(Obj *p) {
   }
   stack[depth++] = p;
 
-  if (o.objType != BLACKHOLE && 
-      o.objType != INDIRECT &&
-      o.objType != FORWARD &&
-      o.objType != it.objType) {
-	    if(!(o.objType == PAP && it.objType == FUN)) {
+  if (p->objType != BLACKHOLE &&
+      p->objType != INDIRECT &&
+      p->objType != FORWARD &&
+      p->objType != it.objType) {
+	    if(!(p->objType == PAP && it.objType == FUN)) {
           fprintf(stderr, "mismatch in infotab and object type! %d != %d\n",
-        		o.objType, it.objType);
+        		p->objType, it.objType);
           exit(0);
 	    }
   }
-  if (strcmp(it.name, o.ident)) {
-	  if (strcmp(it.name, "true") != 0 && strcmp(it.name, "false") != 0 ) {
-        fprintf(stderr, "mismatch in infotab and object names \"%s\" != \"%s\"\n",
-        		it.name, o.ident);
-        exit(0);
-	  }
-  }
+  if (strcmp(it.name, p->ident)) {
+    fprintf(stderr, "mismatch in infotab and object names \"%s\" != \"%s\"\n",
+	    it.name, p->ident);
+    exit(0);
+}
 
 
-  switch (o.objType) {
+  switch (p->objType) {
   case FUN:
   case PAP:
   case THUNK:
   case BLACKHOLE:
-    fprintf(stderr, "%s = <%s>", o.ident, objTypeNames[o.objType]);
+    fprintf(stderr, "%s = <%s>", p->ident, objTypeNames[p->objType]);
     break;
 
   case CON:
-    fprintf(stderr, "%s = %s", o.ident, it.conFields.conName );
+    fprintf(stderr, "%s = %s", p->ident, it.conFields.conName );
     int arity = it.conFields.arity;
     if (arity > 0) {
       if (arity > 1) fprintf(stderr, "(");
       else fprintf(stderr, " ");
-      showStgValPretty(o.payload[0]);
+      showStgValPretty(p->payload[0]);
       for (int i = 1; i < arity; i++) {
-	fprintf(stderr, ", ");
-	showStgValPretty(o.payload[i]);
+	    fprintf(stderr, ", ");
+	    showStgValPretty(p->payload[i]);
       }
       if (arity > 1) fprintf(stderr, ")");
     }
     break;
 
   case INDIRECT:
-    fprintf(stderr, "%s --> ", o.ident );
-    showStgObjRecPretty(o.payload[0].op);
+    fprintf(stderr, "%s --> ", p->ident );
+    showStgObjRecPretty(p->payload[0].op);
     break;
 
   case FORWARD:
@@ -189,22 +279,15 @@ void showStgValPretty(PtrOrLiteral v) {
   case DOUBLE:
     fprintf(stderr,"%f", v.d);
     break;
-  case BOOL:
-    if (v.b) fprintf(stderr,"true#");
-    else fprintf(stderr,"false#");
-    break;
-  case FLOAT:
-    fprintf(stderr,"%f", v.f);
-    break;
-  case CHAR:
-    fprintf(stderr,"%c", v.c);
-    break;
+    //  case FLOAT:
+    //    fprintf(stderr,"%f", v.f);
+    //    break;
   case HEAPOBJ:
     showStgObjRecPretty(v.op);
     break;
   default:
-    fprintf(stderr,"undefined PtrOrLiteral.tag!\n");
-    exit(0);
+    fprintf(stderr,"undefined PtrOrLiteral.tag! tag=%d\n", v.argType);
+    exit(1);
   }
 }
 
@@ -224,12 +307,12 @@ void showStgObjRecDebug(Obj *p) {
   }
   stack[depth++] = p;
 
-  Obj o = *p;
 
-  InfoTab it = *o.infoPtr;
-  fprintf(stderr, "%s %s %s ", objTypeNames[o.objType], 
+
+  InfoTab it = *(p->infoPtr);
+  fprintf(stderr, "%s %s %s ", objTypeNames[p->objType],
 	  objTypeNames[it.objType], it.name);
-  switch (o.objType) {
+  switch (p->objType) {
   case FUN:
     fprintf(stderr,"\n");
     break;
@@ -241,7 +324,7 @@ void showStgObjRecDebug(Obj *p) {
   case CON:
     fprintf(stderr,"tag %d arity %d\n", it.conFields.tag, it.conFields.arity );
     for (int i = 0; i != it.conFields.arity; i++)
-      showStgValDebug(o.payload[i]);    
+      showStgValDebug(p->payload[i]);
     break;
 
   case THUNK:
@@ -254,7 +337,7 @@ void showStgObjRecDebug(Obj *p) {
 
   case INDIRECT:
     fprintf(stderr,"INDIRECT to\n");
-    showStgObjRecDebug(o.payload[0].op);
+    showStgObjRecDebug(p->payload[0].op);
     break;
 
   case FORWARD:
@@ -314,9 +397,11 @@ void showStgHeap() {
     fprintf(stderr,"\n");
   }
   fprintf(stderr,"\nSTG heap:\n\n");
+/*
   for (Obj *p = ((Obj *) stgHP) - 1;
        p >= (Obj *)stgHeap;
        p--) {showStgObj(p); fprintf(stderr,"\n");}
+*/
   showStgStack();
 }
 
