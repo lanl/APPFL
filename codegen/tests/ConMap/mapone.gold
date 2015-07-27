@@ -3,6 +3,7 @@ InfoTab it_one =
     .fvCount             = 0,
     .entryCode           = &stg_constructorcall,
     .objType             = CON,
+    .layoutInfo.payloadSize = 1,
     .conFields.arity     = 1,
     .conFields.tag       = 101,
     .conFields.conName   = "I",
@@ -12,4 +13,5 @@ InfoTab it_main =
     .fvCount             = 0,
     .entryCode           = &fun_main,
     .objType             = THUNK,
+    .layoutInfo.payloadSize = 1,
   };

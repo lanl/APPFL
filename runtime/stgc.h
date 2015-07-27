@@ -3,8 +3,8 @@ File included at top of every program generated
 by the stgc codegenerator. 
 */
 
-#ifndef stg_header_h
-#define stg_header_h
+#ifndef stgc_h
+#define stgc_h
 
 #include <assert.h>
 #include <stdio.h>
@@ -23,8 +23,6 @@ by the stgc codegenerator.
 // entry for each manifest occurrence, so we'll use the constructor
 // name rather than uniqued version of name of variable bound to
 // Also true for known functions?
-
-extern FnPtr start();
 
 // stg_case_not_exhaustive = FUN( x ->  );
 DEFUN2(stg_case_not_exhaustive, self, x) {

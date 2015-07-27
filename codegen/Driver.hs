@@ -29,23 +29,9 @@ header :: String
 header = "#include \"stgc.h\"\n"
         
 footer :: Bool -> String
-footer v = 
-  let top = "\n\nDEFUN0(start) {\n" ++
-            "  registerSHOs();\n" ++
-            "  Obj *showResultCont = stgAllocCallCont2(&it_stgShowResultCont, 0);\n" ++
-            "  STGEVAL(((PtrOrLiteral){.argType = HEAPOBJ, .op = &sho_main}));\n" ++
-            "  STGRETURN0();\n" ++
-            "  ENDFUN;\n" ++
-            "}\n\n" ++
-            "int main (int argc, char **argv) {\n" ++
-            "  initStg();\n" ++
-            "  initCmm();\n" ++
-            "  initGc();\n" ++
-            "  CALL0_0(start);\n"
-      bot = "  return 0;\n" ++ "}\n\n"
-  in if v then top ++ "  showStgHeap();\n" ++ bot else top ++ bot
-           
+footer v = cgStart ++ cgMain v
 
+       
 -- nameDefs
 --  :: [([Char], Obj)] ->
 --     [([Char], [Char])] ->
@@ -105,8 +91,6 @@ conmaptest arg =
    let (_, os) = typechecker f
    putStrLn $ maybe "no map found in objs" ppConMaps (getmap os)
 
-
-   
 
 codegener :: String -> Bool -> String
 codegener inp v = let (tycons, objs) = typechecker inp

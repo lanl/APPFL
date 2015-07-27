@@ -6,6 +6,7 @@ InfoTab it_one =
     .fvCount             = 0,
     .entryCode           = &stg_constructorcall,
     .objType             = CON,
+    .layoutInfo.payloadSize = 1,
     .conFields.arity     = 1,
     .conFields.tag       = 101,
     .conFields.conName   = "I",
@@ -15,6 +16,7 @@ InfoTab it_main =
     .fvCount             = 0,
     .entryCode           = &fun_main,
     .objType             = THUNK,
+    .layoutInfo.payloadSize = 1,
   };
 
 extern Obj sho_one;
@@ -25,19 +27,17 @@ Obj sho_one =
   .infoPtr   = &it_one,
   .objType   = CON,
   .ident     = "one",
-  .payloadSize = 32,
   .payload = {
     {.argType = INT, .i = 1},
-    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,},
+},
   };
 Obj sho_main =
 {
   .infoPtr   = &it_main,
   .objType   = THUNK,
   .ident     = "main",
-  .payloadSize = 32,
   .payload = {
-        0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,},
+    },
   };
 
 void registerSHOs() {
@@ -46,16 +46,19 @@ void registerSHOs() {
 }
 
 
+// Int [B] ()
 DEFUN1(fun_main, self) {
   fprintf(stderr, "main here\n");
   stgThunk(self);
   stgCurVal = HOTOPL(&sho_one); // one
+  fprintf(stderr, "main returning\n");
   STGRETURN0();
   ENDFUN;
 }
+
 DEFUN0(start) {
   registerSHOs();
-  stgPushCont(showResultCont);
+  Obj *showResultCont = stgAllocCallCont2(&it_stgShowResultCont, 0);
   STGEVAL(((PtrOrLiteral){.argType = HEAPOBJ, .op = &sho_main}));
   STGRETURN0();
   ENDFUN;

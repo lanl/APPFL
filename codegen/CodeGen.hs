@@ -33,7 +33,9 @@ Alt default var:  "stgCurVal, bind it"
 {-# LANGUAGE NamedFieldPuns    #-}
 
 module CodeGen(
-  cgObjs
+  cgObjs,
+  cgStart,
+  cgMain
 ) where
 
 import ADT
@@ -106,6 +108,24 @@ cgObjs objs runtimeGlobals =
         (forwards, fundefs) = unzip funcs
         (forward, fundef) = registerSHOs objs
     in (forward:forwards, fundef:fundefs)
+    
+cgStart :: String
+cgStart = "\n\nDEFUN0(start) {\n" ++
+            "  registerSHOs();\n" ++
+            "  Obj *showResultCont = stgAllocCallCont2(&it_stgShowResultCont, 0);\n" ++
+            "  STGEVAL(((PtrOrLiteral){.argType = HEAPOBJ, .op = &sho_main}));\n" ++
+            "  STGRETURN0();\n" ++
+            "  ENDFUN;\n" ++
+            "}\n\n"  
+            
+cgMain :: Bool -> String 
+cgMain v = let top = "int main (int argc, char **argv) {\n" ++
+                     "  initStg();\n" ++
+                     "  initCmm();\n" ++
+                     "  initGc();\n" ++
+                     "  CALL0_0(start);\n"
+               bot = "  return 0;\n" ++ "}\n\n"
+  in if v then top ++ "  showStgHeap();\n" ++ bot else top ++ bot            
 
 registerSHOs objs = 
     ("void registerSHOs();",
