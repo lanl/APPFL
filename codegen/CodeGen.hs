@@ -22,9 +22,7 @@ SHO:  referenced with absolute memory address, e.g. "sho_unit"
 
 HO:  address calculated from TOH pointer, e.g. "((Obj *)TOH_ptr)[-3]"
 
-Formal parameter:  by name, e.g. "x"
-
-CaseCont:  "myCaseCont.payload[i]"
+Formal parameter or local variable from cast cont:  by name, e.g. "x"
 
 Alt constructor var:  "stgCurVal.op->payload[i], bind these"
 
@@ -54,8 +52,7 @@ import qualified Data.Map as Map
 
 data RVal = SHO           -- static heap obj
           | HO Int        -- heap obj,  payload size
-          | FP            -- formal param, use name as is
-          | CC String Int -- named case continuation
+          | FP            -- formal param or local var, use name as is
           | FV Int        -- free var, self->payload[Int]
           | AC Var Int    -- alt con
           | AD Var        -- alt def
@@ -76,7 +73,6 @@ lu v ((v',k):_) size' n | v == v' =
       SHO     -> "HOTOPL(&sho_" ++ v ++ ")"
       HO size -> "HOTOPL((Obj *)STGHEAPAT(" ++ show (size+size') ++ "," ++ show (n+1) ++ "))"
       FP      -> v
-      CC cc i -> cc ++ ".payload[" ++ show i ++ "]"
       FV i    -> "self.op->payload[" ++ show i ++ "]"
       AC v i  -> v ++ "->payload[" ++ show i ++ "]"
       AD v    -> v
@@ -92,10 +88,8 @@ cgv env v = getEnvRef v env -- ++ "/* " ++ v ++ " */"
 
 cga :: Env -> Atom -> String
 cga env (LitI i) = "((PtrOrLiteral){.argType = INT,    .i = " ++ show i ++ " })"
-cga env (LitB b) = "((PtrOrLiteral){.argType = BOOL,   .b = " ++ (if b then "true" else "false") ++ " }"
 cga env (LitD d) = "((PtrOrLiteral){.argType = DOUBLE, .d = " ++ show d ++ " })"
-cga env (LitF f) = "((PtrOrLiteral){.argType = FLOAT,  .f = " ++ show f ++ " })"
-cga env (LitC c) = "((PtrOrLiteral){.argType = CHAR,   .c = " ++ show c ++ " })"
+--cga env (LitF f) = "((PtrOrLiteral){.argType = FLOAT,  .f = " ++ show f ++ " })"
 cga env (Var v) = cgv env v
 
 -- CG in the state monad ***************************************************
@@ -110,10 +104,10 @@ cgObjs objs runtimeGlobals =
         env = zip tlnames $ repeat SHO
         (funcs, _) = runState (cgos env objs) 0  
         (forwards, fundefs) = unzip funcs
-        (forward, fundef) = statObjFun objs
+        (forward, fundef) = registerSHOs objs
     in (forward:forwards, fundef:fundefs)
 
-statObjFun objs = 
+registerSHOs objs = 
     ("void registerSHOs();",
      "void registerSHOs() {\n" ++
         concat [ "  stgStatObj[stgStatObjCount++] = &" ++ s ++ ";\n" 
@@ -132,8 +126,6 @@ cgo env o@(FUN it vs e name) =
                  zip vs (repeat FP) ++
                  env
       (inline, funcs) <- cge env' e
---      let name' = showITType o ++ "_" ++ name
---      let forward = "FnPtr " ++ name' ++ "();"
       let forward = "FnPtr fun_" ++ name ++ "();"
       let func =
             "DEFUN" ++ show (length vs + 1) ++ "(fun_" ++ 
@@ -142,6 +134,7 @@ cgo env o@(FUN it vs e name) =
             ") {\n" ++
             "  fprintf(stderr, \"" ++ name ++ " here\\n\");\n" ++
                indent 2 inline ++
+            "  fprintf(stderr, \"" ++ name ++ " returning\\n\");\n" ++
             "  STGRETURN0();\n" ++  -- in case inline doesn't jump somewhere else
             "  ENDFUN;\n}"
       return $ (forward, func) : funcs
@@ -156,14 +149,13 @@ cgo env o@(THUNK it e name) =
     do 
       let env' = zip (fvs it) (map FV [0..]) ++ env
       (inline, funcs) <- cge env' e
---      let name' = showITType o ++ "_" ++ name
---      let forward = "FnPtr " ++ name' ++ "();"
       let forward = "FnPtr fun_" ++ name ++ "();"
       let func =
             "DEFUN1(fun_" ++ name ++ ", self) {\n" ++
             "  fprintf(stderr, \"" ++ name ++ " here\\n\");\n" ++
             "  stgThunk(self);\n" ++
             indent 2 inline ++
+            "  fprintf(stderr, \"" ++ name ++ " returning\\n\");\n" ++
             "  STGRETURN0();\n" ++  -- in case inline doesn't jump somewhere else
             "  ENDFUN;\n}"
       return $ (forward, func) : funcs
@@ -175,21 +167,34 @@ cgo env (BLACKHOLE {}) =
 
 cgUBa env (Var v)  t   =  "(" ++ cgv env v ++ ")." ++ t
 cgUBa env (LitI i) "i" = show i
-cgUBa env (LitB b) "b" = if b then "true" else "false"
 cgUBa env (LitD d) "d" = show d
-cgUBa env (LitF f) "f" = show f
-cgUBa env (LitC c) "c" = show c
+-- cgUBa env (LitF f) "f" = show f
+
+stgApplyGeneric env f as = 
+    "// " ++ f ++ " " ++ showas as ++ "\n" ++
+    "STGAPPLY" ++ show (length as) ++ "(" ++
+    intercalate ", " (cgv env f : map (cga env) as) ++ 
+    ");\n"
+
+-- for now
+stgApplyDirect env (EFCall it f as) = 
+    "// " ++ f ++ " " ++ showas as ++ "\n" ++
+    "STGAPPLY" ++ show (length as) ++ "(" ++
+    intercalate ", " (cgv env f : map (cga env) as) ++ 
+    ");\n"
 
 -- return (inline code, [(forward, fundef)])
 cge :: Env -> Expr InfoTab -> State Int (String, [(String, String)])
 cge env (EAtom it a) =
     return ("stgCurVal = " ++ cga env a ++ "; " ++ "// " ++ showa a ++ "\n", [])
 
-cge env (EFCall it f as) = 
-    let inline = "// " ++ f ++ " " ++ showas as ++ "\n" ++
-                 "STGAPPLY" ++ show (length as) ++ "(" ++
-                 intercalate ", " (cgv env f : map (cga env) as) ++ 
-                 ");\n"
+cge env e@(EFCall it f as) = 
+    let inline = 
+            case (knownCall it) of 
+              Nothing -> stgApplyGeneric env f as
+              Just kit -> if arity kit == length as
+                          then stgApplyDirect env e
+                          else stgApplyGeneric env f as
     in return (inline, [])
 
 cge env (EPrimop it op as) = 
@@ -248,28 +253,23 @@ cge env (ECase _ e a@(Alts italts alts aname)) =
                                      _              -> True
     in do (ecode, efunc) <- cge env e
           (acode, afunc) <- cgalts env a eboxed
-          let name  = "ccont_" ++ aname
-              pre = "Cont " ++ name ++ " =\n" ++
-                 "  { .retAddr = &" ++ aname ++ ",\n" ++
-                 "    .objType = CASECONT,\n" ++
-                 "    .ident = \"CCont for " ++ aname ++ "\",\n" ++ 
-                 "  };\n" ++
+          let name = "ccont_" ++ aname
+              pre = "Obj *" ++ name ++ 
+                 " = stgAllocCont( &it_" ++ aname ++ ");\n" ++
                  (if fvs italts == [] then
                     "    // no FVs\n"
                   else
-                    "    // load payload with FVs " ++ 
-                            intercalate " " (fvs italts) ++ "\n") ++
-                         indent 2 (snd (loadPayloadFVs env (fvs italts) name False))
-                
-                 
-              cont = "stgPushCont(" ++ name ++ ");\n"
-          return (pre ++ cont ++ ecode ++ acode, efunc ++ afunc)
-
+                    "    // load payload with FVs " ++
+                      intercalate " " (fvs italts) ++ "\n") ++
+                    indent 2 (loadPayloadFVs env (fvs italts) name)
+          return (pre ++ ecode ++ acode, efunc ++ afunc)
+          
 -- ADef only or unary sum => no C switch
 cgalts env (Alts it alts name) boxed = 
     let contName = "ccont_" ++ name
         scrutName = "scrut_" ++ name
-        altenv = zip (fvs it) [ CC contName i | i <- [0..] ]
+        -- altenv = zip (fvs it) [ CC contName i | i <- [0..] ]
+        altenv = zip (fvs it) (repeat FP)
         env' = altenv ++ env
         forward = "FnPtr " ++ name ++ "();"
     in do
@@ -285,10 +285,13 @@ cgalts env (Alts it alts name) boxed =
                  else "  // unboxed scrutinee\n") ++
                 -- actually need the ccont?
                 -- any fvs in the expressions on the rhs's?
---                (if (length $ nub $ concatMap (fvs . emd . ae) alts) > 0 then 
                 (if (length $ fvs it) > 0 then 
-                     "  Cont " ++ contName ++ " = "
-                 else "  ") ++                      "stgPopCont();\n" ++
+                     "  Obj *" ++ contName ++ " = stgPopCont();\n" ++
+                     concat ["  PtrOrLiteral " ++ v ++ 
+                             " = " ++ contName ++ "->payload[" ++ show i ++ "];\n"
+                             | (i,v) <- indexFrom 0 $ fvs it ] 
+                 else 
+                     "  stgPopCont();\n") ++
                 "  PtrOrLiteral " ++ scrutName ++ " = stgCurVal;\n" ++
                 (if switch then
                      (if boxed then
@@ -335,18 +338,7 @@ cgalt env switch scrutName (ADef it v e) =
 
 
 -- ****************************************************************
--- build heap object (bho) is only invoked by 'let' so TLDs not built
-
---   // y = THUNK( x );
---   Obj *y = stgNewHeapObj();
---   *y = (Obj) 
---     { .objType = THUNK,
---       .infoPtr = &it_y,
---       .payload[0] = (PtrOrLiteral) { .argType = HEAPOBJ, 
---                                      .op = STGHEAPAT(-2) }
---     };
--- return (size, inline code)
-
+-- buildHeapObj is only invoked by 'let' so TLDs not built
 
 --  UPDCONT, 
 --  CASECONT, 
@@ -354,31 +346,19 @@ cgalt env switch scrutName (ADef it v e) =
 --  FUNCONT,
 
 buildHeapObj env o =
-    let (size, rval) = heapObjRVal env o
+    let (size, rval) = bho env o
         name = oname o
-        decl = "Obj *" ++ name ++ " = stgNewHeapObj(" ++ show size ++ ");\n" 
-        code = "*" ++ name ++ " = " ++ rval  -- ++ ";\n"
-    in (size, decl, code)
+        decl = "Obj *" ++ name ++ " = stgNewHeapObj( &it_" ++ name ++ " );\n" 
+    in (size, decl, rval)
 
-heapObjRVal env o =
-    let (size, guts) = bho env o
-        name = oname o
-        code =
-            "(Obj) \n" ++
-            "      { .objType = " ++ showObjType (omd o) ++ ",\n" ++
-            "        .infoPtr = &it_" ++ name ++ ",\n" ++
-            "        .ident = \"" ++ name ++ "\",\n" ++
-            "        .payloadSize = " ++ show size ++ ",\n" ++
-            "      };\n" ++ guts
-    in (size, code)
-
-
+bho :: [(String, RVal)] -> Obj InfoTab -> (Int, [Char])
 bho env (FUN it vs e name) = 
-    loadPayloadFVs env (fvs it) name True
+    (length $ fvs it, loadPayloadFVs env (fvs it) name)
 
 -- TODO: the size here should be based on the FUN rather than being maxPayload
 bho env (PAP it f as name) =
-    (maxPayload, snd (loadPayloadFVs env (fvs it) name True) ++ loadPayloadAtoms env as (length $ fvs it) name)
+    (maxPayload, loadPayloadFVs env (fvs it) name ++ 
+                 loadPayloadAtoms env as (length $ fvs it) name)
 
 bho env (CON it c as name) = 
     let ps = [name ++ "->payload[" ++ show i ++ "] = " ++ 
@@ -387,17 +367,14 @@ bho env (CON it c as name) =
     in (length ps, concat ps)
 
 bho env (THUNK it e name) =
-    loadPayloadFVs env (fvs it) name True
+    (max 1 (length $ fvs it), loadPayloadFVs env (fvs it) name)
     
 bho env (BLACKHOLE it name) = (0,"")
 
-loadPayloadFVs env fvs name ptr =
-    let ps = [name ++ (if ptr then "->" else ".") ++
-            "payload[" ++ show i ++ "] = " ++ 
+loadPayloadFVs env fvs name =
+    concat [name ++ "->payload[" ++ show i ++ "] = " ++ 
             cgv env v ++ "; // " ++ v ++ "\n"
             | (i,v) <- indexFrom 0 fvs ]
-        len = length ps
-    in (if len > 0 then len else 1, concat ps)
 
 -- load atoms into payload starting at index ind
 loadPayloadAtoms env as ind name =
@@ -409,10 +386,8 @@ showas as = intercalate " " $ map showa as
 
 showa (Var v) = v
 showa (LitI i) = show i
-showa (LitB b) = if b then "true#" else "false#"
-showa (LitF f) = show f
+-- showa (LitF f) = show f
 showa (LitD d) = show d
-showa (LitC c) = show c
 
 indexFrom :: Int -> [a] -> [(Int, a)]
 indexFrom i xs = zip [i..] xs

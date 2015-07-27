@@ -68,7 +68,7 @@ showHO it =
     "  .infoPtr   = &it_" ++ name it ++ ",\n" ++
     "  .objType   = " ++ showObjType it      ++ ",\n" ++
     "  .ident     = " ++ show (name it)      ++ ",\n" ++
-    "  .payloadSize = 32,\n" ++
+--    "  .payloadSize = 32,\n" ++
        showSHOspec it ++
     "  };\n"
 
@@ -85,25 +85,19 @@ showSHOspec it@(Blackhole {}) = payloads []
 showSHOspec it = ""
 
 payloads as = let ps = indent 4 $ concatMap payload as
-                  pad = indent 4 $ concat $ replicate (maxPayload-length(as)) "0,"
-              in  indent 2 ".payload = {\n" ++ ps ++ pad ++ "},\n"
+--                  pad = indent 4 $ concat $ replicate (maxPayload-length(as)) "0,"
+--              in  indent 2 ".payload = {\n" ++ ps ++ pad ++ "},\n"
+              in  indent 2 ".payload = {\n" ++ ps ++ "},\n"
 
 payload (LitI i) = 
     "{.argType = INT, .i = " ++ show i ++ "},\n"
 
-payload (LitB b) = 
-    "{.argType = BOOL, .b = " ++
-    (if b then "true" else "false") ++ "},\n"
-
 payload (LitD d) = 
     "{.argType = DOUBLE, .i = " ++ show d ++ "},\n"
 
-payload (LitF d) = 
-    "{.argType = FLOAT, .i = " ++ show d ++ "},\n"
+-- payload (LitF d) = 
+--    "{.argType = FLOAT, .i = " ++ show d ++ "},\n"
 
-payload (LitC c) = 
-    "{.argType = CHAR, .i = " ++ show c ++ "},\n"
-   
 -- for SHOs atoms that are variables must be SHOs, so not unboxed
 payload (Var v) = 
     "{.argType = HEAPOBJ, .op = &sho_" ++ v ++ "},\n"

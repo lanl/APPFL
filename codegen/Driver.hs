@@ -28,9 +28,9 @@ header = "#include \"stg_header.h\"\n"
         
 footer :: Bool -> String
 footer v = 
-  let top = "\nDEFUN0(start) {\n" ++
+  let top = "\n\nDEFUN0(start) {\n" ++
             "  registerSHOs();\n" ++
-            "  stgPushCont(showResultCont);\n" ++
+            "  Obj *showResultCont = stgAllocCallCont2(&it_stgShowResultCont, 0);\n" ++
             "  STGEVAL(((PtrOrLiteral){.argType = HEAPOBJ, .op = &sho_main}));\n" ++
             "  STGRETURN0();\n" ++
             "  ENDFUN;\n" ++
@@ -52,13 +52,8 @@ footer v =
 
 -- need a better way, like reading from a .h file
 stgRTSGlobals :: [String]
-stgRTSGlobals = [ "stg_case_not_exhaustive",
-                  "true",  -- sho_True
-                  "false",  -- sho_False
-
-                  "True#",  
-                  "False#" 
-                ] ++ map fst primopTab -- from AST.hs
+stgRTSGlobals = [ "stg_case_not_exhaustive" ]
+                ++ map fst primopTab -- from AST.hs
 
 parser :: String -> ([TyCon], [Obj ()])
 parser = parse

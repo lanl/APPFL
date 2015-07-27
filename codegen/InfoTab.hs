@@ -357,12 +357,12 @@ showITType _ = "sho"
 showITs os = concatMap showIT $ itsOf os
 
 {-
-InfoTab it_z =
-  { .name               = "z",
-    .entryCode          = &z,
-    .objType            = THUNK,
-    .fvCount            = 1,
-  };
+  char name[32];  // for debugging
+  int fvCount;    // lexically determined, should be in layout
+  CmmFnPtr entryCode; 
+  ObjType objType; // kind of object, tag for union
+  LayoutInfo layout;
+  ...
 -}
 
 showIT it@(Fun {}) =
@@ -371,6 +371,7 @@ showIT it@(Fun {}) =
     "    .fvCount             = " ++ show (length $ fvs it) ++ ",\n" ++
     "    .entryCode           = &" ++ entryCode it ++ ",\n" ++
     "    .objType             = FUN,\n" ++
+    "    .layoutInfo.payloadSize = " ++ show (length $ fvs it) ++ ",\n" ++
     "    .funFields.arity     = " ++ show (arity it) ++ ",\n" ++
     "  };\n"
         
@@ -380,7 +381,8 @@ showIT it@(Pap {}) =
     "    .fvCount             = " ++ show (length $ fvs it) ++ ",\n" ++
     "    .entryCode           = &" ++ entryCode it ++ ",\n" ++
     "    .objType             = PAP,\n" ++
-    "    .argCount            = " ++ show (length $ args it) ++ ",\n" ++
+    -- payloadSize handled specially for PAP
+    "    .layoutInfo.payloadSize = " ++ show (length $ fvs it) ++ ",\n" ++
     "  };\n"
         
 showIT it@(Con {}) =
@@ -389,6 +391,7 @@ showIT it@(Con {}) =
     "    .fvCount             = " ++ show (length $ fvs it) ++ ",\n" ++
     "    .entryCode           = &" ++ entryCode it ++ ",\n" ++
     "    .objType             = CON,\n" ++
+    "    .layoutInfo.payloadSize = " ++ show (arity it) ++ ",\n" ++
     "    .conFields.arity     = " ++ show (arity it) ++ ",\n" ++
     "    .conFields.tag       = " ++ show (tag it) ++ ",\n" ++
     "    .conFields.conName   = " ++ show (con it) ++ ",\n" ++
@@ -400,6 +403,7 @@ showIT it@(Thunk {}) =
     "    .fvCount             = " ++ show (length $ fvs it) ++ ",\n" ++
     "    .entryCode           = &" ++ entryCode it ++ ",\n" ++
     "    .objType             = THUNK,\n" ++
+    "    .layoutInfo.payloadSize = " ++ show (max 1 (length $ fvs it)) ++ ",\n" ++
     "  };\n"
         
 showIT it@(Blackhole {}) = 
@@ -408,6 +412,7 @@ showIT it@(Blackhole {}) =
     "    .fvCount             = " ++ show (length $ fvs it) ++ ",\n" ++
     "    .entryCode           = &" ++ entryCode it ++ ",\n" ++
     "    .objType             = BLACKHOLE,\n" ++
+    "    .layoutInfo.payloadSize = 0,\n" ++ 
     "  };\n"
 
 showIT it@(ITAlts{}) =
@@ -415,6 +420,8 @@ showIT it@(ITAlts{}) =
     "  { .name                = " ++ show (name it) ++ ",\n" ++
     "    .fvCount             = " ++ show (length $ fvs it) ++ ",\n" ++
     "    .entryCode           = &" ++ entryCode it ++ ",\n" ++
+    "    .objType             = CASECONT,\n" ++
+    "    .layoutInfo.payloadSize = " ++ show (length $ fvs it) ++ ",\n" ++
     "  };\n"
 
 showIT _ = ""

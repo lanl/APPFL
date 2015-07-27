@@ -3,22 +3,30 @@
 
 #include "stg.h"
 #include "cmm.h"
-#include "stgcmm.h"
+#include "string.h"
+
+extern void stgThunk(PtrOrLiteral self);
+
+// FnPtr stgCallCont();
+extern InfoTab it_stgCallCont;
+
+// FnPtr stgUpdateCont();
+extern InfoTab it_stgUpdateCont;
+
+// FnPtr fun_stgShowResultCont();
+extern InfoTab it_stgShowResultCont;
 
 void callContSave(int argc, PtrOrLiteral argv[]);
 void callContRestore(PtrOrLiteral argv[]);
 
 Obj *derefHO(Obj *op);
-Obj* derefPoL(PtrOrLiteral f);
+Obj *derefPoL(PtrOrLiteral f);
 
 // is this a good place to check for BLACKHOLE?
 void derefStgCurVal();
 
 FnPtr whiteHole();
 FnPtr stg_constructorcall();
-
-FnPtr stgShowResultCont();
-Cont showResultCont;
 
 FnPtr stgApply();
 FnPtr stgApply1();
@@ -36,11 +44,8 @@ do {						\
   derefStgCurVal();				\
   while (stgCurVal.argType == HEAPOBJ &&	\
 	 stgCurVal.op->objType == THUNK) {	\
-    Cont cont = {.retAddr = &stgCallCont,	\
-	              .objType = CALLCONT,	\
-                      .payload[0] = {0}};	\
-    strcpy(cont.ident, stgCurVal.op->ident);    \
-    stgPushCont(cont);			        \
+    Obj* cont = stgAllocCallCont2(&it_stgCallCont, 0);	\
+    strcpy(cont->ident, stgCurVal.op->ident);	\
     STGCALL1(stgCurVal.op->infoPtr->entryCode, stgCurVal); \
     stgPopCont();			        \
     derefStgCurVal();				\
@@ -54,6 +59,5 @@ do {						\
     exit(0);                                    \
   }                                             \
 } while (0)
-
 
 #endif

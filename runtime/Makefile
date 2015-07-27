@@ -1,8 +1,8 @@
 CC=gcc
 CFLAGS=-c -std=gnu99 -I/usr/include/malloc
 LDFLAGS=
-HEADERS=stg.h cmm.h stgcmm.h stgutils.h gc.h
-SOURCES=stg.c cmm.c stgcmm.c stgutils.c gc.c
+HEADERS=stg.h cmm.h stgutils.h gc.h
+SOURCES=stg.c cmm.c stgutils.c gc.c
 OBJECTS=$(SOURCES:.c=.o)
 LIB=libruntime.a
 ALL=$(LIB) 
