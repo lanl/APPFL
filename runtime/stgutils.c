@@ -3,7 +3,6 @@
 #include <stdlib.h>
 
 #include "stgutils.h"
-#include "stgcmm.h"
 #include "stg.h"
 
 // ****************************************************************

@@ -15,7 +15,6 @@ Maybe stgc.h would be a better name.
 
 #include "stg.h"
 #include "cmm.h"
-#include "stgcmm.h"
 #include "stgutils.h"
 #include "gc.h"
 

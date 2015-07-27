@@ -229,13 +229,13 @@ typedef enum {
 
 Continuation stack objects are manipulated in the following places.
 
-UPDCONT  - runtime/ stg.h, stg.c, stgcmm.c, gc.c
+UPDCONT  - runtime/ stg.h, stg.c, gc.c
            codegen/ CodeGen.hs
 
 CASECONT - codegen/Codegen.hs, cge _ ECase
            codegen/CodeGen.hs, cgalts _ Alts
 
-CALLCONT - runtime/ stg.h, stg.c, stgcmm.c, stgutils.h, stgutils.c, gc.c
+CALLCONT - runtime/ stg.h, stg.c, stgutils.h, stgutils.c, gc.c
            codegen/ CodeGen.hs
 
 FUNCONT  - <none yet>
