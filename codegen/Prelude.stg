@@ -108,3 +108,4 @@ take = FUN(n xs ->
                                        rec = THUNK(take m tl);
                                        result = CON(Cons hd rec) } in result }});
 
+main = THUNK(unit);

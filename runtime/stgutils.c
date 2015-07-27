@@ -3,10 +3,77 @@
 #include <stdlib.h>
 
 #include "stgutils.h"
-#include "stgcmm.h"
 #include "stg.h"
 
-Obj* derefPoL(PtrOrLiteral f) {
+// ****************************************************************
+// since we always jump through the top of the stg stack we need some
+// place to go when we're done this continuation is special, dropping 
+// from stg land back to cmm land via RETURN0() rather than STGRETURN(0)
+
+DEFUN0(fun_stgShowResultCont) {
+  fprintf(stderr,"done!\n");
+  stgPopCont();  // clean up
+  fprintf(stderr,"The answer is\n");
+  showStgVal(stgCurVal);  
+  RETURN0();
+  ENDFUN;
+}
+
+InfoTab it_stgShowResultCont =
+  { .name       = "fun_showResultCont",
+    .fvCount    = 0,
+    .entryCode  = &fun_stgShowResultCont,
+    .objType    = CALLCONT,
+  };
+
+
+DEFUN0(stgCallCont) {
+  // stgPopCont();  user must do this
+  fprintf(stderr,"stgCallCont returning\n");
+  RETURN0();
+  ENDFUN;
+}
+
+InfoTab it_stgCallCont =
+  { .name = "stgCallCont",
+    .fvCount = 0,
+    .entryCode = &stgCallCont,
+    .objType = CALLCONT,
+  };
+
+DEFUN0(stgUpdateCont) {
+  Obj *contp = stgPopCont();
+  assert(contp->objType == UPDCONT && "I'm not an UPDCONT!");
+  PtrOrLiteral p = contp->payload[0];
+  assert(p.argType == HEAPOBJ && "not a HEAPOBJ!");
+  assert(p.op->objType == BLACKHOLE && "not a BLACKHOLE!");
+  fprintf(stderr, "stgUpdateCont updating\n  ");
+  showStgObj(p.op);
+  fprintf(stderr, "with\n  ");
+  showStgObj(stgCurVal.op);
+  p.op->objType = INDIRECT;
+  p.op->payload[0] = stgCurVal;
+  STGRETURN0();
+  ENDFUN
+}
+
+InfoTab it_stgUpdateCont =
+  { .name = "default stgUpdateCont",
+    .fvCount = 0,
+    .entryCode = &stgUpdateCont,
+    .objType = UPDCONT,
+    .layoutInfo.payloadSize = 1, // self
+  };
+
+void stgThunk(PtrOrLiteral self) {
+  assert(self.argType == HEAPOBJ && "stgThunk:  not HEAPOJ\n");
+  Obj *contp = stgAllocCont(&it_stgUpdateCont);
+  contp->payload[0] = self;
+  strcpy(contp->ident, self.op->ident); //override default
+  self.op->objType = BLACKHOLE;	
+}
+
+Obj *derefPoL(PtrOrLiteral f) {
   assert(f.argType == HEAPOBJ && "derefPoL: not a HEAPOBJ");
   return derefHO(f.op);
 }
@@ -37,83 +104,19 @@ DEFUN0(stg_constructorcall) {
   ENDFUN;
 }
 
-/*
 void callContSave(int argc, PtrOrLiteral argv[]) {
-  Cont callCont = { .retAddr = &stgCallCont,
-                    .objType = CALLCONT,
-                    .ident = "callContSave"
-                  };
-  callCont.payload[0] = (PtrOrLiteral) {.argType = INT, .i = argc};
+  Obj *cc = stgAllocCallCont2( &it_stgCallCont, argc );
   for (int i = 0; i != argc; i++) 
-    callCont.payload[i+1] = argv[i];
-  stgPushCont(callCont);
+    cc->payload[i+1] = argv[i];
 }
 
 void callContRestore(PtrOrLiteral argv[]) {
-  Cont callCont;
-  callCont = stgPopCont();
-  assert(callCont.objType == CALLCONT);
-  assert(callCont.payload[0].argType == INT);
-  for (int i = 0; i != callCont.payload[0].i; i++) 
-    argv[i] = callCont.payload[i+1];
+  Obj *cc = stgPopCont();
+  assert(cc->objType == CALLCONT);
+  assert(cc->payload[0].argType == INT);
+  for (int i = 0; i != cc->payload[0].i; i++) 
+    argv[i] = cc->payload[i+1];
 }
-*/
-
-void callContSave(int argc, PtrOrLiteral argv[]) {
-  Obj callCont = { .infoPtr = &it_stgCallCont,
-		   .objType = CALLCONT,
-		   .ident = "callContSave",
-                 };
-  callCont.payload[0] = (PtrOrLiteral) {.argType = INT, .i = argc};
-  for (int i = 0; i != argc; i++) 
-    callCont.payload[i+1] = argv[i];
-  stgPushCont(callCont);
-}
-
-void callContRestore(PtrOrLiteral argv[]) {
-  Obj callCont = stgPopCont();
-  assert(callCont.objType == CALLCONT);
-  assert(callCont.payload[0].argType == INT);
-  for (int i = 0; i != callCont.payload[0].i; i++) 
-    argv[i] = callCont.payload[i+1];
-}
-
-// ****************************************************************
-// since we always jump through the top of the stg stack we need some
-// place to go when we're done this continuation is special, dropping 
-// from stg land back to cmm land via RETURN0() rather than STGRETURN(0)
-
-DEFUN0(stgShowResultCont) {
-  fprintf(stderr,"done!\n");
-  stgPopCont();  // clean up
-  fprintf(stderr,"The answer is\n");
-  showStgVal(stgCurVal);  
-  RETURN0();
-  ENDFUN;
-}
-
-InfoTab it_stgShowResultCont =
-  { .name       = "stgShowResultCont",
-    .fvCount    = 0,
-    .entryCode  = &stgShowResultCont,
-    .objType    = CALLCONT,
-  };
-
-// just one of these
-/*
-Cont showResultCont = {
-  .retAddr = &stgShowResultCont,
-  .objType = CALLCONT,
-  .ident = "showResultCont",
-  .payload[0] = {0},
-};
-*/
-Obj showResultCont = {
-  .infoPtr = &it_stgShowResultCont,
-  .objType = CALLCONT,
-  .ident = "showResultCont",
-  .payload[0] = {0},
-};
 
 // ****************************************************************
 // stgApply
@@ -136,7 +139,7 @@ void copyargs(PtrOrLiteral *dest, const PtrOrLiteral *src, int count) {
 DEFUN2(stgApply, N, f) {
   assert(N.argType == INT);
   const int argc = N.i;
-  PtrOrLiteral argv[16];
+  PtrOrLiteral argv[64];
   popargs(argc, argv);
 
   f.op = derefPoL(f);
@@ -146,23 +149,7 @@ DEFUN2(stgApply, N, f) {
     fprintf(stderr, "stgApply THUNK\n");
     // thunks don't take args (eval-apply)
     callContSave(argc, argv);
-
-    /* THIS IS WRONG, MUST PUSH A CALLCONT EVERY TIME
-    do {
-      STGCALL1(f.op->infoPtr->entryCode, f);  // result in stgCurVal
-      f = stgCurVal;  // new f
-      f.op = derefPoL(f);
-    } while (f.op->objType == THUNK);
-    */
-
-    /* do this
-    STGCALL1(f.op->infoPtr->entryCode, f);  // result in stgCurVal
-      or do the following to save all the pushing and popping
-    */
     STGEVAL(f);
-
-
-    // restore args
     callContRestore(argv);
     // now pass the args
     pushargs(argc, argv);
@@ -205,19 +192,24 @@ DEFUN2(stgApply, N, f) {
     // excess < 0, too few args
     } else { 
       fprintf(stderr, "stgApply FUN too few args\n");
-      Obj *pap = stgNewHeapObj();
-      *pap = *f.op;  // quick and dirty
-      pap->objType = PAP;
-      // copy args to just after fvs
+      int fvCount = f.op->infoPtr->fvCount;
+      Obj *pap = stgNewHeapPAP(f.op->infoPtr, fvCount + argc);
       pap->argCount = argc;
+      // copy fvs
+      fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
+      copyargs(&pap->payload[1], &f.op->payload[0], fvCount);
+      // copy args to just after fvs
       fprintf(stderr, "stgApply FUN inserting %d args into new PAP\n", argc);
-      copyargs(&pap->payload[pap->infoPtr->fvCount], argv, argc);
+      copyargs(&pap->payload[fvCount+1], argv, argc);
       STGRETURN1(HOTOPL(pap));
     } // if excess
   } // case FUN
 
   case PAP: {
-    int arity = f.op->infoPtr->funFields.arity - f.op->argCount;
+    int fvCount = f.op->infoPtr->fvCount;
+    int argCount = f.op->payload[0].i - fvCount;
+    assert(argCount == f.op->argCount && "stgApply:  PAP error 1");
+    int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many
@@ -228,7 +220,7 @@ DEFUN2(stgApply, N, f) {
       // push correct number of new args
       pushargs(arity, argv);
       // push args already in PAP object, just beyond fvs
-      pushargs(f.op->argCount, &f.op->payload[f.op->infoPtr->fvCount]);
+      pushargs(argCount, &f.op->payload[fvCount + 1]);
       // call the FUN
       STGCALL1(f.op->infoPtr->entryCode, f);
       // restore excess args
@@ -248,18 +240,22 @@ DEFUN2(stgApply, N, f) {
       // push new args
       pushargs(arity, argv);
       // push args already in PAP object, just beyond fvs
-      pushargs(f.op->argCount, &f.op->payload[f.op->infoPtr->fvCount]);
-      // leave f.op->argCount unchanged?
+      pushargs(argCount, &f.op->payload[fvCount + 1]);
       // tail call the FUN
       STGJUMP1(f.op->infoPtr->entryCode, f);
 
       // excess < 0, too few args
     } else {
       fprintf(stderr, "stgApply1 PAP too few args\n");
-      Obj *pap = stgNewHeapObj();
-      *pap = *f.op;  // quick and dirty
-      copyargs(&pap->payload[pap->infoPtr->fvCount + pap->argCount],
-	       argv, argc);
+      Obj *pap = stgNewHeapPAP(f.op->infoPtr, fvCount + argCount + argc);
+      // copy fvs and existing args
+      fprintf(stderr, "stgApply PAP inserting %d FVs and args into new PAP\n", 
+	              fvCount + argCount);
+      copyargs(&pap->payload[1], &f.op->payload[1], fvCount + argCount);
+      // copy new args to just after
+      fprintf(stderr, "stgApply PAP inserting %d new args into new PAP\n", argc);
+      pap->argCount = f.op->argCount;
+      copyargs(&pap->payload[fvCount + argCount + 1], argv, argc);
       pap->argCount += argc;
       STGRETURN1(HOTOPL(pap));
     } // if excess
@@ -278,89 +274,3 @@ DEFUN2(stgApply, N, f) {
   ENDFUN;
 }
 
-// ****************************************************************
-// early instance of stgApply
-/*
-DEFUN2(stgApplyPap1, f, x1) {
-  // now our predefined function/macro approach breaks down somewhat
-  // since we don't statically know the arity of the PAP's underlying
-  // function and we don't want a giant switch, so explicitly push onto stack
-  fprintf(stderr, "stgApplyPap1");
-  assert(f.argType == HEAPOBJ && f.op->objType == PAP);
-  assert(f.op->infoPtr->funFields.arity == f.op->argCount + 1); // 1 is Pap1
-  _PUSH(x1); // push last arg
-  for (int i = f.op->infoPtr->fvCount + // skip past free variables
-	       f.op->argCount - 1;      // index of last arg
-            // i != -1;  WRONG, must have left some crap on the stack
-               i != f.op->infoPtr->fvCount - 1;
-       i--) _PUSH(f.op->payload[i]);
-  _PUSH(f);  // push self
-  STGJUMP0(f.op->infoPtr->entryCode);
-  ENDFUN;
-}
-
-DEFUN2(stgApply1, f, x1) {
-  f.op = derefPoL(f);
-
-  switch (f.op->objType) {
-
-  case THUNK: { // seems like it would be more efficient to do while(THUNK)
-    fprintf(stderr, "stgApply1 THUNK\n");
-    Cont callCont = {.retAddr = &stgCallCont, .payload[0] = x1};
-    stgPushCont(callCont);
-    STGCALL1(f.op->infoPtr->entryCode, f);  // result in stgCurVal
-    f = stgCurVal;  // new f
-    callCont = stgPopCont();
-    x1 = callCont.payload[0];
-    STGJUMP2(stgApply1, f, x1);
-    break;
-  } // case THUNK
-
-  case FUN: {
-    switch(f.op->infoPtr->funFields.arity) {
-    case 1: { //just right
-      fprintf(stderr, "stgApply1 FUN just right\n");
-      STGJUMP2(f.op->infoPtr->entryCode, f, x1);
-      break;
-    } // case 1
-    default: { // arity > 1, too few args
-      fprintf(stderr, "stgApply1 FUN too few args\n");
-      // build a PAP -- CAREFUL, COULD TRIGGER GC
-      // need to solve this problem for "let" in general
-      // one solution would be to have GC only possibly triggered by STGCALL
-      Obj *pap = stgNewHeapObj();
-      *pap = *f.op;  // quick and dirty
-      pap->objType = PAP;
-      pap->argCount = 1;
-      pap->payload[pap->infoPtr->fvCount] = x1; // just after the fvs
-      STGRETURN1(HOTOPL(pap));
-      break;
-    } // default
-    } // switch
-  } // case FUN
-
-  case PAP: {
-    switch(f.op->infoPtr->funFields.arity - f.op->argCount) {
-    case 1: { // just right
-      fprintf(stderr, "stgApply1 PAP just right\n");
-      STGJUMP2(stgApplyPap1, f, x1);
-      break;
-    } // case 1
-    default: { // too few args
-      fprintf(stderr, "stgApply1 PAP too few args\n");
-      f.op->payload[f.op->infoPtr->fvCount + f.op->argCount] = x1;  // reuse PAP for now
-      f.op->argCount += 1;
-      STGRETURN1(f);
-      break;
-    } // default
-    } // switch
-  } // case PAP
-
-  default: {
-    fprintf(stderr, "stgApply not a THUNK, FUN, or PAP\n");
-    exit(0);
-  } // default
-  }  // switch
-  ENDFUN;
-}
-*/

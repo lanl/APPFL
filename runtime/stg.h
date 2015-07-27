@@ -59,6 +59,9 @@ typedef struct {
   };
 } PtrOrLiteral;
 
+// STG registers
+extern PtrOrLiteral stgCurVal;  // current/return value
+
 /*
   payload -- see README
 */
@@ -67,15 +70,18 @@ typedef struct {
 // in a proper implementation there will be no such struct declaration--
 // they'll be variably-sized and self-describing
 
+
 struct _Obj {
   InfoTab *infoPtr;         // canonical location of ObjType field
   ObjType objType;          // to distinguish PAP, FUN, BLACKHOLE, INDIRECT, FORWARD
   int argCount;             // for PAP, how many args already applied to?
   char ident[64];           // temporary, just for tracing
-  PtrOrLiteral payload[32]; // fixed for now
+  // int payloadSize;          // this should really be in infotab?
+  PtrOrLiteral payload[];
 };
 
 typedef struct {
+  int payloadSize;
 } LayoutInfo;
 
 typedef struct {
@@ -116,10 +122,10 @@ typedef struct {
 // InfoTab
 struct _InfoTab {
   char name[32];  // for debugging
-  int fvCount;    // lexically determined
+  int fvCount;    // lexically determined, should be in layout
   CmmFnPtr entryCode; 
   ObjType objType; // kind of object, tag for union
-  LayoutInfo layout;
+  LayoutInfo layoutInfo;
   union {
     FUNfields funFields;
     PAPfields papFields;
@@ -141,22 +147,19 @@ extern Obj * stgStatObj[];
 extern void initStg();
 extern void showStgObj(Obj *);
 extern void showStgHeap();
-extern Obj* stgNewHeapObj();
 extern void showStgStack();
 extern void showStgVal(PtrOrLiteral);
+extern void showIT(InfoTab *);
+// extern int objSize(Obj *);
 
-inline void stgPushCont(Obj c) {
-  stgSP = (char *)stgSP - sizeof(Obj);
-  assert(stgSP >= stgStack);
-  *(Obj *)stgSP = c;
-}
-
-inline Obj stgPopCont() {
-  assert((char *)stgSP + sizeof(Obj) <= (char *) stgStack + stgStackSize);
-  Obj o = *(Obj *)stgSP;
-  stgSP = (char *)stgSP + sizeof(Obj);
-  return o;
-}
+// allocate Obj on heap, returning pointer to new Obj
+extern Obj* stgNewHeapObj(InfoTab *itp);
+extern Obj* stgNewHeapPAP(InfoTab *itp, int argc);
+// allocate Obj on continuation stack, returning pointer to new Obj
+extern Obj *stgAllocCallCont2(InfoTab *it, int payloadSize);
+extern Obj *stgAllocCont(InfoTab *it);
+// remove Obj from top of continuation stack, returning pointer to de-alloced Obj
+Obj *stgPopCont();
 
 # define STGCALL0(f)				\
   CALL0_0(f)
@@ -270,8 +273,5 @@ define STGRETURN1(o)				\
   JUMP1(((Cont *)stgSP)->infoPtr->entryCode, o) \
   } while (0)
 */
-
-// STG registers
-extern PtrOrLiteral stgCurVal;  // current/return value
 
 #endif  //ifdef stg_h

@@ -1,26 +1,28 @@
-This is intended to document the structure of heap objects.
+This is intended to document the structure of heap/continuation stack objects.
 
 For now we will assume a 64-bit architecture, *nix.  Whether or not we will be
-tied to gcc, gcc or LLVM, etc., remains to be seen.
+tied to gcc, gcc or LLVM, etc., remains to be seen.  There is no fundamental
+reason for not supporting 32-bit other than effort.
 
 We have fixed in stone that there will be a universal fixed-size data type
-that can exist outside the heap (TODO: need to characterize this better)
-called PtrOrLiteral (TODO: or maybe PtrOrLit later).  Initially, for
-simplicity and debugging purposes, it will contain a discrimator tag.  In
-principle this is not necessary because of strong static typing.  Thus we will
-not manipulate, for example, unboxed array types (though we could later have
-boxed arrays of unboxed Ints).  Currently the tag discrimates C int, C double,
-and a pointer to a heap object (type Obj).
+that can exist outside the heap, called PtrOrLiteral (TODO: or maybe PtrOrLit
+later).  Unboxed types may be multiples of this.  Initially, for simplicity
+and debugging purposes, it will contain a discrimator tag.  This tag will be
+eliminated now that we have typing information.  Currently the tag discrimates
+C int, C double (float if 32-bit supported), and a pointer to a heap object
+(type Obj).  Absent the discriminator tag this will be a 64-bit (32-bit)
+entity.
 
 typedef enum {
   INT, 
-  DOUBLE, 
+  DOUBLE,
+  // FLOAT,
   HEAPOBJ 
 } ArgType;
 
 // PtrOrLiteral -- literal value or pointer to heap object
 typedef struct {
-  ArgType argType;
+  ArgType argType;  -- will be eliminated
   union {
     int i;
     double d;
@@ -54,12 +56,6 @@ that it can be copied during garbage collection, because at some point heap
 objects will become variably sized, not just between object types (FUN, PAP,
 etc.), but for each type as well.  
 
-For now all HOs are of uniform fixed size.
-
-Even with uniform size, for garbage collection purposes we need to be able to
-look inside objects and deterministically determine the pointers to other HOs
-they may contain.  (Note: an HO may contain a pointer to itself.)
-
 For all HO types except PAP the positions of the valid PtrOrLiteral values
 that may be pointers to HOs can be determined from solely from the "info
 pointer", a pointer to a static struct (of type InfoTab) containing
@@ -86,9 +82,9 @@ struct _Obj {
 
 All HOs have three parts (using Obj field names, not the field name C types):
 
-Obj type
+C type
 -------------------------------------------------------------
-| infoPtr | objType |    N/A   |          payload           |
+| infoPtr | objType |          |          payload           |
 -------------------------------------------------------------
 
 While the ObjType is also in the InfoTab, we choose to have a dedicated field
@@ -105,14 +101,15 @@ FUN
 For FUN the payload is the list of its lexically free variables,
 i.e. PtrOrLiterals to HOs, starting at payload[0].
 
-                               | payload 
+          |                    | payload 
 -----------------------------------------------------------------------------
-| infoPtr | objType |    N/A   | free variables                             |
+| infoPtr | objType |          | free variables                             |
 -----------------------------------------------------------------------------
 
-infoPtr->fvCount is number of free variables
 objType = FUN
+
 infoPtr->objType = FUN
+infoPtr->fvCount is number of free variables
 
 PAP
                                | payload 
@@ -121,17 +118,20 @@ PAP
 -----------------------------------------------------------------------------
 
 The PAP infoPtr points is its underlying FUN infoTab entry, so
+
 objType = PAP 
+
 infoPtr->objType = FUN
 infoPtr->fvCount = number of free variables 
+
 argCount = number of arguments already applied
+TODO:  this should be in payload[fvCount]
 
 CON
-
                                | payload 
------------------------------------------------------------------------------
-| infoPtr | objType |    N/A   | args                                       |
------------------------------------------------------------------------------
+-------------------------------------------------------------------------
+| infoPtr | objType |          | CON args                               |
+-------------------------------------------------------------------------
 
 infoPtr->conFields.arity = number of args 
 infoPtr->objType = CON
@@ -140,42 +140,150 @@ infoPtr->objType = CON
 THUNK
                                | payload 
 -----------------------------------------------------------------------------
-| infoPtr | objType |    N/A   | free variables                             |
+| infoPtr | objType |          | free variables                             |
 -----------------------------------------------------------------------------
 
+Note that a THUNK must have a payload size of at least 1 so that it
+can become and INDIRECT.
+
 objType = THUNK
+
 infoPtr->objType = THUNK
 infoPtr->fvCount = number of free variables
 
 BLACKHOLE
-
                                | payload 
 -----------------------------------------------------------------------------
-| infoPtr | objType |    N/A   | free variables (they're still live!)       |
+| infoPtr | objType |          | free variables (they're still live!)       |
 -----------------------------------------------------------------------------
 
-Black holes only come from THUNKs.  For convenience and arguable efficiency,
-a BLACKHOLE will be created by simply overwriting objType with value BLACKHOLE,
+Black holes only come from THUNKs.  For convenience and arguable efficiency, a
+BLACKHOLE will be created by simply overwriting objType with value BLACKHOLE,
 
 objType = BLACKHOLE
+
 infoPtr->objType = THUNK
 infoPtr->fvCount = number of free variables
 
 INDIRECT
-
-                               | payload 
------------------------------------------------------------------------------
-| infoPtr | objType | argCount | ptr to some other object                   |
------------------------------------------------------------------------------
+                               |       payload[0]         |
+---------------------------------------------------------------------
+| infoPtr | objType |          | ptr to some other object | garbage |
+---------------------------------------------------------------------
 
 INDIRECTs arise from BLACKHOLEs being updated.  The THUNK object is again
 reused, so 
 
 objType = INDIRECT
+
 infoPtr->objType = THUNK
 infoPtr->fvCount = ***NO LONGER VALID, THE FREE VARS ARE NO LONGER LIVE***
-payload[0] = the pointer to the next object in the indirect chain.
+payload[0] = the pointer to the next object in the indirect chain
+payload[1..] = garbage
 
+
+
+FORWARD
+                               |          payload[0]           |
+-----------------------------------------------------------------------------
+| infoPtr | objType |          | ptr to new self in "to" space | garbage    |
+-----------------------------------------------------------------------------
+
+objType = FORWARD
+payload[0] is pointer to new self in "to" space
+
+
+Static Heap Objects
+
+Pointers to all the SHOs will be gathered up in an array like so:
+
+void initPredefs() {
+  stgStatObj[stgStatObjCount++] = &sho_unit;
+  stgStatObj[stgStatObjCount++] = &sho_one;
+  stgStatObj[stgStatObjCount++] = &sho_two;
+  stgStatObj[stgStatObjCount++] = &sho_main_thunk_unit;
+  stgStatObj[stgStatObjCount++] = &sho_main1;
+  stgStatObj[stgStatObjCount++] = &sho_main3;
+  stgStatObj[stgStatObjCount++] = &sho_main5;
+  stgStatObj[stgStatObjCount++] = &sho_main4;
+  stgStatObj[stgStatObjCount++] = &sho_id;
+  stgStatObj[stgStatObjCount++] = &sho_constf;
+  stgStatObj[stgStatObjCount++] = &sho_mainfail;
+}
+
+
+Continuation Stack Objects
+
+typedef enum {
+  // heap objects
+  ...
+  // stack objects
+  UPDCONT, 
+  CASECONT, 
+  CALLCONT, 
+  FUNCONT        // for strict evaluation
+  //
+  ...
+} ObjType;
+
+
+Continuation stack objects are manipulated in the following places.
+
+UPDCONT  - runtime/ stg.h, stg.c, gc.c
+           codegen/ CodeGen.hs
+
+CASECONT - codegen/Codegen.hs, cge _ ECase
+           codegen/CodeGen.hs, cgalts _ Alts
+
+CALLCONT - runtime/ stg.h, stg.c, stgutils.h, stgutils.c, gc.c
+           codegen/ CodeGen.hs
+
+FUNCONT  - <none yet>
+
+The layout of continuation stack objects is as follows.
+
+
+UPDCONT
+                               | payload[0]
+-----------------------------------------------------------------------------
+| infoPtr | objType |          | ptr to object to update                    |
+-----------------------------------------------------------------------------
+
+objType = UPDCONT
+payload[0] is ptr to object to update, i.e. is a root
+
+
+CASECONT
+                               | payload[0..n] 
+---------------------------------------------------
+| infoPtr | objType |          | fv_0 | .. | fv_n |
+---------------------------------------------------
+
+objType = CASECONT
+payload[0]..payload[payload[0]] are the free vars
+
+
+CALLCONT
+                               | payload 
+-----------------------------------------------------------------------------
+| infoPtr | objType |          | #free vars | free vars                     |
+-----------------------------------------------------------------------------
+
+NOTE:  infoPtr->fvCount is INVALID, #free vars is embedded in payload
+objType = CALLCONT
+payload[0] = # free vars
+payload[1]..payload[payload[0]] are the free vars
+
+
+FUNCONT
+                               | payload 
+-----------------------------------------------------------------------------
+| infoPtr | objType |          | single free var                            |
+-----------------------------------------------------------------------------
+
+objType = FUNCONT infoPtr->objType = FUN payload[0] is the sole free var (the
+function to be applied), i.e. is the only root.  NOT CORRECT?  should be
+all other args not currently being evaluated?
 
 
 Roots for Garbage Collection
@@ -230,96 +338,4 @@ A prototypical sequence of events would be
 3) from_space_object->payload[0] assigned to_space_object
 
 Steps 2 and 3 could occur in either order.
-
-FORWARD
-                               | payload 
------------------------------------------------------------------------------
-| infoPtr | objType | argCount | ptr to new self in "to" space              |
------------------------------------------------------------------------------
-
-objType = FORWARD
-payload[0] is pointer to new self in "to" space
-
-
-
-
-Static Heap Objects
-
-Pointers to all the SHOs will be gathered up in an array like so:
-
-void initPredefs() {
-  stgStatObj[stgStatObjCount++] = &sho_unit;
-  stgStatObj[stgStatObjCount++] = &sho_one;
-  stgStatObj[stgStatObjCount++] = &sho_two;
-  stgStatObj[stgStatObjCount++] = &sho_main_thunk_unit;
-  stgStatObj[stgStatObjCount++] = &sho_main1;
-  stgStatObj[stgStatObjCount++] = &sho_main3;
-  stgStatObj[stgStatObjCount++] = &sho_main5;
-  stgStatObj[stgStatObjCount++] = &sho_main4;
-  stgStatObj[stgStatObjCount++] = &sho_id;
-  stgStatObj[stgStatObjCount++] = &sho_constf;
-  stgStatObj[stgStatObjCount++] = &sho_mainfail;
-}
-
-
-
-Continuation Stack Objects
-
-typedef enum {
-  // heap objects
-  ...
-  // stack objects
-  UPDCONT, 
-  CASECONT, 
-  CALLCONT, 
-  FUNCONT        // for strict evaluation
-  //
-  ...
-} ObjType;
-
-The layout of continuation stack objects is as follows.
-
-
-UPDCONT
-                               | payload 
------------------------------------------------------------------------------
-| infoPtr | objType | argCount | ptr to object to update                    |
------------------------------------------------------------------------------
-
-objType = UPDCONT
-payload[0] is ptr to object to update, i.e. is a root
-
-
-CASECONT
-                               | payload 
------------------------------------------------------------------------------
-| infoPtr | objType | argCount | free vars                                  |
------------------------------------------------------------------------------
-
-objType = CASECONT
-payload[0] = # free vars
-payload[1]..payload[payload[0]] are the free vars
-
-
-CALLCONT
-                               | payload 
------------------------------------------------------------------------------
-| infoPtr | objType | argCount | #free vars | free vars                     |
------------------------------------------------------------------------------
-
-NOTE:  infoPtr->fvCount is INVALID, #free vars is embedded in payload
-objType = CALLCONT
-payload[0] = # free vars
-payload[1]..payload[payload[0]] are the free vars
-
-
-FUNCONT
-                               | payload 
------------------------------------------------------------------------------
-| infoPtr | objType | argCount | single free var                            |
------------------------------------------------------------------------------
-
-objType = FUNCONT infoPtr->objType = FUN payload[0] is the sole free var (the
-function to be applied), i.e. is the only root.
-
 

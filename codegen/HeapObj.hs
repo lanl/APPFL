@@ -35,6 +35,7 @@ module HeapObj (
 import AST
 import InfoTab
 import Prelude
+import Util
 
 -- // two = CON(I 2)
 -- Obj sho_two = 
@@ -67,49 +68,41 @@ showHO it =
     "  .infoPtr   = &it_" ++ name it ++ ",\n" ++
     "  .objType   = " ++ showObjType it      ++ ",\n" ++
     "  .ident     = " ++ show (name it)      ++ ",\n" ++
-    showSHOspec it ++
+--    "  .payloadSize = 32,\n" ++
+       showSHOspec it ++
     "  };\n"
 
-showSHOspec it@(Fun {}) = ""
+showSHOspec it@(Fun {}) = payloads []
 
-showSHOspec it@(Pap {}) = "  .argCount  = " ++ show (length $ args it) ++ ",\n" ++
-                          (payloads $ args it)
+--showSHOspec it@(Pap {}) = "  .argCount  = " ++ show (length $ args it) ++ ",\n" ++
+--                          (payloads $ args it)
+showSHOspec it@(Pap {}) = payloads []
 
 showSHOspec it@(Con {}) = payloads $ args it
 
-showSHOspec it@(Thunk {}) = ""
+showSHOspec it@(Thunk {}) = payloads []
 
-showSHOspec it@(Blackhole {}) = ""
+showSHOspec it@(Blackhole {}) = payloads []
 
 showSHOspec it = ""
 
-payloads as = concatMap payload $ zip [0..] as
+payloads as = let ps = indent 4 $ concatMap payload as
+--                  pad = indent 4 $ concat $ replicate (maxPayload-length(as)) "0,"
+--              in  indent 2 ".payload = {\n" ++ ps ++ pad ++ "},\n"
+              in  indent 2 ".payload = {\n" ++ ps ++ "},\n"
 
-payload (ind, LitI i) = 
-    "    .payload[ " ++ show ind ++ " ].argType = INT,\n" ++
-    "    .payload[ " ++ show ind ++ " ].i = " ++ show i ++ ",\n"
+payload (LitI i) = 
+    "{.argType = INT, .i = " ++ show i ++ "},\n"
 
-payload (ind, LitB b) = 
-    "    .payload[ " ++ show ind ++ " ].argType = BOOL,\n" ++
-    "    .payload[ " ++ show ind ++ " ].b = " ++ 
-    (if b then "true" else "false") ++ ",\n"
+payload (LitD d) = 
+    "{.argType = DOUBLE, .i = " ++ show d ++ "},\n"
 
-payload (ind, LitD d) = 
-    "    .payload[ " ++ show ind ++ " ].argType = DOUBLE,\n" ++
-    "    .payload[ " ++ show ind ++ " ].d = " ++ show d ++ ",\n"
-
-payload (ind, LitF d) = 
-    "    .payload[ " ++ show ind ++ " ].argType = FLOAT,\n" ++
-    "    .payload[ " ++ show ind ++ " ].f = " ++ show d ++ ",\n"
-
-payload (ind, LitC c) = 
-    "    .payload[ " ++ show ind ++ " ].argType = CHAR,\n" ++
-    "    .payload[ " ++ show ind ++ " ].f = " ++ show c ++ ",\n"
+-- payload (LitF d) = 
+--    "{.argType = FLOAT, .i = " ++ show d ++ "},\n"
 
 -- for SHOs atoms that are variables must be SHOs, so not unboxed
-payload (ind, Var v) = 
-    "    .payload[ " ++ show ind ++ " ].argType = HEAPOBJ,\n" ++
-    "    .payload[ " ++ show ind ++ " ].op = &sho_" ++ v ++ ",\n"
+payload (Var v) = 
+    "{.argType = HEAPOBJ, .op = &sho_" ++ v ++ "},\n"
 
 ptrOrLitSHO a =
     "{ " ++
