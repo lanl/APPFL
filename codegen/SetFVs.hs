@@ -238,6 +238,6 @@ instance SetFVs a b => SetFVs [a] [b] where
     setfvs tlds = map (setfvs tlds)
 
 instance PPrint (Set.Set Var, Set.Set Var) where
-  toDoc (fvs, tfvs) = parens (text "fvs:" <+> toDoc fvs <> comma <+> text "tfvs:" <+> toDoc tfvs)
+  pprint (fvs, tfvs) = parens (text "fvs:" <+> pprint fvs <> comma <+> text "tfvs:" <+> pprint tfvs)
 
 

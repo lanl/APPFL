@@ -14,14 +14,11 @@ module AST (
   primopTab,
   show,
   objListDoc,
-  rawDocObj,
-  rawDocExpr,
-  rawDocAlts,
-  rawDocAlt,
 ) where
 
 import PPrint
 import Data.List (find, (\\))
+
 
 {-  grammar
 
@@ -206,226 +203,239 @@ stgPrimName p =
    Nothing -> error $ "primop lookup failed for " ++ show p
    Just x -> reverse ('#' : (drop 2 $ reverse $ fst x))
      
-instance PPrint Atom where
-  toDoc (Var v)  = text v
-  toDoc (LitI i) = int i
-  toDoc (LitF f) = float f
-  toDoc x        = text $ show x -- not expecting other literals yet
+instance Unparse Atom where
+  unparse (Var v)  = text v
+  unparse (LitI i) = int i
+  unparse (LitF f) = float f
+  unparse x        = text $ show x -- not expecting other literals yet
 
 
-instance PPrint Primop where
-  toDoc = text.stgPrimName 
+instance Unparse Primop where
+  unparse = text.stgPrimName 
 
-instance PPrint a => PPrint (Alt a) where
-  toDoc ACon{amd, ac, avs, ae} =
-    toDoc amd $+$
-    text ac <+> (hsep $ map text avs) <+> arw <+> toDoc ae
+instance Unparse a => Unparse (Alt a) where
+  unparse ACon{amd, ac, avs, ae} =
+    unparse amd $+$
+    text ac <+> (hsep $ map text avs) <+> arw <+> unparse ae
 
-  toDoc ADef{amd, av, ae} =
-    toDoc amd $+$
-    text av <+> arw <+> toDoc ae
+  unparse ADef{amd, av, ae} =
+    unparse amd $+$
+    text av <+> arw <+> unparse ae
 
-instance PPrint a => PPrint (Alts a) where
-  toDoc Alts{altsmd, alts} = -- Note aname field is *not* in use here
-    toDoc altsmd $+$
-    (vcat $ punctuate semi $ map toDoc alts)
+instance Unparse a => Unparse (Alts a) where
+  unparse Alts{altsmd, alts} = -- Note aname field is *not* in use here
+    unparse altsmd $+$
+    (vcat $ punctuate semi $ map unparse alts)
 
-instance PPrint a => PPrint (Expr a) where
-  toDoc EAtom{emd, ea} =
-    toDoc emd $+$
-    toDoc ea
+instance Unparse a => Unparse (Expr a) where
+  unparse EAtom{emd, ea} =
+    unparse emd $+$
+    unparse ea
 
-  toDoc EFCall{emd, ev, eas} =
-    toDoc emd $+$
-    text ev <+> (hsep $ map toDoc eas)
+  unparse EFCall{emd, ev, eas} =
+    unparse emd $+$
+    text ev <+> (hsep $ map unparse eas)
 
-  toDoc EPrimop{emd, eprimop, eas} =
-    toDoc emd $+$
-    toDoc eprimop <+> (hsep $ map toDoc eas)
+  unparse EPrimop{emd, eprimop, eas} =
+    unparse emd $+$
+    unparse eprimop <+> (hsep $ map unparse eas)
 
-  toDoc ELet{emd, edefs, ee} =
-    toDoc emd $+$
+  unparse ELet{emd, edefs, ee} =
+    unparse emd $+$
     text "let" <+> lbrace $+$
-    (nest 2 $ vcat $ punctuate semi $ map toDoc edefs) <> rbrace $+$
-    text "in" <+> toDoc ee
+    (nest 2 $ vcat $ punctuate semi $ map unparse edefs) <> rbrace $+$
+    text "in" <+> unparse ee
 
-  toDoc ECase{emd, ee, ealts} =
-    toDoc emd $+$
-    text "case" <+> toDoc ee <+> text "of" <+> lbrace $+$
-    (nest 2 $ toDoc ealts) <> rbrace
+  unparse ECase{emd, ee, ealts} =
+    unparse emd $+$
+    text "case" <+> unparse ee <+> text "of" <+> lbrace $+$
+    (nest 2 $ unparse ealts) <> rbrace
 
 
-instance PPrint a => PPrint (Obj a) where
-  toDoc FUN{omd, vs, e, oname} =
-    toDoc omd $+$
+instance Unparse a => Unparse (Obj a) where
+  unparse FUN{omd, vs, e, oname} =
+    unparse omd $+$
     text oname <+> equals <+> text "FUN" <>
-    parens ((hsep $ map text vs) <+> arw $+$ nest ident (toDoc e))
+    parens ((hsep $ map text vs) <+> arw $+$ nest ident (unparse e))
     where ident = length vs + (sum $ map length vs) -- aligns expr with arrow
 
-  toDoc PAP{omd, f, as, oname} =
-    toDoc omd $+$
+  unparse PAP{omd, f, as, oname} =
+    unparse omd $+$
     text oname <+> equals <+> text "PAP" <>
-    parens (text f <+> (hsep $ map toDoc as))
+    parens (text f <+> (hsep $ map unparse as))
 
-  toDoc CON{omd, c, as, oname} =
-    toDoc omd $+$
+  unparse CON{omd, c, as, oname} =
+    unparse omd $+$
     text oname <+> equals <+> text "CON" <>
-    parens (text c <+> (hsep $ map toDoc as))
+    parens (text c <+> (hsep $ map unparse as))
 
-  toDoc THUNK{omd, e, oname} =
-    toDoc omd $+$
+  unparse THUNK{omd, e, oname} =
+    unparse omd $+$
     text oname <+> equals <+> text "THUNK" <>
-    parens (toDoc e)
+    parens (unparse e)
 
-  toDoc BLACKHOLE{omd, oname} =
-    toDoc omd $+$
+  unparse BLACKHOLE{omd, oname} =
+    unparse omd $+$
     text oname <+> equals <+> text "ERROR"
 
 
 -- () metadata = empty document
 -- empty is the identity Doc for the associative pretty printing operators
-instance PPrint () where
-  toDoc () = empty
+instance Unparse () where
+  unparse () = empty
+
+
+instance PPrint BuiltinType where
+  pprint b = case b of
+    UBInt -> text "UBInt"
+    UBDouble -> text "UBDouble"
+    
+ 
+
 
 objListDoc :: (PPrint a) => [Obj a] -> Doc
-objListDoc objs = vcat $ map rawDocObj objs
+objListDoc objs = vcat $ map pprint objs
 
-rawDocObj o = case o of
-  FUN{..} -> braces
-             (text "FUN:" $+$
-              nest 2
-              (text "name:" <+> text oname $+$
-               text "vars:" <+> listText vs $+$                        
-               text "metadata:" $+$
-               nest 2 (toDoc omd) $+$
-               text "expr:" $+$
-               nest 2 (rawDocExpr e)
-              )
-             )
-  PAP{..} -> braces 
-             (text "PAP:" $+$
-              nest 2
-              (text "name:" <+> text oname $+$
-               text "function:" <+> text f $+$
-               text "args:" <+> brackList (map rawDocAtom as) $+$
-               text "metadata:" $+$
-               nest 2 (toDoc omd)
-              )
-             )
-  CON{..} -> braces
-             (text "CON:" $+$
-              nest 2
-              (text "name:" <+> text oname $+$
-               text "datacon:" <+> text c $+$
-               text "args:" <+> brackList (map rawDocAtom as) $+$
-               text "metadata:" $+$
-               nest 2 (toDoc omd)
-              )
-             )
-  THUNK{..} -> braces
-               (text "THUNK:" $+$
+instance (PPrint a) => PPrint (Obj a) where
+  pprint o = case o of
+    FUN{..} -> braces
+               (text "FUN:" $+$
                 nest 2
                 (text "name:" <+> text oname $+$
+                 text "vars:" <+> listText vs $+$                        
                  text "metadata:" $+$
-                 nest 2 (toDoc omd) $+$
-                 text "expression:" $+$
-                 nest 2 (rawDocExpr e)
+                 nest 2 (pprint omd) $+$
+                 text "expr:" $+$
+                 nest 2 (pprint e)
                 )
                )
-  BLACKHOLE{..} -> braces
-                   (text "BLACKHOLE" $+$
-                    nest 2
-                    (text "name:" <+> text oname $+$
-                     text "metadata:" $+$
-                     nest 2 (toDoc omd)
-                    )
-                   )
-
-rawDocExpr e = case e of
-  EAtom{..} -> braces
-               (text "EAtom:" $+$
+    PAP{..} -> braces 
+               (text "PAP:" $+$
                 nest 2
-                (text "atom:" <+> rawDocAtom ea $+$
+                (text "name:" <+> text oname $+$
+                 text "function:" <+> text f $+$
+                 text "args:" <+> brackList (map pprint as) $+$
                  text "metadata:" $+$
-                 nest 2 (toDoc emd)
+                 nest 2 (pprint omd)
                 )
                )
-  EFCall{..} -> braces
-                (text "EFCall:" $+$
-                 nest 2
-                 (text "function:" <+> text ev $+$
-                  -- 7.9 changed, grab atoms from eas (same in primop below)
-                  text "args:" <+> (brackets $ vcat $ punctuate comma $ map rawDocExpr eas) $+$ 
-                  text "metadata:" $+$
-                  nest 2 (toDoc emd)
-                 )
+    CON{..} -> braces
+               (text "CON:" $+$
+                nest 2
+                (text "name:" <+> text oname $+$
+                 text "datacon:" <+> text c $+$
+                 text "args:" <+> brackList (map pprint as) $+$
+                 text "metadata:" $+$
+                 nest 2 (pprint omd)
                 )
-  EPrimop{..} -> braces
-                 (text "EPrimop:" $+$
+               )
+    THUNK{..} -> braces
+                 (text "THUNK:" $+$
                   nest 2
-                  (text "primop:" <+> rawDocPrimop eprimop $+$
-                   text "args:" <+> (brackets $ vcat $ punctuate comma $ map rawDocExpr eas) $+$
-                   text "metadata" $+$
-                   nest 2 (toDoc emd)
+                  (text "name:" <+> text oname $+$
+                   text "metadata:" $+$
+                   nest 2 (pprint omd) $+$
+                   text "expression:" $+$
+                   nest 2 (pprint e)
                   )
                  )
-  ELet{..} -> braces
-              (text "ELet:" $+$
-               nest 2
-               (text "metadata:" $+$
-                nest 2 (toDoc emd) $+$
-                text "definitions:" $+$
-                nest 2 (objListDoc edefs) $+$
-                text "expression:" $+$
-                nest 2 (rawDocExpr ee)
-               )
-              )
-  ECase{..} -> braces
-               (text "ECase:" $+$
-                nest 2
-                (text "metadata:" $+$
-                 nest 2 (toDoc emd) $+$
-                 text "scrutinee:" $+$
-                 nest 2 (rawDocExpr ee) $+$
-                 text "alts:" $+$
-                 nest 2 (rawDocAlts ealts)
-                )
-               )
-
-rawDocAlts Alts{..} = braces
-                      (text "Alts:" $+$
-                       nest 2
-                       (text "name:" <+> text aname $+$
-                        text "metadata:" $+$ 
-                        nest 2 (toDoc altsmd) $+$
-                        text "alt defs:" $+$
-                        nest 2 (vcat (map rawDocAlt alts))
-                       )
+    BLACKHOLE{..} -> braces
+                     (text "BLACKHOLE" $+$
+                      nest 2
+                      (text "name:" <+> text oname $+$
+                       text "metadata:" $+$
+                       nest 2 (pprint omd)
                       )
+                     )
+instance (PPrint a) => PPrint (Expr a) where
+  pprint e = case e of
+    EAtom{..} -> braces
+                 (text "EAtom:" $+$
+                  nest 2
+                  (text "atom:" <+> pprint ea $+$
+                   text "metadata:" $+$
+                   nest 2 (pprint emd)
+                  )
+                 )
+    EFCall{..} -> braces
+                  (text "EFCall:" $+$
+                   nest 2
+                   (text "function:" <+> text ev $+$
+                    -- 7.9 changed, grab atoms from eas (same in primop below)
+                    text "args:" <+> (brackets $ vcat $ punctuate comma $ map pprint eas) $+$ 
+                    text "metadata:" $+$
+                    nest 2 (pprint emd)
+                   )
+                  )
+    EPrimop{..} -> braces
+                   (text "EPrimop:" $+$
+                    nest 2
+                    (text "primop:" <+> pprint eprimop $+$
+                     text "args:" <+> (brackets $ vcat $ punctuate comma $ map pprint eas) $+$
+                     text "metadata" $+$
+                     nest 2 (pprint emd)
+                    )
+                   )
+    ELet{..} -> braces
+                (text "ELet:" $+$
+                 nest 2
+                 (text "metadata:" $+$
+                  nest 2 (pprint emd) $+$
+                  text "definitions:" $+$
+                  nest 2 (objListDoc edefs) $+$
+                  text "expression:" $+$
+                  nest 2 (pprint ee)
+                 )
+                )
+    ECase{..} -> braces
+                 (text "ECase:" $+$
+                  nest 2
+                  (text "metadata:" $+$
+                   nest 2 (pprint emd) $+$
+                   text "scrutinee:" $+$
+                   nest 2 (pprint ee) $+$
+                   text "alts:" $+$
+                   nest 2 (pprint ealts)
+                  )
+                 )
 
-rawDocAlt a = case a of
-  ACon{..} -> braces
-              (text "ACon:" $+$
-               nest 2
-               (text "datacon:" <+> text ac $+$
-                text "vars:" <+> listText avs $+$
-                text "metadata:" $+$
-                nest 2 (toDoc amd) $+$
-                text "expression:" $+$
-                nest 2 (rawDocExpr ae)
-               )
-              )
-  ADef{..} -> braces
-              (text "ADef:" $+$
-               nest 2
-               (text "var:" <+> text av $+$
-                text "metadata:" $+$
-                nest 2 (toDoc amd) $+$
-                text "expression:" $+$
-                nest 2 (rawDocExpr ae)
-               )
-              )
-rawDocPrimop = toDoc              
-rawDocAtom = toDoc
-
+instance (PPrint a) => PPrint (Alts a) where
+  pprint Alts{..} = braces
+                    (text "Alts:" $+$
+                     nest 2
+                     (text "name:" <+> text aname $+$
+                      text "metadata:" $+$ 
+                      nest 2 (pprint altsmd) $+$
+                      text "alt defs:" $+$
+                      nest 2 (vcat (map pprint alts))
+                     )
+                    )
+instance (PPrint a) => PPrint (Alt a) where  
+  pprint a = case a of
+    ACon{..} -> braces
+                (text "ACon:" $+$
+                 nest 2
+                 (text "datacon:" <+> text ac $+$
+                  text "vars:" <+> listText avs $+$
+                  text "metadata:" $+$
+                  nest 2 (pprint amd) $+$
+                  text "expression:" $+$
+                  nest 2 (pprint ae)
+                 )
+                )
+    ADef{..} -> braces
+                (text "ADef:" $+$
+                 nest 2
+                 (text "var:" <+> text av $+$
+                  text "metadata:" $+$
+                  nest 2 (pprint amd) $+$
+                  text "expression:" $+$
+                  nest 2 (pprint ae)
+                 )
+                )
               
+instance PPrint Atom where
+  pprint = unparse
+
+instance PPrint Primop where
+  pprint = unparse

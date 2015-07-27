@@ -168,38 +168,61 @@ instance Show Monotype where
 
 --------------- ADT Pretty Printing -----------------------
 
-instance PPrint Monotype where
-  toDoc (MVar c) = text c
-  toDoc (MFun m1@MFun{} m2) = parens (toDoc m1) <+> arw <+> toDoc m2
-  toDoc (MFun m1 m2) = toDoc m1 <+> arw <+> toDoc m2
-  toDoc (MCon _ c ms) = (if null ms then (empty <>) else parens)
-                        (text c <+> hsep (map toDoc ms))
-  toDoc (MPrim p) = case p of
+
+
+instance Unparse Monotype where
+  unparse (MVar c) = text c
+  unparse (MFun m1@MFun{} m2) = parens (unparse m1) <+> arw <+> unparse m2
+  unparse (MFun m1 m2) = unparse m1 <+> arw <+> unparse m2
+  unparse (MCon _ c ms) = (if null ms then (empty <>) else parens)
+                        (text c <+> hsep (map unparse ms))
+  unparse (MPrim p) = case p of
     UBInt    -> text "Int#"
     UBDouble -> text "Double#"
-  toDoc m = error $ "ADT.toDoc (Monotype) m=" ++ show m
+  unparse m = error $ "ADT.unparse (Monotype) m=" ++ show m
 
   
-instance PPrint DataCon where
-  toDoc (DataCon con mTypes) = text con <+> hsep (map toDoc mTypes)
+instance Unparse DataCon where
+  unparse (DataCon con mTypes) = text con <+> hsep (map unparse mTypes)
 
-instance PPrint TyCon where
-  toDoc (TyCon boxed name vars dCons) =
+instance PPrint DataCon where
+  pprint = unparse
+
+instance Unparse TyCon where
+  unparse (TyCon boxed name vars dCons) =
     let
+      (d:ds) = dCons
+      sepr = bar <> text " "
       lh = 
         (if boxed then empty else text "unboxed") <+>
         text name <+> hsep (map text vars) <+> equals
 
-      -- nest 2 has the somewhat strange effect of "dedenting" by 2 here
-      -- not sure why
-      rh = vcat $ prepunctuate bar $ map ((nest 2).toDoc) dCons
-
+      ind = length $ show lh  
+      rh =
+        unparse d $$
+        nest ind (vcat $ prepunctuate sepr $ map unparse ds)
     in lh <+> rh
 
-instance PPrint a => PPrint (Def a) where
-  toDoc (DataDef t) = text "data" <+> toDoc t
-  toDoc (ObjDef o) = toDoc o
+instance PPrint TyCon where
+  pprint = unparse
 
-instance PPrint a => PPrint [Def a] where
-  toDoc xs = vcat $ punctuate semi $ map toDoc xs
+instance Unparse a => Unparse (Def a) where
+  unparse (DataDef t) = text "data" <+> unparse t <> semi
+  unparse (ObjDef o) = unparse o <> semi
 
+
+instance PPrint Monotype where
+  pprint m = case m of
+    MVar v -> text "MVar" <> braces (text v)
+    MFun m1 m2 -> text "MFun" <> braces
+                  (nest 2
+                   (pprint m1 $+$
+                    pprint m2))
+    MCon b c ms -> text "MCon" <> braces
+                   (text (if b then "boxed" else "unboxed") <+>
+                    text c $+$
+                    nest 2 (vcat $ map pprint ms))
+    MPrim p -> text "MPrim" <> braces (pprint p)
+    MPVar v -> text "MPVar" <> braces (text v)
+    MPhony -> text "MPhony"
+    

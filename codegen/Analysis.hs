@@ -17,6 +17,7 @@ import PPrint
 import qualified Data.Map as Map
 import Data.List (group)
 import Debug.Trace
+import Util (deleteAll)
 
 
 -- known function analysis identifies PAPs and EFCalls that reference
@@ -34,12 +35,6 @@ import Debug.Trace
 
 -- KCMap: Knowncall map of Function Name to Fun InfoTab
 type KCMap = Map.Map Var InfoTab
-
-
--- remove entries from the KCMap matching a list of Var keys
-deleteAll :: Ord k => [k] -> Map.Map k v -> Map.Map k v
-deleteAll vs env = foldr (Map.delete) env vs
-
 
 
 
@@ -146,7 +141,7 @@ instance SetHA (Obj InfoTab) where
   getHA o = case o of
     FUN{e}   -> getHA e
     THUNK{e} -> getHA e
-    _ -> error $ "DAnalysis.getHA " ++ (show $ rawDocObj o)
+    _ -> error $ "DAnalysis.getHA " ++ (show $ pprint o)
 
 instance SetHA (Expr InfoTab) where
   setHA fmp e = case e of
@@ -186,16 +181,20 @@ instance SetHA (Expr InfoTab) where
       let
         eas' = map (setHA fmp) eas
         fnha = case knownCall emd of
-          Just it -> 
-            case Map.lookup (name it) fmp of
-             Just b -> b 
-             Nothing -> False -- unknown function may grow heap
+          Just it@Fun{arity} ->
+            if arity /= length eas -- (under|over)saturated call grows heap
+            then False
+            else
+              case Map.lookup (name it) fmp of
+               Just b -> b 
+               Nothing -> False -- unknown function may grow heap
           Nothing ->
             -- this works independently of knownCall analysis (for simple tests)
             -- it shouldn't break anything in its presence either, I think.
             case Map.lookup ev fmp of
              Just b -> b
              Nothing -> False
+          Just it -> error $ "Analysis.setHA (EFCall): unexpected infotab: " ++ (show $ pprint it)
              
         nha = fnha -- and (fnha:map getHA eas') -- ignoring args for now
         emd' = emd {noHeapAlloc = nha}
@@ -241,11 +240,11 @@ instance SetHA (Alt InfoTab) where
 addDefsToMap defs funmap =
   let
     fmp  = deleteAll (map oname defs) funmap -- remove shadowed bindings 
-    toAdd = Map.fromList $ map ((,True) . oname) $ filter isFun defs
+    toAdd = Map.fromList $ map ((,True) . oname) $ filter isKFun defs
     fmp' = Map.union toAdd fmp 
-    isFun o = case o of
+    isKFun o = case o of
       FUN{} -> True
---      PAP{} -> -- don't want PAPs for now
+      PAP{} -> False -- Don't want PAPs for now
       _ -> False
     
     foldfunc def fmp = case def of
@@ -264,13 +263,9 @@ addDefsToMap defs funmap =
        else fixDefs defs fmp'
   in
    fixDefs defs fmp'
-      
+     
 
-
-                                              
-
-
-
+                                             
 
 exhaustCases :: CMap -> [Obj a] -> [Obj a]
 exhaustCases cmap = map (exhaustObj cmap)

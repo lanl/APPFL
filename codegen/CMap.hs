@@ -138,17 +138,17 @@ getBuiltInType c
 
 
 instance Show CMap where
-  show = show.toDoc
+  show = show.pprint
 
 
 instance PPrint CMap where
-  toDoc m =
+  pprint m =
     let
       f (con, tyc) = text con <+> arw $+$ (nest 4 $ tyDoc tyc)
       tyDoc (TyCon b n vs dcs) = text "TyCon name:" <+> text n $+$
                                  text "boxed:" <+> boolean b $+$
                                  text "TyVars:" <+> listText vs $+$
-                                 text "DataCons:" <+> brackList (map toDoc dcs)
+                                 text "DataCons:" <+> brackList (map pprint dcs)
     in vcat $ map f $ Map.toList m
         
     

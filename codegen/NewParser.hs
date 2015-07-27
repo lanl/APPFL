@@ -89,7 +89,7 @@ data Int = I Int#
 implying only unboxed ints can be used to construct it.
 -}
 
-module Parser
+module NewParser
 (
   Parsed(..),
   parse,
@@ -97,7 +97,7 @@ module Parser
 ) where
 
 import Tokenizer
-import ASTz
+import NewAST
 import qualified Data.Map as Map
 import Data.List (groupBy)
 import PPrint
@@ -105,10 +105,10 @@ import PPrint
 
 
 instance (PPrint a, PPrint b) => PPrint (Parsed a b) where
-  toDoc (Parsed a) =
-    (lcomment $ text "PARSED:") $+$ toDoc a
-  toDoc (Unparsed b) =
-    bcomment $ text "UNPARSED:" $+$ toDoc b
+  pprint (Parsed a) =
+    (lcomment $ text "PARSED:") $+$ pprint a
+  pprint (Unparsed b) =
+    bcomment $ text "UNPARSED:" $+$ pprint b
 
 
 -- make it easy to group parsed and unparsed input together for later filtration
@@ -121,20 +121,21 @@ parse :: [Token] -> [Defn]
 parse =  fst . head . prog
 
 prog :: Parser Token [Defn]
-prog = many defP `thenx`
+prog = many' defP `thenx`
        tokcutP "Expected EOF at end of program" eofP
 
 defP :: Parser Token Defn
 defP = orExList [oDefP, dDefP, tDefP]
 
 
-splitDefs :: [Defn] -> ([Defn],[Defn],[Defn])
-splitDefs =
-  let f x (dds, tds, ods) = case x of
-        DDefn{} -> (x:dds, tds, ods)
-        TDefn{} -> (dds, x:tds, ods)
-        ODefn{} -> (dds, tds, x:ods)
-  in foldr f ([],[],[])
+testDBG filename =
+  do
+    f <- readFile filename
+    let (ps,us) = fromParsed $ parseDBG f
+        doc = text "##PARSED##" $+$ vcat (concatMap (map unparse) ps) $+$
+              text "##UNPARSED##" $+$ vcat (map pprint us)
+    print doc
+    
 
 parseDBG :: String -> [Parsed [Defn] Token]
 parseDBG = fst . head . progDBG . tokenize
@@ -230,13 +231,22 @@ eqP = rsvP "="
 barP = rsvP "|"
 semiP = rsvP ";"
 lambdaP = rsvP "\\"
+doubleColonP = rsvP "::"
+
+
 
 -- optional braces (for let defs and case clauses)
 optBracesP p =
   isNextP lbraceP >>> \b ->
   if not b
   then p
-  else inbracesP p       
+  else inbracesP p
+
+optParens p =
+  isNextP lparenP >>> \b ->
+  if not b
+  then p
+  else inparensP p
 
 -- match EOF Token
 eofP = tokP1 (TokEOF)
@@ -252,7 +262,7 @@ inbracesP p = xthenx lbraceP p $ tokcutP "Expected closing brace" rbraceP
 -- specialized cutp
 tokcutP msg p inp = cutP (show $
                   text "Parse error:" <+>
-                  (if not $ null inp then toDoc $ head inp else text "end of input:") $+$
+                  (if not $ null inp then pprint $ head inp else text "end of input:") $+$
                   text msg)
                   p inp
 
@@ -274,7 +284,7 @@ tDefP =
 oDefP :: Parser Token Defn              
 oDefP =
   varNameP >>> \name ->
-  many funPatP >>> \pats ->
+  many' patternP >>> \pats ->
   eqP >>> \_ ->
   tokcutP "Expected valid expression on rhs of object definition"
   exprP >>> \exp ->
@@ -291,10 +301,9 @@ oDefP =
 -- parse an expression, accept an Exp object
 exprP :: Parser Token Exp
 exprP =
-  let mults = some $
-              orExList
-              [eAtomP, inparensP exprP] >>> \es ->
-                                             accept $ foldl1 EAp exprs                             
+  let mults = some' (orExList
+              [eAtomP, inparensP exprP]) >>> \es ->
+                                             accept $ foldl1 EAp es  
 -- if only one Exp is parsed, foldl1 leaves it unchanged,
 -- otherwise left-associative application is parsed, so
 -- e1 e2 e3 e4 == ((((e1) e2) e3) e4)
@@ -304,18 +313,19 @@ exprP =
 -- but surrounding it with parens makes the application parse correctly
   in orExList
      [eLetP, eCaseP, eFunP, mults]
-                      
+
+     
 -- parse an anonymous function expression
 -- should behave as in Haskell, with everything to the right
 -- of the arrow being considered the body of the lambda unless parenthesized
 eFunP :: Parser Token Exp
 eFunP =
   lambdaP >>> \_ ->
-  tokcutP "Expected one or more pattern bindings in lambda expression" $
-  some funPatP >>> \pats ->
-  tokCutP "Expected '->' to precede lambda body" $
+  tokcutP "Expected one or more pattern bindings in lambda expression"
+  (some' patternP) >>> \pats ->
+  tokcutP "Expected '->' to precede lambda body"
   arrowP >>> \_ ->
-  tokCutP "Expected valid expression in lambda body"
+  tokcutP "Expected valid expression in lambda body"
   exprP >>> \exp ->
              accept $ EFn pats exp
 
@@ -329,12 +339,12 @@ eLetP :: Parser Token Exp
 eLetP =
    rsvP "let" >>> \_ ->
    optBracesP $
-   tokcutP "Expected one or more declarations for a let expr" $
-   many $ orExList [oDefP, tDefP] >>> \defs ->
-   tokcutP "Expected 'in' to open a let expr's sub expression" $
-   rsvP "in" >>> \_ ->
+   tokcutP "Expected one or more declarations for a let expr"
+   (many' $ orExList [oDefP, tDefP]) >>> \defs ->
+   tokcutP "Expected 'in' to open a let expr's sub expression"
+   (rsvP "in") >>> \_ ->
    exprP >>> \exp ->
-              accept $ ELt defs exp
+              accept $ ELt exp defs
 
 
 -- parse a case expression
@@ -342,9 +352,9 @@ eCaseP :: Parser Token Exp
 eCaseP =
   rsvP "case" >>> \_ ->
   exprP >>> \exp ->
-  tokcutP "Expected 'of' Token to close the scrutinee of a case expr" $
-  rsvP "of" >>> \_ ->
-  opBracesP $ some clauseP >>> \cls ->
+  tokcutP "Expected 'of' Token to close the scrutinee of a case expr"
+  (rsvP "of") >>> \_ ->
+  optBracesP $ some' clauseP >>> \cls ->
                                 accept $ ECs exp cls
 
 
@@ -354,6 +364,7 @@ clauseP =
   casePatP >>> \pat ->
   tokcutP "Expected a '->' symbol after a clause's pattern"
   arrowP >>> \_ ->
+  tokcutP "Expected a valid expression in clause body"
   exprP >>> \exp ->
   tokcutP "Expected a semicolon to terminate a clause's body"
   semiP >>> \_ ->
@@ -361,16 +372,24 @@ clauseP =
 
 
 casePatP :: Parser Token Pattern
-casePatP = orExList [conPatP, varPatP]
+casePatP = some patternP >>> \pats ->
+  case pats of
+   Match{str, npats = []}:ps -> accept $ Match str ps
+   [d@Default{}] -> accept $ d
+   [] -> error "case clause requires a pattern or variable to match against"
+   _ -> error $ "strange pattern in case clause: " ++ show (hsep $ map unparse pats)
 
-funPatP :: Parser Token Pattern
-funPatP = orExList [inParens conPatP, varPatP]
 
-conPatP :: Parser Token Pattern
-conPatP =
-  orExList [conNameP, intP ` ] >>> \c ->
-  many funPatP >>> \pats ->
-                    accept $ Match c pats
+
+patternP = orExList [varPatP, simplConPatP, nestConPatP]
+simplConPatP = orExList
+               [conNameP, intP `using` show] >>> \p ->
+                                                  accept $ Match p []
+                                                  
+nestConPatP = inparensP (
+  conNameP >>> \c ->
+  many' patternP >>> \ps ->
+                      accept $ Match c ps)
 
 varPatP :: Parser Token Pattern
 varPatP = varNameP `using` Default
@@ -380,6 +399,7 @@ varPatP = varNameP `using` Default
 atomP :: Parser Token Atom
 atomP = orExList [
   varNameP `using` Var,
+  conNameP `using` Var,
   intP `using` LitI,
   --boolP `using` LitB,
   fltP `using` LitF
@@ -397,7 +417,7 @@ dDefP =
 
   optP (rsvP "unboxed" `using` (const False)) True >>> \boxed ->
   
-  tokcutP "Expected valid constructor name in datatype declaration" $
+  tokcutP "Expected valid constructor name in datatype declaration"
   conNameP >>> \con ->
   
   many' varNameP >>> \vars ->
@@ -405,8 +425,8 @@ dDefP =
   tokcutP "Expected '=' Token to bind datatype declaration"
   eqP >>> \_ ->
 
-  tokcutP "Expected one or more data constructor definitions separated by '|'" $
-  sepByP constrP barP >>> \dcs ->
+  tokcutP "Expected one or more data constructor definitions separated by '|'"
+  (sepByP constrP barP) >>> \dcs ->
 
   tokcutP "Expected semicolon to terminate datatype definition"
   semiP >>> \_ ->
@@ -424,11 +444,11 @@ constrP =
   isNextP (orExList [semiP, eofP, barP]) >>> \b ->
 
   -- this feels hacky and wrong, but allows for a slightly better error message
-  if b then accept $ DataCon con []
+  if b then accept $ DCon con []
 
-  else tokcutP "Expected valid monotypes in data constructor" $
-       some' monoTypP >>> \mTypes ->
-                           accept $ Constr con mTypes
+  else tokcutP "Expected valid monotypes in data constructor"
+       (some' monoTypP) >>> \mTypes ->
+                             accept $ DCon con mTypes
 
 
 -- parse a monotype in a data constructor as a Monotype object
@@ -447,9 +467,9 @@ mFunP =
   inparensP $
   monoTypP >>> \m ->
   peekP arrowP >>> \_ ->
-  tokcutP "Expected valid monotype(s) following '->' token in data constructor" $
-  some' (arrowP `xthen` monoTypP) >>> \ms ->
-                                       accept $ foldr1 MFun (m:ms)
+  tokcutP "Expected valid monotype(s) following '->' token in data constructor"
+  (some' $ arrowP `xthen` monoTypP) >>> \ms ->
+                                         accept $ foldr1 MFun (m:ms)
 
 
 -- parse a type constructor in a monotype as an MCon (e.g. 'Tree a' in Branch (Tree a) (Tree a) )
@@ -650,4 +670,5 @@ isNextP :: Parser i v -> Parser i Bool
 isNextP p inp =
   let b = not $ null $ p inp
   in accept b inp
-    
+
+

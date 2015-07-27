@@ -479,9 +479,9 @@ instance SetITs (CMap, (Alt InfoTab)) (Alt InfoTab) where
       a { ae = setITs (cmap,ae) }
 
 instance PPrint InfoTab where
- toDoc it = text "Infotab:" <+> itName $+$
+ pprint it = text "Infotab:" <+> itName $+$
             nest 2 (
-              text "typ:" <+> toDoc (typ it) $+$
+              text "typ:" <+> pprint (typ it) $+$
               itExtras )
    where
      makeName n = text "name:" <+> text n

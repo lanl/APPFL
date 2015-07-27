@@ -11,7 +11,7 @@ module Tokenizer
 
 import AST
 import Data.Char
-import Control.Monad
+import Data.List (isPrefixOf)
 import PPrint
 
 ------------------------- Comment Stripper ------------------------------
@@ -101,12 +101,12 @@ data TokenState =  StrTok {tS::String, tP::Pos} |
                    None   {            tP::Pos} -- useful to have position for error messages
 
 instance PPrint TokenState where
-  toDoc StrTok {tS, tP} = brackets $ text "String-type token:" <+> text (show $ reverse tS) <+> text (showpos tP)
-  toDoc NumTok {tS, tP} = brackets $ text "Numeric-type token:" <+> text (show $ reverse tS) <+> text (showpos tP)
-  toDoc None{tP}        = brackets $ text "No token in progress:" <+> text (showpos tP)
+  pprint StrTok {tS, tP} = brackets $ text "String-type token:" <+> text (show $ reverse tS) <+> text (showpos tP)
+  pprint NumTok {tS, tP} = brackets $ text "Numeric-type token:" <+> text (show $ reverse tS) <+> text (showpos tP)
+  pprint None{tP}        = brackets $ text "No token in progress:" <+> text (showpos tP)
 
 instance PPrint Token where
-  toDoc = text.show
+  pprint = text.show
 
 instance Show Token where
   show (TokInt i p) = bracketize (show i) (showpos p)
@@ -135,12 +135,14 @@ primopTable =
     ("imax#",    Pimax)
   ]
 
+specials =
+  [  "{", "}", "(", ")", ";", "|", "=", "\\", "::", "->"]
+
 reserveds =
   [
     "CON", "THUNK", "FUN", "PAP", "ERROR",
-    "case", "of", "let", "in", "data", "unboxed",
-    "{", "}", "(", ")", ";", "|", "="
-  ]
+    "case", "of", "let", "in", "data", "unboxed"
+  ] ++ specials
   
 primops = fst $ unzip primopTable
 isReserved = flip elem reserveds
@@ -150,7 +152,7 @@ isIdSym x = isAlphaNum x ||
             elem x "#_"
 
 tokErr t m = error $ show $
-             text "Tokenization error with token" <+> toDoc t $+$
+             text "Tokenization error with token" <+> pprint t $+$
              text m
                                                        
 tokenize :: String -> [Token]
@@ -176,15 +178,18 @@ tokenize ls = aux (None (0,0)) (0,0) (stripComments ls) []
           _       -> aux (None newPs) newPs xs (fromTokenState st:toks)
 
 
-    -- reserved defined in table above. Single reserved chars always terminate a token-in-progress
-      | isReserved [x] =
+    -- special string sequences always terminate token in progress
+      | isSpecial xl =
         let
-          sym   = TokRsv [x] (l,c)
-          newPs = (l,c+1)
+          sym   = getSpecialHead xl
+          tok   = TokRsv sym (l,c)
+          len   = length sym
+          rest  = drop len xl
+          newPs = (l,c+len)
         in
          case st of
-          None {} -> aux (None newPs) newPs xs (sym:toks)
-          _       -> aux (None newPs) newPs xs (sym:fromTokenState st:toks)
+          None {} -> aux (None newPs) newPs rest (tok:toks)
+          _       -> aux (None newPs) newPs rest (tok:fromTokenState st:toks)
 
 
     -- special case for '.':
@@ -207,7 +212,6 @@ tokenize ls = aux (None (0,0)) (0,0) (stripComments ls) []
 
 --        StrTok {tS} -> aux st {tS = x:tS} (l,c+1) xs toks
 
-
     -- digits start/continue numeric tokens, are valid inside constructors and identifiers
       | isDigit x =
         case st of
@@ -219,7 +223,7 @@ tokenize ls = aux (None (0,0)) (0,0) (stripComments ls) []
     -- only valid as a non-beginning part of an identifier or constructor
     -- if found outside of such, should it be read as a comment in the comment stripper?
     -- MODIFIED 7.1, currently allowing '#' symbol in identifiers everywhere
---      | x == '#' =
+--      | x == '#' =n
 --        case st of
 --        StrTok {tS} -> aux st{tS= x:tS} (l,c+1) xs toks
 --        _           -> error
@@ -234,26 +238,15 @@ tokenize ls = aux (None (0,0)) (0,0) (stripComments ls) []
          NumTok _ _  -> tokErr st $
                         "expected digit, '.', or number-terminating character. Got " ++ show x
 
-
-    -- only two-char non-alpha keyword (I think). This could be generalized for others
-    -- might need a new class of token-in-progress, depending on the characters
-      | arrowHead xl =
-        let
-          arw = TokRsv (take 2 xl) (l,c)
-          newPs = (l,c+2)
-        in
-         case st of
-          None {} -> aux (None newPs) newPs (tail xs) (arw:toks)
-          _       -> aux (None newPs) newPs (tail xs) (arw:fromTokenState st:toks)
-
-
-        
+       
     -- give some kind of meaningful error message if something unexpected is read
       | otherwise = tokErr st $
                     "Couldn't match " ++ show x
    
-    arrowHead ('-':'>':x) = True
-    arrowHead _ = False
+    isSpecial xs = any (`isPrefixOf` xs) specials
+    getSpecialHead xs = head $ filter (`isPrefixOf` xs) specials
+    
+
 
     fromTokenState st =
       case st of

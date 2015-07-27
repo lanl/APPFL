@@ -15,6 +15,11 @@ module Driver (
   codegener
 ) where
 
+import           NewAST
+import           NewParser
+import           Transform
+
+import           Rename
 import           ADT
 import           AST
 import           SCC
@@ -25,8 +30,6 @@ import           PPrint
 import           InfoTab
 import           HeapObj
 import           Tokenizer
-import           Parser
-import           Rename
 import           SetFVs
 import           HMStg
 import           Data.List
@@ -78,14 +81,16 @@ tokenizer = tokenize
 
 -- parse tokenized input
 -- checks for valid syntax
-parser :: String -> ([TyCon], [Obj ()])
+parser :: String -> [Defn]
 parser = parse . tokenizer
 
 
--- set boxity in Monotypes of TyCon DataCons
-boxer :: String -> ([TyCon], [Obj ()])
-boxer inp = let (tycons, objs) = parser inp
-            in (boxMTypes tycons, objs)
+typeSigSetter inp = let defs = parser inp
+                    in 
+
+
+boxer = undefined
+
 
 
 renamer :: String -> ([TyCon], [Obj ()])
@@ -129,9 +134,6 @@ heapchecker inp = let (tycons, objs) = knowncaller inp
 printObjsVerbose (tycons, objs) = print $ objListDoc objs
 
 
--- this is currently not a perfect unparse.
-unparse (tycons, objs) =
-  print $ toDoc $ (map DataDef tycons) ++ (map ObjDef objs)
 
 tester ftest fprint file =
   do
