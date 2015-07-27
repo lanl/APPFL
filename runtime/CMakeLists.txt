@@ -35,5 +35,5 @@ project(runtime)
   # put in build/lib
   set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/../lib)
 
-  add_library(runtime STATIC ${rt_srcs})
-  add_dependencies(runtime ${rt_hdrs})
+  add_library(runtime STATIC ${rt_srcs} ${rt_hdrs})
+  #add_dependencies(runtime ${rt_hdrs})

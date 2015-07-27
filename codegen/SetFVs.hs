@@ -11,7 +11,7 @@ module SetFVs (
 
 import Prelude
 import AST
-import Parser(showObjs)
+import PPrint
 import qualified Data.List as List
 import qualified Data.Set as Set
 
@@ -85,8 +85,9 @@ instance STGToList (Obj (Set.Set Var, Set.Set Var)) (Obj ([Var],[Var])) where
 
 instance STGToList (Expr (Set.Set Var, Set.Set Var)) (Expr ([Var],[Var])) where
     stgToList EAtom{..} = EAtom{emd = p2p emd, ..}
-    stgToList EFCall{..} = EFCall{emd = p2p emd, ..}
-    stgToList EPrimop{..} = EPrimop{emd = p2p emd, ..}
+-- MODIFIED 7.9 - EFCall, EPrimop changes    
+    stgToList EFCall{..} = EFCall{emd = p2p emd, eas = map stgToList eas, ..}
+    stgToList EPrimop{..} = EPrimop{emd = p2p emd, eas = map stgToList eas, ..}
     stgToList ELet{..} = ELet{emd = p2p emd, edefs = map stgToList edefs, ee = stgToList ee, ..}
     stgToList ECase{..} = ECase{emd = p2p emd, ee = stgToList ee, ealts = stgToList ealts, ..}
         
@@ -111,8 +112,9 @@ toplevel rtgs defs =
         myfvl = Set.toList $ Set.unions myfvls
     in case myfvl of
          [] -> deadCode defs'
-         fvs -> error $ "SetFVs.setFVsDefs:  top level free variables:  " ++  
-                        List.intercalate " " fvs ++ "\n\n" ++ showObjs defs'
+         fvs -> error $
+                "SetFVs.setFVsDefs:  top level free variables:  " ++
+                List.intercalate " " fvs ++ "\n\n" ++ show (objListDoc $ rmPrelude defs')
 
 -- vars introduced by EFCall f, PAP f, and EAtom Var v
 -- scope introduced by FUN vs, x ->, C xi ->
@@ -143,14 +145,18 @@ instance SetFVs (Expr a) (Expr (Set.Set Var, Set.Set Var)) where
 
     -- EFCall introduces a Var
     setfvs tlds (EFCall _ f as) = 
-        let (asfvs, astruefvs) = fvsof tlds as
+        let as' = map (setfvs tlds) as
+            (easFVs, easTFVs) = unzip $ map emd as'
+            (asfvs, astruefvs) = (Set.unions easFVs, Set.unions easTFVs)
             myfvs   = (Set.singleton f `Set.union` asfvs) `Set.difference` tlds
             truefvs = Set.singleton f `Set.union` astruefvs
-        in EFCall (myfvs,truefvs) f as
+        in EFCall (myfvs,truefvs) f as'
 
     setfvs tlds (EPrimop _ p as) = 
-        let (myfvs, truefvs) = fvsof tlds as 
-        in EPrimop (myfvs,truefvs) p as
+        let as' = map (setfvs tlds) as
+            (easFVs, easTFVs) = unzip $ map emd as'
+            (myfvs, truefvs) = (Set.unions easFVs, Set.unions easTFVs)
+        in EPrimop (myfvs,truefvs) p as'
 
     -- let introduces scope
     setfvs tlds (ELet _ defs e) = 
@@ -230,4 +236,8 @@ instance SetFVs (Obj a) (Obj (Set.Set Var, Set.Set Var)) where
 
 instance SetFVs a b => SetFVs [a] [b] where
     setfvs tlds = map (setfvs tlds)
+
+instance PPrint (Set.Set Var, Set.Set Var) where
+  pprint (fvs, tfvs) = parens (text "fvs:" <+> pprint fvs <> comma <+> text "tfvs:" <+> pprint tfvs)
+
 

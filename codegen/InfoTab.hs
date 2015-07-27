@@ -1,12 +1,14 @@
-{-# LANGUAGE TypeSynonymInstances #-}
-{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE RecordWildCards       #-}
+{-# LANGUAGE TypeSynonymInstances  #-}
+{-# LANGUAGE FlexibleInstances     #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
-{-# LANGUAGE NamedFieldPuns    #-}
-
-{-# LANGUAGE FlexibleContexts    #-}
+{-# LANGUAGE NamedFieldPuns        #-}
+{-# LANGUAGE FlexibleContexts      #-}
+{-# LANGUAGE TupleSections         #-}
 
 module InfoTab(
   InfoTab(..),
+  setCMaps,
   setITs,
   showITs,
   showITType,
@@ -14,8 +16,10 @@ module InfoTab(
 ) where
 
 import Prelude
+import PPrint
 import AST
 import ADT
+import CMap
 import Data.List(nub,(\\))
 
 import Data.Map (Map)
@@ -61,9 +65,7 @@ data InfoTab =
       args :: [Atom],
       arity :: Int,
       con :: String, -- actual constructor name, not object name
-      tag :: Int,
-      tconMap :: TyConMap,
-      dconMap :: DataConMap }
+      cmap :: CMap }
   | Thunk { 
       typ :: Monotype,
       ctyp :: Polytype,
@@ -108,14 +110,14 @@ data InfoTab =
       ctyp :: Polytype,
       fvs :: [Var],
       truefvs :: [Var],
-      noHeapAlloc :: Bool }
+      noHeapAlloc :: Bool,
+      cmap :: CMap}
   | ITAlt { 
       typ :: Monotype,
       ctyp :: Polytype,
       fvs :: [Var],
       truefvs :: [Var],
-      tconMap :: TyConMap, 
-      dconMap :: DataConMap } 
+      cmap :: CMap }
   | ITAlts { 
       typ :: Monotype,
       ctyp :: Polytype,
@@ -181,11 +183,11 @@ instance SetITs (Expr ([Var],[Var])) (Expr InfoTab) where
     setITs e@(EAtom emd a) = 
         EAtom (makeIT e) a
 
-    setITs e@(EFCall emd f as) =
-        EFCall (makeIT e) f as
+    setITs e@(EFCall emd f eas) =
+        EFCall (makeIT e) f $ map setITs eas
 
-    setITs e@(EPrimop emd p as) =
-        EPrimop (makeIT e) p as 
+    setITs e@(EPrimop emd p eas) =
+        EPrimop (makeIT e) p $ map setITs eas 
 
 instance SetITs (Alts ([Var],[Var])) (Alts InfoTab) where
     setITs as@(Alts altsmd alts name) = 
@@ -245,7 +247,6 @@ instance MakeIT (Obj ([Var],[Var])) where
 
     makeIT o@(CON (fvs,truefvs) c as n) =
         Con { con = c,
-              tag = -1, -- this gets set later
               arity = length as,
               args = as,
               name = n,
@@ -255,8 +256,7 @@ instance MakeIT (Obj ([Var],[Var])) where
               ctyp = ctypUndef,
     --          entryCode = showITType o ++ "_" ++ n
               entryCode = "stg_constructorcall",
-              dconMap = error "ADef dconMap undefined",
-              tconMap = error "ADef tconMap undefined"
+              cmap = error "ADef cmap undefined"
             }
 
     makeIT o@(THUNK (fvs,truefvs) e n) =
@@ -291,8 +291,10 @@ instance MakeIT (Expr ([Var],[Var])) where
         ITCase{fvs = fvs, 
                truefvs = truefvs, 
                typ = typUndef, 
-               ctyp = ctypUndef, 
-               noHeapAlloc = False}
+               ctyp = ctypUndef,
+               noHeapAlloc = False,
+               cmap = Map.empty}
+
     makeIT EAtom{emd = (fvs,truefvs)} = 
         ITAtom{fvs = fvs, 
                truefvs = truefvs, 
@@ -330,16 +332,14 @@ instance MakeIT (Alt ([Var],[Var])) where
               truefvs = truefvs, 
               typ = typUndef,
               ctyp = ctypUndef,
-              dconMap = Map.empty, 
-              tconMap = Map.empty}
+              cmap = Map.empty}
 
     makeIT ADef{amd = (fvs,truefvs)} = 
         ITAlt{fvs = fvs, 
               truefvs = truefvs, 
               typ = typUndef,
               ctyp = ctypUndef,
-              dconMap = error "ADef dconMap set undefined in InfoTab.hs",
-              tconMap = error "ADef tconMap set undefined in InfoTab.hs"}
+              cmap = error "ADef cmap set undefined in InfoTab.hs"}
 
 
 showObjType Fun {} = "FUN"
@@ -396,7 +396,7 @@ showIT it@(Con {}) =
     "    .objType             = CON,\n" ++
     "    .layoutInfo.payloadSize = " ++ show (arity it) ++ ",\n" ++
     "    .conFields.arity     = " ++ show (arity it) ++ ",\n" ++
-    "    .conFields.tag       = " ++ show (tag it) ++ ",\n" ++
+    "    .conFields.tag       = " ++ luConTag (con it) (cmap it) ++ ",\n" ++
     "    .conFields.conName   = " ++ show (con it) ++ ",\n" ++
     "  };\n"
         
@@ -430,5 +430,114 @@ showIT it@(ITAlts{}) =
 showIT _ = ""
 
       
+-- MODIFIED 6.30 - David ----------------------------------------
+-- code below replaces code from ConMaps.hs to set the CMaps in
+-- CON and ACon infotabs for typechecker and codegen lookups
 
 
+setCMaps :: ([TyCon], [Obj InfoTab]) -> ([TyCon], [Obj InfoTab])
+setCMaps (tycons, objs) =
+  let cmap = toCMap tycons
+  in (tycons, addCMapToITs cmap objs)
+
+addCMapToITs :: CMap -> [Obj InfoTab] -> [Obj InfoTab]
+addCMapToITs cmap objs =  map (setITs . (cmap,)) objs
+
+
+instance SetITs (CMap,(Obj InfoTab)) (Obj InfoTab) where
+  setITs (cmap,obj) = case obj of
+
+    o@FUN{e} ->
+      o{ e = setITs (cmap,e) }
+
+    o@THUNK{e} ->
+      o{ e = setITs (cmap,e) }
+
+    o@CON{omd, c} ->
+      o{omd = omd{ cmap = cmap } }
+
+    o -> o --  BLACKHOLE and PAP don't need modification
+
+instance SetITs (CMap, (Expr InfoTab)) (Expr InfoTab) where
+  setITs (cmap,expr) = case expr of
+
+    e@ECase{ee, ealts, emd} ->
+      e{ ee    = setITs (cmap,ee),
+         ealts = setITs (cmap,ealts),
+         emd   = emd { cmap = cmap } }
+
+    e@ELet{ee, edefs} ->
+      e{ ee    = setITs (cmap,ee),
+         edefs = map (setITs . (cmap,)) edefs }
+      
+    e -> e -- EAtom, EFCall, EPrimop don't need modification
+
+instance SetITs (CMap, (Alts InfoTab)) (Alts InfoTab) where
+  setITs (cmap,a@Alts{alts}) =
+    a{ alts = map (setITs . (cmap,)) alts}
+    
+instance SetITs (CMap, (Alt InfoTab)) (Alt InfoTab) where
+  setITs (cmap, alt) = case alt of
+
+    a@ACon{amd, ac, ae} ->
+      a{ amd = amd{cmap = cmap},
+         ae = setITs (cmap,ae) }
+
+    a@ADef{ae} ->
+      a { ae = setITs (cmap,ae) }
+
+instance PPrint InfoTab where
+ pprint it = text "Infotab:" <+> itName $+$
+            nest 2 (
+              text "typ:" <+> pprint (typ it) $+$
+              itExtras )
+   where
+     makeName n = text "name:" <+> text n
+     makeKCDoc kc = case kc of
+       Just it' -> text "known call to" <+> text (name it')
+       Nothing  -> text "unknown call"
+     makeHADoc nha = text "noHeapAlloc:" <+> boolean nha
+     freevsDoc vs = text "fvs:" <+> listText vs
+     trufreevsDoc vs = text "truefvs:" <+> listText vs
+     frvarsDoc vs tvs = freevsDoc vs $+$ trufreevsDoc tvs
+     (itName, itExtras) =
+           case it of
+             Fun{..} ->
+               (text "Fun", makeName name $+$
+                            frvarsDoc fvs truefvs)
+             Pap{..} ->
+               (text "Pap", makeName name $+$
+                            makeKCDoc knownCall $+$
+                            frvarsDoc fvs truefvs)
+             Con{..} ->
+               (text "Con", makeName name $+$
+                            frvarsDoc fvs truefvs)
+             Thunk{..} ->
+               (text "Thunk", makeName name $+$
+                              frvarsDoc fvs truefvs)
+             Blackhole{..} ->
+               (text "Blackhole", makeName name $+$
+                                  frvarsDoc fvs truefvs)
+             ITAtom{..} ->
+               (text "ITAtom", makeHADoc noHeapAlloc $+$
+                               frvarsDoc fvs truefvs)
+             ITFCall{..} ->
+               (text "ITFCall", makeHADoc noHeapAlloc $+$
+                                makeKCDoc knownCall $+$
+                                frvarsDoc fvs truefvs)
+             ITPrimop{..} ->
+               (text "ITPrimop", makeHADoc noHeapAlloc $+$
+                                 frvarsDoc fvs truefvs)
+             ITLet{..} ->
+               (text "ITLet", makeHADoc noHeapAlloc $+$
+                              frvarsDoc fvs truefvs)
+             ITCase{..} ->
+               (text "ITCase", makeHADoc noHeapAlloc $+$
+                               frvarsDoc fvs truefvs)
+             ITAlt{..} ->
+               (text "ITAlt", frvarsDoc fvs truefvs)
+             ITAlts{..} ->
+               (text "ITAlts", makeName name $+$
+                               frvarsDoc fvs truefvs)
+             _ -> (text "Other InfoTab",empty)
+  

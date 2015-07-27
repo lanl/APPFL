@@ -9,23 +9,23 @@ module ADT (
   TyVar,
   Polytype(..),
   Monotype(..),
-  TyConParam(..),
-  TyConMap,
-  DataConParam(..),
-  DataConMap,
-  ConMaps,
-  ppConMaps,
-  getTyConDefFromConstructor,
-  isBoxedMonotype
+  Con,
+  dataConName,
+  tyConName,
+  getDataCons,
+  makeIntTyCon,
+  makeDoubleTyCon,
+  boxMTypes,
+  isBoxed
 ) where
 
-import AST(Con,BuiltinType,Obj)
+import AST(Con,BuiltinType(..),Obj)
 
-import Data.List(intercalate)
---import Data.Maybe
---import Control.Monad.State
+import Data.List(intercalate, (\\), find)
+import Data.Maybe (fromJust)
+import Data.Char (isNumber)
 import qualified Data.Map as Map
-import Text.PrettyPrint
+import PPrint
 
 {-
   Algebraic Datatypes:
@@ -61,8 +61,8 @@ import Text.PrettyPrint
 
 
 data Def a = ObjDef (Obj a)
-          | DataDef TyCon
-            deriving(Eq,Show)
+           | DataDef TyCon
+             deriving(Eq, Show)
 
 -- Boxed: data \Chi \alpha_1 .. \alpha_t =
 -- c_1 \tau_11 .. \tau_1a_1 | ... | c_n \tau_n1 .. \tau_na_1  
@@ -73,7 +73,7 @@ data TyCon = TyCon Bool Con [TyVar] [DataCon]
              
 -- Boxed True: c_x \tau_x1 .. \tau_xa_1 
 -- Boxed False: c_x# \tau_x1 .. \tau_xa_1  
-data DataCon = DataCon Bool Con [Monotype]
+data DataCon = DataCon Con [Monotype]
                deriving(Eq,Show)
 
 type TyVar = String
@@ -90,6 +90,62 @@ data Monotype = MVar TyVar
               | MPhony
                 deriving(Eq,Ord)
 
+isBoxed :: Monotype -> Bool
+isBoxed m = case m of
+  MVar{}     -> True -- polymorphic
+  MFun{}     -> True -- expr / obj :: MFun --> PAP created --> boxed
+  MCon b _ _ -> b
+  MPrim{}    -> False
+  MPVar{}    -> True
+  m          -> error $ "ADT.isBoxed called with " ++ show m
+  
+
+-- set Monotype boxity in TyCons (this should be done before CMaps are built
+-- for InfoTabs
+boxMTypes :: [TyCon] -> [TyCon]
+boxMTypes tycons =
+  let -- create assoc list for TyCon names -> TyCons
+      tycons' = makeIntTyCon "0" : tycons
+      tmap = zip (map tyConName tycons') tycons'
+      
+      -- functions below set MCon boxity in TyCons
+      mapFunc (TyCon b c vs dcs) = TyCon b c vs $ map setDCtypes dcs
+      setDCtypes (DataCon c mts) = DataCon c $ map setMtypes mts
+      setMtypes m = case m of
+                     MCon _ c mts ->
+                       let (TyCon bxt _ _ _) = fromJust $ lookup c tmap
+                       in MCon bxt c $ map setMtypes mts
+                     MFun mts1 mts2 -> MFun (setMtypes mts1) (setMtypes mts2)
+                     MVar{} -> m
+                     MPrim{} -> m
+                     _ -> error $ "CMap.cMapTyCons matching bad Monotype: " ++ show m
+                     
+  in map mapFunc tycons -- don't need built-ins in TyCon list (?) 
+
+-- helpers to make TyCons for built-in types
+-- this is a bit of a hack to fudge the fact that there are no explicit
+-- data declarations for the built-ins
+-- The string given (e.g. "0") may be useful, depending on the application
+-- of the TyCon
+makeIntTyCon :: Con -> TyCon
+makeIntTyCon c = TyCon False "Int_h" [] [DataCon c []]
+
+makeDoubleTyCon :: Con -> TyCon
+makeDoubleTyCon c = TyCon False "Double_h" [] [DataCon c []]
+
+
+-- helper field accessor functions --
+
+dataConName :: DataCon -> Con
+dataConName (DataCon n _) = n
+
+tyConName :: TyCon -> Con
+tyConName (TyCon _ n _ _) = n
+
+getDataCons :: TyCon -> [DataCon]
+getDataCons (TyCon _ _ _ cons) = cons
+
+
 
 precalate s ss = concatMap (s++) ss
 
@@ -101,83 +157,72 @@ instance Show Polytype where
 instance Show Monotype where
     show (MVar v) = v
     show (MPVar v) = "p_" ++ v
-    show (MFun m1@(MFun _ _) m2) = "(" ++ show m1 ++ ") -> " ++ show m2
-    show (MFun m1 m2) = show m1 ++ " -> " ++ show m2
-    show (MCon boxed con ms) = con ++ 
-                               (if boxed then " [B] " else " [U] ") ++
-                               "(" ++ intercalate ") (" (map show ms) ++ ")"
+    show (MFun m1@(MFun _ _) m2) = "(" ++ show m1 ++ ") -> " ++ show m2      
+    show (MFun m1 m2) = show m1 ++ " -> " ++ show m2 
+    show (MCon bxt con ms) = con ++
+                             (if bxt
+                              then "[B] "
+                              else "[U] ") ++ intercalate " " (map show ms)
     show (MPrim p) = show p
-    show MPhony = "phonyType"
+    show MPhony = "MPhony"
 
-isBoxedMonotype MVar{} = True
-isBoxedMonotype MFun{} = True
-isBoxedMonotype (MCon boxed _ _) = boxed
+--------------- ADT Pretty Printing -----------------------
 
-data TyConParam = TyConParam {tarity :: Int, 
-                              ttag :: Int, 
-                              tboxed :: Bool,
-                              tdatacons :: [Con],
-                              tycon :: TyCon}
-                  deriving(Eq,Show)
 
-type TyConMap = Map.Map String TyConParam
 
-data DataConParam = DataConParam {darity :: Int, 
-                                  dtag :: Int, 
-                                  dboxed :: Bool, 
-                                  dtycon :: Con, -- type constructor name
-                                  datacon :: DataCon} 
-                    deriving(Eq,Show)
+instance Unparse Monotype where
+  unparse (MVar c) = text c
+  unparse (MFun m1@MFun{} m2) = parens (unparse m1) <+> arw <+> unparse m2
+  unparse (MFun m1 m2) = unparse m1 <+> arw <+> unparse m2
+  unparse (MCon _ c ms) = (if null ms then (empty <>) else parens)
+                        (text c <+> hsep (map unparse ms))
+  unparse (MPrim p) = case p of
+    UBInt    -> text "Int#"
+    UBDouble -> text "Double#"
+  unparse m = error $ "ADT.unparse (Monotype) m=" ++ show m
 
-type DataConMap = Map.Map String DataConParam
+  
+instance Unparse DataCon where
+  unparse (DataCon con mTypes) = text con <+> hsep (map unparse mTypes)
 
-type ConMaps = (TyConMap, DataConMap)
+instance PPrint DataCon where
+  pprint = unparse
 
--- given a TyConMap, DataConMap and a data constructor C,
--- return the data constructor definition
+instance Unparse TyCon where
+  unparse (TyCon boxed name vars dCons) =
+    let
+      (d:ds) = dCons
+      sepr = bar <> text " "
+      lh = 
+        (if boxed then empty else text "unboxed") <+>
+        text name <+> hsep (map text vars) <+> equals
 
-getTyConDefFromConstructor dconMap tconMap con = 
-    let Just dataConParam = Map.lookup con dconMap :: Maybe DataConParam
-        tyConName = dtycon dataConParam :: Con
-        tyConParam = case Map.lookup tyConName tconMap of
-                       Just x -> x
-                       Nothing -> error $ "getTyConDefFromConstructor: no such " 
-                                          ++ tyConName
-        -- Just tyConParam = Map.lookup tyConName tconMap :: Maybe TyConParam
-    in tycon tyConParam :: TyCon
+      ind = length $ show lh  
+      rh =
+        unparse d $$
+        nest ind (vcat $ prepunctuate sepr $ map unparse ds)
+    in lh <+> rh
 
-         
- 
- 
+instance PPrint TyCon where
+  pprint = unparse
 
-ppConMaps (tmap, dmap) = show $
-                         text "TyConMap:" $+$
-                         nest 2 (brackets $ ppTmap tmap) $+$
-                         text "DataConMap" $+$
-                         ppDmap dmap
+instance Unparse a => Unparse (Def a) where
+  unparse (DataDef t) = text "data" <+> unparse t <> semi
+  unparse (ObjDef o) = unparse o <> semi
 
-ppTmap tmap =
-  let assoc = Map.toList tmap
-      ppEntry (s, tcParam) = case tcParam of
-        TyConParam{..} ->
-          text (s ++ "-->") $+$
-          (nest 2 $ braces $
-           text "tarity:" <+> int tarity $+$
-           text "ttag:" <+> int ttag $+$
-           text "tboxed:" <+> text (show tboxed) $+$
-           text "tdatacons:" <+> brackets (hsep $ punctuate comma $ map text tdatacons) $+$
-           text "tycon:" <+> text (show tycon))
-  in vcat $ map ppEntry assoc
 
-ppDmap dmap =
-  let assoc = Map.toList dmap
-      ppEntry (s, dcParam) = case dcParam of
-        DataConParam{..} ->
-          text (s ++ "-->") $+$
-          (nest 2 $ braces $
-           text "darity:" <+> int darity $+$
-           text "dtag:" <+> int dtag $+$
-           text "dboxed:" <+> text (show dboxed) $+$
-           text "dtycon:" <+> text (show dtycon) $+$
-           text "datacon:" <+> text (show datacon))
-  in vcat $ map ppEntry assoc  
+instance PPrint Monotype where
+  pprint m = case m of
+    MVar v -> text "MVar" <> braces (text v)
+    MFun m1 m2 -> text "MFun" <> braces
+                  (nest 2
+                   (pprint m1 $+$
+                    pprint m2))
+    MCon b c ms -> text "MCon" <> braces
+                   (text (if b then "boxed" else "unboxed") <+>
+                    text c $+$
+                    nest 2 (vcat $ map pprint ms))
+    MPrim p -> text "MPrim" <> braces (pprint p)
+    MPVar v -> text "MPVar" <> braces (text v)
+    MPhony -> text "MPhony"
+    

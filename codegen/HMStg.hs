@@ -1,16 +1,18 @@
-{-# LANGUAGE TypeSynonymInstances #-}
-{-# LANGUAGE FlexibleInstances    #-}
-{-# LANGUAGE NamedFieldPuns       #-}
-{-# LANGUAGE ParallelListComp     #-}
+{-# LANGUAGE TypeSynonymInstances  #-}
+{-# LANGUAGE FlexibleInstances     #-}
+{-# LANGUAGE NamedFieldPuns        #-}
+{-# LANGUAGE ParallelListComp      #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
-{-# LANGUAGE RecordWildCards      #-}
+{-# LANGUAGE RecordWildCards       #-}
 
 module HMStg (
   hmstgdebug,
-  hmstg
+  hmstg,
+  showObjs
 ) where
 
 import ADT
+import CMap
 import AST
 import InfoTab
 import BU
@@ -83,6 +85,7 @@ errTyp = error "typ not defined"
 
 getMono (Var v)  = freshMonoVar
 getMono (LitI _) = return $ MPrim UBInt
+getMono a        = error $ "HMStg.getMono: " ++ show a
 
 class SetTyp a where
     setTyp :: Monotype -> a -> a
@@ -151,11 +154,12 @@ instance DV (Expr InfoTab) (Expr InfoTab) where
     dv e@EAtom{ea} =
         do m <- getMono ea
            return $ setTyp m e
-    dv e@EFCall{..} = 
+
+    dv e@EFCall{eas} = 
         do retMono <- freshMonoVar -- return type
-           ms <- mapM getMono eas   -- arg types
-           let m = foldr MFun retMono ms -- function type = fresh vars + concrete
-           return $ setTyp m e
+           eas' <- mapM dv eas -- setTyp(s) of args
+           let e' = e{eas = eas'}
+           return $ setTyp retMono e'
 
     dv e@EPrimop{..} =
         let retMono = case eprimop of
@@ -166,14 +170,21 @@ instance DV (Expr InfoTab) (Expr InfoTab) where
                         Pimod -> MPrim UBInt
                         Pimax -> MPrim UBInt
                         Pimin -> MPrim UBInt
+                        Pineg -> MPrim UBInt
                         Pieq  -> MPrim UBInt
+                        Pine  -> MPrim UBInt
                         Pile  -> MPrim UBInt
+                        Pilt  -> MPrim UBInt
+                        Pige  -> MPrim UBInt
+                        Pigt  -> MPrim UBInt
                         x -> error $ "HMStg.dv Eprimop " ++ show x
                         -- etc.
 
-        in do ms <- mapM getMono eas
-              let m = foldr MFun retMono ms
-              return $ setTyp m e
+        in do eas' <- mapM dv eas -- setTyp(s) of Primop args
+              let --ms = map getTyp eas' -- use those types to make MFun
+                 -- m = foldr MFun retMono ms
+                  e' = e{eas = eas'}
+              return $ setTyp retMono e'
 
     dv e@ELet{..} =
         do edefs <- mapM dv edefs
@@ -199,15 +210,18 @@ instance DV (Alt InfoTab) (Alt InfoTab) where
         do ae' <- dv ae
            -- stash type constructor TC b1 .. bn, bi fresh
            let TyCon boxed tcon tvs dcs = 
-                   getTyConDefFromConstructor (dconMap amd) (tconMap amd) ac
+-- MODIFIED 6.30 - David----------------------------------------
+                 luTCon ac $ cmap amd -- NEW
+-- OLD                 gettTyConDefFromConstructor (dconMap amd) (tconMap amd) ac
            ntvs <- freshMonoVars $ length tvs
            let m = MCon boxed tcon ntvs
+
            return $ setTyp m a{ae = ae'}
 
 instance DV (Obj InfoTab) (Obj InfoTab) where
     dv o@FUN{vs,e} =
         do bs <- freshMonoVars (length vs) -- one for each arg
-           let m = MCon True "hack" bs  --hack, just hold them
+           let m = MCon True "hack" bs  --hack, just hold them        
            e' <- dv e
            return $ setTyp m o{e=e'}  --what's the precedence, if it mattered?
 
@@ -220,8 +234,10 @@ instance DV (Obj InfoTab) (Obj InfoTab) where
     dv o@CON{omd,c,as} = 
         -- stash type constructor TC b1 .. bn, bi fresh
         -- stash type info for as as well
-        let TyCon boxed tcon tvs dcs = 
-                getTyConDefFromConstructor (dconMap omd) (tconMap omd) c
+        let TyCon boxed tcon tvs dcs =
+-- MODIFIED 6.30 - David ----------------------------------------
+              luTCon c $ cmap omd
+-- OLD              getTyConDefFromConstructor (dconMap omd) (tconMap omd) c
         in do ntvs <- freshMonoVars $ length tvs
               asts <- mapM getMono as -- may be zero of them
               let hack = MFun (MCon boxed tcon ntvs) (MCon True "hack2" asts)
@@ -252,14 +268,17 @@ instance BU (Expr InfoTab) where
          Set.empty,
          e) -- EAtom monotype set in dv
 
-    bu mtvs e@EFCall{emd = ITFCall{typ},ev,eas} =
-        let (m,ms) = unfoldr typ -- m is return type
-        in (Set.fromList $ (ev, typ) : [ (v,m) | (Var v, m) <- zzip eas ms ],
+    bu mtvs e@EFCall{ev,eas} =
+        let (ass, _, eas') = unzip3 $ map (bu mtvs) eas
+            ftyp = foldr MFun (typ $ emd e) $ map (typ . emd) eas
+            fas = Set.singleton (ev, ftyp)
+        in (Set.unions $ fas:ass,
             Set.empty,
-            setTyp m e)
+            e{eas=eas'}) -- EFCall monotype set in dv
 
     bu mtvs e@EPrimop{emd = ITPrimop{typ}, eprimop, eas} =
-        let (m,ms) = unfoldr typ -- get atoms assocs, m is result type
+        let (ass, _, eas') = unzip3 $ map (bu mtvs) eas
+            as = Set.unions ass
             pts = case eprimop of
                     Piadd -> [MPrim UBInt, MPrim UBInt]
                     Pisub -> [MPrim UBInt, MPrim UBInt]
@@ -268,12 +287,16 @@ instance BU (Expr InfoTab) where
                     Pimod -> [MPrim UBInt, MPrim UBInt]
                     Pimax -> [MPrim UBInt, MPrim UBInt]
                     Pimin -> [MPrim UBInt, MPrim UBInt]
+                    Pineg -> [MPrim UBInt, MPrim UBInt]
+                    Pine  -> [MPrim UBInt, MPrim UBInt]
                     Pieq  -> [MPrim UBInt, MPrim UBInt]
                     Pile  -> [MPrim UBInt, MPrim UBInt]
-                    x -> error $ "HMSth.bu EPrimop " ++ show x
-            as = Set.fromList [(v,m) | (Var v, m) <- zzip eas ms] --drop LitX cases
-            cs = Set.fromList [EqC m1 m2 | m1 <- ms | m2 <- pts]
-        in (as, cs, setTyp m e)
+                    Pilt  -> [MPrim UBInt, MPrim UBInt]
+                    Pigt  -> [MPrim UBInt, MPrim UBInt]
+                    Pige  -> [MPrim UBInt, MPrim UBInt]
+                    x -> error $ "HMStg.bu EPrimop " ++ show x
+            cs = Set.fromList [EqC m1 m2 | (_,m1) <- Set.toList as | m2 <- pts]
+        in (as, cs, e) -- EPrimop monotype set in dv
 
     bu mtvs e@ECase{ee,ealts} =
         let (asee, csee, ee')    = bu mtvs ee
@@ -290,6 +313,8 @@ instance BU (Expr InfoTab) where
         in (Set.union asdefs asee',
             csdefs `Set.union` csee `Set.union` cseen,
             setTyp (getTyp ee') e{edefs = edefs', ee = ee'})
+
+    bu mtvs e = error $ "HMStg.bu Expr: " ++ show e
 
 buNest :: Set.Set Monotype
        -> [Obj InfoTab]
@@ -358,17 +383,25 @@ butAlt t0 mtvs e@ADef{av,ae} =
 butAlt t0 mtvs e@ACon{amd,ac,avs,ae} =
     let -- instantiate type constructor definition
         -- get type constructor definition
-        TyCon boxed tcon tvs dcs = 
-            getTyConDefFromConstructor (dconMap amd) (tconMap amd) ac
+        TyCon boxed tcon tvs dcs =
+-- MODIFIED 6.30 - David ----------------------------------------
+            luTCon ac $ cmap amd
+-- OLD            getTyConDefFromConstructor (dconMap amd) (tconMap amd) ac
         -- get data constructor definition C [Monotype]
         -- [ms] = [ ms | DataCon b c ms <- dcs, c == ac ] -- ms :: [Monotype]
-        ms = case [ ms | DataCon b c ms <- dcs, c == ac ] of
+-- MODIFIED 7.1 - David ----------------------------------------
+        ms = case [ ms | DataCon c ms <- dcs, c == ac] of
+-- OLD        ms = case [ ms | DataCon b c ms <- dcs, c == ac ] of
                [ms] -> ms
                _ -> error $ "butAlt: not finding " ++ ac ++ " in " ++ show dcs ++
-                    "\ndconMap: " ++ show (dconMap amd) ++ 
-                    "\ntconMap: " ++ show (tconMap amd)
+-- MODIFIED 6.30 - David ----------------------------------------
+                    " for TyCon: " ++ tcon ++
+                     "\nCMap:\n" ++ show (cmap amd)
+-- OLD                     " ++ show (dconMap amd) ++ 
+-- OLD                     "\ntconMap: " ++ show (tconMap amd)
 
-        -- instantiate those Monotypes 
+        -- instantiate those Monotypes
+
         MCon boxed' c ntvs = getTyp e --stashed by dv
         subst = Map.fromList $ zzip tvs ntvs
         tis = apply subst ms
@@ -386,16 +419,16 @@ butAlt t0 mtvs e@ACon{amd,ac,avs,ae} =
 instance BU (Obj InfoTab) where
   bu mtvs o@FUN{vs,e,oname} = 
       -- get new type vars for args
-      let MCon _ "hack" ntvs = getTyp o
-          (as,cs,e') = bu (Set.union mtvs $ Set.fromList ntvs) e
-          ncs = Set.fromList [EqC t' bi | (xi,bi) <- zzip vs ntvs, 
-                                          (x,t') <- Set.toList as,
-                                          x == xi ]
-          typ = foldr MFun (getTyp e') ntvs
-          nas = Set.singleton (oname, typ)
-      in (foldr dropAss as vs `Set.union` nas,
-          Set.union cs ncs,
-          setTyp typ o{e = e'})
+    let MCon _ "hack" ntvs = getTyp o
+        (as,cs,e') = bu (Set.union mtvs $ Set.fromList ntvs) e
+        ncs = Set.fromList [EqC t' bi | (xi,bi) <- zzip vs ntvs, 
+                            (x,t') <- Set.toList as,
+                            x == xi ]
+        typ = foldr MFun (getTyp e') ntvs
+        nas = Set.singleton (oname, typ)
+    in (foldr dropAss as vs `Set.union` nas,
+        Set.union cs ncs,
+        setTyp typ o{e = e'})
 
   bu mtvs o@PAP{f,as} =
       let typ = getTyp o
@@ -406,11 +439,10 @@ instance BU (Obj InfoTab) where
 
   bu mtvs o@CON{omd,c,as} = 
       let
-        TyCon boxed tcon tvs dcs = 
-            getTyConDefFromConstructor (dconMap omd) (tconMap omd) c
-        [ms] = [ ms | DataCon b c' ms <- dcs, c == c' ] -- ms :: [Monotype]
-        -- instantiate those Monotypes 
-        MFun typ@(MCon boxed' tcon' ntvs) (MCon True "hack2" asts) = getTyp o
+        TyCon boxed tcon tvs dcs = luTCon c $ cmap omd         
+        [ms] = [ ms | DataCon c' ms <- dcs, c == c' ]
+        -- instantiate those Monotypes
+        MFun typ@(MCon _ tcon' ntvs) (MCon True "hack2" asts) = getTyp o        
         subst = Map.fromList $ zzip tvs ntvs
         ms' = apply subst ms
       in (Set.fromList [(v,m) | (Var v, m) <- zzip as ms'], --drop LitX cases
@@ -435,6 +467,7 @@ polyToMono (MFun a b) = MFun (polyToMono a) (polyToMono b)
 polyToMono (MCon b c ms) = MCon b c $ map (polyToMono) ms
 polyToMono m@MPrim{} = m
 polyToMono (MPVar v) = MVar v
+polyToMono m = error $ "HMStg.polyToMono: " ++ show m
 
 class BackSub a where
     backSub :: Subst -> a -> a
@@ -447,16 +480,19 @@ instance BackSub (Obj InfoTab) where
         let o' = setTyp (polyToMono $ apply s $ getTyp o) o
         in case o' of
              o@FUN{e} -> o{e = backSub s e}
-             o@THUNK{e} -> o{e = backSub s e}
+             o@THUNK{omd, e} | isBoxed $ typ omd -> o{e = backSub s e}
+                             | otherwise -> error "THUNKs must evaluate to boxed types"
              _ -> o'
 
 instance BackSub (Expr InfoTab) where
     backSub s e =
         let e' = setTyp (polyToMono $ apply s $ getTyp e) e
         in case e' of
-             e@ELet{edefs,ee} -> e{edefs = backSub s edefs, ee = backSub s ee}
+             e@ELet{edefs,ee}   -> e{edefs = backSub s edefs, ee = backSub s ee}
              e@ECase{ee, ealts} -> e{ee = backSub s ee, ealts = backSub s ealts}
-             _ -> e'
+             e@EPrimop{eas}     -> e{eas = map (backSub s) eas}
+             e@EFCall{eas}      -> e{eas = map (backSub s) eas}
+             EAtom{}            -> e'
 
 instance BackSub (Alts InfoTab) where
     backSub s as@Alts{alts} = 
@@ -497,9 +533,11 @@ instance CO (Expr InfoTab) where
             e' = setCTyp (PPoly (Set.toList ovs) m) e
             bvs' = Set.union bvs ovs
         in case e' of
-             e@ELet{edefs,ee} -> e{edefs = co bvs' edefs, ee = co bvs' ee}
+             e@ELet{edefs,ee}   -> e{edefs = co bvs' edefs, ee = co bvs' ee}
              e@ECase{ee, ealts} -> e{ee = co bvs' ee, ealts = co bvs' ealts}
-             _ -> e'
+             e@EPrimop{eas}     -> e{eas = map (co bvs') eas}
+             e@EFCall{eas}      -> e{eas = map (co bvs') eas}
+             EAtom{}            -> e'
 
 instance CO (Alts InfoTab) where
     co bvs as@Alts{alts} = 
@@ -526,7 +564,7 @@ map2 f g = map (\x -> (f x, g x))
 
 -- sanity-checking zip
 zzip [] [] = []
-zzip (a:as) (b:bs) = (a,b) : zip as bs
+zzip (a:as) (b:bs) = (a,b) : zzip as bs -- changed to zzip here
 zzip _ _ = error "zzip on lists of differing lengths"
 
 class PP a where

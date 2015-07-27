@@ -40,11 +40,13 @@ module CodeGen(
 
 import ADT
 import AST
+import CMap
 import InfoTab
 import HeapObj
 import State
 import Analysis
 import Util
+import PPrint
 
 import Prelude
 import Data.List(intercalate,nub)
@@ -93,6 +95,7 @@ cga env (LitI i) = "((PtrOrLiteral){.argType = INT,    .i = " ++ show i ++ " })"
 cga env (LitD d) = "((PtrOrLiteral){.argType = DOUBLE, .d = " ++ show d ++ " })"
 --cga env (LitF f) = "((PtrOrLiteral){.argType = FLOAT,  .f = " ++ show f ++ " })"
 cga env (Var v) = cgv env v
+cga _ at = error $ "CodeGen.cga: not expecting Atom - " ++ show at 
 
 -- CG in the state monad ***************************************************
 -- CG of objects produces no inline code
@@ -190,6 +193,8 @@ cgo env (BLACKHOLE {}) =
 cgUBa env (Var v)  t   =  "(" ++ cgv env v ++ ")." ++ t
 cgUBa env (LitI i) "i" = show i
 cgUBa env (LitD d) "d" = show d
+cgUBa _ at _ = error $ "CodeGen.cgUBa: not expecting Atom - " ++ show at 
+
 -- cgUBa env (LitF f) "f" = show f
 
 stgApplyGeneric env f as = 
@@ -200,18 +205,23 @@ stgApplyGeneric env f as =
 
 -- for now
 stgApplyDirect env (EFCall it f as) = 
-    "// " ++ f ++ " " ++ showas as ++ "\n" ++
+    "// " ++ f ++ " " ++ showas (map ea as) ++ "\n" ++
     "STGAPPLY" ++ show (length as) ++ "(" ++
-    intercalate ", " (cgv env f : map (cga env) as) ++ 
+    intercalate ", " (cgv env f : map ((cga env) . ea) as) ++ 
     ");\n"
+
+stgApplyDirect env expr = error $
+                          "CodeGen.stgApplyDirect: not expecting Expr - " ++ show (pprint expr)
+
 
 -- return (inline code, [(forward, fundef)])
 cge :: Env -> Expr InfoTab -> State Int (String, [(String, String)])
 cge env (EAtom it a) =
     return ("stgCurVal = " ++ cga env a ++ "; " ++ "// " ++ showa a ++ "\n", [])
 
-cge env e@(EFCall it f as) = 
-    let inline = 
+cge env e@(EFCall it f eas) = 
+    let as = map ea eas
+        inline = 
             case (knownCall it) of 
               Nothing -> stgApplyGeneric env f as
               Just kit -> if arity kit == length as
@@ -219,8 +229,9 @@ cge env e@(EFCall it f as) =
                           else stgApplyGeneric env f as
     in return (inline, [])
 
-cge env (EPrimop it op as) = 
-    let arg0 = cgUBa env (as !! 0) -- these take a type indicator
+cge env (EPrimop it op eas) =
+    let as = map ea eas
+        arg0 = cgUBa env (as !! 0) -- these take a type indicator
         arg1 = cgUBa env (as !! 1)
         inline = case op of
                    Piadd -> cInfixIII " + "
@@ -334,15 +345,13 @@ cgalt env switch scrutName (ACon it c vs e) =
         env' = eenv ++ env
     in do
       (inline, func) <- cge env' e
-      let (DataConParam{dtag}) = case Map.lookup c (dconMap it) of
-                           Nothing -> error "conMap lookup error"
-                           Just x -> x
+      let tag = luConTag c $ cmap it -- ConTags returned as Strings!
       let code = "// " ++ c ++ " " ++ intercalate " " vs ++ " ->\n" ++
                  if switch then
-                     "case " ++ show dtag ++ ": {\n" ++
-                        indent 2 inline ++
-                     "  STGRETURN0();\n" ++
-                     "}\n"
+                   "case " ++ tag ++ ": {\n" ++
+                   indent 2 inline ++
+                   "  STGRETURN0();\n" ++
+                   "}\n"
                  else inline ++ "STGRETURN0();\n"
       return (code, func)
               
@@ -411,6 +420,7 @@ showa (Var v) = v
 showa (LitI i) = show i
 -- showa (LitF f) = show f
 showa (LitD d) = show d
+showa at = error $ "CodeGen.showa: not expecting Atom - " ++ show at 
 
 indexFrom :: Int -> [a] -> [(Int, a)]
 indexFrom i xs = zip [i..] xs

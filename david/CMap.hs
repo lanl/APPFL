@@ -34,13 +34,14 @@ toCMap tycons =
   let tab = concatMap (\t-> zip (map dConName $ tycDCons t) (repeat t)) tycons
   in Map.fromList tab
 
-
 -- Lookup the arity of a DataCon by name     
 conArity :: Con -> CMap -> Int      
-conArity name conmap =
-  let cons = luDCons name conmap
-      (DataCon _ mtypes) = getDConInList name cons
-  in length mtypes
+conArity name conmap
+  | isBuiltInType name = 0 -- short circuit for builtins (0,1,2..)
+  | otherwise          =
+      let cons = luDCons name conmap
+          (DataCon _ mtypes) = getDConInList name cons
+      in length mtypes
 
 -- From a Con, find the DataCon it belongs to
 getDConInList :: Con -> [DataCon] -> DataCon
@@ -100,11 +101,25 @@ luTCon name conmap
 isInt :: String -> Bool
 isInt = and . (map isNumber)
 
+
+-- last word was that "1" would be regarded as constructor for unboxed int
+-- e.g. data unboxed Int_h = 1 | 2 | ...
+-- should the DataCons just be an infinite list? error?
+intTyCon :: TyCon
+intTyCon = TyCon False "Int_h" [] []
+
 -- Pending
 isBuiltInType :: Con -> Bool
-isBuiltInType = const False -- isInt?
+isBuiltInType = isInt -- or others?
+
 getBuiltInType :: Con -> TyCon
-getBuiltInType = undefined -- TyCon False "Int#" [] [DataCon "Int# []]
+getBuiltInType c | isInt c   = intTyCon
+                 | otherwise = error "builtin TyCon not found!"
+      
+
+
+instance Show CMap where
+  show = show.toDoc
 
 
 instance PPrint CMap where

@@ -8,7 +8,7 @@ InfoTab it_one =
     .objType             = CON,
     .layoutInfo.payloadSize = 1,
     .conFields.arity     = 1,
-    .conFields.tag       = 101,
+    .conFields.tag       = 0,
     .conFields.conName   = "I",
   };
 InfoTab it_main = 
@@ -46,7 +46,7 @@ void registerSHOs() {
 }
 
 
-// Int [B] ()
+// Int[B] 
 DEFUN1(fun_main, self) {
   fprintf(stderr, "main here\n");
   stgThunk(self);

@@ -1,17 +1,5 @@
-InfoTab it_one = 
-  { .name                = "one",
-    .fvCount             = 0,
-    .entryCode           = &stg_constructorcall,
-    .objType             = CON,
-    .layoutInfo.payloadSize = 1,
-    .conFields.arity     = 1,
-    .conFields.tag       = 101,
-    .conFields.conName   = "I",
-  };
-InfoTab it_main = 
-  { .name                = "main",
-    .fvCount             = 0,
-    .entryCode           = &fun_main,
-    .objType             = THUNK,
-    .layoutInfo.payloadSize = 1,
-  };
+I ->
+    TyCon name: Int
+    boxed: True
+    TyVars: []
+    DataCons: [I Int_h]

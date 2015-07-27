@@ -104,6 +104,8 @@ payload (LitD d) =
 payload (Var v) = 
     "{.argType = HEAPOBJ, .op = &sho_" ++ v ++ "},\n"
 
+payload at = error $ "HeapObj.payload: not expecting Atom - " ++ show at
+
 ptrOrLitSHO a =
     "{ " ++
     case a of

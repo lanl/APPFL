@@ -1,9 +1,7 @@
 module ConMap.Test where
 
-import           ADT
 import           Driver
-import           ConMaps
-import           InfoTab
+import           CMap
 
 import           Test.Tasty
 import           Test.Tasty.Golden
@@ -19,5 +17,4 @@ unitTests = testGroup "ConMap Unit tests"
 inp = "data Int = I Int#; one = CON(I 1); main=THUNK(one);"
              
 mapone :: IO ByteString
-mapone = return $ fromString $ showITs $ snd $ 
-                setConmaps $ typer inp
+mapone = return $ fromString $ show $ toCMap $ fst $ parser inp

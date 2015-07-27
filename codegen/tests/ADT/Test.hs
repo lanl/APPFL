@@ -1,7 +1,7 @@
 module ADT.Test where
-import           ADT
-import           ConMaps
-import           Parser
+import           CMap
+import           Driver
+
 
 import           Test.Tasty
 import           Test.Tasty.Golden
@@ -18,4 +18,4 @@ unitTests = testGroup "ADT Unit tests"
 adt:: IO ByteString
 adt = do
         input <- IO.readFile "tests/ADT/adt.stg"
-        return $ fromString $ show $ buildConmaps $ fst $ parse input
+        return $ fromString $ show $ toCMap $ fst $ parser input

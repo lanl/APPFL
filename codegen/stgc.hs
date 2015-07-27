@@ -1,9 +1,9 @@
 {-# LANGUAGE NamedFieldPuns #-}
 
-import           ConMaps
-import           Driver
-import           Parser
+-------------------------- MODIFIED 6.30 - David ---------------------------
 
+import           Driver
+import           CMap
 import           Data.List
 import           Data.List.Split
 import           Data.Maybe
@@ -14,11 +14,18 @@ import           System.IO
 import           System.Process
 
 -- build a.out from stg and run it
+_eval :: String -> Bool -> IO()
+_eval input showerr = do
+  build input
+  let erStr = if showerr then "" else " &2>/dev/null"
+  system("./a.out"++erStr)
+  putStrLn ""
+  return ()
+
 eval :: String -> IO()
-eval input = do
-               build input
-               system("./a.out")
-               return ()
+eval i = _eval i True
+
+evalNoErr i = _eval i False
 
 -- build a.out from stg
 build :: String -> IO()
@@ -116,8 +123,10 @@ compile  (Options {optVerbose, optDumpParse, optNoPrelude, optOutput, optInput})
 
     case optDumpParse of
       True  -> do 
-                 let (tycons, objs) = parse source
-                 writeFile (input ++ ".dump") ((show $ buildConmaps $ tycons) ++ (show objs))
+                 let (tycons, objs) = parser source
+-------------------------- MODIFIED 6.30 - David ---------------------------
+                 writeFile (input ++ ".dump") ((show $ toCMap $ tycons) ++ (show objs))
+--                 writeFile (input ++ ".dump") ((show $ buildConmaps $ tycons) ++ (show objs))
       False -> do
                  let coutput = input ++ ".c"
                  let flags = " -std=gnu99 -L" ++ rtLibDir ++ " -I" ++ rtIncDir ++ " -lruntime"
@@ -136,3 +145,4 @@ main =
       -- weird path stuff is because cabal puts binary in dist/build/stgc/stgc
       compile opts (binaryDir ++ "/../etc") (binaryDir ++ "/../lib") (binaryDir ++ "/../include")True
 
+    
