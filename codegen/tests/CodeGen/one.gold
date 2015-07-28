@@ -29,7 +29,7 @@ Obj sho_one =
   .ident     = "one",
   .payload = {
     {.argType = INT, .i = 1},
-},
+    },
   };
 Obj sho_main =
 {
@@ -37,7 +37,7 @@ Obj sho_main =
   .objType   = THUNK,
   .ident     = "main",
   .payload = {
-    },
+        0,},
   };
 
 void registerSHOs() {

@@ -197,7 +197,7 @@ void showStgCont(Obj *c) {
 }
 
 void showStgObjRecPretty(Obj *p) {
-  // fprintf(stderr, "showStgObjRecPretty()\n");
+
   // depth check first
   if (depth+1 >= showDepthLimit) {
     fprintf(stderr, "******showStgObjRec depth exceeded\n");
@@ -205,7 +205,6 @@ void showStgObjRecPretty(Obj *p) {
   }
 
   InfoTab it = *(p->infoPtr);
-  // fprintf(stderr, "showStgObjRecPretty() past deref 1\n");
 
   for (int i=0; i != depth; i++) {
     if (p == stack[i]) {
@@ -229,8 +228,7 @@ void showStgObjRecPretty(Obj *p) {
     fprintf(stderr, "mismatch in infotab and object names \"%s\" != \"%s\"\n",
 	    it.name, p->ident);
     exit(0);
-}
-
+  }
 
   switch (p->objType) {
   case FUN:
@@ -381,7 +379,6 @@ int getObjSize(Obj *o) {
 void showStgStack() {
   fprintf(stderr,"\nSTG stack:\n\n");
 
-  fprintf(stderr,"%x %x %x\n", stgSP, stgStack, stgStackSize );
   for (char *p = (char*)stgSP;
        p < (char*)stgStack + stgStackSize;
        p += getObjSize((Obj *)p)) {
@@ -390,11 +387,12 @@ void showStgStack() {
 }
 
 void showStgHeap() {
-  fprintf(stderr,"\nSTG static objects:\n\n");
+  fprintf(stderr,"\nSTG static objects: \n\n");
   for (int i = 0; i != stgStatObjCount; i++) {
     showStgObj(stgStatObj[i]);
     fprintf(stderr,"\n");
   }
+
   fprintf(stderr,"\nSTG heap:\n\n");
 
   for (char *p = (char*)stgHeap;
