@@ -191,7 +191,7 @@ void showStgCont(Obj *c) {
     return;
 
   default:
-    fprintf(stderr,"showStgCont default case!\n");
+    fprintf(stderr,"showStgCont default case! %d %s\n", c->objType, objTypeNames[c->objType]);
     exit(0);
   }
 }
@@ -372,12 +372,16 @@ size_t stgStatObjCount;
 Obj * stgStatObj[100];
 
 int getObjSize(Obj *o) {
-  return sizeof(Obj) + o->infoPtr->layoutInfo.payloadSize * sizeof(PtrOrLiteral);
+  if (o->objType == CALLCONT || o->objType == PAP) {
+    return  sizeof(Obj) + (o->payload[0].i+1) * sizeof(PtrOrLiteral);
+  } else {
+    return  sizeof(Obj) + o->infoPtr->layoutInfo.payloadSize * sizeof(PtrOrLiteral);;
+  }
 }
 
 
 void showStgStack() {
-  fprintf(stderr,"\nSTG stack:\n\n");
+  fprintf(stderr,"\nSTG stack: %lx %lx \n\n", stgStack + stgStackSize, stgSP);
 
   for (char *p = (char*)stgSP;
        p < (char*)stgStack + stgStackSize;

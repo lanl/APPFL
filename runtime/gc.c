@@ -16,9 +16,11 @@ void *toPtr=NULL, *fromPtr=NULL;
 void *scanPtr=NULL, *freePtr=NULL;
 
 // wrapper functions for possible interface changes
-static inline size_t countFreevars(Obj *p) { return p->infoPtr->fvCount; }
-static inline size_t startPAPargs(Obj *p) { return countFreevars(p); }
-static inline size_t endPAPargs(Obj *p) { return countFreevars(p) + p->argCount; }
+static inline size_t countFVs(Obj *p) { return p->infoPtr->fvCount; }
+static inline size_t startPAPFVs(Obj *p) { return 1; }
+static inline size_t endPAPFVs(Obj *p) { return countFVs(p) + 1; }
+static inline size_t startPAPargs(Obj *p) { return countFVs(p) + 1; }
+static inline size_t endPAPargs(Obj *p) { return p->payload[0].i + 1; }
 static inline size_t countCONargs(Obj *p) { return p->infoPtr->conFields.arity; }
 static inline size_t startCallargs(Obj *p) { return 1; }
 static inline size_t endCallargs(Obj *p) { return p->payload[0].i + 1; }
@@ -71,13 +73,13 @@ void processObj(Obj *p) {
   switch(p->objType) {
   case FUN:
     // freevars
-    for(i = 0; i < countFreevars(p); i++) {
+    for(i = 0; i < countFVs(p); i++) {
       updatePtr(p->payload[i]);
     }    
     break;
   case PAP:
     // free vars
-    for(i = 0; i < countFreevars(p); i++) {
+    for(i = startPAPFVs(p); i < endPAPFVs(p) + 1; i++) {
       updatePtr(p->payload[i]);
     }
     // args already applied    
@@ -96,7 +98,7 @@ void processObj(Obj *p) {
     break;
   case THUNK:
   case BLACKHOLE:
-    for(i = 0; i < countFreevars(p); i++) {
+    for(i = 0; i < countFVs(p); i++) {
       updatePtr(p->payload[i]);
     }
     break;
@@ -128,7 +130,8 @@ void processCont(Obj *p) {
     updatePtr(p->payload[0]);
     break;
   default:
-    assert (false && "bad cont. type");
+    fprintf(stderr, "bad cont. type %d %s\n",p->objType, objTypeNames[p->objType]);
+    assert (false);
   }
 }
 
@@ -146,11 +149,12 @@ void gc(void) {
   }
 
   //Cont. stack
-  void *p = stgSP;
-  while((char *)p < (char *)stgStack + stgStackSize) {
-    processCont(p);
-    p = (char *)p + getObjSize(p);
+  for (char *p = (char*)stgSP;
+        p < (char*)stgStack + stgStackSize;
+        p += getObjSize((Obj *)p)) {
+     processCont((Obj *)p);
   }
+
   //all roots are now added.
 
   // process "to" space
