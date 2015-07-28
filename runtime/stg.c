@@ -373,21 +373,20 @@ void showStgValDebug(PtrOrLiteral v) {
 size_t stgStatObjCount;
 Obj * stgStatObj[100];
 
-// void showStgStack() {}
-/*
-void showStgStack() {
-  fprintf(stderr,"\nSTG stack:\n\n");
-  for (Cont *p = ((Cont *) stgSP);
-       p < (Cont *)((char *)stgStack + stgStackSize);
-       p++) {
-    showStgCont(p);
-  }
+int getObjSize(Obj *o) {
+  return sizeof(Obj) + o->infoPtr->layoutInfo.payloadSize * sizeof(PtrOrLiteral);
 }
-*/
+
 
 void showStgStack() {
-  //  fprintf(stderr,"\nSTG stack:\n\n");
-  fprintf(stderr,"\nSTG stack:  commented out!\n\n");
+  fprintf(stderr,"\nSTG stack:\n\n");
+
+  fprintf(stderr,"%x %x %x\n", stgSP, stgStack, stgStackSize );
+  for (char *p = (char*)stgSP;
+       p < (char*)stgStack + stgStackSize;
+       p += getObjSize((Obj *)p)) {
+     showStgCont((Obj *)p);
+   }
 }
 
 void showStgHeap() {
@@ -397,11 +396,13 @@ void showStgHeap() {
     fprintf(stderr,"\n");
   }
   fprintf(stderr,"\nSTG heap:\n\n");
-/*
-  for (Obj *p = ((Obj *) stgHP) - 1;
-       p >= (Obj *)stgHeap;
-       p--) {showStgObj(p); fprintf(stderr,"\n");}
-*/
+
+  for (char *p = (char*)stgHeap;
+      p < (char*)stgHP;
+      p += getObjSize((Obj *)p)) {
+    showStgObj((Obj *)p);
+  }
+
   showStgStack();
 }
 
@@ -442,15 +443,5 @@ void initStg() {
   fprintf(stderr,"Stg stack at %p and heap at %p\n", stgStack, stgHP);
 
   stgStatObjCount = 0;
-
-  /*
-  int i;
-  int *p = (int *)stgStack + stgStackSize/sizeof(int);
-  int *q = (int *)stgHeap;
-  for (i = 0; i != stgStackSize/sizeof(int); i++) {
-    *--p = i;
-    *q++ = i;
-  }
-  */
 
 }
