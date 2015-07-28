@@ -69,7 +69,7 @@ int main (int argc, char **argv) {
   initCmm();
   initGc();
   CALL0_0(start);
-  showStgHeap();
+  showStgHeap(); gc(); showStgHeap();
   return 0;
 }
 

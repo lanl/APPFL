@@ -128,7 +128,7 @@ cgMain v = let top = "int main (int argc, char **argv) {\n" ++
                      "  initGc();\n" ++
                      "  CALL0_0(start);\n"
                bot = "  return 0;\n" ++ "}\n\n"
-  in if v then top ++ "  showStgHeap();\n" ++ bot else top ++ bot            
+  in if v then top ++ "  showStgHeap();\n  gc();\n" ++ bot else top ++ bot            
 
 registerSHOs objs = 
     ("void registerSHOs();",

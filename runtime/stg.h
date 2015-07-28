@@ -149,7 +149,7 @@ extern void showStgHeap();
 extern void showStgStack();
 extern void showStgVal(PtrOrLiteral);
 extern void showIT(InfoTab *);
-// extern int objSize(Obj *);
+extern int getObjSize(Obj *);
 
 // allocate Obj on heap, returning pointer to new Obj
 extern Obj* stgNewHeapObj(InfoTab *itp);

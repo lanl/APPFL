@@ -259,7 +259,7 @@ void showStgObjRecPretty(Obj *p) {
     break;
 
   case FORWARD:
-    fprintf(stderr, "???FORWARD???" );
+    fprintf(stderr, "FORWARD" );
     break;
 
   default:

@@ -7,7 +7,7 @@
 #include "stg.h"
 #include "stgutils.h"
 
-const bool DEBUG = false;
+const bool DEBUG = true;
 
 // fraction of total heap used before gc runs.
 const float gcThreshold=0.0;
@@ -16,7 +16,6 @@ void *toPtr=NULL, *fromPtr=NULL;
 void *scanPtr=NULL, *freePtr=NULL;
 
 // wrapper functions for possible interface changes
-static inline size_t sizeofObj(Obj *p) { return sizeof(Obj); }
 static inline size_t countFreevars(Obj *p) { return p->infoPtr->fvCount; }
 static inline size_t startPAPargs(Obj *p) { return countFreevars(p); }
 static inline size_t endPAPargs(Obj *p) { return countFreevars(p) + p->argCount; }
@@ -58,11 +57,11 @@ void updatePtr(PtrOrLiteral f) {
       p = p->payload[0].op;
     } else {
       if (DEBUG) fprintf(stderr, "copy a %s from->to\n", objTypeNames[p->objType]);
-      memcpy(freePtr, p, sizeofObj(p));
+      memcpy(freePtr, p, getObjSize(p));
       p->objType = FORWARD;
       p->payload[0].op = freePtr;
       p = freePtr;
-      freePtr = (char *)freePtr + sizeofObj(p);
+      freePtr = (char *)freePtr + getObjSize(p);
     }
   }
 }
@@ -150,14 +149,14 @@ void gc(void) {
   void *p = stgSP;
   while((char *)p < (char *)stgStack + stgStackSize) {
     processCont(p);
-    p = (char *)p + sizeofObj(p);
+    p = (char *)p + getObjSize(p);
   }
   //all roots are now added.
 
   // process "to" space
    while(scanPtr < freePtr) {
      processObj(scanPtr);
-     scanPtr = (char *)scanPtr + sizeofObj(scanPtr);
+     scanPtr = (char *)scanPtr + getObjSize(scanPtr);
    }
 
    if (DEBUG) {
