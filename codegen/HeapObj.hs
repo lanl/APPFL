@@ -86,10 +86,11 @@ showSHOspec it@(Blackhole {}) = payloads []
 
 showSHOspec it = ""
 
+-- need at least a payload of length 1 (for thunks at least)
 payloads as = let ps = indent 4 $ concatMap payload as
---                  pad = indent 4 $ concat $ replicate (maxPayload-length(as)) "0,"
---              in  indent 2 ".payload = {\n" ++ ps ++ pad ++ "},\n"
-              in  indent 2 ".payload = {\n" ++ ps ++ "},\n"
+                  pad = indent 4 $ concat $ replicate (1-length(as)) "0,"
+              in  indent 2 ".payload = {\n" ++ ps ++ pad ++ "},\n"
+--                in  indent 2 ".payload = {\n" ++ ps ++ "},\n"
 
 payload (LitI i) = 
     "{.argType = INT, .i = " ++ show i ++ "},\n"
