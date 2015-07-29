@@ -39,12 +39,14 @@ void initGc(void) {
   freePtr = toPtr;
 }
 
-void swapPtrs(void) {
+void swapPtrs(void) { 
   assert( scanPtr == freePtr && "swapPtrs called when gc not finished");
   stgHeap = toPtr;
   stgHP = freePtr;
   toPtr = fromPtr;
   fromPtr = stgHP;
+  freePtr = toPtr;
+  scanPtr = toPtr;
 }
 
 static inline bool isFrom(void *p) {
@@ -53,6 +55,7 @@ static inline bool isFrom(void *p) {
 
 void updatePtr(PtrOrLiteral f) {
   Obj *p = derefPoL(f);
+
   if (isFrom(p)) {
     if(p->objType == FORWARD) {
       fprintf(stderr, "already copied\n");
