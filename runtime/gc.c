@@ -24,8 +24,8 @@ static inline size_t endPAPargs(Obj *p) { return p->payload[0].i + 1; }
 static inline size_t countCONargs(Obj *p) { return p->infoPtr->conFields.arity; }
 static inline size_t startCallargs(Obj *p) { return 1; }
 static inline size_t endCallargs(Obj *p) { return p->payload[0].i + 1; }
-static inline size_t startCaseargs(Obj *p) { return 1; }
-static inline size_t endCaseargs(Obj *p) { return p->payload[0].i + 1; }
+static inline size_t startCaseargs(Obj *p) { return 0; }
+static inline size_t endCaseargs(Obj *p) { return p->infoPtr->fvCount; }
 static inline bool isHeap(Obj *p, size_t index) {
   return (p->payload[index].argType == HEAPOBJ);
 }
