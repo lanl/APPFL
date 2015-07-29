@@ -401,7 +401,7 @@ bho env (CON it c as name) =
 bho env (THUNK it e name) =
     (max 1 (length $ fvs it), loadPayloadFVs env (fvs it) name)
     
-bho env (BLACKHOLE it name) = (0,"")
+bho env (BLACKHOLE it name) = (1,"")
 
 loadPayloadFVs env fvs name =
     concat [name ++ "->payload[" ++ show i ++ "] = " ++ 

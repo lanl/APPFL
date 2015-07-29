@@ -379,10 +379,7 @@ int getObjSize(Obj *o) {
   }
 }
 
-
 void showStgStack() {
-  fprintf(stderr,"\nSTG stack: %lx %lx \n\n", stgStack + stgStackSize, stgSP);
-
   for (char *p = (char*)stgSP;
        p < (char*)stgStack + stgStackSize;
        p += getObjSize((Obj *)p)) {

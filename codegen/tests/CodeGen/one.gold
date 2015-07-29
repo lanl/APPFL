@@ -29,15 +29,14 @@ Obj sho_one =
   .ident     = "one",
   .payload = {
     {.argType = INT, .i = 1},
-    },
+},
   };
 Obj sho_main =
 {
   .infoPtr   = &it_main,
   .objType   = THUNK,
   .ident     = "main",
-  .payload = {
-        0,},
+  .payload = {0}
   };
 
 void registerSHOs() {
