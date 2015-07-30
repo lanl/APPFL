@@ -15,6 +15,7 @@ executable stgc
                    , pretty >= 1.1.1.1
                    , process
                    , split
+                   , ghc-prim
   
 test-suite test
   type:            exitcode-stdio-1.0
@@ -25,7 +26,6 @@ test-suite test
                  , QuickCheck
                  , base >= 4
                  , bytestring
-                 , pretty >= 1.1.1.1
                  , tasty > 0.10
                  , tasty-ant-xml
                  , tasty-golden

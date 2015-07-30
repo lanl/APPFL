@@ -10,6 +10,7 @@ module PPrint
   pprint,
   unparse,
   bar,
+  hash,
   arw,
   doubleColon,
   lambda,
@@ -43,6 +44,7 @@ class Unparse a where
 
 bar = text "|"
 arw = text "->"
+hash = char '#'
 doubleColon = text "::"
 lambda = text "\\"
 lcomment d = text "--" <> d
@@ -63,14 +65,13 @@ vertList lchr rchr sepr maxlen xs =
   in lchr <> d
   where vl _ [] = ((<>), rchr)
         vl n (x:xs) =
-          let xd = pprint x
+          let xd = pprint x <> (if null xs then empty else sepr)
               l = length (show xd) + n
               newl = l > maxlen
               (f, xsd) = vl (if newl then 0 else l) xs
-              xsd' = xsd <> sepr
           in if newl
-             then (($$), f xd xsd')
-             else ((<+>), f xd xsd')
+             then (($$), f xd xsd)
+             else ((<+>), f xd xsd)
 
 
 instance PPrint Doc where
@@ -84,3 +85,10 @@ instance PPrint String where
 
 instance (PPrint a) => PPrint [a] where
   pprint = vertList lbrack rbrack comma 10
+
+instance (PPrint a, PPrint b) => PPrint (a,b) where
+  pprint (a,b) = parens (pprint a <> comma <+> pprint b)
+
+instance PPrint a => PPrint (Maybe a) where
+  pprint (Just a) = text "Just" <+> pprint a
+  pprint Nothing = text "Nothing"

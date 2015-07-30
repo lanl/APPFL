@@ -18,6 +18,7 @@ module Driver (
 import           NewAST
 import           NewParser
 import           Transform
+import           NewTokenizer
 
 import           Rename
 import           ADT
@@ -29,7 +30,6 @@ import           Analysis
 import           PPrint
 import           InfoTab
 import           HeapObj
-import           Tokenizer
 import           SetFVs
 import           HMStg
 import           Data.List
@@ -85,16 +85,43 @@ parser :: String -> [Defn]
 parser = parse . tokenizer
 
 
-typeSigSetter inp = let defs = parser inp
-                    in 
+testparser = tester parser (show.unparse)
 
+
+typeSigSetter inp = let defs = parser inp
+                    in setTypeSignatures defs
+
+testSigSetter = tester typeSigSetter (show.pprint)
+
+
+renamer inp = let defs = typeSigSetter inp
+               in renameIDs defs
+
+testRenamer = tester renamer (show.unparse)
+
+
+genConFunctioner inp = let defs = renamer inp
+                       in genConFunctions defs
+
+testGenConFunctioner = tester genConFunctioner (show.unparse)
+
+
+desugarApser inp = let defs = genConFunctioner inp
+                   in desugarExpAps defs
+
+testDesugarApser = tester desugarApser (show.unparse)                      
+
+numBoxer inp = let defs = desugarApser inp
+               in boxNumLiterals defs
+
+testNumBoxer = tester numBoxer (show.unparse)                  
 
 boxer = undefined
 
 
 
-renamer :: String -> ([TyCon], [Obj ()])
-renamer inp = let (tycons, objs) = boxer inp
+renamer' :: String -> ([TyCon], [Obj ()])
+renamer' inp = let (tycons, objs) = boxer inp
               in (tycons, renameObjs objs)
 
 
@@ -105,7 +132,7 @@ renamer inp = let (tycons, objs) = boxer inp
 -- might be worth starting to pass CMap around starting here
 -- (currently generated again when setting CMaps in InfoTabs)
 defaultcaser :: String -> ([TyCon], [Obj ()])
-defaultcaser inp = let (tycons, objs) = renamer inp
+defaultcaser inp = let (tycons, objs) = renamer' inp
                  in (tycons, exhaustCases (toCMap tycons) objs)
 
 freevarer :: String -> ([TyCon], [Obj ([Var],[Var])])
@@ -135,11 +162,17 @@ printObjsVerbose (tycons, objs) = print $ objListDoc objs
 
 
 
-tester ftest fprint file =
+tester tfun sfun infile =
+ do
+   ihandle <- openFile infile ReadMode
+   _tester tfun sfun ihandle stdout
+  
+_tester testfun showfun ifd ofd =
   do
-    inp <- readFile file
-    let tup = ftest inp
-    fprint tup
+    inp <- hGetContents ifd
+    let res = testfun inp
+        out = showfun res
+    hPutStrLn ofd out
     return ()
 
 

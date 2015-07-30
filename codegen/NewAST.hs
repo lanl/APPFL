@@ -1,4 +1,3 @@
-
 {-# LANGUAGE TupleSections            #-}
 {-# LANGUAGE NamedFieldPuns           #-}
 {-# LANGUAGE RecordWildCards          #-}
@@ -7,17 +6,19 @@
 
 module NewAST
 (
-  Pattern (..),
-  Defn (..),
-  Constr (..),
-  Exp (..),
-  Primop (..),
-  Atom (..),
-  Monotype (..),
-  isODefn,
-  isTDefn,
-  isDDefn,
-  partitionDefs,
+Pattern (..),
+Defn (..),
+Constr (..),
+Exp (..),
+Atm (..),
+Clause,
+isODefn,
+isTDefn,
+isDDefn,
+partitionDefs,
+unfoldEAp,
+module AST,
+module ADT
 )
 where
 
@@ -68,11 +69,19 @@ data Exp = EAp {fexp :: Exp, eexp :: Exp}
          | EFn {pats :: [Pattern], eexp :: Exp}
          | ECs {eexp :: Exp, cls :: [Clause]}
          | ELt {eexp :: Exp, defns :: [Defn]}
-         | EAt {atm :: Atom}
+         | EAt {atm :: Atm}
            deriving (Show,Eq)
 
 type Clause = (Pattern, Exp)
 
+data Atm = LBInt Int
+         | LBDbl Double
+         | LUBInt Int
+         | LUBDbl Double
+         | AtmVar Var
+         | AtmCon Con
+         | AtmOp Primop
+           deriving (Show, Eq)
 
 data Pattern = Match {str :: String, npats :: [Pattern]}
              | Default {str :: String}
@@ -84,6 +93,19 @@ isDefaultPat p = case p of
 
 
 
+-- unfold nestings of EAp into a tuple representing the "base" function
+-- (which can be any of {EAt, ECs, ELt, EFn}) and the list of Exp that
+-- the function is being applied to
+unfoldEAp :: Exp -> (Exp, [Exp])
+unfoldEAp e =
+  let (f, exps) = uf e
+  in (f, reverse exps) 
+  where
+    uf e = case e of
+            EAp{fexp, eexp} ->
+              let (f, exps) = uf fexp
+              in (f, eexp:exps)
+            _ -> (e,[]) -- NOT necessarily EAt!
 
 
 
@@ -155,9 +177,9 @@ subNamesEx :: [(Var,Var)] -> -- replace fst with snd
 subNamesEx ls e = case e of
   EAt{atm} ->
     case atm of
-     Var v -> case lookup v ls of
+     AtmVar v -> case lookup v ls of
                Nothing -> e
-               Just v' -> e{atm = Var v'}
+               Just v' -> e{atm = AtmVar v'}
      _ -> e -- Literal
      
   EAp{fexp, eexp} -> e { fexp = subNamesEx ls fexp,
@@ -242,6 +264,8 @@ lookUpBy f k assoc = case filter ((f k) . fst) assoc of
   (_,v):_ -> Just v
 
 
+instance Unparse [Defn] where
+  unparse = vcat . map unparse
 
 instance Unparse (Defn) where
   unparse TDefn{bnd, mtyp} =
@@ -276,7 +300,7 @@ instance Unparse (Defn) where
 
 instance Unparse (Constr) where
   unparse DCon{dcon, mtyps} =
-    text dcon <+> hcat (map unparse mtyps)
+    text dcon <+> hsep (map unparse mtyps)
 
 instance Unparse (Exp) where
   unparse EAp{fexp, eexp} =
@@ -312,3 +336,117 @@ instance Unparse Pattern where
 
   unparse Default{str} = text str
 
+instance Unparse Atm where
+  unparse atm = case atm of
+    AtmVar v -> text v
+    AtmCon c -> text c
+    AtmOp o  -> unparse o
+    LBInt i  -> int i
+    LBDbl d  -> double d
+    LUBInt i -> int i <> hash
+    LUBDbl d -> double d <> hash
+
+
+pprintObj :: String -> [(String, Doc)] -> Doc
+pprintObj name tups =
+  text name <> braces
+  (nest 2
+   (vcat $ punctuate comma $ map mproc tups))
+  where
+    mproc (n,d) = text n <> colon <+> d
+
+instance PPrint Defn where
+  pprint d = case d of
+    TDefn{bnd, mtyp} ->
+      pprintObj "TDefn"
+      [("bnd", text bnd),
+       ("mtyp", pprint mtyp)]
+
+    ODefn{bnd, oexp, mmtype} ->
+      let mdoc = case mmtype of
+                  Nothing -> text "Nothing"
+                  Just m  -> pprint m
+      in
+       pprintObj "ODefn"
+       [("bnd", text bnd),
+        ("oexp", pprint oexp),
+        ("mmtyp", mdoc)]
+
+    DDefn{mtyp, dcons} ->
+      let mdoc = case mtyp of
+                  MCon b c ms -> (if b then empty else text "unboxed") <+>
+                                 text c <+> hsep (map mfun ms)
+                  _ -> error $
+                       "NewAST.pprint (Defn): DDefn holding bad Monotype: " ++
+                       show (pprint mtyp)
+          mfun m = case m of
+                    MVar v -> text v
+                    _ -> error $
+                         "NewAST.pprint (Defn): DDefn MTyp holding non MVars " ++
+                         show (pprint mtyp)
+      in
+       pprintObj "DDefn"
+       [("mtyp", mdoc),
+        ("dcons", pprint dcons)]
+
+instance PPrint Exp where
+  pprint e = case e of
+    EAp{fexp, eexp} ->
+      pprintObj "EAp"
+      [("fexp", pprint fexp),
+       ("eexp", pprint eexp)]
+      
+    EFn{pats, eexp} ->
+      pprintObj "EFn"
+      [("pats", pprint pats),
+       ("eexp", pprint eexp)]
+      
+    ECs{eexp, cls} ->
+      pprintObj "ECs"
+      [("eexp", pprint eexp),
+       ("cls", pprint cls)]
+      
+    ELt{eexp, defns} ->
+      pprintObj "ELt"
+      [("defns", pprint defns),
+       ("eexp", pprint eexp)]
+      
+    EAt{atm} ->
+      pprintObj "EAt"
+      [("atm", pprint atm)]
+
+
+instance PPrint Constr where
+  pprint DCon{dcon, mtyps} =
+    pprintObj "DCon"
+    [("dcon", text dcon),
+     ("mtypes", pprint mtyps)]
+
+
+
+instance PPrint Pattern where
+  pprint p = case p of
+    Match{str, npats} ->
+      pprintObj "Match"
+      [("str", text str),
+       ("npats", pprint npats)]
+
+    Default{str} ->
+      pprintObj "Default" [("str", text str)]
+
+
+instance PPrint Clause where
+  pprint (pat, exp) =
+    parens (pprint pat <> arw <+> pprint exp)
+
+instance PPrint Atm where
+  pprint atm = case atm of
+    AtmVar v -> f "AtmVar" $ text v
+    AtmCon c -> f "AtmCon" $ text c
+    AtmOp o  -> f "AtmOp" $ pprint o
+    LBInt i  -> f "LBInt" $ int i
+    LBDbl d  -> f "LBDbl" $ double d
+    LUBInt i -> f "LUBInt" $ int i
+    LUBDbl d -> f "LUBDbl" $ double d
+    where f n d = text n <> braces d
+          

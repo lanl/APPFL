@@ -1,7 +1,7 @@
 {-# LANGUAGE NamedFieldPuns #-}
 
 
-module Tokenizer
+module NewTokenizer
 (
   Token(..),
   primopTable,
@@ -87,8 +87,7 @@ stripComments = concatMap str . readComments
 
 type Pos = (Int, Int)
   
-data Token = TokInt  {ivl::Int,    pos::Pos} |
-             TokFlt  {fvl::Float,  pos::Pos} |
+data Token = TokNum  {tks::String, pos::Pos} |
              TokPrim {tks::String, pos::Pos} |
              TokId   {tks::String, pos::Pos} |
              TokCon  {tks::String, pos::Pos} |
@@ -109,8 +108,6 @@ instance PPrint Token where
   pprint = text.show
 
 instance Show Token where
-  show (TokInt i p) = bracketize (show i) (showpos p)
-  show (TokFlt i p) = bracketize (show i) (showpos p)
   show (TokEOF   p) = bracketize "EOF" (showpos p)
   show tok          = bracketize (tks tok) (showpos $ pos tok)
 bracketize a b = "{" ++ a ++ " @ " ++ b ++ "}"
@@ -136,20 +133,20 @@ primopTable =
   ]
 
 specials =
-  [  "{", "}", "(", ")", ";", "|", "=", "->"]
+  [  "{", "}", "(", ")", ";", "|", "=", "\\", "::", "->"]
 
 reserveds =
   [
-    "CON", "THUNK", "FUN", "PAP", "ERROR",
     "case", "of", "let", "in", "data", "unboxed"
   ] ++ specials
-  
+
+
 primops = fst $ unzip primopTable
 isReserved = flip elem reserveds
 isPrimop = flip elem primops
 
 isIdSym x = isAlphaNum x ||
-            elem x "#_"
+            elem x "#_\'"
 
 tokErr t m = error $ show $
              text "Tokenization error with token" <+> pprint t $+$
@@ -232,11 +229,15 @@ tokenize ls = aux (None (0,0)) (0,0) (stripComments ls) []
 
     -- match on valid identifier symbols
       | isIdSym x =
-        case st of
-         None {} -> aux (StrTok [x] (l,c)) (l,c+1) xs toks
-         StrTok {tS} -> aux st{tS = x:tS} (l,c+1) xs toks
-         NumTok _ _  -> tokErr st $
-                        "expected digit, '.', or number-terminating character. Got " ++ show x
+        let newPs = (l,c+1) in
+         case st of
+          None {}     -> aux (StrTok [x] (l,c)) newPs xs toks
+          StrTok {tS} -> aux st{tS = x:tS} newPs xs toks
+          NumTok _ _ | x == '#' -> aux (None newPs) newPs xs (fromTokenState st:toks)
+                     | otherwise ->
+                         tokErr st $
+                         "expected digit, '.', or number-terminating character. Got " ++
+                         show x
 
        
     -- give some kind of meaningful error message if something unexpected is read
@@ -250,15 +251,11 @@ tokenize ls = aux (None (0,0)) (0,0) (stripComments ls) []
 
     fromTokenState st =
       case st of
-      NumTok cs ps  -> fromNum (reverse cs) ps
+      NumTok cs ps  -> TokNum (reverse cs) ps
       StrTok cs ps  -> fromString (reverse cs) ps
       _             -> tokErr st $
                        "should never see this error message\n" ++
                        "trying to parse Token from invalid TokState object."
-
-    fromNum cs
-      | elem '.' cs = TokFlt (read cs :: Float) -- not really used?
-      | otherwise = TokInt (read cs :: Int)
 
     fromString x
       | isReserved x = TokRsv x

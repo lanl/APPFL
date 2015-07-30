@@ -96,10 +96,11 @@ module NewParser
   fromParsed,
 ) where
 
-import Tokenizer
+import NewTokenizer
 import NewAST
 import qualified Data.Map as Map
 import Data.List (groupBy)
+import Data.Char (isNumber)
 import PPrint
 
 
@@ -172,8 +173,7 @@ tokP :: Token -> Parser Token Token
 tokP _ [] = reject []
 tokP t1 (t2:inp) =
   case (t1,t2) of
-   (TokInt _ _  , TokInt _ _ ) -> accept t2 inp
-   (TokFlt _ _  , TokFlt _ _ ) -> accept t2 inp
+   (TokNum _ _  , TokNum _ _ ) -> accept t2 inp
    (TokId _ _   , TokId _ _  ) -> accept t2 inp
    (TokCon _ _  , TokCon _ _ ) -> accept t2 inp
    (TokPrim _ _ , TokPrim _ _) -> accept t2 inp
@@ -199,19 +199,40 @@ subHash (x:xs) = x : subHash xs
 
 -- Match constructor token, accept its String
 conNameP :: Parser Token String
-conNameP = tokP2 (TokCon) `using` (subHash.tks)
+conNameP =  TokCon `using` tks
 
 -- Match variable token, accept its String
 varNameP :: Parser Token String
-varNameP = tokP2 (TokId) `using` (subHash.tks)
+varNameP = tokP2 TokId `using` tks
 
--- Match Integer Token, accept Int
-intP :: Parser Token Int
-intP = tokP2 (TokInt) `using` ivl
+-- Match a numeric token
+numTokP :: Parser Token String
+numTokP = tokP2 TokNum `using` tks
 
--- Match Float Token, accept Float
-fltP :: Parser Token Float
-fltP = tokP2 (TokFlt) `using` fvl
+-- Match numeric literals
+boxIntP :: Parser Token Int
+boxIntP = satisfy f `using` (read . tks)
+  where f (TokNum s _) = all isNumber s
+        f _ = False
+
+uboxIntP :: Parser Token Int
+uboxIntP = satisfy f `using` (read . init . tks)
+  where f (TokNum s _) = all isNumber (init s) && last s == '#'
+        f _ = False
+
+boxDblP = satisfy f `using` (read . tks)
+  where f (TokNum s _) | '.' `elem` s =
+                         let (w, d:ds) = break (== '.') s
+                         in all isNumber w && all isNumber ds
+        f _ = False
+
+uboxDblP = satisfy f `using` (read . init . tks)
+  where f (TokNum s _ ) | '.' `elem` s =
+                          let (w, d:ds) = break (== '.') s
+                          in all isNumber w &&
+                             all isNumber (init ds) &&
+                             last ds == '#'
+        f _ = False
 
 -- Match Primop Token, accept Primop
 primP :: Parser Token Primop
@@ -272,8 +293,9 @@ tDefP :: Parser Token Defn
 tDefP =
   varNameP >>> \name ->
   doubleColonP >>> \_ ->
-  monoTypP >>> \mtyp ->
-                accept $ TDefn name mtyp
+  typeP >>> \mtyp ->
+  semiP >>> \_ ->
+             accept $ TDefn name mtyp
   
 
 
@@ -308,7 +330,7 @@ exprP =
 -- otherwise left-associative application is parsed, so
 -- e1 e2 e3 e4 == ((((e1) e2) e3) e4)
 -- let, case and lambda expressions are all treated slightly differently
--- to conform with haskell parsing of application
+-- to conform with haskell parsing of function application
 -- case (+) of f -> f; 1 2 produces a compile error (even with braces in alts)
 -- but surrounding it with parens makes the application parse correctly
   in orExList
@@ -383,8 +405,8 @@ casePatP = some patternP >>> \pats ->
 
 patternP = orExList [varPatP, simplConPatP, nestConPatP]
 simplConPatP = orExList
-               [conNameP, intP `using` show] >>> \p ->
-                                                  accept $ Match p []
+               [conNameP, numTokP] >>> \p ->
+                                        accept $ Match p []
                                                   
 nestConPatP = inparensP (
   conNameP >>> \c ->
@@ -396,16 +418,15 @@ varPatP = varNameP `using` Default
   
 
 -- parse an atom (variable or literal)
-atomP :: Parser Token Atom
+atomP :: Parser Token Atm
 atomP = orExList [
-  varNameP `using` Var,
-  conNameP `using` Var,
-  intP `using` LitI,
-  --boolP `using` LitB,
-  fltP `using` LitF
-  --dblP `using` LitD,
-  --chrP `using` LitC
-  ]
+  varNameP `using` AtmVar,
+  conNameP `using` AtmCon,
+  primP `using` AtmOp,
+  boxIntP `using` LBInt,
+  boxDblP `using` LBDbl,
+  uboxIntP `using` LUBInt,
+  uboxDblP `using` LUBDbl]
 
 ---------------------------- DataDef parsing ---------------------------
 
@@ -447,9 +468,40 @@ constrP =
   if b then accept $ DCon con []
 
   else tokcutP "Expected valid monotypes in data constructor"
-       (some' monoTypP) >>> \mTypes ->
-                             accept $ DCon con mTypes
+       (some' atypeP) >>> \mTypes ->
+                           accept $ DCon con mTypes
 
+
+typeP =
+  btypeP >>> \t ->
+  many' (arrowP `xthen` typeP) >>> \ts ->
+                                   accept $ foldr1 MFun (t:ts)
+
+btypeP =
+  let err = True --error "boxity not set in MCON"
+      cAp = 
+        conNameP >>> \c -> -- only permit type applicaton for con names (e.g. List a -> Int, not m a -> Int)
+        many' atypeP >>> \ms -> accept $ MCon err c ms
+  in orExList [cAp, atypeP]
+
+atypeP =
+  let err = True --error "boxity not set in MCON"
+      primTypP inp = case inp of
+        (TokCon "Int#" _:rs)    -> accept UBInt rs
+        (TokCon "Double#" _:rs) -> accept UBDouble rs
+        _ -> reject inp
+  in
+   orExList [
+     primTypP >>> \p -> accept $ MPrim p,
+     conNameP >>> \c -> accept $ MCon err c [],
+     varNameP >>> \v -> accept $ MVar v,
+     inparensP typeP]
+                    
+      
+                    
+
+--TODO: Fix this
+conMonoTypP = orExList [mVarP, inparensP mFunP, mConP, inparensP monoTypP]
 
 -- parse a monotype in a data constructor as a Monotype object
 monoTypP :: Parser Token Monotype
@@ -464,7 +516,6 @@ mVarP = varNameP `using` MVar
 -- parse a Monotype function as an MFun object (e.g. a->b)
 mFunP :: Parser Token Monotype
 mFunP =
-  inparensP $
   monoTypP >>> \m ->
   peekP arrowP >>> \_ ->
   tokcutP "Expected valid monotype(s) following '->' token in data constructor"

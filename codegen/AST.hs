@@ -433,9 +433,13 @@ instance (PPrint a) => PPrint (Alt a) where
                   nest 2 (pprint ae)
                  )
                 )
-              
+             
 instance PPrint Atom where
-  pprint = unparse
+  pprint a = case a of
+    Var v -> text "Var" <> braces (text v)
+    LitI i -> text "LitI" <> braces (int i)
+    LitD d -> text "LitD" <> braces (double d)
+    a -> error $ "AST.pprint (Atom): not expecting Atom - " ++ (show a)
 
 instance PPrint Primop where
   pprint = unparse

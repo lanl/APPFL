@@ -174,8 +174,8 @@ instance Unparse Monotype where
   unparse (MVar c) = text c
   unparse (MFun m1@MFun{} m2) = parens (unparse m1) <+> arw <+> unparse m2
   unparse (MFun m1 m2) = unparse m1 <+> arw <+> unparse m2
-  unparse (MCon _ c ms) = (if null ms then (empty <>) else parens)
-                        (text c <+> hsep (map unparse ms))
+  unparse (MCon b c ms) = (if null ms then (empty <>) else parens)
+                          (text c <+> hsep (map unparse ms))
   unparse (MPrim p) = case p of
     UBInt    -> text "Int#"
     UBDouble -> text "Double#"

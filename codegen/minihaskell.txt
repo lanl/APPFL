@@ -1,0 +1,191 @@
+Growing STG
+
+
+- Removal of explicit PAP, CON, THUNK, FUN constructs
+  - no major change to tokenizer
+  - object transformation is governed by left and right sides  
+    - explicit functions differentiate themselves by 2+ tokens left of '='
+    
+    - CONs are recognized by capital letters (as in haskell)
+      and will desugar to functions that construct the CON objects
+      This will bring partial constructor application in automatically
+      (side effects of this approach?)
+
+transformations
+o [args] = e;      --> o = FUN([args] -> e);
+o = compose f2 f3; --> o = THUNK(compose f2 f3);
+   	           --> o = PAP(compose f2 f3); -- only if compose is known and unsaturated
+o = Con [args]     --> o = THUNK(conFunction [args])
+
+------------------------------------------------------------------------------
+
+- data definition syntax remains the same
+- usage of DataCons becomes more Haskelly
+  - for every DataCon (excluding builtins) a uniquely named function or object 
+    will be generated and substituted in expressions using the actual datacon
+    identifiers
+  - guaranteeing names are unique in every scope is not impossible, but will
+    require a full traversal of AST (repmin it)
+
+  this program:
+    data Unit   = Unit;
+    data List a = Nil | Cons a (List a);
+    
+    myList = Cons Unit Nil;
+
+  is transformed into this program:
+    data Unit   = Unit;
+    data List a = Nil | Cons a (List a);
+    
+    dc_Nil0  = CON(Nil);
+    dc_Unit0 = CON(Unit);
+    dc_Cons0 = FUN(a b -> let {con = CON(Cons a b)} in con);
+    
+    myList   = THUNK(dc_Cons0 dc_Unit0 dc_Nil0);
+
+-----------------------------------------------------------------------------  
+
+- arbitrarly nested expressions / expression application
+  - will require some parsing precedence rules
+    - expression  -> application | paren expr | let expr | case expr | atom
+    - application -> (paren expr | atom ) args
+    - args        -> [atom | paren expr | let expr | case expr]+
+    -- args is roughly equivalent to expression, save that application is absent
+    -- this should produce the correct precedence
+  - application is left associative and implicitly curried (as in haskell) so
+    e1 e2 e3 e4 == ((((e1) e2) e3) e4)
+  
+
+----------------------------------------------------------------------------
+
+- arbitrarily nested pattern matching
+  - will require parsing changes
+  - haskell requires parens *unless* the DataCon matched is simple (e.g. Nothing)
+  - given a list of nested pattern matching cases, the similar top level cases
+    should be grouped and the nested cases should be expanded into "sub-case"
+    expressions
+  - think about a (nested) PatternMatch data structure
+  data PM a = Match Con [PM] (Expr a) | Default Var (Expr a)
+  the case block in f below would be associated with PM objects:
+  Match "T" [Match "A" [], Match "B" [], Match "C" []]
+  Match "T" [Match "A" [], Match "D" [], Match "I" []]
+  ...
+  Match "T" [Default "x", Default "y", Default "z"]
+  
+  To aid transformation, they should be grouped by common subpatterns (L to R)
+  making sure to never raise a Default above a Match in subpattern being matched
+  this program:
+    data Trip a b c = T a b c;
+    data C1 = A | B | C;
+    data C2 = D | E | F;
+    data C3 = G | H | I;
+
+    
+    f t = case t of
+      	T A D H -> True;
+	T A D I -> True;
+	T B E I -> True;
+	T A E G -> True;
+	T C D H -> True;
+	T B F H -> True;
+	T C F x -> True;
+	T x y z -> False;
+
+	
+  can be transformed into this:
+        ( asterisks in comments mean:
+  	-- *  --> pulled up from default case.  
+  	      	  Would be generated as an error case if there was no default
+	-- ** --> should be eliminated as redundant in transformation )
+  
+    data Trip a b c = T a b c;
+    data C1 = A | B | C;
+    data C2 = D | E | F;
+    data C3 = G | H | I;
+
+    f = FUN(t -> 
+      case t of {
+        T x y z ->
+	  case x of {
+	    A -> 
+	      case y of {
+	        D ->
+		  case z of {
+		    H -> true;
+		    I -> true;
+		    z -> false;}   -- *
+		E ->
+		  case z of {
+		    G -> true;
+		    z -> false;}   -- *
+		y ->               -- *
+		  case z of {
+		    z -> false;};} -- **
+            B ->
+	      case y of {
+	        E -> 
+		  case z of {
+		    I -> true;
+		    z -> false;}   -- *
+		F ->
+		  case z of {
+		    H -> true;
+		    z -> false;}   -- *
+		y ->               -- *
+		  case z of {      
+		    z -> false;};} -- **
+  	    C ->
+	      case y of {
+	        D -> 
+		  case z of {
+		    H -> true;
+		    z -> false;}   -- *
+		F -> 
+		  case z of {
+		    x -> true;}    -- **
+	        y ->               -- *
+		  case z of {
+		    z -> false;};} -- **
+	    x ->                   -- **
+	      case y of {
+	        y ->
+		  case z of {
+		    z -> false;};};};});
+		     	  
+		    
+
+	
+
+
+
+
+expand :: [PM] -> ECase
+expand pats =
+       let 
+       	   pmap = map (\ (x:xs) -> (name x, (x,xs))) pats'
+       	   alts = Alts () $ map (\(n, -> case m of
+	   	       	    	       Match con ps = ACon
+
+groupPats pats =
+       let pats' = groupBy (\a b -> name a == name b) pats
+       	   (ms,d) = span isMatch $ concat pats'
+	   -- if length d > 1, unreachable cases exist, error? excise?
+	   	   
+
+makeAlt pats = case pats of
+	[] -> error -- shouldn't happen
+	(Default v:xs) -> ADef () v -- xs ignored, unreachable 
+	pats ->
+	     let subs = map subPats pats
+	     	 
+
+makeSubAlts subs = 
+	let (ms, d) = span (isMatch . head) subs
+	    sorted = sortBy (\a b-> compare (name a) (name b)) ms
+	    grouped = groupBy (\a b-> name a == name b) sorted
+	    pairs = map (\ (x:xs) -> (x,xs)) grouped
+	    
+
+		
+	      
+    

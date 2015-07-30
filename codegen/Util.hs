@@ -4,6 +4,7 @@ module Util
   mapSnd,
   deleteAll,
   indent,
+  lookupOrElse,
   maxPayload
 )
 where
@@ -30,7 +31,11 @@ indent i xs = (take i $ repeat ' ') ++ indent' i xs
       indent' i "\n"        = "\n"
       indent' i (x:xs)      = x : indent' i xs
       indent' i ""          = ""
-      
+
+lookupOrElse :: (Ord k) => k -> Map.Map k v -> v      
+lookupOrElse k map = case Map.lookup k map of
+                      Just k -> k
+                      Nothing -> error "lookupOrElse failed!"
       
 maxPayload :: Int     
 maxPayload = 32
