@@ -101,6 +101,7 @@ Obj* stgNewHeapObj(InfoTab *itp) {
   int payloadSize = itp->layoutInfo.payloadSize;
   size_t objSize = sizeof(Obj) + payloadSize * sizeof(PtrOrLiteral);
   Obj *objp = (Obj *)stgHP;
+  memset(objp, 0, objSize); //zero out anything left by previous gc passes
   stgHP = (char *)stgHP + objSize;
   objp->infoPtr = itp;
   objp->objType = itp->objType;

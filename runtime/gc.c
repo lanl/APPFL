@@ -76,10 +76,9 @@ void updatePtr(PtrOrLiteral *f) {
         f->op = (Obj *)freePtr; 
         freePtr = (char *)freePtr + getObjSize(p);
       }
-    } 
+    }
   }
 }
-
 
 
 void processObj(Obj *p) {
@@ -94,21 +93,18 @@ void processObj(Obj *p) {
     break;
   case PAP:
     // free vars
-    for(i = startPAPFVs(p); i < endPAPFVs(p) + 1; i++) {
+    for(i = startPAPFVs(p); i < endPAPFVs(p); i++) {
       updatePtr(&p->payload[i]);
     }
     // args already applied    
     for(i = startPAPargs(p); i < endPAPargs(p); i++) {
-      if (isHeap(p, i)) {
          updatePtr(&p->payload[i]);
-      }
     }
     break;
   case CON:
+    fprintf(stderr," concount %d ",countCONargs(p));
     for(i = 0; i < countCONargs(p); i++) {
-      if (isHeap(p, i)) {
         updatePtr(&p->payload[i]);
-      }
     }
     break;
   case THUNK:
@@ -159,8 +155,12 @@ void gc(void) {
     return;
   }
 
-  if (DEBUG) fprintf(stderr,"start gc heap size %lx\n", before);
-
+  if (DEBUG) {
+    fprintf(stderr, "old heap\n");
+    showStgHeap();
+    fprintf(stderr,"start gc heap size %lx\n", before);
+  }
+ 
   // all SHO's
   for(int i=0; i<stgStatObjCount; i++) {
     processObj(stgStatObj[i]);
@@ -188,10 +188,6 @@ void gc(void) {
      scanPtr = (char *)scanPtr + getObjSize(scanPtr);
    }
 
-   if (DEBUG) {
-     fprintf(stderr, "old heap\n");
-     showStgHeap();
-   }
    swapPtrs();
    if (DEBUG) {
      fprintf(stderr, "new heap\n");
