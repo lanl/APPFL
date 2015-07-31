@@ -4,6 +4,7 @@
 
 #include "stgutils.h"
 #include "stg.h"
+#include "gc.h"
 
 // ****************************************************************
 // since we always jump through the top of the stg stack we need some
@@ -140,6 +141,12 @@ DEFUN2(stgApply, N, f) {
   assert(N.argType == INT);
   const int argc = N.i;
   PtrOrLiteral argv[64];
+
+#if 0 
+  //test garbage collector
+  gc();
+#endif
+
   popargs(argc, argv);
 
   f.op = derefPoL(f);

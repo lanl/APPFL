@@ -380,6 +380,7 @@ int getObjSize(Obj *o) {
 }
 
 void showStgStack() {
+  fprintf(stderr,"\nSTG Stack:\n\n");
   for (char *p = (char*)stgSP;
        p < (char*)stgStack + stgStackSize;
        p += getObjSize((Obj *)p)) {
@@ -395,7 +396,6 @@ void showStgHeap() {
   }
 
   fprintf(stderr,"\nSTG heap:\n\n");
-
   for (char *p = (char*)stgHeap;
       p < (char*)stgHP;
       p += getObjSize((Obj *)p)) {
