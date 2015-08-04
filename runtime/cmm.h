@@ -179,7 +179,7 @@ extern void initCmm();
   PtrOrLiteral P1, P2, P3, P4;			\
   _POPVALS4(P1,P2,P3,P4);					
 
-#define ENDFUN }
+#define ENDFUN return NULL;}
 
 /* ********** NON-USER STUFF! ********* */
 // 

@@ -129,7 +129,7 @@ compile  (Options {optVerbose, optDumpParse, optNoPrelude, optOutput, optInput})
 --                 writeFile (input ++ ".dump") ((show $ buildConmaps $ tycons) ++ (show objs))
       False -> do
                  let coutput = input ++ ".c"
-                 let flags = " -std=gnu99 -L" ++ rtLibDir ++ " -I" ++ rtIncDir ++ " -lruntime"
+                 let flags = " -g -std=gnu99 -L" ++ rtLibDir ++ " -I" ++ rtIncDir ++ " -lruntime"
                  writeFile coutput (codegener source optVerbose)
                  if gcc then system ("gcc " ++ coutput ++ " -o " ++ (fromJust optOutput) ++ flags) else return ExitSuccess
                  return ()
@@ -143,6 +143,6 @@ main =
       (opts, args') <- compilerOpts args
       checkOpts opts
       -- weird path stuff is because cabal puts binary in dist/build/stgc/stgc
-      compile opts (binaryDir ++ "/../etc") (binaryDir ++ "/../lib") (binaryDir ++ "/../include")True
+      compile opts (binaryDir ++ "/../etc") (binaryDir ++ "/../lib") (binaryDir ++ "/../include") True
 
     

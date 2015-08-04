@@ -145,7 +145,7 @@ cgMain v = let top = "int main (int argc, char **argv) {\n" ++
                      "  initGc();\n" ++
                      "  CALL0_0(start);\n"
                bot = "  return 0;\n" ++ "}\n\n"
-  in if v then top ++ "  showStgHeap();\n" ++ bot else top ++ bot            
+  in if v then top ++ "  showStgHeap();\n  gc();\n" ++ bot else top ++ bot            
 
 registerSHOs objs = 
     ("void registerSHOs();",
@@ -432,7 +432,7 @@ bho env (CON it c as name) =
 bho env (THUNK it e name) =
     (max 1 (length $ fvs it), loadPayloadFVs env (map fst $ fvs it) name)
     
-bho env (BLACKHOLE it name) = (0,"")
+bho env (BLACKHOLE it name) = (1,"")
 
 loadPayloadFVs env fvs name =
     concat [name ++ "->payload[" ++ show i ++ "] = " ++ 

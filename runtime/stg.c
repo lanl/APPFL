@@ -101,6 +101,7 @@ Obj* stgNewHeapObj(InfoTab *itp) {
   int payloadSize = itp->layoutInfo.payloadSize;
   size_t objSize = sizeof(Obj) + payloadSize * sizeof(PtrOrLiteral);
   Obj *objp = (Obj *)stgHP;
+  memset(objp, 0, objSize); //zero out anything left by previous gc passes
   stgHP = (char *)stgHP + objSize;
   objp->infoPtr = itp;
   objp->objType = itp->objType;
@@ -213,13 +214,13 @@ void showStgCont(Obj *c) {
     return;
 
   default:
-    fprintf(stderr,"showStgCont default case!\n");
+    fprintf(stderr,"showStgCont default case! %d %s\n", c->objType, objTypeNames[c->objType]);
     exit(0);
   }
 }
 
 void showStgObjRecPretty(Obj *p) {
-  // fprintf(stderr, "showStgObjRecPretty()\n");
+
   // depth check first
   if (depth+1 >= showDepthLimit) {
     fprintf(stderr, "******showStgObjRec depth exceeded\n");
@@ -227,7 +228,6 @@ void showStgObjRecPretty(Obj *p) {
   }
 
   InfoTab it = *(p->infoPtr);
-  // fprintf(stderr, "showStgObjRecPretty() past deref 1\n");
 
   for (int i=0; i != depth; i++) {
     if (p == stack[i]) {
@@ -251,8 +251,7 @@ void showStgObjRecPretty(Obj *p) {
     fprintf(stderr, "mismatch in infotab and object names \"%s\" != \"%s\"\n",
 	    it.name, p->ident);
     exit(0);
-}
-
+  }
 
   switch (p->objType) {
   case FUN:
@@ -283,7 +282,7 @@ void showStgObjRecPretty(Obj *p) {
     break;
 
   case FORWARD:
-    fprintf(stderr, "???FORWARD???" );
+    fprintf(stderr, "FORWARD" );
     break;
 
   default:
@@ -395,35 +394,37 @@ void showStgValDebug(PtrOrLiteral v) {
 size_t stgStatObjCount;
 Obj * stgStatObj[100];
 
-// void showStgStack() {}
-/*
-void showStgStack() {
-  fprintf(stderr,"\nSTG stack:\n\n");
-  for (Cont *p = ((Cont *) stgSP);
-       p < (Cont *)((char *)stgStack + stgStackSize);
-       p++) {
-    showStgCont(p);
+int getObjSize(Obj *o) {
+  if (o->objType == CALLCONT || o->objType == PAP) {
+    return  sizeof(Obj) + (o->payload[0].i+1) * sizeof(PtrOrLiteral);
+  } else {
+    return  sizeof(Obj) + o->infoPtr->layoutInfo.payloadSize * sizeof(PtrOrLiteral);;
   }
 }
-*/
 
 void showStgStack() {
-  //  fprintf(stderr,"\nSTG stack:\n\n");
-  fprintf(stderr,"\nSTG stack:  commented out!\n\n");
+  fprintf(stderr,"\nSTG Stack:\n\n");
+  for (char *p = (char*)stgSP;
+       p < (char*)stgStack + stgStackSize;
+       p += getObjSize((Obj *)p)) {
+     showStgCont((Obj *)p);
+   }
 }
 
 void showStgHeap() {
-  fprintf(stderr,"\nSTG static objects:\n\n");
+  fprintf(stderr,"\nSTG static objects: \n\n");
   for (int i = 0; i != stgStatObjCount; i++) {
     showStgObj(stgStatObj[i]);
     fprintf(stderr,"\n");
   }
+
   fprintf(stderr,"\nSTG heap:\n\n");
-/*
-  for (Obj *p = ((Obj *) stgHP) - 1;
-       p >= (Obj *)stgHeap;
-       p--) {showStgObj(p); fprintf(stderr,"\n");}
-*/
+  for (char *p = (char*)stgHeap;
+      p < (char*)stgHP;
+      p += getObjSize((Obj *)p)) {
+    showStgObj((Obj *)p);
+  }
+
   showStgStack();
 }
 
@@ -464,15 +465,5 @@ void initStg() {
   fprintf(stderr,"Stg stack at %p and heap at %p\n", stgStack, stgHP);
 
   stgStatObjCount = 0;
-
-  /*
-  int i;
-  int *p = (int *)stgStack + stgStackSize/sizeof(int);
-  int *q = (int *)stgHeap;
-  for (i = 0; i != stgStackSize/sizeof(int); i++) {
-    *--p = i;
-    *q++ = i;
-  }
-  */
 
 }

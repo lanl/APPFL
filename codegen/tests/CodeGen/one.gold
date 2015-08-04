@@ -36,8 +36,7 @@ Obj sho_main =
   .infoPtr   = &it_main,
   .objType   = THUNK,
   .ident     = "main",
-  .payload = {
-    },
+  .payload = {0}
   };
 
 void registerSHOs() {
@@ -70,6 +69,7 @@ int main (int argc, char **argv) {
   initGc();
   CALL0_0(start);
   showStgHeap();
+  gc();
   return 0;
 }
 

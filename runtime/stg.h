@@ -149,7 +149,7 @@ extern void showStgHeap();
 extern void showStgStack();
 extern void showStgVal(PtrOrLiteral);
 extern void showIT(InfoTab *);
-// extern int objSize(Obj *);
+extern int getObjSize(Obj *);
 
 #define hibits (~0 << sizeof(int)/2 * 8)
 #define lobits (~0 & ~hibits)
