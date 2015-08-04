@@ -50,6 +50,7 @@ DEFUN1(fun_main, self) {
   fprintf(stderr, "main here\n");
   stgThunk(self);
   stgCurVal = HOTOPL(&sho_one); // one
+  STGEVAL(stgCurVal);
   fprintf(stderr, "main returning\n");
   STGRETURN0();
   ENDFUN;
