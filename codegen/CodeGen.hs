@@ -86,7 +86,24 @@ lu v ((_, HO size) : xs) size' n =
 
 lu v (x : xs) size n = lu v xs size n
 
+-- boxed expression predicate
+{-
+isBoxede e = case typ $ emd e of MCon False _ _ -> False
+                                 MPrim _        -> False
+                                 _              -> True
+-}
+isBoxede e = isBoxed $ typ $ emd e
+
 -- CG Atom, Var ************************************************************
+-- there's a lacking distinction between simply obtaining a reference to an
+-- atom or variable and forcing evaluation of it (with STGEVAL or
+-- STGAPPLY)
+
+cgUBa env (Var v)  t   =  "(" ++ cgv env v ++ ")." ++ t
+cgUBa env (LitI i) "i" = show i
+cgUBa env (LitD d) "d" = show d
+cgUBa _ at _ = error $ "CodeGen.cgUBa: not expecting Atom - " ++ show at 
+-- cgUBa env (LitF f) "f" = show f
 
 cgv env v = getEnvRef v env -- ++ "/* " ++ v ++ " */"
 
@@ -142,16 +159,37 @@ registerSHOs objs =
 cgos :: Env -> [Obj InfoTab] -> State Int [(String, String)]
 cgos env = concatMapM (cgo env)
 
+
+-- duplicated from HMSTG.hs
+-- m is rightmost element, i.e. result type
+unfoldr (MFun m1 m2) = let (m,ms) = unfoldr m2 in (m, m1:ms)
+unfoldr m = (m,[])
+
+-- given function type and formal parameter list, return the args
+-- and types sorted pointer first
+permArgs vs ft =
+    let (rt, ats) = unfoldr ft
+    in part (reverse vs) (reverse ats)
+        where
+          part [] [] = (([],[]),([],[]))
+          part (v:vs) (t:ts) =
+              let ((bvs,uvs),(bts,uts)) = part vs ts
+              in case isBoxed t of
+                   True  -> ((v:bvs,uvs),(t:bts,uts))
+                   False -> ((bvs,v:uvs),(bts,t:uts))
+
 cgo :: Env -> Obj InfoTab -> State Int [(String, String)]
 cgo env o@(FUN it vs e name) =
     do 
-      let env' = zip (fvs it) (map FV [0..]) ++ 
+      let env' = zip (map fst $ fvs it) (map FV [0..]) ++ 
                  zip vs (repeat FP) ++
                  env
       (inline, funcs) <- cge env' e
       let forward = "FnPtr fun_" ++ name ++ "();"
-      let func =
+          vts@((bvs,uvs),(bts,uts)) = permArgs vs $ typ it
+          func =
             "// " ++ show (ctyp it) ++ "\n" ++
+            "// " ++ show vts ++ "\n" ++
             "DEFUN" ++ show (length vs + 1) ++ "(fun_" ++ 
             name ++ ", self, " ++
             intercalate ", " vs ++
@@ -171,7 +209,7 @@ cgo env (CON it c as name) =
 
 cgo env o@(THUNK it e name) =
     do 
-      let env' = zip (fvs it) (map FV [0..]) ++ env
+      let env' = zip (map fst $ fvs it) (map FV [0..]) ++ env
       (inline, funcs) <- cge env' e
       let forward = "FnPtr fun_" ++ name ++ "();"
       let func =
@@ -190,13 +228,6 @@ cgo env (BLACKHOLE {}) =
 
 -- ****************************************************************
 
-cgUBa env (Var v)  t   =  "(" ++ cgv env v ++ ")." ++ t
-cgUBa env (LitI i) "i" = show i
-cgUBa env (LitD d) "d" = show d
-cgUBa _ at _ = error $ "CodeGen.cgUBa: not expecting Atom - " ++ show at 
-
--- cgUBa env (LitF f) "f" = show f
-
 stgApplyGeneric env f as = 
     "// " ++ f ++ " " ++ showas as ++ "\n" ++
     "STGAPPLY" ++ show (length as) ++ "(" ++
@@ -210,14 +241,17 @@ stgApplyDirect env (EFCall it f as) =
     intercalate ", " (cgv env f : map ((cga env) . ea) as) ++ 
     ");\n"
 
-stgApplyDirect env expr = error $
-                          "CodeGen.stgApplyDirect: not expecting Expr - " ++ show (pprint expr)
+stgApplyDirect env expr = 
+    error $ "CodeGen.stgApplyDirect: not expecting Expr - " ++ show (pprint expr)
 
 
 -- return (inline code, [(forward, fundef)])
 cge :: Env -> Expr InfoTab -> State Int (String, [(String, String)])
-cge env (EAtom it a) =
-    return ("stgCurVal = " ++ cga env a ++ "; " ++ "// " ++ showa a ++ "\n", [])
+
+cge env e@(EAtom it a) =
+    let inline = "stgCurVal = " ++ cga env a ++ "; " ++ "// " ++ showa a ++ "\n" ++
+                 (if isBoxede e then "STGEVAL(stgCurVal);\n" else "")
+    in return (inline, [])
 
 cge env e@(EFCall it f eas) = 
     let as = map ea eas
@@ -281,28 +315,30 @@ cge env (ELet it os e) =
               ofunc ++ efunc)
 
 cge env (ECase _ e a@(Alts italts alts aname)) = 
-    let eboxed = case typ $ emd e of MCon False _ _ -> False
-                                     MPrim _        -> False
-                                     _              -> True
-    in do (ecode, efunc) <- cge env e
-          (acode, afunc) <- cgalts env a eboxed
-          let name = "ccont_" ++ aname
-              pre = "Obj *" ++ name ++ 
-                 " = stgAllocCont( &it_" ++ aname ++ ");\n" ++
-                 (if fvs italts == [] then
-                    "    // no FVs\n"
-                  else
-                    "    // load payload with FVs " ++
-                      intercalate " " (fvs italts) ++ "\n") ++
-                    indent 2 (loadPayloadFVs env (fvs italts) name)
-          return (pre ++ ecode ++ acode, efunc ++ afunc)
+    do (ecode, efunc) <- cge env e
+       (acode, afunc) <- cgalts env a (isBoxede e)
+       let name = "ccont_" ++ aname
+           pre = "Obj *" ++ name ++ 
+              " = stgAllocCont( &it_" ++ aname ++ ");\n" ++
+              (if fvs italts == [] then
+                 "    // no FVs\n"
+               else
+                 "    // load payload with FVs " ++
+                   intercalate " " (map fst $ fvs italts) ++ "\n") ++
+                 indent 2 (loadPayloadFVs env (map fst $ fvs italts) name)
+           scrut = if isBoxede e then
+                       "  // boxed scrutinee\n" ++
+                       "  STGEVAL(stgCurVal);\n"
+                   else "  // unboxed scrutinee\n"
+--       return (pre ++ ecode ++ scrut ++ acode, efunc ++ afunc)
+       return (pre ++ ecode ++ acode, efunc ++ afunc)
           
 -- ADef only or unary sum => no C switch
 cgalts env (Alts it alts name) boxed = 
     let contName = "ccont_" ++ name
         scrutName = "scrut_" ++ name
         -- altenv = zip (fvs it) [ CC contName i | i <- [0..] ]
-        altenv = zip (fvs it) (repeat FP)
+        altenv = zip (map fst $ fvs it) (repeat FP)
         env' = altenv ++ env
         forward = "FnPtr " ++ name ++ "();"
     in do
@@ -312,18 +348,13 @@ cgalts env (Alts it alts name) boxed =
       let fun = "// " ++ show (ctyp it) ++ "\n" ++
                 "DEFUN0("++ name ++ ") {\n" ++
                 "  fprintf(stderr, \"" ++ name ++ " here\\n\");\n" ++
-                -- scrutinee might not be evaluated if boxed
-                (if boxed then 
-                     "  // boxed scrutinee\n" ++
-                     "  STGEVAL(stgCurVal);\n"
-                 else "  // unboxed scrutinee\n") ++
                 -- actually need the ccont?
                 -- any fvs in the expressions on the rhs's?
                 (if (length $ fvs it) > 0 then 
                      "  Obj *" ++ contName ++ " = stgPopCont();\n" ++
                      concat ["  PtrOrLiteral " ++ v ++ 
                              " = " ++ contName ++ "->payload[" ++ show i ++ "];\n"
-                             | (i,v) <- indexFrom 0 $ fvs it ] 
+                             | (i,v) <- indexFrom 0 $ map fst $ fvs it ] 
                  else 
                      "  stgPopCont();\n") ++
                 "  PtrOrLiteral " ++ scrutName ++ " = stgCurVal;\n" ++
@@ -385,11 +416,11 @@ buildHeapObj env o =
 
 bho :: [(String, RVal)] -> Obj InfoTab -> (Int, [Char])
 bho env (FUN it vs e name) = 
-    (length $ fvs it, loadPayloadFVs env (fvs it) name)
+    (length $ fvs it, loadPayloadFVs env (map fst $ fvs it) name)
 
 -- TODO: the size here should be based on the FUN rather than being maxPayload
 bho env (PAP it f as name) =
-    (maxPayload, loadPayloadFVs env (fvs it) name ++ 
+    (maxPayload, loadPayloadFVs env (map fst $ fvs it) name ++ 
                  loadPayloadAtoms env as (length $ fvs it) name)
 
 bho env (CON it c as name) = 
@@ -399,14 +430,14 @@ bho env (CON it c as name) =
     in (length ps, concat ps)
 
 bho env (THUNK it e name) =
-    (max 1 (length $ fvs it), loadPayloadFVs env (fvs it) name)
+    (max 1 (length $ fvs it), loadPayloadFVs env (map fst $ fvs it) name)
     
 bho env (BLACKHOLE it name) = (1,"")
 
 loadPayloadFVs env fvs name =
     concat [name ++ "->payload[" ++ show i ++ "] = " ++ 
             cgv env v ++ "; // " ++ v ++ "\n"
-            | (i,v) <- indexFrom 0 fvs ]
+            | (i,v) <- indexFrom 0 $ fvs ]
 
 -- load atoms into payload starting at index ind
 loadPayloadAtoms env as ind name =

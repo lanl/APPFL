@@ -151,9 +151,20 @@ extern void showStgVal(PtrOrLiteral);
 extern void showIT(InfoTab *);
 extern int getObjSize(Obj *);
 
+#define hibits (~0 << sizeof(int)/2 * 8)
+#define lobits (~0 & ~hibits)
+
+#define PNPACK(pargc,nargc) ((pargc) | ((nargc) << (sizeof(int)/2 * 8)))
+
+#define PNUNPACK(n,pargc,nargc) \
+  do { \
+    pargc = (n) & lobits;				\
+    nargc = ((unsigned int) (n)) >> (sizeof(int)/2 * 8);	\
+  } while (0)
+
 // allocate Obj on heap, returning pointer to new Obj
 extern Obj* stgNewHeapObj(InfoTab *itp);
-extern Obj* stgNewHeapPAP(InfoTab *itp, int argc);
+extern Obj* stgNewHeapPAP(InfoTab *itp, int pargc, int nargc);
 // allocate Obj on continuation stack, returning pointer to new Obj
 extern Obj *stgAllocCallCont2(InfoTab *it, int payloadSize);
 extern Obj *stgAllocCont(InfoTab *it);
@@ -204,28 +215,16 @@ Obj *stgPopCont();
 
 
 // return through continuation stack
-/*
-define STGRETURN0()				\
-  STGJUMP0(((Cont *)stgSP)->retAddr)
-*/
 
 #define STGRETURN0()				\
   STGJUMP0(((Obj *)stgSP)->infoPtr->entryCode)
 
 // no explicit return value stack
-/*
-define STGRETURN1(r)				\
-  do {						\
-    stgCurVal = r;				\
-    STGJUMP0(((Cont *)stgSP)->retAddr);		\
-  } while(0)
-*/
 #define STGRETURN1(r)				\
   do {						\
     stgCurVal = r;				\
     STGRETURN0();				\
   } while(0)
-
 
 #define STGAPPLY1(f,v1)				\
   do {						\

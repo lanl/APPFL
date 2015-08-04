@@ -20,7 +20,7 @@ all: $(ALL)
 $(LIB) : $(OBJECTS)
 	ar -rcs $(LIB) $(OBJECTS)
 
-mymain: userprog.o $(LIB) stg_header.h
+mymain: userprog.o $(LIB) stgc.h
 	$(CC) $(LDFLAGS) $(OBJECTS) userprog.o -o $@ -L. -lruntime
 
 %.o: %.c $(HEADERS)
