@@ -7,7 +7,7 @@
 #include "stg.h"
 #include "stgutils.h"
 
-const bool DEBUG = false;
+const bool DEBUG = true;
 
 // fraction of total heap used before gc runs.
 const float gcThreshold=0.0;
@@ -40,7 +40,6 @@ void initGc(void) {
 }
 
 void swapPtrs(void) { 
-  assert( scanPtr == freePtr && "swapPtrs called when gc not finished");
   size_t before = stgHP-stgHeap;
   stgHeap = toPtr;
   stgHP = freePtr;
@@ -62,20 +61,83 @@ static inline bool isTo(void *p) {
 
 void updatePtr(PtrOrLiteral *f) {
   if(f->argType == HEAPOBJ) {
-    Obj *p = derefPoL(*f);
+
+	Obj *p = derefPoL(*f);
+
+
+	if(f->op->objType == INDIRECT) {
+		if(!isFrom(p) && !isTo(p)) {  // INDIRECT to SHO
+	      if(isFrom(f->op)) {
+	    	  fprintf(stderr,"fix INDIRECT to sho %s\n",f->op->ident);
+	    	  f->op = p;
+#if 0
+	    	if(f->op->objType == FORWARD) {
+	    		//if (DEBUG) fprintf(stderr,"update indirect forward %s\n",p->ident);
+	    		//f->op = p->payload[0].op;
+	    	} else {
+				fprintf(stderr,"copy INDIRECT to sho %s\n",f->op->ident);
+				fprintf(stderr,"f->op\n");
+				showStgObj(f->op);
+				fprintf(stderr,"p\n");
+				showStgObj(p);
+
+				int size = getObjSize(f->op);
+				memcpy(freePtr, f->op, getObjSize(f->op));
+				f->op->objType = FORWARD;
+				f->op->payload[0].op = freePtr;
+				//f->op = (Obj *)freePtr;
+				freePtr = (char *)freePtr + size;
+
+	    	}
+	    	return;
+#endif
+	      }
+		}
+	}
+
+
 
     if (isFrom(p)) {
       if(p->objType == FORWARD) {
         if (DEBUG) fprintf(stderr,"update forward %s\n",p->ident);
         f->op = p->payload[0].op;
       } else {
-        if (DEBUG) fprintf(stderr, "copy %s %s from->to\n", objTypeNames[p->objType], p->ident);
-        memcpy(freePtr, p, getObjSize(p));
+        int size = getObjSize(p);
+        if (DEBUG) {
+          fprintf(stderr, "copy %s %s from->to size=%d\n", objTypeNames[p->objType], p->ident, size);
+          fprintf(stderr, "before\n");
+          showStgObj(p);
+        }
+
+        memcpy(freePtr, p, size);
+        if (DEBUG) {
+          fprintf(stderr, "after to\n");
+          showStgObj((Obj *)freePtr);
+        }
+        assert(size > sizeof(Obj) && "no space for FORWARD");
         p->objType = FORWARD;
         p->payload[0].op = freePtr;
-        f->op = (Obj *)freePtr; 
-        freePtr = (char *)freePtr + getObjSize(p);
+        if (DEBUG) {
+          fprintf(stderr, "after from\n");
+          showStgObj(p);
+        }
+
+        f->op = (Obj *)freePtr;
+        if (DEBUG) {
+          fprintf(stderr, "after from2\n");
+          showStgObj(f->op);
+          fprintf(stderr, "after from3\n");
+          showStgObj(p);
+        }
+
+        freePtr = (char *)freePtr + size;
       }
+    } else if (isTo(p)) {
+
+    } else {
+      // SHO
+      fprintf(stderr,"it is a sho\n");
+      showStgObj(p);
     }
   }
 }
@@ -102,7 +164,7 @@ void processObj(Obj *p) {
     }
     break;
   case CON:
-    fprintf(stderr," concount %d ",countCONargs(p));
+	  if (DEBUG) fprintf(stderr,"CON args %zu\n",countCONargs(p));
     for(i = 0; i < countCONargs(p); i++) {
         updatePtr(&p->payload[i]);
     }
@@ -115,7 +177,7 @@ void processObj(Obj *p) {
     break;
   case INDIRECT:
     updatePtr(&p->payload[0]);
-    break;
+	break;
   default:
     fprintf(stderr, "bad obj. type %d %s", p->objType, objTypeNames[p->objType]);
     assert (false && "bad obj type");
@@ -160,7 +222,14 @@ void gc(void) {
     showStgHeap();
     fprintf(stderr,"start gc heap size %lx\n", before);
   }
- 
+
+  // add stgCurVal
+  fprintf(stderr,"start add stgCurVal\n");
+  if (stgCurVal.argType == HEAPOBJ) {
+	  processObj(stgCurVal.op);
+  }
+  fprintf(stderr,"end add stgCurVal\n");
+
   // all SHO's
   for(int i=0; i<stgStatObjCount; i++) {
     processObj(stgStatObj[i]);
@@ -173,22 +242,28 @@ void gc(void) {
      processCont((Obj *)p);
   }
 
-  //Cmm. stack
-  for (char *p = (char *)cmmSP;
-        p < (char*)cmmStack + cmmStackSize;
-        p += sizeof(PtrOrLiteral)) {
-        updatePtr((PtrOrLiteral *)p);
-  }
-  
   //all roots are now added.
 
+
   // process "to" space
+  fprintf(stderr,"start process to\n");
    while(scanPtr < freePtr) {
      processObj(scanPtr);
      scanPtr = (char *)scanPtr + getObjSize(scanPtr);
    }
+   fprintf(stderr,"end process to\n");
+
+   assert( scanPtr == freePtr && "gc not finished");
+
+   //update stgCurVal
+   fprintf(stderr,"start process stgCurVal\n");
+   if (stgCurVal.argType == HEAPOBJ) {
+	  updatePtr(&stgCurVal);
+   }
+   fprintf(stderr,"end process stgCurVal\n");
 
    swapPtrs();
+
    if (DEBUG) {
      fprintf(stderr, "new heap\n");
      showStgHeap();

@@ -3,6 +3,7 @@
 
 #include "stg.h"
 #include "cmm.h"
+#include "gc.h"
 #include "string.h"
 
 extern void stgThunk(PtrOrLiteral self);
@@ -58,6 +59,8 @@ do {						\
     showStgHeap();			        \
     exit(0);                                    \
   }                                             \
-} while (0)
+} while (0);    \
+assert (cmmSP == cmmStack + cmmStackSize && "Non empty cmm stack in stgeval"); \
+gc();
 
 #endif
