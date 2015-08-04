@@ -42,7 +42,7 @@ data InfoTab =
       typ :: Monotype,
       ctyp :: Polytype,
       name :: String,
-      fvs :: [Var],
+      fvs :: [(Var,Monotype)],
       truefvs :: [Var],
       entryCode :: String,
       arity :: Int}      
@@ -50,7 +50,7 @@ data InfoTab =
       typ :: Monotype,
       ctyp :: Polytype,
       name :: String,
-      fvs :: [Var],
+      fvs :: [(Var,Monotype)],
       truefvs :: [Var],
       entryCode :: String,
       args     :: [Atom],
@@ -59,7 +59,7 @@ data InfoTab =
       typ :: Monotype,
       ctyp :: Polytype,
       name :: String,
-      fvs :: [Var],
+      fvs :: [(Var,Monotype)],
       truefvs :: [Var],
       entryCode :: String,
       args :: [Atom],
@@ -70,58 +70,58 @@ data InfoTab =
       typ :: Monotype,
       ctyp :: Polytype,
       name :: String,
-      fvs :: [Var],
+      fvs :: [(Var,Monotype)],
       truefvs :: [Var],
       entryCode :: String }
   | Blackhole {
       typ :: Monotype,
       ctyp :: Polytype,
       name :: String,
-      fvs :: [Var],
+      fvs :: [(Var,Monotype)],
       truefvs :: [Var],
       entryCode :: String }
   | ITAtom { 
       typ :: Monotype,
       ctyp :: Polytype,
-      fvs :: [Var],
+      fvs :: [(Var,Monotype)],
       truefvs :: [Var],
       noHeapAlloc :: Bool }
   | ITFCall { 
       typ :: Monotype,
       ctyp :: Polytype,
-      fvs :: [Var],
+      fvs :: [(Var,Monotype)],
       truefvs :: [Var],
       noHeapAlloc :: Bool,
       knownCall :: Maybe InfoTab } -- of the FUN
   | ITPrimop { 
       typ :: Monotype,
       ctyp :: Polytype,
-      fvs :: [Var], 
+      fvs :: [(Var,Monotype)], 
       truefvs :: [Var],
       noHeapAlloc :: Bool }
   | ITLet { 
       typ :: Monotype,
       ctyp :: Polytype,
-      fvs :: [Var],
+      fvs :: [(Var,Monotype)],
       truefvs :: [Var],
       noHeapAlloc :: Bool }
   | ITCase { 
       typ :: Monotype,
       ctyp :: Polytype,
-      fvs :: [Var],
+      fvs :: [(Var,Monotype)],
       truefvs :: [Var],
       noHeapAlloc :: Bool,
       cmap :: CMap}
   | ITAlt { 
       typ :: Monotype,
       ctyp :: Polytype,
-      fvs :: [Var],
+      fvs :: [(Var,Monotype)],
       truefvs :: [Var],
       cmap :: CMap }
   | ITAlts { 
       typ :: Monotype,
       ctyp :: Polytype,
-      fvs :: [Var],
+      fvs :: [(Var,Monotype)],
       truefvs :: [Var],
       name :: String,         -- for C infotab
       entryCode :: String }   -- for C infotab
@@ -225,7 +225,7 @@ instance MakeIT (Obj ([Var],[Var])) where
     makeIT o@(FUN (fvs,truefvs) vs e n) = 
         Fun { arity = length vs,
               name = n,
-              fvs = fvs,
+              fvs = zip fvs $ repeat typUndef,
               truefvs = truefvs,
               typ = typUndef,
               ctyp = ctypUndef,
@@ -236,7 +236,7 @@ instance MakeIT (Obj ([Var],[Var])) where
     makeIT o@(PAP (fvs,truefvs) f as n) =
         Pap { args = as,
               name = n,
-              fvs = fvs,
+              fvs = zip fvs $ repeat typUndef,
               truefvs = truefvs,
               typ = typUndef,
               ctyp = ctypUndef,
@@ -250,7 +250,7 @@ instance MakeIT (Obj ([Var],[Var])) where
               arity = length as,
               args = as,
               name = n,
-              fvs = fvs,
+              fvs = zip fvs $ repeat typUndef,
               truefvs = truefvs,
               typ = typUndef,
               ctyp = ctypUndef,
@@ -261,7 +261,7 @@ instance MakeIT (Obj ([Var],[Var])) where
 
     makeIT o@(THUNK (fvs,truefvs) e n) =
         Thunk { name = n,
-                fvs = fvs,
+                fvs = zip fvs $ repeat typUndef,
                 truefvs = truefvs,
                 typ = typUndef,
                 ctyp = ctypUndef,
@@ -273,7 +273,7 @@ instance MakeIT (Obj ([Var],[Var])) where
         Blackhole { name = n,
                     typ = typUndef,
                     ctyp = ctypUndef,
-                    fvs = fvs,
+                    fvs = zip fvs $ repeat typUndef,
                     truefvs = truefvs,
     --                entryCode = showITType o ++ "_" ++ n
                     entryCode = "stg_error"
@@ -281,14 +281,14 @@ instance MakeIT (Obj ([Var],[Var])) where
 
 instance MakeIT (Expr ([Var],[Var])) where
     makeIT ELet{emd = (fvs,truefvs)} = 
-        ITLet {fvs = fvs, 
+        ITLet {fvs = zip fvs $ repeat typUndef, 
                truefvs = truefvs, 
                typ = typUndef, 
                ctyp = ctypUndef, 
                noHeapAlloc = False}
 
     makeIT ECase{emd = (fvs,truefvs)} = 
-        ITCase{fvs = fvs, 
+        ITCase{fvs = zip fvs $ repeat typUndef, 
                truefvs = truefvs, 
                typ = typUndef, 
                ctyp = ctypUndef,
@@ -296,14 +296,14 @@ instance MakeIT (Expr ([Var],[Var])) where
                cmap = Map.empty}
 
     makeIT EAtom{emd = (fvs,truefvs)} = 
-        ITAtom{fvs = fvs, 
+        ITAtom{fvs = zip fvs $ repeat typUndef, 
                truefvs = truefvs, 
                typ = typUndef, 
                ctyp = ctypUndef, 
                noHeapAlloc = False}
 
     makeIT EFCall{emd = (fvs,truefvs)} = 
-        ITFCall{fvs = fvs, 
+        ITFCall{fvs = zip fvs $ repeat typUndef, 
                 truefvs = truefvs, 
                 typ = typUndef, 
                 ctyp = ctypUndef, 
@@ -311,7 +311,7 @@ instance MakeIT (Expr ([Var],[Var])) where
                 knownCall = Nothing}
 
     makeIT EPrimop{emd = (fvs,truefvs)} = 
-        ITPrimop{fvs = fvs, 
+        ITPrimop{fvs = zip fvs $ repeat typUndef, 
                  truefvs = truefvs, 
                  typ = typUndef, 
                  ctyp = ctypUndef, 
@@ -319,7 +319,7 @@ instance MakeIT (Expr ([Var],[Var])) where
 
 instance MakeIT (Alts ([Var],[Var])) where
     makeIT Alts{altsmd = (fvs,truefvs), aname} = 
-        ITAlts {fvs = fvs, 
+        ITAlts {fvs = zip fvs $ repeat typUndef, 
                 truefvs = truefvs, 
                 typ = typUndef,
                 ctyp = ctypUndef,
@@ -328,14 +328,14 @@ instance MakeIT (Alts ([Var],[Var])) where
 
 instance MakeIT (Alt ([Var],[Var])) where
     makeIT ACon{amd = (fvs,truefvs)} = 
-        ITAlt{fvs = fvs, 
+        ITAlt{fvs = zip fvs $ repeat typUndef, 
               truefvs = truefvs, 
               typ = typUndef,
               ctyp = ctypUndef,
               cmap = Map.empty}
 
     makeIT ADef{amd = (fvs,truefvs)} = 
-        ITAlt{fvs = fvs, 
+        ITAlt{fvs = zip fvs $ repeat typUndef, 
               truefvs = truefvs, 
               typ = typUndef,
               ctyp = ctypUndef,
@@ -497,7 +497,7 @@ instance PPrint InfoTab where
        Just it' -> text "known call to" <+> text (name it')
        Nothing  -> text "unknown call"
      makeHADoc nha = text "noHeapAlloc:" <+> boolean nha
-     freevsDoc vs = text "fvs:" <+> listText vs
+     freevsDoc vs = text "fvs:" <+> listText (map fst vs) -- should show Monotype, too
      trufreevsDoc vs = text "truefvs:" <+> listText vs
      frvarsDoc vs tvs = freevsDoc vs $+$ trufreevsDoc tvs
      (itName, itExtras) =

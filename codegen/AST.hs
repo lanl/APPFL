@@ -79,6 +79,13 @@ instance Show Atom where
     show (LitD d) = show d ++ "(d)"
     show (LitC c) = [c]
 
+data Obj a = FUN   {omd :: a, vs :: [Var],   e :: Expr a , oname :: String}
+           | PAP   {omd :: a, f  :: Var,     as :: [Atom], oname :: String}
+           | CON   {omd :: a, c  :: Con,     as :: [Atom], oname :: String}
+           | THUNK {omd :: a, e  :: Expr a               , oname :: String}
+           | BLACKHOLE {omd :: a                         , oname :: String}
+             deriving(Eq,Show)
+
 -- 7.9 EFCalls (and EPrimops, for consistency) changed to accept Expr args.
 -- Parser (and other traversals) should enforce use of *only* EAtom as args
 data Expr a = EAtom   {emd :: a,                    ea :: Atom} --,      ename::String}
@@ -88,18 +95,11 @@ data Expr a = EAtom   {emd :: a,                    ea :: Atom} --,      ename::
             | ECase   {emd :: a, ee :: Expr a,      ealts :: Alts a} --, ename::String}
               deriving(Eq,Show)
 
-data Alt a = ACon {amd :: a, ac :: Con, avs :: [Var], ae :: Expr a}
-           | ADef {amd :: a,            av :: Var,    ae :: Expr a}
-             deriving(Eq,Show)
-
 data Alts a = Alts {altsmd :: a, alts :: [Alt a], aname :: String}
               deriving(Eq,Show)
 
-data Obj a = FUN   {omd :: a, vs :: [Var],   e :: Expr a , oname :: String}
-           | PAP   {omd :: a, f  :: Var,     as :: [Atom], oname :: String}
-           | CON   {omd :: a, c  :: Con,     as :: [Atom], oname :: String}
-           | THUNK {omd :: a, e  :: Expr a               , oname :: String}
-           | BLACKHOLE {omd :: a                         , oname :: String}
+data Alt a = ACon {amd :: a, ac :: Con, avs :: [Var], ae :: Expr a}
+           | ADef {amd :: a,            av :: Var,    ae :: Expr a}
              deriving(Eq,Show)
 
 -- when calculating free variables we need an enclosing environment that

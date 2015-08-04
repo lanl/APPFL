@@ -110,6 +110,7 @@ Obj* stgNewHeapObj(InfoTab *itp) {
   return objp;
 }
 
+/*
 // PAP is special
 Obj* stgNewHeapPAP(InfoTab *itp, int argc) {
   assert(itp->objType == FUN && "stgNewHeapPap:  itp->objType != FUN" );
@@ -121,6 +122,27 @@ Obj* stgNewHeapPAP(InfoTab *itp, int argc) {
   objp->objType = PAP;
   objp->argCount = argc;  // for PAP, this will go
   objp->payload[0] = (PtrOrLiteral) {.argType = INT, .i = argc};
+  strcpy(objp->ident, itp->name);  // may be overwritten
+  fprintf(stderr, "stgNewHeapPAP: "); showStgObj(objp);
+  return objp;
+}
+*/
+
+// PAP is special
+// pargc is number of pointer args to store
+// npargc is number of non-pointer args to store
+Obj* stgNewHeapPAP(InfoTab *itp, int pargc, int npargc) {
+  assert(itp->objType == FUN && "stgNewHeapPap:  itp->objType != FUN" );
+  fprintf(stderr, "stgNewHeapPap: "); showIT(itp);
+  size_t objSize = sizeof(Obj) + 
+                   (itp->fvCount + pargc + npargc + 1) * sizeof(PtrOrLiteral);
+  Obj *objp = (Obj *)stgHP;
+  stgHP = (char *)stgHP + objSize;
+  objp->infoPtr = itp;
+  objp->objType = PAP;
+  objp->argCount = pargc + npargc;  // for PAP, this will go
+  objp->payload[itp->fvCount] = (PtrOrLiteral) {.argType = INT, 
+                                                .i = PNPACK(pargc, npargc)};
   strcpy(objp->ident, itp->name);  // may be overwritten
   fprintf(stderr, "stgNewHeapPAP: "); showStgObj(objp);
   return objp;
