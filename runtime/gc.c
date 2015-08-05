@@ -26,9 +26,15 @@ static inline size_t startCallargs(Obj *p) { return 1; }
 static inline size_t endCallargs(Obj *p) { return p->payload[0].i + 1; }
 static inline size_t startCaseargs(Obj *p) { return 0; }
 static inline size_t endCaseargs(Obj *p) { return p->infoPtr->fvCount; }
-static inline bool isHeap(Obj *p, size_t index) {
-  return (p->payload[index].argType == HEAPOBJ);
+
+static inline bool isFrom(void *p) {
+  return (p >= fromPtr && (char *)p < (char *)fromPtr + stgHeapSize/2);
 }
+
+static inline bool isTo(void *p) {
+  return (p >= toPtr && (char *)p < (char *)toPtr + stgHeapSize/2);
+}
+
 // end of wrappers
 
 void initGc(void) {
@@ -40,6 +46,7 @@ void initGc(void) {
 }
 
 void swapPtrs(void) { 
+  assert( scanPtr == freePtr && "gc not finished");
   size_t before = stgHP-stgHeap;
   stgHeap = toPtr;
   stgHP = freePtr;
@@ -50,29 +57,11 @@ void swapPtrs(void) {
   assert (stgHP-stgHeap <= before && "gc increased heap size!\n"); 
 }
 
-static inline bool isFrom(void *p) {
-  return (p >= fromPtr && (char *)p < (char *)fromPtr + stgHeapSize/2); 
-}
-
-static inline bool isTo(void *p) {
-  return (p >= toPtr && (char *)p < (char *)toPtr + stgHeapSize/2);
-}
-
 
 void updatePtr(PtrOrLiteral *f) {
   if(f->argType == HEAPOBJ) {
 
-	Obj *p = derefPoL(*f);
-
-	if(f->op->objType == INDIRECT) {
-		if(!isFrom(p) && !isTo(p)) {  // INDIRECT to SHO
-			if(isFrom(f->op)) {
-				if (DEBUG) fprintf(stderr,"fix INDIRECT to sho %s\n",f->op->ident);
-				f->op = p;
-				return;
-			}
-		}
-	}
+    Obj *p = derefPoL(*f);
 
     if (isFrom(p)) {
       if(p->objType == FORWARD) {
@@ -94,6 +83,15 @@ void updatePtr(PtrOrLiteral *f) {
         f->op = (Obj *)freePtr;
 
         freePtr = (char *)freePtr + size;
+      }
+    } else if (isTo(p)) {
+      // do nothing
+    } else { // SHO
+      if(f->op->objType == INDIRECT) {
+        if(isFrom(f->op)) {
+          if (DEBUG) fprintf(stderr,"fix INDIRECT to sho %s\n",f->op->ident);
+          f->op = p;
+        }
       }
     }
   }
@@ -208,8 +206,6 @@ void gc(void) {
      processObj(scanPtr);
      scanPtr = (char *)scanPtr + getObjSize(scanPtr);
    }
-
-   assert( scanPtr == freePtr && "gc not finished");
 
    swapPtrs();
 
