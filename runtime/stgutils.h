@@ -3,6 +3,7 @@
 
 #include "stg.h"
 #include "cmm.h"
+#include "gc.h"
 #include "string.h"
 
 extern void stgThunk(PtrOrLiteral self);
@@ -24,6 +25,9 @@ Obj *derefPoL(PtrOrLiteral f);
 
 // is this a good place to check for BLACKHOLE?
 void derefStgCurVal();
+void pushargs(int argc, PtrOrLiteral argv[]);
+void popargs(int argc, PtrOrLiteral argv[]);
+void copyargs(PtrOrLiteral *dest, const PtrOrLiteral *src, int count);
 
 FnPtr whiteHole();
 FnPtr stg_constructorcall();
@@ -36,6 +40,29 @@ FnPtr stgApply1();
 
 // NP = number of PtrOrLiterals NO = Number of Objs
 #define STGHEAPAT(NP,NO) ((char*)stgHP - (NP*sizeof(PtrOrLiteral)) - (NO*sizeof(Obj)))
+
+// evaluate in place
+#define STGEVALworks(e)				\
+do {						\
+  stgCurVal = e;				\
+  derefStgCurVal();				\
+  while (stgCurVal.argType == HEAPOBJ &&	\
+	 stgCurVal.op->objType == THUNK) {	\
+    Obj* cont = stgAllocCallCont2(&it_stgCallCont, 0);	\
+    strcpy(cont->ident, stgCurVal.op->ident);	\
+    STGCALL1(stgCurVal.op->infoPtr->entryCode, stgCurVal); \
+    stgPopCont();			        \
+    derefStgCurVal();				\
+  }						\
+  if (stgCurVal.argType == HEAPOBJ &&           \
+      stgCurVal.op->objType == BLACKHOLE) {     \
+    fprintf(stderr, "infinite loop detected in STGEVAL!\n"); \
+    showStgVal(stgCurVal);			\
+    fprintf(stderr, "\n");			\
+    showStgHeap();			        \
+    exit(0);                                    \
+  }                                             \
+} while (0)
 
 // evaluate in place
 #define STGEVAL(e)				\
@@ -58,6 +85,8 @@ do {						\
     showStgHeap();			        \
     exit(0);                                    \
   }                                             \
-} while (0)
+} while (0);    \
+assert (cmmSP == cmmStack + cmmStackSize && "Non empty cmm stack in stgeval"); \
+gc();
 
 #endif

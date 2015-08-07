@@ -31,6 +31,7 @@
 #ifndef cmm_h
 #define cmm_h
 
+#include <stdio.h>
 #include <stdlib.h>
 #include "stg.h"
 
@@ -179,7 +180,12 @@ extern void initCmm();
   PtrOrLiteral P1, P2, P3, P4;			\
   _POPVALS4(P1,P2,P3,P4);					
 
-#define ENDFUN }
+#define DEFUN5(F,P1,P2,P3,P4,P5)		\
+  FnPtr F() {					\
+  PtrOrLiteral P1, P2, P3, P4, P5;		\
+  _POPVALS5(P1,P2,P3,P4,P5);					
+
+#define ENDFUN return NULL;}
 
 /* ********** NON-USER STUFF! ********* */
 // 
@@ -264,6 +270,15 @@ inline PtrOrLiteral _POP() {
     _POP(L2);				\
     _POP(L3);				\
     _POP(L4);				\
+  } while (0)
+
+#define _POPVALS5(L1,L2,L3,L4,L5)	\
+  do {					\
+    _POP(L1);				\
+    _POP(L2);				\
+    _POP(L3);				\
+    _POP(L4);				\
+    _POP(L5);				\
   } while (0)
 
 // PUSHVALSN(P1,...,PN), N >= 0

@@ -153,7 +153,9 @@ compile  (Options {optVerbose, optDumpParse, optNoPrelude, optOutput, optInput, 
                  let coutput = input ++ ".c"
                  let flags = " -std=gnu99 -L" ++ rtLibDir ++ " -I" ++ rtIncDir ++ " -lruntime"
                  writeFile coutput (codegener source optVerbose minihs)
-                 if gcc then system ("gcc " ++ coutput ++ " -o " ++ (fromJust optOutput) ++ flags) else return ExitSuccess
+                 if gcc 
+                   then system ("gcc " ++ coutput ++ " -o " ++ (fromJust optOutput) ++ flags)
+                   else return ExitSuccess
                  return ()
 
 main :: IO ()
@@ -165,4 +167,4 @@ main =
       (opts, args') <- compilerOpts args
       checkOpts opts
       -- weird path stuff is because cabal puts binary in dist/build/stgc/stgc
-      compile opts (binaryDir ++ "/../etc") (binaryDir ++ "/../lib") (binaryDir ++ "/../include")True
+      compile opts (binaryDir ++ "/../etc") (binaryDir ++ "/../lib") (binaryDir ++ "/../include") True

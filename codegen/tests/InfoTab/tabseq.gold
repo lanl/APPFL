@@ -3,10 +3,13 @@ InfoTab it_seq =
     .fvCount             = 0,
     .entryCode           = &fun_seq,
     .objType             = FUN,
+    .layoutInfo.payloadSize = 0,
     .funFields.arity     = 2,
   };
 InfoTab it_alts_0 = 
   { .name                = "alts_0",
     .fvCount             = 1,
     .entryCode           = &alts_0,
+    .objType             = CASECONT,
+    .layoutInfo.payloadSize = 1,
   };

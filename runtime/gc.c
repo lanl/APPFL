@@ -16,18 +16,25 @@ void *toPtr=NULL, *fromPtr=NULL;
 void *scanPtr=NULL, *freePtr=NULL;
 
 // wrapper functions for possible interface changes
-static inline size_t sizeofObj(Obj *p) { return sizeof(Obj); }
-static inline size_t countFreevars(Obj *p) { return p->infoPtr->fvCount; }
-static inline size_t startPAPargs(Obj *p) { return countFreevars(p); }
-static inline size_t endPAPargs(Obj *p) { return countFreevars(p) + p->argCount; }
+static inline size_t countFVs(Obj *p) { return p->infoPtr->fvCount; }
+static inline size_t startPAPFVs(Obj *p) { return 1; }
+static inline size_t endPAPFVs(Obj *p) { return countFVs(p) + 1; }
+static inline size_t startPAPargs(Obj *p) { return countFVs(p) + 1; }
+static inline size_t endPAPargs(Obj *p) { return p->payload[0].i + 1; }
 static inline size_t countCONargs(Obj *p) { return p->infoPtr->conFields.arity; }
 static inline size_t startCallargs(Obj *p) { return 1; }
 static inline size_t endCallargs(Obj *p) { return p->payload[0].i + 1; }
-static inline size_t startCaseargs(Obj *p) { return 1; }
-static inline size_t endCaseargs(Obj *p) { return p->payload[0].i + 1; }
-static inline bool isHeap(Obj *p, size_t index) {
-  return (p->payload[index].argType == HEAPOBJ);
+static inline size_t startCaseargs(Obj *p) { return 0; }
+static inline size_t endCaseargs(Obj *p) { return p->infoPtr->fvCount; }
+
+static inline bool isFrom(void *p) {
+  return (p >= fromPtr && (char *)p < (char *)fromPtr + stgHeapSize/2);
 }
+
+static inline bool isTo(void *p) {
+  return (p >= toPtr && (char *)p < (char *)toPtr + stgHeapSize/2);
+}
+
 // end of wrappers
 
 void initGc(void) {
@@ -38,108 +45,142 @@ void initGc(void) {
   freePtr = toPtr;
 }
 
-void swapPtrs(void) {
-  assert( scanPtr == freePtr && "swapPtrs called when gc not finished");
+void swapPtrs(void) { 
+  assert( scanPtr == freePtr && "gc not finished");
+  size_t before = stgHP-stgHeap;
   stgHeap = toPtr;
   stgHP = freePtr;
   toPtr = fromPtr;
-  fromPtr = stgHP;
+  fromPtr = stgHeap;
+  freePtr = toPtr;
+  scanPtr = toPtr;
+  assert (stgHP-stgHeap <= before && "gc increased heap size!\n"); 
 }
 
-static inline bool isFrom(void *p) {
-  return (p >= fromPtr && (char *)p < (char *)fromPtr + stgHeapSize/2); 
-}
 
-void updatePtr(PtrOrLiteral f) {
-  Obj *p = derefPoL(f);
-  if (isFrom(p)) {
-    if(p->objType == FORWARD) {
-      fprintf(stderr, "already copied\n");
-      p = p->payload[0].op;
-    } else {
-      if (DEBUG) fprintf(stderr, "copy a %s from->to\n", objTypeNames[p->objType]);
-      memcpy(freePtr, p, sizeofObj(p));
-      p->objType = FORWARD;
-      p->payload[0].op = freePtr;
-      p = freePtr;
-      freePtr = (char *)freePtr + sizeofObj(p);
+void updatePtr(PtrOrLiteral *f) {
+  if(f->argType == HEAPOBJ) {
+
+    Obj *p = derefPoL(*f);
+
+    if (isFrom(p)) {
+      if(p->objType == FORWARD) {
+        if (DEBUG) fprintf(stderr,"update forward %s\n",p->ident);
+        f->op = p->payload[0].op;
+      } else {
+        int size = getObjSize(p);
+        if (DEBUG) {
+          fprintf(stderr, "copy %s %s from->to size=%d\n", objTypeNames[p->objType], p->ident, size);
+        }
+
+        memcpy(freePtr, p, size);
+
+        assert(size > sizeof(Obj) && "no space for FORWARD");
+
+        p->objType = FORWARD;
+        p->payload[0].op = freePtr;
+
+        f->op = (Obj *)freePtr;
+
+        freePtr = (char *)freePtr + size;
+      }
+    } else if (isTo(p)) {
+      // do nothing
+    } else { // SHO
+      if(f->op->objType == INDIRECT) {
+        if(isFrom(f->op)) {
+          if (DEBUG) fprintf(stderr,"fix INDIRECT to sho %s\n",f->op->ident);
+          f->op = p;
+        }
+      }
     }
   }
 }
 
+
 void processObj(Obj *p) {
   size_t i;
+  if (DEBUG) fprintf(stderr,"processObj %s %s\n",objTypeNames[p->objType], p->ident);
   switch(p->objType) {
   case FUN:
     // freevars
-    for(i = 0; i < countFreevars(p); i++) {
-      updatePtr(p->payload[i]);
+    for(i = 0; i < countFVs(p); i++) {
+      updatePtr(&p->payload[i]);
     }    
     break;
   case PAP:
     // free vars
-    for(i = 0; i < countFreevars(p); i++) {
-      updatePtr(p->payload[i]);
+    for(i = startPAPFVs(p); i < endPAPFVs(p); i++) {
+      updatePtr(&p->payload[i]);
     }
     // args already applied    
     for(i = startPAPargs(p); i < endPAPargs(p); i++) {
-      if (isHeap(p, i)) {
-         updatePtr(p->payload[i]);
-      }
+         updatePtr(&p->payload[i]);
     }
     break;
   case CON:
     for(i = 0; i < countCONargs(p); i++) {
-      if (isHeap(p, i)) {
-        updatePtr(p->payload[i]);
-      }
+        updatePtr(&p->payload[i]);
     }
     break;
   case THUNK:
   case BLACKHOLE:
-    for(i = 0; i < countFreevars(p); i++) {
-      updatePtr(p->payload[i]);
+    for(i = 0; i < countFVs(p); i++) {
+      updatePtr(&p->payload[i]);
     }
     break;
   case INDIRECT:
-    updatePtr(p->payload[0]);
-    break;
+    updatePtr(&p->payload[0]);
+	break;
   default:
+    fprintf(stderr, "bad obj. type %d %s", p->objType, objTypeNames[p->objType]);
     assert (false && "bad obj type");
   }
 }
 
 void processCont(Obj *p) {
   size_t i;
+  if (DEBUG) fprintf(stderr,"processCont %s %s\n",objTypeNames[p->objType], p->ident);
   switch(p->objType) {
   case UPDCONT:
-    updatePtr(p->payload[0]);
+    updatePtr(&p->payload[0]);
     break;
   case CASECONT:
-    for(i = startCaseargs(p); i< endCaseargs(p); i++) {
-      updatePtr(p->payload[i]);
+    for(i = startCaseargs(p); i < endCaseargs(p); i++) {
+      updatePtr(&p->payload[i]);
     }
     break;
   case CALLCONT:
-    for(i = startCallargs(p); i< endCallargs(p); i++) {
-      updatePtr(p->payload[i]);
+    for(i = startCallargs(p); i < endCallargs(p); i++) {
+      updatePtr(&p->payload[i]);
     }
     break;
   case FUNCONT:
-    updatePtr(p->payload[0]);
+    updatePtr(&p->payload[0]);
     break;
   default:
-    assert (false && "bad cont. type");
+    fprintf(stderr, "bad cont. type %d %s\n",p->objType, objTypeNames[p->objType]);
+    assert (false);
   }
 }
 
 void gc(void) {
 
-  if((char*)stgHP - (char *)stgHeap < gcThreshold*stgHeapSize) {
+  size_t before = stgHP-stgHeap;
+  if(before <= gcThreshold*stgHeapSize) {
     return;
   }
 
-  if (DEBUG) fprintf(stderr,"start gc\n");
+  if (DEBUG) {
+    fprintf(stderr, "old heap\n");
+    showStgHeap();
+    fprintf(stderr,"start gc heap size %lx\n", before);
+  }
+
+  // add stgCurVal
+  if (stgCurVal.argType == HEAPOBJ) {
+	  processObj(stgCurVal.op);
+  }
 
   // all SHO's
   for(int i=0; i<stgStatObjCount; i++) {
@@ -147,27 +188,32 @@ void gc(void) {
   }
 
   //Cont. stack
-  void *p = stgSP;
-  while((char *)p < (char *)stgStack + stgStackSize) {
-    processCont(p);
-    p = (char *)p + sizeofObj(p);
+  for (char *p = (char*)stgSP;
+        p < (char*)stgStack + stgStackSize;
+        p += getObjSize((Obj *)p)) {
+     processCont((Obj *)p);
   }
+
   //all roots are now added.
+
+  //update stgCurVal
+  if (stgCurVal.argType == HEAPOBJ) {
+    updatePtr(&stgCurVal);
+  }
 
   // process "to" space
    while(scanPtr < freePtr) {
      processObj(scanPtr);
-     scanPtr = (char *)scanPtr + sizeofObj(scanPtr);
+     scanPtr = (char *)scanPtr + getObjSize(scanPtr);
    }
 
-   if (DEBUG) {
-     fprintf(stderr, "old heap\n");
-     showStgHeap();
-   }
    swapPtrs();
+
    if (DEBUG) {
      fprintf(stderr, "new heap\n");
      showStgHeap();
-     fprintf(stderr,"end gc\n");
+     size_t after = stgHP-stgHeap;
+     fprintf(stderr,"end gc heap size %lx (change %lx)\n", 
+       after, before-after );
    }
 }

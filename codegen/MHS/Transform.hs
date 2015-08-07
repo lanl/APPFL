@@ -725,7 +725,7 @@ rmHidden' = foldr (\(ps1,_) pps ->
 testEQs =
   [([Match "Cons" [Default "a", Match "I#" [Match "1#"[]]], Match "X" []], EAt $ AtmVar "a"),
    ([Match "Cons" [Default "a", Match "Cons" [Default "b", Default "c"]], Default "x"], EAt $ AtmVar "b"),
-   ([Default "a", Match "Cons" [Default "b", Default "c"]], EAt $ AtmVar "ABBA rules"),
+   ([Default "a", Match "Cons" [Default "b", Match "Nil" []]], EAt $ AtmVar "ABBA rules"),
    ([Match "X" [], Default "xx"], EAt $ AtmVar "xx"),
    ([Match "Nil" [], Match "Nil" []], EAt $ AtmVar "dunno"),
    ([Match "Cons" [Default "a", Default "b"], Default "l"], EAt $ AtmVar "Family matters"),
@@ -795,7 +795,7 @@ match cons (v:vs) eqs dflt =
                   
                   -- remove Constructor from matches, add nested patterns
                   -- to remainder in each equation
-                  ms' = map (\(Match _ nps:xs, exp) -> (nps ++ xs, exp)) ms
+                  ms' = map (\(Match _ nps : xs, exp) -> (nps ++ xs, exp)) ms
 
                 in do
                   nvs <- caseVars (length npats)

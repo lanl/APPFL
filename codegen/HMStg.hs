@@ -49,7 +49,7 @@ hmstgAssums os0 assums =
                                                       Set.Set Constraint,
                                                       [Obj InfoTab])
         (subst, _) = runState (solve cs) i1
-    in co Set.empty $ backSub subst os2
+    in typeFVs Map.empty $ co Set.empty $ backSub subst os2 :: [Obj InfoTab]
 
 
 hmstg :: [Obj InfoTab] -> [Obj InfoTab]
@@ -394,17 +394,61 @@ butAlt t0 mtvs e@ADef{av,ae} =
         setTyp (getTyp ae') e{ae = ae'})
 
 butAlt t0 mtvs e@ACon{amd,ac,avs,ae} =
+    let MCon _ _ ntvs = getTyp e --stashed by dv
+        tis = instantiateDataConAt ac (cmap amd) ntvs
+        xtis = zzip avs tis
+        -- note ntvs == freeVars tis (as sets) so ntvs are new mtvs
+        (as,cs,ae') = bu (Set.union mtvs $ Set.fromList ntvs) ae
+        ncs = Set.fromList $ (EqC t0 $ getTyp e) : -- TC b1...bn
+                             [ EqC ti t' | (xi,ti) <- xtis, 
+                                           (x,t') <- Set.toList as, 
+                                           x == xi ]
+    in (foldr dropAss as avs,
+        Set.union cs ncs,
+        setTyp (getTyp ae') e{ae = ae'})
+
+-- given a constructor map, data constructor, and list of monotypes to be
+-- substituted for the arguments of the type constructor corresponding to
+-- the data constructor, return the monotype arguments of the data constructor
+-- as a result of the substitution
+
+instantiateDataConAt c cmap subms =
+    let TyCon _ tcon tvs dcs = luTCon c cmap
+        -- get data constructor definition C [Monotype]
+        ms = case [ ms | DataCon c' ms <- dcs, c == c' ] of
+               [ms] -> ms
+               _ -> error $ "butAlt: not finding " ++ c ++ " in " ++ show dcs ++
+                    " for TyCon: " ++ tcon ++
+                    "\nCMap:\n" ++ show cmap
+        -- instantiate the Monotypes
+        subst = Map.fromList $ zzip tvs subms
+    in apply subst ms
+
+{-
+butAlt t0 mtvs e@ACon{amd,ac,avs,ae} =
     let -- instantiate type constructor definition
         -- get type constructor definition
+<<<<<<< HEAD
         TyCon boxed tcon tvs dcs =
             luTCon ac $ cmap amd
+=======
+        TyCon _ tcon tvs dcs =
+            luTCon ac $ cmap amd
+        -- get data constructor definition C [Monotype]
+>>>>>>> master
         ms = case [ ms | DataCon c ms <- dcs, c == ac] of
                [ms] -> ms
                _ -> error $ "butAlt: not finding " ++ ac ++ " in " ++ show dcs ++
                     " for TyCon: " ++ tcon ++
+<<<<<<< HEAD
                      "\nCMap:\n" ++ show (cmap amd)
         -- instantiate those Monotypes
         MCon boxed' c ntvs = getTyp e --stashed by dv
+=======
+                    "\nCMap:\n" ++ show (cmap amd)
+        -- instantiate the Monotypes
+        MCon _ _ ntvs = getTyp e --stashed by dv
+>>>>>>> master
         subst = Map.fromList $ zzip tvs ntvs
         tis = apply subst ms
         xtis = zzip avs tis
@@ -417,6 +461,7 @@ butAlt t0 mtvs e@ACon{amd,ac,avs,ae} =
     in (foldr dropAss as avs,
         Set.union cs ncs,
         setTyp (getTyp ae') e{ae = ae'})
+-}
 
 instance BU (Obj InfoTab) where
   bu mtvs o@FUN{vs,e,oname} = 
@@ -559,6 +604,90 @@ instance CO (Alt InfoTab) where
             bvs' = Set.union bvs ovs
         in a'{ae = co bvs' $ ae a}
 
+
+class TypeFVs a where
+    typeFVs :: Map.Map Var Monotype -> a -> a
+
+rep m fvts = [(k, f k) | (k,_) <- fvts]
+    where f k = case Map.lookup k m of
+                  Nothing -> error "HMStg.rep:  unbound variable"
+                  Just m -> m
+
+-- augmenting type environment is done for [Obj] (top level), ELet, EFCall, ACon, ADef
+instance TypeFVs [Obj InfoTab] where
+    typeFVs m os =
+        let m' = foldr (uncurry Map.insert) m [(oname o, getTyp o) | o <- os]
+        in map (typeFVs m') os
+
+instance TypeFVs (Obj InfoTab) where
+    typeFVs m o@FUN{omd, e} =
+        o{omd = omd{fvs = rep m (fvs omd)}, e = typeFVs m e}
+
+    typeFVs m o@THUNK{omd, e} =
+        o{omd = omd{fvs = rep m (fvs omd)}, e = typeFVs m e}
+
+    typeFVs m o = -- PAP, CON, BLACKHOLE
+        let md = omd o
+        in o{omd = md{fvs = rep m (fvs md)}}
+
+
+instance TypeFVs [Expr InfoTab] where
+    typeFVs m = map (typeFVs m)
+
+instance TypeFVs (Expr InfoTab) where
+    typeFVs m e@EAtom{emd} =
+        e{emd = emd{fvs = rep m (fvs emd)}}
+
+    typeFVs m e@EFCall{emd, ev, eas} =
+        let eastyps = map getTyp eas
+            etyp = getTyp e
+            evtyp = foldr MFun etyp eastyps
+            m' = Map.insert ev evtyp m
+            eas' = typeFVs m' eas
+            emd' = emd{fvs = rep m' (fvs emd)}
+        in e{emd = emd', eas = eas'}
+
+    typeFVs m e@EPrimop{emd, eas} = 
+        e{emd = emd{fvs = rep m (fvs emd)}, eas = typeFVs m eas}
+
+    typeFVs m e@ELet{emd, edefs, ee} =
+        let edefs' = typeFVs m edefs
+            m' = foldr (uncurry Map.insert) m [(oname o, getTyp o) | o <- edefs]
+        in e{emd = emd{fvs = rep m (fvs emd)}, -- enclosing m
+             edefs = edefs', 
+             ee = typeFVs m' ee} -- inner m'
+
+    typeFVs m e@ECase{emd, ee, ealts} =
+        let emd' = emd{fvs = rep m (fvs emd)}
+            ee' = typeFVs m ee
+            ealts' = typeFVsAlts (getTyp ee) m ealts
+        in e{emd = emd', ee = ee', ealts = ealts'}
+
+typeFVsAlts t0 m a@Alts{altsmd, alts} =
+    let altsmd' = altsmd{fvs = rep m (fvs altsmd)}
+        alts' = map (typeFVsAlt t0 m) alts
+    in a{altsmd = altsmd', alts = alts'}
+
+typeFVsAlt t0 m a@ADef{amd, av, ae} =
+    let amd' = amd{fvs = rep m (fvs amd)}
+        m' = Map.insert av t0 m
+        ae' = typeFVs m' ae
+    in a{amd = amd', ae = ae'}
+
+typeFVsAlt (MCon b tc ms0) m a@ACon{amd, ac, avs, ae} =
+    let amd' = amd{fvs = rep m (fvs amd)}
+        tis = instantiateDataConAt ac (cmap amd) ms0
+        m' = foldr (uncurry Map.insert) m (zip avs tis)
+        ae' = typeFVs m' ae
+    in a{amd = amd', ae = ae'}
+
+typeFVsAlt (MPrim _) m a@ACon{amd, ac, avs, ae} =
+    let amd' = amd{fvs = rep m (fvs amd)}
+        ae' = typeFVs m ae
+    in a{amd = amd', ae = ae'}
+
+typeFVsAlt t0 m a@ACon{amd, ac, avs, ae} =
+    error $ "HMStg.typeFVsAlt: " ++ show t0 ++ " " ++ show a
 
 
 -- utilities

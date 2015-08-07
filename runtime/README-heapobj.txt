@@ -112,9 +112,10 @@ infoPtr->objType = FUN
 infoPtr->fvCount is number of free variables
 
 PAP
-                               | payload 
+                    | payload
+                    | [0..fvCount-1] |  [fvCount]  |
 -----------------------------------------------------------------------------
-| infoPtr | objType | argCount | free variables | args already applied      |
+| infoPtr | objType | free variables | layout info | args already applied   |
 -----------------------------------------------------------------------------
 
 The PAP infoPtr points is its underlying FUN infoTab entry, so
@@ -124,7 +125,7 @@ objType = PAP
 infoPtr->objType = FUN
 infoPtr->fvCount = number of free variables 
 
-argCount = number of arguments already applied
+argCount = number of arguments already applied -- GOING AWAY!
 TODO:  this should be in payload[fvCount]
 
 CON
@@ -167,9 +168,9 @@ infoPtr->fvCount = number of free variables
 
 INDIRECT
                                |       payload[0]         |
----------------------------------------------------------------------
-| infoPtr | objType |          | ptr to some other object | garbage |
----------------------------------------------------------------------
+------------------------------------------------------------------------
+| infoPtr | objType |          | ptr to some other object | irrelevant |
+------------------------------------------------------------------------
 
 INDIRECTs arise from BLACKHOLEs being updated.  The THUNK object is again
 reused, so 
@@ -177,7 +178,7 @@ reused, so
 objType = INDIRECT
 
 infoPtr->objType = THUNK
-infoPtr->fvCount = ***NO LONGER VALID, THE FREE VARS ARE NO LONGER LIVE***
+infoPtr->fvCount = ***NO LONGER VALID, ANY FREE VARS WILL BE CAPTURED ELSEWHERE***
 payload[0] = the pointer to the next object in the indirect chain
 payload[1..] = garbage
 
@@ -242,6 +243,8 @@ FUNCONT  - <none yet>
 
 The layout of continuation stack objects is as follows.
 
+TODO:  objType field will go away, should use a pair of macros
+  SETOBJTYPE and GETOBJTYPE
 
 UPDCONT
                                | payload[0]
@@ -260,11 +263,11 @@ CASECONT
 ---------------------------------------------------
 
 objType = CASECONT
-payload[0]..payload[payload[0]] are the free vars
+payload[0]..payload[infoPtr->fvCount] are the free vars
 
 
 CALLCONT
-                               | payload 
+                               | payload[0] | payload[1..payload[0]] 
 -----------------------------------------------------------------------------
 | infoPtr | objType |          | #free vars | free vars                     |
 -----------------------------------------------------------------------------
@@ -281,6 +284,7 @@ FUNCONT
 | infoPtr | objType |          | single free var                            |
 -----------------------------------------------------------------------------
 
+NOTE: IGNORE FOR NOW, not implemented
 objType = FUNCONT infoPtr->objType = FUN payload[0] is the sole free var (the
 function to be applied), i.e. is the only root.  NOT CORRECT?  should be
 all other args not currently being evaluated?

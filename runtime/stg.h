@@ -76,7 +76,6 @@ struct _Obj {
   ObjType objType;          // to distinguish PAP, FUN, BLACKHOLE, INDIRECT, FORWARD
   int argCount;             // for PAP, how many args already applied to?
   char ident[64];           // temporary, just for tracing
-  // int payloadSize;          // this should really be in infotab?
   PtrOrLiteral payload[];
 };
 
@@ -150,11 +149,22 @@ extern void showStgHeap();
 extern void showStgStack();
 extern void showStgVal(PtrOrLiteral);
 extern void showIT(InfoTab *);
-// extern int objSize(Obj *);
+extern int getObjSize(Obj *);
+
+#define hibits (~0 << sizeof(int)/2 * 8)
+#define lobits (~0 & ~hibits)
+
+#define PNPACK(pargc,nargc) ((pargc) | ((nargc) << (sizeof(int)/2 * 8)))
+
+#define PNUNPACK(n,pargc,nargc) \
+  do { \
+    pargc = (n) & lobits;				\
+    nargc = ((unsigned int) (n)) >> (sizeof(int)/2 * 8);	\
+  } while (0)
 
 // allocate Obj on heap, returning pointer to new Obj
 extern Obj* stgNewHeapObj(InfoTab *itp);
-extern Obj* stgNewHeapPAP(InfoTab *itp, int argc);
+extern Obj* stgNewHeapPAP(InfoTab *itp, int pargc, int nargc);
 // allocate Obj on continuation stack, returning pointer to new Obj
 extern Obj *stgAllocCallCont2(InfoTab *it, int payloadSize);
 extern Obj *stgAllocCont(InfoTab *it);
@@ -205,28 +215,16 @@ Obj *stgPopCont();
 
 
 // return through continuation stack
-/*
-define STGRETURN0()				\
-  STGJUMP0(((Cont *)stgSP)->retAddr)
-*/
 
 #define STGRETURN0()				\
   STGJUMP0(((Obj *)stgSP)->infoPtr->entryCode)
 
 // no explicit return value stack
-/*
-define STGRETURN1(r)				\
-  do {						\
-    stgCurVal = r;				\
-    STGJUMP0(((Cont *)stgSP)->retAddr);		\
-  } while(0)
-*/
 #define STGRETURN1(r)				\
   do {						\
     stgCurVal = r;				\
     STGRETURN0();				\
   } while(0)
-
 
 #define STGAPPLY1(f,v1)				\
   do {						\

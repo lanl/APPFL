@@ -1,4 +1,4 @@
 l1 = Cons 1 (Cons 1 (Cons 0 Nil))
-l2 = Cons l1 l1
-l3 = Cons l2 l2
+l2 = append l1 l1
+l3 = append l2 l2
 main = eqInt (sum (seqList l3 l3)) 8

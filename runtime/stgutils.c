@@ -12,7 +12,7 @@
 
 DEFUN0(fun_stgShowResultCont) {
   fprintf(stderr,"done!\n");
-  stgPopCont();  // clean up
+  stgPopCont();  // clean up--normally the job of the returnee
   fprintf(stderr,"The answer is\n");
   showStgVal(stgCurVal);  
   RETURN0();
@@ -140,8 +140,10 @@ DEFUN2(stgApply, N, f) {
   assert(N.argType == INT);
   const int argc = N.i;
   PtrOrLiteral argv[64];
+
   popargs(argc, argv);
 
+  /*
   f.op = derefPoL(f);
   switch (f.op->objType) {
 
@@ -156,7 +158,22 @@ DEFUN2(stgApply, N, f) {
     STGJUMP2(stgApply, N, f);
     break;
   } // case THUNK
+  */
 
+
+  f.op = derefPoL(f);
+  if (f.op->objType == THUNK) {  
+    callContSave(argc, argv);
+    while (f.op->objType == THUNK) {
+      fprintf(stderr, "stgApply THUNK\n");
+      STGEVAL(f);
+      //      f.op = derefPoL(f);  // derefPoL(stgCurVal) less dereferencing?
+      f.op = derefPoL(stgCurVal); 
+    } // while THUNK
+    callContRestore(argv);
+  } // if THUNK
+
+  switch (f.op->objType) {
   case FUN: {
     int arity = f.op->infoPtr->funFields.arity;
     int excess = argc - arity;  // may be negative
@@ -181,7 +198,7 @@ DEFUN2(stgApply, N, f) {
       // try again.
       STGJUMP2(stgApply, N, f);
 
-      // just right
+    // just right
     } else if (excess == 0) { 
       fprintf(stderr, "stgApply FUN just right\n");
       // push args
@@ -193,12 +210,12 @@ DEFUN2(stgApply, N, f) {
     } else { 
       fprintf(stderr, "stgApply FUN too few args\n");
       int fvCount = f.op->infoPtr->fvCount;
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, fvCount + argc);
-      pap->argCount = argc;
+      Obj *pap = stgNewHeapPAP(f.op->infoPtr, argc, 0); // all "pointers" for now
+      pap->argCount = argc + 0;
       // copy fvs
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
-      copyargs(&pap->payload[1], &f.op->payload[0], fvCount);
-      // copy args to just after fvs
+      copyargs(&pap->payload[0], &f.op->payload[0], fvCount);
+      // copy args to just after fvs and layout info
       fprintf(stderr, "stgApply FUN inserting %d args into new PAP\n", argc);
       copyargs(&pap->payload[fvCount+1], argv, argc);
       STGRETURN1(HOTOPL(pap));
@@ -207,7 +224,9 @@ DEFUN2(stgApply, N, f) {
 
   case PAP: {
     int fvCount = f.op->infoPtr->fvCount;
-    int argCount = f.op->payload[0].i - fvCount;
+    int pargc, nargc;
+    PNUNPACK(f.op->payload[fvCount].i, pargc, nargc);
+    int argCount = pargc + nargc;
     assert(argCount == f.op->argCount && "stgApply:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
@@ -232,7 +251,7 @@ DEFUN2(stgApply, N, f) {
       // push excess args, they've been shifted left in argv
       pushargs(excess, argv);
       // try again
-      STGJUMP2(stgApply, N, f);
+      STGJUMP2(stgApply, N, f);  //stgApply derefs f
 
       // just right
     } else if (excess == 0) {
@@ -247,11 +266,12 @@ DEFUN2(stgApply, N, f) {
       // excess < 0, too few args
     } else {
       fprintf(stderr, "stgApply1 PAP too few args\n");
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, fvCount + argCount + argc);
+      Obj *pap = stgNewHeapPAP(f.op->infoPtr, argCount + argc, 0);
       // copy fvs and existing args
-      fprintf(stderr, "stgApply PAP inserting %d FVs and args into new PAP\n", 
-	              fvCount + argCount);
-      copyargs(&pap->payload[1], &f.op->payload[1], fvCount + argCount);
+      fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
+      copyargs(&pap->payload[0], &f.op->payload[0], fvCount);
+      fprintf(stderr, "stgApply PAP inserting %d old args into new PAP\n", argCount);
+      copyargs(&pap->payload[fvCount+1], &f.op->payload[fvCount+1], argCount);
       // copy new args to just after
       fprintf(stderr, "stgApply PAP inserting %d new args into new PAP\n", argc);
       pap->argCount = f.op->argCount;
