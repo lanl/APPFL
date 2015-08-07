@@ -20,6 +20,7 @@ module PPrint
   listText,
   brackList,
   prepunctuate,
+  postpunctuate,
   vertList,
   PPrint,
   Unparse,
@@ -48,7 +49,9 @@ hash = char '#'
 doubleColon = text "::"
 lambda = text "\\"
 lcomment d = text "--" <> d
-bcomment d = text "{-" <+> (nest 3 d) $+$ text "-}"
+bcomment d = if isEmpty d
+             then empty
+             else text "{-" <+> (nest 3 d) $+$ text "-}"
 
 boolean :: Bool -> Doc
 boolean = text . show
@@ -59,6 +62,7 @@ braceList = braces . hsep . punctuate comma
 listText = brackList . map text
 
 prepunctuate d = map (d<>)
+postpunctuate d = map (<>d)
 
 vertList lchr rchr sepr maxlen xs =
   let (_,d) = vl 0 xs
@@ -92,3 +96,7 @@ instance (PPrint a, PPrint b) => PPrint (a,b) where
 instance PPrint a => PPrint (Maybe a) where
   pprint (Just a) = text "Just" <+> pprint a
   pprint Nothing = text "Nothing"
+
+
+instance PPrint () where
+  pprint () = empty

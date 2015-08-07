@@ -1,8 +1,7 @@
 {-# LANGUAGE NamedFieldPuns #-}
 
--------------------------- MODIFIED 6.30 - David ---------------------------
-
-import           Driver
+import           Driver ( )
+import           NewDriver
 import           CMap
 import           Data.List
 import           Data.List.Split
@@ -12,6 +11,8 @@ import           System.Environment
 import           System.Exit
 import           System.IO
 import           System.Process
+import           PPrint
+import           Control.Monad (when)
 
 -- build a.out from stg and run it
 _eval :: String -> Bool -> IO()
@@ -47,7 +48,17 @@ stgc arg =
   do
     ifd <- openFile arg ReadMode
     source <- hGetContents ifd
-    let prog = codegener source True
+    let prog = codegener source True False
+    putStrLn prog
+    hClose ifd
+    writeFile "../runtime/userprog.c" prog
+
+mhsc :: String -> IO ()
+mhsc arg =
+  do
+    ifd <- openFile arg ReadMode
+    source <- hGetContents ifd
+    let prog = codegener source True True
     putStrLn prog
     hClose ifd
     writeFile "../runtime/userprog.c" prog
@@ -56,6 +67,7 @@ data Options = Options
     { optVerbose   :: Bool
     , optHelp      :: Bool
     , optDumpParse :: Bool
+    , optDumpSTG   :: Bool
     , optNoPrelude :: Bool
     , optOutput    :: Maybe FilePath
     , optInput     :: Maybe FilePath
@@ -65,6 +77,7 @@ defaultOptions       = Options
     { optVerbose     = False
     , optHelp        = False
     , optDumpParse   = False
+    , optDumpSTG     = False
     , optNoPrelude   = False
     , optInput       = Nothing
     , optOutput      = Just "a.out"
@@ -81,6 +94,9 @@ options =
     , Option ['d'] ["dump-parse"]
         (NoArg (\ opts -> opts { optDumpParse = True }))
         "parser output only"
+    , Option ['s'] ["dump-stg"]
+        (NoArg (\ opts -> opts {optDumpSTG = True}))
+        "dump parsed STG code"
     , Option ['p'] ["no-prelude"]
         (NoArg (\ opts -> opts { optNoPrelude = True }))
         "do not include prelude"
@@ -111,26 +127,32 @@ checkOpts (Options {optHelp, optInput}) =
                    _ -> return ()
 
 compile :: Options -> String -> String -> String -> Bool -> IO ()
-compile  (Options {optVerbose, optDumpParse, optNoPrelude, optOutput, optInput}) preludeDir rtLibDir rtIncDir gcc =
+compile  (Options {optVerbose, optDumpParse, optNoPrelude, optOutput, optInput, optDumpSTG}) preludeDir rtLibDir rtIncDir gcc =
   do
     let input = fromJust optInput
+        minihs = ".mhs" `isSuffixOf` input
+        preludeFN = (preludeDir ++ "/Prelude" ++ (if minihs then ".mhs" else ".stg"))
     ifd <- openFile input ReadMode
     src <- hGetContents ifd
-    pfd <- openFile (preludeDir ++ "/Prelude.stg") ReadMode
+    pfd <- openFile preludeFN ReadMode
     prelude <- hGetContents pfd
     let source = if optNoPrelude then src
                  else prelude ++ src
+        (ts,os) = let (t,o,_) =  mhsSTGer source             
+                 in if minihs then (t,o) else parser source
 
+    when optDumpSTG $
+      writeFile (input ++ ".dump.stg") (show $ unparse ts $+$ unparse os)
+        
     case optDumpParse of
       True  -> do 
-                 let (tycons, objs) = parser source
--------------------------- MODIFIED 6.30 - David ---------------------------
-                 writeFile (input ++ ".dump") ((show $ toCMap $ tycons) ++ (show objs))
---                 writeFile (input ++ ".dump") ((show $ buildConmaps $ tycons) ++ (show objs))
+                 let stgtext = (show $ toCMap $ ts) ++ (show os)                     
+                 writeFile (input ++ ".dump") stgtext
+                 
       False -> do
                  let coutput = input ++ ".c"
                  let flags = " -std=gnu99 -L" ++ rtLibDir ++ " -I" ++ rtIncDir ++ " -lruntime"
-                 writeFile coutput (codegener source optVerbose)
+                 writeFile coutput (codegener source optVerbose minihs)
                  if gcc then system ("gcc " ++ coutput ++ " -o " ++ (fromJust optOutput) ++ flags) else return ExitSuccess
                  return ()
 
@@ -144,5 +166,3 @@ main =
       checkOpts opts
       -- weird path stuff is because cabal puts binary in dist/build/stgc/stgc
       compile opts (binaryDir ++ "/../etc") (binaryDir ++ "/../lib") (binaryDir ++ "/../include")True
-
-    

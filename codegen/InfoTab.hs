@@ -435,8 +435,8 @@ showIT _ = ""
 -- CON and ACon infotabs for typechecker and codegen lookups
 
 
-setCMaps :: ([TyCon], [Obj InfoTab]) -> ([TyCon], [Obj InfoTab])
-setCMaps (tycons, objs) =
+setCMaps :: [TyCon] -> [Obj InfoTab] -> ([TyCon], [Obj InfoTab])
+setCMaps tycons objs =
   let cmap = toCMap tycons
   in (tycons, addCMapToITs cmap objs)
 
@@ -485,6 +485,11 @@ instance SetITs (CMap, (Alt InfoTab)) (Alt InfoTab) where
 
     a@ADef{ae} ->
       a { ae = setITs (cmap,ae) }
+
+
+-- can change this to get infotabs printed in block comments
+instance Unparse InfoTab where
+  unparse it = empty 
 
 instance PPrint InfoTab where
  pprint it = text "Infotab:" <+> itName $+$

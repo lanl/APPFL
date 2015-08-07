@@ -1,5 +1,7 @@
-{-# LANGUAGE NamedFieldPuns  #-}
-{-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE
+NamedFieldPuns,
+RecordWildCards,
+FlexibleInstances #-}
 module AST (
   Var,
   Con,
@@ -14,6 +16,7 @@ module AST (
   primopTab,
   show,
   objListDoc,
+  primArity,
 ) where
 
 import PPrint
@@ -127,7 +130,11 @@ data Primop = Piadd -- Int -> Int -> Int
 
             -- the following are deprecated
             | PintToBool
-              deriving(Eq,Show)
+              deriving(Eq,Show, Ord)
+
+primArity op = case op of
+  Pineg -> 1
+  _ -> 2
 
 -- these are the C names, not STG names
 primopTab = 
@@ -215,68 +222,73 @@ instance Unparse Primop where
 
 instance Unparse a => Unparse (Alt a) where
   unparse ACon{amd, ac, avs, ae} =
-    unparse amd $+$
+    bcomment (unparse amd) $+$
     text ac <+> (hsep $ map text avs) <+> arw <+> unparse ae
 
   unparse ADef{amd, av, ae} =
-    unparse amd $+$
+    bcomment (unparse amd) $+$
     text av <+> arw <+> unparse ae
 
 instance Unparse a => Unparse (Alts a) where
   unparse Alts{altsmd, alts} = -- Note aname field is *not* in use here
-    unparse altsmd $+$
+    bcomment (unparse altsmd) $+$
     (vcat $ punctuate semi $ map unparse alts)
 
 instance Unparse a => Unparse (Expr a) where
   unparse EAtom{emd, ea} =
-    unparse emd $+$
+    bcomment (unparse emd) $+$
     unparse ea
 
   unparse EFCall{emd, ev, eas} =
-    unparse emd $+$
+    bcomment (unparse emd) $+$
     text ev <+> (hsep $ map unparse eas)
 
   unparse EPrimop{emd, eprimop, eas} =
-    unparse emd $+$
+    bcomment (unparse emd) $+$
     unparse eprimop <+> (hsep $ map unparse eas)
 
   unparse ELet{emd, edefs, ee} =
-    unparse emd $+$
+    bcomment (unparse emd) $+$
     text "let" <+> lbrace $+$
     (nest 2 $ vcat $ punctuate semi $ map unparse edefs) <> rbrace $+$
     text "in" <+> unparse ee
 
   unparse ECase{emd, ee, ealts} =
-    unparse emd $+$
+    bcomment (unparse emd) $+$
     text "case" <+> unparse ee <+> text "of" <+> lbrace $+$
     (nest 2 $ unparse ealts) <> rbrace
 
 
 instance Unparse a => Unparse (Obj a) where
   unparse FUN{omd, vs, e, oname} =
-    unparse omd $+$
+    bcomment (unparse omd) $+$
     text oname <+> equals <+> text "FUN" <>
     parens ((hsep $ map text vs) <+> arw $+$ nest ident (unparse e))
     where ident = length vs + (sum $ map length vs) -- aligns expr with arrow
 
   unparse PAP{omd, f, as, oname} =
-    unparse omd $+$
+    bcomment (unparse omd) $+$
     text oname <+> equals <+> text "PAP" <>
     parens (text f <+> (hsep $ map unparse as))
 
   unparse CON{omd, c, as, oname} =
-    unparse omd $+$
+    bcomment (unparse omd) $+$
     text oname <+> equals <+> text "CON" <>
     parens (text c <+> (hsep $ map unparse as))
 
   unparse THUNK{omd, e, oname} =
-    unparse omd $+$
+    bcomment (unparse omd) $+$
     text oname <+> equals <+> text "THUNK" <>
     parens (unparse e)
 
   unparse BLACKHOLE{omd, oname} =
-    unparse omd $+$
+    bcomment (unparse omd) $+$
     text oname <+> equals <+> text "ERROR"
+
+
+instance Unparse a => Unparse [Obj a] where
+  unparse objs = vcat $ postpunctuate semi $ map unparse objs  
+         
 
 
 -- () metadata = empty document

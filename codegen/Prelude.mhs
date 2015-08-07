@@ -1,0 +1,122 @@
+{-# LANGUAGE MagicHash #-}
+
+{- 
+Below his is haskell code that is ignored by the minihaskell frontend
+anything between two "{-#-}" strings at the top level (i.e. not nested
+in comments/strings).
+Technically, anything is legal in that block, but the "{-#-}" string
+cannot be escaped inside by any means.
+Which, incidentally, is why this comment is not inside the block itself.
+This is useful for putting in valid haskell code that will enable the
+minihaskell to function properly when compiled by GHC.
+Note the aliasing of Primitive operations, importing of the "built-in"
+boxed numeric types, and hiding of the Prelude.
+-}
+{-#-}
+import GHC.Prim ((==#), (*#), (+#), (-#), remInt#)
+import GHC.Exts (Int(..), Double(..))
+import Prelude ()
+
+ieq# = (==#)
+imul# = (*#)
+iplus# = (+#)
+isub# = (-#)
+imod# = (remInt#)
+{-#-}
+
+data Unit = Unit
+data List a = Nil | Cons a (List a)
+data Bool = False | True
+data Tupl2 a b = TP2 a b
+data Tupl3 a b c = TP3 a b c
+
+
+-- boxed Int arithmetic
+
+eqInt :: Int -> Int -> Bool
+eqInt (I# a#) (I# b#) = 
+  case ieq# a# b# of
+   0# -> False  
+   i# -> True
+
+mulInt :: Int -> Int -> Int	   
+mulInt (I# a#) (I# b#) =
+  case imul# a# b# of
+   r# -> I# r#
+
+subInt :: Int -> Int -> Int
+subInt (I# a#) (I# b#) =
+  case isub# a# b# of
+   r# -> I# r#
+
+modInt :: Int -> Int -> Int
+modInt (I# a#) (I# b#) =
+  case imod# a# b# of
+   r# -> I# r#
+
+addInt :: Int -> Int -> Int
+addInt (I# a#) (I# b#) =
+  case iplus# a# b# of
+   r# -> I# r#
+
+-- Tuples
+
+snd (TP2 a b) = b
+fst (TP2 a b) = a
+
+
+-- List stuff
+
+head :: List a -> a
+head (Cons a xs) = a
+
+tail :: List a -> List a
+tail (Cons a xs) = xs
+
+length :: List a -> Int
+length xs =
+  let aux xs n = case xs of
+       	       	  Nil -> n
+                  Cons a xs -> aux xs (addInt n 1)
+  in aux xs 0
+
+
+append :: List a -> List a -> List a 
+append xs ys = case xs of
+                Nil -> ys
+                Cons a xs' -> Cons a (append xs' ys)
+
+compose :: (b -> c) -> (a -> b) -> a -> c
+compose f g x = f (g x)
+
+foldr :: (a -> b -> b) -> b -> List a -> b
+foldr f sd xs = case xs of
+                     Nil -> sd
+                     Cons a xs' -> f a (foldr f sd xs')
+
+foldl :: (b -> a -> b) -> b -> List a -> b
+foldl f ac xs = case xs of
+                     Nil -> ac
+                     Cons a xs' -> foldl f (f ac a) xs'
+
+map :: (a -> b) -> List a -> List b
+map f = foldr (compose Cons f) Nil
+
+
+take :: Int -> List a -> List a
+take 0 xs = Nil
+take n Nil = Nil
+take n (Cons x xs) = Cons x (take (subInt n 1) xs)
+
+drop :: Int -> List a -> List a
+drop 0 xs = xs
+drop n Nil = Nil
+drop n (Cons x xs) = drop (subInt n 1) xs
+
+
+filter :: (a -> Bool) -> List a -> List a
+filter f Nil = Nil
+filter f (Cons x xs) = case f x of
+                        True -> Cons x (filter f xs)
+                        False -> filter f xs
+

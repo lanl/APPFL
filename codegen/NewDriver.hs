@@ -1,4 +1,4 @@
-module Driver (
+module NewDriver (
   tokenizer,
   parser,
   renamer,
@@ -12,14 +12,27 @@ module Driver (
   tctest,
   tester,
   printObjsVerbose,
-  codegener
+  codegener,
+  mhsTokenizer,
+  mhsParser,
+  mhsPup,
+  mhsSigSetter,
+  mhsRenamer,
+  mhsGenFunctioner,
+  mhsExpSimpler,
+  mhsPatSimpler,
+  mhsNumBoxer,
+  mhsSTGer
 ) where
 
-import           NewAST
-import           NewParser
-import           Transform
-import           NewTokenizer
+import qualified MHS.AST
+import qualified MHS.Parser
+import qualified MHS.Transform
+import qualified MHS.Tokenizer          
+import qualified MHS.ToSTG
 
+import           Tokenizer
+import           Parser
 import           Rename
 import           ADT
 import           AST
@@ -31,6 +44,7 @@ import           PPrint
 import           InfoTab
 import           HeapObj
 import           SetFVs
+import           BU
 import           HMStg
 import           Data.List
 import           System.IO
@@ -73,6 +87,71 @@ stgRTSGlobals = [ "stg_case_not_exhaustive",
                 ] ++ map fst primopTab -- from AST.hs
 
 
+-- Tokenizes input, stripping comments and handling the layout rule
+-- (roughly)
+mhsTokenizer :: String -> [MHS.Tokenizer.Token]
+mhsTokenizer = MHS.Tokenizer.tokenize
+
+-- parse tokenized input
+-- checks for valid syntax
+mhsParser :: String -> [MHS.AST.Defn]
+mhsParser inp = let toks = mhsTokenizer inp
+             in MHS.AST.intCon :
+                MHS.AST.dblCon : 
+                MHS.Parser.parse toks 
+
+
+-- parse unparse parse
+mhsPup :: String -> [MHS.AST.Defn]
+mhsPup = mhsParser . show . unparse . mhsParser
+
+
+-- Associate type signatures with objects
+mhsSigSetter :: String -> [MHS.AST.Defn]
+mhsSigSetter inp = let defs = mhsParser inp
+                    in MHS.Transform.setTypeSignatures defs
+
+
+
+-- Rename all user objects uniquely
+mhsRenamer :: String -> [MHS.AST.Defn]
+mhsRenamer inp = let defs = mhsSigSetter inp
+                 in MHS.Transform.renameIDs defs
+
+
+-- Generate functions in place of Constructors and Primops
+mhsGenFunctioner :: String -> [MHS.AST.Defn]
+mhsGenFunctioner inp = let defs = mhsRenamer inp
+                       in MHS.Transform.genFunctions defs
+                   
+
+-- simplify expression application with let bindings
+-- All application must be atomic after this
+mhsExpSimpler :: String -> [MHS.AST.Defn]
+mhsExpSimpler inp = let defs = mhsGenFunctioner inp
+                   in MHS.Transform.simplifyExps defs
+
+
+-- Apply built-in Int constructor to all literal Ints in
+-- expressions and patterns
+mhsNumBoxer :: String -> [MHS.AST.Defn]
+mhsNumBoxer inp = let defs = mhsExpSimpler inp
+                  in MHS.Transform.boxNumLiterals defs
+
+-- Make all pattern matching in functions and case expressions
+-- simple (non-nested) case expressions.
+mhsPatSimpler :: String -> [MHS.AST.Defn]
+mhsPatSimpler inp = let defs = mhsNumBoxer inp
+                        in MHS.Transform.simplifyPats defs
+
+mhsSTGer inp = let defs = mhsPatSimpler inp
+               in MHS.ToSTG.makeSTG defs
+
+mhsPupSTG inp = let (ts, os, as) = mhsSTGer inp
+                    code = show (unparse ts $+$ unparse os)
+                in parser code
+
+
 -- strip comments, tokenize input
 -- includes basic checking for valid characters and character strings
 tokenizer :: String -> [Token]
@@ -81,47 +160,18 @@ tokenizer = tokenize
 
 -- parse tokenized input
 -- checks for valid syntax
-parser :: String -> [Defn]
+parser :: String -> ([TyCon], [Obj ()])
 parser = parse . tokenizer
 
 
-testparser = tester parser (show.unparse)
+-- set boxity in Monotypes of TyCon DataCons
+boxer :: String -> ([TyCon], [Obj ()])
+boxer inp = let (tycons, objs) = parser inp
+            in (boxMTypes tycons, objs)
 
 
-typeSigSetter inp = let defs = parser inp
-                    in setTypeSignatures defs
-
-testSigSetter = tester typeSigSetter (show.pprint)
-
-
-renamer inp = let defs = typeSigSetter inp
-               in renameIDs defs
-
-testRenamer = tester renamer (show.unparse)
-
-
-genConFunctioner inp = let defs = renamer inp
-                       in genConFunctions defs
-
-testGenConFunctioner = tester genConFunctioner (show.unparse)
-
-
-desugarApser inp = let defs = genConFunctioner inp
-                   in desugarExpAps defs
-
-testDesugarApser = tester desugarApser (show.unparse)                      
-
-numBoxer inp = let defs = desugarApser inp
-               in boxNumLiterals defs
-
-testNumBoxer = tester numBoxer (show.unparse)                  
-
-boxer = undefined
-
-
-
-renamer' :: String -> ([TyCon], [Obj ()])
-renamer' inp = let (tycons, objs) = boxer inp
+renamer :: String -> ([TyCon], [Obj ()])
+renamer inp = let (tycons, objs) = boxer inp
               in (tycons, renameObjs objs)
 
 
@@ -132,7 +182,7 @@ renamer' inp = let (tycons, objs) = boxer inp
 -- might be worth starting to pass CMap around starting here
 -- (currently generated again when setting CMaps in InfoTabs)
 defaultcaser :: String -> ([TyCon], [Obj ()])
-defaultcaser inp = let (tycons, objs) = renamer' inp
+defaultcaser inp = let (tycons, objs) = renamer inp
                  in (tycons, exhaustCases (toCMap tycons) objs)
 
 freevarer :: String -> ([TyCon], [Obj ([Var],[Var])])
@@ -145,28 +195,31 @@ infotaber inp = let (tycons, objs) = freevarer inp
 
 conmaper :: String -> ([TyCon], [Obj InfoTab])
 conmaper inp = let (tycons, objs) = infotaber inp
-               in setCMaps (tycons, objs)
+               in setCMaps tycons objs
 
+typechecker :: String -> ([TyCon], [Obj InfoTab])
 typechecker inp = let (tycons, objs) = conmaper inp
                   in (tycons, hmstg objs)
 
-
+knowncaller :: String -> ([TyCon], [Obj InfoTab])
 knowncaller inp  = let (tycons, objs) = typechecker inp
                    in (tycons, propKnownCalls objs)
 
+heapchecker :: String -> ([TyCon], [Obj InfoTab])
 heapchecker inp = let (tycons, objs) = knowncaller inp
                   in (tycons, setHeapAllocs objs)
 
-               
+printObjsVerbose :: ([TyCon], [Obj InfoTab]) -> IO ()
 printObjsVerbose (tycons, objs) = print $ objListDoc objs
 
 
-
+tester :: (String -> a) -> (a -> String) -> FilePath -> IO ()
 tester tfun sfun infile =
  do
    ihandle <- openFile infile ReadMode
    _tester tfun sfun ihandle stdout
-  
+
+_tester :: (String -> a) -> (a -> String) -> Handle -> Handle -> IO ()
 _tester testfun showfun ifd ofd =
   do
     inp <- hGetContents ifd
@@ -184,11 +237,27 @@ tctest arg =
     hmstgdebug objs
 
 
-codegener :: String -> Bool -> String
-codegener inp v = let (tycons, objs) =  heapchecker inp
-                      infotab = showITs objs
-                      (shoForward, shoDef) = showSHOs objs
-                      (funForwards, funDefs) = cgObjs objs stgRTSGlobals
+mhsCheckAll inp = let (ts0,os0,assums) = mhsSTGer inp
+                      os1 = setITs $
+                            setFVsObjs stgRTSGlobals $
+                            exhaustCases (toCMap ts0) os0
+                      (tsF, os2) = setCMaps ts0 os1
+                      osF = setHeapAllocs $
+                            propKnownCalls $
+                            hmstgAssums os2 assums
+                  in (tsF, osF)
+
+
+codegener :: String -> Bool -> Bool -> String
+codegener inp v mhs = let (tycons, objs) =
+                            if mhs
+                            then mhsCheckAll inp
+                            else heapchecker inp
+                                 
+                          infotab = showITs objs
+                          (shoForward, shoDef) = showSHOs objs
+                          (funForwards, funDefs) = cgObjs objs stgRTSGlobals
+
                  in header ++
                     intercalate "\n" funForwards ++ "\n" ++
                     infotab ++ "\n" ++

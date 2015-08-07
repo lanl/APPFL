@@ -108,7 +108,7 @@ infotaber inp = let (tycons, objs) = freevarer inp
 
 conmaper :: String -> ([TyCon], [Obj InfoTab])
 conmaper inp = let (tycons, objs) = infotaber inp
-               in setCMaps (tycons, objs)
+               in setCMaps tycons objs
 
 typechecker inp = let (tycons, objs) = conmaper inp
                   in (tycons, hmstg objs)

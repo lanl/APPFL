@@ -31,6 +31,7 @@ data Symbol = SymArrow
               deriving (Eq,Show)
               
 data Token = BIInt Int
+--           | BIBool Bool  -- true#, false# live here for now
            | BIDouble Double
            | Ident String
            | KW Keyword
@@ -64,7 +65,11 @@ bigtab =
      ("data",      KW KWdata),
      ("unboxed",   KW KWunboxed),
 
+--     ("true_h",    BIBool True),
+--     ("false_h",   BIBool False),
+     
      ("Int#",      BIT UBInt),
+     ("Bool#",     BIT UBBool),
      ("Double#",   BIT UBDouble)
     ]
              
