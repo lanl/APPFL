@@ -234,6 +234,21 @@ stgApplyGeneric env f as =
     intercalate ", " (cgv env f : map (cga env) as) ++ 
     ");\n"
 
+{-
+-- this is one place where strictness is variable
+stgApplyGeneric2 env f as = 
+    let pnstring = [ if isBoxed $ typ $ emd a then 'P' else 'N' | a <- as ]
+    "// " ++ f ++ " " ++ showas as ++ "\n" ++
+    
+    "{ Obj *callCont = stgAllocCallCont2(&it_stgCallCont, " ++ (show $ length as) ++ ");\n" ++
+       concat ["  callCont->payload[" ++ show i ++ "] = " ++ cga a ++ ";\n" 
+               | (i,a) <- zip [1..] as] ++
+    "  STGEVAL(" ++ cgv env f ++ ")"
+    "STGAPPLY" ++ show (length as) ++ "(" ++
+    intercalate ", " (cgv env f : map (cga env) as) ++ 
+    ");\n"
+-}
+
 -- for now
 stgApplyDirect env (EFCall it f as) = 
     "// " ++ f ++ " " ++ showas (map ea as) ++ "\n" ++
@@ -259,7 +274,8 @@ cge env e@(EFCall it f eas) =
             case (knownCall it) of 
               Nothing -> stgApplyGeneric env f as
               Just kit -> if arity kit == length as
-                          then stgApplyDirect env e
+                          -- then stgApplyDirect env e
+                          then stgApplyGeneric env f as
                           else stgApplyGeneric env f as
     in return (inline, [])
 

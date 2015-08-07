@@ -13,7 +13,7 @@
 
 DEFUN0(fun_stgShowResultCont) {
   fprintf(stderr,"done!\n");
-  stgPopCont();  // clean up
+  stgPopCont();  // clean up--normally the job of the returnee
   fprintf(stderr,"The answer is\n");
   showStgVal(stgCurVal);  
   RETURN0();
