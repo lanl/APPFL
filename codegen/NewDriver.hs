@@ -22,7 +22,9 @@ module NewDriver (
   mhsExpSimpler,
   mhsPatSimpler,
   mhsNumBoxer,
-  mhsSTGer
+  mhsSTGer,
+  mhsCheckAll
+  
 ) where
 
 import qualified MHS.AST
@@ -49,14 +51,15 @@ import           HMStg
 import           Data.List
 import           System.IO
 
+
 header :: String
 header = "#include \"stgc.h\"\n"
-        
+
 footer :: Bool -> String
 footer v = 
-  let top = "\nDEFUN0(start) {\n" ++
+  let top = "\n\nDEFUN0(start) {\n" ++
             "  registerSHOs();\n" ++
-            "  stgPushCont(showResultCont);\n" ++
+            "  Obj *showResultCont = stgAllocCallCont2(&it_stgShowResultCont, 0);\n" ++
             "  STGEVAL(((PtrOrLiteral){.argType = HEAPOBJ, .op = &sho_main}));\n" ++
             "  STGRETURN0();\n" ++
             "  ENDFUN;\n" ++
@@ -78,19 +81,13 @@ footer v =
 
 -- need a better way, like reading from a .h file
 stgRTSGlobals :: [String]
-stgRTSGlobals = [ "stg_case_not_exhaustive",
-                  "true",  -- sho_True
-                  "false",  -- sho_False
-
-                  "True#",  
-                  "False#" 
-                ] ++ map fst primopTab -- from AST.hs
-
+stgRTSGlobals = [ "stg_case_not_exhaustive" ]
+                ++ map fst primopTab -- from AST.hs
 
 -- Tokenizes input, stripping comments and handling the layout rule
 -- (roughly)
 mhsTokenizer :: String -> [MHS.Tokenizer.Token]
-mhsTokenizer = MHS.Tokenizer.tokenize
+mhsTokenizer inp = MHS.Tokenizer.tokenize inp
 
 -- parse tokenized input
 -- checks for valid syntax
@@ -209,8 +206,23 @@ heapchecker :: String -> ([TyCon], [Obj InfoTab])
 heapchecker inp = let (tycons, objs) = knowncaller inp
                   in (tycons, setHeapAllocs objs)
 
+
+-- use MHS front end, pass through all MHS and STG transforms
+-- and checks
+mhsCheckAll :: String -> ([TyCon],[Obj InfoTab])
+mhsCheckAll inp = let (ts0,os0,assums) = mhsSTGer inp
+                      os1 = setITs $
+                            setFVsObjs stgRTSGlobals $
+                            exhaustCases (toCMap ts0) os0
+                      (tsF, os2) = setCMaps ts0 os1
+                      osF = setHeapAllocs $
+                            propKnownCalls $
+                            hmstgAssums os2 assums
+                  in (tsF, osF)
+
 printObjsVerbose :: ([TyCon], [Obj InfoTab]) -> IO ()
 printObjsVerbose (tycons, objs) = print $ objListDoc objs
+
 
 
 tester :: (String -> a) -> (a -> String) -> FilePath -> IO ()
@@ -228,6 +240,16 @@ _tester testfun showfun ifd ofd =
     hPutStrLn ofd out
     return ()
 
+mhsTCTest filepath =
+  do
+    src <- readFile filepath
+    let (ts,os,as) = mhsSTGer src
+        os1 = setITs $
+              setFVsObjs stgRTSGlobals $
+              exhaustCases (toCMap ts) os
+        (tsF, os2) = setCMaps ts os1
+    hmstgAssumsdebug os2 as
+
 
 tctest arg =
   do
@@ -236,16 +258,6 @@ tctest arg =
     let (tycons, objs) = conmaper source
     hmstgdebug objs
 
-
-mhsCheckAll inp = let (ts0,os0,assums) = mhsSTGer inp
-                      os1 = setITs $
-                            setFVsObjs stgRTSGlobals $
-                            exhaustCases (toCMap ts0) os0
-                      (tsF, os2) = setCMaps ts0 os1
-                      osF = setHeapAllocs $
-                            propKnownCalls $
-                            hmstgAssums os2 assums
-                  in (tsF, osF)
 
 
 codegener :: String -> Bool -> Bool -> String
@@ -266,3 +278,14 @@ codegener inp v mhs = let (tycons, objs) =
                     intercalate "\n\n" funDefs ++
                     footer v
 
+
+-- parse minihaskell in a file, add a block comment at the end
+-- showing the unparsed STG code
+addSTGComment :: FilePath -> IO ()
+addSTGComment filename =
+  do
+    prld <- readFile "Prelude.mhs"
+    src <- readFile filename
+    let (ts,os) = mhsCheckAll (src++prld)
+        stg = show $ bcomment (unparse ts $+$ unparse os)
+    (length src) `seq` (writeFile filename (src ++ stg))

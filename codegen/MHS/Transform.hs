@@ -37,6 +37,14 @@ This also sets boxity (where applicable) in those types based on the data
 definitions and builtin Int# and Double#
 ---------------------------------------------------------------------}
 
+
+-- Use the TDefns built from type signatures in a .mhs program and
+-- associate them with the objects they correspond to
+-- Currently there is no checking for signatures without accompanying
+-- bindings.
+-- This also sets the "boxity" of the types in both type signatures
+-- and in constructors (Constrs) as defined by the datatype
+-- declarations in the list of Defns
 setTypeSignatures :: [Defn] -> [Defn]
 setTypeSignatures defs = 
   let defs'= map (setBoxity cmap) defs
@@ -45,6 +53,10 @@ setTypeSignatures defs =
       tmap = buildTMap ts
   in ds ++ ts ++  map (setTypeSigs tmap) os
 
+
+-- set the boxity of Monotypes in Constrs and TDefns
+-- given a map from Con to datatype-defining MCons
+setBoxity :: Map.Map Con Monotype -> Defn -> Defn
 setBoxity cmap def =
   case def of
    ODefn{} -> def
@@ -132,7 +144,9 @@ generating variables in other transforms easier.
 -------------------------------------------------------------------------}
 
 renameIDs defs =
-  let (defs', _) = runState (rename Map.empty defs) Map.empty
+  let rmap = Map.singleton "main" "main"
+      nmap = Map.singleton "main" 0
+      (defs', _) = runState (rename rmap defs) nmap
   in defs'
 
 
@@ -709,7 +723,7 @@ rmHidden' = foldr (\(ps1,_) pps ->
 
 
 testEQs =
-  [([Match "Cons" [Default "a", Match "Nil" []], Match "X" []], EAt $ AtmVar "a"),
+  [([Match "Cons" [Default "a", Match "I#" [Match "1#"[]]], Match "X" []], EAt $ AtmVar "a"),
    ([Match "Cons" [Default "a", Match "Cons" [Default "b", Default "c"]], Default "x"], EAt $ AtmVar "b"),
    ([Default "a", Match "Cons" [Default "b", Default "c"]], EAt $ AtmVar "ABBA rules"),
    ([Match "X" [], Default "xx"], EAt $ AtmVar "xx"),
@@ -718,6 +732,14 @@ testEQs =
    ([Default "x", Match "Nil" []], EAt $ AtmVar "whee"),
    ([Default "x", Default "y"], EAt $ AtmVar "whoo")]
 
+oddFn = ODefn "odd"
+         (EFn [Default "x"]
+          (ECs (EAt $ AtmVar "x")
+           [(Match "I#" [Match "1#" []], EAt $ AtmVar "true"),
+            (Default "x", EAt $ AtmVar "false")]))
+         Nothing
+         
+
 testFuns =
   let efns = map (uncurry EFn) testEQs
       fns = map (\x -> ODefn "fun" x Nothing) efns
@@ -725,7 +747,7 @@ testFuns =
               [DCon "X" [] ["X","Nil","Cons"],
                DCon "Nil" [] ["X","Nil","Cons"],
                DCon "Cons" [MVar "a", MCon True "List" [MVar "a"]] ["X","Nil","Cons"]]
-  in lcon : fns
+  in intCon : lcon : oddFn : fns
      
 
 --Match "Cons" [Default "b", Default "c"]
@@ -793,7 +815,7 @@ match cons (v:vs) eqs dflt =
             -- checking case exhaustion
             let cls' = exhaustClauses cons cls lst
                                    
-            return $ supercompact [] $  ECs (EAt $ AtmVar v) $ cls'
+            return $ supercompact [] $ ECs (EAt $ AtmVar v) $ cls'
 
       -- Mixture rule:
       -- There are both constructor and variable matches in list
@@ -897,8 +919,8 @@ instance DSGPats [Defn] where
     in
      do
        newFns <- mapM tripFun trips
-       newOs <- mapM (dsgpats cons) os'
-       return (ts ++ ds ++ newFns ++ newOs)
+       newOs <- mapM (dsgpats cons) (newFns ++ os')
+       return (ts ++ ds ++ newOs)
        
 
 instance DSGPats Defn where

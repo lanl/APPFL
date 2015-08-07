@@ -14,7 +14,7 @@ import AST
 import PPrint
 import qualified Data.List as List
 import qualified Data.Set as Set
-
+import Debug.Trace
 -- *****************************************************
 
 dropkey k = filter (\(k',_)->k==k')
@@ -85,7 +85,6 @@ instance STGToList (Obj (Set.Set Var, Set.Set Var)) (Obj ([Var],[Var])) where
 
 instance STGToList (Expr (Set.Set Var, Set.Set Var)) (Expr ([Var],[Var])) where
     stgToList EAtom{..} = EAtom{emd = p2p emd, ..}
--- MODIFIED 7.9 - EFCall, EPrimop changes    
     stgToList EFCall{..} = EFCall{emd = p2p emd, eas = map stgToList eas, ..}
     stgToList EPrimop{..} = EPrimop{emd = p2p emd, eas = map stgToList eas, ..}
     stgToList ELet{..} = ELet{emd = p2p emd, edefs = map stgToList edefs, ee = stgToList ee, ..}

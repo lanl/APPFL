@@ -14,6 +14,7 @@ module HMStg (
 ) where
 
 import ADT
+import PPrint
 import CMap
 import AST
 import InfoTab
@@ -65,7 +66,10 @@ hmstgAssumsdebug os0 assums =
                                                       Set.Set Constraint,
                                                       [Obj InfoTab])
         (subst, _) = runState (solve cs) i1
-    in putStrLn $ showObjs (co Set.empty $ backSub subst os2)
+    in
+     do
+--       putStrLn $ show $ vcat $ map (text . show) $ Set.toList cs
+       putStrLn $ showObjs (co Set.empty $ backSub subst os2)
 ---}
 {-
 hmstgdebug os0 = 
@@ -344,15 +348,7 @@ buNest mtvs os assums =
                       (as', ncs) = buIn mtvs xts as
                   in (Set.union asdefs as',
                       csdefs `Set.union` cs `Set.union` ncs,
-                      defs'++ds)
-
-replaceKnowns assums as =
-  let as' = Set.map (\(x,b) -> maybe (x,b) id $ findit x) as
-      findit x = case Set.toList $ Set.filter (\(y,_) -> y == x) assums of
-                  x:xs -> Just x
-                  [] -> Nothing
-  in as'
-      
+                      defs'++ds)      
 
 
 

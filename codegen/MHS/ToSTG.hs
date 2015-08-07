@@ -40,7 +40,7 @@ insertAS (v,m) =
   do
     mtyp <- newMtyp m Map.empty
     (i,ass) <- get
-    let ass' = Set.insert (v,m) ass
+    let ass' = Set.insert (v,mtyp) ass
     put (i,ass')
 
 monoVar :: State (Int, Assumptions) Var
@@ -99,9 +99,8 @@ instance Assume Defn where
        Nothing -> assume oexp
        Just m ->
          do
-           m' <- newMtyp m Map.empty
            assume oexp
-           insertAS (bnd,m')
+           insertAS (bnd,m)
                
     _ -> error $ unlines
          ["ToSTG.stgAssum given non ODefn arg:",

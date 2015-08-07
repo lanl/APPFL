@@ -1,5 +1,4 @@
 {-# LANGUAGE NamedFieldPuns #-}
-
 {-
 This file contains all things related to parsing STG according to the following grammar:
 
@@ -89,7 +88,11 @@ import PPrint
 
 
 parse :: [Token] -> [Defn]
-parse =  fst . head . prog
+parse toks = case prog toks of
+  [] -> error $ unlines
+        ["parse error, not sure where...",
+         show $ pprint toks]
+  x:xs -> fst x
 
 prog :: Parser Token [Defn]
 prog = inbracesP tdecls
