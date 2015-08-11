@@ -169,7 +169,7 @@ unfoldr m = (m,[])
 -- and types sorted pointer first
 permArgs vs ft =
     let (rt, ats) = unfoldr ft
-    in part (reverse vs) (reverse ats)
+    in part vs ats
         where
           part [] [] = (([],[]),([],[]))
           part (v:vs) (t:ts) =
@@ -184,15 +184,16 @@ cgo env o@(FUN it vs e name) =
       let env' = zip (map fst $ fvs it) (map FV [0..]) ++ 
                  zip vs (repeat FP) ++
                  env
+          vts@((bvs,uvs),(bts,uts)) = permArgs vs $ typ it
       (inline, funcs) <- cge env' e
       let forward = "FnPtr fun_" ++ name ++ "();"
-          vts@((bvs,uvs),(bts,uts)) = permArgs vs $ typ it
           func =
             "// " ++ show (ctyp it) ++ "\n" ++
             "// " ++ show vts ++ "\n" ++
             "DEFUN" ++ show (length vs + 1) ++ "(fun_" ++ 
             name ++ ", self, " ++
-            intercalate ", " vs ++
+--            intercalate ", " vs ++
+            intercalate ", " (bvs ++ uvs) ++
             ") {\n" ++
             "  fprintf(stderr, \"" ++ name ++ " here\\n\");\n" ++
                indent 2 inline ++
@@ -267,7 +268,7 @@ cge env e@(EAtom it a) =
     let inline = "stgCurVal = " ++ cga env a ++ "; " ++ "// " ++ showa a ++ "\n" ++
                  (if isBoxede e then "STGEVAL(stgCurVal);\n" else "")
     in return (inline, [])
-
+{-
 cge env e@(EFCall it f eas) = 
     let as = map ea eas
         inline = 
@@ -277,6 +278,22 @@ cge env e@(EFCall it f eas) =
                           -- then stgApplyDirect env e
                           then stgApplyGeneric env f as
                           else stgApplyGeneric env f as
+    in return (inline, [])
+-}
+
+    
+
+cge env e@(EFCall it f eas) = 
+    let as = map ea eas
+        pnstring = [ if b then 'P' else 'N' | b <- map (isBoxed . typ . emd) eas ]
+        inline = 
+            "// " ++ f ++ " " ++ showas as ++ "\n" ++
+--            "STGAPPLY" ++ show (length as) ++ "(" ++
+            "STGAPPLY" ++ pnstring ++ "(" ++
+            intercalate ", " (cgv env f : map (cga env) as) ++ 
+            ");\n"
+
+
     in return (inline, [])
 
 cge env (EPrimop it op eas) =
@@ -417,7 +434,7 @@ cgalt env switch scrutName (ADef it v e) =
 
 
 -- ****************************************************************
--- buildHeapObj is only invoked by 'let' so TLDs not built
+-- buildHeapObj is only invoked by ELet so TLDs not built
 
 --  UPDCONT, 
 --  CASECONT, 
@@ -439,6 +456,11 @@ bho env (PAP it f as name) =
     (maxPayload, loadPayloadFVs env (map fst $ fvs it) name ++ 
                  loadPayloadAtoms env as (length $ fvs it) name)
 
+-- CON is special in that the payload contains not just FVs but literals
+-- as well, and we need their types.  Three ways this could be done:
+-- 0.  The right way would be to have Atom be typed (major TODO)
+-- 1.  Use HMStg.luTCon using cmap it, typ it, and c, subsequent gyrations
+-- 2.  Use fvs type information
 bho env (CON it c as name) = 
     let ps = [name ++ "->payload[" ++ show i ++ "] = " ++ 
                        cga env a ++ "; // " ++ showa a ++ "\n"

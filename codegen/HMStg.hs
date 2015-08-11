@@ -398,7 +398,6 @@ butAlt t0 mtvs e@ACon{amd,ac,avs,ae} =
 -- substituted for the arguments of the type constructor corresponding to
 -- the data constructor, return the monotype arguments of the data constructor
 -- as a result of the substitution
-
 instantiateDataConAt c cmap subms =
     let TyCon _ tcon tvs dcs = luTCon c cmap
         -- get data constructor definition C [Monotype]

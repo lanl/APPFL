@@ -21,10 +21,10 @@ $(LIB) : $(OBJECTS)
 	ar -rcs $(LIB) $(OBJECTS)
 
 mymain: userprog.o $(LIB) stgc.h
-	$(CC) $(LDFLAGS) $(OBJECTS) userprog.o -o $@ -L. -lruntime
+	$(CC) $(LDFLAGS) $(OBJECTS) stgApply.o userprog.o -o $@ -L. -lruntime
 
 %.o: %.c $(HEADERS)
 	$(CC) $(CFLAGS) $< -o $@
 
 clean:
-	rm -f *.o $(ALL)
+	rm -f $(OBJECTS) userprog.o userprog $(ALL)

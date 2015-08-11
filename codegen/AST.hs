@@ -88,11 +88,11 @@ data Obj a = FUN   {omd :: a, vs :: [Var],   e :: Expr a , oname :: String}
 
 -- 7.9 EFCalls (and EPrimops, for consistency) changed to accept Expr args.
 -- Parser (and other traversals) should enforce use of *only* EAtom as args
-data Expr a = EAtom   {emd :: a,                    ea :: Atom} --,      ename::String}
-            | EFCall  {emd :: a, ev :: Var,         eas :: [Expr a]} --,   ename::String}
-            | EPrimop {emd :: a, eprimop :: Primop, eas :: [Expr a]} --,   ename::String}
-            | ELet    {emd :: a, edefs :: [Obj a],  ee :: Expr a} --,    ename::String}
-            | ECase   {emd :: a, ee :: Expr a,      ealts :: Alts a} --, ename::String}
+data Expr a = EAtom   {emd :: a,                    ea :: Atom}
+            | EFCall  {emd :: a, ev :: Var,         eas :: [Expr a]}
+            | EPrimop {emd :: a, eprimop :: Primop, eas :: [Expr a]}
+            | ELet    {emd :: a, edefs :: [Obj a],  ee :: Expr a}
+            | ECase   {emd :: a, ee :: Expr a,      ealts :: Alts a}
               deriving(Eq,Show)
 
 data Alts a = Alts {altsmd :: a, alts :: [Alt a], aname :: String}
