@@ -83,12 +83,13 @@ nameObj (THUNK md e name) tt =
 
 nameObj (PAP md f as name) tt =
     let f' = nameVar f tt
-        as' = nameAtoms as tt
-    in
+    in do
+      as' <- mapM ((flip nameExpr) tt) as
       return (PAP md f' as' name)
 
 nameObj (CON md c as name) tt =
-    return (CON md c (nameAtoms as tt) name)
+    do as' <- mapM ((flip nameExpr) tt) as
+       return (CON md c as' name)
 
 nameObj (BLACKHOLE md name) tt = 
     return (BLACKHOLE md name)

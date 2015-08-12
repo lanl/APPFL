@@ -291,7 +291,7 @@ papP = objPat "PAP" $
        tokcutP "Expected a variable followed by one or more atoms to form a PAP"
        varNameP >>> \f ->
        many' atomP >>> \atoms ->
-                        accept $ PAP () f atoms 
+                        accept $ PAP () f (map (\a->EAtom () a) atoms)
 
 
 -- parse a constructor application,
@@ -301,7 +301,7 @@ conP = objPat "CON" $
        tokcutP "Expected a valid constructor name"
        conNameP >>> \nm ->
        many' atomP >>> \atoms ->
-                        accept $ CON () nm atoms
+                        accept $ CON () nm (map (\a->EAtom () a) atoms)
 
 
 -- parse a thunk object,

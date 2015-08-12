@@ -14,6 +14,7 @@ module AST (
   primopTab,
   show,
   objListDoc,
+  projectAtoms
 ) where
 
 import PPrint
@@ -79,11 +80,11 @@ instance Show Atom where
     show (LitD d) = show d ++ "(d)"
     show (LitC c) = [c]
 
-data Obj a = FUN   {omd :: a, vs :: [Var],   e :: Expr a , oname :: String}
-           | PAP   {omd :: a, f  :: Var,     as :: [Atom], oname :: String}
-           | CON   {omd :: a, c  :: Con,     as :: [Atom], oname :: String}
-           | THUNK {omd :: a, e  :: Expr a               , oname :: String}
-           | BLACKHOLE {omd :: a                         , oname :: String}
+data Obj a = FUN   {omd :: a, vs :: [Var],   e :: Expr a   , oname :: String}
+           | PAP   {omd :: a, f  :: Var,     as :: [Expr a], oname :: String}
+           | CON   {omd :: a, c  :: Con,     as :: [Expr a], oname :: String}
+           | THUNK {omd :: a, e  :: Expr a                 , oname :: String}
+           | BLACKHOLE {omd :: a                           , oname :: String}
              deriving(Eq,Show)
 
 -- 7.9 EFCalls (and EPrimops, for consistency) changed to accept Expr args.
@@ -101,6 +102,10 @@ data Alts a = Alts {altsmd :: a, alts :: [Alt a], aname :: String}
 data Alt a = ACon {amd :: a, ac :: Con, avs :: [Var], ae :: Expr a}
            | ADef {amd :: a,            av :: Var,    ae :: Expr a}
              deriving(Eq,Show)
+
+projectAtoms [] = []
+projectAtoms (EAtom{ea}:as) = ea:projectAtoms as
+projectAtoms (a:as) = error $ "InfoTab.projectAtoms: non-EAtom"
 
 -- when calculating free variables we need an enclosing environment that
 -- includes the known primops.  This will allow proper scoping.  As such

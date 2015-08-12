@@ -454,7 +454,7 @@ bho env (FUN it vs e name) =
 -- TODO: the size here should be based on the FUN rather than being maxPayload
 bho env (PAP it f as name) =
     (maxPayload, loadPayloadFVs env (map fst $ fvs it) name ++ 
-                 loadPayloadAtoms env as (length $ fvs it) name)
+                 loadPayloadAtoms env (projectAtoms as) (length $ fvs it) name)
 
 -- CON is special in that the payload contains not just FVs but literals
 -- as well, and we need their types.  Three ways this could be done:
@@ -464,7 +464,7 @@ bho env (PAP it f as name) =
 bho env (CON it c as name) = 
     let ps = [name ++ "->payload[" ++ show i ++ "] = " ++ 
                        cga env a ++ "; // " ++ showa a ++ "\n"
-                       | (i,a) <- indexFrom 0 as ]
+                       | (i,a) <- indexFrom 0 (projectAtoms as) ]
     in (length ps, concat ps)
 
 bho env (THUNK it e name) =
