@@ -9,18 +9,15 @@
 
 const bool DEBUG = false;
 
-// fraction of total heap used before gc runs.
-const float gcThreshold=0.0;
-
 void *toPtr=NULL, *fromPtr=NULL;
 void *scanPtr=NULL, *freePtr=NULL;
 
 // wrapper functions for possible interface changes
 static inline size_t countFVs(Obj *p) { return p->infoPtr->fvCount; }
-static inline size_t startPAPFVs(Obj *p) { return 1; }
-static inline size_t endPAPFVs(Obj *p) { return countFVs(p) + 1; }
+static inline size_t startPAPFVs(Obj *p) { return 0; }
+static inline size_t endPAPFVs(Obj *p) { return countFVs(p); }
 static inline size_t startPAPargs(Obj *p) { return countFVs(p) + 1; }
-static inline size_t endPAPargs(Obj *p) { return p->payload[0].i + 1; }
+static inline size_t endPAPargs(Obj *p) { return  startPAPargs(p) + p->payload[countFVs(p)].i; }
 static inline size_t countCONargs(Obj *p) { return p->infoPtr->conFields.arity; }
 static inline size_t startCallargs(Obj *p) { return 1; }
 static inline size_t endCallargs(Obj *p) { return p->payload[0].i + 1; }
@@ -167,9 +164,6 @@ void processCont(Obj *p) {
 void gc(void) {
 
   size_t before = stgHP-stgHeap;
-  if(before <= gcThreshold*stgHeapSize) {
-    return;
-  }
 
   if (DEBUG) {
     fprintf(stderr, "old heap\n");
