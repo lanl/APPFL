@@ -33,7 +33,8 @@ import           Data.List
 import           System.IO
 
 header :: String
-header = "#include \"stgc.h\"\n"
+header = "#include \"stgc.h\"\n" ++
+         "#include \"stgApply.h\"\n"
         
 footer :: Bool -> String
 footer v = cgStart ++ cgMain v

@@ -69,16 +69,18 @@ do {						\
 do {						\
   stgCurVal = e;				\
   derefStgCurVal();				\
-  while (stgCurVal.argType == HEAPOBJ &&	\
-	 stgCurVal.op->objType == THUNK) {	\
+  assert(stgCurVal.argType == HEAPOBJ && "STGEVAL:  non-heap object before STGCALL!"); \
+  if (stgCurVal.op->objType == THUNK) {	        \
     Obj* cont = stgAllocCallCont2(&it_stgCallCont, 0);	\
-    strcpy(cont->ident, stgCurVal.op->ident);	\
-    STGCALL1(stgCurVal.op->infoPtr->entryCode, stgCurVal); \
+    while (stgCurVal.op->objType == THUNK) {	\
+      strcpy(cont->ident, stgCurVal.op->ident);	\
+      STGCALL1(stgCurVal.op->infoPtr->entryCode, stgCurVal); \
+      derefStgCurVal();				\
+    }  						\
     stgPopCont();			        \
-    derefStgCurVal();				\
-  }						\
-  if (stgCurVal.argType == HEAPOBJ &&           \
-      stgCurVal.op->objType == BLACKHOLE) {     \
+  }  						\
+  assert(stgCurVal.argType == HEAPOBJ && "STGEVAL:  non-heap object after STGCALL!"); \
+  if (stgCurVal.op->objType == BLACKHOLE) {     \
     fprintf(stderr, "infinite loop detected in STGEVAL!\n"); \
     showStgVal(stgCurVal);			\
     fprintf(stderr, "\n");			\
@@ -87,6 +89,6 @@ do {						\
   }                                             \
 } while (0);    \
 assert (cmmSP == cmmStack + cmmStackSize && "Non empty cmm stack in stgeval"); \
-gc();
+GC();
 
 #endif

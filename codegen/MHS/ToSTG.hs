@@ -321,8 +321,8 @@ makeObj dcmap e name =
          | length mtyps == length args ->
              do
                eas <- mapM (stgify dcmap) args
-               let as = map ea eas
-               return $ CON () c as name
+               --let as = map ea eas
+               return $ CON () c eas name
                
          | otherwise ->
              error $ unlines
@@ -352,8 +352,8 @@ letCon dcmap conName args =
   do
     eas <- mapM (stgify dcmap) args
     letv <- letVar
-    let as = map ea eas
-        con = CON () conName as letv
+    --let as = map ea eas
+    let con = CON () conName eas letv
         expr = EAtom () $ Var letv
     return $ ELet () [con] expr
 

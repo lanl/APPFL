@@ -5,12 +5,14 @@ project(runtime)
               gc.h
               stg.h
               stgutils.h
+	      stgApply.h
     )
 
   set(rt_srcs cmm.c
               gc.c
               stg.c
               stgutils.c
+	      stgApply.c
     )
 
   # put headers in build/include
@@ -26,7 +28,7 @@ project(runtime)
     set(CMAKE_C_FLAGS "-Wno-unused-const-variable")
   endif()
 
-  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g -std=gnu99")
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g -std=gnu99 -DDEBUGSTGAPPLY=1")
 
   include_directories(
     "/usr/include/malloc"

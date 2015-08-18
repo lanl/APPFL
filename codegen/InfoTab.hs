@@ -184,10 +184,10 @@ instance SetITs (Expr ([Var],[Var])) (Expr InfoTab) where
         EAtom (makeIT e) a
 
     setITs e@(EFCall emd f eas) =
-        EFCall (makeIT e) f $ map setITs eas
+        EFCall (makeIT e) f (map setITs eas)
 
     setITs e@(EPrimop emd p eas) =
-        EPrimop (makeIT e) p $ map setITs eas 
+        EPrimop (makeIT e) p (map setITs eas)
 
 instance SetITs (Alts ([Var],[Var])) (Alts InfoTab) where
     setITs as@(Alts altsmd alts name) = 
@@ -204,10 +204,10 @@ instance SetITs (Obj ([Var],[Var])) (Obj InfoTab) where
         FUN (makeIT o) vs (setITs e) n
 
     setITs o@(PAP omd f as n) = 
-        PAP (makeIT o) f as n
+        PAP (makeIT o) f (map setITs as) n
 
     setITs o@(CON omd c as n) = 
-        CON (makeIT o) c as n
+        CON (makeIT o) c (map setITs as) n
 
     setITs o@(THUNK omd e n) = 
         THUNK (makeIT o) (setITs e) n
@@ -234,7 +234,7 @@ instance MakeIT (Obj ([Var],[Var])) where
             }
 
     makeIT o@(PAP (fvs,truefvs) f as n) =
-        Pap { args = as,
+        Pap { args = projectAtoms as,
               name = n,
               fvs = zip fvs $ repeat typUndef,
               truefvs = truefvs,
@@ -248,7 +248,7 @@ instance MakeIT (Obj ([Var],[Var])) where
     makeIT o@(CON (fvs,truefvs) c as n) =
         Con { con = c,
               arity = length as,
-              args = as,
+              args = projectAtoms as,
               name = n,
               fvs = zip fvs $ repeat typUndef,
               truefvs = truefvs,

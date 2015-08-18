@@ -172,8 +172,7 @@ instance DV (Expr InfoTab) (Expr InfoTab) where
     dv e@EFCall{eas} = 
         do retMono <- freshMonoVar -- return type
            eas' <- mapM dv eas -- setTyp(s) of args
-           let e' = e{eas = eas'}
-           return $ setTyp retMono e'
+           return $ setTyp retMono e{eas = eas'}
 
     dv e@EPrimop{..} =
         let retMono = case eprimop of
@@ -239,19 +238,17 @@ instance DV (Obj InfoTab) (Obj InfoTab) where
 
     dv o@PAP{f,as} = -- identical to EFCall
         do retMono <- freshMonoVar -- return type
-           ms <- mapM getMono as
-           let m = foldr MFun retMono ms
-           return $ setTyp m o
+           as' <- mapM dv as
+           return $ setTyp retMono o{as=as'}
 
     dv o@CON{omd,c,as} = 
-        -- stash type constructor TC b1 .. bn, bi fresh
-        -- stash type info for as as well
-        let TyCon boxed tcon tvs dcs =
-              luTCon c $ cmap omd
-        in do ntvs <- freshMonoVars $ length tvs
-              asts <- mapM getMono as -- may be zero of them
-              let hack = MFun (MCon boxed tcon ntvs) (MCon True "hack2" asts)
-              return $ setTyp hack o
+
+        -- stash type constructor TC b1 .. bj, bi fresh
+        let TyCon boxed tcon tvs dcs = luTCon c $ cmap omd
+        in do as' <- mapM dv as
+              ntvs <- freshMonoVars $ length tvs
+              let m = MCon boxed tcon ntvs
+              return $ setTyp m o{as=as'}
 
     dv o@THUNK{e} =
         do e' <- dv e
@@ -279,11 +276,10 @@ instance BU (Expr InfoTab) where
          e) -- EAtom monotype set in dv
 
     bu mtvs e@EFCall{ev,eas} =
-        let (ass, _, eas') = unzip3 $ map (bu mtvs) eas
-            ftyp = foldr MFun (typ $ emd e) $ map (typ . emd) eas
-            fas = Set.singleton (ev, ftyp)
-        in (Set.unions $ fas:ass,
-            Set.empty,
+        let (ass, css, eas') = unzip3 $ map (bu mtvs) eas
+            ftyp = foldr MFun (getTyp e) (map getTyp eas')
+        in (Set.insert (ev,ftyp) $ Set.unions ass,
+            Set.unions css,
             e{eas=eas'}) -- EFCall monotype set in dv
 
     bu mtvs e@EPrimop{emd = ITPrimop{typ}, eprimop, eas} =
@@ -411,7 +407,6 @@ butAlt t0 mtvs e@ACon{amd,ac,avs,ae} =
 -- substituted for the arguments of the type constructor corresponding to
 -- the data constructor, return the monotype arguments of the data constructor
 -- as a result of the substitution
-
 instantiateDataConAt c cmap subms =
     let TyCon _ tcon tvs dcs = luTCon c cmap
         -- get data constructor definition C [Monotype]
@@ -428,27 +423,19 @@ instantiateDataConAt c cmap subms =
 butAlt t0 mtvs e@ACon{amd,ac,avs,ae} =
     let -- instantiate type constructor definition
         -- get type constructor definition
-<<<<<<< HEAD
-        TyCon boxed tcon tvs dcs =
-            luTCon ac $ cmap amd
-=======
+
         TyCon _ tcon tvs dcs =
             luTCon ac $ cmap amd
         -- get data constructor definition C [Monotype]
->>>>>>> master
+
         ms = case [ ms | DataCon c ms <- dcs, c == ac] of
                [ms] -> ms
                _ -> error $ "butAlt: not finding " ++ ac ++ " in " ++ show dcs ++
                     " for TyCon: " ++ tcon ++
-<<<<<<< HEAD
-                     "\nCMap:\n" ++ show (cmap amd)
-        -- instantiate those Monotypes
-        MCon boxed' c ntvs = getTyp e --stashed by dv
-=======
                     "\nCMap:\n" ++ show (cmap amd)
         -- instantiate the Monotypes
         MCon _ _ ntvs = getTyp e --stashed by dv
->>>>>>> master
+
         subst = Map.fromList $ zzip tvs ntvs
         tis = apply subst ms
         xtis = zzip avs tis
@@ -477,24 +464,33 @@ instance BU (Obj InfoTab) where
         Set.union cs ncs,
         setTyp typ o{e = e'})
 
+  -- identical to EFCall
+  bu mtvs o@PAP{f,as} =
+      let (ass, css, as') = unzip3 $ map (bu mtvs) as
+          ftyp = foldr MFun (getTyp o) (map getTyp as')
+      in (Set.insert (f,ftyp) $ Set.unions ass,
+          Set.unions css,
+          o{as=as'}) -- PAP monotype set in dv
+          
+
+
+{- [Atom version]
   bu mtvs o@PAP{f,as} =
       let typ = getTyp o
           (m,ms) = unfoldr typ
       in (Set.fromList $ (f,typ) : [ (v, t) | (Var v, t) <- zzip as ms ],
           Set.empty,
           setTyp m o)
+-}
 
   bu mtvs o@CON{omd,c,as} = 
-      let
-        TyCon boxed tcon tvs dcs = luTCon c $ cmap omd         
-        [ms] = [ ms | DataCon c' ms <- dcs, c == c' ]
-        -- instantiate those Monotypes
-        MFun typ@(MCon _ tcon' ntvs) (MCon True "hack2" asts) = getTyp o        
-        subst = Map.fromList $ zzip tvs ntvs
-        ms' = apply subst ms
-      in (Set.fromList [(v,m) | (Var v, m) <- zzip as ms'], --drop LitX cases
-          Set.fromList [ EqC t m | (t,m) <- zzip asts ms'],
-          setTyp typ o)
+      let (ass,css,as') = unzip3 $ map (bu mtvs) as
+          typ@(MCon _ tcon ntvs) = getTyp o
+          ms = instantiateDataConAt c (cmap omd) ntvs
+          asts = map getTyp as'
+      in (Set.unions ass,
+          Set.unions css `Set.union` Set.fromList [EqC t m | (t,m) <- zzip asts ms],
+          setTyp typ o{as = as'})
 
   bu mtvs o@THUNK{e} =
       let (as,cs,e') = bu mtvs e

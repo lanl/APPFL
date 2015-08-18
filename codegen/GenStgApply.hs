@@ -6,33 +6,33 @@ import Util
 import Data.List(intercalate)
 
 dumpStgApply n = 
-    let (forward, fun) = genAllstgApply n
-    in do writeFile "stgApply.h" $ includehtop ++ forward ++ includehbot
-          writeFile "stgApply.c" $ includec ++ fun
+    let (forward, macros, fun) = genAllstgApply n
+    in do writeFile "../runtime/stgApply.h" $ includehtop ++ forward ++ macros ++ includehbot
+          writeFile "../runtime/stgApply.c" $ includec ++ fun
           return ()
         where
           includehtop =
               "#ifndef stgApply_h\n" ++
               "#define stgApply_h\n" ++
-              "#include \"../runtime/stg.h\"\n"
+              "#include \"stg.h\"\n"
           includehbot =
               "#endif\n"
           includec =
-              "#include \"../runtime/stg.h\"\n" ++
-              "#include \"../runtime/cmm.h\"\n" ++
-              "#include \"../runtime/stgutils.h\"\n" ++
+              "#include \"stg.h\"\n" ++
+              "#include \"cmm.h\"\n" ++
+              "#include \"stgutils.h\"\n" ++
               "#include \"stgApply.h\"\n" ++
               "#include <stdlib.h>\n" ++
               "#include <stdio.h>\n\n" 
 
-genAlldebug n = let (forwards, funs) = unzip $ map genN [1..n]
+genAlldebug n = let (forwards, macros, funs) = unzip3 $ map genN [1..n]
                    in putStrLn $ concat forwards ++ "\n\n" ++ concat funs
 
-genAllstgApply n = let (forwards, funs) = unzip $ map genN [1..n]
-                   in (concat forwards, concat funs)
+genAllstgApply n = let (forwards, macros, funs) = unzip3 $ map genN [1..n]
+                   in (concat forwards, concat macros, concat funs)
 
-genN n = let (forwards, funs) = unzip $ map gen (pns n)
-         in (concat forwards, concat funs)
+genN n = let (forwards, macros, funs) = unzip3 $ map gen (pns n)
+         in (concat forwards, concat macros, concat funs)
 
 pns n | n == 0 = [""]
       | n > 0 = pref $ pns (n-1)
@@ -72,8 +72,13 @@ optSwitch scrut lo hi f =
                                    " reached default!\\n\"); exit(0);\n" ++
       "} // switch(" ++ scrut ++ ")\n"
 
+debugp (x:xs) = 
+    "#ifdef DEBUGSTGAPPLY\n" ++
+    "fprintf(stderr, \"" ++ x ++ "\\n\"" ++ concat [ ", " ++ s | s <- xs ] ++ ");\n" ++
+    "#endif\n"
+
 gen s =
-  (forward, fun)
+  (forward, macro, fun)
   where
     argc = length s
     nps = length $ filter (=='P') s
@@ -82,6 +87,24 @@ gen s =
     ninds = [ i | (i,c) <- zip [0..] s, c == 'N' ]
     fname = "stgApply" ++ s
     forward = "FnPtr " ++ fname ++ "();\n"
+
+    lens = length s
+    arglist = 'f' : concat [',':'v':show i | i <- [1..lens]]
+    macro = 
+      "#define STGAPPLY" ++ s ++ "(" ++ arglist ++ ") \\\n" ++
+      "do { \\\n" ++
+      "  PtrOrLiteral N = {.argType = INT, .i = " ++ show lens ++ "}; \\\n" ++
+      "  STGJUMP" ++ show (lens+2) ++ "(stgApply" ++ s ++ ",N," ++ arglist ++ "); \\\n" ++
+      "  } while(0)\n\n"
+
+{-
+ #define STGAPPLY2(f,v1,v2)			\
+  do {						\
+    PtrOrLiteral N = {.argType = INT, .i = 2};	\
+    STGJUMP4(stgApply,N,f,v1,v2);		\
+  } while(0)
+-}
+
     fun = 
      "DEFUN2(" ++ fname ++ ", N, f) {\n" ++
      "  assert(N.argType == INT);\n" ++
@@ -107,7 +130,7 @@ gen s =
      "  if (f.op->objType == THUNK) {\n" ++
           indent 4 (callContSave nps) ++
      "    while (f.op->objType == THUNK) {\n" ++
-     "      fprintf(stderr, \"stgApply THUNK\\n\");\n" ++
+            indent 6 (debugp ["stgApply THUNK"]) ++
      "      STGEVAL(f);\n" ++
      "      // f.op = derefPoL(f);\n" ++
      "      f.op = derefPoL(stgCurVal); \n" ++
@@ -130,12 +153,12 @@ gen s =
      "\n" ++
      "    // just right\n" ++
      "    if (excess == 0) {\n" ++
-     "      fprintf(stderr, \"stgApply FUN just right\\n\");\n" ++
+            indent 6 (debugp ["stgApply FUN just right"]) ++
             (indent 6 $ funeq s argc) ++
      "    }\n" ++
      "    // excess < 0, too few args\n" ++
      "    else {\n" ++
-     "      fprintf(stderr, \"stgApply FUN too few args\\n\");\n" ++
+            indent 6 (debugp ["stgApply FUN too few args"]) ++
             (indent 6 $ funneg s pinds argc nps nns) ++
      "    } // if excess\n" ++
      "  } // case FUN\n" ++
@@ -153,19 +176,19 @@ gen s =
       else 
         "    // too many args\n" ++
         "    if (excess > 0) {\n" ++
-        "      fprintf(stderr, \"stgApply PAP too many args\\n\");\n" ++
+               indent 6 (debugp ["stgApply PAP too many args"]) ++
                indent 6 (optSwitch "excess" 1 (argc-1) 
                              (\n -> pappos n s pinds argc)) ++
         "    } else \n") ++
      "\n" ++
      "    // just right\n" ++
      "    if (excess == 0) {\n" ++
-     "      fprintf(stderr, \"stgApply FUN just right\\n\");\n" ++
+            indent 6 (debugp ["stgApply FUN just right"]) ++
             (indent 6 $ papeq s argc) ++
      "\n" ++
      "    // excess < 0, too few args\n" ++
      "    } else {\n" ++
-     "      fprintf(stderr, \"stgApply PAP too few args\\n\");\n" ++
+            indent 6 (debugp ["stgApply PAP too few args"]) ++
             (indent 6 $ papneg s pinds argc nps nns) ++
      "    } // if excess\n" ++
      "  } // case PAP\n" ++
@@ -190,7 +213,7 @@ funpos excess s pinds argc =
       usedNParamCount = usedParamCount - usedPParamCount
       excessParams = drop (length s - excess) s
       excessPParamCount = length $ filter (=='P') excessParams
-  in "fprintf(stderr, \"stgApply FUN %d excess args\\n\", " ++ show (length excessParams) ++ ");\n" ++
+  in debugp ["stgApply FUN " ++ show (length excessParams) ++ " excess args"] ++
      "// stash excess pointer args\n" ++
      (if excessPParamCount > 0 then
         "callContSave(" ++ show excessPParamCount ++ ", " ++
@@ -246,16 +269,14 @@ funneg s pinds argc nps nns =
                                show nps ++ ", " ++ show nns ++ ");\n" ++
      "pap->argCount = argc;\n" ++
      "// copy fvs\n" ++
-     "fprintf(stderr, \"stgApply FUN inserting %d FVs into new PAP\\n\", fvCount);\n" ++
+     debugp ["stgApply FUN inserting %d FVs into new PAP", "fvCount"] ++
      "copyargs(&pap->payload[0], &f.op->payload[0], fvCount);\n" ++
      "// copy pargs to just after fvs and layout info\n" ++
-     "fprintf(stderr, \"stgApply FUN inserting %d pointers into new PAP\\n\", " ++
-                      show nps ++ ");\n" ++
+     debugp ["stgApply FUN inserting " ++ show nps ++ " pointers into new PAP"] ++
      (if nps > 0 then
           "copyargs(&pap->payload[fvCount+1], pargv, " ++ show nps ++ ");\n" 
       else "// 0 pointers to insert into PAP\n") ++
-     "fprintf(stderr, \"stgApply FUN inserting %d non-pointers into new PAP\\n\", " ++
-                      show nns ++ ");\n" ++
+     debugp ["stgApply FUN inserting " ++ show nns ++ " non-pointers into new PAP"] ++
      (if nns > 0 then
           "copyargs(&pap->payload[fvCount+1+" ++ show nps ++ "], nargv, " ++ show nns ++ ");\n"
       else "// 0 non-pointers to insert into PAP\n") ++
@@ -273,7 +294,7 @@ pappos excess s pinds argc =
       usedNParamCount = usedParamCount - usedPParamCount
       excessParams = drop (length s - excess) s
       excessPParamCount = length $ filter (=='P') excessParams
-  in "fprintf(stderr, \"stgApply PAP %d excess args\\n\", " ++ show (length excessParams) ++ ");\n" ++
+  in debugp ["stgApply PAP to " ++ show (length excessParams) ++ " excess args"] ++
      "// stash excess pointer args\n" ++
      (if excessPParamCount > 0 then
         "callContSave(" ++ show excessPParamCount ++ ", " ++
@@ -341,23 +362,21 @@ papneg s pinds argc nps nns =
                                show nns ++ " + papnargc);\n" ++
      "pap->argCount = argc + pappargc + papnargc;\n" ++
      "// copy fvs\n" ++
-     "fprintf(stderr, \"stgApply PAP inserting %d FVs into new PAP\\n\", fvCount);\n" ++
+     debugp ["stgApply PAP inserting %d FVs into new PAP", "fvCount"] ++
      "copyargs(&pap->payload[0], &f.op->payload[0], fvCount);\n" ++
      "// copy pap pointers to just after fvs and layout info\n" ++
-     "fprintf(stderr, \"stgApply PAP inserting %d old pointers into new PAP\\n\", pappargc);\n" ++
+     debugp ["stgApply PAP inserting %d old pointers into new PAP", "pappargc"] ++
      "copyargs(&pap->payload[fvCount+1], &f.op->payload[fvCount+1], pappargc);\n" ++
      "// copy pargs to just after fvs, layout info, and old pointers\n" ++
-     "fprintf(stderr, \"stgApply PAP inserting " ++ show nps ++ 
-                      " new pointers into new PAP\\n\");\n" ++
+     debugp ["stgApply PAP inserting " ++ show nps ++ " new pointers into new PAP"] ++
      (if nps > 0 then
        "copyargs(&pap->payload[fvCount+1+pappargc], pargv, " ++ show nps ++ ");\n"
       else "// 0 new pointers to insert into PAP\n") ++
 
-     "fprintf(stderr, \"stgApply PAP inserting %d old non-pointers into new PAP\\n\", papnargc);\n" ++
+     debugp ["stgApply PAP inserting %d old non-pointers into new PAP", "papnargc"] ++
      "copyargs(&pap->payload[fvCount+1+pappargc+" ++ show nps ++ "], " ++
                             "&f.op->payload[fvCount+1+pappargc], papnargc);\n" ++
-     "fprintf(stderr, \"stgApply PAP inserting " ++ show nns ++ 
-                      " new non-pointers into new PAP\\n\");\n" ++
+     debugp ["stgApply PAP inserting " ++ show nns ++ " new non-pointers into new PAP"] ++
      (if nns > 0 then
           "copyargs(&pap->payload[fvCount+1+pappargc+" ++ show nps ++ "+papnargc], nargv, " ++ 
                     show nns ++ ");\n"

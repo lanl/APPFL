@@ -75,8 +75,8 @@ p2p (s1,s2) = (Set.toList s1, Set.toList s2)
 
 instance STGToList (Obj (Set.Set Var, Set.Set Var)) (Obj ([Var],[Var])) where
     stgToList FUN{..} = FUN{omd = p2p omd, e = stgToList e, ..}
-    stgToList PAP{..} = PAP{omd = p2p omd, ..}
-    stgToList CON{..} = CON{omd = p2p omd, ..}
+    stgToList PAP{..} = PAP{omd = p2p omd, as = map stgToList as, ..}
+    stgToList CON{..} = CON{omd = p2p omd, as = map stgToList as, ..}
     stgToList THUNK{..} = THUNK{omd = p2p omd, e = stgToList e, ..}
     stgToList BLACKHOLE{..} = BLACKHOLE{omd = p2p omd,..}
 
@@ -217,14 +217,18 @@ instance SetFVs (Obj a) (Obj (Set.Set Var, Set.Set Var)) where
 
     -- PAP introduces a var
     setfvs tlds (PAP _ f as n) = 
-        let (asfvs, astruefvs) = fvsof tlds as
+        let as' = map (setfvs tlds) as
+            (asFVs, asTFVs) = unzip $ map emd as'
+            (asfvs, astruefvs) = (Set.unions asFVs, Set.unions asTFVs)
             fset = Set.singleton f
             myfvs   = (fset `Set.union` asfvs) `Set.difference` tlds
             truefvs = fset `Set.union` astruefvs
-        in PAP (myfvs,truefvs) f as n
+        in PAP (myfvs,truefvs) f as' n
 
     setfvs tlds (CON _ c as n) = 
-        CON (fvsof tlds as) c as n
+        let as' = map (setfvs tlds) as
+            (asFVs, asTFVs) = unzip $ map emd as'
+        in CON (Set.unions asFVs, Set.unions asTFVs) c as' n
 
     setfvs tlds (THUNK _ e n) = 
         let e' = setfvs tlds e

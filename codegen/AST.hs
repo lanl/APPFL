@@ -17,6 +17,7 @@ module AST (
   show,
   objListDoc,
   primArity,
+  projectAtoms
 ) where
 
 import PPrint
@@ -82,20 +83,20 @@ instance Show Atom where
     show (LitD d) = show d ++ "(d)"
     show (LitC c) = [c]
 
-data Obj a = FUN   {omd :: a, vs :: [Var],   e :: Expr a , oname :: String}
-           | PAP   {omd :: a, f  :: Var,     as :: [Atom], oname :: String}
-           | CON   {omd :: a, c  :: Con,     as :: [Atom], oname :: String}
-           | THUNK {omd :: a, e  :: Expr a               , oname :: String}
-           | BLACKHOLE {omd :: a                         , oname :: String}
+data Obj a = FUN   {omd :: a, vs :: [Var],   e :: Expr a   , oname :: String}
+           | PAP   {omd :: a, f  :: Var,     as :: [Expr a], oname :: String}
+           | CON   {omd :: a, c  :: Con,     as :: [Expr a], oname :: String}
+           | THUNK {omd :: a, e  :: Expr a                 , oname :: String}
+           | BLACKHOLE {omd :: a                           , oname :: String}
              deriving(Eq,Show)
 
 -- 7.9 EFCalls (and EPrimops, for consistency) changed to accept Expr args.
 -- Parser (and other traversals) should enforce use of *only* EAtom as args
-data Expr a = EAtom   {emd :: a,                    ea :: Atom} --,      ename::String}
-            | EFCall  {emd :: a, ev :: Var,         eas :: [Expr a]} --,   ename::String}
-            | EPrimop {emd :: a, eprimop :: Primop, eas :: [Expr a]} --,   ename::String}
-            | ELet    {emd :: a, edefs :: [Obj a],  ee :: Expr a} --,    ename::String}
-            | ECase   {emd :: a, ee :: Expr a,      ealts :: Alts a} --, ename::String}
+data Expr a = EAtom   {emd :: a,                    ea :: Atom}
+            | EFCall  {emd :: a, ev :: Var,         eas :: [Expr a]}
+            | EPrimop {emd :: a, eprimop :: Primop, eas :: [Expr a]}
+            | ELet    {emd :: a, edefs :: [Obj a],  ee :: Expr a}
+            | ECase   {emd :: a, ee :: Expr a,      ealts :: Alts a}
               deriving(Eq,Show)
 
 data Alts a = Alts {altsmd :: a, alts :: [Alt a], aname :: String}
@@ -104,6 +105,10 @@ data Alts a = Alts {altsmd :: a, alts :: [Alt a], aname :: String}
 data Alt a = ACon {amd :: a, ac :: Con, avs :: [Var], ae :: Expr a}
            | ADef {amd :: a,            av :: Var,    ae :: Expr a}
              deriving(Eq,Show)
+
+projectAtoms [] = []
+projectAtoms (EAtom{ea}:as) = ea:projectAtoms as
+projectAtoms (a:as) = error $ "InfoTab.projectAtoms: non-EAtom"
 
 -- when calculating free variables we need an enclosing environment that
 -- includes the known primops.  This will allow proper scoping.  As such
