@@ -1,7 +1,6 @@
 {-# LANGUAGE NamedFieldPuns #-}
 
-import           Driver ( )
-import           NewDriver
+import           Driver
 import           CMap
 import           Data.List
 import           Data.List.Split
@@ -166,5 +165,4 @@ main =
       args <- getArgs
       (opts, args') <- compilerOpts args
       checkOpts opts
-      -- weird path stuff is because cabal puts binary in dist/build/stgc/stgc
       compile opts (binaryDir ++ "/../etc") (binaryDir ++ "/../lib") (binaryDir ++ "/../include") True
