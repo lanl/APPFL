@@ -151,7 +151,7 @@ compile  (Options {optVerbose, optDumpParse, optNoPrelude, optOutput, optInput, 
                  
       False -> do
                  let coutput = input ++ ".c"
-                 let flags = " -std=gnu99 -L" ++ rtLibDir ++ " -I" ++ rtIncDir ++ " -lruntime"
+                 let flags = " -std=gnu99 -Wl,-rpath " ++ rtIncDir ++ " -L" ++ rtLibDir ++ " -I" ++ rtIncDir ++ " -lruntime"
                  writeFile coutput (codegener source optVerbose minihs)
                  if gcc 
                    then system ("gcc " ++ coutput ++ " -o " ++ (fromJust optOutput) ++ flags)
