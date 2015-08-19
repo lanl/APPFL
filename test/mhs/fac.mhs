@@ -1,8 +1,6 @@
 fac x = case eqInt x 0 of 
             True -> 1
-            False -> let s = subInt x 1
-                         rec = fac s 
-                     in mulInt x rec
+            False -> mulInt x (fac (subInt x 1)) 
 
 output = fac 7
 
