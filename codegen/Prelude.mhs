@@ -210,7 +210,7 @@ sum = foldl addInt 0
 zipWith :: (a -> b -> c) -> List a -> List b -> List c
 zipWith f xs Nil = Nil
 zipWith f Nil ys = Nil
-zipWith f (Cons x xs) (Cons y ys) = Cons (f x y) (zip xs ys)
+zipWith f (Cons x xs) (Cons y ys) = Cons (f x y) (zipWith f xs ys)
 
 
 zip :: List a -> List b -> List (Tupl2 a b)
