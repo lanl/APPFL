@@ -1,13 +1,2 @@
-main = 1
-{- data Int = I# Int#;
-   data Double = D# Double#;
-   data Unit = Unit;
-   data List a = Nil
-               | Cons a (List a);
-   data Bool = False
-             | True;
-   data Tupl2 a b = TP2 a b;
-   data Tupl3 a b c = TP3 a b c;
-   gvi_1 = CON(I# 1);
-   main = THUNK(gvi_1);
--}
+output = addInt 3 4
+main = eqInt output 7

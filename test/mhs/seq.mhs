@@ -1,0 +1,3 @@
+output = seq 0 1
+
+main = eqInt output 1

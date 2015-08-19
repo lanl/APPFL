@@ -1,0 +1,4 @@
+output = 1
+
+main = eqInt output 1
+ 

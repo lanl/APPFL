@@ -1,0 +1,5 @@
+list = Cons 3 (Cons 2 (Cons 1 Nil))
+output = sum list
+
+main = eqInt output 6
+

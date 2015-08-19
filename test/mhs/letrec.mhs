@@ -1,0 +1,6 @@
+output = let x = 2
+             y = 4
+             result = addInt x y
+         in result
+
+main = eqInt output 6

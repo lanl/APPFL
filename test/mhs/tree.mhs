@@ -1,0 +1,14 @@
+data Tree a = Leaf a | Branch (Tree a) (Tree a)
+ 
+leaf1 = Leaf 1
+leaf2 = Leaf 2   
+
+branch l r = let result = Branch l r 
+             in result
+
+output = branch leaf1 leaf2
+
+-- test left
+left xs = case xs of Branch l r -> l
+val xs = case xs of Leaf x -> x
+main = eqInt (val (left output)) 1

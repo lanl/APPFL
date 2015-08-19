@@ -1,0 +1,9 @@
+fac x = case eqInt x 0 of 
+            True -> 1
+            False -> let s = subInt x 1
+                         rec = fac s 
+                     in mulInt x rec
+
+output = fac 7
+
+main = eqInt output 5040
