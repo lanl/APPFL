@@ -10,6 +10,7 @@ module MHS.Tokenizer
   tokenize
 ) where
 
+import Tokenizer (primopTable)
 import MHS.AST (Primop (..))
 import Data.Char
 import Data.List (isPrefixOf)
@@ -349,25 +350,6 @@ instance Show Token where
   show tok          = bracketize (tks tok) (showpos $ pos tok)
 bracketize a b = "{" ++ a ++ " @ " ++ b ++ "}"
 showpos (l,c) = "(ln:" ++ show l ++ "," ++ "col:" ++ show c ++ ")"
-
-primopTable =
-  [
-    ("iplus#",   Piadd),
-    ("isub#",    Pisub),
-    ("imul#",    Pimul),
-    ("idiv#",    Pidiv),
-    ("imod#",    Pimod),
-    ("imax#",    Pimax), 
-    ("ieq#",     Pieq),
-    ("ine#",     Pine),
-    ("ilt#",     Pilt),
-    ("ile#",     Pile),
-    ("igt#",     Pigt),
-    ("ige#",     Pige),
-    ("ineg#",    Pineg),           
-    ("imin#",    Pimin),
-    ("imax#",    Pimax)
-  ]
 
 specials =
   [  "{", "}", "(", ")", ";", "|", "=", "\\", "::", "->"]

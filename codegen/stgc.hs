@@ -13,12 +13,12 @@ import           System.Process
 import           PPrint
 import           Control.Monad (when)
 
--- build a.out from stg and run it
+-- build a.out from stg/mhs and run it
 _eval :: String -> Bool -> IO()
 _eval input showerr = do
   build input
   let erStr = if showerr then "" else " &2>/dev/null"
-  system("./a.out"++erStr)
+  system("./a.out" ++ erStr)
   putStrLn ""
   return ()
 
@@ -27,13 +27,13 @@ eval i = _eval i True
 
 evalNoErr i = _eval i False
 
--- build a.out from stg
+-- build a.out from stg/mhs
 build :: String -> IO()
 build input = buildit input True
 
--- generate c code from stg
-stg2c :: String -> IO()
-stg2c input = buildit input False
+-- generate c code from stg/mhs
+toc :: String -> IO()
+toc input = buildit input False
 
 buildit :: String -> Bool -> IO()
 buildit input gcc = let update x = x {optInput = Just input}
@@ -52,6 +52,7 @@ stgc arg =
     hClose ifd
     writeFile "../runtime/userprog.c" prog
 
+-- generate c code from mhs (no prelude)
 mhsc :: String -> IO ()
 mhsc arg =
   do
