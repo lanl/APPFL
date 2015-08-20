@@ -20,11 +20,14 @@ isF2 x = False
 isF3 (C3 287 341 D Unit) = True
 isF3 x = False
 
+check a b c  = and (isF1 a) (and (isF2 b) (isF3 c))
 
 main = case fancyList of
         Cons a xs -> case xs of
                       Cons b xs -> case xs of
-                                    Cons c Nil -> and (isF1 a) (and (isF3 c) isF2 b)
+                                    Cons c xs -> case xs of
+                                                 Nil -> check a b c
+                                                 x -> False
                                     x -> False
                       x -> False
         x -> False
