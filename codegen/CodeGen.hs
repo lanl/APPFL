@@ -177,7 +177,12 @@ permArgs vs ft =
               in case isBoxed t of
                    True  -> ((v:bvs,uvs),(t:bts,uts))
                    False -> ((bvs,v:uvs),(bts,t:uts))
-          part _ _ = error "permArgs fallthrough"
+          part [] (t:ts) = 
+                let (([],[]),(bts,uts)) = part [] ts 
+                in case isBoxed t of
+                   True  -> (([],[]),(t:bts,uts))
+                   False -> (([],[]),(bts,t:uts))  
+          part _ _ = error ("permArgs fallthrough  vs=" ++ show vs ++ " ft=" ++ show ft)
 
 cgo :: Env -> Obj InfoTab -> State Int [(String, String)]
 cgo env o@(FUN it vs e name) =

@@ -1,0 +1,9 @@
+-- in Haskell: main = head (map const [7,2,1]) 10 
+
+map2 f Nil = Nil
+map2 f (Cons x xs) = Cons (f x) (map f xs)
+
+list = Cons 7 (Cons 2 (Cons 1 Nil))
+output = head (map2 const list) 10
+
+main = eqInt output 7
