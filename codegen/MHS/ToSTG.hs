@@ -443,11 +443,11 @@ instance ToSTG Clause Alt where
       case exp of
        EAt{atm = AtmVar "noExhaust"} ->
          let var = str pat
-             exp = EFCall{emd = error "emd not set stg_case_not_exhaustive",
+             exp = EFCall{emd = (), --error "emd not set stg_case_not_exhaustive",
                          ev = "stg_case_not_exhaustive",
-                         eas = [EAtom {emd = error "emd not set stg_case_not_exhaustive",
+                         eas = [EAtom {emd = (), --error "emd not set stg_case_not_exhaustive",
                                        ea = Var var}]}
-         in return $ ADef {amd = error "amd not set stg_case_not_exhaustive",
+         in return $ ADef {amd = (), --error "amd not set stg_case_not_exhaustive",
                            av = var,
                            ae = exp}
 
