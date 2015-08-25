@@ -36,6 +36,7 @@ import AST
 import InfoTab
 import Prelude
 import Util
+import Data.Bits
 
 -- // two = CON(I 2)
 -- Obj sho_two = 
@@ -79,7 +80,7 @@ showHO it =
 
 showSHOspec it@(Fun {}) = payloads []
 
-showSHOspec it@(Pap {}) = payloads []
+showSHOspec it@(Pap {}) = papPayloads it
 
 showSHOspec it@(Con {}) = payloads $ args it
 
@@ -89,6 +90,19 @@ showSHOspec it@(Thunk {}) = indent 2 ".payload = {0}\n"
 showSHOspec it@(Blackhole {}) = indent 2 ".payload = {0}\n"
 
 showSHOspec it = ""
+
+papPayloads it = let as = args it             
+                     n = indent 4 $ payload $ LitI $ papArgsLayout as
+                     ap =   indent 4 $ concatMap payload as
+                 in  indent 2 ".argCount = " ++ show (length as) ++ ",\n" ++ 
+                              ".payload = {\n" ++ n ++ ap ++ "},\n"
+                                                            
+papArgsLayout as = let nv = length $ filter isVar as
+                       nl = length as - nv
+                   in nv .|. shiftL nl 16
+                       
+isVar (Var _) = True
+isVar _ = False
 
 payloads as = let ps = indent 4 $ concatMap payload as
               in  indent 2 ".payload = {\n" ++ ps ++ "},\n"
