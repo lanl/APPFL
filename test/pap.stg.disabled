@@ -1,0 +1,5 @@
+eqOne = PAP(eqInt one);
+
+output = THUNK(one);
+
+main = THUNK(eqOne output);

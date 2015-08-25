@@ -66,7 +66,7 @@ InfoTab it_stgUpdateCont =
   };
 
 void stgThunk(PtrOrLiteral self) {
-  assert(self.argType == HEAPOBJ && "stgThunk:  not HEAPOJ\n");
+  assert(self.argType == HEAPOBJ && "stgThunk:  not HEAPOBJ\n");
   Obj *contp = stgAllocCont(&it_stgUpdateCont);
   contp->payload[0] = self;
   strcpy(contp->ident, self.op->ident); //override default

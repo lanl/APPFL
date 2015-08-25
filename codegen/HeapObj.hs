@@ -63,19 +63,22 @@ showSHO o =
     in ("extern " ++ base ++ ";\n", 
                      base ++ " =\n" ++ showHO (omd o))
 
+getIT it@(Pap {}) = case knownCall it of 
+                        Just fit -> fit
+                        Nothing -> error "unknown call in PAP"
+getIT it = it
+
+
 showHO it =
     "{\n" ++
-    "  .infoPtr   = &it_" ++ name it ++ ",\n" ++
+    "  .infoPtr   = &it_" ++ name (getIT it) ++ ",\n" ++
     "  .objType   = " ++ showObjType it      ++ ",\n" ++
     "  .ident     = " ++ show (name it)      ++ ",\n" ++
---    "  .payloadSize = 32,\n" ++
        showSHOspec it ++
     "  };\n"
 
 showSHOspec it@(Fun {}) = payloads []
 
---showSHOspec it@(Pap {}) = "  .argCount  = " ++ show (length $ args it) ++ ",\n" ++
---                          (payloads $ args it)
 showSHOspec it@(Pap {}) = payloads []
 
 showSHOspec it@(Con {}) = payloads $ args it
