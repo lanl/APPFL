@@ -123,7 +123,8 @@ void processObj(Obj *p) {
   case THUNK:
   case BLACKHOLE:
     for(i = 0; i < countFVs(p); i++) {
-      updatePtr(&p->payload[i]);
+      // payload[0] is result field
+      updatePtr(&p->payload[i+1]);
     }
     break;
   case INDIRECT:

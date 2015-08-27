@@ -51,8 +51,8 @@ DEFUN0(stgUpdateCont) {
   showStgObj(p.op);
   fprintf(stderr, "with\n  ");
   showStgObj(stgCurVal.op);
-  p.op->objType = INDIRECT;
   p.op->payload[0] = stgCurVal;
+  p.op->objType = INDIRECT;
   STGRETURN0();
   ENDFUN
 }

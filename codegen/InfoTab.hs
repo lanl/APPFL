@@ -406,7 +406,7 @@ showIT it@(Thunk {}) =
     "    .fvCount             = " ++ show (length $ fvs it) ++ ",\n" ++
     "    .entryCode           = &" ++ entryCode it ++ ",\n" ++
     "    .objType             = THUNK,\n" ++
-    "    .layoutInfo.payloadSize = " ++ show (max 1 (length $ fvs it)) ++ ",\n" ++
+    "    .layoutInfo.payloadSize = " ++ show (1 + (length $ fvs it)) ++ ",\n" ++
     "  };\n"
         
 showIT it@(Blackhole {}) = 

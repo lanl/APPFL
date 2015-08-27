@@ -139,9 +139,9 @@ infoPtr->objType = CON
 
 
 THUNK
-                               | payload 
+                               | payload[0] | payload[1..fvCount+1] 
 -----------------------------------------------------------------------------
-| infoPtr | objType |          | free variables                             |
+| infoPtr | objType |          |   result   |  free variables               |
 -----------------------------------------------------------------------------
 
 Note that a THUNK must have a payload size of at least 1 so that it

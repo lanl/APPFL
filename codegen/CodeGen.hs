@@ -216,7 +216,7 @@ cgo env (CON it c as name) =
 
 cgo env o@(THUNK it e name) =
     do 
-      let env' = zip (map fst $ fvs it) (map FV [0..]) ++ env
+      let env' = zip (map fst $ fvs it) (map FV [1..]) ++ env
       (inline, funcs) <- cge env' e
       let forward = "FnPtr fun_" ++ name ++ "();"
       let func =
@@ -364,7 +364,7 @@ cge env (ECase _ e a@(Alts italts alts aname)) =
                else
                  "    // load payload with FVs " ++
                    intercalate " " (map fst $ fvs italts) ++ "\n") ++
-                 indent 2 (loadPayloadFVs env (map fst $ fvs italts) name)
+                 indent 2 (loadPayloadFVs env (map fst $ fvs italts) 0 name)
            scrut = if isBoxede e then
                        "  // boxed scrutinee\n" ++
                        "  STGEVAL(stgCurVal);\n"
@@ -455,11 +455,11 @@ buildHeapObj env o =
 
 bho :: [(String, RVal)] -> Obj InfoTab -> (Int, [Char])
 bho env (FUN it vs e name) = 
-    (length $ fvs it, loadPayloadFVs env (map fst $ fvs it) name)
+    (length $ fvs it, loadPayloadFVs env (map fst $ fvs it) 0 name)
 
 -- TODO: the size here should be based on the FUN rather than being maxPayload
 bho env (PAP it f as name) =
-    (maxPayload, loadPayloadFVs env (map fst $ fvs it) name ++ 
+    (maxPayload, loadPayloadFVs env (map fst $ fvs it) 0 name ++ 
                  loadPayloadAtoms env (projectAtoms as) (length $ fvs it) name)
 
 -- CON is special in that the payload contains not just FVs but literals
@@ -473,15 +473,16 @@ bho env (CON it c as name) =
                        | (i,a) <- indexFrom 0 (projectAtoms as) ]
     in (length ps, concat ps)
 
-bho env (THUNK it e name) =
-    (max 1 (length $ fvs it), loadPayloadFVs env (map fst $ fvs it) name)
+bho env (THUNK it e name) = 
+    let fv = fvs it
+    in (1 + (length fv), loadPayloadFVs env (map fst fv) 1 name)
     
 bho env (BLACKHOLE it name) = (1,"")
 
-loadPayloadFVs env fvs name =
+loadPayloadFVs env fvs ind name =
     concat [name ++ "->payload[" ++ show i ++ "] = " ++ 
             cgv env v ++ "; // " ++ v ++ "\n"
-            | (i,v) <- indexFrom 0 $ fvs ]
+            | (i,v) <- indexFrom ind $ fvs ]
 
 -- load atoms into payload starting at index ind
 loadPayloadAtoms env as ind name =
