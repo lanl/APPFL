@@ -35,6 +35,13 @@ build input = buildit input True
 toc :: String -> IO()
 toc input = buildit input False
 
+mhs2stg :: String -> IO()
+mhs2stg input =  let update x = x {optInput = Just input, optDumpSTG = True}
+                      -- assumes we are in codegen dir
+                     buildDir = "../build"
+                 in compile (update defaultOptions) (buildDir ++ "/etc") (buildDir ++ "/lib") (buildDir ++ "/include") False
+
+
 buildit :: String -> Bool -> IO()
 buildit input gcc = let update x = x {optInput = Just input}
                         -- assumes we are in codegen dir
