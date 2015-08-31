@@ -16,7 +16,8 @@ module ADT (
   makeIntTyCon,
   makeDoubleTyCon,
   boxMTypes,
-  isBoxed
+  isBoxed,
+  unfoldr
 ) where
 
 import AST(Con,BuiltinType(..),Obj)
@@ -90,6 +91,10 @@ data Monotype = MVar TyVar
               | MPhony
                 deriving(Eq,Ord)
 
+-- m is rightmost element
+unfoldr (MFun m1 m2) = let (m,ms) = unfoldr m2 in (m, m1:ms)
+unfoldr m = (m,[])
+
 isBoxed :: Monotype -> Bool
 isBoxed m = case m of
   MVar{}     -> True -- polymorphic
@@ -146,8 +151,6 @@ getDataCons :: TyCon -> [DataCon]
 getDataCons (TyCon _ _ _ cons) = cons
 
 
-
-precalate s ss = concatMap (s++) ss
 
 instance Show Polytype where
     show (PPoly [] m) = show m

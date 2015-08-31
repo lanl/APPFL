@@ -79,8 +79,12 @@ struct _Obj {
   PtrOrLiteral payload[];
 };
 
+// see README
 typedef struct {
   int payloadSize;
+  int boxedCount;
+  int unboxedCount;
+  char permString[64];  // this is just for e.g. displaying the heap
 } LayoutInfo;
 
 typedef struct {

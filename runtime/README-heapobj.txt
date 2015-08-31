@@ -76,7 +76,7 @@ struct _Obj {
   InfoTab *infoPtr;         // canonical location of ObjType field
   ObjType objType;          // to distinguish PAP, FUN, BLACKHOLE, INDIRECT
   int argCount;             // for PAP, how many args already applied to?
-  PtrOrLiteral payload[16]; // fixed for now
+  PtrOrLiteral payload[];   // variably sized
 };
 
 
@@ -102,20 +102,22 @@ For FUN the payload is the list of its lexically free variables,
 i.e. PtrOrLiterals to HOs, starting at payload[0].
 
           |                    | payload 
------------------------------------------------------------------------------
-| infoPtr | objType |          | free variables                             |
------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+| infoPtr | objType |          | boxed free variables | unboxed free variables |
+--------------------------------------------------------------------------------
 
 objType = FUN
 
 infoPtr->objType = FUN
 infoPtr->fvCount is number of free variables
+infoPtr->layoutInfo.boxedCount is number of boxed free variables
+infoPtr->layoutInfo.unboxedCount is number of unboxed free variables
 
 PAP
                     | payload
                     | [0..fvCount-1] |  [fvCount]  |
 -----------------------------------------------------------------------------
-| infoPtr | objType | free variables | layout info | args already applied   |
+| infoPtr | objType | bfvs  |  ubfvs | layout info | args already applied   |
 -----------------------------------------------------------------------------
 
 The PAP infoPtr points is its underlying FUN infoTab entry, so
@@ -124,25 +126,28 @@ objType = PAP
 
 infoPtr->objType = FUN
 infoPtr->fvCount = number of free variables 
+infoPtr->layoutInfo.boxedCount is number of boxed free variables
+infoPtr->layoutInfo.unboxedCount is number of unboxed free variables
 
-argCount = number of arguments already applied -- GOING AWAY!
-TODO:  this should be in payload[fvCount]
+argCount = number of arguments already applied -- GOING AWAY!--the info is in payload[fvCount]
 
 CON
                                | payload 
 -------------------------------------------------------------------------
-| infoPtr | objType |          | CON args                               |
+| infoPtr | objType |          | boxed args | unboxed args              |
 -------------------------------------------------------------------------
 
 infoPtr->conFields.arity = number of args 
 infoPtr->objType = CON
+infoPtr->layoutInfo.boxedCount is number of boxed ARGUMENTS
+infoPtr->layoutInfo.unboxedCount is number of unboxed ARGUMENTS
 
 
 THUNK
                                | payload 
------------------------------------------------------------------------------
-| infoPtr | objType |          | free variables                             |
------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+| infoPtr | objType |          | boxed free variables | unboxed free variables |
+--------------------------------------------------------------------------------
 
 Note that a THUNK must have a payload size of at least 1 so that it
 can become and INDIRECT.
@@ -151,6 +156,8 @@ objType = THUNK
 
 infoPtr->objType = THUNK
 infoPtr->fvCount = number of free variables
+infoPtr->layoutInfo.boxedCount is number of boxed free variables
+infoPtr->layoutInfo.unboxedCount is number of unboxed free variables
 
 BLACKHOLE
                                | payload 
@@ -165,6 +172,8 @@ objType = BLACKHOLE
 
 infoPtr->objType = THUNK
 infoPtr->fvCount = number of free variables
+infoPtr->layoutInfo.boxedCount is number of boxed free variables
+infoPtr->layoutInfo.unboxedCount is number of unboxed free variables
 
 INDIRECT
                                |       payload[0]         |
@@ -289,6 +298,72 @@ objType = FUNCONT infoPtr->objType = FUN payload[0] is the sole free var (the
 function to be applied), i.e. is the only root.  NOT CORRECT?  should be
 all other args not currently being evaluated?
 
+
+------------------------------------------------------------------------------
+InfoTab
+-------
+
+The interpretation of LayoutInfo varies by object type.
+TODO:  should it be in FUNfields/PAPfields etc.?
+
+FUN, PAP, THUNK:  boxedCount is number of boxed free variables
+
+typedef struct {
+  int payloadSize;
+  int boxedCount;
+  int unboxedCount;
+} LayoutInfo;
+
+typedef struct {
+  int arity;
+  // curry paper suggests that we need type info
+} FUNfields;
+
+typedef struct {
+} PAPfields;
+
+typedef struct {
+  int tag;
+  int arity;
+  char conName[64];
+} CONfields;
+
+typedef struct {
+} THUNKfields;
+
+typedef struct {
+} UPDCONTfields;
+
+typedef struct {
+} CASECONTfields;
+
+typedef struct {
+} CALLCONTfields;
+
+typedef struct {
+} FUNCONTfields;
+
+struct _InfoTab {
+  char name[32];  // for debugging
+  int fvCount;    // lexically determined, should be in layout
+  CmmFnPtr entryCode; 
+  ObjType objType; // kind of object, tag for union
+  LayoutInfo layoutInfo;
+  union {
+    FUNfields funFields;
+    PAPfields papFields;
+    CONfields conFields;
+    THUNKfields thunkFields;
+    UPDCONTfields updcontFields;
+    CASECONTfields casecontFields;
+    CALLCONTfields callcontFields;
+    FUNCONTfields funcontFields;
+  };
+};
+
+
+
+------------------------------------------------------------------------------
 
 Roots for Garbage Collection
 

@@ -29,6 +29,7 @@ import           Parser
 import           Rename
 import           SetFVs
 import           HMStg
+import           OrderFVsArgs
 import           Data.List
 import           System.IO
 
@@ -100,8 +101,10 @@ conmaper inp = let (tycons, objs) = infotaber inp
 typechecker inp = let (tycons, objs) = conmaper inp
                   in (tycons, hmstg objs)
 
+orderfvsargs inp = let (tycons, objs) = typechecker inp
+                   in (tycons, orderFVsArgs objs)
 
-knowncaller inp  = let (tycons, objs) = typechecker inp
+knowncaller inp  = let (tycons, objs) = orderfvsargs inp --typechecker inp
                    in (tycons, propKnownCalls objs)
 
 heapchecker inp = let (tycons, objs) = knowncaller inp

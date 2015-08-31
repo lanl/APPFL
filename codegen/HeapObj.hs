@@ -36,6 +36,7 @@ import AST
 import InfoTab
 import Prelude
 import Util
+import Data.List (intercalate)
 
 -- // two = CON(I 2)
 -- Obj sho_two = 
@@ -54,7 +55,7 @@ shoNames = map (\o -> showITType o ++ "_" ++ (name . omd) o)
 showSHOs :: [Obj InfoTab] -> (String,String)
 showSHOs objs = 
     let (forwards, defs) = unzip $ map showSHO objs
-    in (concat forwards, concat defs)
+    in (concat forwards, intercalate "\n" defs)
     
 
 -- maybe should use "static" instead of "extern"
@@ -70,7 +71,7 @@ showHO it =
     "  .ident     = " ++ show (name it)      ++ ",\n" ++
 --    "  .payloadSize = 32,\n" ++
        showSHOspec it ++
-    "  };\n"
+    "};\n"
 
 showSHOspec it@(Fun {}) = payloads []
 
@@ -78,7 +79,7 @@ showSHOspec it@(Fun {}) = payloads []
 --                          (payloads $ args it)
 showSHOspec it@(Pap {}) = payloads []
 
-showSHOspec it@(Con {}) = payloads $ args it
+showSHOspec it@(Con {}) = payloads $ map fst $ args it
 
 -- need at least a payload of length 1 for thunks
 showSHOspec it@(Thunk {}) = indent 2 ".payload = {0}\n"
@@ -87,8 +88,8 @@ showSHOspec it@(Blackhole {}) = indent 2 ".payload = {0}\n"
 
 showSHOspec it = ""
 
-payloads as = let ps = indent 4 $ concatMap payload as
-              in  indent 2 ".payload = {\n" ++ ps ++ "},\n"
+payloads as = let ps = indent 2 $ concatMap payload as
+              in  indent 2 (".payload = {\n" ++ ps ++ "},\n")
 
 payload (LitI i) = 
     "{.argType = INT, .i = " ++ show i ++ "},\n"

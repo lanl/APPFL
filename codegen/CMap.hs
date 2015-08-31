@@ -17,12 +17,15 @@ module CMap
   luTCon,
   luConTag,
   isBoxedTCon,
-  CMap
+  CMap,
+  instantiateDataConAt 
 ) where
 
+import Util
 import ADT
 import PPrint
 import qualified Data.Map as Map
+import BU(apply)
 import Data.Maybe (fromJust)
 import Data.List ((\\), find)
 import Data.Char (isNumber)
@@ -115,7 +118,22 @@ luConTag c cmap | isBuiltInType c = c
                   in case lookup c tab of
                       Just n -> show n
                       Nothing -> error $ "Tag lookup failing in CMap for " ++ c
-                      
+
+-- given a constructor map, data constructor, and list of monotypes to be
+-- substituted for the arguments of the type constructor corresponding to
+-- the data constructor, return the monotype arguments of the data constructor
+-- as a result of the substitution
+instantiateDataConAt c cmap subms =
+    let TyCon _ tcon tvs dcs = luTCon c cmap
+        -- get data constructor definition C [Monotype]
+        ms = case [ ms | DataCon c' ms <- dcs, c == c' ] of
+               [ms] -> ms
+               _ -> error $ "butAlt: not finding " ++ c ++ " in " ++ show dcs ++
+                    " for TyCon: " ++ tcon ++
+                    "\nCMap:\n" ++ show cmap
+        -- instantiate the Monotypes
+        subst = Map.fromList $ zzip tvs subms
+    in apply subst ms
 
 isInt :: String -> Bool
 isInt = and . (map isNumber)
@@ -135,8 +153,6 @@ getBuiltInType c
   | isInt c   = makeIntTyCon c 
   | otherwise = error "builtin TyCon not found!"
       
-
-
 instance Show CMap where
   show = show.pprint
 

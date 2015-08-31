@@ -12,7 +12,8 @@ module InfoTab(
   setITs,
   showITs,
   showITType,
-  showObjType
+  showObjType,
+  show
 ) where
 
 import Prelude
@@ -43,6 +44,8 @@ data InfoTab =
       ctyp :: Polytype,
       name :: String,
       fvs :: [(Var,Monotype)],
+      bfvc :: Int,  -- boxed FV count     
+      ufvc :: Int,  -- unboxed FV count
       truefvs :: [Var],
       entryCode :: String,
       arity :: Int}      
@@ -51,18 +54,28 @@ data InfoTab =
       ctyp :: Polytype,
       name :: String,
       fvs :: [(Var,Monotype)],
+      bfvc :: Int,  -- boxed FV count     
+      ufvc :: Int,  -- unboxed FV count
       truefvs :: [Var],
       entryCode :: String,
-      args     :: [Atom],
+      args     :: [(Atom,Monotype)],
+      bargc :: Int,  -- boxed initial arg count     
+      uargc :: Int,  -- unboxed initial arg count
+      argPerm :: [Int], -- map from notional pos to actual pos
       knownCall :: Maybe InfoTab} -- of the FUN
   | Con { 
       typ :: Monotype,
       ctyp :: Polytype,
       name :: String,
       fvs :: [(Var,Monotype)],
+      bfvc :: Int,  -- boxed FV count - not needed for Con
+      ufvc :: Int,  -- unboxed FV count - not needed for Con
       truefvs :: [Var],
       entryCode :: String,
-      args :: [Atom],
+      args :: [(Atom,Monotype)],
+      bargc :: Int,  -- boxed arg count     
+      uargc :: Int,  -- unboxed arg count
+      argPerm :: [Int], -- map from notional pos to actual pos
       arity :: Int,
       con :: String, -- actual constructor name, not object name
       cmap :: CMap }
@@ -71,25 +84,33 @@ data InfoTab =
       ctyp :: Polytype,
       name :: String,
       fvs :: [(Var,Monotype)],
+      bfvc :: Int,  -- boxed FV count     
+      ufvc :: Int,  -- unboxed FV count
       truefvs :: [Var],
       entryCode :: String }
   | Blackhole {
       typ :: Monotype,
       ctyp :: Polytype,
       name :: String,
-      fvs :: [(Var,Monotype)],
+      fvs :: [(Var,Monotype)],  -- why is this here?
+      bfvc :: Int,  -- boxed FV count     
+      ufvc :: Int,  -- unboxed FV count
       truefvs :: [Var],
       entryCode :: String }
   | ITAtom { 
       typ :: Monotype,
       ctyp :: Polytype,
       fvs :: [(Var,Monotype)],
+      bfvc :: Int,  -- boxed FV count     
+      ufvc :: Int,  -- unboxed FV count
       truefvs :: [Var],
       noHeapAlloc :: Bool }
   | ITFCall { 
       typ :: Monotype,
       ctyp :: Polytype,
       fvs :: [(Var,Monotype)],
+      bfvc :: Int,  -- boxed FV count     
+      ufvc :: Int,  -- unboxed FV count
       truefvs :: [Var],
       noHeapAlloc :: Bool,
       knownCall :: Maybe InfoTab } -- of the FUN
@@ -97,31 +118,49 @@ data InfoTab =
       typ :: Monotype,
       ctyp :: Polytype,
       fvs :: [(Var,Monotype)], 
+      bfvc :: Int,  -- boxed FV count     
+      ufvc :: Int,  -- unboxed FV count
       truefvs :: [Var],
       noHeapAlloc :: Bool }
   | ITLet { 
       typ :: Monotype,
       ctyp :: Polytype,
       fvs :: [(Var,Monotype)],
+      bfvc :: Int,  -- boxed FV count     
+      ufvc :: Int,  -- unboxed FV count
       truefvs :: [Var],
       noHeapAlloc :: Bool }
   | ITCase { 
       typ :: Monotype,
       ctyp :: Polytype,
       fvs :: [(Var,Monotype)],
+      bfvc :: Int,  -- boxed FV count     
+      ufvc :: Int,  -- unboxed FV count
       truefvs :: [Var],
       noHeapAlloc :: Bool,
       cmap :: CMap}
-  | ITAlt { 
+  | ITACon { 
       typ :: Monotype,
       ctyp :: Polytype,
       fvs :: [(Var,Monotype)],
+      bfvc :: Int,  -- boxed FV count     
+      ufvc :: Int,  -- unboxed FV count
+      truefvs :: [Var],
+      cmap :: CMap }
+  | ITADef { 
+      typ :: Monotype,
+      ctyp :: Polytype,
+      fvs :: [(Var,Monotype)],
+      bfvc :: Int,  -- boxed FV count     
+      ufvc :: Int,  -- unboxed FV count
       truefvs :: [Var],
       cmap :: CMap }
   | ITAlts { 
       typ :: Monotype,
       ctyp :: Polytype,
       fvs :: [(Var,Monotype)],
+      bfvc :: Int,  -- boxed FV count     
+      ufvc :: Int,  -- unboxed FV count
       truefvs :: [Var],
       name :: String,         -- for C infotab
       entryCode :: String }   -- for C infotab
@@ -226,6 +265,8 @@ instance MakeIT (Obj ([Var],[Var])) where
         Fun { arity = length vs,
               name = n,
               fvs = zip fvs $ repeat typUndef,
+              bfvc = -1,
+              ufvc = -1,
               truefvs = truefvs,
               typ = typUndef,
               ctyp = ctypUndef,
@@ -234,9 +275,14 @@ instance MakeIT (Obj ([Var],[Var])) where
             }
 
     makeIT o@(PAP (fvs,truefvs) f as n) =
-        Pap { args = projectAtoms as,
+        Pap { args = zip (projectAtoms as) $ repeat typUndef,
+              bargc = -1,
+              uargc = -1,
               name = n,
               fvs = zip fvs $ repeat typUndef,
+              bfvc = -1,
+              ufvc = -1,
+              argPerm = [],
               truefvs = truefvs,
               typ = typUndef,
               ctyp = ctypUndef,
@@ -248,20 +294,28 @@ instance MakeIT (Obj ([Var],[Var])) where
     makeIT o@(CON (fvs,truefvs) c as n) =
         Con { con = c,
               arity = length as,
-              args = projectAtoms as,
+              args = zip (projectAtoms as) $ repeat typUndef,
+              bargc = -1,
+              uargc = -1,
+              argPerm = [],
               name = n,
               fvs = zip fvs $ repeat typUndef,
+              bfvc = -1,
+              ufvc = -1,
               truefvs = truefvs,
               typ = typUndef,
               ctyp = ctypUndef,
     --          entryCode = showITType o ++ "_" ++ n
               entryCode = "stg_constructorcall",
-              cmap = error "ADef cmap undefined"
+              -- cmap = error "Con cmap undefined in InfoTab.hs"
+              cmap = Map.empty
             }
 
     makeIT o@(THUNK (fvs,truefvs) e n) =
         Thunk { name = n,
                 fvs = zip fvs $ repeat typUndef,
+                bfvc = -1,
+                ufvc = -1,
                 truefvs = truefvs,
                 typ = typUndef,
                 ctyp = ctypUndef,
@@ -274,6 +328,8 @@ instance MakeIT (Obj ([Var],[Var])) where
                     typ = typUndef,
                     ctyp = ctypUndef,
                     fvs = zip fvs $ repeat typUndef,
+                    bfvc = -1,
+                    ufvc = -1,
                     truefvs = truefvs,
     --                entryCode = showITType o ++ "_" ++ n
                     entryCode = "stg_error"
@@ -282,6 +338,8 @@ instance MakeIT (Obj ([Var],[Var])) where
 instance MakeIT (Expr ([Var],[Var])) where
     makeIT ELet{emd = (fvs,truefvs)} = 
         ITLet {fvs = zip fvs $ repeat typUndef, 
+               bfvc = -1,
+               ufvc = -1,
                truefvs = truefvs, 
                typ = typUndef, 
                ctyp = ctypUndef, 
@@ -289,6 +347,8 @@ instance MakeIT (Expr ([Var],[Var])) where
 
     makeIT ECase{emd = (fvs,truefvs)} = 
         ITCase{fvs = zip fvs $ repeat typUndef, 
+               bfvc = -1,
+               ufvc = -1,
                truefvs = truefvs, 
                typ = typUndef, 
                ctyp = ctypUndef,
@@ -297,6 +357,8 @@ instance MakeIT (Expr ([Var],[Var])) where
 
     makeIT EAtom{emd = (fvs,truefvs)} = 
         ITAtom{fvs = zip fvs $ repeat typUndef, 
+               bfvc = -1,
+               ufvc = -1,
                truefvs = truefvs, 
                typ = typUndef, 
                ctyp = ctypUndef, 
@@ -304,6 +366,8 @@ instance MakeIT (Expr ([Var],[Var])) where
 
     makeIT EFCall{emd = (fvs,truefvs)} = 
         ITFCall{fvs = zip fvs $ repeat typUndef, 
+                bfvc = -1,
+                ufvc = -1,
                 truefvs = truefvs, 
                 typ = typUndef, 
                 ctyp = ctypUndef, 
@@ -312,6 +376,8 @@ instance MakeIT (Expr ([Var],[Var])) where
 
     makeIT EPrimop{emd = (fvs,truefvs)} = 
         ITPrimop{fvs = zip fvs $ repeat typUndef, 
+                 bfvc = -1,
+                 ufvc = -1,
                  truefvs = truefvs, 
                  typ = typUndef, 
                  ctyp = ctypUndef, 
@@ -320,6 +386,8 @@ instance MakeIT (Expr ([Var],[Var])) where
 instance MakeIT (Alts ([Var],[Var])) where
     makeIT Alts{altsmd = (fvs,truefvs), aname} = 
         ITAlts {fvs = zip fvs $ repeat typUndef, 
+                bfvc = -1,
+                ufvc = -1,
                 truefvs = truefvs, 
                 typ = typUndef,
                 ctyp = ctypUndef,
@@ -328,18 +396,23 @@ instance MakeIT (Alts ([Var],[Var])) where
 
 instance MakeIT (Alt ([Var],[Var])) where
     makeIT ACon{amd = (fvs,truefvs)} = 
-        ITAlt{fvs = zip fvs $ repeat typUndef, 
-              truefvs = truefvs, 
-              typ = typUndef,
-              ctyp = ctypUndef,
-              cmap = Map.empty}
+        ITACon{fvs = zip fvs $ repeat typUndef, 
+               bfvc = -1,
+               ufvc = -1,
+               truefvs = truefvs, 
+               typ = typUndef,
+               ctyp = ctypUndef,
+               cmap = Map.empty}
 
     makeIT ADef{amd = (fvs,truefvs)} = 
-        ITAlt{fvs = zip fvs $ repeat typUndef, 
-              truefvs = truefvs, 
-              typ = typUndef,
-              ctyp = ctypUndef,
-              cmap = error "ADef cmap set undefined in InfoTab.hs"}
+        ITADef{fvs = zip fvs $ repeat typUndef, 
+               bfvc = -1,
+               ufvc = -1,
+               truefvs = truefvs, 
+               typ = typUndef,
+               ctyp = ctypUndef,
+               -- cmap = error "ADef cmap set undefined in InfoTab.hs"}
+               cmap = Map.empty}
 
 
 showObjType Fun {} = "FUN"
@@ -371,30 +444,47 @@ showITs os = concatMap showIT $ itsOf os
 showIT it@(Fun {}) =
     "InfoTab it_" ++ name it ++ " = \n" ++
     "  { .name                = " ++ show (name it) ++ ",\n" ++
+    "    // fvs " ++ show (fvs it) ++ "\n" ++
     "    .fvCount             = " ++ show (length $ fvs it) ++ ",\n" ++
     "    .entryCode           = &" ++ entryCode it ++ ",\n" ++
     "    .objType             = FUN,\n" ++
-    "    .layoutInfo.payloadSize = " ++ show (length $ fvs it) ++ ",\n" ++
+    "    .layoutInfo.payloadSize  = " ++ show (length $ fvs it) ++ ",\n" ++
+--    "    // argPerm = " ++ show (argPerm it) ++ "\n" ++
+    "    .layoutInfo.boxedCount   = " ++ show (bfvc it) ++ ",\n" ++
+    "    .layoutInfo.unboxedCount = " ++ show (ufvc it) ++ ",\n" ++
+--    "    .layoutInfo.permString   = \"" ++ concatMap show (argPerm it) ++ "\",\n" ++
     "    .funFields.arity     = " ++ show (arity it) ++ ",\n" ++
     "  };\n"
         
 showIT it@(Pap {}) =
     "InfoTab it_" ++ name it ++ " = \n" ++
     "  { .name                = " ++ show (name it) ++ ",\n" ++
+    "    // fvs " ++ show (fvs it) ++ "\n" ++
     "    .fvCount             = " ++ show (length $ fvs it) ++ ",\n" ++
     "    .entryCode           = &" ++ entryCode it ++ ",\n" ++
     "    .objType             = PAP,\n" ++
     -- payloadSize handled specially for PAP
-    "    .layoutInfo.payloadSize = " ++ show (length $ fvs it) ++ ",\n" ++
+    "    .layoutInfo.payloadSize  = " ++ show (length (fvs it) + 
+                                               length (args it) +
+                                               1) ++ ",\n" ++
+--    "    // argPerm = " ++ show (argPerm it) ++ "\n" ++
+    "    .layoutInfo.boxedCount   = " ++ show (bfvc it) ++ ",\n" ++
+    "    .layoutInfo.unboxedCount = " ++ show (ufvc it) ++ ",\n" ++
+--    "    .layoutInfo.permString   = \"" ++ concatMap show (argPerm it) ++ "\",\n" ++
     "  };\n"
         
 showIT it@(Con {}) =
     "InfoTab it_" ++ name it ++ " = \n" ++
     "  { .name                = " ++ show (name it) ++ ",\n" ++
+    "    // fvs " ++ show (fvs it) ++ "\n" ++
     "    .fvCount             = " ++ show (length $ fvs it) ++ ",\n" ++
     "    .entryCode           = &" ++ entryCode it ++ ",\n" ++
     "    .objType             = CON,\n" ++
-    "    .layoutInfo.payloadSize = " ++ show (arity it) ++ ",\n" ++
+    "    .layoutInfo.payloadSize  = " ++ show (arity it) ++ ",\n" ++
+    "    // argPerm = " ++ show (argPerm it) ++ "\n" ++
+    "    .layoutInfo.boxedCount   = " ++ show (bargc it) ++ ",\n" ++
+    "    .layoutInfo.unboxedCount = " ++ show (uargc it) ++ ",\n" ++
+    "    .layoutInfo.permString   = \"" ++ concatMap show (argPerm it) ++ "\",\n" ++
     "    .conFields.arity     = " ++ show (arity it) ++ ",\n" ++
     "    .conFields.tag       = " ++ luConTag (con it) (cmap it) ++ ",\n" ++
     "    .conFields.conName   = " ++ show (con it) ++ ",\n" ++
@@ -403,28 +493,43 @@ showIT it@(Con {}) =
 showIT it@(Thunk {}) =
     "InfoTab it_" ++ name it ++ " = \n" ++
     "  { .name                = " ++ show (name it) ++ ",\n" ++
+    "    // fvs " ++ show (fvs it) ++ "\n" ++
     "    .fvCount             = " ++ show (length $ fvs it) ++ ",\n" ++
     "    .entryCode           = &" ++ entryCode it ++ ",\n" ++
     "    .objType             = THUNK,\n" ++
-    "    .layoutInfo.payloadSize = " ++ show (max 1 (length $ fvs it)) ++ ",\n" ++
+    "    .layoutInfo.payloadSize  = " ++ show (max 1 (length $ fvs it)) ++ ",\n" ++
+--    "    // argPerm = " ++ show (argPerm it) ++ "\n" ++
+    "    .layoutInfo.boxedCount   = " ++ show (bfvc it) ++ ",\n" ++
+    "    .layoutInfo.unboxedCount = " ++ show (ufvc it) ++ ",\n" ++
+--    "    .layoutInfo.permString   = \"" ++ concatMap show (argPerm it) ++ "\",\n" ++
     "  };\n"
         
 showIT it@(Blackhole {}) = 
     "InfoTab it_" ++ name it ++ " = \n" ++
     "  { .name                = " ++ show (name it) ++ ",\n" ++
+    "    // fvs " ++ show (fvs it) ++ "\n" ++
     "    .fvCount             = " ++ show (length $ fvs it) ++ ",\n" ++
     "    .entryCode           = &" ++ entryCode it ++ ",\n" ++
     "    .objType             = BLACKHOLE,\n" ++
-    "    .layoutInfo.payloadSize = 0,\n" ++ 
+    "    .layoutInfo.payloadSize  = 0,\n" ++ 
+--    "    // argPerm = " ++ show (argPerm it) ++ "\n" ++
+    "    .layoutInfo.boxedCount   = 0,\n" ++ 
+    "    .layoutInfo.unboxedCount = 0,\n" ++ 
+--    "    .layoutInfo.permString   = \"" ++ concatMap show (argPerm it) ++ "\",\n" ++
     "  };\n"
 
 showIT it@(ITAlts{}) =
     "InfoTab it_" ++ name it ++ " = \n" ++
     "  { .name                = " ++ show (name it) ++ ",\n" ++
+    "    // fvs " ++ show (fvs it) ++ "\n" ++
     "    .fvCount             = " ++ show (length $ fvs it) ++ ",\n" ++
     "    .entryCode           = &" ++ entryCode it ++ ",\n" ++
     "    .objType             = CASECONT,\n" ++
     "    .layoutInfo.payloadSize = " ++ show (length $ fvs it) ++ ",\n" ++
+--    "    // argPerm = " ++ show (argPerm it) ++ "\n" ++
+    "    .layoutInfo.boxedCount   = " ++ show (bfvc it) ++ ",\n" ++
+    "    .layoutInfo.unboxedCount = " ++ show (ufvc it) ++ ",\n" ++
+--    "    .layoutInfo.permString   = \"" ++ concatMap show (argPerm it) ++ "\",\n" ++
     "  };\n"
 
 showIT _ = ""
@@ -534,10 +639,18 @@ instance PPrint InfoTab where
              ITCase{..} ->
                (text "ITCase", makeHADoc noHeapAlloc $+$
                                frvarsDoc fvs truefvs)
-             ITAlt{..} ->
-               (text "ITAlt", frvarsDoc fvs truefvs)
+             ITACon{..} ->
+               (text "ITACon", frvarsDoc fvs truefvs)
+             ITADef{..} ->
+               (text "ITADef", frvarsDoc fvs truefvs)
              ITAlts{..} ->
                (text "ITAlts", makeName name $+$
                                frvarsDoc fvs truefvs)
              _ -> (text "Other InfoTab",empty)
   
+
+instance Show InfoTab where
+    show it = show (typ it)
+--    show it = show (ctyp it)
+--    show it = show (truefvs it)
+

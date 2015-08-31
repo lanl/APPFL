@@ -160,11 +160,6 @@ cgos :: Env -> [Obj InfoTab] -> State Int [(String, String)]
 cgos env = concatMapM (cgo env)
 
 
--- duplicated from HMSTG.hs
--- m is rightmost element, i.e. result type
-unfoldr (MFun m1 m2) = let (m,ms) = unfoldr m2 in (m, m1:ms)
-unfoldr m = (m,[])
-
 -- given function type and formal parameter list, return the args
 -- and types sorted pointer first
 permArgs vs ft =
@@ -177,6 +172,7 @@ permArgs vs ft =
               in case isBoxed t of
                    True  -> ((v:bvs,uvs),(t:bts,uts))
                    False -> ((bvs,v:uvs),(bts,t:uts))
+          part x y = error "CodeGen.part length mismatch"
 
 cgo :: Env -> Obj InfoTab -> State Int [(String, String)]
 cgo env o@(FUN it vs e name) =
@@ -405,7 +401,10 @@ cgalts env (Alts it alts name) boxed =
       return ("", (forward, fun) : concat funcss)
 
 cgalt env switch scrutName (ACon it c vs e) =
-    let eenv = zip vs (map (AC $ scrutName ++ ".op") [0..])
+    let DataCon c' ms = luDCon c (cmap it)
+        (_,_,perm) = partPerm isBoxed ms
+        -- eenv = zip vs (map (AC $ scrutName ++ ".op") [0..])
+        eenv = zzip vs (map (AC $ scrutName ++ ".op") perm)
         env' = eenv ++ env
     in do
       (inline, func) <- cge env' e
@@ -457,10 +456,11 @@ bho env (PAP it f as name) =
                  loadPayloadAtoms env (projectAtoms as) (length $ fvs it) name)
 
 -- CON is special in that the payload contains not just FVs but literals
--- as well, and we need their types.  Three ways this could be done:
+-- as well, and we need their types.  This could be done:
 -- 0.  The right way would be to have Atom be typed (major TODO)
 -- 1.  Use HMStg.luTCon using cmap it, typ it, and c, subsequent gyrations
 -- 2.  Use fvs type information
+-- 3.  Embedding the Atoms into typed expressions
 bho env (CON it c as name) = 
     let ps = [name ++ "->payload[" ++ show i ++ "] = " ++ 
                        cga env a ++ "; // " ++ showa a ++ "\n"
