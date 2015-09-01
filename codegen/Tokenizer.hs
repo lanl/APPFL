@@ -136,7 +136,7 @@ primopTable =
   ]
 
 specials =
-  [  "{", "}", "(", ")", ";", "|", "=", "\\", "::", "->"]
+  [  "{", "}", "(", ")", ";", "|", "=", "->"]
 
 reserveds =
   [
@@ -233,7 +233,7 @@ tokenize ls = aux (None (0,0)) (0,0) (stripComments ls) []
     -- match on valid identifier symbols
       | isIdSym x =
         case st of
-         None {}     -> aux (StrTok [x] (l,c)) (l,c+1) xs toks
+         None {} -> aux (StrTok [x] (l,c)) (l,c+1) xs toks
          StrTok {tS} -> aux st{tS = x:tS} (l,c+1) xs toks
          NumTok _ _  -> tokErr st $
                         "expected digit, '.', or number-terminating character. Got " ++ show x

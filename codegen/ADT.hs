@@ -177,8 +177,8 @@ instance Unparse Monotype where
   unparse (MVar c) = text c
   unparse (MFun m1@MFun{} m2) = parens (unparse m1) <+> arw <+> unparse m2
   unparse (MFun m1 m2) = unparse m1 <+> arw <+> unparse m2
-  unparse (MCon _ c ms) = (if null ms then (empty <>) else parens)
-                        (text c <+> hsep (map unparse ms))
+  unparse (MCon b c ms) = (if null ms then (empty <>) else parens)
+                          (text c <+> hsep (map unparse ms))
   unparse (MPrim p) = case p of
     UBInt    -> text "Int#"
     UBDouble -> text "Double#"
@@ -195,24 +195,30 @@ instance Unparse TyCon where
   unparse (TyCon boxed name vars dCons) =
     let
       (d:ds) = dCons
-      sepr = bar <> text " "
-      lh = 
+      lh =
+        text "data" <+>
         (if boxed then empty else text "unboxed") <+>
         text name <+> hsep (map text vars) <+> equals
 
-      ind = length $ show lh  
-      rh =
-        unparse d $$
-        nest ind (vcat $ prepunctuate sepr $ map unparse ds)
-    in lh <+> rh
+      sepr = bar <> text " "
+      ind = (length $ show lh) + 1
+      rh = nest ind
+           (unparse d $$
+            nest (-2) (vcat $ prepunctuate sepr $ map unparse ds))
+    in lh $$ rh
+       
+instance Unparse [TyCon] where
+  unparse tycons = vcat $ postpunctuate semi $ map unparse tycons
 
 instance PPrint TyCon where
   pprint = unparse
 
 instance Unparse a => Unparse (Def a) where
-  unparse (DataDef t) = text "data" <+> unparse t <> semi
-  unparse (ObjDef o) = unparse o <> semi
+  unparse (DataDef t) =  unparse t
+  unparse (ObjDef o) = unparse o
 
+instance Unparse a => Unparse [Def a] where
+  unparse defs = vcat $ postpunctuate semi $ map unparse defs
 
 instance PPrint Monotype where
   pprint m = case m of

@@ -248,9 +248,12 @@ void showStgObjRecPretty(Obj *p) {
 	    }
   }
   if (strcmp(it.name, p->ident)) {
-    fprintf(stderr, "mismatch in infotab and object names \"%s\" != \"%s\"\n",
-	    it.name, p->ident);
-    exit(0);
+	  if(p->objType != PAP) {
+        fprintf(stderr, "mismatch in infotab and object names \"%s\" != \"%s\"\n",
+	      it.name, p->ident);
+        exit(0);
+
+	  }
   }
 
   switch (p->objType) {

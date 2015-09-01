@@ -1,0 +1,8 @@
+
+l1 = Cons 1 (Cons 1 Nil)
+l2 = Cons 2 (Cons 2 Nil)
+
+z1 = zipWith addInt l1 l2
+output = seqList z1 z1
+
+main = eqInt (sum output) 6

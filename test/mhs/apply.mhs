@@ -1,0 +1,1 @@
+main = apply const True 22

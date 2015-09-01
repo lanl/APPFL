@@ -1,0 +1,4 @@
+output = Cons 1 (Cons 0 Nil) 
+
+-- test head
+main = eqInt (head output) 1

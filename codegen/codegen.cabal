@@ -5,7 +5,7 @@ build-type:     Simple
 author:         LANL
                 
 executable stgc
-  hs-source-dirs:  .
+  hs-source-dirs:  .,MHS
   main-is:         stgc.hs
   ghc-options:     -W -fno-warn-unused-binds -fno-warn-unused-matches -fno-warn-unused-imports
   build-depends:   
@@ -15,10 +15,11 @@ executable stgc
                    , pretty >= 1.1.1.1
                    , process
                    , split
+                   , ghc-prim
   
 test-suite test
   type:            exitcode-stdio-1.0
-  hs-source-dirs:  .,tests
+  hs-source-dirs:  .,MHS,tests
   main-is:         test.hs
   ghc-options:     -W -fno-warn-unused-binds -fno-warn-unused-matches -fno-warn-unused-imports -rtsopts
   build-depends:   HUnit

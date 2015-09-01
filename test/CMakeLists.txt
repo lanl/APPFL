@@ -30,3 +30,4 @@ project(stgc_test)
   endforeach(test)
 
   add_subdirectory(error)
+  add_subdirectory(mhs)

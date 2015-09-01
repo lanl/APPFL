@@ -1,0 +1,10 @@
+-- fibs = 1 : 1 : zipWith (+) fibs (tail fibs)
+
+fibs = Cons 1 (Cons 1 (zipWith addInt fibs (tail fibs)))
+
+fibs5 = take 5 fibs
+output = seqList fibs5 fibs5
+
+-- test sum
+hout = sum output
+main = eqInt hout 12 

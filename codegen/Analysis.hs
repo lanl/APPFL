@@ -6,7 +6,9 @@
 module Analysis
 (exhaustCases,
  propKnownCalls,
- setHeapAllocs)
+ setHeapAllocs,
+ defAlt,
+ )
 where
 
 import ADT
@@ -322,6 +324,7 @@ defAlt name =
   in ADef {amd = mdErr "ADef",
            av  = "x",
            ae  = elet}
+
 
 
 

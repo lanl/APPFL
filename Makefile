@@ -11,6 +11,7 @@ setup: FORCE
 	@((test -d $(build_dir)/bin) || (mkdir $(build_dir)/bin))
 	@((test -d $(build_dir)/etc) || (mkdir $(build_dir)/etc))
 	@(cp -f codegen/Prelude.stg $(build_dir)/etc/)
+	@(cp -f codegen/Prelude.mhs $(build_dir)/etc/)
 
 codegen_: FORCE
 	@(cd codegen && cabal build)
@@ -35,6 +36,7 @@ clean: FORCE
 	@(cd codegen && cabal clean)
 	@(cd test && rm -f *.stg.c 2>/dev/null)
 	@(cd test/error && rm -f *.stg.c 2>/dev/null)
+	@(cd test/mhs && rm -f *.mhs.c 2>/dev/null)
 	@(rm -rf $(build_dir))
 
 FORCE:

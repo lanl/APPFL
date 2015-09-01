@@ -145,7 +145,7 @@ cgMain v = let top = "int main (int argc, char **argv) {\n" ++
                      "  initGc();\n" ++
                      "  CALL0_0(start);\n"
                bot = "  return 0;\n" ++ "}\n\n"
-  in if v then top ++ "  showStgHeap();\n  gc();\n" ++ bot else top ++ bot            
+  in if v then top ++ "  showStgHeap();\n  GC();\n" ++ bot else top ++ bot            
 
 registerSHOs objs = 
     ("void registerSHOs();",
@@ -173,6 +173,18 @@ permArgs vs ft =
                    True  -> ((v:bvs,uvs),(t:bts,uts))
                    False -> ((bvs,v:uvs),(bts,t:uts))
           part x y = error "CodeGen.part length mismatch"
+{-
+<<<<<<< HEAD
+          part x y = error "CodeGen.part length mismatch"
+=======
+          part [] (t:ts) = 
+                let (([],[]),(bts,uts)) = part [] ts 
+                in case isBoxed t of
+                   True  -> (([],[]),(t:bts,uts))
+                   False -> (([],[]),(bts,t:uts))  
+          part _ _ = error ("permArgs fallthrough  vs=" ++ show vs ++ " ft=" ++ show ft)
+>>>>>>> 433f021a73720e1207f70c3decf585b92c382f73
+-}
 
 cgo :: Env -> Obj InfoTab -> State Int [(String, String)]
 cgo env o@(FUN it vs e name) =
@@ -206,7 +218,7 @@ cgo env (CON it c as name) =
 
 cgo env o@(THUNK it e name) =
     do 
-      let env' = zip (map fst $ fvs it) (map FV [0..]) ++ env
+      let env' = zip (map fst $ fvs it) (map FV [1..]) ++ env
       (inline, funcs) <- cge env' e
       let forward = "FnPtr fun_" ++ name ++ "();"
       let func =
@@ -354,7 +366,7 @@ cge env (ECase _ e a@(Alts italts alts aname)) =
                else
                  "    // load payload with FVs " ++
                    intercalate " " (map fst $ fvs italts) ++ "\n") ++
-                 indent 2 (loadPayloadFVs env (map fst $ fvs italts) name)
+                 indent 2 (loadPayloadFVs env (map fst $ fvs italts) 0 name)
            scrut = if isBoxede e then
                        "  // boxed scrutinee\n" ++
                        "  STGEVAL(stgCurVal);\n"
@@ -448,11 +460,11 @@ buildHeapObj env o =
 
 bho :: [(String, RVal)] -> Obj InfoTab -> (Int, [Char])
 bho env (FUN it vs e name) = 
-    (length $ fvs it, loadPayloadFVs env (map fst $ fvs it) name)
+    (length $ fvs it, loadPayloadFVs env (map fst $ fvs it) 0 name)
 
 -- TODO: the size here should be based on the FUN rather than being maxPayload
 bho env (PAP it f as name) =
-    (maxPayload, loadPayloadFVs env (map fst $ fvs it) name ++ 
+    (maxPayload, loadPayloadFVs env (map fst $ fvs it) 0 name ++ 
                  loadPayloadAtoms env (projectAtoms as) (length $ fvs it) name)
 
 -- CON is special in that the payload contains not just FVs but literals
@@ -467,15 +479,16 @@ bho env (CON it c as name) =
                        | (i,a) <- indexFrom 0 (projectAtoms as) ]
     in (length ps, concat ps)
 
-bho env (THUNK it e name) =
-    (max 1 (length $ fvs it), loadPayloadFVs env (map fst $ fvs it) name)
+bho env (THUNK it e name) = 
+    let fv = fvs it
+    in (1 + (length fv), loadPayloadFVs env (map fst fv) 1 name)
     
 bho env (BLACKHOLE it name) = (1,"")
 
-loadPayloadFVs env fvs name =
+loadPayloadFVs env fvs ind name =
     concat [name ++ "->payload[" ++ show i ++ "] = " ++ 
             cgv env v ++ "; // " ++ v ++ "\n"
-            | (i,v) <- indexFrom 0 $ fvs ]
+            | (i,v) <- indexFrom ind $ fvs ]
 
 -- load atoms into payload starting at index ind
 loadPayloadAtoms env as ind name =

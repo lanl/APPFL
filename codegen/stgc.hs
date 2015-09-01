@@ -1,7 +1,5 @@
 {-# LANGUAGE NamedFieldPuns #-}
 
--------------------------- MODIFIED 6.30 - David ---------------------------
-
 import           Driver
 import           CMap
 import           Data.List
@@ -12,13 +10,15 @@ import           System.Environment
 import           System.Exit
 import           System.IO
 import           System.Process
+import           PPrint
+import           Control.Monad (when)
 
--- build a.out from stg and run it
+-- build a.out from stg/mhs and run it
 _eval :: String -> Bool -> IO()
 _eval input showerr = do
   build input
   let erStr = if showerr then "" else " &2>/dev/null"
-  system("./a.out"++erStr)
+  system("./a.out" ++ erStr)
   putStrLn ""
   return ()
 
@@ -27,13 +27,20 @@ eval i = _eval i True
 
 evalNoErr i = _eval i False
 
--- build a.out from stg
+-- build a.out from stg/mhs
 build :: String -> IO()
 build input = buildit input True
 
--- generate c code from stg
-stg2c :: String -> IO()
-stg2c input = buildit input False
+-- generate c code from stg/mhs
+toc :: String -> IO()
+toc input = buildit input False
+
+mhs2stg :: String -> IO()
+mhs2stg input =  let update x = x {optInput = Just input, optDumpSTG = True}
+                      -- assumes we are in codegen dir
+                     buildDir = "../build"
+                 in compile (update defaultOptions) (buildDir ++ "/etc") (buildDir ++ "/lib") (buildDir ++ "/include") False
+
 
 buildit :: String -> Bool -> IO()
 buildit input gcc = let update x = x {optInput = Just input}
@@ -47,7 +54,18 @@ stgc arg =
   do
     ifd <- openFile arg ReadMode
     source <- hGetContents ifd
-    let prog = codegener source True
+    let prog = codegener source True False
+    putStrLn prog
+    hClose ifd
+    writeFile "../runtime/userprog.c" prog
+
+-- generate c code from mhs (no prelude)
+mhsc :: String -> IO ()
+mhsc arg =
+  do
+    ifd <- openFile arg ReadMode
+    source <- hGetContents ifd
+    let prog = codegener source True True
     putStrLn prog
     hClose ifd
     writeFile "../runtime/userprog.c" prog
@@ -56,6 +74,7 @@ data Options = Options
     { optVerbose   :: Bool
     , optHelp      :: Bool
     , optDumpParse :: Bool
+    , optDumpSTG   :: Bool
     , optNoPrelude :: Bool
     , optOutput    :: Maybe FilePath
     , optInput     :: Maybe FilePath
@@ -65,6 +84,7 @@ defaultOptions       = Options
     { optVerbose     = False
     , optHelp        = False
     , optDumpParse   = False
+    , optDumpSTG     = False
     , optNoPrelude   = False
     , optInput       = Nothing
     , optOutput      = Just "a.out"
@@ -81,6 +101,9 @@ options =
     , Option ['d'] ["dump-parse"]
         (NoArg (\ opts -> opts { optDumpParse = True }))
         "parser output only"
+    , Option ['s'] ["dump-stg"]
+        (NoArg (\ opts -> opts {optDumpSTG = True}))
+        "dump parsed STG code"
     , Option ['p'] ["no-prelude"]
         (NoArg (\ opts -> opts { optNoPrelude = True }))
         "do not include prelude"
@@ -111,27 +134,35 @@ checkOpts (Options {optHelp, optInput}) =
                    _ -> return ()
 
 compile :: Options -> String -> String -> String -> Bool -> IO ()
-compile  (Options {optVerbose, optDumpParse, optNoPrelude, optOutput, optInput}) preludeDir rtLibDir rtIncDir gcc =
+compile  (Options {optVerbose, optDumpParse, optNoPrelude, optOutput, optInput, optDumpSTG}) preludeDir rtLibDir rtIncDir gcc =
   do
     let input = fromJust optInput
+        minihs = ".mhs" `isSuffixOf` input
+        preludeFN = (preludeDir ++ "/Prelude" ++ (if minihs then ".mhs" else ".stg"))
     ifd <- openFile input ReadMode
     src <- hGetContents ifd
-    pfd <- openFile (preludeDir ++ "/Prelude.stg") ReadMode
+    pfd <- openFile preludeFN ReadMode
     prelude <- hGetContents pfd
     let source = if optNoPrelude then src
                  else prelude ++ src
+        (ts,os) = let (t,o,_) =  mhsSTGer source             
+                 in if minihs then (t,o) else parser source
 
+    when optDumpSTG $
+      writeFile (input ++ ".dump.stg") (show $ unparse ts $+$ unparse os)
+        
     case optDumpParse of
       True  -> do 
-                 let (tycons, objs) = parser source
--------------------------- MODIFIED 6.30 - David ---------------------------
-                 writeFile (input ++ ".dump") ((show $ toCMap $ tycons) ++ (show objs))
---                 writeFile (input ++ ".dump") ((show $ buildConmaps $ tycons) ++ (show objs))
+                 let stgtext = (show $ toCMap $ ts) ++ (show os)                     
+                 writeFile (input ++ ".dump") stgtext
+                 
       False -> do
                  let coutput = input ++ ".c"
-                 let flags = " -g -std=gnu99 -L" ++ rtLibDir ++ " -I" ++ rtIncDir ++ " -lruntime"
-                 writeFile coutput (codegener source optVerbose)
-                 if gcc then system ("gcc " ++ coutput ++ " -o " ++ (fromJust optOutput) ++ flags) else return ExitSuccess
+                 let flags = " -std=gnu99 -Wl,-rpath " ++ rtIncDir ++ " -L" ++ rtLibDir ++ " -I" ++ rtIncDir ++ " -lruntime"
+                 writeFile coutput (codegener source optVerbose minihs)
+                 if gcc 
+                   then system ("gcc " ++ coutput ++ " -o " ++ (fromJust optOutput) ++ flags)
+                   else return ExitSuccess
                  return ()
 
 main :: IO ()
@@ -142,7 +173,4 @@ main =
       args <- getArgs
       (opts, args') <- compilerOpts args
       checkOpts opts
-      -- weird path stuff is because cabal puts binary in dist/build/stgc/stgc
       compile opts (binaryDir ++ "/../etc") (binaryDir ++ "/../lib") (binaryDir ++ "/../include") True
-
-    

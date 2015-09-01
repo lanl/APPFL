@@ -1,18 +1,20 @@
 project(runtime)
   cmake_minimum_required(VERSION 2.8.12.2)
 
+  set(SHAREDLIB OFF)
+
   set(rt_hdrs cmm.h
               gc.h
               stg.h
               stgutils.h
-	      stgApply.h
+	          stgApply.h
     )
 
   set(rt_srcs cmm.c
               gc.c
               stg.c
               stgutils.c
-	      stgApply.c
+	          stgApply.c
     )
 
   # put headers in build/include
@@ -35,7 +37,11 @@ project(runtime)
   )
 
   # put in build/lib
-  set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/../lib)
+  if(SHAREDLIB) 
+    set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/../lib)
+    add_library(runtime SHARED ${rt_srcs} ${rt_hdrs})
+  else()
+    set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/../lib)
+    add_library(runtime STATIC ${rt_srcs} ${rt_hdrs})
+  endif()
 
-  add_library(runtime STATIC ${rt_srcs} ${rt_hdrs})
-  #add_dependencies(runtime ${rt_hdrs})

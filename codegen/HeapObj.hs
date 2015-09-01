@@ -37,6 +37,7 @@ import InfoTab
 import Prelude
 import Util
 import Data.List (intercalate)
+import Data.Bits
 
 -- // two = CON(I 2)
 -- Obj sho_two = 
@@ -64,20 +65,23 @@ showSHO o =
     in ("extern " ++ base ++ ";\n", 
                      base ++ " =\n" ++ showHO (omd o))
 
+getIT it@(Pap {}) = case knownCall it of 
+                        Just fit -> fit
+                        Nothing -> error "unknown call in PAP"
+getIT it = it
+
+
 showHO it =
     "{\n" ++
-    "  .infoPtr   = &it_" ++ name it ++ ",\n" ++
+    "  .infoPtr   = &it_" ++ name (getIT it) ++ ",\n" ++
     "  .objType   = " ++ showObjType it      ++ ",\n" ++
     "  .ident     = " ++ show (name it)      ++ ",\n" ++
---    "  .payloadSize = 32,\n" ++
        showSHOspec it ++
     "};\n"
 
 showSHOspec it@(Fun {}) = payloads []
 
---showSHOspec it@(Pap {}) = "  .argCount  = " ++ show (length $ args it) ++ ",\n" ++
---                          (payloads $ args it)
-showSHOspec it@(Pap {}) = payloads []
+showSHOspec it@(Pap {}) = papPayloads it
 
 showSHOspec it@(Con {}) = payloads $ map fst $ args it
 
@@ -88,8 +92,21 @@ showSHOspec it@(Blackhole {}) = indent 2 ".payload = {0}\n"
 
 showSHOspec it = ""
 
-payloads as = let ps = indent 2 $ concatMap payload as
-              in  indent 2 (".payload = {\n" ++ ps ++ "},\n")
+papPayloads it = let as = map fst $ args it             
+                     n = indent 4 $ payload $ LitI $ papArgsLayout as
+                     ap =   indent 4 $ concatMap payload as
+                 in  indent 2 ".argCount = " ++ show (length as) ++ ",\n" ++ 
+                              ".payload = {\n" ++ n ++ ap ++ "},\n"
+                                                            
+papArgsLayout as = let nv = length $ filter isVar as
+                       nl = length as - nv
+                   in nv .|. shiftL nl 16
+                       
+isVar (Var _) = True
+isVar _ = False
+
+payloads as = let ps = indent 4 $ concatMap payload as
+              in  indent 2 ".payload = {\n" ++ ps ++ "},\n"
 
 payload (LitI i) = 
     "{.argType = INT, .i = " ++ show i ++ "},\n"

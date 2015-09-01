@@ -144,10 +144,17 @@ infoPtr->layoutInfo.unboxedCount is number of unboxed ARGUMENTS
 
 
 THUNK
+<<<<<<< HEAD
                                | payload 
 --------------------------------------------------------------------------------
 | infoPtr | objType |          | boxed free variables | unboxed free variables |
 --------------------------------------------------------------------------------
+=======
+                               | payload[0] | payload[1..fvCount+1] 
+-----------------------------------------------------------------------------
+| infoPtr | objType |          |   result   |  free variables               |
+-----------------------------------------------------------------------------
+>>>>>>> 433f021a73720e1207f70c3decf585b92c382f73
 
 Note that a THUNK must have a payload size of at least 1 so that it
 can become and INDIRECT.

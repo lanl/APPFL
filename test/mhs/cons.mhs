@@ -1,0 +1,2 @@
+l3 = Cons 1 (Cons 1 (Cons 1 Nil))
+main = eqInt (sum (seqList l3 l3)) 3

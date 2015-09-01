@@ -1,0 +1,3 @@
+eqOne = eqInt 1
+
+main = eqOne 1

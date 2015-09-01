@@ -1,0 +1,3 @@
+output = mulInt 3 4
+
+main = eqInt output 12

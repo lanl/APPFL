@@ -1,10 +1,10 @@
+
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE NamedFieldPuns    #-}
 
 module ConMaps (
   setConmaps,
-  buildConmaps,
-  getmap
+  buildConmaps
 ) where
 
 import Data.Maybe
@@ -197,35 +197,3 @@ instance ConMaps2IT (Alt InfoTab) where
       ae' <- updateit ae
       return a{ae = ae'}
 
-
-
-class GetMap a where
-  getmap :: a -> Maybe ConMaps
-
-instance GetMap a => GetMap [a] where
-  getmap as = foldr1 (\a b -> maybe a Just b) (map getmap as)
-
-instance GetMap (Obj InfoTab) where
-  getmap o = case o of
-    FUN{e} -> getmap e
-    THUNK{e} -> getmap e
-    CON{omd} -> Just $ (tconMap omd, dconMap omd)
-    _ -> Nothing
-
-instance GetMap (Expr InfoTab) where
-  getmap e = case e of
-    ELet{edefs, ee} -> case getmap edefs of
-                        Nothing -> getmap ee
-                        j -> j
-    ECase{ealts, ee} -> case getmap ealts of
-                         Nothing -> getmap ee
-                         j -> j
-    _ -> Nothing
-
-instance GetMap (Alts InfoTab) where
-  getmap Alts{alts} = getmap alts
-
-instance GetMap (Alt InfoTab) where
-  getmap a = case a of
-    ACon{amd} -> Just $ (tconMap amd, dconMap amd)
-    ADef{} -> Nothing

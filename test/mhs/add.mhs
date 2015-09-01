@@ -1,0 +1,2 @@
+output = addInt 3 4
+main = eqInt output 7

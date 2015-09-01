@@ -1,4 +1,5 @@
--- PAP not working yet
+data T = Z | S T;
+
 pzero = CON(Z);
 pone = CON(S pzero);
 list1 = CON(Cons pone nil);
@@ -6,6 +7,10 @@ list2 = CON(Cons pone list1);
 list3 = CON(Cons pone list2);
 list4 = CON(Cons pone list3); 
 consttrue = PAP(const true);
-main = THUNK( let { result = THUNK(map const list4);
+output = THUNK( let { result = THUNK(map consttrue list4);
                     f = THUNK(forcelist result) 
                   } in seq f result );
+
+-- test head
+main = THUNK(head output);
+

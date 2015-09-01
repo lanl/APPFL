@@ -1,0 +1,8 @@
+maxInt (I# a#) (I# b#) =
+  case imax# a# b# of
+    x# -> I# x#
+
+output = maxInt 2 7
+
+main = eqInt output 7
+

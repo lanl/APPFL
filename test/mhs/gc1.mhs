@@ -1,0 +1,13 @@
+l1 = let { x = 1; y = 2; z = 3; r = x} in r
+l2 = let { x = 1; y = 2; z = 3; r = y} in r
+l3 = let { x = 1; y = 2; z = 3; r = z} in r
+
+minInt (I# a#) (I# b#) =
+  case ile# a# b# of
+    0# -> I# b# 
+    i# -> I# a#
+
+
+min1 = minInt l3 l2
+min2 = minInt min1 l1
+main = eqInt min2 1

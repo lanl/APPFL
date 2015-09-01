@@ -1,0 +1,266 @@
+data Fancy a b c = C1 (List a) (Fancy a b c)
+                 | C2 Bool a b c
+                 | C3 Int a b c
+data Dummy = D
+
+fancyObj1 = C1 (Cons 1 (Cons 2 Nil)) (C2 True 0 D Unit)
+
+fancyObj2 = C2 False 3 D Unit
+
+fancyObj3 = C3 287 341 D Unit
+
+fancyList = Cons fancyObj1 (Cons fancyObj2 (Cons fancyObj3 Nil))
+
+isF1 (C1 (Cons 1 (Cons 2 Nil)) (C2 True 0 D Unit)) = True
+isF1 x = False
+
+isF2 (C2 False 3 D Unit) = True
+isF2 x = False
+
+isF3 (C3 287 341 D Unit) = True
+isF3 x = False
+
+
+main = case fancyList of
+        Cons a xs -> case xs of
+                      Cons b xs -> case xs of
+                                    Cons c Nil -> and (isF1 a) (and (isF3 c) isF2 b)
+                                    x -> False
+                      x -> False
+        x -> False
+{-# LANGUAGE MagicHash #-}
+
+
+
+{- 
+Below this is haskell code that is ignored by the minihaskell frontend.
+Anything between two "{-#-}" strings is a special form of comment, specific
+to minihaskell. They do not nest, unlike normal haskell block comments,
+so care must be taken if using them extensively.  Additionally, they are
+currently inescapable inside the haskell block, which is why this comment
+is not inside the block.
+
+This is useful for putting in valid haskell code that will enable the
+minihaskell to function properly when compiled by GHC.
+Note the aliasing of Primitive operations, importing of the "built-in"
+boxed numeric types, and hiding of the Prelude.
+Renaming this Prelude to Prelude.hs, will make GHC use it, instead of the
+standard Prelude. This might be desireable in some situations.
+-}
+{-#-}
+
+module Prelude where
+import GHC.Prim ((==#), (*#), (+#), (-#), remInt#)
+import GHC.Exts (Int(..), Double(..))
+--import Prelude ()
+
+
+ieq# = (==#)
+imul# = (*#)
+iplus# = (+#)
+isub# = (-#)
+imod# = (remInt#)
+
+{-#-}
+
+data Unit = Unit
+data List a = Nil | Cons a (List a)
+data Bool = False | True
+data Tupl2 a b = TP2 a b
+data Tupl3 a b c = TP3 a b c
+
+
+-- boxed Int arithmetic
+
+eqInt :: Int -> Int -> Bool
+eqInt (I# a#) (I# b#) = 
+  case ieq# a# b# of
+   0# -> False  
+   i# -> True
+
+mulInt :: Int -> Int -> Int	   
+mulInt (I# a#) (I# b#) =
+  case imul# a# b# of
+   r# -> I# r#
+
+subInt :: Int -> Int -> Int
+subInt (I# a#) (I# b#) =
+  case isub# a# b# of
+   r# -> I# r#
+
+modInt :: Int -> Int -> Int
+modInt (I# a#) (I# b#) =
+  case imod# a# b# of
+   r# -> I# r#
+
+addInt :: Int -> Int -> Int
+addInt (I# a#) (I# b#) =
+  case iplus# a# b# of
+   r# -> I# r#
+
+odd :: Int -> Bool
+odd x = case modInt x 2 of
+         1 -> True
+         x -> False
+
+even :: Int -> Bool
+even = compose not odd              
+
+
+-- Booleans
+
+and :: Bool -> Bool -> Bool
+and False x = False
+and True x = x
+
+or :: Bool -> Bool -> Bool
+or True x = True
+or False x = x
+
+not :: Bool -> Bool
+not True = False
+not False = True
+
+
+-- Tuples
+
+snd :: Tupl2 a b -> b
+snd (TP2 a b) = b
+
+fst :: Tupl2 a b -> a
+fst (TP2 a b) = a
+
+
+-- Function
+
+const :: a -> b -> a
+const a b = a
+
+seq :: a -> b -> b
+seq a b = case a of
+           x -> b
+
+apply :: (a -> b) -> a -> b
+apply f x = f x
+
+compose :: (b -> c) -> (a -> b) -> a -> c
+compose f g x = f (g x)
+
+
+
+-- List stuff
+
+head :: List a -> a
+head (Cons a xs) = a
+
+tail :: List a -> List a
+tail (Cons a xs) = xs
+
+last (Cons a Nil) = a
+last (Cons a as) = last as
+
+init (Cons a Nil) = Nil
+init (Cons a xs) = Cons a (init xs)
+
+length :: List a -> b
+length xs =
+  let aux xs n = case xs of
+       	       	  Nil -> n
+                  Cons a xs -> aux xs (addInt n 1)
+  in aux xs 0
+
+
+append :: List a -> List a -> List a 
+append xs ys = case xs of
+                Nil -> ys
+                Cons a xs' -> Cons a (append xs' ys)
+
+foldr :: (a -> b -> b) -> b -> List a -> b
+foldr f sd xs = case xs of
+                     Nil -> sd
+                     Cons a xs' -> f a (foldr f sd xs')
+
+foldl :: (b -> a -> b) -> b -> List a -> b
+foldl f ac xs = case xs of
+                     Nil -> ac
+                     Cons a xs' -> foldl f (f ac a) xs'
+
+
+foldr1 :: (a -> a -> a) -> List a -> a
+foldr1 f (Cons a Nil) = a
+foldr1 f (Cons a as) = f a (foldr1 f as)
+
+
+foldl1 :: (a -> a -> a) -> List a -> a
+foldl1 f (Cons a Nil) = a
+foldl1 f (Cons a (Cons x xs)) = foldl f (f a x) xs
+
+
+map :: (a -> b) -> List a -> List b
+map f = foldr (compose Cons f) Nil
+
+
+take :: Int -> List a -> List a
+take 0 xs = Nil
+take n Nil = Nil
+take n (Cons x xs) = Cons x (take (subInt n 1) xs)
+
+
+drop :: Int -> List a -> List a
+drop 0 xs = xs
+drop n Nil = Nil
+drop n (Cons x xs) = drop (subInt n 1) xs
+
+
+filter :: (a -> Bool) -> List a -> List a
+filter f Nil = Nil
+filter f (Cons x xs) = case f x of
+                        True -> Cons x (filter f xs)
+                        False -> filter f xs
+
+
+all :: (a -> Bool) -> List a -> Bool
+all f = foldr (compose and f) True
+
+
+any :: (a -> Bool) -> List a -> Bool
+any f = foldr (compose or f) False
+
+
+andList :: List Bool -> Bool
+andList = foldl and True
+
+
+orList :: List Bool -> Bool
+orList = foldl or False
+
+sum :: List Int -> Int
+sum = foldl addInt 0
+
+zipWith :: (a -> b -> c) -> List a -> List b -> List c
+zipWith f xs Nil = Nil
+zipWith f Nil ys = Nil
+zipWith f (Cons x xs) (Cons y ys) = Cons (f x y) (zip xs ys)
+
+
+zip :: List a -> List b -> List (Tupl2 a b)
+zip = zipWith TP2
+
+
+unzip :: List (Tupl2 a b) -> Tupl2 (List a) (List b)
+unzip Nil = TP2 Nil Nil
+unzip (Cons (TP2 a b) xs) = case unzip xs of
+  TP2 as bs -> TP2 (Cons a as) (Cons b bs)
+
+
+repeat :: a -> List a
+repeat x = Cons x (repeat x)
+
+
+replicate :: Int -> a -> List a
+replicate n x = take n (repeat x)
+
+
+seqList :: List a -> b -> b
+seqList Nil b = b
+seqList (Cons a xs) b = seq xs b

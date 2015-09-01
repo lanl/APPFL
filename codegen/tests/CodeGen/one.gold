@@ -1,4 +1,5 @@
 #include "stgc.h"
+#include "stgApply.h"
 void registerSHOs();
 FnPtr fun_main();
 InfoTab it_one = 
@@ -70,7 +71,7 @@ int main (int argc, char **argv) {
   initGc();
   CALL0_0(start);
   showStgHeap();
-  gc();
+  GC();
   return 0;
 }
 

@@ -1,0 +1,5 @@
+ones = Cons 1 ones
+output = take 3 ones
+
+-- test head
+main = eqInt (head output) 1 

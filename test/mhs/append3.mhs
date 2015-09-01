@@ -1,0 +1,4 @@
+l1 = Cons 1 Nil
+l2 = Cons 1 l1
+l3 = append l1 l2
+main = eqInt (sum (seqList l3 l3)) 3

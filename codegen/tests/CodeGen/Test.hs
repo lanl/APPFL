@@ -16,4 +16,4 @@ unitTests = testGroup "Codegen Unit tests"
 inp = "data Int = I Int#; one = CON(I 1); main = THUNK(one);"    
 
 cgone :: IO ByteString
-cgone = return $ fromString $ codegener inp True
+cgone = return $ fromString $ codegener inp True False

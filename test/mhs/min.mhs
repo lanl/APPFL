@@ -1,0 +1,8 @@
+minInt (I# a#) (I# b#) =
+  case imin# a# b# of
+    x# -> I# x#
+
+output = minInt 2 7
+
+main = eqInt output 2
+

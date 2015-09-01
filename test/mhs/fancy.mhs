@@ -1,0 +1,33 @@
+data Fancy a b c = C1 (List a) (Fancy a b c)
+                 | C2 Bool a b c
+                 | C3 Int a b c
+data Dummy = D
+
+fancyObj1 = C1 (Cons 1 (Cons 2 Nil)) (C2 True 0 D Unit)
+
+fancyObj2 = C2 False 3 D Unit
+
+fancyObj3 = C3 287 341 D Unit
+
+fancyList = Cons fancyObj1 (Cons fancyObj2 (Cons fancyObj3 Nil))
+
+isF1 (C1 (Cons 1 (Cons 2 Nil)) (C2 True 0 D Unit)) = True
+isF1 x = False
+
+isF2 (C2 False 3 D Unit) = True
+isF2 x = False
+
+isF3 (C3 287 341 D Unit) = True
+isF3 x = False
+
+check a b c  = and (isF1 a) (and (isF2 b) (isF3 c))
+
+main = case fancyList of
+        Cons a xs -> case xs of
+                      Cons b xs -> case xs of
+                                    Cons c xs -> case xs of
+                                                 Nil -> check a b c
+                                                 x -> False
+                                    x -> False
+                      x -> False
+        x -> False

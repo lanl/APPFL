@@ -497,7 +497,7 @@ showIT it@(Thunk {}) =
     "    .fvCount             = " ++ show (length $ fvs it) ++ ",\n" ++
     "    .entryCode           = &" ++ entryCode it ++ ",\n" ++
     "    .objType             = THUNK,\n" ++
-    "    .layoutInfo.payloadSize  = " ++ show (max 1 (length $ fvs it)) ++ ",\n" ++
+    "    .layoutInfo.payloadSize = " ++ show (1 + (length $ fvs it)) ++ ",\n" ++
 --    "    // argPerm = " ++ show (argPerm it) ++ "\n" ++
     "    .layoutInfo.boxedCount   = " ++ show (bfvc it) ++ ",\n" ++
     "    .layoutInfo.unboxedCount = " ++ show (ufvc it) ++ ",\n" ++
@@ -540,8 +540,8 @@ showIT _ = ""
 -- CON and ACon infotabs for typechecker and codegen lookups
 
 
-setCMaps :: ([TyCon], [Obj InfoTab]) -> ([TyCon], [Obj InfoTab])
-setCMaps (tycons, objs) =
+setCMaps :: [TyCon] -> [Obj InfoTab] -> ([TyCon], [Obj InfoTab])
+setCMaps tycons objs =
   let cmap = toCMap tycons
   in (tycons, addCMapToITs cmap objs)
 
@@ -590,6 +590,11 @@ instance SetITs (CMap, (Alt InfoTab)) (Alt InfoTab) where
 
     a@ADef{ae} ->
       a { ae = setITs (cmap,ae) }
+
+
+-- can change this to get infotabs printed in block comments
+instance Unparse InfoTab where
+  unparse it = empty 
 
 instance PPrint InfoTab where
  pprint it = text "Infotab:" <+> itName $+$
