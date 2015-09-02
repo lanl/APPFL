@@ -2,22 +2,30 @@
 #include "stgApply.h"
 void registerSHOs();
 FnPtr fun_main();
-InfoTab it_one = 
+InfoTab it_one __attribute__((aligned(8))) = 
   { .name                = "one",
+    // fvs []
     .fvCount             = 0,
     .entryCode           = &stg_constructorcall,
     .objType             = CON,
-    .layoutInfo.payloadSize = 1,
+    .layoutInfo.payloadSize  = 1,
+    // argPerm = [0]
+    .layoutInfo.boxedCount   = 0,
+    .layoutInfo.unboxedCount = 1,
+    .layoutInfo.permString   = "0",
     .conFields.arity     = 1,
     .conFields.tag       = 0,
     .conFields.conName   = "I",
   };
-InfoTab it_main = 
+InfoTab it_main __attribute__((aligned(8))) = 
   { .name                = "main",
+    // fvs []
     .fvCount             = 0,
     .entryCode           = &fun_main,
     .objType             = THUNK,
     .layoutInfo.payloadSize = 1,
+    .layoutInfo.boxedCount   = 0,
+    .layoutInfo.unboxedCount = 0,
   };
 
 extern Obj sho_one;
@@ -31,14 +39,15 @@ Obj sho_one =
   .payload = {
     {.argType = INT, .i = 1},
 },
-  };
+};
+
 Obj sho_main =
 {
   .infoPtr   = &it_main,
   .objType   = THUNK,
   .ident     = "main",
   .payload = {0}
-  };
+};
 
 void registerSHOs() {
   stgStatObj[stgStatObjCount++] = &sho_one;
@@ -51,6 +60,7 @@ DEFUN1(fun_main, self) {
   fprintf(stderr, "main here\n");
   stgThunk(self);
   stgCurVal = HOTOPL(&sho_one); // one
+  // boxed EAtom 
   STGEVAL(stgCurVal);
   fprintf(stderr, "main returning\n");
   STGRETURN0();

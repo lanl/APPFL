@@ -464,7 +464,7 @@ showITs os = concatMap showIT $ itsOf os
 -}
 
 showIT it@(Fun {}) =
-    "InfoTab it_" ++ name it ++ " = \n" ++
+    "InfoTab it_" ++ name it ++ " __attribute__((aligned(8))) = \n" ++
     "  { .name                = " ++ show (name it) ++ ",\n" ++
     "    // fvs " ++ show (fvs it) ++ "\n" ++
     "    .fvCount             = " ++ show (length $ fvs it) ++ ",\n" ++
@@ -479,7 +479,7 @@ showIT it@(Fun {}) =
     "  };\n"
         
 showIT it@(Pap {}) =
-    "InfoTab it_" ++ name it ++ " = \n" ++
+    "InfoTab it_" ++ name it ++ " __attribute__((aligned(8))) = \n" ++
     "  { .name                = " ++ show (name it) ++ ",\n" ++
     "    // fvs " ++ show (fvs it) ++ "\n" ++
     "    .fvCount             = " ++ show (length $ fvs it) ++ ",\n" ++
@@ -496,7 +496,7 @@ showIT it@(Pap {}) =
     "  };\n"
         
 showIT it@(Con {}) =
-    "InfoTab it_" ++ name it ++ " = \n" ++
+    "InfoTab it_" ++ name it ++ " __attribute__((aligned(8))) = \n" ++
     "  { .name                = " ++ show (name it) ++ ",\n" ++
     "    // fvs " ++ show (fvs it) ++ "\n" ++
     "    .fvCount             = " ++ show (length $ fvs it) ++ ",\n" ++
@@ -513,7 +513,7 @@ showIT it@(Con {}) =
     "  };\n"
         
 showIT it@(Thunk {}) =
-    "InfoTab it_" ++ name it ++ " = \n" ++
+    "InfoTab it_" ++ name it ++ " __attribute__((aligned(8))) = \n" ++
     "  { .name                = " ++ show (name it) ++ ",\n" ++
     "    // fvs " ++ show (fvs it) ++ "\n" ++
     "    .fvCount             = " ++ show (length $ fvs it) ++ ",\n" ++
@@ -527,7 +527,7 @@ showIT it@(Thunk {}) =
     "  };\n"
         
 showIT it@(Blackhole {}) = 
-    "InfoTab it_" ++ name it ++ " = \n" ++
+    "InfoTab it_" ++ name it ++ "  __attribute__((aligned(8)))= \n" ++
     "  { .name                = " ++ show (name it) ++ ",\n" ++
     "    // fvs " ++ show (fvs it) ++ "\n" ++
     "    .fvCount             = " ++ show (length $ fvs it) ++ ",\n" ++
@@ -541,7 +541,7 @@ showIT it@(Blackhole {}) =
     "  };\n"
 
 showIT it@(ITAlts{}) =
-    "InfoTab it_" ++ name it ++ " = \n" ++
+    "InfoTab it_" ++ name it ++ " __attribute__((aligned(8))) = \n" ++
     "  { .name                = " ++ show (name it) ++ ",\n" ++
     "    // fvs " ++ show (fvs it) ++ "\n" ++
     "    .fvCount             = " ++ show (length $ fvs it) ++ ",\n" ++
