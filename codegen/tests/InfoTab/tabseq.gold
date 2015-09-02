@@ -1,15 +1,21 @@
-InfoTab it_seq = 
+InfoTab it_seq __attribute__((aligned(8))) = 
   { .name                = "seq",
+    // fvs []
     .fvCount             = 0,
     .entryCode           = &fun_seq,
     .objType             = FUN,
-    .layoutInfo.payloadSize = 0,
+    .layoutInfo.payloadSize  = 0,
+    .layoutInfo.boxedCount   = -1,
+    .layoutInfo.unboxedCount = -1,
     .funFields.arity     = 2,
   };
-InfoTab it_alts_0 = 
+InfoTab it_alts_0 __attribute__((aligned(8))) = 
   { .name                = "alts_0",
+    // fvs [("y",MPhony)]
     .fvCount             = 1,
     .entryCode           = &alts_0,
     .objType             = CASECONT,
     .layoutInfo.payloadSize = 1,
+    .layoutInfo.boxedCount   = -1,
+    .layoutInfo.unboxedCount = -1,
   };
