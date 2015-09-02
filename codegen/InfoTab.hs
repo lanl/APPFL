@@ -48,7 +48,9 @@ data InfoTab =
       ufvc :: Int,  -- unboxed FV count
       truefvs :: [Var],
       entryCode :: String,
+
       arity :: Int}      
+
   | Pap { 
       typ :: Monotype,
       ctyp :: Polytype,
@@ -58,11 +60,13 @@ data InfoTab =
       ufvc :: Int,  -- unboxed FV count
       truefvs :: [Var],
       entryCode :: String,
+
       args     :: [(Atom,Monotype)],
       bargc :: Int,  -- boxed initial arg count     
       uargc :: Int,  -- unboxed initial arg count
       argPerm :: [Int], -- map from notional pos to actual pos
       knownCall :: Maybe InfoTab} -- of the FUN
+
   | Con { 
       typ :: Monotype,
       ctyp :: Polytype,
@@ -72,6 +76,7 @@ data InfoTab =
       ufvc :: Int,  -- unboxed FV count - not needed for Con
       truefvs :: [Var],
       entryCode :: String,
+
       args :: [(Atom,Monotype)],
       bargc :: Int,  -- boxed arg count     
       uargc :: Int,  -- unboxed arg count
@@ -88,6 +93,7 @@ data InfoTab =
       ufvc :: Int,  -- unboxed FV count
       truefvs :: [Var],
       entryCode :: String }
+
   | Blackhole {
       typ :: Monotype,
       ctyp :: Polytype,
@@ -97,6 +103,7 @@ data InfoTab =
       ufvc :: Int,  -- unboxed FV count
       truefvs :: [Var],
       entryCode :: String }
+
   | ITAtom { 
       typ :: Monotype,
       ctyp :: Polytype,
@@ -105,6 +112,8 @@ data InfoTab =
       ufvc :: Int,  -- unboxed FV count
       truefvs :: [Var],
       noHeapAlloc :: Bool }
+
+-- Expr
   | ITFCall { 
       typ :: Monotype,
       ctyp :: Polytype,
@@ -113,7 +122,9 @@ data InfoTab =
       ufvc :: Int,  -- unboxed FV count
       truefvs :: [Var],
       noHeapAlloc :: Bool,
+
       knownCall :: Maybe InfoTab } -- of the FUN
+
   | ITPrimop { 
       typ :: Monotype,
       ctyp :: Polytype,
@@ -122,6 +133,7 @@ data InfoTab =
       ufvc :: Int,  -- unboxed FV count
       truefvs :: [Var],
       noHeapAlloc :: Bool }
+
   | ITLet { 
       typ :: Monotype,
       ctyp :: Polytype,
@@ -129,7 +141,9 @@ data InfoTab =
       bfvc :: Int,  -- boxed FV count     
       ufvc :: Int,  -- unboxed FV count
       truefvs :: [Var],
+
       noHeapAlloc :: Bool }
+
   | ITCase { 
       typ :: Monotype,
       ctyp :: Polytype,
@@ -137,8 +151,11 @@ data InfoTab =
       bfvc :: Int,  -- boxed FV count     
       ufvc :: Int,  -- unboxed FV count
       truefvs :: [Var],
+
       noHeapAlloc :: Bool,
       cmap :: CMap}
+
+-- Alt
   | ITACon { 
       typ :: Monotype,
       ctyp :: Polytype,
@@ -146,7 +163,9 @@ data InfoTab =
       bfvc :: Int,  -- boxed FV count     
       ufvc :: Int,  -- unboxed FV count
       truefvs :: [Var],
+
       cmap :: CMap }
+
   | ITADef { 
       typ :: Monotype,
       ctyp :: Polytype,
@@ -154,7 +173,10 @@ data InfoTab =
       bfvc :: Int,  -- boxed FV count     
       ufvc :: Int,  -- unboxed FV count
       truefvs :: [Var],
+
       cmap :: CMap }
+
+-- Alts
   | ITAlts { 
       typ :: Monotype,
       ctyp :: Polytype,

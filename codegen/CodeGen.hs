@@ -274,7 +274,11 @@ cge :: Env -> Expr InfoTab -> State Int (String, [(String, String)])
 
 cge env e@(EAtom it a) =
     let inline = "stgCurVal = " ++ cga env a ++ "; " ++ "// " ++ showa a ++ "\n" ++
-                 (if isBoxede e then "STGEVAL(stgCurVal);\n" else "")
+                 (if isBoxede e then 
+                      "// boxed EAtom \n" ++
+                      "STGEVAL(stgCurVal);\n" 
+                  else 
+                      "// unboxed EAtom\n")
     in return (inline, [])
 {-
 cge env e@(EFCall it f eas) = 

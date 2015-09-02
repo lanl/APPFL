@@ -167,7 +167,7 @@ foldl1 f (Cons a (Cons x xs)) = foldl f (f a x) xs
 
 
 map :: (a -> b) -> List a -> List b
-map f = foldr (compose Cons f) Nil
+map f xs = foldr (compose Cons f) Nil xs
 
 
 take :: Int -> List a -> List a

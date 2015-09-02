@@ -45,14 +45,15 @@ boxedFirst xs =
 -- order args for PAP, CON boxed first, set bargc, uargc, argPerm in InfoTab
 -- make valid types for fvs, and PAP and CON args
 
--- typeFVsCommon handles just FVs directly, deferring subtrees to typeFVs
+-- typeFVsCommon* handles just FVs directly, deferring subtrees and arguments
+-- of PAP and CON to typeFVs
 
 class TypeFVs a where
     typeFVs :: Map.Map Var Monotype -> a -> a
 
--- This is the entry point
+-- This is the entry point because typeFVs augments the type environment.
 -- augmenting type environment is done at
--- [Obj] (top level), FUN, ELet, EFCall, ACon, ADef
+--   [Obj] (top level), FUN, ELet, EFCall, ACon, ADef
 instance TypeFVs [Obj InfoTab] where
     typeFVs m os =
         let m' = foldr (uncurry Map.insert) m [(oname o, (typ . omd) o) | o <- os]
@@ -64,10 +65,14 @@ instance TypeFVs (Obj InfoTab) where
             m' = foldr (uncurry Map.insert) m (zip vs vstyps)
         in o{e = typeFVsCommon m' e}
 
-    --TODO!!!
     typeFVs m o@PAP{omd,as} = 
-        o{omd = omd{args = zzip (map fst $ args omd) (map (typ . emd) as)},
-          as = map (typeFVsCommon m) as}
+        let (bc, uc, args', perm) = repa m $ zzip (map fst $ args omd) 
+                                                  (map (typ . emd) as)
+        in o{omd = omd{args = args',
+                       bargc = bc,
+                       uargc = uc,
+                       argPerm = perm},
+             as = map (typeFVsCommon m) as}
 
     typeFVs m o@CON{omd,as} = 
         let (bc, uc, args', perm) = repa m $ zzip (map fst $ args omd) 
@@ -79,8 +84,7 @@ instance TypeFVs (Obj InfoTab) where
              as = map (typeFVsCommon m) as}
 
     typeFVs m o@THUNK{omd, e} =
-        let (bc, uc, fvs', _) = repv m (fvs omd)
-        in o{e = typeFVsCommon m e}
+        o{e = typeFVsCommon m e}
 
     typeFVs m o@BLACKHOLE{omd} = o
 
@@ -95,18 +99,18 @@ instance TypeFVs (Expr InfoTab) where
             etyp = (typ . emd) e
             evtyp = foldr MFun etyp eastyps
             m' = Map.insert ev evtyp m
-            eas' = typeFVsCommon m' eas
+            eas' = map (typeFVsCommon m') eas
         in e{eas = eas'}
 
     typeFVs m e@EPrimop{eas} = 
-        e{eas = typeFVsCommon m eas}
+        e{eas = map (typeFVsCommon m) eas}
 
     typeFVs m e@ELet{edefs, ee} =
-        let edefs' = typeFVsCommon m edefs
+        let edefs' = typeFVs m edefs -- [Obj InfoTab] entry point
             m' = foldr (uncurry Map.insert) m [(oname o, typ $ omd o) | o <- edefs]
             ee' = typeFVsCommon m' ee
         in e{edefs = edefs', 
-             ee = ee'} -- inner m'
+             ee = ee'}
 
     typeFVs m e@ECase{ee, ealts} =
         let ee' = typeFVsCommon m ee
@@ -139,32 +143,25 @@ typeFVsAlt t0 m a@ACon{amd, ac, avs, ae} =
 class TypeFVsCommon a where
     typeFVsCommon :: Map.Map Var Monotype -> a -> a
 
-instance TypeFVsCommon [Obj InfoTab] where
-    typeFVsCommon = typeFVs
-
-instance TypeFVsCommon [Expr InfoTab] where
-    typeFVsCommon = typeFVs
-
 instance TypeFVsCommon (Obj InfoTab) where
     typeFVsCommon m o =
-        let o' = typeFVs m o
-            (bc, uc, fvs', _) = repv m (fvs $ omd o')
-        in o'{omd = (omd o'){fvs=fvs', bfvc=bc, ufvc=uc}}
+        let (bc, uc, fvs', _) = repv m (fvs $ omd o)
+            o' = o{omd = (omd o){fvs=fvs', bfvc=bc, ufvc=uc}}
+        in typeFVs m o'
 
 instance TypeFVsCommon (Expr InfoTab) where
     typeFVsCommon m e =
-        let e' = typeFVs m e
-            (bc, uc, fvs', _) = repv m (fvs $ emd e')
-        in e'{emd = (emd e'){fvs=fvs', bfvc=bc, ufvc=uc}}
+        let (bc, uc, fvs', _) = repv m (fvs $ emd e)
+            e' = e{emd = (emd e){fvs=fvs', bfvc=bc, ufvc=uc}}
+        in typeFVs m e'
 
-typeFVsCommonAlts t0 m e =
-        let e' = typeFVsAlts t0 m e
-            (bc, uc, fvs', _) = repv m (fvs $ altsmd e')
-        in e'{altsmd = (altsmd e'){fvs=fvs', bfvc=bc, ufvc=uc}}
+typeFVsCommonAlts t0 m alts =
+        let (bc, uc, fvs', _) = repv m (fvs $ altsmd alts)
+            alts' = alts{altsmd = (altsmd alts){fvs=fvs', bfvc=bc, ufvc=uc}}
+        in typeFVsAlts t0 m alts'
 
-typeFVsCommonAlt t0 m e =
-        let e' = typeFVsAlt t0 m e
-            (bc, uc, fvs', _) = repv m (fvs $ amd e')
-        in e'{amd = (amd e'){fvs=fvs', bfvc=bc, ufvc=uc}}
-
+typeFVsCommonAlt t0 m a =
+        let (bc, uc, fvs', _) = repv m (fvs $ amd a)
+            a' = a{amd = (amd a){fvs=fvs', bfvc=bc, ufvc=uc}}
+        in typeFVsAlt t0 m a'
 
