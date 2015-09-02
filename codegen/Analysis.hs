@@ -149,7 +149,7 @@ instance SetHA (Expr InfoTab) where
   setHA fmp e = case e of
     EAtom{emd} ->
       let nha = case typ emd of
-                 MCon b c _ -> b
+                 MCon b c _ -> not b
                  MPrim _    -> True
                  -- MVar => polymorphic => boxed?
                  -- MFun => PAP created dynamically? => boxed
