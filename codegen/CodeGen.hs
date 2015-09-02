@@ -359,11 +359,12 @@ cge env (ELet it os e) =
       return (concat decls ++ concat buildcodes ++ einline,
               ofunc ++ efunc)
 
-cge env (ECase _ e a@(Alts italts alts aname)) = 
+cge env (ECase _ e a@(Alts italts alts aname)) | (not $ noHeapAlloc $ emd e) = 
     do (ecode, efunc) <- cge env e
        (acode, afunc) <- cgalts env a (isBoxede e)
        let name = "ccont_" ++ aname
-           pre = "Obj *" ++ name ++ 
+           pre = "// scrutinee may heap alloc\n" ++
+              "Obj *" ++ name ++ 
               " = stgAllocCont( &it_" ++ aname ++ ");\n" ++
               (if fvs italts == [] then
                  "    // no FVs\n"
@@ -371,13 +372,45 @@ cge env (ECase _ e a@(Alts italts alts aname)) =
                  "    // load payload with FVs " ++
                    intercalate " " (map fst $ fvs italts) ++ "\n") ++
                  indent 2 (loadPayloadFVs env (map fst $ fvs italts) 0 name)
-           scrut = if isBoxede e then
-                       "  // boxed scrutinee\n" ++
-                       "  STGEVAL(stgCurVal);\n"
-                   else "  // unboxed scrutinee\n"
+--           scrut = if isBoxede e then
+--                       "  // boxed scrutinee\n" ++
+--                       "  STGEVAL(stgCurVal);\n"
+--                   else "  // unboxed scrutinee\n"
 --       return (pre ++ ecode ++ scrut ++ acode, efunc ++ afunc)
        return (pre ++ ecode ++ acode, efunc ++ afunc)
+
+-- scrutinee does no heap allocation          
+cge env (ECase _ e a@(Alts italts alts aname)) = 
+    do (ecode, efunc) <- cge env e
+       (acode, afunc) <- cgalts_noheapalloc env a (isBoxede e)
+       let name = "ccont_" ++ aname
+           pre = "// scrutinee no heap allocation\n"
+       return (pre ++ ecode ++ acode, efunc ++ afunc)
           
+-- ADef only or unary sum => no C switch
+cgalts_noheapalloc env (Alts it alts name) boxed = 
+    let scrutName = "scrut_" ++ name
+    in do
+      let switch = length alts > 1
+      codefuncs <- mapM (cgalt env switch scrutName) alts
+      let (codes, funcss) = unzip codefuncs
+      let phonyforward = "FnPtr " ++ name ++ "();"
+          phonyfun = "DEFUN0("++ name ++ ") {\n" ++
+                     "  ENDFUN;\n" ++
+                     "}\n"
+      let inl = "// " ++ show (ctyp it) ++ "\n" ++
+                "PtrOrLiteral " ++ scrutName ++ " = stgCurVal;\n" ++
+                (if switch then
+                     (if boxed then
+                          "switch(stgCurVal.op->infoPtr->conFields.tag) {\n"
+                      else 
+                          "switch(stgCurVal.i) {\n"
+                     ) ++
+                     indent 2 (concat codes) ++
+                   "}\n"
+                 else concat codes)
+      return (inl, (phonyforward, phonyfun) : concat funcss)
+
 -- ADef only or unary sum => no C switch
 cgalts env (Alts it alts name) boxed = 
     let contName = "ccont_" ++ name
