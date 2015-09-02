@@ -176,7 +176,7 @@ data InfoTab =
 
       cmap :: CMap }
 
--- Alts
+-- Alts - this is used for CASECONTs
   | ITAlts { 
       typ :: Monotype,
       ctyp :: Polytype,

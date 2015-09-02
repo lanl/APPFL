@@ -116,9 +116,9 @@ infoPtr->layoutInfo.unboxedCount is number of unboxed free variables
 PAP
                     | payload
                     | [0..fvCount-1] |  [fvCount]  |
------------------------------------------------------------------------------
-| infoPtr | objType | bfvs  |  ubfvs | layout info | args already applied   |
------------------------------------------------------------------------------
+----------------------------------------------------------------------
+| infoPtr | objType | bfvs  |  ubfvs | layout_info | bargs | ubargs  |
+----------------------------------------------------------------------
 
 The PAP infoPtr points is its underlying FUN infoTab entry, so
 
@@ -128,6 +128,7 @@ infoPtr->objType = FUN
 infoPtr->fvCount = number of free variables 
 infoPtr->layoutInfo.boxedCount is number of boxed free variables
 infoPtr->layoutInfo.unboxedCount is number of unboxed free variables
+layout_info:  see PNPACK and PNUNPACK in codegen/stg.h
 
 argCount = number of arguments already applied -- GOING AWAY!--the info is in payload[fvCount]
 
@@ -168,9 +169,9 @@ infoPtr->layoutInfo.unboxedCount is number of unboxed free variables
 
 BLACKHOLE
                                | payload 
------------------------------------------------------------------------------
-| infoPtr | objType |          | free variables (they're still live!)       |
------------------------------------------------------------------------------
+--------------------------------------------------------------------------
+| infoPtr | objType |          | bfvs (they're still live!) | ubfvs      |
+--------------------------------------------------------------------------
 
 Black holes only come from THUNKs.  For convenience and arguable efficiency, a
 BLACKHOLE will be created by simply overwriting objType with value BLACKHOLE,
@@ -275,17 +276,20 @@ payload[0] is ptr to object to update, i.e. is a root
 CASECONT
                                | payload[0..n] 
 ---------------------------------------------------
-| infoPtr | objType |          | fv_0 | .. | fv_n |
+| infoPtr | objType |          | fv_0 | .. | fv_n | pointers first
 ---------------------------------------------------
 
 objType = CASECONT
 payload[0]..payload[infoPtr->fvCount] are the free vars
+infoPtr->layoutInfo.boxedCount = #pointers
+infoPtr->layoutInfo.unboxedCount = #non-pointers
 
+infoPtr->layoutInfo.boxedCount + infoPtr->layoutInfo.unboxedCount = infoPtr->fvCount, fvCount GOING AWAY
 
 CALLCONT
                                | payload[0] | payload[1..payload[0]] 
 -----------------------------------------------------------------------------
-| infoPtr | objType |          | #free vars | free vars                     |
+| infoPtr | objType |          | #pointers  | just pointers                 |
 -----------------------------------------------------------------------------
 
 NOTE:  infoPtr->fvCount is INVALID, #free vars is embedded in payload
@@ -294,13 +298,12 @@ payload[0] = # free vars
 payload[1]..payload[payload[0]] are the free vars
 
 
-FUNCONT
+FUNCONT - IGNORE FOR NOW, not yet implemented
                                | payload 
 -----------------------------------------------------------------------------
 | infoPtr | objType |          | single free var                            |
 -----------------------------------------------------------------------------
 
-NOTE: IGNORE FOR NOW, not implemented
 objType = FUNCONT infoPtr->objType = FUN payload[0] is the sole free var (the
 function to be applied), i.e. is the only root.  NOT CORRECT?  should be
 all other args not currently being evaluated?
