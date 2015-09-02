@@ -38,6 +38,8 @@ import Prelude
 import Util
 import Data.List (intercalate)
 import Data.Bits
+import Foreign.Storable
+import Foreign.C.Types
 
 -- // two = CON(I 2)
 -- Obj sho_two = 
@@ -99,8 +101,9 @@ papPayloads it = let as = map fst $ args it
                               ".payload = {\n" ++ n ++ ap ++ "},\n"
                                                             
 papArgsLayout as = let nv = length $ filter isVar as
-                       nl = length as - nv
-                   in nv .|. shiftL nl 16
+                       nl = length as - nv 
+                       bits = 8*sizeOf (CUIntPtr 0)                    
+                   in nv .|. shiftL nl (bits `div` 2)
                        
 isVar (Var _) = True
 isVar _ = False
