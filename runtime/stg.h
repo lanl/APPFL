@@ -5,6 +5,8 @@
 #include <assert.h>
 #include <stdbool.h>
 
+#define DEBUGSTGAPPLY 1
+
 //------ stack and heap objects
 
 typedef enum {          // superfluous, for sanity checking

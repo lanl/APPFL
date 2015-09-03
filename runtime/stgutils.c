@@ -46,11 +46,14 @@ DEFUN0(stgUpdateCont) {
   assert(contp->objType == UPDCONT && "I'm not an UPDCONT!");
   PtrOrLiteral p = contp->payload[0];
   assert(p.argType == HEAPOBJ && "not a HEAPOBJ!");
-  assert(p.op->objType == BLACKHOLE && "not a BLACKHOLE!");
   fprintf(stderr, "stgUpdateCont updating\n  ");
   showStgObj(p.op);
   fprintf(stderr, "with\n  ");
   showStgObj(stgCurVal.op);
+  if (p.op->objType != BLACKHOLE) {
+    fprintf(stderr, "but updatee is not a BLACKHOLE!\n");
+    assert(p.op->objType == BLACKHOLE);
+  }
   p.op->payload[0] = stgCurVal;
   p.op->objType = INDIRECT;
   STGRETURN0();

@@ -6,6 +6,9 @@
 #include <stdio.h>
 
 DEFUN2(stgApplyN, N, f) {
+  #ifdef DEBUGSTGAPPLY
+  fprintf(stderr, "stgApplyN %s\n", f.op->infoPtr->name);
+  #endif
   assert(N.argType == INT);
   const int argc = N.i;
   assert(argc == 1);
@@ -15,13 +18,13 @@ DEFUN2(stgApplyN, N, f) {
   // no pointer args to save
   PtrOrLiteral nargv[1];
   nargv[0] = argv[0];
-
+  
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
     // no pointer args to save
     while (f.op->objType == THUNK) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply THUNK\n");
+      fprintf(stderr, "stgApplyN THUNK\n");
       #endif
       STGEVAL(f);
       // f.op = derefPoL(f);
@@ -33,6 +36,9 @@ DEFUN2(stgApplyN, N, f) {
   switch (f.op->objType) {
   case FUN: {
     int arity = f.op->infoPtr->funFields.arity;
+    #ifdef DEBUGSTGAPPLY
+    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    #endif
     int excess = argc - arity;  // may be negative
 
     // too many args not possible
@@ -40,7 +46,7 @@ DEFUN2(stgApplyN, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyN FUN just right\n");
       #endif
       pushargs(1, nargv);
       // 0 pointers to push
@@ -50,7 +56,7 @@ DEFUN2(stgApplyN, N, f) {
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN too few args\n");
+      fprintf(stderr, "stgApplyN FUN too few args\n");
       #endif
       int fvCount = f.op->infoPtr->fvCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
@@ -79,7 +85,7 @@ DEFUN2(stgApplyN, N, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApply:  PAP error 1");
+    assert(argCount == f.op->argCount && "stgApplyN:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
@@ -88,7 +94,7 @@ DEFUN2(stgApplyN, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyN FUN just right\n");
       #endif
       pushargs(1, nargv);
       pushargs(papnargc, &f.op->payload[fvCount+1+pappargc]);
@@ -100,7 +106,7 @@ DEFUN2(stgApplyN, N, f) {
     // excess < 0, too few args
     } else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too few args\n");
+      fprintf(stderr, "stgApplyN PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 0 + pappargc, 1 + papnargc);
@@ -133,19 +139,22 @@ DEFUN2(stgApplyN, N, f) {
   } // case PAP
 
   case BLACKHOLE: {
-    fprintf(stderr, "infinite loop detected in stgApply!\n");
+    fprintf(stderr, "infinite loop detected in stgApplyN!\n");
     showStgHeap();
     exit(0);
   } // case BLACKHOLE
 
   default:
-    fprintf(stderr, "stgApply not a THUNK, FUN, or PAP\n");
+    fprintf(stderr, "stgApplyN not a THUNK, FUN, or PAP\n");
     exit(0);
   }  // switch
   ENDFUN;
 }
 
 DEFUN2(stgApplyP, N, f) {
+  #ifdef DEBUGSTGAPPLY
+  fprintf(stderr, "stgApplyP %s\n", f.op->infoPtr->name);
+  #endif
   assert(N.argType == INT);
   const int argc = N.i;
   assert(argc == 1);
@@ -155,13 +164,18 @@ DEFUN2(stgApplyP, N, f) {
   PtrOrLiteral pargv[1];
   pargv[0] = argv[0];
   // no non-pointer args to save
+  callContSave(1, pargv);
+  STGEVAL(pargv[0]);
+  callContRestore(pargv);
+  // restore argv
+  argv[0] = pargv[0];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
     callContSave(1, pargv);
     while (f.op->objType == THUNK) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply THUNK\n");
+      fprintf(stderr, "stgApplyP THUNK\n");
       #endif
       STGEVAL(f);
       // f.op = derefPoL(f);
@@ -175,6 +189,9 @@ DEFUN2(stgApplyP, N, f) {
   switch (f.op->objType) {
   case FUN: {
     int arity = f.op->infoPtr->funFields.arity;
+    #ifdef DEBUGSTGAPPLY
+    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    #endif
     int excess = argc - arity;  // may be negative
 
     // too many args not possible
@@ -182,7 +199,7 @@ DEFUN2(stgApplyP, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyP FUN just right\n");
       #endif
       // 0 non-pointers to push
       pushargs(1, pargv);
@@ -192,7 +209,7 @@ DEFUN2(stgApplyP, N, f) {
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN too few args\n");
+      fprintf(stderr, "stgApplyP FUN too few args\n");
       #endif
       int fvCount = f.op->infoPtr->fvCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
@@ -221,7 +238,7 @@ DEFUN2(stgApplyP, N, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApply:  PAP error 1");
+    assert(argCount == f.op->argCount && "stgApplyP:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
@@ -230,7 +247,7 @@ DEFUN2(stgApplyP, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyP FUN just right\n");
       #endif
       // 0 non-pointer args
       pushargs(papnargc, &f.op->payload[fvCount+1+pappargc]);
@@ -242,7 +259,7 @@ DEFUN2(stgApplyP, N, f) {
     // excess < 0, too few args
     } else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too few args\n");
+      fprintf(stderr, "stgApplyP PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 1 + pappargc, 0 + papnargc);
@@ -275,19 +292,22 @@ DEFUN2(stgApplyP, N, f) {
   } // case PAP
 
   case BLACKHOLE: {
-    fprintf(stderr, "infinite loop detected in stgApply!\n");
+    fprintf(stderr, "infinite loop detected in stgApplyP!\n");
     showStgHeap();
     exit(0);
   } // case BLACKHOLE
 
   default:
-    fprintf(stderr, "stgApply not a THUNK, FUN, or PAP\n");
+    fprintf(stderr, "stgApplyP not a THUNK, FUN, or PAP\n");
     exit(0);
   }  // switch
   ENDFUN;
 }
 
 DEFUN2(stgApplyNN, N, f) {
+  #ifdef DEBUGSTGAPPLY
+  fprintf(stderr, "stgApplyNN %s\n", f.op->infoPtr->name);
+  #endif
   assert(N.argType == INT);
   const int argc = N.i;
   assert(argc == 2);
@@ -298,13 +318,13 @@ DEFUN2(stgApplyNN, N, f) {
   PtrOrLiteral nargv[2];
   nargv[0] = argv[0];
   nargv[1] = argv[1];
-
+  
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
     // no pointer args to save
     while (f.op->objType == THUNK) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply THUNK\n");
+      fprintf(stderr, "stgApplyNN THUNK\n");
       #endif
       STGEVAL(f);
       // f.op = derefPoL(f);
@@ -316,6 +336,9 @@ DEFUN2(stgApplyNN, N, f) {
   switch (f.op->objType) {
   case FUN: {
     int arity = f.op->infoPtr->funFields.arity;
+    #ifdef DEBUGSTGAPPLY
+    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    #endif
     int excess = argc - arity;  // may be negative
 
     // too many args
@@ -346,7 +369,7 @@ DEFUN2(stgApplyNN, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyNN FUN just right\n");
       #endif
       pushargs(2, nargv);
       // 0 pointers to push
@@ -356,7 +379,7 @@ DEFUN2(stgApplyNN, N, f) {
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN too few args\n");
+      fprintf(stderr, "stgApplyNN FUN too few args\n");
       #endif
       int fvCount = f.op->infoPtr->fvCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
@@ -385,14 +408,14 @@ DEFUN2(stgApplyNN, N, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApply:  PAP error 1");
+    assert(argCount == f.op->argCount && "stgApplyNN:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
     if (excess > 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too many args\n");
+      fprintf(stderr, "stgApplyNN PAP too many args\n");
       #endif
       // excess can only be 1
       #ifdef DEBUGSTGAPPLY
@@ -422,7 +445,7 @@ DEFUN2(stgApplyNN, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyNN FUN just right\n");
       #endif
       pushargs(2, nargv);
       pushargs(papnargc, &f.op->payload[fvCount+1+pappargc]);
@@ -434,7 +457,7 @@ DEFUN2(stgApplyNN, N, f) {
     // excess < 0, too few args
     } else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too few args\n");
+      fprintf(stderr, "stgApplyNN PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 0 + pappargc, 2 + papnargc);
@@ -467,19 +490,22 @@ DEFUN2(stgApplyNN, N, f) {
   } // case PAP
 
   case BLACKHOLE: {
-    fprintf(stderr, "infinite loop detected in stgApply!\n");
+    fprintf(stderr, "infinite loop detected in stgApplyNN!\n");
     showStgHeap();
     exit(0);
   } // case BLACKHOLE
 
   default:
-    fprintf(stderr, "stgApply not a THUNK, FUN, or PAP\n");
+    fprintf(stderr, "stgApplyNN not a THUNK, FUN, or PAP\n");
     exit(0);
   }  // switch
   ENDFUN;
 }
 
 DEFUN2(stgApplyPN, N, f) {
+  #ifdef DEBUGSTGAPPLY
+  fprintf(stderr, "stgApplyPN %s\n", f.op->infoPtr->name);
+  #endif
   assert(N.argType == INT);
   const int argc = N.i;
   assert(argc == 2);
@@ -490,13 +516,18 @@ DEFUN2(stgApplyPN, N, f) {
   pargv[0] = argv[0];
   PtrOrLiteral nargv[1];
   nargv[0] = argv[1];
+  callContSave(1, pargv);
+  STGEVAL(pargv[0]);
+  callContRestore(pargv);
+  // restore argv
+  argv[0] = pargv[0];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
     callContSave(1, pargv);
     while (f.op->objType == THUNK) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply THUNK\n");
+      fprintf(stderr, "stgApplyPN THUNK\n");
       #endif
       STGEVAL(f);
       // f.op = derefPoL(f);
@@ -510,6 +541,9 @@ DEFUN2(stgApplyPN, N, f) {
   switch (f.op->objType) {
   case FUN: {
     int arity = f.op->infoPtr->funFields.arity;
+    #ifdef DEBUGSTGAPPLY
+    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    #endif
     int excess = argc - arity;  // may be negative
 
     // too many args
@@ -540,7 +574,7 @@ DEFUN2(stgApplyPN, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyPN FUN just right\n");
       #endif
       pushargs(1, nargv);
       pushargs(1, pargv);
@@ -550,7 +584,7 @@ DEFUN2(stgApplyPN, N, f) {
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN too few args\n");
+      fprintf(stderr, "stgApplyPN FUN too few args\n");
       #endif
       int fvCount = f.op->infoPtr->fvCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
@@ -579,14 +613,14 @@ DEFUN2(stgApplyPN, N, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApply:  PAP error 1");
+    assert(argCount == f.op->argCount && "stgApplyPN:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
     if (excess > 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too many args\n");
+      fprintf(stderr, "stgApplyPN PAP too many args\n");
       #endif
       // excess can only be 1
       #ifdef DEBUGSTGAPPLY
@@ -616,7 +650,7 @@ DEFUN2(stgApplyPN, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyPN FUN just right\n");
       #endif
       pushargs(1, nargv);
       pushargs(papnargc, &f.op->payload[fvCount+1+pappargc]);
@@ -628,7 +662,7 @@ DEFUN2(stgApplyPN, N, f) {
     // excess < 0, too few args
     } else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too few args\n");
+      fprintf(stderr, "stgApplyPN PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 1 + pappargc, 1 + papnargc);
@@ -661,19 +695,22 @@ DEFUN2(stgApplyPN, N, f) {
   } // case PAP
 
   case BLACKHOLE: {
-    fprintf(stderr, "infinite loop detected in stgApply!\n");
+    fprintf(stderr, "infinite loop detected in stgApplyPN!\n");
     showStgHeap();
     exit(0);
   } // case BLACKHOLE
 
   default:
-    fprintf(stderr, "stgApply not a THUNK, FUN, or PAP\n");
+    fprintf(stderr, "stgApplyPN not a THUNK, FUN, or PAP\n");
     exit(0);
   }  // switch
   ENDFUN;
 }
 
 DEFUN2(stgApplyNP, N, f) {
+  #ifdef DEBUGSTGAPPLY
+  fprintf(stderr, "stgApplyNP %s\n", f.op->infoPtr->name);
+  #endif
   assert(N.argType == INT);
   const int argc = N.i;
   assert(argc == 2);
@@ -684,13 +721,18 @@ DEFUN2(stgApplyNP, N, f) {
   pargv[0] = argv[1];
   PtrOrLiteral nargv[1];
   nargv[0] = argv[0];
+  callContSave(1, pargv);
+  STGEVAL(pargv[0]);
+  callContRestore(pargv);
+  // restore argv
+  argv[1] = pargv[0];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
     callContSave(1, pargv);
     while (f.op->objType == THUNK) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply THUNK\n");
+      fprintf(stderr, "stgApplyNP THUNK\n");
       #endif
       STGEVAL(f);
       // f.op = derefPoL(f);
@@ -704,6 +746,9 @@ DEFUN2(stgApplyNP, N, f) {
   switch (f.op->objType) {
   case FUN: {
     int arity = f.op->infoPtr->funFields.arity;
+    #ifdef DEBUGSTGAPPLY
+    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    #endif
     int excess = argc - arity;  // may be negative
 
     // too many args
@@ -736,7 +781,7 @@ DEFUN2(stgApplyNP, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyNP FUN just right\n");
       #endif
       pushargs(1, nargv);
       pushargs(1, pargv);
@@ -746,7 +791,7 @@ DEFUN2(stgApplyNP, N, f) {
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN too few args\n");
+      fprintf(stderr, "stgApplyNP FUN too few args\n");
       #endif
       int fvCount = f.op->infoPtr->fvCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
@@ -775,14 +820,14 @@ DEFUN2(stgApplyNP, N, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApply:  PAP error 1");
+    assert(argCount == f.op->argCount && "stgApplyNP:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
     if (excess > 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too many args\n");
+      fprintf(stderr, "stgApplyNP PAP too many args\n");
       #endif
       // excess can only be 1
       #ifdef DEBUGSTGAPPLY
@@ -814,7 +859,7 @@ DEFUN2(stgApplyNP, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyNP FUN just right\n");
       #endif
       pushargs(1, nargv);
       pushargs(papnargc, &f.op->payload[fvCount+1+pappargc]);
@@ -826,7 +871,7 @@ DEFUN2(stgApplyNP, N, f) {
     // excess < 0, too few args
     } else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too few args\n");
+      fprintf(stderr, "stgApplyNP PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 1 + pappargc, 1 + papnargc);
@@ -859,19 +904,22 @@ DEFUN2(stgApplyNP, N, f) {
   } // case PAP
 
   case BLACKHOLE: {
-    fprintf(stderr, "infinite loop detected in stgApply!\n");
+    fprintf(stderr, "infinite loop detected in stgApplyNP!\n");
     showStgHeap();
     exit(0);
   } // case BLACKHOLE
 
   default:
-    fprintf(stderr, "stgApply not a THUNK, FUN, or PAP\n");
+    fprintf(stderr, "stgApplyNP not a THUNK, FUN, or PAP\n");
     exit(0);
   }  // switch
   ENDFUN;
 }
 
 DEFUN2(stgApplyPP, N, f) {
+  #ifdef DEBUGSTGAPPLY
+  fprintf(stderr, "stgApplyPP %s\n", f.op->infoPtr->name);
+  #endif
   assert(N.argType == INT);
   const int argc = N.i;
   assert(argc == 2);
@@ -882,13 +930,25 @@ DEFUN2(stgApplyPP, N, f) {
   pargv[0] = argv[0];
   pargv[1] = argv[1];
   // no non-pointer args to save
+  callContSave(2, pargv);
+  STGEVAL(pargv[0]);
+  callContRestore(pargv);
+  // restore argv
+  argv[0] = pargv[0];
+  argv[1] = pargv[1];
+  callContSave(2, pargv);
+  STGEVAL(pargv[1]);
+  callContRestore(pargv);
+  // restore argv
+  argv[0] = pargv[0];
+  argv[1] = pargv[1];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
     callContSave(2, pargv);
     while (f.op->objType == THUNK) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply THUNK\n");
+      fprintf(stderr, "stgApplyPP THUNK\n");
       #endif
       STGEVAL(f);
       // f.op = derefPoL(f);
@@ -903,6 +963,9 @@ DEFUN2(stgApplyPP, N, f) {
   switch (f.op->objType) {
   case FUN: {
     int arity = f.op->infoPtr->funFields.arity;
+    #ifdef DEBUGSTGAPPLY
+    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    #endif
     int excess = argc - arity;  // may be negative
 
     // too many args
@@ -935,7 +998,7 @@ DEFUN2(stgApplyPP, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyPP FUN just right\n");
       #endif
       // 0 non-pointers to push
       pushargs(2, pargv);
@@ -945,7 +1008,7 @@ DEFUN2(stgApplyPP, N, f) {
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN too few args\n");
+      fprintf(stderr, "stgApplyPP FUN too few args\n");
       #endif
       int fvCount = f.op->infoPtr->fvCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
@@ -974,14 +1037,14 @@ DEFUN2(stgApplyPP, N, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApply:  PAP error 1");
+    assert(argCount == f.op->argCount && "stgApplyPP:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
     if (excess > 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too many args\n");
+      fprintf(stderr, "stgApplyPP PAP too many args\n");
       #endif
       // excess can only be 1
       #ifdef DEBUGSTGAPPLY
@@ -1013,7 +1076,7 @@ DEFUN2(stgApplyPP, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyPP FUN just right\n");
       #endif
       // 0 non-pointer args
       pushargs(papnargc, &f.op->payload[fvCount+1+pappargc]);
@@ -1025,7 +1088,7 @@ DEFUN2(stgApplyPP, N, f) {
     // excess < 0, too few args
     } else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too few args\n");
+      fprintf(stderr, "stgApplyPP PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2 + pappargc, 0 + papnargc);
@@ -1058,19 +1121,22 @@ DEFUN2(stgApplyPP, N, f) {
   } // case PAP
 
   case BLACKHOLE: {
-    fprintf(stderr, "infinite loop detected in stgApply!\n");
+    fprintf(stderr, "infinite loop detected in stgApplyPP!\n");
     showStgHeap();
     exit(0);
   } // case BLACKHOLE
 
   default:
-    fprintf(stderr, "stgApply not a THUNK, FUN, or PAP\n");
+    fprintf(stderr, "stgApplyPP not a THUNK, FUN, or PAP\n");
     exit(0);
   }  // switch
   ENDFUN;
 }
 
 DEFUN2(stgApplyNNN, N, f) {
+  #ifdef DEBUGSTGAPPLY
+  fprintf(stderr, "stgApplyNNN %s\n", f.op->infoPtr->name);
+  #endif
   assert(N.argType == INT);
   const int argc = N.i;
   assert(argc == 3);
@@ -1082,13 +1148,13 @@ DEFUN2(stgApplyNNN, N, f) {
   nargv[0] = argv[0];
   nargv[1] = argv[1];
   nargv[2] = argv[2];
-
+  
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
     // no pointer args to save
     while (f.op->objType == THUNK) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply THUNK\n");
+      fprintf(stderr, "stgApplyNNN THUNK\n");
       #endif
       STGEVAL(f);
       // f.op = derefPoL(f);
@@ -1100,6 +1166,9 @@ DEFUN2(stgApplyNNN, N, f) {
   switch (f.op->objType) {
   case FUN: {
     int arity = f.op->infoPtr->funFields.arity;
+    #ifdef DEBUGSTGAPPLY
+    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    #endif
     int excess = argc - arity;  // may be negative
 
     // too many args
@@ -1158,7 +1227,7 @@ DEFUN2(stgApplyNNN, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyNNN FUN just right\n");
       #endif
       pushargs(3, nargv);
       // 0 pointers to push
@@ -1168,7 +1237,7 @@ DEFUN2(stgApplyNNN, N, f) {
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN too few args\n");
+      fprintf(stderr, "stgApplyNNN FUN too few args\n");
       #endif
       int fvCount = f.op->infoPtr->fvCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
@@ -1197,14 +1266,14 @@ DEFUN2(stgApplyNNN, N, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApply:  PAP error 1");
+    assert(argCount == f.op->argCount && "stgApplyNNN:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
     if (excess > 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too many args\n");
+      fprintf(stderr, "stgApplyNNN PAP too many args\n");
       #endif
       switch (excess) {
       case 1: {
@@ -1264,7 +1333,7 @@ DEFUN2(stgApplyNNN, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyNNN FUN just right\n");
       #endif
       pushargs(3, nargv);
       pushargs(papnargc, &f.op->payload[fvCount+1+pappargc]);
@@ -1276,7 +1345,7 @@ DEFUN2(stgApplyNNN, N, f) {
     // excess < 0, too few args
     } else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too few args\n");
+      fprintf(stderr, "stgApplyNNN PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 0 + pappargc, 3 + papnargc);
@@ -1309,19 +1378,22 @@ DEFUN2(stgApplyNNN, N, f) {
   } // case PAP
 
   case BLACKHOLE: {
-    fprintf(stderr, "infinite loop detected in stgApply!\n");
+    fprintf(stderr, "infinite loop detected in stgApplyNNN!\n");
     showStgHeap();
     exit(0);
   } // case BLACKHOLE
 
   default:
-    fprintf(stderr, "stgApply not a THUNK, FUN, or PAP\n");
+    fprintf(stderr, "stgApplyNNN not a THUNK, FUN, or PAP\n");
     exit(0);
   }  // switch
   ENDFUN;
 }
 
 DEFUN2(stgApplyPNN, N, f) {
+  #ifdef DEBUGSTGAPPLY
+  fprintf(stderr, "stgApplyPNN %s\n", f.op->infoPtr->name);
+  #endif
   assert(N.argType == INT);
   const int argc = N.i;
   assert(argc == 3);
@@ -1333,13 +1405,18 @@ DEFUN2(stgApplyPNN, N, f) {
   PtrOrLiteral nargv[2];
   nargv[0] = argv[1];
   nargv[1] = argv[2];
+  callContSave(1, pargv);
+  STGEVAL(pargv[0]);
+  callContRestore(pargv);
+  // restore argv
+  argv[0] = pargv[0];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
     callContSave(1, pargv);
     while (f.op->objType == THUNK) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply THUNK\n");
+      fprintf(stderr, "stgApplyPNN THUNK\n");
       #endif
       STGEVAL(f);
       // f.op = derefPoL(f);
@@ -1353,6 +1430,9 @@ DEFUN2(stgApplyPNN, N, f) {
   switch (f.op->objType) {
   case FUN: {
     int arity = f.op->infoPtr->funFields.arity;
+    #ifdef DEBUGSTGAPPLY
+    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    #endif
     int excess = argc - arity;  // may be negative
 
     // too many args
@@ -1411,7 +1491,7 @@ DEFUN2(stgApplyPNN, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyPNN FUN just right\n");
       #endif
       pushargs(2, nargv);
       pushargs(1, pargv);
@@ -1421,7 +1501,7 @@ DEFUN2(stgApplyPNN, N, f) {
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN too few args\n");
+      fprintf(stderr, "stgApplyPNN FUN too few args\n");
       #endif
       int fvCount = f.op->infoPtr->fvCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
@@ -1450,14 +1530,14 @@ DEFUN2(stgApplyPNN, N, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApply:  PAP error 1");
+    assert(argCount == f.op->argCount && "stgApplyPNN:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
     if (excess > 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too many args\n");
+      fprintf(stderr, "stgApplyPNN PAP too many args\n");
       #endif
       switch (excess) {
       case 1: {
@@ -1517,7 +1597,7 @@ DEFUN2(stgApplyPNN, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyPNN FUN just right\n");
       #endif
       pushargs(2, nargv);
       pushargs(papnargc, &f.op->payload[fvCount+1+pappargc]);
@@ -1529,7 +1609,7 @@ DEFUN2(stgApplyPNN, N, f) {
     // excess < 0, too few args
     } else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too few args\n");
+      fprintf(stderr, "stgApplyPNN PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 1 + pappargc, 2 + papnargc);
@@ -1562,19 +1642,22 @@ DEFUN2(stgApplyPNN, N, f) {
   } // case PAP
 
   case BLACKHOLE: {
-    fprintf(stderr, "infinite loop detected in stgApply!\n");
+    fprintf(stderr, "infinite loop detected in stgApplyPNN!\n");
     showStgHeap();
     exit(0);
   } // case BLACKHOLE
 
   default:
-    fprintf(stderr, "stgApply not a THUNK, FUN, or PAP\n");
+    fprintf(stderr, "stgApplyPNN not a THUNK, FUN, or PAP\n");
     exit(0);
   }  // switch
   ENDFUN;
 }
 
 DEFUN2(stgApplyNPN, N, f) {
+  #ifdef DEBUGSTGAPPLY
+  fprintf(stderr, "stgApplyNPN %s\n", f.op->infoPtr->name);
+  #endif
   assert(N.argType == INT);
   const int argc = N.i;
   assert(argc == 3);
@@ -1586,13 +1669,18 @@ DEFUN2(stgApplyNPN, N, f) {
   PtrOrLiteral nargv[2];
   nargv[0] = argv[0];
   nargv[1] = argv[2];
+  callContSave(1, pargv);
+  STGEVAL(pargv[0]);
+  callContRestore(pargv);
+  // restore argv
+  argv[1] = pargv[0];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
     callContSave(1, pargv);
     while (f.op->objType == THUNK) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply THUNK\n");
+      fprintf(stderr, "stgApplyNPN THUNK\n");
       #endif
       STGEVAL(f);
       // f.op = derefPoL(f);
@@ -1606,6 +1694,9 @@ DEFUN2(stgApplyNPN, N, f) {
   switch (f.op->objType) {
   case FUN: {
     int arity = f.op->infoPtr->funFields.arity;
+    #ifdef DEBUGSTGAPPLY
+    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    #endif
     int excess = argc - arity;  // may be negative
 
     // too many args
@@ -1666,7 +1757,7 @@ DEFUN2(stgApplyNPN, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyNPN FUN just right\n");
       #endif
       pushargs(2, nargv);
       pushargs(1, pargv);
@@ -1676,7 +1767,7 @@ DEFUN2(stgApplyNPN, N, f) {
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN too few args\n");
+      fprintf(stderr, "stgApplyNPN FUN too few args\n");
       #endif
       int fvCount = f.op->infoPtr->fvCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
@@ -1705,14 +1796,14 @@ DEFUN2(stgApplyNPN, N, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApply:  PAP error 1");
+    assert(argCount == f.op->argCount && "stgApplyNPN:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
     if (excess > 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too many args\n");
+      fprintf(stderr, "stgApplyNPN PAP too many args\n");
       #endif
       switch (excess) {
       case 1: {
@@ -1774,7 +1865,7 @@ DEFUN2(stgApplyNPN, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyNPN FUN just right\n");
       #endif
       pushargs(2, nargv);
       pushargs(papnargc, &f.op->payload[fvCount+1+pappargc]);
@@ -1786,7 +1877,7 @@ DEFUN2(stgApplyNPN, N, f) {
     // excess < 0, too few args
     } else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too few args\n");
+      fprintf(stderr, "stgApplyNPN PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 1 + pappargc, 2 + papnargc);
@@ -1819,19 +1910,22 @@ DEFUN2(stgApplyNPN, N, f) {
   } // case PAP
 
   case BLACKHOLE: {
-    fprintf(stderr, "infinite loop detected in stgApply!\n");
+    fprintf(stderr, "infinite loop detected in stgApplyNPN!\n");
     showStgHeap();
     exit(0);
   } // case BLACKHOLE
 
   default:
-    fprintf(stderr, "stgApply not a THUNK, FUN, or PAP\n");
+    fprintf(stderr, "stgApplyNPN not a THUNK, FUN, or PAP\n");
     exit(0);
   }  // switch
   ENDFUN;
 }
 
 DEFUN2(stgApplyPPN, N, f) {
+  #ifdef DEBUGSTGAPPLY
+  fprintf(stderr, "stgApplyPPN %s\n", f.op->infoPtr->name);
+  #endif
   assert(N.argType == INT);
   const int argc = N.i;
   assert(argc == 3);
@@ -1843,13 +1937,25 @@ DEFUN2(stgApplyPPN, N, f) {
   pargv[1] = argv[1];
   PtrOrLiteral nargv[1];
   nargv[0] = argv[2];
+  callContSave(2, pargv);
+  STGEVAL(pargv[0]);
+  callContRestore(pargv);
+  // restore argv
+  argv[0] = pargv[0];
+  argv[1] = pargv[1];
+  callContSave(2, pargv);
+  STGEVAL(pargv[1]);
+  callContRestore(pargv);
+  // restore argv
+  argv[0] = pargv[0];
+  argv[1] = pargv[1];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
     callContSave(2, pargv);
     while (f.op->objType == THUNK) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply THUNK\n");
+      fprintf(stderr, "stgApplyPPN THUNK\n");
       #endif
       STGEVAL(f);
       // f.op = derefPoL(f);
@@ -1864,6 +1970,9 @@ DEFUN2(stgApplyPPN, N, f) {
   switch (f.op->objType) {
   case FUN: {
     int arity = f.op->infoPtr->funFields.arity;
+    #ifdef DEBUGSTGAPPLY
+    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    #endif
     int excess = argc - arity;  // may be negative
 
     // too many args
@@ -1924,7 +2033,7 @@ DEFUN2(stgApplyPPN, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyPPN FUN just right\n");
       #endif
       pushargs(1, nargv);
       pushargs(2, pargv);
@@ -1934,7 +2043,7 @@ DEFUN2(stgApplyPPN, N, f) {
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN too few args\n");
+      fprintf(stderr, "stgApplyPPN FUN too few args\n");
       #endif
       int fvCount = f.op->infoPtr->fvCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
@@ -1963,14 +2072,14 @@ DEFUN2(stgApplyPPN, N, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApply:  PAP error 1");
+    assert(argCount == f.op->argCount && "stgApplyPPN:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
     if (excess > 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too many args\n");
+      fprintf(stderr, "stgApplyPPN PAP too many args\n");
       #endif
       switch (excess) {
       case 1: {
@@ -2032,7 +2141,7 @@ DEFUN2(stgApplyPPN, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyPPN FUN just right\n");
       #endif
       pushargs(1, nargv);
       pushargs(papnargc, &f.op->payload[fvCount+1+pappargc]);
@@ -2044,7 +2153,7 @@ DEFUN2(stgApplyPPN, N, f) {
     // excess < 0, too few args
     } else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too few args\n");
+      fprintf(stderr, "stgApplyPPN PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2 + pappargc, 1 + papnargc);
@@ -2077,19 +2186,22 @@ DEFUN2(stgApplyPPN, N, f) {
   } // case PAP
 
   case BLACKHOLE: {
-    fprintf(stderr, "infinite loop detected in stgApply!\n");
+    fprintf(stderr, "infinite loop detected in stgApplyPPN!\n");
     showStgHeap();
     exit(0);
   } // case BLACKHOLE
 
   default:
-    fprintf(stderr, "stgApply not a THUNK, FUN, or PAP\n");
+    fprintf(stderr, "stgApplyPPN not a THUNK, FUN, or PAP\n");
     exit(0);
   }  // switch
   ENDFUN;
 }
 
 DEFUN2(stgApplyNNP, N, f) {
+  #ifdef DEBUGSTGAPPLY
+  fprintf(stderr, "stgApplyNNP %s\n", f.op->infoPtr->name);
+  #endif
   assert(N.argType == INT);
   const int argc = N.i;
   assert(argc == 3);
@@ -2101,13 +2213,18 @@ DEFUN2(stgApplyNNP, N, f) {
   PtrOrLiteral nargv[2];
   nargv[0] = argv[0];
   nargv[1] = argv[1];
+  callContSave(1, pargv);
+  STGEVAL(pargv[0]);
+  callContRestore(pargv);
+  // restore argv
+  argv[2] = pargv[0];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
     callContSave(1, pargv);
     while (f.op->objType == THUNK) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply THUNK\n");
+      fprintf(stderr, "stgApplyNNP THUNK\n");
       #endif
       STGEVAL(f);
       // f.op = derefPoL(f);
@@ -2121,6 +2238,9 @@ DEFUN2(stgApplyNNP, N, f) {
   switch (f.op->objType) {
   case FUN: {
     int arity = f.op->infoPtr->funFields.arity;
+    #ifdef DEBUGSTGAPPLY
+    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    #endif
     int excess = argc - arity;  // may be negative
 
     // too many args
@@ -2183,7 +2303,7 @@ DEFUN2(stgApplyNNP, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyNNP FUN just right\n");
       #endif
       pushargs(2, nargv);
       pushargs(1, pargv);
@@ -2193,7 +2313,7 @@ DEFUN2(stgApplyNNP, N, f) {
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN too few args\n");
+      fprintf(stderr, "stgApplyNNP FUN too few args\n");
       #endif
       int fvCount = f.op->infoPtr->fvCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
@@ -2222,14 +2342,14 @@ DEFUN2(stgApplyNNP, N, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApply:  PAP error 1");
+    assert(argCount == f.op->argCount && "stgApplyNNP:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
     if (excess > 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too many args\n");
+      fprintf(stderr, "stgApplyNNP PAP too many args\n");
       #endif
       switch (excess) {
       case 1: {
@@ -2293,7 +2413,7 @@ DEFUN2(stgApplyNNP, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyNNP FUN just right\n");
       #endif
       pushargs(2, nargv);
       pushargs(papnargc, &f.op->payload[fvCount+1+pappargc]);
@@ -2305,7 +2425,7 @@ DEFUN2(stgApplyNNP, N, f) {
     // excess < 0, too few args
     } else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too few args\n");
+      fprintf(stderr, "stgApplyNNP PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 1 + pappargc, 2 + papnargc);
@@ -2338,19 +2458,22 @@ DEFUN2(stgApplyNNP, N, f) {
   } // case PAP
 
   case BLACKHOLE: {
-    fprintf(stderr, "infinite loop detected in stgApply!\n");
+    fprintf(stderr, "infinite loop detected in stgApplyNNP!\n");
     showStgHeap();
     exit(0);
   } // case BLACKHOLE
 
   default:
-    fprintf(stderr, "stgApply not a THUNK, FUN, or PAP\n");
+    fprintf(stderr, "stgApplyNNP not a THUNK, FUN, or PAP\n");
     exit(0);
   }  // switch
   ENDFUN;
 }
 
 DEFUN2(stgApplyPNP, N, f) {
+  #ifdef DEBUGSTGAPPLY
+  fprintf(stderr, "stgApplyPNP %s\n", f.op->infoPtr->name);
+  #endif
   assert(N.argType == INT);
   const int argc = N.i;
   assert(argc == 3);
@@ -2362,13 +2485,25 @@ DEFUN2(stgApplyPNP, N, f) {
   pargv[1] = argv[2];
   PtrOrLiteral nargv[1];
   nargv[0] = argv[1];
+  callContSave(2, pargv);
+  STGEVAL(pargv[0]);
+  callContRestore(pargv);
+  // restore argv
+  argv[0] = pargv[0];
+  argv[2] = pargv[1];
+  callContSave(2, pargv);
+  STGEVAL(pargv[1]);
+  callContRestore(pargv);
+  // restore argv
+  argv[0] = pargv[0];
+  argv[2] = pargv[1];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
     callContSave(2, pargv);
     while (f.op->objType == THUNK) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply THUNK\n");
+      fprintf(stderr, "stgApplyPNP THUNK\n");
       #endif
       STGEVAL(f);
       // f.op = derefPoL(f);
@@ -2383,6 +2518,9 @@ DEFUN2(stgApplyPNP, N, f) {
   switch (f.op->objType) {
   case FUN: {
     int arity = f.op->infoPtr->funFields.arity;
+    #ifdef DEBUGSTGAPPLY
+    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    #endif
     int excess = argc - arity;  // may be negative
 
     // too many args
@@ -2445,7 +2583,7 @@ DEFUN2(stgApplyPNP, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyPNP FUN just right\n");
       #endif
       pushargs(1, nargv);
       pushargs(2, pargv);
@@ -2455,7 +2593,7 @@ DEFUN2(stgApplyPNP, N, f) {
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN too few args\n");
+      fprintf(stderr, "stgApplyPNP FUN too few args\n");
       #endif
       int fvCount = f.op->infoPtr->fvCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
@@ -2484,14 +2622,14 @@ DEFUN2(stgApplyPNP, N, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApply:  PAP error 1");
+    assert(argCount == f.op->argCount && "stgApplyPNP:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
     if (excess > 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too many args\n");
+      fprintf(stderr, "stgApplyPNP PAP too many args\n");
       #endif
       switch (excess) {
       case 1: {
@@ -2555,7 +2693,7 @@ DEFUN2(stgApplyPNP, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyPNP FUN just right\n");
       #endif
       pushargs(1, nargv);
       pushargs(papnargc, &f.op->payload[fvCount+1+pappargc]);
@@ -2567,7 +2705,7 @@ DEFUN2(stgApplyPNP, N, f) {
     // excess < 0, too few args
     } else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too few args\n");
+      fprintf(stderr, "stgApplyPNP PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2 + pappargc, 1 + papnargc);
@@ -2600,19 +2738,22 @@ DEFUN2(stgApplyPNP, N, f) {
   } // case PAP
 
   case BLACKHOLE: {
-    fprintf(stderr, "infinite loop detected in stgApply!\n");
+    fprintf(stderr, "infinite loop detected in stgApplyPNP!\n");
     showStgHeap();
     exit(0);
   } // case BLACKHOLE
 
   default:
-    fprintf(stderr, "stgApply not a THUNK, FUN, or PAP\n");
+    fprintf(stderr, "stgApplyPNP not a THUNK, FUN, or PAP\n");
     exit(0);
   }  // switch
   ENDFUN;
 }
 
 DEFUN2(stgApplyNPP, N, f) {
+  #ifdef DEBUGSTGAPPLY
+  fprintf(stderr, "stgApplyNPP %s\n", f.op->infoPtr->name);
+  #endif
   assert(N.argType == INT);
   const int argc = N.i;
   assert(argc == 3);
@@ -2624,13 +2765,25 @@ DEFUN2(stgApplyNPP, N, f) {
   pargv[1] = argv[2];
   PtrOrLiteral nargv[1];
   nargv[0] = argv[0];
+  callContSave(2, pargv);
+  STGEVAL(pargv[0]);
+  callContRestore(pargv);
+  // restore argv
+  argv[1] = pargv[0];
+  argv[2] = pargv[1];
+  callContSave(2, pargv);
+  STGEVAL(pargv[1]);
+  callContRestore(pargv);
+  // restore argv
+  argv[1] = pargv[0];
+  argv[2] = pargv[1];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
     callContSave(2, pargv);
     while (f.op->objType == THUNK) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply THUNK\n");
+      fprintf(stderr, "stgApplyNPP THUNK\n");
       #endif
       STGEVAL(f);
       // f.op = derefPoL(f);
@@ -2645,6 +2798,9 @@ DEFUN2(stgApplyNPP, N, f) {
   switch (f.op->objType) {
   case FUN: {
     int arity = f.op->infoPtr->funFields.arity;
+    #ifdef DEBUGSTGAPPLY
+    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    #endif
     int excess = argc - arity;  // may be negative
 
     // too many args
@@ -2708,7 +2864,7 @@ DEFUN2(stgApplyNPP, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyNPP FUN just right\n");
       #endif
       pushargs(1, nargv);
       pushargs(2, pargv);
@@ -2718,7 +2874,7 @@ DEFUN2(stgApplyNPP, N, f) {
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN too few args\n");
+      fprintf(stderr, "stgApplyNPP FUN too few args\n");
       #endif
       int fvCount = f.op->infoPtr->fvCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
@@ -2747,14 +2903,14 @@ DEFUN2(stgApplyNPP, N, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApply:  PAP error 1");
+    assert(argCount == f.op->argCount && "stgApplyNPP:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
     if (excess > 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too many args\n");
+      fprintf(stderr, "stgApplyNPP PAP too many args\n");
       #endif
       switch (excess) {
       case 1: {
@@ -2819,7 +2975,7 @@ DEFUN2(stgApplyNPP, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyNPP FUN just right\n");
       #endif
       pushargs(1, nargv);
       pushargs(papnargc, &f.op->payload[fvCount+1+pappargc]);
@@ -2831,7 +2987,7 @@ DEFUN2(stgApplyNPP, N, f) {
     // excess < 0, too few args
     } else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too few args\n");
+      fprintf(stderr, "stgApplyNPP PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2 + pappargc, 1 + papnargc);
@@ -2864,19 +3020,22 @@ DEFUN2(stgApplyNPP, N, f) {
   } // case PAP
 
   case BLACKHOLE: {
-    fprintf(stderr, "infinite loop detected in stgApply!\n");
+    fprintf(stderr, "infinite loop detected in stgApplyNPP!\n");
     showStgHeap();
     exit(0);
   } // case BLACKHOLE
 
   default:
-    fprintf(stderr, "stgApply not a THUNK, FUN, or PAP\n");
+    fprintf(stderr, "stgApplyNPP not a THUNK, FUN, or PAP\n");
     exit(0);
   }  // switch
   ENDFUN;
 }
 
 DEFUN2(stgApplyPPP, N, f) {
+  #ifdef DEBUGSTGAPPLY
+  fprintf(stderr, "stgApplyPPP %s\n", f.op->infoPtr->name);
+  #endif
   assert(N.argType == INT);
   const int argc = N.i;
   assert(argc == 3);
@@ -2888,13 +3047,34 @@ DEFUN2(stgApplyPPP, N, f) {
   pargv[1] = argv[1];
   pargv[2] = argv[2];
   // no non-pointer args to save
+  callContSave(3, pargv);
+  STGEVAL(pargv[0]);
+  callContRestore(pargv);
+  // restore argv
+  argv[0] = pargv[0];
+  argv[1] = pargv[1];
+  argv[2] = pargv[2];
+  callContSave(3, pargv);
+  STGEVAL(pargv[1]);
+  callContRestore(pargv);
+  // restore argv
+  argv[0] = pargv[0];
+  argv[1] = pargv[1];
+  argv[2] = pargv[2];
+  callContSave(3, pargv);
+  STGEVAL(pargv[2]);
+  callContRestore(pargv);
+  // restore argv
+  argv[0] = pargv[0];
+  argv[1] = pargv[1];
+  argv[2] = pargv[2];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
     callContSave(3, pargv);
     while (f.op->objType == THUNK) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply THUNK\n");
+      fprintf(stderr, "stgApplyPPP THUNK\n");
       #endif
       STGEVAL(f);
       // f.op = derefPoL(f);
@@ -2910,6 +3090,9 @@ DEFUN2(stgApplyPPP, N, f) {
   switch (f.op->objType) {
   case FUN: {
     int arity = f.op->infoPtr->funFields.arity;
+    #ifdef DEBUGSTGAPPLY
+    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    #endif
     int excess = argc - arity;  // may be negative
 
     // too many args
@@ -2973,7 +3156,7 @@ DEFUN2(stgApplyPPP, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyPPP FUN just right\n");
       #endif
       // 0 non-pointers to push
       pushargs(3, pargv);
@@ -2983,7 +3166,7 @@ DEFUN2(stgApplyPPP, N, f) {
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN too few args\n");
+      fprintf(stderr, "stgApplyPPP FUN too few args\n");
       #endif
       int fvCount = f.op->infoPtr->fvCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
@@ -3012,14 +3195,14 @@ DEFUN2(stgApplyPPP, N, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApply:  PAP error 1");
+    assert(argCount == f.op->argCount && "stgApplyPPP:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
     if (excess > 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too many args\n");
+      fprintf(stderr, "stgApplyPPP PAP too many args\n");
       #endif
       switch (excess) {
       case 1: {
@@ -3084,7 +3267,7 @@ DEFUN2(stgApplyPPP, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyPPP FUN just right\n");
       #endif
       // 0 non-pointer args
       pushargs(papnargc, &f.op->payload[fvCount+1+pappargc]);
@@ -3096,7 +3279,7 @@ DEFUN2(stgApplyPPP, N, f) {
     // excess < 0, too few args
     } else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too few args\n");
+      fprintf(stderr, "stgApplyPPP PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3 + pappargc, 0 + papnargc);
@@ -3129,19 +3312,22 @@ DEFUN2(stgApplyPPP, N, f) {
   } // case PAP
 
   case BLACKHOLE: {
-    fprintf(stderr, "infinite loop detected in stgApply!\n");
+    fprintf(stderr, "infinite loop detected in stgApplyPPP!\n");
     showStgHeap();
     exit(0);
   } // case BLACKHOLE
 
   default:
-    fprintf(stderr, "stgApply not a THUNK, FUN, or PAP\n");
+    fprintf(stderr, "stgApplyPPP not a THUNK, FUN, or PAP\n");
     exit(0);
   }  // switch
   ENDFUN;
 }
 
 DEFUN2(stgApplyNNNN, N, f) {
+  #ifdef DEBUGSTGAPPLY
+  fprintf(stderr, "stgApplyNNNN %s\n", f.op->infoPtr->name);
+  #endif
   assert(N.argType == INT);
   const int argc = N.i;
   assert(argc == 4);
@@ -3154,13 +3340,13 @@ DEFUN2(stgApplyNNNN, N, f) {
   nargv[1] = argv[1];
   nargv[2] = argv[2];
   nargv[3] = argv[3];
-
+  
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
     // no pointer args to save
     while (f.op->objType == THUNK) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply THUNK\n");
+      fprintf(stderr, "stgApplyNNNN THUNK\n");
       #endif
       STGEVAL(f);
       // f.op = derefPoL(f);
@@ -3172,6 +3358,9 @@ DEFUN2(stgApplyNNNN, N, f) {
   switch (f.op->objType) {
   case FUN: {
     int arity = f.op->infoPtr->funFields.arity;
+    #ifdef DEBUGSTGAPPLY
+    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    #endif
     int excess = argc - arity;  // may be negative
 
     // too many args
@@ -3253,7 +3442,7 @@ DEFUN2(stgApplyNNNN, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyNNNN FUN just right\n");
       #endif
       pushargs(4, nargv);
       // 0 pointers to push
@@ -3263,7 +3452,7 @@ DEFUN2(stgApplyNNNN, N, f) {
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN too few args\n");
+      fprintf(stderr, "stgApplyNNNN FUN too few args\n");
       #endif
       int fvCount = f.op->infoPtr->fvCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
@@ -3292,14 +3481,14 @@ DEFUN2(stgApplyNNNN, N, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApply:  PAP error 1");
+    assert(argCount == f.op->argCount && "stgApplyNNNN:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
     if (excess > 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too many args\n");
+      fprintf(stderr, "stgApplyNNNN PAP too many args\n");
       #endif
       switch (excess) {
       case 1: {
@@ -3384,7 +3573,7 @@ DEFUN2(stgApplyNNNN, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyNNNN FUN just right\n");
       #endif
       pushargs(4, nargv);
       pushargs(papnargc, &f.op->payload[fvCount+1+pappargc]);
@@ -3396,7 +3585,7 @@ DEFUN2(stgApplyNNNN, N, f) {
     // excess < 0, too few args
     } else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too few args\n");
+      fprintf(stderr, "stgApplyNNNN PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 0 + pappargc, 4 + papnargc);
@@ -3429,19 +3618,22 @@ DEFUN2(stgApplyNNNN, N, f) {
   } // case PAP
 
   case BLACKHOLE: {
-    fprintf(stderr, "infinite loop detected in stgApply!\n");
+    fprintf(stderr, "infinite loop detected in stgApplyNNNN!\n");
     showStgHeap();
     exit(0);
   } // case BLACKHOLE
 
   default:
-    fprintf(stderr, "stgApply not a THUNK, FUN, or PAP\n");
+    fprintf(stderr, "stgApplyNNNN not a THUNK, FUN, or PAP\n");
     exit(0);
   }  // switch
   ENDFUN;
 }
 
 DEFUN2(stgApplyPNNN, N, f) {
+  #ifdef DEBUGSTGAPPLY
+  fprintf(stderr, "stgApplyPNNN %s\n", f.op->infoPtr->name);
+  #endif
   assert(N.argType == INT);
   const int argc = N.i;
   assert(argc == 4);
@@ -3454,13 +3646,18 @@ DEFUN2(stgApplyPNNN, N, f) {
   nargv[0] = argv[1];
   nargv[1] = argv[2];
   nargv[2] = argv[3];
+  callContSave(1, pargv);
+  STGEVAL(pargv[0]);
+  callContRestore(pargv);
+  // restore argv
+  argv[0] = pargv[0];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
     callContSave(1, pargv);
     while (f.op->objType == THUNK) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply THUNK\n");
+      fprintf(stderr, "stgApplyPNNN THUNK\n");
       #endif
       STGEVAL(f);
       // f.op = derefPoL(f);
@@ -3474,6 +3671,9 @@ DEFUN2(stgApplyPNNN, N, f) {
   switch (f.op->objType) {
   case FUN: {
     int arity = f.op->infoPtr->funFields.arity;
+    #ifdef DEBUGSTGAPPLY
+    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    #endif
     int excess = argc - arity;  // may be negative
 
     // too many args
@@ -3555,7 +3755,7 @@ DEFUN2(stgApplyPNNN, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyPNNN FUN just right\n");
       #endif
       pushargs(3, nargv);
       pushargs(1, pargv);
@@ -3565,7 +3765,7 @@ DEFUN2(stgApplyPNNN, N, f) {
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN too few args\n");
+      fprintf(stderr, "stgApplyPNNN FUN too few args\n");
       #endif
       int fvCount = f.op->infoPtr->fvCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
@@ -3594,14 +3794,14 @@ DEFUN2(stgApplyPNNN, N, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApply:  PAP error 1");
+    assert(argCount == f.op->argCount && "stgApplyPNNN:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
     if (excess > 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too many args\n");
+      fprintf(stderr, "stgApplyPNNN PAP too many args\n");
       #endif
       switch (excess) {
       case 1: {
@@ -3686,7 +3886,7 @@ DEFUN2(stgApplyPNNN, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyPNNN FUN just right\n");
       #endif
       pushargs(3, nargv);
       pushargs(papnargc, &f.op->payload[fvCount+1+pappargc]);
@@ -3698,7 +3898,7 @@ DEFUN2(stgApplyPNNN, N, f) {
     // excess < 0, too few args
     } else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too few args\n");
+      fprintf(stderr, "stgApplyPNNN PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 1 + pappargc, 3 + papnargc);
@@ -3731,19 +3931,22 @@ DEFUN2(stgApplyPNNN, N, f) {
   } // case PAP
 
   case BLACKHOLE: {
-    fprintf(stderr, "infinite loop detected in stgApply!\n");
+    fprintf(stderr, "infinite loop detected in stgApplyPNNN!\n");
     showStgHeap();
     exit(0);
   } // case BLACKHOLE
 
   default:
-    fprintf(stderr, "stgApply not a THUNK, FUN, or PAP\n");
+    fprintf(stderr, "stgApplyPNNN not a THUNK, FUN, or PAP\n");
     exit(0);
   }  // switch
   ENDFUN;
 }
 
 DEFUN2(stgApplyNPNN, N, f) {
+  #ifdef DEBUGSTGAPPLY
+  fprintf(stderr, "stgApplyNPNN %s\n", f.op->infoPtr->name);
+  #endif
   assert(N.argType == INT);
   const int argc = N.i;
   assert(argc == 4);
@@ -3756,13 +3959,18 @@ DEFUN2(stgApplyNPNN, N, f) {
   nargv[0] = argv[0];
   nargv[1] = argv[2];
   nargv[2] = argv[3];
+  callContSave(1, pargv);
+  STGEVAL(pargv[0]);
+  callContRestore(pargv);
+  // restore argv
+  argv[1] = pargv[0];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
     callContSave(1, pargv);
     while (f.op->objType == THUNK) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply THUNK\n");
+      fprintf(stderr, "stgApplyNPNN THUNK\n");
       #endif
       STGEVAL(f);
       // f.op = derefPoL(f);
@@ -3776,6 +3984,9 @@ DEFUN2(stgApplyNPNN, N, f) {
   switch (f.op->objType) {
   case FUN: {
     int arity = f.op->infoPtr->funFields.arity;
+    #ifdef DEBUGSTGAPPLY
+    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    #endif
     int excess = argc - arity;  // may be negative
 
     // too many args
@@ -3859,7 +4070,7 @@ DEFUN2(stgApplyNPNN, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyNPNN FUN just right\n");
       #endif
       pushargs(3, nargv);
       pushargs(1, pargv);
@@ -3869,7 +4080,7 @@ DEFUN2(stgApplyNPNN, N, f) {
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN too few args\n");
+      fprintf(stderr, "stgApplyNPNN FUN too few args\n");
       #endif
       int fvCount = f.op->infoPtr->fvCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
@@ -3898,14 +4109,14 @@ DEFUN2(stgApplyNPNN, N, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApply:  PAP error 1");
+    assert(argCount == f.op->argCount && "stgApplyNPNN:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
     if (excess > 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too many args\n");
+      fprintf(stderr, "stgApplyNPNN PAP too many args\n");
       #endif
       switch (excess) {
       case 1: {
@@ -3992,7 +4203,7 @@ DEFUN2(stgApplyNPNN, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyNPNN FUN just right\n");
       #endif
       pushargs(3, nargv);
       pushargs(papnargc, &f.op->payload[fvCount+1+pappargc]);
@@ -4004,7 +4215,7 @@ DEFUN2(stgApplyNPNN, N, f) {
     // excess < 0, too few args
     } else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too few args\n");
+      fprintf(stderr, "stgApplyNPNN PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 1 + pappargc, 3 + papnargc);
@@ -4037,19 +4248,22 @@ DEFUN2(stgApplyNPNN, N, f) {
   } // case PAP
 
   case BLACKHOLE: {
-    fprintf(stderr, "infinite loop detected in stgApply!\n");
+    fprintf(stderr, "infinite loop detected in stgApplyNPNN!\n");
     showStgHeap();
     exit(0);
   } // case BLACKHOLE
 
   default:
-    fprintf(stderr, "stgApply not a THUNK, FUN, or PAP\n");
+    fprintf(stderr, "stgApplyNPNN not a THUNK, FUN, or PAP\n");
     exit(0);
   }  // switch
   ENDFUN;
 }
 
 DEFUN2(stgApplyPPNN, N, f) {
+  #ifdef DEBUGSTGAPPLY
+  fprintf(stderr, "stgApplyPPNN %s\n", f.op->infoPtr->name);
+  #endif
   assert(N.argType == INT);
   const int argc = N.i;
   assert(argc == 4);
@@ -4062,13 +4276,25 @@ DEFUN2(stgApplyPPNN, N, f) {
   PtrOrLiteral nargv[2];
   nargv[0] = argv[2];
   nargv[1] = argv[3];
+  callContSave(2, pargv);
+  STGEVAL(pargv[0]);
+  callContRestore(pargv);
+  // restore argv
+  argv[0] = pargv[0];
+  argv[1] = pargv[1];
+  callContSave(2, pargv);
+  STGEVAL(pargv[1]);
+  callContRestore(pargv);
+  // restore argv
+  argv[0] = pargv[0];
+  argv[1] = pargv[1];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
     callContSave(2, pargv);
     while (f.op->objType == THUNK) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply THUNK\n");
+      fprintf(stderr, "stgApplyPPNN THUNK\n");
       #endif
       STGEVAL(f);
       // f.op = derefPoL(f);
@@ -4083,6 +4309,9 @@ DEFUN2(stgApplyPPNN, N, f) {
   switch (f.op->objType) {
   case FUN: {
     int arity = f.op->infoPtr->funFields.arity;
+    #ifdef DEBUGSTGAPPLY
+    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    #endif
     int excess = argc - arity;  // may be negative
 
     // too many args
@@ -4166,7 +4395,7 @@ DEFUN2(stgApplyPPNN, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyPPNN FUN just right\n");
       #endif
       pushargs(2, nargv);
       pushargs(2, pargv);
@@ -4176,7 +4405,7 @@ DEFUN2(stgApplyPPNN, N, f) {
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN too few args\n");
+      fprintf(stderr, "stgApplyPPNN FUN too few args\n");
       #endif
       int fvCount = f.op->infoPtr->fvCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
@@ -4205,14 +4434,14 @@ DEFUN2(stgApplyPPNN, N, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApply:  PAP error 1");
+    assert(argCount == f.op->argCount && "stgApplyPPNN:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
     if (excess > 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too many args\n");
+      fprintf(stderr, "stgApplyPPNN PAP too many args\n");
       #endif
       switch (excess) {
       case 1: {
@@ -4299,7 +4528,7 @@ DEFUN2(stgApplyPPNN, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyPPNN FUN just right\n");
       #endif
       pushargs(2, nargv);
       pushargs(papnargc, &f.op->payload[fvCount+1+pappargc]);
@@ -4311,7 +4540,7 @@ DEFUN2(stgApplyPPNN, N, f) {
     // excess < 0, too few args
     } else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too few args\n");
+      fprintf(stderr, "stgApplyPPNN PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2 + pappargc, 2 + papnargc);
@@ -4344,19 +4573,22 @@ DEFUN2(stgApplyPPNN, N, f) {
   } // case PAP
 
   case BLACKHOLE: {
-    fprintf(stderr, "infinite loop detected in stgApply!\n");
+    fprintf(stderr, "infinite loop detected in stgApplyPPNN!\n");
     showStgHeap();
     exit(0);
   } // case BLACKHOLE
 
   default:
-    fprintf(stderr, "stgApply not a THUNK, FUN, or PAP\n");
+    fprintf(stderr, "stgApplyPPNN not a THUNK, FUN, or PAP\n");
     exit(0);
   }  // switch
   ENDFUN;
 }
 
 DEFUN2(stgApplyNNPN, N, f) {
+  #ifdef DEBUGSTGAPPLY
+  fprintf(stderr, "stgApplyNNPN %s\n", f.op->infoPtr->name);
+  #endif
   assert(N.argType == INT);
   const int argc = N.i;
   assert(argc == 4);
@@ -4369,13 +4601,18 @@ DEFUN2(stgApplyNNPN, N, f) {
   nargv[0] = argv[0];
   nargv[1] = argv[1];
   nargv[2] = argv[3];
+  callContSave(1, pargv);
+  STGEVAL(pargv[0]);
+  callContRestore(pargv);
+  // restore argv
+  argv[2] = pargv[0];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
     callContSave(1, pargv);
     while (f.op->objType == THUNK) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply THUNK\n");
+      fprintf(stderr, "stgApplyNNPN THUNK\n");
       #endif
       STGEVAL(f);
       // f.op = derefPoL(f);
@@ -4389,6 +4626,9 @@ DEFUN2(stgApplyNNPN, N, f) {
   switch (f.op->objType) {
   case FUN: {
     int arity = f.op->infoPtr->funFields.arity;
+    #ifdef DEBUGSTGAPPLY
+    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    #endif
     int excess = argc - arity;  // may be negative
 
     // too many args
@@ -4474,7 +4714,7 @@ DEFUN2(stgApplyNNPN, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyNNPN FUN just right\n");
       #endif
       pushargs(3, nargv);
       pushargs(1, pargv);
@@ -4484,7 +4724,7 @@ DEFUN2(stgApplyNNPN, N, f) {
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN too few args\n");
+      fprintf(stderr, "stgApplyNNPN FUN too few args\n");
       #endif
       int fvCount = f.op->infoPtr->fvCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
@@ -4513,14 +4753,14 @@ DEFUN2(stgApplyNNPN, N, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApply:  PAP error 1");
+    assert(argCount == f.op->argCount && "stgApplyNNPN:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
     if (excess > 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too many args\n");
+      fprintf(stderr, "stgApplyNNPN PAP too many args\n");
       #endif
       switch (excess) {
       case 1: {
@@ -4609,7 +4849,7 @@ DEFUN2(stgApplyNNPN, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyNNPN FUN just right\n");
       #endif
       pushargs(3, nargv);
       pushargs(papnargc, &f.op->payload[fvCount+1+pappargc]);
@@ -4621,7 +4861,7 @@ DEFUN2(stgApplyNNPN, N, f) {
     // excess < 0, too few args
     } else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too few args\n");
+      fprintf(stderr, "stgApplyNNPN PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 1 + pappargc, 3 + papnargc);
@@ -4654,19 +4894,22 @@ DEFUN2(stgApplyNNPN, N, f) {
   } // case PAP
 
   case BLACKHOLE: {
-    fprintf(stderr, "infinite loop detected in stgApply!\n");
+    fprintf(stderr, "infinite loop detected in stgApplyNNPN!\n");
     showStgHeap();
     exit(0);
   } // case BLACKHOLE
 
   default:
-    fprintf(stderr, "stgApply not a THUNK, FUN, or PAP\n");
+    fprintf(stderr, "stgApplyNNPN not a THUNK, FUN, or PAP\n");
     exit(0);
   }  // switch
   ENDFUN;
 }
 
 DEFUN2(stgApplyPNPN, N, f) {
+  #ifdef DEBUGSTGAPPLY
+  fprintf(stderr, "stgApplyPNPN %s\n", f.op->infoPtr->name);
+  #endif
   assert(N.argType == INT);
   const int argc = N.i;
   assert(argc == 4);
@@ -4679,13 +4922,25 @@ DEFUN2(stgApplyPNPN, N, f) {
   PtrOrLiteral nargv[2];
   nargv[0] = argv[1];
   nargv[1] = argv[3];
+  callContSave(2, pargv);
+  STGEVAL(pargv[0]);
+  callContRestore(pargv);
+  // restore argv
+  argv[0] = pargv[0];
+  argv[2] = pargv[1];
+  callContSave(2, pargv);
+  STGEVAL(pargv[1]);
+  callContRestore(pargv);
+  // restore argv
+  argv[0] = pargv[0];
+  argv[2] = pargv[1];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
     callContSave(2, pargv);
     while (f.op->objType == THUNK) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply THUNK\n");
+      fprintf(stderr, "stgApplyPNPN THUNK\n");
       #endif
       STGEVAL(f);
       // f.op = derefPoL(f);
@@ -4700,6 +4955,9 @@ DEFUN2(stgApplyPNPN, N, f) {
   switch (f.op->objType) {
   case FUN: {
     int arity = f.op->infoPtr->funFields.arity;
+    #ifdef DEBUGSTGAPPLY
+    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    #endif
     int excess = argc - arity;  // may be negative
 
     // too many args
@@ -4785,7 +5043,7 @@ DEFUN2(stgApplyPNPN, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyPNPN FUN just right\n");
       #endif
       pushargs(2, nargv);
       pushargs(2, pargv);
@@ -4795,7 +5053,7 @@ DEFUN2(stgApplyPNPN, N, f) {
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN too few args\n");
+      fprintf(stderr, "stgApplyPNPN FUN too few args\n");
       #endif
       int fvCount = f.op->infoPtr->fvCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
@@ -4824,14 +5082,14 @@ DEFUN2(stgApplyPNPN, N, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApply:  PAP error 1");
+    assert(argCount == f.op->argCount && "stgApplyPNPN:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
     if (excess > 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too many args\n");
+      fprintf(stderr, "stgApplyPNPN PAP too many args\n");
       #endif
       switch (excess) {
       case 1: {
@@ -4920,7 +5178,7 @@ DEFUN2(stgApplyPNPN, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyPNPN FUN just right\n");
       #endif
       pushargs(2, nargv);
       pushargs(papnargc, &f.op->payload[fvCount+1+pappargc]);
@@ -4932,7 +5190,7 @@ DEFUN2(stgApplyPNPN, N, f) {
     // excess < 0, too few args
     } else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too few args\n");
+      fprintf(stderr, "stgApplyPNPN PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2 + pappargc, 2 + papnargc);
@@ -4965,19 +5223,22 @@ DEFUN2(stgApplyPNPN, N, f) {
   } // case PAP
 
   case BLACKHOLE: {
-    fprintf(stderr, "infinite loop detected in stgApply!\n");
+    fprintf(stderr, "infinite loop detected in stgApplyPNPN!\n");
     showStgHeap();
     exit(0);
   } // case BLACKHOLE
 
   default:
-    fprintf(stderr, "stgApply not a THUNK, FUN, or PAP\n");
+    fprintf(stderr, "stgApplyPNPN not a THUNK, FUN, or PAP\n");
     exit(0);
   }  // switch
   ENDFUN;
 }
 
 DEFUN2(stgApplyNPPN, N, f) {
+  #ifdef DEBUGSTGAPPLY
+  fprintf(stderr, "stgApplyNPPN %s\n", f.op->infoPtr->name);
+  #endif
   assert(N.argType == INT);
   const int argc = N.i;
   assert(argc == 4);
@@ -4990,13 +5251,25 @@ DEFUN2(stgApplyNPPN, N, f) {
   PtrOrLiteral nargv[2];
   nargv[0] = argv[0];
   nargv[1] = argv[3];
+  callContSave(2, pargv);
+  STGEVAL(pargv[0]);
+  callContRestore(pargv);
+  // restore argv
+  argv[1] = pargv[0];
+  argv[2] = pargv[1];
+  callContSave(2, pargv);
+  STGEVAL(pargv[1]);
+  callContRestore(pargv);
+  // restore argv
+  argv[1] = pargv[0];
+  argv[2] = pargv[1];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
     callContSave(2, pargv);
     while (f.op->objType == THUNK) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply THUNK\n");
+      fprintf(stderr, "stgApplyNPPN THUNK\n");
       #endif
       STGEVAL(f);
       // f.op = derefPoL(f);
@@ -5011,6 +5284,9 @@ DEFUN2(stgApplyNPPN, N, f) {
   switch (f.op->objType) {
   case FUN: {
     int arity = f.op->infoPtr->funFields.arity;
+    #ifdef DEBUGSTGAPPLY
+    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    #endif
     int excess = argc - arity;  // may be negative
 
     // too many args
@@ -5097,7 +5373,7 @@ DEFUN2(stgApplyNPPN, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyNPPN FUN just right\n");
       #endif
       pushargs(2, nargv);
       pushargs(2, pargv);
@@ -5107,7 +5383,7 @@ DEFUN2(stgApplyNPPN, N, f) {
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN too few args\n");
+      fprintf(stderr, "stgApplyNPPN FUN too few args\n");
       #endif
       int fvCount = f.op->infoPtr->fvCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
@@ -5136,14 +5412,14 @@ DEFUN2(stgApplyNPPN, N, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApply:  PAP error 1");
+    assert(argCount == f.op->argCount && "stgApplyNPPN:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
     if (excess > 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too many args\n");
+      fprintf(stderr, "stgApplyNPPN PAP too many args\n");
       #endif
       switch (excess) {
       case 1: {
@@ -5233,7 +5509,7 @@ DEFUN2(stgApplyNPPN, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyNPPN FUN just right\n");
       #endif
       pushargs(2, nargv);
       pushargs(papnargc, &f.op->payload[fvCount+1+pappargc]);
@@ -5245,7 +5521,7 @@ DEFUN2(stgApplyNPPN, N, f) {
     // excess < 0, too few args
     } else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too few args\n");
+      fprintf(stderr, "stgApplyNPPN PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2 + pappargc, 2 + papnargc);
@@ -5278,19 +5554,22 @@ DEFUN2(stgApplyNPPN, N, f) {
   } // case PAP
 
   case BLACKHOLE: {
-    fprintf(stderr, "infinite loop detected in stgApply!\n");
+    fprintf(stderr, "infinite loop detected in stgApplyNPPN!\n");
     showStgHeap();
     exit(0);
   } // case BLACKHOLE
 
   default:
-    fprintf(stderr, "stgApply not a THUNK, FUN, or PAP\n");
+    fprintf(stderr, "stgApplyNPPN not a THUNK, FUN, or PAP\n");
     exit(0);
   }  // switch
   ENDFUN;
 }
 
 DEFUN2(stgApplyPPPN, N, f) {
+  #ifdef DEBUGSTGAPPLY
+  fprintf(stderr, "stgApplyPPPN %s\n", f.op->infoPtr->name);
+  #endif
   assert(N.argType == INT);
   const int argc = N.i;
   assert(argc == 4);
@@ -5303,13 +5582,34 @@ DEFUN2(stgApplyPPPN, N, f) {
   pargv[2] = argv[2];
   PtrOrLiteral nargv[1];
   nargv[0] = argv[3];
+  callContSave(3, pargv);
+  STGEVAL(pargv[0]);
+  callContRestore(pargv);
+  // restore argv
+  argv[0] = pargv[0];
+  argv[1] = pargv[1];
+  argv[2] = pargv[2];
+  callContSave(3, pargv);
+  STGEVAL(pargv[1]);
+  callContRestore(pargv);
+  // restore argv
+  argv[0] = pargv[0];
+  argv[1] = pargv[1];
+  argv[2] = pargv[2];
+  callContSave(3, pargv);
+  STGEVAL(pargv[2]);
+  callContRestore(pargv);
+  // restore argv
+  argv[0] = pargv[0];
+  argv[1] = pargv[1];
+  argv[2] = pargv[2];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
     callContSave(3, pargv);
     while (f.op->objType == THUNK) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply THUNK\n");
+      fprintf(stderr, "stgApplyPPPN THUNK\n");
       #endif
       STGEVAL(f);
       // f.op = derefPoL(f);
@@ -5325,6 +5625,9 @@ DEFUN2(stgApplyPPPN, N, f) {
   switch (f.op->objType) {
   case FUN: {
     int arity = f.op->infoPtr->funFields.arity;
+    #ifdef DEBUGSTGAPPLY
+    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    #endif
     int excess = argc - arity;  // may be negative
 
     // too many args
@@ -5411,7 +5714,7 @@ DEFUN2(stgApplyPPPN, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyPPPN FUN just right\n");
       #endif
       pushargs(1, nargv);
       pushargs(3, pargv);
@@ -5421,7 +5724,7 @@ DEFUN2(stgApplyPPPN, N, f) {
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN too few args\n");
+      fprintf(stderr, "stgApplyPPPN FUN too few args\n");
       #endif
       int fvCount = f.op->infoPtr->fvCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
@@ -5450,14 +5753,14 @@ DEFUN2(stgApplyPPPN, N, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApply:  PAP error 1");
+    assert(argCount == f.op->argCount && "stgApplyPPPN:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
     if (excess > 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too many args\n");
+      fprintf(stderr, "stgApplyPPPN PAP too many args\n");
       #endif
       switch (excess) {
       case 1: {
@@ -5547,7 +5850,7 @@ DEFUN2(stgApplyPPPN, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyPPPN FUN just right\n");
       #endif
       pushargs(1, nargv);
       pushargs(papnargc, &f.op->payload[fvCount+1+pappargc]);
@@ -5559,7 +5862,7 @@ DEFUN2(stgApplyPPPN, N, f) {
     // excess < 0, too few args
     } else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too few args\n");
+      fprintf(stderr, "stgApplyPPPN PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3 + pappargc, 1 + papnargc);
@@ -5592,19 +5895,22 @@ DEFUN2(stgApplyPPPN, N, f) {
   } // case PAP
 
   case BLACKHOLE: {
-    fprintf(stderr, "infinite loop detected in stgApply!\n");
+    fprintf(stderr, "infinite loop detected in stgApplyPPPN!\n");
     showStgHeap();
     exit(0);
   } // case BLACKHOLE
 
   default:
-    fprintf(stderr, "stgApply not a THUNK, FUN, or PAP\n");
+    fprintf(stderr, "stgApplyPPPN not a THUNK, FUN, or PAP\n");
     exit(0);
   }  // switch
   ENDFUN;
 }
 
 DEFUN2(stgApplyNNNP, N, f) {
+  #ifdef DEBUGSTGAPPLY
+  fprintf(stderr, "stgApplyNNNP %s\n", f.op->infoPtr->name);
+  #endif
   assert(N.argType == INT);
   const int argc = N.i;
   assert(argc == 4);
@@ -5617,13 +5923,18 @@ DEFUN2(stgApplyNNNP, N, f) {
   nargv[0] = argv[0];
   nargv[1] = argv[1];
   nargv[2] = argv[2];
+  callContSave(1, pargv);
+  STGEVAL(pargv[0]);
+  callContRestore(pargv);
+  // restore argv
+  argv[3] = pargv[0];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
     callContSave(1, pargv);
     while (f.op->objType == THUNK) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply THUNK\n");
+      fprintf(stderr, "stgApplyNNNP THUNK\n");
       #endif
       STGEVAL(f);
       // f.op = derefPoL(f);
@@ -5637,6 +5948,9 @@ DEFUN2(stgApplyNNNP, N, f) {
   switch (f.op->objType) {
   case FUN: {
     int arity = f.op->infoPtr->funFields.arity;
+    #ifdef DEBUGSTGAPPLY
+    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    #endif
     int excess = argc - arity;  // may be negative
 
     // too many args
@@ -5724,7 +6038,7 @@ DEFUN2(stgApplyNNNP, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyNNNP FUN just right\n");
       #endif
       pushargs(3, nargv);
       pushargs(1, pargv);
@@ -5734,7 +6048,7 @@ DEFUN2(stgApplyNNNP, N, f) {
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN too few args\n");
+      fprintf(stderr, "stgApplyNNNP FUN too few args\n");
       #endif
       int fvCount = f.op->infoPtr->fvCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
@@ -5763,14 +6077,14 @@ DEFUN2(stgApplyNNNP, N, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApply:  PAP error 1");
+    assert(argCount == f.op->argCount && "stgApplyNNNP:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
     if (excess > 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too many args\n");
+      fprintf(stderr, "stgApplyNNNP PAP too many args\n");
       #endif
       switch (excess) {
       case 1: {
@@ -5861,7 +6175,7 @@ DEFUN2(stgApplyNNNP, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyNNNP FUN just right\n");
       #endif
       pushargs(3, nargv);
       pushargs(papnargc, &f.op->payload[fvCount+1+pappargc]);
@@ -5873,7 +6187,7 @@ DEFUN2(stgApplyNNNP, N, f) {
     // excess < 0, too few args
     } else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too few args\n");
+      fprintf(stderr, "stgApplyNNNP PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 1 + pappargc, 3 + papnargc);
@@ -5906,19 +6220,22 @@ DEFUN2(stgApplyNNNP, N, f) {
   } // case PAP
 
   case BLACKHOLE: {
-    fprintf(stderr, "infinite loop detected in stgApply!\n");
+    fprintf(stderr, "infinite loop detected in stgApplyNNNP!\n");
     showStgHeap();
     exit(0);
   } // case BLACKHOLE
 
   default:
-    fprintf(stderr, "stgApply not a THUNK, FUN, or PAP\n");
+    fprintf(stderr, "stgApplyNNNP not a THUNK, FUN, or PAP\n");
     exit(0);
   }  // switch
   ENDFUN;
 }
 
 DEFUN2(stgApplyPNNP, N, f) {
+  #ifdef DEBUGSTGAPPLY
+  fprintf(stderr, "stgApplyPNNP %s\n", f.op->infoPtr->name);
+  #endif
   assert(N.argType == INT);
   const int argc = N.i;
   assert(argc == 4);
@@ -5931,13 +6248,25 @@ DEFUN2(stgApplyPNNP, N, f) {
   PtrOrLiteral nargv[2];
   nargv[0] = argv[1];
   nargv[1] = argv[2];
+  callContSave(2, pargv);
+  STGEVAL(pargv[0]);
+  callContRestore(pargv);
+  // restore argv
+  argv[0] = pargv[0];
+  argv[3] = pargv[1];
+  callContSave(2, pargv);
+  STGEVAL(pargv[1]);
+  callContRestore(pargv);
+  // restore argv
+  argv[0] = pargv[0];
+  argv[3] = pargv[1];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
     callContSave(2, pargv);
     while (f.op->objType == THUNK) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply THUNK\n");
+      fprintf(stderr, "stgApplyPNNP THUNK\n");
       #endif
       STGEVAL(f);
       // f.op = derefPoL(f);
@@ -5952,6 +6281,9 @@ DEFUN2(stgApplyPNNP, N, f) {
   switch (f.op->objType) {
   case FUN: {
     int arity = f.op->infoPtr->funFields.arity;
+    #ifdef DEBUGSTGAPPLY
+    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    #endif
     int excess = argc - arity;  // may be negative
 
     // too many args
@@ -6039,7 +6371,7 @@ DEFUN2(stgApplyPNNP, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyPNNP FUN just right\n");
       #endif
       pushargs(2, nargv);
       pushargs(2, pargv);
@@ -6049,7 +6381,7 @@ DEFUN2(stgApplyPNNP, N, f) {
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN too few args\n");
+      fprintf(stderr, "stgApplyPNNP FUN too few args\n");
       #endif
       int fvCount = f.op->infoPtr->fvCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
@@ -6078,14 +6410,14 @@ DEFUN2(stgApplyPNNP, N, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApply:  PAP error 1");
+    assert(argCount == f.op->argCount && "stgApplyPNNP:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
     if (excess > 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too many args\n");
+      fprintf(stderr, "stgApplyPNNP PAP too many args\n");
       #endif
       switch (excess) {
       case 1: {
@@ -6176,7 +6508,7 @@ DEFUN2(stgApplyPNNP, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyPNNP FUN just right\n");
       #endif
       pushargs(2, nargv);
       pushargs(papnargc, &f.op->payload[fvCount+1+pappargc]);
@@ -6188,7 +6520,7 @@ DEFUN2(stgApplyPNNP, N, f) {
     // excess < 0, too few args
     } else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too few args\n");
+      fprintf(stderr, "stgApplyPNNP PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2 + pappargc, 2 + papnargc);
@@ -6221,19 +6553,22 @@ DEFUN2(stgApplyPNNP, N, f) {
   } // case PAP
 
   case BLACKHOLE: {
-    fprintf(stderr, "infinite loop detected in stgApply!\n");
+    fprintf(stderr, "infinite loop detected in stgApplyPNNP!\n");
     showStgHeap();
     exit(0);
   } // case BLACKHOLE
 
   default:
-    fprintf(stderr, "stgApply not a THUNK, FUN, or PAP\n");
+    fprintf(stderr, "stgApplyPNNP not a THUNK, FUN, or PAP\n");
     exit(0);
   }  // switch
   ENDFUN;
 }
 
 DEFUN2(stgApplyNPNP, N, f) {
+  #ifdef DEBUGSTGAPPLY
+  fprintf(stderr, "stgApplyNPNP %s\n", f.op->infoPtr->name);
+  #endif
   assert(N.argType == INT);
   const int argc = N.i;
   assert(argc == 4);
@@ -6246,13 +6581,25 @@ DEFUN2(stgApplyNPNP, N, f) {
   PtrOrLiteral nargv[2];
   nargv[0] = argv[0];
   nargv[1] = argv[2];
+  callContSave(2, pargv);
+  STGEVAL(pargv[0]);
+  callContRestore(pargv);
+  // restore argv
+  argv[1] = pargv[0];
+  argv[3] = pargv[1];
+  callContSave(2, pargv);
+  STGEVAL(pargv[1]);
+  callContRestore(pargv);
+  // restore argv
+  argv[1] = pargv[0];
+  argv[3] = pargv[1];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
     callContSave(2, pargv);
     while (f.op->objType == THUNK) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply THUNK\n");
+      fprintf(stderr, "stgApplyNPNP THUNK\n");
       #endif
       STGEVAL(f);
       // f.op = derefPoL(f);
@@ -6267,6 +6614,9 @@ DEFUN2(stgApplyNPNP, N, f) {
   switch (f.op->objType) {
   case FUN: {
     int arity = f.op->infoPtr->funFields.arity;
+    #ifdef DEBUGSTGAPPLY
+    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    #endif
     int excess = argc - arity;  // may be negative
 
     // too many args
@@ -6355,7 +6705,7 @@ DEFUN2(stgApplyNPNP, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyNPNP FUN just right\n");
       #endif
       pushargs(2, nargv);
       pushargs(2, pargv);
@@ -6365,7 +6715,7 @@ DEFUN2(stgApplyNPNP, N, f) {
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN too few args\n");
+      fprintf(stderr, "stgApplyNPNP FUN too few args\n");
       #endif
       int fvCount = f.op->infoPtr->fvCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
@@ -6394,14 +6744,14 @@ DEFUN2(stgApplyNPNP, N, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApply:  PAP error 1");
+    assert(argCount == f.op->argCount && "stgApplyNPNP:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
     if (excess > 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too many args\n");
+      fprintf(stderr, "stgApplyNPNP PAP too many args\n");
       #endif
       switch (excess) {
       case 1: {
@@ -6493,7 +6843,7 @@ DEFUN2(stgApplyNPNP, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyNPNP FUN just right\n");
       #endif
       pushargs(2, nargv);
       pushargs(papnargc, &f.op->payload[fvCount+1+pappargc]);
@@ -6505,7 +6855,7 @@ DEFUN2(stgApplyNPNP, N, f) {
     // excess < 0, too few args
     } else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too few args\n");
+      fprintf(stderr, "stgApplyNPNP PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2 + pappargc, 2 + papnargc);
@@ -6538,19 +6888,22 @@ DEFUN2(stgApplyNPNP, N, f) {
   } // case PAP
 
   case BLACKHOLE: {
-    fprintf(stderr, "infinite loop detected in stgApply!\n");
+    fprintf(stderr, "infinite loop detected in stgApplyNPNP!\n");
     showStgHeap();
     exit(0);
   } // case BLACKHOLE
 
   default:
-    fprintf(stderr, "stgApply not a THUNK, FUN, or PAP\n");
+    fprintf(stderr, "stgApplyNPNP not a THUNK, FUN, or PAP\n");
     exit(0);
   }  // switch
   ENDFUN;
 }
 
 DEFUN2(stgApplyPPNP, N, f) {
+  #ifdef DEBUGSTGAPPLY
+  fprintf(stderr, "stgApplyPPNP %s\n", f.op->infoPtr->name);
+  #endif
   assert(N.argType == INT);
   const int argc = N.i;
   assert(argc == 4);
@@ -6563,13 +6916,34 @@ DEFUN2(stgApplyPPNP, N, f) {
   pargv[2] = argv[3];
   PtrOrLiteral nargv[1];
   nargv[0] = argv[2];
+  callContSave(3, pargv);
+  STGEVAL(pargv[0]);
+  callContRestore(pargv);
+  // restore argv
+  argv[0] = pargv[0];
+  argv[1] = pargv[1];
+  argv[3] = pargv[2];
+  callContSave(3, pargv);
+  STGEVAL(pargv[1]);
+  callContRestore(pargv);
+  // restore argv
+  argv[0] = pargv[0];
+  argv[1] = pargv[1];
+  argv[3] = pargv[2];
+  callContSave(3, pargv);
+  STGEVAL(pargv[2]);
+  callContRestore(pargv);
+  // restore argv
+  argv[0] = pargv[0];
+  argv[1] = pargv[1];
+  argv[3] = pargv[2];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
     callContSave(3, pargv);
     while (f.op->objType == THUNK) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply THUNK\n");
+      fprintf(stderr, "stgApplyPPNP THUNK\n");
       #endif
       STGEVAL(f);
       // f.op = derefPoL(f);
@@ -6585,6 +6959,9 @@ DEFUN2(stgApplyPPNP, N, f) {
   switch (f.op->objType) {
   case FUN: {
     int arity = f.op->infoPtr->funFields.arity;
+    #ifdef DEBUGSTGAPPLY
+    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    #endif
     int excess = argc - arity;  // may be negative
 
     // too many args
@@ -6673,7 +7050,7 @@ DEFUN2(stgApplyPPNP, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyPPNP FUN just right\n");
       #endif
       pushargs(1, nargv);
       pushargs(3, pargv);
@@ -6683,7 +7060,7 @@ DEFUN2(stgApplyPPNP, N, f) {
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN too few args\n");
+      fprintf(stderr, "stgApplyPPNP FUN too few args\n");
       #endif
       int fvCount = f.op->infoPtr->fvCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
@@ -6712,14 +7089,14 @@ DEFUN2(stgApplyPPNP, N, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApply:  PAP error 1");
+    assert(argCount == f.op->argCount && "stgApplyPPNP:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
     if (excess > 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too many args\n");
+      fprintf(stderr, "stgApplyPPNP PAP too many args\n");
       #endif
       switch (excess) {
       case 1: {
@@ -6811,7 +7188,7 @@ DEFUN2(stgApplyPPNP, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyPPNP FUN just right\n");
       #endif
       pushargs(1, nargv);
       pushargs(papnargc, &f.op->payload[fvCount+1+pappargc]);
@@ -6823,7 +7200,7 @@ DEFUN2(stgApplyPPNP, N, f) {
     // excess < 0, too few args
     } else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too few args\n");
+      fprintf(stderr, "stgApplyPPNP PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3 + pappargc, 1 + papnargc);
@@ -6856,19 +7233,22 @@ DEFUN2(stgApplyPPNP, N, f) {
   } // case PAP
 
   case BLACKHOLE: {
-    fprintf(stderr, "infinite loop detected in stgApply!\n");
+    fprintf(stderr, "infinite loop detected in stgApplyPPNP!\n");
     showStgHeap();
     exit(0);
   } // case BLACKHOLE
 
   default:
-    fprintf(stderr, "stgApply not a THUNK, FUN, or PAP\n");
+    fprintf(stderr, "stgApplyPPNP not a THUNK, FUN, or PAP\n");
     exit(0);
   }  // switch
   ENDFUN;
 }
 
 DEFUN2(stgApplyNNPP, N, f) {
+  #ifdef DEBUGSTGAPPLY
+  fprintf(stderr, "stgApplyNNPP %s\n", f.op->infoPtr->name);
+  #endif
   assert(N.argType == INT);
   const int argc = N.i;
   assert(argc == 4);
@@ -6881,13 +7261,25 @@ DEFUN2(stgApplyNNPP, N, f) {
   PtrOrLiteral nargv[2];
   nargv[0] = argv[0];
   nargv[1] = argv[1];
+  callContSave(2, pargv);
+  STGEVAL(pargv[0]);
+  callContRestore(pargv);
+  // restore argv
+  argv[2] = pargv[0];
+  argv[3] = pargv[1];
+  callContSave(2, pargv);
+  STGEVAL(pargv[1]);
+  callContRestore(pargv);
+  // restore argv
+  argv[2] = pargv[0];
+  argv[3] = pargv[1];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
     callContSave(2, pargv);
     while (f.op->objType == THUNK) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply THUNK\n");
+      fprintf(stderr, "stgApplyNNPP THUNK\n");
       #endif
       STGEVAL(f);
       // f.op = derefPoL(f);
@@ -6902,6 +7294,9 @@ DEFUN2(stgApplyNNPP, N, f) {
   switch (f.op->objType) {
   case FUN: {
     int arity = f.op->infoPtr->funFields.arity;
+    #ifdef DEBUGSTGAPPLY
+    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    #endif
     int excess = argc - arity;  // may be negative
 
     // too many args
@@ -6991,7 +7386,7 @@ DEFUN2(stgApplyNNPP, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyNNPP FUN just right\n");
       #endif
       pushargs(2, nargv);
       pushargs(2, pargv);
@@ -7001,7 +7396,7 @@ DEFUN2(stgApplyNNPP, N, f) {
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN too few args\n");
+      fprintf(stderr, "stgApplyNNPP FUN too few args\n");
       #endif
       int fvCount = f.op->infoPtr->fvCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
@@ -7030,14 +7425,14 @@ DEFUN2(stgApplyNNPP, N, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApply:  PAP error 1");
+    assert(argCount == f.op->argCount && "stgApplyNNPP:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
     if (excess > 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too many args\n");
+      fprintf(stderr, "stgApplyNNPP PAP too many args\n");
       #endif
       switch (excess) {
       case 1: {
@@ -7130,7 +7525,7 @@ DEFUN2(stgApplyNNPP, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyNNPP FUN just right\n");
       #endif
       pushargs(2, nargv);
       pushargs(papnargc, &f.op->payload[fvCount+1+pappargc]);
@@ -7142,7 +7537,7 @@ DEFUN2(stgApplyNNPP, N, f) {
     // excess < 0, too few args
     } else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too few args\n");
+      fprintf(stderr, "stgApplyNNPP PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2 + pappargc, 2 + papnargc);
@@ -7175,19 +7570,22 @@ DEFUN2(stgApplyNNPP, N, f) {
   } // case PAP
 
   case BLACKHOLE: {
-    fprintf(stderr, "infinite loop detected in stgApply!\n");
+    fprintf(stderr, "infinite loop detected in stgApplyNNPP!\n");
     showStgHeap();
     exit(0);
   } // case BLACKHOLE
 
   default:
-    fprintf(stderr, "stgApply not a THUNK, FUN, or PAP\n");
+    fprintf(stderr, "stgApplyNNPP not a THUNK, FUN, or PAP\n");
     exit(0);
   }  // switch
   ENDFUN;
 }
 
 DEFUN2(stgApplyPNPP, N, f) {
+  #ifdef DEBUGSTGAPPLY
+  fprintf(stderr, "stgApplyPNPP %s\n", f.op->infoPtr->name);
+  #endif
   assert(N.argType == INT);
   const int argc = N.i;
   assert(argc == 4);
@@ -7200,13 +7598,34 @@ DEFUN2(stgApplyPNPP, N, f) {
   pargv[2] = argv[3];
   PtrOrLiteral nargv[1];
   nargv[0] = argv[1];
+  callContSave(3, pargv);
+  STGEVAL(pargv[0]);
+  callContRestore(pargv);
+  // restore argv
+  argv[0] = pargv[0];
+  argv[2] = pargv[1];
+  argv[3] = pargv[2];
+  callContSave(3, pargv);
+  STGEVAL(pargv[1]);
+  callContRestore(pargv);
+  // restore argv
+  argv[0] = pargv[0];
+  argv[2] = pargv[1];
+  argv[3] = pargv[2];
+  callContSave(3, pargv);
+  STGEVAL(pargv[2]);
+  callContRestore(pargv);
+  // restore argv
+  argv[0] = pargv[0];
+  argv[2] = pargv[1];
+  argv[3] = pargv[2];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
     callContSave(3, pargv);
     while (f.op->objType == THUNK) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply THUNK\n");
+      fprintf(stderr, "stgApplyPNPP THUNK\n");
       #endif
       STGEVAL(f);
       // f.op = derefPoL(f);
@@ -7222,6 +7641,9 @@ DEFUN2(stgApplyPNPP, N, f) {
   switch (f.op->objType) {
   case FUN: {
     int arity = f.op->infoPtr->funFields.arity;
+    #ifdef DEBUGSTGAPPLY
+    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    #endif
     int excess = argc - arity;  // may be negative
 
     // too many args
@@ -7311,7 +7733,7 @@ DEFUN2(stgApplyPNPP, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyPNPP FUN just right\n");
       #endif
       pushargs(1, nargv);
       pushargs(3, pargv);
@@ -7321,7 +7743,7 @@ DEFUN2(stgApplyPNPP, N, f) {
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN too few args\n");
+      fprintf(stderr, "stgApplyPNPP FUN too few args\n");
       #endif
       int fvCount = f.op->infoPtr->fvCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
@@ -7350,14 +7772,14 @@ DEFUN2(stgApplyPNPP, N, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApply:  PAP error 1");
+    assert(argCount == f.op->argCount && "stgApplyPNPP:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
     if (excess > 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too many args\n");
+      fprintf(stderr, "stgApplyPNPP PAP too many args\n");
       #endif
       switch (excess) {
       case 1: {
@@ -7450,7 +7872,7 @@ DEFUN2(stgApplyPNPP, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyPNPP FUN just right\n");
       #endif
       pushargs(1, nargv);
       pushargs(papnargc, &f.op->payload[fvCount+1+pappargc]);
@@ -7462,7 +7884,7 @@ DEFUN2(stgApplyPNPP, N, f) {
     // excess < 0, too few args
     } else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too few args\n");
+      fprintf(stderr, "stgApplyPNPP PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3 + pappargc, 1 + papnargc);
@@ -7495,19 +7917,22 @@ DEFUN2(stgApplyPNPP, N, f) {
   } // case PAP
 
   case BLACKHOLE: {
-    fprintf(stderr, "infinite loop detected in stgApply!\n");
+    fprintf(stderr, "infinite loop detected in stgApplyPNPP!\n");
     showStgHeap();
     exit(0);
   } // case BLACKHOLE
 
   default:
-    fprintf(stderr, "stgApply not a THUNK, FUN, or PAP\n");
+    fprintf(stderr, "stgApplyPNPP not a THUNK, FUN, or PAP\n");
     exit(0);
   }  // switch
   ENDFUN;
 }
 
 DEFUN2(stgApplyNPPP, N, f) {
+  #ifdef DEBUGSTGAPPLY
+  fprintf(stderr, "stgApplyNPPP %s\n", f.op->infoPtr->name);
+  #endif
   assert(N.argType == INT);
   const int argc = N.i;
   assert(argc == 4);
@@ -7520,13 +7945,34 @@ DEFUN2(stgApplyNPPP, N, f) {
   pargv[2] = argv[3];
   PtrOrLiteral nargv[1];
   nargv[0] = argv[0];
+  callContSave(3, pargv);
+  STGEVAL(pargv[0]);
+  callContRestore(pargv);
+  // restore argv
+  argv[1] = pargv[0];
+  argv[2] = pargv[1];
+  argv[3] = pargv[2];
+  callContSave(3, pargv);
+  STGEVAL(pargv[1]);
+  callContRestore(pargv);
+  // restore argv
+  argv[1] = pargv[0];
+  argv[2] = pargv[1];
+  argv[3] = pargv[2];
+  callContSave(3, pargv);
+  STGEVAL(pargv[2]);
+  callContRestore(pargv);
+  // restore argv
+  argv[1] = pargv[0];
+  argv[2] = pargv[1];
+  argv[3] = pargv[2];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
     callContSave(3, pargv);
     while (f.op->objType == THUNK) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply THUNK\n");
+      fprintf(stderr, "stgApplyNPPP THUNK\n");
       #endif
       STGEVAL(f);
       // f.op = derefPoL(f);
@@ -7542,6 +7988,9 @@ DEFUN2(stgApplyNPPP, N, f) {
   switch (f.op->objType) {
   case FUN: {
     int arity = f.op->infoPtr->funFields.arity;
+    #ifdef DEBUGSTGAPPLY
+    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    #endif
     int excess = argc - arity;  // may be negative
 
     // too many args
@@ -7632,7 +8081,7 @@ DEFUN2(stgApplyNPPP, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyNPPP FUN just right\n");
       #endif
       pushargs(1, nargv);
       pushargs(3, pargv);
@@ -7642,7 +8091,7 @@ DEFUN2(stgApplyNPPP, N, f) {
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN too few args\n");
+      fprintf(stderr, "stgApplyNPPP FUN too few args\n");
       #endif
       int fvCount = f.op->infoPtr->fvCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
@@ -7671,14 +8120,14 @@ DEFUN2(stgApplyNPPP, N, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApply:  PAP error 1");
+    assert(argCount == f.op->argCount && "stgApplyNPPP:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
     if (excess > 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too many args\n");
+      fprintf(stderr, "stgApplyNPPP PAP too many args\n");
       #endif
       switch (excess) {
       case 1: {
@@ -7772,7 +8221,7 @@ DEFUN2(stgApplyNPPP, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyNPPP FUN just right\n");
       #endif
       pushargs(1, nargv);
       pushargs(papnargc, &f.op->payload[fvCount+1+pappargc]);
@@ -7784,7 +8233,7 @@ DEFUN2(stgApplyNPPP, N, f) {
     // excess < 0, too few args
     } else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too few args\n");
+      fprintf(stderr, "stgApplyNPPP PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3 + pappargc, 1 + papnargc);
@@ -7817,19 +8266,22 @@ DEFUN2(stgApplyNPPP, N, f) {
   } // case PAP
 
   case BLACKHOLE: {
-    fprintf(stderr, "infinite loop detected in stgApply!\n");
+    fprintf(stderr, "infinite loop detected in stgApplyNPPP!\n");
     showStgHeap();
     exit(0);
   } // case BLACKHOLE
 
   default:
-    fprintf(stderr, "stgApply not a THUNK, FUN, or PAP\n");
+    fprintf(stderr, "stgApplyNPPP not a THUNK, FUN, or PAP\n");
     exit(0);
   }  // switch
   ENDFUN;
 }
 
 DEFUN2(stgApplyPPPP, N, f) {
+  #ifdef DEBUGSTGAPPLY
+  fprintf(stderr, "stgApplyPPPP %s\n", f.op->infoPtr->name);
+  #endif
   assert(N.argType == INT);
   const int argc = N.i;
   assert(argc == 4);
@@ -7842,13 +8294,45 @@ DEFUN2(stgApplyPPPP, N, f) {
   pargv[2] = argv[2];
   pargv[3] = argv[3];
   // no non-pointer args to save
+  callContSave(4, pargv);
+  STGEVAL(pargv[0]);
+  callContRestore(pargv);
+  // restore argv
+  argv[0] = pargv[0];
+  argv[1] = pargv[1];
+  argv[2] = pargv[2];
+  argv[3] = pargv[3];
+  callContSave(4, pargv);
+  STGEVAL(pargv[1]);
+  callContRestore(pargv);
+  // restore argv
+  argv[0] = pargv[0];
+  argv[1] = pargv[1];
+  argv[2] = pargv[2];
+  argv[3] = pargv[3];
+  callContSave(4, pargv);
+  STGEVAL(pargv[2]);
+  callContRestore(pargv);
+  // restore argv
+  argv[0] = pargv[0];
+  argv[1] = pargv[1];
+  argv[2] = pargv[2];
+  argv[3] = pargv[3];
+  callContSave(4, pargv);
+  STGEVAL(pargv[3]);
+  callContRestore(pargv);
+  // restore argv
+  argv[0] = pargv[0];
+  argv[1] = pargv[1];
+  argv[2] = pargv[2];
+  argv[3] = pargv[3];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
     callContSave(4, pargv);
     while (f.op->objType == THUNK) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply THUNK\n");
+      fprintf(stderr, "stgApplyPPPP THUNK\n");
       #endif
       STGEVAL(f);
       // f.op = derefPoL(f);
@@ -7865,6 +8349,9 @@ DEFUN2(stgApplyPPPP, N, f) {
   switch (f.op->objType) {
   case FUN: {
     int arity = f.op->infoPtr->funFields.arity;
+    #ifdef DEBUGSTGAPPLY
+    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    #endif
     int excess = argc - arity;  // may be negative
 
     // too many args
@@ -7955,7 +8442,7 @@ DEFUN2(stgApplyPPPP, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyPPPP FUN just right\n");
       #endif
       // 0 non-pointers to push
       pushargs(4, pargv);
@@ -7965,7 +8452,7 @@ DEFUN2(stgApplyPPPP, N, f) {
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN too few args\n");
+      fprintf(stderr, "stgApplyPPPP FUN too few args\n");
       #endif
       int fvCount = f.op->infoPtr->fvCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
@@ -7994,14 +8481,14 @@ DEFUN2(stgApplyPPPP, N, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApply:  PAP error 1");
+    assert(argCount == f.op->argCount && "stgApplyPPPP:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
     if (excess > 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too many args\n");
+      fprintf(stderr, "stgApplyPPPP PAP too many args\n");
       #endif
       switch (excess) {
       case 1: {
@@ -8095,7 +8582,7 @@ DEFUN2(stgApplyPPPP, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyPPPP FUN just right\n");
       #endif
       // 0 non-pointer args
       pushargs(papnargc, &f.op->payload[fvCount+1+pappargc]);
@@ -8107,7 +8594,7 @@ DEFUN2(stgApplyPPPP, N, f) {
     // excess < 0, too few args
     } else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too few args\n");
+      fprintf(stderr, "stgApplyPPPP PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 4 + pappargc, 0 + papnargc);
@@ -8140,19 +8627,22 @@ DEFUN2(stgApplyPPPP, N, f) {
   } // case PAP
 
   case BLACKHOLE: {
-    fprintf(stderr, "infinite loop detected in stgApply!\n");
+    fprintf(stderr, "infinite loop detected in stgApplyPPPP!\n");
     showStgHeap();
     exit(0);
   } // case BLACKHOLE
 
   default:
-    fprintf(stderr, "stgApply not a THUNK, FUN, or PAP\n");
+    fprintf(stderr, "stgApplyPPPP not a THUNK, FUN, or PAP\n");
     exit(0);
   }  // switch
   ENDFUN;
 }
 
 DEFUN2(stgApplyNNNNN, N, f) {
+  #ifdef DEBUGSTGAPPLY
+  fprintf(stderr, "stgApplyNNNNN %s\n", f.op->infoPtr->name);
+  #endif
   assert(N.argType == INT);
   const int argc = N.i;
   assert(argc == 5);
@@ -8166,13 +8656,13 @@ DEFUN2(stgApplyNNNNN, N, f) {
   nargv[2] = argv[2];
   nargv[3] = argv[3];
   nargv[4] = argv[4];
-
+  
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
     // no pointer args to save
     while (f.op->objType == THUNK) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply THUNK\n");
+      fprintf(stderr, "stgApplyNNNNN THUNK\n");
       #endif
       STGEVAL(f);
       // f.op = derefPoL(f);
@@ -8184,6 +8674,9 @@ DEFUN2(stgApplyNNNNN, N, f) {
   switch (f.op->objType) {
   case FUN: {
     int arity = f.op->infoPtr->funFields.arity;
+    #ifdef DEBUGSTGAPPLY
+    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    #endif
     int excess = argc - arity;  // may be negative
 
     // too many args
@@ -8288,7 +8781,7 @@ DEFUN2(stgApplyNNNNN, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyNNNNN FUN just right\n");
       #endif
       pushargs(5, nargv);
       // 0 pointers to push
@@ -8298,7 +8791,7 @@ DEFUN2(stgApplyNNNNN, N, f) {
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN too few args\n");
+      fprintf(stderr, "stgApplyNNNNN FUN too few args\n");
       #endif
       int fvCount = f.op->infoPtr->fvCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
@@ -8327,14 +8820,14 @@ DEFUN2(stgApplyNNNNN, N, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApply:  PAP error 1");
+    assert(argCount == f.op->argCount && "stgApplyNNNNN:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
     if (excess > 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too many args\n");
+      fprintf(stderr, "stgApplyNNNNN PAP too many args\n");
       #endif
       switch (excess) {
       case 1: {
@@ -8444,7 +8937,7 @@ DEFUN2(stgApplyNNNNN, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyNNNNN FUN just right\n");
       #endif
       pushargs(5, nargv);
       pushargs(papnargc, &f.op->payload[fvCount+1+pappargc]);
@@ -8456,7 +8949,7 @@ DEFUN2(stgApplyNNNNN, N, f) {
     // excess < 0, too few args
     } else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too few args\n");
+      fprintf(stderr, "stgApplyNNNNN PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 0 + pappargc, 5 + papnargc);
@@ -8489,19 +8982,22 @@ DEFUN2(stgApplyNNNNN, N, f) {
   } // case PAP
 
   case BLACKHOLE: {
-    fprintf(stderr, "infinite loop detected in stgApply!\n");
+    fprintf(stderr, "infinite loop detected in stgApplyNNNNN!\n");
     showStgHeap();
     exit(0);
   } // case BLACKHOLE
 
   default:
-    fprintf(stderr, "stgApply not a THUNK, FUN, or PAP\n");
+    fprintf(stderr, "stgApplyNNNNN not a THUNK, FUN, or PAP\n");
     exit(0);
   }  // switch
   ENDFUN;
 }
 
 DEFUN2(stgApplyPNNNN, N, f) {
+  #ifdef DEBUGSTGAPPLY
+  fprintf(stderr, "stgApplyPNNNN %s\n", f.op->infoPtr->name);
+  #endif
   assert(N.argType == INT);
   const int argc = N.i;
   assert(argc == 5);
@@ -8515,13 +9011,18 @@ DEFUN2(stgApplyPNNNN, N, f) {
   nargv[1] = argv[2];
   nargv[2] = argv[3];
   nargv[3] = argv[4];
+  callContSave(1, pargv);
+  STGEVAL(pargv[0]);
+  callContRestore(pargv);
+  // restore argv
+  argv[0] = pargv[0];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
     callContSave(1, pargv);
     while (f.op->objType == THUNK) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply THUNK\n");
+      fprintf(stderr, "stgApplyPNNNN THUNK\n");
       #endif
       STGEVAL(f);
       // f.op = derefPoL(f);
@@ -8535,6 +9036,9 @@ DEFUN2(stgApplyPNNNN, N, f) {
   switch (f.op->objType) {
   case FUN: {
     int arity = f.op->infoPtr->funFields.arity;
+    #ifdef DEBUGSTGAPPLY
+    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    #endif
     int excess = argc - arity;  // may be negative
 
     // too many args
@@ -8639,7 +9143,7 @@ DEFUN2(stgApplyPNNNN, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyPNNNN FUN just right\n");
       #endif
       pushargs(4, nargv);
       pushargs(1, pargv);
@@ -8649,7 +9153,7 @@ DEFUN2(stgApplyPNNNN, N, f) {
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN too few args\n");
+      fprintf(stderr, "stgApplyPNNNN FUN too few args\n");
       #endif
       int fvCount = f.op->infoPtr->fvCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
@@ -8678,14 +9182,14 @@ DEFUN2(stgApplyPNNNN, N, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApply:  PAP error 1");
+    assert(argCount == f.op->argCount && "stgApplyPNNNN:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
     if (excess > 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too many args\n");
+      fprintf(stderr, "stgApplyPNNNN PAP too many args\n");
       #endif
       switch (excess) {
       case 1: {
@@ -8795,7 +9299,7 @@ DEFUN2(stgApplyPNNNN, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyPNNNN FUN just right\n");
       #endif
       pushargs(4, nargv);
       pushargs(papnargc, &f.op->payload[fvCount+1+pappargc]);
@@ -8807,7 +9311,7 @@ DEFUN2(stgApplyPNNNN, N, f) {
     // excess < 0, too few args
     } else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too few args\n");
+      fprintf(stderr, "stgApplyPNNNN PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 1 + pappargc, 4 + papnargc);
@@ -8840,19 +9344,22 @@ DEFUN2(stgApplyPNNNN, N, f) {
   } // case PAP
 
   case BLACKHOLE: {
-    fprintf(stderr, "infinite loop detected in stgApply!\n");
+    fprintf(stderr, "infinite loop detected in stgApplyPNNNN!\n");
     showStgHeap();
     exit(0);
   } // case BLACKHOLE
 
   default:
-    fprintf(stderr, "stgApply not a THUNK, FUN, or PAP\n");
+    fprintf(stderr, "stgApplyPNNNN not a THUNK, FUN, or PAP\n");
     exit(0);
   }  // switch
   ENDFUN;
 }
 
 DEFUN2(stgApplyNPNNN, N, f) {
+  #ifdef DEBUGSTGAPPLY
+  fprintf(stderr, "stgApplyNPNNN %s\n", f.op->infoPtr->name);
+  #endif
   assert(N.argType == INT);
   const int argc = N.i;
   assert(argc == 5);
@@ -8866,13 +9373,18 @@ DEFUN2(stgApplyNPNNN, N, f) {
   nargv[1] = argv[2];
   nargv[2] = argv[3];
   nargv[3] = argv[4];
+  callContSave(1, pargv);
+  STGEVAL(pargv[0]);
+  callContRestore(pargv);
+  // restore argv
+  argv[1] = pargv[0];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
     callContSave(1, pargv);
     while (f.op->objType == THUNK) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply THUNK\n");
+      fprintf(stderr, "stgApplyNPNNN THUNK\n");
       #endif
       STGEVAL(f);
       // f.op = derefPoL(f);
@@ -8886,6 +9398,9 @@ DEFUN2(stgApplyNPNNN, N, f) {
   switch (f.op->objType) {
   case FUN: {
     int arity = f.op->infoPtr->funFields.arity;
+    #ifdef DEBUGSTGAPPLY
+    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    #endif
     int excess = argc - arity;  // may be negative
 
     // too many args
@@ -8992,7 +9507,7 @@ DEFUN2(stgApplyNPNNN, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyNPNNN FUN just right\n");
       #endif
       pushargs(4, nargv);
       pushargs(1, pargv);
@@ -9002,7 +9517,7 @@ DEFUN2(stgApplyNPNNN, N, f) {
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN too few args\n");
+      fprintf(stderr, "stgApplyNPNNN FUN too few args\n");
       #endif
       int fvCount = f.op->infoPtr->fvCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
@@ -9031,14 +9546,14 @@ DEFUN2(stgApplyNPNNN, N, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApply:  PAP error 1");
+    assert(argCount == f.op->argCount && "stgApplyNPNNN:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
     if (excess > 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too many args\n");
+      fprintf(stderr, "stgApplyNPNNN PAP too many args\n");
       #endif
       switch (excess) {
       case 1: {
@@ -9150,7 +9665,7 @@ DEFUN2(stgApplyNPNNN, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyNPNNN FUN just right\n");
       #endif
       pushargs(4, nargv);
       pushargs(papnargc, &f.op->payload[fvCount+1+pappargc]);
@@ -9162,7 +9677,7 @@ DEFUN2(stgApplyNPNNN, N, f) {
     // excess < 0, too few args
     } else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too few args\n");
+      fprintf(stderr, "stgApplyNPNNN PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 1 + pappargc, 4 + papnargc);
@@ -9195,19 +9710,22 @@ DEFUN2(stgApplyNPNNN, N, f) {
   } // case PAP
 
   case BLACKHOLE: {
-    fprintf(stderr, "infinite loop detected in stgApply!\n");
+    fprintf(stderr, "infinite loop detected in stgApplyNPNNN!\n");
     showStgHeap();
     exit(0);
   } // case BLACKHOLE
 
   default:
-    fprintf(stderr, "stgApply not a THUNK, FUN, or PAP\n");
+    fprintf(stderr, "stgApplyNPNNN not a THUNK, FUN, or PAP\n");
     exit(0);
   }  // switch
   ENDFUN;
 }
 
 DEFUN2(stgApplyPPNNN, N, f) {
+  #ifdef DEBUGSTGAPPLY
+  fprintf(stderr, "stgApplyPPNNN %s\n", f.op->infoPtr->name);
+  #endif
   assert(N.argType == INT);
   const int argc = N.i;
   assert(argc == 5);
@@ -9221,13 +9739,25 @@ DEFUN2(stgApplyPPNNN, N, f) {
   nargv[0] = argv[2];
   nargv[1] = argv[3];
   nargv[2] = argv[4];
+  callContSave(2, pargv);
+  STGEVAL(pargv[0]);
+  callContRestore(pargv);
+  // restore argv
+  argv[0] = pargv[0];
+  argv[1] = pargv[1];
+  callContSave(2, pargv);
+  STGEVAL(pargv[1]);
+  callContRestore(pargv);
+  // restore argv
+  argv[0] = pargv[0];
+  argv[1] = pargv[1];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
     callContSave(2, pargv);
     while (f.op->objType == THUNK) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply THUNK\n");
+      fprintf(stderr, "stgApplyPPNNN THUNK\n");
       #endif
       STGEVAL(f);
       // f.op = derefPoL(f);
@@ -9242,6 +9772,9 @@ DEFUN2(stgApplyPPNNN, N, f) {
   switch (f.op->objType) {
   case FUN: {
     int arity = f.op->infoPtr->funFields.arity;
+    #ifdef DEBUGSTGAPPLY
+    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    #endif
     int excess = argc - arity;  // may be negative
 
     // too many args
@@ -9348,7 +9881,7 @@ DEFUN2(stgApplyPPNNN, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyPPNNN FUN just right\n");
       #endif
       pushargs(3, nargv);
       pushargs(2, pargv);
@@ -9358,7 +9891,7 @@ DEFUN2(stgApplyPPNNN, N, f) {
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN too few args\n");
+      fprintf(stderr, "stgApplyPPNNN FUN too few args\n");
       #endif
       int fvCount = f.op->infoPtr->fvCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
@@ -9387,14 +9920,14 @@ DEFUN2(stgApplyPPNNN, N, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApply:  PAP error 1");
+    assert(argCount == f.op->argCount && "stgApplyPPNNN:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
     if (excess > 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too many args\n");
+      fprintf(stderr, "stgApplyPPNNN PAP too many args\n");
       #endif
       switch (excess) {
       case 1: {
@@ -9506,7 +10039,7 @@ DEFUN2(stgApplyPPNNN, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyPPNNN FUN just right\n");
       #endif
       pushargs(3, nargv);
       pushargs(papnargc, &f.op->payload[fvCount+1+pappargc]);
@@ -9518,7 +10051,7 @@ DEFUN2(stgApplyPPNNN, N, f) {
     // excess < 0, too few args
     } else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too few args\n");
+      fprintf(stderr, "stgApplyPPNNN PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2 + pappargc, 3 + papnargc);
@@ -9551,19 +10084,22 @@ DEFUN2(stgApplyPPNNN, N, f) {
   } // case PAP
 
   case BLACKHOLE: {
-    fprintf(stderr, "infinite loop detected in stgApply!\n");
+    fprintf(stderr, "infinite loop detected in stgApplyPPNNN!\n");
     showStgHeap();
     exit(0);
   } // case BLACKHOLE
 
   default:
-    fprintf(stderr, "stgApply not a THUNK, FUN, or PAP\n");
+    fprintf(stderr, "stgApplyPPNNN not a THUNK, FUN, or PAP\n");
     exit(0);
   }  // switch
   ENDFUN;
 }
 
 DEFUN2(stgApplyNNPNN, N, f) {
+  #ifdef DEBUGSTGAPPLY
+  fprintf(stderr, "stgApplyNNPNN %s\n", f.op->infoPtr->name);
+  #endif
   assert(N.argType == INT);
   const int argc = N.i;
   assert(argc == 5);
@@ -9577,13 +10113,18 @@ DEFUN2(stgApplyNNPNN, N, f) {
   nargv[1] = argv[1];
   nargv[2] = argv[3];
   nargv[3] = argv[4];
+  callContSave(1, pargv);
+  STGEVAL(pargv[0]);
+  callContRestore(pargv);
+  // restore argv
+  argv[2] = pargv[0];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
     callContSave(1, pargv);
     while (f.op->objType == THUNK) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply THUNK\n");
+      fprintf(stderr, "stgApplyNNPNN THUNK\n");
       #endif
       STGEVAL(f);
       // f.op = derefPoL(f);
@@ -9597,6 +10138,9 @@ DEFUN2(stgApplyNNPNN, N, f) {
   switch (f.op->objType) {
   case FUN: {
     int arity = f.op->infoPtr->funFields.arity;
+    #ifdef DEBUGSTGAPPLY
+    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    #endif
     int excess = argc - arity;  // may be negative
 
     // too many args
@@ -9705,7 +10249,7 @@ DEFUN2(stgApplyNNPNN, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyNNPNN FUN just right\n");
       #endif
       pushargs(4, nargv);
       pushargs(1, pargv);
@@ -9715,7 +10259,7 @@ DEFUN2(stgApplyNNPNN, N, f) {
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN too few args\n");
+      fprintf(stderr, "stgApplyNNPNN FUN too few args\n");
       #endif
       int fvCount = f.op->infoPtr->fvCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
@@ -9744,14 +10288,14 @@ DEFUN2(stgApplyNNPNN, N, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApply:  PAP error 1");
+    assert(argCount == f.op->argCount && "stgApplyNNPNN:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
     if (excess > 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too many args\n");
+      fprintf(stderr, "stgApplyNNPNN PAP too many args\n");
       #endif
       switch (excess) {
       case 1: {
@@ -9865,7 +10409,7 @@ DEFUN2(stgApplyNNPNN, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyNNPNN FUN just right\n");
       #endif
       pushargs(4, nargv);
       pushargs(papnargc, &f.op->payload[fvCount+1+pappargc]);
@@ -9877,7 +10421,7 @@ DEFUN2(stgApplyNNPNN, N, f) {
     // excess < 0, too few args
     } else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too few args\n");
+      fprintf(stderr, "stgApplyNNPNN PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 1 + pappargc, 4 + papnargc);
@@ -9910,19 +10454,22 @@ DEFUN2(stgApplyNNPNN, N, f) {
   } // case PAP
 
   case BLACKHOLE: {
-    fprintf(stderr, "infinite loop detected in stgApply!\n");
+    fprintf(stderr, "infinite loop detected in stgApplyNNPNN!\n");
     showStgHeap();
     exit(0);
   } // case BLACKHOLE
 
   default:
-    fprintf(stderr, "stgApply not a THUNK, FUN, or PAP\n");
+    fprintf(stderr, "stgApplyNNPNN not a THUNK, FUN, or PAP\n");
     exit(0);
   }  // switch
   ENDFUN;
 }
 
 DEFUN2(stgApplyPNPNN, N, f) {
+  #ifdef DEBUGSTGAPPLY
+  fprintf(stderr, "stgApplyPNPNN %s\n", f.op->infoPtr->name);
+  #endif
   assert(N.argType == INT);
   const int argc = N.i;
   assert(argc == 5);
@@ -9936,13 +10483,25 @@ DEFUN2(stgApplyPNPNN, N, f) {
   nargv[0] = argv[1];
   nargv[1] = argv[3];
   nargv[2] = argv[4];
+  callContSave(2, pargv);
+  STGEVAL(pargv[0]);
+  callContRestore(pargv);
+  // restore argv
+  argv[0] = pargv[0];
+  argv[2] = pargv[1];
+  callContSave(2, pargv);
+  STGEVAL(pargv[1]);
+  callContRestore(pargv);
+  // restore argv
+  argv[0] = pargv[0];
+  argv[2] = pargv[1];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
     callContSave(2, pargv);
     while (f.op->objType == THUNK) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply THUNK\n");
+      fprintf(stderr, "stgApplyPNPNN THUNK\n");
       #endif
       STGEVAL(f);
       // f.op = derefPoL(f);
@@ -9957,6 +10516,9 @@ DEFUN2(stgApplyPNPNN, N, f) {
   switch (f.op->objType) {
   case FUN: {
     int arity = f.op->infoPtr->funFields.arity;
+    #ifdef DEBUGSTGAPPLY
+    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    #endif
     int excess = argc - arity;  // may be negative
 
     // too many args
@@ -10065,7 +10627,7 @@ DEFUN2(stgApplyPNPNN, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyPNPNN FUN just right\n");
       #endif
       pushargs(3, nargv);
       pushargs(2, pargv);
@@ -10075,7 +10637,7 @@ DEFUN2(stgApplyPNPNN, N, f) {
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN too few args\n");
+      fprintf(stderr, "stgApplyPNPNN FUN too few args\n");
       #endif
       int fvCount = f.op->infoPtr->fvCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
@@ -10104,14 +10666,14 @@ DEFUN2(stgApplyPNPNN, N, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApply:  PAP error 1");
+    assert(argCount == f.op->argCount && "stgApplyPNPNN:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
     if (excess > 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too many args\n");
+      fprintf(stderr, "stgApplyPNPNN PAP too many args\n");
       #endif
       switch (excess) {
       case 1: {
@@ -10225,7 +10787,7 @@ DEFUN2(stgApplyPNPNN, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyPNPNN FUN just right\n");
       #endif
       pushargs(3, nargv);
       pushargs(papnargc, &f.op->payload[fvCount+1+pappargc]);
@@ -10237,7 +10799,7 @@ DEFUN2(stgApplyPNPNN, N, f) {
     // excess < 0, too few args
     } else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too few args\n");
+      fprintf(stderr, "stgApplyPNPNN PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2 + pappargc, 3 + papnargc);
@@ -10270,19 +10832,22 @@ DEFUN2(stgApplyPNPNN, N, f) {
   } // case PAP
 
   case BLACKHOLE: {
-    fprintf(stderr, "infinite loop detected in stgApply!\n");
+    fprintf(stderr, "infinite loop detected in stgApplyPNPNN!\n");
     showStgHeap();
     exit(0);
   } // case BLACKHOLE
 
   default:
-    fprintf(stderr, "stgApply not a THUNK, FUN, or PAP\n");
+    fprintf(stderr, "stgApplyPNPNN not a THUNK, FUN, or PAP\n");
     exit(0);
   }  // switch
   ENDFUN;
 }
 
 DEFUN2(stgApplyNPPNN, N, f) {
+  #ifdef DEBUGSTGAPPLY
+  fprintf(stderr, "stgApplyNPPNN %s\n", f.op->infoPtr->name);
+  #endif
   assert(N.argType == INT);
   const int argc = N.i;
   assert(argc == 5);
@@ -10296,13 +10861,25 @@ DEFUN2(stgApplyNPPNN, N, f) {
   nargv[0] = argv[0];
   nargv[1] = argv[3];
   nargv[2] = argv[4];
+  callContSave(2, pargv);
+  STGEVAL(pargv[0]);
+  callContRestore(pargv);
+  // restore argv
+  argv[1] = pargv[0];
+  argv[2] = pargv[1];
+  callContSave(2, pargv);
+  STGEVAL(pargv[1]);
+  callContRestore(pargv);
+  // restore argv
+  argv[1] = pargv[0];
+  argv[2] = pargv[1];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
     callContSave(2, pargv);
     while (f.op->objType == THUNK) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply THUNK\n");
+      fprintf(stderr, "stgApplyNPPNN THUNK\n");
       #endif
       STGEVAL(f);
       // f.op = derefPoL(f);
@@ -10317,6 +10894,9 @@ DEFUN2(stgApplyNPPNN, N, f) {
   switch (f.op->objType) {
   case FUN: {
     int arity = f.op->infoPtr->funFields.arity;
+    #ifdef DEBUGSTGAPPLY
+    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    #endif
     int excess = argc - arity;  // may be negative
 
     // too many args
@@ -10426,7 +11006,7 @@ DEFUN2(stgApplyNPPNN, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyNPPNN FUN just right\n");
       #endif
       pushargs(3, nargv);
       pushargs(2, pargv);
@@ -10436,7 +11016,7 @@ DEFUN2(stgApplyNPPNN, N, f) {
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN too few args\n");
+      fprintf(stderr, "stgApplyNPPNN FUN too few args\n");
       #endif
       int fvCount = f.op->infoPtr->fvCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
@@ -10465,14 +11045,14 @@ DEFUN2(stgApplyNPPNN, N, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApply:  PAP error 1");
+    assert(argCount == f.op->argCount && "stgApplyNPPNN:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
     if (excess > 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too many args\n");
+      fprintf(stderr, "stgApplyNPPNN PAP too many args\n");
       #endif
       switch (excess) {
       case 1: {
@@ -10587,7 +11167,7 @@ DEFUN2(stgApplyNPPNN, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyNPPNN FUN just right\n");
       #endif
       pushargs(3, nargv);
       pushargs(papnargc, &f.op->payload[fvCount+1+pappargc]);
@@ -10599,7 +11179,7 @@ DEFUN2(stgApplyNPPNN, N, f) {
     // excess < 0, too few args
     } else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too few args\n");
+      fprintf(stderr, "stgApplyNPPNN PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2 + pappargc, 3 + papnargc);
@@ -10632,19 +11212,22 @@ DEFUN2(stgApplyNPPNN, N, f) {
   } // case PAP
 
   case BLACKHOLE: {
-    fprintf(stderr, "infinite loop detected in stgApply!\n");
+    fprintf(stderr, "infinite loop detected in stgApplyNPPNN!\n");
     showStgHeap();
     exit(0);
   } // case BLACKHOLE
 
   default:
-    fprintf(stderr, "stgApply not a THUNK, FUN, or PAP\n");
+    fprintf(stderr, "stgApplyNPPNN not a THUNK, FUN, or PAP\n");
     exit(0);
   }  // switch
   ENDFUN;
 }
 
 DEFUN2(stgApplyPPPNN, N, f) {
+  #ifdef DEBUGSTGAPPLY
+  fprintf(stderr, "stgApplyPPPNN %s\n", f.op->infoPtr->name);
+  #endif
   assert(N.argType == INT);
   const int argc = N.i;
   assert(argc == 5);
@@ -10658,13 +11241,34 @@ DEFUN2(stgApplyPPPNN, N, f) {
   PtrOrLiteral nargv[2];
   nargv[0] = argv[3];
   nargv[1] = argv[4];
+  callContSave(3, pargv);
+  STGEVAL(pargv[0]);
+  callContRestore(pargv);
+  // restore argv
+  argv[0] = pargv[0];
+  argv[1] = pargv[1];
+  argv[2] = pargv[2];
+  callContSave(3, pargv);
+  STGEVAL(pargv[1]);
+  callContRestore(pargv);
+  // restore argv
+  argv[0] = pargv[0];
+  argv[1] = pargv[1];
+  argv[2] = pargv[2];
+  callContSave(3, pargv);
+  STGEVAL(pargv[2]);
+  callContRestore(pargv);
+  // restore argv
+  argv[0] = pargv[0];
+  argv[1] = pargv[1];
+  argv[2] = pargv[2];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
     callContSave(3, pargv);
     while (f.op->objType == THUNK) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply THUNK\n");
+      fprintf(stderr, "stgApplyPPPNN THUNK\n");
       #endif
       STGEVAL(f);
       // f.op = derefPoL(f);
@@ -10680,6 +11284,9 @@ DEFUN2(stgApplyPPPNN, N, f) {
   switch (f.op->objType) {
   case FUN: {
     int arity = f.op->infoPtr->funFields.arity;
+    #ifdef DEBUGSTGAPPLY
+    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    #endif
     int excess = argc - arity;  // may be negative
 
     // too many args
@@ -10789,7 +11396,7 @@ DEFUN2(stgApplyPPPNN, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyPPPNN FUN just right\n");
       #endif
       pushargs(2, nargv);
       pushargs(3, pargv);
@@ -10799,7 +11406,7 @@ DEFUN2(stgApplyPPPNN, N, f) {
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN too few args\n");
+      fprintf(stderr, "stgApplyPPPNN FUN too few args\n");
       #endif
       int fvCount = f.op->infoPtr->fvCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
@@ -10828,14 +11435,14 @@ DEFUN2(stgApplyPPPNN, N, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApply:  PAP error 1");
+    assert(argCount == f.op->argCount && "stgApplyPPPNN:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
     if (excess > 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too many args\n");
+      fprintf(stderr, "stgApplyPPPNN PAP too many args\n");
       #endif
       switch (excess) {
       case 1: {
@@ -10950,7 +11557,7 @@ DEFUN2(stgApplyPPPNN, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyPPPNN FUN just right\n");
       #endif
       pushargs(2, nargv);
       pushargs(papnargc, &f.op->payload[fvCount+1+pappargc]);
@@ -10962,7 +11569,7 @@ DEFUN2(stgApplyPPPNN, N, f) {
     // excess < 0, too few args
     } else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too few args\n");
+      fprintf(stderr, "stgApplyPPPNN PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3 + pappargc, 2 + papnargc);
@@ -10995,19 +11602,22 @@ DEFUN2(stgApplyPPPNN, N, f) {
   } // case PAP
 
   case BLACKHOLE: {
-    fprintf(stderr, "infinite loop detected in stgApply!\n");
+    fprintf(stderr, "infinite loop detected in stgApplyPPPNN!\n");
     showStgHeap();
     exit(0);
   } // case BLACKHOLE
 
   default:
-    fprintf(stderr, "stgApply not a THUNK, FUN, or PAP\n");
+    fprintf(stderr, "stgApplyPPPNN not a THUNK, FUN, or PAP\n");
     exit(0);
   }  // switch
   ENDFUN;
 }
 
 DEFUN2(stgApplyNNNPN, N, f) {
+  #ifdef DEBUGSTGAPPLY
+  fprintf(stderr, "stgApplyNNNPN %s\n", f.op->infoPtr->name);
+  #endif
   assert(N.argType == INT);
   const int argc = N.i;
   assert(argc == 5);
@@ -11021,13 +11631,18 @@ DEFUN2(stgApplyNNNPN, N, f) {
   nargv[1] = argv[1];
   nargv[2] = argv[2];
   nargv[3] = argv[4];
+  callContSave(1, pargv);
+  STGEVAL(pargv[0]);
+  callContRestore(pargv);
+  // restore argv
+  argv[3] = pargv[0];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
     callContSave(1, pargv);
     while (f.op->objType == THUNK) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply THUNK\n");
+      fprintf(stderr, "stgApplyNNNPN THUNK\n");
       #endif
       STGEVAL(f);
       // f.op = derefPoL(f);
@@ -11041,6 +11656,9 @@ DEFUN2(stgApplyNNNPN, N, f) {
   switch (f.op->objType) {
   case FUN: {
     int arity = f.op->infoPtr->funFields.arity;
+    #ifdef DEBUGSTGAPPLY
+    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    #endif
     int excess = argc - arity;  // may be negative
 
     // too many args
@@ -11151,7 +11769,7 @@ DEFUN2(stgApplyNNNPN, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyNNNPN FUN just right\n");
       #endif
       pushargs(4, nargv);
       pushargs(1, pargv);
@@ -11161,7 +11779,7 @@ DEFUN2(stgApplyNNNPN, N, f) {
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN too few args\n");
+      fprintf(stderr, "stgApplyNNNPN FUN too few args\n");
       #endif
       int fvCount = f.op->infoPtr->fvCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
@@ -11190,14 +11808,14 @@ DEFUN2(stgApplyNNNPN, N, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApply:  PAP error 1");
+    assert(argCount == f.op->argCount && "stgApplyNNNPN:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
     if (excess > 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too many args\n");
+      fprintf(stderr, "stgApplyNNNPN PAP too many args\n");
       #endif
       switch (excess) {
       case 1: {
@@ -11313,7 +11931,7 @@ DEFUN2(stgApplyNNNPN, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyNNNPN FUN just right\n");
       #endif
       pushargs(4, nargv);
       pushargs(papnargc, &f.op->payload[fvCount+1+pappargc]);
@@ -11325,7 +11943,7 @@ DEFUN2(stgApplyNNNPN, N, f) {
     // excess < 0, too few args
     } else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too few args\n");
+      fprintf(stderr, "stgApplyNNNPN PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 1 + pappargc, 4 + papnargc);
@@ -11358,19 +11976,22 @@ DEFUN2(stgApplyNNNPN, N, f) {
   } // case PAP
 
   case BLACKHOLE: {
-    fprintf(stderr, "infinite loop detected in stgApply!\n");
+    fprintf(stderr, "infinite loop detected in stgApplyNNNPN!\n");
     showStgHeap();
     exit(0);
   } // case BLACKHOLE
 
   default:
-    fprintf(stderr, "stgApply not a THUNK, FUN, or PAP\n");
+    fprintf(stderr, "stgApplyNNNPN not a THUNK, FUN, or PAP\n");
     exit(0);
   }  // switch
   ENDFUN;
 }
 
 DEFUN2(stgApplyPNNPN, N, f) {
+  #ifdef DEBUGSTGAPPLY
+  fprintf(stderr, "stgApplyPNNPN %s\n", f.op->infoPtr->name);
+  #endif
   assert(N.argType == INT);
   const int argc = N.i;
   assert(argc == 5);
@@ -11384,13 +12005,25 @@ DEFUN2(stgApplyPNNPN, N, f) {
   nargv[0] = argv[1];
   nargv[1] = argv[2];
   nargv[2] = argv[4];
+  callContSave(2, pargv);
+  STGEVAL(pargv[0]);
+  callContRestore(pargv);
+  // restore argv
+  argv[0] = pargv[0];
+  argv[3] = pargv[1];
+  callContSave(2, pargv);
+  STGEVAL(pargv[1]);
+  callContRestore(pargv);
+  // restore argv
+  argv[0] = pargv[0];
+  argv[3] = pargv[1];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
     callContSave(2, pargv);
     while (f.op->objType == THUNK) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply THUNK\n");
+      fprintf(stderr, "stgApplyPNNPN THUNK\n");
       #endif
       STGEVAL(f);
       // f.op = derefPoL(f);
@@ -11405,6 +12038,9 @@ DEFUN2(stgApplyPNNPN, N, f) {
   switch (f.op->objType) {
   case FUN: {
     int arity = f.op->infoPtr->funFields.arity;
+    #ifdef DEBUGSTGAPPLY
+    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    #endif
     int excess = argc - arity;  // may be negative
 
     // too many args
@@ -11515,7 +12151,7 @@ DEFUN2(stgApplyPNNPN, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyPNNPN FUN just right\n");
       #endif
       pushargs(3, nargv);
       pushargs(2, pargv);
@@ -11525,7 +12161,7 @@ DEFUN2(stgApplyPNNPN, N, f) {
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN too few args\n");
+      fprintf(stderr, "stgApplyPNNPN FUN too few args\n");
       #endif
       int fvCount = f.op->infoPtr->fvCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
@@ -11554,14 +12190,14 @@ DEFUN2(stgApplyPNNPN, N, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApply:  PAP error 1");
+    assert(argCount == f.op->argCount && "stgApplyPNNPN:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
     if (excess > 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too many args\n");
+      fprintf(stderr, "stgApplyPNNPN PAP too many args\n");
       #endif
       switch (excess) {
       case 1: {
@@ -11677,7 +12313,7 @@ DEFUN2(stgApplyPNNPN, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyPNNPN FUN just right\n");
       #endif
       pushargs(3, nargv);
       pushargs(papnargc, &f.op->payload[fvCount+1+pappargc]);
@@ -11689,7 +12325,7 @@ DEFUN2(stgApplyPNNPN, N, f) {
     // excess < 0, too few args
     } else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too few args\n");
+      fprintf(stderr, "stgApplyPNNPN PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2 + pappargc, 3 + papnargc);
@@ -11722,19 +12358,22 @@ DEFUN2(stgApplyPNNPN, N, f) {
   } // case PAP
 
   case BLACKHOLE: {
-    fprintf(stderr, "infinite loop detected in stgApply!\n");
+    fprintf(stderr, "infinite loop detected in stgApplyPNNPN!\n");
     showStgHeap();
     exit(0);
   } // case BLACKHOLE
 
   default:
-    fprintf(stderr, "stgApply not a THUNK, FUN, or PAP\n");
+    fprintf(stderr, "stgApplyPNNPN not a THUNK, FUN, or PAP\n");
     exit(0);
   }  // switch
   ENDFUN;
 }
 
 DEFUN2(stgApplyNPNPN, N, f) {
+  #ifdef DEBUGSTGAPPLY
+  fprintf(stderr, "stgApplyNPNPN %s\n", f.op->infoPtr->name);
+  #endif
   assert(N.argType == INT);
   const int argc = N.i;
   assert(argc == 5);
@@ -11748,13 +12387,25 @@ DEFUN2(stgApplyNPNPN, N, f) {
   nargv[0] = argv[0];
   nargv[1] = argv[2];
   nargv[2] = argv[4];
+  callContSave(2, pargv);
+  STGEVAL(pargv[0]);
+  callContRestore(pargv);
+  // restore argv
+  argv[1] = pargv[0];
+  argv[3] = pargv[1];
+  callContSave(2, pargv);
+  STGEVAL(pargv[1]);
+  callContRestore(pargv);
+  // restore argv
+  argv[1] = pargv[0];
+  argv[3] = pargv[1];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
     callContSave(2, pargv);
     while (f.op->objType == THUNK) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply THUNK\n");
+      fprintf(stderr, "stgApplyNPNPN THUNK\n");
       #endif
       STGEVAL(f);
       // f.op = derefPoL(f);
@@ -11769,6 +12420,9 @@ DEFUN2(stgApplyNPNPN, N, f) {
   switch (f.op->objType) {
   case FUN: {
     int arity = f.op->infoPtr->funFields.arity;
+    #ifdef DEBUGSTGAPPLY
+    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    #endif
     int excess = argc - arity;  // may be negative
 
     // too many args
@@ -11880,7 +12534,7 @@ DEFUN2(stgApplyNPNPN, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyNPNPN FUN just right\n");
       #endif
       pushargs(3, nargv);
       pushargs(2, pargv);
@@ -11890,7 +12544,7 @@ DEFUN2(stgApplyNPNPN, N, f) {
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN too few args\n");
+      fprintf(stderr, "stgApplyNPNPN FUN too few args\n");
       #endif
       int fvCount = f.op->infoPtr->fvCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
@@ -11919,14 +12573,14 @@ DEFUN2(stgApplyNPNPN, N, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApply:  PAP error 1");
+    assert(argCount == f.op->argCount && "stgApplyNPNPN:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
     if (excess > 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too many args\n");
+      fprintf(stderr, "stgApplyNPNPN PAP too many args\n");
       #endif
       switch (excess) {
       case 1: {
@@ -12043,7 +12697,7 @@ DEFUN2(stgApplyNPNPN, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyNPNPN FUN just right\n");
       #endif
       pushargs(3, nargv);
       pushargs(papnargc, &f.op->payload[fvCount+1+pappargc]);
@@ -12055,7 +12709,7 @@ DEFUN2(stgApplyNPNPN, N, f) {
     // excess < 0, too few args
     } else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too few args\n");
+      fprintf(stderr, "stgApplyNPNPN PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2 + pappargc, 3 + papnargc);
@@ -12088,19 +12742,22 @@ DEFUN2(stgApplyNPNPN, N, f) {
   } // case PAP
 
   case BLACKHOLE: {
-    fprintf(stderr, "infinite loop detected in stgApply!\n");
+    fprintf(stderr, "infinite loop detected in stgApplyNPNPN!\n");
     showStgHeap();
     exit(0);
   } // case BLACKHOLE
 
   default:
-    fprintf(stderr, "stgApply not a THUNK, FUN, or PAP\n");
+    fprintf(stderr, "stgApplyNPNPN not a THUNK, FUN, or PAP\n");
     exit(0);
   }  // switch
   ENDFUN;
 }
 
 DEFUN2(stgApplyPPNPN, N, f) {
+  #ifdef DEBUGSTGAPPLY
+  fprintf(stderr, "stgApplyPPNPN %s\n", f.op->infoPtr->name);
+  #endif
   assert(N.argType == INT);
   const int argc = N.i;
   assert(argc == 5);
@@ -12114,13 +12771,34 @@ DEFUN2(stgApplyPPNPN, N, f) {
   PtrOrLiteral nargv[2];
   nargv[0] = argv[2];
   nargv[1] = argv[4];
+  callContSave(3, pargv);
+  STGEVAL(pargv[0]);
+  callContRestore(pargv);
+  // restore argv
+  argv[0] = pargv[0];
+  argv[1] = pargv[1];
+  argv[3] = pargv[2];
+  callContSave(3, pargv);
+  STGEVAL(pargv[1]);
+  callContRestore(pargv);
+  // restore argv
+  argv[0] = pargv[0];
+  argv[1] = pargv[1];
+  argv[3] = pargv[2];
+  callContSave(3, pargv);
+  STGEVAL(pargv[2]);
+  callContRestore(pargv);
+  // restore argv
+  argv[0] = pargv[0];
+  argv[1] = pargv[1];
+  argv[3] = pargv[2];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
     callContSave(3, pargv);
     while (f.op->objType == THUNK) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply THUNK\n");
+      fprintf(stderr, "stgApplyPPNPN THUNK\n");
       #endif
       STGEVAL(f);
       // f.op = derefPoL(f);
@@ -12136,6 +12814,9 @@ DEFUN2(stgApplyPPNPN, N, f) {
   switch (f.op->objType) {
   case FUN: {
     int arity = f.op->infoPtr->funFields.arity;
+    #ifdef DEBUGSTGAPPLY
+    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    #endif
     int excess = argc - arity;  // may be negative
 
     // too many args
@@ -12247,7 +12928,7 @@ DEFUN2(stgApplyPPNPN, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyPPNPN FUN just right\n");
       #endif
       pushargs(2, nargv);
       pushargs(3, pargv);
@@ -12257,7 +12938,7 @@ DEFUN2(stgApplyPPNPN, N, f) {
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN too few args\n");
+      fprintf(stderr, "stgApplyPPNPN FUN too few args\n");
       #endif
       int fvCount = f.op->infoPtr->fvCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
@@ -12286,14 +12967,14 @@ DEFUN2(stgApplyPPNPN, N, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApply:  PAP error 1");
+    assert(argCount == f.op->argCount && "stgApplyPPNPN:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
     if (excess > 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too many args\n");
+      fprintf(stderr, "stgApplyPPNPN PAP too many args\n");
       #endif
       switch (excess) {
       case 1: {
@@ -12410,7 +13091,7 @@ DEFUN2(stgApplyPPNPN, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyPPNPN FUN just right\n");
       #endif
       pushargs(2, nargv);
       pushargs(papnargc, &f.op->payload[fvCount+1+pappargc]);
@@ -12422,7 +13103,7 @@ DEFUN2(stgApplyPPNPN, N, f) {
     // excess < 0, too few args
     } else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too few args\n");
+      fprintf(stderr, "stgApplyPPNPN PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3 + pappargc, 2 + papnargc);
@@ -12455,19 +13136,22 @@ DEFUN2(stgApplyPPNPN, N, f) {
   } // case PAP
 
   case BLACKHOLE: {
-    fprintf(stderr, "infinite loop detected in stgApply!\n");
+    fprintf(stderr, "infinite loop detected in stgApplyPPNPN!\n");
     showStgHeap();
     exit(0);
   } // case BLACKHOLE
 
   default:
-    fprintf(stderr, "stgApply not a THUNK, FUN, or PAP\n");
+    fprintf(stderr, "stgApplyPPNPN not a THUNK, FUN, or PAP\n");
     exit(0);
   }  // switch
   ENDFUN;
 }
 
 DEFUN2(stgApplyNNPPN, N, f) {
+  #ifdef DEBUGSTGAPPLY
+  fprintf(stderr, "stgApplyNNPPN %s\n", f.op->infoPtr->name);
+  #endif
   assert(N.argType == INT);
   const int argc = N.i;
   assert(argc == 5);
@@ -12481,13 +13165,25 @@ DEFUN2(stgApplyNNPPN, N, f) {
   nargv[0] = argv[0];
   nargv[1] = argv[1];
   nargv[2] = argv[4];
+  callContSave(2, pargv);
+  STGEVAL(pargv[0]);
+  callContRestore(pargv);
+  // restore argv
+  argv[2] = pargv[0];
+  argv[3] = pargv[1];
+  callContSave(2, pargv);
+  STGEVAL(pargv[1]);
+  callContRestore(pargv);
+  // restore argv
+  argv[2] = pargv[0];
+  argv[3] = pargv[1];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
     callContSave(2, pargv);
     while (f.op->objType == THUNK) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply THUNK\n");
+      fprintf(stderr, "stgApplyNNPPN THUNK\n");
       #endif
       STGEVAL(f);
       // f.op = derefPoL(f);
@@ -12502,6 +13198,9 @@ DEFUN2(stgApplyNNPPN, N, f) {
   switch (f.op->objType) {
   case FUN: {
     int arity = f.op->infoPtr->funFields.arity;
+    #ifdef DEBUGSTGAPPLY
+    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    #endif
     int excess = argc - arity;  // may be negative
 
     // too many args
@@ -12614,7 +13313,7 @@ DEFUN2(stgApplyNNPPN, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyNNPPN FUN just right\n");
       #endif
       pushargs(3, nargv);
       pushargs(2, pargv);
@@ -12624,7 +13323,7 @@ DEFUN2(stgApplyNNPPN, N, f) {
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN too few args\n");
+      fprintf(stderr, "stgApplyNNPPN FUN too few args\n");
       #endif
       int fvCount = f.op->infoPtr->fvCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
@@ -12653,14 +13352,14 @@ DEFUN2(stgApplyNNPPN, N, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApply:  PAP error 1");
+    assert(argCount == f.op->argCount && "stgApplyNNPPN:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
     if (excess > 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too many args\n");
+      fprintf(stderr, "stgApplyNNPPN PAP too many args\n");
       #endif
       switch (excess) {
       case 1: {
@@ -12778,7 +13477,7 @@ DEFUN2(stgApplyNNPPN, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyNNPPN FUN just right\n");
       #endif
       pushargs(3, nargv);
       pushargs(papnargc, &f.op->payload[fvCount+1+pappargc]);
@@ -12790,7 +13489,7 @@ DEFUN2(stgApplyNNPPN, N, f) {
     // excess < 0, too few args
     } else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too few args\n");
+      fprintf(stderr, "stgApplyNNPPN PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2 + pappargc, 3 + papnargc);
@@ -12823,19 +13522,22 @@ DEFUN2(stgApplyNNPPN, N, f) {
   } // case PAP
 
   case BLACKHOLE: {
-    fprintf(stderr, "infinite loop detected in stgApply!\n");
+    fprintf(stderr, "infinite loop detected in stgApplyNNPPN!\n");
     showStgHeap();
     exit(0);
   } // case BLACKHOLE
 
   default:
-    fprintf(stderr, "stgApply not a THUNK, FUN, or PAP\n");
+    fprintf(stderr, "stgApplyNNPPN not a THUNK, FUN, or PAP\n");
     exit(0);
   }  // switch
   ENDFUN;
 }
 
 DEFUN2(stgApplyPNPPN, N, f) {
+  #ifdef DEBUGSTGAPPLY
+  fprintf(stderr, "stgApplyPNPPN %s\n", f.op->infoPtr->name);
+  #endif
   assert(N.argType == INT);
   const int argc = N.i;
   assert(argc == 5);
@@ -12849,13 +13551,34 @@ DEFUN2(stgApplyPNPPN, N, f) {
   PtrOrLiteral nargv[2];
   nargv[0] = argv[1];
   nargv[1] = argv[4];
+  callContSave(3, pargv);
+  STGEVAL(pargv[0]);
+  callContRestore(pargv);
+  // restore argv
+  argv[0] = pargv[0];
+  argv[2] = pargv[1];
+  argv[3] = pargv[2];
+  callContSave(3, pargv);
+  STGEVAL(pargv[1]);
+  callContRestore(pargv);
+  // restore argv
+  argv[0] = pargv[0];
+  argv[2] = pargv[1];
+  argv[3] = pargv[2];
+  callContSave(3, pargv);
+  STGEVAL(pargv[2]);
+  callContRestore(pargv);
+  // restore argv
+  argv[0] = pargv[0];
+  argv[2] = pargv[1];
+  argv[3] = pargv[2];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
     callContSave(3, pargv);
     while (f.op->objType == THUNK) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply THUNK\n");
+      fprintf(stderr, "stgApplyPNPPN THUNK\n");
       #endif
       STGEVAL(f);
       // f.op = derefPoL(f);
@@ -12871,6 +13594,9 @@ DEFUN2(stgApplyPNPPN, N, f) {
   switch (f.op->objType) {
   case FUN: {
     int arity = f.op->infoPtr->funFields.arity;
+    #ifdef DEBUGSTGAPPLY
+    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    #endif
     int excess = argc - arity;  // may be negative
 
     // too many args
@@ -12983,7 +13709,7 @@ DEFUN2(stgApplyPNPPN, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyPNPPN FUN just right\n");
       #endif
       pushargs(2, nargv);
       pushargs(3, pargv);
@@ -12993,7 +13719,7 @@ DEFUN2(stgApplyPNPPN, N, f) {
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN too few args\n");
+      fprintf(stderr, "stgApplyPNPPN FUN too few args\n");
       #endif
       int fvCount = f.op->infoPtr->fvCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
@@ -13022,14 +13748,14 @@ DEFUN2(stgApplyPNPPN, N, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApply:  PAP error 1");
+    assert(argCount == f.op->argCount && "stgApplyPNPPN:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
     if (excess > 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too many args\n");
+      fprintf(stderr, "stgApplyPNPPN PAP too many args\n");
       #endif
       switch (excess) {
       case 1: {
@@ -13147,7 +13873,7 @@ DEFUN2(stgApplyPNPPN, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyPNPPN FUN just right\n");
       #endif
       pushargs(2, nargv);
       pushargs(papnargc, &f.op->payload[fvCount+1+pappargc]);
@@ -13159,7 +13885,7 @@ DEFUN2(stgApplyPNPPN, N, f) {
     // excess < 0, too few args
     } else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too few args\n");
+      fprintf(stderr, "stgApplyPNPPN PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3 + pappargc, 2 + papnargc);
@@ -13192,19 +13918,22 @@ DEFUN2(stgApplyPNPPN, N, f) {
   } // case PAP
 
   case BLACKHOLE: {
-    fprintf(stderr, "infinite loop detected in stgApply!\n");
+    fprintf(stderr, "infinite loop detected in stgApplyPNPPN!\n");
     showStgHeap();
     exit(0);
   } // case BLACKHOLE
 
   default:
-    fprintf(stderr, "stgApply not a THUNK, FUN, or PAP\n");
+    fprintf(stderr, "stgApplyPNPPN not a THUNK, FUN, or PAP\n");
     exit(0);
   }  // switch
   ENDFUN;
 }
 
 DEFUN2(stgApplyNPPPN, N, f) {
+  #ifdef DEBUGSTGAPPLY
+  fprintf(stderr, "stgApplyNPPPN %s\n", f.op->infoPtr->name);
+  #endif
   assert(N.argType == INT);
   const int argc = N.i;
   assert(argc == 5);
@@ -13218,13 +13947,34 @@ DEFUN2(stgApplyNPPPN, N, f) {
   PtrOrLiteral nargv[2];
   nargv[0] = argv[0];
   nargv[1] = argv[4];
+  callContSave(3, pargv);
+  STGEVAL(pargv[0]);
+  callContRestore(pargv);
+  // restore argv
+  argv[1] = pargv[0];
+  argv[2] = pargv[1];
+  argv[3] = pargv[2];
+  callContSave(3, pargv);
+  STGEVAL(pargv[1]);
+  callContRestore(pargv);
+  // restore argv
+  argv[1] = pargv[0];
+  argv[2] = pargv[1];
+  argv[3] = pargv[2];
+  callContSave(3, pargv);
+  STGEVAL(pargv[2]);
+  callContRestore(pargv);
+  // restore argv
+  argv[1] = pargv[0];
+  argv[2] = pargv[1];
+  argv[3] = pargv[2];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
     callContSave(3, pargv);
     while (f.op->objType == THUNK) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply THUNK\n");
+      fprintf(stderr, "stgApplyNPPPN THUNK\n");
       #endif
       STGEVAL(f);
       // f.op = derefPoL(f);
@@ -13240,6 +13990,9 @@ DEFUN2(stgApplyNPPPN, N, f) {
   switch (f.op->objType) {
   case FUN: {
     int arity = f.op->infoPtr->funFields.arity;
+    #ifdef DEBUGSTGAPPLY
+    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    #endif
     int excess = argc - arity;  // may be negative
 
     // too many args
@@ -13353,7 +14106,7 @@ DEFUN2(stgApplyNPPPN, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyNPPPN FUN just right\n");
       #endif
       pushargs(2, nargv);
       pushargs(3, pargv);
@@ -13363,7 +14116,7 @@ DEFUN2(stgApplyNPPPN, N, f) {
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN too few args\n");
+      fprintf(stderr, "stgApplyNPPPN FUN too few args\n");
       #endif
       int fvCount = f.op->infoPtr->fvCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
@@ -13392,14 +14145,14 @@ DEFUN2(stgApplyNPPPN, N, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApply:  PAP error 1");
+    assert(argCount == f.op->argCount && "stgApplyNPPPN:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
     if (excess > 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too many args\n");
+      fprintf(stderr, "stgApplyNPPPN PAP too many args\n");
       #endif
       switch (excess) {
       case 1: {
@@ -13518,7 +14271,7 @@ DEFUN2(stgApplyNPPPN, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyNPPPN FUN just right\n");
       #endif
       pushargs(2, nargv);
       pushargs(papnargc, &f.op->payload[fvCount+1+pappargc]);
@@ -13530,7 +14283,7 @@ DEFUN2(stgApplyNPPPN, N, f) {
     // excess < 0, too few args
     } else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too few args\n");
+      fprintf(stderr, "stgApplyNPPPN PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3 + pappargc, 2 + papnargc);
@@ -13563,19 +14316,22 @@ DEFUN2(stgApplyNPPPN, N, f) {
   } // case PAP
 
   case BLACKHOLE: {
-    fprintf(stderr, "infinite loop detected in stgApply!\n");
+    fprintf(stderr, "infinite loop detected in stgApplyNPPPN!\n");
     showStgHeap();
     exit(0);
   } // case BLACKHOLE
 
   default:
-    fprintf(stderr, "stgApply not a THUNK, FUN, or PAP\n");
+    fprintf(stderr, "stgApplyNPPPN not a THUNK, FUN, or PAP\n");
     exit(0);
   }  // switch
   ENDFUN;
 }
 
 DEFUN2(stgApplyPPPPN, N, f) {
+  #ifdef DEBUGSTGAPPLY
+  fprintf(stderr, "stgApplyPPPPN %s\n", f.op->infoPtr->name);
+  #endif
   assert(N.argType == INT);
   const int argc = N.i;
   assert(argc == 5);
@@ -13589,13 +14345,45 @@ DEFUN2(stgApplyPPPPN, N, f) {
   pargv[3] = argv[3];
   PtrOrLiteral nargv[1];
   nargv[0] = argv[4];
+  callContSave(4, pargv);
+  STGEVAL(pargv[0]);
+  callContRestore(pargv);
+  // restore argv
+  argv[0] = pargv[0];
+  argv[1] = pargv[1];
+  argv[2] = pargv[2];
+  argv[3] = pargv[3];
+  callContSave(4, pargv);
+  STGEVAL(pargv[1]);
+  callContRestore(pargv);
+  // restore argv
+  argv[0] = pargv[0];
+  argv[1] = pargv[1];
+  argv[2] = pargv[2];
+  argv[3] = pargv[3];
+  callContSave(4, pargv);
+  STGEVAL(pargv[2]);
+  callContRestore(pargv);
+  // restore argv
+  argv[0] = pargv[0];
+  argv[1] = pargv[1];
+  argv[2] = pargv[2];
+  argv[3] = pargv[3];
+  callContSave(4, pargv);
+  STGEVAL(pargv[3]);
+  callContRestore(pargv);
+  // restore argv
+  argv[0] = pargv[0];
+  argv[1] = pargv[1];
+  argv[2] = pargv[2];
+  argv[3] = pargv[3];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
     callContSave(4, pargv);
     while (f.op->objType == THUNK) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply THUNK\n");
+      fprintf(stderr, "stgApplyPPPPN THUNK\n");
       #endif
       STGEVAL(f);
       // f.op = derefPoL(f);
@@ -13612,6 +14400,9 @@ DEFUN2(stgApplyPPPPN, N, f) {
   switch (f.op->objType) {
   case FUN: {
     int arity = f.op->infoPtr->funFields.arity;
+    #ifdef DEBUGSTGAPPLY
+    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    #endif
     int excess = argc - arity;  // may be negative
 
     // too many args
@@ -13725,7 +14516,7 @@ DEFUN2(stgApplyPPPPN, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyPPPPN FUN just right\n");
       #endif
       pushargs(1, nargv);
       pushargs(4, pargv);
@@ -13735,7 +14526,7 @@ DEFUN2(stgApplyPPPPN, N, f) {
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN too few args\n");
+      fprintf(stderr, "stgApplyPPPPN FUN too few args\n");
       #endif
       int fvCount = f.op->infoPtr->fvCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
@@ -13764,14 +14555,14 @@ DEFUN2(stgApplyPPPPN, N, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApply:  PAP error 1");
+    assert(argCount == f.op->argCount && "stgApplyPPPPN:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
     if (excess > 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too many args\n");
+      fprintf(stderr, "stgApplyPPPPN PAP too many args\n");
       #endif
       switch (excess) {
       case 1: {
@@ -13890,7 +14681,7 @@ DEFUN2(stgApplyPPPPN, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyPPPPN FUN just right\n");
       #endif
       pushargs(1, nargv);
       pushargs(papnargc, &f.op->payload[fvCount+1+pappargc]);
@@ -13902,7 +14693,7 @@ DEFUN2(stgApplyPPPPN, N, f) {
     // excess < 0, too few args
     } else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too few args\n");
+      fprintf(stderr, "stgApplyPPPPN PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 4 + pappargc, 1 + papnargc);
@@ -13935,19 +14726,22 @@ DEFUN2(stgApplyPPPPN, N, f) {
   } // case PAP
 
   case BLACKHOLE: {
-    fprintf(stderr, "infinite loop detected in stgApply!\n");
+    fprintf(stderr, "infinite loop detected in stgApplyPPPPN!\n");
     showStgHeap();
     exit(0);
   } // case BLACKHOLE
 
   default:
-    fprintf(stderr, "stgApply not a THUNK, FUN, or PAP\n");
+    fprintf(stderr, "stgApplyPPPPN not a THUNK, FUN, or PAP\n");
     exit(0);
   }  // switch
   ENDFUN;
 }
 
 DEFUN2(stgApplyNNNNP, N, f) {
+  #ifdef DEBUGSTGAPPLY
+  fprintf(stderr, "stgApplyNNNNP %s\n", f.op->infoPtr->name);
+  #endif
   assert(N.argType == INT);
   const int argc = N.i;
   assert(argc == 5);
@@ -13961,13 +14755,18 @@ DEFUN2(stgApplyNNNNP, N, f) {
   nargv[1] = argv[1];
   nargv[2] = argv[2];
   nargv[3] = argv[3];
+  callContSave(1, pargv);
+  STGEVAL(pargv[0]);
+  callContRestore(pargv);
+  // restore argv
+  argv[4] = pargv[0];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
     callContSave(1, pargv);
     while (f.op->objType == THUNK) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply THUNK\n");
+      fprintf(stderr, "stgApplyNNNNP THUNK\n");
       #endif
       STGEVAL(f);
       // f.op = derefPoL(f);
@@ -13981,6 +14780,9 @@ DEFUN2(stgApplyNNNNP, N, f) {
   switch (f.op->objType) {
   case FUN: {
     int arity = f.op->infoPtr->funFields.arity;
+    #ifdef DEBUGSTGAPPLY
+    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    #endif
     int excess = argc - arity;  // may be negative
 
     // too many args
@@ -14093,7 +14895,7 @@ DEFUN2(stgApplyNNNNP, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyNNNNP FUN just right\n");
       #endif
       pushargs(4, nargv);
       pushargs(1, pargv);
@@ -14103,7 +14905,7 @@ DEFUN2(stgApplyNNNNP, N, f) {
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN too few args\n");
+      fprintf(stderr, "stgApplyNNNNP FUN too few args\n");
       #endif
       int fvCount = f.op->infoPtr->fvCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
@@ -14132,14 +14934,14 @@ DEFUN2(stgApplyNNNNP, N, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApply:  PAP error 1");
+    assert(argCount == f.op->argCount && "stgApplyNNNNP:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
     if (excess > 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too many args\n");
+      fprintf(stderr, "stgApplyNNNNP PAP too many args\n");
       #endif
       switch (excess) {
       case 1: {
@@ -14257,7 +15059,7 @@ DEFUN2(stgApplyNNNNP, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyNNNNP FUN just right\n");
       #endif
       pushargs(4, nargv);
       pushargs(papnargc, &f.op->payload[fvCount+1+pappargc]);
@@ -14269,7 +15071,7 @@ DEFUN2(stgApplyNNNNP, N, f) {
     // excess < 0, too few args
     } else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too few args\n");
+      fprintf(stderr, "stgApplyNNNNP PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 1 + pappargc, 4 + papnargc);
@@ -14302,19 +15104,22 @@ DEFUN2(stgApplyNNNNP, N, f) {
   } // case PAP
 
   case BLACKHOLE: {
-    fprintf(stderr, "infinite loop detected in stgApply!\n");
+    fprintf(stderr, "infinite loop detected in stgApplyNNNNP!\n");
     showStgHeap();
     exit(0);
   } // case BLACKHOLE
 
   default:
-    fprintf(stderr, "stgApply not a THUNK, FUN, or PAP\n");
+    fprintf(stderr, "stgApplyNNNNP not a THUNK, FUN, or PAP\n");
     exit(0);
   }  // switch
   ENDFUN;
 }
 
 DEFUN2(stgApplyPNNNP, N, f) {
+  #ifdef DEBUGSTGAPPLY
+  fprintf(stderr, "stgApplyPNNNP %s\n", f.op->infoPtr->name);
+  #endif
   assert(N.argType == INT);
   const int argc = N.i;
   assert(argc == 5);
@@ -14328,13 +15133,25 @@ DEFUN2(stgApplyPNNNP, N, f) {
   nargv[0] = argv[1];
   nargv[1] = argv[2];
   nargv[2] = argv[3];
+  callContSave(2, pargv);
+  STGEVAL(pargv[0]);
+  callContRestore(pargv);
+  // restore argv
+  argv[0] = pargv[0];
+  argv[4] = pargv[1];
+  callContSave(2, pargv);
+  STGEVAL(pargv[1]);
+  callContRestore(pargv);
+  // restore argv
+  argv[0] = pargv[0];
+  argv[4] = pargv[1];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
     callContSave(2, pargv);
     while (f.op->objType == THUNK) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply THUNK\n");
+      fprintf(stderr, "stgApplyPNNNP THUNK\n");
       #endif
       STGEVAL(f);
       // f.op = derefPoL(f);
@@ -14349,6 +15166,9 @@ DEFUN2(stgApplyPNNNP, N, f) {
   switch (f.op->objType) {
   case FUN: {
     int arity = f.op->infoPtr->funFields.arity;
+    #ifdef DEBUGSTGAPPLY
+    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    #endif
     int excess = argc - arity;  // may be negative
 
     // too many args
@@ -14461,7 +15281,7 @@ DEFUN2(stgApplyPNNNP, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyPNNNP FUN just right\n");
       #endif
       pushargs(3, nargv);
       pushargs(2, pargv);
@@ -14471,7 +15291,7 @@ DEFUN2(stgApplyPNNNP, N, f) {
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN too few args\n");
+      fprintf(stderr, "stgApplyPNNNP FUN too few args\n");
       #endif
       int fvCount = f.op->infoPtr->fvCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
@@ -14500,14 +15320,14 @@ DEFUN2(stgApplyPNNNP, N, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApply:  PAP error 1");
+    assert(argCount == f.op->argCount && "stgApplyPNNNP:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
     if (excess > 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too many args\n");
+      fprintf(stderr, "stgApplyPNNNP PAP too many args\n");
       #endif
       switch (excess) {
       case 1: {
@@ -14625,7 +15445,7 @@ DEFUN2(stgApplyPNNNP, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyPNNNP FUN just right\n");
       #endif
       pushargs(3, nargv);
       pushargs(papnargc, &f.op->payload[fvCount+1+pappargc]);
@@ -14637,7 +15457,7 @@ DEFUN2(stgApplyPNNNP, N, f) {
     // excess < 0, too few args
     } else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too few args\n");
+      fprintf(stderr, "stgApplyPNNNP PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2 + pappargc, 3 + papnargc);
@@ -14670,19 +15490,22 @@ DEFUN2(stgApplyPNNNP, N, f) {
   } // case PAP
 
   case BLACKHOLE: {
-    fprintf(stderr, "infinite loop detected in stgApply!\n");
+    fprintf(stderr, "infinite loop detected in stgApplyPNNNP!\n");
     showStgHeap();
     exit(0);
   } // case BLACKHOLE
 
   default:
-    fprintf(stderr, "stgApply not a THUNK, FUN, or PAP\n");
+    fprintf(stderr, "stgApplyPNNNP not a THUNK, FUN, or PAP\n");
     exit(0);
   }  // switch
   ENDFUN;
 }
 
 DEFUN2(stgApplyNPNNP, N, f) {
+  #ifdef DEBUGSTGAPPLY
+  fprintf(stderr, "stgApplyNPNNP %s\n", f.op->infoPtr->name);
+  #endif
   assert(N.argType == INT);
   const int argc = N.i;
   assert(argc == 5);
@@ -14696,13 +15519,25 @@ DEFUN2(stgApplyNPNNP, N, f) {
   nargv[0] = argv[0];
   nargv[1] = argv[2];
   nargv[2] = argv[3];
+  callContSave(2, pargv);
+  STGEVAL(pargv[0]);
+  callContRestore(pargv);
+  // restore argv
+  argv[1] = pargv[0];
+  argv[4] = pargv[1];
+  callContSave(2, pargv);
+  STGEVAL(pargv[1]);
+  callContRestore(pargv);
+  // restore argv
+  argv[1] = pargv[0];
+  argv[4] = pargv[1];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
     callContSave(2, pargv);
     while (f.op->objType == THUNK) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply THUNK\n");
+      fprintf(stderr, "stgApplyNPNNP THUNK\n");
       #endif
       STGEVAL(f);
       // f.op = derefPoL(f);
@@ -14717,6 +15552,9 @@ DEFUN2(stgApplyNPNNP, N, f) {
   switch (f.op->objType) {
   case FUN: {
     int arity = f.op->infoPtr->funFields.arity;
+    #ifdef DEBUGSTGAPPLY
+    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    #endif
     int excess = argc - arity;  // may be negative
 
     // too many args
@@ -14830,7 +15668,7 @@ DEFUN2(stgApplyNPNNP, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyNPNNP FUN just right\n");
       #endif
       pushargs(3, nargv);
       pushargs(2, pargv);
@@ -14840,7 +15678,7 @@ DEFUN2(stgApplyNPNNP, N, f) {
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN too few args\n");
+      fprintf(stderr, "stgApplyNPNNP FUN too few args\n");
       #endif
       int fvCount = f.op->infoPtr->fvCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
@@ -14869,14 +15707,14 @@ DEFUN2(stgApplyNPNNP, N, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApply:  PAP error 1");
+    assert(argCount == f.op->argCount && "stgApplyNPNNP:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
     if (excess > 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too many args\n");
+      fprintf(stderr, "stgApplyNPNNP PAP too many args\n");
       #endif
       switch (excess) {
       case 1: {
@@ -14995,7 +15833,7 @@ DEFUN2(stgApplyNPNNP, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyNPNNP FUN just right\n");
       #endif
       pushargs(3, nargv);
       pushargs(papnargc, &f.op->payload[fvCount+1+pappargc]);
@@ -15007,7 +15845,7 @@ DEFUN2(stgApplyNPNNP, N, f) {
     // excess < 0, too few args
     } else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too few args\n");
+      fprintf(stderr, "stgApplyNPNNP PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2 + pappargc, 3 + papnargc);
@@ -15040,19 +15878,22 @@ DEFUN2(stgApplyNPNNP, N, f) {
   } // case PAP
 
   case BLACKHOLE: {
-    fprintf(stderr, "infinite loop detected in stgApply!\n");
+    fprintf(stderr, "infinite loop detected in stgApplyNPNNP!\n");
     showStgHeap();
     exit(0);
   } // case BLACKHOLE
 
   default:
-    fprintf(stderr, "stgApply not a THUNK, FUN, or PAP\n");
+    fprintf(stderr, "stgApplyNPNNP not a THUNK, FUN, or PAP\n");
     exit(0);
   }  // switch
   ENDFUN;
 }
 
 DEFUN2(stgApplyPPNNP, N, f) {
+  #ifdef DEBUGSTGAPPLY
+  fprintf(stderr, "stgApplyPPNNP %s\n", f.op->infoPtr->name);
+  #endif
   assert(N.argType == INT);
   const int argc = N.i;
   assert(argc == 5);
@@ -15066,13 +15907,34 @@ DEFUN2(stgApplyPPNNP, N, f) {
   PtrOrLiteral nargv[2];
   nargv[0] = argv[2];
   nargv[1] = argv[3];
+  callContSave(3, pargv);
+  STGEVAL(pargv[0]);
+  callContRestore(pargv);
+  // restore argv
+  argv[0] = pargv[0];
+  argv[1] = pargv[1];
+  argv[4] = pargv[2];
+  callContSave(3, pargv);
+  STGEVAL(pargv[1]);
+  callContRestore(pargv);
+  // restore argv
+  argv[0] = pargv[0];
+  argv[1] = pargv[1];
+  argv[4] = pargv[2];
+  callContSave(3, pargv);
+  STGEVAL(pargv[2]);
+  callContRestore(pargv);
+  // restore argv
+  argv[0] = pargv[0];
+  argv[1] = pargv[1];
+  argv[4] = pargv[2];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
     callContSave(3, pargv);
     while (f.op->objType == THUNK) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply THUNK\n");
+      fprintf(stderr, "stgApplyPPNNP THUNK\n");
       #endif
       STGEVAL(f);
       // f.op = derefPoL(f);
@@ -15088,6 +15950,9 @@ DEFUN2(stgApplyPPNNP, N, f) {
   switch (f.op->objType) {
   case FUN: {
     int arity = f.op->infoPtr->funFields.arity;
+    #ifdef DEBUGSTGAPPLY
+    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    #endif
     int excess = argc - arity;  // may be negative
 
     // too many args
@@ -15201,7 +16066,7 @@ DEFUN2(stgApplyPPNNP, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyPPNNP FUN just right\n");
       #endif
       pushargs(2, nargv);
       pushargs(3, pargv);
@@ -15211,7 +16076,7 @@ DEFUN2(stgApplyPPNNP, N, f) {
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN too few args\n");
+      fprintf(stderr, "stgApplyPPNNP FUN too few args\n");
       #endif
       int fvCount = f.op->infoPtr->fvCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
@@ -15240,14 +16105,14 @@ DEFUN2(stgApplyPPNNP, N, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApply:  PAP error 1");
+    assert(argCount == f.op->argCount && "stgApplyPPNNP:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
     if (excess > 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too many args\n");
+      fprintf(stderr, "stgApplyPPNNP PAP too many args\n");
       #endif
       switch (excess) {
       case 1: {
@@ -15366,7 +16231,7 @@ DEFUN2(stgApplyPPNNP, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyPPNNP FUN just right\n");
       #endif
       pushargs(2, nargv);
       pushargs(papnargc, &f.op->payload[fvCount+1+pappargc]);
@@ -15378,7 +16243,7 @@ DEFUN2(stgApplyPPNNP, N, f) {
     // excess < 0, too few args
     } else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too few args\n");
+      fprintf(stderr, "stgApplyPPNNP PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3 + pappargc, 2 + papnargc);
@@ -15411,19 +16276,22 @@ DEFUN2(stgApplyPPNNP, N, f) {
   } // case PAP
 
   case BLACKHOLE: {
-    fprintf(stderr, "infinite loop detected in stgApply!\n");
+    fprintf(stderr, "infinite loop detected in stgApplyPPNNP!\n");
     showStgHeap();
     exit(0);
   } // case BLACKHOLE
 
   default:
-    fprintf(stderr, "stgApply not a THUNK, FUN, or PAP\n");
+    fprintf(stderr, "stgApplyPPNNP not a THUNK, FUN, or PAP\n");
     exit(0);
   }  // switch
   ENDFUN;
 }
 
 DEFUN2(stgApplyNNPNP, N, f) {
+  #ifdef DEBUGSTGAPPLY
+  fprintf(stderr, "stgApplyNNPNP %s\n", f.op->infoPtr->name);
+  #endif
   assert(N.argType == INT);
   const int argc = N.i;
   assert(argc == 5);
@@ -15437,13 +16305,25 @@ DEFUN2(stgApplyNNPNP, N, f) {
   nargv[0] = argv[0];
   nargv[1] = argv[1];
   nargv[2] = argv[3];
+  callContSave(2, pargv);
+  STGEVAL(pargv[0]);
+  callContRestore(pargv);
+  // restore argv
+  argv[2] = pargv[0];
+  argv[4] = pargv[1];
+  callContSave(2, pargv);
+  STGEVAL(pargv[1]);
+  callContRestore(pargv);
+  // restore argv
+  argv[2] = pargv[0];
+  argv[4] = pargv[1];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
     callContSave(2, pargv);
     while (f.op->objType == THUNK) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply THUNK\n");
+      fprintf(stderr, "stgApplyNNPNP THUNK\n");
       #endif
       STGEVAL(f);
       // f.op = derefPoL(f);
@@ -15458,6 +16338,9 @@ DEFUN2(stgApplyNNPNP, N, f) {
   switch (f.op->objType) {
   case FUN: {
     int arity = f.op->infoPtr->funFields.arity;
+    #ifdef DEBUGSTGAPPLY
+    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    #endif
     int excess = argc - arity;  // may be negative
 
     // too many args
@@ -15572,7 +16455,7 @@ DEFUN2(stgApplyNNPNP, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyNNPNP FUN just right\n");
       #endif
       pushargs(3, nargv);
       pushargs(2, pargv);
@@ -15582,7 +16465,7 @@ DEFUN2(stgApplyNNPNP, N, f) {
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN too few args\n");
+      fprintf(stderr, "stgApplyNNPNP FUN too few args\n");
       #endif
       int fvCount = f.op->infoPtr->fvCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
@@ -15611,14 +16494,14 @@ DEFUN2(stgApplyNNPNP, N, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApply:  PAP error 1");
+    assert(argCount == f.op->argCount && "stgApplyNNPNP:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
     if (excess > 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too many args\n");
+      fprintf(stderr, "stgApplyNNPNP PAP too many args\n");
       #endif
       switch (excess) {
       case 1: {
@@ -15738,7 +16621,7 @@ DEFUN2(stgApplyNNPNP, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyNNPNP FUN just right\n");
       #endif
       pushargs(3, nargv);
       pushargs(papnargc, &f.op->payload[fvCount+1+pappargc]);
@@ -15750,7 +16633,7 @@ DEFUN2(stgApplyNNPNP, N, f) {
     // excess < 0, too few args
     } else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too few args\n");
+      fprintf(stderr, "stgApplyNNPNP PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2 + pappargc, 3 + papnargc);
@@ -15783,19 +16666,22 @@ DEFUN2(stgApplyNNPNP, N, f) {
   } // case PAP
 
   case BLACKHOLE: {
-    fprintf(stderr, "infinite loop detected in stgApply!\n");
+    fprintf(stderr, "infinite loop detected in stgApplyNNPNP!\n");
     showStgHeap();
     exit(0);
   } // case BLACKHOLE
 
   default:
-    fprintf(stderr, "stgApply not a THUNK, FUN, or PAP\n");
+    fprintf(stderr, "stgApplyNNPNP not a THUNK, FUN, or PAP\n");
     exit(0);
   }  // switch
   ENDFUN;
 }
 
 DEFUN2(stgApplyPNPNP, N, f) {
+  #ifdef DEBUGSTGAPPLY
+  fprintf(stderr, "stgApplyPNPNP %s\n", f.op->infoPtr->name);
+  #endif
   assert(N.argType == INT);
   const int argc = N.i;
   assert(argc == 5);
@@ -15809,13 +16695,34 @@ DEFUN2(stgApplyPNPNP, N, f) {
   PtrOrLiteral nargv[2];
   nargv[0] = argv[1];
   nargv[1] = argv[3];
+  callContSave(3, pargv);
+  STGEVAL(pargv[0]);
+  callContRestore(pargv);
+  // restore argv
+  argv[0] = pargv[0];
+  argv[2] = pargv[1];
+  argv[4] = pargv[2];
+  callContSave(3, pargv);
+  STGEVAL(pargv[1]);
+  callContRestore(pargv);
+  // restore argv
+  argv[0] = pargv[0];
+  argv[2] = pargv[1];
+  argv[4] = pargv[2];
+  callContSave(3, pargv);
+  STGEVAL(pargv[2]);
+  callContRestore(pargv);
+  // restore argv
+  argv[0] = pargv[0];
+  argv[2] = pargv[1];
+  argv[4] = pargv[2];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
     callContSave(3, pargv);
     while (f.op->objType == THUNK) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply THUNK\n");
+      fprintf(stderr, "stgApplyPNPNP THUNK\n");
       #endif
       STGEVAL(f);
       // f.op = derefPoL(f);
@@ -15831,6 +16738,9 @@ DEFUN2(stgApplyPNPNP, N, f) {
   switch (f.op->objType) {
   case FUN: {
     int arity = f.op->infoPtr->funFields.arity;
+    #ifdef DEBUGSTGAPPLY
+    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    #endif
     int excess = argc - arity;  // may be negative
 
     // too many args
@@ -15945,7 +16855,7 @@ DEFUN2(stgApplyPNPNP, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyPNPNP FUN just right\n");
       #endif
       pushargs(2, nargv);
       pushargs(3, pargv);
@@ -15955,7 +16865,7 @@ DEFUN2(stgApplyPNPNP, N, f) {
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN too few args\n");
+      fprintf(stderr, "stgApplyPNPNP FUN too few args\n");
       #endif
       int fvCount = f.op->infoPtr->fvCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
@@ -15984,14 +16894,14 @@ DEFUN2(stgApplyPNPNP, N, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApply:  PAP error 1");
+    assert(argCount == f.op->argCount && "stgApplyPNPNP:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
     if (excess > 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too many args\n");
+      fprintf(stderr, "stgApplyPNPNP PAP too many args\n");
       #endif
       switch (excess) {
       case 1: {
@@ -16111,7 +17021,7 @@ DEFUN2(stgApplyPNPNP, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyPNPNP FUN just right\n");
       #endif
       pushargs(2, nargv);
       pushargs(papnargc, &f.op->payload[fvCount+1+pappargc]);
@@ -16123,7 +17033,7 @@ DEFUN2(stgApplyPNPNP, N, f) {
     // excess < 0, too few args
     } else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too few args\n");
+      fprintf(stderr, "stgApplyPNPNP PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3 + pappargc, 2 + papnargc);
@@ -16156,19 +17066,22 @@ DEFUN2(stgApplyPNPNP, N, f) {
   } // case PAP
 
   case BLACKHOLE: {
-    fprintf(stderr, "infinite loop detected in stgApply!\n");
+    fprintf(stderr, "infinite loop detected in stgApplyPNPNP!\n");
     showStgHeap();
     exit(0);
   } // case BLACKHOLE
 
   default:
-    fprintf(stderr, "stgApply not a THUNK, FUN, or PAP\n");
+    fprintf(stderr, "stgApplyPNPNP not a THUNK, FUN, or PAP\n");
     exit(0);
   }  // switch
   ENDFUN;
 }
 
 DEFUN2(stgApplyNPPNP, N, f) {
+  #ifdef DEBUGSTGAPPLY
+  fprintf(stderr, "stgApplyNPPNP %s\n", f.op->infoPtr->name);
+  #endif
   assert(N.argType == INT);
   const int argc = N.i;
   assert(argc == 5);
@@ -16182,13 +17095,34 @@ DEFUN2(stgApplyNPPNP, N, f) {
   PtrOrLiteral nargv[2];
   nargv[0] = argv[0];
   nargv[1] = argv[3];
+  callContSave(3, pargv);
+  STGEVAL(pargv[0]);
+  callContRestore(pargv);
+  // restore argv
+  argv[1] = pargv[0];
+  argv[2] = pargv[1];
+  argv[4] = pargv[2];
+  callContSave(3, pargv);
+  STGEVAL(pargv[1]);
+  callContRestore(pargv);
+  // restore argv
+  argv[1] = pargv[0];
+  argv[2] = pargv[1];
+  argv[4] = pargv[2];
+  callContSave(3, pargv);
+  STGEVAL(pargv[2]);
+  callContRestore(pargv);
+  // restore argv
+  argv[1] = pargv[0];
+  argv[2] = pargv[1];
+  argv[4] = pargv[2];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
     callContSave(3, pargv);
     while (f.op->objType == THUNK) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply THUNK\n");
+      fprintf(stderr, "stgApplyNPPNP THUNK\n");
       #endif
       STGEVAL(f);
       // f.op = derefPoL(f);
@@ -16204,6 +17138,9 @@ DEFUN2(stgApplyNPPNP, N, f) {
   switch (f.op->objType) {
   case FUN: {
     int arity = f.op->infoPtr->funFields.arity;
+    #ifdef DEBUGSTGAPPLY
+    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    #endif
     int excess = argc - arity;  // may be negative
 
     // too many args
@@ -16319,7 +17256,7 @@ DEFUN2(stgApplyNPPNP, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyNPPNP FUN just right\n");
       #endif
       pushargs(2, nargv);
       pushargs(3, pargv);
@@ -16329,7 +17266,7 @@ DEFUN2(stgApplyNPPNP, N, f) {
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN too few args\n");
+      fprintf(stderr, "stgApplyNPPNP FUN too few args\n");
       #endif
       int fvCount = f.op->infoPtr->fvCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
@@ -16358,14 +17295,14 @@ DEFUN2(stgApplyNPPNP, N, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApply:  PAP error 1");
+    assert(argCount == f.op->argCount && "stgApplyNPPNP:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
     if (excess > 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too many args\n");
+      fprintf(stderr, "stgApplyNPPNP PAP too many args\n");
       #endif
       switch (excess) {
       case 1: {
@@ -16486,7 +17423,7 @@ DEFUN2(stgApplyNPPNP, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyNPPNP FUN just right\n");
       #endif
       pushargs(2, nargv);
       pushargs(papnargc, &f.op->payload[fvCount+1+pappargc]);
@@ -16498,7 +17435,7 @@ DEFUN2(stgApplyNPPNP, N, f) {
     // excess < 0, too few args
     } else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too few args\n");
+      fprintf(stderr, "stgApplyNPPNP PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3 + pappargc, 2 + papnargc);
@@ -16531,19 +17468,22 @@ DEFUN2(stgApplyNPPNP, N, f) {
   } // case PAP
 
   case BLACKHOLE: {
-    fprintf(stderr, "infinite loop detected in stgApply!\n");
+    fprintf(stderr, "infinite loop detected in stgApplyNPPNP!\n");
     showStgHeap();
     exit(0);
   } // case BLACKHOLE
 
   default:
-    fprintf(stderr, "stgApply not a THUNK, FUN, or PAP\n");
+    fprintf(stderr, "stgApplyNPPNP not a THUNK, FUN, or PAP\n");
     exit(0);
   }  // switch
   ENDFUN;
 }
 
 DEFUN2(stgApplyPPPNP, N, f) {
+  #ifdef DEBUGSTGAPPLY
+  fprintf(stderr, "stgApplyPPPNP %s\n", f.op->infoPtr->name);
+  #endif
   assert(N.argType == INT);
   const int argc = N.i;
   assert(argc == 5);
@@ -16557,13 +17497,45 @@ DEFUN2(stgApplyPPPNP, N, f) {
   pargv[3] = argv[4];
   PtrOrLiteral nargv[1];
   nargv[0] = argv[3];
+  callContSave(4, pargv);
+  STGEVAL(pargv[0]);
+  callContRestore(pargv);
+  // restore argv
+  argv[0] = pargv[0];
+  argv[1] = pargv[1];
+  argv[2] = pargv[2];
+  argv[4] = pargv[3];
+  callContSave(4, pargv);
+  STGEVAL(pargv[1]);
+  callContRestore(pargv);
+  // restore argv
+  argv[0] = pargv[0];
+  argv[1] = pargv[1];
+  argv[2] = pargv[2];
+  argv[4] = pargv[3];
+  callContSave(4, pargv);
+  STGEVAL(pargv[2]);
+  callContRestore(pargv);
+  // restore argv
+  argv[0] = pargv[0];
+  argv[1] = pargv[1];
+  argv[2] = pargv[2];
+  argv[4] = pargv[3];
+  callContSave(4, pargv);
+  STGEVAL(pargv[3]);
+  callContRestore(pargv);
+  // restore argv
+  argv[0] = pargv[0];
+  argv[1] = pargv[1];
+  argv[2] = pargv[2];
+  argv[4] = pargv[3];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
     callContSave(4, pargv);
     while (f.op->objType == THUNK) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply THUNK\n");
+      fprintf(stderr, "stgApplyPPPNP THUNK\n");
       #endif
       STGEVAL(f);
       // f.op = derefPoL(f);
@@ -16580,6 +17552,9 @@ DEFUN2(stgApplyPPPNP, N, f) {
   switch (f.op->objType) {
   case FUN: {
     int arity = f.op->infoPtr->funFields.arity;
+    #ifdef DEBUGSTGAPPLY
+    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    #endif
     int excess = argc - arity;  // may be negative
 
     // too many args
@@ -16695,7 +17670,7 @@ DEFUN2(stgApplyPPPNP, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyPPPNP FUN just right\n");
       #endif
       pushargs(1, nargv);
       pushargs(4, pargv);
@@ -16705,7 +17680,7 @@ DEFUN2(stgApplyPPPNP, N, f) {
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN too few args\n");
+      fprintf(stderr, "stgApplyPPPNP FUN too few args\n");
       #endif
       int fvCount = f.op->infoPtr->fvCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
@@ -16734,14 +17709,14 @@ DEFUN2(stgApplyPPPNP, N, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApply:  PAP error 1");
+    assert(argCount == f.op->argCount && "stgApplyPPPNP:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
     if (excess > 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too many args\n");
+      fprintf(stderr, "stgApplyPPPNP PAP too many args\n");
       #endif
       switch (excess) {
       case 1: {
@@ -16862,7 +17837,7 @@ DEFUN2(stgApplyPPPNP, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyPPPNP FUN just right\n");
       #endif
       pushargs(1, nargv);
       pushargs(papnargc, &f.op->payload[fvCount+1+pappargc]);
@@ -16874,7 +17849,7 @@ DEFUN2(stgApplyPPPNP, N, f) {
     // excess < 0, too few args
     } else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too few args\n");
+      fprintf(stderr, "stgApplyPPPNP PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 4 + pappargc, 1 + papnargc);
@@ -16907,19 +17882,22 @@ DEFUN2(stgApplyPPPNP, N, f) {
   } // case PAP
 
   case BLACKHOLE: {
-    fprintf(stderr, "infinite loop detected in stgApply!\n");
+    fprintf(stderr, "infinite loop detected in stgApplyPPPNP!\n");
     showStgHeap();
     exit(0);
   } // case BLACKHOLE
 
   default:
-    fprintf(stderr, "stgApply not a THUNK, FUN, or PAP\n");
+    fprintf(stderr, "stgApplyPPPNP not a THUNK, FUN, or PAP\n");
     exit(0);
   }  // switch
   ENDFUN;
 }
 
 DEFUN2(stgApplyNNNPP, N, f) {
+  #ifdef DEBUGSTGAPPLY
+  fprintf(stderr, "stgApplyNNNPP %s\n", f.op->infoPtr->name);
+  #endif
   assert(N.argType == INT);
   const int argc = N.i;
   assert(argc == 5);
@@ -16933,13 +17911,25 @@ DEFUN2(stgApplyNNNPP, N, f) {
   nargv[0] = argv[0];
   nargv[1] = argv[1];
   nargv[2] = argv[2];
+  callContSave(2, pargv);
+  STGEVAL(pargv[0]);
+  callContRestore(pargv);
+  // restore argv
+  argv[3] = pargv[0];
+  argv[4] = pargv[1];
+  callContSave(2, pargv);
+  STGEVAL(pargv[1]);
+  callContRestore(pargv);
+  // restore argv
+  argv[3] = pargv[0];
+  argv[4] = pargv[1];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
     callContSave(2, pargv);
     while (f.op->objType == THUNK) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply THUNK\n");
+      fprintf(stderr, "stgApplyNNNPP THUNK\n");
       #endif
       STGEVAL(f);
       // f.op = derefPoL(f);
@@ -16954,6 +17944,9 @@ DEFUN2(stgApplyNNNPP, N, f) {
   switch (f.op->objType) {
   case FUN: {
     int arity = f.op->infoPtr->funFields.arity;
+    #ifdef DEBUGSTGAPPLY
+    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    #endif
     int excess = argc - arity;  // may be negative
 
     // too many args
@@ -17069,7 +18062,7 @@ DEFUN2(stgApplyNNNPP, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyNNNPP FUN just right\n");
       #endif
       pushargs(3, nargv);
       pushargs(2, pargv);
@@ -17079,7 +18072,7 @@ DEFUN2(stgApplyNNNPP, N, f) {
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN too few args\n");
+      fprintf(stderr, "stgApplyNNNPP FUN too few args\n");
       #endif
       int fvCount = f.op->infoPtr->fvCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
@@ -17108,14 +18101,14 @@ DEFUN2(stgApplyNNNPP, N, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApply:  PAP error 1");
+    assert(argCount == f.op->argCount && "stgApplyNNNPP:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
     if (excess > 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too many args\n");
+      fprintf(stderr, "stgApplyNNNPP PAP too many args\n");
       #endif
       switch (excess) {
       case 1: {
@@ -17236,7 +18229,7 @@ DEFUN2(stgApplyNNNPP, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyNNNPP FUN just right\n");
       #endif
       pushargs(3, nargv);
       pushargs(papnargc, &f.op->payload[fvCount+1+pappargc]);
@@ -17248,7 +18241,7 @@ DEFUN2(stgApplyNNNPP, N, f) {
     // excess < 0, too few args
     } else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too few args\n");
+      fprintf(stderr, "stgApplyNNNPP PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2 + pappargc, 3 + papnargc);
@@ -17281,19 +18274,22 @@ DEFUN2(stgApplyNNNPP, N, f) {
   } // case PAP
 
   case BLACKHOLE: {
-    fprintf(stderr, "infinite loop detected in stgApply!\n");
+    fprintf(stderr, "infinite loop detected in stgApplyNNNPP!\n");
     showStgHeap();
     exit(0);
   } // case BLACKHOLE
 
   default:
-    fprintf(stderr, "stgApply not a THUNK, FUN, or PAP\n");
+    fprintf(stderr, "stgApplyNNNPP not a THUNK, FUN, or PAP\n");
     exit(0);
   }  // switch
   ENDFUN;
 }
 
 DEFUN2(stgApplyPNNPP, N, f) {
+  #ifdef DEBUGSTGAPPLY
+  fprintf(stderr, "stgApplyPNNPP %s\n", f.op->infoPtr->name);
+  #endif
   assert(N.argType == INT);
   const int argc = N.i;
   assert(argc == 5);
@@ -17307,13 +18303,34 @@ DEFUN2(stgApplyPNNPP, N, f) {
   PtrOrLiteral nargv[2];
   nargv[0] = argv[1];
   nargv[1] = argv[2];
+  callContSave(3, pargv);
+  STGEVAL(pargv[0]);
+  callContRestore(pargv);
+  // restore argv
+  argv[0] = pargv[0];
+  argv[3] = pargv[1];
+  argv[4] = pargv[2];
+  callContSave(3, pargv);
+  STGEVAL(pargv[1]);
+  callContRestore(pargv);
+  // restore argv
+  argv[0] = pargv[0];
+  argv[3] = pargv[1];
+  argv[4] = pargv[2];
+  callContSave(3, pargv);
+  STGEVAL(pargv[2]);
+  callContRestore(pargv);
+  // restore argv
+  argv[0] = pargv[0];
+  argv[3] = pargv[1];
+  argv[4] = pargv[2];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
     callContSave(3, pargv);
     while (f.op->objType == THUNK) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply THUNK\n");
+      fprintf(stderr, "stgApplyPNNPP THUNK\n");
       #endif
       STGEVAL(f);
       // f.op = derefPoL(f);
@@ -17329,6 +18346,9 @@ DEFUN2(stgApplyPNNPP, N, f) {
   switch (f.op->objType) {
   case FUN: {
     int arity = f.op->infoPtr->funFields.arity;
+    #ifdef DEBUGSTGAPPLY
+    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    #endif
     int excess = argc - arity;  // may be negative
 
     // too many args
@@ -17444,7 +18464,7 @@ DEFUN2(stgApplyPNNPP, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyPNNPP FUN just right\n");
       #endif
       pushargs(2, nargv);
       pushargs(3, pargv);
@@ -17454,7 +18474,7 @@ DEFUN2(stgApplyPNNPP, N, f) {
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN too few args\n");
+      fprintf(stderr, "stgApplyPNNPP FUN too few args\n");
       #endif
       int fvCount = f.op->infoPtr->fvCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
@@ -17483,14 +18503,14 @@ DEFUN2(stgApplyPNNPP, N, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApply:  PAP error 1");
+    assert(argCount == f.op->argCount && "stgApplyPNNPP:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
     if (excess > 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too many args\n");
+      fprintf(stderr, "stgApplyPNNPP PAP too many args\n");
       #endif
       switch (excess) {
       case 1: {
@@ -17611,7 +18631,7 @@ DEFUN2(stgApplyPNNPP, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyPNNPP FUN just right\n");
       #endif
       pushargs(2, nargv);
       pushargs(papnargc, &f.op->payload[fvCount+1+pappargc]);
@@ -17623,7 +18643,7 @@ DEFUN2(stgApplyPNNPP, N, f) {
     // excess < 0, too few args
     } else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too few args\n");
+      fprintf(stderr, "stgApplyPNNPP PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3 + pappargc, 2 + papnargc);
@@ -17656,19 +18676,22 @@ DEFUN2(stgApplyPNNPP, N, f) {
   } // case PAP
 
   case BLACKHOLE: {
-    fprintf(stderr, "infinite loop detected in stgApply!\n");
+    fprintf(stderr, "infinite loop detected in stgApplyPNNPP!\n");
     showStgHeap();
     exit(0);
   } // case BLACKHOLE
 
   default:
-    fprintf(stderr, "stgApply not a THUNK, FUN, or PAP\n");
+    fprintf(stderr, "stgApplyPNNPP not a THUNK, FUN, or PAP\n");
     exit(0);
   }  // switch
   ENDFUN;
 }
 
 DEFUN2(stgApplyNPNPP, N, f) {
+  #ifdef DEBUGSTGAPPLY
+  fprintf(stderr, "stgApplyNPNPP %s\n", f.op->infoPtr->name);
+  #endif
   assert(N.argType == INT);
   const int argc = N.i;
   assert(argc == 5);
@@ -17682,13 +18705,34 @@ DEFUN2(stgApplyNPNPP, N, f) {
   PtrOrLiteral nargv[2];
   nargv[0] = argv[0];
   nargv[1] = argv[2];
+  callContSave(3, pargv);
+  STGEVAL(pargv[0]);
+  callContRestore(pargv);
+  // restore argv
+  argv[1] = pargv[0];
+  argv[3] = pargv[1];
+  argv[4] = pargv[2];
+  callContSave(3, pargv);
+  STGEVAL(pargv[1]);
+  callContRestore(pargv);
+  // restore argv
+  argv[1] = pargv[0];
+  argv[3] = pargv[1];
+  argv[4] = pargv[2];
+  callContSave(3, pargv);
+  STGEVAL(pargv[2]);
+  callContRestore(pargv);
+  // restore argv
+  argv[1] = pargv[0];
+  argv[3] = pargv[1];
+  argv[4] = pargv[2];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
     callContSave(3, pargv);
     while (f.op->objType == THUNK) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply THUNK\n");
+      fprintf(stderr, "stgApplyNPNPP THUNK\n");
       #endif
       STGEVAL(f);
       // f.op = derefPoL(f);
@@ -17704,6 +18748,9 @@ DEFUN2(stgApplyNPNPP, N, f) {
   switch (f.op->objType) {
   case FUN: {
     int arity = f.op->infoPtr->funFields.arity;
+    #ifdef DEBUGSTGAPPLY
+    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    #endif
     int excess = argc - arity;  // may be negative
 
     // too many args
@@ -17820,7 +18867,7 @@ DEFUN2(stgApplyNPNPP, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyNPNPP FUN just right\n");
       #endif
       pushargs(2, nargv);
       pushargs(3, pargv);
@@ -17830,7 +18877,7 @@ DEFUN2(stgApplyNPNPP, N, f) {
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN too few args\n");
+      fprintf(stderr, "stgApplyNPNPP FUN too few args\n");
       #endif
       int fvCount = f.op->infoPtr->fvCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
@@ -17859,14 +18906,14 @@ DEFUN2(stgApplyNPNPP, N, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApply:  PAP error 1");
+    assert(argCount == f.op->argCount && "stgApplyNPNPP:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
     if (excess > 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too many args\n");
+      fprintf(stderr, "stgApplyNPNPP PAP too many args\n");
       #endif
       switch (excess) {
       case 1: {
@@ -17988,7 +19035,7 @@ DEFUN2(stgApplyNPNPP, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyNPNPP FUN just right\n");
       #endif
       pushargs(2, nargv);
       pushargs(papnargc, &f.op->payload[fvCount+1+pappargc]);
@@ -18000,7 +19047,7 @@ DEFUN2(stgApplyNPNPP, N, f) {
     // excess < 0, too few args
     } else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too few args\n");
+      fprintf(stderr, "stgApplyNPNPP PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3 + pappargc, 2 + papnargc);
@@ -18033,19 +19080,22 @@ DEFUN2(stgApplyNPNPP, N, f) {
   } // case PAP
 
   case BLACKHOLE: {
-    fprintf(stderr, "infinite loop detected in stgApply!\n");
+    fprintf(stderr, "infinite loop detected in stgApplyNPNPP!\n");
     showStgHeap();
     exit(0);
   } // case BLACKHOLE
 
   default:
-    fprintf(stderr, "stgApply not a THUNK, FUN, or PAP\n");
+    fprintf(stderr, "stgApplyNPNPP not a THUNK, FUN, or PAP\n");
     exit(0);
   }  // switch
   ENDFUN;
 }
 
 DEFUN2(stgApplyPPNPP, N, f) {
+  #ifdef DEBUGSTGAPPLY
+  fprintf(stderr, "stgApplyPPNPP %s\n", f.op->infoPtr->name);
+  #endif
   assert(N.argType == INT);
   const int argc = N.i;
   assert(argc == 5);
@@ -18059,13 +19109,45 @@ DEFUN2(stgApplyPPNPP, N, f) {
   pargv[3] = argv[4];
   PtrOrLiteral nargv[1];
   nargv[0] = argv[2];
+  callContSave(4, pargv);
+  STGEVAL(pargv[0]);
+  callContRestore(pargv);
+  // restore argv
+  argv[0] = pargv[0];
+  argv[1] = pargv[1];
+  argv[3] = pargv[2];
+  argv[4] = pargv[3];
+  callContSave(4, pargv);
+  STGEVAL(pargv[1]);
+  callContRestore(pargv);
+  // restore argv
+  argv[0] = pargv[0];
+  argv[1] = pargv[1];
+  argv[3] = pargv[2];
+  argv[4] = pargv[3];
+  callContSave(4, pargv);
+  STGEVAL(pargv[2]);
+  callContRestore(pargv);
+  // restore argv
+  argv[0] = pargv[0];
+  argv[1] = pargv[1];
+  argv[3] = pargv[2];
+  argv[4] = pargv[3];
+  callContSave(4, pargv);
+  STGEVAL(pargv[3]);
+  callContRestore(pargv);
+  // restore argv
+  argv[0] = pargv[0];
+  argv[1] = pargv[1];
+  argv[3] = pargv[2];
+  argv[4] = pargv[3];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
     callContSave(4, pargv);
     while (f.op->objType == THUNK) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply THUNK\n");
+      fprintf(stderr, "stgApplyPPNPP THUNK\n");
       #endif
       STGEVAL(f);
       // f.op = derefPoL(f);
@@ -18082,6 +19164,9 @@ DEFUN2(stgApplyPPNPP, N, f) {
   switch (f.op->objType) {
   case FUN: {
     int arity = f.op->infoPtr->funFields.arity;
+    #ifdef DEBUGSTGAPPLY
+    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    #endif
     int excess = argc - arity;  // may be negative
 
     // too many args
@@ -18198,7 +19283,7 @@ DEFUN2(stgApplyPPNPP, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyPPNPP FUN just right\n");
       #endif
       pushargs(1, nargv);
       pushargs(4, pargv);
@@ -18208,7 +19293,7 @@ DEFUN2(stgApplyPPNPP, N, f) {
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN too few args\n");
+      fprintf(stderr, "stgApplyPPNPP FUN too few args\n");
       #endif
       int fvCount = f.op->infoPtr->fvCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
@@ -18237,14 +19322,14 @@ DEFUN2(stgApplyPPNPP, N, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApply:  PAP error 1");
+    assert(argCount == f.op->argCount && "stgApplyPPNPP:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
     if (excess > 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too many args\n");
+      fprintf(stderr, "stgApplyPPNPP PAP too many args\n");
       #endif
       switch (excess) {
       case 1: {
@@ -18366,7 +19451,7 @@ DEFUN2(stgApplyPPNPP, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyPPNPP FUN just right\n");
       #endif
       pushargs(1, nargv);
       pushargs(papnargc, &f.op->payload[fvCount+1+pappargc]);
@@ -18378,7 +19463,7 @@ DEFUN2(stgApplyPPNPP, N, f) {
     // excess < 0, too few args
     } else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too few args\n");
+      fprintf(stderr, "stgApplyPPNPP PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 4 + pappargc, 1 + papnargc);
@@ -18411,19 +19496,22 @@ DEFUN2(stgApplyPPNPP, N, f) {
   } // case PAP
 
   case BLACKHOLE: {
-    fprintf(stderr, "infinite loop detected in stgApply!\n");
+    fprintf(stderr, "infinite loop detected in stgApplyPPNPP!\n");
     showStgHeap();
     exit(0);
   } // case BLACKHOLE
 
   default:
-    fprintf(stderr, "stgApply not a THUNK, FUN, or PAP\n");
+    fprintf(stderr, "stgApplyPPNPP not a THUNK, FUN, or PAP\n");
     exit(0);
   }  // switch
   ENDFUN;
 }
 
 DEFUN2(stgApplyNNPPP, N, f) {
+  #ifdef DEBUGSTGAPPLY
+  fprintf(stderr, "stgApplyNNPPP %s\n", f.op->infoPtr->name);
+  #endif
   assert(N.argType == INT);
   const int argc = N.i;
   assert(argc == 5);
@@ -18437,13 +19525,34 @@ DEFUN2(stgApplyNNPPP, N, f) {
   PtrOrLiteral nargv[2];
   nargv[0] = argv[0];
   nargv[1] = argv[1];
+  callContSave(3, pargv);
+  STGEVAL(pargv[0]);
+  callContRestore(pargv);
+  // restore argv
+  argv[2] = pargv[0];
+  argv[3] = pargv[1];
+  argv[4] = pargv[2];
+  callContSave(3, pargv);
+  STGEVAL(pargv[1]);
+  callContRestore(pargv);
+  // restore argv
+  argv[2] = pargv[0];
+  argv[3] = pargv[1];
+  argv[4] = pargv[2];
+  callContSave(3, pargv);
+  STGEVAL(pargv[2]);
+  callContRestore(pargv);
+  // restore argv
+  argv[2] = pargv[0];
+  argv[3] = pargv[1];
+  argv[4] = pargv[2];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
     callContSave(3, pargv);
     while (f.op->objType == THUNK) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply THUNK\n");
+      fprintf(stderr, "stgApplyNNPPP THUNK\n");
       #endif
       STGEVAL(f);
       // f.op = derefPoL(f);
@@ -18459,6 +19568,9 @@ DEFUN2(stgApplyNNPPP, N, f) {
   switch (f.op->objType) {
   case FUN: {
     int arity = f.op->infoPtr->funFields.arity;
+    #ifdef DEBUGSTGAPPLY
+    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    #endif
     int excess = argc - arity;  // may be negative
 
     // too many args
@@ -18576,7 +19688,7 @@ DEFUN2(stgApplyNNPPP, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyNNPPP FUN just right\n");
       #endif
       pushargs(2, nargv);
       pushargs(3, pargv);
@@ -18586,7 +19698,7 @@ DEFUN2(stgApplyNNPPP, N, f) {
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN too few args\n");
+      fprintf(stderr, "stgApplyNNPPP FUN too few args\n");
       #endif
       int fvCount = f.op->infoPtr->fvCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
@@ -18615,14 +19727,14 @@ DEFUN2(stgApplyNNPPP, N, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApply:  PAP error 1");
+    assert(argCount == f.op->argCount && "stgApplyNNPPP:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
     if (excess > 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too many args\n");
+      fprintf(stderr, "stgApplyNNPPP PAP too many args\n");
       #endif
       switch (excess) {
       case 1: {
@@ -18745,7 +19857,7 @@ DEFUN2(stgApplyNNPPP, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyNNPPP FUN just right\n");
       #endif
       pushargs(2, nargv);
       pushargs(papnargc, &f.op->payload[fvCount+1+pappargc]);
@@ -18757,7 +19869,7 @@ DEFUN2(stgApplyNNPPP, N, f) {
     // excess < 0, too few args
     } else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too few args\n");
+      fprintf(stderr, "stgApplyNNPPP PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3 + pappargc, 2 + papnargc);
@@ -18790,19 +19902,22 @@ DEFUN2(stgApplyNNPPP, N, f) {
   } // case PAP
 
   case BLACKHOLE: {
-    fprintf(stderr, "infinite loop detected in stgApply!\n");
+    fprintf(stderr, "infinite loop detected in stgApplyNNPPP!\n");
     showStgHeap();
     exit(0);
   } // case BLACKHOLE
 
   default:
-    fprintf(stderr, "stgApply not a THUNK, FUN, or PAP\n");
+    fprintf(stderr, "stgApplyNNPPP not a THUNK, FUN, or PAP\n");
     exit(0);
   }  // switch
   ENDFUN;
 }
 
 DEFUN2(stgApplyPNPPP, N, f) {
+  #ifdef DEBUGSTGAPPLY
+  fprintf(stderr, "stgApplyPNPPP %s\n", f.op->infoPtr->name);
+  #endif
   assert(N.argType == INT);
   const int argc = N.i;
   assert(argc == 5);
@@ -18816,13 +19931,45 @@ DEFUN2(stgApplyPNPPP, N, f) {
   pargv[3] = argv[4];
   PtrOrLiteral nargv[1];
   nargv[0] = argv[1];
+  callContSave(4, pargv);
+  STGEVAL(pargv[0]);
+  callContRestore(pargv);
+  // restore argv
+  argv[0] = pargv[0];
+  argv[2] = pargv[1];
+  argv[3] = pargv[2];
+  argv[4] = pargv[3];
+  callContSave(4, pargv);
+  STGEVAL(pargv[1]);
+  callContRestore(pargv);
+  // restore argv
+  argv[0] = pargv[0];
+  argv[2] = pargv[1];
+  argv[3] = pargv[2];
+  argv[4] = pargv[3];
+  callContSave(4, pargv);
+  STGEVAL(pargv[2]);
+  callContRestore(pargv);
+  // restore argv
+  argv[0] = pargv[0];
+  argv[2] = pargv[1];
+  argv[3] = pargv[2];
+  argv[4] = pargv[3];
+  callContSave(4, pargv);
+  STGEVAL(pargv[3]);
+  callContRestore(pargv);
+  // restore argv
+  argv[0] = pargv[0];
+  argv[2] = pargv[1];
+  argv[3] = pargv[2];
+  argv[4] = pargv[3];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
     callContSave(4, pargv);
     while (f.op->objType == THUNK) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply THUNK\n");
+      fprintf(stderr, "stgApplyPNPPP THUNK\n");
       #endif
       STGEVAL(f);
       // f.op = derefPoL(f);
@@ -18839,6 +19986,9 @@ DEFUN2(stgApplyPNPPP, N, f) {
   switch (f.op->objType) {
   case FUN: {
     int arity = f.op->infoPtr->funFields.arity;
+    #ifdef DEBUGSTGAPPLY
+    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    #endif
     int excess = argc - arity;  // may be negative
 
     // too many args
@@ -18956,7 +20106,7 @@ DEFUN2(stgApplyPNPPP, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyPNPPP FUN just right\n");
       #endif
       pushargs(1, nargv);
       pushargs(4, pargv);
@@ -18966,7 +20116,7 @@ DEFUN2(stgApplyPNPPP, N, f) {
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN too few args\n");
+      fprintf(stderr, "stgApplyPNPPP FUN too few args\n");
       #endif
       int fvCount = f.op->infoPtr->fvCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
@@ -18995,14 +20145,14 @@ DEFUN2(stgApplyPNPPP, N, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApply:  PAP error 1");
+    assert(argCount == f.op->argCount && "stgApplyPNPPP:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
     if (excess > 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too many args\n");
+      fprintf(stderr, "stgApplyPNPPP PAP too many args\n");
       #endif
       switch (excess) {
       case 1: {
@@ -19125,7 +20275,7 @@ DEFUN2(stgApplyPNPPP, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyPNPPP FUN just right\n");
       #endif
       pushargs(1, nargv);
       pushargs(papnargc, &f.op->payload[fvCount+1+pappargc]);
@@ -19137,7 +20287,7 @@ DEFUN2(stgApplyPNPPP, N, f) {
     // excess < 0, too few args
     } else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too few args\n");
+      fprintf(stderr, "stgApplyPNPPP PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 4 + pappargc, 1 + papnargc);
@@ -19170,19 +20320,22 @@ DEFUN2(stgApplyPNPPP, N, f) {
   } // case PAP
 
   case BLACKHOLE: {
-    fprintf(stderr, "infinite loop detected in stgApply!\n");
+    fprintf(stderr, "infinite loop detected in stgApplyPNPPP!\n");
     showStgHeap();
     exit(0);
   } // case BLACKHOLE
 
   default:
-    fprintf(stderr, "stgApply not a THUNK, FUN, or PAP\n");
+    fprintf(stderr, "stgApplyPNPPP not a THUNK, FUN, or PAP\n");
     exit(0);
   }  // switch
   ENDFUN;
 }
 
 DEFUN2(stgApplyNPPPP, N, f) {
+  #ifdef DEBUGSTGAPPLY
+  fprintf(stderr, "stgApplyNPPPP %s\n", f.op->infoPtr->name);
+  #endif
   assert(N.argType == INT);
   const int argc = N.i;
   assert(argc == 5);
@@ -19196,13 +20349,45 @@ DEFUN2(stgApplyNPPPP, N, f) {
   pargv[3] = argv[4];
   PtrOrLiteral nargv[1];
   nargv[0] = argv[0];
+  callContSave(4, pargv);
+  STGEVAL(pargv[0]);
+  callContRestore(pargv);
+  // restore argv
+  argv[1] = pargv[0];
+  argv[2] = pargv[1];
+  argv[3] = pargv[2];
+  argv[4] = pargv[3];
+  callContSave(4, pargv);
+  STGEVAL(pargv[1]);
+  callContRestore(pargv);
+  // restore argv
+  argv[1] = pargv[0];
+  argv[2] = pargv[1];
+  argv[3] = pargv[2];
+  argv[4] = pargv[3];
+  callContSave(4, pargv);
+  STGEVAL(pargv[2]);
+  callContRestore(pargv);
+  // restore argv
+  argv[1] = pargv[0];
+  argv[2] = pargv[1];
+  argv[3] = pargv[2];
+  argv[4] = pargv[3];
+  callContSave(4, pargv);
+  STGEVAL(pargv[3]);
+  callContRestore(pargv);
+  // restore argv
+  argv[1] = pargv[0];
+  argv[2] = pargv[1];
+  argv[3] = pargv[2];
+  argv[4] = pargv[3];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
     callContSave(4, pargv);
     while (f.op->objType == THUNK) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply THUNK\n");
+      fprintf(stderr, "stgApplyNPPPP THUNK\n");
       #endif
       STGEVAL(f);
       // f.op = derefPoL(f);
@@ -19219,6 +20404,9 @@ DEFUN2(stgApplyNPPPP, N, f) {
   switch (f.op->objType) {
   case FUN: {
     int arity = f.op->infoPtr->funFields.arity;
+    #ifdef DEBUGSTGAPPLY
+    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    #endif
     int excess = argc - arity;  // may be negative
 
     // too many args
@@ -19337,7 +20525,7 @@ DEFUN2(stgApplyNPPPP, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyNPPPP FUN just right\n");
       #endif
       pushargs(1, nargv);
       pushargs(4, pargv);
@@ -19347,7 +20535,7 @@ DEFUN2(stgApplyNPPPP, N, f) {
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN too few args\n");
+      fprintf(stderr, "stgApplyNPPPP FUN too few args\n");
       #endif
       int fvCount = f.op->infoPtr->fvCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
@@ -19376,14 +20564,14 @@ DEFUN2(stgApplyNPPPP, N, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApply:  PAP error 1");
+    assert(argCount == f.op->argCount && "stgApplyNPPPP:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
     if (excess > 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too many args\n");
+      fprintf(stderr, "stgApplyNPPPP PAP too many args\n");
       #endif
       switch (excess) {
       case 1: {
@@ -19507,7 +20695,7 @@ DEFUN2(stgApplyNPPPP, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyNPPPP FUN just right\n");
       #endif
       pushargs(1, nargv);
       pushargs(papnargc, &f.op->payload[fvCount+1+pappargc]);
@@ -19519,7 +20707,7 @@ DEFUN2(stgApplyNPPPP, N, f) {
     // excess < 0, too few args
     } else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too few args\n");
+      fprintf(stderr, "stgApplyNPPPP PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 4 + pappargc, 1 + papnargc);
@@ -19552,19 +20740,22 @@ DEFUN2(stgApplyNPPPP, N, f) {
   } // case PAP
 
   case BLACKHOLE: {
-    fprintf(stderr, "infinite loop detected in stgApply!\n");
+    fprintf(stderr, "infinite loop detected in stgApplyNPPPP!\n");
     showStgHeap();
     exit(0);
   } // case BLACKHOLE
 
   default:
-    fprintf(stderr, "stgApply not a THUNK, FUN, or PAP\n");
+    fprintf(stderr, "stgApplyNPPPP not a THUNK, FUN, or PAP\n");
     exit(0);
   }  // switch
   ENDFUN;
 }
 
 DEFUN2(stgApplyPPPPP, N, f) {
+  #ifdef DEBUGSTGAPPLY
+  fprintf(stderr, "stgApplyPPPPP %s\n", f.op->infoPtr->name);
+  #endif
   assert(N.argType == INT);
   const int argc = N.i;
   assert(argc == 5);
@@ -19578,13 +20769,58 @@ DEFUN2(stgApplyPPPPP, N, f) {
   pargv[3] = argv[3];
   pargv[4] = argv[4];
   // no non-pointer args to save
+  callContSave(5, pargv);
+  STGEVAL(pargv[0]);
+  callContRestore(pargv);
+  // restore argv
+  argv[0] = pargv[0];
+  argv[1] = pargv[1];
+  argv[2] = pargv[2];
+  argv[3] = pargv[3];
+  argv[4] = pargv[4];
+  callContSave(5, pargv);
+  STGEVAL(pargv[1]);
+  callContRestore(pargv);
+  // restore argv
+  argv[0] = pargv[0];
+  argv[1] = pargv[1];
+  argv[2] = pargv[2];
+  argv[3] = pargv[3];
+  argv[4] = pargv[4];
+  callContSave(5, pargv);
+  STGEVAL(pargv[2]);
+  callContRestore(pargv);
+  // restore argv
+  argv[0] = pargv[0];
+  argv[1] = pargv[1];
+  argv[2] = pargv[2];
+  argv[3] = pargv[3];
+  argv[4] = pargv[4];
+  callContSave(5, pargv);
+  STGEVAL(pargv[3]);
+  callContRestore(pargv);
+  // restore argv
+  argv[0] = pargv[0];
+  argv[1] = pargv[1];
+  argv[2] = pargv[2];
+  argv[3] = pargv[3];
+  argv[4] = pargv[4];
+  callContSave(5, pargv);
+  STGEVAL(pargv[4]);
+  callContRestore(pargv);
+  // restore argv
+  argv[0] = pargv[0];
+  argv[1] = pargv[1];
+  argv[2] = pargv[2];
+  argv[3] = pargv[3];
+  argv[4] = pargv[4];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
     callContSave(5, pargv);
     while (f.op->objType == THUNK) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply THUNK\n");
+      fprintf(stderr, "stgApplyPPPPP THUNK\n");
       #endif
       STGEVAL(f);
       // f.op = derefPoL(f);
@@ -19602,6 +20838,9 @@ DEFUN2(stgApplyPPPPP, N, f) {
   switch (f.op->objType) {
   case FUN: {
     int arity = f.op->infoPtr->funFields.arity;
+    #ifdef DEBUGSTGAPPLY
+    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    #endif
     int excess = argc - arity;  // may be negative
 
     // too many args
@@ -19720,7 +20959,7 @@ DEFUN2(stgApplyPPPPP, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyPPPPP FUN just right\n");
       #endif
       // 0 non-pointers to push
       pushargs(5, pargv);
@@ -19730,7 +20969,7 @@ DEFUN2(stgApplyPPPPP, N, f) {
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN too few args\n");
+      fprintf(stderr, "stgApplyPPPPP FUN too few args\n");
       #endif
       int fvCount = f.op->infoPtr->fvCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
@@ -19759,14 +20998,14 @@ DEFUN2(stgApplyPPPPP, N, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApply:  PAP error 1");
+    assert(argCount == f.op->argCount && "stgApplyPPPPP:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
     if (excess > 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too many args\n");
+      fprintf(stderr, "stgApplyPPPPP PAP too many args\n");
       #endif
       switch (excess) {
       case 1: {
@@ -19890,7 +21129,7 @@ DEFUN2(stgApplyPPPPP, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyPPPPP FUN just right\n");
       #endif
       // 0 non-pointer args
       pushargs(papnargc, &f.op->payload[fvCount+1+pappargc]);
@@ -19902,7 +21141,7 @@ DEFUN2(stgApplyPPPPP, N, f) {
     // excess < 0, too few args
     } else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too few args\n");
+      fprintf(stderr, "stgApplyPPPPP PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 5 + pappargc, 0 + papnargc);
@@ -19935,19 +21174,22 @@ DEFUN2(stgApplyPPPPP, N, f) {
   } // case PAP
 
   case BLACKHOLE: {
-    fprintf(stderr, "infinite loop detected in stgApply!\n");
+    fprintf(stderr, "infinite loop detected in stgApplyPPPPP!\n");
     showStgHeap();
     exit(0);
   } // case BLACKHOLE
 
   default:
-    fprintf(stderr, "stgApply not a THUNK, FUN, or PAP\n");
+    fprintf(stderr, "stgApplyPPPPP not a THUNK, FUN, or PAP\n");
     exit(0);
   }  // switch
   ENDFUN;
 }
 
 DEFUN2(stgApplyNNNNNN, N, f) {
+  #ifdef DEBUGSTGAPPLY
+  fprintf(stderr, "stgApplyNNNNNN %s\n", f.op->infoPtr->name);
+  #endif
   assert(N.argType == INT);
   const int argc = N.i;
   assert(argc == 6);
@@ -19962,13 +21204,13 @@ DEFUN2(stgApplyNNNNNN, N, f) {
   nargv[3] = argv[3];
   nargv[4] = argv[4];
   nargv[5] = argv[5];
-
+  
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
     // no pointer args to save
     while (f.op->objType == THUNK) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply THUNK\n");
+      fprintf(stderr, "stgApplyNNNNNN THUNK\n");
       #endif
       STGEVAL(f);
       // f.op = derefPoL(f);
@@ -19980,6 +21222,9 @@ DEFUN2(stgApplyNNNNNN, N, f) {
   switch (f.op->objType) {
   case FUN: {
     int arity = f.op->infoPtr->funFields.arity;
+    #ifdef DEBUGSTGAPPLY
+    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    #endif
     int excess = argc - arity;  // may be negative
 
     // too many args
@@ -20107,7 +21352,7 @@ DEFUN2(stgApplyNNNNNN, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyNNNNNN FUN just right\n");
       #endif
       pushargs(6, nargv);
       // 0 pointers to push
@@ -20117,7 +21362,7 @@ DEFUN2(stgApplyNNNNNN, N, f) {
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN too few args\n");
+      fprintf(stderr, "stgApplyNNNNNN FUN too few args\n");
       #endif
       int fvCount = f.op->infoPtr->fvCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
@@ -20146,14 +21391,14 @@ DEFUN2(stgApplyNNNNNN, N, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApply:  PAP error 1");
+    assert(argCount == f.op->argCount && "stgApplyNNNNNN:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
     if (excess > 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too many args\n");
+      fprintf(stderr, "stgApplyNNNNNN PAP too many args\n");
       #endif
       switch (excess) {
       case 1: {
@@ -20288,7 +21533,7 @@ DEFUN2(stgApplyNNNNNN, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyNNNNNN FUN just right\n");
       #endif
       pushargs(6, nargv);
       pushargs(papnargc, &f.op->payload[fvCount+1+pappargc]);
@@ -20300,7 +21545,7 @@ DEFUN2(stgApplyNNNNNN, N, f) {
     // excess < 0, too few args
     } else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too few args\n");
+      fprintf(stderr, "stgApplyNNNNNN PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 0 + pappargc, 6 + papnargc);
@@ -20333,19 +21578,22 @@ DEFUN2(stgApplyNNNNNN, N, f) {
   } // case PAP
 
   case BLACKHOLE: {
-    fprintf(stderr, "infinite loop detected in stgApply!\n");
+    fprintf(stderr, "infinite loop detected in stgApplyNNNNNN!\n");
     showStgHeap();
     exit(0);
   } // case BLACKHOLE
 
   default:
-    fprintf(stderr, "stgApply not a THUNK, FUN, or PAP\n");
+    fprintf(stderr, "stgApplyNNNNNN not a THUNK, FUN, or PAP\n");
     exit(0);
   }  // switch
   ENDFUN;
 }
 
 DEFUN2(stgApplyPNNNNN, N, f) {
+  #ifdef DEBUGSTGAPPLY
+  fprintf(stderr, "stgApplyPNNNNN %s\n", f.op->infoPtr->name);
+  #endif
   assert(N.argType == INT);
   const int argc = N.i;
   assert(argc == 6);
@@ -20360,13 +21608,18 @@ DEFUN2(stgApplyPNNNNN, N, f) {
   nargv[2] = argv[3];
   nargv[3] = argv[4];
   nargv[4] = argv[5];
+  callContSave(1, pargv);
+  STGEVAL(pargv[0]);
+  callContRestore(pargv);
+  // restore argv
+  argv[0] = pargv[0];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
     callContSave(1, pargv);
     while (f.op->objType == THUNK) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply THUNK\n");
+      fprintf(stderr, "stgApplyPNNNNN THUNK\n");
       #endif
       STGEVAL(f);
       // f.op = derefPoL(f);
@@ -20380,6 +21633,9 @@ DEFUN2(stgApplyPNNNNN, N, f) {
   switch (f.op->objType) {
   case FUN: {
     int arity = f.op->infoPtr->funFields.arity;
+    #ifdef DEBUGSTGAPPLY
+    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    #endif
     int excess = argc - arity;  // may be negative
 
     // too many args
@@ -20507,7 +21763,7 @@ DEFUN2(stgApplyPNNNNN, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyPNNNNN FUN just right\n");
       #endif
       pushargs(5, nargv);
       pushargs(1, pargv);
@@ -20517,7 +21773,7 @@ DEFUN2(stgApplyPNNNNN, N, f) {
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN too few args\n");
+      fprintf(stderr, "stgApplyPNNNNN FUN too few args\n");
       #endif
       int fvCount = f.op->infoPtr->fvCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
@@ -20546,14 +21802,14 @@ DEFUN2(stgApplyPNNNNN, N, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApply:  PAP error 1");
+    assert(argCount == f.op->argCount && "stgApplyPNNNNN:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
     if (excess > 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too many args\n");
+      fprintf(stderr, "stgApplyPNNNNN PAP too many args\n");
       #endif
       switch (excess) {
       case 1: {
@@ -20688,7 +21944,7 @@ DEFUN2(stgApplyPNNNNN, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyPNNNNN FUN just right\n");
       #endif
       pushargs(5, nargv);
       pushargs(papnargc, &f.op->payload[fvCount+1+pappargc]);
@@ -20700,7 +21956,7 @@ DEFUN2(stgApplyPNNNNN, N, f) {
     // excess < 0, too few args
     } else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too few args\n");
+      fprintf(stderr, "stgApplyPNNNNN PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 1 + pappargc, 5 + papnargc);
@@ -20733,19 +21989,22 @@ DEFUN2(stgApplyPNNNNN, N, f) {
   } // case PAP
 
   case BLACKHOLE: {
-    fprintf(stderr, "infinite loop detected in stgApply!\n");
+    fprintf(stderr, "infinite loop detected in stgApplyPNNNNN!\n");
     showStgHeap();
     exit(0);
   } // case BLACKHOLE
 
   default:
-    fprintf(stderr, "stgApply not a THUNK, FUN, or PAP\n");
+    fprintf(stderr, "stgApplyPNNNNN not a THUNK, FUN, or PAP\n");
     exit(0);
   }  // switch
   ENDFUN;
 }
 
 DEFUN2(stgApplyNPNNNN, N, f) {
+  #ifdef DEBUGSTGAPPLY
+  fprintf(stderr, "stgApplyNPNNNN %s\n", f.op->infoPtr->name);
+  #endif
   assert(N.argType == INT);
   const int argc = N.i;
   assert(argc == 6);
@@ -20760,13 +22019,18 @@ DEFUN2(stgApplyNPNNNN, N, f) {
   nargv[2] = argv[3];
   nargv[3] = argv[4];
   nargv[4] = argv[5];
+  callContSave(1, pargv);
+  STGEVAL(pargv[0]);
+  callContRestore(pargv);
+  // restore argv
+  argv[1] = pargv[0];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
     callContSave(1, pargv);
     while (f.op->objType == THUNK) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply THUNK\n");
+      fprintf(stderr, "stgApplyNPNNNN THUNK\n");
       #endif
       STGEVAL(f);
       // f.op = derefPoL(f);
@@ -20780,6 +22044,9 @@ DEFUN2(stgApplyNPNNNN, N, f) {
   switch (f.op->objType) {
   case FUN: {
     int arity = f.op->infoPtr->funFields.arity;
+    #ifdef DEBUGSTGAPPLY
+    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    #endif
     int excess = argc - arity;  // may be negative
 
     // too many args
@@ -20909,7 +22176,7 @@ DEFUN2(stgApplyNPNNNN, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyNPNNNN FUN just right\n");
       #endif
       pushargs(5, nargv);
       pushargs(1, pargv);
@@ -20919,7 +22186,7 @@ DEFUN2(stgApplyNPNNNN, N, f) {
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN too few args\n");
+      fprintf(stderr, "stgApplyNPNNNN FUN too few args\n");
       #endif
       int fvCount = f.op->infoPtr->fvCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
@@ -20948,14 +22215,14 @@ DEFUN2(stgApplyNPNNNN, N, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApply:  PAP error 1");
+    assert(argCount == f.op->argCount && "stgApplyNPNNNN:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
     if (excess > 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too many args\n");
+      fprintf(stderr, "stgApplyNPNNNN PAP too many args\n");
       #endif
       switch (excess) {
       case 1: {
@@ -21092,7 +22359,7 @@ DEFUN2(stgApplyNPNNNN, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyNPNNNN FUN just right\n");
       #endif
       pushargs(5, nargv);
       pushargs(papnargc, &f.op->payload[fvCount+1+pappargc]);
@@ -21104,7 +22371,7 @@ DEFUN2(stgApplyNPNNNN, N, f) {
     // excess < 0, too few args
     } else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too few args\n");
+      fprintf(stderr, "stgApplyNPNNNN PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 1 + pappargc, 5 + papnargc);
@@ -21137,19 +22404,22 @@ DEFUN2(stgApplyNPNNNN, N, f) {
   } // case PAP
 
   case BLACKHOLE: {
-    fprintf(stderr, "infinite loop detected in stgApply!\n");
+    fprintf(stderr, "infinite loop detected in stgApplyNPNNNN!\n");
     showStgHeap();
     exit(0);
   } // case BLACKHOLE
 
   default:
-    fprintf(stderr, "stgApply not a THUNK, FUN, or PAP\n");
+    fprintf(stderr, "stgApplyNPNNNN not a THUNK, FUN, or PAP\n");
     exit(0);
   }  // switch
   ENDFUN;
 }
 
 DEFUN2(stgApplyPPNNNN, N, f) {
+  #ifdef DEBUGSTGAPPLY
+  fprintf(stderr, "stgApplyPPNNNN %s\n", f.op->infoPtr->name);
+  #endif
   assert(N.argType == INT);
   const int argc = N.i;
   assert(argc == 6);
@@ -21164,13 +22434,25 @@ DEFUN2(stgApplyPPNNNN, N, f) {
   nargv[1] = argv[3];
   nargv[2] = argv[4];
   nargv[3] = argv[5];
+  callContSave(2, pargv);
+  STGEVAL(pargv[0]);
+  callContRestore(pargv);
+  // restore argv
+  argv[0] = pargv[0];
+  argv[1] = pargv[1];
+  callContSave(2, pargv);
+  STGEVAL(pargv[1]);
+  callContRestore(pargv);
+  // restore argv
+  argv[0] = pargv[0];
+  argv[1] = pargv[1];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
     callContSave(2, pargv);
     while (f.op->objType == THUNK) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply THUNK\n");
+      fprintf(stderr, "stgApplyPPNNNN THUNK\n");
       #endif
       STGEVAL(f);
       // f.op = derefPoL(f);
@@ -21185,6 +22467,9 @@ DEFUN2(stgApplyPPNNNN, N, f) {
   switch (f.op->objType) {
   case FUN: {
     int arity = f.op->infoPtr->funFields.arity;
+    #ifdef DEBUGSTGAPPLY
+    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    #endif
     int excess = argc - arity;  // may be negative
 
     // too many args
@@ -21314,7 +22599,7 @@ DEFUN2(stgApplyPPNNNN, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyPPNNNN FUN just right\n");
       #endif
       pushargs(4, nargv);
       pushargs(2, pargv);
@@ -21324,7 +22609,7 @@ DEFUN2(stgApplyPPNNNN, N, f) {
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN too few args\n");
+      fprintf(stderr, "stgApplyPPNNNN FUN too few args\n");
       #endif
       int fvCount = f.op->infoPtr->fvCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
@@ -21353,14 +22638,14 @@ DEFUN2(stgApplyPPNNNN, N, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApply:  PAP error 1");
+    assert(argCount == f.op->argCount && "stgApplyPPNNNN:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
     if (excess > 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too many args\n");
+      fprintf(stderr, "stgApplyPPNNNN PAP too many args\n");
       #endif
       switch (excess) {
       case 1: {
@@ -21497,7 +22782,7 @@ DEFUN2(stgApplyPPNNNN, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyPPNNNN FUN just right\n");
       #endif
       pushargs(4, nargv);
       pushargs(papnargc, &f.op->payload[fvCount+1+pappargc]);
@@ -21509,7 +22794,7 @@ DEFUN2(stgApplyPPNNNN, N, f) {
     // excess < 0, too few args
     } else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too few args\n");
+      fprintf(stderr, "stgApplyPPNNNN PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2 + pappargc, 4 + papnargc);
@@ -21542,19 +22827,22 @@ DEFUN2(stgApplyPPNNNN, N, f) {
   } // case PAP
 
   case BLACKHOLE: {
-    fprintf(stderr, "infinite loop detected in stgApply!\n");
+    fprintf(stderr, "infinite loop detected in stgApplyPPNNNN!\n");
     showStgHeap();
     exit(0);
   } // case BLACKHOLE
 
   default:
-    fprintf(stderr, "stgApply not a THUNK, FUN, or PAP\n");
+    fprintf(stderr, "stgApplyPPNNNN not a THUNK, FUN, or PAP\n");
     exit(0);
   }  // switch
   ENDFUN;
 }
 
 DEFUN2(stgApplyNNPNNN, N, f) {
+  #ifdef DEBUGSTGAPPLY
+  fprintf(stderr, "stgApplyNNPNNN %s\n", f.op->infoPtr->name);
+  #endif
   assert(N.argType == INT);
   const int argc = N.i;
   assert(argc == 6);
@@ -21569,13 +22857,18 @@ DEFUN2(stgApplyNNPNNN, N, f) {
   nargv[2] = argv[3];
   nargv[3] = argv[4];
   nargv[4] = argv[5];
+  callContSave(1, pargv);
+  STGEVAL(pargv[0]);
+  callContRestore(pargv);
+  // restore argv
+  argv[2] = pargv[0];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
     callContSave(1, pargv);
     while (f.op->objType == THUNK) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply THUNK\n");
+      fprintf(stderr, "stgApplyNNPNNN THUNK\n");
       #endif
       STGEVAL(f);
       // f.op = derefPoL(f);
@@ -21589,6 +22882,9 @@ DEFUN2(stgApplyNNPNNN, N, f) {
   switch (f.op->objType) {
   case FUN: {
     int arity = f.op->infoPtr->funFields.arity;
+    #ifdef DEBUGSTGAPPLY
+    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    #endif
     int excess = argc - arity;  // may be negative
 
     // too many args
@@ -21720,7 +23016,7 @@ DEFUN2(stgApplyNNPNNN, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyNNPNNN FUN just right\n");
       #endif
       pushargs(5, nargv);
       pushargs(1, pargv);
@@ -21730,7 +23026,7 @@ DEFUN2(stgApplyNNPNNN, N, f) {
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN too few args\n");
+      fprintf(stderr, "stgApplyNNPNNN FUN too few args\n");
       #endif
       int fvCount = f.op->infoPtr->fvCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
@@ -21759,14 +23055,14 @@ DEFUN2(stgApplyNNPNNN, N, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApply:  PAP error 1");
+    assert(argCount == f.op->argCount && "stgApplyNNPNNN:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
     if (excess > 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too many args\n");
+      fprintf(stderr, "stgApplyNNPNNN PAP too many args\n");
       #endif
       switch (excess) {
       case 1: {
@@ -21905,7 +23201,7 @@ DEFUN2(stgApplyNNPNNN, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyNNPNNN FUN just right\n");
       #endif
       pushargs(5, nargv);
       pushargs(papnargc, &f.op->payload[fvCount+1+pappargc]);
@@ -21917,7 +23213,7 @@ DEFUN2(stgApplyNNPNNN, N, f) {
     // excess < 0, too few args
     } else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too few args\n");
+      fprintf(stderr, "stgApplyNNPNNN PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 1 + pappargc, 5 + papnargc);
@@ -21950,19 +23246,22 @@ DEFUN2(stgApplyNNPNNN, N, f) {
   } // case PAP
 
   case BLACKHOLE: {
-    fprintf(stderr, "infinite loop detected in stgApply!\n");
+    fprintf(stderr, "infinite loop detected in stgApplyNNPNNN!\n");
     showStgHeap();
     exit(0);
   } // case BLACKHOLE
 
   default:
-    fprintf(stderr, "stgApply not a THUNK, FUN, or PAP\n");
+    fprintf(stderr, "stgApplyNNPNNN not a THUNK, FUN, or PAP\n");
     exit(0);
   }  // switch
   ENDFUN;
 }
 
 DEFUN2(stgApplyPNPNNN, N, f) {
+  #ifdef DEBUGSTGAPPLY
+  fprintf(stderr, "stgApplyPNPNNN %s\n", f.op->infoPtr->name);
+  #endif
   assert(N.argType == INT);
   const int argc = N.i;
   assert(argc == 6);
@@ -21977,13 +23276,25 @@ DEFUN2(stgApplyPNPNNN, N, f) {
   nargv[1] = argv[3];
   nargv[2] = argv[4];
   nargv[3] = argv[5];
+  callContSave(2, pargv);
+  STGEVAL(pargv[0]);
+  callContRestore(pargv);
+  // restore argv
+  argv[0] = pargv[0];
+  argv[2] = pargv[1];
+  callContSave(2, pargv);
+  STGEVAL(pargv[1]);
+  callContRestore(pargv);
+  // restore argv
+  argv[0] = pargv[0];
+  argv[2] = pargv[1];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
     callContSave(2, pargv);
     while (f.op->objType == THUNK) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply THUNK\n");
+      fprintf(stderr, "stgApplyPNPNNN THUNK\n");
       #endif
       STGEVAL(f);
       // f.op = derefPoL(f);
@@ -21998,6 +23309,9 @@ DEFUN2(stgApplyPNPNNN, N, f) {
   switch (f.op->objType) {
   case FUN: {
     int arity = f.op->infoPtr->funFields.arity;
+    #ifdef DEBUGSTGAPPLY
+    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    #endif
     int excess = argc - arity;  // may be negative
 
     // too many args
@@ -22129,7 +23443,7 @@ DEFUN2(stgApplyPNPNNN, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyPNPNNN FUN just right\n");
       #endif
       pushargs(4, nargv);
       pushargs(2, pargv);
@@ -22139,7 +23453,7 @@ DEFUN2(stgApplyPNPNNN, N, f) {
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN too few args\n");
+      fprintf(stderr, "stgApplyPNPNNN FUN too few args\n");
       #endif
       int fvCount = f.op->infoPtr->fvCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
@@ -22168,14 +23482,14 @@ DEFUN2(stgApplyPNPNNN, N, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApply:  PAP error 1");
+    assert(argCount == f.op->argCount && "stgApplyPNPNNN:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
     if (excess > 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too many args\n");
+      fprintf(stderr, "stgApplyPNPNNN PAP too many args\n");
       #endif
       switch (excess) {
       case 1: {
@@ -22314,7 +23628,7 @@ DEFUN2(stgApplyPNPNNN, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyPNPNNN FUN just right\n");
       #endif
       pushargs(4, nargv);
       pushargs(papnargc, &f.op->payload[fvCount+1+pappargc]);
@@ -22326,7 +23640,7 @@ DEFUN2(stgApplyPNPNNN, N, f) {
     // excess < 0, too few args
     } else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too few args\n");
+      fprintf(stderr, "stgApplyPNPNNN PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2 + pappargc, 4 + papnargc);
@@ -22359,19 +23673,22 @@ DEFUN2(stgApplyPNPNNN, N, f) {
   } // case PAP
 
   case BLACKHOLE: {
-    fprintf(stderr, "infinite loop detected in stgApply!\n");
+    fprintf(stderr, "infinite loop detected in stgApplyPNPNNN!\n");
     showStgHeap();
     exit(0);
   } // case BLACKHOLE
 
   default:
-    fprintf(stderr, "stgApply not a THUNK, FUN, or PAP\n");
+    fprintf(stderr, "stgApplyPNPNNN not a THUNK, FUN, or PAP\n");
     exit(0);
   }  // switch
   ENDFUN;
 }
 
 DEFUN2(stgApplyNPPNNN, N, f) {
+  #ifdef DEBUGSTGAPPLY
+  fprintf(stderr, "stgApplyNPPNNN %s\n", f.op->infoPtr->name);
+  #endif
   assert(N.argType == INT);
   const int argc = N.i;
   assert(argc == 6);
@@ -22386,13 +23703,25 @@ DEFUN2(stgApplyNPPNNN, N, f) {
   nargv[1] = argv[3];
   nargv[2] = argv[4];
   nargv[3] = argv[5];
+  callContSave(2, pargv);
+  STGEVAL(pargv[0]);
+  callContRestore(pargv);
+  // restore argv
+  argv[1] = pargv[0];
+  argv[2] = pargv[1];
+  callContSave(2, pargv);
+  STGEVAL(pargv[1]);
+  callContRestore(pargv);
+  // restore argv
+  argv[1] = pargv[0];
+  argv[2] = pargv[1];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
     callContSave(2, pargv);
     while (f.op->objType == THUNK) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply THUNK\n");
+      fprintf(stderr, "stgApplyNPPNNN THUNK\n");
       #endif
       STGEVAL(f);
       // f.op = derefPoL(f);
@@ -22407,6 +23736,9 @@ DEFUN2(stgApplyNPPNNN, N, f) {
   switch (f.op->objType) {
   case FUN: {
     int arity = f.op->infoPtr->funFields.arity;
+    #ifdef DEBUGSTGAPPLY
+    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    #endif
     int excess = argc - arity;  // may be negative
 
     // too many args
@@ -22539,7 +23871,7 @@ DEFUN2(stgApplyNPPNNN, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyNPPNNN FUN just right\n");
       #endif
       pushargs(4, nargv);
       pushargs(2, pargv);
@@ -22549,7 +23881,7 @@ DEFUN2(stgApplyNPPNNN, N, f) {
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN too few args\n");
+      fprintf(stderr, "stgApplyNPPNNN FUN too few args\n");
       #endif
       int fvCount = f.op->infoPtr->fvCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
@@ -22578,14 +23910,14 @@ DEFUN2(stgApplyNPPNNN, N, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApply:  PAP error 1");
+    assert(argCount == f.op->argCount && "stgApplyNPPNNN:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
     if (excess > 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too many args\n");
+      fprintf(stderr, "stgApplyNPPNNN PAP too many args\n");
       #endif
       switch (excess) {
       case 1: {
@@ -22725,7 +24057,7 @@ DEFUN2(stgApplyNPPNNN, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyNPPNNN FUN just right\n");
       #endif
       pushargs(4, nargv);
       pushargs(papnargc, &f.op->payload[fvCount+1+pappargc]);
@@ -22737,7 +24069,7 @@ DEFUN2(stgApplyNPPNNN, N, f) {
     // excess < 0, too few args
     } else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too few args\n");
+      fprintf(stderr, "stgApplyNPPNNN PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2 + pappargc, 4 + papnargc);
@@ -22770,19 +24102,22 @@ DEFUN2(stgApplyNPPNNN, N, f) {
   } // case PAP
 
   case BLACKHOLE: {
-    fprintf(stderr, "infinite loop detected in stgApply!\n");
+    fprintf(stderr, "infinite loop detected in stgApplyNPPNNN!\n");
     showStgHeap();
     exit(0);
   } // case BLACKHOLE
 
   default:
-    fprintf(stderr, "stgApply not a THUNK, FUN, or PAP\n");
+    fprintf(stderr, "stgApplyNPPNNN not a THUNK, FUN, or PAP\n");
     exit(0);
   }  // switch
   ENDFUN;
 }
 
 DEFUN2(stgApplyPPPNNN, N, f) {
+  #ifdef DEBUGSTGAPPLY
+  fprintf(stderr, "stgApplyPPPNNN %s\n", f.op->infoPtr->name);
+  #endif
   assert(N.argType == INT);
   const int argc = N.i;
   assert(argc == 6);
@@ -22797,13 +24132,34 @@ DEFUN2(stgApplyPPPNNN, N, f) {
   nargv[0] = argv[3];
   nargv[1] = argv[4];
   nargv[2] = argv[5];
+  callContSave(3, pargv);
+  STGEVAL(pargv[0]);
+  callContRestore(pargv);
+  // restore argv
+  argv[0] = pargv[0];
+  argv[1] = pargv[1];
+  argv[2] = pargv[2];
+  callContSave(3, pargv);
+  STGEVAL(pargv[1]);
+  callContRestore(pargv);
+  // restore argv
+  argv[0] = pargv[0];
+  argv[1] = pargv[1];
+  argv[2] = pargv[2];
+  callContSave(3, pargv);
+  STGEVAL(pargv[2]);
+  callContRestore(pargv);
+  // restore argv
+  argv[0] = pargv[0];
+  argv[1] = pargv[1];
+  argv[2] = pargv[2];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
     callContSave(3, pargv);
     while (f.op->objType == THUNK) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply THUNK\n");
+      fprintf(stderr, "stgApplyPPPNNN THUNK\n");
       #endif
       STGEVAL(f);
       // f.op = derefPoL(f);
@@ -22819,6 +24175,9 @@ DEFUN2(stgApplyPPPNNN, N, f) {
   switch (f.op->objType) {
   case FUN: {
     int arity = f.op->infoPtr->funFields.arity;
+    #ifdef DEBUGSTGAPPLY
+    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    #endif
     int excess = argc - arity;  // may be negative
 
     // too many args
@@ -22951,7 +24310,7 @@ DEFUN2(stgApplyPPPNNN, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyPPPNNN FUN just right\n");
       #endif
       pushargs(3, nargv);
       pushargs(3, pargv);
@@ -22961,7 +24320,7 @@ DEFUN2(stgApplyPPPNNN, N, f) {
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN too few args\n");
+      fprintf(stderr, "stgApplyPPPNNN FUN too few args\n");
       #endif
       int fvCount = f.op->infoPtr->fvCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
@@ -22990,14 +24349,14 @@ DEFUN2(stgApplyPPPNNN, N, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApply:  PAP error 1");
+    assert(argCount == f.op->argCount && "stgApplyPPPNNN:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
     if (excess > 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too many args\n");
+      fprintf(stderr, "stgApplyPPPNNN PAP too many args\n");
       #endif
       switch (excess) {
       case 1: {
@@ -23137,7 +24496,7 @@ DEFUN2(stgApplyPPPNNN, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyPPPNNN FUN just right\n");
       #endif
       pushargs(3, nargv);
       pushargs(papnargc, &f.op->payload[fvCount+1+pappargc]);
@@ -23149,7 +24508,7 @@ DEFUN2(stgApplyPPPNNN, N, f) {
     // excess < 0, too few args
     } else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too few args\n");
+      fprintf(stderr, "stgApplyPPPNNN PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3 + pappargc, 3 + papnargc);
@@ -23182,19 +24541,22 @@ DEFUN2(stgApplyPPPNNN, N, f) {
   } // case PAP
 
   case BLACKHOLE: {
-    fprintf(stderr, "infinite loop detected in stgApply!\n");
+    fprintf(stderr, "infinite loop detected in stgApplyPPPNNN!\n");
     showStgHeap();
     exit(0);
   } // case BLACKHOLE
 
   default:
-    fprintf(stderr, "stgApply not a THUNK, FUN, or PAP\n");
+    fprintf(stderr, "stgApplyPPPNNN not a THUNK, FUN, or PAP\n");
     exit(0);
   }  // switch
   ENDFUN;
 }
 
 DEFUN2(stgApplyNNNPNN, N, f) {
+  #ifdef DEBUGSTGAPPLY
+  fprintf(stderr, "stgApplyNNNPNN %s\n", f.op->infoPtr->name);
+  #endif
   assert(N.argType == INT);
   const int argc = N.i;
   assert(argc == 6);
@@ -23209,13 +24571,18 @@ DEFUN2(stgApplyNNNPNN, N, f) {
   nargv[2] = argv[2];
   nargv[3] = argv[4];
   nargv[4] = argv[5];
+  callContSave(1, pargv);
+  STGEVAL(pargv[0]);
+  callContRestore(pargv);
+  // restore argv
+  argv[3] = pargv[0];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
     callContSave(1, pargv);
     while (f.op->objType == THUNK) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply THUNK\n");
+      fprintf(stderr, "stgApplyNNNPNN THUNK\n");
       #endif
       STGEVAL(f);
       // f.op = derefPoL(f);
@@ -23229,6 +24596,9 @@ DEFUN2(stgApplyNNNPNN, N, f) {
   switch (f.op->objType) {
   case FUN: {
     int arity = f.op->infoPtr->funFields.arity;
+    #ifdef DEBUGSTGAPPLY
+    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    #endif
     int excess = argc - arity;  // may be negative
 
     // too many args
@@ -23362,7 +24732,7 @@ DEFUN2(stgApplyNNNPNN, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyNNNPNN FUN just right\n");
       #endif
       pushargs(5, nargv);
       pushargs(1, pargv);
@@ -23372,7 +24742,7 @@ DEFUN2(stgApplyNNNPNN, N, f) {
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN too few args\n");
+      fprintf(stderr, "stgApplyNNNPNN FUN too few args\n");
       #endif
       int fvCount = f.op->infoPtr->fvCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
@@ -23401,14 +24771,14 @@ DEFUN2(stgApplyNNNPNN, N, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApply:  PAP error 1");
+    assert(argCount == f.op->argCount && "stgApplyNNNPNN:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
     if (excess > 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too many args\n");
+      fprintf(stderr, "stgApplyNNNPNN PAP too many args\n");
       #endif
       switch (excess) {
       case 1: {
@@ -23549,7 +24919,7 @@ DEFUN2(stgApplyNNNPNN, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyNNNPNN FUN just right\n");
       #endif
       pushargs(5, nargv);
       pushargs(papnargc, &f.op->payload[fvCount+1+pappargc]);
@@ -23561,7 +24931,7 @@ DEFUN2(stgApplyNNNPNN, N, f) {
     // excess < 0, too few args
     } else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too few args\n");
+      fprintf(stderr, "stgApplyNNNPNN PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 1 + pappargc, 5 + papnargc);
@@ -23594,19 +24964,22 @@ DEFUN2(stgApplyNNNPNN, N, f) {
   } // case PAP
 
   case BLACKHOLE: {
-    fprintf(stderr, "infinite loop detected in stgApply!\n");
+    fprintf(stderr, "infinite loop detected in stgApplyNNNPNN!\n");
     showStgHeap();
     exit(0);
   } // case BLACKHOLE
 
   default:
-    fprintf(stderr, "stgApply not a THUNK, FUN, or PAP\n");
+    fprintf(stderr, "stgApplyNNNPNN not a THUNK, FUN, or PAP\n");
     exit(0);
   }  // switch
   ENDFUN;
 }
 
 DEFUN2(stgApplyPNNPNN, N, f) {
+  #ifdef DEBUGSTGAPPLY
+  fprintf(stderr, "stgApplyPNNPNN %s\n", f.op->infoPtr->name);
+  #endif
   assert(N.argType == INT);
   const int argc = N.i;
   assert(argc == 6);
@@ -23621,13 +24994,25 @@ DEFUN2(stgApplyPNNPNN, N, f) {
   nargv[1] = argv[2];
   nargv[2] = argv[4];
   nargv[3] = argv[5];
+  callContSave(2, pargv);
+  STGEVAL(pargv[0]);
+  callContRestore(pargv);
+  // restore argv
+  argv[0] = pargv[0];
+  argv[3] = pargv[1];
+  callContSave(2, pargv);
+  STGEVAL(pargv[1]);
+  callContRestore(pargv);
+  // restore argv
+  argv[0] = pargv[0];
+  argv[3] = pargv[1];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
     callContSave(2, pargv);
     while (f.op->objType == THUNK) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply THUNK\n");
+      fprintf(stderr, "stgApplyPNNPNN THUNK\n");
       #endif
       STGEVAL(f);
       // f.op = derefPoL(f);
@@ -23642,6 +25027,9 @@ DEFUN2(stgApplyPNNPNN, N, f) {
   switch (f.op->objType) {
   case FUN: {
     int arity = f.op->infoPtr->funFields.arity;
+    #ifdef DEBUGSTGAPPLY
+    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    #endif
     int excess = argc - arity;  // may be negative
 
     // too many args
@@ -23775,7 +25163,7 @@ DEFUN2(stgApplyPNNPNN, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyPNNPNN FUN just right\n");
       #endif
       pushargs(4, nargv);
       pushargs(2, pargv);
@@ -23785,7 +25173,7 @@ DEFUN2(stgApplyPNNPNN, N, f) {
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN too few args\n");
+      fprintf(stderr, "stgApplyPNNPNN FUN too few args\n");
       #endif
       int fvCount = f.op->infoPtr->fvCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
@@ -23814,14 +25202,14 @@ DEFUN2(stgApplyPNNPNN, N, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApply:  PAP error 1");
+    assert(argCount == f.op->argCount && "stgApplyPNNPNN:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
     if (excess > 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too many args\n");
+      fprintf(stderr, "stgApplyPNNPNN PAP too many args\n");
       #endif
       switch (excess) {
       case 1: {
@@ -23962,7 +25350,7 @@ DEFUN2(stgApplyPNNPNN, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyPNNPNN FUN just right\n");
       #endif
       pushargs(4, nargv);
       pushargs(papnargc, &f.op->payload[fvCount+1+pappargc]);
@@ -23974,7 +25362,7 @@ DEFUN2(stgApplyPNNPNN, N, f) {
     // excess < 0, too few args
     } else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too few args\n");
+      fprintf(stderr, "stgApplyPNNPNN PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2 + pappargc, 4 + papnargc);
@@ -24007,19 +25395,22 @@ DEFUN2(stgApplyPNNPNN, N, f) {
   } // case PAP
 
   case BLACKHOLE: {
-    fprintf(stderr, "infinite loop detected in stgApply!\n");
+    fprintf(stderr, "infinite loop detected in stgApplyPNNPNN!\n");
     showStgHeap();
     exit(0);
   } // case BLACKHOLE
 
   default:
-    fprintf(stderr, "stgApply not a THUNK, FUN, or PAP\n");
+    fprintf(stderr, "stgApplyPNNPNN not a THUNK, FUN, or PAP\n");
     exit(0);
   }  // switch
   ENDFUN;
 }
 
 DEFUN2(stgApplyNPNPNN, N, f) {
+  #ifdef DEBUGSTGAPPLY
+  fprintf(stderr, "stgApplyNPNPNN %s\n", f.op->infoPtr->name);
+  #endif
   assert(N.argType == INT);
   const int argc = N.i;
   assert(argc == 6);
@@ -24034,13 +25425,25 @@ DEFUN2(stgApplyNPNPNN, N, f) {
   nargv[1] = argv[2];
   nargv[2] = argv[4];
   nargv[3] = argv[5];
+  callContSave(2, pargv);
+  STGEVAL(pargv[0]);
+  callContRestore(pargv);
+  // restore argv
+  argv[1] = pargv[0];
+  argv[3] = pargv[1];
+  callContSave(2, pargv);
+  STGEVAL(pargv[1]);
+  callContRestore(pargv);
+  // restore argv
+  argv[1] = pargv[0];
+  argv[3] = pargv[1];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
     callContSave(2, pargv);
     while (f.op->objType == THUNK) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply THUNK\n");
+      fprintf(stderr, "stgApplyNPNPNN THUNK\n");
       #endif
       STGEVAL(f);
       // f.op = derefPoL(f);
@@ -24055,6 +25458,9 @@ DEFUN2(stgApplyNPNPNN, N, f) {
   switch (f.op->objType) {
   case FUN: {
     int arity = f.op->infoPtr->funFields.arity;
+    #ifdef DEBUGSTGAPPLY
+    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    #endif
     int excess = argc - arity;  // may be negative
 
     // too many args
@@ -24189,7 +25595,7 @@ DEFUN2(stgApplyNPNPNN, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyNPNPNN FUN just right\n");
       #endif
       pushargs(4, nargv);
       pushargs(2, pargv);
@@ -24199,7 +25605,7 @@ DEFUN2(stgApplyNPNPNN, N, f) {
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN too few args\n");
+      fprintf(stderr, "stgApplyNPNPNN FUN too few args\n");
       #endif
       int fvCount = f.op->infoPtr->fvCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
@@ -24228,14 +25634,14 @@ DEFUN2(stgApplyNPNPNN, N, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApply:  PAP error 1");
+    assert(argCount == f.op->argCount && "stgApplyNPNPNN:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
     if (excess > 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too many args\n");
+      fprintf(stderr, "stgApplyNPNPNN PAP too many args\n");
       #endif
       switch (excess) {
       case 1: {
@@ -24377,7 +25783,7 @@ DEFUN2(stgApplyNPNPNN, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyNPNPNN FUN just right\n");
       #endif
       pushargs(4, nargv);
       pushargs(papnargc, &f.op->payload[fvCount+1+pappargc]);
@@ -24389,7 +25795,7 @@ DEFUN2(stgApplyNPNPNN, N, f) {
     // excess < 0, too few args
     } else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too few args\n");
+      fprintf(stderr, "stgApplyNPNPNN PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2 + pappargc, 4 + papnargc);
@@ -24422,19 +25828,22 @@ DEFUN2(stgApplyNPNPNN, N, f) {
   } // case PAP
 
   case BLACKHOLE: {
-    fprintf(stderr, "infinite loop detected in stgApply!\n");
+    fprintf(stderr, "infinite loop detected in stgApplyNPNPNN!\n");
     showStgHeap();
     exit(0);
   } // case BLACKHOLE
 
   default:
-    fprintf(stderr, "stgApply not a THUNK, FUN, or PAP\n");
+    fprintf(stderr, "stgApplyNPNPNN not a THUNK, FUN, or PAP\n");
     exit(0);
   }  // switch
   ENDFUN;
 }
 
 DEFUN2(stgApplyPPNPNN, N, f) {
+  #ifdef DEBUGSTGAPPLY
+  fprintf(stderr, "stgApplyPPNPNN %s\n", f.op->infoPtr->name);
+  #endif
   assert(N.argType == INT);
   const int argc = N.i;
   assert(argc == 6);
@@ -24449,13 +25858,34 @@ DEFUN2(stgApplyPPNPNN, N, f) {
   nargv[0] = argv[2];
   nargv[1] = argv[4];
   nargv[2] = argv[5];
+  callContSave(3, pargv);
+  STGEVAL(pargv[0]);
+  callContRestore(pargv);
+  // restore argv
+  argv[0] = pargv[0];
+  argv[1] = pargv[1];
+  argv[3] = pargv[2];
+  callContSave(3, pargv);
+  STGEVAL(pargv[1]);
+  callContRestore(pargv);
+  // restore argv
+  argv[0] = pargv[0];
+  argv[1] = pargv[1];
+  argv[3] = pargv[2];
+  callContSave(3, pargv);
+  STGEVAL(pargv[2]);
+  callContRestore(pargv);
+  // restore argv
+  argv[0] = pargv[0];
+  argv[1] = pargv[1];
+  argv[3] = pargv[2];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
     callContSave(3, pargv);
     while (f.op->objType == THUNK) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply THUNK\n");
+      fprintf(stderr, "stgApplyPPNPNN THUNK\n");
       #endif
       STGEVAL(f);
       // f.op = derefPoL(f);
@@ -24471,6 +25901,9 @@ DEFUN2(stgApplyPPNPNN, N, f) {
   switch (f.op->objType) {
   case FUN: {
     int arity = f.op->infoPtr->funFields.arity;
+    #ifdef DEBUGSTGAPPLY
+    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    #endif
     int excess = argc - arity;  // may be negative
 
     // too many args
@@ -24605,7 +26038,7 @@ DEFUN2(stgApplyPPNPNN, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyPPNPNN FUN just right\n");
       #endif
       pushargs(3, nargv);
       pushargs(3, pargv);
@@ -24615,7 +26048,7 @@ DEFUN2(stgApplyPPNPNN, N, f) {
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN too few args\n");
+      fprintf(stderr, "stgApplyPPNPNN FUN too few args\n");
       #endif
       int fvCount = f.op->infoPtr->fvCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
@@ -24644,14 +26077,14 @@ DEFUN2(stgApplyPPNPNN, N, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApply:  PAP error 1");
+    assert(argCount == f.op->argCount && "stgApplyPPNPNN:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
     if (excess > 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too many args\n");
+      fprintf(stderr, "stgApplyPPNPNN PAP too many args\n");
       #endif
       switch (excess) {
       case 1: {
@@ -24793,7 +26226,7 @@ DEFUN2(stgApplyPPNPNN, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyPPNPNN FUN just right\n");
       #endif
       pushargs(3, nargv);
       pushargs(papnargc, &f.op->payload[fvCount+1+pappargc]);
@@ -24805,7 +26238,7 @@ DEFUN2(stgApplyPPNPNN, N, f) {
     // excess < 0, too few args
     } else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too few args\n");
+      fprintf(stderr, "stgApplyPPNPNN PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3 + pappargc, 3 + papnargc);
@@ -24838,19 +26271,22 @@ DEFUN2(stgApplyPPNPNN, N, f) {
   } // case PAP
 
   case BLACKHOLE: {
-    fprintf(stderr, "infinite loop detected in stgApply!\n");
+    fprintf(stderr, "infinite loop detected in stgApplyPPNPNN!\n");
     showStgHeap();
     exit(0);
   } // case BLACKHOLE
 
   default:
-    fprintf(stderr, "stgApply not a THUNK, FUN, or PAP\n");
+    fprintf(stderr, "stgApplyPPNPNN not a THUNK, FUN, or PAP\n");
     exit(0);
   }  // switch
   ENDFUN;
 }
 
 DEFUN2(stgApplyNNPPNN, N, f) {
+  #ifdef DEBUGSTGAPPLY
+  fprintf(stderr, "stgApplyNNPPNN %s\n", f.op->infoPtr->name);
+  #endif
   assert(N.argType == INT);
   const int argc = N.i;
   assert(argc == 6);
@@ -24865,13 +26301,25 @@ DEFUN2(stgApplyNNPPNN, N, f) {
   nargv[1] = argv[1];
   nargv[2] = argv[4];
   nargv[3] = argv[5];
+  callContSave(2, pargv);
+  STGEVAL(pargv[0]);
+  callContRestore(pargv);
+  // restore argv
+  argv[2] = pargv[0];
+  argv[3] = pargv[1];
+  callContSave(2, pargv);
+  STGEVAL(pargv[1]);
+  callContRestore(pargv);
+  // restore argv
+  argv[2] = pargv[0];
+  argv[3] = pargv[1];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
     callContSave(2, pargv);
     while (f.op->objType == THUNK) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply THUNK\n");
+      fprintf(stderr, "stgApplyNNPPNN THUNK\n");
       #endif
       STGEVAL(f);
       // f.op = derefPoL(f);
@@ -24886,6 +26334,9 @@ DEFUN2(stgApplyNNPPNN, N, f) {
   switch (f.op->objType) {
   case FUN: {
     int arity = f.op->infoPtr->funFields.arity;
+    #ifdef DEBUGSTGAPPLY
+    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    #endif
     int excess = argc - arity;  // may be negative
 
     // too many args
@@ -25021,7 +26472,7 @@ DEFUN2(stgApplyNNPPNN, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyNNPPNN FUN just right\n");
       #endif
       pushargs(4, nargv);
       pushargs(2, pargv);
@@ -25031,7 +26482,7 @@ DEFUN2(stgApplyNNPPNN, N, f) {
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN too few args\n");
+      fprintf(stderr, "stgApplyNNPPNN FUN too few args\n");
       #endif
       int fvCount = f.op->infoPtr->fvCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
@@ -25060,14 +26511,14 @@ DEFUN2(stgApplyNNPPNN, N, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApply:  PAP error 1");
+    assert(argCount == f.op->argCount && "stgApplyNNPPNN:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
     if (excess > 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too many args\n");
+      fprintf(stderr, "stgApplyNNPPNN PAP too many args\n");
       #endif
       switch (excess) {
       case 1: {
@@ -25210,7 +26661,7 @@ DEFUN2(stgApplyNNPPNN, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyNNPPNN FUN just right\n");
       #endif
       pushargs(4, nargv);
       pushargs(papnargc, &f.op->payload[fvCount+1+pappargc]);
@@ -25222,7 +26673,7 @@ DEFUN2(stgApplyNNPPNN, N, f) {
     // excess < 0, too few args
     } else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too few args\n");
+      fprintf(stderr, "stgApplyNNPPNN PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2 + pappargc, 4 + papnargc);
@@ -25255,19 +26706,22 @@ DEFUN2(stgApplyNNPPNN, N, f) {
   } // case PAP
 
   case BLACKHOLE: {
-    fprintf(stderr, "infinite loop detected in stgApply!\n");
+    fprintf(stderr, "infinite loop detected in stgApplyNNPPNN!\n");
     showStgHeap();
     exit(0);
   } // case BLACKHOLE
 
   default:
-    fprintf(stderr, "stgApply not a THUNK, FUN, or PAP\n");
+    fprintf(stderr, "stgApplyNNPPNN not a THUNK, FUN, or PAP\n");
     exit(0);
   }  // switch
   ENDFUN;
 }
 
 DEFUN2(stgApplyPNPPNN, N, f) {
+  #ifdef DEBUGSTGAPPLY
+  fprintf(stderr, "stgApplyPNPPNN %s\n", f.op->infoPtr->name);
+  #endif
   assert(N.argType == INT);
   const int argc = N.i;
   assert(argc == 6);
@@ -25282,13 +26736,34 @@ DEFUN2(stgApplyPNPPNN, N, f) {
   nargv[0] = argv[1];
   nargv[1] = argv[4];
   nargv[2] = argv[5];
+  callContSave(3, pargv);
+  STGEVAL(pargv[0]);
+  callContRestore(pargv);
+  // restore argv
+  argv[0] = pargv[0];
+  argv[2] = pargv[1];
+  argv[3] = pargv[2];
+  callContSave(3, pargv);
+  STGEVAL(pargv[1]);
+  callContRestore(pargv);
+  // restore argv
+  argv[0] = pargv[0];
+  argv[2] = pargv[1];
+  argv[3] = pargv[2];
+  callContSave(3, pargv);
+  STGEVAL(pargv[2]);
+  callContRestore(pargv);
+  // restore argv
+  argv[0] = pargv[0];
+  argv[2] = pargv[1];
+  argv[3] = pargv[2];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
     callContSave(3, pargv);
     while (f.op->objType == THUNK) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply THUNK\n");
+      fprintf(stderr, "stgApplyPNPPNN THUNK\n");
       #endif
       STGEVAL(f);
       // f.op = derefPoL(f);
@@ -25304,6 +26779,9 @@ DEFUN2(stgApplyPNPPNN, N, f) {
   switch (f.op->objType) {
   case FUN: {
     int arity = f.op->infoPtr->funFields.arity;
+    #ifdef DEBUGSTGAPPLY
+    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    #endif
     int excess = argc - arity;  // may be negative
 
     // too many args
@@ -25439,7 +26917,7 @@ DEFUN2(stgApplyPNPPNN, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyPNPPNN FUN just right\n");
       #endif
       pushargs(3, nargv);
       pushargs(3, pargv);
@@ -25449,7 +26927,7 @@ DEFUN2(stgApplyPNPPNN, N, f) {
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN too few args\n");
+      fprintf(stderr, "stgApplyPNPPNN FUN too few args\n");
       #endif
       int fvCount = f.op->infoPtr->fvCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
@@ -25478,14 +26956,14 @@ DEFUN2(stgApplyPNPPNN, N, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApply:  PAP error 1");
+    assert(argCount == f.op->argCount && "stgApplyPNPPNN:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
     if (excess > 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too many args\n");
+      fprintf(stderr, "stgApplyPNPPNN PAP too many args\n");
       #endif
       switch (excess) {
       case 1: {
@@ -25628,7 +27106,7 @@ DEFUN2(stgApplyPNPPNN, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyPNPPNN FUN just right\n");
       #endif
       pushargs(3, nargv);
       pushargs(papnargc, &f.op->payload[fvCount+1+pappargc]);
@@ -25640,7 +27118,7 @@ DEFUN2(stgApplyPNPPNN, N, f) {
     // excess < 0, too few args
     } else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too few args\n");
+      fprintf(stderr, "stgApplyPNPPNN PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3 + pappargc, 3 + papnargc);
@@ -25673,19 +27151,22 @@ DEFUN2(stgApplyPNPPNN, N, f) {
   } // case PAP
 
   case BLACKHOLE: {
-    fprintf(stderr, "infinite loop detected in stgApply!\n");
+    fprintf(stderr, "infinite loop detected in stgApplyPNPPNN!\n");
     showStgHeap();
     exit(0);
   } // case BLACKHOLE
 
   default:
-    fprintf(stderr, "stgApply not a THUNK, FUN, or PAP\n");
+    fprintf(stderr, "stgApplyPNPPNN not a THUNK, FUN, or PAP\n");
     exit(0);
   }  // switch
   ENDFUN;
 }
 
 DEFUN2(stgApplyNPPPNN, N, f) {
+  #ifdef DEBUGSTGAPPLY
+  fprintf(stderr, "stgApplyNPPPNN %s\n", f.op->infoPtr->name);
+  #endif
   assert(N.argType == INT);
   const int argc = N.i;
   assert(argc == 6);
@@ -25700,13 +27181,34 @@ DEFUN2(stgApplyNPPPNN, N, f) {
   nargv[0] = argv[0];
   nargv[1] = argv[4];
   nargv[2] = argv[5];
+  callContSave(3, pargv);
+  STGEVAL(pargv[0]);
+  callContRestore(pargv);
+  // restore argv
+  argv[1] = pargv[0];
+  argv[2] = pargv[1];
+  argv[3] = pargv[2];
+  callContSave(3, pargv);
+  STGEVAL(pargv[1]);
+  callContRestore(pargv);
+  // restore argv
+  argv[1] = pargv[0];
+  argv[2] = pargv[1];
+  argv[3] = pargv[2];
+  callContSave(3, pargv);
+  STGEVAL(pargv[2]);
+  callContRestore(pargv);
+  // restore argv
+  argv[1] = pargv[0];
+  argv[2] = pargv[1];
+  argv[3] = pargv[2];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
     callContSave(3, pargv);
     while (f.op->objType == THUNK) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply THUNK\n");
+      fprintf(stderr, "stgApplyNPPPNN THUNK\n");
       #endif
       STGEVAL(f);
       // f.op = derefPoL(f);
@@ -25722,6 +27224,9 @@ DEFUN2(stgApplyNPPPNN, N, f) {
   switch (f.op->objType) {
   case FUN: {
     int arity = f.op->infoPtr->funFields.arity;
+    #ifdef DEBUGSTGAPPLY
+    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    #endif
     int excess = argc - arity;  // may be negative
 
     // too many args
@@ -25858,7 +27363,7 @@ DEFUN2(stgApplyNPPPNN, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyNPPPNN FUN just right\n");
       #endif
       pushargs(3, nargv);
       pushargs(3, pargv);
@@ -25868,7 +27373,7 @@ DEFUN2(stgApplyNPPPNN, N, f) {
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN too few args\n");
+      fprintf(stderr, "stgApplyNPPPNN FUN too few args\n");
       #endif
       int fvCount = f.op->infoPtr->fvCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
@@ -25897,14 +27402,14 @@ DEFUN2(stgApplyNPPPNN, N, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApply:  PAP error 1");
+    assert(argCount == f.op->argCount && "stgApplyNPPPNN:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
     if (excess > 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too many args\n");
+      fprintf(stderr, "stgApplyNPPPNN PAP too many args\n");
       #endif
       switch (excess) {
       case 1: {
@@ -26048,7 +27553,7 @@ DEFUN2(stgApplyNPPPNN, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyNPPPNN FUN just right\n");
       #endif
       pushargs(3, nargv);
       pushargs(papnargc, &f.op->payload[fvCount+1+pappargc]);
@@ -26060,7 +27565,7 @@ DEFUN2(stgApplyNPPPNN, N, f) {
     // excess < 0, too few args
     } else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too few args\n");
+      fprintf(stderr, "stgApplyNPPPNN PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3 + pappargc, 3 + papnargc);
@@ -26093,19 +27598,22 @@ DEFUN2(stgApplyNPPPNN, N, f) {
   } // case PAP
 
   case BLACKHOLE: {
-    fprintf(stderr, "infinite loop detected in stgApply!\n");
+    fprintf(stderr, "infinite loop detected in stgApplyNPPPNN!\n");
     showStgHeap();
     exit(0);
   } // case BLACKHOLE
 
   default:
-    fprintf(stderr, "stgApply not a THUNK, FUN, or PAP\n");
+    fprintf(stderr, "stgApplyNPPPNN not a THUNK, FUN, or PAP\n");
     exit(0);
   }  // switch
   ENDFUN;
 }
 
 DEFUN2(stgApplyPPPPNN, N, f) {
+  #ifdef DEBUGSTGAPPLY
+  fprintf(stderr, "stgApplyPPPPNN %s\n", f.op->infoPtr->name);
+  #endif
   assert(N.argType == INT);
   const int argc = N.i;
   assert(argc == 6);
@@ -26120,13 +27628,45 @@ DEFUN2(stgApplyPPPPNN, N, f) {
   PtrOrLiteral nargv[2];
   nargv[0] = argv[4];
   nargv[1] = argv[5];
+  callContSave(4, pargv);
+  STGEVAL(pargv[0]);
+  callContRestore(pargv);
+  // restore argv
+  argv[0] = pargv[0];
+  argv[1] = pargv[1];
+  argv[2] = pargv[2];
+  argv[3] = pargv[3];
+  callContSave(4, pargv);
+  STGEVAL(pargv[1]);
+  callContRestore(pargv);
+  // restore argv
+  argv[0] = pargv[0];
+  argv[1] = pargv[1];
+  argv[2] = pargv[2];
+  argv[3] = pargv[3];
+  callContSave(4, pargv);
+  STGEVAL(pargv[2]);
+  callContRestore(pargv);
+  // restore argv
+  argv[0] = pargv[0];
+  argv[1] = pargv[1];
+  argv[2] = pargv[2];
+  argv[3] = pargv[3];
+  callContSave(4, pargv);
+  STGEVAL(pargv[3]);
+  callContRestore(pargv);
+  // restore argv
+  argv[0] = pargv[0];
+  argv[1] = pargv[1];
+  argv[2] = pargv[2];
+  argv[3] = pargv[3];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
     callContSave(4, pargv);
     while (f.op->objType == THUNK) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply THUNK\n");
+      fprintf(stderr, "stgApplyPPPPNN THUNK\n");
       #endif
       STGEVAL(f);
       // f.op = derefPoL(f);
@@ -26143,6 +27683,9 @@ DEFUN2(stgApplyPPPPNN, N, f) {
   switch (f.op->objType) {
   case FUN: {
     int arity = f.op->infoPtr->funFields.arity;
+    #ifdef DEBUGSTGAPPLY
+    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    #endif
     int excess = argc - arity;  // may be negative
 
     // too many args
@@ -26279,7 +27822,7 @@ DEFUN2(stgApplyPPPPNN, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyPPPPNN FUN just right\n");
       #endif
       pushargs(2, nargv);
       pushargs(4, pargv);
@@ -26289,7 +27832,7 @@ DEFUN2(stgApplyPPPPNN, N, f) {
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN too few args\n");
+      fprintf(stderr, "stgApplyPPPPNN FUN too few args\n");
       #endif
       int fvCount = f.op->infoPtr->fvCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
@@ -26318,14 +27861,14 @@ DEFUN2(stgApplyPPPPNN, N, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApply:  PAP error 1");
+    assert(argCount == f.op->argCount && "stgApplyPPPPNN:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
     if (excess > 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too many args\n");
+      fprintf(stderr, "stgApplyPPPPNN PAP too many args\n");
       #endif
       switch (excess) {
       case 1: {
@@ -26469,7 +28012,7 @@ DEFUN2(stgApplyPPPPNN, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyPPPPNN FUN just right\n");
       #endif
       pushargs(2, nargv);
       pushargs(papnargc, &f.op->payload[fvCount+1+pappargc]);
@@ -26481,7 +28024,7 @@ DEFUN2(stgApplyPPPPNN, N, f) {
     // excess < 0, too few args
     } else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too few args\n");
+      fprintf(stderr, "stgApplyPPPPNN PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 4 + pappargc, 2 + papnargc);
@@ -26514,19 +28057,22 @@ DEFUN2(stgApplyPPPPNN, N, f) {
   } // case PAP
 
   case BLACKHOLE: {
-    fprintf(stderr, "infinite loop detected in stgApply!\n");
+    fprintf(stderr, "infinite loop detected in stgApplyPPPPNN!\n");
     showStgHeap();
     exit(0);
   } // case BLACKHOLE
 
   default:
-    fprintf(stderr, "stgApply not a THUNK, FUN, or PAP\n");
+    fprintf(stderr, "stgApplyPPPPNN not a THUNK, FUN, or PAP\n");
     exit(0);
   }  // switch
   ENDFUN;
 }
 
 DEFUN2(stgApplyNNNNPN, N, f) {
+  #ifdef DEBUGSTGAPPLY
+  fprintf(stderr, "stgApplyNNNNPN %s\n", f.op->infoPtr->name);
+  #endif
   assert(N.argType == INT);
   const int argc = N.i;
   assert(argc == 6);
@@ -26541,13 +28087,18 @@ DEFUN2(stgApplyNNNNPN, N, f) {
   nargv[2] = argv[2];
   nargv[3] = argv[3];
   nargv[4] = argv[5];
+  callContSave(1, pargv);
+  STGEVAL(pargv[0]);
+  callContRestore(pargv);
+  // restore argv
+  argv[4] = pargv[0];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
     callContSave(1, pargv);
     while (f.op->objType == THUNK) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply THUNK\n");
+      fprintf(stderr, "stgApplyNNNNPN THUNK\n");
       #endif
       STGEVAL(f);
       // f.op = derefPoL(f);
@@ -26561,6 +28112,9 @@ DEFUN2(stgApplyNNNNPN, N, f) {
   switch (f.op->objType) {
   case FUN: {
     int arity = f.op->infoPtr->funFields.arity;
+    #ifdef DEBUGSTGAPPLY
+    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    #endif
     int excess = argc - arity;  // may be negative
 
     // too many args
@@ -26696,7 +28250,7 @@ DEFUN2(stgApplyNNNNPN, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyNNNNPN FUN just right\n");
       #endif
       pushargs(5, nargv);
       pushargs(1, pargv);
@@ -26706,7 +28260,7 @@ DEFUN2(stgApplyNNNNPN, N, f) {
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN too few args\n");
+      fprintf(stderr, "stgApplyNNNNPN FUN too few args\n");
       #endif
       int fvCount = f.op->infoPtr->fvCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
@@ -26735,14 +28289,14 @@ DEFUN2(stgApplyNNNNPN, N, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApply:  PAP error 1");
+    assert(argCount == f.op->argCount && "stgApplyNNNNPN:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
     if (excess > 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too many args\n");
+      fprintf(stderr, "stgApplyNNNNPN PAP too many args\n");
       #endif
       switch (excess) {
       case 1: {
@@ -26885,7 +28439,7 @@ DEFUN2(stgApplyNNNNPN, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyNNNNPN FUN just right\n");
       #endif
       pushargs(5, nargv);
       pushargs(papnargc, &f.op->payload[fvCount+1+pappargc]);
@@ -26897,7 +28451,7 @@ DEFUN2(stgApplyNNNNPN, N, f) {
     // excess < 0, too few args
     } else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too few args\n");
+      fprintf(stderr, "stgApplyNNNNPN PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 1 + pappargc, 5 + papnargc);
@@ -26930,19 +28484,22 @@ DEFUN2(stgApplyNNNNPN, N, f) {
   } // case PAP
 
   case BLACKHOLE: {
-    fprintf(stderr, "infinite loop detected in stgApply!\n");
+    fprintf(stderr, "infinite loop detected in stgApplyNNNNPN!\n");
     showStgHeap();
     exit(0);
   } // case BLACKHOLE
 
   default:
-    fprintf(stderr, "stgApply not a THUNK, FUN, or PAP\n");
+    fprintf(stderr, "stgApplyNNNNPN not a THUNK, FUN, or PAP\n");
     exit(0);
   }  // switch
   ENDFUN;
 }
 
 DEFUN2(stgApplyPNNNPN, N, f) {
+  #ifdef DEBUGSTGAPPLY
+  fprintf(stderr, "stgApplyPNNNPN %s\n", f.op->infoPtr->name);
+  #endif
   assert(N.argType == INT);
   const int argc = N.i;
   assert(argc == 6);
@@ -26957,13 +28514,25 @@ DEFUN2(stgApplyPNNNPN, N, f) {
   nargv[1] = argv[2];
   nargv[2] = argv[3];
   nargv[3] = argv[5];
+  callContSave(2, pargv);
+  STGEVAL(pargv[0]);
+  callContRestore(pargv);
+  // restore argv
+  argv[0] = pargv[0];
+  argv[4] = pargv[1];
+  callContSave(2, pargv);
+  STGEVAL(pargv[1]);
+  callContRestore(pargv);
+  // restore argv
+  argv[0] = pargv[0];
+  argv[4] = pargv[1];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
     callContSave(2, pargv);
     while (f.op->objType == THUNK) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply THUNK\n");
+      fprintf(stderr, "stgApplyPNNNPN THUNK\n");
       #endif
       STGEVAL(f);
       // f.op = derefPoL(f);
@@ -26978,6 +28547,9 @@ DEFUN2(stgApplyPNNNPN, N, f) {
   switch (f.op->objType) {
   case FUN: {
     int arity = f.op->infoPtr->funFields.arity;
+    #ifdef DEBUGSTGAPPLY
+    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    #endif
     int excess = argc - arity;  // may be negative
 
     // too many args
@@ -27113,7 +28685,7 @@ DEFUN2(stgApplyPNNNPN, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyPNNNPN FUN just right\n");
       #endif
       pushargs(4, nargv);
       pushargs(2, pargv);
@@ -27123,7 +28695,7 @@ DEFUN2(stgApplyPNNNPN, N, f) {
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN too few args\n");
+      fprintf(stderr, "stgApplyPNNNPN FUN too few args\n");
       #endif
       int fvCount = f.op->infoPtr->fvCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
@@ -27152,14 +28724,14 @@ DEFUN2(stgApplyPNNNPN, N, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApply:  PAP error 1");
+    assert(argCount == f.op->argCount && "stgApplyPNNNPN:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
     if (excess > 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too many args\n");
+      fprintf(stderr, "stgApplyPNNNPN PAP too many args\n");
       #endif
       switch (excess) {
       case 1: {
@@ -27302,7 +28874,7 @@ DEFUN2(stgApplyPNNNPN, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyPNNNPN FUN just right\n");
       #endif
       pushargs(4, nargv);
       pushargs(papnargc, &f.op->payload[fvCount+1+pappargc]);
@@ -27314,7 +28886,7 @@ DEFUN2(stgApplyPNNNPN, N, f) {
     // excess < 0, too few args
     } else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too few args\n");
+      fprintf(stderr, "stgApplyPNNNPN PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2 + pappargc, 4 + papnargc);
@@ -27347,19 +28919,22 @@ DEFUN2(stgApplyPNNNPN, N, f) {
   } // case PAP
 
   case BLACKHOLE: {
-    fprintf(stderr, "infinite loop detected in stgApply!\n");
+    fprintf(stderr, "infinite loop detected in stgApplyPNNNPN!\n");
     showStgHeap();
     exit(0);
   } // case BLACKHOLE
 
   default:
-    fprintf(stderr, "stgApply not a THUNK, FUN, or PAP\n");
+    fprintf(stderr, "stgApplyPNNNPN not a THUNK, FUN, or PAP\n");
     exit(0);
   }  // switch
   ENDFUN;
 }
 
 DEFUN2(stgApplyNPNNPN, N, f) {
+  #ifdef DEBUGSTGAPPLY
+  fprintf(stderr, "stgApplyNPNNPN %s\n", f.op->infoPtr->name);
+  #endif
   assert(N.argType == INT);
   const int argc = N.i;
   assert(argc == 6);
@@ -27374,13 +28949,25 @@ DEFUN2(stgApplyNPNNPN, N, f) {
   nargv[1] = argv[2];
   nargv[2] = argv[3];
   nargv[3] = argv[5];
+  callContSave(2, pargv);
+  STGEVAL(pargv[0]);
+  callContRestore(pargv);
+  // restore argv
+  argv[1] = pargv[0];
+  argv[4] = pargv[1];
+  callContSave(2, pargv);
+  STGEVAL(pargv[1]);
+  callContRestore(pargv);
+  // restore argv
+  argv[1] = pargv[0];
+  argv[4] = pargv[1];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
     callContSave(2, pargv);
     while (f.op->objType == THUNK) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply THUNK\n");
+      fprintf(stderr, "stgApplyNPNNPN THUNK\n");
       #endif
       STGEVAL(f);
       // f.op = derefPoL(f);
@@ -27395,6 +28982,9 @@ DEFUN2(stgApplyNPNNPN, N, f) {
   switch (f.op->objType) {
   case FUN: {
     int arity = f.op->infoPtr->funFields.arity;
+    #ifdef DEBUGSTGAPPLY
+    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    #endif
     int excess = argc - arity;  // may be negative
 
     // too many args
@@ -27531,7 +29121,7 @@ DEFUN2(stgApplyNPNNPN, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyNPNNPN FUN just right\n");
       #endif
       pushargs(4, nargv);
       pushargs(2, pargv);
@@ -27541,7 +29131,7 @@ DEFUN2(stgApplyNPNNPN, N, f) {
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN too few args\n");
+      fprintf(stderr, "stgApplyNPNNPN FUN too few args\n");
       #endif
       int fvCount = f.op->infoPtr->fvCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
@@ -27570,14 +29160,14 @@ DEFUN2(stgApplyNPNNPN, N, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApply:  PAP error 1");
+    assert(argCount == f.op->argCount && "stgApplyNPNNPN:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
     if (excess > 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too many args\n");
+      fprintf(stderr, "stgApplyNPNNPN PAP too many args\n");
       #endif
       switch (excess) {
       case 1: {
@@ -27721,7 +29311,7 @@ DEFUN2(stgApplyNPNNPN, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyNPNNPN FUN just right\n");
       #endif
       pushargs(4, nargv);
       pushargs(papnargc, &f.op->payload[fvCount+1+pappargc]);
@@ -27733,7 +29323,7 @@ DEFUN2(stgApplyNPNNPN, N, f) {
     // excess < 0, too few args
     } else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too few args\n");
+      fprintf(stderr, "stgApplyNPNNPN PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2 + pappargc, 4 + papnargc);
@@ -27766,19 +29356,22 @@ DEFUN2(stgApplyNPNNPN, N, f) {
   } // case PAP
 
   case BLACKHOLE: {
-    fprintf(stderr, "infinite loop detected in stgApply!\n");
+    fprintf(stderr, "infinite loop detected in stgApplyNPNNPN!\n");
     showStgHeap();
     exit(0);
   } // case BLACKHOLE
 
   default:
-    fprintf(stderr, "stgApply not a THUNK, FUN, or PAP\n");
+    fprintf(stderr, "stgApplyNPNNPN not a THUNK, FUN, or PAP\n");
     exit(0);
   }  // switch
   ENDFUN;
 }
 
 DEFUN2(stgApplyPPNNPN, N, f) {
+  #ifdef DEBUGSTGAPPLY
+  fprintf(stderr, "stgApplyPPNNPN %s\n", f.op->infoPtr->name);
+  #endif
   assert(N.argType == INT);
   const int argc = N.i;
   assert(argc == 6);
@@ -27793,13 +29386,34 @@ DEFUN2(stgApplyPPNNPN, N, f) {
   nargv[0] = argv[2];
   nargv[1] = argv[3];
   nargv[2] = argv[5];
+  callContSave(3, pargv);
+  STGEVAL(pargv[0]);
+  callContRestore(pargv);
+  // restore argv
+  argv[0] = pargv[0];
+  argv[1] = pargv[1];
+  argv[4] = pargv[2];
+  callContSave(3, pargv);
+  STGEVAL(pargv[1]);
+  callContRestore(pargv);
+  // restore argv
+  argv[0] = pargv[0];
+  argv[1] = pargv[1];
+  argv[4] = pargv[2];
+  callContSave(3, pargv);
+  STGEVAL(pargv[2]);
+  callContRestore(pargv);
+  // restore argv
+  argv[0] = pargv[0];
+  argv[1] = pargv[1];
+  argv[4] = pargv[2];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
     callContSave(3, pargv);
     while (f.op->objType == THUNK) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply THUNK\n");
+      fprintf(stderr, "stgApplyPPNNPN THUNK\n");
       #endif
       STGEVAL(f);
       // f.op = derefPoL(f);
@@ -27815,6 +29429,9 @@ DEFUN2(stgApplyPPNNPN, N, f) {
   switch (f.op->objType) {
   case FUN: {
     int arity = f.op->infoPtr->funFields.arity;
+    #ifdef DEBUGSTGAPPLY
+    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    #endif
     int excess = argc - arity;  // may be negative
 
     // too many args
@@ -27951,7 +29568,7 @@ DEFUN2(stgApplyPPNNPN, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyPPNNPN FUN just right\n");
       #endif
       pushargs(3, nargv);
       pushargs(3, pargv);
@@ -27961,7 +29578,7 @@ DEFUN2(stgApplyPPNNPN, N, f) {
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN too few args\n");
+      fprintf(stderr, "stgApplyPPNNPN FUN too few args\n");
       #endif
       int fvCount = f.op->infoPtr->fvCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
@@ -27990,14 +29607,14 @@ DEFUN2(stgApplyPPNNPN, N, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApply:  PAP error 1");
+    assert(argCount == f.op->argCount && "stgApplyPPNNPN:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
     if (excess > 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too many args\n");
+      fprintf(stderr, "stgApplyPPNNPN PAP too many args\n");
       #endif
       switch (excess) {
       case 1: {
@@ -28141,7 +29758,7 @@ DEFUN2(stgApplyPPNNPN, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyPPNNPN FUN just right\n");
       #endif
       pushargs(3, nargv);
       pushargs(papnargc, &f.op->payload[fvCount+1+pappargc]);
@@ -28153,7 +29770,7 @@ DEFUN2(stgApplyPPNNPN, N, f) {
     // excess < 0, too few args
     } else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too few args\n");
+      fprintf(stderr, "stgApplyPPNNPN PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3 + pappargc, 3 + papnargc);
@@ -28186,19 +29803,22 @@ DEFUN2(stgApplyPPNNPN, N, f) {
   } // case PAP
 
   case BLACKHOLE: {
-    fprintf(stderr, "infinite loop detected in stgApply!\n");
+    fprintf(stderr, "infinite loop detected in stgApplyPPNNPN!\n");
     showStgHeap();
     exit(0);
   } // case BLACKHOLE
 
   default:
-    fprintf(stderr, "stgApply not a THUNK, FUN, or PAP\n");
+    fprintf(stderr, "stgApplyPPNNPN not a THUNK, FUN, or PAP\n");
     exit(0);
   }  // switch
   ENDFUN;
 }
 
 DEFUN2(stgApplyNNPNPN, N, f) {
+  #ifdef DEBUGSTGAPPLY
+  fprintf(stderr, "stgApplyNNPNPN %s\n", f.op->infoPtr->name);
+  #endif
   assert(N.argType == INT);
   const int argc = N.i;
   assert(argc == 6);
@@ -28213,13 +29833,25 @@ DEFUN2(stgApplyNNPNPN, N, f) {
   nargv[1] = argv[1];
   nargv[2] = argv[3];
   nargv[3] = argv[5];
+  callContSave(2, pargv);
+  STGEVAL(pargv[0]);
+  callContRestore(pargv);
+  // restore argv
+  argv[2] = pargv[0];
+  argv[4] = pargv[1];
+  callContSave(2, pargv);
+  STGEVAL(pargv[1]);
+  callContRestore(pargv);
+  // restore argv
+  argv[2] = pargv[0];
+  argv[4] = pargv[1];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
     callContSave(2, pargv);
     while (f.op->objType == THUNK) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply THUNK\n");
+      fprintf(stderr, "stgApplyNNPNPN THUNK\n");
       #endif
       STGEVAL(f);
       // f.op = derefPoL(f);
@@ -28234,6 +29866,9 @@ DEFUN2(stgApplyNNPNPN, N, f) {
   switch (f.op->objType) {
   case FUN: {
     int arity = f.op->infoPtr->funFields.arity;
+    #ifdef DEBUGSTGAPPLY
+    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    #endif
     int excess = argc - arity;  // may be negative
 
     // too many args
@@ -28371,7 +30006,7 @@ DEFUN2(stgApplyNNPNPN, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyNNPNPN FUN just right\n");
       #endif
       pushargs(4, nargv);
       pushargs(2, pargv);
@@ -28381,7 +30016,7 @@ DEFUN2(stgApplyNNPNPN, N, f) {
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN too few args\n");
+      fprintf(stderr, "stgApplyNNPNPN FUN too few args\n");
       #endif
       int fvCount = f.op->infoPtr->fvCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
@@ -28410,14 +30045,14 @@ DEFUN2(stgApplyNNPNPN, N, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApply:  PAP error 1");
+    assert(argCount == f.op->argCount && "stgApplyNNPNPN:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
     if (excess > 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too many args\n");
+      fprintf(stderr, "stgApplyNNPNPN PAP too many args\n");
       #endif
       switch (excess) {
       case 1: {
@@ -28562,7 +30197,7 @@ DEFUN2(stgApplyNNPNPN, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyNNPNPN FUN just right\n");
       #endif
       pushargs(4, nargv);
       pushargs(papnargc, &f.op->payload[fvCount+1+pappargc]);
@@ -28574,7 +30209,7 @@ DEFUN2(stgApplyNNPNPN, N, f) {
     // excess < 0, too few args
     } else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too few args\n");
+      fprintf(stderr, "stgApplyNNPNPN PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2 + pappargc, 4 + papnargc);
@@ -28607,19 +30242,22 @@ DEFUN2(stgApplyNNPNPN, N, f) {
   } // case PAP
 
   case BLACKHOLE: {
-    fprintf(stderr, "infinite loop detected in stgApply!\n");
+    fprintf(stderr, "infinite loop detected in stgApplyNNPNPN!\n");
     showStgHeap();
     exit(0);
   } // case BLACKHOLE
 
   default:
-    fprintf(stderr, "stgApply not a THUNK, FUN, or PAP\n");
+    fprintf(stderr, "stgApplyNNPNPN not a THUNK, FUN, or PAP\n");
     exit(0);
   }  // switch
   ENDFUN;
 }
 
 DEFUN2(stgApplyPNPNPN, N, f) {
+  #ifdef DEBUGSTGAPPLY
+  fprintf(stderr, "stgApplyPNPNPN %s\n", f.op->infoPtr->name);
+  #endif
   assert(N.argType == INT);
   const int argc = N.i;
   assert(argc == 6);
@@ -28634,13 +30272,34 @@ DEFUN2(stgApplyPNPNPN, N, f) {
   nargv[0] = argv[1];
   nargv[1] = argv[3];
   nargv[2] = argv[5];
+  callContSave(3, pargv);
+  STGEVAL(pargv[0]);
+  callContRestore(pargv);
+  // restore argv
+  argv[0] = pargv[0];
+  argv[2] = pargv[1];
+  argv[4] = pargv[2];
+  callContSave(3, pargv);
+  STGEVAL(pargv[1]);
+  callContRestore(pargv);
+  // restore argv
+  argv[0] = pargv[0];
+  argv[2] = pargv[1];
+  argv[4] = pargv[2];
+  callContSave(3, pargv);
+  STGEVAL(pargv[2]);
+  callContRestore(pargv);
+  // restore argv
+  argv[0] = pargv[0];
+  argv[2] = pargv[1];
+  argv[4] = pargv[2];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
     callContSave(3, pargv);
     while (f.op->objType == THUNK) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply THUNK\n");
+      fprintf(stderr, "stgApplyPNPNPN THUNK\n");
       #endif
       STGEVAL(f);
       // f.op = derefPoL(f);
@@ -28656,6 +30315,9 @@ DEFUN2(stgApplyPNPNPN, N, f) {
   switch (f.op->objType) {
   case FUN: {
     int arity = f.op->infoPtr->funFields.arity;
+    #ifdef DEBUGSTGAPPLY
+    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    #endif
     int excess = argc - arity;  // may be negative
 
     // too many args
@@ -28793,7 +30455,7 @@ DEFUN2(stgApplyPNPNPN, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyPNPNPN FUN just right\n");
       #endif
       pushargs(3, nargv);
       pushargs(3, pargv);
@@ -28803,7 +30465,7 @@ DEFUN2(stgApplyPNPNPN, N, f) {
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN too few args\n");
+      fprintf(stderr, "stgApplyPNPNPN FUN too few args\n");
       #endif
       int fvCount = f.op->infoPtr->fvCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
@@ -28832,14 +30494,14 @@ DEFUN2(stgApplyPNPNPN, N, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApply:  PAP error 1");
+    assert(argCount == f.op->argCount && "stgApplyPNPNPN:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
     if (excess > 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too many args\n");
+      fprintf(stderr, "stgApplyPNPNPN PAP too many args\n");
       #endif
       switch (excess) {
       case 1: {
@@ -28984,7 +30646,7 @@ DEFUN2(stgApplyPNPNPN, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyPNPNPN FUN just right\n");
       #endif
       pushargs(3, nargv);
       pushargs(papnargc, &f.op->payload[fvCount+1+pappargc]);
@@ -28996,7 +30658,7 @@ DEFUN2(stgApplyPNPNPN, N, f) {
     // excess < 0, too few args
     } else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too few args\n");
+      fprintf(stderr, "stgApplyPNPNPN PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3 + pappargc, 3 + papnargc);
@@ -29029,19 +30691,22 @@ DEFUN2(stgApplyPNPNPN, N, f) {
   } // case PAP
 
   case BLACKHOLE: {
-    fprintf(stderr, "infinite loop detected in stgApply!\n");
+    fprintf(stderr, "infinite loop detected in stgApplyPNPNPN!\n");
     showStgHeap();
     exit(0);
   } // case BLACKHOLE
 
   default:
-    fprintf(stderr, "stgApply not a THUNK, FUN, or PAP\n");
+    fprintf(stderr, "stgApplyPNPNPN not a THUNK, FUN, or PAP\n");
     exit(0);
   }  // switch
   ENDFUN;
 }
 
 DEFUN2(stgApplyNPPNPN, N, f) {
+  #ifdef DEBUGSTGAPPLY
+  fprintf(stderr, "stgApplyNPPNPN %s\n", f.op->infoPtr->name);
+  #endif
   assert(N.argType == INT);
   const int argc = N.i;
   assert(argc == 6);
@@ -29056,13 +30721,34 @@ DEFUN2(stgApplyNPPNPN, N, f) {
   nargv[0] = argv[0];
   nargv[1] = argv[3];
   nargv[2] = argv[5];
+  callContSave(3, pargv);
+  STGEVAL(pargv[0]);
+  callContRestore(pargv);
+  // restore argv
+  argv[1] = pargv[0];
+  argv[2] = pargv[1];
+  argv[4] = pargv[2];
+  callContSave(3, pargv);
+  STGEVAL(pargv[1]);
+  callContRestore(pargv);
+  // restore argv
+  argv[1] = pargv[0];
+  argv[2] = pargv[1];
+  argv[4] = pargv[2];
+  callContSave(3, pargv);
+  STGEVAL(pargv[2]);
+  callContRestore(pargv);
+  // restore argv
+  argv[1] = pargv[0];
+  argv[2] = pargv[1];
+  argv[4] = pargv[2];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
     callContSave(3, pargv);
     while (f.op->objType == THUNK) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply THUNK\n");
+      fprintf(stderr, "stgApplyNPPNPN THUNK\n");
       #endif
       STGEVAL(f);
       // f.op = derefPoL(f);
@@ -29078,6 +30764,9 @@ DEFUN2(stgApplyNPPNPN, N, f) {
   switch (f.op->objType) {
   case FUN: {
     int arity = f.op->infoPtr->funFields.arity;
+    #ifdef DEBUGSTGAPPLY
+    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    #endif
     int excess = argc - arity;  // may be negative
 
     // too many args
@@ -29216,7 +30905,7 @@ DEFUN2(stgApplyNPPNPN, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyNPPNPN FUN just right\n");
       #endif
       pushargs(3, nargv);
       pushargs(3, pargv);
@@ -29226,7 +30915,7 @@ DEFUN2(stgApplyNPPNPN, N, f) {
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN too few args\n");
+      fprintf(stderr, "stgApplyNPPNPN FUN too few args\n");
       #endif
       int fvCount = f.op->infoPtr->fvCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
@@ -29255,14 +30944,14 @@ DEFUN2(stgApplyNPPNPN, N, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApply:  PAP error 1");
+    assert(argCount == f.op->argCount && "stgApplyNPPNPN:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
     if (excess > 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too many args\n");
+      fprintf(stderr, "stgApplyNPPNPN PAP too many args\n");
       #endif
       switch (excess) {
       case 1: {
@@ -29408,7 +31097,7 @@ DEFUN2(stgApplyNPPNPN, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyNPPNPN FUN just right\n");
       #endif
       pushargs(3, nargv);
       pushargs(papnargc, &f.op->payload[fvCount+1+pappargc]);
@@ -29420,7 +31109,7 @@ DEFUN2(stgApplyNPPNPN, N, f) {
     // excess < 0, too few args
     } else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too few args\n");
+      fprintf(stderr, "stgApplyNPPNPN PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3 + pappargc, 3 + papnargc);
@@ -29453,19 +31142,22 @@ DEFUN2(stgApplyNPPNPN, N, f) {
   } // case PAP
 
   case BLACKHOLE: {
-    fprintf(stderr, "infinite loop detected in stgApply!\n");
+    fprintf(stderr, "infinite loop detected in stgApplyNPPNPN!\n");
     showStgHeap();
     exit(0);
   } // case BLACKHOLE
 
   default:
-    fprintf(stderr, "stgApply not a THUNK, FUN, or PAP\n");
+    fprintf(stderr, "stgApplyNPPNPN not a THUNK, FUN, or PAP\n");
     exit(0);
   }  // switch
   ENDFUN;
 }
 
 DEFUN2(stgApplyPPPNPN, N, f) {
+  #ifdef DEBUGSTGAPPLY
+  fprintf(stderr, "stgApplyPPPNPN %s\n", f.op->infoPtr->name);
+  #endif
   assert(N.argType == INT);
   const int argc = N.i;
   assert(argc == 6);
@@ -29480,13 +31172,45 @@ DEFUN2(stgApplyPPPNPN, N, f) {
   PtrOrLiteral nargv[2];
   nargv[0] = argv[3];
   nargv[1] = argv[5];
+  callContSave(4, pargv);
+  STGEVAL(pargv[0]);
+  callContRestore(pargv);
+  // restore argv
+  argv[0] = pargv[0];
+  argv[1] = pargv[1];
+  argv[2] = pargv[2];
+  argv[4] = pargv[3];
+  callContSave(4, pargv);
+  STGEVAL(pargv[1]);
+  callContRestore(pargv);
+  // restore argv
+  argv[0] = pargv[0];
+  argv[1] = pargv[1];
+  argv[2] = pargv[2];
+  argv[4] = pargv[3];
+  callContSave(4, pargv);
+  STGEVAL(pargv[2]);
+  callContRestore(pargv);
+  // restore argv
+  argv[0] = pargv[0];
+  argv[1] = pargv[1];
+  argv[2] = pargv[2];
+  argv[4] = pargv[3];
+  callContSave(4, pargv);
+  STGEVAL(pargv[3]);
+  callContRestore(pargv);
+  // restore argv
+  argv[0] = pargv[0];
+  argv[1] = pargv[1];
+  argv[2] = pargv[2];
+  argv[4] = pargv[3];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
     callContSave(4, pargv);
     while (f.op->objType == THUNK) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply THUNK\n");
+      fprintf(stderr, "stgApplyPPPNPN THUNK\n");
       #endif
       STGEVAL(f);
       // f.op = derefPoL(f);
@@ -29503,6 +31227,9 @@ DEFUN2(stgApplyPPPNPN, N, f) {
   switch (f.op->objType) {
   case FUN: {
     int arity = f.op->infoPtr->funFields.arity;
+    #ifdef DEBUGSTGAPPLY
+    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    #endif
     int excess = argc - arity;  // may be negative
 
     // too many args
@@ -29641,7 +31368,7 @@ DEFUN2(stgApplyPPPNPN, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyPPPNPN FUN just right\n");
       #endif
       pushargs(2, nargv);
       pushargs(4, pargv);
@@ -29651,7 +31378,7 @@ DEFUN2(stgApplyPPPNPN, N, f) {
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN too few args\n");
+      fprintf(stderr, "stgApplyPPPNPN FUN too few args\n");
       #endif
       int fvCount = f.op->infoPtr->fvCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
@@ -29680,14 +31407,14 @@ DEFUN2(stgApplyPPPNPN, N, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApply:  PAP error 1");
+    assert(argCount == f.op->argCount && "stgApplyPPPNPN:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
     if (excess > 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too many args\n");
+      fprintf(stderr, "stgApplyPPPNPN PAP too many args\n");
       #endif
       switch (excess) {
       case 1: {
@@ -29833,7 +31560,7 @@ DEFUN2(stgApplyPPPNPN, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyPPPNPN FUN just right\n");
       #endif
       pushargs(2, nargv);
       pushargs(papnargc, &f.op->payload[fvCount+1+pappargc]);
@@ -29845,7 +31572,7 @@ DEFUN2(stgApplyPPPNPN, N, f) {
     // excess < 0, too few args
     } else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too few args\n");
+      fprintf(stderr, "stgApplyPPPNPN PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 4 + pappargc, 2 + papnargc);
@@ -29878,19 +31605,22 @@ DEFUN2(stgApplyPPPNPN, N, f) {
   } // case PAP
 
   case BLACKHOLE: {
-    fprintf(stderr, "infinite loop detected in stgApply!\n");
+    fprintf(stderr, "infinite loop detected in stgApplyPPPNPN!\n");
     showStgHeap();
     exit(0);
   } // case BLACKHOLE
 
   default:
-    fprintf(stderr, "stgApply not a THUNK, FUN, or PAP\n");
+    fprintf(stderr, "stgApplyPPPNPN not a THUNK, FUN, or PAP\n");
     exit(0);
   }  // switch
   ENDFUN;
 }
 
 DEFUN2(stgApplyNNNPPN, N, f) {
+  #ifdef DEBUGSTGAPPLY
+  fprintf(stderr, "stgApplyNNNPPN %s\n", f.op->infoPtr->name);
+  #endif
   assert(N.argType == INT);
   const int argc = N.i;
   assert(argc == 6);
@@ -29905,13 +31635,25 @@ DEFUN2(stgApplyNNNPPN, N, f) {
   nargv[1] = argv[1];
   nargv[2] = argv[2];
   nargv[3] = argv[5];
+  callContSave(2, pargv);
+  STGEVAL(pargv[0]);
+  callContRestore(pargv);
+  // restore argv
+  argv[3] = pargv[0];
+  argv[4] = pargv[1];
+  callContSave(2, pargv);
+  STGEVAL(pargv[1]);
+  callContRestore(pargv);
+  // restore argv
+  argv[3] = pargv[0];
+  argv[4] = pargv[1];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
     callContSave(2, pargv);
     while (f.op->objType == THUNK) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply THUNK\n");
+      fprintf(stderr, "stgApplyNNNPPN THUNK\n");
       #endif
       STGEVAL(f);
       // f.op = derefPoL(f);
@@ -29926,6 +31668,9 @@ DEFUN2(stgApplyNNNPPN, N, f) {
   switch (f.op->objType) {
   case FUN: {
     int arity = f.op->infoPtr->funFields.arity;
+    #ifdef DEBUGSTGAPPLY
+    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    #endif
     int excess = argc - arity;  // may be negative
 
     // too many args
@@ -30064,7 +31809,7 @@ DEFUN2(stgApplyNNNPPN, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyNNNPPN FUN just right\n");
       #endif
       pushargs(4, nargv);
       pushargs(2, pargv);
@@ -30074,7 +31819,7 @@ DEFUN2(stgApplyNNNPPN, N, f) {
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN too few args\n");
+      fprintf(stderr, "stgApplyNNNPPN FUN too few args\n");
       #endif
       int fvCount = f.op->infoPtr->fvCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
@@ -30103,14 +31848,14 @@ DEFUN2(stgApplyNNNPPN, N, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApply:  PAP error 1");
+    assert(argCount == f.op->argCount && "stgApplyNNNPPN:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
     if (excess > 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too many args\n");
+      fprintf(stderr, "stgApplyNNNPPN PAP too many args\n");
       #endif
       switch (excess) {
       case 1: {
@@ -30256,7 +32001,7 @@ DEFUN2(stgApplyNNNPPN, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyNNNPPN FUN just right\n");
       #endif
       pushargs(4, nargv);
       pushargs(papnargc, &f.op->payload[fvCount+1+pappargc]);
@@ -30268,7 +32013,7 @@ DEFUN2(stgApplyNNNPPN, N, f) {
     // excess < 0, too few args
     } else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too few args\n");
+      fprintf(stderr, "stgApplyNNNPPN PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2 + pappargc, 4 + papnargc);
@@ -30301,19 +32046,22 @@ DEFUN2(stgApplyNNNPPN, N, f) {
   } // case PAP
 
   case BLACKHOLE: {
-    fprintf(stderr, "infinite loop detected in stgApply!\n");
+    fprintf(stderr, "infinite loop detected in stgApplyNNNPPN!\n");
     showStgHeap();
     exit(0);
   } // case BLACKHOLE
 
   default:
-    fprintf(stderr, "stgApply not a THUNK, FUN, or PAP\n");
+    fprintf(stderr, "stgApplyNNNPPN not a THUNK, FUN, or PAP\n");
     exit(0);
   }  // switch
   ENDFUN;
 }
 
 DEFUN2(stgApplyPNNPPN, N, f) {
+  #ifdef DEBUGSTGAPPLY
+  fprintf(stderr, "stgApplyPNNPPN %s\n", f.op->infoPtr->name);
+  #endif
   assert(N.argType == INT);
   const int argc = N.i;
   assert(argc == 6);
@@ -30328,13 +32076,34 @@ DEFUN2(stgApplyPNNPPN, N, f) {
   nargv[0] = argv[1];
   nargv[1] = argv[2];
   nargv[2] = argv[5];
+  callContSave(3, pargv);
+  STGEVAL(pargv[0]);
+  callContRestore(pargv);
+  // restore argv
+  argv[0] = pargv[0];
+  argv[3] = pargv[1];
+  argv[4] = pargv[2];
+  callContSave(3, pargv);
+  STGEVAL(pargv[1]);
+  callContRestore(pargv);
+  // restore argv
+  argv[0] = pargv[0];
+  argv[3] = pargv[1];
+  argv[4] = pargv[2];
+  callContSave(3, pargv);
+  STGEVAL(pargv[2]);
+  callContRestore(pargv);
+  // restore argv
+  argv[0] = pargv[0];
+  argv[3] = pargv[1];
+  argv[4] = pargv[2];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
     callContSave(3, pargv);
     while (f.op->objType == THUNK) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply THUNK\n");
+      fprintf(stderr, "stgApplyPNNPPN THUNK\n");
       #endif
       STGEVAL(f);
       // f.op = derefPoL(f);
@@ -30350,6 +32119,9 @@ DEFUN2(stgApplyPNNPPN, N, f) {
   switch (f.op->objType) {
   case FUN: {
     int arity = f.op->infoPtr->funFields.arity;
+    #ifdef DEBUGSTGAPPLY
+    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    #endif
     int excess = argc - arity;  // may be negative
 
     // too many args
@@ -30488,7 +32260,7 @@ DEFUN2(stgApplyPNNPPN, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyPNNPPN FUN just right\n");
       #endif
       pushargs(3, nargv);
       pushargs(3, pargv);
@@ -30498,7 +32270,7 @@ DEFUN2(stgApplyPNNPPN, N, f) {
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN too few args\n");
+      fprintf(stderr, "stgApplyPNNPPN FUN too few args\n");
       #endif
       int fvCount = f.op->infoPtr->fvCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
@@ -30527,14 +32299,14 @@ DEFUN2(stgApplyPNNPPN, N, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApply:  PAP error 1");
+    assert(argCount == f.op->argCount && "stgApplyPNNPPN:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
     if (excess > 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too many args\n");
+      fprintf(stderr, "stgApplyPNNPPN PAP too many args\n");
       #endif
       switch (excess) {
       case 1: {
@@ -30680,7 +32452,7 @@ DEFUN2(stgApplyPNNPPN, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyPNNPPN FUN just right\n");
       #endif
       pushargs(3, nargv);
       pushargs(papnargc, &f.op->payload[fvCount+1+pappargc]);
@@ -30692,7 +32464,7 @@ DEFUN2(stgApplyPNNPPN, N, f) {
     // excess < 0, too few args
     } else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too few args\n");
+      fprintf(stderr, "stgApplyPNNPPN PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3 + pappargc, 3 + papnargc);
@@ -30725,19 +32497,22 @@ DEFUN2(stgApplyPNNPPN, N, f) {
   } // case PAP
 
   case BLACKHOLE: {
-    fprintf(stderr, "infinite loop detected in stgApply!\n");
+    fprintf(stderr, "infinite loop detected in stgApplyPNNPPN!\n");
     showStgHeap();
     exit(0);
   } // case BLACKHOLE
 
   default:
-    fprintf(stderr, "stgApply not a THUNK, FUN, or PAP\n");
+    fprintf(stderr, "stgApplyPNNPPN not a THUNK, FUN, or PAP\n");
     exit(0);
   }  // switch
   ENDFUN;
 }
 
 DEFUN2(stgApplyNPNPPN, N, f) {
+  #ifdef DEBUGSTGAPPLY
+  fprintf(stderr, "stgApplyNPNPPN %s\n", f.op->infoPtr->name);
+  #endif
   assert(N.argType == INT);
   const int argc = N.i;
   assert(argc == 6);
@@ -30752,13 +32527,34 @@ DEFUN2(stgApplyNPNPPN, N, f) {
   nargv[0] = argv[0];
   nargv[1] = argv[2];
   nargv[2] = argv[5];
+  callContSave(3, pargv);
+  STGEVAL(pargv[0]);
+  callContRestore(pargv);
+  // restore argv
+  argv[1] = pargv[0];
+  argv[3] = pargv[1];
+  argv[4] = pargv[2];
+  callContSave(3, pargv);
+  STGEVAL(pargv[1]);
+  callContRestore(pargv);
+  // restore argv
+  argv[1] = pargv[0];
+  argv[3] = pargv[1];
+  argv[4] = pargv[2];
+  callContSave(3, pargv);
+  STGEVAL(pargv[2]);
+  callContRestore(pargv);
+  // restore argv
+  argv[1] = pargv[0];
+  argv[3] = pargv[1];
+  argv[4] = pargv[2];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
     callContSave(3, pargv);
     while (f.op->objType == THUNK) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply THUNK\n");
+      fprintf(stderr, "stgApplyNPNPPN THUNK\n");
       #endif
       STGEVAL(f);
       // f.op = derefPoL(f);
@@ -30774,6 +32570,9 @@ DEFUN2(stgApplyNPNPPN, N, f) {
   switch (f.op->objType) {
   case FUN: {
     int arity = f.op->infoPtr->funFields.arity;
+    #ifdef DEBUGSTGAPPLY
+    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    #endif
     int excess = argc - arity;  // may be negative
 
     // too many args
@@ -30913,7 +32712,7 @@ DEFUN2(stgApplyNPNPPN, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyNPNPPN FUN just right\n");
       #endif
       pushargs(3, nargv);
       pushargs(3, pargv);
@@ -30923,7 +32722,7 @@ DEFUN2(stgApplyNPNPPN, N, f) {
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN too few args\n");
+      fprintf(stderr, "stgApplyNPNPPN FUN too few args\n");
       #endif
       int fvCount = f.op->infoPtr->fvCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
@@ -30952,14 +32751,14 @@ DEFUN2(stgApplyNPNPPN, N, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApply:  PAP error 1");
+    assert(argCount == f.op->argCount && "stgApplyNPNPPN:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
     if (excess > 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too many args\n");
+      fprintf(stderr, "stgApplyNPNPPN PAP too many args\n");
       #endif
       switch (excess) {
       case 1: {
@@ -31106,7 +32905,7 @@ DEFUN2(stgApplyNPNPPN, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyNPNPPN FUN just right\n");
       #endif
       pushargs(3, nargv);
       pushargs(papnargc, &f.op->payload[fvCount+1+pappargc]);
@@ -31118,7 +32917,7 @@ DEFUN2(stgApplyNPNPPN, N, f) {
     // excess < 0, too few args
     } else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too few args\n");
+      fprintf(stderr, "stgApplyNPNPPN PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3 + pappargc, 3 + papnargc);
@@ -31151,19 +32950,22 @@ DEFUN2(stgApplyNPNPPN, N, f) {
   } // case PAP
 
   case BLACKHOLE: {
-    fprintf(stderr, "infinite loop detected in stgApply!\n");
+    fprintf(stderr, "infinite loop detected in stgApplyNPNPPN!\n");
     showStgHeap();
     exit(0);
   } // case BLACKHOLE
 
   default:
-    fprintf(stderr, "stgApply not a THUNK, FUN, or PAP\n");
+    fprintf(stderr, "stgApplyNPNPPN not a THUNK, FUN, or PAP\n");
     exit(0);
   }  // switch
   ENDFUN;
 }
 
 DEFUN2(stgApplyPPNPPN, N, f) {
+  #ifdef DEBUGSTGAPPLY
+  fprintf(stderr, "stgApplyPPNPPN %s\n", f.op->infoPtr->name);
+  #endif
   assert(N.argType == INT);
   const int argc = N.i;
   assert(argc == 6);
@@ -31178,13 +32980,45 @@ DEFUN2(stgApplyPPNPPN, N, f) {
   PtrOrLiteral nargv[2];
   nargv[0] = argv[2];
   nargv[1] = argv[5];
+  callContSave(4, pargv);
+  STGEVAL(pargv[0]);
+  callContRestore(pargv);
+  // restore argv
+  argv[0] = pargv[0];
+  argv[1] = pargv[1];
+  argv[3] = pargv[2];
+  argv[4] = pargv[3];
+  callContSave(4, pargv);
+  STGEVAL(pargv[1]);
+  callContRestore(pargv);
+  // restore argv
+  argv[0] = pargv[0];
+  argv[1] = pargv[1];
+  argv[3] = pargv[2];
+  argv[4] = pargv[3];
+  callContSave(4, pargv);
+  STGEVAL(pargv[2]);
+  callContRestore(pargv);
+  // restore argv
+  argv[0] = pargv[0];
+  argv[1] = pargv[1];
+  argv[3] = pargv[2];
+  argv[4] = pargv[3];
+  callContSave(4, pargv);
+  STGEVAL(pargv[3]);
+  callContRestore(pargv);
+  // restore argv
+  argv[0] = pargv[0];
+  argv[1] = pargv[1];
+  argv[3] = pargv[2];
+  argv[4] = pargv[3];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
     callContSave(4, pargv);
     while (f.op->objType == THUNK) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply THUNK\n");
+      fprintf(stderr, "stgApplyPPNPPN THUNK\n");
       #endif
       STGEVAL(f);
       // f.op = derefPoL(f);
@@ -31201,6 +33035,9 @@ DEFUN2(stgApplyPPNPPN, N, f) {
   switch (f.op->objType) {
   case FUN: {
     int arity = f.op->infoPtr->funFields.arity;
+    #ifdef DEBUGSTGAPPLY
+    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    #endif
     int excess = argc - arity;  // may be negative
 
     // too many args
@@ -31340,7 +33177,7 @@ DEFUN2(stgApplyPPNPPN, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyPPNPPN FUN just right\n");
       #endif
       pushargs(2, nargv);
       pushargs(4, pargv);
@@ -31350,7 +33187,7 @@ DEFUN2(stgApplyPPNPPN, N, f) {
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN too few args\n");
+      fprintf(stderr, "stgApplyPPNPPN FUN too few args\n");
       #endif
       int fvCount = f.op->infoPtr->fvCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
@@ -31379,14 +33216,14 @@ DEFUN2(stgApplyPPNPPN, N, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApply:  PAP error 1");
+    assert(argCount == f.op->argCount && "stgApplyPPNPPN:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
     if (excess > 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too many args\n");
+      fprintf(stderr, "stgApplyPPNPPN PAP too many args\n");
       #endif
       switch (excess) {
       case 1: {
@@ -31533,7 +33370,7 @@ DEFUN2(stgApplyPPNPPN, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyPPNPPN FUN just right\n");
       #endif
       pushargs(2, nargv);
       pushargs(papnargc, &f.op->payload[fvCount+1+pappargc]);
@@ -31545,7 +33382,7 @@ DEFUN2(stgApplyPPNPPN, N, f) {
     // excess < 0, too few args
     } else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too few args\n");
+      fprintf(stderr, "stgApplyPPNPPN PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 4 + pappargc, 2 + papnargc);
@@ -31578,19 +33415,22 @@ DEFUN2(stgApplyPPNPPN, N, f) {
   } // case PAP
 
   case BLACKHOLE: {
-    fprintf(stderr, "infinite loop detected in stgApply!\n");
+    fprintf(stderr, "infinite loop detected in stgApplyPPNPPN!\n");
     showStgHeap();
     exit(0);
   } // case BLACKHOLE
 
   default:
-    fprintf(stderr, "stgApply not a THUNK, FUN, or PAP\n");
+    fprintf(stderr, "stgApplyPPNPPN not a THUNK, FUN, or PAP\n");
     exit(0);
   }  // switch
   ENDFUN;
 }
 
 DEFUN2(stgApplyNNPPPN, N, f) {
+  #ifdef DEBUGSTGAPPLY
+  fprintf(stderr, "stgApplyNNPPPN %s\n", f.op->infoPtr->name);
+  #endif
   assert(N.argType == INT);
   const int argc = N.i;
   assert(argc == 6);
@@ -31605,13 +33445,34 @@ DEFUN2(stgApplyNNPPPN, N, f) {
   nargv[0] = argv[0];
   nargv[1] = argv[1];
   nargv[2] = argv[5];
+  callContSave(3, pargv);
+  STGEVAL(pargv[0]);
+  callContRestore(pargv);
+  // restore argv
+  argv[2] = pargv[0];
+  argv[3] = pargv[1];
+  argv[4] = pargv[2];
+  callContSave(3, pargv);
+  STGEVAL(pargv[1]);
+  callContRestore(pargv);
+  // restore argv
+  argv[2] = pargv[0];
+  argv[3] = pargv[1];
+  argv[4] = pargv[2];
+  callContSave(3, pargv);
+  STGEVAL(pargv[2]);
+  callContRestore(pargv);
+  // restore argv
+  argv[2] = pargv[0];
+  argv[3] = pargv[1];
+  argv[4] = pargv[2];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
     callContSave(3, pargv);
     while (f.op->objType == THUNK) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply THUNK\n");
+      fprintf(stderr, "stgApplyNNPPPN THUNK\n");
       #endif
       STGEVAL(f);
       // f.op = derefPoL(f);
@@ -31627,6 +33488,9 @@ DEFUN2(stgApplyNNPPPN, N, f) {
   switch (f.op->objType) {
   case FUN: {
     int arity = f.op->infoPtr->funFields.arity;
+    #ifdef DEBUGSTGAPPLY
+    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    #endif
     int excess = argc - arity;  // may be negative
 
     // too many args
@@ -31767,7 +33631,7 @@ DEFUN2(stgApplyNNPPPN, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyNNPPPN FUN just right\n");
       #endif
       pushargs(3, nargv);
       pushargs(3, pargv);
@@ -31777,7 +33641,7 @@ DEFUN2(stgApplyNNPPPN, N, f) {
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN too few args\n");
+      fprintf(stderr, "stgApplyNNPPPN FUN too few args\n");
       #endif
       int fvCount = f.op->infoPtr->fvCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
@@ -31806,14 +33670,14 @@ DEFUN2(stgApplyNNPPPN, N, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApply:  PAP error 1");
+    assert(argCount == f.op->argCount && "stgApplyNNPPPN:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
     if (excess > 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too many args\n");
+      fprintf(stderr, "stgApplyNNPPPN PAP too many args\n");
       #endif
       switch (excess) {
       case 1: {
@@ -31961,7 +33825,7 @@ DEFUN2(stgApplyNNPPPN, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyNNPPPN FUN just right\n");
       #endif
       pushargs(3, nargv);
       pushargs(papnargc, &f.op->payload[fvCount+1+pappargc]);
@@ -31973,7 +33837,7 @@ DEFUN2(stgApplyNNPPPN, N, f) {
     // excess < 0, too few args
     } else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too few args\n");
+      fprintf(stderr, "stgApplyNNPPPN PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3 + pappargc, 3 + papnargc);
@@ -32006,19 +33870,22 @@ DEFUN2(stgApplyNNPPPN, N, f) {
   } // case PAP
 
   case BLACKHOLE: {
-    fprintf(stderr, "infinite loop detected in stgApply!\n");
+    fprintf(stderr, "infinite loop detected in stgApplyNNPPPN!\n");
     showStgHeap();
     exit(0);
   } // case BLACKHOLE
 
   default:
-    fprintf(stderr, "stgApply not a THUNK, FUN, or PAP\n");
+    fprintf(stderr, "stgApplyNNPPPN not a THUNK, FUN, or PAP\n");
     exit(0);
   }  // switch
   ENDFUN;
 }
 
 DEFUN2(stgApplyPNPPPN, N, f) {
+  #ifdef DEBUGSTGAPPLY
+  fprintf(stderr, "stgApplyPNPPPN %s\n", f.op->infoPtr->name);
+  #endif
   assert(N.argType == INT);
   const int argc = N.i;
   assert(argc == 6);
@@ -32033,13 +33900,45 @@ DEFUN2(stgApplyPNPPPN, N, f) {
   PtrOrLiteral nargv[2];
   nargv[0] = argv[1];
   nargv[1] = argv[5];
+  callContSave(4, pargv);
+  STGEVAL(pargv[0]);
+  callContRestore(pargv);
+  // restore argv
+  argv[0] = pargv[0];
+  argv[2] = pargv[1];
+  argv[3] = pargv[2];
+  argv[4] = pargv[3];
+  callContSave(4, pargv);
+  STGEVAL(pargv[1]);
+  callContRestore(pargv);
+  // restore argv
+  argv[0] = pargv[0];
+  argv[2] = pargv[1];
+  argv[3] = pargv[2];
+  argv[4] = pargv[3];
+  callContSave(4, pargv);
+  STGEVAL(pargv[2]);
+  callContRestore(pargv);
+  // restore argv
+  argv[0] = pargv[0];
+  argv[2] = pargv[1];
+  argv[3] = pargv[2];
+  argv[4] = pargv[3];
+  callContSave(4, pargv);
+  STGEVAL(pargv[3]);
+  callContRestore(pargv);
+  // restore argv
+  argv[0] = pargv[0];
+  argv[2] = pargv[1];
+  argv[3] = pargv[2];
+  argv[4] = pargv[3];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
     callContSave(4, pargv);
     while (f.op->objType == THUNK) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply THUNK\n");
+      fprintf(stderr, "stgApplyPNPPPN THUNK\n");
       #endif
       STGEVAL(f);
       // f.op = derefPoL(f);
@@ -32056,6 +33955,9 @@ DEFUN2(stgApplyPNPPPN, N, f) {
   switch (f.op->objType) {
   case FUN: {
     int arity = f.op->infoPtr->funFields.arity;
+    #ifdef DEBUGSTGAPPLY
+    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    #endif
     int excess = argc - arity;  // may be negative
 
     // too many args
@@ -32196,7 +34098,7 @@ DEFUN2(stgApplyPNPPPN, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyPNPPPN FUN just right\n");
       #endif
       pushargs(2, nargv);
       pushargs(4, pargv);
@@ -32206,7 +34108,7 @@ DEFUN2(stgApplyPNPPPN, N, f) {
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN too few args\n");
+      fprintf(stderr, "stgApplyPNPPPN FUN too few args\n");
       #endif
       int fvCount = f.op->infoPtr->fvCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
@@ -32235,14 +34137,14 @@ DEFUN2(stgApplyPNPPPN, N, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApply:  PAP error 1");
+    assert(argCount == f.op->argCount && "stgApplyPNPPPN:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
     if (excess > 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too many args\n");
+      fprintf(stderr, "stgApplyPNPPPN PAP too many args\n");
       #endif
       switch (excess) {
       case 1: {
@@ -32390,7 +34292,7 @@ DEFUN2(stgApplyPNPPPN, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyPNPPPN FUN just right\n");
       #endif
       pushargs(2, nargv);
       pushargs(papnargc, &f.op->payload[fvCount+1+pappargc]);
@@ -32402,7 +34304,7 @@ DEFUN2(stgApplyPNPPPN, N, f) {
     // excess < 0, too few args
     } else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too few args\n");
+      fprintf(stderr, "stgApplyPNPPPN PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 4 + pappargc, 2 + papnargc);
@@ -32435,19 +34337,22 @@ DEFUN2(stgApplyPNPPPN, N, f) {
   } // case PAP
 
   case BLACKHOLE: {
-    fprintf(stderr, "infinite loop detected in stgApply!\n");
+    fprintf(stderr, "infinite loop detected in stgApplyPNPPPN!\n");
     showStgHeap();
     exit(0);
   } // case BLACKHOLE
 
   default:
-    fprintf(stderr, "stgApply not a THUNK, FUN, or PAP\n");
+    fprintf(stderr, "stgApplyPNPPPN not a THUNK, FUN, or PAP\n");
     exit(0);
   }  // switch
   ENDFUN;
 }
 
 DEFUN2(stgApplyNPPPPN, N, f) {
+  #ifdef DEBUGSTGAPPLY
+  fprintf(stderr, "stgApplyNPPPPN %s\n", f.op->infoPtr->name);
+  #endif
   assert(N.argType == INT);
   const int argc = N.i;
   assert(argc == 6);
@@ -32462,13 +34367,45 @@ DEFUN2(stgApplyNPPPPN, N, f) {
   PtrOrLiteral nargv[2];
   nargv[0] = argv[0];
   nargv[1] = argv[5];
+  callContSave(4, pargv);
+  STGEVAL(pargv[0]);
+  callContRestore(pargv);
+  // restore argv
+  argv[1] = pargv[0];
+  argv[2] = pargv[1];
+  argv[3] = pargv[2];
+  argv[4] = pargv[3];
+  callContSave(4, pargv);
+  STGEVAL(pargv[1]);
+  callContRestore(pargv);
+  // restore argv
+  argv[1] = pargv[0];
+  argv[2] = pargv[1];
+  argv[3] = pargv[2];
+  argv[4] = pargv[3];
+  callContSave(4, pargv);
+  STGEVAL(pargv[2]);
+  callContRestore(pargv);
+  // restore argv
+  argv[1] = pargv[0];
+  argv[2] = pargv[1];
+  argv[3] = pargv[2];
+  argv[4] = pargv[3];
+  callContSave(4, pargv);
+  STGEVAL(pargv[3]);
+  callContRestore(pargv);
+  // restore argv
+  argv[1] = pargv[0];
+  argv[2] = pargv[1];
+  argv[3] = pargv[2];
+  argv[4] = pargv[3];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
     callContSave(4, pargv);
     while (f.op->objType == THUNK) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply THUNK\n");
+      fprintf(stderr, "stgApplyNPPPPN THUNK\n");
       #endif
       STGEVAL(f);
       // f.op = derefPoL(f);
@@ -32485,6 +34422,9 @@ DEFUN2(stgApplyNPPPPN, N, f) {
   switch (f.op->objType) {
   case FUN: {
     int arity = f.op->infoPtr->funFields.arity;
+    #ifdef DEBUGSTGAPPLY
+    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    #endif
     int excess = argc - arity;  // may be negative
 
     // too many args
@@ -32626,7 +34566,7 @@ DEFUN2(stgApplyNPPPPN, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyNPPPPN FUN just right\n");
       #endif
       pushargs(2, nargv);
       pushargs(4, pargv);
@@ -32636,7 +34576,7 @@ DEFUN2(stgApplyNPPPPN, N, f) {
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN too few args\n");
+      fprintf(stderr, "stgApplyNPPPPN FUN too few args\n");
       #endif
       int fvCount = f.op->infoPtr->fvCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
@@ -32665,14 +34605,14 @@ DEFUN2(stgApplyNPPPPN, N, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApply:  PAP error 1");
+    assert(argCount == f.op->argCount && "stgApplyNPPPPN:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
     if (excess > 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too many args\n");
+      fprintf(stderr, "stgApplyNPPPPN PAP too many args\n");
       #endif
       switch (excess) {
       case 1: {
@@ -32821,7 +34761,7 @@ DEFUN2(stgApplyNPPPPN, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyNPPPPN FUN just right\n");
       #endif
       pushargs(2, nargv);
       pushargs(papnargc, &f.op->payload[fvCount+1+pappargc]);
@@ -32833,7 +34773,7 @@ DEFUN2(stgApplyNPPPPN, N, f) {
     // excess < 0, too few args
     } else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too few args\n");
+      fprintf(stderr, "stgApplyNPPPPN PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 4 + pappargc, 2 + papnargc);
@@ -32866,19 +34806,22 @@ DEFUN2(stgApplyNPPPPN, N, f) {
   } // case PAP
 
   case BLACKHOLE: {
-    fprintf(stderr, "infinite loop detected in stgApply!\n");
+    fprintf(stderr, "infinite loop detected in stgApplyNPPPPN!\n");
     showStgHeap();
     exit(0);
   } // case BLACKHOLE
 
   default:
-    fprintf(stderr, "stgApply not a THUNK, FUN, or PAP\n");
+    fprintf(stderr, "stgApplyNPPPPN not a THUNK, FUN, or PAP\n");
     exit(0);
   }  // switch
   ENDFUN;
 }
 
 DEFUN2(stgApplyPPPPPN, N, f) {
+  #ifdef DEBUGSTGAPPLY
+  fprintf(stderr, "stgApplyPPPPPN %s\n", f.op->infoPtr->name);
+  #endif
   assert(N.argType == INT);
   const int argc = N.i;
   assert(argc == 6);
@@ -32893,13 +34836,58 @@ DEFUN2(stgApplyPPPPPN, N, f) {
   pargv[4] = argv[4];
   PtrOrLiteral nargv[1];
   nargv[0] = argv[5];
+  callContSave(5, pargv);
+  STGEVAL(pargv[0]);
+  callContRestore(pargv);
+  // restore argv
+  argv[0] = pargv[0];
+  argv[1] = pargv[1];
+  argv[2] = pargv[2];
+  argv[3] = pargv[3];
+  argv[4] = pargv[4];
+  callContSave(5, pargv);
+  STGEVAL(pargv[1]);
+  callContRestore(pargv);
+  // restore argv
+  argv[0] = pargv[0];
+  argv[1] = pargv[1];
+  argv[2] = pargv[2];
+  argv[3] = pargv[3];
+  argv[4] = pargv[4];
+  callContSave(5, pargv);
+  STGEVAL(pargv[2]);
+  callContRestore(pargv);
+  // restore argv
+  argv[0] = pargv[0];
+  argv[1] = pargv[1];
+  argv[2] = pargv[2];
+  argv[3] = pargv[3];
+  argv[4] = pargv[4];
+  callContSave(5, pargv);
+  STGEVAL(pargv[3]);
+  callContRestore(pargv);
+  // restore argv
+  argv[0] = pargv[0];
+  argv[1] = pargv[1];
+  argv[2] = pargv[2];
+  argv[3] = pargv[3];
+  argv[4] = pargv[4];
+  callContSave(5, pargv);
+  STGEVAL(pargv[4]);
+  callContRestore(pargv);
+  // restore argv
+  argv[0] = pargv[0];
+  argv[1] = pargv[1];
+  argv[2] = pargv[2];
+  argv[3] = pargv[3];
+  argv[4] = pargv[4];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
     callContSave(5, pargv);
     while (f.op->objType == THUNK) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply THUNK\n");
+      fprintf(stderr, "stgApplyPPPPPN THUNK\n");
       #endif
       STGEVAL(f);
       // f.op = derefPoL(f);
@@ -32917,6 +34905,9 @@ DEFUN2(stgApplyPPPPPN, N, f) {
   switch (f.op->objType) {
   case FUN: {
     int arity = f.op->infoPtr->funFields.arity;
+    #ifdef DEBUGSTGAPPLY
+    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    #endif
     int excess = argc - arity;  // may be negative
 
     // too many args
@@ -33058,7 +35049,7 @@ DEFUN2(stgApplyPPPPPN, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyPPPPPN FUN just right\n");
       #endif
       pushargs(1, nargv);
       pushargs(5, pargv);
@@ -33068,7 +35059,7 @@ DEFUN2(stgApplyPPPPPN, N, f) {
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN too few args\n");
+      fprintf(stderr, "stgApplyPPPPPN FUN too few args\n");
       #endif
       int fvCount = f.op->infoPtr->fvCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
@@ -33097,14 +35088,14 @@ DEFUN2(stgApplyPPPPPN, N, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApply:  PAP error 1");
+    assert(argCount == f.op->argCount && "stgApplyPPPPPN:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
     if (excess > 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too many args\n");
+      fprintf(stderr, "stgApplyPPPPPN PAP too many args\n");
       #endif
       switch (excess) {
       case 1: {
@@ -33253,7 +35244,7 @@ DEFUN2(stgApplyPPPPPN, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyPPPPPN FUN just right\n");
       #endif
       pushargs(1, nargv);
       pushargs(papnargc, &f.op->payload[fvCount+1+pappargc]);
@@ -33265,7 +35256,7 @@ DEFUN2(stgApplyPPPPPN, N, f) {
     // excess < 0, too few args
     } else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too few args\n");
+      fprintf(stderr, "stgApplyPPPPPN PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 5 + pappargc, 1 + papnargc);
@@ -33298,19 +35289,22 @@ DEFUN2(stgApplyPPPPPN, N, f) {
   } // case PAP
 
   case BLACKHOLE: {
-    fprintf(stderr, "infinite loop detected in stgApply!\n");
+    fprintf(stderr, "infinite loop detected in stgApplyPPPPPN!\n");
     showStgHeap();
     exit(0);
   } // case BLACKHOLE
 
   default:
-    fprintf(stderr, "stgApply not a THUNK, FUN, or PAP\n");
+    fprintf(stderr, "stgApplyPPPPPN not a THUNK, FUN, or PAP\n");
     exit(0);
   }  // switch
   ENDFUN;
 }
 
 DEFUN2(stgApplyNNNNNP, N, f) {
+  #ifdef DEBUGSTGAPPLY
+  fprintf(stderr, "stgApplyNNNNNP %s\n", f.op->infoPtr->name);
+  #endif
   assert(N.argType == INT);
   const int argc = N.i;
   assert(argc == 6);
@@ -33325,13 +35319,18 @@ DEFUN2(stgApplyNNNNNP, N, f) {
   nargv[2] = argv[2];
   nargv[3] = argv[3];
   nargv[4] = argv[4];
+  callContSave(1, pargv);
+  STGEVAL(pargv[0]);
+  callContRestore(pargv);
+  // restore argv
+  argv[5] = pargv[0];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
     callContSave(1, pargv);
     while (f.op->objType == THUNK) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply THUNK\n");
+      fprintf(stderr, "stgApplyNNNNNP THUNK\n");
       #endif
       STGEVAL(f);
       // f.op = derefPoL(f);
@@ -33345,6 +35344,9 @@ DEFUN2(stgApplyNNNNNP, N, f) {
   switch (f.op->objType) {
   case FUN: {
     int arity = f.op->infoPtr->funFields.arity;
+    #ifdef DEBUGSTGAPPLY
+    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    #endif
     int excess = argc - arity;  // may be negative
 
     // too many args
@@ -33482,7 +35484,7 @@ DEFUN2(stgApplyNNNNNP, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyNNNNNP FUN just right\n");
       #endif
       pushargs(5, nargv);
       pushargs(1, pargv);
@@ -33492,7 +35494,7 @@ DEFUN2(stgApplyNNNNNP, N, f) {
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN too few args\n");
+      fprintf(stderr, "stgApplyNNNNNP FUN too few args\n");
       #endif
       int fvCount = f.op->infoPtr->fvCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
@@ -33521,14 +35523,14 @@ DEFUN2(stgApplyNNNNNP, N, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApply:  PAP error 1");
+    assert(argCount == f.op->argCount && "stgApplyNNNNNP:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
     if (excess > 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too many args\n");
+      fprintf(stderr, "stgApplyNNNNNP PAP too many args\n");
       #endif
       switch (excess) {
       case 1: {
@@ -33673,7 +35675,7 @@ DEFUN2(stgApplyNNNNNP, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyNNNNNP FUN just right\n");
       #endif
       pushargs(5, nargv);
       pushargs(papnargc, &f.op->payload[fvCount+1+pappargc]);
@@ -33685,7 +35687,7 @@ DEFUN2(stgApplyNNNNNP, N, f) {
     // excess < 0, too few args
     } else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too few args\n");
+      fprintf(stderr, "stgApplyNNNNNP PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 1 + pappargc, 5 + papnargc);
@@ -33718,19 +35720,22 @@ DEFUN2(stgApplyNNNNNP, N, f) {
   } // case PAP
 
   case BLACKHOLE: {
-    fprintf(stderr, "infinite loop detected in stgApply!\n");
+    fprintf(stderr, "infinite loop detected in stgApplyNNNNNP!\n");
     showStgHeap();
     exit(0);
   } // case BLACKHOLE
 
   default:
-    fprintf(stderr, "stgApply not a THUNK, FUN, or PAP\n");
+    fprintf(stderr, "stgApplyNNNNNP not a THUNK, FUN, or PAP\n");
     exit(0);
   }  // switch
   ENDFUN;
 }
 
 DEFUN2(stgApplyPNNNNP, N, f) {
+  #ifdef DEBUGSTGAPPLY
+  fprintf(stderr, "stgApplyPNNNNP %s\n", f.op->infoPtr->name);
+  #endif
   assert(N.argType == INT);
   const int argc = N.i;
   assert(argc == 6);
@@ -33745,13 +35750,25 @@ DEFUN2(stgApplyPNNNNP, N, f) {
   nargv[1] = argv[2];
   nargv[2] = argv[3];
   nargv[3] = argv[4];
+  callContSave(2, pargv);
+  STGEVAL(pargv[0]);
+  callContRestore(pargv);
+  // restore argv
+  argv[0] = pargv[0];
+  argv[5] = pargv[1];
+  callContSave(2, pargv);
+  STGEVAL(pargv[1]);
+  callContRestore(pargv);
+  // restore argv
+  argv[0] = pargv[0];
+  argv[5] = pargv[1];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
     callContSave(2, pargv);
     while (f.op->objType == THUNK) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply THUNK\n");
+      fprintf(stderr, "stgApplyPNNNNP THUNK\n");
       #endif
       STGEVAL(f);
       // f.op = derefPoL(f);
@@ -33766,6 +35783,9 @@ DEFUN2(stgApplyPNNNNP, N, f) {
   switch (f.op->objType) {
   case FUN: {
     int arity = f.op->infoPtr->funFields.arity;
+    #ifdef DEBUGSTGAPPLY
+    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    #endif
     int excess = argc - arity;  // may be negative
 
     // too many args
@@ -33903,7 +35923,7 @@ DEFUN2(stgApplyPNNNNP, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyPNNNNP FUN just right\n");
       #endif
       pushargs(4, nargv);
       pushargs(2, pargv);
@@ -33913,7 +35933,7 @@ DEFUN2(stgApplyPNNNNP, N, f) {
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN too few args\n");
+      fprintf(stderr, "stgApplyPNNNNP FUN too few args\n");
       #endif
       int fvCount = f.op->infoPtr->fvCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
@@ -33942,14 +35962,14 @@ DEFUN2(stgApplyPNNNNP, N, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApply:  PAP error 1");
+    assert(argCount == f.op->argCount && "stgApplyPNNNNP:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
     if (excess > 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too many args\n");
+      fprintf(stderr, "stgApplyPNNNNP PAP too many args\n");
       #endif
       switch (excess) {
       case 1: {
@@ -34094,7 +36114,7 @@ DEFUN2(stgApplyPNNNNP, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyPNNNNP FUN just right\n");
       #endif
       pushargs(4, nargv);
       pushargs(papnargc, &f.op->payload[fvCount+1+pappargc]);
@@ -34106,7 +36126,7 @@ DEFUN2(stgApplyPNNNNP, N, f) {
     // excess < 0, too few args
     } else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too few args\n");
+      fprintf(stderr, "stgApplyPNNNNP PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2 + pappargc, 4 + papnargc);
@@ -34139,19 +36159,22 @@ DEFUN2(stgApplyPNNNNP, N, f) {
   } // case PAP
 
   case BLACKHOLE: {
-    fprintf(stderr, "infinite loop detected in stgApply!\n");
+    fprintf(stderr, "infinite loop detected in stgApplyPNNNNP!\n");
     showStgHeap();
     exit(0);
   } // case BLACKHOLE
 
   default:
-    fprintf(stderr, "stgApply not a THUNK, FUN, or PAP\n");
+    fprintf(stderr, "stgApplyPNNNNP not a THUNK, FUN, or PAP\n");
     exit(0);
   }  // switch
   ENDFUN;
 }
 
 DEFUN2(stgApplyNPNNNP, N, f) {
+  #ifdef DEBUGSTGAPPLY
+  fprintf(stderr, "stgApplyNPNNNP %s\n", f.op->infoPtr->name);
+  #endif
   assert(N.argType == INT);
   const int argc = N.i;
   assert(argc == 6);
@@ -34166,13 +36189,25 @@ DEFUN2(stgApplyNPNNNP, N, f) {
   nargv[1] = argv[2];
   nargv[2] = argv[3];
   nargv[3] = argv[4];
+  callContSave(2, pargv);
+  STGEVAL(pargv[0]);
+  callContRestore(pargv);
+  // restore argv
+  argv[1] = pargv[0];
+  argv[5] = pargv[1];
+  callContSave(2, pargv);
+  STGEVAL(pargv[1]);
+  callContRestore(pargv);
+  // restore argv
+  argv[1] = pargv[0];
+  argv[5] = pargv[1];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
     callContSave(2, pargv);
     while (f.op->objType == THUNK) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply THUNK\n");
+      fprintf(stderr, "stgApplyNPNNNP THUNK\n");
       #endif
       STGEVAL(f);
       // f.op = derefPoL(f);
@@ -34187,6 +36222,9 @@ DEFUN2(stgApplyNPNNNP, N, f) {
   switch (f.op->objType) {
   case FUN: {
     int arity = f.op->infoPtr->funFields.arity;
+    #ifdef DEBUGSTGAPPLY
+    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    #endif
     int excess = argc - arity;  // may be negative
 
     // too many args
@@ -34325,7 +36363,7 @@ DEFUN2(stgApplyNPNNNP, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyNPNNNP FUN just right\n");
       #endif
       pushargs(4, nargv);
       pushargs(2, pargv);
@@ -34335,7 +36373,7 @@ DEFUN2(stgApplyNPNNNP, N, f) {
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN too few args\n");
+      fprintf(stderr, "stgApplyNPNNNP FUN too few args\n");
       #endif
       int fvCount = f.op->infoPtr->fvCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
@@ -34364,14 +36402,14 @@ DEFUN2(stgApplyNPNNNP, N, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApply:  PAP error 1");
+    assert(argCount == f.op->argCount && "stgApplyNPNNNP:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
     if (excess > 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too many args\n");
+      fprintf(stderr, "stgApplyNPNNNP PAP too many args\n");
       #endif
       switch (excess) {
       case 1: {
@@ -34517,7 +36555,7 @@ DEFUN2(stgApplyNPNNNP, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyNPNNNP FUN just right\n");
       #endif
       pushargs(4, nargv);
       pushargs(papnargc, &f.op->payload[fvCount+1+pappargc]);
@@ -34529,7 +36567,7 @@ DEFUN2(stgApplyNPNNNP, N, f) {
     // excess < 0, too few args
     } else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too few args\n");
+      fprintf(stderr, "stgApplyNPNNNP PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2 + pappargc, 4 + papnargc);
@@ -34562,19 +36600,22 @@ DEFUN2(stgApplyNPNNNP, N, f) {
   } // case PAP
 
   case BLACKHOLE: {
-    fprintf(stderr, "infinite loop detected in stgApply!\n");
+    fprintf(stderr, "infinite loop detected in stgApplyNPNNNP!\n");
     showStgHeap();
     exit(0);
   } // case BLACKHOLE
 
   default:
-    fprintf(stderr, "stgApply not a THUNK, FUN, or PAP\n");
+    fprintf(stderr, "stgApplyNPNNNP not a THUNK, FUN, or PAP\n");
     exit(0);
   }  // switch
   ENDFUN;
 }
 
 DEFUN2(stgApplyPPNNNP, N, f) {
+  #ifdef DEBUGSTGAPPLY
+  fprintf(stderr, "stgApplyPPNNNP %s\n", f.op->infoPtr->name);
+  #endif
   assert(N.argType == INT);
   const int argc = N.i;
   assert(argc == 6);
@@ -34589,13 +36630,34 @@ DEFUN2(stgApplyPPNNNP, N, f) {
   nargv[0] = argv[2];
   nargv[1] = argv[3];
   nargv[2] = argv[4];
+  callContSave(3, pargv);
+  STGEVAL(pargv[0]);
+  callContRestore(pargv);
+  // restore argv
+  argv[0] = pargv[0];
+  argv[1] = pargv[1];
+  argv[5] = pargv[2];
+  callContSave(3, pargv);
+  STGEVAL(pargv[1]);
+  callContRestore(pargv);
+  // restore argv
+  argv[0] = pargv[0];
+  argv[1] = pargv[1];
+  argv[5] = pargv[2];
+  callContSave(3, pargv);
+  STGEVAL(pargv[2]);
+  callContRestore(pargv);
+  // restore argv
+  argv[0] = pargv[0];
+  argv[1] = pargv[1];
+  argv[5] = pargv[2];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
     callContSave(3, pargv);
     while (f.op->objType == THUNK) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply THUNK\n");
+      fprintf(stderr, "stgApplyPPNNNP THUNK\n");
       #endif
       STGEVAL(f);
       // f.op = derefPoL(f);
@@ -34611,6 +36673,9 @@ DEFUN2(stgApplyPPNNNP, N, f) {
   switch (f.op->objType) {
   case FUN: {
     int arity = f.op->infoPtr->funFields.arity;
+    #ifdef DEBUGSTGAPPLY
+    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    #endif
     int excess = argc - arity;  // may be negative
 
     // too many args
@@ -34749,7 +36814,7 @@ DEFUN2(stgApplyPPNNNP, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyPPNNNP FUN just right\n");
       #endif
       pushargs(3, nargv);
       pushargs(3, pargv);
@@ -34759,7 +36824,7 @@ DEFUN2(stgApplyPPNNNP, N, f) {
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN too few args\n");
+      fprintf(stderr, "stgApplyPPNNNP FUN too few args\n");
       #endif
       int fvCount = f.op->infoPtr->fvCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
@@ -34788,14 +36853,14 @@ DEFUN2(stgApplyPPNNNP, N, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApply:  PAP error 1");
+    assert(argCount == f.op->argCount && "stgApplyPPNNNP:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
     if (excess > 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too many args\n");
+      fprintf(stderr, "stgApplyPPNNNP PAP too many args\n");
       #endif
       switch (excess) {
       case 1: {
@@ -34941,7 +37006,7 @@ DEFUN2(stgApplyPPNNNP, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyPPNNNP FUN just right\n");
       #endif
       pushargs(3, nargv);
       pushargs(papnargc, &f.op->payload[fvCount+1+pappargc]);
@@ -34953,7 +37018,7 @@ DEFUN2(stgApplyPPNNNP, N, f) {
     // excess < 0, too few args
     } else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too few args\n");
+      fprintf(stderr, "stgApplyPPNNNP PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3 + pappargc, 3 + papnargc);
@@ -34986,19 +37051,22 @@ DEFUN2(stgApplyPPNNNP, N, f) {
   } // case PAP
 
   case BLACKHOLE: {
-    fprintf(stderr, "infinite loop detected in stgApply!\n");
+    fprintf(stderr, "infinite loop detected in stgApplyPPNNNP!\n");
     showStgHeap();
     exit(0);
   } // case BLACKHOLE
 
   default:
-    fprintf(stderr, "stgApply not a THUNK, FUN, or PAP\n");
+    fprintf(stderr, "stgApplyPPNNNP not a THUNK, FUN, or PAP\n");
     exit(0);
   }  // switch
   ENDFUN;
 }
 
 DEFUN2(stgApplyNNPNNP, N, f) {
+  #ifdef DEBUGSTGAPPLY
+  fprintf(stderr, "stgApplyNNPNNP %s\n", f.op->infoPtr->name);
+  #endif
   assert(N.argType == INT);
   const int argc = N.i;
   assert(argc == 6);
@@ -35013,13 +37081,25 @@ DEFUN2(stgApplyNNPNNP, N, f) {
   nargv[1] = argv[1];
   nargv[2] = argv[3];
   nargv[3] = argv[4];
+  callContSave(2, pargv);
+  STGEVAL(pargv[0]);
+  callContRestore(pargv);
+  // restore argv
+  argv[2] = pargv[0];
+  argv[5] = pargv[1];
+  callContSave(2, pargv);
+  STGEVAL(pargv[1]);
+  callContRestore(pargv);
+  // restore argv
+  argv[2] = pargv[0];
+  argv[5] = pargv[1];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
     callContSave(2, pargv);
     while (f.op->objType == THUNK) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply THUNK\n");
+      fprintf(stderr, "stgApplyNNPNNP THUNK\n");
       #endif
       STGEVAL(f);
       // f.op = derefPoL(f);
@@ -35034,6 +37114,9 @@ DEFUN2(stgApplyNNPNNP, N, f) {
   switch (f.op->objType) {
   case FUN: {
     int arity = f.op->infoPtr->funFields.arity;
+    #ifdef DEBUGSTGAPPLY
+    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    #endif
     int excess = argc - arity;  // may be negative
 
     // too many args
@@ -35173,7 +37256,7 @@ DEFUN2(stgApplyNNPNNP, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyNNPNNP FUN just right\n");
       #endif
       pushargs(4, nargv);
       pushargs(2, pargv);
@@ -35183,7 +37266,7 @@ DEFUN2(stgApplyNNPNNP, N, f) {
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN too few args\n");
+      fprintf(stderr, "stgApplyNNPNNP FUN too few args\n");
       #endif
       int fvCount = f.op->infoPtr->fvCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
@@ -35212,14 +37295,14 @@ DEFUN2(stgApplyNNPNNP, N, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApply:  PAP error 1");
+    assert(argCount == f.op->argCount && "stgApplyNNPNNP:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
     if (excess > 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too many args\n");
+      fprintf(stderr, "stgApplyNNPNNP PAP too many args\n");
       #endif
       switch (excess) {
       case 1: {
@@ -35366,7 +37449,7 @@ DEFUN2(stgApplyNNPNNP, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyNNPNNP FUN just right\n");
       #endif
       pushargs(4, nargv);
       pushargs(papnargc, &f.op->payload[fvCount+1+pappargc]);
@@ -35378,7 +37461,7 @@ DEFUN2(stgApplyNNPNNP, N, f) {
     // excess < 0, too few args
     } else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too few args\n");
+      fprintf(stderr, "stgApplyNNPNNP PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2 + pappargc, 4 + papnargc);
@@ -35411,19 +37494,22 @@ DEFUN2(stgApplyNNPNNP, N, f) {
   } // case PAP
 
   case BLACKHOLE: {
-    fprintf(stderr, "infinite loop detected in stgApply!\n");
+    fprintf(stderr, "infinite loop detected in stgApplyNNPNNP!\n");
     showStgHeap();
     exit(0);
   } // case BLACKHOLE
 
   default:
-    fprintf(stderr, "stgApply not a THUNK, FUN, or PAP\n");
+    fprintf(stderr, "stgApplyNNPNNP not a THUNK, FUN, or PAP\n");
     exit(0);
   }  // switch
   ENDFUN;
 }
 
 DEFUN2(stgApplyPNPNNP, N, f) {
+  #ifdef DEBUGSTGAPPLY
+  fprintf(stderr, "stgApplyPNPNNP %s\n", f.op->infoPtr->name);
+  #endif
   assert(N.argType == INT);
   const int argc = N.i;
   assert(argc == 6);
@@ -35438,13 +37524,34 @@ DEFUN2(stgApplyPNPNNP, N, f) {
   nargv[0] = argv[1];
   nargv[1] = argv[3];
   nargv[2] = argv[4];
+  callContSave(3, pargv);
+  STGEVAL(pargv[0]);
+  callContRestore(pargv);
+  // restore argv
+  argv[0] = pargv[0];
+  argv[2] = pargv[1];
+  argv[5] = pargv[2];
+  callContSave(3, pargv);
+  STGEVAL(pargv[1]);
+  callContRestore(pargv);
+  // restore argv
+  argv[0] = pargv[0];
+  argv[2] = pargv[1];
+  argv[5] = pargv[2];
+  callContSave(3, pargv);
+  STGEVAL(pargv[2]);
+  callContRestore(pargv);
+  // restore argv
+  argv[0] = pargv[0];
+  argv[2] = pargv[1];
+  argv[5] = pargv[2];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
     callContSave(3, pargv);
     while (f.op->objType == THUNK) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply THUNK\n");
+      fprintf(stderr, "stgApplyPNPNNP THUNK\n");
       #endif
       STGEVAL(f);
       // f.op = derefPoL(f);
@@ -35460,6 +37567,9 @@ DEFUN2(stgApplyPNPNNP, N, f) {
   switch (f.op->objType) {
   case FUN: {
     int arity = f.op->infoPtr->funFields.arity;
+    #ifdef DEBUGSTGAPPLY
+    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    #endif
     int excess = argc - arity;  // may be negative
 
     // too many args
@@ -35599,7 +37709,7 @@ DEFUN2(stgApplyPNPNNP, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyPNPNNP FUN just right\n");
       #endif
       pushargs(3, nargv);
       pushargs(3, pargv);
@@ -35609,7 +37719,7 @@ DEFUN2(stgApplyPNPNNP, N, f) {
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN too few args\n");
+      fprintf(stderr, "stgApplyPNPNNP FUN too few args\n");
       #endif
       int fvCount = f.op->infoPtr->fvCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
@@ -35638,14 +37748,14 @@ DEFUN2(stgApplyPNPNNP, N, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApply:  PAP error 1");
+    assert(argCount == f.op->argCount && "stgApplyPNPNNP:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
     if (excess > 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too many args\n");
+      fprintf(stderr, "stgApplyPNPNNP PAP too many args\n");
       #endif
       switch (excess) {
       case 1: {
@@ -35792,7 +37902,7 @@ DEFUN2(stgApplyPNPNNP, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyPNPNNP FUN just right\n");
       #endif
       pushargs(3, nargv);
       pushargs(papnargc, &f.op->payload[fvCount+1+pappargc]);
@@ -35804,7 +37914,7 @@ DEFUN2(stgApplyPNPNNP, N, f) {
     // excess < 0, too few args
     } else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too few args\n");
+      fprintf(stderr, "stgApplyPNPNNP PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3 + pappargc, 3 + papnargc);
@@ -35837,19 +37947,22 @@ DEFUN2(stgApplyPNPNNP, N, f) {
   } // case PAP
 
   case BLACKHOLE: {
-    fprintf(stderr, "infinite loop detected in stgApply!\n");
+    fprintf(stderr, "infinite loop detected in stgApplyPNPNNP!\n");
     showStgHeap();
     exit(0);
   } // case BLACKHOLE
 
   default:
-    fprintf(stderr, "stgApply not a THUNK, FUN, or PAP\n");
+    fprintf(stderr, "stgApplyPNPNNP not a THUNK, FUN, or PAP\n");
     exit(0);
   }  // switch
   ENDFUN;
 }
 
 DEFUN2(stgApplyNPPNNP, N, f) {
+  #ifdef DEBUGSTGAPPLY
+  fprintf(stderr, "stgApplyNPPNNP %s\n", f.op->infoPtr->name);
+  #endif
   assert(N.argType == INT);
   const int argc = N.i;
   assert(argc == 6);
@@ -35864,13 +37977,34 @@ DEFUN2(stgApplyNPPNNP, N, f) {
   nargv[0] = argv[0];
   nargv[1] = argv[3];
   nargv[2] = argv[4];
+  callContSave(3, pargv);
+  STGEVAL(pargv[0]);
+  callContRestore(pargv);
+  // restore argv
+  argv[1] = pargv[0];
+  argv[2] = pargv[1];
+  argv[5] = pargv[2];
+  callContSave(3, pargv);
+  STGEVAL(pargv[1]);
+  callContRestore(pargv);
+  // restore argv
+  argv[1] = pargv[0];
+  argv[2] = pargv[1];
+  argv[5] = pargv[2];
+  callContSave(3, pargv);
+  STGEVAL(pargv[2]);
+  callContRestore(pargv);
+  // restore argv
+  argv[1] = pargv[0];
+  argv[2] = pargv[1];
+  argv[5] = pargv[2];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
     callContSave(3, pargv);
     while (f.op->objType == THUNK) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply THUNK\n");
+      fprintf(stderr, "stgApplyNPPNNP THUNK\n");
       #endif
       STGEVAL(f);
       // f.op = derefPoL(f);
@@ -35886,6 +38020,9 @@ DEFUN2(stgApplyNPPNNP, N, f) {
   switch (f.op->objType) {
   case FUN: {
     int arity = f.op->infoPtr->funFields.arity;
+    #ifdef DEBUGSTGAPPLY
+    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    #endif
     int excess = argc - arity;  // may be negative
 
     // too many args
@@ -36026,7 +38163,7 @@ DEFUN2(stgApplyNPPNNP, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyNPPNNP FUN just right\n");
       #endif
       pushargs(3, nargv);
       pushargs(3, pargv);
@@ -36036,7 +38173,7 @@ DEFUN2(stgApplyNPPNNP, N, f) {
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN too few args\n");
+      fprintf(stderr, "stgApplyNPPNNP FUN too few args\n");
       #endif
       int fvCount = f.op->infoPtr->fvCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
@@ -36065,14 +38202,14 @@ DEFUN2(stgApplyNPPNNP, N, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApply:  PAP error 1");
+    assert(argCount == f.op->argCount && "stgApplyNPPNNP:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
     if (excess > 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too many args\n");
+      fprintf(stderr, "stgApplyNPPNNP PAP too many args\n");
       #endif
       switch (excess) {
       case 1: {
@@ -36220,7 +38357,7 @@ DEFUN2(stgApplyNPPNNP, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyNPPNNP FUN just right\n");
       #endif
       pushargs(3, nargv);
       pushargs(papnargc, &f.op->payload[fvCount+1+pappargc]);
@@ -36232,7 +38369,7 @@ DEFUN2(stgApplyNPPNNP, N, f) {
     // excess < 0, too few args
     } else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too few args\n");
+      fprintf(stderr, "stgApplyNPPNNP PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3 + pappargc, 3 + papnargc);
@@ -36265,19 +38402,22 @@ DEFUN2(stgApplyNPPNNP, N, f) {
   } // case PAP
 
   case BLACKHOLE: {
-    fprintf(stderr, "infinite loop detected in stgApply!\n");
+    fprintf(stderr, "infinite loop detected in stgApplyNPPNNP!\n");
     showStgHeap();
     exit(0);
   } // case BLACKHOLE
 
   default:
-    fprintf(stderr, "stgApply not a THUNK, FUN, or PAP\n");
+    fprintf(stderr, "stgApplyNPPNNP not a THUNK, FUN, or PAP\n");
     exit(0);
   }  // switch
   ENDFUN;
 }
 
 DEFUN2(stgApplyPPPNNP, N, f) {
+  #ifdef DEBUGSTGAPPLY
+  fprintf(stderr, "stgApplyPPPNNP %s\n", f.op->infoPtr->name);
+  #endif
   assert(N.argType == INT);
   const int argc = N.i;
   assert(argc == 6);
@@ -36292,13 +38432,45 @@ DEFUN2(stgApplyPPPNNP, N, f) {
   PtrOrLiteral nargv[2];
   nargv[0] = argv[3];
   nargv[1] = argv[4];
+  callContSave(4, pargv);
+  STGEVAL(pargv[0]);
+  callContRestore(pargv);
+  // restore argv
+  argv[0] = pargv[0];
+  argv[1] = pargv[1];
+  argv[2] = pargv[2];
+  argv[5] = pargv[3];
+  callContSave(4, pargv);
+  STGEVAL(pargv[1]);
+  callContRestore(pargv);
+  // restore argv
+  argv[0] = pargv[0];
+  argv[1] = pargv[1];
+  argv[2] = pargv[2];
+  argv[5] = pargv[3];
+  callContSave(4, pargv);
+  STGEVAL(pargv[2]);
+  callContRestore(pargv);
+  // restore argv
+  argv[0] = pargv[0];
+  argv[1] = pargv[1];
+  argv[2] = pargv[2];
+  argv[5] = pargv[3];
+  callContSave(4, pargv);
+  STGEVAL(pargv[3]);
+  callContRestore(pargv);
+  // restore argv
+  argv[0] = pargv[0];
+  argv[1] = pargv[1];
+  argv[2] = pargv[2];
+  argv[5] = pargv[3];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
     callContSave(4, pargv);
     while (f.op->objType == THUNK) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply THUNK\n");
+      fprintf(stderr, "stgApplyPPPNNP THUNK\n");
       #endif
       STGEVAL(f);
       // f.op = derefPoL(f);
@@ -36315,6 +38487,9 @@ DEFUN2(stgApplyPPPNNP, N, f) {
   switch (f.op->objType) {
   case FUN: {
     int arity = f.op->infoPtr->funFields.arity;
+    #ifdef DEBUGSTGAPPLY
+    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    #endif
     int excess = argc - arity;  // may be negative
 
     // too many args
@@ -36455,7 +38630,7 @@ DEFUN2(stgApplyPPPNNP, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyPPPNNP FUN just right\n");
       #endif
       pushargs(2, nargv);
       pushargs(4, pargv);
@@ -36465,7 +38640,7 @@ DEFUN2(stgApplyPPPNNP, N, f) {
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN too few args\n");
+      fprintf(stderr, "stgApplyPPPNNP FUN too few args\n");
       #endif
       int fvCount = f.op->infoPtr->fvCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
@@ -36494,14 +38669,14 @@ DEFUN2(stgApplyPPPNNP, N, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApply:  PAP error 1");
+    assert(argCount == f.op->argCount && "stgApplyPPPNNP:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
     if (excess > 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too many args\n");
+      fprintf(stderr, "stgApplyPPPNNP PAP too many args\n");
       #endif
       switch (excess) {
       case 1: {
@@ -36649,7 +38824,7 @@ DEFUN2(stgApplyPPPNNP, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyPPPNNP FUN just right\n");
       #endif
       pushargs(2, nargv);
       pushargs(papnargc, &f.op->payload[fvCount+1+pappargc]);
@@ -36661,7 +38836,7 @@ DEFUN2(stgApplyPPPNNP, N, f) {
     // excess < 0, too few args
     } else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too few args\n");
+      fprintf(stderr, "stgApplyPPPNNP PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 4 + pappargc, 2 + papnargc);
@@ -36694,19 +38869,22 @@ DEFUN2(stgApplyPPPNNP, N, f) {
   } // case PAP
 
   case BLACKHOLE: {
-    fprintf(stderr, "infinite loop detected in stgApply!\n");
+    fprintf(stderr, "infinite loop detected in stgApplyPPPNNP!\n");
     showStgHeap();
     exit(0);
   } // case BLACKHOLE
 
   default:
-    fprintf(stderr, "stgApply not a THUNK, FUN, or PAP\n");
+    fprintf(stderr, "stgApplyPPPNNP not a THUNK, FUN, or PAP\n");
     exit(0);
   }  // switch
   ENDFUN;
 }
 
 DEFUN2(stgApplyNNNPNP, N, f) {
+  #ifdef DEBUGSTGAPPLY
+  fprintf(stderr, "stgApplyNNNPNP %s\n", f.op->infoPtr->name);
+  #endif
   assert(N.argType == INT);
   const int argc = N.i;
   assert(argc == 6);
@@ -36721,13 +38899,25 @@ DEFUN2(stgApplyNNNPNP, N, f) {
   nargv[1] = argv[1];
   nargv[2] = argv[2];
   nargv[3] = argv[4];
+  callContSave(2, pargv);
+  STGEVAL(pargv[0]);
+  callContRestore(pargv);
+  // restore argv
+  argv[3] = pargv[0];
+  argv[5] = pargv[1];
+  callContSave(2, pargv);
+  STGEVAL(pargv[1]);
+  callContRestore(pargv);
+  // restore argv
+  argv[3] = pargv[0];
+  argv[5] = pargv[1];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
     callContSave(2, pargv);
     while (f.op->objType == THUNK) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply THUNK\n");
+      fprintf(stderr, "stgApplyNNNPNP THUNK\n");
       #endif
       STGEVAL(f);
       // f.op = derefPoL(f);
@@ -36742,6 +38932,9 @@ DEFUN2(stgApplyNNNPNP, N, f) {
   switch (f.op->objType) {
   case FUN: {
     int arity = f.op->infoPtr->funFields.arity;
+    #ifdef DEBUGSTGAPPLY
+    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    #endif
     int excess = argc - arity;  // may be negative
 
     // too many args
@@ -36882,7 +39075,7 @@ DEFUN2(stgApplyNNNPNP, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyNNNPNP FUN just right\n");
       #endif
       pushargs(4, nargv);
       pushargs(2, pargv);
@@ -36892,7 +39085,7 @@ DEFUN2(stgApplyNNNPNP, N, f) {
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN too few args\n");
+      fprintf(stderr, "stgApplyNNNPNP FUN too few args\n");
       #endif
       int fvCount = f.op->infoPtr->fvCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
@@ -36921,14 +39114,14 @@ DEFUN2(stgApplyNNNPNP, N, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApply:  PAP error 1");
+    assert(argCount == f.op->argCount && "stgApplyNNNPNP:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
     if (excess > 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too many args\n");
+      fprintf(stderr, "stgApplyNNNPNP PAP too many args\n");
       #endif
       switch (excess) {
       case 1: {
@@ -37076,7 +39269,7 @@ DEFUN2(stgApplyNNNPNP, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyNNNPNP FUN just right\n");
       #endif
       pushargs(4, nargv);
       pushargs(papnargc, &f.op->payload[fvCount+1+pappargc]);
@@ -37088,7 +39281,7 @@ DEFUN2(stgApplyNNNPNP, N, f) {
     // excess < 0, too few args
     } else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too few args\n");
+      fprintf(stderr, "stgApplyNNNPNP PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2 + pappargc, 4 + papnargc);
@@ -37121,19 +39314,22 @@ DEFUN2(stgApplyNNNPNP, N, f) {
   } // case PAP
 
   case BLACKHOLE: {
-    fprintf(stderr, "infinite loop detected in stgApply!\n");
+    fprintf(stderr, "infinite loop detected in stgApplyNNNPNP!\n");
     showStgHeap();
     exit(0);
   } // case BLACKHOLE
 
   default:
-    fprintf(stderr, "stgApply not a THUNK, FUN, or PAP\n");
+    fprintf(stderr, "stgApplyNNNPNP not a THUNK, FUN, or PAP\n");
     exit(0);
   }  // switch
   ENDFUN;
 }
 
 DEFUN2(stgApplyPNNPNP, N, f) {
+  #ifdef DEBUGSTGAPPLY
+  fprintf(stderr, "stgApplyPNNPNP %s\n", f.op->infoPtr->name);
+  #endif
   assert(N.argType == INT);
   const int argc = N.i;
   assert(argc == 6);
@@ -37148,13 +39344,34 @@ DEFUN2(stgApplyPNNPNP, N, f) {
   nargv[0] = argv[1];
   nargv[1] = argv[2];
   nargv[2] = argv[4];
+  callContSave(3, pargv);
+  STGEVAL(pargv[0]);
+  callContRestore(pargv);
+  // restore argv
+  argv[0] = pargv[0];
+  argv[3] = pargv[1];
+  argv[5] = pargv[2];
+  callContSave(3, pargv);
+  STGEVAL(pargv[1]);
+  callContRestore(pargv);
+  // restore argv
+  argv[0] = pargv[0];
+  argv[3] = pargv[1];
+  argv[5] = pargv[2];
+  callContSave(3, pargv);
+  STGEVAL(pargv[2]);
+  callContRestore(pargv);
+  // restore argv
+  argv[0] = pargv[0];
+  argv[3] = pargv[1];
+  argv[5] = pargv[2];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
     callContSave(3, pargv);
     while (f.op->objType == THUNK) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply THUNK\n");
+      fprintf(stderr, "stgApplyPNNPNP THUNK\n");
       #endif
       STGEVAL(f);
       // f.op = derefPoL(f);
@@ -37170,6 +39387,9 @@ DEFUN2(stgApplyPNNPNP, N, f) {
   switch (f.op->objType) {
   case FUN: {
     int arity = f.op->infoPtr->funFields.arity;
+    #ifdef DEBUGSTGAPPLY
+    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    #endif
     int excess = argc - arity;  // may be negative
 
     // too many args
@@ -37310,7 +39530,7 @@ DEFUN2(stgApplyPNNPNP, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyPNNPNP FUN just right\n");
       #endif
       pushargs(3, nargv);
       pushargs(3, pargv);
@@ -37320,7 +39540,7 @@ DEFUN2(stgApplyPNNPNP, N, f) {
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN too few args\n");
+      fprintf(stderr, "stgApplyPNNPNP FUN too few args\n");
       #endif
       int fvCount = f.op->infoPtr->fvCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
@@ -37349,14 +39569,14 @@ DEFUN2(stgApplyPNNPNP, N, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApply:  PAP error 1");
+    assert(argCount == f.op->argCount && "stgApplyPNNPNP:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
     if (excess > 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too many args\n");
+      fprintf(stderr, "stgApplyPNNPNP PAP too many args\n");
       #endif
       switch (excess) {
       case 1: {
@@ -37504,7 +39724,7 @@ DEFUN2(stgApplyPNNPNP, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyPNNPNP FUN just right\n");
       #endif
       pushargs(3, nargv);
       pushargs(papnargc, &f.op->payload[fvCount+1+pappargc]);
@@ -37516,7 +39736,7 @@ DEFUN2(stgApplyPNNPNP, N, f) {
     // excess < 0, too few args
     } else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too few args\n");
+      fprintf(stderr, "stgApplyPNNPNP PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3 + pappargc, 3 + papnargc);
@@ -37549,19 +39769,22 @@ DEFUN2(stgApplyPNNPNP, N, f) {
   } // case PAP
 
   case BLACKHOLE: {
-    fprintf(stderr, "infinite loop detected in stgApply!\n");
+    fprintf(stderr, "infinite loop detected in stgApplyPNNPNP!\n");
     showStgHeap();
     exit(0);
   } // case BLACKHOLE
 
   default:
-    fprintf(stderr, "stgApply not a THUNK, FUN, or PAP\n");
+    fprintf(stderr, "stgApplyPNNPNP not a THUNK, FUN, or PAP\n");
     exit(0);
   }  // switch
   ENDFUN;
 }
 
 DEFUN2(stgApplyNPNPNP, N, f) {
+  #ifdef DEBUGSTGAPPLY
+  fprintf(stderr, "stgApplyNPNPNP %s\n", f.op->infoPtr->name);
+  #endif
   assert(N.argType == INT);
   const int argc = N.i;
   assert(argc == 6);
@@ -37576,13 +39799,34 @@ DEFUN2(stgApplyNPNPNP, N, f) {
   nargv[0] = argv[0];
   nargv[1] = argv[2];
   nargv[2] = argv[4];
+  callContSave(3, pargv);
+  STGEVAL(pargv[0]);
+  callContRestore(pargv);
+  // restore argv
+  argv[1] = pargv[0];
+  argv[3] = pargv[1];
+  argv[5] = pargv[2];
+  callContSave(3, pargv);
+  STGEVAL(pargv[1]);
+  callContRestore(pargv);
+  // restore argv
+  argv[1] = pargv[0];
+  argv[3] = pargv[1];
+  argv[5] = pargv[2];
+  callContSave(3, pargv);
+  STGEVAL(pargv[2]);
+  callContRestore(pargv);
+  // restore argv
+  argv[1] = pargv[0];
+  argv[3] = pargv[1];
+  argv[5] = pargv[2];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
     callContSave(3, pargv);
     while (f.op->objType == THUNK) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply THUNK\n");
+      fprintf(stderr, "stgApplyNPNPNP THUNK\n");
       #endif
       STGEVAL(f);
       // f.op = derefPoL(f);
@@ -37598,6 +39842,9 @@ DEFUN2(stgApplyNPNPNP, N, f) {
   switch (f.op->objType) {
   case FUN: {
     int arity = f.op->infoPtr->funFields.arity;
+    #ifdef DEBUGSTGAPPLY
+    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    #endif
     int excess = argc - arity;  // may be negative
 
     // too many args
@@ -37739,7 +39986,7 @@ DEFUN2(stgApplyNPNPNP, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyNPNPNP FUN just right\n");
       #endif
       pushargs(3, nargv);
       pushargs(3, pargv);
@@ -37749,7 +39996,7 @@ DEFUN2(stgApplyNPNPNP, N, f) {
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN too few args\n");
+      fprintf(stderr, "stgApplyNPNPNP FUN too few args\n");
       #endif
       int fvCount = f.op->infoPtr->fvCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
@@ -37778,14 +40025,14 @@ DEFUN2(stgApplyNPNPNP, N, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApply:  PAP error 1");
+    assert(argCount == f.op->argCount && "stgApplyNPNPNP:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
     if (excess > 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too many args\n");
+      fprintf(stderr, "stgApplyNPNPNP PAP too many args\n");
       #endif
       switch (excess) {
       case 1: {
@@ -37934,7 +40181,7 @@ DEFUN2(stgApplyNPNPNP, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyNPNPNP FUN just right\n");
       #endif
       pushargs(3, nargv);
       pushargs(papnargc, &f.op->payload[fvCount+1+pappargc]);
@@ -37946,7 +40193,7 @@ DEFUN2(stgApplyNPNPNP, N, f) {
     // excess < 0, too few args
     } else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too few args\n");
+      fprintf(stderr, "stgApplyNPNPNP PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3 + pappargc, 3 + papnargc);
@@ -37979,19 +40226,22 @@ DEFUN2(stgApplyNPNPNP, N, f) {
   } // case PAP
 
   case BLACKHOLE: {
-    fprintf(stderr, "infinite loop detected in stgApply!\n");
+    fprintf(stderr, "infinite loop detected in stgApplyNPNPNP!\n");
     showStgHeap();
     exit(0);
   } // case BLACKHOLE
 
   default:
-    fprintf(stderr, "stgApply not a THUNK, FUN, or PAP\n");
+    fprintf(stderr, "stgApplyNPNPNP not a THUNK, FUN, or PAP\n");
     exit(0);
   }  // switch
   ENDFUN;
 }
 
 DEFUN2(stgApplyPPNPNP, N, f) {
+  #ifdef DEBUGSTGAPPLY
+  fprintf(stderr, "stgApplyPPNPNP %s\n", f.op->infoPtr->name);
+  #endif
   assert(N.argType == INT);
   const int argc = N.i;
   assert(argc == 6);
@@ -38006,13 +40256,45 @@ DEFUN2(stgApplyPPNPNP, N, f) {
   PtrOrLiteral nargv[2];
   nargv[0] = argv[2];
   nargv[1] = argv[4];
+  callContSave(4, pargv);
+  STGEVAL(pargv[0]);
+  callContRestore(pargv);
+  // restore argv
+  argv[0] = pargv[0];
+  argv[1] = pargv[1];
+  argv[3] = pargv[2];
+  argv[5] = pargv[3];
+  callContSave(4, pargv);
+  STGEVAL(pargv[1]);
+  callContRestore(pargv);
+  // restore argv
+  argv[0] = pargv[0];
+  argv[1] = pargv[1];
+  argv[3] = pargv[2];
+  argv[5] = pargv[3];
+  callContSave(4, pargv);
+  STGEVAL(pargv[2]);
+  callContRestore(pargv);
+  // restore argv
+  argv[0] = pargv[0];
+  argv[1] = pargv[1];
+  argv[3] = pargv[2];
+  argv[5] = pargv[3];
+  callContSave(4, pargv);
+  STGEVAL(pargv[3]);
+  callContRestore(pargv);
+  // restore argv
+  argv[0] = pargv[0];
+  argv[1] = pargv[1];
+  argv[3] = pargv[2];
+  argv[5] = pargv[3];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
     callContSave(4, pargv);
     while (f.op->objType == THUNK) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply THUNK\n");
+      fprintf(stderr, "stgApplyPPNPNP THUNK\n");
       #endif
       STGEVAL(f);
       // f.op = derefPoL(f);
@@ -38029,6 +40311,9 @@ DEFUN2(stgApplyPPNPNP, N, f) {
   switch (f.op->objType) {
   case FUN: {
     int arity = f.op->infoPtr->funFields.arity;
+    #ifdef DEBUGSTGAPPLY
+    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    #endif
     int excess = argc - arity;  // may be negative
 
     // too many args
@@ -38170,7 +40455,7 @@ DEFUN2(stgApplyPPNPNP, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyPPNPNP FUN just right\n");
       #endif
       pushargs(2, nargv);
       pushargs(4, pargv);
@@ -38180,7 +40465,7 @@ DEFUN2(stgApplyPPNPNP, N, f) {
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN too few args\n");
+      fprintf(stderr, "stgApplyPPNPNP FUN too few args\n");
       #endif
       int fvCount = f.op->infoPtr->fvCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
@@ -38209,14 +40494,14 @@ DEFUN2(stgApplyPPNPNP, N, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApply:  PAP error 1");
+    assert(argCount == f.op->argCount && "stgApplyPPNPNP:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
     if (excess > 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too many args\n");
+      fprintf(stderr, "stgApplyPPNPNP PAP too many args\n");
       #endif
       switch (excess) {
       case 1: {
@@ -38365,7 +40650,7 @@ DEFUN2(stgApplyPPNPNP, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyPPNPNP FUN just right\n");
       #endif
       pushargs(2, nargv);
       pushargs(papnargc, &f.op->payload[fvCount+1+pappargc]);
@@ -38377,7 +40662,7 @@ DEFUN2(stgApplyPPNPNP, N, f) {
     // excess < 0, too few args
     } else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too few args\n");
+      fprintf(stderr, "stgApplyPPNPNP PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 4 + pappargc, 2 + papnargc);
@@ -38410,19 +40695,22 @@ DEFUN2(stgApplyPPNPNP, N, f) {
   } // case PAP
 
   case BLACKHOLE: {
-    fprintf(stderr, "infinite loop detected in stgApply!\n");
+    fprintf(stderr, "infinite loop detected in stgApplyPPNPNP!\n");
     showStgHeap();
     exit(0);
   } // case BLACKHOLE
 
   default:
-    fprintf(stderr, "stgApply not a THUNK, FUN, or PAP\n");
+    fprintf(stderr, "stgApplyPPNPNP not a THUNK, FUN, or PAP\n");
     exit(0);
   }  // switch
   ENDFUN;
 }
 
 DEFUN2(stgApplyNNPPNP, N, f) {
+  #ifdef DEBUGSTGAPPLY
+  fprintf(stderr, "stgApplyNNPPNP %s\n", f.op->infoPtr->name);
+  #endif
   assert(N.argType == INT);
   const int argc = N.i;
   assert(argc == 6);
@@ -38437,13 +40725,34 @@ DEFUN2(stgApplyNNPPNP, N, f) {
   nargv[0] = argv[0];
   nargv[1] = argv[1];
   nargv[2] = argv[4];
+  callContSave(3, pargv);
+  STGEVAL(pargv[0]);
+  callContRestore(pargv);
+  // restore argv
+  argv[2] = pargv[0];
+  argv[3] = pargv[1];
+  argv[5] = pargv[2];
+  callContSave(3, pargv);
+  STGEVAL(pargv[1]);
+  callContRestore(pargv);
+  // restore argv
+  argv[2] = pargv[0];
+  argv[3] = pargv[1];
+  argv[5] = pargv[2];
+  callContSave(3, pargv);
+  STGEVAL(pargv[2]);
+  callContRestore(pargv);
+  // restore argv
+  argv[2] = pargv[0];
+  argv[3] = pargv[1];
+  argv[5] = pargv[2];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
     callContSave(3, pargv);
     while (f.op->objType == THUNK) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply THUNK\n");
+      fprintf(stderr, "stgApplyNNPPNP THUNK\n");
       #endif
       STGEVAL(f);
       // f.op = derefPoL(f);
@@ -38459,6 +40768,9 @@ DEFUN2(stgApplyNNPPNP, N, f) {
   switch (f.op->objType) {
   case FUN: {
     int arity = f.op->infoPtr->funFields.arity;
+    #ifdef DEBUGSTGAPPLY
+    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    #endif
     int excess = argc - arity;  // may be negative
 
     // too many args
@@ -38601,7 +40913,7 @@ DEFUN2(stgApplyNNPPNP, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyNNPPNP FUN just right\n");
       #endif
       pushargs(3, nargv);
       pushargs(3, pargv);
@@ -38611,7 +40923,7 @@ DEFUN2(stgApplyNNPPNP, N, f) {
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN too few args\n");
+      fprintf(stderr, "stgApplyNNPPNP FUN too few args\n");
       #endif
       int fvCount = f.op->infoPtr->fvCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
@@ -38640,14 +40952,14 @@ DEFUN2(stgApplyNNPPNP, N, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApply:  PAP error 1");
+    assert(argCount == f.op->argCount && "stgApplyNNPPNP:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
     if (excess > 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too many args\n");
+      fprintf(stderr, "stgApplyNNPPNP PAP too many args\n");
       #endif
       switch (excess) {
       case 1: {
@@ -38797,7 +41109,7 @@ DEFUN2(stgApplyNNPPNP, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyNNPPNP FUN just right\n");
       #endif
       pushargs(3, nargv);
       pushargs(papnargc, &f.op->payload[fvCount+1+pappargc]);
@@ -38809,7 +41121,7 @@ DEFUN2(stgApplyNNPPNP, N, f) {
     // excess < 0, too few args
     } else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too few args\n");
+      fprintf(stderr, "stgApplyNNPPNP PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3 + pappargc, 3 + papnargc);
@@ -38842,19 +41154,22 @@ DEFUN2(stgApplyNNPPNP, N, f) {
   } // case PAP
 
   case BLACKHOLE: {
-    fprintf(stderr, "infinite loop detected in stgApply!\n");
+    fprintf(stderr, "infinite loop detected in stgApplyNNPPNP!\n");
     showStgHeap();
     exit(0);
   } // case BLACKHOLE
 
   default:
-    fprintf(stderr, "stgApply not a THUNK, FUN, or PAP\n");
+    fprintf(stderr, "stgApplyNNPPNP not a THUNK, FUN, or PAP\n");
     exit(0);
   }  // switch
   ENDFUN;
 }
 
 DEFUN2(stgApplyPNPPNP, N, f) {
+  #ifdef DEBUGSTGAPPLY
+  fprintf(stderr, "stgApplyPNPPNP %s\n", f.op->infoPtr->name);
+  #endif
   assert(N.argType == INT);
   const int argc = N.i;
   assert(argc == 6);
@@ -38869,13 +41184,45 @@ DEFUN2(stgApplyPNPPNP, N, f) {
   PtrOrLiteral nargv[2];
   nargv[0] = argv[1];
   nargv[1] = argv[4];
+  callContSave(4, pargv);
+  STGEVAL(pargv[0]);
+  callContRestore(pargv);
+  // restore argv
+  argv[0] = pargv[0];
+  argv[2] = pargv[1];
+  argv[3] = pargv[2];
+  argv[5] = pargv[3];
+  callContSave(4, pargv);
+  STGEVAL(pargv[1]);
+  callContRestore(pargv);
+  // restore argv
+  argv[0] = pargv[0];
+  argv[2] = pargv[1];
+  argv[3] = pargv[2];
+  argv[5] = pargv[3];
+  callContSave(4, pargv);
+  STGEVAL(pargv[2]);
+  callContRestore(pargv);
+  // restore argv
+  argv[0] = pargv[0];
+  argv[2] = pargv[1];
+  argv[3] = pargv[2];
+  argv[5] = pargv[3];
+  callContSave(4, pargv);
+  STGEVAL(pargv[3]);
+  callContRestore(pargv);
+  // restore argv
+  argv[0] = pargv[0];
+  argv[2] = pargv[1];
+  argv[3] = pargv[2];
+  argv[5] = pargv[3];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
     callContSave(4, pargv);
     while (f.op->objType == THUNK) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply THUNK\n");
+      fprintf(stderr, "stgApplyPNPPNP THUNK\n");
       #endif
       STGEVAL(f);
       // f.op = derefPoL(f);
@@ -38892,6 +41239,9 @@ DEFUN2(stgApplyPNPPNP, N, f) {
   switch (f.op->objType) {
   case FUN: {
     int arity = f.op->infoPtr->funFields.arity;
+    #ifdef DEBUGSTGAPPLY
+    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    #endif
     int excess = argc - arity;  // may be negative
 
     // too many args
@@ -39034,7 +41384,7 @@ DEFUN2(stgApplyPNPPNP, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyPNPPNP FUN just right\n");
       #endif
       pushargs(2, nargv);
       pushargs(4, pargv);
@@ -39044,7 +41394,7 @@ DEFUN2(stgApplyPNPPNP, N, f) {
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN too few args\n");
+      fprintf(stderr, "stgApplyPNPPNP FUN too few args\n");
       #endif
       int fvCount = f.op->infoPtr->fvCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
@@ -39073,14 +41423,14 @@ DEFUN2(stgApplyPNPPNP, N, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApply:  PAP error 1");
+    assert(argCount == f.op->argCount && "stgApplyPNPPNP:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
     if (excess > 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too many args\n");
+      fprintf(stderr, "stgApplyPNPPNP PAP too many args\n");
       #endif
       switch (excess) {
       case 1: {
@@ -39230,7 +41580,7 @@ DEFUN2(stgApplyPNPPNP, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyPNPPNP FUN just right\n");
       #endif
       pushargs(2, nargv);
       pushargs(papnargc, &f.op->payload[fvCount+1+pappargc]);
@@ -39242,7 +41592,7 @@ DEFUN2(stgApplyPNPPNP, N, f) {
     // excess < 0, too few args
     } else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too few args\n");
+      fprintf(stderr, "stgApplyPNPPNP PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 4 + pappargc, 2 + papnargc);
@@ -39275,19 +41625,22 @@ DEFUN2(stgApplyPNPPNP, N, f) {
   } // case PAP
 
   case BLACKHOLE: {
-    fprintf(stderr, "infinite loop detected in stgApply!\n");
+    fprintf(stderr, "infinite loop detected in stgApplyPNPPNP!\n");
     showStgHeap();
     exit(0);
   } // case BLACKHOLE
 
   default:
-    fprintf(stderr, "stgApply not a THUNK, FUN, or PAP\n");
+    fprintf(stderr, "stgApplyPNPPNP not a THUNK, FUN, or PAP\n");
     exit(0);
   }  // switch
   ENDFUN;
 }
 
 DEFUN2(stgApplyNPPPNP, N, f) {
+  #ifdef DEBUGSTGAPPLY
+  fprintf(stderr, "stgApplyNPPPNP %s\n", f.op->infoPtr->name);
+  #endif
   assert(N.argType == INT);
   const int argc = N.i;
   assert(argc == 6);
@@ -39302,13 +41655,45 @@ DEFUN2(stgApplyNPPPNP, N, f) {
   PtrOrLiteral nargv[2];
   nargv[0] = argv[0];
   nargv[1] = argv[4];
+  callContSave(4, pargv);
+  STGEVAL(pargv[0]);
+  callContRestore(pargv);
+  // restore argv
+  argv[1] = pargv[0];
+  argv[2] = pargv[1];
+  argv[3] = pargv[2];
+  argv[5] = pargv[3];
+  callContSave(4, pargv);
+  STGEVAL(pargv[1]);
+  callContRestore(pargv);
+  // restore argv
+  argv[1] = pargv[0];
+  argv[2] = pargv[1];
+  argv[3] = pargv[2];
+  argv[5] = pargv[3];
+  callContSave(4, pargv);
+  STGEVAL(pargv[2]);
+  callContRestore(pargv);
+  // restore argv
+  argv[1] = pargv[0];
+  argv[2] = pargv[1];
+  argv[3] = pargv[2];
+  argv[5] = pargv[3];
+  callContSave(4, pargv);
+  STGEVAL(pargv[3]);
+  callContRestore(pargv);
+  // restore argv
+  argv[1] = pargv[0];
+  argv[2] = pargv[1];
+  argv[3] = pargv[2];
+  argv[5] = pargv[3];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
     callContSave(4, pargv);
     while (f.op->objType == THUNK) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply THUNK\n");
+      fprintf(stderr, "stgApplyNPPPNP THUNK\n");
       #endif
       STGEVAL(f);
       // f.op = derefPoL(f);
@@ -39325,6 +41710,9 @@ DEFUN2(stgApplyNPPPNP, N, f) {
   switch (f.op->objType) {
   case FUN: {
     int arity = f.op->infoPtr->funFields.arity;
+    #ifdef DEBUGSTGAPPLY
+    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    #endif
     int excess = argc - arity;  // may be negative
 
     // too many args
@@ -39468,7 +41856,7 @@ DEFUN2(stgApplyNPPPNP, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyNPPPNP FUN just right\n");
       #endif
       pushargs(2, nargv);
       pushargs(4, pargv);
@@ -39478,7 +41866,7 @@ DEFUN2(stgApplyNPPPNP, N, f) {
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN too few args\n");
+      fprintf(stderr, "stgApplyNPPPNP FUN too few args\n");
       #endif
       int fvCount = f.op->infoPtr->fvCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
@@ -39507,14 +41895,14 @@ DEFUN2(stgApplyNPPPNP, N, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApply:  PAP error 1");
+    assert(argCount == f.op->argCount && "stgApplyNPPPNP:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
     if (excess > 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too many args\n");
+      fprintf(stderr, "stgApplyNPPPNP PAP too many args\n");
       #endif
       switch (excess) {
       case 1: {
@@ -39665,7 +42053,7 @@ DEFUN2(stgApplyNPPPNP, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyNPPPNP FUN just right\n");
       #endif
       pushargs(2, nargv);
       pushargs(papnargc, &f.op->payload[fvCount+1+pappargc]);
@@ -39677,7 +42065,7 @@ DEFUN2(stgApplyNPPPNP, N, f) {
     // excess < 0, too few args
     } else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too few args\n");
+      fprintf(stderr, "stgApplyNPPPNP PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 4 + pappargc, 2 + papnargc);
@@ -39710,19 +42098,22 @@ DEFUN2(stgApplyNPPPNP, N, f) {
   } // case PAP
 
   case BLACKHOLE: {
-    fprintf(stderr, "infinite loop detected in stgApply!\n");
+    fprintf(stderr, "infinite loop detected in stgApplyNPPPNP!\n");
     showStgHeap();
     exit(0);
   } // case BLACKHOLE
 
   default:
-    fprintf(stderr, "stgApply not a THUNK, FUN, or PAP\n");
+    fprintf(stderr, "stgApplyNPPPNP not a THUNK, FUN, or PAP\n");
     exit(0);
   }  // switch
   ENDFUN;
 }
 
 DEFUN2(stgApplyPPPPNP, N, f) {
+  #ifdef DEBUGSTGAPPLY
+  fprintf(stderr, "stgApplyPPPPNP %s\n", f.op->infoPtr->name);
+  #endif
   assert(N.argType == INT);
   const int argc = N.i;
   assert(argc == 6);
@@ -39737,13 +42128,58 @@ DEFUN2(stgApplyPPPPNP, N, f) {
   pargv[4] = argv[5];
   PtrOrLiteral nargv[1];
   nargv[0] = argv[4];
+  callContSave(5, pargv);
+  STGEVAL(pargv[0]);
+  callContRestore(pargv);
+  // restore argv
+  argv[0] = pargv[0];
+  argv[1] = pargv[1];
+  argv[2] = pargv[2];
+  argv[3] = pargv[3];
+  argv[5] = pargv[4];
+  callContSave(5, pargv);
+  STGEVAL(pargv[1]);
+  callContRestore(pargv);
+  // restore argv
+  argv[0] = pargv[0];
+  argv[1] = pargv[1];
+  argv[2] = pargv[2];
+  argv[3] = pargv[3];
+  argv[5] = pargv[4];
+  callContSave(5, pargv);
+  STGEVAL(pargv[2]);
+  callContRestore(pargv);
+  // restore argv
+  argv[0] = pargv[0];
+  argv[1] = pargv[1];
+  argv[2] = pargv[2];
+  argv[3] = pargv[3];
+  argv[5] = pargv[4];
+  callContSave(5, pargv);
+  STGEVAL(pargv[3]);
+  callContRestore(pargv);
+  // restore argv
+  argv[0] = pargv[0];
+  argv[1] = pargv[1];
+  argv[2] = pargv[2];
+  argv[3] = pargv[3];
+  argv[5] = pargv[4];
+  callContSave(5, pargv);
+  STGEVAL(pargv[4]);
+  callContRestore(pargv);
+  // restore argv
+  argv[0] = pargv[0];
+  argv[1] = pargv[1];
+  argv[2] = pargv[2];
+  argv[3] = pargv[3];
+  argv[5] = pargv[4];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
     callContSave(5, pargv);
     while (f.op->objType == THUNK) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply THUNK\n");
+      fprintf(stderr, "stgApplyPPPPNP THUNK\n");
       #endif
       STGEVAL(f);
       // f.op = derefPoL(f);
@@ -39761,6 +42197,9 @@ DEFUN2(stgApplyPPPPNP, N, f) {
   switch (f.op->objType) {
   case FUN: {
     int arity = f.op->infoPtr->funFields.arity;
+    #ifdef DEBUGSTGAPPLY
+    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    #endif
     int excess = argc - arity;  // may be negative
 
     // too many args
@@ -39904,7 +42343,7 @@ DEFUN2(stgApplyPPPPNP, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyPPPPNP FUN just right\n");
       #endif
       pushargs(1, nargv);
       pushargs(5, pargv);
@@ -39914,7 +42353,7 @@ DEFUN2(stgApplyPPPPNP, N, f) {
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN too few args\n");
+      fprintf(stderr, "stgApplyPPPPNP FUN too few args\n");
       #endif
       int fvCount = f.op->infoPtr->fvCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
@@ -39943,14 +42382,14 @@ DEFUN2(stgApplyPPPPNP, N, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApply:  PAP error 1");
+    assert(argCount == f.op->argCount && "stgApplyPPPPNP:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
     if (excess > 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too many args\n");
+      fprintf(stderr, "stgApplyPPPPNP PAP too many args\n");
       #endif
       switch (excess) {
       case 1: {
@@ -40101,7 +42540,7 @@ DEFUN2(stgApplyPPPPNP, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyPPPPNP FUN just right\n");
       #endif
       pushargs(1, nargv);
       pushargs(papnargc, &f.op->payload[fvCount+1+pappargc]);
@@ -40113,7 +42552,7 @@ DEFUN2(stgApplyPPPPNP, N, f) {
     // excess < 0, too few args
     } else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too few args\n");
+      fprintf(stderr, "stgApplyPPPPNP PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 5 + pappargc, 1 + papnargc);
@@ -40146,19 +42585,22 @@ DEFUN2(stgApplyPPPPNP, N, f) {
   } // case PAP
 
   case BLACKHOLE: {
-    fprintf(stderr, "infinite loop detected in stgApply!\n");
+    fprintf(stderr, "infinite loop detected in stgApplyPPPPNP!\n");
     showStgHeap();
     exit(0);
   } // case BLACKHOLE
 
   default:
-    fprintf(stderr, "stgApply not a THUNK, FUN, or PAP\n");
+    fprintf(stderr, "stgApplyPPPPNP not a THUNK, FUN, or PAP\n");
     exit(0);
   }  // switch
   ENDFUN;
 }
 
 DEFUN2(stgApplyNNNNPP, N, f) {
+  #ifdef DEBUGSTGAPPLY
+  fprintf(stderr, "stgApplyNNNNPP %s\n", f.op->infoPtr->name);
+  #endif
   assert(N.argType == INT);
   const int argc = N.i;
   assert(argc == 6);
@@ -40173,13 +42615,25 @@ DEFUN2(stgApplyNNNNPP, N, f) {
   nargv[1] = argv[1];
   nargv[2] = argv[2];
   nargv[3] = argv[3];
+  callContSave(2, pargv);
+  STGEVAL(pargv[0]);
+  callContRestore(pargv);
+  // restore argv
+  argv[4] = pargv[0];
+  argv[5] = pargv[1];
+  callContSave(2, pargv);
+  STGEVAL(pargv[1]);
+  callContRestore(pargv);
+  // restore argv
+  argv[4] = pargv[0];
+  argv[5] = pargv[1];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
     callContSave(2, pargv);
     while (f.op->objType == THUNK) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply THUNK\n");
+      fprintf(stderr, "stgApplyNNNNPP THUNK\n");
       #endif
       STGEVAL(f);
       // f.op = derefPoL(f);
@@ -40194,6 +42648,9 @@ DEFUN2(stgApplyNNNNPP, N, f) {
   switch (f.op->objType) {
   case FUN: {
     int arity = f.op->infoPtr->funFields.arity;
+    #ifdef DEBUGSTGAPPLY
+    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    #endif
     int excess = argc - arity;  // may be negative
 
     // too many args
@@ -40335,7 +42792,7 @@ DEFUN2(stgApplyNNNNPP, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyNNNNPP FUN just right\n");
       #endif
       pushargs(4, nargv);
       pushargs(2, pargv);
@@ -40345,7 +42802,7 @@ DEFUN2(stgApplyNNNNPP, N, f) {
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN too few args\n");
+      fprintf(stderr, "stgApplyNNNNPP FUN too few args\n");
       #endif
       int fvCount = f.op->infoPtr->fvCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
@@ -40374,14 +42831,14 @@ DEFUN2(stgApplyNNNNPP, N, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApply:  PAP error 1");
+    assert(argCount == f.op->argCount && "stgApplyNNNNPP:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
     if (excess > 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too many args\n");
+      fprintf(stderr, "stgApplyNNNNPP PAP too many args\n");
       #endif
       switch (excess) {
       case 1: {
@@ -40530,7 +42987,7 @@ DEFUN2(stgApplyNNNNPP, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyNNNNPP FUN just right\n");
       #endif
       pushargs(4, nargv);
       pushargs(papnargc, &f.op->payload[fvCount+1+pappargc]);
@@ -40542,7 +42999,7 @@ DEFUN2(stgApplyNNNNPP, N, f) {
     // excess < 0, too few args
     } else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too few args\n");
+      fprintf(stderr, "stgApplyNNNNPP PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2 + pappargc, 4 + papnargc);
@@ -40575,19 +43032,22 @@ DEFUN2(stgApplyNNNNPP, N, f) {
   } // case PAP
 
   case BLACKHOLE: {
-    fprintf(stderr, "infinite loop detected in stgApply!\n");
+    fprintf(stderr, "infinite loop detected in stgApplyNNNNPP!\n");
     showStgHeap();
     exit(0);
   } // case BLACKHOLE
 
   default:
-    fprintf(stderr, "stgApply not a THUNK, FUN, or PAP\n");
+    fprintf(stderr, "stgApplyNNNNPP not a THUNK, FUN, or PAP\n");
     exit(0);
   }  // switch
   ENDFUN;
 }
 
 DEFUN2(stgApplyPNNNPP, N, f) {
+  #ifdef DEBUGSTGAPPLY
+  fprintf(stderr, "stgApplyPNNNPP %s\n", f.op->infoPtr->name);
+  #endif
   assert(N.argType == INT);
   const int argc = N.i;
   assert(argc == 6);
@@ -40602,13 +43062,34 @@ DEFUN2(stgApplyPNNNPP, N, f) {
   nargv[0] = argv[1];
   nargv[1] = argv[2];
   nargv[2] = argv[3];
+  callContSave(3, pargv);
+  STGEVAL(pargv[0]);
+  callContRestore(pargv);
+  // restore argv
+  argv[0] = pargv[0];
+  argv[4] = pargv[1];
+  argv[5] = pargv[2];
+  callContSave(3, pargv);
+  STGEVAL(pargv[1]);
+  callContRestore(pargv);
+  // restore argv
+  argv[0] = pargv[0];
+  argv[4] = pargv[1];
+  argv[5] = pargv[2];
+  callContSave(3, pargv);
+  STGEVAL(pargv[2]);
+  callContRestore(pargv);
+  // restore argv
+  argv[0] = pargv[0];
+  argv[4] = pargv[1];
+  argv[5] = pargv[2];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
     callContSave(3, pargv);
     while (f.op->objType == THUNK) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply THUNK\n");
+      fprintf(stderr, "stgApplyPNNNPP THUNK\n");
       #endif
       STGEVAL(f);
       // f.op = derefPoL(f);
@@ -40624,6 +43105,9 @@ DEFUN2(stgApplyPNNNPP, N, f) {
   switch (f.op->objType) {
   case FUN: {
     int arity = f.op->infoPtr->funFields.arity;
+    #ifdef DEBUGSTGAPPLY
+    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    #endif
     int excess = argc - arity;  // may be negative
 
     // too many args
@@ -40765,7 +43249,7 @@ DEFUN2(stgApplyPNNNPP, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyPNNNPP FUN just right\n");
       #endif
       pushargs(3, nargv);
       pushargs(3, pargv);
@@ -40775,7 +43259,7 @@ DEFUN2(stgApplyPNNNPP, N, f) {
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN too few args\n");
+      fprintf(stderr, "stgApplyPNNNPP FUN too few args\n");
       #endif
       int fvCount = f.op->infoPtr->fvCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
@@ -40804,14 +43288,14 @@ DEFUN2(stgApplyPNNNPP, N, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApply:  PAP error 1");
+    assert(argCount == f.op->argCount && "stgApplyPNNNPP:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
     if (excess > 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too many args\n");
+      fprintf(stderr, "stgApplyPNNNPP PAP too many args\n");
       #endif
       switch (excess) {
       case 1: {
@@ -40960,7 +43444,7 @@ DEFUN2(stgApplyPNNNPP, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyPNNNPP FUN just right\n");
       #endif
       pushargs(3, nargv);
       pushargs(papnargc, &f.op->payload[fvCount+1+pappargc]);
@@ -40972,7 +43456,7 @@ DEFUN2(stgApplyPNNNPP, N, f) {
     // excess < 0, too few args
     } else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too few args\n");
+      fprintf(stderr, "stgApplyPNNNPP PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3 + pappargc, 3 + papnargc);
@@ -41005,19 +43489,22 @@ DEFUN2(stgApplyPNNNPP, N, f) {
   } // case PAP
 
   case BLACKHOLE: {
-    fprintf(stderr, "infinite loop detected in stgApply!\n");
+    fprintf(stderr, "infinite loop detected in stgApplyPNNNPP!\n");
     showStgHeap();
     exit(0);
   } // case BLACKHOLE
 
   default:
-    fprintf(stderr, "stgApply not a THUNK, FUN, or PAP\n");
+    fprintf(stderr, "stgApplyPNNNPP not a THUNK, FUN, or PAP\n");
     exit(0);
   }  // switch
   ENDFUN;
 }
 
 DEFUN2(stgApplyNPNNPP, N, f) {
+  #ifdef DEBUGSTGAPPLY
+  fprintf(stderr, "stgApplyNPNNPP %s\n", f.op->infoPtr->name);
+  #endif
   assert(N.argType == INT);
   const int argc = N.i;
   assert(argc == 6);
@@ -41032,13 +43519,34 @@ DEFUN2(stgApplyNPNNPP, N, f) {
   nargv[0] = argv[0];
   nargv[1] = argv[2];
   nargv[2] = argv[3];
+  callContSave(3, pargv);
+  STGEVAL(pargv[0]);
+  callContRestore(pargv);
+  // restore argv
+  argv[1] = pargv[0];
+  argv[4] = pargv[1];
+  argv[5] = pargv[2];
+  callContSave(3, pargv);
+  STGEVAL(pargv[1]);
+  callContRestore(pargv);
+  // restore argv
+  argv[1] = pargv[0];
+  argv[4] = pargv[1];
+  argv[5] = pargv[2];
+  callContSave(3, pargv);
+  STGEVAL(pargv[2]);
+  callContRestore(pargv);
+  // restore argv
+  argv[1] = pargv[0];
+  argv[4] = pargv[1];
+  argv[5] = pargv[2];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
     callContSave(3, pargv);
     while (f.op->objType == THUNK) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply THUNK\n");
+      fprintf(stderr, "stgApplyNPNNPP THUNK\n");
       #endif
       STGEVAL(f);
       // f.op = derefPoL(f);
@@ -41054,6 +43562,9 @@ DEFUN2(stgApplyNPNNPP, N, f) {
   switch (f.op->objType) {
   case FUN: {
     int arity = f.op->infoPtr->funFields.arity;
+    #ifdef DEBUGSTGAPPLY
+    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    #endif
     int excess = argc - arity;  // may be negative
 
     // too many args
@@ -41196,7 +43707,7 @@ DEFUN2(stgApplyNPNNPP, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyNPNNPP FUN just right\n");
       #endif
       pushargs(3, nargv);
       pushargs(3, pargv);
@@ -41206,7 +43717,7 @@ DEFUN2(stgApplyNPNNPP, N, f) {
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN too few args\n");
+      fprintf(stderr, "stgApplyNPNNPP FUN too few args\n");
       #endif
       int fvCount = f.op->infoPtr->fvCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
@@ -41235,14 +43746,14 @@ DEFUN2(stgApplyNPNNPP, N, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApply:  PAP error 1");
+    assert(argCount == f.op->argCount && "stgApplyNPNNPP:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
     if (excess > 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too many args\n");
+      fprintf(stderr, "stgApplyNPNNPP PAP too many args\n");
       #endif
       switch (excess) {
       case 1: {
@@ -41392,7 +43903,7 @@ DEFUN2(stgApplyNPNNPP, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyNPNNPP FUN just right\n");
       #endif
       pushargs(3, nargv);
       pushargs(papnargc, &f.op->payload[fvCount+1+pappargc]);
@@ -41404,7 +43915,7 @@ DEFUN2(stgApplyNPNNPP, N, f) {
     // excess < 0, too few args
     } else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too few args\n");
+      fprintf(stderr, "stgApplyNPNNPP PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3 + pappargc, 3 + papnargc);
@@ -41437,19 +43948,22 @@ DEFUN2(stgApplyNPNNPP, N, f) {
   } // case PAP
 
   case BLACKHOLE: {
-    fprintf(stderr, "infinite loop detected in stgApply!\n");
+    fprintf(stderr, "infinite loop detected in stgApplyNPNNPP!\n");
     showStgHeap();
     exit(0);
   } // case BLACKHOLE
 
   default:
-    fprintf(stderr, "stgApply not a THUNK, FUN, or PAP\n");
+    fprintf(stderr, "stgApplyNPNNPP not a THUNK, FUN, or PAP\n");
     exit(0);
   }  // switch
   ENDFUN;
 }
 
 DEFUN2(stgApplyPPNNPP, N, f) {
+  #ifdef DEBUGSTGAPPLY
+  fprintf(stderr, "stgApplyPPNNPP %s\n", f.op->infoPtr->name);
+  #endif
   assert(N.argType == INT);
   const int argc = N.i;
   assert(argc == 6);
@@ -41464,13 +43978,45 @@ DEFUN2(stgApplyPPNNPP, N, f) {
   PtrOrLiteral nargv[2];
   nargv[0] = argv[2];
   nargv[1] = argv[3];
+  callContSave(4, pargv);
+  STGEVAL(pargv[0]);
+  callContRestore(pargv);
+  // restore argv
+  argv[0] = pargv[0];
+  argv[1] = pargv[1];
+  argv[4] = pargv[2];
+  argv[5] = pargv[3];
+  callContSave(4, pargv);
+  STGEVAL(pargv[1]);
+  callContRestore(pargv);
+  // restore argv
+  argv[0] = pargv[0];
+  argv[1] = pargv[1];
+  argv[4] = pargv[2];
+  argv[5] = pargv[3];
+  callContSave(4, pargv);
+  STGEVAL(pargv[2]);
+  callContRestore(pargv);
+  // restore argv
+  argv[0] = pargv[0];
+  argv[1] = pargv[1];
+  argv[4] = pargv[2];
+  argv[5] = pargv[3];
+  callContSave(4, pargv);
+  STGEVAL(pargv[3]);
+  callContRestore(pargv);
+  // restore argv
+  argv[0] = pargv[0];
+  argv[1] = pargv[1];
+  argv[4] = pargv[2];
+  argv[5] = pargv[3];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
     callContSave(4, pargv);
     while (f.op->objType == THUNK) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply THUNK\n");
+      fprintf(stderr, "stgApplyPPNNPP THUNK\n");
       #endif
       STGEVAL(f);
       // f.op = derefPoL(f);
@@ -41487,6 +44033,9 @@ DEFUN2(stgApplyPPNNPP, N, f) {
   switch (f.op->objType) {
   case FUN: {
     int arity = f.op->infoPtr->funFields.arity;
+    #ifdef DEBUGSTGAPPLY
+    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    #endif
     int excess = argc - arity;  // may be negative
 
     // too many args
@@ -41629,7 +44178,7 @@ DEFUN2(stgApplyPPNNPP, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyPPNNPP FUN just right\n");
       #endif
       pushargs(2, nargv);
       pushargs(4, pargv);
@@ -41639,7 +44188,7 @@ DEFUN2(stgApplyPPNNPP, N, f) {
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN too few args\n");
+      fprintf(stderr, "stgApplyPPNNPP FUN too few args\n");
       #endif
       int fvCount = f.op->infoPtr->fvCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
@@ -41668,14 +44217,14 @@ DEFUN2(stgApplyPPNNPP, N, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApply:  PAP error 1");
+    assert(argCount == f.op->argCount && "stgApplyPPNNPP:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
     if (excess > 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too many args\n");
+      fprintf(stderr, "stgApplyPPNNPP PAP too many args\n");
       #endif
       switch (excess) {
       case 1: {
@@ -41825,7 +44374,7 @@ DEFUN2(stgApplyPPNNPP, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyPPNNPP FUN just right\n");
       #endif
       pushargs(2, nargv);
       pushargs(papnargc, &f.op->payload[fvCount+1+pappargc]);
@@ -41837,7 +44386,7 @@ DEFUN2(stgApplyPPNNPP, N, f) {
     // excess < 0, too few args
     } else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too few args\n");
+      fprintf(stderr, "stgApplyPPNNPP PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 4 + pappargc, 2 + papnargc);
@@ -41870,19 +44419,22 @@ DEFUN2(stgApplyPPNNPP, N, f) {
   } // case PAP
 
   case BLACKHOLE: {
-    fprintf(stderr, "infinite loop detected in stgApply!\n");
+    fprintf(stderr, "infinite loop detected in stgApplyPPNNPP!\n");
     showStgHeap();
     exit(0);
   } // case BLACKHOLE
 
   default:
-    fprintf(stderr, "stgApply not a THUNK, FUN, or PAP\n");
+    fprintf(stderr, "stgApplyPPNNPP not a THUNK, FUN, or PAP\n");
     exit(0);
   }  // switch
   ENDFUN;
 }
 
 DEFUN2(stgApplyNNPNPP, N, f) {
+  #ifdef DEBUGSTGAPPLY
+  fprintf(stderr, "stgApplyNNPNPP %s\n", f.op->infoPtr->name);
+  #endif
   assert(N.argType == INT);
   const int argc = N.i;
   assert(argc == 6);
@@ -41897,13 +44449,34 @@ DEFUN2(stgApplyNNPNPP, N, f) {
   nargv[0] = argv[0];
   nargv[1] = argv[1];
   nargv[2] = argv[3];
+  callContSave(3, pargv);
+  STGEVAL(pargv[0]);
+  callContRestore(pargv);
+  // restore argv
+  argv[2] = pargv[0];
+  argv[4] = pargv[1];
+  argv[5] = pargv[2];
+  callContSave(3, pargv);
+  STGEVAL(pargv[1]);
+  callContRestore(pargv);
+  // restore argv
+  argv[2] = pargv[0];
+  argv[4] = pargv[1];
+  argv[5] = pargv[2];
+  callContSave(3, pargv);
+  STGEVAL(pargv[2]);
+  callContRestore(pargv);
+  // restore argv
+  argv[2] = pargv[0];
+  argv[4] = pargv[1];
+  argv[5] = pargv[2];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
     callContSave(3, pargv);
     while (f.op->objType == THUNK) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply THUNK\n");
+      fprintf(stderr, "stgApplyNNPNPP THUNK\n");
       #endif
       STGEVAL(f);
       // f.op = derefPoL(f);
@@ -41919,6 +44492,9 @@ DEFUN2(stgApplyNNPNPP, N, f) {
   switch (f.op->objType) {
   case FUN: {
     int arity = f.op->infoPtr->funFields.arity;
+    #ifdef DEBUGSTGAPPLY
+    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    #endif
     int excess = argc - arity;  // may be negative
 
     // too many args
@@ -42062,7 +44638,7 @@ DEFUN2(stgApplyNNPNPP, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyNNPNPP FUN just right\n");
       #endif
       pushargs(3, nargv);
       pushargs(3, pargv);
@@ -42072,7 +44648,7 @@ DEFUN2(stgApplyNNPNPP, N, f) {
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN too few args\n");
+      fprintf(stderr, "stgApplyNNPNPP FUN too few args\n");
       #endif
       int fvCount = f.op->infoPtr->fvCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
@@ -42101,14 +44677,14 @@ DEFUN2(stgApplyNNPNPP, N, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApply:  PAP error 1");
+    assert(argCount == f.op->argCount && "stgApplyNNPNPP:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
     if (excess > 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too many args\n");
+      fprintf(stderr, "stgApplyNNPNPP PAP too many args\n");
       #endif
       switch (excess) {
       case 1: {
@@ -42259,7 +44835,7 @@ DEFUN2(stgApplyNNPNPP, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyNNPNPP FUN just right\n");
       #endif
       pushargs(3, nargv);
       pushargs(papnargc, &f.op->payload[fvCount+1+pappargc]);
@@ -42271,7 +44847,7 @@ DEFUN2(stgApplyNNPNPP, N, f) {
     // excess < 0, too few args
     } else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too few args\n");
+      fprintf(stderr, "stgApplyNNPNPP PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3 + pappargc, 3 + papnargc);
@@ -42304,19 +44880,22 @@ DEFUN2(stgApplyNNPNPP, N, f) {
   } // case PAP
 
   case BLACKHOLE: {
-    fprintf(stderr, "infinite loop detected in stgApply!\n");
+    fprintf(stderr, "infinite loop detected in stgApplyNNPNPP!\n");
     showStgHeap();
     exit(0);
   } // case BLACKHOLE
 
   default:
-    fprintf(stderr, "stgApply not a THUNK, FUN, or PAP\n");
+    fprintf(stderr, "stgApplyNNPNPP not a THUNK, FUN, or PAP\n");
     exit(0);
   }  // switch
   ENDFUN;
 }
 
 DEFUN2(stgApplyPNPNPP, N, f) {
+  #ifdef DEBUGSTGAPPLY
+  fprintf(stderr, "stgApplyPNPNPP %s\n", f.op->infoPtr->name);
+  #endif
   assert(N.argType == INT);
   const int argc = N.i;
   assert(argc == 6);
@@ -42331,13 +44910,45 @@ DEFUN2(stgApplyPNPNPP, N, f) {
   PtrOrLiteral nargv[2];
   nargv[0] = argv[1];
   nargv[1] = argv[3];
+  callContSave(4, pargv);
+  STGEVAL(pargv[0]);
+  callContRestore(pargv);
+  // restore argv
+  argv[0] = pargv[0];
+  argv[2] = pargv[1];
+  argv[4] = pargv[2];
+  argv[5] = pargv[3];
+  callContSave(4, pargv);
+  STGEVAL(pargv[1]);
+  callContRestore(pargv);
+  // restore argv
+  argv[0] = pargv[0];
+  argv[2] = pargv[1];
+  argv[4] = pargv[2];
+  argv[5] = pargv[3];
+  callContSave(4, pargv);
+  STGEVAL(pargv[2]);
+  callContRestore(pargv);
+  // restore argv
+  argv[0] = pargv[0];
+  argv[2] = pargv[1];
+  argv[4] = pargv[2];
+  argv[5] = pargv[3];
+  callContSave(4, pargv);
+  STGEVAL(pargv[3]);
+  callContRestore(pargv);
+  // restore argv
+  argv[0] = pargv[0];
+  argv[2] = pargv[1];
+  argv[4] = pargv[2];
+  argv[5] = pargv[3];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
     callContSave(4, pargv);
     while (f.op->objType == THUNK) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply THUNK\n");
+      fprintf(stderr, "stgApplyPNPNPP THUNK\n");
       #endif
       STGEVAL(f);
       // f.op = derefPoL(f);
@@ -42354,6 +44965,9 @@ DEFUN2(stgApplyPNPNPP, N, f) {
   switch (f.op->objType) {
   case FUN: {
     int arity = f.op->infoPtr->funFields.arity;
+    #ifdef DEBUGSTGAPPLY
+    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    #endif
     int excess = argc - arity;  // may be negative
 
     // too many args
@@ -42497,7 +45111,7 @@ DEFUN2(stgApplyPNPNPP, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyPNPNPP FUN just right\n");
       #endif
       pushargs(2, nargv);
       pushargs(4, pargv);
@@ -42507,7 +45121,7 @@ DEFUN2(stgApplyPNPNPP, N, f) {
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN too few args\n");
+      fprintf(stderr, "stgApplyPNPNPP FUN too few args\n");
       #endif
       int fvCount = f.op->infoPtr->fvCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
@@ -42536,14 +45150,14 @@ DEFUN2(stgApplyPNPNPP, N, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApply:  PAP error 1");
+    assert(argCount == f.op->argCount && "stgApplyPNPNPP:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
     if (excess > 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too many args\n");
+      fprintf(stderr, "stgApplyPNPNPP PAP too many args\n");
       #endif
       switch (excess) {
       case 1: {
@@ -42694,7 +45308,7 @@ DEFUN2(stgApplyPNPNPP, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyPNPNPP FUN just right\n");
       #endif
       pushargs(2, nargv);
       pushargs(papnargc, &f.op->payload[fvCount+1+pappargc]);
@@ -42706,7 +45320,7 @@ DEFUN2(stgApplyPNPNPP, N, f) {
     // excess < 0, too few args
     } else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too few args\n");
+      fprintf(stderr, "stgApplyPNPNPP PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 4 + pappargc, 2 + papnargc);
@@ -42739,19 +45353,22 @@ DEFUN2(stgApplyPNPNPP, N, f) {
   } // case PAP
 
   case BLACKHOLE: {
-    fprintf(stderr, "infinite loop detected in stgApply!\n");
+    fprintf(stderr, "infinite loop detected in stgApplyPNPNPP!\n");
     showStgHeap();
     exit(0);
   } // case BLACKHOLE
 
   default:
-    fprintf(stderr, "stgApply not a THUNK, FUN, or PAP\n");
+    fprintf(stderr, "stgApplyPNPNPP not a THUNK, FUN, or PAP\n");
     exit(0);
   }  // switch
   ENDFUN;
 }
 
 DEFUN2(stgApplyNPPNPP, N, f) {
+  #ifdef DEBUGSTGAPPLY
+  fprintf(stderr, "stgApplyNPPNPP %s\n", f.op->infoPtr->name);
+  #endif
   assert(N.argType == INT);
   const int argc = N.i;
   assert(argc == 6);
@@ -42766,13 +45383,45 @@ DEFUN2(stgApplyNPPNPP, N, f) {
   PtrOrLiteral nargv[2];
   nargv[0] = argv[0];
   nargv[1] = argv[3];
+  callContSave(4, pargv);
+  STGEVAL(pargv[0]);
+  callContRestore(pargv);
+  // restore argv
+  argv[1] = pargv[0];
+  argv[2] = pargv[1];
+  argv[4] = pargv[2];
+  argv[5] = pargv[3];
+  callContSave(4, pargv);
+  STGEVAL(pargv[1]);
+  callContRestore(pargv);
+  // restore argv
+  argv[1] = pargv[0];
+  argv[2] = pargv[1];
+  argv[4] = pargv[2];
+  argv[5] = pargv[3];
+  callContSave(4, pargv);
+  STGEVAL(pargv[2]);
+  callContRestore(pargv);
+  // restore argv
+  argv[1] = pargv[0];
+  argv[2] = pargv[1];
+  argv[4] = pargv[2];
+  argv[5] = pargv[3];
+  callContSave(4, pargv);
+  STGEVAL(pargv[3]);
+  callContRestore(pargv);
+  // restore argv
+  argv[1] = pargv[0];
+  argv[2] = pargv[1];
+  argv[4] = pargv[2];
+  argv[5] = pargv[3];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
     callContSave(4, pargv);
     while (f.op->objType == THUNK) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply THUNK\n");
+      fprintf(stderr, "stgApplyNPPNPP THUNK\n");
       #endif
       STGEVAL(f);
       // f.op = derefPoL(f);
@@ -42789,6 +45438,9 @@ DEFUN2(stgApplyNPPNPP, N, f) {
   switch (f.op->objType) {
   case FUN: {
     int arity = f.op->infoPtr->funFields.arity;
+    #ifdef DEBUGSTGAPPLY
+    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    #endif
     int excess = argc - arity;  // may be negative
 
     // too many args
@@ -42933,7 +45585,7 @@ DEFUN2(stgApplyNPPNPP, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyNPPNPP FUN just right\n");
       #endif
       pushargs(2, nargv);
       pushargs(4, pargv);
@@ -42943,7 +45595,7 @@ DEFUN2(stgApplyNPPNPP, N, f) {
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN too few args\n");
+      fprintf(stderr, "stgApplyNPPNPP FUN too few args\n");
       #endif
       int fvCount = f.op->infoPtr->fvCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
@@ -42972,14 +45624,14 @@ DEFUN2(stgApplyNPPNPP, N, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApply:  PAP error 1");
+    assert(argCount == f.op->argCount && "stgApplyNPPNPP:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
     if (excess > 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too many args\n");
+      fprintf(stderr, "stgApplyNPPNPP PAP too many args\n");
       #endif
       switch (excess) {
       case 1: {
@@ -43131,7 +45783,7 @@ DEFUN2(stgApplyNPPNPP, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyNPPNPP FUN just right\n");
       #endif
       pushargs(2, nargv);
       pushargs(papnargc, &f.op->payload[fvCount+1+pappargc]);
@@ -43143,7 +45795,7 @@ DEFUN2(stgApplyNPPNPP, N, f) {
     // excess < 0, too few args
     } else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too few args\n");
+      fprintf(stderr, "stgApplyNPPNPP PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 4 + pappargc, 2 + papnargc);
@@ -43176,19 +45828,22 @@ DEFUN2(stgApplyNPPNPP, N, f) {
   } // case PAP
 
   case BLACKHOLE: {
-    fprintf(stderr, "infinite loop detected in stgApply!\n");
+    fprintf(stderr, "infinite loop detected in stgApplyNPPNPP!\n");
     showStgHeap();
     exit(0);
   } // case BLACKHOLE
 
   default:
-    fprintf(stderr, "stgApply not a THUNK, FUN, or PAP\n");
+    fprintf(stderr, "stgApplyNPPNPP not a THUNK, FUN, or PAP\n");
     exit(0);
   }  // switch
   ENDFUN;
 }
 
 DEFUN2(stgApplyPPPNPP, N, f) {
+  #ifdef DEBUGSTGAPPLY
+  fprintf(stderr, "stgApplyPPPNPP %s\n", f.op->infoPtr->name);
+  #endif
   assert(N.argType == INT);
   const int argc = N.i;
   assert(argc == 6);
@@ -43203,13 +45858,58 @@ DEFUN2(stgApplyPPPNPP, N, f) {
   pargv[4] = argv[5];
   PtrOrLiteral nargv[1];
   nargv[0] = argv[3];
+  callContSave(5, pargv);
+  STGEVAL(pargv[0]);
+  callContRestore(pargv);
+  // restore argv
+  argv[0] = pargv[0];
+  argv[1] = pargv[1];
+  argv[2] = pargv[2];
+  argv[4] = pargv[3];
+  argv[5] = pargv[4];
+  callContSave(5, pargv);
+  STGEVAL(pargv[1]);
+  callContRestore(pargv);
+  // restore argv
+  argv[0] = pargv[0];
+  argv[1] = pargv[1];
+  argv[2] = pargv[2];
+  argv[4] = pargv[3];
+  argv[5] = pargv[4];
+  callContSave(5, pargv);
+  STGEVAL(pargv[2]);
+  callContRestore(pargv);
+  // restore argv
+  argv[0] = pargv[0];
+  argv[1] = pargv[1];
+  argv[2] = pargv[2];
+  argv[4] = pargv[3];
+  argv[5] = pargv[4];
+  callContSave(5, pargv);
+  STGEVAL(pargv[3]);
+  callContRestore(pargv);
+  // restore argv
+  argv[0] = pargv[0];
+  argv[1] = pargv[1];
+  argv[2] = pargv[2];
+  argv[4] = pargv[3];
+  argv[5] = pargv[4];
+  callContSave(5, pargv);
+  STGEVAL(pargv[4]);
+  callContRestore(pargv);
+  // restore argv
+  argv[0] = pargv[0];
+  argv[1] = pargv[1];
+  argv[2] = pargv[2];
+  argv[4] = pargv[3];
+  argv[5] = pargv[4];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
     callContSave(5, pargv);
     while (f.op->objType == THUNK) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply THUNK\n");
+      fprintf(stderr, "stgApplyPPPNPP THUNK\n");
       #endif
       STGEVAL(f);
       // f.op = derefPoL(f);
@@ -43227,6 +45927,9 @@ DEFUN2(stgApplyPPPNPP, N, f) {
   switch (f.op->objType) {
   case FUN: {
     int arity = f.op->infoPtr->funFields.arity;
+    #ifdef DEBUGSTGAPPLY
+    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    #endif
     int excess = argc - arity;  // may be negative
 
     // too many args
@@ -43371,7 +46074,7 @@ DEFUN2(stgApplyPPPNPP, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyPPPNPP FUN just right\n");
       #endif
       pushargs(1, nargv);
       pushargs(5, pargv);
@@ -43381,7 +46084,7 @@ DEFUN2(stgApplyPPPNPP, N, f) {
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN too few args\n");
+      fprintf(stderr, "stgApplyPPPNPP FUN too few args\n");
       #endif
       int fvCount = f.op->infoPtr->fvCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
@@ -43410,14 +46113,14 @@ DEFUN2(stgApplyPPPNPP, N, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApply:  PAP error 1");
+    assert(argCount == f.op->argCount && "stgApplyPPPNPP:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
     if (excess > 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too many args\n");
+      fprintf(stderr, "stgApplyPPPNPP PAP too many args\n");
       #endif
       switch (excess) {
       case 1: {
@@ -43569,7 +46272,7 @@ DEFUN2(stgApplyPPPNPP, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyPPPNPP FUN just right\n");
       #endif
       pushargs(1, nargv);
       pushargs(papnargc, &f.op->payload[fvCount+1+pappargc]);
@@ -43581,7 +46284,7 @@ DEFUN2(stgApplyPPPNPP, N, f) {
     // excess < 0, too few args
     } else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too few args\n");
+      fprintf(stderr, "stgApplyPPPNPP PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 5 + pappargc, 1 + papnargc);
@@ -43614,19 +46317,22 @@ DEFUN2(stgApplyPPPNPP, N, f) {
   } // case PAP
 
   case BLACKHOLE: {
-    fprintf(stderr, "infinite loop detected in stgApply!\n");
+    fprintf(stderr, "infinite loop detected in stgApplyPPPNPP!\n");
     showStgHeap();
     exit(0);
   } // case BLACKHOLE
 
   default:
-    fprintf(stderr, "stgApply not a THUNK, FUN, or PAP\n");
+    fprintf(stderr, "stgApplyPPPNPP not a THUNK, FUN, or PAP\n");
     exit(0);
   }  // switch
   ENDFUN;
 }
 
 DEFUN2(stgApplyNNNPPP, N, f) {
+  #ifdef DEBUGSTGAPPLY
+  fprintf(stderr, "stgApplyNNNPPP %s\n", f.op->infoPtr->name);
+  #endif
   assert(N.argType == INT);
   const int argc = N.i;
   assert(argc == 6);
@@ -43641,13 +46347,34 @@ DEFUN2(stgApplyNNNPPP, N, f) {
   nargv[0] = argv[0];
   nargv[1] = argv[1];
   nargv[2] = argv[2];
+  callContSave(3, pargv);
+  STGEVAL(pargv[0]);
+  callContRestore(pargv);
+  // restore argv
+  argv[3] = pargv[0];
+  argv[4] = pargv[1];
+  argv[5] = pargv[2];
+  callContSave(3, pargv);
+  STGEVAL(pargv[1]);
+  callContRestore(pargv);
+  // restore argv
+  argv[3] = pargv[0];
+  argv[4] = pargv[1];
+  argv[5] = pargv[2];
+  callContSave(3, pargv);
+  STGEVAL(pargv[2]);
+  callContRestore(pargv);
+  // restore argv
+  argv[3] = pargv[0];
+  argv[4] = pargv[1];
+  argv[5] = pargv[2];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
     callContSave(3, pargv);
     while (f.op->objType == THUNK) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply THUNK\n");
+      fprintf(stderr, "stgApplyNNNPPP THUNK\n");
       #endif
       STGEVAL(f);
       // f.op = derefPoL(f);
@@ -43663,6 +46390,9 @@ DEFUN2(stgApplyNNNPPP, N, f) {
   switch (f.op->objType) {
   case FUN: {
     int arity = f.op->infoPtr->funFields.arity;
+    #ifdef DEBUGSTGAPPLY
+    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    #endif
     int excess = argc - arity;  // may be negative
 
     // too many args
@@ -43807,7 +46537,7 @@ DEFUN2(stgApplyNNNPPP, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyNNNPPP FUN just right\n");
       #endif
       pushargs(3, nargv);
       pushargs(3, pargv);
@@ -43817,7 +46547,7 @@ DEFUN2(stgApplyNNNPPP, N, f) {
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN too few args\n");
+      fprintf(stderr, "stgApplyNNNPPP FUN too few args\n");
       #endif
       int fvCount = f.op->infoPtr->fvCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
@@ -43846,14 +46576,14 @@ DEFUN2(stgApplyNNNPPP, N, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApply:  PAP error 1");
+    assert(argCount == f.op->argCount && "stgApplyNNNPPP:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
     if (excess > 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too many args\n");
+      fprintf(stderr, "stgApplyNNNPPP PAP too many args\n");
       #endif
       switch (excess) {
       case 1: {
@@ -44005,7 +46735,7 @@ DEFUN2(stgApplyNNNPPP, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyNNNPPP FUN just right\n");
       #endif
       pushargs(3, nargv);
       pushargs(papnargc, &f.op->payload[fvCount+1+pappargc]);
@@ -44017,7 +46747,7 @@ DEFUN2(stgApplyNNNPPP, N, f) {
     // excess < 0, too few args
     } else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too few args\n");
+      fprintf(stderr, "stgApplyNNNPPP PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3 + pappargc, 3 + papnargc);
@@ -44050,19 +46780,22 @@ DEFUN2(stgApplyNNNPPP, N, f) {
   } // case PAP
 
   case BLACKHOLE: {
-    fprintf(stderr, "infinite loop detected in stgApply!\n");
+    fprintf(stderr, "infinite loop detected in stgApplyNNNPPP!\n");
     showStgHeap();
     exit(0);
   } // case BLACKHOLE
 
   default:
-    fprintf(stderr, "stgApply not a THUNK, FUN, or PAP\n");
+    fprintf(stderr, "stgApplyNNNPPP not a THUNK, FUN, or PAP\n");
     exit(0);
   }  // switch
   ENDFUN;
 }
 
 DEFUN2(stgApplyPNNPPP, N, f) {
+  #ifdef DEBUGSTGAPPLY
+  fprintf(stderr, "stgApplyPNNPPP %s\n", f.op->infoPtr->name);
+  #endif
   assert(N.argType == INT);
   const int argc = N.i;
   assert(argc == 6);
@@ -44077,13 +46810,45 @@ DEFUN2(stgApplyPNNPPP, N, f) {
   PtrOrLiteral nargv[2];
   nargv[0] = argv[1];
   nargv[1] = argv[2];
+  callContSave(4, pargv);
+  STGEVAL(pargv[0]);
+  callContRestore(pargv);
+  // restore argv
+  argv[0] = pargv[0];
+  argv[3] = pargv[1];
+  argv[4] = pargv[2];
+  argv[5] = pargv[3];
+  callContSave(4, pargv);
+  STGEVAL(pargv[1]);
+  callContRestore(pargv);
+  // restore argv
+  argv[0] = pargv[0];
+  argv[3] = pargv[1];
+  argv[4] = pargv[2];
+  argv[5] = pargv[3];
+  callContSave(4, pargv);
+  STGEVAL(pargv[2]);
+  callContRestore(pargv);
+  // restore argv
+  argv[0] = pargv[0];
+  argv[3] = pargv[1];
+  argv[4] = pargv[2];
+  argv[5] = pargv[3];
+  callContSave(4, pargv);
+  STGEVAL(pargv[3]);
+  callContRestore(pargv);
+  // restore argv
+  argv[0] = pargv[0];
+  argv[3] = pargv[1];
+  argv[4] = pargv[2];
+  argv[5] = pargv[3];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
     callContSave(4, pargv);
     while (f.op->objType == THUNK) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply THUNK\n");
+      fprintf(stderr, "stgApplyPNNPPP THUNK\n");
       #endif
       STGEVAL(f);
       // f.op = derefPoL(f);
@@ -44100,6 +46865,9 @@ DEFUN2(stgApplyPNNPPP, N, f) {
   switch (f.op->objType) {
   case FUN: {
     int arity = f.op->infoPtr->funFields.arity;
+    #ifdef DEBUGSTGAPPLY
+    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    #endif
     int excess = argc - arity;  // may be negative
 
     // too many args
@@ -44244,7 +47012,7 @@ DEFUN2(stgApplyPNNPPP, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyPNNPPP FUN just right\n");
       #endif
       pushargs(2, nargv);
       pushargs(4, pargv);
@@ -44254,7 +47022,7 @@ DEFUN2(stgApplyPNNPPP, N, f) {
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN too few args\n");
+      fprintf(stderr, "stgApplyPNNPPP FUN too few args\n");
       #endif
       int fvCount = f.op->infoPtr->fvCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
@@ -44283,14 +47051,14 @@ DEFUN2(stgApplyPNNPPP, N, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApply:  PAP error 1");
+    assert(argCount == f.op->argCount && "stgApplyPNNPPP:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
     if (excess > 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too many args\n");
+      fprintf(stderr, "stgApplyPNNPPP PAP too many args\n");
       #endif
       switch (excess) {
       case 1: {
@@ -44442,7 +47210,7 @@ DEFUN2(stgApplyPNNPPP, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyPNNPPP FUN just right\n");
       #endif
       pushargs(2, nargv);
       pushargs(papnargc, &f.op->payload[fvCount+1+pappargc]);
@@ -44454,7 +47222,7 @@ DEFUN2(stgApplyPNNPPP, N, f) {
     // excess < 0, too few args
     } else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too few args\n");
+      fprintf(stderr, "stgApplyPNNPPP PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 4 + pappargc, 2 + papnargc);
@@ -44487,19 +47255,22 @@ DEFUN2(stgApplyPNNPPP, N, f) {
   } // case PAP
 
   case BLACKHOLE: {
-    fprintf(stderr, "infinite loop detected in stgApply!\n");
+    fprintf(stderr, "infinite loop detected in stgApplyPNNPPP!\n");
     showStgHeap();
     exit(0);
   } // case BLACKHOLE
 
   default:
-    fprintf(stderr, "stgApply not a THUNK, FUN, or PAP\n");
+    fprintf(stderr, "stgApplyPNNPPP not a THUNK, FUN, or PAP\n");
     exit(0);
   }  // switch
   ENDFUN;
 }
 
 DEFUN2(stgApplyNPNPPP, N, f) {
+  #ifdef DEBUGSTGAPPLY
+  fprintf(stderr, "stgApplyNPNPPP %s\n", f.op->infoPtr->name);
+  #endif
   assert(N.argType == INT);
   const int argc = N.i;
   assert(argc == 6);
@@ -44514,13 +47285,45 @@ DEFUN2(stgApplyNPNPPP, N, f) {
   PtrOrLiteral nargv[2];
   nargv[0] = argv[0];
   nargv[1] = argv[2];
+  callContSave(4, pargv);
+  STGEVAL(pargv[0]);
+  callContRestore(pargv);
+  // restore argv
+  argv[1] = pargv[0];
+  argv[3] = pargv[1];
+  argv[4] = pargv[2];
+  argv[5] = pargv[3];
+  callContSave(4, pargv);
+  STGEVAL(pargv[1]);
+  callContRestore(pargv);
+  // restore argv
+  argv[1] = pargv[0];
+  argv[3] = pargv[1];
+  argv[4] = pargv[2];
+  argv[5] = pargv[3];
+  callContSave(4, pargv);
+  STGEVAL(pargv[2]);
+  callContRestore(pargv);
+  // restore argv
+  argv[1] = pargv[0];
+  argv[3] = pargv[1];
+  argv[4] = pargv[2];
+  argv[5] = pargv[3];
+  callContSave(4, pargv);
+  STGEVAL(pargv[3]);
+  callContRestore(pargv);
+  // restore argv
+  argv[1] = pargv[0];
+  argv[3] = pargv[1];
+  argv[4] = pargv[2];
+  argv[5] = pargv[3];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
     callContSave(4, pargv);
     while (f.op->objType == THUNK) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply THUNK\n");
+      fprintf(stderr, "stgApplyNPNPPP THUNK\n");
       #endif
       STGEVAL(f);
       // f.op = derefPoL(f);
@@ -44537,6 +47340,9 @@ DEFUN2(stgApplyNPNPPP, N, f) {
   switch (f.op->objType) {
   case FUN: {
     int arity = f.op->infoPtr->funFields.arity;
+    #ifdef DEBUGSTGAPPLY
+    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    #endif
     int excess = argc - arity;  // may be negative
 
     // too many args
@@ -44682,7 +47488,7 @@ DEFUN2(stgApplyNPNPPP, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyNPNPPP FUN just right\n");
       #endif
       pushargs(2, nargv);
       pushargs(4, pargv);
@@ -44692,7 +47498,7 @@ DEFUN2(stgApplyNPNPPP, N, f) {
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN too few args\n");
+      fprintf(stderr, "stgApplyNPNPPP FUN too few args\n");
       #endif
       int fvCount = f.op->infoPtr->fvCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
@@ -44721,14 +47527,14 @@ DEFUN2(stgApplyNPNPPP, N, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApply:  PAP error 1");
+    assert(argCount == f.op->argCount && "stgApplyNPNPPP:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
     if (excess > 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too many args\n");
+      fprintf(stderr, "stgApplyNPNPPP PAP too many args\n");
       #endif
       switch (excess) {
       case 1: {
@@ -44881,7 +47687,7 @@ DEFUN2(stgApplyNPNPPP, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyNPNPPP FUN just right\n");
       #endif
       pushargs(2, nargv);
       pushargs(papnargc, &f.op->payload[fvCount+1+pappargc]);
@@ -44893,7 +47699,7 @@ DEFUN2(stgApplyNPNPPP, N, f) {
     // excess < 0, too few args
     } else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too few args\n");
+      fprintf(stderr, "stgApplyNPNPPP PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 4 + pappargc, 2 + papnargc);
@@ -44926,19 +47732,22 @@ DEFUN2(stgApplyNPNPPP, N, f) {
   } // case PAP
 
   case BLACKHOLE: {
-    fprintf(stderr, "infinite loop detected in stgApply!\n");
+    fprintf(stderr, "infinite loop detected in stgApplyNPNPPP!\n");
     showStgHeap();
     exit(0);
   } // case BLACKHOLE
 
   default:
-    fprintf(stderr, "stgApply not a THUNK, FUN, or PAP\n");
+    fprintf(stderr, "stgApplyNPNPPP not a THUNK, FUN, or PAP\n");
     exit(0);
   }  // switch
   ENDFUN;
 }
 
 DEFUN2(stgApplyPPNPPP, N, f) {
+  #ifdef DEBUGSTGAPPLY
+  fprintf(stderr, "stgApplyPPNPPP %s\n", f.op->infoPtr->name);
+  #endif
   assert(N.argType == INT);
   const int argc = N.i;
   assert(argc == 6);
@@ -44953,13 +47762,58 @@ DEFUN2(stgApplyPPNPPP, N, f) {
   pargv[4] = argv[5];
   PtrOrLiteral nargv[1];
   nargv[0] = argv[2];
+  callContSave(5, pargv);
+  STGEVAL(pargv[0]);
+  callContRestore(pargv);
+  // restore argv
+  argv[0] = pargv[0];
+  argv[1] = pargv[1];
+  argv[3] = pargv[2];
+  argv[4] = pargv[3];
+  argv[5] = pargv[4];
+  callContSave(5, pargv);
+  STGEVAL(pargv[1]);
+  callContRestore(pargv);
+  // restore argv
+  argv[0] = pargv[0];
+  argv[1] = pargv[1];
+  argv[3] = pargv[2];
+  argv[4] = pargv[3];
+  argv[5] = pargv[4];
+  callContSave(5, pargv);
+  STGEVAL(pargv[2]);
+  callContRestore(pargv);
+  // restore argv
+  argv[0] = pargv[0];
+  argv[1] = pargv[1];
+  argv[3] = pargv[2];
+  argv[4] = pargv[3];
+  argv[5] = pargv[4];
+  callContSave(5, pargv);
+  STGEVAL(pargv[3]);
+  callContRestore(pargv);
+  // restore argv
+  argv[0] = pargv[0];
+  argv[1] = pargv[1];
+  argv[3] = pargv[2];
+  argv[4] = pargv[3];
+  argv[5] = pargv[4];
+  callContSave(5, pargv);
+  STGEVAL(pargv[4]);
+  callContRestore(pargv);
+  // restore argv
+  argv[0] = pargv[0];
+  argv[1] = pargv[1];
+  argv[3] = pargv[2];
+  argv[4] = pargv[3];
+  argv[5] = pargv[4];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
     callContSave(5, pargv);
     while (f.op->objType == THUNK) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply THUNK\n");
+      fprintf(stderr, "stgApplyPPNPPP THUNK\n");
       #endif
       STGEVAL(f);
       // f.op = derefPoL(f);
@@ -44977,6 +47831,9 @@ DEFUN2(stgApplyPPNPPP, N, f) {
   switch (f.op->objType) {
   case FUN: {
     int arity = f.op->infoPtr->funFields.arity;
+    #ifdef DEBUGSTGAPPLY
+    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    #endif
     int excess = argc - arity;  // may be negative
 
     // too many args
@@ -45122,7 +47979,7 @@ DEFUN2(stgApplyPPNPPP, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyPPNPPP FUN just right\n");
       #endif
       pushargs(1, nargv);
       pushargs(5, pargv);
@@ -45132,7 +47989,7 @@ DEFUN2(stgApplyPPNPPP, N, f) {
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN too few args\n");
+      fprintf(stderr, "stgApplyPPNPPP FUN too few args\n");
       #endif
       int fvCount = f.op->infoPtr->fvCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
@@ -45161,14 +48018,14 @@ DEFUN2(stgApplyPPNPPP, N, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApply:  PAP error 1");
+    assert(argCount == f.op->argCount && "stgApplyPPNPPP:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
     if (excess > 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too many args\n");
+      fprintf(stderr, "stgApplyPPNPPP PAP too many args\n");
       #endif
       switch (excess) {
       case 1: {
@@ -45321,7 +48178,7 @@ DEFUN2(stgApplyPPNPPP, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyPPNPPP FUN just right\n");
       #endif
       pushargs(1, nargv);
       pushargs(papnargc, &f.op->payload[fvCount+1+pappargc]);
@@ -45333,7 +48190,7 @@ DEFUN2(stgApplyPPNPPP, N, f) {
     // excess < 0, too few args
     } else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too few args\n");
+      fprintf(stderr, "stgApplyPPNPPP PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 5 + pappargc, 1 + papnargc);
@@ -45366,19 +48223,22 @@ DEFUN2(stgApplyPPNPPP, N, f) {
   } // case PAP
 
   case BLACKHOLE: {
-    fprintf(stderr, "infinite loop detected in stgApply!\n");
+    fprintf(stderr, "infinite loop detected in stgApplyPPNPPP!\n");
     showStgHeap();
     exit(0);
   } // case BLACKHOLE
 
   default:
-    fprintf(stderr, "stgApply not a THUNK, FUN, or PAP\n");
+    fprintf(stderr, "stgApplyPPNPPP not a THUNK, FUN, or PAP\n");
     exit(0);
   }  // switch
   ENDFUN;
 }
 
 DEFUN2(stgApplyNNPPPP, N, f) {
+  #ifdef DEBUGSTGAPPLY
+  fprintf(stderr, "stgApplyNNPPPP %s\n", f.op->infoPtr->name);
+  #endif
   assert(N.argType == INT);
   const int argc = N.i;
   assert(argc == 6);
@@ -45393,13 +48253,45 @@ DEFUN2(stgApplyNNPPPP, N, f) {
   PtrOrLiteral nargv[2];
   nargv[0] = argv[0];
   nargv[1] = argv[1];
+  callContSave(4, pargv);
+  STGEVAL(pargv[0]);
+  callContRestore(pargv);
+  // restore argv
+  argv[2] = pargv[0];
+  argv[3] = pargv[1];
+  argv[4] = pargv[2];
+  argv[5] = pargv[3];
+  callContSave(4, pargv);
+  STGEVAL(pargv[1]);
+  callContRestore(pargv);
+  // restore argv
+  argv[2] = pargv[0];
+  argv[3] = pargv[1];
+  argv[4] = pargv[2];
+  argv[5] = pargv[3];
+  callContSave(4, pargv);
+  STGEVAL(pargv[2]);
+  callContRestore(pargv);
+  // restore argv
+  argv[2] = pargv[0];
+  argv[3] = pargv[1];
+  argv[4] = pargv[2];
+  argv[5] = pargv[3];
+  callContSave(4, pargv);
+  STGEVAL(pargv[3]);
+  callContRestore(pargv);
+  // restore argv
+  argv[2] = pargv[0];
+  argv[3] = pargv[1];
+  argv[4] = pargv[2];
+  argv[5] = pargv[3];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
     callContSave(4, pargv);
     while (f.op->objType == THUNK) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply THUNK\n");
+      fprintf(stderr, "stgApplyNNPPPP THUNK\n");
       #endif
       STGEVAL(f);
       // f.op = derefPoL(f);
@@ -45416,6 +48308,9 @@ DEFUN2(stgApplyNNPPPP, N, f) {
   switch (f.op->objType) {
   case FUN: {
     int arity = f.op->infoPtr->funFields.arity;
+    #ifdef DEBUGSTGAPPLY
+    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    #endif
     int excess = argc - arity;  // may be negative
 
     // too many args
@@ -45562,7 +48457,7 @@ DEFUN2(stgApplyNNPPPP, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyNNPPPP FUN just right\n");
       #endif
       pushargs(2, nargv);
       pushargs(4, pargv);
@@ -45572,7 +48467,7 @@ DEFUN2(stgApplyNNPPPP, N, f) {
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN too few args\n");
+      fprintf(stderr, "stgApplyNNPPPP FUN too few args\n");
       #endif
       int fvCount = f.op->infoPtr->fvCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
@@ -45601,14 +48496,14 @@ DEFUN2(stgApplyNNPPPP, N, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApply:  PAP error 1");
+    assert(argCount == f.op->argCount && "stgApplyNNPPPP:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
     if (excess > 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too many args\n");
+      fprintf(stderr, "stgApplyNNPPPP PAP too many args\n");
       #endif
       switch (excess) {
       case 1: {
@@ -45762,7 +48657,7 @@ DEFUN2(stgApplyNNPPPP, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyNNPPPP FUN just right\n");
       #endif
       pushargs(2, nargv);
       pushargs(papnargc, &f.op->payload[fvCount+1+pappargc]);
@@ -45774,7 +48669,7 @@ DEFUN2(stgApplyNNPPPP, N, f) {
     // excess < 0, too few args
     } else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too few args\n");
+      fprintf(stderr, "stgApplyNNPPPP PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 4 + pappargc, 2 + papnargc);
@@ -45807,19 +48702,22 @@ DEFUN2(stgApplyNNPPPP, N, f) {
   } // case PAP
 
   case BLACKHOLE: {
-    fprintf(stderr, "infinite loop detected in stgApply!\n");
+    fprintf(stderr, "infinite loop detected in stgApplyNNPPPP!\n");
     showStgHeap();
     exit(0);
   } // case BLACKHOLE
 
   default:
-    fprintf(stderr, "stgApply not a THUNK, FUN, or PAP\n");
+    fprintf(stderr, "stgApplyNNPPPP not a THUNK, FUN, or PAP\n");
     exit(0);
   }  // switch
   ENDFUN;
 }
 
 DEFUN2(stgApplyPNPPPP, N, f) {
+  #ifdef DEBUGSTGAPPLY
+  fprintf(stderr, "stgApplyPNPPPP %s\n", f.op->infoPtr->name);
+  #endif
   assert(N.argType == INT);
   const int argc = N.i;
   assert(argc == 6);
@@ -45834,13 +48732,58 @@ DEFUN2(stgApplyPNPPPP, N, f) {
   pargv[4] = argv[5];
   PtrOrLiteral nargv[1];
   nargv[0] = argv[1];
+  callContSave(5, pargv);
+  STGEVAL(pargv[0]);
+  callContRestore(pargv);
+  // restore argv
+  argv[0] = pargv[0];
+  argv[2] = pargv[1];
+  argv[3] = pargv[2];
+  argv[4] = pargv[3];
+  argv[5] = pargv[4];
+  callContSave(5, pargv);
+  STGEVAL(pargv[1]);
+  callContRestore(pargv);
+  // restore argv
+  argv[0] = pargv[0];
+  argv[2] = pargv[1];
+  argv[3] = pargv[2];
+  argv[4] = pargv[3];
+  argv[5] = pargv[4];
+  callContSave(5, pargv);
+  STGEVAL(pargv[2]);
+  callContRestore(pargv);
+  // restore argv
+  argv[0] = pargv[0];
+  argv[2] = pargv[1];
+  argv[3] = pargv[2];
+  argv[4] = pargv[3];
+  argv[5] = pargv[4];
+  callContSave(5, pargv);
+  STGEVAL(pargv[3]);
+  callContRestore(pargv);
+  // restore argv
+  argv[0] = pargv[0];
+  argv[2] = pargv[1];
+  argv[3] = pargv[2];
+  argv[4] = pargv[3];
+  argv[5] = pargv[4];
+  callContSave(5, pargv);
+  STGEVAL(pargv[4]);
+  callContRestore(pargv);
+  // restore argv
+  argv[0] = pargv[0];
+  argv[2] = pargv[1];
+  argv[3] = pargv[2];
+  argv[4] = pargv[3];
+  argv[5] = pargv[4];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
     callContSave(5, pargv);
     while (f.op->objType == THUNK) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply THUNK\n");
+      fprintf(stderr, "stgApplyPNPPPP THUNK\n");
       #endif
       STGEVAL(f);
       // f.op = derefPoL(f);
@@ -45858,6 +48801,9 @@ DEFUN2(stgApplyPNPPPP, N, f) {
   switch (f.op->objType) {
   case FUN: {
     int arity = f.op->infoPtr->funFields.arity;
+    #ifdef DEBUGSTGAPPLY
+    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    #endif
     int excess = argc - arity;  // may be negative
 
     // too many args
@@ -46004,7 +48950,7 @@ DEFUN2(stgApplyPNPPPP, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyPNPPPP FUN just right\n");
       #endif
       pushargs(1, nargv);
       pushargs(5, pargv);
@@ -46014,7 +48960,7 @@ DEFUN2(stgApplyPNPPPP, N, f) {
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN too few args\n");
+      fprintf(stderr, "stgApplyPNPPPP FUN too few args\n");
       #endif
       int fvCount = f.op->infoPtr->fvCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
@@ -46043,14 +48989,14 @@ DEFUN2(stgApplyPNPPPP, N, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApply:  PAP error 1");
+    assert(argCount == f.op->argCount && "stgApplyPNPPPP:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
     if (excess > 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too many args\n");
+      fprintf(stderr, "stgApplyPNPPPP PAP too many args\n");
       #endif
       switch (excess) {
       case 1: {
@@ -46204,7 +49150,7 @@ DEFUN2(stgApplyPNPPPP, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyPNPPPP FUN just right\n");
       #endif
       pushargs(1, nargv);
       pushargs(papnargc, &f.op->payload[fvCount+1+pappargc]);
@@ -46216,7 +49162,7 @@ DEFUN2(stgApplyPNPPPP, N, f) {
     // excess < 0, too few args
     } else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too few args\n");
+      fprintf(stderr, "stgApplyPNPPPP PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 5 + pappargc, 1 + papnargc);
@@ -46249,19 +49195,22 @@ DEFUN2(stgApplyPNPPPP, N, f) {
   } // case PAP
 
   case BLACKHOLE: {
-    fprintf(stderr, "infinite loop detected in stgApply!\n");
+    fprintf(stderr, "infinite loop detected in stgApplyPNPPPP!\n");
     showStgHeap();
     exit(0);
   } // case BLACKHOLE
 
   default:
-    fprintf(stderr, "stgApply not a THUNK, FUN, or PAP\n");
+    fprintf(stderr, "stgApplyPNPPPP not a THUNK, FUN, or PAP\n");
     exit(0);
   }  // switch
   ENDFUN;
 }
 
 DEFUN2(stgApplyNPPPPP, N, f) {
+  #ifdef DEBUGSTGAPPLY
+  fprintf(stderr, "stgApplyNPPPPP %s\n", f.op->infoPtr->name);
+  #endif
   assert(N.argType == INT);
   const int argc = N.i;
   assert(argc == 6);
@@ -46276,13 +49225,58 @@ DEFUN2(stgApplyNPPPPP, N, f) {
   pargv[4] = argv[5];
   PtrOrLiteral nargv[1];
   nargv[0] = argv[0];
+  callContSave(5, pargv);
+  STGEVAL(pargv[0]);
+  callContRestore(pargv);
+  // restore argv
+  argv[1] = pargv[0];
+  argv[2] = pargv[1];
+  argv[3] = pargv[2];
+  argv[4] = pargv[3];
+  argv[5] = pargv[4];
+  callContSave(5, pargv);
+  STGEVAL(pargv[1]);
+  callContRestore(pargv);
+  // restore argv
+  argv[1] = pargv[0];
+  argv[2] = pargv[1];
+  argv[3] = pargv[2];
+  argv[4] = pargv[3];
+  argv[5] = pargv[4];
+  callContSave(5, pargv);
+  STGEVAL(pargv[2]);
+  callContRestore(pargv);
+  // restore argv
+  argv[1] = pargv[0];
+  argv[2] = pargv[1];
+  argv[3] = pargv[2];
+  argv[4] = pargv[3];
+  argv[5] = pargv[4];
+  callContSave(5, pargv);
+  STGEVAL(pargv[3]);
+  callContRestore(pargv);
+  // restore argv
+  argv[1] = pargv[0];
+  argv[2] = pargv[1];
+  argv[3] = pargv[2];
+  argv[4] = pargv[3];
+  argv[5] = pargv[4];
+  callContSave(5, pargv);
+  STGEVAL(pargv[4]);
+  callContRestore(pargv);
+  // restore argv
+  argv[1] = pargv[0];
+  argv[2] = pargv[1];
+  argv[3] = pargv[2];
+  argv[4] = pargv[3];
+  argv[5] = pargv[4];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
     callContSave(5, pargv);
     while (f.op->objType == THUNK) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply THUNK\n");
+      fprintf(stderr, "stgApplyNPPPPP THUNK\n");
       #endif
       STGEVAL(f);
       // f.op = derefPoL(f);
@@ -46300,6 +49294,9 @@ DEFUN2(stgApplyNPPPPP, N, f) {
   switch (f.op->objType) {
   case FUN: {
     int arity = f.op->infoPtr->funFields.arity;
+    #ifdef DEBUGSTGAPPLY
+    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    #endif
     int excess = argc - arity;  // may be negative
 
     // too many args
@@ -46447,7 +49444,7 @@ DEFUN2(stgApplyNPPPPP, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyNPPPPP FUN just right\n");
       #endif
       pushargs(1, nargv);
       pushargs(5, pargv);
@@ -46457,7 +49454,7 @@ DEFUN2(stgApplyNPPPPP, N, f) {
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN too few args\n");
+      fprintf(stderr, "stgApplyNPPPPP FUN too few args\n");
       #endif
       int fvCount = f.op->infoPtr->fvCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
@@ -46486,14 +49483,14 @@ DEFUN2(stgApplyNPPPPP, N, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApply:  PAP error 1");
+    assert(argCount == f.op->argCount && "stgApplyNPPPPP:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
     if (excess > 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too many args\n");
+      fprintf(stderr, "stgApplyNPPPPP PAP too many args\n");
       #endif
       switch (excess) {
       case 1: {
@@ -46648,7 +49645,7 @@ DEFUN2(stgApplyNPPPPP, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyNPPPPP FUN just right\n");
       #endif
       pushargs(1, nargv);
       pushargs(papnargc, &f.op->payload[fvCount+1+pappargc]);
@@ -46660,7 +49657,7 @@ DEFUN2(stgApplyNPPPPP, N, f) {
     // excess < 0, too few args
     } else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too few args\n");
+      fprintf(stderr, "stgApplyNPPPPP PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 5 + pappargc, 1 + papnargc);
@@ -46693,19 +49690,22 @@ DEFUN2(stgApplyNPPPPP, N, f) {
   } // case PAP
 
   case BLACKHOLE: {
-    fprintf(stderr, "infinite loop detected in stgApply!\n");
+    fprintf(stderr, "infinite loop detected in stgApplyNPPPPP!\n");
     showStgHeap();
     exit(0);
   } // case BLACKHOLE
 
   default:
-    fprintf(stderr, "stgApply not a THUNK, FUN, or PAP\n");
+    fprintf(stderr, "stgApplyNPPPPP not a THUNK, FUN, or PAP\n");
     exit(0);
   }  // switch
   ENDFUN;
 }
 
 DEFUN2(stgApplyPPPPPP, N, f) {
+  #ifdef DEBUGSTGAPPLY
+  fprintf(stderr, "stgApplyPPPPPP %s\n", f.op->infoPtr->name);
+  #endif
   assert(N.argType == INT);
   const int argc = N.i;
   assert(argc == 6);
@@ -46720,13 +49720,73 @@ DEFUN2(stgApplyPPPPPP, N, f) {
   pargv[4] = argv[4];
   pargv[5] = argv[5];
   // no non-pointer args to save
+  callContSave(6, pargv);
+  STGEVAL(pargv[0]);
+  callContRestore(pargv);
+  // restore argv
+  argv[0] = pargv[0];
+  argv[1] = pargv[1];
+  argv[2] = pargv[2];
+  argv[3] = pargv[3];
+  argv[4] = pargv[4];
+  argv[5] = pargv[5];
+  callContSave(6, pargv);
+  STGEVAL(pargv[1]);
+  callContRestore(pargv);
+  // restore argv
+  argv[0] = pargv[0];
+  argv[1] = pargv[1];
+  argv[2] = pargv[2];
+  argv[3] = pargv[3];
+  argv[4] = pargv[4];
+  argv[5] = pargv[5];
+  callContSave(6, pargv);
+  STGEVAL(pargv[2]);
+  callContRestore(pargv);
+  // restore argv
+  argv[0] = pargv[0];
+  argv[1] = pargv[1];
+  argv[2] = pargv[2];
+  argv[3] = pargv[3];
+  argv[4] = pargv[4];
+  argv[5] = pargv[5];
+  callContSave(6, pargv);
+  STGEVAL(pargv[3]);
+  callContRestore(pargv);
+  // restore argv
+  argv[0] = pargv[0];
+  argv[1] = pargv[1];
+  argv[2] = pargv[2];
+  argv[3] = pargv[3];
+  argv[4] = pargv[4];
+  argv[5] = pargv[5];
+  callContSave(6, pargv);
+  STGEVAL(pargv[4]);
+  callContRestore(pargv);
+  // restore argv
+  argv[0] = pargv[0];
+  argv[1] = pargv[1];
+  argv[2] = pargv[2];
+  argv[3] = pargv[3];
+  argv[4] = pargv[4];
+  argv[5] = pargv[5];
+  callContSave(6, pargv);
+  STGEVAL(pargv[5]);
+  callContRestore(pargv);
+  // restore argv
+  argv[0] = pargv[0];
+  argv[1] = pargv[1];
+  argv[2] = pargv[2];
+  argv[3] = pargv[3];
+  argv[4] = pargv[4];
+  argv[5] = pargv[5];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
     callContSave(6, pargv);
     while (f.op->objType == THUNK) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply THUNK\n");
+      fprintf(stderr, "stgApplyPPPPPP THUNK\n");
       #endif
       STGEVAL(f);
       // f.op = derefPoL(f);
@@ -46745,6 +49805,9 @@ DEFUN2(stgApplyPPPPPP, N, f) {
   switch (f.op->objType) {
   case FUN: {
     int arity = f.op->infoPtr->funFields.arity;
+    #ifdef DEBUGSTGAPPLY
+    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    #endif
     int excess = argc - arity;  // may be negative
 
     // too many args
@@ -46892,7 +49955,7 @@ DEFUN2(stgApplyPPPPPP, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyPPPPPP FUN just right\n");
       #endif
       // 0 non-pointers to push
       pushargs(6, pargv);
@@ -46902,7 +49965,7 @@ DEFUN2(stgApplyPPPPPP, N, f) {
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN too few args\n");
+      fprintf(stderr, "stgApplyPPPPPP FUN too few args\n");
       #endif
       int fvCount = f.op->infoPtr->fvCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
@@ -46931,14 +49994,14 @@ DEFUN2(stgApplyPPPPPP, N, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApply:  PAP error 1");
+    assert(argCount == f.op->argCount && "stgApplyPPPPPP:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
     if (excess > 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too many args\n");
+      fprintf(stderr, "stgApplyPPPPPP PAP too many args\n");
       #endif
       switch (excess) {
       case 1: {
@@ -47093,7 +50156,7 @@ DEFUN2(stgApplyPPPPPP, N, f) {
     // just right
     if (excess == 0) {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply FUN just right\n");
+      fprintf(stderr, "stgApplyPPPPPP FUN just right\n");
       #endif
       // 0 non-pointer args
       pushargs(papnargc, &f.op->payload[fvCount+1+pappargc]);
@@ -47105,7 +50168,7 @@ DEFUN2(stgApplyPPPPPP, N, f) {
     // excess < 0, too few args
     } else {
       #ifdef DEBUGSTGAPPLY
-      fprintf(stderr, "stgApply PAP too few args\n");
+      fprintf(stderr, "stgApplyPPPPPP PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 6 + pappargc, 0 + papnargc);
@@ -47138,13 +50201,13 @@ DEFUN2(stgApplyPPPPPP, N, f) {
   } // case PAP
 
   case BLACKHOLE: {
-    fprintf(stderr, "infinite loop detected in stgApply!\n");
+    fprintf(stderr, "infinite loop detected in stgApplyPPPPPP!\n");
     showStgHeap();
     exit(0);
   } // case BLACKHOLE
 
   default:
-    fprintf(stderr, "stgApply not a THUNK, FUN, or PAP\n");
+    fprintf(stderr, "stgApplyPPPPPP not a THUNK, FUN, or PAP\n");
     exit(0);
   }  // switch
   ENDFUN;

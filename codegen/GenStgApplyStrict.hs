@@ -5,7 +5,11 @@ module GenStgApply (
 import Util
 import Data.List(intercalate)
 
-dumpStgApply n = 
+data Strictness = Nonstrict
+                | Strict1   -- evaluate args first, then fun
+                
+
+dumpStgApply strictness n = 
     let (forward, macros, fun) = genAllstgApply n
     in do writeFile "../runtime/stgApply.h" $ includehtop ++ forward ++ macros ++ includehbot
           writeFile "../runtime/stgApplyStrict.c" $ includec ++ fun
@@ -74,7 +78,7 @@ optSwitch scrut lo hi f =
 
 debugp (x:xs) = 
     "#ifdef DEBUGSTGAPPLY\n" ++
-    "fprintf(stderr, \"" ++ x ++ "\\n\"" ++ concat [ ", " ++ s | s <- xs ] ++ ");\n" ++
+    "fprintf(stderr, \"" ++ x ++ "\\n\"" ++ concatMap (", " ++) xs ++ ");\n" ++
     "#endif\n"
 
 --  Obj *cc = stgAllocCallCont2( &it_stgCallCont, argc );
@@ -117,6 +121,8 @@ gen s =
 
     fun = 
      "DEFUN2(" ++ fname ++ ", N, f) {\n" ++
+        indent 2 (debugp [ fname ++ " %s", 
+                           "f.op->infoTab.name"]) ++
      "  assert(N.argType == INT);\n" ++
      "  const int argc = N.i;\n" ++
      "  assert(argc == " ++ show argc ++ ");\n" ++
@@ -136,15 +142,14 @@ gen s =
      else
        "  // no non-pointer args to save\n") ++
 
-     -- strict evaluation
-     indent 2 (evalps nps pinds) ++
+     (if strictness == Strict1 then indent 2 (evalps nps pinds) else "") ++
 
      "\n" ++
      "  f.op = derefPoL(f);\n" ++
      "  if (f.op->objType == THUNK) {\n" ++
           indent 4 (callContSave nps) ++
      "    while (f.op->objType == THUNK) {\n" ++
-            indent 6 (debugp ["stgApply THUNK"]) ++
+            indent 6 (debugp [fname ++ " THUNK"]) ++
      "      STGEVAL(f);\n" ++
      "      // f.op = derefPoL(f);\n" ++
      "      f.op = derefPoL(stgCurVal); \n" ++
@@ -155,6 +160,8 @@ gen s =
      "  switch (f.op->objType) {\n" ++
      "  case FUN: {\n" ++
      "    int arity = f.op->infoPtr->funFields.arity;\n" ++
+          indent 4 (debugp ["FUN %s arity %d", "f.op->infoTab.name", 
+                            "f.op->infoTab.funFields.arity"]) ++
      "    int excess = argc - arity;  // may be negative\n" ++
      "\n" ++
      (if argc == 1 then "    // too many args not possible\n"
@@ -167,12 +174,12 @@ gen s =
      "\n" ++
      "    // just right\n" ++
      "    if (excess == 0) {\n" ++
-            indent 6 (debugp ["stgApply FUN just right"]) ++
+            indent 6 (debugp [fname ++ " FUN just right"]) ++
             (indent 6 $ funeq s argc) ++
      "    }\n" ++
      "    // excess < 0, too few args\n" ++
      "    else {\n" ++
-            indent 6 (debugp ["stgApply FUN too few args"]) ++
+            indent 6 (debugp [fname ++ " FUN too few args"]) ++
             (indent 6 $ funneg s pinds argc nps nns) ++
      "    } // if excess\n" ++
      "  } // case FUN\n" ++
@@ -182,7 +189,7 @@ gen s =
      "    int pappargc, papnargc;\n" ++
      "    PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);\n" ++
      "    int argCount = pappargc + papnargc;\n" ++
-     "    assert(argCount == f.op->argCount && \"stgApply:  PAP error 1\");\n" ++
+     "    assert(argCount == f.op->argCount && \"" ++ fname ++ ":  PAP error 1\");\n" ++
      "    int arity = f.op->infoPtr->funFields.arity - argCount;\n" ++
      "    int excess = argc - arity;\n" ++
      "\n" ++
@@ -190,31 +197,31 @@ gen s =
       else 
         "    // too many args\n" ++
         "    if (excess > 0) {\n" ++
-               indent 6 (debugp ["stgApply PAP too many args"]) ++
+               indent 6 (debugp [fname ++ " PAP too many args"]) ++
                indent 6 (optSwitch "excess" 1 (argc-1) 
                              (\n -> pappos n s pinds argc)) ++
         "    } else \n") ++
      "\n" ++
      "    // just right\n" ++
      "    if (excess == 0) {\n" ++
-            indent 6 (debugp ["stgApply FUN just right"]) ++
+            indent 6 (debugp [fname ++ " FUN just right"]) ++
             (indent 6 $ papeq s argc) ++
      "\n" ++
      "    // excess < 0, too few args\n" ++
      "    } else {\n" ++
-            indent 6 (debugp ["stgApply PAP too few args"]) ++
+            indent 6 (debugp [fname ++ " PAP too few args"]) ++
             (indent 6 $ papneg s pinds argc nps nns) ++
      "    } // if excess\n" ++
      "  } // case PAP\n" ++
      "\n" ++
      "  case BLACKHOLE: {\n" ++
-     "    fprintf(stderr, \"infinite loop detected in stgApply!\\n\");\n" ++
+     "    fprintf(stderr, \"infinite loop detected in " ++ fname ++ "!\\n\");\n" ++
      "    showStgHeap();\n" ++
      "    exit(0);\n" ++
      "  } // case BLACKHOLE\n" ++
      "\n" ++
      "  default:\n" ++
-     "    fprintf(stderr, \"stgApply not a THUNK, FUN, or PAP\\n\");\n" ++
+     "    fprintf(stderr, \"" ++ fname ++ " not a THUNK, FUN, or PAP\\n\");\n" ++
      "    exit(0);\n" ++
      "  }  // switch\n" ++
      "  ENDFUN;\n" ++
