@@ -204,6 +204,7 @@ mhsCheckAll inp = let (ts0,os0,assums) = mhsSTGer inp
                             exhaustCases (toCMap ts0) os0
                       (tsF, os2) = setCMaps ts0 os1
                       osF = setHeapAllocs $
+                            orderFVsArgs $
                             propKnownCalls $
                             hmstgAssums os2 assums
                   in (tsF, osF)
