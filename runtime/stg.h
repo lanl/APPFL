@@ -4,6 +4,7 @@
 #include <stddef.h>
 #include <assert.h>
 #include <stdbool.h>
+#include <stdint.h>
 
 #define DEBUGSTGAPPLY 1
 
@@ -52,7 +53,7 @@ typedef FnPtr (*CmmFnPtr)();
 typedef struct {
   ArgType argType;        // superfluous, for sanity checking
   union {
-    int i;
+    int64_t i;
     double d;
     float f;
     bool b;
@@ -157,15 +158,19 @@ extern void showStgVal(PtrOrLiteral);
 extern void showIT(InfoTab *);
 extern int getObjSize(Obj *);
 
-#define hibits (~0 << sizeof(int)/2 * 8)
-#define lobits (~0 & ~hibits)
+#define PACKBITS (sizeof(uintptr_t)/2 * 8)
+#define hibits (~0L << PACKBITS)
+#define lobits (~0L & ~hibits)
 
-#define PNPACK(pargc,nargc) ((pargc) | ((nargc) << (sizeof(int)/2 * 8)))
+#define PNPACK(pargc,nargc) ((pargc) | (((uintptr_t)(nargc)) << PACKBITS))
+
+#define PUNPACK(n) (((uintptr_t) (n)) & lobits)
+#define NUNPACK(n) (((uintptr_t) (n)) >> PACKBITS)
 
 #define PNUNPACK(n,pargc,nargc) \
   do { \
-    pargc = (n) & lobits;				\
-    nargc = ((unsigned int) (n)) >> (sizeof(int)/2 * 8);	\
+    pargc = PUNPACK(n);	\
+    nargc = NUNPACK(n);	\
   } while (0)
 
 // allocate Obj on heap, returning pointer to new Obj

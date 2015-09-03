@@ -298,7 +298,7 @@ void showStgObjRecPretty(Obj *p) {
 void showStgValPretty(PtrOrLiteral v) {
   switch (v.argType) {
   case INT:
-    fprintf(stderr,"%d", v.i);
+    fprintf(stderr,"%ld", v.i);
     break;
   case DOUBLE:
     fprintf(stderr,"%f", v.d);
@@ -378,7 +378,7 @@ void showStgObjRecDebug(Obj *p) {
 void showStgValDebug(PtrOrLiteral v) {
   switch (v.argType) {
   case INT:
-    fprintf(stderr,"INT %d\n", v.i);
+    fprintf(stderr,"INT %ld\n", v.i);
     break;
   case DOUBLE:
     fprintf(stderr,"DOUBLE %f\n", v.d);

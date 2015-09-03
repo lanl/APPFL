@@ -145,17 +145,10 @@ infoPtr->layoutInfo.unboxedCount is number of unboxed ARGUMENTS
 
 
 THUNK
-<<<<<<< HEAD
-                               | payload 
---------------------------------------------------------------------------------
-| infoPtr | objType |          | boxed free variables | unboxed free variables |
---------------------------------------------------------------------------------
-=======
                                | payload[0] | payload[1..fvCount+1] 
------------------------------------------------------------------------------
-| infoPtr | objType |          |   result   |  free variables               |
------------------------------------------------------------------------------
->>>>>>> 433f021a73720e1207f70c3decf585b92c382f73
+---------------------------------------------------------------------------------------------
+| infoPtr | objType |          |   result   |  boxed free variables | unboxed free variables|
+---------------------------------------------------------------------------------------------
 
 Note that a THUNK must have a payload size of at least 1 so that it
 can become and INDIRECT.
@@ -169,9 +162,9 @@ infoPtr->layoutInfo.unboxedCount is number of unboxed free variables
 
 BLACKHOLE
                                | payload 
---------------------------------------------------------------------------
-| infoPtr | objType |          | bfvs (they're still live!) | ubfvs      |
---------------------------------------------------------------------------
+-----------------------------------------------------------------------------------
+| infoPtr | objType |          | result | bfvs (they're still live!) | ubfvs      |
+-----------------------------------------------------------------------------------
 
 Black holes only come from THUNKs.  For convenience and arguable efficiency, a
 BLACKHOLE will be created by simply overwriting objType with value BLACKHOLE,

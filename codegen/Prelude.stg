@@ -74,7 +74,7 @@ tupl3 = FUN(a b c -> let {t = CON(TP3 a b c)} in t);
 
 
 -------------- Boxed Int arithmetic ------------------------
--- Caveat Computor: 32-bit Ints underly boxed ints
+-- Caveat Computor: 64-bit Ints underly boxed ints
 
 -- check boxed Ints for equality
 -- eqInt :: Int -> Int -> Bool
