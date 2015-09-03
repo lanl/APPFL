@@ -15,3 +15,7 @@ runtime/main
 runtime/mymain
 #emacs temp files
 \#*\#
+#testing temp files
+test/*.c
+test/mhs/*.c
+test/error/*.c
