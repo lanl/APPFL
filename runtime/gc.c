@@ -14,12 +14,12 @@ void *toPtr=NULL, *fromPtr=NULL;
 void *scanPtr=NULL, *freePtr=NULL;
 
 // wrapper functions for possible interface changes
-//static inline size_t countFVs(Obj *p) { return p->infoPtr->fvCount; }
 
 static inline size_t startFUNFvsB(Obj *p) { return 0; }
 static inline size_t endFUNFvsB(Obj *p) { return p->infoPtr->layoutInfo.boxedCount; }
 static inline size_t startFUNFvsU(Obj *p) { return endFUNFvsB(p); }
 static inline size_t endFUNFvsU(Obj *p) { return startFUNFvsU(p) + p->infoPtr->layoutInfo.unboxedCount; }
+static inline void checkFUNFvs(Obj *p) { assert (p->infoPtr->fvCount == endFUNFvsU(p) && "FUN mismatch"); }
 
 static inline size_t startPAPFVsB(Obj *p) { return 0; }
 static inline size_t endPAPFVsB(Obj *p) { return p->infoPtr->layoutInfo.boxedCount; }
@@ -28,7 +28,13 @@ static inline size_t endPAPFVsU(Obj *p)   { return startPAPFVsU(p) +  p->infoPtr
 static inline size_t startPAPargsB(Obj *p) { return endPAPFVsU(p) + 1; }
 static inline size_t endPAPargsB(Obj *p) { return  startPAPargsB(p) +  PUNPACK(p->payload[endPAPFVsU(p)].i); }
 static inline size_t startPAPargsU(Obj *p) { return  endPAPargsB(p);}
-static inline size_t endPAPargsU(Obj *p) {  return startPAPFVsU(p) + NUNPACK(p->payload[endPAPFVsU(p)].i); }
+static inline size_t endPAPargsU(Obj *p) {  return startPAPargsU(p) + NUNPACK(p->payload[endPAPFVsU(p)].i); }
+static inline void checkPAPFVs(Obj *p) {
+  assert (p->infoPtr->fvCount == endPAPFVsU(p) && "PAP FV mismatch");
+}
+static inline void checkPAPargs(Obj *p) {
+  assert (p->argCount == endPAPargsU(p) - startPAPargsB(p) && "PAP arg mismatch");
+}
 
 static inline size_t countCONargs(Obj *p) { return p->infoPtr->conFields.arity; }
 static inline size_t startCONargsB(Obj *p) { return 0; }
@@ -42,12 +48,13 @@ static inline size_t endTHUNKargsB(Obj *p) { return p->infoPtr->layoutInfo.boxed
 static inline size_t startTHUNKargsU(Obj *p) { return endCONargsB(p); }
 static inline size_t endTHUNKargsU(Obj *p) { return startCONargsU(p) + p->infoPtr->layoutInfo.unboxedCount; }
 
-
 static inline size_t startCALLargsB(Obj *p) { return 1; }
 static inline size_t endCALLargsB(Obj *p) { return p->payload[0].i + 1; }
 
-static inline size_t startCaseargs(Obj *p) { return 0; }
-static inline size_t endCaseargs(Obj *p) { return p->infoPtr->fvCount; }
+static inline size_t startCASEargsB(Obj *p) { return 0; }
+static inline size_t endCASEargsB(Obj *p) { return  p->infoPtr->layoutInfo.boxedCount; }
+static inline size_t startCASEargsU(Obj *p) { return endCASEargsB(p); }
+static inline size_t endCASEargsU(Obj *p) { return startCASEargsU(p) + p->infoPtr->layoutInfo.unboxedCount; }
 
 static inline bool isFrom(void *p) {
   return (p >= fromPtr && (char *)p < (char *)fromPtr + stgHeapSize/2);
@@ -83,39 +90,36 @@ void swapPtrs(void) {
 
 
 void updatePtr(PtrOrLiteral *f) {
-  if(f->argType == HEAPOBJ) { // TODO: remove this check
+  Obj *p = derefPoL(*f);
 
-    Obj *p = derefPoL(*f);
-
-    if (isFrom(p)) {
-      if(p->objType == FORWARD) {
-        if (DEBUG) fprintf(stderr,"update forward %s\n",p->ident);
-        f->op = p->payload[0].op;
-      } else {
-        int size = getObjSize(p);
-        if (DEBUG) {
-          fprintf(stderr, "copy %s %s from->to size=%d\n", objTypeNames[p->objType], p->ident, size);
-        }
-
-        memcpy(freePtr, p, size);
-
-        assert(size > sizeof(Obj) && "no space for FORWARD");
-
-        p->objType = FORWARD;
-        p->payload[0].op = freePtr;
-
-        f->op = (Obj *)freePtr;
-
-        freePtr = (char *)freePtr + size;
+  if (isFrom(p)) {
+    if(p->objType == FORWARD) {
+      if (DEBUG) fprintf(stderr,"update forward %s\n",p->ident);
+      f->op = p->payload[0].op;
+    } else {
+      int size = getObjSize(p);
+      if (DEBUG) {
+        fprintf(stderr, "copy %s %s from->to size=%d\n", objTypeNames[p->objType], p->ident, size);
       }
-    } else if (isTo(p)) {
-      // do nothing
-    } else { // SHO
-      if(f->op->objType == INDIRECT) {
-        if(isFrom(f->op)) {
-          if (DEBUG) fprintf(stderr,"fix INDIRECT to sho %s\n",f->op->ident);
-          f->op = p;
-        }
+
+      memcpy(freePtr, p, size);
+
+      assert(size > sizeof(Obj) && "no space for FORWARD");
+
+      p->objType = FORWARD;
+      p->payload[0].op = freePtr;
+
+      f->op = (Obj *)freePtr;
+
+      freePtr = (char *)freePtr + size;
+    }
+  } else if (isTo(p)) {
+    // do nothing
+  } else { // SHO
+    if(f->op->objType == INDIRECT) {
+      if(isFrom(f->op)) {
+        if (DEBUG) fprintf(stderr,"fix INDIRECT to sho %s\n",f->op->ident);
+        f->op = p;
       }
     }
   }
@@ -129,6 +133,7 @@ void processObj(Obj *p) {
   case FUN: {
     int FVCount = endFUNFvsU(p);
     if(FVCount) {
+      if (EXTRA) checkFUNFvs(p);
       // process boxed freevars
       for (i = startFUNFvsB(p); i < endFUNFvsB(p); i++) {
         if (EXTRA) assert(isBoxed(&p->payload[i]) && "gc: unexpected unboxed FV in FUN");
@@ -146,11 +151,12 @@ void processObj(Obj *p) {
   case PAP: {
     int  FVCount = endPAPFVsU(p);
     if(FVCount) {
+      if (EXTRA) checkPAPFVs(p);
       // boxed free vars
       int startB = startPAPFVsB(p);
       int endB = endPAPFVsB(p);
       for (i = startB; i < endB; i++) {
-        assert(isBoxed(&p->payload[i]) && "gc: unexpected unboxed FV in PAP");
+        if (EXTRA) assert(isBoxed(&p->payload[i]) && "gc: unexpected unboxed FV in PAP");
         updatePtr(&p->payload[i]);
       }
 
@@ -163,6 +169,7 @@ void processObj(Obj *p) {
       }
     }
 
+    if (EXTRA) checkPAPargs(p);
     // boxed args already applied
     for (i = startPAPargsB(p); i < endPAPargsB(p); i++) {
       if (EXTRA) assert(isBoxed(&p->payload[i]) && "gc: unexpected unboxed arg in PAP");
@@ -205,6 +212,7 @@ void processObj(Obj *p) {
     }
     break;
   case INDIRECT:
+    if (EXTRA) assert(isBoxed(&p->payload[0]) && "gc: unexpected unboxed arg in INDIRECT");
     updatePtr(&p->payload[0]);
     break;
   default:
@@ -221,16 +229,24 @@ void processCont(Obj *p) {
     updatePtr(&p->payload[0]);
     break;
   case CASECONT:
-    for(i = startCaseargs(p); i < endCaseargs(p); i++) {
+    for(i = startCASEargsB(p); i < endCASEargsB(p); i++) {
+      if (EXTRA) assert(isBoxed(&p->payload[i]) && "gc: unexpected unboxed arg in CASE");
       updatePtr(&p->payload[i]);
+    }
+    if (EXTRA) {
+      for (i = startCASEargsU(p); i < endCASEargsU(p); i++) {
+        assert(!isBoxed(&p->payload[i]) && "gc: unexpected boxed arg in CASE");
+      }
     }
     break;
   case CALLCONT:
     for(i = startCALLargsB(p); i < endCALLargsB(p); i++) {
+      if (EXTRA) assert(isBoxed(&p->payload[i]) && "gc: unexpected unboxed arg in CALL");
       updatePtr(&p->payload[i]);
     }
     break;
   case FUNCONT:
+    if (EXTRA) assert(isBoxed(&p->payload[0]) && "gc: unexpected unboxed arg in FUN");
     updatePtr(&p->payload[0]);
     break;
   default:
@@ -270,6 +286,7 @@ void gc(void) {
 
   //update stgCurVal
   if (stgCurVal.argType == HEAPOBJ) {
+    if (EXTRA) assert(isBoxed(&stgCurVal) && "gc: unexpected unboxed arg in stgCurVal");
     updatePtr(&stgCurVal);
   }
 
