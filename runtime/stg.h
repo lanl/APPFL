@@ -156,15 +156,19 @@ extern void showStgVal(PtrOrLiteral);
 extern void showIT(InfoTab *);
 extern int getObjSize(Obj *);
 
-#define hibits (~0L << sizeof(uintptr_t)/2 * 8)
+#define PACKBITS (sizeof(uintptr_t)/2 * 8)
+#define hibits (~0L << PACKBITS)
 #define lobits (~0L & ~hibits)
 
-#define PNPACK(pargc,nargc) ((pargc) | (((uintptr_t)(nargc)) << (sizeof(uintptr_t)/2 * 8)))
+#define PNPACK(pargc,nargc) ((pargc) | (((uintptr_t)(nargc)) << PACKBITS))
+
+#define PUNPACK(n) (((uintptr_t) (n)) & lobits)
+#define NUNPACK(n) (((uintptr_t) (n)) >> PACKBITS)
 
 #define PNUNPACK(n,pargc,nargc) \
   do { \
-    pargc = (n) & lobits;				\
-    nargc = ((uintptr_t) (n)) >> (sizeof(uintptr_t)/2 * 8);	\
+    pargc = PUNPACK(n);	\
+    nargc = NUNPACK(n);	\
   } while (0)
 
 // allocate Obj on heap, returning pointer to new Obj
