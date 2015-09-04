@@ -52,6 +52,7 @@ DEFUN0(stgUpdateCont) {
   showStgObj(stgCurVal.op);
   if (p.op->objType != BLACKHOLE) {
     fprintf(stderr, "but updatee is not a BLACKHOLE!\n");
+    showStgHeap();
     assert(p.op->objType == BLACKHOLE);
   }
   p.op->payload[0] = stgCurVal;

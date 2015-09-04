@@ -15,10 +15,11 @@ DEFUN2(stgApplyN, N, f) {
   PtrOrLiteral argv[1];
   popargs(argc, argv);
   const int nps = 0;
-  // no pointer args to save
+  PtrOrLiteral pargv[1];
+  pargv[0] = f;
   PtrOrLiteral nargv[1];
   nargv[0] = argv[0];
-  
+
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
     // no pointer args to save
@@ -161,14 +162,10 @@ DEFUN2(stgApplyP, N, f) {
   PtrOrLiteral argv[1];
   popargs(argc, argv);
   const int nps = 1;
-  PtrOrLiteral pargv[1];
+  PtrOrLiteral pargv[2];
   pargv[0] = argv[0];
+  pargv[1] = f;
   // no non-pointer args to save
-  callContSave(1, pargv);
-  STGEVAL(pargv[0]);
-  callContRestore(pargv);
-  // restore argv
-  argv[0] = pargv[0];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
@@ -314,11 +311,12 @@ DEFUN2(stgApplyNN, N, f) {
   PtrOrLiteral argv[2];
   popargs(argc, argv);
   const int nps = 0;
-  // no pointer args to save
+  PtrOrLiteral pargv[1];
+  pargv[0] = f;
   PtrOrLiteral nargv[2];
   nargv[0] = argv[0];
   nargv[1] = argv[1];
-  
+
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
     // no pointer args to save
@@ -512,15 +510,11 @@ DEFUN2(stgApplyPN, N, f) {
   PtrOrLiteral argv[2];
   popargs(argc, argv);
   const int nps = 1;
-  PtrOrLiteral pargv[1];
+  PtrOrLiteral pargv[2];
   pargv[0] = argv[0];
+  pargv[1] = f;
   PtrOrLiteral nargv[1];
   nargv[0] = argv[1];
-  callContSave(1, pargv);
-  STGEVAL(pargv[0]);
-  callContRestore(pargv);
-  // restore argv
-  argv[0] = pargv[0];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
@@ -717,15 +711,11 @@ DEFUN2(stgApplyNP, N, f) {
   PtrOrLiteral argv[2];
   popargs(argc, argv);
   const int nps = 1;
-  PtrOrLiteral pargv[1];
+  PtrOrLiteral pargv[2];
   pargv[0] = argv[1];
+  pargv[1] = f;
   PtrOrLiteral nargv[1];
   nargv[0] = argv[0];
-  callContSave(1, pargv);
-  STGEVAL(pargv[0]);
-  callContRestore(pargv);
-  // restore argv
-  argv[1] = pargv[0];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
@@ -926,22 +916,11 @@ DEFUN2(stgApplyPP, N, f) {
   PtrOrLiteral argv[2];
   popargs(argc, argv);
   const int nps = 2;
-  PtrOrLiteral pargv[2];
+  PtrOrLiteral pargv[3];
   pargv[0] = argv[0];
   pargv[1] = argv[1];
+  pargv[2] = f;
   // no non-pointer args to save
-  callContSave(2, pargv);
-  STGEVAL(pargv[0]);
-  callContRestore(pargv);
-  // restore argv
-  argv[0] = pargv[0];
-  argv[1] = pargv[1];
-  callContSave(2, pargv);
-  STGEVAL(pargv[1]);
-  callContRestore(pargv);
-  // restore argv
-  argv[0] = pargv[0];
-  argv[1] = pargv[1];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
@@ -1143,12 +1122,13 @@ DEFUN2(stgApplyNNN, N, f) {
   PtrOrLiteral argv[3];
   popargs(argc, argv);
   const int nps = 0;
-  // no pointer args to save
+  PtrOrLiteral pargv[1];
+  pargv[0] = f;
   PtrOrLiteral nargv[3];
   nargv[0] = argv[0];
   nargv[1] = argv[1];
   nargv[2] = argv[2];
-  
+
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
     // no pointer args to save
@@ -1400,16 +1380,12 @@ DEFUN2(stgApplyPNN, N, f) {
   PtrOrLiteral argv[3];
   popargs(argc, argv);
   const int nps = 1;
-  PtrOrLiteral pargv[1];
+  PtrOrLiteral pargv[2];
   pargv[0] = argv[0];
+  pargv[1] = f;
   PtrOrLiteral nargv[2];
   nargv[0] = argv[1];
   nargv[1] = argv[2];
-  callContSave(1, pargv);
-  STGEVAL(pargv[0]);
-  callContRestore(pargv);
-  // restore argv
-  argv[0] = pargv[0];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
@@ -1664,16 +1640,12 @@ DEFUN2(stgApplyNPN, N, f) {
   PtrOrLiteral argv[3];
   popargs(argc, argv);
   const int nps = 1;
-  PtrOrLiteral pargv[1];
+  PtrOrLiteral pargv[2];
   pargv[0] = argv[1];
+  pargv[1] = f;
   PtrOrLiteral nargv[2];
   nargv[0] = argv[0];
   nargv[1] = argv[2];
-  callContSave(1, pargv);
-  STGEVAL(pargv[0]);
-  callContRestore(pargv);
-  // restore argv
-  argv[1] = pargv[0];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
@@ -1932,23 +1904,12 @@ DEFUN2(stgApplyPPN, N, f) {
   PtrOrLiteral argv[3];
   popargs(argc, argv);
   const int nps = 2;
-  PtrOrLiteral pargv[2];
+  PtrOrLiteral pargv[3];
   pargv[0] = argv[0];
   pargv[1] = argv[1];
+  pargv[2] = f;
   PtrOrLiteral nargv[1];
   nargv[0] = argv[2];
-  callContSave(2, pargv);
-  STGEVAL(pargv[0]);
-  callContRestore(pargv);
-  // restore argv
-  argv[0] = pargv[0];
-  argv[1] = pargv[1];
-  callContSave(2, pargv);
-  STGEVAL(pargv[1]);
-  callContRestore(pargv);
-  // restore argv
-  argv[0] = pargv[0];
-  argv[1] = pargv[1];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
@@ -2208,16 +2169,12 @@ DEFUN2(stgApplyNNP, N, f) {
   PtrOrLiteral argv[3];
   popargs(argc, argv);
   const int nps = 1;
-  PtrOrLiteral pargv[1];
+  PtrOrLiteral pargv[2];
   pargv[0] = argv[2];
+  pargv[1] = f;
   PtrOrLiteral nargv[2];
   nargv[0] = argv[0];
   nargv[1] = argv[1];
-  callContSave(1, pargv);
-  STGEVAL(pargv[0]);
-  callContRestore(pargv);
-  // restore argv
-  argv[2] = pargv[0];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
@@ -2480,23 +2437,12 @@ DEFUN2(stgApplyPNP, N, f) {
   PtrOrLiteral argv[3];
   popargs(argc, argv);
   const int nps = 2;
-  PtrOrLiteral pargv[2];
+  PtrOrLiteral pargv[3];
   pargv[0] = argv[0];
   pargv[1] = argv[2];
+  pargv[2] = f;
   PtrOrLiteral nargv[1];
   nargv[0] = argv[1];
-  callContSave(2, pargv);
-  STGEVAL(pargv[0]);
-  callContRestore(pargv);
-  // restore argv
-  argv[0] = pargv[0];
-  argv[2] = pargv[1];
-  callContSave(2, pargv);
-  STGEVAL(pargv[1]);
-  callContRestore(pargv);
-  // restore argv
-  argv[0] = pargv[0];
-  argv[2] = pargv[1];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
@@ -2760,23 +2706,12 @@ DEFUN2(stgApplyNPP, N, f) {
   PtrOrLiteral argv[3];
   popargs(argc, argv);
   const int nps = 2;
-  PtrOrLiteral pargv[2];
+  PtrOrLiteral pargv[3];
   pargv[0] = argv[1];
   pargv[1] = argv[2];
+  pargv[2] = f;
   PtrOrLiteral nargv[1];
   nargv[0] = argv[0];
-  callContSave(2, pargv);
-  STGEVAL(pargv[0]);
-  callContRestore(pargv);
-  // restore argv
-  argv[1] = pargv[0];
-  argv[2] = pargv[1];
-  callContSave(2, pargv);
-  STGEVAL(pargv[1]);
-  callContRestore(pargv);
-  // restore argv
-  argv[1] = pargv[0];
-  argv[2] = pargv[1];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
@@ -3042,32 +2977,12 @@ DEFUN2(stgApplyPPP, N, f) {
   PtrOrLiteral argv[3];
   popargs(argc, argv);
   const int nps = 3;
-  PtrOrLiteral pargv[3];
+  PtrOrLiteral pargv[4];
   pargv[0] = argv[0];
   pargv[1] = argv[1];
   pargv[2] = argv[2];
+  pargv[3] = f;
   // no non-pointer args to save
-  callContSave(3, pargv);
-  STGEVAL(pargv[0]);
-  callContRestore(pargv);
-  // restore argv
-  argv[0] = pargv[0];
-  argv[1] = pargv[1];
-  argv[2] = pargv[2];
-  callContSave(3, pargv);
-  STGEVAL(pargv[1]);
-  callContRestore(pargv);
-  // restore argv
-  argv[0] = pargv[0];
-  argv[1] = pargv[1];
-  argv[2] = pargv[2];
-  callContSave(3, pargv);
-  STGEVAL(pargv[2]);
-  callContRestore(pargv);
-  // restore argv
-  argv[0] = pargv[0];
-  argv[1] = pargv[1];
-  argv[2] = pargv[2];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
@@ -3334,13 +3249,14 @@ DEFUN2(stgApplyNNNN, N, f) {
   PtrOrLiteral argv[4];
   popargs(argc, argv);
   const int nps = 0;
-  // no pointer args to save
+  PtrOrLiteral pargv[1];
+  pargv[0] = f;
   PtrOrLiteral nargv[4];
   nargv[0] = argv[0];
   nargv[1] = argv[1];
   nargv[2] = argv[2];
   nargv[3] = argv[3];
-  
+
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
     // no pointer args to save
@@ -3640,17 +3556,13 @@ DEFUN2(stgApplyPNNN, N, f) {
   PtrOrLiteral argv[4];
   popargs(argc, argv);
   const int nps = 1;
-  PtrOrLiteral pargv[1];
+  PtrOrLiteral pargv[2];
   pargv[0] = argv[0];
+  pargv[1] = f;
   PtrOrLiteral nargv[3];
   nargv[0] = argv[1];
   nargv[1] = argv[2];
   nargv[2] = argv[3];
-  callContSave(1, pargv);
-  STGEVAL(pargv[0]);
-  callContRestore(pargv);
-  // restore argv
-  argv[0] = pargv[0];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
@@ -3953,17 +3865,13 @@ DEFUN2(stgApplyNPNN, N, f) {
   PtrOrLiteral argv[4];
   popargs(argc, argv);
   const int nps = 1;
-  PtrOrLiteral pargv[1];
+  PtrOrLiteral pargv[2];
   pargv[0] = argv[1];
+  pargv[1] = f;
   PtrOrLiteral nargv[3];
   nargv[0] = argv[0];
   nargv[1] = argv[2];
   nargv[2] = argv[3];
-  callContSave(1, pargv);
-  STGEVAL(pargv[0]);
-  callContRestore(pargv);
-  // restore argv
-  argv[1] = pargv[0];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
@@ -4270,24 +4178,13 @@ DEFUN2(stgApplyPPNN, N, f) {
   PtrOrLiteral argv[4];
   popargs(argc, argv);
   const int nps = 2;
-  PtrOrLiteral pargv[2];
+  PtrOrLiteral pargv[3];
   pargv[0] = argv[0];
   pargv[1] = argv[1];
+  pargv[2] = f;
   PtrOrLiteral nargv[2];
   nargv[0] = argv[2];
   nargv[1] = argv[3];
-  callContSave(2, pargv);
-  STGEVAL(pargv[0]);
-  callContRestore(pargv);
-  // restore argv
-  argv[0] = pargv[0];
-  argv[1] = pargv[1];
-  callContSave(2, pargv);
-  STGEVAL(pargv[1]);
-  callContRestore(pargv);
-  // restore argv
-  argv[0] = pargv[0];
-  argv[1] = pargv[1];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
@@ -4595,17 +4492,13 @@ DEFUN2(stgApplyNNPN, N, f) {
   PtrOrLiteral argv[4];
   popargs(argc, argv);
   const int nps = 1;
-  PtrOrLiteral pargv[1];
+  PtrOrLiteral pargv[2];
   pargv[0] = argv[2];
+  pargv[1] = f;
   PtrOrLiteral nargv[3];
   nargv[0] = argv[0];
   nargv[1] = argv[1];
   nargv[2] = argv[3];
-  callContSave(1, pargv);
-  STGEVAL(pargv[0]);
-  callContRestore(pargv);
-  // restore argv
-  argv[2] = pargv[0];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
@@ -4916,24 +4809,13 @@ DEFUN2(stgApplyPNPN, N, f) {
   PtrOrLiteral argv[4];
   popargs(argc, argv);
   const int nps = 2;
-  PtrOrLiteral pargv[2];
+  PtrOrLiteral pargv[3];
   pargv[0] = argv[0];
   pargv[1] = argv[2];
+  pargv[2] = f;
   PtrOrLiteral nargv[2];
   nargv[0] = argv[1];
   nargv[1] = argv[3];
-  callContSave(2, pargv);
-  STGEVAL(pargv[0]);
-  callContRestore(pargv);
-  // restore argv
-  argv[0] = pargv[0];
-  argv[2] = pargv[1];
-  callContSave(2, pargv);
-  STGEVAL(pargv[1]);
-  callContRestore(pargv);
-  // restore argv
-  argv[0] = pargv[0];
-  argv[2] = pargv[1];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
@@ -5245,24 +5127,13 @@ DEFUN2(stgApplyNPPN, N, f) {
   PtrOrLiteral argv[4];
   popargs(argc, argv);
   const int nps = 2;
-  PtrOrLiteral pargv[2];
+  PtrOrLiteral pargv[3];
   pargv[0] = argv[1];
   pargv[1] = argv[2];
+  pargv[2] = f;
   PtrOrLiteral nargv[2];
   nargv[0] = argv[0];
   nargv[1] = argv[3];
-  callContSave(2, pargv);
-  STGEVAL(pargv[0]);
-  callContRestore(pargv);
-  // restore argv
-  argv[1] = pargv[0];
-  argv[2] = pargv[1];
-  callContSave(2, pargv);
-  STGEVAL(pargv[1]);
-  callContRestore(pargv);
-  // restore argv
-  argv[1] = pargv[0];
-  argv[2] = pargv[1];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
@@ -5576,33 +5447,13 @@ DEFUN2(stgApplyPPPN, N, f) {
   PtrOrLiteral argv[4];
   popargs(argc, argv);
   const int nps = 3;
-  PtrOrLiteral pargv[3];
+  PtrOrLiteral pargv[4];
   pargv[0] = argv[0];
   pargv[1] = argv[1];
   pargv[2] = argv[2];
+  pargv[3] = f;
   PtrOrLiteral nargv[1];
   nargv[0] = argv[3];
-  callContSave(3, pargv);
-  STGEVAL(pargv[0]);
-  callContRestore(pargv);
-  // restore argv
-  argv[0] = pargv[0];
-  argv[1] = pargv[1];
-  argv[2] = pargv[2];
-  callContSave(3, pargv);
-  STGEVAL(pargv[1]);
-  callContRestore(pargv);
-  // restore argv
-  argv[0] = pargv[0];
-  argv[1] = pargv[1];
-  argv[2] = pargv[2];
-  callContSave(3, pargv);
-  STGEVAL(pargv[2]);
-  callContRestore(pargv);
-  // restore argv
-  argv[0] = pargv[0];
-  argv[1] = pargv[1];
-  argv[2] = pargv[2];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
@@ -5917,17 +5768,13 @@ DEFUN2(stgApplyNNNP, N, f) {
   PtrOrLiteral argv[4];
   popargs(argc, argv);
   const int nps = 1;
-  PtrOrLiteral pargv[1];
+  PtrOrLiteral pargv[2];
   pargv[0] = argv[3];
+  pargv[1] = f;
   PtrOrLiteral nargv[3];
   nargv[0] = argv[0];
   nargv[1] = argv[1];
   nargv[2] = argv[2];
-  callContSave(1, pargv);
-  STGEVAL(pargv[0]);
-  callContRestore(pargv);
-  // restore argv
-  argv[3] = pargv[0];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
@@ -6242,24 +6089,13 @@ DEFUN2(stgApplyPNNP, N, f) {
   PtrOrLiteral argv[4];
   popargs(argc, argv);
   const int nps = 2;
-  PtrOrLiteral pargv[2];
+  PtrOrLiteral pargv[3];
   pargv[0] = argv[0];
   pargv[1] = argv[3];
+  pargv[2] = f;
   PtrOrLiteral nargv[2];
   nargv[0] = argv[1];
   nargv[1] = argv[2];
-  callContSave(2, pargv);
-  STGEVAL(pargv[0]);
-  callContRestore(pargv);
-  // restore argv
-  argv[0] = pargv[0];
-  argv[3] = pargv[1];
-  callContSave(2, pargv);
-  STGEVAL(pargv[1]);
-  callContRestore(pargv);
-  // restore argv
-  argv[0] = pargv[0];
-  argv[3] = pargv[1];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
@@ -6575,24 +6411,13 @@ DEFUN2(stgApplyNPNP, N, f) {
   PtrOrLiteral argv[4];
   popargs(argc, argv);
   const int nps = 2;
-  PtrOrLiteral pargv[2];
+  PtrOrLiteral pargv[3];
   pargv[0] = argv[1];
   pargv[1] = argv[3];
+  pargv[2] = f;
   PtrOrLiteral nargv[2];
   nargv[0] = argv[0];
   nargv[1] = argv[2];
-  callContSave(2, pargv);
-  STGEVAL(pargv[0]);
-  callContRestore(pargv);
-  // restore argv
-  argv[1] = pargv[0];
-  argv[3] = pargv[1];
-  callContSave(2, pargv);
-  STGEVAL(pargv[1]);
-  callContRestore(pargv);
-  // restore argv
-  argv[1] = pargv[0];
-  argv[3] = pargv[1];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
@@ -6910,33 +6735,13 @@ DEFUN2(stgApplyPPNP, N, f) {
   PtrOrLiteral argv[4];
   popargs(argc, argv);
   const int nps = 3;
-  PtrOrLiteral pargv[3];
+  PtrOrLiteral pargv[4];
   pargv[0] = argv[0];
   pargv[1] = argv[1];
   pargv[2] = argv[3];
+  pargv[3] = f;
   PtrOrLiteral nargv[1];
   nargv[0] = argv[2];
-  callContSave(3, pargv);
-  STGEVAL(pargv[0]);
-  callContRestore(pargv);
-  // restore argv
-  argv[0] = pargv[0];
-  argv[1] = pargv[1];
-  argv[3] = pargv[2];
-  callContSave(3, pargv);
-  STGEVAL(pargv[1]);
-  callContRestore(pargv);
-  // restore argv
-  argv[0] = pargv[0];
-  argv[1] = pargv[1];
-  argv[3] = pargv[2];
-  callContSave(3, pargv);
-  STGEVAL(pargv[2]);
-  callContRestore(pargv);
-  // restore argv
-  argv[0] = pargv[0];
-  argv[1] = pargv[1];
-  argv[3] = pargv[2];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
@@ -7255,24 +7060,13 @@ DEFUN2(stgApplyNNPP, N, f) {
   PtrOrLiteral argv[4];
   popargs(argc, argv);
   const int nps = 2;
-  PtrOrLiteral pargv[2];
+  PtrOrLiteral pargv[3];
   pargv[0] = argv[2];
   pargv[1] = argv[3];
+  pargv[2] = f;
   PtrOrLiteral nargv[2];
   nargv[0] = argv[0];
   nargv[1] = argv[1];
-  callContSave(2, pargv);
-  STGEVAL(pargv[0]);
-  callContRestore(pargv);
-  // restore argv
-  argv[2] = pargv[0];
-  argv[3] = pargv[1];
-  callContSave(2, pargv);
-  STGEVAL(pargv[1]);
-  callContRestore(pargv);
-  // restore argv
-  argv[2] = pargv[0];
-  argv[3] = pargv[1];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
@@ -7592,33 +7386,13 @@ DEFUN2(stgApplyPNPP, N, f) {
   PtrOrLiteral argv[4];
   popargs(argc, argv);
   const int nps = 3;
-  PtrOrLiteral pargv[3];
+  PtrOrLiteral pargv[4];
   pargv[0] = argv[0];
   pargv[1] = argv[2];
   pargv[2] = argv[3];
+  pargv[3] = f;
   PtrOrLiteral nargv[1];
   nargv[0] = argv[1];
-  callContSave(3, pargv);
-  STGEVAL(pargv[0]);
-  callContRestore(pargv);
-  // restore argv
-  argv[0] = pargv[0];
-  argv[2] = pargv[1];
-  argv[3] = pargv[2];
-  callContSave(3, pargv);
-  STGEVAL(pargv[1]);
-  callContRestore(pargv);
-  // restore argv
-  argv[0] = pargv[0];
-  argv[2] = pargv[1];
-  argv[3] = pargv[2];
-  callContSave(3, pargv);
-  STGEVAL(pargv[2]);
-  callContRestore(pargv);
-  // restore argv
-  argv[0] = pargv[0];
-  argv[2] = pargv[1];
-  argv[3] = pargv[2];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
@@ -7939,33 +7713,13 @@ DEFUN2(stgApplyNPPP, N, f) {
   PtrOrLiteral argv[4];
   popargs(argc, argv);
   const int nps = 3;
-  PtrOrLiteral pargv[3];
+  PtrOrLiteral pargv[4];
   pargv[0] = argv[1];
   pargv[1] = argv[2];
   pargv[2] = argv[3];
+  pargv[3] = f;
   PtrOrLiteral nargv[1];
   nargv[0] = argv[0];
-  callContSave(3, pargv);
-  STGEVAL(pargv[0]);
-  callContRestore(pargv);
-  // restore argv
-  argv[1] = pargv[0];
-  argv[2] = pargv[1];
-  argv[3] = pargv[2];
-  callContSave(3, pargv);
-  STGEVAL(pargv[1]);
-  callContRestore(pargv);
-  // restore argv
-  argv[1] = pargv[0];
-  argv[2] = pargv[1];
-  argv[3] = pargv[2];
-  callContSave(3, pargv);
-  STGEVAL(pargv[2]);
-  callContRestore(pargv);
-  // restore argv
-  argv[1] = pargv[0];
-  argv[2] = pargv[1];
-  argv[3] = pargv[2];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
@@ -8288,44 +8042,13 @@ DEFUN2(stgApplyPPPP, N, f) {
   PtrOrLiteral argv[4];
   popargs(argc, argv);
   const int nps = 4;
-  PtrOrLiteral pargv[4];
+  PtrOrLiteral pargv[5];
   pargv[0] = argv[0];
   pargv[1] = argv[1];
   pargv[2] = argv[2];
   pargv[3] = argv[3];
+  pargv[4] = f;
   // no non-pointer args to save
-  callContSave(4, pargv);
-  STGEVAL(pargv[0]);
-  callContRestore(pargv);
-  // restore argv
-  argv[0] = pargv[0];
-  argv[1] = pargv[1];
-  argv[2] = pargv[2];
-  argv[3] = pargv[3];
-  callContSave(4, pargv);
-  STGEVAL(pargv[1]);
-  callContRestore(pargv);
-  // restore argv
-  argv[0] = pargv[0];
-  argv[1] = pargv[1];
-  argv[2] = pargv[2];
-  argv[3] = pargv[3];
-  callContSave(4, pargv);
-  STGEVAL(pargv[2]);
-  callContRestore(pargv);
-  // restore argv
-  argv[0] = pargv[0];
-  argv[1] = pargv[1];
-  argv[2] = pargv[2];
-  argv[3] = pargv[3];
-  callContSave(4, pargv);
-  STGEVAL(pargv[3]);
-  callContRestore(pargv);
-  // restore argv
-  argv[0] = pargv[0];
-  argv[1] = pargv[1];
-  argv[2] = pargv[2];
-  argv[3] = pargv[3];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
@@ -8649,14 +8372,15 @@ DEFUN2(stgApplyNNNNN, N, f) {
   PtrOrLiteral argv[5];
   popargs(argc, argv);
   const int nps = 0;
-  // no pointer args to save
+  PtrOrLiteral pargv[1];
+  pargv[0] = f;
   PtrOrLiteral nargv[5];
   nargv[0] = argv[0];
   nargv[1] = argv[1];
   nargv[2] = argv[2];
   nargv[3] = argv[3];
   nargv[4] = argv[4];
-  
+
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
     // no pointer args to save
@@ -9004,18 +8728,14 @@ DEFUN2(stgApplyPNNNN, N, f) {
   PtrOrLiteral argv[5];
   popargs(argc, argv);
   const int nps = 1;
-  PtrOrLiteral pargv[1];
+  PtrOrLiteral pargv[2];
   pargv[0] = argv[0];
+  pargv[1] = f;
   PtrOrLiteral nargv[4];
   nargv[0] = argv[1];
   nargv[1] = argv[2];
   nargv[2] = argv[3];
   nargv[3] = argv[4];
-  callContSave(1, pargv);
-  STGEVAL(pargv[0]);
-  callContRestore(pargv);
-  // restore argv
-  argv[0] = pargv[0];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
@@ -9366,18 +9086,14 @@ DEFUN2(stgApplyNPNNN, N, f) {
   PtrOrLiteral argv[5];
   popargs(argc, argv);
   const int nps = 1;
-  PtrOrLiteral pargv[1];
+  PtrOrLiteral pargv[2];
   pargv[0] = argv[1];
+  pargv[1] = f;
   PtrOrLiteral nargv[4];
   nargv[0] = argv[0];
   nargv[1] = argv[2];
   nargv[2] = argv[3];
   nargv[3] = argv[4];
-  callContSave(1, pargv);
-  STGEVAL(pargv[0]);
-  callContRestore(pargv);
-  // restore argv
-  argv[1] = pargv[0];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
@@ -9732,25 +9448,14 @@ DEFUN2(stgApplyPPNNN, N, f) {
   PtrOrLiteral argv[5];
   popargs(argc, argv);
   const int nps = 2;
-  PtrOrLiteral pargv[2];
+  PtrOrLiteral pargv[3];
   pargv[0] = argv[0];
   pargv[1] = argv[1];
+  pargv[2] = f;
   PtrOrLiteral nargv[3];
   nargv[0] = argv[2];
   nargv[1] = argv[3];
   nargv[2] = argv[4];
-  callContSave(2, pargv);
-  STGEVAL(pargv[0]);
-  callContRestore(pargv);
-  // restore argv
-  argv[0] = pargv[0];
-  argv[1] = pargv[1];
-  callContSave(2, pargv);
-  STGEVAL(pargv[1]);
-  callContRestore(pargv);
-  // restore argv
-  argv[0] = pargv[0];
-  argv[1] = pargv[1];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
@@ -10106,18 +9811,14 @@ DEFUN2(stgApplyNNPNN, N, f) {
   PtrOrLiteral argv[5];
   popargs(argc, argv);
   const int nps = 1;
-  PtrOrLiteral pargv[1];
+  PtrOrLiteral pargv[2];
   pargv[0] = argv[2];
+  pargv[1] = f;
   PtrOrLiteral nargv[4];
   nargv[0] = argv[0];
   nargv[1] = argv[1];
   nargv[2] = argv[3];
   nargv[3] = argv[4];
-  callContSave(1, pargv);
-  STGEVAL(pargv[0]);
-  callContRestore(pargv);
-  // restore argv
-  argv[2] = pargv[0];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
@@ -10476,25 +10177,14 @@ DEFUN2(stgApplyPNPNN, N, f) {
   PtrOrLiteral argv[5];
   popargs(argc, argv);
   const int nps = 2;
-  PtrOrLiteral pargv[2];
+  PtrOrLiteral pargv[3];
   pargv[0] = argv[0];
   pargv[1] = argv[2];
+  pargv[2] = f;
   PtrOrLiteral nargv[3];
   nargv[0] = argv[1];
   nargv[1] = argv[3];
   nargv[2] = argv[4];
-  callContSave(2, pargv);
-  STGEVAL(pargv[0]);
-  callContRestore(pargv);
-  // restore argv
-  argv[0] = pargv[0];
-  argv[2] = pargv[1];
-  callContSave(2, pargv);
-  STGEVAL(pargv[1]);
-  callContRestore(pargv);
-  // restore argv
-  argv[0] = pargv[0];
-  argv[2] = pargv[1];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
@@ -10854,25 +10544,14 @@ DEFUN2(stgApplyNPPNN, N, f) {
   PtrOrLiteral argv[5];
   popargs(argc, argv);
   const int nps = 2;
-  PtrOrLiteral pargv[2];
+  PtrOrLiteral pargv[3];
   pargv[0] = argv[1];
   pargv[1] = argv[2];
+  pargv[2] = f;
   PtrOrLiteral nargv[3];
   nargv[0] = argv[0];
   nargv[1] = argv[3];
   nargv[2] = argv[4];
-  callContSave(2, pargv);
-  STGEVAL(pargv[0]);
-  callContRestore(pargv);
-  // restore argv
-  argv[1] = pargv[0];
-  argv[2] = pargv[1];
-  callContSave(2, pargv);
-  STGEVAL(pargv[1]);
-  callContRestore(pargv);
-  // restore argv
-  argv[1] = pargv[0];
-  argv[2] = pargv[1];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
@@ -11234,34 +10913,14 @@ DEFUN2(stgApplyPPPNN, N, f) {
   PtrOrLiteral argv[5];
   popargs(argc, argv);
   const int nps = 3;
-  PtrOrLiteral pargv[3];
+  PtrOrLiteral pargv[4];
   pargv[0] = argv[0];
   pargv[1] = argv[1];
   pargv[2] = argv[2];
+  pargv[3] = f;
   PtrOrLiteral nargv[2];
   nargv[0] = argv[3];
   nargv[1] = argv[4];
-  callContSave(3, pargv);
-  STGEVAL(pargv[0]);
-  callContRestore(pargv);
-  // restore argv
-  argv[0] = pargv[0];
-  argv[1] = pargv[1];
-  argv[2] = pargv[2];
-  callContSave(3, pargv);
-  STGEVAL(pargv[1]);
-  callContRestore(pargv);
-  // restore argv
-  argv[0] = pargv[0];
-  argv[1] = pargv[1];
-  argv[2] = pargv[2];
-  callContSave(3, pargv);
-  STGEVAL(pargv[2]);
-  callContRestore(pargv);
-  // restore argv
-  argv[0] = pargv[0];
-  argv[1] = pargv[1];
-  argv[2] = pargv[2];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
@@ -11624,18 +11283,14 @@ DEFUN2(stgApplyNNNPN, N, f) {
   PtrOrLiteral argv[5];
   popargs(argc, argv);
   const int nps = 1;
-  PtrOrLiteral pargv[1];
+  PtrOrLiteral pargv[2];
   pargv[0] = argv[3];
+  pargv[1] = f;
   PtrOrLiteral nargv[4];
   nargv[0] = argv[0];
   nargv[1] = argv[1];
   nargv[2] = argv[2];
   nargv[3] = argv[4];
-  callContSave(1, pargv);
-  STGEVAL(pargv[0]);
-  callContRestore(pargv);
-  // restore argv
-  argv[3] = pargv[0];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
@@ -11998,25 +11653,14 @@ DEFUN2(stgApplyPNNPN, N, f) {
   PtrOrLiteral argv[5];
   popargs(argc, argv);
   const int nps = 2;
-  PtrOrLiteral pargv[2];
+  PtrOrLiteral pargv[3];
   pargv[0] = argv[0];
   pargv[1] = argv[3];
+  pargv[2] = f;
   PtrOrLiteral nargv[3];
   nargv[0] = argv[1];
   nargv[1] = argv[2];
   nargv[2] = argv[4];
-  callContSave(2, pargv);
-  STGEVAL(pargv[0]);
-  callContRestore(pargv);
-  // restore argv
-  argv[0] = pargv[0];
-  argv[3] = pargv[1];
-  callContSave(2, pargv);
-  STGEVAL(pargv[1]);
-  callContRestore(pargv);
-  // restore argv
-  argv[0] = pargv[0];
-  argv[3] = pargv[1];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
@@ -12380,25 +12024,14 @@ DEFUN2(stgApplyNPNPN, N, f) {
   PtrOrLiteral argv[5];
   popargs(argc, argv);
   const int nps = 2;
-  PtrOrLiteral pargv[2];
+  PtrOrLiteral pargv[3];
   pargv[0] = argv[1];
   pargv[1] = argv[3];
+  pargv[2] = f;
   PtrOrLiteral nargv[3];
   nargv[0] = argv[0];
   nargv[1] = argv[2];
   nargv[2] = argv[4];
-  callContSave(2, pargv);
-  STGEVAL(pargv[0]);
-  callContRestore(pargv);
-  // restore argv
-  argv[1] = pargv[0];
-  argv[3] = pargv[1];
-  callContSave(2, pargv);
-  STGEVAL(pargv[1]);
-  callContRestore(pargv);
-  // restore argv
-  argv[1] = pargv[0];
-  argv[3] = pargv[1];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
@@ -12764,34 +12397,14 @@ DEFUN2(stgApplyPPNPN, N, f) {
   PtrOrLiteral argv[5];
   popargs(argc, argv);
   const int nps = 3;
-  PtrOrLiteral pargv[3];
+  PtrOrLiteral pargv[4];
   pargv[0] = argv[0];
   pargv[1] = argv[1];
   pargv[2] = argv[3];
+  pargv[3] = f;
   PtrOrLiteral nargv[2];
   nargv[0] = argv[2];
   nargv[1] = argv[4];
-  callContSave(3, pargv);
-  STGEVAL(pargv[0]);
-  callContRestore(pargv);
-  // restore argv
-  argv[0] = pargv[0];
-  argv[1] = pargv[1];
-  argv[3] = pargv[2];
-  callContSave(3, pargv);
-  STGEVAL(pargv[1]);
-  callContRestore(pargv);
-  // restore argv
-  argv[0] = pargv[0];
-  argv[1] = pargv[1];
-  argv[3] = pargv[2];
-  callContSave(3, pargv);
-  STGEVAL(pargv[2]);
-  callContRestore(pargv);
-  // restore argv
-  argv[0] = pargv[0];
-  argv[1] = pargv[1];
-  argv[3] = pargv[2];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
@@ -13158,25 +12771,14 @@ DEFUN2(stgApplyNNPPN, N, f) {
   PtrOrLiteral argv[5];
   popargs(argc, argv);
   const int nps = 2;
-  PtrOrLiteral pargv[2];
+  PtrOrLiteral pargv[3];
   pargv[0] = argv[2];
   pargv[1] = argv[3];
+  pargv[2] = f;
   PtrOrLiteral nargv[3];
   nargv[0] = argv[0];
   nargv[1] = argv[1];
   nargv[2] = argv[4];
-  callContSave(2, pargv);
-  STGEVAL(pargv[0]);
-  callContRestore(pargv);
-  // restore argv
-  argv[2] = pargv[0];
-  argv[3] = pargv[1];
-  callContSave(2, pargv);
-  STGEVAL(pargv[1]);
-  callContRestore(pargv);
-  // restore argv
-  argv[2] = pargv[0];
-  argv[3] = pargv[1];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
@@ -13544,34 +13146,14 @@ DEFUN2(stgApplyPNPPN, N, f) {
   PtrOrLiteral argv[5];
   popargs(argc, argv);
   const int nps = 3;
-  PtrOrLiteral pargv[3];
+  PtrOrLiteral pargv[4];
   pargv[0] = argv[0];
   pargv[1] = argv[2];
   pargv[2] = argv[3];
+  pargv[3] = f;
   PtrOrLiteral nargv[2];
   nargv[0] = argv[1];
   nargv[1] = argv[4];
-  callContSave(3, pargv);
-  STGEVAL(pargv[0]);
-  callContRestore(pargv);
-  // restore argv
-  argv[0] = pargv[0];
-  argv[2] = pargv[1];
-  argv[3] = pargv[2];
-  callContSave(3, pargv);
-  STGEVAL(pargv[1]);
-  callContRestore(pargv);
-  // restore argv
-  argv[0] = pargv[0];
-  argv[2] = pargv[1];
-  argv[3] = pargv[2];
-  callContSave(3, pargv);
-  STGEVAL(pargv[2]);
-  callContRestore(pargv);
-  // restore argv
-  argv[0] = pargv[0];
-  argv[2] = pargv[1];
-  argv[3] = pargv[2];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
@@ -13940,34 +13522,14 @@ DEFUN2(stgApplyNPPPN, N, f) {
   PtrOrLiteral argv[5];
   popargs(argc, argv);
   const int nps = 3;
-  PtrOrLiteral pargv[3];
+  PtrOrLiteral pargv[4];
   pargv[0] = argv[1];
   pargv[1] = argv[2];
   pargv[2] = argv[3];
+  pargv[3] = f;
   PtrOrLiteral nargv[2];
   nargv[0] = argv[0];
   nargv[1] = argv[4];
-  callContSave(3, pargv);
-  STGEVAL(pargv[0]);
-  callContRestore(pargv);
-  // restore argv
-  argv[1] = pargv[0];
-  argv[2] = pargv[1];
-  argv[3] = pargv[2];
-  callContSave(3, pargv);
-  STGEVAL(pargv[1]);
-  callContRestore(pargv);
-  // restore argv
-  argv[1] = pargv[0];
-  argv[2] = pargv[1];
-  argv[3] = pargv[2];
-  callContSave(3, pargv);
-  STGEVAL(pargv[2]);
-  callContRestore(pargv);
-  // restore argv
-  argv[1] = pargv[0];
-  argv[2] = pargv[1];
-  argv[3] = pargv[2];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
@@ -14338,45 +13900,14 @@ DEFUN2(stgApplyPPPPN, N, f) {
   PtrOrLiteral argv[5];
   popargs(argc, argv);
   const int nps = 4;
-  PtrOrLiteral pargv[4];
+  PtrOrLiteral pargv[5];
   pargv[0] = argv[0];
   pargv[1] = argv[1];
   pargv[2] = argv[2];
   pargv[3] = argv[3];
+  pargv[4] = f;
   PtrOrLiteral nargv[1];
   nargv[0] = argv[4];
-  callContSave(4, pargv);
-  STGEVAL(pargv[0]);
-  callContRestore(pargv);
-  // restore argv
-  argv[0] = pargv[0];
-  argv[1] = pargv[1];
-  argv[2] = pargv[2];
-  argv[3] = pargv[3];
-  callContSave(4, pargv);
-  STGEVAL(pargv[1]);
-  callContRestore(pargv);
-  // restore argv
-  argv[0] = pargv[0];
-  argv[1] = pargv[1];
-  argv[2] = pargv[2];
-  argv[3] = pargv[3];
-  callContSave(4, pargv);
-  STGEVAL(pargv[2]);
-  callContRestore(pargv);
-  // restore argv
-  argv[0] = pargv[0];
-  argv[1] = pargv[1];
-  argv[2] = pargv[2];
-  argv[3] = pargv[3];
-  callContSave(4, pargv);
-  STGEVAL(pargv[3]);
-  callContRestore(pargv);
-  // restore argv
-  argv[0] = pargv[0];
-  argv[1] = pargv[1];
-  argv[2] = pargv[2];
-  argv[3] = pargv[3];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
@@ -14748,18 +14279,14 @@ DEFUN2(stgApplyNNNNP, N, f) {
   PtrOrLiteral argv[5];
   popargs(argc, argv);
   const int nps = 1;
-  PtrOrLiteral pargv[1];
+  PtrOrLiteral pargv[2];
   pargv[0] = argv[4];
+  pargv[1] = f;
   PtrOrLiteral nargv[4];
   nargv[0] = argv[0];
   nargv[1] = argv[1];
   nargv[2] = argv[2];
   nargv[3] = argv[3];
-  callContSave(1, pargv);
-  STGEVAL(pargv[0]);
-  callContRestore(pargv);
-  // restore argv
-  argv[4] = pargv[0];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
@@ -15126,25 +14653,14 @@ DEFUN2(stgApplyPNNNP, N, f) {
   PtrOrLiteral argv[5];
   popargs(argc, argv);
   const int nps = 2;
-  PtrOrLiteral pargv[2];
+  PtrOrLiteral pargv[3];
   pargv[0] = argv[0];
   pargv[1] = argv[4];
+  pargv[2] = f;
   PtrOrLiteral nargv[3];
   nargv[0] = argv[1];
   nargv[1] = argv[2];
   nargv[2] = argv[3];
-  callContSave(2, pargv);
-  STGEVAL(pargv[0]);
-  callContRestore(pargv);
-  // restore argv
-  argv[0] = pargv[0];
-  argv[4] = pargv[1];
-  callContSave(2, pargv);
-  STGEVAL(pargv[1]);
-  callContRestore(pargv);
-  // restore argv
-  argv[0] = pargv[0];
-  argv[4] = pargv[1];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
@@ -15512,25 +15028,14 @@ DEFUN2(stgApplyNPNNP, N, f) {
   PtrOrLiteral argv[5];
   popargs(argc, argv);
   const int nps = 2;
-  PtrOrLiteral pargv[2];
+  PtrOrLiteral pargv[3];
   pargv[0] = argv[1];
   pargv[1] = argv[4];
+  pargv[2] = f;
   PtrOrLiteral nargv[3];
   nargv[0] = argv[0];
   nargv[1] = argv[2];
   nargv[2] = argv[3];
-  callContSave(2, pargv);
-  STGEVAL(pargv[0]);
-  callContRestore(pargv);
-  // restore argv
-  argv[1] = pargv[0];
-  argv[4] = pargv[1];
-  callContSave(2, pargv);
-  STGEVAL(pargv[1]);
-  callContRestore(pargv);
-  // restore argv
-  argv[1] = pargv[0];
-  argv[4] = pargv[1];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
@@ -15900,34 +15405,14 @@ DEFUN2(stgApplyPPNNP, N, f) {
   PtrOrLiteral argv[5];
   popargs(argc, argv);
   const int nps = 3;
-  PtrOrLiteral pargv[3];
+  PtrOrLiteral pargv[4];
   pargv[0] = argv[0];
   pargv[1] = argv[1];
   pargv[2] = argv[4];
+  pargv[3] = f;
   PtrOrLiteral nargv[2];
   nargv[0] = argv[2];
   nargv[1] = argv[3];
-  callContSave(3, pargv);
-  STGEVAL(pargv[0]);
-  callContRestore(pargv);
-  // restore argv
-  argv[0] = pargv[0];
-  argv[1] = pargv[1];
-  argv[4] = pargv[2];
-  callContSave(3, pargv);
-  STGEVAL(pargv[1]);
-  callContRestore(pargv);
-  // restore argv
-  argv[0] = pargv[0];
-  argv[1] = pargv[1];
-  argv[4] = pargv[2];
-  callContSave(3, pargv);
-  STGEVAL(pargv[2]);
-  callContRestore(pargv);
-  // restore argv
-  argv[0] = pargv[0];
-  argv[1] = pargv[1];
-  argv[4] = pargv[2];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
@@ -16298,25 +15783,14 @@ DEFUN2(stgApplyNNPNP, N, f) {
   PtrOrLiteral argv[5];
   popargs(argc, argv);
   const int nps = 2;
-  PtrOrLiteral pargv[2];
+  PtrOrLiteral pargv[3];
   pargv[0] = argv[2];
   pargv[1] = argv[4];
+  pargv[2] = f;
   PtrOrLiteral nargv[3];
   nargv[0] = argv[0];
   nargv[1] = argv[1];
   nargv[2] = argv[3];
-  callContSave(2, pargv);
-  STGEVAL(pargv[0]);
-  callContRestore(pargv);
-  // restore argv
-  argv[2] = pargv[0];
-  argv[4] = pargv[1];
-  callContSave(2, pargv);
-  STGEVAL(pargv[1]);
-  callContRestore(pargv);
-  // restore argv
-  argv[2] = pargv[0];
-  argv[4] = pargv[1];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
@@ -16688,34 +16162,14 @@ DEFUN2(stgApplyPNPNP, N, f) {
   PtrOrLiteral argv[5];
   popargs(argc, argv);
   const int nps = 3;
-  PtrOrLiteral pargv[3];
+  PtrOrLiteral pargv[4];
   pargv[0] = argv[0];
   pargv[1] = argv[2];
   pargv[2] = argv[4];
+  pargv[3] = f;
   PtrOrLiteral nargv[2];
   nargv[0] = argv[1];
   nargv[1] = argv[3];
-  callContSave(3, pargv);
-  STGEVAL(pargv[0]);
-  callContRestore(pargv);
-  // restore argv
-  argv[0] = pargv[0];
-  argv[2] = pargv[1];
-  argv[4] = pargv[2];
-  callContSave(3, pargv);
-  STGEVAL(pargv[1]);
-  callContRestore(pargv);
-  // restore argv
-  argv[0] = pargv[0];
-  argv[2] = pargv[1];
-  argv[4] = pargv[2];
-  callContSave(3, pargv);
-  STGEVAL(pargv[2]);
-  callContRestore(pargv);
-  // restore argv
-  argv[0] = pargv[0];
-  argv[2] = pargv[1];
-  argv[4] = pargv[2];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
@@ -17088,34 +16542,14 @@ DEFUN2(stgApplyNPPNP, N, f) {
   PtrOrLiteral argv[5];
   popargs(argc, argv);
   const int nps = 3;
-  PtrOrLiteral pargv[3];
+  PtrOrLiteral pargv[4];
   pargv[0] = argv[1];
   pargv[1] = argv[2];
   pargv[2] = argv[4];
+  pargv[3] = f;
   PtrOrLiteral nargv[2];
   nargv[0] = argv[0];
   nargv[1] = argv[3];
-  callContSave(3, pargv);
-  STGEVAL(pargv[0]);
-  callContRestore(pargv);
-  // restore argv
-  argv[1] = pargv[0];
-  argv[2] = pargv[1];
-  argv[4] = pargv[2];
-  callContSave(3, pargv);
-  STGEVAL(pargv[1]);
-  callContRestore(pargv);
-  // restore argv
-  argv[1] = pargv[0];
-  argv[2] = pargv[1];
-  argv[4] = pargv[2];
-  callContSave(3, pargv);
-  STGEVAL(pargv[2]);
-  callContRestore(pargv);
-  // restore argv
-  argv[1] = pargv[0];
-  argv[2] = pargv[1];
-  argv[4] = pargv[2];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
@@ -17490,45 +16924,14 @@ DEFUN2(stgApplyPPPNP, N, f) {
   PtrOrLiteral argv[5];
   popargs(argc, argv);
   const int nps = 4;
-  PtrOrLiteral pargv[4];
+  PtrOrLiteral pargv[5];
   pargv[0] = argv[0];
   pargv[1] = argv[1];
   pargv[2] = argv[2];
   pargv[3] = argv[4];
+  pargv[4] = f;
   PtrOrLiteral nargv[1];
   nargv[0] = argv[3];
-  callContSave(4, pargv);
-  STGEVAL(pargv[0]);
-  callContRestore(pargv);
-  // restore argv
-  argv[0] = pargv[0];
-  argv[1] = pargv[1];
-  argv[2] = pargv[2];
-  argv[4] = pargv[3];
-  callContSave(4, pargv);
-  STGEVAL(pargv[1]);
-  callContRestore(pargv);
-  // restore argv
-  argv[0] = pargv[0];
-  argv[1] = pargv[1];
-  argv[2] = pargv[2];
-  argv[4] = pargv[3];
-  callContSave(4, pargv);
-  STGEVAL(pargv[2]);
-  callContRestore(pargv);
-  // restore argv
-  argv[0] = pargv[0];
-  argv[1] = pargv[1];
-  argv[2] = pargv[2];
-  argv[4] = pargv[3];
-  callContSave(4, pargv);
-  STGEVAL(pargv[3]);
-  callContRestore(pargv);
-  // restore argv
-  argv[0] = pargv[0];
-  argv[1] = pargv[1];
-  argv[2] = pargv[2];
-  argv[4] = pargv[3];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
@@ -17904,25 +17307,14 @@ DEFUN2(stgApplyNNNPP, N, f) {
   PtrOrLiteral argv[5];
   popargs(argc, argv);
   const int nps = 2;
-  PtrOrLiteral pargv[2];
+  PtrOrLiteral pargv[3];
   pargv[0] = argv[3];
   pargv[1] = argv[4];
+  pargv[2] = f;
   PtrOrLiteral nargv[3];
   nargv[0] = argv[0];
   nargv[1] = argv[1];
   nargv[2] = argv[2];
-  callContSave(2, pargv);
-  STGEVAL(pargv[0]);
-  callContRestore(pargv);
-  // restore argv
-  argv[3] = pargv[0];
-  argv[4] = pargv[1];
-  callContSave(2, pargv);
-  STGEVAL(pargv[1]);
-  callContRestore(pargv);
-  // restore argv
-  argv[3] = pargv[0];
-  argv[4] = pargv[1];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
@@ -18296,34 +17688,14 @@ DEFUN2(stgApplyPNNPP, N, f) {
   PtrOrLiteral argv[5];
   popargs(argc, argv);
   const int nps = 3;
-  PtrOrLiteral pargv[3];
+  PtrOrLiteral pargv[4];
   pargv[0] = argv[0];
   pargv[1] = argv[3];
   pargv[2] = argv[4];
+  pargv[3] = f;
   PtrOrLiteral nargv[2];
   nargv[0] = argv[1];
   nargv[1] = argv[2];
-  callContSave(3, pargv);
-  STGEVAL(pargv[0]);
-  callContRestore(pargv);
-  // restore argv
-  argv[0] = pargv[0];
-  argv[3] = pargv[1];
-  argv[4] = pargv[2];
-  callContSave(3, pargv);
-  STGEVAL(pargv[1]);
-  callContRestore(pargv);
-  // restore argv
-  argv[0] = pargv[0];
-  argv[3] = pargv[1];
-  argv[4] = pargv[2];
-  callContSave(3, pargv);
-  STGEVAL(pargv[2]);
-  callContRestore(pargv);
-  // restore argv
-  argv[0] = pargv[0];
-  argv[3] = pargv[1];
-  argv[4] = pargv[2];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
@@ -18698,34 +18070,14 @@ DEFUN2(stgApplyNPNPP, N, f) {
   PtrOrLiteral argv[5];
   popargs(argc, argv);
   const int nps = 3;
-  PtrOrLiteral pargv[3];
+  PtrOrLiteral pargv[4];
   pargv[0] = argv[1];
   pargv[1] = argv[3];
   pargv[2] = argv[4];
+  pargv[3] = f;
   PtrOrLiteral nargv[2];
   nargv[0] = argv[0];
   nargv[1] = argv[2];
-  callContSave(3, pargv);
-  STGEVAL(pargv[0]);
-  callContRestore(pargv);
-  // restore argv
-  argv[1] = pargv[0];
-  argv[3] = pargv[1];
-  argv[4] = pargv[2];
-  callContSave(3, pargv);
-  STGEVAL(pargv[1]);
-  callContRestore(pargv);
-  // restore argv
-  argv[1] = pargv[0];
-  argv[3] = pargv[1];
-  argv[4] = pargv[2];
-  callContSave(3, pargv);
-  STGEVAL(pargv[2]);
-  callContRestore(pargv);
-  // restore argv
-  argv[1] = pargv[0];
-  argv[3] = pargv[1];
-  argv[4] = pargv[2];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
@@ -19102,45 +18454,14 @@ DEFUN2(stgApplyPPNPP, N, f) {
   PtrOrLiteral argv[5];
   popargs(argc, argv);
   const int nps = 4;
-  PtrOrLiteral pargv[4];
+  PtrOrLiteral pargv[5];
   pargv[0] = argv[0];
   pargv[1] = argv[1];
   pargv[2] = argv[3];
   pargv[3] = argv[4];
+  pargv[4] = f;
   PtrOrLiteral nargv[1];
   nargv[0] = argv[2];
-  callContSave(4, pargv);
-  STGEVAL(pargv[0]);
-  callContRestore(pargv);
-  // restore argv
-  argv[0] = pargv[0];
-  argv[1] = pargv[1];
-  argv[3] = pargv[2];
-  argv[4] = pargv[3];
-  callContSave(4, pargv);
-  STGEVAL(pargv[1]);
-  callContRestore(pargv);
-  // restore argv
-  argv[0] = pargv[0];
-  argv[1] = pargv[1];
-  argv[3] = pargv[2];
-  argv[4] = pargv[3];
-  callContSave(4, pargv);
-  STGEVAL(pargv[2]);
-  callContRestore(pargv);
-  // restore argv
-  argv[0] = pargv[0];
-  argv[1] = pargv[1];
-  argv[3] = pargv[2];
-  argv[4] = pargv[3];
-  callContSave(4, pargv);
-  STGEVAL(pargv[3]);
-  callContRestore(pargv);
-  // restore argv
-  argv[0] = pargv[0];
-  argv[1] = pargv[1];
-  argv[3] = pargv[2];
-  argv[4] = pargv[3];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
@@ -19518,34 +18839,14 @@ DEFUN2(stgApplyNNPPP, N, f) {
   PtrOrLiteral argv[5];
   popargs(argc, argv);
   const int nps = 3;
-  PtrOrLiteral pargv[3];
+  PtrOrLiteral pargv[4];
   pargv[0] = argv[2];
   pargv[1] = argv[3];
   pargv[2] = argv[4];
+  pargv[3] = f;
   PtrOrLiteral nargv[2];
   nargv[0] = argv[0];
   nargv[1] = argv[1];
-  callContSave(3, pargv);
-  STGEVAL(pargv[0]);
-  callContRestore(pargv);
-  // restore argv
-  argv[2] = pargv[0];
-  argv[3] = pargv[1];
-  argv[4] = pargv[2];
-  callContSave(3, pargv);
-  STGEVAL(pargv[1]);
-  callContRestore(pargv);
-  // restore argv
-  argv[2] = pargv[0];
-  argv[3] = pargv[1];
-  argv[4] = pargv[2];
-  callContSave(3, pargv);
-  STGEVAL(pargv[2]);
-  callContRestore(pargv);
-  // restore argv
-  argv[2] = pargv[0];
-  argv[3] = pargv[1];
-  argv[4] = pargv[2];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
@@ -19924,45 +19225,14 @@ DEFUN2(stgApplyPNPPP, N, f) {
   PtrOrLiteral argv[5];
   popargs(argc, argv);
   const int nps = 4;
-  PtrOrLiteral pargv[4];
+  PtrOrLiteral pargv[5];
   pargv[0] = argv[0];
   pargv[1] = argv[2];
   pargv[2] = argv[3];
   pargv[3] = argv[4];
+  pargv[4] = f;
   PtrOrLiteral nargv[1];
   nargv[0] = argv[1];
-  callContSave(4, pargv);
-  STGEVAL(pargv[0]);
-  callContRestore(pargv);
-  // restore argv
-  argv[0] = pargv[0];
-  argv[2] = pargv[1];
-  argv[3] = pargv[2];
-  argv[4] = pargv[3];
-  callContSave(4, pargv);
-  STGEVAL(pargv[1]);
-  callContRestore(pargv);
-  // restore argv
-  argv[0] = pargv[0];
-  argv[2] = pargv[1];
-  argv[3] = pargv[2];
-  argv[4] = pargv[3];
-  callContSave(4, pargv);
-  STGEVAL(pargv[2]);
-  callContRestore(pargv);
-  // restore argv
-  argv[0] = pargv[0];
-  argv[2] = pargv[1];
-  argv[3] = pargv[2];
-  argv[4] = pargv[3];
-  callContSave(4, pargv);
-  STGEVAL(pargv[3]);
-  callContRestore(pargv);
-  // restore argv
-  argv[0] = pargv[0];
-  argv[2] = pargv[1];
-  argv[3] = pargv[2];
-  argv[4] = pargv[3];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
@@ -20342,45 +19612,14 @@ DEFUN2(stgApplyNPPPP, N, f) {
   PtrOrLiteral argv[5];
   popargs(argc, argv);
   const int nps = 4;
-  PtrOrLiteral pargv[4];
+  PtrOrLiteral pargv[5];
   pargv[0] = argv[1];
   pargv[1] = argv[2];
   pargv[2] = argv[3];
   pargv[3] = argv[4];
+  pargv[4] = f;
   PtrOrLiteral nargv[1];
   nargv[0] = argv[0];
-  callContSave(4, pargv);
-  STGEVAL(pargv[0]);
-  callContRestore(pargv);
-  // restore argv
-  argv[1] = pargv[0];
-  argv[2] = pargv[1];
-  argv[3] = pargv[2];
-  argv[4] = pargv[3];
-  callContSave(4, pargv);
-  STGEVAL(pargv[1]);
-  callContRestore(pargv);
-  // restore argv
-  argv[1] = pargv[0];
-  argv[2] = pargv[1];
-  argv[3] = pargv[2];
-  argv[4] = pargv[3];
-  callContSave(4, pargv);
-  STGEVAL(pargv[2]);
-  callContRestore(pargv);
-  // restore argv
-  argv[1] = pargv[0];
-  argv[2] = pargv[1];
-  argv[3] = pargv[2];
-  argv[4] = pargv[3];
-  callContSave(4, pargv);
-  STGEVAL(pargv[3]);
-  callContRestore(pargv);
-  // restore argv
-  argv[1] = pargv[0];
-  argv[2] = pargv[1];
-  argv[3] = pargv[2];
-  argv[4] = pargv[3];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
@@ -20762,58 +20001,14 @@ DEFUN2(stgApplyPPPPP, N, f) {
   PtrOrLiteral argv[5];
   popargs(argc, argv);
   const int nps = 5;
-  PtrOrLiteral pargv[5];
+  PtrOrLiteral pargv[6];
   pargv[0] = argv[0];
   pargv[1] = argv[1];
   pargv[2] = argv[2];
   pargv[3] = argv[3];
   pargv[4] = argv[4];
+  pargv[5] = f;
   // no non-pointer args to save
-  callContSave(5, pargv);
-  STGEVAL(pargv[0]);
-  callContRestore(pargv);
-  // restore argv
-  argv[0] = pargv[0];
-  argv[1] = pargv[1];
-  argv[2] = pargv[2];
-  argv[3] = pargv[3];
-  argv[4] = pargv[4];
-  callContSave(5, pargv);
-  STGEVAL(pargv[1]);
-  callContRestore(pargv);
-  // restore argv
-  argv[0] = pargv[0];
-  argv[1] = pargv[1];
-  argv[2] = pargv[2];
-  argv[3] = pargv[3];
-  argv[4] = pargv[4];
-  callContSave(5, pargv);
-  STGEVAL(pargv[2]);
-  callContRestore(pargv);
-  // restore argv
-  argv[0] = pargv[0];
-  argv[1] = pargv[1];
-  argv[2] = pargv[2];
-  argv[3] = pargv[3];
-  argv[4] = pargv[4];
-  callContSave(5, pargv);
-  STGEVAL(pargv[3]);
-  callContRestore(pargv);
-  // restore argv
-  argv[0] = pargv[0];
-  argv[1] = pargv[1];
-  argv[2] = pargv[2];
-  argv[3] = pargv[3];
-  argv[4] = pargv[4];
-  callContSave(5, pargv);
-  STGEVAL(pargv[4]);
-  callContRestore(pargv);
-  // restore argv
-  argv[0] = pargv[0];
-  argv[1] = pargv[1];
-  argv[2] = pargv[2];
-  argv[3] = pargv[3];
-  argv[4] = pargv[4];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
@@ -21196,7 +20391,8 @@ DEFUN2(stgApplyNNNNNN, N, f) {
   PtrOrLiteral argv[6];
   popargs(argc, argv);
   const int nps = 0;
-  // no pointer args to save
+  PtrOrLiteral pargv[1];
+  pargv[0] = f;
   PtrOrLiteral nargv[6];
   nargv[0] = argv[0];
   nargv[1] = argv[1];
@@ -21204,7 +20400,7 @@ DEFUN2(stgApplyNNNNNN, N, f) {
   nargv[3] = argv[3];
   nargv[4] = argv[4];
   nargv[5] = argv[5];
-  
+
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
     // no pointer args to save
@@ -21600,19 +20796,15 @@ DEFUN2(stgApplyPNNNNN, N, f) {
   PtrOrLiteral argv[6];
   popargs(argc, argv);
   const int nps = 1;
-  PtrOrLiteral pargv[1];
+  PtrOrLiteral pargv[2];
   pargv[0] = argv[0];
+  pargv[1] = f;
   PtrOrLiteral nargv[5];
   nargv[0] = argv[1];
   nargv[1] = argv[2];
   nargv[2] = argv[3];
   nargv[3] = argv[4];
   nargv[4] = argv[5];
-  callContSave(1, pargv);
-  STGEVAL(pargv[0]);
-  callContRestore(pargv);
-  // restore argv
-  argv[0] = pargv[0];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
@@ -22011,19 +21203,15 @@ DEFUN2(stgApplyNPNNNN, N, f) {
   PtrOrLiteral argv[6];
   popargs(argc, argv);
   const int nps = 1;
-  PtrOrLiteral pargv[1];
+  PtrOrLiteral pargv[2];
   pargv[0] = argv[1];
+  pargv[1] = f;
   PtrOrLiteral nargv[5];
   nargv[0] = argv[0];
   nargv[1] = argv[2];
   nargv[2] = argv[3];
   nargv[3] = argv[4];
   nargv[4] = argv[5];
-  callContSave(1, pargv);
-  STGEVAL(pargv[0]);
-  callContRestore(pargv);
-  // restore argv
-  argv[1] = pargv[0];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
@@ -22426,26 +21614,15 @@ DEFUN2(stgApplyPPNNNN, N, f) {
   PtrOrLiteral argv[6];
   popargs(argc, argv);
   const int nps = 2;
-  PtrOrLiteral pargv[2];
+  PtrOrLiteral pargv[3];
   pargv[0] = argv[0];
   pargv[1] = argv[1];
+  pargv[2] = f;
   PtrOrLiteral nargv[4];
   nargv[0] = argv[2];
   nargv[1] = argv[3];
   nargv[2] = argv[4];
   nargv[3] = argv[5];
-  callContSave(2, pargv);
-  STGEVAL(pargv[0]);
-  callContRestore(pargv);
-  // restore argv
-  argv[0] = pargv[0];
-  argv[1] = pargv[1];
-  callContSave(2, pargv);
-  STGEVAL(pargv[1]);
-  callContRestore(pargv);
-  // restore argv
-  argv[0] = pargv[0];
-  argv[1] = pargv[1];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
@@ -22849,19 +22026,15 @@ DEFUN2(stgApplyNNPNNN, N, f) {
   PtrOrLiteral argv[6];
   popargs(argc, argv);
   const int nps = 1;
-  PtrOrLiteral pargv[1];
+  PtrOrLiteral pargv[2];
   pargv[0] = argv[2];
+  pargv[1] = f;
   PtrOrLiteral nargv[5];
   nargv[0] = argv[0];
   nargv[1] = argv[1];
   nargv[2] = argv[3];
   nargv[3] = argv[4];
   nargv[4] = argv[5];
-  callContSave(1, pargv);
-  STGEVAL(pargv[0]);
-  callContRestore(pargv);
-  // restore argv
-  argv[2] = pargv[0];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
@@ -23268,26 +22441,15 @@ DEFUN2(stgApplyPNPNNN, N, f) {
   PtrOrLiteral argv[6];
   popargs(argc, argv);
   const int nps = 2;
-  PtrOrLiteral pargv[2];
+  PtrOrLiteral pargv[3];
   pargv[0] = argv[0];
   pargv[1] = argv[2];
+  pargv[2] = f;
   PtrOrLiteral nargv[4];
   nargv[0] = argv[1];
   nargv[1] = argv[3];
   nargv[2] = argv[4];
   nargv[3] = argv[5];
-  callContSave(2, pargv);
-  STGEVAL(pargv[0]);
-  callContRestore(pargv);
-  // restore argv
-  argv[0] = pargv[0];
-  argv[2] = pargv[1];
-  callContSave(2, pargv);
-  STGEVAL(pargv[1]);
-  callContRestore(pargv);
-  // restore argv
-  argv[0] = pargv[0];
-  argv[2] = pargv[1];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
@@ -23695,26 +22857,15 @@ DEFUN2(stgApplyNPPNNN, N, f) {
   PtrOrLiteral argv[6];
   popargs(argc, argv);
   const int nps = 2;
-  PtrOrLiteral pargv[2];
+  PtrOrLiteral pargv[3];
   pargv[0] = argv[1];
   pargv[1] = argv[2];
+  pargv[2] = f;
   PtrOrLiteral nargv[4];
   nargv[0] = argv[0];
   nargv[1] = argv[3];
   nargv[2] = argv[4];
   nargv[3] = argv[5];
-  callContSave(2, pargv);
-  STGEVAL(pargv[0]);
-  callContRestore(pargv);
-  // restore argv
-  argv[1] = pargv[0];
-  argv[2] = pargv[1];
-  callContSave(2, pargv);
-  STGEVAL(pargv[1]);
-  callContRestore(pargv);
-  // restore argv
-  argv[1] = pargv[0];
-  argv[2] = pargv[1];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
@@ -24124,35 +23275,15 @@ DEFUN2(stgApplyPPPNNN, N, f) {
   PtrOrLiteral argv[6];
   popargs(argc, argv);
   const int nps = 3;
-  PtrOrLiteral pargv[3];
+  PtrOrLiteral pargv[4];
   pargv[0] = argv[0];
   pargv[1] = argv[1];
   pargv[2] = argv[2];
+  pargv[3] = f;
   PtrOrLiteral nargv[3];
   nargv[0] = argv[3];
   nargv[1] = argv[4];
   nargv[2] = argv[5];
-  callContSave(3, pargv);
-  STGEVAL(pargv[0]);
-  callContRestore(pargv);
-  // restore argv
-  argv[0] = pargv[0];
-  argv[1] = pargv[1];
-  argv[2] = pargv[2];
-  callContSave(3, pargv);
-  STGEVAL(pargv[1]);
-  callContRestore(pargv);
-  // restore argv
-  argv[0] = pargv[0];
-  argv[1] = pargv[1];
-  argv[2] = pargv[2];
-  callContSave(3, pargv);
-  STGEVAL(pargv[2]);
-  callContRestore(pargv);
-  // restore argv
-  argv[0] = pargv[0];
-  argv[1] = pargv[1];
-  argv[2] = pargv[2];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
@@ -24563,19 +23694,15 @@ DEFUN2(stgApplyNNNPNN, N, f) {
   PtrOrLiteral argv[6];
   popargs(argc, argv);
   const int nps = 1;
-  PtrOrLiteral pargv[1];
+  PtrOrLiteral pargv[2];
   pargv[0] = argv[3];
+  pargv[1] = f;
   PtrOrLiteral nargv[5];
   nargv[0] = argv[0];
   nargv[1] = argv[1];
   nargv[2] = argv[2];
   nargv[3] = argv[4];
   nargv[4] = argv[5];
-  callContSave(1, pargv);
-  STGEVAL(pargv[0]);
-  callContRestore(pargv);
-  // restore argv
-  argv[3] = pargv[0];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
@@ -24986,26 +24113,15 @@ DEFUN2(stgApplyPNNPNN, N, f) {
   PtrOrLiteral argv[6];
   popargs(argc, argv);
   const int nps = 2;
-  PtrOrLiteral pargv[2];
+  PtrOrLiteral pargv[3];
   pargv[0] = argv[0];
   pargv[1] = argv[3];
+  pargv[2] = f;
   PtrOrLiteral nargv[4];
   nargv[0] = argv[1];
   nargv[1] = argv[2];
   nargv[2] = argv[4];
   nargv[3] = argv[5];
-  callContSave(2, pargv);
-  STGEVAL(pargv[0]);
-  callContRestore(pargv);
-  // restore argv
-  argv[0] = pargv[0];
-  argv[3] = pargv[1];
-  callContSave(2, pargv);
-  STGEVAL(pargv[1]);
-  callContRestore(pargv);
-  // restore argv
-  argv[0] = pargv[0];
-  argv[3] = pargv[1];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
@@ -25417,26 +24533,15 @@ DEFUN2(stgApplyNPNPNN, N, f) {
   PtrOrLiteral argv[6];
   popargs(argc, argv);
   const int nps = 2;
-  PtrOrLiteral pargv[2];
+  PtrOrLiteral pargv[3];
   pargv[0] = argv[1];
   pargv[1] = argv[3];
+  pargv[2] = f;
   PtrOrLiteral nargv[4];
   nargv[0] = argv[0];
   nargv[1] = argv[2];
   nargv[2] = argv[4];
   nargv[3] = argv[5];
-  callContSave(2, pargv);
-  STGEVAL(pargv[0]);
-  callContRestore(pargv);
-  // restore argv
-  argv[1] = pargv[0];
-  argv[3] = pargv[1];
-  callContSave(2, pargv);
-  STGEVAL(pargv[1]);
-  callContRestore(pargv);
-  // restore argv
-  argv[1] = pargv[0];
-  argv[3] = pargv[1];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
@@ -25850,35 +24955,15 @@ DEFUN2(stgApplyPPNPNN, N, f) {
   PtrOrLiteral argv[6];
   popargs(argc, argv);
   const int nps = 3;
-  PtrOrLiteral pargv[3];
+  PtrOrLiteral pargv[4];
   pargv[0] = argv[0];
   pargv[1] = argv[1];
   pargv[2] = argv[3];
+  pargv[3] = f;
   PtrOrLiteral nargv[3];
   nargv[0] = argv[2];
   nargv[1] = argv[4];
   nargv[2] = argv[5];
-  callContSave(3, pargv);
-  STGEVAL(pargv[0]);
-  callContRestore(pargv);
-  // restore argv
-  argv[0] = pargv[0];
-  argv[1] = pargv[1];
-  argv[3] = pargv[2];
-  callContSave(3, pargv);
-  STGEVAL(pargv[1]);
-  callContRestore(pargv);
-  // restore argv
-  argv[0] = pargv[0];
-  argv[1] = pargv[1];
-  argv[3] = pargv[2];
-  callContSave(3, pargv);
-  STGEVAL(pargv[2]);
-  callContRestore(pargv);
-  // restore argv
-  argv[0] = pargv[0];
-  argv[1] = pargv[1];
-  argv[3] = pargv[2];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
@@ -26293,26 +25378,15 @@ DEFUN2(stgApplyNNPPNN, N, f) {
   PtrOrLiteral argv[6];
   popargs(argc, argv);
   const int nps = 2;
-  PtrOrLiteral pargv[2];
+  PtrOrLiteral pargv[3];
   pargv[0] = argv[2];
   pargv[1] = argv[3];
+  pargv[2] = f;
   PtrOrLiteral nargv[4];
   nargv[0] = argv[0];
   nargv[1] = argv[1];
   nargv[2] = argv[4];
   nargv[3] = argv[5];
-  callContSave(2, pargv);
-  STGEVAL(pargv[0]);
-  callContRestore(pargv);
-  // restore argv
-  argv[2] = pargv[0];
-  argv[3] = pargv[1];
-  callContSave(2, pargv);
-  STGEVAL(pargv[1]);
-  callContRestore(pargv);
-  // restore argv
-  argv[2] = pargv[0];
-  argv[3] = pargv[1];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
@@ -26728,35 +25802,15 @@ DEFUN2(stgApplyPNPPNN, N, f) {
   PtrOrLiteral argv[6];
   popargs(argc, argv);
   const int nps = 3;
-  PtrOrLiteral pargv[3];
+  PtrOrLiteral pargv[4];
   pargv[0] = argv[0];
   pargv[1] = argv[2];
   pargv[2] = argv[3];
+  pargv[3] = f;
   PtrOrLiteral nargv[3];
   nargv[0] = argv[1];
   nargv[1] = argv[4];
   nargv[2] = argv[5];
-  callContSave(3, pargv);
-  STGEVAL(pargv[0]);
-  callContRestore(pargv);
-  // restore argv
-  argv[0] = pargv[0];
-  argv[2] = pargv[1];
-  argv[3] = pargv[2];
-  callContSave(3, pargv);
-  STGEVAL(pargv[1]);
-  callContRestore(pargv);
-  // restore argv
-  argv[0] = pargv[0];
-  argv[2] = pargv[1];
-  argv[3] = pargv[2];
-  callContSave(3, pargv);
-  STGEVAL(pargv[2]);
-  callContRestore(pargv);
-  // restore argv
-  argv[0] = pargv[0];
-  argv[2] = pargv[1];
-  argv[3] = pargv[2];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
@@ -27173,35 +26227,15 @@ DEFUN2(stgApplyNPPPNN, N, f) {
   PtrOrLiteral argv[6];
   popargs(argc, argv);
   const int nps = 3;
-  PtrOrLiteral pargv[3];
+  PtrOrLiteral pargv[4];
   pargv[0] = argv[1];
   pargv[1] = argv[2];
   pargv[2] = argv[3];
+  pargv[3] = f;
   PtrOrLiteral nargv[3];
   nargv[0] = argv[0];
   nargv[1] = argv[4];
   nargv[2] = argv[5];
-  callContSave(3, pargv);
-  STGEVAL(pargv[0]);
-  callContRestore(pargv);
-  // restore argv
-  argv[1] = pargv[0];
-  argv[2] = pargv[1];
-  argv[3] = pargv[2];
-  callContSave(3, pargv);
-  STGEVAL(pargv[1]);
-  callContRestore(pargv);
-  // restore argv
-  argv[1] = pargv[0];
-  argv[2] = pargv[1];
-  argv[3] = pargv[2];
-  callContSave(3, pargv);
-  STGEVAL(pargv[2]);
-  callContRestore(pargv);
-  // restore argv
-  argv[1] = pargv[0];
-  argv[2] = pargv[1];
-  argv[3] = pargv[2];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
@@ -27620,46 +26654,15 @@ DEFUN2(stgApplyPPPPNN, N, f) {
   PtrOrLiteral argv[6];
   popargs(argc, argv);
   const int nps = 4;
-  PtrOrLiteral pargv[4];
+  PtrOrLiteral pargv[5];
   pargv[0] = argv[0];
   pargv[1] = argv[1];
   pargv[2] = argv[2];
   pargv[3] = argv[3];
+  pargv[4] = f;
   PtrOrLiteral nargv[2];
   nargv[0] = argv[4];
   nargv[1] = argv[5];
-  callContSave(4, pargv);
-  STGEVAL(pargv[0]);
-  callContRestore(pargv);
-  // restore argv
-  argv[0] = pargv[0];
-  argv[1] = pargv[1];
-  argv[2] = pargv[2];
-  argv[3] = pargv[3];
-  callContSave(4, pargv);
-  STGEVAL(pargv[1]);
-  callContRestore(pargv);
-  // restore argv
-  argv[0] = pargv[0];
-  argv[1] = pargv[1];
-  argv[2] = pargv[2];
-  argv[3] = pargv[3];
-  callContSave(4, pargv);
-  STGEVAL(pargv[2]);
-  callContRestore(pargv);
-  // restore argv
-  argv[0] = pargv[0];
-  argv[1] = pargv[1];
-  argv[2] = pargv[2];
-  argv[3] = pargv[3];
-  callContSave(4, pargv);
-  STGEVAL(pargv[3]);
-  callContRestore(pargv);
-  // restore argv
-  argv[0] = pargv[0];
-  argv[1] = pargv[1];
-  argv[2] = pargv[2];
-  argv[3] = pargv[3];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
@@ -28079,19 +27082,15 @@ DEFUN2(stgApplyNNNNPN, N, f) {
   PtrOrLiteral argv[6];
   popargs(argc, argv);
   const int nps = 1;
-  PtrOrLiteral pargv[1];
+  PtrOrLiteral pargv[2];
   pargv[0] = argv[4];
+  pargv[1] = f;
   PtrOrLiteral nargv[5];
   nargv[0] = argv[0];
   nargv[1] = argv[1];
   nargv[2] = argv[2];
   nargv[3] = argv[3];
   nargv[4] = argv[5];
-  callContSave(1, pargv);
-  STGEVAL(pargv[0]);
-  callContRestore(pargv);
-  // restore argv
-  argv[4] = pargv[0];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
@@ -28506,26 +27505,15 @@ DEFUN2(stgApplyPNNNPN, N, f) {
   PtrOrLiteral argv[6];
   popargs(argc, argv);
   const int nps = 2;
-  PtrOrLiteral pargv[2];
+  PtrOrLiteral pargv[3];
   pargv[0] = argv[0];
   pargv[1] = argv[4];
+  pargv[2] = f;
   PtrOrLiteral nargv[4];
   nargv[0] = argv[1];
   nargv[1] = argv[2];
   nargv[2] = argv[3];
   nargv[3] = argv[5];
-  callContSave(2, pargv);
-  STGEVAL(pargv[0]);
-  callContRestore(pargv);
-  // restore argv
-  argv[0] = pargv[0];
-  argv[4] = pargv[1];
-  callContSave(2, pargv);
-  STGEVAL(pargv[1]);
-  callContRestore(pargv);
-  // restore argv
-  argv[0] = pargv[0];
-  argv[4] = pargv[1];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
@@ -28941,26 +27929,15 @@ DEFUN2(stgApplyNPNNPN, N, f) {
   PtrOrLiteral argv[6];
   popargs(argc, argv);
   const int nps = 2;
-  PtrOrLiteral pargv[2];
+  PtrOrLiteral pargv[3];
   pargv[0] = argv[1];
   pargv[1] = argv[4];
+  pargv[2] = f;
   PtrOrLiteral nargv[4];
   nargv[0] = argv[0];
   nargv[1] = argv[2];
   nargv[2] = argv[3];
   nargv[3] = argv[5];
-  callContSave(2, pargv);
-  STGEVAL(pargv[0]);
-  callContRestore(pargv);
-  // restore argv
-  argv[1] = pargv[0];
-  argv[4] = pargv[1];
-  callContSave(2, pargv);
-  STGEVAL(pargv[1]);
-  callContRestore(pargv);
-  // restore argv
-  argv[1] = pargv[0];
-  argv[4] = pargv[1];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
@@ -29378,35 +28355,15 @@ DEFUN2(stgApplyPPNNPN, N, f) {
   PtrOrLiteral argv[6];
   popargs(argc, argv);
   const int nps = 3;
-  PtrOrLiteral pargv[3];
+  PtrOrLiteral pargv[4];
   pargv[0] = argv[0];
   pargv[1] = argv[1];
   pargv[2] = argv[4];
+  pargv[3] = f;
   PtrOrLiteral nargv[3];
   nargv[0] = argv[2];
   nargv[1] = argv[3];
   nargv[2] = argv[5];
-  callContSave(3, pargv);
-  STGEVAL(pargv[0]);
-  callContRestore(pargv);
-  // restore argv
-  argv[0] = pargv[0];
-  argv[1] = pargv[1];
-  argv[4] = pargv[2];
-  callContSave(3, pargv);
-  STGEVAL(pargv[1]);
-  callContRestore(pargv);
-  // restore argv
-  argv[0] = pargv[0];
-  argv[1] = pargv[1];
-  argv[4] = pargv[2];
-  callContSave(3, pargv);
-  STGEVAL(pargv[2]);
-  callContRestore(pargv);
-  // restore argv
-  argv[0] = pargv[0];
-  argv[1] = pargv[1];
-  argv[4] = pargv[2];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
@@ -29825,26 +28782,15 @@ DEFUN2(stgApplyNNPNPN, N, f) {
   PtrOrLiteral argv[6];
   popargs(argc, argv);
   const int nps = 2;
-  PtrOrLiteral pargv[2];
+  PtrOrLiteral pargv[3];
   pargv[0] = argv[2];
   pargv[1] = argv[4];
+  pargv[2] = f;
   PtrOrLiteral nargv[4];
   nargv[0] = argv[0];
   nargv[1] = argv[1];
   nargv[2] = argv[3];
   nargv[3] = argv[5];
-  callContSave(2, pargv);
-  STGEVAL(pargv[0]);
-  callContRestore(pargv);
-  // restore argv
-  argv[2] = pargv[0];
-  argv[4] = pargv[1];
-  callContSave(2, pargv);
-  STGEVAL(pargv[1]);
-  callContRestore(pargv);
-  // restore argv
-  argv[2] = pargv[0];
-  argv[4] = pargv[1];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
@@ -30264,35 +29210,15 @@ DEFUN2(stgApplyPNPNPN, N, f) {
   PtrOrLiteral argv[6];
   popargs(argc, argv);
   const int nps = 3;
-  PtrOrLiteral pargv[3];
+  PtrOrLiteral pargv[4];
   pargv[0] = argv[0];
   pargv[1] = argv[2];
   pargv[2] = argv[4];
+  pargv[3] = f;
   PtrOrLiteral nargv[3];
   nargv[0] = argv[1];
   nargv[1] = argv[3];
   nargv[2] = argv[5];
-  callContSave(3, pargv);
-  STGEVAL(pargv[0]);
-  callContRestore(pargv);
-  // restore argv
-  argv[0] = pargv[0];
-  argv[2] = pargv[1];
-  argv[4] = pargv[2];
-  callContSave(3, pargv);
-  STGEVAL(pargv[1]);
-  callContRestore(pargv);
-  // restore argv
-  argv[0] = pargv[0];
-  argv[2] = pargv[1];
-  argv[4] = pargv[2];
-  callContSave(3, pargv);
-  STGEVAL(pargv[2]);
-  callContRestore(pargv);
-  // restore argv
-  argv[0] = pargv[0];
-  argv[2] = pargv[1];
-  argv[4] = pargv[2];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
@@ -30713,35 +29639,15 @@ DEFUN2(stgApplyNPPNPN, N, f) {
   PtrOrLiteral argv[6];
   popargs(argc, argv);
   const int nps = 3;
-  PtrOrLiteral pargv[3];
+  PtrOrLiteral pargv[4];
   pargv[0] = argv[1];
   pargv[1] = argv[2];
   pargv[2] = argv[4];
+  pargv[3] = f;
   PtrOrLiteral nargv[3];
   nargv[0] = argv[0];
   nargv[1] = argv[3];
   nargv[2] = argv[5];
-  callContSave(3, pargv);
-  STGEVAL(pargv[0]);
-  callContRestore(pargv);
-  // restore argv
-  argv[1] = pargv[0];
-  argv[2] = pargv[1];
-  argv[4] = pargv[2];
-  callContSave(3, pargv);
-  STGEVAL(pargv[1]);
-  callContRestore(pargv);
-  // restore argv
-  argv[1] = pargv[0];
-  argv[2] = pargv[1];
-  argv[4] = pargv[2];
-  callContSave(3, pargv);
-  STGEVAL(pargv[2]);
-  callContRestore(pargv);
-  // restore argv
-  argv[1] = pargv[0];
-  argv[2] = pargv[1];
-  argv[4] = pargv[2];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
@@ -31164,46 +30070,15 @@ DEFUN2(stgApplyPPPNPN, N, f) {
   PtrOrLiteral argv[6];
   popargs(argc, argv);
   const int nps = 4;
-  PtrOrLiteral pargv[4];
+  PtrOrLiteral pargv[5];
   pargv[0] = argv[0];
   pargv[1] = argv[1];
   pargv[2] = argv[2];
   pargv[3] = argv[4];
+  pargv[4] = f;
   PtrOrLiteral nargv[2];
   nargv[0] = argv[3];
   nargv[1] = argv[5];
-  callContSave(4, pargv);
-  STGEVAL(pargv[0]);
-  callContRestore(pargv);
-  // restore argv
-  argv[0] = pargv[0];
-  argv[1] = pargv[1];
-  argv[2] = pargv[2];
-  argv[4] = pargv[3];
-  callContSave(4, pargv);
-  STGEVAL(pargv[1]);
-  callContRestore(pargv);
-  // restore argv
-  argv[0] = pargv[0];
-  argv[1] = pargv[1];
-  argv[2] = pargv[2];
-  argv[4] = pargv[3];
-  callContSave(4, pargv);
-  STGEVAL(pargv[2]);
-  callContRestore(pargv);
-  // restore argv
-  argv[0] = pargv[0];
-  argv[1] = pargv[1];
-  argv[2] = pargv[2];
-  argv[4] = pargv[3];
-  callContSave(4, pargv);
-  STGEVAL(pargv[3]);
-  callContRestore(pargv);
-  // restore argv
-  argv[0] = pargv[0];
-  argv[1] = pargv[1];
-  argv[2] = pargv[2];
-  argv[4] = pargv[3];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
@@ -31627,26 +30502,15 @@ DEFUN2(stgApplyNNNPPN, N, f) {
   PtrOrLiteral argv[6];
   popargs(argc, argv);
   const int nps = 2;
-  PtrOrLiteral pargv[2];
+  PtrOrLiteral pargv[3];
   pargv[0] = argv[3];
   pargv[1] = argv[4];
+  pargv[2] = f;
   PtrOrLiteral nargv[4];
   nargv[0] = argv[0];
   nargv[1] = argv[1];
   nargv[2] = argv[2];
   nargv[3] = argv[5];
-  callContSave(2, pargv);
-  STGEVAL(pargv[0]);
-  callContRestore(pargv);
-  // restore argv
-  argv[3] = pargv[0];
-  argv[4] = pargv[1];
-  callContSave(2, pargv);
-  STGEVAL(pargv[1]);
-  callContRestore(pargv);
-  // restore argv
-  argv[3] = pargv[0];
-  argv[4] = pargv[1];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
@@ -32068,35 +30932,15 @@ DEFUN2(stgApplyPNNPPN, N, f) {
   PtrOrLiteral argv[6];
   popargs(argc, argv);
   const int nps = 3;
-  PtrOrLiteral pargv[3];
+  PtrOrLiteral pargv[4];
   pargv[0] = argv[0];
   pargv[1] = argv[3];
   pargv[2] = argv[4];
+  pargv[3] = f;
   PtrOrLiteral nargv[3];
   nargv[0] = argv[1];
   nargv[1] = argv[2];
   nargv[2] = argv[5];
-  callContSave(3, pargv);
-  STGEVAL(pargv[0]);
-  callContRestore(pargv);
-  // restore argv
-  argv[0] = pargv[0];
-  argv[3] = pargv[1];
-  argv[4] = pargv[2];
-  callContSave(3, pargv);
-  STGEVAL(pargv[1]);
-  callContRestore(pargv);
-  // restore argv
-  argv[0] = pargv[0];
-  argv[3] = pargv[1];
-  argv[4] = pargv[2];
-  callContSave(3, pargv);
-  STGEVAL(pargv[2]);
-  callContRestore(pargv);
-  // restore argv
-  argv[0] = pargv[0];
-  argv[3] = pargv[1];
-  argv[4] = pargv[2];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
@@ -32519,35 +31363,15 @@ DEFUN2(stgApplyNPNPPN, N, f) {
   PtrOrLiteral argv[6];
   popargs(argc, argv);
   const int nps = 3;
-  PtrOrLiteral pargv[3];
+  PtrOrLiteral pargv[4];
   pargv[0] = argv[1];
   pargv[1] = argv[3];
   pargv[2] = argv[4];
+  pargv[3] = f;
   PtrOrLiteral nargv[3];
   nargv[0] = argv[0];
   nargv[1] = argv[2];
   nargv[2] = argv[5];
-  callContSave(3, pargv);
-  STGEVAL(pargv[0]);
-  callContRestore(pargv);
-  // restore argv
-  argv[1] = pargv[0];
-  argv[3] = pargv[1];
-  argv[4] = pargv[2];
-  callContSave(3, pargv);
-  STGEVAL(pargv[1]);
-  callContRestore(pargv);
-  // restore argv
-  argv[1] = pargv[0];
-  argv[3] = pargv[1];
-  argv[4] = pargv[2];
-  callContSave(3, pargv);
-  STGEVAL(pargv[2]);
-  callContRestore(pargv);
-  // restore argv
-  argv[1] = pargv[0];
-  argv[3] = pargv[1];
-  argv[4] = pargv[2];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
@@ -32972,46 +31796,15 @@ DEFUN2(stgApplyPPNPPN, N, f) {
   PtrOrLiteral argv[6];
   popargs(argc, argv);
   const int nps = 4;
-  PtrOrLiteral pargv[4];
+  PtrOrLiteral pargv[5];
   pargv[0] = argv[0];
   pargv[1] = argv[1];
   pargv[2] = argv[3];
   pargv[3] = argv[4];
+  pargv[4] = f;
   PtrOrLiteral nargv[2];
   nargv[0] = argv[2];
   nargv[1] = argv[5];
-  callContSave(4, pargv);
-  STGEVAL(pargv[0]);
-  callContRestore(pargv);
-  // restore argv
-  argv[0] = pargv[0];
-  argv[1] = pargv[1];
-  argv[3] = pargv[2];
-  argv[4] = pargv[3];
-  callContSave(4, pargv);
-  STGEVAL(pargv[1]);
-  callContRestore(pargv);
-  // restore argv
-  argv[0] = pargv[0];
-  argv[1] = pargv[1];
-  argv[3] = pargv[2];
-  argv[4] = pargv[3];
-  callContSave(4, pargv);
-  STGEVAL(pargv[2]);
-  callContRestore(pargv);
-  // restore argv
-  argv[0] = pargv[0];
-  argv[1] = pargv[1];
-  argv[3] = pargv[2];
-  argv[4] = pargv[3];
-  callContSave(4, pargv);
-  STGEVAL(pargv[3]);
-  callContRestore(pargv);
-  // restore argv
-  argv[0] = pargv[0];
-  argv[1] = pargv[1];
-  argv[3] = pargv[2];
-  argv[4] = pargv[3];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
@@ -33437,35 +32230,15 @@ DEFUN2(stgApplyNNPPPN, N, f) {
   PtrOrLiteral argv[6];
   popargs(argc, argv);
   const int nps = 3;
-  PtrOrLiteral pargv[3];
+  PtrOrLiteral pargv[4];
   pargv[0] = argv[2];
   pargv[1] = argv[3];
   pargv[2] = argv[4];
+  pargv[3] = f;
   PtrOrLiteral nargv[3];
   nargv[0] = argv[0];
   nargv[1] = argv[1];
   nargv[2] = argv[5];
-  callContSave(3, pargv);
-  STGEVAL(pargv[0]);
-  callContRestore(pargv);
-  // restore argv
-  argv[2] = pargv[0];
-  argv[3] = pargv[1];
-  argv[4] = pargv[2];
-  callContSave(3, pargv);
-  STGEVAL(pargv[1]);
-  callContRestore(pargv);
-  // restore argv
-  argv[2] = pargv[0];
-  argv[3] = pargv[1];
-  argv[4] = pargv[2];
-  callContSave(3, pargv);
-  STGEVAL(pargv[2]);
-  callContRestore(pargv);
-  // restore argv
-  argv[2] = pargv[0];
-  argv[3] = pargv[1];
-  argv[4] = pargv[2];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
@@ -33892,46 +32665,15 @@ DEFUN2(stgApplyPNPPPN, N, f) {
   PtrOrLiteral argv[6];
   popargs(argc, argv);
   const int nps = 4;
-  PtrOrLiteral pargv[4];
+  PtrOrLiteral pargv[5];
   pargv[0] = argv[0];
   pargv[1] = argv[2];
   pargv[2] = argv[3];
   pargv[3] = argv[4];
+  pargv[4] = f;
   PtrOrLiteral nargv[2];
   nargv[0] = argv[1];
   nargv[1] = argv[5];
-  callContSave(4, pargv);
-  STGEVAL(pargv[0]);
-  callContRestore(pargv);
-  // restore argv
-  argv[0] = pargv[0];
-  argv[2] = pargv[1];
-  argv[3] = pargv[2];
-  argv[4] = pargv[3];
-  callContSave(4, pargv);
-  STGEVAL(pargv[1]);
-  callContRestore(pargv);
-  // restore argv
-  argv[0] = pargv[0];
-  argv[2] = pargv[1];
-  argv[3] = pargv[2];
-  argv[4] = pargv[3];
-  callContSave(4, pargv);
-  STGEVAL(pargv[2]);
-  callContRestore(pargv);
-  // restore argv
-  argv[0] = pargv[0];
-  argv[2] = pargv[1];
-  argv[3] = pargv[2];
-  argv[4] = pargv[3];
-  callContSave(4, pargv);
-  STGEVAL(pargv[3]);
-  callContRestore(pargv);
-  // restore argv
-  argv[0] = pargv[0];
-  argv[2] = pargv[1];
-  argv[3] = pargv[2];
-  argv[4] = pargv[3];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
@@ -34359,46 +33101,15 @@ DEFUN2(stgApplyNPPPPN, N, f) {
   PtrOrLiteral argv[6];
   popargs(argc, argv);
   const int nps = 4;
-  PtrOrLiteral pargv[4];
+  PtrOrLiteral pargv[5];
   pargv[0] = argv[1];
   pargv[1] = argv[2];
   pargv[2] = argv[3];
   pargv[3] = argv[4];
+  pargv[4] = f;
   PtrOrLiteral nargv[2];
   nargv[0] = argv[0];
   nargv[1] = argv[5];
-  callContSave(4, pargv);
-  STGEVAL(pargv[0]);
-  callContRestore(pargv);
-  // restore argv
-  argv[1] = pargv[0];
-  argv[2] = pargv[1];
-  argv[3] = pargv[2];
-  argv[4] = pargv[3];
-  callContSave(4, pargv);
-  STGEVAL(pargv[1]);
-  callContRestore(pargv);
-  // restore argv
-  argv[1] = pargv[0];
-  argv[2] = pargv[1];
-  argv[3] = pargv[2];
-  argv[4] = pargv[3];
-  callContSave(4, pargv);
-  STGEVAL(pargv[2]);
-  callContRestore(pargv);
-  // restore argv
-  argv[1] = pargv[0];
-  argv[2] = pargv[1];
-  argv[3] = pargv[2];
-  argv[4] = pargv[3];
-  callContSave(4, pargv);
-  STGEVAL(pargv[3]);
-  callContRestore(pargv);
-  // restore argv
-  argv[1] = pargv[0];
-  argv[2] = pargv[1];
-  argv[3] = pargv[2];
-  argv[4] = pargv[3];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
@@ -34828,59 +33539,15 @@ DEFUN2(stgApplyPPPPPN, N, f) {
   PtrOrLiteral argv[6];
   popargs(argc, argv);
   const int nps = 5;
-  PtrOrLiteral pargv[5];
+  PtrOrLiteral pargv[6];
   pargv[0] = argv[0];
   pargv[1] = argv[1];
   pargv[2] = argv[2];
   pargv[3] = argv[3];
   pargv[4] = argv[4];
+  pargv[5] = f;
   PtrOrLiteral nargv[1];
   nargv[0] = argv[5];
-  callContSave(5, pargv);
-  STGEVAL(pargv[0]);
-  callContRestore(pargv);
-  // restore argv
-  argv[0] = pargv[0];
-  argv[1] = pargv[1];
-  argv[2] = pargv[2];
-  argv[3] = pargv[3];
-  argv[4] = pargv[4];
-  callContSave(5, pargv);
-  STGEVAL(pargv[1]);
-  callContRestore(pargv);
-  // restore argv
-  argv[0] = pargv[0];
-  argv[1] = pargv[1];
-  argv[2] = pargv[2];
-  argv[3] = pargv[3];
-  argv[4] = pargv[4];
-  callContSave(5, pargv);
-  STGEVAL(pargv[2]);
-  callContRestore(pargv);
-  // restore argv
-  argv[0] = pargv[0];
-  argv[1] = pargv[1];
-  argv[2] = pargv[2];
-  argv[3] = pargv[3];
-  argv[4] = pargv[4];
-  callContSave(5, pargv);
-  STGEVAL(pargv[3]);
-  callContRestore(pargv);
-  // restore argv
-  argv[0] = pargv[0];
-  argv[1] = pargv[1];
-  argv[2] = pargv[2];
-  argv[3] = pargv[3];
-  argv[4] = pargv[4];
-  callContSave(5, pargv);
-  STGEVAL(pargv[4]);
-  callContRestore(pargv);
-  // restore argv
-  argv[0] = pargv[0];
-  argv[1] = pargv[1];
-  argv[2] = pargv[2];
-  argv[3] = pargv[3];
-  argv[4] = pargv[4];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
@@ -35311,19 +33978,15 @@ DEFUN2(stgApplyNNNNNP, N, f) {
   PtrOrLiteral argv[6];
   popargs(argc, argv);
   const int nps = 1;
-  PtrOrLiteral pargv[1];
+  PtrOrLiteral pargv[2];
   pargv[0] = argv[5];
+  pargv[1] = f;
   PtrOrLiteral nargv[5];
   nargv[0] = argv[0];
   nargv[1] = argv[1];
   nargv[2] = argv[2];
   nargv[3] = argv[3];
   nargv[4] = argv[4];
-  callContSave(1, pargv);
-  STGEVAL(pargv[0]);
-  callContRestore(pargv);
-  // restore argv
-  argv[5] = pargv[0];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
@@ -35742,26 +34405,15 @@ DEFUN2(stgApplyPNNNNP, N, f) {
   PtrOrLiteral argv[6];
   popargs(argc, argv);
   const int nps = 2;
-  PtrOrLiteral pargv[2];
+  PtrOrLiteral pargv[3];
   pargv[0] = argv[0];
   pargv[1] = argv[5];
+  pargv[2] = f;
   PtrOrLiteral nargv[4];
   nargv[0] = argv[1];
   nargv[1] = argv[2];
   nargv[2] = argv[3];
   nargv[3] = argv[4];
-  callContSave(2, pargv);
-  STGEVAL(pargv[0]);
-  callContRestore(pargv);
-  // restore argv
-  argv[0] = pargv[0];
-  argv[5] = pargv[1];
-  callContSave(2, pargv);
-  STGEVAL(pargv[1]);
-  callContRestore(pargv);
-  // restore argv
-  argv[0] = pargv[0];
-  argv[5] = pargv[1];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
@@ -36181,26 +34833,15 @@ DEFUN2(stgApplyNPNNNP, N, f) {
   PtrOrLiteral argv[6];
   popargs(argc, argv);
   const int nps = 2;
-  PtrOrLiteral pargv[2];
+  PtrOrLiteral pargv[3];
   pargv[0] = argv[1];
   pargv[1] = argv[5];
+  pargv[2] = f;
   PtrOrLiteral nargv[4];
   nargv[0] = argv[0];
   nargv[1] = argv[2];
   nargv[2] = argv[3];
   nargv[3] = argv[4];
-  callContSave(2, pargv);
-  STGEVAL(pargv[0]);
-  callContRestore(pargv);
-  // restore argv
-  argv[1] = pargv[0];
-  argv[5] = pargv[1];
-  callContSave(2, pargv);
-  STGEVAL(pargv[1]);
-  callContRestore(pargv);
-  // restore argv
-  argv[1] = pargv[0];
-  argv[5] = pargv[1];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
@@ -36622,35 +35263,15 @@ DEFUN2(stgApplyPPNNNP, N, f) {
   PtrOrLiteral argv[6];
   popargs(argc, argv);
   const int nps = 3;
-  PtrOrLiteral pargv[3];
+  PtrOrLiteral pargv[4];
   pargv[0] = argv[0];
   pargv[1] = argv[1];
   pargv[2] = argv[5];
+  pargv[3] = f;
   PtrOrLiteral nargv[3];
   nargv[0] = argv[2];
   nargv[1] = argv[3];
   nargv[2] = argv[4];
-  callContSave(3, pargv);
-  STGEVAL(pargv[0]);
-  callContRestore(pargv);
-  // restore argv
-  argv[0] = pargv[0];
-  argv[1] = pargv[1];
-  argv[5] = pargv[2];
-  callContSave(3, pargv);
-  STGEVAL(pargv[1]);
-  callContRestore(pargv);
-  // restore argv
-  argv[0] = pargv[0];
-  argv[1] = pargv[1];
-  argv[5] = pargv[2];
-  callContSave(3, pargv);
-  STGEVAL(pargv[2]);
-  callContRestore(pargv);
-  // restore argv
-  argv[0] = pargv[0];
-  argv[1] = pargv[1];
-  argv[5] = pargv[2];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
@@ -37073,26 +35694,15 @@ DEFUN2(stgApplyNNPNNP, N, f) {
   PtrOrLiteral argv[6];
   popargs(argc, argv);
   const int nps = 2;
-  PtrOrLiteral pargv[2];
+  PtrOrLiteral pargv[3];
   pargv[0] = argv[2];
   pargv[1] = argv[5];
+  pargv[2] = f;
   PtrOrLiteral nargv[4];
   nargv[0] = argv[0];
   nargv[1] = argv[1];
   nargv[2] = argv[3];
   nargv[3] = argv[4];
-  callContSave(2, pargv);
-  STGEVAL(pargv[0]);
-  callContRestore(pargv);
-  // restore argv
-  argv[2] = pargv[0];
-  argv[5] = pargv[1];
-  callContSave(2, pargv);
-  STGEVAL(pargv[1]);
-  callContRestore(pargv);
-  // restore argv
-  argv[2] = pargv[0];
-  argv[5] = pargv[1];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
@@ -37516,35 +36126,15 @@ DEFUN2(stgApplyPNPNNP, N, f) {
   PtrOrLiteral argv[6];
   popargs(argc, argv);
   const int nps = 3;
-  PtrOrLiteral pargv[3];
+  PtrOrLiteral pargv[4];
   pargv[0] = argv[0];
   pargv[1] = argv[2];
   pargv[2] = argv[5];
+  pargv[3] = f;
   PtrOrLiteral nargv[3];
   nargv[0] = argv[1];
   nargv[1] = argv[3];
   nargv[2] = argv[4];
-  callContSave(3, pargv);
-  STGEVAL(pargv[0]);
-  callContRestore(pargv);
-  // restore argv
-  argv[0] = pargv[0];
-  argv[2] = pargv[1];
-  argv[5] = pargv[2];
-  callContSave(3, pargv);
-  STGEVAL(pargv[1]);
-  callContRestore(pargv);
-  // restore argv
-  argv[0] = pargv[0];
-  argv[2] = pargv[1];
-  argv[5] = pargv[2];
-  callContSave(3, pargv);
-  STGEVAL(pargv[2]);
-  callContRestore(pargv);
-  // restore argv
-  argv[0] = pargv[0];
-  argv[2] = pargv[1];
-  argv[5] = pargv[2];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
@@ -37969,35 +36559,15 @@ DEFUN2(stgApplyNPPNNP, N, f) {
   PtrOrLiteral argv[6];
   popargs(argc, argv);
   const int nps = 3;
-  PtrOrLiteral pargv[3];
+  PtrOrLiteral pargv[4];
   pargv[0] = argv[1];
   pargv[1] = argv[2];
   pargv[2] = argv[5];
+  pargv[3] = f;
   PtrOrLiteral nargv[3];
   nargv[0] = argv[0];
   nargv[1] = argv[3];
   nargv[2] = argv[4];
-  callContSave(3, pargv);
-  STGEVAL(pargv[0]);
-  callContRestore(pargv);
-  // restore argv
-  argv[1] = pargv[0];
-  argv[2] = pargv[1];
-  argv[5] = pargv[2];
-  callContSave(3, pargv);
-  STGEVAL(pargv[1]);
-  callContRestore(pargv);
-  // restore argv
-  argv[1] = pargv[0];
-  argv[2] = pargv[1];
-  argv[5] = pargv[2];
-  callContSave(3, pargv);
-  STGEVAL(pargv[2]);
-  callContRestore(pargv);
-  // restore argv
-  argv[1] = pargv[0];
-  argv[2] = pargv[1];
-  argv[5] = pargv[2];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
@@ -38424,46 +36994,15 @@ DEFUN2(stgApplyPPPNNP, N, f) {
   PtrOrLiteral argv[6];
   popargs(argc, argv);
   const int nps = 4;
-  PtrOrLiteral pargv[4];
+  PtrOrLiteral pargv[5];
   pargv[0] = argv[0];
   pargv[1] = argv[1];
   pargv[2] = argv[2];
   pargv[3] = argv[5];
+  pargv[4] = f;
   PtrOrLiteral nargv[2];
   nargv[0] = argv[3];
   nargv[1] = argv[4];
-  callContSave(4, pargv);
-  STGEVAL(pargv[0]);
-  callContRestore(pargv);
-  // restore argv
-  argv[0] = pargv[0];
-  argv[1] = pargv[1];
-  argv[2] = pargv[2];
-  argv[5] = pargv[3];
-  callContSave(4, pargv);
-  STGEVAL(pargv[1]);
-  callContRestore(pargv);
-  // restore argv
-  argv[0] = pargv[0];
-  argv[1] = pargv[1];
-  argv[2] = pargv[2];
-  argv[5] = pargv[3];
-  callContSave(4, pargv);
-  STGEVAL(pargv[2]);
-  callContRestore(pargv);
-  // restore argv
-  argv[0] = pargv[0];
-  argv[1] = pargv[1];
-  argv[2] = pargv[2];
-  argv[5] = pargv[3];
-  callContSave(4, pargv);
-  STGEVAL(pargv[3]);
-  callContRestore(pargv);
-  // restore argv
-  argv[0] = pargv[0];
-  argv[1] = pargv[1];
-  argv[2] = pargv[2];
-  argv[5] = pargv[3];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
@@ -38891,26 +37430,15 @@ DEFUN2(stgApplyNNNPNP, N, f) {
   PtrOrLiteral argv[6];
   popargs(argc, argv);
   const int nps = 2;
-  PtrOrLiteral pargv[2];
+  PtrOrLiteral pargv[3];
   pargv[0] = argv[3];
   pargv[1] = argv[5];
+  pargv[2] = f;
   PtrOrLiteral nargv[4];
   nargv[0] = argv[0];
   nargv[1] = argv[1];
   nargv[2] = argv[2];
   nargv[3] = argv[4];
-  callContSave(2, pargv);
-  STGEVAL(pargv[0]);
-  callContRestore(pargv);
-  // restore argv
-  argv[3] = pargv[0];
-  argv[5] = pargv[1];
-  callContSave(2, pargv);
-  STGEVAL(pargv[1]);
-  callContRestore(pargv);
-  // restore argv
-  argv[3] = pargv[0];
-  argv[5] = pargv[1];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
@@ -39336,35 +37864,15 @@ DEFUN2(stgApplyPNNPNP, N, f) {
   PtrOrLiteral argv[6];
   popargs(argc, argv);
   const int nps = 3;
-  PtrOrLiteral pargv[3];
+  PtrOrLiteral pargv[4];
   pargv[0] = argv[0];
   pargv[1] = argv[3];
   pargv[2] = argv[5];
+  pargv[3] = f;
   PtrOrLiteral nargv[3];
   nargv[0] = argv[1];
   nargv[1] = argv[2];
   nargv[2] = argv[4];
-  callContSave(3, pargv);
-  STGEVAL(pargv[0]);
-  callContRestore(pargv);
-  // restore argv
-  argv[0] = pargv[0];
-  argv[3] = pargv[1];
-  argv[5] = pargv[2];
-  callContSave(3, pargv);
-  STGEVAL(pargv[1]);
-  callContRestore(pargv);
-  // restore argv
-  argv[0] = pargv[0];
-  argv[3] = pargv[1];
-  argv[5] = pargv[2];
-  callContSave(3, pargv);
-  STGEVAL(pargv[2]);
-  callContRestore(pargv);
-  // restore argv
-  argv[0] = pargv[0];
-  argv[3] = pargv[1];
-  argv[5] = pargv[2];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
@@ -39791,35 +38299,15 @@ DEFUN2(stgApplyNPNPNP, N, f) {
   PtrOrLiteral argv[6];
   popargs(argc, argv);
   const int nps = 3;
-  PtrOrLiteral pargv[3];
+  PtrOrLiteral pargv[4];
   pargv[0] = argv[1];
   pargv[1] = argv[3];
   pargv[2] = argv[5];
+  pargv[3] = f;
   PtrOrLiteral nargv[3];
   nargv[0] = argv[0];
   nargv[1] = argv[2];
   nargv[2] = argv[4];
-  callContSave(3, pargv);
-  STGEVAL(pargv[0]);
-  callContRestore(pargv);
-  // restore argv
-  argv[1] = pargv[0];
-  argv[3] = pargv[1];
-  argv[5] = pargv[2];
-  callContSave(3, pargv);
-  STGEVAL(pargv[1]);
-  callContRestore(pargv);
-  // restore argv
-  argv[1] = pargv[0];
-  argv[3] = pargv[1];
-  argv[5] = pargv[2];
-  callContSave(3, pargv);
-  STGEVAL(pargv[2]);
-  callContRestore(pargv);
-  // restore argv
-  argv[1] = pargv[0];
-  argv[3] = pargv[1];
-  argv[5] = pargv[2];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
@@ -40248,46 +38736,15 @@ DEFUN2(stgApplyPPNPNP, N, f) {
   PtrOrLiteral argv[6];
   popargs(argc, argv);
   const int nps = 4;
-  PtrOrLiteral pargv[4];
+  PtrOrLiteral pargv[5];
   pargv[0] = argv[0];
   pargv[1] = argv[1];
   pargv[2] = argv[3];
   pargv[3] = argv[5];
+  pargv[4] = f;
   PtrOrLiteral nargv[2];
   nargv[0] = argv[2];
   nargv[1] = argv[4];
-  callContSave(4, pargv);
-  STGEVAL(pargv[0]);
-  callContRestore(pargv);
-  // restore argv
-  argv[0] = pargv[0];
-  argv[1] = pargv[1];
-  argv[3] = pargv[2];
-  argv[5] = pargv[3];
-  callContSave(4, pargv);
-  STGEVAL(pargv[1]);
-  callContRestore(pargv);
-  // restore argv
-  argv[0] = pargv[0];
-  argv[1] = pargv[1];
-  argv[3] = pargv[2];
-  argv[5] = pargv[3];
-  callContSave(4, pargv);
-  STGEVAL(pargv[2]);
-  callContRestore(pargv);
-  // restore argv
-  argv[0] = pargv[0];
-  argv[1] = pargv[1];
-  argv[3] = pargv[2];
-  argv[5] = pargv[3];
-  callContSave(4, pargv);
-  STGEVAL(pargv[3]);
-  callContRestore(pargv);
-  // restore argv
-  argv[0] = pargv[0];
-  argv[1] = pargv[1];
-  argv[3] = pargv[2];
-  argv[5] = pargv[3];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
@@ -40717,35 +39174,15 @@ DEFUN2(stgApplyNNPPNP, N, f) {
   PtrOrLiteral argv[6];
   popargs(argc, argv);
   const int nps = 3;
-  PtrOrLiteral pargv[3];
+  PtrOrLiteral pargv[4];
   pargv[0] = argv[2];
   pargv[1] = argv[3];
   pargv[2] = argv[5];
+  pargv[3] = f;
   PtrOrLiteral nargv[3];
   nargv[0] = argv[0];
   nargv[1] = argv[1];
   nargv[2] = argv[4];
-  callContSave(3, pargv);
-  STGEVAL(pargv[0]);
-  callContRestore(pargv);
-  // restore argv
-  argv[2] = pargv[0];
-  argv[3] = pargv[1];
-  argv[5] = pargv[2];
-  callContSave(3, pargv);
-  STGEVAL(pargv[1]);
-  callContRestore(pargv);
-  // restore argv
-  argv[2] = pargv[0];
-  argv[3] = pargv[1];
-  argv[5] = pargv[2];
-  callContSave(3, pargv);
-  STGEVAL(pargv[2]);
-  callContRestore(pargv);
-  // restore argv
-  argv[2] = pargv[0];
-  argv[3] = pargv[1];
-  argv[5] = pargv[2];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
@@ -41176,46 +39613,15 @@ DEFUN2(stgApplyPNPPNP, N, f) {
   PtrOrLiteral argv[6];
   popargs(argc, argv);
   const int nps = 4;
-  PtrOrLiteral pargv[4];
+  PtrOrLiteral pargv[5];
   pargv[0] = argv[0];
   pargv[1] = argv[2];
   pargv[2] = argv[3];
   pargv[3] = argv[5];
+  pargv[4] = f;
   PtrOrLiteral nargv[2];
   nargv[0] = argv[1];
   nargv[1] = argv[4];
-  callContSave(4, pargv);
-  STGEVAL(pargv[0]);
-  callContRestore(pargv);
-  // restore argv
-  argv[0] = pargv[0];
-  argv[2] = pargv[1];
-  argv[3] = pargv[2];
-  argv[5] = pargv[3];
-  callContSave(4, pargv);
-  STGEVAL(pargv[1]);
-  callContRestore(pargv);
-  // restore argv
-  argv[0] = pargv[0];
-  argv[2] = pargv[1];
-  argv[3] = pargv[2];
-  argv[5] = pargv[3];
-  callContSave(4, pargv);
-  STGEVAL(pargv[2]);
-  callContRestore(pargv);
-  // restore argv
-  argv[0] = pargv[0];
-  argv[2] = pargv[1];
-  argv[3] = pargv[2];
-  argv[5] = pargv[3];
-  callContSave(4, pargv);
-  STGEVAL(pargv[3]);
-  callContRestore(pargv);
-  // restore argv
-  argv[0] = pargv[0];
-  argv[2] = pargv[1];
-  argv[3] = pargv[2];
-  argv[5] = pargv[3];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
@@ -41647,46 +40053,15 @@ DEFUN2(stgApplyNPPPNP, N, f) {
   PtrOrLiteral argv[6];
   popargs(argc, argv);
   const int nps = 4;
-  PtrOrLiteral pargv[4];
+  PtrOrLiteral pargv[5];
   pargv[0] = argv[1];
   pargv[1] = argv[2];
   pargv[2] = argv[3];
   pargv[3] = argv[5];
+  pargv[4] = f;
   PtrOrLiteral nargv[2];
   nargv[0] = argv[0];
   nargv[1] = argv[4];
-  callContSave(4, pargv);
-  STGEVAL(pargv[0]);
-  callContRestore(pargv);
-  // restore argv
-  argv[1] = pargv[0];
-  argv[2] = pargv[1];
-  argv[3] = pargv[2];
-  argv[5] = pargv[3];
-  callContSave(4, pargv);
-  STGEVAL(pargv[1]);
-  callContRestore(pargv);
-  // restore argv
-  argv[1] = pargv[0];
-  argv[2] = pargv[1];
-  argv[3] = pargv[2];
-  argv[5] = pargv[3];
-  callContSave(4, pargv);
-  STGEVAL(pargv[2]);
-  callContRestore(pargv);
-  // restore argv
-  argv[1] = pargv[0];
-  argv[2] = pargv[1];
-  argv[3] = pargv[2];
-  argv[5] = pargv[3];
-  callContSave(4, pargv);
-  STGEVAL(pargv[3]);
-  callContRestore(pargv);
-  // restore argv
-  argv[1] = pargv[0];
-  argv[2] = pargv[1];
-  argv[3] = pargv[2];
-  argv[5] = pargv[3];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
@@ -42120,59 +40495,15 @@ DEFUN2(stgApplyPPPPNP, N, f) {
   PtrOrLiteral argv[6];
   popargs(argc, argv);
   const int nps = 5;
-  PtrOrLiteral pargv[5];
+  PtrOrLiteral pargv[6];
   pargv[0] = argv[0];
   pargv[1] = argv[1];
   pargv[2] = argv[2];
   pargv[3] = argv[3];
   pargv[4] = argv[5];
+  pargv[5] = f;
   PtrOrLiteral nargv[1];
   nargv[0] = argv[4];
-  callContSave(5, pargv);
-  STGEVAL(pargv[0]);
-  callContRestore(pargv);
-  // restore argv
-  argv[0] = pargv[0];
-  argv[1] = pargv[1];
-  argv[2] = pargv[2];
-  argv[3] = pargv[3];
-  argv[5] = pargv[4];
-  callContSave(5, pargv);
-  STGEVAL(pargv[1]);
-  callContRestore(pargv);
-  // restore argv
-  argv[0] = pargv[0];
-  argv[1] = pargv[1];
-  argv[2] = pargv[2];
-  argv[3] = pargv[3];
-  argv[5] = pargv[4];
-  callContSave(5, pargv);
-  STGEVAL(pargv[2]);
-  callContRestore(pargv);
-  // restore argv
-  argv[0] = pargv[0];
-  argv[1] = pargv[1];
-  argv[2] = pargv[2];
-  argv[3] = pargv[3];
-  argv[5] = pargv[4];
-  callContSave(5, pargv);
-  STGEVAL(pargv[3]);
-  callContRestore(pargv);
-  // restore argv
-  argv[0] = pargv[0];
-  argv[1] = pargv[1];
-  argv[2] = pargv[2];
-  argv[3] = pargv[3];
-  argv[5] = pargv[4];
-  callContSave(5, pargv);
-  STGEVAL(pargv[4]);
-  callContRestore(pargv);
-  // restore argv
-  argv[0] = pargv[0];
-  argv[1] = pargv[1];
-  argv[2] = pargv[2];
-  argv[3] = pargv[3];
-  argv[5] = pargv[4];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
@@ -42607,26 +40938,15 @@ DEFUN2(stgApplyNNNNPP, N, f) {
   PtrOrLiteral argv[6];
   popargs(argc, argv);
   const int nps = 2;
-  PtrOrLiteral pargv[2];
+  PtrOrLiteral pargv[3];
   pargv[0] = argv[4];
   pargv[1] = argv[5];
+  pargv[2] = f;
   PtrOrLiteral nargv[4];
   nargv[0] = argv[0];
   nargv[1] = argv[1];
   nargv[2] = argv[2];
   nargv[3] = argv[3];
-  callContSave(2, pargv);
-  STGEVAL(pargv[0]);
-  callContRestore(pargv);
-  // restore argv
-  argv[4] = pargv[0];
-  argv[5] = pargv[1];
-  callContSave(2, pargv);
-  STGEVAL(pargv[1]);
-  callContRestore(pargv);
-  // restore argv
-  argv[4] = pargv[0];
-  argv[5] = pargv[1];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
@@ -43054,35 +41374,15 @@ DEFUN2(stgApplyPNNNPP, N, f) {
   PtrOrLiteral argv[6];
   popargs(argc, argv);
   const int nps = 3;
-  PtrOrLiteral pargv[3];
+  PtrOrLiteral pargv[4];
   pargv[0] = argv[0];
   pargv[1] = argv[4];
   pargv[2] = argv[5];
+  pargv[3] = f;
   PtrOrLiteral nargv[3];
   nargv[0] = argv[1];
   nargv[1] = argv[2];
   nargv[2] = argv[3];
-  callContSave(3, pargv);
-  STGEVAL(pargv[0]);
-  callContRestore(pargv);
-  // restore argv
-  argv[0] = pargv[0];
-  argv[4] = pargv[1];
-  argv[5] = pargv[2];
-  callContSave(3, pargv);
-  STGEVAL(pargv[1]);
-  callContRestore(pargv);
-  // restore argv
-  argv[0] = pargv[0];
-  argv[4] = pargv[1];
-  argv[5] = pargv[2];
-  callContSave(3, pargv);
-  STGEVAL(pargv[2]);
-  callContRestore(pargv);
-  // restore argv
-  argv[0] = pargv[0];
-  argv[4] = pargv[1];
-  argv[5] = pargv[2];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
@@ -43511,35 +41811,15 @@ DEFUN2(stgApplyNPNNPP, N, f) {
   PtrOrLiteral argv[6];
   popargs(argc, argv);
   const int nps = 3;
-  PtrOrLiteral pargv[3];
+  PtrOrLiteral pargv[4];
   pargv[0] = argv[1];
   pargv[1] = argv[4];
   pargv[2] = argv[5];
+  pargv[3] = f;
   PtrOrLiteral nargv[3];
   nargv[0] = argv[0];
   nargv[1] = argv[2];
   nargv[2] = argv[3];
-  callContSave(3, pargv);
-  STGEVAL(pargv[0]);
-  callContRestore(pargv);
-  // restore argv
-  argv[1] = pargv[0];
-  argv[4] = pargv[1];
-  argv[5] = pargv[2];
-  callContSave(3, pargv);
-  STGEVAL(pargv[1]);
-  callContRestore(pargv);
-  // restore argv
-  argv[1] = pargv[0];
-  argv[4] = pargv[1];
-  argv[5] = pargv[2];
-  callContSave(3, pargv);
-  STGEVAL(pargv[2]);
-  callContRestore(pargv);
-  // restore argv
-  argv[1] = pargv[0];
-  argv[4] = pargv[1];
-  argv[5] = pargv[2];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
@@ -43970,46 +42250,15 @@ DEFUN2(stgApplyPPNNPP, N, f) {
   PtrOrLiteral argv[6];
   popargs(argc, argv);
   const int nps = 4;
-  PtrOrLiteral pargv[4];
+  PtrOrLiteral pargv[5];
   pargv[0] = argv[0];
   pargv[1] = argv[1];
   pargv[2] = argv[4];
   pargv[3] = argv[5];
+  pargv[4] = f;
   PtrOrLiteral nargv[2];
   nargv[0] = argv[2];
   nargv[1] = argv[3];
-  callContSave(4, pargv);
-  STGEVAL(pargv[0]);
-  callContRestore(pargv);
-  // restore argv
-  argv[0] = pargv[0];
-  argv[1] = pargv[1];
-  argv[4] = pargv[2];
-  argv[5] = pargv[3];
-  callContSave(4, pargv);
-  STGEVAL(pargv[1]);
-  callContRestore(pargv);
-  // restore argv
-  argv[0] = pargv[0];
-  argv[1] = pargv[1];
-  argv[4] = pargv[2];
-  argv[5] = pargv[3];
-  callContSave(4, pargv);
-  STGEVAL(pargv[2]);
-  callContRestore(pargv);
-  // restore argv
-  argv[0] = pargv[0];
-  argv[1] = pargv[1];
-  argv[4] = pargv[2];
-  argv[5] = pargv[3];
-  callContSave(4, pargv);
-  STGEVAL(pargv[3]);
-  callContRestore(pargv);
-  // restore argv
-  argv[0] = pargv[0];
-  argv[1] = pargv[1];
-  argv[4] = pargv[2];
-  argv[5] = pargv[3];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
@@ -44441,35 +42690,15 @@ DEFUN2(stgApplyNNPNPP, N, f) {
   PtrOrLiteral argv[6];
   popargs(argc, argv);
   const int nps = 3;
-  PtrOrLiteral pargv[3];
+  PtrOrLiteral pargv[4];
   pargv[0] = argv[2];
   pargv[1] = argv[4];
   pargv[2] = argv[5];
+  pargv[3] = f;
   PtrOrLiteral nargv[3];
   nargv[0] = argv[0];
   nargv[1] = argv[1];
   nargv[2] = argv[3];
-  callContSave(3, pargv);
-  STGEVAL(pargv[0]);
-  callContRestore(pargv);
-  // restore argv
-  argv[2] = pargv[0];
-  argv[4] = pargv[1];
-  argv[5] = pargv[2];
-  callContSave(3, pargv);
-  STGEVAL(pargv[1]);
-  callContRestore(pargv);
-  // restore argv
-  argv[2] = pargv[0];
-  argv[4] = pargv[1];
-  argv[5] = pargv[2];
-  callContSave(3, pargv);
-  STGEVAL(pargv[2]);
-  callContRestore(pargv);
-  // restore argv
-  argv[2] = pargv[0];
-  argv[4] = pargv[1];
-  argv[5] = pargv[2];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
@@ -44902,46 +43131,15 @@ DEFUN2(stgApplyPNPNPP, N, f) {
   PtrOrLiteral argv[6];
   popargs(argc, argv);
   const int nps = 4;
-  PtrOrLiteral pargv[4];
+  PtrOrLiteral pargv[5];
   pargv[0] = argv[0];
   pargv[1] = argv[2];
   pargv[2] = argv[4];
   pargv[3] = argv[5];
+  pargv[4] = f;
   PtrOrLiteral nargv[2];
   nargv[0] = argv[1];
   nargv[1] = argv[3];
-  callContSave(4, pargv);
-  STGEVAL(pargv[0]);
-  callContRestore(pargv);
-  // restore argv
-  argv[0] = pargv[0];
-  argv[2] = pargv[1];
-  argv[4] = pargv[2];
-  argv[5] = pargv[3];
-  callContSave(4, pargv);
-  STGEVAL(pargv[1]);
-  callContRestore(pargv);
-  // restore argv
-  argv[0] = pargv[0];
-  argv[2] = pargv[1];
-  argv[4] = pargv[2];
-  argv[5] = pargv[3];
-  callContSave(4, pargv);
-  STGEVAL(pargv[2]);
-  callContRestore(pargv);
-  // restore argv
-  argv[0] = pargv[0];
-  argv[2] = pargv[1];
-  argv[4] = pargv[2];
-  argv[5] = pargv[3];
-  callContSave(4, pargv);
-  STGEVAL(pargv[3]);
-  callContRestore(pargv);
-  // restore argv
-  argv[0] = pargv[0];
-  argv[2] = pargv[1];
-  argv[4] = pargv[2];
-  argv[5] = pargv[3];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
@@ -45375,46 +43573,15 @@ DEFUN2(stgApplyNPPNPP, N, f) {
   PtrOrLiteral argv[6];
   popargs(argc, argv);
   const int nps = 4;
-  PtrOrLiteral pargv[4];
+  PtrOrLiteral pargv[5];
   pargv[0] = argv[1];
   pargv[1] = argv[2];
   pargv[2] = argv[4];
   pargv[3] = argv[5];
+  pargv[4] = f;
   PtrOrLiteral nargv[2];
   nargv[0] = argv[0];
   nargv[1] = argv[3];
-  callContSave(4, pargv);
-  STGEVAL(pargv[0]);
-  callContRestore(pargv);
-  // restore argv
-  argv[1] = pargv[0];
-  argv[2] = pargv[1];
-  argv[4] = pargv[2];
-  argv[5] = pargv[3];
-  callContSave(4, pargv);
-  STGEVAL(pargv[1]);
-  callContRestore(pargv);
-  // restore argv
-  argv[1] = pargv[0];
-  argv[2] = pargv[1];
-  argv[4] = pargv[2];
-  argv[5] = pargv[3];
-  callContSave(4, pargv);
-  STGEVAL(pargv[2]);
-  callContRestore(pargv);
-  // restore argv
-  argv[1] = pargv[0];
-  argv[2] = pargv[1];
-  argv[4] = pargv[2];
-  argv[5] = pargv[3];
-  callContSave(4, pargv);
-  STGEVAL(pargv[3]);
-  callContRestore(pargv);
-  // restore argv
-  argv[1] = pargv[0];
-  argv[2] = pargv[1];
-  argv[4] = pargv[2];
-  argv[5] = pargv[3];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
@@ -45850,59 +44017,15 @@ DEFUN2(stgApplyPPPNPP, N, f) {
   PtrOrLiteral argv[6];
   popargs(argc, argv);
   const int nps = 5;
-  PtrOrLiteral pargv[5];
+  PtrOrLiteral pargv[6];
   pargv[0] = argv[0];
   pargv[1] = argv[1];
   pargv[2] = argv[2];
   pargv[3] = argv[4];
   pargv[4] = argv[5];
+  pargv[5] = f;
   PtrOrLiteral nargv[1];
   nargv[0] = argv[3];
-  callContSave(5, pargv);
-  STGEVAL(pargv[0]);
-  callContRestore(pargv);
-  // restore argv
-  argv[0] = pargv[0];
-  argv[1] = pargv[1];
-  argv[2] = pargv[2];
-  argv[4] = pargv[3];
-  argv[5] = pargv[4];
-  callContSave(5, pargv);
-  STGEVAL(pargv[1]);
-  callContRestore(pargv);
-  // restore argv
-  argv[0] = pargv[0];
-  argv[1] = pargv[1];
-  argv[2] = pargv[2];
-  argv[4] = pargv[3];
-  argv[5] = pargv[4];
-  callContSave(5, pargv);
-  STGEVAL(pargv[2]);
-  callContRestore(pargv);
-  // restore argv
-  argv[0] = pargv[0];
-  argv[1] = pargv[1];
-  argv[2] = pargv[2];
-  argv[4] = pargv[3];
-  argv[5] = pargv[4];
-  callContSave(5, pargv);
-  STGEVAL(pargv[3]);
-  callContRestore(pargv);
-  // restore argv
-  argv[0] = pargv[0];
-  argv[1] = pargv[1];
-  argv[2] = pargv[2];
-  argv[4] = pargv[3];
-  argv[5] = pargv[4];
-  callContSave(5, pargv);
-  STGEVAL(pargv[4]);
-  callContRestore(pargv);
-  // restore argv
-  argv[0] = pargv[0];
-  argv[1] = pargv[1];
-  argv[2] = pargv[2];
-  argv[4] = pargv[3];
-  argv[5] = pargv[4];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
@@ -46339,35 +44462,15 @@ DEFUN2(stgApplyNNNPPP, N, f) {
   PtrOrLiteral argv[6];
   popargs(argc, argv);
   const int nps = 3;
-  PtrOrLiteral pargv[3];
+  PtrOrLiteral pargv[4];
   pargv[0] = argv[3];
   pargv[1] = argv[4];
   pargv[2] = argv[5];
+  pargv[3] = f;
   PtrOrLiteral nargv[3];
   nargv[0] = argv[0];
   nargv[1] = argv[1];
   nargv[2] = argv[2];
-  callContSave(3, pargv);
-  STGEVAL(pargv[0]);
-  callContRestore(pargv);
-  // restore argv
-  argv[3] = pargv[0];
-  argv[4] = pargv[1];
-  argv[5] = pargv[2];
-  callContSave(3, pargv);
-  STGEVAL(pargv[1]);
-  callContRestore(pargv);
-  // restore argv
-  argv[3] = pargv[0];
-  argv[4] = pargv[1];
-  argv[5] = pargv[2];
-  callContSave(3, pargv);
-  STGEVAL(pargv[2]);
-  callContRestore(pargv);
-  // restore argv
-  argv[3] = pargv[0];
-  argv[4] = pargv[1];
-  argv[5] = pargv[2];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
@@ -46802,46 +44905,15 @@ DEFUN2(stgApplyPNNPPP, N, f) {
   PtrOrLiteral argv[6];
   popargs(argc, argv);
   const int nps = 4;
-  PtrOrLiteral pargv[4];
+  PtrOrLiteral pargv[5];
   pargv[0] = argv[0];
   pargv[1] = argv[3];
   pargv[2] = argv[4];
   pargv[3] = argv[5];
+  pargv[4] = f;
   PtrOrLiteral nargv[2];
   nargv[0] = argv[1];
   nargv[1] = argv[2];
-  callContSave(4, pargv);
-  STGEVAL(pargv[0]);
-  callContRestore(pargv);
-  // restore argv
-  argv[0] = pargv[0];
-  argv[3] = pargv[1];
-  argv[4] = pargv[2];
-  argv[5] = pargv[3];
-  callContSave(4, pargv);
-  STGEVAL(pargv[1]);
-  callContRestore(pargv);
-  // restore argv
-  argv[0] = pargv[0];
-  argv[3] = pargv[1];
-  argv[4] = pargv[2];
-  argv[5] = pargv[3];
-  callContSave(4, pargv);
-  STGEVAL(pargv[2]);
-  callContRestore(pargv);
-  // restore argv
-  argv[0] = pargv[0];
-  argv[3] = pargv[1];
-  argv[4] = pargv[2];
-  argv[5] = pargv[3];
-  callContSave(4, pargv);
-  STGEVAL(pargv[3]);
-  callContRestore(pargv);
-  // restore argv
-  argv[0] = pargv[0];
-  argv[3] = pargv[1];
-  argv[4] = pargv[2];
-  argv[5] = pargv[3];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
@@ -47277,46 +45349,15 @@ DEFUN2(stgApplyNPNPPP, N, f) {
   PtrOrLiteral argv[6];
   popargs(argc, argv);
   const int nps = 4;
-  PtrOrLiteral pargv[4];
+  PtrOrLiteral pargv[5];
   pargv[0] = argv[1];
   pargv[1] = argv[3];
   pargv[2] = argv[4];
   pargv[3] = argv[5];
+  pargv[4] = f;
   PtrOrLiteral nargv[2];
   nargv[0] = argv[0];
   nargv[1] = argv[2];
-  callContSave(4, pargv);
-  STGEVAL(pargv[0]);
-  callContRestore(pargv);
-  // restore argv
-  argv[1] = pargv[0];
-  argv[3] = pargv[1];
-  argv[4] = pargv[2];
-  argv[5] = pargv[3];
-  callContSave(4, pargv);
-  STGEVAL(pargv[1]);
-  callContRestore(pargv);
-  // restore argv
-  argv[1] = pargv[0];
-  argv[3] = pargv[1];
-  argv[4] = pargv[2];
-  argv[5] = pargv[3];
-  callContSave(4, pargv);
-  STGEVAL(pargv[2]);
-  callContRestore(pargv);
-  // restore argv
-  argv[1] = pargv[0];
-  argv[3] = pargv[1];
-  argv[4] = pargv[2];
-  argv[5] = pargv[3];
-  callContSave(4, pargv);
-  STGEVAL(pargv[3]);
-  callContRestore(pargv);
-  // restore argv
-  argv[1] = pargv[0];
-  argv[3] = pargv[1];
-  argv[4] = pargv[2];
-  argv[5] = pargv[3];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
@@ -47754,59 +45795,15 @@ DEFUN2(stgApplyPPNPPP, N, f) {
   PtrOrLiteral argv[6];
   popargs(argc, argv);
   const int nps = 5;
-  PtrOrLiteral pargv[5];
+  PtrOrLiteral pargv[6];
   pargv[0] = argv[0];
   pargv[1] = argv[1];
   pargv[2] = argv[3];
   pargv[3] = argv[4];
   pargv[4] = argv[5];
+  pargv[5] = f;
   PtrOrLiteral nargv[1];
   nargv[0] = argv[2];
-  callContSave(5, pargv);
-  STGEVAL(pargv[0]);
-  callContRestore(pargv);
-  // restore argv
-  argv[0] = pargv[0];
-  argv[1] = pargv[1];
-  argv[3] = pargv[2];
-  argv[4] = pargv[3];
-  argv[5] = pargv[4];
-  callContSave(5, pargv);
-  STGEVAL(pargv[1]);
-  callContRestore(pargv);
-  // restore argv
-  argv[0] = pargv[0];
-  argv[1] = pargv[1];
-  argv[3] = pargv[2];
-  argv[4] = pargv[3];
-  argv[5] = pargv[4];
-  callContSave(5, pargv);
-  STGEVAL(pargv[2]);
-  callContRestore(pargv);
-  // restore argv
-  argv[0] = pargv[0];
-  argv[1] = pargv[1];
-  argv[3] = pargv[2];
-  argv[4] = pargv[3];
-  argv[5] = pargv[4];
-  callContSave(5, pargv);
-  STGEVAL(pargv[3]);
-  callContRestore(pargv);
-  // restore argv
-  argv[0] = pargv[0];
-  argv[1] = pargv[1];
-  argv[3] = pargv[2];
-  argv[4] = pargv[3];
-  argv[5] = pargv[4];
-  callContSave(5, pargv);
-  STGEVAL(pargv[4]);
-  callContRestore(pargv);
-  // restore argv
-  argv[0] = pargv[0];
-  argv[1] = pargv[1];
-  argv[3] = pargv[2];
-  argv[4] = pargv[3];
-  argv[5] = pargv[4];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
@@ -48245,46 +46242,15 @@ DEFUN2(stgApplyNNPPPP, N, f) {
   PtrOrLiteral argv[6];
   popargs(argc, argv);
   const int nps = 4;
-  PtrOrLiteral pargv[4];
+  PtrOrLiteral pargv[5];
   pargv[0] = argv[2];
   pargv[1] = argv[3];
   pargv[2] = argv[4];
   pargv[3] = argv[5];
+  pargv[4] = f;
   PtrOrLiteral nargv[2];
   nargv[0] = argv[0];
   nargv[1] = argv[1];
-  callContSave(4, pargv);
-  STGEVAL(pargv[0]);
-  callContRestore(pargv);
-  // restore argv
-  argv[2] = pargv[0];
-  argv[3] = pargv[1];
-  argv[4] = pargv[2];
-  argv[5] = pargv[3];
-  callContSave(4, pargv);
-  STGEVAL(pargv[1]);
-  callContRestore(pargv);
-  // restore argv
-  argv[2] = pargv[0];
-  argv[3] = pargv[1];
-  argv[4] = pargv[2];
-  argv[5] = pargv[3];
-  callContSave(4, pargv);
-  STGEVAL(pargv[2]);
-  callContRestore(pargv);
-  // restore argv
-  argv[2] = pargv[0];
-  argv[3] = pargv[1];
-  argv[4] = pargv[2];
-  argv[5] = pargv[3];
-  callContSave(4, pargv);
-  STGEVAL(pargv[3]);
-  callContRestore(pargv);
-  // restore argv
-  argv[2] = pargv[0];
-  argv[3] = pargv[1];
-  argv[4] = pargv[2];
-  argv[5] = pargv[3];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
@@ -48724,59 +46690,15 @@ DEFUN2(stgApplyPNPPPP, N, f) {
   PtrOrLiteral argv[6];
   popargs(argc, argv);
   const int nps = 5;
-  PtrOrLiteral pargv[5];
+  PtrOrLiteral pargv[6];
   pargv[0] = argv[0];
   pargv[1] = argv[2];
   pargv[2] = argv[3];
   pargv[3] = argv[4];
   pargv[4] = argv[5];
+  pargv[5] = f;
   PtrOrLiteral nargv[1];
   nargv[0] = argv[1];
-  callContSave(5, pargv);
-  STGEVAL(pargv[0]);
-  callContRestore(pargv);
-  // restore argv
-  argv[0] = pargv[0];
-  argv[2] = pargv[1];
-  argv[3] = pargv[2];
-  argv[4] = pargv[3];
-  argv[5] = pargv[4];
-  callContSave(5, pargv);
-  STGEVAL(pargv[1]);
-  callContRestore(pargv);
-  // restore argv
-  argv[0] = pargv[0];
-  argv[2] = pargv[1];
-  argv[3] = pargv[2];
-  argv[4] = pargv[3];
-  argv[5] = pargv[4];
-  callContSave(5, pargv);
-  STGEVAL(pargv[2]);
-  callContRestore(pargv);
-  // restore argv
-  argv[0] = pargv[0];
-  argv[2] = pargv[1];
-  argv[3] = pargv[2];
-  argv[4] = pargv[3];
-  argv[5] = pargv[4];
-  callContSave(5, pargv);
-  STGEVAL(pargv[3]);
-  callContRestore(pargv);
-  // restore argv
-  argv[0] = pargv[0];
-  argv[2] = pargv[1];
-  argv[3] = pargv[2];
-  argv[4] = pargv[3];
-  argv[5] = pargv[4];
-  callContSave(5, pargv);
-  STGEVAL(pargv[4]);
-  callContRestore(pargv);
-  // restore argv
-  argv[0] = pargv[0];
-  argv[2] = pargv[1];
-  argv[3] = pargv[2];
-  argv[4] = pargv[3];
-  argv[5] = pargv[4];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
@@ -49217,59 +47139,15 @@ DEFUN2(stgApplyNPPPPP, N, f) {
   PtrOrLiteral argv[6];
   popargs(argc, argv);
   const int nps = 5;
-  PtrOrLiteral pargv[5];
+  PtrOrLiteral pargv[6];
   pargv[0] = argv[1];
   pargv[1] = argv[2];
   pargv[2] = argv[3];
   pargv[3] = argv[4];
   pargv[4] = argv[5];
+  pargv[5] = f;
   PtrOrLiteral nargv[1];
   nargv[0] = argv[0];
-  callContSave(5, pargv);
-  STGEVAL(pargv[0]);
-  callContRestore(pargv);
-  // restore argv
-  argv[1] = pargv[0];
-  argv[2] = pargv[1];
-  argv[3] = pargv[2];
-  argv[4] = pargv[3];
-  argv[5] = pargv[4];
-  callContSave(5, pargv);
-  STGEVAL(pargv[1]);
-  callContRestore(pargv);
-  // restore argv
-  argv[1] = pargv[0];
-  argv[2] = pargv[1];
-  argv[3] = pargv[2];
-  argv[4] = pargv[3];
-  argv[5] = pargv[4];
-  callContSave(5, pargv);
-  STGEVAL(pargv[2]);
-  callContRestore(pargv);
-  // restore argv
-  argv[1] = pargv[0];
-  argv[2] = pargv[1];
-  argv[3] = pargv[2];
-  argv[4] = pargv[3];
-  argv[5] = pargv[4];
-  callContSave(5, pargv);
-  STGEVAL(pargv[3]);
-  callContRestore(pargv);
-  // restore argv
-  argv[1] = pargv[0];
-  argv[2] = pargv[1];
-  argv[3] = pargv[2];
-  argv[4] = pargv[3];
-  argv[5] = pargv[4];
-  callContSave(5, pargv);
-  STGEVAL(pargv[4]);
-  callContRestore(pargv);
-  // restore argv
-  argv[1] = pargv[0];
-  argv[2] = pargv[1];
-  argv[3] = pargv[2];
-  argv[4] = pargv[3];
-  argv[5] = pargv[4];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {
@@ -49712,74 +47590,15 @@ DEFUN2(stgApplyPPPPPP, N, f) {
   PtrOrLiteral argv[6];
   popargs(argc, argv);
   const int nps = 6;
-  PtrOrLiteral pargv[6];
+  PtrOrLiteral pargv[7];
   pargv[0] = argv[0];
   pargv[1] = argv[1];
   pargv[2] = argv[2];
   pargv[3] = argv[3];
   pargv[4] = argv[4];
   pargv[5] = argv[5];
+  pargv[6] = f;
   // no non-pointer args to save
-  callContSave(6, pargv);
-  STGEVAL(pargv[0]);
-  callContRestore(pargv);
-  // restore argv
-  argv[0] = pargv[0];
-  argv[1] = pargv[1];
-  argv[2] = pargv[2];
-  argv[3] = pargv[3];
-  argv[4] = pargv[4];
-  argv[5] = pargv[5];
-  callContSave(6, pargv);
-  STGEVAL(pargv[1]);
-  callContRestore(pargv);
-  // restore argv
-  argv[0] = pargv[0];
-  argv[1] = pargv[1];
-  argv[2] = pargv[2];
-  argv[3] = pargv[3];
-  argv[4] = pargv[4];
-  argv[5] = pargv[5];
-  callContSave(6, pargv);
-  STGEVAL(pargv[2]);
-  callContRestore(pargv);
-  // restore argv
-  argv[0] = pargv[0];
-  argv[1] = pargv[1];
-  argv[2] = pargv[2];
-  argv[3] = pargv[3];
-  argv[4] = pargv[4];
-  argv[5] = pargv[5];
-  callContSave(6, pargv);
-  STGEVAL(pargv[3]);
-  callContRestore(pargv);
-  // restore argv
-  argv[0] = pargv[0];
-  argv[1] = pargv[1];
-  argv[2] = pargv[2];
-  argv[3] = pargv[3];
-  argv[4] = pargv[4];
-  argv[5] = pargv[5];
-  callContSave(6, pargv);
-  STGEVAL(pargv[4]);
-  callContRestore(pargv);
-  // restore argv
-  argv[0] = pargv[0];
-  argv[1] = pargv[1];
-  argv[2] = pargv[2];
-  argv[3] = pargv[3];
-  argv[4] = pargv[4];
-  argv[5] = pargv[5];
-  callContSave(6, pargv);
-  STGEVAL(pargv[5]);
-  callContRestore(pargv);
-  // restore argv
-  argv[0] = pargv[0];
-  argv[1] = pargv[1];
-  argv[2] = pargv[2];
-  argv[3] = pargv[3];
-  argv[4] = pargv[4];
-  argv[5] = pargv[5];
 
   f.op = derefPoL(f);
   if (f.op->objType == THUNK) {

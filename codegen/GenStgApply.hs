@@ -9,7 +9,7 @@ data Strictness = Nonstrict
                 | Strict1   -- evaluate args first, then fun
                   deriving(Eq)
     
-strictness = Strict1
+strictness = Nonstrict
 
 dumpStgApply n = 
     let (forward, macros, fun) = genAllstgApply n
@@ -106,10 +106,13 @@ evalps nps pinds =
 evalps nps pinds =
     -- only need to put all but the one to be evaluated in a ccont
     -- but for a quick test...
-    concat [ callContSave nps ++
-             "STGEVAL(pargv[" ++ show i ++ "]);\n" ++
-             callContAndArgvRestore nps pinds
-             | i <- [0..nps-1] ]
+    if nps > 0 then
+      concat [ callContSave (nps+1) ++
+               "STGEVAL(pargv[" ++ show i ++ "]);\n" ++
+               callContAndArgvRestore (nps+1) pinds  -- nps+1 just so not 0
+               | i <- [0..nps-1] ] ++
+      "f = pargv[" ++ show nps ++ "];\n"
+    else ""
 
 gen s =
   (forward, macro, fun)
@@ -149,12 +152,10 @@ gen s =
      "  PtrOrLiteral argv[" ++ show argc ++ "];\n" ++
      "  popargs(argc, argv);\n" ++
      "  const int nps = " ++ show nps ++ ";\n" ++
-     (if nps > 0 then 
-        "  PtrOrLiteral pargv[" ++ show nps ++ "];\n" ++
+     "  PtrOrLiteral pargv[" ++ show (nps + 1) ++ "];\n" ++ -- space for f
         concat ["  pargv[" ++ show i ++ "] = argv[" ++ show ind ++ "];\n"
-                | (i,ind) <- zip [0..] pinds]
-     else
-       "  // no pointer args to save\n") ++
+                | (i,ind) <- zip [0..] pinds] ++
+     "  pargv[" ++ show nps ++ "] = f;\n" ++
      (if nns > 0 then 
         "  PtrOrLiteral nargv[" ++ show nns ++ "];\n" ++
         concat ["  nargv[" ++ show i ++ "] = argv[" ++ show ind ++ "];\n"
