@@ -1,1 +1,1 @@
-([],[FUN {omd = ([] ,[] ), vs = ["x","y"], e = ECase {emd = ([x y] ,[x y] ), ee = EAtom {emd = ([x] ,[x] ), ea = x}, ealts = Alts {altsmd = ([y] ,[y] ), alts = [ADef {amd = ([y] ,[y] ), av = "z", ae = EAtom {emd = ([y] ,[y] ), ea = y}}], aname = "alts_0"}}, oname = "seq"}])
+([],[FUN {omd = ([] ,[] ), vs = ["x","y"], e = ECase {emd = ([x y] ,[x y] ), ee = EAtom {emd = ([x] ,[x] ), ea = x}, ealts = Alts {altsmd = ([y] ,[y] ), alts = [ADef {amd = ([y] ,[y] ), av = "z", ae = EAtom {emd = ([y] ,[y] ), ea = y}}], aname = "alts_0"}}, oname = "seq"}],fromList [])

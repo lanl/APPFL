@@ -17,8 +17,10 @@ unitTests = testGroup "SetFvs Unit tests"
 inp :: String
 inp = "seq = FUN(x y -> case x of { z -> y });"
     
+snd3 (a,b,c) = b    
+    
 setFVseq :: IO ByteString
-setFVseq = return $ fromString $ show $ freevarer inp 
+setFVseq = return $ fromString $ show $ freevarer False inp 
 
 showseq :: IO ByteString
-showseq = return $ fromString $ showObjs $ snd $ freevarer inp
+showseq = return $ fromString $ showObjs $ snd3 $ freevarer False inp

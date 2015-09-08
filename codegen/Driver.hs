@@ -22,9 +22,7 @@ module Driver (
   mhsExpSimpler,
   mhsPatSimpler,
   mhsNumBoxer,
-  mhsSTGer,
-  mhsCheckAll
-  
+  mhsSTGer 
 ) where
 
 import qualified MHS.AST
@@ -50,6 +48,7 @@ import           BU
 import           HMStg
 import           OrderFVsArgs
 import           Data.List
+import qualified Data.Set as Set
 import           System.IO
 
 header :: String
@@ -127,6 +126,7 @@ mhsPatSimpler :: String -> [MHS.AST.Defn]
 mhsPatSimpler inp = let defs = mhsNumBoxer inp
                         in MHS.Transform.simplifyPats defs
 
+mhsSTGer :: String -> ([TyCon], [Obj ()], Assumptions)
 mhsSTGer inp = let defs = mhsPatSimpler inp
                in MHS.ToSTG.makeSTG defs
 
@@ -164,37 +164,42 @@ renamer inp = let (tycons, objs) = boxer inp
 -- objects
 -- might be worth starting to pass CMap around starting here
 -- (currently generated again when setting CMaps in InfoTabs)
-defaultcaser :: String -> ([TyCon], [Obj ()])
-defaultcaser inp = let (tycons, objs) = renamer inp
-                 in (tycons, exhaustCases (toCMap tycons) objs)
+defaultcaser :: Bool -> String -> ([TyCon], [Obj ()],  Assumptions)
+defaultcaser mhs inp = if mhs 
+                       then mhsSTGer inp
+                       else let (tycons, objs) = renamer inp
+                            in (tycons, exhaustCases (toCMap tycons) objs, Set.empty)
 
-freevarer :: String -> ([TyCon], [Obj ([Var],[Var])])
-freevarer inp = let (tycons, objs) = defaultcaser inp
-                in (tycons, setFVsObjs stgRTSGlobals objs)
+freevarer :: Bool -> String -> ([TyCon], [Obj ([Var],[Var])], Assumptions)
+freevarer mhs inp = let (tycons, objs, assums) = defaultcaser mhs inp
+                in (tycons, setFVsObjs stgRTSGlobals objs, assums)
 
-infotaber :: String -> ([TyCon], [Obj InfoTab])
-infotaber inp = let (tycons, objs) = freevarer inp
-                in (tycons, setITs objs :: [Obj InfoTab])
+infotaber :: Bool -> String -> ([TyCon], [Obj InfoTab], Assumptions)
+infotaber mhs inp = let (tycons, objs, assums) = freevarer mhs inp
+                in (tycons, setITs objs :: [Obj InfoTab], assums)
 
-conmaper :: String -> ([TyCon], [Obj InfoTab])
-conmaper inp = let (tycons, objs) = infotaber inp
-               in setCMaps tycons objs
+conmaper :: Bool -> String -> ([TyCon], [Obj InfoTab], Assumptions)
+conmaper mhs inp = let (tycons, objs, assums) = infotaber mhs inp
+                       (tycons', objs') = setCMaps tycons objs
+                    in (tycons', objs', assums)
 
-typechecker :: String -> ([TyCon], [Obj InfoTab])
-typechecker inp = let (tycons, objs) = conmaper inp
-                  in (tycons, hmstg objs)
+typechecker :: Bool -> String -> ([TyCon], [Obj InfoTab])
+typechecker mhs inp = let (tycons, objs, assums) = conmaper mhs inp                                                 
+                      in (tycons, if mhs then hmstgAssums objs assums else hmstg objs)
 
-orderfvsargs inp = let (tycons, objs) = typechecker inp
-                   in (tycons, orderFVsArgs objs)
+orderfvsargser :: Bool -> String -> ([TyCon], [Obj InfoTab])
+orderfvsargser mhs inp = let (tycons, objs) = typechecker mhs inp
+                         in (tycons, orderFVsArgs objs)
 
-knowncaller inp  = let (tycons, objs) = orderfvsargs inp --typechecker inp
-                   in (tycons, propKnownCalls objs)
+knowncaller ::  Bool -> String -> ([TyCon], [Obj InfoTab])
+knowncaller mhs inp  = let (tycons, objs) = orderfvsargser mhs inp 
+                       in (tycons, propKnownCalls objs)
 
-heapchecker :: String -> ([TyCon], [Obj InfoTab])
-heapchecker inp = let (tycons, objs) = knowncaller inp
-                  in (tycons, setHeapAllocs objs)
+heapchecker :: Bool -> String -> ([TyCon], [Obj InfoTab])
+heapchecker mhs inp  = let (tycons, objs) = knowncaller mhs inp
+                       in (tycons, setHeapAllocs objs)
 
-
+{-
 -- use MHS front end, pass through all MHS and STG transforms
 -- and checks
 mhsCheckAll :: String -> ([TyCon],[Obj InfoTab])
@@ -204,10 +209,12 @@ mhsCheckAll inp = let (ts0,os0,assums) = mhsSTGer inp
                             exhaustCases (toCMap ts0) os0
                       (tsF, os2) = setCMaps ts0 os1
                       osF = setHeapAllocs $
-                            orderFVsArgs $
                             propKnownCalls $
+                            orderFVsArgs $
                             hmstgAssums os2 assums
                   in (tsF, osF)
+-}
+
 
 printObjsVerbose :: ([TyCon], [Obj InfoTab]) -> IO ()
 printObjsVerbose (tycons, objs) = print $ objListDoc objs
@@ -240,21 +247,17 @@ mhsTCTest filepath =
     hmstgAssumsdebug os2 as
 
 
-tctest arg =
+tctest mhs arg =
   do
     ifd <- openFile arg ReadMode
     source <- hGetContents ifd
-    let (tycons, objs) = conmaper source
+    let (tycons, objs, assums) = conmaper mhs source
     hmstgdebug objs
 
 
 
 codegener :: String -> Bool -> Bool -> String
-codegener inp v mhs = let (tycons, objs) =
-                            if mhs
-                            then mhsCheckAll inp
-                            else heapchecker inp
-                                 
+codegener inp v mhs = let (tycons, objs) = heapchecker mhs inp   
                           infotab = showITs objs
                           (shoForward, shoDef) = showSHOs objs
                           (funForwards, funDefs) = cgObjs objs stgRTSGlobals
@@ -275,6 +278,6 @@ addSTGComment filename =
   do
     prld <- readFile "Prelude.mhs"
     src <- readFile filename
-    let (ts,os) = mhsCheckAll (src++prld)
+    let (ts,os) = heapchecker True (src++prld)
         stg = show $ bcomment (unparse ts $+$ unparse os)
     (length src) `seq` (writeFile filename (src ++ stg))

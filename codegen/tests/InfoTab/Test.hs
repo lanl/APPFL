@@ -16,7 +16,8 @@ unitTests = testGroup "InfoTab Unit tests"
     
 inp = "seq = FUN(x y -> case x of { z -> y });"
              
+snd3 (a,b,c) = b
 
 showinfoseq :: IO ByteString
-showinfoseq = return $ fromString $ showITs $ snd $ infotaber inp
+showinfoseq = return $ fromString $ showITs $ snd3 $ infotaber False inp
            
