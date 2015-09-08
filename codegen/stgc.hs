@@ -161,7 +161,7 @@ compile  (Options {optVerbose, optDumpParse, optNoPrelude, optStrict, optInput, 
                  
       False -> do
                  let coutput = input ++ ".c"
-                 let flags = " -std=gnu99 -Wl,-rpath " ++ rtIncDir ++ " -L" ++ rtLibDir ++ " -I" ++ rtIncDir ++ if optStrict then " -lruntime-s " else "-lruntime-ns"
+                 let flags = " -std=gnu99 -Wl,-rpath " ++ rtIncDir ++ " -L" ++ rtLibDir ++ " -I" ++ rtIncDir ++ if optStrict then " -lruntime-s " else " -lruntime-ns"
                  writeFile coutput (codegener source optVerbose minihs)
                  if gcc 
                    then system ("gcc " ++ coutput ++ " -o " ++ (fromJust optOutput) ++ flags)
