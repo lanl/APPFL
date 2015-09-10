@@ -239,38 +239,32 @@ Obj *stgPopCont();
 
 #define STGAPPLY1(f,v1)				\
   do {						\
-    PtrOrLiteral N = {.argType = INT, .i = 1};	\
-    STGJUMP3(stgApply,N,f,v1);			\
+    STGJUMP3(stgApply,((PtrOrLiteral){.argType = INT, .i = 1}),f,v1);	\
   } while(0)
 
 #define STGAPPLY2(f,v1,v2)			\
   do {						\
-    PtrOrLiteral N = {.argType = INT, .i = 2};	\
-    STGJUMP4(stgApply,N,f,v1,v2);		\
+    STGJUMP4(stgApply,((PtrOrLiteral){.argType = INT, .i = 2}),f,v1,v2);		\
   } while(0)
 
 #define STGAPPLY3(f,v1,v2,v3)			\
   do {						\
-    PtrOrLiteral N = {.argType = INT, .i = 3};	\
-    STGJUMP5(stgApply,N,f,v1,v2,v3);		\
+    STGJUMP5(stgApply,((PtrOrLiteral){.argType = INT, .i = 3}),f,v1,v2,v3);		\
   } while(0)
 
 #define STGAPPLY4(f,v1,v2,v3,v4)		\
   do {						\
-    PtrOrLiteral N = {.argType = INT, .i = 4};	\
-    STGJUMP6(stgApply,N,f,v1,v2,v3,v4);		\
+    STGJUMP6(stgApply,((PtrOrLiteral){.argType = INT, .i = 4}),f,v1,v2,v3,v4);		\
   } while(0)
 
 #define STGAPPLY5(f,v1,v2,v3,v4,v5)		\
   do {						\
-    PtrOrLiteral N = {.argType = INT, .i = 5};	\
-    STGJUMP7(stgApply,N,f,v1,v2,v3,v4,v5);	\
+    STGJUMP7(stgApply,((PtrOrLiteral){.argType = INT, .i = 5}),f,v1,v2,v3,v4,v5);	\
   } while(0)
 
 #define STGAPPLY6(f,v1,v2,v3,v4,v5,v6)		\
   do {						\
-    PtrOrLiteral N = {.argType = INT, .i = 6};	\
-    STGJUMP8(stgApply,N,f,v1,v2,v3,v4,v5,v6);	\
+    STGJUMP8(stgApply,((PtrOrLiteral){.argType = INT, .i = 6}),f,v1,v2,v3,v4,v5,v6);	\
   } while(0)
 
 

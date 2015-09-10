@@ -237,33 +237,37 @@ cgo env (BLACKHOLE {}) =
 
 -- ****************************************************************
 
-stgApplyGeneric env f as = 
-    "// " ++ f ++ " " ++ showas as ++ "\n" ++
-    "STGAPPLY" ++ show (length as) ++ "(" ++
-    intercalate ", " (cgv env f : map (cga env) as) ++ 
-    ");\n"
+stgApplyGeneric env f eas = 
+    let as = map ea eas
+        pnstring = [ if b then 'P' else 'N' | b <- map (isBoxed . typ . emd) eas ]
+        inline = 
+            "// NOT DIRECT CALL " ++ f ++ " " ++ showas as ++ "\n" ++
+            "STGAPPLY" ++ pnstring ++ "(" ++
+            intercalate ", " (cgv env f : map (cga env) as) ++ 
+            ");\n"
+    in return (inline, [])
 
 {-
--- this is one place where strictness is variable
-stgApplyGeneric2 env f as = 
-    let pnstring = [ if isBoxed $ typ $ emd a then 'P' else 'N' | a <- as ]
-    "// " ++ f ++ " " ++ showas as ++ "\n" ++
-    
-    "{ Obj *callCont = stgAllocCallCont2(&it_stgCallCont, " ++ (show $ length as) ++ ");\n" ++
-       concat ["  callCont->payload[" ++ show i ++ "] = " ++ cga a ++ ";\n" 
-               | (i,a) <- zip [1..] as] ++
-    "  STGEVAL(" ++ cgv env f ++ ")"
-    "STGAPPLY" ++ show (length as) ++ "(" ++
-    intercalate ", " (cgv env f : map (cga env) as) ++ 
-    ");\n"
+stgApplyDirect env (EFCall it f eas) = 
+    let as = map ea eas
+        pnstring = [ if b then 'P' else 'N' | b <- map (isBoxed . typ . emd) eas ]
+        inline = 
+            "// DIRECT CALL " ++ f ++ " " ++ showas as ++ "\n" ++
+            "STGAPPLY" ++ pnstring ++ "(" ++
+            intercalate ", " (cgv env f : map (cga env) as) ++ 
+            ");\n"
+    in return (inline, [])
 -}
 
--- for now
-stgApplyDirect env (EFCall it f as) = 
-    "// " ++ f ++ " " ++ showas (map ea as) ++ "\n" ++
-    "STGAPPLY" ++ show (length as) ++ "(" ++
-    intercalate ", " (cgv env f : map ((cga env) . ea) as) ++ 
-    ");\n"
+stgApplyDirect env (EFCall it f eas) = 
+    let as = map ea eas
+        inline = 
+            "// DIRECT CALL " ++ f ++ " " ++ showas as ++ "\n" ++
+            "STGAPPLY" ++ show (length as) ++ "(" ++
+              intercalate ", " (cgv env f : map (cga env) as) ++ 
+            ");\n"
+    in return (inline, [])
+
 
 stgApplyDirect env expr = 
     error $ "CodeGen.stgApplyDirect: not expecting Expr - " ++ show (pprint expr)
@@ -280,33 +284,26 @@ cge env e@(EAtom it a) =
                   else 
                       "// unboxed EAtom\n")
     in return (inline, [])
-{-
+
 cge env e@(EFCall it f eas) = 
-    let as = map ea eas
-        inline = 
-            case (knownCall it) of 
-              Nothing -> stgApplyGeneric env f as
-              Just kit -> if arity kit == length as
-                          -- then stgApplyDirect env e
-                          then stgApplyGeneric env f as
-                          else stgApplyGeneric env f as
-    in return (inline, [])
--}
+    case (knownCall it) of 
+      Nothing -> stgApplyGeneric env f eas
+      Just kit -> if arity kit == length eas
+                  then stgApplyDirect env e
+                  else stgApplyGeneric env f eas
 
     
-
+{-
 cge env e@(EFCall it f eas) = 
     let as = map ea eas
         pnstring = [ if b then 'P' else 'N' | b <- map (isBoxed . typ . emd) eas ]
         inline = 
             "// " ++ f ++ " " ++ showas as ++ "\n" ++
---            "STGAPPLY" ++ show (length as) ++ "(" ++
             "STGAPPLY" ++ pnstring ++ "(" ++
             intercalate ", " (cgv env f : map (cga env) as) ++ 
             ");\n"
-
-
     in return (inline, [])
+-}
 
 cge env (EPrimop it op eas) =
     let as = map ea eas
