@@ -76,6 +76,7 @@ data Options = Options
     , optDumpParse :: Bool
     , optDumpSTG   :: Bool
     , optNoPrelude :: Bool
+    , optStrict    :: Bool
     , optOutput    :: Maybe FilePath
     , optInput     :: Maybe FilePath
     } deriving Show
@@ -86,6 +87,7 @@ defaultOptions       = Options
     , optDumpParse   = False
     , optDumpSTG     = False
     , optNoPrelude   = False
+    , optStrict      = False
     , optInput       = Nothing
     , optOutput      = Just "a.out"
     }
@@ -101,40 +103,41 @@ options =
     , Option ['d'] ["dump-parse"]
         (NoArg (\ opts -> opts { optDumpParse = True }))
         "parser output only"
-    , Option ['s'] ["dump-stg"]
+    , Option ['g'] ["dump-stg"]
         (NoArg (\ opts -> opts {optDumpSTG = True}))
         "dump parsed STG code"
     , Option ['p'] ["no-prelude"]
         (NoArg (\ opts -> opts { optNoPrelude = True }))
         "do not include prelude"
+     , Option ['s'] ["strict"]
+        (NoArg (\ opts -> opts { optStrict = True }))
+        "strict evaluation"
     , Option ['o']     ["output"]
         (ReqArg ((\ f opts -> opts { optOutput = Just f })) "FILE")
         "output FILE"
-    , Option ['c']     []
-        (ReqArg ((\ f opts -> opts { optInput = Just f })) "FILE")
-        "input FILE"
     ]
 
-header = "Usage: stgc [OPTION...] files..."
+header = "Usage: stgc [OPTION...] inputfile"
 
 compilerOpts :: [String] -> IO (Options, [String])
 compilerOpts argv =
       case getOpt Permute options argv of
-         (o,n,[]  ) -> return (foldl (flip id) defaultOptions o, n)
+         (o,inp,[]) -> return (foldl (flip id) defaultOptions o, inp)
          (_,_,errs) -> ioError (userError (concat errs ++ usageInfo header options))
 
-checkOpts :: Options -> IO ()
-checkOpts (Options {optHelp, optInput}) =
+checkOpts :: Options ->  [String] -> IO ()
+checkOpts (Options {optHelp}) optInputs =
   do
     case optHelp of
       True -> ioError (userError (usageInfo header options))
       False -> do
-                 case optInput of
-                   Nothing -> ioError (userError ("No input files\n" ++ usageInfo header options))
-                   _ -> return ()
+                 case length optInputs of
+                   0 -> ioError (userError ("No input files\n" ++ usageInfo header options))
+                   1 -> return ()
+                   _ ->  ioError (userError ("bad input\n" ++ usageInfo header options)) 
 
 compile :: Options -> String -> String -> String -> Bool -> IO ()
-compile  (Options {optVerbose, optDumpParse, optNoPrelude, optOutput, optInput, optDumpSTG}) preludeDir rtLibDir rtIncDir gcc =
+compile  (Options {optVerbose, optDumpParse, optNoPrelude, optStrict, optInput, optOutput, optDumpSTG}) preludeDir rtLibDir rtIncDir gcc =
   do
     let input = fromJust optInput
         minihs = ".mhs" `isSuffixOf` input
@@ -158,7 +161,7 @@ compile  (Options {optVerbose, optDumpParse, optNoPrelude, optOutput, optInput, 
                  
       False -> do
                  let coutput = input ++ ".c"
-                 let flags = " -std=gnu99 -Wl,-rpath " ++ rtIncDir ++ " -L" ++ rtLibDir ++ " -I" ++ rtIncDir ++ " -lruntime"
+                 let flags = " -std=gnu99 -Wl,-rpath " ++ rtIncDir ++ " -L" ++ rtLibDir ++ " -I" ++ rtIncDir ++ if optStrict then " -lruntime-s " else " -lruntime-ns"
                  writeFile coutput (codegener source optVerbose minihs)
                  if gcc 
                    then system ("gcc " ++ coutput ++ " -o " ++ (fromJust optOutput) ++ flags)
@@ -170,7 +173,8 @@ main =
     do
       binaryPath <- getExecutablePath
       let binaryDir = intercalate "/" $ init $ splitOn "/" binaryPath
+      let update x input = x {optInput = Just input}
       args <- getArgs
       (opts, args') <- compilerOpts args
-      checkOpts opts
-      compile opts (binaryDir ++ "/../etc") (binaryDir ++ "/../lib") (binaryDir ++ "/../include") True
+      checkOpts opts args'
+      compile (update opts (head args')) (binaryDir ++ "/../etc") (binaryDir ++ "/../lib") (binaryDir ++ "/../include") True

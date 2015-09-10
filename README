@@ -55,7 +55,7 @@ build the stgc binary (starting at top level):
 
 $ make
 
-$ ./build/bin/stgc -c test/one.stg -o one
+$ ./build/bin/stgc test/one.stg -o one
 
 this will also generate test/one.stg.c
 

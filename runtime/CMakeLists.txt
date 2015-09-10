@@ -7,14 +7,13 @@ project(runtime)
               gc.h
               stg.h
               stgutils.h
-	          stgApply.h
+	      stgApply.h
     )
 
   set(rt_srcs cmm.c
               gc.c
               stg.c
               stgutils.c
-	          stgApply.c
     )
 
   # put headers in build/include
@@ -39,9 +38,11 @@ project(runtime)
   # put in build/lib
   if(SHAREDLIB) 
     set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/../lib)
-    add_library(runtime SHARED ${rt_srcs} ${rt_hdrs})
+    add_library(runtime-ns SHARED ${rt_srcs} stgApply-nonstrict.c ${rt_hdrs})
+    add_library(runtime-s SHARED ${rt_srcs} stgApply-strict.c ${rt_hdrs})
   else()
     set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/../lib)
-    add_library(runtime STATIC ${rt_srcs} ${rt_hdrs})
+    add_library(runtime-ns STATIC ${rt_srcs} stgApply-nonstrict.c ${rt_hdrs})
+    add_library(runtime-s STATIC ${rt_srcs} stgApply-strict.c ${rt_hdrs})
   endif()
 
