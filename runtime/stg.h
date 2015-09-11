@@ -32,10 +32,8 @@ typedef enum {
   CASECONT, 
   CALLCONT, 
   FUNCONT,        // for strict evaluation
-  // garbage collection
-  FORWARD
 } ObjType;
-const char *objTypeNames[FORWARD+1];
+const char *objTypeNames[FUNCONT+1];
 
 struct _Obj;
 struct _InfoTab;
@@ -76,7 +74,7 @@ extern PtrOrLiteral stgCurVal;  // current/return value
 
 struct _Obj {
   InfoTab *infoPtr;         // canonical location of ObjType field
-  ObjType objType;          // to distinguish PAP, FUN, BLACKHOLE, INDIRECT, FORWARD
+  ObjType objType;          // to distinguish PAP, FUN, BLACKHOLE, INDIRECT
   int argCount;             // for PAP, how many args already applied to?
   char ident[64];           // temporary, just for tracing
   PtrOrLiteral payload[];

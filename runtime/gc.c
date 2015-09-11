@@ -105,9 +105,9 @@ void updatePtr(PtrOrLiteral *f) {
   Obj *p = derefPoL(*f);
 
   if (isFrom(p)) {
-    if(p->objType == FORWARD) {
+    if ((uintptr_t)p->infoPtr & 1) { // this is a forward
       if (DEBUG) fprintf(stderr,"update forward %s\n",p->ident);
-      f->op = p->payload[0].op;
+      f->op = (Obj *)((uintptr_t)p->infoPtr & ~1); // unset LSB
     } else {
       int size = getObjSize(p);
       if (DEBUG) {
@@ -116,10 +116,7 @@ void updatePtr(PtrOrLiteral *f) {
 
       memcpy(freePtr, p, size);
 
-      assert(size > sizeof(Obj) && "no space for FORWARD");
-
-      p->objType = FORWARD;
-      p->payload[0].op = freePtr;
+      p->infoPtr = (InfoTab *)((uintptr_t)freePtr | 1); //set LSB to say this is a forward
 
       f->op = (Obj *)freePtr;
 
