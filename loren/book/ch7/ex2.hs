@@ -15,3 +15,46 @@ dropWhile1 f xs | null xs = []
 dropWhile1 f xs | otherwise = if f (head xs)
                               then dropWhile1 f (tail xs) else xs
 
+all2 :: (a -> Bool) -> [a] -> Bool
+all2 f [] = True
+all2 f (x:xs) = if f x then all2 f xs else False
+
+any2 :: (a -> Bool) -> [a] -> Bool
+any2 f [] = False
+any2 f (x:xs) = if f x then True else any2 f xs
+
+takeWhile2 :: (a -> Bool) -> [a] -> [a]
+takeWhile2 f xs | null xs   = []
+                | otherwise = if f (head xs)
+                                  then (head xs):(takeWhile1 f (tail xs))
+                                             else []
+
+dropWhile2 :: (a -> Bool) -> [a] -> [a] 
+dropWhile2 f xs | null xs   = []
+                | otherwise = if f (head xs)
+                              then dropWhile1 f (tail xs) else xs
+
+takeWhile3 :: (a -> Bool) -> [a] -> [a]
+takeWhile3 f xs = take n xs 
+                      where n = findTake f 0 xs (length xs)
+
+findTake :: (a -> Bool)-> Int -> [a] -> Int -> Int
+findTake f n xs k | n==k = k
+                | otherwise = if f (xs !! n) then findTake f (n+1) xs k else n 
+
+dropWhile3 :: (a -> Bool) -> [a] -> [a]
+dropWhile3 f xs = drop n xs 
+                      where n = findTake f 0 xs (length xs)
+--Newest Code
+takeWhile4 :: (a -> Bool) -> [a] -> [a]
+takeWhile4 f xs = take n xs 
+                      where n = findN f 0 xs (length xs)
+
+findN :: (a -> Bool)-> Int -> [a] -> Int -> Int
+findN f k (x:xs) l | k == l    =  l 
+                   | otherwise =  if  f x then findN f (k+1) xs l else k
+
+dropWhile4 :: (a -> Bool) -> [a] -> [a]
+dropWhile4 f xs = drop n xs 
+                      where n = findTake f 0 xs (length xs)
+--End Newest Code
