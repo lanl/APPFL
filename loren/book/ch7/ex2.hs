@@ -45,3 +45,16 @@ findTake f n xs k | n==k = k
 dropWhile3 :: (a -> Bool) -> [a] -> [a]
 dropWhile3 f xs = drop n xs 
                       where n = findTake f 0 xs (length xs)
+--Newest Code
+takeWhile4 :: (a -> Bool) -> [a] -> [a]
+takeWhile4 f xs = take n xs 
+                      where n = findN f 0 xs (length xs)
+
+findN :: (a -> Bool)-> Int -> [a] -> Int -> Int
+findN f k (x:xs) l | k == l    =  l 
+                   | otherwise =  if  f x then findN f (k+1) xs l else k
+
+dropWhile4 :: (a -> Bool) -> [a] -> [a]
+dropWhile4 f xs = drop n xs 
+                      where n = findTake f 0 xs (length xs)
+--End Newest Code
