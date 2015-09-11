@@ -8,7 +8,7 @@ chop8  = unfold null (take 8) (drop 8)
 map1 :: (a -> b) -> [a] -> [b]
 map1 f = unfold null (f.head) (tail)
 
-iterate :: (a ->a) -> a -> [a]
-iterate f = unfold ??? id f
+iterate1 :: (a ->a) -> a -> [a]
+iterate1 f = unfold (const False) id f
 
 
