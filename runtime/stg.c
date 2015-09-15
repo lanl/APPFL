@@ -30,8 +30,7 @@ const char *objTypeNames[] = {
   "UPDCONT", 
   "CASECONT", 
   "CALLCONT", 
-  "FUNCONT",
-  "FORWARD",
+  "FUNCONT"
 };
 
 Obj *stgAllocCont(InfoTab *itp) {
@@ -239,7 +238,6 @@ void showStgObjRecPretty(Obj *p) {
 
   if (p->objType != BLACKHOLE &&
       p->objType != INDIRECT &&
-      p->objType != FORWARD &&
       p->objType != it.objType) {
 	    if(!(p->objType == PAP && it.objType == FUN)) {
           fprintf(stderr, "mismatch in infotab and object type! %d != %d\n",
@@ -282,10 +280,6 @@ void showStgObjRecPretty(Obj *p) {
   case INDIRECT:
     fprintf(stderr, "%s --> ", p->ident );
     showStgObjRecPretty(p->payload[0].op);
-    break;
-
-  case FORWARD:
-    fprintf(stderr, "FORWARD" );
     break;
 
   default:
@@ -362,10 +356,6 @@ void showStgObjRecDebug(Obj *p) {
   case INDIRECT:
     fprintf(stderr,"INDIRECT to\n");
     showStgObjRecDebug(p->payload[0].op);
-    break;
-
-  case FORWARD:
-    fprintf(stderr,"\n");
     break;
 
   default:
