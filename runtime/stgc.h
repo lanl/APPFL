@@ -34,7 +34,7 @@ DEFUN2(stg_case_not_exhaustive, self, x) {
   ENDFUN;
 }
 
-InfoTab it_stg_case_not_exhaustive = {
+InfoTab it_stg_case_not_exhaustive __attribute__((aligned(8))) = {
   .name = "stg_case_not_exhaustive",
   .entryCode = &stg_case_not_exhaustive,
   .objType = FUN,
