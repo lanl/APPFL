@@ -48,4 +48,9 @@ Step 5: Generalise and Simplify
 
 last1 :: [a] -> a
 last1 (x:xs)|(length xs)==0 = x
-last1 (x:xs)|otherwise = last1 xs
+            |otherwise = last1 xs
+
+
+last2 :: [a] -> a
+last2 [a] = a 
+last2 (x:xs) = last2 xs 

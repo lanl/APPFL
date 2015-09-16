@@ -22,7 +22,7 @@ SHO:  referenced with absolute memory address, e.g. "sho_unit"
 
 HO:  address calculated from TOH pointer, e.g. "((Obj *)TOH_ptr)[-3]"
 
-Formal parameter or local variable from cast cont:  by name, e.g. "x"
+Formal parameter or local variable from case cont:  by name, e.g. "x"
 
 Alt constructor var:  "stgCurVal.op->payload[i], bind these"
 
