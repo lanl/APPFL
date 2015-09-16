@@ -120,6 +120,7 @@ void updatePtr(PtrOrLiteral *f) {
       }
 
       memcpy(freePtr, p, size);
+      if (EXTRA) assert(isLSBset(freePtr) == 0 && "gc: bad alignment");
 
       p->infoPtr = (InfoTab *)setLSB(freePtr);
 

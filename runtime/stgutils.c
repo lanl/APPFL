@@ -19,7 +19,7 @@ DEFUN0(fun_stgShowResultCont) {
   ENDFUN;
 }
 
-InfoTab it_stgShowResultCont =
+InfoTab it_stgShowResultCont __attribute__((aligned(8))) =
   { .name       = "fun_showResultCont",
     .fvCount    = 0,
     .entryCode  = &fun_stgShowResultCont,
@@ -34,7 +34,7 @@ DEFUN0(stgCallCont) {
   ENDFUN;
 }
 
-InfoTab it_stgCallCont =
+InfoTab it_stgCallCont __attribute__((aligned(8))) =
   { .name = "stgCallCont",
     .fvCount = 0,
     .entryCode = &stgCallCont,
@@ -61,7 +61,7 @@ DEFUN0(stgUpdateCont) {
   ENDFUN
 }
 
-InfoTab it_stgUpdateCont =
+InfoTab it_stgUpdateCont __attribute__((aligned(8))) =
   { .name = "default stgUpdateCont",
     .fvCount = 0,
     .entryCode = &stgUpdateCont,

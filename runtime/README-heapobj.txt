@@ -192,16 +192,12 @@ infoPtr->fvCount = ***NO LONGER VALID, ANY FREE VARS WILL BE CAPTURED ELSEWHERE*
 payload[0] = the pointer to the next object in the indirect chain
 payload[1..] = garbage
 
-
-
 FORWARD
-                               |          payload[0]           |
------------------------------------------------------------------------------
-| infoPtr | objType |          | ptr to new self in "to" space | garbage    |
------------------------------------------------------------------------------
-
-objType = FORWARD
-payload[0] is pointer to new self in "to" space
+ 
+Forwarding pointers appear temporarily during garbage collection.
+The infoPtr of the Obj is replaced by a ptr to the new Obj in the "To space"
+with the least significant bit set to 1 to distinguish a forwarding pointer 
+from an info pointer.
 
 
 Static Heap Objects
