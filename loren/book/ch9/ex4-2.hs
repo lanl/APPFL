@@ -38,7 +38,7 @@ rmdups [] = []
 rmdups (x:xs) = x: rmdups (filter (/= x) xs)
 
 nextgen :: Board -> Board
-nextgen b = renormalize(survivors b ++ births b)
+nextgen b = (survivors b ++ births b)
 
 subX :: Int -> Pos -> Pos
 subX a (x,y) = (x-a,y)
@@ -55,11 +55,14 @@ life :: Board -> IO()
 life b = do cls
             showCells b
             printBorder b
-            wait 500000
-            life (nextgen b)
+            wait 5000
+            if (length (nextgen b)) == 0 
+               then do cls
+                       putStrLn "EXTINCTION!!!!"
+               else life (renormalize(nextgen b))
            
 startLife = do cls
-               printBorder [(29,29),(2,2)]
+               printBorder [(50,50),(2,2)]
                goto (2,2)
                b <- getBoard [] (2,2)
                let b1 = renormalize b
@@ -97,16 +100,18 @@ printRight x y = seqn[writeat (x,b) "|" | b<- [1..y]]
 printBottom x y = seqn[writeat (a,y) "-" | a <- [1..x]]
 
 getBoard ::Board -> Pos ->  IO Board
-getBoard xs p = do x <- getChar
+getBoard xs p = do goto p
+                   x <- getChar
+                   if (length [y|y <- xs, y==p])>=1 then writeat p "0" else writeat p " "
                    case x of 
                        'i' -> if (snd p) == 2 then getBoard xs p else getBoard xs ((fst p),(snd p)-1)
                        'j' -> if (fst p) == 2 then getBoard xs p else getBoard xs ((fst p)-1,(snd p))
-                       'l' -> if (fst p) == 29 then getBoard xs p else getBoard xs ((fst p)+1,(snd p))
-                       'm' -> if (snd p) == 29 then getBoard xs p else getBoard xs ((fst p),(snd p)+1)
+                       'l' -> if (fst p) == 50 then getBoard xs p else getBoard xs ((fst p)+1,(snd p))
+                       'm' -> if (snd p) == 50 then getBoard xs p else getBoard xs ((fst p),(snd p)+1)
                        'k' -> if (length [y|y<- xs, y==p])>=1
-                               then do writeat p " "
-                                       getBoard (xs \\ (p:[])) p                            
-                               else do writeat p "0" 
-                                       getBoard (p:xs) p                                  
+                                    then do writeat p " "
+                                            getBoard (xs \\ (p:[])) p                            
+                                    else do writeat p "0" 
+                                            getBoard (p:xs) p                                  
                        'q' -> return xs 
                        _  -> getBoard xs p
