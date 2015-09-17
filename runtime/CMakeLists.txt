@@ -3,14 +3,16 @@ project(runtime)
 
   set(SHAREDLIB OFF)
 
-  set(rt_hdrs cmm.h
+  set(rt_hdrs args.h 
+              cmm.h
               gc.h
               stg.h
               stgutils.h
 	      stgApply.h
     )
 
-  set(rt_srcs cmm.c
+  set(rt_srcs args.c 
+              cmm.c
               gc.c
               stg.c
               stgutils.c

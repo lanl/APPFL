@@ -7,7 +7,7 @@
 #include "stg.h"
 #include "stgutils.h"
 
-const bool DEBUG = false;
+const bool DEBUG = true;
 const bool EXTRA = true;  // run extra checks
 
 void *toPtr=NULL, *fromPtr=NULL;

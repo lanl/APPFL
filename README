@@ -63,6 +63,12 @@ compile a .stg.c file:
 
 $ gcc test/one.stg.c -o one -L build/lib -I build/include -lruntime -std=gnu99
 
+-----------------------------------------
+Runtime flags to binaries:
+
+-g         -- disable Garbage Collection
+-t <float> -- set Garbage Collection Threshold
+
 
 
 
