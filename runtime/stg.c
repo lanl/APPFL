@@ -38,6 +38,7 @@ Obj *stgAllocCont(InfoTab *itp) {
           "stgAllocCont: itp->objType == CALLCONT" );
   int payloadSize = itp->layoutInfo.payloadSize;
   size_t objSize = sizeof(Obj) + payloadSize * sizeof(PtrOrLiteral);
+  objSize = ((objSize + 7)/8)*8; 
   fprintf(stderr, "allocating continuation with payloadSize %d\n", payloadSize);
   showIT(itp);
   stgSP = (char *)stgSP - objSize;
@@ -58,6 +59,7 @@ Obj *stgAllocCallCont2(InfoTab *itp, int argc) {
   assert(itp->objType == CALLCONT && 
 	 "stgAllocCallCont: itp->objType != CALLCONT");
   size_t objSize = sizeof(Obj) + (argc + 1) * sizeof(PtrOrLiteral);
+  objSize = ((objSize + 7)/8)*8; 
   fprintf(stderr, "allocating call continuation with argc %d\n", argc);
   showIT(itp);
   stgSP = (char *)stgSP - objSize;
@@ -99,6 +101,7 @@ Obj* stgNewHeapObj(InfoTab *itp) {
   fprintf(stderr, "stgNewHeapObj: "); showIT(itp);
   int payloadSize = itp->layoutInfo.payloadSize;
   size_t objSize = sizeof(Obj) + payloadSize * sizeof(PtrOrLiteral);
+  objSize = ((objSize + 7)/8)*8; 
   Obj *objp = (Obj *)stgHP;
   memset(objp, 0, objSize); //zero out anything left by previous gc passes
   stgHP = (char *)stgHP + objSize;
@@ -110,24 +113,6 @@ Obj* stgNewHeapObj(InfoTab *itp) {
   return objp;
 }
 
-/*
-// PAP is special
-Obj* stgNewHeapPAP(InfoTab *itp, int argc) {
-  assert(itp->objType == FUN && "stgNewHeapPap:  itp->objType != FUN" );
-  fprintf(stderr, "stgNewHeapPap: "); showIT(itp);
-  size_t objSize = sizeof(Obj) + (argc + 1) * sizeof(PtrOrLiteral);
-  Obj *objp = (Obj *)stgHP;
-  stgHP = (char *)stgHP + objSize;
-  objp->infoPtr = itp;
-  objp->objType = PAP;
-  objp->argCount = argc;  // for PAP, this will go
-  objp->payload[0] = (PtrOrLiteral) {.argType = INT, .i = argc};
-  strcpy(objp->ident, itp->name);  // may be overwritten
-  fprintf(stderr, "stgNewHeapPAP: "); showStgObj(objp);
-  return objp;
-}
-*/
-
 // PAP is special
 // pargc is number of pointer args to store
 // npargc is number of non-pointer args to store
@@ -135,7 +120,8 @@ Obj* stgNewHeapPAP(InfoTab *itp, int pargc, int npargc) {
   assert(itp->objType == FUN && "stgNewHeapPap:  itp->objType != FUN" );
   fprintf(stderr, "stgNewHeapPap: "); showIT(itp);
   size_t objSize = sizeof(Obj) + 
-                   (itp->fvCount + pargc + npargc + 1) * sizeof(PtrOrLiteral);
+    (itp->fvCount + pargc + npargc + 1) * sizeof(PtrOrLiteral);
+  objSize = ((objSize + 7)/8)*8;
   Obj *objp = (Obj *)stgHP;
   stgHP = (char *)stgHP + objSize;
   objp->infoPtr = itp;
@@ -146,6 +132,19 @@ Obj* stgNewHeapPAP(InfoTab *itp, int pargc, int npargc) {
   strcpy(objp->ident, itp->name);  // may be overwritten
   fprintf(stderr, "stgNewHeapPAP: "); showStgObj(objp);
   return objp;
+}
+
+int getObjSize(Obj *o) {
+  size_t objSize;
+  if (o->objType == CALLCONT) {
+    objSize = sizeof(Obj) + (o->payload[0].i+1) * sizeof(PtrOrLiteral);
+  } else if (o->objType == PAP) {
+    objSize = sizeof(Obj) + (o->infoPtr->fvCount + 1 + o->argCount) * sizeof(PtrOrLiteral);
+  } else {
+    objSize = sizeof(Obj) + o->infoPtr->layoutInfo.payloadSize * sizeof(PtrOrLiteral);
+  }
+  objSize = ((objSize + 7)/8)*8;
+  return objSize;
 }
 
 void showStgObjPretty(Obj *p);
@@ -386,14 +385,6 @@ void showStgValDebug(PtrOrLiteral v) {
 
 size_t stgStatObjCount;
 Obj * stgStatObj[100];
-
-int getObjSize(Obj *o) {
-  if (o->objType == CALLCONT || o->objType == PAP) {
-    return  sizeof(Obj) + (o->payload[0].i+1) * sizeof(PtrOrLiteral);
-  } else {
-    return  sizeof(Obj) + o->infoPtr->layoutInfo.payloadSize * sizeof(PtrOrLiteral);;
-  }
-}
 
 void showStgStack() {
   fprintf(stderr,"\nSTG Stack:\n\n");

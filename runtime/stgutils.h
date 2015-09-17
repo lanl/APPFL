@@ -88,8 +88,12 @@ do {						\
     exit(0);                                    \
   }                                             \
   assert (cmmSP == cmmStack + cmmStackSize && "Non empty cmm stack in stgeval");\
-  GC(); \
+  GC();					\
 } while (0)
+
+//  GC();					\
+
+
 
 #endif
 

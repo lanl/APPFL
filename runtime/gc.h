@@ -2,14 +2,12 @@
 #define gc_h
 
 #include "stg.h"
-
-// fraction of total heap used before gc runs.
-static const float gcThreshold=0.0;
+#include "args.h"
 
 void initGc(void);
 
 void gc(void);
 
-#define GC() if(stgHP-stgHeap > gcThreshold*stgHeapSize) gc();
+#define GC() if(stgHP-stgHeap > GCThreshold*stgHeapSize) gc();
 
 #endif

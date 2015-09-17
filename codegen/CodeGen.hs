@@ -140,6 +140,7 @@ cgStart = "\n\nDEFUN0(start) {\n" ++
             
 cgMain :: Bool -> String 
 cgMain v = let top = "int main (int argc, char **argv) {\n" ++
+                     "  parseArgs(argc, argv);\n" ++
                      "  initStg();\n" ++
                      "  initCmm();\n" ++
                      "  initGc();\n" ++

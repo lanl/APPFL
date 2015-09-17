@@ -76,6 +76,7 @@ DEFUN0(start) {
 }
 
 int main (int argc, char **argv) {
+  parseArgs(argc, argv);
   initStg();
   initCmm();
   initGc();
