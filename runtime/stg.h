@@ -77,7 +77,7 @@ struct _Obj {
   int _objSize;              // for debugging
   ObjType objType;          // to distinguish PAP, FUN, BLACKHOLE, INDIRECT
   int argCount;             // for PAP, how many args already applied to?
-  char ident[65];           // temporary, just for tracing
+  char ident[67];           // temporary, just for tracing
   PtrOrLiteral payload[];
 };
 
@@ -86,7 +86,7 @@ typedef struct {
   int payloadSize;
   int boxedCount;
   int unboxedCount;
-  char permString[64];  // this is just for e.g. displaying the heap
+  char permString[32];  // this is just for e.g. displaying the heap
 } LayoutInfo;
 
 typedef struct {
@@ -100,7 +100,7 @@ typedef struct {
 typedef struct {
   int tag;
   int arity;
-  char conName[64];
+  char conName[32];
 } CONfields;
 
 typedef struct {

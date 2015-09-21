@@ -38,7 +38,7 @@ Obj *stgAllocCont(InfoTab *itp) {
           "stgAllocCont: itp->objType == CALLCONT" );
   int payloadSize = itp->layoutInfo.payloadSize;
   size_t objSize = sizeof(Obj) + payloadSize * sizeof(PtrOrLiteral);
-  //  objSize = ((objSize + 7)/8)*8; 
+  objSize = ((objSize + 7)/8)*8; 
   fprintf(stderr, "allocating continuation with payloadSize %d\n", payloadSize);
   showIT(itp);
   stgSP = (char *)stgSP - objSize;
@@ -60,7 +60,7 @@ Obj *stgAllocCallCont2(InfoTab *itp, int argc) {
   assert(itp->objType == CALLCONT && 
 	 "stgAllocCallCont: itp->objType != CALLCONT");
   size_t objSize = sizeof(Obj) + (argc + 1) * sizeof(PtrOrLiteral);
-  //  objSize = ((objSize + 7)/8)*8; 
+  objSize = ((objSize + 7)/8)*8; 
   fprintf(stderr, "allocating call continuation with argc %d\n", argc);
   showIT(itp);
   stgSP = (char *)stgSP - objSize;
@@ -94,7 +94,7 @@ Obj *stgPopCont() {
     fprintf(stderr, "popping continuation with payloadSize %d\n", payloadSize);
   }
   size_t objSize = sizeof(Obj) + payloadSize * sizeof(PtrOrLiteral);
-  //  objSize = ((objSize + 7)/8)*8; 
+  objSize = ((objSize + 7)/8)*8; 
   showIT(retVal->infoPtr);
   assert((char *)retVal + objSize <= (char *)stgStack + stgStackSize);
   stgSP = (char *)retVal + objSize;
@@ -113,7 +113,7 @@ Obj* stgNewHeapObj(InfoTab *itp) {
   default:  assert("stgNewHeapObj");
   }
   size_t objSize = sizeof(Obj) + payloadSize * sizeof(PtrOrLiteral);
-  //  objSize = ((objSize + 7)/8)*8; 
+  objSize = ((objSize + 7)/8)*8; 
   Obj *objp = (Obj *)stgHP;
   stgHP = (char *)stgHP + objSize;
   memset(objp, 0, objSize); //zero out anything left by previous gc passes
@@ -137,7 +137,7 @@ Obj* stgNewHeapPAP(InfoTab *itp, int pargc, int npargc) {
   fprintf(stderr, "stgNewHeapPap: "); showIT(itp);
   size_t objSize = sizeof(Obj) + 
     (fvs + pargc + npargc + 1) * sizeof(PtrOrLiteral);
-  //  objSize = ((objSize + 7)/8)*8;
+  objSize = ((objSize + 7)/8)*8;
   Obj *objp = (Obj *)stgHP;
   stgHP = (char *)stgHP + objSize;
   objp->infoPtr = itp;
@@ -163,7 +163,7 @@ int getObjSize(Obj *o) {
   } else {
     objSize = sizeof(Obj) + o->infoPtr->layoutInfo.payloadSize * sizeof(PtrOrLiteral);
   }
-  //  objSize = ((objSize + 7)/8)*8;
+  objSize = ((objSize + 7)/8)*8;
   assert(objSize == o->_objSize && "bad objSize");
   return objSize;
 }
