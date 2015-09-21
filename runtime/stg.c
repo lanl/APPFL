@@ -38,13 +38,14 @@ Obj *stgAllocCont(InfoTab *itp) {
           "stgAllocCont: itp->objType == CALLCONT" );
   int payloadSize = itp->layoutInfo.payloadSize;
   size_t objSize = sizeof(Obj) + payloadSize * sizeof(PtrOrLiteral);
-  objSize = ((objSize + 7)/8)*8; 
+  //  objSize = ((objSize + 7)/8)*8; 
   fprintf(stderr, "allocating continuation with payloadSize %d\n", payloadSize);
   showIT(itp);
   stgSP = (char *)stgSP - objSize;
   assert(stgSP >= stgStack);
   Obj *objp = (Obj *)stgSP;
   objp->infoPtr = itp;
+  objp->_objSize = objSize;
   objp->objType = itp->objType;
   objp->argCount = 0;  // for PAP, this will go
   strcpy(objp->ident, itp->name);  // may be overwritten
@@ -59,13 +60,14 @@ Obj *stgAllocCallCont2(InfoTab *itp, int argc) {
   assert(itp->objType == CALLCONT && 
 	 "stgAllocCallCont: itp->objType != CALLCONT");
   size_t objSize = sizeof(Obj) + (argc + 1) * sizeof(PtrOrLiteral);
-  objSize = ((objSize + 7)/8)*8; 
+  //  objSize = ((objSize + 7)/8)*8; 
   fprintf(stderr, "allocating call continuation with argc %d\n", argc);
   showIT(itp);
   stgSP = (char *)stgSP - objSize;
   assert(stgSP >= stgStack);
   Obj *objp = (Obj *)stgSP;
   objp->infoPtr = itp;
+  objp->_objSize = objSize;
   objp->objType = itp->objType;
   objp->argCount = 0;  // for PAP, this will go
   objp->payload[0] = (PtrOrLiteral) {.argType = INT, .i = argc};
@@ -75,11 +77,12 @@ Obj *stgAllocCallCont2(InfoTab *itp, int argc) {
 
 // TODO: 64 bit align
 // return pointer to popped cont
-// NOTE:  stgAllocCont with invalidate this pointer!
+// NOTE:  stgAllocCont will invalidate this pointer!
 // CALLCONT is special
 Obj *stgPopCont() {
   Obj *retVal = (Obj *)stgSP;
-  // this isn't robust for multiple reasons
+  InfoTab *itp = retVal->infoPtr;
+  assert( itp->objType == retVal->objType);
   assert( retVal->infoPtr->objType >= UPDCONT &&
           retVal->infoPtr->objType <= FUNCONT);
   int payloadSize;
@@ -91,6 +94,7 @@ Obj *stgPopCont() {
     fprintf(stderr, "popping continuation with payloadSize %d\n", payloadSize);
   }
   size_t objSize = sizeof(Obj) + payloadSize * sizeof(PtrOrLiteral);
+  //  objSize = ((objSize + 7)/8)*8; 
   showIT(retVal->infoPtr);
   assert((char *)retVal + objSize <= (char *)stgStack + stgStackSize);
   stgSP = (char *)retVal + objSize;
@@ -100,12 +104,21 @@ Obj *stgPopCont() {
 Obj* stgNewHeapObj(InfoTab *itp) {
   fprintf(stderr, "stgNewHeapObj: "); showIT(itp);
   int payloadSize = itp->layoutInfo.payloadSize;
+  int fvs = itp->layoutInfo.boxedCount + itp->layoutInfo.unboxedCount;
+  // assert(itp->fvCount == fvs);  // fvCount going away
+  switch (itp->objType) {
+  case FUN:
+  case CON: assert(payloadSize == fvs && "stgNewHeapObj"); break;
+  case THUNK: assert(payloadSize == fvs + 1 && "stgNewHeapObj"); break;
+  default:  assert("stgNewHeapObj");
+  }
   size_t objSize = sizeof(Obj) + payloadSize * sizeof(PtrOrLiteral);
-  objSize = ((objSize + 7)/8)*8; 
+  //  objSize = ((objSize + 7)/8)*8; 
   Obj *objp = (Obj *)stgHP;
-  memset(objp, 0, objSize); //zero out anything left by previous gc passes
   stgHP = (char *)stgHP + objSize;
+  memset(objp, 0, objSize); //zero out anything left by previous gc passes
   objp->infoPtr = itp;
+  objp->_objSize = objSize;
   objp->objType = itp->objType;
   objp->argCount = 0;  // for PAP, this will go
   strcpy(objp->ident, itp->name);  // may be overwritten
@@ -118,17 +131,21 @@ Obj* stgNewHeapObj(InfoTab *itp) {
 // npargc is number of non-pointer args to store
 Obj* stgNewHeapPAP(InfoTab *itp, int pargc, int npargc) {
   assert(itp->objType == FUN && "stgNewHeapPap:  itp->objType != FUN" );
+  int fvs = itp->layoutInfo.boxedCount + itp->layoutInfo.unboxedCount;
+  // assert(itp->fvCount == fvs);      // fvCount going away
+  assert(itp->layoutInfo.payloadSize == fvs);  // FUN
   fprintf(stderr, "stgNewHeapPap: "); showIT(itp);
   size_t objSize = sizeof(Obj) + 
-    (itp->fvCount + pargc + npargc + 1) * sizeof(PtrOrLiteral);
-  objSize = ((objSize + 7)/8)*8;
+    (fvs + pargc + npargc + 1) * sizeof(PtrOrLiteral);
+  //  objSize = ((objSize + 7)/8)*8;
   Obj *objp = (Obj *)stgHP;
   stgHP = (char *)stgHP + objSize;
   objp->infoPtr = itp;
+  objp->_objSize = objSize;
   objp->objType = PAP;
   objp->argCount = pargc + npargc;  // for PAP, this will go
-  objp->payload[itp->fvCount] = (PtrOrLiteral) {.argType = INT, 
-                                                .i = PNPACK(pargc, npargc)};
+  objp->payload[fvs] = (PtrOrLiteral) {.argType = INT, 
+                                       .i = PNPACK(pargc, npargc)};
   strcpy(objp->ident, itp->name);  // may be overwritten
   fprintf(stderr, "stgNewHeapPAP: "); showStgObj(objp);
   return objp;
@@ -136,14 +153,18 @@ Obj* stgNewHeapPAP(InfoTab *itp, int pargc, int npargc) {
 
 int getObjSize(Obj *o) {
   size_t objSize;
+  
   if (o->objType == CALLCONT) {
     objSize = sizeof(Obj) + (o->payload[0].i+1) * sizeof(PtrOrLiteral);
   } else if (o->objType == PAP) {
-    objSize = sizeof(Obj) + (o->infoPtr->fvCount + 1 + o->argCount) * sizeof(PtrOrLiteral);
+    InfoTab *itp = o->infoPtr;
+    int fvs = itp->layoutInfo.boxedCount + itp->layoutInfo.unboxedCount;
+    objSize = sizeof(Obj) + (fvs + 1 + o->argCount) * sizeof(PtrOrLiteral);
   } else {
     objSize = sizeof(Obj) + o->infoPtr->layoutInfo.payloadSize * sizeof(PtrOrLiteral);
   }
-  objSize = ((objSize + 7)/8)*8;
+  //  objSize = ((objSize + 7)/8)*8;
+  assert(objSize == o->_objSize && "bad objSize");
   return objSize;
 }
 
@@ -163,10 +184,11 @@ void showStgVal(PtrOrLiteral v) {
 }
 
 void showIT(InfoTab *itp) {
-  fprintf(stderr, "showIT: %s %s, fvCount %d", 
+  fprintf(stderr, "showIT: %s %s, bc %d ubc %d", 
 	  objTypeNames[itp->objType], 
 	  itp->name, 
-	  itp->fvCount);
+	  itp->layoutInfo.boxedCount,
+          itp->layoutInfo.unboxedCount);
   if (itp->objType != CALLCONT)
     fprintf(stderr, ", layoutInfo.payloadSize %d", itp->layoutInfo.payloadSize);
   fprintf(stderr, "\n");

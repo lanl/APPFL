@@ -454,20 +454,11 @@ showITType _ = "sho"
 
 showITs os = concatMap showIT $ itsOf os
 
-{-
-  char name[32];  // for debugging
-  int fvCount;    // lexically determined, should be in layout
-  CmmFnPtr entryCode; 
-  ObjType objType; // kind of object, tag for union
-  LayoutInfo layout;
-  ...
--}
-
 showIT it@(Fun {}) =
     "InfoTab it_" ++ name it ++ " __attribute__((aligned(8))) = \n" ++
     "  { .name                = " ++ show (name it) ++ ",\n" ++
     "    // fvs " ++ show (fvs it) ++ "\n" ++
-    "    .fvCount             = " ++ show (length $ fvs it) ++ ",\n" ++
+    -- "    .fvCount             = " ++ show (length $ fvs it) ++ ",\n" ++
     "    .entryCode           = &" ++ entryCode it ++ ",\n" ++
     "    .objType             = FUN,\n" ++
     "    .layoutInfo.payloadSize  = " ++ show (length $ fvs it) ++ ",\n" ++
@@ -482,7 +473,7 @@ showIT it@(Pap {}) =
     "InfoTab it_" ++ name it ++ " __attribute__((aligned(8))) = \n" ++
     "  { .name                = " ++ show (name it) ++ ",\n" ++
     "    // fvs " ++ show (fvs it) ++ "\n" ++
-    "    .fvCount             = " ++ show (length $ fvs it) ++ ",\n" ++
+    -- "    .fvCount             = " ++ show (length $ fvs it) ++ ",\n" ++
     "    .entryCode           = &" ++ entryCode it ++ ",\n" ++
     "    .objType             = PAP,\n" ++
     -- payloadSize handled specially for PAP
@@ -499,7 +490,7 @@ showIT it@(Con {}) =
     "InfoTab it_" ++ name it ++ " __attribute__((aligned(8))) = \n" ++
     "  { .name                = " ++ show (name it) ++ ",\n" ++
     "    // fvs " ++ show (fvs it) ++ "\n" ++
-    "    .fvCount             = " ++ show (length $ fvs it) ++ ",\n" ++
+    -- "    .fvCount             = " ++ show (length $ fvs it) ++ ",\n" ++
     "    .entryCode           = &" ++ entryCode it ++ ",\n" ++
     "    .objType             = CON,\n" ++
     "    .layoutInfo.payloadSize  = " ++ show (arity it) ++ ",\n" ++
@@ -516,7 +507,7 @@ showIT it@(Thunk {}) =
     "InfoTab it_" ++ name it ++ " __attribute__((aligned(8))) = \n" ++
     "  { .name                = " ++ show (name it) ++ ",\n" ++
     "    // fvs " ++ show (fvs it) ++ "\n" ++
-    "    .fvCount             = " ++ show (length $ fvs it) ++ ",\n" ++
+    -- "    .fvCount             = " ++ show (length $ fvs it) ++ ",\n" ++
     "    .entryCode           = &" ++ entryCode it ++ ",\n" ++
     "    .objType             = THUNK,\n" ++
     "    .layoutInfo.payloadSize = " ++ show (1 + (length $ fvs it)) ++ ",\n" ++
@@ -530,7 +521,7 @@ showIT it@(Blackhole {}) =
     "InfoTab it_" ++ name it ++ "  __attribute__((aligned(8)))= \n" ++
     "  { .name                = " ++ show (name it) ++ ",\n" ++
     "    // fvs " ++ show (fvs it) ++ "\n" ++
-    "    .fvCount             = " ++ show (length $ fvs it) ++ ",\n" ++
+    -- "    .fvCount             = " ++ show (length $ fvs it) ++ ",\n" ++
     "    .entryCode           = &" ++ entryCode it ++ ",\n" ++
     "    .objType             = BLACKHOLE,\n" ++
     "    .layoutInfo.payloadSize  = 0,\n" ++ 
@@ -544,7 +535,7 @@ showIT it@(ITAlts{}) =
     "InfoTab it_" ++ name it ++ " __attribute__((aligned(8))) = \n" ++
     "  { .name                = " ++ show (name it) ++ ",\n" ++
     "    // fvs " ++ show (fvs it) ++ "\n" ++
-    "    .fvCount             = " ++ show (length $ fvs it) ++ ",\n" ++
+    -- "    .fvCount             = " ++ show (length $ fvs it) ++ ",\n" ++
     "    .entryCode           = &" ++ entryCode it ++ ",\n" ++
     "    .objType             = CASECONT,\n" ++
     "    .layoutInfo.payloadSize = " ++ show (length $ fvs it) ++ ",\n" ++

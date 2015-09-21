@@ -59,7 +59,8 @@ DEFUN2(stgApplyN, N, f) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyN FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->fvCount;
+      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                    f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 0, 1);
       pap->argCount = argc;
@@ -82,7 +83,8 @@ DEFUN2(stgApplyN, N, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->fvCount;
+    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                  f.op->infoPtr->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
@@ -208,7 +210,8 @@ DEFUN2(stgApplyP, N, f) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyP FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->fvCount;
+      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                    f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 1, 0);
       pap->argCount = argc;
@@ -231,7 +234,8 @@ DEFUN2(stgApplyP, N, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->fvCount;
+    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                  f.op->infoPtr->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
@@ -379,7 +383,8 @@ DEFUN2(stgApplyNN, N, f) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNN FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->fvCount;
+      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                    f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 0, 2);
       pap->argCount = argc;
@@ -402,7 +407,8 @@ DEFUN2(stgApplyNN, N, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->fvCount;
+    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                  f.op->infoPtr->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
@@ -580,7 +586,8 @@ DEFUN2(stgApplyPN, N, f) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPN FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->fvCount;
+      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                    f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 1, 1);
       pap->argCount = argc;
@@ -603,7 +610,8 @@ DEFUN2(stgApplyPN, N, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->fvCount;
+    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                  f.op->infoPtr->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
@@ -783,7 +791,8 @@ DEFUN2(stgApplyNP, N, f) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNP FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->fvCount;
+      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                    f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 1, 1);
       pap->argCount = argc;
@@ -806,7 +815,8 @@ DEFUN2(stgApplyNP, N, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->fvCount;
+    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                  f.op->infoPtr->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
@@ -989,7 +999,8 @@ DEFUN2(stgApplyPP, N, f) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPP FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->fvCount;
+      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                    f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2, 0);
       pap->argCount = argc;
@@ -1012,7 +1023,8 @@ DEFUN2(stgApplyPP, N, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->fvCount;
+    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                  f.op->infoPtr->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
@@ -1219,7 +1231,8 @@ DEFUN2(stgApplyNNN, N, f) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNNN FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->fvCount;
+      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                    f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 0, 3);
       pap->argCount = argc;
@@ -1242,7 +1255,8 @@ DEFUN2(stgApplyNNN, N, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->fvCount;
+    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                  f.op->infoPtr->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
@@ -1479,7 +1493,8 @@ DEFUN2(stgApplyPNN, N, f) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPNN FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->fvCount;
+      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                    f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 1, 2);
       pap->argCount = argc;
@@ -1502,7 +1517,8 @@ DEFUN2(stgApplyPNN, N, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->fvCount;
+    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                  f.op->infoPtr->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
@@ -1741,7 +1757,8 @@ DEFUN2(stgApplyNPN, N, f) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNPN FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->fvCount;
+      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                    f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 1, 2);
       pap->argCount = argc;
@@ -1764,7 +1781,8 @@ DEFUN2(stgApplyNPN, N, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->fvCount;
+    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                  f.op->infoPtr->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
@@ -2006,7 +2024,8 @@ DEFUN2(stgApplyPPN, N, f) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPPN FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->fvCount;
+      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                    f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2, 1);
       pap->argCount = argc;
@@ -2029,7 +2048,8 @@ DEFUN2(stgApplyPPN, N, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->fvCount;
+    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                  f.op->infoPtr->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
@@ -2272,7 +2292,8 @@ DEFUN2(stgApplyNNP, N, f) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNNP FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->fvCount;
+      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                    f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 1, 2);
       pap->argCount = argc;
@@ -2295,7 +2316,8 @@ DEFUN2(stgApplyNNP, N, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->fvCount;
+    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                  f.op->infoPtr->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
@@ -2541,7 +2563,8 @@ DEFUN2(stgApplyPNP, N, f) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPNP FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->fvCount;
+      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                    f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2, 1);
       pap->argCount = argc;
@@ -2564,7 +2587,8 @@ DEFUN2(stgApplyPNP, N, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->fvCount;
+    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                  f.op->infoPtr->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
@@ -2811,7 +2835,8 @@ DEFUN2(stgApplyNPP, N, f) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNPP FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->fvCount;
+      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                    f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2, 1);
       pap->argCount = argc;
@@ -2834,7 +2859,8 @@ DEFUN2(stgApplyNPP, N, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->fvCount;
+    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                  f.op->infoPtr->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
@@ -3083,7 +3109,8 @@ DEFUN2(stgApplyPPP, N, f) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPPP FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->fvCount;
+      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                    f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3, 0);
       pap->argCount = argc;
@@ -3106,7 +3133,8 @@ DEFUN2(stgApplyPPP, N, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->fvCount;
+    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                  f.op->infoPtr->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
@@ -3370,7 +3398,8 @@ DEFUN2(stgApplyNNNN, N, f) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNNNN FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->fvCount;
+      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                    f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 0, 4);
       pap->argCount = argc;
@@ -3393,7 +3422,8 @@ DEFUN2(stgApplyNNNN, N, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->fvCount;
+    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                  f.op->infoPtr->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
@@ -3679,7 +3709,8 @@ DEFUN2(stgApplyPNNN, N, f) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPNNN FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->fvCount;
+      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                    f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 1, 3);
       pap->argCount = argc;
@@ -3702,7 +3733,8 @@ DEFUN2(stgApplyPNNN, N, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->fvCount;
+    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                  f.op->infoPtr->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
@@ -3990,7 +4022,8 @@ DEFUN2(stgApplyNPNN, N, f) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNPNN FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->fvCount;
+      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                    f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 1, 3);
       pap->argCount = argc;
@@ -4013,7 +4046,8 @@ DEFUN2(stgApplyNPNN, N, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->fvCount;
+    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                  f.op->infoPtr->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
@@ -4304,7 +4338,8 @@ DEFUN2(stgApplyPPNN, N, f) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPPNN FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->fvCount;
+      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                    f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2, 2);
       pap->argCount = argc;
@@ -4327,7 +4362,8 @@ DEFUN2(stgApplyPPNN, N, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->fvCount;
+    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                  f.op->infoPtr->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
@@ -4619,7 +4655,8 @@ DEFUN2(stgApplyNNPN, N, f) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNNPN FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->fvCount;
+      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                    f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 1, 3);
       pap->argCount = argc;
@@ -4642,7 +4679,8 @@ DEFUN2(stgApplyNNPN, N, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->fvCount;
+    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                  f.op->infoPtr->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
@@ -4937,7 +4975,8 @@ DEFUN2(stgApplyPNPN, N, f) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPNPN FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->fvCount;
+      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                    f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2, 2);
       pap->argCount = argc;
@@ -4960,7 +4999,8 @@ DEFUN2(stgApplyPNPN, N, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->fvCount;
+    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                  f.op->infoPtr->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
@@ -5256,7 +5296,8 @@ DEFUN2(stgApplyNPPN, N, f) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNPPN FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->fvCount;
+      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                    f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2, 2);
       pap->argCount = argc;
@@ -5279,7 +5320,8 @@ DEFUN2(stgApplyNPPN, N, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->fvCount;
+    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                  f.op->infoPtr->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
@@ -5577,7 +5619,8 @@ DEFUN2(stgApplyPPPN, N, f) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPPPN FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->fvCount;
+      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                    f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3, 1);
       pap->argCount = argc;
@@ -5600,7 +5643,8 @@ DEFUN2(stgApplyPPPN, N, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->fvCount;
+    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                  f.op->infoPtr->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
@@ -5897,7 +5941,8 @@ DEFUN2(stgApplyNNNP, N, f) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNNNP FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->fvCount;
+      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                    f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 1, 3);
       pap->argCount = argc;
@@ -5920,7 +5965,8 @@ DEFUN2(stgApplyNNNP, N, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->fvCount;
+    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                  f.op->infoPtr->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
@@ -6219,7 +6265,8 @@ DEFUN2(stgApplyPNNP, N, f) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPNNP FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->fvCount;
+      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                    f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2, 2);
       pap->argCount = argc;
@@ -6242,7 +6289,8 @@ DEFUN2(stgApplyPNNP, N, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->fvCount;
+    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                  f.op->infoPtr->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
@@ -6542,7 +6590,8 @@ DEFUN2(stgApplyNPNP, N, f) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNPNP FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->fvCount;
+      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                    f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2, 2);
       pap->argCount = argc;
@@ -6565,7 +6614,8 @@ DEFUN2(stgApplyNPNP, N, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->fvCount;
+    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                  f.op->infoPtr->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
@@ -6867,7 +6917,8 @@ DEFUN2(stgApplyPPNP, N, f) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPPNP FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->fvCount;
+      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                    f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3, 1);
       pap->argCount = argc;
@@ -6890,7 +6941,8 @@ DEFUN2(stgApplyPPNP, N, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->fvCount;
+    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                  f.op->infoPtr->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
@@ -7192,7 +7244,8 @@ DEFUN2(stgApplyNNPP, N, f) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNNPP FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->fvCount;
+      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                    f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2, 2);
       pap->argCount = argc;
@@ -7215,7 +7268,8 @@ DEFUN2(stgApplyNNPP, N, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->fvCount;
+    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                  f.op->infoPtr->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
@@ -7519,7 +7573,8 @@ DEFUN2(stgApplyPNPP, N, f) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPNPP FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->fvCount;
+      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                    f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3, 1);
       pap->argCount = argc;
@@ -7542,7 +7597,8 @@ DEFUN2(stgApplyPNPP, N, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->fvCount;
+    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                  f.op->infoPtr->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
@@ -7847,7 +7903,8 @@ DEFUN2(stgApplyNPPP, N, f) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNPPP FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->fvCount;
+      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                    f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3, 1);
       pap->argCount = argc;
@@ -7870,7 +7927,8 @@ DEFUN2(stgApplyNPPP, N, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->fvCount;
+    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                  f.op->infoPtr->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
@@ -8177,7 +8235,8 @@ DEFUN2(stgApplyPPPP, N, f) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPPPP FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->fvCount;
+      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                    f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 4, 0);
       pap->argCount = argc;
@@ -8200,7 +8259,8 @@ DEFUN2(stgApplyPPPP, N, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->fvCount;
+    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                  f.op->infoPtr->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
@@ -8517,7 +8577,8 @@ DEFUN2(stgApplyNNNNN, N, f) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNNNNN FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->fvCount;
+      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                    f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 0, 5);
       pap->argCount = argc;
@@ -8540,7 +8601,8 @@ DEFUN2(stgApplyNNNNN, N, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->fvCount;
+    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                  f.op->infoPtr->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
@@ -8875,7 +8937,8 @@ DEFUN2(stgApplyPNNNN, N, f) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPNNNN FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->fvCount;
+      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                    f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 1, 4);
       pap->argCount = argc;
@@ -8898,7 +8961,8 @@ DEFUN2(stgApplyPNNNN, N, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->fvCount;
+    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                  f.op->infoPtr->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
@@ -9235,7 +9299,8 @@ DEFUN2(stgApplyNPNNN, N, f) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNPNNN FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->fvCount;
+      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                    f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 1, 4);
       pap->argCount = argc;
@@ -9258,7 +9323,8 @@ DEFUN2(stgApplyNPNNN, N, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->fvCount;
+    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                  f.op->infoPtr->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
@@ -9598,7 +9664,8 @@ DEFUN2(stgApplyPPNNN, N, f) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPPNNN FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->fvCount;
+      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                    f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2, 3);
       pap->argCount = argc;
@@ -9621,7 +9688,8 @@ DEFUN2(stgApplyPPNNN, N, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->fvCount;
+    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                  f.op->infoPtr->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
@@ -9962,7 +10030,8 @@ DEFUN2(stgApplyNNPNN, N, f) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNNPNN FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->fvCount;
+      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                    f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 1, 4);
       pap->argCount = argc;
@@ -9985,7 +10054,8 @@ DEFUN2(stgApplyNNPNN, N, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->fvCount;
+    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                  f.op->infoPtr->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
@@ -10329,7 +10399,8 @@ DEFUN2(stgApplyPNPNN, N, f) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPNPNN FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->fvCount;
+      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                    f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2, 3);
       pap->argCount = argc;
@@ -10352,7 +10423,8 @@ DEFUN2(stgApplyPNPNN, N, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->fvCount;
+    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                  f.op->infoPtr->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
@@ -10697,7 +10769,8 @@ DEFUN2(stgApplyNPPNN, N, f) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNPPNN FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->fvCount;
+      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                    f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2, 3);
       pap->argCount = argc;
@@ -10720,7 +10793,8 @@ DEFUN2(stgApplyNPPNN, N, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->fvCount;
+    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                  f.op->infoPtr->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
@@ -11067,7 +11141,8 @@ DEFUN2(stgApplyPPPNN, N, f) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPPPNN FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->fvCount;
+      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                    f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3, 2);
       pap->argCount = argc;
@@ -11090,7 +11165,8 @@ DEFUN2(stgApplyPPPNN, N, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->fvCount;
+    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                  f.op->infoPtr->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
@@ -11436,7 +11512,8 @@ DEFUN2(stgApplyNNNPN, N, f) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNNNPN FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->fvCount;
+      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                    f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 1, 4);
       pap->argCount = argc;
@@ -11459,7 +11536,8 @@ DEFUN2(stgApplyNNNPN, N, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->fvCount;
+    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                  f.op->infoPtr->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
@@ -11807,7 +11885,8 @@ DEFUN2(stgApplyPNNPN, N, f) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPNNPN FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->fvCount;
+      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                    f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2, 3);
       pap->argCount = argc;
@@ -11830,7 +11909,8 @@ DEFUN2(stgApplyPNNPN, N, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->fvCount;
+    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                  f.op->infoPtr->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
@@ -12179,7 +12259,8 @@ DEFUN2(stgApplyNPNPN, N, f) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNPNPN FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->fvCount;
+      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                    f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2, 3);
       pap->argCount = argc;
@@ -12202,7 +12283,8 @@ DEFUN2(stgApplyNPNPN, N, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->fvCount;
+    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                  f.op->infoPtr->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
@@ -12553,7 +12635,8 @@ DEFUN2(stgApplyPPNPN, N, f) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPPNPN FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->fvCount;
+      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                    f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3, 2);
       pap->argCount = argc;
@@ -12576,7 +12659,8 @@ DEFUN2(stgApplyPPNPN, N, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->fvCount;
+    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                  f.op->infoPtr->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
@@ -12927,7 +13011,8 @@ DEFUN2(stgApplyNNPPN, N, f) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNNPPN FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->fvCount;
+      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                    f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2, 3);
       pap->argCount = argc;
@@ -12950,7 +13035,8 @@ DEFUN2(stgApplyNNPPN, N, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->fvCount;
+    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                  f.op->infoPtr->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
@@ -13303,7 +13389,8 @@ DEFUN2(stgApplyPNPPN, N, f) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPNPPN FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->fvCount;
+      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                    f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3, 2);
       pap->argCount = argc;
@@ -13326,7 +13413,8 @@ DEFUN2(stgApplyPNPPN, N, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->fvCount;
+    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                  f.op->infoPtr->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
@@ -13680,7 +13768,8 @@ DEFUN2(stgApplyNPPPN, N, f) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNPPPN FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->fvCount;
+      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                    f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3, 2);
       pap->argCount = argc;
@@ -13703,7 +13792,8 @@ DEFUN2(stgApplyNPPPN, N, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->fvCount;
+    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                  f.op->infoPtr->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
@@ -14059,7 +14149,8 @@ DEFUN2(stgApplyPPPPN, N, f) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPPPPN FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->fvCount;
+      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                    f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 4, 1);
       pap->argCount = argc;
@@ -14082,7 +14173,8 @@ DEFUN2(stgApplyPPPPN, N, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->fvCount;
+    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                  f.op->infoPtr->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
@@ -14434,7 +14526,8 @@ DEFUN2(stgApplyNNNNP, N, f) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNNNNP FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->fvCount;
+      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                    f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 1, 4);
       pap->argCount = argc;
@@ -14457,7 +14550,8 @@ DEFUN2(stgApplyNNNNP, N, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->fvCount;
+    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                  f.op->infoPtr->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
@@ -14809,7 +14903,8 @@ DEFUN2(stgApplyPNNNP, N, f) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPNNNP FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->fvCount;
+      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                    f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2, 3);
       pap->argCount = argc;
@@ -14832,7 +14927,8 @@ DEFUN2(stgApplyPNNNP, N, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->fvCount;
+    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                  f.op->infoPtr->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
@@ -15185,7 +15281,8 @@ DEFUN2(stgApplyNPNNP, N, f) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNPNNP FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->fvCount;
+      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                    f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2, 3);
       pap->argCount = argc;
@@ -15208,7 +15305,8 @@ DEFUN2(stgApplyNPNNP, N, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->fvCount;
+    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                  f.op->infoPtr->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
@@ -15563,7 +15661,8 @@ DEFUN2(stgApplyPPNNP, N, f) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPPNNP FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->fvCount;
+      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                    f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3, 2);
       pap->argCount = argc;
@@ -15586,7 +15685,8 @@ DEFUN2(stgApplyPPNNP, N, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->fvCount;
+    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                  f.op->infoPtr->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
@@ -15941,7 +16041,8 @@ DEFUN2(stgApplyNNPNP, N, f) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNNPNP FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->fvCount;
+      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                    f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2, 3);
       pap->argCount = argc;
@@ -15964,7 +16065,8 @@ DEFUN2(stgApplyNNPNP, N, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->fvCount;
+    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                  f.op->infoPtr->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
@@ -16321,7 +16423,8 @@ DEFUN2(stgApplyPNPNP, N, f) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPNPNP FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->fvCount;
+      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                    f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3, 2);
       pap->argCount = argc;
@@ -16344,7 +16447,8 @@ DEFUN2(stgApplyPNPNP, N, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->fvCount;
+    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                  f.op->infoPtr->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
@@ -16702,7 +16806,8 @@ DEFUN2(stgApplyNPPNP, N, f) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNPPNP FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->fvCount;
+      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                    f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3, 2);
       pap->argCount = argc;
@@ -16725,7 +16830,8 @@ DEFUN2(stgApplyNPPNP, N, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->fvCount;
+    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                  f.op->infoPtr->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
@@ -17085,7 +17191,8 @@ DEFUN2(stgApplyPPPNP, N, f) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPPPNP FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->fvCount;
+      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                    f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 4, 1);
       pap->argCount = argc;
@@ -17108,7 +17215,8 @@ DEFUN2(stgApplyPPPNP, N, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->fvCount;
+    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                  f.op->infoPtr->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
@@ -17466,7 +17574,8 @@ DEFUN2(stgApplyNNNPP, N, f) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNNNPP FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->fvCount;
+      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                    f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2, 3);
       pap->argCount = argc;
@@ -17489,7 +17598,8 @@ DEFUN2(stgApplyNNNPP, N, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->fvCount;
+    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                  f.op->infoPtr->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
@@ -17848,7 +17958,8 @@ DEFUN2(stgApplyPNNPP, N, f) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPNNPP FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->fvCount;
+      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                    f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3, 2);
       pap->argCount = argc;
@@ -17871,7 +17982,8 @@ DEFUN2(stgApplyPNNPP, N, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->fvCount;
+    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                  f.op->infoPtr->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
@@ -18231,7 +18343,8 @@ DEFUN2(stgApplyNPNPP, N, f) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNPNPP FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->fvCount;
+      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                    f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3, 2);
       pap->argCount = argc;
@@ -18254,7 +18367,8 @@ DEFUN2(stgApplyNPNPP, N, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->fvCount;
+    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                  f.op->infoPtr->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
@@ -18616,7 +18730,8 @@ DEFUN2(stgApplyPPNPP, N, f) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPPNPP FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->fvCount;
+      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                    f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 4, 1);
       pap->argCount = argc;
@@ -18639,7 +18754,8 @@ DEFUN2(stgApplyPPNPP, N, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->fvCount;
+    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                  f.op->infoPtr->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
@@ -19001,7 +19117,8 @@ DEFUN2(stgApplyNNPPP, N, f) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNNPPP FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->fvCount;
+      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                    f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3, 2);
       pap->argCount = argc;
@@ -19024,7 +19141,8 @@ DEFUN2(stgApplyNNPPP, N, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->fvCount;
+    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                  f.op->infoPtr->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
@@ -19388,7 +19506,8 @@ DEFUN2(stgApplyPNPPP, N, f) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPNPPP FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->fvCount;
+      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                    f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 4, 1);
       pap->argCount = argc;
@@ -19411,7 +19530,8 @@ DEFUN2(stgApplyPNPPP, N, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->fvCount;
+    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                  f.op->infoPtr->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
@@ -19776,7 +19896,8 @@ DEFUN2(stgApplyNPPPP, N, f) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNPPPP FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->fvCount;
+      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                    f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 4, 1);
       pap->argCount = argc;
@@ -19799,7 +19920,8 @@ DEFUN2(stgApplyNPPPP, N, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->fvCount;
+    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                  f.op->infoPtr->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
@@ -20166,7 +20288,8 @@ DEFUN2(stgApplyPPPPP, N, f) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPPPPP FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->fvCount;
+      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                    f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 5, 0);
       pap->argCount = argc;
@@ -20189,7 +20312,8 @@ DEFUN2(stgApplyPPPPP, N, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->fvCount;
+    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                  f.op->infoPtr->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
@@ -20560,7 +20684,8 @@ DEFUN2(stgApplyNNNNNN, N, f) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNNNNNN FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->fvCount;
+      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                    f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 0, 6);
       pap->argCount = argc;
@@ -20583,7 +20708,8 @@ DEFUN2(stgApplyNNNNNN, N, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->fvCount;
+    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                  f.op->infoPtr->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
@@ -20967,7 +21093,8 @@ DEFUN2(stgApplyPNNNNN, N, f) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPNNNNN FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->fvCount;
+      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                    f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 1, 5);
       pap->argCount = argc;
@@ -20990,7 +21117,8 @@ DEFUN2(stgApplyPNNNNN, N, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->fvCount;
+    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                  f.op->infoPtr->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
@@ -21376,7 +21504,8 @@ DEFUN2(stgApplyNPNNNN, N, f) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNPNNNN FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->fvCount;
+      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                    f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 1, 5);
       pap->argCount = argc;
@@ -21399,7 +21528,8 @@ DEFUN2(stgApplyNPNNNN, N, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->fvCount;
+    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                  f.op->infoPtr->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
@@ -21788,7 +21918,8 @@ DEFUN2(stgApplyPPNNNN, N, f) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPPNNNN FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->fvCount;
+      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                    f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2, 4);
       pap->argCount = argc;
@@ -21811,7 +21942,8 @@ DEFUN2(stgApplyPPNNNN, N, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->fvCount;
+    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                  f.op->infoPtr->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
@@ -22201,7 +22333,8 @@ DEFUN2(stgApplyNNPNNN, N, f) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNNPNNN FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->fvCount;
+      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                    f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 1, 5);
       pap->argCount = argc;
@@ -22224,7 +22357,8 @@ DEFUN2(stgApplyNNPNNN, N, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->fvCount;
+    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                  f.op->infoPtr->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
@@ -22617,7 +22751,8 @@ DEFUN2(stgApplyPNPNNN, N, f) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPNPNNN FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->fvCount;
+      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                    f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2, 4);
       pap->argCount = argc;
@@ -22640,7 +22775,8 @@ DEFUN2(stgApplyPNPNNN, N, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->fvCount;
+    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                  f.op->infoPtr->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
@@ -23034,7 +23170,8 @@ DEFUN2(stgApplyNPPNNN, N, f) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNPPNNN FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->fvCount;
+      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                    f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2, 4);
       pap->argCount = argc;
@@ -23057,7 +23194,8 @@ DEFUN2(stgApplyNPPNNN, N, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->fvCount;
+    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                  f.op->infoPtr->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
@@ -23453,7 +23591,8 @@ DEFUN2(stgApplyPPPNNN, N, f) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPPPNNN FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->fvCount;
+      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                    f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3, 3);
       pap->argCount = argc;
@@ -23476,7 +23615,8 @@ DEFUN2(stgApplyPPPNNN, N, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->fvCount;
+    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                  f.op->infoPtr->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
@@ -23871,7 +24011,8 @@ DEFUN2(stgApplyNNNPNN, N, f) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNNNPNN FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->fvCount;
+      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                    f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 1, 5);
       pap->argCount = argc;
@@ -23894,7 +24035,8 @@ DEFUN2(stgApplyNNNPNN, N, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->fvCount;
+    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                  f.op->infoPtr->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
@@ -24291,7 +24433,8 @@ DEFUN2(stgApplyPNNPNN, N, f) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPNNPNN FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->fvCount;
+      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                    f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2, 4);
       pap->argCount = argc;
@@ -24314,7 +24457,8 @@ DEFUN2(stgApplyPNNPNN, N, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->fvCount;
+    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                  f.op->infoPtr->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
@@ -24712,7 +24856,8 @@ DEFUN2(stgApplyNPNPNN, N, f) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNPNPNN FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->fvCount;
+      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                    f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2, 4);
       pap->argCount = argc;
@@ -24735,7 +24880,8 @@ DEFUN2(stgApplyNPNPNN, N, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->fvCount;
+    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                  f.op->infoPtr->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
@@ -25135,7 +25281,8 @@ DEFUN2(stgApplyPPNPNN, N, f) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPPNPNN FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->fvCount;
+      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                    f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3, 3);
       pap->argCount = argc;
@@ -25158,7 +25305,8 @@ DEFUN2(stgApplyPPNPNN, N, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->fvCount;
+    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                  f.op->infoPtr->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
@@ -25558,7 +25706,8 @@ DEFUN2(stgApplyNNPPNN, N, f) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNNPPNN FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->fvCount;
+      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                    f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2, 4);
       pap->argCount = argc;
@@ -25581,7 +25730,8 @@ DEFUN2(stgApplyNNPPNN, N, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->fvCount;
+    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                  f.op->infoPtr->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
@@ -25983,7 +26133,8 @@ DEFUN2(stgApplyPNPPNN, N, f) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPNPPNN FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->fvCount;
+      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                    f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3, 3);
       pap->argCount = argc;
@@ -26006,7 +26157,8 @@ DEFUN2(stgApplyPNPPNN, N, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->fvCount;
+    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                  f.op->infoPtr->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
@@ -26409,7 +26561,8 @@ DEFUN2(stgApplyNPPPNN, N, f) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNPPPNN FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->fvCount;
+      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                    f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3, 3);
       pap->argCount = argc;
@@ -26432,7 +26585,8 @@ DEFUN2(stgApplyNPPPNN, N, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->fvCount;
+    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                  f.op->infoPtr->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
@@ -26837,7 +26991,8 @@ DEFUN2(stgApplyPPPPNN, N, f) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPPPPNN FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->fvCount;
+      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                    f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 4, 2);
       pap->argCount = argc;
@@ -26860,7 +27015,8 @@ DEFUN2(stgApplyPPPPNN, N, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->fvCount;
+    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                  f.op->infoPtr->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
@@ -27261,7 +27417,8 @@ DEFUN2(stgApplyNNNNPN, N, f) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNNNNPN FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->fvCount;
+      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                    f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 1, 5);
       pap->argCount = argc;
@@ -27284,7 +27441,8 @@ DEFUN2(stgApplyNNNNPN, N, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->fvCount;
+    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                  f.op->infoPtr->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
@@ -27685,7 +27843,8 @@ DEFUN2(stgApplyPNNNPN, N, f) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPNNNPN FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->fvCount;
+      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                    f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2, 4);
       pap->argCount = argc;
@@ -27708,7 +27867,8 @@ DEFUN2(stgApplyPNNNPN, N, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->fvCount;
+    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                  f.op->infoPtr->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
@@ -28110,7 +28270,8 @@ DEFUN2(stgApplyNPNNPN, N, f) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNPNNPN FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->fvCount;
+      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                    f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2, 4);
       pap->argCount = argc;
@@ -28133,7 +28294,8 @@ DEFUN2(stgApplyNPNNPN, N, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->fvCount;
+    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                  f.op->infoPtr->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
@@ -28537,7 +28699,8 @@ DEFUN2(stgApplyPPNNPN, N, f) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPPNNPN FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->fvCount;
+      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                    f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3, 3);
       pap->argCount = argc;
@@ -28560,7 +28723,8 @@ DEFUN2(stgApplyPPNNPN, N, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->fvCount;
+    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                  f.op->infoPtr->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
@@ -28964,7 +29128,8 @@ DEFUN2(stgApplyNNPNPN, N, f) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNNPNPN FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->fvCount;
+      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                    f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2, 4);
       pap->argCount = argc;
@@ -28987,7 +29152,8 @@ DEFUN2(stgApplyNNPNPN, N, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->fvCount;
+    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                  f.op->infoPtr->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
@@ -29393,7 +29559,8 @@ DEFUN2(stgApplyPNPNPN, N, f) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPNPNPN FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->fvCount;
+      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                    f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3, 3);
       pap->argCount = argc;
@@ -29416,7 +29583,8 @@ DEFUN2(stgApplyPNPNPN, N, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->fvCount;
+    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                  f.op->infoPtr->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
@@ -29823,7 +29991,8 @@ DEFUN2(stgApplyNPPNPN, N, f) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNPPNPN FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->fvCount;
+      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                    f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3, 3);
       pap->argCount = argc;
@@ -29846,7 +30015,8 @@ DEFUN2(stgApplyNPPNPN, N, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->fvCount;
+    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                  f.op->infoPtr->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
@@ -30255,7 +30425,8 @@ DEFUN2(stgApplyPPPNPN, N, f) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPPPNPN FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->fvCount;
+      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                    f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 4, 2);
       pap->argCount = argc;
@@ -30278,7 +30449,8 @@ DEFUN2(stgApplyPPPNPN, N, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->fvCount;
+    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                  f.op->infoPtr->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
@@ -30685,7 +30857,8 @@ DEFUN2(stgApplyNNNPPN, N, f) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNNNPPN FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->fvCount;
+      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                    f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2, 4);
       pap->argCount = argc;
@@ -30708,7 +30881,8 @@ DEFUN2(stgApplyNNNPPN, N, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->fvCount;
+    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                  f.op->infoPtr->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
@@ -31116,7 +31290,8 @@ DEFUN2(stgApplyPNNPPN, N, f) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPNNPPN FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->fvCount;
+      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                    f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3, 3);
       pap->argCount = argc;
@@ -31139,7 +31314,8 @@ DEFUN2(stgApplyPNNPPN, N, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->fvCount;
+    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                  f.op->infoPtr->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
@@ -31548,7 +31724,8 @@ DEFUN2(stgApplyNPNPPN, N, f) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNPNPPN FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->fvCount;
+      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                    f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3, 3);
       pap->argCount = argc;
@@ -31571,7 +31748,8 @@ DEFUN2(stgApplyNPNPPN, N, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->fvCount;
+    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                  f.op->infoPtr->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
@@ -31982,7 +32160,8 @@ DEFUN2(stgApplyPPNPPN, N, f) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPPNPPN FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->fvCount;
+      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                    f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 4, 2);
       pap->argCount = argc;
@@ -32005,7 +32184,8 @@ DEFUN2(stgApplyPPNPPN, N, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->fvCount;
+    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                  f.op->infoPtr->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
@@ -32416,7 +32596,8 @@ DEFUN2(stgApplyNNPPPN, N, f) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNNPPPN FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->fvCount;
+      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                    f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3, 3);
       pap->argCount = argc;
@@ -32439,7 +32620,8 @@ DEFUN2(stgApplyNNPPPN, N, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->fvCount;
+    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                  f.op->infoPtr->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
@@ -32852,7 +33034,8 @@ DEFUN2(stgApplyPNPPPN, N, f) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPNPPPN FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->fvCount;
+      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                    f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 4, 2);
       pap->argCount = argc;
@@ -32875,7 +33058,8 @@ DEFUN2(stgApplyPNPPPN, N, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->fvCount;
+    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                  f.op->infoPtr->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
@@ -33289,7 +33473,8 @@ DEFUN2(stgApplyNPPPPN, N, f) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNPPPPN FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->fvCount;
+      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                    f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 4, 2);
       pap->argCount = argc;
@@ -33312,7 +33497,8 @@ DEFUN2(stgApplyNPPPPN, N, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->fvCount;
+    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                  f.op->infoPtr->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
@@ -33728,7 +33914,8 @@ DEFUN2(stgApplyPPPPPN, N, f) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPPPPPN FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->fvCount;
+      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                    f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 5, 1);
       pap->argCount = argc;
@@ -33751,7 +33938,8 @@ DEFUN2(stgApplyPPPPPN, N, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->fvCount;
+    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                  f.op->infoPtr->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
@@ -34159,7 +34347,8 @@ DEFUN2(stgApplyNNNNNP, N, f) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNNNNNP FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->fvCount;
+      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                    f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 1, 5);
       pap->argCount = argc;
@@ -34182,7 +34371,8 @@ DEFUN2(stgApplyNNNNNP, N, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->fvCount;
+    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                  f.op->infoPtr->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
@@ -34587,7 +34777,8 @@ DEFUN2(stgApplyPNNNNP, N, f) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPNNNNP FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->fvCount;
+      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                    f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2, 4);
       pap->argCount = argc;
@@ -34610,7 +34801,8 @@ DEFUN2(stgApplyPNNNNP, N, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->fvCount;
+    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                  f.op->infoPtr->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
@@ -35016,7 +35208,8 @@ DEFUN2(stgApplyNPNNNP, N, f) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNPNNNP FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->fvCount;
+      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                    f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2, 4);
       pap->argCount = argc;
@@ -35039,7 +35232,8 @@ DEFUN2(stgApplyNPNNNP, N, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->fvCount;
+    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                  f.op->infoPtr->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
@@ -35447,7 +35641,8 @@ DEFUN2(stgApplyPPNNNP, N, f) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPPNNNP FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->fvCount;
+      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                    f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3, 3);
       pap->argCount = argc;
@@ -35470,7 +35665,8 @@ DEFUN2(stgApplyPPNNNP, N, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->fvCount;
+    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                  f.op->infoPtr->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
@@ -35878,7 +36074,8 @@ DEFUN2(stgApplyNNPNNP, N, f) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNNPNNP FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->fvCount;
+      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                    f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2, 4);
       pap->argCount = argc;
@@ -35901,7 +36098,8 @@ DEFUN2(stgApplyNNPNNP, N, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->fvCount;
+    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                  f.op->infoPtr->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
@@ -36311,7 +36509,8 @@ DEFUN2(stgApplyPNPNNP, N, f) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPNPNNP FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->fvCount;
+      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                    f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3, 3);
       pap->argCount = argc;
@@ -36334,7 +36533,8 @@ DEFUN2(stgApplyPNPNNP, N, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->fvCount;
+    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                  f.op->infoPtr->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
@@ -36745,7 +36945,8 @@ DEFUN2(stgApplyNPPNNP, N, f) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNPPNNP FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->fvCount;
+      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                    f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3, 3);
       pap->argCount = argc;
@@ -36768,7 +36969,8 @@ DEFUN2(stgApplyNPPNNP, N, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->fvCount;
+    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                  f.op->infoPtr->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
@@ -37181,7 +37383,8 @@ DEFUN2(stgApplyPPPNNP, N, f) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPPPNNP FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->fvCount;
+      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                    f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 4, 2);
       pap->argCount = argc;
@@ -37204,7 +37407,8 @@ DEFUN2(stgApplyPPPNNP, N, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->fvCount;
+    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                  f.op->infoPtr->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
@@ -37615,7 +37819,8 @@ DEFUN2(stgApplyNNNPNP, N, f) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNNNPNP FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->fvCount;
+      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                    f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2, 4);
       pap->argCount = argc;
@@ -37638,7 +37843,8 @@ DEFUN2(stgApplyNNNPNP, N, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->fvCount;
+    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                  f.op->infoPtr->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
@@ -38050,7 +38256,8 @@ DEFUN2(stgApplyPNNPNP, N, f) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPNNPNP FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->fvCount;
+      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                    f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3, 3);
       pap->argCount = argc;
@@ -38073,7 +38280,8 @@ DEFUN2(stgApplyPNNPNP, N, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->fvCount;
+    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                  f.op->infoPtr->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
@@ -38486,7 +38694,8 @@ DEFUN2(stgApplyNPNPNP, N, f) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNPNPNP FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->fvCount;
+      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                    f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3, 3);
       pap->argCount = argc;
@@ -38509,7 +38718,8 @@ DEFUN2(stgApplyNPNPNP, N, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->fvCount;
+    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                  f.op->infoPtr->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
@@ -38924,7 +39134,8 @@ DEFUN2(stgApplyPPNPNP, N, f) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPPNPNP FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->fvCount;
+      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                    f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 4, 2);
       pap->argCount = argc;
@@ -38947,7 +39158,8 @@ DEFUN2(stgApplyPPNPNP, N, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->fvCount;
+    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                  f.op->infoPtr->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
@@ -39362,7 +39574,8 @@ DEFUN2(stgApplyNNPPNP, N, f) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNNPPNP FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->fvCount;
+      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                    f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3, 3);
       pap->argCount = argc;
@@ -39385,7 +39598,8 @@ DEFUN2(stgApplyNNPPNP, N, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->fvCount;
+    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                  f.op->infoPtr->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
@@ -39802,7 +40016,8 @@ DEFUN2(stgApplyPNPPNP, N, f) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPNPPNP FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->fvCount;
+      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                    f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 4, 2);
       pap->argCount = argc;
@@ -39825,7 +40040,8 @@ DEFUN2(stgApplyPNPPNP, N, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->fvCount;
+    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                  f.op->infoPtr->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
@@ -40243,7 +40459,8 @@ DEFUN2(stgApplyNPPPNP, N, f) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNPPPNP FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->fvCount;
+      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                    f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 4, 2);
       pap->argCount = argc;
@@ -40266,7 +40483,8 @@ DEFUN2(stgApplyNPPPNP, N, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->fvCount;
+    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                  f.op->infoPtr->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
@@ -40686,7 +40904,8 @@ DEFUN2(stgApplyPPPPNP, N, f) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPPPPNP FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->fvCount;
+      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                    f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 5, 1);
       pap->argCount = argc;
@@ -40709,7 +40928,8 @@ DEFUN2(stgApplyPPPPNP, N, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->fvCount;
+    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                  f.op->infoPtr->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
@@ -41124,7 +41344,8 @@ DEFUN2(stgApplyNNNNPP, N, f) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNNNNPP FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->fvCount;
+      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                    f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2, 4);
       pap->argCount = argc;
@@ -41147,7 +41368,8 @@ DEFUN2(stgApplyNNNNPP, N, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->fvCount;
+    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                  f.op->infoPtr->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
@@ -41561,7 +41783,8 @@ DEFUN2(stgApplyPNNNPP, N, f) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPNNNPP FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->fvCount;
+      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                    f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3, 3);
       pap->argCount = argc;
@@ -41584,7 +41807,8 @@ DEFUN2(stgApplyPNNNPP, N, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->fvCount;
+    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                  f.op->infoPtr->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
@@ -41999,7 +42223,8 @@ DEFUN2(stgApplyNPNNPP, N, f) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNPNNPP FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->fvCount;
+      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                    f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3, 3);
       pap->argCount = argc;
@@ -42022,7 +42247,8 @@ DEFUN2(stgApplyNPNNPP, N, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->fvCount;
+    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                  f.op->infoPtr->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
@@ -42439,7 +42665,8 @@ DEFUN2(stgApplyPPNNPP, N, f) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPPNNPP FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->fvCount;
+      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                    f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 4, 2);
       pap->argCount = argc;
@@ -42462,7 +42689,8 @@ DEFUN2(stgApplyPPNNPP, N, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->fvCount;
+    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                  f.op->infoPtr->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
@@ -42879,7 +43107,8 @@ DEFUN2(stgApplyNNPNPP, N, f) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNNPNPP FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->fvCount;
+      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                    f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3, 3);
       pap->argCount = argc;
@@ -42902,7 +43131,8 @@ DEFUN2(stgApplyNNPNPP, N, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->fvCount;
+    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                  f.op->infoPtr->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
@@ -43321,7 +43551,8 @@ DEFUN2(stgApplyPNPNPP, N, f) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPNPNPP FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->fvCount;
+      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                    f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 4, 2);
       pap->argCount = argc;
@@ -43344,7 +43575,8 @@ DEFUN2(stgApplyPNPNPP, N, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->fvCount;
+    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                  f.op->infoPtr->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
@@ -43764,7 +43996,8 @@ DEFUN2(stgApplyNPPNPP, N, f) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNPPNPP FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->fvCount;
+      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                    f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 4, 2);
       pap->argCount = argc;
@@ -43787,7 +44020,8 @@ DEFUN2(stgApplyNPPNPP, N, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->fvCount;
+    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                  f.op->infoPtr->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
@@ -44209,7 +44443,8 @@ DEFUN2(stgApplyPPPNPP, N, f) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPPPNPP FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->fvCount;
+      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                    f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 5, 1);
       pap->argCount = argc;
@@ -44232,7 +44467,8 @@ DEFUN2(stgApplyPPPNPP, N, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->fvCount;
+    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                  f.op->infoPtr->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
@@ -44652,7 +44888,8 @@ DEFUN2(stgApplyNNNPPP, N, f) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNNNPPP FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->fvCount;
+      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                    f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3, 3);
       pap->argCount = argc;
@@ -44675,7 +44912,8 @@ DEFUN2(stgApplyNNNPPP, N, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->fvCount;
+    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                  f.op->infoPtr->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
@@ -45096,7 +45334,8 @@ DEFUN2(stgApplyPNNPPP, N, f) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPNNPPP FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->fvCount;
+      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                    f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 4, 2);
       pap->argCount = argc;
@@ -45119,7 +45358,8 @@ DEFUN2(stgApplyPNNPPP, N, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->fvCount;
+    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                  f.op->infoPtr->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
@@ -45541,7 +45781,8 @@ DEFUN2(stgApplyNPNPPP, N, f) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNPNPPP FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->fvCount;
+      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                    f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 4, 2);
       pap->argCount = argc;
@@ -45564,7 +45805,8 @@ DEFUN2(stgApplyNPNPPP, N, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->fvCount;
+    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                  f.op->infoPtr->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
@@ -45988,7 +46230,8 @@ DEFUN2(stgApplyPPNPPP, N, f) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPPNPPP FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->fvCount;
+      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                    f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 5, 1);
       pap->argCount = argc;
@@ -46011,7 +46254,8 @@ DEFUN2(stgApplyPPNPPP, N, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->fvCount;
+    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                  f.op->infoPtr->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
@@ -46435,7 +46679,8 @@ DEFUN2(stgApplyNNPPPP, N, f) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNNPPPP FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->fvCount;
+      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                    f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 4, 2);
       pap->argCount = argc;
@@ -46458,7 +46703,8 @@ DEFUN2(stgApplyNNPPPP, N, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->fvCount;
+    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                  f.op->infoPtr->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
@@ -46884,7 +47130,8 @@ DEFUN2(stgApplyPNPPPP, N, f) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPNPPPP FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->fvCount;
+      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                    f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 5, 1);
       pap->argCount = argc;
@@ -46907,7 +47154,8 @@ DEFUN2(stgApplyPNPPPP, N, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->fvCount;
+    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                  f.op->infoPtr->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
@@ -47334,7 +47582,8 @@ DEFUN2(stgApplyNPPPPP, N, f) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNPPPPP FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->fvCount;
+      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                    f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 5, 1);
       pap->argCount = argc;
@@ -47357,7 +47606,8 @@ DEFUN2(stgApplyNPPPPP, N, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->fvCount;
+    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                  f.op->infoPtr->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
@@ -47786,7 +48036,8 @@ DEFUN2(stgApplyPPPPPP, N, f) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPPPPPP FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->fvCount;
+      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                    f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 6, 0);
       pap->argCount = argc;
@@ -47809,7 +48060,8 @@ DEFUN2(stgApplyPPPPPP, N, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->fvCount;
+    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                  f.op->infoPtr->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;

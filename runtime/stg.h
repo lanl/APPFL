@@ -74,9 +74,10 @@ extern PtrOrLiteral stgCurVal;  // current/return value
 
 struct _Obj {
   InfoTab *infoPtr;         // canonical location of ObjType field
+  int _objSize;              // for debugging
   ObjType objType;          // to distinguish PAP, FUN, BLACKHOLE, INDIRECT
   int argCount;             // for PAP, how many args already applied to?
-  char ident[64];           // temporary, just for tracing
+  char ident[65];           // temporary, just for tracing
   PtrOrLiteral payload[];
 };
 
@@ -126,7 +127,7 @@ typedef struct {
 // InfoTab
 struct _InfoTab {
   char name[32];  // for debugging
-  int fvCount;    // lexically determined, should be in layout
+  //  int fvCount;    // lexically determined, should be in layout
   CmmFnPtr entryCode; 
   ObjType objType; // kind of object, tag for union
   LayoutInfo layoutInfo;

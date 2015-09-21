@@ -19,7 +19,10 @@ static inline size_t startFUNFVsB(Obj *p) { return 0; }
 static inline size_t endFUNFVsB(Obj *p) { return p->infoPtr->layoutInfo.boxedCount; }
 static inline size_t startFUNFVsU(Obj *p) { return endFUNFVsB(p); }
 static inline size_t endFUNFVsU(Obj *p) { return startFUNFVsU(p) + p->infoPtr->layoutInfo.unboxedCount; }
-static inline void checkFUNFVs(Obj *p) { assert (p->infoPtr->fvCount == endFUNFVsU(p) && "gc: FUN mismatch"); }
+static inline void checkFUNFVs(Obj *p) { 
+  // fvCount is going away at some point
+  // assert (p->infoPtr->fvCount == endFUNFVsU(p) && "gc: FUN mismatch"); 
+}
 
 static inline size_t startPAPFVsB(Obj *p) { return 0; }
 static inline size_t endPAPFVsB(Obj *p) { return p->infoPtr->layoutInfo.boxedCount; }
@@ -31,7 +34,7 @@ static inline size_t startPAPargsU(Obj *p) { return endPAPargsB(p); }
 static inline size_t endPAPargsU(Obj *p) { return startPAPargsU(p) + NUNPACK(p->payload[endPAPFVsU(p)].i); }
 static inline void checkPAPFVs(Obj *p) {
   // fvCount is going away at some point
-  assert (p->infoPtr->fvCount == endPAPFVsU(p) && "gc: PAP FV mismatch");
+  // assert (p->infoPtr->fvCount == endPAPFVsU(p) && "gc: PAP FV mismatch");
 }
 static inline void checkPAPargs(Obj *p) {
   // argCount is going away at some point
@@ -53,7 +56,7 @@ static inline size_t startTHUNKFVsU(Obj *p) { return endCONargsB(p); }
 static inline size_t endTHUNKFVsU(Obj *p) { return startCONargsU(p) + p->infoPtr->layoutInfo.unboxedCount; }
 static inline void checkTHUNKFVs(Obj *p) {
   // fvCount is going away at some point
-  assert (p->infoPtr->fvCount == endTHUNKFVsU(p) && "gc: THUNK FV mismatch");
+  // assert (p->infoPtr->fvCount == endTHUNKFVsU(p) && "gc: THUNK FV mismatch");
 }
 
 static inline size_t startCALLFVsB(Obj *p) { return 1; }
@@ -65,7 +68,7 @@ static inline size_t startCASEFVsU(Obj *p) { return endCASEFVsB(p); }
 static inline size_t endCASEFVsU(Obj *p) { return startCASEFVsU(p) + p->infoPtr->layoutInfo.unboxedCount; }
 static inline void checkCASEFVs(Obj *p) {
   // fvCount is going away at some point
-  assert (p->infoPtr->fvCount == endCASEFVsU(p) && "gc: CASE FV mismatch");
+  // assert (p->infoPtr->fvCount == endCASEFVsU(p) && "gc: CASE FV mismatch");
 }
 
 static inline bool isFrom(void *p) {

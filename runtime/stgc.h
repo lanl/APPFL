@@ -38,8 +38,10 @@ InfoTab it_stg_case_not_exhaustive __attribute__((aligned(8))) = {
   .name = "stg_case_not_exhaustive",
   .entryCode = &stg_case_not_exhaustive,
   .objType = FUN,
-  .fvCount = 0,
+  //  .fvCount = 0,
   .funFields.arity = 1,
+  .layoutInfo.boxedCount = 0,
+  .layoutInfo.unboxedCount = 0,
 };
 
 Obj sho_stg_case_not_exhaustive = {

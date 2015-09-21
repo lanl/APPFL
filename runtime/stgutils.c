@@ -21,9 +21,11 @@ DEFUN0(fun_stgShowResultCont) {
 
 InfoTab it_stgShowResultCont __attribute__((aligned(8))) =
   { .name       = "fun_showResultCont",
-    .fvCount    = 0,
+    //    .fvCount    = 0,
     .entryCode  = &fun_stgShowResultCont,
     .objType    = CALLCONT,
+    .layoutInfo.boxedCount = -1,  // shouldn't be using this
+    .layoutInfo.unboxedCount = -1,  // shouldn't be using this
   };
 
 
@@ -36,9 +38,11 @@ DEFUN0(stgCallCont) {
 
 InfoTab it_stgCallCont __attribute__((aligned(8))) =
   { .name = "stgCallCont",
-    .fvCount = 0,
+    //    .fvCount = 0,
     .entryCode = &stgCallCont,
     .objType = CALLCONT,
+    .layoutInfo.boxedCount = -1,  // shouldn't be using this
+    .layoutInfo.unboxedCount = -1,  // shouldn't be using this
   };
 
 DEFUN0(stgUpdateCont) {
@@ -63,10 +67,12 @@ DEFUN0(stgUpdateCont) {
 
 InfoTab it_stgUpdateCont __attribute__((aligned(8))) =
   { .name = "default stgUpdateCont",
-    .fvCount = 0,
+    //    .fvCount = 1, // self
     .entryCode = &stgUpdateCont,
     .objType = UPDCONT,
     .layoutInfo.payloadSize = 1, // self
+    .layoutInfo.boxedCount = 1,
+    .layoutInfo.unboxedCount = 0,
   };
 
 void stgThunk(PtrOrLiteral self) {
@@ -213,7 +219,9 @@ DEFUN2(stgApply, N, f) {
     // excess < 0, too few args
     } else { 
       fprintf(stderr, "stgApply FUN too few args\n");
-      int fvCount = f.op->infoPtr->fvCount;
+      // int fvCount = f.op->infoPtr->fvCount;
+      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+	            f.op->infoPtr->layoutInfo.unboxedCount;
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, argc, 0); // all "pointers" for now
       pap->argCount = argc + 0;
       // copy fvs
@@ -227,7 +235,9 @@ DEFUN2(stgApply, N, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->fvCount;
+    //    int fvCount = f.op->infoPtr->fvCount;
+    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
+                  f.op->infoPtr->layoutInfo.unboxedCount;
     int pargc, nargc;
     PNUNPACK(f.op->payload[fvCount].i, pargc, nargc);
     int argCount = pargc + nargc;
