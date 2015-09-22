@@ -7,7 +7,7 @@
 #include "stg.h"
 #include "stgutils.h"
 
-const bool DEBUG = true;
+const bool DEBUG = false;
 const bool EXTRA = true;  // run extra checks
 
 void *toPtr=NULL, *fromPtr=NULL;
@@ -19,7 +19,10 @@ static inline size_t startFUNFVsB(Obj *p) { return 0; }
 static inline size_t endFUNFVsB(Obj *p) { return p->infoPtr->layoutInfo.boxedCount; }
 static inline size_t startFUNFVsU(Obj *p) { return endFUNFVsB(p); }
 static inline size_t endFUNFVsU(Obj *p) { return startFUNFVsU(p) + p->infoPtr->layoutInfo.unboxedCount; }
-static inline void checkFUNFVs(Obj *p) { assert (p->infoPtr->fvCount == endFUNFVsU(p) && "gc: FUN mismatch"); }
+static inline void checkFUNFVs(Obj *p) { 
+  // fvCount is going away at some point
+  // assert (p->infoPtr->fvCount == endFUNFVsU(p) && "gc: FUN mismatch"); 
+}
 
 static inline size_t startPAPFVsB(Obj *p) { return 0; }
 static inline size_t endPAPFVsB(Obj *p) { return p->infoPtr->layoutInfo.boxedCount; }
@@ -31,7 +34,7 @@ static inline size_t startPAPargsU(Obj *p) { return endPAPargsB(p); }
 static inline size_t endPAPargsU(Obj *p) { return startPAPargsU(p) + NUNPACK(p->payload[endPAPFVsU(p)].i); }
 static inline void checkPAPFVs(Obj *p) {
   // fvCount is going away at some point
-  assert (p->infoPtr->fvCount == endPAPFVsU(p) && "gc: PAP FV mismatch");
+  // assert (p->infoPtr->fvCount == endPAPFVsU(p) && "gc: PAP FV mismatch");
 }
 static inline void checkPAPargs(Obj *p) {
   // argCount is going away at some point
@@ -43,6 +46,9 @@ static inline size_t endCONargsB(Obj *p) { return p->infoPtr->layoutInfo.boxedCo
 static inline size_t startCONargsU(Obj *p) { return endCONargsB(p); }
 static inline size_t endCONargsU(Obj *p) { return startCONargsU(p) + p->infoPtr->layoutInfo.unboxedCount; }
 static inline void checkCONargs(Obj *p) {
+  assert (!((uintptr_t)p->infoPtr & (uintptr_t)1) && "...odd infoPtr checkCONargs");
+  assert (p->infoPtr->conFields.arity >= 0 && p->infoPtr->conFields.arity <= 10 &&
+          "gc:  unlikely number of constructor arguments");
   assert (p->infoPtr->conFields.arity == endCONargsU(p) && "gc: CON args mismatch");
 }
 
@@ -53,7 +59,7 @@ static inline size_t startTHUNKFVsU(Obj *p) { return endCONargsB(p); }
 static inline size_t endTHUNKFVsU(Obj *p) { return startCONargsU(p) + p->infoPtr->layoutInfo.unboxedCount; }
 static inline void checkTHUNKFVs(Obj *p) {
   // fvCount is going away at some point
-  assert (p->infoPtr->fvCount == endTHUNKFVsU(p) && "gc: THUNK FV mismatch");
+  // assert (p->infoPtr->fvCount == endTHUNKFVsU(p) && "gc: THUNK FV mismatch");
 }
 
 static inline size_t startCALLFVsB(Obj *p) { return 1; }
@@ -65,7 +71,7 @@ static inline size_t startCASEFVsU(Obj *p) { return endCASEFVsB(p); }
 static inline size_t endCASEFVsU(Obj *p) { return startCASEFVsU(p) + p->infoPtr->layoutInfo.unboxedCount; }
 static inline void checkCASEFVs(Obj *p) {
   // fvCount is going away at some point
-  assert (p->infoPtr->fvCount == endCASEFVsU(p) && "gc: CASE FV mismatch");
+  // assert (p->infoPtr->fvCount == endCASEFVsU(p) && "gc: CASE FV mismatch");
 }
 
 static inline bool isFrom(void *p) {
@@ -144,29 +150,47 @@ void updatePtr(PtrOrLiteral *f) {
 void processObj(Obj *p) {
   size_t i;
   if (DEBUG) fprintf(stderr,"processObj %s %s\n",objTypeNames[p->objType], p->ident);
+  if (DEBUG) if ((uintptr_t)p->infoPtr & (uintptr_t)1) fprintf(stderr, "...odd infoPtr %p\n", p->infoPtr);
   switch(p->objType) {
   case FUN: {
     int FVCount = endFUNFVsU(p);
     if(FVCount) {
-      if (EXTRA) checkFUNFVs(p);
+      if (EXTRA) {
+        checkFUNFVs(p);
+        // double check that unboxed FVs really are unboxed
+        for (i = startFUNFVsU(p); i < FVCount; i++) {
+          assert(!isBoxed(&p->payload[i]) && "gc: unexpected boxed FV in FUN");
+        }
+      }
       // process boxed freevars
       for (i = startFUNFVsB(p); i < endFUNFVsB(p); i++) {
         if (EXTRA) assert(isBoxed(&p->payload[i]) && "gc: unexpected unboxed FV in FUN");
         updatePtr(&p->payload[i]);
-      }
-      // double check that unboxed FVs really are unboxed
-      if (EXTRA) {
-        for (i = startFUNFVsU(p); i < FVCount; i++) {
-          assert(!isBoxed(&p->payload[i]) && "gc: unexpected boxed FV in FUN");
-        }
       }
     }
     break;
   }
   case PAP: {
     int  FVCount = endPAPFVsU(p);
+    if (EXTRA) {
+      if(FVCount) {
+
+        checkPAPFVs(p);
+        // double check that unboxed FVs really are unboxed
+        int startU = startPAPFVsU(p);
+        for (i = startU; i < FVCount; i++) {
+          assert(!isBoxed(&p->payload[i]) && "gc: unexpected boxed FV in PAP");
+        }
+      }
+
+      checkPAPargs(p);
+      // double check that unboxed args really are unboxed
+      for (i = startPAPargsU(p); i < endPAPargsU(p); i++) {
+        assert(!isBoxed(&p->payload[i]) && "gc: unexpected boxed arg in PAP");
+      }
+    }
+
     if(FVCount) {
-      if (EXTRA) checkPAPFVs(p);
       // boxed free vars
       int startB = startPAPFVsB(p);
       int endB = endPAPFVsB(p);
@@ -174,58 +198,43 @@ void processObj(Obj *p) {
         if (EXTRA) assert(isBoxed(&p->payload[i]) && "gc: unexpected unboxed FV in PAP");
         updatePtr(&p->payload[i]);
       }
-
-      // double check that unboxed FVs really are unboxed
-      if (EXTRA) {
-        int startU = startPAPFVsU(p);
-        for (i = startU; i < FVCount; i++) {
-          assert(!isBoxed(&p->payload[i]) && "gc: unexpected boxed FV in PAP");
-        }
-      }
     }
 
-    if (EXTRA) checkPAPargs(p);
     // boxed args already applied
     for (i = startPAPargsB(p); i < endPAPargsB(p); i++) {
       if (EXTRA) assert(isBoxed(&p->payload[i]) && "gc: unexpected unboxed arg in PAP");
       updatePtr(&p->payload[i]);
     }
-    // double check that unboxed args really are unboxed
-    if (EXTRA) {
-      for (i = startPAPargsU(p); i < endPAPargsU(p); i++) {
-        assert(!isBoxed(&p->payload[i]) && "gc: unexpected boxed arg in PAP");
-      }
-    }
     break;
   }
   case CON:
-    if (EXTRA) checkCONargs(p);
-
+    if (EXTRA) {
+      checkCONargs(p);
+      // double check that unboxed args really are unboxed
+      for (i = startCONargsU(p); i < endCONargsU(p); i++) {
+        if (isBoxed(&p->payload[i])) showStgObj(p);
+        assert(!isBoxed(&p->payload[i]) && "gc: unexpected boxed arg in CON");
+      }
+    }
     // boxed args
     for(i = startCONargsB(p); i < endCONargsB(p); i++) {
       if (EXTRA) assert(isBoxed(&p->payload[i]) && "gc: unexpected unboxed arg in CON");
       updatePtr(&p->payload[i]);
     }
-    // double check that unboxed args really are unboxed
-    if (EXTRA) {
-      for (i = startCONargsU(p); i < endCONargsU(p); i++) {
-        assert(!isBoxed(&p->payload[i]) && "gc: unexpected boxed arg in CON");
-      }
-    }
     break;
   case THUNK:
   case BLACKHOLE:
-    if (EXTRA) checkTHUNKFVs(p);
+    if (EXTRA) {
+      checkTHUNKFVs(p);
+      // double check that unboxed args really are unboxed
+      for (i = startTHUNKFVsU(p); i < endTHUNKFVsU(p); i++) {
+        assert(!isBoxed(&p->payload[i]) && "gc: unexpected boxed arg in THUNK");
+      }
+    }
 
     for(i = startTHUNKFVsB(p); i < endTHUNKFVsB(p); i++) {
       if (EXTRA) assert(isBoxed(&p->payload[i]) && "gc: unexpected unboxed arg in THUNK");
       updatePtr(&p->payload[i]);
-    }
-    // double check that unboxed args really are unboxed
-    if (EXTRA) {
-      for (i = startTHUNKFVsU(p); i < endTHUNKFVsU(p); i++) {
-        assert(!isBoxed(&p->payload[i]) && "gc: unexpected boxed arg in THUNK");
-      }
     }
     break;
   case INDIRECT:
@@ -246,16 +255,16 @@ void processCont(Obj *p) {
     updatePtr(&p->payload[0]);
     break;
   case CASECONT:
-    if (EXTRA) checkCASEFVs(p);
+    if (EXTRA) {
+      checkCASEFVs(p);
+      for (i = startCASEFVsU(p); i < endCASEFVsU(p); i++) {
+        assert(!isBoxed(&p->payload[i]) && "gc: unexpected boxed arg in CASE");
+      }
+    }
 
     for(i = startCASEFVsB(p); i < endCASEFVsB(p); i++) {
       if (EXTRA) assert(isBoxed(&p->payload[i]) && "gc: unexpected unboxed arg in CASE");
       updatePtr(&p->payload[i]);
-    }
-    if (EXTRA) {
-      for (i = startCASEFVsU(p); i < endCASEFVsU(p); i++) {
-        assert(!isBoxed(&p->payload[i]) && "gc: unexpected boxed arg in CASE");
-      }
     }
     break;
   case CALLCONT:

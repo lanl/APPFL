@@ -33,7 +33,6 @@ FnPtr whiteHole();
 FnPtr stg_constructorcall();
 
 FnPtr stgApply();
-FnPtr stgApply1();
 
 #define HOTOPL(HO) ((PtrOrLiteral) {.argType = HEAPOBJ, .op = (HO) })
 #define INTTOPL(L) ((PtrOrLiteral) {.argType = INT,     .i = L   })

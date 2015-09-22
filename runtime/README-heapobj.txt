@@ -143,12 +143,14 @@ infoPtr->objType = CON
 infoPtr->layoutInfo.boxedCount is number of boxed ARGUMENTS
 infoPtr->layoutInfo.unboxedCount is number of unboxed ARGUMENTS
 
+infoPtr->payloadSize = infoPtr->layoutInfo.boxedCount + infoPtr->layoutInfo.unboxedCount
+
 
 THUNK
-                               | payload[0] | payload[1..fvCount+1] 
----------------------------------------------------------------------------------------------
-| infoPtr | objType |          |   result   |  boxed free variables | unboxed free variables|
----------------------------------------------------------------------------------------------
+                    | payload[0] | payload[1..fvCount+1] 
+----------------------------------------------------------------------------------
+| infoPtr | objType |   result   |  boxed free variables | unboxed free variables|
+----------------------------------------------------------------------------------
 
 Note that a THUNK must have a payload size of at least 1 so that it
 can become and INDIRECT.

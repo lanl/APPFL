@@ -9,7 +9,7 @@ data Strictness = Nonstrict
                 | Strict1   -- evaluate args first, then fun
                   deriving(Eq)
     
-strictness = Nonstrict
+strictness = Strict1
 
 dumpStgApply n = 
     let (forward, macros, fun) = genAllstgApply n
@@ -206,7 +206,8 @@ gen s =
      "  } // case FUN\n" ++
      "\n" ++
      "  case PAP: {\n" ++
-     "    int fvCount = f.op->infoPtr->fvCount;\n" ++
+     "    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + \n" ++
+     "                  f.op->infoPtr->layoutInfo.unboxedCount;\n" ++
      "    int pappargc, papnargc;\n" ++
      "    PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);\n" ++
      "    int argCount = pappargc + papnargc;\n" ++
@@ -305,7 +306,8 @@ funeq s argc =
      "STGJUMP1(f.op->infoPtr->entryCode, f);\n"
 
 funneg s pinds argc nps nns = 
-     "int fvCount = f.op->infoPtr->fvCount;\n" ++
+     "int fvCount = f.op->infoPtr->layoutInfo.boxedCount + \n" ++
+     "              f.op->infoPtr->layoutInfo.unboxedCount;\n" ++
      "// stgNewHeapPAP puts layout info at payload[fvCount]\n" ++
      "Obj *pap = stgNewHeapPAP(f.op->infoPtr, " ++ 
                                show nps ++ ", " ++ show nns ++ ");\n" ++
