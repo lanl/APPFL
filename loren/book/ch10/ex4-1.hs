@@ -20,3 +20,12 @@ balance xs | length xs == 1 = (Leaf (head xs))
            | otherwise = (Node (balance w) (balance z))
                           where (w,z) = halve xs
 
+balance2 :: [Int] -> Tree
+balance2 [] = error "You lose"
+balance2 [x] = (Leaf x)
+balance2  xs  = (Node (balance2 w) (balance2 z))
+               where (w,z) = halve xs
+
+countLeaves :: Tree -> Int
+countLeaves (Leaf _) = 1
+countLeaves (Node x y) = countLeaves x + countLeaves y
