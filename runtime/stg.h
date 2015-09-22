@@ -77,7 +77,7 @@ struct _Obj {
   int _objSize;              // for debugging
   ObjType objType;          // to distinguish PAP, FUN, BLACKHOLE, INDIRECT
   int argCount;             // for PAP, how many args already applied to?
-  char ident[67];           // temporary, just for tracing
+  char ident[36];           // temporary, just for tracing
   PtrOrLiteral payload[];
 };
 
