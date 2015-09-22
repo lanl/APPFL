@@ -139,6 +139,7 @@ Obj* stgNewHeapPAP(InfoTab *itp, int pargc, int npargc) {
   objSize = ((objSize + 7)/8)*8;
   Obj *objp = (Obj *)stgHP;
   stgHP = (char *)stgHP + objSize;
+  memset(objp, 0, objSize); //zero out anything left by previous gc passes
   objp->infoPtr = itp;
   objp->_objSize = objSize;
   objp->objType = PAP;
