@@ -21,6 +21,7 @@ typedef enum {          // superfluous, for sanity checking
 
 typedef enum {
   // heap and stack objects
+  OBJTYPE0BAD,
   FUN, 
   PAP, 
   CON,
@@ -77,7 +78,7 @@ struct _Obj {
   int _objSize;              // for debugging
   ObjType objType;          // to distinguish PAP, FUN, BLACKHOLE, INDIRECT
   int argCount;             // for PAP, how many args already applied to?
-  char ident[67];           // temporary, just for tracing
+  char ident[36];           // temporary, just for tracing
   PtrOrLiteral payload[];
 };
 
@@ -86,7 +87,7 @@ typedef struct {
   int payloadSize;
   int boxedCount;
   int unboxedCount;
-  char permString[32];  // this is just for e.g. displaying the heap
+  char permString[64];  // this is just for e.g. displaying the heap
 } LayoutInfo;
 
 typedef struct {

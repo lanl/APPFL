@@ -21,6 +21,7 @@ void *stgSP = NULL;
 PtrOrLiteral stgCurVal;  // current value STG register
 
 const char *objTypeNames[] = {
+  "OBJTYPE0BAD"
   "FUN", 
   "PAP", 
   "CON",
@@ -52,10 +53,8 @@ Obj *stgAllocCont(InfoTab *itp) {
   return objp;
 }
 
-// this is still a hack:  we need the whole family of stgApply functions
-// and an analogous set of infoTabs with correct layout info for
-// CALLCONTs; alternatively, CALLCONTs could be more self-describing like PAPs
-// for now payload[0].i == argc, the number of subsequent args
+// CALLCONTs have a common InfoTab entries but .layoutInfo is invalid
+// payload[0].i == argc, the number of subsequent args
 Obj *stgAllocCallCont2(InfoTab *itp, int argc) {
   assert(itp->objType == CALLCONT && 
 	 "stgAllocCallCont: itp->objType != CALLCONT");
@@ -155,7 +154,7 @@ int getObjSize(Obj *o) {
   size_t objSize;
   
   if (o->objType == CALLCONT) {
-    objSize = sizeof(Obj) + (o->payload[0].i+1) * sizeof(PtrOrLiteral);
+    objSize = sizeof(Obj) + (o->payload[0].i + 1) * sizeof(PtrOrLiteral);
   } else if (o->objType == PAP) {
     InfoTab *itp = o->infoPtr;
     int fvs = itp->layoutInfo.boxedCount + itp->layoutInfo.unboxedCount;

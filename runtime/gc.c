@@ -46,6 +46,9 @@ static inline size_t endCONargsB(Obj *p) { return p->infoPtr->layoutInfo.boxedCo
 static inline size_t startCONargsU(Obj *p) { return endCONargsB(p); }
 static inline size_t endCONargsU(Obj *p) { return startCONargsU(p) + p->infoPtr->layoutInfo.unboxedCount; }
 static inline void checkCONargs(Obj *p) {
+  assert (!((uintptr_t)p->infoPtr & (uintptr_t)1) && "...odd infoPtr checkCONargs");
+  assert (p->infoPtr->conFields.arity >= 0 && p->infoPtr->conFields.arity <= 10 &&
+          "gc:  unlikely number of constructor arguments");
   assert (p->infoPtr->conFields.arity == endCONargsU(p) && "gc: CON args mismatch");
 }
 
@@ -147,6 +150,7 @@ void updatePtr(PtrOrLiteral *f) {
 void processObj(Obj *p) {
   size_t i;
   if (DEBUG) fprintf(stderr,"processObj %s %s\n",objTypeNames[p->objType], p->ident);
+  if (DEBUG) if ((uintptr_t)p->infoPtr & (uintptr_t)1) fprintf(stderr, "...odd infoPtr %p\n", p->infoPtr);
   switch(p->objType) {
   case FUN: {
     int FVCount = endFUNFVsU(p);
@@ -211,7 +215,10 @@ void processObj(Obj *p) {
     }
     // double check that unboxed args really are unboxed
     if (EXTRA) {
+    if (EXTRA) checkCONargs(p);
+      fprintf(stderr, "startCONargsU(p) %d endCONargsU(p) %d\n", startCONargsU(p), endCONargsU(p));
       for (i = startCONargsU(p); i < endCONargsU(p); i++) {
+        if (isBoxed(&p->payload[i])) showStgObj(p);
         assert(!isBoxed(&p->payload[i]) && "gc: unexpected boxed arg in CON");
       }
     }

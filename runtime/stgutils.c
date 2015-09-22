@@ -129,10 +129,8 @@ void callContRestore(PtrOrLiteral argv[]) {
 }
 
 // ****************************************************************
-// stgApply
-// to make this fully general we do explicit heap manipulation
+// stgApply 
 
-// argv points to the beginning of the arg list, but push backwards...
 void pushargs(int argc, PtrOrLiteral argv[]) {
   for (int i = argc-1; i != -1; i--) _PUSH(argv[i]);
 }
@@ -145,8 +143,19 @@ void copyargs(PtrOrLiteral *dest, const PtrOrLiteral *src, int count) {
   for (int i = 0; i != count; i++) dest[i] = src[i];
 }
 
-
 DEFUN2(stgApply, N, f) {
+  assert(N.argType == INT);
+  assert(f.op->infoPtr->objType == FUN);
+  assert(f.op->infoPtr->funFields.arity == N.i);
+  STGJUMP1(f.op->infoPtr->entryCode, f);
+  ENDFUN;
+}
+
+// we no longer use this generic version
+/// to make this fully general we do explicit heap manipulation
+// argv points to the beginning of the arg list, but push backwards...
+
+DEFUN2(stgApplyX, N, f) {
   assert(N.argType == INT);
   const int argc = N.i;
   PtrOrLiteral argv[64];
@@ -269,7 +278,7 @@ DEFUN2(stgApply, N, f) {
 
       // just right
     } else if (excess == 0) {
-      fprintf(stderr, "stgApply1 PAP just right\n");
+      fprintf(stderr, "stgApply PAP just right\n");
       // push new args
       pushargs(arity, argv);
       // push args already in PAP object, just beyond fvs
@@ -279,7 +288,7 @@ DEFUN2(stgApply, N, f) {
 
       // excess < 0, too few args
     } else {
-      fprintf(stderr, "stgApply1 PAP too few args\n");
+      fprintf(stderr, "stgApply PAP too few args\n");
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, argCount + argc, 0);
       // copy fvs and existing args
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
