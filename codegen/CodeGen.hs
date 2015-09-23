@@ -242,28 +242,16 @@ stgApplyGeneric env f eas =
     let as = map ea eas
         pnstring = [ if b then 'P' else 'N' | b <- map (isBoxed . typ . emd) eas ]
         inline = 
-            "// NOT DIRECT CALL " ++ f ++ " " ++ showas as ++ "\n" ++
+            "// INDIRECT TAIL CALL " ++ f ++ " " ++ showas as ++ "\n" ++
             "STGAPPLY" ++ pnstring ++ "(" ++
             intercalate ", " (cgv env f : map (cga env) as) ++ 
             ");\n"
     in return (inline, [])
 
-{-
-stgApplyDirect env (EFCall it f eas) = 
-    let as = map ea eas
-        pnstring = [ if b then 'P' else 'N' | b <- map (isBoxed . typ . emd) eas ]
-        inline = 
-            "// DIRECT CALL " ++ f ++ " " ++ showas as ++ "\n" ++
-            "STGAPPLY" ++ pnstring ++ "(" ++
-            intercalate ", " (cgv env f : map (cga env) as) ++ 
-            ");\n"
-    in return (inline, [])
--}
-
 stgApplyDirect env (EFCall it f eas) = 
     let as = map ea eas
         inline = 
-            "// DIRECT CALL " ++ f ++ " " ++ showas as ++ "\n" ++
+            "// DIRECT TAIL CALL " ++ f ++ " " ++ showas as ++ "\n" ++
             "STGAPPLY" ++ show (length as) ++ "(" ++
               intercalate ", " (cgv env f : map (cga env) as) ++ 
             ");\n"

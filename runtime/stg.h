@@ -173,6 +173,14 @@ extern int getObjSize(Obj *);
     nargc = NUNPACK(n);	\
   } while (0)
 
+// bitmap for specifying boxed/unboxed values
+// assume 64 bits, high six bits for length,
+// low bit is index 0,
+// 0 => unboxed, 1 => boxed
+typedef uintptr_t Bitmap64;
+#define BMSIZE(bm) ((bm>>58)&0x3F)
+#define BMMAP(bm) (bm & 0x03FFFFFFFFFFFFFFLL) 
+
 // allocate Obj on heap, returning pointer to new Obj
 extern Obj* stgNewHeapObj(InfoTab *itp);
 extern Obj* stgNewHeapPAP(InfoTab *itp, int pargc, int nargc);
@@ -239,36 +247,52 @@ Obj *stgPopCont();
 
 #define STGAPPLY1(f,v1)				\
   do {						\
-    STGJUMP3(stgApply,((PtrOrLiteral){.argType = INT, .i = 1}),f,v1);	\
+    assert(f.op->infoPtr->objType == FUN);	\
+    assert(f.op->infoPtr->funFields.arity == 1);\
+    STGJUMP2(f.op->infoPtr->entryCode, f, v1);	\
   } while(0)
 
-#define STGAPPLY2(f,v1,v2)			\
-  do {						\
-    STGJUMP4(stgApply,((PtrOrLiteral){.argType = INT, .i = 2}),f,v1,v2);		\
+#define STGAPPLY2(f,v1,v2)				\
+  do {							\
+    assert(f.op->infoPtr->objType == FUN);		\
+    assert(f.op->infoPtr->funFields.arity == 2);	\
+    STGJUMP3(f.op->infoPtr->entryCode, f, v1, v2);	\
   } while(0)
 
-#define STGAPPLY3(f,v1,v2,v3)			\
-  do {						\
-    STGJUMP5(stgApply,((PtrOrLiteral){.argType = INT, .i = 3}),f,v1,v2,v3);		\
+#define STGAPPLY3(f,v1,v2,v3)				\
+  do {							\
+    assert(f.op->infoPtr->objType == FUN);		\
+    assert(f.op->infoPtr->funFields.arity == 3);	\
+    STGJUMP4(f.op->infoPtr->entryCode, f, v1, v2, v3);	\
   } while(0)
 
-#define STGAPPLY4(f,v1,v2,v3,v4)		\
-  do {						\
-    STGJUMP6(stgApply,((PtrOrLiteral){.argType = INT, .i = 4}),f,v1,v2,v3,v4);		\
+#define STGAPPLY4(f,v1,v2,v3,v4)				\
+  do {								\
+    assert(f.op->infoPtr->objType == FUN);			\
+    assert(f.op->infoPtr->funFields.arity == 4);		\
+    STGJUMP5(f.op->infoPtr->entryCode, f, v1, v2, v3, v4);	\
   } while(0)
 
-#define STGAPPLY5(f,v1,v2,v3,v4,v5)		\
-  do {						\
-    STGJUMP7(stgApply,((PtrOrLiteral){.argType = INT, .i = 5}),f,v1,v2,v3,v4,v5);	\
+#define STGAPPLY5(f,v1,v2,v3,v4,v5)				\
+  do {								\
+    assert(f.op->infoPtr->objType == FUN);			\
+    assert(f.op->infoPtr->funFields.arity == 5);		\
+    STGJUMP6(f.op->infoPtr->entryCode, f, v1, v2, v3, v4, v5);	\
   } while(0)
 
-#define STGAPPLY6(f,v1,v2,v3,v4,v5,v6)		\
-  do {						\
-    STGJUMP8(stgApply,((PtrOrLiteral){.argType = INT, .i = 6}),f,v1,v2,v3,v4,v5,v6);	\
+#define STGAPPLY6(f,v1,v2,v3,v4,v5,v6)					\
+  do {									\
+    assert(f.op->infoPtr->objType == FUN);				\
+    assert(f.op->infoPtr->funFields.arity == 6);			\
+    STGJUMP7(f.op->infoPtr->entryCode, f, v1, v2, v3, v4, v5, v6);	\
   } while(0)
 
-
-
+#define STGAPPLY7(f,v1,v2,v3,v4,v5,v6,v7)				\
+  do {									\
+    assert(f.op->infoPtr->objType == FUN);				\
+    assert(f.op->infoPtr->funFields.arity == 7);			\
+    STGJUMP8(f.op->infoPtr->entryCode, f, v1, v2, v3, v4, v5, v6, v7);	\
+  } while(0)
 
 /*
 define STGRETURN1(o)				\
