@@ -238,6 +238,13 @@ Obj *stgPopCont();
 #define STGRETURN0()				\
   STGJUMP0(((Obj *)stgSP)->infoPtr->entryCode)
 
+/*
+define STGRETURN1(o)				\
+  do {						\
+  JUMP1(((Cont *)stgSP)->infoPtr->entryCode, o) \
+  } while (0)
+*/
+
 // no explicit return value stack
 #define STGRETURN1(r)				\
   do {						\
@@ -293,12 +300,5 @@ Obj *stgPopCont();
     assert(f.op->infoPtr->funFields.arity == 7);			\
     STGJUMP8(f.op->infoPtr->entryCode, f, v1, v2, v3, v4, v5, v6, v7);	\
   } while(0)
-
-/*
-define STGRETURN1(o)				\
-  do {						\
-  JUMP1(((Cont *)stgSP)->infoPtr->entryCode, o) \
-  } while (0)
-*/
 
 #endif  //ifdef stg_h

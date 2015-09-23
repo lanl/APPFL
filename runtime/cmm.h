@@ -238,6 +238,9 @@ inline PtrOrLiteral _POP() {
 
 #define _JUMP(f)  return ((FnPtr)f)
 
+// this works so there's hope for tail calls
+// define _JUMP(f)  return ((FnPtr)(f()))
+
 #define _CALL(f)  for (CmmFnPtr _f = (CmmFnPtr)f; _f; _f = (CmmFnPtr)_f())
 
 // POPVALSN(P1,...,PN), N >= 0
