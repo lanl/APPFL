@@ -278,7 +278,7 @@ cge env e@(EFCall it f eas) =
     case (knownCall it) of 
       Nothing -> stgApplyGeneric env f eas
       Just kit -> if arity kit == length eas
-                  then stgApplyDirect env e
+                  then stgApplyGeneric env f eas -- stgApplyDirect env e
                   else stgApplyGeneric env f eas
 
     

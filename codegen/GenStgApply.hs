@@ -130,25 +130,14 @@ gen s =
     macro = 
       "#define STGAPPLY" ++ s ++ "(" ++ arglist ++ ") \\\n" ++
       "do { \\\n" ++
-      "  PtrOrLiteral N = {.argType = INT, .i = " ++ show lens ++ "}; \\\n" ++
-      "  STGJUMP" ++ show (lens+2) ++ "(stgApply" ++ s ++ ",N," ++ arglist ++ "); \\\n" ++
+      "  STGJUMP" ++ show (lens+1) ++ "(stgApply" ++ s ++ "," ++ arglist ++ "); \\\n" ++
       "  } while(0)\n\n"
 
-{-
- #define STGAPPLY2(f,v1,v2)			\
-  do {						\
-    PtrOrLiteral N = {.argType = INT, .i = 2};	\
-    STGJUMP4(stgApply,N,f,v1,v2);		\
-  } while(0)
--}
-
     fun = 
-     "DEFUN2(" ++ fname ++ ", N, f) {\n" ++
+     "DEFUN1(" ++ fname ++ ", f) {\n" ++
         indent 2 (debugp [ fname ++ " %s\\n", 
                            "f.op->infoPtr->name"]) ++
-     "  assert(N.argType == INT);\n" ++
-     "  const int argc = N.i;\n" ++
-     "  assert(argc == " ++ show argc ++ ");\n" ++
+     "  const int argc = " ++ show argc ++ ";\n" ++
      "  PtrOrLiteral argv[" ++ show argc ++ "];\n" ++
      "  popargs(argc, argv);\n" ++
      "  const int nps = " ++ show nps ++ ";\n" ++
@@ -284,13 +273,10 @@ funpos excess s pinds argc =
      "// grab obj just returned\n" ++
      "f = stgCurVal;\n" ++
      "// new argc\n" ++
-     "N.i = excess;\n" ++
      "// push excess args\n" ++
      "pushargs(excess, &argv[" ++ show usedParamCount ++ "]);\n" ++ 
      "// try again - tail call stgApply\n" ++
---     optSwitch "excess" 1 (argc-1) 
---                   (\i -> "STGJUMP2(stgApply" ++ drop (argc - i) s  ++ ", N, f);\n")
-     "STGJUMP2(stgApply" ++ drop (argc - excess) s  ++ ", N, f);\n"
+     "STGJUMP1(stgApply" ++ drop (argc - excess) s  ++ ", f);\n"
 
 
 funeq s argc = 
@@ -371,11 +357,10 @@ pappos excess s pinds argc =
      "// grab obj just returned\n" ++
      "f = stgCurVal;\n" ++
      "// new argc\n" ++
-     "N.i = excess;\n" ++
      "// push excess args\n" ++
      "pushargs(excess, &argv[" ++ show usedParamCount ++ "]);\n" ++ 
      "// try again - tail call stgApply \n" ++
-     "STGJUMP2(stgApply" ++ drop (argc - excess) s  ++ ", N, f);\n"
+     "STGJUMP1(stgApply" ++ drop (argc - excess) s  ++ ", f);\n"
 
 -- s      - "NNPPNP" of new args
 -- argc   - #new args
