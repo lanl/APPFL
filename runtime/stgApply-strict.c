@@ -5,13 +5,11 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-DEFUN2(stgApplyN, N, f) {
+DEFUN1(stgApplyN, f) {
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyN %s\n", f.op->infoPtr->name);
   #endif
-  assert(N.argType == INT);
-  const int argc = N.i;
-  assert(argc == 1);
+  const int argc = 1;
   PtrOrLiteral argv[1];
   popargs(argc, argv);
   const int nps = 0;
@@ -154,13 +152,11 @@ DEFUN2(stgApplyN, N, f) {
   ENDFUN;
 }
 
-DEFUN2(stgApplyP, N, f) {
+DEFUN1(stgApplyP, f) {
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyP %s\n", f.op->infoPtr->name);
   #endif
-  assert(N.argType == INT);
-  const int argc = N.i;
-  assert(argc == 1);
+  const int argc = 1;
   PtrOrLiteral argv[1];
   popargs(argc, argv);
   const int nps = 1;
@@ -311,13 +307,11 @@ DEFUN2(stgApplyP, N, f) {
   ENDFUN;
 }
 
-DEFUN2(stgApplyNN, N, f) {
+DEFUN1(stgApplyNN, f) {
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyNN %s\n", f.op->infoPtr->name);
   #endif
-  assert(N.argType == INT);
-  const int argc = N.i;
-  assert(argc == 2);
+  const int argc = 2;
   PtrOrLiteral argv[2];
   popargs(argc, argv);
   const int nps = 0;
@@ -367,11 +361,10 @@ DEFUN2(stgApplyNN, N, f) {
       // grab obj just returned
       f = stgCurVal;
       // new argc
-      N.i = excess;
       // push excess args
       pushargs(excess, &argv[1]);
       // try again - tail call stgApply
-      STGJUMP2(stgApplyN, N, f);
+      STGJUMP1(stgApplyN, f);
     } else 
 
     // just right
@@ -445,11 +438,10 @@ DEFUN2(stgApplyNN, N, f) {
       // grab obj just returned
       f = stgCurVal;
       // new argc
-      N.i = excess;
       // push excess args
       pushargs(excess, &argv[1]);
       // try again - tail call stgApply 
-      STGJUMP2(stgApplyN, N, f);
+      STGJUMP1(stgApplyN, f);
     } else 
 
     // just right
@@ -512,13 +504,11 @@ DEFUN2(stgApplyNN, N, f) {
   ENDFUN;
 }
 
-DEFUN2(stgApplyPN, N, f) {
+DEFUN1(stgApplyPN, f) {
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyPN %s\n", f.op->infoPtr->name);
   #endif
-  assert(N.argType == INT);
-  const int argc = N.i;
-  assert(argc == 2);
+  const int argc = 2;
   PtrOrLiteral argv[2];
   popargs(argc, argv);
   const int nps = 1;
@@ -576,11 +566,10 @@ DEFUN2(stgApplyPN, N, f) {
       // grab obj just returned
       f = stgCurVal;
       // new argc
-      N.i = excess;
       // push excess args
       pushargs(excess, &argv[1]);
       // try again - tail call stgApply
-      STGJUMP2(stgApplyN, N, f);
+      STGJUMP1(stgApplyN, f);
     } else 
 
     // just right
@@ -654,11 +643,10 @@ DEFUN2(stgApplyPN, N, f) {
       // grab obj just returned
       f = stgCurVal;
       // new argc
-      N.i = excess;
       // push excess args
       pushargs(excess, &argv[1]);
       // try again - tail call stgApply 
-      STGJUMP2(stgApplyN, N, f);
+      STGJUMP1(stgApplyN, f);
     } else 
 
     // just right
@@ -721,13 +709,11 @@ DEFUN2(stgApplyPN, N, f) {
   ENDFUN;
 }
 
-DEFUN2(stgApplyNP, N, f) {
+DEFUN1(stgApplyNP, f) {
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyNP %s\n", f.op->infoPtr->name);
   #endif
-  assert(N.argType == INT);
-  const int argc = N.i;
-  assert(argc == 2);
+  const int argc = 2;
   PtrOrLiteral argv[2];
   popargs(argc, argv);
   const int nps = 1;
@@ -787,11 +773,10 @@ DEFUN2(stgApplyNP, N, f) {
       // grab obj just returned
       f = stgCurVal;
       // new argc
-      N.i = excess;
       // push excess args
       pushargs(excess, &argv[1]);
       // try again - tail call stgApply
-      STGJUMP2(stgApplyP, N, f);
+      STGJUMP1(stgApplyP, f);
     } else 
 
     // just right
@@ -867,11 +852,10 @@ DEFUN2(stgApplyNP, N, f) {
       // grab obj just returned
       f = stgCurVal;
       // new argc
-      N.i = excess;
       // push excess args
       pushargs(excess, &argv[1]);
       // try again - tail call stgApply 
-      STGJUMP2(stgApplyP, N, f);
+      STGJUMP1(stgApplyP, f);
     } else 
 
     // just right
@@ -934,13 +918,11 @@ DEFUN2(stgApplyNP, N, f) {
   ENDFUN;
 }
 
-DEFUN2(stgApplyPP, N, f) {
+DEFUN1(stgApplyPP, f) {
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyPP %s\n", f.op->infoPtr->name);
   #endif
-  assert(N.argType == INT);
-  const int argc = N.i;
-  assert(argc == 2);
+  const int argc = 2;
   PtrOrLiteral argv[2];
   popargs(argc, argv);
   const int nps = 2;
@@ -1008,11 +990,10 @@ DEFUN2(stgApplyPP, N, f) {
       // grab obj just returned
       f = stgCurVal;
       // new argc
-      N.i = excess;
       // push excess args
       pushargs(excess, &argv[1]);
       // try again - tail call stgApply
-      STGJUMP2(stgApplyP, N, f);
+      STGJUMP1(stgApplyP, f);
     } else 
 
     // just right
@@ -1088,11 +1069,10 @@ DEFUN2(stgApplyPP, N, f) {
       // grab obj just returned
       f = stgCurVal;
       // new argc
-      N.i = excess;
       // push excess args
       pushargs(excess, &argv[1]);
       // try again - tail call stgApply 
-      STGJUMP2(stgApplyP, N, f);
+      STGJUMP1(stgApplyP, f);
     } else 
 
     // just right
@@ -1155,13 +1135,11 @@ DEFUN2(stgApplyPP, N, f) {
   ENDFUN;
 }
 
-DEFUN2(stgApplyNNN, N, f) {
+DEFUN1(stgApplyNNN, f) {
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyNNN %s\n", f.op->infoPtr->name);
   #endif
-  assert(N.argType == INT);
-  const int argc = N.i;
-  assert(argc == 3);
+  const int argc = 3;
   PtrOrLiteral argv[3];
   popargs(argc, argv);
   const int nps = 0;
@@ -1213,11 +1191,10 @@ DEFUN2(stgApplyNNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyN, N, f);
+        STGJUMP1(stgApplyN, f);
         break;
       } // case 1
       case 2: {
@@ -1236,11 +1213,10 @@ DEFUN2(stgApplyNNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyNN, N, f);
+        STGJUMP1(stgApplyNN, f);
         break;
       } // case 2
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -1319,11 +1295,10 @@ DEFUN2(stgApplyNNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyN, N, f);
+        STGJUMP1(stgApplyN, f);
         break;
       } // case 1
       case 2: {
@@ -1344,11 +1319,10 @@ DEFUN2(stgApplyNNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyNN, N, f);
+        STGJUMP1(stgApplyNN, f);
         break;
       } // case 2
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -1415,13 +1389,11 @@ DEFUN2(stgApplyNNN, N, f) {
   ENDFUN;
 }
 
-DEFUN2(stgApplyPNN, N, f) {
+DEFUN1(stgApplyPNN, f) {
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyPNN %s\n", f.op->infoPtr->name);
   #endif
-  assert(N.argType == INT);
-  const int argc = N.i;
-  assert(argc == 3);
+  const int argc = 3;
   PtrOrLiteral argv[3];
   popargs(argc, argv);
   const int nps = 1;
@@ -1481,11 +1453,10 @@ DEFUN2(stgApplyPNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyN, N, f);
+        STGJUMP1(stgApplyN, f);
         break;
       } // case 1
       case 2: {
@@ -1504,11 +1475,10 @@ DEFUN2(stgApplyPNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyNN, N, f);
+        STGJUMP1(stgApplyNN, f);
         break;
       } // case 2
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -1587,11 +1557,10 @@ DEFUN2(stgApplyPNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyN, N, f);
+        STGJUMP1(stgApplyN, f);
         break;
       } // case 1
       case 2: {
@@ -1612,11 +1581,10 @@ DEFUN2(stgApplyPNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyNN, N, f);
+        STGJUMP1(stgApplyNN, f);
         break;
       } // case 2
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -1683,13 +1651,11 @@ DEFUN2(stgApplyPNN, N, f) {
   ENDFUN;
 }
 
-DEFUN2(stgApplyNPN, N, f) {
+DEFUN1(stgApplyNPN, f) {
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyNPN %s\n", f.op->infoPtr->name);
   #endif
-  assert(N.argType == INT);
-  const int argc = N.i;
-  assert(argc == 3);
+  const int argc = 3;
   PtrOrLiteral argv[3];
   popargs(argc, argv);
   const int nps = 1;
@@ -1749,11 +1715,10 @@ DEFUN2(stgApplyNPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyN, N, f);
+        STGJUMP1(stgApplyN, f);
         break;
       } // case 1
       case 2: {
@@ -1774,11 +1739,10 @@ DEFUN2(stgApplyNPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyPN, N, f);
+        STGJUMP1(stgApplyPN, f);
         break;
       } // case 2
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -1857,11 +1821,10 @@ DEFUN2(stgApplyNPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyN, N, f);
+        STGJUMP1(stgApplyN, f);
         break;
       } // case 1
       case 2: {
@@ -1884,11 +1847,10 @@ DEFUN2(stgApplyNPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyPN, N, f);
+        STGJUMP1(stgApplyPN, f);
         break;
       } // case 2
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -1955,13 +1917,11 @@ DEFUN2(stgApplyNPN, N, f) {
   ENDFUN;
 }
 
-DEFUN2(stgApplyPPN, N, f) {
+DEFUN1(stgApplyPPN, f) {
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyPPN %s\n", f.op->infoPtr->name);
   #endif
-  assert(N.argType == INT);
-  const int argc = N.i;
-  assert(argc == 3);
+  const int argc = 3;
   PtrOrLiteral argv[3];
   popargs(argc, argv);
   const int nps = 2;
@@ -2029,11 +1989,10 @@ DEFUN2(stgApplyPPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyN, N, f);
+        STGJUMP1(stgApplyN, f);
         break;
       } // case 1
       case 2: {
@@ -2054,11 +2013,10 @@ DEFUN2(stgApplyPPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyPN, N, f);
+        STGJUMP1(stgApplyPN, f);
         break;
       } // case 2
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -2137,11 +2095,10 @@ DEFUN2(stgApplyPPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyN, N, f);
+        STGJUMP1(stgApplyN, f);
         break;
       } // case 1
       case 2: {
@@ -2164,11 +2121,10 @@ DEFUN2(stgApplyPPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyPN, N, f);
+        STGJUMP1(stgApplyPN, f);
         break;
       } // case 2
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -2235,13 +2191,11 @@ DEFUN2(stgApplyPPN, N, f) {
   ENDFUN;
 }
 
-DEFUN2(stgApplyNNP, N, f) {
+DEFUN1(stgApplyNNP, f) {
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyNNP %s\n", f.op->infoPtr->name);
   #endif
-  assert(N.argType == INT);
-  const int argc = N.i;
-  assert(argc == 3);
+  const int argc = 3;
   PtrOrLiteral argv[3];
   popargs(argc, argv);
   const int nps = 1;
@@ -2303,11 +2257,10 @@ DEFUN2(stgApplyNNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyP, N, f);
+        STGJUMP1(stgApplyP, f);
         break;
       } // case 1
       case 2: {
@@ -2328,11 +2281,10 @@ DEFUN2(stgApplyNNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyNP, N, f);
+        STGJUMP1(stgApplyNP, f);
         break;
       } // case 2
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -2413,11 +2365,10 @@ DEFUN2(stgApplyNNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyP, N, f);
+        STGJUMP1(stgApplyP, f);
         break;
       } // case 1
       case 2: {
@@ -2440,11 +2391,10 @@ DEFUN2(stgApplyNNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyNP, N, f);
+        STGJUMP1(stgApplyNP, f);
         break;
       } // case 2
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -2511,13 +2461,11 @@ DEFUN2(stgApplyNNP, N, f) {
   ENDFUN;
 }
 
-DEFUN2(stgApplyPNP, N, f) {
+DEFUN1(stgApplyPNP, f) {
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyPNP %s\n", f.op->infoPtr->name);
   #endif
-  assert(N.argType == INT);
-  const int argc = N.i;
-  assert(argc == 3);
+  const int argc = 3;
   PtrOrLiteral argv[3];
   popargs(argc, argv);
   const int nps = 2;
@@ -2587,11 +2535,10 @@ DEFUN2(stgApplyPNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyP, N, f);
+        STGJUMP1(stgApplyP, f);
         break;
       } // case 1
       case 2: {
@@ -2612,11 +2559,10 @@ DEFUN2(stgApplyPNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyNP, N, f);
+        STGJUMP1(stgApplyNP, f);
         break;
       } // case 2
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -2697,11 +2643,10 @@ DEFUN2(stgApplyPNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyP, N, f);
+        STGJUMP1(stgApplyP, f);
         break;
       } // case 1
       case 2: {
@@ -2724,11 +2669,10 @@ DEFUN2(stgApplyPNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyNP, N, f);
+        STGJUMP1(stgApplyNP, f);
         break;
       } // case 2
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -2795,13 +2739,11 @@ DEFUN2(stgApplyPNP, N, f) {
   ENDFUN;
 }
 
-DEFUN2(stgApplyNPP, N, f) {
+DEFUN1(stgApplyNPP, f) {
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyNPP %s\n", f.op->infoPtr->name);
   #endif
-  assert(N.argType == INT);
-  const int argc = N.i;
-  assert(argc == 3);
+  const int argc = 3;
   PtrOrLiteral argv[3];
   popargs(argc, argv);
   const int nps = 2;
@@ -2871,11 +2813,10 @@ DEFUN2(stgApplyNPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyP, N, f);
+        STGJUMP1(stgApplyP, f);
         break;
       } // case 1
       case 2: {
@@ -2897,11 +2838,10 @@ DEFUN2(stgApplyNPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyPP, N, f);
+        STGJUMP1(stgApplyPP, f);
         break;
       } // case 2
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -2982,11 +2922,10 @@ DEFUN2(stgApplyNPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyP, N, f);
+        STGJUMP1(stgApplyP, f);
         break;
       } // case 1
       case 2: {
@@ -3010,11 +2949,10 @@ DEFUN2(stgApplyNPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyPP, N, f);
+        STGJUMP1(stgApplyPP, f);
         break;
       } // case 2
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -3081,13 +3019,11 @@ DEFUN2(stgApplyNPP, N, f) {
   ENDFUN;
 }
 
-DEFUN2(stgApplyPPP, N, f) {
+DEFUN1(stgApplyPPP, f) {
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyPPP %s\n", f.op->infoPtr->name);
   #endif
-  assert(N.argType == INT);
-  const int argc = N.i;
-  assert(argc == 3);
+  const int argc = 3;
   PtrOrLiteral argv[3];
   popargs(argc, argv);
   const int nps = 3;
@@ -3167,11 +3103,10 @@ DEFUN2(stgApplyPPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyP, N, f);
+        STGJUMP1(stgApplyP, f);
         break;
       } // case 1
       case 2: {
@@ -3193,11 +3128,10 @@ DEFUN2(stgApplyPPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyPP, N, f);
+        STGJUMP1(stgApplyPP, f);
         break;
       } // case 2
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -3278,11 +3212,10 @@ DEFUN2(stgApplyPPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyP, N, f);
+        STGJUMP1(stgApplyP, f);
         break;
       } // case 1
       case 2: {
@@ -3306,11 +3239,10 @@ DEFUN2(stgApplyPPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyPP, N, f);
+        STGJUMP1(stgApplyPP, f);
         break;
       } // case 2
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -3377,13 +3309,11 @@ DEFUN2(stgApplyPPP, N, f) {
   ENDFUN;
 }
 
-DEFUN2(stgApplyNNNN, N, f) {
+DEFUN1(stgApplyNNNN, f) {
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyNNNN %s\n", f.op->infoPtr->name);
   #endif
-  assert(N.argType == INT);
-  const int argc = N.i;
-  assert(argc == 4);
+  const int argc = 4;
   PtrOrLiteral argv[4];
   popargs(argc, argv);
   const int nps = 0;
@@ -3436,11 +3366,10 @@ DEFUN2(stgApplyNNNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyN, N, f);
+        STGJUMP1(stgApplyN, f);
         break;
       } // case 1
       case 2: {
@@ -3459,11 +3388,10 @@ DEFUN2(stgApplyNNNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyNN, N, f);
+        STGJUMP1(stgApplyNN, f);
         break;
       } // case 2
       case 3: {
@@ -3482,11 +3410,10 @@ DEFUN2(stgApplyNNNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyNNN, N, f);
+        STGJUMP1(stgApplyNNN, f);
         break;
       } // case 3
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -3565,11 +3492,10 @@ DEFUN2(stgApplyNNNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyN, N, f);
+        STGJUMP1(stgApplyN, f);
         break;
       } // case 1
       case 2: {
@@ -3590,11 +3516,10 @@ DEFUN2(stgApplyNNNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyNN, N, f);
+        STGJUMP1(stgApplyNN, f);
         break;
       } // case 2
       case 3: {
@@ -3615,11 +3540,10 @@ DEFUN2(stgApplyNNNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyNNN, N, f);
+        STGJUMP1(stgApplyNNN, f);
         break;
       } // case 3
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -3686,13 +3610,11 @@ DEFUN2(stgApplyNNNN, N, f) {
   ENDFUN;
 }
 
-DEFUN2(stgApplyPNNN, N, f) {
+DEFUN1(stgApplyPNNN, f) {
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyPNNN %s\n", f.op->infoPtr->name);
   #endif
-  assert(N.argType == INT);
-  const int argc = N.i;
-  assert(argc == 4);
+  const int argc = 4;
   PtrOrLiteral argv[4];
   popargs(argc, argv);
   const int nps = 1;
@@ -3753,11 +3675,10 @@ DEFUN2(stgApplyPNNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyN, N, f);
+        STGJUMP1(stgApplyN, f);
         break;
       } // case 1
       case 2: {
@@ -3776,11 +3697,10 @@ DEFUN2(stgApplyPNNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyNN, N, f);
+        STGJUMP1(stgApplyNN, f);
         break;
       } // case 2
       case 3: {
@@ -3799,11 +3719,10 @@ DEFUN2(stgApplyPNNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyNNN, N, f);
+        STGJUMP1(stgApplyNNN, f);
         break;
       } // case 3
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -3882,11 +3801,10 @@ DEFUN2(stgApplyPNNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyN, N, f);
+        STGJUMP1(stgApplyN, f);
         break;
       } // case 1
       case 2: {
@@ -3907,11 +3825,10 @@ DEFUN2(stgApplyPNNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyNN, N, f);
+        STGJUMP1(stgApplyNN, f);
         break;
       } // case 2
       case 3: {
@@ -3932,11 +3849,10 @@ DEFUN2(stgApplyPNNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyNNN, N, f);
+        STGJUMP1(stgApplyNNN, f);
         break;
       } // case 3
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -4003,13 +3919,11 @@ DEFUN2(stgApplyPNNN, N, f) {
   ENDFUN;
 }
 
-DEFUN2(stgApplyNPNN, N, f) {
+DEFUN1(stgApplyNPNN, f) {
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyNPNN %s\n", f.op->infoPtr->name);
   #endif
-  assert(N.argType == INT);
-  const int argc = N.i;
-  assert(argc == 4);
+  const int argc = 4;
   PtrOrLiteral argv[4];
   popargs(argc, argv);
   const int nps = 1;
@@ -4070,11 +3984,10 @@ DEFUN2(stgApplyNPNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyN, N, f);
+        STGJUMP1(stgApplyN, f);
         break;
       } // case 1
       case 2: {
@@ -4093,11 +4006,10 @@ DEFUN2(stgApplyNPNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyNN, N, f);
+        STGJUMP1(stgApplyNN, f);
         break;
       } // case 2
       case 3: {
@@ -4118,11 +4030,10 @@ DEFUN2(stgApplyNPNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyPNN, N, f);
+        STGJUMP1(stgApplyPNN, f);
         break;
       } // case 3
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -4201,11 +4112,10 @@ DEFUN2(stgApplyNPNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyN, N, f);
+        STGJUMP1(stgApplyN, f);
         break;
       } // case 1
       case 2: {
@@ -4226,11 +4136,10 @@ DEFUN2(stgApplyNPNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyNN, N, f);
+        STGJUMP1(stgApplyNN, f);
         break;
       } // case 2
       case 3: {
@@ -4253,11 +4162,10 @@ DEFUN2(stgApplyNPNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyPNN, N, f);
+        STGJUMP1(stgApplyPNN, f);
         break;
       } // case 3
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -4324,13 +4232,11 @@ DEFUN2(stgApplyNPNN, N, f) {
   ENDFUN;
 }
 
-DEFUN2(stgApplyPPNN, N, f) {
+DEFUN1(stgApplyPPNN, f) {
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyPPNN %s\n", f.op->infoPtr->name);
   #endif
-  assert(N.argType == INT);
-  const int argc = N.i;
-  assert(argc == 4);
+  const int argc = 4;
   PtrOrLiteral argv[4];
   popargs(argc, argv);
   const int nps = 2;
@@ -4399,11 +4305,10 @@ DEFUN2(stgApplyPPNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyN, N, f);
+        STGJUMP1(stgApplyN, f);
         break;
       } // case 1
       case 2: {
@@ -4422,11 +4327,10 @@ DEFUN2(stgApplyPPNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyNN, N, f);
+        STGJUMP1(stgApplyNN, f);
         break;
       } // case 2
       case 3: {
@@ -4447,11 +4351,10 @@ DEFUN2(stgApplyPPNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyPNN, N, f);
+        STGJUMP1(stgApplyPNN, f);
         break;
       } // case 3
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -4530,11 +4433,10 @@ DEFUN2(stgApplyPPNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyN, N, f);
+        STGJUMP1(stgApplyN, f);
         break;
       } // case 1
       case 2: {
@@ -4555,11 +4457,10 @@ DEFUN2(stgApplyPPNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyNN, N, f);
+        STGJUMP1(stgApplyNN, f);
         break;
       } // case 2
       case 3: {
@@ -4582,11 +4483,10 @@ DEFUN2(stgApplyPPNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyPNN, N, f);
+        STGJUMP1(stgApplyPNN, f);
         break;
       } // case 3
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -4653,13 +4553,11 @@ DEFUN2(stgApplyPPNN, N, f) {
   ENDFUN;
 }
 
-DEFUN2(stgApplyNNPN, N, f) {
+DEFUN1(stgApplyNNPN, f) {
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyNNPN %s\n", f.op->infoPtr->name);
   #endif
-  assert(N.argType == INT);
-  const int argc = N.i;
-  assert(argc == 4);
+  const int argc = 4;
   PtrOrLiteral argv[4];
   popargs(argc, argv);
   const int nps = 1;
@@ -4720,11 +4618,10 @@ DEFUN2(stgApplyNNPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyN, N, f);
+        STGJUMP1(stgApplyN, f);
         break;
       } // case 1
       case 2: {
@@ -4745,11 +4642,10 @@ DEFUN2(stgApplyNNPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyPN, N, f);
+        STGJUMP1(stgApplyPN, f);
         break;
       } // case 2
       case 3: {
@@ -4770,11 +4666,10 @@ DEFUN2(stgApplyNNPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyNPN, N, f);
+        STGJUMP1(stgApplyNPN, f);
         break;
       } // case 3
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -4853,11 +4748,10 @@ DEFUN2(stgApplyNNPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyN, N, f);
+        STGJUMP1(stgApplyN, f);
         break;
       } // case 1
       case 2: {
@@ -4880,11 +4774,10 @@ DEFUN2(stgApplyNNPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyPN, N, f);
+        STGJUMP1(stgApplyPN, f);
         break;
       } // case 2
       case 3: {
@@ -4907,11 +4800,10 @@ DEFUN2(stgApplyNNPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyNPN, N, f);
+        STGJUMP1(stgApplyNPN, f);
         break;
       } // case 3
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -4978,13 +4870,11 @@ DEFUN2(stgApplyNNPN, N, f) {
   ENDFUN;
 }
 
-DEFUN2(stgApplyPNPN, N, f) {
+DEFUN1(stgApplyPNPN, f) {
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyPNPN %s\n", f.op->infoPtr->name);
   #endif
-  assert(N.argType == INT);
-  const int argc = N.i;
-  assert(argc == 4);
+  const int argc = 4;
   PtrOrLiteral argv[4];
   popargs(argc, argv);
   const int nps = 2;
@@ -5053,11 +4943,10 @@ DEFUN2(stgApplyPNPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyN, N, f);
+        STGJUMP1(stgApplyN, f);
         break;
       } // case 1
       case 2: {
@@ -5078,11 +4967,10 @@ DEFUN2(stgApplyPNPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyPN, N, f);
+        STGJUMP1(stgApplyPN, f);
         break;
       } // case 2
       case 3: {
@@ -5103,11 +4991,10 @@ DEFUN2(stgApplyPNPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyNPN, N, f);
+        STGJUMP1(stgApplyNPN, f);
         break;
       } // case 3
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -5186,11 +5073,10 @@ DEFUN2(stgApplyPNPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyN, N, f);
+        STGJUMP1(stgApplyN, f);
         break;
       } // case 1
       case 2: {
@@ -5213,11 +5099,10 @@ DEFUN2(stgApplyPNPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyPN, N, f);
+        STGJUMP1(stgApplyPN, f);
         break;
       } // case 2
       case 3: {
@@ -5240,11 +5125,10 @@ DEFUN2(stgApplyPNPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyNPN, N, f);
+        STGJUMP1(stgApplyNPN, f);
         break;
       } // case 3
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -5311,13 +5195,11 @@ DEFUN2(stgApplyPNPN, N, f) {
   ENDFUN;
 }
 
-DEFUN2(stgApplyNPPN, N, f) {
+DEFUN1(stgApplyNPPN, f) {
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyNPPN %s\n", f.op->infoPtr->name);
   #endif
-  assert(N.argType == INT);
-  const int argc = N.i;
-  assert(argc == 4);
+  const int argc = 4;
   PtrOrLiteral argv[4];
   popargs(argc, argv);
   const int nps = 2;
@@ -5386,11 +5268,10 @@ DEFUN2(stgApplyNPPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyN, N, f);
+        STGJUMP1(stgApplyN, f);
         break;
       } // case 1
       case 2: {
@@ -5411,11 +5292,10 @@ DEFUN2(stgApplyNPPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyPN, N, f);
+        STGJUMP1(stgApplyPN, f);
         break;
       } // case 2
       case 3: {
@@ -5437,11 +5317,10 @@ DEFUN2(stgApplyNPPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyPPN, N, f);
+        STGJUMP1(stgApplyPPN, f);
         break;
       } // case 3
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -5520,11 +5399,10 @@ DEFUN2(stgApplyNPPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyN, N, f);
+        STGJUMP1(stgApplyN, f);
         break;
       } // case 1
       case 2: {
@@ -5547,11 +5425,10 @@ DEFUN2(stgApplyNPPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyPN, N, f);
+        STGJUMP1(stgApplyPN, f);
         break;
       } // case 2
       case 3: {
@@ -5575,11 +5452,10 @@ DEFUN2(stgApplyNPPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyPPN, N, f);
+        STGJUMP1(stgApplyPPN, f);
         break;
       } // case 3
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -5646,13 +5522,11 @@ DEFUN2(stgApplyNPPN, N, f) {
   ENDFUN;
 }
 
-DEFUN2(stgApplyPPPN, N, f) {
+DEFUN1(stgApplyPPPN, f) {
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyPPPN %s\n", f.op->infoPtr->name);
   #endif
-  assert(N.argType == INT);
-  const int argc = N.i;
-  assert(argc == 4);
+  const int argc = 4;
   PtrOrLiteral argv[4];
   popargs(argc, argv);
   const int nps = 3;
@@ -5731,11 +5605,10 @@ DEFUN2(stgApplyPPPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyN, N, f);
+        STGJUMP1(stgApplyN, f);
         break;
       } // case 1
       case 2: {
@@ -5756,11 +5629,10 @@ DEFUN2(stgApplyPPPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyPN, N, f);
+        STGJUMP1(stgApplyPN, f);
         break;
       } // case 2
       case 3: {
@@ -5782,11 +5654,10 @@ DEFUN2(stgApplyPPPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyPPN, N, f);
+        STGJUMP1(stgApplyPPN, f);
         break;
       } // case 3
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -5865,11 +5736,10 @@ DEFUN2(stgApplyPPPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyN, N, f);
+        STGJUMP1(stgApplyN, f);
         break;
       } // case 1
       case 2: {
@@ -5892,11 +5762,10 @@ DEFUN2(stgApplyPPPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyPN, N, f);
+        STGJUMP1(stgApplyPN, f);
         break;
       } // case 2
       case 3: {
@@ -5920,11 +5789,10 @@ DEFUN2(stgApplyPPPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyPPN, N, f);
+        STGJUMP1(stgApplyPPN, f);
         break;
       } // case 3
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -5991,13 +5859,11 @@ DEFUN2(stgApplyPPPN, N, f) {
   ENDFUN;
 }
 
-DEFUN2(stgApplyNNNP, N, f) {
+DEFUN1(stgApplyNNNP, f) {
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyNNNP %s\n", f.op->infoPtr->name);
   #endif
-  assert(N.argType == INT);
-  const int argc = N.i;
-  assert(argc == 4);
+  const int argc = 4;
   PtrOrLiteral argv[4];
   popargs(argc, argv);
   const int nps = 1;
@@ -6060,11 +5926,10 @@ DEFUN2(stgApplyNNNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyP, N, f);
+        STGJUMP1(stgApplyP, f);
         break;
       } // case 1
       case 2: {
@@ -6085,11 +5950,10 @@ DEFUN2(stgApplyNNNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyNP, N, f);
+        STGJUMP1(stgApplyNP, f);
         break;
       } // case 2
       case 3: {
@@ -6110,11 +5974,10 @@ DEFUN2(stgApplyNNNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyNNP, N, f);
+        STGJUMP1(stgApplyNNP, f);
         break;
       } // case 3
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -6195,11 +6058,10 @@ DEFUN2(stgApplyNNNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyP, N, f);
+        STGJUMP1(stgApplyP, f);
         break;
       } // case 1
       case 2: {
@@ -6222,11 +6084,10 @@ DEFUN2(stgApplyNNNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyNP, N, f);
+        STGJUMP1(stgApplyNP, f);
         break;
       } // case 2
       case 3: {
@@ -6249,11 +6110,10 @@ DEFUN2(stgApplyNNNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyNNP, N, f);
+        STGJUMP1(stgApplyNNP, f);
         break;
       } // case 3
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -6320,13 +6180,11 @@ DEFUN2(stgApplyNNNP, N, f) {
   ENDFUN;
 }
 
-DEFUN2(stgApplyPNNP, N, f) {
+DEFUN1(stgApplyPNNP, f) {
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyPNNP %s\n", f.op->infoPtr->name);
   #endif
-  assert(N.argType == INT);
-  const int argc = N.i;
-  assert(argc == 4);
+  const int argc = 4;
   PtrOrLiteral argv[4];
   popargs(argc, argv);
   const int nps = 2;
@@ -6397,11 +6255,10 @@ DEFUN2(stgApplyPNNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyP, N, f);
+        STGJUMP1(stgApplyP, f);
         break;
       } // case 1
       case 2: {
@@ -6422,11 +6279,10 @@ DEFUN2(stgApplyPNNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyNP, N, f);
+        STGJUMP1(stgApplyNP, f);
         break;
       } // case 2
       case 3: {
@@ -6447,11 +6303,10 @@ DEFUN2(stgApplyPNNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyNNP, N, f);
+        STGJUMP1(stgApplyNNP, f);
         break;
       } // case 3
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -6532,11 +6387,10 @@ DEFUN2(stgApplyPNNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyP, N, f);
+        STGJUMP1(stgApplyP, f);
         break;
       } // case 1
       case 2: {
@@ -6559,11 +6413,10 @@ DEFUN2(stgApplyPNNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyNP, N, f);
+        STGJUMP1(stgApplyNP, f);
         break;
       } // case 2
       case 3: {
@@ -6586,11 +6439,10 @@ DEFUN2(stgApplyPNNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyNNP, N, f);
+        STGJUMP1(stgApplyNNP, f);
         break;
       } // case 3
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -6657,13 +6509,11 @@ DEFUN2(stgApplyPNNP, N, f) {
   ENDFUN;
 }
 
-DEFUN2(stgApplyNPNP, N, f) {
+DEFUN1(stgApplyNPNP, f) {
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyNPNP %s\n", f.op->infoPtr->name);
   #endif
-  assert(N.argType == INT);
-  const int argc = N.i;
-  assert(argc == 4);
+  const int argc = 4;
   PtrOrLiteral argv[4];
   popargs(argc, argv);
   const int nps = 2;
@@ -6734,11 +6584,10 @@ DEFUN2(stgApplyNPNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyP, N, f);
+        STGJUMP1(stgApplyP, f);
         break;
       } // case 1
       case 2: {
@@ -6759,11 +6608,10 @@ DEFUN2(stgApplyNPNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyNP, N, f);
+        STGJUMP1(stgApplyNP, f);
         break;
       } // case 2
       case 3: {
@@ -6785,11 +6633,10 @@ DEFUN2(stgApplyNPNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyPNP, N, f);
+        STGJUMP1(stgApplyPNP, f);
         break;
       } // case 3
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -6870,11 +6717,10 @@ DEFUN2(stgApplyNPNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyP, N, f);
+        STGJUMP1(stgApplyP, f);
         break;
       } // case 1
       case 2: {
@@ -6897,11 +6743,10 @@ DEFUN2(stgApplyNPNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyNP, N, f);
+        STGJUMP1(stgApplyNP, f);
         break;
       } // case 2
       case 3: {
@@ -6925,11 +6770,10 @@ DEFUN2(stgApplyNPNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyPNP, N, f);
+        STGJUMP1(stgApplyPNP, f);
         break;
       } // case 3
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -6996,13 +6840,11 @@ DEFUN2(stgApplyNPNP, N, f) {
   ENDFUN;
 }
 
-DEFUN2(stgApplyPPNP, N, f) {
+DEFUN1(stgApplyPPNP, f) {
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyPPNP %s\n", f.op->infoPtr->name);
   #endif
-  assert(N.argType == INT);
-  const int argc = N.i;
-  assert(argc == 4);
+  const int argc = 4;
   PtrOrLiteral argv[4];
   popargs(argc, argv);
   const int nps = 3;
@@ -7083,11 +6925,10 @@ DEFUN2(stgApplyPPNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyP, N, f);
+        STGJUMP1(stgApplyP, f);
         break;
       } // case 1
       case 2: {
@@ -7108,11 +6949,10 @@ DEFUN2(stgApplyPPNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyNP, N, f);
+        STGJUMP1(stgApplyNP, f);
         break;
       } // case 2
       case 3: {
@@ -7134,11 +6974,10 @@ DEFUN2(stgApplyPPNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyPNP, N, f);
+        STGJUMP1(stgApplyPNP, f);
         break;
       } // case 3
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -7219,11 +7058,10 @@ DEFUN2(stgApplyPPNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyP, N, f);
+        STGJUMP1(stgApplyP, f);
         break;
       } // case 1
       case 2: {
@@ -7246,11 +7084,10 @@ DEFUN2(stgApplyPPNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyNP, N, f);
+        STGJUMP1(stgApplyNP, f);
         break;
       } // case 2
       case 3: {
@@ -7274,11 +7111,10 @@ DEFUN2(stgApplyPPNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyPNP, N, f);
+        STGJUMP1(stgApplyPNP, f);
         break;
       } // case 3
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -7345,13 +7181,11 @@ DEFUN2(stgApplyPPNP, N, f) {
   ENDFUN;
 }
 
-DEFUN2(stgApplyNNPP, N, f) {
+DEFUN1(stgApplyNNPP, f) {
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyNNPP %s\n", f.op->infoPtr->name);
   #endif
-  assert(N.argType == INT);
-  const int argc = N.i;
-  assert(argc == 4);
+  const int argc = 4;
   PtrOrLiteral argv[4];
   popargs(argc, argv);
   const int nps = 2;
@@ -7422,11 +7256,10 @@ DEFUN2(stgApplyNNPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyP, N, f);
+        STGJUMP1(stgApplyP, f);
         break;
       } // case 1
       case 2: {
@@ -7448,11 +7281,10 @@ DEFUN2(stgApplyNNPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyPP, N, f);
+        STGJUMP1(stgApplyPP, f);
         break;
       } // case 2
       case 3: {
@@ -7474,11 +7306,10 @@ DEFUN2(stgApplyNNPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyNPP, N, f);
+        STGJUMP1(stgApplyNPP, f);
         break;
       } // case 3
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -7559,11 +7390,10 @@ DEFUN2(stgApplyNNPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyP, N, f);
+        STGJUMP1(stgApplyP, f);
         break;
       } // case 1
       case 2: {
@@ -7587,11 +7417,10 @@ DEFUN2(stgApplyNNPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyPP, N, f);
+        STGJUMP1(stgApplyPP, f);
         break;
       } // case 2
       case 3: {
@@ -7615,11 +7444,10 @@ DEFUN2(stgApplyNNPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyNPP, N, f);
+        STGJUMP1(stgApplyNPP, f);
         break;
       } // case 3
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -7686,13 +7514,11 @@ DEFUN2(stgApplyNNPP, N, f) {
   ENDFUN;
 }
 
-DEFUN2(stgApplyPNPP, N, f) {
+DEFUN1(stgApplyPNPP, f) {
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyPNPP %s\n", f.op->infoPtr->name);
   #endif
-  assert(N.argType == INT);
-  const int argc = N.i;
-  assert(argc == 4);
+  const int argc = 4;
   PtrOrLiteral argv[4];
   popargs(argc, argv);
   const int nps = 3;
@@ -7773,11 +7599,10 @@ DEFUN2(stgApplyPNPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyP, N, f);
+        STGJUMP1(stgApplyP, f);
         break;
       } // case 1
       case 2: {
@@ -7799,11 +7624,10 @@ DEFUN2(stgApplyPNPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyPP, N, f);
+        STGJUMP1(stgApplyPP, f);
         break;
       } // case 2
       case 3: {
@@ -7825,11 +7649,10 @@ DEFUN2(stgApplyPNPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyNPP, N, f);
+        STGJUMP1(stgApplyNPP, f);
         break;
       } // case 3
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -7910,11 +7733,10 @@ DEFUN2(stgApplyPNPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyP, N, f);
+        STGJUMP1(stgApplyP, f);
         break;
       } // case 1
       case 2: {
@@ -7938,11 +7760,10 @@ DEFUN2(stgApplyPNPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyPP, N, f);
+        STGJUMP1(stgApplyPP, f);
         break;
       } // case 2
       case 3: {
@@ -7966,11 +7787,10 @@ DEFUN2(stgApplyPNPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyNPP, N, f);
+        STGJUMP1(stgApplyNPP, f);
         break;
       } // case 3
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -8037,13 +7857,11 @@ DEFUN2(stgApplyPNPP, N, f) {
   ENDFUN;
 }
 
-DEFUN2(stgApplyNPPP, N, f) {
+DEFUN1(stgApplyNPPP, f) {
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyNPPP %s\n", f.op->infoPtr->name);
   #endif
-  assert(N.argType == INT);
-  const int argc = N.i;
-  assert(argc == 4);
+  const int argc = 4;
   PtrOrLiteral argv[4];
   popargs(argc, argv);
   const int nps = 3;
@@ -8124,11 +7942,10 @@ DEFUN2(stgApplyNPPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyP, N, f);
+        STGJUMP1(stgApplyP, f);
         break;
       } // case 1
       case 2: {
@@ -8150,11 +7967,10 @@ DEFUN2(stgApplyNPPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyPP, N, f);
+        STGJUMP1(stgApplyPP, f);
         break;
       } // case 2
       case 3: {
@@ -8177,11 +7993,10 @@ DEFUN2(stgApplyNPPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyPPP, N, f);
+        STGJUMP1(stgApplyPPP, f);
         break;
       } // case 3
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -8262,11 +8077,10 @@ DEFUN2(stgApplyNPPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyP, N, f);
+        STGJUMP1(stgApplyP, f);
         break;
       } // case 1
       case 2: {
@@ -8290,11 +8104,10 @@ DEFUN2(stgApplyNPPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyPP, N, f);
+        STGJUMP1(stgApplyPP, f);
         break;
       } // case 2
       case 3: {
@@ -8319,11 +8132,10 @@ DEFUN2(stgApplyNPPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyPPP, N, f);
+        STGJUMP1(stgApplyPPP, f);
         break;
       } // case 3
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -8390,13 +8202,11 @@ DEFUN2(stgApplyNPPP, N, f) {
   ENDFUN;
 }
 
-DEFUN2(stgApplyPPPP, N, f) {
+DEFUN1(stgApplyPPPP, f) {
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyPPPP %s\n", f.op->infoPtr->name);
   #endif
-  assert(N.argType == INT);
-  const int argc = N.i;
-  assert(argc == 4);
+  const int argc = 4;
   PtrOrLiteral argv[4];
   popargs(argc, argv);
   const int nps = 4;
@@ -8489,11 +8299,10 @@ DEFUN2(stgApplyPPPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyP, N, f);
+        STGJUMP1(stgApplyP, f);
         break;
       } // case 1
       case 2: {
@@ -8515,11 +8324,10 @@ DEFUN2(stgApplyPPPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyPP, N, f);
+        STGJUMP1(stgApplyPP, f);
         break;
       } // case 2
       case 3: {
@@ -8542,11 +8350,10 @@ DEFUN2(stgApplyPPPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyPPP, N, f);
+        STGJUMP1(stgApplyPPP, f);
         break;
       } // case 3
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -8627,11 +8434,10 @@ DEFUN2(stgApplyPPPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyP, N, f);
+        STGJUMP1(stgApplyP, f);
         break;
       } // case 1
       case 2: {
@@ -8655,11 +8461,10 @@ DEFUN2(stgApplyPPPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyPP, N, f);
+        STGJUMP1(stgApplyPP, f);
         break;
       } // case 2
       case 3: {
@@ -8684,11 +8489,10 @@ DEFUN2(stgApplyPPPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyPPP, N, f);
+        STGJUMP1(stgApplyPPP, f);
         break;
       } // case 3
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -8755,13 +8559,11 @@ DEFUN2(stgApplyPPPP, N, f) {
   ENDFUN;
 }
 
-DEFUN2(stgApplyNNNNN, N, f) {
+DEFUN1(stgApplyNNNNN, f) {
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyNNNNN %s\n", f.op->infoPtr->name);
   #endif
-  assert(N.argType == INT);
-  const int argc = N.i;
-  assert(argc == 5);
+  const int argc = 5;
   PtrOrLiteral argv[5];
   popargs(argc, argv);
   const int nps = 0;
@@ -8815,11 +8617,10 @@ DEFUN2(stgApplyNNNNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[4]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyN, N, f);
+        STGJUMP1(stgApplyN, f);
         break;
       } // case 1
       case 2: {
@@ -8838,11 +8639,10 @@ DEFUN2(stgApplyNNNNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyNN, N, f);
+        STGJUMP1(stgApplyNN, f);
         break;
       } // case 2
       case 3: {
@@ -8861,11 +8661,10 @@ DEFUN2(stgApplyNNNNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyNNN, N, f);
+        STGJUMP1(stgApplyNNN, f);
         break;
       } // case 3
       case 4: {
@@ -8884,11 +8683,10 @@ DEFUN2(stgApplyNNNNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyNNNN, N, f);
+        STGJUMP1(stgApplyNNNN, f);
         break;
       } // case 4
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -8967,11 +8765,10 @@ DEFUN2(stgApplyNNNNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[4]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyN, N, f);
+        STGJUMP1(stgApplyN, f);
         break;
       } // case 1
       case 2: {
@@ -8992,11 +8789,10 @@ DEFUN2(stgApplyNNNNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyNN, N, f);
+        STGJUMP1(stgApplyNN, f);
         break;
       } // case 2
       case 3: {
@@ -9017,11 +8813,10 @@ DEFUN2(stgApplyNNNNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyNNN, N, f);
+        STGJUMP1(stgApplyNNN, f);
         break;
       } // case 3
       case 4: {
@@ -9042,11 +8837,10 @@ DEFUN2(stgApplyNNNNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyNNNN, N, f);
+        STGJUMP1(stgApplyNNNN, f);
         break;
       } // case 4
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -9113,13 +8907,11 @@ DEFUN2(stgApplyNNNNN, N, f) {
   ENDFUN;
 }
 
-DEFUN2(stgApplyPNNNN, N, f) {
+DEFUN1(stgApplyPNNNN, f) {
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyPNNNN %s\n", f.op->infoPtr->name);
   #endif
-  assert(N.argType == INT);
-  const int argc = N.i;
-  assert(argc == 5);
+  const int argc = 5;
   PtrOrLiteral argv[5];
   popargs(argc, argv);
   const int nps = 1;
@@ -9181,11 +8973,10 @@ DEFUN2(stgApplyPNNNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[4]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyN, N, f);
+        STGJUMP1(stgApplyN, f);
         break;
       } // case 1
       case 2: {
@@ -9204,11 +8995,10 @@ DEFUN2(stgApplyPNNNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyNN, N, f);
+        STGJUMP1(stgApplyNN, f);
         break;
       } // case 2
       case 3: {
@@ -9227,11 +9017,10 @@ DEFUN2(stgApplyPNNNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyNNN, N, f);
+        STGJUMP1(stgApplyNNN, f);
         break;
       } // case 3
       case 4: {
@@ -9250,11 +9039,10 @@ DEFUN2(stgApplyPNNNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyNNNN, N, f);
+        STGJUMP1(stgApplyNNNN, f);
         break;
       } // case 4
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -9333,11 +9121,10 @@ DEFUN2(stgApplyPNNNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[4]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyN, N, f);
+        STGJUMP1(stgApplyN, f);
         break;
       } // case 1
       case 2: {
@@ -9358,11 +9145,10 @@ DEFUN2(stgApplyPNNNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyNN, N, f);
+        STGJUMP1(stgApplyNN, f);
         break;
       } // case 2
       case 3: {
@@ -9383,11 +9169,10 @@ DEFUN2(stgApplyPNNNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyNNN, N, f);
+        STGJUMP1(stgApplyNNN, f);
         break;
       } // case 3
       case 4: {
@@ -9408,11 +9193,10 @@ DEFUN2(stgApplyPNNNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyNNNN, N, f);
+        STGJUMP1(stgApplyNNNN, f);
         break;
       } // case 4
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -9479,13 +9263,11 @@ DEFUN2(stgApplyPNNNN, N, f) {
   ENDFUN;
 }
 
-DEFUN2(stgApplyNPNNN, N, f) {
+DEFUN1(stgApplyNPNNN, f) {
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyNPNNN %s\n", f.op->infoPtr->name);
   #endif
-  assert(N.argType == INT);
-  const int argc = N.i;
-  assert(argc == 5);
+  const int argc = 5;
   PtrOrLiteral argv[5];
   popargs(argc, argv);
   const int nps = 1;
@@ -9547,11 +9329,10 @@ DEFUN2(stgApplyNPNNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[4]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyN, N, f);
+        STGJUMP1(stgApplyN, f);
         break;
       } // case 1
       case 2: {
@@ -9570,11 +9351,10 @@ DEFUN2(stgApplyNPNNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyNN, N, f);
+        STGJUMP1(stgApplyNN, f);
         break;
       } // case 2
       case 3: {
@@ -9593,11 +9373,10 @@ DEFUN2(stgApplyNPNNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyNNN, N, f);
+        STGJUMP1(stgApplyNNN, f);
         break;
       } // case 3
       case 4: {
@@ -9618,11 +9397,10 @@ DEFUN2(stgApplyNPNNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyPNNN, N, f);
+        STGJUMP1(stgApplyPNNN, f);
         break;
       } // case 4
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -9701,11 +9479,10 @@ DEFUN2(stgApplyNPNNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[4]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyN, N, f);
+        STGJUMP1(stgApplyN, f);
         break;
       } // case 1
       case 2: {
@@ -9726,11 +9503,10 @@ DEFUN2(stgApplyNPNNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyNN, N, f);
+        STGJUMP1(stgApplyNN, f);
         break;
       } // case 2
       case 3: {
@@ -9751,11 +9527,10 @@ DEFUN2(stgApplyNPNNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyNNN, N, f);
+        STGJUMP1(stgApplyNNN, f);
         break;
       } // case 3
       case 4: {
@@ -9778,11 +9553,10 @@ DEFUN2(stgApplyNPNNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyPNNN, N, f);
+        STGJUMP1(stgApplyPNNN, f);
         break;
       } // case 4
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -9849,13 +9623,11 @@ DEFUN2(stgApplyNPNNN, N, f) {
   ENDFUN;
 }
 
-DEFUN2(stgApplyPPNNN, N, f) {
+DEFUN1(stgApplyPPNNN, f) {
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyPPNNN %s\n", f.op->infoPtr->name);
   #endif
-  assert(N.argType == INT);
-  const int argc = N.i;
-  assert(argc == 5);
+  const int argc = 5;
   PtrOrLiteral argv[5];
   popargs(argc, argv);
   const int nps = 2;
@@ -9925,11 +9697,10 @@ DEFUN2(stgApplyPPNNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[4]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyN, N, f);
+        STGJUMP1(stgApplyN, f);
         break;
       } // case 1
       case 2: {
@@ -9948,11 +9719,10 @@ DEFUN2(stgApplyPPNNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyNN, N, f);
+        STGJUMP1(stgApplyNN, f);
         break;
       } // case 2
       case 3: {
@@ -9971,11 +9741,10 @@ DEFUN2(stgApplyPPNNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyNNN, N, f);
+        STGJUMP1(stgApplyNNN, f);
         break;
       } // case 3
       case 4: {
@@ -9996,11 +9765,10 @@ DEFUN2(stgApplyPPNNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyPNNN, N, f);
+        STGJUMP1(stgApplyPNNN, f);
         break;
       } // case 4
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -10079,11 +9847,10 @@ DEFUN2(stgApplyPPNNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[4]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyN, N, f);
+        STGJUMP1(stgApplyN, f);
         break;
       } // case 1
       case 2: {
@@ -10104,11 +9871,10 @@ DEFUN2(stgApplyPPNNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyNN, N, f);
+        STGJUMP1(stgApplyNN, f);
         break;
       } // case 2
       case 3: {
@@ -10129,11 +9895,10 @@ DEFUN2(stgApplyPPNNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyNNN, N, f);
+        STGJUMP1(stgApplyNNN, f);
         break;
       } // case 3
       case 4: {
@@ -10156,11 +9921,10 @@ DEFUN2(stgApplyPPNNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyPNNN, N, f);
+        STGJUMP1(stgApplyPNNN, f);
         break;
       } // case 4
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -10227,13 +9991,11 @@ DEFUN2(stgApplyPPNNN, N, f) {
   ENDFUN;
 }
 
-DEFUN2(stgApplyNNPNN, N, f) {
+DEFUN1(stgApplyNNPNN, f) {
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyNNPNN %s\n", f.op->infoPtr->name);
   #endif
-  assert(N.argType == INT);
-  const int argc = N.i;
-  assert(argc == 5);
+  const int argc = 5;
   PtrOrLiteral argv[5];
   popargs(argc, argv);
   const int nps = 1;
@@ -10295,11 +10057,10 @@ DEFUN2(stgApplyNNPNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[4]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyN, N, f);
+        STGJUMP1(stgApplyN, f);
         break;
       } // case 1
       case 2: {
@@ -10318,11 +10079,10 @@ DEFUN2(stgApplyNNPNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyNN, N, f);
+        STGJUMP1(stgApplyNN, f);
         break;
       } // case 2
       case 3: {
@@ -10343,11 +10103,10 @@ DEFUN2(stgApplyNNPNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyPNN, N, f);
+        STGJUMP1(stgApplyPNN, f);
         break;
       } // case 3
       case 4: {
@@ -10368,11 +10127,10 @@ DEFUN2(stgApplyNNPNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyNPNN, N, f);
+        STGJUMP1(stgApplyNPNN, f);
         break;
       } // case 4
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -10451,11 +10209,10 @@ DEFUN2(stgApplyNNPNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[4]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyN, N, f);
+        STGJUMP1(stgApplyN, f);
         break;
       } // case 1
       case 2: {
@@ -10476,11 +10233,10 @@ DEFUN2(stgApplyNNPNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyNN, N, f);
+        STGJUMP1(stgApplyNN, f);
         break;
       } // case 2
       case 3: {
@@ -10503,11 +10259,10 @@ DEFUN2(stgApplyNNPNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyPNN, N, f);
+        STGJUMP1(stgApplyPNN, f);
         break;
       } // case 3
       case 4: {
@@ -10530,11 +10285,10 @@ DEFUN2(stgApplyNNPNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyNPNN, N, f);
+        STGJUMP1(stgApplyNPNN, f);
         break;
       } // case 4
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -10601,13 +10355,11 @@ DEFUN2(stgApplyNNPNN, N, f) {
   ENDFUN;
 }
 
-DEFUN2(stgApplyPNPNN, N, f) {
+DEFUN1(stgApplyPNPNN, f) {
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyPNPNN %s\n", f.op->infoPtr->name);
   #endif
-  assert(N.argType == INT);
-  const int argc = N.i;
-  assert(argc == 5);
+  const int argc = 5;
   PtrOrLiteral argv[5];
   popargs(argc, argv);
   const int nps = 2;
@@ -10677,11 +10429,10 @@ DEFUN2(stgApplyPNPNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[4]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyN, N, f);
+        STGJUMP1(stgApplyN, f);
         break;
       } // case 1
       case 2: {
@@ -10700,11 +10451,10 @@ DEFUN2(stgApplyPNPNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyNN, N, f);
+        STGJUMP1(stgApplyNN, f);
         break;
       } // case 2
       case 3: {
@@ -10725,11 +10475,10 @@ DEFUN2(stgApplyPNPNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyPNN, N, f);
+        STGJUMP1(stgApplyPNN, f);
         break;
       } // case 3
       case 4: {
@@ -10750,11 +10499,10 @@ DEFUN2(stgApplyPNPNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyNPNN, N, f);
+        STGJUMP1(stgApplyNPNN, f);
         break;
       } // case 4
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -10833,11 +10581,10 @@ DEFUN2(stgApplyPNPNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[4]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyN, N, f);
+        STGJUMP1(stgApplyN, f);
         break;
       } // case 1
       case 2: {
@@ -10858,11 +10605,10 @@ DEFUN2(stgApplyPNPNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyNN, N, f);
+        STGJUMP1(stgApplyNN, f);
         break;
       } // case 2
       case 3: {
@@ -10885,11 +10631,10 @@ DEFUN2(stgApplyPNPNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyPNN, N, f);
+        STGJUMP1(stgApplyPNN, f);
         break;
       } // case 3
       case 4: {
@@ -10912,11 +10657,10 @@ DEFUN2(stgApplyPNPNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyNPNN, N, f);
+        STGJUMP1(stgApplyNPNN, f);
         break;
       } // case 4
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -10983,13 +10727,11 @@ DEFUN2(stgApplyPNPNN, N, f) {
   ENDFUN;
 }
 
-DEFUN2(stgApplyNPPNN, N, f) {
+DEFUN1(stgApplyNPPNN, f) {
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyNPPNN %s\n", f.op->infoPtr->name);
   #endif
-  assert(N.argType == INT);
-  const int argc = N.i;
-  assert(argc == 5);
+  const int argc = 5;
   PtrOrLiteral argv[5];
   popargs(argc, argv);
   const int nps = 2;
@@ -11059,11 +10801,10 @@ DEFUN2(stgApplyNPPNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[4]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyN, N, f);
+        STGJUMP1(stgApplyN, f);
         break;
       } // case 1
       case 2: {
@@ -11082,11 +10823,10 @@ DEFUN2(stgApplyNPPNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyNN, N, f);
+        STGJUMP1(stgApplyNN, f);
         break;
       } // case 2
       case 3: {
@@ -11107,11 +10847,10 @@ DEFUN2(stgApplyNPPNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyPNN, N, f);
+        STGJUMP1(stgApplyPNN, f);
         break;
       } // case 3
       case 4: {
@@ -11133,11 +10872,10 @@ DEFUN2(stgApplyNPPNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyPPNN, N, f);
+        STGJUMP1(stgApplyPPNN, f);
         break;
       } // case 4
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -11216,11 +10954,10 @@ DEFUN2(stgApplyNPPNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[4]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyN, N, f);
+        STGJUMP1(stgApplyN, f);
         break;
       } // case 1
       case 2: {
@@ -11241,11 +10978,10 @@ DEFUN2(stgApplyNPPNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyNN, N, f);
+        STGJUMP1(stgApplyNN, f);
         break;
       } // case 2
       case 3: {
@@ -11268,11 +11004,10 @@ DEFUN2(stgApplyNPPNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyPNN, N, f);
+        STGJUMP1(stgApplyPNN, f);
         break;
       } // case 3
       case 4: {
@@ -11296,11 +11031,10 @@ DEFUN2(stgApplyNPPNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyPPNN, N, f);
+        STGJUMP1(stgApplyPPNN, f);
         break;
       } // case 4
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -11367,13 +11101,11 @@ DEFUN2(stgApplyNPPNN, N, f) {
   ENDFUN;
 }
 
-DEFUN2(stgApplyPPPNN, N, f) {
+DEFUN1(stgApplyPPPNN, f) {
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyPPPNN %s\n", f.op->infoPtr->name);
   #endif
-  assert(N.argType == INT);
-  const int argc = N.i;
-  assert(argc == 5);
+  const int argc = 5;
   PtrOrLiteral argv[5];
   popargs(argc, argv);
   const int nps = 3;
@@ -11453,11 +11185,10 @@ DEFUN2(stgApplyPPPNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[4]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyN, N, f);
+        STGJUMP1(stgApplyN, f);
         break;
       } // case 1
       case 2: {
@@ -11476,11 +11207,10 @@ DEFUN2(stgApplyPPPNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyNN, N, f);
+        STGJUMP1(stgApplyNN, f);
         break;
       } // case 2
       case 3: {
@@ -11501,11 +11231,10 @@ DEFUN2(stgApplyPPPNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyPNN, N, f);
+        STGJUMP1(stgApplyPNN, f);
         break;
       } // case 3
       case 4: {
@@ -11527,11 +11256,10 @@ DEFUN2(stgApplyPPPNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyPPNN, N, f);
+        STGJUMP1(stgApplyPPNN, f);
         break;
       } // case 4
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -11610,11 +11338,10 @@ DEFUN2(stgApplyPPPNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[4]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyN, N, f);
+        STGJUMP1(stgApplyN, f);
         break;
       } // case 1
       case 2: {
@@ -11635,11 +11362,10 @@ DEFUN2(stgApplyPPPNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyNN, N, f);
+        STGJUMP1(stgApplyNN, f);
         break;
       } // case 2
       case 3: {
@@ -11662,11 +11388,10 @@ DEFUN2(stgApplyPPPNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyPNN, N, f);
+        STGJUMP1(stgApplyPNN, f);
         break;
       } // case 3
       case 4: {
@@ -11690,11 +11415,10 @@ DEFUN2(stgApplyPPPNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyPPNN, N, f);
+        STGJUMP1(stgApplyPPNN, f);
         break;
       } // case 4
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -11761,13 +11485,11 @@ DEFUN2(stgApplyPPPNN, N, f) {
   ENDFUN;
 }
 
-DEFUN2(stgApplyNNNPN, N, f) {
+DEFUN1(stgApplyNNNPN, f) {
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyNNNPN %s\n", f.op->infoPtr->name);
   #endif
-  assert(N.argType == INT);
-  const int argc = N.i;
-  assert(argc == 5);
+  const int argc = 5;
   PtrOrLiteral argv[5];
   popargs(argc, argv);
   const int nps = 1;
@@ -11829,11 +11551,10 @@ DEFUN2(stgApplyNNNPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[4]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyN, N, f);
+        STGJUMP1(stgApplyN, f);
         break;
       } // case 1
       case 2: {
@@ -11854,11 +11575,10 @@ DEFUN2(stgApplyNNNPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyPN, N, f);
+        STGJUMP1(stgApplyPN, f);
         break;
       } // case 2
       case 3: {
@@ -11879,11 +11599,10 @@ DEFUN2(stgApplyNNNPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyNPN, N, f);
+        STGJUMP1(stgApplyNPN, f);
         break;
       } // case 3
       case 4: {
@@ -11904,11 +11623,10 @@ DEFUN2(stgApplyNNNPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyNNPN, N, f);
+        STGJUMP1(stgApplyNNPN, f);
         break;
       } // case 4
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -11987,11 +11705,10 @@ DEFUN2(stgApplyNNNPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[4]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyN, N, f);
+        STGJUMP1(stgApplyN, f);
         break;
       } // case 1
       case 2: {
@@ -12014,11 +11731,10 @@ DEFUN2(stgApplyNNNPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyPN, N, f);
+        STGJUMP1(stgApplyPN, f);
         break;
       } // case 2
       case 3: {
@@ -12041,11 +11757,10 @@ DEFUN2(stgApplyNNNPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyNPN, N, f);
+        STGJUMP1(stgApplyNPN, f);
         break;
       } // case 3
       case 4: {
@@ -12068,11 +11783,10 @@ DEFUN2(stgApplyNNNPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyNNPN, N, f);
+        STGJUMP1(stgApplyNNPN, f);
         break;
       } // case 4
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -12139,13 +11853,11 @@ DEFUN2(stgApplyNNNPN, N, f) {
   ENDFUN;
 }
 
-DEFUN2(stgApplyPNNPN, N, f) {
+DEFUN1(stgApplyPNNPN, f) {
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyPNNPN %s\n", f.op->infoPtr->name);
   #endif
-  assert(N.argType == INT);
-  const int argc = N.i;
-  assert(argc == 5);
+  const int argc = 5;
   PtrOrLiteral argv[5];
   popargs(argc, argv);
   const int nps = 2;
@@ -12215,11 +11927,10 @@ DEFUN2(stgApplyPNNPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[4]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyN, N, f);
+        STGJUMP1(stgApplyN, f);
         break;
       } // case 1
       case 2: {
@@ -12240,11 +11951,10 @@ DEFUN2(stgApplyPNNPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyPN, N, f);
+        STGJUMP1(stgApplyPN, f);
         break;
       } // case 2
       case 3: {
@@ -12265,11 +11975,10 @@ DEFUN2(stgApplyPNNPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyNPN, N, f);
+        STGJUMP1(stgApplyNPN, f);
         break;
       } // case 3
       case 4: {
@@ -12290,11 +11999,10 @@ DEFUN2(stgApplyPNNPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyNNPN, N, f);
+        STGJUMP1(stgApplyNNPN, f);
         break;
       } // case 4
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -12373,11 +12081,10 @@ DEFUN2(stgApplyPNNPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[4]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyN, N, f);
+        STGJUMP1(stgApplyN, f);
         break;
       } // case 1
       case 2: {
@@ -12400,11 +12107,10 @@ DEFUN2(stgApplyPNNPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyPN, N, f);
+        STGJUMP1(stgApplyPN, f);
         break;
       } // case 2
       case 3: {
@@ -12427,11 +12133,10 @@ DEFUN2(stgApplyPNNPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyNPN, N, f);
+        STGJUMP1(stgApplyNPN, f);
         break;
       } // case 3
       case 4: {
@@ -12454,11 +12159,10 @@ DEFUN2(stgApplyPNNPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyNNPN, N, f);
+        STGJUMP1(stgApplyNNPN, f);
         break;
       } // case 4
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -12525,13 +12229,11 @@ DEFUN2(stgApplyPNNPN, N, f) {
   ENDFUN;
 }
 
-DEFUN2(stgApplyNPNPN, N, f) {
+DEFUN1(stgApplyNPNPN, f) {
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyNPNPN %s\n", f.op->infoPtr->name);
   #endif
-  assert(N.argType == INT);
-  const int argc = N.i;
-  assert(argc == 5);
+  const int argc = 5;
   PtrOrLiteral argv[5];
   popargs(argc, argv);
   const int nps = 2;
@@ -12601,11 +12303,10 @@ DEFUN2(stgApplyNPNPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[4]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyN, N, f);
+        STGJUMP1(stgApplyN, f);
         break;
       } // case 1
       case 2: {
@@ -12626,11 +12327,10 @@ DEFUN2(stgApplyNPNPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyPN, N, f);
+        STGJUMP1(stgApplyPN, f);
         break;
       } // case 2
       case 3: {
@@ -12651,11 +12351,10 @@ DEFUN2(stgApplyNPNPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyNPN, N, f);
+        STGJUMP1(stgApplyNPN, f);
         break;
       } // case 3
       case 4: {
@@ -12677,11 +12376,10 @@ DEFUN2(stgApplyNPNPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyPNPN, N, f);
+        STGJUMP1(stgApplyPNPN, f);
         break;
       } // case 4
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -12760,11 +12458,10 @@ DEFUN2(stgApplyNPNPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[4]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyN, N, f);
+        STGJUMP1(stgApplyN, f);
         break;
       } // case 1
       case 2: {
@@ -12787,11 +12484,10 @@ DEFUN2(stgApplyNPNPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyPN, N, f);
+        STGJUMP1(stgApplyPN, f);
         break;
       } // case 2
       case 3: {
@@ -12814,11 +12510,10 @@ DEFUN2(stgApplyNPNPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyNPN, N, f);
+        STGJUMP1(stgApplyNPN, f);
         break;
       } // case 3
       case 4: {
@@ -12842,11 +12537,10 @@ DEFUN2(stgApplyNPNPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyPNPN, N, f);
+        STGJUMP1(stgApplyPNPN, f);
         break;
       } // case 4
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -12913,13 +12607,11 @@ DEFUN2(stgApplyNPNPN, N, f) {
   ENDFUN;
 }
 
-DEFUN2(stgApplyPPNPN, N, f) {
+DEFUN1(stgApplyPPNPN, f) {
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyPPNPN %s\n", f.op->infoPtr->name);
   #endif
-  assert(N.argType == INT);
-  const int argc = N.i;
-  assert(argc == 5);
+  const int argc = 5;
   PtrOrLiteral argv[5];
   popargs(argc, argv);
   const int nps = 3;
@@ -12999,11 +12691,10 @@ DEFUN2(stgApplyPPNPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[4]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyN, N, f);
+        STGJUMP1(stgApplyN, f);
         break;
       } // case 1
       case 2: {
@@ -13024,11 +12715,10 @@ DEFUN2(stgApplyPPNPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyPN, N, f);
+        STGJUMP1(stgApplyPN, f);
         break;
       } // case 2
       case 3: {
@@ -13049,11 +12739,10 @@ DEFUN2(stgApplyPPNPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyNPN, N, f);
+        STGJUMP1(stgApplyNPN, f);
         break;
       } // case 3
       case 4: {
@@ -13075,11 +12764,10 @@ DEFUN2(stgApplyPPNPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyPNPN, N, f);
+        STGJUMP1(stgApplyPNPN, f);
         break;
       } // case 4
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -13158,11 +12846,10 @@ DEFUN2(stgApplyPPNPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[4]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyN, N, f);
+        STGJUMP1(stgApplyN, f);
         break;
       } // case 1
       case 2: {
@@ -13185,11 +12872,10 @@ DEFUN2(stgApplyPPNPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyPN, N, f);
+        STGJUMP1(stgApplyPN, f);
         break;
       } // case 2
       case 3: {
@@ -13212,11 +12898,10 @@ DEFUN2(stgApplyPPNPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyNPN, N, f);
+        STGJUMP1(stgApplyNPN, f);
         break;
       } // case 3
       case 4: {
@@ -13240,11 +12925,10 @@ DEFUN2(stgApplyPPNPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyPNPN, N, f);
+        STGJUMP1(stgApplyPNPN, f);
         break;
       } // case 4
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -13311,13 +12995,11 @@ DEFUN2(stgApplyPPNPN, N, f) {
   ENDFUN;
 }
 
-DEFUN2(stgApplyNNPPN, N, f) {
+DEFUN1(stgApplyNNPPN, f) {
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyNNPPN %s\n", f.op->infoPtr->name);
   #endif
-  assert(N.argType == INT);
-  const int argc = N.i;
-  assert(argc == 5);
+  const int argc = 5;
   PtrOrLiteral argv[5];
   popargs(argc, argv);
   const int nps = 2;
@@ -13387,11 +13069,10 @@ DEFUN2(stgApplyNNPPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[4]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyN, N, f);
+        STGJUMP1(stgApplyN, f);
         break;
       } // case 1
       case 2: {
@@ -13412,11 +13093,10 @@ DEFUN2(stgApplyNNPPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyPN, N, f);
+        STGJUMP1(stgApplyPN, f);
         break;
       } // case 2
       case 3: {
@@ -13438,11 +13118,10 @@ DEFUN2(stgApplyNNPPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyPPN, N, f);
+        STGJUMP1(stgApplyPPN, f);
         break;
       } // case 3
       case 4: {
@@ -13464,11 +13143,10 @@ DEFUN2(stgApplyNNPPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyNPPN, N, f);
+        STGJUMP1(stgApplyNPPN, f);
         break;
       } // case 4
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -13547,11 +13225,10 @@ DEFUN2(stgApplyNNPPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[4]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyN, N, f);
+        STGJUMP1(stgApplyN, f);
         break;
       } // case 1
       case 2: {
@@ -13574,11 +13251,10 @@ DEFUN2(stgApplyNNPPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyPN, N, f);
+        STGJUMP1(stgApplyPN, f);
         break;
       } // case 2
       case 3: {
@@ -13602,11 +13278,10 @@ DEFUN2(stgApplyNNPPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyPPN, N, f);
+        STGJUMP1(stgApplyPPN, f);
         break;
       } // case 3
       case 4: {
@@ -13630,11 +13305,10 @@ DEFUN2(stgApplyNNPPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyNPPN, N, f);
+        STGJUMP1(stgApplyNPPN, f);
         break;
       } // case 4
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -13701,13 +13375,11 @@ DEFUN2(stgApplyNNPPN, N, f) {
   ENDFUN;
 }
 
-DEFUN2(stgApplyPNPPN, N, f) {
+DEFUN1(stgApplyPNPPN, f) {
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyPNPPN %s\n", f.op->infoPtr->name);
   #endif
-  assert(N.argType == INT);
-  const int argc = N.i;
-  assert(argc == 5);
+  const int argc = 5;
   PtrOrLiteral argv[5];
   popargs(argc, argv);
   const int nps = 3;
@@ -13787,11 +13459,10 @@ DEFUN2(stgApplyPNPPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[4]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyN, N, f);
+        STGJUMP1(stgApplyN, f);
         break;
       } // case 1
       case 2: {
@@ -13812,11 +13483,10 @@ DEFUN2(stgApplyPNPPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyPN, N, f);
+        STGJUMP1(stgApplyPN, f);
         break;
       } // case 2
       case 3: {
@@ -13838,11 +13508,10 @@ DEFUN2(stgApplyPNPPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyPPN, N, f);
+        STGJUMP1(stgApplyPPN, f);
         break;
       } // case 3
       case 4: {
@@ -13864,11 +13533,10 @@ DEFUN2(stgApplyPNPPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyNPPN, N, f);
+        STGJUMP1(stgApplyNPPN, f);
         break;
       } // case 4
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -13947,11 +13615,10 @@ DEFUN2(stgApplyPNPPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[4]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyN, N, f);
+        STGJUMP1(stgApplyN, f);
         break;
       } // case 1
       case 2: {
@@ -13974,11 +13641,10 @@ DEFUN2(stgApplyPNPPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyPN, N, f);
+        STGJUMP1(stgApplyPN, f);
         break;
       } // case 2
       case 3: {
@@ -14002,11 +13668,10 @@ DEFUN2(stgApplyPNPPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyPPN, N, f);
+        STGJUMP1(stgApplyPPN, f);
         break;
       } // case 3
       case 4: {
@@ -14030,11 +13695,10 @@ DEFUN2(stgApplyPNPPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyNPPN, N, f);
+        STGJUMP1(stgApplyNPPN, f);
         break;
       } // case 4
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -14101,13 +13765,11 @@ DEFUN2(stgApplyPNPPN, N, f) {
   ENDFUN;
 }
 
-DEFUN2(stgApplyNPPPN, N, f) {
+DEFUN1(stgApplyNPPPN, f) {
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyNPPPN %s\n", f.op->infoPtr->name);
   #endif
-  assert(N.argType == INT);
-  const int argc = N.i;
-  assert(argc == 5);
+  const int argc = 5;
   PtrOrLiteral argv[5];
   popargs(argc, argv);
   const int nps = 3;
@@ -14187,11 +13849,10 @@ DEFUN2(stgApplyNPPPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[4]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyN, N, f);
+        STGJUMP1(stgApplyN, f);
         break;
       } // case 1
       case 2: {
@@ -14212,11 +13873,10 @@ DEFUN2(stgApplyNPPPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyPN, N, f);
+        STGJUMP1(stgApplyPN, f);
         break;
       } // case 2
       case 3: {
@@ -14238,11 +13898,10 @@ DEFUN2(stgApplyNPPPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyPPN, N, f);
+        STGJUMP1(stgApplyPPN, f);
         break;
       } // case 3
       case 4: {
@@ -14265,11 +13924,10 @@ DEFUN2(stgApplyNPPPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyPPPN, N, f);
+        STGJUMP1(stgApplyPPPN, f);
         break;
       } // case 4
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -14348,11 +14006,10 @@ DEFUN2(stgApplyNPPPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[4]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyN, N, f);
+        STGJUMP1(stgApplyN, f);
         break;
       } // case 1
       case 2: {
@@ -14375,11 +14032,10 @@ DEFUN2(stgApplyNPPPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyPN, N, f);
+        STGJUMP1(stgApplyPN, f);
         break;
       } // case 2
       case 3: {
@@ -14403,11 +14059,10 @@ DEFUN2(stgApplyNPPPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyPPN, N, f);
+        STGJUMP1(stgApplyPPN, f);
         break;
       } // case 3
       case 4: {
@@ -14432,11 +14087,10 @@ DEFUN2(stgApplyNPPPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyPPPN, N, f);
+        STGJUMP1(stgApplyPPPN, f);
         break;
       } // case 4
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -14503,13 +14157,11 @@ DEFUN2(stgApplyNPPPN, N, f) {
   ENDFUN;
 }
 
-DEFUN2(stgApplyPPPPN, N, f) {
+DEFUN1(stgApplyPPPPN, f) {
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyPPPPN %s\n", f.op->infoPtr->name);
   #endif
-  assert(N.argType == INT);
-  const int argc = N.i;
-  assert(argc == 5);
+  const int argc = 5;
   PtrOrLiteral argv[5];
   popargs(argc, argv);
   const int nps = 4;
@@ -14601,11 +14253,10 @@ DEFUN2(stgApplyPPPPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[4]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyN, N, f);
+        STGJUMP1(stgApplyN, f);
         break;
       } // case 1
       case 2: {
@@ -14626,11 +14277,10 @@ DEFUN2(stgApplyPPPPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyPN, N, f);
+        STGJUMP1(stgApplyPN, f);
         break;
       } // case 2
       case 3: {
@@ -14652,11 +14302,10 @@ DEFUN2(stgApplyPPPPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyPPN, N, f);
+        STGJUMP1(stgApplyPPN, f);
         break;
       } // case 3
       case 4: {
@@ -14679,11 +14328,10 @@ DEFUN2(stgApplyPPPPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyPPPN, N, f);
+        STGJUMP1(stgApplyPPPN, f);
         break;
       } // case 4
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -14762,11 +14410,10 @@ DEFUN2(stgApplyPPPPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[4]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyN, N, f);
+        STGJUMP1(stgApplyN, f);
         break;
       } // case 1
       case 2: {
@@ -14789,11 +14436,10 @@ DEFUN2(stgApplyPPPPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyPN, N, f);
+        STGJUMP1(stgApplyPN, f);
         break;
       } // case 2
       case 3: {
@@ -14817,11 +14463,10 @@ DEFUN2(stgApplyPPPPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyPPN, N, f);
+        STGJUMP1(stgApplyPPN, f);
         break;
       } // case 3
       case 4: {
@@ -14846,11 +14491,10 @@ DEFUN2(stgApplyPPPPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyPPPN, N, f);
+        STGJUMP1(stgApplyPPPN, f);
         break;
       } // case 4
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -14917,13 +14561,11 @@ DEFUN2(stgApplyPPPPN, N, f) {
   ENDFUN;
 }
 
-DEFUN2(stgApplyNNNNP, N, f) {
+DEFUN1(stgApplyNNNNP, f) {
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyNNNNP %s\n", f.op->infoPtr->name);
   #endif
-  assert(N.argType == INT);
-  const int argc = N.i;
-  assert(argc == 5);
+  const int argc = 5;
   PtrOrLiteral argv[5];
   popargs(argc, argv);
   const int nps = 1;
@@ -14987,11 +14629,10 @@ DEFUN2(stgApplyNNNNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[4]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyP, N, f);
+        STGJUMP1(stgApplyP, f);
         break;
       } // case 1
       case 2: {
@@ -15012,11 +14653,10 @@ DEFUN2(stgApplyNNNNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyNP, N, f);
+        STGJUMP1(stgApplyNP, f);
         break;
       } // case 2
       case 3: {
@@ -15037,11 +14677,10 @@ DEFUN2(stgApplyNNNNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyNNP, N, f);
+        STGJUMP1(stgApplyNNP, f);
         break;
       } // case 3
       case 4: {
@@ -15062,11 +14701,10 @@ DEFUN2(stgApplyNNNNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyNNNP, N, f);
+        STGJUMP1(stgApplyNNNP, f);
         break;
       } // case 4
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -15147,11 +14785,10 @@ DEFUN2(stgApplyNNNNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[4]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyP, N, f);
+        STGJUMP1(stgApplyP, f);
         break;
       } // case 1
       case 2: {
@@ -15174,11 +14811,10 @@ DEFUN2(stgApplyNNNNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyNP, N, f);
+        STGJUMP1(stgApplyNP, f);
         break;
       } // case 2
       case 3: {
@@ -15201,11 +14837,10 @@ DEFUN2(stgApplyNNNNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyNNP, N, f);
+        STGJUMP1(stgApplyNNP, f);
         break;
       } // case 3
       case 4: {
@@ -15228,11 +14863,10 @@ DEFUN2(stgApplyNNNNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyNNNP, N, f);
+        STGJUMP1(stgApplyNNNP, f);
         break;
       } // case 4
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -15299,13 +14933,11 @@ DEFUN2(stgApplyNNNNP, N, f) {
   ENDFUN;
 }
 
-DEFUN2(stgApplyPNNNP, N, f) {
+DEFUN1(stgApplyPNNNP, f) {
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyPNNNP %s\n", f.op->infoPtr->name);
   #endif
-  assert(N.argType == INT);
-  const int argc = N.i;
-  assert(argc == 5);
+  const int argc = 5;
   PtrOrLiteral argv[5];
   popargs(argc, argv);
   const int nps = 2;
@@ -15377,11 +15009,10 @@ DEFUN2(stgApplyPNNNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[4]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyP, N, f);
+        STGJUMP1(stgApplyP, f);
         break;
       } // case 1
       case 2: {
@@ -15402,11 +15033,10 @@ DEFUN2(stgApplyPNNNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyNP, N, f);
+        STGJUMP1(stgApplyNP, f);
         break;
       } // case 2
       case 3: {
@@ -15427,11 +15057,10 @@ DEFUN2(stgApplyPNNNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyNNP, N, f);
+        STGJUMP1(stgApplyNNP, f);
         break;
       } // case 3
       case 4: {
@@ -15452,11 +15081,10 @@ DEFUN2(stgApplyPNNNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyNNNP, N, f);
+        STGJUMP1(stgApplyNNNP, f);
         break;
       } // case 4
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -15537,11 +15165,10 @@ DEFUN2(stgApplyPNNNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[4]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyP, N, f);
+        STGJUMP1(stgApplyP, f);
         break;
       } // case 1
       case 2: {
@@ -15564,11 +15191,10 @@ DEFUN2(stgApplyPNNNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyNP, N, f);
+        STGJUMP1(stgApplyNP, f);
         break;
       } // case 2
       case 3: {
@@ -15591,11 +15217,10 @@ DEFUN2(stgApplyPNNNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyNNP, N, f);
+        STGJUMP1(stgApplyNNP, f);
         break;
       } // case 3
       case 4: {
@@ -15618,11 +15243,10 @@ DEFUN2(stgApplyPNNNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyNNNP, N, f);
+        STGJUMP1(stgApplyNNNP, f);
         break;
       } // case 4
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -15689,13 +15313,11 @@ DEFUN2(stgApplyPNNNP, N, f) {
   ENDFUN;
 }
 
-DEFUN2(stgApplyNPNNP, N, f) {
+DEFUN1(stgApplyNPNNP, f) {
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyNPNNP %s\n", f.op->infoPtr->name);
   #endif
-  assert(N.argType == INT);
-  const int argc = N.i;
-  assert(argc == 5);
+  const int argc = 5;
   PtrOrLiteral argv[5];
   popargs(argc, argv);
   const int nps = 2;
@@ -15767,11 +15389,10 @@ DEFUN2(stgApplyNPNNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[4]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyP, N, f);
+        STGJUMP1(stgApplyP, f);
         break;
       } // case 1
       case 2: {
@@ -15792,11 +15413,10 @@ DEFUN2(stgApplyNPNNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyNP, N, f);
+        STGJUMP1(stgApplyNP, f);
         break;
       } // case 2
       case 3: {
@@ -15817,11 +15437,10 @@ DEFUN2(stgApplyNPNNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyNNP, N, f);
+        STGJUMP1(stgApplyNNP, f);
         break;
       } // case 3
       case 4: {
@@ -15843,11 +15462,10 @@ DEFUN2(stgApplyNPNNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyPNNP, N, f);
+        STGJUMP1(stgApplyPNNP, f);
         break;
       } // case 4
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -15928,11 +15546,10 @@ DEFUN2(stgApplyNPNNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[4]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyP, N, f);
+        STGJUMP1(stgApplyP, f);
         break;
       } // case 1
       case 2: {
@@ -15955,11 +15572,10 @@ DEFUN2(stgApplyNPNNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyNP, N, f);
+        STGJUMP1(stgApplyNP, f);
         break;
       } // case 2
       case 3: {
@@ -15982,11 +15598,10 @@ DEFUN2(stgApplyNPNNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyNNP, N, f);
+        STGJUMP1(stgApplyNNP, f);
         break;
       } // case 3
       case 4: {
@@ -16010,11 +15625,10 @@ DEFUN2(stgApplyNPNNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyPNNP, N, f);
+        STGJUMP1(stgApplyPNNP, f);
         break;
       } // case 4
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -16081,13 +15695,11 @@ DEFUN2(stgApplyNPNNP, N, f) {
   ENDFUN;
 }
 
-DEFUN2(stgApplyPPNNP, N, f) {
+DEFUN1(stgApplyPPNNP, f) {
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyPPNNP %s\n", f.op->infoPtr->name);
   #endif
-  assert(N.argType == INT);
-  const int argc = N.i;
-  assert(argc == 5);
+  const int argc = 5;
   PtrOrLiteral argv[5];
   popargs(argc, argv);
   const int nps = 3;
@@ -16169,11 +15781,10 @@ DEFUN2(stgApplyPPNNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[4]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyP, N, f);
+        STGJUMP1(stgApplyP, f);
         break;
       } // case 1
       case 2: {
@@ -16194,11 +15805,10 @@ DEFUN2(stgApplyPPNNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyNP, N, f);
+        STGJUMP1(stgApplyNP, f);
         break;
       } // case 2
       case 3: {
@@ -16219,11 +15829,10 @@ DEFUN2(stgApplyPPNNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyNNP, N, f);
+        STGJUMP1(stgApplyNNP, f);
         break;
       } // case 3
       case 4: {
@@ -16245,11 +15854,10 @@ DEFUN2(stgApplyPPNNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyPNNP, N, f);
+        STGJUMP1(stgApplyPNNP, f);
         break;
       } // case 4
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -16330,11 +15938,10 @@ DEFUN2(stgApplyPPNNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[4]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyP, N, f);
+        STGJUMP1(stgApplyP, f);
         break;
       } // case 1
       case 2: {
@@ -16357,11 +15964,10 @@ DEFUN2(stgApplyPPNNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyNP, N, f);
+        STGJUMP1(stgApplyNP, f);
         break;
       } // case 2
       case 3: {
@@ -16384,11 +15990,10 @@ DEFUN2(stgApplyPPNNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyNNP, N, f);
+        STGJUMP1(stgApplyNNP, f);
         break;
       } // case 3
       case 4: {
@@ -16412,11 +16017,10 @@ DEFUN2(stgApplyPPNNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyPNNP, N, f);
+        STGJUMP1(stgApplyPNNP, f);
         break;
       } // case 4
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -16483,13 +16087,11 @@ DEFUN2(stgApplyPPNNP, N, f) {
   ENDFUN;
 }
 
-DEFUN2(stgApplyNNPNP, N, f) {
+DEFUN1(stgApplyNNPNP, f) {
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyNNPNP %s\n", f.op->infoPtr->name);
   #endif
-  assert(N.argType == INT);
-  const int argc = N.i;
-  assert(argc == 5);
+  const int argc = 5;
   PtrOrLiteral argv[5];
   popargs(argc, argv);
   const int nps = 2;
@@ -16561,11 +16163,10 @@ DEFUN2(stgApplyNNPNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[4]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyP, N, f);
+        STGJUMP1(stgApplyP, f);
         break;
       } // case 1
       case 2: {
@@ -16586,11 +16187,10 @@ DEFUN2(stgApplyNNPNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyNP, N, f);
+        STGJUMP1(stgApplyNP, f);
         break;
       } // case 2
       case 3: {
@@ -16612,11 +16212,10 @@ DEFUN2(stgApplyNNPNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyPNP, N, f);
+        STGJUMP1(stgApplyPNP, f);
         break;
       } // case 3
       case 4: {
@@ -16638,11 +16237,10 @@ DEFUN2(stgApplyNNPNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyNPNP, N, f);
+        STGJUMP1(stgApplyNPNP, f);
         break;
       } // case 4
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -16723,11 +16321,10 @@ DEFUN2(stgApplyNNPNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[4]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyP, N, f);
+        STGJUMP1(stgApplyP, f);
         break;
       } // case 1
       case 2: {
@@ -16750,11 +16347,10 @@ DEFUN2(stgApplyNNPNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyNP, N, f);
+        STGJUMP1(stgApplyNP, f);
         break;
       } // case 2
       case 3: {
@@ -16778,11 +16374,10 @@ DEFUN2(stgApplyNNPNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyPNP, N, f);
+        STGJUMP1(stgApplyPNP, f);
         break;
       } // case 3
       case 4: {
@@ -16806,11 +16401,10 @@ DEFUN2(stgApplyNNPNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyNPNP, N, f);
+        STGJUMP1(stgApplyNPNP, f);
         break;
       } // case 4
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -16877,13 +16471,11 @@ DEFUN2(stgApplyNNPNP, N, f) {
   ENDFUN;
 }
 
-DEFUN2(stgApplyPNPNP, N, f) {
+DEFUN1(stgApplyPNPNP, f) {
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyPNPNP %s\n", f.op->infoPtr->name);
   #endif
-  assert(N.argType == INT);
-  const int argc = N.i;
-  assert(argc == 5);
+  const int argc = 5;
   PtrOrLiteral argv[5];
   popargs(argc, argv);
   const int nps = 3;
@@ -16965,11 +16557,10 @@ DEFUN2(stgApplyPNPNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[4]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyP, N, f);
+        STGJUMP1(stgApplyP, f);
         break;
       } // case 1
       case 2: {
@@ -16990,11 +16581,10 @@ DEFUN2(stgApplyPNPNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyNP, N, f);
+        STGJUMP1(stgApplyNP, f);
         break;
       } // case 2
       case 3: {
@@ -17016,11 +16606,10 @@ DEFUN2(stgApplyPNPNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyPNP, N, f);
+        STGJUMP1(stgApplyPNP, f);
         break;
       } // case 3
       case 4: {
@@ -17042,11 +16631,10 @@ DEFUN2(stgApplyPNPNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyNPNP, N, f);
+        STGJUMP1(stgApplyNPNP, f);
         break;
       } // case 4
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -17127,11 +16715,10 @@ DEFUN2(stgApplyPNPNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[4]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyP, N, f);
+        STGJUMP1(stgApplyP, f);
         break;
       } // case 1
       case 2: {
@@ -17154,11 +16741,10 @@ DEFUN2(stgApplyPNPNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyNP, N, f);
+        STGJUMP1(stgApplyNP, f);
         break;
       } // case 2
       case 3: {
@@ -17182,11 +16768,10 @@ DEFUN2(stgApplyPNPNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyPNP, N, f);
+        STGJUMP1(stgApplyPNP, f);
         break;
       } // case 3
       case 4: {
@@ -17210,11 +16795,10 @@ DEFUN2(stgApplyPNPNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyNPNP, N, f);
+        STGJUMP1(stgApplyNPNP, f);
         break;
       } // case 4
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -17281,13 +16865,11 @@ DEFUN2(stgApplyPNPNP, N, f) {
   ENDFUN;
 }
 
-DEFUN2(stgApplyNPPNP, N, f) {
+DEFUN1(stgApplyNPPNP, f) {
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyNPPNP %s\n", f.op->infoPtr->name);
   #endif
-  assert(N.argType == INT);
-  const int argc = N.i;
-  assert(argc == 5);
+  const int argc = 5;
   PtrOrLiteral argv[5];
   popargs(argc, argv);
   const int nps = 3;
@@ -17369,11 +16951,10 @@ DEFUN2(stgApplyNPPNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[4]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyP, N, f);
+        STGJUMP1(stgApplyP, f);
         break;
       } // case 1
       case 2: {
@@ -17394,11 +16975,10 @@ DEFUN2(stgApplyNPPNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyNP, N, f);
+        STGJUMP1(stgApplyNP, f);
         break;
       } // case 2
       case 3: {
@@ -17420,11 +17000,10 @@ DEFUN2(stgApplyNPPNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyPNP, N, f);
+        STGJUMP1(stgApplyPNP, f);
         break;
       } // case 3
       case 4: {
@@ -17447,11 +17026,10 @@ DEFUN2(stgApplyNPPNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyPPNP, N, f);
+        STGJUMP1(stgApplyPPNP, f);
         break;
       } // case 4
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -17532,11 +17110,10 @@ DEFUN2(stgApplyNPPNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[4]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyP, N, f);
+        STGJUMP1(stgApplyP, f);
         break;
       } // case 1
       case 2: {
@@ -17559,11 +17136,10 @@ DEFUN2(stgApplyNPPNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyNP, N, f);
+        STGJUMP1(stgApplyNP, f);
         break;
       } // case 2
       case 3: {
@@ -17587,11 +17163,10 @@ DEFUN2(stgApplyNPPNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyPNP, N, f);
+        STGJUMP1(stgApplyPNP, f);
         break;
       } // case 3
       case 4: {
@@ -17616,11 +17191,10 @@ DEFUN2(stgApplyNPPNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyPPNP, N, f);
+        STGJUMP1(stgApplyPPNP, f);
         break;
       } // case 4
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -17687,13 +17261,11 @@ DEFUN2(stgApplyNPPNP, N, f) {
   ENDFUN;
 }
 
-DEFUN2(stgApplyPPPNP, N, f) {
+DEFUN1(stgApplyPPPNP, f) {
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyPPPNP %s\n", f.op->infoPtr->name);
   #endif
-  assert(N.argType == INT);
-  const int argc = N.i;
-  assert(argc == 5);
+  const int argc = 5;
   PtrOrLiteral argv[5];
   popargs(argc, argv);
   const int nps = 4;
@@ -17787,11 +17359,10 @@ DEFUN2(stgApplyPPPNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[4]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyP, N, f);
+        STGJUMP1(stgApplyP, f);
         break;
       } // case 1
       case 2: {
@@ -17812,11 +17383,10 @@ DEFUN2(stgApplyPPPNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyNP, N, f);
+        STGJUMP1(stgApplyNP, f);
         break;
       } // case 2
       case 3: {
@@ -17838,11 +17408,10 @@ DEFUN2(stgApplyPPPNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyPNP, N, f);
+        STGJUMP1(stgApplyPNP, f);
         break;
       } // case 3
       case 4: {
@@ -17865,11 +17434,10 @@ DEFUN2(stgApplyPPPNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyPPNP, N, f);
+        STGJUMP1(stgApplyPPNP, f);
         break;
       } // case 4
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -17950,11 +17518,10 @@ DEFUN2(stgApplyPPPNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[4]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyP, N, f);
+        STGJUMP1(stgApplyP, f);
         break;
       } // case 1
       case 2: {
@@ -17977,11 +17544,10 @@ DEFUN2(stgApplyPPPNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyNP, N, f);
+        STGJUMP1(stgApplyNP, f);
         break;
       } // case 2
       case 3: {
@@ -18005,11 +17571,10 @@ DEFUN2(stgApplyPPPNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyPNP, N, f);
+        STGJUMP1(stgApplyPNP, f);
         break;
       } // case 3
       case 4: {
@@ -18034,11 +17599,10 @@ DEFUN2(stgApplyPPPNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyPPNP, N, f);
+        STGJUMP1(stgApplyPPNP, f);
         break;
       } // case 4
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -18105,13 +17669,11 @@ DEFUN2(stgApplyPPPNP, N, f) {
   ENDFUN;
 }
 
-DEFUN2(stgApplyNNNPP, N, f) {
+DEFUN1(stgApplyNNNPP, f) {
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyNNNPP %s\n", f.op->infoPtr->name);
   #endif
-  assert(N.argType == INT);
-  const int argc = N.i;
-  assert(argc == 5);
+  const int argc = 5;
   PtrOrLiteral argv[5];
   popargs(argc, argv);
   const int nps = 2;
@@ -18183,11 +17745,10 @@ DEFUN2(stgApplyNNNPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[4]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyP, N, f);
+        STGJUMP1(stgApplyP, f);
         break;
       } // case 1
       case 2: {
@@ -18209,11 +17770,10 @@ DEFUN2(stgApplyNNNPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyPP, N, f);
+        STGJUMP1(stgApplyPP, f);
         break;
       } // case 2
       case 3: {
@@ -18235,11 +17795,10 @@ DEFUN2(stgApplyNNNPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyNPP, N, f);
+        STGJUMP1(stgApplyNPP, f);
         break;
       } // case 3
       case 4: {
@@ -18261,11 +17820,10 @@ DEFUN2(stgApplyNNNPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyNNPP, N, f);
+        STGJUMP1(stgApplyNNPP, f);
         break;
       } // case 4
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -18346,11 +17904,10 @@ DEFUN2(stgApplyNNNPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[4]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyP, N, f);
+        STGJUMP1(stgApplyP, f);
         break;
       } // case 1
       case 2: {
@@ -18374,11 +17931,10 @@ DEFUN2(stgApplyNNNPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyPP, N, f);
+        STGJUMP1(stgApplyPP, f);
         break;
       } // case 2
       case 3: {
@@ -18402,11 +17958,10 @@ DEFUN2(stgApplyNNNPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyNPP, N, f);
+        STGJUMP1(stgApplyNPP, f);
         break;
       } // case 3
       case 4: {
@@ -18430,11 +17985,10 @@ DEFUN2(stgApplyNNNPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyNNPP, N, f);
+        STGJUMP1(stgApplyNNPP, f);
         break;
       } // case 4
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -18501,13 +18055,11 @@ DEFUN2(stgApplyNNNPP, N, f) {
   ENDFUN;
 }
 
-DEFUN2(stgApplyPNNPP, N, f) {
+DEFUN1(stgApplyPNNPP, f) {
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyPNNPP %s\n", f.op->infoPtr->name);
   #endif
-  assert(N.argType == INT);
-  const int argc = N.i;
-  assert(argc == 5);
+  const int argc = 5;
   PtrOrLiteral argv[5];
   popargs(argc, argv);
   const int nps = 3;
@@ -18589,11 +18141,10 @@ DEFUN2(stgApplyPNNPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[4]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyP, N, f);
+        STGJUMP1(stgApplyP, f);
         break;
       } // case 1
       case 2: {
@@ -18615,11 +18166,10 @@ DEFUN2(stgApplyPNNPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyPP, N, f);
+        STGJUMP1(stgApplyPP, f);
         break;
       } // case 2
       case 3: {
@@ -18641,11 +18191,10 @@ DEFUN2(stgApplyPNNPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyNPP, N, f);
+        STGJUMP1(stgApplyNPP, f);
         break;
       } // case 3
       case 4: {
@@ -18667,11 +18216,10 @@ DEFUN2(stgApplyPNNPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyNNPP, N, f);
+        STGJUMP1(stgApplyNNPP, f);
         break;
       } // case 4
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -18752,11 +18300,10 @@ DEFUN2(stgApplyPNNPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[4]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyP, N, f);
+        STGJUMP1(stgApplyP, f);
         break;
       } // case 1
       case 2: {
@@ -18780,11 +18327,10 @@ DEFUN2(stgApplyPNNPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyPP, N, f);
+        STGJUMP1(stgApplyPP, f);
         break;
       } // case 2
       case 3: {
@@ -18808,11 +18354,10 @@ DEFUN2(stgApplyPNNPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyNPP, N, f);
+        STGJUMP1(stgApplyNPP, f);
         break;
       } // case 3
       case 4: {
@@ -18836,11 +18381,10 @@ DEFUN2(stgApplyPNNPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyNNPP, N, f);
+        STGJUMP1(stgApplyNNPP, f);
         break;
       } // case 4
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -18907,13 +18451,11 @@ DEFUN2(stgApplyPNNPP, N, f) {
   ENDFUN;
 }
 
-DEFUN2(stgApplyNPNPP, N, f) {
+DEFUN1(stgApplyNPNPP, f) {
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyNPNPP %s\n", f.op->infoPtr->name);
   #endif
-  assert(N.argType == INT);
-  const int argc = N.i;
-  assert(argc == 5);
+  const int argc = 5;
   PtrOrLiteral argv[5];
   popargs(argc, argv);
   const int nps = 3;
@@ -18995,11 +18537,10 @@ DEFUN2(stgApplyNPNPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[4]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyP, N, f);
+        STGJUMP1(stgApplyP, f);
         break;
       } // case 1
       case 2: {
@@ -19021,11 +18562,10 @@ DEFUN2(stgApplyNPNPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyPP, N, f);
+        STGJUMP1(stgApplyPP, f);
         break;
       } // case 2
       case 3: {
@@ -19047,11 +18587,10 @@ DEFUN2(stgApplyNPNPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyNPP, N, f);
+        STGJUMP1(stgApplyNPP, f);
         break;
       } // case 3
       case 4: {
@@ -19074,11 +18613,10 @@ DEFUN2(stgApplyNPNPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyPNPP, N, f);
+        STGJUMP1(stgApplyPNPP, f);
         break;
       } // case 4
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -19159,11 +18697,10 @@ DEFUN2(stgApplyNPNPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[4]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyP, N, f);
+        STGJUMP1(stgApplyP, f);
         break;
       } // case 1
       case 2: {
@@ -19187,11 +18724,10 @@ DEFUN2(stgApplyNPNPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyPP, N, f);
+        STGJUMP1(stgApplyPP, f);
         break;
       } // case 2
       case 3: {
@@ -19215,11 +18751,10 @@ DEFUN2(stgApplyNPNPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyNPP, N, f);
+        STGJUMP1(stgApplyNPP, f);
         break;
       } // case 3
       case 4: {
@@ -19244,11 +18779,10 @@ DEFUN2(stgApplyNPNPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyPNPP, N, f);
+        STGJUMP1(stgApplyPNPP, f);
         break;
       } // case 4
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -19315,13 +18849,11 @@ DEFUN2(stgApplyNPNPP, N, f) {
   ENDFUN;
 }
 
-DEFUN2(stgApplyPPNPP, N, f) {
+DEFUN1(stgApplyPPNPP, f) {
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyPPNPP %s\n", f.op->infoPtr->name);
   #endif
-  assert(N.argType == INT);
-  const int argc = N.i;
-  assert(argc == 5);
+  const int argc = 5;
   PtrOrLiteral argv[5];
   popargs(argc, argv);
   const int nps = 4;
@@ -19415,11 +18947,10 @@ DEFUN2(stgApplyPPNPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[4]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyP, N, f);
+        STGJUMP1(stgApplyP, f);
         break;
       } // case 1
       case 2: {
@@ -19441,11 +18972,10 @@ DEFUN2(stgApplyPPNPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyPP, N, f);
+        STGJUMP1(stgApplyPP, f);
         break;
       } // case 2
       case 3: {
@@ -19467,11 +18997,10 @@ DEFUN2(stgApplyPPNPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyNPP, N, f);
+        STGJUMP1(stgApplyNPP, f);
         break;
       } // case 3
       case 4: {
@@ -19494,11 +19023,10 @@ DEFUN2(stgApplyPPNPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyPNPP, N, f);
+        STGJUMP1(stgApplyPNPP, f);
         break;
       } // case 4
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -19579,11 +19107,10 @@ DEFUN2(stgApplyPPNPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[4]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyP, N, f);
+        STGJUMP1(stgApplyP, f);
         break;
       } // case 1
       case 2: {
@@ -19607,11 +19134,10 @@ DEFUN2(stgApplyPPNPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyPP, N, f);
+        STGJUMP1(stgApplyPP, f);
         break;
       } // case 2
       case 3: {
@@ -19635,11 +19161,10 @@ DEFUN2(stgApplyPPNPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyNPP, N, f);
+        STGJUMP1(stgApplyNPP, f);
         break;
       } // case 3
       case 4: {
@@ -19664,11 +19189,10 @@ DEFUN2(stgApplyPPNPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyPNPP, N, f);
+        STGJUMP1(stgApplyPNPP, f);
         break;
       } // case 4
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -19735,13 +19259,11 @@ DEFUN2(stgApplyPPNPP, N, f) {
   ENDFUN;
 }
 
-DEFUN2(stgApplyNNPPP, N, f) {
+DEFUN1(stgApplyNNPPP, f) {
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyNNPPP %s\n", f.op->infoPtr->name);
   #endif
-  assert(N.argType == INT);
-  const int argc = N.i;
-  assert(argc == 5);
+  const int argc = 5;
   PtrOrLiteral argv[5];
   popargs(argc, argv);
   const int nps = 3;
@@ -19823,11 +19345,10 @@ DEFUN2(stgApplyNNPPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[4]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyP, N, f);
+        STGJUMP1(stgApplyP, f);
         break;
       } // case 1
       case 2: {
@@ -19849,11 +19370,10 @@ DEFUN2(stgApplyNNPPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyPP, N, f);
+        STGJUMP1(stgApplyPP, f);
         break;
       } // case 2
       case 3: {
@@ -19876,11 +19396,10 @@ DEFUN2(stgApplyNNPPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyPPP, N, f);
+        STGJUMP1(stgApplyPPP, f);
         break;
       } // case 3
       case 4: {
@@ -19903,11 +19422,10 @@ DEFUN2(stgApplyNNPPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyNPPP, N, f);
+        STGJUMP1(stgApplyNPPP, f);
         break;
       } // case 4
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -19988,11 +19506,10 @@ DEFUN2(stgApplyNNPPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[4]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyP, N, f);
+        STGJUMP1(stgApplyP, f);
         break;
       } // case 1
       case 2: {
@@ -20016,11 +19533,10 @@ DEFUN2(stgApplyNNPPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyPP, N, f);
+        STGJUMP1(stgApplyPP, f);
         break;
       } // case 2
       case 3: {
@@ -20045,11 +19561,10 @@ DEFUN2(stgApplyNNPPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyPPP, N, f);
+        STGJUMP1(stgApplyPPP, f);
         break;
       } // case 3
       case 4: {
@@ -20074,11 +19589,10 @@ DEFUN2(stgApplyNNPPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyNPPP, N, f);
+        STGJUMP1(stgApplyNPPP, f);
         break;
       } // case 4
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -20145,13 +19659,11 @@ DEFUN2(stgApplyNNPPP, N, f) {
   ENDFUN;
 }
 
-DEFUN2(stgApplyPNPPP, N, f) {
+DEFUN1(stgApplyPNPPP, f) {
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyPNPPP %s\n", f.op->infoPtr->name);
   #endif
-  assert(N.argType == INT);
-  const int argc = N.i;
-  assert(argc == 5);
+  const int argc = 5;
   PtrOrLiteral argv[5];
   popargs(argc, argv);
   const int nps = 4;
@@ -20245,11 +19757,10 @@ DEFUN2(stgApplyPNPPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[4]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyP, N, f);
+        STGJUMP1(stgApplyP, f);
         break;
       } // case 1
       case 2: {
@@ -20271,11 +19782,10 @@ DEFUN2(stgApplyPNPPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyPP, N, f);
+        STGJUMP1(stgApplyPP, f);
         break;
       } // case 2
       case 3: {
@@ -20298,11 +19808,10 @@ DEFUN2(stgApplyPNPPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyPPP, N, f);
+        STGJUMP1(stgApplyPPP, f);
         break;
       } // case 3
       case 4: {
@@ -20325,11 +19834,10 @@ DEFUN2(stgApplyPNPPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyNPPP, N, f);
+        STGJUMP1(stgApplyNPPP, f);
         break;
       } // case 4
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -20410,11 +19918,10 @@ DEFUN2(stgApplyPNPPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[4]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyP, N, f);
+        STGJUMP1(stgApplyP, f);
         break;
       } // case 1
       case 2: {
@@ -20438,11 +19945,10 @@ DEFUN2(stgApplyPNPPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyPP, N, f);
+        STGJUMP1(stgApplyPP, f);
         break;
       } // case 2
       case 3: {
@@ -20467,11 +19973,10 @@ DEFUN2(stgApplyPNPPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyPPP, N, f);
+        STGJUMP1(stgApplyPPP, f);
         break;
       } // case 3
       case 4: {
@@ -20496,11 +20001,10 @@ DEFUN2(stgApplyPNPPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyNPPP, N, f);
+        STGJUMP1(stgApplyNPPP, f);
         break;
       } // case 4
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -20567,13 +20071,11 @@ DEFUN2(stgApplyPNPPP, N, f) {
   ENDFUN;
 }
 
-DEFUN2(stgApplyNPPPP, N, f) {
+DEFUN1(stgApplyNPPPP, f) {
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyNPPPP %s\n", f.op->infoPtr->name);
   #endif
-  assert(N.argType == INT);
-  const int argc = N.i;
-  assert(argc == 5);
+  const int argc = 5;
   PtrOrLiteral argv[5];
   popargs(argc, argv);
   const int nps = 4;
@@ -20667,11 +20169,10 @@ DEFUN2(stgApplyNPPPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[4]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyP, N, f);
+        STGJUMP1(stgApplyP, f);
         break;
       } // case 1
       case 2: {
@@ -20693,11 +20194,10 @@ DEFUN2(stgApplyNPPPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyPP, N, f);
+        STGJUMP1(stgApplyPP, f);
         break;
       } // case 2
       case 3: {
@@ -20720,11 +20220,10 @@ DEFUN2(stgApplyNPPPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyPPP, N, f);
+        STGJUMP1(stgApplyPPP, f);
         break;
       } // case 3
       case 4: {
@@ -20748,11 +20247,10 @@ DEFUN2(stgApplyNPPPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyPPPP, N, f);
+        STGJUMP1(stgApplyPPPP, f);
         break;
       } // case 4
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -20833,11 +20331,10 @@ DEFUN2(stgApplyNPPPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[4]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyP, N, f);
+        STGJUMP1(stgApplyP, f);
         break;
       } // case 1
       case 2: {
@@ -20861,11 +20358,10 @@ DEFUN2(stgApplyNPPPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyPP, N, f);
+        STGJUMP1(stgApplyPP, f);
         break;
       } // case 2
       case 3: {
@@ -20890,11 +20386,10 @@ DEFUN2(stgApplyNPPPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyPPP, N, f);
+        STGJUMP1(stgApplyPPP, f);
         break;
       } // case 3
       case 4: {
@@ -20920,11 +20415,10 @@ DEFUN2(stgApplyNPPPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyPPPP, N, f);
+        STGJUMP1(stgApplyPPPP, f);
         break;
       } // case 4
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -20991,13 +20485,11 @@ DEFUN2(stgApplyNPPPP, N, f) {
   ENDFUN;
 }
 
-DEFUN2(stgApplyPPPPP, N, f) {
+DEFUN1(stgApplyPPPPP, f) {
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyPPPPP %s\n", f.op->infoPtr->name);
   #endif
-  assert(N.argType == INT);
-  const int argc = N.i;
-  assert(argc == 5);
+  const int argc = 5;
   PtrOrLiteral argv[5];
   popargs(argc, argv);
   const int nps = 5;
@@ -21105,11 +20597,10 @@ DEFUN2(stgApplyPPPPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[4]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyP, N, f);
+        STGJUMP1(stgApplyP, f);
         break;
       } // case 1
       case 2: {
@@ -21131,11 +20622,10 @@ DEFUN2(stgApplyPPPPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyPP, N, f);
+        STGJUMP1(stgApplyPP, f);
         break;
       } // case 2
       case 3: {
@@ -21158,11 +20648,10 @@ DEFUN2(stgApplyPPPPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyPPP, N, f);
+        STGJUMP1(stgApplyPPP, f);
         break;
       } // case 3
       case 4: {
@@ -21186,11 +20675,10 @@ DEFUN2(stgApplyPPPPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyPPPP, N, f);
+        STGJUMP1(stgApplyPPPP, f);
         break;
       } // case 4
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -21271,11 +20759,10 @@ DEFUN2(stgApplyPPPPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[4]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyP, N, f);
+        STGJUMP1(stgApplyP, f);
         break;
       } // case 1
       case 2: {
@@ -21299,11 +20786,10 @@ DEFUN2(stgApplyPPPPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyPP, N, f);
+        STGJUMP1(stgApplyPP, f);
         break;
       } // case 2
       case 3: {
@@ -21328,11 +20814,10 @@ DEFUN2(stgApplyPPPPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyPPP, N, f);
+        STGJUMP1(stgApplyPPP, f);
         break;
       } // case 3
       case 4: {
@@ -21358,11 +20843,10 @@ DEFUN2(stgApplyPPPPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyPPPP, N, f);
+        STGJUMP1(stgApplyPPPP, f);
         break;
       } // case 4
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -21429,13 +20913,11 @@ DEFUN2(stgApplyPPPPP, N, f) {
   ENDFUN;
 }
 
-DEFUN2(stgApplyNNNNNN, N, f) {
+DEFUN1(stgApplyNNNNNN, f) {
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyNNNNNN %s\n", f.op->infoPtr->name);
   #endif
-  assert(N.argType == INT);
-  const int argc = N.i;
-  assert(argc == 6);
+  const int argc = 6;
   PtrOrLiteral argv[6];
   popargs(argc, argv);
   const int nps = 0;
@@ -21490,11 +20972,10 @@ DEFUN2(stgApplyNNNNNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[5]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyN, N, f);
+        STGJUMP1(stgApplyN, f);
         break;
       } // case 1
       case 2: {
@@ -21513,11 +20994,10 @@ DEFUN2(stgApplyNNNNNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[4]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyNN, N, f);
+        STGJUMP1(stgApplyNN, f);
         break;
       } // case 2
       case 3: {
@@ -21536,11 +21016,10 @@ DEFUN2(stgApplyNNNNNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyNNN, N, f);
+        STGJUMP1(stgApplyNNN, f);
         break;
       } // case 3
       case 4: {
@@ -21559,11 +21038,10 @@ DEFUN2(stgApplyNNNNNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyNNNN, N, f);
+        STGJUMP1(stgApplyNNNN, f);
         break;
       } // case 4
       case 5: {
@@ -21582,11 +21060,10 @@ DEFUN2(stgApplyNNNNNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyNNNNN, N, f);
+        STGJUMP1(stgApplyNNNNN, f);
         break;
       } // case 5
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -21665,11 +21142,10 @@ DEFUN2(stgApplyNNNNNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[5]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyN, N, f);
+        STGJUMP1(stgApplyN, f);
         break;
       } // case 1
       case 2: {
@@ -21690,11 +21166,10 @@ DEFUN2(stgApplyNNNNNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[4]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyNN, N, f);
+        STGJUMP1(stgApplyNN, f);
         break;
       } // case 2
       case 3: {
@@ -21715,11 +21190,10 @@ DEFUN2(stgApplyNNNNNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyNNN, N, f);
+        STGJUMP1(stgApplyNNN, f);
         break;
       } // case 3
       case 4: {
@@ -21740,11 +21214,10 @@ DEFUN2(stgApplyNNNNNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyNNNN, N, f);
+        STGJUMP1(stgApplyNNNN, f);
         break;
       } // case 4
       case 5: {
@@ -21765,11 +21238,10 @@ DEFUN2(stgApplyNNNNNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyNNNNN, N, f);
+        STGJUMP1(stgApplyNNNNN, f);
         break;
       } // case 5
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -21836,13 +21308,11 @@ DEFUN2(stgApplyNNNNNN, N, f) {
   ENDFUN;
 }
 
-DEFUN2(stgApplyPNNNNN, N, f) {
+DEFUN1(stgApplyPNNNNN, f) {
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyPNNNNN %s\n", f.op->infoPtr->name);
   #endif
-  assert(N.argType == INT);
-  const int argc = N.i;
-  assert(argc == 6);
+  const int argc = 6;
   PtrOrLiteral argv[6];
   popargs(argc, argv);
   const int nps = 1;
@@ -21905,11 +21375,10 @@ DEFUN2(stgApplyPNNNNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[5]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyN, N, f);
+        STGJUMP1(stgApplyN, f);
         break;
       } // case 1
       case 2: {
@@ -21928,11 +21397,10 @@ DEFUN2(stgApplyPNNNNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[4]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyNN, N, f);
+        STGJUMP1(stgApplyNN, f);
         break;
       } // case 2
       case 3: {
@@ -21951,11 +21419,10 @@ DEFUN2(stgApplyPNNNNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyNNN, N, f);
+        STGJUMP1(stgApplyNNN, f);
         break;
       } // case 3
       case 4: {
@@ -21974,11 +21441,10 @@ DEFUN2(stgApplyPNNNNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyNNNN, N, f);
+        STGJUMP1(stgApplyNNNN, f);
         break;
       } // case 4
       case 5: {
@@ -21997,11 +21463,10 @@ DEFUN2(stgApplyPNNNNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyNNNNN, N, f);
+        STGJUMP1(stgApplyNNNNN, f);
         break;
       } // case 5
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -22080,11 +21545,10 @@ DEFUN2(stgApplyPNNNNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[5]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyN, N, f);
+        STGJUMP1(stgApplyN, f);
         break;
       } // case 1
       case 2: {
@@ -22105,11 +21569,10 @@ DEFUN2(stgApplyPNNNNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[4]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyNN, N, f);
+        STGJUMP1(stgApplyNN, f);
         break;
       } // case 2
       case 3: {
@@ -22130,11 +21593,10 @@ DEFUN2(stgApplyPNNNNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyNNN, N, f);
+        STGJUMP1(stgApplyNNN, f);
         break;
       } // case 3
       case 4: {
@@ -22155,11 +21617,10 @@ DEFUN2(stgApplyPNNNNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyNNNN, N, f);
+        STGJUMP1(stgApplyNNNN, f);
         break;
       } // case 4
       case 5: {
@@ -22180,11 +21641,10 @@ DEFUN2(stgApplyPNNNNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyNNNNN, N, f);
+        STGJUMP1(stgApplyNNNNN, f);
         break;
       } // case 5
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -22251,13 +21711,11 @@ DEFUN2(stgApplyPNNNNN, N, f) {
   ENDFUN;
 }
 
-DEFUN2(stgApplyNPNNNN, N, f) {
+DEFUN1(stgApplyNPNNNN, f) {
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyNPNNNN %s\n", f.op->infoPtr->name);
   #endif
-  assert(N.argType == INT);
-  const int argc = N.i;
-  assert(argc == 6);
+  const int argc = 6;
   PtrOrLiteral argv[6];
   popargs(argc, argv);
   const int nps = 1;
@@ -22320,11 +21778,10 @@ DEFUN2(stgApplyNPNNNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[5]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyN, N, f);
+        STGJUMP1(stgApplyN, f);
         break;
       } // case 1
       case 2: {
@@ -22343,11 +21800,10 @@ DEFUN2(stgApplyNPNNNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[4]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyNN, N, f);
+        STGJUMP1(stgApplyNN, f);
         break;
       } // case 2
       case 3: {
@@ -22366,11 +21822,10 @@ DEFUN2(stgApplyNPNNNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyNNN, N, f);
+        STGJUMP1(stgApplyNNN, f);
         break;
       } // case 3
       case 4: {
@@ -22389,11 +21844,10 @@ DEFUN2(stgApplyNPNNNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyNNNN, N, f);
+        STGJUMP1(stgApplyNNNN, f);
         break;
       } // case 4
       case 5: {
@@ -22414,11 +21868,10 @@ DEFUN2(stgApplyNPNNNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyPNNNN, N, f);
+        STGJUMP1(stgApplyPNNNN, f);
         break;
       } // case 5
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -22497,11 +21950,10 @@ DEFUN2(stgApplyNPNNNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[5]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyN, N, f);
+        STGJUMP1(stgApplyN, f);
         break;
       } // case 1
       case 2: {
@@ -22522,11 +21974,10 @@ DEFUN2(stgApplyNPNNNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[4]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyNN, N, f);
+        STGJUMP1(stgApplyNN, f);
         break;
       } // case 2
       case 3: {
@@ -22547,11 +21998,10 @@ DEFUN2(stgApplyNPNNNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyNNN, N, f);
+        STGJUMP1(stgApplyNNN, f);
         break;
       } // case 3
       case 4: {
@@ -22572,11 +22022,10 @@ DEFUN2(stgApplyNPNNNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyNNNN, N, f);
+        STGJUMP1(stgApplyNNNN, f);
         break;
       } // case 4
       case 5: {
@@ -22599,11 +22048,10 @@ DEFUN2(stgApplyNPNNNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyPNNNN, N, f);
+        STGJUMP1(stgApplyPNNNN, f);
         break;
       } // case 5
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -22670,13 +22118,11 @@ DEFUN2(stgApplyNPNNNN, N, f) {
   ENDFUN;
 }
 
-DEFUN2(stgApplyPPNNNN, N, f) {
+DEFUN1(stgApplyPPNNNN, f) {
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyPPNNNN %s\n", f.op->infoPtr->name);
   #endif
-  assert(N.argType == INT);
-  const int argc = N.i;
-  assert(argc == 6);
+  const int argc = 6;
   PtrOrLiteral argv[6];
   popargs(argc, argv);
   const int nps = 2;
@@ -22747,11 +22193,10 @@ DEFUN2(stgApplyPPNNNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[5]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyN, N, f);
+        STGJUMP1(stgApplyN, f);
         break;
       } // case 1
       case 2: {
@@ -22770,11 +22215,10 @@ DEFUN2(stgApplyPPNNNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[4]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyNN, N, f);
+        STGJUMP1(stgApplyNN, f);
         break;
       } // case 2
       case 3: {
@@ -22793,11 +22237,10 @@ DEFUN2(stgApplyPPNNNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyNNN, N, f);
+        STGJUMP1(stgApplyNNN, f);
         break;
       } // case 3
       case 4: {
@@ -22816,11 +22259,10 @@ DEFUN2(stgApplyPPNNNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyNNNN, N, f);
+        STGJUMP1(stgApplyNNNN, f);
         break;
       } // case 4
       case 5: {
@@ -22841,11 +22283,10 @@ DEFUN2(stgApplyPPNNNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyPNNNN, N, f);
+        STGJUMP1(stgApplyPNNNN, f);
         break;
       } // case 5
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -22924,11 +22365,10 @@ DEFUN2(stgApplyPPNNNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[5]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyN, N, f);
+        STGJUMP1(stgApplyN, f);
         break;
       } // case 1
       case 2: {
@@ -22949,11 +22389,10 @@ DEFUN2(stgApplyPPNNNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[4]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyNN, N, f);
+        STGJUMP1(stgApplyNN, f);
         break;
       } // case 2
       case 3: {
@@ -22974,11 +22413,10 @@ DEFUN2(stgApplyPPNNNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyNNN, N, f);
+        STGJUMP1(stgApplyNNN, f);
         break;
       } // case 3
       case 4: {
@@ -22999,11 +22437,10 @@ DEFUN2(stgApplyPPNNNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyNNNN, N, f);
+        STGJUMP1(stgApplyNNNN, f);
         break;
       } // case 4
       case 5: {
@@ -23026,11 +22463,10 @@ DEFUN2(stgApplyPPNNNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyPNNNN, N, f);
+        STGJUMP1(stgApplyPNNNN, f);
         break;
       } // case 5
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -23097,13 +22533,11 @@ DEFUN2(stgApplyPPNNNN, N, f) {
   ENDFUN;
 }
 
-DEFUN2(stgApplyNNPNNN, N, f) {
+DEFUN1(stgApplyNNPNNN, f) {
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyNNPNNN %s\n", f.op->infoPtr->name);
   #endif
-  assert(N.argType == INT);
-  const int argc = N.i;
-  assert(argc == 6);
+  const int argc = 6;
   PtrOrLiteral argv[6];
   popargs(argc, argv);
   const int nps = 1;
@@ -23166,11 +22600,10 @@ DEFUN2(stgApplyNNPNNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[5]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyN, N, f);
+        STGJUMP1(stgApplyN, f);
         break;
       } // case 1
       case 2: {
@@ -23189,11 +22622,10 @@ DEFUN2(stgApplyNNPNNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[4]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyNN, N, f);
+        STGJUMP1(stgApplyNN, f);
         break;
       } // case 2
       case 3: {
@@ -23212,11 +22644,10 @@ DEFUN2(stgApplyNNPNNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyNNN, N, f);
+        STGJUMP1(stgApplyNNN, f);
         break;
       } // case 3
       case 4: {
@@ -23237,11 +22668,10 @@ DEFUN2(stgApplyNNPNNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyPNNN, N, f);
+        STGJUMP1(stgApplyPNNN, f);
         break;
       } // case 4
       case 5: {
@@ -23262,11 +22692,10 @@ DEFUN2(stgApplyNNPNNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyNPNNN, N, f);
+        STGJUMP1(stgApplyNPNNN, f);
         break;
       } // case 5
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -23345,11 +22774,10 @@ DEFUN2(stgApplyNNPNNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[5]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyN, N, f);
+        STGJUMP1(stgApplyN, f);
         break;
       } // case 1
       case 2: {
@@ -23370,11 +22798,10 @@ DEFUN2(stgApplyNNPNNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[4]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyNN, N, f);
+        STGJUMP1(stgApplyNN, f);
         break;
       } // case 2
       case 3: {
@@ -23395,11 +22822,10 @@ DEFUN2(stgApplyNNPNNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyNNN, N, f);
+        STGJUMP1(stgApplyNNN, f);
         break;
       } // case 3
       case 4: {
@@ -23422,11 +22848,10 @@ DEFUN2(stgApplyNNPNNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyPNNN, N, f);
+        STGJUMP1(stgApplyPNNN, f);
         break;
       } // case 4
       case 5: {
@@ -23449,11 +22874,10 @@ DEFUN2(stgApplyNNPNNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyNPNNN, N, f);
+        STGJUMP1(stgApplyNPNNN, f);
         break;
       } // case 5
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -23520,13 +22944,11 @@ DEFUN2(stgApplyNNPNNN, N, f) {
   ENDFUN;
 }
 
-DEFUN2(stgApplyPNPNNN, N, f) {
+DEFUN1(stgApplyPNPNNN, f) {
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyPNPNNN %s\n", f.op->infoPtr->name);
   #endif
-  assert(N.argType == INT);
-  const int argc = N.i;
-  assert(argc == 6);
+  const int argc = 6;
   PtrOrLiteral argv[6];
   popargs(argc, argv);
   const int nps = 2;
@@ -23597,11 +23019,10 @@ DEFUN2(stgApplyPNPNNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[5]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyN, N, f);
+        STGJUMP1(stgApplyN, f);
         break;
       } // case 1
       case 2: {
@@ -23620,11 +23041,10 @@ DEFUN2(stgApplyPNPNNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[4]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyNN, N, f);
+        STGJUMP1(stgApplyNN, f);
         break;
       } // case 2
       case 3: {
@@ -23643,11 +23063,10 @@ DEFUN2(stgApplyPNPNNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyNNN, N, f);
+        STGJUMP1(stgApplyNNN, f);
         break;
       } // case 3
       case 4: {
@@ -23668,11 +23087,10 @@ DEFUN2(stgApplyPNPNNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyPNNN, N, f);
+        STGJUMP1(stgApplyPNNN, f);
         break;
       } // case 4
       case 5: {
@@ -23693,11 +23111,10 @@ DEFUN2(stgApplyPNPNNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyNPNNN, N, f);
+        STGJUMP1(stgApplyNPNNN, f);
         break;
       } // case 5
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -23776,11 +23193,10 @@ DEFUN2(stgApplyPNPNNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[5]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyN, N, f);
+        STGJUMP1(stgApplyN, f);
         break;
       } // case 1
       case 2: {
@@ -23801,11 +23217,10 @@ DEFUN2(stgApplyPNPNNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[4]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyNN, N, f);
+        STGJUMP1(stgApplyNN, f);
         break;
       } // case 2
       case 3: {
@@ -23826,11 +23241,10 @@ DEFUN2(stgApplyPNPNNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyNNN, N, f);
+        STGJUMP1(stgApplyNNN, f);
         break;
       } // case 3
       case 4: {
@@ -23853,11 +23267,10 @@ DEFUN2(stgApplyPNPNNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyPNNN, N, f);
+        STGJUMP1(stgApplyPNNN, f);
         break;
       } // case 4
       case 5: {
@@ -23880,11 +23293,10 @@ DEFUN2(stgApplyPNPNNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyNPNNN, N, f);
+        STGJUMP1(stgApplyNPNNN, f);
         break;
       } // case 5
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -23951,13 +23363,11 @@ DEFUN2(stgApplyPNPNNN, N, f) {
   ENDFUN;
 }
 
-DEFUN2(stgApplyNPPNNN, N, f) {
+DEFUN1(stgApplyNPPNNN, f) {
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyNPPNNN %s\n", f.op->infoPtr->name);
   #endif
-  assert(N.argType == INT);
-  const int argc = N.i;
-  assert(argc == 6);
+  const int argc = 6;
   PtrOrLiteral argv[6];
   popargs(argc, argv);
   const int nps = 2;
@@ -24028,11 +23438,10 @@ DEFUN2(stgApplyNPPNNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[5]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyN, N, f);
+        STGJUMP1(stgApplyN, f);
         break;
       } // case 1
       case 2: {
@@ -24051,11 +23460,10 @@ DEFUN2(stgApplyNPPNNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[4]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyNN, N, f);
+        STGJUMP1(stgApplyNN, f);
         break;
       } // case 2
       case 3: {
@@ -24074,11 +23482,10 @@ DEFUN2(stgApplyNPPNNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyNNN, N, f);
+        STGJUMP1(stgApplyNNN, f);
         break;
       } // case 3
       case 4: {
@@ -24099,11 +23506,10 @@ DEFUN2(stgApplyNPPNNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyPNNN, N, f);
+        STGJUMP1(stgApplyPNNN, f);
         break;
       } // case 4
       case 5: {
@@ -24125,11 +23531,10 @@ DEFUN2(stgApplyNPPNNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyPPNNN, N, f);
+        STGJUMP1(stgApplyPPNNN, f);
         break;
       } // case 5
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -24208,11 +23613,10 @@ DEFUN2(stgApplyNPPNNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[5]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyN, N, f);
+        STGJUMP1(stgApplyN, f);
         break;
       } // case 1
       case 2: {
@@ -24233,11 +23637,10 @@ DEFUN2(stgApplyNPPNNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[4]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyNN, N, f);
+        STGJUMP1(stgApplyNN, f);
         break;
       } // case 2
       case 3: {
@@ -24258,11 +23661,10 @@ DEFUN2(stgApplyNPPNNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyNNN, N, f);
+        STGJUMP1(stgApplyNNN, f);
         break;
       } // case 3
       case 4: {
@@ -24285,11 +23687,10 @@ DEFUN2(stgApplyNPPNNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyPNNN, N, f);
+        STGJUMP1(stgApplyPNNN, f);
         break;
       } // case 4
       case 5: {
@@ -24313,11 +23714,10 @@ DEFUN2(stgApplyNPPNNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyPPNNN, N, f);
+        STGJUMP1(stgApplyPPNNN, f);
         break;
       } // case 5
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -24384,13 +23784,11 @@ DEFUN2(stgApplyNPPNNN, N, f) {
   ENDFUN;
 }
 
-DEFUN2(stgApplyPPPNNN, N, f) {
+DEFUN1(stgApplyPPPNNN, f) {
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyPPPNNN %s\n", f.op->infoPtr->name);
   #endif
-  assert(N.argType == INT);
-  const int argc = N.i;
-  assert(argc == 6);
+  const int argc = 6;
   PtrOrLiteral argv[6];
   popargs(argc, argv);
   const int nps = 3;
@@ -24471,11 +23869,10 @@ DEFUN2(stgApplyPPPNNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[5]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyN, N, f);
+        STGJUMP1(stgApplyN, f);
         break;
       } // case 1
       case 2: {
@@ -24494,11 +23891,10 @@ DEFUN2(stgApplyPPPNNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[4]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyNN, N, f);
+        STGJUMP1(stgApplyNN, f);
         break;
       } // case 2
       case 3: {
@@ -24517,11 +23913,10 @@ DEFUN2(stgApplyPPPNNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyNNN, N, f);
+        STGJUMP1(stgApplyNNN, f);
         break;
       } // case 3
       case 4: {
@@ -24542,11 +23937,10 @@ DEFUN2(stgApplyPPPNNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyPNNN, N, f);
+        STGJUMP1(stgApplyPNNN, f);
         break;
       } // case 4
       case 5: {
@@ -24568,11 +23962,10 @@ DEFUN2(stgApplyPPPNNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyPPNNN, N, f);
+        STGJUMP1(stgApplyPPNNN, f);
         break;
       } // case 5
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -24651,11 +24044,10 @@ DEFUN2(stgApplyPPPNNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[5]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyN, N, f);
+        STGJUMP1(stgApplyN, f);
         break;
       } // case 1
       case 2: {
@@ -24676,11 +24068,10 @@ DEFUN2(stgApplyPPPNNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[4]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyNN, N, f);
+        STGJUMP1(stgApplyNN, f);
         break;
       } // case 2
       case 3: {
@@ -24701,11 +24092,10 @@ DEFUN2(stgApplyPPPNNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyNNN, N, f);
+        STGJUMP1(stgApplyNNN, f);
         break;
       } // case 3
       case 4: {
@@ -24728,11 +24118,10 @@ DEFUN2(stgApplyPPPNNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyPNNN, N, f);
+        STGJUMP1(stgApplyPNNN, f);
         break;
       } // case 4
       case 5: {
@@ -24756,11 +24145,10 @@ DEFUN2(stgApplyPPPNNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyPPNNN, N, f);
+        STGJUMP1(stgApplyPPNNN, f);
         break;
       } // case 5
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -24827,13 +24215,11 @@ DEFUN2(stgApplyPPPNNN, N, f) {
   ENDFUN;
 }
 
-DEFUN2(stgApplyNNNPNN, N, f) {
+DEFUN1(stgApplyNNNPNN, f) {
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyNNNPNN %s\n", f.op->infoPtr->name);
   #endif
-  assert(N.argType == INT);
-  const int argc = N.i;
-  assert(argc == 6);
+  const int argc = 6;
   PtrOrLiteral argv[6];
   popargs(argc, argv);
   const int nps = 1;
@@ -24896,11 +24282,10 @@ DEFUN2(stgApplyNNNPNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[5]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyN, N, f);
+        STGJUMP1(stgApplyN, f);
         break;
       } // case 1
       case 2: {
@@ -24919,11 +24304,10 @@ DEFUN2(stgApplyNNNPNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[4]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyNN, N, f);
+        STGJUMP1(stgApplyNN, f);
         break;
       } // case 2
       case 3: {
@@ -24944,11 +24328,10 @@ DEFUN2(stgApplyNNNPNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyPNN, N, f);
+        STGJUMP1(stgApplyPNN, f);
         break;
       } // case 3
       case 4: {
@@ -24969,11 +24352,10 @@ DEFUN2(stgApplyNNNPNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyNPNN, N, f);
+        STGJUMP1(stgApplyNPNN, f);
         break;
       } // case 4
       case 5: {
@@ -24994,11 +24376,10 @@ DEFUN2(stgApplyNNNPNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyNNPNN, N, f);
+        STGJUMP1(stgApplyNNPNN, f);
         break;
       } // case 5
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -25077,11 +24458,10 @@ DEFUN2(stgApplyNNNPNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[5]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyN, N, f);
+        STGJUMP1(stgApplyN, f);
         break;
       } // case 1
       case 2: {
@@ -25102,11 +24482,10 @@ DEFUN2(stgApplyNNNPNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[4]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyNN, N, f);
+        STGJUMP1(stgApplyNN, f);
         break;
       } // case 2
       case 3: {
@@ -25129,11 +24508,10 @@ DEFUN2(stgApplyNNNPNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyPNN, N, f);
+        STGJUMP1(stgApplyPNN, f);
         break;
       } // case 3
       case 4: {
@@ -25156,11 +24534,10 @@ DEFUN2(stgApplyNNNPNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyNPNN, N, f);
+        STGJUMP1(stgApplyNPNN, f);
         break;
       } // case 4
       case 5: {
@@ -25183,11 +24560,10 @@ DEFUN2(stgApplyNNNPNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyNNPNN, N, f);
+        STGJUMP1(stgApplyNNPNN, f);
         break;
       } // case 5
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -25254,13 +24630,11 @@ DEFUN2(stgApplyNNNPNN, N, f) {
   ENDFUN;
 }
 
-DEFUN2(stgApplyPNNPNN, N, f) {
+DEFUN1(stgApplyPNNPNN, f) {
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyPNNPNN %s\n", f.op->infoPtr->name);
   #endif
-  assert(N.argType == INT);
-  const int argc = N.i;
-  assert(argc == 6);
+  const int argc = 6;
   PtrOrLiteral argv[6];
   popargs(argc, argv);
   const int nps = 2;
@@ -25331,11 +24705,10 @@ DEFUN2(stgApplyPNNPNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[5]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyN, N, f);
+        STGJUMP1(stgApplyN, f);
         break;
       } // case 1
       case 2: {
@@ -25354,11 +24727,10 @@ DEFUN2(stgApplyPNNPNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[4]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyNN, N, f);
+        STGJUMP1(stgApplyNN, f);
         break;
       } // case 2
       case 3: {
@@ -25379,11 +24751,10 @@ DEFUN2(stgApplyPNNPNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyPNN, N, f);
+        STGJUMP1(stgApplyPNN, f);
         break;
       } // case 3
       case 4: {
@@ -25404,11 +24775,10 @@ DEFUN2(stgApplyPNNPNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyNPNN, N, f);
+        STGJUMP1(stgApplyNPNN, f);
         break;
       } // case 4
       case 5: {
@@ -25429,11 +24799,10 @@ DEFUN2(stgApplyPNNPNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyNNPNN, N, f);
+        STGJUMP1(stgApplyNNPNN, f);
         break;
       } // case 5
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -25512,11 +24881,10 @@ DEFUN2(stgApplyPNNPNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[5]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyN, N, f);
+        STGJUMP1(stgApplyN, f);
         break;
       } // case 1
       case 2: {
@@ -25537,11 +24905,10 @@ DEFUN2(stgApplyPNNPNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[4]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyNN, N, f);
+        STGJUMP1(stgApplyNN, f);
         break;
       } // case 2
       case 3: {
@@ -25564,11 +24931,10 @@ DEFUN2(stgApplyPNNPNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyPNN, N, f);
+        STGJUMP1(stgApplyPNN, f);
         break;
       } // case 3
       case 4: {
@@ -25591,11 +24957,10 @@ DEFUN2(stgApplyPNNPNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyNPNN, N, f);
+        STGJUMP1(stgApplyNPNN, f);
         break;
       } // case 4
       case 5: {
@@ -25618,11 +24983,10 @@ DEFUN2(stgApplyPNNPNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyNNPNN, N, f);
+        STGJUMP1(stgApplyNNPNN, f);
         break;
       } // case 5
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -25689,13 +25053,11 @@ DEFUN2(stgApplyPNNPNN, N, f) {
   ENDFUN;
 }
 
-DEFUN2(stgApplyNPNPNN, N, f) {
+DEFUN1(stgApplyNPNPNN, f) {
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyNPNPNN %s\n", f.op->infoPtr->name);
   #endif
-  assert(N.argType == INT);
-  const int argc = N.i;
-  assert(argc == 6);
+  const int argc = 6;
   PtrOrLiteral argv[6];
   popargs(argc, argv);
   const int nps = 2;
@@ -25766,11 +25128,10 @@ DEFUN2(stgApplyNPNPNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[5]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyN, N, f);
+        STGJUMP1(stgApplyN, f);
         break;
       } // case 1
       case 2: {
@@ -25789,11 +25150,10 @@ DEFUN2(stgApplyNPNPNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[4]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyNN, N, f);
+        STGJUMP1(stgApplyNN, f);
         break;
       } // case 2
       case 3: {
@@ -25814,11 +25174,10 @@ DEFUN2(stgApplyNPNPNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyPNN, N, f);
+        STGJUMP1(stgApplyPNN, f);
         break;
       } // case 3
       case 4: {
@@ -25839,11 +25198,10 @@ DEFUN2(stgApplyNPNPNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyNPNN, N, f);
+        STGJUMP1(stgApplyNPNN, f);
         break;
       } // case 4
       case 5: {
@@ -25865,11 +25223,10 @@ DEFUN2(stgApplyNPNPNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyPNPNN, N, f);
+        STGJUMP1(stgApplyPNPNN, f);
         break;
       } // case 5
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -25948,11 +25305,10 @@ DEFUN2(stgApplyNPNPNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[5]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyN, N, f);
+        STGJUMP1(stgApplyN, f);
         break;
       } // case 1
       case 2: {
@@ -25973,11 +25329,10 @@ DEFUN2(stgApplyNPNPNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[4]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyNN, N, f);
+        STGJUMP1(stgApplyNN, f);
         break;
       } // case 2
       case 3: {
@@ -26000,11 +25355,10 @@ DEFUN2(stgApplyNPNPNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyPNN, N, f);
+        STGJUMP1(stgApplyPNN, f);
         break;
       } // case 3
       case 4: {
@@ -26027,11 +25381,10 @@ DEFUN2(stgApplyNPNPNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyNPNN, N, f);
+        STGJUMP1(stgApplyNPNN, f);
         break;
       } // case 4
       case 5: {
@@ -26055,11 +25408,10 @@ DEFUN2(stgApplyNPNPNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyPNPNN, N, f);
+        STGJUMP1(stgApplyPNPNN, f);
         break;
       } // case 5
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -26126,13 +25478,11 @@ DEFUN2(stgApplyNPNPNN, N, f) {
   ENDFUN;
 }
 
-DEFUN2(stgApplyPPNPNN, N, f) {
+DEFUN1(stgApplyPPNPNN, f) {
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyPPNPNN %s\n", f.op->infoPtr->name);
   #endif
-  assert(N.argType == INT);
-  const int argc = N.i;
-  assert(argc == 6);
+  const int argc = 6;
   PtrOrLiteral argv[6];
   popargs(argc, argv);
   const int nps = 3;
@@ -26213,11 +25563,10 @@ DEFUN2(stgApplyPPNPNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[5]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyN, N, f);
+        STGJUMP1(stgApplyN, f);
         break;
       } // case 1
       case 2: {
@@ -26236,11 +25585,10 @@ DEFUN2(stgApplyPPNPNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[4]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyNN, N, f);
+        STGJUMP1(stgApplyNN, f);
         break;
       } // case 2
       case 3: {
@@ -26261,11 +25609,10 @@ DEFUN2(stgApplyPPNPNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyPNN, N, f);
+        STGJUMP1(stgApplyPNN, f);
         break;
       } // case 3
       case 4: {
@@ -26286,11 +25633,10 @@ DEFUN2(stgApplyPPNPNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyNPNN, N, f);
+        STGJUMP1(stgApplyNPNN, f);
         break;
       } // case 4
       case 5: {
@@ -26312,11 +25658,10 @@ DEFUN2(stgApplyPPNPNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyPNPNN, N, f);
+        STGJUMP1(stgApplyPNPNN, f);
         break;
       } // case 5
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -26395,11 +25740,10 @@ DEFUN2(stgApplyPPNPNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[5]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyN, N, f);
+        STGJUMP1(stgApplyN, f);
         break;
       } // case 1
       case 2: {
@@ -26420,11 +25764,10 @@ DEFUN2(stgApplyPPNPNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[4]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyNN, N, f);
+        STGJUMP1(stgApplyNN, f);
         break;
       } // case 2
       case 3: {
@@ -26447,11 +25790,10 @@ DEFUN2(stgApplyPPNPNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyPNN, N, f);
+        STGJUMP1(stgApplyPNN, f);
         break;
       } // case 3
       case 4: {
@@ -26474,11 +25816,10 @@ DEFUN2(stgApplyPPNPNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyNPNN, N, f);
+        STGJUMP1(stgApplyNPNN, f);
         break;
       } // case 4
       case 5: {
@@ -26502,11 +25843,10 @@ DEFUN2(stgApplyPPNPNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyPNPNN, N, f);
+        STGJUMP1(stgApplyPNPNN, f);
         break;
       } // case 5
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -26573,13 +25913,11 @@ DEFUN2(stgApplyPPNPNN, N, f) {
   ENDFUN;
 }
 
-DEFUN2(stgApplyNNPPNN, N, f) {
+DEFUN1(stgApplyNNPPNN, f) {
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyNNPPNN %s\n", f.op->infoPtr->name);
   #endif
-  assert(N.argType == INT);
-  const int argc = N.i;
-  assert(argc == 6);
+  const int argc = 6;
   PtrOrLiteral argv[6];
   popargs(argc, argv);
   const int nps = 2;
@@ -26650,11 +25988,10 @@ DEFUN2(stgApplyNNPPNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[5]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyN, N, f);
+        STGJUMP1(stgApplyN, f);
         break;
       } // case 1
       case 2: {
@@ -26673,11 +26010,10 @@ DEFUN2(stgApplyNNPPNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[4]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyNN, N, f);
+        STGJUMP1(stgApplyNN, f);
         break;
       } // case 2
       case 3: {
@@ -26698,11 +26034,10 @@ DEFUN2(stgApplyNNPPNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyPNN, N, f);
+        STGJUMP1(stgApplyPNN, f);
         break;
       } // case 3
       case 4: {
@@ -26724,11 +26059,10 @@ DEFUN2(stgApplyNNPPNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyPPNN, N, f);
+        STGJUMP1(stgApplyPPNN, f);
         break;
       } // case 4
       case 5: {
@@ -26750,11 +26084,10 @@ DEFUN2(stgApplyNNPPNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyNPPNN, N, f);
+        STGJUMP1(stgApplyNPPNN, f);
         break;
       } // case 5
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -26833,11 +26166,10 @@ DEFUN2(stgApplyNNPPNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[5]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyN, N, f);
+        STGJUMP1(stgApplyN, f);
         break;
       } // case 1
       case 2: {
@@ -26858,11 +26190,10 @@ DEFUN2(stgApplyNNPPNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[4]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyNN, N, f);
+        STGJUMP1(stgApplyNN, f);
         break;
       } // case 2
       case 3: {
@@ -26885,11 +26216,10 @@ DEFUN2(stgApplyNNPPNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyPNN, N, f);
+        STGJUMP1(stgApplyPNN, f);
         break;
       } // case 3
       case 4: {
@@ -26913,11 +26243,10 @@ DEFUN2(stgApplyNNPPNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyPPNN, N, f);
+        STGJUMP1(stgApplyPPNN, f);
         break;
       } // case 4
       case 5: {
@@ -26941,11 +26270,10 @@ DEFUN2(stgApplyNNPPNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyNPPNN, N, f);
+        STGJUMP1(stgApplyNPPNN, f);
         break;
       } // case 5
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -27012,13 +26340,11 @@ DEFUN2(stgApplyNNPPNN, N, f) {
   ENDFUN;
 }
 
-DEFUN2(stgApplyPNPPNN, N, f) {
+DEFUN1(stgApplyPNPPNN, f) {
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyPNPPNN %s\n", f.op->infoPtr->name);
   #endif
-  assert(N.argType == INT);
-  const int argc = N.i;
-  assert(argc == 6);
+  const int argc = 6;
   PtrOrLiteral argv[6];
   popargs(argc, argv);
   const int nps = 3;
@@ -27099,11 +26425,10 @@ DEFUN2(stgApplyPNPPNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[5]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyN, N, f);
+        STGJUMP1(stgApplyN, f);
         break;
       } // case 1
       case 2: {
@@ -27122,11 +26447,10 @@ DEFUN2(stgApplyPNPPNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[4]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyNN, N, f);
+        STGJUMP1(stgApplyNN, f);
         break;
       } // case 2
       case 3: {
@@ -27147,11 +26471,10 @@ DEFUN2(stgApplyPNPPNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyPNN, N, f);
+        STGJUMP1(stgApplyPNN, f);
         break;
       } // case 3
       case 4: {
@@ -27173,11 +26496,10 @@ DEFUN2(stgApplyPNPPNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyPPNN, N, f);
+        STGJUMP1(stgApplyPPNN, f);
         break;
       } // case 4
       case 5: {
@@ -27199,11 +26521,10 @@ DEFUN2(stgApplyPNPPNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyNPPNN, N, f);
+        STGJUMP1(stgApplyNPPNN, f);
         break;
       } // case 5
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -27282,11 +26603,10 @@ DEFUN2(stgApplyPNPPNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[5]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyN, N, f);
+        STGJUMP1(stgApplyN, f);
         break;
       } // case 1
       case 2: {
@@ -27307,11 +26627,10 @@ DEFUN2(stgApplyPNPPNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[4]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyNN, N, f);
+        STGJUMP1(stgApplyNN, f);
         break;
       } // case 2
       case 3: {
@@ -27334,11 +26653,10 @@ DEFUN2(stgApplyPNPPNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyPNN, N, f);
+        STGJUMP1(stgApplyPNN, f);
         break;
       } // case 3
       case 4: {
@@ -27362,11 +26680,10 @@ DEFUN2(stgApplyPNPPNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyPPNN, N, f);
+        STGJUMP1(stgApplyPPNN, f);
         break;
       } // case 4
       case 5: {
@@ -27390,11 +26707,10 @@ DEFUN2(stgApplyPNPPNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyNPPNN, N, f);
+        STGJUMP1(stgApplyNPPNN, f);
         break;
       } // case 5
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -27461,13 +26777,11 @@ DEFUN2(stgApplyPNPPNN, N, f) {
   ENDFUN;
 }
 
-DEFUN2(stgApplyNPPPNN, N, f) {
+DEFUN1(stgApplyNPPPNN, f) {
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyNPPPNN %s\n", f.op->infoPtr->name);
   #endif
-  assert(N.argType == INT);
-  const int argc = N.i;
-  assert(argc == 6);
+  const int argc = 6;
   PtrOrLiteral argv[6];
   popargs(argc, argv);
   const int nps = 3;
@@ -27548,11 +26862,10 @@ DEFUN2(stgApplyNPPPNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[5]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyN, N, f);
+        STGJUMP1(stgApplyN, f);
         break;
       } // case 1
       case 2: {
@@ -27571,11 +26884,10 @@ DEFUN2(stgApplyNPPPNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[4]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyNN, N, f);
+        STGJUMP1(stgApplyNN, f);
         break;
       } // case 2
       case 3: {
@@ -27596,11 +26908,10 @@ DEFUN2(stgApplyNPPPNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyPNN, N, f);
+        STGJUMP1(stgApplyPNN, f);
         break;
       } // case 3
       case 4: {
@@ -27622,11 +26933,10 @@ DEFUN2(stgApplyNPPPNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyPPNN, N, f);
+        STGJUMP1(stgApplyPPNN, f);
         break;
       } // case 4
       case 5: {
@@ -27649,11 +26959,10 @@ DEFUN2(stgApplyNPPPNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyPPPNN, N, f);
+        STGJUMP1(stgApplyPPPNN, f);
         break;
       } // case 5
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -27732,11 +27041,10 @@ DEFUN2(stgApplyNPPPNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[5]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyN, N, f);
+        STGJUMP1(stgApplyN, f);
         break;
       } // case 1
       case 2: {
@@ -27757,11 +27065,10 @@ DEFUN2(stgApplyNPPPNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[4]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyNN, N, f);
+        STGJUMP1(stgApplyNN, f);
         break;
       } // case 2
       case 3: {
@@ -27784,11 +27091,10 @@ DEFUN2(stgApplyNPPPNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyPNN, N, f);
+        STGJUMP1(stgApplyPNN, f);
         break;
       } // case 3
       case 4: {
@@ -27812,11 +27118,10 @@ DEFUN2(stgApplyNPPPNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyPPNN, N, f);
+        STGJUMP1(stgApplyPPNN, f);
         break;
       } // case 4
       case 5: {
@@ -27841,11 +27146,10 @@ DEFUN2(stgApplyNPPPNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyPPPNN, N, f);
+        STGJUMP1(stgApplyPPPNN, f);
         break;
       } // case 5
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -27912,13 +27216,11 @@ DEFUN2(stgApplyNPPPNN, N, f) {
   ENDFUN;
 }
 
-DEFUN2(stgApplyPPPPNN, N, f) {
+DEFUN1(stgApplyPPPPNN, f) {
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyPPPPNN %s\n", f.op->infoPtr->name);
   #endif
-  assert(N.argType == INT);
-  const int argc = N.i;
-  assert(argc == 6);
+  const int argc = 6;
   PtrOrLiteral argv[6];
   popargs(argc, argv);
   const int nps = 4;
@@ -28011,11 +27313,10 @@ DEFUN2(stgApplyPPPPNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[5]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyN, N, f);
+        STGJUMP1(stgApplyN, f);
         break;
       } // case 1
       case 2: {
@@ -28034,11 +27335,10 @@ DEFUN2(stgApplyPPPPNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[4]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyNN, N, f);
+        STGJUMP1(stgApplyNN, f);
         break;
       } // case 2
       case 3: {
@@ -28059,11 +27359,10 @@ DEFUN2(stgApplyPPPPNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyPNN, N, f);
+        STGJUMP1(stgApplyPNN, f);
         break;
       } // case 3
       case 4: {
@@ -28085,11 +27384,10 @@ DEFUN2(stgApplyPPPPNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyPPNN, N, f);
+        STGJUMP1(stgApplyPPNN, f);
         break;
       } // case 4
       case 5: {
@@ -28112,11 +27410,10 @@ DEFUN2(stgApplyPPPPNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyPPPNN, N, f);
+        STGJUMP1(stgApplyPPPNN, f);
         break;
       } // case 5
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -28195,11 +27492,10 @@ DEFUN2(stgApplyPPPPNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[5]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyN, N, f);
+        STGJUMP1(stgApplyN, f);
         break;
       } // case 1
       case 2: {
@@ -28220,11 +27516,10 @@ DEFUN2(stgApplyPPPPNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[4]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyNN, N, f);
+        STGJUMP1(stgApplyNN, f);
         break;
       } // case 2
       case 3: {
@@ -28247,11 +27542,10 @@ DEFUN2(stgApplyPPPPNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyPNN, N, f);
+        STGJUMP1(stgApplyPNN, f);
         break;
       } // case 3
       case 4: {
@@ -28275,11 +27569,10 @@ DEFUN2(stgApplyPPPPNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyPPNN, N, f);
+        STGJUMP1(stgApplyPPNN, f);
         break;
       } // case 4
       case 5: {
@@ -28304,11 +27597,10 @@ DEFUN2(stgApplyPPPPNN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyPPPNN, N, f);
+        STGJUMP1(stgApplyPPPNN, f);
         break;
       } // case 5
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -28375,13 +27667,11 @@ DEFUN2(stgApplyPPPPNN, N, f) {
   ENDFUN;
 }
 
-DEFUN2(stgApplyNNNNPN, N, f) {
+DEFUN1(stgApplyNNNNPN, f) {
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyNNNNPN %s\n", f.op->infoPtr->name);
   #endif
-  assert(N.argType == INT);
-  const int argc = N.i;
-  assert(argc == 6);
+  const int argc = 6;
   PtrOrLiteral argv[6];
   popargs(argc, argv);
   const int nps = 1;
@@ -28444,11 +27734,10 @@ DEFUN2(stgApplyNNNNPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[5]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyN, N, f);
+        STGJUMP1(stgApplyN, f);
         break;
       } // case 1
       case 2: {
@@ -28469,11 +27758,10 @@ DEFUN2(stgApplyNNNNPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[4]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyPN, N, f);
+        STGJUMP1(stgApplyPN, f);
         break;
       } // case 2
       case 3: {
@@ -28494,11 +27782,10 @@ DEFUN2(stgApplyNNNNPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyNPN, N, f);
+        STGJUMP1(stgApplyNPN, f);
         break;
       } // case 3
       case 4: {
@@ -28519,11 +27806,10 @@ DEFUN2(stgApplyNNNNPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyNNPN, N, f);
+        STGJUMP1(stgApplyNNPN, f);
         break;
       } // case 4
       case 5: {
@@ -28544,11 +27830,10 @@ DEFUN2(stgApplyNNNNPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyNNNPN, N, f);
+        STGJUMP1(stgApplyNNNPN, f);
         break;
       } // case 5
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -28627,11 +27912,10 @@ DEFUN2(stgApplyNNNNPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[5]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyN, N, f);
+        STGJUMP1(stgApplyN, f);
         break;
       } // case 1
       case 2: {
@@ -28654,11 +27938,10 @@ DEFUN2(stgApplyNNNNPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[4]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyPN, N, f);
+        STGJUMP1(stgApplyPN, f);
         break;
       } // case 2
       case 3: {
@@ -28681,11 +27964,10 @@ DEFUN2(stgApplyNNNNPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyNPN, N, f);
+        STGJUMP1(stgApplyNPN, f);
         break;
       } // case 3
       case 4: {
@@ -28708,11 +27990,10 @@ DEFUN2(stgApplyNNNNPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyNNPN, N, f);
+        STGJUMP1(stgApplyNNPN, f);
         break;
       } // case 4
       case 5: {
@@ -28735,11 +28016,10 @@ DEFUN2(stgApplyNNNNPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyNNNPN, N, f);
+        STGJUMP1(stgApplyNNNPN, f);
         break;
       } // case 5
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -28806,13 +28086,11 @@ DEFUN2(stgApplyNNNNPN, N, f) {
   ENDFUN;
 }
 
-DEFUN2(stgApplyPNNNPN, N, f) {
+DEFUN1(stgApplyPNNNPN, f) {
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyPNNNPN %s\n", f.op->infoPtr->name);
   #endif
-  assert(N.argType == INT);
-  const int argc = N.i;
-  assert(argc == 6);
+  const int argc = 6;
   PtrOrLiteral argv[6];
   popargs(argc, argv);
   const int nps = 2;
@@ -28883,11 +28161,10 @@ DEFUN2(stgApplyPNNNPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[5]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyN, N, f);
+        STGJUMP1(stgApplyN, f);
         break;
       } // case 1
       case 2: {
@@ -28908,11 +28185,10 @@ DEFUN2(stgApplyPNNNPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[4]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyPN, N, f);
+        STGJUMP1(stgApplyPN, f);
         break;
       } // case 2
       case 3: {
@@ -28933,11 +28209,10 @@ DEFUN2(stgApplyPNNNPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyNPN, N, f);
+        STGJUMP1(stgApplyNPN, f);
         break;
       } // case 3
       case 4: {
@@ -28958,11 +28233,10 @@ DEFUN2(stgApplyPNNNPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyNNPN, N, f);
+        STGJUMP1(stgApplyNNPN, f);
         break;
       } // case 4
       case 5: {
@@ -28983,11 +28257,10 @@ DEFUN2(stgApplyPNNNPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyNNNPN, N, f);
+        STGJUMP1(stgApplyNNNPN, f);
         break;
       } // case 5
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -29066,11 +28339,10 @@ DEFUN2(stgApplyPNNNPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[5]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyN, N, f);
+        STGJUMP1(stgApplyN, f);
         break;
       } // case 1
       case 2: {
@@ -29093,11 +28365,10 @@ DEFUN2(stgApplyPNNNPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[4]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyPN, N, f);
+        STGJUMP1(stgApplyPN, f);
         break;
       } // case 2
       case 3: {
@@ -29120,11 +28391,10 @@ DEFUN2(stgApplyPNNNPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyNPN, N, f);
+        STGJUMP1(stgApplyNPN, f);
         break;
       } // case 3
       case 4: {
@@ -29147,11 +28417,10 @@ DEFUN2(stgApplyPNNNPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyNNPN, N, f);
+        STGJUMP1(stgApplyNNPN, f);
         break;
       } // case 4
       case 5: {
@@ -29174,11 +28443,10 @@ DEFUN2(stgApplyPNNNPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyNNNPN, N, f);
+        STGJUMP1(stgApplyNNNPN, f);
         break;
       } // case 5
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -29245,13 +28513,11 @@ DEFUN2(stgApplyPNNNPN, N, f) {
   ENDFUN;
 }
 
-DEFUN2(stgApplyNPNNPN, N, f) {
+DEFUN1(stgApplyNPNNPN, f) {
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyNPNNPN %s\n", f.op->infoPtr->name);
   #endif
-  assert(N.argType == INT);
-  const int argc = N.i;
-  assert(argc == 6);
+  const int argc = 6;
   PtrOrLiteral argv[6];
   popargs(argc, argv);
   const int nps = 2;
@@ -29322,11 +28588,10 @@ DEFUN2(stgApplyNPNNPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[5]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyN, N, f);
+        STGJUMP1(stgApplyN, f);
         break;
       } // case 1
       case 2: {
@@ -29347,11 +28612,10 @@ DEFUN2(stgApplyNPNNPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[4]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyPN, N, f);
+        STGJUMP1(stgApplyPN, f);
         break;
       } // case 2
       case 3: {
@@ -29372,11 +28636,10 @@ DEFUN2(stgApplyNPNNPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyNPN, N, f);
+        STGJUMP1(stgApplyNPN, f);
         break;
       } // case 3
       case 4: {
@@ -29397,11 +28660,10 @@ DEFUN2(stgApplyNPNNPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyNNPN, N, f);
+        STGJUMP1(stgApplyNNPN, f);
         break;
       } // case 4
       case 5: {
@@ -29423,11 +28685,10 @@ DEFUN2(stgApplyNPNNPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyPNNPN, N, f);
+        STGJUMP1(stgApplyPNNPN, f);
         break;
       } // case 5
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -29506,11 +28767,10 @@ DEFUN2(stgApplyNPNNPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[5]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyN, N, f);
+        STGJUMP1(stgApplyN, f);
         break;
       } // case 1
       case 2: {
@@ -29533,11 +28793,10 @@ DEFUN2(stgApplyNPNNPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[4]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyPN, N, f);
+        STGJUMP1(stgApplyPN, f);
         break;
       } // case 2
       case 3: {
@@ -29560,11 +28819,10 @@ DEFUN2(stgApplyNPNNPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyNPN, N, f);
+        STGJUMP1(stgApplyNPN, f);
         break;
       } // case 3
       case 4: {
@@ -29587,11 +28845,10 @@ DEFUN2(stgApplyNPNNPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyNNPN, N, f);
+        STGJUMP1(stgApplyNNPN, f);
         break;
       } // case 4
       case 5: {
@@ -29615,11 +28872,10 @@ DEFUN2(stgApplyNPNNPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyPNNPN, N, f);
+        STGJUMP1(stgApplyPNNPN, f);
         break;
       } // case 5
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -29686,13 +28942,11 @@ DEFUN2(stgApplyNPNNPN, N, f) {
   ENDFUN;
 }
 
-DEFUN2(stgApplyPPNNPN, N, f) {
+DEFUN1(stgApplyPPNNPN, f) {
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyPPNNPN %s\n", f.op->infoPtr->name);
   #endif
-  assert(N.argType == INT);
-  const int argc = N.i;
-  assert(argc == 6);
+  const int argc = 6;
   PtrOrLiteral argv[6];
   popargs(argc, argv);
   const int nps = 3;
@@ -29773,11 +29027,10 @@ DEFUN2(stgApplyPPNNPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[5]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyN, N, f);
+        STGJUMP1(stgApplyN, f);
         break;
       } // case 1
       case 2: {
@@ -29798,11 +29051,10 @@ DEFUN2(stgApplyPPNNPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[4]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyPN, N, f);
+        STGJUMP1(stgApplyPN, f);
         break;
       } // case 2
       case 3: {
@@ -29823,11 +29075,10 @@ DEFUN2(stgApplyPPNNPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyNPN, N, f);
+        STGJUMP1(stgApplyNPN, f);
         break;
       } // case 3
       case 4: {
@@ -29848,11 +29099,10 @@ DEFUN2(stgApplyPPNNPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyNNPN, N, f);
+        STGJUMP1(stgApplyNNPN, f);
         break;
       } // case 4
       case 5: {
@@ -29874,11 +29124,10 @@ DEFUN2(stgApplyPPNNPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyPNNPN, N, f);
+        STGJUMP1(stgApplyPNNPN, f);
         break;
       } // case 5
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -29957,11 +29206,10 @@ DEFUN2(stgApplyPPNNPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[5]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyN, N, f);
+        STGJUMP1(stgApplyN, f);
         break;
       } // case 1
       case 2: {
@@ -29984,11 +29232,10 @@ DEFUN2(stgApplyPPNNPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[4]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyPN, N, f);
+        STGJUMP1(stgApplyPN, f);
         break;
       } // case 2
       case 3: {
@@ -30011,11 +29258,10 @@ DEFUN2(stgApplyPPNNPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyNPN, N, f);
+        STGJUMP1(stgApplyNPN, f);
         break;
       } // case 3
       case 4: {
@@ -30038,11 +29284,10 @@ DEFUN2(stgApplyPPNNPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyNNPN, N, f);
+        STGJUMP1(stgApplyNNPN, f);
         break;
       } // case 4
       case 5: {
@@ -30066,11 +29311,10 @@ DEFUN2(stgApplyPPNNPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyPNNPN, N, f);
+        STGJUMP1(stgApplyPNNPN, f);
         break;
       } // case 5
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -30137,13 +29381,11 @@ DEFUN2(stgApplyPPNNPN, N, f) {
   ENDFUN;
 }
 
-DEFUN2(stgApplyNNPNPN, N, f) {
+DEFUN1(stgApplyNNPNPN, f) {
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyNNPNPN %s\n", f.op->infoPtr->name);
   #endif
-  assert(N.argType == INT);
-  const int argc = N.i;
-  assert(argc == 6);
+  const int argc = 6;
   PtrOrLiteral argv[6];
   popargs(argc, argv);
   const int nps = 2;
@@ -30214,11 +29456,10 @@ DEFUN2(stgApplyNNPNPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[5]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyN, N, f);
+        STGJUMP1(stgApplyN, f);
         break;
       } // case 1
       case 2: {
@@ -30239,11 +29480,10 @@ DEFUN2(stgApplyNNPNPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[4]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyPN, N, f);
+        STGJUMP1(stgApplyPN, f);
         break;
       } // case 2
       case 3: {
@@ -30264,11 +29504,10 @@ DEFUN2(stgApplyNNPNPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyNPN, N, f);
+        STGJUMP1(stgApplyNPN, f);
         break;
       } // case 3
       case 4: {
@@ -30290,11 +29529,10 @@ DEFUN2(stgApplyNNPNPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyPNPN, N, f);
+        STGJUMP1(stgApplyPNPN, f);
         break;
       } // case 4
       case 5: {
@@ -30316,11 +29554,10 @@ DEFUN2(stgApplyNNPNPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyNPNPN, N, f);
+        STGJUMP1(stgApplyNPNPN, f);
         break;
       } // case 5
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -30399,11 +29636,10 @@ DEFUN2(stgApplyNNPNPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[5]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyN, N, f);
+        STGJUMP1(stgApplyN, f);
         break;
       } // case 1
       case 2: {
@@ -30426,11 +29662,10 @@ DEFUN2(stgApplyNNPNPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[4]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyPN, N, f);
+        STGJUMP1(stgApplyPN, f);
         break;
       } // case 2
       case 3: {
@@ -30453,11 +29688,10 @@ DEFUN2(stgApplyNNPNPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyNPN, N, f);
+        STGJUMP1(stgApplyNPN, f);
         break;
       } // case 3
       case 4: {
@@ -30481,11 +29715,10 @@ DEFUN2(stgApplyNNPNPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyPNPN, N, f);
+        STGJUMP1(stgApplyPNPN, f);
         break;
       } // case 4
       case 5: {
@@ -30509,11 +29742,10 @@ DEFUN2(stgApplyNNPNPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyNPNPN, N, f);
+        STGJUMP1(stgApplyNPNPN, f);
         break;
       } // case 5
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -30580,13 +29812,11 @@ DEFUN2(stgApplyNNPNPN, N, f) {
   ENDFUN;
 }
 
-DEFUN2(stgApplyPNPNPN, N, f) {
+DEFUN1(stgApplyPNPNPN, f) {
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyPNPNPN %s\n", f.op->infoPtr->name);
   #endif
-  assert(N.argType == INT);
-  const int argc = N.i;
-  assert(argc == 6);
+  const int argc = 6;
   PtrOrLiteral argv[6];
   popargs(argc, argv);
   const int nps = 3;
@@ -30667,11 +29897,10 @@ DEFUN2(stgApplyPNPNPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[5]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyN, N, f);
+        STGJUMP1(stgApplyN, f);
         break;
       } // case 1
       case 2: {
@@ -30692,11 +29921,10 @@ DEFUN2(stgApplyPNPNPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[4]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyPN, N, f);
+        STGJUMP1(stgApplyPN, f);
         break;
       } // case 2
       case 3: {
@@ -30717,11 +29945,10 @@ DEFUN2(stgApplyPNPNPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyNPN, N, f);
+        STGJUMP1(stgApplyNPN, f);
         break;
       } // case 3
       case 4: {
@@ -30743,11 +29970,10 @@ DEFUN2(stgApplyPNPNPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyPNPN, N, f);
+        STGJUMP1(stgApplyPNPN, f);
         break;
       } // case 4
       case 5: {
@@ -30769,11 +29995,10 @@ DEFUN2(stgApplyPNPNPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyNPNPN, N, f);
+        STGJUMP1(stgApplyNPNPN, f);
         break;
       } // case 5
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -30852,11 +30077,10 @@ DEFUN2(stgApplyPNPNPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[5]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyN, N, f);
+        STGJUMP1(stgApplyN, f);
         break;
       } // case 1
       case 2: {
@@ -30879,11 +30103,10 @@ DEFUN2(stgApplyPNPNPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[4]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyPN, N, f);
+        STGJUMP1(stgApplyPN, f);
         break;
       } // case 2
       case 3: {
@@ -30906,11 +30129,10 @@ DEFUN2(stgApplyPNPNPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyNPN, N, f);
+        STGJUMP1(stgApplyNPN, f);
         break;
       } // case 3
       case 4: {
@@ -30934,11 +30156,10 @@ DEFUN2(stgApplyPNPNPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyPNPN, N, f);
+        STGJUMP1(stgApplyPNPN, f);
         break;
       } // case 4
       case 5: {
@@ -30962,11 +30183,10 @@ DEFUN2(stgApplyPNPNPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyNPNPN, N, f);
+        STGJUMP1(stgApplyNPNPN, f);
         break;
       } // case 5
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -31033,13 +30253,11 @@ DEFUN2(stgApplyPNPNPN, N, f) {
   ENDFUN;
 }
 
-DEFUN2(stgApplyNPPNPN, N, f) {
+DEFUN1(stgApplyNPPNPN, f) {
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyNPPNPN %s\n", f.op->infoPtr->name);
   #endif
-  assert(N.argType == INT);
-  const int argc = N.i;
-  assert(argc == 6);
+  const int argc = 6;
   PtrOrLiteral argv[6];
   popargs(argc, argv);
   const int nps = 3;
@@ -31120,11 +30338,10 @@ DEFUN2(stgApplyNPPNPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[5]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyN, N, f);
+        STGJUMP1(stgApplyN, f);
         break;
       } // case 1
       case 2: {
@@ -31145,11 +30362,10 @@ DEFUN2(stgApplyNPPNPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[4]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyPN, N, f);
+        STGJUMP1(stgApplyPN, f);
         break;
       } // case 2
       case 3: {
@@ -31170,11 +30386,10 @@ DEFUN2(stgApplyNPPNPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyNPN, N, f);
+        STGJUMP1(stgApplyNPN, f);
         break;
       } // case 3
       case 4: {
@@ -31196,11 +30411,10 @@ DEFUN2(stgApplyNPPNPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyPNPN, N, f);
+        STGJUMP1(stgApplyPNPN, f);
         break;
       } // case 4
       case 5: {
@@ -31223,11 +30437,10 @@ DEFUN2(stgApplyNPPNPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyPPNPN, N, f);
+        STGJUMP1(stgApplyPPNPN, f);
         break;
       } // case 5
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -31306,11 +30519,10 @@ DEFUN2(stgApplyNPPNPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[5]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyN, N, f);
+        STGJUMP1(stgApplyN, f);
         break;
       } // case 1
       case 2: {
@@ -31333,11 +30545,10 @@ DEFUN2(stgApplyNPPNPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[4]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyPN, N, f);
+        STGJUMP1(stgApplyPN, f);
         break;
       } // case 2
       case 3: {
@@ -31360,11 +30571,10 @@ DEFUN2(stgApplyNPPNPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyNPN, N, f);
+        STGJUMP1(stgApplyNPN, f);
         break;
       } // case 3
       case 4: {
@@ -31388,11 +30598,10 @@ DEFUN2(stgApplyNPPNPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyPNPN, N, f);
+        STGJUMP1(stgApplyPNPN, f);
         break;
       } // case 4
       case 5: {
@@ -31417,11 +30626,10 @@ DEFUN2(stgApplyNPPNPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyPPNPN, N, f);
+        STGJUMP1(stgApplyPPNPN, f);
         break;
       } // case 5
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -31488,13 +30696,11 @@ DEFUN2(stgApplyNPPNPN, N, f) {
   ENDFUN;
 }
 
-DEFUN2(stgApplyPPPNPN, N, f) {
+DEFUN1(stgApplyPPPNPN, f) {
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyPPPNPN %s\n", f.op->infoPtr->name);
   #endif
-  assert(N.argType == INT);
-  const int argc = N.i;
-  assert(argc == 6);
+  const int argc = 6;
   PtrOrLiteral argv[6];
   popargs(argc, argv);
   const int nps = 4;
@@ -31587,11 +30793,10 @@ DEFUN2(stgApplyPPPNPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[5]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyN, N, f);
+        STGJUMP1(stgApplyN, f);
         break;
       } // case 1
       case 2: {
@@ -31612,11 +30817,10 @@ DEFUN2(stgApplyPPPNPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[4]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyPN, N, f);
+        STGJUMP1(stgApplyPN, f);
         break;
       } // case 2
       case 3: {
@@ -31637,11 +30841,10 @@ DEFUN2(stgApplyPPPNPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyNPN, N, f);
+        STGJUMP1(stgApplyNPN, f);
         break;
       } // case 3
       case 4: {
@@ -31663,11 +30866,10 @@ DEFUN2(stgApplyPPPNPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyPNPN, N, f);
+        STGJUMP1(stgApplyPNPN, f);
         break;
       } // case 4
       case 5: {
@@ -31690,11 +30892,10 @@ DEFUN2(stgApplyPPPNPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyPPNPN, N, f);
+        STGJUMP1(stgApplyPPNPN, f);
         break;
       } // case 5
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -31773,11 +30974,10 @@ DEFUN2(stgApplyPPPNPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[5]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyN, N, f);
+        STGJUMP1(stgApplyN, f);
         break;
       } // case 1
       case 2: {
@@ -31800,11 +31000,10 @@ DEFUN2(stgApplyPPPNPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[4]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyPN, N, f);
+        STGJUMP1(stgApplyPN, f);
         break;
       } // case 2
       case 3: {
@@ -31827,11 +31026,10 @@ DEFUN2(stgApplyPPPNPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyNPN, N, f);
+        STGJUMP1(stgApplyNPN, f);
         break;
       } // case 3
       case 4: {
@@ -31855,11 +31053,10 @@ DEFUN2(stgApplyPPPNPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyPNPN, N, f);
+        STGJUMP1(stgApplyPNPN, f);
         break;
       } // case 4
       case 5: {
@@ -31884,11 +31081,10 @@ DEFUN2(stgApplyPPPNPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyPPNPN, N, f);
+        STGJUMP1(stgApplyPPNPN, f);
         break;
       } // case 5
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -31955,13 +31151,11 @@ DEFUN2(stgApplyPPPNPN, N, f) {
   ENDFUN;
 }
 
-DEFUN2(stgApplyNNNPPN, N, f) {
+DEFUN1(stgApplyNNNPPN, f) {
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyNNNPPN %s\n", f.op->infoPtr->name);
   #endif
-  assert(N.argType == INT);
-  const int argc = N.i;
-  assert(argc == 6);
+  const int argc = 6;
   PtrOrLiteral argv[6];
   popargs(argc, argv);
   const int nps = 2;
@@ -32032,11 +31226,10 @@ DEFUN2(stgApplyNNNPPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[5]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyN, N, f);
+        STGJUMP1(stgApplyN, f);
         break;
       } // case 1
       case 2: {
@@ -32057,11 +31250,10 @@ DEFUN2(stgApplyNNNPPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[4]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyPN, N, f);
+        STGJUMP1(stgApplyPN, f);
         break;
       } // case 2
       case 3: {
@@ -32083,11 +31275,10 @@ DEFUN2(stgApplyNNNPPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyPPN, N, f);
+        STGJUMP1(stgApplyPPN, f);
         break;
       } // case 3
       case 4: {
@@ -32109,11 +31300,10 @@ DEFUN2(stgApplyNNNPPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyNPPN, N, f);
+        STGJUMP1(stgApplyNPPN, f);
         break;
       } // case 4
       case 5: {
@@ -32135,11 +31325,10 @@ DEFUN2(stgApplyNNNPPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyNNPPN, N, f);
+        STGJUMP1(stgApplyNNPPN, f);
         break;
       } // case 5
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -32218,11 +31407,10 @@ DEFUN2(stgApplyNNNPPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[5]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyN, N, f);
+        STGJUMP1(stgApplyN, f);
         break;
       } // case 1
       case 2: {
@@ -32245,11 +31433,10 @@ DEFUN2(stgApplyNNNPPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[4]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyPN, N, f);
+        STGJUMP1(stgApplyPN, f);
         break;
       } // case 2
       case 3: {
@@ -32273,11 +31460,10 @@ DEFUN2(stgApplyNNNPPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyPPN, N, f);
+        STGJUMP1(stgApplyPPN, f);
         break;
       } // case 3
       case 4: {
@@ -32301,11 +31487,10 @@ DEFUN2(stgApplyNNNPPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyNPPN, N, f);
+        STGJUMP1(stgApplyNPPN, f);
         break;
       } // case 4
       case 5: {
@@ -32329,11 +31514,10 @@ DEFUN2(stgApplyNNNPPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyNNPPN, N, f);
+        STGJUMP1(stgApplyNNPPN, f);
         break;
       } // case 5
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -32400,13 +31584,11 @@ DEFUN2(stgApplyNNNPPN, N, f) {
   ENDFUN;
 }
 
-DEFUN2(stgApplyPNNPPN, N, f) {
+DEFUN1(stgApplyPNNPPN, f) {
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyPNNPPN %s\n", f.op->infoPtr->name);
   #endif
-  assert(N.argType == INT);
-  const int argc = N.i;
-  assert(argc == 6);
+  const int argc = 6;
   PtrOrLiteral argv[6];
   popargs(argc, argv);
   const int nps = 3;
@@ -32487,11 +31669,10 @@ DEFUN2(stgApplyPNNPPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[5]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyN, N, f);
+        STGJUMP1(stgApplyN, f);
         break;
       } // case 1
       case 2: {
@@ -32512,11 +31693,10 @@ DEFUN2(stgApplyPNNPPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[4]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyPN, N, f);
+        STGJUMP1(stgApplyPN, f);
         break;
       } // case 2
       case 3: {
@@ -32538,11 +31718,10 @@ DEFUN2(stgApplyPNNPPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyPPN, N, f);
+        STGJUMP1(stgApplyPPN, f);
         break;
       } // case 3
       case 4: {
@@ -32564,11 +31743,10 @@ DEFUN2(stgApplyPNNPPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyNPPN, N, f);
+        STGJUMP1(stgApplyNPPN, f);
         break;
       } // case 4
       case 5: {
@@ -32590,11 +31768,10 @@ DEFUN2(stgApplyPNNPPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyNNPPN, N, f);
+        STGJUMP1(stgApplyNNPPN, f);
         break;
       } // case 5
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -32673,11 +31850,10 @@ DEFUN2(stgApplyPNNPPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[5]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyN, N, f);
+        STGJUMP1(stgApplyN, f);
         break;
       } // case 1
       case 2: {
@@ -32700,11 +31876,10 @@ DEFUN2(stgApplyPNNPPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[4]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyPN, N, f);
+        STGJUMP1(stgApplyPN, f);
         break;
       } // case 2
       case 3: {
@@ -32728,11 +31903,10 @@ DEFUN2(stgApplyPNNPPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyPPN, N, f);
+        STGJUMP1(stgApplyPPN, f);
         break;
       } // case 3
       case 4: {
@@ -32756,11 +31930,10 @@ DEFUN2(stgApplyPNNPPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyNPPN, N, f);
+        STGJUMP1(stgApplyNPPN, f);
         break;
       } // case 4
       case 5: {
@@ -32784,11 +31957,10 @@ DEFUN2(stgApplyPNNPPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyNNPPN, N, f);
+        STGJUMP1(stgApplyNNPPN, f);
         break;
       } // case 5
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -32855,13 +32027,11 @@ DEFUN2(stgApplyPNNPPN, N, f) {
   ENDFUN;
 }
 
-DEFUN2(stgApplyNPNPPN, N, f) {
+DEFUN1(stgApplyNPNPPN, f) {
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyNPNPPN %s\n", f.op->infoPtr->name);
   #endif
-  assert(N.argType == INT);
-  const int argc = N.i;
-  assert(argc == 6);
+  const int argc = 6;
   PtrOrLiteral argv[6];
   popargs(argc, argv);
   const int nps = 3;
@@ -32942,11 +32112,10 @@ DEFUN2(stgApplyNPNPPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[5]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyN, N, f);
+        STGJUMP1(stgApplyN, f);
         break;
       } // case 1
       case 2: {
@@ -32967,11 +32136,10 @@ DEFUN2(stgApplyNPNPPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[4]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyPN, N, f);
+        STGJUMP1(stgApplyPN, f);
         break;
       } // case 2
       case 3: {
@@ -32993,11 +32161,10 @@ DEFUN2(stgApplyNPNPPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyPPN, N, f);
+        STGJUMP1(stgApplyPPN, f);
         break;
       } // case 3
       case 4: {
@@ -33019,11 +32186,10 @@ DEFUN2(stgApplyNPNPPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyNPPN, N, f);
+        STGJUMP1(stgApplyNPPN, f);
         break;
       } // case 4
       case 5: {
@@ -33046,11 +32212,10 @@ DEFUN2(stgApplyNPNPPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyPNPPN, N, f);
+        STGJUMP1(stgApplyPNPPN, f);
         break;
       } // case 5
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -33129,11 +32294,10 @@ DEFUN2(stgApplyNPNPPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[5]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyN, N, f);
+        STGJUMP1(stgApplyN, f);
         break;
       } // case 1
       case 2: {
@@ -33156,11 +32320,10 @@ DEFUN2(stgApplyNPNPPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[4]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyPN, N, f);
+        STGJUMP1(stgApplyPN, f);
         break;
       } // case 2
       case 3: {
@@ -33184,11 +32347,10 @@ DEFUN2(stgApplyNPNPPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyPPN, N, f);
+        STGJUMP1(stgApplyPPN, f);
         break;
       } // case 3
       case 4: {
@@ -33212,11 +32374,10 @@ DEFUN2(stgApplyNPNPPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyNPPN, N, f);
+        STGJUMP1(stgApplyNPPN, f);
         break;
       } // case 4
       case 5: {
@@ -33241,11 +32402,10 @@ DEFUN2(stgApplyNPNPPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyPNPPN, N, f);
+        STGJUMP1(stgApplyPNPPN, f);
         break;
       } // case 5
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -33312,13 +32472,11 @@ DEFUN2(stgApplyNPNPPN, N, f) {
   ENDFUN;
 }
 
-DEFUN2(stgApplyPPNPPN, N, f) {
+DEFUN1(stgApplyPPNPPN, f) {
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyPPNPPN %s\n", f.op->infoPtr->name);
   #endif
-  assert(N.argType == INT);
-  const int argc = N.i;
-  assert(argc == 6);
+  const int argc = 6;
   PtrOrLiteral argv[6];
   popargs(argc, argv);
   const int nps = 4;
@@ -33411,11 +32569,10 @@ DEFUN2(stgApplyPPNPPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[5]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyN, N, f);
+        STGJUMP1(stgApplyN, f);
         break;
       } // case 1
       case 2: {
@@ -33436,11 +32593,10 @@ DEFUN2(stgApplyPPNPPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[4]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyPN, N, f);
+        STGJUMP1(stgApplyPN, f);
         break;
       } // case 2
       case 3: {
@@ -33462,11 +32618,10 @@ DEFUN2(stgApplyPPNPPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyPPN, N, f);
+        STGJUMP1(stgApplyPPN, f);
         break;
       } // case 3
       case 4: {
@@ -33488,11 +32643,10 @@ DEFUN2(stgApplyPPNPPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyNPPN, N, f);
+        STGJUMP1(stgApplyNPPN, f);
         break;
       } // case 4
       case 5: {
@@ -33515,11 +32669,10 @@ DEFUN2(stgApplyPPNPPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyPNPPN, N, f);
+        STGJUMP1(stgApplyPNPPN, f);
         break;
       } // case 5
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -33598,11 +32751,10 @@ DEFUN2(stgApplyPPNPPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[5]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyN, N, f);
+        STGJUMP1(stgApplyN, f);
         break;
       } // case 1
       case 2: {
@@ -33625,11 +32777,10 @@ DEFUN2(stgApplyPPNPPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[4]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyPN, N, f);
+        STGJUMP1(stgApplyPN, f);
         break;
       } // case 2
       case 3: {
@@ -33653,11 +32804,10 @@ DEFUN2(stgApplyPPNPPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyPPN, N, f);
+        STGJUMP1(stgApplyPPN, f);
         break;
       } // case 3
       case 4: {
@@ -33681,11 +32831,10 @@ DEFUN2(stgApplyPPNPPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyNPPN, N, f);
+        STGJUMP1(stgApplyNPPN, f);
         break;
       } // case 4
       case 5: {
@@ -33710,11 +32859,10 @@ DEFUN2(stgApplyPPNPPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyPNPPN, N, f);
+        STGJUMP1(stgApplyPNPPN, f);
         break;
       } // case 5
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -33781,13 +32929,11 @@ DEFUN2(stgApplyPPNPPN, N, f) {
   ENDFUN;
 }
 
-DEFUN2(stgApplyNNPPPN, N, f) {
+DEFUN1(stgApplyNNPPPN, f) {
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyNNPPPN %s\n", f.op->infoPtr->name);
   #endif
-  assert(N.argType == INT);
-  const int argc = N.i;
-  assert(argc == 6);
+  const int argc = 6;
   PtrOrLiteral argv[6];
   popargs(argc, argv);
   const int nps = 3;
@@ -33868,11 +33014,10 @@ DEFUN2(stgApplyNNPPPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[5]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyN, N, f);
+        STGJUMP1(stgApplyN, f);
         break;
       } // case 1
       case 2: {
@@ -33893,11 +33038,10 @@ DEFUN2(stgApplyNNPPPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[4]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyPN, N, f);
+        STGJUMP1(stgApplyPN, f);
         break;
       } // case 2
       case 3: {
@@ -33919,11 +33063,10 @@ DEFUN2(stgApplyNNPPPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyPPN, N, f);
+        STGJUMP1(stgApplyPPN, f);
         break;
       } // case 3
       case 4: {
@@ -33946,11 +33089,10 @@ DEFUN2(stgApplyNNPPPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyPPPN, N, f);
+        STGJUMP1(stgApplyPPPN, f);
         break;
       } // case 4
       case 5: {
@@ -33973,11 +33115,10 @@ DEFUN2(stgApplyNNPPPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyNPPPN, N, f);
+        STGJUMP1(stgApplyNPPPN, f);
         break;
       } // case 5
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -34056,11 +33197,10 @@ DEFUN2(stgApplyNNPPPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[5]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyN, N, f);
+        STGJUMP1(stgApplyN, f);
         break;
       } // case 1
       case 2: {
@@ -34083,11 +33223,10 @@ DEFUN2(stgApplyNNPPPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[4]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyPN, N, f);
+        STGJUMP1(stgApplyPN, f);
         break;
       } // case 2
       case 3: {
@@ -34111,11 +33250,10 @@ DEFUN2(stgApplyNNPPPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyPPN, N, f);
+        STGJUMP1(stgApplyPPN, f);
         break;
       } // case 3
       case 4: {
@@ -34140,11 +33278,10 @@ DEFUN2(stgApplyNNPPPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyPPPN, N, f);
+        STGJUMP1(stgApplyPPPN, f);
         break;
       } // case 4
       case 5: {
@@ -34169,11 +33306,10 @@ DEFUN2(stgApplyNNPPPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyNPPPN, N, f);
+        STGJUMP1(stgApplyNPPPN, f);
         break;
       } // case 5
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -34240,13 +33376,11 @@ DEFUN2(stgApplyNNPPPN, N, f) {
   ENDFUN;
 }
 
-DEFUN2(stgApplyPNPPPN, N, f) {
+DEFUN1(stgApplyPNPPPN, f) {
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyPNPPPN %s\n", f.op->infoPtr->name);
   #endif
-  assert(N.argType == INT);
-  const int argc = N.i;
-  assert(argc == 6);
+  const int argc = 6;
   PtrOrLiteral argv[6];
   popargs(argc, argv);
   const int nps = 4;
@@ -34339,11 +33473,10 @@ DEFUN2(stgApplyPNPPPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[5]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyN, N, f);
+        STGJUMP1(stgApplyN, f);
         break;
       } // case 1
       case 2: {
@@ -34364,11 +33497,10 @@ DEFUN2(stgApplyPNPPPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[4]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyPN, N, f);
+        STGJUMP1(stgApplyPN, f);
         break;
       } // case 2
       case 3: {
@@ -34390,11 +33522,10 @@ DEFUN2(stgApplyPNPPPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyPPN, N, f);
+        STGJUMP1(stgApplyPPN, f);
         break;
       } // case 3
       case 4: {
@@ -34417,11 +33548,10 @@ DEFUN2(stgApplyPNPPPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyPPPN, N, f);
+        STGJUMP1(stgApplyPPPN, f);
         break;
       } // case 4
       case 5: {
@@ -34444,11 +33574,10 @@ DEFUN2(stgApplyPNPPPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyNPPPN, N, f);
+        STGJUMP1(stgApplyNPPPN, f);
         break;
       } // case 5
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -34527,11 +33656,10 @@ DEFUN2(stgApplyPNPPPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[5]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyN, N, f);
+        STGJUMP1(stgApplyN, f);
         break;
       } // case 1
       case 2: {
@@ -34554,11 +33682,10 @@ DEFUN2(stgApplyPNPPPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[4]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyPN, N, f);
+        STGJUMP1(stgApplyPN, f);
         break;
       } // case 2
       case 3: {
@@ -34582,11 +33709,10 @@ DEFUN2(stgApplyPNPPPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyPPN, N, f);
+        STGJUMP1(stgApplyPPN, f);
         break;
       } // case 3
       case 4: {
@@ -34611,11 +33737,10 @@ DEFUN2(stgApplyPNPPPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyPPPN, N, f);
+        STGJUMP1(stgApplyPPPN, f);
         break;
       } // case 4
       case 5: {
@@ -34640,11 +33765,10 @@ DEFUN2(stgApplyPNPPPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyNPPPN, N, f);
+        STGJUMP1(stgApplyNPPPN, f);
         break;
       } // case 5
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -34711,13 +33835,11 @@ DEFUN2(stgApplyPNPPPN, N, f) {
   ENDFUN;
 }
 
-DEFUN2(stgApplyNPPPPN, N, f) {
+DEFUN1(stgApplyNPPPPN, f) {
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyNPPPPN %s\n", f.op->infoPtr->name);
   #endif
-  assert(N.argType == INT);
-  const int argc = N.i;
-  assert(argc == 6);
+  const int argc = 6;
   PtrOrLiteral argv[6];
   popargs(argc, argv);
   const int nps = 4;
@@ -34810,11 +33932,10 @@ DEFUN2(stgApplyNPPPPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[5]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyN, N, f);
+        STGJUMP1(stgApplyN, f);
         break;
       } // case 1
       case 2: {
@@ -34835,11 +33956,10 @@ DEFUN2(stgApplyNPPPPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[4]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyPN, N, f);
+        STGJUMP1(stgApplyPN, f);
         break;
       } // case 2
       case 3: {
@@ -34861,11 +33981,10 @@ DEFUN2(stgApplyNPPPPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyPPN, N, f);
+        STGJUMP1(stgApplyPPN, f);
         break;
       } // case 3
       case 4: {
@@ -34888,11 +34007,10 @@ DEFUN2(stgApplyNPPPPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyPPPN, N, f);
+        STGJUMP1(stgApplyPPPN, f);
         break;
       } // case 4
       case 5: {
@@ -34916,11 +34034,10 @@ DEFUN2(stgApplyNPPPPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyPPPPN, N, f);
+        STGJUMP1(stgApplyPPPPN, f);
         break;
       } // case 5
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -34999,11 +34116,10 @@ DEFUN2(stgApplyNPPPPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[5]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyN, N, f);
+        STGJUMP1(stgApplyN, f);
         break;
       } // case 1
       case 2: {
@@ -35026,11 +34142,10 @@ DEFUN2(stgApplyNPPPPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[4]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyPN, N, f);
+        STGJUMP1(stgApplyPN, f);
         break;
       } // case 2
       case 3: {
@@ -35054,11 +34169,10 @@ DEFUN2(stgApplyNPPPPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyPPN, N, f);
+        STGJUMP1(stgApplyPPN, f);
         break;
       } // case 3
       case 4: {
@@ -35083,11 +34197,10 @@ DEFUN2(stgApplyNPPPPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyPPPN, N, f);
+        STGJUMP1(stgApplyPPPN, f);
         break;
       } // case 4
       case 5: {
@@ -35113,11 +34226,10 @@ DEFUN2(stgApplyNPPPPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyPPPPN, N, f);
+        STGJUMP1(stgApplyPPPPN, f);
         break;
       } // case 5
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -35184,13 +34296,11 @@ DEFUN2(stgApplyNPPPPN, N, f) {
   ENDFUN;
 }
 
-DEFUN2(stgApplyPPPPPN, N, f) {
+DEFUN1(stgApplyPPPPPN, f) {
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyPPPPPN %s\n", f.op->infoPtr->name);
   #endif
-  assert(N.argType == INT);
-  const int argc = N.i;
-  assert(argc == 6);
+  const int argc = 6;
   PtrOrLiteral argv[6];
   popargs(argc, argv);
   const int nps = 5;
@@ -35297,11 +34407,10 @@ DEFUN2(stgApplyPPPPPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[5]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyN, N, f);
+        STGJUMP1(stgApplyN, f);
         break;
       } // case 1
       case 2: {
@@ -35322,11 +34431,10 @@ DEFUN2(stgApplyPPPPPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[4]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyPN, N, f);
+        STGJUMP1(stgApplyPN, f);
         break;
       } // case 2
       case 3: {
@@ -35348,11 +34456,10 @@ DEFUN2(stgApplyPPPPPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyPPN, N, f);
+        STGJUMP1(stgApplyPPN, f);
         break;
       } // case 3
       case 4: {
@@ -35375,11 +34482,10 @@ DEFUN2(stgApplyPPPPPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyPPPN, N, f);
+        STGJUMP1(stgApplyPPPN, f);
         break;
       } // case 4
       case 5: {
@@ -35403,11 +34509,10 @@ DEFUN2(stgApplyPPPPPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyPPPPN, N, f);
+        STGJUMP1(stgApplyPPPPN, f);
         break;
       } // case 5
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -35486,11 +34591,10 @@ DEFUN2(stgApplyPPPPPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[5]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyN, N, f);
+        STGJUMP1(stgApplyN, f);
         break;
       } // case 1
       case 2: {
@@ -35513,11 +34617,10 @@ DEFUN2(stgApplyPPPPPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[4]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyPN, N, f);
+        STGJUMP1(stgApplyPN, f);
         break;
       } // case 2
       case 3: {
@@ -35541,11 +34644,10 @@ DEFUN2(stgApplyPPPPPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyPPN, N, f);
+        STGJUMP1(stgApplyPPN, f);
         break;
       } // case 3
       case 4: {
@@ -35570,11 +34672,10 @@ DEFUN2(stgApplyPPPPPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyPPPN, N, f);
+        STGJUMP1(stgApplyPPPN, f);
         break;
       } // case 4
       case 5: {
@@ -35600,11 +34701,10 @@ DEFUN2(stgApplyPPPPPN, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyPPPPN, N, f);
+        STGJUMP1(stgApplyPPPPN, f);
         break;
       } // case 5
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -35671,13 +34771,11 @@ DEFUN2(stgApplyPPPPPN, N, f) {
   ENDFUN;
 }
 
-DEFUN2(stgApplyNNNNNP, N, f) {
+DEFUN1(stgApplyNNNNNP, f) {
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyNNNNNP %s\n", f.op->infoPtr->name);
   #endif
-  assert(N.argType == INT);
-  const int argc = N.i;
-  assert(argc == 6);
+  const int argc = 6;
   PtrOrLiteral argv[6];
   popargs(argc, argv);
   const int nps = 1;
@@ -35742,11 +34840,10 @@ DEFUN2(stgApplyNNNNNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[5]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyP, N, f);
+        STGJUMP1(stgApplyP, f);
         break;
       } // case 1
       case 2: {
@@ -35767,11 +34864,10 @@ DEFUN2(stgApplyNNNNNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[4]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyNP, N, f);
+        STGJUMP1(stgApplyNP, f);
         break;
       } // case 2
       case 3: {
@@ -35792,11 +34888,10 @@ DEFUN2(stgApplyNNNNNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyNNP, N, f);
+        STGJUMP1(stgApplyNNP, f);
         break;
       } // case 3
       case 4: {
@@ -35817,11 +34912,10 @@ DEFUN2(stgApplyNNNNNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyNNNP, N, f);
+        STGJUMP1(stgApplyNNNP, f);
         break;
       } // case 4
       case 5: {
@@ -35842,11 +34936,10 @@ DEFUN2(stgApplyNNNNNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyNNNNP, N, f);
+        STGJUMP1(stgApplyNNNNP, f);
         break;
       } // case 5
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -35927,11 +35020,10 @@ DEFUN2(stgApplyNNNNNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[5]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyP, N, f);
+        STGJUMP1(stgApplyP, f);
         break;
       } // case 1
       case 2: {
@@ -35954,11 +35046,10 @@ DEFUN2(stgApplyNNNNNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[4]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyNP, N, f);
+        STGJUMP1(stgApplyNP, f);
         break;
       } // case 2
       case 3: {
@@ -35981,11 +35072,10 @@ DEFUN2(stgApplyNNNNNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyNNP, N, f);
+        STGJUMP1(stgApplyNNP, f);
         break;
       } // case 3
       case 4: {
@@ -36008,11 +35098,10 @@ DEFUN2(stgApplyNNNNNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyNNNP, N, f);
+        STGJUMP1(stgApplyNNNP, f);
         break;
       } // case 4
       case 5: {
@@ -36035,11 +35124,10 @@ DEFUN2(stgApplyNNNNNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyNNNNP, N, f);
+        STGJUMP1(stgApplyNNNNP, f);
         break;
       } // case 5
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -36106,13 +35194,11 @@ DEFUN2(stgApplyNNNNNP, N, f) {
   ENDFUN;
 }
 
-DEFUN2(stgApplyPNNNNP, N, f) {
+DEFUN1(stgApplyPNNNNP, f) {
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyPNNNNP %s\n", f.op->infoPtr->name);
   #endif
-  assert(N.argType == INT);
-  const int argc = N.i;
-  assert(argc == 6);
+  const int argc = 6;
   PtrOrLiteral argv[6];
   popargs(argc, argv);
   const int nps = 2;
@@ -36185,11 +35271,10 @@ DEFUN2(stgApplyPNNNNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[5]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyP, N, f);
+        STGJUMP1(stgApplyP, f);
         break;
       } // case 1
       case 2: {
@@ -36210,11 +35295,10 @@ DEFUN2(stgApplyPNNNNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[4]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyNP, N, f);
+        STGJUMP1(stgApplyNP, f);
         break;
       } // case 2
       case 3: {
@@ -36235,11 +35319,10 @@ DEFUN2(stgApplyPNNNNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyNNP, N, f);
+        STGJUMP1(stgApplyNNP, f);
         break;
       } // case 3
       case 4: {
@@ -36260,11 +35343,10 @@ DEFUN2(stgApplyPNNNNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyNNNP, N, f);
+        STGJUMP1(stgApplyNNNP, f);
         break;
       } // case 4
       case 5: {
@@ -36285,11 +35367,10 @@ DEFUN2(stgApplyPNNNNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyNNNNP, N, f);
+        STGJUMP1(stgApplyNNNNP, f);
         break;
       } // case 5
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -36370,11 +35451,10 @@ DEFUN2(stgApplyPNNNNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[5]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyP, N, f);
+        STGJUMP1(stgApplyP, f);
         break;
       } // case 1
       case 2: {
@@ -36397,11 +35477,10 @@ DEFUN2(stgApplyPNNNNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[4]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyNP, N, f);
+        STGJUMP1(stgApplyNP, f);
         break;
       } // case 2
       case 3: {
@@ -36424,11 +35503,10 @@ DEFUN2(stgApplyPNNNNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyNNP, N, f);
+        STGJUMP1(stgApplyNNP, f);
         break;
       } // case 3
       case 4: {
@@ -36451,11 +35529,10 @@ DEFUN2(stgApplyPNNNNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyNNNP, N, f);
+        STGJUMP1(stgApplyNNNP, f);
         break;
       } // case 4
       case 5: {
@@ -36478,11 +35555,10 @@ DEFUN2(stgApplyPNNNNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyNNNNP, N, f);
+        STGJUMP1(stgApplyNNNNP, f);
         break;
       } // case 5
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -36549,13 +35625,11 @@ DEFUN2(stgApplyPNNNNP, N, f) {
   ENDFUN;
 }
 
-DEFUN2(stgApplyNPNNNP, N, f) {
+DEFUN1(stgApplyNPNNNP, f) {
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyNPNNNP %s\n", f.op->infoPtr->name);
   #endif
-  assert(N.argType == INT);
-  const int argc = N.i;
-  assert(argc == 6);
+  const int argc = 6;
   PtrOrLiteral argv[6];
   popargs(argc, argv);
   const int nps = 2;
@@ -36628,11 +35702,10 @@ DEFUN2(stgApplyNPNNNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[5]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyP, N, f);
+        STGJUMP1(stgApplyP, f);
         break;
       } // case 1
       case 2: {
@@ -36653,11 +35726,10 @@ DEFUN2(stgApplyNPNNNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[4]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyNP, N, f);
+        STGJUMP1(stgApplyNP, f);
         break;
       } // case 2
       case 3: {
@@ -36678,11 +35750,10 @@ DEFUN2(stgApplyNPNNNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyNNP, N, f);
+        STGJUMP1(stgApplyNNP, f);
         break;
       } // case 3
       case 4: {
@@ -36703,11 +35774,10 @@ DEFUN2(stgApplyNPNNNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyNNNP, N, f);
+        STGJUMP1(stgApplyNNNP, f);
         break;
       } // case 4
       case 5: {
@@ -36729,11 +35799,10 @@ DEFUN2(stgApplyNPNNNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyPNNNP, N, f);
+        STGJUMP1(stgApplyPNNNP, f);
         break;
       } // case 5
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -36814,11 +35883,10 @@ DEFUN2(stgApplyNPNNNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[5]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyP, N, f);
+        STGJUMP1(stgApplyP, f);
         break;
       } // case 1
       case 2: {
@@ -36841,11 +35909,10 @@ DEFUN2(stgApplyNPNNNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[4]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyNP, N, f);
+        STGJUMP1(stgApplyNP, f);
         break;
       } // case 2
       case 3: {
@@ -36868,11 +35935,10 @@ DEFUN2(stgApplyNPNNNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyNNP, N, f);
+        STGJUMP1(stgApplyNNP, f);
         break;
       } // case 3
       case 4: {
@@ -36895,11 +35961,10 @@ DEFUN2(stgApplyNPNNNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyNNNP, N, f);
+        STGJUMP1(stgApplyNNNP, f);
         break;
       } // case 4
       case 5: {
@@ -36923,11 +35988,10 @@ DEFUN2(stgApplyNPNNNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyPNNNP, N, f);
+        STGJUMP1(stgApplyPNNNP, f);
         break;
       } // case 5
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -36994,13 +36058,11 @@ DEFUN2(stgApplyNPNNNP, N, f) {
   ENDFUN;
 }
 
-DEFUN2(stgApplyPPNNNP, N, f) {
+DEFUN1(stgApplyPPNNNP, f) {
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyPPNNNP %s\n", f.op->infoPtr->name);
   #endif
-  assert(N.argType == INT);
-  const int argc = N.i;
-  assert(argc == 6);
+  const int argc = 6;
   PtrOrLiteral argv[6];
   popargs(argc, argv);
   const int nps = 3;
@@ -37083,11 +36145,10 @@ DEFUN2(stgApplyPPNNNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[5]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyP, N, f);
+        STGJUMP1(stgApplyP, f);
         break;
       } // case 1
       case 2: {
@@ -37108,11 +36169,10 @@ DEFUN2(stgApplyPPNNNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[4]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyNP, N, f);
+        STGJUMP1(stgApplyNP, f);
         break;
       } // case 2
       case 3: {
@@ -37133,11 +36193,10 @@ DEFUN2(stgApplyPPNNNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyNNP, N, f);
+        STGJUMP1(stgApplyNNP, f);
         break;
       } // case 3
       case 4: {
@@ -37158,11 +36217,10 @@ DEFUN2(stgApplyPPNNNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyNNNP, N, f);
+        STGJUMP1(stgApplyNNNP, f);
         break;
       } // case 4
       case 5: {
@@ -37184,11 +36242,10 @@ DEFUN2(stgApplyPPNNNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyPNNNP, N, f);
+        STGJUMP1(stgApplyPNNNP, f);
         break;
       } // case 5
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -37269,11 +36326,10 @@ DEFUN2(stgApplyPPNNNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[5]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyP, N, f);
+        STGJUMP1(stgApplyP, f);
         break;
       } // case 1
       case 2: {
@@ -37296,11 +36352,10 @@ DEFUN2(stgApplyPPNNNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[4]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyNP, N, f);
+        STGJUMP1(stgApplyNP, f);
         break;
       } // case 2
       case 3: {
@@ -37323,11 +36378,10 @@ DEFUN2(stgApplyPPNNNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyNNP, N, f);
+        STGJUMP1(stgApplyNNP, f);
         break;
       } // case 3
       case 4: {
@@ -37350,11 +36404,10 @@ DEFUN2(stgApplyPPNNNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyNNNP, N, f);
+        STGJUMP1(stgApplyNNNP, f);
         break;
       } // case 4
       case 5: {
@@ -37378,11 +36431,10 @@ DEFUN2(stgApplyPPNNNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyPNNNP, N, f);
+        STGJUMP1(stgApplyPNNNP, f);
         break;
       } // case 5
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -37449,13 +36501,11 @@ DEFUN2(stgApplyPPNNNP, N, f) {
   ENDFUN;
 }
 
-DEFUN2(stgApplyNNPNNP, N, f) {
+DEFUN1(stgApplyNNPNNP, f) {
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyNNPNNP %s\n", f.op->infoPtr->name);
   #endif
-  assert(N.argType == INT);
-  const int argc = N.i;
-  assert(argc == 6);
+  const int argc = 6;
   PtrOrLiteral argv[6];
   popargs(argc, argv);
   const int nps = 2;
@@ -37528,11 +36578,10 @@ DEFUN2(stgApplyNNPNNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[5]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyP, N, f);
+        STGJUMP1(stgApplyP, f);
         break;
       } // case 1
       case 2: {
@@ -37553,11 +36602,10 @@ DEFUN2(stgApplyNNPNNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[4]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyNP, N, f);
+        STGJUMP1(stgApplyNP, f);
         break;
       } // case 2
       case 3: {
@@ -37578,11 +36626,10 @@ DEFUN2(stgApplyNNPNNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyNNP, N, f);
+        STGJUMP1(stgApplyNNP, f);
         break;
       } // case 3
       case 4: {
@@ -37604,11 +36651,10 @@ DEFUN2(stgApplyNNPNNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyPNNP, N, f);
+        STGJUMP1(stgApplyPNNP, f);
         break;
       } // case 4
       case 5: {
@@ -37630,11 +36676,10 @@ DEFUN2(stgApplyNNPNNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyNPNNP, N, f);
+        STGJUMP1(stgApplyNPNNP, f);
         break;
       } // case 5
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -37715,11 +36760,10 @@ DEFUN2(stgApplyNNPNNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[5]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyP, N, f);
+        STGJUMP1(stgApplyP, f);
         break;
       } // case 1
       case 2: {
@@ -37742,11 +36786,10 @@ DEFUN2(stgApplyNNPNNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[4]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyNP, N, f);
+        STGJUMP1(stgApplyNP, f);
         break;
       } // case 2
       case 3: {
@@ -37769,11 +36812,10 @@ DEFUN2(stgApplyNNPNNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyNNP, N, f);
+        STGJUMP1(stgApplyNNP, f);
         break;
       } // case 3
       case 4: {
@@ -37797,11 +36839,10 @@ DEFUN2(stgApplyNNPNNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyPNNP, N, f);
+        STGJUMP1(stgApplyPNNP, f);
         break;
       } // case 4
       case 5: {
@@ -37825,11 +36866,10 @@ DEFUN2(stgApplyNNPNNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyNPNNP, N, f);
+        STGJUMP1(stgApplyNPNNP, f);
         break;
       } // case 5
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -37896,13 +36936,11 @@ DEFUN2(stgApplyNNPNNP, N, f) {
   ENDFUN;
 }
 
-DEFUN2(stgApplyPNPNNP, N, f) {
+DEFUN1(stgApplyPNPNNP, f) {
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyPNPNNP %s\n", f.op->infoPtr->name);
   #endif
-  assert(N.argType == INT);
-  const int argc = N.i;
-  assert(argc == 6);
+  const int argc = 6;
   PtrOrLiteral argv[6];
   popargs(argc, argv);
   const int nps = 3;
@@ -37985,11 +37023,10 @@ DEFUN2(stgApplyPNPNNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[5]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyP, N, f);
+        STGJUMP1(stgApplyP, f);
         break;
       } // case 1
       case 2: {
@@ -38010,11 +37047,10 @@ DEFUN2(stgApplyPNPNNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[4]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyNP, N, f);
+        STGJUMP1(stgApplyNP, f);
         break;
       } // case 2
       case 3: {
@@ -38035,11 +37071,10 @@ DEFUN2(stgApplyPNPNNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyNNP, N, f);
+        STGJUMP1(stgApplyNNP, f);
         break;
       } // case 3
       case 4: {
@@ -38061,11 +37096,10 @@ DEFUN2(stgApplyPNPNNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyPNNP, N, f);
+        STGJUMP1(stgApplyPNNP, f);
         break;
       } // case 4
       case 5: {
@@ -38087,11 +37121,10 @@ DEFUN2(stgApplyPNPNNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyNPNNP, N, f);
+        STGJUMP1(stgApplyNPNNP, f);
         break;
       } // case 5
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -38172,11 +37205,10 @@ DEFUN2(stgApplyPNPNNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[5]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyP, N, f);
+        STGJUMP1(stgApplyP, f);
         break;
       } // case 1
       case 2: {
@@ -38199,11 +37231,10 @@ DEFUN2(stgApplyPNPNNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[4]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyNP, N, f);
+        STGJUMP1(stgApplyNP, f);
         break;
       } // case 2
       case 3: {
@@ -38226,11 +37257,10 @@ DEFUN2(stgApplyPNPNNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyNNP, N, f);
+        STGJUMP1(stgApplyNNP, f);
         break;
       } // case 3
       case 4: {
@@ -38254,11 +37284,10 @@ DEFUN2(stgApplyPNPNNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyPNNP, N, f);
+        STGJUMP1(stgApplyPNNP, f);
         break;
       } // case 4
       case 5: {
@@ -38282,11 +37311,10 @@ DEFUN2(stgApplyPNPNNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyNPNNP, N, f);
+        STGJUMP1(stgApplyNPNNP, f);
         break;
       } // case 5
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -38353,13 +37381,11 @@ DEFUN2(stgApplyPNPNNP, N, f) {
   ENDFUN;
 }
 
-DEFUN2(stgApplyNPPNNP, N, f) {
+DEFUN1(stgApplyNPPNNP, f) {
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyNPPNNP %s\n", f.op->infoPtr->name);
   #endif
-  assert(N.argType == INT);
-  const int argc = N.i;
-  assert(argc == 6);
+  const int argc = 6;
   PtrOrLiteral argv[6];
   popargs(argc, argv);
   const int nps = 3;
@@ -38442,11 +37468,10 @@ DEFUN2(stgApplyNPPNNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[5]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyP, N, f);
+        STGJUMP1(stgApplyP, f);
         break;
       } // case 1
       case 2: {
@@ -38467,11 +37492,10 @@ DEFUN2(stgApplyNPPNNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[4]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyNP, N, f);
+        STGJUMP1(stgApplyNP, f);
         break;
       } // case 2
       case 3: {
@@ -38492,11 +37516,10 @@ DEFUN2(stgApplyNPPNNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyNNP, N, f);
+        STGJUMP1(stgApplyNNP, f);
         break;
       } // case 3
       case 4: {
@@ -38518,11 +37541,10 @@ DEFUN2(stgApplyNPPNNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyPNNP, N, f);
+        STGJUMP1(stgApplyPNNP, f);
         break;
       } // case 4
       case 5: {
@@ -38545,11 +37567,10 @@ DEFUN2(stgApplyNPPNNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyPPNNP, N, f);
+        STGJUMP1(stgApplyPPNNP, f);
         break;
       } // case 5
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -38630,11 +37651,10 @@ DEFUN2(stgApplyNPPNNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[5]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyP, N, f);
+        STGJUMP1(stgApplyP, f);
         break;
       } // case 1
       case 2: {
@@ -38657,11 +37677,10 @@ DEFUN2(stgApplyNPPNNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[4]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyNP, N, f);
+        STGJUMP1(stgApplyNP, f);
         break;
       } // case 2
       case 3: {
@@ -38684,11 +37703,10 @@ DEFUN2(stgApplyNPPNNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyNNP, N, f);
+        STGJUMP1(stgApplyNNP, f);
         break;
       } // case 3
       case 4: {
@@ -38712,11 +37730,10 @@ DEFUN2(stgApplyNPPNNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyPNNP, N, f);
+        STGJUMP1(stgApplyPNNP, f);
         break;
       } // case 4
       case 5: {
@@ -38741,11 +37758,10 @@ DEFUN2(stgApplyNPPNNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyPPNNP, N, f);
+        STGJUMP1(stgApplyPPNNP, f);
         break;
       } // case 5
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -38812,13 +37828,11 @@ DEFUN2(stgApplyNPPNNP, N, f) {
   ENDFUN;
 }
 
-DEFUN2(stgApplyPPPNNP, N, f) {
+DEFUN1(stgApplyPPPNNP, f) {
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyPPPNNP %s\n", f.op->infoPtr->name);
   #endif
-  assert(N.argType == INT);
-  const int argc = N.i;
-  assert(argc == 6);
+  const int argc = 6;
   PtrOrLiteral argv[6];
   popargs(argc, argv);
   const int nps = 4;
@@ -38913,11 +37927,10 @@ DEFUN2(stgApplyPPPNNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[5]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyP, N, f);
+        STGJUMP1(stgApplyP, f);
         break;
       } // case 1
       case 2: {
@@ -38938,11 +37951,10 @@ DEFUN2(stgApplyPPPNNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[4]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyNP, N, f);
+        STGJUMP1(stgApplyNP, f);
         break;
       } // case 2
       case 3: {
@@ -38963,11 +37975,10 @@ DEFUN2(stgApplyPPPNNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyNNP, N, f);
+        STGJUMP1(stgApplyNNP, f);
         break;
       } // case 3
       case 4: {
@@ -38989,11 +38000,10 @@ DEFUN2(stgApplyPPPNNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyPNNP, N, f);
+        STGJUMP1(stgApplyPNNP, f);
         break;
       } // case 4
       case 5: {
@@ -39016,11 +38026,10 @@ DEFUN2(stgApplyPPPNNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyPPNNP, N, f);
+        STGJUMP1(stgApplyPPNNP, f);
         break;
       } // case 5
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -39101,11 +38110,10 @@ DEFUN2(stgApplyPPPNNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[5]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyP, N, f);
+        STGJUMP1(stgApplyP, f);
         break;
       } // case 1
       case 2: {
@@ -39128,11 +38136,10 @@ DEFUN2(stgApplyPPPNNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[4]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyNP, N, f);
+        STGJUMP1(stgApplyNP, f);
         break;
       } // case 2
       case 3: {
@@ -39155,11 +38162,10 @@ DEFUN2(stgApplyPPPNNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyNNP, N, f);
+        STGJUMP1(stgApplyNNP, f);
         break;
       } // case 3
       case 4: {
@@ -39183,11 +38189,10 @@ DEFUN2(stgApplyPPPNNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyPNNP, N, f);
+        STGJUMP1(stgApplyPNNP, f);
         break;
       } // case 4
       case 5: {
@@ -39212,11 +38217,10 @@ DEFUN2(stgApplyPPPNNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyPPNNP, N, f);
+        STGJUMP1(stgApplyPPNNP, f);
         break;
       } // case 5
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -39283,13 +38287,11 @@ DEFUN2(stgApplyPPPNNP, N, f) {
   ENDFUN;
 }
 
-DEFUN2(stgApplyNNNPNP, N, f) {
+DEFUN1(stgApplyNNNPNP, f) {
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyNNNPNP %s\n", f.op->infoPtr->name);
   #endif
-  assert(N.argType == INT);
-  const int argc = N.i;
-  assert(argc == 6);
+  const int argc = 6;
   PtrOrLiteral argv[6];
   popargs(argc, argv);
   const int nps = 2;
@@ -39362,11 +38364,10 @@ DEFUN2(stgApplyNNNPNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[5]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyP, N, f);
+        STGJUMP1(stgApplyP, f);
         break;
       } // case 1
       case 2: {
@@ -39387,11 +38388,10 @@ DEFUN2(stgApplyNNNPNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[4]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyNP, N, f);
+        STGJUMP1(stgApplyNP, f);
         break;
       } // case 2
       case 3: {
@@ -39413,11 +38413,10 @@ DEFUN2(stgApplyNNNPNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyPNP, N, f);
+        STGJUMP1(stgApplyPNP, f);
         break;
       } // case 3
       case 4: {
@@ -39439,11 +38438,10 @@ DEFUN2(stgApplyNNNPNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyNPNP, N, f);
+        STGJUMP1(stgApplyNPNP, f);
         break;
       } // case 4
       case 5: {
@@ -39465,11 +38463,10 @@ DEFUN2(stgApplyNNNPNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyNNPNP, N, f);
+        STGJUMP1(stgApplyNNPNP, f);
         break;
       } // case 5
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -39550,11 +38547,10 @@ DEFUN2(stgApplyNNNPNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[5]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyP, N, f);
+        STGJUMP1(stgApplyP, f);
         break;
       } // case 1
       case 2: {
@@ -39577,11 +38573,10 @@ DEFUN2(stgApplyNNNPNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[4]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyNP, N, f);
+        STGJUMP1(stgApplyNP, f);
         break;
       } // case 2
       case 3: {
@@ -39605,11 +38600,10 @@ DEFUN2(stgApplyNNNPNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyPNP, N, f);
+        STGJUMP1(stgApplyPNP, f);
         break;
       } // case 3
       case 4: {
@@ -39633,11 +38627,10 @@ DEFUN2(stgApplyNNNPNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyNPNP, N, f);
+        STGJUMP1(stgApplyNPNP, f);
         break;
       } // case 4
       case 5: {
@@ -39661,11 +38654,10 @@ DEFUN2(stgApplyNNNPNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyNNPNP, N, f);
+        STGJUMP1(stgApplyNNPNP, f);
         break;
       } // case 5
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -39732,13 +38724,11 @@ DEFUN2(stgApplyNNNPNP, N, f) {
   ENDFUN;
 }
 
-DEFUN2(stgApplyPNNPNP, N, f) {
+DEFUN1(stgApplyPNNPNP, f) {
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyPNNPNP %s\n", f.op->infoPtr->name);
   #endif
-  assert(N.argType == INT);
-  const int argc = N.i;
-  assert(argc == 6);
+  const int argc = 6;
   PtrOrLiteral argv[6];
   popargs(argc, argv);
   const int nps = 3;
@@ -39821,11 +38811,10 @@ DEFUN2(stgApplyPNNPNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[5]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyP, N, f);
+        STGJUMP1(stgApplyP, f);
         break;
       } // case 1
       case 2: {
@@ -39846,11 +38835,10 @@ DEFUN2(stgApplyPNNPNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[4]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyNP, N, f);
+        STGJUMP1(stgApplyNP, f);
         break;
       } // case 2
       case 3: {
@@ -39872,11 +38860,10 @@ DEFUN2(stgApplyPNNPNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyPNP, N, f);
+        STGJUMP1(stgApplyPNP, f);
         break;
       } // case 3
       case 4: {
@@ -39898,11 +38885,10 @@ DEFUN2(stgApplyPNNPNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyNPNP, N, f);
+        STGJUMP1(stgApplyNPNP, f);
         break;
       } // case 4
       case 5: {
@@ -39924,11 +38910,10 @@ DEFUN2(stgApplyPNNPNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyNNPNP, N, f);
+        STGJUMP1(stgApplyNNPNP, f);
         break;
       } // case 5
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -40009,11 +38994,10 @@ DEFUN2(stgApplyPNNPNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[5]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyP, N, f);
+        STGJUMP1(stgApplyP, f);
         break;
       } // case 1
       case 2: {
@@ -40036,11 +39020,10 @@ DEFUN2(stgApplyPNNPNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[4]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyNP, N, f);
+        STGJUMP1(stgApplyNP, f);
         break;
       } // case 2
       case 3: {
@@ -40064,11 +39047,10 @@ DEFUN2(stgApplyPNNPNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyPNP, N, f);
+        STGJUMP1(stgApplyPNP, f);
         break;
       } // case 3
       case 4: {
@@ -40092,11 +39074,10 @@ DEFUN2(stgApplyPNNPNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyNPNP, N, f);
+        STGJUMP1(stgApplyNPNP, f);
         break;
       } // case 4
       case 5: {
@@ -40120,11 +39101,10 @@ DEFUN2(stgApplyPNNPNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyNNPNP, N, f);
+        STGJUMP1(stgApplyNNPNP, f);
         break;
       } // case 5
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -40191,13 +39171,11 @@ DEFUN2(stgApplyPNNPNP, N, f) {
   ENDFUN;
 }
 
-DEFUN2(stgApplyNPNPNP, N, f) {
+DEFUN1(stgApplyNPNPNP, f) {
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyNPNPNP %s\n", f.op->infoPtr->name);
   #endif
-  assert(N.argType == INT);
-  const int argc = N.i;
-  assert(argc == 6);
+  const int argc = 6;
   PtrOrLiteral argv[6];
   popargs(argc, argv);
   const int nps = 3;
@@ -40280,11 +39258,10 @@ DEFUN2(stgApplyNPNPNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[5]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyP, N, f);
+        STGJUMP1(stgApplyP, f);
         break;
       } // case 1
       case 2: {
@@ -40305,11 +39282,10 @@ DEFUN2(stgApplyNPNPNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[4]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyNP, N, f);
+        STGJUMP1(stgApplyNP, f);
         break;
       } // case 2
       case 3: {
@@ -40331,11 +39307,10 @@ DEFUN2(stgApplyNPNPNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyPNP, N, f);
+        STGJUMP1(stgApplyPNP, f);
         break;
       } // case 3
       case 4: {
@@ -40357,11 +39332,10 @@ DEFUN2(stgApplyNPNPNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyNPNP, N, f);
+        STGJUMP1(stgApplyNPNP, f);
         break;
       } // case 4
       case 5: {
@@ -40384,11 +39358,10 @@ DEFUN2(stgApplyNPNPNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyPNPNP, N, f);
+        STGJUMP1(stgApplyPNPNP, f);
         break;
       } // case 5
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -40469,11 +39442,10 @@ DEFUN2(stgApplyNPNPNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[5]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyP, N, f);
+        STGJUMP1(stgApplyP, f);
         break;
       } // case 1
       case 2: {
@@ -40496,11 +39468,10 @@ DEFUN2(stgApplyNPNPNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[4]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyNP, N, f);
+        STGJUMP1(stgApplyNP, f);
         break;
       } // case 2
       case 3: {
@@ -40524,11 +39495,10 @@ DEFUN2(stgApplyNPNPNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyPNP, N, f);
+        STGJUMP1(stgApplyPNP, f);
         break;
       } // case 3
       case 4: {
@@ -40552,11 +39522,10 @@ DEFUN2(stgApplyNPNPNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyNPNP, N, f);
+        STGJUMP1(stgApplyNPNP, f);
         break;
       } // case 4
       case 5: {
@@ -40581,11 +39550,10 @@ DEFUN2(stgApplyNPNPNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyPNPNP, N, f);
+        STGJUMP1(stgApplyPNPNP, f);
         break;
       } // case 5
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -40652,13 +39620,11 @@ DEFUN2(stgApplyNPNPNP, N, f) {
   ENDFUN;
 }
 
-DEFUN2(stgApplyPPNPNP, N, f) {
+DEFUN1(stgApplyPPNPNP, f) {
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyPPNPNP %s\n", f.op->infoPtr->name);
   #endif
-  assert(N.argType == INT);
-  const int argc = N.i;
-  assert(argc == 6);
+  const int argc = 6;
   PtrOrLiteral argv[6];
   popargs(argc, argv);
   const int nps = 4;
@@ -40753,11 +39719,10 @@ DEFUN2(stgApplyPPNPNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[5]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyP, N, f);
+        STGJUMP1(stgApplyP, f);
         break;
       } // case 1
       case 2: {
@@ -40778,11 +39743,10 @@ DEFUN2(stgApplyPPNPNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[4]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyNP, N, f);
+        STGJUMP1(stgApplyNP, f);
         break;
       } // case 2
       case 3: {
@@ -40804,11 +39768,10 @@ DEFUN2(stgApplyPPNPNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyPNP, N, f);
+        STGJUMP1(stgApplyPNP, f);
         break;
       } // case 3
       case 4: {
@@ -40830,11 +39793,10 @@ DEFUN2(stgApplyPPNPNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyNPNP, N, f);
+        STGJUMP1(stgApplyNPNP, f);
         break;
       } // case 4
       case 5: {
@@ -40857,11 +39819,10 @@ DEFUN2(stgApplyPPNPNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyPNPNP, N, f);
+        STGJUMP1(stgApplyPNPNP, f);
         break;
       } // case 5
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -40942,11 +39903,10 @@ DEFUN2(stgApplyPPNPNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[5]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyP, N, f);
+        STGJUMP1(stgApplyP, f);
         break;
       } // case 1
       case 2: {
@@ -40969,11 +39929,10 @@ DEFUN2(stgApplyPPNPNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[4]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyNP, N, f);
+        STGJUMP1(stgApplyNP, f);
         break;
       } // case 2
       case 3: {
@@ -40997,11 +39956,10 @@ DEFUN2(stgApplyPPNPNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyPNP, N, f);
+        STGJUMP1(stgApplyPNP, f);
         break;
       } // case 3
       case 4: {
@@ -41025,11 +39983,10 @@ DEFUN2(stgApplyPPNPNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyNPNP, N, f);
+        STGJUMP1(stgApplyNPNP, f);
         break;
       } // case 4
       case 5: {
@@ -41054,11 +40011,10 @@ DEFUN2(stgApplyPPNPNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyPNPNP, N, f);
+        STGJUMP1(stgApplyPNPNP, f);
         break;
       } // case 5
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -41125,13 +40081,11 @@ DEFUN2(stgApplyPPNPNP, N, f) {
   ENDFUN;
 }
 
-DEFUN2(stgApplyNNPPNP, N, f) {
+DEFUN1(stgApplyNNPPNP, f) {
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyNNPPNP %s\n", f.op->infoPtr->name);
   #endif
-  assert(N.argType == INT);
-  const int argc = N.i;
-  assert(argc == 6);
+  const int argc = 6;
   PtrOrLiteral argv[6];
   popargs(argc, argv);
   const int nps = 3;
@@ -41214,11 +40168,10 @@ DEFUN2(stgApplyNNPPNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[5]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyP, N, f);
+        STGJUMP1(stgApplyP, f);
         break;
       } // case 1
       case 2: {
@@ -41239,11 +40192,10 @@ DEFUN2(stgApplyNNPPNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[4]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyNP, N, f);
+        STGJUMP1(stgApplyNP, f);
         break;
       } // case 2
       case 3: {
@@ -41265,11 +40217,10 @@ DEFUN2(stgApplyNNPPNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyPNP, N, f);
+        STGJUMP1(stgApplyPNP, f);
         break;
       } // case 3
       case 4: {
@@ -41292,11 +40243,10 @@ DEFUN2(stgApplyNNPPNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyPPNP, N, f);
+        STGJUMP1(stgApplyPPNP, f);
         break;
       } // case 4
       case 5: {
@@ -41319,11 +40269,10 @@ DEFUN2(stgApplyNNPPNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyNPPNP, N, f);
+        STGJUMP1(stgApplyNPPNP, f);
         break;
       } // case 5
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -41404,11 +40353,10 @@ DEFUN2(stgApplyNNPPNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[5]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyP, N, f);
+        STGJUMP1(stgApplyP, f);
         break;
       } // case 1
       case 2: {
@@ -41431,11 +40379,10 @@ DEFUN2(stgApplyNNPPNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[4]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyNP, N, f);
+        STGJUMP1(stgApplyNP, f);
         break;
       } // case 2
       case 3: {
@@ -41459,11 +40406,10 @@ DEFUN2(stgApplyNNPPNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyPNP, N, f);
+        STGJUMP1(stgApplyPNP, f);
         break;
       } // case 3
       case 4: {
@@ -41488,11 +40434,10 @@ DEFUN2(stgApplyNNPPNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyPPNP, N, f);
+        STGJUMP1(stgApplyPPNP, f);
         break;
       } // case 4
       case 5: {
@@ -41517,11 +40462,10 @@ DEFUN2(stgApplyNNPPNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyNPPNP, N, f);
+        STGJUMP1(stgApplyNPPNP, f);
         break;
       } // case 5
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -41588,13 +40532,11 @@ DEFUN2(stgApplyNNPPNP, N, f) {
   ENDFUN;
 }
 
-DEFUN2(stgApplyPNPPNP, N, f) {
+DEFUN1(stgApplyPNPPNP, f) {
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyPNPPNP %s\n", f.op->infoPtr->name);
   #endif
-  assert(N.argType == INT);
-  const int argc = N.i;
-  assert(argc == 6);
+  const int argc = 6;
   PtrOrLiteral argv[6];
   popargs(argc, argv);
   const int nps = 4;
@@ -41689,11 +40631,10 @@ DEFUN2(stgApplyPNPPNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[5]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyP, N, f);
+        STGJUMP1(stgApplyP, f);
         break;
       } // case 1
       case 2: {
@@ -41714,11 +40655,10 @@ DEFUN2(stgApplyPNPPNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[4]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyNP, N, f);
+        STGJUMP1(stgApplyNP, f);
         break;
       } // case 2
       case 3: {
@@ -41740,11 +40680,10 @@ DEFUN2(stgApplyPNPPNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyPNP, N, f);
+        STGJUMP1(stgApplyPNP, f);
         break;
       } // case 3
       case 4: {
@@ -41767,11 +40706,10 @@ DEFUN2(stgApplyPNPPNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyPPNP, N, f);
+        STGJUMP1(stgApplyPPNP, f);
         break;
       } // case 4
       case 5: {
@@ -41794,11 +40732,10 @@ DEFUN2(stgApplyPNPPNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyNPPNP, N, f);
+        STGJUMP1(stgApplyNPPNP, f);
         break;
       } // case 5
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -41879,11 +40816,10 @@ DEFUN2(stgApplyPNPPNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[5]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyP, N, f);
+        STGJUMP1(stgApplyP, f);
         break;
       } // case 1
       case 2: {
@@ -41906,11 +40842,10 @@ DEFUN2(stgApplyPNPPNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[4]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyNP, N, f);
+        STGJUMP1(stgApplyNP, f);
         break;
       } // case 2
       case 3: {
@@ -41934,11 +40869,10 @@ DEFUN2(stgApplyPNPPNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyPNP, N, f);
+        STGJUMP1(stgApplyPNP, f);
         break;
       } // case 3
       case 4: {
@@ -41963,11 +40897,10 @@ DEFUN2(stgApplyPNPPNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyPPNP, N, f);
+        STGJUMP1(stgApplyPPNP, f);
         break;
       } // case 4
       case 5: {
@@ -41992,11 +40925,10 @@ DEFUN2(stgApplyPNPPNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyNPPNP, N, f);
+        STGJUMP1(stgApplyNPPNP, f);
         break;
       } // case 5
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -42063,13 +40995,11 @@ DEFUN2(stgApplyPNPPNP, N, f) {
   ENDFUN;
 }
 
-DEFUN2(stgApplyNPPPNP, N, f) {
+DEFUN1(stgApplyNPPPNP, f) {
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyNPPPNP %s\n", f.op->infoPtr->name);
   #endif
-  assert(N.argType == INT);
-  const int argc = N.i;
-  assert(argc == 6);
+  const int argc = 6;
   PtrOrLiteral argv[6];
   popargs(argc, argv);
   const int nps = 4;
@@ -42164,11 +41094,10 @@ DEFUN2(stgApplyNPPPNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[5]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyP, N, f);
+        STGJUMP1(stgApplyP, f);
         break;
       } // case 1
       case 2: {
@@ -42189,11 +41118,10 @@ DEFUN2(stgApplyNPPPNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[4]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyNP, N, f);
+        STGJUMP1(stgApplyNP, f);
         break;
       } // case 2
       case 3: {
@@ -42215,11 +41143,10 @@ DEFUN2(stgApplyNPPPNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyPNP, N, f);
+        STGJUMP1(stgApplyPNP, f);
         break;
       } // case 3
       case 4: {
@@ -42242,11 +41169,10 @@ DEFUN2(stgApplyNPPPNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyPPNP, N, f);
+        STGJUMP1(stgApplyPPNP, f);
         break;
       } // case 4
       case 5: {
@@ -42270,11 +41196,10 @@ DEFUN2(stgApplyNPPPNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyPPPNP, N, f);
+        STGJUMP1(stgApplyPPPNP, f);
         break;
       } // case 5
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -42355,11 +41280,10 @@ DEFUN2(stgApplyNPPPNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[5]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyP, N, f);
+        STGJUMP1(stgApplyP, f);
         break;
       } // case 1
       case 2: {
@@ -42382,11 +41306,10 @@ DEFUN2(stgApplyNPPPNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[4]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyNP, N, f);
+        STGJUMP1(stgApplyNP, f);
         break;
       } // case 2
       case 3: {
@@ -42410,11 +41333,10 @@ DEFUN2(stgApplyNPPPNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyPNP, N, f);
+        STGJUMP1(stgApplyPNP, f);
         break;
       } // case 3
       case 4: {
@@ -42439,11 +41361,10 @@ DEFUN2(stgApplyNPPPNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyPPNP, N, f);
+        STGJUMP1(stgApplyPPNP, f);
         break;
       } // case 4
       case 5: {
@@ -42469,11 +41390,10 @@ DEFUN2(stgApplyNPPPNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyPPPNP, N, f);
+        STGJUMP1(stgApplyPPPNP, f);
         break;
       } // case 5
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -42540,13 +41460,11 @@ DEFUN2(stgApplyNPPPNP, N, f) {
   ENDFUN;
 }
 
-DEFUN2(stgApplyPPPPNP, N, f) {
+DEFUN1(stgApplyPPPPNP, f) {
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyPPPPNP %s\n", f.op->infoPtr->name);
   #endif
-  assert(N.argType == INT);
-  const int argc = N.i;
-  assert(argc == 6);
+  const int argc = 6;
   PtrOrLiteral argv[6];
   popargs(argc, argv);
   const int nps = 5;
@@ -42655,11 +41573,10 @@ DEFUN2(stgApplyPPPPNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[5]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyP, N, f);
+        STGJUMP1(stgApplyP, f);
         break;
       } // case 1
       case 2: {
@@ -42680,11 +41597,10 @@ DEFUN2(stgApplyPPPPNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[4]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyNP, N, f);
+        STGJUMP1(stgApplyNP, f);
         break;
       } // case 2
       case 3: {
@@ -42706,11 +41622,10 @@ DEFUN2(stgApplyPPPPNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyPNP, N, f);
+        STGJUMP1(stgApplyPNP, f);
         break;
       } // case 3
       case 4: {
@@ -42733,11 +41648,10 @@ DEFUN2(stgApplyPPPPNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyPPNP, N, f);
+        STGJUMP1(stgApplyPPNP, f);
         break;
       } // case 4
       case 5: {
@@ -42761,11 +41675,10 @@ DEFUN2(stgApplyPPPPNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyPPPNP, N, f);
+        STGJUMP1(stgApplyPPPNP, f);
         break;
       } // case 5
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -42846,11 +41759,10 @@ DEFUN2(stgApplyPPPPNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[5]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyP, N, f);
+        STGJUMP1(stgApplyP, f);
         break;
       } // case 1
       case 2: {
@@ -42873,11 +41785,10 @@ DEFUN2(stgApplyPPPPNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[4]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyNP, N, f);
+        STGJUMP1(stgApplyNP, f);
         break;
       } // case 2
       case 3: {
@@ -42901,11 +41812,10 @@ DEFUN2(stgApplyPPPPNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyPNP, N, f);
+        STGJUMP1(stgApplyPNP, f);
         break;
       } // case 3
       case 4: {
@@ -42930,11 +41840,10 @@ DEFUN2(stgApplyPPPPNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyPPNP, N, f);
+        STGJUMP1(stgApplyPPNP, f);
         break;
       } // case 4
       case 5: {
@@ -42960,11 +41869,10 @@ DEFUN2(stgApplyPPPPNP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyPPPNP, N, f);
+        STGJUMP1(stgApplyPPPNP, f);
         break;
       } // case 5
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -43031,13 +41939,11 @@ DEFUN2(stgApplyPPPPNP, N, f) {
   ENDFUN;
 }
 
-DEFUN2(stgApplyNNNNPP, N, f) {
+DEFUN1(stgApplyNNNNPP, f) {
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyNNNNPP %s\n", f.op->infoPtr->name);
   #endif
-  assert(N.argType == INT);
-  const int argc = N.i;
-  assert(argc == 6);
+  const int argc = 6;
   PtrOrLiteral argv[6];
   popargs(argc, argv);
   const int nps = 2;
@@ -43110,11 +42016,10 @@ DEFUN2(stgApplyNNNNPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[5]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyP, N, f);
+        STGJUMP1(stgApplyP, f);
         break;
       } // case 1
       case 2: {
@@ -43136,11 +42041,10 @@ DEFUN2(stgApplyNNNNPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[4]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyPP, N, f);
+        STGJUMP1(stgApplyPP, f);
         break;
       } // case 2
       case 3: {
@@ -43162,11 +42066,10 @@ DEFUN2(stgApplyNNNNPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyNPP, N, f);
+        STGJUMP1(stgApplyNPP, f);
         break;
       } // case 3
       case 4: {
@@ -43188,11 +42091,10 @@ DEFUN2(stgApplyNNNNPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyNNPP, N, f);
+        STGJUMP1(stgApplyNNPP, f);
         break;
       } // case 4
       case 5: {
@@ -43214,11 +42116,10 @@ DEFUN2(stgApplyNNNNPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyNNNPP, N, f);
+        STGJUMP1(stgApplyNNNPP, f);
         break;
       } // case 5
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -43299,11 +42200,10 @@ DEFUN2(stgApplyNNNNPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[5]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyP, N, f);
+        STGJUMP1(stgApplyP, f);
         break;
       } // case 1
       case 2: {
@@ -43327,11 +42227,10 @@ DEFUN2(stgApplyNNNNPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[4]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyPP, N, f);
+        STGJUMP1(stgApplyPP, f);
         break;
       } // case 2
       case 3: {
@@ -43355,11 +42254,10 @@ DEFUN2(stgApplyNNNNPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyNPP, N, f);
+        STGJUMP1(stgApplyNPP, f);
         break;
       } // case 3
       case 4: {
@@ -43383,11 +42281,10 @@ DEFUN2(stgApplyNNNNPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyNNPP, N, f);
+        STGJUMP1(stgApplyNNPP, f);
         break;
       } // case 4
       case 5: {
@@ -43411,11 +42308,10 @@ DEFUN2(stgApplyNNNNPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyNNNPP, N, f);
+        STGJUMP1(stgApplyNNNPP, f);
         break;
       } // case 5
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -43482,13 +42378,11 @@ DEFUN2(stgApplyNNNNPP, N, f) {
   ENDFUN;
 }
 
-DEFUN2(stgApplyPNNNPP, N, f) {
+DEFUN1(stgApplyPNNNPP, f) {
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyPNNNPP %s\n", f.op->infoPtr->name);
   #endif
-  assert(N.argType == INT);
-  const int argc = N.i;
-  assert(argc == 6);
+  const int argc = 6;
   PtrOrLiteral argv[6];
   popargs(argc, argv);
   const int nps = 3;
@@ -43571,11 +42465,10 @@ DEFUN2(stgApplyPNNNPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[5]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyP, N, f);
+        STGJUMP1(stgApplyP, f);
         break;
       } // case 1
       case 2: {
@@ -43597,11 +42490,10 @@ DEFUN2(stgApplyPNNNPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[4]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyPP, N, f);
+        STGJUMP1(stgApplyPP, f);
         break;
       } // case 2
       case 3: {
@@ -43623,11 +42515,10 @@ DEFUN2(stgApplyPNNNPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyNPP, N, f);
+        STGJUMP1(stgApplyNPP, f);
         break;
       } // case 3
       case 4: {
@@ -43649,11 +42540,10 @@ DEFUN2(stgApplyPNNNPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyNNPP, N, f);
+        STGJUMP1(stgApplyNNPP, f);
         break;
       } // case 4
       case 5: {
@@ -43675,11 +42565,10 @@ DEFUN2(stgApplyPNNNPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyNNNPP, N, f);
+        STGJUMP1(stgApplyNNNPP, f);
         break;
       } // case 5
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -43760,11 +42649,10 @@ DEFUN2(stgApplyPNNNPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[5]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyP, N, f);
+        STGJUMP1(stgApplyP, f);
         break;
       } // case 1
       case 2: {
@@ -43788,11 +42676,10 @@ DEFUN2(stgApplyPNNNPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[4]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyPP, N, f);
+        STGJUMP1(stgApplyPP, f);
         break;
       } // case 2
       case 3: {
@@ -43816,11 +42703,10 @@ DEFUN2(stgApplyPNNNPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyNPP, N, f);
+        STGJUMP1(stgApplyNPP, f);
         break;
       } // case 3
       case 4: {
@@ -43844,11 +42730,10 @@ DEFUN2(stgApplyPNNNPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyNNPP, N, f);
+        STGJUMP1(stgApplyNNPP, f);
         break;
       } // case 4
       case 5: {
@@ -43872,11 +42757,10 @@ DEFUN2(stgApplyPNNNPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyNNNPP, N, f);
+        STGJUMP1(stgApplyNNNPP, f);
         break;
       } // case 5
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -43943,13 +42827,11 @@ DEFUN2(stgApplyPNNNPP, N, f) {
   ENDFUN;
 }
 
-DEFUN2(stgApplyNPNNPP, N, f) {
+DEFUN1(stgApplyNPNNPP, f) {
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyNPNNPP %s\n", f.op->infoPtr->name);
   #endif
-  assert(N.argType == INT);
-  const int argc = N.i;
-  assert(argc == 6);
+  const int argc = 6;
   PtrOrLiteral argv[6];
   popargs(argc, argv);
   const int nps = 3;
@@ -44032,11 +42914,10 @@ DEFUN2(stgApplyNPNNPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[5]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyP, N, f);
+        STGJUMP1(stgApplyP, f);
         break;
       } // case 1
       case 2: {
@@ -44058,11 +42939,10 @@ DEFUN2(stgApplyNPNNPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[4]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyPP, N, f);
+        STGJUMP1(stgApplyPP, f);
         break;
       } // case 2
       case 3: {
@@ -44084,11 +42964,10 @@ DEFUN2(stgApplyNPNNPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyNPP, N, f);
+        STGJUMP1(stgApplyNPP, f);
         break;
       } // case 3
       case 4: {
@@ -44110,11 +42989,10 @@ DEFUN2(stgApplyNPNNPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyNNPP, N, f);
+        STGJUMP1(stgApplyNNPP, f);
         break;
       } // case 4
       case 5: {
@@ -44137,11 +43015,10 @@ DEFUN2(stgApplyNPNNPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyPNNPP, N, f);
+        STGJUMP1(stgApplyPNNPP, f);
         break;
       } // case 5
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -44222,11 +43099,10 @@ DEFUN2(stgApplyNPNNPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[5]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyP, N, f);
+        STGJUMP1(stgApplyP, f);
         break;
       } // case 1
       case 2: {
@@ -44250,11 +43126,10 @@ DEFUN2(stgApplyNPNNPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[4]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyPP, N, f);
+        STGJUMP1(stgApplyPP, f);
         break;
       } // case 2
       case 3: {
@@ -44278,11 +43153,10 @@ DEFUN2(stgApplyNPNNPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyNPP, N, f);
+        STGJUMP1(stgApplyNPP, f);
         break;
       } // case 3
       case 4: {
@@ -44306,11 +43180,10 @@ DEFUN2(stgApplyNPNNPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyNNPP, N, f);
+        STGJUMP1(stgApplyNNPP, f);
         break;
       } // case 4
       case 5: {
@@ -44335,11 +43208,10 @@ DEFUN2(stgApplyNPNNPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyPNNPP, N, f);
+        STGJUMP1(stgApplyPNNPP, f);
         break;
       } // case 5
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -44406,13 +43278,11 @@ DEFUN2(stgApplyNPNNPP, N, f) {
   ENDFUN;
 }
 
-DEFUN2(stgApplyPPNNPP, N, f) {
+DEFUN1(stgApplyPPNNPP, f) {
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyPPNNPP %s\n", f.op->infoPtr->name);
   #endif
-  assert(N.argType == INT);
-  const int argc = N.i;
-  assert(argc == 6);
+  const int argc = 6;
   PtrOrLiteral argv[6];
   popargs(argc, argv);
   const int nps = 4;
@@ -44507,11 +43377,10 @@ DEFUN2(stgApplyPPNNPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[5]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyP, N, f);
+        STGJUMP1(stgApplyP, f);
         break;
       } // case 1
       case 2: {
@@ -44533,11 +43402,10 @@ DEFUN2(stgApplyPPNNPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[4]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyPP, N, f);
+        STGJUMP1(stgApplyPP, f);
         break;
       } // case 2
       case 3: {
@@ -44559,11 +43427,10 @@ DEFUN2(stgApplyPPNNPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyNPP, N, f);
+        STGJUMP1(stgApplyNPP, f);
         break;
       } // case 3
       case 4: {
@@ -44585,11 +43452,10 @@ DEFUN2(stgApplyPPNNPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyNNPP, N, f);
+        STGJUMP1(stgApplyNNPP, f);
         break;
       } // case 4
       case 5: {
@@ -44612,11 +43478,10 @@ DEFUN2(stgApplyPPNNPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyPNNPP, N, f);
+        STGJUMP1(stgApplyPNNPP, f);
         break;
       } // case 5
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -44697,11 +43562,10 @@ DEFUN2(stgApplyPPNNPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[5]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyP, N, f);
+        STGJUMP1(stgApplyP, f);
         break;
       } // case 1
       case 2: {
@@ -44725,11 +43589,10 @@ DEFUN2(stgApplyPPNNPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[4]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyPP, N, f);
+        STGJUMP1(stgApplyPP, f);
         break;
       } // case 2
       case 3: {
@@ -44753,11 +43616,10 @@ DEFUN2(stgApplyPPNNPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyNPP, N, f);
+        STGJUMP1(stgApplyNPP, f);
         break;
       } // case 3
       case 4: {
@@ -44781,11 +43643,10 @@ DEFUN2(stgApplyPPNNPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyNNPP, N, f);
+        STGJUMP1(stgApplyNNPP, f);
         break;
       } // case 4
       case 5: {
@@ -44810,11 +43671,10 @@ DEFUN2(stgApplyPPNNPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyPNNPP, N, f);
+        STGJUMP1(stgApplyPNNPP, f);
         break;
       } // case 5
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -44881,13 +43741,11 @@ DEFUN2(stgApplyPPNNPP, N, f) {
   ENDFUN;
 }
 
-DEFUN2(stgApplyNNPNPP, N, f) {
+DEFUN1(stgApplyNNPNPP, f) {
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyNNPNPP %s\n", f.op->infoPtr->name);
   #endif
-  assert(N.argType == INT);
-  const int argc = N.i;
-  assert(argc == 6);
+  const int argc = 6;
   PtrOrLiteral argv[6];
   popargs(argc, argv);
   const int nps = 3;
@@ -44970,11 +43828,10 @@ DEFUN2(stgApplyNNPNPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[5]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyP, N, f);
+        STGJUMP1(stgApplyP, f);
         break;
       } // case 1
       case 2: {
@@ -44996,11 +43853,10 @@ DEFUN2(stgApplyNNPNPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[4]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyPP, N, f);
+        STGJUMP1(stgApplyPP, f);
         break;
       } // case 2
       case 3: {
@@ -45022,11 +43878,10 @@ DEFUN2(stgApplyNNPNPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyNPP, N, f);
+        STGJUMP1(stgApplyNPP, f);
         break;
       } // case 3
       case 4: {
@@ -45049,11 +43904,10 @@ DEFUN2(stgApplyNNPNPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyPNPP, N, f);
+        STGJUMP1(stgApplyPNPP, f);
         break;
       } // case 4
       case 5: {
@@ -45076,11 +43930,10 @@ DEFUN2(stgApplyNNPNPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyNPNPP, N, f);
+        STGJUMP1(stgApplyNPNPP, f);
         break;
       } // case 5
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -45161,11 +44014,10 @@ DEFUN2(stgApplyNNPNPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[5]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyP, N, f);
+        STGJUMP1(stgApplyP, f);
         break;
       } // case 1
       case 2: {
@@ -45189,11 +44041,10 @@ DEFUN2(stgApplyNNPNPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[4]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyPP, N, f);
+        STGJUMP1(stgApplyPP, f);
         break;
       } // case 2
       case 3: {
@@ -45217,11 +44068,10 @@ DEFUN2(stgApplyNNPNPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyNPP, N, f);
+        STGJUMP1(stgApplyNPP, f);
         break;
       } // case 3
       case 4: {
@@ -45246,11 +44096,10 @@ DEFUN2(stgApplyNNPNPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyPNPP, N, f);
+        STGJUMP1(stgApplyPNPP, f);
         break;
       } // case 4
       case 5: {
@@ -45275,11 +44124,10 @@ DEFUN2(stgApplyNNPNPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyNPNPP, N, f);
+        STGJUMP1(stgApplyNPNPP, f);
         break;
       } // case 5
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -45346,13 +44194,11 @@ DEFUN2(stgApplyNNPNPP, N, f) {
   ENDFUN;
 }
 
-DEFUN2(stgApplyPNPNPP, N, f) {
+DEFUN1(stgApplyPNPNPP, f) {
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyPNPNPP %s\n", f.op->infoPtr->name);
   #endif
-  assert(N.argType == INT);
-  const int argc = N.i;
-  assert(argc == 6);
+  const int argc = 6;
   PtrOrLiteral argv[6];
   popargs(argc, argv);
   const int nps = 4;
@@ -45447,11 +44293,10 @@ DEFUN2(stgApplyPNPNPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[5]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyP, N, f);
+        STGJUMP1(stgApplyP, f);
         break;
       } // case 1
       case 2: {
@@ -45473,11 +44318,10 @@ DEFUN2(stgApplyPNPNPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[4]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyPP, N, f);
+        STGJUMP1(stgApplyPP, f);
         break;
       } // case 2
       case 3: {
@@ -45499,11 +44343,10 @@ DEFUN2(stgApplyPNPNPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyNPP, N, f);
+        STGJUMP1(stgApplyNPP, f);
         break;
       } // case 3
       case 4: {
@@ -45526,11 +44369,10 @@ DEFUN2(stgApplyPNPNPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyPNPP, N, f);
+        STGJUMP1(stgApplyPNPP, f);
         break;
       } // case 4
       case 5: {
@@ -45553,11 +44395,10 @@ DEFUN2(stgApplyPNPNPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyNPNPP, N, f);
+        STGJUMP1(stgApplyNPNPP, f);
         break;
       } // case 5
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -45638,11 +44479,10 @@ DEFUN2(stgApplyPNPNPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[5]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyP, N, f);
+        STGJUMP1(stgApplyP, f);
         break;
       } // case 1
       case 2: {
@@ -45666,11 +44506,10 @@ DEFUN2(stgApplyPNPNPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[4]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyPP, N, f);
+        STGJUMP1(stgApplyPP, f);
         break;
       } // case 2
       case 3: {
@@ -45694,11 +44533,10 @@ DEFUN2(stgApplyPNPNPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyNPP, N, f);
+        STGJUMP1(stgApplyNPP, f);
         break;
       } // case 3
       case 4: {
@@ -45723,11 +44561,10 @@ DEFUN2(stgApplyPNPNPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyPNPP, N, f);
+        STGJUMP1(stgApplyPNPP, f);
         break;
       } // case 4
       case 5: {
@@ -45752,11 +44589,10 @@ DEFUN2(stgApplyPNPNPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyNPNPP, N, f);
+        STGJUMP1(stgApplyNPNPP, f);
         break;
       } // case 5
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -45823,13 +44659,11 @@ DEFUN2(stgApplyPNPNPP, N, f) {
   ENDFUN;
 }
 
-DEFUN2(stgApplyNPPNPP, N, f) {
+DEFUN1(stgApplyNPPNPP, f) {
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyNPPNPP %s\n", f.op->infoPtr->name);
   #endif
-  assert(N.argType == INT);
-  const int argc = N.i;
-  assert(argc == 6);
+  const int argc = 6;
   PtrOrLiteral argv[6];
   popargs(argc, argv);
   const int nps = 4;
@@ -45924,11 +44758,10 @@ DEFUN2(stgApplyNPPNPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[5]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyP, N, f);
+        STGJUMP1(stgApplyP, f);
         break;
       } // case 1
       case 2: {
@@ -45950,11 +44783,10 @@ DEFUN2(stgApplyNPPNPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[4]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyPP, N, f);
+        STGJUMP1(stgApplyPP, f);
         break;
       } // case 2
       case 3: {
@@ -45976,11 +44808,10 @@ DEFUN2(stgApplyNPPNPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyNPP, N, f);
+        STGJUMP1(stgApplyNPP, f);
         break;
       } // case 3
       case 4: {
@@ -46003,11 +44834,10 @@ DEFUN2(stgApplyNPPNPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyPNPP, N, f);
+        STGJUMP1(stgApplyPNPP, f);
         break;
       } // case 4
       case 5: {
@@ -46031,11 +44861,10 @@ DEFUN2(stgApplyNPPNPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyPPNPP, N, f);
+        STGJUMP1(stgApplyPPNPP, f);
         break;
       } // case 5
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -46116,11 +44945,10 @@ DEFUN2(stgApplyNPPNPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[5]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyP, N, f);
+        STGJUMP1(stgApplyP, f);
         break;
       } // case 1
       case 2: {
@@ -46144,11 +44972,10 @@ DEFUN2(stgApplyNPPNPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[4]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyPP, N, f);
+        STGJUMP1(stgApplyPP, f);
         break;
       } // case 2
       case 3: {
@@ -46172,11 +44999,10 @@ DEFUN2(stgApplyNPPNPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyNPP, N, f);
+        STGJUMP1(stgApplyNPP, f);
         break;
       } // case 3
       case 4: {
@@ -46201,11 +45027,10 @@ DEFUN2(stgApplyNPPNPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyPNPP, N, f);
+        STGJUMP1(stgApplyPNPP, f);
         break;
       } // case 4
       case 5: {
@@ -46231,11 +45056,10 @@ DEFUN2(stgApplyNPPNPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyPPNPP, N, f);
+        STGJUMP1(stgApplyPPNPP, f);
         break;
       } // case 5
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -46302,13 +45126,11 @@ DEFUN2(stgApplyNPPNPP, N, f) {
   ENDFUN;
 }
 
-DEFUN2(stgApplyPPPNPP, N, f) {
+DEFUN1(stgApplyPPPNPP, f) {
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyPPPNPP %s\n", f.op->infoPtr->name);
   #endif
-  assert(N.argType == INT);
-  const int argc = N.i;
-  assert(argc == 6);
+  const int argc = 6;
   PtrOrLiteral argv[6];
   popargs(argc, argv);
   const int nps = 5;
@@ -46417,11 +45239,10 @@ DEFUN2(stgApplyPPPNPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[5]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyP, N, f);
+        STGJUMP1(stgApplyP, f);
         break;
       } // case 1
       case 2: {
@@ -46443,11 +45264,10 @@ DEFUN2(stgApplyPPPNPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[4]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyPP, N, f);
+        STGJUMP1(stgApplyPP, f);
         break;
       } // case 2
       case 3: {
@@ -46469,11 +45289,10 @@ DEFUN2(stgApplyPPPNPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyNPP, N, f);
+        STGJUMP1(stgApplyNPP, f);
         break;
       } // case 3
       case 4: {
@@ -46496,11 +45315,10 @@ DEFUN2(stgApplyPPPNPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyPNPP, N, f);
+        STGJUMP1(stgApplyPNPP, f);
         break;
       } // case 4
       case 5: {
@@ -46524,11 +45342,10 @@ DEFUN2(stgApplyPPPNPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyPPNPP, N, f);
+        STGJUMP1(stgApplyPPNPP, f);
         break;
       } // case 5
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -46609,11 +45426,10 @@ DEFUN2(stgApplyPPPNPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[5]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyP, N, f);
+        STGJUMP1(stgApplyP, f);
         break;
       } // case 1
       case 2: {
@@ -46637,11 +45453,10 @@ DEFUN2(stgApplyPPPNPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[4]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyPP, N, f);
+        STGJUMP1(stgApplyPP, f);
         break;
       } // case 2
       case 3: {
@@ -46665,11 +45480,10 @@ DEFUN2(stgApplyPPPNPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyNPP, N, f);
+        STGJUMP1(stgApplyNPP, f);
         break;
       } // case 3
       case 4: {
@@ -46694,11 +45508,10 @@ DEFUN2(stgApplyPPPNPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyPNPP, N, f);
+        STGJUMP1(stgApplyPNPP, f);
         break;
       } // case 4
       case 5: {
@@ -46724,11 +45537,10 @@ DEFUN2(stgApplyPPPNPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyPPNPP, N, f);
+        STGJUMP1(stgApplyPPNPP, f);
         break;
       } // case 5
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -46795,13 +45607,11 @@ DEFUN2(stgApplyPPPNPP, N, f) {
   ENDFUN;
 }
 
-DEFUN2(stgApplyNNNPPP, N, f) {
+DEFUN1(stgApplyNNNPPP, f) {
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyNNNPPP %s\n", f.op->infoPtr->name);
   #endif
-  assert(N.argType == INT);
-  const int argc = N.i;
-  assert(argc == 6);
+  const int argc = 6;
   PtrOrLiteral argv[6];
   popargs(argc, argv);
   const int nps = 3;
@@ -46884,11 +45694,10 @@ DEFUN2(stgApplyNNNPPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[5]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyP, N, f);
+        STGJUMP1(stgApplyP, f);
         break;
       } // case 1
       case 2: {
@@ -46910,11 +45719,10 @@ DEFUN2(stgApplyNNNPPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[4]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyPP, N, f);
+        STGJUMP1(stgApplyPP, f);
         break;
       } // case 2
       case 3: {
@@ -46937,11 +45745,10 @@ DEFUN2(stgApplyNNNPPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyPPP, N, f);
+        STGJUMP1(stgApplyPPP, f);
         break;
       } // case 3
       case 4: {
@@ -46964,11 +45771,10 @@ DEFUN2(stgApplyNNNPPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyNPPP, N, f);
+        STGJUMP1(stgApplyNPPP, f);
         break;
       } // case 4
       case 5: {
@@ -46991,11 +45797,10 @@ DEFUN2(stgApplyNNNPPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyNNPPP, N, f);
+        STGJUMP1(stgApplyNNPPP, f);
         break;
       } // case 5
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -47076,11 +45881,10 @@ DEFUN2(stgApplyNNNPPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[5]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyP, N, f);
+        STGJUMP1(stgApplyP, f);
         break;
       } // case 1
       case 2: {
@@ -47104,11 +45908,10 @@ DEFUN2(stgApplyNNNPPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[4]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyPP, N, f);
+        STGJUMP1(stgApplyPP, f);
         break;
       } // case 2
       case 3: {
@@ -47133,11 +45936,10 @@ DEFUN2(stgApplyNNNPPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyPPP, N, f);
+        STGJUMP1(stgApplyPPP, f);
         break;
       } // case 3
       case 4: {
@@ -47162,11 +45964,10 @@ DEFUN2(stgApplyNNNPPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyNPPP, N, f);
+        STGJUMP1(stgApplyNPPP, f);
         break;
       } // case 4
       case 5: {
@@ -47191,11 +45992,10 @@ DEFUN2(stgApplyNNNPPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyNNPPP, N, f);
+        STGJUMP1(stgApplyNNPPP, f);
         break;
       } // case 5
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -47262,13 +46062,11 @@ DEFUN2(stgApplyNNNPPP, N, f) {
   ENDFUN;
 }
 
-DEFUN2(stgApplyPNNPPP, N, f) {
+DEFUN1(stgApplyPNNPPP, f) {
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyPNNPPP %s\n", f.op->infoPtr->name);
   #endif
-  assert(N.argType == INT);
-  const int argc = N.i;
-  assert(argc == 6);
+  const int argc = 6;
   PtrOrLiteral argv[6];
   popargs(argc, argv);
   const int nps = 4;
@@ -47363,11 +46161,10 @@ DEFUN2(stgApplyPNNPPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[5]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyP, N, f);
+        STGJUMP1(stgApplyP, f);
         break;
       } // case 1
       case 2: {
@@ -47389,11 +46186,10 @@ DEFUN2(stgApplyPNNPPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[4]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyPP, N, f);
+        STGJUMP1(stgApplyPP, f);
         break;
       } // case 2
       case 3: {
@@ -47416,11 +46212,10 @@ DEFUN2(stgApplyPNNPPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyPPP, N, f);
+        STGJUMP1(stgApplyPPP, f);
         break;
       } // case 3
       case 4: {
@@ -47443,11 +46238,10 @@ DEFUN2(stgApplyPNNPPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyNPPP, N, f);
+        STGJUMP1(stgApplyNPPP, f);
         break;
       } // case 4
       case 5: {
@@ -47470,11 +46264,10 @@ DEFUN2(stgApplyPNNPPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyNNPPP, N, f);
+        STGJUMP1(stgApplyNNPPP, f);
         break;
       } // case 5
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -47555,11 +46348,10 @@ DEFUN2(stgApplyPNNPPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[5]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyP, N, f);
+        STGJUMP1(stgApplyP, f);
         break;
       } // case 1
       case 2: {
@@ -47583,11 +46375,10 @@ DEFUN2(stgApplyPNNPPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[4]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyPP, N, f);
+        STGJUMP1(stgApplyPP, f);
         break;
       } // case 2
       case 3: {
@@ -47612,11 +46403,10 @@ DEFUN2(stgApplyPNNPPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyPPP, N, f);
+        STGJUMP1(stgApplyPPP, f);
         break;
       } // case 3
       case 4: {
@@ -47641,11 +46431,10 @@ DEFUN2(stgApplyPNNPPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyNPPP, N, f);
+        STGJUMP1(stgApplyNPPP, f);
         break;
       } // case 4
       case 5: {
@@ -47670,11 +46459,10 @@ DEFUN2(stgApplyPNNPPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyNNPPP, N, f);
+        STGJUMP1(stgApplyNNPPP, f);
         break;
       } // case 5
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -47741,13 +46529,11 @@ DEFUN2(stgApplyPNNPPP, N, f) {
   ENDFUN;
 }
 
-DEFUN2(stgApplyNPNPPP, N, f) {
+DEFUN1(stgApplyNPNPPP, f) {
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyNPNPPP %s\n", f.op->infoPtr->name);
   #endif
-  assert(N.argType == INT);
-  const int argc = N.i;
-  assert(argc == 6);
+  const int argc = 6;
   PtrOrLiteral argv[6];
   popargs(argc, argv);
   const int nps = 4;
@@ -47842,11 +46628,10 @@ DEFUN2(stgApplyNPNPPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[5]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyP, N, f);
+        STGJUMP1(stgApplyP, f);
         break;
       } // case 1
       case 2: {
@@ -47868,11 +46653,10 @@ DEFUN2(stgApplyNPNPPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[4]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyPP, N, f);
+        STGJUMP1(stgApplyPP, f);
         break;
       } // case 2
       case 3: {
@@ -47895,11 +46679,10 @@ DEFUN2(stgApplyNPNPPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyPPP, N, f);
+        STGJUMP1(stgApplyPPP, f);
         break;
       } // case 3
       case 4: {
@@ -47922,11 +46705,10 @@ DEFUN2(stgApplyNPNPPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyNPPP, N, f);
+        STGJUMP1(stgApplyNPPP, f);
         break;
       } // case 4
       case 5: {
@@ -47950,11 +46732,10 @@ DEFUN2(stgApplyNPNPPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyPNPPP, N, f);
+        STGJUMP1(stgApplyPNPPP, f);
         break;
       } // case 5
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -48035,11 +46816,10 @@ DEFUN2(stgApplyNPNPPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[5]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyP, N, f);
+        STGJUMP1(stgApplyP, f);
         break;
       } // case 1
       case 2: {
@@ -48063,11 +46843,10 @@ DEFUN2(stgApplyNPNPPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[4]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyPP, N, f);
+        STGJUMP1(stgApplyPP, f);
         break;
       } // case 2
       case 3: {
@@ -48092,11 +46871,10 @@ DEFUN2(stgApplyNPNPPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyPPP, N, f);
+        STGJUMP1(stgApplyPPP, f);
         break;
       } // case 3
       case 4: {
@@ -48121,11 +46899,10 @@ DEFUN2(stgApplyNPNPPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyNPPP, N, f);
+        STGJUMP1(stgApplyNPPP, f);
         break;
       } // case 4
       case 5: {
@@ -48151,11 +46928,10 @@ DEFUN2(stgApplyNPNPPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyPNPPP, N, f);
+        STGJUMP1(stgApplyPNPPP, f);
         break;
       } // case 5
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -48222,13 +46998,11 @@ DEFUN2(stgApplyNPNPPP, N, f) {
   ENDFUN;
 }
 
-DEFUN2(stgApplyPPNPPP, N, f) {
+DEFUN1(stgApplyPPNPPP, f) {
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyPPNPPP %s\n", f.op->infoPtr->name);
   #endif
-  assert(N.argType == INT);
-  const int argc = N.i;
-  assert(argc == 6);
+  const int argc = 6;
   PtrOrLiteral argv[6];
   popargs(argc, argv);
   const int nps = 5;
@@ -48337,11 +47111,10 @@ DEFUN2(stgApplyPPNPPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[5]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyP, N, f);
+        STGJUMP1(stgApplyP, f);
         break;
       } // case 1
       case 2: {
@@ -48363,11 +47136,10 @@ DEFUN2(stgApplyPPNPPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[4]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyPP, N, f);
+        STGJUMP1(stgApplyPP, f);
         break;
       } // case 2
       case 3: {
@@ -48390,11 +47162,10 @@ DEFUN2(stgApplyPPNPPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyPPP, N, f);
+        STGJUMP1(stgApplyPPP, f);
         break;
       } // case 3
       case 4: {
@@ -48417,11 +47188,10 @@ DEFUN2(stgApplyPPNPPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyNPPP, N, f);
+        STGJUMP1(stgApplyNPPP, f);
         break;
       } // case 4
       case 5: {
@@ -48445,11 +47215,10 @@ DEFUN2(stgApplyPPNPPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyPNPPP, N, f);
+        STGJUMP1(stgApplyPNPPP, f);
         break;
       } // case 5
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -48530,11 +47299,10 @@ DEFUN2(stgApplyPPNPPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[5]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyP, N, f);
+        STGJUMP1(stgApplyP, f);
         break;
       } // case 1
       case 2: {
@@ -48558,11 +47326,10 @@ DEFUN2(stgApplyPPNPPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[4]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyPP, N, f);
+        STGJUMP1(stgApplyPP, f);
         break;
       } // case 2
       case 3: {
@@ -48587,11 +47354,10 @@ DEFUN2(stgApplyPPNPPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyPPP, N, f);
+        STGJUMP1(stgApplyPPP, f);
         break;
       } // case 3
       case 4: {
@@ -48616,11 +47382,10 @@ DEFUN2(stgApplyPPNPPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyNPPP, N, f);
+        STGJUMP1(stgApplyNPPP, f);
         break;
       } // case 4
       case 5: {
@@ -48646,11 +47411,10 @@ DEFUN2(stgApplyPPNPPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyPNPPP, N, f);
+        STGJUMP1(stgApplyPNPPP, f);
         break;
       } // case 5
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -48717,13 +47481,11 @@ DEFUN2(stgApplyPPNPPP, N, f) {
   ENDFUN;
 }
 
-DEFUN2(stgApplyNNPPPP, N, f) {
+DEFUN1(stgApplyNNPPPP, f) {
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyNNPPPP %s\n", f.op->infoPtr->name);
   #endif
-  assert(N.argType == INT);
-  const int argc = N.i;
-  assert(argc == 6);
+  const int argc = 6;
   PtrOrLiteral argv[6];
   popargs(argc, argv);
   const int nps = 4;
@@ -48818,11 +47580,10 @@ DEFUN2(stgApplyNNPPPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[5]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyP, N, f);
+        STGJUMP1(stgApplyP, f);
         break;
       } // case 1
       case 2: {
@@ -48844,11 +47605,10 @@ DEFUN2(stgApplyNNPPPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[4]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyPP, N, f);
+        STGJUMP1(stgApplyPP, f);
         break;
       } // case 2
       case 3: {
@@ -48871,11 +47631,10 @@ DEFUN2(stgApplyNNPPPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyPPP, N, f);
+        STGJUMP1(stgApplyPPP, f);
         break;
       } // case 3
       case 4: {
@@ -48899,11 +47658,10 @@ DEFUN2(stgApplyNNPPPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyPPPP, N, f);
+        STGJUMP1(stgApplyPPPP, f);
         break;
       } // case 4
       case 5: {
@@ -48927,11 +47685,10 @@ DEFUN2(stgApplyNNPPPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyNPPPP, N, f);
+        STGJUMP1(stgApplyNPPPP, f);
         break;
       } // case 5
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -49012,11 +47769,10 @@ DEFUN2(stgApplyNNPPPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[5]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyP, N, f);
+        STGJUMP1(stgApplyP, f);
         break;
       } // case 1
       case 2: {
@@ -49040,11 +47796,10 @@ DEFUN2(stgApplyNNPPPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[4]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyPP, N, f);
+        STGJUMP1(stgApplyPP, f);
         break;
       } // case 2
       case 3: {
@@ -49069,11 +47824,10 @@ DEFUN2(stgApplyNNPPPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyPPP, N, f);
+        STGJUMP1(stgApplyPPP, f);
         break;
       } // case 3
       case 4: {
@@ -49099,11 +47853,10 @@ DEFUN2(stgApplyNNPPPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyPPPP, N, f);
+        STGJUMP1(stgApplyPPPP, f);
         break;
       } // case 4
       case 5: {
@@ -49129,11 +47882,10 @@ DEFUN2(stgApplyNNPPPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyNPPPP, N, f);
+        STGJUMP1(stgApplyNPPPP, f);
         break;
       } // case 5
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -49200,13 +47952,11 @@ DEFUN2(stgApplyNNPPPP, N, f) {
   ENDFUN;
 }
 
-DEFUN2(stgApplyPNPPPP, N, f) {
+DEFUN1(stgApplyPNPPPP, f) {
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyPNPPPP %s\n", f.op->infoPtr->name);
   #endif
-  assert(N.argType == INT);
-  const int argc = N.i;
-  assert(argc == 6);
+  const int argc = 6;
   PtrOrLiteral argv[6];
   popargs(argc, argv);
   const int nps = 5;
@@ -49315,11 +48065,10 @@ DEFUN2(stgApplyPNPPPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[5]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyP, N, f);
+        STGJUMP1(stgApplyP, f);
         break;
       } // case 1
       case 2: {
@@ -49341,11 +48090,10 @@ DEFUN2(stgApplyPNPPPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[4]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyPP, N, f);
+        STGJUMP1(stgApplyPP, f);
         break;
       } // case 2
       case 3: {
@@ -49368,11 +48116,10 @@ DEFUN2(stgApplyPNPPPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyPPP, N, f);
+        STGJUMP1(stgApplyPPP, f);
         break;
       } // case 3
       case 4: {
@@ -49396,11 +48143,10 @@ DEFUN2(stgApplyPNPPPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyPPPP, N, f);
+        STGJUMP1(stgApplyPPPP, f);
         break;
       } // case 4
       case 5: {
@@ -49424,11 +48170,10 @@ DEFUN2(stgApplyPNPPPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyNPPPP, N, f);
+        STGJUMP1(stgApplyNPPPP, f);
         break;
       } // case 5
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -49509,11 +48254,10 @@ DEFUN2(stgApplyPNPPPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[5]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyP, N, f);
+        STGJUMP1(stgApplyP, f);
         break;
       } // case 1
       case 2: {
@@ -49537,11 +48281,10 @@ DEFUN2(stgApplyPNPPPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[4]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyPP, N, f);
+        STGJUMP1(stgApplyPP, f);
         break;
       } // case 2
       case 3: {
@@ -49566,11 +48309,10 @@ DEFUN2(stgApplyPNPPPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyPPP, N, f);
+        STGJUMP1(stgApplyPPP, f);
         break;
       } // case 3
       case 4: {
@@ -49596,11 +48338,10 @@ DEFUN2(stgApplyPNPPPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyPPPP, N, f);
+        STGJUMP1(stgApplyPPPP, f);
         break;
       } // case 4
       case 5: {
@@ -49626,11 +48367,10 @@ DEFUN2(stgApplyPNPPPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyNPPPP, N, f);
+        STGJUMP1(stgApplyNPPPP, f);
         break;
       } // case 5
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -49697,13 +48437,11 @@ DEFUN2(stgApplyPNPPPP, N, f) {
   ENDFUN;
 }
 
-DEFUN2(stgApplyNPPPPP, N, f) {
+DEFUN1(stgApplyNPPPPP, f) {
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyNPPPPP %s\n", f.op->infoPtr->name);
   #endif
-  assert(N.argType == INT);
-  const int argc = N.i;
-  assert(argc == 6);
+  const int argc = 6;
   PtrOrLiteral argv[6];
   popargs(argc, argv);
   const int nps = 5;
@@ -49812,11 +48550,10 @@ DEFUN2(stgApplyNPPPPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[5]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyP, N, f);
+        STGJUMP1(stgApplyP, f);
         break;
       } // case 1
       case 2: {
@@ -49838,11 +48575,10 @@ DEFUN2(stgApplyNPPPPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[4]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyPP, N, f);
+        STGJUMP1(stgApplyPP, f);
         break;
       } // case 2
       case 3: {
@@ -49865,11 +48601,10 @@ DEFUN2(stgApplyNPPPPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyPPP, N, f);
+        STGJUMP1(stgApplyPPP, f);
         break;
       } // case 3
       case 4: {
@@ -49893,11 +48628,10 @@ DEFUN2(stgApplyNPPPPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyPPPP, N, f);
+        STGJUMP1(stgApplyPPPP, f);
         break;
       } // case 4
       case 5: {
@@ -49922,11 +48656,10 @@ DEFUN2(stgApplyNPPPPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyPPPPP, N, f);
+        STGJUMP1(stgApplyPPPPP, f);
         break;
       } // case 5
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -50007,11 +48740,10 @@ DEFUN2(stgApplyNPPPPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[5]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyP, N, f);
+        STGJUMP1(stgApplyP, f);
         break;
       } // case 1
       case 2: {
@@ -50035,11 +48767,10 @@ DEFUN2(stgApplyNPPPPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[4]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyPP, N, f);
+        STGJUMP1(stgApplyPP, f);
         break;
       } // case 2
       case 3: {
@@ -50064,11 +48795,10 @@ DEFUN2(stgApplyNPPPPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyPPP, N, f);
+        STGJUMP1(stgApplyPPP, f);
         break;
       } // case 3
       case 4: {
@@ -50094,11 +48824,10 @@ DEFUN2(stgApplyNPPPPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyPPPP, N, f);
+        STGJUMP1(stgApplyPPPP, f);
         break;
       } // case 4
       case 5: {
@@ -50125,11 +48854,10 @@ DEFUN2(stgApplyNPPPPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyPPPPP, N, f);
+        STGJUMP1(stgApplyPPPPP, f);
         break;
       } // case 5
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -50196,13 +48924,11 @@ DEFUN2(stgApplyNPPPPP, N, f) {
   ENDFUN;
 }
 
-DEFUN2(stgApplyPPPPPP, N, f) {
+DEFUN1(stgApplyPPPPPP, f) {
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyPPPPPP %s\n", f.op->infoPtr->name);
   #endif
-  assert(N.argType == INT);
-  const int argc = N.i;
-  assert(argc == 6);
+  const int argc = 6;
   PtrOrLiteral argv[6];
   popargs(argc, argv);
   const int nps = 6;
@@ -50327,11 +49053,10 @@ DEFUN2(stgApplyPPPPPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[5]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyP, N, f);
+        STGJUMP1(stgApplyP, f);
         break;
       } // case 1
       case 2: {
@@ -50353,11 +49078,10 @@ DEFUN2(stgApplyPPPPPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[4]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyPP, N, f);
+        STGJUMP1(stgApplyPP, f);
         break;
       } // case 2
       case 3: {
@@ -50380,11 +49104,10 @@ DEFUN2(stgApplyPPPPPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyPPP, N, f);
+        STGJUMP1(stgApplyPPP, f);
         break;
       } // case 3
       case 4: {
@@ -50408,11 +49131,10 @@ DEFUN2(stgApplyPPPPPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyPPPP, N, f);
+        STGJUMP1(stgApplyPPPP, f);
         break;
       } // case 4
       case 5: {
@@ -50437,11 +49159,10 @@ DEFUN2(stgApplyPPPPPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply
-        STGJUMP2(stgApplyPPPPP, N, f);
+        STGJUMP1(stgApplyPPPPP, f);
         break;
       } // case 5
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);
@@ -50522,11 +49243,10 @@ DEFUN2(stgApplyPPPPPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[5]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyP, N, f);
+        STGJUMP1(stgApplyP, f);
         break;
       } // case 1
       case 2: {
@@ -50550,11 +49270,10 @@ DEFUN2(stgApplyPPPPPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[4]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyPP, N, f);
+        STGJUMP1(stgApplyPP, f);
         break;
       } // case 2
       case 3: {
@@ -50579,11 +49298,10 @@ DEFUN2(stgApplyPPPPPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[3]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyPPP, N, f);
+        STGJUMP1(stgApplyPPP, f);
         break;
       } // case 3
       case 4: {
@@ -50609,11 +49327,10 @@ DEFUN2(stgApplyPPPPPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[2]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyPPPP, N, f);
+        STGJUMP1(stgApplyPPPP, f);
         break;
       } // case 4
       case 5: {
@@ -50640,11 +49357,10 @@ DEFUN2(stgApplyPPPPPP, N, f) {
         // grab obj just returned
         f = stgCurVal;
         // new argc
-        N.i = excess;
         // push excess args
         pushargs(excess, &argv[1]);
         // try again - tail call stgApply 
-        STGJUMP2(stgApplyPPPPP, N, f);
+        STGJUMP1(stgApplyPPPPP, f);
         break;
       } // case 5
         default: fprintf(stderr, "switch on excess reached default!\n"); exit(0);

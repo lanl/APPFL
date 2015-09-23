@@ -1,1 +1,0 @@
-stgApply-nonstrict.c
