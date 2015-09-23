@@ -61,7 +61,6 @@ DEFUN1(stgApplyN, f) {
                     f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 0, 1);
-      pap->argCount = argc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -86,7 +85,6 @@ DEFUN1(stgApplyN, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApplyN:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
@@ -111,7 +109,6 @@ DEFUN1(stgApplyN, f) {
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 0 + pappargc, 1 + papnargc);
-      pap->argCount = argc + pappargc + papnargc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -210,7 +207,6 @@ DEFUN1(stgApplyP, f) {
                     f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 1, 0);
-      pap->argCount = argc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -235,7 +231,6 @@ DEFUN1(stgApplyP, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApplyP:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
@@ -260,7 +255,6 @@ DEFUN1(stgApplyP, f) {
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 1 + pappargc, 0 + papnargc);
-      pap->argCount = argc + pappargc + papnargc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -380,7 +374,6 @@ DEFUN1(stgApplyNN, f) {
                     f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 0, 2);
-      pap->argCount = argc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -405,7 +398,6 @@ DEFUN1(stgApplyNN, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApplyNN:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
@@ -457,7 +449,6 @@ DEFUN1(stgApplyNN, f) {
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 0 + pappargc, 2 + papnargc);
-      pap->argCount = argc + pappargc + papnargc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -579,7 +570,6 @@ DEFUN1(stgApplyPN, f) {
                     f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 1, 1);
-      pap->argCount = argc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -604,7 +594,6 @@ DEFUN1(stgApplyPN, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApplyPN:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
@@ -656,7 +645,6 @@ DEFUN1(stgApplyPN, f) {
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 1 + pappargc, 1 + papnargc);
-      pap->argCount = argc + pappargc + papnargc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -780,7 +768,6 @@ DEFUN1(stgApplyNP, f) {
                     f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 1, 1);
-      pap->argCount = argc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -805,7 +792,6 @@ DEFUN1(stgApplyNP, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApplyNP:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
@@ -859,7 +845,6 @@ DEFUN1(stgApplyNP, f) {
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 1 + pappargc, 1 + papnargc);
-      pap->argCount = argc + pappargc + papnargc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -984,7 +969,6 @@ DEFUN1(stgApplyPP, f) {
                     f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2, 0);
-      pap->argCount = argc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -1009,7 +993,6 @@ DEFUN1(stgApplyPP, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApplyPP:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
@@ -1063,7 +1046,6 @@ DEFUN1(stgApplyPP, f) {
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2 + pappargc, 0 + papnargc);
-      pap->argCount = argc + pappargc + papnargc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -1211,7 +1193,6 @@ DEFUN1(stgApplyNNN, f) {
                     f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 0, 3);
-      pap->argCount = argc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -1236,7 +1217,6 @@ DEFUN1(stgApplyNNN, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApplyNNN:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
@@ -1317,7 +1297,6 @@ DEFUN1(stgApplyNNN, f) {
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 0 + pappargc, 3 + papnargc);
-      pap->argCount = argc + pappargc + papnargc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -1467,7 +1446,6 @@ DEFUN1(stgApplyPNN, f) {
                     f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 1, 2);
-      pap->argCount = argc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -1492,7 +1470,6 @@ DEFUN1(stgApplyPNN, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApplyPNN:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
@@ -1573,7 +1550,6 @@ DEFUN1(stgApplyPNN, f) {
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 1 + pappargc, 2 + papnargc);
-      pap->argCount = argc + pappargc + papnargc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -1725,7 +1701,6 @@ DEFUN1(stgApplyNPN, f) {
                     f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 1, 2);
-      pap->argCount = argc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -1750,7 +1725,6 @@ DEFUN1(stgApplyNPN, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApplyNPN:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
@@ -1833,7 +1807,6 @@ DEFUN1(stgApplyNPN, f) {
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 1 + pappargc, 2 + papnargc);
-      pap->argCount = argc + pappargc + papnargc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -1986,7 +1959,6 @@ DEFUN1(stgApplyPPN, f) {
                     f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2, 1);
-      pap->argCount = argc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -2011,7 +1983,6 @@ DEFUN1(stgApplyPPN, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApplyPPN:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
@@ -2094,7 +2065,6 @@ DEFUN1(stgApplyPPN, f) {
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2 + pappargc, 1 + papnargc);
-      pap->argCount = argc + pappargc + papnargc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -2248,7 +2218,6 @@ DEFUN1(stgApplyNNP, f) {
                     f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 1, 2);
-      pap->argCount = argc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -2273,7 +2242,6 @@ DEFUN1(stgApplyNNP, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApplyNNP:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
@@ -2358,7 +2326,6 @@ DEFUN1(stgApplyNNP, f) {
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 1 + pappargc, 2 + papnargc);
-      pap->argCount = argc + pappargc + papnargc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -2513,7 +2480,6 @@ DEFUN1(stgApplyPNP, f) {
                     f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2, 1);
-      pap->argCount = argc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -2538,7 +2504,6 @@ DEFUN1(stgApplyPNP, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApplyPNP:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
@@ -2623,7 +2588,6 @@ DEFUN1(stgApplyPNP, f) {
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2 + pappargc, 1 + papnargc);
-      pap->argCount = argc + pappargc + papnargc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -2779,7 +2743,6 @@ DEFUN1(stgApplyNPP, f) {
                     f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2, 1);
-      pap->argCount = argc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -2804,7 +2767,6 @@ DEFUN1(stgApplyNPP, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApplyNPP:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
@@ -2890,7 +2852,6 @@ DEFUN1(stgApplyNPP, f) {
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2 + pappargc, 1 + papnargc);
-      pap->argCount = argc + pappargc + papnargc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -3047,7 +3008,6 @@ DEFUN1(stgApplyPPP, f) {
                     f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3, 0);
-      pap->argCount = argc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -3072,7 +3032,6 @@ DEFUN1(stgApplyPPP, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApplyPPP:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
@@ -3158,7 +3117,6 @@ DEFUN1(stgApplyPPP, f) {
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3 + pappargc, 0 + papnargc);
-      pap->argCount = argc + pappargc + papnargc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -3329,7 +3287,6 @@ DEFUN1(stgApplyNNNN, f) {
                     f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 0, 4);
-      pap->argCount = argc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -3354,7 +3311,6 @@ DEFUN1(stgApplyNNNN, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApplyNNNN:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
@@ -3459,7 +3415,6 @@ DEFUN1(stgApplyNNNN, f) {
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 0 + pappargc, 4 + papnargc);
-      pap->argCount = argc + pappargc + papnargc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -3632,7 +3587,6 @@ DEFUN1(stgApplyPNNN, f) {
                     f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 1, 3);
-      pap->argCount = argc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -3657,7 +3611,6 @@ DEFUN1(stgApplyPNNN, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApplyPNNN:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
@@ -3762,7 +3715,6 @@ DEFUN1(stgApplyPNNN, f) {
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 1 + pappargc, 3 + papnargc);
-      pap->argCount = argc + pappargc + papnargc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -3937,7 +3889,6 @@ DEFUN1(stgApplyNPNN, f) {
                     f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 1, 3);
-      pap->argCount = argc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -3962,7 +3913,6 @@ DEFUN1(stgApplyNPNN, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApplyNPNN:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
@@ -4069,7 +4019,6 @@ DEFUN1(stgApplyNPNN, f) {
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 1 + pappargc, 3 + papnargc);
-      pap->argCount = argc + pappargc + papnargc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -4245,7 +4194,6 @@ DEFUN1(stgApplyPPNN, f) {
                     f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2, 2);
-      pap->argCount = argc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -4270,7 +4218,6 @@ DEFUN1(stgApplyPPNN, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApplyPPNN:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
@@ -4377,7 +4324,6 @@ DEFUN1(stgApplyPPNN, f) {
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2 + pappargc, 2 + papnargc);
-      pap->argCount = argc + pappargc + papnargc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -4554,7 +4500,6 @@ DEFUN1(stgApplyNNPN, f) {
                     f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 1, 3);
-      pap->argCount = argc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -4579,7 +4524,6 @@ DEFUN1(stgApplyNNPN, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApplyNNPN:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
@@ -4688,7 +4632,6 @@ DEFUN1(stgApplyNNPN, f) {
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 1 + pappargc, 3 + papnargc);
-      pap->argCount = argc + pappargc + papnargc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -4866,7 +4809,6 @@ DEFUN1(stgApplyPNPN, f) {
                     f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2, 2);
-      pap->argCount = argc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -4891,7 +4833,6 @@ DEFUN1(stgApplyPNPN, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApplyPNPN:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
@@ -5000,7 +4941,6 @@ DEFUN1(stgApplyPNPN, f) {
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2 + pappargc, 2 + papnargc);
-      pap->argCount = argc + pappargc + papnargc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -5179,7 +5119,6 @@ DEFUN1(stgApplyNPPN, f) {
                     f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2, 2);
-      pap->argCount = argc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -5204,7 +5143,6 @@ DEFUN1(stgApplyNPPN, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApplyNPPN:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
@@ -5314,7 +5252,6 @@ DEFUN1(stgApplyNPPN, f) {
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2 + pappargc, 2 + papnargc);
-      pap->argCount = argc + pappargc + papnargc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -5494,7 +5431,6 @@ DEFUN1(stgApplyPPPN, f) {
                     f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3, 1);
-      pap->argCount = argc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -5519,7 +5455,6 @@ DEFUN1(stgApplyPPPN, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApplyPPPN:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
@@ -5629,7 +5564,6 @@ DEFUN1(stgApplyPPPN, f) {
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3 + pappargc, 1 + papnargc);
-      pap->argCount = argc + pappargc + papnargc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -5808,7 +5742,6 @@ DEFUN1(stgApplyNNNP, f) {
                     f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 1, 3);
-      pap->argCount = argc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -5833,7 +5766,6 @@ DEFUN1(stgApplyNNNP, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApplyNNNP:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
@@ -5944,7 +5876,6 @@ DEFUN1(stgApplyNNNP, f) {
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 1 + pappargc, 3 + papnargc);
-      pap->argCount = argc + pappargc + papnargc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -6124,7 +6055,6 @@ DEFUN1(stgApplyPNNP, f) {
                     f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2, 2);
-      pap->argCount = argc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -6149,7 +6079,6 @@ DEFUN1(stgApplyPNNP, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApplyPNNP:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
@@ -6260,7 +6189,6 @@ DEFUN1(stgApplyPNNP, f) {
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2 + pappargc, 2 + papnargc);
-      pap->argCount = argc + pappargc + papnargc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -6441,7 +6369,6 @@ DEFUN1(stgApplyNPNP, f) {
                     f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2, 2);
-      pap->argCount = argc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -6466,7 +6393,6 @@ DEFUN1(stgApplyNPNP, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApplyNPNP:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
@@ -6578,7 +6504,6 @@ DEFUN1(stgApplyNPNP, f) {
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2 + pappargc, 2 + papnargc);
-      pap->argCount = argc + pappargc + papnargc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -6760,7 +6685,6 @@ DEFUN1(stgApplyPPNP, f) {
                     f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3, 1);
-      pap->argCount = argc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -6785,7 +6709,6 @@ DEFUN1(stgApplyPPNP, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApplyPPNP:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
@@ -6897,7 +6820,6 @@ DEFUN1(stgApplyPPNP, f) {
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3 + pappargc, 1 + papnargc);
-      pap->argCount = argc + pappargc + papnargc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -7079,7 +7001,6 @@ DEFUN1(stgApplyNNPP, f) {
                     f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2, 2);
-      pap->argCount = argc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -7104,7 +7025,6 @@ DEFUN1(stgApplyNNPP, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApplyNNPP:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
@@ -7217,7 +7137,6 @@ DEFUN1(stgApplyNNPP, f) {
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2 + pappargc, 2 + papnargc);
-      pap->argCount = argc + pappargc + papnargc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -7400,7 +7319,6 @@ DEFUN1(stgApplyPNPP, f) {
                     f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3, 1);
-      pap->argCount = argc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -7425,7 +7343,6 @@ DEFUN1(stgApplyPNPP, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApplyPNPP:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
@@ -7538,7 +7455,6 @@ DEFUN1(stgApplyPNPP, f) {
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3 + pappargc, 1 + papnargc);
-      pap->argCount = argc + pappargc + papnargc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -7722,7 +7638,6 @@ DEFUN1(stgApplyNPPP, f) {
                     f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3, 1);
-      pap->argCount = argc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -7747,7 +7662,6 @@ DEFUN1(stgApplyNPPP, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApplyNPPP:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
@@ -7861,7 +7775,6 @@ DEFUN1(stgApplyNPPP, f) {
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3 + pappargc, 1 + papnargc);
-      pap->argCount = argc + pappargc + papnargc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -8046,7 +7959,6 @@ DEFUN1(stgApplyPPPP, f) {
                     f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 4, 0);
-      pap->argCount = argc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -8071,7 +7983,6 @@ DEFUN1(stgApplyPPPP, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApplyPPPP:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
@@ -8185,7 +8096,6 @@ DEFUN1(stgApplyPPPP, f) {
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 4 + pappargc, 0 + papnargc);
-      pap->argCount = argc + pappargc + papnargc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -8379,7 +8289,6 @@ DEFUN1(stgApplyNNNNN, f) {
                     f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 0, 5);
-      pap->argCount = argc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -8404,7 +8313,6 @@ DEFUN1(stgApplyNNNNN, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApplyNNNNN:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
@@ -8533,7 +8441,6 @@ DEFUN1(stgApplyNNNNN, f) {
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 0 + pappargc, 5 + papnargc);
-      pap->argCount = argc + pappargc + papnargc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -8729,7 +8636,6 @@ DEFUN1(stgApplyPNNNN, f) {
                     f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 1, 4);
-      pap->argCount = argc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -8754,7 +8660,6 @@ DEFUN1(stgApplyPNNNN, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApplyPNNNN:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
@@ -8883,7 +8788,6 @@ DEFUN1(stgApplyPNNNN, f) {
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 1 + pappargc, 4 + papnargc);
-      pap->argCount = argc + pappargc + papnargc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -9081,7 +8985,6 @@ DEFUN1(stgApplyNPNNN, f) {
                     f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 1, 4);
-      pap->argCount = argc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -9106,7 +9009,6 @@ DEFUN1(stgApplyNPNNN, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApplyNPNNN:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
@@ -9237,7 +9139,6 @@ DEFUN1(stgApplyNPNNN, f) {
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 1 + pappargc, 4 + papnargc);
-      pap->argCount = argc + pappargc + papnargc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -9436,7 +9337,6 @@ DEFUN1(stgApplyPPNNN, f) {
                     f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2, 3);
-      pap->argCount = argc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -9461,7 +9361,6 @@ DEFUN1(stgApplyPPNNN, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApplyPPNNN:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
@@ -9592,7 +9491,6 @@ DEFUN1(stgApplyPPNNN, f) {
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2 + pappargc, 3 + papnargc);
-      pap->argCount = argc + pappargc + papnargc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -9792,7 +9690,6 @@ DEFUN1(stgApplyNNPNN, f) {
                     f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 1, 4);
-      pap->argCount = argc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -9817,7 +9714,6 @@ DEFUN1(stgApplyNNPNN, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApplyNNPNN:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
@@ -9950,7 +9846,6 @@ DEFUN1(stgApplyNNPNN, f) {
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 1 + pappargc, 4 + papnargc);
-      pap->argCount = argc + pappargc + papnargc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -10151,7 +10046,6 @@ DEFUN1(stgApplyPNPNN, f) {
                     f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2, 3);
-      pap->argCount = argc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -10176,7 +10070,6 @@ DEFUN1(stgApplyPNPNN, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApplyPNPNN:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
@@ -10309,7 +10202,6 @@ DEFUN1(stgApplyPNPNN, f) {
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2 + pappargc, 3 + papnargc);
-      pap->argCount = argc + pappargc + papnargc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -10511,7 +10403,6 @@ DEFUN1(stgApplyNPPNN, f) {
                     f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2, 3);
-      pap->argCount = argc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -10536,7 +10427,6 @@ DEFUN1(stgApplyNPPNN, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApplyNPPNN:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
@@ -10670,7 +10560,6 @@ DEFUN1(stgApplyNPPNN, f) {
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2 + pappargc, 3 + papnargc);
-      pap->argCount = argc + pappargc + papnargc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -10873,7 +10762,6 @@ DEFUN1(stgApplyPPPNN, f) {
                     f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3, 2);
-      pap->argCount = argc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -10898,7 +10786,6 @@ DEFUN1(stgApplyPPPNN, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApplyPPPNN:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
@@ -11032,7 +10919,6 @@ DEFUN1(stgApplyPPPNN, f) {
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3 + pappargc, 2 + papnargc);
-      pap->argCount = argc + pappargc + papnargc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -11234,7 +11120,6 @@ DEFUN1(stgApplyNNNPN, f) {
                     f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 1, 4);
-      pap->argCount = argc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -11259,7 +11144,6 @@ DEFUN1(stgApplyNNNPN, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApplyNNNPN:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
@@ -11394,7 +11278,6 @@ DEFUN1(stgApplyNNNPN, f) {
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 1 + pappargc, 4 + papnargc);
-      pap->argCount = argc + pappargc + papnargc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -11597,7 +11480,6 @@ DEFUN1(stgApplyPNNPN, f) {
                     f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2, 3);
-      pap->argCount = argc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -11622,7 +11504,6 @@ DEFUN1(stgApplyPNNPN, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApplyPNNPN:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
@@ -11757,7 +11638,6 @@ DEFUN1(stgApplyPNNPN, f) {
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2 + pappargc, 3 + papnargc);
-      pap->argCount = argc + pappargc + papnargc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -11961,7 +11841,6 @@ DEFUN1(stgApplyNPNPN, f) {
                     f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2, 3);
-      pap->argCount = argc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -11986,7 +11865,6 @@ DEFUN1(stgApplyNPNPN, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApplyNPNPN:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
@@ -12122,7 +12000,6 @@ DEFUN1(stgApplyNPNPN, f) {
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2 + pappargc, 3 + papnargc);
-      pap->argCount = argc + pappargc + papnargc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -12327,7 +12204,6 @@ DEFUN1(stgApplyPPNPN, f) {
                     f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3, 2);
-      pap->argCount = argc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -12352,7 +12228,6 @@ DEFUN1(stgApplyPPNPN, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApplyPPNPN:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
@@ -12488,7 +12363,6 @@ DEFUN1(stgApplyPPNPN, f) {
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3 + pappargc, 2 + papnargc);
-      pap->argCount = argc + pappargc + papnargc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -12693,7 +12567,6 @@ DEFUN1(stgApplyNNPPN, f) {
                     f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2, 3);
-      pap->argCount = argc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -12718,7 +12591,6 @@ DEFUN1(stgApplyNNPPN, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApplyNNPPN:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
@@ -12855,7 +12727,6 @@ DEFUN1(stgApplyNNPPN, f) {
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2 + pappargc, 3 + papnargc);
-      pap->argCount = argc + pappargc + papnargc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -13061,7 +12932,6 @@ DEFUN1(stgApplyPNPPN, f) {
                     f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3, 2);
-      pap->argCount = argc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -13086,7 +12956,6 @@ DEFUN1(stgApplyPNPPN, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApplyPNPPN:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
@@ -13223,7 +13092,6 @@ DEFUN1(stgApplyPNPPN, f) {
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3 + pappargc, 2 + papnargc);
-      pap->argCount = argc + pappargc + papnargc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -13430,7 +13298,6 @@ DEFUN1(stgApplyNPPPN, f) {
                     f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3, 2);
-      pap->argCount = argc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -13455,7 +13322,6 @@ DEFUN1(stgApplyNPPPN, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApplyNPPPN:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
@@ -13593,7 +13459,6 @@ DEFUN1(stgApplyNPPPN, f) {
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3 + pappargc, 2 + papnargc);
-      pap->argCount = argc + pappargc + papnargc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -13801,7 +13666,6 @@ DEFUN1(stgApplyPPPPN, f) {
                     f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 4, 1);
-      pap->argCount = argc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -13826,7 +13690,6 @@ DEFUN1(stgApplyPPPPN, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApplyPPPPN:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
@@ -13964,7 +13827,6 @@ DEFUN1(stgApplyPPPPN, f) {
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 4 + pappargc, 1 + papnargc);
-      pap->argCount = argc + pappargc + papnargc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -14168,7 +14030,6 @@ DEFUN1(stgApplyNNNNP, f) {
                     f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 1, 4);
-      pap->argCount = argc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -14193,7 +14054,6 @@ DEFUN1(stgApplyNNNNP, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApplyNNNNP:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
@@ -14330,7 +14190,6 @@ DEFUN1(stgApplyNNNNP, f) {
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 1 + pappargc, 4 + papnargc);
-      pap->argCount = argc + pappargc + papnargc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -14535,7 +14394,6 @@ DEFUN1(stgApplyPNNNP, f) {
                     f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2, 3);
-      pap->argCount = argc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -14560,7 +14418,6 @@ DEFUN1(stgApplyPNNNP, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApplyPNNNP:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
@@ -14697,7 +14554,6 @@ DEFUN1(stgApplyPNNNP, f) {
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2 + pappargc, 3 + papnargc);
-      pap->argCount = argc + pappargc + papnargc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -14903,7 +14759,6 @@ DEFUN1(stgApplyNPNNP, f) {
                     f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2, 3);
-      pap->argCount = argc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -14928,7 +14783,6 @@ DEFUN1(stgApplyNPNNP, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApplyNPNNP:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
@@ -15066,7 +14920,6 @@ DEFUN1(stgApplyNPNNP, f) {
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2 + pappargc, 3 + papnargc);
-      pap->argCount = argc + pappargc + papnargc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -15273,7 +15126,6 @@ DEFUN1(stgApplyPPNNP, f) {
                     f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3, 2);
-      pap->argCount = argc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -15298,7 +15150,6 @@ DEFUN1(stgApplyPPNNP, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApplyPPNNP:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
@@ -15436,7 +15287,6 @@ DEFUN1(stgApplyPPNNP, f) {
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3 + pappargc, 2 + papnargc);
-      pap->argCount = argc + pappargc + papnargc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -15643,7 +15493,6 @@ DEFUN1(stgApplyNNPNP, f) {
                     f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2, 3);
-      pap->argCount = argc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -15668,7 +15517,6 @@ DEFUN1(stgApplyNNPNP, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApplyNNPNP:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
@@ -15807,7 +15655,6 @@ DEFUN1(stgApplyNNPNP, f) {
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2 + pappargc, 3 + papnargc);
-      pap->argCount = argc + pappargc + papnargc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -16015,7 +15862,6 @@ DEFUN1(stgApplyPNPNP, f) {
                     f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3, 2);
-      pap->argCount = argc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -16040,7 +15886,6 @@ DEFUN1(stgApplyPNPNP, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApplyPNPNP:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
@@ -16179,7 +16024,6 @@ DEFUN1(stgApplyPNPNP, f) {
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3 + pappargc, 2 + papnargc);
-      pap->argCount = argc + pappargc + papnargc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -16388,7 +16232,6 @@ DEFUN1(stgApplyNPPNP, f) {
                     f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3, 2);
-      pap->argCount = argc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -16413,7 +16256,6 @@ DEFUN1(stgApplyNPPNP, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApplyNPPNP:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
@@ -16553,7 +16395,6 @@ DEFUN1(stgApplyNPPNP, f) {
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3 + pappargc, 2 + papnargc);
-      pap->argCount = argc + pappargc + papnargc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -16763,7 +16604,6 @@ DEFUN1(stgApplyPPPNP, f) {
                     f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 4, 1);
-      pap->argCount = argc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -16788,7 +16628,6 @@ DEFUN1(stgApplyPPPNP, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApplyPPPNP:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
@@ -16928,7 +16767,6 @@ DEFUN1(stgApplyPPPNP, f) {
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 4 + pappargc, 1 + papnargc);
-      pap->argCount = argc + pappargc + papnargc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -17136,7 +16974,6 @@ DEFUN1(stgApplyNNNPP, f) {
                     f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2, 3);
-      pap->argCount = argc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -17161,7 +16998,6 @@ DEFUN1(stgApplyNNNPP, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApplyNNNPP:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
@@ -17301,7 +17137,6 @@ DEFUN1(stgApplyNNNPP, f) {
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2 + pappargc, 3 + papnargc);
-      pap->argCount = argc + pappargc + papnargc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -17510,7 +17345,6 @@ DEFUN1(stgApplyPNNPP, f) {
                     f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3, 2);
-      pap->argCount = argc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -17535,7 +17369,6 @@ DEFUN1(stgApplyPNNPP, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApplyPNNPP:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
@@ -17675,7 +17508,6 @@ DEFUN1(stgApplyPNNPP, f) {
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3 + pappargc, 2 + papnargc);
-      pap->argCount = argc + pappargc + papnargc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -17885,7 +17717,6 @@ DEFUN1(stgApplyNPNPP, f) {
                     f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3, 2);
-      pap->argCount = argc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -17910,7 +17741,6 @@ DEFUN1(stgApplyNPNPP, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApplyNPNPP:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
@@ -18051,7 +17881,6 @@ DEFUN1(stgApplyNPNPP, f) {
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3 + pappargc, 2 + papnargc);
-      pap->argCount = argc + pappargc + papnargc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -18262,7 +18091,6 @@ DEFUN1(stgApplyPPNPP, f) {
                     f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 4, 1);
-      pap->argCount = argc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -18287,7 +18115,6 @@ DEFUN1(stgApplyPPNPP, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApplyPPNPP:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
@@ -18428,7 +18255,6 @@ DEFUN1(stgApplyPPNPP, f) {
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 4 + pappargc, 1 + papnargc);
-      pap->argCount = argc + pappargc + papnargc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -18639,7 +18465,6 @@ DEFUN1(stgApplyNNPPP, f) {
                     f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3, 2);
-      pap->argCount = argc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -18664,7 +18489,6 @@ DEFUN1(stgApplyNNPPP, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApplyNNPPP:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
@@ -18806,7 +18630,6 @@ DEFUN1(stgApplyNNPPP, f) {
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3 + pappargc, 2 + papnargc);
-      pap->argCount = argc + pappargc + papnargc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -19018,7 +18841,6 @@ DEFUN1(stgApplyPNPPP, f) {
                     f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 4, 1);
-      pap->argCount = argc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -19043,7 +18865,6 @@ DEFUN1(stgApplyPNPPP, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApplyPNPPP:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
@@ -19185,7 +19006,6 @@ DEFUN1(stgApplyPNPPP, f) {
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 4 + pappargc, 1 + papnargc);
-      pap->argCount = argc + pappargc + papnargc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -19398,7 +19218,6 @@ DEFUN1(stgApplyNPPPP, f) {
                     f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 4, 1);
-      pap->argCount = argc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -19423,7 +19242,6 @@ DEFUN1(stgApplyNPPPP, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApplyNPPPP:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
@@ -19566,7 +19384,6 @@ DEFUN1(stgApplyNPPPP, f) {
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 4 + pappargc, 1 + papnargc);
-      pap->argCount = argc + pappargc + papnargc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -19780,7 +19597,6 @@ DEFUN1(stgApplyPPPPP, f) {
                     f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 5, 0);
-      pap->argCount = argc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -19805,7 +19621,6 @@ DEFUN1(stgApplyPPPPP, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApplyPPPPP:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
@@ -19948,7 +19763,6 @@ DEFUN1(stgApplyPPPPP, f) {
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 5 + pappargc, 0 + papnargc);
-      pap->argCount = argc + pappargc + papnargc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -20165,7 +19979,6 @@ DEFUN1(stgApplyNNNNNN, f) {
                     f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 0, 6);
-      pap->argCount = argc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -20190,7 +20003,6 @@ DEFUN1(stgApplyNNNNNN, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApplyNNNNNN:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
@@ -20343,7 +20155,6 @@ DEFUN1(stgApplyNNNNNN, f) {
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 0 + pappargc, 6 + papnargc);
-      pap->argCount = argc + pappargc + papnargc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -20562,7 +20373,6 @@ DEFUN1(stgApplyPNNNNN, f) {
                     f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 1, 5);
-      pap->argCount = argc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -20587,7 +20397,6 @@ DEFUN1(stgApplyPNNNNN, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApplyPNNNNN:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
@@ -20740,7 +20549,6 @@ DEFUN1(stgApplyPNNNNN, f) {
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 1 + pappargc, 5 + papnargc);
-      pap->argCount = argc + pappargc + papnargc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -20961,7 +20769,6 @@ DEFUN1(stgApplyNPNNNN, f) {
                     f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 1, 5);
-      pap->argCount = argc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -20986,7 +20793,6 @@ DEFUN1(stgApplyNPNNNN, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApplyNPNNNN:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
@@ -21141,7 +20947,6 @@ DEFUN1(stgApplyNPNNNN, f) {
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 1 + pappargc, 5 + papnargc);
-      pap->argCount = argc + pappargc + papnargc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -21363,7 +21168,6 @@ DEFUN1(stgApplyPPNNNN, f) {
                     f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2, 4);
-      pap->argCount = argc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -21388,7 +21192,6 @@ DEFUN1(stgApplyPPNNNN, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApplyPPNNNN:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
@@ -21543,7 +21346,6 @@ DEFUN1(stgApplyPPNNNN, f) {
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2 + pappargc, 4 + papnargc);
-      pap->argCount = argc + pappargc + papnargc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -21766,7 +21568,6 @@ DEFUN1(stgApplyNNPNNN, f) {
                     f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 1, 5);
-      pap->argCount = argc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -21791,7 +21592,6 @@ DEFUN1(stgApplyNNPNNN, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApplyNNPNNN:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
@@ -21948,7 +21748,6 @@ DEFUN1(stgApplyNNPNNN, f) {
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 1 + pappargc, 5 + papnargc);
-      pap->argCount = argc + pappargc + papnargc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -22172,7 +21971,6 @@ DEFUN1(stgApplyPNPNNN, f) {
                     f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2, 4);
-      pap->argCount = argc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -22197,7 +21995,6 @@ DEFUN1(stgApplyPNPNNN, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApplyPNPNNN:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
@@ -22354,7 +22151,6 @@ DEFUN1(stgApplyPNPNNN, f) {
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2 + pappargc, 4 + papnargc);
-      pap->argCount = argc + pappargc + papnargc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -22579,7 +22375,6 @@ DEFUN1(stgApplyNPPNNN, f) {
                     f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2, 4);
-      pap->argCount = argc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -22604,7 +22399,6 @@ DEFUN1(stgApplyNPPNNN, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApplyNPPNNN:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
@@ -22762,7 +22556,6 @@ DEFUN1(stgApplyNPPNNN, f) {
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2 + pappargc, 4 + papnargc);
-      pap->argCount = argc + pappargc + papnargc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -22988,7 +22781,6 @@ DEFUN1(stgApplyPPPNNN, f) {
                     f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3, 3);
-      pap->argCount = argc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -23013,7 +22805,6 @@ DEFUN1(stgApplyPPPNNN, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApplyPPPNNN:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
@@ -23171,7 +22962,6 @@ DEFUN1(stgApplyPPPNNN, f) {
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3 + pappargc, 3 + papnargc);
-      pap->argCount = argc + pappargc + papnargc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -23396,7 +23186,6 @@ DEFUN1(stgApplyNNNPNN, f) {
                     f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 1, 5);
-      pap->argCount = argc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -23421,7 +23210,6 @@ DEFUN1(stgApplyNNNPNN, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApplyNNNPNN:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
@@ -23580,7 +23368,6 @@ DEFUN1(stgApplyNNNPNN, f) {
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 1 + pappargc, 5 + papnargc);
-      pap->argCount = argc + pappargc + papnargc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -23806,7 +23593,6 @@ DEFUN1(stgApplyPNNPNN, f) {
                     f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2, 4);
-      pap->argCount = argc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -23831,7 +23617,6 @@ DEFUN1(stgApplyPNNPNN, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApplyPNNPNN:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
@@ -23990,7 +23775,6 @@ DEFUN1(stgApplyPNNPNN, f) {
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2 + pappargc, 4 + papnargc);
-      pap->argCount = argc + pappargc + papnargc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -24217,7 +24001,6 @@ DEFUN1(stgApplyNPNPNN, f) {
                     f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2, 4);
-      pap->argCount = argc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -24242,7 +24025,6 @@ DEFUN1(stgApplyNPNPNN, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApplyNPNPNN:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
@@ -24402,7 +24184,6 @@ DEFUN1(stgApplyNPNPNN, f) {
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2 + pappargc, 4 + papnargc);
-      pap->argCount = argc + pappargc + papnargc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -24630,7 +24411,6 @@ DEFUN1(stgApplyPPNPNN, f) {
                     f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3, 3);
-      pap->argCount = argc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -24655,7 +24435,6 @@ DEFUN1(stgApplyPPNPNN, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApplyPPNPNN:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
@@ -24815,7 +24594,6 @@ DEFUN1(stgApplyPPNPNN, f) {
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3 + pappargc, 3 + papnargc);
-      pap->argCount = argc + pappargc + papnargc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -25043,7 +24821,6 @@ DEFUN1(stgApplyNNPPNN, f) {
                     f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2, 4);
-      pap->argCount = argc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -25068,7 +24845,6 @@ DEFUN1(stgApplyNNPPNN, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApplyNNPPNN:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
@@ -25229,7 +25005,6 @@ DEFUN1(stgApplyNNPPNN, f) {
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2 + pappargc, 4 + papnargc);
-      pap->argCount = argc + pappargc + papnargc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -25458,7 +25233,6 @@ DEFUN1(stgApplyPNPPNN, f) {
                     f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3, 3);
-      pap->argCount = argc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -25483,7 +25257,6 @@ DEFUN1(stgApplyPNPPNN, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApplyPNPPNN:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
@@ -25644,7 +25417,6 @@ DEFUN1(stgApplyPNPPNN, f) {
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3 + pappargc, 3 + papnargc);
-      pap->argCount = argc + pappargc + papnargc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -25874,7 +25646,6 @@ DEFUN1(stgApplyNPPPNN, f) {
                     f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3, 3);
-      pap->argCount = argc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -25899,7 +25670,6 @@ DEFUN1(stgApplyNPPPNN, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApplyNPPPNN:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
@@ -26061,7 +25831,6 @@ DEFUN1(stgApplyNPPPNN, f) {
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3 + pappargc, 3 + papnargc);
-      pap->argCount = argc + pappargc + papnargc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -26292,7 +26061,6 @@ DEFUN1(stgApplyPPPPNN, f) {
                     f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 4, 2);
-      pap->argCount = argc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -26317,7 +26085,6 @@ DEFUN1(stgApplyPPPPNN, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApplyPPPPNN:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
@@ -26479,7 +26246,6 @@ DEFUN1(stgApplyPPPPNN, f) {
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 4 + pappargc, 2 + papnargc);
-      pap->argCount = argc + pappargc + papnargc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -26706,7 +26472,6 @@ DEFUN1(stgApplyNNNNPN, f) {
                     f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 1, 5);
-      pap->argCount = argc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -26731,7 +26496,6 @@ DEFUN1(stgApplyNNNNPN, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApplyNNNNPN:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
@@ -26892,7 +26656,6 @@ DEFUN1(stgApplyNNNNPN, f) {
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 1 + pappargc, 5 + papnargc);
-      pap->argCount = argc + pappargc + papnargc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -27120,7 +26883,6 @@ DEFUN1(stgApplyPNNNPN, f) {
                     f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2, 4);
-      pap->argCount = argc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -27145,7 +26907,6 @@ DEFUN1(stgApplyPNNNPN, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApplyPNNNPN:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
@@ -27306,7 +27067,6 @@ DEFUN1(stgApplyPNNNPN, f) {
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2 + pappargc, 4 + papnargc);
-      pap->argCount = argc + pappargc + papnargc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -27535,7 +27295,6 @@ DEFUN1(stgApplyNPNNPN, f) {
                     f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2, 4);
-      pap->argCount = argc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -27560,7 +27319,6 @@ DEFUN1(stgApplyNPNNPN, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApplyNPNNPN:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
@@ -27722,7 +27480,6 @@ DEFUN1(stgApplyNPNNPN, f) {
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2 + pappargc, 4 + papnargc);
-      pap->argCount = argc + pappargc + papnargc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -27952,7 +27709,6 @@ DEFUN1(stgApplyPPNNPN, f) {
                     f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3, 3);
-      pap->argCount = argc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -27977,7 +27733,6 @@ DEFUN1(stgApplyPPNNPN, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApplyPPNNPN:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
@@ -28139,7 +27894,6 @@ DEFUN1(stgApplyPPNNPN, f) {
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3 + pappargc, 3 + papnargc);
-      pap->argCount = argc + pappargc + papnargc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -28369,7 +28123,6 @@ DEFUN1(stgApplyNNPNPN, f) {
                     f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2, 4);
-      pap->argCount = argc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -28394,7 +28147,6 @@ DEFUN1(stgApplyNNPNPN, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApplyNNPNPN:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
@@ -28557,7 +28309,6 @@ DEFUN1(stgApplyNNPNPN, f) {
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2 + pappargc, 4 + papnargc);
-      pap->argCount = argc + pappargc + papnargc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -28788,7 +28539,6 @@ DEFUN1(stgApplyPNPNPN, f) {
                     f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3, 3);
-      pap->argCount = argc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -28813,7 +28563,6 @@ DEFUN1(stgApplyPNPNPN, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApplyPNPNPN:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
@@ -28976,7 +28725,6 @@ DEFUN1(stgApplyPNPNPN, f) {
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3 + pappargc, 3 + papnargc);
-      pap->argCount = argc + pappargc + papnargc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -29208,7 +28956,6 @@ DEFUN1(stgApplyNPPNPN, f) {
                     f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3, 3);
-      pap->argCount = argc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -29233,7 +28980,6 @@ DEFUN1(stgApplyNPPNPN, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApplyNPPNPN:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
@@ -29397,7 +29143,6 @@ DEFUN1(stgApplyNPPNPN, f) {
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3 + pappargc, 3 + papnargc);
-      pap->argCount = argc + pappargc + papnargc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -29630,7 +29375,6 @@ DEFUN1(stgApplyPPPNPN, f) {
                     f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 4, 2);
-      pap->argCount = argc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -29655,7 +29399,6 @@ DEFUN1(stgApplyPPPNPN, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApplyPPPNPN:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
@@ -29819,7 +29562,6 @@ DEFUN1(stgApplyPPPNPN, f) {
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 4 + pappargc, 2 + papnargc);
-      pap->argCount = argc + pappargc + papnargc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -30050,7 +29792,6 @@ DEFUN1(stgApplyNNNPPN, f) {
                     f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2, 4);
-      pap->argCount = argc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -30075,7 +29816,6 @@ DEFUN1(stgApplyNNNPPN, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApplyNNNPPN:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
@@ -30239,7 +29979,6 @@ DEFUN1(stgApplyNNNPPN, f) {
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2 + pappargc, 4 + papnargc);
-      pap->argCount = argc + pappargc + papnargc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -30471,7 +30210,6 @@ DEFUN1(stgApplyPNNPPN, f) {
                     f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3, 3);
-      pap->argCount = argc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -30496,7 +30234,6 @@ DEFUN1(stgApplyPNNPPN, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApplyPNNPPN:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
@@ -30660,7 +30397,6 @@ DEFUN1(stgApplyPNNPPN, f) {
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3 + pappargc, 3 + papnargc);
-      pap->argCount = argc + pappargc + papnargc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -30893,7 +30629,6 @@ DEFUN1(stgApplyNPNPPN, f) {
                     f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3, 3);
-      pap->argCount = argc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -30918,7 +30653,6 @@ DEFUN1(stgApplyNPNPPN, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApplyNPNPPN:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
@@ -31083,7 +30817,6 @@ DEFUN1(stgApplyNPNPPN, f) {
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3 + pappargc, 3 + papnargc);
-      pap->argCount = argc + pappargc + papnargc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -31317,7 +31050,6 @@ DEFUN1(stgApplyPPNPPN, f) {
                     f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 4, 2);
-      pap->argCount = argc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -31342,7 +31074,6 @@ DEFUN1(stgApplyPPNPPN, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApplyPPNPPN:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
@@ -31507,7 +31238,6 @@ DEFUN1(stgApplyPPNPPN, f) {
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 4 + pappargc, 2 + papnargc);
-      pap->argCount = argc + pappargc + papnargc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -31741,7 +31471,6 @@ DEFUN1(stgApplyNNPPPN, f) {
                     f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3, 3);
-      pap->argCount = argc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -31766,7 +31495,6 @@ DEFUN1(stgApplyNNPPPN, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApplyNNPPPN:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
@@ -31932,7 +31660,6 @@ DEFUN1(stgApplyNNPPPN, f) {
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3 + pappargc, 3 + papnargc);
-      pap->argCount = argc + pappargc + papnargc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -32167,7 +31894,6 @@ DEFUN1(stgApplyPNPPPN, f) {
                     f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 4, 2);
-      pap->argCount = argc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -32192,7 +31918,6 @@ DEFUN1(stgApplyPNPPPN, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApplyPNPPPN:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
@@ -32358,7 +32083,6 @@ DEFUN1(stgApplyPNPPPN, f) {
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 4 + pappargc, 2 + papnargc);
-      pap->argCount = argc + pappargc + papnargc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -32594,7 +32318,6 @@ DEFUN1(stgApplyNPPPPN, f) {
                     f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 4, 2);
-      pap->argCount = argc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -32619,7 +32342,6 @@ DEFUN1(stgApplyNPPPPN, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApplyNPPPPN:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
@@ -32786,7 +32508,6 @@ DEFUN1(stgApplyNPPPPN, f) {
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 4 + pappargc, 2 + papnargc);
-      pap->argCount = argc + pappargc + papnargc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -33023,7 +32744,6 @@ DEFUN1(stgApplyPPPPPN, f) {
                     f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 5, 1);
-      pap->argCount = argc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -33048,7 +32768,6 @@ DEFUN1(stgApplyPPPPPN, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApplyPPPPPN:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
@@ -33215,7 +32934,6 @@ DEFUN1(stgApplyPPPPPN, f) {
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 5 + pappargc, 1 + papnargc);
-      pap->argCount = argc + pappargc + papnargc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -33444,7 +33162,6 @@ DEFUN1(stgApplyNNNNNP, f) {
                     f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 1, 5);
-      pap->argCount = argc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -33469,7 +33186,6 @@ DEFUN1(stgApplyNNNNNP, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApplyNNNNNP:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
@@ -33632,7 +33348,6 @@ DEFUN1(stgApplyNNNNNP, f) {
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 1 + pappargc, 5 + papnargc);
-      pap->argCount = argc + pappargc + papnargc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -33862,7 +33577,6 @@ DEFUN1(stgApplyPNNNNP, f) {
                     f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2, 4);
-      pap->argCount = argc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -33887,7 +33601,6 @@ DEFUN1(stgApplyPNNNNP, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApplyPNNNNP:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
@@ -34050,7 +33763,6 @@ DEFUN1(stgApplyPNNNNP, f) {
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2 + pappargc, 4 + papnargc);
-      pap->argCount = argc + pappargc + papnargc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -34281,7 +33993,6 @@ DEFUN1(stgApplyNPNNNP, f) {
                     f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2, 4);
-      pap->argCount = argc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -34306,7 +34017,6 @@ DEFUN1(stgApplyNPNNNP, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApplyNPNNNP:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
@@ -34470,7 +34180,6 @@ DEFUN1(stgApplyNPNNNP, f) {
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2 + pappargc, 4 + papnargc);
-      pap->argCount = argc + pappargc + papnargc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -34702,7 +34411,6 @@ DEFUN1(stgApplyPPNNNP, f) {
                     f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3, 3);
-      pap->argCount = argc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -34727,7 +34435,6 @@ DEFUN1(stgApplyPPNNNP, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApplyPPNNNP:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
@@ -34891,7 +34598,6 @@ DEFUN1(stgApplyPPNNNP, f) {
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3 + pappargc, 3 + papnargc);
-      pap->argCount = argc + pappargc + papnargc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -35123,7 +34829,6 @@ DEFUN1(stgApplyNNPNNP, f) {
                     f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2, 4);
-      pap->argCount = argc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -35148,7 +34853,6 @@ DEFUN1(stgApplyNNPNNP, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApplyNNPNNP:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
@@ -35313,7 +35017,6 @@ DEFUN1(stgApplyNNPNNP, f) {
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2 + pappargc, 4 + papnargc);
-      pap->argCount = argc + pappargc + papnargc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -35546,7 +35249,6 @@ DEFUN1(stgApplyPNPNNP, f) {
                     f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3, 3);
-      pap->argCount = argc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -35571,7 +35273,6 @@ DEFUN1(stgApplyPNPNNP, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApplyPNPNNP:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
@@ -35736,7 +35437,6 @@ DEFUN1(stgApplyPNPNNP, f) {
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3 + pappargc, 3 + papnargc);
-      pap->argCount = argc + pappargc + papnargc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -35970,7 +35670,6 @@ DEFUN1(stgApplyNPPNNP, f) {
                     f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3, 3);
-      pap->argCount = argc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -35995,7 +35694,6 @@ DEFUN1(stgApplyNPPNNP, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApplyNPPNNP:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
@@ -36161,7 +35859,6 @@ DEFUN1(stgApplyNPPNNP, f) {
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3 + pappargc, 3 + papnargc);
-      pap->argCount = argc + pappargc + papnargc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -36396,7 +36093,6 @@ DEFUN1(stgApplyPPPNNP, f) {
                     f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 4, 2);
-      pap->argCount = argc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -36421,7 +36117,6 @@ DEFUN1(stgApplyPPPNNP, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApplyPPPNNP:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
@@ -36587,7 +36282,6 @@ DEFUN1(stgApplyPPPNNP, f) {
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 4 + pappargc, 2 + papnargc);
-      pap->argCount = argc + pappargc + papnargc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -36820,7 +36514,6 @@ DEFUN1(stgApplyNNNPNP, f) {
                     f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2, 4);
-      pap->argCount = argc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -36845,7 +36538,6 @@ DEFUN1(stgApplyNNNPNP, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApplyNNNPNP:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
@@ -37011,7 +36703,6 @@ DEFUN1(stgApplyNNNPNP, f) {
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2 + pappargc, 4 + papnargc);
-      pap->argCount = argc + pappargc + papnargc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -37245,7 +36936,6 @@ DEFUN1(stgApplyPNNPNP, f) {
                     f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3, 3);
-      pap->argCount = argc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -37270,7 +36960,6 @@ DEFUN1(stgApplyPNNPNP, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApplyPNNPNP:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
@@ -37436,7 +37125,6 @@ DEFUN1(stgApplyPNNPNP, f) {
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3 + pappargc, 3 + papnargc);
-      pap->argCount = argc + pappargc + papnargc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -37671,7 +37359,6 @@ DEFUN1(stgApplyNPNPNP, f) {
                     f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3, 3);
-      pap->argCount = argc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -37696,7 +37383,6 @@ DEFUN1(stgApplyNPNPNP, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApplyNPNPNP:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
@@ -37863,7 +37549,6 @@ DEFUN1(stgApplyNPNPNP, f) {
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3 + pappargc, 3 + papnargc);
-      pap->argCount = argc + pappargc + papnargc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -38099,7 +37784,6 @@ DEFUN1(stgApplyPPNPNP, f) {
                     f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 4, 2);
-      pap->argCount = argc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -38124,7 +37808,6 @@ DEFUN1(stgApplyPPNPNP, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApplyPPNPNP:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
@@ -38291,7 +37974,6 @@ DEFUN1(stgApplyPPNPNP, f) {
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 4 + pappargc, 2 + papnargc);
-      pap->argCount = argc + pappargc + papnargc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -38527,7 +38209,6 @@ DEFUN1(stgApplyNNPPNP, f) {
                     f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3, 3);
-      pap->argCount = argc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -38552,7 +38233,6 @@ DEFUN1(stgApplyNNPPNP, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApplyNNPPNP:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
@@ -38720,7 +38400,6 @@ DEFUN1(stgApplyNNPPNP, f) {
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3 + pappargc, 3 + papnargc);
-      pap->argCount = argc + pappargc + papnargc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -38957,7 +38636,6 @@ DEFUN1(stgApplyPNPPNP, f) {
                     f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 4, 2);
-      pap->argCount = argc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -38982,7 +38660,6 @@ DEFUN1(stgApplyPNPPNP, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApplyPNPPNP:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
@@ -39150,7 +38827,6 @@ DEFUN1(stgApplyPNPPNP, f) {
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 4 + pappargc, 2 + papnargc);
-      pap->argCount = argc + pappargc + papnargc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -39388,7 +39064,6 @@ DEFUN1(stgApplyNPPPNP, f) {
                     f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 4, 2);
-      pap->argCount = argc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -39413,7 +39088,6 @@ DEFUN1(stgApplyNPPPNP, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApplyNPPPNP:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
@@ -39582,7 +39256,6 @@ DEFUN1(stgApplyNPPPNP, f) {
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 4 + pappargc, 2 + papnargc);
-      pap->argCount = argc + pappargc + papnargc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -39821,7 +39494,6 @@ DEFUN1(stgApplyPPPPNP, f) {
                     f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 5, 1);
-      pap->argCount = argc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -39846,7 +39518,6 @@ DEFUN1(stgApplyPPPPNP, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApplyPPPPNP:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
@@ -40015,7 +39686,6 @@ DEFUN1(stgApplyPPPPNP, f) {
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 5 + pappargc, 1 + papnargc);
-      pap->argCount = argc + pappargc + papnargc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -40249,7 +39919,6 @@ DEFUN1(stgApplyNNNNPP, f) {
                     f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2, 4);
-      pap->argCount = argc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -40274,7 +39943,6 @@ DEFUN1(stgApplyNNNNPP, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApplyNNNNPP:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
@@ -40441,7 +40109,6 @@ DEFUN1(stgApplyNNNNPP, f) {
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2 + pappargc, 4 + papnargc);
-      pap->argCount = argc + pappargc + papnargc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -40676,7 +40343,6 @@ DEFUN1(stgApplyPNNNPP, f) {
                     f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3, 3);
-      pap->argCount = argc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -40701,7 +40367,6 @@ DEFUN1(stgApplyPNNNPP, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApplyPNNNPP:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
@@ -40868,7 +40533,6 @@ DEFUN1(stgApplyPNNNPP, f) {
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3 + pappargc, 3 + papnargc);
-      pap->argCount = argc + pappargc + papnargc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -41104,7 +40768,6 @@ DEFUN1(stgApplyNPNNPP, f) {
                     f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3, 3);
-      pap->argCount = argc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -41129,7 +40792,6 @@ DEFUN1(stgApplyNPNNPP, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApplyNPNNPP:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
@@ -41297,7 +40959,6 @@ DEFUN1(stgApplyNPNNPP, f) {
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3 + pappargc, 3 + papnargc);
-      pap->argCount = argc + pappargc + papnargc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -41534,7 +41195,6 @@ DEFUN1(stgApplyPPNNPP, f) {
                     f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 4, 2);
-      pap->argCount = argc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -41559,7 +41219,6 @@ DEFUN1(stgApplyPPNNPP, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApplyPPNNPP:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
@@ -41727,7 +41386,6 @@ DEFUN1(stgApplyPPNNPP, f) {
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 4 + pappargc, 2 + papnargc);
-      pap->argCount = argc + pappargc + papnargc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -41964,7 +41622,6 @@ DEFUN1(stgApplyNNPNPP, f) {
                     f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3, 3);
-      pap->argCount = argc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -41989,7 +41646,6 @@ DEFUN1(stgApplyNNPNPP, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApplyNNPNPP:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
@@ -42158,7 +41814,6 @@ DEFUN1(stgApplyNNPNPP, f) {
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3 + pappargc, 3 + papnargc);
-      pap->argCount = argc + pappargc + papnargc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -42396,7 +42051,6 @@ DEFUN1(stgApplyPNPNPP, f) {
                     f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 4, 2);
-      pap->argCount = argc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -42421,7 +42075,6 @@ DEFUN1(stgApplyPNPNPP, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApplyPNPNPP:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
@@ -42590,7 +42243,6 @@ DEFUN1(stgApplyPNPNPP, f) {
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 4 + pappargc, 2 + papnargc);
-      pap->argCount = argc + pappargc + papnargc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -42829,7 +42481,6 @@ DEFUN1(stgApplyNPPNPP, f) {
                     f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 4, 2);
-      pap->argCount = argc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -42854,7 +42505,6 @@ DEFUN1(stgApplyNPPNPP, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApplyNPPNPP:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
@@ -43024,7 +42674,6 @@ DEFUN1(stgApplyNPPNPP, f) {
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 4 + pappargc, 2 + papnargc);
-      pap->argCount = argc + pappargc + papnargc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -43264,7 +42913,6 @@ DEFUN1(stgApplyPPPNPP, f) {
                     f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 5, 1);
-      pap->argCount = argc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -43289,7 +42937,6 @@ DEFUN1(stgApplyPPPNPP, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApplyPPPNPP:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
@@ -43459,7 +43106,6 @@ DEFUN1(stgApplyPPPNPP, f) {
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 5 + pappargc, 1 + papnargc);
-      pap->argCount = argc + pappargc + papnargc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -43697,7 +43343,6 @@ DEFUN1(stgApplyNNNPPP, f) {
                     f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3, 3);
-      pap->argCount = argc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -43722,7 +43367,6 @@ DEFUN1(stgApplyNNNPPP, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApplyNNNPPP:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
@@ -43892,7 +43536,6 @@ DEFUN1(stgApplyNNNPPP, f) {
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3 + pappargc, 3 + papnargc);
-      pap->argCount = argc + pappargc + papnargc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -44131,7 +43774,6 @@ DEFUN1(stgApplyPNNPPP, f) {
                     f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 4, 2);
-      pap->argCount = argc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -44156,7 +43798,6 @@ DEFUN1(stgApplyPNNPPP, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApplyPNNPPP:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
@@ -44326,7 +43967,6 @@ DEFUN1(stgApplyPNNPPP, f) {
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 4 + pappargc, 2 + papnargc);
-      pap->argCount = argc + pappargc + papnargc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -44566,7 +44206,6 @@ DEFUN1(stgApplyNPNPPP, f) {
                     f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 4, 2);
-      pap->argCount = argc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -44591,7 +44230,6 @@ DEFUN1(stgApplyNPNPPP, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApplyNPNPPP:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
@@ -44762,7 +44400,6 @@ DEFUN1(stgApplyNPNPPP, f) {
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 4 + pappargc, 2 + papnargc);
-      pap->argCount = argc + pappargc + papnargc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -45003,7 +44640,6 @@ DEFUN1(stgApplyPPNPPP, f) {
                     f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 5, 1);
-      pap->argCount = argc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -45028,7 +44664,6 @@ DEFUN1(stgApplyPPNPPP, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApplyPPNPPP:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
@@ -45199,7 +44834,6 @@ DEFUN1(stgApplyPPNPPP, f) {
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 5 + pappargc, 1 + papnargc);
-      pap->argCount = argc + pappargc + papnargc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -45440,7 +45074,6 @@ DEFUN1(stgApplyNNPPPP, f) {
                     f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 4, 2);
-      pap->argCount = argc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -45465,7 +45098,6 @@ DEFUN1(stgApplyNNPPPP, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApplyNNPPPP:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
@@ -45637,7 +45269,6 @@ DEFUN1(stgApplyNNPPPP, f) {
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 4 + pappargc, 2 + papnargc);
-      pap->argCount = argc + pappargc + papnargc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -45879,7 +45510,6 @@ DEFUN1(stgApplyPNPPPP, f) {
                     f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 5, 1);
-      pap->argCount = argc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -45904,7 +45534,6 @@ DEFUN1(stgApplyPNPPPP, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApplyPNPPPP:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
@@ -46076,7 +45705,6 @@ DEFUN1(stgApplyPNPPPP, f) {
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 5 + pappargc, 1 + papnargc);
-      pap->argCount = argc + pappargc + papnargc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -46319,7 +45947,6 @@ DEFUN1(stgApplyNPPPPP, f) {
                     f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 5, 1);
-      pap->argCount = argc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -46344,7 +45971,6 @@ DEFUN1(stgApplyNPPPPP, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApplyNPPPPP:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
@@ -46517,7 +46143,6 @@ DEFUN1(stgApplyNPPPPP, f) {
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 5 + pappargc, 1 + papnargc);
-      pap->argCount = argc + pappargc + papnargc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -46761,7 +46386,6 @@ DEFUN1(stgApplyPPPPPP, f) {
                     f.op->infoPtr->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 6, 0);
-      pap->argCount = argc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -46786,7 +46410,6 @@ DEFUN1(stgApplyPPPPPP, f) {
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    assert(argCount == f.op->argCount && "stgApplyPPPPPP:  PAP error 1");
     int arity = f.op->infoPtr->funFields.arity - argCount;
     int excess = argc - arity;
 
@@ -46959,7 +46582,6 @@ DEFUN1(stgApplyPPPPPP, f) {
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *pap = stgNewHeapPAP(f.op->infoPtr, 6 + pappargc, 0 + papnargc);
-      pap->argCount = argc + pappargc + papnargc;
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);

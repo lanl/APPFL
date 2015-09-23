@@ -38,7 +38,7 @@ static inline void checkPAPFVs(Obj *p) {
 }
 static inline void checkPAPargs(Obj *p) {
   // argCount is going away at some point
-  assert (p->argCount == endPAPargsU(p) - startPAPargsB(p) && "gc: PAP arg mismatch");
+  // assert (p->argCount == endPAPargsU(p) - startPAPargsB(p) && "gc: PAP arg mismatch");
 }
 
 static inline size_t startCONargsB(Obj *p) { return 0; }

@@ -77,7 +77,6 @@ struct _Obj {
   InfoTab *infoPtr;         // canonical location of ObjType field
   int _objSize;              // for debugging
   ObjType objType;          // to distinguish PAP, FUN, BLACKHOLE, INDIRECT
-  int argCount;             // for PAP, how many args already applied to?
   char ident[32];           // temporary, just for tracing
   PtrOrLiteral payload[];
 };
@@ -166,6 +165,8 @@ extern int getObjSize(Obj *);
 
 #define PUNPACK(n) (((uintptr_t) (n)) & lobits)
 #define NUNPACK(n) (((uintptr_t) (n)) >> PACKBITS)
+
+#define PNSIZE(n) (PUNPACK(n)+NUNPACK(n))
 
 #define PNUNPACK(n,pargc,nargc) \
   do { \

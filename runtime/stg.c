@@ -48,7 +48,6 @@ Obj *stgAllocCont(InfoTab *itp) {
   objp->infoPtr = itp;
   objp->_objSize = objSize;
   objp->objType = itp->objType;
-  objp->argCount = 0;  // for PAP, this will go
   strcpy(objp->ident, itp->name);  // may be overwritten
   return objp;
 }
@@ -68,7 +67,6 @@ Obj *stgAllocCallCont2(InfoTab *itp, int argc) {
   objp->infoPtr = itp;
   objp->_objSize = objSize;
   objp->objType = itp->objType;
-  objp->argCount = 0;  // for PAP, this will go
   objp->payload[0] = (PtrOrLiteral) {.argType = INT, .i = argc};
   strcpy(objp->ident, itp->name);  // may be overwritten
   return objp;
@@ -119,7 +117,6 @@ Obj* stgNewHeapObj(InfoTab *itp) {
   objp->infoPtr = itp;
   objp->_objSize = objSize;
   objp->objType = itp->objType;
-  objp->argCount = 0;  // for PAP, this will go
   strcpy(objp->ident, itp->name);  // may be overwritten
   fprintf(stderr, "stgNewHeapObj: "); showStgObj(objp);
   return objp;
@@ -143,7 +140,6 @@ Obj* stgNewHeapPAP(InfoTab *itp, int pargc, int npargc) {
   objp->infoPtr = itp;
   objp->_objSize = objSize;
   objp->objType = PAP;
-  objp->argCount = pargc + npargc;  // for PAP, this will go
   objp->payload[fvs] = (PtrOrLiteral) {.argType = INT, 
                                        .i = PNPACK(pargc, npargc)};
   strcpy(objp->ident, itp->name);  // may be overwritten
@@ -159,7 +155,7 @@ int getObjSize(Obj *o) {
   } else if (o->objType == PAP) {
     InfoTab *itp = o->infoPtr;
     int fvs = itp->layoutInfo.boxedCount + itp->layoutInfo.unboxedCount;
-    objSize = sizeof(Obj) + (fvs + 1 + o->argCount) * sizeof(PtrOrLiteral);
+    objSize = sizeof(Obj) + (fvs + 1 + PNSIZE(o->payload[fvs].i)) * sizeof(PtrOrLiteral);
   } else {
     objSize = sizeof(Obj) + o->infoPtr->layoutInfo.payloadSize * sizeof(PtrOrLiteral);
   }

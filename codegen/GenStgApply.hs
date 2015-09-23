@@ -9,7 +9,7 @@ data Strictness = Nonstrict
                 | Strict1   -- evaluate args first, then fun
                   deriving(Eq)
     
-strictness = Strict1
+strictness = Nonstrict
 
 dumpStgApply n = 
     let (forward, macros, fun) = genAllstgApply n
@@ -200,7 +200,6 @@ gen s =
      "    int pappargc, papnargc;\n" ++
      "    PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);\n" ++
      "    int argCount = pappargc + papnargc;\n" ++
-     "    assert(argCount == f.op->argCount && \"" ++ fname ++ ":  PAP error 1\");\n" ++
      "    int arity = f.op->infoPtr->funFields.arity - argCount;\n" ++
      "    int excess = argc - arity;\n" ++
      "\n" ++
@@ -297,7 +296,6 @@ funneg s pinds argc nps nns =
      "// stgNewHeapPAP puts layout info at payload[fvCount]\n" ++
      "Obj *pap = stgNewHeapPAP(f.op->infoPtr, " ++ 
                                show nps ++ ", " ++ show nns ++ ");\n" ++
-     "pap->argCount = argc;\n" ++
      "// copy fvs\n" ++
      debugp ["stgApply FUN inserting %d FVs into new PAP\\n", "fvCount"] ++
      "copyargs(&pap->payload[0], &f.op->payload[0], fvCount);\n" ++
@@ -389,7 +387,6 @@ papneg s pinds argc nps nns =
      "Obj *pap = stgNewHeapPAP(f.op->infoPtr, " ++ 
                                show nps ++ " + pappargc, " ++ 
                                show nns ++ " + papnargc);\n" ++
-     "pap->argCount = argc + pappargc + papnargc;\n" ++
      "// copy fvs\n" ++
      debugp ["stgApply PAP inserting %d FVs into new PAP\\n", "fvCount"] ++
      "copyargs(&pap->payload[0], &f.op->payload[0], fvCount);\n" ++
