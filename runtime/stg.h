@@ -154,8 +154,11 @@ extern void showStgObj(Obj *);
 extern void showStgHeap();
 extern void showStgStack();
 extern void showStgVal(PtrOrLiteral);
+extern void checkStgHeap();
 extern void showIT(InfoTab *);
 extern int getObjSize(Obj *);
+extern bool isSHO();
+extern bool isHeap(Obj *p);
 
 #define PACKBITS (sizeof(uintptr_t)/2 * 8)
 #define hibits (~0L << PACKBITS)
