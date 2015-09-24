@@ -1,0 +1,44 @@
+
+As of 9/24/15 the following are being contemplated.  They are interrelated.
+
+- Use a bitmap in PAPs instead of boxed/unboxed count for the already-applied
+  args.  This would allow the backing out of the maybe-too-clever permuting
+  of formal parameters of the underlying functions.
+
+- Use a bitmap in call continuations instead of storing just pointer values.
+
+- Make stack objects a type different than Obj.
+
+- Introduce a "stack frame" pseudo- (or actual) continuation instead of using
+  the cmm stack.
+
+  -- Instead of loading these values into C variables on function entry,
+     refer to them in their stack frame.  
+
+     --- Stack frame gets popped by STGRETURN() or STGJUMP(), OR, stack frame
+         could be a proper continuation whose code pops the frame and jumps
+         through the next continuation on the stack.
+
+     --- Does this subsume call continuation?
+
+- Use bitmaps and code pointers in all entities on the STG stack instead of
+  InfoTabs.
+
+  -- All continuation types look the same?  (Code pointer, bitmap, payload;
+     code pointer odd means there is no bitmap or payload?)
+
+- Change evaluation strategy such that stgEval is not a loop, just trivially
+  jumps through its argument.
+
+  -- Thus FUN, PAP, and CON just return self.  The true entry point of FUN is
+     `hidden'.  BLACKHOLEs have actual code, currently to indicate an error,
+     to do something else in the parallel implementation.  This was already
+     implemented in a currently abandoned branch, to be resurrected.
+
+- Further investigate using gcc and LLVM's tail call mechanism to eliminate
+  the use of the trampoline.  Then both STG calls and jumps become C calls.
+
+  -- If feasible, what should the type signature be?  Simplest would be void
+     f().  void f(Obj *self)?  Some fixed number of args whether they're used
+     or not, with excess on the stack?  Because x86_64 can use a fair number
+     of registers for arguments this could be quite a bit more efficient.
