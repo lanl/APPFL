@@ -56,7 +56,7 @@ project(stgc_test)
        set_tests_properties(${tname} PROPERTIES PASS_REGULAR_EXPRESSION
        "The answer is[\r\n\t ]*true = True")
        set(t2name ${tname}_nogc)
-       add_test(${t2name} ${BINARY_DIR}/${tname} 2>&1)
+       add_test(${t2name} ${BINARY_DIR}/${tname} -g 2>&1)
        set_tests_properties(${t2name} PROPERTIES DEPENDS ${bname})
        set_tests_properties(${t2name} PROPERTIES PASS_REGULAR_EXPRESSION
        "The answer is[\r\n\t ]*true = True")

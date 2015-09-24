@@ -192,10 +192,10 @@ void showIT(InfoTab *itp) {
 
 // ****************************************************************
 
-const int showDepthLimit = 1000;
-int depth;
-Obj *stack[1000];
-int stackp;
+static const int showDepthLimit = 1000;
+static int depth;
+static Obj *stack[1000];
+static int stackp;
 
 
 void showStgObjRecDebug(Obj *p);

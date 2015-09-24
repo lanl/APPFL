@@ -5,7 +5,6 @@ FnPtr fun_main();
 InfoTab it_one __attribute__((aligned(8))) = 
   { .name                = "one",
     // fvs []
-    .fvCount             = 0,
     .entryCode           = &stg_constructorcall,
     .objType             = CON,
     .layoutInfo.payloadSize  = 1,
@@ -20,7 +19,6 @@ InfoTab it_one __attribute__((aligned(8))) =
 InfoTab it_main __attribute__((aligned(8))) = 
   { .name                = "main",
     // fvs []
-    .fvCount             = 0,
     .entryCode           = &fun_main,
     .objType             = THUNK,
     .layoutInfo.payloadSize = 1,
