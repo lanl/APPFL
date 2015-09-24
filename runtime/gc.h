@@ -8,6 +8,8 @@ void initGc(void);
 
 void gc(void);
 
+void checkStgHeap();
+
 #define GC() if(stgHP-stgHeap > GCThreshold*stgHeapSize) gc();
 
 #endif
