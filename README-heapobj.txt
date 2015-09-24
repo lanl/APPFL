@@ -75,7 +75,6 @@ typedef struct _Obj Obj;
 struct _Obj {
   InfoTab *infoPtr;         // canonical location of ObjType field
   ObjType objType;          // to distinguish PAP, FUN, BLACKHOLE, INDIRECT
-  int argCount;             // for PAP, how many args already applied to?
   PtrOrLiteral payload[];   // variably sized
 };
 
@@ -89,8 +88,6 @@ C type
 
 While the ObjType is also in the InfoTab, we choose to have a dedicated field
 in the HO as well for reasons that will be detailed later.
-
-NOTE!!!!:  argCount is for PAP only.  Later we will embed it in payload.
 
 Next the layouts of each object type.  In the following, "free variables"
 means a sequence PtrOrLiteral where field argType = HEAPOBJ, and "arguments"
@@ -129,8 +126,6 @@ infoPtr->fvCount = number of free variables
 infoPtr->layoutInfo.boxedCount is number of boxed free variables
 infoPtr->layoutInfo.unboxedCount is number of unboxed free variables
 layout_info:  see PNPACK and PNUNPACK in codegen/stg.h
-
-argCount = number of arguments already applied -- GOING AWAY!--the info is in payload[fvCount]
 
 CON
                                | payload 

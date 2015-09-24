@@ -32,7 +32,7 @@ InfoTab it_stgShowResultCont __attribute__((aligned(8))) =
 DEFUN0(stgCallCont) {
   // stgPopCont();  user must do this
   fprintf(stderr,"stgCallCont returning\n");
-  RETURN0();
+  RETURN0();  // fall back to the cmm trampoline
   ENDFUN;
 }
 
