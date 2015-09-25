@@ -126,7 +126,7 @@ void registerSHOs() {
 // ((["f","x"],[]),([t6 -> t5,t6],[]))
 DEFUN3(fun_apply, self, f, x) {
   fprintf(stderr, "apply here\n");
-  // NOT DIRECT CALL f x
+  // INDIRECT TAIL CALL f x
   STGAPPLYP(f, x);
   fprintf(stderr, "apply returning\n");
   STGRETURN0();
@@ -149,7 +149,7 @@ DEFUN3(fun_const, self, x, y) {
 DEFUN1(fun_main, self) {
   fprintf(stderr, "main here\n");
   stgThunk(self);
-  // NOT DIRECT CALL apply const true twentytwo
+  // INDIRECT TAIL CALL apply const true twentytwo
   STGAPPLYPPP(HOTOPL(&sho_apply), HOTOPL(&sho_const), HOTOPL(&sho_true), HOTOPL(&sho_twentytwo));
   fprintf(stderr, "main returning\n");
   STGRETURN0();

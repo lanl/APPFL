@@ -2,7 +2,6 @@
 struct _Obj {
   InfoTab *infoPtr;         // canonical location of ObjType field
   ObjType objType;          // to distinguish PAP, FUN, BLACKHOLE, INDIRECT
-  int argCount;             // for PAP, how many args already applied to?
   char ident[64];           // temporary, just for tracing
   PtrOrLiteral payload[32]; // fixed for now
 };
@@ -97,8 +96,7 @@ showSHOspec it = ""
 papPayloads it = let as = map fst $ args it             
                      n = indent 4 $ payload $ LitI $ papArgsLayout as
                      ap =   indent 4 $ concatMap payload as
-                 in  indent 2 ".argCount = " ++ show (length as) ++ ",\n" ++ 
-                              ".payload = {\n" ++ n ++ ap ++ "},\n"
+                 in  indent 2 ".payload = {\n" ++ n ++ ap ++ "},\n"
                                                             
 papArgsLayout as = let nv = length $ filter isVar as
                        nl = length as - nv 

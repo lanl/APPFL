@@ -13,6 +13,7 @@
 
 #include "stg.h"
 #include "cmm.h"
+#include "obj.h"
 
 void *stgHeap = NULL;
 void *stgHP = NULL;
@@ -48,7 +49,6 @@ Obj *stgAllocCont(InfoTab *itp) {
   objp->infoPtr = itp;
   objp->_objSize = objSize;
   objp->objType = itp->objType;
-  objp->argCount = 0;  // for PAP, this will go
   strcpy(objp->ident, itp->name);  // may be overwritten
   return objp;
 }
@@ -68,7 +68,6 @@ Obj *stgAllocCallCont2(InfoTab *itp, int argc) {
   objp->infoPtr = itp;
   objp->_objSize = objSize;
   objp->objType = itp->objType;
-  objp->argCount = 0;  // for PAP, this will go
   objp->payload[0] = (PtrOrLiteral) {.argType = INT, .i = argc};
   strcpy(objp->ident, itp->name);  // may be overwritten
   return objp;
@@ -119,7 +118,6 @@ Obj* stgNewHeapObj(InfoTab *itp) {
   objp->infoPtr = itp;
   objp->_objSize = objSize;
   objp->objType = itp->objType;
-  objp->argCount = 0;  // for PAP, this will go
   strcpy(objp->ident, itp->name);  // may be overwritten
   fprintf(stderr, "stgNewHeapObj: "); showStgObj(objp);
   return objp;
@@ -143,7 +141,6 @@ Obj* stgNewHeapPAP(InfoTab *itp, int pargc, int npargc) {
   objp->infoPtr = itp;
   objp->_objSize = objSize;
   objp->objType = PAP;
-  objp->argCount = pargc + npargc;  // for PAP, this will go
   objp->payload[fvs] = (PtrOrLiteral) {.argType = INT, 
                                        .i = PNPACK(pargc, npargc)};
   strcpy(objp->ident, itp->name);  // may be overwritten
@@ -159,7 +156,7 @@ int getObjSize(Obj *o) {
   } else if (o->objType == PAP) {
     InfoTab *itp = o->infoPtr;
     int fvs = itp->layoutInfo.boxedCount + itp->layoutInfo.unboxedCount;
-    objSize = sizeof(Obj) + (fvs + 1 + o->argCount) * sizeof(PtrOrLiteral);
+    objSize = sizeof(Obj) + (fvs + 1 + PNSIZE(o->payload[fvs].i)) * sizeof(PtrOrLiteral);
   } else {
     objSize = sizeof(Obj) + o->infoPtr->layoutInfo.payloadSize * sizeof(PtrOrLiteral);
   }
@@ -196,10 +193,10 @@ void showIT(InfoTab *itp) {
 
 // ****************************************************************
 
-const int showDepthLimit = 1000;
-int depth;
-Obj *stack[1000];
-int stackp;
+static const int showDepthLimit = 1000;
+static int depth;
+static Obj *stack[1000];
+static int stackp;
 
 
 void showStgObjRecDebug(Obj *p);
@@ -405,8 +402,142 @@ void showStgValDebug(PtrOrLiteral v) {
 }
 
 
+void checkStgObjRec(Obj *p) {
+  size_t i;
+
+  // depth check first
+  if (depth + 1 >= showDepthLimit) {
+    assert(false && "hc: checkStgObjRec depth exceeded\n");
+  }
+
+  assert((uintptr_t)p % 8 == 0 && "hc: bad Obj alignment");
+
+  assert(isHeap(p) || isSHO(p) && "hc: bad Obj location");
+
+  InfoTab it = *(p->infoPtr);
+  assert((uintptr_t)(p->infoPtr) % 8 == 0 && "hc: bad infoPtr alignment");
+
+  for (i = 0; i != depth; i++) {
+    if (p == stack[i]) {
+      return;
+    }
+  }
+  stack[depth++] = p;
+
+  if (strcmp(it.name, p->ident)) {
+    if (p->objType != PAP) {
+      fprintf(stderr, "mismatch in infotab and object names \"%s\" != \"%s\"\n",
+          it.name, p->ident);
+      assert(false);
+    }
+  }
+
+  switch (p->objType) {
+  case FUN: {
+    assert(it.objType == FUN && "hc: FUN infotab type mismatch");
+    int FVCount = endFUNFVsU(p);
+    if (FVCount) {
+      // check that unboxed FVs really are unboxed
+      for (i = startFUNFVsU(p); i < FVCount; i++) {
+        assert(!isBoxed(&p->payload[i]) && "hc: unexpected boxed FV in FUN");
+      }
+      // check that boxed FVs really are boxed
+      for (i = startFUNFVsB(p); i < endFUNFVsB(p); i++) {
+        assert(isBoxed(&p->payload[i]) && "hc: unexpected unboxed FV in FUN");
+        checkStgObjRec(p->payload[i].op);
+      }
+    }
+    break;
+  }
+
+  case PAP: {
+    assert(it.objType == FUN && "hc: PAP infotab type mismatch");
+    int FVCount = endPAPFVsU(p);
+    if (FVCount) {
+      // check that unboxed FVs really are unboxed
+      for (i = startPAPFVsU(p); i < FVCount; i++) {
+        assert(!isBoxed(&p->payload[i]) && "hc: unexpected boxed FV in PAP");
+      }
+      // check that boxed FVs really are nboxed
+      for (i = startPAPFVsB(p); i < endPAPFVsB(p); i++) {
+        assert(isBoxed(&p->payload[i]) && "hc: unexpected unboxed FV in PAP");
+        checkStgObjRec(p->payload[i].op);
+      }
+    }
+
+    // check that unboxed args really are unboxed
+    for (i = startPAPargsU(p); i < endPAPargsU(p); i++) {
+      assert(!isBoxed(&p->payload[i]) && "hc: unexpected boxed arg in PAP");
+    }
+
+    // check that boxed args really are boxed
+    for (i = startPAPargsB(p); i < endPAPargsB(p); i++) {
+      assert(isBoxed(&p->payload[i]) && "hc: unexpected unboxed arg in PAP");
+      checkStgObjRec(p->payload[i].op);
+    }
+    break;
+  }
+  case CON:
+    assert(it.objType == CON && "hc: CON infotab type mismatch");
+    checkCONargs(p);
+    // check that unboxed args really are unboxed
+    for (i = startCONargsU(p); i < endCONargsU(p); i++) {
+      assert(!isBoxed(&p->payload[i]) && "hc: unexpected boxed arg in CON");
+    }
+    // check that boxed args really are boxed
+    for (i = startCONargsB(p); i < endCONargsB(p); i++) {
+      assert(isBoxed(&p->payload[i]) && "hc: unexpected unboxed arg in CON");
+      checkStgObjRec(p->payload[i].op);
+    }
+    break;
+  case THUNK:
+    assert(it.objType == THUNK && "hc: THUNK infotab type mismatch");
+    //fallthrough..
+  case BLACKHOLE:
+    // check that unboxed FVs really are unboxed
+    for (i = startTHUNKFVsU(p); i < endTHUNKFVsU(p); i++) {
+      assert(!isBoxed(&p->payload[i]) && "hc: unexpected boxed arg in THUNK");
+    }
+    // check that boxed FVs really are boxed
+    for (i = startTHUNKFVsB(p); i < endTHUNKFVsB(p); i++) {
+        assert(isBoxed(&p->payload[i]) && "hc: unexpected unboxed arg in THUNK");
+        checkStgObjRec(p->payload[i].op);
+    }
+    break;
+
+  case INDIRECT:
+    assert(isBoxed(&p->payload[0]) && "hc: unexpected unboxed arg in INDIRECT");
+    checkStgObjRec(p->payload[0].op);
+    break;
+
+  default:
+    assert(false && "hc: bad obj in checkStgObjRec");
+  }
+  depth--;
+}
+
+void checkStgObj(Obj *p) {
+  depth = 0;
+  checkStgObjRec(p);
+}
+
+void checkStgHeap() {
+  for (char *p = (char*) stgHeap; p < (char*) stgHP; p += getObjSize((Obj *) p)) {
+    checkStgObj((Obj *) p);
+  }
+}
+
+
 size_t stgStatObjCount;
 Obj * stgStatObj[100];
+
+bool isSHO(Obj *p) {
+  return (p >= stgStatObj[0] && p <= stgStatObj[stgStatObjCount-1]);
+}
+
+bool isHeap(Obj *p) {
+  return (p >= (Obj *)stgHeap && p < (Obj *)stgHP);
+}
 
 void showStgStack() {
   fprintf(stderr,"\nSTG Stack:\n\n");
@@ -473,3 +604,4 @@ void initStg() {
   stgStatObjCount = 0;
 
 }
+

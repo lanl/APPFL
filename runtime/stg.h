@@ -77,7 +77,6 @@ struct _Obj {
   InfoTab *infoPtr;         // canonical location of ObjType field
   int _objSize;              // for debugging
   ObjType objType;          // to distinguish PAP, FUN, BLACKHOLE, INDIRECT
-  int argCount;             // for PAP, how many args already applied to?
   char ident[32];           // temporary, just for tracing
   PtrOrLiteral payload[];
 };
@@ -155,8 +154,11 @@ extern void showStgObj(Obj *);
 extern void showStgHeap();
 extern void showStgStack();
 extern void showStgVal(PtrOrLiteral);
+extern void checkStgHeap();
 extern void showIT(InfoTab *);
 extern int getObjSize(Obj *);
+extern bool isSHO();
+extern bool isHeap(Obj *p);
 
 #define PACKBITS (sizeof(uintptr_t)/2 * 8)
 #define hibits (~0L << PACKBITS)
@@ -166,6 +168,8 @@ extern int getObjSize(Obj *);
 
 #define PUNPACK(n) (((uintptr_t) (n)) & lobits)
 #define NUNPACK(n) (((uintptr_t) (n)) >> PACKBITS)
+
+#define PNSIZE(n) (PUNPACK(n)+NUNPACK(n))
 
 #define PNUNPACK(n,pargc,nargc) \
   do { \
@@ -238,6 +242,13 @@ Obj *stgPopCont();
 #define STGRETURN0()				\
   STGJUMP0(((Obj *)stgSP)->infoPtr->entryCode)
 
+/*
+define STGRETURN1(o)				\
+  do {						\
+  JUMP1(((Cont *)stgSP)->infoPtr->entryCode, o) \
+  } while (0)
+*/
+
 // no explicit return value stack
 #define STGRETURN1(r)				\
   do {						\
@@ -293,12 +304,5 @@ Obj *stgPopCont();
     assert(f.op->infoPtr->funFields.arity == 7);			\
     STGJUMP8(f.op->infoPtr->entryCode, f, v1, v2, v3, v4, v5, v6, v7);	\
   } while(0)
-
-/*
-define STGRETURN1(o)				\
-  do {						\
-  JUMP1(((Cont *)stgSP)->infoPtr->entryCode, o) \
-  } while (0)
-*/
 
 #endif  //ifdef stg_h
