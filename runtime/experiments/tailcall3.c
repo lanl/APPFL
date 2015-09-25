@@ -1,3 +1,8 @@
+
+// this compiles to tail calls with gcc -O2 and clang -O1
+// gcc -O2 -S tailcall3.c
+// clang -O1 -emit-llvm -S -o tailcall3.ll tailcall3.c
+
 #include <stdio.h>
 #include <stdint.h>
 
@@ -55,10 +60,11 @@ void f(Obj *self , uint64_t i , uint64_t j, uint64_t k, uint64_t l) {
 void finish(Obj *self , uint64_t i , uint64_t j, uint64_t k, uint64_t l) {
   printf("finish!\n");
   // ordinary return to C land
+  return;
 }
 
 void start(Obj *self , uint64_t i , uint64_t j, uint64_t k, uint64_t l) {
-  printf("start()\n");
+  printf("start(%d)\n", (int) i);
   // last place to go
   stgSP = stgStack;
   *stgSP = (Cont) {.fp = &finish,
