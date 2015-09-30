@@ -41,4 +41,36 @@ As of 9/24/15 the following are being contemplated.  They are interrelated.
   -- If feasible, what should the type signature be?  Simplest would be void
      f().  void f(Obj *self)?  Some fixed number of args whether they're used
      or not, with excess on the stack?  Because x86_64 can use a fair number
-     of registers for arguments this could be quite a bit more efficient.
+     of registers for arguments this could be quite a bit more
+     efficient. What's more, Clang/LLVM appears to be quite smart about
+
+     The problem is that we likely want arguments to be on a stack that the GC
+     can see at (almost) all times.  How does ghc handle this with its own
+     LLVM calling convention to maximize the number of arguments passed in
+     registers?  Does it only pass pointers to objects that are already
+     accessible via other roots?  When, then, is it safe to GC?
+
+     An answer could be that a cmm function's local variables are stack
+     allocated (that would be an STG stack frame for us).  LETs write these
+     addresses directly to the stack frame (all at once? atomically?)  This
+     means the CG needs to know how much space to allocate IF THEY'RE
+     ALLOCATED BEFORE FUNCTION CALL (as part of the argument list) OR ON
+     FUNCTION ENTRY (like C)--and this could be tricky to figure out given the
+     current CG.  However, using the stack frame (as above), a new stack frame
+     could be allocated for each LET, and if self-popping (as above) their
+     management should be simple.
+
+     Having LET-bound variables automatically rooted in the stack has a number
+     of implications:
+
+     --- Static objects need not be roots in GC
+
+     --- CG for ECase is simplified: currently we assume that if the scrutinee
+     	 might grow the heap then Alts cannot by inlined.  With heap objects
+     	 referenced through their stack frame this is no longer an issue.
+     	 (There is still the issue of whether the scrutinee code does a tail
+     	 call--even by inspecting the code this can only be safely
+     	 approximated.)
+
+     --- Atomicity of heap allocation/creating/updating stack frame, as
+         noted before.	   
