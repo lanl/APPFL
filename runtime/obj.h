@@ -1,6 +1,8 @@
 #ifndef obj_h
 #define obj_h
 
+#include "options.h"
+
 // wrapper functions for possible interface changes
 // see README-heapobj.txt
 static inline size_t startFUNFVsB(Obj *p) { return 0; }
@@ -47,7 +49,21 @@ static inline size_t startCASEFVsU(Obj *p) { return endCASEFVsB(p); }
 static inline size_t endCASEFVsU(Obj *p) { return startCASEFVsU(p) + p->infoPtr->layoutInfo.unboxedCount; }
 
 
-static inline bool isBoxed(PtrOrLiteral *f) { return (f->argType == HEAPOBJ); }
+static inline bool isBoxed(PtrOrLiteral f) {
+#if USE_ARGTYPE
+  return (f.argType == HEAPOBJ);
+#else
+  return true;
+#endif
+}
+
+static inline bool isUnboxed(PtrOrLiteral f) {
+#if USE_ARGTYPE
+  return (f.argType != HEAPOBJ);
+#else
+  return true;
+#endif
+}
 
 // use LSB to say it is a FORWARD
 static inline uintptr_t setLSB(void *ptr) { return (uintptr_t) ptr | 1; }

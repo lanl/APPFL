@@ -123,23 +123,23 @@ void processCont(Obj *p) {
   case CASECONT:
     if (EXTRA) {
       for (i = startCASEFVsU(p); i < endCASEFVsU(p); i++) {
-        assert(!isBoxed(&p->payload[i]) && "gc: unexpected boxed arg in CASE");
+        assert(isUnboxed(p->payload[i]) && "gc: unexpected boxed arg in CASE");
       }
     }
 
     for (i = startCASEFVsB(p); i < endCASEFVsB(p); i++) {
-      if (EXTRA) assert(isBoxed(&p->payload[i]) && "gc: unexpected unboxed arg in CASE");
+      if (EXTRA) assert(isBoxed(p->payload[i]) && "gc: unexpected unboxed arg in CASE");
       updatePtr(&p->payload[i]);
     }
     break;
   case CALLCONT:
     for (i = startCALLFVsB(p); i < endCALLFVsB(p); i++) {
-      if (EXTRA) assert(isBoxed(&p->payload[i]) && "gc: unexpected unboxed arg in CALL");
+      if (EXTRA) assert(isBoxed(p->payload[i]) && "gc: unexpected unboxed arg in CALL");
       updatePtr(&p->payload[i]);
     }
     break;
   case FUNCONT:
-    if (EXTRA) assert(isBoxed(&p->payload[0]) && "gc: unexpected unboxed arg in FUN");
+    if (EXTRA) assert(isBoxed(p->payload[0]) && "gc: unexpected unboxed arg in FUN");
     updatePtr(&p->payload[0]);
     break;
   default:
@@ -162,9 +162,8 @@ void gc(void) {
   }
 
   // add stgCurVal
-  if (stgCurVal.argType == HEAPOBJ) {
-    processObj(stgCurVal.op);
-  }
+  if (EXTRA ) assert(isBoxed(stgCurVal) && "gc: unexpected unboxed arg in stgCurVal");
+  processObj(stgCurVal.op);
 
   // all SHO's
   for (int i = 0; i < stgStatObjCount; i++) {
@@ -180,7 +179,7 @@ void gc(void) {
   //all roots are now added.
 
   //update stgCurVal
-  if (EXTRA) assert(isBoxed(&stgCurVal) && "gc: unexpected unboxed arg in stgCurVal");
+  if (EXTRA ) assert(isBoxed(stgCurVal) && "gc: unexpected unboxed arg in stgCurVal");
   updatePtr(&stgCurVal);
 
   // process "to" space

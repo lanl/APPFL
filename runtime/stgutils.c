@@ -4,6 +4,7 @@
 
 #include "stgutils.h"
 #include "stg.h"
+#include "obj.h"
 
 // ****************************************************************
 // since we always jump through the top of the stg stack we need some
@@ -14,7 +15,11 @@ DEFUN0(fun_stgShowResultCont) {
   fprintf(stderr,"done!\n");
   stgPopCont();  // clean up--normally the job of the returnee
   fprintf(stderr,"The answer is\n");
-  showStgVal(stgCurVal);  
+#if USE_ARGTYPE
+  showStgVal(stgCurVal);
+#else
+  showStgObj(stgCurVal.op);
+#endif
   RETURN0();
   ENDFUN;
 }
@@ -49,7 +54,7 @@ DEFUN0(stgUpdateCont) {
   Obj *contp = stgPopCont();
   assert(contp->objType == UPDCONT && "I'm not an UPDCONT!");
   PtrOrLiteral p = contp->payload[0];
-  assert(p.argType == HEAPOBJ && "not a HEAPOBJ!");
+  assert(isBoxed(p) && "not a HEAPOBJ!");
   fprintf(stderr, "stgUpdateCont updating\n  ");
   showStgObj(p.op);
   fprintf(stderr, "with\n  ");
@@ -76,7 +81,7 @@ InfoTab it_stgUpdateCont __attribute__((aligned(8))) =
   };
 
 void stgThunk(PtrOrLiteral self) {
-  assert(self.argType == HEAPOBJ && "stgThunk:  not HEAPOBJ\n");
+  assert(isBoxed(self) && "stgThunk:  not HEAPOBJ\n");
   Obj *contp = stgAllocCont(&it_stgUpdateCont);
   contp->payload[0] = self;
   strcpy(contp->ident, self.op->ident); //override default
@@ -84,13 +89,14 @@ void stgThunk(PtrOrLiteral self) {
 }
 
 Obj *derefPoL(PtrOrLiteral f) {
-  assert(f.argType == HEAPOBJ && "derefPoL: not a HEAPOBJ");
+  assert(isBoxed(f) && "derefPoL: not a HEAPOBJ");
   return derefHO(f.op);
 }
 
 void derefStgCurVal() {
-  while (stgCurVal.argType == HEAPOBJ && stgCurVal.op->objType == INDIRECT)
+  while (isBoxed(stgCurVal) && stgCurVal.op->objType == INDIRECT) {
     stgCurVal = stgCurVal.op->payload[0];
+  }
 // is this a good place to check for BLACKHOLE?
 }
 
@@ -123,7 +129,9 @@ void callContSave(int argc, PtrOrLiteral argv[]) {
 void callContRestore(PtrOrLiteral argv[]) {
   Obj *cc = stgPopCont();
   assert(cc->objType == CALLCONT);
+#if USE_ARGTYPE
   assert(cc->payload[0].argType == INT);
+#endif
   for (int i = 0; i != cc->payload[0].i; i++) 
     argv[i] = cc->payload[i+1];
 }

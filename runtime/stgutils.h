@@ -5,6 +5,7 @@
 #include "cmm.h"
 #include "gc.h"
 #include "string.h"
+#include "options.h"
 
 extern void stgThunk(PtrOrLiteral self);
 
@@ -34,12 +35,18 @@ FnPtr stg_constructorcall();
 
 FnPtr stgApply();
 
+#if USE_ARGTYPE
 #define HOTOPL(HO) ((PtrOrLiteral) {.argType = HEAPOBJ, .op = (HO) })
 #define INTTOPL(L) ((PtrOrLiteral) {.argType = INT,     .i = L   })
+#else
+#define HOTOPL(HO) ((PtrOrLiteral) {.op = (HO) })
+#define INTTOPL(L) ((PtrOrLiteral) {.i = L   })
+#endif
 
 // NP = number of PtrOrLiterals NO = Number of Objs
 #define STGHEAPAT(NP,NO) ((char*)stgHP - (NP*sizeof(PtrOrLiteral)) - (NO*sizeof(Obj)))
 
+/*
 // evaluate in place
 #define STGEVALworks(e)				\
 do {						\
@@ -62,8 +69,9 @@ do {						\
     exit(0);                                    \
   }                                             \
 } while (0)
-
+*/
 // evaluate in place
+#if USE_ARGTYPE
 #define STGEVAL(e)				\
 do {						\
   stgCurVal = e;				\
@@ -89,8 +97,32 @@ do {						\
   assert (cmmSP == cmmStack + cmmStackSize && "Non empty cmm stack in stgeval");\
   GC();					\
 } while (0)
+#else
+#define STGEVAL(e)        \
+do {            \
+  stgCurVal = e;        \
+  derefStgCurVal();       \
+  if (stgCurVal.op->objType == THUNK) {         \
+    Obj* cont = stgAllocCallCont2(&it_stgCallCont, 0);  \
+    while (stgCurVal.op->objType == THUNK) {  \
+      strcpy(cont->ident, stgCurVal.op->ident); \
+      STGCALL1(stgCurVal.op->infoPtr->entryCode, stgCurVal); \
+      derefStgCurVal();       \
+    }             \
+    stgPopCont();             \
+  }             \
+  if (stgCurVal.op->objType == BLACKHOLE) {     \
+    fprintf(stderr, "infinite loop detected in STGEVAL!\n"); \
+    showStgVal(stgCurVal);      \
+    fprintf(stderr, "\n");      \
+    showStgHeap();              \
+    exit(0);                                    \
+  }                                             \
+  assert (cmmSP == cmmStack + cmmStackSize && "Non empty cmm stack in stgeval");\
+  GC();         \
+} while (0)
+#endif
 
-//  GC();					\
 
 
 

@@ -68,7 +68,11 @@ Obj *stgAllocCallCont2(InfoTab *itp, int argc) {
   objp->infoPtr = itp;
   objp->_objSize = objSize;
   objp->objType = itp->objType;
+#if USE_ARGTYPE
   objp->payload[0] = (PtrOrLiteral) {.argType = INT, .i = argc};
+#else
+  objp->payload[0] = (PtrOrLiteral) {.i = argc};
+#endif
   strcpy(objp->ident, itp->name);  // may be overwritten
   return objp;
 }
@@ -141,8 +145,12 @@ Obj* stgNewHeapPAP(InfoTab *itp, int pargc, int npargc) {
   objp->infoPtr = itp;
   objp->_objSize = objSize;
   objp->objType = PAP;
+#if USE_ARGTYPE
   objp->payload[fvs] = (PtrOrLiteral) {.argType = INT, 
                                        .i = PNPACK(pargc, npargc)};
+#else
+  objp->payload[fvs] = (PtrOrLiteral) {.i = PNPACK(pargc, npargc)};
+#endif
   strcpy(objp->ident, itp->name);  // may be overwritten
   fprintf(stderr, "stgNewHeapPAP: "); showStgObj(objp);
   return objp;
@@ -308,6 +316,7 @@ void showStgObjRecPretty(Obj *p) {
 }
 
 void showStgValPretty(PtrOrLiteral v) {
+#if USE_ARGTYPE
   switch (v.argType) {
   case INT:
     fprintf(stderr,"%ld", v.i);
@@ -325,6 +334,7 @@ void showStgValPretty(PtrOrLiteral v) {
     fprintf(stderr,"undefined PtrOrLiteral.tag! tag=%d\n", v.argType);
     exit(1);
   }
+#endif
 }
 
 
@@ -384,6 +394,7 @@ void showStgObjRecDebug(Obj *p) {
 }
 
 void showStgValDebug(PtrOrLiteral v) {
+#if USE_ARGTYPE
   switch (v.argType) {
   case INT:
     fprintf(stderr,"INT %ld\n", v.i);
@@ -399,6 +410,7 @@ void showStgValDebug(PtrOrLiteral v) {
     fprintf(stderr,"undefined PtrOrLiteral.tag!\n");
     exit(0);
   }
+#endif
 }
 
 
@@ -439,11 +451,11 @@ void checkStgObjRec(Obj *p) {
     if (FVCount) {
       // check that unboxed FVs really are unboxed
       for (i = startFUNFVsU(p); i < FVCount; i++) {
-        assert(!isBoxed(&p->payload[i]) && "hc: unexpected boxed FV in FUN");
+        assert(isUnboxed(p->payload[i]) && "hc: unexpected boxed FV in FUN");
       }
       // check that boxed FVs really are boxed
       for (i = startFUNFVsB(p); i < endFUNFVsB(p); i++) {
-        assert(isBoxed(&p->payload[i]) && "hc: unexpected unboxed FV in FUN");
+        assert(isBoxed(p->payload[i]) && "hc: unexpected unboxed FV in FUN");
         checkStgObjRec(p->payload[i].op);
       }
     }
@@ -456,23 +468,23 @@ void checkStgObjRec(Obj *p) {
     if (FVCount) {
       // check that unboxed FVs really are unboxed
       for (i = startPAPFVsU(p); i < FVCount; i++) {
-        assert(!isBoxed(&p->payload[i]) && "hc: unexpected boxed FV in PAP");
+        assert(isUnboxed(p->payload[i]) && "hc: unexpected boxed FV in PAP");
       }
       // check that boxed FVs really are nboxed
       for (i = startPAPFVsB(p); i < endPAPFVsB(p); i++) {
-        assert(isBoxed(&p->payload[i]) && "hc: unexpected unboxed FV in PAP");
+        assert(isBoxed(p->payload[i]) && "hc: unexpected unboxed FV in PAP");
         checkStgObjRec(p->payload[i].op);
       }
     }
 
     // check that unboxed args really are unboxed
     for (i = startPAPargsU(p); i < endPAPargsU(p); i++) {
-      assert(!isBoxed(&p->payload[i]) && "hc: unexpected boxed arg in PAP");
+      assert(isUnboxed(p->payload[i]) && "hc: unexpected boxed arg in PAP");
     }
 
     // check that boxed args really are boxed
     for (i = startPAPargsB(p); i < endPAPargsB(p); i++) {
-      assert(isBoxed(&p->payload[i]) && "hc: unexpected unboxed arg in PAP");
+      assert(isBoxed(p->payload[i]) && "hc: unexpected unboxed arg in PAP");
       checkStgObjRec(p->payload[i].op);
     }
     break;
@@ -482,11 +494,11 @@ void checkStgObjRec(Obj *p) {
     checkCONargs(p);
     // check that unboxed args really are unboxed
     for (i = startCONargsU(p); i < endCONargsU(p); i++) {
-      assert(!isBoxed(&p->payload[i]) && "hc: unexpected boxed arg in CON");
+      assert(isUnboxed(p->payload[i]) && "hc: unexpected boxed arg in CON");
     }
     // check that boxed args really are boxed
     for (i = startCONargsB(p); i < endCONargsB(p); i++) {
-      assert(isBoxed(&p->payload[i]) && "hc: unexpected unboxed arg in CON");
+      assert(isBoxed(p->payload[i]) && "hc: unexpected unboxed arg in CON");
       checkStgObjRec(p->payload[i].op);
     }
     break;
@@ -496,17 +508,17 @@ void checkStgObjRec(Obj *p) {
   case BLACKHOLE:
     // check that unboxed FVs really are unboxed
     for (i = startTHUNKFVsU(p); i < endTHUNKFVsU(p); i++) {
-      assert(!isBoxed(&p->payload[i]) && "hc: unexpected boxed arg in THUNK");
+      assert(isUnboxed(p->payload[i]) && "hc: unexpected boxed arg in THUNK");
     }
     // check that boxed FVs really are boxed
     for (i = startTHUNKFVsB(p); i < endTHUNKFVsB(p); i++) {
-        assert(isBoxed(&p->payload[i]) && "hc: unexpected unboxed arg in THUNK");
+        assert(isBoxed(p->payload[i]) && "hc: unexpected unboxed arg in THUNK");
         checkStgObjRec(p->payload[i].op);
     }
     break;
 
   case INDIRECT:
-    assert(isBoxed(&p->payload[0]) && "hc: unexpected unboxed arg in INDIRECT");
+    assert(isBoxed(p->payload[0]) && "hc: unexpected unboxed arg in INDIRECT");
     checkStgObjRec(p->payload[0].op);
     break;
 
