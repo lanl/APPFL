@@ -54,11 +54,9 @@ void updatePtr(PtrOrLiteral *f) {
   } else if (isTo(p)) {
     // do nothing
   } else { // SHO
-    if (f->op->objType == INDIRECT) {
-      if (isFrom(f->op)) {
+    if (isFrom(f->op) && f->op->objType == INDIRECT) {
         if (DEBUG) fprintf(stderr, "fix INDIRECT to sho %s\n", f->op->ident);
         f->op = p;
-      }
     }
   }
 }
@@ -68,40 +66,54 @@ void processObj(Obj *p) {
   if (DEBUG) fprintf(stderr, "processObj %s %s\n", objTypeNames[p->objType], p->ident);
 
   switch (p->objType) {
-  case FUN:
+  case FUN: {
+    int start = startFUNFVsB(p);
+    int end = endFUNFVsB(p);
     // process boxed freevars
-    for (i = startFUNFVsB(p); i < endFUNFVsB(p); i++) {
+    for (i = start; i < end; i++) {
       updatePtr(&p->payload[i]);
     }
     break;
+  }
 
-  case PAP:
+  case PAP: {
     if (endPAPFVsU(p)) {
       // boxed free vars
-      for (i = startPAPFVsB(p); i < endPAPFVsB(p); i++) {
+      int start = startPAPFVsB(p);
+      int end = endPAPFVsB(p);
+      for (i = start; i < end; i++) {
         updatePtr(&p->payload[i]);
       }
     }
 
     // boxed args already applied
-    for (i = startPAPargsB(p); i < endPAPargsB(p); i++) {
+    int start = startPAPargsB(p);
+    int end = endPAPargsB(p);
+    for (i = start; i < end; i++) {
       updatePtr(&p->payload[i]);
     }
     break;
+  }
 
-  case CON:
+  case CON: {
     // boxed args
-    for (i = startCONargsB(p); i < endCONargsB(p); i++) {
+    int start = startCONargsB(p);
+    int end = endCONargsB(p);
+    for (i = start; i < end; i++) {
       updatePtr(&p->payload[i]);
     }
     break;
+  }
 
   case THUNK:
-  case BLACKHOLE:
-    for (i = startTHUNKFVsB(p); i < endTHUNKFVsB(p); i++) {
+  case BLACKHOLE: {
+    int start = startTHUNKFVsB(p);
+    int end = endTHUNKFVsB(p);
+    for (i = start; i < end; i++) {
       updatePtr(&p->payload[i]);
     }
     break;
+  }
 
   case INDIRECT:
     updatePtr(&p->payload[0]);
@@ -120,24 +132,30 @@ void processCont(Obj *p) {
   case UPDCONT:
     updatePtr(&p->payload[0]);
     break;
-  case CASECONT:
+  case CASECONT: {
     if (EXTRA) {
       for (i = startCASEFVsU(p); i < endCASEFVsU(p); i++) {
         assert(isUnboxed(p->payload[i]) && "gc: unexpected boxed arg in CASE");
       }
     }
 
-    for (i = startCASEFVsB(p); i < endCASEFVsB(p); i++) {
+    int start = startCASEFVsB(p);
+    int end = endCASEFVsB(p);
+    for (i = start; i < end; i++) {
       if (EXTRA) assert(isBoxed(p->payload[i]) && "gc: unexpected unboxed arg in CASE");
       updatePtr(&p->payload[i]);
     }
     break;
-  case CALLCONT:
-    for (i = startCALLFVsB(p); i < endCALLFVsB(p); i++) {
+  }
+  case CALLCONT: {
+    int start = startCALLFVsB(p);
+    int end = endCALLFVsB(p);
+    for (i = start; i < end; i++) {
       if (EXTRA) assert(isBoxed(p->payload[i]) && "gc: unexpected unboxed arg in CALL");
       updatePtr(&p->payload[i]);
     }
     break;
+  }
   case FUNCONT:
     if (EXTRA) assert(isBoxed(p->payload[0]) && "gc: unexpected unboxed arg in FUN");
     updatePtr(&p->payload[0]);
