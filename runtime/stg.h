@@ -5,6 +5,7 @@
 #include <assert.h>
 #include <stdbool.h>
 #include <stdint.h>
+#include "options.h"
 
 #define DEBUGSTGAPPLY 1
 
@@ -50,7 +51,9 @@ typedef FnPtr (*CmmFnPtr)();
 
 // PtrOrLiteral -- literal value or pointer to heap object 
 typedef struct {
+#if USE_ARGTYPE
   ArgType argType;        // superfluous, for sanity checking
+#endif
   union {
     int64_t i;
     double d;

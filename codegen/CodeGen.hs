@@ -31,6 +31,8 @@ Alt default var:  "stgCurVal, bind it"
 -}
 
 {-# LANGUAGE NamedFieldPuns    #-}
+{-# LANGUAGE CPP #-}
+#include "options.h"
 
 module CodeGen(
   cgObjs,
@@ -108,9 +110,15 @@ cgUBa _ at _ = error $ "CodeGen.cgUBa: not expecting Atom - " ++ show at
 cgv env v = getEnvRef v env -- ++ "/* " ++ v ++ " */"
 
 cga :: Env -> Atom -> String
+#if USE_ARGTYPE 
 cga env (LitI i) = "((PtrOrLiteral){.argType = INT,    .i = " ++ show i ++ " })"
 cga env (LitD d) = "((PtrOrLiteral){.argType = DOUBLE, .d = " ++ show d ++ " })"
---cga env (LitF f) = "((PtrOrLiteral){.argType = FLOAT,  .f = " ++ show f ++ " })"
+cga env (LitF f) = "((PtrOrLiteral){.argType = FLOAT,  .f = " ++ show f ++ " })"
+#else
+cga env (LitI i) = "((PtrOrLiteral){.i = " ++ show i ++ " })"
+cga env (LitD d) = "((PtrOrLiteral){.d = " ++ show d ++ " })"
+cga env (LitF f) = "((PtrOrLiteral){.f = " ++ show f ++ " })"
+#endif
 cga env (Var v) = cgv env v
 cga _ at = error $ "CodeGen.cga: not expecting Atom - " ++ show at 
 
@@ -133,7 +141,11 @@ cgStart :: String
 cgStart = "\n\nDEFUN0(start) {\n" ++
             "  registerSHOs();\n" ++
             "  Obj *showResultCont = stgAllocCallCont2(&it_stgShowResultCont, 0);\n" ++
+#if USE_ARGTYPE
             "  STGEVAL(((PtrOrLiteral){.argType = HEAPOBJ, .op = &sho_main}));\n" ++
+#else
+            "  STGEVAL(((PtrOrLiteral){.op = &sho_main}));\n" ++
+#endif
             "  STGRETURN0();\n" ++
             "  ENDFUN;\n" ++
             "}\n\n"  
@@ -174,18 +186,6 @@ permArgs vs ft =
                    True  -> ((v:bvs,uvs),(t:bts,uts))
                    False -> ((bvs,v:uvs),(bts,t:uts))
           part x y = error "CodeGen.part length mismatch"
-{-
-<<<<<<< HEAD
-          part x y = error "CodeGen.part length mismatch"
-=======
-          part [] (t:ts) = 
-                let (([],[]),(bts,uts)) = part [] ts 
-                in case isBoxed t of
-                   True  -> (([],[]),(t:bts,uts))
-                   False -> (([],[]),(bts,t:uts))  
-          part _ _ = error ("permArgs fallthrough  vs=" ++ show vs ++ " ft=" ++ show ft)
->>>>>>> 433f021a73720e1207f70c3decf585b92c382f73
--}
 
 cgo :: Env -> Obj InfoTab -> State Int [(String, String)]
 cgo env o@(FUN it vs e name) =
@@ -322,16 +322,28 @@ cge env (EPrimop it op eas) =
                        arg0 "i" ++ "?" ++ getEnvRef "true"  env ++
                                    ":" ++ getEnvRef "false" env ++ ";\n"
 
-        cPrefixII op =  "stgCurVal.argType = INT;\n" ++
+        cPrefixII op =  
+#if USE_ARGTYPE
+                        "stgCurVal.argType = INT;\n" ++
+#endif
                         "stgCurVal.i = " ++ op ++ arg0 "i" ++ ";\n"
 
-        cInfixIII op =  "stgCurVal.argType = INT;\n" ++
+        cInfixIII op =  
+#if USE_ARGTYPE
+                        "stgCurVal.argType = INT;\n" ++
+#endif
                         "stgCurVal.i = " ++ arg0 "i" ++ op ++ arg1 "i" ++ ";\n"
 
-        cInfixIIB op =  "stgCurVal.argType = BOOL;\n" ++
+        cInfixIIB op =  
+#if USE_ARGTYPE
+                        "stgCurVal.argType = BOOL;\n" ++
+#endif
                         "stgCurVal.i = " ++ arg0 "i" ++ op ++ arg1 "i" ++ ";\n"
 
-        cFunIII fun = "stgCurVal.argType = INT;\n" ++
+        cFunIII fun = 
+#if USE_ARGTYPE
+                      "stgCurVal.argType = INT;\n" ++
+#endif
                       "stgCurVal.i = " ++ fun ++ "(" ++ arg0 "i" ++ ", " ++ arg1 "i" ++ ");\n"
     in return (inline, [])
 

@@ -26,6 +26,9 @@ Obj sho_one =
 
 -}
 
+{-# LANGUAGE CPP #-}
+#include "options.h"
+
 module HeapObj (
   showSHOs,
   shoNames
@@ -110,27 +113,53 @@ payloads as = let ps = indent 4 $ concatMap payload as
               in  indent 2 ".payload = {\n" ++ ps ++ "},\n"
 
 payload (LitI i) = 
+#if USE_ARGTYPE 
     "{.argType = INT, .i = " ++ show i ++ "},\n"
+#else
+    "{.i = " ++ show i ++ "},\n"
+#endif
+
 
 payload (LitD d) = 
-    "{.argType = DOUBLE, .i = " ++ show d ++ "},\n"
+#if USE_ARGTYPE 
+    "{.argType = DOUBLE, .d = " ++ show d ++ "},\n"
+#else
+    "{.d = " ++ show d ++ "},\n"
+#endif
 
--- payload (LitF d) = 
---    "{.argType = FLOAT, .i = " ++ show d ++ "},\n"
+payload (LitF f) = 
+#if USE_ARGTYPE 
+   "{.argType = FLOAT, .f = " ++ show f ++ "},\n"
+#else
+    "{.f = " ++ show f ++ "},\n"
+#endif
 
 -- for SHOs atoms that are variables must be SHOs, so not unboxed
 payload (Var v) = 
+#if USE_ARGTYPE 
     "{.argType = HEAPOBJ, .op = &sho_" ++ v ++ "},\n"
+#else
+    "{.op = &sho_" ++ v ++ "},\n"
+#endif
 
 payload at = error $ "HeapObj.payload: not expecting Atom - " ++ show at
 
 ptrOrLitSHO a =
     "{ " ++
     case a of
+#if USE_ARGTYPE 
       LitI i -> ".argType = INT, .i = " ++ show i
       LitB b -> ".argType = BOOL, .b = " ++ (if b then "true" else "false")
       LitD d -> ".argType = DOUBLE, .d = " ++ show d
       LitF f -> ".argType = FLOAT, .f = " ++ show f
       LitC c -> ".argType = CHAR, .c = " ++ show c
       Var v -> ".argType = HEAPOBJ, .op = &sho_" ++ v   -- these must be global
+#else
+      LitI i -> ".i = " ++ show i
+      LitB b -> ".b = " ++ (if b then "true" else "false")
+      LitD d -> ".d = " ++ show d
+      LitF f -> ".f = " ++ show f
+      LitC c -> ".c = " ++ show c
+      Var v -> ".op = &sho_" ++ v   -- these must be global
+#endif
     ++ " }"
