@@ -18,6 +18,11 @@ to just build runtime (and copy Preludes etc):
 
 $ make runtime
 
+to build/test in parallel:
+
+$ export BUILD_NTHREADS=4
+$ make clean && make && make ctest
+
 ---------------------------------------
 Using the compiler from inside ghci:
 

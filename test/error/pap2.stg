@@ -1,0 +1,3 @@
+main = THUNK(let { eqOne = PAP(eqInt one);
+                   output = THUNK(one); 
+                   result = THUNK(eqOne output)} in result); 
