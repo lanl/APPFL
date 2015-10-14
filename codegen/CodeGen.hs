@@ -497,10 +497,14 @@ bho :: [(String, RVal)] -> Obj InfoTab -> (Int, [Char])
 bho env (FUN it vs e name) = 
     (length $ fvs it, loadPayloadFVs env (map fst $ fvs it) 0 name)
 
+
+bho env (PAP it f as name) = error "unsupported explicit PAP"
 -- TODO: the size here should be based on the FUN rather than being maxPayload
-bho env (PAP it f as name) =
+{-
+
     (maxPayload, loadPayloadFVs env (map fst $ fvs it) 0 name ++ 
                  loadPayloadAtoms env (projectAtoms as) (length $ fvs it) name)
+-}               
 
 -- CON is special in that the payload contains not just FVs but literals
 -- as well, and we need their types.  This could be done:

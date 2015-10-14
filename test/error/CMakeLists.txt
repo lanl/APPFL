@@ -93,3 +93,10 @@ add_test(${tname} ${STGCC} ${SRC_DIR}/${name}.stg)
 set_property(TEST ${tname} PROPERTY PASS_REGULAR_EXPRESSION 
     "cannot unify unboxed type UBInt with polymorphic type variable")
 set_property(TEST ${tname} PROPERTY WILL_FAIL)
+
+set(name pap2)
+set(tname error_${name})
+add_test(${tname} ${STGCC} ${SRC_DIR}/${name}.stg)
+set_property(TEST ${tname} PROPERTY PASS_REGULAR_EXPRESSION 
+    "unsupported explicit PAP")
+set_property(TEST ${tname} PROPERTY WILL_FAIL)

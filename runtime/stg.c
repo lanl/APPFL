@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdbool.h>
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -112,7 +113,7 @@ Obj* stgNewHeapObj(InfoTab *itp) {
   case FUN:
   case CON: assert(payloadSize == fvs && "stgNewHeapObj"); break;
   case THUNK: assert(payloadSize == fvs + 1 && "stgNewHeapObj"); break;
-  default:  assert("stgNewHeapObj");
+  default:  assert(false && "stgNewHeapObj");
   }
   size_t objSize = sizeof(Obj) + payloadSize * sizeof(PtrOrLiteral);
   objSize = ((objSize + 7)/8)*8; 
