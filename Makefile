@@ -1,3 +1,7 @@
+ifdef BUILD_NTHREADS
+  build_flags := -j$(BUILD_NTHREADS)
+endif
+
 build_dir := $(CURDIR)/build
 
 all: codegen runtime
@@ -14,12 +18,12 @@ setup: FORCE
 	@(cp -f codegen/Prelude.mhs $(build_dir)/etc/)
 
 codegen_: FORCE
-	@(cd codegen && cabal build)
+	@(cd codegen && cabal build $(build_flags))
 	@(cp -f codegen/dist/build/stgc/stgc $(build_dir)/bin/)
 
 runtime_: FORCE
 	@(cd $(build_dir); cmake $(cmake_flags) ..)
-	@(cd $(build_dir); make)
+	@(cd $(build_dir); make $(build_flags))
 
 test: ctest tastytest
 
@@ -30,7 +34,7 @@ ctest: setup ctest_
 
 ctest_: FORCE
 	@(cd $(build_dir); cmake $(cmake_flags) ..)
-	@(cd $(build_dir); ARGS="-D ExperimentalTest --no-compress-output" $(MAKE) test; cp Testing/`head -n 1 Testing/TAG`/Test.xml ./CTestResults.xml)
+	@(cd $(build_dir) &&  ARGS="$(build_flags) -D ExperimentalTest --no-compress-output" $(MAKE) test && cp Testing/`head -n 1 Testing/TAG`/Test.xml ./CTestResults.xml)
 
 clean: FORCE
 	@(cd codegen && cabal clean)
