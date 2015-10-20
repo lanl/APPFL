@@ -52,17 +52,17 @@ InfoTab it_stgCallCont __attribute__((aligned(8))) =
 
 DEFUN0(stgUpdateCont) {
   Obj *contp = stgPopCont();
-  assert(contp->objType == UPDCONT && "I'm not an UPDCONT!");
+  assert(getObjType(contp) == UPDCONT && "I'm not an UPDCONT!");
   PtrOrLiteral p = contp->payload[0];
   assert(isBoxed(p) && "not a HEAPOBJ!");
   fprintf(stderr, "stgUpdateCont updating\n  ");
   showStgObj(p.op);
   fprintf(stderr, "with\n  ");
   showStgObj(stgCurVal.op);
-  if (p.op->objType != BLACKHOLE) {
+  if (getObjType(p.op) != BLACKHOLE) {
     fprintf(stderr, "but updatee is not a BLACKHOLE!\n");
     showStgHeap();
-    assert(p.op->objType == BLACKHOLE);
+    assert(getObjType(p.op) == BLACKHOLE);
   }
   p.op->payload[0] = stgCurVal;
   p.op->objType = INDIRECT;
@@ -85,7 +85,10 @@ void stgThunk(PtrOrLiteral self) {
   Obj *contp = stgAllocCont(&it_stgUpdateCont);
   contp->payload[0] = self;
   strcpy(contp->ident, self.op->ident); //override default
+#if USE_OBJTYPE
   self.op->objType = BLACKHOLE;	
+#endif
+  self.op->infoPtr = setLSB2(self.op->infoPtr); // update bit to say this is a Blackhole
 }
 
 Obj *derefPoL(PtrOrLiteral f) {
@@ -94,14 +97,14 @@ Obj *derefPoL(PtrOrLiteral f) {
 }
 
 void derefStgCurVal() {
-  while (isBoxed(stgCurVal) && stgCurVal.op->objType == INDIRECT) {
+  while (isBoxed(stgCurVal) && getObjType(stgCurVal.op) == INDIRECT) {
     stgCurVal = stgCurVal.op->payload[0];
   }
 // is this a good place to check for BLACKHOLE?
 }
 
 Obj *derefHO(Obj *op) {
-  while (op->objType == INDIRECT)
+  while (getObjType(op) == INDIRECT)
     op = op->payload[0].op;
   return op;
 }
@@ -128,7 +131,7 @@ void callContSave(int argc, PtrOrLiteral argv[]) {
 
 void callContRestore(PtrOrLiteral argv[]) {
   Obj *cc = stgPopCont();
-  assert(cc->objType == CALLCONT);
+  assert(getObjType(cc) == CALLCONT);
 #if USE_ARGTYPE
   assert(cc->payload[0].argType == INT);
 #endif

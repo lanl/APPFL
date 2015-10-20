@@ -23,7 +23,7 @@ void *stgSP = NULL;
 PtrOrLiteral stgCurVal;  // current value STG register
 
 const char *objTypeNames[] = {
-  "OBJTYPE0BAD"
+  "OBJTYPE0BAD",
   "FUN", 
   "PAP", 
   "CON",
@@ -37,7 +37,7 @@ const char *objTypeNames[] = {
 };
 
 Obj *stgAllocCont(InfoTab *itp) {
-  assert( itp->objType != CALLCONT &&
+  assert(itp->objType != CALLCONT &&
           "stgAllocCont: itp->objType == CALLCONT" );
   int payloadSize = itp->layoutInfo.payloadSize;
   size_t objSize = sizeof(Obj) + payloadSize * sizeof(PtrOrLiteral);
@@ -47,9 +47,11 @@ Obj *stgAllocCont(InfoTab *itp) {
   stgSP = (char *)stgSP - objSize;
   assert(stgSP >= stgStack);
   Obj *objp = (Obj *)stgSP;
-  objp->infoPtr = itp;
+  objp->infoPtr = (uintptr_t)itp;
   objp->_objSize = objSize;
+#if USE_OBJTYPE
   objp->objType = itp->objType;
+#endif
   strcpy(objp->ident, itp->name);  // may be overwritten
   return objp;
 }
@@ -66,9 +68,11 @@ Obj *stgAllocCallCont2(InfoTab *itp, int argc) {
   stgSP = (char *)stgSP - objSize;
   assert(stgSP >= stgStack);
   Obj *objp = (Obj *)stgSP;
-  objp->infoPtr = itp;
+  objp->infoPtr = (uintptr_t)itp;
   objp->_objSize = objSize;
+#if USE_OBJTYPE
   objp->objType = itp->objType;
+#endif
 #if USE_ARGTYPE
   objp->payload[0] = (PtrOrLiteral) {.argType = INT, .i = argc};
 #else
@@ -84,21 +88,21 @@ Obj *stgAllocCallCont2(InfoTab *itp, int argc) {
 // CALLCONT is special
 Obj *stgPopCont() {
   Obj *retVal = (Obj *)stgSP;
-  InfoTab *itp = retVal->infoPtr;
-  assert( itp->objType == retVal->objType);
-  assert( retVal->infoPtr->objType >= UPDCONT &&
-          retVal->infoPtr->objType <= FUNCONT);
+  InfoTab *itp = getInfoPtr(retVal);
+  assert(itp->objType == getObjType(retVal));
+  assert( getInfoPtr(retVal)->objType >= UPDCONT &&
+          getInfoPtr(retVal)->objType <= FUNCONT);
   int payloadSize;
-  if (retVal->infoPtr->objType == CALLCONT) {
+  if (getInfoPtr(retVal)->objType == CALLCONT) {
     payloadSize = retVal->payload[0].i + 1;
     fprintf(stderr, "popping call continuation with argc %d\n", payloadSize-1);
   } else {
-    payloadSize = retVal->infoPtr->layoutInfo.payloadSize;
+    payloadSize = getInfoPtr(retVal)->layoutInfo.payloadSize;
     fprintf(stderr, "popping continuation with payloadSize %d\n", payloadSize);
   }
   size_t objSize = sizeof(Obj) + payloadSize * sizeof(PtrOrLiteral);
   objSize = ((objSize + 7)/8)*8; 
-  showIT(retVal->infoPtr);
+  showIT(getInfoPtr(retVal));
   assert((char *)retVal + objSize <= (char *)stgStack + stgStackSize);
   stgSP = (char *)retVal + objSize;
   return retVal;
@@ -120,9 +124,11 @@ Obj* stgNewHeapObj(InfoTab *itp) {
   Obj *objp = (Obj *)stgHP;
   stgHP = (char *)stgHP + objSize;
   memset(objp, 0, objSize); //zero out anything left by previous gc passes
-  objp->infoPtr = itp;
+  objp->infoPtr = (uintptr_t)itp;
   objp->_objSize = objSize;
+#if USE_OBJTYPE
   objp->objType = itp->objType;
+#endif
   strcpy(objp->ident, itp->name);  // may be overwritten
   fprintf(stderr, "stgNewHeapObj: "); showStgObj(objp);
   return objp;
@@ -143,9 +149,11 @@ Obj* stgNewHeapPAP(InfoTab *itp, int pargc, int npargc) {
   Obj *objp = (Obj *)stgHP;
   stgHP = (char *)stgHP + objSize;
   memset(objp, 0, objSize); //zero out anything left by previous gc passes
-  objp->infoPtr = itp;
+  objp->infoPtr = setLSB2((uintptr_t)itp); // set InfoPtr bit to say this is a PAP
   objp->_objSize = objSize;
+#if USE_OBJTYPE
   objp->objType = PAP;
+#endif
 #if USE_ARGTYPE
   objp->payload[fvs] = (PtrOrLiteral) {.argType = INT, 
                                        .i = PNPACK(pargc, npargc)};
@@ -159,15 +167,15 @@ Obj* stgNewHeapPAP(InfoTab *itp, int pargc, int npargc) {
 
 int getObjSize(Obj *o) {
   size_t objSize;
-  
-  if (o->objType == CALLCONT) {
+  ObjType type = getObjType(o);
+  if (type == CALLCONT) {
     objSize = sizeof(Obj) + (o->payload[0].i + 1) * sizeof(PtrOrLiteral);
-  } else if (o->objType == PAP) {
-    InfoTab *itp = o->infoPtr;
+  } else if (type == PAP) {
+    InfoTab *itp = getInfoPtr(o);
     int fvs = itp->layoutInfo.boxedCount + itp->layoutInfo.unboxedCount;
     objSize = sizeof(Obj) + (fvs + 1 + PNSIZE(o->payload[fvs].i)) * sizeof(PtrOrLiteral);
   } else {
-    objSize = sizeof(Obj) + o->infoPtr->layoutInfo.payloadSize * sizeof(PtrOrLiteral);
+    objSize = sizeof(Obj) + getInfoPtr(o)->layoutInfo.payloadSize * sizeof(PtrOrLiteral);
   }
   objSize = ((objSize + 7)/8)*8;
   assert(objSize == o->_objSize && "bad objSize");
@@ -222,7 +230,8 @@ void showStgObjPretty(Obj *p) {
 }
 
 void showStgCont(Obj *c) {
-  switch (c->objType) {
+  ObjType type = getObjType(c);
+  switch (type) {
   case UPDCONT:
     fprintf(stderr,"UPDCONT  %s\n", c->ident);
     return;
@@ -240,7 +249,7 @@ void showStgCont(Obj *c) {
     return;
 
   default:
-    fprintf(stderr,"showStgCont default case! %d %s\n", c->objType, objTypeNames[c->objType]);
+    fprintf(stderr,"showStgCont default case! %d %s\n", type, objTypeNames[type]);
     exit(0);
   }
 }
@@ -253,7 +262,7 @@ void showStgObjRecPretty(Obj *p) {
     return;
   }
 
-  InfoTab it = *(p->infoPtr);
+  InfoTab it = *(getInfoPtr(p));
 
   for (int i=0; i != depth; i++) {
     if (p == stack[i]) {
@@ -263,17 +272,18 @@ void showStgObjRecPretty(Obj *p) {
   }
   stack[depth++] = p;
 
-  if (p->objType != BLACKHOLE &&
-      p->objType != INDIRECT &&
-      p->objType != it.objType) {
-	    if(!(p->objType == PAP && it.objType == FUN)) {
+  ObjType type = getObjType(p);
+  if (type != BLACKHOLE &&
+      type != INDIRECT &&
+      type != it.objType) {
+	    if(!(type == PAP && it.objType == FUN)) {
           fprintf(stderr, "mismatch in infotab and object type! %d != %d\n",
-        		p->objType, it.objType);
+        		type, it.objType);
           exit(0);
 	    }
   }
   if (strcmp(it.name, p->ident)) {
-	  if(p->objType != PAP) {
+	  if(type != PAP) {
         fprintf(stderr, "mismatch in infotab and object names \"%s\" != \"%s\"\n",
 	      it.name, p->ident);
         exit(0);
@@ -281,12 +291,12 @@ void showStgObjRecPretty(Obj *p) {
 	  }
   }
 
-  switch (p->objType) {
+  switch (type) {
   case FUN:
   case PAP:
   case THUNK:
   case BLACKHOLE:
-    fprintf(stderr, "%s = <%s>", p->ident, objTypeNames[p->objType]);
+    fprintf(stderr, "%s = <%s>", p->ident, objTypeNames[type]);
     break;
 
   case CON:
@@ -356,10 +366,11 @@ void showStgObjRecDebug(Obj *p) {
 
 
 
-  InfoTab it = *(p->infoPtr);
-  fprintf(stderr, "%s %s %s ", objTypeNames[p->objType],
+  InfoTab it = *(getInfoPtr(p));
+  ObjType type = getObjType(p);
+  fprintf(stderr, "%s %s %s ", objTypeNames[type],
 	  objTypeNames[it.objType], it.name);
-  switch (p->objType) {
+  switch (type) {
   case FUN:
     fprintf(stderr,"\n");
     break;
@@ -427,8 +438,8 @@ void checkStgObjRec(Obj *p) {
 
   assert(isHeap(p) || isSHO(p) && "hc: bad Obj location");
 
-  InfoTab it = *(p->infoPtr);
-  assert((uintptr_t)(p->infoPtr) % 8 == 0 && "hc: bad infoPtr alignment");
+  InfoTab it = *(getInfoPtr(p));
+  //assert((uintptr_t)(p->infoPtr) % 8 == 0 && "hc: bad infoPtr alignment");
 
   for (i = 0; i != depth; i++) {
     if (p == stack[i]) {
@@ -437,15 +448,17 @@ void checkStgObjRec(Obj *p) {
   }
   stack[depth++] = p;
 
+  ObjType type = getObjType(p);
+
   if (strcmp(it.name, p->ident)) {
-    if (p->objType != PAP) {
+    if (type != PAP) {
       fprintf(stderr, "mismatch in infotab and object names \"%s\" != \"%s\"\n",
           it.name, p->ident);
       assert(false);
     }
   }
 
-  switch (p->objType) {
+  switch (type) {
   case FUN: {
     assert(it.objType == FUN && "hc: FUN infotab type mismatch");
     int FVCount = endFUNFVsU(p);

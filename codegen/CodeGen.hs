@@ -400,7 +400,7 @@ cgalts_noheapalloc env (Alts it alts name) boxed =
                 "PtrOrLiteral " ++ scrutName ++ " = stgCurVal;\n" ++
                 (if switch then
                      (if boxed then
-                          "switch(stgCurVal.op->infoPtr->conFields.tag) {\n"
+                          "switch(getInfoPtr(stgCurVal.op)->conFields.tag) {\n"
                       else 
                           "switch(stgCurVal.i) {\n"
                      ) ++
@@ -436,7 +436,7 @@ cgalts env (Alts it alts name) boxed =
                 "  PtrOrLiteral " ++ scrutName ++ " = stgCurVal;\n" ++
                 (if switch then
                      (if boxed then
-                          "  switch(stgCurVal.op->infoPtr->conFields.tag) {\n"
+                          "  switch(getInfoPtr(stgCurVal.op)->conFields.tag) {\n"
                       else 
                           "  switch(stgCurVal.i) {\n"
                      ) ++

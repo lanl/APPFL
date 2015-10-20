@@ -7,7 +7,7 @@
 
 DEFUN1(stgApplyN, f) {
   #ifdef DEBUGSTGAPPLY
-  fprintf(stderr, "stgApplyN %s\n", f.op->infoPtr->name);
+  fprintf(stderr, "stgApplyN %s\n", getInfoPtr(f.op)->name);
   #endif
   const int argc = 1;
   PtrOrLiteral argv[1];
@@ -19,9 +19,9 @@ DEFUN1(stgApplyN, f) {
   nargv[0] = argv[0];
   
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     // no pointer args to save
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyN THUNK\n");
       #endif
@@ -32,11 +32,11 @@ DEFUN1(stgApplyN, f) {
     // no pointer args to restore
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
-    int arity = f.op->infoPtr->funFields.arity;
+    int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
-    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    fprintf(stderr, "FUN %s arity %d\n", getInfoPtr(f.op)->name, getInfoPtr(f.op)->funFields.arity);
     #endif
     int excess = argc - arity;  // may be negative
 
@@ -50,17 +50,17 @@ DEFUN1(stgApplyN, f) {
       pushargs(1, nargv);
       // 0 pointers to push
       // tail call the fun
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
     }
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyN FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                    f.op->infoPtr->layoutInfo.unboxedCount;
+      int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                    getInfoPtr(f.op)->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 0, 1);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 0, 1);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -80,12 +80,12 @@ DEFUN1(stgApplyN, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                  f.op->infoPtr->layoutInfo.unboxedCount;
+    int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                  getInfoPtr(f.op)->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    int arity = f.op->infoPtr->funFields.arity - argCount;
+    int arity = getInfoPtr(f.op)->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args not possible
@@ -100,7 +100,7 @@ DEFUN1(stgApplyN, f) {
       // 0 non-pointer args
       pushargs(pappargc, &f.op->payload[fvCount+1]);
       // tail call the FUN
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
 
     // excess < 0, too few args
     } else {
@@ -108,7 +108,7 @@ DEFUN1(stgApplyN, f) {
       fprintf(stderr, "stgApplyN PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 0 + pappargc, 1 + papnargc);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 0 + pappargc, 1 + papnargc);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -151,7 +151,7 @@ DEFUN1(stgApplyN, f) {
 
 DEFUN1(stgApplyP, f) {
   #ifdef DEBUGSTGAPPLY
-  fprintf(stderr, "stgApplyP %s\n", f.op->infoPtr->name);
+  fprintf(stderr, "stgApplyP %s\n", getInfoPtr(f.op)->name);
   #endif
   const int argc = 1;
   PtrOrLiteral argv[1];
@@ -169,9 +169,9 @@ DEFUN1(stgApplyP, f) {
   f = pargv[1];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(1, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyP THUNK\n");
       #endif
@@ -184,11 +184,11 @@ DEFUN1(stgApplyP, f) {
     argv[0] = pargv[0];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
-    int arity = f.op->infoPtr->funFields.arity;
+    int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
-    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    fprintf(stderr, "FUN %s arity %d\n", getInfoPtr(f.op)->name, getInfoPtr(f.op)->funFields.arity);
     #endif
     int excess = argc - arity;  // may be negative
 
@@ -202,17 +202,17 @@ DEFUN1(stgApplyP, f) {
       // 0 non-pointers to push
       pushargs(1, pargv);
       // tail call the fun
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
     }
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyP FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                    f.op->infoPtr->layoutInfo.unboxedCount;
+      int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                    getInfoPtr(f.op)->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 1, 0);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 1, 0);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -232,12 +232,12 @@ DEFUN1(stgApplyP, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                  f.op->infoPtr->layoutInfo.unboxedCount;
+    int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                  getInfoPtr(f.op)->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    int arity = f.op->infoPtr->funFields.arity - argCount;
+    int arity = getInfoPtr(f.op)->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args not possible
@@ -252,7 +252,7 @@ DEFUN1(stgApplyP, f) {
       pushargs(1, pargv);
       pushargs(pappargc, &f.op->payload[fvCount+1]);
       // tail call the FUN
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
 
     // excess < 0, too few args
     } else {
@@ -260,7 +260,7 @@ DEFUN1(stgApplyP, f) {
       fprintf(stderr, "stgApplyP PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 1 + pappargc, 0 + papnargc);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 1 + pappargc, 0 + papnargc);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -303,7 +303,7 @@ DEFUN1(stgApplyP, f) {
 
 DEFUN1(stgApplyNN, f) {
   #ifdef DEBUGSTGAPPLY
-  fprintf(stderr, "stgApplyNN %s\n", f.op->infoPtr->name);
+  fprintf(stderr, "stgApplyNN %s\n", getInfoPtr(f.op)->name);
   #endif
   const int argc = 2;
   PtrOrLiteral argv[2];
@@ -316,9 +316,9 @@ DEFUN1(stgApplyNN, f) {
   nargv[1] = argv[1];
   
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     // no pointer args to save
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNN THUNK\n");
       #endif
@@ -329,11 +329,11 @@ DEFUN1(stgApplyNN, f) {
     // no pointer args to restore
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
-    int arity = f.op->infoPtr->funFields.arity;
+    int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
-    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    fprintf(stderr, "FUN %s arity %d\n", getInfoPtr(f.op)->name, getInfoPtr(f.op)->funFields.arity);
     #endif
     int excess = argc - arity;  // may be negative
 
@@ -349,7 +349,7 @@ DEFUN1(stgApplyNN, f) {
       pushargs(1, nargv);
       // 0 pointers to push
       // call-with-return the FUN
-      STGCALL1(f.op->infoPtr->entryCode, f);
+      STGCALL1(getInfoPtr(f.op)->entryCode, f);
       // restore excess args
       // no excess pointer params to restore
       // grab obj just returned
@@ -369,17 +369,17 @@ DEFUN1(stgApplyNN, f) {
       pushargs(2, nargv);
       // 0 pointers to push
       // tail call the fun
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
     }
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNN FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                    f.op->infoPtr->layoutInfo.unboxedCount;
+      int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                    getInfoPtr(f.op)->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 0, 2);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 0, 2);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -399,12 +399,12 @@ DEFUN1(stgApplyNN, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                  f.op->infoPtr->layoutInfo.unboxedCount;
+    int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                  getInfoPtr(f.op)->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    int arity = f.op->infoPtr->funFields.arity - argCount;
+    int arity = getInfoPtr(f.op)->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
@@ -424,7 +424,7 @@ DEFUN1(stgApplyNN, f) {
       // 0 pointers to push
       pushargs(pappargc, &f.op->payload[fvCount+1]);
       // call-with-return the FUN
-      STGCALL1(f.op->infoPtr->entryCode, f);
+      STGCALL1(getInfoPtr(f.op)->entryCode, f);
       // restore excess args
       // no excess pointer params to restore
       // grab obj just returned
@@ -446,7 +446,7 @@ DEFUN1(stgApplyNN, f) {
       // 0 non-pointer args
       pushargs(pappargc, &f.op->payload[fvCount+1]);
       // tail call the FUN
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
 
     // excess < 0, too few args
     } else {
@@ -454,7 +454,7 @@ DEFUN1(stgApplyNN, f) {
       fprintf(stderr, "stgApplyNN PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 0 + pappargc, 2 + papnargc);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 0 + pappargc, 2 + papnargc);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -497,7 +497,7 @@ DEFUN1(stgApplyNN, f) {
 
 DEFUN1(stgApplyPN, f) {
   #ifdef DEBUGSTGAPPLY
-  fprintf(stderr, "stgApplyPN %s\n", f.op->infoPtr->name);
+  fprintf(stderr, "stgApplyPN %s\n", getInfoPtr(f.op)->name);
   #endif
   const int argc = 2;
   PtrOrLiteral argv[2];
@@ -516,9 +516,9 @@ DEFUN1(stgApplyPN, f) {
   f = pargv[1];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(1, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPN THUNK\n");
       #endif
@@ -531,11 +531,11 @@ DEFUN1(stgApplyPN, f) {
     argv[0] = pargv[0];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
-    int arity = f.op->infoPtr->funFields.arity;
+    int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
-    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    fprintf(stderr, "FUN %s arity %d\n", getInfoPtr(f.op)->name, getInfoPtr(f.op)->funFields.arity);
     #endif
     int excess = argc - arity;  // may be negative
 
@@ -551,7 +551,7 @@ DEFUN1(stgApplyPN, f) {
       // 0 non-pointers to push
       pushargs(1, pargv);
       // call-with-return the FUN
-      STGCALL1(f.op->infoPtr->entryCode, f);
+      STGCALL1(getInfoPtr(f.op)->entryCode, f);
       // restore excess args
       // no excess pointer params to restore
       // grab obj just returned
@@ -571,17 +571,17 @@ DEFUN1(stgApplyPN, f) {
       pushargs(1, nargv);
       pushargs(1, pargv);
       // tail call the fun
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
     }
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPN FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                    f.op->infoPtr->layoutInfo.unboxedCount;
+      int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                    getInfoPtr(f.op)->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 1, 1);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 1, 1);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -601,12 +601,12 @@ DEFUN1(stgApplyPN, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                  f.op->infoPtr->layoutInfo.unboxedCount;
+    int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                  getInfoPtr(f.op)->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    int arity = f.op->infoPtr->funFields.arity - argCount;
+    int arity = getInfoPtr(f.op)->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
@@ -626,7 +626,7 @@ DEFUN1(stgApplyPN, f) {
       pushargs(1, pargv);
       pushargs(pappargc, &f.op->payload[fvCount+1]);
       // call-with-return the FUN
-      STGCALL1(f.op->infoPtr->entryCode, f);
+      STGCALL1(getInfoPtr(f.op)->entryCode, f);
       // restore excess args
       // no excess pointer params to restore
       // grab obj just returned
@@ -648,7 +648,7 @@ DEFUN1(stgApplyPN, f) {
       pushargs(1, pargv);
       pushargs(pappargc, &f.op->payload[fvCount+1]);
       // tail call the FUN
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
 
     // excess < 0, too few args
     } else {
@@ -656,7 +656,7 @@ DEFUN1(stgApplyPN, f) {
       fprintf(stderr, "stgApplyPN PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 1 + pappargc, 1 + papnargc);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 1 + pappargc, 1 + papnargc);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -699,7 +699,7 @@ DEFUN1(stgApplyPN, f) {
 
 DEFUN1(stgApplyNP, f) {
   #ifdef DEBUGSTGAPPLY
-  fprintf(stderr, "stgApplyNP %s\n", f.op->infoPtr->name);
+  fprintf(stderr, "stgApplyNP %s\n", getInfoPtr(f.op)->name);
   #endif
   const int argc = 2;
   PtrOrLiteral argv[2];
@@ -718,9 +718,9 @@ DEFUN1(stgApplyNP, f) {
   f = pargv[1];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(1, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNP THUNK\n");
       #endif
@@ -733,11 +733,11 @@ DEFUN1(stgApplyNP, f) {
     argv[1] = pargv[0];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
-    int arity = f.op->infoPtr->funFields.arity;
+    int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
-    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    fprintf(stderr, "FUN %s arity %d\n", getInfoPtr(f.op)->name, getInfoPtr(f.op)->funFields.arity);
     #endif
     int excess = argc - arity;  // may be negative
 
@@ -753,7 +753,7 @@ DEFUN1(stgApplyNP, f) {
       pushargs(1, nargv);
       // 0 pointers to push
       // call-with-return the FUN
-      STGCALL1(f.op->infoPtr->entryCode, f);
+      STGCALL1(getInfoPtr(f.op)->entryCode, f);
       // restore excess args
       callContRestore(&pargv[0]);
       // restore argv
@@ -775,17 +775,17 @@ DEFUN1(stgApplyNP, f) {
       pushargs(1, nargv);
       pushargs(1, pargv);
       // tail call the fun
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
     }
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNP FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                    f.op->infoPtr->layoutInfo.unboxedCount;
+      int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                    getInfoPtr(f.op)->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 1, 1);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 1, 1);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -805,12 +805,12 @@ DEFUN1(stgApplyNP, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                  f.op->infoPtr->layoutInfo.unboxedCount;
+    int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                  getInfoPtr(f.op)->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    int arity = f.op->infoPtr->funFields.arity - argCount;
+    int arity = getInfoPtr(f.op)->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
@@ -830,7 +830,7 @@ DEFUN1(stgApplyNP, f) {
       // 0 pointers to push
       pushargs(pappargc, &f.op->payload[fvCount+1]);
       // call-with-return the FUN
-      STGCALL1(f.op->infoPtr->entryCode, f);
+      STGCALL1(getInfoPtr(f.op)->entryCode, f);
       // restore excess args
       callContRestore(&pargv[0]);
       // restore argv
@@ -854,7 +854,7 @@ DEFUN1(stgApplyNP, f) {
       pushargs(1, pargv);
       pushargs(pappargc, &f.op->payload[fvCount+1]);
       // tail call the FUN
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
 
     // excess < 0, too few args
     } else {
@@ -862,7 +862,7 @@ DEFUN1(stgApplyNP, f) {
       fprintf(stderr, "stgApplyNP PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 1 + pappargc, 1 + papnargc);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 1 + pappargc, 1 + papnargc);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -905,7 +905,7 @@ DEFUN1(stgApplyNP, f) {
 
 DEFUN1(stgApplyPP, f) {
   #ifdef DEBUGSTGAPPLY
-  fprintf(stderr, "stgApplyPP %s\n", f.op->infoPtr->name);
+  fprintf(stderr, "stgApplyPP %s\n", getInfoPtr(f.op)->name);
   #endif
   const int argc = 2;
   PtrOrLiteral argv[2];
@@ -931,9 +931,9 @@ DEFUN1(stgApplyPP, f) {
   f = pargv[2];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(2, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPP THUNK\n");
       #endif
@@ -947,11 +947,11 @@ DEFUN1(stgApplyPP, f) {
     argv[1] = pargv[1];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
-    int arity = f.op->infoPtr->funFields.arity;
+    int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
-    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    fprintf(stderr, "FUN %s arity %d\n", getInfoPtr(f.op)->name, getInfoPtr(f.op)->funFields.arity);
     #endif
     int excess = argc - arity;  // may be negative
 
@@ -967,7 +967,7 @@ DEFUN1(stgApplyPP, f) {
       // 0 non-pointers to push
       pushargs(1, pargv);
       // call-with-return the FUN
-      STGCALL1(f.op->infoPtr->entryCode, f);
+      STGCALL1(getInfoPtr(f.op)->entryCode, f);
       // restore excess args
       callContRestore(&pargv[1]);
       // restore argv
@@ -989,17 +989,17 @@ DEFUN1(stgApplyPP, f) {
       // 0 non-pointers to push
       pushargs(2, pargv);
       // tail call the fun
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
     }
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPP FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                    f.op->infoPtr->layoutInfo.unboxedCount;
+      int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                    getInfoPtr(f.op)->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2, 0);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 2, 0);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -1019,12 +1019,12 @@ DEFUN1(stgApplyPP, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                  f.op->infoPtr->layoutInfo.unboxedCount;
+    int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                  getInfoPtr(f.op)->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    int arity = f.op->infoPtr->funFields.arity - argCount;
+    int arity = getInfoPtr(f.op)->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
@@ -1044,7 +1044,7 @@ DEFUN1(stgApplyPP, f) {
       pushargs(1, pargv);
       pushargs(pappargc, &f.op->payload[fvCount+1]);
       // call-with-return the FUN
-      STGCALL1(f.op->infoPtr->entryCode, f);
+      STGCALL1(getInfoPtr(f.op)->entryCode, f);
       // restore excess args
       callContRestore(&pargv[1]);
       // restore argv
@@ -1068,7 +1068,7 @@ DEFUN1(stgApplyPP, f) {
       pushargs(2, pargv);
       pushargs(pappargc, &f.op->payload[fvCount+1]);
       // tail call the FUN
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
 
     // excess < 0, too few args
     } else {
@@ -1076,7 +1076,7 @@ DEFUN1(stgApplyPP, f) {
       fprintf(stderr, "stgApplyPP PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2 + pappargc, 0 + papnargc);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 2 + pappargc, 0 + papnargc);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -1119,7 +1119,7 @@ DEFUN1(stgApplyPP, f) {
 
 DEFUN1(stgApplyNNN, f) {
   #ifdef DEBUGSTGAPPLY
-  fprintf(stderr, "stgApplyNNN %s\n", f.op->infoPtr->name);
+  fprintf(stderr, "stgApplyNNN %s\n", getInfoPtr(f.op)->name);
   #endif
   const int argc = 3;
   PtrOrLiteral argv[3];
@@ -1133,9 +1133,9 @@ DEFUN1(stgApplyNNN, f) {
   nargv[2] = argv[2];
   
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     // no pointer args to save
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNNN THUNK\n");
       #endif
@@ -1146,11 +1146,11 @@ DEFUN1(stgApplyNNN, f) {
     // no pointer args to restore
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
-    int arity = f.op->infoPtr->funFields.arity;
+    int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
-    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    fprintf(stderr, "FUN %s arity %d\n", getInfoPtr(f.op)->name, getInfoPtr(f.op)->funFields.arity);
     #endif
     int excess = argc - arity;  // may be negative
 
@@ -1167,7 +1167,7 @@ DEFUN1(stgApplyNNN, f) {
         pushargs(2, nargv);
         // 0 pointers to push
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -1189,7 +1189,7 @@ DEFUN1(stgApplyNNN, f) {
         pushargs(1, nargv);
         // 0 pointers to push
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -1213,17 +1213,17 @@ DEFUN1(stgApplyNNN, f) {
       pushargs(3, nargv);
       // 0 pointers to push
       // tail call the fun
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
     }
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNNN FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                    f.op->infoPtr->layoutInfo.unboxedCount;
+      int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                    getInfoPtr(f.op)->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 0, 3);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 0, 3);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -1243,12 +1243,12 @@ DEFUN1(stgApplyNNN, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                  f.op->infoPtr->layoutInfo.unboxedCount;
+    int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                  getInfoPtr(f.op)->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    int arity = f.op->infoPtr->funFields.arity - argCount;
+    int arity = getInfoPtr(f.op)->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
@@ -1269,7 +1269,7 @@ DEFUN1(stgApplyNNN, f) {
         // 0 pointers to push
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -1293,7 +1293,7 @@ DEFUN1(stgApplyNNN, f) {
         // 0 pointers to push
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -1319,7 +1319,7 @@ DEFUN1(stgApplyNNN, f) {
       // 0 non-pointer args
       pushargs(pappargc, &f.op->payload[fvCount+1]);
       // tail call the FUN
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
 
     // excess < 0, too few args
     } else {
@@ -1327,7 +1327,7 @@ DEFUN1(stgApplyNNN, f) {
       fprintf(stderr, "stgApplyNNN PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 0 + pappargc, 3 + papnargc);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 0 + pappargc, 3 + papnargc);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -1370,7 +1370,7 @@ DEFUN1(stgApplyNNN, f) {
 
 DEFUN1(stgApplyPNN, f) {
   #ifdef DEBUGSTGAPPLY
-  fprintf(stderr, "stgApplyPNN %s\n", f.op->infoPtr->name);
+  fprintf(stderr, "stgApplyPNN %s\n", getInfoPtr(f.op)->name);
   #endif
   const int argc = 3;
   PtrOrLiteral argv[3];
@@ -1390,9 +1390,9 @@ DEFUN1(stgApplyPNN, f) {
   f = pargv[1];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(1, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPNN THUNK\n");
       #endif
@@ -1405,11 +1405,11 @@ DEFUN1(stgApplyPNN, f) {
     argv[0] = pargv[0];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
-    int arity = f.op->infoPtr->funFields.arity;
+    int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
-    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    fprintf(stderr, "FUN %s arity %d\n", getInfoPtr(f.op)->name, getInfoPtr(f.op)->funFields.arity);
     #endif
     int excess = argc - arity;  // may be negative
 
@@ -1426,7 +1426,7 @@ DEFUN1(stgApplyPNN, f) {
         pushargs(1, nargv);
         pushargs(1, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -1448,7 +1448,7 @@ DEFUN1(stgApplyPNN, f) {
         // 0 non-pointers to push
         pushargs(1, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -1472,17 +1472,17 @@ DEFUN1(stgApplyPNN, f) {
       pushargs(2, nargv);
       pushargs(1, pargv);
       // tail call the fun
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
     }
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPNN FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                    f.op->infoPtr->layoutInfo.unboxedCount;
+      int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                    getInfoPtr(f.op)->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 1, 2);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 1, 2);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -1502,12 +1502,12 @@ DEFUN1(stgApplyPNN, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                  f.op->infoPtr->layoutInfo.unboxedCount;
+    int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                  getInfoPtr(f.op)->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    int arity = f.op->infoPtr->funFields.arity - argCount;
+    int arity = getInfoPtr(f.op)->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
@@ -1528,7 +1528,7 @@ DEFUN1(stgApplyPNN, f) {
         pushargs(1, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -1552,7 +1552,7 @@ DEFUN1(stgApplyPNN, f) {
         pushargs(1, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -1578,7 +1578,7 @@ DEFUN1(stgApplyPNN, f) {
       pushargs(1, pargv);
       pushargs(pappargc, &f.op->payload[fvCount+1]);
       // tail call the FUN
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
 
     // excess < 0, too few args
     } else {
@@ -1586,7 +1586,7 @@ DEFUN1(stgApplyPNN, f) {
       fprintf(stderr, "stgApplyPNN PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 1 + pappargc, 2 + papnargc);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 1 + pappargc, 2 + papnargc);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -1629,7 +1629,7 @@ DEFUN1(stgApplyPNN, f) {
 
 DEFUN1(stgApplyNPN, f) {
   #ifdef DEBUGSTGAPPLY
-  fprintf(stderr, "stgApplyNPN %s\n", f.op->infoPtr->name);
+  fprintf(stderr, "stgApplyNPN %s\n", getInfoPtr(f.op)->name);
   #endif
   const int argc = 3;
   PtrOrLiteral argv[3];
@@ -1649,9 +1649,9 @@ DEFUN1(stgApplyNPN, f) {
   f = pargv[1];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(1, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNPN THUNK\n");
       #endif
@@ -1664,11 +1664,11 @@ DEFUN1(stgApplyNPN, f) {
     argv[1] = pargv[0];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
-    int arity = f.op->infoPtr->funFields.arity;
+    int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
-    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    fprintf(stderr, "FUN %s arity %d\n", getInfoPtr(f.op)->name, getInfoPtr(f.op)->funFields.arity);
     #endif
     int excess = argc - arity;  // may be negative
 
@@ -1685,7 +1685,7 @@ DEFUN1(stgApplyNPN, f) {
         pushargs(1, nargv);
         pushargs(1, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -1707,7 +1707,7 @@ DEFUN1(stgApplyNPN, f) {
         pushargs(1, nargv);
         // 0 pointers to push
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[0]);
         // restore argv
@@ -1733,17 +1733,17 @@ DEFUN1(stgApplyNPN, f) {
       pushargs(2, nargv);
       pushargs(1, pargv);
       // tail call the fun
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
     }
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNPN FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                    f.op->infoPtr->layoutInfo.unboxedCount;
+      int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                    getInfoPtr(f.op)->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 1, 2);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 1, 2);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -1763,12 +1763,12 @@ DEFUN1(stgApplyNPN, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                  f.op->infoPtr->layoutInfo.unboxedCount;
+    int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                  getInfoPtr(f.op)->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    int arity = f.op->infoPtr->funFields.arity - argCount;
+    int arity = getInfoPtr(f.op)->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
@@ -1789,7 +1789,7 @@ DEFUN1(stgApplyNPN, f) {
         pushargs(1, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -1813,7 +1813,7 @@ DEFUN1(stgApplyNPN, f) {
         // 0 pointers to push
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[0]);
         // restore argv
@@ -1841,7 +1841,7 @@ DEFUN1(stgApplyNPN, f) {
       pushargs(1, pargv);
       pushargs(pappargc, &f.op->payload[fvCount+1]);
       // tail call the FUN
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
 
     // excess < 0, too few args
     } else {
@@ -1849,7 +1849,7 @@ DEFUN1(stgApplyNPN, f) {
       fprintf(stderr, "stgApplyNPN PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 1 + pappargc, 2 + papnargc);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 1 + pappargc, 2 + papnargc);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -1892,7 +1892,7 @@ DEFUN1(stgApplyNPN, f) {
 
 DEFUN1(stgApplyPPN, f) {
   #ifdef DEBUGSTGAPPLY
-  fprintf(stderr, "stgApplyPPN %s\n", f.op->infoPtr->name);
+  fprintf(stderr, "stgApplyPPN %s\n", getInfoPtr(f.op)->name);
   #endif
   const int argc = 3;
   PtrOrLiteral argv[3];
@@ -1919,9 +1919,9 @@ DEFUN1(stgApplyPPN, f) {
   f = pargv[2];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(2, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPPN THUNK\n");
       #endif
@@ -1935,11 +1935,11 @@ DEFUN1(stgApplyPPN, f) {
     argv[1] = pargv[1];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
-    int arity = f.op->infoPtr->funFields.arity;
+    int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
-    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    fprintf(stderr, "FUN %s arity %d\n", getInfoPtr(f.op)->name, getInfoPtr(f.op)->funFields.arity);
     #endif
     int excess = argc - arity;  // may be negative
 
@@ -1956,7 +1956,7 @@ DEFUN1(stgApplyPPN, f) {
         // 0 non-pointers to push
         pushargs(2, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -1978,7 +1978,7 @@ DEFUN1(stgApplyPPN, f) {
         // 0 non-pointers to push
         pushargs(1, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -2004,17 +2004,17 @@ DEFUN1(stgApplyPPN, f) {
       pushargs(1, nargv);
       pushargs(2, pargv);
       // tail call the fun
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
     }
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPPN FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                    f.op->infoPtr->layoutInfo.unboxedCount;
+      int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                    getInfoPtr(f.op)->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2, 1);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 2, 1);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -2034,12 +2034,12 @@ DEFUN1(stgApplyPPN, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                  f.op->infoPtr->layoutInfo.unboxedCount;
+    int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                  getInfoPtr(f.op)->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    int arity = f.op->infoPtr->funFields.arity - argCount;
+    int arity = getInfoPtr(f.op)->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
@@ -2060,7 +2060,7 @@ DEFUN1(stgApplyPPN, f) {
         pushargs(2, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -2084,7 +2084,7 @@ DEFUN1(stgApplyPPN, f) {
         pushargs(1, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -2112,7 +2112,7 @@ DEFUN1(stgApplyPPN, f) {
       pushargs(2, pargv);
       pushargs(pappargc, &f.op->payload[fvCount+1]);
       // tail call the FUN
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
 
     // excess < 0, too few args
     } else {
@@ -2120,7 +2120,7 @@ DEFUN1(stgApplyPPN, f) {
       fprintf(stderr, "stgApplyPPN PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2 + pappargc, 1 + papnargc);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 2 + pappargc, 1 + papnargc);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -2163,7 +2163,7 @@ DEFUN1(stgApplyPPN, f) {
 
 DEFUN1(stgApplyNNP, f) {
   #ifdef DEBUGSTGAPPLY
-  fprintf(stderr, "stgApplyNNP %s\n", f.op->infoPtr->name);
+  fprintf(stderr, "stgApplyNNP %s\n", getInfoPtr(f.op)->name);
   #endif
   const int argc = 3;
   PtrOrLiteral argv[3];
@@ -2183,9 +2183,9 @@ DEFUN1(stgApplyNNP, f) {
   f = pargv[1];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(1, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNNP THUNK\n");
       #endif
@@ -2198,11 +2198,11 @@ DEFUN1(stgApplyNNP, f) {
     argv[2] = pargv[0];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
-    int arity = f.op->infoPtr->funFields.arity;
+    int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
-    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    fprintf(stderr, "FUN %s arity %d\n", getInfoPtr(f.op)->name, getInfoPtr(f.op)->funFields.arity);
     #endif
     int excess = argc - arity;  // may be negative
 
@@ -2219,7 +2219,7 @@ DEFUN1(stgApplyNNP, f) {
         pushargs(2, nargv);
         // 0 pointers to push
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[0]);
         // restore argv
@@ -2243,7 +2243,7 @@ DEFUN1(stgApplyNNP, f) {
         pushargs(1, nargv);
         // 0 pointers to push
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[0]);
         // restore argv
@@ -2269,17 +2269,17 @@ DEFUN1(stgApplyNNP, f) {
       pushargs(2, nargv);
       pushargs(1, pargv);
       // tail call the fun
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
     }
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNNP FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                    f.op->infoPtr->layoutInfo.unboxedCount;
+      int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                    getInfoPtr(f.op)->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 1, 2);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 1, 2);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -2299,12 +2299,12 @@ DEFUN1(stgApplyNNP, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                  f.op->infoPtr->layoutInfo.unboxedCount;
+    int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                  getInfoPtr(f.op)->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    int arity = f.op->infoPtr->funFields.arity - argCount;
+    int arity = getInfoPtr(f.op)->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
@@ -2325,7 +2325,7 @@ DEFUN1(stgApplyNNP, f) {
         // 0 pointers to push
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[0]);
         // restore argv
@@ -2351,7 +2351,7 @@ DEFUN1(stgApplyNNP, f) {
         // 0 pointers to push
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[0]);
         // restore argv
@@ -2379,7 +2379,7 @@ DEFUN1(stgApplyNNP, f) {
       pushargs(1, pargv);
       pushargs(pappargc, &f.op->payload[fvCount+1]);
       // tail call the FUN
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
 
     // excess < 0, too few args
     } else {
@@ -2387,7 +2387,7 @@ DEFUN1(stgApplyNNP, f) {
       fprintf(stderr, "stgApplyNNP PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 1 + pappargc, 2 + papnargc);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 1 + pappargc, 2 + papnargc);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -2430,7 +2430,7 @@ DEFUN1(stgApplyNNP, f) {
 
 DEFUN1(stgApplyPNP, f) {
   #ifdef DEBUGSTGAPPLY
-  fprintf(stderr, "stgApplyPNP %s\n", f.op->infoPtr->name);
+  fprintf(stderr, "stgApplyPNP %s\n", getInfoPtr(f.op)->name);
   #endif
   const int argc = 3;
   PtrOrLiteral argv[3];
@@ -2457,9 +2457,9 @@ DEFUN1(stgApplyPNP, f) {
   f = pargv[2];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(2, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPNP THUNK\n");
       #endif
@@ -2473,11 +2473,11 @@ DEFUN1(stgApplyPNP, f) {
     argv[2] = pargv[1];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
-    int arity = f.op->infoPtr->funFields.arity;
+    int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
-    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    fprintf(stderr, "FUN %s arity %d\n", getInfoPtr(f.op)->name, getInfoPtr(f.op)->funFields.arity);
     #endif
     int excess = argc - arity;  // may be negative
 
@@ -2494,7 +2494,7 @@ DEFUN1(stgApplyPNP, f) {
         pushargs(1, nargv);
         pushargs(1, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -2518,7 +2518,7 @@ DEFUN1(stgApplyPNP, f) {
         // 0 non-pointers to push
         pushargs(1, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -2544,17 +2544,17 @@ DEFUN1(stgApplyPNP, f) {
       pushargs(1, nargv);
       pushargs(2, pargv);
       // tail call the fun
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
     }
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPNP FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                    f.op->infoPtr->layoutInfo.unboxedCount;
+      int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                    getInfoPtr(f.op)->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2, 1);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 2, 1);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -2574,12 +2574,12 @@ DEFUN1(stgApplyPNP, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                  f.op->infoPtr->layoutInfo.unboxedCount;
+    int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                  getInfoPtr(f.op)->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    int arity = f.op->infoPtr->funFields.arity - argCount;
+    int arity = getInfoPtr(f.op)->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
@@ -2600,7 +2600,7 @@ DEFUN1(stgApplyPNP, f) {
         pushargs(1, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -2626,7 +2626,7 @@ DEFUN1(stgApplyPNP, f) {
         pushargs(1, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -2654,7 +2654,7 @@ DEFUN1(stgApplyPNP, f) {
       pushargs(2, pargv);
       pushargs(pappargc, &f.op->payload[fvCount+1]);
       // tail call the FUN
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
 
     // excess < 0, too few args
     } else {
@@ -2662,7 +2662,7 @@ DEFUN1(stgApplyPNP, f) {
       fprintf(stderr, "stgApplyPNP PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2 + pappargc, 1 + papnargc);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 2 + pappargc, 1 + papnargc);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -2705,7 +2705,7 @@ DEFUN1(stgApplyPNP, f) {
 
 DEFUN1(stgApplyNPP, f) {
   #ifdef DEBUGSTGAPPLY
-  fprintf(stderr, "stgApplyNPP %s\n", f.op->infoPtr->name);
+  fprintf(stderr, "stgApplyNPP %s\n", getInfoPtr(f.op)->name);
   #endif
   const int argc = 3;
   PtrOrLiteral argv[3];
@@ -2732,9 +2732,9 @@ DEFUN1(stgApplyNPP, f) {
   f = pargv[2];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(2, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNPP THUNK\n");
       #endif
@@ -2748,11 +2748,11 @@ DEFUN1(stgApplyNPP, f) {
     argv[2] = pargv[1];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
-    int arity = f.op->infoPtr->funFields.arity;
+    int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
-    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    fprintf(stderr, "FUN %s arity %d\n", getInfoPtr(f.op)->name, getInfoPtr(f.op)->funFields.arity);
     #endif
     int excess = argc - arity;  // may be negative
 
@@ -2769,7 +2769,7 @@ DEFUN1(stgApplyNPP, f) {
         pushargs(1, nargv);
         pushargs(1, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -2793,7 +2793,7 @@ DEFUN1(stgApplyNPP, f) {
         pushargs(1, nargv);
         // 0 pointers to push
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[0]);
         // restore argv
@@ -2820,17 +2820,17 @@ DEFUN1(stgApplyNPP, f) {
       pushargs(1, nargv);
       pushargs(2, pargv);
       // tail call the fun
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
     }
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNPP FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                    f.op->infoPtr->layoutInfo.unboxedCount;
+      int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                    getInfoPtr(f.op)->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2, 1);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 2, 1);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -2850,12 +2850,12 @@ DEFUN1(stgApplyNPP, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                  f.op->infoPtr->layoutInfo.unboxedCount;
+    int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                  getInfoPtr(f.op)->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    int arity = f.op->infoPtr->funFields.arity - argCount;
+    int arity = getInfoPtr(f.op)->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
@@ -2876,7 +2876,7 @@ DEFUN1(stgApplyNPP, f) {
         pushargs(1, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -2902,7 +2902,7 @@ DEFUN1(stgApplyNPP, f) {
         // 0 pointers to push
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[0]);
         // restore argv
@@ -2931,7 +2931,7 @@ DEFUN1(stgApplyNPP, f) {
       pushargs(2, pargv);
       pushargs(pappargc, &f.op->payload[fvCount+1]);
       // tail call the FUN
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
 
     // excess < 0, too few args
     } else {
@@ -2939,7 +2939,7 @@ DEFUN1(stgApplyNPP, f) {
       fprintf(stderr, "stgApplyNPP PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2 + pappargc, 1 + papnargc);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 2 + pappargc, 1 + papnargc);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -2982,7 +2982,7 @@ DEFUN1(stgApplyNPP, f) {
 
 DEFUN1(stgApplyPPP, f) {
   #ifdef DEBUGSTGAPPLY
-  fprintf(stderr, "stgApplyPPP %s\n", f.op->infoPtr->name);
+  fprintf(stderr, "stgApplyPPP %s\n", getInfoPtr(f.op)->name);
   #endif
   const int argc = 3;
   PtrOrLiteral argv[3];
@@ -3018,9 +3018,9 @@ DEFUN1(stgApplyPPP, f) {
   f = pargv[3];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(3, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPPP THUNK\n");
       #endif
@@ -3035,11 +3035,11 @@ DEFUN1(stgApplyPPP, f) {
     argv[2] = pargv[2];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
-    int arity = f.op->infoPtr->funFields.arity;
+    int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
-    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    fprintf(stderr, "FUN %s arity %d\n", getInfoPtr(f.op)->name, getInfoPtr(f.op)->funFields.arity);
     #endif
     int excess = argc - arity;  // may be negative
 
@@ -3056,7 +3056,7 @@ DEFUN1(stgApplyPPP, f) {
         // 0 non-pointers to push
         pushargs(2, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[2]);
         // restore argv
@@ -3080,7 +3080,7 @@ DEFUN1(stgApplyPPP, f) {
         // 0 non-pointers to push
         pushargs(1, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -3107,17 +3107,17 @@ DEFUN1(stgApplyPPP, f) {
       // 0 non-pointers to push
       pushargs(3, pargv);
       // tail call the fun
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
     }
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPPP FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                    f.op->infoPtr->layoutInfo.unboxedCount;
+      int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                    getInfoPtr(f.op)->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3, 0);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 3, 0);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -3137,12 +3137,12 @@ DEFUN1(stgApplyPPP, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                  f.op->infoPtr->layoutInfo.unboxedCount;
+    int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                  getInfoPtr(f.op)->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    int arity = f.op->infoPtr->funFields.arity - argCount;
+    int arity = getInfoPtr(f.op)->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
@@ -3163,7 +3163,7 @@ DEFUN1(stgApplyPPP, f) {
         pushargs(2, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[2]);
         // restore argv
@@ -3189,7 +3189,7 @@ DEFUN1(stgApplyPPP, f) {
         pushargs(1, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -3218,7 +3218,7 @@ DEFUN1(stgApplyPPP, f) {
       pushargs(3, pargv);
       pushargs(pappargc, &f.op->payload[fvCount+1]);
       // tail call the FUN
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
 
     // excess < 0, too few args
     } else {
@@ -3226,7 +3226,7 @@ DEFUN1(stgApplyPPP, f) {
       fprintf(stderr, "stgApplyPPP PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3 + pappargc, 0 + papnargc);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 3 + pappargc, 0 + papnargc);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -3269,7 +3269,7 @@ DEFUN1(stgApplyPPP, f) {
 
 DEFUN1(stgApplyNNNN, f) {
   #ifdef DEBUGSTGAPPLY
-  fprintf(stderr, "stgApplyNNNN %s\n", f.op->infoPtr->name);
+  fprintf(stderr, "stgApplyNNNN %s\n", getInfoPtr(f.op)->name);
   #endif
   const int argc = 4;
   PtrOrLiteral argv[4];
@@ -3284,9 +3284,9 @@ DEFUN1(stgApplyNNNN, f) {
   nargv[3] = argv[3];
   
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     // no pointer args to save
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNNNN THUNK\n");
       #endif
@@ -3297,11 +3297,11 @@ DEFUN1(stgApplyNNNN, f) {
     // no pointer args to restore
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
-    int arity = f.op->infoPtr->funFields.arity;
+    int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
-    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    fprintf(stderr, "FUN %s arity %d\n", getInfoPtr(f.op)->name, getInfoPtr(f.op)->funFields.arity);
     #endif
     int excess = argc - arity;  // may be negative
 
@@ -3318,7 +3318,7 @@ DEFUN1(stgApplyNNNN, f) {
         pushargs(3, nargv);
         // 0 pointers to push
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -3340,7 +3340,7 @@ DEFUN1(stgApplyNNNN, f) {
         pushargs(2, nargv);
         // 0 pointers to push
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -3362,7 +3362,7 @@ DEFUN1(stgApplyNNNN, f) {
         pushargs(1, nargv);
         // 0 pointers to push
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -3386,17 +3386,17 @@ DEFUN1(stgApplyNNNN, f) {
       pushargs(4, nargv);
       // 0 pointers to push
       // tail call the fun
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
     }
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNNNN FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                    f.op->infoPtr->layoutInfo.unboxedCount;
+      int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                    getInfoPtr(f.op)->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 0, 4);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 0, 4);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -3416,12 +3416,12 @@ DEFUN1(stgApplyNNNN, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                  f.op->infoPtr->layoutInfo.unboxedCount;
+    int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                  getInfoPtr(f.op)->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    int arity = f.op->infoPtr->funFields.arity - argCount;
+    int arity = getInfoPtr(f.op)->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
@@ -3442,7 +3442,7 @@ DEFUN1(stgApplyNNNN, f) {
         // 0 pointers to push
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -3466,7 +3466,7 @@ DEFUN1(stgApplyNNNN, f) {
         // 0 pointers to push
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -3490,7 +3490,7 @@ DEFUN1(stgApplyNNNN, f) {
         // 0 pointers to push
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -3516,7 +3516,7 @@ DEFUN1(stgApplyNNNN, f) {
       // 0 non-pointer args
       pushargs(pappargc, &f.op->payload[fvCount+1]);
       // tail call the FUN
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
 
     // excess < 0, too few args
     } else {
@@ -3524,7 +3524,7 @@ DEFUN1(stgApplyNNNN, f) {
       fprintf(stderr, "stgApplyNNNN PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 0 + pappargc, 4 + papnargc);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 0 + pappargc, 4 + papnargc);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -3567,7 +3567,7 @@ DEFUN1(stgApplyNNNN, f) {
 
 DEFUN1(stgApplyPNNN, f) {
   #ifdef DEBUGSTGAPPLY
-  fprintf(stderr, "stgApplyPNNN %s\n", f.op->infoPtr->name);
+  fprintf(stderr, "stgApplyPNNN %s\n", getInfoPtr(f.op)->name);
   #endif
   const int argc = 4;
   PtrOrLiteral argv[4];
@@ -3588,9 +3588,9 @@ DEFUN1(stgApplyPNNN, f) {
   f = pargv[1];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(1, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPNNN THUNK\n");
       #endif
@@ -3603,11 +3603,11 @@ DEFUN1(stgApplyPNNN, f) {
     argv[0] = pargv[0];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
-    int arity = f.op->infoPtr->funFields.arity;
+    int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
-    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    fprintf(stderr, "FUN %s arity %d\n", getInfoPtr(f.op)->name, getInfoPtr(f.op)->funFields.arity);
     #endif
     int excess = argc - arity;  // may be negative
 
@@ -3624,7 +3624,7 @@ DEFUN1(stgApplyPNNN, f) {
         pushargs(2, nargv);
         pushargs(1, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -3646,7 +3646,7 @@ DEFUN1(stgApplyPNNN, f) {
         pushargs(1, nargv);
         pushargs(1, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -3668,7 +3668,7 @@ DEFUN1(stgApplyPNNN, f) {
         // 0 non-pointers to push
         pushargs(1, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -3692,17 +3692,17 @@ DEFUN1(stgApplyPNNN, f) {
       pushargs(3, nargv);
       pushargs(1, pargv);
       // tail call the fun
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
     }
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPNNN FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                    f.op->infoPtr->layoutInfo.unboxedCount;
+      int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                    getInfoPtr(f.op)->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 1, 3);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 1, 3);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -3722,12 +3722,12 @@ DEFUN1(stgApplyPNNN, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                  f.op->infoPtr->layoutInfo.unboxedCount;
+    int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                  getInfoPtr(f.op)->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    int arity = f.op->infoPtr->funFields.arity - argCount;
+    int arity = getInfoPtr(f.op)->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
@@ -3748,7 +3748,7 @@ DEFUN1(stgApplyPNNN, f) {
         pushargs(1, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -3772,7 +3772,7 @@ DEFUN1(stgApplyPNNN, f) {
         pushargs(1, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -3796,7 +3796,7 @@ DEFUN1(stgApplyPNNN, f) {
         pushargs(1, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -3822,7 +3822,7 @@ DEFUN1(stgApplyPNNN, f) {
       pushargs(1, pargv);
       pushargs(pappargc, &f.op->payload[fvCount+1]);
       // tail call the FUN
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
 
     // excess < 0, too few args
     } else {
@@ -3830,7 +3830,7 @@ DEFUN1(stgApplyPNNN, f) {
       fprintf(stderr, "stgApplyPNNN PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 1 + pappargc, 3 + papnargc);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 1 + pappargc, 3 + papnargc);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -3873,7 +3873,7 @@ DEFUN1(stgApplyPNNN, f) {
 
 DEFUN1(stgApplyNPNN, f) {
   #ifdef DEBUGSTGAPPLY
-  fprintf(stderr, "stgApplyNPNN %s\n", f.op->infoPtr->name);
+  fprintf(stderr, "stgApplyNPNN %s\n", getInfoPtr(f.op)->name);
   #endif
   const int argc = 4;
   PtrOrLiteral argv[4];
@@ -3894,9 +3894,9 @@ DEFUN1(stgApplyNPNN, f) {
   f = pargv[1];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(1, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNPNN THUNK\n");
       #endif
@@ -3909,11 +3909,11 @@ DEFUN1(stgApplyNPNN, f) {
     argv[1] = pargv[0];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
-    int arity = f.op->infoPtr->funFields.arity;
+    int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
-    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    fprintf(stderr, "FUN %s arity %d\n", getInfoPtr(f.op)->name, getInfoPtr(f.op)->funFields.arity);
     #endif
     int excess = argc - arity;  // may be negative
 
@@ -3930,7 +3930,7 @@ DEFUN1(stgApplyNPNN, f) {
         pushargs(2, nargv);
         pushargs(1, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -3952,7 +3952,7 @@ DEFUN1(stgApplyNPNN, f) {
         pushargs(1, nargv);
         pushargs(1, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -3974,7 +3974,7 @@ DEFUN1(stgApplyNPNN, f) {
         pushargs(1, nargv);
         // 0 pointers to push
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[0]);
         // restore argv
@@ -4000,17 +4000,17 @@ DEFUN1(stgApplyNPNN, f) {
       pushargs(3, nargv);
       pushargs(1, pargv);
       // tail call the fun
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
     }
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNPNN FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                    f.op->infoPtr->layoutInfo.unboxedCount;
+      int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                    getInfoPtr(f.op)->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 1, 3);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 1, 3);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -4030,12 +4030,12 @@ DEFUN1(stgApplyNPNN, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                  f.op->infoPtr->layoutInfo.unboxedCount;
+    int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                  getInfoPtr(f.op)->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    int arity = f.op->infoPtr->funFields.arity - argCount;
+    int arity = getInfoPtr(f.op)->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
@@ -4056,7 +4056,7 @@ DEFUN1(stgApplyNPNN, f) {
         pushargs(1, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -4080,7 +4080,7 @@ DEFUN1(stgApplyNPNN, f) {
         pushargs(1, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -4104,7 +4104,7 @@ DEFUN1(stgApplyNPNN, f) {
         // 0 pointers to push
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[0]);
         // restore argv
@@ -4132,7 +4132,7 @@ DEFUN1(stgApplyNPNN, f) {
       pushargs(1, pargv);
       pushargs(pappargc, &f.op->payload[fvCount+1]);
       // tail call the FUN
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
 
     // excess < 0, too few args
     } else {
@@ -4140,7 +4140,7 @@ DEFUN1(stgApplyNPNN, f) {
       fprintf(stderr, "stgApplyNPNN PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 1 + pappargc, 3 + papnargc);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 1 + pappargc, 3 + papnargc);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -4183,7 +4183,7 @@ DEFUN1(stgApplyNPNN, f) {
 
 DEFUN1(stgApplyPPNN, f) {
   #ifdef DEBUGSTGAPPLY
-  fprintf(stderr, "stgApplyPPNN %s\n", f.op->infoPtr->name);
+  fprintf(stderr, "stgApplyPPNN %s\n", getInfoPtr(f.op)->name);
   #endif
   const int argc = 4;
   PtrOrLiteral argv[4];
@@ -4211,9 +4211,9 @@ DEFUN1(stgApplyPPNN, f) {
   f = pargv[2];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(2, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPPNN THUNK\n");
       #endif
@@ -4227,11 +4227,11 @@ DEFUN1(stgApplyPPNN, f) {
     argv[1] = pargv[1];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
-    int arity = f.op->infoPtr->funFields.arity;
+    int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
-    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    fprintf(stderr, "FUN %s arity %d\n", getInfoPtr(f.op)->name, getInfoPtr(f.op)->funFields.arity);
     #endif
     int excess = argc - arity;  // may be negative
 
@@ -4248,7 +4248,7 @@ DEFUN1(stgApplyPPNN, f) {
         pushargs(1, nargv);
         pushargs(2, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -4270,7 +4270,7 @@ DEFUN1(stgApplyPPNN, f) {
         // 0 non-pointers to push
         pushargs(2, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -4292,7 +4292,7 @@ DEFUN1(stgApplyPPNN, f) {
         // 0 non-pointers to push
         pushargs(1, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -4318,17 +4318,17 @@ DEFUN1(stgApplyPPNN, f) {
       pushargs(2, nargv);
       pushargs(2, pargv);
       // tail call the fun
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
     }
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPPNN FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                    f.op->infoPtr->layoutInfo.unboxedCount;
+      int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                    getInfoPtr(f.op)->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2, 2);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 2, 2);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -4348,12 +4348,12 @@ DEFUN1(stgApplyPPNN, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                  f.op->infoPtr->layoutInfo.unboxedCount;
+    int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                  getInfoPtr(f.op)->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    int arity = f.op->infoPtr->funFields.arity - argCount;
+    int arity = getInfoPtr(f.op)->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
@@ -4374,7 +4374,7 @@ DEFUN1(stgApplyPPNN, f) {
         pushargs(2, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -4398,7 +4398,7 @@ DEFUN1(stgApplyPPNN, f) {
         pushargs(2, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -4422,7 +4422,7 @@ DEFUN1(stgApplyPPNN, f) {
         pushargs(1, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -4450,7 +4450,7 @@ DEFUN1(stgApplyPPNN, f) {
       pushargs(2, pargv);
       pushargs(pappargc, &f.op->payload[fvCount+1]);
       // tail call the FUN
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
 
     // excess < 0, too few args
     } else {
@@ -4458,7 +4458,7 @@ DEFUN1(stgApplyPPNN, f) {
       fprintf(stderr, "stgApplyPPNN PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2 + pappargc, 2 + papnargc);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 2 + pappargc, 2 + papnargc);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -4501,7 +4501,7 @@ DEFUN1(stgApplyPPNN, f) {
 
 DEFUN1(stgApplyNNPN, f) {
   #ifdef DEBUGSTGAPPLY
-  fprintf(stderr, "stgApplyNNPN %s\n", f.op->infoPtr->name);
+  fprintf(stderr, "stgApplyNNPN %s\n", getInfoPtr(f.op)->name);
   #endif
   const int argc = 4;
   PtrOrLiteral argv[4];
@@ -4522,9 +4522,9 @@ DEFUN1(stgApplyNNPN, f) {
   f = pargv[1];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(1, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNNPN THUNK\n");
       #endif
@@ -4537,11 +4537,11 @@ DEFUN1(stgApplyNNPN, f) {
     argv[2] = pargv[0];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
-    int arity = f.op->infoPtr->funFields.arity;
+    int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
-    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    fprintf(stderr, "FUN %s arity %d\n", getInfoPtr(f.op)->name, getInfoPtr(f.op)->funFields.arity);
     #endif
     int excess = argc - arity;  // may be negative
 
@@ -4558,7 +4558,7 @@ DEFUN1(stgApplyNNPN, f) {
         pushargs(2, nargv);
         pushargs(1, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -4580,7 +4580,7 @@ DEFUN1(stgApplyNNPN, f) {
         pushargs(2, nargv);
         // 0 pointers to push
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[0]);
         // restore argv
@@ -4604,7 +4604,7 @@ DEFUN1(stgApplyNNPN, f) {
         pushargs(1, nargv);
         // 0 pointers to push
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[0]);
         // restore argv
@@ -4630,17 +4630,17 @@ DEFUN1(stgApplyNNPN, f) {
       pushargs(3, nargv);
       pushargs(1, pargv);
       // tail call the fun
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
     }
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNNPN FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                    f.op->infoPtr->layoutInfo.unboxedCount;
+      int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                    getInfoPtr(f.op)->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 1, 3);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 1, 3);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -4660,12 +4660,12 @@ DEFUN1(stgApplyNNPN, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                  f.op->infoPtr->layoutInfo.unboxedCount;
+    int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                  getInfoPtr(f.op)->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    int arity = f.op->infoPtr->funFields.arity - argCount;
+    int arity = getInfoPtr(f.op)->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
@@ -4686,7 +4686,7 @@ DEFUN1(stgApplyNNPN, f) {
         pushargs(1, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -4710,7 +4710,7 @@ DEFUN1(stgApplyNNPN, f) {
         // 0 pointers to push
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[0]);
         // restore argv
@@ -4736,7 +4736,7 @@ DEFUN1(stgApplyNNPN, f) {
         // 0 pointers to push
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[0]);
         // restore argv
@@ -4764,7 +4764,7 @@ DEFUN1(stgApplyNNPN, f) {
       pushargs(1, pargv);
       pushargs(pappargc, &f.op->payload[fvCount+1]);
       // tail call the FUN
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
 
     // excess < 0, too few args
     } else {
@@ -4772,7 +4772,7 @@ DEFUN1(stgApplyNNPN, f) {
       fprintf(stderr, "stgApplyNNPN PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 1 + pappargc, 3 + papnargc);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 1 + pappargc, 3 + papnargc);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -4815,7 +4815,7 @@ DEFUN1(stgApplyNNPN, f) {
 
 DEFUN1(stgApplyPNPN, f) {
   #ifdef DEBUGSTGAPPLY
-  fprintf(stderr, "stgApplyPNPN %s\n", f.op->infoPtr->name);
+  fprintf(stderr, "stgApplyPNPN %s\n", getInfoPtr(f.op)->name);
   #endif
   const int argc = 4;
   PtrOrLiteral argv[4];
@@ -4843,9 +4843,9 @@ DEFUN1(stgApplyPNPN, f) {
   f = pargv[2];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(2, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPNPN THUNK\n");
       #endif
@@ -4859,11 +4859,11 @@ DEFUN1(stgApplyPNPN, f) {
     argv[2] = pargv[1];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
-    int arity = f.op->infoPtr->funFields.arity;
+    int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
-    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    fprintf(stderr, "FUN %s arity %d\n", getInfoPtr(f.op)->name, getInfoPtr(f.op)->funFields.arity);
     #endif
     int excess = argc - arity;  // may be negative
 
@@ -4880,7 +4880,7 @@ DEFUN1(stgApplyPNPN, f) {
         pushargs(1, nargv);
         pushargs(2, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -4902,7 +4902,7 @@ DEFUN1(stgApplyPNPN, f) {
         pushargs(1, nargv);
         pushargs(1, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -4926,7 +4926,7 @@ DEFUN1(stgApplyPNPN, f) {
         // 0 non-pointers to push
         pushargs(1, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -4952,17 +4952,17 @@ DEFUN1(stgApplyPNPN, f) {
       pushargs(2, nargv);
       pushargs(2, pargv);
       // tail call the fun
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
     }
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPNPN FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                    f.op->infoPtr->layoutInfo.unboxedCount;
+      int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                    getInfoPtr(f.op)->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2, 2);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 2, 2);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -4982,12 +4982,12 @@ DEFUN1(stgApplyPNPN, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                  f.op->infoPtr->layoutInfo.unboxedCount;
+    int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                  getInfoPtr(f.op)->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    int arity = f.op->infoPtr->funFields.arity - argCount;
+    int arity = getInfoPtr(f.op)->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
@@ -5008,7 +5008,7 @@ DEFUN1(stgApplyPNPN, f) {
         pushargs(2, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -5032,7 +5032,7 @@ DEFUN1(stgApplyPNPN, f) {
         pushargs(1, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -5058,7 +5058,7 @@ DEFUN1(stgApplyPNPN, f) {
         pushargs(1, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -5086,7 +5086,7 @@ DEFUN1(stgApplyPNPN, f) {
       pushargs(2, pargv);
       pushargs(pappargc, &f.op->payload[fvCount+1]);
       // tail call the FUN
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
 
     // excess < 0, too few args
     } else {
@@ -5094,7 +5094,7 @@ DEFUN1(stgApplyPNPN, f) {
       fprintf(stderr, "stgApplyPNPN PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2 + pappargc, 2 + papnargc);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 2 + pappargc, 2 + papnargc);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -5137,7 +5137,7 @@ DEFUN1(stgApplyPNPN, f) {
 
 DEFUN1(stgApplyNPPN, f) {
   #ifdef DEBUGSTGAPPLY
-  fprintf(stderr, "stgApplyNPPN %s\n", f.op->infoPtr->name);
+  fprintf(stderr, "stgApplyNPPN %s\n", getInfoPtr(f.op)->name);
   #endif
   const int argc = 4;
   PtrOrLiteral argv[4];
@@ -5165,9 +5165,9 @@ DEFUN1(stgApplyNPPN, f) {
   f = pargv[2];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(2, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNPPN THUNK\n");
       #endif
@@ -5181,11 +5181,11 @@ DEFUN1(stgApplyNPPN, f) {
     argv[2] = pargv[1];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
-    int arity = f.op->infoPtr->funFields.arity;
+    int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
-    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    fprintf(stderr, "FUN %s arity %d\n", getInfoPtr(f.op)->name, getInfoPtr(f.op)->funFields.arity);
     #endif
     int excess = argc - arity;  // may be negative
 
@@ -5202,7 +5202,7 @@ DEFUN1(stgApplyNPPN, f) {
         pushargs(1, nargv);
         pushargs(2, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -5224,7 +5224,7 @@ DEFUN1(stgApplyNPPN, f) {
         pushargs(1, nargv);
         pushargs(1, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -5248,7 +5248,7 @@ DEFUN1(stgApplyNPPN, f) {
         pushargs(1, nargv);
         // 0 pointers to push
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[0]);
         // restore argv
@@ -5275,17 +5275,17 @@ DEFUN1(stgApplyNPPN, f) {
       pushargs(2, nargv);
       pushargs(2, pargv);
       // tail call the fun
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
     }
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNPPN FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                    f.op->infoPtr->layoutInfo.unboxedCount;
+      int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                    getInfoPtr(f.op)->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2, 2);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 2, 2);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -5305,12 +5305,12 @@ DEFUN1(stgApplyNPPN, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                  f.op->infoPtr->layoutInfo.unboxedCount;
+    int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                  getInfoPtr(f.op)->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    int arity = f.op->infoPtr->funFields.arity - argCount;
+    int arity = getInfoPtr(f.op)->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
@@ -5331,7 +5331,7 @@ DEFUN1(stgApplyNPPN, f) {
         pushargs(2, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -5355,7 +5355,7 @@ DEFUN1(stgApplyNPPN, f) {
         pushargs(1, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -5381,7 +5381,7 @@ DEFUN1(stgApplyNPPN, f) {
         // 0 pointers to push
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[0]);
         // restore argv
@@ -5410,7 +5410,7 @@ DEFUN1(stgApplyNPPN, f) {
       pushargs(2, pargv);
       pushargs(pappargc, &f.op->payload[fvCount+1]);
       // tail call the FUN
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
 
     // excess < 0, too few args
     } else {
@@ -5418,7 +5418,7 @@ DEFUN1(stgApplyNPPN, f) {
       fprintf(stderr, "stgApplyNPPN PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2 + pappargc, 2 + papnargc);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 2 + pappargc, 2 + papnargc);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -5461,7 +5461,7 @@ DEFUN1(stgApplyNPPN, f) {
 
 DEFUN1(stgApplyPPPN, f) {
   #ifdef DEBUGSTGAPPLY
-  fprintf(stderr, "stgApplyPPPN %s\n", f.op->infoPtr->name);
+  fprintf(stderr, "stgApplyPPPN %s\n", getInfoPtr(f.op)->name);
   #endif
   const int argc = 4;
   PtrOrLiteral argv[4];
@@ -5498,9 +5498,9 @@ DEFUN1(stgApplyPPPN, f) {
   f = pargv[3];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(3, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPPPN THUNK\n");
       #endif
@@ -5515,11 +5515,11 @@ DEFUN1(stgApplyPPPN, f) {
     argv[2] = pargv[2];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
-    int arity = f.op->infoPtr->funFields.arity;
+    int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
-    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    fprintf(stderr, "FUN %s arity %d\n", getInfoPtr(f.op)->name, getInfoPtr(f.op)->funFields.arity);
     #endif
     int excess = argc - arity;  // may be negative
 
@@ -5536,7 +5536,7 @@ DEFUN1(stgApplyPPPN, f) {
         // 0 non-pointers to push
         pushargs(3, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -5558,7 +5558,7 @@ DEFUN1(stgApplyPPPN, f) {
         // 0 non-pointers to push
         pushargs(2, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[2]);
         // restore argv
@@ -5582,7 +5582,7 @@ DEFUN1(stgApplyPPPN, f) {
         // 0 non-pointers to push
         pushargs(1, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -5609,17 +5609,17 @@ DEFUN1(stgApplyPPPN, f) {
       pushargs(1, nargv);
       pushargs(3, pargv);
       // tail call the fun
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
     }
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPPPN FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                    f.op->infoPtr->layoutInfo.unboxedCount;
+      int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                    getInfoPtr(f.op)->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3, 1);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 3, 1);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -5639,12 +5639,12 @@ DEFUN1(stgApplyPPPN, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                  f.op->infoPtr->layoutInfo.unboxedCount;
+    int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                  getInfoPtr(f.op)->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    int arity = f.op->infoPtr->funFields.arity - argCount;
+    int arity = getInfoPtr(f.op)->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
@@ -5665,7 +5665,7 @@ DEFUN1(stgApplyPPPN, f) {
         pushargs(3, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -5689,7 +5689,7 @@ DEFUN1(stgApplyPPPN, f) {
         pushargs(2, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[2]);
         // restore argv
@@ -5715,7 +5715,7 @@ DEFUN1(stgApplyPPPN, f) {
         pushargs(1, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -5744,7 +5744,7 @@ DEFUN1(stgApplyPPPN, f) {
       pushargs(3, pargv);
       pushargs(pappargc, &f.op->payload[fvCount+1]);
       // tail call the FUN
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
 
     // excess < 0, too few args
     } else {
@@ -5752,7 +5752,7 @@ DEFUN1(stgApplyPPPN, f) {
       fprintf(stderr, "stgApplyPPPN PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3 + pappargc, 1 + papnargc);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 3 + pappargc, 1 + papnargc);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -5795,7 +5795,7 @@ DEFUN1(stgApplyPPPN, f) {
 
 DEFUN1(stgApplyNNNP, f) {
   #ifdef DEBUGSTGAPPLY
-  fprintf(stderr, "stgApplyNNNP %s\n", f.op->infoPtr->name);
+  fprintf(stderr, "stgApplyNNNP %s\n", getInfoPtr(f.op)->name);
   #endif
   const int argc = 4;
   PtrOrLiteral argv[4];
@@ -5816,9 +5816,9 @@ DEFUN1(stgApplyNNNP, f) {
   f = pargv[1];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(1, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNNNP THUNK\n");
       #endif
@@ -5831,11 +5831,11 @@ DEFUN1(stgApplyNNNP, f) {
     argv[3] = pargv[0];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
-    int arity = f.op->infoPtr->funFields.arity;
+    int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
-    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    fprintf(stderr, "FUN %s arity %d\n", getInfoPtr(f.op)->name, getInfoPtr(f.op)->funFields.arity);
     #endif
     int excess = argc - arity;  // may be negative
 
@@ -5852,7 +5852,7 @@ DEFUN1(stgApplyNNNP, f) {
         pushargs(3, nargv);
         // 0 pointers to push
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[0]);
         // restore argv
@@ -5876,7 +5876,7 @@ DEFUN1(stgApplyNNNP, f) {
         pushargs(2, nargv);
         // 0 pointers to push
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[0]);
         // restore argv
@@ -5900,7 +5900,7 @@ DEFUN1(stgApplyNNNP, f) {
         pushargs(1, nargv);
         // 0 pointers to push
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[0]);
         // restore argv
@@ -5926,17 +5926,17 @@ DEFUN1(stgApplyNNNP, f) {
       pushargs(3, nargv);
       pushargs(1, pargv);
       // tail call the fun
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
     }
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNNNP FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                    f.op->infoPtr->layoutInfo.unboxedCount;
+      int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                    getInfoPtr(f.op)->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 1, 3);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 1, 3);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -5956,12 +5956,12 @@ DEFUN1(stgApplyNNNP, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                  f.op->infoPtr->layoutInfo.unboxedCount;
+    int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                  getInfoPtr(f.op)->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    int arity = f.op->infoPtr->funFields.arity - argCount;
+    int arity = getInfoPtr(f.op)->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
@@ -5982,7 +5982,7 @@ DEFUN1(stgApplyNNNP, f) {
         // 0 pointers to push
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[0]);
         // restore argv
@@ -6008,7 +6008,7 @@ DEFUN1(stgApplyNNNP, f) {
         // 0 pointers to push
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[0]);
         // restore argv
@@ -6034,7 +6034,7 @@ DEFUN1(stgApplyNNNP, f) {
         // 0 pointers to push
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[0]);
         // restore argv
@@ -6062,7 +6062,7 @@ DEFUN1(stgApplyNNNP, f) {
       pushargs(1, pargv);
       pushargs(pappargc, &f.op->payload[fvCount+1]);
       // tail call the FUN
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
 
     // excess < 0, too few args
     } else {
@@ -6070,7 +6070,7 @@ DEFUN1(stgApplyNNNP, f) {
       fprintf(stderr, "stgApplyNNNP PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 1 + pappargc, 3 + papnargc);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 1 + pappargc, 3 + papnargc);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -6113,7 +6113,7 @@ DEFUN1(stgApplyNNNP, f) {
 
 DEFUN1(stgApplyPNNP, f) {
   #ifdef DEBUGSTGAPPLY
-  fprintf(stderr, "stgApplyPNNP %s\n", f.op->infoPtr->name);
+  fprintf(stderr, "stgApplyPNNP %s\n", getInfoPtr(f.op)->name);
   #endif
   const int argc = 4;
   PtrOrLiteral argv[4];
@@ -6141,9 +6141,9 @@ DEFUN1(stgApplyPNNP, f) {
   f = pargv[2];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(2, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPNNP THUNK\n");
       #endif
@@ -6157,11 +6157,11 @@ DEFUN1(stgApplyPNNP, f) {
     argv[3] = pargv[1];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
-    int arity = f.op->infoPtr->funFields.arity;
+    int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
-    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    fprintf(stderr, "FUN %s arity %d\n", getInfoPtr(f.op)->name, getInfoPtr(f.op)->funFields.arity);
     #endif
     int excess = argc - arity;  // may be negative
 
@@ -6178,7 +6178,7 @@ DEFUN1(stgApplyPNNP, f) {
         pushargs(2, nargv);
         pushargs(1, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -6202,7 +6202,7 @@ DEFUN1(stgApplyPNNP, f) {
         pushargs(1, nargv);
         pushargs(1, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -6226,7 +6226,7 @@ DEFUN1(stgApplyPNNP, f) {
         // 0 non-pointers to push
         pushargs(1, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -6252,17 +6252,17 @@ DEFUN1(stgApplyPNNP, f) {
       pushargs(2, nargv);
       pushargs(2, pargv);
       // tail call the fun
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
     }
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPNNP FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                    f.op->infoPtr->layoutInfo.unboxedCount;
+      int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                    getInfoPtr(f.op)->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2, 2);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 2, 2);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -6282,12 +6282,12 @@ DEFUN1(stgApplyPNNP, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                  f.op->infoPtr->layoutInfo.unboxedCount;
+    int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                  getInfoPtr(f.op)->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    int arity = f.op->infoPtr->funFields.arity - argCount;
+    int arity = getInfoPtr(f.op)->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
@@ -6308,7 +6308,7 @@ DEFUN1(stgApplyPNNP, f) {
         pushargs(1, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -6334,7 +6334,7 @@ DEFUN1(stgApplyPNNP, f) {
         pushargs(1, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -6360,7 +6360,7 @@ DEFUN1(stgApplyPNNP, f) {
         pushargs(1, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -6388,7 +6388,7 @@ DEFUN1(stgApplyPNNP, f) {
       pushargs(2, pargv);
       pushargs(pappargc, &f.op->payload[fvCount+1]);
       // tail call the FUN
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
 
     // excess < 0, too few args
     } else {
@@ -6396,7 +6396,7 @@ DEFUN1(stgApplyPNNP, f) {
       fprintf(stderr, "stgApplyPNNP PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2 + pappargc, 2 + papnargc);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 2 + pappargc, 2 + papnargc);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -6439,7 +6439,7 @@ DEFUN1(stgApplyPNNP, f) {
 
 DEFUN1(stgApplyNPNP, f) {
   #ifdef DEBUGSTGAPPLY
-  fprintf(stderr, "stgApplyNPNP %s\n", f.op->infoPtr->name);
+  fprintf(stderr, "stgApplyNPNP %s\n", getInfoPtr(f.op)->name);
   #endif
   const int argc = 4;
   PtrOrLiteral argv[4];
@@ -6467,9 +6467,9 @@ DEFUN1(stgApplyNPNP, f) {
   f = pargv[2];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(2, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNPNP THUNK\n");
       #endif
@@ -6483,11 +6483,11 @@ DEFUN1(stgApplyNPNP, f) {
     argv[3] = pargv[1];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
-    int arity = f.op->infoPtr->funFields.arity;
+    int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
-    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    fprintf(stderr, "FUN %s arity %d\n", getInfoPtr(f.op)->name, getInfoPtr(f.op)->funFields.arity);
     #endif
     int excess = argc - arity;  // may be negative
 
@@ -6504,7 +6504,7 @@ DEFUN1(stgApplyNPNP, f) {
         pushargs(2, nargv);
         pushargs(1, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -6528,7 +6528,7 @@ DEFUN1(stgApplyNPNP, f) {
         pushargs(1, nargv);
         pushargs(1, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -6552,7 +6552,7 @@ DEFUN1(stgApplyNPNP, f) {
         pushargs(1, nargv);
         // 0 pointers to push
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[0]);
         // restore argv
@@ -6579,17 +6579,17 @@ DEFUN1(stgApplyNPNP, f) {
       pushargs(2, nargv);
       pushargs(2, pargv);
       // tail call the fun
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
     }
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNPNP FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                    f.op->infoPtr->layoutInfo.unboxedCount;
+      int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                    getInfoPtr(f.op)->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2, 2);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 2, 2);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -6609,12 +6609,12 @@ DEFUN1(stgApplyNPNP, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                  f.op->infoPtr->layoutInfo.unboxedCount;
+    int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                  getInfoPtr(f.op)->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    int arity = f.op->infoPtr->funFields.arity - argCount;
+    int arity = getInfoPtr(f.op)->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
@@ -6635,7 +6635,7 @@ DEFUN1(stgApplyNPNP, f) {
         pushargs(1, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -6661,7 +6661,7 @@ DEFUN1(stgApplyNPNP, f) {
         pushargs(1, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -6687,7 +6687,7 @@ DEFUN1(stgApplyNPNP, f) {
         // 0 pointers to push
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[0]);
         // restore argv
@@ -6716,7 +6716,7 @@ DEFUN1(stgApplyNPNP, f) {
       pushargs(2, pargv);
       pushargs(pappargc, &f.op->payload[fvCount+1]);
       // tail call the FUN
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
 
     // excess < 0, too few args
     } else {
@@ -6724,7 +6724,7 @@ DEFUN1(stgApplyNPNP, f) {
       fprintf(stderr, "stgApplyNPNP PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2 + pappargc, 2 + papnargc);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 2 + pappargc, 2 + papnargc);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -6767,7 +6767,7 @@ DEFUN1(stgApplyNPNP, f) {
 
 DEFUN1(stgApplyPPNP, f) {
   #ifdef DEBUGSTGAPPLY
-  fprintf(stderr, "stgApplyPPNP %s\n", f.op->infoPtr->name);
+  fprintf(stderr, "stgApplyPPNP %s\n", getInfoPtr(f.op)->name);
   #endif
   const int argc = 4;
   PtrOrLiteral argv[4];
@@ -6804,9 +6804,9 @@ DEFUN1(stgApplyPPNP, f) {
   f = pargv[3];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(3, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPPNP THUNK\n");
       #endif
@@ -6821,11 +6821,11 @@ DEFUN1(stgApplyPPNP, f) {
     argv[3] = pargv[2];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
-    int arity = f.op->infoPtr->funFields.arity;
+    int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
-    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    fprintf(stderr, "FUN %s arity %d\n", getInfoPtr(f.op)->name, getInfoPtr(f.op)->funFields.arity);
     #endif
     int excess = argc - arity;  // may be negative
 
@@ -6842,7 +6842,7 @@ DEFUN1(stgApplyPPNP, f) {
         pushargs(1, nargv);
         pushargs(2, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[2]);
         // restore argv
@@ -6866,7 +6866,7 @@ DEFUN1(stgApplyPPNP, f) {
         // 0 non-pointers to push
         pushargs(2, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[2]);
         // restore argv
@@ -6890,7 +6890,7 @@ DEFUN1(stgApplyPPNP, f) {
         // 0 non-pointers to push
         pushargs(1, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -6917,17 +6917,17 @@ DEFUN1(stgApplyPPNP, f) {
       pushargs(1, nargv);
       pushargs(3, pargv);
       // tail call the fun
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
     }
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPPNP FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                    f.op->infoPtr->layoutInfo.unboxedCount;
+      int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                    getInfoPtr(f.op)->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3, 1);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 3, 1);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -6947,12 +6947,12 @@ DEFUN1(stgApplyPPNP, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                  f.op->infoPtr->layoutInfo.unboxedCount;
+    int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                  getInfoPtr(f.op)->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    int arity = f.op->infoPtr->funFields.arity - argCount;
+    int arity = getInfoPtr(f.op)->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
@@ -6973,7 +6973,7 @@ DEFUN1(stgApplyPPNP, f) {
         pushargs(2, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[2]);
         // restore argv
@@ -6999,7 +6999,7 @@ DEFUN1(stgApplyPPNP, f) {
         pushargs(2, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[2]);
         // restore argv
@@ -7025,7 +7025,7 @@ DEFUN1(stgApplyPPNP, f) {
         pushargs(1, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -7054,7 +7054,7 @@ DEFUN1(stgApplyPPNP, f) {
       pushargs(3, pargv);
       pushargs(pappargc, &f.op->payload[fvCount+1]);
       // tail call the FUN
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
 
     // excess < 0, too few args
     } else {
@@ -7062,7 +7062,7 @@ DEFUN1(stgApplyPPNP, f) {
       fprintf(stderr, "stgApplyPPNP PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3 + pappargc, 1 + papnargc);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 3 + pappargc, 1 + papnargc);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -7105,7 +7105,7 @@ DEFUN1(stgApplyPPNP, f) {
 
 DEFUN1(stgApplyNNPP, f) {
   #ifdef DEBUGSTGAPPLY
-  fprintf(stderr, "stgApplyNNPP %s\n", f.op->infoPtr->name);
+  fprintf(stderr, "stgApplyNNPP %s\n", getInfoPtr(f.op)->name);
   #endif
   const int argc = 4;
   PtrOrLiteral argv[4];
@@ -7133,9 +7133,9 @@ DEFUN1(stgApplyNNPP, f) {
   f = pargv[2];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(2, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNNPP THUNK\n");
       #endif
@@ -7149,11 +7149,11 @@ DEFUN1(stgApplyNNPP, f) {
     argv[3] = pargv[1];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
-    int arity = f.op->infoPtr->funFields.arity;
+    int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
-    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    fprintf(stderr, "FUN %s arity %d\n", getInfoPtr(f.op)->name, getInfoPtr(f.op)->funFields.arity);
     #endif
     int excess = argc - arity;  // may be negative
 
@@ -7170,7 +7170,7 @@ DEFUN1(stgApplyNNPP, f) {
         pushargs(2, nargv);
         pushargs(1, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -7194,7 +7194,7 @@ DEFUN1(stgApplyNNPP, f) {
         pushargs(2, nargv);
         // 0 pointers to push
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[0]);
         // restore argv
@@ -7219,7 +7219,7 @@ DEFUN1(stgApplyNNPP, f) {
         pushargs(1, nargv);
         // 0 pointers to push
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[0]);
         // restore argv
@@ -7246,17 +7246,17 @@ DEFUN1(stgApplyNNPP, f) {
       pushargs(2, nargv);
       pushargs(2, pargv);
       // tail call the fun
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
     }
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNNPP FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                    f.op->infoPtr->layoutInfo.unboxedCount;
+      int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                    getInfoPtr(f.op)->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2, 2);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 2, 2);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -7276,12 +7276,12 @@ DEFUN1(stgApplyNNPP, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                  f.op->infoPtr->layoutInfo.unboxedCount;
+    int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                  getInfoPtr(f.op)->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    int arity = f.op->infoPtr->funFields.arity - argCount;
+    int arity = getInfoPtr(f.op)->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
@@ -7302,7 +7302,7 @@ DEFUN1(stgApplyNNPP, f) {
         pushargs(1, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -7328,7 +7328,7 @@ DEFUN1(stgApplyNNPP, f) {
         // 0 pointers to push
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[0]);
         // restore argv
@@ -7355,7 +7355,7 @@ DEFUN1(stgApplyNNPP, f) {
         // 0 pointers to push
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[0]);
         // restore argv
@@ -7384,7 +7384,7 @@ DEFUN1(stgApplyNNPP, f) {
       pushargs(2, pargv);
       pushargs(pappargc, &f.op->payload[fvCount+1]);
       // tail call the FUN
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
 
     // excess < 0, too few args
     } else {
@@ -7392,7 +7392,7 @@ DEFUN1(stgApplyNNPP, f) {
       fprintf(stderr, "stgApplyNNPP PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2 + pappargc, 2 + papnargc);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 2 + pappargc, 2 + papnargc);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -7435,7 +7435,7 @@ DEFUN1(stgApplyNNPP, f) {
 
 DEFUN1(stgApplyPNPP, f) {
   #ifdef DEBUGSTGAPPLY
-  fprintf(stderr, "stgApplyPNPP %s\n", f.op->infoPtr->name);
+  fprintf(stderr, "stgApplyPNPP %s\n", getInfoPtr(f.op)->name);
   #endif
   const int argc = 4;
   PtrOrLiteral argv[4];
@@ -7472,9 +7472,9 @@ DEFUN1(stgApplyPNPP, f) {
   f = pargv[3];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(3, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPNPP THUNK\n");
       #endif
@@ -7489,11 +7489,11 @@ DEFUN1(stgApplyPNPP, f) {
     argv[3] = pargv[2];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
-    int arity = f.op->infoPtr->funFields.arity;
+    int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
-    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    fprintf(stderr, "FUN %s arity %d\n", getInfoPtr(f.op)->name, getInfoPtr(f.op)->funFields.arity);
     #endif
     int excess = argc - arity;  // may be negative
 
@@ -7510,7 +7510,7 @@ DEFUN1(stgApplyPNPP, f) {
         pushargs(1, nargv);
         pushargs(2, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[2]);
         // restore argv
@@ -7534,7 +7534,7 @@ DEFUN1(stgApplyPNPP, f) {
         pushargs(1, nargv);
         pushargs(1, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -7559,7 +7559,7 @@ DEFUN1(stgApplyPNPP, f) {
         // 0 non-pointers to push
         pushargs(1, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -7586,17 +7586,17 @@ DEFUN1(stgApplyPNPP, f) {
       pushargs(1, nargv);
       pushargs(3, pargv);
       // tail call the fun
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
     }
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPNPP FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                    f.op->infoPtr->layoutInfo.unboxedCount;
+      int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                    getInfoPtr(f.op)->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3, 1);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 3, 1);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -7616,12 +7616,12 @@ DEFUN1(stgApplyPNPP, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                  f.op->infoPtr->layoutInfo.unboxedCount;
+    int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                  getInfoPtr(f.op)->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    int arity = f.op->infoPtr->funFields.arity - argCount;
+    int arity = getInfoPtr(f.op)->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
@@ -7642,7 +7642,7 @@ DEFUN1(stgApplyPNPP, f) {
         pushargs(2, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[2]);
         // restore argv
@@ -7668,7 +7668,7 @@ DEFUN1(stgApplyPNPP, f) {
         pushargs(1, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -7695,7 +7695,7 @@ DEFUN1(stgApplyPNPP, f) {
         pushargs(1, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -7724,7 +7724,7 @@ DEFUN1(stgApplyPNPP, f) {
       pushargs(3, pargv);
       pushargs(pappargc, &f.op->payload[fvCount+1]);
       // tail call the FUN
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
 
     // excess < 0, too few args
     } else {
@@ -7732,7 +7732,7 @@ DEFUN1(stgApplyPNPP, f) {
       fprintf(stderr, "stgApplyPNPP PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3 + pappargc, 1 + papnargc);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 3 + pappargc, 1 + papnargc);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -7775,7 +7775,7 @@ DEFUN1(stgApplyPNPP, f) {
 
 DEFUN1(stgApplyNPPP, f) {
   #ifdef DEBUGSTGAPPLY
-  fprintf(stderr, "stgApplyNPPP %s\n", f.op->infoPtr->name);
+  fprintf(stderr, "stgApplyNPPP %s\n", getInfoPtr(f.op)->name);
   #endif
   const int argc = 4;
   PtrOrLiteral argv[4];
@@ -7812,9 +7812,9 @@ DEFUN1(stgApplyNPPP, f) {
   f = pargv[3];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(3, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNPPP THUNK\n");
       #endif
@@ -7829,11 +7829,11 @@ DEFUN1(stgApplyNPPP, f) {
     argv[3] = pargv[2];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
-    int arity = f.op->infoPtr->funFields.arity;
+    int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
-    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    fprintf(stderr, "FUN %s arity %d\n", getInfoPtr(f.op)->name, getInfoPtr(f.op)->funFields.arity);
     #endif
     int excess = argc - arity;  // may be negative
 
@@ -7850,7 +7850,7 @@ DEFUN1(stgApplyNPPP, f) {
         pushargs(1, nargv);
         pushargs(2, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[2]);
         // restore argv
@@ -7874,7 +7874,7 @@ DEFUN1(stgApplyNPPP, f) {
         pushargs(1, nargv);
         pushargs(1, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -7899,7 +7899,7 @@ DEFUN1(stgApplyNPPP, f) {
         pushargs(1, nargv);
         // 0 pointers to push
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[0]);
         // restore argv
@@ -7927,17 +7927,17 @@ DEFUN1(stgApplyNPPP, f) {
       pushargs(1, nargv);
       pushargs(3, pargv);
       // tail call the fun
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
     }
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNPPP FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                    f.op->infoPtr->layoutInfo.unboxedCount;
+      int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                    getInfoPtr(f.op)->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3, 1);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 3, 1);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -7957,12 +7957,12 @@ DEFUN1(stgApplyNPPP, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                  f.op->infoPtr->layoutInfo.unboxedCount;
+    int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                  getInfoPtr(f.op)->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    int arity = f.op->infoPtr->funFields.arity - argCount;
+    int arity = getInfoPtr(f.op)->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
@@ -7983,7 +7983,7 @@ DEFUN1(stgApplyNPPP, f) {
         pushargs(2, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[2]);
         // restore argv
@@ -8009,7 +8009,7 @@ DEFUN1(stgApplyNPPP, f) {
         pushargs(1, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -8036,7 +8036,7 @@ DEFUN1(stgApplyNPPP, f) {
         // 0 pointers to push
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[0]);
         // restore argv
@@ -8066,7 +8066,7 @@ DEFUN1(stgApplyNPPP, f) {
       pushargs(3, pargv);
       pushargs(pappargc, &f.op->payload[fvCount+1]);
       // tail call the FUN
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
 
     // excess < 0, too few args
     } else {
@@ -8074,7 +8074,7 @@ DEFUN1(stgApplyNPPP, f) {
       fprintf(stderr, "stgApplyNPPP PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3 + pappargc, 1 + papnargc);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 3 + pappargc, 1 + papnargc);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -8117,7 +8117,7 @@ DEFUN1(stgApplyNPPP, f) {
 
 DEFUN1(stgApplyPPPP, f) {
   #ifdef DEBUGSTGAPPLY
-  fprintf(stderr, "stgApplyPPPP %s\n", f.op->infoPtr->name);
+  fprintf(stderr, "stgApplyPPPP %s\n", getInfoPtr(f.op)->name);
   #endif
   const int argc = 4;
   PtrOrLiteral argv[4];
@@ -8165,9 +8165,9 @@ DEFUN1(stgApplyPPPP, f) {
   f = pargv[4];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(4, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPPPP THUNK\n");
       #endif
@@ -8183,11 +8183,11 @@ DEFUN1(stgApplyPPPP, f) {
     argv[3] = pargv[3];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
-    int arity = f.op->infoPtr->funFields.arity;
+    int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
-    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    fprintf(stderr, "FUN %s arity %d\n", getInfoPtr(f.op)->name, getInfoPtr(f.op)->funFields.arity);
     #endif
     int excess = argc - arity;  // may be negative
 
@@ -8204,7 +8204,7 @@ DEFUN1(stgApplyPPPP, f) {
         // 0 non-pointers to push
         pushargs(3, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[3]);
         // restore argv
@@ -8228,7 +8228,7 @@ DEFUN1(stgApplyPPPP, f) {
         // 0 non-pointers to push
         pushargs(2, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[2]);
         // restore argv
@@ -8253,7 +8253,7 @@ DEFUN1(stgApplyPPPP, f) {
         // 0 non-pointers to push
         pushargs(1, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -8281,17 +8281,17 @@ DEFUN1(stgApplyPPPP, f) {
       // 0 non-pointers to push
       pushargs(4, pargv);
       // tail call the fun
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
     }
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPPPP FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                    f.op->infoPtr->layoutInfo.unboxedCount;
+      int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                    getInfoPtr(f.op)->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 4, 0);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 4, 0);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -8311,12 +8311,12 @@ DEFUN1(stgApplyPPPP, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                  f.op->infoPtr->layoutInfo.unboxedCount;
+    int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                  getInfoPtr(f.op)->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    int arity = f.op->infoPtr->funFields.arity - argCount;
+    int arity = getInfoPtr(f.op)->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
@@ -8337,7 +8337,7 @@ DEFUN1(stgApplyPPPP, f) {
         pushargs(3, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[3]);
         // restore argv
@@ -8363,7 +8363,7 @@ DEFUN1(stgApplyPPPP, f) {
         pushargs(2, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[2]);
         // restore argv
@@ -8390,7 +8390,7 @@ DEFUN1(stgApplyPPPP, f) {
         pushargs(1, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -8420,7 +8420,7 @@ DEFUN1(stgApplyPPPP, f) {
       pushargs(4, pargv);
       pushargs(pappargc, &f.op->payload[fvCount+1]);
       // tail call the FUN
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
 
     // excess < 0, too few args
     } else {
@@ -8428,7 +8428,7 @@ DEFUN1(stgApplyPPPP, f) {
       fprintf(stderr, "stgApplyPPPP PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 4 + pappargc, 0 + papnargc);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 4 + pappargc, 0 + papnargc);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -8471,7 +8471,7 @@ DEFUN1(stgApplyPPPP, f) {
 
 DEFUN1(stgApplyNNNNN, f) {
   #ifdef DEBUGSTGAPPLY
-  fprintf(stderr, "stgApplyNNNNN %s\n", f.op->infoPtr->name);
+  fprintf(stderr, "stgApplyNNNNN %s\n", getInfoPtr(f.op)->name);
   #endif
   const int argc = 5;
   PtrOrLiteral argv[5];
@@ -8487,9 +8487,9 @@ DEFUN1(stgApplyNNNNN, f) {
   nargv[4] = argv[4];
   
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     // no pointer args to save
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNNNNN THUNK\n");
       #endif
@@ -8500,11 +8500,11 @@ DEFUN1(stgApplyNNNNN, f) {
     // no pointer args to restore
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
-    int arity = f.op->infoPtr->funFields.arity;
+    int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
-    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    fprintf(stderr, "FUN %s arity %d\n", getInfoPtr(f.op)->name, getInfoPtr(f.op)->funFields.arity);
     #endif
     int excess = argc - arity;  // may be negative
 
@@ -8521,7 +8521,7 @@ DEFUN1(stgApplyNNNNN, f) {
         pushargs(4, nargv);
         // 0 pointers to push
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -8543,7 +8543,7 @@ DEFUN1(stgApplyNNNNN, f) {
         pushargs(3, nargv);
         // 0 pointers to push
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -8565,7 +8565,7 @@ DEFUN1(stgApplyNNNNN, f) {
         pushargs(2, nargv);
         // 0 pointers to push
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -8587,7 +8587,7 @@ DEFUN1(stgApplyNNNNN, f) {
         pushargs(1, nargv);
         // 0 pointers to push
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -8611,17 +8611,17 @@ DEFUN1(stgApplyNNNNN, f) {
       pushargs(5, nargv);
       // 0 pointers to push
       // tail call the fun
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
     }
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNNNNN FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                    f.op->infoPtr->layoutInfo.unboxedCount;
+      int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                    getInfoPtr(f.op)->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 0, 5);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 0, 5);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -8641,12 +8641,12 @@ DEFUN1(stgApplyNNNNN, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                  f.op->infoPtr->layoutInfo.unboxedCount;
+    int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                  getInfoPtr(f.op)->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    int arity = f.op->infoPtr->funFields.arity - argCount;
+    int arity = getInfoPtr(f.op)->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
@@ -8667,7 +8667,7 @@ DEFUN1(stgApplyNNNNN, f) {
         // 0 pointers to push
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -8691,7 +8691,7 @@ DEFUN1(stgApplyNNNNN, f) {
         // 0 pointers to push
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -8715,7 +8715,7 @@ DEFUN1(stgApplyNNNNN, f) {
         // 0 pointers to push
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -8739,7 +8739,7 @@ DEFUN1(stgApplyNNNNN, f) {
         // 0 pointers to push
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -8765,7 +8765,7 @@ DEFUN1(stgApplyNNNNN, f) {
       // 0 non-pointer args
       pushargs(pappargc, &f.op->payload[fvCount+1]);
       // tail call the FUN
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
 
     // excess < 0, too few args
     } else {
@@ -8773,7 +8773,7 @@ DEFUN1(stgApplyNNNNN, f) {
       fprintf(stderr, "stgApplyNNNNN PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 0 + pappargc, 5 + papnargc);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 0 + pappargc, 5 + papnargc);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -8816,7 +8816,7 @@ DEFUN1(stgApplyNNNNN, f) {
 
 DEFUN1(stgApplyPNNNN, f) {
   #ifdef DEBUGSTGAPPLY
-  fprintf(stderr, "stgApplyPNNNN %s\n", f.op->infoPtr->name);
+  fprintf(stderr, "stgApplyPNNNN %s\n", getInfoPtr(f.op)->name);
   #endif
   const int argc = 5;
   PtrOrLiteral argv[5];
@@ -8838,9 +8838,9 @@ DEFUN1(stgApplyPNNNN, f) {
   f = pargv[1];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(1, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPNNNN THUNK\n");
       #endif
@@ -8853,11 +8853,11 @@ DEFUN1(stgApplyPNNNN, f) {
     argv[0] = pargv[0];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
-    int arity = f.op->infoPtr->funFields.arity;
+    int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
-    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    fprintf(stderr, "FUN %s arity %d\n", getInfoPtr(f.op)->name, getInfoPtr(f.op)->funFields.arity);
     #endif
     int excess = argc - arity;  // may be negative
 
@@ -8874,7 +8874,7 @@ DEFUN1(stgApplyPNNNN, f) {
         pushargs(3, nargv);
         pushargs(1, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -8896,7 +8896,7 @@ DEFUN1(stgApplyPNNNN, f) {
         pushargs(2, nargv);
         pushargs(1, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -8918,7 +8918,7 @@ DEFUN1(stgApplyPNNNN, f) {
         pushargs(1, nargv);
         pushargs(1, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -8940,7 +8940,7 @@ DEFUN1(stgApplyPNNNN, f) {
         // 0 non-pointers to push
         pushargs(1, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -8964,17 +8964,17 @@ DEFUN1(stgApplyPNNNN, f) {
       pushargs(4, nargv);
       pushargs(1, pargv);
       // tail call the fun
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
     }
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPNNNN FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                    f.op->infoPtr->layoutInfo.unboxedCount;
+      int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                    getInfoPtr(f.op)->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 1, 4);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 1, 4);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -8994,12 +8994,12 @@ DEFUN1(stgApplyPNNNN, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                  f.op->infoPtr->layoutInfo.unboxedCount;
+    int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                  getInfoPtr(f.op)->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    int arity = f.op->infoPtr->funFields.arity - argCount;
+    int arity = getInfoPtr(f.op)->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
@@ -9020,7 +9020,7 @@ DEFUN1(stgApplyPNNNN, f) {
         pushargs(1, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -9044,7 +9044,7 @@ DEFUN1(stgApplyPNNNN, f) {
         pushargs(1, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -9068,7 +9068,7 @@ DEFUN1(stgApplyPNNNN, f) {
         pushargs(1, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -9092,7 +9092,7 @@ DEFUN1(stgApplyPNNNN, f) {
         pushargs(1, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -9118,7 +9118,7 @@ DEFUN1(stgApplyPNNNN, f) {
       pushargs(1, pargv);
       pushargs(pappargc, &f.op->payload[fvCount+1]);
       // tail call the FUN
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
 
     // excess < 0, too few args
     } else {
@@ -9126,7 +9126,7 @@ DEFUN1(stgApplyPNNNN, f) {
       fprintf(stderr, "stgApplyPNNNN PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 1 + pappargc, 4 + papnargc);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 1 + pappargc, 4 + papnargc);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -9169,7 +9169,7 @@ DEFUN1(stgApplyPNNNN, f) {
 
 DEFUN1(stgApplyNPNNN, f) {
   #ifdef DEBUGSTGAPPLY
-  fprintf(stderr, "stgApplyNPNNN %s\n", f.op->infoPtr->name);
+  fprintf(stderr, "stgApplyNPNNN %s\n", getInfoPtr(f.op)->name);
   #endif
   const int argc = 5;
   PtrOrLiteral argv[5];
@@ -9191,9 +9191,9 @@ DEFUN1(stgApplyNPNNN, f) {
   f = pargv[1];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(1, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNPNNN THUNK\n");
       #endif
@@ -9206,11 +9206,11 @@ DEFUN1(stgApplyNPNNN, f) {
     argv[1] = pargv[0];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
-    int arity = f.op->infoPtr->funFields.arity;
+    int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
-    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    fprintf(stderr, "FUN %s arity %d\n", getInfoPtr(f.op)->name, getInfoPtr(f.op)->funFields.arity);
     #endif
     int excess = argc - arity;  // may be negative
 
@@ -9227,7 +9227,7 @@ DEFUN1(stgApplyNPNNN, f) {
         pushargs(3, nargv);
         pushargs(1, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -9249,7 +9249,7 @@ DEFUN1(stgApplyNPNNN, f) {
         pushargs(2, nargv);
         pushargs(1, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -9271,7 +9271,7 @@ DEFUN1(stgApplyNPNNN, f) {
         pushargs(1, nargv);
         pushargs(1, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -9293,7 +9293,7 @@ DEFUN1(stgApplyNPNNN, f) {
         pushargs(1, nargv);
         // 0 pointers to push
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[0]);
         // restore argv
@@ -9319,17 +9319,17 @@ DEFUN1(stgApplyNPNNN, f) {
       pushargs(4, nargv);
       pushargs(1, pargv);
       // tail call the fun
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
     }
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNPNNN FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                    f.op->infoPtr->layoutInfo.unboxedCount;
+      int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                    getInfoPtr(f.op)->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 1, 4);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 1, 4);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -9349,12 +9349,12 @@ DEFUN1(stgApplyNPNNN, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                  f.op->infoPtr->layoutInfo.unboxedCount;
+    int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                  getInfoPtr(f.op)->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    int arity = f.op->infoPtr->funFields.arity - argCount;
+    int arity = getInfoPtr(f.op)->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
@@ -9375,7 +9375,7 @@ DEFUN1(stgApplyNPNNN, f) {
         pushargs(1, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -9399,7 +9399,7 @@ DEFUN1(stgApplyNPNNN, f) {
         pushargs(1, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -9423,7 +9423,7 @@ DEFUN1(stgApplyNPNNN, f) {
         pushargs(1, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -9447,7 +9447,7 @@ DEFUN1(stgApplyNPNNN, f) {
         // 0 pointers to push
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[0]);
         // restore argv
@@ -9475,7 +9475,7 @@ DEFUN1(stgApplyNPNNN, f) {
       pushargs(1, pargv);
       pushargs(pappargc, &f.op->payload[fvCount+1]);
       // tail call the FUN
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
 
     // excess < 0, too few args
     } else {
@@ -9483,7 +9483,7 @@ DEFUN1(stgApplyNPNNN, f) {
       fprintf(stderr, "stgApplyNPNNN PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 1 + pappargc, 4 + papnargc);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 1 + pappargc, 4 + papnargc);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -9526,7 +9526,7 @@ DEFUN1(stgApplyNPNNN, f) {
 
 DEFUN1(stgApplyPPNNN, f) {
   #ifdef DEBUGSTGAPPLY
-  fprintf(stderr, "stgApplyPPNNN %s\n", f.op->infoPtr->name);
+  fprintf(stderr, "stgApplyPPNNN %s\n", getInfoPtr(f.op)->name);
   #endif
   const int argc = 5;
   PtrOrLiteral argv[5];
@@ -9555,9 +9555,9 @@ DEFUN1(stgApplyPPNNN, f) {
   f = pargv[2];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(2, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPPNNN THUNK\n");
       #endif
@@ -9571,11 +9571,11 @@ DEFUN1(stgApplyPPNNN, f) {
     argv[1] = pargv[1];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
-    int arity = f.op->infoPtr->funFields.arity;
+    int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
-    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    fprintf(stderr, "FUN %s arity %d\n", getInfoPtr(f.op)->name, getInfoPtr(f.op)->funFields.arity);
     #endif
     int excess = argc - arity;  // may be negative
 
@@ -9592,7 +9592,7 @@ DEFUN1(stgApplyPPNNN, f) {
         pushargs(2, nargv);
         pushargs(2, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -9614,7 +9614,7 @@ DEFUN1(stgApplyPPNNN, f) {
         pushargs(1, nargv);
         pushargs(2, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -9636,7 +9636,7 @@ DEFUN1(stgApplyPPNNN, f) {
         // 0 non-pointers to push
         pushargs(2, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -9658,7 +9658,7 @@ DEFUN1(stgApplyPPNNN, f) {
         // 0 non-pointers to push
         pushargs(1, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -9684,17 +9684,17 @@ DEFUN1(stgApplyPPNNN, f) {
       pushargs(3, nargv);
       pushargs(2, pargv);
       // tail call the fun
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
     }
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPPNNN FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                    f.op->infoPtr->layoutInfo.unboxedCount;
+      int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                    getInfoPtr(f.op)->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2, 3);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 2, 3);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -9714,12 +9714,12 @@ DEFUN1(stgApplyPPNNN, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                  f.op->infoPtr->layoutInfo.unboxedCount;
+    int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                  getInfoPtr(f.op)->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    int arity = f.op->infoPtr->funFields.arity - argCount;
+    int arity = getInfoPtr(f.op)->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
@@ -9740,7 +9740,7 @@ DEFUN1(stgApplyPPNNN, f) {
         pushargs(2, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -9764,7 +9764,7 @@ DEFUN1(stgApplyPPNNN, f) {
         pushargs(2, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -9788,7 +9788,7 @@ DEFUN1(stgApplyPPNNN, f) {
         pushargs(2, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -9812,7 +9812,7 @@ DEFUN1(stgApplyPPNNN, f) {
         pushargs(1, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -9840,7 +9840,7 @@ DEFUN1(stgApplyPPNNN, f) {
       pushargs(2, pargv);
       pushargs(pappargc, &f.op->payload[fvCount+1]);
       // tail call the FUN
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
 
     // excess < 0, too few args
     } else {
@@ -9848,7 +9848,7 @@ DEFUN1(stgApplyPPNNN, f) {
       fprintf(stderr, "stgApplyPPNNN PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2 + pappargc, 3 + papnargc);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 2 + pappargc, 3 + papnargc);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -9891,7 +9891,7 @@ DEFUN1(stgApplyPPNNN, f) {
 
 DEFUN1(stgApplyNNPNN, f) {
   #ifdef DEBUGSTGAPPLY
-  fprintf(stderr, "stgApplyNNPNN %s\n", f.op->infoPtr->name);
+  fprintf(stderr, "stgApplyNNPNN %s\n", getInfoPtr(f.op)->name);
   #endif
   const int argc = 5;
   PtrOrLiteral argv[5];
@@ -9913,9 +9913,9 @@ DEFUN1(stgApplyNNPNN, f) {
   f = pargv[1];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(1, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNNPNN THUNK\n");
       #endif
@@ -9928,11 +9928,11 @@ DEFUN1(stgApplyNNPNN, f) {
     argv[2] = pargv[0];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
-    int arity = f.op->infoPtr->funFields.arity;
+    int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
-    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    fprintf(stderr, "FUN %s arity %d\n", getInfoPtr(f.op)->name, getInfoPtr(f.op)->funFields.arity);
     #endif
     int excess = argc - arity;  // may be negative
 
@@ -9949,7 +9949,7 @@ DEFUN1(stgApplyNNPNN, f) {
         pushargs(3, nargv);
         pushargs(1, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -9971,7 +9971,7 @@ DEFUN1(stgApplyNNPNN, f) {
         pushargs(2, nargv);
         pushargs(1, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -9993,7 +9993,7 @@ DEFUN1(stgApplyNNPNN, f) {
         pushargs(2, nargv);
         // 0 pointers to push
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[0]);
         // restore argv
@@ -10017,7 +10017,7 @@ DEFUN1(stgApplyNNPNN, f) {
         pushargs(1, nargv);
         // 0 pointers to push
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[0]);
         // restore argv
@@ -10043,17 +10043,17 @@ DEFUN1(stgApplyNNPNN, f) {
       pushargs(4, nargv);
       pushargs(1, pargv);
       // tail call the fun
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
     }
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNNPNN FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                    f.op->infoPtr->layoutInfo.unboxedCount;
+      int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                    getInfoPtr(f.op)->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 1, 4);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 1, 4);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -10073,12 +10073,12 @@ DEFUN1(stgApplyNNPNN, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                  f.op->infoPtr->layoutInfo.unboxedCount;
+    int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                  getInfoPtr(f.op)->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    int arity = f.op->infoPtr->funFields.arity - argCount;
+    int arity = getInfoPtr(f.op)->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
@@ -10099,7 +10099,7 @@ DEFUN1(stgApplyNNPNN, f) {
         pushargs(1, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -10123,7 +10123,7 @@ DEFUN1(stgApplyNNPNN, f) {
         pushargs(1, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -10147,7 +10147,7 @@ DEFUN1(stgApplyNNPNN, f) {
         // 0 pointers to push
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[0]);
         // restore argv
@@ -10173,7 +10173,7 @@ DEFUN1(stgApplyNNPNN, f) {
         // 0 pointers to push
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[0]);
         // restore argv
@@ -10201,7 +10201,7 @@ DEFUN1(stgApplyNNPNN, f) {
       pushargs(1, pargv);
       pushargs(pappargc, &f.op->payload[fvCount+1]);
       // tail call the FUN
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
 
     // excess < 0, too few args
     } else {
@@ -10209,7 +10209,7 @@ DEFUN1(stgApplyNNPNN, f) {
       fprintf(stderr, "stgApplyNNPNN PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 1 + pappargc, 4 + papnargc);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 1 + pappargc, 4 + papnargc);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -10252,7 +10252,7 @@ DEFUN1(stgApplyNNPNN, f) {
 
 DEFUN1(stgApplyPNPNN, f) {
   #ifdef DEBUGSTGAPPLY
-  fprintf(stderr, "stgApplyPNPNN %s\n", f.op->infoPtr->name);
+  fprintf(stderr, "stgApplyPNPNN %s\n", getInfoPtr(f.op)->name);
   #endif
   const int argc = 5;
   PtrOrLiteral argv[5];
@@ -10281,9 +10281,9 @@ DEFUN1(stgApplyPNPNN, f) {
   f = pargv[2];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(2, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPNPNN THUNK\n");
       #endif
@@ -10297,11 +10297,11 @@ DEFUN1(stgApplyPNPNN, f) {
     argv[2] = pargv[1];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
-    int arity = f.op->infoPtr->funFields.arity;
+    int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
-    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    fprintf(stderr, "FUN %s arity %d\n", getInfoPtr(f.op)->name, getInfoPtr(f.op)->funFields.arity);
     #endif
     int excess = argc - arity;  // may be negative
 
@@ -10318,7 +10318,7 @@ DEFUN1(stgApplyPNPNN, f) {
         pushargs(2, nargv);
         pushargs(2, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -10340,7 +10340,7 @@ DEFUN1(stgApplyPNPNN, f) {
         pushargs(1, nargv);
         pushargs(2, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -10362,7 +10362,7 @@ DEFUN1(stgApplyPNPNN, f) {
         pushargs(1, nargv);
         pushargs(1, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -10386,7 +10386,7 @@ DEFUN1(stgApplyPNPNN, f) {
         // 0 non-pointers to push
         pushargs(1, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -10412,17 +10412,17 @@ DEFUN1(stgApplyPNPNN, f) {
       pushargs(3, nargv);
       pushargs(2, pargv);
       // tail call the fun
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
     }
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPNPNN FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                    f.op->infoPtr->layoutInfo.unboxedCount;
+      int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                    getInfoPtr(f.op)->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2, 3);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 2, 3);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -10442,12 +10442,12 @@ DEFUN1(stgApplyPNPNN, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                  f.op->infoPtr->layoutInfo.unboxedCount;
+    int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                  getInfoPtr(f.op)->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    int arity = f.op->infoPtr->funFields.arity - argCount;
+    int arity = getInfoPtr(f.op)->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
@@ -10468,7 +10468,7 @@ DEFUN1(stgApplyPNPNN, f) {
         pushargs(2, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -10492,7 +10492,7 @@ DEFUN1(stgApplyPNPNN, f) {
         pushargs(2, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -10516,7 +10516,7 @@ DEFUN1(stgApplyPNPNN, f) {
         pushargs(1, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -10542,7 +10542,7 @@ DEFUN1(stgApplyPNPNN, f) {
         pushargs(1, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -10570,7 +10570,7 @@ DEFUN1(stgApplyPNPNN, f) {
       pushargs(2, pargv);
       pushargs(pappargc, &f.op->payload[fvCount+1]);
       // tail call the FUN
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
 
     // excess < 0, too few args
     } else {
@@ -10578,7 +10578,7 @@ DEFUN1(stgApplyPNPNN, f) {
       fprintf(stderr, "stgApplyPNPNN PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2 + pappargc, 3 + papnargc);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 2 + pappargc, 3 + papnargc);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -10621,7 +10621,7 @@ DEFUN1(stgApplyPNPNN, f) {
 
 DEFUN1(stgApplyNPPNN, f) {
   #ifdef DEBUGSTGAPPLY
-  fprintf(stderr, "stgApplyNPPNN %s\n", f.op->infoPtr->name);
+  fprintf(stderr, "stgApplyNPPNN %s\n", getInfoPtr(f.op)->name);
   #endif
   const int argc = 5;
   PtrOrLiteral argv[5];
@@ -10650,9 +10650,9 @@ DEFUN1(stgApplyNPPNN, f) {
   f = pargv[2];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(2, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNPPNN THUNK\n");
       #endif
@@ -10666,11 +10666,11 @@ DEFUN1(stgApplyNPPNN, f) {
     argv[2] = pargv[1];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
-    int arity = f.op->infoPtr->funFields.arity;
+    int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
-    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    fprintf(stderr, "FUN %s arity %d\n", getInfoPtr(f.op)->name, getInfoPtr(f.op)->funFields.arity);
     #endif
     int excess = argc - arity;  // may be negative
 
@@ -10687,7 +10687,7 @@ DEFUN1(stgApplyNPPNN, f) {
         pushargs(2, nargv);
         pushargs(2, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -10709,7 +10709,7 @@ DEFUN1(stgApplyNPPNN, f) {
         pushargs(1, nargv);
         pushargs(2, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -10731,7 +10731,7 @@ DEFUN1(stgApplyNPPNN, f) {
         pushargs(1, nargv);
         pushargs(1, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -10755,7 +10755,7 @@ DEFUN1(stgApplyNPPNN, f) {
         pushargs(1, nargv);
         // 0 pointers to push
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[0]);
         // restore argv
@@ -10782,17 +10782,17 @@ DEFUN1(stgApplyNPPNN, f) {
       pushargs(3, nargv);
       pushargs(2, pargv);
       // tail call the fun
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
     }
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNPPNN FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                    f.op->infoPtr->layoutInfo.unboxedCount;
+      int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                    getInfoPtr(f.op)->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2, 3);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 2, 3);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -10812,12 +10812,12 @@ DEFUN1(stgApplyNPPNN, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                  f.op->infoPtr->layoutInfo.unboxedCount;
+    int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                  getInfoPtr(f.op)->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    int arity = f.op->infoPtr->funFields.arity - argCount;
+    int arity = getInfoPtr(f.op)->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
@@ -10838,7 +10838,7 @@ DEFUN1(stgApplyNPPNN, f) {
         pushargs(2, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -10862,7 +10862,7 @@ DEFUN1(stgApplyNPPNN, f) {
         pushargs(2, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -10886,7 +10886,7 @@ DEFUN1(stgApplyNPPNN, f) {
         pushargs(1, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -10912,7 +10912,7 @@ DEFUN1(stgApplyNPPNN, f) {
         // 0 pointers to push
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[0]);
         // restore argv
@@ -10941,7 +10941,7 @@ DEFUN1(stgApplyNPPNN, f) {
       pushargs(2, pargv);
       pushargs(pappargc, &f.op->payload[fvCount+1]);
       // tail call the FUN
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
 
     // excess < 0, too few args
     } else {
@@ -10949,7 +10949,7 @@ DEFUN1(stgApplyNPPNN, f) {
       fprintf(stderr, "stgApplyNPPNN PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2 + pappargc, 3 + papnargc);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 2 + pappargc, 3 + papnargc);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -10992,7 +10992,7 @@ DEFUN1(stgApplyNPPNN, f) {
 
 DEFUN1(stgApplyPPPNN, f) {
   #ifdef DEBUGSTGAPPLY
-  fprintf(stderr, "stgApplyPPPNN %s\n", f.op->infoPtr->name);
+  fprintf(stderr, "stgApplyPPPNN %s\n", getInfoPtr(f.op)->name);
   #endif
   const int argc = 5;
   PtrOrLiteral argv[5];
@@ -11030,9 +11030,9 @@ DEFUN1(stgApplyPPPNN, f) {
   f = pargv[3];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(3, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPPPNN THUNK\n");
       #endif
@@ -11047,11 +11047,11 @@ DEFUN1(stgApplyPPPNN, f) {
     argv[2] = pargv[2];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
-    int arity = f.op->infoPtr->funFields.arity;
+    int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
-    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    fprintf(stderr, "FUN %s arity %d\n", getInfoPtr(f.op)->name, getInfoPtr(f.op)->funFields.arity);
     #endif
     int excess = argc - arity;  // may be negative
 
@@ -11068,7 +11068,7 @@ DEFUN1(stgApplyPPPNN, f) {
         pushargs(1, nargv);
         pushargs(3, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -11090,7 +11090,7 @@ DEFUN1(stgApplyPPPNN, f) {
         // 0 non-pointers to push
         pushargs(3, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -11112,7 +11112,7 @@ DEFUN1(stgApplyPPPNN, f) {
         // 0 non-pointers to push
         pushargs(2, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[2]);
         // restore argv
@@ -11136,7 +11136,7 @@ DEFUN1(stgApplyPPPNN, f) {
         // 0 non-pointers to push
         pushargs(1, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -11163,17 +11163,17 @@ DEFUN1(stgApplyPPPNN, f) {
       pushargs(2, nargv);
       pushargs(3, pargv);
       // tail call the fun
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
     }
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPPPNN FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                    f.op->infoPtr->layoutInfo.unboxedCount;
+      int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                    getInfoPtr(f.op)->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3, 2);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 3, 2);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -11193,12 +11193,12 @@ DEFUN1(stgApplyPPPNN, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                  f.op->infoPtr->layoutInfo.unboxedCount;
+    int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                  getInfoPtr(f.op)->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    int arity = f.op->infoPtr->funFields.arity - argCount;
+    int arity = getInfoPtr(f.op)->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
@@ -11219,7 +11219,7 @@ DEFUN1(stgApplyPPPNN, f) {
         pushargs(3, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -11243,7 +11243,7 @@ DEFUN1(stgApplyPPPNN, f) {
         pushargs(3, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -11267,7 +11267,7 @@ DEFUN1(stgApplyPPPNN, f) {
         pushargs(2, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[2]);
         // restore argv
@@ -11293,7 +11293,7 @@ DEFUN1(stgApplyPPPNN, f) {
         pushargs(1, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -11322,7 +11322,7 @@ DEFUN1(stgApplyPPPNN, f) {
       pushargs(3, pargv);
       pushargs(pappargc, &f.op->payload[fvCount+1]);
       // tail call the FUN
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
 
     // excess < 0, too few args
     } else {
@@ -11330,7 +11330,7 @@ DEFUN1(stgApplyPPPNN, f) {
       fprintf(stderr, "stgApplyPPPNN PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3 + pappargc, 2 + papnargc);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 3 + pappargc, 2 + papnargc);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -11373,7 +11373,7 @@ DEFUN1(stgApplyPPPNN, f) {
 
 DEFUN1(stgApplyNNNPN, f) {
   #ifdef DEBUGSTGAPPLY
-  fprintf(stderr, "stgApplyNNNPN %s\n", f.op->infoPtr->name);
+  fprintf(stderr, "stgApplyNNNPN %s\n", getInfoPtr(f.op)->name);
   #endif
   const int argc = 5;
   PtrOrLiteral argv[5];
@@ -11395,9 +11395,9 @@ DEFUN1(stgApplyNNNPN, f) {
   f = pargv[1];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(1, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNNNPN THUNK\n");
       #endif
@@ -11410,11 +11410,11 @@ DEFUN1(stgApplyNNNPN, f) {
     argv[3] = pargv[0];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
-    int arity = f.op->infoPtr->funFields.arity;
+    int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
-    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    fprintf(stderr, "FUN %s arity %d\n", getInfoPtr(f.op)->name, getInfoPtr(f.op)->funFields.arity);
     #endif
     int excess = argc - arity;  // may be negative
 
@@ -11431,7 +11431,7 @@ DEFUN1(stgApplyNNNPN, f) {
         pushargs(3, nargv);
         pushargs(1, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -11453,7 +11453,7 @@ DEFUN1(stgApplyNNNPN, f) {
         pushargs(3, nargv);
         // 0 pointers to push
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[0]);
         // restore argv
@@ -11477,7 +11477,7 @@ DEFUN1(stgApplyNNNPN, f) {
         pushargs(2, nargv);
         // 0 pointers to push
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[0]);
         // restore argv
@@ -11501,7 +11501,7 @@ DEFUN1(stgApplyNNNPN, f) {
         pushargs(1, nargv);
         // 0 pointers to push
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[0]);
         // restore argv
@@ -11527,17 +11527,17 @@ DEFUN1(stgApplyNNNPN, f) {
       pushargs(4, nargv);
       pushargs(1, pargv);
       // tail call the fun
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
     }
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNNNPN FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                    f.op->infoPtr->layoutInfo.unboxedCount;
+      int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                    getInfoPtr(f.op)->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 1, 4);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 1, 4);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -11557,12 +11557,12 @@ DEFUN1(stgApplyNNNPN, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                  f.op->infoPtr->layoutInfo.unboxedCount;
+    int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                  getInfoPtr(f.op)->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    int arity = f.op->infoPtr->funFields.arity - argCount;
+    int arity = getInfoPtr(f.op)->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
@@ -11583,7 +11583,7 @@ DEFUN1(stgApplyNNNPN, f) {
         pushargs(1, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -11607,7 +11607,7 @@ DEFUN1(stgApplyNNNPN, f) {
         // 0 pointers to push
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[0]);
         // restore argv
@@ -11633,7 +11633,7 @@ DEFUN1(stgApplyNNNPN, f) {
         // 0 pointers to push
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[0]);
         // restore argv
@@ -11659,7 +11659,7 @@ DEFUN1(stgApplyNNNPN, f) {
         // 0 pointers to push
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[0]);
         // restore argv
@@ -11687,7 +11687,7 @@ DEFUN1(stgApplyNNNPN, f) {
       pushargs(1, pargv);
       pushargs(pappargc, &f.op->payload[fvCount+1]);
       // tail call the FUN
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
 
     // excess < 0, too few args
     } else {
@@ -11695,7 +11695,7 @@ DEFUN1(stgApplyNNNPN, f) {
       fprintf(stderr, "stgApplyNNNPN PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 1 + pappargc, 4 + papnargc);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 1 + pappargc, 4 + papnargc);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -11738,7 +11738,7 @@ DEFUN1(stgApplyNNNPN, f) {
 
 DEFUN1(stgApplyPNNPN, f) {
   #ifdef DEBUGSTGAPPLY
-  fprintf(stderr, "stgApplyPNNPN %s\n", f.op->infoPtr->name);
+  fprintf(stderr, "stgApplyPNNPN %s\n", getInfoPtr(f.op)->name);
   #endif
   const int argc = 5;
   PtrOrLiteral argv[5];
@@ -11767,9 +11767,9 @@ DEFUN1(stgApplyPNNPN, f) {
   f = pargv[2];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(2, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPNNPN THUNK\n");
       #endif
@@ -11783,11 +11783,11 @@ DEFUN1(stgApplyPNNPN, f) {
     argv[3] = pargv[1];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
-    int arity = f.op->infoPtr->funFields.arity;
+    int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
-    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    fprintf(stderr, "FUN %s arity %d\n", getInfoPtr(f.op)->name, getInfoPtr(f.op)->funFields.arity);
     #endif
     int excess = argc - arity;  // may be negative
 
@@ -11804,7 +11804,7 @@ DEFUN1(stgApplyPNNPN, f) {
         pushargs(2, nargv);
         pushargs(2, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -11826,7 +11826,7 @@ DEFUN1(stgApplyPNNPN, f) {
         pushargs(2, nargv);
         pushargs(1, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -11850,7 +11850,7 @@ DEFUN1(stgApplyPNNPN, f) {
         pushargs(1, nargv);
         pushargs(1, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -11874,7 +11874,7 @@ DEFUN1(stgApplyPNNPN, f) {
         // 0 non-pointers to push
         pushargs(1, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -11900,17 +11900,17 @@ DEFUN1(stgApplyPNNPN, f) {
       pushargs(3, nargv);
       pushargs(2, pargv);
       // tail call the fun
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
     }
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPNNPN FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                    f.op->infoPtr->layoutInfo.unboxedCount;
+      int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                    getInfoPtr(f.op)->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2, 3);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 2, 3);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -11930,12 +11930,12 @@ DEFUN1(stgApplyPNNPN, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                  f.op->infoPtr->layoutInfo.unboxedCount;
+    int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                  getInfoPtr(f.op)->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    int arity = f.op->infoPtr->funFields.arity - argCount;
+    int arity = getInfoPtr(f.op)->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
@@ -11956,7 +11956,7 @@ DEFUN1(stgApplyPNNPN, f) {
         pushargs(2, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -11980,7 +11980,7 @@ DEFUN1(stgApplyPNNPN, f) {
         pushargs(1, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -12006,7 +12006,7 @@ DEFUN1(stgApplyPNNPN, f) {
         pushargs(1, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -12032,7 +12032,7 @@ DEFUN1(stgApplyPNNPN, f) {
         pushargs(1, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -12060,7 +12060,7 @@ DEFUN1(stgApplyPNNPN, f) {
       pushargs(2, pargv);
       pushargs(pappargc, &f.op->payload[fvCount+1]);
       // tail call the FUN
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
 
     // excess < 0, too few args
     } else {
@@ -12068,7 +12068,7 @@ DEFUN1(stgApplyPNNPN, f) {
       fprintf(stderr, "stgApplyPNNPN PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2 + pappargc, 3 + papnargc);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 2 + pappargc, 3 + papnargc);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -12111,7 +12111,7 @@ DEFUN1(stgApplyPNNPN, f) {
 
 DEFUN1(stgApplyNPNPN, f) {
   #ifdef DEBUGSTGAPPLY
-  fprintf(stderr, "stgApplyNPNPN %s\n", f.op->infoPtr->name);
+  fprintf(stderr, "stgApplyNPNPN %s\n", getInfoPtr(f.op)->name);
   #endif
   const int argc = 5;
   PtrOrLiteral argv[5];
@@ -12140,9 +12140,9 @@ DEFUN1(stgApplyNPNPN, f) {
   f = pargv[2];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(2, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNPNPN THUNK\n");
       #endif
@@ -12156,11 +12156,11 @@ DEFUN1(stgApplyNPNPN, f) {
     argv[3] = pargv[1];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
-    int arity = f.op->infoPtr->funFields.arity;
+    int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
-    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    fprintf(stderr, "FUN %s arity %d\n", getInfoPtr(f.op)->name, getInfoPtr(f.op)->funFields.arity);
     #endif
     int excess = argc - arity;  // may be negative
 
@@ -12177,7 +12177,7 @@ DEFUN1(stgApplyNPNPN, f) {
         pushargs(2, nargv);
         pushargs(2, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -12199,7 +12199,7 @@ DEFUN1(stgApplyNPNPN, f) {
         pushargs(2, nargv);
         pushargs(1, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -12223,7 +12223,7 @@ DEFUN1(stgApplyNPNPN, f) {
         pushargs(1, nargv);
         pushargs(1, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -12247,7 +12247,7 @@ DEFUN1(stgApplyNPNPN, f) {
         pushargs(1, nargv);
         // 0 pointers to push
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[0]);
         // restore argv
@@ -12274,17 +12274,17 @@ DEFUN1(stgApplyNPNPN, f) {
       pushargs(3, nargv);
       pushargs(2, pargv);
       // tail call the fun
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
     }
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNPNPN FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                    f.op->infoPtr->layoutInfo.unboxedCount;
+      int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                    getInfoPtr(f.op)->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2, 3);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 2, 3);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -12304,12 +12304,12 @@ DEFUN1(stgApplyNPNPN, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                  f.op->infoPtr->layoutInfo.unboxedCount;
+    int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                  getInfoPtr(f.op)->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    int arity = f.op->infoPtr->funFields.arity - argCount;
+    int arity = getInfoPtr(f.op)->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
@@ -12330,7 +12330,7 @@ DEFUN1(stgApplyNPNPN, f) {
         pushargs(2, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -12354,7 +12354,7 @@ DEFUN1(stgApplyNPNPN, f) {
         pushargs(1, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -12380,7 +12380,7 @@ DEFUN1(stgApplyNPNPN, f) {
         pushargs(1, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -12406,7 +12406,7 @@ DEFUN1(stgApplyNPNPN, f) {
         // 0 pointers to push
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[0]);
         // restore argv
@@ -12435,7 +12435,7 @@ DEFUN1(stgApplyNPNPN, f) {
       pushargs(2, pargv);
       pushargs(pappargc, &f.op->payload[fvCount+1]);
       // tail call the FUN
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
 
     // excess < 0, too few args
     } else {
@@ -12443,7 +12443,7 @@ DEFUN1(stgApplyNPNPN, f) {
       fprintf(stderr, "stgApplyNPNPN PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2 + pappargc, 3 + papnargc);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 2 + pappargc, 3 + papnargc);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -12486,7 +12486,7 @@ DEFUN1(stgApplyNPNPN, f) {
 
 DEFUN1(stgApplyPPNPN, f) {
   #ifdef DEBUGSTGAPPLY
-  fprintf(stderr, "stgApplyPPNPN %s\n", f.op->infoPtr->name);
+  fprintf(stderr, "stgApplyPPNPN %s\n", getInfoPtr(f.op)->name);
   #endif
   const int argc = 5;
   PtrOrLiteral argv[5];
@@ -12524,9 +12524,9 @@ DEFUN1(stgApplyPPNPN, f) {
   f = pargv[3];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(3, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPPNPN THUNK\n");
       #endif
@@ -12541,11 +12541,11 @@ DEFUN1(stgApplyPPNPN, f) {
     argv[3] = pargv[2];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
-    int arity = f.op->infoPtr->funFields.arity;
+    int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
-    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    fprintf(stderr, "FUN %s arity %d\n", getInfoPtr(f.op)->name, getInfoPtr(f.op)->funFields.arity);
     #endif
     int excess = argc - arity;  // may be negative
 
@@ -12562,7 +12562,7 @@ DEFUN1(stgApplyPPNPN, f) {
         pushargs(1, nargv);
         pushargs(3, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -12584,7 +12584,7 @@ DEFUN1(stgApplyPPNPN, f) {
         pushargs(1, nargv);
         pushargs(2, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[2]);
         // restore argv
@@ -12608,7 +12608,7 @@ DEFUN1(stgApplyPPNPN, f) {
         // 0 non-pointers to push
         pushargs(2, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[2]);
         // restore argv
@@ -12632,7 +12632,7 @@ DEFUN1(stgApplyPPNPN, f) {
         // 0 non-pointers to push
         pushargs(1, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -12659,17 +12659,17 @@ DEFUN1(stgApplyPPNPN, f) {
       pushargs(2, nargv);
       pushargs(3, pargv);
       // tail call the fun
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
     }
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPPNPN FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                    f.op->infoPtr->layoutInfo.unboxedCount;
+      int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                    getInfoPtr(f.op)->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3, 2);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 3, 2);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -12689,12 +12689,12 @@ DEFUN1(stgApplyPPNPN, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                  f.op->infoPtr->layoutInfo.unboxedCount;
+    int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                  getInfoPtr(f.op)->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    int arity = f.op->infoPtr->funFields.arity - argCount;
+    int arity = getInfoPtr(f.op)->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
@@ -12715,7 +12715,7 @@ DEFUN1(stgApplyPPNPN, f) {
         pushargs(3, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -12739,7 +12739,7 @@ DEFUN1(stgApplyPPNPN, f) {
         pushargs(2, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[2]);
         // restore argv
@@ -12765,7 +12765,7 @@ DEFUN1(stgApplyPPNPN, f) {
         pushargs(2, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[2]);
         // restore argv
@@ -12791,7 +12791,7 @@ DEFUN1(stgApplyPPNPN, f) {
         pushargs(1, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -12820,7 +12820,7 @@ DEFUN1(stgApplyPPNPN, f) {
       pushargs(3, pargv);
       pushargs(pappargc, &f.op->payload[fvCount+1]);
       // tail call the FUN
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
 
     // excess < 0, too few args
     } else {
@@ -12828,7 +12828,7 @@ DEFUN1(stgApplyPPNPN, f) {
       fprintf(stderr, "stgApplyPPNPN PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3 + pappargc, 2 + papnargc);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 3 + pappargc, 2 + papnargc);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -12871,7 +12871,7 @@ DEFUN1(stgApplyPPNPN, f) {
 
 DEFUN1(stgApplyNNPPN, f) {
   #ifdef DEBUGSTGAPPLY
-  fprintf(stderr, "stgApplyNNPPN %s\n", f.op->infoPtr->name);
+  fprintf(stderr, "stgApplyNNPPN %s\n", getInfoPtr(f.op)->name);
   #endif
   const int argc = 5;
   PtrOrLiteral argv[5];
@@ -12900,9 +12900,9 @@ DEFUN1(stgApplyNNPPN, f) {
   f = pargv[2];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(2, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNNPPN THUNK\n");
       #endif
@@ -12916,11 +12916,11 @@ DEFUN1(stgApplyNNPPN, f) {
     argv[3] = pargv[1];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
-    int arity = f.op->infoPtr->funFields.arity;
+    int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
-    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    fprintf(stderr, "FUN %s arity %d\n", getInfoPtr(f.op)->name, getInfoPtr(f.op)->funFields.arity);
     #endif
     int excess = argc - arity;  // may be negative
 
@@ -12937,7 +12937,7 @@ DEFUN1(stgApplyNNPPN, f) {
         pushargs(2, nargv);
         pushargs(2, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -12959,7 +12959,7 @@ DEFUN1(stgApplyNNPPN, f) {
         pushargs(2, nargv);
         pushargs(1, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -12983,7 +12983,7 @@ DEFUN1(stgApplyNNPPN, f) {
         pushargs(2, nargv);
         // 0 pointers to push
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[0]);
         // restore argv
@@ -13008,7 +13008,7 @@ DEFUN1(stgApplyNNPPN, f) {
         pushargs(1, nargv);
         // 0 pointers to push
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[0]);
         // restore argv
@@ -13035,17 +13035,17 @@ DEFUN1(stgApplyNNPPN, f) {
       pushargs(3, nargv);
       pushargs(2, pargv);
       // tail call the fun
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
     }
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNNPPN FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                    f.op->infoPtr->layoutInfo.unboxedCount;
+      int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                    getInfoPtr(f.op)->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2, 3);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 2, 3);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -13065,12 +13065,12 @@ DEFUN1(stgApplyNNPPN, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                  f.op->infoPtr->layoutInfo.unboxedCount;
+    int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                  getInfoPtr(f.op)->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    int arity = f.op->infoPtr->funFields.arity - argCount;
+    int arity = getInfoPtr(f.op)->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
@@ -13091,7 +13091,7 @@ DEFUN1(stgApplyNNPPN, f) {
         pushargs(2, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -13115,7 +13115,7 @@ DEFUN1(stgApplyNNPPN, f) {
         pushargs(1, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -13141,7 +13141,7 @@ DEFUN1(stgApplyNNPPN, f) {
         // 0 pointers to push
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[0]);
         // restore argv
@@ -13168,7 +13168,7 @@ DEFUN1(stgApplyNNPPN, f) {
         // 0 pointers to push
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[0]);
         // restore argv
@@ -13197,7 +13197,7 @@ DEFUN1(stgApplyNNPPN, f) {
       pushargs(2, pargv);
       pushargs(pappargc, &f.op->payload[fvCount+1]);
       // tail call the FUN
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
 
     // excess < 0, too few args
     } else {
@@ -13205,7 +13205,7 @@ DEFUN1(stgApplyNNPPN, f) {
       fprintf(stderr, "stgApplyNNPPN PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2 + pappargc, 3 + papnargc);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 2 + pappargc, 3 + papnargc);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -13248,7 +13248,7 @@ DEFUN1(stgApplyNNPPN, f) {
 
 DEFUN1(stgApplyPNPPN, f) {
   #ifdef DEBUGSTGAPPLY
-  fprintf(stderr, "stgApplyPNPPN %s\n", f.op->infoPtr->name);
+  fprintf(stderr, "stgApplyPNPPN %s\n", getInfoPtr(f.op)->name);
   #endif
   const int argc = 5;
   PtrOrLiteral argv[5];
@@ -13286,9 +13286,9 @@ DEFUN1(stgApplyPNPPN, f) {
   f = pargv[3];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(3, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPNPPN THUNK\n");
       #endif
@@ -13303,11 +13303,11 @@ DEFUN1(stgApplyPNPPN, f) {
     argv[3] = pargv[2];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
-    int arity = f.op->infoPtr->funFields.arity;
+    int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
-    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    fprintf(stderr, "FUN %s arity %d\n", getInfoPtr(f.op)->name, getInfoPtr(f.op)->funFields.arity);
     #endif
     int excess = argc - arity;  // may be negative
 
@@ -13324,7 +13324,7 @@ DEFUN1(stgApplyPNPPN, f) {
         pushargs(1, nargv);
         pushargs(3, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -13346,7 +13346,7 @@ DEFUN1(stgApplyPNPPN, f) {
         pushargs(1, nargv);
         pushargs(2, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[2]);
         // restore argv
@@ -13370,7 +13370,7 @@ DEFUN1(stgApplyPNPPN, f) {
         pushargs(1, nargv);
         pushargs(1, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -13395,7 +13395,7 @@ DEFUN1(stgApplyPNPPN, f) {
         // 0 non-pointers to push
         pushargs(1, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -13422,17 +13422,17 @@ DEFUN1(stgApplyPNPPN, f) {
       pushargs(2, nargv);
       pushargs(3, pargv);
       // tail call the fun
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
     }
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPNPPN FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                    f.op->infoPtr->layoutInfo.unboxedCount;
+      int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                    getInfoPtr(f.op)->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3, 2);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 3, 2);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -13452,12 +13452,12 @@ DEFUN1(stgApplyPNPPN, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                  f.op->infoPtr->layoutInfo.unboxedCount;
+    int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                  getInfoPtr(f.op)->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    int arity = f.op->infoPtr->funFields.arity - argCount;
+    int arity = getInfoPtr(f.op)->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
@@ -13478,7 +13478,7 @@ DEFUN1(stgApplyPNPPN, f) {
         pushargs(3, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -13502,7 +13502,7 @@ DEFUN1(stgApplyPNPPN, f) {
         pushargs(2, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[2]);
         // restore argv
@@ -13528,7 +13528,7 @@ DEFUN1(stgApplyPNPPN, f) {
         pushargs(1, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -13555,7 +13555,7 @@ DEFUN1(stgApplyPNPPN, f) {
         pushargs(1, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -13584,7 +13584,7 @@ DEFUN1(stgApplyPNPPN, f) {
       pushargs(3, pargv);
       pushargs(pappargc, &f.op->payload[fvCount+1]);
       // tail call the FUN
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
 
     // excess < 0, too few args
     } else {
@@ -13592,7 +13592,7 @@ DEFUN1(stgApplyPNPPN, f) {
       fprintf(stderr, "stgApplyPNPPN PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3 + pappargc, 2 + papnargc);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 3 + pappargc, 2 + papnargc);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -13635,7 +13635,7 @@ DEFUN1(stgApplyPNPPN, f) {
 
 DEFUN1(stgApplyNPPPN, f) {
   #ifdef DEBUGSTGAPPLY
-  fprintf(stderr, "stgApplyNPPPN %s\n", f.op->infoPtr->name);
+  fprintf(stderr, "stgApplyNPPPN %s\n", getInfoPtr(f.op)->name);
   #endif
   const int argc = 5;
   PtrOrLiteral argv[5];
@@ -13673,9 +13673,9 @@ DEFUN1(stgApplyNPPPN, f) {
   f = pargv[3];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(3, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNPPPN THUNK\n");
       #endif
@@ -13690,11 +13690,11 @@ DEFUN1(stgApplyNPPPN, f) {
     argv[3] = pargv[2];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
-    int arity = f.op->infoPtr->funFields.arity;
+    int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
-    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    fprintf(stderr, "FUN %s arity %d\n", getInfoPtr(f.op)->name, getInfoPtr(f.op)->funFields.arity);
     #endif
     int excess = argc - arity;  // may be negative
 
@@ -13711,7 +13711,7 @@ DEFUN1(stgApplyNPPPN, f) {
         pushargs(1, nargv);
         pushargs(3, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -13733,7 +13733,7 @@ DEFUN1(stgApplyNPPPN, f) {
         pushargs(1, nargv);
         pushargs(2, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[2]);
         // restore argv
@@ -13757,7 +13757,7 @@ DEFUN1(stgApplyNPPPN, f) {
         pushargs(1, nargv);
         pushargs(1, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -13782,7 +13782,7 @@ DEFUN1(stgApplyNPPPN, f) {
         pushargs(1, nargv);
         // 0 pointers to push
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[0]);
         // restore argv
@@ -13810,17 +13810,17 @@ DEFUN1(stgApplyNPPPN, f) {
       pushargs(2, nargv);
       pushargs(3, pargv);
       // tail call the fun
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
     }
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNPPPN FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                    f.op->infoPtr->layoutInfo.unboxedCount;
+      int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                    getInfoPtr(f.op)->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3, 2);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 3, 2);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -13840,12 +13840,12 @@ DEFUN1(stgApplyNPPPN, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                  f.op->infoPtr->layoutInfo.unboxedCount;
+    int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                  getInfoPtr(f.op)->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    int arity = f.op->infoPtr->funFields.arity - argCount;
+    int arity = getInfoPtr(f.op)->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
@@ -13866,7 +13866,7 @@ DEFUN1(stgApplyNPPPN, f) {
         pushargs(3, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -13890,7 +13890,7 @@ DEFUN1(stgApplyNPPPN, f) {
         pushargs(2, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[2]);
         // restore argv
@@ -13916,7 +13916,7 @@ DEFUN1(stgApplyNPPPN, f) {
         pushargs(1, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -13943,7 +13943,7 @@ DEFUN1(stgApplyNPPPN, f) {
         // 0 pointers to push
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[0]);
         // restore argv
@@ -13973,7 +13973,7 @@ DEFUN1(stgApplyNPPPN, f) {
       pushargs(3, pargv);
       pushargs(pappargc, &f.op->payload[fvCount+1]);
       // tail call the FUN
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
 
     // excess < 0, too few args
     } else {
@@ -13981,7 +13981,7 @@ DEFUN1(stgApplyNPPPN, f) {
       fprintf(stderr, "stgApplyNPPPN PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3 + pappargc, 2 + papnargc);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 3 + pappargc, 2 + papnargc);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -14024,7 +14024,7 @@ DEFUN1(stgApplyNPPPN, f) {
 
 DEFUN1(stgApplyPPPPN, f) {
   #ifdef DEBUGSTGAPPLY
-  fprintf(stderr, "stgApplyPPPPN %s\n", f.op->infoPtr->name);
+  fprintf(stderr, "stgApplyPPPPN %s\n", getInfoPtr(f.op)->name);
   #endif
   const int argc = 5;
   PtrOrLiteral argv[5];
@@ -14073,9 +14073,9 @@ DEFUN1(stgApplyPPPPN, f) {
   f = pargv[4];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(4, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPPPPN THUNK\n");
       #endif
@@ -14091,11 +14091,11 @@ DEFUN1(stgApplyPPPPN, f) {
     argv[3] = pargv[3];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
-    int arity = f.op->infoPtr->funFields.arity;
+    int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
-    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    fprintf(stderr, "FUN %s arity %d\n", getInfoPtr(f.op)->name, getInfoPtr(f.op)->funFields.arity);
     #endif
     int excess = argc - arity;  // may be negative
 
@@ -14112,7 +14112,7 @@ DEFUN1(stgApplyPPPPN, f) {
         // 0 non-pointers to push
         pushargs(4, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -14134,7 +14134,7 @@ DEFUN1(stgApplyPPPPN, f) {
         // 0 non-pointers to push
         pushargs(3, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[3]);
         // restore argv
@@ -14158,7 +14158,7 @@ DEFUN1(stgApplyPPPPN, f) {
         // 0 non-pointers to push
         pushargs(2, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[2]);
         // restore argv
@@ -14183,7 +14183,7 @@ DEFUN1(stgApplyPPPPN, f) {
         // 0 non-pointers to push
         pushargs(1, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -14211,17 +14211,17 @@ DEFUN1(stgApplyPPPPN, f) {
       pushargs(1, nargv);
       pushargs(4, pargv);
       // tail call the fun
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
     }
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPPPPN FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                    f.op->infoPtr->layoutInfo.unboxedCount;
+      int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                    getInfoPtr(f.op)->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 4, 1);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 4, 1);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -14241,12 +14241,12 @@ DEFUN1(stgApplyPPPPN, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                  f.op->infoPtr->layoutInfo.unboxedCount;
+    int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                  getInfoPtr(f.op)->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    int arity = f.op->infoPtr->funFields.arity - argCount;
+    int arity = getInfoPtr(f.op)->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
@@ -14267,7 +14267,7 @@ DEFUN1(stgApplyPPPPN, f) {
         pushargs(4, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -14291,7 +14291,7 @@ DEFUN1(stgApplyPPPPN, f) {
         pushargs(3, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[3]);
         // restore argv
@@ -14317,7 +14317,7 @@ DEFUN1(stgApplyPPPPN, f) {
         pushargs(2, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[2]);
         // restore argv
@@ -14344,7 +14344,7 @@ DEFUN1(stgApplyPPPPN, f) {
         pushargs(1, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -14374,7 +14374,7 @@ DEFUN1(stgApplyPPPPN, f) {
       pushargs(4, pargv);
       pushargs(pappargc, &f.op->payload[fvCount+1]);
       // tail call the FUN
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
 
     // excess < 0, too few args
     } else {
@@ -14382,7 +14382,7 @@ DEFUN1(stgApplyPPPPN, f) {
       fprintf(stderr, "stgApplyPPPPN PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 4 + pappargc, 1 + papnargc);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 4 + pappargc, 1 + papnargc);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -14425,7 +14425,7 @@ DEFUN1(stgApplyPPPPN, f) {
 
 DEFUN1(stgApplyNNNNP, f) {
   #ifdef DEBUGSTGAPPLY
-  fprintf(stderr, "stgApplyNNNNP %s\n", f.op->infoPtr->name);
+  fprintf(stderr, "stgApplyNNNNP %s\n", getInfoPtr(f.op)->name);
   #endif
   const int argc = 5;
   PtrOrLiteral argv[5];
@@ -14447,9 +14447,9 @@ DEFUN1(stgApplyNNNNP, f) {
   f = pargv[1];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(1, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNNNNP THUNK\n");
       #endif
@@ -14462,11 +14462,11 @@ DEFUN1(stgApplyNNNNP, f) {
     argv[4] = pargv[0];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
-    int arity = f.op->infoPtr->funFields.arity;
+    int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
-    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    fprintf(stderr, "FUN %s arity %d\n", getInfoPtr(f.op)->name, getInfoPtr(f.op)->funFields.arity);
     #endif
     int excess = argc - arity;  // may be negative
 
@@ -14483,7 +14483,7 @@ DEFUN1(stgApplyNNNNP, f) {
         pushargs(4, nargv);
         // 0 pointers to push
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[0]);
         // restore argv
@@ -14507,7 +14507,7 @@ DEFUN1(stgApplyNNNNP, f) {
         pushargs(3, nargv);
         // 0 pointers to push
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[0]);
         // restore argv
@@ -14531,7 +14531,7 @@ DEFUN1(stgApplyNNNNP, f) {
         pushargs(2, nargv);
         // 0 pointers to push
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[0]);
         // restore argv
@@ -14555,7 +14555,7 @@ DEFUN1(stgApplyNNNNP, f) {
         pushargs(1, nargv);
         // 0 pointers to push
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[0]);
         // restore argv
@@ -14581,17 +14581,17 @@ DEFUN1(stgApplyNNNNP, f) {
       pushargs(4, nargv);
       pushargs(1, pargv);
       // tail call the fun
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
     }
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNNNNP FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                    f.op->infoPtr->layoutInfo.unboxedCount;
+      int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                    getInfoPtr(f.op)->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 1, 4);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 1, 4);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -14611,12 +14611,12 @@ DEFUN1(stgApplyNNNNP, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                  f.op->infoPtr->layoutInfo.unboxedCount;
+    int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                  getInfoPtr(f.op)->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    int arity = f.op->infoPtr->funFields.arity - argCount;
+    int arity = getInfoPtr(f.op)->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
@@ -14637,7 +14637,7 @@ DEFUN1(stgApplyNNNNP, f) {
         // 0 pointers to push
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[0]);
         // restore argv
@@ -14663,7 +14663,7 @@ DEFUN1(stgApplyNNNNP, f) {
         // 0 pointers to push
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[0]);
         // restore argv
@@ -14689,7 +14689,7 @@ DEFUN1(stgApplyNNNNP, f) {
         // 0 pointers to push
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[0]);
         // restore argv
@@ -14715,7 +14715,7 @@ DEFUN1(stgApplyNNNNP, f) {
         // 0 pointers to push
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[0]);
         // restore argv
@@ -14743,7 +14743,7 @@ DEFUN1(stgApplyNNNNP, f) {
       pushargs(1, pargv);
       pushargs(pappargc, &f.op->payload[fvCount+1]);
       // tail call the FUN
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
 
     // excess < 0, too few args
     } else {
@@ -14751,7 +14751,7 @@ DEFUN1(stgApplyNNNNP, f) {
       fprintf(stderr, "stgApplyNNNNP PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 1 + pappargc, 4 + papnargc);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 1 + pappargc, 4 + papnargc);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -14794,7 +14794,7 @@ DEFUN1(stgApplyNNNNP, f) {
 
 DEFUN1(stgApplyPNNNP, f) {
   #ifdef DEBUGSTGAPPLY
-  fprintf(stderr, "stgApplyPNNNP %s\n", f.op->infoPtr->name);
+  fprintf(stderr, "stgApplyPNNNP %s\n", getInfoPtr(f.op)->name);
   #endif
   const int argc = 5;
   PtrOrLiteral argv[5];
@@ -14823,9 +14823,9 @@ DEFUN1(stgApplyPNNNP, f) {
   f = pargv[2];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(2, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPNNNP THUNK\n");
       #endif
@@ -14839,11 +14839,11 @@ DEFUN1(stgApplyPNNNP, f) {
     argv[4] = pargv[1];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
-    int arity = f.op->infoPtr->funFields.arity;
+    int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
-    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    fprintf(stderr, "FUN %s arity %d\n", getInfoPtr(f.op)->name, getInfoPtr(f.op)->funFields.arity);
     #endif
     int excess = argc - arity;  // may be negative
 
@@ -14860,7 +14860,7 @@ DEFUN1(stgApplyPNNNP, f) {
         pushargs(3, nargv);
         pushargs(1, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -14884,7 +14884,7 @@ DEFUN1(stgApplyPNNNP, f) {
         pushargs(2, nargv);
         pushargs(1, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -14908,7 +14908,7 @@ DEFUN1(stgApplyPNNNP, f) {
         pushargs(1, nargv);
         pushargs(1, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -14932,7 +14932,7 @@ DEFUN1(stgApplyPNNNP, f) {
         // 0 non-pointers to push
         pushargs(1, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -14958,17 +14958,17 @@ DEFUN1(stgApplyPNNNP, f) {
       pushargs(3, nargv);
       pushargs(2, pargv);
       // tail call the fun
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
     }
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPNNNP FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                    f.op->infoPtr->layoutInfo.unboxedCount;
+      int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                    getInfoPtr(f.op)->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2, 3);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 2, 3);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -14988,12 +14988,12 @@ DEFUN1(stgApplyPNNNP, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                  f.op->infoPtr->layoutInfo.unboxedCount;
+    int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                  getInfoPtr(f.op)->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    int arity = f.op->infoPtr->funFields.arity - argCount;
+    int arity = getInfoPtr(f.op)->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
@@ -15014,7 +15014,7 @@ DEFUN1(stgApplyPNNNP, f) {
         pushargs(1, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -15040,7 +15040,7 @@ DEFUN1(stgApplyPNNNP, f) {
         pushargs(1, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -15066,7 +15066,7 @@ DEFUN1(stgApplyPNNNP, f) {
         pushargs(1, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -15092,7 +15092,7 @@ DEFUN1(stgApplyPNNNP, f) {
         pushargs(1, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -15120,7 +15120,7 @@ DEFUN1(stgApplyPNNNP, f) {
       pushargs(2, pargv);
       pushargs(pappargc, &f.op->payload[fvCount+1]);
       // tail call the FUN
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
 
     // excess < 0, too few args
     } else {
@@ -15128,7 +15128,7 @@ DEFUN1(stgApplyPNNNP, f) {
       fprintf(stderr, "stgApplyPNNNP PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2 + pappargc, 3 + papnargc);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 2 + pappargc, 3 + papnargc);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -15171,7 +15171,7 @@ DEFUN1(stgApplyPNNNP, f) {
 
 DEFUN1(stgApplyNPNNP, f) {
   #ifdef DEBUGSTGAPPLY
-  fprintf(stderr, "stgApplyNPNNP %s\n", f.op->infoPtr->name);
+  fprintf(stderr, "stgApplyNPNNP %s\n", getInfoPtr(f.op)->name);
   #endif
   const int argc = 5;
   PtrOrLiteral argv[5];
@@ -15200,9 +15200,9 @@ DEFUN1(stgApplyNPNNP, f) {
   f = pargv[2];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(2, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNPNNP THUNK\n");
       #endif
@@ -15216,11 +15216,11 @@ DEFUN1(stgApplyNPNNP, f) {
     argv[4] = pargv[1];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
-    int arity = f.op->infoPtr->funFields.arity;
+    int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
-    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    fprintf(stderr, "FUN %s arity %d\n", getInfoPtr(f.op)->name, getInfoPtr(f.op)->funFields.arity);
     #endif
     int excess = argc - arity;  // may be negative
 
@@ -15237,7 +15237,7 @@ DEFUN1(stgApplyNPNNP, f) {
         pushargs(3, nargv);
         pushargs(1, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -15261,7 +15261,7 @@ DEFUN1(stgApplyNPNNP, f) {
         pushargs(2, nargv);
         pushargs(1, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -15285,7 +15285,7 @@ DEFUN1(stgApplyNPNNP, f) {
         pushargs(1, nargv);
         pushargs(1, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -15309,7 +15309,7 @@ DEFUN1(stgApplyNPNNP, f) {
         pushargs(1, nargv);
         // 0 pointers to push
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[0]);
         // restore argv
@@ -15336,17 +15336,17 @@ DEFUN1(stgApplyNPNNP, f) {
       pushargs(3, nargv);
       pushargs(2, pargv);
       // tail call the fun
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
     }
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNPNNP FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                    f.op->infoPtr->layoutInfo.unboxedCount;
+      int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                    getInfoPtr(f.op)->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2, 3);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 2, 3);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -15366,12 +15366,12 @@ DEFUN1(stgApplyNPNNP, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                  f.op->infoPtr->layoutInfo.unboxedCount;
+    int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                  getInfoPtr(f.op)->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    int arity = f.op->infoPtr->funFields.arity - argCount;
+    int arity = getInfoPtr(f.op)->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
@@ -15392,7 +15392,7 @@ DEFUN1(stgApplyNPNNP, f) {
         pushargs(1, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -15418,7 +15418,7 @@ DEFUN1(stgApplyNPNNP, f) {
         pushargs(1, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -15444,7 +15444,7 @@ DEFUN1(stgApplyNPNNP, f) {
         pushargs(1, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -15470,7 +15470,7 @@ DEFUN1(stgApplyNPNNP, f) {
         // 0 pointers to push
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[0]);
         // restore argv
@@ -15499,7 +15499,7 @@ DEFUN1(stgApplyNPNNP, f) {
       pushargs(2, pargv);
       pushargs(pappargc, &f.op->payload[fvCount+1]);
       // tail call the FUN
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
 
     // excess < 0, too few args
     } else {
@@ -15507,7 +15507,7 @@ DEFUN1(stgApplyNPNNP, f) {
       fprintf(stderr, "stgApplyNPNNP PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2 + pappargc, 3 + papnargc);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 2 + pappargc, 3 + papnargc);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -15550,7 +15550,7 @@ DEFUN1(stgApplyNPNNP, f) {
 
 DEFUN1(stgApplyPPNNP, f) {
   #ifdef DEBUGSTGAPPLY
-  fprintf(stderr, "stgApplyPPNNP %s\n", f.op->infoPtr->name);
+  fprintf(stderr, "stgApplyPPNNP %s\n", getInfoPtr(f.op)->name);
   #endif
   const int argc = 5;
   PtrOrLiteral argv[5];
@@ -15588,9 +15588,9 @@ DEFUN1(stgApplyPPNNP, f) {
   f = pargv[3];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(3, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPPNNP THUNK\n");
       #endif
@@ -15605,11 +15605,11 @@ DEFUN1(stgApplyPPNNP, f) {
     argv[4] = pargv[2];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
-    int arity = f.op->infoPtr->funFields.arity;
+    int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
-    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    fprintf(stderr, "FUN %s arity %d\n", getInfoPtr(f.op)->name, getInfoPtr(f.op)->funFields.arity);
     #endif
     int excess = argc - arity;  // may be negative
 
@@ -15626,7 +15626,7 @@ DEFUN1(stgApplyPPNNP, f) {
         pushargs(2, nargv);
         pushargs(2, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[2]);
         // restore argv
@@ -15650,7 +15650,7 @@ DEFUN1(stgApplyPPNNP, f) {
         pushargs(1, nargv);
         pushargs(2, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[2]);
         // restore argv
@@ -15674,7 +15674,7 @@ DEFUN1(stgApplyPPNNP, f) {
         // 0 non-pointers to push
         pushargs(2, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[2]);
         // restore argv
@@ -15698,7 +15698,7 @@ DEFUN1(stgApplyPPNNP, f) {
         // 0 non-pointers to push
         pushargs(1, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -15725,17 +15725,17 @@ DEFUN1(stgApplyPPNNP, f) {
       pushargs(2, nargv);
       pushargs(3, pargv);
       // tail call the fun
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
     }
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPPNNP FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                    f.op->infoPtr->layoutInfo.unboxedCount;
+      int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                    getInfoPtr(f.op)->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3, 2);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 3, 2);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -15755,12 +15755,12 @@ DEFUN1(stgApplyPPNNP, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                  f.op->infoPtr->layoutInfo.unboxedCount;
+    int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                  getInfoPtr(f.op)->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    int arity = f.op->infoPtr->funFields.arity - argCount;
+    int arity = getInfoPtr(f.op)->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
@@ -15781,7 +15781,7 @@ DEFUN1(stgApplyPPNNP, f) {
         pushargs(2, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[2]);
         // restore argv
@@ -15807,7 +15807,7 @@ DEFUN1(stgApplyPPNNP, f) {
         pushargs(2, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[2]);
         // restore argv
@@ -15833,7 +15833,7 @@ DEFUN1(stgApplyPPNNP, f) {
         pushargs(2, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[2]);
         // restore argv
@@ -15859,7 +15859,7 @@ DEFUN1(stgApplyPPNNP, f) {
         pushargs(1, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -15888,7 +15888,7 @@ DEFUN1(stgApplyPPNNP, f) {
       pushargs(3, pargv);
       pushargs(pappargc, &f.op->payload[fvCount+1]);
       // tail call the FUN
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
 
     // excess < 0, too few args
     } else {
@@ -15896,7 +15896,7 @@ DEFUN1(stgApplyPPNNP, f) {
       fprintf(stderr, "stgApplyPPNNP PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3 + pappargc, 2 + papnargc);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 3 + pappargc, 2 + papnargc);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -15939,7 +15939,7 @@ DEFUN1(stgApplyPPNNP, f) {
 
 DEFUN1(stgApplyNNPNP, f) {
   #ifdef DEBUGSTGAPPLY
-  fprintf(stderr, "stgApplyNNPNP %s\n", f.op->infoPtr->name);
+  fprintf(stderr, "stgApplyNNPNP %s\n", getInfoPtr(f.op)->name);
   #endif
   const int argc = 5;
   PtrOrLiteral argv[5];
@@ -15968,9 +15968,9 @@ DEFUN1(stgApplyNNPNP, f) {
   f = pargv[2];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(2, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNNPNP THUNK\n");
       #endif
@@ -15984,11 +15984,11 @@ DEFUN1(stgApplyNNPNP, f) {
     argv[4] = pargv[1];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
-    int arity = f.op->infoPtr->funFields.arity;
+    int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
-    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    fprintf(stderr, "FUN %s arity %d\n", getInfoPtr(f.op)->name, getInfoPtr(f.op)->funFields.arity);
     #endif
     int excess = argc - arity;  // may be negative
 
@@ -16005,7 +16005,7 @@ DEFUN1(stgApplyNNPNP, f) {
         pushargs(3, nargv);
         pushargs(1, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -16029,7 +16029,7 @@ DEFUN1(stgApplyNNPNP, f) {
         pushargs(2, nargv);
         pushargs(1, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -16053,7 +16053,7 @@ DEFUN1(stgApplyNNPNP, f) {
         pushargs(2, nargv);
         // 0 pointers to push
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[0]);
         // restore argv
@@ -16078,7 +16078,7 @@ DEFUN1(stgApplyNNPNP, f) {
         pushargs(1, nargv);
         // 0 pointers to push
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[0]);
         // restore argv
@@ -16105,17 +16105,17 @@ DEFUN1(stgApplyNNPNP, f) {
       pushargs(3, nargv);
       pushargs(2, pargv);
       // tail call the fun
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
     }
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNNPNP FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                    f.op->infoPtr->layoutInfo.unboxedCount;
+      int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                    getInfoPtr(f.op)->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2, 3);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 2, 3);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -16135,12 +16135,12 @@ DEFUN1(stgApplyNNPNP, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                  f.op->infoPtr->layoutInfo.unboxedCount;
+    int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                  getInfoPtr(f.op)->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    int arity = f.op->infoPtr->funFields.arity - argCount;
+    int arity = getInfoPtr(f.op)->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
@@ -16161,7 +16161,7 @@ DEFUN1(stgApplyNNPNP, f) {
         pushargs(1, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -16187,7 +16187,7 @@ DEFUN1(stgApplyNNPNP, f) {
         pushargs(1, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -16213,7 +16213,7 @@ DEFUN1(stgApplyNNPNP, f) {
         // 0 pointers to push
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[0]);
         // restore argv
@@ -16240,7 +16240,7 @@ DEFUN1(stgApplyNNPNP, f) {
         // 0 pointers to push
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[0]);
         // restore argv
@@ -16269,7 +16269,7 @@ DEFUN1(stgApplyNNPNP, f) {
       pushargs(2, pargv);
       pushargs(pappargc, &f.op->payload[fvCount+1]);
       // tail call the FUN
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
 
     // excess < 0, too few args
     } else {
@@ -16277,7 +16277,7 @@ DEFUN1(stgApplyNNPNP, f) {
       fprintf(stderr, "stgApplyNNPNP PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2 + pappargc, 3 + papnargc);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 2 + pappargc, 3 + papnargc);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -16320,7 +16320,7 @@ DEFUN1(stgApplyNNPNP, f) {
 
 DEFUN1(stgApplyPNPNP, f) {
   #ifdef DEBUGSTGAPPLY
-  fprintf(stderr, "stgApplyPNPNP %s\n", f.op->infoPtr->name);
+  fprintf(stderr, "stgApplyPNPNP %s\n", getInfoPtr(f.op)->name);
   #endif
   const int argc = 5;
   PtrOrLiteral argv[5];
@@ -16358,9 +16358,9 @@ DEFUN1(stgApplyPNPNP, f) {
   f = pargv[3];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(3, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPNPNP THUNK\n");
       #endif
@@ -16375,11 +16375,11 @@ DEFUN1(stgApplyPNPNP, f) {
     argv[4] = pargv[2];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
-    int arity = f.op->infoPtr->funFields.arity;
+    int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
-    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    fprintf(stderr, "FUN %s arity %d\n", getInfoPtr(f.op)->name, getInfoPtr(f.op)->funFields.arity);
     #endif
     int excess = argc - arity;  // may be negative
 
@@ -16396,7 +16396,7 @@ DEFUN1(stgApplyPNPNP, f) {
         pushargs(2, nargv);
         pushargs(2, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[2]);
         // restore argv
@@ -16420,7 +16420,7 @@ DEFUN1(stgApplyPNPNP, f) {
         pushargs(1, nargv);
         pushargs(2, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[2]);
         // restore argv
@@ -16444,7 +16444,7 @@ DEFUN1(stgApplyPNPNP, f) {
         pushargs(1, nargv);
         pushargs(1, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -16469,7 +16469,7 @@ DEFUN1(stgApplyPNPNP, f) {
         // 0 non-pointers to push
         pushargs(1, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -16496,17 +16496,17 @@ DEFUN1(stgApplyPNPNP, f) {
       pushargs(2, nargv);
       pushargs(3, pargv);
       // tail call the fun
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
     }
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPNPNP FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                    f.op->infoPtr->layoutInfo.unboxedCount;
+      int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                    getInfoPtr(f.op)->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3, 2);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 3, 2);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -16526,12 +16526,12 @@ DEFUN1(stgApplyPNPNP, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                  f.op->infoPtr->layoutInfo.unboxedCount;
+    int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                  getInfoPtr(f.op)->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    int arity = f.op->infoPtr->funFields.arity - argCount;
+    int arity = getInfoPtr(f.op)->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
@@ -16552,7 +16552,7 @@ DEFUN1(stgApplyPNPNP, f) {
         pushargs(2, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[2]);
         // restore argv
@@ -16578,7 +16578,7 @@ DEFUN1(stgApplyPNPNP, f) {
         pushargs(2, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[2]);
         // restore argv
@@ -16604,7 +16604,7 @@ DEFUN1(stgApplyPNPNP, f) {
         pushargs(1, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -16631,7 +16631,7 @@ DEFUN1(stgApplyPNPNP, f) {
         pushargs(1, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -16660,7 +16660,7 @@ DEFUN1(stgApplyPNPNP, f) {
       pushargs(3, pargv);
       pushargs(pappargc, &f.op->payload[fvCount+1]);
       // tail call the FUN
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
 
     // excess < 0, too few args
     } else {
@@ -16668,7 +16668,7 @@ DEFUN1(stgApplyPNPNP, f) {
       fprintf(stderr, "stgApplyPNPNP PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3 + pappargc, 2 + papnargc);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 3 + pappargc, 2 + papnargc);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -16711,7 +16711,7 @@ DEFUN1(stgApplyPNPNP, f) {
 
 DEFUN1(stgApplyNPPNP, f) {
   #ifdef DEBUGSTGAPPLY
-  fprintf(stderr, "stgApplyNPPNP %s\n", f.op->infoPtr->name);
+  fprintf(stderr, "stgApplyNPPNP %s\n", getInfoPtr(f.op)->name);
   #endif
   const int argc = 5;
   PtrOrLiteral argv[5];
@@ -16749,9 +16749,9 @@ DEFUN1(stgApplyNPPNP, f) {
   f = pargv[3];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(3, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNPPNP THUNK\n");
       #endif
@@ -16766,11 +16766,11 @@ DEFUN1(stgApplyNPPNP, f) {
     argv[4] = pargv[2];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
-    int arity = f.op->infoPtr->funFields.arity;
+    int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
-    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    fprintf(stderr, "FUN %s arity %d\n", getInfoPtr(f.op)->name, getInfoPtr(f.op)->funFields.arity);
     #endif
     int excess = argc - arity;  // may be negative
 
@@ -16787,7 +16787,7 @@ DEFUN1(stgApplyNPPNP, f) {
         pushargs(2, nargv);
         pushargs(2, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[2]);
         // restore argv
@@ -16811,7 +16811,7 @@ DEFUN1(stgApplyNPPNP, f) {
         pushargs(1, nargv);
         pushargs(2, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[2]);
         // restore argv
@@ -16835,7 +16835,7 @@ DEFUN1(stgApplyNPPNP, f) {
         pushargs(1, nargv);
         pushargs(1, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -16860,7 +16860,7 @@ DEFUN1(stgApplyNPPNP, f) {
         pushargs(1, nargv);
         // 0 pointers to push
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[0]);
         // restore argv
@@ -16888,17 +16888,17 @@ DEFUN1(stgApplyNPPNP, f) {
       pushargs(2, nargv);
       pushargs(3, pargv);
       // tail call the fun
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
     }
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNPPNP FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                    f.op->infoPtr->layoutInfo.unboxedCount;
+      int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                    getInfoPtr(f.op)->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3, 2);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 3, 2);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -16918,12 +16918,12 @@ DEFUN1(stgApplyNPPNP, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                  f.op->infoPtr->layoutInfo.unboxedCount;
+    int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                  getInfoPtr(f.op)->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    int arity = f.op->infoPtr->funFields.arity - argCount;
+    int arity = getInfoPtr(f.op)->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
@@ -16944,7 +16944,7 @@ DEFUN1(stgApplyNPPNP, f) {
         pushargs(2, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[2]);
         // restore argv
@@ -16970,7 +16970,7 @@ DEFUN1(stgApplyNPPNP, f) {
         pushargs(2, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[2]);
         // restore argv
@@ -16996,7 +16996,7 @@ DEFUN1(stgApplyNPPNP, f) {
         pushargs(1, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -17023,7 +17023,7 @@ DEFUN1(stgApplyNPPNP, f) {
         // 0 pointers to push
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[0]);
         // restore argv
@@ -17053,7 +17053,7 @@ DEFUN1(stgApplyNPPNP, f) {
       pushargs(3, pargv);
       pushargs(pappargc, &f.op->payload[fvCount+1]);
       // tail call the FUN
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
 
     // excess < 0, too few args
     } else {
@@ -17061,7 +17061,7 @@ DEFUN1(stgApplyNPPNP, f) {
       fprintf(stderr, "stgApplyNPPNP PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3 + pappargc, 2 + papnargc);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 3 + pappargc, 2 + papnargc);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -17104,7 +17104,7 @@ DEFUN1(stgApplyNPPNP, f) {
 
 DEFUN1(stgApplyPPPNP, f) {
   #ifdef DEBUGSTGAPPLY
-  fprintf(stderr, "stgApplyPPPNP %s\n", f.op->infoPtr->name);
+  fprintf(stderr, "stgApplyPPPNP %s\n", getInfoPtr(f.op)->name);
   #endif
   const int argc = 5;
   PtrOrLiteral argv[5];
@@ -17153,9 +17153,9 @@ DEFUN1(stgApplyPPPNP, f) {
   f = pargv[4];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(4, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPPPNP THUNK\n");
       #endif
@@ -17171,11 +17171,11 @@ DEFUN1(stgApplyPPPNP, f) {
     argv[4] = pargv[3];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
-    int arity = f.op->infoPtr->funFields.arity;
+    int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
-    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    fprintf(stderr, "FUN %s arity %d\n", getInfoPtr(f.op)->name, getInfoPtr(f.op)->funFields.arity);
     #endif
     int excess = argc - arity;  // may be negative
 
@@ -17192,7 +17192,7 @@ DEFUN1(stgApplyPPPNP, f) {
         pushargs(1, nargv);
         pushargs(3, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[3]);
         // restore argv
@@ -17216,7 +17216,7 @@ DEFUN1(stgApplyPPPNP, f) {
         // 0 non-pointers to push
         pushargs(3, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[3]);
         // restore argv
@@ -17240,7 +17240,7 @@ DEFUN1(stgApplyPPPNP, f) {
         // 0 non-pointers to push
         pushargs(2, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[2]);
         // restore argv
@@ -17265,7 +17265,7 @@ DEFUN1(stgApplyPPPNP, f) {
         // 0 non-pointers to push
         pushargs(1, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -17293,17 +17293,17 @@ DEFUN1(stgApplyPPPNP, f) {
       pushargs(1, nargv);
       pushargs(4, pargv);
       // tail call the fun
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
     }
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPPPNP FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                    f.op->infoPtr->layoutInfo.unboxedCount;
+      int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                    getInfoPtr(f.op)->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 4, 1);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 4, 1);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -17323,12 +17323,12 @@ DEFUN1(stgApplyPPPNP, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                  f.op->infoPtr->layoutInfo.unboxedCount;
+    int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                  getInfoPtr(f.op)->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    int arity = f.op->infoPtr->funFields.arity - argCount;
+    int arity = getInfoPtr(f.op)->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
@@ -17349,7 +17349,7 @@ DEFUN1(stgApplyPPPNP, f) {
         pushargs(3, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[3]);
         // restore argv
@@ -17375,7 +17375,7 @@ DEFUN1(stgApplyPPPNP, f) {
         pushargs(3, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[3]);
         // restore argv
@@ -17401,7 +17401,7 @@ DEFUN1(stgApplyPPPNP, f) {
         pushargs(2, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[2]);
         // restore argv
@@ -17428,7 +17428,7 @@ DEFUN1(stgApplyPPPNP, f) {
         pushargs(1, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -17458,7 +17458,7 @@ DEFUN1(stgApplyPPPNP, f) {
       pushargs(4, pargv);
       pushargs(pappargc, &f.op->payload[fvCount+1]);
       // tail call the FUN
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
 
     // excess < 0, too few args
     } else {
@@ -17466,7 +17466,7 @@ DEFUN1(stgApplyPPPNP, f) {
       fprintf(stderr, "stgApplyPPPNP PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 4 + pappargc, 1 + papnargc);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 4 + pappargc, 1 + papnargc);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -17509,7 +17509,7 @@ DEFUN1(stgApplyPPPNP, f) {
 
 DEFUN1(stgApplyNNNPP, f) {
   #ifdef DEBUGSTGAPPLY
-  fprintf(stderr, "stgApplyNNNPP %s\n", f.op->infoPtr->name);
+  fprintf(stderr, "stgApplyNNNPP %s\n", getInfoPtr(f.op)->name);
   #endif
   const int argc = 5;
   PtrOrLiteral argv[5];
@@ -17538,9 +17538,9 @@ DEFUN1(stgApplyNNNPP, f) {
   f = pargv[2];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(2, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNNNPP THUNK\n");
       #endif
@@ -17554,11 +17554,11 @@ DEFUN1(stgApplyNNNPP, f) {
     argv[4] = pargv[1];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
-    int arity = f.op->infoPtr->funFields.arity;
+    int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
-    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    fprintf(stderr, "FUN %s arity %d\n", getInfoPtr(f.op)->name, getInfoPtr(f.op)->funFields.arity);
     #endif
     int excess = argc - arity;  // may be negative
 
@@ -17575,7 +17575,7 @@ DEFUN1(stgApplyNNNPP, f) {
         pushargs(3, nargv);
         pushargs(1, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -17599,7 +17599,7 @@ DEFUN1(stgApplyNNNPP, f) {
         pushargs(3, nargv);
         // 0 pointers to push
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[0]);
         // restore argv
@@ -17624,7 +17624,7 @@ DEFUN1(stgApplyNNNPP, f) {
         pushargs(2, nargv);
         // 0 pointers to push
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[0]);
         // restore argv
@@ -17649,7 +17649,7 @@ DEFUN1(stgApplyNNNPP, f) {
         pushargs(1, nargv);
         // 0 pointers to push
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[0]);
         // restore argv
@@ -17676,17 +17676,17 @@ DEFUN1(stgApplyNNNPP, f) {
       pushargs(3, nargv);
       pushargs(2, pargv);
       // tail call the fun
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
     }
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNNNPP FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                    f.op->infoPtr->layoutInfo.unboxedCount;
+      int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                    getInfoPtr(f.op)->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2, 3);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 2, 3);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -17706,12 +17706,12 @@ DEFUN1(stgApplyNNNPP, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                  f.op->infoPtr->layoutInfo.unboxedCount;
+    int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                  getInfoPtr(f.op)->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    int arity = f.op->infoPtr->funFields.arity - argCount;
+    int arity = getInfoPtr(f.op)->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
@@ -17732,7 +17732,7 @@ DEFUN1(stgApplyNNNPP, f) {
         pushargs(1, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -17758,7 +17758,7 @@ DEFUN1(stgApplyNNNPP, f) {
         // 0 pointers to push
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[0]);
         // restore argv
@@ -17785,7 +17785,7 @@ DEFUN1(stgApplyNNNPP, f) {
         // 0 pointers to push
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[0]);
         // restore argv
@@ -17812,7 +17812,7 @@ DEFUN1(stgApplyNNNPP, f) {
         // 0 pointers to push
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[0]);
         // restore argv
@@ -17841,7 +17841,7 @@ DEFUN1(stgApplyNNNPP, f) {
       pushargs(2, pargv);
       pushargs(pappargc, &f.op->payload[fvCount+1]);
       // tail call the FUN
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
 
     // excess < 0, too few args
     } else {
@@ -17849,7 +17849,7 @@ DEFUN1(stgApplyNNNPP, f) {
       fprintf(stderr, "stgApplyNNNPP PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2 + pappargc, 3 + papnargc);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 2 + pappargc, 3 + papnargc);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -17892,7 +17892,7 @@ DEFUN1(stgApplyNNNPP, f) {
 
 DEFUN1(stgApplyPNNPP, f) {
   #ifdef DEBUGSTGAPPLY
-  fprintf(stderr, "stgApplyPNNPP %s\n", f.op->infoPtr->name);
+  fprintf(stderr, "stgApplyPNNPP %s\n", getInfoPtr(f.op)->name);
   #endif
   const int argc = 5;
   PtrOrLiteral argv[5];
@@ -17930,9 +17930,9 @@ DEFUN1(stgApplyPNNPP, f) {
   f = pargv[3];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(3, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPNNPP THUNK\n");
       #endif
@@ -17947,11 +17947,11 @@ DEFUN1(stgApplyPNNPP, f) {
     argv[4] = pargv[2];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
-    int arity = f.op->infoPtr->funFields.arity;
+    int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
-    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    fprintf(stderr, "FUN %s arity %d\n", getInfoPtr(f.op)->name, getInfoPtr(f.op)->funFields.arity);
     #endif
     int excess = argc - arity;  // may be negative
 
@@ -17968,7 +17968,7 @@ DEFUN1(stgApplyPNNPP, f) {
         pushargs(2, nargv);
         pushargs(2, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[2]);
         // restore argv
@@ -17992,7 +17992,7 @@ DEFUN1(stgApplyPNNPP, f) {
         pushargs(2, nargv);
         pushargs(1, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -18017,7 +18017,7 @@ DEFUN1(stgApplyPNNPP, f) {
         pushargs(1, nargv);
         pushargs(1, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -18042,7 +18042,7 @@ DEFUN1(stgApplyPNNPP, f) {
         // 0 non-pointers to push
         pushargs(1, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -18069,17 +18069,17 @@ DEFUN1(stgApplyPNNPP, f) {
       pushargs(2, nargv);
       pushargs(3, pargv);
       // tail call the fun
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
     }
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPNNPP FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                    f.op->infoPtr->layoutInfo.unboxedCount;
+      int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                    getInfoPtr(f.op)->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3, 2);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 3, 2);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -18099,12 +18099,12 @@ DEFUN1(stgApplyPNNPP, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                  f.op->infoPtr->layoutInfo.unboxedCount;
+    int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                  getInfoPtr(f.op)->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    int arity = f.op->infoPtr->funFields.arity - argCount;
+    int arity = getInfoPtr(f.op)->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
@@ -18125,7 +18125,7 @@ DEFUN1(stgApplyPNNPP, f) {
         pushargs(2, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[2]);
         // restore argv
@@ -18151,7 +18151,7 @@ DEFUN1(stgApplyPNNPP, f) {
         pushargs(1, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -18178,7 +18178,7 @@ DEFUN1(stgApplyPNNPP, f) {
         pushargs(1, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -18205,7 +18205,7 @@ DEFUN1(stgApplyPNNPP, f) {
         pushargs(1, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -18234,7 +18234,7 @@ DEFUN1(stgApplyPNNPP, f) {
       pushargs(3, pargv);
       pushargs(pappargc, &f.op->payload[fvCount+1]);
       // tail call the FUN
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
 
     // excess < 0, too few args
     } else {
@@ -18242,7 +18242,7 @@ DEFUN1(stgApplyPNNPP, f) {
       fprintf(stderr, "stgApplyPNNPP PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3 + pappargc, 2 + papnargc);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 3 + pappargc, 2 + papnargc);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -18285,7 +18285,7 @@ DEFUN1(stgApplyPNNPP, f) {
 
 DEFUN1(stgApplyNPNPP, f) {
   #ifdef DEBUGSTGAPPLY
-  fprintf(stderr, "stgApplyNPNPP %s\n", f.op->infoPtr->name);
+  fprintf(stderr, "stgApplyNPNPP %s\n", getInfoPtr(f.op)->name);
   #endif
   const int argc = 5;
   PtrOrLiteral argv[5];
@@ -18323,9 +18323,9 @@ DEFUN1(stgApplyNPNPP, f) {
   f = pargv[3];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(3, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNPNPP THUNK\n");
       #endif
@@ -18340,11 +18340,11 @@ DEFUN1(stgApplyNPNPP, f) {
     argv[4] = pargv[2];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
-    int arity = f.op->infoPtr->funFields.arity;
+    int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
-    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    fprintf(stderr, "FUN %s arity %d\n", getInfoPtr(f.op)->name, getInfoPtr(f.op)->funFields.arity);
     #endif
     int excess = argc - arity;  // may be negative
 
@@ -18361,7 +18361,7 @@ DEFUN1(stgApplyNPNPP, f) {
         pushargs(2, nargv);
         pushargs(2, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[2]);
         // restore argv
@@ -18385,7 +18385,7 @@ DEFUN1(stgApplyNPNPP, f) {
         pushargs(2, nargv);
         pushargs(1, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -18410,7 +18410,7 @@ DEFUN1(stgApplyNPNPP, f) {
         pushargs(1, nargv);
         pushargs(1, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -18435,7 +18435,7 @@ DEFUN1(stgApplyNPNPP, f) {
         pushargs(1, nargv);
         // 0 pointers to push
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[0]);
         // restore argv
@@ -18463,17 +18463,17 @@ DEFUN1(stgApplyNPNPP, f) {
       pushargs(2, nargv);
       pushargs(3, pargv);
       // tail call the fun
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
     }
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNPNPP FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                    f.op->infoPtr->layoutInfo.unboxedCount;
+      int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                    getInfoPtr(f.op)->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3, 2);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 3, 2);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -18493,12 +18493,12 @@ DEFUN1(stgApplyNPNPP, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                  f.op->infoPtr->layoutInfo.unboxedCount;
+    int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                  getInfoPtr(f.op)->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    int arity = f.op->infoPtr->funFields.arity - argCount;
+    int arity = getInfoPtr(f.op)->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
@@ -18519,7 +18519,7 @@ DEFUN1(stgApplyNPNPP, f) {
         pushargs(2, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[2]);
         // restore argv
@@ -18545,7 +18545,7 @@ DEFUN1(stgApplyNPNPP, f) {
         pushargs(1, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -18572,7 +18572,7 @@ DEFUN1(stgApplyNPNPP, f) {
         pushargs(1, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -18599,7 +18599,7 @@ DEFUN1(stgApplyNPNPP, f) {
         // 0 pointers to push
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[0]);
         // restore argv
@@ -18629,7 +18629,7 @@ DEFUN1(stgApplyNPNPP, f) {
       pushargs(3, pargv);
       pushargs(pappargc, &f.op->payload[fvCount+1]);
       // tail call the FUN
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
 
     // excess < 0, too few args
     } else {
@@ -18637,7 +18637,7 @@ DEFUN1(stgApplyNPNPP, f) {
       fprintf(stderr, "stgApplyNPNPP PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3 + pappargc, 2 + papnargc);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 3 + pappargc, 2 + papnargc);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -18680,7 +18680,7 @@ DEFUN1(stgApplyNPNPP, f) {
 
 DEFUN1(stgApplyPPNPP, f) {
   #ifdef DEBUGSTGAPPLY
-  fprintf(stderr, "stgApplyPPNPP %s\n", f.op->infoPtr->name);
+  fprintf(stderr, "stgApplyPPNPP %s\n", getInfoPtr(f.op)->name);
   #endif
   const int argc = 5;
   PtrOrLiteral argv[5];
@@ -18729,9 +18729,9 @@ DEFUN1(stgApplyPPNPP, f) {
   f = pargv[4];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(4, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPPNPP THUNK\n");
       #endif
@@ -18747,11 +18747,11 @@ DEFUN1(stgApplyPPNPP, f) {
     argv[4] = pargv[3];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
-    int arity = f.op->infoPtr->funFields.arity;
+    int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
-    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    fprintf(stderr, "FUN %s arity %d\n", getInfoPtr(f.op)->name, getInfoPtr(f.op)->funFields.arity);
     #endif
     int excess = argc - arity;  // may be negative
 
@@ -18768,7 +18768,7 @@ DEFUN1(stgApplyPPNPP, f) {
         pushargs(1, nargv);
         pushargs(3, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[3]);
         // restore argv
@@ -18792,7 +18792,7 @@ DEFUN1(stgApplyPPNPP, f) {
         pushargs(1, nargv);
         pushargs(2, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[2]);
         // restore argv
@@ -18817,7 +18817,7 @@ DEFUN1(stgApplyPPNPP, f) {
         // 0 non-pointers to push
         pushargs(2, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[2]);
         // restore argv
@@ -18842,7 +18842,7 @@ DEFUN1(stgApplyPPNPP, f) {
         // 0 non-pointers to push
         pushargs(1, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -18870,17 +18870,17 @@ DEFUN1(stgApplyPPNPP, f) {
       pushargs(1, nargv);
       pushargs(4, pargv);
       // tail call the fun
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
     }
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPPNPP FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                    f.op->infoPtr->layoutInfo.unboxedCount;
+      int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                    getInfoPtr(f.op)->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 4, 1);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 4, 1);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -18900,12 +18900,12 @@ DEFUN1(stgApplyPPNPP, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                  f.op->infoPtr->layoutInfo.unboxedCount;
+    int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                  getInfoPtr(f.op)->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    int arity = f.op->infoPtr->funFields.arity - argCount;
+    int arity = getInfoPtr(f.op)->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
@@ -18926,7 +18926,7 @@ DEFUN1(stgApplyPPNPP, f) {
         pushargs(3, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[3]);
         // restore argv
@@ -18952,7 +18952,7 @@ DEFUN1(stgApplyPPNPP, f) {
         pushargs(2, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[2]);
         // restore argv
@@ -18979,7 +18979,7 @@ DEFUN1(stgApplyPPNPP, f) {
         pushargs(2, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[2]);
         // restore argv
@@ -19006,7 +19006,7 @@ DEFUN1(stgApplyPPNPP, f) {
         pushargs(1, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -19036,7 +19036,7 @@ DEFUN1(stgApplyPPNPP, f) {
       pushargs(4, pargv);
       pushargs(pappargc, &f.op->payload[fvCount+1]);
       // tail call the FUN
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
 
     // excess < 0, too few args
     } else {
@@ -19044,7 +19044,7 @@ DEFUN1(stgApplyPPNPP, f) {
       fprintf(stderr, "stgApplyPPNPP PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 4 + pappargc, 1 + papnargc);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 4 + pappargc, 1 + papnargc);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -19087,7 +19087,7 @@ DEFUN1(stgApplyPPNPP, f) {
 
 DEFUN1(stgApplyNNPPP, f) {
   #ifdef DEBUGSTGAPPLY
-  fprintf(stderr, "stgApplyNNPPP %s\n", f.op->infoPtr->name);
+  fprintf(stderr, "stgApplyNNPPP %s\n", getInfoPtr(f.op)->name);
   #endif
   const int argc = 5;
   PtrOrLiteral argv[5];
@@ -19125,9 +19125,9 @@ DEFUN1(stgApplyNNPPP, f) {
   f = pargv[3];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(3, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNNPPP THUNK\n");
       #endif
@@ -19142,11 +19142,11 @@ DEFUN1(stgApplyNNPPP, f) {
     argv[4] = pargv[2];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
-    int arity = f.op->infoPtr->funFields.arity;
+    int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
-    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    fprintf(stderr, "FUN %s arity %d\n", getInfoPtr(f.op)->name, getInfoPtr(f.op)->funFields.arity);
     #endif
     int excess = argc - arity;  // may be negative
 
@@ -19163,7 +19163,7 @@ DEFUN1(stgApplyNNPPP, f) {
         pushargs(2, nargv);
         pushargs(2, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[2]);
         // restore argv
@@ -19187,7 +19187,7 @@ DEFUN1(stgApplyNNPPP, f) {
         pushargs(2, nargv);
         pushargs(1, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -19212,7 +19212,7 @@ DEFUN1(stgApplyNNPPP, f) {
         pushargs(2, nargv);
         // 0 pointers to push
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[0]);
         // restore argv
@@ -19238,7 +19238,7 @@ DEFUN1(stgApplyNNPPP, f) {
         pushargs(1, nargv);
         // 0 pointers to push
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[0]);
         // restore argv
@@ -19266,17 +19266,17 @@ DEFUN1(stgApplyNNPPP, f) {
       pushargs(2, nargv);
       pushargs(3, pargv);
       // tail call the fun
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
     }
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNNPPP FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                    f.op->infoPtr->layoutInfo.unboxedCount;
+      int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                    getInfoPtr(f.op)->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3, 2);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 3, 2);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -19296,12 +19296,12 @@ DEFUN1(stgApplyNNPPP, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                  f.op->infoPtr->layoutInfo.unboxedCount;
+    int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                  getInfoPtr(f.op)->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    int arity = f.op->infoPtr->funFields.arity - argCount;
+    int arity = getInfoPtr(f.op)->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
@@ -19322,7 +19322,7 @@ DEFUN1(stgApplyNNPPP, f) {
         pushargs(2, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[2]);
         // restore argv
@@ -19348,7 +19348,7 @@ DEFUN1(stgApplyNNPPP, f) {
         pushargs(1, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -19375,7 +19375,7 @@ DEFUN1(stgApplyNNPPP, f) {
         // 0 pointers to push
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[0]);
         // restore argv
@@ -19403,7 +19403,7 @@ DEFUN1(stgApplyNNPPP, f) {
         // 0 pointers to push
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[0]);
         // restore argv
@@ -19433,7 +19433,7 @@ DEFUN1(stgApplyNNPPP, f) {
       pushargs(3, pargv);
       pushargs(pappargc, &f.op->payload[fvCount+1]);
       // tail call the FUN
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
 
     // excess < 0, too few args
     } else {
@@ -19441,7 +19441,7 @@ DEFUN1(stgApplyNNPPP, f) {
       fprintf(stderr, "stgApplyNNPPP PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3 + pappargc, 2 + papnargc);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 3 + pappargc, 2 + papnargc);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -19484,7 +19484,7 @@ DEFUN1(stgApplyNNPPP, f) {
 
 DEFUN1(stgApplyPNPPP, f) {
   #ifdef DEBUGSTGAPPLY
-  fprintf(stderr, "stgApplyPNPPP %s\n", f.op->infoPtr->name);
+  fprintf(stderr, "stgApplyPNPPP %s\n", getInfoPtr(f.op)->name);
   #endif
   const int argc = 5;
   PtrOrLiteral argv[5];
@@ -19533,9 +19533,9 @@ DEFUN1(stgApplyPNPPP, f) {
   f = pargv[4];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(4, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPNPPP THUNK\n");
       #endif
@@ -19551,11 +19551,11 @@ DEFUN1(stgApplyPNPPP, f) {
     argv[4] = pargv[3];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
-    int arity = f.op->infoPtr->funFields.arity;
+    int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
-    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    fprintf(stderr, "FUN %s arity %d\n", getInfoPtr(f.op)->name, getInfoPtr(f.op)->funFields.arity);
     #endif
     int excess = argc - arity;  // may be negative
 
@@ -19572,7 +19572,7 @@ DEFUN1(stgApplyPNPPP, f) {
         pushargs(1, nargv);
         pushargs(3, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[3]);
         // restore argv
@@ -19596,7 +19596,7 @@ DEFUN1(stgApplyPNPPP, f) {
         pushargs(1, nargv);
         pushargs(2, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[2]);
         // restore argv
@@ -19621,7 +19621,7 @@ DEFUN1(stgApplyPNPPP, f) {
         pushargs(1, nargv);
         pushargs(1, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -19647,7 +19647,7 @@ DEFUN1(stgApplyPNPPP, f) {
         // 0 non-pointers to push
         pushargs(1, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -19675,17 +19675,17 @@ DEFUN1(stgApplyPNPPP, f) {
       pushargs(1, nargv);
       pushargs(4, pargv);
       // tail call the fun
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
     }
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPNPPP FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                    f.op->infoPtr->layoutInfo.unboxedCount;
+      int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                    getInfoPtr(f.op)->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 4, 1);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 4, 1);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -19705,12 +19705,12 @@ DEFUN1(stgApplyPNPPP, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                  f.op->infoPtr->layoutInfo.unboxedCount;
+    int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                  getInfoPtr(f.op)->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    int arity = f.op->infoPtr->funFields.arity - argCount;
+    int arity = getInfoPtr(f.op)->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
@@ -19731,7 +19731,7 @@ DEFUN1(stgApplyPNPPP, f) {
         pushargs(3, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[3]);
         // restore argv
@@ -19757,7 +19757,7 @@ DEFUN1(stgApplyPNPPP, f) {
         pushargs(2, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[2]);
         // restore argv
@@ -19784,7 +19784,7 @@ DEFUN1(stgApplyPNPPP, f) {
         pushargs(1, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -19812,7 +19812,7 @@ DEFUN1(stgApplyPNPPP, f) {
         pushargs(1, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -19842,7 +19842,7 @@ DEFUN1(stgApplyPNPPP, f) {
       pushargs(4, pargv);
       pushargs(pappargc, &f.op->payload[fvCount+1]);
       // tail call the FUN
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
 
     // excess < 0, too few args
     } else {
@@ -19850,7 +19850,7 @@ DEFUN1(stgApplyPNPPP, f) {
       fprintf(stderr, "stgApplyPNPPP PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 4 + pappargc, 1 + papnargc);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 4 + pappargc, 1 + papnargc);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -19893,7 +19893,7 @@ DEFUN1(stgApplyPNPPP, f) {
 
 DEFUN1(stgApplyNPPPP, f) {
   #ifdef DEBUGSTGAPPLY
-  fprintf(stderr, "stgApplyNPPPP %s\n", f.op->infoPtr->name);
+  fprintf(stderr, "stgApplyNPPPP %s\n", getInfoPtr(f.op)->name);
   #endif
   const int argc = 5;
   PtrOrLiteral argv[5];
@@ -19942,9 +19942,9 @@ DEFUN1(stgApplyNPPPP, f) {
   f = pargv[4];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(4, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNPPPP THUNK\n");
       #endif
@@ -19960,11 +19960,11 @@ DEFUN1(stgApplyNPPPP, f) {
     argv[4] = pargv[3];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
-    int arity = f.op->infoPtr->funFields.arity;
+    int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
-    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    fprintf(stderr, "FUN %s arity %d\n", getInfoPtr(f.op)->name, getInfoPtr(f.op)->funFields.arity);
     #endif
     int excess = argc - arity;  // may be negative
 
@@ -19981,7 +19981,7 @@ DEFUN1(stgApplyNPPPP, f) {
         pushargs(1, nargv);
         pushargs(3, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[3]);
         // restore argv
@@ -20005,7 +20005,7 @@ DEFUN1(stgApplyNPPPP, f) {
         pushargs(1, nargv);
         pushargs(2, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[2]);
         // restore argv
@@ -20030,7 +20030,7 @@ DEFUN1(stgApplyNPPPP, f) {
         pushargs(1, nargv);
         pushargs(1, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -20056,7 +20056,7 @@ DEFUN1(stgApplyNPPPP, f) {
         pushargs(1, nargv);
         // 0 pointers to push
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[0]);
         // restore argv
@@ -20085,17 +20085,17 @@ DEFUN1(stgApplyNPPPP, f) {
       pushargs(1, nargv);
       pushargs(4, pargv);
       // tail call the fun
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
     }
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNPPPP FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                    f.op->infoPtr->layoutInfo.unboxedCount;
+      int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                    getInfoPtr(f.op)->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 4, 1);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 4, 1);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -20115,12 +20115,12 @@ DEFUN1(stgApplyNPPPP, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                  f.op->infoPtr->layoutInfo.unboxedCount;
+    int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                  getInfoPtr(f.op)->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    int arity = f.op->infoPtr->funFields.arity - argCount;
+    int arity = getInfoPtr(f.op)->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
@@ -20141,7 +20141,7 @@ DEFUN1(stgApplyNPPPP, f) {
         pushargs(3, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[3]);
         // restore argv
@@ -20167,7 +20167,7 @@ DEFUN1(stgApplyNPPPP, f) {
         pushargs(2, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[2]);
         // restore argv
@@ -20194,7 +20194,7 @@ DEFUN1(stgApplyNPPPP, f) {
         pushargs(1, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -20222,7 +20222,7 @@ DEFUN1(stgApplyNPPPP, f) {
         // 0 pointers to push
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[0]);
         // restore argv
@@ -20253,7 +20253,7 @@ DEFUN1(stgApplyNPPPP, f) {
       pushargs(4, pargv);
       pushargs(pappargc, &f.op->payload[fvCount+1]);
       // tail call the FUN
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
 
     // excess < 0, too few args
     } else {
@@ -20261,7 +20261,7 @@ DEFUN1(stgApplyNPPPP, f) {
       fprintf(stderr, "stgApplyNPPPP PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 4 + pappargc, 1 + papnargc);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 4 + pappargc, 1 + papnargc);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -20304,7 +20304,7 @@ DEFUN1(stgApplyNPPPP, f) {
 
 DEFUN1(stgApplyPPPPP, f) {
   #ifdef DEBUGSTGAPPLY
-  fprintf(stderr, "stgApplyPPPPP %s\n", f.op->infoPtr->name);
+  fprintf(stderr, "stgApplyPPPPP %s\n", getInfoPtr(f.op)->name);
   #endif
   const int argc = 5;
   PtrOrLiteral argv[5];
@@ -20366,9 +20366,9 @@ DEFUN1(stgApplyPPPPP, f) {
   f = pargv[5];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(5, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPPPPP THUNK\n");
       #endif
@@ -20385,11 +20385,11 @@ DEFUN1(stgApplyPPPPP, f) {
     argv[4] = pargv[4];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
-    int arity = f.op->infoPtr->funFields.arity;
+    int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
-    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    fprintf(stderr, "FUN %s arity %d\n", getInfoPtr(f.op)->name, getInfoPtr(f.op)->funFields.arity);
     #endif
     int excess = argc - arity;  // may be negative
 
@@ -20406,7 +20406,7 @@ DEFUN1(stgApplyPPPPP, f) {
         // 0 non-pointers to push
         pushargs(4, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[4]);
         // restore argv
@@ -20430,7 +20430,7 @@ DEFUN1(stgApplyPPPPP, f) {
         // 0 non-pointers to push
         pushargs(3, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[3]);
         // restore argv
@@ -20455,7 +20455,7 @@ DEFUN1(stgApplyPPPPP, f) {
         // 0 non-pointers to push
         pushargs(2, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[2]);
         // restore argv
@@ -20481,7 +20481,7 @@ DEFUN1(stgApplyPPPPP, f) {
         // 0 non-pointers to push
         pushargs(1, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -20510,17 +20510,17 @@ DEFUN1(stgApplyPPPPP, f) {
       // 0 non-pointers to push
       pushargs(5, pargv);
       // tail call the fun
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
     }
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPPPPP FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                    f.op->infoPtr->layoutInfo.unboxedCount;
+      int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                    getInfoPtr(f.op)->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 5, 0);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 5, 0);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -20540,12 +20540,12 @@ DEFUN1(stgApplyPPPPP, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                  f.op->infoPtr->layoutInfo.unboxedCount;
+    int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                  getInfoPtr(f.op)->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    int arity = f.op->infoPtr->funFields.arity - argCount;
+    int arity = getInfoPtr(f.op)->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
@@ -20566,7 +20566,7 @@ DEFUN1(stgApplyPPPPP, f) {
         pushargs(4, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[4]);
         // restore argv
@@ -20592,7 +20592,7 @@ DEFUN1(stgApplyPPPPP, f) {
         pushargs(3, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[3]);
         // restore argv
@@ -20619,7 +20619,7 @@ DEFUN1(stgApplyPPPPP, f) {
         pushargs(2, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[2]);
         // restore argv
@@ -20647,7 +20647,7 @@ DEFUN1(stgApplyPPPPP, f) {
         pushargs(1, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -20678,7 +20678,7 @@ DEFUN1(stgApplyPPPPP, f) {
       pushargs(5, pargv);
       pushargs(pappargc, &f.op->payload[fvCount+1]);
       // tail call the FUN
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
 
     // excess < 0, too few args
     } else {
@@ -20686,7 +20686,7 @@ DEFUN1(stgApplyPPPPP, f) {
       fprintf(stderr, "stgApplyPPPPP PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 5 + pappargc, 0 + papnargc);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 5 + pappargc, 0 + papnargc);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -20729,7 +20729,7 @@ DEFUN1(stgApplyPPPPP, f) {
 
 DEFUN1(stgApplyNNNNNN, f) {
   #ifdef DEBUGSTGAPPLY
-  fprintf(stderr, "stgApplyNNNNNN %s\n", f.op->infoPtr->name);
+  fprintf(stderr, "stgApplyNNNNNN %s\n", getInfoPtr(f.op)->name);
   #endif
   const int argc = 6;
   PtrOrLiteral argv[6];
@@ -20746,9 +20746,9 @@ DEFUN1(stgApplyNNNNNN, f) {
   nargv[5] = argv[5];
   
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     // no pointer args to save
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNNNNNN THUNK\n");
       #endif
@@ -20759,11 +20759,11 @@ DEFUN1(stgApplyNNNNNN, f) {
     // no pointer args to restore
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
-    int arity = f.op->infoPtr->funFields.arity;
+    int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
-    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    fprintf(stderr, "FUN %s arity %d\n", getInfoPtr(f.op)->name, getInfoPtr(f.op)->funFields.arity);
     #endif
     int excess = argc - arity;  // may be negative
 
@@ -20780,7 +20780,7 @@ DEFUN1(stgApplyNNNNNN, f) {
         pushargs(5, nargv);
         // 0 pointers to push
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -20802,7 +20802,7 @@ DEFUN1(stgApplyNNNNNN, f) {
         pushargs(4, nargv);
         // 0 pointers to push
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -20824,7 +20824,7 @@ DEFUN1(stgApplyNNNNNN, f) {
         pushargs(3, nargv);
         // 0 pointers to push
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -20846,7 +20846,7 @@ DEFUN1(stgApplyNNNNNN, f) {
         pushargs(2, nargv);
         // 0 pointers to push
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -20868,7 +20868,7 @@ DEFUN1(stgApplyNNNNNN, f) {
         pushargs(1, nargv);
         // 0 pointers to push
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -20892,17 +20892,17 @@ DEFUN1(stgApplyNNNNNN, f) {
       pushargs(6, nargv);
       // 0 pointers to push
       // tail call the fun
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
     }
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNNNNNN FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                    f.op->infoPtr->layoutInfo.unboxedCount;
+      int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                    getInfoPtr(f.op)->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 0, 6);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 0, 6);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -20922,12 +20922,12 @@ DEFUN1(stgApplyNNNNNN, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                  f.op->infoPtr->layoutInfo.unboxedCount;
+    int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                  getInfoPtr(f.op)->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    int arity = f.op->infoPtr->funFields.arity - argCount;
+    int arity = getInfoPtr(f.op)->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
@@ -20948,7 +20948,7 @@ DEFUN1(stgApplyNNNNNN, f) {
         // 0 pointers to push
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -20972,7 +20972,7 @@ DEFUN1(stgApplyNNNNNN, f) {
         // 0 pointers to push
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -20996,7 +20996,7 @@ DEFUN1(stgApplyNNNNNN, f) {
         // 0 pointers to push
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -21020,7 +21020,7 @@ DEFUN1(stgApplyNNNNNN, f) {
         // 0 pointers to push
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -21044,7 +21044,7 @@ DEFUN1(stgApplyNNNNNN, f) {
         // 0 pointers to push
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -21070,7 +21070,7 @@ DEFUN1(stgApplyNNNNNN, f) {
       // 0 non-pointer args
       pushargs(pappargc, &f.op->payload[fvCount+1]);
       // tail call the FUN
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
 
     // excess < 0, too few args
     } else {
@@ -21078,7 +21078,7 @@ DEFUN1(stgApplyNNNNNN, f) {
       fprintf(stderr, "stgApplyNNNNNN PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 0 + pappargc, 6 + papnargc);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 0 + pappargc, 6 + papnargc);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -21121,7 +21121,7 @@ DEFUN1(stgApplyNNNNNN, f) {
 
 DEFUN1(stgApplyPNNNNN, f) {
   #ifdef DEBUGSTGAPPLY
-  fprintf(stderr, "stgApplyPNNNNN %s\n", f.op->infoPtr->name);
+  fprintf(stderr, "stgApplyPNNNNN %s\n", getInfoPtr(f.op)->name);
   #endif
   const int argc = 6;
   PtrOrLiteral argv[6];
@@ -21144,9 +21144,9 @@ DEFUN1(stgApplyPNNNNN, f) {
   f = pargv[1];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(1, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPNNNNN THUNK\n");
       #endif
@@ -21159,11 +21159,11 @@ DEFUN1(stgApplyPNNNNN, f) {
     argv[0] = pargv[0];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
-    int arity = f.op->infoPtr->funFields.arity;
+    int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
-    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    fprintf(stderr, "FUN %s arity %d\n", getInfoPtr(f.op)->name, getInfoPtr(f.op)->funFields.arity);
     #endif
     int excess = argc - arity;  // may be negative
 
@@ -21180,7 +21180,7 @@ DEFUN1(stgApplyPNNNNN, f) {
         pushargs(4, nargv);
         pushargs(1, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -21202,7 +21202,7 @@ DEFUN1(stgApplyPNNNNN, f) {
         pushargs(3, nargv);
         pushargs(1, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -21224,7 +21224,7 @@ DEFUN1(stgApplyPNNNNN, f) {
         pushargs(2, nargv);
         pushargs(1, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -21246,7 +21246,7 @@ DEFUN1(stgApplyPNNNNN, f) {
         pushargs(1, nargv);
         pushargs(1, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -21268,7 +21268,7 @@ DEFUN1(stgApplyPNNNNN, f) {
         // 0 non-pointers to push
         pushargs(1, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -21292,17 +21292,17 @@ DEFUN1(stgApplyPNNNNN, f) {
       pushargs(5, nargv);
       pushargs(1, pargv);
       // tail call the fun
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
     }
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPNNNNN FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                    f.op->infoPtr->layoutInfo.unboxedCount;
+      int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                    getInfoPtr(f.op)->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 1, 5);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 1, 5);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -21322,12 +21322,12 @@ DEFUN1(stgApplyPNNNNN, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                  f.op->infoPtr->layoutInfo.unboxedCount;
+    int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                  getInfoPtr(f.op)->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    int arity = f.op->infoPtr->funFields.arity - argCount;
+    int arity = getInfoPtr(f.op)->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
@@ -21348,7 +21348,7 @@ DEFUN1(stgApplyPNNNNN, f) {
         pushargs(1, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -21372,7 +21372,7 @@ DEFUN1(stgApplyPNNNNN, f) {
         pushargs(1, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -21396,7 +21396,7 @@ DEFUN1(stgApplyPNNNNN, f) {
         pushargs(1, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -21420,7 +21420,7 @@ DEFUN1(stgApplyPNNNNN, f) {
         pushargs(1, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -21444,7 +21444,7 @@ DEFUN1(stgApplyPNNNNN, f) {
         pushargs(1, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -21470,7 +21470,7 @@ DEFUN1(stgApplyPNNNNN, f) {
       pushargs(1, pargv);
       pushargs(pappargc, &f.op->payload[fvCount+1]);
       // tail call the FUN
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
 
     // excess < 0, too few args
     } else {
@@ -21478,7 +21478,7 @@ DEFUN1(stgApplyPNNNNN, f) {
       fprintf(stderr, "stgApplyPNNNNN PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 1 + pappargc, 5 + papnargc);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 1 + pappargc, 5 + papnargc);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -21521,7 +21521,7 @@ DEFUN1(stgApplyPNNNNN, f) {
 
 DEFUN1(stgApplyNPNNNN, f) {
   #ifdef DEBUGSTGAPPLY
-  fprintf(stderr, "stgApplyNPNNNN %s\n", f.op->infoPtr->name);
+  fprintf(stderr, "stgApplyNPNNNN %s\n", getInfoPtr(f.op)->name);
   #endif
   const int argc = 6;
   PtrOrLiteral argv[6];
@@ -21544,9 +21544,9 @@ DEFUN1(stgApplyNPNNNN, f) {
   f = pargv[1];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(1, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNPNNNN THUNK\n");
       #endif
@@ -21559,11 +21559,11 @@ DEFUN1(stgApplyNPNNNN, f) {
     argv[1] = pargv[0];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
-    int arity = f.op->infoPtr->funFields.arity;
+    int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
-    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    fprintf(stderr, "FUN %s arity %d\n", getInfoPtr(f.op)->name, getInfoPtr(f.op)->funFields.arity);
     #endif
     int excess = argc - arity;  // may be negative
 
@@ -21580,7 +21580,7 @@ DEFUN1(stgApplyNPNNNN, f) {
         pushargs(4, nargv);
         pushargs(1, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -21602,7 +21602,7 @@ DEFUN1(stgApplyNPNNNN, f) {
         pushargs(3, nargv);
         pushargs(1, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -21624,7 +21624,7 @@ DEFUN1(stgApplyNPNNNN, f) {
         pushargs(2, nargv);
         pushargs(1, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -21646,7 +21646,7 @@ DEFUN1(stgApplyNPNNNN, f) {
         pushargs(1, nargv);
         pushargs(1, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -21668,7 +21668,7 @@ DEFUN1(stgApplyNPNNNN, f) {
         pushargs(1, nargv);
         // 0 pointers to push
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[0]);
         // restore argv
@@ -21694,17 +21694,17 @@ DEFUN1(stgApplyNPNNNN, f) {
       pushargs(5, nargv);
       pushargs(1, pargv);
       // tail call the fun
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
     }
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNPNNNN FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                    f.op->infoPtr->layoutInfo.unboxedCount;
+      int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                    getInfoPtr(f.op)->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 1, 5);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 1, 5);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -21724,12 +21724,12 @@ DEFUN1(stgApplyNPNNNN, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                  f.op->infoPtr->layoutInfo.unboxedCount;
+    int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                  getInfoPtr(f.op)->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    int arity = f.op->infoPtr->funFields.arity - argCount;
+    int arity = getInfoPtr(f.op)->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
@@ -21750,7 +21750,7 @@ DEFUN1(stgApplyNPNNNN, f) {
         pushargs(1, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -21774,7 +21774,7 @@ DEFUN1(stgApplyNPNNNN, f) {
         pushargs(1, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -21798,7 +21798,7 @@ DEFUN1(stgApplyNPNNNN, f) {
         pushargs(1, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -21822,7 +21822,7 @@ DEFUN1(stgApplyNPNNNN, f) {
         pushargs(1, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -21846,7 +21846,7 @@ DEFUN1(stgApplyNPNNNN, f) {
         // 0 pointers to push
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[0]);
         // restore argv
@@ -21874,7 +21874,7 @@ DEFUN1(stgApplyNPNNNN, f) {
       pushargs(1, pargv);
       pushargs(pappargc, &f.op->payload[fvCount+1]);
       // tail call the FUN
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
 
     // excess < 0, too few args
     } else {
@@ -21882,7 +21882,7 @@ DEFUN1(stgApplyNPNNNN, f) {
       fprintf(stderr, "stgApplyNPNNNN PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 1 + pappargc, 5 + papnargc);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 1 + pappargc, 5 + papnargc);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -21925,7 +21925,7 @@ DEFUN1(stgApplyNPNNNN, f) {
 
 DEFUN1(stgApplyPPNNNN, f) {
   #ifdef DEBUGSTGAPPLY
-  fprintf(stderr, "stgApplyPPNNNN %s\n", f.op->infoPtr->name);
+  fprintf(stderr, "stgApplyPPNNNN %s\n", getInfoPtr(f.op)->name);
   #endif
   const int argc = 6;
   PtrOrLiteral argv[6];
@@ -21955,9 +21955,9 @@ DEFUN1(stgApplyPPNNNN, f) {
   f = pargv[2];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(2, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPPNNNN THUNK\n");
       #endif
@@ -21971,11 +21971,11 @@ DEFUN1(stgApplyPPNNNN, f) {
     argv[1] = pargv[1];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
-    int arity = f.op->infoPtr->funFields.arity;
+    int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
-    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    fprintf(stderr, "FUN %s arity %d\n", getInfoPtr(f.op)->name, getInfoPtr(f.op)->funFields.arity);
     #endif
     int excess = argc - arity;  // may be negative
 
@@ -21992,7 +21992,7 @@ DEFUN1(stgApplyPPNNNN, f) {
         pushargs(3, nargv);
         pushargs(2, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -22014,7 +22014,7 @@ DEFUN1(stgApplyPPNNNN, f) {
         pushargs(2, nargv);
         pushargs(2, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -22036,7 +22036,7 @@ DEFUN1(stgApplyPPNNNN, f) {
         pushargs(1, nargv);
         pushargs(2, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -22058,7 +22058,7 @@ DEFUN1(stgApplyPPNNNN, f) {
         // 0 non-pointers to push
         pushargs(2, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -22080,7 +22080,7 @@ DEFUN1(stgApplyPPNNNN, f) {
         // 0 non-pointers to push
         pushargs(1, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -22106,17 +22106,17 @@ DEFUN1(stgApplyPPNNNN, f) {
       pushargs(4, nargv);
       pushargs(2, pargv);
       // tail call the fun
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
     }
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPPNNNN FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                    f.op->infoPtr->layoutInfo.unboxedCount;
+      int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                    getInfoPtr(f.op)->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2, 4);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 2, 4);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -22136,12 +22136,12 @@ DEFUN1(stgApplyPPNNNN, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                  f.op->infoPtr->layoutInfo.unboxedCount;
+    int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                  getInfoPtr(f.op)->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    int arity = f.op->infoPtr->funFields.arity - argCount;
+    int arity = getInfoPtr(f.op)->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
@@ -22162,7 +22162,7 @@ DEFUN1(stgApplyPPNNNN, f) {
         pushargs(2, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -22186,7 +22186,7 @@ DEFUN1(stgApplyPPNNNN, f) {
         pushargs(2, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -22210,7 +22210,7 @@ DEFUN1(stgApplyPPNNNN, f) {
         pushargs(2, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -22234,7 +22234,7 @@ DEFUN1(stgApplyPPNNNN, f) {
         pushargs(2, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -22258,7 +22258,7 @@ DEFUN1(stgApplyPPNNNN, f) {
         pushargs(1, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -22286,7 +22286,7 @@ DEFUN1(stgApplyPPNNNN, f) {
       pushargs(2, pargv);
       pushargs(pappargc, &f.op->payload[fvCount+1]);
       // tail call the FUN
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
 
     // excess < 0, too few args
     } else {
@@ -22294,7 +22294,7 @@ DEFUN1(stgApplyPPNNNN, f) {
       fprintf(stderr, "stgApplyPPNNNN PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2 + pappargc, 4 + papnargc);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 2 + pappargc, 4 + papnargc);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -22337,7 +22337,7 @@ DEFUN1(stgApplyPPNNNN, f) {
 
 DEFUN1(stgApplyNNPNNN, f) {
   #ifdef DEBUGSTGAPPLY
-  fprintf(stderr, "stgApplyNNPNNN %s\n", f.op->infoPtr->name);
+  fprintf(stderr, "stgApplyNNPNNN %s\n", getInfoPtr(f.op)->name);
   #endif
   const int argc = 6;
   PtrOrLiteral argv[6];
@@ -22360,9 +22360,9 @@ DEFUN1(stgApplyNNPNNN, f) {
   f = pargv[1];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(1, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNNPNNN THUNK\n");
       #endif
@@ -22375,11 +22375,11 @@ DEFUN1(stgApplyNNPNNN, f) {
     argv[2] = pargv[0];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
-    int arity = f.op->infoPtr->funFields.arity;
+    int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
-    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    fprintf(stderr, "FUN %s arity %d\n", getInfoPtr(f.op)->name, getInfoPtr(f.op)->funFields.arity);
     #endif
     int excess = argc - arity;  // may be negative
 
@@ -22396,7 +22396,7 @@ DEFUN1(stgApplyNNPNNN, f) {
         pushargs(4, nargv);
         pushargs(1, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -22418,7 +22418,7 @@ DEFUN1(stgApplyNNPNNN, f) {
         pushargs(3, nargv);
         pushargs(1, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -22440,7 +22440,7 @@ DEFUN1(stgApplyNNPNNN, f) {
         pushargs(2, nargv);
         pushargs(1, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -22462,7 +22462,7 @@ DEFUN1(stgApplyNNPNNN, f) {
         pushargs(2, nargv);
         // 0 pointers to push
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[0]);
         // restore argv
@@ -22486,7 +22486,7 @@ DEFUN1(stgApplyNNPNNN, f) {
         pushargs(1, nargv);
         // 0 pointers to push
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[0]);
         // restore argv
@@ -22512,17 +22512,17 @@ DEFUN1(stgApplyNNPNNN, f) {
       pushargs(5, nargv);
       pushargs(1, pargv);
       // tail call the fun
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
     }
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNNPNNN FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                    f.op->infoPtr->layoutInfo.unboxedCount;
+      int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                    getInfoPtr(f.op)->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 1, 5);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 1, 5);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -22542,12 +22542,12 @@ DEFUN1(stgApplyNNPNNN, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                  f.op->infoPtr->layoutInfo.unboxedCount;
+    int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                  getInfoPtr(f.op)->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    int arity = f.op->infoPtr->funFields.arity - argCount;
+    int arity = getInfoPtr(f.op)->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
@@ -22568,7 +22568,7 @@ DEFUN1(stgApplyNNPNNN, f) {
         pushargs(1, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -22592,7 +22592,7 @@ DEFUN1(stgApplyNNPNNN, f) {
         pushargs(1, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -22616,7 +22616,7 @@ DEFUN1(stgApplyNNPNNN, f) {
         pushargs(1, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -22640,7 +22640,7 @@ DEFUN1(stgApplyNNPNNN, f) {
         // 0 pointers to push
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[0]);
         // restore argv
@@ -22666,7 +22666,7 @@ DEFUN1(stgApplyNNPNNN, f) {
         // 0 pointers to push
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[0]);
         // restore argv
@@ -22694,7 +22694,7 @@ DEFUN1(stgApplyNNPNNN, f) {
       pushargs(1, pargv);
       pushargs(pappargc, &f.op->payload[fvCount+1]);
       // tail call the FUN
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
 
     // excess < 0, too few args
     } else {
@@ -22702,7 +22702,7 @@ DEFUN1(stgApplyNNPNNN, f) {
       fprintf(stderr, "stgApplyNNPNNN PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 1 + pappargc, 5 + papnargc);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 1 + pappargc, 5 + papnargc);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -22745,7 +22745,7 @@ DEFUN1(stgApplyNNPNNN, f) {
 
 DEFUN1(stgApplyPNPNNN, f) {
   #ifdef DEBUGSTGAPPLY
-  fprintf(stderr, "stgApplyPNPNNN %s\n", f.op->infoPtr->name);
+  fprintf(stderr, "stgApplyPNPNNN %s\n", getInfoPtr(f.op)->name);
   #endif
   const int argc = 6;
   PtrOrLiteral argv[6];
@@ -22775,9 +22775,9 @@ DEFUN1(stgApplyPNPNNN, f) {
   f = pargv[2];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(2, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPNPNNN THUNK\n");
       #endif
@@ -22791,11 +22791,11 @@ DEFUN1(stgApplyPNPNNN, f) {
     argv[2] = pargv[1];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
-    int arity = f.op->infoPtr->funFields.arity;
+    int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
-    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    fprintf(stderr, "FUN %s arity %d\n", getInfoPtr(f.op)->name, getInfoPtr(f.op)->funFields.arity);
     #endif
     int excess = argc - arity;  // may be negative
 
@@ -22812,7 +22812,7 @@ DEFUN1(stgApplyPNPNNN, f) {
         pushargs(3, nargv);
         pushargs(2, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -22834,7 +22834,7 @@ DEFUN1(stgApplyPNPNNN, f) {
         pushargs(2, nargv);
         pushargs(2, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -22856,7 +22856,7 @@ DEFUN1(stgApplyPNPNNN, f) {
         pushargs(1, nargv);
         pushargs(2, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -22878,7 +22878,7 @@ DEFUN1(stgApplyPNPNNN, f) {
         pushargs(1, nargv);
         pushargs(1, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -22902,7 +22902,7 @@ DEFUN1(stgApplyPNPNNN, f) {
         // 0 non-pointers to push
         pushargs(1, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -22928,17 +22928,17 @@ DEFUN1(stgApplyPNPNNN, f) {
       pushargs(4, nargv);
       pushargs(2, pargv);
       // tail call the fun
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
     }
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPNPNNN FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                    f.op->infoPtr->layoutInfo.unboxedCount;
+      int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                    getInfoPtr(f.op)->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2, 4);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 2, 4);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -22958,12 +22958,12 @@ DEFUN1(stgApplyPNPNNN, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                  f.op->infoPtr->layoutInfo.unboxedCount;
+    int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                  getInfoPtr(f.op)->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    int arity = f.op->infoPtr->funFields.arity - argCount;
+    int arity = getInfoPtr(f.op)->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
@@ -22984,7 +22984,7 @@ DEFUN1(stgApplyPNPNNN, f) {
         pushargs(2, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -23008,7 +23008,7 @@ DEFUN1(stgApplyPNPNNN, f) {
         pushargs(2, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -23032,7 +23032,7 @@ DEFUN1(stgApplyPNPNNN, f) {
         pushargs(2, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -23056,7 +23056,7 @@ DEFUN1(stgApplyPNPNNN, f) {
         pushargs(1, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -23082,7 +23082,7 @@ DEFUN1(stgApplyPNPNNN, f) {
         pushargs(1, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -23110,7 +23110,7 @@ DEFUN1(stgApplyPNPNNN, f) {
       pushargs(2, pargv);
       pushargs(pappargc, &f.op->payload[fvCount+1]);
       // tail call the FUN
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
 
     // excess < 0, too few args
     } else {
@@ -23118,7 +23118,7 @@ DEFUN1(stgApplyPNPNNN, f) {
       fprintf(stderr, "stgApplyPNPNNN PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2 + pappargc, 4 + papnargc);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 2 + pappargc, 4 + papnargc);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -23161,7 +23161,7 @@ DEFUN1(stgApplyPNPNNN, f) {
 
 DEFUN1(stgApplyNPPNNN, f) {
   #ifdef DEBUGSTGAPPLY
-  fprintf(stderr, "stgApplyNPPNNN %s\n", f.op->infoPtr->name);
+  fprintf(stderr, "stgApplyNPPNNN %s\n", getInfoPtr(f.op)->name);
   #endif
   const int argc = 6;
   PtrOrLiteral argv[6];
@@ -23191,9 +23191,9 @@ DEFUN1(stgApplyNPPNNN, f) {
   f = pargv[2];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(2, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNPPNNN THUNK\n");
       #endif
@@ -23207,11 +23207,11 @@ DEFUN1(stgApplyNPPNNN, f) {
     argv[2] = pargv[1];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
-    int arity = f.op->infoPtr->funFields.arity;
+    int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
-    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    fprintf(stderr, "FUN %s arity %d\n", getInfoPtr(f.op)->name, getInfoPtr(f.op)->funFields.arity);
     #endif
     int excess = argc - arity;  // may be negative
 
@@ -23228,7 +23228,7 @@ DEFUN1(stgApplyNPPNNN, f) {
         pushargs(3, nargv);
         pushargs(2, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -23250,7 +23250,7 @@ DEFUN1(stgApplyNPPNNN, f) {
         pushargs(2, nargv);
         pushargs(2, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -23272,7 +23272,7 @@ DEFUN1(stgApplyNPPNNN, f) {
         pushargs(1, nargv);
         pushargs(2, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -23294,7 +23294,7 @@ DEFUN1(stgApplyNPPNNN, f) {
         pushargs(1, nargv);
         pushargs(1, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -23318,7 +23318,7 @@ DEFUN1(stgApplyNPPNNN, f) {
         pushargs(1, nargv);
         // 0 pointers to push
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[0]);
         // restore argv
@@ -23345,17 +23345,17 @@ DEFUN1(stgApplyNPPNNN, f) {
       pushargs(4, nargv);
       pushargs(2, pargv);
       // tail call the fun
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
     }
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNPPNNN FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                    f.op->infoPtr->layoutInfo.unboxedCount;
+      int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                    getInfoPtr(f.op)->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2, 4);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 2, 4);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -23375,12 +23375,12 @@ DEFUN1(stgApplyNPPNNN, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                  f.op->infoPtr->layoutInfo.unboxedCount;
+    int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                  getInfoPtr(f.op)->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    int arity = f.op->infoPtr->funFields.arity - argCount;
+    int arity = getInfoPtr(f.op)->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
@@ -23401,7 +23401,7 @@ DEFUN1(stgApplyNPPNNN, f) {
         pushargs(2, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -23425,7 +23425,7 @@ DEFUN1(stgApplyNPPNNN, f) {
         pushargs(2, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -23449,7 +23449,7 @@ DEFUN1(stgApplyNPPNNN, f) {
         pushargs(2, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -23473,7 +23473,7 @@ DEFUN1(stgApplyNPPNNN, f) {
         pushargs(1, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -23499,7 +23499,7 @@ DEFUN1(stgApplyNPPNNN, f) {
         // 0 pointers to push
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[0]);
         // restore argv
@@ -23528,7 +23528,7 @@ DEFUN1(stgApplyNPPNNN, f) {
       pushargs(2, pargv);
       pushargs(pappargc, &f.op->payload[fvCount+1]);
       // tail call the FUN
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
 
     // excess < 0, too few args
     } else {
@@ -23536,7 +23536,7 @@ DEFUN1(stgApplyNPPNNN, f) {
       fprintf(stderr, "stgApplyNPPNNN PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2 + pappargc, 4 + papnargc);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 2 + pappargc, 4 + papnargc);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -23579,7 +23579,7 @@ DEFUN1(stgApplyNPPNNN, f) {
 
 DEFUN1(stgApplyPPPNNN, f) {
   #ifdef DEBUGSTGAPPLY
-  fprintf(stderr, "stgApplyPPPNNN %s\n", f.op->infoPtr->name);
+  fprintf(stderr, "stgApplyPPPNNN %s\n", getInfoPtr(f.op)->name);
   #endif
   const int argc = 6;
   PtrOrLiteral argv[6];
@@ -23618,9 +23618,9 @@ DEFUN1(stgApplyPPPNNN, f) {
   f = pargv[3];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(3, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPPPNNN THUNK\n");
       #endif
@@ -23635,11 +23635,11 @@ DEFUN1(stgApplyPPPNNN, f) {
     argv[2] = pargv[2];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
-    int arity = f.op->infoPtr->funFields.arity;
+    int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
-    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    fprintf(stderr, "FUN %s arity %d\n", getInfoPtr(f.op)->name, getInfoPtr(f.op)->funFields.arity);
     #endif
     int excess = argc - arity;  // may be negative
 
@@ -23656,7 +23656,7 @@ DEFUN1(stgApplyPPPNNN, f) {
         pushargs(2, nargv);
         pushargs(3, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -23678,7 +23678,7 @@ DEFUN1(stgApplyPPPNNN, f) {
         pushargs(1, nargv);
         pushargs(3, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -23700,7 +23700,7 @@ DEFUN1(stgApplyPPPNNN, f) {
         // 0 non-pointers to push
         pushargs(3, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -23722,7 +23722,7 @@ DEFUN1(stgApplyPPPNNN, f) {
         // 0 non-pointers to push
         pushargs(2, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[2]);
         // restore argv
@@ -23746,7 +23746,7 @@ DEFUN1(stgApplyPPPNNN, f) {
         // 0 non-pointers to push
         pushargs(1, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -23773,17 +23773,17 @@ DEFUN1(stgApplyPPPNNN, f) {
       pushargs(3, nargv);
       pushargs(3, pargv);
       // tail call the fun
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
     }
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPPPNNN FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                    f.op->infoPtr->layoutInfo.unboxedCount;
+      int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                    getInfoPtr(f.op)->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3, 3);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 3, 3);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -23803,12 +23803,12 @@ DEFUN1(stgApplyPPPNNN, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                  f.op->infoPtr->layoutInfo.unboxedCount;
+    int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                  getInfoPtr(f.op)->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    int arity = f.op->infoPtr->funFields.arity - argCount;
+    int arity = getInfoPtr(f.op)->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
@@ -23829,7 +23829,7 @@ DEFUN1(stgApplyPPPNNN, f) {
         pushargs(3, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -23853,7 +23853,7 @@ DEFUN1(stgApplyPPPNNN, f) {
         pushargs(3, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -23877,7 +23877,7 @@ DEFUN1(stgApplyPPPNNN, f) {
         pushargs(3, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -23901,7 +23901,7 @@ DEFUN1(stgApplyPPPNNN, f) {
         pushargs(2, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[2]);
         // restore argv
@@ -23927,7 +23927,7 @@ DEFUN1(stgApplyPPPNNN, f) {
         pushargs(1, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -23956,7 +23956,7 @@ DEFUN1(stgApplyPPPNNN, f) {
       pushargs(3, pargv);
       pushargs(pappargc, &f.op->payload[fvCount+1]);
       // tail call the FUN
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
 
     // excess < 0, too few args
     } else {
@@ -23964,7 +23964,7 @@ DEFUN1(stgApplyPPPNNN, f) {
       fprintf(stderr, "stgApplyPPPNNN PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3 + pappargc, 3 + papnargc);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 3 + pappargc, 3 + papnargc);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -24007,7 +24007,7 @@ DEFUN1(stgApplyPPPNNN, f) {
 
 DEFUN1(stgApplyNNNPNN, f) {
   #ifdef DEBUGSTGAPPLY
-  fprintf(stderr, "stgApplyNNNPNN %s\n", f.op->infoPtr->name);
+  fprintf(stderr, "stgApplyNNNPNN %s\n", getInfoPtr(f.op)->name);
   #endif
   const int argc = 6;
   PtrOrLiteral argv[6];
@@ -24030,9 +24030,9 @@ DEFUN1(stgApplyNNNPNN, f) {
   f = pargv[1];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(1, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNNNPNN THUNK\n");
       #endif
@@ -24045,11 +24045,11 @@ DEFUN1(stgApplyNNNPNN, f) {
     argv[3] = pargv[0];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
-    int arity = f.op->infoPtr->funFields.arity;
+    int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
-    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    fprintf(stderr, "FUN %s arity %d\n", getInfoPtr(f.op)->name, getInfoPtr(f.op)->funFields.arity);
     #endif
     int excess = argc - arity;  // may be negative
 
@@ -24066,7 +24066,7 @@ DEFUN1(stgApplyNNNPNN, f) {
         pushargs(4, nargv);
         pushargs(1, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -24088,7 +24088,7 @@ DEFUN1(stgApplyNNNPNN, f) {
         pushargs(3, nargv);
         pushargs(1, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -24110,7 +24110,7 @@ DEFUN1(stgApplyNNNPNN, f) {
         pushargs(3, nargv);
         // 0 pointers to push
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[0]);
         // restore argv
@@ -24134,7 +24134,7 @@ DEFUN1(stgApplyNNNPNN, f) {
         pushargs(2, nargv);
         // 0 pointers to push
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[0]);
         // restore argv
@@ -24158,7 +24158,7 @@ DEFUN1(stgApplyNNNPNN, f) {
         pushargs(1, nargv);
         // 0 pointers to push
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[0]);
         // restore argv
@@ -24184,17 +24184,17 @@ DEFUN1(stgApplyNNNPNN, f) {
       pushargs(5, nargv);
       pushargs(1, pargv);
       // tail call the fun
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
     }
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNNNPNN FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                    f.op->infoPtr->layoutInfo.unboxedCount;
+      int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                    getInfoPtr(f.op)->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 1, 5);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 1, 5);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -24214,12 +24214,12 @@ DEFUN1(stgApplyNNNPNN, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                  f.op->infoPtr->layoutInfo.unboxedCount;
+    int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                  getInfoPtr(f.op)->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    int arity = f.op->infoPtr->funFields.arity - argCount;
+    int arity = getInfoPtr(f.op)->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
@@ -24240,7 +24240,7 @@ DEFUN1(stgApplyNNNPNN, f) {
         pushargs(1, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -24264,7 +24264,7 @@ DEFUN1(stgApplyNNNPNN, f) {
         pushargs(1, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -24288,7 +24288,7 @@ DEFUN1(stgApplyNNNPNN, f) {
         // 0 pointers to push
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[0]);
         // restore argv
@@ -24314,7 +24314,7 @@ DEFUN1(stgApplyNNNPNN, f) {
         // 0 pointers to push
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[0]);
         // restore argv
@@ -24340,7 +24340,7 @@ DEFUN1(stgApplyNNNPNN, f) {
         // 0 pointers to push
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[0]);
         // restore argv
@@ -24368,7 +24368,7 @@ DEFUN1(stgApplyNNNPNN, f) {
       pushargs(1, pargv);
       pushargs(pappargc, &f.op->payload[fvCount+1]);
       // tail call the FUN
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
 
     // excess < 0, too few args
     } else {
@@ -24376,7 +24376,7 @@ DEFUN1(stgApplyNNNPNN, f) {
       fprintf(stderr, "stgApplyNNNPNN PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 1 + pappargc, 5 + papnargc);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 1 + pappargc, 5 + papnargc);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -24419,7 +24419,7 @@ DEFUN1(stgApplyNNNPNN, f) {
 
 DEFUN1(stgApplyPNNPNN, f) {
   #ifdef DEBUGSTGAPPLY
-  fprintf(stderr, "stgApplyPNNPNN %s\n", f.op->infoPtr->name);
+  fprintf(stderr, "stgApplyPNNPNN %s\n", getInfoPtr(f.op)->name);
   #endif
   const int argc = 6;
   PtrOrLiteral argv[6];
@@ -24449,9 +24449,9 @@ DEFUN1(stgApplyPNNPNN, f) {
   f = pargv[2];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(2, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPNNPNN THUNK\n");
       #endif
@@ -24465,11 +24465,11 @@ DEFUN1(stgApplyPNNPNN, f) {
     argv[3] = pargv[1];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
-    int arity = f.op->infoPtr->funFields.arity;
+    int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
-    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    fprintf(stderr, "FUN %s arity %d\n", getInfoPtr(f.op)->name, getInfoPtr(f.op)->funFields.arity);
     #endif
     int excess = argc - arity;  // may be negative
 
@@ -24486,7 +24486,7 @@ DEFUN1(stgApplyPNNPNN, f) {
         pushargs(3, nargv);
         pushargs(2, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -24508,7 +24508,7 @@ DEFUN1(stgApplyPNNPNN, f) {
         pushargs(2, nargv);
         pushargs(2, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -24530,7 +24530,7 @@ DEFUN1(stgApplyPNNPNN, f) {
         pushargs(2, nargv);
         pushargs(1, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -24554,7 +24554,7 @@ DEFUN1(stgApplyPNNPNN, f) {
         pushargs(1, nargv);
         pushargs(1, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -24578,7 +24578,7 @@ DEFUN1(stgApplyPNNPNN, f) {
         // 0 non-pointers to push
         pushargs(1, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -24604,17 +24604,17 @@ DEFUN1(stgApplyPNNPNN, f) {
       pushargs(4, nargv);
       pushargs(2, pargv);
       // tail call the fun
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
     }
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPNNPNN FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                    f.op->infoPtr->layoutInfo.unboxedCount;
+      int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                    getInfoPtr(f.op)->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2, 4);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 2, 4);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -24634,12 +24634,12 @@ DEFUN1(stgApplyPNNPNN, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                  f.op->infoPtr->layoutInfo.unboxedCount;
+    int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                  getInfoPtr(f.op)->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    int arity = f.op->infoPtr->funFields.arity - argCount;
+    int arity = getInfoPtr(f.op)->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
@@ -24660,7 +24660,7 @@ DEFUN1(stgApplyPNNPNN, f) {
         pushargs(2, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -24684,7 +24684,7 @@ DEFUN1(stgApplyPNNPNN, f) {
         pushargs(2, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -24708,7 +24708,7 @@ DEFUN1(stgApplyPNNPNN, f) {
         pushargs(1, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -24734,7 +24734,7 @@ DEFUN1(stgApplyPNNPNN, f) {
         pushargs(1, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -24760,7 +24760,7 @@ DEFUN1(stgApplyPNNPNN, f) {
         pushargs(1, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -24788,7 +24788,7 @@ DEFUN1(stgApplyPNNPNN, f) {
       pushargs(2, pargv);
       pushargs(pappargc, &f.op->payload[fvCount+1]);
       // tail call the FUN
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
 
     // excess < 0, too few args
     } else {
@@ -24796,7 +24796,7 @@ DEFUN1(stgApplyPNNPNN, f) {
       fprintf(stderr, "stgApplyPNNPNN PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2 + pappargc, 4 + papnargc);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 2 + pappargc, 4 + papnargc);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -24839,7 +24839,7 @@ DEFUN1(stgApplyPNNPNN, f) {
 
 DEFUN1(stgApplyNPNPNN, f) {
   #ifdef DEBUGSTGAPPLY
-  fprintf(stderr, "stgApplyNPNPNN %s\n", f.op->infoPtr->name);
+  fprintf(stderr, "stgApplyNPNPNN %s\n", getInfoPtr(f.op)->name);
   #endif
   const int argc = 6;
   PtrOrLiteral argv[6];
@@ -24869,9 +24869,9 @@ DEFUN1(stgApplyNPNPNN, f) {
   f = pargv[2];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(2, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNPNPNN THUNK\n");
       #endif
@@ -24885,11 +24885,11 @@ DEFUN1(stgApplyNPNPNN, f) {
     argv[3] = pargv[1];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
-    int arity = f.op->infoPtr->funFields.arity;
+    int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
-    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    fprintf(stderr, "FUN %s arity %d\n", getInfoPtr(f.op)->name, getInfoPtr(f.op)->funFields.arity);
     #endif
     int excess = argc - arity;  // may be negative
 
@@ -24906,7 +24906,7 @@ DEFUN1(stgApplyNPNPNN, f) {
         pushargs(3, nargv);
         pushargs(2, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -24928,7 +24928,7 @@ DEFUN1(stgApplyNPNPNN, f) {
         pushargs(2, nargv);
         pushargs(2, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -24950,7 +24950,7 @@ DEFUN1(stgApplyNPNPNN, f) {
         pushargs(2, nargv);
         pushargs(1, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -24974,7 +24974,7 @@ DEFUN1(stgApplyNPNPNN, f) {
         pushargs(1, nargv);
         pushargs(1, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -24998,7 +24998,7 @@ DEFUN1(stgApplyNPNPNN, f) {
         pushargs(1, nargv);
         // 0 pointers to push
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[0]);
         // restore argv
@@ -25025,17 +25025,17 @@ DEFUN1(stgApplyNPNPNN, f) {
       pushargs(4, nargv);
       pushargs(2, pargv);
       // tail call the fun
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
     }
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNPNPNN FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                    f.op->infoPtr->layoutInfo.unboxedCount;
+      int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                    getInfoPtr(f.op)->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2, 4);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 2, 4);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -25055,12 +25055,12 @@ DEFUN1(stgApplyNPNPNN, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                  f.op->infoPtr->layoutInfo.unboxedCount;
+    int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                  getInfoPtr(f.op)->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    int arity = f.op->infoPtr->funFields.arity - argCount;
+    int arity = getInfoPtr(f.op)->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
@@ -25081,7 +25081,7 @@ DEFUN1(stgApplyNPNPNN, f) {
         pushargs(2, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -25105,7 +25105,7 @@ DEFUN1(stgApplyNPNPNN, f) {
         pushargs(2, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -25129,7 +25129,7 @@ DEFUN1(stgApplyNPNPNN, f) {
         pushargs(1, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -25155,7 +25155,7 @@ DEFUN1(stgApplyNPNPNN, f) {
         pushargs(1, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -25181,7 +25181,7 @@ DEFUN1(stgApplyNPNPNN, f) {
         // 0 pointers to push
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[0]);
         // restore argv
@@ -25210,7 +25210,7 @@ DEFUN1(stgApplyNPNPNN, f) {
       pushargs(2, pargv);
       pushargs(pappargc, &f.op->payload[fvCount+1]);
       // tail call the FUN
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
 
     // excess < 0, too few args
     } else {
@@ -25218,7 +25218,7 @@ DEFUN1(stgApplyNPNPNN, f) {
       fprintf(stderr, "stgApplyNPNPNN PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2 + pappargc, 4 + papnargc);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 2 + pappargc, 4 + papnargc);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -25261,7 +25261,7 @@ DEFUN1(stgApplyNPNPNN, f) {
 
 DEFUN1(stgApplyPPNPNN, f) {
   #ifdef DEBUGSTGAPPLY
-  fprintf(stderr, "stgApplyPPNPNN %s\n", f.op->infoPtr->name);
+  fprintf(stderr, "stgApplyPPNPNN %s\n", getInfoPtr(f.op)->name);
   #endif
   const int argc = 6;
   PtrOrLiteral argv[6];
@@ -25300,9 +25300,9 @@ DEFUN1(stgApplyPPNPNN, f) {
   f = pargv[3];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(3, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPPNPNN THUNK\n");
       #endif
@@ -25317,11 +25317,11 @@ DEFUN1(stgApplyPPNPNN, f) {
     argv[3] = pargv[2];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
-    int arity = f.op->infoPtr->funFields.arity;
+    int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
-    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    fprintf(stderr, "FUN %s arity %d\n", getInfoPtr(f.op)->name, getInfoPtr(f.op)->funFields.arity);
     #endif
     int excess = argc - arity;  // may be negative
 
@@ -25338,7 +25338,7 @@ DEFUN1(stgApplyPPNPNN, f) {
         pushargs(2, nargv);
         pushargs(3, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -25360,7 +25360,7 @@ DEFUN1(stgApplyPPNPNN, f) {
         pushargs(1, nargv);
         pushargs(3, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -25382,7 +25382,7 @@ DEFUN1(stgApplyPPNPNN, f) {
         pushargs(1, nargv);
         pushargs(2, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[2]);
         // restore argv
@@ -25406,7 +25406,7 @@ DEFUN1(stgApplyPPNPNN, f) {
         // 0 non-pointers to push
         pushargs(2, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[2]);
         // restore argv
@@ -25430,7 +25430,7 @@ DEFUN1(stgApplyPPNPNN, f) {
         // 0 non-pointers to push
         pushargs(1, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -25457,17 +25457,17 @@ DEFUN1(stgApplyPPNPNN, f) {
       pushargs(3, nargv);
       pushargs(3, pargv);
       // tail call the fun
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
     }
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPPNPNN FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                    f.op->infoPtr->layoutInfo.unboxedCount;
+      int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                    getInfoPtr(f.op)->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3, 3);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 3, 3);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -25487,12 +25487,12 @@ DEFUN1(stgApplyPPNPNN, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                  f.op->infoPtr->layoutInfo.unboxedCount;
+    int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                  getInfoPtr(f.op)->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    int arity = f.op->infoPtr->funFields.arity - argCount;
+    int arity = getInfoPtr(f.op)->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
@@ -25513,7 +25513,7 @@ DEFUN1(stgApplyPPNPNN, f) {
         pushargs(3, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -25537,7 +25537,7 @@ DEFUN1(stgApplyPPNPNN, f) {
         pushargs(3, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -25561,7 +25561,7 @@ DEFUN1(stgApplyPPNPNN, f) {
         pushargs(2, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[2]);
         // restore argv
@@ -25587,7 +25587,7 @@ DEFUN1(stgApplyPPNPNN, f) {
         pushargs(2, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[2]);
         // restore argv
@@ -25613,7 +25613,7 @@ DEFUN1(stgApplyPPNPNN, f) {
         pushargs(1, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -25642,7 +25642,7 @@ DEFUN1(stgApplyPPNPNN, f) {
       pushargs(3, pargv);
       pushargs(pappargc, &f.op->payload[fvCount+1]);
       // tail call the FUN
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
 
     // excess < 0, too few args
     } else {
@@ -25650,7 +25650,7 @@ DEFUN1(stgApplyPPNPNN, f) {
       fprintf(stderr, "stgApplyPPNPNN PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3 + pappargc, 3 + papnargc);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 3 + pappargc, 3 + papnargc);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -25693,7 +25693,7 @@ DEFUN1(stgApplyPPNPNN, f) {
 
 DEFUN1(stgApplyNNPPNN, f) {
   #ifdef DEBUGSTGAPPLY
-  fprintf(stderr, "stgApplyNNPPNN %s\n", f.op->infoPtr->name);
+  fprintf(stderr, "stgApplyNNPPNN %s\n", getInfoPtr(f.op)->name);
   #endif
   const int argc = 6;
   PtrOrLiteral argv[6];
@@ -25723,9 +25723,9 @@ DEFUN1(stgApplyNNPPNN, f) {
   f = pargv[2];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(2, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNNPPNN THUNK\n");
       #endif
@@ -25739,11 +25739,11 @@ DEFUN1(stgApplyNNPPNN, f) {
     argv[3] = pargv[1];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
-    int arity = f.op->infoPtr->funFields.arity;
+    int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
-    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    fprintf(stderr, "FUN %s arity %d\n", getInfoPtr(f.op)->name, getInfoPtr(f.op)->funFields.arity);
     #endif
     int excess = argc - arity;  // may be negative
 
@@ -25760,7 +25760,7 @@ DEFUN1(stgApplyNNPPNN, f) {
         pushargs(3, nargv);
         pushargs(2, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -25782,7 +25782,7 @@ DEFUN1(stgApplyNNPPNN, f) {
         pushargs(2, nargv);
         pushargs(2, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -25804,7 +25804,7 @@ DEFUN1(stgApplyNNPPNN, f) {
         pushargs(2, nargv);
         pushargs(1, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -25828,7 +25828,7 @@ DEFUN1(stgApplyNNPPNN, f) {
         pushargs(2, nargv);
         // 0 pointers to push
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[0]);
         // restore argv
@@ -25853,7 +25853,7 @@ DEFUN1(stgApplyNNPPNN, f) {
         pushargs(1, nargv);
         // 0 pointers to push
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[0]);
         // restore argv
@@ -25880,17 +25880,17 @@ DEFUN1(stgApplyNNPPNN, f) {
       pushargs(4, nargv);
       pushargs(2, pargv);
       // tail call the fun
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
     }
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNNPPNN FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                    f.op->infoPtr->layoutInfo.unboxedCount;
+      int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                    getInfoPtr(f.op)->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2, 4);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 2, 4);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -25910,12 +25910,12 @@ DEFUN1(stgApplyNNPPNN, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                  f.op->infoPtr->layoutInfo.unboxedCount;
+    int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                  getInfoPtr(f.op)->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    int arity = f.op->infoPtr->funFields.arity - argCount;
+    int arity = getInfoPtr(f.op)->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
@@ -25936,7 +25936,7 @@ DEFUN1(stgApplyNNPPNN, f) {
         pushargs(2, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -25960,7 +25960,7 @@ DEFUN1(stgApplyNNPPNN, f) {
         pushargs(2, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -25984,7 +25984,7 @@ DEFUN1(stgApplyNNPPNN, f) {
         pushargs(1, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -26010,7 +26010,7 @@ DEFUN1(stgApplyNNPPNN, f) {
         // 0 pointers to push
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[0]);
         // restore argv
@@ -26037,7 +26037,7 @@ DEFUN1(stgApplyNNPPNN, f) {
         // 0 pointers to push
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[0]);
         // restore argv
@@ -26066,7 +26066,7 @@ DEFUN1(stgApplyNNPPNN, f) {
       pushargs(2, pargv);
       pushargs(pappargc, &f.op->payload[fvCount+1]);
       // tail call the FUN
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
 
     // excess < 0, too few args
     } else {
@@ -26074,7 +26074,7 @@ DEFUN1(stgApplyNNPPNN, f) {
       fprintf(stderr, "stgApplyNNPPNN PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2 + pappargc, 4 + papnargc);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 2 + pappargc, 4 + papnargc);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -26117,7 +26117,7 @@ DEFUN1(stgApplyNNPPNN, f) {
 
 DEFUN1(stgApplyPNPPNN, f) {
   #ifdef DEBUGSTGAPPLY
-  fprintf(stderr, "stgApplyPNPPNN %s\n", f.op->infoPtr->name);
+  fprintf(stderr, "stgApplyPNPPNN %s\n", getInfoPtr(f.op)->name);
   #endif
   const int argc = 6;
   PtrOrLiteral argv[6];
@@ -26156,9 +26156,9 @@ DEFUN1(stgApplyPNPPNN, f) {
   f = pargv[3];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(3, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPNPPNN THUNK\n");
       #endif
@@ -26173,11 +26173,11 @@ DEFUN1(stgApplyPNPPNN, f) {
     argv[3] = pargv[2];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
-    int arity = f.op->infoPtr->funFields.arity;
+    int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
-    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    fprintf(stderr, "FUN %s arity %d\n", getInfoPtr(f.op)->name, getInfoPtr(f.op)->funFields.arity);
     #endif
     int excess = argc - arity;  // may be negative
 
@@ -26194,7 +26194,7 @@ DEFUN1(stgApplyPNPPNN, f) {
         pushargs(2, nargv);
         pushargs(3, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -26216,7 +26216,7 @@ DEFUN1(stgApplyPNPPNN, f) {
         pushargs(1, nargv);
         pushargs(3, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -26238,7 +26238,7 @@ DEFUN1(stgApplyPNPPNN, f) {
         pushargs(1, nargv);
         pushargs(2, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[2]);
         // restore argv
@@ -26262,7 +26262,7 @@ DEFUN1(stgApplyPNPPNN, f) {
         pushargs(1, nargv);
         pushargs(1, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -26287,7 +26287,7 @@ DEFUN1(stgApplyPNPPNN, f) {
         // 0 non-pointers to push
         pushargs(1, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -26314,17 +26314,17 @@ DEFUN1(stgApplyPNPPNN, f) {
       pushargs(3, nargv);
       pushargs(3, pargv);
       // tail call the fun
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
     }
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPNPPNN FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                    f.op->infoPtr->layoutInfo.unboxedCount;
+      int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                    getInfoPtr(f.op)->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3, 3);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 3, 3);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -26344,12 +26344,12 @@ DEFUN1(stgApplyPNPPNN, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                  f.op->infoPtr->layoutInfo.unboxedCount;
+    int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                  getInfoPtr(f.op)->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    int arity = f.op->infoPtr->funFields.arity - argCount;
+    int arity = getInfoPtr(f.op)->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
@@ -26370,7 +26370,7 @@ DEFUN1(stgApplyPNPPNN, f) {
         pushargs(3, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -26394,7 +26394,7 @@ DEFUN1(stgApplyPNPPNN, f) {
         pushargs(3, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -26418,7 +26418,7 @@ DEFUN1(stgApplyPNPPNN, f) {
         pushargs(2, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[2]);
         // restore argv
@@ -26444,7 +26444,7 @@ DEFUN1(stgApplyPNPPNN, f) {
         pushargs(1, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -26471,7 +26471,7 @@ DEFUN1(stgApplyPNPPNN, f) {
         pushargs(1, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -26500,7 +26500,7 @@ DEFUN1(stgApplyPNPPNN, f) {
       pushargs(3, pargv);
       pushargs(pappargc, &f.op->payload[fvCount+1]);
       // tail call the FUN
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
 
     // excess < 0, too few args
     } else {
@@ -26508,7 +26508,7 @@ DEFUN1(stgApplyPNPPNN, f) {
       fprintf(stderr, "stgApplyPNPPNN PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3 + pappargc, 3 + papnargc);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 3 + pappargc, 3 + papnargc);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -26551,7 +26551,7 @@ DEFUN1(stgApplyPNPPNN, f) {
 
 DEFUN1(stgApplyNPPPNN, f) {
   #ifdef DEBUGSTGAPPLY
-  fprintf(stderr, "stgApplyNPPPNN %s\n", f.op->infoPtr->name);
+  fprintf(stderr, "stgApplyNPPPNN %s\n", getInfoPtr(f.op)->name);
   #endif
   const int argc = 6;
   PtrOrLiteral argv[6];
@@ -26590,9 +26590,9 @@ DEFUN1(stgApplyNPPPNN, f) {
   f = pargv[3];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(3, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNPPPNN THUNK\n");
       #endif
@@ -26607,11 +26607,11 @@ DEFUN1(stgApplyNPPPNN, f) {
     argv[3] = pargv[2];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
-    int arity = f.op->infoPtr->funFields.arity;
+    int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
-    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    fprintf(stderr, "FUN %s arity %d\n", getInfoPtr(f.op)->name, getInfoPtr(f.op)->funFields.arity);
     #endif
     int excess = argc - arity;  // may be negative
 
@@ -26628,7 +26628,7 @@ DEFUN1(stgApplyNPPPNN, f) {
         pushargs(2, nargv);
         pushargs(3, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -26650,7 +26650,7 @@ DEFUN1(stgApplyNPPPNN, f) {
         pushargs(1, nargv);
         pushargs(3, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -26672,7 +26672,7 @@ DEFUN1(stgApplyNPPPNN, f) {
         pushargs(1, nargv);
         pushargs(2, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[2]);
         // restore argv
@@ -26696,7 +26696,7 @@ DEFUN1(stgApplyNPPPNN, f) {
         pushargs(1, nargv);
         pushargs(1, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -26721,7 +26721,7 @@ DEFUN1(stgApplyNPPPNN, f) {
         pushargs(1, nargv);
         // 0 pointers to push
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[0]);
         // restore argv
@@ -26749,17 +26749,17 @@ DEFUN1(stgApplyNPPPNN, f) {
       pushargs(3, nargv);
       pushargs(3, pargv);
       // tail call the fun
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
     }
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNPPPNN FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                    f.op->infoPtr->layoutInfo.unboxedCount;
+      int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                    getInfoPtr(f.op)->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3, 3);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 3, 3);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -26779,12 +26779,12 @@ DEFUN1(stgApplyNPPPNN, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                  f.op->infoPtr->layoutInfo.unboxedCount;
+    int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                  getInfoPtr(f.op)->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    int arity = f.op->infoPtr->funFields.arity - argCount;
+    int arity = getInfoPtr(f.op)->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
@@ -26805,7 +26805,7 @@ DEFUN1(stgApplyNPPPNN, f) {
         pushargs(3, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -26829,7 +26829,7 @@ DEFUN1(stgApplyNPPPNN, f) {
         pushargs(3, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -26853,7 +26853,7 @@ DEFUN1(stgApplyNPPPNN, f) {
         pushargs(2, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[2]);
         // restore argv
@@ -26879,7 +26879,7 @@ DEFUN1(stgApplyNPPPNN, f) {
         pushargs(1, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -26906,7 +26906,7 @@ DEFUN1(stgApplyNPPPNN, f) {
         // 0 pointers to push
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[0]);
         // restore argv
@@ -26936,7 +26936,7 @@ DEFUN1(stgApplyNPPPNN, f) {
       pushargs(3, pargv);
       pushargs(pappargc, &f.op->payload[fvCount+1]);
       // tail call the FUN
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
 
     // excess < 0, too few args
     } else {
@@ -26944,7 +26944,7 @@ DEFUN1(stgApplyNPPPNN, f) {
       fprintf(stderr, "stgApplyNPPPNN PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3 + pappargc, 3 + papnargc);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 3 + pappargc, 3 + papnargc);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -26987,7 +26987,7 @@ DEFUN1(stgApplyNPPPNN, f) {
 
 DEFUN1(stgApplyPPPPNN, f) {
   #ifdef DEBUGSTGAPPLY
-  fprintf(stderr, "stgApplyPPPPNN %s\n", f.op->infoPtr->name);
+  fprintf(stderr, "stgApplyPPPPNN %s\n", getInfoPtr(f.op)->name);
   #endif
   const int argc = 6;
   PtrOrLiteral argv[6];
@@ -27037,9 +27037,9 @@ DEFUN1(stgApplyPPPPNN, f) {
   f = pargv[4];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(4, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPPPPNN THUNK\n");
       #endif
@@ -27055,11 +27055,11 @@ DEFUN1(stgApplyPPPPNN, f) {
     argv[3] = pargv[3];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
-    int arity = f.op->infoPtr->funFields.arity;
+    int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
-    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    fprintf(stderr, "FUN %s arity %d\n", getInfoPtr(f.op)->name, getInfoPtr(f.op)->funFields.arity);
     #endif
     int excess = argc - arity;  // may be negative
 
@@ -27076,7 +27076,7 @@ DEFUN1(stgApplyPPPPNN, f) {
         pushargs(1, nargv);
         pushargs(4, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -27098,7 +27098,7 @@ DEFUN1(stgApplyPPPPNN, f) {
         // 0 non-pointers to push
         pushargs(4, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -27120,7 +27120,7 @@ DEFUN1(stgApplyPPPPNN, f) {
         // 0 non-pointers to push
         pushargs(3, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[3]);
         // restore argv
@@ -27144,7 +27144,7 @@ DEFUN1(stgApplyPPPPNN, f) {
         // 0 non-pointers to push
         pushargs(2, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[2]);
         // restore argv
@@ -27169,7 +27169,7 @@ DEFUN1(stgApplyPPPPNN, f) {
         // 0 non-pointers to push
         pushargs(1, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -27197,17 +27197,17 @@ DEFUN1(stgApplyPPPPNN, f) {
       pushargs(2, nargv);
       pushargs(4, pargv);
       // tail call the fun
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
     }
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPPPPNN FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                    f.op->infoPtr->layoutInfo.unboxedCount;
+      int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                    getInfoPtr(f.op)->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 4, 2);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 4, 2);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -27227,12 +27227,12 @@ DEFUN1(stgApplyPPPPNN, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                  f.op->infoPtr->layoutInfo.unboxedCount;
+    int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                  getInfoPtr(f.op)->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    int arity = f.op->infoPtr->funFields.arity - argCount;
+    int arity = getInfoPtr(f.op)->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
@@ -27253,7 +27253,7 @@ DEFUN1(stgApplyPPPPNN, f) {
         pushargs(4, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -27277,7 +27277,7 @@ DEFUN1(stgApplyPPPPNN, f) {
         pushargs(4, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -27301,7 +27301,7 @@ DEFUN1(stgApplyPPPPNN, f) {
         pushargs(3, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[3]);
         // restore argv
@@ -27327,7 +27327,7 @@ DEFUN1(stgApplyPPPPNN, f) {
         pushargs(2, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[2]);
         // restore argv
@@ -27354,7 +27354,7 @@ DEFUN1(stgApplyPPPPNN, f) {
         pushargs(1, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -27384,7 +27384,7 @@ DEFUN1(stgApplyPPPPNN, f) {
       pushargs(4, pargv);
       pushargs(pappargc, &f.op->payload[fvCount+1]);
       // tail call the FUN
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
 
     // excess < 0, too few args
     } else {
@@ -27392,7 +27392,7 @@ DEFUN1(stgApplyPPPPNN, f) {
       fprintf(stderr, "stgApplyPPPPNN PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 4 + pappargc, 2 + papnargc);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 4 + pappargc, 2 + papnargc);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -27435,7 +27435,7 @@ DEFUN1(stgApplyPPPPNN, f) {
 
 DEFUN1(stgApplyNNNNPN, f) {
   #ifdef DEBUGSTGAPPLY
-  fprintf(stderr, "stgApplyNNNNPN %s\n", f.op->infoPtr->name);
+  fprintf(stderr, "stgApplyNNNNPN %s\n", getInfoPtr(f.op)->name);
   #endif
   const int argc = 6;
   PtrOrLiteral argv[6];
@@ -27458,9 +27458,9 @@ DEFUN1(stgApplyNNNNPN, f) {
   f = pargv[1];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(1, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNNNNPN THUNK\n");
       #endif
@@ -27473,11 +27473,11 @@ DEFUN1(stgApplyNNNNPN, f) {
     argv[4] = pargv[0];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
-    int arity = f.op->infoPtr->funFields.arity;
+    int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
-    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    fprintf(stderr, "FUN %s arity %d\n", getInfoPtr(f.op)->name, getInfoPtr(f.op)->funFields.arity);
     #endif
     int excess = argc - arity;  // may be negative
 
@@ -27494,7 +27494,7 @@ DEFUN1(stgApplyNNNNPN, f) {
         pushargs(4, nargv);
         pushargs(1, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -27516,7 +27516,7 @@ DEFUN1(stgApplyNNNNPN, f) {
         pushargs(4, nargv);
         // 0 pointers to push
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[0]);
         // restore argv
@@ -27540,7 +27540,7 @@ DEFUN1(stgApplyNNNNPN, f) {
         pushargs(3, nargv);
         // 0 pointers to push
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[0]);
         // restore argv
@@ -27564,7 +27564,7 @@ DEFUN1(stgApplyNNNNPN, f) {
         pushargs(2, nargv);
         // 0 pointers to push
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[0]);
         // restore argv
@@ -27588,7 +27588,7 @@ DEFUN1(stgApplyNNNNPN, f) {
         pushargs(1, nargv);
         // 0 pointers to push
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[0]);
         // restore argv
@@ -27614,17 +27614,17 @@ DEFUN1(stgApplyNNNNPN, f) {
       pushargs(5, nargv);
       pushargs(1, pargv);
       // tail call the fun
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
     }
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNNNNPN FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                    f.op->infoPtr->layoutInfo.unboxedCount;
+      int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                    getInfoPtr(f.op)->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 1, 5);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 1, 5);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -27644,12 +27644,12 @@ DEFUN1(stgApplyNNNNPN, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                  f.op->infoPtr->layoutInfo.unboxedCount;
+    int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                  getInfoPtr(f.op)->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    int arity = f.op->infoPtr->funFields.arity - argCount;
+    int arity = getInfoPtr(f.op)->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
@@ -27670,7 +27670,7 @@ DEFUN1(stgApplyNNNNPN, f) {
         pushargs(1, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -27694,7 +27694,7 @@ DEFUN1(stgApplyNNNNPN, f) {
         // 0 pointers to push
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[0]);
         // restore argv
@@ -27720,7 +27720,7 @@ DEFUN1(stgApplyNNNNPN, f) {
         // 0 pointers to push
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[0]);
         // restore argv
@@ -27746,7 +27746,7 @@ DEFUN1(stgApplyNNNNPN, f) {
         // 0 pointers to push
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[0]);
         // restore argv
@@ -27772,7 +27772,7 @@ DEFUN1(stgApplyNNNNPN, f) {
         // 0 pointers to push
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[0]);
         // restore argv
@@ -27800,7 +27800,7 @@ DEFUN1(stgApplyNNNNPN, f) {
       pushargs(1, pargv);
       pushargs(pappargc, &f.op->payload[fvCount+1]);
       // tail call the FUN
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
 
     // excess < 0, too few args
     } else {
@@ -27808,7 +27808,7 @@ DEFUN1(stgApplyNNNNPN, f) {
       fprintf(stderr, "stgApplyNNNNPN PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 1 + pappargc, 5 + papnargc);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 1 + pappargc, 5 + papnargc);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -27851,7 +27851,7 @@ DEFUN1(stgApplyNNNNPN, f) {
 
 DEFUN1(stgApplyPNNNPN, f) {
   #ifdef DEBUGSTGAPPLY
-  fprintf(stderr, "stgApplyPNNNPN %s\n", f.op->infoPtr->name);
+  fprintf(stderr, "stgApplyPNNNPN %s\n", getInfoPtr(f.op)->name);
   #endif
   const int argc = 6;
   PtrOrLiteral argv[6];
@@ -27881,9 +27881,9 @@ DEFUN1(stgApplyPNNNPN, f) {
   f = pargv[2];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(2, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPNNNPN THUNK\n");
       #endif
@@ -27897,11 +27897,11 @@ DEFUN1(stgApplyPNNNPN, f) {
     argv[4] = pargv[1];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
-    int arity = f.op->infoPtr->funFields.arity;
+    int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
-    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    fprintf(stderr, "FUN %s arity %d\n", getInfoPtr(f.op)->name, getInfoPtr(f.op)->funFields.arity);
     #endif
     int excess = argc - arity;  // may be negative
 
@@ -27918,7 +27918,7 @@ DEFUN1(stgApplyPNNNPN, f) {
         pushargs(3, nargv);
         pushargs(2, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -27940,7 +27940,7 @@ DEFUN1(stgApplyPNNNPN, f) {
         pushargs(3, nargv);
         pushargs(1, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -27964,7 +27964,7 @@ DEFUN1(stgApplyPNNNPN, f) {
         pushargs(2, nargv);
         pushargs(1, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -27988,7 +27988,7 @@ DEFUN1(stgApplyPNNNPN, f) {
         pushargs(1, nargv);
         pushargs(1, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -28012,7 +28012,7 @@ DEFUN1(stgApplyPNNNPN, f) {
         // 0 non-pointers to push
         pushargs(1, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -28038,17 +28038,17 @@ DEFUN1(stgApplyPNNNPN, f) {
       pushargs(4, nargv);
       pushargs(2, pargv);
       // tail call the fun
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
     }
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPNNNPN FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                    f.op->infoPtr->layoutInfo.unboxedCount;
+      int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                    getInfoPtr(f.op)->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2, 4);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 2, 4);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -28068,12 +28068,12 @@ DEFUN1(stgApplyPNNNPN, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                  f.op->infoPtr->layoutInfo.unboxedCount;
+    int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                  getInfoPtr(f.op)->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    int arity = f.op->infoPtr->funFields.arity - argCount;
+    int arity = getInfoPtr(f.op)->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
@@ -28094,7 +28094,7 @@ DEFUN1(stgApplyPNNNPN, f) {
         pushargs(2, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -28118,7 +28118,7 @@ DEFUN1(stgApplyPNNNPN, f) {
         pushargs(1, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -28144,7 +28144,7 @@ DEFUN1(stgApplyPNNNPN, f) {
         pushargs(1, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -28170,7 +28170,7 @@ DEFUN1(stgApplyPNNNPN, f) {
         pushargs(1, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -28196,7 +28196,7 @@ DEFUN1(stgApplyPNNNPN, f) {
         pushargs(1, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -28224,7 +28224,7 @@ DEFUN1(stgApplyPNNNPN, f) {
       pushargs(2, pargv);
       pushargs(pappargc, &f.op->payload[fvCount+1]);
       // tail call the FUN
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
 
     // excess < 0, too few args
     } else {
@@ -28232,7 +28232,7 @@ DEFUN1(stgApplyPNNNPN, f) {
       fprintf(stderr, "stgApplyPNNNPN PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2 + pappargc, 4 + papnargc);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 2 + pappargc, 4 + papnargc);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -28275,7 +28275,7 @@ DEFUN1(stgApplyPNNNPN, f) {
 
 DEFUN1(stgApplyNPNNPN, f) {
   #ifdef DEBUGSTGAPPLY
-  fprintf(stderr, "stgApplyNPNNPN %s\n", f.op->infoPtr->name);
+  fprintf(stderr, "stgApplyNPNNPN %s\n", getInfoPtr(f.op)->name);
   #endif
   const int argc = 6;
   PtrOrLiteral argv[6];
@@ -28305,9 +28305,9 @@ DEFUN1(stgApplyNPNNPN, f) {
   f = pargv[2];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(2, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNPNNPN THUNK\n");
       #endif
@@ -28321,11 +28321,11 @@ DEFUN1(stgApplyNPNNPN, f) {
     argv[4] = pargv[1];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
-    int arity = f.op->infoPtr->funFields.arity;
+    int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
-    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    fprintf(stderr, "FUN %s arity %d\n", getInfoPtr(f.op)->name, getInfoPtr(f.op)->funFields.arity);
     #endif
     int excess = argc - arity;  // may be negative
 
@@ -28342,7 +28342,7 @@ DEFUN1(stgApplyNPNNPN, f) {
         pushargs(3, nargv);
         pushargs(2, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -28364,7 +28364,7 @@ DEFUN1(stgApplyNPNNPN, f) {
         pushargs(3, nargv);
         pushargs(1, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -28388,7 +28388,7 @@ DEFUN1(stgApplyNPNNPN, f) {
         pushargs(2, nargv);
         pushargs(1, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -28412,7 +28412,7 @@ DEFUN1(stgApplyNPNNPN, f) {
         pushargs(1, nargv);
         pushargs(1, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -28436,7 +28436,7 @@ DEFUN1(stgApplyNPNNPN, f) {
         pushargs(1, nargv);
         // 0 pointers to push
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[0]);
         // restore argv
@@ -28463,17 +28463,17 @@ DEFUN1(stgApplyNPNNPN, f) {
       pushargs(4, nargv);
       pushargs(2, pargv);
       // tail call the fun
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
     }
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNPNNPN FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                    f.op->infoPtr->layoutInfo.unboxedCount;
+      int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                    getInfoPtr(f.op)->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2, 4);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 2, 4);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -28493,12 +28493,12 @@ DEFUN1(stgApplyNPNNPN, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                  f.op->infoPtr->layoutInfo.unboxedCount;
+    int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                  getInfoPtr(f.op)->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    int arity = f.op->infoPtr->funFields.arity - argCount;
+    int arity = getInfoPtr(f.op)->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
@@ -28519,7 +28519,7 @@ DEFUN1(stgApplyNPNNPN, f) {
         pushargs(2, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -28543,7 +28543,7 @@ DEFUN1(stgApplyNPNNPN, f) {
         pushargs(1, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -28569,7 +28569,7 @@ DEFUN1(stgApplyNPNNPN, f) {
         pushargs(1, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -28595,7 +28595,7 @@ DEFUN1(stgApplyNPNNPN, f) {
         pushargs(1, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -28621,7 +28621,7 @@ DEFUN1(stgApplyNPNNPN, f) {
         // 0 pointers to push
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[0]);
         // restore argv
@@ -28650,7 +28650,7 @@ DEFUN1(stgApplyNPNNPN, f) {
       pushargs(2, pargv);
       pushargs(pappargc, &f.op->payload[fvCount+1]);
       // tail call the FUN
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
 
     // excess < 0, too few args
     } else {
@@ -28658,7 +28658,7 @@ DEFUN1(stgApplyNPNNPN, f) {
       fprintf(stderr, "stgApplyNPNNPN PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2 + pappargc, 4 + papnargc);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 2 + pappargc, 4 + papnargc);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -28701,7 +28701,7 @@ DEFUN1(stgApplyNPNNPN, f) {
 
 DEFUN1(stgApplyPPNNPN, f) {
   #ifdef DEBUGSTGAPPLY
-  fprintf(stderr, "stgApplyPPNNPN %s\n", f.op->infoPtr->name);
+  fprintf(stderr, "stgApplyPPNNPN %s\n", getInfoPtr(f.op)->name);
   #endif
   const int argc = 6;
   PtrOrLiteral argv[6];
@@ -28740,9 +28740,9 @@ DEFUN1(stgApplyPPNNPN, f) {
   f = pargv[3];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(3, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPPNNPN THUNK\n");
       #endif
@@ -28757,11 +28757,11 @@ DEFUN1(stgApplyPPNNPN, f) {
     argv[4] = pargv[2];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
-    int arity = f.op->infoPtr->funFields.arity;
+    int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
-    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    fprintf(stderr, "FUN %s arity %d\n", getInfoPtr(f.op)->name, getInfoPtr(f.op)->funFields.arity);
     #endif
     int excess = argc - arity;  // may be negative
 
@@ -28778,7 +28778,7 @@ DEFUN1(stgApplyPPNNPN, f) {
         pushargs(2, nargv);
         pushargs(3, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -28800,7 +28800,7 @@ DEFUN1(stgApplyPPNNPN, f) {
         pushargs(2, nargv);
         pushargs(2, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[2]);
         // restore argv
@@ -28824,7 +28824,7 @@ DEFUN1(stgApplyPPNNPN, f) {
         pushargs(1, nargv);
         pushargs(2, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[2]);
         // restore argv
@@ -28848,7 +28848,7 @@ DEFUN1(stgApplyPPNNPN, f) {
         // 0 non-pointers to push
         pushargs(2, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[2]);
         // restore argv
@@ -28872,7 +28872,7 @@ DEFUN1(stgApplyPPNNPN, f) {
         // 0 non-pointers to push
         pushargs(1, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -28899,17 +28899,17 @@ DEFUN1(stgApplyPPNNPN, f) {
       pushargs(3, nargv);
       pushargs(3, pargv);
       // tail call the fun
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
     }
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPPNNPN FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                    f.op->infoPtr->layoutInfo.unboxedCount;
+      int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                    getInfoPtr(f.op)->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3, 3);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 3, 3);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -28929,12 +28929,12 @@ DEFUN1(stgApplyPPNNPN, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                  f.op->infoPtr->layoutInfo.unboxedCount;
+    int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                  getInfoPtr(f.op)->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    int arity = f.op->infoPtr->funFields.arity - argCount;
+    int arity = getInfoPtr(f.op)->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
@@ -28955,7 +28955,7 @@ DEFUN1(stgApplyPPNNPN, f) {
         pushargs(3, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -28979,7 +28979,7 @@ DEFUN1(stgApplyPPNNPN, f) {
         pushargs(2, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[2]);
         // restore argv
@@ -29005,7 +29005,7 @@ DEFUN1(stgApplyPPNNPN, f) {
         pushargs(2, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[2]);
         // restore argv
@@ -29031,7 +29031,7 @@ DEFUN1(stgApplyPPNNPN, f) {
         pushargs(2, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[2]);
         // restore argv
@@ -29057,7 +29057,7 @@ DEFUN1(stgApplyPPNNPN, f) {
         pushargs(1, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -29086,7 +29086,7 @@ DEFUN1(stgApplyPPNNPN, f) {
       pushargs(3, pargv);
       pushargs(pappargc, &f.op->payload[fvCount+1]);
       // tail call the FUN
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
 
     // excess < 0, too few args
     } else {
@@ -29094,7 +29094,7 @@ DEFUN1(stgApplyPPNNPN, f) {
       fprintf(stderr, "stgApplyPPNNPN PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3 + pappargc, 3 + papnargc);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 3 + pappargc, 3 + papnargc);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -29137,7 +29137,7 @@ DEFUN1(stgApplyPPNNPN, f) {
 
 DEFUN1(stgApplyNNPNPN, f) {
   #ifdef DEBUGSTGAPPLY
-  fprintf(stderr, "stgApplyNNPNPN %s\n", f.op->infoPtr->name);
+  fprintf(stderr, "stgApplyNNPNPN %s\n", getInfoPtr(f.op)->name);
   #endif
   const int argc = 6;
   PtrOrLiteral argv[6];
@@ -29167,9 +29167,9 @@ DEFUN1(stgApplyNNPNPN, f) {
   f = pargv[2];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(2, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNNPNPN THUNK\n");
       #endif
@@ -29183,11 +29183,11 @@ DEFUN1(stgApplyNNPNPN, f) {
     argv[4] = pargv[1];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
-    int arity = f.op->infoPtr->funFields.arity;
+    int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
-    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    fprintf(stderr, "FUN %s arity %d\n", getInfoPtr(f.op)->name, getInfoPtr(f.op)->funFields.arity);
     #endif
     int excess = argc - arity;  // may be negative
 
@@ -29204,7 +29204,7 @@ DEFUN1(stgApplyNNPNPN, f) {
         pushargs(3, nargv);
         pushargs(2, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -29226,7 +29226,7 @@ DEFUN1(stgApplyNNPNPN, f) {
         pushargs(3, nargv);
         pushargs(1, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -29250,7 +29250,7 @@ DEFUN1(stgApplyNNPNPN, f) {
         pushargs(2, nargv);
         pushargs(1, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -29274,7 +29274,7 @@ DEFUN1(stgApplyNNPNPN, f) {
         pushargs(2, nargv);
         // 0 pointers to push
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[0]);
         // restore argv
@@ -29299,7 +29299,7 @@ DEFUN1(stgApplyNNPNPN, f) {
         pushargs(1, nargv);
         // 0 pointers to push
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[0]);
         // restore argv
@@ -29326,17 +29326,17 @@ DEFUN1(stgApplyNNPNPN, f) {
       pushargs(4, nargv);
       pushargs(2, pargv);
       // tail call the fun
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
     }
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNNPNPN FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                    f.op->infoPtr->layoutInfo.unboxedCount;
+      int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                    getInfoPtr(f.op)->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2, 4);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 2, 4);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -29356,12 +29356,12 @@ DEFUN1(stgApplyNNPNPN, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                  f.op->infoPtr->layoutInfo.unboxedCount;
+    int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                  getInfoPtr(f.op)->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    int arity = f.op->infoPtr->funFields.arity - argCount;
+    int arity = getInfoPtr(f.op)->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
@@ -29382,7 +29382,7 @@ DEFUN1(stgApplyNNPNPN, f) {
         pushargs(2, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -29406,7 +29406,7 @@ DEFUN1(stgApplyNNPNPN, f) {
         pushargs(1, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -29432,7 +29432,7 @@ DEFUN1(stgApplyNNPNPN, f) {
         pushargs(1, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -29458,7 +29458,7 @@ DEFUN1(stgApplyNNPNPN, f) {
         // 0 pointers to push
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[0]);
         // restore argv
@@ -29485,7 +29485,7 @@ DEFUN1(stgApplyNNPNPN, f) {
         // 0 pointers to push
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[0]);
         // restore argv
@@ -29514,7 +29514,7 @@ DEFUN1(stgApplyNNPNPN, f) {
       pushargs(2, pargv);
       pushargs(pappargc, &f.op->payload[fvCount+1]);
       // tail call the FUN
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
 
     // excess < 0, too few args
     } else {
@@ -29522,7 +29522,7 @@ DEFUN1(stgApplyNNPNPN, f) {
       fprintf(stderr, "stgApplyNNPNPN PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2 + pappargc, 4 + papnargc);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 2 + pappargc, 4 + papnargc);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -29565,7 +29565,7 @@ DEFUN1(stgApplyNNPNPN, f) {
 
 DEFUN1(stgApplyPNPNPN, f) {
   #ifdef DEBUGSTGAPPLY
-  fprintf(stderr, "stgApplyPNPNPN %s\n", f.op->infoPtr->name);
+  fprintf(stderr, "stgApplyPNPNPN %s\n", getInfoPtr(f.op)->name);
   #endif
   const int argc = 6;
   PtrOrLiteral argv[6];
@@ -29604,9 +29604,9 @@ DEFUN1(stgApplyPNPNPN, f) {
   f = pargv[3];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(3, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPNPNPN THUNK\n");
       #endif
@@ -29621,11 +29621,11 @@ DEFUN1(stgApplyPNPNPN, f) {
     argv[4] = pargv[2];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
-    int arity = f.op->infoPtr->funFields.arity;
+    int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
-    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    fprintf(stderr, "FUN %s arity %d\n", getInfoPtr(f.op)->name, getInfoPtr(f.op)->funFields.arity);
     #endif
     int excess = argc - arity;  // may be negative
 
@@ -29642,7 +29642,7 @@ DEFUN1(stgApplyPNPNPN, f) {
         pushargs(2, nargv);
         pushargs(3, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -29664,7 +29664,7 @@ DEFUN1(stgApplyPNPNPN, f) {
         pushargs(2, nargv);
         pushargs(2, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[2]);
         // restore argv
@@ -29688,7 +29688,7 @@ DEFUN1(stgApplyPNPNPN, f) {
         pushargs(1, nargv);
         pushargs(2, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[2]);
         // restore argv
@@ -29712,7 +29712,7 @@ DEFUN1(stgApplyPNPNPN, f) {
         pushargs(1, nargv);
         pushargs(1, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -29737,7 +29737,7 @@ DEFUN1(stgApplyPNPNPN, f) {
         // 0 non-pointers to push
         pushargs(1, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -29764,17 +29764,17 @@ DEFUN1(stgApplyPNPNPN, f) {
       pushargs(3, nargv);
       pushargs(3, pargv);
       // tail call the fun
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
     }
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPNPNPN FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                    f.op->infoPtr->layoutInfo.unboxedCount;
+      int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                    getInfoPtr(f.op)->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3, 3);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 3, 3);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -29794,12 +29794,12 @@ DEFUN1(stgApplyPNPNPN, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                  f.op->infoPtr->layoutInfo.unboxedCount;
+    int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                  getInfoPtr(f.op)->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    int arity = f.op->infoPtr->funFields.arity - argCount;
+    int arity = getInfoPtr(f.op)->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
@@ -29820,7 +29820,7 @@ DEFUN1(stgApplyPNPNPN, f) {
         pushargs(3, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -29844,7 +29844,7 @@ DEFUN1(stgApplyPNPNPN, f) {
         pushargs(2, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[2]);
         // restore argv
@@ -29870,7 +29870,7 @@ DEFUN1(stgApplyPNPNPN, f) {
         pushargs(2, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[2]);
         // restore argv
@@ -29896,7 +29896,7 @@ DEFUN1(stgApplyPNPNPN, f) {
         pushargs(1, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -29923,7 +29923,7 @@ DEFUN1(stgApplyPNPNPN, f) {
         pushargs(1, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -29952,7 +29952,7 @@ DEFUN1(stgApplyPNPNPN, f) {
       pushargs(3, pargv);
       pushargs(pappargc, &f.op->payload[fvCount+1]);
       // tail call the FUN
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
 
     // excess < 0, too few args
     } else {
@@ -29960,7 +29960,7 @@ DEFUN1(stgApplyPNPNPN, f) {
       fprintf(stderr, "stgApplyPNPNPN PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3 + pappargc, 3 + papnargc);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 3 + pappargc, 3 + papnargc);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -30003,7 +30003,7 @@ DEFUN1(stgApplyPNPNPN, f) {
 
 DEFUN1(stgApplyNPPNPN, f) {
   #ifdef DEBUGSTGAPPLY
-  fprintf(stderr, "stgApplyNPPNPN %s\n", f.op->infoPtr->name);
+  fprintf(stderr, "stgApplyNPPNPN %s\n", getInfoPtr(f.op)->name);
   #endif
   const int argc = 6;
   PtrOrLiteral argv[6];
@@ -30042,9 +30042,9 @@ DEFUN1(stgApplyNPPNPN, f) {
   f = pargv[3];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(3, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNPPNPN THUNK\n");
       #endif
@@ -30059,11 +30059,11 @@ DEFUN1(stgApplyNPPNPN, f) {
     argv[4] = pargv[2];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
-    int arity = f.op->infoPtr->funFields.arity;
+    int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
-    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    fprintf(stderr, "FUN %s arity %d\n", getInfoPtr(f.op)->name, getInfoPtr(f.op)->funFields.arity);
     #endif
     int excess = argc - arity;  // may be negative
 
@@ -30080,7 +30080,7 @@ DEFUN1(stgApplyNPPNPN, f) {
         pushargs(2, nargv);
         pushargs(3, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -30102,7 +30102,7 @@ DEFUN1(stgApplyNPPNPN, f) {
         pushargs(2, nargv);
         pushargs(2, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[2]);
         // restore argv
@@ -30126,7 +30126,7 @@ DEFUN1(stgApplyNPPNPN, f) {
         pushargs(1, nargv);
         pushargs(2, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[2]);
         // restore argv
@@ -30150,7 +30150,7 @@ DEFUN1(stgApplyNPPNPN, f) {
         pushargs(1, nargv);
         pushargs(1, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -30175,7 +30175,7 @@ DEFUN1(stgApplyNPPNPN, f) {
         pushargs(1, nargv);
         // 0 pointers to push
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[0]);
         // restore argv
@@ -30203,17 +30203,17 @@ DEFUN1(stgApplyNPPNPN, f) {
       pushargs(3, nargv);
       pushargs(3, pargv);
       // tail call the fun
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
     }
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNPPNPN FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                    f.op->infoPtr->layoutInfo.unboxedCount;
+      int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                    getInfoPtr(f.op)->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3, 3);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 3, 3);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -30233,12 +30233,12 @@ DEFUN1(stgApplyNPPNPN, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                  f.op->infoPtr->layoutInfo.unboxedCount;
+    int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                  getInfoPtr(f.op)->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    int arity = f.op->infoPtr->funFields.arity - argCount;
+    int arity = getInfoPtr(f.op)->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
@@ -30259,7 +30259,7 @@ DEFUN1(stgApplyNPPNPN, f) {
         pushargs(3, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -30283,7 +30283,7 @@ DEFUN1(stgApplyNPPNPN, f) {
         pushargs(2, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[2]);
         // restore argv
@@ -30309,7 +30309,7 @@ DEFUN1(stgApplyNPPNPN, f) {
         pushargs(2, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[2]);
         // restore argv
@@ -30335,7 +30335,7 @@ DEFUN1(stgApplyNPPNPN, f) {
         pushargs(1, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -30362,7 +30362,7 @@ DEFUN1(stgApplyNPPNPN, f) {
         // 0 pointers to push
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[0]);
         // restore argv
@@ -30392,7 +30392,7 @@ DEFUN1(stgApplyNPPNPN, f) {
       pushargs(3, pargv);
       pushargs(pappargc, &f.op->payload[fvCount+1]);
       // tail call the FUN
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
 
     // excess < 0, too few args
     } else {
@@ -30400,7 +30400,7 @@ DEFUN1(stgApplyNPPNPN, f) {
       fprintf(stderr, "stgApplyNPPNPN PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3 + pappargc, 3 + papnargc);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 3 + pappargc, 3 + papnargc);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -30443,7 +30443,7 @@ DEFUN1(stgApplyNPPNPN, f) {
 
 DEFUN1(stgApplyPPPNPN, f) {
   #ifdef DEBUGSTGAPPLY
-  fprintf(stderr, "stgApplyPPPNPN %s\n", f.op->infoPtr->name);
+  fprintf(stderr, "stgApplyPPPNPN %s\n", getInfoPtr(f.op)->name);
   #endif
   const int argc = 6;
   PtrOrLiteral argv[6];
@@ -30493,9 +30493,9 @@ DEFUN1(stgApplyPPPNPN, f) {
   f = pargv[4];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(4, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPPPNPN THUNK\n");
       #endif
@@ -30511,11 +30511,11 @@ DEFUN1(stgApplyPPPNPN, f) {
     argv[4] = pargv[3];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
-    int arity = f.op->infoPtr->funFields.arity;
+    int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
-    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    fprintf(stderr, "FUN %s arity %d\n", getInfoPtr(f.op)->name, getInfoPtr(f.op)->funFields.arity);
     #endif
     int excess = argc - arity;  // may be negative
 
@@ -30532,7 +30532,7 @@ DEFUN1(stgApplyPPPNPN, f) {
         pushargs(1, nargv);
         pushargs(4, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -30554,7 +30554,7 @@ DEFUN1(stgApplyPPPNPN, f) {
         pushargs(1, nargv);
         pushargs(3, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[3]);
         // restore argv
@@ -30578,7 +30578,7 @@ DEFUN1(stgApplyPPPNPN, f) {
         // 0 non-pointers to push
         pushargs(3, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[3]);
         // restore argv
@@ -30602,7 +30602,7 @@ DEFUN1(stgApplyPPPNPN, f) {
         // 0 non-pointers to push
         pushargs(2, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[2]);
         // restore argv
@@ -30627,7 +30627,7 @@ DEFUN1(stgApplyPPPNPN, f) {
         // 0 non-pointers to push
         pushargs(1, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -30655,17 +30655,17 @@ DEFUN1(stgApplyPPPNPN, f) {
       pushargs(2, nargv);
       pushargs(4, pargv);
       // tail call the fun
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
     }
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPPPNPN FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                    f.op->infoPtr->layoutInfo.unboxedCount;
+      int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                    getInfoPtr(f.op)->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 4, 2);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 4, 2);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -30685,12 +30685,12 @@ DEFUN1(stgApplyPPPNPN, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                  f.op->infoPtr->layoutInfo.unboxedCount;
+    int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                  getInfoPtr(f.op)->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    int arity = f.op->infoPtr->funFields.arity - argCount;
+    int arity = getInfoPtr(f.op)->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
@@ -30711,7 +30711,7 @@ DEFUN1(stgApplyPPPNPN, f) {
         pushargs(4, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -30735,7 +30735,7 @@ DEFUN1(stgApplyPPPNPN, f) {
         pushargs(3, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[3]);
         // restore argv
@@ -30761,7 +30761,7 @@ DEFUN1(stgApplyPPPNPN, f) {
         pushargs(3, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[3]);
         // restore argv
@@ -30787,7 +30787,7 @@ DEFUN1(stgApplyPPPNPN, f) {
         pushargs(2, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[2]);
         // restore argv
@@ -30814,7 +30814,7 @@ DEFUN1(stgApplyPPPNPN, f) {
         pushargs(1, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -30844,7 +30844,7 @@ DEFUN1(stgApplyPPPNPN, f) {
       pushargs(4, pargv);
       pushargs(pappargc, &f.op->payload[fvCount+1]);
       // tail call the FUN
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
 
     // excess < 0, too few args
     } else {
@@ -30852,7 +30852,7 @@ DEFUN1(stgApplyPPPNPN, f) {
       fprintf(stderr, "stgApplyPPPNPN PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 4 + pappargc, 2 + papnargc);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 4 + pappargc, 2 + papnargc);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -30895,7 +30895,7 @@ DEFUN1(stgApplyPPPNPN, f) {
 
 DEFUN1(stgApplyNNNPPN, f) {
   #ifdef DEBUGSTGAPPLY
-  fprintf(stderr, "stgApplyNNNPPN %s\n", f.op->infoPtr->name);
+  fprintf(stderr, "stgApplyNNNPPN %s\n", getInfoPtr(f.op)->name);
   #endif
   const int argc = 6;
   PtrOrLiteral argv[6];
@@ -30925,9 +30925,9 @@ DEFUN1(stgApplyNNNPPN, f) {
   f = pargv[2];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(2, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNNNPPN THUNK\n");
       #endif
@@ -30941,11 +30941,11 @@ DEFUN1(stgApplyNNNPPN, f) {
     argv[4] = pargv[1];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
-    int arity = f.op->infoPtr->funFields.arity;
+    int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
-    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    fprintf(stderr, "FUN %s arity %d\n", getInfoPtr(f.op)->name, getInfoPtr(f.op)->funFields.arity);
     #endif
     int excess = argc - arity;  // may be negative
 
@@ -30962,7 +30962,7 @@ DEFUN1(stgApplyNNNPPN, f) {
         pushargs(3, nargv);
         pushargs(2, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -30984,7 +30984,7 @@ DEFUN1(stgApplyNNNPPN, f) {
         pushargs(3, nargv);
         pushargs(1, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -31008,7 +31008,7 @@ DEFUN1(stgApplyNNNPPN, f) {
         pushargs(3, nargv);
         // 0 pointers to push
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[0]);
         // restore argv
@@ -31033,7 +31033,7 @@ DEFUN1(stgApplyNNNPPN, f) {
         pushargs(2, nargv);
         // 0 pointers to push
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[0]);
         // restore argv
@@ -31058,7 +31058,7 @@ DEFUN1(stgApplyNNNPPN, f) {
         pushargs(1, nargv);
         // 0 pointers to push
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[0]);
         // restore argv
@@ -31085,17 +31085,17 @@ DEFUN1(stgApplyNNNPPN, f) {
       pushargs(4, nargv);
       pushargs(2, pargv);
       // tail call the fun
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
     }
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNNNPPN FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                    f.op->infoPtr->layoutInfo.unboxedCount;
+      int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                    getInfoPtr(f.op)->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2, 4);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 2, 4);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -31115,12 +31115,12 @@ DEFUN1(stgApplyNNNPPN, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                  f.op->infoPtr->layoutInfo.unboxedCount;
+    int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                  getInfoPtr(f.op)->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    int arity = f.op->infoPtr->funFields.arity - argCount;
+    int arity = getInfoPtr(f.op)->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
@@ -31141,7 +31141,7 @@ DEFUN1(stgApplyNNNPPN, f) {
         pushargs(2, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -31165,7 +31165,7 @@ DEFUN1(stgApplyNNNPPN, f) {
         pushargs(1, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -31191,7 +31191,7 @@ DEFUN1(stgApplyNNNPPN, f) {
         // 0 pointers to push
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[0]);
         // restore argv
@@ -31218,7 +31218,7 @@ DEFUN1(stgApplyNNNPPN, f) {
         // 0 pointers to push
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[0]);
         // restore argv
@@ -31245,7 +31245,7 @@ DEFUN1(stgApplyNNNPPN, f) {
         // 0 pointers to push
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[0]);
         // restore argv
@@ -31274,7 +31274,7 @@ DEFUN1(stgApplyNNNPPN, f) {
       pushargs(2, pargv);
       pushargs(pappargc, &f.op->payload[fvCount+1]);
       // tail call the FUN
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
 
     // excess < 0, too few args
     } else {
@@ -31282,7 +31282,7 @@ DEFUN1(stgApplyNNNPPN, f) {
       fprintf(stderr, "stgApplyNNNPPN PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2 + pappargc, 4 + papnargc);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 2 + pappargc, 4 + papnargc);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -31325,7 +31325,7 @@ DEFUN1(stgApplyNNNPPN, f) {
 
 DEFUN1(stgApplyPNNPPN, f) {
   #ifdef DEBUGSTGAPPLY
-  fprintf(stderr, "stgApplyPNNPPN %s\n", f.op->infoPtr->name);
+  fprintf(stderr, "stgApplyPNNPPN %s\n", getInfoPtr(f.op)->name);
   #endif
   const int argc = 6;
   PtrOrLiteral argv[6];
@@ -31364,9 +31364,9 @@ DEFUN1(stgApplyPNNPPN, f) {
   f = pargv[3];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(3, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPNNPPN THUNK\n");
       #endif
@@ -31381,11 +31381,11 @@ DEFUN1(stgApplyPNNPPN, f) {
     argv[4] = pargv[2];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
-    int arity = f.op->infoPtr->funFields.arity;
+    int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
-    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    fprintf(stderr, "FUN %s arity %d\n", getInfoPtr(f.op)->name, getInfoPtr(f.op)->funFields.arity);
     #endif
     int excess = argc - arity;  // may be negative
 
@@ -31402,7 +31402,7 @@ DEFUN1(stgApplyPNNPPN, f) {
         pushargs(2, nargv);
         pushargs(3, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -31424,7 +31424,7 @@ DEFUN1(stgApplyPNNPPN, f) {
         pushargs(2, nargv);
         pushargs(2, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[2]);
         // restore argv
@@ -31448,7 +31448,7 @@ DEFUN1(stgApplyPNNPPN, f) {
         pushargs(2, nargv);
         pushargs(1, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -31473,7 +31473,7 @@ DEFUN1(stgApplyPNNPPN, f) {
         pushargs(1, nargv);
         pushargs(1, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -31498,7 +31498,7 @@ DEFUN1(stgApplyPNNPPN, f) {
         // 0 non-pointers to push
         pushargs(1, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -31525,17 +31525,17 @@ DEFUN1(stgApplyPNNPPN, f) {
       pushargs(3, nargv);
       pushargs(3, pargv);
       // tail call the fun
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
     }
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPNNPPN FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                    f.op->infoPtr->layoutInfo.unboxedCount;
+      int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                    getInfoPtr(f.op)->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3, 3);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 3, 3);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -31555,12 +31555,12 @@ DEFUN1(stgApplyPNNPPN, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                  f.op->infoPtr->layoutInfo.unboxedCount;
+    int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                  getInfoPtr(f.op)->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    int arity = f.op->infoPtr->funFields.arity - argCount;
+    int arity = getInfoPtr(f.op)->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
@@ -31581,7 +31581,7 @@ DEFUN1(stgApplyPNNPPN, f) {
         pushargs(3, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -31605,7 +31605,7 @@ DEFUN1(stgApplyPNNPPN, f) {
         pushargs(2, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[2]);
         // restore argv
@@ -31631,7 +31631,7 @@ DEFUN1(stgApplyPNNPPN, f) {
         pushargs(1, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -31658,7 +31658,7 @@ DEFUN1(stgApplyPNNPPN, f) {
         pushargs(1, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -31685,7 +31685,7 @@ DEFUN1(stgApplyPNNPPN, f) {
         pushargs(1, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -31714,7 +31714,7 @@ DEFUN1(stgApplyPNNPPN, f) {
       pushargs(3, pargv);
       pushargs(pappargc, &f.op->payload[fvCount+1]);
       // tail call the FUN
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
 
     // excess < 0, too few args
     } else {
@@ -31722,7 +31722,7 @@ DEFUN1(stgApplyPNNPPN, f) {
       fprintf(stderr, "stgApplyPNNPPN PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3 + pappargc, 3 + papnargc);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 3 + pappargc, 3 + papnargc);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -31765,7 +31765,7 @@ DEFUN1(stgApplyPNNPPN, f) {
 
 DEFUN1(stgApplyNPNPPN, f) {
   #ifdef DEBUGSTGAPPLY
-  fprintf(stderr, "stgApplyNPNPPN %s\n", f.op->infoPtr->name);
+  fprintf(stderr, "stgApplyNPNPPN %s\n", getInfoPtr(f.op)->name);
   #endif
   const int argc = 6;
   PtrOrLiteral argv[6];
@@ -31804,9 +31804,9 @@ DEFUN1(stgApplyNPNPPN, f) {
   f = pargv[3];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(3, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNPNPPN THUNK\n");
       #endif
@@ -31821,11 +31821,11 @@ DEFUN1(stgApplyNPNPPN, f) {
     argv[4] = pargv[2];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
-    int arity = f.op->infoPtr->funFields.arity;
+    int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
-    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    fprintf(stderr, "FUN %s arity %d\n", getInfoPtr(f.op)->name, getInfoPtr(f.op)->funFields.arity);
     #endif
     int excess = argc - arity;  // may be negative
 
@@ -31842,7 +31842,7 @@ DEFUN1(stgApplyNPNPPN, f) {
         pushargs(2, nargv);
         pushargs(3, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -31864,7 +31864,7 @@ DEFUN1(stgApplyNPNPPN, f) {
         pushargs(2, nargv);
         pushargs(2, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[2]);
         // restore argv
@@ -31888,7 +31888,7 @@ DEFUN1(stgApplyNPNPPN, f) {
         pushargs(2, nargv);
         pushargs(1, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -31913,7 +31913,7 @@ DEFUN1(stgApplyNPNPPN, f) {
         pushargs(1, nargv);
         pushargs(1, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -31938,7 +31938,7 @@ DEFUN1(stgApplyNPNPPN, f) {
         pushargs(1, nargv);
         // 0 pointers to push
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[0]);
         // restore argv
@@ -31966,17 +31966,17 @@ DEFUN1(stgApplyNPNPPN, f) {
       pushargs(3, nargv);
       pushargs(3, pargv);
       // tail call the fun
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
     }
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNPNPPN FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                    f.op->infoPtr->layoutInfo.unboxedCount;
+      int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                    getInfoPtr(f.op)->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3, 3);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 3, 3);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -31996,12 +31996,12 @@ DEFUN1(stgApplyNPNPPN, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                  f.op->infoPtr->layoutInfo.unboxedCount;
+    int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                  getInfoPtr(f.op)->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    int arity = f.op->infoPtr->funFields.arity - argCount;
+    int arity = getInfoPtr(f.op)->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
@@ -32022,7 +32022,7 @@ DEFUN1(stgApplyNPNPPN, f) {
         pushargs(3, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -32046,7 +32046,7 @@ DEFUN1(stgApplyNPNPPN, f) {
         pushargs(2, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[2]);
         // restore argv
@@ -32072,7 +32072,7 @@ DEFUN1(stgApplyNPNPPN, f) {
         pushargs(1, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -32099,7 +32099,7 @@ DEFUN1(stgApplyNPNPPN, f) {
         pushargs(1, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -32126,7 +32126,7 @@ DEFUN1(stgApplyNPNPPN, f) {
         // 0 pointers to push
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[0]);
         // restore argv
@@ -32156,7 +32156,7 @@ DEFUN1(stgApplyNPNPPN, f) {
       pushargs(3, pargv);
       pushargs(pappargc, &f.op->payload[fvCount+1]);
       // tail call the FUN
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
 
     // excess < 0, too few args
     } else {
@@ -32164,7 +32164,7 @@ DEFUN1(stgApplyNPNPPN, f) {
       fprintf(stderr, "stgApplyNPNPPN PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3 + pappargc, 3 + papnargc);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 3 + pappargc, 3 + papnargc);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -32207,7 +32207,7 @@ DEFUN1(stgApplyNPNPPN, f) {
 
 DEFUN1(stgApplyPPNPPN, f) {
   #ifdef DEBUGSTGAPPLY
-  fprintf(stderr, "stgApplyPPNPPN %s\n", f.op->infoPtr->name);
+  fprintf(stderr, "stgApplyPPNPPN %s\n", getInfoPtr(f.op)->name);
   #endif
   const int argc = 6;
   PtrOrLiteral argv[6];
@@ -32257,9 +32257,9 @@ DEFUN1(stgApplyPPNPPN, f) {
   f = pargv[4];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(4, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPPNPPN THUNK\n");
       #endif
@@ -32275,11 +32275,11 @@ DEFUN1(stgApplyPPNPPN, f) {
     argv[4] = pargv[3];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
-    int arity = f.op->infoPtr->funFields.arity;
+    int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
-    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    fprintf(stderr, "FUN %s arity %d\n", getInfoPtr(f.op)->name, getInfoPtr(f.op)->funFields.arity);
     #endif
     int excess = argc - arity;  // may be negative
 
@@ -32296,7 +32296,7 @@ DEFUN1(stgApplyPPNPPN, f) {
         pushargs(1, nargv);
         pushargs(4, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -32318,7 +32318,7 @@ DEFUN1(stgApplyPPNPPN, f) {
         pushargs(1, nargv);
         pushargs(3, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[3]);
         // restore argv
@@ -32342,7 +32342,7 @@ DEFUN1(stgApplyPPNPPN, f) {
         pushargs(1, nargv);
         pushargs(2, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[2]);
         // restore argv
@@ -32367,7 +32367,7 @@ DEFUN1(stgApplyPPNPPN, f) {
         // 0 non-pointers to push
         pushargs(2, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[2]);
         // restore argv
@@ -32392,7 +32392,7 @@ DEFUN1(stgApplyPPNPPN, f) {
         // 0 non-pointers to push
         pushargs(1, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -32420,17 +32420,17 @@ DEFUN1(stgApplyPPNPPN, f) {
       pushargs(2, nargv);
       pushargs(4, pargv);
       // tail call the fun
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
     }
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPPNPPN FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                    f.op->infoPtr->layoutInfo.unboxedCount;
+      int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                    getInfoPtr(f.op)->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 4, 2);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 4, 2);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -32450,12 +32450,12 @@ DEFUN1(stgApplyPPNPPN, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                  f.op->infoPtr->layoutInfo.unboxedCount;
+    int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                  getInfoPtr(f.op)->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    int arity = f.op->infoPtr->funFields.arity - argCount;
+    int arity = getInfoPtr(f.op)->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
@@ -32476,7 +32476,7 @@ DEFUN1(stgApplyPPNPPN, f) {
         pushargs(4, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -32500,7 +32500,7 @@ DEFUN1(stgApplyPPNPPN, f) {
         pushargs(3, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[3]);
         // restore argv
@@ -32526,7 +32526,7 @@ DEFUN1(stgApplyPPNPPN, f) {
         pushargs(2, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[2]);
         // restore argv
@@ -32553,7 +32553,7 @@ DEFUN1(stgApplyPPNPPN, f) {
         pushargs(2, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[2]);
         // restore argv
@@ -32580,7 +32580,7 @@ DEFUN1(stgApplyPPNPPN, f) {
         pushargs(1, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -32610,7 +32610,7 @@ DEFUN1(stgApplyPPNPPN, f) {
       pushargs(4, pargv);
       pushargs(pappargc, &f.op->payload[fvCount+1]);
       // tail call the FUN
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
 
     // excess < 0, too few args
     } else {
@@ -32618,7 +32618,7 @@ DEFUN1(stgApplyPPNPPN, f) {
       fprintf(stderr, "stgApplyPPNPPN PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 4 + pappargc, 2 + papnargc);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 4 + pappargc, 2 + papnargc);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -32661,7 +32661,7 @@ DEFUN1(stgApplyPPNPPN, f) {
 
 DEFUN1(stgApplyNNPPPN, f) {
   #ifdef DEBUGSTGAPPLY
-  fprintf(stderr, "stgApplyNNPPPN %s\n", f.op->infoPtr->name);
+  fprintf(stderr, "stgApplyNNPPPN %s\n", getInfoPtr(f.op)->name);
   #endif
   const int argc = 6;
   PtrOrLiteral argv[6];
@@ -32700,9 +32700,9 @@ DEFUN1(stgApplyNNPPPN, f) {
   f = pargv[3];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(3, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNNPPPN THUNK\n");
       #endif
@@ -32717,11 +32717,11 @@ DEFUN1(stgApplyNNPPPN, f) {
     argv[4] = pargv[2];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
-    int arity = f.op->infoPtr->funFields.arity;
+    int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
-    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    fprintf(stderr, "FUN %s arity %d\n", getInfoPtr(f.op)->name, getInfoPtr(f.op)->funFields.arity);
     #endif
     int excess = argc - arity;  // may be negative
 
@@ -32738,7 +32738,7 @@ DEFUN1(stgApplyNNPPPN, f) {
         pushargs(2, nargv);
         pushargs(3, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -32760,7 +32760,7 @@ DEFUN1(stgApplyNNPPPN, f) {
         pushargs(2, nargv);
         pushargs(2, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[2]);
         // restore argv
@@ -32784,7 +32784,7 @@ DEFUN1(stgApplyNNPPPN, f) {
         pushargs(2, nargv);
         pushargs(1, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -32809,7 +32809,7 @@ DEFUN1(stgApplyNNPPPN, f) {
         pushargs(2, nargv);
         // 0 pointers to push
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[0]);
         // restore argv
@@ -32835,7 +32835,7 @@ DEFUN1(stgApplyNNPPPN, f) {
         pushargs(1, nargv);
         // 0 pointers to push
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[0]);
         // restore argv
@@ -32863,17 +32863,17 @@ DEFUN1(stgApplyNNPPPN, f) {
       pushargs(3, nargv);
       pushargs(3, pargv);
       // tail call the fun
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
     }
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNNPPPN FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                    f.op->infoPtr->layoutInfo.unboxedCount;
+      int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                    getInfoPtr(f.op)->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3, 3);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 3, 3);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -32893,12 +32893,12 @@ DEFUN1(stgApplyNNPPPN, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                  f.op->infoPtr->layoutInfo.unboxedCount;
+    int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                  getInfoPtr(f.op)->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    int arity = f.op->infoPtr->funFields.arity - argCount;
+    int arity = getInfoPtr(f.op)->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
@@ -32919,7 +32919,7 @@ DEFUN1(stgApplyNNPPPN, f) {
         pushargs(3, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -32943,7 +32943,7 @@ DEFUN1(stgApplyNNPPPN, f) {
         pushargs(2, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[2]);
         // restore argv
@@ -32969,7 +32969,7 @@ DEFUN1(stgApplyNNPPPN, f) {
         pushargs(1, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -32996,7 +32996,7 @@ DEFUN1(stgApplyNNPPPN, f) {
         // 0 pointers to push
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[0]);
         // restore argv
@@ -33024,7 +33024,7 @@ DEFUN1(stgApplyNNPPPN, f) {
         // 0 pointers to push
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[0]);
         // restore argv
@@ -33054,7 +33054,7 @@ DEFUN1(stgApplyNNPPPN, f) {
       pushargs(3, pargv);
       pushargs(pappargc, &f.op->payload[fvCount+1]);
       // tail call the FUN
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
 
     // excess < 0, too few args
     } else {
@@ -33062,7 +33062,7 @@ DEFUN1(stgApplyNNPPPN, f) {
       fprintf(stderr, "stgApplyNNPPPN PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3 + pappargc, 3 + papnargc);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 3 + pappargc, 3 + papnargc);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -33105,7 +33105,7 @@ DEFUN1(stgApplyNNPPPN, f) {
 
 DEFUN1(stgApplyPNPPPN, f) {
   #ifdef DEBUGSTGAPPLY
-  fprintf(stderr, "stgApplyPNPPPN %s\n", f.op->infoPtr->name);
+  fprintf(stderr, "stgApplyPNPPPN %s\n", getInfoPtr(f.op)->name);
   #endif
   const int argc = 6;
   PtrOrLiteral argv[6];
@@ -33155,9 +33155,9 @@ DEFUN1(stgApplyPNPPPN, f) {
   f = pargv[4];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(4, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPNPPPN THUNK\n");
       #endif
@@ -33173,11 +33173,11 @@ DEFUN1(stgApplyPNPPPN, f) {
     argv[4] = pargv[3];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
-    int arity = f.op->infoPtr->funFields.arity;
+    int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
-    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    fprintf(stderr, "FUN %s arity %d\n", getInfoPtr(f.op)->name, getInfoPtr(f.op)->funFields.arity);
     #endif
     int excess = argc - arity;  // may be negative
 
@@ -33194,7 +33194,7 @@ DEFUN1(stgApplyPNPPPN, f) {
         pushargs(1, nargv);
         pushargs(4, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -33216,7 +33216,7 @@ DEFUN1(stgApplyPNPPPN, f) {
         pushargs(1, nargv);
         pushargs(3, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[3]);
         // restore argv
@@ -33240,7 +33240,7 @@ DEFUN1(stgApplyPNPPPN, f) {
         pushargs(1, nargv);
         pushargs(2, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[2]);
         // restore argv
@@ -33265,7 +33265,7 @@ DEFUN1(stgApplyPNPPPN, f) {
         pushargs(1, nargv);
         pushargs(1, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -33291,7 +33291,7 @@ DEFUN1(stgApplyPNPPPN, f) {
         // 0 non-pointers to push
         pushargs(1, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -33319,17 +33319,17 @@ DEFUN1(stgApplyPNPPPN, f) {
       pushargs(2, nargv);
       pushargs(4, pargv);
       // tail call the fun
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
     }
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPNPPPN FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                    f.op->infoPtr->layoutInfo.unboxedCount;
+      int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                    getInfoPtr(f.op)->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 4, 2);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 4, 2);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -33349,12 +33349,12 @@ DEFUN1(stgApplyPNPPPN, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                  f.op->infoPtr->layoutInfo.unboxedCount;
+    int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                  getInfoPtr(f.op)->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    int arity = f.op->infoPtr->funFields.arity - argCount;
+    int arity = getInfoPtr(f.op)->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
@@ -33375,7 +33375,7 @@ DEFUN1(stgApplyPNPPPN, f) {
         pushargs(4, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -33399,7 +33399,7 @@ DEFUN1(stgApplyPNPPPN, f) {
         pushargs(3, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[3]);
         // restore argv
@@ -33425,7 +33425,7 @@ DEFUN1(stgApplyPNPPPN, f) {
         pushargs(2, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[2]);
         // restore argv
@@ -33452,7 +33452,7 @@ DEFUN1(stgApplyPNPPPN, f) {
         pushargs(1, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -33480,7 +33480,7 @@ DEFUN1(stgApplyPNPPPN, f) {
         pushargs(1, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -33510,7 +33510,7 @@ DEFUN1(stgApplyPNPPPN, f) {
       pushargs(4, pargv);
       pushargs(pappargc, &f.op->payload[fvCount+1]);
       // tail call the FUN
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
 
     // excess < 0, too few args
     } else {
@@ -33518,7 +33518,7 @@ DEFUN1(stgApplyPNPPPN, f) {
       fprintf(stderr, "stgApplyPNPPPN PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 4 + pappargc, 2 + papnargc);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 4 + pappargc, 2 + papnargc);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -33561,7 +33561,7 @@ DEFUN1(stgApplyPNPPPN, f) {
 
 DEFUN1(stgApplyNPPPPN, f) {
   #ifdef DEBUGSTGAPPLY
-  fprintf(stderr, "stgApplyNPPPPN %s\n", f.op->infoPtr->name);
+  fprintf(stderr, "stgApplyNPPPPN %s\n", getInfoPtr(f.op)->name);
   #endif
   const int argc = 6;
   PtrOrLiteral argv[6];
@@ -33611,9 +33611,9 @@ DEFUN1(stgApplyNPPPPN, f) {
   f = pargv[4];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(4, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNPPPPN THUNK\n");
       #endif
@@ -33629,11 +33629,11 @@ DEFUN1(stgApplyNPPPPN, f) {
     argv[4] = pargv[3];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
-    int arity = f.op->infoPtr->funFields.arity;
+    int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
-    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    fprintf(stderr, "FUN %s arity %d\n", getInfoPtr(f.op)->name, getInfoPtr(f.op)->funFields.arity);
     #endif
     int excess = argc - arity;  // may be negative
 
@@ -33650,7 +33650,7 @@ DEFUN1(stgApplyNPPPPN, f) {
         pushargs(1, nargv);
         pushargs(4, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -33672,7 +33672,7 @@ DEFUN1(stgApplyNPPPPN, f) {
         pushargs(1, nargv);
         pushargs(3, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[3]);
         // restore argv
@@ -33696,7 +33696,7 @@ DEFUN1(stgApplyNPPPPN, f) {
         pushargs(1, nargv);
         pushargs(2, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[2]);
         // restore argv
@@ -33721,7 +33721,7 @@ DEFUN1(stgApplyNPPPPN, f) {
         pushargs(1, nargv);
         pushargs(1, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -33747,7 +33747,7 @@ DEFUN1(stgApplyNPPPPN, f) {
         pushargs(1, nargv);
         // 0 pointers to push
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[0]);
         // restore argv
@@ -33776,17 +33776,17 @@ DEFUN1(stgApplyNPPPPN, f) {
       pushargs(2, nargv);
       pushargs(4, pargv);
       // tail call the fun
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
     }
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNPPPPN FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                    f.op->infoPtr->layoutInfo.unboxedCount;
+      int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                    getInfoPtr(f.op)->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 4, 2);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 4, 2);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -33806,12 +33806,12 @@ DEFUN1(stgApplyNPPPPN, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                  f.op->infoPtr->layoutInfo.unboxedCount;
+    int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                  getInfoPtr(f.op)->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    int arity = f.op->infoPtr->funFields.arity - argCount;
+    int arity = getInfoPtr(f.op)->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
@@ -33832,7 +33832,7 @@ DEFUN1(stgApplyNPPPPN, f) {
         pushargs(4, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -33856,7 +33856,7 @@ DEFUN1(stgApplyNPPPPN, f) {
         pushargs(3, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[3]);
         // restore argv
@@ -33882,7 +33882,7 @@ DEFUN1(stgApplyNPPPPN, f) {
         pushargs(2, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[2]);
         // restore argv
@@ -33909,7 +33909,7 @@ DEFUN1(stgApplyNPPPPN, f) {
         pushargs(1, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -33937,7 +33937,7 @@ DEFUN1(stgApplyNPPPPN, f) {
         // 0 pointers to push
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[0]);
         // restore argv
@@ -33968,7 +33968,7 @@ DEFUN1(stgApplyNPPPPN, f) {
       pushargs(4, pargv);
       pushargs(pappargc, &f.op->payload[fvCount+1]);
       // tail call the FUN
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
 
     // excess < 0, too few args
     } else {
@@ -33976,7 +33976,7 @@ DEFUN1(stgApplyNPPPPN, f) {
       fprintf(stderr, "stgApplyNPPPPN PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 4 + pappargc, 2 + papnargc);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 4 + pappargc, 2 + papnargc);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -34019,7 +34019,7 @@ DEFUN1(stgApplyNPPPPN, f) {
 
 DEFUN1(stgApplyPPPPPN, f) {
   #ifdef DEBUGSTGAPPLY
-  fprintf(stderr, "stgApplyPPPPPN %s\n", f.op->infoPtr->name);
+  fprintf(stderr, "stgApplyPPPPPN %s\n", getInfoPtr(f.op)->name);
   #endif
   const int argc = 6;
   PtrOrLiteral argv[6];
@@ -34082,9 +34082,9 @@ DEFUN1(stgApplyPPPPPN, f) {
   f = pargv[5];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(5, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPPPPPN THUNK\n");
       #endif
@@ -34101,11 +34101,11 @@ DEFUN1(stgApplyPPPPPN, f) {
     argv[4] = pargv[4];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
-    int arity = f.op->infoPtr->funFields.arity;
+    int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
-    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    fprintf(stderr, "FUN %s arity %d\n", getInfoPtr(f.op)->name, getInfoPtr(f.op)->funFields.arity);
     #endif
     int excess = argc - arity;  // may be negative
 
@@ -34122,7 +34122,7 @@ DEFUN1(stgApplyPPPPPN, f) {
         // 0 non-pointers to push
         pushargs(5, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -34144,7 +34144,7 @@ DEFUN1(stgApplyPPPPPN, f) {
         // 0 non-pointers to push
         pushargs(4, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[4]);
         // restore argv
@@ -34168,7 +34168,7 @@ DEFUN1(stgApplyPPPPPN, f) {
         // 0 non-pointers to push
         pushargs(3, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[3]);
         // restore argv
@@ -34193,7 +34193,7 @@ DEFUN1(stgApplyPPPPPN, f) {
         // 0 non-pointers to push
         pushargs(2, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[2]);
         // restore argv
@@ -34219,7 +34219,7 @@ DEFUN1(stgApplyPPPPPN, f) {
         // 0 non-pointers to push
         pushargs(1, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -34248,17 +34248,17 @@ DEFUN1(stgApplyPPPPPN, f) {
       pushargs(1, nargv);
       pushargs(5, pargv);
       // tail call the fun
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
     }
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPPPPPN FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                    f.op->infoPtr->layoutInfo.unboxedCount;
+      int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                    getInfoPtr(f.op)->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 5, 1);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 5, 1);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -34278,12 +34278,12 @@ DEFUN1(stgApplyPPPPPN, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                  f.op->infoPtr->layoutInfo.unboxedCount;
+    int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                  getInfoPtr(f.op)->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    int arity = f.op->infoPtr->funFields.arity - argCount;
+    int arity = getInfoPtr(f.op)->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
@@ -34304,7 +34304,7 @@ DEFUN1(stgApplyPPPPPN, f) {
         pushargs(5, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         // no excess pointer params to restore
         // grab obj just returned
@@ -34328,7 +34328,7 @@ DEFUN1(stgApplyPPPPPN, f) {
         pushargs(4, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[4]);
         // restore argv
@@ -34354,7 +34354,7 @@ DEFUN1(stgApplyPPPPPN, f) {
         pushargs(3, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[3]);
         // restore argv
@@ -34381,7 +34381,7 @@ DEFUN1(stgApplyPPPPPN, f) {
         pushargs(2, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[2]);
         // restore argv
@@ -34409,7 +34409,7 @@ DEFUN1(stgApplyPPPPPN, f) {
         pushargs(1, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -34440,7 +34440,7 @@ DEFUN1(stgApplyPPPPPN, f) {
       pushargs(5, pargv);
       pushargs(pappargc, &f.op->payload[fvCount+1]);
       // tail call the FUN
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
 
     // excess < 0, too few args
     } else {
@@ -34448,7 +34448,7 @@ DEFUN1(stgApplyPPPPPN, f) {
       fprintf(stderr, "stgApplyPPPPPN PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 5 + pappargc, 1 + papnargc);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 5 + pappargc, 1 + papnargc);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -34491,7 +34491,7 @@ DEFUN1(stgApplyPPPPPN, f) {
 
 DEFUN1(stgApplyNNNNNP, f) {
   #ifdef DEBUGSTGAPPLY
-  fprintf(stderr, "stgApplyNNNNNP %s\n", f.op->infoPtr->name);
+  fprintf(stderr, "stgApplyNNNNNP %s\n", getInfoPtr(f.op)->name);
   #endif
   const int argc = 6;
   PtrOrLiteral argv[6];
@@ -34514,9 +34514,9 @@ DEFUN1(stgApplyNNNNNP, f) {
   f = pargv[1];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(1, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNNNNNP THUNK\n");
       #endif
@@ -34529,11 +34529,11 @@ DEFUN1(stgApplyNNNNNP, f) {
     argv[5] = pargv[0];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
-    int arity = f.op->infoPtr->funFields.arity;
+    int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
-    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    fprintf(stderr, "FUN %s arity %d\n", getInfoPtr(f.op)->name, getInfoPtr(f.op)->funFields.arity);
     #endif
     int excess = argc - arity;  // may be negative
 
@@ -34550,7 +34550,7 @@ DEFUN1(stgApplyNNNNNP, f) {
         pushargs(5, nargv);
         // 0 pointers to push
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[0]);
         // restore argv
@@ -34574,7 +34574,7 @@ DEFUN1(stgApplyNNNNNP, f) {
         pushargs(4, nargv);
         // 0 pointers to push
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[0]);
         // restore argv
@@ -34598,7 +34598,7 @@ DEFUN1(stgApplyNNNNNP, f) {
         pushargs(3, nargv);
         // 0 pointers to push
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[0]);
         // restore argv
@@ -34622,7 +34622,7 @@ DEFUN1(stgApplyNNNNNP, f) {
         pushargs(2, nargv);
         // 0 pointers to push
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[0]);
         // restore argv
@@ -34646,7 +34646,7 @@ DEFUN1(stgApplyNNNNNP, f) {
         pushargs(1, nargv);
         // 0 pointers to push
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[0]);
         // restore argv
@@ -34672,17 +34672,17 @@ DEFUN1(stgApplyNNNNNP, f) {
       pushargs(5, nargv);
       pushargs(1, pargv);
       // tail call the fun
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
     }
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNNNNNP FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                    f.op->infoPtr->layoutInfo.unboxedCount;
+      int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                    getInfoPtr(f.op)->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 1, 5);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 1, 5);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -34702,12 +34702,12 @@ DEFUN1(stgApplyNNNNNP, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                  f.op->infoPtr->layoutInfo.unboxedCount;
+    int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                  getInfoPtr(f.op)->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    int arity = f.op->infoPtr->funFields.arity - argCount;
+    int arity = getInfoPtr(f.op)->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
@@ -34728,7 +34728,7 @@ DEFUN1(stgApplyNNNNNP, f) {
         // 0 pointers to push
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[0]);
         // restore argv
@@ -34754,7 +34754,7 @@ DEFUN1(stgApplyNNNNNP, f) {
         // 0 pointers to push
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[0]);
         // restore argv
@@ -34780,7 +34780,7 @@ DEFUN1(stgApplyNNNNNP, f) {
         // 0 pointers to push
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[0]);
         // restore argv
@@ -34806,7 +34806,7 @@ DEFUN1(stgApplyNNNNNP, f) {
         // 0 pointers to push
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[0]);
         // restore argv
@@ -34832,7 +34832,7 @@ DEFUN1(stgApplyNNNNNP, f) {
         // 0 pointers to push
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[0]);
         // restore argv
@@ -34860,7 +34860,7 @@ DEFUN1(stgApplyNNNNNP, f) {
       pushargs(1, pargv);
       pushargs(pappargc, &f.op->payload[fvCount+1]);
       // tail call the FUN
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
 
     // excess < 0, too few args
     } else {
@@ -34868,7 +34868,7 @@ DEFUN1(stgApplyNNNNNP, f) {
       fprintf(stderr, "stgApplyNNNNNP PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 1 + pappargc, 5 + papnargc);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 1 + pappargc, 5 + papnargc);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -34911,7 +34911,7 @@ DEFUN1(stgApplyNNNNNP, f) {
 
 DEFUN1(stgApplyPNNNNP, f) {
   #ifdef DEBUGSTGAPPLY
-  fprintf(stderr, "stgApplyPNNNNP %s\n", f.op->infoPtr->name);
+  fprintf(stderr, "stgApplyPNNNNP %s\n", getInfoPtr(f.op)->name);
   #endif
   const int argc = 6;
   PtrOrLiteral argv[6];
@@ -34941,9 +34941,9 @@ DEFUN1(stgApplyPNNNNP, f) {
   f = pargv[2];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(2, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPNNNNP THUNK\n");
       #endif
@@ -34957,11 +34957,11 @@ DEFUN1(stgApplyPNNNNP, f) {
     argv[5] = pargv[1];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
-    int arity = f.op->infoPtr->funFields.arity;
+    int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
-    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    fprintf(stderr, "FUN %s arity %d\n", getInfoPtr(f.op)->name, getInfoPtr(f.op)->funFields.arity);
     #endif
     int excess = argc - arity;  // may be negative
 
@@ -34978,7 +34978,7 @@ DEFUN1(stgApplyPNNNNP, f) {
         pushargs(4, nargv);
         pushargs(1, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -35002,7 +35002,7 @@ DEFUN1(stgApplyPNNNNP, f) {
         pushargs(3, nargv);
         pushargs(1, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -35026,7 +35026,7 @@ DEFUN1(stgApplyPNNNNP, f) {
         pushargs(2, nargv);
         pushargs(1, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -35050,7 +35050,7 @@ DEFUN1(stgApplyPNNNNP, f) {
         pushargs(1, nargv);
         pushargs(1, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -35074,7 +35074,7 @@ DEFUN1(stgApplyPNNNNP, f) {
         // 0 non-pointers to push
         pushargs(1, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -35100,17 +35100,17 @@ DEFUN1(stgApplyPNNNNP, f) {
       pushargs(4, nargv);
       pushargs(2, pargv);
       // tail call the fun
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
     }
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPNNNNP FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                    f.op->infoPtr->layoutInfo.unboxedCount;
+      int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                    getInfoPtr(f.op)->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2, 4);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 2, 4);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -35130,12 +35130,12 @@ DEFUN1(stgApplyPNNNNP, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                  f.op->infoPtr->layoutInfo.unboxedCount;
+    int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                  getInfoPtr(f.op)->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    int arity = f.op->infoPtr->funFields.arity - argCount;
+    int arity = getInfoPtr(f.op)->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
@@ -35156,7 +35156,7 @@ DEFUN1(stgApplyPNNNNP, f) {
         pushargs(1, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -35182,7 +35182,7 @@ DEFUN1(stgApplyPNNNNP, f) {
         pushargs(1, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -35208,7 +35208,7 @@ DEFUN1(stgApplyPNNNNP, f) {
         pushargs(1, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -35234,7 +35234,7 @@ DEFUN1(stgApplyPNNNNP, f) {
         pushargs(1, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -35260,7 +35260,7 @@ DEFUN1(stgApplyPNNNNP, f) {
         pushargs(1, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -35288,7 +35288,7 @@ DEFUN1(stgApplyPNNNNP, f) {
       pushargs(2, pargv);
       pushargs(pappargc, &f.op->payload[fvCount+1]);
       // tail call the FUN
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
 
     // excess < 0, too few args
     } else {
@@ -35296,7 +35296,7 @@ DEFUN1(stgApplyPNNNNP, f) {
       fprintf(stderr, "stgApplyPNNNNP PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2 + pappargc, 4 + papnargc);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 2 + pappargc, 4 + papnargc);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -35339,7 +35339,7 @@ DEFUN1(stgApplyPNNNNP, f) {
 
 DEFUN1(stgApplyNPNNNP, f) {
   #ifdef DEBUGSTGAPPLY
-  fprintf(stderr, "stgApplyNPNNNP %s\n", f.op->infoPtr->name);
+  fprintf(stderr, "stgApplyNPNNNP %s\n", getInfoPtr(f.op)->name);
   #endif
   const int argc = 6;
   PtrOrLiteral argv[6];
@@ -35369,9 +35369,9 @@ DEFUN1(stgApplyNPNNNP, f) {
   f = pargv[2];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(2, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNPNNNP THUNK\n");
       #endif
@@ -35385,11 +35385,11 @@ DEFUN1(stgApplyNPNNNP, f) {
     argv[5] = pargv[1];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
-    int arity = f.op->infoPtr->funFields.arity;
+    int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
-    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    fprintf(stderr, "FUN %s arity %d\n", getInfoPtr(f.op)->name, getInfoPtr(f.op)->funFields.arity);
     #endif
     int excess = argc - arity;  // may be negative
 
@@ -35406,7 +35406,7 @@ DEFUN1(stgApplyNPNNNP, f) {
         pushargs(4, nargv);
         pushargs(1, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -35430,7 +35430,7 @@ DEFUN1(stgApplyNPNNNP, f) {
         pushargs(3, nargv);
         pushargs(1, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -35454,7 +35454,7 @@ DEFUN1(stgApplyNPNNNP, f) {
         pushargs(2, nargv);
         pushargs(1, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -35478,7 +35478,7 @@ DEFUN1(stgApplyNPNNNP, f) {
         pushargs(1, nargv);
         pushargs(1, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -35502,7 +35502,7 @@ DEFUN1(stgApplyNPNNNP, f) {
         pushargs(1, nargv);
         // 0 pointers to push
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[0]);
         // restore argv
@@ -35529,17 +35529,17 @@ DEFUN1(stgApplyNPNNNP, f) {
       pushargs(4, nargv);
       pushargs(2, pargv);
       // tail call the fun
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
     }
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNPNNNP FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                    f.op->infoPtr->layoutInfo.unboxedCount;
+      int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                    getInfoPtr(f.op)->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2, 4);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 2, 4);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -35559,12 +35559,12 @@ DEFUN1(stgApplyNPNNNP, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                  f.op->infoPtr->layoutInfo.unboxedCount;
+    int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                  getInfoPtr(f.op)->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    int arity = f.op->infoPtr->funFields.arity - argCount;
+    int arity = getInfoPtr(f.op)->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
@@ -35585,7 +35585,7 @@ DEFUN1(stgApplyNPNNNP, f) {
         pushargs(1, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -35611,7 +35611,7 @@ DEFUN1(stgApplyNPNNNP, f) {
         pushargs(1, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -35637,7 +35637,7 @@ DEFUN1(stgApplyNPNNNP, f) {
         pushargs(1, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -35663,7 +35663,7 @@ DEFUN1(stgApplyNPNNNP, f) {
         pushargs(1, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -35689,7 +35689,7 @@ DEFUN1(stgApplyNPNNNP, f) {
         // 0 pointers to push
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[0]);
         // restore argv
@@ -35718,7 +35718,7 @@ DEFUN1(stgApplyNPNNNP, f) {
       pushargs(2, pargv);
       pushargs(pappargc, &f.op->payload[fvCount+1]);
       // tail call the FUN
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
 
     // excess < 0, too few args
     } else {
@@ -35726,7 +35726,7 @@ DEFUN1(stgApplyNPNNNP, f) {
       fprintf(stderr, "stgApplyNPNNNP PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2 + pappargc, 4 + papnargc);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 2 + pappargc, 4 + papnargc);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -35769,7 +35769,7 @@ DEFUN1(stgApplyNPNNNP, f) {
 
 DEFUN1(stgApplyPPNNNP, f) {
   #ifdef DEBUGSTGAPPLY
-  fprintf(stderr, "stgApplyPPNNNP %s\n", f.op->infoPtr->name);
+  fprintf(stderr, "stgApplyPPNNNP %s\n", getInfoPtr(f.op)->name);
   #endif
   const int argc = 6;
   PtrOrLiteral argv[6];
@@ -35808,9 +35808,9 @@ DEFUN1(stgApplyPPNNNP, f) {
   f = pargv[3];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(3, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPPNNNP THUNK\n");
       #endif
@@ -35825,11 +35825,11 @@ DEFUN1(stgApplyPPNNNP, f) {
     argv[5] = pargv[2];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
-    int arity = f.op->infoPtr->funFields.arity;
+    int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
-    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    fprintf(stderr, "FUN %s arity %d\n", getInfoPtr(f.op)->name, getInfoPtr(f.op)->funFields.arity);
     #endif
     int excess = argc - arity;  // may be negative
 
@@ -35846,7 +35846,7 @@ DEFUN1(stgApplyPPNNNP, f) {
         pushargs(3, nargv);
         pushargs(2, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[2]);
         // restore argv
@@ -35870,7 +35870,7 @@ DEFUN1(stgApplyPPNNNP, f) {
         pushargs(2, nargv);
         pushargs(2, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[2]);
         // restore argv
@@ -35894,7 +35894,7 @@ DEFUN1(stgApplyPPNNNP, f) {
         pushargs(1, nargv);
         pushargs(2, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[2]);
         // restore argv
@@ -35918,7 +35918,7 @@ DEFUN1(stgApplyPPNNNP, f) {
         // 0 non-pointers to push
         pushargs(2, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[2]);
         // restore argv
@@ -35942,7 +35942,7 @@ DEFUN1(stgApplyPPNNNP, f) {
         // 0 non-pointers to push
         pushargs(1, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -35969,17 +35969,17 @@ DEFUN1(stgApplyPPNNNP, f) {
       pushargs(3, nargv);
       pushargs(3, pargv);
       // tail call the fun
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
     }
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPPNNNP FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                    f.op->infoPtr->layoutInfo.unboxedCount;
+      int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                    getInfoPtr(f.op)->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3, 3);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 3, 3);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -35999,12 +35999,12 @@ DEFUN1(stgApplyPPNNNP, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                  f.op->infoPtr->layoutInfo.unboxedCount;
+    int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                  getInfoPtr(f.op)->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    int arity = f.op->infoPtr->funFields.arity - argCount;
+    int arity = getInfoPtr(f.op)->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
@@ -36025,7 +36025,7 @@ DEFUN1(stgApplyPPNNNP, f) {
         pushargs(2, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[2]);
         // restore argv
@@ -36051,7 +36051,7 @@ DEFUN1(stgApplyPPNNNP, f) {
         pushargs(2, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[2]);
         // restore argv
@@ -36077,7 +36077,7 @@ DEFUN1(stgApplyPPNNNP, f) {
         pushargs(2, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[2]);
         // restore argv
@@ -36103,7 +36103,7 @@ DEFUN1(stgApplyPPNNNP, f) {
         pushargs(2, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[2]);
         // restore argv
@@ -36129,7 +36129,7 @@ DEFUN1(stgApplyPPNNNP, f) {
         pushargs(1, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -36158,7 +36158,7 @@ DEFUN1(stgApplyPPNNNP, f) {
       pushargs(3, pargv);
       pushargs(pappargc, &f.op->payload[fvCount+1]);
       // tail call the FUN
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
 
     // excess < 0, too few args
     } else {
@@ -36166,7 +36166,7 @@ DEFUN1(stgApplyPPNNNP, f) {
       fprintf(stderr, "stgApplyPPNNNP PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3 + pappargc, 3 + papnargc);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 3 + pappargc, 3 + papnargc);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -36209,7 +36209,7 @@ DEFUN1(stgApplyPPNNNP, f) {
 
 DEFUN1(stgApplyNNPNNP, f) {
   #ifdef DEBUGSTGAPPLY
-  fprintf(stderr, "stgApplyNNPNNP %s\n", f.op->infoPtr->name);
+  fprintf(stderr, "stgApplyNNPNNP %s\n", getInfoPtr(f.op)->name);
   #endif
   const int argc = 6;
   PtrOrLiteral argv[6];
@@ -36239,9 +36239,9 @@ DEFUN1(stgApplyNNPNNP, f) {
   f = pargv[2];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(2, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNNPNNP THUNK\n");
       #endif
@@ -36255,11 +36255,11 @@ DEFUN1(stgApplyNNPNNP, f) {
     argv[5] = pargv[1];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
-    int arity = f.op->infoPtr->funFields.arity;
+    int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
-    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    fprintf(stderr, "FUN %s arity %d\n", getInfoPtr(f.op)->name, getInfoPtr(f.op)->funFields.arity);
     #endif
     int excess = argc - arity;  // may be negative
 
@@ -36276,7 +36276,7 @@ DEFUN1(stgApplyNNPNNP, f) {
         pushargs(4, nargv);
         pushargs(1, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -36300,7 +36300,7 @@ DEFUN1(stgApplyNNPNNP, f) {
         pushargs(3, nargv);
         pushargs(1, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -36324,7 +36324,7 @@ DEFUN1(stgApplyNNPNNP, f) {
         pushargs(2, nargv);
         pushargs(1, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -36348,7 +36348,7 @@ DEFUN1(stgApplyNNPNNP, f) {
         pushargs(2, nargv);
         // 0 pointers to push
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[0]);
         // restore argv
@@ -36373,7 +36373,7 @@ DEFUN1(stgApplyNNPNNP, f) {
         pushargs(1, nargv);
         // 0 pointers to push
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[0]);
         // restore argv
@@ -36400,17 +36400,17 @@ DEFUN1(stgApplyNNPNNP, f) {
       pushargs(4, nargv);
       pushargs(2, pargv);
       // tail call the fun
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
     }
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNNPNNP FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                    f.op->infoPtr->layoutInfo.unboxedCount;
+      int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                    getInfoPtr(f.op)->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2, 4);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 2, 4);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -36430,12 +36430,12 @@ DEFUN1(stgApplyNNPNNP, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                  f.op->infoPtr->layoutInfo.unboxedCount;
+    int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                  getInfoPtr(f.op)->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    int arity = f.op->infoPtr->funFields.arity - argCount;
+    int arity = getInfoPtr(f.op)->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
@@ -36456,7 +36456,7 @@ DEFUN1(stgApplyNNPNNP, f) {
         pushargs(1, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -36482,7 +36482,7 @@ DEFUN1(stgApplyNNPNNP, f) {
         pushargs(1, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -36508,7 +36508,7 @@ DEFUN1(stgApplyNNPNNP, f) {
         pushargs(1, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -36534,7 +36534,7 @@ DEFUN1(stgApplyNNPNNP, f) {
         // 0 pointers to push
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[0]);
         // restore argv
@@ -36561,7 +36561,7 @@ DEFUN1(stgApplyNNPNNP, f) {
         // 0 pointers to push
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[0]);
         // restore argv
@@ -36590,7 +36590,7 @@ DEFUN1(stgApplyNNPNNP, f) {
       pushargs(2, pargv);
       pushargs(pappargc, &f.op->payload[fvCount+1]);
       // tail call the FUN
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
 
     // excess < 0, too few args
     } else {
@@ -36598,7 +36598,7 @@ DEFUN1(stgApplyNNPNNP, f) {
       fprintf(stderr, "stgApplyNNPNNP PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2 + pappargc, 4 + papnargc);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 2 + pappargc, 4 + papnargc);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -36641,7 +36641,7 @@ DEFUN1(stgApplyNNPNNP, f) {
 
 DEFUN1(stgApplyPNPNNP, f) {
   #ifdef DEBUGSTGAPPLY
-  fprintf(stderr, "stgApplyPNPNNP %s\n", f.op->infoPtr->name);
+  fprintf(stderr, "stgApplyPNPNNP %s\n", getInfoPtr(f.op)->name);
   #endif
   const int argc = 6;
   PtrOrLiteral argv[6];
@@ -36680,9 +36680,9 @@ DEFUN1(stgApplyPNPNNP, f) {
   f = pargv[3];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(3, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPNPNNP THUNK\n");
       #endif
@@ -36697,11 +36697,11 @@ DEFUN1(stgApplyPNPNNP, f) {
     argv[5] = pargv[2];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
-    int arity = f.op->infoPtr->funFields.arity;
+    int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
-    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    fprintf(stderr, "FUN %s arity %d\n", getInfoPtr(f.op)->name, getInfoPtr(f.op)->funFields.arity);
     #endif
     int excess = argc - arity;  // may be negative
 
@@ -36718,7 +36718,7 @@ DEFUN1(stgApplyPNPNNP, f) {
         pushargs(3, nargv);
         pushargs(2, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[2]);
         // restore argv
@@ -36742,7 +36742,7 @@ DEFUN1(stgApplyPNPNNP, f) {
         pushargs(2, nargv);
         pushargs(2, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[2]);
         // restore argv
@@ -36766,7 +36766,7 @@ DEFUN1(stgApplyPNPNNP, f) {
         pushargs(1, nargv);
         pushargs(2, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[2]);
         // restore argv
@@ -36790,7 +36790,7 @@ DEFUN1(stgApplyPNPNNP, f) {
         pushargs(1, nargv);
         pushargs(1, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -36815,7 +36815,7 @@ DEFUN1(stgApplyPNPNNP, f) {
         // 0 non-pointers to push
         pushargs(1, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -36842,17 +36842,17 @@ DEFUN1(stgApplyPNPNNP, f) {
       pushargs(3, nargv);
       pushargs(3, pargv);
       // tail call the fun
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
     }
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPNPNNP FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                    f.op->infoPtr->layoutInfo.unboxedCount;
+      int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                    getInfoPtr(f.op)->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3, 3);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 3, 3);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -36872,12 +36872,12 @@ DEFUN1(stgApplyPNPNNP, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                  f.op->infoPtr->layoutInfo.unboxedCount;
+    int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                  getInfoPtr(f.op)->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    int arity = f.op->infoPtr->funFields.arity - argCount;
+    int arity = getInfoPtr(f.op)->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
@@ -36898,7 +36898,7 @@ DEFUN1(stgApplyPNPNNP, f) {
         pushargs(2, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[2]);
         // restore argv
@@ -36924,7 +36924,7 @@ DEFUN1(stgApplyPNPNNP, f) {
         pushargs(2, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[2]);
         // restore argv
@@ -36950,7 +36950,7 @@ DEFUN1(stgApplyPNPNNP, f) {
         pushargs(2, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[2]);
         // restore argv
@@ -36976,7 +36976,7 @@ DEFUN1(stgApplyPNPNNP, f) {
         pushargs(1, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -37003,7 +37003,7 @@ DEFUN1(stgApplyPNPNNP, f) {
         pushargs(1, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -37032,7 +37032,7 @@ DEFUN1(stgApplyPNPNNP, f) {
       pushargs(3, pargv);
       pushargs(pappargc, &f.op->payload[fvCount+1]);
       // tail call the FUN
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
 
     // excess < 0, too few args
     } else {
@@ -37040,7 +37040,7 @@ DEFUN1(stgApplyPNPNNP, f) {
       fprintf(stderr, "stgApplyPNPNNP PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3 + pappargc, 3 + papnargc);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 3 + pappargc, 3 + papnargc);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -37083,7 +37083,7 @@ DEFUN1(stgApplyPNPNNP, f) {
 
 DEFUN1(stgApplyNPPNNP, f) {
   #ifdef DEBUGSTGAPPLY
-  fprintf(stderr, "stgApplyNPPNNP %s\n", f.op->infoPtr->name);
+  fprintf(stderr, "stgApplyNPPNNP %s\n", getInfoPtr(f.op)->name);
   #endif
   const int argc = 6;
   PtrOrLiteral argv[6];
@@ -37122,9 +37122,9 @@ DEFUN1(stgApplyNPPNNP, f) {
   f = pargv[3];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(3, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNPPNNP THUNK\n");
       #endif
@@ -37139,11 +37139,11 @@ DEFUN1(stgApplyNPPNNP, f) {
     argv[5] = pargv[2];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
-    int arity = f.op->infoPtr->funFields.arity;
+    int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
-    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    fprintf(stderr, "FUN %s arity %d\n", getInfoPtr(f.op)->name, getInfoPtr(f.op)->funFields.arity);
     #endif
     int excess = argc - arity;  // may be negative
 
@@ -37160,7 +37160,7 @@ DEFUN1(stgApplyNPPNNP, f) {
         pushargs(3, nargv);
         pushargs(2, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[2]);
         // restore argv
@@ -37184,7 +37184,7 @@ DEFUN1(stgApplyNPPNNP, f) {
         pushargs(2, nargv);
         pushargs(2, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[2]);
         // restore argv
@@ -37208,7 +37208,7 @@ DEFUN1(stgApplyNPPNNP, f) {
         pushargs(1, nargv);
         pushargs(2, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[2]);
         // restore argv
@@ -37232,7 +37232,7 @@ DEFUN1(stgApplyNPPNNP, f) {
         pushargs(1, nargv);
         pushargs(1, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -37257,7 +37257,7 @@ DEFUN1(stgApplyNPPNNP, f) {
         pushargs(1, nargv);
         // 0 pointers to push
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[0]);
         // restore argv
@@ -37285,17 +37285,17 @@ DEFUN1(stgApplyNPPNNP, f) {
       pushargs(3, nargv);
       pushargs(3, pargv);
       // tail call the fun
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
     }
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNPPNNP FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                    f.op->infoPtr->layoutInfo.unboxedCount;
+      int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                    getInfoPtr(f.op)->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3, 3);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 3, 3);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -37315,12 +37315,12 @@ DEFUN1(stgApplyNPPNNP, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                  f.op->infoPtr->layoutInfo.unboxedCount;
+    int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                  getInfoPtr(f.op)->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    int arity = f.op->infoPtr->funFields.arity - argCount;
+    int arity = getInfoPtr(f.op)->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
@@ -37341,7 +37341,7 @@ DEFUN1(stgApplyNPPNNP, f) {
         pushargs(2, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[2]);
         // restore argv
@@ -37367,7 +37367,7 @@ DEFUN1(stgApplyNPPNNP, f) {
         pushargs(2, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[2]);
         // restore argv
@@ -37393,7 +37393,7 @@ DEFUN1(stgApplyNPPNNP, f) {
         pushargs(2, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[2]);
         // restore argv
@@ -37419,7 +37419,7 @@ DEFUN1(stgApplyNPPNNP, f) {
         pushargs(1, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -37446,7 +37446,7 @@ DEFUN1(stgApplyNPPNNP, f) {
         // 0 pointers to push
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[0]);
         // restore argv
@@ -37476,7 +37476,7 @@ DEFUN1(stgApplyNPPNNP, f) {
       pushargs(3, pargv);
       pushargs(pappargc, &f.op->payload[fvCount+1]);
       // tail call the FUN
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
 
     // excess < 0, too few args
     } else {
@@ -37484,7 +37484,7 @@ DEFUN1(stgApplyNPPNNP, f) {
       fprintf(stderr, "stgApplyNPPNNP PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3 + pappargc, 3 + papnargc);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 3 + pappargc, 3 + papnargc);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -37527,7 +37527,7 @@ DEFUN1(stgApplyNPPNNP, f) {
 
 DEFUN1(stgApplyPPPNNP, f) {
   #ifdef DEBUGSTGAPPLY
-  fprintf(stderr, "stgApplyPPPNNP %s\n", f.op->infoPtr->name);
+  fprintf(stderr, "stgApplyPPPNNP %s\n", getInfoPtr(f.op)->name);
   #endif
   const int argc = 6;
   PtrOrLiteral argv[6];
@@ -37577,9 +37577,9 @@ DEFUN1(stgApplyPPPNNP, f) {
   f = pargv[4];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(4, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPPPNNP THUNK\n");
       #endif
@@ -37595,11 +37595,11 @@ DEFUN1(stgApplyPPPNNP, f) {
     argv[5] = pargv[3];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
-    int arity = f.op->infoPtr->funFields.arity;
+    int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
-    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    fprintf(stderr, "FUN %s arity %d\n", getInfoPtr(f.op)->name, getInfoPtr(f.op)->funFields.arity);
     #endif
     int excess = argc - arity;  // may be negative
 
@@ -37616,7 +37616,7 @@ DEFUN1(stgApplyPPPNNP, f) {
         pushargs(2, nargv);
         pushargs(3, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[3]);
         // restore argv
@@ -37640,7 +37640,7 @@ DEFUN1(stgApplyPPPNNP, f) {
         pushargs(1, nargv);
         pushargs(3, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[3]);
         // restore argv
@@ -37664,7 +37664,7 @@ DEFUN1(stgApplyPPPNNP, f) {
         // 0 non-pointers to push
         pushargs(3, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[3]);
         // restore argv
@@ -37688,7 +37688,7 @@ DEFUN1(stgApplyPPPNNP, f) {
         // 0 non-pointers to push
         pushargs(2, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[2]);
         // restore argv
@@ -37713,7 +37713,7 @@ DEFUN1(stgApplyPPPNNP, f) {
         // 0 non-pointers to push
         pushargs(1, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -37741,17 +37741,17 @@ DEFUN1(stgApplyPPPNNP, f) {
       pushargs(2, nargv);
       pushargs(4, pargv);
       // tail call the fun
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
     }
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPPPNNP FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                    f.op->infoPtr->layoutInfo.unboxedCount;
+      int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                    getInfoPtr(f.op)->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 4, 2);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 4, 2);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -37771,12 +37771,12 @@ DEFUN1(stgApplyPPPNNP, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                  f.op->infoPtr->layoutInfo.unboxedCount;
+    int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                  getInfoPtr(f.op)->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    int arity = f.op->infoPtr->funFields.arity - argCount;
+    int arity = getInfoPtr(f.op)->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
@@ -37797,7 +37797,7 @@ DEFUN1(stgApplyPPPNNP, f) {
         pushargs(3, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[3]);
         // restore argv
@@ -37823,7 +37823,7 @@ DEFUN1(stgApplyPPPNNP, f) {
         pushargs(3, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[3]);
         // restore argv
@@ -37849,7 +37849,7 @@ DEFUN1(stgApplyPPPNNP, f) {
         pushargs(3, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[3]);
         // restore argv
@@ -37875,7 +37875,7 @@ DEFUN1(stgApplyPPPNNP, f) {
         pushargs(2, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[2]);
         // restore argv
@@ -37902,7 +37902,7 @@ DEFUN1(stgApplyPPPNNP, f) {
         pushargs(1, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -37932,7 +37932,7 @@ DEFUN1(stgApplyPPPNNP, f) {
       pushargs(4, pargv);
       pushargs(pappargc, &f.op->payload[fvCount+1]);
       // tail call the FUN
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
 
     // excess < 0, too few args
     } else {
@@ -37940,7 +37940,7 @@ DEFUN1(stgApplyPPPNNP, f) {
       fprintf(stderr, "stgApplyPPPNNP PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 4 + pappargc, 2 + papnargc);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 4 + pappargc, 2 + papnargc);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -37983,7 +37983,7 @@ DEFUN1(stgApplyPPPNNP, f) {
 
 DEFUN1(stgApplyNNNPNP, f) {
   #ifdef DEBUGSTGAPPLY
-  fprintf(stderr, "stgApplyNNNPNP %s\n", f.op->infoPtr->name);
+  fprintf(stderr, "stgApplyNNNPNP %s\n", getInfoPtr(f.op)->name);
   #endif
   const int argc = 6;
   PtrOrLiteral argv[6];
@@ -38013,9 +38013,9 @@ DEFUN1(stgApplyNNNPNP, f) {
   f = pargv[2];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(2, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNNNPNP THUNK\n");
       #endif
@@ -38029,11 +38029,11 @@ DEFUN1(stgApplyNNNPNP, f) {
     argv[5] = pargv[1];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
-    int arity = f.op->infoPtr->funFields.arity;
+    int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
-    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    fprintf(stderr, "FUN %s arity %d\n", getInfoPtr(f.op)->name, getInfoPtr(f.op)->funFields.arity);
     #endif
     int excess = argc - arity;  // may be negative
 
@@ -38050,7 +38050,7 @@ DEFUN1(stgApplyNNNPNP, f) {
         pushargs(4, nargv);
         pushargs(1, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -38074,7 +38074,7 @@ DEFUN1(stgApplyNNNPNP, f) {
         pushargs(3, nargv);
         pushargs(1, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -38098,7 +38098,7 @@ DEFUN1(stgApplyNNNPNP, f) {
         pushargs(3, nargv);
         // 0 pointers to push
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[0]);
         // restore argv
@@ -38123,7 +38123,7 @@ DEFUN1(stgApplyNNNPNP, f) {
         pushargs(2, nargv);
         // 0 pointers to push
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[0]);
         // restore argv
@@ -38148,7 +38148,7 @@ DEFUN1(stgApplyNNNPNP, f) {
         pushargs(1, nargv);
         // 0 pointers to push
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[0]);
         // restore argv
@@ -38175,17 +38175,17 @@ DEFUN1(stgApplyNNNPNP, f) {
       pushargs(4, nargv);
       pushargs(2, pargv);
       // tail call the fun
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
     }
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNNNPNP FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                    f.op->infoPtr->layoutInfo.unboxedCount;
+      int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                    getInfoPtr(f.op)->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2, 4);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 2, 4);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -38205,12 +38205,12 @@ DEFUN1(stgApplyNNNPNP, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                  f.op->infoPtr->layoutInfo.unboxedCount;
+    int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                  getInfoPtr(f.op)->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    int arity = f.op->infoPtr->funFields.arity - argCount;
+    int arity = getInfoPtr(f.op)->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
@@ -38231,7 +38231,7 @@ DEFUN1(stgApplyNNNPNP, f) {
         pushargs(1, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -38257,7 +38257,7 @@ DEFUN1(stgApplyNNNPNP, f) {
         pushargs(1, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -38283,7 +38283,7 @@ DEFUN1(stgApplyNNNPNP, f) {
         // 0 pointers to push
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[0]);
         // restore argv
@@ -38310,7 +38310,7 @@ DEFUN1(stgApplyNNNPNP, f) {
         // 0 pointers to push
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[0]);
         // restore argv
@@ -38337,7 +38337,7 @@ DEFUN1(stgApplyNNNPNP, f) {
         // 0 pointers to push
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[0]);
         // restore argv
@@ -38366,7 +38366,7 @@ DEFUN1(stgApplyNNNPNP, f) {
       pushargs(2, pargv);
       pushargs(pappargc, &f.op->payload[fvCount+1]);
       // tail call the FUN
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
 
     // excess < 0, too few args
     } else {
@@ -38374,7 +38374,7 @@ DEFUN1(stgApplyNNNPNP, f) {
       fprintf(stderr, "stgApplyNNNPNP PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2 + pappargc, 4 + papnargc);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 2 + pappargc, 4 + papnargc);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -38417,7 +38417,7 @@ DEFUN1(stgApplyNNNPNP, f) {
 
 DEFUN1(stgApplyPNNPNP, f) {
   #ifdef DEBUGSTGAPPLY
-  fprintf(stderr, "stgApplyPNNPNP %s\n", f.op->infoPtr->name);
+  fprintf(stderr, "stgApplyPNNPNP %s\n", getInfoPtr(f.op)->name);
   #endif
   const int argc = 6;
   PtrOrLiteral argv[6];
@@ -38456,9 +38456,9 @@ DEFUN1(stgApplyPNNPNP, f) {
   f = pargv[3];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(3, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPNNPNP THUNK\n");
       #endif
@@ -38473,11 +38473,11 @@ DEFUN1(stgApplyPNNPNP, f) {
     argv[5] = pargv[2];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
-    int arity = f.op->infoPtr->funFields.arity;
+    int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
-    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    fprintf(stderr, "FUN %s arity %d\n", getInfoPtr(f.op)->name, getInfoPtr(f.op)->funFields.arity);
     #endif
     int excess = argc - arity;  // may be negative
 
@@ -38494,7 +38494,7 @@ DEFUN1(stgApplyPNNPNP, f) {
         pushargs(3, nargv);
         pushargs(2, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[2]);
         // restore argv
@@ -38518,7 +38518,7 @@ DEFUN1(stgApplyPNNPNP, f) {
         pushargs(2, nargv);
         pushargs(2, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[2]);
         // restore argv
@@ -38542,7 +38542,7 @@ DEFUN1(stgApplyPNNPNP, f) {
         pushargs(2, nargv);
         pushargs(1, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -38567,7 +38567,7 @@ DEFUN1(stgApplyPNNPNP, f) {
         pushargs(1, nargv);
         pushargs(1, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -38592,7 +38592,7 @@ DEFUN1(stgApplyPNNPNP, f) {
         // 0 non-pointers to push
         pushargs(1, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -38619,17 +38619,17 @@ DEFUN1(stgApplyPNNPNP, f) {
       pushargs(3, nargv);
       pushargs(3, pargv);
       // tail call the fun
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
     }
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPNNPNP FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                    f.op->infoPtr->layoutInfo.unboxedCount;
+      int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                    getInfoPtr(f.op)->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3, 3);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 3, 3);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -38649,12 +38649,12 @@ DEFUN1(stgApplyPNNPNP, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                  f.op->infoPtr->layoutInfo.unboxedCount;
+    int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                  getInfoPtr(f.op)->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    int arity = f.op->infoPtr->funFields.arity - argCount;
+    int arity = getInfoPtr(f.op)->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
@@ -38675,7 +38675,7 @@ DEFUN1(stgApplyPNNPNP, f) {
         pushargs(2, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[2]);
         // restore argv
@@ -38701,7 +38701,7 @@ DEFUN1(stgApplyPNNPNP, f) {
         pushargs(2, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[2]);
         // restore argv
@@ -38727,7 +38727,7 @@ DEFUN1(stgApplyPNNPNP, f) {
         pushargs(1, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -38754,7 +38754,7 @@ DEFUN1(stgApplyPNNPNP, f) {
         pushargs(1, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -38781,7 +38781,7 @@ DEFUN1(stgApplyPNNPNP, f) {
         pushargs(1, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -38810,7 +38810,7 @@ DEFUN1(stgApplyPNNPNP, f) {
       pushargs(3, pargv);
       pushargs(pappargc, &f.op->payload[fvCount+1]);
       // tail call the FUN
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
 
     // excess < 0, too few args
     } else {
@@ -38818,7 +38818,7 @@ DEFUN1(stgApplyPNNPNP, f) {
       fprintf(stderr, "stgApplyPNNPNP PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3 + pappargc, 3 + papnargc);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 3 + pappargc, 3 + papnargc);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -38861,7 +38861,7 @@ DEFUN1(stgApplyPNNPNP, f) {
 
 DEFUN1(stgApplyNPNPNP, f) {
   #ifdef DEBUGSTGAPPLY
-  fprintf(stderr, "stgApplyNPNPNP %s\n", f.op->infoPtr->name);
+  fprintf(stderr, "stgApplyNPNPNP %s\n", getInfoPtr(f.op)->name);
   #endif
   const int argc = 6;
   PtrOrLiteral argv[6];
@@ -38900,9 +38900,9 @@ DEFUN1(stgApplyNPNPNP, f) {
   f = pargv[3];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(3, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNPNPNP THUNK\n");
       #endif
@@ -38917,11 +38917,11 @@ DEFUN1(stgApplyNPNPNP, f) {
     argv[5] = pargv[2];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
-    int arity = f.op->infoPtr->funFields.arity;
+    int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
-    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    fprintf(stderr, "FUN %s arity %d\n", getInfoPtr(f.op)->name, getInfoPtr(f.op)->funFields.arity);
     #endif
     int excess = argc - arity;  // may be negative
 
@@ -38938,7 +38938,7 @@ DEFUN1(stgApplyNPNPNP, f) {
         pushargs(3, nargv);
         pushargs(2, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[2]);
         // restore argv
@@ -38962,7 +38962,7 @@ DEFUN1(stgApplyNPNPNP, f) {
         pushargs(2, nargv);
         pushargs(2, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[2]);
         // restore argv
@@ -38986,7 +38986,7 @@ DEFUN1(stgApplyNPNPNP, f) {
         pushargs(2, nargv);
         pushargs(1, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -39011,7 +39011,7 @@ DEFUN1(stgApplyNPNPNP, f) {
         pushargs(1, nargv);
         pushargs(1, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -39036,7 +39036,7 @@ DEFUN1(stgApplyNPNPNP, f) {
         pushargs(1, nargv);
         // 0 pointers to push
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[0]);
         // restore argv
@@ -39064,17 +39064,17 @@ DEFUN1(stgApplyNPNPNP, f) {
       pushargs(3, nargv);
       pushargs(3, pargv);
       // tail call the fun
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
     }
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNPNPNP FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                    f.op->infoPtr->layoutInfo.unboxedCount;
+      int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                    getInfoPtr(f.op)->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3, 3);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 3, 3);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -39094,12 +39094,12 @@ DEFUN1(stgApplyNPNPNP, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                  f.op->infoPtr->layoutInfo.unboxedCount;
+    int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                  getInfoPtr(f.op)->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    int arity = f.op->infoPtr->funFields.arity - argCount;
+    int arity = getInfoPtr(f.op)->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
@@ -39120,7 +39120,7 @@ DEFUN1(stgApplyNPNPNP, f) {
         pushargs(2, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[2]);
         // restore argv
@@ -39146,7 +39146,7 @@ DEFUN1(stgApplyNPNPNP, f) {
         pushargs(2, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[2]);
         // restore argv
@@ -39172,7 +39172,7 @@ DEFUN1(stgApplyNPNPNP, f) {
         pushargs(1, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -39199,7 +39199,7 @@ DEFUN1(stgApplyNPNPNP, f) {
         pushargs(1, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -39226,7 +39226,7 @@ DEFUN1(stgApplyNPNPNP, f) {
         // 0 pointers to push
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[0]);
         // restore argv
@@ -39256,7 +39256,7 @@ DEFUN1(stgApplyNPNPNP, f) {
       pushargs(3, pargv);
       pushargs(pappargc, &f.op->payload[fvCount+1]);
       // tail call the FUN
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
 
     // excess < 0, too few args
     } else {
@@ -39264,7 +39264,7 @@ DEFUN1(stgApplyNPNPNP, f) {
       fprintf(stderr, "stgApplyNPNPNP PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3 + pappargc, 3 + papnargc);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 3 + pappargc, 3 + papnargc);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -39307,7 +39307,7 @@ DEFUN1(stgApplyNPNPNP, f) {
 
 DEFUN1(stgApplyPPNPNP, f) {
   #ifdef DEBUGSTGAPPLY
-  fprintf(stderr, "stgApplyPPNPNP %s\n", f.op->infoPtr->name);
+  fprintf(stderr, "stgApplyPPNPNP %s\n", getInfoPtr(f.op)->name);
   #endif
   const int argc = 6;
   PtrOrLiteral argv[6];
@@ -39357,9 +39357,9 @@ DEFUN1(stgApplyPPNPNP, f) {
   f = pargv[4];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(4, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPPNPNP THUNK\n");
       #endif
@@ -39375,11 +39375,11 @@ DEFUN1(stgApplyPPNPNP, f) {
     argv[5] = pargv[3];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
-    int arity = f.op->infoPtr->funFields.arity;
+    int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
-    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    fprintf(stderr, "FUN %s arity %d\n", getInfoPtr(f.op)->name, getInfoPtr(f.op)->funFields.arity);
     #endif
     int excess = argc - arity;  // may be negative
 
@@ -39396,7 +39396,7 @@ DEFUN1(stgApplyPPNPNP, f) {
         pushargs(2, nargv);
         pushargs(3, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[3]);
         // restore argv
@@ -39420,7 +39420,7 @@ DEFUN1(stgApplyPPNPNP, f) {
         pushargs(1, nargv);
         pushargs(3, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[3]);
         // restore argv
@@ -39444,7 +39444,7 @@ DEFUN1(stgApplyPPNPNP, f) {
         pushargs(1, nargv);
         pushargs(2, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[2]);
         // restore argv
@@ -39469,7 +39469,7 @@ DEFUN1(stgApplyPPNPNP, f) {
         // 0 non-pointers to push
         pushargs(2, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[2]);
         // restore argv
@@ -39494,7 +39494,7 @@ DEFUN1(stgApplyPPNPNP, f) {
         // 0 non-pointers to push
         pushargs(1, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -39522,17 +39522,17 @@ DEFUN1(stgApplyPPNPNP, f) {
       pushargs(2, nargv);
       pushargs(4, pargv);
       // tail call the fun
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
     }
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPPNPNP FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                    f.op->infoPtr->layoutInfo.unboxedCount;
+      int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                    getInfoPtr(f.op)->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 4, 2);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 4, 2);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -39552,12 +39552,12 @@ DEFUN1(stgApplyPPNPNP, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                  f.op->infoPtr->layoutInfo.unboxedCount;
+    int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                  getInfoPtr(f.op)->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    int arity = f.op->infoPtr->funFields.arity - argCount;
+    int arity = getInfoPtr(f.op)->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
@@ -39578,7 +39578,7 @@ DEFUN1(stgApplyPPNPNP, f) {
         pushargs(3, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[3]);
         // restore argv
@@ -39604,7 +39604,7 @@ DEFUN1(stgApplyPPNPNP, f) {
         pushargs(3, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[3]);
         // restore argv
@@ -39630,7 +39630,7 @@ DEFUN1(stgApplyPPNPNP, f) {
         pushargs(2, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[2]);
         // restore argv
@@ -39657,7 +39657,7 @@ DEFUN1(stgApplyPPNPNP, f) {
         pushargs(2, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[2]);
         // restore argv
@@ -39684,7 +39684,7 @@ DEFUN1(stgApplyPPNPNP, f) {
         pushargs(1, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -39714,7 +39714,7 @@ DEFUN1(stgApplyPPNPNP, f) {
       pushargs(4, pargv);
       pushargs(pappargc, &f.op->payload[fvCount+1]);
       // tail call the FUN
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
 
     // excess < 0, too few args
     } else {
@@ -39722,7 +39722,7 @@ DEFUN1(stgApplyPPNPNP, f) {
       fprintf(stderr, "stgApplyPPNPNP PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 4 + pappargc, 2 + papnargc);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 4 + pappargc, 2 + papnargc);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -39765,7 +39765,7 @@ DEFUN1(stgApplyPPNPNP, f) {
 
 DEFUN1(stgApplyNNPPNP, f) {
   #ifdef DEBUGSTGAPPLY
-  fprintf(stderr, "stgApplyNNPPNP %s\n", f.op->infoPtr->name);
+  fprintf(stderr, "stgApplyNNPPNP %s\n", getInfoPtr(f.op)->name);
   #endif
   const int argc = 6;
   PtrOrLiteral argv[6];
@@ -39804,9 +39804,9 @@ DEFUN1(stgApplyNNPPNP, f) {
   f = pargv[3];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(3, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNNPPNP THUNK\n");
       #endif
@@ -39821,11 +39821,11 @@ DEFUN1(stgApplyNNPPNP, f) {
     argv[5] = pargv[2];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
-    int arity = f.op->infoPtr->funFields.arity;
+    int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
-    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    fprintf(stderr, "FUN %s arity %d\n", getInfoPtr(f.op)->name, getInfoPtr(f.op)->funFields.arity);
     #endif
     int excess = argc - arity;  // may be negative
 
@@ -39842,7 +39842,7 @@ DEFUN1(stgApplyNNPPNP, f) {
         pushargs(3, nargv);
         pushargs(2, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[2]);
         // restore argv
@@ -39866,7 +39866,7 @@ DEFUN1(stgApplyNNPPNP, f) {
         pushargs(2, nargv);
         pushargs(2, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[2]);
         // restore argv
@@ -39890,7 +39890,7 @@ DEFUN1(stgApplyNNPPNP, f) {
         pushargs(2, nargv);
         pushargs(1, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -39915,7 +39915,7 @@ DEFUN1(stgApplyNNPPNP, f) {
         pushargs(2, nargv);
         // 0 pointers to push
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[0]);
         // restore argv
@@ -39941,7 +39941,7 @@ DEFUN1(stgApplyNNPPNP, f) {
         pushargs(1, nargv);
         // 0 pointers to push
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[0]);
         // restore argv
@@ -39969,17 +39969,17 @@ DEFUN1(stgApplyNNPPNP, f) {
       pushargs(3, nargv);
       pushargs(3, pargv);
       // tail call the fun
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
     }
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNNPPNP FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                    f.op->infoPtr->layoutInfo.unboxedCount;
+      int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                    getInfoPtr(f.op)->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3, 3);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 3, 3);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -39999,12 +39999,12 @@ DEFUN1(stgApplyNNPPNP, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                  f.op->infoPtr->layoutInfo.unboxedCount;
+    int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                  getInfoPtr(f.op)->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    int arity = f.op->infoPtr->funFields.arity - argCount;
+    int arity = getInfoPtr(f.op)->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
@@ -40025,7 +40025,7 @@ DEFUN1(stgApplyNNPPNP, f) {
         pushargs(2, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[2]);
         // restore argv
@@ -40051,7 +40051,7 @@ DEFUN1(stgApplyNNPPNP, f) {
         pushargs(2, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[2]);
         // restore argv
@@ -40077,7 +40077,7 @@ DEFUN1(stgApplyNNPPNP, f) {
         pushargs(1, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -40104,7 +40104,7 @@ DEFUN1(stgApplyNNPPNP, f) {
         // 0 pointers to push
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[0]);
         // restore argv
@@ -40132,7 +40132,7 @@ DEFUN1(stgApplyNNPPNP, f) {
         // 0 pointers to push
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[0]);
         // restore argv
@@ -40162,7 +40162,7 @@ DEFUN1(stgApplyNNPPNP, f) {
       pushargs(3, pargv);
       pushargs(pappargc, &f.op->payload[fvCount+1]);
       // tail call the FUN
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
 
     // excess < 0, too few args
     } else {
@@ -40170,7 +40170,7 @@ DEFUN1(stgApplyNNPPNP, f) {
       fprintf(stderr, "stgApplyNNPPNP PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3 + pappargc, 3 + papnargc);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 3 + pappargc, 3 + papnargc);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -40213,7 +40213,7 @@ DEFUN1(stgApplyNNPPNP, f) {
 
 DEFUN1(stgApplyPNPPNP, f) {
   #ifdef DEBUGSTGAPPLY
-  fprintf(stderr, "stgApplyPNPPNP %s\n", f.op->infoPtr->name);
+  fprintf(stderr, "stgApplyPNPPNP %s\n", getInfoPtr(f.op)->name);
   #endif
   const int argc = 6;
   PtrOrLiteral argv[6];
@@ -40263,9 +40263,9 @@ DEFUN1(stgApplyPNPPNP, f) {
   f = pargv[4];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(4, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPNPPNP THUNK\n");
       #endif
@@ -40281,11 +40281,11 @@ DEFUN1(stgApplyPNPPNP, f) {
     argv[5] = pargv[3];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
-    int arity = f.op->infoPtr->funFields.arity;
+    int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
-    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    fprintf(stderr, "FUN %s arity %d\n", getInfoPtr(f.op)->name, getInfoPtr(f.op)->funFields.arity);
     #endif
     int excess = argc - arity;  // may be negative
 
@@ -40302,7 +40302,7 @@ DEFUN1(stgApplyPNPPNP, f) {
         pushargs(2, nargv);
         pushargs(3, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[3]);
         // restore argv
@@ -40326,7 +40326,7 @@ DEFUN1(stgApplyPNPPNP, f) {
         pushargs(1, nargv);
         pushargs(3, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[3]);
         // restore argv
@@ -40350,7 +40350,7 @@ DEFUN1(stgApplyPNPPNP, f) {
         pushargs(1, nargv);
         pushargs(2, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[2]);
         // restore argv
@@ -40375,7 +40375,7 @@ DEFUN1(stgApplyPNPPNP, f) {
         pushargs(1, nargv);
         pushargs(1, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -40401,7 +40401,7 @@ DEFUN1(stgApplyPNPPNP, f) {
         // 0 non-pointers to push
         pushargs(1, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -40429,17 +40429,17 @@ DEFUN1(stgApplyPNPPNP, f) {
       pushargs(2, nargv);
       pushargs(4, pargv);
       // tail call the fun
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
     }
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPNPPNP FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                    f.op->infoPtr->layoutInfo.unboxedCount;
+      int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                    getInfoPtr(f.op)->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 4, 2);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 4, 2);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -40459,12 +40459,12 @@ DEFUN1(stgApplyPNPPNP, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                  f.op->infoPtr->layoutInfo.unboxedCount;
+    int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                  getInfoPtr(f.op)->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    int arity = f.op->infoPtr->funFields.arity - argCount;
+    int arity = getInfoPtr(f.op)->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
@@ -40485,7 +40485,7 @@ DEFUN1(stgApplyPNPPNP, f) {
         pushargs(3, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[3]);
         // restore argv
@@ -40511,7 +40511,7 @@ DEFUN1(stgApplyPNPPNP, f) {
         pushargs(3, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[3]);
         // restore argv
@@ -40537,7 +40537,7 @@ DEFUN1(stgApplyPNPPNP, f) {
         pushargs(2, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[2]);
         // restore argv
@@ -40564,7 +40564,7 @@ DEFUN1(stgApplyPNPPNP, f) {
         pushargs(1, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -40592,7 +40592,7 @@ DEFUN1(stgApplyPNPPNP, f) {
         pushargs(1, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -40622,7 +40622,7 @@ DEFUN1(stgApplyPNPPNP, f) {
       pushargs(4, pargv);
       pushargs(pappargc, &f.op->payload[fvCount+1]);
       // tail call the FUN
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
 
     // excess < 0, too few args
     } else {
@@ -40630,7 +40630,7 @@ DEFUN1(stgApplyPNPPNP, f) {
       fprintf(stderr, "stgApplyPNPPNP PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 4 + pappargc, 2 + papnargc);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 4 + pappargc, 2 + papnargc);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -40673,7 +40673,7 @@ DEFUN1(stgApplyPNPPNP, f) {
 
 DEFUN1(stgApplyNPPPNP, f) {
   #ifdef DEBUGSTGAPPLY
-  fprintf(stderr, "stgApplyNPPPNP %s\n", f.op->infoPtr->name);
+  fprintf(stderr, "stgApplyNPPPNP %s\n", getInfoPtr(f.op)->name);
   #endif
   const int argc = 6;
   PtrOrLiteral argv[6];
@@ -40723,9 +40723,9 @@ DEFUN1(stgApplyNPPPNP, f) {
   f = pargv[4];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(4, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNPPPNP THUNK\n");
       #endif
@@ -40741,11 +40741,11 @@ DEFUN1(stgApplyNPPPNP, f) {
     argv[5] = pargv[3];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
-    int arity = f.op->infoPtr->funFields.arity;
+    int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
-    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    fprintf(stderr, "FUN %s arity %d\n", getInfoPtr(f.op)->name, getInfoPtr(f.op)->funFields.arity);
     #endif
     int excess = argc - arity;  // may be negative
 
@@ -40762,7 +40762,7 @@ DEFUN1(stgApplyNPPPNP, f) {
         pushargs(2, nargv);
         pushargs(3, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[3]);
         // restore argv
@@ -40786,7 +40786,7 @@ DEFUN1(stgApplyNPPPNP, f) {
         pushargs(1, nargv);
         pushargs(3, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[3]);
         // restore argv
@@ -40810,7 +40810,7 @@ DEFUN1(stgApplyNPPPNP, f) {
         pushargs(1, nargv);
         pushargs(2, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[2]);
         // restore argv
@@ -40835,7 +40835,7 @@ DEFUN1(stgApplyNPPPNP, f) {
         pushargs(1, nargv);
         pushargs(1, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -40861,7 +40861,7 @@ DEFUN1(stgApplyNPPPNP, f) {
         pushargs(1, nargv);
         // 0 pointers to push
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[0]);
         // restore argv
@@ -40890,17 +40890,17 @@ DEFUN1(stgApplyNPPPNP, f) {
       pushargs(2, nargv);
       pushargs(4, pargv);
       // tail call the fun
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
     }
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNPPPNP FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                    f.op->infoPtr->layoutInfo.unboxedCount;
+      int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                    getInfoPtr(f.op)->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 4, 2);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 4, 2);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -40920,12 +40920,12 @@ DEFUN1(stgApplyNPPPNP, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                  f.op->infoPtr->layoutInfo.unboxedCount;
+    int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                  getInfoPtr(f.op)->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    int arity = f.op->infoPtr->funFields.arity - argCount;
+    int arity = getInfoPtr(f.op)->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
@@ -40946,7 +40946,7 @@ DEFUN1(stgApplyNPPPNP, f) {
         pushargs(3, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[3]);
         // restore argv
@@ -40972,7 +40972,7 @@ DEFUN1(stgApplyNPPPNP, f) {
         pushargs(3, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[3]);
         // restore argv
@@ -40998,7 +40998,7 @@ DEFUN1(stgApplyNPPPNP, f) {
         pushargs(2, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[2]);
         // restore argv
@@ -41025,7 +41025,7 @@ DEFUN1(stgApplyNPPPNP, f) {
         pushargs(1, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -41053,7 +41053,7 @@ DEFUN1(stgApplyNPPPNP, f) {
         // 0 pointers to push
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[0]);
         // restore argv
@@ -41084,7 +41084,7 @@ DEFUN1(stgApplyNPPPNP, f) {
       pushargs(4, pargv);
       pushargs(pappargc, &f.op->payload[fvCount+1]);
       // tail call the FUN
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
 
     // excess < 0, too few args
     } else {
@@ -41092,7 +41092,7 @@ DEFUN1(stgApplyNPPPNP, f) {
       fprintf(stderr, "stgApplyNPPPNP PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 4 + pappargc, 2 + papnargc);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 4 + pappargc, 2 + papnargc);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -41135,7 +41135,7 @@ DEFUN1(stgApplyNPPPNP, f) {
 
 DEFUN1(stgApplyPPPPNP, f) {
   #ifdef DEBUGSTGAPPLY
-  fprintf(stderr, "stgApplyPPPPNP %s\n", f.op->infoPtr->name);
+  fprintf(stderr, "stgApplyPPPPNP %s\n", getInfoPtr(f.op)->name);
   #endif
   const int argc = 6;
   PtrOrLiteral argv[6];
@@ -41198,9 +41198,9 @@ DEFUN1(stgApplyPPPPNP, f) {
   f = pargv[5];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(5, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPPPPNP THUNK\n");
       #endif
@@ -41217,11 +41217,11 @@ DEFUN1(stgApplyPPPPNP, f) {
     argv[5] = pargv[4];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
-    int arity = f.op->infoPtr->funFields.arity;
+    int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
-    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    fprintf(stderr, "FUN %s arity %d\n", getInfoPtr(f.op)->name, getInfoPtr(f.op)->funFields.arity);
     #endif
     int excess = argc - arity;  // may be negative
 
@@ -41238,7 +41238,7 @@ DEFUN1(stgApplyPPPPNP, f) {
         pushargs(1, nargv);
         pushargs(4, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[4]);
         // restore argv
@@ -41262,7 +41262,7 @@ DEFUN1(stgApplyPPPPNP, f) {
         // 0 non-pointers to push
         pushargs(4, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[4]);
         // restore argv
@@ -41286,7 +41286,7 @@ DEFUN1(stgApplyPPPPNP, f) {
         // 0 non-pointers to push
         pushargs(3, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[3]);
         // restore argv
@@ -41311,7 +41311,7 @@ DEFUN1(stgApplyPPPPNP, f) {
         // 0 non-pointers to push
         pushargs(2, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[2]);
         // restore argv
@@ -41337,7 +41337,7 @@ DEFUN1(stgApplyPPPPNP, f) {
         // 0 non-pointers to push
         pushargs(1, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -41366,17 +41366,17 @@ DEFUN1(stgApplyPPPPNP, f) {
       pushargs(1, nargv);
       pushargs(5, pargv);
       // tail call the fun
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
     }
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPPPPNP FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                    f.op->infoPtr->layoutInfo.unboxedCount;
+      int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                    getInfoPtr(f.op)->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 5, 1);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 5, 1);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -41396,12 +41396,12 @@ DEFUN1(stgApplyPPPPNP, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                  f.op->infoPtr->layoutInfo.unboxedCount;
+    int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                  getInfoPtr(f.op)->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    int arity = f.op->infoPtr->funFields.arity - argCount;
+    int arity = getInfoPtr(f.op)->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
@@ -41422,7 +41422,7 @@ DEFUN1(stgApplyPPPPNP, f) {
         pushargs(4, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[4]);
         // restore argv
@@ -41448,7 +41448,7 @@ DEFUN1(stgApplyPPPPNP, f) {
         pushargs(4, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[4]);
         // restore argv
@@ -41474,7 +41474,7 @@ DEFUN1(stgApplyPPPPNP, f) {
         pushargs(3, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[3]);
         // restore argv
@@ -41501,7 +41501,7 @@ DEFUN1(stgApplyPPPPNP, f) {
         pushargs(2, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[2]);
         // restore argv
@@ -41529,7 +41529,7 @@ DEFUN1(stgApplyPPPPNP, f) {
         pushargs(1, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -41560,7 +41560,7 @@ DEFUN1(stgApplyPPPPNP, f) {
       pushargs(5, pargv);
       pushargs(pappargc, &f.op->payload[fvCount+1]);
       // tail call the FUN
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
 
     // excess < 0, too few args
     } else {
@@ -41568,7 +41568,7 @@ DEFUN1(stgApplyPPPPNP, f) {
       fprintf(stderr, "stgApplyPPPPNP PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 5 + pappargc, 1 + papnargc);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 5 + pappargc, 1 + papnargc);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -41611,7 +41611,7 @@ DEFUN1(stgApplyPPPPNP, f) {
 
 DEFUN1(stgApplyNNNNPP, f) {
   #ifdef DEBUGSTGAPPLY
-  fprintf(stderr, "stgApplyNNNNPP %s\n", f.op->infoPtr->name);
+  fprintf(stderr, "stgApplyNNNNPP %s\n", getInfoPtr(f.op)->name);
   #endif
   const int argc = 6;
   PtrOrLiteral argv[6];
@@ -41641,9 +41641,9 @@ DEFUN1(stgApplyNNNNPP, f) {
   f = pargv[2];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(2, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNNNNPP THUNK\n");
       #endif
@@ -41657,11 +41657,11 @@ DEFUN1(stgApplyNNNNPP, f) {
     argv[5] = pargv[1];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
-    int arity = f.op->infoPtr->funFields.arity;
+    int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
-    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    fprintf(stderr, "FUN %s arity %d\n", getInfoPtr(f.op)->name, getInfoPtr(f.op)->funFields.arity);
     #endif
     int excess = argc - arity;  // may be negative
 
@@ -41678,7 +41678,7 @@ DEFUN1(stgApplyNNNNPP, f) {
         pushargs(4, nargv);
         pushargs(1, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -41702,7 +41702,7 @@ DEFUN1(stgApplyNNNNPP, f) {
         pushargs(4, nargv);
         // 0 pointers to push
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[0]);
         // restore argv
@@ -41727,7 +41727,7 @@ DEFUN1(stgApplyNNNNPP, f) {
         pushargs(3, nargv);
         // 0 pointers to push
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[0]);
         // restore argv
@@ -41752,7 +41752,7 @@ DEFUN1(stgApplyNNNNPP, f) {
         pushargs(2, nargv);
         // 0 pointers to push
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[0]);
         // restore argv
@@ -41777,7 +41777,7 @@ DEFUN1(stgApplyNNNNPP, f) {
         pushargs(1, nargv);
         // 0 pointers to push
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[0]);
         // restore argv
@@ -41804,17 +41804,17 @@ DEFUN1(stgApplyNNNNPP, f) {
       pushargs(4, nargv);
       pushargs(2, pargv);
       // tail call the fun
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
     }
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNNNNPP FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                    f.op->infoPtr->layoutInfo.unboxedCount;
+      int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                    getInfoPtr(f.op)->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2, 4);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 2, 4);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -41834,12 +41834,12 @@ DEFUN1(stgApplyNNNNPP, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                  f.op->infoPtr->layoutInfo.unboxedCount;
+    int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                  getInfoPtr(f.op)->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    int arity = f.op->infoPtr->funFields.arity - argCount;
+    int arity = getInfoPtr(f.op)->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
@@ -41860,7 +41860,7 @@ DEFUN1(stgApplyNNNNPP, f) {
         pushargs(1, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -41886,7 +41886,7 @@ DEFUN1(stgApplyNNNNPP, f) {
         // 0 pointers to push
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[0]);
         // restore argv
@@ -41913,7 +41913,7 @@ DEFUN1(stgApplyNNNNPP, f) {
         // 0 pointers to push
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[0]);
         // restore argv
@@ -41940,7 +41940,7 @@ DEFUN1(stgApplyNNNNPP, f) {
         // 0 pointers to push
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[0]);
         // restore argv
@@ -41967,7 +41967,7 @@ DEFUN1(stgApplyNNNNPP, f) {
         // 0 pointers to push
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[0]);
         // restore argv
@@ -41996,7 +41996,7 @@ DEFUN1(stgApplyNNNNPP, f) {
       pushargs(2, pargv);
       pushargs(pappargc, &f.op->payload[fvCount+1]);
       // tail call the FUN
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
 
     // excess < 0, too few args
     } else {
@@ -42004,7 +42004,7 @@ DEFUN1(stgApplyNNNNPP, f) {
       fprintf(stderr, "stgApplyNNNNPP PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 2 + pappargc, 4 + papnargc);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 2 + pappargc, 4 + papnargc);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -42047,7 +42047,7 @@ DEFUN1(stgApplyNNNNPP, f) {
 
 DEFUN1(stgApplyPNNNPP, f) {
   #ifdef DEBUGSTGAPPLY
-  fprintf(stderr, "stgApplyPNNNPP %s\n", f.op->infoPtr->name);
+  fprintf(stderr, "stgApplyPNNNPP %s\n", getInfoPtr(f.op)->name);
   #endif
   const int argc = 6;
   PtrOrLiteral argv[6];
@@ -42086,9 +42086,9 @@ DEFUN1(stgApplyPNNNPP, f) {
   f = pargv[3];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(3, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPNNNPP THUNK\n");
       #endif
@@ -42103,11 +42103,11 @@ DEFUN1(stgApplyPNNNPP, f) {
     argv[5] = pargv[2];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
-    int arity = f.op->infoPtr->funFields.arity;
+    int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
-    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    fprintf(stderr, "FUN %s arity %d\n", getInfoPtr(f.op)->name, getInfoPtr(f.op)->funFields.arity);
     #endif
     int excess = argc - arity;  // may be negative
 
@@ -42124,7 +42124,7 @@ DEFUN1(stgApplyPNNNPP, f) {
         pushargs(3, nargv);
         pushargs(2, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[2]);
         // restore argv
@@ -42148,7 +42148,7 @@ DEFUN1(stgApplyPNNNPP, f) {
         pushargs(3, nargv);
         pushargs(1, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -42173,7 +42173,7 @@ DEFUN1(stgApplyPNNNPP, f) {
         pushargs(2, nargv);
         pushargs(1, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -42198,7 +42198,7 @@ DEFUN1(stgApplyPNNNPP, f) {
         pushargs(1, nargv);
         pushargs(1, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -42223,7 +42223,7 @@ DEFUN1(stgApplyPNNNPP, f) {
         // 0 non-pointers to push
         pushargs(1, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -42250,17 +42250,17 @@ DEFUN1(stgApplyPNNNPP, f) {
       pushargs(3, nargv);
       pushargs(3, pargv);
       // tail call the fun
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
     }
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPNNNPP FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                    f.op->infoPtr->layoutInfo.unboxedCount;
+      int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                    getInfoPtr(f.op)->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3, 3);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 3, 3);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -42280,12 +42280,12 @@ DEFUN1(stgApplyPNNNPP, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                  f.op->infoPtr->layoutInfo.unboxedCount;
+    int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                  getInfoPtr(f.op)->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    int arity = f.op->infoPtr->funFields.arity - argCount;
+    int arity = getInfoPtr(f.op)->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
@@ -42306,7 +42306,7 @@ DEFUN1(stgApplyPNNNPP, f) {
         pushargs(2, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[2]);
         // restore argv
@@ -42332,7 +42332,7 @@ DEFUN1(stgApplyPNNNPP, f) {
         pushargs(1, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -42359,7 +42359,7 @@ DEFUN1(stgApplyPNNNPP, f) {
         pushargs(1, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -42386,7 +42386,7 @@ DEFUN1(stgApplyPNNNPP, f) {
         pushargs(1, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -42413,7 +42413,7 @@ DEFUN1(stgApplyPNNNPP, f) {
         pushargs(1, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -42442,7 +42442,7 @@ DEFUN1(stgApplyPNNNPP, f) {
       pushargs(3, pargv);
       pushargs(pappargc, &f.op->payload[fvCount+1]);
       // tail call the FUN
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
 
     // excess < 0, too few args
     } else {
@@ -42450,7 +42450,7 @@ DEFUN1(stgApplyPNNNPP, f) {
       fprintf(stderr, "stgApplyPNNNPP PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3 + pappargc, 3 + papnargc);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 3 + pappargc, 3 + papnargc);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -42493,7 +42493,7 @@ DEFUN1(stgApplyPNNNPP, f) {
 
 DEFUN1(stgApplyNPNNPP, f) {
   #ifdef DEBUGSTGAPPLY
-  fprintf(stderr, "stgApplyNPNNPP %s\n", f.op->infoPtr->name);
+  fprintf(stderr, "stgApplyNPNNPP %s\n", getInfoPtr(f.op)->name);
   #endif
   const int argc = 6;
   PtrOrLiteral argv[6];
@@ -42532,9 +42532,9 @@ DEFUN1(stgApplyNPNNPP, f) {
   f = pargv[3];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(3, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNPNNPP THUNK\n");
       #endif
@@ -42549,11 +42549,11 @@ DEFUN1(stgApplyNPNNPP, f) {
     argv[5] = pargv[2];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
-    int arity = f.op->infoPtr->funFields.arity;
+    int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
-    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    fprintf(stderr, "FUN %s arity %d\n", getInfoPtr(f.op)->name, getInfoPtr(f.op)->funFields.arity);
     #endif
     int excess = argc - arity;  // may be negative
 
@@ -42570,7 +42570,7 @@ DEFUN1(stgApplyNPNNPP, f) {
         pushargs(3, nargv);
         pushargs(2, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[2]);
         // restore argv
@@ -42594,7 +42594,7 @@ DEFUN1(stgApplyNPNNPP, f) {
         pushargs(3, nargv);
         pushargs(1, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -42619,7 +42619,7 @@ DEFUN1(stgApplyNPNNPP, f) {
         pushargs(2, nargv);
         pushargs(1, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -42644,7 +42644,7 @@ DEFUN1(stgApplyNPNNPP, f) {
         pushargs(1, nargv);
         pushargs(1, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -42669,7 +42669,7 @@ DEFUN1(stgApplyNPNNPP, f) {
         pushargs(1, nargv);
         // 0 pointers to push
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[0]);
         // restore argv
@@ -42697,17 +42697,17 @@ DEFUN1(stgApplyNPNNPP, f) {
       pushargs(3, nargv);
       pushargs(3, pargv);
       // tail call the fun
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
     }
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNPNNPP FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                    f.op->infoPtr->layoutInfo.unboxedCount;
+      int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                    getInfoPtr(f.op)->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3, 3);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 3, 3);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -42727,12 +42727,12 @@ DEFUN1(stgApplyNPNNPP, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                  f.op->infoPtr->layoutInfo.unboxedCount;
+    int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                  getInfoPtr(f.op)->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    int arity = f.op->infoPtr->funFields.arity - argCount;
+    int arity = getInfoPtr(f.op)->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
@@ -42753,7 +42753,7 @@ DEFUN1(stgApplyNPNNPP, f) {
         pushargs(2, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[2]);
         // restore argv
@@ -42779,7 +42779,7 @@ DEFUN1(stgApplyNPNNPP, f) {
         pushargs(1, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -42806,7 +42806,7 @@ DEFUN1(stgApplyNPNNPP, f) {
         pushargs(1, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -42833,7 +42833,7 @@ DEFUN1(stgApplyNPNNPP, f) {
         pushargs(1, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -42860,7 +42860,7 @@ DEFUN1(stgApplyNPNNPP, f) {
         // 0 pointers to push
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[0]);
         // restore argv
@@ -42890,7 +42890,7 @@ DEFUN1(stgApplyNPNNPP, f) {
       pushargs(3, pargv);
       pushargs(pappargc, &f.op->payload[fvCount+1]);
       // tail call the FUN
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
 
     // excess < 0, too few args
     } else {
@@ -42898,7 +42898,7 @@ DEFUN1(stgApplyNPNNPP, f) {
       fprintf(stderr, "stgApplyNPNNPP PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3 + pappargc, 3 + papnargc);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 3 + pappargc, 3 + papnargc);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -42941,7 +42941,7 @@ DEFUN1(stgApplyNPNNPP, f) {
 
 DEFUN1(stgApplyPPNNPP, f) {
   #ifdef DEBUGSTGAPPLY
-  fprintf(stderr, "stgApplyPPNNPP %s\n", f.op->infoPtr->name);
+  fprintf(stderr, "stgApplyPPNNPP %s\n", getInfoPtr(f.op)->name);
   #endif
   const int argc = 6;
   PtrOrLiteral argv[6];
@@ -42991,9 +42991,9 @@ DEFUN1(stgApplyPPNNPP, f) {
   f = pargv[4];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(4, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPPNNPP THUNK\n");
       #endif
@@ -43009,11 +43009,11 @@ DEFUN1(stgApplyPPNNPP, f) {
     argv[5] = pargv[3];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
-    int arity = f.op->infoPtr->funFields.arity;
+    int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
-    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    fprintf(stderr, "FUN %s arity %d\n", getInfoPtr(f.op)->name, getInfoPtr(f.op)->funFields.arity);
     #endif
     int excess = argc - arity;  // may be negative
 
@@ -43030,7 +43030,7 @@ DEFUN1(stgApplyPPNNPP, f) {
         pushargs(2, nargv);
         pushargs(3, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[3]);
         // restore argv
@@ -43054,7 +43054,7 @@ DEFUN1(stgApplyPPNNPP, f) {
         pushargs(2, nargv);
         pushargs(2, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[2]);
         // restore argv
@@ -43079,7 +43079,7 @@ DEFUN1(stgApplyPPNNPP, f) {
         pushargs(1, nargv);
         pushargs(2, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[2]);
         // restore argv
@@ -43104,7 +43104,7 @@ DEFUN1(stgApplyPPNNPP, f) {
         // 0 non-pointers to push
         pushargs(2, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[2]);
         // restore argv
@@ -43129,7 +43129,7 @@ DEFUN1(stgApplyPPNNPP, f) {
         // 0 non-pointers to push
         pushargs(1, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -43157,17 +43157,17 @@ DEFUN1(stgApplyPPNNPP, f) {
       pushargs(2, nargv);
       pushargs(4, pargv);
       // tail call the fun
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
     }
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPPNNPP FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                    f.op->infoPtr->layoutInfo.unboxedCount;
+      int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                    getInfoPtr(f.op)->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 4, 2);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 4, 2);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -43187,12 +43187,12 @@ DEFUN1(stgApplyPPNNPP, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                  f.op->infoPtr->layoutInfo.unboxedCount;
+    int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                  getInfoPtr(f.op)->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    int arity = f.op->infoPtr->funFields.arity - argCount;
+    int arity = getInfoPtr(f.op)->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
@@ -43213,7 +43213,7 @@ DEFUN1(stgApplyPPNNPP, f) {
         pushargs(3, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[3]);
         // restore argv
@@ -43239,7 +43239,7 @@ DEFUN1(stgApplyPPNNPP, f) {
         pushargs(2, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[2]);
         // restore argv
@@ -43266,7 +43266,7 @@ DEFUN1(stgApplyPPNNPP, f) {
         pushargs(2, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[2]);
         // restore argv
@@ -43293,7 +43293,7 @@ DEFUN1(stgApplyPPNNPP, f) {
         pushargs(2, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[2]);
         // restore argv
@@ -43320,7 +43320,7 @@ DEFUN1(stgApplyPPNNPP, f) {
         pushargs(1, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -43350,7 +43350,7 @@ DEFUN1(stgApplyPPNNPP, f) {
       pushargs(4, pargv);
       pushargs(pappargc, &f.op->payload[fvCount+1]);
       // tail call the FUN
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
 
     // excess < 0, too few args
     } else {
@@ -43358,7 +43358,7 @@ DEFUN1(stgApplyPPNNPP, f) {
       fprintf(stderr, "stgApplyPPNNPP PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 4 + pappargc, 2 + papnargc);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 4 + pappargc, 2 + papnargc);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -43401,7 +43401,7 @@ DEFUN1(stgApplyPPNNPP, f) {
 
 DEFUN1(stgApplyNNPNPP, f) {
   #ifdef DEBUGSTGAPPLY
-  fprintf(stderr, "stgApplyNNPNPP %s\n", f.op->infoPtr->name);
+  fprintf(stderr, "stgApplyNNPNPP %s\n", getInfoPtr(f.op)->name);
   #endif
   const int argc = 6;
   PtrOrLiteral argv[6];
@@ -43440,9 +43440,9 @@ DEFUN1(stgApplyNNPNPP, f) {
   f = pargv[3];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(3, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNNPNPP THUNK\n");
       #endif
@@ -43457,11 +43457,11 @@ DEFUN1(stgApplyNNPNPP, f) {
     argv[5] = pargv[2];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
-    int arity = f.op->infoPtr->funFields.arity;
+    int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
-    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    fprintf(stderr, "FUN %s arity %d\n", getInfoPtr(f.op)->name, getInfoPtr(f.op)->funFields.arity);
     #endif
     int excess = argc - arity;  // may be negative
 
@@ -43478,7 +43478,7 @@ DEFUN1(stgApplyNNPNPP, f) {
         pushargs(3, nargv);
         pushargs(2, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[2]);
         // restore argv
@@ -43502,7 +43502,7 @@ DEFUN1(stgApplyNNPNPP, f) {
         pushargs(3, nargv);
         pushargs(1, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -43527,7 +43527,7 @@ DEFUN1(stgApplyNNPNPP, f) {
         pushargs(2, nargv);
         pushargs(1, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -43552,7 +43552,7 @@ DEFUN1(stgApplyNNPNPP, f) {
         pushargs(2, nargv);
         // 0 pointers to push
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[0]);
         // restore argv
@@ -43578,7 +43578,7 @@ DEFUN1(stgApplyNNPNPP, f) {
         pushargs(1, nargv);
         // 0 pointers to push
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[0]);
         // restore argv
@@ -43606,17 +43606,17 @@ DEFUN1(stgApplyNNPNPP, f) {
       pushargs(3, nargv);
       pushargs(3, pargv);
       // tail call the fun
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
     }
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNNPNPP FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                    f.op->infoPtr->layoutInfo.unboxedCount;
+      int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                    getInfoPtr(f.op)->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3, 3);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 3, 3);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -43636,12 +43636,12 @@ DEFUN1(stgApplyNNPNPP, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                  f.op->infoPtr->layoutInfo.unboxedCount;
+    int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                  getInfoPtr(f.op)->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    int arity = f.op->infoPtr->funFields.arity - argCount;
+    int arity = getInfoPtr(f.op)->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
@@ -43662,7 +43662,7 @@ DEFUN1(stgApplyNNPNPP, f) {
         pushargs(2, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[2]);
         // restore argv
@@ -43688,7 +43688,7 @@ DEFUN1(stgApplyNNPNPP, f) {
         pushargs(1, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -43715,7 +43715,7 @@ DEFUN1(stgApplyNNPNPP, f) {
         pushargs(1, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -43742,7 +43742,7 @@ DEFUN1(stgApplyNNPNPP, f) {
         // 0 pointers to push
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[0]);
         // restore argv
@@ -43770,7 +43770,7 @@ DEFUN1(stgApplyNNPNPP, f) {
         // 0 pointers to push
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[0]);
         // restore argv
@@ -43800,7 +43800,7 @@ DEFUN1(stgApplyNNPNPP, f) {
       pushargs(3, pargv);
       pushargs(pappargc, &f.op->payload[fvCount+1]);
       // tail call the FUN
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
 
     // excess < 0, too few args
     } else {
@@ -43808,7 +43808,7 @@ DEFUN1(stgApplyNNPNPP, f) {
       fprintf(stderr, "stgApplyNNPNPP PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3 + pappargc, 3 + papnargc);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 3 + pappargc, 3 + papnargc);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -43851,7 +43851,7 @@ DEFUN1(stgApplyNNPNPP, f) {
 
 DEFUN1(stgApplyPNPNPP, f) {
   #ifdef DEBUGSTGAPPLY
-  fprintf(stderr, "stgApplyPNPNPP %s\n", f.op->infoPtr->name);
+  fprintf(stderr, "stgApplyPNPNPP %s\n", getInfoPtr(f.op)->name);
   #endif
   const int argc = 6;
   PtrOrLiteral argv[6];
@@ -43901,9 +43901,9 @@ DEFUN1(stgApplyPNPNPP, f) {
   f = pargv[4];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(4, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPNPNPP THUNK\n");
       #endif
@@ -43919,11 +43919,11 @@ DEFUN1(stgApplyPNPNPP, f) {
     argv[5] = pargv[3];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
-    int arity = f.op->infoPtr->funFields.arity;
+    int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
-    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    fprintf(stderr, "FUN %s arity %d\n", getInfoPtr(f.op)->name, getInfoPtr(f.op)->funFields.arity);
     #endif
     int excess = argc - arity;  // may be negative
 
@@ -43940,7 +43940,7 @@ DEFUN1(stgApplyPNPNPP, f) {
         pushargs(2, nargv);
         pushargs(3, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[3]);
         // restore argv
@@ -43964,7 +43964,7 @@ DEFUN1(stgApplyPNPNPP, f) {
         pushargs(2, nargv);
         pushargs(2, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[2]);
         // restore argv
@@ -43989,7 +43989,7 @@ DEFUN1(stgApplyPNPNPP, f) {
         pushargs(1, nargv);
         pushargs(2, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[2]);
         // restore argv
@@ -44014,7 +44014,7 @@ DEFUN1(stgApplyPNPNPP, f) {
         pushargs(1, nargv);
         pushargs(1, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -44040,7 +44040,7 @@ DEFUN1(stgApplyPNPNPP, f) {
         // 0 non-pointers to push
         pushargs(1, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -44068,17 +44068,17 @@ DEFUN1(stgApplyPNPNPP, f) {
       pushargs(2, nargv);
       pushargs(4, pargv);
       // tail call the fun
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
     }
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPNPNPP FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                    f.op->infoPtr->layoutInfo.unboxedCount;
+      int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                    getInfoPtr(f.op)->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 4, 2);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 4, 2);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -44098,12 +44098,12 @@ DEFUN1(stgApplyPNPNPP, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                  f.op->infoPtr->layoutInfo.unboxedCount;
+    int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                  getInfoPtr(f.op)->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    int arity = f.op->infoPtr->funFields.arity - argCount;
+    int arity = getInfoPtr(f.op)->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
@@ -44124,7 +44124,7 @@ DEFUN1(stgApplyPNPNPP, f) {
         pushargs(3, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[3]);
         // restore argv
@@ -44150,7 +44150,7 @@ DEFUN1(stgApplyPNPNPP, f) {
         pushargs(2, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[2]);
         // restore argv
@@ -44177,7 +44177,7 @@ DEFUN1(stgApplyPNPNPP, f) {
         pushargs(2, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[2]);
         // restore argv
@@ -44204,7 +44204,7 @@ DEFUN1(stgApplyPNPNPP, f) {
         pushargs(1, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -44232,7 +44232,7 @@ DEFUN1(stgApplyPNPNPP, f) {
         pushargs(1, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -44262,7 +44262,7 @@ DEFUN1(stgApplyPNPNPP, f) {
       pushargs(4, pargv);
       pushargs(pappargc, &f.op->payload[fvCount+1]);
       // tail call the FUN
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
 
     // excess < 0, too few args
     } else {
@@ -44270,7 +44270,7 @@ DEFUN1(stgApplyPNPNPP, f) {
       fprintf(stderr, "stgApplyPNPNPP PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 4 + pappargc, 2 + papnargc);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 4 + pappargc, 2 + papnargc);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -44313,7 +44313,7 @@ DEFUN1(stgApplyPNPNPP, f) {
 
 DEFUN1(stgApplyNPPNPP, f) {
   #ifdef DEBUGSTGAPPLY
-  fprintf(stderr, "stgApplyNPPNPP %s\n", f.op->infoPtr->name);
+  fprintf(stderr, "stgApplyNPPNPP %s\n", getInfoPtr(f.op)->name);
   #endif
   const int argc = 6;
   PtrOrLiteral argv[6];
@@ -44363,9 +44363,9 @@ DEFUN1(stgApplyNPPNPP, f) {
   f = pargv[4];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(4, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNPPNPP THUNK\n");
       #endif
@@ -44381,11 +44381,11 @@ DEFUN1(stgApplyNPPNPP, f) {
     argv[5] = pargv[3];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
-    int arity = f.op->infoPtr->funFields.arity;
+    int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
-    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    fprintf(stderr, "FUN %s arity %d\n", getInfoPtr(f.op)->name, getInfoPtr(f.op)->funFields.arity);
     #endif
     int excess = argc - arity;  // may be negative
 
@@ -44402,7 +44402,7 @@ DEFUN1(stgApplyNPPNPP, f) {
         pushargs(2, nargv);
         pushargs(3, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[3]);
         // restore argv
@@ -44426,7 +44426,7 @@ DEFUN1(stgApplyNPPNPP, f) {
         pushargs(2, nargv);
         pushargs(2, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[2]);
         // restore argv
@@ -44451,7 +44451,7 @@ DEFUN1(stgApplyNPPNPP, f) {
         pushargs(1, nargv);
         pushargs(2, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[2]);
         // restore argv
@@ -44476,7 +44476,7 @@ DEFUN1(stgApplyNPPNPP, f) {
         pushargs(1, nargv);
         pushargs(1, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -44502,7 +44502,7 @@ DEFUN1(stgApplyNPPNPP, f) {
         pushargs(1, nargv);
         // 0 pointers to push
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[0]);
         // restore argv
@@ -44531,17 +44531,17 @@ DEFUN1(stgApplyNPPNPP, f) {
       pushargs(2, nargv);
       pushargs(4, pargv);
       // tail call the fun
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
     }
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNPPNPP FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                    f.op->infoPtr->layoutInfo.unboxedCount;
+      int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                    getInfoPtr(f.op)->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 4, 2);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 4, 2);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -44561,12 +44561,12 @@ DEFUN1(stgApplyNPPNPP, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                  f.op->infoPtr->layoutInfo.unboxedCount;
+    int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                  getInfoPtr(f.op)->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    int arity = f.op->infoPtr->funFields.arity - argCount;
+    int arity = getInfoPtr(f.op)->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
@@ -44587,7 +44587,7 @@ DEFUN1(stgApplyNPPNPP, f) {
         pushargs(3, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[3]);
         // restore argv
@@ -44613,7 +44613,7 @@ DEFUN1(stgApplyNPPNPP, f) {
         pushargs(2, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[2]);
         // restore argv
@@ -44640,7 +44640,7 @@ DEFUN1(stgApplyNPPNPP, f) {
         pushargs(2, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[2]);
         // restore argv
@@ -44667,7 +44667,7 @@ DEFUN1(stgApplyNPPNPP, f) {
         pushargs(1, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -44695,7 +44695,7 @@ DEFUN1(stgApplyNPPNPP, f) {
         // 0 pointers to push
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[0]);
         // restore argv
@@ -44726,7 +44726,7 @@ DEFUN1(stgApplyNPPNPP, f) {
       pushargs(4, pargv);
       pushargs(pappargc, &f.op->payload[fvCount+1]);
       // tail call the FUN
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
 
     // excess < 0, too few args
     } else {
@@ -44734,7 +44734,7 @@ DEFUN1(stgApplyNPPNPP, f) {
       fprintf(stderr, "stgApplyNPPNPP PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 4 + pappargc, 2 + papnargc);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 4 + pappargc, 2 + papnargc);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -44777,7 +44777,7 @@ DEFUN1(stgApplyNPPNPP, f) {
 
 DEFUN1(stgApplyPPPNPP, f) {
   #ifdef DEBUGSTGAPPLY
-  fprintf(stderr, "stgApplyPPPNPP %s\n", f.op->infoPtr->name);
+  fprintf(stderr, "stgApplyPPPNPP %s\n", getInfoPtr(f.op)->name);
   #endif
   const int argc = 6;
   PtrOrLiteral argv[6];
@@ -44840,9 +44840,9 @@ DEFUN1(stgApplyPPPNPP, f) {
   f = pargv[5];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(5, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPPPNPP THUNK\n");
       #endif
@@ -44859,11 +44859,11 @@ DEFUN1(stgApplyPPPNPP, f) {
     argv[5] = pargv[4];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
-    int arity = f.op->infoPtr->funFields.arity;
+    int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
-    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    fprintf(stderr, "FUN %s arity %d\n", getInfoPtr(f.op)->name, getInfoPtr(f.op)->funFields.arity);
     #endif
     int excess = argc - arity;  // may be negative
 
@@ -44880,7 +44880,7 @@ DEFUN1(stgApplyPPPNPP, f) {
         pushargs(1, nargv);
         pushargs(4, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[4]);
         // restore argv
@@ -44904,7 +44904,7 @@ DEFUN1(stgApplyPPPNPP, f) {
         pushargs(1, nargv);
         pushargs(3, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[3]);
         // restore argv
@@ -44929,7 +44929,7 @@ DEFUN1(stgApplyPPPNPP, f) {
         // 0 non-pointers to push
         pushargs(3, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[3]);
         // restore argv
@@ -44954,7 +44954,7 @@ DEFUN1(stgApplyPPPNPP, f) {
         // 0 non-pointers to push
         pushargs(2, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[2]);
         // restore argv
@@ -44980,7 +44980,7 @@ DEFUN1(stgApplyPPPNPP, f) {
         // 0 non-pointers to push
         pushargs(1, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -45009,17 +45009,17 @@ DEFUN1(stgApplyPPPNPP, f) {
       pushargs(1, nargv);
       pushargs(5, pargv);
       // tail call the fun
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
     }
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPPPNPP FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                    f.op->infoPtr->layoutInfo.unboxedCount;
+      int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                    getInfoPtr(f.op)->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 5, 1);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 5, 1);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -45039,12 +45039,12 @@ DEFUN1(stgApplyPPPNPP, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                  f.op->infoPtr->layoutInfo.unboxedCount;
+    int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                  getInfoPtr(f.op)->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    int arity = f.op->infoPtr->funFields.arity - argCount;
+    int arity = getInfoPtr(f.op)->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
@@ -45065,7 +45065,7 @@ DEFUN1(stgApplyPPPNPP, f) {
         pushargs(4, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[4]);
         // restore argv
@@ -45091,7 +45091,7 @@ DEFUN1(stgApplyPPPNPP, f) {
         pushargs(3, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[3]);
         // restore argv
@@ -45118,7 +45118,7 @@ DEFUN1(stgApplyPPPNPP, f) {
         pushargs(3, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[3]);
         // restore argv
@@ -45145,7 +45145,7 @@ DEFUN1(stgApplyPPPNPP, f) {
         pushargs(2, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[2]);
         // restore argv
@@ -45173,7 +45173,7 @@ DEFUN1(stgApplyPPPNPP, f) {
         pushargs(1, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -45204,7 +45204,7 @@ DEFUN1(stgApplyPPPNPP, f) {
       pushargs(5, pargv);
       pushargs(pappargc, &f.op->payload[fvCount+1]);
       // tail call the FUN
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
 
     // excess < 0, too few args
     } else {
@@ -45212,7 +45212,7 @@ DEFUN1(stgApplyPPPNPP, f) {
       fprintf(stderr, "stgApplyPPPNPP PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 5 + pappargc, 1 + papnargc);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 5 + pappargc, 1 + papnargc);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -45255,7 +45255,7 @@ DEFUN1(stgApplyPPPNPP, f) {
 
 DEFUN1(stgApplyNNNPPP, f) {
   #ifdef DEBUGSTGAPPLY
-  fprintf(stderr, "stgApplyNNNPPP %s\n", f.op->infoPtr->name);
+  fprintf(stderr, "stgApplyNNNPPP %s\n", getInfoPtr(f.op)->name);
   #endif
   const int argc = 6;
   PtrOrLiteral argv[6];
@@ -45294,9 +45294,9 @@ DEFUN1(stgApplyNNNPPP, f) {
   f = pargv[3];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(3, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNNNPPP THUNK\n");
       #endif
@@ -45311,11 +45311,11 @@ DEFUN1(stgApplyNNNPPP, f) {
     argv[5] = pargv[2];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
-    int arity = f.op->infoPtr->funFields.arity;
+    int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
-    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    fprintf(stderr, "FUN %s arity %d\n", getInfoPtr(f.op)->name, getInfoPtr(f.op)->funFields.arity);
     #endif
     int excess = argc - arity;  // may be negative
 
@@ -45332,7 +45332,7 @@ DEFUN1(stgApplyNNNPPP, f) {
         pushargs(3, nargv);
         pushargs(2, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[2]);
         // restore argv
@@ -45356,7 +45356,7 @@ DEFUN1(stgApplyNNNPPP, f) {
         pushargs(3, nargv);
         pushargs(1, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -45381,7 +45381,7 @@ DEFUN1(stgApplyNNNPPP, f) {
         pushargs(3, nargv);
         // 0 pointers to push
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[0]);
         // restore argv
@@ -45407,7 +45407,7 @@ DEFUN1(stgApplyNNNPPP, f) {
         pushargs(2, nargv);
         // 0 pointers to push
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[0]);
         // restore argv
@@ -45433,7 +45433,7 @@ DEFUN1(stgApplyNNNPPP, f) {
         pushargs(1, nargv);
         // 0 pointers to push
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[0]);
         // restore argv
@@ -45461,17 +45461,17 @@ DEFUN1(stgApplyNNNPPP, f) {
       pushargs(3, nargv);
       pushargs(3, pargv);
       // tail call the fun
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
     }
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNNNPPP FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                    f.op->infoPtr->layoutInfo.unboxedCount;
+      int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                    getInfoPtr(f.op)->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3, 3);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 3, 3);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -45491,12 +45491,12 @@ DEFUN1(stgApplyNNNPPP, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                  f.op->infoPtr->layoutInfo.unboxedCount;
+    int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                  getInfoPtr(f.op)->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    int arity = f.op->infoPtr->funFields.arity - argCount;
+    int arity = getInfoPtr(f.op)->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
@@ -45517,7 +45517,7 @@ DEFUN1(stgApplyNNNPPP, f) {
         pushargs(2, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[2]);
         // restore argv
@@ -45543,7 +45543,7 @@ DEFUN1(stgApplyNNNPPP, f) {
         pushargs(1, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -45570,7 +45570,7 @@ DEFUN1(stgApplyNNNPPP, f) {
         // 0 pointers to push
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[0]);
         // restore argv
@@ -45598,7 +45598,7 @@ DEFUN1(stgApplyNNNPPP, f) {
         // 0 pointers to push
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[0]);
         // restore argv
@@ -45626,7 +45626,7 @@ DEFUN1(stgApplyNNNPPP, f) {
         // 0 pointers to push
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[0]);
         // restore argv
@@ -45656,7 +45656,7 @@ DEFUN1(stgApplyNNNPPP, f) {
       pushargs(3, pargv);
       pushargs(pappargc, &f.op->payload[fvCount+1]);
       // tail call the FUN
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
 
     // excess < 0, too few args
     } else {
@@ -45664,7 +45664,7 @@ DEFUN1(stgApplyNNNPPP, f) {
       fprintf(stderr, "stgApplyNNNPPP PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 3 + pappargc, 3 + papnargc);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 3 + pappargc, 3 + papnargc);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -45707,7 +45707,7 @@ DEFUN1(stgApplyNNNPPP, f) {
 
 DEFUN1(stgApplyPNNPPP, f) {
   #ifdef DEBUGSTGAPPLY
-  fprintf(stderr, "stgApplyPNNPPP %s\n", f.op->infoPtr->name);
+  fprintf(stderr, "stgApplyPNNPPP %s\n", getInfoPtr(f.op)->name);
   #endif
   const int argc = 6;
   PtrOrLiteral argv[6];
@@ -45757,9 +45757,9 @@ DEFUN1(stgApplyPNNPPP, f) {
   f = pargv[4];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(4, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPNNPPP THUNK\n");
       #endif
@@ -45775,11 +45775,11 @@ DEFUN1(stgApplyPNNPPP, f) {
     argv[5] = pargv[3];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
-    int arity = f.op->infoPtr->funFields.arity;
+    int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
-    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    fprintf(stderr, "FUN %s arity %d\n", getInfoPtr(f.op)->name, getInfoPtr(f.op)->funFields.arity);
     #endif
     int excess = argc - arity;  // may be negative
 
@@ -45796,7 +45796,7 @@ DEFUN1(stgApplyPNNPPP, f) {
         pushargs(2, nargv);
         pushargs(3, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[3]);
         // restore argv
@@ -45820,7 +45820,7 @@ DEFUN1(stgApplyPNNPPP, f) {
         pushargs(2, nargv);
         pushargs(2, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[2]);
         // restore argv
@@ -45845,7 +45845,7 @@ DEFUN1(stgApplyPNNPPP, f) {
         pushargs(2, nargv);
         pushargs(1, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -45871,7 +45871,7 @@ DEFUN1(stgApplyPNNPPP, f) {
         pushargs(1, nargv);
         pushargs(1, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -45897,7 +45897,7 @@ DEFUN1(stgApplyPNNPPP, f) {
         // 0 non-pointers to push
         pushargs(1, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -45925,17 +45925,17 @@ DEFUN1(stgApplyPNNPPP, f) {
       pushargs(2, nargv);
       pushargs(4, pargv);
       // tail call the fun
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
     }
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPNNPPP FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                    f.op->infoPtr->layoutInfo.unboxedCount;
+      int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                    getInfoPtr(f.op)->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 4, 2);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 4, 2);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -45955,12 +45955,12 @@ DEFUN1(stgApplyPNNPPP, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                  f.op->infoPtr->layoutInfo.unboxedCount;
+    int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                  getInfoPtr(f.op)->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    int arity = f.op->infoPtr->funFields.arity - argCount;
+    int arity = getInfoPtr(f.op)->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
@@ -45981,7 +45981,7 @@ DEFUN1(stgApplyPNNPPP, f) {
         pushargs(3, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[3]);
         // restore argv
@@ -46007,7 +46007,7 @@ DEFUN1(stgApplyPNNPPP, f) {
         pushargs(2, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[2]);
         // restore argv
@@ -46034,7 +46034,7 @@ DEFUN1(stgApplyPNNPPP, f) {
         pushargs(1, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -46062,7 +46062,7 @@ DEFUN1(stgApplyPNNPPP, f) {
         pushargs(1, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -46090,7 +46090,7 @@ DEFUN1(stgApplyPNNPPP, f) {
         pushargs(1, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -46120,7 +46120,7 @@ DEFUN1(stgApplyPNNPPP, f) {
       pushargs(4, pargv);
       pushargs(pappargc, &f.op->payload[fvCount+1]);
       // tail call the FUN
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
 
     // excess < 0, too few args
     } else {
@@ -46128,7 +46128,7 @@ DEFUN1(stgApplyPNNPPP, f) {
       fprintf(stderr, "stgApplyPNNPPP PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 4 + pappargc, 2 + papnargc);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 4 + pappargc, 2 + papnargc);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -46171,7 +46171,7 @@ DEFUN1(stgApplyPNNPPP, f) {
 
 DEFUN1(stgApplyNPNPPP, f) {
   #ifdef DEBUGSTGAPPLY
-  fprintf(stderr, "stgApplyNPNPPP %s\n", f.op->infoPtr->name);
+  fprintf(stderr, "stgApplyNPNPPP %s\n", getInfoPtr(f.op)->name);
   #endif
   const int argc = 6;
   PtrOrLiteral argv[6];
@@ -46221,9 +46221,9 @@ DEFUN1(stgApplyNPNPPP, f) {
   f = pargv[4];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(4, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNPNPPP THUNK\n");
       #endif
@@ -46239,11 +46239,11 @@ DEFUN1(stgApplyNPNPPP, f) {
     argv[5] = pargv[3];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
-    int arity = f.op->infoPtr->funFields.arity;
+    int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
-    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    fprintf(stderr, "FUN %s arity %d\n", getInfoPtr(f.op)->name, getInfoPtr(f.op)->funFields.arity);
     #endif
     int excess = argc - arity;  // may be negative
 
@@ -46260,7 +46260,7 @@ DEFUN1(stgApplyNPNPPP, f) {
         pushargs(2, nargv);
         pushargs(3, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[3]);
         // restore argv
@@ -46284,7 +46284,7 @@ DEFUN1(stgApplyNPNPPP, f) {
         pushargs(2, nargv);
         pushargs(2, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[2]);
         // restore argv
@@ -46309,7 +46309,7 @@ DEFUN1(stgApplyNPNPPP, f) {
         pushargs(2, nargv);
         pushargs(1, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -46335,7 +46335,7 @@ DEFUN1(stgApplyNPNPPP, f) {
         pushargs(1, nargv);
         pushargs(1, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -46361,7 +46361,7 @@ DEFUN1(stgApplyNPNPPP, f) {
         pushargs(1, nargv);
         // 0 pointers to push
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[0]);
         // restore argv
@@ -46390,17 +46390,17 @@ DEFUN1(stgApplyNPNPPP, f) {
       pushargs(2, nargv);
       pushargs(4, pargv);
       // tail call the fun
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
     }
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNPNPPP FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                    f.op->infoPtr->layoutInfo.unboxedCount;
+      int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                    getInfoPtr(f.op)->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 4, 2);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 4, 2);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -46420,12 +46420,12 @@ DEFUN1(stgApplyNPNPPP, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                  f.op->infoPtr->layoutInfo.unboxedCount;
+    int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                  getInfoPtr(f.op)->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    int arity = f.op->infoPtr->funFields.arity - argCount;
+    int arity = getInfoPtr(f.op)->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
@@ -46446,7 +46446,7 @@ DEFUN1(stgApplyNPNPPP, f) {
         pushargs(3, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[3]);
         // restore argv
@@ -46472,7 +46472,7 @@ DEFUN1(stgApplyNPNPPP, f) {
         pushargs(2, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[2]);
         // restore argv
@@ -46499,7 +46499,7 @@ DEFUN1(stgApplyNPNPPP, f) {
         pushargs(1, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -46527,7 +46527,7 @@ DEFUN1(stgApplyNPNPPP, f) {
         pushargs(1, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -46555,7 +46555,7 @@ DEFUN1(stgApplyNPNPPP, f) {
         // 0 pointers to push
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[0]);
         // restore argv
@@ -46586,7 +46586,7 @@ DEFUN1(stgApplyNPNPPP, f) {
       pushargs(4, pargv);
       pushargs(pappargc, &f.op->payload[fvCount+1]);
       // tail call the FUN
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
 
     // excess < 0, too few args
     } else {
@@ -46594,7 +46594,7 @@ DEFUN1(stgApplyNPNPPP, f) {
       fprintf(stderr, "stgApplyNPNPPP PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 4 + pappargc, 2 + papnargc);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 4 + pappargc, 2 + papnargc);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -46637,7 +46637,7 @@ DEFUN1(stgApplyNPNPPP, f) {
 
 DEFUN1(stgApplyPPNPPP, f) {
   #ifdef DEBUGSTGAPPLY
-  fprintf(stderr, "stgApplyPPNPPP %s\n", f.op->infoPtr->name);
+  fprintf(stderr, "stgApplyPPNPPP %s\n", getInfoPtr(f.op)->name);
   #endif
   const int argc = 6;
   PtrOrLiteral argv[6];
@@ -46700,9 +46700,9 @@ DEFUN1(stgApplyPPNPPP, f) {
   f = pargv[5];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(5, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPPNPPP THUNK\n");
       #endif
@@ -46719,11 +46719,11 @@ DEFUN1(stgApplyPPNPPP, f) {
     argv[5] = pargv[4];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
-    int arity = f.op->infoPtr->funFields.arity;
+    int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
-    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    fprintf(stderr, "FUN %s arity %d\n", getInfoPtr(f.op)->name, getInfoPtr(f.op)->funFields.arity);
     #endif
     int excess = argc - arity;  // may be negative
 
@@ -46740,7 +46740,7 @@ DEFUN1(stgApplyPPNPPP, f) {
         pushargs(1, nargv);
         pushargs(4, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[4]);
         // restore argv
@@ -46764,7 +46764,7 @@ DEFUN1(stgApplyPPNPPP, f) {
         pushargs(1, nargv);
         pushargs(3, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[3]);
         // restore argv
@@ -46789,7 +46789,7 @@ DEFUN1(stgApplyPPNPPP, f) {
         pushargs(1, nargv);
         pushargs(2, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[2]);
         // restore argv
@@ -46815,7 +46815,7 @@ DEFUN1(stgApplyPPNPPP, f) {
         // 0 non-pointers to push
         pushargs(2, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[2]);
         // restore argv
@@ -46841,7 +46841,7 @@ DEFUN1(stgApplyPPNPPP, f) {
         // 0 non-pointers to push
         pushargs(1, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -46870,17 +46870,17 @@ DEFUN1(stgApplyPPNPPP, f) {
       pushargs(1, nargv);
       pushargs(5, pargv);
       // tail call the fun
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
     }
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPPNPPP FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                    f.op->infoPtr->layoutInfo.unboxedCount;
+      int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                    getInfoPtr(f.op)->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 5, 1);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 5, 1);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -46900,12 +46900,12 @@ DEFUN1(stgApplyPPNPPP, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                  f.op->infoPtr->layoutInfo.unboxedCount;
+    int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                  getInfoPtr(f.op)->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    int arity = f.op->infoPtr->funFields.arity - argCount;
+    int arity = getInfoPtr(f.op)->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
@@ -46926,7 +46926,7 @@ DEFUN1(stgApplyPPNPPP, f) {
         pushargs(4, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[4]);
         // restore argv
@@ -46952,7 +46952,7 @@ DEFUN1(stgApplyPPNPPP, f) {
         pushargs(3, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[3]);
         // restore argv
@@ -46979,7 +46979,7 @@ DEFUN1(stgApplyPPNPPP, f) {
         pushargs(2, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[2]);
         // restore argv
@@ -47007,7 +47007,7 @@ DEFUN1(stgApplyPPNPPP, f) {
         pushargs(2, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[2]);
         // restore argv
@@ -47035,7 +47035,7 @@ DEFUN1(stgApplyPPNPPP, f) {
         pushargs(1, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -47066,7 +47066,7 @@ DEFUN1(stgApplyPPNPPP, f) {
       pushargs(5, pargv);
       pushargs(pappargc, &f.op->payload[fvCount+1]);
       // tail call the FUN
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
 
     // excess < 0, too few args
     } else {
@@ -47074,7 +47074,7 @@ DEFUN1(stgApplyPPNPPP, f) {
       fprintf(stderr, "stgApplyPPNPPP PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 5 + pappargc, 1 + papnargc);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 5 + pappargc, 1 + papnargc);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -47117,7 +47117,7 @@ DEFUN1(stgApplyPPNPPP, f) {
 
 DEFUN1(stgApplyNNPPPP, f) {
   #ifdef DEBUGSTGAPPLY
-  fprintf(stderr, "stgApplyNNPPPP %s\n", f.op->infoPtr->name);
+  fprintf(stderr, "stgApplyNNPPPP %s\n", getInfoPtr(f.op)->name);
   #endif
   const int argc = 6;
   PtrOrLiteral argv[6];
@@ -47167,9 +47167,9 @@ DEFUN1(stgApplyNNPPPP, f) {
   f = pargv[4];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(4, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNNPPPP THUNK\n");
       #endif
@@ -47185,11 +47185,11 @@ DEFUN1(stgApplyNNPPPP, f) {
     argv[5] = pargv[3];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
-    int arity = f.op->infoPtr->funFields.arity;
+    int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
-    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    fprintf(stderr, "FUN %s arity %d\n", getInfoPtr(f.op)->name, getInfoPtr(f.op)->funFields.arity);
     #endif
     int excess = argc - arity;  // may be negative
 
@@ -47206,7 +47206,7 @@ DEFUN1(stgApplyNNPPPP, f) {
         pushargs(2, nargv);
         pushargs(3, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[3]);
         // restore argv
@@ -47230,7 +47230,7 @@ DEFUN1(stgApplyNNPPPP, f) {
         pushargs(2, nargv);
         pushargs(2, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[2]);
         // restore argv
@@ -47255,7 +47255,7 @@ DEFUN1(stgApplyNNPPPP, f) {
         pushargs(2, nargv);
         pushargs(1, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -47281,7 +47281,7 @@ DEFUN1(stgApplyNNPPPP, f) {
         pushargs(2, nargv);
         // 0 pointers to push
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[0]);
         // restore argv
@@ -47308,7 +47308,7 @@ DEFUN1(stgApplyNNPPPP, f) {
         pushargs(1, nargv);
         // 0 pointers to push
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[0]);
         // restore argv
@@ -47337,17 +47337,17 @@ DEFUN1(stgApplyNNPPPP, f) {
       pushargs(2, nargv);
       pushargs(4, pargv);
       // tail call the fun
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
     }
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNNPPPP FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                    f.op->infoPtr->layoutInfo.unboxedCount;
+      int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                    getInfoPtr(f.op)->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 4, 2);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 4, 2);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -47367,12 +47367,12 @@ DEFUN1(stgApplyNNPPPP, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                  f.op->infoPtr->layoutInfo.unboxedCount;
+    int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                  getInfoPtr(f.op)->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    int arity = f.op->infoPtr->funFields.arity - argCount;
+    int arity = getInfoPtr(f.op)->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
@@ -47393,7 +47393,7 @@ DEFUN1(stgApplyNNPPPP, f) {
         pushargs(3, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[3]);
         // restore argv
@@ -47419,7 +47419,7 @@ DEFUN1(stgApplyNNPPPP, f) {
         pushargs(2, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[2]);
         // restore argv
@@ -47446,7 +47446,7 @@ DEFUN1(stgApplyNNPPPP, f) {
         pushargs(1, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -47474,7 +47474,7 @@ DEFUN1(stgApplyNNPPPP, f) {
         // 0 pointers to push
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[0]);
         // restore argv
@@ -47503,7 +47503,7 @@ DEFUN1(stgApplyNNPPPP, f) {
         // 0 pointers to push
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[0]);
         // restore argv
@@ -47534,7 +47534,7 @@ DEFUN1(stgApplyNNPPPP, f) {
       pushargs(4, pargv);
       pushargs(pappargc, &f.op->payload[fvCount+1]);
       // tail call the FUN
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
 
     // excess < 0, too few args
     } else {
@@ -47542,7 +47542,7 @@ DEFUN1(stgApplyNNPPPP, f) {
       fprintf(stderr, "stgApplyNNPPPP PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 4 + pappargc, 2 + papnargc);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 4 + pappargc, 2 + papnargc);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -47585,7 +47585,7 @@ DEFUN1(stgApplyNNPPPP, f) {
 
 DEFUN1(stgApplyPNPPPP, f) {
   #ifdef DEBUGSTGAPPLY
-  fprintf(stderr, "stgApplyPNPPPP %s\n", f.op->infoPtr->name);
+  fprintf(stderr, "stgApplyPNPPPP %s\n", getInfoPtr(f.op)->name);
   #endif
   const int argc = 6;
   PtrOrLiteral argv[6];
@@ -47648,9 +47648,9 @@ DEFUN1(stgApplyPNPPPP, f) {
   f = pargv[5];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(5, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPNPPPP THUNK\n");
       #endif
@@ -47667,11 +47667,11 @@ DEFUN1(stgApplyPNPPPP, f) {
     argv[5] = pargv[4];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
-    int arity = f.op->infoPtr->funFields.arity;
+    int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
-    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    fprintf(stderr, "FUN %s arity %d\n", getInfoPtr(f.op)->name, getInfoPtr(f.op)->funFields.arity);
     #endif
     int excess = argc - arity;  // may be negative
 
@@ -47688,7 +47688,7 @@ DEFUN1(stgApplyPNPPPP, f) {
         pushargs(1, nargv);
         pushargs(4, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[4]);
         // restore argv
@@ -47712,7 +47712,7 @@ DEFUN1(stgApplyPNPPPP, f) {
         pushargs(1, nargv);
         pushargs(3, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[3]);
         // restore argv
@@ -47737,7 +47737,7 @@ DEFUN1(stgApplyPNPPPP, f) {
         pushargs(1, nargv);
         pushargs(2, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[2]);
         // restore argv
@@ -47763,7 +47763,7 @@ DEFUN1(stgApplyPNPPPP, f) {
         pushargs(1, nargv);
         pushargs(1, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -47790,7 +47790,7 @@ DEFUN1(stgApplyPNPPPP, f) {
         // 0 non-pointers to push
         pushargs(1, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -47819,17 +47819,17 @@ DEFUN1(stgApplyPNPPPP, f) {
       pushargs(1, nargv);
       pushargs(5, pargv);
       // tail call the fun
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
     }
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPNPPPP FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                    f.op->infoPtr->layoutInfo.unboxedCount;
+      int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                    getInfoPtr(f.op)->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 5, 1);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 5, 1);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -47849,12 +47849,12 @@ DEFUN1(stgApplyPNPPPP, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                  f.op->infoPtr->layoutInfo.unboxedCount;
+    int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                  getInfoPtr(f.op)->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    int arity = f.op->infoPtr->funFields.arity - argCount;
+    int arity = getInfoPtr(f.op)->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
@@ -47875,7 +47875,7 @@ DEFUN1(stgApplyPNPPPP, f) {
         pushargs(4, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[4]);
         // restore argv
@@ -47901,7 +47901,7 @@ DEFUN1(stgApplyPNPPPP, f) {
         pushargs(3, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[3]);
         // restore argv
@@ -47928,7 +47928,7 @@ DEFUN1(stgApplyPNPPPP, f) {
         pushargs(2, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[2]);
         // restore argv
@@ -47956,7 +47956,7 @@ DEFUN1(stgApplyPNPPPP, f) {
         pushargs(1, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -47985,7 +47985,7 @@ DEFUN1(stgApplyPNPPPP, f) {
         pushargs(1, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -48016,7 +48016,7 @@ DEFUN1(stgApplyPNPPPP, f) {
       pushargs(5, pargv);
       pushargs(pappargc, &f.op->payload[fvCount+1]);
       // tail call the FUN
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
 
     // excess < 0, too few args
     } else {
@@ -48024,7 +48024,7 @@ DEFUN1(stgApplyPNPPPP, f) {
       fprintf(stderr, "stgApplyPNPPPP PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 5 + pappargc, 1 + papnargc);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 5 + pappargc, 1 + papnargc);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -48067,7 +48067,7 @@ DEFUN1(stgApplyPNPPPP, f) {
 
 DEFUN1(stgApplyNPPPPP, f) {
   #ifdef DEBUGSTGAPPLY
-  fprintf(stderr, "stgApplyNPPPPP %s\n", f.op->infoPtr->name);
+  fprintf(stderr, "stgApplyNPPPPP %s\n", getInfoPtr(f.op)->name);
   #endif
   const int argc = 6;
   PtrOrLiteral argv[6];
@@ -48130,9 +48130,9 @@ DEFUN1(stgApplyNPPPPP, f) {
   f = pargv[5];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(5, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNPPPPP THUNK\n");
       #endif
@@ -48149,11 +48149,11 @@ DEFUN1(stgApplyNPPPPP, f) {
     argv[5] = pargv[4];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
-    int arity = f.op->infoPtr->funFields.arity;
+    int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
-    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    fprintf(stderr, "FUN %s arity %d\n", getInfoPtr(f.op)->name, getInfoPtr(f.op)->funFields.arity);
     #endif
     int excess = argc - arity;  // may be negative
 
@@ -48170,7 +48170,7 @@ DEFUN1(stgApplyNPPPPP, f) {
         pushargs(1, nargv);
         pushargs(4, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[4]);
         // restore argv
@@ -48194,7 +48194,7 @@ DEFUN1(stgApplyNPPPPP, f) {
         pushargs(1, nargv);
         pushargs(3, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[3]);
         // restore argv
@@ -48219,7 +48219,7 @@ DEFUN1(stgApplyNPPPPP, f) {
         pushargs(1, nargv);
         pushargs(2, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[2]);
         // restore argv
@@ -48245,7 +48245,7 @@ DEFUN1(stgApplyNPPPPP, f) {
         pushargs(1, nargv);
         pushargs(1, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -48272,7 +48272,7 @@ DEFUN1(stgApplyNPPPPP, f) {
         pushargs(1, nargv);
         // 0 pointers to push
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[0]);
         // restore argv
@@ -48302,17 +48302,17 @@ DEFUN1(stgApplyNPPPPP, f) {
       pushargs(1, nargv);
       pushargs(5, pargv);
       // tail call the fun
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
     }
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNPPPPP FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                    f.op->infoPtr->layoutInfo.unboxedCount;
+      int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                    getInfoPtr(f.op)->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 5, 1);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 5, 1);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -48332,12 +48332,12 @@ DEFUN1(stgApplyNPPPPP, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                  f.op->infoPtr->layoutInfo.unboxedCount;
+    int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                  getInfoPtr(f.op)->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    int arity = f.op->infoPtr->funFields.arity - argCount;
+    int arity = getInfoPtr(f.op)->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
@@ -48358,7 +48358,7 @@ DEFUN1(stgApplyNPPPPP, f) {
         pushargs(4, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[4]);
         // restore argv
@@ -48384,7 +48384,7 @@ DEFUN1(stgApplyNPPPPP, f) {
         pushargs(3, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[3]);
         // restore argv
@@ -48411,7 +48411,7 @@ DEFUN1(stgApplyNPPPPP, f) {
         pushargs(2, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[2]);
         // restore argv
@@ -48439,7 +48439,7 @@ DEFUN1(stgApplyNPPPPP, f) {
         pushargs(1, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -48468,7 +48468,7 @@ DEFUN1(stgApplyNPPPPP, f) {
         // 0 pointers to push
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[0]);
         // restore argv
@@ -48500,7 +48500,7 @@ DEFUN1(stgApplyNPPPPP, f) {
       pushargs(5, pargv);
       pushargs(pappargc, &f.op->payload[fvCount+1]);
       // tail call the FUN
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
 
     // excess < 0, too few args
     } else {
@@ -48508,7 +48508,7 @@ DEFUN1(stgApplyNPPPPP, f) {
       fprintf(stderr, "stgApplyNPPPPP PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 5 + pappargc, 1 + papnargc);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 5 + pappargc, 1 + papnargc);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);
@@ -48551,7 +48551,7 @@ DEFUN1(stgApplyNPPPPP, f) {
 
 DEFUN1(stgApplyPPPPPP, f) {
   #ifdef DEBUGSTGAPPLY
-  fprintf(stderr, "stgApplyPPPPPP %s\n", f.op->infoPtr->name);
+  fprintf(stderr, "stgApplyPPPPPP %s\n", getInfoPtr(f.op)->name);
   #endif
   const int argc = 6;
   PtrOrLiteral argv[6];
@@ -48629,9 +48629,9 @@ DEFUN1(stgApplyPPPPPP, f) {
   f = pargv[6];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(6, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPPPPPP THUNK\n");
       #endif
@@ -48649,11 +48649,11 @@ DEFUN1(stgApplyPPPPPP, f) {
     argv[5] = pargv[5];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
-    int arity = f.op->infoPtr->funFields.arity;
+    int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
-    fprintf(stderr, "FUN %s arity %d\n", f.op->infoPtr->name, f.op->infoPtr->funFields.arity);
+    fprintf(stderr, "FUN %s arity %d\n", getInfoPtr(f.op)->name, getInfoPtr(f.op)->funFields.arity);
     #endif
     int excess = argc - arity;  // may be negative
 
@@ -48670,7 +48670,7 @@ DEFUN1(stgApplyPPPPPP, f) {
         // 0 non-pointers to push
         pushargs(5, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[5]);
         // restore argv
@@ -48694,7 +48694,7 @@ DEFUN1(stgApplyPPPPPP, f) {
         // 0 non-pointers to push
         pushargs(4, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[4]);
         // restore argv
@@ -48719,7 +48719,7 @@ DEFUN1(stgApplyPPPPPP, f) {
         // 0 non-pointers to push
         pushargs(3, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[3]);
         // restore argv
@@ -48745,7 +48745,7 @@ DEFUN1(stgApplyPPPPPP, f) {
         // 0 non-pointers to push
         pushargs(2, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[2]);
         // restore argv
@@ -48772,7 +48772,7 @@ DEFUN1(stgApplyPPPPPP, f) {
         // 0 non-pointers to push
         pushargs(1, pargv);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -48802,17 +48802,17 @@ DEFUN1(stgApplyPPPPPP, f) {
       // 0 non-pointers to push
       pushargs(6, pargv);
       // tail call the fun
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
     }
     // excess < 0, too few args
     else {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPPPPPP FUN too few args\n");
       #endif
-      int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                    f.op->infoPtr->layoutInfo.unboxedCount;
+      int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                    getInfoPtr(f.op)->layoutInfo.unboxedCount;
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 6, 0);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 6, 0);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply FUN inserting %d FVs into new PAP\n", fvCount);
@@ -48832,12 +48832,12 @@ DEFUN1(stgApplyPPPPPP, f) {
   } // case FUN
 
   case PAP: {
-    int fvCount = f.op->infoPtr->layoutInfo.boxedCount + 
-                  f.op->infoPtr->layoutInfo.unboxedCount;
+    int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + 
+                  getInfoPtr(f.op)->layoutInfo.unboxedCount;
     int pappargc, papnargc;
     PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);
     int argCount = pappargc + papnargc;
-    int arity = f.op->infoPtr->funFields.arity - argCount;
+    int arity = getInfoPtr(f.op)->funFields.arity - argCount;
     int excess = argc - arity;
 
     // too many args
@@ -48858,7 +48858,7 @@ DEFUN1(stgApplyPPPPPP, f) {
         pushargs(5, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[5]);
         // restore argv
@@ -48884,7 +48884,7 @@ DEFUN1(stgApplyPPPPPP, f) {
         pushargs(4, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[4]);
         // restore argv
@@ -48911,7 +48911,7 @@ DEFUN1(stgApplyPPPPPP, f) {
         pushargs(3, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[3]);
         // restore argv
@@ -48939,7 +48939,7 @@ DEFUN1(stgApplyPPPPPP, f) {
         pushargs(2, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[2]);
         // restore argv
@@ -48968,7 +48968,7 @@ DEFUN1(stgApplyPPPPPP, f) {
         pushargs(1, pargv);
         pushargs(pappargc, &f.op->payload[fvCount+1]);
         // call-with-return the FUN
-        STGCALL1(f.op->infoPtr->entryCode, f);
+        STGCALL1(getInfoPtr(f.op)->entryCode, f);
         // restore excess args
         callContRestore(&pargv[1]);
         // restore argv
@@ -49000,7 +49000,7 @@ DEFUN1(stgApplyPPPPPP, f) {
       pushargs(6, pargv);
       pushargs(pappargc, &f.op->payload[fvCount+1]);
       // tail call the FUN
-      STGJUMP1(f.op->infoPtr->entryCode, f);
+      STGJUMP1(getInfoPtr(f.op)->entryCode, f);
 
     // excess < 0, too few args
     } else {
@@ -49008,7 +49008,7 @@ DEFUN1(stgApplyPPPPPP, f) {
       fprintf(stderr, "stgApplyPPPPPP PAP too few args\n");
       #endif
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAP(f.op->infoPtr, 6 + pappargc, 0 + papnargc);
+      Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), 6 + pappargc, 0 + papnargc);
       // copy fvs
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApply PAP inserting %d FVs into new PAP\n", fvCount);

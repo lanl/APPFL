@@ -6,10 +6,11 @@ project(runtime)
   set(rt_hdrs args.h 
               cmm.h
               gc.h
+              obj.h
               stg.h
               stgutils.h
-	            stgApply.h
-	              )
+	      stgApply.h
+    )
 
   set(rt_srcs args.c 
               cmm.c
