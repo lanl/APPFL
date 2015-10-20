@@ -23,7 +23,7 @@ void *stgSP = NULL;
 PtrOrLiteral stgCurVal;  // current value STG register
 
 const char *objTypeNames[] = {
-  "OBJTYPE0BAD"
+  "OBJTYPE0BAD",
   "FUN", 
   "PAP", 
   "CON",
