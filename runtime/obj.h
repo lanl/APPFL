@@ -70,6 +70,7 @@ static inline uintptr_t setLSB(void *ptr) { return (uintptr_t) ptr | 1; }
 static inline uintptr_t unsetLSB(void *ptr) { return (uintptr_t) ptr & ~1; }
 static inline uintptr_t isLSBset(void *ptr) { return (uintptr_t) ptr & 1; }
 
+
 // end of wrappers
 
 #endif

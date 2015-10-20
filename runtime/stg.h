@@ -188,6 +188,8 @@ typedef uintptr_t Bitmap64;
 #define BMSIZE(bm) ((bm>>58)&0x3F)
 #define BMMAP(bm) (bm & 0x03FFFFFFFFFFFFFFLL) 
 
+static inline InfoTab *maskInfoPtr(InfoTab *ptr) { return (InfoTab *)(((uintptr_t)ptr >> 3) << 3); }
+
 // allocate Obj on heap, returning pointer to new Obj
 extern Obj* stgNewHeapObj(InfoTab *itp);
 extern Obj* stgNewHeapPAP(InfoTab *itp, int pargc, int nargc);
