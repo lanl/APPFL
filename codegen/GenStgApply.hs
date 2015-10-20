@@ -9,7 +9,7 @@ data Strictness = Nonstrict
                 | Strict1   -- evaluate args first, then fun
                   deriving(Eq)
     
-strictness = Strict1
+strictness = Nonstrict
 
 dumpStgApply n = 
     let (forward, macros, fun) = genAllstgApply n
@@ -156,9 +156,9 @@ gen s =
 
      "\n" ++
      "  f.op = derefPoL(f);\n" ++
-     "  if (f.op->objType == THUNK) {\n" ++
+     "  if (getObjType(f.op) == THUNK) {\n" ++
           indent 4 (callContSave nps) ++
-     "    while (f.op->objType == THUNK) {\n" ++
+     "    while (getObjType(f.op) == THUNK) {\n" ++
             indent 6 (debugp [fname ++ " THUNK\\n"]) ++
      "      STGEVAL(f);\n" ++
      "      // f.op = derefPoL(f);\n" ++
@@ -167,7 +167,7 @@ gen s =
           indent 4 (callContAndArgvRestore nps pinds) ++
      "  } // if THUNK\n" ++
      "\n" ++
-     "  switch (f.op->objType) {\n" ++
+     "  switch (getObjType(f.op)) {\n" ++
      "  case FUN: {\n" ++
      "    int arity = getInfoPtr(f.op)->funFields.arity;\n" ++
           indent 4 (debugp ["FUN %s arity %d\\n", "getInfoPtr(f.op)->name", 

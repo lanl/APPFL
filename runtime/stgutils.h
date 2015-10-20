@@ -76,8 +76,7 @@ do {						\
 do {						\
   stgCurVal = e;				\
   derefStgCurVal();				\
-  assert(stgCurVal.argType == HEAPOBJ && "STGEVAL:  non-heap object before STGCALL!"); \
-  if (stgCurVal.op->objType == THUNK) {	        \
+  if (getObjType(stgCurVal.op) == THUNK) {	        \
     Obj* cont = stgAllocCallCont2(&it_stgCallCont, 0);	\
     while (stgCurVal.op->objType == THUNK) {	\
       strcpy(cont->ident, stgCurVal.op->ident);	\
@@ -86,8 +85,7 @@ do {						\
     }  						\
     stgPopCont();			        \
   }  						\
-  assert(stgCurVal.argType == HEAPOBJ && "STGEVAL:  non-heap object after STGCALL!"); \
-  if (stgCurVal.op->objType == BLACKHOLE) {     \
+  if (getObjType(stgCurVal.op) == BLACKHOLE) {     \
     fprintf(stderr, "infinite loop detected in STGEVAL!\n"); \
     showStgVal(stgCurVal);			\
     fprintf(stderr, "\n");			\
@@ -102,16 +100,16 @@ do {						\
 do {            \
   stgCurVal = e;        \
   derefStgCurVal();       \
-  if (stgCurVal.op->objType == THUNK) {         \
+  if (getObjType(stgCurVal.op) == THUNK) {         \
     Obj* cont = stgAllocCallCont2(&it_stgCallCont, 0);  \
-    while (stgCurVal.op->objType == THUNK) {  \
+    while (getObjType(stgCurVal.op) == THUNK) {  \
       strcpy(cont->ident, stgCurVal.op->ident); \
       STGCALL1(getInfoPtr(stgCurVal.op)->entryCode, stgCurVal); \
       derefStgCurVal();       \
     }             \
     stgPopCont();             \
   }             \
-  if (stgCurVal.op->objType == BLACKHOLE) {     \
+  if (getObjType(stgCurVal.op) == BLACKHOLE) {     \
     fprintf(stderr, "infinite loop detected in STGEVAL!\n"); \
     showStgVal(stgCurVal);      \
     fprintf(stderr, "\n");      \

@@ -19,9 +19,9 @@ DEFUN1(stgApplyN, f) {
   nargv[0] = argv[0];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     // no pointer args to save
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyN THUNK\n");
       #endif
@@ -32,7 +32,7 @@ DEFUN1(stgApplyN, f) {
     // no pointer args to restore
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
     int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
@@ -163,9 +163,9 @@ DEFUN1(stgApplyP, f) {
   // no non-pointer args to save
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(1, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyP THUNK\n");
       #endif
@@ -178,7 +178,7 @@ DEFUN1(stgApplyP, f) {
     argv[0] = pargv[0];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
     int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
@@ -310,9 +310,9 @@ DEFUN1(stgApplyNN, f) {
   nargv[1] = argv[1];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     // no pointer args to save
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNN THUNK\n");
       #endif
@@ -323,7 +323,7 @@ DEFUN1(stgApplyNN, f) {
     // no pointer args to restore
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
     int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
@@ -504,9 +504,9 @@ DEFUN1(stgApplyPN, f) {
   nargv[0] = argv[1];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(1, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPN THUNK\n");
       #endif
@@ -519,7 +519,7 @@ DEFUN1(stgApplyPN, f) {
     argv[0] = pargv[0];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
     int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
@@ -700,9 +700,9 @@ DEFUN1(stgApplyNP, f) {
   nargv[0] = argv[0];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(1, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNP THUNK\n");
       #endif
@@ -715,7 +715,7 @@ DEFUN1(stgApplyNP, f) {
     argv[1] = pargv[0];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
     int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
@@ -900,9 +900,9 @@ DEFUN1(stgApplyPP, f) {
   // no non-pointer args to save
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(2, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPP THUNK\n");
       #endif
@@ -916,7 +916,7 @@ DEFUN1(stgApplyPP, f) {
     argv[1] = pargv[1];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
     int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
@@ -1102,9 +1102,9 @@ DEFUN1(stgApplyNNN, f) {
   nargv[2] = argv[2];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     // no pointer args to save
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNNN THUNK\n");
       #endif
@@ -1115,7 +1115,7 @@ DEFUN1(stgApplyNNN, f) {
     // no pointer args to restore
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
     int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
@@ -1353,9 +1353,9 @@ DEFUN1(stgApplyPNN, f) {
   nargv[1] = argv[2];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(1, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPNN THUNK\n");
       #endif
@@ -1368,7 +1368,7 @@ DEFUN1(stgApplyPNN, f) {
     argv[0] = pargv[0];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
     int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
@@ -1606,9 +1606,9 @@ DEFUN1(stgApplyNPN, f) {
   nargv[1] = argv[2];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(1, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNPN THUNK\n");
       #endif
@@ -1621,7 +1621,7 @@ DEFUN1(stgApplyNPN, f) {
     argv[1] = pargv[0];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
     int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
@@ -1863,9 +1863,9 @@ DEFUN1(stgApplyPPN, f) {
   nargv[0] = argv[2];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(2, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPPN THUNK\n");
       #endif
@@ -1879,7 +1879,7 @@ DEFUN1(stgApplyPPN, f) {
     argv[1] = pargv[1];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
     int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
@@ -2121,9 +2121,9 @@ DEFUN1(stgApplyNNP, f) {
   nargv[1] = argv[1];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(1, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNNP THUNK\n");
       #endif
@@ -2136,7 +2136,7 @@ DEFUN1(stgApplyNNP, f) {
     argv[2] = pargv[0];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
     int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
@@ -2382,9 +2382,9 @@ DEFUN1(stgApplyPNP, f) {
   nargv[0] = argv[1];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(2, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPNP THUNK\n");
       #endif
@@ -2398,7 +2398,7 @@ DEFUN1(stgApplyPNP, f) {
     argv[2] = pargv[1];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
     int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
@@ -2644,9 +2644,9 @@ DEFUN1(stgApplyNPP, f) {
   nargv[0] = argv[0];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(2, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNPP THUNK\n");
       #endif
@@ -2660,7 +2660,7 @@ DEFUN1(stgApplyNPP, f) {
     argv[2] = pargv[1];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
     int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
@@ -2908,9 +2908,9 @@ DEFUN1(stgApplyPPP, f) {
   // no non-pointer args to save
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(3, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPPP THUNK\n");
       #endif
@@ -2925,7 +2925,7 @@ DEFUN1(stgApplyPPP, f) {
     argv[2] = pargv[2];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
     int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
@@ -3174,9 +3174,9 @@ DEFUN1(stgApplyNNNN, f) {
   nargv[3] = argv[3];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     // no pointer args to save
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNNNN THUNK\n");
       #endif
@@ -3187,7 +3187,7 @@ DEFUN1(stgApplyNNNN, f) {
     // no pointer args to restore
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
     int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
@@ -3472,9 +3472,9 @@ DEFUN1(stgApplyPNNN, f) {
   nargv[2] = argv[3];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(1, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPNNN THUNK\n");
       #endif
@@ -3487,7 +3487,7 @@ DEFUN1(stgApplyPNNN, f) {
     argv[0] = pargv[0];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
     int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
@@ -3772,9 +3772,9 @@ DEFUN1(stgApplyNPNN, f) {
   nargv[2] = argv[3];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(1, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNPNN THUNK\n");
       #endif
@@ -3787,7 +3787,7 @@ DEFUN1(stgApplyNPNN, f) {
     argv[1] = pargv[0];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
     int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
@@ -4076,9 +4076,9 @@ DEFUN1(stgApplyPPNN, f) {
   nargv[1] = argv[3];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(2, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPPNN THUNK\n");
       #endif
@@ -4092,7 +4092,7 @@ DEFUN1(stgApplyPPNN, f) {
     argv[1] = pargv[1];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
     int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
@@ -4381,9 +4381,9 @@ DEFUN1(stgApplyNNPN, f) {
   nargv[2] = argv[3];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(1, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNNPN THUNK\n");
       #endif
@@ -4396,7 +4396,7 @@ DEFUN1(stgApplyNNPN, f) {
     argv[2] = pargv[0];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
     int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
@@ -4689,9 +4689,9 @@ DEFUN1(stgApplyPNPN, f) {
   nargv[1] = argv[3];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(2, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPNPN THUNK\n");
       #endif
@@ -4705,7 +4705,7 @@ DEFUN1(stgApplyPNPN, f) {
     argv[2] = pargv[1];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
     int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
@@ -4998,9 +4998,9 @@ DEFUN1(stgApplyNPPN, f) {
   nargv[1] = argv[3];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(2, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNPPN THUNK\n");
       #endif
@@ -5014,7 +5014,7 @@ DEFUN1(stgApplyNPPN, f) {
     argv[2] = pargv[1];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
     int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
@@ -5309,9 +5309,9 @@ DEFUN1(stgApplyPPPN, f) {
   nargv[0] = argv[3];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(3, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPPPN THUNK\n");
       #endif
@@ -5326,7 +5326,7 @@ DEFUN1(stgApplyPPPN, f) {
     argv[2] = pargv[2];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
     int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
@@ -5621,9 +5621,9 @@ DEFUN1(stgApplyNNNP, f) {
   nargv[2] = argv[2];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(1, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNNNP THUNK\n");
       #endif
@@ -5636,7 +5636,7 @@ DEFUN1(stgApplyNNNP, f) {
     argv[3] = pargv[0];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
     int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
@@ -5933,9 +5933,9 @@ DEFUN1(stgApplyPNNP, f) {
   nargv[1] = argv[2];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(2, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPNNP THUNK\n");
       #endif
@@ -5949,7 +5949,7 @@ DEFUN1(stgApplyPNNP, f) {
     argv[3] = pargv[1];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
     int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
@@ -6246,9 +6246,9 @@ DEFUN1(stgApplyNPNP, f) {
   nargv[1] = argv[2];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(2, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNPNP THUNK\n");
       #endif
@@ -6262,7 +6262,7 @@ DEFUN1(stgApplyNPNP, f) {
     argv[3] = pargv[1];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
     int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
@@ -6561,9 +6561,9 @@ DEFUN1(stgApplyPPNP, f) {
   nargv[0] = argv[2];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(3, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPPNP THUNK\n");
       #endif
@@ -6578,7 +6578,7 @@ DEFUN1(stgApplyPPNP, f) {
     argv[3] = pargv[2];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
     int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
@@ -6877,9 +6877,9 @@ DEFUN1(stgApplyNNPP, f) {
   nargv[1] = argv[1];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(2, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNNPP THUNK\n");
       #endif
@@ -6893,7 +6893,7 @@ DEFUN1(stgApplyNNPP, f) {
     argv[3] = pargv[1];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
     int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
@@ -7194,9 +7194,9 @@ DEFUN1(stgApplyPNPP, f) {
   nargv[0] = argv[1];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(3, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPNPP THUNK\n");
       #endif
@@ -7211,7 +7211,7 @@ DEFUN1(stgApplyPNPP, f) {
     argv[3] = pargv[2];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
     int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
@@ -7512,9 +7512,9 @@ DEFUN1(stgApplyNPPP, f) {
   nargv[0] = argv[0];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(3, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNPPP THUNK\n");
       #endif
@@ -7529,7 +7529,7 @@ DEFUN1(stgApplyNPPP, f) {
     argv[3] = pargv[2];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
     int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
@@ -7832,9 +7832,9 @@ DEFUN1(stgApplyPPPP, f) {
   // no non-pointer args to save
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(4, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPPPP THUNK\n");
       #endif
@@ -7850,7 +7850,7 @@ DEFUN1(stgApplyPPPP, f) {
     argv[3] = pargv[3];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
     int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
@@ -8154,9 +8154,9 @@ DEFUN1(stgApplyNNNNN, f) {
   nargv[4] = argv[4];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     // no pointer args to save
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNNNNN THUNK\n");
       #endif
@@ -8167,7 +8167,7 @@ DEFUN1(stgApplyNNNNN, f) {
     // no pointer args to restore
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
     int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
@@ -8499,9 +8499,9 @@ DEFUN1(stgApplyPNNNN, f) {
   nargv[3] = argv[4];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(1, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPNNNN THUNK\n");
       #endif
@@ -8514,7 +8514,7 @@ DEFUN1(stgApplyPNNNN, f) {
     argv[0] = pargv[0];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
     int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
@@ -8846,9 +8846,9 @@ DEFUN1(stgApplyNPNNN, f) {
   nargv[3] = argv[4];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(1, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNPNNN THUNK\n");
       #endif
@@ -8861,7 +8861,7 @@ DEFUN1(stgApplyNPNNN, f) {
     argv[1] = pargv[0];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
     int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
@@ -9197,9 +9197,9 @@ DEFUN1(stgApplyPPNNN, f) {
   nargv[2] = argv[4];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(2, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPPNNN THUNK\n");
       #endif
@@ -9213,7 +9213,7 @@ DEFUN1(stgApplyPPNNN, f) {
     argv[1] = pargv[1];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
     int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
@@ -9549,9 +9549,9 @@ DEFUN1(stgApplyNNPNN, f) {
   nargv[3] = argv[4];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(1, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNNPNN THUNK\n");
       #endif
@@ -9564,7 +9564,7 @@ DEFUN1(stgApplyNNPNN, f) {
     argv[2] = pargv[0];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
     int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
@@ -9904,9 +9904,9 @@ DEFUN1(stgApplyPNPNN, f) {
   nargv[2] = argv[4];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(2, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPNPNN THUNK\n");
       #endif
@@ -9920,7 +9920,7 @@ DEFUN1(stgApplyPNPNN, f) {
     argv[2] = pargv[1];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
     int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
@@ -10260,9 +10260,9 @@ DEFUN1(stgApplyNPPNN, f) {
   nargv[2] = argv[4];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(2, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNPPNN THUNK\n");
       #endif
@@ -10276,7 +10276,7 @@ DEFUN1(stgApplyNPPNN, f) {
     argv[2] = pargv[1];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
     int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
@@ -10618,9 +10618,9 @@ DEFUN1(stgApplyPPPNN, f) {
   nargv[1] = argv[4];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(3, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPPPNN THUNK\n");
       #endif
@@ -10635,7 +10635,7 @@ DEFUN1(stgApplyPPPNN, f) {
     argv[2] = pargv[2];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
     int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
@@ -10977,9 +10977,9 @@ DEFUN1(stgApplyNNNPN, f) {
   nargv[3] = argv[4];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(1, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNNNPN THUNK\n");
       #endif
@@ -10992,7 +10992,7 @@ DEFUN1(stgApplyNNNPN, f) {
     argv[3] = pargv[0];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
     int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
@@ -11336,9 +11336,9 @@ DEFUN1(stgApplyPNNPN, f) {
   nargv[2] = argv[4];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(2, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPNNPN THUNK\n");
       #endif
@@ -11352,7 +11352,7 @@ DEFUN1(stgApplyPNNPN, f) {
     argv[3] = pargv[1];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
     int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
@@ -11696,9 +11696,9 @@ DEFUN1(stgApplyNPNPN, f) {
   nargv[2] = argv[4];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(2, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNPNPN THUNK\n");
       #endif
@@ -11712,7 +11712,7 @@ DEFUN1(stgApplyNPNPN, f) {
     argv[3] = pargv[1];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
     int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
@@ -12058,9 +12058,9 @@ DEFUN1(stgApplyPPNPN, f) {
   nargv[1] = argv[4];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(3, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPPNPN THUNK\n");
       #endif
@@ -12075,7 +12075,7 @@ DEFUN1(stgApplyPPNPN, f) {
     argv[3] = pargv[2];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
     int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
@@ -12421,9 +12421,9 @@ DEFUN1(stgApplyNNPPN, f) {
   nargv[2] = argv[4];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(2, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNNPPN THUNK\n");
       #endif
@@ -12437,7 +12437,7 @@ DEFUN1(stgApplyNNPPN, f) {
     argv[3] = pargv[1];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
     int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
@@ -12785,9 +12785,9 @@ DEFUN1(stgApplyPNPPN, f) {
   nargv[1] = argv[4];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(3, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPNPPN THUNK\n");
       #endif
@@ -12802,7 +12802,7 @@ DEFUN1(stgApplyPNPPN, f) {
     argv[3] = pargv[2];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
     int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
@@ -13150,9 +13150,9 @@ DEFUN1(stgApplyNPPPN, f) {
   nargv[1] = argv[4];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(3, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNPPPN THUNK\n");
       #endif
@@ -13167,7 +13167,7 @@ DEFUN1(stgApplyNPPPN, f) {
     argv[3] = pargv[2];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
     int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
@@ -13517,9 +13517,9 @@ DEFUN1(stgApplyPPPPN, f) {
   nargv[0] = argv[4];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(4, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPPPPN THUNK\n");
       #endif
@@ -13535,7 +13535,7 @@ DEFUN1(stgApplyPPPPN, f) {
     argv[3] = pargv[3];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
     int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
@@ -13885,9 +13885,9 @@ DEFUN1(stgApplyNNNNP, f) {
   nargv[3] = argv[3];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(1, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNNNNP THUNK\n");
       #endif
@@ -13900,7 +13900,7 @@ DEFUN1(stgApplyNNNNP, f) {
     argv[4] = pargv[0];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
     int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
@@ -14248,9 +14248,9 @@ DEFUN1(stgApplyPNNNP, f) {
   nargv[2] = argv[3];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(2, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPNNNP THUNK\n");
       #endif
@@ -14264,7 +14264,7 @@ DEFUN1(stgApplyPNNNP, f) {
     argv[4] = pargv[1];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
     int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
@@ -14612,9 +14612,9 @@ DEFUN1(stgApplyNPNNP, f) {
   nargv[2] = argv[3];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(2, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNPNNP THUNK\n");
       #endif
@@ -14628,7 +14628,7 @@ DEFUN1(stgApplyNPNNP, f) {
     argv[4] = pargv[1];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
     int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
@@ -14978,9 +14978,9 @@ DEFUN1(stgApplyPPNNP, f) {
   nargv[1] = argv[3];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(3, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPPNNP THUNK\n");
       #endif
@@ -14995,7 +14995,7 @@ DEFUN1(stgApplyPPNNP, f) {
     argv[4] = pargv[2];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
     int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
@@ -15345,9 +15345,9 @@ DEFUN1(stgApplyNNPNP, f) {
   nargv[2] = argv[3];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(2, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNNPNP THUNK\n");
       #endif
@@ -15361,7 +15361,7 @@ DEFUN1(stgApplyNNPNP, f) {
     argv[4] = pargv[1];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
     int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
@@ -15713,9 +15713,9 @@ DEFUN1(stgApplyPNPNP, f) {
   nargv[1] = argv[3];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(3, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPNPNP THUNK\n");
       #endif
@@ -15730,7 +15730,7 @@ DEFUN1(stgApplyPNPNP, f) {
     argv[4] = pargv[2];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
     int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
@@ -16082,9 +16082,9 @@ DEFUN1(stgApplyNPPNP, f) {
   nargv[1] = argv[3];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(3, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNPPNP THUNK\n");
       #endif
@@ -16099,7 +16099,7 @@ DEFUN1(stgApplyNPPNP, f) {
     argv[4] = pargv[2];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
     int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
@@ -16453,9 +16453,9 @@ DEFUN1(stgApplyPPPNP, f) {
   nargv[0] = argv[3];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(4, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPPPNP THUNK\n");
       #endif
@@ -16471,7 +16471,7 @@ DEFUN1(stgApplyPPPNP, f) {
     argv[4] = pargv[3];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
     int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
@@ -16825,9 +16825,9 @@ DEFUN1(stgApplyNNNPP, f) {
   nargv[2] = argv[2];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(2, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNNNPP THUNK\n");
       #endif
@@ -16841,7 +16841,7 @@ DEFUN1(stgApplyNNNPP, f) {
     argv[4] = pargv[1];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
     int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
@@ -17195,9 +17195,9 @@ DEFUN1(stgApplyPNNPP, f) {
   nargv[1] = argv[2];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(3, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPNNPP THUNK\n");
       #endif
@@ -17212,7 +17212,7 @@ DEFUN1(stgApplyPNNPP, f) {
     argv[4] = pargv[2];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
     int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
@@ -17566,9 +17566,9 @@ DEFUN1(stgApplyNPNPP, f) {
   nargv[1] = argv[2];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(3, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNPNPP THUNK\n");
       #endif
@@ -17583,7 +17583,7 @@ DEFUN1(stgApplyNPNPP, f) {
     argv[4] = pargv[2];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
     int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
@@ -17939,9 +17939,9 @@ DEFUN1(stgApplyPPNPP, f) {
   nargv[0] = argv[2];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(4, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPPNPP THUNK\n");
       #endif
@@ -17957,7 +17957,7 @@ DEFUN1(stgApplyPPNPP, f) {
     argv[4] = pargv[3];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
     int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
@@ -18313,9 +18313,9 @@ DEFUN1(stgApplyNNPPP, f) {
   nargv[1] = argv[1];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(3, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNNPPP THUNK\n");
       #endif
@@ -18330,7 +18330,7 @@ DEFUN1(stgApplyNNPPP, f) {
     argv[4] = pargv[2];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
     int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
@@ -18688,9 +18688,9 @@ DEFUN1(stgApplyPNPPP, f) {
   nargv[0] = argv[1];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(4, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPNPPP THUNK\n");
       #endif
@@ -18706,7 +18706,7 @@ DEFUN1(stgApplyPNPPP, f) {
     argv[4] = pargv[3];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
     int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
@@ -19064,9 +19064,9 @@ DEFUN1(stgApplyNPPPP, f) {
   nargv[0] = argv[0];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(4, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNPPPP THUNK\n");
       #endif
@@ -19082,7 +19082,7 @@ DEFUN1(stgApplyNPPPP, f) {
     argv[4] = pargv[3];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
     int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
@@ -19442,9 +19442,9 @@ DEFUN1(stgApplyPPPPP, f) {
   // no non-pointer args to save
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(5, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPPPPP THUNK\n");
       #endif
@@ -19461,7 +19461,7 @@ DEFUN1(stgApplyPPPPP, f) {
     argv[4] = pargv[4];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
     int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
@@ -19822,9 +19822,9 @@ DEFUN1(stgApplyNNNNNN, f) {
   nargv[5] = argv[5];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     // no pointer args to save
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNNNNNN THUNK\n");
       #endif
@@ -19835,7 +19835,7 @@ DEFUN1(stgApplyNNNNNN, f) {
     // no pointer args to restore
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
     int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
@@ -20214,9 +20214,9 @@ DEFUN1(stgApplyPNNNNN, f) {
   nargv[4] = argv[5];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(1, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPNNNNN THUNK\n");
       #endif
@@ -20229,7 +20229,7 @@ DEFUN1(stgApplyPNNNNN, f) {
     argv[0] = pargv[0];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
     int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
@@ -20608,9 +20608,9 @@ DEFUN1(stgApplyNPNNNN, f) {
   nargv[4] = argv[5];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(1, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNPNNNN THUNK\n");
       #endif
@@ -20623,7 +20623,7 @@ DEFUN1(stgApplyNPNNNN, f) {
     argv[1] = pargv[0];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
     int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
@@ -21006,9 +21006,9 @@ DEFUN1(stgApplyPPNNNN, f) {
   nargv[3] = argv[5];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(2, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPPNNNN THUNK\n");
       #endif
@@ -21022,7 +21022,7 @@ DEFUN1(stgApplyPPNNNN, f) {
     argv[1] = pargv[1];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
     int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
@@ -21405,9 +21405,9 @@ DEFUN1(stgApplyNNPNNN, f) {
   nargv[4] = argv[5];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(1, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNNPNNN THUNK\n");
       #endif
@@ -21420,7 +21420,7 @@ DEFUN1(stgApplyNNPNNN, f) {
     argv[2] = pargv[0];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
     int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
@@ -21807,9 +21807,9 @@ DEFUN1(stgApplyPNPNNN, f) {
   nargv[3] = argv[5];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(2, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPNPNNN THUNK\n");
       #endif
@@ -21823,7 +21823,7 @@ DEFUN1(stgApplyPNPNNN, f) {
     argv[2] = pargv[1];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
     int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
@@ -22210,9 +22210,9 @@ DEFUN1(stgApplyNPPNNN, f) {
   nargv[3] = argv[5];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(2, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNPPNNN THUNK\n");
       #endif
@@ -22226,7 +22226,7 @@ DEFUN1(stgApplyNPPNNN, f) {
     argv[2] = pargv[1];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
     int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
@@ -22615,9 +22615,9 @@ DEFUN1(stgApplyPPPNNN, f) {
   nargv[2] = argv[5];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(3, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPPPNNN THUNK\n");
       #endif
@@ -22632,7 +22632,7 @@ DEFUN1(stgApplyPPPNNN, f) {
     argv[2] = pargv[2];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
     int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
@@ -23021,9 +23021,9 @@ DEFUN1(stgApplyNNNPNN, f) {
   nargv[4] = argv[5];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(1, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNNNPNN THUNK\n");
       #endif
@@ -23036,7 +23036,7 @@ DEFUN1(stgApplyNNNPNN, f) {
     argv[3] = pargv[0];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
     int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
@@ -23427,9 +23427,9 @@ DEFUN1(stgApplyPNNPNN, f) {
   nargv[3] = argv[5];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(2, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPNNPNN THUNK\n");
       #endif
@@ -23443,7 +23443,7 @@ DEFUN1(stgApplyPNNPNN, f) {
     argv[3] = pargv[1];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
     int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
@@ -23834,9 +23834,9 @@ DEFUN1(stgApplyNPNPNN, f) {
   nargv[3] = argv[5];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(2, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNPNPNN THUNK\n");
       #endif
@@ -23850,7 +23850,7 @@ DEFUN1(stgApplyNPNPNN, f) {
     argv[3] = pargv[1];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
     int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
@@ -24243,9 +24243,9 @@ DEFUN1(stgApplyPPNPNN, f) {
   nargv[2] = argv[5];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(3, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPPNPNN THUNK\n");
       #endif
@@ -24260,7 +24260,7 @@ DEFUN1(stgApplyPPNPNN, f) {
     argv[3] = pargv[2];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
     int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
@@ -24653,9 +24653,9 @@ DEFUN1(stgApplyNNPPNN, f) {
   nargv[3] = argv[5];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(2, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNNPPNN THUNK\n");
       #endif
@@ -24669,7 +24669,7 @@ DEFUN1(stgApplyNNPPNN, f) {
     argv[3] = pargv[1];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
     int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
@@ -25064,9 +25064,9 @@ DEFUN1(stgApplyPNPPNN, f) {
   nargv[2] = argv[5];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(3, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPNPPNN THUNK\n");
       #endif
@@ -25081,7 +25081,7 @@ DEFUN1(stgApplyPNPPNN, f) {
     argv[3] = pargv[2];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
     int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
@@ -25476,9 +25476,9 @@ DEFUN1(stgApplyNPPPNN, f) {
   nargv[2] = argv[5];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(3, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNPPPNN THUNK\n");
       #endif
@@ -25493,7 +25493,7 @@ DEFUN1(stgApplyNPPPNN, f) {
     argv[3] = pargv[2];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
     int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
@@ -25890,9 +25890,9 @@ DEFUN1(stgApplyPPPPNN, f) {
   nargv[1] = argv[5];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(4, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPPPPNN THUNK\n");
       #endif
@@ -25908,7 +25908,7 @@ DEFUN1(stgApplyPPPPNN, f) {
     argv[3] = pargv[3];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
     int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
@@ -26305,9 +26305,9 @@ DEFUN1(stgApplyNNNNPN, f) {
   nargv[4] = argv[5];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(1, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNNNNPN THUNK\n");
       #endif
@@ -26320,7 +26320,7 @@ DEFUN1(stgApplyNNNNPN, f) {
     argv[4] = pargv[0];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
     int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
@@ -26715,9 +26715,9 @@ DEFUN1(stgApplyPNNNPN, f) {
   nargv[3] = argv[5];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(2, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPNNNPN THUNK\n");
       #endif
@@ -26731,7 +26731,7 @@ DEFUN1(stgApplyPNNNPN, f) {
     argv[4] = pargv[1];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
     int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
@@ -27126,9 +27126,9 @@ DEFUN1(stgApplyNPNNPN, f) {
   nargv[3] = argv[5];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(2, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNPNNPN THUNK\n");
       #endif
@@ -27142,7 +27142,7 @@ DEFUN1(stgApplyNPNNPN, f) {
     argv[4] = pargv[1];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
     int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
@@ -27539,9 +27539,9 @@ DEFUN1(stgApplyPPNNPN, f) {
   nargv[2] = argv[5];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(3, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPPNNPN THUNK\n");
       #endif
@@ -27556,7 +27556,7 @@ DEFUN1(stgApplyPPNNPN, f) {
     argv[4] = pargv[2];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
     int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
@@ -27953,9 +27953,9 @@ DEFUN1(stgApplyNNPNPN, f) {
   nargv[3] = argv[5];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(2, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNNPNPN THUNK\n");
       #endif
@@ -27969,7 +27969,7 @@ DEFUN1(stgApplyNNPNPN, f) {
     argv[4] = pargv[1];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
     int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
@@ -28368,9 +28368,9 @@ DEFUN1(stgApplyPNPNPN, f) {
   nargv[2] = argv[5];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(3, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPNPNPN THUNK\n");
       #endif
@@ -28385,7 +28385,7 @@ DEFUN1(stgApplyPNPNPN, f) {
     argv[4] = pargv[2];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
     int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
@@ -28784,9 +28784,9 @@ DEFUN1(stgApplyNPPNPN, f) {
   nargv[2] = argv[5];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(3, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNPPNPN THUNK\n");
       #endif
@@ -28801,7 +28801,7 @@ DEFUN1(stgApplyNPPNPN, f) {
     argv[4] = pargv[2];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
     int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
@@ -29202,9 +29202,9 @@ DEFUN1(stgApplyPPPNPN, f) {
   nargv[1] = argv[5];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(4, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPPPNPN THUNK\n");
       #endif
@@ -29220,7 +29220,7 @@ DEFUN1(stgApplyPPPNPN, f) {
     argv[4] = pargv[3];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
     int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
@@ -29621,9 +29621,9 @@ DEFUN1(stgApplyNNNPPN, f) {
   nargv[3] = argv[5];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(2, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNNNPPN THUNK\n");
       #endif
@@ -29637,7 +29637,7 @@ DEFUN1(stgApplyNNNPPN, f) {
     argv[4] = pargv[1];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
     int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
@@ -30038,9 +30038,9 @@ DEFUN1(stgApplyPNNPPN, f) {
   nargv[2] = argv[5];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(3, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPNNPPN THUNK\n");
       #endif
@@ -30055,7 +30055,7 @@ DEFUN1(stgApplyPNNPPN, f) {
     argv[4] = pargv[2];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
     int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
@@ -30456,9 +30456,9 @@ DEFUN1(stgApplyNPNPPN, f) {
   nargv[2] = argv[5];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(3, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNPNPPN THUNK\n");
       #endif
@@ -30473,7 +30473,7 @@ DEFUN1(stgApplyNPNPPN, f) {
     argv[4] = pargv[2];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
     int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
@@ -30876,9 +30876,9 @@ DEFUN1(stgApplyPPNPPN, f) {
   nargv[1] = argv[5];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(4, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPPNPPN THUNK\n");
       #endif
@@ -30894,7 +30894,7 @@ DEFUN1(stgApplyPPNPPN, f) {
     argv[4] = pargv[3];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
     int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
@@ -31297,9 +31297,9 @@ DEFUN1(stgApplyNNPPPN, f) {
   nargv[2] = argv[5];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(3, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNNPPPN THUNK\n");
       #endif
@@ -31314,7 +31314,7 @@ DEFUN1(stgApplyNNPPPN, f) {
     argv[4] = pargv[2];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
     int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
@@ -31719,9 +31719,9 @@ DEFUN1(stgApplyPNPPPN, f) {
   nargv[1] = argv[5];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(4, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPNPPPN THUNK\n");
       #endif
@@ -31737,7 +31737,7 @@ DEFUN1(stgApplyPNPPPN, f) {
     argv[4] = pargv[3];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
     int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
@@ -32142,9 +32142,9 @@ DEFUN1(stgApplyNPPPPN, f) {
   nargv[1] = argv[5];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(4, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNPPPPN THUNK\n");
       #endif
@@ -32160,7 +32160,7 @@ DEFUN1(stgApplyNPPPPN, f) {
     argv[4] = pargv[3];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
     int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
@@ -32567,9 +32567,9 @@ DEFUN1(stgApplyPPPPPN, f) {
   nargv[0] = argv[5];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(5, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPPPPPN THUNK\n");
       #endif
@@ -32586,7 +32586,7 @@ DEFUN1(stgApplyPPPPPN, f) {
     argv[4] = pargv[4];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
     int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
@@ -32993,9 +32993,9 @@ DEFUN1(stgApplyNNNNNP, f) {
   nargv[4] = argv[4];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(1, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNNNNNP THUNK\n");
       #endif
@@ -33008,7 +33008,7 @@ DEFUN1(stgApplyNNNNNP, f) {
     argv[5] = pargv[0];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
     int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
@@ -33407,9 +33407,9 @@ DEFUN1(stgApplyPNNNNP, f) {
   nargv[3] = argv[4];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(2, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPNNNNP THUNK\n");
       #endif
@@ -33423,7 +33423,7 @@ DEFUN1(stgApplyPNNNNP, f) {
     argv[5] = pargv[1];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
     int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
@@ -33822,9 +33822,9 @@ DEFUN1(stgApplyNPNNNP, f) {
   nargv[3] = argv[4];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(2, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNPNNNP THUNK\n");
       #endif
@@ -33838,7 +33838,7 @@ DEFUN1(stgApplyNPNNNP, f) {
     argv[5] = pargv[1];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
     int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
@@ -34239,9 +34239,9 @@ DEFUN1(stgApplyPPNNNP, f) {
   nargv[2] = argv[4];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(3, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPPNNNP THUNK\n");
       #endif
@@ -34256,7 +34256,7 @@ DEFUN1(stgApplyPPNNNP, f) {
     argv[5] = pargv[2];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
     int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
@@ -34657,9 +34657,9 @@ DEFUN1(stgApplyNNPNNP, f) {
   nargv[3] = argv[4];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(2, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNNPNNP THUNK\n");
       #endif
@@ -34673,7 +34673,7 @@ DEFUN1(stgApplyNNPNNP, f) {
     argv[5] = pargv[1];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
     int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
@@ -35076,9 +35076,9 @@ DEFUN1(stgApplyPNPNNP, f) {
   nargv[2] = argv[4];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(3, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPNPNNP THUNK\n");
       #endif
@@ -35093,7 +35093,7 @@ DEFUN1(stgApplyPNPNNP, f) {
     argv[5] = pargv[2];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
     int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
@@ -35496,9 +35496,9 @@ DEFUN1(stgApplyNPPNNP, f) {
   nargv[2] = argv[4];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(3, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNPPNNP THUNK\n");
       #endif
@@ -35513,7 +35513,7 @@ DEFUN1(stgApplyNPPNNP, f) {
     argv[5] = pargv[2];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
     int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
@@ -35918,9 +35918,9 @@ DEFUN1(stgApplyPPPNNP, f) {
   nargv[1] = argv[4];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(4, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPPPNNP THUNK\n");
       #endif
@@ -35936,7 +35936,7 @@ DEFUN1(stgApplyPPPNNP, f) {
     argv[5] = pargv[3];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
     int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
@@ -36341,9 +36341,9 @@ DEFUN1(stgApplyNNNPNP, f) {
   nargv[3] = argv[4];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(2, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNNNPNP THUNK\n");
       #endif
@@ -36357,7 +36357,7 @@ DEFUN1(stgApplyNNNPNP, f) {
     argv[5] = pargv[1];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
     int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
@@ -36762,9 +36762,9 @@ DEFUN1(stgApplyPNNPNP, f) {
   nargv[2] = argv[4];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(3, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPNNPNP THUNK\n");
       #endif
@@ -36779,7 +36779,7 @@ DEFUN1(stgApplyPNNPNP, f) {
     argv[5] = pargv[2];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
     int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
@@ -37184,9 +37184,9 @@ DEFUN1(stgApplyNPNPNP, f) {
   nargv[2] = argv[4];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(3, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNPNPNP THUNK\n");
       #endif
@@ -37201,7 +37201,7 @@ DEFUN1(stgApplyNPNPNP, f) {
     argv[5] = pargv[2];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
     int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
@@ -37608,9 +37608,9 @@ DEFUN1(stgApplyPPNPNP, f) {
   nargv[1] = argv[4];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(4, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPPNPNP THUNK\n");
       #endif
@@ -37626,7 +37626,7 @@ DEFUN1(stgApplyPPNPNP, f) {
     argv[5] = pargv[3];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
     int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
@@ -38033,9 +38033,9 @@ DEFUN1(stgApplyNNPPNP, f) {
   nargv[2] = argv[4];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(3, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNNPPNP THUNK\n");
       #endif
@@ -38050,7 +38050,7 @@ DEFUN1(stgApplyNNPPNP, f) {
     argv[5] = pargv[2];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
     int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
@@ -38459,9 +38459,9 @@ DEFUN1(stgApplyPNPPNP, f) {
   nargv[1] = argv[4];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(4, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPNPPNP THUNK\n");
       #endif
@@ -38477,7 +38477,7 @@ DEFUN1(stgApplyPNPPNP, f) {
     argv[5] = pargv[3];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
     int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
@@ -38886,9 +38886,9 @@ DEFUN1(stgApplyNPPPNP, f) {
   nargv[1] = argv[4];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(4, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNPPPNP THUNK\n");
       #endif
@@ -38904,7 +38904,7 @@ DEFUN1(stgApplyNPPPNP, f) {
     argv[5] = pargv[3];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
     int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
@@ -39315,9 +39315,9 @@ DEFUN1(stgApplyPPPPNP, f) {
   nargv[0] = argv[4];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(5, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPPPPNP THUNK\n");
       #endif
@@ -39334,7 +39334,7 @@ DEFUN1(stgApplyPPPPNP, f) {
     argv[5] = pargv[4];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
     int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
@@ -39745,9 +39745,9 @@ DEFUN1(stgApplyNNNNPP, f) {
   nargv[3] = argv[3];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(2, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNNNNPP THUNK\n");
       #endif
@@ -39761,7 +39761,7 @@ DEFUN1(stgApplyNNNNPP, f) {
     argv[5] = pargv[1];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
     int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
@@ -40168,9 +40168,9 @@ DEFUN1(stgApplyPNNNPP, f) {
   nargv[2] = argv[3];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(3, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPNNNPP THUNK\n");
       #endif
@@ -40185,7 +40185,7 @@ DEFUN1(stgApplyPNNNPP, f) {
     argv[5] = pargv[2];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
     int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
@@ -40592,9 +40592,9 @@ DEFUN1(stgApplyNPNNPP, f) {
   nargv[2] = argv[3];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(3, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNPNNPP THUNK\n");
       #endif
@@ -40609,7 +40609,7 @@ DEFUN1(stgApplyNPNNPP, f) {
     argv[5] = pargv[2];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
     int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
@@ -41018,9 +41018,9 @@ DEFUN1(stgApplyPPNNPP, f) {
   nargv[1] = argv[3];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(4, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPPNNPP THUNK\n");
       #endif
@@ -41036,7 +41036,7 @@ DEFUN1(stgApplyPPNNPP, f) {
     argv[5] = pargv[3];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
     int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
@@ -41445,9 +41445,9 @@ DEFUN1(stgApplyNNPNPP, f) {
   nargv[2] = argv[3];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(3, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNNPNPP THUNK\n");
       #endif
@@ -41462,7 +41462,7 @@ DEFUN1(stgApplyNNPNPP, f) {
     argv[5] = pargv[2];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
     int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
@@ -41873,9 +41873,9 @@ DEFUN1(stgApplyPNPNPP, f) {
   nargv[1] = argv[3];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(4, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPNPNPP THUNK\n");
       #endif
@@ -41891,7 +41891,7 @@ DEFUN1(stgApplyPNPNPP, f) {
     argv[5] = pargv[3];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
     int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
@@ -42302,9 +42302,9 @@ DEFUN1(stgApplyNPPNPP, f) {
   nargv[1] = argv[3];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(4, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNPPNPP THUNK\n");
       #endif
@@ -42320,7 +42320,7 @@ DEFUN1(stgApplyNPPNPP, f) {
     argv[5] = pargv[3];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
     int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
@@ -42733,9 +42733,9 @@ DEFUN1(stgApplyPPPNPP, f) {
   nargv[0] = argv[3];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(5, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPPPNPP THUNK\n");
       #endif
@@ -42752,7 +42752,7 @@ DEFUN1(stgApplyPPPNPP, f) {
     argv[5] = pargv[4];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
     int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
@@ -43165,9 +43165,9 @@ DEFUN1(stgApplyNNNPPP, f) {
   nargv[2] = argv[2];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(3, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNNNPPP THUNK\n");
       #endif
@@ -43182,7 +43182,7 @@ DEFUN1(stgApplyNNNPPP, f) {
     argv[5] = pargv[2];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
     int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
@@ -43595,9 +43595,9 @@ DEFUN1(stgApplyPNNPPP, f) {
   nargv[1] = argv[2];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(4, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPNNPPP THUNK\n");
       #endif
@@ -43613,7 +43613,7 @@ DEFUN1(stgApplyPNNPPP, f) {
     argv[5] = pargv[3];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
     int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
@@ -44026,9 +44026,9 @@ DEFUN1(stgApplyNPNPPP, f) {
   nargv[1] = argv[2];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(4, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNPNPPP THUNK\n");
       #endif
@@ -44044,7 +44044,7 @@ DEFUN1(stgApplyNPNPPP, f) {
     argv[5] = pargv[3];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
     int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
@@ -44459,9 +44459,9 @@ DEFUN1(stgApplyPPNPPP, f) {
   nargv[0] = argv[2];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(5, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPPNPPP THUNK\n");
       #endif
@@ -44478,7 +44478,7 @@ DEFUN1(stgApplyPPNPPP, f) {
     argv[5] = pargv[4];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
     int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
@@ -44893,9 +44893,9 @@ DEFUN1(stgApplyNNPPPP, f) {
   nargv[1] = argv[1];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(4, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNNPPPP THUNK\n");
       #endif
@@ -44911,7 +44911,7 @@ DEFUN1(stgApplyNNPPPP, f) {
     argv[5] = pargv[3];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
     int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
@@ -45328,9 +45328,9 @@ DEFUN1(stgApplyPNPPPP, f) {
   nargv[0] = argv[1];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(5, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPNPPPP THUNK\n");
       #endif
@@ -45347,7 +45347,7 @@ DEFUN1(stgApplyPNPPPP, f) {
     argv[5] = pargv[4];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
     int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
@@ -45764,9 +45764,9 @@ DEFUN1(stgApplyNPPPPP, f) {
   nargv[0] = argv[0];
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(5, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyNPPPPP THUNK\n");
       #endif
@@ -45783,7 +45783,7 @@ DEFUN1(stgApplyNPPPPP, f) {
     argv[5] = pargv[4];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
     int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY
@@ -46202,9 +46202,9 @@ DEFUN1(stgApplyPPPPPP, f) {
   // no non-pointer args to save
 
   f.op = derefPoL(f);
-  if (f.op->objType == THUNK) {
+  if (getObjType(f.op) == THUNK) {
     callContSave(6, pargv);
-    while (f.op->objType == THUNK) {
+    while (getObjType(f.op) == THUNK) {
       #ifdef DEBUGSTGAPPLY
       fprintf(stderr, "stgApplyPPPPPP THUNK\n");
       #endif
@@ -46222,7 +46222,7 @@ DEFUN1(stgApplyPPPPPP, f) {
     argv[5] = pargv[5];
   } // if THUNK
 
-  switch (f.op->objType) {
+  switch (getObjType(f.op)) {
   case FUN: {
     int arity = getInfoPtr(f.op)->funFields.arity;
     #ifdef DEBUGSTGAPPLY

@@ -78,8 +78,10 @@ extern PtrOrLiteral stgCurVal;  // current/return value
 
 struct _Obj {
   uintptr_t infoPtr;         // canonical location of ObjType field
-  int _objSize;              // for debugging
+#if USE_OBJTYPE
   ObjType objType;          // to distinguish PAP, FUN, BLACKHOLE, INDIRECT
+#endif
+  int _objSize;              // for debugging
   char ident[32];           // temporary, just for tracing
   PtrOrLiteral payload[];
 };
@@ -189,6 +191,41 @@ typedef uintptr_t Bitmap64;
 #define BMMAP(bm) (bm & 0x03FFFFFFFFFFFFFFLL) 
 
 static inline InfoTab *getInfoPtr(Obj *p)  { return (InfoTab *)((p->infoPtr >> 3) << 3); }
+static inline uintptr_t setLSB2(uintptr_t ptr) { return ptr | 2; }
+static inline uintptr_t isLSB2set(uintptr_t ptr) { return ptr & 2; }
+
+
+static inline ObjType getObjType(Obj *p) {
+#if USE_OBJTYPE
+  return p->objType;
+#else
+  InfoTab *infoPtr = getInfoPtr(p);
+  switch(infoPtr->objType) {
+  case FUN:
+    return isLSB2set(infoPtr) ? PAP : FUN;
+  case THUNK:
+    return isLSB2set(infoPtr) ? BLACKHOLE : THUNK;
+  default:
+    return infoPtr->objType;
+#endif
+}
+
+/*
+static inline bool isObjType(Obj *p, ObjType type) {
+#if USE_OBJTYPE
+  return (p->objType == type);
+#else
+  InfoTab *infoPtr = getInfoPtr(p);
+  bool flag = isLSB2set(infoPtr);
+  bool otype = (inforPtr->objType == type);
+  if (type == BLACKHOLE || type == PAP) {
+    return otype && flag;
+  } else {
+    return otype && !flag;
+  }
+#endif
+}
+*/
 
 // allocate Obj on heap, returning pointer to new Obj
 extern Obj* stgNewHeapObj(InfoTab *itp);

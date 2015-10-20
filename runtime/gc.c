@@ -7,6 +7,7 @@
 #include "stg.h"
 #include "stgutils.h"
 #include "obj.h"
+#include "options.h"
 
 const bool DEBUG = false;
 const bool EXTRA = true;  // run extra checks
@@ -37,11 +38,12 @@ void updatePtr(PtrOrLiteral *f) {
   if (isFrom(p)) {
     if (isLSBset(p->infoPtr)) {
       if (DEBUG) fprintf(stderr, "update forward %s\n", p->ident);
+      //f->op = (Obj *) unsetLSB((uintptr_t)getInfoPtr(p));
       f->op = (Obj *) getInfoPtr(p);
     } else {
       int size = getObjSize(p);
       if (DEBUG) {
-        fprintf(stderr, "copy %s %s from->to size=%d\n", objTypeNames[p->objType], p->ident, size);
+        fprintf(stderr, "copy %s %s from->to size=%d\n", objTypeNames[getObjType(p)], p->ident, size);
       }
 
       memcpy(freePtr, p, size);
@@ -54,7 +56,7 @@ void updatePtr(PtrOrLiteral *f) {
   } else if (isTo(p)) {
     // do nothing
   } else { // SHO
-    if (isFrom(f->op) && f->op->objType == INDIRECT) {
+    if (isFrom(f->op) && getObjType(f->op) == INDIRECT) {
         if (DEBUG) fprintf(stderr, "fix INDIRECT to sho %s\n", f->op->ident);
         f->op = p;
     }
@@ -63,9 +65,9 @@ void updatePtr(PtrOrLiteral *f) {
 
 void processObj(Obj *p) {
   size_t i;
-  if (DEBUG) fprintf(stderr, "processObj %s %s\n", objTypeNames[p->objType], p->ident);
+  if (DEBUG) fprintf(stderr, "processObj %s %s\n", objTypeNames[getObjType(p)], p->ident);
 
-  switch (p->objType) {
+  switch (getObjType(p)) {
   case FUN: {
     int start = startFUNFVsB(p);
     int end = endFUNFVsB(p);
@@ -119,16 +121,16 @@ void processObj(Obj *p) {
     updatePtr(&p->payload[0]);
     break;
   default:
-    fprintf(stderr, "gc: bad obj. type %d %s", p->objType,
-        objTypeNames[p->objType]);
+    fprintf(stderr, "gc: bad obj. type %d %s", getObjType(p),
+        objTypeNames[getObjType(p)]);
     assert(false);
   }
 }
 
 void processCont(Obj *p) {
   size_t i;
-  if (DEBUG) fprintf(stderr, "processCont %s %s\n", objTypeNames[p->objType], p->ident);
-  switch (p->objType) {
+  if (DEBUG) fprintf(stderr, "processCont %s %s\n", objTypeNames[getObjType(p)], p->ident);
+  switch (getObjType(p)) {
   case UPDCONT:
     updatePtr(&p->payload[0]);
     break;
@@ -161,8 +163,8 @@ void processCont(Obj *p) {
     updatePtr(&p->payload[0]);
     break;
   default:
-    fprintf(stderr, "gc: bad cont. type %d %s\n", p->objType,
-        objTypeNames[p->objType]);
+    fprintf(stderr, "gc: bad cont. type %d %s\n", getObjType(p),
+        objTypeNames[getObjType(p)]);
     assert(false);
   }
 }
