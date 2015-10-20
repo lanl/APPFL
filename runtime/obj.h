@@ -69,7 +69,7 @@ static inline bool isUnboxed(PtrOrLiteral f) {
 // use LSB to say it is a FORWARD
 static inline uintptr_t setLSB(uintptr_t ptr) { return ptr | 1; }
 static inline uintptr_t unsetLSB(uintptr_t ptr) { return ptr & ~1; }
-static inline uintptr_t isLSBset(uintptr_t ptr) { return ptr & 1; }
+static inline bool isLSBset(uintptr_t ptr) { return (bool)(ptr & 1); }
 
 
 // end of wrappers

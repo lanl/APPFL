@@ -60,12 +60,16 @@ DEFUN0(stgUpdateCont) {
   fprintf(stderr, "with\n  ");
   showStgObj(stgCurVal.op);
   if (getObjType(p.op) != BLACKHOLE) {
-    fprintf(stderr, "but updatee is not a BLACKHOLE!\n");
+    fprintf(stderr, "but updatee is %s not a BLACKHOLE!\n", objTypeNames[getObjType(p.op)]);
     showStgHeap();
     assert(getObjType(p.op) == BLACKHOLE);
   }
   p.op->payload[0] = stgCurVal;
+#if USE_OBJTYPE
   p.op->objType = INDIRECT;
+#else
+  p.op->infoPtr = setLSB3(p.op->infoPtr);
+#endif
   STGRETURN0();
   ENDFUN
 }
