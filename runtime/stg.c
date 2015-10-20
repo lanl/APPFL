@@ -47,7 +47,7 @@ Obj *stgAllocCont(InfoTab *itp) {
   stgSP = (char *)stgSP - objSize;
   assert(stgSP >= stgStack);
   Obj *objp = (Obj *)stgSP;
-  objp->infoPtr = itp;
+  objp->infoPtr = (uintptr_t)itp;
   objp->_objSize = objSize;
   objp->objType = itp->objType;
   strcpy(objp->ident, itp->name);  // may be overwritten
@@ -66,7 +66,7 @@ Obj *stgAllocCallCont2(InfoTab *itp, int argc) {
   stgSP = (char *)stgSP - objSize;
   assert(stgSP >= stgStack);
   Obj *objp = (Obj *)stgSP;
-  objp->infoPtr = itp;
+  objp->infoPtr = (uintptr_t)itp;
   objp->_objSize = objSize;
   objp->objType = itp->objType;
 #if USE_ARGTYPE
@@ -84,21 +84,21 @@ Obj *stgAllocCallCont2(InfoTab *itp, int argc) {
 // CALLCONT is special
 Obj *stgPopCont() {
   Obj *retVal = (Obj *)stgSP;
-  InfoTab *itp = retVal->infoPtr;
+  InfoTab *itp = getInfoPtr(retVal);
   assert( itp->objType == retVal->objType);
-  assert( retVal->infoPtr->objType >= UPDCONT &&
-          retVal->infoPtr->objType <= FUNCONT);
+  assert( getInfoPtr(retVal)->objType >= UPDCONT &&
+          getInfoPtr(retVal)->objType <= FUNCONT);
   int payloadSize;
-  if (retVal->infoPtr->objType == CALLCONT) {
+  if (getInfoPtr(retVal)->objType == CALLCONT) {
     payloadSize = retVal->payload[0].i + 1;
     fprintf(stderr, "popping call continuation with argc %d\n", payloadSize-1);
   } else {
-    payloadSize = retVal->infoPtr->layoutInfo.payloadSize;
+    payloadSize = getInfoPtr(retVal)->layoutInfo.payloadSize;
     fprintf(stderr, "popping continuation with payloadSize %d\n", payloadSize);
   }
   size_t objSize = sizeof(Obj) + payloadSize * sizeof(PtrOrLiteral);
   objSize = ((objSize + 7)/8)*8; 
-  showIT(retVal->infoPtr);
+  showIT(getInfoPtr(retVal));
   assert((char *)retVal + objSize <= (char *)stgStack + stgStackSize);
   stgSP = (char *)retVal + objSize;
   return retVal;
@@ -120,7 +120,7 @@ Obj* stgNewHeapObj(InfoTab *itp) {
   Obj *objp = (Obj *)stgHP;
   stgHP = (char *)stgHP + objSize;
   memset(objp, 0, objSize); //zero out anything left by previous gc passes
-  objp->infoPtr = itp;
+  objp->infoPtr = (uintptr_t)itp;
   objp->_objSize = objSize;
   objp->objType = itp->objType;
   strcpy(objp->ident, itp->name);  // may be overwritten
@@ -143,7 +143,7 @@ Obj* stgNewHeapPAP(InfoTab *itp, int pargc, int npargc) {
   Obj *objp = (Obj *)stgHP;
   stgHP = (char *)stgHP + objSize;
   memset(objp, 0, objSize); //zero out anything left by previous gc passes
-  objp->infoPtr = itp;
+  objp->infoPtr = (uintptr_t)itp | 2; // set InfoPtr bit to say this is a PAP
   objp->_objSize = objSize;
   objp->objType = PAP;
 #if USE_ARGTYPE
@@ -163,11 +163,11 @@ int getObjSize(Obj *o) {
   if (o->objType == CALLCONT) {
     objSize = sizeof(Obj) + (o->payload[0].i + 1) * sizeof(PtrOrLiteral);
   } else if (o->objType == PAP) {
-    InfoTab *itp = o->infoPtr;
+    InfoTab *itp = getInfoPtr(o);
     int fvs = itp->layoutInfo.boxedCount + itp->layoutInfo.unboxedCount;
     objSize = sizeof(Obj) + (fvs + 1 + PNSIZE(o->payload[fvs].i)) * sizeof(PtrOrLiteral);
   } else {
-    objSize = sizeof(Obj) + o->infoPtr->layoutInfo.payloadSize * sizeof(PtrOrLiteral);
+    objSize = sizeof(Obj) + getInfoPtr(o)->layoutInfo.payloadSize * sizeof(PtrOrLiteral);
   }
   objSize = ((objSize + 7)/8)*8;
   assert(objSize == o->_objSize && "bad objSize");
@@ -253,7 +253,7 @@ void showStgObjRecPretty(Obj *p) {
     return;
   }
 
-  InfoTab it = *(p->infoPtr);
+  InfoTab it = *(getInfoPtr(p));
 
   for (int i=0; i != depth; i++) {
     if (p == stack[i]) {
@@ -356,7 +356,7 @@ void showStgObjRecDebug(Obj *p) {
 
 
 
-  InfoTab it = *(p->infoPtr);
+  InfoTab it = *(getInfoPtr(p));
   fprintf(stderr, "%s %s %s ", objTypeNames[p->objType],
 	  objTypeNames[it.objType], it.name);
   switch (p->objType) {
@@ -427,8 +427,8 @@ void checkStgObjRec(Obj *p) {
 
   assert(isHeap(p) || isSHO(p) && "hc: bad Obj location");
 
-  InfoTab it = *(p->infoPtr);
-  assert((uintptr_t)(p->infoPtr) % 8 == 0 && "hc: bad infoPtr alignment");
+  InfoTab it = *(getInfoPtr(p));
+  //assert((uintptr_t)(p->infoPtr) % 8 == 0 && "hc: bad infoPtr alignment");
 
   for (i = 0; i != depth; i++) {
     if (p == stack[i]) {

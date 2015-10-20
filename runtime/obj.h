@@ -29,7 +29,7 @@ static inline void checkCONargs(Obj *p) {
       !((uintptr_t) p->infoPtr & (uintptr_t) 1)
           && "...odd infoPtr checkCONargs");
   assert(
-      p->infoPtr->conFields.arity >= 0 && getInfoPtr(p)->conFields.arity <= 10
+      getInfoPtr(p)->conFields.arity >= 0 && getInfoPtr(p)->conFields.arity <= 10
           && "gc:  unlikely number of constructor arguments");
   assert(
       getInfoPtr(p)->conFields.arity == endCONargsU(p) && "gc: CON args mismatch");
@@ -67,9 +67,9 @@ static inline bool isUnboxed(PtrOrLiteral f) {
 }
 
 // use LSB to say it is a FORWARD
-static inline uintptr_t setLSB(void *ptr) { return (uintptr_t) ptr | 1; }
-static inline uintptr_t unsetLSB(void *ptr) { return (uintptr_t) ptr & ~1; }
-static inline uintptr_t isLSBset(void *ptr) { return (uintptr_t) ptr & 1; }
+static inline uintptr_t setLSB(uintptr_t ptr) { return ptr | 1; }
+static inline uintptr_t unsetLSB(uintptr_t ptr) { return ptr & ~1; }
+static inline uintptr_t isLSBset(uintptr_t ptr) { return ptr & 1; }
 
 
 // end of wrappers

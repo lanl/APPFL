@@ -45,9 +45,9 @@ void updatePtr(PtrOrLiteral *f) {
       }
 
       memcpy(freePtr, p, size);
-      if (EXTRA) assert(isLSBset(freePtr) == 0 && "gc: bad alignment");
+      if (EXTRA) assert(isLSBset((uintptr_t)freePtr) == 0 && "gc: bad alignment");
 
-      p->infoPtr = (InfoTab *) setLSB(freePtr);
+      p->infoPtr = setLSB((uintptr_t)freePtr);
       f->op = (Obj *) freePtr;
       freePtr = (char *) freePtr + size;
     }

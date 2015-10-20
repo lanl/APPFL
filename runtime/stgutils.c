@@ -86,6 +86,7 @@ void stgThunk(PtrOrLiteral self) {
   contp->payload[0] = self;
   strcpy(contp->ident, self.op->ident); //override default
   self.op->objType = BLACKHOLE;	
+  self.op->infoPtr |= 2; // update bit to say this is a Blackhole
 }
 
 Obj *derefPoL(PtrOrLiteral f) {

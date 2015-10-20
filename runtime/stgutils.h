@@ -81,7 +81,7 @@ do {						\
     Obj* cont = stgAllocCallCont2(&it_stgCallCont, 0);	\
     while (stgCurVal.op->objType == THUNK) {	\
       strcpy(cont->ident, stgCurVal.op->ident);	\
-      STGCALL1(stgCurVal.op->infoPtr->entryCode, stgCurVal); \
+      STGCALL1(getInfoPtr(stgCurVal.op)->entryCode, stgCurVal); \
       derefStgCurVal();				\
     }  						\
     stgPopCont();			        \
@@ -106,7 +106,7 @@ do {            \
     Obj* cont = stgAllocCallCont2(&it_stgCallCont, 0);  \
     while (stgCurVal.op->objType == THUNK) {  \
       strcpy(cont->ident, stgCurVal.op->ident); \
-      STGCALL1(stgCurVal.op->infoPtr->entryCode, stgCurVal); \
+      STGCALL1(getInfoPtr(stgCurVal.op)->entryCode, stgCurVal); \
       derefStgCurVal();       \
     }             \
     stgPopCont();             \

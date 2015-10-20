@@ -77,7 +77,7 @@ extern PtrOrLiteral stgCurVal;  // current/return value
 
 
 struct _Obj {
-  InfoTab *infoPtr;         // canonical location of ObjType field
+  uintptr_t infoPtr;         // canonical location of ObjType field
   int _objSize;              // for debugging
   ObjType objType;          // to distinguish PAP, FUN, BLACKHOLE, INDIRECT
   char ident[32];           // temporary, just for tracing
@@ -188,7 +188,7 @@ typedef uintptr_t Bitmap64;
 #define BMSIZE(bm) ((bm>>58)&0x3F)
 #define BMMAP(bm) (bm & 0x03FFFFFFFFFFFFFFLL) 
 
-static inline InfoTab *getInfoPtr(Obj *p)  { return (InfoTab *)(((uintptr_t)p->infoPtr >> 3) << 3); }
+static inline InfoTab *getInfoPtr(Obj *p)  { return (InfoTab *)((p->infoPtr >> 3) << 3); }
 
 // allocate Obj on heap, returning pointer to new Obj
 extern Obj* stgNewHeapObj(InfoTab *itp);
@@ -245,14 +245,8 @@ Obj *stgPopCont();
 // return through continuation stack
 
 #define STGRETURN0()				\
-  STGJUMP0(((Obj *)stgSP)->infoPtr->entryCode)
+  STGJUMP0(getInfoPtr((Obj *)stgSP)->entryCode)
 
-/*
-define STGRETURN1(o)				\
-  do {						\
-  JUMP1(((Cont *)stgSP)->infoPtr->entryCode, o) \
-  } while (0)
-*/
 
 // no explicit return value stack
 #define STGRETURN1(r)				\
@@ -263,51 +257,51 @@ define STGRETURN1(o)				\
 
 #define STGAPPLY1(f,v1)				\
   do {						\
-    assert(f.op->infoPtr->objType == FUN);	\
-    assert(f.op->infoPtr->funFields.arity == 1);\
+    assert(getInfoPtr(f.op)->objType == FUN);	\
+    assert(getInfoPtr(f.op)->funFields.arity == 1);\
     STGJUMP2(f.op->infoPtr->entryCode, f, v1);	\
   } while(0)
 
 #define STGAPPLY2(f,v1,v2)				\
   do {							\
-    assert(f.op->infoPtr->objType == FUN);		\
-    assert(f.op->infoPtr->funFields.arity == 2);	\
-    STGJUMP3(f.op->infoPtr->entryCode, f, v1, v2);	\
+    assert(getInfoPtr(f.op)->objType == FUN);		\
+    assert(getInfoPtr(f.op)->funFields.arity == 2);	\
+    STGJUMP3(getInfoPtr(f.op)->entryCode, f, v1, v2);	\
   } while(0)
 
 #define STGAPPLY3(f,v1,v2,v3)				\
   do {							\
-    assert(f.op->infoPtr->objType == FUN);		\
-    assert(f.op->infoPtr->funFields.arity == 3);	\
-    STGJUMP4(f.op->infoPtr->entryCode, f, v1, v2, v3);	\
+    assert(getInfoPtr(f.op)->objType == FUN);		\
+    assert(getInfoPtr(f.op)->funFields.arity == 3);	\
+    STGJUMP4(getInfoPtr(f.op)->entryCode, f, v1, v2, v3);	\
   } while(0)
 
 #define STGAPPLY4(f,v1,v2,v3,v4)				\
   do {								\
-    assert(f.op->infoPtr->objType == FUN);			\
-    assert(f.op->infoPtr->funFields.arity == 4);		\
-    STGJUMP5(f.op->infoPtr->entryCode, f, v1, v2, v3, v4);	\
+    assert(getInfoPtr(f.op)->objType == FUN);			\
+    assert(getInfoPtr(f.op)->funFields.arity == 4);		\
+    STGJUMP5(getInfoPtr(f.op)->entryCode, f, v1, v2, v3, v4);	\
   } while(0)
 
 #define STGAPPLY5(f,v1,v2,v3,v4,v5)				\
   do {								\
-    assert(f.op->infoPtr->objType == FUN);			\
-    assert(f.op->infoPtr->funFields.arity == 5);		\
-    STGJUMP6(f.op->infoPtr->entryCode, f, v1, v2, v3, v4, v5);	\
+    assert(getInfoPtr(f.op)->objType == FUN);			\
+    assert(getInfoPtr(f.op)->funFields.arity == 5);		\
+    STGJUMP6(getInfoPtr(f.op)->entryCode, f, v1, v2, v3, v4, v5);	\
   } while(0)
 
 #define STGAPPLY6(f,v1,v2,v3,v4,v5,v6)					\
   do {									\
-    assert(f.op->infoPtr->objType == FUN);				\
-    assert(f.op->infoPtr->funFields.arity == 6);			\
-    STGJUMP7(f.op->infoPtr->entryCode, f, v1, v2, v3, v4, v5, v6);	\
+    assert(getInfoPtr(f.op)->objType == FUN);				\
+    assert(getInfoPtr(f.op)->funFields.arity == 6);			\
+    STGJUMP7(getInfoPtr(f.op)->entryCode, f, v1, v2, v3, v4, v5, v6);	\
   } while(0)
 
 #define STGAPPLY7(f,v1,v2,v3,v4,v5,v6,v7)				\
   do {									\
-    assert(f.op->infoPtr->objType == FUN);				\
-    assert(f.op->infoPtr->funFields.arity == 7);			\
-    STGJUMP8(f.op->infoPtr->entryCode, f, v1, v2, v3, v4, v5, v6, v7);	\
+    assert(getInfoPtr(f.op)->objType == FUN);				\
+    assert(getInfoPtr(f.op)->funFields.arity == 7);			\
+    STGJUMP8(getInfoPtr(f.op)->entryCode, f, v1, v2, v3, v4, v5, v6, v7);	\
   } while(0)
 
 #endif  //ifdef stg_h
