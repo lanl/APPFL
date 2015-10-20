@@ -9,7 +9,7 @@ data Strictness = Nonstrict
                 | Strict1   -- evaluate args first, then fun
                   deriving(Eq)
     
-strictness = Nonstrict
+strictness = Strict1
 
 dumpStgApply n = 
     let (forward, macros, fun) = genAllstgApply n
@@ -136,7 +136,7 @@ gen s =
     fun = 
      "DEFUN1(" ++ fname ++ ", f) {\n" ++
         indent 2 (debugp [ fname ++ " %s\\n", 
-                           "maskInfoPtr(f.op->infoPtr)->name"]) ++
+                           "getInfoPtr(f.op)->name"]) ++
      "  const int argc = " ++ show argc ++ ";\n" ++
      "  PtrOrLiteral argv[" ++ show argc ++ "];\n" ++
      "  popargs(argc, argv);\n" ++
@@ -169,9 +169,9 @@ gen s =
      "\n" ++
      "  switch (f.op->objType) {\n" ++
      "  case FUN: {\n" ++
-     "    int arity = maskInfoPtr(f.op->infoPtr)->funFields.arity;\n" ++
-          indent 4 (debugp ["FUN %s arity %d\\n", "maskInfoPtr(f.op->infoPtr)->name", 
-                            "maskInfoPtr(f.op->infoPtr)->funFields.arity"]) ++
+     "    int arity = getInfoPtr(f.op)->funFields.arity;\n" ++
+          indent 4 (debugp ["FUN %s arity %d\\n", "getInfoPtr(f.op)->name", 
+                            "getInfoPtr(f.op)->funFields.arity"]) ++
      "    int excess = argc - arity;  // may be negative\n" ++
      "\n" ++
      (if argc == 1 then "    // too many args not possible\n"
@@ -195,12 +195,12 @@ gen s =
      "  } // case FUN\n" ++
      "\n" ++
      "  case PAP: {\n" ++
-     "    int fvCount = maskInfoPtr(f.op->infoPtr)->layoutInfo.boxedCount + \n" ++
-     "                  maskInfoPtr(f.op->infoPtr)->layoutInfo.unboxedCount;\n" ++
+     "    int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + \n" ++
+     "                  getInfoPtr(f.op)->layoutInfo.unboxedCount;\n" ++
      "    int pappargc, papnargc;\n" ++
      "    PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);\n" ++
      "    int argCount = pappargc + papnargc;\n" ++
-     "    int arity = maskInfoPtr(f.op->infoPtr)->funFields.arity - argCount;\n" ++
+     "    int arity = getInfoPtr(f.op)->funFields.arity - argCount;\n" ++
      "    int excess = argc - arity;\n" ++
      "\n" ++
      (if argc == 1 then "    // too many args not possible\n"
@@ -261,7 +261,7 @@ funpos excess s pinds argc =
           "pushargs(" ++ show usedPParamCount ++ ", pargv);\n" 
       else "// 0 pointers to push\n") ++
      "// call-with-return the FUN\n" ++
-     "STGCALL1(maskInfoPtr(f.op->infoPtr)->entryCode, f);\n" ++
+     "STGCALL1(getInfoPtr(f.op)->entryCode, f);\n" ++
      "// restore excess args\n" ++
      (if excessPParamCount > 0 then
         "callContRestore(&pargv[" ++ show usedPParamCount ++ "]);\n" ++
@@ -288,13 +288,13 @@ funeq s argc =
           "pushargs(" ++ show usedPParamCount ++ ", pargv);\n"
       else "// 0 pointers to push\n") ++
      "// tail call the fun\n" ++
-     "STGJUMP1(maskInfoPtr(f.op->infoPtr)->entryCode, f);\n"
+     "STGJUMP1(getInfoPtr(f.op)->entryCode, f);\n"
 
 funneg s pinds argc nps nns = 
-     "int fvCount = maskInfoPtr(f.op->infoPtr)->layoutInfo.boxedCount + \n" ++
-     "              maskInfoPtr(f.op->infoPtr)->layoutInfo.unboxedCount;\n" ++
+     "int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + \n" ++
+     "              getInfoPtr(f.op)->layoutInfo.unboxedCount;\n" ++
      "// stgNewHeapPAP puts layout info at payload[fvCount]\n" ++
-     "Obj *pap = stgNewHeapPAP(maskInfoPtr(f.op->infoPtr), " ++ 
+     "Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), " ++ 
                                show nps ++ ", " ++ show nns ++ ");\n" ++
      "// copy fvs\n" ++
      debugp ["stgApply FUN inserting %d FVs into new PAP\\n", "fvCount"] ++
@@ -344,7 +344,7 @@ pappos excess s pinds argc =
       else "// 0 pointers to push\n") ++
      "pushargs(pappargc, &f.op->payload[fvCount+1]);\n" ++
      "// call-with-return the FUN\n" ++
-     "STGCALL1(maskInfoPtr(f.op->infoPtr)->entryCode, f);\n" ++
+     "STGCALL1(getInfoPtr(f.op)->entryCode, f);\n" ++
      "// restore excess args\n" ++
      (if excessPParamCount > 0 then
         "callContRestore(&pargv[" ++ show usedPParamCount ++ "]);\n" ++
@@ -376,7 +376,7 @@ papeq s argc =
       else "// 0 non-pointer args\n") ++
      "pushargs(pappargc, &f.op->payload[fvCount+1]);\n" ++
      "// tail call the FUN\n" ++
-     "STGJUMP1(maskInfoPtr(f.op->infoPtr)->entryCode, f);\n"
+     "STGJUMP1(getInfoPtr(f.op)->entryCode, f);\n"
 
 -- pappargc - in C, #pointer args in pap
 -- papnargc - in C, #non-pointer args in pap
@@ -384,7 +384,7 @@ papneg s pinds argc nps nns =
   let usedPParamCount = length $ filter (=='P') s
       usedNParamCount = argc - usedPParamCount
   in "// stgNewHeapPAP puts layout info at payload[fvCount]\n" ++
-     "Obj *pap = stgNewHeapPAP(maskInfoPtr(f.op->infoPtr), " ++ 
+     "Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), " ++ 
                                show nps ++ " + pappargc, " ++ 
                                show nns ++ " + papnargc);\n" ++
      "// copy fvs\n" ++

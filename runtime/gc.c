@@ -37,7 +37,7 @@ void updatePtr(PtrOrLiteral *f) {
   if (isFrom(p)) {
     if (isLSBset(p->infoPtr)) {
       if (DEBUG) fprintf(stderr, "update forward %s\n", p->ident);
-      f->op = (Obj *) maskInfoPtr(p->infoPtr);
+      f->op = (Obj *) getInfoPtr(p);
     } else {
       int size = getObjSize(p);
       if (DEBUG) {
