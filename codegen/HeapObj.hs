@@ -77,8 +77,10 @@ getIT it = it
 
 showHO it =
     "{\n" ++
-    "  .infoPtr   = &it_" ++ name (getIT it) ++ ",\n" ++
+    "  .infoPtr   = (uintptr_t)&it_" ++ name (getIT it) ++ ",\n" ++
+#if USE_OBJTYPE    
     "  .objType   = " ++ showObjType it      ++ ",\n" ++
+#endif
     "  .ident     = " ++ show (name it)      ++ ",\n" ++
        showSHOspec it ++
     "};\n"

@@ -78,7 +78,7 @@ do {						\
   derefStgCurVal();				\
   if (getObjType(stgCurVal.op) == THUNK) {	        \
     Obj* cont = stgAllocCallCont2(&it_stgCallCont, 0);	\
-    while (stgCurVal.op->objType == THUNK) {	\
+    while (getObjType(stgCurVal.op) == THUNK) {	\
       strcpy(cont->ident, stgCurVal.op->ident);	\
       STGCALL1(getInfoPtr(stgCurVal.op)->entryCode, stgCurVal); \
       derefStgCurVal();				\

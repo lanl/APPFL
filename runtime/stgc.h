@@ -45,8 +45,10 @@ InfoTab it_stg_case_not_exhaustive __attribute__((aligned(8))) = {
 };
 
 Obj sho_stg_case_not_exhaustive = {
+#ifdef USE_OBJTYPE
   .objType = FUN,
-  .infoPtr = &it_stg_case_not_exhaustive,
+#endif
+  .infoPtr = (uintptr_t)&it_stg_case_not_exhaustive,
   .ident = "stg_case_not_exhaustive",
 };
 

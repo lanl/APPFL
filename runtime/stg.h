@@ -192,7 +192,10 @@ typedef uintptr_t Bitmap64;
 
 static inline InfoTab *getInfoPtr(Obj *p)  { return (InfoTab *)((p->infoPtr >> 3) << 3); }
 static inline uintptr_t setLSB2(uintptr_t ptr) { return ptr | 2; }
-static inline uintptr_t isLSB2set(uintptr_t ptr) { return ptr & 2; }
+static inline bool isLSB2set(uintptr_t ptr) { return (bool)(ptr & 2); }
+// for indirect
+static inline uintptr_t setLSB3(uintptr_t ptr) { return ptr | 4;}
+static inline bool isLSB3set(uintptr_t ptr) { return (bool)(ptr & 4); }
 
 
 static inline ObjType getObjType(Obj *p) {
@@ -200,13 +203,15 @@ static inline ObjType getObjType(Obj *p) {
   return p->objType;
 #else
   InfoTab *infoPtr = getInfoPtr(p);
+  if (isLSB3set((uintptr_t)p->infoPtr)) return INDIRECT;
   switch(infoPtr->objType) {
   case FUN:
-    return isLSB2set(infoPtr) ? PAP : FUN;
+    return (isLSB2set((uintptr_t)p->infoPtr) ? PAP : FUN);
   case THUNK:
-    return isLSB2set(infoPtr) ? BLACKHOLE : THUNK;
+    return (isLSB2set((uintptr_t)p->infoPtr) ? BLACKHOLE : THUNK);
   default:
     return infoPtr->objType;
+  }
 #endif
 }
 
