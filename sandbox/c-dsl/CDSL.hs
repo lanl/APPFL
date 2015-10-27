@@ -29,3 +29,6 @@ c = CConst (CIntConst (cInteger 8) undefNode)
 f =  CConst (CStrConst (cString "false") undefNode)
 
 it =  (CDecl [CTypeSpec (CTypeDef (Ident "InfoTab" 236087325 undefNode) undefNode)] [(Just (CDeclr (Just (Ident "it_false" 429191370 undefNode)) [] Nothing [CAttr (Ident "aligned" 219392335 undefNode) [CConst (CIntConst (cInteger 8) undefNode)] undefNode] undefNode),Just (CInitList [([CMemberDesig (Ident "name" 213610734 undefNode) undefNode],CInitExpr (CConst (CStrConst (cString "false") undefNode)) undefNode)] undefNode),Nothing)] undefNode)
+
+-- cleaner
+it2 =  (CDecl [CTypeSpec (CTypeDef "InfoTab" undefNode)] [(Just (CDeclr (Just "it_false") [] Nothing [CAttr "aligned" [CConst (CIntConst (cInteger 8) undefNode)] undefNode] undefNode),Just (CInitList [([CMemberDesig "name" undefNode],CInitExpr (CConst (CStrConst (cString "false") undefNode)) undefNode)] undefNode),Nothing)] undefNode)
