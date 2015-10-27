@@ -1,4 +1,5 @@
 --NORMAL ORDER and APPLICATIVE ORDER using Thread
+{-# LANGUAGE FlexibleInstances #-}
 
 import Data.List
 import Data.Char
@@ -90,7 +91,15 @@ lexer (x:xs) | x == '\n' = lexer(snd(head(whitespace (x:xs))))
 
 --BEGIN PARSERRRRRRRRRRRRRRRRRRRRRRRRRRRRR
 
-data Expr = Var String | Abs Expr Expr |  Expr | Comb Expr Expr  deriving (Show, Eq, Read)
+data Expr = Var String 
+          | Abs Expr Expr 
+--          | Expr 
+          | Comb Expr Expr  deriving (Eq, Read)
+
+instance Show Expr where
+    show (Var v) = v
+    show (Abs e1 e2) = "(\\" ++ show e1 ++ "." ++ show e2 ++ ")"
+    show (Comb e1 e2) = show e1 ++ " " ++ show e2
 
 parse :: String -> Expr
 parse = fst.head.lexpr.lexer
@@ -260,6 +269,8 @@ twoSplit (x:y:xs) = y:(twoSplit(xs))
 
 
 --BEGINNNNNN Normal Order Evaluator
+nor e = putStrLn $ intercalate "\n" $ map show $ startEvalNormOrder e
+
 startEvalNormOrder :: Expr -> [Expr]
 startEvalNormOrder expression = expression:(evaluateNormalOrder (fvs,expression))
 
