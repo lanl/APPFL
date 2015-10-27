@@ -132,7 +132,9 @@ type Var = [Char]
 
 --Main Stuff
 prog = many defn `using` Scr
-defn = (some (kind Ident) `thens` (lit "=") `xthen` offside body) `using` defnFN
+
+defn = (some (kind Ident) `thens` ((lit "=") `xthen` offside body)) `using` defnFN
+
 body = (expr `thens` ((lit "where" `xthen` some defn) `opt` [])) `using` bodyFN
 
 expr :: Parser (Pos Token) Expn

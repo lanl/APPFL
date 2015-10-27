@@ -90,11 +90,13 @@ lexer (x:xs) | x == '\n' = lexer(snd(head(whitespace (x:xs))))
 
 --BEGIN PARSERRRRRRRRRRRRRRRRRRRRRRRRRRRRR
 
+--mkd why have the nullary constructor Expr?
 data Expr = Var String | Abs Expr Expr |  Expr | Comb Expr Expr  deriving (Show, Eq, Read)
 
 parse :: String -> Expr
 parse = fst.head.lexpr.lexer
 
+--mkd combing == Comb
 combing :: Expr -> Expr -> Expr
 combing x y = Comb x y
 
@@ -121,6 +123,7 @@ alphaNums [] = []
 alphaNums (x:xs) | (isAlpha (head x) && wordt x)= succeed x xs
                  | otherwise = failed xs
 
+--mkd you have 'many' and 'some'
 wordt :: String -> Bool
 wordt [] = True
 wordt (x:xs) = if ((isAlpha x) || (isDigit x)) then wordt xs else False
