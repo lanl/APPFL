@@ -30,9 +30,11 @@ data NodeInfo = OnlyPos  Position {-# UNPACK #-} !PosLength        -- only pos a
 
 instance Show NodeInfo where
     showsPrec d (OnlyPos p l) =
-      (showString "(OnlyPos ") . (showsPrec d p) . (showString " ") . (showsPrec d l) . (showString ")")
+--      (showString "(OnlyPos ") . (showsPrec d p) . (showString " ") . (showsPrec d l) . (showString ")")
+        (showString "undefNode")
     showsPrec d (NodeInfo p l n) =
-      (showString "(NodeInfo ") . (showsPrec d p) . (showString " ") . (showsPrec d l) . (showString " ") . (showsPrec d n) . (showString ")")
+--      (showString "(NodeInfo ") . (showsPrec d p) . (showString " ") . (showsPrec d l) . (showString " ") . (showsPrec d n) . (showString ")")
+        (showString "undefNode")
 
 -- name equality of attributes, used to define (name) equality of objects
 instance Eq NodeInfo where
