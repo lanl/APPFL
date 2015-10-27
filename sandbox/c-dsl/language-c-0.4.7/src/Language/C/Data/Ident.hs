@@ -45,7 +45,10 @@ isAnonymousRef _ = False
 data Ident = Ident String       -- lexeme
                    {-# UNPACK #-}   !Int     -- hash to speed up equality check
                    NodeInfo                   -- attributes of this ident. incl. position
-             deriving (Data,Typeable,Show) -- Read
+--             deriving (Data,Typeable,Show) -- Read
+             deriving (Data,Typeable) -- Read
+instance Show Ident where
+  showsPrec _ (Ident s _ _) = showString "\"" . showString s . showString "\""
 
 -- the definition of the equality allows identifiers to be equal that are
 -- defined at different source text positions, and aims at speeding up the

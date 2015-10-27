@@ -3,7 +3,7 @@
 InfoTab it_false  __attribute__((aligned(8))) =
   { .name                = "false",
     // fvs []
-/*    .entryCode           = &stg_constructorcall,
+    .entryCode           = &stg_constructorcall,
     .objType             = CON,
     .layoutInfo.payloadSize  = 0,
     // argPerm = []
@@ -12,6 +12,6 @@ InfoTab it_false  __attribute__((aligned(8))) =
     .layoutInfo.permString   = "",
     .conFields.arity     = 0,
     .conFields.tag       = 0,
-    .conFields.conName   = "False", */
+    .conFields.conName   = "False", 
   };
 
