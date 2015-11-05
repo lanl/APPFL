@@ -10,6 +10,9 @@ codegen: setup codegen_
 
 runtime: setup runtime_
 
+config: FORCE
+	@(cd codegen && cabal configure)
+
 setup: FORCE
 	@((test -d $(build_dir)) || (mkdir $(build_dir)))
 	@((test -d $(build_dir)/bin) || (mkdir $(build_dir)/bin))

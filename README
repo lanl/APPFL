@@ -4,6 +4,11 @@ to build full compiler:
 
 $ make
 
+If you happen to get a cabal error saying to run configure
+(should only happen if you upgrade ghc/cabal) then:
+
+$ make config && make
+
 to run normal tests:
 
 $ make ctest

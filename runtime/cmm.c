@@ -8,7 +8,9 @@
 #include <errno.h>
 #include <string.h>  // for memcpy()
 #include <stdlib.h>  // for exit()
+#ifndef __APPLE__
 #include <malloc.h>  // for memalign()
+#endif
 
 #include "cmm.h"
 

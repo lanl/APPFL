@@ -9,6 +9,8 @@ cabal test
 to clean and rerun:
 cabal clean
 
+what follows is for ghc 7.8 w/ 7.10 the tasty install should work...
+
 If the install fails do not use -force-reinstalls instead:
 
 first try:

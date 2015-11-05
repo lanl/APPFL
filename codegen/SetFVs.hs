@@ -102,7 +102,7 @@ instance STGToList (Alt (Set.Set Var, Set.Set Var)) (Alt ([Var],[Var])) where
 
 showFVs vs = "[" ++ List.intercalate " " vs ++ "] "
 
-instance Show ([Var],[Var]) where
+instance {-# OVERLAPPING #-} Show ([Var],[Var]) where
     show (a,b) = "(" ++ showFVs a ++ "," ++ showFVs b ++ ")"
 
 toplevel :: (Set.Set Var) -> [Obj a] -> [Obj (Set.Set Var, Set.Set Var)]

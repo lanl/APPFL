@@ -10,7 +10,9 @@
 #include <errno.h>
 #include <string.h>  // for memcpy()
 #include <stdlib.h>  // for exit()
+#ifndef __APPLE__
 #include <malloc.h>  // for memalign()
+#endif
 
 #include "stg.h"
 #include "cmm.h"
@@ -330,7 +332,11 @@ void showStgValPretty(PtrOrLiteral v) {
 #if USE_ARGTYPE
   switch (v.argType) {
   case INT:
+#ifdef __clang__
+    fprintf(stderr,"%lld", v.i);
+#else
     fprintf(stderr,"%ld", v.i);
+#endif
     break;
   case DOUBLE:
     fprintf(stderr,"%f", v.d);
@@ -409,7 +415,11 @@ void showStgValDebug(PtrOrLiteral v) {
 #if USE_ARGTYPE
   switch (v.argType) {
   case INT:
+#ifdef  __clang__
+    fprintf(stderr,"INT %lld\n", v.i);
+#else
     fprintf(stderr,"INT %ld\n", v.i);
+#endif
     break;
   case DOUBLE:
     fprintf(stderr,"DOUBLE %f\n", v.d);
