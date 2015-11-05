@@ -1,0 +1,27 @@
+name:                c-dsl
+version:             0.3.1
+synopsis:            A higher level DSL on top of language-c
+description:         This DSL is meant to make it easier to write language-c's DSL by providing simple
+                     functions/operators for writing C AST's in Haskell.
+license:             MIT
+license-file:        LICENSE
+author:              Danny Gratzer
+maintainer:          danny.gratzer@gmail.com
+category:            Language
+build-type:          Simple
+cabal-version:       >=1.10
+source-repository head
+                  type:     hg
+                  location: http://bitbucket.org/jozefg/c-dsl
+library
+   exposed-modules:     Language.C.DSL,
+                        Language.C.DSL.Decl,
+                        Language.C.DSL.Stat,
+                        Language.C.DSL.Exp,
+                        Language.C.DSL.StringLike
+  
+  build-depends:       base ==4.*,
+                       language-c == 0.4.*
+  hs-source-dirs:      src/
+  default-language:    Haskell2010
+  

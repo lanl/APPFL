@@ -124,7 +124,7 @@ opt p v = p `alt` (succeed v)
 numval :: (Read a) => (Num a) => String -> a 
 numval cs = read cs
 
---Start Here
+
 data Script = Scr [Def] deriving (Show, Eq, Ord)
 data Def = Defin Var [Var] Expn deriving (Show, Eq, Ord)
 data Expn = V Var | Numb Int | Apply Expn Expn | Where Expn [Def] deriving (Show, Eq, Ord)
@@ -153,6 +153,3 @@ numFN xs = Numb (numval xs)
 bodyFN :: (Expn, [Def]) -> Expn
 bodyFN (e,[]) = e
 bodyFN (e,d:ds) = Where e (d:ds)
-
-helper :: Parser (Pos Token) ([[Char]],[Char])
-helper = (some (kind Ident) `thens` (lit "="))

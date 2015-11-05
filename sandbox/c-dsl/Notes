@@ -1,0 +1,13 @@
+modify language-c-0.4.7/src/Language/C/Data/Node.hs
+
+build
+
+cd language-c-0.4.7
+runhaskell Setup.hs configure --user
+runhaskell Setup.hs build
+runhaskell Setup.hs install
+
+cd c-dsl-0.3.1
+runhaskell Setup.hs configure --user
+runhaskell Setup.hs build
+runhaskell Setup.hs install
