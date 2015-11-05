@@ -1,9 +1,10 @@
-{-# LANGUAGE
-FlexibleInstances,
-TypeSynonymInstances,
-NamedFieldPuns,
-OverlappingInstances #-}
-
+{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE TypeSynonymInstances #-}
+{-# LANGUAGE NamedFieldPuns #-}
+{-# LANGUAGE CPP #-}
+#if __GLASGOW_HASKELL__ < 710
+{-# LANGUAGE OverlappingInstances #-}
+#endif
 
 module PPrint
 (
@@ -84,13 +85,13 @@ instance PPrint Doc where
 instance (PPrint a) => PPrint (Set.Set a) where
   pprint s = braceList (map pprint $ Set.toList s)
 
-instance PPrint String where
+instance {-# OVERLAPPING #-} PPrint String where
   pprint = text
 
 instance (PPrint a) => PPrint [a] where
   pprint = vertList lbrack rbrack comma 10
 
-instance (PPrint a, PPrint b) => PPrint (a,b) where
+instance {-# OVERLAPPABLE#-} (PPrint a, PPrint b) => PPrint (a,b) where
   pprint (a,b) = parens (pprint a <> comma <+> pprint b)
 
 instance PPrint a => PPrint (Maybe a) where

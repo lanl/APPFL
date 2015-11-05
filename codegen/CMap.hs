@@ -1,6 +1,9 @@
 {-# LANGUAGE FlexibleInstances    #-}
 {-# LANGUAGE TypeSynonymInstances #-}
+{-# LANGUAGE CPP #-}
+#if __GLASGOW_HASKELL__ < 710
 {-# LANGUAGE OverlappingInstances #-}
+#endif
 
 ----------------------------  Alternative interface to ConMap idea ----------------------
 -- Originally had a container for TyCons with an internal Assoc list of Con --> Arity,
@@ -153,7 +156,7 @@ getBuiltInType c
   | isInt c   = makeIntTyCon c 
   | otherwise = error "builtin TyCon not found!"
       
-instance Show CMap where
+instance {-# OVERLAPPING #-} Show CMap where
   show = show.pprint
 
 

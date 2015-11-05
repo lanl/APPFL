@@ -1,7 +1,6 @@
 {-# LANGUAGE NamedFieldPuns       #-}
 {-# LANGUAGE FlexibleInstances    #-}
 {-# LANGUAGE FlexibleContexts     #-}
-{-# LANGUAGE OverlappingInstances #-}
 {-# LANGUAGE TupleSections        #-}
 
 module Analysis

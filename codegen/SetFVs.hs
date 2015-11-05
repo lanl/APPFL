@@ -1,9 +1,12 @@
 {-# LANGUAGE TypeSynonymInstances  #-}
 {-# LANGUAGE FlexibleInstances     #-}
-{-# LANGUAGE OverlappingInstances  #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE NamedFieldPuns        #-}
 {-# LANGUAGE RecordWildCards       #-}
+{-# LANGUAGE CPP #-}
+#if __GLASGOW_HASKELL__ < 710
+ {-# LANGUAGE OverlappingInstances #-}
+#endif
 
 module SetFVs (
   setFVsObjs
@@ -240,7 +243,7 @@ instance SetFVs (Obj a) (Obj (Set.Set Var, Set.Set Var)) where
 instance SetFVs a b => SetFVs [a] [b] where
     setfvs tlds = map (setfvs tlds)
 
-instance PPrint (Set.Set Var, Set.Set Var) where
+instance  {-# OVERLAPPING #-} PPrint (Set.Set Var, Set.Set Var) where
   pprint (fvs, tfvs) = parens (text "fvs:" <+> pprint fvs <> comma <+> text "tfvs:" <+> pprint tfvs)
 
 
