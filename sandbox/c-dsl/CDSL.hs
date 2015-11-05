@@ -37,3 +37,65 @@ it3 = CDeclExt (CDecl [CTypeSpec (CTypeDef "InfoTab" undefNode)] [(Just (CDeclr 
 
 o = CDeclExt (CDecl [CTypeSpec (CTypeDef "Obj" undefNode)] [(Just (CDeclr (Just "sho_four") [] Nothing [] undefNode),Just (CInitList [([CMemberDesig "infoPtr" undefNode],CInitExpr (CCast (CDecl [CTypeSpec (CTypeDef "uintptr_t" undefNode)] [] undefNode) (CUnary CAdrOp (CVar "it_four" undefNode) undefNode) undefNode) undefNode),([CMemberDesig "objType" undefNode],CInitExpr (CVar "CON" undefNode) undefNode),([CMemberDesig "ident" undefNode],CInitExpr (CConst (CStrConst (cString"four") undefNode)) undefNode),([CMemberDesig "payload" undefNode],CInitList [([],CInitList [([CMemberDesig "argType" undefNode],CInitExpr (CVar "INT" undefNode) undefNode),([CMemberDesig "i" undefNode],CInitExpr (CConst (CIntConst (cInteger 4) undefNode)) undefNode)] undefNode)] undefNode)] undefNode),Nothing)] undefNode)
 
+initializer :: CInitializer NodeInfo
+initializer = CInitList [([CMemberDesig "infoPtr" undefNode],CInitExpr (CCast (CDecl [CTypeSpec (CTypeDef "uintptr_t" undefNode)] [] undefNode) (CUnary CAdrOp (CVar "it_four" undefNode) undefNode) undefNode) undefNode),([CMemberDesig "objType" undefNode],CInitExpr (CVar "CON" undefNode) undefNode),([CMemberDesig "ident" undefNode],CInitExpr (CConst (CStrConst (cString"four") undefNode)) undefNode),([CMemberDesig "payload" undefNode],CInitList [([],CInitList [([CMemberDesig "argType" undefNode],CInitExpr (CVar "INT" undefNode) undefNode),([CMemberDesig "i" undefNode],CInitExpr (CConst (CIntConst (cInteger 4) undefNode)) undefNode)] undefNode)] undefNode)] undefNode
+
+--
+
+type CInitializerMember a = ([CPartDesignator a], CInitializer a)
+
+declSpecs :: Ident -> [CDeclarationSpecifier NodeInfo]
+declSpecs name = [CTypeSpec (CTypeDef name undefNode)]
+
+objDS = declSpecs "Obj"
+
+declarator :: Ident -> CDeclarator NodeInfo
+declarator name = CDeclr (Just name) [] Nothing [] undefNode
+
+initStructMember :: Ident -> CInitializer NodeInfo 
+  -> CInitializerMember NodeInfo
+initStructMember name expr = ([CMemberDesig name undefNode], expr)  
+
+initObjInfoPtr :: Ident -> CInitializerMember NodeInfo
+initObjInfoPtr name = let e = CInitExpr (CCast (CDecl [CTypeSpec (CTypeDef "uintptr_t" undefNode)] [] undefNode) (CUnary CAdrOp (CVar name undefNode) undefNode) undefNode) undefNode
+                      in initStructMember "infoPtr" e 
+
+enumExpr :: Ident -> CInitializer NodeInfo
+enumExpr name = CInitExpr (CVar name undefNode) undefNode
+
+stringExpr :: String -> CInitializer NodeInfo
+stringExpr name = CInitExpr (CConst (CStrConst (cString name) undefNode)) undefNode
+
+intExpr :: Integer -> CInitializer NodeInfo
+intExpr x = CInitExpr (CConst (CIntConst (cInteger x) undefNode)) undefNode
+
+initObjObjType :: Ident -> CInitializerMember NodeInfo
+initObjObjType name = initStructMember "objType" (enumExpr name) 
+
+initObjIdent :: String -> CInitializerMember NodeInfo
+initObjIdent name = initStructMember "ident" (stringExpr name) 
+
+initObjPayload :: Ident -> Integer -> CInitializerMember NodeInfo
+initObjPayload a i = let e = CInitList [([], CInitList [initObjPayloadArgType a, initObjPayloadI i] undefNode)] undefNode
+                     in initStructMember "payload" e
+
+initObjPayloadArgType :: Ident -> CInitializerMember NodeInfo
+initObjPayloadArgType name = initStructMember "argType" (enumExpr name)
+
+initObjPayloadI :: Integer -> CInitializerMember NodeInfo
+initObjPayloadI x = initStructMember "i" (intExpr x)
+
+objInitializer :: Ident -> Ident -> String -> Ident -> Integer -> CInitializer NodeInfo
+objInitializer i t id pa pi = CInitList [initObjInfoPtr i, initObjObjType t, initObjIdent id, initObjPayload pa pi] undefNode
+
+initializer4 :: CInitializer NodeInfo
+initializer4 = objInitializer "it_four" "CON" "four" "INT" 4
+
+initStruct :: [CDeclarationSpecifier NodeInfo] -> CDeclarator NodeInfo 
+  -> CInitializer NodeInfo -> CExternalDeclaration NodeInfo
+initStruct t d i = CDeclExt (CDecl t [(Just d, Just i, Nothing)] undefNode) 
+
+initObj :: Ident -> CInitializer NodeInfo -> CExternalDeclaration NodeInfo
+initObj name i = initStruct objDS (declarator name) i
+
+o2 = initObj "sho_four" initializer4
