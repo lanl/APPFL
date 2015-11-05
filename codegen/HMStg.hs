@@ -1,5 +1,6 @@
 {-# LANGUAGE TypeSynonymInstances  #-}
 {-# LANGUAGE FlexibleInstances     #-}
+{-# LANGUAGE FlexibleContexts      #-}
 {-# LANGUAGE NamedFieldPuns        #-}
 {-# LANGUAGE ParallelListComp      #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
@@ -352,6 +353,11 @@ buNest mtvs os assums =
 
 
 --buRec discharges assumptions about the objects it defines
+buRec
+  :: (BU (Obj a), SetTyp (Obj a)) =>
+     Set.Set Monotype
+     -> [Obj a]
+     -> (Set.Set (Var, Monotype), Set.Set Constraint, [Obj a])
 buRec mtvs os =
     let (ass, css, os') = unzip3 $ map (bu mtvs) os
         xts = map2 oname getTyp os'

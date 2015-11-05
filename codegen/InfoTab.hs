@@ -452,7 +452,12 @@ showITType _ = "sho"
 -- showITType BLACKHOLE {} = "obhl"
 -- showITTType _ = error "bad ITType"
 
-showITs os = concatMap showIT $ itsOf os
+--showITs os = concatMap showIT $ itsOf os
+
+myConcatMap f = concat . (map f)
+
+showITs :: ITsOf a [InfoTab] => a -> [Char]
+showITs os = myConcatMap showIT $ itsOf os
 
 showIT it@(Fun {}) =
     "InfoTab it_" ++ name it ++ " __attribute__((aligned(8))) = \n" ++
