@@ -1,0 +1,18 @@
+--gets fourth element in a list
+--fourth :: List a -> a
+fourth = FUN(xs -> let {g = THUNK(tail xs);
+       	 	        h = THUNK(tail g);
+			i = THUNK(tail h);
+		       final = THUNK(head i)} in final);
+
+--list5: [5,4,3,2,1]
+list1 = CON(Cons one nil);
+list2 = CON(Cons two list1);
+list3 = CON(Cons three list2);
+list4 = CON(Cons four list3);
+list5 = CON(Cons five list4);
+
+--test   
+result = CON(I 2);
+output = THUNK(fourth list5);
+main = THUNK(eqInt result output);

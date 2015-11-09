@@ -1,0 +1,28 @@
+-- Compare if two lists of ints are the same
+-- eqList :: List a -> List a -> Bool
+eqList = FUN(xs ys -> case xs of {
+       	 	      	   Nil -> case ys of {
+			       	       Nil -> true;
+				       Cons h t -> false};
+			   Cons h1 t1 -> case ys of {
+			   	    	      Nil -> false; 
+					      Cons h2 t2 -> let {expr = THUNK(eqInt h1 h2)} in case expr of {
+					      	      	    	                                    True -> let {final = THUNK(eqList t1 t2)} in final;
+								                                    False -> false}}});
+
+-- list5: [5,4,3,2,1]
+list1 = CON(Cons one nil);
+list2 = CON(Cons two list1);
+list3 = CON(Cons three list2);
+list4 = CON(Cons four list3);
+list5 = CON(Cons five list4);
+-- list10: [5,4,3,2,1]
+list6 = CON(Cons one nil);
+list7 = CON(Cons two list6);
+list8 = CON(Cons three list7);
+list9 = CON(Cons four list8);
+list10 = CON(Cons five list9);
+
+
+--test
+main = THUNK(eqList list5 list10);		                

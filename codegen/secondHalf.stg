@@ -1,0 +1,38 @@
+-- divide boxed Ints
+-- divInt :: Int -> Int -> Int
+-- Integer Division
+divInt = FUN(x y -> case x of {
+	  	     	  I i# -> case y of {
+			       	       I j# -> case idiv# i# j# of {
+				       	       	    x# -> let {result = CON(I x#)} in result }}});
+
+-- secondHalf
+-- secondHalf a list, rounding down
+-- secondHalf :: List a -> List a
+secondHalf = FUN(xs -> let {l = THUNK(length xs);
+      	       	       a = THUNK(divInt l two);
+		       final = THUNK(drop a xs)} in final);
+
+-- Compare if two lists of ints are the same
+-- eqList :: List a -> List a -> Bool
+eqList = FUN(xs ys -> case xs of {
+       	 	      	   Nil -> case ys of {
+			       	       Nil -> true;
+				       Cons h t -> false};
+			   Cons h1 t1 -> case ys of {
+			   	    	      Nil -> false; 
+					      Cons h2 t2 -> let {expr = THUNK(eqInt h1 h2)} in case expr of {
+					      	      	    	                                    True -> let {final = THUNK(eqList t1 t2)} in final;
+								                                    False -> false}}});
+
+--list5: [5,4,3,2,1]
+list1 = CON(Cons one nil);
+list2 = CON(Cons two list1);
+list3 = CON(Cons three list2);
+list4 = CON(Cons four list3);
+list5 = CON(Cons five list4);
+
+--Test
+result = THUNK(secondHalf list5);
+output = THUNK(list3);
+main = THUNK(eqList output result);
