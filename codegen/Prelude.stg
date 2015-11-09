@@ -113,6 +113,13 @@ subInt = FUN(x y ->
                   case y of
                      { I j# -> case isub# i# j# of
                                  { x# -> let { result = CON (I x#) } in result }}});
+-- divide boxed Ints
+-- divInt :: Int -> Int -> Int
+-- Integer Division
+divInt = FUN(x y -> case x of {
+	  	     	  I i# -> case y of {
+			       	       I j# -> case idiv# i# j# of {
+				       	       	    x# -> let {result = CON(I x#)} in result }}});
 
 -- modulus operation for boxed Ints | modInt a b == Haskell(a `mod` b)
 -- modInt :: Int -> Int -> Int
