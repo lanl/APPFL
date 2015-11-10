@@ -6,6 +6,9 @@
 {-# LANGUAGE FlexibleContexts      #-}
 {-# LANGUAGE TupleSections         #-}
 
+{-# LANGUAGE CPP #-}
+#include "options.h"
+
 module InfoTab(
   InfoTab(..),
   setCMaps,
@@ -28,6 +31,11 @@ import qualified Data.Map as Map
 
 import Data.Set (Set)
 import qualified Data.Set as Set
+
+#if USE_CAST
+import CAST
+import Language.C.Pretty 
+#endif 
 
 
 -- need an infoTab entry for each lexically distinct HO or SHO
@@ -459,6 +467,83 @@ myConcatMap f = concat . (map f)
 showITs :: ITsOf a [InfoTab] => a -> [Char]
 showITs os = myConcatMap showIT $ itsOf os
 
+
+#if USE_CAST
+cInfoTab :: InfoTab -> Maybe ExtDecl
+cInfoTab it@(Fun {}) = Just (
+    initStruct "InfoTab" ("it_" ++ name it) True
+        [initStructMember StringTy "name" (name it)
+        ,initStructMember PtrTy "entryCode" (entryCode it)
+        ,initStructMember EnumTy "objType" "FUN"
+        ,initStructMember IntTy "layoutInfo.payloadSize" (length $ fvs it) 
+        ,initStructMember IntTy "layoutInfo.boxedCount" (length $ fvs it)
+        ,initStructMember IntTy "layoutInfo.unboxedCount" (ufvc it)
+        ,initStructMember IntTy "funFields.arity" (arity it)
+        ])
+  
+cInfoTab it@(Pap {}) =  Just (
+    initStruct "InfoTab" ("it_" ++ name it) True
+        [initStructMember StringTy "name" (name it)
+        ,initStructMember PtrTy "entryCode" (entryCode it)
+        ,initStructMember EnumTy "objType" "PAP"
+        ,initStructMember IntTy "layoutInfo.payloadSize" (length (fvs it) + length (args it) + 1) 
+        ,initStructMember IntTy "layoutInfo.boxedCount" (bfvc it)
+        ,initStructMember IntTy "layoutInfo.unboxedCount" (ufvc it)
+        ])
+        
+cInfoTab it@(Con {}) =  Just (
+    initStruct "InfoTab" ("it_" ++ name it) True
+        [initStructMember StringTy "name" (name it)
+        ,initStructMember PtrTy "entryCode" (entryCode it)
+        ,initStructMember EnumTy "objType" "CON"
+        ,initStructMember IntTy "layoutInfo.payloadSize" (arity it) 
+        ,initStructMember IntTy "layoutInfo.boxedCount" (bargc it)
+        ,initStructMember IntTy "layoutInfo.unboxedCount" (uargc it)
+        ,initStructMember StringTy "layoutInfo.permString" (concatMap show (argPerm it))
+        ,initStructMember IntTy "conFields.arity" (arity it)
+        ,initStructMember IntTy "conFields.tag"  (read (luConTag (con it) (cmap it)) :: Int)
+        ,initStructMember StringTy "conFields.conName" (con it)
+        ])     
+        
+cInfoTab it@(Thunk {}) =  Just (
+    initStruct "InfoTab" ("it_" ++ name it) True
+        [initStructMember StringTy "name" (name it)
+        ,initStructMember PtrTy "entryCode" (entryCode it)
+        ,initStructMember EnumTy "objType" "THUNK"
+        ,initStructMember IntTy "layoutInfo.payloadSize" (1 + (length $ fvs it)) 
+        ,initStructMember IntTy "layoutInfo.boxedCount" (bfvc it)
+        ,initStructMember IntTy "layoutInfo.unboxedCount" (ufvc it)
+        ])
+        
+cInfoTab it@(Blackhole {}) =  Just (
+    initStruct "InfoTab" ("it_" ++ name it) True
+        [initStructMember StringTy "name" (name it)
+        ,initStructMember PtrTy "entryCode" (entryCode it)
+        ,initStructMember EnumTy "objType" "BLACKHOLE"
+        ,initStructMember IntTy "layoutInfo.payloadSize" (0 :: Int)
+        ,initStructMember IntTy "layoutInfo.boxedCount" (0 :: Int)
+        ,initStructMember IntTy "layoutInfo.unboxedCount" (0 :: Int)
+        ])            
+
+cInfoTab it@(ITAlts {}) =  Just (
+    initStruct "InfoTab" ("it_" ++ name it) True
+        [initStructMember StringTy "name" (name it)
+        ,initStructMember PtrTy "entryCode" (entryCode it)
+        ,initStructMember EnumTy "objType" "CASECONT"
+        ,initStructMember IntTy "layoutInfo.payloadSize" (length $ fvs it)
+        ,initStructMember IntTy "layoutInfo.boxedCount" (bfvc it)
+        ,initStructMember IntTy "layoutInfo.unboxedCount" (ufvc it)
+        ])           
+
+cInfoTab _ = Nothing
+
+showIT it = let x = cInfoTab it in
+                case x of
+                  Just it -> (render . pretty) it ++ "\n"
+                  Nothing -> ""
+
+#else
+
 showIT it@(Fun {}) =
     "InfoTab it_" ++ name it ++ " __attribute__((aligned(8))) = \n" ++
     "  { .name                = " ++ show (name it) ++ ",\n" ++
@@ -552,6 +637,7 @@ showIT it@(ITAlts{}) =
 
 showIT _ = ""
 
+#endif
       
 -- MODIFIED 6.30 - David ----------------------------------------
 -- code below replaces code from ConMaps.hs to set the CMaps in

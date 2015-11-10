@@ -16,6 +16,8 @@ executable stgc
                    , process
                    , split
                    , ghc-prim
+--                   , language-c
+--                   , c-dsl
   
 test-suite test
   type:            exitcode-stdio-1.0
