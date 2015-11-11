@@ -14,10 +14,18 @@ import Language.C.System.Preprocess
 import Language.C.System.GCC
 import Language.C.DSL
 import Data.List.Split
+import GHC.Float
 
 import AST
 
-data Ty = EnumTy | StringTy | IntTy | PtrTy | InfoPtrTy | StructTy deriving(Show)
+data Ty = EnumTy 
+        | StringTy 
+        | IntTy  
+        | FloatTy
+        | DoubleTy
+        | PtrTy  
+        | InfoPtrTy  
+        | StructTy deriving(Show)
 
 type CInitializerMember a = ([CPartDesignator a], CInitializer a)
 
@@ -50,6 +58,20 @@ instance InitStructMember Int where
     let e = case ty of
               IntTy -> CInitExpr (CConst (CIntConst (cInteger (toInteger val)) undefNode)) undefNode
               _ -> error "bad Type in initStructMember (Int)"
+    in initStructMemberE (splitOn "." name) e
+
+instance InitStructMember Double where
+  initStructMember ty name val =         
+    let e = case ty of
+              DoubleTy -> CInitExpr (CConst (CFloatConst (cFloat (double2Float val)) undefNode)) undefNode
+              _ -> error "bad Type in initStructMember (Double)"
+    in initStructMemberE (splitOn "." name) e
+
+instance InitStructMember Float where
+  initStructMember ty name val =         
+    let e = case ty of
+              FloatTy -> CInitExpr (CConst (CFloatConst (cFloat val) undefNode)) undefNode
+              _ -> error "bad Type in initStructMember (Float)"
     in initStructMemberE (splitOn "." name) e
 
 instance InitStructMember [CInitializerMember NodeInfo] where
