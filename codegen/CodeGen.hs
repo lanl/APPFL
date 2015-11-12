@@ -357,7 +357,10 @@ cge env (ELet it os e) =
       return (concat decls ++ concat buildcodes ++ einline,
               ofunc ++ efunc)
 
-cge env (ECase _ e a@(Alts italts alts aname)) | (not $ noHeapAlloc $ emd e) = 
+-- TOFIX:  even if scrutinee doesn't heap alloc it may return through the
+-- continuation stack, so we need better analysis
+-- cge env (ECase _ e a@(Alts italts alts aname)) | (not $ noHeapAlloc $ emd e) = 
+cge env (ECase _ e a@(Alts italts alts aname)) = 
     do (ecode, efunc) <- cge env e
        (acode, afunc) <- cgalts env a (isBoxede e)
        let name = "ccont_" ++ aname
@@ -378,12 +381,14 @@ cge env (ECase _ e a@(Alts italts alts aname)) | (not $ noHeapAlloc $ emd e) =
        return (pre ++ ecode ++ acode, efunc ++ afunc)
 
 -- scrutinee does no heap allocation          
+{-
 cge env (ECase _ e a@(Alts italts alts aname)) = 
     do (ecode, efunc) <- cge env e
        (acode, afunc) <- cgalts_noheapalloc env a (isBoxede e)
        let name = "ccont_" ++ aname
            pre = "// scrutinee no heap allocation\n"
        return (pre ++ ecode ++ acode, efunc ++ afunc)
+-}
           
 -- ADef only or unary sum => no C switch
 cgalts_noheapalloc env (Alts it alts name) boxed = 
