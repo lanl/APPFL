@@ -43,6 +43,13 @@ import Data.Bits
 import Foreign.Storable
 import Foreign.C.Types
 
+#if USE_CAST
+import CAST
+import Text.PrettyPrint(render)
+import Language.C.Pretty 
+#endif 
+
+
 -- // two = CON(I 2)
 -- Obj sho_two = 
 --   { .objType = CON,
@@ -61,7 +68,72 @@ showSHOs :: [Obj InfoTab] -> (String,String)
 showSHOs objs = 
     let (forwards, defs) = unzip $ map showSHO objs
     in (concat forwards, intercalate "\n" defs)
-    
+
+
+#if USE_CAST
+
+showSHO o = 
+   let n = "sho_" ++ (name . omd) o
+    in ("extern Obj " ++ n ++ ";\n",(render (pretty (cSHO o))))
+                    
+cSHO o =
+   let it = omd o
+       n = name it
+       infoPtr = initStructMember InfoPtrTy "infoPtr" ("it_" ++ n)
+       objType = initStructMember EnumTy "objType" (showObjType it)
+       ident = initStructMember StringTy "ident" n
+       payload = cSHOspec it
+   in initStruct "Obj" ("sho_" ++ n) False [infoPtr, objType, ident, payload]
+   
+payloads xs = initStructMember StructTy "payload" xs
+   
+cSHOspec it@(Fun {}) = payloads ""
+   
+cSHOspec it@(Pap {}) = error "top level PAP"
+
+cSHOspec it@(Con {}) = payloads (concat (map payload (map fst (args it)))) 
+   
+cSHOspec it@(Thunk {}) = payloads "0"
+   
+cSHOspec it@(Blackhole {}) = payloads "0"
+   
+cSHOspec it = error "bad IT in Obj"
+
+--payload ::  Atom -> [CAST.CInitializerMember Language.C.Data.Node.NodeInfo]
+payload (LitI i) = [ 
+#if USE_ARGTYPE 
+    initStructMember EnumTy "argType" "INT",
+#endif 
+    initStructMember IntTy "i" i
+    ]
+
+payload (LitD d) = [ 
+#if USE_ARGTYPE 
+    initStructMember EnumTy "argType" "DOUBLE",
+#endif 
+    initStructMember DoubleTy "d" d 
+    ]
+
+
+payload (LitF f) = [
+#if USE_ARGTYPE 
+    initStructMember EnumTy "argType" "FLOAT",
+#endif 
+    initStructMember FloatTy "f" f 
+    ]
+
+-- for SHOs atoms that are variables must be SHOs, so not unboxed
+payload (Var v) = [
+#if USE_ARGTYPE
+    initStructMember EnumTy "argType" "HEAPOBJ",
+#endif
+    initStructMember PtrTy "op" ("sho_" ++ v)
+    ]
+
+payload _ = error "bad payload"
+
+-- end of USE_CAST
+#else 
 
 -- maybe should use "static" instead of "extern"
 showSHO o =
@@ -165,3 +237,5 @@ ptrOrLitSHO a =
       Var v -> ".op = &sho_" ++ v   -- these must be global
 #endif
     ++ " }"
+    
+#endif

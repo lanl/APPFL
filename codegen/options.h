@@ -3,5 +3,6 @@
 
 #define USE_ARGTYPE 1
 #define USE_OBJTYPE 1
+#define USE_CAST 0
 
 #endif
