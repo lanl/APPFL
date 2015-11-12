@@ -1,0 +1,12 @@
+-- exponentiate boxed ints
+-- exp :: Int -> Int -> Int
+exp = FUN(x y -> let {pred = THUNK(eqInt y zero)} in case pred of {
+      	      	      True -> one;
+		      False -> let {z = THUNK(subInt y one);
+		      	       	    t = THUNK(exp x z);
+		      	       	    w = THUNK(multInt x t)} in w});
+		      	       	   
+-- Test 
+result = THUNK(exp three four);
+output = CON(I 81);
+main = THUNK(eqInt result output);

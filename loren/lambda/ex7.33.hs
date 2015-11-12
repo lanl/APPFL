@@ -1,5 +1,4 @@
 --NORMAL ORDER and APPLICATIVE ORDER using Thread
-{-# LANGUAGE FlexibleInstances #-}
 
 import Data.List
 import Data.Char
@@ -284,8 +283,8 @@ normEval (ws,(Var x)) = (ws,(Var x))
 normEval (ws,(Comb (Abs (Var x) y) z)) = (betaReduce1 ws y (Var x) z)
 normEval (ws,(Abs x y)) = (t1,(Abs x t2))
                           where (t1,t2) = (normEval (ws,y))
-normEval (ws,(Comb x y)) | Comb (snd (normEval (ws, x))) y /= (Comb x y) = (s1, Comb s2 y)
-                         | Comb x (snd (normEval (ws, y))) /= (Comb x y) = (t1, Comb x t2)             
+normEval (ws,(Comb x y)) | Comb (snd $ normEval (ws, x)) y /= (Comb x y) = (s1, Comb s2 y)
+                         | Comb x (snd $ normEval (ws, y)) /= (Comb x y) = (t1, Comb x t2)             
                          | otherwise = (ws,(Comb x y))
                                        where (s1,s2) = normEval (ws, x)
                                              (t1,t2) = normEval (ws, y)
@@ -298,7 +297,7 @@ checkEval :: Expr -> Bool
 checkEval (Var x) = False
 checkEval (Comb (Abs (Var x) y) z) = True
 checkEval (Abs x y) = checkEval y
-checkEval (Comb x y) = (checkEval x) && (checkEval y)
+checkEval (Comb x y) = (checkEval x) || (checkEval y)
 
 --BEGINNNNNN Applicative Order Evaluator
 startEvalAppOrder :: Expr -> [Expr]
@@ -325,7 +324,32 @@ appEval (ws,(Abs x y)) = (t1,(Abs x t2))
 appEval (ws,(Comb x y)) | Comb (snd (appEval (ws, x))) y /= (Comb x y) = (s1, Comb s2 y)
                         | Comb x (snd (appEval (ws, y))) /= (Comb x y) = (t1, Comb x t2)             
                         | otherwise = (ws,(Comb x y))
-                                       where (s1,s2) = appEval (ws, x)
-                                             (t1,t2) = appEval (ws, y)
+                                      where (s1,s2) = appEval (ws, x)
+                                            (t1,t2) = appEval (ws, y)
 --ENDDDDDDDD Applicative Order Evaluator
 
+succ1  = "(\\n \\f \\x f (n f x))"
+psucc1 = parse succ1
+
+zero = "(\\f \\x x)"
+one1 = "(\\f \\x f x)"
+ones = parse $ succ1 ++ zero
+
+{-
+zero :: t -> t1 -> t1
+zero  = \f -> \x -> x
+
+one1 = \f -> \x -> f x
+
+succ1 :: ((t1 -> t) -> t2 -> t1) -> (t1 -> t) -> t2 -> t
+succ1 = \n -> \f -> \x -> f (n f x)
+
+intToLamb :: (Eq a, Num a) => a -> (t -> t) -> t -> t
+intToLamb 0 = zero
+intToLamb n = succ1 (intToLamb (n-1))
+
+add1 :: (t2 -> t1 -> t) -> (t2 -> t3 -> t1) -> t2 -> t3 -> t
+add1 = \m -> \n -> \f -> \x -> m f (n f x)
+
+inc = (+1)
+-}

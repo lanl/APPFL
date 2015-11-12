@@ -153,9 +153,7 @@ minInt = FUN(a b ->
        case intLE a b of {
        	 True -> a;
 	 False -> b;});
-       	 
-		  
-
+       	 	  
 
 -- calcuate greatest common divisor of two unboxed ints
 -- gcd# :: Int# -> Int# -> Int#

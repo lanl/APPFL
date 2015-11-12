@@ -1,0 +1,20 @@
+-- Sums every other element in a list starting with the second element
+-- sumEveryOther :: Int -> List Int -> Int
+sumEveryOther = FUN(acc xs -> case xs of {
+	      		      	   Nil -> acc;
+				   Cons h1 t1 -> case t1 of {
+				   	      	      Nil -> acc;
+				   	      	      Cons h2 t2 -> let {s = THUNK(plusInt acc h2);
+						      	      	    	 r = THUNK(sumEveryOther s t2)} in r}});
+
+-- list5: [5,4,3,2,1]
+list5 = CON(Cons one list4);
+list4 = CON(Cons two list3);
+list3 = CON(Cons three list2);
+list2 = CON(Cons four list1);
+list1 = CON(Cons five nil);
+
+-- Test
+result = THUNK(sumEveryOther zero list5);
+output = CON(I 6);
+main = THUNK(eqInt output result);

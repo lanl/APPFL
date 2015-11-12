@@ -99,10 +99,10 @@ expr :: Parser [String] Expr
 expr = var `alt` lambda `alt` parenExpr
 
 var :: Parser [String] Expr
-var = alphaNum `using` Var
+var = alphaNums `using` Var
 
 lambda :: Parser [String] Expr
-lambda = ((literal1 "\\") `thens` alphaNum `thens` expr) `using` lambdaing
+lambda = ((literal1 "\\") `thens` alphaNums `thens` expr) `using` lambdaing
 
 lambdaing :: ((String,String),Expr) -> Expr
 lambdaing ((x,y),z) = Abs y z
@@ -112,18 +112,11 @@ parenExpr = ((literal1 "(") `xthen` lexpr  `thenx` (literal1 ")")) `using` Paren
 
 --END PARSERRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR
 
-alphaNum :: Parser [String] String
-alphaNum = (number1 `alt` word1)
-
-number1 :: Parser [String] String
-number1 [] = []
-number1 (x:xs) | isDigit (head x) = succeed x xs
-               | otherwise = failed xs
-
-word1 :: Parser [String] String
-word1 [] = []
-word1 (x:xs) | isAlpha (head x) = succeed x xs
-             | otherwise = failed xs
+alphaNums :: Parser [String] String
+alphaNums [] = []
+alphaNums (x:xs) | isDigit (head x) = succeed x xs
+                 | isAlpha (head x) = succeed x xs
+                 | otherwise = failed xs
 
 c1 = "\\ x (\\y (z e))"
 c2 = "(\\ z x)(\\ g f)"
@@ -131,3 +124,5 @@ c3 = "\\x y e \\x \\z o 3 "
 c4 = "\\ z x (\\ g f)"
 c5 = "(\\ z x)"
 c6 = "(\\ z x (\\ x y))"
+c7 = "1 3 5 234 2o 281 s0"
+c8 = "(\\ var1 var2  var3) (\\ d 3 (s d))"

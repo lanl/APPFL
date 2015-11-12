@@ -1,5 +1,5 @@
 import Data.Char
-type Parser a b = [a] -> [(b,[a])]
+type Parser a b = [a] -> [(b,[a])] 
 
 succeed :: b -> Parser a b
 succeed v inp = [(v, inp)]
@@ -38,11 +38,10 @@ number = some (satisfy isDigit)
 word :: Parser Char [Char]
 word = some (satisfy isAlpha)
 
-{-
+--Needs two inputs--
 string :: [Char] -> Parser Char [Char]
 string [] = succeed []
 string (x:xs) = ((literal x) `thens` (string xs)) `using` cons
--}
 
 xthen :: Parser a b -> Parser a c -> Parser a c
 p1 `xthen` p2 = (p1 `thens` p2) `using` snd 
@@ -52,28 +51,13 @@ p1 `thenx` p2 = (p1 `thens` p2) `using` fst
 
 returns :: Parser a b -> c -> Parser a c
 p `returns` v = p `using` (const v)
-                 
+            
+any1 :: (a -> Parser Char b) -> [a] -> Parser Char b
+any1 p = foldr (alt . p) fail
 
-expn :: term+term || term -term || term
-term :: factor*factor|factor/factor|factor
-factor :: digit^ | (expn)
+nibble :: Parser Char b -> Parser Char b
+nibble p = white `xthen` p `thenx` white
+           where white = many (any1 literal " \t\n")
 
-expn = (term `then` literal `*` `then` factor `using` plus) `alt`
-       (term `then` literal `-` `xthen` term) `using` minus) `alt`
-       term
-
-term = (factor `then` literal `*` `xthen` factor `using` times) `alt`
-       (factor `then` literal `/` `xthen` factor `using` divide) `alt`
-       factor
-
-factor = (number `using` value) `alt`
-         (literal `(` `xthen` expn `thenx` literal `)`)
-
-value xs = Num (numval xs)
-plus (x,y) = x `Add` y
-minus (x,y) = x `Sub` y
-times (x,y) = x `Mul` y 
-divide (x,y) = x `Div` y
-
-
-
+symbol :: [Char] -> Parser Char [Char]
+symbol = nibble.string

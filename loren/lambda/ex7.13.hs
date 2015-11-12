@@ -146,3 +146,37 @@ setDiff [] ys _ = ys
 setDiff (x:xs) [] zs = setDiff xs zs []
 setDiff (x:xs) (y:ys) zs = if x == y then setDiff (x:xs) ys zs else setDiff (x:xs) ys (y:zs)
 --END FREE VARIABLES
+
+--BEGIN ALPHA REDUCTION
+
+checkAlphaReduce :: String ->  Expr -> Expr 
+checkAlphaReduce x (Abs (Var y) z)  = if mayAlphaReduce x (Abs (Var y) z) then alphaReduce x y (Abs (Var y) z) else (Abs (Var y) z)
+checkAlphaReduce x y = y
+
+alphaReduce :: String -> String -> Expr -> Expr
+alphaReduce x w (Abs y z) = Abs (alphaReduce x w y) (alphaReduce x w z)
+alphaReduce x w (Var y) | w == y = Var x
+                        | otherwise = Var y
+alphaReduce x w (Paren y) = Paren (alphaReduce x w y)
+alphaReduce x w (Comb y z) = Comb (alphaReduce x w y) (alphaReduce x w z)
+
+
+mayAlphaReduce :: String -> Expr -> Bool
+mayAlphaReduce z (Abs (Var x) y) = if notOccur z y then True else False
+mayAlphaReduce _ (Abs x y) = False
+mayAlphaReduce _ (Var x) = False
+mayAlphaReduce _ (Paren x) = False
+mayAlphaReduce _ (Comb x y) = False
+
+notOccur :: String -> Expr -> Bool
+notOccur z (Abs x y) = (notOccur z x) && (notOccur z y)
+notOccur z (Var x) = if x == z then False else True
+notOccur z (Paren x) = notOccur z x
+notOccur z (Comb x y) = (notOccur z x) && (notOccur z y)
+
+--END ALPHA REDUCTION
+
+--BEGIN BETA REDUCTION
+
+betaReduce :: Expr -> String -> Expr -> Expr
+betaReduce (Var x) "y" z = z

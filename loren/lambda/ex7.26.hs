@@ -139,6 +139,13 @@ c10 = "(\\ x x x)(\\ g g)"
 c11 = "(\\ x x x)(\\ g g g)"
 c12 = "(\\ x x y)(\\ g g)"
 c13 = "(\\ x x y)(\\ g g g)"
+c14 = "(\\ x x) (x y)"
+c15 = "(\\ x (\\ y (\\ f f x y))) y"
+c16 = "(\\ x (\\ y (\\ f (\\ f x y y)))) y"
+c17 = "(\\ x (\\ y (\\ f (\\ f x y y))) f) y"
+c18 = "(\\ x (\\ y y x)) (\\ z y z)"
+c19 = "(\\ f (f y))(\\x x)"
+c20 = "(\\ s (s s))(\\ x x x)"
 s1 = ["a","b","c","d"]
 --Remember - variables must start with a letter. 
 
@@ -241,8 +248,14 @@ twoSplit :: [String] -> [String]
 twoSplit (x:y:xs) = y:(twoSplit(xs))
 --END FREE VARIABLES
 
+{-
+| (Comb (Abs (Var x) y) z) == (Comb (Abs (Var x) (appEval ws y)) z) = if (Comb (Abs (Var x) y) z) == (Comb (Abs (Var x) y) (appEval ws z)) then (if (betaReduce1 (twoSplit ws) y (Var x) z) == (Comb (Abs (Var x) y) z) then (Comb (Abs (Var x) y) z) else appEval (oneSplit ws) (betaReduce1 (twoSplit ws) y (Var x) z)) else appEval (oneSplit ws) (Comb (Abs (Var x) y) (appEval (twoSplit ws) z))
+-}
 
 --BEGINNNNNN Normal Order Evaluator
+evaluateNormalOrder :: Expr -> Expr 
+evaluateNormalOrder expression = normEval fvs expression
+
 normEval :: [String] -> Expr -> Expr
 normEval ws (Var x) = (Var x)
 normEval ws (Comb (Abs (Var x) y) z) | (Comb (Abs (Var x) y) z) == (betaReduce1 ws y (Var x) z) = (Comb (Abs (Var x) y) z)
@@ -255,6 +268,9 @@ normEval ws (Comb x y) | (Comb (normEval (oneSplit ws) x) (normEval (twoSplit ws
 
 
 --BEGINNNNNN Applicative Order Evaluator
+evaluateApplicativeOrder :: Expr -> Expr 
+evaluateApplicativeOrder expression = appEval fvs expression
+
 appEval :: [String] -> Expr -> Expr 
 appEval ws (Var x) = (Var x) 
 appEval ws (Comb (Abs (Var x) y) z) | (Comb (Abs (Var x) y) z) == (Comb (Abs (Var x) (appEval ws y)) z) = if (Comb (Abs (Var x) y) z) == (Comb (Abs (Var x) y) (appEval ws z)) then (if (betaReduce1 (twoSplit ws) y (Var x) z) == (Comb (Abs (Var x) y) z) then (Comb (Abs (Var x) y) z) else appEval (oneSplit ws) (betaReduce1 (twoSplit ws) y (Var x) z)) else appEval (oneSplit ws) (Comb (Abs (Var x) y) (appEval (twoSplit ws) z))

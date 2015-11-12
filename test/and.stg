@@ -9,4 +9,3 @@ and = FUN(x y -> case x of {
 
 --Test
 main = THUNK(and true true);
-      	      	      
