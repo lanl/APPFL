@@ -77,7 +77,7 @@ extern PtrOrLiteral stgCurVal;  // current/return value
 
 
 struct _Obj {
-  uintptr_t infoPtr;         // canonical location of ObjType field
+  uintptr_t infoPtr;         // canonical location of infoPtr--first word
 #if USE_OBJTYPE
   ObjType objType;          // to distinguish PAP, FUN, BLACKHOLE, INDIRECT
 #endif
@@ -97,9 +97,11 @@ typedef struct {
 typedef struct {
   int arity;
   // curry paper suggests that we need type info
+  CmmFnPtr trueEntryCode;
 } FUNfields;
 
 typedef struct {
+  CmmFnPtr trueEntryCode;
 } PAPfields;
 
 typedef struct {

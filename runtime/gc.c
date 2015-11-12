@@ -9,8 +9,8 @@
 #include "obj.h"
 #include "options.h"
 
-const bool DEBUG = false;
-const bool EXTRA = true;  // run extra checks
+const bool DEBUG = true;
+const bool EXTRA = false;  // run extra checks
 
 void initGc(void) {
   assert(stgHeap && "gc: heap not defined");

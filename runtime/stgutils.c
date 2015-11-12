@@ -11,6 +11,127 @@
 // place to go when we're done this continuation is special, dropping 
 // from stg land back to cmm land via RETURN0() rather than STGRETURN(0)
 
+Obj *derefPoL(PtrOrLiteral f) {
+  assert(isBoxed(f) && "derefPoL: not a HEAPOBJ");
+  return derefHO(f.op);
+}
+
+void derefStgCurVal() {
+  while (isBoxed(stgCurVal) && getObjType(stgCurVal.op) == INDIRECT) {
+    stgCurVal = stgCurVal.op->payload[0];
+  }
+// is this a good place to check for BLACKHOLE?
+}
+
+Obj *derefHO(Obj *op) {
+  while (getObjType(op) == INDIRECT)
+    op = op->payload[0].op;
+  return op;
+}
+
+DEFUN1(stg_funcall, self) {
+  fprintf(stderr,"stg_funcall, returning self\n");
+  stgCurVal = self;
+  RETURN0();
+  ENDFUN;
+}
+
+DEFUN1(stg_papcall, self) {
+  fprintf(stderr,"top-level PAP call, returning self\n");
+  stgCurVal = self;
+  RETURN0();
+  ENDFUN;
+}
+
+DEFUN1(stg_concall, self) {
+  fprintf(stderr,"stg_concall, returning self\n");
+  stgCurVal = self;
+  RETURN0();
+  ENDFUN;
+}
+
+DEFUN1(stgBlackhole, self) {
+  fprintf(stderr, "stgBlackhole, exiting!\n");
+  exit(0);
+  ENDFUN;
+}
+
+// we can't use this until FVs are stashed first
+InfoTab it_stgBlackhole __attribute__((aligned(8))) =
+  { .name = "default stgBlackhole",
+    //    .fvCount = 1, // self
+    .entryCode = &stgBlackhole,
+    .objType = BLACKHOLE,
+    .layoutInfo.payloadSize = 1, // space for indirect
+    .layoutInfo.boxedCount = 1,
+    .layoutInfo.unboxedCount = 0,
+  };
+
+DEFUN1(stgIndirect, self) {
+  fprintf(stderr,"stgIndirect, jumping through indirection\n");
+  PtrOrLiteral next = self.op->payload[0];
+  STGJUMP1(getInfoPtr(next.op)->entryCode, next);
+  RETURN0();
+  ENDFUN;
+}
+
+InfoTab it_stgIndirect __attribute__((aligned(8))) =
+  { .name = "stgIndirect",
+    // .fvCount = 1, // target of indirect
+    .entryCode = &stgIndirect,
+    .objType = INDIRECT,
+    .layoutInfo.payloadSize = 1, // target of indirect
+    .layoutInfo.boxedCount = 1,
+    .layoutInfo.unboxedCount = 0,
+  };
+
+DEFUN0(stgUpdateCont) {
+  Obj *contp = stgPopCont();
+  assert(getObjType(contp) == UPDCONT && "I'm not an UPDCONT!");
+  PtrOrLiteral p = contp->payload[0];
+  assert(isBoxed(p) && "not a HEAPOBJ!");
+  fprintf(stderr, "stgUpdateCont updating\n  ");
+  showStgObj(p.op);
+  fprintf(stderr, "with\n  ");
+  showStgObj(stgCurVal.op);
+  if (getObjType(p.op) != BLACKHOLE) {
+    fprintf(stderr, "but updatee is %s not a BLACKHOLE!\n", objTypeNames[getObjType(p.op)]);
+    showStgHeap();
+    assert(getObjType(p.op) == BLACKHOLE);
+  }
+  // the order of the following two operations is important for concurrency
+  p.op->payload[0] = stgCurVal;
+  // now zero out the payload
+
+  p.op->infoPtr = (uintptr_t) &it_stgIndirect; // this will supersede the # if below
+
+
+  // TOFIX--size determination should be more centralized
+  size_t objSize = sizeof(Obj) + it_stgIndirect.layoutInfo.payloadSize * sizeof(PtrOrLiteral);
+  objSize = ((objSize + 7)/8)*8;
+  p.op->_objSize = objSize;
+  strcpy( p.op->ident, it_stgIndirect.name );
+
+#if USE_OBJTYPE
+  p.op->objType = INDIRECT;
+#else
+  p.op->infoPtr = setLSB3(p.op->infoPtr);
+#endif
+  fprintf(stderr, "stgUpdateCont leaving...\n  ");
+  STGRETURN0();
+  ENDFUN
+}
+
+InfoTab it_stgUpdateCont __attribute__((aligned(8))) =
+  { .name = "default stgUpdateCont",
+    //    .fvCount = 1, // self
+    .entryCode = &stgUpdateCont,
+    .objType = UPDCONT,
+    .layoutInfo.payloadSize = 1, // self
+    .layoutInfo.boxedCount = 1,
+    .layoutInfo.unboxedCount = 0,
+  };
+
 DEFUN0(fun_stgShowResultCont) {
   fprintf(stderr,"done!\n");
   stgPopCont();  // clean up--normally the job of the returnee
@@ -33,7 +154,6 @@ InfoTab it_stgShowResultCont __attribute__((aligned(8))) =
     .layoutInfo.unboxedCount = -1,  // shouldn't be using this
   };
 
-
 DEFUN0(stgCallCont) {
   // stgPopCont();  user must do this
   fprintf(stderr,"stgCallCont returning\n");
@@ -50,40 +170,6 @@ InfoTab it_stgCallCont __attribute__((aligned(8))) =
     .layoutInfo.unboxedCount = -1,  // shouldn't be using this
   };
 
-DEFUN0(stgUpdateCont) {
-  Obj *contp = stgPopCont();
-  assert(getObjType(contp) == UPDCONT && "I'm not an UPDCONT!");
-  PtrOrLiteral p = contp->payload[0];
-  assert(isBoxed(p) && "not a HEAPOBJ!");
-  fprintf(stderr, "stgUpdateCont updating\n  ");
-  showStgObj(p.op);
-  fprintf(stderr, "with\n  ");
-  showStgObj(stgCurVal.op);
-  if (getObjType(p.op) != BLACKHOLE) {
-    fprintf(stderr, "but updatee is %s not a BLACKHOLE!\n", objTypeNames[getObjType(p.op)]);
-    showStgHeap();
-    assert(getObjType(p.op) == BLACKHOLE);
-  }
-  p.op->payload[0] = stgCurVal;
-#if USE_OBJTYPE
-  p.op->objType = INDIRECT;
-#else
-  p.op->infoPtr = setLSB3(p.op->infoPtr);
-#endif
-  STGRETURN0();
-  ENDFUN
-}
-
-InfoTab it_stgUpdateCont __attribute__((aligned(8))) =
-  { .name = "default stgUpdateCont",
-    //    .fvCount = 1, // self
-    .entryCode = &stgUpdateCont,
-    .objType = UPDCONT,
-    .layoutInfo.payloadSize = 1, // self
-    .layoutInfo.boxedCount = 1,
-    .layoutInfo.unboxedCount = 0,
-  };
-
 void stgThunk(PtrOrLiteral self) {
   assert(isBoxed(self) && "stgThunk:  not HEAPOBJ\n");
   Obj *contp = stgAllocCont(&it_stgUpdateCont);
@@ -93,38 +179,6 @@ void stgThunk(PtrOrLiteral self) {
   self.op->objType = BLACKHOLE;	
 #endif
   self.op->infoPtr = setLSB2(self.op->infoPtr); // update bit to say this is a Blackhole
-}
-
-Obj *derefPoL(PtrOrLiteral f) {
-  assert(isBoxed(f) && "derefPoL: not a HEAPOBJ");
-  return derefHO(f.op);
-}
-
-void derefStgCurVal() {
-  while (isBoxed(stgCurVal) && getObjType(stgCurVal.op) == INDIRECT) {
-    stgCurVal = stgCurVal.op->payload[0];
-  }
-// is this a good place to check for BLACKHOLE?
-}
-
-Obj *derefHO(Obj *op) {
-  while (getObjType(op) == INDIRECT)
-    op = op->payload[0].op;
-  return op;
-}
-
-DEFUN0(whiteHole) {
-  fprintf(stderr,"in whiteHole, something not right or initialized somewhere, exiting\n");
-  exit(0);
-  RETURN0();
-  ENDFUN;
-}
-
-DEFUN0(stg_constructorcall) {
-  fprintf(stderr,"we are not using the call-everything convention!\n");
-  exit(0);
-  RETURN0();
-  ENDFUN;
 }
 
 void callContSave(int argc, PtrOrLiteral argv[]) {

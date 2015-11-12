@@ -30,8 +30,12 @@ void pushargs(int argc, PtrOrLiteral argv[]);
 void popargs(int argc, PtrOrLiteral argv[]);
 void copyargs(PtrOrLiteral *dest, const PtrOrLiteral *src, int count);
 
-FnPtr whiteHole();
-FnPtr stg_constructorcall();
+FnPtr stg_funcall();
+FnPtr stg_papcall();
+FnPtr stg_concall();
+// THUNKS are individualized
+FnPtr stgBlackhole();
+FnPtr stgIndirect();
 
 FnPtr stgApply();
 
@@ -71,8 +75,27 @@ do {						\
 } while (0)
 */
 // evaluate in place
-#if USE_ARGTYPE
+
 #define STGEVAL(e)				\
+do {						\
+  stgCurVal = e;				\
+  Obj* cont = stgAllocCallCont2(&it_stgCallCont, 0);	\
+  strcpy(cont->ident, stgCurVal.op->ident);	\
+  STGCALL1(getInfoPtr(stgCurVal.op)->entryCode, stgCurVal); \
+  stgPopCont();			        \
+  if (getObjType(stgCurVal.op) == BLACKHOLE) {     \
+    fprintf(stderr, "infinite loop detected in STGEVAL!\n"); \
+    showStgVal(stgCurVal);			\
+    fprintf(stderr, "\n");			\
+    showStgHeap();			        \
+    assert(false);				\
+  }                                             \
+  assert (cmmSP == cmmStack + cmmStackSize && "Non empty cmm stack in stgeval");\
+  GC();					\
+} while (0)
+
+#if USE_ARGTYPE
+#define STGEVAL_works(e)				\
 do {						\
   stgCurVal = e;				\
   derefStgCurVal();				\
@@ -96,7 +119,7 @@ do {						\
   GC();					\
 } while (0)
 #else
-#define STGEVAL(e)        \
+#define STGEVAL_works(e)        \
 do {            \
   stgCurVal = e;        \
   derefStgCurVal();       \

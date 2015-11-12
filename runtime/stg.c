@@ -278,19 +278,18 @@ void showStgObjRecPretty(Obj *p) {
   if (type != BLACKHOLE &&
       type != INDIRECT &&
       type != it.objType) {
-	    if(!(type == PAP && it.objType == FUN)) {
-          fprintf(stderr, "mismatch in infotab and object type! %d != %d\n",
-        		type, it.objType);
-          exit(0);
-	    }
+    if (!(type == PAP && it.objType == FUN)) {
+      fprintf(stderr, "mismatch in infotab and object type! %d != %d\n",
+	      type, it.objType);
+      assert(false);
+    }
   }
   if (strcmp(it.name, p->ident)) {
-	  if(type != PAP) {
-        fprintf(stderr, "mismatch in infotab and object names \"%s\" != \"%s\"\n",
+    if(type != PAP) {
+      fprintf(stderr, "mismatch in infotab and object names \"%s\" != \"%s\"\n",
 	      it.name, p->ident);
-        exit(0);
-
-	  }
+      assert(false);
+    }
   }
 
   switch (type) {
@@ -585,6 +584,7 @@ void showStgStack() {
 }
 
 void showStgHeap() {
+  return;
   fprintf(stderr,"\nSTG static objects: \n\n");
   for (int i = 0; i != stgStatObjCount; i++) {
     showStgObj(stgStatObj[i]);

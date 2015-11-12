@@ -11,10 +11,14 @@ data Strictness = Nonstrict
     
 strictness = Nonstrict
 
+filesuffix = case strictness of
+               Nonstrict -> "-nonstrict"
+               Strict1 -> "-strict"
+
 dumpStgApply n = 
     let (forward, macros, fun) = genAllstgApply n
-    in do writeFile "../runtime/stgApply.h" $ includehtop ++ forward ++ macros ++ includehbot
-          writeFile "../runtime/stgApply.c" $ includec ++ fun
+    in do writeFile "../runtime/stgApply.h" (includehtop ++ forward ++ macros ++ includehbot)
+          writeFile ("../runtime/stgApply" ++ filesuffix ++ ".c") (includec ++ fun)
           return ()
         where
           includehtop =
@@ -261,7 +265,7 @@ funpos excess s pinds argc =
           "pushargs(" ++ show usedPParamCount ++ ", pargv);\n" 
       else "// 0 pointers to push\n") ++
      "// call-with-return the FUN\n" ++
-     "STGCALL1(getInfoPtr(f.op)->entryCode, f);\n" ++
+     "STGCALL1(getInfoPtr(f.op)->funFields.trueEntryCode, f);\n" ++
      "// restore excess args\n" ++
      (if excessPParamCount > 0 then
         "callContRestore(&pargv[" ++ show usedPParamCount ++ "]);\n" ++
@@ -288,7 +292,7 @@ funeq s argc =
           "pushargs(" ++ show usedPParamCount ++ ", pargv);\n"
       else "// 0 pointers to push\n") ++
      "// tail call the fun\n" ++
-     "STGJUMP1(getInfoPtr(f.op)->entryCode, f);\n"
+     "STGJUMP1(getInfoPtr(f.op)->funFields.trueEntryCode, f);\n"
 
 funneg s pinds argc nps nns = 
      "int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + \n" ++
@@ -344,7 +348,7 @@ pappos excess s pinds argc =
       else "// 0 pointers to push\n") ++
      "pushargs(pappargc, &f.op->payload[fvCount+1]);\n" ++
      "// call-with-return the FUN\n" ++
-     "STGCALL1(getInfoPtr(f.op)->entryCode, f);\n" ++
+     "STGCALL1(getInfoPtr(f.op)->funFields.trueEntryCode, f);\n" ++
      "// restore excess args\n" ++
      (if excessPParamCount > 0 then
         "callContRestore(&pargv[" ++ show usedPParamCount ++ "]);\n" ++
@@ -376,7 +380,7 @@ papeq s argc =
       else "// 0 non-pointer args\n") ++
      "pushargs(pappargc, &f.op->payload[fvCount+1]);\n" ++
      "// tail call the FUN\n" ++
-     "STGJUMP1(getInfoPtr(f.op)->entryCode, f);\n"
+     "STGJUMP1(getInfoPtr(f.op)->funFields.trueEntryCode, f);\n"
 
 -- pappargc - in C, #pointer args in pap
 -- papnargc - in C, #non-pointer args in pap

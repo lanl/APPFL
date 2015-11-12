@@ -14,6 +14,9 @@ module InfoTab(
   showITType,
   showObjType,
   show
+
+  , showIT
+  , itsOf
 ) where
 
 import Prelude
@@ -48,6 +51,7 @@ data InfoTab =
       ufvc :: Int,  -- unboxed FV count
       truefvs :: [Var],
       entryCode :: String,
+      trueEntryCode :: String,
 
       arity :: Int}      
 
@@ -60,6 +64,7 @@ data InfoTab =
       ufvc :: Int,  -- unboxed FV count
       truefvs :: [Var],
       entryCode :: String,
+      trueEntryCode :: String,
 
       args     :: [(Atom,Monotype)],
       bargc :: Int,  -- boxed initial arg count     
@@ -292,8 +297,10 @@ instance MakeIT (Obj ([Var],[Var])) where
               truefvs = truefvs,
               typ = typUndef,
               ctyp = ctypUndef,
-    --          entryCode = showITType o ++ "_" ++ n
-              entryCode = "fun_" ++ n
+    -- --         entryCode = showITType o ++ "_" ++ n,
+              entryCode = "stg_funcall",
+    --          entryCode = "fun_" ++ n,
+              trueEntryCode = "fun_" ++ n
             }
 
     makeIT o@(PAP (fvs,truefvs) f as n) =
@@ -309,7 +316,9 @@ instance MakeIT (Obj ([Var],[Var])) where
               typ = typUndef,
               ctyp = ctypUndef,
     --          entryCode = showITType o ++ "_" ++ n
+    --          entryCode = "stg_papcall",
               entryCode = "fun_" ++ f,
+              trueEntryCode = "fun_" ++ f,
               knownCall = Nothing
             }
 
@@ -328,7 +337,7 @@ instance MakeIT (Obj ([Var],[Var])) where
               typ = typUndef,
               ctyp = ctypUndef,
     --          entryCode = showITType o ++ "_" ++ n
-              entryCode = "stg_constructorcall",
+              entryCode = "stg_concall",
               -- cmap = error "Con cmap undefined in InfoTab.hs"
               cmap = Map.empty
             }
@@ -354,7 +363,7 @@ instance MakeIT (Obj ([Var],[Var])) where
                     ufvc = -1,
                     truefvs = truefvs,
     --                entryCode = showITType o ++ "_" ++ n
-                    entryCode = "stg_error"
+                    entryCode = "stgBlackhole"
                   }
 
 instance MakeIT (Expr ([Var],[Var])) where
@@ -452,13 +461,14 @@ showITType _ = "sho"
 -- showITType BLACKHOLE {} = "obhl"
 -- showITTType _ = error "bad ITType"
 
---showITs os = concatMap showIT $ itsOf os
 
 myConcatMap f = concat . (map f)
 
 showITs :: ITsOf a [InfoTab] => a -> [Char]
 showITs os = myConcatMap showIT $ itsOf os
+--showITs os = concatMap showIT $ itsOf os
 
+showIT :: InfoTab -> [Char]
 showIT it@(Fun {}) =
     "InfoTab it_" ++ name it ++ " __attribute__((aligned(8))) = \n" ++
     "  { .name                = " ++ show (name it) ++ ",\n" ++
@@ -471,7 +481,8 @@ showIT it@(Fun {}) =
     "    .layoutInfo.boxedCount   = " ++ show (bfvc it) ++ ",\n" ++
     "    .layoutInfo.unboxedCount = " ++ show (ufvc it) ++ ",\n" ++
 --    "    .layoutInfo.permString   = \"" ++ concatMap show (argPerm it) ++ "\",\n" ++
-    "    .funFields.arity     = " ++ show (arity it) ++ ",\n" ++
+    "    .funFields.arity         = " ++ show (arity it) ++ ",\n" ++
+    "    .funFields.trueEntryCode = " ++ trueEntryCode it ++ ",\n" ++
     "  };\n"
         
 showIT it@(Pap {}) =
@@ -489,6 +500,7 @@ showIT it@(Pap {}) =
     "    .layoutInfo.boxedCount   = " ++ show (bfvc it) ++ ",\n" ++
     "    .layoutInfo.unboxedCount = " ++ show (ufvc it) ++ ",\n" ++
 --    "    .layoutInfo.permString   = \"" ++ concatMap show (argPerm it) ++ "\",\n" ++
+    "    .papFields.trueEntryCode = " ++ trueEntryCode it ++ ",\n" ++
     "  };\n"
         
 showIT it@(Con {}) =
