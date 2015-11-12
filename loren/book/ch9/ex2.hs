@@ -9,7 +9,7 @@ cls :: IO()
 cls = putStr "\ESC[2J"
 
 goto :: Pos -> IO()
-goto(x,y) = putStr ("\ESC[" ++ showy ++ ";" ++ show x ++ "H")
+goto(x,y) = putStr ("\ESC[" ++ show y ++ ";" ++ show x ++ "H")
 
 writeat :: Pos -> String -> IO()
 writeat p xs = do goto p 
@@ -53,7 +53,7 @@ display xs =  do writeat (3,2) "             "
 
 calc :: String -> IO()
 calc xs = do display xs 
-             c <- getCh
+             c <- getChar
              if elem c buttons then
                    process c xs
               else 
@@ -62,7 +62,7 @@ calc xs = do display xs
 
 process :: Char -> String -> IO()
 process c xs | elem c "qQ\ESC" = quit
-             | elem c "dD\BS\DEL" = delete xs
+             | elem c "dD\BS\DEL" = delete1 xs
              | elem c "=\n" = eval xs
              | elem c "cC" = clear
              | otherwise = press c xs
@@ -70,9 +70,9 @@ process c xs | elem c "qQ\ESC" = quit
 quit :: IO()
 quit = goto (1,14) 
 
-delete :: String -> IO()
-delete "" = calc""
-delete xs = calc (init xs)
+delete1 :: String -> IO()
+delete1 "" = calc""
+delete1 xs = calc (init xs)
 
 eval :: String -> IO()
 eval xs = case parse expr xs of 

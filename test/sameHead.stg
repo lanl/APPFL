@@ -21,4 +21,3 @@ list10 = CON(Cons five list8);
 
 --Test
 main = THUNK(eqList list5 list10);
-			             

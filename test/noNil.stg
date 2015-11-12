@@ -21,4 +21,3 @@ list10 = CON(Cons five list9);
 
 --Test
 main = THUNK(noNull list5 list10);
-			             

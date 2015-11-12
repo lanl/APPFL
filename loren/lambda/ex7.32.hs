@@ -285,7 +285,7 @@ checkEval :: Expr -> Bool
 checkEval (Var x) = False
 checkEval (Comb (Abs (Var x) y) z) = True
 checkEval (Abs x y) = checkEval y
-checkEval (Comb x y) = (checkEval x) && (checkEval y)
+checkEval (Comb x y) = (checkEval x) || (checkEval y)
 
 --BEGINNNNNN Applicative Order Evaluator
 startEvalAppOrder :: Expr -> [Expr]
