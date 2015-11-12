@@ -1,0 +1,10 @@
+--eqBool :: Bool -> Bool -> Bool
+eqBool = FUN(x y -> case x of {
+       	       	    	 True -> case y of {
+			      	      True -> true;
+				      False -> false};
+                         False -> case y of {
+			      	      True -> false;
+				      False -> true}});
+
+main = THUNK(eqBool true true);

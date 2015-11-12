@@ -1,0 +1,10 @@
+--determines if two ints are relatively prime
+--relPrime :: Int -> Int -> Bool
+relPrime = FUN(x y -> case gcd x y of {
+	   	      	   one -> zero;
+			   z -> one});
+
+--test
+result = CON(I 0);
+output = THUNK(relPrime two four);
+main = THUNK(eqInt result output);

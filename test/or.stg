@@ -1,0 +1,11 @@
+--or :: Bool -> Bool -> Bool
+or = FUN(x y -> case x of {
+                         True -> case y of {
+	                	      True -> true;
+				      False -> true};
+                         False -> case y of {
+			      	      True -> true;
+				      False -> false}});
+
+--Test
+main = THUNK(or true false);

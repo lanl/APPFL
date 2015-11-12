@@ -1,0 +1,16 @@
+-- gcd1# :: Int# -> Int# -> Int#
+gcd1# = FUN(a# b# -> case b# of {
+       	      	      0 -> a#;
+		      x -> case imod# a# b# of {r# -> gcd1# b# r#}});
+
+-- int1 :: Int# -> Int
+int1 = FUN(i# -> let {i = CON(I i#)} in i);
+
+
+
+
+
+--main = THUNK(case gcd# 4 2 of {x# -> int x#}); segmentation fault
+--main = THUNK(gcd four two); segmentation fault
+-- imod# works as intended
+-- int1 words as intended

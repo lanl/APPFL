@@ -1,0 +1,15 @@
+--third element in a list
+--third :: List a -> a
+third = FUN(xs -> let {g = THUNK(tail xs);
+      	       	       h = THUNK(tail g);
+		       final = THUNK(head h)} in final);
+
+--list3: [3,2,1]
+list1 = CON(Cons one nil);
+list2 = CON(Cons two list1);
+list3 = CON(Cons three list2);
+
+--test 
+result = CON(I 1);
+output = THUNK(third list3);
+main = THUNK(eqInt result output);
