@@ -1,0 +1,22 @@
+--creates array of specified size with even numbers in the usual order
+--[0,2,4,6,8,...,2n-2,nil]
+--createEvenArray :: Int -> List Int -> List Int
+createEvenArray = FUN(n xs -> let {a = THUNK(eqInt n zero)} in case a of {
+	      	    	                                            True -> let {g = CON(Cons zero xs)} in g;
+								    False -> let {e = THUNK(multInt n two);
+                                                                                  b = CON(Cons e xs);
+								                  d = THUNK(subInt n one);
+									          c = THUNK(createEvenArray d b)} in c});
+
+--initializes array creation
+--cEArr :: Int -> List Int
+cEArr = FUN(n -> let {b = THUNK(subInt n one);
+                     a = THUNK(createEvenArray b nil)} in a);  
+
+list1 = CON(Cons four nil);
+list2 = CON(Cons two list1);
+list3 = CON(Cons zero list2);
+
+--Test
+output = THUNK(cEArr three);
+main = THUNK(eqList list3 output);
