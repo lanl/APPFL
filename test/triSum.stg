@@ -1,0 +1,15 @@
+--Constructs a list that will sum to a triangular number
+--[10,9,8,7,6,5,4,3,2,1]
+--triangularList :: Int -> List Int -> List Int 
+triangularList = FUN(n xs -> let {pred = THUNK(eqInt n zero)} in case pred of {
+								      True -> xs;
+								      False -> let {q = CON(Cons n xs);
+								      	       	    s = THUNK(subInt n one);
+								      	       	    r = THUNK(triangularList s q)} in r});
+
+--Test
+ten = CON(I 10);
+interm = THUNK(triangularList ten nil);
+result = THUNK(sum interm);
+output = CON(I 55);
+main = THUNK(eqInt output result); 
