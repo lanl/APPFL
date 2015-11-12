@@ -7,8 +7,6 @@
 #include <stdint.h>
 #include "options.h"
 
-#define DEBUGSTGAPPLY 1
-
 //------ stack and heap objects
 
 typedef enum {          // superfluous, for sanity checking
@@ -65,8 +63,14 @@ typedef struct {
 } PtrOrLiteral;
 
 // STG registers
+// %rbx, %rbp, %r10, %r13, %r14, %r15 callee saved
+// TODO:  make heap, stack pointers registers, test performance
+// TODO:  distinguish stgCurVal as stgCurPtr and stgCurUbx
+#ifdef __GNUC__
+extern register PtrOrLiteral stgCurVal asm("%r15");  // current/return value
+#else
 extern PtrOrLiteral stgCurVal;  // current/return value
-
+#endif
 /*
   payload -- see README
 */

@@ -22,7 +22,12 @@ void *stgHeap = NULL;
 void *stgHP = NULL;
 void *stgStack = NULL;
 void *stgSP = NULL;
-PtrOrLiteral stgCurVal;  // current value STG register
+
+#ifdef __GNUC__
+register PtrOrLiteral stgCurVal asm("%r15");  // current value STG register
+#else
+extern PtrOrLiteral stgCurVal;  // current/return value
+#endif
 
 const char *objTypeNames[] = {
   "OBJTYPE0BAD",
@@ -447,8 +452,9 @@ void checkStgObjRec(Obj *p) {
 
   assert(isHeap(p) || isSHO(p) && "hc: bad Obj location");
 
-  InfoTab it = *(getInfoPtr(p));
-  //assert((uintptr_t)(p->infoPtr) % 8 == 0 && "hc: bad infoPtr alignment");
+  InfoTab *itp = getInfoPtr(p);
+  assert((uintptr_t)itp % 8 == 0 && "hc: bad infoPtr alignment");
+  InfoTab it = *itp;
 
   for (i = 0; i != depth; i++) {
     if (p == stack[i]) {

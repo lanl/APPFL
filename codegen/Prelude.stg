@@ -185,7 +185,7 @@ append = FUN(l1 l2 ->
 
 
 -- apply a function to all elements of a list
--- map :: (a -> b) -> List a -> List b
+map :: (a -> b) -> List a -> List b
 map = FUN(f list ->
    case list of {
       Nil -> nil;
