@@ -42,6 +42,9 @@ _imin  = FUN(a# b# -> imin# a# b#);
 _imax  = FUN(a# b# -> imax# a# b#);
 _ineg  = FUN(a# -> ineg# a#);
 
+-- scrutinize an object to force evaluation, return arbitrary (specified) value
+-- seq :: a -> b -> b
+seq = FUN(x y -> case x of { z -> y });
 
 -------------- Constructor functions -----------------------
 
@@ -184,14 +187,14 @@ append = FUN(l1 l2 ->
                                in result });
 
 
+
 -- apply a function to all elements of a list
-map :: (a -> b) -> List a -> List b
+-- map :: (a -> b) -> List a -> List b
 map = FUN(f list ->
    case list of {
       Nil -> nil;
       Cons h t -> let { x = THUNK(f h); rec = THUNK(map f t); res = CON(Cons x rec) } in res
    });
-
 
 -- take the first element of a list
 -- head :: List a -> a
@@ -219,12 +222,12 @@ foldr = FUN(f sd list ->
       	Nil -> sd;
         Cons h t -> let { res = THUNK(foldr f sd t) } in f h res });
 
+
 -- calculate length of a list
 -- length :: List a -> Int
 length = FUN(xs -> 
        case _length xs 0 of {
          r# -> int r#});
-
 
 -- tail recursive, non-heap-growing helper for length
 _length = FUN(xs ac# -> 
@@ -241,6 +244,7 @@ forcelist = FUN(list ->
    case list of {
       Nil -> unit;
       Cons h t -> let { rec = THUNK(forcelist t) } in seq h rec });
+
 
 -- take n objects from a list, starting at the head
 -- take :: Int -> List a -> List a
@@ -348,15 +352,9 @@ sum = FUN(list -> foldl plusInt zero list);
 -- const :: a -> b -> a
 const = FUN(x y -> x);
 
-
 -- apply a function to an argument
 -- apply :: (a -> b) -> a -> b
 apply = FUN(f x -> f x);
-
-
--- scrutinize an object to force evaluation, return arbitrary (specified) value
--- seq :: a -> b -> b
-seq = FUN(x y -> case x of { z -> y });
 
 
 -- make an infinite list of a repeated element
@@ -368,7 +366,9 @@ repeat = FUN(x -> let { next = THUNK(repeat x) } in cons x next);
 -- replicate :: Int -> a -> List a
 replicate = FUN(n x -> let {list = THUNK(repeat x)} in take n list);
 
+data unboxed Bool# = False# | True#
 
+{-
 
 -- odd# :: Int# -> Bool
 odd# = FUN(i# -> case imod# i# 2 of {
@@ -377,7 +377,7 @@ odd# = FUN(i# -> case imod# i# 2 of {
 
 
 -- even# :: Int# -> Bool
-even# = FUN(i# -> case odd# i# of { x -> not x });
+-- even# = THUNK(compose not odd#);
 
 
 -- odd :: Int -> Bool
@@ -385,13 +385,12 @@ odd = FUN(i -> case i of { I i# -> odd# i# });
 
 
 -- even :: Int -> Bool
-even = THUNK(compose not odd);
-
+-- even = THUNK(compose not odd);
 
 -- not :: Bool -> Bool
 not = FUN(b -> case b of {
       	       False -> true;
 	       True  -> false});
 
-
-compose = FUN(f g x -> let { r = THUNK(g x); } in f g);
+compose = FUN(f g x -> let { r = THUNK(g x); } in f r);
+-}

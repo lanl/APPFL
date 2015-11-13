@@ -67,7 +67,7 @@ typedef struct {
 // TODO:  make heap, stack pointers registers, test performance
 // TODO:  distinguish stgCurVal as stgCurPtr and stgCurUbx
 #ifdef __GNUC__
-extern register PtrOrLiteral stgCurVal asm("%r15");  // current/return value
+register PtrOrLiteral stgCurVal asm("%r14");  // current/return value
 #else
 extern PtrOrLiteral stgCurVal;  // current/return value
 #endif

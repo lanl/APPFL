@@ -24,7 +24,7 @@ void *stgStack = NULL;
 void *stgSP = NULL;
 
 #ifdef __GNUC__
-register PtrOrLiteral stgCurVal asm("%r15");  // current value STG register
+// register PtrOrLiteral stgCurVal asm("%r15");  // current value STG register
 #else
 extern PtrOrLiteral stgCurVal;  // current/return value
 #endif

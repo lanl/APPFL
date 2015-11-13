@@ -32,6 +32,42 @@ void swapPtrs(void) {
   assert(stgHP - stgHeap <= before && "gc: increased heap size!\n");
 }
 
+PtrOrLiteral updatePtrByValue (PtrOrLiteral f) {
+  Obj *p = derefPoL(f);
+
+  if (isFrom(p)) {
+    if (isLSBset(p->infoPtr)) {
+      if (DEBUG) fprintf(stderr, "update forward %s\n", p->ident);
+      f.op = (Obj *) getInfoPtr(p);
+    } else {
+      int size = getObjSize(p);
+      if (DEBUG) {
+        fprintf(stderr, "copy %s %s from->to size=%d\n", objTypeNames[getObjType(p)], p->ident, size);
+      }
+
+      memcpy(freePtr, p, size);
+      if (EXTRA) assert(isLSBset((uintptr_t)freePtr) == 0 && "gc: bad alignment");
+
+      p->infoPtr = setLSB((uintptr_t)freePtr);
+      f.op = (Obj *) freePtr;
+      freePtr = (char *) freePtr + size;
+    }
+  } else if (isTo(p)) {
+    // do nothing
+  } else { // SHO
+    if (isFrom(f.op) && getObjType(f.op) == INDIRECT) {
+        if (DEBUG) fprintf(stderr, "fix INDIRECT to sho %s\n", f.op->ident);
+        f.op = p;
+    }
+  }
+  return f;
+}
+
+void updatePtr(PtrOrLiteral *f) {
+  *f = updatePtrByValue(*f);
+}
+
+/*
 void updatePtr(PtrOrLiteral *f) {
   Obj *p = derefPoL(*f);
 
@@ -61,6 +97,7 @@ void updatePtr(PtrOrLiteral *f) {
     }
   }
 }
+*/
 
 void processObj(Obj *p) {
   size_t i;
@@ -199,7 +236,7 @@ void gc(void) {
 
   //update stgCurVal
   if (EXTRA ) assert(isBoxed(stgCurVal) && "gc: unexpected unboxed arg in stgCurVal");
-  updatePtr(&stgCurVal);
+  stgCurVal = updatePtrByValue(stgCurVal);
 
   // process "to" space
   while (scanPtr < freePtr) {
