@@ -1,0 +1,19 @@
+--removes first occurrence of int from list
+--remove :: Int -> List Int -> List Int 
+--O(n) time
+remove = FUN(n xs -> case xs of {
+       	       	     	  Nil -> nil;
+			  Cons h1 t1 -> let {a = THUNK(eqInt h1 n)} in case a of {
+			       	     	       	 	     	       	    True -> t1;
+									    False -> let {b = THUNK(remove n t1);
+									    	     	  c = CON(Cons h1 b)} in c}});
+
+list0 = CON(Cons four nil);
+list1 = CON(Cons three list0);
+list2 = CON(Cons one list1);
+list3 = CON(Cons zero list2);
+
+list = THUNK(cNArr five);
+
+output = THUNK(remove two list);
+main = THUNK(eqList list3 output);
