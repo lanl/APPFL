@@ -391,9 +391,6 @@ compose = FUN(f g x -> let {r = THUNK(g x)} in f r);
 
 
 ------------------------- Loren's FUNctions ---------------------------------------------------- 
-
-
-
 -- divide boxed Ints
 -- divInt :: Int -> Int -> Int
 -- Integer Division
@@ -528,4 +525,5 @@ createOddArray = FUN(n xs -> let {a = THUNK(eqInt n zero)} in case a of {
 
 -- initializes array creation
 -- cArr :: Int -> List Int
-cArr = FUN(n -> let {a = THUNK(createOddArray n nil)} in a);  
+cOArr = FUN(n -> let {a = THUNK(createOddArray n nil)} in a);  
+ 
