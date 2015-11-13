@@ -510,3 +510,13 @@ index = FUN(n xs -> case xs of {
       	      	    	     		   	     	  True -> h1;
 						          False -> let {c = THUNK(subInt n one);
 							  	        d = THUNK(index c t1)} in d}});
+
+--removes first occurrence of int from list
+--remove :: Int -> List Int -> List Int 
+--O(n) time
+remove = FUN(n xs -> case xs of {
+       	       	     	  Nil -> nil;
+			  Cons h1 t1 -> let {a = THUNK(eqInt h1 n)} in case a of {
+			       	     	       	 	     	       	    True -> t1;
+									    False -> let {b = THUNK(remove n t1);
+									    	     	  c = CON(Cons h1 b)} in c}});
