@@ -10,6 +10,10 @@ module ADT (
   Polytype(..),
   Monotype(..),
   Con,
+  biIntMCon,    
+  biLongMCon,   
+  biFloatMCon,  
+  biDoubleMCon, 
   dataConName,
   tyConName,
   getDataCons,
@@ -54,9 +58,10 @@ import PPrint
                         |   \Chi \pi_1 ... \pi_n   Parameterized boxed data type
 
   Unboxed type  \nu     ::=  Int#
-                        |   Double#
-                        |   Bool#
-                        |   \Chi# \pi_1 ... \pi_n   Parameterized boxed data type
+                         |   Long#
+                         |   Float#
+                         |   Double#
+                         |   \Chi# \pi_1 ... \pi_n   Parameterized unboxed data type
 
 -}
 
@@ -110,7 +115,11 @@ isBoxed m = case m of
 boxMTypes :: [TyCon] -> [TyCon]
 boxMTypes tycons =
   let -- create assoc list for TyCon names -> TyCons
-      tycons' = makeIntTyCon "0" : tycons
+      tycons' = makeIntTyCon "0" : 
+                makeLongTyCon "0" : 
+                makeFloatTyCon "0" : 
+                makeDoubleTyCon "0" : 
+                tycons
       tmap = zip (map tyConName tycons') tycons'
       
       -- functions below set MCon boxity in TyCons
@@ -135,9 +144,20 @@ boxMTypes tycons =
 makeIntTyCon :: Con -> TyCon
 makeIntTyCon c = TyCon False "Int_h" [] [DataCon c []]
 
+makeLongTyCon :: Con -> TyCon
+makeLongTyCon c = TyCon False "Long_h" [] [DataCon c []]
+
+makeFloatTyCon :: Con -> TyCon
+makeFloatTyCon c = TyCon False "Float_h" [] [DataCon c []]
+
 makeDoubleTyCon :: Con -> TyCon
 makeDoubleTyCon c = TyCon False "Double_h" [] [DataCon c []]
 
+-- this is even more of a hack but at least it's localized
+biIntMCon    = MCon False "Int_h" []
+biLongMCon   = MCon False "Long_h" []
+biFloatMCon  = MCon False "Float_h" []
+biDoubleMCon = MCon False "Double_h" []
 
 -- helper field accessor functions --
 

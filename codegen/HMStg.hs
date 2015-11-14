@@ -102,8 +102,13 @@ hmstgdebug os0 =
 errTyp = error "typ not defined"
 
 getMono (Var v)  = freshMonoVar
-getMono (LitI _) = return $ MPrim UBInt
-getMono a        = error $ "HMStg.getMono: " ++ show a
+-- getMono (LitI _) = return $ MPrim UBInt
+getMono (LitI _) = return $ biIntMCon
+getMono (LitL _) = return $ biLongMCon
+getMono (LitF _) = return $ biFloatMCon
+getMono (LitD _) = return $ biDoubleMCon
+-- this only works for nullary user-defined unboxed type
+getMono (LitC c) = return $ MCon False c []
 
 class SetTyp a where
     setTyp :: Monotype -> a -> a
