@@ -52,11 +52,4 @@ Obj sho_stg_case_not_exhaustive = {
   .ident = "stg_case_not_exhaustive",
 };
 
-// BLACKHOLE = THUNK();
-DEFUN1(stg_error, self) {
-  fprintf(stderr, "fun_error (BLACKHOLE)!\n");
-  exit(0);
-  ENDFUN;
-}
-
 #endif

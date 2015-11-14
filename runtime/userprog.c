@@ -224,137 +224,150 @@ FnPtr fun_zip();
 InfoTab it__idiv __attribute__((aligned(8))) = 
   { .name                = "_idiv",
     // fvs []
-    .entryCode           = &fun__idiv,
+    .entryCode           = &stg_funcall,
     .objType             = FUN,
     .layoutInfo.payloadSize  = 0,
     .layoutInfo.boxedCount   = 0,
     .layoutInfo.unboxedCount = 0,
-    .funFields.arity     = 2,
+    .funFields.arity         = 2,
+    .funFields.trueEntryCode = fun__idiv,
   };
 InfoTab it__ieq __attribute__((aligned(8))) = 
   { .name                = "_ieq",
     // fvs []
-    .entryCode           = &fun__ieq,
+    .entryCode           = &stg_funcall,
     .objType             = FUN,
     .layoutInfo.payloadSize  = 0,
     .layoutInfo.boxedCount   = 0,
     .layoutInfo.unboxedCount = 0,
-    .funFields.arity     = 2,
+    .funFields.arity         = 2,
+    .funFields.trueEntryCode = fun__ieq,
   };
 InfoTab it__ige __attribute__((aligned(8))) = 
   { .name                = "_ige",
     // fvs []
-    .entryCode           = &fun__ige,
+    .entryCode           = &stg_funcall,
     .objType             = FUN,
     .layoutInfo.payloadSize  = 0,
     .layoutInfo.boxedCount   = 0,
     .layoutInfo.unboxedCount = 0,
-    .funFields.arity     = 2,
+    .funFields.arity         = 2,
+    .funFields.trueEntryCode = fun__ige,
   };
 InfoTab it__igt __attribute__((aligned(8))) = 
   { .name                = "_igt",
     // fvs []
-    .entryCode           = &fun__igt,
+    .entryCode           = &stg_funcall,
     .objType             = FUN,
     .layoutInfo.payloadSize  = 0,
     .layoutInfo.boxedCount   = 0,
     .layoutInfo.unboxedCount = 0,
-    .funFields.arity     = 2,
+    .funFields.arity         = 2,
+    .funFields.trueEntryCode = fun__igt,
   };
 InfoTab it__ile __attribute__((aligned(8))) = 
   { .name                = "_ile",
     // fvs []
-    .entryCode           = &fun__ile,
+    .entryCode           = &stg_funcall,
     .objType             = FUN,
     .layoutInfo.payloadSize  = 0,
     .layoutInfo.boxedCount   = 0,
     .layoutInfo.unboxedCount = 0,
-    .funFields.arity     = 2,
+    .funFields.arity         = 2,
+    .funFields.trueEntryCode = fun__ile,
   };
 InfoTab it__ilt __attribute__((aligned(8))) = 
   { .name                = "_ilt",
     // fvs []
-    .entryCode           = &fun__ilt,
+    .entryCode           = &stg_funcall,
     .objType             = FUN,
     .layoutInfo.payloadSize  = 0,
     .layoutInfo.boxedCount   = 0,
     .layoutInfo.unboxedCount = 0,
-    .funFields.arity     = 2,
+    .funFields.arity         = 2,
+    .funFields.trueEntryCode = fun__ilt,
   };
 InfoTab it__imax __attribute__((aligned(8))) = 
   { .name                = "_imax",
     // fvs []
-    .entryCode           = &fun__imax,
+    .entryCode           = &stg_funcall,
     .objType             = FUN,
     .layoutInfo.payloadSize  = 0,
     .layoutInfo.boxedCount   = 0,
     .layoutInfo.unboxedCount = 0,
-    .funFields.arity     = 2,
+    .funFields.arity         = 2,
+    .funFields.trueEntryCode = fun__imax,
   };
 InfoTab it__imin __attribute__((aligned(8))) = 
   { .name                = "_imin",
     // fvs []
-    .entryCode           = &fun__imin,
+    .entryCode           = &stg_funcall,
     .objType             = FUN,
     .layoutInfo.payloadSize  = 0,
     .layoutInfo.boxedCount   = 0,
     .layoutInfo.unboxedCount = 0,
-    .funFields.arity     = 2,
+    .funFields.arity         = 2,
+    .funFields.trueEntryCode = fun__imin,
   };
 InfoTab it__imod __attribute__((aligned(8))) = 
   { .name                = "_imod",
     // fvs []
-    .entryCode           = &fun__imod,
+    .entryCode           = &stg_funcall,
     .objType             = FUN,
     .layoutInfo.payloadSize  = 0,
     .layoutInfo.boxedCount   = 0,
     .layoutInfo.unboxedCount = 0,
-    .funFields.arity     = 2,
+    .funFields.arity         = 2,
+    .funFields.trueEntryCode = fun__imod,
   };
 InfoTab it__imul __attribute__((aligned(8))) = 
   { .name                = "_imul",
     // fvs []
-    .entryCode           = &fun__imul,
+    .entryCode           = &stg_funcall,
     .objType             = FUN,
     .layoutInfo.payloadSize  = 0,
     .layoutInfo.boxedCount   = 0,
     .layoutInfo.unboxedCount = 0,
-    .funFields.arity     = 2,
+    .funFields.arity         = 2,
+    .funFields.trueEntryCode = fun__imul,
   };
 InfoTab it__ine __attribute__((aligned(8))) = 
   { .name                = "_ine",
     // fvs []
-    .entryCode           = &fun__ine,
+    .entryCode           = &stg_funcall,
     .objType             = FUN,
     .layoutInfo.payloadSize  = 0,
     .layoutInfo.boxedCount   = 0,
     .layoutInfo.unboxedCount = 0,
-    .funFields.arity     = 2,
+    .funFields.arity         = 2,
+    .funFields.trueEntryCode = fun__ine,
   };
 InfoTab it__ineg __attribute__((aligned(8))) = 
   { .name                = "_ineg",
     // fvs []
-    .entryCode           = &fun__ineg,
+    .entryCode           = &stg_funcall,
     .objType             = FUN,
     .layoutInfo.payloadSize  = 0,
     .layoutInfo.boxedCount   = 0,
     .layoutInfo.unboxedCount = 0,
-    .funFields.arity     = 1,
+    .funFields.arity         = 1,
+    .funFields.trueEntryCode = fun__ineg,
   };
 InfoTab it_int __attribute__((aligned(8))) = 
   { .name                = "int",
     // fvs []
-    .entryCode           = &fun_int,
+    .entryCode           = &stg_funcall,
     .objType             = FUN,
     .layoutInfo.payloadSize  = 0,
     .layoutInfo.boxedCount   = 0,
     .layoutInfo.unboxedCount = 0,
-    .funFields.arity     = 1,
+    .funFields.arity         = 1,
+    .funFields.trueEntryCode = fun_int,
   };
 InfoTab it_i_0 __attribute__((aligned(8))) = 
   { .name                = "i_0",
     // fvs [("i_h",Int_h[U] )]
-    .entryCode           = &stg_constructorcall,
+    .entryCode           = &stg_concall,
     .objType             = CON,
     .layoutInfo.payloadSize  = 1,
     // argPerm = [0]
@@ -368,12 +381,13 @@ InfoTab it_i_0 __attribute__((aligned(8))) =
 InfoTab it__intPrimop __attribute__((aligned(8))) = 
   { .name                = "_intPrimop",
     // fvs []
-    .entryCode           = &fun__intPrimop,
+    .entryCode           = &stg_funcall,
     .objType             = FUN,
     .layoutInfo.payloadSize  = 0,
     .layoutInfo.boxedCount   = 0,
     .layoutInfo.unboxedCount = 0,
-    .funFields.arity     = 3,
+    .funFields.arity         = 3,
+    .funFields.trueEntryCode = fun__intPrimop,
   };
 InfoTab it_alts_17 __attribute__((aligned(8))) = 
   { .name                = "alts_17",
@@ -405,7 +419,7 @@ InfoTab it_alts_19 __attribute__((aligned(8))) =
 InfoTab it_false __attribute__((aligned(8))) = 
   { .name                = "false",
     // fvs []
-    .entryCode           = &stg_constructorcall,
+    .entryCode           = &stg_concall,
     .objType             = CON,
     .layoutInfo.payloadSize  = 0,
     // argPerm = []
@@ -419,7 +433,7 @@ InfoTab it_false __attribute__((aligned(8))) =
 InfoTab it_true __attribute__((aligned(8))) = 
   { .name                = "true",
     // fvs []
-    .entryCode           = &stg_constructorcall,
+    .entryCode           = &stg_concall,
     .objType             = CON,
     .layoutInfo.payloadSize  = 0,
     // argPerm = []
@@ -433,12 +447,13 @@ InfoTab it_true __attribute__((aligned(8))) =
 InfoTab it__intComp __attribute__((aligned(8))) = 
   { .name                = "_intComp",
     // fvs []
-    .entryCode           = &fun__intComp,
+    .entryCode           = &stg_funcall,
     .objType             = FUN,
     .layoutInfo.payloadSize  = 0,
     .layoutInfo.boxedCount   = 0,
     .layoutInfo.unboxedCount = 0,
-    .funFields.arity     = 3,
+    .funFields.arity         = 3,
+    .funFields.trueEntryCode = fun__intComp,
   };
 InfoTab it_alts_20 __attribute__((aligned(8))) = 
   { .name                = "alts_20",
@@ -461,32 +476,35 @@ InfoTab it_alts_21 __attribute__((aligned(8))) =
 InfoTab it__iplus __attribute__((aligned(8))) = 
   { .name                = "_iplus",
     // fvs []
-    .entryCode           = &fun__iplus,
+    .entryCode           = &stg_funcall,
     .objType             = FUN,
     .layoutInfo.payloadSize  = 0,
     .layoutInfo.boxedCount   = 0,
     .layoutInfo.unboxedCount = 0,
-    .funFields.arity     = 2,
+    .funFields.arity         = 2,
+    .funFields.trueEntryCode = fun__iplus,
   };
 InfoTab it__isub __attribute__((aligned(8))) = 
   { .name                = "_isub",
     // fvs []
-    .entryCode           = &fun__isub,
+    .entryCode           = &stg_funcall,
     .objType             = FUN,
     .layoutInfo.payloadSize  = 0,
     .layoutInfo.boxedCount   = 0,
     .layoutInfo.unboxedCount = 0,
-    .funFields.arity     = 2,
+    .funFields.arity         = 2,
+    .funFields.trueEntryCode = fun__isub,
   };
 InfoTab it__length __attribute__((aligned(8))) = 
   { .name                = "_length",
     // fvs []
-    .entryCode           = &fun__length,
+    .entryCode           = &stg_funcall,
     .objType             = FUN,
     .layoutInfo.payloadSize  = 0,
     .layoutInfo.boxedCount   = 0,
     .layoutInfo.unboxedCount = 0,
-    .funFields.arity     = 2,
+    .funFields.arity         = 2,
+    .funFields.trueEntryCode = fun__length,
   };
 InfoTab it_alts_35 __attribute__((aligned(8))) = 
   { .name                = "alts_35",
@@ -509,12 +527,13 @@ InfoTab it_alts_36 __attribute__((aligned(8))) =
 InfoTab it_all __attribute__((aligned(8))) = 
   { .name                = "all",
     // fvs []
-    .entryCode           = &fun_all,
+    .entryCode           = &stg_funcall,
     .objType             = FUN,
     .layoutInfo.payloadSize  = 0,
     .layoutInfo.boxedCount   = 0,
     .layoutInfo.unboxedCount = 0,
-    .funFields.arity     = 2,
+    .funFields.arity         = 2,
+    .funFields.trueEntryCode = fun_all,
   };
 InfoTab it_alts_51 __attribute__((aligned(8))) = 
   { .name                = "alts_51",
@@ -537,12 +556,13 @@ InfoTab it_alts_52 __attribute__((aligned(8))) =
 InfoTab it_any __attribute__((aligned(8))) = 
   { .name                = "any",
     // fvs []
-    .entryCode           = &fun_any,
+    .entryCode           = &stg_funcall,
     .objType             = FUN,
     .layoutInfo.payloadSize  = 0,
     .layoutInfo.boxedCount   = 0,
     .layoutInfo.unboxedCount = 0,
-    .funFields.arity     = 2,
+    .funFields.arity         = 2,
+    .funFields.trueEntryCode = fun_any,
   };
 InfoTab it_alts_53 __attribute__((aligned(8))) = 
   { .name                = "alts_53",
@@ -565,12 +585,13 @@ InfoTab it_alts_54 __attribute__((aligned(8))) =
 InfoTab it_append __attribute__((aligned(8))) = 
   { .name                = "append",
     // fvs []
-    .entryCode           = &fun_append,
+    .entryCode           = &stg_funcall,
     .objType             = FUN,
     .layoutInfo.payloadSize  = 0,
     .layoutInfo.boxedCount   = 0,
     .layoutInfo.unboxedCount = 0,
-    .funFields.arity     = 2,
+    .funFields.arity         = 2,
+    .funFields.trueEntryCode = fun_append,
   };
 InfoTab it_alts_28 __attribute__((aligned(8))) = 
   { .name                = "alts_28",
@@ -593,7 +614,7 @@ InfoTab it_rec_0 __attribute__((aligned(8))) =
 InfoTab it_result_3 __attribute__((aligned(8))) = 
   { .name                = "result_3",
     // fvs [("hd",t183),("rec_0",List[B] t183)]
-    .entryCode           = &stg_constructorcall,
+    .entryCode           = &stg_concall,
     .objType             = CON,
     .layoutInfo.payloadSize  = 2,
     // argPerm = [0,1]
@@ -607,22 +628,24 @@ InfoTab it_result_3 __attribute__((aligned(8))) =
 InfoTab it_apply __attribute__((aligned(8))) = 
   { .name                = "apply",
     // fvs []
-    .entryCode           = &fun_apply,
+    .entryCode           = &stg_funcall,
     .objType             = FUN,
     .layoutInfo.payloadSize  = 0,
     .layoutInfo.boxedCount   = 0,
     .layoutInfo.unboxedCount = 0,
-    .funFields.arity     = 2,
+    .funFields.arity         = 2,
+    .funFields.trueEntryCode = fun_apply,
   };
 InfoTab it_eqInt __attribute__((aligned(8))) = 
   { .name                = "eqInt",
     // fvs []
-    .entryCode           = &fun_eqInt,
+    .entryCode           = &stg_funcall,
     .objType             = FUN,
     .layoutInfo.payloadSize  = 0,
     .layoutInfo.boxedCount   = 0,
     .layoutInfo.unboxedCount = 0,
-    .funFields.arity     = 2,
+    .funFields.arity         = 2,
+    .funFields.trueEntryCode = fun_eqInt,
   };
 InfoTab it_alts_2 __attribute__((aligned(8))) = 
   { .name                = "alts_2",
@@ -654,7 +677,7 @@ InfoTab it_alts_4 __attribute__((aligned(8))) =
 InfoTab it_one __attribute__((aligned(8))) = 
   { .name                = "one",
     // fvs []
-    .entryCode           = &stg_constructorcall,
+    .entryCode           = &stg_concall,
     .objType             = CON,
     .layoutInfo.payloadSize  = 1,
     // argPerm = [0]
@@ -668,12 +691,13 @@ InfoTab it_one __attribute__((aligned(8))) =
 InfoTab it_subInt __attribute__((aligned(8))) = 
   { .name                = "subInt",
     // fvs []
-    .entryCode           = &fun_subInt,
+    .entryCode           = &stg_funcall,
     .objType             = FUN,
     .layoutInfo.payloadSize  = 0,
     .layoutInfo.boxedCount   = 0,
     .layoutInfo.unboxedCount = 0,
-    .funFields.arity     = 2,
+    .funFields.arity         = 2,
+    .funFields.trueEntryCode = fun_subInt,
   };
 InfoTab it_alts_11 __attribute__((aligned(8))) = 
   { .name                = "alts_11",
@@ -705,7 +729,7 @@ InfoTab it_alts_13 __attribute__((aligned(8))) =
 InfoTab it_result_2 __attribute__((aligned(8))) = 
   { .name                = "result_2",
     // fvs [("x_h",UBInt)]
-    .entryCode           = &stg_constructorcall,
+    .entryCode           = &stg_concall,
     .objType             = CON,
     .layoutInfo.payloadSize  = 1,
     // argPerm = [0]
@@ -719,7 +743,7 @@ InfoTab it_result_2 __attribute__((aligned(8))) =
 InfoTab it_zero __attribute__((aligned(8))) = 
   { .name                = "zero",
     // fvs []
-    .entryCode           = &stg_constructorcall,
+    .entryCode           = &stg_concall,
     .objType             = CON,
     .layoutInfo.payloadSize  = 1,
     // argPerm = [0]
@@ -733,12 +757,13 @@ InfoTab it_zero __attribute__((aligned(8))) =
 InfoTab it_createArray __attribute__((aligned(8))) = 
   { .name                = "createArray",
     // fvs []
-    .entryCode           = &fun_createArray,
+    .entryCode           = &stg_funcall,
     .objType             = FUN,
     .layoutInfo.payloadSize  = 0,
     .layoutInfo.boxedCount   = 0,
     .layoutInfo.unboxedCount = 0,
-    .funFields.arity     = 2,
+    .funFields.arity         = 2,
+    .funFields.trueEntryCode = fun_createArray,
   };
 InfoTab it_a_6 __attribute__((aligned(8))) = 
   { .name                = "a_6",
@@ -761,7 +786,7 @@ InfoTab it_alts_73 __attribute__((aligned(8))) =
 InfoTab it_b_5 __attribute__((aligned(8))) = 
   { .name                = "b_5",
     // fvs [("xs",List[B] Int[B] )]
-    .entryCode           = &stg_constructorcall,
+    .entryCode           = &stg_concall,
     .objType             = CON,
     .layoutInfo.payloadSize  = 2,
     // argPerm = [0,1]
@@ -793,7 +818,7 @@ InfoTab it_c_4 __attribute__((aligned(8))) =
 InfoTab it_nil __attribute__((aligned(8))) = 
   { .name                = "nil",
     // fvs []
-    .entryCode           = &stg_constructorcall,
+    .entryCode           = &stg_concall,
     .objType             = CON,
     .layoutInfo.payloadSize  = 0,
     // argPerm = []
@@ -807,12 +832,13 @@ InfoTab it_nil __attribute__((aligned(8))) =
 InfoTab it_cArr __attribute__((aligned(8))) = 
   { .name                = "cArr",
     // fvs []
-    .entryCode           = &fun_cArr,
+    .entryCode           = &stg_funcall,
     .objType             = FUN,
     .layoutInfo.payloadSize  = 0,
     .layoutInfo.boxedCount   = 0,
     .layoutInfo.unboxedCount = 0,
-    .funFields.arity     = 1,
+    .funFields.arity         = 1,
+    .funFields.trueEntryCode = fun_cArr,
   };
 InfoTab it_a_7 __attribute__((aligned(8))) = 
   { .name                = "a_7",
@@ -826,12 +852,13 @@ InfoTab it_a_7 __attribute__((aligned(8))) =
 InfoTab it_multInt __attribute__((aligned(8))) = 
   { .name                = "multInt",
     // fvs []
-    .entryCode           = &fun_multInt,
+    .entryCode           = &stg_funcall,
     .objType             = FUN,
     .layoutInfo.payloadSize  = 0,
     .layoutInfo.boxedCount   = 0,
     .layoutInfo.unboxedCount = 0,
-    .funFields.arity     = 2,
+    .funFields.arity         = 2,
+    .funFields.trueEntryCode = fun_multInt,
   };
 InfoTab it_alts_5 __attribute__((aligned(8))) = 
   { .name                = "alts_5",
@@ -863,7 +890,7 @@ InfoTab it_alts_7 __attribute__((aligned(8))) =
 InfoTab it_result_0 __attribute__((aligned(8))) = 
   { .name                = "result_0",
     // fvs [("x_h",UBInt)]
-    .entryCode           = &stg_constructorcall,
+    .entryCode           = &stg_concall,
     .objType             = CON,
     .layoutInfo.payloadSize  = 1,
     // argPerm = [0]
@@ -877,7 +904,7 @@ InfoTab it_result_0 __attribute__((aligned(8))) =
 InfoTab it_two __attribute__((aligned(8))) = 
   { .name                = "two",
     // fvs []
-    .entryCode           = &stg_constructorcall,
+    .entryCode           = &stg_concall,
     .objType             = CON,
     .layoutInfo.payloadSize  = 1,
     // argPerm = [0]
@@ -891,12 +918,13 @@ InfoTab it_two __attribute__((aligned(8))) =
 InfoTab it_createEvenArray __attribute__((aligned(8))) = 
   { .name                = "createEvenArray",
     // fvs []
-    .entryCode           = &fun_createEvenArray,
+    .entryCode           = &stg_funcall,
     .objType             = FUN,
     .layoutInfo.payloadSize  = 0,
     .layoutInfo.boxedCount   = 0,
     .layoutInfo.unboxedCount = 0,
-    .funFields.arity     = 2,
+    .funFields.arity         = 2,
+    .funFields.trueEntryCode = fun_createEvenArray,
   };
 InfoTab it_a_10 __attribute__((aligned(8))) = 
   { .name                = "a_10",
@@ -919,7 +947,7 @@ InfoTab it_alts_75 __attribute__((aligned(8))) =
 InfoTab it_g_0 __attribute__((aligned(8))) = 
   { .name                = "g_0",
     // fvs [("xs",List[B] Int[B] )]
-    .entryCode           = &stg_constructorcall,
+    .entryCode           = &stg_concall,
     .objType             = CON,
     .layoutInfo.payloadSize  = 2,
     // argPerm = [0,1]
@@ -942,7 +970,7 @@ InfoTab it_e_2 __attribute__((aligned(8))) =
 InfoTab it_b_7 __attribute__((aligned(8))) = 
   { .name                = "b_7",
     // fvs [("e_2",Int[B] ),("xs",List[B] Int[B] )]
-    .entryCode           = &stg_constructorcall,
+    .entryCode           = &stg_concall,
     .objType             = CON,
     .layoutInfo.payloadSize  = 2,
     // argPerm = [0,1]
@@ -974,12 +1002,13 @@ InfoTab it_c_6 __attribute__((aligned(8))) =
 InfoTab it_cEArr __attribute__((aligned(8))) = 
   { .name                = "cEArr",
     // fvs []
-    .entryCode           = &fun_cEArr,
+    .entryCode           = &stg_funcall,
     .objType             = FUN,
     .layoutInfo.payloadSize  = 0,
     .layoutInfo.boxedCount   = 0,
     .layoutInfo.unboxedCount = 0,
-    .funFields.arity     = 1,
+    .funFields.arity         = 1,
+    .funFields.trueEntryCode = fun_cEArr,
   };
 InfoTab it_b_8 __attribute__((aligned(8))) = 
   { .name                = "b_8",
@@ -1002,12 +1031,13 @@ InfoTab it_a_11 __attribute__((aligned(8))) =
 InfoTab it_plusInt __attribute__((aligned(8))) = 
   { .name                = "plusInt",
     // fvs []
-    .entryCode           = &fun_plusInt,
+    .entryCode           = &stg_funcall,
     .objType             = FUN,
     .layoutInfo.payloadSize  = 0,
     .layoutInfo.boxedCount   = 0,
     .layoutInfo.unboxedCount = 0,
-    .funFields.arity     = 2,
+    .funFields.arity         = 2,
+    .funFields.trueEntryCode = fun_plusInt,
   };
 InfoTab it_alts_8 __attribute__((aligned(8))) = 
   { .name                = "alts_8",
@@ -1039,7 +1069,7 @@ InfoTab it_alts_10 __attribute__((aligned(8))) =
 InfoTab it_result_1 __attribute__((aligned(8))) = 
   { .name                = "result_1",
     // fvs [("x_h",UBInt)]
-    .entryCode           = &stg_constructorcall,
+    .entryCode           = &stg_concall,
     .objType             = CON,
     .layoutInfo.payloadSize  = 1,
     // argPerm = [0]
@@ -1053,12 +1083,13 @@ InfoTab it_result_1 __attribute__((aligned(8))) =
 InfoTab it_createEvenBackArray __attribute__((aligned(8))) = 
   { .name                = "createEvenBackArray",
     // fvs []
-    .entryCode           = &fun_createEvenBackArray,
+    .entryCode           = &stg_funcall,
     .objType             = FUN,
     .layoutInfo.payloadSize  = 0,
     .layoutInfo.boxedCount   = 0,
     .layoutInfo.unboxedCount = 0,
-    .funFields.arity     = 3,
+    .funFields.arity         = 3,
+    .funFields.trueEntryCode = fun_createEvenBackArray,
   };
 InfoTab it_a_12 __attribute__((aligned(8))) = 
   { .name                = "a_12",
@@ -1081,7 +1112,7 @@ InfoTab it_alts_76 __attribute__((aligned(8))) =
 InfoTab it_b_9 __attribute__((aligned(8))) = 
   { .name                = "b_9",
     // fvs [("m",Int[B] ),("xs",List[B] Int[B] )]
-    .entryCode           = &stg_constructorcall,
+    .entryCode           = &stg_concall,
     .objType             = CON,
     .layoutInfo.payloadSize  = 2,
     // argPerm = [0,1]
@@ -1122,12 +1153,13 @@ InfoTab it_c_7 __attribute__((aligned(8))) =
 InfoTab it_cEBArr __attribute__((aligned(8))) = 
   { .name                = "cEBArr",
     // fvs []
-    .entryCode           = &fun_cEBArr,
+    .entryCode           = &stg_funcall,
     .objType             = FUN,
     .layoutInfo.payloadSize  = 0,
     .layoutInfo.boxedCount   = 0,
     .layoutInfo.unboxedCount = 0,
-    .funFields.arity     = 1,
+    .funFields.arity         = 1,
+    .funFields.trueEntryCode = fun_cEBArr,
   };
 InfoTab it_a_13 __attribute__((aligned(8))) = 
   { .name                = "a_13",
@@ -1141,12 +1173,13 @@ InfoTab it_a_13 __attribute__((aligned(8))) =
 InfoTab it_createNormArray __attribute__((aligned(8))) = 
   { .name                = "createNormArray",
     // fvs []
-    .entryCode           = &fun_createNormArray,
+    .entryCode           = &stg_funcall,
     .objType             = FUN,
     .layoutInfo.payloadSize  = 0,
     .layoutInfo.boxedCount   = 0,
     .layoutInfo.unboxedCount = 0,
-    .funFields.arity     = 2,
+    .funFields.arity         = 2,
+    .funFields.trueEntryCode = fun_createNormArray,
   };
 InfoTab it_a_0 __attribute__((aligned(8))) = 
   { .name                = "a_0",
@@ -1169,7 +1202,7 @@ InfoTab it_alts_63 __attribute__((aligned(8))) =
 InfoTab it_b_0 __attribute__((aligned(8))) = 
   { .name                = "b_0",
     // fvs [("n",Int[B] ),("xs",List[B] Int[B] )]
-    .entryCode           = &stg_constructorcall,
+    .entryCode           = &stg_concall,
     .objType             = CON,
     .layoutInfo.payloadSize  = 2,
     // argPerm = [0,1]
@@ -1183,7 +1216,7 @@ InfoTab it_b_0 __attribute__((aligned(8))) =
 InfoTab it_b_1 __attribute__((aligned(8))) = 
   { .name                = "b_1",
     // fvs [("n",Int[B] ),("xs",List[B] Int[B] )]
-    .entryCode           = &stg_constructorcall,
+    .entryCode           = &stg_concall,
     .objType             = CON,
     .layoutInfo.payloadSize  = 2,
     // argPerm = [0,1]
@@ -1215,12 +1248,13 @@ InfoTab it_c_0 __attribute__((aligned(8))) =
 InfoTab it_cNArr __attribute__((aligned(8))) = 
   { .name                = "cNArr",
     // fvs []
-    .entryCode           = &fun_cNArr,
+    .entryCode           = &stg_funcall,
     .objType             = FUN,
     .layoutInfo.payloadSize  = 0,
     .layoutInfo.boxedCount   = 0,
     .layoutInfo.unboxedCount = 0,
-    .funFields.arity     = 1,
+    .funFields.arity         = 1,
+    .funFields.trueEntryCode = fun_cNArr,
   };
 InfoTab it_b_2 __attribute__((aligned(8))) = 
   { .name                = "b_2",
@@ -1243,12 +1277,13 @@ InfoTab it_a_1 __attribute__((aligned(8))) =
 InfoTab it_createNormBackArray __attribute__((aligned(8))) = 
   { .name                = "createNormBackArray",
     // fvs []
-    .entryCode           = &fun_createNormBackArray,
+    .entryCode           = &stg_funcall,
     .objType             = FUN,
     .layoutInfo.payloadSize  = 0,
     .layoutInfo.boxedCount   = 0,
     .layoutInfo.unboxedCount = 0,
-    .funFields.arity     = 3,
+    .funFields.arity         = 3,
+    .funFields.trueEntryCode = fun_createNormBackArray,
   };
 InfoTab it_a_4 __attribute__((aligned(8))) = 
   { .name                = "a_4",
@@ -1271,7 +1306,7 @@ InfoTab it_alts_68 __attribute__((aligned(8))) =
 InfoTab it_b_4 __attribute__((aligned(8))) = 
   { .name                = "b_4",
     // fvs [("m",Int[B] ),("xs",List[B] Int[B] )]
-    .entryCode           = &stg_constructorcall,
+    .entryCode           = &stg_concall,
     .objType             = CON,
     .layoutInfo.payloadSize  = 2,
     // argPerm = [0,1]
@@ -1312,12 +1347,13 @@ InfoTab it_c_3 __attribute__((aligned(8))) =
 InfoTab it_cNBArr __attribute__((aligned(8))) = 
   { .name                = "cNBArr",
     // fvs []
-    .entryCode           = &fun_cNBArr,
+    .entryCode           = &stg_funcall,
     .objType             = FUN,
     .layoutInfo.payloadSize  = 0,
     .layoutInfo.boxedCount   = 0,
     .layoutInfo.unboxedCount = 0,
-    .funFields.arity     = 1,
+    .funFields.arity         = 1,
+    .funFields.trueEntryCode = fun_cNBArr,
   };
 InfoTab it_a_5 __attribute__((aligned(8))) = 
   { .name                = "a_5",
@@ -1331,12 +1367,13 @@ InfoTab it_a_5 __attribute__((aligned(8))) =
 InfoTab it_createOddArray __attribute__((aligned(8))) = 
   { .name                = "createOddArray",
     // fvs []
-    .entryCode           = &fun_createOddArray,
+    .entryCode           = &stg_funcall,
     .objType             = FUN,
     .layoutInfo.payloadSize  = 0,
     .layoutInfo.boxedCount   = 0,
     .layoutInfo.unboxedCount = 0,
-    .funFields.arity     = 2,
+    .funFields.arity         = 2,
+    .funFields.trueEntryCode = fun_createOddArray,
   };
 InfoTab it_a_14 __attribute__((aligned(8))) = 
   { .name                = "a_14",
@@ -1377,7 +1414,7 @@ InfoTab it_f_0 __attribute__((aligned(8))) =
 InfoTab it_b_10 __attribute__((aligned(8))) = 
   { .name                = "b_10",
     // fvs [("f_0",Int[B] ),("xs",List[B] Int[B] )]
-    .entryCode           = &stg_constructorcall,
+    .entryCode           = &stg_concall,
     .objType             = CON,
     .layoutInfo.payloadSize  = 2,
     // argPerm = [0,1]
@@ -1409,12 +1446,13 @@ InfoTab it_c_8 __attribute__((aligned(8))) =
 InfoTab it_cOArr __attribute__((aligned(8))) = 
   { .name                = "cOArr",
     // fvs []
-    .entryCode           = &fun_cOArr,
+    .entryCode           = &stg_funcall,
     .objType             = FUN,
     .layoutInfo.payloadSize  = 0,
     .layoutInfo.boxedCount   = 0,
     .layoutInfo.unboxedCount = 0,
-    .funFields.arity     = 1,
+    .funFields.arity         = 1,
+    .funFields.trueEntryCode = fun_cOArr,
   };
 InfoTab it_a_15 __attribute__((aligned(8))) = 
   { .name                = "a_15",
@@ -1428,12 +1466,13 @@ InfoTab it_a_15 __attribute__((aligned(8))) =
 InfoTab it_createOddBackArray __attribute__((aligned(8))) = 
   { .name                = "createOddBackArray",
     // fvs []
-    .entryCode           = &fun_createOddBackArray,
+    .entryCode           = &stg_funcall,
     .objType             = FUN,
     .layoutInfo.payloadSize  = 0,
     .layoutInfo.boxedCount   = 0,
     .layoutInfo.unboxedCount = 0,
-    .funFields.arity     = 3,
+    .funFields.arity         = 3,
+    .funFields.trueEntryCode = fun_createOddBackArray,
   };
 InfoTab it_a_8 __attribute__((aligned(8))) = 
   { .name                = "a_8",
@@ -1456,7 +1495,7 @@ InfoTab it_alts_74 __attribute__((aligned(8))) =
 InfoTab it_b_6 __attribute__((aligned(8))) = 
   { .name                = "b_6",
     // fvs [("m",Int[B] ),("xs",List[B] Int[B] )]
-    .entryCode           = &stg_constructorcall,
+    .entryCode           = &stg_concall,
     .objType             = CON,
     .layoutInfo.payloadSize  = 2,
     // argPerm = [0,1]
@@ -1497,12 +1536,13 @@ InfoTab it_c_5 __attribute__((aligned(8))) =
 InfoTab it_cOBArr __attribute__((aligned(8))) = 
   { .name                = "cOBArr",
     // fvs []
-    .entryCode           = &fun_cOBArr,
+    .entryCode           = &stg_funcall,
     .objType             = FUN,
     .layoutInfo.payloadSize  = 0,
     .layoutInfo.boxedCount   = 0,
     .layoutInfo.unboxedCount = 0,
-    .funFields.arity     = 1,
+    .funFields.arity         = 1,
+    .funFields.trueEntryCode = fun_cOBArr,
   };
 InfoTab it_a_9 __attribute__((aligned(8))) = 
   { .name                = "a_9",
@@ -1516,12 +1556,13 @@ InfoTab it_a_9 __attribute__((aligned(8))) =
 InfoTab it_compose __attribute__((aligned(8))) = 
   { .name                = "compose",
     // fvs []
-    .entryCode           = &fun_compose,
+    .entryCode           = &stg_funcall,
     .objType             = FUN,
     .layoutInfo.payloadSize  = 0,
     .layoutInfo.boxedCount   = 0,
     .layoutInfo.unboxedCount = 0,
-    .funFields.arity     = 3,
+    .funFields.arity         = 3,
+    .funFields.trueEntryCode = fun_compose,
   };
 InfoTab it_r_1 __attribute__((aligned(8))) = 
   { .name                = "r_1",
@@ -1535,17 +1576,18 @@ InfoTab it_r_1 __attribute__((aligned(8))) =
 InfoTab it_cons __attribute__((aligned(8))) = 
   { .name                = "cons",
     // fvs []
-    .entryCode           = &fun_cons,
+    .entryCode           = &stg_funcall,
     .objType             = FUN,
     .layoutInfo.payloadSize  = 0,
     .layoutInfo.boxedCount   = 0,
     .layoutInfo.unboxedCount = 0,
-    .funFields.arity     = 2,
+    .funFields.arity         = 2,
+    .funFields.trueEntryCode = fun_cons,
   };
 InfoTab it_r_0 __attribute__((aligned(8))) = 
   { .name                = "r_0",
     // fvs [("h",t58),("t",List[B] t58)]
-    .entryCode           = &stg_constructorcall,
+    .entryCode           = &stg_concall,
     .objType             = CON,
     .layoutInfo.payloadSize  = 2,
     // argPerm = [0,1]
@@ -1559,22 +1601,24 @@ InfoTab it_r_0 __attribute__((aligned(8))) =
 InfoTab it_const __attribute__((aligned(8))) = 
   { .name                = "const",
     // fvs []
-    .entryCode           = &fun_const,
+    .entryCode           = &stg_funcall,
     .objType             = FUN,
     .layoutInfo.payloadSize  = 0,
     .layoutInfo.boxedCount   = 0,
     .layoutInfo.unboxedCount = 0,
-    .funFields.arity     = 2,
+    .funFields.arity         = 2,
+    .funFields.trueEntryCode = fun_const,
   };
 InfoTab it_divInt __attribute__((aligned(8))) = 
   { .name                = "divInt",
     // fvs []
-    .entryCode           = &fun_divInt,
+    .entryCode           = &stg_funcall,
     .objType             = FUN,
     .layoutInfo.payloadSize  = 0,
     .layoutInfo.boxedCount   = 0,
     .layoutInfo.unboxedCount = 0,
-    .funFields.arity     = 2,
+    .funFields.arity         = 2,
+    .funFields.trueEntryCode = fun_divInt,
   };
 InfoTab it_alts_60 __attribute__((aligned(8))) = 
   { .name                = "alts_60",
@@ -1606,7 +1650,7 @@ InfoTab it_alts_62 __attribute__((aligned(8))) =
 InfoTab it_result_6 __attribute__((aligned(8))) = 
   { .name                = "result_6",
     // fvs [("x_h",UBInt)]
-    .entryCode           = &stg_constructorcall,
+    .entryCode           = &stg_concall,
     .objType             = CON,
     .layoutInfo.payloadSize  = 1,
     // argPerm = [0]
@@ -1620,12 +1664,13 @@ InfoTab it_result_6 __attribute__((aligned(8))) =
 InfoTab it_drop __attribute__((aligned(8))) = 
   { .name                = "drop",
     // fvs []
-    .entryCode           = &fun_drop,
+    .entryCode           = &stg_funcall,
     .objType             = FUN,
     .layoutInfo.payloadSize  = 0,
     .layoutInfo.boxedCount   = 0,
     .layoutInfo.unboxedCount = 0,
-    .funFields.arity     = 2,
+    .funFields.arity         = 2,
+    .funFields.trueEntryCode = fun_drop,
   };
 InfoTab it_alts_40 __attribute__((aligned(8))) = 
   { .name                = "alts_40",
@@ -1657,7 +1702,7 @@ InfoTab it_m_1 __attribute__((aligned(8))) =
 InfoTab it_eight __attribute__((aligned(8))) = 
   { .name                = "eight",
     // fvs []
-    .entryCode           = &stg_constructorcall,
+    .entryCode           = &stg_concall,
     .objType             = CON,
     .layoutInfo.payloadSize  = 1,
     // argPerm = [0]
@@ -1671,12 +1716,13 @@ InfoTab it_eight __attribute__((aligned(8))) =
 InfoTab it_eqList __attribute__((aligned(8))) = 
   { .name                = "eqList",
     // fvs []
-    .entryCode           = &fun_eqList,
+    .entryCode           = &stg_funcall,
     .objType             = FUN,
     .layoutInfo.payloadSize  = 0,
     .layoutInfo.boxedCount   = 0,
     .layoutInfo.unboxedCount = 0,
-    .funFields.arity     = 2,
+    .funFields.arity         = 2,
+    .funFields.trueEntryCode = fun_eqList,
   };
 InfoTab it_alts_69 __attribute__((aligned(8))) = 
   { .name                = "alts_69",
@@ -1735,7 +1781,7 @@ InfoTab it_final_0 __attribute__((aligned(8))) =
 InfoTab it_error  __attribute__((aligned(8)))= 
   { .name                = "error",
     // fvs []
-    .entryCode           = &stg_error,
+    .entryCode           = &stgBlackhole,
     .objType             = BLACKHOLE,
     .layoutInfo.payloadSize  = 0,
     .layoutInfo.boxedCount   = 0,
@@ -1744,12 +1790,13 @@ InfoTab it_error  __attribute__((aligned(8)))=
 InfoTab it_not __attribute__((aligned(8))) = 
   { .name                = "not",
     // fvs []
-    .entryCode           = &fun_not,
+    .entryCode           = &stg_funcall,
     .objType             = FUN,
     .layoutInfo.payloadSize  = 0,
     .layoutInfo.boxedCount   = 0,
     .layoutInfo.unboxedCount = 0,
-    .funFields.arity     = 1,
+    .funFields.arity         = 1,
+    .funFields.trueEntryCode = fun_not,
   };
 InfoTab it_alts_59 __attribute__((aligned(8))) = 
   { .name                = "alts_59",
@@ -1763,12 +1810,13 @@ InfoTab it_alts_59 __attribute__((aligned(8))) =
 InfoTab it_odd_h __attribute__((aligned(8))) = 
   { .name                = "odd_h",
     // fvs []
-    .entryCode           = &fun_odd_h,
+    .entryCode           = &stg_funcall,
     .objType             = FUN,
     .layoutInfo.payloadSize  = 0,
     .layoutInfo.boxedCount   = 0,
     .layoutInfo.unboxedCount = 0,
-    .funFields.arity     = 1,
+    .funFields.arity         = 1,
+    .funFields.trueEntryCode = fun_odd_h,
   };
 InfoTab it_alts_56 __attribute__((aligned(8))) = 
   { .name                = "alts_56",
@@ -1782,12 +1830,13 @@ InfoTab it_alts_56 __attribute__((aligned(8))) =
 InfoTab it_odd __attribute__((aligned(8))) = 
   { .name                = "odd",
     // fvs []
-    .entryCode           = &fun_odd,
+    .entryCode           = &stg_funcall,
     .objType             = FUN,
     .layoutInfo.payloadSize  = 0,
     .layoutInfo.boxedCount   = 0,
     .layoutInfo.unboxedCount = 0,
-    .funFields.arity     = 1,
+    .funFields.arity         = 1,
+    .funFields.trueEntryCode = fun_odd,
   };
 InfoTab it_alts_58 __attribute__((aligned(8))) = 
   { .name                = "alts_58",
@@ -1810,12 +1859,13 @@ InfoTab it_even __attribute__((aligned(8))) =
 InfoTab it_even_h __attribute__((aligned(8))) = 
   { .name                = "even_h",
     // fvs []
-    .entryCode           = &fun_even_h,
+    .entryCode           = &stg_funcall,
     .objType             = FUN,
     .layoutInfo.payloadSize  = 0,
     .layoutInfo.boxedCount   = 0,
     .layoutInfo.unboxedCount = 0,
-    .funFields.arity     = 1,
+    .funFields.arity         = 1,
+    .funFields.trueEntryCode = fun_even_h,
   };
 InfoTab it_alts_57 __attribute__((aligned(8))) = 
   { .name                = "alts_57",
@@ -1829,12 +1879,13 @@ InfoTab it_alts_57 __attribute__((aligned(8))) =
 InfoTab it_filter __attribute__((aligned(8))) = 
   { .name                = "filter",
     // fvs []
-    .entryCode           = &fun_filter,
+    .entryCode           = &stg_funcall,
     .objType             = FUN,
     .layoutInfo.payloadSize  = 0,
     .layoutInfo.boxedCount   = 0,
     .layoutInfo.unboxedCount = 0,
-    .funFields.arity     = 2,
+    .funFields.arity         = 2,
+    .funFields.trueEntryCode = fun_filter,
   };
 InfoTab it_alts_49 __attribute__((aligned(8))) = 
   { .name                = "alts_49",
@@ -1866,7 +1917,7 @@ InfoTab it_alts_50 __attribute__((aligned(8))) =
 InfoTab it_five __attribute__((aligned(8))) = 
   { .name                = "five",
     // fvs []
-    .entryCode           = &stg_constructorcall,
+    .entryCode           = &stg_concall,
     .objType             = CON,
     .layoutInfo.payloadSize  = 1,
     // argPerm = [0]
@@ -1880,12 +1931,13 @@ InfoTab it_five __attribute__((aligned(8))) =
 InfoTab it_foldl __attribute__((aligned(8))) = 
   { .name                = "foldl",
     // fvs []
-    .entryCode           = &fun_foldl,
+    .entryCode           = &stg_funcall,
     .objType             = FUN,
     .layoutInfo.payloadSize  = 0,
     .layoutInfo.boxedCount   = 0,
     .layoutInfo.unboxedCount = 0,
-    .funFields.arity     = 3,
+    .funFields.arity         = 3,
+    .funFields.trueEntryCode = fun_foldl,
   };
 InfoTab it_alts_32 __attribute__((aligned(8))) = 
   { .name                = "alts_32",
@@ -1908,12 +1960,13 @@ InfoTab it_newAcc_0 __attribute__((aligned(8))) =
 InfoTab it_foldr __attribute__((aligned(8))) = 
   { .name                = "foldr",
     // fvs []
-    .entryCode           = &fun_foldr,
+    .entryCode           = &stg_funcall,
     .objType             = FUN,
     .layoutInfo.payloadSize  = 0,
     .layoutInfo.boxedCount   = 0,
     .layoutInfo.unboxedCount = 0,
-    .funFields.arity     = 3,
+    .funFields.arity         = 3,
+    .funFields.trueEntryCode = fun_foldr,
   };
 InfoTab it_alts_33 __attribute__((aligned(8))) = 
   { .name                = "alts_33",
@@ -1936,12 +1989,13 @@ InfoTab it_res_1 __attribute__((aligned(8))) =
 InfoTab it_seq __attribute__((aligned(8))) = 
   { .name                = "seq",
     // fvs []
-    .entryCode           = &fun_seq,
+    .entryCode           = &stg_funcall,
     .objType             = FUN,
     .layoutInfo.payloadSize  = 0,
     .layoutInfo.boxedCount   = 0,
     .layoutInfo.unboxedCount = 0,
-    .funFields.arity     = 2,
+    .funFields.arity         = 2,
+    .funFields.trueEntryCode = fun_seq,
   };
 InfoTab it_alts_55 __attribute__((aligned(8))) = 
   { .name                = "alts_55",
@@ -1955,7 +2009,7 @@ InfoTab it_alts_55 __attribute__((aligned(8))) =
 InfoTab it_unit __attribute__((aligned(8))) = 
   { .name                = "unit",
     // fvs []
-    .entryCode           = &stg_constructorcall,
+    .entryCode           = &stg_concall,
     .objType             = CON,
     .layoutInfo.payloadSize  = 0,
     // argPerm = []
@@ -1969,12 +2023,13 @@ InfoTab it_unit __attribute__((aligned(8))) =
 InfoTab it_forcelist __attribute__((aligned(8))) = 
   { .name                = "forcelist",
     // fvs []
-    .entryCode           = &fun_forcelist,
+    .entryCode           = &stg_funcall,
     .objType             = FUN,
     .layoutInfo.payloadSize  = 0,
     .layoutInfo.boxedCount   = 0,
     .layoutInfo.unboxedCount = 0,
-    .funFields.arity     = 1,
+    .funFields.arity         = 1,
+    .funFields.trueEntryCode = fun_forcelist,
   };
 InfoTab it_alts_37 __attribute__((aligned(8))) = 
   { .name                = "alts_37",
@@ -1997,7 +2052,7 @@ InfoTab it_rec_2 __attribute__((aligned(8))) =
 InfoTab it_four __attribute__((aligned(8))) = 
   { .name                = "four",
     // fvs []
-    .entryCode           = &stg_constructorcall,
+    .entryCode           = &stg_concall,
     .objType             = CON,
     .layoutInfo.payloadSize  = 1,
     // argPerm = [0]
@@ -2011,12 +2066,13 @@ InfoTab it_four __attribute__((aligned(8))) =
 InfoTab it_fst __attribute__((aligned(8))) = 
   { .name                = "fst",
     // fvs []
-    .entryCode           = &fun_fst,
+    .entryCode           = &stg_funcall,
     .objType             = FUN,
     .layoutInfo.payloadSize  = 0,
     .layoutInfo.boxedCount   = 0,
     .layoutInfo.unboxedCount = 0,
-    .funFields.arity     = 1,
+    .funFields.arity         = 1,
+    .funFields.trueEntryCode = fun_fst,
   };
 InfoTab it_alts_0 __attribute__((aligned(8))) = 
   { .name                = "alts_0",
@@ -2030,12 +2086,13 @@ InfoTab it_alts_0 __attribute__((aligned(8))) =
 InfoTab it_gcd_h __attribute__((aligned(8))) = 
   { .name                = "gcd_h",
     // fvs []
-    .entryCode           = &fun_gcd_h,
+    .entryCode           = &stg_funcall,
     .objType             = FUN,
     .layoutInfo.payloadSize  = 0,
     .layoutInfo.boxedCount   = 0,
     .layoutInfo.unboxedCount = 0,
-    .funFields.arity     = 2,
+    .funFields.arity         = 2,
+    .funFields.trueEntryCode = fun_gcd_h,
   };
 InfoTab it_alts_23 __attribute__((aligned(8))) = 
   { .name                = "alts_23",
@@ -2058,12 +2115,13 @@ InfoTab it_alts_24 __attribute__((aligned(8))) =
 InfoTab it_gcd __attribute__((aligned(8))) = 
   { .name                = "gcd",
     // fvs []
-    .entryCode           = &fun_gcd,
+    .entryCode           = &stg_funcall,
     .objType             = FUN,
     .layoutInfo.payloadSize  = 0,
     .layoutInfo.boxedCount   = 0,
     .layoutInfo.unboxedCount = 0,
-    .funFields.arity     = 2,
+    .funFields.arity         = 2,
+    .funFields.trueEntryCode = fun_gcd,
   };
 InfoTab it_alts_25 __attribute__((aligned(8))) = 
   { .name                = "alts_25",
@@ -2095,12 +2153,13 @@ InfoTab it_alts_27 __attribute__((aligned(8))) =
 InfoTab it_head __attribute__((aligned(8))) = 
   { .name                = "head",
     // fvs []
-    .entryCode           = &fun_head,
+    .entryCode           = &stg_funcall,
     .objType             = FUN,
     .layoutInfo.payloadSize  = 0,
     .layoutInfo.boxedCount   = 0,
     .layoutInfo.unboxedCount = 0,
-    .funFields.arity     = 1,
+    .funFields.arity         = 1,
+    .funFields.trueEntryCode = fun_head,
   };
 InfoTab it_alts_30 __attribute__((aligned(8))) = 
   { .name                = "alts_30",
@@ -2123,12 +2182,13 @@ InfoTab it_alts_30_exhaust __attribute__((aligned(8))) =
 InfoTab it_index __attribute__((aligned(8))) = 
   { .name                = "index",
     // fvs []
-    .entryCode           = &fun_index,
+    .entryCode           = &stg_funcall,
     .objType             = FUN,
     .layoutInfo.payloadSize  = 0,
     .layoutInfo.boxedCount   = 0,
     .layoutInfo.unboxedCount = 0,
-    .funFields.arity     = 2,
+    .funFields.arity         = 2,
+    .funFields.trueEntryCode = fun_index,
   };
 InfoTab it_alts_64 __attribute__((aligned(8))) = 
   { .name                = "alts_64",
@@ -2187,12 +2247,13 @@ InfoTab it_alts_64_exhaust __attribute__((aligned(8))) =
 InfoTab it_null __attribute__((aligned(8))) = 
   { .name                = "null",
     // fvs []
-    .entryCode           = &fun_null,
+    .entryCode           = &stg_funcall,
     .objType             = FUN,
     .layoutInfo.payloadSize  = 0,
     .layoutInfo.boxedCount   = 0,
     .layoutInfo.unboxedCount = 0,
-    .funFields.arity     = 1,
+    .funFields.arity         = 1,
+    .funFields.trueEntryCode = fun_null,
   };
 InfoTab it_alts_46 __attribute__((aligned(8))) = 
   { .name                = "alts_46",
@@ -2206,12 +2267,13 @@ InfoTab it_alts_46 __attribute__((aligned(8))) =
 InfoTab it_init __attribute__((aligned(8))) = 
   { .name                = "init",
     // fvs []
-    .entryCode           = &fun_init,
+    .entryCode           = &stg_funcall,
     .objType             = FUN,
     .layoutInfo.payloadSize  = 0,
     .layoutInfo.boxedCount   = 0,
     .layoutInfo.unboxedCount = 0,
-    .funFields.arity     = 1,
+    .funFields.arity         = 1,
+    .funFields.trueEntryCode = fun_init,
   };
 InfoTab it_alts_47 __attribute__((aligned(8))) = 
   { .name                = "alts_47",
@@ -2252,12 +2314,13 @@ InfoTab it_intLE __attribute__((aligned(8))) =
 InfoTab it_length __attribute__((aligned(8))) = 
   { .name                = "length",
     // fvs []
-    .entryCode           = &fun_length,
+    .entryCode           = &stg_funcall,
     .objType             = FUN,
     .layoutInfo.payloadSize  = 0,
     .layoutInfo.boxedCount   = 0,
     .layoutInfo.unboxedCount = 0,
-    .funFields.arity     = 1,
+    .funFields.arity         = 1,
+    .funFields.trueEntryCode = fun_length,
   };
 InfoTab it_alts_34 __attribute__((aligned(8))) = 
   { .name                = "alts_34",
@@ -2271,12 +2334,13 @@ InfoTab it_alts_34 __attribute__((aligned(8))) =
 InfoTab it_map __attribute__((aligned(8))) = 
   { .name                = "map",
     // fvs []
-    .entryCode           = &fun_map,
+    .entryCode           = &stg_funcall,
     .objType             = FUN,
     .layoutInfo.payloadSize  = 0,
     .layoutInfo.boxedCount   = 0,
     .layoutInfo.unboxedCount = 0,
-    .funFields.arity     = 2,
+    .funFields.arity         = 2,
+    .funFields.trueEntryCode = fun_map,
   };
 InfoTab it_alts_29 __attribute__((aligned(8))) = 
   { .name                = "alts_29",
@@ -2308,7 +2372,7 @@ InfoTab it_x_0 __attribute__((aligned(8))) =
 InfoTab it_res_0 __attribute__((aligned(8))) = 
   { .name                = "res_0",
     // fvs [("rec_1",List[B] t718),("x_0",t718)]
-    .entryCode           = &stg_constructorcall,
+    .entryCode           = &stg_concall,
     .objType             = CON,
     .layoutInfo.payloadSize  = 2,
     // argPerm = [0,1]
@@ -2322,12 +2386,13 @@ InfoTab it_res_0 __attribute__((aligned(8))) =
 InfoTab it_minInt __attribute__((aligned(8))) = 
   { .name                = "minInt",
     // fvs []
-    .entryCode           = &fun_minInt,
+    .entryCode           = &stg_funcall,
     .objType             = FUN,
     .layoutInfo.payloadSize  = 0,
     .layoutInfo.boxedCount   = 0,
     .layoutInfo.unboxedCount = 0,
-    .funFields.arity     = 2,
+    .funFields.arity         = 2,
+    .funFields.trueEntryCode = fun_minInt,
   };
 InfoTab it_alts_22 __attribute__((aligned(8))) = 
   { .name                = "alts_22",
@@ -2341,12 +2406,13 @@ InfoTab it_alts_22 __attribute__((aligned(8))) =
 InfoTab it_modInt __attribute__((aligned(8))) = 
   { .name                = "modInt",
     // fvs []
-    .entryCode           = &fun_modInt,
+    .entryCode           = &stg_funcall,
     .objType             = FUN,
     .layoutInfo.payloadSize  = 0,
     .layoutInfo.boxedCount   = 0,
     .layoutInfo.unboxedCount = 0,
-    .funFields.arity     = 2,
+    .funFields.arity         = 2,
+    .funFields.trueEntryCode = fun_modInt,
   };
 InfoTab it_alts_14 __attribute__((aligned(8))) = 
   { .name                = "alts_14",
@@ -2378,7 +2444,7 @@ InfoTab it_alts_16 __attribute__((aligned(8))) =
 InfoTab it_nine __attribute__((aligned(8))) = 
   { .name                = "nine",
     // fvs []
-    .entryCode           = &stg_constructorcall,
+    .entryCode           = &stg_concall,
     .objType             = CON,
     .layoutInfo.payloadSize  = 1,
     // argPerm = [0]
@@ -2392,12 +2458,13 @@ InfoTab it_nine __attribute__((aligned(8))) =
 InfoTab it_remove __attribute__((aligned(8))) = 
   { .name                = "remove",
     // fvs []
-    .entryCode           = &fun_remove,
+    .entryCode           = &stg_funcall,
     .objType             = FUN,
     .layoutInfo.payloadSize  = 0,
     .layoutInfo.boxedCount   = 0,
     .layoutInfo.unboxedCount = 0,
-    .funFields.arity     = 2,
+    .funFields.arity         = 2,
+    .funFields.trueEntryCode = fun_remove,
   };
 InfoTab it_alts_66 __attribute__((aligned(8))) = 
   { .name                = "alts_66",
@@ -2438,7 +2505,7 @@ InfoTab it_b_3 __attribute__((aligned(8))) =
 InfoTab it_c_2 __attribute__((aligned(8))) = 
   { .name                = "c_2",
     // fvs [("b_3",List[B] Int[B] ),("h1",Int[B] )]
-    .entryCode           = &stg_constructorcall,
+    .entryCode           = &stg_concall,
     .objType             = CON,
     .layoutInfo.payloadSize  = 2,
     // argPerm = [0,1]
@@ -2452,12 +2519,13 @@ InfoTab it_c_2 __attribute__((aligned(8))) =
 InfoTab it_repeat __attribute__((aligned(8))) = 
   { .name                = "repeat",
     // fvs []
-    .entryCode           = &fun_repeat,
+    .entryCode           = &stg_funcall,
     .objType             = FUN,
     .layoutInfo.payloadSize  = 0,
     .layoutInfo.boxedCount   = 0,
     .layoutInfo.unboxedCount = 0,
-    .funFields.arity     = 1,
+    .funFields.arity         = 1,
+    .funFields.trueEntryCode = fun_repeat,
   };
 InfoTab it_next_0 __attribute__((aligned(8))) = 
   { .name                = "next_0",
@@ -2471,12 +2539,13 @@ InfoTab it_next_0 __attribute__((aligned(8))) =
 InfoTab it_take __attribute__((aligned(8))) = 
   { .name                = "take",
     // fvs []
-    .entryCode           = &fun_take,
+    .entryCode           = &stg_funcall,
     .objType             = FUN,
     .layoutInfo.payloadSize  = 0,
     .layoutInfo.boxedCount   = 0,
     .layoutInfo.unboxedCount = 0,
-    .funFields.arity     = 2,
+    .funFields.arity         = 2,
+    .funFields.trueEntryCode = fun_take,
   };
 InfoTab it_alts_38 __attribute__((aligned(8))) = 
   { .name                = "alts_38",
@@ -2517,7 +2586,7 @@ InfoTab it_rec_3 __attribute__((aligned(8))) =
 InfoTab it_result_4 __attribute__((aligned(8))) = 
   { .name                = "result_4",
     // fvs [("hd",t722),("rec_3",List[B] t722)]
-    .entryCode           = &stg_constructorcall,
+    .entryCode           = &stg_concall,
     .objType             = CON,
     .layoutInfo.payloadSize  = 2,
     // argPerm = [0,1]
@@ -2531,12 +2600,13 @@ InfoTab it_result_4 __attribute__((aligned(8))) =
 InfoTab it_replicate __attribute__((aligned(8))) = 
   { .name                = "replicate",
     // fvs []
-    .entryCode           = &fun_replicate,
+    .entryCode           = &stg_funcall,
     .objType             = FUN,
     .layoutInfo.payloadSize  = 0,
     .layoutInfo.boxedCount   = 0,
     .layoutInfo.unboxedCount = 0,
-    .funFields.arity     = 2,
+    .funFields.arity         = 2,
+    .funFields.trueEntryCode = fun_replicate,
   };
 InfoTab it_list_0 __attribute__((aligned(8))) = 
   { .name                = "list_0",
@@ -2550,7 +2620,7 @@ InfoTab it_list_0 __attribute__((aligned(8))) =
 InfoTab it_seven __attribute__((aligned(8))) = 
   { .name                = "seven",
     // fvs []
-    .entryCode           = &stg_constructorcall,
+    .entryCode           = &stg_concall,
     .objType             = CON,
     .layoutInfo.payloadSize  = 1,
     // argPerm = [0]
@@ -2564,7 +2634,7 @@ InfoTab it_seven __attribute__((aligned(8))) =
 InfoTab it_six __attribute__((aligned(8))) = 
   { .name                = "six",
     // fvs []
-    .entryCode           = &stg_constructorcall,
+    .entryCode           = &stg_concall,
     .objType             = CON,
     .layoutInfo.payloadSize  = 1,
     // argPerm = [0]
@@ -2578,12 +2648,13 @@ InfoTab it_six __attribute__((aligned(8))) =
 InfoTab it_snd __attribute__((aligned(8))) = 
   { .name                = "snd",
     // fvs []
-    .entryCode           = &fun_snd,
+    .entryCode           = &stg_funcall,
     .objType             = FUN,
     .layoutInfo.payloadSize  = 0,
     .layoutInfo.boxedCount   = 0,
     .layoutInfo.unboxedCount = 0,
-    .funFields.arity     = 1,
+    .funFields.arity         = 1,
+    .funFields.trueEntryCode = fun_snd,
   };
 InfoTab it_alts_1 __attribute__((aligned(8))) = 
   { .name                = "alts_1",
@@ -2597,12 +2668,13 @@ InfoTab it_alts_1 __attribute__((aligned(8))) =
 InfoTab it_strictList __attribute__((aligned(8))) = 
   { .name                = "strictList",
     // fvs []
-    .entryCode           = &fun_strictList,
+    .entryCode           = &stg_funcall,
     .objType             = FUN,
     .layoutInfo.payloadSize  = 0,
     .layoutInfo.boxedCount   = 0,
     .layoutInfo.unboxedCount = 0,
-    .funFields.arity     = 1,
+    .funFields.arity         = 1,
+    .funFields.trueEntryCode = fun_strictList,
   };
 InfoTab it_alts_44 __attribute__((aligned(8))) = 
   { .name                = "alts_44",
@@ -2625,22 +2697,24 @@ InfoTab it_alts_45 __attribute__((aligned(8))) =
 InfoTab it_sum __attribute__((aligned(8))) = 
   { .name                = "sum",
     // fvs []
-    .entryCode           = &fun_sum,
+    .entryCode           = &stg_funcall,
     .objType             = FUN,
     .layoutInfo.payloadSize  = 0,
     .layoutInfo.boxedCount   = 0,
     .layoutInfo.unboxedCount = 0,
-    .funFields.arity     = 1,
+    .funFields.arity         = 1,
+    .funFields.trueEntryCode = fun_sum,
   };
 InfoTab it_tail __attribute__((aligned(8))) = 
   { .name                = "tail",
     // fvs []
-    .entryCode           = &fun_tail,
+    .entryCode           = &stg_funcall,
     .objType             = FUN,
     .layoutInfo.payloadSize  = 0,
     .layoutInfo.boxedCount   = 0,
     .layoutInfo.unboxedCount = 0,
-    .funFields.arity     = 1,
+    .funFields.arity         = 1,
+    .funFields.trueEntryCode = fun_tail,
   };
 InfoTab it_alts_31 __attribute__((aligned(8))) = 
   { .name                = "alts_31",
@@ -2663,7 +2737,7 @@ InfoTab it_alts_31_exhaust __attribute__((aligned(8))) =
 InfoTab it_ten __attribute__((aligned(8))) = 
   { .name                = "ten",
     // fvs []
-    .entryCode           = &stg_constructorcall,
+    .entryCode           = &stg_concall,
     .objType             = CON,
     .layoutInfo.payloadSize  = 1,
     // argPerm = [0]
@@ -2677,7 +2751,7 @@ InfoTab it_ten __attribute__((aligned(8))) =
 InfoTab it_three __attribute__((aligned(8))) = 
   { .name                = "three",
     // fvs []
-    .entryCode           = &stg_constructorcall,
+    .entryCode           = &stg_concall,
     .objType             = CON,
     .layoutInfo.payloadSize  = 1,
     // argPerm = [0]
@@ -2691,17 +2765,18 @@ InfoTab it_three __attribute__((aligned(8))) =
 InfoTab it_tupl2 __attribute__((aligned(8))) = 
   { .name                = "tupl2",
     // fvs []
-    .entryCode           = &fun_tupl2,
+    .entryCode           = &stg_funcall,
     .objType             = FUN,
     .layoutInfo.payloadSize  = 0,
     .layoutInfo.boxedCount   = 0,
     .layoutInfo.unboxedCount = 0,
-    .funFields.arity     = 2,
+    .funFields.arity         = 2,
+    .funFields.trueEntryCode = fun_tupl2,
   };
 InfoTab it_t_0 __attribute__((aligned(8))) = 
   { .name                = "t_0",
     // fvs [("a",t67),("b",t68)]
-    .entryCode           = &stg_constructorcall,
+    .entryCode           = &stg_concall,
     .objType             = CON,
     .layoutInfo.payloadSize  = 2,
     // argPerm = [0,1]
@@ -2715,17 +2790,18 @@ InfoTab it_t_0 __attribute__((aligned(8))) =
 InfoTab it_tupl3 __attribute__((aligned(8))) = 
   { .name                = "tupl3",
     // fvs []
-    .entryCode           = &fun_tupl3,
+    .entryCode           = &stg_funcall,
     .objType             = FUN,
     .layoutInfo.payloadSize  = 0,
     .layoutInfo.boxedCount   = 0,
     .layoutInfo.unboxedCount = 0,
-    .funFields.arity     = 3,
+    .funFields.arity         = 3,
+    .funFields.trueEntryCode = fun_tupl3,
   };
 InfoTab it_t_1 __attribute__((aligned(8))) = 
   { .name                = "t_1",
     // fvs [("a",t85),("b",t86),("c",t87)]
-    .entryCode           = &stg_constructorcall,
+    .entryCode           = &stg_concall,
     .objType             = CON,
     .layoutInfo.payloadSize  = 3,
     // argPerm = [0,1,2]
@@ -2739,12 +2815,13 @@ InfoTab it_t_1 __attribute__((aligned(8))) =
 InfoTab it_zipWith __attribute__((aligned(8))) = 
   { .name                = "zipWith",
     // fvs []
-    .entryCode           = &fun_zipWith,
+    .entryCode           = &stg_funcall,
     .objType             = FUN,
     .layoutInfo.payloadSize  = 0,
     .layoutInfo.boxedCount   = 0,
     .layoutInfo.unboxedCount = 0,
-    .funFields.arity     = 3,
+    .funFields.arity         = 3,
+    .funFields.trueEntryCode = fun_zipWith,
   };
 InfoTab it_alts_42 __attribute__((aligned(8))) = 
   { .name                = "alts_42",
@@ -2785,7 +2862,7 @@ InfoTab it_newTail_0 __attribute__((aligned(8))) =
 InfoTab it_result_5 __attribute__((aligned(8))) = 
   { .name                = "result_5",
     // fvs [("newHead_0",t725),("newTail_0",List[B] t725)]
-    .entryCode           = &stg_constructorcall,
+    .entryCode           = &stg_concall,
     .objType             = CON,
     .layoutInfo.payloadSize  = 2,
     // argPerm = [0,1]

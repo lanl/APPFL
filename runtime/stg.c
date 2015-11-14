@@ -22,7 +22,12 @@ void *stgHeap = NULL;
 void *stgHP = NULL;
 void *stgStack = NULL;
 void *stgSP = NULL;
-PtrOrLiteral stgCurVal;  // current value STG register
+
+#ifndef __clang__
+// register PtrOrLiteral stgCurVal asm("%r15");  // current value STG register
+#else
+PtrOrLiteral stgCurVal;  // current/return value
+#endif
 
 const char *objTypeNames[] = {
   "OBJTYPE0BAD",
@@ -278,19 +283,18 @@ void showStgObjRecPretty(Obj *p) {
   if (type != BLACKHOLE &&
       type != INDIRECT &&
       type != it.objType) {
-	    if(!(type == PAP && it.objType == FUN)) {
-          fprintf(stderr, "mismatch in infotab and object type! %d != %d\n",
-        		type, it.objType);
-          exit(0);
-	    }
+    if (!(type == PAP && it.objType == FUN)) {
+      fprintf(stderr, "mismatch in infotab and object type! %d != %d\n",
+	      type, it.objType);
+      assert(false);
+    }
   }
   if (strcmp(it.name, p->ident)) {
-	  if(type != PAP) {
-        fprintf(stderr, "mismatch in infotab and object names \"%s\" != \"%s\"\n",
+    if(type != PAP) {
+      fprintf(stderr, "mismatch in infotab and object names \"%s\" != \"%s\"\n",
 	      it.name, p->ident);
-        exit(0);
-
-	  }
+      assert(false);
+    }
   }
 
   switch (type) {
@@ -448,8 +452,9 @@ void checkStgObjRec(Obj *p) {
 
   assert(isHeap(p) || isSHO(p) && "hc: bad Obj location");
 
-  InfoTab it = *(getInfoPtr(p));
-  //assert((uintptr_t)(p->infoPtr) % 8 == 0 && "hc: bad infoPtr alignment");
+  InfoTab *itp = getInfoPtr(p);
+  assert((uintptr_t)itp % 8 == 0 && "hc: bad infoPtr alignment");
+  InfoTab it = *itp;
 
   for (i = 0; i != depth; i++) {
     if (p == stack[i]) {
@@ -585,6 +590,7 @@ void showStgStack() {
 }
 
 void showStgHeap() {
+  return;
   fprintf(stderr,"\nSTG static objects: \n\n");
   for (int i = 0; i != stgStatObjCount; i++) {
     showStgObj(stgStatObj[i]);
