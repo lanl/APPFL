@@ -1,0 +1,25 @@
+--determines if two ints are relatively prime
+--relPrime :: Int -> Int -> Bool
+relPrime = FUN(x y -> let {a = THUNK(gcdNew x y);
+	   	      	   b = THUNK(eqInt a one)} in case b of {
+	   	      	                                   True -> true;
+			                                   False -> false});
+
+--test
+main = THUNK(relPrime seven six);
+
+--GCD of unboxed ints
+--gcdNew# :: Int# -> Int# -> Int#
+gcdNew# = FUN(x# y# -> case ilt# x# y# of {
+	  	            0 -> case y# of {
+			       	       0 -> x#;
+				       z# -> case imod# x# y# of {r# -> gcdNew# y# r#}};
+		            d# -> gcdNew# y# x#});
+
+--GCD of boxed ints
+--gcdNew :: Int -> Int -> Int
+gcdNew = FUN(x y -> case x of {
+       	       	    	 I x# -> case y of {
+			      	      I y# -> case gcdNew# x# y# of {
+				      	      	   r# -> int r#}}});
+

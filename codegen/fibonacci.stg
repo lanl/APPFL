@@ -1,0 +1,23 @@
+-- creates array of specified size with fibonacci numbers in reverse order
+-- [?,.....,3,2,1,1,0,nil]
+-- createFibArray :: Int -> Int -> Int ->  List Int -> List Int
+createBackFibArray = FUN(n i j xs -> let {a = THUNK(eqInt n zero)} in case a of {
+	      	    	                                             True -> xs;
+								     False -> let {e = THUNK(plusInt i j);
+                                                                                   b = CON(Cons e xs);
+								                   d = THUNK(subInt n one);
+									           c = THUNK(createBackFibArray d j e b)} in c});
+
+-- initializes array creation
+-- cBFArr :: Int -> List Int
+cBFArr = FUN(n -> let {b = THUNK(subInt n two);		      
+		      a = THUNK(createOddArray b list2)} in a);  
+
+list1 = CON(Cons zero nil);
+list2 = CON(Cons one list1);
+
+--Test
+list3 = CON(Cons one list2);
+result = THUNK(list3);
+output = THUNK(cBFArr three);
+main = THUNK(eqList result output);

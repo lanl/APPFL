@@ -1,0 +1,15 @@
+--compares two ints for >,=,or <
+--compareInt :: Int -> Int -> Int 
+--outputs zero if first number is less, two if first number is greater, and one if equal
+compareInt = FUN(x y -> case x of {
+	     	     	     I a# -> case y of {
+			       	     	  I b# -> case _ile a# b# of {
+					       	       0 -> two;
+						       x -> case _ige a# b# of {
+						       	     	0 -> zero;
+								x -> one}}}}); 
+
+--Test	 
+result = CON(I 1);
+output = THUNK(compareInt four four);
+main = THUNK(eqInt result output);
