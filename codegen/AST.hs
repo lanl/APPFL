@@ -11,7 +11,7 @@ module AST (
   Alts(..),
   Obj(..),
   Primop(..),
-  BuiltinType(..),
+--  BuiltinType(..),
   rmPrelude,
   primopTab,
   show,
@@ -22,66 +22,36 @@ module AST (
 
 import PPrint
 import Data.List (find, (\\))
+import Data.Int as Int (Int64)
 
 
-{-  grammar
+--  See Parser.hs for grammar
 
-<var> :: C syntax, more or less
-
-<con> :: start with uppercase
-
-<lit> ::= int[eger]
-
-<atom> ::= <lit> | <var>
-
-<prog> ::= <def> (";" <def>)*
-
-<obj> ::= "FUN" "(" <var>+ -> <expr> ")"
-       |  "PAP" "(" <var> <atom>+ ")"
-       |  "CON" "(" <con> <atom>* ")"
-       |  "THUNK" <expr>
-       |  "ERROR"  (aka BLACKHOLE)
-
-<expr> ::= <atom>
-       |  <var>"^"<arity> <atom>+
-       |  <primop> <atom>+
-       |  "let" "{" <defs> "}" "in" <expr>
-       |  "case" <expr> "of" "{" <alts> "}"
-
-<alts> ::= <alt> (";" <alt>)*
-
-<alt> ::= <con> <var>* "->" <expr>
-       |  <var> "->" <expr>
-
-<arity> ::= <pos> | "_"
-
--}
 
 -- not really the place for this, maybe need to factor
 -- the common types into a module
-data BuiltinType = UBInt
-                 | UBDouble             
-                   deriving (Eq,Show,Ord)           
+--data BuiltinType = UBInt
+--                 | UBDouble             
+--                   deriving (Eq,Show,Ord)           
 
 type Var = String
 type Con = String
 
 data Atom = Var  Var
           | LitI Int
-          | LitB Bool
+          | LitL Int.Int64
           | LitF Float
           | LitD Double
-          | LitC Char
+          | LitC Con
             deriving(Eq)
 
 instance Show Atom where
-    show (Var v) = v
+    show (Var v)  = v
     show (LitI i) = show i
-    show (LitB False) = "false#"
-    show (LitB True) = "true#"
+    show (LitL l) = show l
     show (LitF f) = show f ++ "(f)"
     show (LitD d) = show d ++ "(d)"
-    show (LitC c) = [c]
+    show (LitC d)  = d
 
 data Obj a = FUN   {omd :: a, vs :: [Var],   e :: Expr a   , oname :: String}
            | PAP   {omd :: a, f  :: Var,     as :: [Expr a], oname :: String}
@@ -218,9 +188,9 @@ stgPrimName p =
 instance Unparse Atom where
   unparse (Var v)  = text v
   unparse (LitI i) = int i
+  unparse (LitL l) = text $ show l
   unparse (LitF f) = float f
-  unparse x        = text $ show x -- not expecting other literals yet
-
+  unparse (LitC c)  = text c
 
 instance Unparse Primop where
   unparse = text.stgPrimName 
@@ -302,10 +272,10 @@ instance Unparse () where
   unparse () = empty
 
 
-instance PPrint BuiltinType where
-  pprint b = case b of
-    UBInt -> text "UBInt"
-    UBDouble -> text "UBDouble"
+--instance PPrint BuiltinType where
+--  pprint b = case b of
+--    UBInt -> text "UBInt"
+--    UBDouble -> text "UBDouble"
     
  
 
@@ -455,7 +425,9 @@ instance PPrint Atom where
   pprint a = case a of
     Var v -> text "Var" <> braces (text v)
     LitI i -> text "LitI" <> braces (int i)
+    LitL l -> text "LitL" <> braces (text $ show l)
     LitD d -> text "LitD" <> braces (double d)
+    LitC c -> text "LitC" <> braces (text c)
     a -> error $ "AST.pprint (Atom): not expecting Atom - " ++ (show a)
 
 instance PPrint Primop where

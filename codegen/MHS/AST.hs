@@ -137,11 +137,11 @@ unfoldEAp e =
 -- and the correct imports and aliases see prelude.mhs
 intCon = DDefn { mtyp = MCon True "Int" [],
                dcons = [DCon {dcon = "I#",
-                              mtyps = [MPrim UBInt],
+                              mtyps = [biIntMCon], --[MPrim UBInt],
                               cons = ["I#"]}] }
 dblCon = DDefn { mtyp = MCon True "Double" [],
                dcons = [DCon {dcon = "D#",
-                              mtyps = [MPrim UBDouble],
+                              mtyps = [biDoubleMCon], --[MPrim UBDouble],
                               cons = ["D#"]}] }
 
 isBoxedNum s = 

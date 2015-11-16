@@ -71,10 +71,13 @@ setBoxity cmap def =
      let dcons' = map mfun2 dcons
          mfun2 d@DCon{mtyps} = d{mtyps = map mfun mtyps}
          mfun (MCon _ c ms) = let ms' = map mfun ms
-                                  bxt = case Map.lookup c cmap of
-                                         Just (MCon b _ _) -> b
-                                         _ ->
-                                           error $ "cmap lookup failed for " ++ c
+                                  bxt = case c of
+                                          "Int_h" -> False
+                                          "Double_h" -> False
+                                          _ ->
+                                              case Map.lookup c cmap of
+                                                Just (MCon b _ _) -> b
+                                                _ -> error $ "cmap lookup failed for " ++ c
                               in MCon bxt c ms'
          mfun (MFun m1 m2) = MFun (mfun m1) (mfun m2)
          mfun m = m

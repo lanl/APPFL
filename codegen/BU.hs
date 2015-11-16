@@ -15,7 +15,7 @@ module BU (
   solve
 ) where
 
-import AST(BuiltinType(..)) -- for hack in unify
+--import AST(BuiltinType(..)) -- for hack in unify
 
 import ADT
 import Data.Set (Set)
@@ -77,8 +77,8 @@ bind v t | MPVar v == t    = idSubst
 unify :: Monotype -> Monotype -> Subst
 
 -- unify unboxed and poly -> error
-unify (MPVar p) (MPrim u) = let e = error $ "cannot unify unboxed type " ++ show u ++ " with polymorphic type variable" in seq e e
-unify (MPrim u) (MPVar p) = let e = error $ "cannot unify unboxed type " ++ show u ++ " with polymorphic type variable" in seq e e
+--unify (MPVar p) (MPrim u) = let e = error $ "cannot unify unboxed type " ++ show u ++ " with polymorphic type variable" in seq e e
+--unify (MPrim u) (MPVar p) = let e = error $ "cannot unify unboxed type " ++ show u ++ " with polymorphic type variable" in seq e e
 unify (MPVar p) c@(MCon False _ _) = let e = error $ "cannot unify unboxed type " ++ show c ++ " with polymorphic type variable" in seq e e
 unify c@(MCon False _ _) (MPVar p) = let e = error $ "cannot unify unboxed type " ++ show c ++ " with polymorphic type variable"in seq e e
 
@@ -97,8 +97,8 @@ unify m1@(MCon b1 c1 ms1) m2@(MCon b2 c2 ms2)
     | c1 /= c2 = error $ "unify constructor mismatch! " ++ show c1 ++ " " ++ show c2
     | otherwise = unifys ms1 ms2
 
-unify (MPrim UBInt) (MCon False "Int_h" []) = idSubst
-unify (MCon False "Int_h" []) (MPrim UBInt) = idSubst
+--unify (MPrim UBInt) (MCon False "Int_h" []) = idSubst
+--unify (MCon False "Int_h" []) (MPrim UBInt) = idSubst
 
 -- if they're equal there's nothing to do
 unify m1 m2 | m1 == m2 = idSubst
@@ -156,7 +156,7 @@ monoToPoly as m@(MVar v) | Set.member v as = MPVar v
                          | otherwise = m
 monoToPoly as (MFun a b) = MFun (monoToPoly as a) (monoToPoly as b)
 monoToPoly as (MCon b c ms) = MCon b c $ map (monoToPoly as) ms
-monoToPoly as m@MPrim{} = m
+--monoToPoly as m@MPrim{} = m
 monoToPoly as m@MPVar{} = m
 monoToPoly as m = error $
                   "HMStg.monoToPoly: m=" ++ show m

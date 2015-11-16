@@ -223,17 +223,15 @@ ptrOrLitSHO a =
     case a of
 #if USE_ARGTYPE 
       LitI i -> ".argType = INT, .i = " ++ show i
-      LitB b -> ".argType = BOOL, .b = " ++ (if b then "true" else "false")
-      LitD d -> ".argType = DOUBLE, .d = " ++ show d
+      LitL l -> ".argType = LONG, .d = " ++ show l
       LitF f -> ".argType = FLOAT, .f = " ++ show f
-      LitC c -> ".argType = CHAR, .c = " ++ show c
+      LitD d -> ".argType = DOUBLE, .d = " ++ show d
       Var v -> ".argType = HEAPOBJ, .op = &sho_" ++ v   -- these must be global
 #else
       LitI i -> ".i = " ++ show i
-      LitB b -> ".b = " ++ (if b then "true" else "false")
-      LitD d -> ".d = " ++ show d
+      LitL f -> ".l = " ++ show l
       LitF f -> ".f = " ++ show f
-      LitC c -> ".c = " ++ show c
+      LitD d -> ".d = " ++ show d
       Var v -> ".op = &sho_" ++ v   -- these must be global
 #endif
     ++ " }"

@@ -32,9 +32,11 @@ repa m ats = boxedFirst [(k, f k) | (k,_) <- ats]
                         Nothing -> error $ "HMStg.repa:  unbound variable " ++ 
                                            show v ++ " " ++ show m
                         Just m -> m
-                  LitI{} -> MPrim UBInt
-                  LitD{} -> MPrim UBDouble
-                  _      -> error "bad prim type"
+                  LitI{} -> biIntMCon
+                  LitL{} -> biLongMCon
+                  LitF{} -> biFloatMCon
+                  LitD{} -> biDoubleMCon
+                  LitC c -> MCon False c []
 
 -- partition (a,Monotype) pairs into boxed and unboxed, preserving order
 -- also return  perm such that old[i] = new[perm[i]]
@@ -133,9 +135,9 @@ typeFVsAlt t@(MCon b tc ms0) m a@ACon{amd, ac, avs, ae} =
         ae' = typeFVsCommon m' ae
     in a{ae = ae'}
 
-typeFVsAlt (MPrim _) m a@ACon{ac, avs, ae} =
-    let ae' = typeFVsCommon m ae
-    in a{ae = ae'}
+--typeFVsAlt (MPrim _) m a@ACon{ac, avs, ae} =
+--    let ae' = typeFVsCommon m ae
+--    in a{ae = ae'}
 
 typeFVsAlt t0 m a@ACon{amd, ac, avs, ae} =
     error $ "HMStg.typeFVsAlt: " ++ show t0 ++ " " ++ show a
