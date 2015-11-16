@@ -36,4 +36,4 @@ list11 = CON(Cons one list10);
 --Test
 result = THUNK(list11);
 output = THUNK(startSort list5);
-test = THUNK(eqList result output);
+main = THUNK(eqList result output);

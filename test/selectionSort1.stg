@@ -21,4 +21,4 @@ list5 = CON(Cons five list4);
 --Test
 result = THUNK(one);
 output = THUNK(startFindSmallest list5);
-test = THUNK(eqInt result output);
+main = THUNK(eqInt result output);

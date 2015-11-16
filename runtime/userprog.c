@@ -109,6 +109,11 @@ FnPtr fun_e_1();
 FnPtr fun_c_5();
 FnPtr fun_cOBArr();
 FnPtr fun_a_9();
+FnPtr fun_compareInt();
+FnPtr alts_78();
+FnPtr alts_79();
+FnPtr alts_80();
+FnPtr alts_81();
 FnPtr fun_compose();
 FnPtr fun_r_1();
 FnPtr fun_cons();
@@ -141,6 +146,10 @@ FnPtr fun_filter();
 FnPtr alts_49();
 FnPtr fun_tail_0();
 FnPtr alts_50();
+FnPtr fun_intLE();
+FnPtr fun_findSmallest();
+FnPtr alts_82();
+FnPtr alts_83();
 FnPtr fun_foldl();
 FnPtr alts_32();
 FnPtr fun_newAcc_0();
@@ -177,9 +186,9 @@ FnPtr fun_init();
 FnPtr alts_47();
 FnPtr alts_48();
 FnPtr fun_l_0();
-FnPtr fun_intLE();
 FnPtr fun_length();
 FnPtr alts_34();
+FnPtr fun_list0();
 FnPtr fun_map();
 FnPtr alts_29();
 FnPtr fun_rec_1();
@@ -190,6 +199,10 @@ FnPtr fun_modInt();
 FnPtr alts_14();
 FnPtr alts_15();
 FnPtr alts_16();
+FnPtr fun_startFindSmallest();
+FnPtr fun_q_0();
+FnPtr fun_r_2();
+FnPtr fun_output();
 FnPtr fun_remove();
 FnPtr alts_66();
 FnPtr fun_a_3();
@@ -204,6 +217,7 @@ FnPtr fun_m_0();
 FnPtr fun_rec_3();
 FnPtr fun_replicate();
 FnPtr fun_list_0();
+FnPtr fun_result();
 FnPtr fun_snd();
 FnPtr alts_1();
 FnPtr fun_strictList();
@@ -213,6 +227,7 @@ FnPtr fun_sum();
 FnPtr fun_tail();
 FnPtr alts_31();
 FnPtr fun_alts_31_exhaust();
+FnPtr fun_test();
 FnPtr fun_tupl2();
 FnPtr fun_tupl3();
 FnPtr fun_zipWith();
@@ -1553,6 +1568,53 @@ InfoTab it_a_9 __attribute__((aligned(8))) =
     .layoutInfo.boxedCount   = 1,
     .layoutInfo.unboxedCount = 0,
   };
+InfoTab it_compareInt __attribute__((aligned(8))) = 
+  { .name                = "compareInt",
+    // fvs []
+    .entryCode           = &stg_funcall,
+    .objType             = FUN,
+    .layoutInfo.payloadSize  = 0,
+    .layoutInfo.boxedCount   = 0,
+    .layoutInfo.unboxedCount = 0,
+    .funFields.arity         = 2,
+    .funFields.trueEntryCode = fun_compareInt,
+  };
+InfoTab it_alts_78 __attribute__((aligned(8))) = 
+  { .name                = "alts_78",
+    // fvs [("y",Int[B] )]
+    .entryCode           = &alts_78,
+    .objType             = CASECONT,
+    .layoutInfo.payloadSize = 1,
+    .layoutInfo.boxedCount   = 1,
+    .layoutInfo.unboxedCount = 0,
+  };
+InfoTab it_alts_79 __attribute__((aligned(8))) = 
+  { .name                = "alts_79",
+    // fvs [("a_h",Int_h[U] )]
+    .entryCode           = &alts_79,
+    .objType             = CASECONT,
+    .layoutInfo.payloadSize = 1,
+    .layoutInfo.boxedCount   = 0,
+    .layoutInfo.unboxedCount = 1,
+  };
+InfoTab it_alts_80 __attribute__((aligned(8))) = 
+  { .name                = "alts_80",
+    // fvs [("a_h",Int_h[U] ),("b_h",Int_h[U] )]
+    .entryCode           = &alts_80,
+    .objType             = CASECONT,
+    .layoutInfo.payloadSize = 2,
+    .layoutInfo.boxedCount   = 0,
+    .layoutInfo.unboxedCount = 2,
+  };
+InfoTab it_alts_81 __attribute__((aligned(8))) = 
+  { .name                = "alts_81",
+    // fvs []
+    .entryCode           = &alts_81,
+    .objType             = CASECONT,
+    .layoutInfo.payloadSize = 0,
+    .layoutInfo.boxedCount   = 0,
+    .layoutInfo.unboxedCount = 0,
+  };
 InfoTab it_compose __attribute__((aligned(8))) = 
   { .name                = "compose",
     // fvs []
@@ -1674,7 +1736,7 @@ InfoTab it_drop __attribute__((aligned(8))) =
   };
 InfoTab it_alts_40 __attribute__((aligned(8))) = 
   { .name                = "alts_40",
-    // fvs [("n",Int[B] ),("xs",List[B] t723)]
+    // fvs [("n",Int[B] ),("xs",List[B] t780)]
     .entryCode           = &alts_40,
     .objType             = CASECONT,
     .layoutInfo.payloadSize = 2,
@@ -1889,7 +1951,7 @@ InfoTab it_filter __attribute__((aligned(8))) =
   };
 InfoTab it_alts_49 __attribute__((aligned(8))) = 
   { .name                = "alts_49",
-    // fvs [("p",t745 -> Bool[B] )]
+    // fvs [("p",t804 -> Bool[B] )]
     .entryCode           = &alts_49,
     .objType             = CASECONT,
     .layoutInfo.payloadSize = 1,
@@ -1898,7 +1960,7 @@ InfoTab it_alts_49 __attribute__((aligned(8))) =
   };
 InfoTab it_tail_0 __attribute__((aligned(8))) = 
   { .name                = "tail_0",
-    // fvs [("p",t745 -> Bool[B] ),("t",List[B] t745)]
+    // fvs [("p",t804 -> Bool[B] ),("t",List[B] t804)]
     .entryCode           = &fun_tail_0,
     .objType             = THUNK,
     .layoutInfo.payloadSize = 3,
@@ -1907,11 +1969,49 @@ InfoTab it_tail_0 __attribute__((aligned(8))) =
   };
 InfoTab it_alts_50 __attribute__((aligned(8))) = 
   { .name                = "alts_50",
-    // fvs [("h",t745),("tail_0",List[B] t745)]
+    // fvs [("h",t804),("tail_0",List[B] t804)]
     .entryCode           = &alts_50,
     .objType             = CASECONT,
     .layoutInfo.payloadSize = 2,
     .layoutInfo.boxedCount   = 2,
+    .layoutInfo.unboxedCount = 0,
+  };
+InfoTab it_intLE __attribute__((aligned(8))) = 
+  { .name                = "intLE",
+    // fvs []
+    .entryCode           = &fun_intLE,
+    .objType             = THUNK,
+    .layoutInfo.payloadSize = 1,
+    .layoutInfo.boxedCount   = 0,
+    .layoutInfo.unboxedCount = 0,
+  };
+InfoTab it_findSmallest __attribute__((aligned(8))) = 
+  { .name                = "findSmallest",
+    // fvs []
+    .entryCode           = &stg_funcall,
+    .objType             = FUN,
+    .layoutInfo.payloadSize  = 0,
+    .layoutInfo.boxedCount   = 0,
+    .layoutInfo.unboxedCount = 0,
+    .funFields.arity         = 2,
+    .funFields.trueEntryCode = fun_findSmallest,
+  };
+InfoTab it_alts_82 __attribute__((aligned(8))) = 
+  { .name                = "alts_82",
+    // fvs [("n",Int[B] )]
+    .entryCode           = &alts_82,
+    .objType             = CASECONT,
+    .layoutInfo.payloadSize = 1,
+    .layoutInfo.boxedCount   = 1,
+    .layoutInfo.unboxedCount = 0,
+  };
+InfoTab it_alts_83 __attribute__((aligned(8))) = 
+  { .name                = "alts_83",
+    // fvs [("h1",Int[B] ),("n",Int[B] ),("t1",List[B] Int[B] )]
+    .entryCode           = &alts_83,
+    .objType             = CASECONT,
+    .layoutInfo.payloadSize = 3,
+    .layoutInfo.boxedCount   = 3,
     .layoutInfo.unboxedCount = 0,
   };
 InfoTab it_five __attribute__((aligned(8))) = 
@@ -2042,7 +2142,7 @@ InfoTab it_alts_37 __attribute__((aligned(8))) =
   };
 InfoTab it_rec_2 __attribute__((aligned(8))) = 
   { .name                = "rec_2",
-    // fvs [("t",List[B] t740)]
+    // fvs [("t",List[B] t799)]
     .entryCode           = &fun_rec_2,
     .objType             = THUNK,
     .layoutInfo.payloadSize = 2,
@@ -2172,7 +2272,7 @@ InfoTab it_alts_30 __attribute__((aligned(8))) =
   };
 InfoTab it_alts_30_exhaust __attribute__((aligned(8))) = 
   { .name                = "alts_30_exhaust",
-    // fvs [("x",List[B] t719)]
+    // fvs [("x",List[B] t776)]
     .entryCode           = &fun_alts_30_exhaust,
     .objType             = THUNK,
     .layoutInfo.payloadSize = 2,
@@ -2210,7 +2310,7 @@ InfoTab it_a_2 __attribute__((aligned(8))) =
   };
 InfoTab it_alts_65 __attribute__((aligned(8))) = 
   { .name                = "alts_65",
-    // fvs [("h1",t731),("n",Int[B] ),("t1",List[B] t731)]
+    // fvs [("h1",t788),("n",Int[B] ),("t1",List[B] t788)]
     .entryCode           = &alts_65,
     .objType             = CASECONT,
     .layoutInfo.payloadSize = 3,
@@ -2228,7 +2328,7 @@ InfoTab it_c_1 __attribute__((aligned(8))) =
   };
 InfoTab it_d_1 __attribute__((aligned(8))) = 
   { .name                = "d_1",
-    // fvs [("c_1",Int[B] ),("t1",List[B] t731)]
+    // fvs [("c_1",Int[B] ),("t1",List[B] t788)]
     .entryCode           = &fun_d_1,
     .objType             = THUNK,
     .layoutInfo.payloadSize = 3,
@@ -2237,7 +2337,7 @@ InfoTab it_d_1 __attribute__((aligned(8))) =
   };
 InfoTab it_alts_64_exhaust __attribute__((aligned(8))) = 
   { .name                = "alts_64_exhaust",
-    // fvs [("x",List[B] t731)]
+    // fvs [("x",List[B] t788)]
     .entryCode           = &fun_alts_64_exhaust,
     .objType             = THUNK,
     .layoutInfo.payloadSize = 2,
@@ -2286,7 +2386,7 @@ InfoTab it_alts_47 __attribute__((aligned(8))) =
   };
 InfoTab it_alts_48 __attribute__((aligned(8))) = 
   { .name                = "alts_48",
-    // fvs [("h",t744),("t",List[B] t744)]
+    // fvs [("h",t803),("t",List[B] t803)]
     .entryCode           = &alts_48,
     .objType             = CASECONT,
     .layoutInfo.payloadSize = 2,
@@ -2295,20 +2395,11 @@ InfoTab it_alts_48 __attribute__((aligned(8))) =
   };
 InfoTab it_l_0 __attribute__((aligned(8))) = 
   { .name                = "l_0",
-    // fvs [("t",List[B] t744)]
+    // fvs [("t",List[B] t803)]
     .entryCode           = &fun_l_0,
     .objType             = THUNK,
     .layoutInfo.payloadSize = 2,
     .layoutInfo.boxedCount   = 1,
-    .layoutInfo.unboxedCount = 0,
-  };
-InfoTab it_intLE __attribute__((aligned(8))) = 
-  { .name                = "intLE",
-    // fvs []
-    .entryCode           = &fun_intLE,
-    .objType             = THUNK,
-    .layoutInfo.payloadSize = 1,
-    .layoutInfo.boxedCount   = 0,
     .layoutInfo.unboxedCount = 0,
   };
 InfoTab it_length __attribute__((aligned(8))) = 
@@ -2331,6 +2422,99 @@ InfoTab it_alts_34 __attribute__((aligned(8))) =
     .layoutInfo.boxedCount   = 0,
     .layoutInfo.unboxedCount = 0,
   };
+InfoTab it_list0 __attribute__((aligned(8))) = 
+  { .name                = "list0",
+    // fvs []
+    .entryCode           = &fun_list0,
+    .objType             = THUNK,
+    .layoutInfo.payloadSize = 1,
+    .layoutInfo.boxedCount   = 0,
+    .layoutInfo.unboxedCount = 0,
+  };
+InfoTab it_list1 __attribute__((aligned(8))) = 
+  { .name                = "list1",
+    // fvs []
+    .entryCode           = &stg_concall,
+    .objType             = CON,
+    .layoutInfo.payloadSize  = 2,
+    // argPerm = [0,1]
+    .layoutInfo.boxedCount   = 2,
+    .layoutInfo.unboxedCount = 0,
+    .layoutInfo.permString   = "01",
+    .conFields.arity     = 2,
+    .conFields.tag       = 1,
+    .conFields.conName   = "Cons",
+  };
+InfoTab it_three __attribute__((aligned(8))) = 
+  { .name                = "three",
+    // fvs []
+    .entryCode           = &stg_concall,
+    .objType             = CON,
+    .layoutInfo.payloadSize  = 1,
+    // argPerm = [0]
+    .layoutInfo.boxedCount   = 0,
+    .layoutInfo.unboxedCount = 1,
+    .layoutInfo.permString   = "0",
+    .conFields.arity     = 1,
+    .conFields.tag       = 0,
+    .conFields.conName   = "I",
+  };
+InfoTab it_list2 __attribute__((aligned(8))) = 
+  { .name                = "list2",
+    // fvs []
+    .entryCode           = &stg_concall,
+    .objType             = CON,
+    .layoutInfo.payloadSize  = 2,
+    // argPerm = [0,1]
+    .layoutInfo.boxedCount   = 2,
+    .layoutInfo.unboxedCount = 0,
+    .layoutInfo.permString   = "01",
+    .conFields.arity     = 2,
+    .conFields.tag       = 1,
+    .conFields.conName   = "Cons",
+  };
+InfoTab it_list3 __attribute__((aligned(8))) = 
+  { .name                = "list3",
+    // fvs []
+    .entryCode           = &stg_concall,
+    .objType             = CON,
+    .layoutInfo.payloadSize  = 2,
+    // argPerm = [0,1]
+    .layoutInfo.boxedCount   = 2,
+    .layoutInfo.unboxedCount = 0,
+    .layoutInfo.permString   = "01",
+    .conFields.arity     = 2,
+    .conFields.tag       = 1,
+    .conFields.conName   = "Cons",
+  };
+InfoTab it_list4 __attribute__((aligned(8))) = 
+  { .name                = "list4",
+    // fvs []
+    .entryCode           = &stg_concall,
+    .objType             = CON,
+    .layoutInfo.payloadSize  = 2,
+    // argPerm = [0,1]
+    .layoutInfo.boxedCount   = 2,
+    .layoutInfo.unboxedCount = 0,
+    .layoutInfo.permString   = "01",
+    .conFields.arity     = 2,
+    .conFields.tag       = 1,
+    .conFields.conName   = "Cons",
+  };
+InfoTab it_list5 __attribute__((aligned(8))) = 
+  { .name                = "list5",
+    // fvs []
+    .entryCode           = &stg_concall,
+    .objType             = CON,
+    .layoutInfo.payloadSize  = 2,
+    // argPerm = [0,1]
+    .layoutInfo.boxedCount   = 2,
+    .layoutInfo.unboxedCount = 0,
+    .layoutInfo.permString   = "01",
+    .conFields.arity     = 2,
+    .conFields.tag       = 1,
+    .conFields.conName   = "Cons",
+  };
 InfoTab it_map __attribute__((aligned(8))) = 
   { .name                = "map",
     // fvs []
@@ -2344,7 +2528,7 @@ InfoTab it_map __attribute__((aligned(8))) =
   };
 InfoTab it_alts_29 __attribute__((aligned(8))) = 
   { .name                = "alts_29",
-    // fvs [("f",t196 -> t718)]
+    // fvs [("f",t196 -> t775)]
     .entryCode           = &alts_29,
     .objType             = CASECONT,
     .layoutInfo.payloadSize = 1,
@@ -2353,7 +2537,7 @@ InfoTab it_alts_29 __attribute__((aligned(8))) =
   };
 InfoTab it_rec_1 __attribute__((aligned(8))) = 
   { .name                = "rec_1",
-    // fvs [("f",t196 -> t718),("t",List[B] t196)]
+    // fvs [("f",t196 -> t775),("t",List[B] t196)]
     .entryCode           = &fun_rec_1,
     .objType             = THUNK,
     .layoutInfo.payloadSize = 3,
@@ -2362,7 +2546,7 @@ InfoTab it_rec_1 __attribute__((aligned(8))) =
   };
 InfoTab it_x_0 __attribute__((aligned(8))) = 
   { .name                = "x_0",
-    // fvs [("f",t196 -> t718),("h",t196)]
+    // fvs [("f",t196 -> t775),("h",t196)]
     .entryCode           = &fun_x_0,
     .objType             = THUNK,
     .layoutInfo.payloadSize = 3,
@@ -2371,7 +2555,7 @@ InfoTab it_x_0 __attribute__((aligned(8))) =
   };
 InfoTab it_res_0 __attribute__((aligned(8))) = 
   { .name                = "res_0",
-    // fvs [("rec_1",List[B] t718),("x_0",t718)]
+    // fvs [("rec_1",List[B] t775),("x_0",t775)]
     .entryCode           = &stg_concall,
     .objType             = CON,
     .layoutInfo.payloadSize  = 2,
@@ -2455,6 +2639,44 @@ InfoTab it_nine __attribute__((aligned(8))) =
     .conFields.tag       = 0,
     .conFields.conName   = "I",
   };
+InfoTab it_startFindSmallest __attribute__((aligned(8))) = 
+  { .name                = "startFindSmallest",
+    // fvs []
+    .entryCode           = &stg_funcall,
+    .objType             = FUN,
+    .layoutInfo.payloadSize  = 0,
+    .layoutInfo.boxedCount   = 0,
+    .layoutInfo.unboxedCount = 0,
+    .funFields.arity         = 1,
+    .funFields.trueEntryCode = fun_startFindSmallest,
+  };
+InfoTab it_q_0 __attribute__((aligned(8))) = 
+  { .name                = "q_0",
+    // fvs [("xs",List[B] Int[B] )]
+    .entryCode           = &fun_q_0,
+    .objType             = THUNK,
+    .layoutInfo.payloadSize = 2,
+    .layoutInfo.boxedCount   = 1,
+    .layoutInfo.unboxedCount = 0,
+  };
+InfoTab it_r_2 __attribute__((aligned(8))) = 
+  { .name                = "r_2",
+    // fvs [("q_0",Int[B] ),("xs",List[B] Int[B] )]
+    .entryCode           = &fun_r_2,
+    .objType             = THUNK,
+    .layoutInfo.payloadSize = 3,
+    .layoutInfo.boxedCount   = 2,
+    .layoutInfo.unboxedCount = 0,
+  };
+InfoTab it_output __attribute__((aligned(8))) = 
+  { .name                = "output",
+    // fvs []
+    .entryCode           = &fun_output,
+    .objType             = THUNK,
+    .layoutInfo.payloadSize = 1,
+    .layoutInfo.boxedCount   = 0,
+    .layoutInfo.unboxedCount = 0,
+  };
 InfoTab it_remove __attribute__((aligned(8))) = 
   { .name                = "remove",
     // fvs []
@@ -2529,7 +2751,7 @@ InfoTab it_repeat __attribute__((aligned(8))) =
   };
 InfoTab it_next_0 __attribute__((aligned(8))) = 
   { .name                = "next_0",
-    // fvs [("x",t748)]
+    // fvs [("x",t807)]
     .entryCode           = &fun_next_0,
     .objType             = THUNK,
     .layoutInfo.payloadSize = 2,
@@ -2549,7 +2771,7 @@ InfoTab it_take __attribute__((aligned(8))) =
   };
 InfoTab it_alts_38 __attribute__((aligned(8))) = 
   { .name                = "alts_38",
-    // fvs [("n",Int[B] ),("xs",List[B] t722)]
+    // fvs [("n",Int[B] ),("xs",List[B] t779)]
     .entryCode           = &alts_38,
     .objType             = CASECONT,
     .layoutInfo.payloadSize = 2,
@@ -2576,7 +2798,7 @@ InfoTab it_m_0 __attribute__((aligned(8))) =
   };
 InfoTab it_rec_3 __attribute__((aligned(8))) = 
   { .name                = "rec_3",
-    // fvs [("m_0",Int[B] ),("tl",List[B] t722)]
+    // fvs [("m_0",Int[B] ),("tl",List[B] t779)]
     .entryCode           = &fun_rec_3,
     .objType             = THUNK,
     .layoutInfo.payloadSize = 3,
@@ -2585,7 +2807,7 @@ InfoTab it_rec_3 __attribute__((aligned(8))) =
   };
 InfoTab it_result_4 __attribute__((aligned(8))) = 
   { .name                = "result_4",
-    // fvs [("hd",t722),("rec_3",List[B] t722)]
+    // fvs [("hd",t779),("rec_3",List[B] t779)]
     .entryCode           = &stg_concall,
     .objType             = CON,
     .layoutInfo.payloadSize  = 2,
@@ -2610,11 +2832,20 @@ InfoTab it_replicate __attribute__((aligned(8))) =
   };
 InfoTab it_list_0 __attribute__((aligned(8))) = 
   { .name                = "list_0",
-    // fvs [("x",t757)]
+    // fvs [("x",t817)]
     .entryCode           = &fun_list_0,
     .objType             = THUNK,
     .layoutInfo.payloadSize = 2,
     .layoutInfo.boxedCount   = 1,
+    .layoutInfo.unboxedCount = 0,
+  };
+InfoTab it_result __attribute__((aligned(8))) = 
+  { .name                = "result",
+    // fvs []
+    .entryCode           = &fun_result,
+    .objType             = THUNK,
+    .layoutInfo.payloadSize = 1,
+    .layoutInfo.boxedCount   = 0,
     .layoutInfo.unboxedCount = 0,
   };
 InfoTab it_seven __attribute__((aligned(8))) = 
@@ -2687,7 +2918,7 @@ InfoTab it_alts_44 __attribute__((aligned(8))) =
   };
 InfoTab it_alts_45 __attribute__((aligned(8))) = 
   { .name                = "alts_45",
-    // fvs [("h",t742)]
+    // fvs [("h",t801)]
     .entryCode           = &alts_45,
     .objType             = CASECONT,
     .layoutInfo.payloadSize = 1,
@@ -2748,19 +2979,14 @@ InfoTab it_ten __attribute__((aligned(8))) =
     .conFields.tag       = 0,
     .conFields.conName   = "I",
   };
-InfoTab it_three __attribute__((aligned(8))) = 
-  { .name                = "three",
+InfoTab it_test __attribute__((aligned(8))) = 
+  { .name                = "test",
     // fvs []
-    .entryCode           = &stg_concall,
-    .objType             = CON,
-    .layoutInfo.payloadSize  = 1,
-    // argPerm = [0]
+    .entryCode           = &fun_test,
+    .objType             = THUNK,
+    .layoutInfo.payloadSize = 1,
     .layoutInfo.boxedCount   = 0,
-    .layoutInfo.unboxedCount = 1,
-    .layoutInfo.permString   = "0",
-    .conFields.arity     = 1,
-    .conFields.tag       = 0,
-    .conFields.conName   = "I",
+    .layoutInfo.unboxedCount = 0,
   };
 InfoTab it_tupl2 __attribute__((aligned(8))) = 
   { .name                = "tupl2",
@@ -2825,7 +3051,7 @@ InfoTab it_zipWith __attribute__((aligned(8))) =
   };
 InfoTab it_alts_42 __attribute__((aligned(8))) = 
   { .name                = "alts_42",
-    // fvs [("f",t315 -> t318 -> t725),("list2",List[B] t318)]
+    // fvs [("f",t315 -> t318 -> t782),("list2",List[B] t318)]
     .entryCode           = &alts_42,
     .objType             = CASECONT,
     .layoutInfo.payloadSize = 2,
@@ -2834,7 +3060,7 @@ InfoTab it_alts_42 __attribute__((aligned(8))) =
   };
 InfoTab it_alts_43 __attribute__((aligned(8))) = 
   { .name                = "alts_43",
-    // fvs [("f",t315 -> t318 -> t725),("h1",t315),("t1",List[B] t315)]
+    // fvs [("f",t315 -> t318 -> t782),("h1",t315),("t1",List[B] t315)]
     .entryCode           = &alts_43,
     .objType             = CASECONT,
     .layoutInfo.payloadSize = 3,
@@ -2843,7 +3069,7 @@ InfoTab it_alts_43 __attribute__((aligned(8))) =
   };
 InfoTab it_newHead_0 __attribute__((aligned(8))) = 
   { .name                = "newHead_0",
-    // fvs [("f",t315 -> t318 -> t725),("h1",t315),("h2",t318)]
+    // fvs [("f",t315 -> t318 -> t782),("h1",t315),("h2",t318)]
     .entryCode           = &fun_newHead_0,
     .objType             = THUNK,
     .layoutInfo.payloadSize = 4,
@@ -2852,7 +3078,7 @@ InfoTab it_newHead_0 __attribute__((aligned(8))) =
   };
 InfoTab it_newTail_0 __attribute__((aligned(8))) = 
   { .name                = "newTail_0",
-    // fvs [("f",t315 -> t318 -> t725),("t1",List[B] t315),("t2",List[B] t318)]
+    // fvs [("f",t315 -> t318 -> t782),("t1",List[B] t315),("t2",List[B] t318)]
     .entryCode           = &fun_newTail_0,
     .objType             = THUNK,
     .layoutInfo.payloadSize = 4,
@@ -2861,7 +3087,7 @@ InfoTab it_newTail_0 __attribute__((aligned(8))) =
   };
 InfoTab it_result_5 __attribute__((aligned(8))) = 
   { .name                = "result_5",
-    // fvs [("newHead_0",t725),("newTail_0",List[B] t725)]
+    // fvs [("newHead_0",t782),("newTail_0",List[B] t782)]
     .entryCode           = &stg_concall,
     .objType             = CON,
     .layoutInfo.payloadSize  = 2,
@@ -2929,6 +3155,7 @@ extern Obj sho_createOddArray;
 extern Obj sho_cOArr;
 extern Obj sho_createOddBackArray;
 extern Obj sho_cOBArr;
+extern Obj sho_compareInt;
 extern Obj sho_compose;
 extern Obj sho_cons;
 extern Obj sho_const;
@@ -2943,6 +3170,8 @@ extern Obj sho_odd;
 extern Obj sho_even;
 extern Obj sho_even_h;
 extern Obj sho_filter;
+extern Obj sho_intLE;
+extern Obj sho_findSmallest;
 extern Obj sho_five;
 extern Obj sho_foldl;
 extern Obj sho_foldr;
@@ -2957,16 +3186,25 @@ extern Obj sho_head;
 extern Obj sho_index;
 extern Obj sho_null;
 extern Obj sho_init;
-extern Obj sho_intLE;
 extern Obj sho_length;
+extern Obj sho_list0;
+extern Obj sho_list1;
+extern Obj sho_three;
+extern Obj sho_list2;
+extern Obj sho_list3;
+extern Obj sho_list4;
+extern Obj sho_list5;
 extern Obj sho_map;
 extern Obj sho_minInt;
 extern Obj sho_modInt;
 extern Obj sho_nine;
+extern Obj sho_startFindSmallest;
+extern Obj sho_output;
 extern Obj sho_remove;
 extern Obj sho_repeat;
 extern Obj sho_take;
 extern Obj sho_replicate;
+extern Obj sho_result;
 extern Obj sho_seven;
 extern Obj sho_six;
 extern Obj sho_snd;
@@ -2974,7 +3212,7 @@ extern Obj sho_strictList;
 extern Obj sho_sum;
 extern Obj sho_tail;
 extern Obj sho_ten;
-extern Obj sho_three;
+extern Obj sho_test;
 extern Obj sho_tupl2;
 extern Obj sho_tupl3;
 extern Obj sho_zipWith;
@@ -3397,6 +3635,15 @@ Obj sho_cOBArr =
     },
 };
 
+Obj sho_compareInt =
+{
+  .infoPtr   = (uintptr_t)&it_compareInt,
+  .objType   = FUN,
+  .ident     = "compareInt",
+  .payload = {
+    },
+};
+
 Obj sho_compose =
 {
   .infoPtr   = (uintptr_t)&it_compose,
@@ -3518,6 +3765,23 @@ Obj sho_filter =
   .infoPtr   = (uintptr_t)&it_filter,
   .objType   = FUN,
   .ident     = "filter",
+  .payload = {
+    },
+};
+
+Obj sho_intLE =
+{
+  .infoPtr   = (uintptr_t)&it_intLE,
+  .objType   = THUNK,
+  .ident     = "intLE",
+  .payload = {0}
+};
+
+Obj sho_findSmallest =
+{
+  .infoPtr   = (uintptr_t)&it_findSmallest,
+  .objType   = FUN,
+  .ident     = "findSmallest",
   .payload = {
     },
 };
@@ -3650,14 +3914,6 @@ Obj sho_init =
     },
 };
 
-Obj sho_intLE =
-{
-  .infoPtr   = (uintptr_t)&it_intLE,
-  .objType   = THUNK,
-  .ident     = "intLE",
-  .payload = {0}
-};
-
 Obj sho_length =
 {
   .infoPtr   = (uintptr_t)&it_length,
@@ -3665,6 +3921,79 @@ Obj sho_length =
   .ident     = "length",
   .payload = {
     },
+};
+
+Obj sho_list0 =
+{
+  .infoPtr   = (uintptr_t)&it_list0,
+  .objType   = THUNK,
+  .ident     = "list0",
+  .payload = {0}
+};
+
+Obj sho_list1 =
+{
+  .infoPtr   = (uintptr_t)&it_list1,
+  .objType   = CON,
+  .ident     = "list1",
+  .payload = {
+    {.argType = HEAPOBJ, .op = &sho_two},
+    {.argType = HEAPOBJ, .op = &sho_list0},
+},
+};
+
+Obj sho_three =
+{
+  .infoPtr   = (uintptr_t)&it_three,
+  .objType   = CON,
+  .ident     = "three",
+  .payload = {
+    {.argType = INT, .i = 3},
+},
+};
+
+Obj sho_list2 =
+{
+  .infoPtr   = (uintptr_t)&it_list2,
+  .objType   = CON,
+  .ident     = "list2",
+  .payload = {
+    {.argType = HEAPOBJ, .op = &sho_three},
+    {.argType = HEAPOBJ, .op = &sho_list1},
+},
+};
+
+Obj sho_list3 =
+{
+  .infoPtr   = (uintptr_t)&it_list3,
+  .objType   = CON,
+  .ident     = "list3",
+  .payload = {
+    {.argType = HEAPOBJ, .op = &sho_one},
+    {.argType = HEAPOBJ, .op = &sho_list2},
+},
+};
+
+Obj sho_list4 =
+{
+  .infoPtr   = (uintptr_t)&it_list4,
+  .objType   = CON,
+  .ident     = "list4",
+  .payload = {
+    {.argType = HEAPOBJ, .op = &sho_two},
+    {.argType = HEAPOBJ, .op = &sho_list3},
+},
+};
+
+Obj sho_list5 =
+{
+  .infoPtr   = (uintptr_t)&it_list5,
+  .objType   = CON,
+  .ident     = "list5",
+  .payload = {
+    {.argType = HEAPOBJ, .op = &sho_five},
+    {.argType = HEAPOBJ, .op = &sho_list4},
+},
 };
 
 Obj sho_map =
@@ -3704,6 +4033,23 @@ Obj sho_nine =
 },
 };
 
+Obj sho_startFindSmallest =
+{
+  .infoPtr   = (uintptr_t)&it_startFindSmallest,
+  .objType   = FUN,
+  .ident     = "startFindSmallest",
+  .payload = {
+    },
+};
+
+Obj sho_output =
+{
+  .infoPtr   = (uintptr_t)&it_output,
+  .objType   = THUNK,
+  .ident     = "output",
+  .payload = {0}
+};
+
 Obj sho_remove =
 {
   .infoPtr   = (uintptr_t)&it_remove,
@@ -3738,6 +4084,14 @@ Obj sho_replicate =
   .ident     = "replicate",
   .payload = {
     },
+};
+
+Obj sho_result =
+{
+  .infoPtr   = (uintptr_t)&it_result,
+  .objType   = THUNK,
+  .ident     = "result",
+  .payload = {0}
 };
 
 Obj sho_seven =
@@ -3806,14 +4160,12 @@ Obj sho_ten =
 },
 };
 
-Obj sho_three =
+Obj sho_test =
 {
-  .infoPtr   = (uintptr_t)&it_three,
-  .objType   = CON,
-  .ident     = "three",
-  .payload = {
-    {.argType = INT, .i = 3},
-},
+  .infoPtr   = (uintptr_t)&it_test,
+  .objType   = THUNK,
+  .ident     = "test",
+  .payload = {0}
 };
 
 Obj sho_tupl2 =
@@ -3898,6 +4250,7 @@ void registerSHOs() {
   stgStatObj[stgStatObjCount++] = &sho_cOArr;
   stgStatObj[stgStatObjCount++] = &sho_createOddBackArray;
   stgStatObj[stgStatObjCount++] = &sho_cOBArr;
+  stgStatObj[stgStatObjCount++] = &sho_compareInt;
   stgStatObj[stgStatObjCount++] = &sho_compose;
   stgStatObj[stgStatObjCount++] = &sho_cons;
   stgStatObj[stgStatObjCount++] = &sho_const;
@@ -3912,6 +4265,8 @@ void registerSHOs() {
   stgStatObj[stgStatObjCount++] = &sho_even;
   stgStatObj[stgStatObjCount++] = &sho_even_h;
   stgStatObj[stgStatObjCount++] = &sho_filter;
+  stgStatObj[stgStatObjCount++] = &sho_intLE;
+  stgStatObj[stgStatObjCount++] = &sho_findSmallest;
   stgStatObj[stgStatObjCount++] = &sho_five;
   stgStatObj[stgStatObjCount++] = &sho_foldl;
   stgStatObj[stgStatObjCount++] = &sho_foldr;
@@ -3926,16 +4281,25 @@ void registerSHOs() {
   stgStatObj[stgStatObjCount++] = &sho_index;
   stgStatObj[stgStatObjCount++] = &sho_null;
   stgStatObj[stgStatObjCount++] = &sho_init;
-  stgStatObj[stgStatObjCount++] = &sho_intLE;
   stgStatObj[stgStatObjCount++] = &sho_length;
+  stgStatObj[stgStatObjCount++] = &sho_list0;
+  stgStatObj[stgStatObjCount++] = &sho_list1;
+  stgStatObj[stgStatObjCount++] = &sho_three;
+  stgStatObj[stgStatObjCount++] = &sho_list2;
+  stgStatObj[stgStatObjCount++] = &sho_list3;
+  stgStatObj[stgStatObjCount++] = &sho_list4;
+  stgStatObj[stgStatObjCount++] = &sho_list5;
   stgStatObj[stgStatObjCount++] = &sho_map;
   stgStatObj[stgStatObjCount++] = &sho_minInt;
   stgStatObj[stgStatObjCount++] = &sho_modInt;
   stgStatObj[stgStatObjCount++] = &sho_nine;
+  stgStatObj[stgStatObjCount++] = &sho_startFindSmallest;
+  stgStatObj[stgStatObjCount++] = &sho_output;
   stgStatObj[stgStatObjCount++] = &sho_remove;
   stgStatObj[stgStatObjCount++] = &sho_repeat;
   stgStatObj[stgStatObjCount++] = &sho_take;
   stgStatObj[stgStatObjCount++] = &sho_replicate;
+  stgStatObj[stgStatObjCount++] = &sho_result;
   stgStatObj[stgStatObjCount++] = &sho_seven;
   stgStatObj[stgStatObjCount++] = &sho_six;
   stgStatObj[stgStatObjCount++] = &sho_snd;
@@ -3943,7 +4307,7 @@ void registerSHOs() {
   stgStatObj[stgStatObjCount++] = &sho_sum;
   stgStatObj[stgStatObjCount++] = &sho_tail;
   stgStatObj[stgStatObjCount++] = &sho_ten;
-  stgStatObj[stgStatObjCount++] = &sho_three;
+  stgStatObj[stgStatObjCount++] = &sho_test;
   stgStatObj[stgStatObjCount++] = &sho_tupl2;
   stgStatObj[stgStatObjCount++] = &sho_tupl3;
   stgStatObj[stgStatObjCount++] = &sho_zipWith;
@@ -5699,6 +6063,114 @@ DEFUN1(fun_a_9, self) {
   ENDFUN;
 }
 
+// Int[B]  -> Int[B]  -> Int[B] 
+// ((["x","y"],[]),([Int[B] ,Int[B] ],[]))
+DEFUN3(fun_compareInt, self, x, y) {
+  fprintf(stderr, "compareInt here\n");
+  // scrutinee may heap alloc
+  Obj *ccont_alts_78 = stgAllocCont( &it_alts_78);
+      // load payload with FVs y
+    ccont_alts_78->payload[0] = y; // y
+  stgCurVal = x; // x
+  // boxed EAtom 
+  STGEVAL(stgCurVal);
+  fprintf(stderr, "compareInt returning\n");
+  STGRETURN0();
+  ENDFUN;
+}
+
+// Int[B] 
+DEFUN0(alts_78) {
+  fprintf(stderr, "alts_78 here\n");
+  Obj *ccont_alts_78 = stgPopCont();
+  PtrOrLiteral y = ccont_alts_78->payload[0];
+  PtrOrLiteral scrut_alts_78 = stgCurVal;
+  // I a_h ->
+  // scrutinee may heap alloc
+  Obj *ccont_alts_79 = stgAllocCont( &it_alts_79);
+      // load payload with FVs a_h
+    ccont_alts_79->payload[0] = scrut_alts_78.op->payload[0]; // a_h
+  stgCurVal = y; // y
+  // boxed EAtom 
+  STGEVAL(stgCurVal);
+  STGRETURN0();
+  ENDFUN;
+}
+
+
+// Int[B] 
+DEFUN0(alts_79) {
+  fprintf(stderr, "alts_79 here\n");
+  Obj *ccont_alts_79 = stgPopCont();
+  PtrOrLiteral a_h = ccont_alts_79->payload[0];
+  PtrOrLiteral scrut_alts_79 = stgCurVal;
+  // I b_h ->
+  // scrutinee may heap alloc
+  Obj *ccont_alts_80 = stgAllocCont( &it_alts_80);
+      // load payload with FVs a_h b_h
+    ccont_alts_80->payload[0] = a_h; // a_h
+    ccont_alts_80->payload[1] = scrut_alts_79.op->payload[0]; // b_h
+  // INDIRECT TAIL CALL _ile a_h b_h
+  STGAPPLYNN(HOTOPL(&sho__ile), a_h, scrut_alts_79.op->payload[0]);
+  STGRETURN0();
+  ENDFUN;
+}
+
+
+// Int[B] 
+DEFUN0(alts_80) {
+  fprintf(stderr, "alts_80 here\n");
+  Obj *ccont_alts_80 = stgPopCont();
+  PtrOrLiteral a_h = ccont_alts_80->payload[0];
+  PtrOrLiteral b_h = ccont_alts_80->payload[1];
+  PtrOrLiteral scrut_alts_80 = stgCurVal;
+  switch(stgCurVal.i) {
+    // 0  ->
+    case 0: {
+      stgCurVal = HOTOPL(&sho_two); // two
+      // boxed EAtom 
+      STGEVAL(stgCurVal);
+      STGRETURN0();
+    }
+    // x ->
+    default: {
+      // scrutinee may heap alloc
+      Obj *ccont_alts_81 = stgAllocCont( &it_alts_81);
+          // no FVs
+        // INDIRECT TAIL CALL _ige a_h b_h
+      STGAPPLYNN(HOTOPL(&sho__ige), a_h, b_h);
+      STGRETURN0();
+    }
+  }
+  ENDFUN;
+}
+
+
+// Int[B] 
+DEFUN0(alts_81) {
+  fprintf(stderr, "alts_81 here\n");
+  stgPopCont();
+  PtrOrLiteral scrut_alts_81 = stgCurVal;
+  switch(stgCurVal.i) {
+    // 0  ->
+    case 0: {
+      stgCurVal = HOTOPL(&sho_zero); // zero
+      // boxed EAtom 
+      STGEVAL(stgCurVal);
+      STGRETURN0();
+    }
+    // x ->
+    default: {
+      stgCurVal = HOTOPL(&sho_one); // one
+      // boxed EAtom 
+      STGEVAL(stgCurVal);
+      STGRETURN0();
+    }
+  }
+  ENDFUN;
+}
+
+
 // forall t454,t455,t456.(t456 -> t455) -> (t454 -> t456) -> t454 -> t455
 // ((["f","g","x"],[]),([t456 -> t455,t454 -> t456,t454],[]))
 DEFUN4(fun_compose, self, f, g, x) {
@@ -5819,8 +6291,8 @@ DEFUN0(alts_62) {
 }
 
 
-// forall t723.Int[B]  -> List[B] t723 -> List[B] t723
-// ((["n","xs"],[]),([Int[B] ,List[B] t723],[]))
+// forall t780.Int[B]  -> List[B] t780 -> List[B] t780
+// ((["n","xs"],[]),([Int[B] ,List[B] t780],[]))
 DEFUN3(fun_drop, self, n, xs) {
   fprintf(stderr, "drop here\n");
   // scrutinee may heap alloc
@@ -5835,7 +6307,7 @@ DEFUN3(fun_drop, self, n, xs) {
   ENDFUN;
 }
 
-// List[B] t723
+// List[B] t780
 DEFUN0(alts_40) {
   fprintf(stderr, "alts_40 here\n");
   Obj *ccont_alts_40 = stgPopCont();
@@ -5866,7 +6338,7 @@ DEFUN0(alts_40) {
 }
 
 
-// List[B] t723
+// List[B] t780
 DEFUN0(alts_41) {
   fprintf(stderr, "alts_41 here\n");
   Obj *ccont_alts_41 = stgPopCont();
@@ -6211,8 +6683,8 @@ DEFUN0(alts_57) {
 }
 
 
-// forall t745.(t745 -> Bool[B] ) -> List[B] t745 -> List[B] t745
-// ((["p","xs"],[]),([t745 -> Bool[B] ,List[B] t745],[]))
+// forall t804.(t804 -> Bool[B] ) -> List[B] t804 -> List[B] t804
+// ((["p","xs"],[]),([t804 -> Bool[B] ,List[B] t804],[]))
 DEFUN3(fun_filter, self, p, xs) {
   fprintf(stderr, "filter here\n");
   // scrutinee may heap alloc
@@ -6227,7 +6699,7 @@ DEFUN3(fun_filter, self, p, xs) {
   ENDFUN;
 }
 
-// List[B] t745
+// List[B] t804
 DEFUN0(alts_49) {
   fprintf(stderr, "alts_49 here\n");
   Obj *ccont_alts_49 = stgPopCont();
@@ -6260,7 +6732,7 @@ DEFUN0(alts_49) {
 }
 
 
-// List[B] t745
+// List[B] t804
 DEFUN1(fun_tail_0, self) {
   fprintf(stderr, "tail_0 here\n");
   stgThunk(self);
@@ -6271,7 +6743,7 @@ DEFUN1(fun_tail_0, self) {
   ENDFUN;
 }
 
-// List[B] t745
+// List[B] t804
 DEFUN0(alts_50) {
   fprintf(stderr, "alts_50 here\n");
   Obj *ccont_alts_50 = stgPopCont();
@@ -6290,6 +6762,90 @@ DEFUN0(alts_50) {
       stgCurVal = tail_0; // tail_0
       // boxed EAtom 
       STGEVAL(stgCurVal);
+      STGRETURN0();
+    }
+  }
+  ENDFUN;
+}
+
+
+// Int[B]  -> Int[B]  -> Bool[B] 
+DEFUN1(fun_intLE, self) {
+  fprintf(stderr, "intLE here\n");
+  stgThunk(self);
+  // INDIRECT TAIL CALL _intComp _ile
+  STGAPPLYP(HOTOPL(&sho__intComp), HOTOPL(&sho__ile));
+  fprintf(stderr, "intLE returning\n");
+  STGRETURN0();
+  ENDFUN;
+}
+
+// List[B] Int[B]  -> Int[B]  -> Int[B] 
+// ((["xs","n"],[]),([List[B] Int[B] ,Int[B] ],[]))
+DEFUN3(fun_findSmallest, self, xs, n) {
+  fprintf(stderr, "findSmallest here\n");
+  // scrutinee may heap alloc
+  Obj *ccont_alts_82 = stgAllocCont( &it_alts_82);
+      // load payload with FVs n
+    ccont_alts_82->payload[0] = n; // n
+  stgCurVal = xs; // xs
+  // boxed EAtom 
+  STGEVAL(stgCurVal);
+  fprintf(stderr, "findSmallest returning\n");
+  STGRETURN0();
+  ENDFUN;
+}
+
+// Int[B] 
+DEFUN0(alts_82) {
+  fprintf(stderr, "alts_82 here\n");
+  Obj *ccont_alts_82 = stgPopCont();
+  PtrOrLiteral n = ccont_alts_82->payload[0];
+  PtrOrLiteral scrut_alts_82 = stgCurVal;
+  switch(getInfoPtr(stgCurVal.op)->conFields.tag) {
+    // Nil  ->
+    case 0: {
+      stgCurVal = n; // n
+      // boxed EAtom 
+      STGEVAL(stgCurVal);
+      STGRETURN0();
+    }
+    // Cons h1 t1 ->
+    case 1: {
+      // scrutinee may heap alloc
+      Obj *ccont_alts_83 = stgAllocCont( &it_alts_83);
+          // load payload with FVs h1 n t1
+        ccont_alts_83->payload[0] = scrut_alts_82.op->payload[0]; // h1
+        ccont_alts_83->payload[1] = n; // n
+        ccont_alts_83->payload[2] = scrut_alts_82.op->payload[1]; // t1
+      // INDIRECT TAIL CALL intLE n h1
+      STGAPPLYPP(HOTOPL(&sho_intLE), n, scrut_alts_82.op->payload[0]);
+      STGRETURN0();
+    }
+  }
+  ENDFUN;
+}
+
+
+// Int[B] 
+DEFUN0(alts_83) {
+  fprintf(stderr, "alts_83 here\n");
+  Obj *ccont_alts_83 = stgPopCont();
+  PtrOrLiteral h1 = ccont_alts_83->payload[0];
+  PtrOrLiteral n = ccont_alts_83->payload[1];
+  PtrOrLiteral t1 = ccont_alts_83->payload[2];
+  PtrOrLiteral scrut_alts_83 = stgCurVal;
+  switch(getInfoPtr(stgCurVal.op)->conFields.tag) {
+    // False  ->
+    case 0: {
+      // INDIRECT TAIL CALL findSmallest t1 h1
+      STGAPPLYPP(HOTOPL(&sho_findSmallest), t1, h1);
+      STGRETURN0();
+    }
+    // True  ->
+    case 1: {
+      // INDIRECT TAIL CALL findSmallest t1 n
+      STGAPPLYPP(HOTOPL(&sho_findSmallest), t1, n);
       STGRETURN0();
     }
   }
@@ -6444,8 +7000,8 @@ DEFUN0(alts_55) {
 }
 
 
-// forall t740.List[B] t740 -> Unit[B] 
-// ((["list"],[]),([List[B] t740],[]))
+// forall t799.List[B] t799 -> Unit[B] 
+// ((["list"],[]),([List[B] t799],[]))
 DEFUN2(fun_forcelist, self, list) {
   fprintf(stderr, "forcelist here\n");
   // scrutinee may heap alloc
@@ -6649,8 +7205,8 @@ DEFUN0(alts_27) {
 }
 
 
-// forall t719.List[B] t719 -> t719
-// ((["xs"],[]),([List[B] t719],[]))
+// forall t776.List[B] t776 -> t776
+// ((["xs"],[]),([List[B] t776],[]))
 DEFUN2(fun_head, self, xs) {
   fprintf(stderr, "head here\n");
   // scrutinee may heap alloc
@@ -6664,7 +7220,7 @@ DEFUN2(fun_head, self, xs) {
   ENDFUN;
 }
 
-// t719
+// t776
 DEFUN0(alts_30) {
   fprintf(stderr, "alts_30 here\n");
   stgPopCont();
@@ -6702,8 +7258,8 @@ DEFUN1(fun_alts_30_exhaust, self) {
   ENDFUN;
 }
 
-// forall t731.Int[B]  -> List[B] t731 -> t731
-// ((["n","xs"],[]),([Int[B] ,List[B] t731],[]))
+// forall t788.Int[B]  -> List[B] t788 -> t788
+// ((["n","xs"],[]),([Int[B] ,List[B] t788],[]))
 DEFUN3(fun_index, self, n, xs) {
   fprintf(stderr, "index here\n");
   // scrutinee may heap alloc
@@ -6718,7 +7274,7 @@ DEFUN3(fun_index, self, n, xs) {
   ENDFUN;
 }
 
-// t731
+// t788
 DEFUN0(alts_64) {
   fprintf(stderr, "alts_64 here\n");
   Obj *ccont_alts_64 = stgPopCont();
@@ -6765,7 +7321,7 @@ DEFUN1(fun_a_2, self) {
   ENDFUN;
 }
 
-// t731
+// t788
 DEFUN0(alts_65) {
   fprintf(stderr, "alts_65 here\n");
   Obj *ccont_alts_65 = stgPopCont();
@@ -6809,7 +7365,7 @@ DEFUN1(fun_c_1, self) {
   ENDFUN;
 }
 
-// t731
+// t788
 DEFUN1(fun_d_1, self) {
   fprintf(stderr, "d_1 here\n");
   stgThunk(self);
@@ -6871,8 +7427,8 @@ DEFUN0(alts_46) {
 }
 
 
-// forall t744.List[B] t744 -> List[B] t744
-// ((["xs"],[]),([List[B] t744],[]))
+// forall t803.List[B] t803 -> List[B] t803
+// ((["xs"],[]),([List[B] t803],[]))
 DEFUN2(fun_init, self, xs) {
   fprintf(stderr, "init here\n");
   // scrutinee may heap alloc
@@ -6886,7 +7442,7 @@ DEFUN2(fun_init, self, xs) {
   ENDFUN;
 }
 
-// List[B] t744
+// List[B] t803
 DEFUN0(alts_47) {
   fprintf(stderr, "alts_47 here\n");
   stgPopCont();
@@ -6915,7 +7471,7 @@ DEFUN0(alts_47) {
 }
 
 
-// List[B] t744
+// List[B] t803
 DEFUN0(alts_48) {
   fprintf(stderr, "alts_48 here\n");
   Obj *ccont_alts_48 = stgPopCont();
@@ -6943,7 +7499,7 @@ DEFUN0(alts_48) {
 }
 
 
-// List[B] t744
+// List[B] t803
 DEFUN1(fun_l_0, self) {
   fprintf(stderr, "l_0 here\n");
   stgThunk(self);
@@ -6954,19 +7510,8 @@ DEFUN1(fun_l_0, self) {
   ENDFUN;
 }
 
-// Int[B]  -> Int[B]  -> Bool[B] 
-DEFUN1(fun_intLE, self) {
-  fprintf(stderr, "intLE here\n");
-  stgThunk(self);
-  // INDIRECT TAIL CALL _intComp _ile
-  STGAPPLYP(HOTOPL(&sho__intComp), HOTOPL(&sho__ile));
-  fprintf(stderr, "intLE returning\n");
-  STGRETURN0();
-  ENDFUN;
-}
-
-// forall t739.List[B] t739 -> Int[B] 
-// ((["xs"],[]),([List[B] t739],[]))
+// forall t798.List[B] t798 -> Int[B] 
+// ((["xs"],[]),([List[B] t798],[]))
 DEFUN2(fun_length, self, xs) {
   fprintf(stderr, "length here\n");
   // scrutinee may heap alloc
@@ -6992,8 +7537,20 @@ DEFUN0(alts_34) {
 }
 
 
-// forall t196,t718.(t196 -> t718) -> List[B] t196 -> List[B] t718
-// ((["f","list"],[]),([t196 -> t718,List[B] t196],[]))
+// forall t796.List[B] t796
+DEFUN1(fun_list0, self) {
+  fprintf(stderr, "list0 here\n");
+  stgThunk(self);
+  stgCurVal = HOTOPL(&sho_nil); // nil
+  // boxed EAtom 
+  STGEVAL(stgCurVal);
+  fprintf(stderr, "list0 returning\n");
+  STGRETURN0();
+  ENDFUN;
+}
+
+// forall t196,t775.(t196 -> t775) -> List[B] t196 -> List[B] t775
+// ((["f","list"],[]),([t196 -> t775,List[B] t196],[]))
 DEFUN3(fun_map, self, f, list) {
   fprintf(stderr, "map here\n");
   // scrutinee may heap alloc
@@ -7008,7 +7565,7 @@ DEFUN3(fun_map, self, f, list) {
   ENDFUN;
 }
 
-// List[B] t718
+// List[B] t775
 DEFUN0(alts_29) {
   fprintf(stderr, "alts_29 here\n");
   Obj *ccont_alts_29 = stgPopCont();
@@ -7043,7 +7600,7 @@ DEFUN0(alts_29) {
 }
 
 
-// List[B] t718
+// List[B] t775
 DEFUN1(fun_rec_1, self) {
   fprintf(stderr, "rec_1 here\n");
   stgThunk(self);
@@ -7054,7 +7611,7 @@ DEFUN1(fun_rec_1, self) {
   ENDFUN;
 }
 
-// t718
+// t775
 DEFUN1(fun_x_0, self) {
   fprintf(stderr, "x_0 here\n");
   stgThunk(self);
@@ -7173,6 +7730,56 @@ DEFUN0(alts_16) {
 }
 
 
+// List[B] Int[B]  -> Int[B] 
+// ((["xs"],[]),([List[B] Int[B] ],[]))
+DEFUN2(fun_startFindSmallest, self, xs) {
+  fprintf(stderr, "startFindSmallest here\n");
+  Obj *q_0 = stgNewHeapObj( &it_q_0 );
+  Obj *r_2 = stgNewHeapObj( &it_r_2 );
+  q_0->payload[1] = xs; // xs
+  r_2->payload[1] = HOTOPL((Obj *)STGHEAPAT(5,2)); // q_0
+  r_2->payload[2] = xs; // xs
+  stgCurVal = HOTOPL((Obj *)STGHEAPAT(3,1)); // r_2
+  // boxed EAtom 
+  STGEVAL(stgCurVal);
+  fprintf(stderr, "startFindSmallest returning\n");
+  STGRETURN0();
+  ENDFUN;
+}
+
+// Int[B] 
+DEFUN1(fun_q_0, self) {
+  fprintf(stderr, "q_0 here\n");
+  stgThunk(self);
+  // INDIRECT TAIL CALL head xs
+  STGAPPLYP(HOTOPL(&sho_head), self.op->payload[1]);
+  fprintf(stderr, "q_0 returning\n");
+  STGRETURN0();
+  ENDFUN;
+}
+
+// Int[B] 
+DEFUN1(fun_r_2, self) {
+  fprintf(stderr, "r_2 here\n");
+  stgThunk(self);
+  // INDIRECT TAIL CALL findSmallest xs q_0
+  STGAPPLYPP(HOTOPL(&sho_findSmallest), self.op->payload[2], self.op->payload[1]);
+  fprintf(stderr, "r_2 returning\n");
+  STGRETURN0();
+  ENDFUN;
+}
+
+// Int[B] 
+DEFUN1(fun_output, self) {
+  fprintf(stderr, "output here\n");
+  stgThunk(self);
+  // INDIRECT TAIL CALL startFindSmallest list5
+  STGAPPLYP(HOTOPL(&sho_startFindSmallest), HOTOPL(&sho_list5));
+  fprintf(stderr, "output returning\n");
+  STGRETURN0();
+  ENDFUN;
+}
+
 // Int[B]  -> List[B] Int[B]  -> List[B] Int[B] 
 // ((["n","xs"],[]),([Int[B] ,List[B] Int[B] ],[]))
 DEFUN3(fun_remove, self, n, xs) {
@@ -7280,8 +7887,8 @@ DEFUN1(fun_b_3, self) {
   ENDFUN;
 }
 
-// forall t748.t748 -> List[B] t748
-// ((["x"],[]),([t748],[]))
+// forall t807.t807 -> List[B] t807
+// ((["x"],[]),([t807],[]))
 DEFUN2(fun_repeat, self, x) {
   fprintf(stderr, "repeat here\n");
   Obj *next_0 = stgNewHeapObj( &it_next_0 );
@@ -7293,7 +7900,7 @@ DEFUN2(fun_repeat, self, x) {
   ENDFUN;
 }
 
-// List[B] t748
+// List[B] t807
 DEFUN1(fun_next_0, self) {
   fprintf(stderr, "next_0 here\n");
   stgThunk(self);
@@ -7304,8 +7911,8 @@ DEFUN1(fun_next_0, self) {
   ENDFUN;
 }
 
-// forall t722.Int[B]  -> List[B] t722 -> List[B] t722
-// ((["n","xs"],[]),([Int[B] ,List[B] t722],[]))
+// forall t779.Int[B]  -> List[B] t779 -> List[B] t779
+// ((["n","xs"],[]),([Int[B] ,List[B] t779],[]))
 DEFUN3(fun_take, self, n, xs) {
   fprintf(stderr, "take here\n");
   // scrutinee may heap alloc
@@ -7320,7 +7927,7 @@ DEFUN3(fun_take, self, n, xs) {
   ENDFUN;
 }
 
-// List[B] t722
+// List[B] t779
 DEFUN0(alts_38) {
   fprintf(stderr, "alts_38 here\n");
   Obj *ccont_alts_38 = stgPopCont();
@@ -7351,7 +7958,7 @@ DEFUN0(alts_38) {
 }
 
 
-// List[B] t722
+// List[B] t779
 DEFUN0(alts_39) {
   fprintf(stderr, "alts_39 here\n");
   Obj *ccont_alts_39 = stgPopCont();
@@ -7396,7 +8003,7 @@ DEFUN1(fun_m_0, self) {
   ENDFUN;
 }
 
-// List[B] t722
+// List[B] t779
 DEFUN1(fun_rec_3, self) {
   fprintf(stderr, "rec_3 here\n");
   stgThunk(self);
@@ -7407,8 +8014,8 @@ DEFUN1(fun_rec_3, self) {
   ENDFUN;
 }
 
-// forall t757.Int[B]  -> t757 -> List[B] t757
-// ((["n","x"],[]),([Int[B] ,t757],[]))
+// forall t817.Int[B]  -> t817 -> List[B] t817
+// ((["n","x"],[]),([Int[B] ,t817],[]))
 DEFUN3(fun_replicate, self, n, x) {
   fprintf(stderr, "replicate here\n");
   Obj *list_0 = stgNewHeapObj( &it_list_0 );
@@ -7420,13 +8027,25 @@ DEFUN3(fun_replicate, self, n, x) {
   ENDFUN;
 }
 
-// List[B] t757
+// List[B] t817
 DEFUN1(fun_list_0, self) {
   fprintf(stderr, "list_0 here\n");
   stgThunk(self);
   // INDIRECT TAIL CALL repeat x
   STGAPPLYP(HOTOPL(&sho_repeat), self.op->payload[1]);
   fprintf(stderr, "list_0 returning\n");
+  STGRETURN0();
+  ENDFUN;
+}
+
+// Int[B] 
+DEFUN1(fun_result, self) {
+  fprintf(stderr, "result here\n");
+  stgThunk(self);
+  stgCurVal = HOTOPL(&sho_one); // one
+  // boxed EAtom 
+  STGEVAL(stgCurVal);
+  fprintf(stderr, "result returning\n");
   STGRETURN0();
   ENDFUN;
 }
@@ -7460,8 +8079,8 @@ DEFUN0(alts_1) {
 }
 
 
-// forall t742.List[B] t742 -> List[B] t742
-// ((["xs"],[]),([List[B] t742],[]))
+// forall t801.List[B] t801 -> List[B] t801
+// ((["xs"],[]),([List[B] t801],[]))
 DEFUN2(fun_strictList, self, xs) {
   fprintf(stderr, "strictList here\n");
   // scrutinee may heap alloc
@@ -7475,7 +8094,7 @@ DEFUN2(fun_strictList, self, xs) {
   ENDFUN;
 }
 
-// List[B] t742
+// List[B] t801
 DEFUN0(alts_44) {
   fprintf(stderr, "alts_44 here\n");
   stgPopCont();
@@ -7503,7 +8122,7 @@ DEFUN0(alts_44) {
 }
 
 
-// List[B] t742
+// List[B] t801
 DEFUN0(alts_45) {
   fprintf(stderr, "alts_45 here\n");
   Obj *ccont_alts_45 = stgPopCont();
@@ -7581,6 +8200,17 @@ DEFUN1(fun_alts_31_exhaust, self) {
   ENDFUN;
 }
 
+// Bool[B] 
+DEFUN1(fun_test, self) {
+  fprintf(stderr, "test here\n");
+  stgThunk(self);
+  // INDIRECT TAIL CALL eqInt result output
+  STGAPPLYPP(HOTOPL(&sho_eqInt), HOTOPL(&sho_result), HOTOPL(&sho_output));
+  fprintf(stderr, "test returning\n");
+  STGRETURN0();
+  ENDFUN;
+}
+
 // forall t67,t68.t67 -> t68 -> Tupl2[B] t67 t68
 // ((["a","b"],[]),([t67,t68],[]))
 DEFUN3(fun_tupl2, self, a, b) {
@@ -7612,8 +8242,8 @@ DEFUN4(fun_tupl3, self, a, b, c) {
   ENDFUN;
 }
 
-// forall t315,t318,t725.(t315 -> t318 -> t725) -> List[B] t315 -> List[B] t318 -> List[B] t725
-// ((["f","list1","list2"],[]),([t315 -> t318 -> t725,List[B] t315,List[B] t318],[]))
+// forall t315,t318,t782.(t315 -> t318 -> t782) -> List[B] t315 -> List[B] t318 -> List[B] t782
+// ((["f","list1","list2"],[]),([t315 -> t318 -> t782,List[B] t315,List[B] t318],[]))
 DEFUN4(fun_zipWith, self, f, list1, list2) {
   fprintf(stderr, "zipWith here\n");
   // scrutinee may heap alloc
@@ -7629,7 +8259,7 @@ DEFUN4(fun_zipWith, self, f, list1, list2) {
   ENDFUN;
 }
 
-// List[B] t725
+// List[B] t782
 DEFUN0(alts_42) {
   fprintf(stderr, "alts_42 here\n");
   Obj *ccont_alts_42 = stgPopCont();
@@ -7662,7 +8292,7 @@ DEFUN0(alts_42) {
 }
 
 
-// List[B] t725
+// List[B] t782
 DEFUN0(alts_43) {
   fprintf(stderr, "alts_43 here\n");
   Obj *ccont_alts_43 = stgPopCont();
@@ -7701,7 +8331,7 @@ DEFUN0(alts_43) {
 }
 
 
-// t725
+// t782
 DEFUN1(fun_newHead_0, self) {
   fprintf(stderr, "newHead_0 here\n");
   stgThunk(self);
@@ -7712,7 +8342,7 @@ DEFUN1(fun_newHead_0, self) {
   ENDFUN;
 }
 
-// List[B] t725
+// List[B] t782
 DEFUN1(fun_newTail_0, self) {
   fprintf(stderr, "newTail_0 here\n");
   stgThunk(self);
@@ -7723,7 +8353,7 @@ DEFUN1(fun_newTail_0, self) {
   ENDFUN;
 }
 
-// forall t754,t755.List[B] t754 -> List[B] t755 -> List[B] Tupl2[B] t754 t755
+// forall t814,t815.List[B] t814 -> List[B] t815 -> List[B] Tupl2[B] t814 t815
 DEFUN1(fun_zip, self) {
   fprintf(stderr, "zip here\n");
   stgThunk(self);
