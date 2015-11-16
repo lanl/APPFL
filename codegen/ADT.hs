@@ -24,7 +24,8 @@ module ADT (
   unfoldr
 ) where
 
-import AST(Con,BuiltinType(..),Obj)
+--import AST(Con,BuiltinType(..),Obj)
+import AST(Con,Obj)
 
 import Data.List(intercalate, (\\), find)
 import Data.Maybe (fromJust)
@@ -91,7 +92,7 @@ data Polytype = PPoly [TyVar] Monotype
 data Monotype = MVar TyVar
               | MFun Monotype Monotype
               | MCon Bool Con [Monotype]
-              | MPrim BuiltinType
+--              | MPrim BuiltinType
               | MPVar TyVar -- should be used only in BU.hs
               | MPhony
                 deriving(Eq,Ord)
@@ -105,7 +106,7 @@ isBoxed m = case m of
   MVar{}     -> True -- polymorphic
   MFun{}     -> True -- expr / obj :: MFun --> PAP created --> boxed
   MCon b _ _ -> b
-  MPrim{}    -> False
+--  MPrim{}    -> False
   MPVar{}    -> True
   m          -> error $ "ADT.isBoxed called with " ++ show m
   
@@ -131,7 +132,7 @@ boxMTypes tycons =
                        in MCon bxt c $ map setMtypes mts
                      MFun mts1 mts2 -> MFun (setMtypes mts1) (setMtypes mts2)
                      MVar{} -> m
-                     MPrim{} -> m
+--                     MPrim{} -> m
                      _ -> error $ "CMap.cMapTyCons matching bad Monotype: " ++ show m
                      
   in map mapFunc tycons -- don't need built-ins in TyCon list (?) 
@@ -186,7 +187,7 @@ instance Show Monotype where
                              (if bxt
                               then "[B] "
                               else "[U] ") ++ intercalate " " (map show ms)
-    show (MPrim p) = show p
+--    show (MPrim p) = show p
     show MPhony = "MPhony"
 
 --------------- ADT Pretty Printing -----------------------
@@ -199,9 +200,9 @@ instance Unparse Monotype where
   unparse (MFun m1 m2) = unparse m1 <+> arw <+> unparse m2
   unparse (MCon b c ms) = (if null ms then (empty <>) else parens)
                           (text c <+> hsep (map unparse ms))
-  unparse (MPrim p) = case p of
-    UBInt    -> text "Int#"
-    UBDouble -> text "Double#"
+--  unparse (MPrim p) = case p of
+--    UBInt    -> text "Int#"
+--    UBDouble -> text "Double#"
   unparse m = error $ "ADT.unparse (Monotype) m=" ++ show m
 
   
@@ -251,7 +252,7 @@ instance PPrint Monotype where
                    (text (if b then "boxed" else "unboxed") <+>
                     text c $+$
                     nest 2 (vcat $ map pprint ms))
-    MPrim p -> text "MPrim" <> braces (pprint p)
+--    MPrim p -> text "MPrim" <> braces (pprint p)
     MPVar v -> text "MPVar" <> braces (text v)
     MPhony -> text "MPhony"
     

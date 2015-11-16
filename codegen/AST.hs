@@ -11,7 +11,7 @@ module AST (
   Alts(..),
   Obj(..),
   Primop(..),
-  BuiltinType(..),
+--  BuiltinType(..),
   rmPrelude,
   primopTab,
   show,
@@ -30,9 +30,9 @@ import Data.Int as Int (Int64)
 
 -- not really the place for this, maybe need to factor
 -- the common types into a module
-data BuiltinType = UBInt
-                 | UBDouble             
-                   deriving (Eq,Show,Ord)           
+--data BuiltinType = UBInt
+--                 | UBDouble             
+--                   deriving (Eq,Show,Ord)           
 
 type Var = String
 type Con = String
@@ -272,10 +272,10 @@ instance Unparse () where
   unparse () = empty
 
 
-instance PPrint BuiltinType where
-  pprint b = case b of
-    UBInt -> text "UBInt"
-    UBDouble -> text "UBDouble"
+--instance PPrint BuiltinType where
+--  pprint b = case b of
+--    UBInt -> text "UBInt"
+--    UBDouble -> text "UBDouble"
     
  
 

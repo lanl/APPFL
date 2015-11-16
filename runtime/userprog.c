@@ -508,7 +508,7 @@ InfoTab it__length __attribute__((aligned(8))) =
   };
 InfoTab it_alts_35 __attribute__((aligned(8))) = 
   { .name                = "alts_35",
-    // fvs [("ac_h",UBInt)]
+    // fvs [("ac_h",Int_h[U] )]
     .entryCode           = &alts_35,
     .objType             = CASECONT,
     .layoutInfo.payloadSize = 1,
@@ -728,7 +728,7 @@ InfoTab it_alts_13 __attribute__((aligned(8))) =
   };
 InfoTab it_result_2 __attribute__((aligned(8))) = 
   { .name                = "result_2",
-    // fvs [("x_h",UBInt)]
+    // fvs [("x_h",Int_h[U] )]
     .entryCode           = &stg_concall,
     .objType             = CON,
     .layoutInfo.payloadSize  = 1,
@@ -889,7 +889,7 @@ InfoTab it_alts_7 __attribute__((aligned(8))) =
   };
 InfoTab it_result_0 __attribute__((aligned(8))) = 
   { .name                = "result_0",
-    // fvs [("x_h",UBInt)]
+    // fvs [("x_h",Int_h[U] )]
     .entryCode           = &stg_concall,
     .objType             = CON,
     .layoutInfo.payloadSize  = 1,
@@ -1068,7 +1068,7 @@ InfoTab it_alts_10 __attribute__((aligned(8))) =
   };
 InfoTab it_result_1 __attribute__((aligned(8))) = 
   { .name                = "result_1",
-    // fvs [("x_h",UBInt)]
+    // fvs [("x_h",Int_h[U] )]
     .entryCode           = &stg_concall,
     .objType             = CON,
     .layoutInfo.payloadSize  = 1,
@@ -1649,7 +1649,7 @@ InfoTab it_alts_62 __attribute__((aligned(8))) =
   };
 InfoTab it_result_6 __attribute__((aligned(8))) = 
   { .name                = "result_6",
-    // fvs [("x_h",UBInt)]
+    // fvs [("x_h",Int_h[U] )]
     .entryCode           = &stg_concall,
     .objType             = CON,
     .layoutInfo.payloadSize  = 1,
@@ -2096,7 +2096,7 @@ InfoTab it_gcd_h __attribute__((aligned(8))) =
   };
 InfoTab it_alts_23 __attribute__((aligned(8))) = 
   { .name                = "alts_23",
-    // fvs [("a_h",UBInt),("b_h",Int_h[U] )]
+    // fvs [("a_h",Int_h[U] ),("b_h",Int_h[U] )]
     .entryCode           = &alts_23,
     .objType             = CASECONT,
     .layoutInfo.payloadSize = 2,
@@ -3951,8 +3951,8 @@ void registerSHOs() {
 }
 
 
-// UBInt -> UBInt -> UBInt
-// (([],["a_h","b_h"]),([],[UBInt,UBInt]))
+// Int_h[U]  -> Int_h[U]  -> Int_h[U] 
+// (([],["a_h","b_h"]),([],[Int_h[U] ,Int_h[U] ]))
 DEFUN3(fun__idiv, self, a_h, b_h) {
   fprintf(stderr, "_idiv here\n");
   stgCurVal.argType = INT;
@@ -3962,8 +3962,8 @@ DEFUN3(fun__idiv, self, a_h, b_h) {
   ENDFUN;
 }
 
-// UBInt -> UBInt -> UBInt
-// (([],["a_h","b_h"]),([],[UBInt,UBInt]))
+// Int_h[U]  -> Int_h[U]  -> Int_h[U] 
+// (([],["a_h","b_h"]),([],[Int_h[U] ,Int_h[U] ]))
 DEFUN3(fun__ieq, self, a_h, b_h) {
   fprintf(stderr, "_ieq here\n");
   stgCurVal.argType = INT;
@@ -3973,8 +3973,8 @@ DEFUN3(fun__ieq, self, a_h, b_h) {
   ENDFUN;
 }
 
-// UBInt -> UBInt -> UBInt
-// (([],["a_h","b_h"]),([],[UBInt,UBInt]))
+// Int_h[U]  -> Int_h[U]  -> Int_h[U] 
+// (([],["a_h","b_h"]),([],[Int_h[U] ,Int_h[U] ]))
 DEFUN3(fun__ige, self, a_h, b_h) {
   fprintf(stderr, "_ige here\n");
   stgCurVal.argType = INT;
@@ -3984,8 +3984,8 @@ DEFUN3(fun__ige, self, a_h, b_h) {
   ENDFUN;
 }
 
-// UBInt -> UBInt -> UBInt
-// (([],["a_h","b_h"]),([],[UBInt,UBInt]))
+// Int_h[U]  -> Int_h[U]  -> Int_h[U] 
+// (([],["a_h","b_h"]),([],[Int_h[U] ,Int_h[U] ]))
 DEFUN3(fun__igt, self, a_h, b_h) {
   fprintf(stderr, "_igt here\n");
   stgCurVal.argType = INT;
@@ -3995,8 +3995,8 @@ DEFUN3(fun__igt, self, a_h, b_h) {
   ENDFUN;
 }
 
-// UBInt -> UBInt -> UBInt
-// (([],["a_h","b_h"]),([],[UBInt,UBInt]))
+// Int_h[U]  -> Int_h[U]  -> Int_h[U] 
+// (([],["a_h","b_h"]),([],[Int_h[U] ,Int_h[U] ]))
 DEFUN3(fun__ile, self, a_h, b_h) {
   fprintf(stderr, "_ile here\n");
   stgCurVal.argType = INT;
@@ -4006,8 +4006,8 @@ DEFUN3(fun__ile, self, a_h, b_h) {
   ENDFUN;
 }
 
-// UBInt -> UBInt -> UBInt
-// (([],["a_h","b_h"]),([],[UBInt,UBInt]))
+// Int_h[U]  -> Int_h[U]  -> Int_h[U] 
+// (([],["a_h","b_h"]),([],[Int_h[U] ,Int_h[U] ]))
 DEFUN3(fun__ilt, self, a_h, b_h) {
   fprintf(stderr, "_ilt here\n");
   stgCurVal.argType = INT;
@@ -4017,8 +4017,8 @@ DEFUN3(fun__ilt, self, a_h, b_h) {
   ENDFUN;
 }
 
-// UBInt -> UBInt -> UBInt
-// (([],["a_h","b_h"]),([],[UBInt,UBInt]))
+// Int_h[U]  -> Int_h[U]  -> Int_h[U] 
+// (([],["a_h","b_h"]),([],[Int_h[U] ,Int_h[U] ]))
 DEFUN3(fun__imax, self, a_h, b_h) {
   fprintf(stderr, "_imax here\n");
   stgCurVal.argType = INT;
@@ -4028,8 +4028,8 @@ DEFUN3(fun__imax, self, a_h, b_h) {
   ENDFUN;
 }
 
-// UBInt -> UBInt -> UBInt
-// (([],["a_h","b_h"]),([],[UBInt,UBInt]))
+// Int_h[U]  -> Int_h[U]  -> Int_h[U] 
+// (([],["a_h","b_h"]),([],[Int_h[U] ,Int_h[U] ]))
 DEFUN3(fun__imin, self, a_h, b_h) {
   fprintf(stderr, "_imin here\n");
   stgCurVal.argType = INT;
@@ -4039,8 +4039,8 @@ DEFUN3(fun__imin, self, a_h, b_h) {
   ENDFUN;
 }
 
-// UBInt -> UBInt -> UBInt
-// (([],["a_h","b_h"]),([],[UBInt,UBInt]))
+// Int_h[U]  -> Int_h[U]  -> Int_h[U] 
+// (([],["a_h","b_h"]),([],[Int_h[U] ,Int_h[U] ]))
 DEFUN3(fun__imod, self, a_h, b_h) {
   fprintf(stderr, "_imod here\n");
   stgCurVal.argType = INT;
@@ -4050,8 +4050,8 @@ DEFUN3(fun__imod, self, a_h, b_h) {
   ENDFUN;
 }
 
-// UBInt -> UBInt -> UBInt
-// (([],["a_h","b_h"]),([],[UBInt,UBInt]))
+// Int_h[U]  -> Int_h[U]  -> Int_h[U] 
+// (([],["a_h","b_h"]),([],[Int_h[U] ,Int_h[U] ]))
 DEFUN3(fun__imul, self, a_h, b_h) {
   fprintf(stderr, "_imul here\n");
   stgCurVal.argType = INT;
@@ -4061,8 +4061,8 @@ DEFUN3(fun__imul, self, a_h, b_h) {
   ENDFUN;
 }
 
-// UBInt -> UBInt -> UBInt
-// (([],["a_h","b_h"]),([],[UBInt,UBInt]))
+// Int_h[U]  -> Int_h[U]  -> Int_h[U] 
+// (([],["a_h","b_h"]),([],[Int_h[U] ,Int_h[U] ]))
 DEFUN3(fun__ine, self, a_h, b_h) {
   fprintf(stderr, "_ine here\n");
   stgCurVal.argType = INT;
@@ -4072,8 +4072,8 @@ DEFUN3(fun__ine, self, a_h, b_h) {
   ENDFUN;
 }
 
-// UBInt -> UBInt
-// (([],["a_h"]),([],[UBInt]))
+// Int_h[U]  -> Int_h[U] 
+// (([],["a_h"]),([],[Int_h[U] ]))
 DEFUN2(fun__ineg, self, a_h) {
   fprintf(stderr, "_ineg here\n");
   stgCurVal.argType = INT;
@@ -4221,8 +4221,8 @@ DEFUN0(alts_21) {
 }
 
 
-// UBInt -> UBInt -> UBInt
-// (([],["a_h","b_h"]),([],[UBInt,UBInt]))
+// Int_h[U]  -> Int_h[U]  -> Int_h[U] 
+// (([],["a_h","b_h"]),([],[Int_h[U] ,Int_h[U] ]))
 DEFUN3(fun__iplus, self, a_h, b_h) {
   fprintf(stderr, "_iplus here\n");
   stgCurVal.argType = INT;
@@ -4232,8 +4232,8 @@ DEFUN3(fun__iplus, self, a_h, b_h) {
   ENDFUN;
 }
 
-// UBInt -> UBInt -> UBInt
-// (([],["a_h","b_h"]),([],[UBInt,UBInt]))
+// Int_h[U]  -> Int_h[U]  -> Int_h[U] 
+// (([],["a_h","b_h"]),([],[Int_h[U] ,Int_h[U] ]))
 DEFUN3(fun__isub, self, a_h, b_h) {
   fprintf(stderr, "_isub here\n");
   stgCurVal.argType = INT;
@@ -4243,8 +4243,8 @@ DEFUN3(fun__isub, self, a_h, b_h) {
   ENDFUN;
 }
 
-// forall t258.List[B] t258 -> UBInt -> UBInt
-// ((["xs"],["ac_h"]),([List[B] t258],[UBInt]))
+// forall t258.List[B] t258 -> Int_h[U]  -> Int_h[U] 
+// ((["xs"],["ac_h"]),([List[B] t258],[Int_h[U] ]))
 DEFUN3(fun__length, self, xs, ac_h) {
   fprintf(stderr, "_length here\n");
   // scrutinee may heap alloc
@@ -4259,7 +4259,7 @@ DEFUN3(fun__length, self, xs, ac_h) {
   ENDFUN;
 }
 
-// UBInt
+// Int_h[U] 
 DEFUN0(alts_35) {
   fprintf(stderr, "alts_35 here\n");
   Obj *ccont_alts_35 = stgPopCont();
@@ -4287,7 +4287,7 @@ DEFUN0(alts_35) {
 }
 
 
-// UBInt
+// Int_h[U] 
 DEFUN0(alts_36) {
   fprintf(stderr, "alts_36 here\n");
   Obj *ccont_alts_36 = stgPopCont();
@@ -6106,8 +6106,8 @@ DEFUN0(alts_59) {
 }
 
 
-// UBInt -> Bool[B] 
-// (([],["i_h"]),([],[UBInt]))
+// Int_h[U]  -> Bool[B] 
+// (([],["i_h"]),([],[Int_h[U] ]))
 DEFUN2(fun_odd_h, self, i_h) {
   fprintf(stderr, "odd_h here\n");
   // scrutinee may heap alloc
@@ -6184,8 +6184,8 @@ DEFUN1(fun_even, self) {
   ENDFUN;
 }
 
-// UBInt -> Bool[B] 
-// (([],["i_h"]),([],[UBInt]))
+// Int_h[U]  -> Bool[B] 
+// (([],["i_h"]),([],[Int_h[U] ]))
 DEFUN2(fun_even_h, self, i_h) {
   fprintf(stderr, "even_h here\n");
   // scrutinee may heap alloc
@@ -6525,8 +6525,8 @@ DEFUN0(alts_0) {
 }
 
 
-// UBInt -> Int_h[U]  -> UBInt
-// (([],["a_h","b_h"]),([],[UBInt,Int_h[U] ]))
+// Int_h[U]  -> Int_h[U]  -> Int_h[U] 
+// (([],["a_h","b_h"]),([],[Int_h[U] ,Int_h[U] ]))
 DEFUN3(fun_gcd_h, self, a_h, b_h) {
   fprintf(stderr, "gcd_h here\n");
   // scrutinee may heap alloc
@@ -6541,7 +6541,7 @@ DEFUN3(fun_gcd_h, self, a_h, b_h) {
   ENDFUN;
 }
 
-// UBInt
+// Int_h[U] 
 DEFUN0(alts_23) {
   fprintf(stderr, "alts_23 here\n");
   Obj *ccont_alts_23 = stgPopCont();
@@ -6570,7 +6570,7 @@ DEFUN0(alts_23) {
 }
 
 
-// UBInt
+// Int_h[U] 
 DEFUN0(alts_24) {
   fprintf(stderr, "alts_24 here\n");
   Obj *ccont_alts_24 = stgPopCont();

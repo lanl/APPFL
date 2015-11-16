@@ -102,7 +102,6 @@ hmstgdebug os0 =
 errTyp = error "typ not defined"
 
 getMono (Var v)  = freshMonoVar
--- getMono (LitI _) = return $ MPrim UBInt
 getMono (LitI _) = return $ biIntMCon
 getMono (LitL _) = return $ biLongMCon
 getMono (LitF _) = return $ biFloatMCon
@@ -185,20 +184,20 @@ instance DV (Expr InfoTab) (Expr InfoTab) where
 
     dv e@EPrimop{..} =
         let retMono = case eprimop of
-                        Piadd -> MPrim UBInt
-                        Pisub -> MPrim UBInt
-                        Pimul -> MPrim UBInt
-                        Pidiv -> MPrim UBInt
-                        Pimod -> MPrim UBInt
-                        Pimax -> MPrim UBInt
-                        Pimin -> MPrim UBInt
-                        Pineg -> MPrim UBInt
-                        Pieq  -> MPrim UBInt
-                        Pine  -> MPrim UBInt
-                        Pile  -> MPrim UBInt
-                        Pilt  -> MPrim UBInt
-                        Pige  -> MPrim UBInt
-                        Pigt  -> MPrim UBInt
+                        Piadd -> biIntMCon
+                        Pisub -> biIntMCon
+                        Pimul -> biIntMCon
+                        Pidiv -> biIntMCon
+                        Pimod -> biIntMCon
+                        Pimax -> biIntMCon
+                        Pimin -> biIntMCon
+                        Pineg -> biIntMCon
+                        Pieq  -> biIntMCon
+                        Pine  -> biIntMCon
+                        Pile  -> biIntMCon
+                        Pilt  -> biIntMCon
+                        Pige  -> biIntMCon
+                        Pigt  -> biIntMCon
                         x -> error $ "HMStg.dv Eprimop " ++ show x
                         -- etc.
 
@@ -295,20 +294,20 @@ instance BU (Expr InfoTab) where
         let (ass, _, eas') = unzip3 $ map (bu mtvs) eas
             as = Set.unions ass
             pts = case eprimop of
-                    Piadd -> [MPrim UBInt, MPrim UBInt]
-                    Pisub -> [MPrim UBInt, MPrim UBInt]
-                    Pimul -> [MPrim UBInt, MPrim UBInt]
-                    Pidiv -> [MPrim UBInt, MPrim UBInt]
-                    Pimod -> [MPrim UBInt, MPrim UBInt]
-                    Pimax -> [MPrim UBInt, MPrim UBInt]
-                    Pimin -> [MPrim UBInt, MPrim UBInt]
-                    Pineg -> [MPrim UBInt, MPrim UBInt]
-                    Pine  -> [MPrim UBInt, MPrim UBInt]
-                    Pieq  -> [MPrim UBInt, MPrim UBInt]
-                    Pile  -> [MPrim UBInt, MPrim UBInt]
-                    Pilt  -> [MPrim UBInt, MPrim UBInt]
-                    Pigt  -> [MPrim UBInt, MPrim UBInt]
-                    Pige  -> [MPrim UBInt, MPrim UBInt]
+                    Piadd -> [biIntMCon, biIntMCon]
+                    Pisub -> [biIntMCon, biIntMCon]
+                    Pimul -> [biIntMCon, biIntMCon]
+                    Pidiv -> [biIntMCon, biIntMCon]
+                    Pimod -> [biIntMCon, biIntMCon]
+                    Pimax -> [biIntMCon, biIntMCon]
+                    Pimin -> [biIntMCon, biIntMCon]
+                    Pineg -> [biIntMCon, biIntMCon]
+                    Pine  -> [biIntMCon, biIntMCon]
+                    Pieq  -> [biIntMCon, biIntMCon]
+                    Pile  -> [biIntMCon, biIntMCon]
+                    Pilt  -> [biIntMCon, biIntMCon]
+                    Pigt  -> [biIntMCon, biIntMCon]
+                    Pige  -> [biIntMCon, biIntMCon]
                     x -> error $ "HMStg.bu EPrimop " ++ show x
             cs = Set.fromList [EqC m1 m2 | (_,m1) <- Set.toList as | m2 <- pts]
         in (as, cs, e) -- EPrimop monotype set in dv
@@ -497,7 +496,7 @@ instance BU (Obj InfoTab) where
 polyToMono m@(MVar _) = m
 polyToMono (MFun a b) = MFun (polyToMono a) (polyToMono b)
 polyToMono (MCon b c ms) = MCon b c $ map (polyToMono) ms
-polyToMono m@MPrim{} = m
+-- polyToMono m@MPrim{} = m
 polyToMono (MPVar v) = MVar v
 polyToMono m = error $ "HMStg.polyToMono: " ++ show m
 

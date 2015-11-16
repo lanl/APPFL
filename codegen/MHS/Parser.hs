@@ -361,8 +361,8 @@ btypeP =
         conNameP >>> \c -> -- only permit type applicaton for con names (e.g. List a -> Int, not m a -> Int)
         many' atypeP >>> \ms ->
         accept $ case () of 
-                  _ | c == "Int#" -> MPrim UBInt -- hacky
-                    | c == "Double#" -> MPrim UBDouble
+                  _ | c == "Int#" -> biIntMCon -- MPrim UBInt -- hacky
+                    | c == "Double#" -> biDoubleMCon -- MPrim UBDouble
                     | otherwise -> MCon err c ms
                                    
   in orExList [cAp, atypeP]
@@ -370,12 +370,12 @@ btypeP =
 atypeP =
   let err = True --error "boxity not set in MCON"
       primTypP inp = case inp of
-        (TokCon "Int#" _:rs)    -> accept UBInt rs
-        (TokCon "Double#" _:rs) -> accept UBDouble rs
+        (TokCon "Int#" _:rs)    -> accept "Int_h" rs --accept UBInt rs
+        (TokCon "Double#" _:rs) -> accept "Double_h" rs --UBDouble rs
         _ -> reject inp
   in
    orExList [
-     primTypP >>> \p -> accept $ MPrim p,
+     primTypP >>> \p -> accept $ MCon False p [], --MPrim p,
      conNameP >>> \c -> accept $ MCon err c [],
      varNameP >>> \v -> accept $ MVar v,
      inparensP typeP]

@@ -91,7 +91,7 @@ set(name polyUnboxed)
 set(tname error_${name})
 add_test(${tname} ${STGCC} ${SRC_DIR}/${name}.stg)
 set_property(TEST ${tname} PROPERTY PASS_REGULAR_EXPRESSION 
-    "cannot unify unboxed type UBInt with polymorphic type variable")
+    "cannot unify unboxed type")
 set_property(TEST ${tname} PROPERTY WILL_FAIL)
 
 set(name pap2)
