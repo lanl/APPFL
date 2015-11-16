@@ -23,10 +23,10 @@ void *stgHP = NULL;
 void *stgStack = NULL;
 void *stgSP = NULL;
 
-#ifdef __GNUC__
+#ifndef __clang__
 // register PtrOrLiteral stgCurVal asm("%r15");  // current value STG register
 #else
-extern PtrOrLiteral stgCurVal;  // current/return value
+PtrOrLiteral stgCurVal;  // current/return value
 #endif
 
 const char *objTypeNames[] = {
