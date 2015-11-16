@@ -1,0 +1,24 @@
+--finds smallest integer in list
+--findSmallest :: List Int -> Int
+findSmallest = FUN(xs n -> case xs of {
+	       	      	   	Nil -> n;
+	       	      	   	Cons h1 t1 -> case intLE n h1 of {
+				     	      	   False -> findSmallest t1 h1;
+						   True -> findSmallest t1 n}});
+
+startFindSmallest = FUN(xs -> let {q = THUNK(head xs);
+		    	      	   r = THUNK(findSmallest xs q)} in r);
+
+
+
+list0 = THUNK(nil);
+list1 = CON(Cons two list0);
+list2 = CON(Cons three list1);
+list3 = CON(Cons one list2);
+list4 = CON(Cons two list3);
+list5 = CON(Cons five list4);
+
+--Test
+result = THUNK(one);
+output = THUNK(startFindSmallest list5);
+test = THUNK(eqInt result output);

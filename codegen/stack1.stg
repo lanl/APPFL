@@ -1,0 +1,13 @@
+--Gets element at top of stack
+--top :: List a -> a
+top = FUN(xs -> case xs of {
+		     Cons h1 t1 -> h1});
+
+stack1 = CON(Cons one nil);
+stack2 = CON(Cons two stack1);
+stack3 = CON(Cons three stack2);
+
+
+--Test
+output = THUNK(top stack2);
+main = THUNK(eqInt output two);
