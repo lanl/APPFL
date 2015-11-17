@@ -491,6 +491,7 @@ cInfoTab it@(Fun {}) = Just (
         ,initStructMember IntTy "layoutInfo.boxedCount" (length $ fvs it)
         ,initStructMember IntTy "layoutInfo.unboxedCount" (ufvc it)
         ,initStructMember IntTy "funFields.arity" (arity it)
+        ,initStructMember EnumTy "funFields.trueEntryCode" (trueEntryCode it)
         ])
   
 cInfoTab it@(Pap {}) =  Just (
@@ -501,6 +502,7 @@ cInfoTab it@(Pap {}) =  Just (
         ,initStructMember IntTy "layoutInfo.payloadSize" (length (fvs it) + length (args it) + 1) 
         ,initStructMember IntTy "layoutInfo.boxedCount" (bfvc it)
         ,initStructMember IntTy "layoutInfo.unboxedCount" (ufvc it)
+        ,initStructMember EnumTy "funFields.trueEntryCode" (trueEntryCode it)
         ])
         
 cInfoTab it@(Con {}) =  Just (
@@ -513,10 +515,10 @@ cInfoTab it@(Con {}) =  Just (
         ,initStructMember IntTy "layoutInfo.unboxedCount" (uargc it)
         ,initStructMember StringTy "layoutInfo.permString" (concatMap show (argPerm it))
         ,initStructMember IntTy "conFields.arity" (arity it)
-        ,initStructMember IntTy "conFields.tag"  (read (luConTag (con it) (cmap it)) :: Int)
+        ,initStructMember EnumTy "conFields.tag"  (luConTag (con it) (cmap it))
         ,initStructMember StringTy "conFields.conName" (con it)
         ])     
-        
+    
 cInfoTab it@(Thunk {}) =  Just (
     initStruct "InfoTab" ("it_" ++ name it) True
         [initStructMember StringTy "name" (name it)
