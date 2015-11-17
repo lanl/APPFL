@@ -101,14 +101,6 @@ hmstgdebug os0 =
 
 errTyp = error "typ not defined"
 
-getMono (Var v)  = freshMonoVar
-getMono (LitI _) = return $ biIntMCon
-getMono (LitL _) = return $ biLongMCon
-getMono (LitF _) = return $ biFloatMCon
-getMono (LitD _) = return $ biDoubleMCon
--- this only works for nullary user-defined unboxed type
-getMono (LitC c) = return $ MCon False c []
-
 class SetTyp a where
     setTyp :: Monotype -> a -> a
     getTyp :: a -> Monotype
@@ -173,8 +165,22 @@ class DV a b where
     dv :: a -> State Int b
 
 instance DV (Expr InfoTab) (Expr InfoTab) where
-    dv e@EAtom{ea} =
-        do m <- getMono ea
+    dv e@EAtom{emd, ea} =
+        do m <- case ea of
+                  Var v  -> freshMonoVar
+                  LitI _ -> return $ biIntMCon
+                  LitL _ -> return $ biLongMCon
+                  LitF _ -> return $ biFloatMCon
+                  LitD _ -> return $ biDoubleMCon
+                  LitC c -> case maybeCMap emd of
+                              Nothing -> error "dv LitC maybeCMap is Nothing"
+                              Just cmap -> return $
+                                           let (TyCon boxed tname _ _) = 
+                                                  luTCon c cmap 
+                                           in case boxed of
+                                                True -> error $ "dv:  boxed constructor " ++
+                                                                c ++ " cannot be literal"
+                                                False -> MCon False tname []
            return $ setTyp m e
 
     dv e@EFCall{eas} = 

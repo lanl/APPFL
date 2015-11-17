@@ -16,6 +16,7 @@ import           Control.Monad (when)
 -- build a.out from stg/mhs and run it
 _eval :: String -> Bool -> IO()
 _eval input showerr = do
+  system("rm -f a.out")
   build input
   let erStr = if showerr then "" else " &2>/dev/null"
   system("./a.out" ++ erStr)

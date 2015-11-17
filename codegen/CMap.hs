@@ -21,7 +21,8 @@ module CMap
   luConTag,
   isBoxedTCon,
   CMap,
-  instantiateDataConAt 
+  instantiateDataConAt,
+  showTypeEnums
 ) where
 
 import Util
@@ -30,12 +31,21 @@ import PPrint
 import qualified Data.Map as Map
 import BU(apply)
 import Data.Maybe (fromJust)
-import Data.List ((\\), find)
+import Data.List ((\\), find, intercalate)
 import Data.Char (isNumber)
 import Debug.Trace
 
 type CMap = Map.Map Con TyCon
 
+showTypeEnums tycons = 
+    let tycons' = [ t | t@(TyCon _ con _ dataCons) <- tycons,
+                        con /= "Int" && con /= "Double" ] -- hack for MHS
+    in intercalate "\n" $ map showTypeEnum tycons'
+
+showTypeEnum (TyCon _ con _ dataCons) =
+    "enum tycon_" ++ con ++ "{\n" ++
+      intercalate ",\n" [ con ++ "_" ++ c | DataCon c _ <- dataCons ] ++
+      " };\n"
 
 -- Construct the CMap from a list of TyCons
 toCMap :: [TyCon] -> CMap
@@ -117,10 +127,13 @@ luTCon name conmap
 luConTag :: Con -> CMap -> String
 luConTag c cmap | isBuiltInType c = c
                 | otherwise       =
+
+
                   let tab = zip (map dataConName $ luDCons c cmap) [0..]
                   in case lookup c tab of
                       Just n -> show n
                       Nothing -> error $ "Tag lookup failing in CMap for " ++ c
+
 
 -- given a constructor map, data constructor, and list of monotypes to be
 -- substituted for the arguments of the type constructor corresponding to

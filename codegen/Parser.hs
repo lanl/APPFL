@@ -397,10 +397,10 @@ atomP :: Parser Token Atom
 atomP = orExList [
   varNameP `using` Var,
   intP `using` LitI,
-  --boolP `using` LitB,
-  fltP `using` LitF
+  --longP `using` LitL,
+  fltP `using` LitF,
   --dblP `using` LitD,
-  --chrP `using` LitC
+  conNameP `using` LitC
   ]
 
 ---------------------------- DataDef parsing ---------------------------

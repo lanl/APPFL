@@ -27,7 +27,7 @@ import PPrint
 import AST
 import ADT
 import CMap
-import Data.List(nub,(\\))
+import Data.List(nub,(\\),intercalate)
 
 import Data.Map (Map)
 import qualified Data.Map as Map
@@ -124,7 +124,10 @@ data InfoTab =
       bfvc :: Int,  -- boxed FV count     
       ufvc :: Int,  -- unboxed FV count
       truefvs :: [Var],
-      noHeapAlloc :: Bool }
+      noHeapAlloc :: Bool,
+      
+      maybeCMap :: Maybe CMap  -- only needed for LitC
+    }
 
 -- Expr
   | ITFCall { 
@@ -401,7 +404,8 @@ instance MakeIT (Expr ([Var],[Var])) where
                truefvs = truefvs, 
                typ = typUndef, 
                ctyp = ctypUndef, 
-               noHeapAlloc = False}
+               noHeapAlloc = False,
+               maybeCMap = Nothing}
 
     makeIT EFCall{emd = (fvs,truefvs)} = 
         ITFCall{fvs = zip fvs $ repeat typUndef, 
@@ -470,7 +474,7 @@ showITType _ = "sho"
 -- showITTType _ = error "bad ITType"
 
 
-myConcatMap f = concat . (map f)
+myConcatMap f = intercalate "\n" . map f
 
 showITs :: ITsOf a [InfoTab] => a -> [Char]
 showITs os = myConcatMap showIT $ itsOf os
@@ -665,7 +669,7 @@ addCMapToITs :: CMap -> [Obj InfoTab] -> [Obj InfoTab]
 addCMapToITs cmap objs =  map (setITs . (cmap,)) objs
 
 
-instance SetITs (CMap,(Obj InfoTab)) (Obj InfoTab) where
+instance SetITs (CMap, (Obj InfoTab)) (Obj InfoTab) where
   setITs (cmap,obj) = case obj of
 
     o@FUN{e} ->
@@ -674,14 +678,27 @@ instance SetITs (CMap,(Obj InfoTab)) (Obj InfoTab) where
     o@THUNK{e} ->
       o{ e = setITs (cmap,e) }
 
-    o@CON{omd, c} ->
-      o{omd = omd{ cmap = cmap } }
+    o@CON{omd, c, as} ->
+      o{omd = omd{ cmap = cmap },
+        as = map (setITs . (cmap,)) as}
 
     o -> o --  BLACKHOLE and PAP don't need modification
 
 instance SetITs (CMap, (Expr InfoTab)) (Expr InfoTab) where
   setITs (cmap,expr) = case expr of
 
+    e@EAtom{emd, ea} ->
+        case ea of
+          LitC{} -> e{ emd = emd{ maybeCMap = Just cmap } }
+          _      -> e{ emd = emd{ maybeCMap = Nothing   } }
+
+    e@EFCall{eas} ->
+        e{eas = map (setITs . (cmap,)) eas}
+        
+    -- this could be the identity:  primops should not apply to user-defined constants
+    e@EPrimop{eas} ->
+        e{eas = map (setITs . (cmap,)) eas}
+        
     e@ECase{ee, ealts, emd} ->
       e{ ee    = setITs (cmap,ee),
          ealts = setITs (cmap,ealts),
@@ -690,11 +707,9 @@ instance SetITs (CMap, (Expr InfoTab)) (Expr InfoTab) where
     e@ELet{ee, edefs} ->
       e{ ee    = setITs (cmap,ee),
          edefs = map (setITs . (cmap,)) edefs }
-      
-    e -> e -- EAtom, EFCall, EPrimop don't need modification
 
 instance SetITs (CMap, (Alts InfoTab)) (Alts InfoTab) where
-  setITs (cmap,a@Alts{alts}) =
+  setITs (cmap, a@Alts{alts}) =
     a{ alts = map (setITs . (cmap,)) alts}
     
 instance SetITs (CMap, (Alt InfoTab)) (Alt InfoTab) where

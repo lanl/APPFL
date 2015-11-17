@@ -542,10 +542,12 @@ loadPayloadAtoms env as ind name =
 
 showas as = intercalate " " $ map showa as
 
-showa (Var v) = v
+showa (Var v)  = v
 showa (LitI i) = show i
--- showa (LitF f) = show f
+showa (LitL l) = show l
+showa (LitF f) = show f
 showa (LitD d) = show d
+-- showa (LitC c) = 
 showa at = error $ "CodeGen.showa: not expecting Atom - " ++ show at 
 
 indexFrom :: Int -> [a] -> [(Int, a)]

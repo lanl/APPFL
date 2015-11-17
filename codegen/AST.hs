@@ -51,7 +51,7 @@ instance Show Atom where
     show (LitL l) = show l
     show (LitF f) = show f ++ "(f)"
     show (LitD d) = show d ++ "(d)"
-    show (LitC d)  = d
+    show (LitC c) = c
 
 data Obj a = FUN   {omd :: a, vs :: [Var],   e :: Expr a   , oname :: String}
            | PAP   {omd :: a, f  :: Var,     as :: [Expr a], oname :: String}
@@ -190,7 +190,8 @@ instance Unparse Atom where
   unparse (LitI i) = int i
   unparse (LitL l) = text $ show l
   unparse (LitF f) = float f
-  unparse (LitC c)  = text c
+  unparse (LitD d) = text $ show d
+  unparse (LitC c) = text c
 
 instance Unparse Primop where
   unparse = text.stgPrimName 

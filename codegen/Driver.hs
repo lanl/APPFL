@@ -258,12 +258,14 @@ tctest mhs arg =
 
 codegener :: String -> Bool -> Bool -> String
 codegener inp v mhs = let (tycons, objs) = heapchecker mhs inp   
+                          typeEnums = showTypeEnums tycons
                           infotab = showITs objs
                           (shoForward, shoDef) = showSHOs objs
                           (funForwards, funDefs) = cgObjs objs stgRTSGlobals
 
-                 in header ++
-                    intercalate "\n" funForwards ++ "\n" ++
+                 in header ++ "\n" ++
+                    intercalate "\n" funForwards ++ "\n\n" ++
+                    typeEnums ++ "\n" ++
                     infotab ++ "\n" ++
                     shoForward ++ "\n" ++
                     shoDef ++ "\n" ++
