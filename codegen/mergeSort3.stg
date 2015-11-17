@@ -1,0 +1,76 @@
+-- divide boxed Ints
+-- divInt :: Int -> Int -> Int
+-- Integer Division
+divInt = FUN(x y -> case x of {
+	  	     	  I i# -> case y of {
+			       	       I j# -> case idiv# i# j# of {
+				       	       	    x# -> let {result = CON(I x#)} in result }}});
+
+-- secondHalf
+-- secondHalf a list, rounding up
+-- secondHalf :: List a -> List a
+secondHalf = FUN(xs -> let {l = THUNK(length xs);
+      	       	       a = THUNK(divInt l two);
+		       final = THUNK(drop a xs)} in final);
+
+-- firstHalf
+-- firstHalf a list, rounding up
+-- firstHalf :: List a -> List a
+firstHalf = FUN(xs -> let {l = THUNK(length xs);
+      	       	       a = THUNK(divInt l two);
+		       final = THUNK(take a xs)} in final);
+
+-- Compare if two lists of ints are the same
+-- eqList :: List a -> List a -> Bool
+eqList = FUN(xs ys -> case xs of {
+       	 	      	   Nil -> case ys of {
+			       	       Nil -> true;
+				       Cons h t -> false};
+			   Cons h1 t1 -> case ys of {
+			   	    	      Nil -> false; 
+					      Cons h2 t2 -> let {expr = THUNK(eqInt h1 h2)} in case expr of {
+					      	      	    	                                    True -> let {final = THUNK(eqList t1 t2)} in final;
+								                                    False -> false}}});
+
+--merge :: List a -> List a -> List a
+merge = FUN(xs ys -> case xs of {
+      	       	     	  Nil -> ys;
+			  Cons h1 t1 -> case ys of {
+			       	    	     Nil -> xs;
+					     Cons h2 t2 -> let {a = THUNK(intLE h2 h1)} in case a of {
+					     	     	       	    	      	       	       True -> let {b = THUNK(merge xs t2);
+											       	       	    c = CON(Cons h2 b)} in c; 
+											       False -> let {b = THUNK(merge t1 ys);
+											       	       	     c = CON(Cons h1 b)} in c}}});
+
+mergeSort = FUN(xs -> let {w = THUNK(length xs)} in case eqInt w one of {
+	    	      	       		    	    True -> xs ;
+						    False -> let {q = THUNK(firstHalf xs);
+	    	      	                                          q1 = THUNK(mergeSort q);
+			                                          r = THUNK(secondHalf xs);
+			                                          r1 = THUNK(mergeSort r);
+								  s = THUNK(merge q1 r1)} in s});
+
+list4 = CON(Cons two list3);
+list3 = CON(Cons three list2);
+list2 = CON(Cons four list1);
+list1 = CON(Cons five nil);
+
+list10 = CON(Cons one list11);
+list11 = CON(Cons one list12);
+list12 = CON(Cons two list13);
+list13 = CON(Cons three list14);
+list14 = CON(Cons three list15);
+list15 = CON(Cons four list16);
+list16 = CON(Cons five list17);
+list17 = CON(Cons six nil);
+
+list21 = CON(Cons one list22);
+list22 = CON(Cons one list23);
+list23 = CON(Cons three list24);
+list24 = CON(Cons six nil);
+
+--Test
+result = THUNK(merge list21 list4);
+output = THUNK(list10);
+main = THUNK(eqList result output);
