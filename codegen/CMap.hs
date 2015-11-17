@@ -38,14 +38,17 @@ import Debug.Trace
 type CMap = Map.Map Con TyCon
 
 showTypeEnums tycons = 
-    let tycons' = [ t | t@(TyCon _ con _ dataCons) <- tycons,
-                        con /= "Int" && con /= "Double" ] -- hack for MHS
-    in intercalate "\n" $ map showTypeEnum tycons'
+    intercalate "\n" $ map showTypeEnum tycons
 
 showTypeEnum (TyCon _ con _ dataCons) =
-    "enum tycon_" ++ con ++ "{\n" ++
-      intercalate ",\n" [ con ++ "_" ++ c | DataCon c _ <- dataCons ] ++
+    "enum tycon_" ++ con ++ " {\n" ++
+      intercalate ",\n" [ "  " ++ con ++ "_" ++ mhsSanitize c 
+                          | DataCon c _ <- dataCons ] ++
       " };\n"
+        where  -- MHS HACK FIX, see also CMap.luConTag
+          mhsSanitize c | c == "D#" = "D"
+                        | c == "I#" = "I"
+                        | otherwise = c
 
 -- Construct the CMap from a list of TyCons
 toCMap :: [TyCon] -> CMap
@@ -127,13 +130,22 @@ luTCon name conmap
 luConTag :: Con -> CMap -> String
 luConTag c cmap | isBuiltInType c = c
                 | otherwise       =
+                    let tyCon = luTCon c cmap
+                    in case elem c (map dataConName $ luDCons c cmap) of
+                         True -> tyConName tyCon ++ "_" ++ mhsSanitize c
+                         False -> "Tag lookup failure for " ++ c ++ " in " ++
+                                  show tyCon
+                        where  -- MHS HACK FIX, see also CMap.showTypeEnum
+                          mhsSanitize c | c == "D#" = "D"
+                                        | c == "I#" = "I"
+                                        | otherwise = c
 
-
+{-
                   let tab = zip (map dataConName $ luDCons c cmap) [0..]
                   in case lookup c tab of
                       Just n -> show n
                       Nothing -> error $ "Tag lookup failing in CMap for " ++ c
-
+-}
 
 -- given a constructor map, data constructor, and list of monotypes to be
 -- substituted for the arguments of the type constructor corresponding to
