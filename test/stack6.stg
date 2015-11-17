@@ -1,0 +1,50 @@
+--Gets element at top of stack
+--top :: List a -> a
+top = FUN(xs -> case xs of {
+		     Cons h1 t1 -> h1});
+
+--Checks if stack is empty
+--isEmpty :: List a -> Bool
+isEmpty = FUN(xs -> case xs of {
+	  	    	 Nil -> true;
+			 Cons h1 t1 -> false});
+
+--Pushes Int into stack
+--push :: List a -> a -> List a
+push = FUN(xs n -> let {q = CON(Cons n xs)} in q); 
+
+--Pops Int from stack
+--pop :: List a -> List a
+pop = FUN(xs -> case xs of {
+      	     	     Cons h1 t1 -> t1});
+
+--Gets size of stack
+--size :: List a -> Int 
+size = FUN(xs -> let {q = THUNK(length xs)} in q);
+
+--Reverses Stack
+--reverse :: List a -> List a -> List a
+reverse = FUN(xs ys -> case xs of {
+	  	       	    Nil -> ys;
+			    Cons h1 t1 -> let {q = THUNK(pop xs);
+			    	       	       r = THUNK(top xs);
+					       s = THUNK(push ys r);
+					       t = THUNK(reverse q s)} in t});  
+
+startReverse = FUN(xs -> let {a = THUNK(nil);
+	       	      	      b = THUNK(reverse xs a)} in b);
+
+stack0 = THUNK(nil);
+stack1 = CON(Cons one stack0);
+stack2 = CON(Cons two stack1);
+stack3 = CON(Cons three stack2);
+
+stack4 = THUNK(nil);
+stack5 = CON(Cons three stack4);
+stack6 = CON(Cons two stack5);
+stack7 = CON(Cons one stack6);
+
+--Test
+result = THUNK(stack3);
+output = THUNK(startReverse stack7);
+main = THUNK(eqList result output);

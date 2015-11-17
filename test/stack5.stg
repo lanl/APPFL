@@ -1,0 +1,32 @@
+--Gets element at top of stack
+--top :: List a -> a
+top = FUN(xs -> case xs of {
+		     Cons h1 t1 -> h1});
+
+--Checks if stack is empty
+--isEmpty :: List a -> Bool
+isEmpty = FUN(xs -> case xs of {
+	  	    	 Nil -> true;
+			 Cons h1 t1 -> false});
+
+--Pushes Int into stack
+--push :: List a -> a -> List a
+push = FUN(xs n -> let {q = CON(Cons n xs)} in q); 
+
+--Pops Int from stack
+--pop :: List a -> List a
+pop = FUN(xs -> case xs of {
+      	     	     Cons h1 t1 -> t1});
+
+--Gets size of stack
+--size :: List a -> Int 
+size = FUN(xs -> let {q = THUNK(length xs)} in q);
+
+stack0 = THUNK(nil);
+stack1 = CON(Cons one stack0);
+stack2 = CON(Cons two stack1);
+stack3 = CON(Cons three stack2);
+
+--Test
+output = THUNK(size stack3);
+main = THUNK(eqInt three output);
