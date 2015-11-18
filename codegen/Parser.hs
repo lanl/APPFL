@@ -140,7 +140,8 @@ groupParsed =
 
     
 
--- uncurried cons is used on several occasions to combine the results of ordered parsers
+-- uncurried cons is used on several occasions to combine the results of 
+-- ordered parsers
 cons = uncurry (:)
       
 ----------------------------- Parsers for Tokens ---------------------------

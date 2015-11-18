@@ -37,7 +37,9 @@ FnPtr stg_concall();
 FnPtr stgBlackhole();
 FnPtr stgIndirect();
 
-FnPtr stgApply();
+// this is not a real object, should not need an sho_, TODO fix CodeGen.hs
+FnPtr stg_case_not_exhaustive();
+extern Obj sho_stg_case_not_exhaustive;
 
 #if USE_ARGTYPE
 #define HOTOPL(HO) ((PtrOrLiteral) {.argType = HEAPOBJ, .op = (HO) })

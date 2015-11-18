@@ -20,7 +20,6 @@ void derefStgCurVal() {
   while (isBoxed(stgCurVal) && getObjType(stgCurVal.op) == INDIRECT) {
     stgCurVal = stgCurVal.op->payload[0];
   }
-// is this a good place to check for BLACKHOLE?
 }
 
 Obj *derefHO(Obj *op) {
@@ -28,6 +27,36 @@ Obj *derefHO(Obj *op) {
     op = op->payload[0].op;
   return op;
 }
+
+// stg_case_not_exhaustive = FUN( x ->  );
+DEFUN2(stg_case_not_exhaustive, self, x) {
+  fprintf(stderr, "stg_case_not_exhaustive: ");
+  showStgVal(x);
+  fprintf(stderr, "\n");
+  showStgHeap();
+  exit(0);
+  ENDFUN;
+}
+
+InfoTab it_stg_case_not_exhaustive __attribute__((aligned(8))) = {
+  .name = "stg_case_not_exhaustive",
+  .entryCode = &stg_case_not_exhaustive,
+  .objType = FUN,
+  //  .fvCount = 0,
+  .funFields.arity = 1,
+  .layoutInfo.boxedCount = 0,
+  .layoutInfo.unboxedCount = 0,
+};
+
+Obj sho_stg_case_not_exhaustive = {
+#if USE_OBJTYPE
+  .objType = FUN,
+#endif
+  .infoPtr = (uintptr_t)&it_stg_case_not_exhaustive,
+  .ident = "stg_case_not_exhaustive",
+};
+
+
 
 DEFUN1(stg_funcall, self) {
   fprintf(stderr,"stg_funcall, returning self\n");

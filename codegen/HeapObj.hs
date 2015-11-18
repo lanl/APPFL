@@ -230,17 +230,19 @@ ptrOrLitSHO a =
     "{ " ++
     case a of
 #if USE_ARGTYPE 
+      Var v  -> ".argType = HEAPOBJ, .op = &sho_" ++ v   -- these must be global
       LitI i -> ".argType = INT, .i = " ++ show i
       LitL l -> ".argType = LONG, .d = " ++ show l
       LitF f -> ".argType = FLOAT, .f = " ++ show f
       LitD d -> ".argType = DOUBLE, .d = " ++ show d
-      Var v -> ".argType = HEAPOBJ, .op = &sho_" ++ v   -- these must be global
+      LitC c -> ".argType = INT, .i = " ++ "con_" ++ c
 #else
+      Var  v -> ".op = &sho_" ++ v   -- these must be global
       LitI i -> ".i = " ++ show i
       LitL f -> ".l = " ++ show l
       LitF f -> ".f = " ++ show f
       LitD d -> ".d = " ++ show d
-      Var v -> ".op = &sho_" ++ v   -- these must be global
+      LitC c -> ".i = " ++ "con_" ++ c
 #endif
     ++ " }"
     

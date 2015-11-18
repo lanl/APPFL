@@ -10,6 +10,8 @@ project(runtime)
               stg.h
               stgutils.h
 	      stgApply.h
+	      cruntime.h
+	      stgc.h
     )
 
   set(rt_srcs args.c 
@@ -25,8 +27,6 @@ include_directories("../codegen")
   foreach (header ${rt_hdrs})
     configure_file(${header} ${PROJECT_BINARY_DIR}/../include/${header} COPYONLY)
   endforeach()
-  configure_file(stgc.h ${PROJECT_BINARY_DIR}/../include/stgc.h COPYONLY)
-  configure_file(cruntime.h ${PROJECT_BINARY_DIR}/../include/cruntime.h COPYONLY)
   configure_file(../codegen/options.h ${PROJECT_BINARY_DIR}/../include/options.h COPYONLY)
 
   if(NOT APPLE) 
