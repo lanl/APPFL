@@ -80,7 +80,17 @@ instance InitStructMember [CInitializerMember NodeInfo] where
               StructTy -> CInitList [([],  CInitList val undefNode)] undefNode
               _ -> error "bad Type in initStructMember (Struct)"
     in initStructMemberE  (splitOn "." name) e
+    
+instance InitStructMember [[CInitializerMember NodeInfo]] where
+  initStructMember ty name vals = 
+    let e = case ty of
+              StructTy -> CInitList (initList vals) undefNode
+              _ -> error "bad Type in initStructMember (Struct)"
+    in initStructMemberE  (splitOn "." name) e    
 
+initList :: [CInitializerList NodeInfo] -> [([CPartDesignator NodeInfo], CInitializer NodeInfo)]
+initList (x:xs) = ([],(CInitList x undefNode)) : initList xs
+initList [] = []
        
 initStruct :: String -> String -> Bool -> [CInitializerMember NodeInfo] -> ExtDecl
 initStruct ty name align is = 
