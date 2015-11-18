@@ -1,0 +1,44 @@
+
+data unboxed Bool# = False# | True#;
+data B = B Bool#;
+
+bfalse = CON(B False#);
+
+btrue = THUNK(case True# of {
+                b# -> let { b = CON(B b#) } in b 
+              });
+
+not# = FUN(x# -> case x# of {
+                   True#  -> False#;
+                   False# -> True#
+                 });
+
+-- this illustrates why either B = B Int# or having "deriving(Eq)" is a good idea
+
+beq# = FUN(x# y# -> case x# of {
+                      True#  -> y#;
+                      False# -> not# y#
+                    });
+
+beq = FUN(x y -> case x of {
+                   x# -> case y of {
+                           y# -> beq# x# y#
+                         }
+                 });
+
+bnot = FUN(x -> case x of {
+                  B b# -> case not# b# of {
+                            y# -> let {z = CON(B y#)} in z
+                          }
+                });
+
+bToBool = FUN(b -> case b of {
+	             B b# -> case b# of {
+                               True#  -> true;
+                               False# -> false
+                             }
+                   });
+
+main = THUNK(let {f = THUNK(bnot btrue);
+                  g = THUNK(bnot f)}
+             in bToBool g)

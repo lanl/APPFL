@@ -42,7 +42,10 @@ showTypeEnums tycons =
 
 showTypeEnum (TyCon _ con _ dataCons) =
     "enum tycon_" ++ con ++ " {\n" ++
-      intercalate ",\n" [ "  " ++ con ++ "_" ++ mhsSanitize c 
+      -- this would be a nice touch but should be done when ingesting data decls
+      -- renaming the constructors with tycon as prefix instead of "con_" here
+      -- intercalate ",\n" [ "  " ++ con ++ "_" ++ mhsSanitize c 
+       intercalate ",\n" [ "  " ++ "con_" ++ mhsSanitize c 
                           | DataCon c _ <- dataCons ] ++
       " };\n"
         where  -- MHS HACK FIX, see also CMap.luConTag
@@ -132,7 +135,8 @@ luConTag c cmap | isBuiltInType c = c
                 | otherwise       =
                     let tyCon = luTCon c cmap
                     in case elem c (map dataConName $ luDCons c cmap) of
-                         True -> tyConName tyCon ++ "_" ++ mhsSanitize c
+                         -- True -> tyConName tyCon ++ "_" ++ mhsSanitize c
+                         True -> "con_" ++ mhsSanitize c
                          False -> "Tag lookup failure for " ++ c ++ " in " ++
                                   show tyCon
                         where  -- MHS HACK FIX, see also CMap.showTypeEnum

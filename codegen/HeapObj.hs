@@ -208,6 +208,13 @@ payload (LitF f) =
     "{.f = " ++ show f ++ "},\n"
 #endif
 
+payload (LitC c) = 
+#if USE_ARGTYPE 
+   "{.argType = INT, .i = con_" ++ c ++  "},\n"
+#else
+   "{.i = con_" ++ c ++ "},\n"
+#endif
+
 -- for SHOs atoms that are variables must be SHOs, so not unboxed
 payload (Var v) = 
 #if USE_ARGTYPE 

@@ -112,15 +112,19 @@ cgv env v = getEnvRef v env -- ++ "/* " ++ v ++ " */"
 cga :: Env -> Atom -> String
 #if USE_ARGTYPE 
 cga env (LitI i) = "((PtrOrLiteral){.argType = INT,    .i = " ++ show i ++ " })"
-cga env (LitD d) = "((PtrOrLiteral){.argType = DOUBLE, .d = " ++ show d ++ " })"
+cga env (LitL l) = "((PtrOrLiteral){.argType = LONG,   .l = " ++ show l ++ " })"
 cga env (LitF f) = "((PtrOrLiteral){.argType = FLOAT,  .f = " ++ show f ++ " })"
+cga env (LitD d) = "((PtrOrLiteral){.argType = DOUBLE, .d = " ++ show d ++ " })"
+cga env (LitC c) = "((PtrOrLiteral){.argType = INT,    .i = con_" ++ c ++ " })"
 #else
 cga env (LitI i) = "((PtrOrLiteral){.i = " ++ show i ++ " })"
-cga env (LitD d) = "((PtrOrLiteral){.d = " ++ show d ++ " })"
+cga env (LitL l) = "((PtrOrLiteral){.l = " ++ show l ++ " })"
 cga env (LitF f) = "((PtrOrLiteral){.f = " ++ show f ++ " })"
+cga env (LitD d) = "((PtrOrLiteral){.d = " ++ show d ++ " })"
+cga env (LitC c) = "((PtrOrLiteral){.i = con_" ++ c ++ " })"
 #endif
 cga env (Var v) = cgv env v
-cga _ at = error $ "CodeGen.cga: not expecting Atom - " ++ show at 
+-- cga _ at = error $ "CodeGen.cga: not expecting Atom - " ++ show at 
 
 -- CG in the state monad ***************************************************
 -- CG of objects produces no inline code
@@ -542,13 +546,13 @@ loadPayloadAtoms env as ind name =
 
 showas as = intercalate " " $ map showa as
 
-showa (Var v)  = v
+showa (Var  v) = v
 showa (LitI i) = show i
 showa (LitL l) = show l
 showa (LitF f) = show f
 showa (LitD d) = show d
--- showa (LitC c) = 
-showa at = error $ "CodeGen.showa: not expecting Atom - " ++ show at 
+showa (LitC c) = "con_" ++ c
+-- showa at = error $ "CodeGen.showa: not expecting Atom - " ++ show at 
 
 indexFrom :: Int -> [a] -> [(Int, a)]
 indexFrom i xs = zip [i..] xs
