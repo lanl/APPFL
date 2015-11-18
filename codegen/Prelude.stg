@@ -391,6 +391,7 @@ compose = FUN(f g x -> let {r = THUNK(g x)} in f r);
 
 
 ------------------------- Loren's FUNctions ---------------------------------------------------- 
+           --------------------GENERAL FUNCTIONS-------------------
 -- divide boxed Ints
 -- divInt :: Int -> Int -> Int
 -- Integer Division
@@ -398,52 +399,44 @@ divInt = FUN(x y -> case x of {
 	  	     	  I i# -> case y of {
 			       	       I j# -> case idiv# i# j# of {
 				       	       	    x# -> let {result = CON(I x#)} in result }}});
+--compares two ints for >,=,or <
+--compareInt :: Int -> Int -> Int 
+--outputs zero if first number is less, two if first number is greater, and one if equal
+compareInt = FUN(x y -> case x of {
+	     	     	     I a# -> case y of {
+			       	     	  I b# -> case _ile a# b# of {
+					       	       0 -> two;
+						       x -> case _ige a# b# of {
+						       	     	0 -> zero;
+								x -> one}}}}); 
+            ---------------------LIST OPERATIONS--------------------
+--removes an element at a specific index in a list
+--removeAtIndex :: List a -> Int -> List a
+removeAtIndex = FUN(xs n -> case xs of {
+		      	   Nil -> nil;
+			   Cons h1 t1 -> case eqInt n zero of {
+			   	      	      False -> let {r = THUNK(subInt n one);
+					      	       	    s = THUNK(removeAtIndex t1 r);
+						            q = CON(Cons h1 s)} in q;
+					      True -> t1}});
+--inserts an element at a specific index in a list
+-- List, element, Index
+--insertAtIndex :: List a -> a -> Int -> List a
+insertAtIndex = FUN(xs a n ->  case eqInt n zero of { 
+	      	       	       	    True -> let {r = CON(Cons a xs)} in r;
+			    	    False -> case xs of {
+				    	     	  Nil -> nil;
+						  Cons h1 t1 -> let {r = THUNK(subInt n one);
+				    	     	                     s = THUNK(insertAtIndex t1 a r);
+		                                                     q = CON(Cons h1 s)} in q}});
 
--- creates array of specified size with whole numbers in the usual order
--- [nil,0,1,2,3,4,5,6,...,n-1]
--- createNormArray :: Int -> List Int -> List Int
-createNormArray = FUN(n xs -> let {a = THUNK(eqInt n zero)} in case a of {
-	      	    	                                        True -> let {b = CON(Cons n xs)} in b;
-								False -> let {b = CON(Cons n xs);
-								              d = THUNK(subInt n one);
-									      c = THUNK(createNormArray d b)} in c});
-
--- initializes array creation
--- cNArr :: Int -> List Int
-cNArr = FUN(n -> let {b = THUNK(subInt n one);
-       	     	     a = THUNK(createNormArray b nil)} in a);  
-
--- retrieves value at index of array 
--- index :: Int -> List a -> a
-index = FUN(n xs -> case xs of {
+-- retrieves value at specified index in a list 
+-- index :: List a -> Int -> a
+index = FUN(xs n -> case xs of {
       	      	    	 Cons h1 t1 -> let {a = THUNK(eqInt n zero)} in case a of {
       	      	    	     		   	     	  True -> h1;
 						          False -> let {c = THUNK(subInt n one);
-							  	        d = THUNK(index c t1)} in d}});
--- removes first occurrence of int from list
--- remove :: Int -> List Int -> List Int 
--- O(n) time
-remove = FUN(n xs -> case xs of {
-       	       	     	  Nil -> nil;
-			  Cons h1 t1 -> let {a = THUNK(eqInt h1 n)} in case a of {
-			       	     	       	 	     	       	    True -> t1;
-									    False -> let {b = THUNK(remove n t1);
-									    	     	  c = CON(Cons h1 b)} in c}});
-
--- creates array of specified size with whole numbers in backwards order
--- [n-1,n-2,...,3,2,1,0,nil]
--- createNormBackArray :: Int -> List Int -> List Int
-createNormBackArray = FUN(n m xs -> let {a = THUNK(eqInt n zero)} in case a of {
-	      	      	                                          True -> xs;
-								  False -> let {b = CON(Cons m xs);
-								      	        e = THUNK(plusInt m one); 
-										d = THUNK(subInt n one);
-									        c = THUNK(createNormBackArray d e b)} in c});
-
-
- -- initializes array creation
--- cNBArr :: Int -> List Int
-cNBArr = FUN(n -> let {a = THUNK(createNormBackArray n zero nil)} in a);  
+							  	        d = THUNK(index t1 c)} in d}});
 
 -- Compare if two lists of ints are the same
 -- eqList :: List a -> List a -> Bool
@@ -456,6 +449,33 @@ eqList = FUN(xs ys -> case xs of {
 					      Cons h2 t2 -> let {expr = THUNK(eqInt h1 h2)} in case expr of {
 					      	      	    	                                    True -> let {final = THUNK(eqList t1 t2)} in final;
 								                                    False -> false}}});
+            ---------------------FOR USE IN TESTS-------------------
+-- creates array of specified size with whole numbers in the usual order
+-- [nil,0,1,2,3,4,5,6,...,n-1]
+-- createNormArray :: Int -> List Int -> List Int
+createNormArray = FUN(n xs -> let {a = THUNK(eqInt n zero)} in case a of {
+	      	    	                                        True -> let {b = CON(Cons n xs)} in b;
+								False -> let {b = CON(Cons n xs);
+								              d = THUNK(subInt n one);
+									      c = THUNK(createNormArray d b)} in c});
+-- initializes array creation
+-- cNArr :: Int -> List Int
+cNArr = FUN(n -> let {b = THUNK(subInt n one);
+       	     	     a = THUNK(createNormArray b nil)} in a);  
+
+-- creates array of specified size with whole numbers in backwards order
+-- [n-1,n-2,...,3,2,1,0,nil]
+-- createNormBackArray :: Int -> List Int -> List Int
+createNormBackArray = FUN(n m xs -> let {a = THUNK(eqInt n zero)} in case a of {
+	      	      	                                          True -> xs;
+								  False -> let {b = CON(Cons m xs);
+								      	        e = THUNK(plusInt m one); 
+										d = THUNK(subInt n one);
+									        c = THUNK(createNormBackArray d e b)} in c});
+-- initializes array creation
+-- cNBArr :: Int -> List Int
+cNBArr = FUN(n -> let {a = THUNK(createNormBackArray n zero nil)} in a);  
+
 
 -- creates array of specified size with zeros 
 -- createArray :: Int -> List Int -> List Int
@@ -478,7 +498,6 @@ createOddBackArray = FUN(n m xs -> let {a = THUNK(eqInt n zero)} in case a of {
 								  	        e = THUNK(plusInt two m);
 								                d = THUNK(subInt n one);
 									        c = THUNK(createOddBackArray d e b)} in c});
-
 -- initializes array creation
 -- cOBArr :: Int -> List Int
 cOBArr = FUN(n -> let {a = THUNK(createOddBackArray n one nil)} in a);  
@@ -492,7 +511,6 @@ createEvenArray = FUN(n xs -> let {a = THUNK(eqInt n zero)} in case a of {
                                                                                   b = CON(Cons e xs);
 								                  d = THUNK(subInt n one);
 									          c = THUNK(createEvenArray d b)} in c});
-
 --initializes array creation
 --cEArr :: Int -> List Int
 cEArr = FUN(n -> let {b = THUNK(subInt n one);
@@ -507,7 +525,6 @@ createEvenBackArray = FUN(n m xs -> let {a = THUNK(eqInt n zero)} in case a of {
 								  	        e = THUNK(plusInt two m);
 								                d = THUNK(subInt n one);
 									        c = THUNK(createEvenBackArray d e b)} in c});
-
 --initializes array creation
 --cEBArr :: Int -> List Int
 cEBArr = FUN(n -> let {a = THUNK(createEvenBackArray n zero nil)} in a);  
@@ -522,19 +539,9 @@ createOddArray = FUN(n xs -> let {a = THUNK(eqInt n zero)} in case a of {
                                                                               b = CON(Cons f xs);
 								              d = THUNK(subInt n one);
 									      c = THUNK(createOddArray d b)} in c});
-
 -- initializes array creation
 -- cOArr :: Int -> List Int
 cOArr = FUN(n -> let {a = THUNK(createOddArray n nil)} in a);  
- 
---compares two ints for >,=,or <
---compareInt :: Int -> Int -> Int 
---outputs zero if first number is less, two if first number is greater, and one if equal
-compareInt = FUN(x y -> case x of {
-	     	     	     I a# -> case y of {
-			       	     	  I b# -> case _ile a# b# of {
-					       	       0 -> two;
-						       x -> case _ige a# b# of {
-						       	     	0 -> zero;
-								x -> one}}}}); 
+                  ---------------------------------------------------------------------
+
 
