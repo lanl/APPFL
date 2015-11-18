@@ -91,7 +91,8 @@ cSHOspec it@(Fun {}) = payloads ""
    
 cSHOspec it@(Pap {}) = error "top level PAP"
 
-cSHOspec it@(Con {}) = payloads (concat (map payload (map fst (args it)))) 
+
+cSHOspec it@(Con {}) = payloads (map payload (map fst (args it))) 
    
 cSHOspec it@(Thunk {}) = payloads "0"
    
