@@ -54,7 +54,7 @@ showTypeEnums tycons =
     intercalate "\n" $ map (render . pretty . cTypeEnum) tycons
 
 cTypeEnum :: TyCon -> ExtDecl
-cTypeEnum  (TyCon _ con _ dataCons) = initEnum con [ _mhsSanitize c | DataCon c _ <- dataCons ]
+cTypeEnum  (TyCon _ con _ dataCons) = cEnum con [ _mhsSanitize c | DataCon c _ <- dataCons ]
 
 #else
 

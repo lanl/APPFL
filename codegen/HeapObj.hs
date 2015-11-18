@@ -79,13 +79,13 @@ showSHO o =
 cSHO o =
    let it = omd o
        n = name it
-       infoPtr = initStructMember InfoPtrTy "infoPtr" ("it_" ++ n)
-       objType = initStructMember EnumTy "objType" (showObjType it)
-       ident = initStructMember StringTy "ident" n
+       infoPtr = cStructMember InfoPtrTy "infoPtr" n
+       objType = cStructMember EnumTy "objType" (showObjType it)
+       ident = cStructMember StringTy "ident" n
        payload = cSHOspec it
-   in initStruct "Obj" ("sho_" ++ n) False [infoPtr, objType, ident, payload]
+   in cObjStruct n [infoPtr, objType, ident, payload]
    
-payloads xs = initStructMember StructTy "payload" xs
+payloads xs = cStructMember StructTy "payload" xs
    
 cSHOspec it@(Fun {}) = payloads ""
    
@@ -103,32 +103,32 @@ cSHOspec it = error "bad IT in Obj"
 --payload ::  Atom -> [CAST.CInitializerMember Language.C.Data.Node.NodeInfo]
 payload (LitI i) = [ 
 #if USE_ARGTYPE 
-    initStructMember EnumTy "argType" "INT",
+    cStructMember EnumTy "argType" "INT",
 #endif 
-    initStructMember IntTy "i" i
+    cStructMember IntTy "i" i
     ]
 
 payload (LitD d) = [ 
 #if USE_ARGTYPE 
-    initStructMember EnumTy "argType" "DOUBLE",
+    cStructMember EnumTy "argType" "DOUBLE",
 #endif 
-    initStructMember DoubleTy "d" d 
+    cStructMember DoubleTy "d" d 
     ]
 
 
 payload (LitF f) = [
 #if USE_ARGTYPE 
-    initStructMember EnumTy "argType" "FLOAT",
+    cStructMember EnumTy "argType" "FLOAT",
 #endif 
-    initStructMember FloatTy "f" f 
+    cStructMember FloatTy "f" f 
     ]
 
 -- for SHOs atoms that are variables must be SHOs, so not unboxed
 payload (Var v) = [
 #if USE_ARGTYPE
-    initStructMember EnumTy "argType" "HEAPOBJ",
+    cStructMember EnumTy "argType" "HEAPOBJ",
 #endif
-    initStructMember PtrTy "op" ("sho_" ++ v)
+    cStructMember PtrTy "op" ("sho_" ++ v)
     ]
 
 payload _ = error "bad payload"

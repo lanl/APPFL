@@ -56,6 +56,13 @@ import Data.List(intercalate,nub)
 import Data.Map (Map)
 import qualified Data.Map as Map
 
+#if USE_CAST
+import CAST
+import Text.PrettyPrint(render)
+import Language.C.Pretty 
+#endif 
+
+
 data RVal = SHO           -- static heap obj
           | HO Int        -- heap obj,  payload size
           | FP            -- formal param or local var, use name as is
@@ -164,12 +171,22 @@ cgMain v = let top = "int main (int argc, char **argv) {\n" ++
                bot = "  return 0;\n" ++ "}\n\n"
   in if v then top ++ "  showStgHeap();\n  GC();\n" ++ bot else top ++ bot            
 
+
+#if USE_CAST
+
+registerSHOs objs = ("void registerSHOs();",
+                    render (pretty (cRegisterSHOs (map (\o -> (name . omd) o) objs))))
+
+#else
+
 registerSHOs objs = 
     ("void registerSHOs();",
      "void registerSHOs() {\n" ++
         concat [ "  stgStatObj[stgStatObjCount++] = &" ++ s ++ ";\n" 
                  | s <- shoNames objs ] ++
      "}\n")
+
+#endif
 
 -- return [(forward,fundef)], will be unzipped at top level
 
