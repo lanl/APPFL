@@ -1,11 +1,16 @@
 #include "stgc.h"
 #include "stgApply.h"
+
 void registerSHOs();
 FnPtr fun_main();
+
+enum tycon_Int {
+  con_I };
+
 InfoTab it_one __attribute__((aligned(8))) = 
   { .name                = "one",
     // fvs []
-    .entryCode           = &stg_constructorcall,
+    .entryCode           = &stg_concall,
     .objType             = CON,
     .layoutInfo.payloadSize  = 1,
     // argPerm = [0]
@@ -13,9 +18,10 @@ InfoTab it_one __attribute__((aligned(8))) =
     .layoutInfo.unboxedCount = 1,
     .layoutInfo.permString   = "0",
     .conFields.arity     = 1,
-    .conFields.tag       = 0,
+    .conFields.tag       = con_I,
     .conFields.conName   = "I",
   };
+
 InfoTab it_main __attribute__((aligned(8))) = 
   { .name                = "main",
     // fvs []
@@ -25,6 +31,7 @@ InfoTab it_main __attribute__((aligned(8))) =
     .layoutInfo.boxedCount   = 0,
     .layoutInfo.unboxedCount = 0,
   };
+
 
 extern Obj sho_one;
 extern Obj sho_main;

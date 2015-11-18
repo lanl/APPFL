@@ -3,6 +3,7 @@
 module CAST (
   Ty(..),
   ExtDecl,
+  initEnum,
   initStruct,
   initStructMember,
 ) where
@@ -84,13 +85,13 @@ instance InitStructMember [CInitializerMember NodeInfo] where
 instance InitStructMember [[CInitializerMember NodeInfo]] where
   initStructMember ty name vals = 
     let e = case ty of
-              StructTy -> CInitList (initList vals) undefNode
+              StructTy -> CInitList (_initList vals) undefNode
               _ -> error "bad Type in initStructMember (Struct)"
     in initStructMemberE  (splitOn "." name) e    
 
-initList :: [CInitializerList NodeInfo] -> [([CPartDesignator NodeInfo], CInitializer NodeInfo)]
-initList (x:xs) = ([],(CInitList x undefNode)) : initList xs
-initList [] = []
+_initList :: [CInitializerList NodeInfo] -> [([CPartDesignator NodeInfo], CInitializer NodeInfo)]
+_initList (x:xs) = ([],(CInitList x undefNode)) : _initList xs
+_initList [] = []
        
 initStruct :: String -> String -> Bool -> [CInitializerMember NodeInfo] -> ExtDecl
 initStruct ty name align is = 
@@ -102,7 +103,17 @@ initStruct ty name align is =
       i = CInitList is undefNode
       in CDeclExt (CDecl t [(Just d, Just i, Nothing)] undefNode)
 
+
+_initEnumList (x:xs) = (builtinIdent ("con_" ++ x) , Nothing) : _initEnumList xs
+_initEnumList [] = []
+
+initEnum :: String -> [String] -> ExtDecl
+initEnum name xs = CDeclExt (CDecl [CTypeSpec (CEnumType (CEnum (Just (builtinIdent ("tycon_" ++ name)))
+                   (Just (_initEnumList xs)) [] undefNode) undefNode)] [] undefNode)
 -- examples
+
+e2 = initEnum "Bool" ["False","True"]
+
 
 cobj = initStruct "Obj" "sho_four" False 
         [initStructMember InfoPtrTy "infoPtr" "it_four"
