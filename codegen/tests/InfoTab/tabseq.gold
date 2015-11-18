@@ -1,13 +1,17 @@
 InfoTab it_seq __attribute__((aligned(8))) = 
   { .name                = "seq",
     // fvs []
-    .entryCode           = &fun_seq,
+    .entryCode           = &stg_funcall,
     .objType             = FUN,
     .layoutInfo.payloadSize  = 0,
     .layoutInfo.boxedCount   = -1,
     .layoutInfo.unboxedCount = -1,
-    .funFields.arity     = 2,
+    .funFields.arity         = 2,
+    .funFields.trueEntryCode = fun_seq,
   };
+
+
+
 InfoTab it_alts_0 __attribute__((aligned(8))) = 
   { .name                = "alts_0",
     // fvs [("y",MPhony)]
@@ -17,3 +21,5 @@ InfoTab it_alts_0 __attribute__((aligned(8))) =
     .layoutInfo.boxedCount   = -1,
     .layoutInfo.unboxedCount = -1,
   };
+
+
