@@ -138,7 +138,6 @@ typedef struct {
 // InfoTab
 struct _InfoTab {
   char name[32];  // for debugging
-  //  int fvCount;    // lexically determined, should be in layout
   CmmFnPtr entryCode; 
   ObjType objType; // kind of object, tag for union
   LayoutInfo layoutInfo;
