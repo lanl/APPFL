@@ -145,6 +145,21 @@ cgObjs objs runtimeGlobals =
         (forward, fundef) = registerSHOs objs
     in (forward:forwards, fundef:fundefs)
     
+
+#if USE_CAST
+
+cgStart :: String
+cgStart = "\n" ++ (render $ pretty $ cStart) ++ "\n"
+
+cgMain :: Bool -> String
+cgMain v = "\n" ++ (render $ pretty $ cMain v) ++ "\n"
+
+registerSHOs :: [Obj InfoTab] -> (String, String)
+registerSHOs objs = ("void registerSHOs();",
+                    render $ pretty $ cRegisterSHOs (map (\o -> (name . omd) o) objs))
+
+#else
+
 cgStart :: String
 cgStart = "\n\nDEFUN0(start)" ++
             "  registerSHOs();\n" ++
@@ -154,8 +169,8 @@ cgStart = "\n\nDEFUN0(start)" ++
 #endif
             "  stgCurVal.op = &sho_main;\n" ++
             "  STGJUMP1(getInfoPtr(stgCurVal.op)->entryCode, stgCurVal);\n" ++
-            "}\n\n"  
-            
+            "}\n\n"
+
 cgMain :: Bool -> String 
 cgMain v = let top = "int main (int argc, char **argv) {\n" ++
                      "  parseArgs(argc, argv);\n" ++
@@ -164,16 +179,9 @@ cgMain v = let top = "int main (int argc, char **argv) {\n" ++
                      "  initGc();\n" ++
                      "  CALL0_0(start);\n"
                bot = "  return 0;\n" ++ "}\n\n"
-  in if v then top ++ "  showStgHeap();\n  GC();\n" ++ bot else top ++ bot            
+  in if v then top ++ "  showStgHeap();\n  GC();\n" ++ bot else top ++ bot     
 
-
-#if USE_CAST
-
-registerSHOs objs = ("void registerSHOs();",
-                    render (pretty (cRegisterSHOs (map (\o -> (name . omd) o) objs))))
-
-#else
-
+registerSHOs :: [Obj InfoTab] -> (String, String)
 registerSHOs objs = 
     ("void registerSHOs();",
      "void registerSHOs() {\n" ++
