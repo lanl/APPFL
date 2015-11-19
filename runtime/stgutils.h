@@ -76,8 +76,38 @@ do {						\
   }                                             \
 } while (0)
 */
-// evaluate in place
 
+// evaluate IN PLACE, this should probably only happen in stgApply
+#define STGEVAL(e)					    \
+do {							    \
+  stgCurVal = e;					    \
+  Obj* cont = stgAllocCallCont2(&it_stgCallCont, 0);	    \
+  strcpy(cont->ident, stgCurVal.op->ident);		    \
+  STGCALL1(getInfoPtr(stgCurVal.op)->entryCode, stgCurVal); \
+  stgPopCont();						    \
+  if (getObjType(stgCurVal.op) == BLACKHOLE) {		     \
+    fprintf(stderr, "infinite loop detected in STGEVAL!\n"); \
+    showStgVal(stgCurVal);				     \
+    assert(false);					     \
+  }									\
+  assert (cmmSP == cmmStack + cmmStackSize && "Non empty cmm stack in stgeval");\
+  GC();					\
+} while (0)
+
+// bye bye!
+#define STGJUMP()						     \
+  do {								     \
+  GC();								     \
+  derefStgCurVal();						     \
+  if (getObjType(stgCurVal.op) == BLACKHOLE) {			     \
+    fprintf(stderr, "infinite loop detected in STGEVAL!\n");	     \
+    showStgVal(stgCurVal);					     \
+    assert(false);						     \
+  }								     \
+  STGJUMP1(getInfoPtr(stgCurVal.op)->entryCode, stgCurVal);	     \
+} while (0)
+
+#if 0
 #define STGEVAL(e)				\
 do {						\
   stgCurVal = e;				\
@@ -85,6 +115,7 @@ do {						\
   strcpy(cont->ident, stgCurVal.op->ident);	\
   STGCALL1(getInfoPtr(stgCurVal.op)->entryCode, stgCurVal); \
   stgPopCont();			        \
+  derefStgCurVal();					     \
   if (getObjType(stgCurVal.op) == BLACKHOLE) {     \
     fprintf(stderr, "infinite loop detected in STGEVAL!\n"); \
     showStgVal(stgCurVal);			\
@@ -95,6 +126,8 @@ do {						\
   assert (cmmSP == cmmStack + cmmStackSize && "Non empty cmm stack in stgeval");\
   GC();					\
 } while (0)
+#endif
+
 
 #if USE_ARGTYPE
 #define STGEVAL_works(e)				\

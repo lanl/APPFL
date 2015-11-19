@@ -61,21 +61,21 @@ Obj sho_stg_case_not_exhaustive = {
 DEFUN1(stg_funcall, self) {
   fprintf(stderr,"stg_funcall, returning self\n");
   stgCurVal = self;
-  RETURN0();
+  STGRETURN0();
   ENDFUN;
 }
 
 DEFUN1(stg_papcall, self) {
   fprintf(stderr,"top-level PAP call, returning self\n");
   stgCurVal = self;
-  RETURN0();
+  STGRETURN0();
   ENDFUN;
 }
 
 DEFUN1(stg_concall, self) {
   fprintf(stderr,"stg_concall, returning self\n");
   stgCurVal = self;
-  RETURN0();
+  STGRETURN0();
   ENDFUN;
 }
 
@@ -204,10 +204,14 @@ void stgThunk(PtrOrLiteral self) {
   Obj *contp = stgAllocCont(&it_stgUpdateCont);
   contp->payload[0] = self;
   strcpy(contp->ident, self.op->ident); //override default
+  // can't do this until we capture the variables in a stack frame
+  // self.op->infoPtr = &it_stgBlackHole;
 #if USE_OBJTYPE
-  self.op->objType = BLACKHOLE;	
-#endif
+  self.op->objType = BLACKHOLE;
+#else
   self.op->infoPtr = setLSB2(self.op->infoPtr); // update bit to say this is a Blackhole
+#endif
+
 }
 
 void callContSave(int argc, PtrOrLiteral argv[]) {
