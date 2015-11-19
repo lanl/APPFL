@@ -9,7 +9,7 @@
 #include "obj.h"
 #include "options.h"
 
-const bool DEBUG = true;
+const bool DEBUG = false;
 const bool EXTRA = false;  // run extra checks
 
 void initGc(void) {

@@ -64,7 +64,7 @@ shoNames :: [Obj InfoTab] -> [String]
 shoNames = map (\o -> showITType o ++ "_" ++ (name . omd) o)
 
 -- return list of forwards (static declarations) and (static) definitions
-showSHOs :: [Obj InfoTab] -> (String,String)
+showSHOs :: [Obj InfoTab] -> (String, String)
 showSHOs objs = 
     let (forwards, defs) = unzip $ map showSHO objs
     in (concat forwards, intercalate "\n" defs)
@@ -72,26 +72,29 @@ showSHOs objs =
 
 #if USE_CAST
 
+showSHO :: Obj InfoTab -> (String, String)
 showSHO o = 
    let n = "sho_" ++ (name . omd) o
-    in ("extern Obj " ++ n ++ ";\n",(render (pretty (cSHO o))))
-                    
+    in ("extern Obj " ++ n ++ ";\n", render $ pretty $ cSHO o)
+
+cSHO :: Obj InfoTab -> ExtDecl                  
 cSHO o =
    let it = omd o
        n = name it
-       infoPtr = initStructMember InfoPtrTy "infoPtr" ("it_" ++ n)
-       objType = initStructMember EnumTy "objType" (showObjType it)
-       ident = initStructMember StringTy "ident" n
+       infoPtr = cStructMember InfoPtrTy "infoPtr" n
+       objType = cStructMember EnumTy "objType" (showObjType it)
+       ident = cStructMember StringTy "ident" n
        payload = cSHOspec it
-   in initStruct "Obj" ("sho_" ++ n) False [infoPtr, objType, ident, payload]
+   in cObjStruct n [infoPtr, objType, ident, payload]
    
-payloads xs = initStructMember StructTy "payload" xs
-   
+payloads xs = cStructMember StructTy "payload" xs
+
+cSHOspec :: InfoTab -> InitializerMember
 cSHOspec it@(Fun {}) = payloads ""
    
 cSHOspec it@(Pap {}) = error "top level PAP"
 
-cSHOspec it@(Con {}) = payloads (concat (map payload (map fst (args it)))) 
+cSHOspec it@(Con {}) = payloads (map payload (map fst (args it))) 
    
 cSHOspec it@(Thunk {}) = payloads "0"
    
@@ -99,35 +102,35 @@ cSHOspec it@(Blackhole {}) = payloads "0"
    
 cSHOspec it = error "bad IT in Obj"
 
---payload ::  Atom -> [CAST.CInitializerMember Language.C.Data.Node.NodeInfo]
+payload ::  Atom -> [InitializerMember]
 payload (LitI i) = [ 
 #if USE_ARGTYPE 
-    initStructMember EnumTy "argType" "INT",
+    cStructMember EnumTy "argType" "INT",
 #endif 
-    initStructMember IntTy "i" i
+    cStructMember IntTy "i" i
     ]
 
 payload (LitD d) = [ 
 #if USE_ARGTYPE 
-    initStructMember EnumTy "argType" "DOUBLE",
+    cStructMember EnumTy "argType" "DOUBLE",
 #endif 
-    initStructMember DoubleTy "d" d 
+    cStructMember DoubleTy "d" d 
     ]
 
 
 payload (LitF f) = [
 #if USE_ARGTYPE 
-    initStructMember EnumTy "argType" "FLOAT",
+    cStructMember EnumTy "argType" "FLOAT",
 #endif 
-    initStructMember FloatTy "f" f 
+    cStructMember FloatTy "f" f 
     ]
 
 -- for SHOs atoms that are variables must be SHOs, so not unboxed
 payload (Var v) = [
 #if USE_ARGTYPE
-    initStructMember EnumTy "argType" "HEAPOBJ",
+    cStructMember EnumTy "argType" "HEAPOBJ",
 #endif
-    initStructMember PtrTy "op" ("sho_" ++ v)
+    cStructMember PtrTy "op" ("sho_" ++ v)
     ]
 
 payload _ = error "bad payload"
@@ -208,6 +211,13 @@ payload (LitF f) =
     "{.f = " ++ show f ++ "},\n"
 #endif
 
+payload (LitC c) = 
+#if USE_ARGTYPE 
+   "{.argType = INT, .i = con_" ++ c ++  "},\n"
+#else
+   "{.i = con_" ++ c ++ "},\n"
+#endif
+
 -- for SHOs atoms that are variables must be SHOs, so not unboxed
 payload (Var v) = 
 #if USE_ARGTYPE 
@@ -222,17 +232,19 @@ ptrOrLitSHO a =
     "{ " ++
     case a of
 #if USE_ARGTYPE 
+      Var v  -> ".argType = HEAPOBJ, .op = &sho_" ++ v   -- these must be global
       LitI i -> ".argType = INT, .i = " ++ show i
       LitL l -> ".argType = LONG, .d = " ++ show l
       LitF f -> ".argType = FLOAT, .f = " ++ show f
       LitD d -> ".argType = DOUBLE, .d = " ++ show d
-      Var v -> ".argType = HEAPOBJ, .op = &sho_" ++ v   -- these must be global
+      LitC c -> ".argType = INT, .i = " ++ "con_" ++ c
 #else
+      Var  v -> ".op = &sho_" ++ v   -- these must be global
       LitI i -> ".i = " ++ show i
-      LitL f -> ".l = " ++ show l
+      LitL l -> ".l = " ++ show l
       LitF f -> ".f = " ++ show f
       LitD d -> ".d = " ++ show d
-      Var v -> ".op = &sho_" ++ v   -- these must be global
+      LitC c -> ".i = " ++ "con_" ++ c
 #endif
     ++ " }"
     

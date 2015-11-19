@@ -20,7 +20,6 @@ void derefStgCurVal() {
   while (isBoxed(stgCurVal) && getObjType(stgCurVal.op) == INDIRECT) {
     stgCurVal = stgCurVal.op->payload[0];
   }
-// is this a good place to check for BLACKHOLE?
 }
 
 Obj *derefHO(Obj *op) {
@@ -29,24 +28,54 @@ Obj *derefHO(Obj *op) {
   return op;
 }
 
+// stg_case_not_exhaustive = FUN( x ->  );
+DEFUN2(stg_case_not_exhaustive, self, x) {
+  fprintf(stderr, "stg_case_not_exhaustive: ");
+  showStgVal(x);
+  fprintf(stderr, "\n");
+  showStgHeap();
+  exit(0);
+  ENDFUN;
+}
+
+InfoTab it_stg_case_not_exhaustive __attribute__((aligned(8))) = {
+  .name = "stg_case_not_exhaustive",
+  .entryCode = &stg_case_not_exhaustive,
+  .objType = FUN,
+  //  .fvCount = 0,
+  .funFields.arity = 1,
+  .layoutInfo.boxedCount = 0,
+  .layoutInfo.unboxedCount = 0,
+};
+
+Obj sho_stg_case_not_exhaustive = {
+#if USE_OBJTYPE
+  .objType = FUN,
+#endif
+  .infoPtr = (uintptr_t)&it_stg_case_not_exhaustive,
+  .ident = "stg_case_not_exhaustive",
+};
+
+
+
 DEFUN1(stg_funcall, self) {
   fprintf(stderr,"stg_funcall, returning self\n");
   stgCurVal = self;
-  RETURN0();
+  STGRETURN0();
   ENDFUN;
 }
 
 DEFUN1(stg_papcall, self) {
   fprintf(stderr,"top-level PAP call, returning self\n");
   stgCurVal = self;
-  RETURN0();
+  STGRETURN0();
   ENDFUN;
 }
 
 DEFUN1(stg_concall, self) {
   fprintf(stderr,"stg_concall, returning self\n");
   stgCurVal = self;
-  RETURN0();
+  STGRETURN0();
   ENDFUN;
 }
 
@@ -175,10 +204,14 @@ void stgThunk(PtrOrLiteral self) {
   Obj *contp = stgAllocCont(&it_stgUpdateCont);
   contp->payload[0] = self;
   strcpy(contp->ident, self.op->ident); //override default
+  // can't do this until we capture the variables in a stack frame
+  // self.op->infoPtr = &it_stgBlackHole;
 #if USE_OBJTYPE
-  self.op->objType = BLACKHOLE;	
-#endif
+  self.op->objType = BLACKHOLE;
+#else
   self.op->infoPtr = setLSB2(self.op->infoPtr); // update bit to say this is a Blackhole
+#endif
+
 }
 
 void callContSave(int argc, PtrOrLiteral argv[]) {

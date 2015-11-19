@@ -5,6 +5,9 @@
 {-# LANGUAGE OverlappingInstances #-}
 #endif
 
+{-# LANGUAGE CPP #-}
+#include "options.h"
+
 ----------------------------  Alternative interface to ConMap idea ----------------------
 -- Originally had a container for TyCons with an internal Assoc list of Con --> Arity,
 -- but I'm not sure if that's useful.
@@ -35,20 +38,45 @@ import Data.List ((\\), find, intercalate)
 import Data.Char (isNumber)
 import Debug.Trace
 
+#if USE_CAST
+import CAST
+import Text.PrettyPrint(render)
+import Language.C.Pretty 
+#endif 
+
+
 type CMap = Map.Map Con TyCon
+
+#if USE_CAST
+
+showTypeEnums :: [TyCon] -> String
+showTypeEnums tycons = 
+    intercalate "\n" $ map (render . pretty . cTypeEnum) tycons
+
+cTypeEnum :: TyCon -> ExtDecl
+cTypeEnum  (TyCon _ con _ dataCons) = cEnum con [ _mhsSanitize c | DataCon c _ <- dataCons ]
+
+#else
 
 showTypeEnums tycons = 
     intercalate "\n" $ map showTypeEnum tycons
 
 showTypeEnum (TyCon _ con _ dataCons) =
     "enum tycon_" ++ con ++ " {\n" ++
-      intercalate ",\n" [ "  " ++ con ++ "_" ++ mhsSanitize c 
+      -- this would be a nice touch but should be done when ingesting data decls
+      -- renaming the constructors with tycon as prefix instead of "con_" here
+      -- intercalate ",\n" [ "  " ++ con ++ "_" ++ mhsSanitize c 
+       intercalate ",\n" [ "  " ++ "con_" ++ _mhsSanitize c 
                           | DataCon c _ <- dataCons ] ++
       " };\n"
-        where  -- MHS HACK FIX, see also CMap.luConTag
-          mhsSanitize c | c == "D#" = "D"
-                        | c == "I#" = "I"
-                        | otherwise = c
+       
+                        
+#endif
+
+-- MHS HACK FIX, see also CMap.luConTag
+_mhsSanitize c | c == "D#" = "D"
+               | c == "I#" = "I"
+               | otherwise = c
 
 -- Construct the CMap from a list of TyCons
 toCMap :: [TyCon] -> CMap
@@ -132,7 +160,8 @@ luConTag c cmap | isBuiltInType c = c
                 | otherwise       =
                     let tyCon = luTCon c cmap
                     in case elem c (map dataConName $ luDCons c cmap) of
-                         True -> tyConName tyCon ++ "_" ++ mhsSanitize c
+                         -- True -> tyConName tyCon ++ "_" ++ mhsSanitize c
+                         True -> "con_" ++ mhsSanitize c
                          False -> "Tag lookup failure for " ++ c ++ " in " ++
                                   show tyCon
                         where  -- MHS HACK FIX, see also CMap.showTypeEnum

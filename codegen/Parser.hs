@@ -100,7 +100,6 @@ import Tokenizer
 import ParserComb
 import AST
 import ADT
-import qualified Data.Map as Map
 import Data.List (groupBy)
 import PPrint
 
@@ -140,7 +139,8 @@ groupParsed =
 
     
 
--- uncurried cons is used on several occasions to combine the results of ordered parsers
+-- uncurried cons is used on several occasions to combine the results of 
+-- ordered parsers
 cons = uncurry (:)
       
 ----------------------------- Parsers for Tokens ---------------------------
