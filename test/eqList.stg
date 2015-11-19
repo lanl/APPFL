@@ -1,15 +1,3 @@
--- Compare if two lists of ints are the same
--- eqList :: List a -> List a -> Bool
-eqList = FUN(xs ys -> case xs of {
-       	 	      	   Nil -> case ys of {
-			       	       Nil -> true;
-				       Cons h t -> false};
-			   Cons h1 t1 -> case ys of {
-			   	    	      Nil -> false; 
-					      Cons h2 t2 -> let {expr = THUNK(eqInt h1 h2)} in case expr of {
-					      	      	    	                                    True -> let {final = THUNK(eqList t1 t2)} in final;
-								                                    False -> false}}});
-
 -- list5: [5,4,3,2,1]
 list1 = CON(Cons one nil);
 list2 = CON(Cons two list1);

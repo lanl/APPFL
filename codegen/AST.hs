@@ -54,8 +54,8 @@ instance Show Atom where
     show (LitC c) = c
 
 data Obj a = FUN   {omd :: a, vs :: [Var],   e :: Expr a   , oname :: String}
-           | PAP   {omd :: a, f  :: Var,     as :: [Expr a], oname :: String}
-           | CON   {omd :: a, c  :: Con,     as :: [Expr a], oname :: String}
+           | PAP   {omd :: a, f  :: Var,     as :: [Expr a], oname :: String} -- invariant the as are EAtoms
+           | CON   {omd :: a, c  :: Con,     as :: [Expr a], oname :: String} -- invariant the as are EAtoms
            | THUNK {omd :: a, e  :: Expr a                 , oname :: String}
            | BLACKHOLE {omd :: a                           , oname :: String}
              deriving(Eq,Show)
@@ -63,8 +63,8 @@ data Obj a = FUN   {omd :: a, vs :: [Var],   e :: Expr a   , oname :: String}
 -- 7.9 EFCalls (and EPrimops, for consistency) changed to accept Expr args.
 -- Parser (and other traversals) should enforce use of *only* EAtom as args
 data Expr a = EAtom   {emd :: a,                    ea :: Atom}
-            | EFCall  {emd :: a, ev :: Var,         eas :: [Expr a]}
-            | EPrimop {emd :: a, eprimop :: Primop, eas :: [Expr a]}
+            | EFCall  {emd :: a, ev :: Var,         eas :: [Expr a]} -- invariant the eas are EAtoms
+            | EPrimop {emd :: a, eprimop :: Primop, eas :: [Expr a]} -- invariant the eas are EAtoms
             | ELet    {emd :: a, edefs :: [Obj a],  ee :: Expr a}
             | ECase   {emd :: a, ee :: Expr a,      ealts :: Alts a}
               deriving(Eq,Show)

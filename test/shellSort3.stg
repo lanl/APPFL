@@ -1,22 +1,3 @@
---removeAtIndex :: List a -> Int -> List a
-removeAtIndex = FUN(xs n -> case xs of {
-		      	   Nil -> nil;
-			   Cons h1 t1 -> case eqInt n zero of {
-			   	      	      False -> let {r = THUNK(subInt n one);
-					      	       	    s = THUNK(removeAtIndex t1 r);
-						            q = CON(Cons h1 s)} in q;
-					      True -> t1}});
-
--- List, element, Index
---insertAtIndex :: List a -> a -> Int -> List a
-insertAtIndex = FUN(xs a n ->  case eqInt n zero of { 
-	      	       	       	    True -> let {r = CON(Cons a xs)} in r;
-			    	    False -> case xs of {
-				    	     	  Nil -> nil;
-						  Cons h1 t1 -> let {r = THUNK(subInt n one);
-				    	     	                     s = THUNK(insertAtIndex t1 a r);
-		                                                     q = CON(Cons h1 s)} in q}});
-
 -- retrieves value at index of array 
 -- index1 :: List a -> Int -> a
 index1 = FUN(xs n -> case xs of {
@@ -26,8 +7,8 @@ index1 = FUN(xs n -> case xs of {
 							  	        d = THUNK(index1 t1 c)} in d}});
 
 
---switch :: List a -> Int -> Int -> List a
-switch = FUN(xs a b -> let {r = THUNK(index1 xs a);
+--switch1 :: List a -> Int -> Int -> List a
+switch1 = FUN(xs a b -> let {r = THUNK(index1 xs a);
        	 	       	    s = THUNK(index1 xs b);
 			    t = THUNK(insertAtIndex xs s a);
 			    u = THUNK(plusInt one a);
@@ -51,6 +32,6 @@ list14 = CON(Cons one list15);
 list15 = CON(Cons five nil);
 
 --Test
-result = THUNK(switch list6 four one);
+result = THUNK(switch1 list6 four one);
 output = THUNK(list10);
 main = THUNK(eqList result output);

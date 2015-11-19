@@ -16,19 +16,6 @@ hanoi = FUN(x y -> let {pred = THUNK(eqInt one x)} in case pred of {
 																								   t = THUNK(hanoi r s)} in case t of {
 																								      	  	      	       	 TP3 a4 b4 c4 -> let {q = CON(TP3 b4 a4 c4)} in q}}}}});
 
-
--- Compare if two lists of ints are the same
--- eqList :: List a -> List a -> Bool
-eqList = FUN(xs ys -> case xs of {
-       	 	      	   Nil -> case ys of {
-			       	       Nil -> true;
-				       Cons h t -> false};
-			   Cons h1 t1 -> case ys of {
-			   	    	      Nil -> false; 
-					      Cons h2 t2 -> let {expr = THUNK(eqInt h1 h2)} in case expr of {
-					      	      	    	                                    True -> let {final = THUNK(eqList t1 t2)} in final;
-								                                    False -> false}}});
-
 eqTuple3 = FUN(x -> case x of {
 	  	      	 TP3 a b c -> case a of {
 			       	      	   Nil -> case b of {

@@ -33,6 +33,7 @@ import qualified MHS.ToSTG
 
 import           Tokenizer
 import           Parser
+import           DupCheck
 import           Rename
 import           ADT
 import           AST
@@ -146,10 +147,13 @@ tokenizer = tokenize
 parser :: String -> ([TyCon], [Obj ()])
 parser = parse . tokenizer
 
+--checks for duplicates
+dupChecker ::  String -> ([TyCon], [Obj ()])
+dupChecker = dupCheck . parser
 
 -- set boxity in Monotypes of TyCon DataCons
 boxer :: String -> ([TyCon], [Obj ()])
-boxer inp = let (tycons, objs) = parser inp
+boxer inp = let (tycons, objs) = dupChecker inp
             in (boxMTypes tycons, objs)
 
 

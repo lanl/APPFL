@@ -1,17 +1,3 @@
---creates array of specified size with whole numbers in the usual order
---[nil,0,1,2,3,4,5,6,...,n-1]
---createNormArray :: Int -> List Int -> List Int
-createNormArray = FUN(n xs -> let {a = THUNK(eqInt n zero)} in case a of {
-	      	    	                                        True -> let {b = CON(Cons n xs)} in b;
-								False -> let {b = CON(Cons n xs);
-								              d = THUNK(subInt n one);
-									      c = THUNK(createNormArray d b)} in c});
-
---initializes array creation
---cNArr :: Int -> List Int
-cNArr = FUN(n -> let {b = THUNK(subInt n one);
-       	     	     a = THUNK(createNormArray b nil)} in a);  
-
 list1 = CON(Cons two nil);
 list2 = CON(Cons one list1);
 list3 = CON(Cons zero list2);

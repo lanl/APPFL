@@ -1,7 +1,2 @@
---not :: Bool -> Bool 
-not = FUN(x -> case x of {
-      	       	    True -> false;
-		    False -> true});
-
 --Test
 main = THUNK(not false);

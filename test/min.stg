@@ -1,10 +1,3 @@
-minInt = FUN(x y ->
-           case x of
-              { I i# ->
-                  case y of
-                     { I j# -> case imin# i# j# of
-                                 { x# -> let { result = CON (I x#) } in result }}});
-
 output = THUNK(minInt two seven);
 
 main = THUNK(eqInt output two);
