@@ -97,9 +97,6 @@ isBoxede e = case typ $ emd e of MCon False _ _ -> False
 isBoxede e = isBoxed $ typ $ emd e
 
 -- CG Atom, Var ************************************************************
--- there's a lacking distinction between simply obtaining a reference to an
--- atom or variable and forcing evaluation of it (with STGEVAL or
--- STGAPPLY)
 
 cgUBa env (Var v)  t   =  "(" ++ cgv env v ++ ")." ++ t
 cgUBa env (LitI i) "i" = show i
@@ -142,16 +139,14 @@ cgObjs objs runtimeGlobals =
     in (forward:forwards, fundef:fundefs)
     
 cgStart :: String
-cgStart = "\n\nDEFUN0(start) {\n" ++
+cgStart = "\n\nDEFUN0(start)" ++
             "  registerSHOs();\n" ++
             "  Obj *showResultCont = stgAllocCallCont2(&it_stgShowResultCont, 0);\n" ++
 #if USE_ARGTYPE
-            "  STGEVAL(((PtrOrLiteral){.argType = HEAPOBJ, .op = &sho_main}));\n" ++
-#else
-            "  STGEVAL(((PtrOrLiteral){.op = &sho_main}));\n" ++
+            "  stgCurVal.argType = HEAPOBJ;\n" ++
 #endif
-            "  STGRETURN0();\n" ++
-            "  ENDFUN;\n" ++
+            "  stgCurVal.op = &sho_main;\n" ++
+            "  STGJUMP1(getInfoPtr(stgCurVal.op)->entryCode, stgCurVal);\n" ++
             "}\n\n"  
             
 cgMain :: Bool -> String 
@@ -272,8 +267,8 @@ cge :: Env -> Expr InfoTab -> State Int (String, [(String, String)])
 cge env e@(EAtom it a) =
     let inline = "stgCurVal = " ++ cga env a ++ "; " ++ "// " ++ showa a ++ "\n" ++
                  (if isBoxede e then 
-                      "// boxed EAtom \n" ++
-                      "STGEVAL(stgCurVal);\n" 
+                      "// boxed EAtom, stgCurVal updates itself \n" ++
+                      "STGJUMP();\n" 
                   else 
                       "// unboxed EAtom\n")
     in return (inline, [])

@@ -100,7 +100,6 @@ import Tokenizer
 import ParserComb
 import AST
 import ADT
-import qualified Data.Map as Map
 import Data.List (groupBy)
 import PPrint
 
