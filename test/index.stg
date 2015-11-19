@@ -1,15 +1,7 @@
---retrieves value at index of array 
---index :: Int -> List a -> a
-index = FUN(n xs -> case xs of {
-      	      	    	 Cons h1 t1 -> let {a = THUNK(eqInt n zero)} in case a of {
-      	      	    	     		   	     	  True -> h1;
-						          False -> let {c = THUNK(subInt n one);
-							  	        d = THUNK(index c t1)} in d}});
-
 list1 = CON(Cons two nil);
 list2 = CON(Cons zero list1);
 list3 = CON(Cons zero list2);
 
 result = CON(I 2);
-output = THUNK(index two list3);
+output = THUNK(index list3 two);
 main = THUNK(eqInt output result); 

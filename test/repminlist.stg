@@ -34,13 +34,6 @@ rep =
        }
   );
 
-minInt = FUN(x y ->
-   case x of { 
-      I i# -> case y of {
-               I j# -> case ile# i# j# of { 
-                        0 -> y;
-                        q -> x }}});
-
 list2 = CON(Cons two nil);
 list12 = CON(Cons one list2);
 list212 = CON(Cons two list12);

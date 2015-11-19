@@ -1,17 +1,3 @@
---creates array of specified size with odd numbers in backwards order
---[2n-1,2n-3,2n-5,...,5,3,1,nil]
---createArray :: Int -> Int ->  List Int -> List Int
-createArray = FUN(n m xs -> let {a = THUNK(eqInt n zero)} in case a of {
-	      	       	                                          True -> xs;
-								  False -> let {b = CON(Cons m xs);
-								  	        e = THUNK(plusInt two m);
-								                d = THUNK(subInt n one);
-									        c = THUNK(createArray d e b)} in c});
-
---initializes array creation
---cOBArr :: Int -> List Int
-cOBArr = FUN(n -> let {a = THUNK(createArray n one nil)} in a);  
-
 list1 = CON(Cons one nil);
 list2 = CON(Cons three list1);
 list3 = CON(Cons five list2);

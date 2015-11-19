@@ -64,7 +64,7 @@ shoNames :: [Obj InfoTab] -> [String]
 shoNames = map (\o -> showITType o ++ "_" ++ (name . omd) o)
 
 -- return list of forwards (static declarations) and (static) definitions
-showSHOs :: [Obj InfoTab] -> (String,String)
+showSHOs :: [Obj InfoTab] -> (String, String)
 showSHOs objs = 
     let (forwards, defs) = unzip $ map showSHO objs
     in (concat forwards, intercalate "\n" defs)
@@ -72,10 +72,12 @@ showSHOs objs =
 
 #if USE_CAST
 
+showSHO :: Obj InfoTab -> (String, String)
 showSHO o = 
    let n = "sho_" ++ (name . omd) o
-    in ("extern Obj " ++ n ++ ";\n",(render (pretty (cSHO o))))
-                    
+    in ("extern Obj " ++ n ++ ";\n", render $ pretty $ cSHO o)
+
+cSHO :: Obj InfoTab -> ExtDecl                  
 cSHO o =
    let it = omd o
        n = name it
@@ -86,11 +88,11 @@ cSHO o =
    in cObjStruct n [infoPtr, objType, ident, payload]
    
 payloads xs = cStructMember StructTy "payload" xs
-   
+
+cSHOspec :: InfoTab -> InitializerMember
 cSHOspec it@(Fun {}) = payloads ""
    
 cSHOspec it@(Pap {}) = error "top level PAP"
-
 
 cSHOspec it@(Con {}) = payloads (map payload (map fst (args it))) 
    
@@ -100,7 +102,7 @@ cSHOspec it@(Blackhole {}) = payloads "0"
    
 cSHOspec it = error "bad IT in Obj"
 
---payload ::  Atom -> [CAST.CInitializerMember Language.C.Data.Node.NodeInfo]
+payload ::  Atom -> [InitializerMember]
 payload (LitI i) = [ 
 #if USE_ARGTYPE 
     cStructMember EnumTy "argType" "INT",
@@ -239,7 +241,7 @@ ptrOrLitSHO a =
 #else
       Var  v -> ".op = &sho_" ++ v   -- these must be global
       LitI i -> ".i = " ++ show i
-      LitL f -> ".l = " ++ show l
+      LitL l -> ".l = " ++ show l
       LitF f -> ".f = " ++ show f
       LitD d -> ".d = " ++ show d
       LitC c -> ".i = " ++ "con_" ++ c

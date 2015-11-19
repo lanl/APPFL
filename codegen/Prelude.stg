@@ -399,6 +399,7 @@ divInt = FUN(x y -> case x of {
 	  	     	  I i# -> case y of {
 			       	       I j# -> case idiv# i# j# of {
 				       	       	    x# -> let {result = CON(I x#)} in result }}});
+
 --compares two ints for >,=,or <
 --compareInt :: Int -> Int -> Int 
 --outputs zero if first number is less, two if first number is greater, and one if equal
@@ -409,7 +410,37 @@ compareInt = FUN(x y -> case x of {
 						       x -> case _ige a# b# of {
 						       	     	0 -> zero;
 								x -> one}}}}); 
+
+--compares ints for <
+--intLT :: Int -> Int -> Bool
+intLT = THUNK(_intComp _ilt);
+
+--compares ints for >=
+--intGE :: Int -> Int -> Bool
+intGE = THUNK(_intComp _ige);
+
+--compares ints for >
+--intGT :: Int -> Int -> Bool
+intGT = THUNK(_intComp _igt);
             ---------------------LIST OPERATIONS--------------------
+--switches two elements at two designated indices in a list
+--switch :: List a -> Int -> Int -> List a
+switch = FUN(xs a b -> case eqInt a b of {
+       	 	       	    True -> xs;
+       	 	            False -> case intLT a b of {
+       	 	       	                  True -> let {q = THUNK(move xs a b);
+       	 	       	                          s = THUNK(subInt b one);
+       	 	       	                          r = THUNK(move q s a)} in r;
+                                          False -> let {q =  THUNK(move xs b a);
+					  	        s = THUNK(subInt a one);
+							r = THUNK(move q s b)} in r}});
+
+--moves element at index a to index b, possibly shifting other elements in the list
+--move :: List a -> Int -> Int -> List a
+move = FUN(xs a b ->  let {r = THUNK(index xs a);
+       	      	           s = THUNK(removeAtIndex xs a);
+		           u = THUNK(insertAtIndex s r b)} in u);
+
 --removes an element at a specific index in a list
 --removeAtIndex :: List a -> Int -> List a
 removeAtIndex = FUN(xs n -> case xs of {
@@ -419,6 +450,7 @@ removeAtIndex = FUN(xs n -> case xs of {
 					      	       	    s = THUNK(removeAtIndex t1 r);
 						            q = CON(Cons h1 s)} in q;
 					      True -> t1}});
+
 --inserts an element at a specific index in a list
 -- List, element, Index
 --insertAtIndex :: List a -> a -> Int -> List a

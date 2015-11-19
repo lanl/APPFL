@@ -12,12 +12,6 @@ l3 = THUNK(let { x = CON(I 1);
                    y = CON(I 2); 
                    z = CON(I 3); 
                    r = THUNK(z); } in r);
-minInt = FUN(x y ->
-   case x of { 
-      I i# -> case y of {
-               I j# -> case ile# i# j# of { 
-                        0 -> y;
-                        q -> x }}});
 
 min1 = THUNK(minInt l3 l2);
 min2 = THUNK(minInt min1 l1);

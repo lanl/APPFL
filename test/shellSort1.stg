@@ -1,11 +1,3 @@
-removeAtIndex = FUN(xs n -> case xs of {
-		      	   Nil -> nil;
-			   Cons h1 t1 -> case eqInt n zero of {
-			   	      	      False -> let {r = THUNK(subInt n one);
-					      	       	    s = THUNK(removeAtIndex t1 r);
-						            q = CON(Cons h1 s)} in q;
-					      True -> t1}});
-
 list6 = CON(Cons one list5);
 list5 = CON(Cons one list4);
 list4 = CON(Cons two list3);

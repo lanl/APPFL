@@ -9,10 +9,13 @@ project(runtime)
               obj.h
               stg.h
               stgutils.h
-	      stgApply.h
 	      cruntime.h
 	      stgc.h
     )
+
+  set(xrt_hdrs ../codegen/options.h
+               ../stgApply/stgApply.h
+     )
 
   set(rt_srcs args.c 
               cmm.c
@@ -21,13 +24,16 @@ project(runtime)
               stgutils.c
     )
 
-include_directories("../codegen")
+include_directories("../codegen"
+                   .
+                   )
 
   # put headers in build/include
   foreach (header ${rt_hdrs})
     configure_file(${header} ${PROJECT_BINARY_DIR}/../include/${header} COPYONLY)
   endforeach()
   configure_file(../codegen/options.h ${PROJECT_BINARY_DIR}/../include/options.h COPYONLY)
+  configure_file(../stgApply/stgApply.h ${PROJECT_BINARY_DIR}/../include/stgApply.h COPYONLY)
 
   if(NOT APPLE) 
     set(CMAKE_C_FLAGS "-Wno-unused-but-set-variable")
@@ -35,7 +41,7 @@ include_directories("../codegen")
     set(CMAKE_C_FLAGS "-Wno-unused-const-variable")
   endif()
 
-  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g -std=gnu99 -DDEBUGSTGAPPLY=1")
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g -std=gnu99")
 
   include_directories(
     "/usr/include/malloc"
@@ -44,11 +50,11 @@ include_directories("../codegen")
   # put in build/lib
   if(SHAREDLIB) 
     set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/../lib)
-    add_library(runtime-ns SHARED ${rt_srcs} stgApply-nonstrict.c ${rt_hdrs})
-    add_library(runtime-s SHARED ${rt_srcs} stgApply-strict.c ${rt_hdrs})
+    add_library(runtime-ns SHARED ${rt_srcs} ../stgApply/nonstrict.c ${rt_hdrs} ${xrt_hdrs})
+    add_library(runtime-s SHARED ${rt_srcs} ../stgApply/strict.c ${rt_hdrs} ${xrt_hdrs})
   else()
     set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/../lib)
-    add_library(runtime-ns STATIC ${rt_srcs} stgApply-nonstrict.c ${rt_hdrs})
-    add_library(runtime-s STATIC ${rt_srcs} stgApply-strict.c ${rt_hdrs})
+    add_library(runtime-ns STATIC ${rt_srcs} ../stgApply/nonstrict.c ${rt_hdrs} ${xrt_hdrs})
+    add_library(runtime-s STATIC ${rt_srcs} ../stgApply/strict.c ${rt_hdrs} ${xrt_hdrs})
   endif()
 

@@ -1,21 +1,3 @@
---removeAtIndex :: List a -> Int -> List a
-removeAtIndex = FUN(xs n -> case xs of {
-		      	   Nil -> nil;
-			   Cons h1 t1 -> case eqInt n zero of {
-			   	      	      False -> let {r = THUNK(subInt n one);
-					      	       	    s = THUNK(removeAtIndex t1 r);
-						            q = CON(Cons h1 s)} in q;
-					      True -> t1}});
-
---insertAtIndex :: List a -> a -> Int -> List a
-insertAtIndex = FUN(xs a n ->  case eqInt n zero of { 
-	      	       	       	    True -> let {r = CON(Cons a xs)} in r;
-			    	    False -> case xs of {
-				    	     	  Nil -> nil;
-						  Cons h1 t1 -> let {r = THUNK(subInt n one);
-				    	     	                     s = THUNK(insertAtIndex t1 a r);
-		                                                     q = CON(Cons h1 s)} in q}});
-
 list6 = CON(Cons one list5);
 list5 = CON(Cons one list4);
 list4 = CON(Cons two nil);
