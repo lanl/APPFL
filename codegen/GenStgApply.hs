@@ -9,7 +9,7 @@ data Strictness = Nonstrict
                 | Strict1   -- evaluate args first, then fun
                   deriving(Eq)
     
-strictness = Nonstrict
+strictness = Strict1
 
 filesuffix = case strictness of
                Nonstrict -> "-nonstrict"
@@ -94,7 +94,7 @@ debugc code =
     "#endif\n"
 
 
---  Obj *cc = stgAllocCallCont2( &it_stgCallCont, argc );
+--  Cont *cc = stgAllocCallCont( &it_stgCallCont, argc );
 {-
 evalps nps pinds =
     -- only need to put all but the one to be evaluated in a ccont

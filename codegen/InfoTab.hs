@@ -50,7 +50,7 @@ import Language.C.Pretty
 -}
 
 data InfoTab = 
-    Fun { 
+    ITFun { 
       typ :: Monotype,
       ctyp :: Polytype,
       name :: String,
@@ -63,7 +63,7 @@ data InfoTab =
 
       arity :: Int}      
 
-  | Pap { 
+  | ITPap { 
       typ :: Monotype,
       ctyp :: Polytype,
       name :: String,
@@ -80,7 +80,7 @@ data InfoTab =
       argPerm :: [Int], -- map from notional pos to actual pos
       knownCall :: Maybe InfoTab} -- of the FUN
 
-  | Con { 
+  | ITCon { 
       typ :: Monotype,
       ctyp :: Polytype,
       name :: String,
@@ -97,7 +97,7 @@ data InfoTab =
       arity :: Int,
       con :: String, -- actual constructor name, not object name
       cmap :: CMap }
-  | Thunk { 
+  | ITThunk { 
       typ :: Monotype,
       ctyp :: Polytype,
       name :: String,
@@ -107,7 +107,7 @@ data InfoTab =
       truefvs :: [Var],
       entryCode :: String }
 
-  | Blackhole {
+  | ITBlackhole {
       typ :: Monotype,
       ctyp :: Polytype,
       name :: String,
@@ -205,7 +205,7 @@ data InfoTab =
   -- the following may be useful later
   -- for now case continuation is handled by Alts.ITAlts
   -- similarly function continuation could be handled by EFCall.ITFCall
-  -- update continuation by THUNK.Thunk?
+  -- update continuation by THUNK.ITThunk?
   -- call continuation by ???
   | ITUpdcont
   | ITCasecont
@@ -300,7 +300,7 @@ class MakeIT a where
 
 instance MakeIT (Obj ([Var],[Var])) where
     makeIT o@(FUN (fvs,truefvs) vs e n) = 
-        Fun { arity = length vs,
+        ITFun { arity = length vs,
               name = n,
               fvs = zip fvs $ repeat typUndef,
               bfvc = -1,
@@ -315,7 +315,7 @@ instance MakeIT (Obj ([Var],[Var])) where
             }
 
     makeIT o@(PAP (fvs,truefvs) f as n) =
-        Pap { args = zip (projectAtoms as) $ repeat typUndef,
+        ITPap { args = zip (projectAtoms as) $ repeat typUndef,
               bargc = -1,
               uargc = -1,
               name = n,
@@ -334,7 +334,7 @@ instance MakeIT (Obj ([Var],[Var])) where
             }
 
     makeIT o@(CON (fvs,truefvs) c as n) =
-        Con { con = c,
+        ITCon { con = c,
               arity = length as,
               args = zip (projectAtoms as) $ repeat typUndef,
               bargc = -1,
@@ -349,12 +349,12 @@ instance MakeIT (Obj ([Var],[Var])) where
               ctyp = ctypUndef,
     --          entryCode = showITType o ++ "_" ++ n
               entryCode = "stg_concall",
-              -- cmap = error "Con cmap undefined in InfoTab.hs"
+              -- cmap = error "ITCon cmap undefined in InfoTab.hs"
               cmap = Map.empty
             }
 
     makeIT o@(THUNK (fvs,truefvs) e n) =
-        Thunk { name = n,
+        ITThunk { name = n,
                 fvs = zip fvs $ repeat typUndef,
                 bfvc = -1,
                 ufvc = -1,
@@ -366,7 +366,7 @@ instance MakeIT (Obj ([Var],[Var])) where
               }
 
     makeIT o@(BLACKHOLE (fvs,truefvs) n) =
-        Blackhole { name = n,
+        ITBlackhole { name = n,
                     typ = typUndef,
                     ctyp = ctypUndef,
                     fvs = zip fvs $ repeat typUndef,
@@ -458,11 +458,11 @@ instance MakeIT (Alt ([Var],[Var])) where
                cmap = Map.empty}
 
 
-showObjType Fun {} = "FUN"
-showObjType Pap {} = "PAP"
-showObjType Con {} = "CON"
-showObjType Thunk {} = "THUNK"
-showObjType Blackhole {} = "BLACKHOLE"
+showObjType ITFun {} = "FUN"
+showObjType ITPap {} = "PAP"
+showObjType ITCon {} = "CON"
+showObjType ITThunk {} = "THUNK"
+showObjType ITBlackhole {} = "BLACKHOLE"
 showObjType _ = error "bad ObjType"
 
 showITType _ = "sho"
@@ -482,7 +482,7 @@ showITs os = myConcatMap showIT $ itsOf os
 
 #if USE_CAST
 cInfoTab :: InfoTab -> Maybe ExtDecl
-cInfoTab it@(Fun {}) = Just (
+cInfoTab it@(ITFun {}) = Just (
     cInfoTabStruct (name it) 
         [cStructMember StringTy "name" (name it)
         ,cStructMember PtrTy "entryCode" (entryCode it)
@@ -494,7 +494,7 @@ cInfoTab it@(Fun {}) = Just (
         ,cStructMember EnumTy "funFields.trueEntryCode" (trueEntryCode it)
         ])
   
-cInfoTab it@(Pap {}) =  Just (
+cInfoTab it@(ITPap {}) =  Just (
     cInfoTabStruct (name it) 
         [cStructMember StringTy "name" (name it)
         ,cStructMember PtrTy "entryCode" (entryCode it)
@@ -505,7 +505,7 @@ cInfoTab it@(Pap {}) =  Just (
         ,cStructMember EnumTy "funFields.trueEntryCode" (trueEntryCode it)
         ])
         
-cInfoTab it@(Con {}) =  Just (
+cInfoTab it@(ITCon {}) =  Just (
     cInfoTabStruct (name it)
         [cStructMember StringTy "name" (name it)
         ,cStructMember PtrTy "entryCode" (entryCode it)
@@ -519,7 +519,7 @@ cInfoTab it@(Con {}) =  Just (
         ,cStructMember StringTy "conFields.conName" (con it)
         ])     
     
-cInfoTab it@(Thunk {}) =  Just (
+cInfoTab it@(ITThunk {}) =  Just (
     cInfoTabStruct (name it) 
         [cStructMember StringTy "name" (name it)
         ,cStructMember PtrTy "entryCode" (entryCode it)
@@ -529,7 +529,7 @@ cInfoTab it@(Thunk {}) =  Just (
         ,cStructMember IntTy "layoutInfo.unboxedCount" (ufvc it)
         ])
         
-cInfoTab it@(Blackhole {}) =  Just (
+cInfoTab it@(ITBlackhole {}) =  Just (
     cInfoTabStruct (name it) 
         [cStructMember StringTy "name" (name it)
         ,cStructMember PtrTy "entryCode" (entryCode it)
@@ -543,7 +543,7 @@ cInfoTab it@(ITAlts {}) =  Just (
     cInfoTabStruct (name it)
         [cStructMember StringTy "name" (name it)
         ,cStructMember PtrTy "entryCode" (entryCode it)
-        ,cStructMember EnumTy "objType" "CASECONT"
+        ,cStructMember EnumTy "contType" "CASECONT"
         ,cStructMember IntTy "layoutInfo.payloadSize" (length $ fvs it)
         ,cStructMember IntTy "layoutInfo.boxedCount" (bfvc it)
         ,cStructMember IntTy "layoutInfo.unboxedCount" (ufvc it)
@@ -560,7 +560,7 @@ showIT it = let x = cInfoTab it in
 #else
 
 showIT :: InfoTab -> [Char]
-showIT it@(Fun {}) =
+showIT it@(ITFun {}) =
     "InfoTab it_" ++ name it ++ " __attribute__((aligned(8))) = \n" ++
     "  { .name                = " ++ show (name it) ++ ",\n" ++
     "    // fvs " ++ show (fvs it) ++ "\n" ++
@@ -576,7 +576,7 @@ showIT it@(Fun {}) =
     "    .funFields.trueEntryCode = " ++ trueEntryCode it ++ ",\n" ++
     "  };\n"
         
-showIT it@(Pap {}) =
+showIT it@(ITPap {}) =
     "InfoTab it_" ++ name it ++ " __attribute__((aligned(8))) = \n" ++
     "  { .name                = " ++ show (name it) ++ ",\n" ++
     "    // fvs " ++ show (fvs it) ++ "\n" ++
@@ -594,7 +594,7 @@ showIT it@(Pap {}) =
     "    .papFields.trueEntryCode = " ++ trueEntryCode it ++ ",\n" ++
     "  };\n"
         
-showIT it@(Con {}) =
+showIT it@(ITCon {}) =
     "InfoTab it_" ++ name it ++ " __attribute__((aligned(8))) = \n" ++
     "  { .name                = " ++ show (name it) ++ ",\n" ++
     "    // fvs " ++ show (fvs it) ++ "\n" ++
@@ -611,7 +611,7 @@ showIT it@(Con {}) =
     "    .conFields.conName   = " ++ show (con it) ++ ",\n" ++
     "  };\n"
         
-showIT it@(Thunk {}) =
+showIT it@(ITThunk {}) =
     "InfoTab it_" ++ name it ++ " __attribute__((aligned(8))) = \n" ++
     "  { .name                = " ++ show (name it) ++ ",\n" ++
     "    // fvs " ++ show (fvs it) ++ "\n" ++
@@ -625,7 +625,7 @@ showIT it@(Thunk {}) =
 --    "    .layoutInfo.permString   = \"" ++ concatMap show (argPerm it) ++ "\",\n" ++
     "  };\n"
         
-showIT it@(Blackhole {}) = 
+showIT it@(ITBlackhole {}) = 
     "InfoTab it_" ++ name it ++ "  __attribute__((aligned(8)))= \n" ++
     "  { .name                = " ++ show (name it) ++ ",\n" ++
     "    // fvs " ++ show (fvs it) ++ "\n" ++
@@ -640,12 +640,12 @@ showIT it@(Blackhole {}) =
     "  };\n"
 
 showIT it@(ITAlts{}) =
-    "InfoTab it_" ++ name it ++ " __attribute__((aligned(8))) = \n" ++
+    "CInfoTab it_" ++ name it ++ " __attribute__((aligned(8))) = \n" ++
     "  { .name                = " ++ show (name it) ++ ",\n" ++
     "    // fvs " ++ show (fvs it) ++ "\n" ++
     -- "    .fvCount             = " ++ show (length $ fvs it) ++ ",\n" ++
     "    .entryCode           = &" ++ entryCode it ++ ",\n" ++
-    "    .objType             = CASECONT,\n" ++
+    "    .contType             = CASECONT,\n" ++
     "    .layoutInfo.payloadSize = " ++ show (length $ fvs it) ++ ",\n" ++
 --    "    // argPerm = " ++ show (argPerm it) ++ "\n" ++
     "    .layoutInfo.boxedCount   = " ++ show (bfvc it) ++ ",\n" ++
@@ -745,21 +745,21 @@ instance PPrint InfoTab where
      frvarsDoc vs tvs = freevsDoc vs $+$ trufreevsDoc tvs
      (itName, itExtras) =
            case it of
-             Fun{..} ->
-               (text "Fun", makeName name $+$
+             ITFun{..} ->
+               (text "ITFun", makeName name $+$
                             frvarsDoc fvs truefvs)
-             Pap{..} ->
-               (text "Pap", makeName name $+$
+             ITPap{..} ->
+               (text "ITPap", makeName name $+$
                             makeKCDoc knownCall $+$
                             frvarsDoc fvs truefvs)
-             Con{..} ->
-               (text "Con", makeName name $+$
+             ITCon{..} ->
+               (text "ITCon", makeName name $+$
                             frvarsDoc fvs truefvs)
-             Thunk{..} ->
-               (text "Thunk", makeName name $+$
+             ITThunk{..} ->
+               (text "ITThunk", makeName name $+$
                               frvarsDoc fvs truefvs)
-             Blackhole{..} ->
-               (text "Blackhole", makeName name $+$
+             ITBlackhole{..} ->
+               (text "ITBlackhole", makeName name $+$
                                   frvarsDoc fvs truefvs)
              ITAtom{..} ->
                (text "ITAtom", makeHADoc noHeapAlloc $+$

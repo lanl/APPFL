@@ -9,8 +9,19 @@
 #include "obj.h"
 #include "options.h"
 
-const bool DEBUG = false;
+const bool DEBUG = true;
 const bool EXTRA = false;  // run extra checks
+
+static void *toPtr, *fromPtr;
+static void *scanPtr, *freePtr;
+
+static inline bool isFrom(void *p) {
+  return (p >= fromPtr && (char *) p < (char *) fromPtr + stgHeapSize / 2);
+}
+
+static inline bool isTo(void *p) {
+  return (p >= toPtr && (char *) p < (char *) toPtr + stgHeapSize / 2);
+}
 
 void initGc(void) {
   assert(stgHeap && "gc: heap not defined");
@@ -46,9 +57,9 @@ PtrOrLiteral updatePtrByValue (PtrOrLiteral f) {
       }
 
       memcpy(freePtr, p, size);
-      if (EXTRA) assert(isLSBset((uintptr_t)freePtr) == 0 && "gc: bad alignment");
+      if (EXTRA) assert(isLSBset((InfoTab *)freePtr) == 0 && "gc: bad alignment");
 
-      p->infoPtr = setLSB((uintptr_t)freePtr);
+      p->infoPtr = setLSB((InfoTab *)freePtr);
       f.op = (Obj *) freePtr;
       freePtr = (char *) freePtr + size;
     }
@@ -163,10 +174,10 @@ void processObj(Obj *p) {
   }
 }
 
-void processCont(Obj *p) {
+void processCont(Cont *p) {
   size_t i;
-  if (DEBUG) fprintf(stderr, "processCont %s %s\n", objTypeNames[getObjType(p)], p->ident);
-  switch (getObjType(p)) {
+  if (DEBUG) fprintf(stderr, "processCont %s %s\n", contTypeNames[getContType(p)], p->ident);
+  switch (getContType(p)) {
   case UPDCONT:
     updatePtr(&p->payload[0]);
     break;
@@ -199,8 +210,8 @@ void processCont(Obj *p) {
     updatePtr(&p->payload[0]);
     break;
   default:
-    fprintf(stderr, "gc: bad cont. type %d %s\n", getObjType(p),
-        objTypeNames[getObjType(p)]);
+    fprintf(stderr, "gc: bad cont. type %d %s\n", getContType(p),
+        contTypeNames[getContType(p)]);
     assert(false);
   }
 }
@@ -218,18 +229,18 @@ void gc(void) {
   }
 
   // add stgCurVal
-  if (EXTRA ) assert(isBoxed(stgCurVal) && "gc: unexpected unboxed arg in stgCurVal");
+  if (EXTRA) assert(isBoxed(stgCurVal) && "gc: unexpected unboxed arg in stgCurVal");
   processObj(stgCurVal.op);
 
   // all SHO's
   for (int i = 0; i < stgStatObjCount; i++) {
     processObj(stgStatObj[i]);
   }
-
   //Cont. stack
-  for (char *p = (char*) stgSP; p < (char*) stgStack + stgStackSize; p +=
-      getObjSize((Obj *) p)) {
-    processCont((Obj *) p);
+  for (Cont *p = (Cont *)stgSP; 
+       (char *)p < (char*) stgStack + stgStackSize; 
+       p = (Cont *)((char*)p + getContSize(p))) {
+    processCont(p);
   }
 
   //all roots are now added.
