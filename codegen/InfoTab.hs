@@ -483,70 +483,70 @@ showITs os = myConcatMap showIT $ itsOf os
 #if USE_CAST
 cInfoTab :: InfoTab -> Maybe ExtDecl
 cInfoTab it@(Fun {}) = Just (
-    initStruct "InfoTab" ("it_" ++ name it) True
-        [initStructMember StringTy "name" (name it)
-        ,initStructMember PtrTy "entryCode" (entryCode it)
-        ,initStructMember EnumTy "objType" "FUN"
-        ,initStructMember IntTy "layoutInfo.payloadSize" (length $ fvs it) 
-        ,initStructMember IntTy "layoutInfo.boxedCount" (length $ fvs it)
-        ,initStructMember IntTy "layoutInfo.unboxedCount" (ufvc it)
-        ,initStructMember IntTy "funFields.arity" (arity it)
-        ,initStructMember EnumTy "funFields.trueEntryCode" (trueEntryCode it)
+    cInfoTabStruct (name it) 
+        [cStructMember StringTy "name" (name it)
+        ,cStructMember PtrTy "entryCode" (entryCode it)
+        ,cStructMember EnumTy "objType" "FUN"
+        ,cStructMember IntTy "layoutInfo.payloadSize" (length $ fvs it) 
+        ,cStructMember IntTy "layoutInfo.boxedCount" (length $ fvs it)
+        ,cStructMember IntTy "layoutInfo.unboxedCount" (ufvc it)
+        ,cStructMember IntTy "funFields.arity" (arity it)
+        ,cStructMember EnumTy "funFields.trueEntryCode" (trueEntryCode it)
         ])
   
 cInfoTab it@(Pap {}) =  Just (
-    initStruct "InfoTab" ("it_" ++ name it) True
-        [initStructMember StringTy "name" (name it)
-        ,initStructMember PtrTy "entryCode" (entryCode it)
-        ,initStructMember EnumTy "objType" "PAP"
-        ,initStructMember IntTy "layoutInfo.payloadSize" (length (fvs it) + length (args it) + 1) 
-        ,initStructMember IntTy "layoutInfo.boxedCount" (bfvc it)
-        ,initStructMember IntTy "layoutInfo.unboxedCount" (ufvc it)
-        ,initStructMember EnumTy "funFields.trueEntryCode" (trueEntryCode it)
+    cInfoTabStruct (name it) 
+        [cStructMember StringTy "name" (name it)
+        ,cStructMember PtrTy "entryCode" (entryCode it)
+        ,cStructMember EnumTy "objType" "PAP"
+        ,cStructMember IntTy "layoutInfo.payloadSize" (length (fvs it) + length (args it) + 1) 
+        ,cStructMember IntTy "layoutInfo.boxedCount" (bfvc it)
+        ,cStructMember IntTy "layoutInfo.unboxedCount" (ufvc it)
+        ,cStructMember EnumTy "funFields.trueEntryCode" (trueEntryCode it)
         ])
         
 cInfoTab it@(Con {}) =  Just (
-    initStruct "InfoTab" ("it_" ++ name it) True
-        [initStructMember StringTy "name" (name it)
-        ,initStructMember PtrTy "entryCode" (entryCode it)
-        ,initStructMember EnumTy "objType" "CON"
-        ,initStructMember IntTy "layoutInfo.payloadSize" (arity it) 
-        ,initStructMember IntTy "layoutInfo.boxedCount" (bargc it)
-        ,initStructMember IntTy "layoutInfo.unboxedCount" (uargc it)
-        ,initStructMember StringTy "layoutInfo.permString" (concatMap show (argPerm it))
-        ,initStructMember IntTy "conFields.arity" (arity it)
-        ,initStructMember EnumTy "conFields.tag"  (luConTag (con it) (cmap it))
-        ,initStructMember StringTy "conFields.conName" (con it)
+    cInfoTabStruct (name it)
+        [cStructMember StringTy "name" (name it)
+        ,cStructMember PtrTy "entryCode" (entryCode it)
+        ,cStructMember EnumTy "objType" "CON"
+        ,cStructMember IntTy "layoutInfo.payloadSize" (arity it) 
+        ,cStructMember IntTy "layoutInfo.boxedCount" (bargc it)
+        ,cStructMember IntTy "layoutInfo.unboxedCount" (uargc it)
+        ,cStructMember StringTy "layoutInfo.permString" (concatMap show (argPerm it))
+        ,cStructMember IntTy "conFields.arity" (arity it)
+        ,cStructMember EnumTy "conFields.tag"  (luConTag (con it) (cmap it))
+        ,cStructMember StringTy "conFields.conName" (con it)
         ])     
     
 cInfoTab it@(Thunk {}) =  Just (
-    initStruct "InfoTab" ("it_" ++ name it) True
-        [initStructMember StringTy "name" (name it)
-        ,initStructMember PtrTy "entryCode" (entryCode it)
-        ,initStructMember EnumTy "objType" "THUNK"
-        ,initStructMember IntTy "layoutInfo.payloadSize" (1 + (length $ fvs it)) 
-        ,initStructMember IntTy "layoutInfo.boxedCount" (bfvc it)
-        ,initStructMember IntTy "layoutInfo.unboxedCount" (ufvc it)
+    cInfoTabStruct (name it) 
+        [cStructMember StringTy "name" (name it)
+        ,cStructMember PtrTy "entryCode" (entryCode it)
+        ,cStructMember EnumTy "objType" "THUNK"
+        ,cStructMember IntTy "layoutInfo.payloadSize" (1 + (length $ fvs it)) 
+        ,cStructMember IntTy "layoutInfo.boxedCount" (bfvc it)
+        ,cStructMember IntTy "layoutInfo.unboxedCount" (ufvc it)
         ])
         
 cInfoTab it@(Blackhole {}) =  Just (
-    initStruct "InfoTab" ("it_" ++ name it) True
-        [initStructMember StringTy "name" (name it)
-        ,initStructMember PtrTy "entryCode" (entryCode it)
-        ,initStructMember EnumTy "objType" "BLACKHOLE"
-        ,initStructMember IntTy "layoutInfo.payloadSize" (0 :: Int)
-        ,initStructMember IntTy "layoutInfo.boxedCount" (0 :: Int)
-        ,initStructMember IntTy "layoutInfo.unboxedCount" (0 :: Int)
+    cInfoTabStruct (name it) 
+        [cStructMember StringTy "name" (name it)
+        ,cStructMember PtrTy "entryCode" (entryCode it)
+        ,cStructMember EnumTy "objType" "BLACKHOLE"
+        ,cStructMember IntTy "layoutInfo.payloadSize" (0 :: Int)
+        ,cStructMember IntTy "layoutInfo.boxedCount" (0 :: Int)
+        ,cStructMember IntTy "layoutInfo.unboxedCount" (0 :: Int)
         ])            
 
 cInfoTab it@(ITAlts {}) =  Just (
-    initStruct "InfoTab" ("it_" ++ name it) True
-        [initStructMember StringTy "name" (name it)
-        ,initStructMember PtrTy "entryCode" (entryCode it)
-        ,initStructMember EnumTy "objType" "CASECONT"
-        ,initStructMember IntTy "layoutInfo.payloadSize" (length $ fvs it)
-        ,initStructMember IntTy "layoutInfo.boxedCount" (bfvc it)
-        ,initStructMember IntTy "layoutInfo.unboxedCount" (ufvc it)
+    cInfoTabStruct (name it)
+        [cStructMember StringTy "name" (name it)
+        ,cStructMember PtrTy "entryCode" (entryCode it)
+        ,cStructMember EnumTy "objType" "CASECONT"
+        ,cStructMember IntTy "layoutInfo.payloadSize" (length $ fvs it)
+        ,cStructMember IntTy "layoutInfo.boxedCount" (bfvc it)
+        ,cStructMember IntTy "layoutInfo.unboxedCount" (ufvc it)
         ])           
 
 cInfoTab _ = Nothing
