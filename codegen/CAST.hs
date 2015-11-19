@@ -120,8 +120,9 @@ cEnum name xs = CDeclExt (CDecl [CTypeSpec (CEnumType (CEnum (Just (builtinIdent
 cFun :: Ty -> String -> [CDerivedDeclarator NodeInfo] -> [CCompoundBlockItem NodeInfo] -> ExtDecl
 cFun ty name dds cbs =
   let r = case ty of
-            IntTy -> CTypeSpec (CIntType undefNode)
+            IntTy  -> CTypeSpec (CIntType undefNode)
             VoidTy -> CTypeSpec (CVoidType undefNode)
+            _      -> error "bad Fun Ty"
    in CFDefExt (CFunDef [r] (CDeclr (Just (builtinIdent name)) dds
       Nothing [] undefNode) [] (CCompound [] cbs undefNode) undefNode)
 

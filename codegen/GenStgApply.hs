@@ -17,8 +17,9 @@ filesuffix = case strictness of
 
 dumpStgApply n = 
     let (forward, macros, fun) = genAllstgApply n
-    in do writeFile "../runtime/stgApply.h" (includehtop ++ forward ++ macros ++ includehbot)
-          writeFile ("../runtime/stgApply" ++ filesuffix ++ ".c") (includec ++ fun)
+        name = if strictness == Strict1 then "strict" else "nonstrict" 
+    in do writeFile "../stgApply/stgApply.h" (includehtop ++ forward ++ macros ++ includehbot)
+          writeFile ("../stgApply/" ++ name ++ filesuffix ++ ".c") (includec ++ fun)
           return ()
         where
           includehtop =
