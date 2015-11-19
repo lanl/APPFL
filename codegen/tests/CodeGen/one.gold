@@ -1,5 +1,4 @@
 #include "stgc.h"
-#include "stgApply.h"
 
 void registerSHOs();
 FnPtr fun_main();
@@ -65,19 +64,18 @@ DEFUN1(fun_main, self) {
   fprintf(stderr, "main here\n");
   stgThunk(self);
   stgCurVal = HOTOPL(&sho_one); // one
-  // boxed EAtom 
-  STGEVAL(stgCurVal);
+  // boxed EAtom, stgCurVal updates itself 
+  STGJUMP();
   fprintf(stderr, "main returning\n");
   STGRETURN0();
   ENDFUN;
 }
 
-DEFUN0(start) {
-  registerSHOs();
-  Obj *showResultCont = stgAllocCallCont2(&it_stgShowResultCont, 0);
-  STGEVAL(((PtrOrLiteral){.argType = HEAPOBJ, .op = &sho_main}));
-  STGRETURN0();
-  ENDFUN;
+DEFUN0(start)  registerSHOs();
+  Cont *showResultCont = stgAllocCallCont(&it_stgShowResultCont, 0);
+  stgCurVal.argType = HEAPOBJ;
+  stgCurVal.op = &sho_main;
+  STGJUMP1(getInfoPtr(stgCurVal.op)->entryCode, stgCurVal);
 }
 
 int main (int argc, char **argv) {

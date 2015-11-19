@@ -12,11 +12,11 @@ InfoTab it_seq __attribute__((aligned(8))) =
 
 
 
-InfoTab it_alts_0 __attribute__((aligned(8))) = 
+CInfoTab it_alts_0 __attribute__((aligned(8))) = 
   { .name                = "alts_0",
     // fvs [("y",MPhony)]
     .entryCode           = &alts_0,
-    .objType             = CASECONT,
+    .contType             = CASECONT,
     .layoutInfo.payloadSize = 1,
     .layoutInfo.boxedCount   = -1,
     .layoutInfo.unboxedCount = -1,
