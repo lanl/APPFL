@@ -52,11 +52,9 @@ Obj sho_stg_case_not_exhaustive = {
 #if USE_OBJTYPE
   .objType = FUN,
 #endif
-  .infoPtr = (uintptr_t)&it_stg_case_not_exhaustive,
+  .infoPtr = &it_stg_case_not_exhaustive,
   .ident = "stg_case_not_exhaustive",
 };
-
-
 
 DEFUN1(stg_funcall, self) {
   fprintf(stderr,"stg_funcall, returning self\n");
@@ -115,8 +113,8 @@ InfoTab it_stgIndirect __attribute__((aligned(8))) =
   };
 
 DEFUN0(stgUpdateCont) {
-  Obj *contp = stgPopCont();
-  assert(getObjType(contp) == UPDCONT && "I'm not an UPDCONT!");
+  Cont *contp = stgPopCont();
+  assert(getContType(contp) == UPDCONT && "I'm not an UPDCONT!");
   PtrOrLiteral p = contp->payload[0];
   assert(isBoxed(p) && "not a HEAPOBJ!");
   fprintf(stderr, "stgUpdateCont updating\n  ");
@@ -132,8 +130,7 @@ DEFUN0(stgUpdateCont) {
   p.op->payload[0] = stgCurVal;
   // now zero out the payload
 
-  p.op->infoPtr = (uintptr_t) &it_stgIndirect; // this will supersede the # if below
-
+  p.op->infoPtr = &it_stgIndirect; // this will supersede the # if below
 
   // TOFIX--size determination should be more centralized
   size_t objSize = sizeof(Obj) + it_stgIndirect.layoutInfo.payloadSize * sizeof(PtrOrLiteral);
@@ -151,11 +148,11 @@ DEFUN0(stgUpdateCont) {
   ENDFUN
 }
 
-InfoTab it_stgUpdateCont __attribute__((aligned(8))) =
+CInfoTab it_stgUpdateCont __attribute__((aligned(8))) =
   { .name = "default stgUpdateCont",
     //    .fvCount = 1, // self
     .entryCode = &stgUpdateCont,
-    .objType = UPDCONT,
+    .contType = UPDCONT,
     .layoutInfo.payloadSize = 1, // self
     .layoutInfo.boxedCount = 1,
     .layoutInfo.unboxedCount = 0,
@@ -174,11 +171,11 @@ DEFUN0(fun_stgShowResultCont) {
   ENDFUN;
 }
 
-InfoTab it_stgShowResultCont __attribute__((aligned(8))) =
+CInfoTab it_stgShowResultCont __attribute__((aligned(8))) =
   { .name       = "fun_showResultCont",
     //    .fvCount    = 0,
     .entryCode  = &fun_stgShowResultCont,
-    .objType    = CALLCONT,
+    .contType    = CALLCONT,
     .layoutInfo.boxedCount = -1,  // shouldn't be using this
     .layoutInfo.unboxedCount = -1,  // shouldn't be using this
   };
@@ -190,18 +187,18 @@ DEFUN0(stgCallCont) {
   ENDFUN;
 }
 
-InfoTab it_stgCallCont __attribute__((aligned(8))) =
+CInfoTab it_stgCallCont __attribute__((aligned(8))) =
   { .name = "stgCallCont",
     //    .fvCount = 0,
     .entryCode = &stgCallCont,
-    .objType = CALLCONT,
+    .contType = CALLCONT,
     .layoutInfo.boxedCount = -1,  // shouldn't be using this
     .layoutInfo.unboxedCount = -1,  // shouldn't be using this
   };
 
 void stgThunk(PtrOrLiteral self) {
   assert(isBoxed(self) && "stgThunk:  not HEAPOBJ\n");
-  Obj *contp = stgAllocCont(&it_stgUpdateCont);
+  Cont *contp = stgAllocCont(&it_stgUpdateCont);
   contp->payload[0] = self;
   strcpy(contp->ident, self.op->ident); //override default
   // can't do this until we capture the variables in a stack frame
@@ -215,14 +212,14 @@ void stgThunk(PtrOrLiteral self) {
 }
 
 void callContSave(int argc, PtrOrLiteral argv[]) {
-  Obj *cc = stgAllocCallCont2( &it_stgCallCont, argc );
+  Cont *cc = stgAllocCallCont( &it_stgCallCont, argc );
   for (int i = 0; i != argc; i++) 
     cc->payload[i+1] = argv[i];
 }
 
 void callContRestore(PtrOrLiteral argv[]) {
-  Obj *cc = stgPopCont();
-  assert(getObjType(cc) == CALLCONT);
+  Cont *cc = stgPopCont();
+  assert(getContType(cc) == CALLCONT);
 #if USE_ARGTYPE
   assert(cc->payload[0].argType == INT);
 #endif

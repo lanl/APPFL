@@ -90,15 +90,15 @@ cSHO o =
 payloads xs = cStructMember StructTy "payload" xs
 
 cSHOspec :: InfoTab -> InitializerMember
-cSHOspec it@(Fun {}) = payloads ""
+cSHOspec it@(ITFun {}) = payloads ""
    
-cSHOspec it@(Pap {}) = error "top level PAP"
+cSHOspec it@(ITPap {}) = error "top level PAP"
 
-cSHOspec it@(Con {}) = payloads (map payload (map fst (args it))) 
+cSHOspec it@(ITCon {}) = payloads (map payload (map fst (args it))) 
    
-cSHOspec it@(Thunk {}) = payloads "0"
+cSHOspec it@(ITThunk {}) = payloads "0"
    
-cSHOspec it@(Blackhole {}) = payloads "0"
+cSHOspec it@(ITBlackhole {}) = payloads "0"
    
 cSHOspec it = error "bad IT in Obj"
 
@@ -144,7 +144,7 @@ showSHO o =
     in ("extern " ++ base ++ ";\n", 
                      base ++ " =\n" ++ showHO (omd o))
 
-getIT it@(Pap {}) = case knownCall it of 
+getIT it@(ITPap {}) = case knownCall it of 
                         Just fit -> fit
                         Nothing -> error "unknown call in PAP"
 getIT it = it
@@ -160,16 +160,16 @@ showHO it =
        showSHOspec it ++
     "};\n"
 
-showSHOspec it@(Fun {}) = payloads []
+showSHOspec it@(ITFun {}) = payloads []
 
-showSHOspec it@(Pap {}) = papPayloads it
+showSHOspec it@(ITPap {}) = papPayloads it
 
-showSHOspec it@(Con {}) = payloads $ map fst $ args it
+showSHOspec it@(ITCon {}) = payloads $ map fst $ args it
 
 -- need at least a payload of length 1 for thunks
-showSHOspec it@(Thunk {}) = indent 2 ".payload = {0}\n"
+showSHOspec it@(ITThunk {}) = indent 2 ".payload = {0}\n"
 
-showSHOspec it@(Blackhole {}) = indent 2 ".payload = {0}\n"
+showSHOspec it@(ITBlackhole {}) = indent 2 ".payload = {0}\n"
 
 showSHOspec it = ""
 

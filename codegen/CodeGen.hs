@@ -148,7 +148,7 @@ cgObjs objs runtimeGlobals =
 cgStart :: String
 cgStart = "\n\nDEFUN0(start)" ++
             "  registerSHOs();\n" ++
-            "  Obj *showResultCont = stgAllocCallCont2(&it_stgShowResultCont, 0);\n" ++
+            "  Cont *showResultCont = stgAllocCallCont(&it_stgShowResultCont, 0);\n" ++
 #if USE_ARGTYPE
             "  stgCurVal.argType = HEAPOBJ;\n" ++
 #endif
@@ -381,7 +381,7 @@ cge env (ECase _ e a@(Alts italts alts aname)) =
        (acode, afunc) <- cgalts env a (isBoxede e)
        let name = "ccont_" ++ aname
            pre = "// scrutinee may heap alloc\n" ++
-              "Obj *" ++ name ++ 
+              "Cont *" ++ name ++ 
               " = stgAllocCont( &it_" ++ aname ++ ");\n" ++
               (if fvs italts == [] then
                  "    // no FVs\n"
@@ -448,7 +448,7 @@ cgalts env (Alts it alts name) boxed =
                 -- actually need the ccont?
                 -- any fvs in the expressions on the rhs's?
                 (if (length $ fvs it) > 0 then 
-                     "  Obj *" ++ contName ++ " = stgPopCont();\n" ++
+                     "  Cont *" ++ contName ++ " = stgPopCont();\n" ++
                      concat ["  PtrOrLiteral " ++ v ++ 
                              " = " ++ contName ++ "->payload[" ++ show i ++ "];\n"
                              | (i,v) <- indexFrom 0 $ map fst $ fvs it ] 

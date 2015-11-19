@@ -41,13 +41,13 @@ static inline size_t endTHUNKFVsB(Obj *p) { return getInfoPtr(p)->layoutInfo.box
 static inline size_t startTHUNKFVsU(Obj *p) { return endCONargsB(p); }
 static inline size_t endTHUNKFVsU(Obj *p) { return startCONargsU(p) + getInfoPtr(p)->layoutInfo.unboxedCount; }
 
-static inline size_t startCALLFVsB(Obj *p) { return 1; }
-static inline size_t endCALLFVsB(Obj *p) { return p->payload[0].i + 1; }
+static inline size_t startCALLFVsB(Cont *p) { return 1; }
+static inline size_t endCALLFVsB(Cont *p) { return p->payload[0].i + 1; }
 
-static inline size_t startCASEFVsB(Obj *p) { return 0; }
-static inline size_t endCASEFVsB(Obj *p) { return getInfoPtr(p)->layoutInfo.boxedCount; }
-static inline size_t startCASEFVsU(Obj *p) { return endCASEFVsB(p); }
-static inline size_t endCASEFVsU(Obj *p) { return startCASEFVsU(p) + getInfoPtr(p)->layoutInfo.unboxedCount; }
+static inline size_t startCASEFVsB(Cont *p) { return 0; }
+static inline size_t endCASEFVsB(Cont *p) { return getCInfoPtr(p)->layoutInfo.boxedCount; }
+static inline size_t startCASEFVsU(Cont *p) { return endCASEFVsB(p); }
+static inline size_t endCASEFVsU(Cont *p) { return startCASEFVsU(p) + getCInfoPtr(p)->layoutInfo.unboxedCount; }
 
 
 static inline bool isBoxed(PtrOrLiteral f) {
@@ -67,10 +67,15 @@ static inline bool isUnboxed(PtrOrLiteral f) {
 }
 
 // use LSB to say it is a FORWARD
-static inline uintptr_t setLSB(uintptr_t ptr) { return ptr | 1; }
-static inline uintptr_t unsetLSB(uintptr_t ptr) { return ptr & ~1; }
-static inline bool isLSBset(uintptr_t ptr) { return (bool)(ptr & 1); }
-
+static inline InfoTab *setLSB(InfoTab *ptr) { 
+  return (InfoTab *)((uintptr_t)ptr | 1); 
+}
+static inline InfoTab *unsetLSB(InfoTab *ptr) { 
+  return (InfoTab *)((uintptr_t)ptr & ~1); 
+}
+static inline bool isLSBset(InfoTab *ptr) { 
+  return (bool)((uintptr_t)ptr & 1); 
+}
 
 // end of wrappers
 
