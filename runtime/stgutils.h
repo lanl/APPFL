@@ -10,13 +10,13 @@
 extern void stgThunk(PtrOrLiteral self);
 
 // FnPtr stgCallCont();
-extern InfoTab it_stgCallCont;
+extern CInfoTab it_stgCallCont;
 
 // FnPtr stgUpdateCont();
-extern InfoTab it_stgUpdateCont;
+extern CInfoTab it_stgUpdateCont;
 
 // FnPtr fun_stgShowResultCont();
-extern InfoTab it_stgShowResultCont;
+extern CInfoTab it_stgShowResultCont;
 
 void callContSave(int argc, PtrOrLiteral argv[]);
 void callContRestore(PtrOrLiteral argv[]);
@@ -60,7 +60,7 @@ do {						\
   derefStgCurVal();				\
   while (stgCurVal.argType == HEAPOBJ &&	\
 	 stgCurVal.op->objType == THUNK) {	\
-    Obj* cont = stgAllocCallCont2(&it_stgCallCont, 0);	\
+    Obj* cont = stgAllocCallCont(&it_stgCallCont, 0);	\
     strcpy(cont->ident, stgCurVal.op->ident);	\
     STGCALL1(stgCurVal.op->infoPtr->entryCode, stgCurVal); \
     stgPopCont();			        \
@@ -81,7 +81,7 @@ do {						\
 #define STGEVAL(e)					    \
 do {							    \
   stgCurVal = e;					    \
-  Obj* cont = stgAllocCallCont2(&it_stgCallCont, 0);	    \
+  Cont* cont = stgAllocCallCont(&it_stgCallCont, 0);	    \
   strcpy(cont->ident, stgCurVal.op->ident);		    \
   STGCALL1(getInfoPtr(stgCurVal.op)->entryCode, stgCurVal); \
   stgPopCont();						    \
@@ -111,7 +111,7 @@ do {							    \
 #define STGEVAL(e)				\
 do {						\
   stgCurVal = e;				\
-  Obj* cont = stgAllocCallCont2(&it_stgCallCont, 0);	\
+  Obj* cont = stgAllocCallCont(&it_stgCallCont, 0);	\
   strcpy(cont->ident, stgCurVal.op->ident);	\
   STGCALL1(getInfoPtr(stgCurVal.op)->entryCode, stgCurVal); \
   stgPopCont();			        \
@@ -135,7 +135,7 @@ do {						\
   stgCurVal = e;				\
   derefStgCurVal();				\
   if (getObjType(stgCurVal.op) == THUNK) {	        \
-    Obj* cont = stgAllocCallCont2(&it_stgCallCont, 0);	\
+    Obj* cont = stgAllocCallCont(&it_stgCallCont, 0);	\
     while (getObjType(stgCurVal.op) == THUNK) {	\
       strcpy(cont->ident, stgCurVal.op->ident);	\
       STGCALL1(getInfoPtr(stgCurVal.op)->entryCode, stgCurVal); \
@@ -159,7 +159,7 @@ do {            \
   stgCurVal = e;        \
   derefStgCurVal();       \
   if (getObjType(stgCurVal.op) == THUNK) {         \
-    Obj* cont = stgAllocCallCont2(&it_stgCallCont, 0);  \
+    Obj* cont = stgAllocCallCont(&it_stgCallCont, 0);  \
     while (getObjType(stgCurVal.op) == THUNK) {  \
       strcpy(cont->ident, stgCurVal.op->ident); \
       STGCALL1(getInfoPtr(stgCurVal.op)->entryCode, stgCurVal); \

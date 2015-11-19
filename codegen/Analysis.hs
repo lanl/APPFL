@@ -35,7 +35,7 @@ import Util (deleteAll)
 -- the heap, naive analysis would suggest the scrutinee does not either,
 -- but that would be wrong, due to the letexpr in g
 
--- KCMap: Knowncall map of Function Name to Fun InfoTab
+-- KCMap: Knowncall map of Function Name to ITFun InfoTab
 type KCMap = Map.Map Var InfoTab
 
 
@@ -183,7 +183,7 @@ instance SetHA (Expr InfoTab) where
       let
         eas' = map (setHA fmp) eas
         fnha = case knownCall emd of
-          Just it@Fun{arity} ->
+          Just it@ITFun{arity} ->
             if arity /= length eas -- (under|over)saturated call grows heap
             then False
             else
@@ -393,7 +393,7 @@ knownFunExprIT env e =
     ECase {ee, ealts = Alts{alts}} -> checkAlts env ee alts
 
     EFCall {emd, ev, eas} -> case Map.lookup ev env of
-                              Just i@Fun{arity} | length eas < arity -> Just i
+                              Just i@ITFun{arity} | length eas < arity -> Just i
                                                 | otherwise -> Nothing
                               _ -> Nothing
 

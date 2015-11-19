@@ -11,15 +11,14 @@
 
 typedef enum {          // superfluous, for sanity checking
   INT, 
-  DOUBLE,
-  BOOL,
+  LONG,
   FLOAT,
-  CHAR, 
+  DOUBLE,
   HEAPOBJ 
 } ArgType;
 
+// heap objects
 typedef enum {
-  // heap and stack objects
   OBJTYPE0BAD,
   FUN, 
   PAP, 
@@ -27,18 +26,33 @@ typedef enum {
   THUNK,
   BLACKHOLE,
   INDIRECT,
-  // stack objects
+} ObjType;
+const char *objTypeNames[INDIRECT+1];
+
+  // stack continuations--change the names for compiler help finding them
+typedef enum {
+  BADCONTTYPE0,
+  BADCONTTYPE1,
+  BADCONTTYPE2,
+  BADCONTTYPE3,
+  BADCONTTYPE4,
+  BADCONTTYPE5,
+  BADCONTTYPE6,
   UPDCONT, 
   CASECONT, 
   CALLCONT, 
   FUNCONT,        // for strict evaluation
-} ObjType;
-const char *objTypeNames[FUNCONT+1];
+} ContType;
+const char *contTypeNames[FUNCONT+1];
 
 struct _Obj;
-struct _InfoTab;
 typedef struct _Obj Obj;
+struct _InfoTab;
 typedef struct _InfoTab InfoTab;
+struct _Cont;
+typedef struct _Cont Cont;
+struct _CInfoTab;
+typedef struct _CInfoTab CInfoTab;
 
 //------ fake typedef fp (*fp)()
 // how to roll these into one?
@@ -54,10 +68,9 @@ typedef struct {
 #endif
   union {
     int64_t i;
-    double d;
+    int64_t l;
     float f;
-    bool b;
-    char c;
+    double d;
     Obj *op;
   };
 } PtrOrLiteral;
@@ -81,11 +94,23 @@ extern PtrOrLiteral stgCurVal;  // current/return value
 
 
 struct _Obj {
-  uintptr_t infoPtr;         // canonical location of infoPtr--first word
+  // uintptr_t infoPtr;         // canonical location of infoPtr--first word
+  InfoTab *infoPtr;         // canonical location of infoPtr--first word
 #if USE_OBJTYPE
   ObjType objType;          // to distinguish PAP, FUN, BLACKHOLE, INDIRECT
 #endif
   int _objSize;              // for debugging
+  char ident[32];           // temporary, just for tracing
+  PtrOrLiteral payload[];
+};
+
+struct _Cont {
+  //  uintptr_t cinfoPtr;         // canonical location of infoPtr--first word
+  CInfoTab *cinfoPtr;         // canonical location of infoPtr--first word
+#if USE_OBJTYPE
+  ContType contType;        // to distinguish PAP, FUN, BLACKHOLE, INDIRECT
+#endif
+  int _contSize;              // for debugging
   char ident[32];           // temporary, just for tracing
   PtrOrLiteral payload[];
 };
@@ -138,7 +163,6 @@ typedef struct {
 // InfoTab
 struct _InfoTab {
   char name[32];  // for debugging
-  //  int fvCount;    // lexically determined, should be in layout
   CmmFnPtr entryCode; 
   ObjType objType; // kind of object, tag for union
   LayoutInfo layoutInfo;
@@ -147,6 +171,16 @@ struct _InfoTab {
     PAPfields papFields;
     CONfields conFields;
     THUNKfields thunkFields;
+  };
+};
+
+// CInfoTab
+struct _CInfoTab {
+  char name[32];  // for debugging
+  CmmFnPtr entryCode; 
+  ContType contType; // kind of continuation, tag for union
+  LayoutInfo layoutInfo;
+  union {
     UPDCONTfields updcontFields;
     CASECONTfields casecontFields;
     CALLCONTfields callcontFields;
@@ -167,7 +201,9 @@ extern void showStgStack();
 extern void showStgVal(PtrOrLiteral);
 extern void checkStgHeap();
 extern void showIT(InfoTab *);
-extern int getObjSize(Obj *);
+extern void showCIT(CInfoTab *);
+extern int  getObjSize(Obj *);
+extern int  getContSize(Cont *);
 extern bool isSHO();
 extern bool isHeap(Obj *p);
 
@@ -196,12 +232,22 @@ typedef uintptr_t Bitmap64;
 #define BMSIZE(bm) ((bm>>58)&0x3F)
 #define BMMAP(bm) (bm & 0x03FFFFFFFFFFFFFFLL) 
 
-static inline InfoTab *getInfoPtr(Obj *p)  { return (InfoTab *)((p->infoPtr >> 3) << 3); }
-static inline uintptr_t setLSB2(uintptr_t ptr) { return ptr | 2; }
-static inline bool isLSB2set(uintptr_t ptr) { return (bool)(ptr & 2); }
+static inline InfoTab *getInfoPtr(Obj *p)  { 
+  return (InfoTab *)((((uintptr_t)(p->infoPtr)) >> 3) << 3); 
+}
+
+static inline CInfoTab *getCInfoPtr(Cont *p)  { return p->cinfoPtr; }
+
+static inline InfoTab *setLSB2(InfoTab *ptr) { 
+  return (InfoTab*)((uintptr_t)ptr | 2);
+}
+
+static inline bool isLSB2set(InfoTab *ptr) { return (bool)((uintptr_t)ptr & 2); }
 // for indirect
-static inline uintptr_t setLSB3(uintptr_t ptr) { return ptr | 4;}
-static inline bool isLSB3set(uintptr_t ptr) { return (bool)(ptr & 4); }
+static inline InfoTab *setLSB3(InfoTab *ptr) { 
+  return (InfoTab *)((uintptr_t)ptr | 4);
+}
+static inline bool isLSB3set(InfoTab *ptr) { return (bool)((uintptr_t)ptr & 4); }
 
 
 static inline ObjType getObjType(Obj *p) {
@@ -221,31 +267,23 @@ static inline ObjType getObjType(Obj *p) {
 #endif
 }
 
-/*
-static inline bool isObjType(Obj *p, ObjType type) {
+static inline ContType getContType(Cont *p) {
 #if USE_OBJTYPE
-  return (p->objType == type);
+  return p->contType;
 #else
-  InfoTab *infoPtr = getInfoPtr(p);
-  bool flag = isLSB2set(infoPtr);
-  bool otype = (inforPtr->objType == type);
-  if (type == BLACKHOLE || type == PAP) {
-    return otype && flag;
-  } else {
-    return otype && !flag;
-  }
+  CInfoTab *cinfoPtr = getCInfoPtr(p);
+  return cinfoPtr->contType;
 #endif
 }
-*/
 
 // allocate Obj on heap, returning pointer to new Obj
 extern Obj* stgNewHeapObj(InfoTab *itp);
 extern Obj* stgNewHeapPAP(InfoTab *itp, int pargc, int nargc);
 // allocate Obj on continuation stack, returning pointer to new Obj
-extern Obj *stgAllocCallCont2(InfoTab *it, int payloadSize);
-extern Obj *stgAllocCont(InfoTab *it);
+extern Cont *stgAllocCallCont(CInfoTab *it, int payloadSize);
+extern Cont *stgAllocCont(CInfoTab *it);
 // remove Obj from top of continuation stack, returning pointer to de-alloced Obj
-Obj *stgPopCont();
+Cont *stgPopCont();
 
 # define STGCALL0(f)				\
   CALL0_0(f)
@@ -293,7 +331,7 @@ Obj *stgPopCont();
 // return through continuation stack
 
 #define STGRETURN0()				\
-  STGJUMP0(getInfoPtr((Obj *)stgSP)->entryCode)
+  STGJUMP0(getCInfoPtr((Cont *)stgSP)->entryCode)
 
 
 // no explicit return value stack
