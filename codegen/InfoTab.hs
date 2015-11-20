@@ -540,7 +540,7 @@ cInfoTab it@(ITBlackhole {}) =  Just (
         ])            
 
 cInfoTab it@(ITAlts {}) =  Just (
-    cInfoTabStruct (name it)
+    cCInfoTabStruct (name it)
         [cStructMember StringTy "name" (name it)
         ,cStructMember PtrTy "entryCode" (entryCode it)
         ,cStructMember EnumTy "contType" "CASECONT"

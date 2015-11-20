@@ -10,6 +10,7 @@ module CAST (
   cEnum,
   cRegisterSHOs,
   cInfoTabStruct,
+  cCInfoTabStruct,
   cMain,
   cObjStruct,
   cStart,
@@ -79,8 +80,7 @@ instance InitStructMember String where
               EnumTy   -> CInitExpr (varE val) undefNode
               StringTy -> CInitExpr (stringE val) undefNode
               PtrTy -> CInitExpr (addrvarE val) undefNode
-              InfoPtrTy -> CInitExpr (CCast (CDecl [typeSpec "uintptr_t"]
-                           [] undefNode) (addrvarE ("it_" ++ val)) undefNode) undefNode
+              InfoPtrTy -> CInitExpr (addrvarE ("it_" ++ val)) undefNode
               -- empty/zero payload
               StructTy -> CInitList (if null val then [] else [([], CInitExpr (intE 0) undefNode)] ) undefNode
               _ -> error ("bad Type in cStructMember (String) " ++ show ty)
@@ -126,6 +126,9 @@ cObjStruct name = cStruct "Obj" ("sho_" ++ name) False
 
 cInfoTabStruct :: String -> [CInitializerMember NodeInfo] -> ExtDecl
 cInfoTabStruct name = cStruct "InfoTab" ("it_" ++ name) True
+
+cCInfoTabStruct :: String -> [CInitializerMember NodeInfo] -> ExtDecl
+cCInfoTabStruct name = cStruct "CInfoTab" ("it_" ++ name) True
 
 cStruct :: String -> String -> Bool -> [CInitializerMember NodeInfo] -> ExtDecl
 cStruct ty name align is =
@@ -203,9 +206,8 @@ cMain v =
 _ptrDecl :: String -> CDeclarator NodeInfo
 _ptrDecl name = CDeclr (Just (builtinIdent name)) [CPtrDeclr [] undefNode] Nothing [] undefNode
 
-_objPtrDecl name val = CBlockDecl (CDecl [typeSpec "Obj"] [(Just (_ptrDecl name)
+_contPtrDecl name val = CBlockDecl (CDecl [typeSpec "Cont"] [(Just (_ptrDecl name)
                         ,val, Nothing)] undefNode)
-
 
 assign:: CExpression NodeInfo -> CExpression NodeInfo -> CCompoundBlockItem NodeInfo
 assign lhs rhs = CBlockStmt (CExpr (Just (CAssign CAssignOp lhs rhs undefNode)) undefNode)
@@ -213,7 +215,7 @@ assign lhs rhs = CBlockStmt (CExpr (Just (CAssign CAssignOp lhs rhs undefNode)) 
 cStart :: ExtDecl
 cStart = let body = [cCall "_POPVALS0" []
                     ,cCall "registerSHOs" []
-                    ,_objPtrDecl "showResultCont" (Just (CInitExpr (cCallExpr "stgAllocCallCont2"
+                    ,_contPtrDecl "showResultCont" (Just (CInitExpr (cCallExpr "stgAllocCallCont"
                       [addrvarE "it_stgShowResultCont",intE 0]) undefNode))
 #if USE_ARGTYPE                      
                     ,assign (memberE "stgCurVal" "argType" False) (varE "HEAPOBJ")

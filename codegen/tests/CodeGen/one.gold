@@ -37,7 +37,7 @@ extern Obj sho_main;
 
 Obj sho_one =
 {
-  .infoPtr   = (uintptr_t)&it_one,
+  .infoPtr   = &it_one,
   .objType   = CON,
   .ident     = "one",
   .payload = {
@@ -47,7 +47,7 @@ Obj sho_one =
 
 Obj sho_main =
 {
-  .infoPtr   = (uintptr_t)&it_main,
+  .infoPtr   = &it_main,
   .objType   = THUNK,
   .ident     = "main",
   .payload = {0}
