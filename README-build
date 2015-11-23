@@ -1,0 +1,82 @@
+build notes:
+
+to build full compiler:
+
+$ make
+
+If you happen to get a cabal error saying to run configure
+(should only happen if you upgrade ghc/cabal) then:
+
+$ make config && make
+
+to run normal tests:
+
+$ make ctest
+
+to run all tests:
+(note this requires installation of tasty test framework 
+which is a bit of a pain. see codegen/tests/README)
+
+$ make test
+
+to just build runtime (and copy Preludes etc):
+
+$ make runtime
+
+to build/test in parallel:
+
+$ export BUILD_NTHREADS=4
+$ make clean && make && make ctest
+
+---------------------------------------
+Using the compiler from inside ghci:
+
+build runtime:
+
+$ make runtime
+
+start ghci: 
+
+$ cd codegen
+$ ghci
+Prelude> :l stgc
+...
+*Main>
+
+To build and run a stg file:
+
+*Main>  eval "../test/one.stg"
+
+To generate a.out (in codegen dir):
+
+*Main> build "../test/one.stg"
+
+To generate c file (in same location as stg file
+in this case ../test/one.stg.c)
+
+*Main> toc "../test/one.stg"
+
+This also works for .mhs files
+
+----------------------------------------
+Using the compiler from the command line:
+
+build the stgc binary (starting at top level):
+
+$ make
+
+$ ./build/bin/stgc test/one.stg -o one
+
+this will also generate test/one.stg.c
+
+compile a .stg.c file:
+
+$ gcc test/one.stg.c -o one -L build/lib -I build/include -lruntime -std=gnu99
+
+-----------------------------------------
+Runtime flags to binaries:
+
+-g         -- disable Garbage Collection
+-t <float> -- set Garbage Collection Threshold
+
+
