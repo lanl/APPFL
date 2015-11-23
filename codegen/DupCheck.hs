@@ -17,95 +17,107 @@ import AST
 import ADT
 import Data.List
 
+-- -----------------------------------BEGIN RECURSIVE TRAVERSAL------------------------------------------------------------------------
+-- Checks for duplicates in a variety of situations
 dupCheck :: ([TyCon], [Obj ()]) -> ([TyCon], [Obj ()])
-dupCheck = checkTopLevel . checkFunArguments 
+dupCheck (ts,os) = let odups = dupCheckObjs os
+                       tdups = dupCheckTyCons ts
+                   in case (odups ++ tdups) of 
+                      [] -> (ts,os)
+                      ys -> error ys 
 
---  ------------------------BEGIN TOP LEVEL FUNCTIONS---------------------------------------
--- checks top level functions for duplicate names
-checkTopLevel :: ([TyCon], [Obj ()]) -> ([TyCon], [Obj ()])
-checkTopLevel x | startGetDup (getList s) = x
-                | otherwise = error "something went wrong"
-                  where (f,s) = x
+-- Checks the list of TyCons
+dupCheckTyCons :: [TyCon] -> String
+dupCheckTyCons ts = []
 
--- gets a list of names of top level functions
-getList :: [Obj ()] -> [String]
-getList [] = []
-getList (x:xs) = case x of 
-                      FUN _ _ _ name -> name:(getList xs)
-                      PAP _ _ _ name -> name:(getList xs)
-                      CON _ _ _ name -> name:(getList xs)
-                      THUNK _ _ name -> name:(getList xs)
-                      BLACKHOLE _ name -> name:(getList xs)
+-- Checks the list of Objects
+dupCheckObjs :: [Obj ()] -> String
+dupCheckObjs os = dupCheckTopLevelObjects os ++ concatMap dupCheckObj os 
 
--- predicate to see if the list of names has no duplicates
-noDups :: [String] -> Bool
-noDups xs = length (nub xs) == length xs 
+-- checks OBJ
+dupCheckObj :: Obj () -> String
+dupCheckObj x = case x of 
+                  PAP{} -> []
+                  BLACKHOLE{} -> []
+                  CON{} -> []
+                  THUNK _ e _ -> dupCheckExpr e
+                  FUN _ vs e _ -> dupCheckVars vs ++ dupCheckExpr e
 
--- if there are duplicates in list of names, returns true. else starts making an error message
-startGetDup :: [String] -> Bool
-startGetDup xs | noDups xs = True
-               | otherwise = startError xs
+-- checks EXPR
+dupCheckExpr :: Expr () -> String
+dupCheckExpr e = case e of 
+                   EAtom{} -> []
+                   EFCall{} -> []
+                   EPrimop{} -> []
+                   ELet _ os e -> dupCheckObjs os ++ dupCheckExpr e 
+                   ECase _ ee ealts -> dupCheckExpr ee ++ dupCheckAlts ealts
 
--- starts the creation of an error message
-startError :: [String] -> Bool 
-startError xs = printDups (group (sort xs)) []
+-- checks ALTS
+dupCheckAlts :: Alts () -> String
+dupCheckAlts a = case a of 
+                   Alts _ alts _ -> dupCheckCons alts ++ concatMap dupCheckAlt alts
 
--- creates and concatenates error message
-printDups :: [[String]] -> String -> Bool 
-printDups [] ys = error ("you have duplicated -- " ++ ys)
-printDups (x:xs) ys | length x <= 1 = printDups xs ys
-                    | otherwise = printDups xs (ys ++ (head x) ++ " " ++ (show (length x)) ++ " times -- ") 
---  ------------------------END TOP LEVEL FUNCTIONS---------------------------------------
+-- Checks ALT
+dupCheckAlt :: Alt () -> String
+dupCheckAlt a = case a of 
+                  ACon _ _ avs ae -> dupCheckVars avs ++ dupCheckExpr ae
+                  ADef _ _ ae  -> dupCheckExpr ae
+-- -----------------------------------END RECURSIVE TRAVERSAL--------------------------------------------------------------------------
 
---  ------------------------BEGIN FUNCTION ARGUMENTS---------------------------------------
--- checks function arguments for duplicate names
-checkFunArguments :: ([TyCon], [Obj ()]) -> ([TyCon], [Obj ()])
-checkFunArguments x | checkFunArgList (objFunArgList s) = x
-                    | otherwise = error "something went wrong"
-                      where (f,s) = x
---         -----CONSTRUCTING LIST OF LISTS OF FUNCTION ARGUMENTS-----
--- checks names of function arguments from objects for duplicates
-objFunArgList :: [Obj ()] -> [[String]]
-objFunArgList [] = {-[]-} error "here2"
-objFunArgList (x:xs) = error "here1" {-case x of 
-                            FUN _ vs e _ -> {-vs:(exprFunArgList (e:[]))-} error "reached here"
-                            PAP _ _ as _ -> (exprFunArgList as)
-                            CON _ _ as _ -> exprFunArgList as
-                            THUNK _ e _ -> exprFunArgList (e:[])
-                            BLACKHOLE _ _ -> []-}
 
--- checks names of function arguments from expressions for duplicates  
-exprFunArgList :: [Expr ()] -> [[String]]
-exprFunArgList [] = []
-exprFunArgList (x:xs) = case x of 
-                             EAtom _ _ -> []
-                             EFCall _ _ eas -> exprFunArgList eas
-                             EPrimop _ _ eas -> exprFunArgList eas
-                             ELet _ edefs ee -> (objFunArgList edefs)++(exprFunArgList (ee:[]))
-                             ECase _ ee ealts -> (exprFunArgList (ee:[]))++(altsFunArgList (ealts:[]))  
+-- -----------------------------------BEGIN CHECKS-------------------------------------------------------------------------------------
 
--- checks names of function arguments from alts for duplicates
-altsFunArgList :: [Alts ()] -> [[String]]
-altsFunArgList [] = []
-altsFunArgList (x:xs) = case x of 
-                             Alts _ alts _ -> altFunArgList alts
+--               --------------Begin Object Check-----------
+-- checks objects at top level
+dupCheckTopLevelObjects :: [Obj ()] -> String
+dupCheckTopLevelObjects xs =  printFunNameDups (group (sort (getFunNameList xs))) []
 
--- checks names of function arguments from alt for duplicates
-altFunArgList :: [Alt ()] -> [[String]]
-altFunArgList [] = []
-altFunArgList (x:xs) = case x of 
-                             ACon _ _ _ ae -> exprFunArgList (ae:[]) 
-                             ADef _ _ ae -> exprFunArgList (ae:[])
---           -----END CONSTRUCTING LIST OF LISTS OF FUNCTION ARGUMENTS-----
---           -----CHECK LIST FOR DUPLICATE FUNCTION ARGUMENTS------
--- determines if the list of lists of function arguments contains duplicates
-checkFunArgList :: [[String]] -> Bool
-checkFunArgList xs = True
+-- gets a list of names of top level objects
+getFunNameList :: [Obj ()] -> [String]
+getFunNameList [] = []
+getFunNameList (x:xs) = case x of 
+                          FUN _ _ _ name -> name:(getFunNameList xs)
+                          PAP _ _ _ name -> name:(getFunNameList xs)
+                          CON _ _ _ name -> name:(getFunNameList xs)
+                          THUNK _ _ name -> name:(getFunNameList xs)
+                          BLACKHOLE _ name -> name:(getFunNameList xs)
 
--- checks the list of list for duplicate names
-checkEntireList :: [[String]] -> Bool
-checkEntireList [] = True
-checkEntireList (x:xs) = startGetDup x && checkEntireList xs
+-- creates and concatenates error message for top level object names
+printFunNameDups :: [[String]] -> String -> String 
+printFunNameDups [] ys = ys 
+printFunNameDups (x:xs) ys | length x <= 1 = printFunNameDups xs ys
+                          | otherwise = printFunNameDups xs (ys ++ " function name " ++ (head x) ++ " duplicated " ++ (show (length x)) ++ " times -- ") 
+--               --------------End Object Check-------------
 
---  ------------------------END FUNCTION ARGUMENTS---------------------------------------
+--               --------------Begin Variable Check---------
+-- checks for duplicates in list of variables     
+dupCheckVars :: [Var] -> String
+dupCheckVars xs = printDupVars (group (sort xs)) []
 
+-- prints duplicates in list of variables
+printDupVars :: [[Var]] -> String -> String
+printDupVars [] ys = ys 
+printDupVars (x:xs) ys | length x <= 1 = printDupVars xs ys
+                       | otherwise = printDupVars xs (ys ++ " function variable " ++  (head x) ++ " duplicated " ++ (show (length x)) ++ " times -- ")
+--               --------------End Variable Check-----------
+
+--               --------------Begin Constructor Check------
+-- checks for duplicats of cons in list of ALT
+dupCheckCons :: [Alt ()] -> String
+dupCheckCons xs =  printDupCons (group (sort (dupGetCons xs))) []
+
+-- gets list of Cons from list of ALT
+dupGetCons :: [Alt ()] -> [Con]
+dupGetCons [] = []
+dupGetCons (x:xs) = case x of 
+                      ACon _ ac _ _ -> ac:(dupGetCons xs)  
+                      ADef{} -> []
+
+-- prints duplicates in list of constructors
+printDupCons :: [[Con]] -> String -> String
+printDupCons [] ys = ys
+printDupCons (x:xs) ys | length x <= 1 = printDupCons xs ys
+                       | otherwise = printDupCons xs (ys ++ " constructor " ++ (head x) ++ " duplicated " ++ (show (length x)) ++ " times -- ")
+--               --------------End Constructor Check--------
+
+-- -----------------------------------END CHECKS --------------------------------------------------------------------------------------
