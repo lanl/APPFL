@@ -155,8 +155,8 @@ cgMain :: Bool -> String
 cgMain v = "\n" ++ (render $ pretty $ cMain v) ++ "\n"
 
 registerSHOs :: [Obj InfoTab] -> (String, String)
-registerSHOs objs = ("void registerSHOs();",
-                    render $ pretty $ cRegisterSHOs (map (\o -> (name . omd) o) objs))
+registerSHOs objs = let (p,f) = cRegisterSHOs (map (\o -> (name . omd) o) objs)
+                    in (render $ pretty p, render $ pretty f)
 
 #else
 
