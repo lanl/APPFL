@@ -2,34 +2,31 @@ module DupCheck (
  dupCheck
 ) where 
 
--- [-] Need to check for duplicates in
+-- [X] Need to check for duplicates in
 --  [X] Objects/expressions
 --   [X] top-level object names
 --   [X] object names in "let"
 --   [X] variables in individual case patterns
 --   [X] constructors across case alternatives
 --   [X] FUN formal parameters
---  [-] Datatype definitions
---   [-] tyCons
---   [-] constructors (globally, not just within a tyCon)
+--  [X] Datatype definitions
+--   [X] tyCons
+--   [X] constructors (globally, not just within a tyCon)
 
 import AST
 import ADT
 import Data.List
 
--- -----------------------------------BEGIN RECURSIVE TRAVERSAL------------------------------------------------------------
--- Checks for duplicates in a variety of situations
+-- -----------------------------------BEGIN RECURSIVE TRAVERSAL-----------------------------------------------------------
+-- Checks for duplicates in list of TyCons and list of Objects
 dupCheck :: ([TyCon], [Obj ()]) -> ([TyCon], [Obj ()])
-dupCheck (ts,os) = let odups = dupCheckObjs os ("top":[])
-                       tdups = dupCheckTyCons ts
+dupCheck (ts,os) = let odups = dupCheckObjs os ("toplevel":[])
+                       tdups = dupCheckTyCons ts ++ dupCheckDataCons ts
                    in case (odups ++ tdups) of 
                       [] -> (ts,os)
                       ys -> error ys 
 
--- Checks the list of TyCons
-dupCheckTyCons :: [TyCon] -> String
-dupCheckTyCons ts = []
-
+--               --------------Begin OBJ/EXPR/ALTS/ALT Recursive Traversal------------
 -- Checks the list of Objects
 dupCheckObjs :: [Obj ()] -> [String] -> String
 dupCheckObjs os ys = dupCheckTopLevelObjects os ys ++ concatMapGen dupCheckObj os ys 
@@ -61,8 +58,11 @@ dupCheckAlts a ys = case a of
 dupCheckAlt :: Alt () -> [String] -> String
 dupCheckAlt a ys = case a of 
                      ACon _ ac avs ae -> dupCheckVars avs (ys ++ (ac:[])) ++ dupCheckExpr ae (ys ++ (ac:[]))
-                     ADef _ _ ae  -> dupCheckExpr ae (ys ++ ("Default":[]))
--- -----------------------------------END RECURSIVE TRAVERSAL--------------------------------------------------------------
+                     ADef _ _ ae  -> dupCheckExpr ae (ys ++ ("def":[]))
+--               --------------End OBJ/EXPR/ALTS/ALT Recursive Traversal--------------
+
+-- -----------------------------------END RECURSIVE TRAVERSAL-------------------------------------------------------------
+
 
 
 -- -----------------------------------BEGIN CHECKS-------------------------------------------------------------------------
@@ -76,7 +76,7 @@ dupCheckTopLevelObjects xs ys = printFunNameDups (group (sort (getFunNameList xs
 getFunNameList :: [Obj ()] -> [String]
 getFunNameList [] = []
 getFunNameList (x:xs) = case x of 
-                          FUN _ _ _ name -> name:(getFunNameList xs)
+                          FUN _ _ _ name -> name:(getFunNameList xs) -- oname x:(.....)
                           PAP _ _ _ name -> name:(getFunNameList xs)
                           CON _ _ _ name -> name:(getFunNameList xs)
                           THUNK _ _ name -> name:(getFunNameList xs)
@@ -97,8 +97,8 @@ dupCheckVars xs ys = printDupVars (group (sort xs)) [] ys
 -- prints duplicates in list of variables
 printDupVars :: [[Var]] -> String -> [String] -> String
 printDupVars [] ys zs = ys 
-printDupVars (x:xs) ys zs| length x <= 1 = printDupVars xs ys
-                       zs| otherwise = printDupVars xs (ys ++ " variable " ++  (head x) ++ " duplicated " ++ (show (length x)) ++ " times " ++ "in location: " ++ (locationToString zs) ++ " -- ") zs
+printDupVars (x:xs) ys zs | length x <= 1 = printDupVars xs ys zs
+                          | otherwise = printDupVars xs (ys ++ " variable " ++  (head x) ++ " duplicated " ++ (show (length x)) ++ " times " ++ "in location: " ++ (locationToString zs) ++ " -- ") zs
 --               --------------End Variable Check-----------
 
 --               --------------Begin Constructor Check------
@@ -119,6 +119,48 @@ printDupCons [] ys zs = ys
 printDupCons (x:xs) ys zs | length x <= 1 = printDupCons xs ys zs
                           | otherwise = printDupCons xs (ys ++ " constructor " ++ (head x) ++ " duplicated " ++ (show (length x)) ++ " times " ++ "in location: " ++ (locationToString zs) ++ " -- ") zs
 --               --------------End Constructor Check--------
+
+--               --------------Begin TyCon Check------------
+-- checks for duplicates of Cons in list of TyCons
+dupCheckTyCons :: [TyCon] -> String
+dupCheckTyCons ts = printDupTyCons (group (sort (dupGetTyCons ts))) [] 
+
+-- get list of Cons from list of TyCons 
+dupGetTyCons :: [TyCon] -> [Con]
+dupGetTyCons [] = []
+dupGetTyCons (x:xs) = case x of 
+                        TyCon _ con _ _  -> con:(dupGetTyCons xs)
+
+-- prints duplicates in list of Cons from TyCons
+printDupTyCons :: [[Con]] -> String ->  String
+printDupTyCons [] ys = ys
+printDupTyCons (x:xs) ys | length x <= 1 = printDupTyCons xs ys 
+                         | otherwise = printDupTyCons xs (ys ++ " data type " ++ (head x) ++ " duplicated " ++ (show (length x)) ++ " times " ++ " -- ") 
+--               --------------End TyCon Check--------------
+
+--               --------------Begin DataCon Check----------
+-- checks for duplicates of DataCons in list of TyCons
+dupCheckDataCons :: [TyCon] -> String
+dupCheckDataCons ts = printDupDataCons (group (sort (dupGetDataCons ts))) []
+
+-- get List of DataCons from list of TyCons
+dupGetDataCons :: [TyCon] -> [Con]
+dupGetDataCons [] = []
+dupGetDataCons (x:xs) = case x of 
+                          TyCon _ _ _ cons -> (dupGetDataConsCon cons)++(dupGetDataCons xs)
+
+-- getList of Cons from list of DataCons
+dupGetDataConsCon :: [DataCon] -> [Con]
+dupGetDataConsCon [] = []
+dupGetDataConsCon (x:xs) = case x of 
+                             DataCon con _ -> con:(dupGetDataConsCon xs)
+
+-- prints duplicates in list of DataCons from TyCons
+printDupDataCons :: [[Con]] -> String -> String
+printDupDataCons [] ys = ys 
+printDupDataCons (x:xs) ys | length x <= 1 = printDupDataCons xs ys 
+                           | otherwise = printDupDataCons xs (ys ++ " data constructor " ++ (head x) ++ " duplicated " ++ (show (length x)) ++ " times " ++ " -- ") 
+--               --------------End DataCon Check------------
 
 --               --------------Miscellaneous----------------
 -- identical to concatMap function, except with another parameter for location
