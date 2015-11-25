@@ -1,0 +1,6 @@
+f1 = FUN(b -> case b of {
+      	       False -> true;
+	       List a -> true;
+	       True -> false;
+	       x -> let {a = THUNK(b);
+	       	    	 a = THUNK(b)} in a});

@@ -1,0 +1,2 @@
+data Mybool = True | False;
+data Mybool = Zero | Else;

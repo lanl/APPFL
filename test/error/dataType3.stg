@@ -1,0 +1,8 @@
+data Bool1 = True | False;
+data Bool1 = Nil | False;
+data Bool1 = True | Nothing;
+data Bool2 = Int;
+data Bool3 = Int;
+data Bool2 = This;
+data Bool3 = That;
+data Bool1 = None;

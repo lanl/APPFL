@@ -1,0 +1,2 @@
+data Bool1 = True | False;
+data Bool1 = Nil | Con;

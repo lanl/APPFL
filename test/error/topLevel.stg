@@ -1,0 +1,2 @@
+badArgs = FUN(x y -> y);
+badArgs = FUN(x y -> y);

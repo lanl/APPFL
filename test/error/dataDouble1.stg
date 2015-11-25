@@ -1,0 +1,8 @@
+not1 = FUN(b -> case b of {
+      	       False -> true;
+	       List a -> true;
+	       True  -> false;
+	       x -> let {a = THUNK(b)} in case a of {
+	       	    	     	       	  False -> true;
+					  False -> true;
+					  y -> true}});

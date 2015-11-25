@@ -1,3 +1,5 @@
+{-# LANGUAGE NamedFieldPuns    #-}
+
 module DupCheck (
  dupCheck
 ) where 
@@ -37,8 +39,8 @@ dupCheckObj x ys = case x of
                      PAP{} -> []
                      BLACKHOLE{} -> []
                      CON{} -> []
-                     THUNK{} -> dupCheckExpr (e x) (ys ++ ((oname x):[]))
-                     FUN{} -> dupCheckVars (vs x) (ys ++ ((oname x):[])) ++ dupCheckExpr (e x) (ys ++ ((oname x):[]))
+                     THUNK{e,oname} -> dupCheckExpr e (ys ++ (oname:[]))
+                     FUN{vs,e,oname} -> dupCheckVars vs (ys ++ (oname :[])) ++ dupCheckExpr e (ys ++ (oname:[]))
 
 -- checks EXPR
 dupCheckExpr :: Expr () -> [String] -> String
@@ -46,18 +48,19 @@ dupCheckExpr expr ys = case expr of
                          EAtom{} -> []
                          EFCall{} -> []
                          EPrimop{} -> []
-                         ELet{} -> dupCheckObjs (edefs expr) (ys ++ ("let":[])) ++ dupCheckExpr (ee expr) (ys ++ ("let":[]))
-                         ECase{} -> dupCheckExpr (ee expr) (ys ++ ("case":[])) ++ dupCheckAlts (ealts expr) (ys ++ ("case":[]))
+                         ELet{edefs,ee} -> dupCheckObjs edefs (ys ++ ("let":[])) ++ dupCheckExpr ee (ys ++ ("let":[]))
+                         ECase{ee,ealts} -> dupCheckExpr ee (ys ++ ("case":[])) ++ dupCheckAlts ealts (ys ++ ("case":[]))
 
 -- checks ALTS
 dupCheckAlts :: Alts () -> [String] -> String
-dupCheckAlts a ys = dupCheckCons (alts a) (ys ++ ((aname a):[])) ++ concatMapGen dupCheckAlt (alts a) (ys ++ ((aname a):[]))
+dupCheckAlts a ys = case a of 
+                      Alts{alts,aname} -> dupCheckCons alts (ys ++ (aname:[])) ++ concatMapGen dupCheckAlt alts (ys ++ (aname:[]))
 
 -- Checks ALT
 dupCheckAlt :: Alt () -> [String] -> String
 dupCheckAlt a ys = case a of 
-                     ACon{} -> dupCheckVars (avs a) (ys ++ ((ac a):[])) ++ dupCheckExpr (ae a) (ys ++ ((ac a):[]))
-                     ADef{} -> dupCheckExpr (ae a) (ys ++ ("def":[]))
+                     ACon{avs,ae,ac} -> dupCheckVars avs (ys ++ (ac:[])) ++ dupCheckExpr ae (ys ++ (ac:[]))
+                     ADef{ae} -> dupCheckExpr ae (ys ++ ("def":[]))
 --               --------------End OBJ/EXPR/ALTS/ALT Recursive Traversal--------------
 
 -- -----------------------------------END RECURSIVE TRAVERSAL-------------------------------------------------------------
@@ -99,7 +102,7 @@ dupCheckCons xs ys =  printDupCons (group (sort (dupGetCons xs))) [] ys
 dupGetCons :: [Alt ()] -> [Con]
 dupGetCons [] = []
 dupGetCons (x:xs) = case x of 
-                      ACon{} -> (ac x):(dupGetCons xs)  
+                      ACon{ac} -> ac:(dupGetCons xs)  
                       ADef{} -> []
 
 -- prints duplicates in list of constructors

@@ -1,0 +1,2 @@
+badFunc = FUN(x -> let {y = THUNK(x);
+	  	   	y = THUNK(x)} in y);
