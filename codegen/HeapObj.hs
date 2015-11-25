@@ -74,10 +74,10 @@ showSHOs objs =
 
 showSHO :: Obj InfoTab -> (String, String)
 showSHO o = 
-   let n = "sho_" ++ (name . omd) o
-    in ("extern Obj " ++ n ++ ";\n", render $ pretty $ cSHO o)
+   let (proto, sho) = cSHO o
+    in (render $ pretty proto, render $ pretty sho)
 
-cSHO :: Obj InfoTab -> ExtDecl                  
+cSHO :: Obj InfoTab -> (ExtDecl, ExtDecl)                 
 cSHO o =
    let it = omd o
        n = name it

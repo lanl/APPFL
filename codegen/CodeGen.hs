@@ -114,6 +114,10 @@ cgUBa _ at _ = error $ "CodeGen.cgUBa: not expecting Atom - " ++ show at
 cgv env v = getEnvRef v env -- ++ "/* " ++ v ++ " */"
 
 cga :: Env -> Atom -> String
+cga env (Var v) = cgv env v
+#if USE_CAST
+cga _ a = render $ pretty $ cPoLExpr a
+#else
 #if USE_ARGTYPE 
 cga env (LitI i) = "((PtrOrLiteral){.argType = INT,    .i = " ++ show i ++ " })"
 cga env (LitL l) = "((PtrOrLiteral){.argType = LONG,   .l = " ++ show l ++ " })"
@@ -127,7 +131,8 @@ cga env (LitF f) = "((PtrOrLiteral){.f = " ++ show f ++ " })"
 cga env (LitD d) = "((PtrOrLiteral){.d = " ++ show d ++ " })"
 cga env (LitC c) = "((PtrOrLiteral){.i = con_" ++ c ++ " })"
 #endif
-cga env (Var v) = cgv env v
+#endif
+
 -- cga _ at = error $ "CodeGen.cga: not expecting Atom - " ++ show at 
 
 -- CG in the state monad ***************************************************
@@ -155,8 +160,8 @@ cgMain :: Bool -> String
 cgMain v = "\n" ++ (render $ pretty $ cMain v) ++ "\n"
 
 registerSHOs :: [Obj InfoTab] -> (String, String)
-registerSHOs objs = ("void registerSHOs();",
-                    render $ pretty $ cRegisterSHOs (map (\o -> (name . omd) o) objs))
+registerSHOs objs = let (p,f) = cRegisterSHOs (map (\o -> (name . omd) o) objs)
+                    in (render $ pretty p, render $ pretty f)
 
 #else
 

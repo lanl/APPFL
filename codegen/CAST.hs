@@ -15,6 +15,7 @@ module CAST (
   cObjStruct,
   cStart,
   cStructMember,
+  cPoLExpr,
 ) where
 
 import           Data.List.Split
@@ -44,7 +45,7 @@ type ExtDecl = CExternalDeclaration NodeInfo
 type InitializerMember = CInitializerMember NodeInfo
 
 varE :: String -> CExpression NodeInfo
-varE val = (CVar (builtinIdent val) undefNode)
+varE val = CVar (builtinIdent val) undefNode
 
 addrvarE :: String -> CExpression NodeInfo
 addrvarE val = CUnary CAdrOp (varE val) undefNode
@@ -63,6 +64,11 @@ memberE x y arrow = CMember (varE x) (builtinIdent y) arrow undefNode
 
 typeSpec :: String -> CDeclarationSpecifier NodeInfo
 typeSpec name = CTypeSpec (CTypeDef (builtinIdent name) undefNode)
+
+funProto :: CDeclarationSpecifier NodeInfo -> String -> ExtDecl
+funProto declspec name =
+  CDeclExt (CDecl [declspec] [(Just (CDeclr (Just (builtinIdent name)) 
+  [CFunDeclr (Right ([],False)) [] undefNode] Nothing [] undefNode),Nothing,Nothing)] undefNode)
 
 -- init a Struct Member w/ an Expr
 cStructMemberE :: [String] -> CInitializer NodeInfo
@@ -121,8 +127,14 @@ instance InitStructMember [[CInitializerMember NodeInfo]] where
               _ -> error "bad Type in cStructMember (Struct)"
     in cStructMemberE  (splitOn "." name) e
 
-cObjStruct :: String -> [CInitializerMember NodeInfo] -> ExtDecl
-cObjStruct name = cStruct "Obj" ("sho_" ++ name) False
+cObjStruct :: String -> [CInitializerMember NodeInfo] -> (ExtDecl, ExtDecl)
+cObjStruct name xs = 
+  let n = ("sho_" ++ name)
+      proto = CDeclExt (CDecl [CStorageSpec (CExtern undefNode),
+                 CTypeSpec (CTypeDef (builtinIdent "Obj") undefNode)] 
+                 [(Just (CDeclr (Just (builtinIdent n)) [] Nothing [] 
+                 undefNode),Nothing,Nothing)] undefNode)
+  in (proto, cStruct "Obj" n False xs)
 
 cInfoTabStruct :: String -> [CInitializerMember NodeInfo] -> ExtDecl
 cInfoTabStruct name = cStruct "InfoTab" ("it_" ++ name) True
@@ -132,7 +144,7 @@ cCInfoTabStruct name = cStruct "CInfoTab" ("it_" ++ name) True
 
 cStruct :: String -> String -> Bool -> [CInitializerMember NodeInfo] -> ExtDecl
 cStruct ty name align is =
-  let t = [CTypeSpec (CTypeDef (builtinIdent ty) undefNode)]
+  let t = [typeSpec ty]
       a = [CAttr (builtinIdent "aligned") [intE 8]
            undefNode | align]
       d = CDeclr (Just (builtinIdent name)) [] Nothing a undefNode
@@ -163,19 +175,20 @@ _cRegSHOExpr name =  CBlockStmt (CExpr
 
 emptyFunDeclr = [CFunDeclr (Right ([],False)) [] undefNode]
 
-cRegisterSHOs :: [String] -> ExtDecl
-cRegisterSHOs names = cFun VoidTy "" "registerSHOs"
-                      emptyFunDeclr
-                      (map _cRegSHOExpr names)
+cRegisterSHOs :: [String] -> (ExtDecl, ExtDecl)
+cRegisterSHOs names = let name = "registerSHOs"
+                      in (funProto (CTypeSpec (CVoidType undefNode)) name,
+                          cFun VoidTy "" name emptyFunDeclr
+                          (map _cRegSHOExpr names))                         
 
 
 cCallExpr :: String -> [CExpression NodeInfo] -> CExpression NodeInfo
 cCallExpr name args = CCall (CVar (builtinIdent name) undefNode) args undefNode
 
 
-
 cCall:: String -> [CExpression NodeInfo] -> CCompoundBlockItem NodeInfo                      
 cCall name args = CBlockStmt (CExpr (Just (cCallExpr name args )) undefNode) 
+
 
 cCallVars :: String -> [String] -> CCompoundBlockItem NodeInfo
 cCallVars name args = let cvars = map (\a -> CVar (builtinIdent a) undefNode) args
@@ -226,6 +239,42 @@ cStart = let body = [cCall "_POPVALS0" []
                        (builtinIdent "entryCode") True undefNode, varE "stgCurVal"]
                     ]
          in cFun UserTy "FnPtr" "start" emptyFunDeclr body     
+
+
+-- PointerOrLiteral members
+_polMembers(LitI i) = [
+#if USE_ARGTYPE 
+                       cStructMember EnumTy "argType" "INT",
+#endif
+                       cStructMember IntTy "i" (show i)]
+                       
+_polMembers(LitL l) = [
+#if USE_ARGTYPE 
+                       cStructMember EnumTy "argType" "LONG",
+#endif
+                       cStructMember IntTy "l" (show l)]
+                       
+_polMembers (LitF f) = [
+#if USE_ARGTYPE 
+                       cStructMember EnumTy "argType" "FLOAT",
+#endif
+                       cStructMember FloatTy "f" (show f)]                    
+                              
+_polMembers (LitD d) = [
+#if USE_ARGTYPE 
+                       cStructMember EnumTy "argType" "DOUBLE",
+#endif
+                       cStructMember DoubleTy "d" (show d)]     
+
+_polMembers(LitC c) = [
+#if USE_ARGTYPE 
+                       cStructMember EnumTy "argType" "INT",
+#endif
+                       cStructMember IntTy "i" ("con_" ++ show c)]                       
+
+cPoLExpr a =  CCompoundLit (CDecl [typeSpec "PtrOrLiteral"] [] undefNode)
+              (_polMembers a) undefNode
+
 
 -- examples
 
