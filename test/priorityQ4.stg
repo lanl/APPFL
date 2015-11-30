@@ -1,0 +1,25 @@
+max = FUN(xs -> case xs of {
+      	     	     Cons h1 t1 -> case h1 of {
+		     	     	   	TP2 a b -> a}});
+
+delMax = FUN(xs -> case xs of {
+       	 	   	Nil -> nil;
+       	 	   	Cons h1 t1 -> t1});
+
+insert = FUN(xs k -> let {q = CON(Cons k xs)} in q);
+       	 	       
+eqTP2 = FUN(x y -> case x of {
+      	      	TP2 a1 b1 -> case y of {
+		    TP2 a2 b2 -> case eqInt a1 a2 of {
+		    	False -> false;
+			True -> case eqInt b1 b2 of {
+			     False -> false; 
+			     True -> true}}}});
+
+--Test 
+j0 = CON(TP2 one two);
+j1 = CON(TP2 two one);
+
+output = CON(TP2 two one);
+result = CON(TP2 two one);
+main = THUNK(eqTP2 result output);
