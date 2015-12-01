@@ -1,0 +1,62 @@
+data BTree a = Leaf a | B (BTree a) a (BTree a);
+
+--eqBTree :: BTree -> BTree -> Bool
+eqBTree = FUN(x y -> case x of {
+	  	     Leaf a1 -> case y of {
+		    	 Leaf a2 -> case eqInt a1 a2 of {
+			      True -> true;
+			      False -> false};
+			 B b3 a2 b4 -> false};
+	             B b1 a1 b2 -> case y of {
+		       	 Leaf a2 -> false;
+			 B b3 a2 b4 -> let {q1 = THUNK(eqBTree b1 b3);
+			       	     	  q2 = THUNK(eqBTree b2 b4);
+					  q3 = THUNK(and q1 q2)} in q3}});
+
+--and :: Bool -> Bool -> Bool
+and = FUN(x y -> case x of {
+      	      	      True -> case y of {
+		      	      	   True -> true;
+				   False -> false};
+	              False -> case y of {
+		      	       False -> false;
+			       True -> false}});
+			  
+--max :: Int -> Int -> Int
+max = FUN(x y -> case intLE x y of {
+      	      	 True -> y;
+		 False -> x}); 	
+
+--tHeight :: BTree -> Int -> Int 
+tHeight = FUN(x h -> case x of {
+       	       	    	 Leaf a1 -> h;
+       	       	    	 B b1 a2 b2 -> let {r1 = THUNK(plusInt one h);
+			      	      	   r2 = THUNK(tHeight b1 r1);
+					   r3 = THUNK(tHeight b2 r1);
+					   r4 = THUNK(max r2 r3)} in r4});
+
+--sinkLeft :: BTree -> BTree 
+sinkLeft = FUN(x -> case x of {
+	   	    Leaf a1 -> x;
+		    B b1 a2 b2 -> case b1 of {
+		      	       	  Leaf a3 -> let {q1 = CON(Leaf a2);
+				       	     	  q2 = CON(B q1 a3 b2)} in q2;
+				  B b3 a4 b4 -> let {q3 = CON(B b3 a2 b4);
+				       	     	     q4 = CON(B q3 a4 b2)} in q4}});
+
+--findHeight :: BTree -> Int 
+findHeight = FUN(x -> tHeight x zero); 
+
+--Test
+l1 = CON(Leaf one);
+l2 = CON(Leaf two);
+q1 = CON(B l1 two l2);
+
+l3 = CON(Leaf two);
+l4 = CON(Leaf two);
+q2 = CON(B l3 one l4);
+
+output = THUNK(sinkLeft q1);
+result = THUNK(q2);
+main = THUNK(eqBTree output result);
+
