@@ -9,15 +9,6 @@
 
 extern void stgThunk(PtrOrLiteral self);
 
-// FnPtr stgCallCont();
-extern CInfoTab it_stgCallCont;
-
-// FnPtr stgUpdateCont();
-extern CInfoTab it_stgUpdateCont;
-
-// FnPtr fun_stgShowResultCont();
-extern CInfoTab it_stgShowResultCont;
-
 void callContSave(int argc, PtrOrLiteral argv[]);
 void callContRestore(PtrOrLiteral argv[]);
 

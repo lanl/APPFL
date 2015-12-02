@@ -180,22 +180,6 @@ CInfoTab it_stgShowResultCont __attribute__((aligned(8))) =
     .layoutInfo.unboxedCount = -1,  // shouldn't be using this
   };
 
-DEFUN0(stgCallCont) {
-  // stgPopCont();  user must do this
-  fprintf(stderr,"stgCallCont returning\n");
-  RETURN0();  // fall back to the cmm trampoline
-  ENDFUN;
-}
-
-CInfoTab it_stgCallCont __attribute__((aligned(8))) =
-  { .name = "stgCallCont",
-    //    .fvCount = 0,
-    .entryCode = &stgCallCont,
-    .contType = CALLCONT,
-    .layoutInfo.boxedCount = -1,  // shouldn't be using this
-    .layoutInfo.unboxedCount = -1,  // shouldn't be using this
-  };
-
 void stgThunk(PtrOrLiteral self) {
   assert(isBoxed(self) && "stgThunk:  not HEAPOBJ\n");
   Cont *contp = stgAllocCont(&it_stgUpdateCont);

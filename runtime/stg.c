@@ -49,6 +49,7 @@ const char *contTypeNames[] = {
   "BADCONTTYPE6",
   "UPDCONT", 
   "CASECONT", 
+  "STACKCONT",
   "CALLCONT", 
   "FUNCONT"
 };
@@ -66,9 +67,8 @@ Cont *stgAllocCont(CInfoTab *citp) {
   Cont *contp = (Cont *)stgSP;
   contp->cinfoPtr = citp;
   contp->_contSize = contSize;
-#if USE_OBJTYPE
+  contp->entryCode = citp->entryCode;
   contp->contType = citp->contType;
-#endif
   strcpy(contp->ident, citp->name);  // may be overwritten
   return contp;
 }
@@ -87,9 +87,8 @@ Cont *stgAllocCallCont(CInfoTab *citp, int argc) {
   Cont *contp = (Cont *)stgSP;
   contp->cinfoPtr = citp;
   contp->_contSize = contSize;
-#if USE_OBJTYPE
-  contp->contType = citp->contType;
-#endif
+  contp->entryCode = citp->entryCode;
+  contp->contType = CALLCONT;
 #if USE_ARGTYPE
   contp->payload[0] = (PtrOrLiteral) {.argType = INT, .i = argc};
 #else
@@ -200,6 +199,22 @@ int getObjSize(Obj *o) {
   return objSize;
 }
 
+DEFUN0(stgCallCont) {
+  // stgPopCont();  user must do this
+  fprintf(stderr,"stgCallCont returning\n");
+  RETURN0();  // fall back to the cmm trampoline
+  ENDFUN;
+}
+
+CInfoTab it_stgCallCont __attribute__((aligned(8))) =
+  { .name = "stgCallCont",
+    //    .fvCount = 0,
+    .entryCode = &stgCallCont,
+    .contType = CALLCONT,
+    .layoutInfo.boxedCount = -1,  // shouldn't be using this
+    .layoutInfo.unboxedCount = -1,  // shouldn't be using this
+  };
+
 int getContSize(Cont *o) {
   size_t contSize;
   ContType type = getContType(o);
@@ -213,6 +228,8 @@ int getContSize(Cont *o) {
   assert(contSize == o->_contSize && "bad contSize");
   return contSize;
 }
+
+
 
 void showStgObjPretty(Obj *p);
 void showStgObjDebug(Obj *p);
