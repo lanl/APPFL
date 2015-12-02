@@ -46,8 +46,6 @@ typedef enum {
   THUNK,
   BLACKHOLE,
   INDIRECT,
-  // stack objects
-  ...
 } ObjType;
 
 In general it must be possible to determine the size of a heap object
@@ -138,7 +136,8 @@ infoPtr->objType = CON
 infoPtr->layoutInfo.boxedCount is number of boxed ARGUMENTS
 infoPtr->layoutInfo.unboxedCount is number of unboxed ARGUMENTS
 
-infoPtr->payloadSize = infoPtr->layoutInfo.boxedCount + infoPtr->layoutInfo.unboxedCount
+infoPtr->payloadSize = infoPtr->layoutInfo.boxedCount + 
+                       infoPtr->layoutInfo.unboxedCount
 
 
 THUNK
@@ -219,16 +218,13 @@ void initPredefs() {
 Continuation Stack Objects
 
 typedef enum {
-  // heap objects
-  ...
-  // stack objects
   UPDCONT, 
   CASECONT, 
   CALLCONT, 
   FUNCONT        // for strict evaluation
   //
   ...
-} ObjType;
+} ContType;
 
 
 Continuation stack objects are manipulated in the following places.
@@ -242,12 +238,32 @@ CASECONT - codegen/Codegen.hs, cge _ ECase
 CALLCONT - runtime/ stg.h, stg.c, stgutils.h, stgutils.c, gc.c
            codegen/ CodeGen.hs
 
+           CALLCONT current use assumes that the call will return
+	   so it is used to store only boxed values
+
+STACKCONT  The intent here is to have function arguments passedand referenced 
+           through this structure so that the GC can see them.
+           - should this subsume CALLCONT?
+           - does it differ substantively from CASECONT?  While CASECONT
+             contains the address of the Alts, STACKCONT could contain the
+	     address of a fixed "pop-me" routine that then jumps through
+             the next continuation on the stack.
+
 FUNCONT  - <none yet>
 
 The layout of continuation stack objects is as follows.
 
 TODO:  objType field will go away, should use a pair of macros
   SETOBJTYPE and GETOBJTYPE
+
+STACKCONT
+                               | payload[0]
+-----------------------------------------------------------------------------
+| infoPtr | objType |          | ptr to object to update                    |
+-----------------------------------------------------------------------------
+
+objType = UPDCONT
+payload[0] is ptr to object to update, i.e. is a root
 
 UPDCONT
                                | payload[0]

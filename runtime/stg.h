@@ -7,6 +7,33 @@
 #include <stdint.h>
 #include "options.h"
 
+//------ fake typedef fp (*fp)()
+// how to roll these into one?
+// seems like the only way to get a recursive type is to use a struct
+typedef void (*vvfp)();
+typedef vvfp (*FnPtr)();
+typedef FnPtr (*CmmFnPtr)();
+
+struct _Obj;
+typedef struct _Obj Obj;
+struct _InfoTab;
+typedef struct _InfoTab InfoTab;
+struct _Cont;
+typedef struct _Cont Cont;
+struct _CInfoTab;
+typedef struct _CInfoTab CInfoTab;
+
+FnPtr stgCallCont();
+extern CInfoTab it_stgCallCont;
+
+FnPtr stgUpdateCont();
+extern CInfoTab it_stgUpdateCont;
+
+FnPtr fun_stgShowResultCont();
+extern CInfoTab it_stgShowResultCont;
+
+typedef uintptr_t Bitmap64;
+
 //------ stack and heap objects
 
 typedef enum {          // superfluous, for sanity checking
@@ -40,26 +67,12 @@ typedef enum {
   BADCONTTYPE6,
   UPDCONT, 
   CASECONT, 
-  CALLCONT, 
+  CALLCONT,
+  STACKCONT,
   FUNCONT,        // for strict evaluation
+  PHONYENDCONT
 } ContType;
-const char *contTypeNames[FUNCONT+1];
-
-struct _Obj;
-typedef struct _Obj Obj;
-struct _InfoTab;
-typedef struct _InfoTab InfoTab;
-struct _Cont;
-typedef struct _Cont Cont;
-struct _CInfoTab;
-typedef struct _CInfoTab CInfoTab;
-
-//------ fake typedef fp (*fp)()
-// how to roll these into one?
-// seems like the only way to get a recursive type is to use a struct
-typedef void (*vvfp)();
-typedef vvfp (*FnPtr)();
-typedef FnPtr (*CmmFnPtr)();
+const char *contTypeNames[PHONYENDCONT];
 
 // PtrOrLiteral -- literal value or pointer to heap object 
 typedef struct {
@@ -88,13 +101,7 @@ extern PtrOrLiteral stgCurVal;  // current/return value
   payload -- see README
 */
 
-// stack or heap object
-// in a proper implementation there will be no such struct declaration--
-// they'll be variably-sized and self-describing
-
-
 struct _Obj {
-  // uintptr_t infoPtr;         // canonical location of infoPtr--first word
   InfoTab *infoPtr;         // canonical location of infoPtr--first word
 #if USE_OBJTYPE
   ObjType objType;          // to distinguish PAP, FUN, BLACKHOLE, INDIRECT
@@ -105,13 +112,12 @@ struct _Obj {
 };
 
 struct _Cont {
-  //  uintptr_t cinfoPtr;         // canonical location of infoPtr--first word
-  CInfoTab *cinfoPtr;         // canonical location of infoPtr--first word
-#if USE_OBJTYPE
-  ContType contType;        // to distinguish PAP, FUN, BLACKHOLE, INDIRECT
-#endif
-  int _contSize;              // for debugging
-  char ident[32];           // temporary, just for tracing
+  CInfoTab *cinfoPtr;     // *going away* 
+  CmmFnPtr entryCode;    // new
+  ContType contType;
+  Bitmap64 layout;        // new
+  int _contSize;          // for debugging
+  char ident[32];         // temporary, just for tracing
   PtrOrLiteral payload[];
 };
 
@@ -228,7 +234,7 @@ extern bool isHeap(Obj *p);
 // assume 64 bits, high six bits for length,
 // low bit is index 0,
 // 0 => unboxed, 1 => boxed
-typedef uintptr_t Bitmap64;
+
 #define BMSIZE(bm) ((bm>>58)&0x3F)
 #define BMMAP(bm) (bm & 0x03FFFFFFFFFFFFFFLL) 
 
@@ -330,8 +336,11 @@ Cont *stgPopCont();
 
 // return through continuation stack
 
-#define STGRETURN0()				\
+#define STGRETURN0_old()				\
   STGJUMP0(getCInfoPtr((Cont *)stgSP)->entryCode)
+
+#define STGRETURN0()			\
+  STGJUMP0(((Cont *)stgSP)->entryCode)
 
 
 // no explicit return value stack
