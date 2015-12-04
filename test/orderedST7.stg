@@ -1,0 +1,162 @@
+-- put :: List Int -> TP2 Int Int -> List Int 
+put = FUN(xs y -> let {q1 = CON(Cons y xs)} in q1);
+
+-- get :: List (TP2 Int Int) -> Int -> Int
+get = FUN(xs n -> case xs of {
+      	       	  Nil -> zero;
+		  Cons h1 t1 -> case h1 of {
+		       	     	TP2 a1 b1 -> case eqInt a1 n of {
+				       	     True -> b1;
+					     False -> get t1 n}}});
+
+-- eqTP2 :: TP2 Int Int -> Bool
+eqTP2 = FUN(x y -> case x of {
+      	      	TP2 a1 b1 -> case y of {
+		    TP2 a2 b2 -> case eqInt a1 a2 of {
+		    	False -> false;
+			True -> case eqInt b1 b2 of {
+			     False -> false; 
+			     True -> true}}}});
+
+-- eqKeyList :: List (TP2 Int Int) -> Bool
+eqKeyList = FUN(xs ys -> case xs of {
+	    	   Nil -> case ys of {
+		      Nil -> true;
+		      x -> false};
+		   Cons h1 t1 -> case ys of {
+		      Nil -> false;
+		      Cons h2 t2 -> case eqTP2 h1 h2 of {
+		      	      	    False -> false;
+				    True -> eqKeyList t1 t2}}});
+
+-- delete :: List (TP2 Int Int) -> Int -> List (TP2 Int Int)
+delete = FUN(xs n -> case xs of {
+       	 	     Nil -> nil;
+	  	     Cons h1 t1 -> case h1 of {
+		      	      	   TP2 a1 b1 -> case eqInt a1 n of {
+				    	      	True -> t1;
+						False -> let {q1 = THUNK(delete t1 n);
+						      	      q2 = CON(Cons h1 q1)} in q2}}});
+
+-- contains :: List (TP2 Int Int) -> Int -> Bool
+contains = FUN(xs n -> case xs of {
+	   	       Nil -> false;
+		       Cons h1 t1 -> case h1 of {
+		       	       	     TP2 a1 b1 -> case eqInt a1 n of {
+				     	       	  True -> true;
+						  False -> contains t1 n}}});
+
+-- isEmpty :: List (TP2 Int Int) -> Bool
+isEmpty = FUN(xs -> case xs of {
+	  	    Nil -> true;
+		    Cons h1 t1 -> false});
+
+-- size :: List (TP2 Int Int) -> Int 
+size = FUN(xs n -> case xs of {
+       	      	   Nil -> n;
+		   Cons h1 t1 -> let {q1 = THUNK(plusInt one n);
+		   	      	      q2 = THUNK(size t1 q1)} in q2});
+
+-- keys :: List (TP2 Int Int) -> List Int
+keys = FUN(xs -> case xs of {
+       	      	 Nil -> nil;
+		 Cons h1 t1 -> case h1 of {
+		    	       TP2 a1 b1 -> let {q0 = THUNK(keys t1); 
+						 q1 = CON(Cons a1 q0)} in q1}});
+
+-- elem :: List Int -> Int -> Bool 
+elem = FUN(xs n -> case xs of {
+       	      	   Nil -> false;
+		   Cons h1 t1 -> case eqInt n h1 of {
+		   	      	 True -> true;
+				 False -> elem t1 n}});
+
+-- removeElem :: List Int -> Int -> List Int
+removeElem = FUN(xs n -> case xs of {
+	     	      	 Nil -> nil;
+			 Cons h1 t1 -> case eqInt h1 n of {
+			      	       True -> t1;
+				       False -> let {q0 = THUNK(removeElem t1 n);
+						     q1 = CON(Cons h1 q0)} in q1}});
+
+-- ceiling :: List (TP2 Int Int) -> Int -> Int 
+ceiling = FUN(xs n -> case xs of {
+      	       	    Nil -> zero;
+		    Cons h1 t1 -> case h1 of {
+		    	       	  TP2 a1 b1 -> case intGE n a1 of {
+				      	       True -> a1;
+					       False -> ceiling t1 n}}});
+
+-- reverse :: List a -> List a -> List a
+reverse = FUN(xs ys -> case xs of {
+	  	       Nil -> ys;
+		       Cons s1 t1 -> let {q1 = CON(Cons s1 ys);
+		       	       	     	  q2 = THUNK(reverse t1 q1)} in q2});
+
+-- startReverse :: List a -> List a
+startReverse = FUN(xs -> reverse xs nil);
+
+-- floor :: List (TP2 Int Int) -> Int -> Int 
+floor = FUN(xs n -> let {q1 = THUNK(startReverse xs);
+      	       	         q2 = THUNK(ceiling q1 n)} in q2); 
+
+-- min :: List (TP2 Int Int) -> Int
+min = FUN(xs -> case xs of {
+      	     	Nil -> zero;
+		Cons h1 t1 -> case h1 of {
+		     	      TP2 a1 b1 -> a1}});
+
+-- max :: List (TP2 Int Int) -> Int
+max = FUN(xs -> case xs of {
+      	     	Nil -> zero;
+		Cons h1 t1 -> case h1 of {
+		     	      TP2 a1 b1 -> case t1 of {
+		     	                   Nil -> a1;
+			                   Cons h2 t2 -> max t1}}});
+
+-- length1 :: List a -> Int -> Int 
+length1 = FUN(xs n -> case xs of {
+       	 	      Nil -> n;
+		      Cons h1 t1 -> let {q1 = THUNK(plusInt one n);
+		     	     	         q2 = THUNK(length1 t1 q1)} in q2});
+
+-- getLength :: List a -> Int
+getLength = FUN(xs -> length1 xs zero);
+
+-- rank :: List (TP2 Int Int) -> Int -> Int
+rank = FUN(xs n -> case xs of {
+       	      	   Nil -> zero;
+		   Cons h1 t1 -> case h1 of {
+		   	      	 TP2 a1 b1 -> case eqInt a1 n of {
+				     	      True -> getLength t1;
+					      False -> rank t1 n}}});
+
+-- select :: List (TP2 Int Int) -> Int -> Int
+select = FUN(xs n -> case xs of {
+       	 	     Nil -> zero;
+		     Cons h1 t1 -> case h1 of {
+		     	     	   TP2 a1 b1 -> let {q1 = THUNK(getLength t1)} in case eqInt q1 n of {
+				       	     	    	  		       	  True -> a1;
+									       	  False -> select t1 n}}});   
+
+
+
+-- Test
+t1 = CON(TP2 seven eight);
+t2 = CON(TP2 six six);
+t3 = CON(TP2 five five);
+t4 = CON(TP2 three two);
+t5 = CON(TP2 three one);
+t6 = CON(TP2 two three);
+t7 = CON(TP2 one four);
+
+l1 = CON(Cons t1 nil);
+l2 = CON(Cons t2 l1);
+l3 = CON(Cons t3 l2);
+l4 = CON(Cons t4 l3);
+l5 = CON(Cons t5 l4);
+l6 = CON(Cons t6 l5);
+l7 = CON(Cons t7 l6);
+
+output = THUNK(select l7 two);
+main = THUNK(eqInt five output);
