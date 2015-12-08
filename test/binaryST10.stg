@@ -1,0 +1,211 @@
+data BSTree a = Leaf | B (BSTree a) a (BSTree a);
+
+-- or :: Bool -> Bool -> Bool 
+or = FUN(x y -> case x of {
+     	     	True -> true;
+		False -> case y of {
+		      	 True -> true;
+			 False -> false}});
+
+-- and :: Bool -> Bool -> Bool
+and = FUN(x y -> case x of {
+      	      	 False -> false;
+		 True -> case y of {
+		      	 False -> false;
+			 True -> true}});
+
+-- max :: Int -> Int -> Int
+max = FUN(n m -> case intGE n m of {
+      	      	      True -> n;
+		      False -> m});
+
+-- searchTest :: BSTree (TP2 Int Int) -> Int -> Bool
+searchTest = FUN(xs t -> case xs of {
+	     	      	 Leaf -> false;
+	                 B a1 a2 a3 -> case a2 of {
+			   	       TP2 b1 c1 -> case eqInt b1 t of {
+				       	     	    True -> true;
+	                                            False -> let {q1 = THUNK(searchTest a1 t);
+								  q2 = THUNK(searchTest a3 t);
+								  q3 = THUNK(or q1 q2)} in q3}}});
+
+-- getKey :: BSTree (TP2 Int Int) -> Int -> Int
+getKey = FUN(xs t -> case xs of {
+       	 	     Leaf -> zero;
+		     B a1 a2 a3 -> case a2 of {
+		       	     	   TP2 b1 c1 -> case eqInt b1 t of {
+				       	     	True -> c1;
+						False -> case intGT b1 t of {
+						      	 True -> getKey a1 t;
+							 False -> getKey a3 t}}}}); 
+
+-- size :: BSTree a -> Int
+size = FUN(xs -> case xs of {
+       	      	 Leaf -> zero;
+		 B a1 a2 a3 -> let {q1 = THUNK(size a1);
+		      	       	    q2 = THUNK(size a3); 
+				    q3 = THUNK(plusInt one q1);
+				    q4 = THUNK(plusInt q2 q3)} in q4});
+
+-- height :: BSTree a -> Int
+height = FUN(xs -> case xs of {
+       	 	   Leaf -> zero;
+		   B a1 a2 a3 -> let {q1 = THUNK(height a1);
+		     	      	      q2 = THUNK(height a3);
+				      q3 = THUNK(plusInt one q1);
+				      q4 = THUNK(plusInt one q2);
+				      q5 = THUNK(max q3 q4)} in q5});
+
+-- getHeight :: BSTree a -> Int
+getHeight = FUN(xs -> let {q1 = THUNK(height xs);
+	    	      	   q2 = THUNK(subInt q1 one)} in q2);
+
+-- insert :: BSTree (TP2 Int Int) -> TP2 Int Int -> BSTree (TP2 Int Int)
+insert = FUN(xs kv -> case kv of {
+       	 	      TP2 b1 c1 -> case xs of {
+		      	     	   B a1 a2 a3 -> case a2 of {
+				     	      	 TP2 b2 c2 -> case intGE b1 b2 of {
+						     	      True -> case a3 of {
+							      	      Leaf -> let {q1 = CON(B leaf kv leaf);
+								      	      	   q2 = CON(B a1 a2 q1)} in q2;
+							              B d1 d2 d3 -> let {q1 = THUNK(insert a3 kv);
+								      	      	         q2 = CON(B a1 a2 q1)} in q2}; 
+						              False -> case a1 of {
+							      	       Leaf -> let {q1 = CON(B leaf kv leaf);
+								      	      	    q2 = CON(B q1 a2 a3)} in q2;
+							               B d1 d2 d3 -> let {q1 = THUNK(insert a1 kv);
+								      	      	          q2 = CON(B q1 a2 a3)} in q2}}}}}); 
+
+-- eqKV :: TP2 Int Int -> TP2 Int Int -> Bool
+eqKV = FUN(x y -> case x of {
+      	      	   TP2 a1 b1 -> case y of {
+		       	     	TP2 a2 b2 -> case eqInt a1 a2 of {
+				       	     False -> false;
+					     True -> eqInt b1 b2}}});
+
+-- eqBSTree :: BSTree (TP2 Int Int) -> BSTree (TP2 Int Int) -> Bool
+eqBSTree = FUN(xs ys -> case xs of {
+	   	     	Leaf -> case ys of {
+			     	Leaf -> true;
+				B c1 c2 c3 -> false};
+			B a1 a2 a3 -> case ys of {
+			     	      Leaf -> false;
+				      B c1 c2 c3 -> case eqKV a2 c2 of {
+				      	      	    False -> false;
+						    True -> let {q1 = THUNK(eqBSTree a1 c1);
+						    	    	 q2 = THUNK(eqBSTree a3 c3);
+								 q3 = THUNK(and q1 q2)} in q3}}});
+
+-- min :: BSTree (TP2 Int Int) -> Int
+min = FUN(xs -> case xs of {
+      	     	B a1 a2 a3 -> case a1 of {
+		     	      Leaf -> case a2 of {
+			      	      TP2 b1 c1 -> b1};
+			      B d1 d2 d3 -> min a1}});
+
+-- max1 :: BSTree (TP2 Int Int) -> Int 
+max1 = FUN(xs -> case xs of {
+      	     	B a1 a2 a3 -> case a3 of {
+		     	      Leaf -> case a2 of {
+			      	      TP2 b1 c1 -> b1};
+			      B d1 d2 d3 -> max1 a3}});
+
+-- delete :: BSTree (TP2 Int Int) -> Int -> BSTree (TP2 Int Int)
+delete = FUN(xs k -> case xs of {
+       	 	     B a1 a2 a3 -> case a2 of {
+		       	     	   TP2 b1 c1 ->  case eqInt k b1 of {
+				       	     	 False -> case intGT k b1 of {
+						       	  True -> let {q1 = THUNK(delete a3 k);
+							       	       q2 = CON(B a1 a2 q1)} in q2;
+							  False -> let {q1 = THUNK(delete a1 k);
+							       	        q2 = CON(B a1 a2 q1)} in q2};
+					         True -> case a1 of {
+						      	 Leaf -> a3;
+							 B d1 d2 d3 -> case a3 of {
+							      	       Leaf -> a1;
+								       B e1 e2 e3 -> appendMin a1 a3}}}}});
+
+-- appendMin :: BSTree (TP2 Int Int) -> BSTree (TP2 Int Int) -> BSTree (TP2 Int Int)
+appendMin = FUN(xs ys -> case ys of {
+	    	      	 B a1 a2 a3 -> case a1 of {
+			      	       Leaf -> let {q1 = CON(B xs a2 a3)} in q1;
+				       B b2 b3 b4 -> let {q1 = THUNK(appendMin xs a1);
+				       	       	     	  q2 = CON(B q1 a2 a3)} in q2}});
+
+-- rootKey :: BSTree (TP2 Int Int) -> Int
+rootKey = FUN(xs -> case xs of {
+	  	    B a1 a2 a3 -> case a2 of {
+		      	       	  TP2 b1 c1 -> b1}});
+
+-- floor :: BSTree (TP2 Int Int) -> Int -> Int -> Int
+floor = FUN(xs n m -> case xs of {
+      	       	      Leaf -> m;
+      	       	      B a1 a2 a3 -> case a2 of {
+		      	      	    TP2 b1 c1 -> case eqInt b1 n of {
+		      	       	    	      	 True -> b1;
+				    		 False -> case intGT n b1 of {
+				  	     	       	  True -> floor a3 n b1;
+					   	     	  False -> case intLT n b1 of {
+							  	   True -> floor a1 n m;
+								   False -> floor a1 n b1}}}}});
+
+-- startFloor :: BSTree (TP2 Int Int) -> Int -> Int
+startFloor = FUN(xs n -> let {q1 = THUNK(rootKey xs);
+	     	      	      q2 = THUNK(floor xs n q1)} in q2);
+
+--Test 
+leaf = CON(Leaf);
+
+t1 = CON(TP2 one four);
+t2 = CON(TP2 two three);
+t3 = CON(TP2 three two);
+t4 = CON(TP2 four five);
+t5 = CON(TP2 five one);
+t6 = CON(TP2 six two);
+t7 = CON(TP2 seven three);
+
+b1 = CON(B leaf t1 leaf);
+b2 = CON(B leaf t3 leaf);
+b3 = CON(B leaf t5 leaf);
+b4 = CON(B leaf t7 leaf);
+b5 = CON(B b1 t2 b2);
+b6 = CON(B b3 t6 b4);
+b7 = CON(B b5 t4 b6);
+
+newNode = CON(TP2 four one);
+
+s1 = CON(TP2 one four);
+s2 = CON(TP2 two three);
+s3 = CON(TP2 three two);
+s4 = CON(TP2 four five);
+s5 = CON(TP2 five one);
+s6 = CON(TP2 six two);
+s7 = CON(TP2 seven three);
+
+c1 = CON(B leaf s1 leaf);
+c2 = CON(B leaf s3 leaf);
+c3 = CON(B leaf s5 leaf);
+c4 = CON(B leaf s7 leaf);
+c5 = CON(B c1 s2 c2);
+c6 = CON(B c3 s7 leaf);
+c7 = CON(B c5 s4 c6);
+
+
+-- -------------------------------------------
+d1 = CON(B d2 e1 d3);
+d2 = CON(B leaf e2 leaf);
+d3 = CON(B leaf e3 leaf);
+
+e1 = CON(TP2 two two);
+e2 = CON(TP2 one one);
+e3 = CON(TP2 three three);
+
+e4 = CON(TP2 two four);
+
+f1 = CON(B f2 e1 f3);
+f2 = CON(B leaf e2 leaf);
+f3 = CON(B f4 e3 leaf);
+f4 = CON(B leaf e4 leaf);
+
+output = THUNK(startFloor b7 six);
+main = THUNK(eqInt output six);
