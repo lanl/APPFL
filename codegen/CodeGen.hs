@@ -59,8 +59,8 @@ import qualified Data.Map as Map
 #if USE_CAST
 import CAST
 import Text.PrettyPrint(render)
-import Language.C.Pretty 
-#endif 
+import Language.C.Pretty
+#endif
 
 
 data RVal = SHO           -- static heap obj
@@ -77,7 +77,7 @@ getEnvRef :: String -> Env -> String
 getEnvRef v env = lu v env 0 0
 
 -- first Int is total number of payload elements
--- second Int is total number of Objs 
+-- second Int is total number of Objs
 lu :: String -> Env -> Int -> Int -> String
 lu v [] _ _ = error $ "lu " ++ v ++ " failed"
 
@@ -108,7 +108,7 @@ isBoxede e = isBoxed $ typ $ emd e
 cgUBa env (Var v)  t   =  "(" ++ cgv env v ++ ")." ++ t
 cgUBa env (LitI i) "i" = show i
 cgUBa env (LitD d) "d" = show d
-cgUBa _ at _ = error $ "CodeGen.cgUBa: not expecting Atom - " ++ show at 
+cgUBa _ at _ = error $ "CodeGen.cgUBa: not expecting Atom - " ++ show at
 -- cgUBa env (LitF f) "f" = show f
 
 cgv env v = getEnvRef v env -- ++ "/* " ++ v ++ " */"
@@ -116,9 +116,9 @@ cgv env v = getEnvRef v env -- ++ "/* " ++ v ++ " */"
 cga :: Env -> Atom -> String
 cga env (Var v) = cgv env v
 #if USE_CAST
-cga _ a = render $ pretty $ cPoLExpr a
+cga _ a =  "(" ++ (render $ pretty $ cPoLExpr a) ++ ")"
 #else
-#if USE_ARGTYPE 
+#if USE_ARGTYPE
 cga env (LitI i) = "((PtrOrLiteral){.argType = INT,    .i = " ++ show i ++ " })"
 cga env (LitL l) = "((PtrOrLiteral){.argType = LONG,   .l = " ++ show l ++ " })"
 cga env (LitF f) = "((PtrOrLiteral){.argType = FLOAT,  .f = " ++ show f ++ " })"
@@ -133,7 +133,7 @@ cga env (LitC c) = "((PtrOrLiteral){.i = con_" ++ c ++ " })"
 #endif
 #endif
 
--- cga _ at = error $ "CodeGen.cga: not expecting Atom - " ++ show at 
+-- cga _ at = error $ "CodeGen.cga: not expecting Atom - " ++ show at
 
 -- CG in the state monad ***************************************************
 -- CG of objects produces no inline code
@@ -145,11 +145,11 @@ cgObjs :: [Obj InfoTab] -> [String] -> ([String],[String])
 cgObjs objs runtimeGlobals =
     let tlnames = runtimeGlobals ++ map (name . omd) objs
         env = zip tlnames $ repeat SHO
-        (funcs, _) = runState (cgos env objs) 0  
+        (funcs, _) = runState (cgos env objs) 0
         (forwards, fundefs) = unzip funcs
         (forward, fundef) = registerSHOs objs
     in (forward:forwards, fundef:fundefs)
-    
+
 
 #if USE_CAST
 
@@ -176,7 +176,7 @@ cgStart = "\n\nDEFUN0(start)" ++
             "  STGJUMP1(getInfoPtr(stgCurVal.op)->entryCode, stgCurVal);\n" ++
             "}\n\n"
 
-cgMain :: Bool -> String 
+cgMain :: Bool -> String
 cgMain v = let top = "int main (int argc, char **argv) {\n" ++
                      "  parseArgs(argc, argv);\n" ++
                      "  initStg();\n" ++
@@ -184,13 +184,13 @@ cgMain v = let top = "int main (int argc, char **argv) {\n" ++
                      "  initGc();\n" ++
                      "  CALL0_0(start);\n"
                bot = "  return 0;\n" ++ "}\n\n"
-  in if v then top ++ "  showStgHeap();\n  GC();\n" ++ bot else top ++ bot     
+  in if v then top ++ "  showStgHeap();\n  GC();\n" ++ bot else top ++ bot
 
 registerSHOs :: [Obj InfoTab] -> (String, String)
-registerSHOs objs = 
+registerSHOs objs =
     ("void registerSHOs();",
      "void registerSHOs() {\n" ++
-        concat [ "  stgStatObj[stgStatObjCount++] = &" ++ s ++ ";\n" 
+        concat [ "  stgStatObj[stgStatObjCount++] = &" ++ s ++ ";\n"
                  | s <- shoNames objs ] ++
      "}\n")
 
@@ -218,8 +218,8 @@ permArgs vs ft =
 
 cgo :: Env -> Obj InfoTab -> State Int [(String, String)]
 cgo env o@(FUN it vs e name) =
-    do 
-      let env' = zip (map fst $ fvs it) (map FV [0..]) ++ 
+    do
+      let env' = zip (map fst $ fvs it) (map FV [0..]) ++
                  zip vs (repeat FP) ++
                  env
           vts@((bvs,uvs),(bts,uts)) = permArgs vs $ typ it
@@ -228,7 +228,7 @@ cgo env o@(FUN it vs e name) =
           func =
             "// " ++ show (ctyp it) ++ "\n" ++
             "// " ++ show vts ++ "\n" ++
-            "DEFUN" ++ show (length vs + 1) ++ "(fun_" ++ 
+            "DEFUN" ++ show (length vs + 1) ++ "(fun_" ++
             name ++ ", self, " ++
 --            intercalate ", " vs ++
             intercalate ", " (bvs ++ uvs) ++
@@ -247,7 +247,7 @@ cgo env (CON it c as name) =
     return []
 
 cgo env o@(THUNK it e name) =
-    do 
+    do
       let env' = zip (map fst $ fvs it) (map FV [1..]) ++ env
       (inline, funcs) <- cge env' e
       let forward = "FnPtr fun_" ++ name ++ "();"
@@ -267,27 +267,27 @@ cgo env (BLACKHOLE {}) =
 
 -- ****************************************************************
 
-stgApplyGeneric env f eas = 
+stgApplyGeneric env f eas =
     let as = map ea eas
         pnstring = [ if b then 'P' else 'N' | b <- map (isBoxed . typ . emd) eas ]
-        inline = 
+        inline =
             "// INDIRECT TAIL CALL " ++ f ++ " " ++ showas as ++ "\n" ++
             "STGAPPLY" ++ pnstring ++ "(" ++
-            intercalate ", " (cgv env f : map (cga env) as) ++ 
+            intercalate ", " (cgv env f : map (cga env) as) ++
             ");\n"
     in return (inline, [])
 
-stgApplyDirect env (EFCall it f eas) = 
+stgApplyDirect env (EFCall it f eas) =
     let as = map ea eas
-        inline = 
+        inline =
             "// DIRECT TAIL CALL " ++ f ++ " " ++ showas as ++ "\n" ++
             "STGAPPLY" ++ show (length as) ++ "(" ++
-              intercalate ", " (cgv env f : map (cga env) as) ++ 
+              intercalate ", " (cgv env f : map (cga env) as) ++
             ");\n"
     in return (inline, [])
 
 
-stgApplyDirect env expr = 
+stgApplyDirect env expr =
     error $ "CodeGen.stgApplyDirect: not expecting Expr - " ++ show (pprint expr)
 
 
@@ -296,29 +296,29 @@ cge :: Env -> Expr InfoTab -> State Int (String, [(String, String)])
 
 cge env e@(EAtom it a) =
     let inline = "stgCurVal = " ++ cga env a ++ "; " ++ "// " ++ showa a ++ "\n" ++
-                 (if isBoxede e then 
+                 (if isBoxede e then
                       "// boxed EAtom, stgCurVal updates itself \n" ++
-                      "STGJUMP();\n" 
-                  else 
+                      "STGJUMP();\n"
+                  else
                       "// unboxed EAtom\n")
     in return (inline, [])
 
-cge env e@(EFCall it f eas) = 
-    case (knownCall it) of 
+cge env e@(EFCall it f eas) =
+    case (knownCall it) of
       Nothing -> stgApplyGeneric env f eas
       Just kit -> if arity kit == length eas
                   then stgApplyGeneric env f eas -- stgApplyDirect env e
                   else stgApplyGeneric env f eas
 
-    
+
 {-
-cge env e@(EFCall it f eas) = 
+cge env e@(EFCall it f eas) =
     let as = map ea eas
         pnstring = [ if b then 'P' else 'N' | b <- map (isBoxed . typ . emd) eas ]
-        inline = 
+        inline =
             "// " ++ f ++ " " ++ showas as ++ "\n" ++
             "STGAPPLY" ++ pnstring ++ "(" ++
-            intercalate ", " (cgv env f : map (cga env) as) ++ 
+            intercalate ", " (cgv env f : map (cga env) as) ++
             ");\n"
     in return (inline, [])
 -}
@@ -351,25 +351,25 @@ cge env (EPrimop it op eas) =
                        arg0 "i" ++ "?" ++ getEnvRef "true"  env ++
                                    ":" ++ getEnvRef "false" env ++ ";\n"
 
-        cPrefixII op =  
+        cPrefixII op =
 #if USE_ARGTYPE
                         "stgCurVal.argType = INT;\n" ++
 #endif
                         "stgCurVal.i = " ++ op ++ arg0 "i" ++ ";\n"
 
-        cInfixIII op =  
+        cInfixIII op =
 #if USE_ARGTYPE
                         "stgCurVal.argType = INT;\n" ++
 #endif
                         "stgCurVal.i = " ++ arg0 "i" ++ op ++ arg1 "i" ++ ";\n"
 
-        cInfixIIB op =  
+        cInfixIIB op =
 #if USE_ARGTYPE
                         "stgCurVal.argType = BOOL;\n" ++
 #endif
                         "stgCurVal.i = " ++ arg0 "i" ++ op ++ arg1 "i" ++ ";\n"
 
-        cFunIII fun = 
+        cFunIII fun =
 #if USE_ARGTYPE
                       "stgCurVal.argType = INT;\n" ++
 #endif
@@ -388,13 +388,13 @@ cge env (ELet it os e) =
 
 -- TOFIX:  even if scrutinee doesn't heap alloc it may return through the
 -- continuation stack, so we need better analysis
--- cge env (ECase _ e a@(Alts italts alts aname)) | (not $ noHeapAlloc $ emd e) = 
-cge env (ECase _ e a@(Alts italts alts aname)) = 
+-- cge env (ECase _ e a@(Alts italts alts aname)) | (not $ noHeapAlloc $ emd e) =
+cge env (ECase _ e a@(Alts italts alts aname)) =
     do (ecode, efunc) <- cge env e
        (acode, afunc) <- cgalts env a (isBoxede e)
        let name = "ccont_" ++ aname
            pre = "// scrutinee may heap alloc\n" ++
-              "Cont *" ++ name ++ 
+              "Cont *" ++ name ++
               " = stgAllocCont( &it_" ++ aname ++ ");\n" ++
               (if fvs italts == [] then
                  "    // no FVs\n"
@@ -409,18 +409,18 @@ cge env (ECase _ e a@(Alts italts alts aname)) =
 --       return (pre ++ ecode ++ scrut ++ acode, efunc ++ afunc)
        return (pre ++ ecode ++ acode, efunc ++ afunc)
 
--- scrutinee does no heap allocation          
+-- scrutinee does no heap allocation
 {-
-cge env (ECase _ e a@(Alts italts alts aname)) = 
+cge env (ECase _ e a@(Alts italts alts aname)) =
     do (ecode, efunc) <- cge env e
        (acode, afunc) <- cgalts_noheapalloc env a (isBoxede e)
        let name = "ccont_" ++ aname
            pre = "// scrutinee no heap allocation\n"
        return (pre ++ ecode ++ acode, efunc ++ afunc)
 -}
-          
+
 -- ADef only or unary sum => no C switch
-cgalts_noheapalloc env (Alts it alts name) boxed = 
+cgalts_noheapalloc env (Alts it alts name) boxed =
     let scrutName = "scrut_" ++ name
     in do
       let switch = length alts > 1
@@ -435,7 +435,7 @@ cgalts_noheapalloc env (Alts it alts name) boxed =
                 (if switch then
                      (if boxed then
                           "switch(getInfoPtr(stgCurVal.op)->conFields.tag) {\n"
-                      else 
+                      else
                           "switch(stgCurVal.i) {\n"
                      ) ++
                      indent 2 (concat codes) ++
@@ -444,7 +444,7 @@ cgalts_noheapalloc env (Alts it alts name) boxed =
       return (inl, (phonyforward, phonyfun) : concat funcss)
 
 -- ADef only or unary sum => no C switch
-cgalts env (Alts it alts name) boxed = 
+cgalts env (Alts it alts name) boxed =
     let contName = "ccont_" ++ name
         scrutName = "scrut_" ++ name
         -- altenv = zip (fvs it) [ CC contName i | i <- [0..] ]
@@ -460,18 +460,18 @@ cgalts env (Alts it alts name) boxed =
                 "  fprintf(stderr, \"" ++ name ++ " here\\n\");\n" ++
                 -- actually need the ccont?
                 -- any fvs in the expressions on the rhs's?
-                (if (length $ fvs it) > 0 then 
+                (if (length $ fvs it) > 0 then
                      "  Cont *" ++ contName ++ " = stgPopCont();\n" ++
-                     concat ["  PtrOrLiteral " ++ v ++ 
+                     concat ["  PtrOrLiteral " ++ v ++
                              " = " ++ contName ++ "->payload[" ++ show i ++ "];\n"
-                             | (i,v) <- indexFrom 0 $ map fst $ fvs it ] 
-                 else 
+                             | (i,v) <- indexFrom 0 $ map fst $ fvs it ]
+                 else
                      "  stgPopCont();\n") ++
                 "  PtrOrLiteral " ++ scrutName ++ " = stgCurVal;\n" ++
                 (if switch then
                      (if boxed then
                           "  switch(getInfoPtr(stgCurVal.op)->conFields.tag) {\n"
-                      else 
+                      else
                           "  switch(stgCurVal.i) {\n"
                      ) ++
                      indent 4 (concat codes) ++
@@ -498,7 +498,7 @@ cgalt env switch scrutName (ACon it c vs e) =
                    "}\n"
                  else inline ++ "STGRETURN0();\n"
       return (code, func)
-              
+
 cgalt env switch scrutName (ADef it v e) =
     let env' = (v, AD scrutName) : env
     in do
@@ -516,19 +516,19 @@ cgalt env switch scrutName (ADef it v e) =
 -- ****************************************************************
 -- buildHeapObj is only invoked by ELet so TLDs not built
 
---  UPDCONT, 
---  CASECONT, 
---  CALLCONT, 
+--  UPDCONT,
+--  CASECONT,
+--  CALLCONT,
 --  FUNCONT,
 
 buildHeapObj env o =
     let (size, rval) = bho env o
         name = oname o
-        decl = "Obj *" ++ name ++ " = stgNewHeapObj( &it_" ++ name ++ " );\n" 
+        decl = "Obj *" ++ name ++ " = stgNewHeapObj( &it_" ++ name ++ " );\n"
     in (size, decl, rval)
 
 bho :: [(String, RVal)] -> Obj InfoTab -> (Int, [Char])
-bho env (FUN it vs e name) = 
+bho env (FUN it vs e name) =
     (length $ fvs it, loadPayloadFVs env (map fst $ fvs it) 0 name)
 
 
@@ -536,9 +536,9 @@ bho env (PAP it f as name) = error "unsupported explicit PAP"
 -- TODO: the size here should be based on the FUN rather than being maxPayload
 {-
 
-    (maxPayload, loadPayloadFVs env (map fst $ fvs it) 0 name ++ 
+    (maxPayload, loadPayloadFVs env (map fst $ fvs it) 0 name ++
                  loadPayloadAtoms env (projectAtoms as) (length $ fvs it) name)
--}               
+-}
 
 -- CON is special in that the payload contains not just FVs but literals
 -- as well, and we need their types.  This could be done:
@@ -546,26 +546,26 @@ bho env (PAP it f as name) = error "unsupported explicit PAP"
 -- 1.  Use HMStg.luTCon using cmap it, typ it, and c, subsequent gyrations
 -- 2.  Use fvs type information
 -- 3.  Embedding the Atoms into typed expressions
-bho env (CON it c as name) = 
-    let ps = [name ++ "->payload[" ++ show i ++ "] = " ++ 
+bho env (CON it c as name) =
+    let ps = [name ++ "->payload[" ++ show i ++ "] = " ++
                        cga env a ++ "; // " ++ showa a ++ "\n"
                        | (i,a) <- indexFrom 0 (projectAtoms as) ]
     in (length ps, concat ps)
 
-bho env (THUNK it e name) = 
+bho env (THUNK it e name) =
     let fv = fvs it
     in (1 + (length fv), loadPayloadFVs env (map fst fv) 1 name)
-    
+
 bho env (BLACKHOLE it name) = (1,"")
 
 loadPayloadFVs env fvs ind name =
-    concat [name ++ "->payload[" ++ show i ++ "] = " ++ 
+    concat [name ++ "->payload[" ++ show i ++ "] = " ++
             cgv env v ++ "; // " ++ v ++ "\n"
             | (i,v) <- indexFrom ind $ fvs ]
 
 -- load atoms into payload starting at index ind
 loadPayloadAtoms env as ind name =
-    concat [name ++ "->payload[" ++ show i ++ "] = " ++ 
+    concat [name ++ "->payload[" ++ show i ++ "] = " ++
             cga env a ++ "; //" ++ showa a ++ "\n"
             | (i,a) <- indexFrom ind as]
 
@@ -577,7 +577,7 @@ showa (LitL l) = show l
 showa (LitF f) = show f
 showa (LitD d) = show d
 showa (LitC c) = "con_" ++ c
--- showa at = error $ "CodeGen.showa: not expecting Atom - " ++ show at 
+-- showa at = error $ "CodeGen.showa: not expecting Atom - " ++ show at
 
 indexFrom :: Int -> [a] -> [(Int, a)]
 indexFrom i xs = zip [i..] xs

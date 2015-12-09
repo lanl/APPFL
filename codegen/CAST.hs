@@ -19,6 +19,7 @@ module CAST (
 ) where
 
 import           Data.List.Split
+import           GHC.Int
 import           GHC.Float
 import           Language.C.Data.Ident
 import           Language.C.Data.InputStream
@@ -31,6 +32,7 @@ import           AST
 data Ty = EnumTy
         | StringTy
         | IntTy
+        | LongTy
         | FloatTy
         | DoubleTy
         | PtrTy
@@ -43,6 +45,8 @@ type CInitializerMember a = ([CPartDesignator a], CInitializer a)
 
 type ExtDecl = CExternalDeclaration NodeInfo
 type InitializerMember = CInitializerMember NodeInfo
+
+ptrD = CPtrDeclr [] undefNode
 
 varE :: String -> CExpression NodeInfo
 varE val = CVar (builtinIdent val) undefNode
@@ -67,7 +71,7 @@ typeSpec name = CTypeSpec (CTypeDef (builtinIdent name) undefNode)
 
 funProto :: CDeclarationSpecifier NodeInfo -> String -> ExtDecl
 funProto declspec name =
-  CDeclExt (CDecl [declspec] [(Just (CDeclr (Just (builtinIdent name)) 
+  CDeclExt (CDecl [declspec] [(Just (CDeclr (Just (builtinIdent name))
   [CFunDeclr (Right ([],False)) [] undefNode] Nothing [] undefNode),Nothing,Nothing)] undefNode)
 
 -- init a Struct Member w/ an Expr
@@ -93,6 +97,12 @@ instance InitStructMember String where
     in cStructMemberE (splitOn "." name) e
 
 instance InitStructMember Int where
+  cStructMember ty name val =
+    let e = case ty of
+              IntTy -> CInitExpr (intE (toInteger val)) undefNode
+              _ -> error "bad Type in cStructMember (Int)"
+    in cStructMemberE (splitOn "." name) e
+instance InitStructMember Int64 where
   cStructMember ty name val =
     let e = case ty of
               IntTy -> CInitExpr (intE (toInteger val)) undefNode
@@ -128,11 +138,11 @@ instance InitStructMember [[CInitializerMember NodeInfo]] where
     in cStructMemberE  (splitOn "." name) e
 
 cObjStruct :: String -> [CInitializerMember NodeInfo] -> (ExtDecl, ExtDecl)
-cObjStruct name xs = 
+cObjStruct name xs =
   let n = ("sho_" ++ name)
       proto = CDeclExt (CDecl [CStorageSpec (CExtern undefNode),
-                 CTypeSpec (CTypeDef (builtinIdent "Obj") undefNode)] 
-                 [(Just (CDeclr (Just (builtinIdent n)) [] Nothing [] 
+                 CTypeSpec (CTypeDef (builtinIdent "Obj") undefNode)]
+                 [(Just (CDeclr (Just (builtinIdent n)) [] Nothing []
                  undefNode),Nothing,Nothing)] undefNode)
   in (proto, cStruct "Obj" n False xs)
 
@@ -179,27 +189,26 @@ cRegisterSHOs :: [String] -> (ExtDecl, ExtDecl)
 cRegisterSHOs names = let name = "registerSHOs"
                       in (funProto (CTypeSpec (CVoidType undefNode)) name,
                           cFun VoidTy "" name emptyFunDeclr
-                          (map _cRegSHOExpr names))                         
-
+                          (map _cRegSHOExpr names))
 
 cCallExpr :: String -> [CExpression NodeInfo] -> CExpression NodeInfo
 cCallExpr name args = CCall (CVar (builtinIdent name) undefNode) args undefNode
 
 
-cCall:: String -> [CExpression NodeInfo] -> CCompoundBlockItem NodeInfo                      
-cCall name args = CBlockStmt (CExpr (Just (cCallExpr name args )) undefNode) 
+cCall:: String -> [CExpression NodeInfo] -> CCompoundBlockItem NodeInfo
+cCall name args = CBlockStmt (CExpr (Just (cCallExpr name args )) undefNode)
 
 
 cCallVars :: String -> [String] -> CCompoundBlockItem NodeInfo
 cCallVars name args = let cvars = map (\a -> CVar (builtinIdent a) undefNode) args
                    in cCall name cvars
-              
+
 
 cIntReturn :: Integer -> CCompoundBlockItem NodeInfo
 cIntReturn x = CBlockStmt (CReturn (Just (CConst (CIntConst (cInteger x) undefNode))) undefNode)
 
 cMain :: Bool -> ExtDecl
-cMain v = 
+cMain v =
   let top = [cCallVars "parseArgs" ["argc","argv"]
             ,cCall "initStg" []
             ,cCall "initCmm" []
@@ -208,16 +217,16 @@ cMain v =
              ]
       body = top ++ [cCallVars "showStgHeap" [] | v] ++ [cIntReturn 0]
 
-  in cFun IntTy "" "main"  
+  in cFun IntTy "" "main"
   [CFunDeclr (Right ([CDecl [CTypeSpec (CIntType undefNode)]
   [(Just (CDeclr (Just (builtinIdent "argc")) [] Nothing [] undefNode),Nothing,Nothing)] undefNode,
-  CDecl [CTypeSpec (CCharType undefNode)] [(Just (CDeclr (Just (builtinIdent "argv")) 
-  [CPtrDeclr [] undefNode,CPtrDeclr [] undefNode] Nothing [] undefNode),Nothing,Nothing)] 
+  CDecl [CTypeSpec (CCharType undefNode)] [(Just (CDeclr (Just (builtinIdent "argv"))
+  [ptrD, ptrD] Nothing [] undefNode),Nothing,Nothing)]
   undefNode],False)) [] undefNode] body
 
 
 _ptrDecl :: String -> CDeclarator NodeInfo
-_ptrDecl name = CDeclr (Just (builtinIdent name)) [CPtrDeclr [] undefNode] Nothing [] undefNode
+_ptrDecl name = CDeclr (Just (builtinIdent name)) [ptrD] Nothing [] undefNode
 
 _contPtrDecl name val = CBlockDecl (CDecl [typeSpec "Cont"] [(Just (_ptrDecl name)
                         ,val, Nothing)] undefNode)
@@ -230,51 +239,63 @@ cStart = let body = [cCall "_POPVALS0" []
                     ,cCall "registerSHOs" []
                     ,_contPtrDecl "showResultCont" (Just (CInitExpr (cCallExpr "stgAllocCallCont"
                       [addrvarE "it_stgShowResultCont",intE 0]) undefNode))
-#if USE_ARGTYPE                      
+#if USE_ARGTYPE
                     ,assign (memberE "stgCurVal" "argType" False) (varE "HEAPOBJ")
-#endif                   
+#endif
                     ,assign (memberE "stgCurVal" "op" False) (addrvarE "sho_main")
-                    ,cCall "STGJUMP1" 
+                    ,cCall "STGJUMP1"
                        [CMember (cCallExpr "getInfoPtr" [memberE "stgCurVal" "op" False])
                        (builtinIdent "entryCode") True undefNode, varE "stgCurVal"]
                     ]
-         in cFun UserTy "FnPtr" "start" emptyFunDeclr body     
+         in cFun UserTy "FnPtr" "start" emptyFunDeclr body
 
 
 -- PointerOrLiteral members
 _polMembers(LitI i) = [
-#if USE_ARGTYPE 
+#if USE_ARGTYPE
                        cStructMember EnumTy "argType" "INT",
 #endif
-                       cStructMember IntTy "i" (show i)]
-                       
+                       cStructMember IntTy "i" i]
+
 _polMembers(LitL l) = [
-#if USE_ARGTYPE 
+#if USE_ARGTYPE
                        cStructMember EnumTy "argType" "LONG",
 #endif
-                       cStructMember IntTy "l" (show l)]
-                       
+                       cStructMember IntTy "l" l]
+
 _polMembers (LitF f) = [
-#if USE_ARGTYPE 
+#if USE_ARGTYPE
                        cStructMember EnumTy "argType" "FLOAT",
 #endif
-                       cStructMember FloatTy "f" (show f)]                    
-                              
+                       cStructMember FloatTy "f" f]
+
 _polMembers (LitD d) = [
-#if USE_ARGTYPE 
+#if USE_ARGTYPE
                        cStructMember EnumTy "argType" "DOUBLE",
 #endif
-                       cStructMember DoubleTy "d" (show d)]     
+                       cStructMember DoubleTy "d" d]
 
 _polMembers(LitC c) = [
-#if USE_ARGTYPE 
+#if USE_ARGTYPE
                        cStructMember EnumTy "argType" "INT",
 #endif
-                       cStructMember IntTy "i" ("con_" ++ show c)]                       
+                       cStructMember EnumTy "i" ("con_" ++ c)]
+
+_polMembers(Var v) = error "Var Type in _polMembers"
 
 cPoLExpr a =  CCompoundLit (CDecl [typeSpec "PtrOrLiteral"] [] undefNode)
               (_polMembers a) undefNode
 
+cHOTOPLsho name = CCall (varE "HOTOPL") [CUnary CAdrOp (varE name) undefNode] undefNode
+
+cHOTOPL x y = CCall (varE "HOTOPL") [CCast (CDecl [typeSpec "Obj"]
+                [(Just (CDeclr Nothing [ptrD] Nothing [] undefNode),Nothing,Nothing)] undefNode)
+                (CCall (varE "STGHEAPAT") [intE x, intE y] undefNode) undefNode] undefNode
+
+cFV x = CIndex (CMember (CMember (varE "self") (builtinIdent "op") False undefNode)
+          (builtinIdent "payload") True undefNode) (intE x) undefNode
+
+cAC v i = CIndex (memberE v "payload" True) (intE i) undefNode
 
 -- examples
 
@@ -319,4 +340,3 @@ info = cInfoTabStruct "false"
          ,cStructMember IntTy "conFields.tag" (0 :: Int)
          ,cStructMember StringTy "conFields.conName" "False"
          ]
-
