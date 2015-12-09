@@ -72,10 +72,10 @@ shoNames = map (\o -> showITType o ++ "_" ++ (name . omd) o)
 
 showSHOs = error "showSHOs"
 
-cSHOs :: [Obj InfoTab] -> ([ExtDecl], [ExtDecl])
+cSHOs :: [Obj InfoTab] -> ([CExtDecl], [CExtDecl])
 cSHOs os = unzip $ map cSHO os
 
-cSHO :: Obj InfoTab -> (ExtDecl, ExtDecl)
+cSHO :: Obj InfoTab -> (CExtDecl, CExtDecl)
 cSHO o =
    let it = omd o
        n = name it
@@ -87,7 +87,7 @@ cSHO o =
 
 payloads xs = cStructMember StructTy "payload" xs
 
-cSHOspec :: InfoTab -> InitializerMember
+cSHOspec :: InfoTab -> CInitializerMember
 cSHOspec (ITFun {}) = payloads ""
 
 cSHOspec (ITPap {}) = error "top level PAP"
@@ -100,7 +100,7 @@ cSHOspec (ITBlackhole {}) = payloads "0"
 
 cSHOspec it = error "bad IT in Obj"
 
-payload ::  Atom -> [InitializerMember]
+payload ::  Atom -> [CInitializerMember]
 payload (LitI i) = [
 #if USE_ARGTYPE
     cStructMember EnumTy "argType" "INT",

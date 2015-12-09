@@ -477,7 +477,7 @@ showITType _ = "sho"
 
 
 #if USE_CAST
-cInfoTab :: InfoTab -> Maybe ExtDecl
+cInfoTab :: InfoTab -> Maybe CExtDecl
 cInfoTab it@(ITFun {}) = Just (
     cInfoTabStruct (name it)
         [cStructMember StringTy "name" (name it)
@@ -547,7 +547,7 @@ cInfoTab it@(ITAlts {}) =  Just (
 
 cInfoTab _ = Nothing
 
-cITs :: ITsOf a [InfoTab] => a -> [ExtDecl]
+cITs :: ITsOf a [InfoTab] => a -> [CExtDecl]
 cITs os =  mapMaybe cInfoTab (itsOf os)
 
 showIT = error "showIT"

@@ -73,11 +73,33 @@ data RVal = SHO           -- static heap obj
 
 type Env = [(String, RVal)]
 
+#if USE_CAST
+
+getEnvRef :: String -> Env -> String
+getEnvRef v env = render $ pretty $ lu v env 0 0
+
+lu :: String -> Env -> Int -> Int -> CExpr
+lu v [] _ _ = error $ "lu " ++ v ++ " failed"
+
+lu v ((v',k):_) size' n | v == v' =
+    case k of
+      SHO     -> cHOTOPLshoE v
+      HO size -> cHOTOPLE (size+size') (n+1)
+      FP      -> cVarE v
+      FV i    -> cFVE i
+      AC v i  -> cACE v i
+      AD v    -> cVarE v
+
+lu v ((_, HO size) : xs) size' n =
+    lu v xs (size'+size) (n+1)
+
+lu v (x : xs) size n = lu v xs size n
+
+#else
+
 getEnvRef :: String -> Env -> String
 getEnvRef v env = lu v env 0 0
 
--- first Int is total number of payload elements
--- second Int is total number of Objs
 lu :: String -> Env -> Int -> Int -> String
 lu v [] _ _ = error $ "lu " ++ v ++ " failed"
 
@@ -94,7 +116,7 @@ lu v ((_, HO size) : xs) size' n =
     lu v xs (size'+size) (n+1)
 
 lu v (x : xs) size n = lu v xs size n
-
+#endif
 -- boxed expression predicate
 {-
 isBoxede e = case typ $ emd e of MCon False _ _ -> False
@@ -116,7 +138,7 @@ cgv env v = getEnvRef v env -- ++ "/* " ++ v ++ " */"
 cga :: Env -> Atom -> String
 cga env (Var v) = cgv env v
 #if USE_CAST
-cga _ a =  "(" ++ (render $ pretty $ cPoLExpr a) ++ ")"
+cga _ a =  "(" ++ (render $ pretty $ cPoLE a) ++ ")"
 #else
 #if USE_ARGTYPE
 cga env (LitI i) = "((PtrOrLiteral){.argType = INT,    .i = " ++ show i ++ " })"
@@ -153,11 +175,8 @@ cgObjs objs runtimeGlobals =
 
 #if USE_CAST
 
-cgStart :: String
-cgStart = "\n" ++ (render $ pretty $ cStart) ++ "\n"
-
-cgMain :: Bool -> String
-cgMain v = "\n" ++ (render $ pretty $ cMain v) ++ "\n"
+cgStart = error "cgStart"
+cgMain = error "cgMain"
 
 registerSHOs :: [Obj InfoTab] -> (String, String)
 registerSHOs objs = let (p,f) = cRegisterSHOs (map (\o -> (name . omd) o) objs)

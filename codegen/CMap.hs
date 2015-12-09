@@ -51,10 +51,10 @@ type CMap = Map.Map Con TyCon
 #if USE_CAST
 showTypeEnums = error "showTypeEnums"
 
-cTypeEnums :: [TyCon] -> [ExtDecl]
+cTypeEnums :: [TyCon] -> [CExtDecl]
 cTypeEnums tycons = map cTypeEnum tycons
 
-cTypeEnum :: TyCon -> ExtDecl
+cTypeEnum :: TyCon -> CExtDecl
 cTypeEnum  (TyCon _ con _ dataCons) = cEnum con [ _mhsSanitize c | DataCon c _ <- dataCons ]
 
 #else

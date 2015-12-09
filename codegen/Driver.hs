@@ -60,7 +60,7 @@ import           System.IO
 import CAST
 import Text.PrettyPrint(render)
 import Language.C.Pretty
-type EExtDecl = Either ExtDecl String
+type EExtDecl = Either CExtDecl String
 #endif
 
 header :: String
@@ -283,7 +283,9 @@ codegener inp v mhs = let (tycons, objs) = heapchecker mhs inp
                           map Left shoForward ++
                           map Left shoDef ++
                           map Right funDefs ++
-                          [Right $ footer v]
+                          [Left cStart] ++
+                          [Left $ cMain v]
+
 
 
 printEE :: EExtDecl -> String
