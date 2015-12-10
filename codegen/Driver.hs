@@ -1,3 +1,6 @@
+{-# LANGUAGE CPP #-}
+#include "options.h"
+
 module Driver (
   tokenizer,
   parser,
@@ -13,6 +16,7 @@ module Driver (
   tester,
   printObjsVerbose,
   codegener,
+  pprinter,
   mhsTokenizer,
   mhsParser,
   mhsPup,
@@ -22,13 +26,13 @@ module Driver (
   mhsExpSimpler,
   mhsPatSimpler,
   mhsNumBoxer,
-  mhsSTGer 
+  mhsSTGer
 ) where
 
 import qualified MHS.AST
 import qualified MHS.Parser
 import qualified MHS.Transform
-import qualified MHS.Tokenizer          
+import qualified MHS.Tokenizer
 import qualified MHS.ToSTG
 
 import           Tokenizer
@@ -52,9 +56,16 @@ import           Data.List
 import qualified Data.Set as Set
 import           System.IO
 
+#if USE_CAST
+import CAST
+import Text.PrettyPrint(render)
+import Language.C.Pretty
+type EExtDecl = Either CExtDecl String
+#endif
+
 header :: String
 header = "#include \"stgc.h\"\n"
-        
+
 footer :: Bool -> String
 footer v = cgStart ++ cgMain v
 
@@ -79,8 +90,8 @@ mhsTokenizer inp = MHS.Tokenizer.tokenize inp
 mhsParser :: String -> [MHS.AST.Defn]
 mhsParser inp = let toks = mhsTokenizer inp
              in MHS.AST.intCon :
-                MHS.AST.dblCon : 
-                MHS.Parser.parse toks 
+                MHS.AST.dblCon :
+                MHS.Parser.parse toks
 
 
 -- parse unparse parse
@@ -105,7 +116,7 @@ mhsRenamer inp = let defs = mhsSigSetter inp
 mhsGenFunctioner :: String -> [MHS.AST.Defn]
 mhsGenFunctioner inp = let defs = mhsRenamer inp
                        in MHS.Transform.genFunctions defs
-                   
+
 
 -- simplify expression application with let bindings
 -- All application must be atomic after this
@@ -168,7 +179,7 @@ renamer inp = let (tycons, objs) = boxer inp
 -- might be worth starting to pass CMap around starting here
 -- (currently generated again when setting CMaps in InfoTabs)
 defaultcaser :: Bool -> String -> ([TyCon], [Obj ()],  Assumptions)
-defaultcaser mhs inp = if mhs 
+defaultcaser mhs inp = if mhs
                        then mhsSTGer inp
                        else let (tycons, objs) = renamer inp
                             in (tycons, exhaustCases (toCMap tycons) objs, Set.empty)
@@ -187,7 +198,7 @@ conmaper mhs inp = let (tycons, objs, assums) = infotaber mhs inp
                     in (tycons', objs', assums)
 
 typechecker :: Bool -> String -> ([TyCon], [Obj InfoTab])
-typechecker mhs inp = let (tycons, objs, assums) = conmaper mhs inp                                                 
+typechecker mhs inp = let (tycons, objs, assums) = conmaper mhs inp
                       in (tycons, if mhs then hmstgAssums objs assums else hmstg objs)
 
 orderfvsargser :: Bool -> String -> ([TyCon], [Obj InfoTab])
@@ -195,7 +206,7 @@ orderfvsargser mhs inp = let (tycons, objs) = typechecker mhs inp
                          in (tycons, orderFVsArgs objs)
 
 knowncaller ::  Bool -> String -> ([TyCon], [Obj InfoTab])
-knowncaller mhs inp  = let (tycons, objs) = orderfvsargser mhs inp 
+knowncaller mhs inp  = let (tycons, objs) = orderfvsargser mhs inp
                        in (tycons, propKnownCalls objs)
 
 heapchecker :: Bool -> String -> ([TyCon], [Obj InfoTab])
@@ -258,9 +269,35 @@ tctest mhs arg =
     hmstgdebug objs
 
 
+#if USE_CAST
+codegener :: String -> Bool -> Bool -> [EExtDecl]
+codegener inp v mhs = let (tycons, objs) = heapchecker mhs inp
+                          typeEnums = cTypeEnums tycons
+                          infotab = cITs objs
+                          (shoForward, shoDef) = cSHOs objs
+                          (funForwards, funDefs) = cgObjs objs stgRTSGlobals
+                       in [Right header] ++
+                          map Right funForwards ++
+                          map Left typeEnums ++
+                          map Left infotab ++
+                          map Left shoForward ++
+                          map Left shoDef ++
+                          map Right funDefs ++
+                          [Left cStart] ++
+                          [Left $ cMain v]
 
+
+
+printEE :: EExtDecl -> String
+printEE (Left x) = (render . pretty) x ++ "\n"
+printEE (Right x) = x ++ "\n"
+
+pprinter :: [EExtDecl] -> String
+pprinter xs = concatMap printEE xs
+
+#else
 codegener :: String -> Bool -> Bool -> String
-codegener inp v mhs = let (tycons, objs) = heapchecker mhs inp   
+codegener inp v mhs = let (tycons, objs) = heapchecker mhs inp
                           typeEnums = showTypeEnums tycons
                           infotab = showITs objs
                           (shoForward, shoDef) = showSHOs objs
@@ -274,6 +311,10 @@ codegener inp v mhs = let (tycons, objs) = heapchecker mhs inp
                     shoDef ++ "\n" ++
                     intercalate "\n\n" funDefs ++
                     footer v
+
+pprinter :: String -> String
+pprinter = id
+#endif
 
 
 -- parse minihaskell in a file, add a block comment at the end
