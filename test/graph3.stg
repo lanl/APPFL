@@ -1,0 +1,55 @@
+data Graph = Nothing | G VE Graph;
+data VE = VE Int (List Int);
+
+degree = FUN(x -> case x of {
+       	       	  VE y zs -> length zs});
+
+elem = FUN(xs x -> case xs of {
+       	      	   Nil -> false;
+		   Cons a1 b1 -> case eqInt a1 x of {
+		      	       	      True -> true;
+				      False -> elem b1 x}}); 
+
+getVE = FUN(x g -> case g of {
+      	      	   G ve g1 -> case ve of {
+		     	      VE y z -> case eqInt y x of {
+			      	     	True -> ve;
+					False -> getVE x g1}}});
+
+degree2 = FUN(x g -> case getVE x g of {
+	  	     y -> degree y});
+		     	      
+
+--Test
+nothing = CON(Nothing);
+
+edge10 = CON(Cons two nil);
+edge11 = CON(Cons three edge10);
+edge12 = CON(Cons four edge11);
+edge13 = CON(Cons five edge12);
+
+edge20 = CON(Cons one nil);
+
+edge30 = CON(Cons three nil);
+
+edge40 = CON(Cons one nil);
+edge41 = CON(Cons five edge40);
+
+edge50 = CON(Cons one nil);
+edge51 = CON(Cons four edge50); 
+
+set1 = CON(VE one edge13);
+set2 = CON(VE two edge20);
+set3 = CON(VE three edge30);
+set4 = CON(VE four edge41);
+set5 = CON(VE five edge51);
+
+graph1 = CON(G set1 nothing);
+graph2 = CON(G set2 graph1);
+graph3 = CON(G set3 graph2);
+graph4 = CON(G set4 graph3);
+graph5 = CON(G set5 graph4);
+
+
+output = THUNK(degree2 three graph5);
+main = THUNK(eqInt output one);
