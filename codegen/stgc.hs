@@ -55,7 +55,7 @@ stgc arg =
   do
     ifd <- openFile arg ReadMode
     source <- hGetContents ifd
-    let prog = codegener source True False
+    let prog = pprinter $ codegener source True False
     putStrLn prog
     hClose ifd
     writeFile "../runtime/userprog.c" prog
@@ -66,7 +66,7 @@ mhsc arg =
   do
     ifd <- openFile arg ReadMode
     source <- hGetContents ifd
-    let prog = codegener source True True
+    let prog = pprinter $ codegener source True True
     putStrLn prog
     hClose ifd
     writeFile "../runtime/userprog.c" prog
@@ -135,7 +135,7 @@ checkOpts (Options {optHelp}) optInputs =
                  case length optInputs of
                    0 -> ioError (userError ("No input files\n" ++ usageInfo header options))
                    1 -> return ()
-                   _ ->  ioError (userError ("bad input\n" ++ usageInfo header options)) 
+                   _ ->  ioError (userError ("bad input\n" ++ usageInfo header options))
 
 compile :: Options -> String -> String -> String -> Bool -> IO ()
 compile  (Options {optVerbose, optDumpParse, optNoPrelude, optStrict, optInput, optOutput, optDumpSTG}) preludeDir rtLibDir rtIncDir gcc =
@@ -149,22 +149,22 @@ compile  (Options {optVerbose, optDumpParse, optNoPrelude, optStrict, optInput, 
     prelude <- hGetContents pfd
     let source = if optNoPrelude then src
                  else prelude ++ src
-        (ts,os) = let (t,o,_) =  mhsSTGer source             
+        (ts,os) = let (t,o,_) =  mhsSTGer source
                  in if minihs then (t,o) else parser source
 
     when optDumpSTG $
       writeFile (input ++ ".dump.stg") (show $ unparse ts $+$ unparse os)
-        
+
     case optDumpParse of
-      True  -> do 
-                 let stgtext = (show $ toCMap $ ts) ++ (show os)                     
+      True  -> do
+                 let stgtext = (show $ toCMap $ ts) ++ (show os)
                  writeFile (input ++ ".dump") stgtext
-                 
+
       False -> do
                  let coutput = input ++ ".c"
                  let flags = " -std=gnu99 -Wl,-rpath " ++ rtIncDir ++ " -L" ++ rtLibDir ++ " -I" ++ rtIncDir ++ if optStrict then " -lruntime-s " else " -lruntime-ns"
-                 writeFile coutput (codegener source optVerbose minihs)
-                 if gcc 
+                 writeFile coutput (pprinter $ codegener source optVerbose minihs)
+                 if gcc
                    then system ("gcc " ++ coutput ++ " -o " ++ (fromJust optOutput) ++ flags)
                    else return ExitSuccess
                  return ()

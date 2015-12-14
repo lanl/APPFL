@@ -1,0 +1,62 @@
+data BSTree a = Leaf a | B (BSTree a) a (BSTree a);
+
+-- or :: Bool -> Bool -> Bool 
+or = FUN(x y -> case x of {
+     	     	True -> true;
+		False -> case y of {
+		      	 True -> true;
+			 False -> false}});
+
+-- searchTest :: BSTree (TP2 Int Int) -> Int -> Bool
+searchTest = FUN(xs t -> case xs of {
+	     	      	 Leaf a -> case a of {
+			      	   TP2 b1 c1 -> case eqInt b1 t of {
+				       	     	True -> true;
+						False -> false}};
+	                 B a1 a2 a3 -> case a2 of {
+			   	       TP2 b1 c1 -> case eqInt b1 t of {
+				       	     	    True -> true;
+	                                            False -> let {q1 = THUNK(searchTest a1 t);
+								  q2 = THUNK(searchTest a3 t);
+								  q3 = THUNK(or q1 q2)} in q3}}});
+
+-- getKey :: BSTree (TP2 Int Int) -> Int -> Int
+getKey = FUN(xs t -> case xs of {
+       	 	     Leaf a -> case a of {
+		     	       TP2 b1 c1 -> case eqInt b1 t of {
+			       	      	    True -> c1;
+					    False -> zero}};
+		     B a1 a2 a3 -> case a2 of {
+		       	     	   TP2 b1 c1 -> case eqInt b1 t of {
+				       	     	True -> c1;
+						False -> case intGT b1 t of {
+						      	 True -> getKey a1 t;
+							 False -> getKey a3 t}}}}); 
+
+-- size :: BSTree a -> Int
+size = FUN(xs -> case xs of {
+       	      	 Leaf a -> one;
+		 B a1 a2 a3 -> let {q1 = THUNK(size a1);
+		      	       	    q2 = THUNK(size a3); 
+				    q3 = THUNK(plusInt one q1);
+				    q4 = THUNK(plusInt q2 q3)} in q4});
+
+t1 = CON(TP2 one four);
+t2 = CON(TP2 two three);
+t3 = CON(TP2 three two);
+t4 = CON(TP2 four five);
+t5 = CON(TP2 five one);
+t6 = CON(TP2 six two);
+t7 = CON(TP2 seven three);
+
+b1 = CON(Leaf t1);
+b2 = CON(Leaf t3);
+b3 = CON(Leaf t5);
+b4 = CON(Leaf t7);
+b5 = CON(B b1 t2 b2);
+b6 = CON(B b3 t6 b4);
+b7 = CON(B b5 t4 b6);
+
+--Test 
+output = THUNK(size b7);
+main = THUNK(eqInt output seven);

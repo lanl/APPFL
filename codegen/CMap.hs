@@ -25,7 +25,8 @@ module CMap
   isBoxedTCon,
   CMap,
   instantiateDataConAt,
-  showTypeEnums
+  showTypeEnums,
+  cTypeEnums,
 ) where
 
 import Util
@@ -41,36 +42,37 @@ import Debug.Trace
 #if USE_CAST
 import CAST
 import Text.PrettyPrint(render)
-import Language.C.Pretty 
-#endif 
+import Language.C.Pretty
+#endif
 
 
 type CMap = Map.Map Con TyCon
 
 #if USE_CAST
+showTypeEnums = error "showTypeEnums"
 
-showTypeEnums :: [TyCon] -> String
-showTypeEnums tycons = 
-    intercalate "\n" $ map (render . pretty . cTypeEnum) tycons
+cTypeEnums :: [TyCon] -> [CExtDecl]
+cTypeEnums tycons = map cTypeEnum tycons
 
-cTypeEnum :: TyCon -> ExtDecl
+cTypeEnum :: TyCon -> CExtDecl
 cTypeEnum  (TyCon _ con _ dataCons) = cEnum con [ _mhsSanitize c | DataCon c _ <- dataCons ]
 
 #else
+cTypeEnums = error "cTypeEnums"
 
-showTypeEnums tycons = 
+showTypeEnums tycons =
     intercalate "\n" $ map showTypeEnum tycons
 
 showTypeEnum (TyCon _ con _ dataCons) =
     "enum tycon_" ++ con ++ " {\n" ++
       -- this would be a nice touch but should be done when ingesting data decls
       -- renaming the constructors with tycon as prefix instead of "con_" here
-      -- intercalate ",\n" [ "  " ++ con ++ "_" ++ mhsSanitize c 
-       intercalate ",\n" [ "  " ++ "con_" ++ _mhsSanitize c 
+      -- intercalate ",\n" [ "  " ++ con ++ "_" ++ mhsSanitize c
+       intercalate ",\n" [ "  " ++ "con_" ++ _mhsSanitize c
                           | DataCon c _ <- dataCons ] ++
       " };\n"
-       
-                        
+
+
 #endif
 
 -- MHS HACK FIX, see also CMap.luConTag
@@ -85,8 +87,8 @@ toCMap tycons =
   in Map.fromList tab
 
 
--- Lookup the arity of a DataCon by name     
-conArity :: Con -> CMap -> Int      
+-- Lookup the arity of a DataCon by name
+conArity :: Con -> CMap -> Int
 conArity name conmap
   | isBuiltInType name = 0 -- short circuit for builtins (0,1,2..)
   | otherwise          =
@@ -110,7 +112,7 @@ consExhaust :: [Con] -> CMap -> Bool
 consExhaust [] _ = False
 consExhaust cc@(c:cs) conmap
   | isBuiltInType c = False -- assume Int# and Double# cannot be enumerated
-  | otherwise = 
+  | otherwise =
       let cons = luDCons c conmap
       in  null $ map dataConName cons \\ cc
 
@@ -134,7 +136,7 @@ isBoxedTCon c cmap
         Just (TyCon boxed _ _ _) -> boxed
         Nothing                  -> error $
                                     "TyCon for " ++ c ++ " not found in CMap"
-                               
+
 
 -- lookup TyCon info by con in the CMap
 -- info is a triple of the form
@@ -207,9 +209,9 @@ getBuiltInType c
 -- (empty MonoType list is what it needs here, but it finds it
 -- by looking through the DataCons of the TyCon until it finds
 -- one whose name matches what it looked up)
-  | isInt c   = makeIntTyCon c 
+  | isInt c   = makeIntTyCon c
   | otherwise = error "builtin TyCon not found!"
-      
+
 instance {-# OVERLAPPING #-} Show CMap where
   show = show.pprint
 
@@ -223,5 +225,3 @@ instance PPrint CMap where
                                  text "TyVars:" <+> listText vs $+$
                                  text "DataCons:" <+> brackList (map pprint dcs)
     in vcat $ map f $ Map.toList m
-        
-    

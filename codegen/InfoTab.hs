@@ -14,12 +14,12 @@ module InfoTab(
   setCMaps,
   setITs,
   showITs,
+  cITs,
   showITType,
   showObjType,
-  show
-
-  , showIT
-  , itsOf
+  show,
+  showIT,
+  itsOf,
 ) where
 
 import Prelude
@@ -27,6 +27,7 @@ import PPrint
 import AST
 import ADT
 import CMap
+import Data.Maybe
 import Data.List(nub,(\\),intercalate)
 
 import Data.Map (Map)
@@ -37,8 +38,8 @@ import qualified Data.Set as Set
 
 #if USE_CAST
 import CAST
-import Language.C.Pretty 
-#endif 
+import Language.C.Pretty
+#endif
 
 
 -- need an infoTab entry for each lexically distinct HO or SHO
@@ -49,38 +50,38 @@ import Language.C.Pretty
   every Expr, Alt, Obj has metadata, e.g. name, freevars
 -}
 
-data InfoTab = 
-    ITFun { 
+data InfoTab =
+    ITFun {
       typ :: Monotype,
       ctyp :: Polytype,
       name :: String,
       fvs :: [(Var,Monotype)],
-      bfvc :: Int,  -- boxed FV count     
+      bfvc :: Int,  -- boxed FV count
       ufvc :: Int,  -- unboxed FV count
       truefvs :: [Var],
       entryCode :: String,
       trueEntryCode :: String,
 
-      arity :: Int}      
+      arity :: Int}
 
-  | ITPap { 
+  | ITPap {
       typ :: Monotype,
       ctyp :: Polytype,
       name :: String,
       fvs :: [(Var,Monotype)],
-      bfvc :: Int,  -- boxed FV count     
+      bfvc :: Int,  -- boxed FV count
       ufvc :: Int,  -- unboxed FV count
       truefvs :: [Var],
       entryCode :: String,
       trueEntryCode :: String,
 
       args     :: [(Atom,Monotype)],
-      bargc :: Int,  -- boxed initial arg count     
+      bargc :: Int,  -- boxed initial arg count
       uargc :: Int,  -- unboxed initial arg count
       argPerm :: [Int], -- map from notional pos to actual pos
       knownCall :: Maybe InfoTab} -- of the FUN
 
-  | ITCon { 
+  | ITCon {
       typ :: Monotype,
       ctyp :: Polytype,
       name :: String,
@@ -91,18 +92,18 @@ data InfoTab =
       entryCode :: String,
 
       args :: [(Atom,Monotype)],
-      bargc :: Int,  -- boxed arg count     
+      bargc :: Int,  -- boxed arg count
       uargc :: Int,  -- unboxed arg count
       argPerm :: [Int], -- map from notional pos to actual pos
       arity :: Int,
       con :: String, -- actual constructor name, not object name
       cmap :: CMap }
-  | ITThunk { 
+  | ITThunk {
       typ :: Monotype,
       ctyp :: Polytype,
       name :: String,
       fvs :: [(Var,Monotype)],
-      bfvc :: Int,  -- boxed FV count     
+      bfvc :: Int,  -- boxed FV count
       ufvc :: Int,  -- unboxed FV count
       truefvs :: [Var],
       entryCode :: String }
@@ -112,59 +113,59 @@ data InfoTab =
       ctyp :: Polytype,
       name :: String,
       fvs :: [(Var,Monotype)],  -- why is this here?
-      bfvc :: Int,  -- boxed FV count     
+      bfvc :: Int,  -- boxed FV count
       ufvc :: Int,  -- unboxed FV count
       truefvs :: [Var],
       entryCode :: String }
 
-  | ITAtom { 
+  | ITAtom {
       typ :: Monotype,
       ctyp :: Polytype,
       fvs :: [(Var,Monotype)],
-      bfvc :: Int,  -- boxed FV count     
+      bfvc :: Int,  -- boxed FV count
       ufvc :: Int,  -- unboxed FV count
       truefvs :: [Var],
       noHeapAlloc :: Bool,
-      
+
       maybeCMap :: Maybe CMap  -- only needed for LitC
     }
 
 -- Expr
-  | ITFCall { 
+  | ITFCall {
       typ :: Monotype,
       ctyp :: Polytype,
       fvs :: [(Var,Monotype)],
-      bfvc :: Int,  -- boxed FV count     
+      bfvc :: Int,  -- boxed FV count
       ufvc :: Int,  -- unboxed FV count
       truefvs :: [Var],
       noHeapAlloc :: Bool,
 
       knownCall :: Maybe InfoTab } -- of the FUN
 
-  | ITPrimop { 
+  | ITPrimop {
       typ :: Monotype,
       ctyp :: Polytype,
-      fvs :: [(Var,Monotype)], 
-      bfvc :: Int,  -- boxed FV count     
+      fvs :: [(Var,Monotype)],
+      bfvc :: Int,  -- boxed FV count
       ufvc :: Int,  -- unboxed FV count
       truefvs :: [Var],
       noHeapAlloc :: Bool }
 
-  | ITLet { 
+  | ITLet {
       typ :: Monotype,
       ctyp :: Polytype,
       fvs :: [(Var,Monotype)],
-      bfvc :: Int,  -- boxed FV count     
+      bfvc :: Int,  -- boxed FV count
       ufvc :: Int,  -- unboxed FV count
       truefvs :: [Var],
 
       noHeapAlloc :: Bool }
 
-  | ITCase { 
+  | ITCase {
       typ :: Monotype,
       ctyp :: Polytype,
       fvs :: [(Var,Monotype)],
-      bfvc :: Int,  -- boxed FV count     
+      bfvc :: Int,  -- boxed FV count
       ufvc :: Int,  -- unboxed FV count
       truefvs :: [Var],
 
@@ -172,32 +173,32 @@ data InfoTab =
       cmap :: CMap}
 
 -- Alt
-  | ITACon { 
+  | ITACon {
       typ :: Monotype,
       ctyp :: Polytype,
       fvs :: [(Var,Monotype)],
-      bfvc :: Int,  -- boxed FV count     
+      bfvc :: Int,  -- boxed FV count
       ufvc :: Int,  -- unboxed FV count
       truefvs :: [Var],
 
       cmap :: CMap }
 
-  | ITADef { 
+  | ITADef {
       typ :: Monotype,
       ctyp :: Polytype,
       fvs :: [(Var,Monotype)],
-      bfvc :: Int,  -- boxed FV count     
+      bfvc :: Int,  -- boxed FV count
       ufvc :: Int,  -- unboxed FV count
       truefvs :: [Var],
 
       cmap :: CMap }
 
 -- Alts - this is used for CASECONTs
-  | ITAlts { 
+  | ITAlts {
       typ :: Monotype,
       ctyp :: Polytype,
       fvs :: [(Var,Monotype)],
-      bfvc :: Int,  -- boxed FV count     
+      bfvc :: Int,  -- boxed FV count
       ufvc :: Int,  -- unboxed FV count
       truefvs :: [Var],
       name :: String,         -- for C infotab
@@ -209,11 +210,11 @@ data InfoTab =
   -- call continuation by ???
   | ITUpdcont
   | ITCasecont
-  | ITCallcont 
+  | ITCallcont
   | ITFuncont
-    deriving(Eq)   
+    deriving(Eq)
 
-class ITsOf a b where 
+class ITsOf a b where
     itsOf :: a -> b
 
 instance ITsOf a [b] => ITsOf [a] [b] where
@@ -232,7 +233,7 @@ instance ITsOf (Expr a) [a] where
 instance ITsOf (Alt a) [a] where
     itsOf ACon{amd, ae} = amd : itsOf ae
     itsOf ADef{amd, ae} = amd : itsOf ae
-    
+
 instance ITsOf (Alts a) [a] where
     itsOf Alts{altsmd, alts} = altsmd : itsOf alts
 
@@ -244,20 +245,20 @@ typUndef = MPhony
 ctypUndef = PPoly [] MPhony
 
 
-class SetITs a b where 
+class SetITs a b where
     setITs :: a -> b
 
 instance SetITs [Obj ([Var],[Var])] [Obj InfoTab] where
     setITs = map setITs
 
 instance SetITs (Expr ([Var],[Var])) (Expr InfoTab) where
-    setITs e@(ELet emd defs ee) = 
+    setITs e@(ELet emd defs ee) =
         ELet (makeIT e) (setITs defs) (setITs ee)
 
-    setITs e@(ECase emd ee alts) = 
+    setITs e@(ECase emd ee alts) =
         ECase (makeIT e) (setITs ee) (setITs alts)
 
-    setITs e@(EAtom emd a) = 
+    setITs e@(EAtom emd a) =
         EAtom (makeIT e) a
 
     setITs e@(EFCall emd f eas) =
@@ -267,29 +268,29 @@ instance SetITs (Expr ([Var],[Var])) (Expr InfoTab) where
         EPrimop (makeIT e) p (map setITs eas)
 
 instance SetITs (Alts ([Var],[Var])) (Alts InfoTab) where
-    setITs as@(Alts altsmd alts name) = 
+    setITs as@(Alts altsmd alts name) =
        Alts (makeIT as) (map setITs alts) name
 
 instance SetITs (Alt ([Var],[Var])) (Alt InfoTab) where
-    setITs a@(ACon amd c vs e) = 
+    setITs a@(ACon amd c vs e) =
         ACon (makeIT a) c vs (setITs e)
-    setITs a@(ADef amd v e) = 
+    setITs a@(ADef amd v e) =
         ADef (makeIT a) v (setITs e)
 
 instance SetITs (Obj ([Var],[Var])) (Obj InfoTab) where
-    setITs o@(FUN omd vs e n) = 
+    setITs o@(FUN omd vs e n) =
         FUN (makeIT o) vs (setITs e) n
 
-    setITs o@(PAP omd f as n) = 
+    setITs o@(PAP omd f as n) =
         PAP (makeIT o) f (map setITs as) n
 
-    setITs o@(CON omd c as n) = 
+    setITs o@(CON omd c as n) =
         CON (makeIT o) c (map setITs as) n
 
-    setITs o@(THUNK omd e n) = 
+    setITs o@(THUNK omd e n) =
         THUNK (makeIT o) (setITs e) n
 
-    setITs o@(BLACKHOLE omd n) = 
+    setITs o@(BLACKHOLE omd n) =
         BLACKHOLE (makeIT o) n
 
 
@@ -299,7 +300,7 @@ class MakeIT a where
     makeIT :: a -> InfoTab
 
 instance MakeIT (Obj ([Var],[Var])) where
-    makeIT o@(FUN (fvs,truefvs) vs e n) = 
+    makeIT o@(FUN (fvs,truefvs) vs e n) =
         ITFun { arity = length vs,
               name = n,
               fvs = zip fvs $ repeat typUndef,
@@ -378,80 +379,80 @@ instance MakeIT (Obj ([Var],[Var])) where
                   }
 
 instance MakeIT (Expr ([Var],[Var])) where
-    makeIT ELet{emd = (fvs,truefvs)} = 
-        ITLet {fvs = zip fvs $ repeat typUndef, 
+    makeIT ELet{emd = (fvs,truefvs)} =
+        ITLet {fvs = zip fvs $ repeat typUndef,
                bfvc = -1,
                ufvc = -1,
-               truefvs = truefvs, 
-               typ = typUndef, 
-               ctyp = ctypUndef, 
+               truefvs = truefvs,
+               typ = typUndef,
+               ctyp = ctypUndef,
                noHeapAlloc = False}
 
-    makeIT ECase{emd = (fvs,truefvs)} = 
-        ITCase{fvs = zip fvs $ repeat typUndef, 
+    makeIT ECase{emd = (fvs,truefvs)} =
+        ITCase{fvs = zip fvs $ repeat typUndef,
                bfvc = -1,
                ufvc = -1,
-               truefvs = truefvs, 
-               typ = typUndef, 
+               truefvs = truefvs,
+               typ = typUndef,
                ctyp = ctypUndef,
                noHeapAlloc = False,
                cmap = Map.empty}
 
-    makeIT EAtom{emd = (fvs,truefvs)} = 
-        ITAtom{fvs = zip fvs $ repeat typUndef, 
+    makeIT EAtom{emd = (fvs,truefvs)} =
+        ITAtom{fvs = zip fvs $ repeat typUndef,
                bfvc = -1,
                ufvc = -1,
-               truefvs = truefvs, 
-               typ = typUndef, 
-               ctyp = ctypUndef, 
+               truefvs = truefvs,
+               typ = typUndef,
+               ctyp = ctypUndef,
                noHeapAlloc = False,
                maybeCMap = Nothing}
 
-    makeIT EFCall{emd = (fvs,truefvs)} = 
-        ITFCall{fvs = zip fvs $ repeat typUndef, 
+    makeIT EFCall{emd = (fvs,truefvs)} =
+        ITFCall{fvs = zip fvs $ repeat typUndef,
                 bfvc = -1,
                 ufvc = -1,
-                truefvs = truefvs, 
-                typ = typUndef, 
-                ctyp = ctypUndef, 
-                noHeapAlloc = False, 
+                truefvs = truefvs,
+                typ = typUndef,
+                ctyp = ctypUndef,
+                noHeapAlloc = False,
                 knownCall = Nothing}
 
-    makeIT EPrimop{emd = (fvs,truefvs)} = 
-        ITPrimop{fvs = zip fvs $ repeat typUndef, 
+    makeIT EPrimop{emd = (fvs,truefvs)} =
+        ITPrimop{fvs = zip fvs $ repeat typUndef,
                  bfvc = -1,
                  ufvc = -1,
-                 truefvs = truefvs, 
-                 typ = typUndef, 
-                 ctyp = ctypUndef, 
+                 truefvs = truefvs,
+                 typ = typUndef,
+                 ctyp = ctypUndef,
                  noHeapAlloc = False}
 
 instance MakeIT (Alts ([Var],[Var])) where
-    makeIT Alts{altsmd = (fvs,truefvs), aname} = 
-        ITAlts {fvs = zip fvs $ repeat typUndef, 
+    makeIT Alts{altsmd = (fvs,truefvs), aname} =
+        ITAlts {fvs = zip fvs $ repeat typUndef,
                 bfvc = -1,
                 ufvc = -1,
-                truefvs = truefvs, 
+                truefvs = truefvs,
                 typ = typUndef,
                 ctyp = ctypUndef,
                 entryCode = aname,
                 name = aname}
 
 instance MakeIT (Alt ([Var],[Var])) where
-    makeIT ACon{amd = (fvs,truefvs)} = 
-        ITACon{fvs = zip fvs $ repeat typUndef, 
+    makeIT ACon{amd = (fvs,truefvs)} =
+        ITACon{fvs = zip fvs $ repeat typUndef,
                bfvc = -1,
                ufvc = -1,
-               truefvs = truefvs, 
+               truefvs = truefvs,
                typ = typUndef,
                ctyp = ctypUndef,
                cmap = Map.empty}
 
-    makeIT ADef{amd = (fvs,truefvs)} = 
-        ITADef{fvs = zip fvs $ repeat typUndef, 
+    makeIT ADef{amd = (fvs,truefvs)} =
+        ITADef{fvs = zip fvs $ repeat typUndef,
                bfvc = -1,
                ufvc = -1,
-               truefvs = truefvs, 
+               truefvs = truefvs,
                typ = typUndef,
                ctyp = ctypUndef,
                -- cmap = error "ADef cmap set undefined in InfoTab.hs"}
@@ -474,88 +475,83 @@ showITType _ = "sho"
 -- showITTType _ = error "bad ITType"
 
 
-myConcatMap f = intercalate "\n" . map f
-
-showITs :: ITsOf a [InfoTab] => a -> [Char]
-showITs os = myConcatMap showIT $ itsOf os
---showITs os = concatMap showIT $ itsOf os
 
 #if USE_CAST
-cInfoTab :: InfoTab -> Maybe ExtDecl
+cInfoTab :: InfoTab -> Maybe CExtDecl
 cInfoTab it@(ITFun {}) = Just (
-    cInfoTabStruct (name it) 
+    cInfoTabStruct (name it)
         [cStructMember StringTy "name" (name it)
         ,cStructMember PtrTy "entryCode" (entryCode it)
         ,cStructMember EnumTy "objType" "FUN"
-        ,cStructMember IntTy "layoutInfo.payloadSize" (length $ fvs it) 
+        ,cStructMember IntTy "layoutInfo.payloadSize" (length $ fvs it)
         ,cStructMember IntTy "layoutInfo.boxedCount" (length $ fvs it)
         ,cStructMember IntTy "layoutInfo.unboxedCount" (ufvc it)
         ,cStructMember IntTy "funFields.arity" (arity it)
         ,cStructMember EnumTy "funFields.trueEntryCode" (trueEntryCode it)
         ])
-  
+
 cInfoTab it@(ITPap {}) =  Just (
-    cInfoTabStruct (name it) 
+    cInfoTabStruct (name it)
         [cStructMember StringTy "name" (name it)
         ,cStructMember PtrTy "entryCode" (entryCode it)
         ,cStructMember EnumTy "objType" "PAP"
-        ,cStructMember IntTy "layoutInfo.payloadSize" (length (fvs it) + length (args it) + 1) 
+        ,cStructMember IntTy "layoutInfo.payloadSize" (length (fvs it) + length (args it) + 1)
         ,cStructMember IntTy "layoutInfo.boxedCount" (bfvc it)
         ,cStructMember IntTy "layoutInfo.unboxedCount" (ufvc it)
         ,cStructMember EnumTy "funFields.trueEntryCode" (trueEntryCode it)
         ])
-        
+
 cInfoTab it@(ITCon {}) =  Just (
     cInfoTabStruct (name it)
         [cStructMember StringTy "name" (name it)
         ,cStructMember PtrTy "entryCode" (entryCode it)
         ,cStructMember EnumTy "objType" "CON"
-        ,cStructMember IntTy "layoutInfo.payloadSize" (arity it) 
+        ,cStructMember IntTy "layoutInfo.payloadSize" (arity it)
         ,cStructMember IntTy "layoutInfo.boxedCount" (bargc it)
         ,cStructMember IntTy "layoutInfo.unboxedCount" (uargc it)
         ,cStructMember StringTy "layoutInfo.permString" (concatMap show (argPerm it))
         ,cStructMember IntTy "conFields.arity" (arity it)
         ,cStructMember EnumTy "conFields.tag"  (luConTag (con it) (cmap it))
         ,cStructMember StringTy "conFields.conName" (con it)
-        ])     
-    
+        ])
+
 cInfoTab it@(ITThunk {}) =  Just (
-    cInfoTabStruct (name it) 
+    cInfoTabStruct (name it)
         [cStructMember StringTy "name" (name it)
         ,cStructMember PtrTy "entryCode" (entryCode it)
         ,cStructMember EnumTy "objType" "THUNK"
-        ,cStructMember IntTy "layoutInfo.payloadSize" (1 + (length $ fvs it)) 
+        ,cStructMember IntTy "layoutInfo.payloadSize" (1 + (length $ fvs it))
         ,cStructMember IntTy "layoutInfo.boxedCount" (bfvc it)
         ,cStructMember IntTy "layoutInfo.unboxedCount" (ufvc it)
         ])
-        
+
 cInfoTab it@(ITBlackhole {}) =  Just (
-    cInfoTabStruct (name it) 
+    cInfoTabStruct (name it)
         [cStructMember StringTy "name" (name it)
         ,cStructMember PtrTy "entryCode" (entryCode it)
         ,cStructMember EnumTy "objType" "BLACKHOLE"
         ,cStructMember IntTy "layoutInfo.payloadSize" (0 :: Int)
         ,cStructMember IntTy "layoutInfo.boxedCount" (0 :: Int)
         ,cStructMember IntTy "layoutInfo.unboxedCount" (0 :: Int)
-        ])            
+        ])
 
 cInfoTab it@(ITAlts {}) =  Just (
     cCInfoTabStruct (name it)
         [cStructMember StringTy "name" (name it)
         ,cStructMember PtrTy "entryCode" (entryCode it)
         ,cStructMember EnumTy "contType" "CASECONT"
-        ,cStructMember IntTy "layoutInfo.payloadSize" (length $ fvs it)
+         ,cStructMember IntTy "layoutInfo.payloadSize" (length $ fvs it)
         ,cStructMember IntTy "layoutInfo.boxedCount" (bfvc it)
         ,cStructMember IntTy "layoutInfo.unboxedCount" (ufvc it)
-        ])           
+        ])
 
 cInfoTab _ = Nothing
 
-showIT :: InfoTab -> [Char]
-showIT it = let x = cInfoTab it in
-                case x of
-                  Just it -> (render . pretty) it ++ "\n"
-                  Nothing -> ""
+cITs :: ITsOf a [InfoTab] => a -> [CExtDecl]
+cITs os =  mapMaybe cInfoTab (itsOf os)
+
+showIT = error "showIT"
+showITs = error "showITs"
 
 #else
 
@@ -575,7 +571,7 @@ showIT it@(ITFun {}) =
     "    .funFields.arity         = " ++ show (arity it) ++ ",\n" ++
     "    .funFields.trueEntryCode = " ++ trueEntryCode it ++ ",\n" ++
     "  };\n"
-        
+
 showIT it@(ITPap {}) =
     "InfoTab it_" ++ name it ++ " __attribute__((aligned(8))) = \n" ++
     "  { .name                = " ++ show (name it) ++ ",\n" ++
@@ -584,7 +580,7 @@ showIT it@(ITPap {}) =
     "    .entryCode           = &" ++ entryCode it ++ ",\n" ++
     "    .objType             = PAP,\n" ++
     -- payloadSize handled specially for PAP
-    "    .layoutInfo.payloadSize  = " ++ show (length (fvs it) + 
+    "    .layoutInfo.payloadSize  = " ++ show (length (fvs it) +
                                                length (args it) +
                                                1) ++ ",\n" ++
 --    "    // argPerm = " ++ show (argPerm it) ++ "\n" ++
@@ -593,7 +589,7 @@ showIT it@(ITPap {}) =
 --    "    .layoutInfo.permString   = \"" ++ concatMap show (argPerm it) ++ "\",\n" ++
     "    .papFields.trueEntryCode = " ++ trueEntryCode it ++ ",\n" ++
     "  };\n"
-        
+
 showIT it@(ITCon {}) =
     "InfoTab it_" ++ name it ++ " __attribute__((aligned(8))) = \n" ++
     "  { .name                = " ++ show (name it) ++ ",\n" ++
@@ -610,7 +606,7 @@ showIT it@(ITCon {}) =
     "    .conFields.tag       = " ++ luConTag (con it) (cmap it) ++ ",\n" ++
     "    .conFields.conName   = " ++ show (con it) ++ ",\n" ++
     "  };\n"
-        
+
 showIT it@(ITThunk {}) =
     "InfoTab it_" ++ name it ++ " __attribute__((aligned(8))) = \n" ++
     "  { .name                = " ++ show (name it) ++ ",\n" ++
@@ -624,18 +620,18 @@ showIT it@(ITThunk {}) =
     "    .layoutInfo.unboxedCount = " ++ show (ufvc it) ++ ",\n" ++
 --    "    .layoutInfo.permString   = \"" ++ concatMap show (argPerm it) ++ "\",\n" ++
     "  };\n"
-        
-showIT it@(ITBlackhole {}) = 
+
+showIT it@(ITBlackhole {}) =
     "InfoTab it_" ++ name it ++ "  __attribute__((aligned(8)))= \n" ++
     "  { .name                = " ++ show (name it) ++ ",\n" ++
     "    // fvs " ++ show (fvs it) ++ "\n" ++
     -- "    .fvCount             = " ++ show (length $ fvs it) ++ ",\n" ++
     "    .entryCode           = &" ++ entryCode it ++ ",\n" ++
     "    .objType             = BLACKHOLE,\n" ++
-    "    .layoutInfo.payloadSize  = 0,\n" ++ 
+    "    .layoutInfo.payloadSize  = 0,\n" ++
 --    "    // argPerm = " ++ show (argPerm it) ++ "\n" ++
-    "    .layoutInfo.boxedCount   = 0,\n" ++ 
-    "    .layoutInfo.unboxedCount = 0,\n" ++ 
+    "    .layoutInfo.boxedCount   = 0,\n" ++
+    "    .layoutInfo.unboxedCount = 0,\n" ++
 --    "    .layoutInfo.permString   = \"" ++ concatMap show (argPerm it) ++ "\",\n" ++
     "  };\n"
 
@@ -655,8 +651,16 @@ showIT it@(ITAlts{}) =
 
 showIT _ = ""
 
+myConcatMap f = intercalate "\n" . map f
+
+showITs :: ITsOf a [InfoTab] => a -> [Char]
+showITs os = myConcatMap showIT $ itsOf os
+--showITs os = concatMap showIT $ itsOf os
+
+cITs = error "cIts"
+
 #endif
-      
+
 -- MODIFIED 6.30 - David ----------------------------------------
 -- code below replaces code from ConMaps.hs to set the CMaps in
 -- CON and ACon infotabs for typechecker and codegen lookups
@@ -696,11 +700,11 @@ instance SetITs (CMap, (Expr InfoTab)) (Expr InfoTab) where
 
     e@EFCall{eas} ->
         e{eas = map (setITs . (cmap,)) eas}
-        
+
     -- this could be the identity:  primops should not apply to user-defined constants
     e@EPrimop{eas} ->
         e{eas = map (setITs . (cmap,)) eas}
-        
+
     e@ECase{ee, ealts, emd} ->
       e{ ee    = setITs (cmap,ee),
          ealts = setITs (cmap,ealts),
@@ -713,7 +717,7 @@ instance SetITs (CMap, (Expr InfoTab)) (Expr InfoTab) where
 instance SetITs (CMap, (Alts InfoTab)) (Alts InfoTab) where
   setITs (cmap, a@Alts{alts}) =
     a{ alts = map (setITs . (cmap,)) alts}
-    
+
 instance SetITs (CMap, (Alt InfoTab)) (Alt InfoTab) where
   setITs (cmap, alt) = case alt of
 
@@ -727,7 +731,7 @@ instance SetITs (CMap, (Alt InfoTab)) (Alt InfoTab) where
 
 -- can change this to get infotabs printed in block comments
 instance Unparse InfoTab where
-  unparse it = empty 
+  unparse it = empty
 
 instance PPrint InfoTab where
  pprint it = text "Infotab:" <+> itName $+$
@@ -785,10 +789,9 @@ instance PPrint InfoTab where
                (text "ITAlts", makeName name $+$
                                frvarsDoc fvs truefvs)
              _ -> (text "Other InfoTab",empty)
-  
+
 
 instance Show InfoTab where
     show it = show (typ it)
 --    show it = show (ctyp it)
 --    show it = show (truefvs it)
-
