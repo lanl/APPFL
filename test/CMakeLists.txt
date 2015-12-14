@@ -39,6 +39,7 @@ project(stgc_test)
        set(tnames ${tname}_strict)
        set(bnames build_${tnames})
        add_test(${bnames} ${STGCC} -v -s ${SRC_DIR}/${tname}.stg -o ${tnames})
+       set_tests_properties(${bnames} PROPERTIES DEPENDS ${bname}) #hack to deal w/ race in .c output
        add_test(${tnames} ${BINARY_DIR}/${tnames} 2>&1)
        set_tests_properties(${tnames} PROPERTIES DEPENDS ${bnames})
        set_tests_properties(${tnames} PROPERTIES PASS_REGULAR_EXPRESSION
@@ -63,6 +64,7 @@ project(stgc_test)
        set(tnames ${tname}_strict)
        set(bnames build_${tnames})
        add_test(${bnames} ${STGCC} -v -s ${SRC_DIR}/${tname}.stg -o ${tnames})
+       set_tests_properties(${bnames} PROPERTIES DEPENDS ${bname}) #hack to deal w/ race in .c output
        add_test(${tnames} ${BINARY_DIR}/${tnames} 2>&1)
        set_tests_properties(${tnames} PROPERTIES DEPENDS ${bnames})
        set_tests_properties(${tnames} PROPERTIES PASS_REGULAR_EXPRESSION
