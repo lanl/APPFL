@@ -9,7 +9,8 @@
 
 extern void stgThunk(PtrOrLiteral self);
 
-void callContSave(int argc, PtrOrLiteral argv[]);
+// void callContSave(int argc, PtrOrLiteral argv[]);
+void callContSave(PtrOrLiteral argv[], Bitmap64 layout);
 void callContRestore(PtrOrLiteral argv[]);
 
 Obj *derefHO(Obj *op);
@@ -69,6 +70,7 @@ do {						\
 */
 
 // evaluate IN PLACE, this should probably only happen in stgApply
+// in which case there's some redundancy in pushing CALLCONTs
 #define STGEVAL(e)					    \
 do {							    \
   stgCurVal = e;					    \
@@ -80,7 +82,12 @@ do {							    \
     fprintf(stderr, "infinite loop detected in STGEVAL!\n"); \
     showStgVal(stgCurVal);				     \
     assert(false);					     \
-  }									\
+  }							     \
+  if (getObjType(stgCurVal.op) == THUNK) {		     \
+    fprintf(stderr, "THUNK at end of STGEVAL!\n");	     \
+    showStgVal(stgCurVal);				     \
+    assert(false);					     \
+  }							     \
   assert (cmmSP == cmmStack + cmmStackSize && "Non empty cmm stack in stgeval");\
   GC();					\
 } while (0)

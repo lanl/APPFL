@@ -195,8 +195,34 @@ void stgThunk(PtrOrLiteral self) {
 
 }
 
+DEFUN0(stgCallCont) {
+  // stgPopCont();  user must do this
+  fprintf(stderr,"stgCallCont returning\n");
+  RETURN0();  // fall back to the cmm trampoline
+  ENDFUN;
+}
+
+CInfoTab it_stgCallCont __attribute__((aligned(8))) =
+  { .name = "stgCallCont",
+    //    .fvCount = 0,
+    .entryCode = &stgCallCont,
+    .contType = CALLCONT,
+    .layoutInfo.boxedCount = -1,  // shouldn't be using this
+    .layoutInfo.unboxedCount = -1,  // shouldn't be using this
+  };
+
+/*
 void callContSave(int argc, PtrOrLiteral argv[]) {
   Cont *cc = stgAllocCallCont( &it_stgCallCont, argc );
+  for (int i = 0; i != argc; i++) 
+    cc->payload[i+1] = argv[i];
+}
+*/
+
+void callContSave(PtrOrLiteral argv[], Bitmap64 layout) {
+  int argc = BMSIZE(layout);
+  Cont *cc = stgAllocCallCont( &it_stgCallCont, argc );
+  cc->layout = layout;
   for (int i = 0; i != argc; i++) 
     cc->payload[i+1] = argv[i];
 }

@@ -222,16 +222,16 @@ cgo env o@(FUN it vs e name) =
       let env' = zip (map fst $ fvs it) (map FV [0..]) ++ 
                  zip vs (repeat FP) ++
                  env
-          vts@((bvs,uvs),(bts,uts)) = permArgs vs $ typ it
+--          vts@((bvs,uvs),(bts,uts)) = permArgs vs $ typ it
       (inline, funcs) <- cge env' e
       let forward = "FnPtr fun_" ++ name ++ "();"
           func =
             "// " ++ show (ctyp it) ++ "\n" ++
-            "// " ++ show vts ++ "\n" ++
+--            "// " ++ show vts ++ "\n" ++
             "DEFUN" ++ show (length vs + 1) ++ "(fun_" ++ 
             name ++ ", self, " ++
---            intercalate ", " vs ++
-            intercalate ", " (bvs ++ uvs) ++
+            intercalate ", " vs ++
+--            intercalate ", " (bvs ++ uvs) ++
             ") {\n" ++
             "  fprintf(stderr, \"" ++ name ++ " here\\n\");\n" ++
                indent 2 inline ++

@@ -32,7 +32,24 @@ extern CInfoTab it_stgUpdateCont;
 FnPtr fun_stgShowResultCont();
 extern CInfoTab it_stgShowResultCont;
 
-typedef uintptr_t Bitmap64;
+// bitmap for specifying boxed/unboxed values
+// assume 64 bits, high six bits for length,
+// low bit is index 0,
+// 0 => unboxed, 1 => boxed
+
+typedef struct Bitmap64proto {
+  uintptr_t mask : 58;
+  unsigned int size : 6;
+} Bitmap64proto;
+
+typedef union Bitmap64 {
+  uintptr_t bits;
+  Bitmap64proto bitmap;
+} Bitmap64;
+
+
+#define BMSIZE(bm) (bm.bitmap.size)
+#define BMMAP(bm) (bm.bitmap.mask)
 
 //------ stack and heap objects
 
@@ -41,6 +58,7 @@ typedef enum {          // superfluous, for sanity checking
   LONG,
   FLOAT,
   DOUBLE,
+  BITMAP,
   HEAPOBJ 
 } ArgType;
 
@@ -53,8 +71,9 @@ typedef enum {
   THUNK,
   BLACKHOLE,
   INDIRECT,
+  PHONYENDOBJ
 } ObjType;
-const char *objTypeNames[INDIRECT+1];
+const char *objTypeNames[PHONYENDOBJ];
 
   // stack continuations--change the names for compiler help finding them
 typedef enum {
@@ -84,6 +103,7 @@ typedef struct {
     int64_t l;
     float f;
     double d;
+    Bitmap64 b;
     Obj *op;
   };
 } PtrOrLiteral;
@@ -230,14 +250,6 @@ extern bool isHeap(Obj *p);
     nargc = NUNPACK(n);	\
   } while (0)
 
-// bitmap for specifying boxed/unboxed values
-// assume 64 bits, high six bits for length,
-// low bit is index 0,
-// 0 => unboxed, 1 => boxed
-
-#define BMSIZE(bm) ((bm>>58)&0x3F)
-#define BMMAP(bm) (bm & 0x03FFFFFFFFFFFFFFLL) 
-
 static inline InfoTab *getInfoPtr(Obj *p)  { 
   return (InfoTab *)((((uintptr_t)(p->infoPtr)) >> 3) << 3); 
 }
@@ -285,6 +297,7 @@ static inline ContType getContType(Cont *p) {
 // allocate Obj on heap, returning pointer to new Obj
 extern Obj* stgNewHeapObj(InfoTab *itp);
 extern Obj* stgNewHeapPAP(InfoTab *itp, int pargc, int nargc);
+extern Obj* stgNewHeapPAPmask(InfoTab *itp, Bitmap64 bitmap);
 // allocate Obj on continuation stack, returning pointer to new Obj
 extern Cont *stgAllocCallCont(CInfoTab *it, int payloadSize);
 extern Cont *stgAllocCont(CInfoTab *it);

@@ -60,7 +60,7 @@ strBaseNToM s n m = word64ToBaseNStr (strBaseNToWord64 s n) m
 
 word64ToCULHex w64 =
     let hex = word64ToBaseNStr w64 16
-    in "0x" ++ take (16 - length hex) (repeat '0') ++ hex ++ "UL"
+    in "(Bitmap64)0x" ++ take (16 - length hex) (repeat '0') ++ hex ++ "UL"
 
 
 

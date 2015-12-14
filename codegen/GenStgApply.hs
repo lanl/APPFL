@@ -1,25 +1,26 @@
 module GenStgApply (
-  dumpStgApply
+  doit
 ) where
 
 import Util
 import Data.List(intercalate)
+import STGbits
 
 data Strictness = Nonstrict
                 | Strict1   -- evaluate args first, then fun
                   deriving(Eq)
     
-strictness = Strict1
+doit = mapM (dumpStgApply 6) [Nonstrict, Strict1]
 
-filesuffix = case strictness of
-               Nonstrict -> "-nonstrict"
-               Strict1 -> "-strict"
+name strictness =
+    case strictness of
+      Nonstrict -> "nonstrict"
+      Strict1 -> "strict"
 
-dumpStgApply n = 
-    let (forward, macros, fun) = genAllstgApply n
-        name = if strictness == Strict1 then "strict" else "nonstrict" 
+dumpStgApply n strictness = 
+    let (forward, macros, fun) = genAllstgApply strictness n
     in do writeFile "../stgApply/stgApply.h" (includehtop ++ forward ++ macros ++ includehbot)
-          writeFile ("../stgApply/" ++ name ++ filesuffix ++ ".c") (includec ++ fun)
+          writeFile ("../stgApply/" ++ name strictness ++ ".c") (includec ++ fun)
           return ()
         where
           includehtop =
@@ -36,14 +37,17 @@ dumpStgApply n =
               "#include <stdlib.h>\n" ++
               "#include <stdio.h>\n\n" 
 
-genAlldebug n = let (forwards, macros, funs) = unzip3 $ map genN [1..n]
-                   in putStrLn $ concat forwards ++ "\n\n" ++ concat funs
+genAlldebug strictness n = 
+    let (forwards, macros, funs) = unzip3 $ map (genN strictness) [1..n]
+    in putStrLn $ concat forwards ++ "\n\n" ++ concat funs
 
-genAllstgApply n = let (forwards, macros, funs) = unzip3 $ map genN [1..n]
-                   in (concat forwards, concat macros, concat funs)
+genAllstgApply strictness n = 
+    let (forwards, macros, funs) = unzip3 $ map (genN strictness) [1..n]
+    in (concat forwards, concat macros, concat funs)
 
-genN n = let (forwards, macros, funs) = unzip3 $ map gen (pns n)
-         in (concat forwards, concat macros, concat funs)
+genN strictness n = 
+    let (forwards, macros, funs) = unzip3 $ map (gen strictness) (pns n)
+    in (concat forwards, concat macros, concat funs)
 
 pns n | n == 0 = [""]
       | n > 0 = pref $ pns (n-1)
@@ -51,20 +55,11 @@ pns n | n == 0 = [""]
         pref [] = []
         pref (x:xs) = ('N':x):('P':x):pref xs
 
-callContSave nps =
-    if nps > 0 then 
-        "callContSave(" ++ show nps ++ ", pargv);\n" 
-    else 
-        "// no pointer args to save\n"
+callContArgvSave offset npstring =
+    "callContSave( &argv[" ++ show offset ++ "], " ++ npStrToBMStr npstring ++ " );\n" 
 
-callContAndArgvRestore nps pinds =
-    if nps > 0 then 
-        "callContRestore(pargv);\n" ++
-        "// restore argv\n" ++
-        concat ["argv[" ++ show ind ++ "] = pargv[" ++ show i ++ "];\n"
-                | (i,ind) <- zip [0..] pinds] 
-    else 
-        "// no pointer args to restore\n"
+callContArgvRestore offset =
+    "callContRestore( &argv[" ++ show offset ++ "] );\n"
 
 optSwitch scrut lo hi f =
   if lo > hi then 
@@ -93,7 +88,6 @@ debugc code =
     code ++
     "#endif\n"
 
-
 --  Cont *cc = stgAllocCallCont( &it_stgCallCont, argc );
 {-
 evalps nps pinds =
@@ -108,6 +102,7 @@ evalps nps pinds =
              | i <- [0..nps-1] ]
 -}
 
+{-
 evalps nps pinds =
     -- only need to put all but the one to be evaluated in a ccont
     -- but for a quick test...
@@ -118,121 +113,125 @@ evalps nps pinds =
                | i <- [0..nps-1] ] ++
       "f = pargv[" ++ show nps ++ "];\n"
     else ""
+-}
 
-gen s =
+gen strictness npstring =
   (forward, macro, fun)
   where
-    argc = length s
-    nps = length $ filter (=='P') s
-    nns = argc - nps
-    pinds = [ i | (i,c) <- zip [0..] s, c == 'P' ]
-    ninds = [ i | (i,c) <- zip [0..] s, c == 'N' ]
-    fname = "stgApply" ++ s
+    argc = length npstring
+    fname = "stgApply" ++ npstring
     forward = "FnPtr " ++ fname ++ "();\n"
-
-    lens = length s
-    arglist = 'f' : concat [',':'v':show i | i <- [1..lens]]
+    arglist = 'f' : concat [',':'v':show i | i <- [1..argc]]
     macro = 
-      "#define STGAPPLY" ++ s ++ "(" ++ arglist ++ ") \\\n" ++
+      "#define STGAPPLY" ++ npstring ++ "(" ++ arglist ++ ") \\\n" ++
       "do { \\\n" ++
-      "  STGJUMP" ++ show (lens+1) ++ "(stgApply" ++ s ++ "," ++ arglist ++ "); \\\n" ++
+      "  STGJUMP" ++ show (argc+1) ++ "(stgApply" ++ npstring ++ "," ++ arglist ++ "); \\\n" ++
       "  } while(0)\n\n"
 
     fun = 
-     "DEFUN1(" ++ fname ++ ", f) {\n" ++
-        indent 2 (debugp [ fname ++ " %s\\n", 
-                           "getInfoPtr(f.op)->name"]) ++
+     "DEFUN0(" ++ fname ++ ") {\n" ++
      "  const int argc = " ++ show argc ++ ";\n" ++
-     "  PtrOrLiteral argv[" ++ show argc ++ "];\n" ++
-     "  popargs(argc, argv);\n" ++
-     "  const int nps = " ++ show nps ++ ";\n" ++
-     "  PtrOrLiteral pargv[" ++ show (nps + 1) ++ "];\n" ++ -- space for f
-        concat ["  pargv[" ++ show i ++ "] = argv[" ++ show ind ++ "];\n"
-                | (i,ind) <- zip [0..] pinds] ++
-     "  pargv[" ++ show nps ++ "] = f;\n" ++
-     (if nns > 0 then 
-        "  PtrOrLiteral nargv[" ++ show nns ++ "];\n" ++
-        concat ["  nargv[" ++ show i ++ "] = argv[" ++ show ind ++ "];\n"
-                | (i,ind) <- zip [0..] ninds]
-     else
-       "  // no non-pointer args to save\n") ++
+     "  PtrOrLiteral argv[argc+1]; // argv[0] is the FUN/PAP/THUNK/BLACKHOLE\n" ++
+     "  popargs(argc+1, argv);\n" ++
+        indent 2 (debugp [fname ++ " %s\\n", "getInfoPtr(argv[0].op)->name"]) ++
 
-     (if strictness == Strict1 then indent 2 (evalps nps pinds) else "") ++
+     -- now the function and its arguments are in C "argv[argc+1]"
 
+     -- TODO
+     --(if strictness == Strict1 then indent 2 (evalps nps pinds) else "") ++
+
+     -- TODO
+     -- STGEVAL is only called from stgApplyXXX so it need not push a call continuation
      "\n" ++
-     "  f.op = derefPoL(f);\n" ++
-     "  if (getObjType(f.op) == THUNK) {\n" ++
-          indent 4 (callContSave nps) ++
-     "    while (getObjType(f.op) == THUNK) {\n" ++
-            indent 6 (debugp [fname ++ " THUNK\\n"]) ++
-     "      STGEVAL(f);\n" ++
-     "      // f.op = derefPoL(f);\n" ++
-     "      f.op = derefPoL(stgCurVal); \n" ++
-     "    } // while THUNK\n" ++
-          indent 4 (callContAndArgvRestore nps pinds) ++
+     "  argv[0].op = derefPoL(argv[0]);\n" ++
+     -- this if just saves a possibly
+     "  if (getObjType(argv[0].op) == THUNK) {\n" ++
+          indent 4 (callContArgvSave 0 ('P':npstring)) ++
+          indent 4 (debugp [fname ++ " THUNK\\n"]) ++
+     "    STGEVAL(argv[0]);\n" ++
+          indent 4 (callContArgvRestore 0) ++
+     -- this works because stgCurVal is a GC root
+     "    // this works because stgCurVal is a GC root\n" ++
+     "    argv[0].op = derefPoL(stgCurVal);\n" ++
      "  } // if THUNK\n" ++
+
      "\n" ++
-     "  switch (getObjType(f.op)) {\n" ++
+     "  switch (getObjType(argv[0].op)) {\n" ++
+
+
      "  case FUN: {\n" ++
-     "    int arity = getInfoPtr(f.op)->funFields.arity;\n" ++
-          indent 4 (debugp ["FUN %s arity %d\\n", "getInfoPtr(f.op)->name", 
-                            "getInfoPtr(f.op)->funFields.arity"]) ++
+     "    int arity = getInfoPtr(argv[0].op)->funFields.arity;\n" ++
+          indent 4 (debugp ["FUN %s arity %d\\n", 
+                            "getInfoPtr(argv[0].op)->name", 
+                            "getInfoPtr(argv[0].op)->funFields.arity"]) ++
      "    int excess = argc - arity;  // may be negative\n" ++
      "\n" ++
-     (if argc == 1 then "    // too many args not possible\n"
+     (if argc == 1 then 
+        "    // too many args not possible\n"
       else 
-        "    // too many args\n" ++
+        "    // too many args?\n" ++
         "    if (excess > 0) {\n" ++
-               indent 6 (optSwitch "excess" 1 (argc-1) 
-                      (\excess -> funpos excess s pinds argc)) ++
+               indent 6 (debugp [fname ++ " FUN too many args\\n"]) ++
+               indent 6 (optSwitch "excess" 
+                                   1 
+                                   (argc-1) 
+                                   (\excess -> funpos npstring excess)) ++
         "    } else \n") ++
      "\n" ++
-     "    // just right\n" ++
+     "    // just right?\n" ++
      "    if (excess == 0) {\n" ++
             indent 6 (debugp [fname ++ " FUN just right\\n"]) ++
-            (indent 6 $ funeq s argc) ++
+            (indent 6 funeq) ++
      "    }\n" ++
      "    // excess < 0, too few args\n" ++
      "    else {\n" ++
             indent 6 (debugp [fname ++ " FUN too few args\\n"]) ++
-            (indent 6 $ funneg s pinds argc nps nns) ++
+            (indent 6 $ funneg npstring) ++
      "    } // if excess\n" ++
      "  } // case FUN\n" ++
      "\n" ++
+
+
      "  case PAP: {\n" ++
-     "    int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + \n" ++
-     "                  getInfoPtr(f.op)->layoutInfo.unboxedCount;\n" ++
-     "    int pappargc, papnargc;\n" ++
-     "    PNUNPACK(f.op->payload[fvCount].i, pappargc, papnargc);\n" ++
-     "    int argCount = pappargc + papnargc;\n" ++
-     "    int arity = getInfoPtr(f.op)->funFields.arity - argCount;\n" ++
-     "    int excess = argc - arity;\n" ++
+     "    int fvCount = getInfoPtr(argv[0].op)->layoutInfo.boxedCount + \n" ++
+     "                  getInfoPtr(argv[0].op)->layoutInfo.unboxedCount;\n" ++
+     "    int argCount = BMSIZE(argv[0].op->payload[fvCount].b);\n" ++
+     "    int arity = getInfoPtr(argv[0].op)->funFields.arity - argCount;\n" ++
+          indent 4 (debugp ["PAP/FUN %s arity %d\\n", 
+                            "getInfoPtr(argv[0].op)->name", 
+                            "getInfoPtr(argv[0].op)->funFields.arity"]) ++
+     "    int excess = argc - arity;    // may be negative\n" ++
      "\n" ++
-     (if argc == 1 then "    // too many args not possible\n"
+     (if argc == 1 then 
+        "    // too many args not possible\n"
       else 
-        "    // too many args\n" ++
+        "    // too many args?\n" ++
         "    if (excess > 0) {\n" ++
                indent 6 (debugp [fname ++ " PAP too many args\\n"]) ++
-               indent 6 (optSwitch "excess" 1 (argc-1) 
-                             (\n -> pappos n s pinds argc)) ++
+               indent 6 (optSwitch "excess" 
+                                   1 
+                                   (argc-1) 
+                                   (\excess -> pappos npstring excess)) ++
         "    } else \n") ++
      "\n" ++
-     "    // just right\n" ++
+     "    // just right?\n" ++
      "    if (excess == 0) {\n" ++
-            indent 6 (debugp [fname ++ " FUN just right\\n"]) ++
-            (indent 6 $ papeq s argc) ++
+            indent 6 (debugp [fname ++ " PAP just right\\n"]) ++
+            (indent 6 papeq) ++
      "\n" ++
      "    // excess < 0, too few args\n" ++
      "    } else {\n" ++
             indent 6 (debugp [fname ++ " PAP too few args\\n"]) ++
-            (indent 6 $ papneg s pinds argc nps nns) ++
+            (indent 6 $ papneg npstring) ++
      "    } // if excess\n" ++
      "  } // case PAP\n" ++
      "\n" ++
+
+
      "  case BLACKHOLE: {\n" ++
      "    fprintf(stderr, \"infinite loop detected in " ++ fname ++ "!\\n\");\n" ++
      "    showStgHeap();\n" ++
-     "    exit(0);\n" ++
+     "    assert(0);\n" ++
      "  } // case BLACKHOLE\n" ++
      "\n" ++
      "  default:\n" ++
@@ -242,176 +241,99 @@ gen s =
      "  ENDFUN;\n" ++
      "}\n\n"
 
-
-funpos excess s pinds argc =
-  let usedParamCount = argc - excess
-      usedPParamCount = length $ filter (=='P') (take usedParamCount s)
-      usedNParamCount = usedParamCount - usedPParamCount
-      excessParams = drop (length s - excess) s
-      excessPParamCount = length $ filter (=='P') excessParams
-  in debugp ["stgApply FUN " ++ show (length excessParams) ++ " excess args\\n"] ++
-     "// stash excess pointer args\n" ++
-     (if excessPParamCount > 0 then
-        "callContSave(" ++ show excessPParamCount ++ ", " ++
-                      "&pargv[" ++ show usedPParamCount ++ "]);\n"
-      else "// no excess pointer params to save\n") ++
+funpos npstring excess =
+  let arity = (length npstring) - excess
+  in debugp ["stgApply FUN " ++ show excess ++ " excess args\\n"] ++
+     "// stash excess args\n" ++
+     callContArgvSave (arity+1) (drop arity npstring) ++  -- FUN at index 0
      "// push needed args\n" ++
---   "pushargs(arity, argv);\n" ++
---   1. push usedNParamCount args from nargv
---   2. push usedPParamCount args from pargv
-     (if usedNParamCount > 0 then 
-          "pushargs(" ++ show usedNParamCount ++ ", nargv);\n" 
-      else "// 0 non-pointers to push\n") ++
-     (if usedPParamCount > 0 then
-          "pushargs(" ++ show usedPParamCount ++ ", pargv);\n" 
-      else "// 0 pointers to push\n") ++
+     "pushargs(arity, &argv[1]);\n" ++
      "// call-with-return the FUN\n" ++
-     "STGCALL1(getInfoPtr(f.op)->funFields.trueEntryCode, f);\n" ++
-     "// restore excess args\n" ++
-     (if excessPParamCount > 0 then
-        "callContRestore(&pargv[" ++ show usedPParamCount ++ "]);\n" ++
-        "// restore argv\n" ++
-        concat ["argv[" ++ show ind ++ "] = pargv[" ++ show i ++ "];\n"
-                | (i,ind) <- zip [usedPParamCount..] (drop usedPParamCount pinds)]
-      else "// no excess pointer params to restore\n") ++
-     "// grab obj just returned\n" ++
-     "f = stgCurVal;\n" ++
-     "// new argc\n" ++
+     "STGCALL1(getInfoPtr(argv[0].op)->funFields.trueEntryCode, argv[0]);\n" ++
+     "// restore excess args left shifted into argv\n" ++
+     callContArgvRestore 0 ++
      "// push excess args\n" ++
-     "pushargs(excess, &argv[" ++ show usedParamCount ++ "]);\n" ++ 
+     "pushargs(excess, argv);\n" ++ 
      "// try again - tail call stgApply\n" ++
-     "STGJUMP1(stgApply" ++ drop (argc - excess) s  ++ ", f);\n"
+     "STGJUMP1(stgApply" ++ drop arity npstring  ++ ", stgCurVal);\n"
 
 
-funeq s argc = 
-  let usedPParamCount = length $ filter (=='P') s
-      usedNParamCount = argc - usedPParamCount
-  in (if usedNParamCount > 0 then
-          "pushargs(" ++ show usedNParamCount ++ ", nargv);\n"
-      else "// 0 non-pointers to push\n") ++
-     (if usedPParamCount > 0 then
-          "pushargs(" ++ show usedPParamCount ++ ", pargv);\n"
-      else "// 0 pointers to push\n") ++
-     "// tail call the fun\n" ++
-     "STGJUMP1(getInfoPtr(f.op)->funFields.trueEntryCode, f);\n"
+funeq = 
+  "pushargs(argc, &argv[1]);\n" ++
+  "STGJUMP1(getInfoPtr(argv[0].op)->funFields.trueEntryCode, argv[0]);\n"
 
-funneg s pinds argc nps nns = 
-     "int fvCount = getInfoPtr(f.op)->layoutInfo.boxedCount + \n" ++
-     "              getInfoPtr(f.op)->layoutInfo.unboxedCount;\n" ++
-     "// stgNewHeapPAP puts layout info at payload[fvCount]\n" ++
-     "Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), " ++ 
-                               show nps ++ ", " ++ show nns ++ ");\n" ++
+funneg npstring = 
+  let arity = length npstring
+  in "int fvCount = getInfoPtr(argv[0].op)->layoutInfo.boxedCount + \n" ++
+     "              getInfoPtr(argv[0].op)->layoutInfo.unboxedCount;\n" ++
+     "// stgNewHeapPAPmask puts layout info at payload[fvCount]\n" ++
+     "Obj *pap = stgNewHeapPAPmask(getInfoPtr(argv[0].op), " ++ 
+                 npStrToBMStr npstring ++ ");\n" ++
      "// copy fvs\n" ++
      debugp ["stgApply FUN inserting %d FVs into new PAP\\n", "fvCount"] ++
-     "copyargs(&pap->payload[0], &f.op->payload[0], fvCount);\n" ++
-     "// copy pargs to just after fvs and layout info\n" ++
-     debugp ["stgApply FUN inserting " ++ show nps ++ " pointers into new PAP\\n"] ++
-     (if nps > 0 then
-          "copyargs(&pap->payload[fvCount+1], pargv, " ++ show nps ++ ");\n" 
-      else "// 0 pointers to insert into PAP\n") ++
-     debugp ["stgApply FUN inserting " ++ show nns ++ " non-pointers into new PAP\\n"] ++
-     (if nns > 0 then
-          "copyargs(&pap->payload[fvCount+1+" ++ show nps ++ "], nargv, " ++ show nns ++ ");\n"
-      else "// 0 non-pointers to insert into PAP\n") ++
+     "copyargs(&pap->payload[0], &argv[0].op->payload[0], fvCount);\n" ++
+     "// copy args to just after fvs and layout info\n" ++
+     debugp ["stgApply FUN inserting " ++ show arity ++ " args into new PAP\\n"] ++
+     "copyargs(&pap->payload[fvCount+1], &argv[1], " ++ show arity ++ ");\n" ++
      "STGRETURN1(HOTOPL(pap));\n"
 
--- excess - #excess args, also in C
--- s      - "NNPPNP" of new args
--- pinds  - list of indexes of Ps in argc
--- argc   - #new args
--- pappargc - in C, #pointer args in pap
--- papnargc - in C, #non-pointer args in pap
-pappos excess s pinds argc =
-  let usedParamCount = argc - excess
-      usedPParamCount = length $ filter (=='P') (take usedParamCount s)
-      usedNParamCount = usedParamCount - usedPParamCount
-      excessParams = drop (length s - excess) s
-      excessPParamCount = length $ filter (=='P') excessParams
-  in debugp ["stgApply PAP to " ++ show (length excessParams) ++ " excess args\\n"] ++
-     "// stash excess pointer args\n" ++
-     (if excessPParamCount > 0 then
-        "callContSave(" ++ show excessPParamCount ++ ", " ++
-                      "&pargv[" ++ show usedPParamCount ++ "]);\n"
-      else "// no excess pointer params to save\n") ++
+--pappos npstring excess = "fprintf(stderr, \"papneg not implemented\\n\");\n"
+--papeq = "fprintf(stderr, \"papeq not implemented\\n\");\n"
+--papneg npstring = "fprintf(stderr, \"papneg not implemented\\n\");\n"
+
+
+-- C argCount = number of args already in PAP
+-- C arity
+-- C excess
+pappos npstring excess =
+  let arity = length npstring - excess -- effective arity of PAP
+  in debugp ["stgApply PAP to " ++ show excess ++ " excess args\\n"] ++
+     "// stash excess args\n" ++
+     callContArgvSave (arity+1) (drop arity npstring) ++  -- PAP at index 0
+--   1.  push new needed args
+--   2.  push args already in pap from PAP[fvCount+1...]
      "// push needed args\n" ++
---   "pushargs(arity, argv);\n" ++
---   non-pointers first, last first
---   1. push usedNParamCount args from nargv
---   2. push papnargc args from PAP[fvCount+1+pappargc..]
---   3. push usedPParamCount args from pargv
---   4. push pappargc args from PAP[fvCount+1..]
-     (if usedNParamCount > 0 then 
-          "pushargs(" ++ show usedNParamCount ++ ", nargv);\n" 
-      else "// 0 non-pointers to push\n") ++
-     "pushargs(papnargc, &f.op->payload[fvCount+1+pappargc]);\n" ++
-     (if usedPParamCount > 0 then
-          "pushargs(" ++ show usedPParamCount ++ ", pargv);\n" 
-      else "// 0 pointers to push\n") ++
-     "pushargs(pappargc, &f.op->payload[fvCount+1]);\n" ++
+     "pushargs(arity, &argv[1]);\n" ++
+     "// push args already in PAP\n" ++
+     "pushargs(argCount, &argv[0].op->payload[fvCount+1]);\n" ++
      "// call-with-return the FUN\n" ++
-     "STGCALL1(getInfoPtr(f.op)->funFields.trueEntryCode, f);\n" ++
-     "// restore excess args\n" ++
-     (if excessPParamCount > 0 then
-        "callContRestore(&pargv[" ++ show usedPParamCount ++ "]);\n" ++
-        "// restore argv\n" ++
-        concat ["argv[" ++ show ind ++ "] = pargv[" ++ show i ++ "];\n"
-                | (i,ind) <- zip [usedPParamCount..] (drop usedPParamCount pinds)]
-      else "// no excess pointer params to restore\n") ++
-     "// grab obj just returned\n" ++
-     "f = stgCurVal;\n" ++
-     "// new argc\n" ++
+     "STGCALL1(getInfoPtr(argv[0].op)->funFields.trueEntryCode, argv[0]);\n" ++
+     "// restore excess args left shifted into argv\n" ++
+     callContArgvRestore 0 ++
      "// push excess args\n" ++
-     "pushargs(excess, &argv[" ++ show usedParamCount ++ "]);\n" ++ 
+     "pushargs(excess, argv);\n" ++ 
      "// try again - tail call stgApply \n" ++
-     "STGJUMP1(stgApply" ++ drop (argc - excess) s  ++ ", f);\n"
+     "STGJUMP1(stgApply" ++ drop arity npstring  ++ ", stgCurVal);\n"
 
--- s      - "NNPPNP" of new args
--- argc   - #new args
--- pappargc - in C, #pointer args in pap
--- papnargc - in C, #non-pointer args in pap
-papeq s argc = 
-  let usedPParamCount = length $ filter (=='P') s
-      usedNParamCount = argc - usedPParamCount
-  in (if usedNParamCount > 0 then
-       "pushargs(" ++ show usedNParamCount ++ ", nargv);\n"
-      else "// 0 non-pointer args\n") ++
-     "pushargs(papnargc, &f.op->payload[fvCount+1+pappargc]);\n" ++
-     (if usedPParamCount > 0 then
-       "pushargs(" ++ show usedPParamCount ++ ", pargv);\n"
-      else "// 0 non-pointer args\n") ++
-     "pushargs(pappargc, &f.op->payload[fvCount+1]);\n" ++
+papeq = 
+    "// push new args\n" ++
+    debugp ["PAP just right:  %d args in PAP, %d new args\\n", "argCount", "arity"] ++
+    debugp ["pushing new args\\n"] ++ 
+    "pushargs(arity, &argv[1]);\n" ++
+    "// push args already in PAP\n" ++
+    debugp ["pushing existing args\\n"] ++ 
+    "pushargs(argCount, &argv[0].op->payload[fvCount+1]);\n" ++
      "// tail call the FUN\n" ++
-     "STGJUMP1(getInfoPtr(f.op)->funFields.trueEntryCode, f);\n"
+     "STGJUMP1(getInfoPtr(argv[0].op)->funFields.trueEntryCode, argv[0]);\n"
 
--- pappargc - in C, #pointer args in pap
--- papnargc - in C, #non-pointer args in pap
-papneg s pinds argc nps nns =
-  let usedPParamCount = length $ filter (=='P') s
-      usedNParamCount = argc - usedPParamCount
-  in "// stgNewHeapPAP puts layout info at payload[fvCount]\n" ++
-     "Obj *pap = stgNewHeapPAP(getInfoPtr(f.op), " ++ 
-                               show nps ++ " + pappargc, " ++ 
-                               show nns ++ " + papnargc);\n" ++
+papneg npstring =
+  let newargc = length npstring
+  in "// bitmap for new args\n" ++
+     "Bitmap64 bmold = argv[0].op->payload[fvCount].b;\n" ++
+     "Bitmap64 bmnew = " ++ npStrToBMStr npstring ++ ";\n" ++
+     "// shift mask by known only at runtime #existing PAP args\n" ++
+     "bmnew.bitmap.mask <<= argCount;\n" ++
+     "bmnew.bits += bmold.bits;\n" ++ 
+     "// stgNewHeapPAP puts layout info at payload[fvCount]\n" ++
+     "Obj *pap = stgNewHeapPAPmask(getInfoPtr(argv[0].op), bmnew);\n" ++ 
      "// copy fvs\n" ++
      debugp ["stgApply PAP inserting %d FVs into new PAP\\n", "fvCount"] ++
-     "copyargs(&pap->payload[0], &f.op->payload[0], fvCount);\n" ++
-     "// copy pap pointers to just after fvs and layout info\n" ++
-     debugp ["stgApply PAP inserting %d old pointers into new PAP\\n", "pappargc"] ++
-     "copyargs(&pap->payload[fvCount+1], &f.op->payload[fvCount+1], pappargc);\n" ++
-     "// copy pargs to just after fvs, layout info, and old pointers\n" ++
-     debugp ["stgApply PAP inserting " ++ show nps ++ " new pointers into new PAP\\n"] ++
-     (if nps > 0 then
-       "copyargs(&pap->payload[fvCount+1+pappargc], pargv, " ++ show nps ++ ");\n"
-      else "// 0 new pointers to insert into PAP\n") ++
-
-     debugp ["stgApply PAP inserting %d old non-pointers into new PAP\\n", "papnargc"] ++
-     "copyargs(&pap->payload[fvCount+1+pappargc+" ++ show nps ++ "], " ++
-                            "&f.op->payload[fvCount+1+pappargc], papnargc);\n" ++
-     debugp ["stgApply PAP inserting " ++ show nns ++ " new non-pointers into new PAP\\n"] ++
-     (if nns > 0 then
-          "copyargs(&pap->payload[fvCount+1+pappargc+" ++ show nps ++ "+papnargc], nargv, " ++ 
-                    show nns ++ ");\n"
-      else "// 0 new non-pointers to insert into PAP\n") ++
+     "copyargs(&pap->payload[0], &argv[0].op->payload[0], fvCount);\n" ++
+     "// copy old args\n" ++
+     debugp ["stgApply PAP inserting %d old args into new PAP\\n", "argCount"] ++
+     "copyargs(&pap->payload[fvCount+1], &argv[0].op->payload[fvCount+1], argCount);\n" ++
+     "// copy new args to just after fvs, layout info, and old args\n" ++
+     debugp ["stgApply PAP inserting " ++ show newargc ++ " new args into new PAP\\n"] ++
+     "copyargs(&pap->payload[fvCount+1+argCount], &argv[1], " ++ show newargc ++ ");\n" ++
+      "// 0 new pointers to insert into PAP\n" ++
      "STGRETURN1(HOTOPL(pap));\n"
-
-
