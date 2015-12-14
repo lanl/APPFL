@@ -13,16 +13,25 @@ Note:  THUNK InfoPtr is not yet changed to BLACKHOLE IntoPtr because garbage
 collection would not work correctly.  When THUNK's FV's are stashed in a stack
 frame then the BLACKHOLE can be safely GC'd.
 
+- Make stack objects a type different than Obj.
+
 ------- TODO ----------------------------------------------------------------
 
+- separate stgCurVal into stgCurValBoxed and stgCurValUnboxed
+
+- STGEVAL is invoked only by stgApplyXXX.  STGCALL1 is only invoked by STGEVAL
+  (check this).  STGJUMP1 is called...  The parameters to the latter two are
+  'self'--this could be stgCurVal instead (?)
+
+  -- CALLCONT is special in that because STGCALLs return only pointer values
+     necessarily need to be saved.  When variables are referenced via stack
+     frame objects then CALLCONT need not store any values at all.
 
 - Use a bitmap in PAPs instead of boxed/unboxed count for the already-applied
   args.  This would allow the backing out of the maybe-too-clever permuting
   of formal parameters of the underlying functions.
 
 - Use a bitmap in call continuations instead of storing just pointer values.
-
-- Make stack objects a type different than Obj.
 
 - Introduce a "stack frame" pseudo- (or actual) continuation instead of using
   the cmm stack.
@@ -35,6 +44,8 @@ frame then the BLACKHOLE can be safely GC'd.
          through the next continuation on the stack.
 
      --- Does this subsume call continuation?
+
+     --- This gets tricky with stgApply
 
 - Use bitmaps and code pointers in all entities on the STG stack instead of
   InfoTabs.

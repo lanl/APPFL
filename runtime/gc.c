@@ -218,7 +218,7 @@ void processCont(Cont *p) {
 
 void gc(void) {
 
-  //  fprintf(stderr, "GARBAGE COLLECTION DISABLED in gc.c/gc(void)\n"); return;
+  fprintf(stderr, "GARBAGE COLLECTION DISABLED in gc.c/gc(void)\n"); return;
 
   size_t before = stgHP - stgHeap;
 

@@ -49,8 +49,8 @@ const char *contTypeNames[] = {
   "BADCONTTYPE6",
   "UPDCONT", 
   "CASECONT", 
-  "STACKCONT",
   "CALLCONT", 
+  "STACKCONT",
   "FUNCONT"
 };
 
@@ -150,17 +150,43 @@ Obj* stgNewHeapObj(InfoTab *itp) {
   return objp;
 }
 
-// PAP is special
-// pargc is number of pointer args to store
-// npargc is number of non-pointer args to store
-Obj* stgNewHeapPAP(InfoTab *itp, int pargc, int npargc) {
+/*
+// PAP is special--payload[fvCount] is layout info
+Obj* stgNewHeapPAP(InfoTab *itp, Bitmask64 bm) {
   assert(itp->objType == FUN && "stgNewHeapPap:  itp->objType != FUN" );
   int fvs = itp->layoutInfo.boxedCount + itp->layoutInfo.unboxedCount;
   // assert(itp->fvCount == fvs);      // fvCount going away
   assert(itp->layoutInfo.payloadSize == fvs);  // FUN
   fprintf(stderr, "stgNewHeapPap: "); showIT(itp);
   size_t objSize = sizeof(Obj) + 
-    (fvs + pargc + npargc + 1) * sizeof(PtrOrLiteral);
+    (fvs + bm.bitmask.size + 1) * sizeof(PtrOrLiteral);
+  objSize = ((objSize + 7)/8)*8;
+  Obj *objp = (Obj *)stgHP;
+  stgHP = (char *)stgHP + objSize;
+  memset(objp, 0, objSize); //zero out anything left by previous gc passes
+  objp->infoPtr = setLSB2(itp); // set InfoPtr bit to say this is a PAP
+  objp->_objSize = objSize;
+#if USE_OBJTYPE
+  objp->objType = PAP;
+#endif
+  objp->payload[fvs].l = bm;
+#if USE_ARGTYPE
+  objp->payload[fvs].argtype = LONG;
+#endif
+  strcpy(objp->ident, itp->name);  // may be overwritten
+  fprintf(stderr, "stgNewHeapPAP: "); showStgObj(objp);
+  return objp;
+}
+*/
+
+Obj* stgNewHeapPAPmask(InfoTab *itp, Bitmap64 bm) {
+  assert(itp->objType == FUN && "stgNewHeapPAPmask:  itp->objType != FUN" );
+  int fvs = itp->layoutInfo.boxedCount + itp->layoutInfo.unboxedCount;
+  // assert(itp->fvCount == fvs);      // fvCount going away
+  assert(itp->layoutInfo.payloadSize == fvs);  // FUN
+  fprintf(stderr, "stgNewHeapPap: "); showIT(itp);
+  size_t objSize = sizeof(Obj) + 
+    (fvs + bm.bitmap.size + 1) * sizeof(PtrOrLiteral);
   objSize = ((objSize + 7)/8)*8;
   Obj *objp = (Obj *)stgHP;
   stgHP = (char *)stgHP + objSize;
@@ -171,11 +197,9 @@ Obj* stgNewHeapPAP(InfoTab *itp, int pargc, int npargc) {
   objp->objType = PAP;
 #endif
 #if USE_ARGTYPE
-  objp->payload[fvs] = (PtrOrLiteral) {.argType = INT, 
-                                       .i = PNPACK(pargc, npargc)};
-#else
-  objp->payload[fvs] = (PtrOrLiteral) {.i = PNPACK(pargc, npargc)};
+  objp->payload[fvs].argType = LONG;
 #endif
+  objp->payload[fvs].b = bm;
   strcpy(objp->ident, itp->name);  // may be overwritten
   fprintf(stderr, "stgNewHeapPAP: "); showStgObj(objp);
   return objp;
@@ -184,51 +208,31 @@ Obj* stgNewHeapPAP(InfoTab *itp, int pargc, int npargc) {
 int getObjSize(Obj *o) {
   size_t objSize;
   ObjType type = getObjType(o);
-  if (!(type >= FUN && type <= INDIRECT))
-    fprintf(stderr, "bad obj type %d\n", type);
-  assert(type >= FUN && type <= INDIRECT && "getObjSize:  bad obj type");
-  if (type == PAP) {
+  switch (type) {
+  case PAP: {
     InfoTab *itp = getInfoPtr(o);
     int fvs = itp->layoutInfo.boxedCount + itp->layoutInfo.unboxedCount;
-    objSize = sizeof(Obj) + (fvs + 1 + PNSIZE(o->payload[fvs].i)) * sizeof(PtrOrLiteral);
-  } else {
-    objSize = sizeof(Obj) + getInfoPtr(o)->layoutInfo.payloadSize * sizeof(PtrOrLiteral);
+    objSize = sizeof(Obj) + 
+              (fvs + 1 + PNSIZE(o->payload[fvs].i)) * sizeof(PtrOrLiteral);
+    break;
+  } // PAP
+  case FUN:
+  case CON:
+  case THUNK:
+  case BLACKHOLE:
+  case INDIRECT:
+    objSize = sizeof(Obj) + 
+              getInfoPtr(o)->layoutInfo.payloadSize * sizeof(PtrOrLiteral);
+    break;
+  default:
+    fprintf(stderr, "stg.c/getObjSize bad ObjType %d\n", type);
+    assert(false);
+    break;
   }
   objSize = ((objSize + 7)/8)*8;
   assert(objSize == o->_objSize && "bad objSize");
   return objSize;
 }
-
-DEFUN0(stgCallCont) {
-  // stgPopCont();  user must do this
-  fprintf(stderr,"stgCallCont returning\n");
-  RETURN0();  // fall back to the cmm trampoline
-  ENDFUN;
-}
-
-CInfoTab it_stgCallCont __attribute__((aligned(8))) =
-  { .name = "stgCallCont",
-    //    .fvCount = 0,
-    .entryCode = &stgCallCont,
-    .contType = CALLCONT,
-    .layoutInfo.boxedCount = -1,  // shouldn't be using this
-    .layoutInfo.unboxedCount = -1,  // shouldn't be using this
-  };
-
-int getContSize(Cont *o) {
-  size_t contSize;
-  ContType type = getContType(o);
-  assert(type >= UPDCONT && type <= FUNCONT && "getContSize:  bad cont type");
-  if (type == CALLCONT) {
-    contSize = sizeof(Cont) + (o->payload[0].i + 1) * sizeof(PtrOrLiteral);
-  } else {
-    contSize = sizeof(Cont) + getCInfoPtr(o)->layoutInfo.payloadSize * sizeof(PtrOrLiteral);
-  }
-  contSize = ((contSize + 7)/8)*8;
-  assert(contSize == o->_contSize && "bad contSize");
-  return contSize;
-}
-
 
 
 void showStgObjPretty(Obj *p);
@@ -247,14 +251,12 @@ void showStgVal(PtrOrLiteral v) {
 }
 
 void showIT(InfoTab *itp) {
-  fprintf(stderr, "showIT: %s %s, bc %d ubc %d", 
+  fprintf(stderr, "showIT: %s %s, bc %d ubc %d layoutInfo.payloadSize %d\n", 
 	  objTypeNames[itp->objType], 
 	  itp->name, 
 	  itp->layoutInfo.boxedCount,
-          itp->layoutInfo.unboxedCount);
-  if (itp->objType != CALLCONT)
-    fprintf(stderr, ", layoutInfo.payloadSize %d", itp->layoutInfo.payloadSize);
-  fprintf(stderr, "\n");
+          itp->layoutInfo.unboxedCount, 
+	  itp->layoutInfo.payloadSize);
 }  
 
 void showCIT(CInfoTab *citp) {
@@ -268,13 +270,37 @@ void showCIT(CInfoTab *citp) {
   fprintf(stderr, "\n");
 }  
 
+int getContSize(Cont *o) {
+  size_t contSize;
+  ContType type = getContType(o);
+  switch (type) {
+  case CALLCONT:
+    contSize = sizeof(Cont) + (o->payload[0].i + 1) * sizeof(PtrOrLiteral);
+    break;
+  case UPDCONT:
+  case CASECONT:
+  case FUNCONT:
+    contSize = sizeof(Cont) + 
+               getCInfoPtr(o)->layoutInfo.payloadSize * sizeof(PtrOrLiteral);
+    break;
+  case STACKCONT:
+    fprintf(stderr, "stg.c/getContSize STACKCONT not implemented\n");
+    assert(false);
+    break;
+  default:
+    fprintf(stderr, "stg.c/getContSize bad ContType %d\n", type);
+    assert(false);
+  }
+  contSize = ((contSize + 7)/8)*8;
+  assert(contSize == o->_contSize && "bad contSize");
+  return contSize;
+}
+
 // ****************************************************************
 
 static const int showDepthLimit = 1000;
 static int depth;
 static Obj *stack[1000];
-static int stackp;
-
 
 void showStgObjRecDebug(Obj *p);
 void showStgObjDebug(Obj *p) {
@@ -289,8 +315,8 @@ void showStgObjPretty(Obj *p) {
   fprintf(stderr,"\n");
 }
 
-void showStgCont(Obj *c) {
-  ObjType type = getObjType(c);
+void showStgCont(Cont *c) {
+  ContType type = getContType(c);
   switch (type) {
   case UPDCONT:
     fprintf(stderr,"UPDCONT  %s\n", c->ident);
@@ -503,7 +529,7 @@ void checkStgObjRec(Obj *p) {
 
   assert((uintptr_t)p % 8 == 0 && "hc: bad Obj alignment");
 
-  assert(isHeap(p) || isSHO(p) && "hc: bad Obj location");
+  assert((isHeap(p) || isSHO(p)) && "hc: bad Obj location");
 
   InfoTab *itp = getInfoPtr(p);
   assert((uintptr_t)itp % 8 == 0 && "hc: bad infoPtr alignment");
@@ -637,8 +663,8 @@ void showStgStack() {
   fprintf(stderr,"\nSTG Stack:\n\n");
   for (char *p = (char*)stgSP;
        p < (char*)stgStack + stgStackSize;
-       p += getObjSize((Obj *)p)) {
-     showStgCont((Obj *)p);
+       p += getContSize((Cont *)p)) {
+     showStgCont((Cont *)p);
    }
 }
 

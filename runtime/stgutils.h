@@ -9,7 +9,7 @@
 
 extern void stgThunk(PtrOrLiteral self);
 
-void callContSave(int argc, PtrOrLiteral argv[]);
+void callContSave(PtrOrLiteral argv[], Bitmap64 layout);
 void callContRestore(PtrOrLiteral argv[]);
 
 Obj *derefHO(Obj *op);
@@ -43,33 +43,29 @@ extern Obj sho_stg_case_not_exhaustive;
 // NP = number of PtrOrLiterals NO = Number of Objs
 #define STGHEAPAT(NP,NO) ((char*)stgHP - (NP*sizeof(PtrOrLiteral)) - (NO*sizeof(Obj)))
 
-/*
-// evaluate in place
-#define STGEVALworks(e)				\
-do {						\
-  stgCurVal = e;				\
-  derefStgCurVal();				\
-  while (stgCurVal.argType == HEAPOBJ &&	\
-	 stgCurVal.op->objType == THUNK) {	\
-    Obj* cont = stgAllocCallCont(&it_stgCallCont, 0);	\
-    strcpy(cont->ident, stgCurVal.op->ident);	\
-    STGCALL1(stgCurVal.op->infoPtr->entryCode, stgCurVal); \
-    stgPopCont();			        \
-    derefStgCurVal();				\
-  }						\
-  if (stgCurVal.argType == HEAPOBJ &&           \
-      stgCurVal.op->objType == BLACKHOLE) {     \
+// evaluate IN PLACE, this should probably only happen in stgApply
+// in which case there's some redundancy in pushing CALLCONTs
+#define STGEVAL(e)					    \
+do {							    \
+  stgCurVal = e;					    \
+  STGCALL1(getInfoPtr(stgCurVal.op)->entryCode, stgCurVal); \
+  if (getObjType(stgCurVal.op) == BLACKHOLE) {		     \
     fprintf(stderr, "infinite loop detected in STGEVAL!\n"); \
-    showStgVal(stgCurVal);			\
-    fprintf(stderr, "\n");			\
-    showStgHeap();			        \
-    exit(0);                                    \
-  }                                             \
+    showStgVal(stgCurVal);				     \
+    assert(false);					     \
+  }							     \
+  if (getObjType(stgCurVal.op) == THUNK) {		     \
+    fprintf(stderr, "THUNK at end of STGEVAL!\n");	     \
+    showStgVal(stgCurVal);				     \
+    assert(false);					     \
+  }							     \
+  assert (cmmSP == cmmStack + cmmStackSize && "Non empty cmm stack in stgeval");\
+  GC();					\
 } while (0)
-*/
 
 // evaluate IN PLACE, this should probably only happen in stgApply
-#define STGEVAL(e)					    \
+// in which case there's some redundancy in pushing CALLCONTs
+#define STGEVALworks(e)					    \
 do {							    \
   stgCurVal = e;					    \
   Cont* cont = stgAllocCallCont(&it_stgCallCont, 0);	    \
@@ -80,7 +76,12 @@ do {							    \
     fprintf(stderr, "infinite loop detected in STGEVAL!\n"); \
     showStgVal(stgCurVal);				     \
     assert(false);					     \
-  }									\
+  }							     \
+  if (getObjType(stgCurVal.op) == THUNK) {		     \
+    fprintf(stderr, "THUNK at end of STGEVAL!\n");	     \
+    showStgVal(stgCurVal);				     \
+    assert(false);					     \
+  }							     \
   assert (cmmSP == cmmStack + cmmStackSize && "Non empty cmm stack in stgeval");\
   GC();					\
 } while (0)
@@ -97,80 +98,6 @@ do {							    \
   }								     \
   STGJUMP1(getInfoPtr(stgCurVal.op)->entryCode, stgCurVal);	     \
 } while (0)
-
-#if 0
-#define STGEVAL(e)				\
-do {						\
-  stgCurVal = e;				\
-  Obj* cont = stgAllocCallCont(&it_stgCallCont, 0);	\
-  strcpy(cont->ident, stgCurVal.op->ident);	\
-  STGCALL1(getInfoPtr(stgCurVal.op)->entryCode, stgCurVal); \
-  stgPopCont();			        \
-  derefStgCurVal();					     \
-  if (getObjType(stgCurVal.op) == BLACKHOLE) {     \
-    fprintf(stderr, "infinite loop detected in STGEVAL!\n"); \
-    showStgVal(stgCurVal);			\
-    fprintf(stderr, "\n");			\
-    showStgHeap();			        \
-    assert(false);				\
-  }                                             \
-  assert (cmmSP == cmmStack + cmmStackSize && "Non empty cmm stack in stgeval");\
-  GC();					\
-} while (0)
-#endif
-
-
-#if USE_ARGTYPE
-#define STGEVAL_works(e)				\
-do {						\
-  stgCurVal = e;				\
-  derefStgCurVal();				\
-  if (getObjType(stgCurVal.op) == THUNK) {	        \
-    Obj* cont = stgAllocCallCont(&it_stgCallCont, 0);	\
-    while (getObjType(stgCurVal.op) == THUNK) {	\
-      strcpy(cont->ident, stgCurVal.op->ident);	\
-      STGCALL1(getInfoPtr(stgCurVal.op)->entryCode, stgCurVal); \
-      derefStgCurVal();				\
-    }  						\
-    stgPopCont();			        \
-  }  						\
-  if (getObjType(stgCurVal.op) == BLACKHOLE) {     \
-    fprintf(stderr, "infinite loop detected in STGEVAL!\n"); \
-    showStgVal(stgCurVal);			\
-    fprintf(stderr, "\n");			\
-    showStgHeap();			        \
-    exit(0);                                    \
-  }                                             \
-  assert (cmmSP == cmmStack + cmmStackSize && "Non empty cmm stack in stgeval");\
-  GC();					\
-} while (0)
-#else
-#define STGEVAL_works(e)        \
-do {            \
-  stgCurVal = e;        \
-  derefStgCurVal();       \
-  if (getObjType(stgCurVal.op) == THUNK) {         \
-    Obj* cont = stgAllocCallCont(&it_stgCallCont, 0);  \
-    while (getObjType(stgCurVal.op) == THUNK) {  \
-      strcpy(cont->ident, stgCurVal.op->ident); \
-      STGCALL1(getInfoPtr(stgCurVal.op)->entryCode, stgCurVal); \
-      derefStgCurVal();       \
-    }             \
-    stgPopCont();             \
-  }             \
-  if (getObjType(stgCurVal.op) == BLACKHOLE) {     \
-    fprintf(stderr, "infinite loop detected in STGEVAL!\n"); \
-    showStgVal(stgCurVal);      \
-    fprintf(stderr, "\n");      \
-    showStgHeap();              \
-    exit(0);                                    \
-  }                                             \
-  assert (cmmSP == cmmStack + cmmStackSize && "Non empty cmm stack in stgeval");\
-  GC();         \
-} while (0)
-#endif
-
-
 
 
 #endif
