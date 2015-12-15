@@ -88,32 +88,8 @@ debugc code =
     code ++
     "#endif\n"
 
-{-
-evalps nps pinds =
-    -- only need to put all but the one to be evaluated in a ccont
-    -- but for a quick test...
-    concat [ debugp [ "strict arg eval\\n  " ] ++
-             debugc ("showStgVal(pargv[" ++ show i ++ "]);\n") ++
-             debugp [ "\\n" ] ++
-             callContSave nps ++
-             "STGEVAL(pargv[" ++ show i ++ "]);\n" ++
-             callContAndArgvRestore nps pinds
-             | i <- [0..nps-1] ]
--}
 
 {-
-evalps nps pinds =
-    -- only need to put all but the one to be evaluated in a ccont
-    -- but for a quick test...
-    if nps > 0 then
-      concat [ callContSave (nps+1) ++
-               "STGEVAL(pargv[" ++ show i ++ "]);\n" ++
-               callContAndArgvRestore (nps+1) pinds  -- nps+1 just so not 0
-               | i <- [0..nps-1] ] ++
-      "f = pargv[" ++ show nps ++ "];\n"
-    else ""
--}
-
 -- npstring is args, which start at argv[1]
 evalps npstring =
   -- only need to put all but the one to be evaluated in a ccont
@@ -122,6 +98,14 @@ evalps npstring =
              "STGEVAL(argv[" ++ show (i+1) ++ "]);\n" ++
              callContArgvRestore 0
              | i <- [0..(length npstring - 1)], npstring!!i == 'P' ]
+-}
+
+-- npstring is args, which start at argv[1]
+evalps npstring =
+    callContArgvSave 0 ('P':npstring) ++
+    concat [ "STGEVAL(argv[" ++ show (i+1) ++ "]);\n"
+             | i <- [0..(length npstring - 1)], npstring!!i == 'P' ] ++
+    callContArgvRestore 0
 
 gen strictness npstring =
   (forward, macro, fun)
