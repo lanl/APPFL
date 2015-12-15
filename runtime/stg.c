@@ -106,15 +106,22 @@ Cont *stgPopCont() {
   Cont *retVal = (Cont *)stgSP;
   CInfoTab *citp = getCInfoPtr(retVal);
   assert(citp->contType == getContType(retVal));
-  assert( getCInfoPtr(retVal)->contType >= UPDCONT &&
-          getCInfoPtr(retVal)->contType <= FUNCONT);
   int payloadSize;
-  if (getCInfoPtr(retVal)->contType == CALLCONT) {
-    payloadSize = retVal->payload[0].i + 1;
-    fprintf(stderr, "popping call continuation with argc %d\n", payloadSize-1);
-  } else {
+  switch (getContType(retVal)) {
+  case UPDCONT:
+  case CASECONT:
+  case STACKCONT:
+  case FUNCONT:
     payloadSize = getCInfoPtr(retVal)->layoutInfo.payloadSize;
     fprintf(stderr, "popping continuation with payloadSize %d\n", payloadSize);
+    break;
+  case CALLCONT:
+    payloadSize = retVal->payload[0].i + 1;
+    fprintf(stderr, "popping call continuation with argc %d\n", payloadSize-1);
+    break;
+  default:
+    fprintf(stderr, "bad continuation value %d\n", getContType(retVal));
+    assert(false);
   }
   size_t contSize = sizeof(Cont) + payloadSize * sizeof(PtrOrLiteral);
   contSize = ((contSize + 7)/8)*8; 
@@ -149,35 +156,6 @@ Obj* stgNewHeapObj(InfoTab *itp) {
   fprintf(stderr, "stgNewHeapObj: "); showStgObj(objp);
   return objp;
 }
-
-/*
-// PAP is special--payload[fvCount] is layout info
-Obj* stgNewHeapPAP(InfoTab *itp, Bitmask64 bm) {
-  assert(itp->objType == FUN && "stgNewHeapPap:  itp->objType != FUN" );
-  int fvs = itp->layoutInfo.boxedCount + itp->layoutInfo.unboxedCount;
-  // assert(itp->fvCount == fvs);      // fvCount going away
-  assert(itp->layoutInfo.payloadSize == fvs);  // FUN
-  fprintf(stderr, "stgNewHeapPap: "); showIT(itp);
-  size_t objSize = sizeof(Obj) + 
-    (fvs + bm.bitmask.size + 1) * sizeof(PtrOrLiteral);
-  objSize = ((objSize + 7)/8)*8;
-  Obj *objp = (Obj *)stgHP;
-  stgHP = (char *)stgHP + objSize;
-  memset(objp, 0, objSize); //zero out anything left by previous gc passes
-  objp->infoPtr = setLSB2(itp); // set InfoPtr bit to say this is a PAP
-  objp->_objSize = objSize;
-#if USE_OBJTYPE
-  objp->objType = PAP;
-#endif
-  objp->payload[fvs].l = bm;
-#if USE_ARGTYPE
-  objp->payload[fvs].argtype = LONG;
-#endif
-  strcpy(objp->ident, itp->name);  // may be overwritten
-  fprintf(stderr, "stgNewHeapPAP: "); showStgObj(objp);
-  return objp;
-}
-*/
 
 Obj* stgNewHeapPAPmask(InfoTab *itp, Bitmap64 bm) {
   assert(itp->objType == FUN && "stgNewHeapPAPmask:  itp->objType != FUN" );

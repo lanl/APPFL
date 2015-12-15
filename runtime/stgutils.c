@@ -150,7 +150,6 @@ DEFUN0(stgUpdateCont) {
 
 CInfoTab it_stgUpdateCont __attribute__((aligned(8))) =
   { .name = "default stgUpdateCont",
-    //    .fvCount = 1, // self
     .entryCode = &stgUpdateCont,
     .contType = UPDCONT,
     .layoutInfo.payloadSize = 1, // self
