@@ -78,7 +78,7 @@ Cont *stgAllocCont(CInfoTab *citp) {
 Cont *stgAllocCallCont(CInfoTab *citp, int argc) {
   assert(citp->contType == CALLCONT && 
 	 "stgAllocCallCont: citp->contType != CALLCONT");
-  size_t contSize = sizeof(Cont) + (argc + 1) * sizeof(PtrOrLiteral);
+  size_t contSize = sizeof(Cont) + argc * sizeof(PtrOrLiteral);
   contSize = ((contSize + 7)/8)*8; 
   fprintf(stderr, "allocating call continuation with argc %d\n", argc);
   showCIT(citp);
@@ -89,11 +89,6 @@ Cont *stgAllocCallCont(CInfoTab *citp, int argc) {
   contp->_contSize = contSize;
   contp->entryCode = citp->entryCode;
   contp->contType = CALLCONT;
-#if USE_ARGTYPE
-  contp->payload[0] = (PtrOrLiteral) {.argType = INT, .i = argc};
-#else
-  contp->payload[0] = (PtrOrLiteral) {.i = argc};
-#endif
   strcpy(contp->ident, citp->name);  // may be overwritten
   return contp;
 }
@@ -116,8 +111,8 @@ Cont *stgPopCont() {
     fprintf(stderr, "popping continuation with payloadSize %d\n", payloadSize);
     break;
   case CALLCONT:
-    payloadSize = retVal->payload[0].i + 1;
-    fprintf(stderr, "popping call continuation with argc %d\n", payloadSize-1);
+    payloadSize = retVal->layout.bitmap.size;
+    fprintf(stderr, "popping call continuation with argc %d\n", payloadSize);
     break;
   default:
     fprintf(stderr, "bad continuation value %d\n", getContType(retVal));

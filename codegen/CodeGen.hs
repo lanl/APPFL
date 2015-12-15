@@ -188,6 +188,7 @@ cgStart :: String
 cgStart = "\n\nDEFUN0(start)" ++
             "  registerSHOs();\n" ++
             "  Cont *showResultCont = stgAllocCallCont(&it_stgShowResultCont, 0);\n" ++
+            "  showResultCont->layout.bits = 0x0UL; // empty\n" ++
 #if USE_ARGTYPE
             "  stgCurVal.argType = HEAPOBJ;\n" ++
 #endif

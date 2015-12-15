@@ -63,29 +63,6 @@ do {							    \
   GC();					\
 } while (0)
 
-// evaluate IN PLACE, this should probably only happen in stgApply
-// in which case there's some redundancy in pushing CALLCONTs
-#define STGEVALworks(e)					    \
-do {							    \
-  stgCurVal = e;					    \
-  Cont* cont = stgAllocCallCont(&it_stgCallCont, 0);	    \
-  strcpy(cont->ident, stgCurVal.op->ident);		    \
-  STGCALL1(getInfoPtr(stgCurVal.op)->entryCode, stgCurVal); \
-  stgPopCont();						    \
-  if (getObjType(stgCurVal.op) == BLACKHOLE) {		     \
-    fprintf(stderr, "infinite loop detected in STGEVAL!\n"); \
-    showStgVal(stgCurVal);				     \
-    assert(false);					     \
-  }							     \
-  if (getObjType(stgCurVal.op) == THUNK) {		     \
-    fprintf(stderr, "THUNK at end of STGEVAL!\n");	     \
-    showStgVal(stgCurVal);				     \
-    assert(false);					     \
-  }							     \
-  assert (cmmSP == cmmStack + cmmStackSize && "Non empty cmm stack in stgeval");\
-  GC();					\
-} while (0)
-
 // bye bye!
 #define STGJUMP()						     \
   do {								     \

@@ -203,7 +203,6 @@ DEFUN0(stgCallCont) {
 
 CInfoTab it_stgCallCont __attribute__((aligned(8))) =
   { .name = "stgCallCont",
-    //    .fvCount = 0,
     .entryCode = &stgCallCont,
     .contType = CALLCONT,
     .layoutInfo.boxedCount = -1,  // shouldn't be using this
@@ -215,17 +214,15 @@ void callContSave(PtrOrLiteral argv[], Bitmap64 layout) {
   Cont *cc = stgAllocCallCont( &it_stgCallCont, argc );
   cc->layout = layout;
   for (int i = 0; i != argc; i++) 
-    cc->payload[i+1] = argv[i];
+    cc->payload[i] = argv[i];
 }
 
 void callContRestore(PtrOrLiteral argv[]) {
   Cont *cc = stgPopCont();
   assert(getContType(cc) == CALLCONT);
-#if USE_ARGTYPE
-  assert(cc->payload[0].argType == INT);
-#endif
-  for (int i = 0; i != cc->payload[0].i; i++) 
-    argv[i] = cc->payload[i+1];
+  int argc = cc->layout.bitmap.size;
+  for (int i = 0; i != argc; i++) 
+    argv[i] = cc->payload[i];
 }
 
 // ****************************************************************
