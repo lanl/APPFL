@@ -12,9 +12,7 @@ DEFUN0(stgApplyN) {
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyN %s\n", getInfoPtr(argv[0].op)->name);
   #endif
-  callContSave( &argv[0], (Bitmap64)0x0800000000000001UL );
-  callContRestore( &argv[0] );
-
+  
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
     callContSave( &argv[0], (Bitmap64)0x0800000000000001UL );
@@ -157,6 +155,7 @@ DEFUN0(stgApplyP) {
   callContSave( &argv[0], (Bitmap64)0x0800000000000003UL );
   STGEVAL(argv[1]);
   callContRestore( &argv[0] );
+  argv[1] = stgCurVal;
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -297,9 +296,7 @@ DEFUN0(stgApplyNN) {
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyNN %s\n", getInfoPtr(argv[0].op)->name);
   #endif
-  callContSave( &argv[0], (Bitmap64)0x0C00000000000001UL );
-  callContRestore( &argv[0] );
-
+  
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
     callContSave( &argv[0], (Bitmap64)0x0C00000000000001UL );
@@ -486,6 +483,7 @@ DEFUN0(stgApplyPN) {
   callContSave( &argv[0], (Bitmap64)0x0C00000000000003UL );
   STGEVAL(argv[1]);
   callContRestore( &argv[0] );
+  argv[1] = stgCurVal;
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -673,6 +671,7 @@ DEFUN0(stgApplyNP) {
   callContSave( &argv[0], (Bitmap64)0x0C00000000000005UL );
   STGEVAL(argv[2]);
   callContRestore( &argv[0] );
+  argv[2] = stgCurVal;
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -859,8 +858,12 @@ DEFUN0(stgApplyPP) {
   #endif
   callContSave( &argv[0], (Bitmap64)0x0C00000000000007UL );
   STGEVAL(argv[1]);
+  callContRestore( &argv[0] );
+  argv[1] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x0C00000000000007UL );
   STGEVAL(argv[2]);
   callContRestore( &argv[0] );
+  argv[2] = stgCurVal;
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -1045,9 +1048,7 @@ DEFUN0(stgApplyNNN) {
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyNNN %s\n", getInfoPtr(argv[0].op)->name);
   #endif
-  callContSave( &argv[0], (Bitmap64)0x1000000000000001UL );
-  callContRestore( &argv[0] );
-
+  
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
     callContSave( &argv[0], (Bitmap64)0x1000000000000001UL );
@@ -1282,6 +1283,7 @@ DEFUN0(stgApplyPNN) {
   callContSave( &argv[0], (Bitmap64)0x1000000000000003UL );
   STGEVAL(argv[1]);
   callContRestore( &argv[0] );
+  argv[1] = stgCurVal;
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -1517,6 +1519,7 @@ DEFUN0(stgApplyNPN) {
   callContSave( &argv[0], (Bitmap64)0x1000000000000005UL );
   STGEVAL(argv[2]);
   callContRestore( &argv[0] );
+  argv[2] = stgCurVal;
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -1751,8 +1754,12 @@ DEFUN0(stgApplyPPN) {
   #endif
   callContSave( &argv[0], (Bitmap64)0x1000000000000007UL );
   STGEVAL(argv[1]);
+  callContRestore( &argv[0] );
+  argv[1] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x1000000000000007UL );
   STGEVAL(argv[2]);
   callContRestore( &argv[0] );
+  argv[2] = stgCurVal;
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -1988,6 +1995,7 @@ DEFUN0(stgApplyNNP) {
   callContSave( &argv[0], (Bitmap64)0x1000000000000009UL );
   STGEVAL(argv[3]);
   callContRestore( &argv[0] );
+  argv[3] = stgCurVal;
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -2222,8 +2230,12 @@ DEFUN0(stgApplyPNP) {
   #endif
   callContSave( &argv[0], (Bitmap64)0x100000000000000BUL );
   STGEVAL(argv[1]);
+  callContRestore( &argv[0] );
+  argv[1] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x100000000000000BUL );
   STGEVAL(argv[3]);
   callContRestore( &argv[0] );
+  argv[3] = stgCurVal;
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -2458,8 +2470,12 @@ DEFUN0(stgApplyNPP) {
   #endif
   callContSave( &argv[0], (Bitmap64)0x100000000000000DUL );
   STGEVAL(argv[2]);
+  callContRestore( &argv[0] );
+  argv[2] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x100000000000000DUL );
   STGEVAL(argv[3]);
   callContRestore( &argv[0] );
+  argv[3] = stgCurVal;
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -2694,9 +2710,16 @@ DEFUN0(stgApplyPPP) {
   #endif
   callContSave( &argv[0], (Bitmap64)0x100000000000000FUL );
   STGEVAL(argv[1]);
+  callContRestore( &argv[0] );
+  argv[1] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x100000000000000FUL );
   STGEVAL(argv[2]);
+  callContRestore( &argv[0] );
+  argv[2] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x100000000000000FUL );
   STGEVAL(argv[3]);
   callContRestore( &argv[0] );
+  argv[3] = stgCurVal;
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -2929,9 +2952,7 @@ DEFUN0(stgApplyNNNN) {
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyNNNN %s\n", getInfoPtr(argv[0].op)->name);
   #endif
-  callContSave( &argv[0], (Bitmap64)0x1400000000000001UL );
-  callContRestore( &argv[0] );
-
+  
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
     callContSave( &argv[0], (Bitmap64)0x1400000000000001UL );
@@ -3204,6 +3225,7 @@ DEFUN0(stgApplyPNNN) {
   callContSave( &argv[0], (Bitmap64)0x1400000000000003UL );
   STGEVAL(argv[1]);
   callContRestore( &argv[0] );
+  argv[1] = stgCurVal;
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -3477,6 +3499,7 @@ DEFUN0(stgApplyNPNN) {
   callContSave( &argv[0], (Bitmap64)0x1400000000000005UL );
   STGEVAL(argv[2]);
   callContRestore( &argv[0] );
+  argv[2] = stgCurVal;
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -3749,8 +3772,12 @@ DEFUN0(stgApplyPPNN) {
   #endif
   callContSave( &argv[0], (Bitmap64)0x1400000000000007UL );
   STGEVAL(argv[1]);
+  callContRestore( &argv[0] );
+  argv[1] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x1400000000000007UL );
   STGEVAL(argv[2]);
   callContRestore( &argv[0] );
+  argv[2] = stgCurVal;
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -4024,6 +4051,7 @@ DEFUN0(stgApplyNNPN) {
   callContSave( &argv[0], (Bitmap64)0x1400000000000009UL );
   STGEVAL(argv[3]);
   callContRestore( &argv[0] );
+  argv[3] = stgCurVal;
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -4296,8 +4324,12 @@ DEFUN0(stgApplyPNPN) {
   #endif
   callContSave( &argv[0], (Bitmap64)0x140000000000000BUL );
   STGEVAL(argv[1]);
+  callContRestore( &argv[0] );
+  argv[1] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x140000000000000BUL );
   STGEVAL(argv[3]);
   callContRestore( &argv[0] );
+  argv[3] = stgCurVal;
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -4570,8 +4602,12 @@ DEFUN0(stgApplyNPPN) {
   #endif
   callContSave( &argv[0], (Bitmap64)0x140000000000000DUL );
   STGEVAL(argv[2]);
+  callContRestore( &argv[0] );
+  argv[2] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x140000000000000DUL );
   STGEVAL(argv[3]);
   callContRestore( &argv[0] );
+  argv[3] = stgCurVal;
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -4844,9 +4880,16 @@ DEFUN0(stgApplyPPPN) {
   #endif
   callContSave( &argv[0], (Bitmap64)0x140000000000000FUL );
   STGEVAL(argv[1]);
+  callContRestore( &argv[0] );
+  argv[1] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x140000000000000FUL );
   STGEVAL(argv[2]);
+  callContRestore( &argv[0] );
+  argv[2] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x140000000000000FUL );
   STGEVAL(argv[3]);
   callContRestore( &argv[0] );
+  argv[3] = stgCurVal;
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -5120,6 +5163,7 @@ DEFUN0(stgApplyNNNP) {
   callContSave( &argv[0], (Bitmap64)0x1400000000000011UL );
   STGEVAL(argv[4]);
   callContRestore( &argv[0] );
+  argv[4] = stgCurVal;
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -5392,8 +5436,12 @@ DEFUN0(stgApplyPNNP) {
   #endif
   callContSave( &argv[0], (Bitmap64)0x1400000000000013UL );
   STGEVAL(argv[1]);
+  callContRestore( &argv[0] );
+  argv[1] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x1400000000000013UL );
   STGEVAL(argv[4]);
   callContRestore( &argv[0] );
+  argv[4] = stgCurVal;
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -5666,8 +5714,12 @@ DEFUN0(stgApplyNPNP) {
   #endif
   callContSave( &argv[0], (Bitmap64)0x1400000000000015UL );
   STGEVAL(argv[2]);
+  callContRestore( &argv[0] );
+  argv[2] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x1400000000000015UL );
   STGEVAL(argv[4]);
   callContRestore( &argv[0] );
+  argv[4] = stgCurVal;
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -5940,9 +5992,16 @@ DEFUN0(stgApplyPPNP) {
   #endif
   callContSave( &argv[0], (Bitmap64)0x1400000000000017UL );
   STGEVAL(argv[1]);
+  callContRestore( &argv[0] );
+  argv[1] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x1400000000000017UL );
   STGEVAL(argv[2]);
+  callContRestore( &argv[0] );
+  argv[2] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x1400000000000017UL );
   STGEVAL(argv[4]);
   callContRestore( &argv[0] );
+  argv[4] = stgCurVal;
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -6215,8 +6274,12 @@ DEFUN0(stgApplyNNPP) {
   #endif
   callContSave( &argv[0], (Bitmap64)0x1400000000000019UL );
   STGEVAL(argv[3]);
+  callContRestore( &argv[0] );
+  argv[3] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x1400000000000019UL );
   STGEVAL(argv[4]);
   callContRestore( &argv[0] );
+  argv[4] = stgCurVal;
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -6489,9 +6552,16 @@ DEFUN0(stgApplyPNPP) {
   #endif
   callContSave( &argv[0], (Bitmap64)0x140000000000001BUL );
   STGEVAL(argv[1]);
+  callContRestore( &argv[0] );
+  argv[1] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x140000000000001BUL );
   STGEVAL(argv[3]);
+  callContRestore( &argv[0] );
+  argv[3] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x140000000000001BUL );
   STGEVAL(argv[4]);
   callContRestore( &argv[0] );
+  argv[4] = stgCurVal;
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -6764,9 +6834,16 @@ DEFUN0(stgApplyNPPP) {
   #endif
   callContSave( &argv[0], (Bitmap64)0x140000000000001DUL );
   STGEVAL(argv[2]);
+  callContRestore( &argv[0] );
+  argv[2] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x140000000000001DUL );
   STGEVAL(argv[3]);
+  callContRestore( &argv[0] );
+  argv[3] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x140000000000001DUL );
   STGEVAL(argv[4]);
   callContRestore( &argv[0] );
+  argv[4] = stgCurVal;
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -7039,10 +7116,20 @@ DEFUN0(stgApplyPPPP) {
   #endif
   callContSave( &argv[0], (Bitmap64)0x140000000000001FUL );
   STGEVAL(argv[1]);
+  callContRestore( &argv[0] );
+  argv[1] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x140000000000001FUL );
   STGEVAL(argv[2]);
+  callContRestore( &argv[0] );
+  argv[2] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x140000000000001FUL );
   STGEVAL(argv[3]);
+  callContRestore( &argv[0] );
+  argv[3] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x140000000000001FUL );
   STGEVAL(argv[4]);
   callContRestore( &argv[0] );
+  argv[4] = stgCurVal;
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -7313,9 +7400,7 @@ DEFUN0(stgApplyNNNNN) {
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyNNNNN %s\n", getInfoPtr(argv[0].op)->name);
   #endif
-  callContSave( &argv[0], (Bitmap64)0x1800000000000001UL );
-  callContRestore( &argv[0] );
-
+  
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
     callContSave( &argv[0], (Bitmap64)0x1800000000000001UL );
@@ -7626,6 +7711,7 @@ DEFUN0(stgApplyPNNNN) {
   callContSave( &argv[0], (Bitmap64)0x1800000000000003UL );
   STGEVAL(argv[1]);
   callContRestore( &argv[0] );
+  argv[1] = stgCurVal;
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -7937,6 +8023,7 @@ DEFUN0(stgApplyNPNNN) {
   callContSave( &argv[0], (Bitmap64)0x1800000000000005UL );
   STGEVAL(argv[2]);
   callContRestore( &argv[0] );
+  argv[2] = stgCurVal;
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -8247,8 +8334,12 @@ DEFUN0(stgApplyPPNNN) {
   #endif
   callContSave( &argv[0], (Bitmap64)0x1800000000000007UL );
   STGEVAL(argv[1]);
+  callContRestore( &argv[0] );
+  argv[1] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x1800000000000007UL );
   STGEVAL(argv[2]);
   callContRestore( &argv[0] );
+  argv[2] = stgCurVal;
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -8560,6 +8651,7 @@ DEFUN0(stgApplyNNPNN) {
   callContSave( &argv[0], (Bitmap64)0x1800000000000009UL );
   STGEVAL(argv[3]);
   callContRestore( &argv[0] );
+  argv[3] = stgCurVal;
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -8870,8 +8962,12 @@ DEFUN0(stgApplyPNPNN) {
   #endif
   callContSave( &argv[0], (Bitmap64)0x180000000000000BUL );
   STGEVAL(argv[1]);
+  callContRestore( &argv[0] );
+  argv[1] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x180000000000000BUL );
   STGEVAL(argv[3]);
   callContRestore( &argv[0] );
+  argv[3] = stgCurVal;
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -9182,8 +9278,12 @@ DEFUN0(stgApplyNPPNN) {
   #endif
   callContSave( &argv[0], (Bitmap64)0x180000000000000DUL );
   STGEVAL(argv[2]);
+  callContRestore( &argv[0] );
+  argv[2] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x180000000000000DUL );
   STGEVAL(argv[3]);
   callContRestore( &argv[0] );
+  argv[3] = stgCurVal;
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -9494,9 +9594,16 @@ DEFUN0(stgApplyPPPNN) {
   #endif
   callContSave( &argv[0], (Bitmap64)0x180000000000000FUL );
   STGEVAL(argv[1]);
+  callContRestore( &argv[0] );
+  argv[1] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x180000000000000FUL );
   STGEVAL(argv[2]);
+  callContRestore( &argv[0] );
+  argv[2] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x180000000000000FUL );
   STGEVAL(argv[3]);
   callContRestore( &argv[0] );
+  argv[3] = stgCurVal;
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -9808,6 +9915,7 @@ DEFUN0(stgApplyNNNPN) {
   callContSave( &argv[0], (Bitmap64)0x1800000000000011UL );
   STGEVAL(argv[4]);
   callContRestore( &argv[0] );
+  argv[4] = stgCurVal;
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -10118,8 +10226,12 @@ DEFUN0(stgApplyPNNPN) {
   #endif
   callContSave( &argv[0], (Bitmap64)0x1800000000000013UL );
   STGEVAL(argv[1]);
+  callContRestore( &argv[0] );
+  argv[1] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x1800000000000013UL );
   STGEVAL(argv[4]);
   callContRestore( &argv[0] );
+  argv[4] = stgCurVal;
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -10430,8 +10542,12 @@ DEFUN0(stgApplyNPNPN) {
   #endif
   callContSave( &argv[0], (Bitmap64)0x1800000000000015UL );
   STGEVAL(argv[2]);
+  callContRestore( &argv[0] );
+  argv[2] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x1800000000000015UL );
   STGEVAL(argv[4]);
   callContRestore( &argv[0] );
+  argv[4] = stgCurVal;
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -10742,9 +10858,16 @@ DEFUN0(stgApplyPPNPN) {
   #endif
   callContSave( &argv[0], (Bitmap64)0x1800000000000017UL );
   STGEVAL(argv[1]);
+  callContRestore( &argv[0] );
+  argv[1] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x1800000000000017UL );
   STGEVAL(argv[2]);
+  callContRestore( &argv[0] );
+  argv[2] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x1800000000000017UL );
   STGEVAL(argv[4]);
   callContRestore( &argv[0] );
+  argv[4] = stgCurVal;
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -11055,8 +11178,12 @@ DEFUN0(stgApplyNNPPN) {
   #endif
   callContSave( &argv[0], (Bitmap64)0x1800000000000019UL );
   STGEVAL(argv[3]);
+  callContRestore( &argv[0] );
+  argv[3] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x1800000000000019UL );
   STGEVAL(argv[4]);
   callContRestore( &argv[0] );
+  argv[4] = stgCurVal;
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -11367,9 +11494,16 @@ DEFUN0(stgApplyPNPPN) {
   #endif
   callContSave( &argv[0], (Bitmap64)0x180000000000001BUL );
   STGEVAL(argv[1]);
+  callContRestore( &argv[0] );
+  argv[1] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x180000000000001BUL );
   STGEVAL(argv[3]);
+  callContRestore( &argv[0] );
+  argv[3] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x180000000000001BUL );
   STGEVAL(argv[4]);
   callContRestore( &argv[0] );
+  argv[4] = stgCurVal;
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -11680,9 +11814,16 @@ DEFUN0(stgApplyNPPPN) {
   #endif
   callContSave( &argv[0], (Bitmap64)0x180000000000001DUL );
   STGEVAL(argv[2]);
+  callContRestore( &argv[0] );
+  argv[2] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x180000000000001DUL );
   STGEVAL(argv[3]);
+  callContRestore( &argv[0] );
+  argv[3] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x180000000000001DUL );
   STGEVAL(argv[4]);
   callContRestore( &argv[0] );
+  argv[4] = stgCurVal;
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -11993,10 +12134,20 @@ DEFUN0(stgApplyPPPPN) {
   #endif
   callContSave( &argv[0], (Bitmap64)0x180000000000001FUL );
   STGEVAL(argv[1]);
+  callContRestore( &argv[0] );
+  argv[1] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x180000000000001FUL );
   STGEVAL(argv[2]);
+  callContRestore( &argv[0] );
+  argv[2] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x180000000000001FUL );
   STGEVAL(argv[3]);
+  callContRestore( &argv[0] );
+  argv[3] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x180000000000001FUL );
   STGEVAL(argv[4]);
   callContRestore( &argv[0] );
+  argv[4] = stgCurVal;
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -12308,6 +12459,7 @@ DEFUN0(stgApplyNNNNP) {
   callContSave( &argv[0], (Bitmap64)0x1800000000000021UL );
   STGEVAL(argv[5]);
   callContRestore( &argv[0] );
+  argv[5] = stgCurVal;
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -12618,8 +12770,12 @@ DEFUN0(stgApplyPNNNP) {
   #endif
   callContSave( &argv[0], (Bitmap64)0x1800000000000023UL );
   STGEVAL(argv[1]);
+  callContRestore( &argv[0] );
+  argv[1] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x1800000000000023UL );
   STGEVAL(argv[5]);
   callContRestore( &argv[0] );
+  argv[5] = stgCurVal;
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -12930,8 +13086,12 @@ DEFUN0(stgApplyNPNNP) {
   #endif
   callContSave( &argv[0], (Bitmap64)0x1800000000000025UL );
   STGEVAL(argv[2]);
+  callContRestore( &argv[0] );
+  argv[2] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x1800000000000025UL );
   STGEVAL(argv[5]);
   callContRestore( &argv[0] );
+  argv[5] = stgCurVal;
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -13242,9 +13402,16 @@ DEFUN0(stgApplyPPNNP) {
   #endif
   callContSave( &argv[0], (Bitmap64)0x1800000000000027UL );
   STGEVAL(argv[1]);
+  callContRestore( &argv[0] );
+  argv[1] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x1800000000000027UL );
   STGEVAL(argv[2]);
+  callContRestore( &argv[0] );
+  argv[2] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x1800000000000027UL );
   STGEVAL(argv[5]);
   callContRestore( &argv[0] );
+  argv[5] = stgCurVal;
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -13555,8 +13722,12 @@ DEFUN0(stgApplyNNPNP) {
   #endif
   callContSave( &argv[0], (Bitmap64)0x1800000000000029UL );
   STGEVAL(argv[3]);
+  callContRestore( &argv[0] );
+  argv[3] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x1800000000000029UL );
   STGEVAL(argv[5]);
   callContRestore( &argv[0] );
+  argv[5] = stgCurVal;
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -13867,9 +14038,16 @@ DEFUN0(stgApplyPNPNP) {
   #endif
   callContSave( &argv[0], (Bitmap64)0x180000000000002BUL );
   STGEVAL(argv[1]);
+  callContRestore( &argv[0] );
+  argv[1] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x180000000000002BUL );
   STGEVAL(argv[3]);
+  callContRestore( &argv[0] );
+  argv[3] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x180000000000002BUL );
   STGEVAL(argv[5]);
   callContRestore( &argv[0] );
+  argv[5] = stgCurVal;
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -14180,9 +14358,16 @@ DEFUN0(stgApplyNPPNP) {
   #endif
   callContSave( &argv[0], (Bitmap64)0x180000000000002DUL );
   STGEVAL(argv[2]);
+  callContRestore( &argv[0] );
+  argv[2] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x180000000000002DUL );
   STGEVAL(argv[3]);
+  callContRestore( &argv[0] );
+  argv[3] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x180000000000002DUL );
   STGEVAL(argv[5]);
   callContRestore( &argv[0] );
+  argv[5] = stgCurVal;
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -14493,10 +14678,20 @@ DEFUN0(stgApplyPPPNP) {
   #endif
   callContSave( &argv[0], (Bitmap64)0x180000000000002FUL );
   STGEVAL(argv[1]);
+  callContRestore( &argv[0] );
+  argv[1] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x180000000000002FUL );
   STGEVAL(argv[2]);
+  callContRestore( &argv[0] );
+  argv[2] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x180000000000002FUL );
   STGEVAL(argv[3]);
+  callContRestore( &argv[0] );
+  argv[3] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x180000000000002FUL );
   STGEVAL(argv[5]);
   callContRestore( &argv[0] );
+  argv[5] = stgCurVal;
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -14807,8 +15002,12 @@ DEFUN0(stgApplyNNNPP) {
   #endif
   callContSave( &argv[0], (Bitmap64)0x1800000000000031UL );
   STGEVAL(argv[4]);
+  callContRestore( &argv[0] );
+  argv[4] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x1800000000000031UL );
   STGEVAL(argv[5]);
   callContRestore( &argv[0] );
+  argv[5] = stgCurVal;
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -15119,9 +15318,16 @@ DEFUN0(stgApplyPNNPP) {
   #endif
   callContSave( &argv[0], (Bitmap64)0x1800000000000033UL );
   STGEVAL(argv[1]);
+  callContRestore( &argv[0] );
+  argv[1] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x1800000000000033UL );
   STGEVAL(argv[4]);
+  callContRestore( &argv[0] );
+  argv[4] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x1800000000000033UL );
   STGEVAL(argv[5]);
   callContRestore( &argv[0] );
+  argv[5] = stgCurVal;
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -15432,9 +15638,16 @@ DEFUN0(stgApplyNPNPP) {
   #endif
   callContSave( &argv[0], (Bitmap64)0x1800000000000035UL );
   STGEVAL(argv[2]);
+  callContRestore( &argv[0] );
+  argv[2] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x1800000000000035UL );
   STGEVAL(argv[4]);
+  callContRestore( &argv[0] );
+  argv[4] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x1800000000000035UL );
   STGEVAL(argv[5]);
   callContRestore( &argv[0] );
+  argv[5] = stgCurVal;
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -15745,10 +15958,20 @@ DEFUN0(stgApplyPPNPP) {
   #endif
   callContSave( &argv[0], (Bitmap64)0x1800000000000037UL );
   STGEVAL(argv[1]);
+  callContRestore( &argv[0] );
+  argv[1] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x1800000000000037UL );
   STGEVAL(argv[2]);
+  callContRestore( &argv[0] );
+  argv[2] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x1800000000000037UL );
   STGEVAL(argv[4]);
+  callContRestore( &argv[0] );
+  argv[4] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x1800000000000037UL );
   STGEVAL(argv[5]);
   callContRestore( &argv[0] );
+  argv[5] = stgCurVal;
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -16059,9 +16282,16 @@ DEFUN0(stgApplyNNPPP) {
   #endif
   callContSave( &argv[0], (Bitmap64)0x1800000000000039UL );
   STGEVAL(argv[3]);
+  callContRestore( &argv[0] );
+  argv[3] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x1800000000000039UL );
   STGEVAL(argv[4]);
+  callContRestore( &argv[0] );
+  argv[4] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x1800000000000039UL );
   STGEVAL(argv[5]);
   callContRestore( &argv[0] );
+  argv[5] = stgCurVal;
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -16372,10 +16602,20 @@ DEFUN0(stgApplyPNPPP) {
   #endif
   callContSave( &argv[0], (Bitmap64)0x180000000000003BUL );
   STGEVAL(argv[1]);
+  callContRestore( &argv[0] );
+  argv[1] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x180000000000003BUL );
   STGEVAL(argv[3]);
+  callContRestore( &argv[0] );
+  argv[3] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x180000000000003BUL );
   STGEVAL(argv[4]);
+  callContRestore( &argv[0] );
+  argv[4] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x180000000000003BUL );
   STGEVAL(argv[5]);
   callContRestore( &argv[0] );
+  argv[5] = stgCurVal;
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -16686,10 +16926,20 @@ DEFUN0(stgApplyNPPPP) {
   #endif
   callContSave( &argv[0], (Bitmap64)0x180000000000003DUL );
   STGEVAL(argv[2]);
+  callContRestore( &argv[0] );
+  argv[2] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x180000000000003DUL );
   STGEVAL(argv[3]);
+  callContRestore( &argv[0] );
+  argv[3] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x180000000000003DUL );
   STGEVAL(argv[4]);
+  callContRestore( &argv[0] );
+  argv[4] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x180000000000003DUL );
   STGEVAL(argv[5]);
   callContRestore( &argv[0] );
+  argv[5] = stgCurVal;
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -17000,11 +17250,24 @@ DEFUN0(stgApplyPPPPP) {
   #endif
   callContSave( &argv[0], (Bitmap64)0x180000000000003FUL );
   STGEVAL(argv[1]);
+  callContRestore( &argv[0] );
+  argv[1] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x180000000000003FUL );
   STGEVAL(argv[2]);
+  callContRestore( &argv[0] );
+  argv[2] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x180000000000003FUL );
   STGEVAL(argv[3]);
+  callContRestore( &argv[0] );
+  argv[3] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x180000000000003FUL );
   STGEVAL(argv[4]);
+  callContRestore( &argv[0] );
+  argv[4] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x180000000000003FUL );
   STGEVAL(argv[5]);
   callContRestore( &argv[0] );
+  argv[5] = stgCurVal;
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -17313,9 +17576,7 @@ DEFUN0(stgApplyNNNNNN) {
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyNNNNNN %s\n", getInfoPtr(argv[0].op)->name);
   #endif
-  callContSave( &argv[0], (Bitmap64)0x1C00000000000001UL );
-  callContRestore( &argv[0] );
-
+  
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
     callContSave( &argv[0], (Bitmap64)0x1C00000000000001UL );
@@ -17664,6 +17925,7 @@ DEFUN0(stgApplyPNNNNN) {
   callContSave( &argv[0], (Bitmap64)0x1C00000000000003UL );
   STGEVAL(argv[1]);
   callContRestore( &argv[0] );
+  argv[1] = stgCurVal;
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -18013,6 +18275,7 @@ DEFUN0(stgApplyNPNNNN) {
   callContSave( &argv[0], (Bitmap64)0x1C00000000000005UL );
   STGEVAL(argv[2]);
   callContRestore( &argv[0] );
+  argv[2] = stgCurVal;
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -18361,8 +18624,12 @@ DEFUN0(stgApplyPPNNNN) {
   #endif
   callContSave( &argv[0], (Bitmap64)0x1C00000000000007UL );
   STGEVAL(argv[1]);
+  callContRestore( &argv[0] );
+  argv[1] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x1C00000000000007UL );
   STGEVAL(argv[2]);
   callContRestore( &argv[0] );
+  argv[2] = stgCurVal;
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -18712,6 +18979,7 @@ DEFUN0(stgApplyNNPNNN) {
   callContSave( &argv[0], (Bitmap64)0x1C00000000000009UL );
   STGEVAL(argv[3]);
   callContRestore( &argv[0] );
+  argv[3] = stgCurVal;
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -19060,8 +19328,12 @@ DEFUN0(stgApplyPNPNNN) {
   #endif
   callContSave( &argv[0], (Bitmap64)0x1C0000000000000BUL );
   STGEVAL(argv[1]);
+  callContRestore( &argv[0] );
+  argv[1] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x1C0000000000000BUL );
   STGEVAL(argv[3]);
   callContRestore( &argv[0] );
+  argv[3] = stgCurVal;
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -19410,8 +19682,12 @@ DEFUN0(stgApplyNPPNNN) {
   #endif
   callContSave( &argv[0], (Bitmap64)0x1C0000000000000DUL );
   STGEVAL(argv[2]);
+  callContRestore( &argv[0] );
+  argv[2] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x1C0000000000000DUL );
   STGEVAL(argv[3]);
   callContRestore( &argv[0] );
+  argv[3] = stgCurVal;
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -19760,9 +20036,16 @@ DEFUN0(stgApplyPPPNNN) {
   #endif
   callContSave( &argv[0], (Bitmap64)0x1C0000000000000FUL );
   STGEVAL(argv[1]);
+  callContRestore( &argv[0] );
+  argv[1] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x1C0000000000000FUL );
   STGEVAL(argv[2]);
+  callContRestore( &argv[0] );
+  argv[2] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x1C0000000000000FUL );
   STGEVAL(argv[3]);
   callContRestore( &argv[0] );
+  argv[3] = stgCurVal;
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -20112,6 +20395,7 @@ DEFUN0(stgApplyNNNPNN) {
   callContSave( &argv[0], (Bitmap64)0x1C00000000000011UL );
   STGEVAL(argv[4]);
   callContRestore( &argv[0] );
+  argv[4] = stgCurVal;
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -20460,8 +20744,12 @@ DEFUN0(stgApplyPNNPNN) {
   #endif
   callContSave( &argv[0], (Bitmap64)0x1C00000000000013UL );
   STGEVAL(argv[1]);
+  callContRestore( &argv[0] );
+  argv[1] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x1C00000000000013UL );
   STGEVAL(argv[4]);
   callContRestore( &argv[0] );
+  argv[4] = stgCurVal;
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -20810,8 +21098,12 @@ DEFUN0(stgApplyNPNPNN) {
   #endif
   callContSave( &argv[0], (Bitmap64)0x1C00000000000015UL );
   STGEVAL(argv[2]);
+  callContRestore( &argv[0] );
+  argv[2] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x1C00000000000015UL );
   STGEVAL(argv[4]);
   callContRestore( &argv[0] );
+  argv[4] = stgCurVal;
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -21160,9 +21452,16 @@ DEFUN0(stgApplyPPNPNN) {
   #endif
   callContSave( &argv[0], (Bitmap64)0x1C00000000000017UL );
   STGEVAL(argv[1]);
+  callContRestore( &argv[0] );
+  argv[1] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x1C00000000000017UL );
   STGEVAL(argv[2]);
+  callContRestore( &argv[0] );
+  argv[2] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x1C00000000000017UL );
   STGEVAL(argv[4]);
   callContRestore( &argv[0] );
+  argv[4] = stgCurVal;
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -21511,8 +21810,12 @@ DEFUN0(stgApplyNNPPNN) {
   #endif
   callContSave( &argv[0], (Bitmap64)0x1C00000000000019UL );
   STGEVAL(argv[3]);
+  callContRestore( &argv[0] );
+  argv[3] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x1C00000000000019UL );
   STGEVAL(argv[4]);
   callContRestore( &argv[0] );
+  argv[4] = stgCurVal;
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -21861,9 +22164,16 @@ DEFUN0(stgApplyPNPPNN) {
   #endif
   callContSave( &argv[0], (Bitmap64)0x1C0000000000001BUL );
   STGEVAL(argv[1]);
+  callContRestore( &argv[0] );
+  argv[1] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x1C0000000000001BUL );
   STGEVAL(argv[3]);
+  callContRestore( &argv[0] );
+  argv[3] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x1C0000000000001BUL );
   STGEVAL(argv[4]);
   callContRestore( &argv[0] );
+  argv[4] = stgCurVal;
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -22212,9 +22522,16 @@ DEFUN0(stgApplyNPPPNN) {
   #endif
   callContSave( &argv[0], (Bitmap64)0x1C0000000000001DUL );
   STGEVAL(argv[2]);
+  callContRestore( &argv[0] );
+  argv[2] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x1C0000000000001DUL );
   STGEVAL(argv[3]);
+  callContRestore( &argv[0] );
+  argv[3] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x1C0000000000001DUL );
   STGEVAL(argv[4]);
   callContRestore( &argv[0] );
+  argv[4] = stgCurVal;
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -22563,10 +22880,20 @@ DEFUN0(stgApplyPPPPNN) {
   #endif
   callContSave( &argv[0], (Bitmap64)0x1C0000000000001FUL );
   STGEVAL(argv[1]);
+  callContRestore( &argv[0] );
+  argv[1] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x1C0000000000001FUL );
   STGEVAL(argv[2]);
+  callContRestore( &argv[0] );
+  argv[2] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x1C0000000000001FUL );
   STGEVAL(argv[3]);
+  callContRestore( &argv[0] );
+  argv[3] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x1C0000000000001FUL );
   STGEVAL(argv[4]);
   callContRestore( &argv[0] );
+  argv[4] = stgCurVal;
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -22916,6 +23243,7 @@ DEFUN0(stgApplyNNNNPN) {
   callContSave( &argv[0], (Bitmap64)0x1C00000000000021UL );
   STGEVAL(argv[5]);
   callContRestore( &argv[0] );
+  argv[5] = stgCurVal;
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -23264,8 +23592,12 @@ DEFUN0(stgApplyPNNNPN) {
   #endif
   callContSave( &argv[0], (Bitmap64)0x1C00000000000023UL );
   STGEVAL(argv[1]);
+  callContRestore( &argv[0] );
+  argv[1] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x1C00000000000023UL );
   STGEVAL(argv[5]);
   callContRestore( &argv[0] );
+  argv[5] = stgCurVal;
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -23614,8 +23946,12 @@ DEFUN0(stgApplyNPNNPN) {
   #endif
   callContSave( &argv[0], (Bitmap64)0x1C00000000000025UL );
   STGEVAL(argv[2]);
+  callContRestore( &argv[0] );
+  argv[2] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x1C00000000000025UL );
   STGEVAL(argv[5]);
   callContRestore( &argv[0] );
+  argv[5] = stgCurVal;
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -23964,9 +24300,16 @@ DEFUN0(stgApplyPPNNPN) {
   #endif
   callContSave( &argv[0], (Bitmap64)0x1C00000000000027UL );
   STGEVAL(argv[1]);
+  callContRestore( &argv[0] );
+  argv[1] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x1C00000000000027UL );
   STGEVAL(argv[2]);
+  callContRestore( &argv[0] );
+  argv[2] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x1C00000000000027UL );
   STGEVAL(argv[5]);
   callContRestore( &argv[0] );
+  argv[5] = stgCurVal;
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -24315,8 +24658,12 @@ DEFUN0(stgApplyNNPNPN) {
   #endif
   callContSave( &argv[0], (Bitmap64)0x1C00000000000029UL );
   STGEVAL(argv[3]);
+  callContRestore( &argv[0] );
+  argv[3] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x1C00000000000029UL );
   STGEVAL(argv[5]);
   callContRestore( &argv[0] );
+  argv[5] = stgCurVal;
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -24665,9 +25012,16 @@ DEFUN0(stgApplyPNPNPN) {
   #endif
   callContSave( &argv[0], (Bitmap64)0x1C0000000000002BUL );
   STGEVAL(argv[1]);
+  callContRestore( &argv[0] );
+  argv[1] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x1C0000000000002BUL );
   STGEVAL(argv[3]);
+  callContRestore( &argv[0] );
+  argv[3] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x1C0000000000002BUL );
   STGEVAL(argv[5]);
   callContRestore( &argv[0] );
+  argv[5] = stgCurVal;
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -25016,9 +25370,16 @@ DEFUN0(stgApplyNPPNPN) {
   #endif
   callContSave( &argv[0], (Bitmap64)0x1C0000000000002DUL );
   STGEVAL(argv[2]);
+  callContRestore( &argv[0] );
+  argv[2] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x1C0000000000002DUL );
   STGEVAL(argv[3]);
+  callContRestore( &argv[0] );
+  argv[3] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x1C0000000000002DUL );
   STGEVAL(argv[5]);
   callContRestore( &argv[0] );
+  argv[5] = stgCurVal;
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -25367,10 +25728,20 @@ DEFUN0(stgApplyPPPNPN) {
   #endif
   callContSave( &argv[0], (Bitmap64)0x1C0000000000002FUL );
   STGEVAL(argv[1]);
+  callContRestore( &argv[0] );
+  argv[1] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x1C0000000000002FUL );
   STGEVAL(argv[2]);
+  callContRestore( &argv[0] );
+  argv[2] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x1C0000000000002FUL );
   STGEVAL(argv[3]);
+  callContRestore( &argv[0] );
+  argv[3] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x1C0000000000002FUL );
   STGEVAL(argv[5]);
   callContRestore( &argv[0] );
+  argv[5] = stgCurVal;
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -25719,8 +26090,12 @@ DEFUN0(stgApplyNNNPPN) {
   #endif
   callContSave( &argv[0], (Bitmap64)0x1C00000000000031UL );
   STGEVAL(argv[4]);
+  callContRestore( &argv[0] );
+  argv[4] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x1C00000000000031UL );
   STGEVAL(argv[5]);
   callContRestore( &argv[0] );
+  argv[5] = stgCurVal;
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -26069,9 +26444,16 @@ DEFUN0(stgApplyPNNPPN) {
   #endif
   callContSave( &argv[0], (Bitmap64)0x1C00000000000033UL );
   STGEVAL(argv[1]);
+  callContRestore( &argv[0] );
+  argv[1] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x1C00000000000033UL );
   STGEVAL(argv[4]);
+  callContRestore( &argv[0] );
+  argv[4] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x1C00000000000033UL );
   STGEVAL(argv[5]);
   callContRestore( &argv[0] );
+  argv[5] = stgCurVal;
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -26420,9 +26802,16 @@ DEFUN0(stgApplyNPNPPN) {
   #endif
   callContSave( &argv[0], (Bitmap64)0x1C00000000000035UL );
   STGEVAL(argv[2]);
+  callContRestore( &argv[0] );
+  argv[2] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x1C00000000000035UL );
   STGEVAL(argv[4]);
+  callContRestore( &argv[0] );
+  argv[4] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x1C00000000000035UL );
   STGEVAL(argv[5]);
   callContRestore( &argv[0] );
+  argv[5] = stgCurVal;
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -26771,10 +27160,20 @@ DEFUN0(stgApplyPPNPPN) {
   #endif
   callContSave( &argv[0], (Bitmap64)0x1C00000000000037UL );
   STGEVAL(argv[1]);
+  callContRestore( &argv[0] );
+  argv[1] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x1C00000000000037UL );
   STGEVAL(argv[2]);
+  callContRestore( &argv[0] );
+  argv[2] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x1C00000000000037UL );
   STGEVAL(argv[4]);
+  callContRestore( &argv[0] );
+  argv[4] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x1C00000000000037UL );
   STGEVAL(argv[5]);
   callContRestore( &argv[0] );
+  argv[5] = stgCurVal;
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -27123,9 +27522,16 @@ DEFUN0(stgApplyNNPPPN) {
   #endif
   callContSave( &argv[0], (Bitmap64)0x1C00000000000039UL );
   STGEVAL(argv[3]);
+  callContRestore( &argv[0] );
+  argv[3] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x1C00000000000039UL );
   STGEVAL(argv[4]);
+  callContRestore( &argv[0] );
+  argv[4] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x1C00000000000039UL );
   STGEVAL(argv[5]);
   callContRestore( &argv[0] );
+  argv[5] = stgCurVal;
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -27474,10 +27880,20 @@ DEFUN0(stgApplyPNPPPN) {
   #endif
   callContSave( &argv[0], (Bitmap64)0x1C0000000000003BUL );
   STGEVAL(argv[1]);
+  callContRestore( &argv[0] );
+  argv[1] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x1C0000000000003BUL );
   STGEVAL(argv[3]);
+  callContRestore( &argv[0] );
+  argv[3] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x1C0000000000003BUL );
   STGEVAL(argv[4]);
+  callContRestore( &argv[0] );
+  argv[4] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x1C0000000000003BUL );
   STGEVAL(argv[5]);
   callContRestore( &argv[0] );
+  argv[5] = stgCurVal;
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -27826,10 +28242,20 @@ DEFUN0(stgApplyNPPPPN) {
   #endif
   callContSave( &argv[0], (Bitmap64)0x1C0000000000003DUL );
   STGEVAL(argv[2]);
+  callContRestore( &argv[0] );
+  argv[2] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x1C0000000000003DUL );
   STGEVAL(argv[3]);
+  callContRestore( &argv[0] );
+  argv[3] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x1C0000000000003DUL );
   STGEVAL(argv[4]);
+  callContRestore( &argv[0] );
+  argv[4] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x1C0000000000003DUL );
   STGEVAL(argv[5]);
   callContRestore( &argv[0] );
+  argv[5] = stgCurVal;
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -28178,11 +28604,24 @@ DEFUN0(stgApplyPPPPPN) {
   #endif
   callContSave( &argv[0], (Bitmap64)0x1C0000000000003FUL );
   STGEVAL(argv[1]);
+  callContRestore( &argv[0] );
+  argv[1] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x1C0000000000003FUL );
   STGEVAL(argv[2]);
+  callContRestore( &argv[0] );
+  argv[2] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x1C0000000000003FUL );
   STGEVAL(argv[3]);
+  callContRestore( &argv[0] );
+  argv[3] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x1C0000000000003FUL );
   STGEVAL(argv[4]);
+  callContRestore( &argv[0] );
+  argv[4] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x1C0000000000003FUL );
   STGEVAL(argv[5]);
   callContRestore( &argv[0] );
+  argv[5] = stgCurVal;
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -28532,6 +28971,7 @@ DEFUN0(stgApplyNNNNNP) {
   callContSave( &argv[0], (Bitmap64)0x1C00000000000041UL );
   STGEVAL(argv[6]);
   callContRestore( &argv[0] );
+  argv[6] = stgCurVal;
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -28880,8 +29320,12 @@ DEFUN0(stgApplyPNNNNP) {
   #endif
   callContSave( &argv[0], (Bitmap64)0x1C00000000000043UL );
   STGEVAL(argv[1]);
+  callContRestore( &argv[0] );
+  argv[1] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x1C00000000000043UL );
   STGEVAL(argv[6]);
   callContRestore( &argv[0] );
+  argv[6] = stgCurVal;
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -29230,8 +29674,12 @@ DEFUN0(stgApplyNPNNNP) {
   #endif
   callContSave( &argv[0], (Bitmap64)0x1C00000000000045UL );
   STGEVAL(argv[2]);
+  callContRestore( &argv[0] );
+  argv[2] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x1C00000000000045UL );
   STGEVAL(argv[6]);
   callContRestore( &argv[0] );
+  argv[6] = stgCurVal;
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -29580,9 +30028,16 @@ DEFUN0(stgApplyPPNNNP) {
   #endif
   callContSave( &argv[0], (Bitmap64)0x1C00000000000047UL );
   STGEVAL(argv[1]);
+  callContRestore( &argv[0] );
+  argv[1] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x1C00000000000047UL );
   STGEVAL(argv[2]);
+  callContRestore( &argv[0] );
+  argv[2] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x1C00000000000047UL );
   STGEVAL(argv[6]);
   callContRestore( &argv[0] );
+  argv[6] = stgCurVal;
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -29931,8 +30386,12 @@ DEFUN0(stgApplyNNPNNP) {
   #endif
   callContSave( &argv[0], (Bitmap64)0x1C00000000000049UL );
   STGEVAL(argv[3]);
+  callContRestore( &argv[0] );
+  argv[3] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x1C00000000000049UL );
   STGEVAL(argv[6]);
   callContRestore( &argv[0] );
+  argv[6] = stgCurVal;
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -30281,9 +30740,16 @@ DEFUN0(stgApplyPNPNNP) {
   #endif
   callContSave( &argv[0], (Bitmap64)0x1C0000000000004BUL );
   STGEVAL(argv[1]);
+  callContRestore( &argv[0] );
+  argv[1] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x1C0000000000004BUL );
   STGEVAL(argv[3]);
+  callContRestore( &argv[0] );
+  argv[3] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x1C0000000000004BUL );
   STGEVAL(argv[6]);
   callContRestore( &argv[0] );
+  argv[6] = stgCurVal;
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -30632,9 +31098,16 @@ DEFUN0(stgApplyNPPNNP) {
   #endif
   callContSave( &argv[0], (Bitmap64)0x1C0000000000004DUL );
   STGEVAL(argv[2]);
+  callContRestore( &argv[0] );
+  argv[2] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x1C0000000000004DUL );
   STGEVAL(argv[3]);
+  callContRestore( &argv[0] );
+  argv[3] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x1C0000000000004DUL );
   STGEVAL(argv[6]);
   callContRestore( &argv[0] );
+  argv[6] = stgCurVal;
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -30983,10 +31456,20 @@ DEFUN0(stgApplyPPPNNP) {
   #endif
   callContSave( &argv[0], (Bitmap64)0x1C0000000000004FUL );
   STGEVAL(argv[1]);
+  callContRestore( &argv[0] );
+  argv[1] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x1C0000000000004FUL );
   STGEVAL(argv[2]);
+  callContRestore( &argv[0] );
+  argv[2] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x1C0000000000004FUL );
   STGEVAL(argv[3]);
+  callContRestore( &argv[0] );
+  argv[3] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x1C0000000000004FUL );
   STGEVAL(argv[6]);
   callContRestore( &argv[0] );
+  argv[6] = stgCurVal;
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -31335,8 +31818,12 @@ DEFUN0(stgApplyNNNPNP) {
   #endif
   callContSave( &argv[0], (Bitmap64)0x1C00000000000051UL );
   STGEVAL(argv[4]);
+  callContRestore( &argv[0] );
+  argv[4] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x1C00000000000051UL );
   STGEVAL(argv[6]);
   callContRestore( &argv[0] );
+  argv[6] = stgCurVal;
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -31685,9 +32172,16 @@ DEFUN0(stgApplyPNNPNP) {
   #endif
   callContSave( &argv[0], (Bitmap64)0x1C00000000000053UL );
   STGEVAL(argv[1]);
+  callContRestore( &argv[0] );
+  argv[1] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x1C00000000000053UL );
   STGEVAL(argv[4]);
+  callContRestore( &argv[0] );
+  argv[4] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x1C00000000000053UL );
   STGEVAL(argv[6]);
   callContRestore( &argv[0] );
+  argv[6] = stgCurVal;
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -32036,9 +32530,16 @@ DEFUN0(stgApplyNPNPNP) {
   #endif
   callContSave( &argv[0], (Bitmap64)0x1C00000000000055UL );
   STGEVAL(argv[2]);
+  callContRestore( &argv[0] );
+  argv[2] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x1C00000000000055UL );
   STGEVAL(argv[4]);
+  callContRestore( &argv[0] );
+  argv[4] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x1C00000000000055UL );
   STGEVAL(argv[6]);
   callContRestore( &argv[0] );
+  argv[6] = stgCurVal;
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -32387,10 +32888,20 @@ DEFUN0(stgApplyPPNPNP) {
   #endif
   callContSave( &argv[0], (Bitmap64)0x1C00000000000057UL );
   STGEVAL(argv[1]);
+  callContRestore( &argv[0] );
+  argv[1] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x1C00000000000057UL );
   STGEVAL(argv[2]);
+  callContRestore( &argv[0] );
+  argv[2] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x1C00000000000057UL );
   STGEVAL(argv[4]);
+  callContRestore( &argv[0] );
+  argv[4] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x1C00000000000057UL );
   STGEVAL(argv[6]);
   callContRestore( &argv[0] );
+  argv[6] = stgCurVal;
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -32739,9 +33250,16 @@ DEFUN0(stgApplyNNPPNP) {
   #endif
   callContSave( &argv[0], (Bitmap64)0x1C00000000000059UL );
   STGEVAL(argv[3]);
+  callContRestore( &argv[0] );
+  argv[3] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x1C00000000000059UL );
   STGEVAL(argv[4]);
+  callContRestore( &argv[0] );
+  argv[4] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x1C00000000000059UL );
   STGEVAL(argv[6]);
   callContRestore( &argv[0] );
+  argv[6] = stgCurVal;
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -33090,10 +33608,20 @@ DEFUN0(stgApplyPNPPNP) {
   #endif
   callContSave( &argv[0], (Bitmap64)0x1C0000000000005BUL );
   STGEVAL(argv[1]);
+  callContRestore( &argv[0] );
+  argv[1] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x1C0000000000005BUL );
   STGEVAL(argv[3]);
+  callContRestore( &argv[0] );
+  argv[3] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x1C0000000000005BUL );
   STGEVAL(argv[4]);
+  callContRestore( &argv[0] );
+  argv[4] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x1C0000000000005BUL );
   STGEVAL(argv[6]);
   callContRestore( &argv[0] );
+  argv[6] = stgCurVal;
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -33442,10 +33970,20 @@ DEFUN0(stgApplyNPPPNP) {
   #endif
   callContSave( &argv[0], (Bitmap64)0x1C0000000000005DUL );
   STGEVAL(argv[2]);
+  callContRestore( &argv[0] );
+  argv[2] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x1C0000000000005DUL );
   STGEVAL(argv[3]);
+  callContRestore( &argv[0] );
+  argv[3] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x1C0000000000005DUL );
   STGEVAL(argv[4]);
+  callContRestore( &argv[0] );
+  argv[4] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x1C0000000000005DUL );
   STGEVAL(argv[6]);
   callContRestore( &argv[0] );
+  argv[6] = stgCurVal;
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -33794,11 +34332,24 @@ DEFUN0(stgApplyPPPPNP) {
   #endif
   callContSave( &argv[0], (Bitmap64)0x1C0000000000005FUL );
   STGEVAL(argv[1]);
+  callContRestore( &argv[0] );
+  argv[1] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x1C0000000000005FUL );
   STGEVAL(argv[2]);
+  callContRestore( &argv[0] );
+  argv[2] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x1C0000000000005FUL );
   STGEVAL(argv[3]);
+  callContRestore( &argv[0] );
+  argv[3] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x1C0000000000005FUL );
   STGEVAL(argv[4]);
+  callContRestore( &argv[0] );
+  argv[4] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x1C0000000000005FUL );
   STGEVAL(argv[6]);
   callContRestore( &argv[0] );
+  argv[6] = stgCurVal;
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -34147,8 +34698,12 @@ DEFUN0(stgApplyNNNNPP) {
   #endif
   callContSave( &argv[0], (Bitmap64)0x1C00000000000061UL );
   STGEVAL(argv[5]);
+  callContRestore( &argv[0] );
+  argv[5] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x1C00000000000061UL );
   STGEVAL(argv[6]);
   callContRestore( &argv[0] );
+  argv[6] = stgCurVal;
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -34497,9 +35052,16 @@ DEFUN0(stgApplyPNNNPP) {
   #endif
   callContSave( &argv[0], (Bitmap64)0x1C00000000000063UL );
   STGEVAL(argv[1]);
+  callContRestore( &argv[0] );
+  argv[1] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x1C00000000000063UL );
   STGEVAL(argv[5]);
+  callContRestore( &argv[0] );
+  argv[5] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x1C00000000000063UL );
   STGEVAL(argv[6]);
   callContRestore( &argv[0] );
+  argv[6] = stgCurVal;
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -34848,9 +35410,16 @@ DEFUN0(stgApplyNPNNPP) {
   #endif
   callContSave( &argv[0], (Bitmap64)0x1C00000000000065UL );
   STGEVAL(argv[2]);
+  callContRestore( &argv[0] );
+  argv[2] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x1C00000000000065UL );
   STGEVAL(argv[5]);
+  callContRestore( &argv[0] );
+  argv[5] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x1C00000000000065UL );
   STGEVAL(argv[6]);
   callContRestore( &argv[0] );
+  argv[6] = stgCurVal;
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -35199,10 +35768,20 @@ DEFUN0(stgApplyPPNNPP) {
   #endif
   callContSave( &argv[0], (Bitmap64)0x1C00000000000067UL );
   STGEVAL(argv[1]);
+  callContRestore( &argv[0] );
+  argv[1] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x1C00000000000067UL );
   STGEVAL(argv[2]);
+  callContRestore( &argv[0] );
+  argv[2] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x1C00000000000067UL );
   STGEVAL(argv[5]);
+  callContRestore( &argv[0] );
+  argv[5] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x1C00000000000067UL );
   STGEVAL(argv[6]);
   callContRestore( &argv[0] );
+  argv[6] = stgCurVal;
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -35551,9 +36130,16 @@ DEFUN0(stgApplyNNPNPP) {
   #endif
   callContSave( &argv[0], (Bitmap64)0x1C00000000000069UL );
   STGEVAL(argv[3]);
+  callContRestore( &argv[0] );
+  argv[3] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x1C00000000000069UL );
   STGEVAL(argv[5]);
+  callContRestore( &argv[0] );
+  argv[5] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x1C00000000000069UL );
   STGEVAL(argv[6]);
   callContRestore( &argv[0] );
+  argv[6] = stgCurVal;
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -35902,10 +36488,20 @@ DEFUN0(stgApplyPNPNPP) {
   #endif
   callContSave( &argv[0], (Bitmap64)0x1C0000000000006BUL );
   STGEVAL(argv[1]);
+  callContRestore( &argv[0] );
+  argv[1] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x1C0000000000006BUL );
   STGEVAL(argv[3]);
+  callContRestore( &argv[0] );
+  argv[3] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x1C0000000000006BUL );
   STGEVAL(argv[5]);
+  callContRestore( &argv[0] );
+  argv[5] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x1C0000000000006BUL );
   STGEVAL(argv[6]);
   callContRestore( &argv[0] );
+  argv[6] = stgCurVal;
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -36254,10 +36850,20 @@ DEFUN0(stgApplyNPPNPP) {
   #endif
   callContSave( &argv[0], (Bitmap64)0x1C0000000000006DUL );
   STGEVAL(argv[2]);
+  callContRestore( &argv[0] );
+  argv[2] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x1C0000000000006DUL );
   STGEVAL(argv[3]);
+  callContRestore( &argv[0] );
+  argv[3] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x1C0000000000006DUL );
   STGEVAL(argv[5]);
+  callContRestore( &argv[0] );
+  argv[5] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x1C0000000000006DUL );
   STGEVAL(argv[6]);
   callContRestore( &argv[0] );
+  argv[6] = stgCurVal;
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -36606,11 +37212,24 @@ DEFUN0(stgApplyPPPNPP) {
   #endif
   callContSave( &argv[0], (Bitmap64)0x1C0000000000006FUL );
   STGEVAL(argv[1]);
+  callContRestore( &argv[0] );
+  argv[1] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x1C0000000000006FUL );
   STGEVAL(argv[2]);
+  callContRestore( &argv[0] );
+  argv[2] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x1C0000000000006FUL );
   STGEVAL(argv[3]);
+  callContRestore( &argv[0] );
+  argv[3] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x1C0000000000006FUL );
   STGEVAL(argv[5]);
+  callContRestore( &argv[0] );
+  argv[5] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x1C0000000000006FUL );
   STGEVAL(argv[6]);
   callContRestore( &argv[0] );
+  argv[6] = stgCurVal;
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -36959,9 +37578,16 @@ DEFUN0(stgApplyNNNPPP) {
   #endif
   callContSave( &argv[0], (Bitmap64)0x1C00000000000071UL );
   STGEVAL(argv[4]);
+  callContRestore( &argv[0] );
+  argv[4] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x1C00000000000071UL );
   STGEVAL(argv[5]);
+  callContRestore( &argv[0] );
+  argv[5] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x1C00000000000071UL );
   STGEVAL(argv[6]);
   callContRestore( &argv[0] );
+  argv[6] = stgCurVal;
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -37310,10 +37936,20 @@ DEFUN0(stgApplyPNNPPP) {
   #endif
   callContSave( &argv[0], (Bitmap64)0x1C00000000000073UL );
   STGEVAL(argv[1]);
+  callContRestore( &argv[0] );
+  argv[1] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x1C00000000000073UL );
   STGEVAL(argv[4]);
+  callContRestore( &argv[0] );
+  argv[4] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x1C00000000000073UL );
   STGEVAL(argv[5]);
+  callContRestore( &argv[0] );
+  argv[5] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x1C00000000000073UL );
   STGEVAL(argv[6]);
   callContRestore( &argv[0] );
+  argv[6] = stgCurVal;
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -37662,10 +38298,20 @@ DEFUN0(stgApplyNPNPPP) {
   #endif
   callContSave( &argv[0], (Bitmap64)0x1C00000000000075UL );
   STGEVAL(argv[2]);
+  callContRestore( &argv[0] );
+  argv[2] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x1C00000000000075UL );
   STGEVAL(argv[4]);
+  callContRestore( &argv[0] );
+  argv[4] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x1C00000000000075UL );
   STGEVAL(argv[5]);
+  callContRestore( &argv[0] );
+  argv[5] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x1C00000000000075UL );
   STGEVAL(argv[6]);
   callContRestore( &argv[0] );
+  argv[6] = stgCurVal;
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -38014,11 +38660,24 @@ DEFUN0(stgApplyPPNPPP) {
   #endif
   callContSave( &argv[0], (Bitmap64)0x1C00000000000077UL );
   STGEVAL(argv[1]);
+  callContRestore( &argv[0] );
+  argv[1] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x1C00000000000077UL );
   STGEVAL(argv[2]);
+  callContRestore( &argv[0] );
+  argv[2] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x1C00000000000077UL );
   STGEVAL(argv[4]);
+  callContRestore( &argv[0] );
+  argv[4] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x1C00000000000077UL );
   STGEVAL(argv[5]);
+  callContRestore( &argv[0] );
+  argv[5] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x1C00000000000077UL );
   STGEVAL(argv[6]);
   callContRestore( &argv[0] );
+  argv[6] = stgCurVal;
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -38367,10 +39026,20 @@ DEFUN0(stgApplyNNPPPP) {
   #endif
   callContSave( &argv[0], (Bitmap64)0x1C00000000000079UL );
   STGEVAL(argv[3]);
+  callContRestore( &argv[0] );
+  argv[3] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x1C00000000000079UL );
   STGEVAL(argv[4]);
+  callContRestore( &argv[0] );
+  argv[4] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x1C00000000000079UL );
   STGEVAL(argv[5]);
+  callContRestore( &argv[0] );
+  argv[5] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x1C00000000000079UL );
   STGEVAL(argv[6]);
   callContRestore( &argv[0] );
+  argv[6] = stgCurVal;
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -38719,11 +39388,24 @@ DEFUN0(stgApplyPNPPPP) {
   #endif
   callContSave( &argv[0], (Bitmap64)0x1C0000000000007BUL );
   STGEVAL(argv[1]);
+  callContRestore( &argv[0] );
+  argv[1] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x1C0000000000007BUL );
   STGEVAL(argv[3]);
+  callContRestore( &argv[0] );
+  argv[3] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x1C0000000000007BUL );
   STGEVAL(argv[4]);
+  callContRestore( &argv[0] );
+  argv[4] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x1C0000000000007BUL );
   STGEVAL(argv[5]);
+  callContRestore( &argv[0] );
+  argv[5] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x1C0000000000007BUL );
   STGEVAL(argv[6]);
   callContRestore( &argv[0] );
+  argv[6] = stgCurVal;
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -39072,11 +39754,24 @@ DEFUN0(stgApplyNPPPPP) {
   #endif
   callContSave( &argv[0], (Bitmap64)0x1C0000000000007DUL );
   STGEVAL(argv[2]);
+  callContRestore( &argv[0] );
+  argv[2] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x1C0000000000007DUL );
   STGEVAL(argv[3]);
+  callContRestore( &argv[0] );
+  argv[3] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x1C0000000000007DUL );
   STGEVAL(argv[4]);
+  callContRestore( &argv[0] );
+  argv[4] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x1C0000000000007DUL );
   STGEVAL(argv[5]);
+  callContRestore( &argv[0] );
+  argv[5] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x1C0000000000007DUL );
   STGEVAL(argv[6]);
   callContRestore( &argv[0] );
+  argv[6] = stgCurVal;
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -39425,12 +40120,28 @@ DEFUN0(stgApplyPPPPPP) {
   #endif
   callContSave( &argv[0], (Bitmap64)0x1C0000000000007FUL );
   STGEVAL(argv[1]);
+  callContRestore( &argv[0] );
+  argv[1] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x1C0000000000007FUL );
   STGEVAL(argv[2]);
+  callContRestore( &argv[0] );
+  argv[2] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x1C0000000000007FUL );
   STGEVAL(argv[3]);
+  callContRestore( &argv[0] );
+  argv[3] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x1C0000000000007FUL );
   STGEVAL(argv[4]);
+  callContRestore( &argv[0] );
+  argv[4] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x1C0000000000007FUL );
   STGEVAL(argv[5]);
+  callContRestore( &argv[0] );
+  argv[5] = stgCurVal;
+  callContSave( &argv[0], (Bitmap64)0x1C0000000000007FUL );
   STGEVAL(argv[6]);
   callContRestore( &argv[0] );
+  argv[6] = stgCurVal;
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {

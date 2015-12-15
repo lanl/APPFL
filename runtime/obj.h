@@ -15,10 +15,10 @@ static inline size_t startPAPFVsB(Obj *p) { return 0; }
 static inline size_t endPAPFVsB(Obj *p) { return getInfoPtr(p)->layoutInfo.boxedCount; }
 static inline size_t startPAPFVsU(Obj *p) { return endPAPFVsB(p); }
 static inline size_t endPAPFVsU(Obj *p) { return startPAPFVsU(p) + getInfoPtr(p)->layoutInfo.unboxedCount; }
-static inline size_t startPAPargsB(Obj *p) { return endPAPFVsU(p) + 1; }
-static inline size_t endPAPargsB(Obj *p) { return startPAPargsB(p) + PUNPACK(p->payload[endPAPFVsU(p)].i); }
-static inline size_t startPAPargsU(Obj *p) { return endPAPargsB(p); }
-static inline size_t endPAPargsU(Obj *p) { return startPAPargsU(p) + NUNPACK(p->payload[endPAPFVsU(p)].i); }
+//static inline size_t startPAPargsB(Obj *p) { return endPAPFVsU(p) + 1; }
+//static inline size_t endPAPargsB(Obj *p) { return startPAPargsB(p) + PUNPACK(p->payload[endPAPFVsU(p)].i); }
+//static inline size_t startPAPargsU(Obj *p) { return endPAPargsB(p); }
+//static inline size_t endPAPargsU(Obj *p) { return startPAPargsU(p) + NUNPACK(p->payload[endPAPFVsU(p)].i); }
 
 static inline size_t startCONargsB(Obj *p) { return 0; }
 static inline size_t endCONargsB(Obj *p) { return getInfoPtr(p)->layoutInfo.boxedCount; }
@@ -41,8 +41,8 @@ static inline size_t endTHUNKFVsB(Obj *p) { return getInfoPtr(p)->layoutInfo.box
 static inline size_t startTHUNKFVsU(Obj *p) { return endCONargsB(p); }
 static inline size_t endTHUNKFVsU(Obj *p) { return startCONargsU(p) + getInfoPtr(p)->layoutInfo.unboxedCount; }
 
-static inline size_t startCALLFVsB(Cont *p) { return 1; }
-static inline size_t endCALLFVsB(Cont *p) { return p->payload[0].i + 1; }
+// static inline size_t startCALLFVsB(Cont *p) { return 1; }
+// static inline size_t endCALLFVsB(Cont *p) { return p->payload[0].i + 1; }
 
 static inline size_t startCASEFVsB(Cont *p) { return 0; }
 static inline size_t endCASEFVsB(Cont *p) { return getCInfoPtr(p)->layoutInfo.boxedCount; }

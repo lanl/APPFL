@@ -136,13 +136,13 @@ struct _Cont {
   CmmFnPtr entryCode;    // new
   ContType contType;
   Bitmap64 layout;        // new
-  int _contSize;          // for debugging
+  int _contSize;          // for debugging, should go away
   char ident[32];         // temporary, just for tracing
   PtrOrLiteral payload[];
 };
 
 // see README
-typedef struct {
+typedef struct _LayoutInfo {
   int payloadSize;
   int boxedCount;
   int unboxedCount;

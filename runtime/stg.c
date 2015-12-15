@@ -54,6 +54,15 @@ const char *contTypeNames[] = {
   "FUNCONT"
 };
 
+
+// this is a temporary hack as we incorporate Bitmap64s into continuations
+Bitmap64 layoutInfoToBitmap64(LayoutInfo *lip) {
+  Bitmap64 bm;
+  bm.bitmap.mask = (0x1UL << lip->boxedCount) - 1;  // boxed vals first
+  bm.bitmap.size = lip->boxedCount + lip->unboxedCount;
+  return bm;
+}
+
 Cont *stgAllocCont(CInfoTab *citp) {
   assert(citp->contType != CALLCONT &&
           "stgAllocCont: citp->contType == CALLCONT" );
@@ -66,7 +75,8 @@ Cont *stgAllocCont(CInfoTab *citp) {
   assert(stgSP >= stgStack);
   Cont *contp = (Cont *)stgSP;
   contp->cinfoPtr = citp;
-  contp->_contSize = contSize;
+  contp->_contSize = contSize;  // to go away
+  contp->layout = layoutInfoToBitmap64(&citp->layoutInfo); // temp hack
   contp->entryCode = citp->entryCode;
   contp->contType = citp->contType;
   strcpy(contp->ident, citp->name);  // may be overwritten
@@ -185,8 +195,14 @@ int getObjSize(Obj *o) {
   case PAP: {
     InfoTab *itp = getInfoPtr(o);
     int fvs = itp->layoutInfo.boxedCount + itp->layoutInfo.unboxedCount;
+    /* mkd gc
     objSize = sizeof(Obj) + 
               (fvs + 1 + PNSIZE(o->payload[fvs].i)) * sizeof(PtrOrLiteral);
+    */
+    objSize = sizeof(Obj) + 
+      (o->payload[fvs].b.bitmap.size + 1) * sizeof(PtrOrLiteral);
+    objSize = ((objSize + 7)/8)*8;
+    /* mkd gc */
     break;
   } // PAP
   case FUN:
@@ -203,7 +219,11 @@ int getObjSize(Obj *o) {
     break;
   }
   objSize = ((objSize + 7)/8)*8;
-  assert(objSize == o->_objSize && "bad objSize");
+  if (objSize != o->_objSize) {
+    fprintf(stderr, "objSize is %d, o->_objSize is %d for %s\n",
+	    objSize, o->_objSize, objTypeNames[type]);
+    assert(objSize == o->_objSize && "bad objSize");
+  }
   return objSize;
 }
 
@@ -247,6 +267,7 @@ int getContSize(Cont *o) {
   size_t contSize;
   ContType type = getContType(o);
   switch (type) {
+  /* mkd gc
   case CALLCONT:
     contSize = sizeof(Cont) + (o->payload[0].i + 1) * sizeof(PtrOrLiteral);
     break;
@@ -256,6 +277,15 @@ int getContSize(Cont *o) {
     contSize = sizeof(Cont) + 
                getCInfoPtr(o)->layoutInfo.payloadSize * sizeof(PtrOrLiteral);
     break;
+  */
+  case CALLCONT:
+  case UPDCONT:
+  case CASECONT:
+  case FUNCONT:
+    contSize = sizeof(Cont) + o->layout.bitmap.size * sizeof(PtrOrLiteral);
+    break;
+  /*mkd gc*/
+
   case STACKCONT:
     fprintf(stderr, "stg.c/getContSize STACKCONT not implemented\n");
     assert(false);
@@ -265,7 +295,11 @@ int getContSize(Cont *o) {
     assert(false);
   }
   contSize = ((contSize + 7)/8)*8;
-  assert(contSize == o->_contSize && "bad contSize");
+  if (contSize != o->_contSize) {
+    fprintf(stderr, "contSize is %d, o->_contSize is %d for %s\n",
+	    contSize, o->_contSize, contTypeNames[type]);
+    assert(contSize == o->_contSize && "bad contSize");
+  }
   return contSize;
 }
 
@@ -336,8 +370,8 @@ void showStgObjRecPretty(Obj *p) {
       type != INDIRECT &&
       type != it.objType) {
     if (!(type == PAP && it.objType == FUN)) {
-      fprintf(stderr, "mismatch in infotab and object type! %d != %d\n",
-	      type, it.objType);
+      fprintf(stderr, "getObjType(p) = %s, it.objType = %s\n",
+	      objTypeNames[type], objTypeNames[it.objType]);
       assert(false);
     }
   }
@@ -557,7 +591,7 @@ void checkStgObjRec(Obj *p) {
         checkStgObjRec(p->payload[i].op);
       }
     }
-
+    /* mkd gc
     // check that unboxed args really are unboxed
     for (i = startPAPargsU(p); i < endPAPargsU(p); i++) {
       assert(isUnboxed(p->payload[i]) && "hc: unexpected boxed arg in PAP");
@@ -568,6 +602,19 @@ void checkStgObjRec(Obj *p) {
       assert(isBoxed(p->payload[i]) && "hc: unexpected unboxed arg in PAP");
       checkStgObjRec(p->payload[i].op);
     }
+    */
+    {
+      Bitmap64 bm = p->payload[endPAPFVsU(p)].b;
+      uint64_t mask = bm.bitmap.mask;
+      int i = endPAPFVsU(p) + 1;
+      for (int size = bm.bitmap.size; size != 0; size--, i++, mask >>= 1) {
+        if (mask & 0x1UL) {
+	  assert(isBoxed(p->payload[i]) && "hc: unexpected unboxed arg in PAP");
+	} else {
+	  assert(isUnboxed(p->payload[i]) && "hc: unexpected boxed arg in PAP");
+	}
+      }
+    } /* mkd gc */
     break;
   }
   case CON:

@@ -134,13 +134,20 @@ void processObj(Obj *p) {
         updatePtr(&p->payload[i]);
       }
     }
-
+    /* mkd gc
     // boxed args already applied
     int start = startPAPargsB(p);
     int end = endPAPargsB(p);
     for (i = start; i < end; i++) {
       updatePtr(&p->payload[i]);
     }
+    */
+    Bitmap64 bm = p->payload[endPAPFVsU(p)].b;
+    uint64_t mask = bm.bitmap.mask;
+    int i = endPAPFVsU(p) + 1;
+    for (int size = bm.bitmap.size; size != 0; size--, i++, mask >>= 1) {
+      if (mask & 0x1UL) updatePtr(&p->payload[i]);
+    } /* mkd gc */
     break;
   }
 
@@ -197,16 +204,33 @@ void processCont(Cont *p) {
     break;
   }
   case CALLCONT: {
+    /*
     int start = startCALLFVsB(p);
     int end = endCALLFVsB(p);
     for (i = start; i < end; i++) {
-      if (EXTRA) assert(isBoxed(p->payload[i]) && "gc: unexpected unboxed arg in CALL");
+      if (EXTRA) assert(isBoxed(p->payload[i]) && 
+			"gc: unexpected unboxed arg in CALL");
       updatePtr(&p->payload[i]);
     }
+    */
+    Bitmap64 bm = p->layout;
+    uint64_t mask = bm.bitmap.mask;
+    int i = 0;
+    for (int size = bm.bitmap.size; size != 0; size--, i++, mask >>= 1) {
+      if (EXTRA) {
+	if (mask & 0x1UL)
+	  assert(isBoxed(p->payload[i]) && "gc: unexpected unboxed arg in CALLCONT");
+	else
+	  assert(!isBoxed(p->payload[i]) && "gc: unexpected boxed arg in CALLCONT");
+      }
+      if (mask & 0x1UL) updatePtr(&p->payload[i]);
+    } /* mkd gc */
+
     break;
   }
   case FUNCONT:
-    if (EXTRA) assert(isBoxed(p->payload[0]) && "gc: unexpected unboxed arg in FUN");
+    if (EXTRA) assert(isBoxed(p->payload[0]) && 
+		      "gc: unexpected unboxed arg in FUN");
     updatePtr(&p->payload[0]);
     break;
   default:
@@ -218,7 +242,7 @@ void processCont(Cont *p) {
 
 void gc(void) {
 
-  fprintf(stderr, "GARBAGE COLLECTION DISABLED in gc.c/gc(void)\n"); return;
+  // fprintf(stderr, "GARBAGE COLLECTION DISABLED in gc.c/gc(void)\n"); return;
 
   size_t before = stgHP - stgHeap;
 

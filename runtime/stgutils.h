@@ -44,7 +44,7 @@ extern Obj sho_stg_case_not_exhaustive;
 #define STGHEAPAT(NP,NO) ((char*)stgHP - (NP*sizeof(PtrOrLiteral)) - (NO*sizeof(Obj)))
 
 // evaluate IN PLACE, this should probably only happen in stgApply
-// in which case there's some redundancy in pushing CALLCONTs
+// note caller must handle CALLCONT as needed
 #define STGEVAL(e)					    \
 do {							    \
   stgCurVal = e;					    \
