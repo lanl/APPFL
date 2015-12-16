@@ -220,7 +220,7 @@ int getObjSize(Obj *o) {
   }
   objSize = ((objSize + 7)/8)*8;
   if (objSize != o->_objSize) {
-    fprintf(stderr, "objSize is %d, o->_objSize is %d for %s\n",
+    fprintf(stderr, "objSize is %lu, o->_objSize is %d for %s\n",
 	    objSize, o->_objSize, objTypeNames[type]);
     assert(objSize == o->_objSize && "bad objSize");
   }
@@ -296,7 +296,7 @@ int getContSize(Cont *o) {
   }
   contSize = ((contSize + 7)/8)*8;
   if (contSize != o->_contSize) {
-    fprintf(stderr, "contSize is %d, o->_contSize is %d for %s\n",
+    fprintf(stderr, "contSize is %lu, o->_contSize is %d for %s\n",
 	    contSize, o->_contSize, contTypeNames[type]);
     assert(contSize == o->_contSize && "bad contSize");
   }
@@ -525,31 +525,30 @@ void showStgValDebug(PtrOrLiteral v) {
 #endif
 }
 
+void showObjSpaceInfo();
 
 void checkStgObjRec(Obj *p) {
   size_t i;
 
-  // depth check first
-  if (depth + 1 >= showDepthLimit) {
-    assert(false && "hc: checkStgObjRec depth exceeded\n");
-  }
-
+  assert(depth + 1 < showDepthLimit && "hc: checkStgObjRec depth exceeded\n");
   assert((uintptr_t)p % 8 == 0 && "hc: bad Obj alignment");
-
-  assert((isHeap(p) || isSHO(p)) && "hc: bad Obj location");
+  // following causes test symbolT10 to fail!!!
+  if (!(isHeap(p) || isSHO(p))) {
+    showObjSpaceInfo();
+    fprintf(stderr, "hc:  bad Obj location, object addr is %p, recursive depth %d\n", p, depth);
+    showStgObjRecPretty(p);
+    assert(false);
+  }
 
   InfoTab *itp = getInfoPtr(p);
   assert((uintptr_t)itp % 8 == 0 && "hc: bad infoPtr alignment");
   InfoTab it = *itp;
 
-  for (i = 0; i != depth; i++) {
-    if (p == stack[i]) {
-      return;
-    }
-  }
+  for (i = 0; i != depth; i++) if (p == stack[i]) return;
   stack[depth++] = p;
 
   ObjType type = getObjType(p);
+  assert(type > OBJTYPE0BAD && type < PHONYENDOBJ && "hc: bad obj type");
 
   if (strcmp(it.name, p->ident)) {
     if (type != PAP) {
@@ -658,11 +657,16 @@ void checkStgObjRec(Obj *p) {
 
 void checkStgObj(Obj *p) {
   depth = 0;
+  fprintf(stderr, "checkSTgObj \n");
+  showStgObjRecPretty(p);   fprintf(stderr, "\n");
+
   checkStgObjRec(p);
 }
 
 void checkStgHeap() {
-  for (char *p = (char*) stgHeap; p < (char*) stgHP; p += getObjSize((Obj *) p)) {
+  for (char *p = (char*) stgHeap; 
+       p < (char*) stgHP; 
+       p += getObjSize((Obj *) p)) {
     checkStgObj((Obj *) p);
   }
 }
@@ -670,6 +674,16 @@ void checkStgHeap() {
 
 size_t stgStatObjCount;
 Obj * stgStatObj[100];
+
+//tmp hack!
+void *getToPtr();
+void showObjSpaceInfo() {
+  fprintf(stderr, "SHO range is %p to %p\n", 
+	  &stgStatObj[0], 
+	  &stgStatObj[stgStatObjCount-1]);
+  fprintf(stderr, "heap range is %p to %p\n", stgHeap, stgHP);
+  fprintf(stderr, "heap toPtr is %p\n", getToPtr());
+}
 
 bool isSHO(Obj *p) {
   return (p >= stgStatObj[0] && p <= stgStatObj[stgStatObjCount-1]);

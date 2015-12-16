@@ -155,7 +155,7 @@ DEFUN0(stgApplyP) {
   callContSave( &argv[0], (Bitmap64)0x0800000000000003UL );
   STGEVAL(argv[1]);
   callContRestore( &argv[0] );
-  argv[1] = stgCurVal;
+  argv[1] = stgCurVal;  // stgCurVal possibly less indirect
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -483,7 +483,7 @@ DEFUN0(stgApplyPN) {
   callContSave( &argv[0], (Bitmap64)0x0C00000000000003UL );
   STGEVAL(argv[1]);
   callContRestore( &argv[0] );
-  argv[1] = stgCurVal;
+  argv[1] = stgCurVal;  // stgCurVal possibly less indirect
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -671,7 +671,7 @@ DEFUN0(stgApplyNP) {
   callContSave( &argv[0], (Bitmap64)0x0C00000000000005UL );
   STGEVAL(argv[2]);
   callContRestore( &argv[0] );
-  argv[2] = stgCurVal;
+  argv[2] = stgCurVal;  // stgCurVal possibly less indirect
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -859,11 +859,11 @@ DEFUN0(stgApplyPP) {
   callContSave( &argv[0], (Bitmap64)0x0C00000000000007UL );
   STGEVAL(argv[1]);
   callContRestore( &argv[0] );
-  argv[1] = stgCurVal;
+  argv[1] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x0C00000000000007UL );
   STGEVAL(argv[2]);
   callContRestore( &argv[0] );
-  argv[2] = stgCurVal;
+  argv[2] = stgCurVal;  // stgCurVal possibly less indirect
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -1283,7 +1283,7 @@ DEFUN0(stgApplyPNN) {
   callContSave( &argv[0], (Bitmap64)0x1000000000000003UL );
   STGEVAL(argv[1]);
   callContRestore( &argv[0] );
-  argv[1] = stgCurVal;
+  argv[1] = stgCurVal;  // stgCurVal possibly less indirect
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -1519,7 +1519,7 @@ DEFUN0(stgApplyNPN) {
   callContSave( &argv[0], (Bitmap64)0x1000000000000005UL );
   STGEVAL(argv[2]);
   callContRestore( &argv[0] );
-  argv[2] = stgCurVal;
+  argv[2] = stgCurVal;  // stgCurVal possibly less indirect
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -1755,11 +1755,11 @@ DEFUN0(stgApplyPPN) {
   callContSave( &argv[0], (Bitmap64)0x1000000000000007UL );
   STGEVAL(argv[1]);
   callContRestore( &argv[0] );
-  argv[1] = stgCurVal;
+  argv[1] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x1000000000000007UL );
   STGEVAL(argv[2]);
   callContRestore( &argv[0] );
-  argv[2] = stgCurVal;
+  argv[2] = stgCurVal;  // stgCurVal possibly less indirect
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -1995,7 +1995,7 @@ DEFUN0(stgApplyNNP) {
   callContSave( &argv[0], (Bitmap64)0x1000000000000009UL );
   STGEVAL(argv[3]);
   callContRestore( &argv[0] );
-  argv[3] = stgCurVal;
+  argv[3] = stgCurVal;  // stgCurVal possibly less indirect
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -2231,11 +2231,11 @@ DEFUN0(stgApplyPNP) {
   callContSave( &argv[0], (Bitmap64)0x100000000000000BUL );
   STGEVAL(argv[1]);
   callContRestore( &argv[0] );
-  argv[1] = stgCurVal;
+  argv[1] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x100000000000000BUL );
   STGEVAL(argv[3]);
   callContRestore( &argv[0] );
-  argv[3] = stgCurVal;
+  argv[3] = stgCurVal;  // stgCurVal possibly less indirect
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -2471,11 +2471,11 @@ DEFUN0(stgApplyNPP) {
   callContSave( &argv[0], (Bitmap64)0x100000000000000DUL );
   STGEVAL(argv[2]);
   callContRestore( &argv[0] );
-  argv[2] = stgCurVal;
+  argv[2] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x100000000000000DUL );
   STGEVAL(argv[3]);
   callContRestore( &argv[0] );
-  argv[3] = stgCurVal;
+  argv[3] = stgCurVal;  // stgCurVal possibly less indirect
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -2711,15 +2711,15 @@ DEFUN0(stgApplyPPP) {
   callContSave( &argv[0], (Bitmap64)0x100000000000000FUL );
   STGEVAL(argv[1]);
   callContRestore( &argv[0] );
-  argv[1] = stgCurVal;
+  argv[1] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x100000000000000FUL );
   STGEVAL(argv[2]);
   callContRestore( &argv[0] );
-  argv[2] = stgCurVal;
+  argv[2] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x100000000000000FUL );
   STGEVAL(argv[3]);
   callContRestore( &argv[0] );
-  argv[3] = stgCurVal;
+  argv[3] = stgCurVal;  // stgCurVal possibly less indirect
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -3225,7 +3225,7 @@ DEFUN0(stgApplyPNNN) {
   callContSave( &argv[0], (Bitmap64)0x1400000000000003UL );
   STGEVAL(argv[1]);
   callContRestore( &argv[0] );
-  argv[1] = stgCurVal;
+  argv[1] = stgCurVal;  // stgCurVal possibly less indirect
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -3499,7 +3499,7 @@ DEFUN0(stgApplyNPNN) {
   callContSave( &argv[0], (Bitmap64)0x1400000000000005UL );
   STGEVAL(argv[2]);
   callContRestore( &argv[0] );
-  argv[2] = stgCurVal;
+  argv[2] = stgCurVal;  // stgCurVal possibly less indirect
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -3773,11 +3773,11 @@ DEFUN0(stgApplyPPNN) {
   callContSave( &argv[0], (Bitmap64)0x1400000000000007UL );
   STGEVAL(argv[1]);
   callContRestore( &argv[0] );
-  argv[1] = stgCurVal;
+  argv[1] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x1400000000000007UL );
   STGEVAL(argv[2]);
   callContRestore( &argv[0] );
-  argv[2] = stgCurVal;
+  argv[2] = stgCurVal;  // stgCurVal possibly less indirect
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -4051,7 +4051,7 @@ DEFUN0(stgApplyNNPN) {
   callContSave( &argv[0], (Bitmap64)0x1400000000000009UL );
   STGEVAL(argv[3]);
   callContRestore( &argv[0] );
-  argv[3] = stgCurVal;
+  argv[3] = stgCurVal;  // stgCurVal possibly less indirect
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -4325,11 +4325,11 @@ DEFUN0(stgApplyPNPN) {
   callContSave( &argv[0], (Bitmap64)0x140000000000000BUL );
   STGEVAL(argv[1]);
   callContRestore( &argv[0] );
-  argv[1] = stgCurVal;
+  argv[1] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x140000000000000BUL );
   STGEVAL(argv[3]);
   callContRestore( &argv[0] );
-  argv[3] = stgCurVal;
+  argv[3] = stgCurVal;  // stgCurVal possibly less indirect
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -4603,11 +4603,11 @@ DEFUN0(stgApplyNPPN) {
   callContSave( &argv[0], (Bitmap64)0x140000000000000DUL );
   STGEVAL(argv[2]);
   callContRestore( &argv[0] );
-  argv[2] = stgCurVal;
+  argv[2] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x140000000000000DUL );
   STGEVAL(argv[3]);
   callContRestore( &argv[0] );
-  argv[3] = stgCurVal;
+  argv[3] = stgCurVal;  // stgCurVal possibly less indirect
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -4881,15 +4881,15 @@ DEFUN0(stgApplyPPPN) {
   callContSave( &argv[0], (Bitmap64)0x140000000000000FUL );
   STGEVAL(argv[1]);
   callContRestore( &argv[0] );
-  argv[1] = stgCurVal;
+  argv[1] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x140000000000000FUL );
   STGEVAL(argv[2]);
   callContRestore( &argv[0] );
-  argv[2] = stgCurVal;
+  argv[2] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x140000000000000FUL );
   STGEVAL(argv[3]);
   callContRestore( &argv[0] );
-  argv[3] = stgCurVal;
+  argv[3] = stgCurVal;  // stgCurVal possibly less indirect
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -5163,7 +5163,7 @@ DEFUN0(stgApplyNNNP) {
   callContSave( &argv[0], (Bitmap64)0x1400000000000011UL );
   STGEVAL(argv[4]);
   callContRestore( &argv[0] );
-  argv[4] = stgCurVal;
+  argv[4] = stgCurVal;  // stgCurVal possibly less indirect
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -5437,11 +5437,11 @@ DEFUN0(stgApplyPNNP) {
   callContSave( &argv[0], (Bitmap64)0x1400000000000013UL );
   STGEVAL(argv[1]);
   callContRestore( &argv[0] );
-  argv[1] = stgCurVal;
+  argv[1] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x1400000000000013UL );
   STGEVAL(argv[4]);
   callContRestore( &argv[0] );
-  argv[4] = stgCurVal;
+  argv[4] = stgCurVal;  // stgCurVal possibly less indirect
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -5715,11 +5715,11 @@ DEFUN0(stgApplyNPNP) {
   callContSave( &argv[0], (Bitmap64)0x1400000000000015UL );
   STGEVAL(argv[2]);
   callContRestore( &argv[0] );
-  argv[2] = stgCurVal;
+  argv[2] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x1400000000000015UL );
   STGEVAL(argv[4]);
   callContRestore( &argv[0] );
-  argv[4] = stgCurVal;
+  argv[4] = stgCurVal;  // stgCurVal possibly less indirect
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -5993,15 +5993,15 @@ DEFUN0(stgApplyPPNP) {
   callContSave( &argv[0], (Bitmap64)0x1400000000000017UL );
   STGEVAL(argv[1]);
   callContRestore( &argv[0] );
-  argv[1] = stgCurVal;
+  argv[1] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x1400000000000017UL );
   STGEVAL(argv[2]);
   callContRestore( &argv[0] );
-  argv[2] = stgCurVal;
+  argv[2] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x1400000000000017UL );
   STGEVAL(argv[4]);
   callContRestore( &argv[0] );
-  argv[4] = stgCurVal;
+  argv[4] = stgCurVal;  // stgCurVal possibly less indirect
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -6275,11 +6275,11 @@ DEFUN0(stgApplyNNPP) {
   callContSave( &argv[0], (Bitmap64)0x1400000000000019UL );
   STGEVAL(argv[3]);
   callContRestore( &argv[0] );
-  argv[3] = stgCurVal;
+  argv[3] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x1400000000000019UL );
   STGEVAL(argv[4]);
   callContRestore( &argv[0] );
-  argv[4] = stgCurVal;
+  argv[4] = stgCurVal;  // stgCurVal possibly less indirect
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -6553,15 +6553,15 @@ DEFUN0(stgApplyPNPP) {
   callContSave( &argv[0], (Bitmap64)0x140000000000001BUL );
   STGEVAL(argv[1]);
   callContRestore( &argv[0] );
-  argv[1] = stgCurVal;
+  argv[1] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x140000000000001BUL );
   STGEVAL(argv[3]);
   callContRestore( &argv[0] );
-  argv[3] = stgCurVal;
+  argv[3] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x140000000000001BUL );
   STGEVAL(argv[4]);
   callContRestore( &argv[0] );
-  argv[4] = stgCurVal;
+  argv[4] = stgCurVal;  // stgCurVal possibly less indirect
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -6835,15 +6835,15 @@ DEFUN0(stgApplyNPPP) {
   callContSave( &argv[0], (Bitmap64)0x140000000000001DUL );
   STGEVAL(argv[2]);
   callContRestore( &argv[0] );
-  argv[2] = stgCurVal;
+  argv[2] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x140000000000001DUL );
   STGEVAL(argv[3]);
   callContRestore( &argv[0] );
-  argv[3] = stgCurVal;
+  argv[3] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x140000000000001DUL );
   STGEVAL(argv[4]);
   callContRestore( &argv[0] );
-  argv[4] = stgCurVal;
+  argv[4] = stgCurVal;  // stgCurVal possibly less indirect
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -7117,19 +7117,19 @@ DEFUN0(stgApplyPPPP) {
   callContSave( &argv[0], (Bitmap64)0x140000000000001FUL );
   STGEVAL(argv[1]);
   callContRestore( &argv[0] );
-  argv[1] = stgCurVal;
+  argv[1] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x140000000000001FUL );
   STGEVAL(argv[2]);
   callContRestore( &argv[0] );
-  argv[2] = stgCurVal;
+  argv[2] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x140000000000001FUL );
   STGEVAL(argv[3]);
   callContRestore( &argv[0] );
-  argv[3] = stgCurVal;
+  argv[3] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x140000000000001FUL );
   STGEVAL(argv[4]);
   callContRestore( &argv[0] );
-  argv[4] = stgCurVal;
+  argv[4] = stgCurVal;  // stgCurVal possibly less indirect
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -7711,7 +7711,7 @@ DEFUN0(stgApplyPNNNN) {
   callContSave( &argv[0], (Bitmap64)0x1800000000000003UL );
   STGEVAL(argv[1]);
   callContRestore( &argv[0] );
-  argv[1] = stgCurVal;
+  argv[1] = stgCurVal;  // stgCurVal possibly less indirect
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -8023,7 +8023,7 @@ DEFUN0(stgApplyNPNNN) {
   callContSave( &argv[0], (Bitmap64)0x1800000000000005UL );
   STGEVAL(argv[2]);
   callContRestore( &argv[0] );
-  argv[2] = stgCurVal;
+  argv[2] = stgCurVal;  // stgCurVal possibly less indirect
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -8335,11 +8335,11 @@ DEFUN0(stgApplyPPNNN) {
   callContSave( &argv[0], (Bitmap64)0x1800000000000007UL );
   STGEVAL(argv[1]);
   callContRestore( &argv[0] );
-  argv[1] = stgCurVal;
+  argv[1] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x1800000000000007UL );
   STGEVAL(argv[2]);
   callContRestore( &argv[0] );
-  argv[2] = stgCurVal;
+  argv[2] = stgCurVal;  // stgCurVal possibly less indirect
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -8651,7 +8651,7 @@ DEFUN0(stgApplyNNPNN) {
   callContSave( &argv[0], (Bitmap64)0x1800000000000009UL );
   STGEVAL(argv[3]);
   callContRestore( &argv[0] );
-  argv[3] = stgCurVal;
+  argv[3] = stgCurVal;  // stgCurVal possibly less indirect
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -8963,11 +8963,11 @@ DEFUN0(stgApplyPNPNN) {
   callContSave( &argv[0], (Bitmap64)0x180000000000000BUL );
   STGEVAL(argv[1]);
   callContRestore( &argv[0] );
-  argv[1] = stgCurVal;
+  argv[1] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x180000000000000BUL );
   STGEVAL(argv[3]);
   callContRestore( &argv[0] );
-  argv[3] = stgCurVal;
+  argv[3] = stgCurVal;  // stgCurVal possibly less indirect
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -9279,11 +9279,11 @@ DEFUN0(stgApplyNPPNN) {
   callContSave( &argv[0], (Bitmap64)0x180000000000000DUL );
   STGEVAL(argv[2]);
   callContRestore( &argv[0] );
-  argv[2] = stgCurVal;
+  argv[2] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x180000000000000DUL );
   STGEVAL(argv[3]);
   callContRestore( &argv[0] );
-  argv[3] = stgCurVal;
+  argv[3] = stgCurVal;  // stgCurVal possibly less indirect
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -9595,15 +9595,15 @@ DEFUN0(stgApplyPPPNN) {
   callContSave( &argv[0], (Bitmap64)0x180000000000000FUL );
   STGEVAL(argv[1]);
   callContRestore( &argv[0] );
-  argv[1] = stgCurVal;
+  argv[1] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x180000000000000FUL );
   STGEVAL(argv[2]);
   callContRestore( &argv[0] );
-  argv[2] = stgCurVal;
+  argv[2] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x180000000000000FUL );
   STGEVAL(argv[3]);
   callContRestore( &argv[0] );
-  argv[3] = stgCurVal;
+  argv[3] = stgCurVal;  // stgCurVal possibly less indirect
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -9915,7 +9915,7 @@ DEFUN0(stgApplyNNNPN) {
   callContSave( &argv[0], (Bitmap64)0x1800000000000011UL );
   STGEVAL(argv[4]);
   callContRestore( &argv[0] );
-  argv[4] = stgCurVal;
+  argv[4] = stgCurVal;  // stgCurVal possibly less indirect
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -10227,11 +10227,11 @@ DEFUN0(stgApplyPNNPN) {
   callContSave( &argv[0], (Bitmap64)0x1800000000000013UL );
   STGEVAL(argv[1]);
   callContRestore( &argv[0] );
-  argv[1] = stgCurVal;
+  argv[1] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x1800000000000013UL );
   STGEVAL(argv[4]);
   callContRestore( &argv[0] );
-  argv[4] = stgCurVal;
+  argv[4] = stgCurVal;  // stgCurVal possibly less indirect
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -10543,11 +10543,11 @@ DEFUN0(stgApplyNPNPN) {
   callContSave( &argv[0], (Bitmap64)0x1800000000000015UL );
   STGEVAL(argv[2]);
   callContRestore( &argv[0] );
-  argv[2] = stgCurVal;
+  argv[2] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x1800000000000015UL );
   STGEVAL(argv[4]);
   callContRestore( &argv[0] );
-  argv[4] = stgCurVal;
+  argv[4] = stgCurVal;  // stgCurVal possibly less indirect
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -10859,15 +10859,15 @@ DEFUN0(stgApplyPPNPN) {
   callContSave( &argv[0], (Bitmap64)0x1800000000000017UL );
   STGEVAL(argv[1]);
   callContRestore( &argv[0] );
-  argv[1] = stgCurVal;
+  argv[1] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x1800000000000017UL );
   STGEVAL(argv[2]);
   callContRestore( &argv[0] );
-  argv[2] = stgCurVal;
+  argv[2] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x1800000000000017UL );
   STGEVAL(argv[4]);
   callContRestore( &argv[0] );
-  argv[4] = stgCurVal;
+  argv[4] = stgCurVal;  // stgCurVal possibly less indirect
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -11179,11 +11179,11 @@ DEFUN0(stgApplyNNPPN) {
   callContSave( &argv[0], (Bitmap64)0x1800000000000019UL );
   STGEVAL(argv[3]);
   callContRestore( &argv[0] );
-  argv[3] = stgCurVal;
+  argv[3] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x1800000000000019UL );
   STGEVAL(argv[4]);
   callContRestore( &argv[0] );
-  argv[4] = stgCurVal;
+  argv[4] = stgCurVal;  // stgCurVal possibly less indirect
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -11495,15 +11495,15 @@ DEFUN0(stgApplyPNPPN) {
   callContSave( &argv[0], (Bitmap64)0x180000000000001BUL );
   STGEVAL(argv[1]);
   callContRestore( &argv[0] );
-  argv[1] = stgCurVal;
+  argv[1] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x180000000000001BUL );
   STGEVAL(argv[3]);
   callContRestore( &argv[0] );
-  argv[3] = stgCurVal;
+  argv[3] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x180000000000001BUL );
   STGEVAL(argv[4]);
   callContRestore( &argv[0] );
-  argv[4] = stgCurVal;
+  argv[4] = stgCurVal;  // stgCurVal possibly less indirect
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -11815,15 +11815,15 @@ DEFUN0(stgApplyNPPPN) {
   callContSave( &argv[0], (Bitmap64)0x180000000000001DUL );
   STGEVAL(argv[2]);
   callContRestore( &argv[0] );
-  argv[2] = stgCurVal;
+  argv[2] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x180000000000001DUL );
   STGEVAL(argv[3]);
   callContRestore( &argv[0] );
-  argv[3] = stgCurVal;
+  argv[3] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x180000000000001DUL );
   STGEVAL(argv[4]);
   callContRestore( &argv[0] );
-  argv[4] = stgCurVal;
+  argv[4] = stgCurVal;  // stgCurVal possibly less indirect
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -12135,19 +12135,19 @@ DEFUN0(stgApplyPPPPN) {
   callContSave( &argv[0], (Bitmap64)0x180000000000001FUL );
   STGEVAL(argv[1]);
   callContRestore( &argv[0] );
-  argv[1] = stgCurVal;
+  argv[1] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x180000000000001FUL );
   STGEVAL(argv[2]);
   callContRestore( &argv[0] );
-  argv[2] = stgCurVal;
+  argv[2] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x180000000000001FUL );
   STGEVAL(argv[3]);
   callContRestore( &argv[0] );
-  argv[3] = stgCurVal;
+  argv[3] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x180000000000001FUL );
   STGEVAL(argv[4]);
   callContRestore( &argv[0] );
-  argv[4] = stgCurVal;
+  argv[4] = stgCurVal;  // stgCurVal possibly less indirect
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -12459,7 +12459,7 @@ DEFUN0(stgApplyNNNNP) {
   callContSave( &argv[0], (Bitmap64)0x1800000000000021UL );
   STGEVAL(argv[5]);
   callContRestore( &argv[0] );
-  argv[5] = stgCurVal;
+  argv[5] = stgCurVal;  // stgCurVal possibly less indirect
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -12771,11 +12771,11 @@ DEFUN0(stgApplyPNNNP) {
   callContSave( &argv[0], (Bitmap64)0x1800000000000023UL );
   STGEVAL(argv[1]);
   callContRestore( &argv[0] );
-  argv[1] = stgCurVal;
+  argv[1] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x1800000000000023UL );
   STGEVAL(argv[5]);
   callContRestore( &argv[0] );
-  argv[5] = stgCurVal;
+  argv[5] = stgCurVal;  // stgCurVal possibly less indirect
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -13087,11 +13087,11 @@ DEFUN0(stgApplyNPNNP) {
   callContSave( &argv[0], (Bitmap64)0x1800000000000025UL );
   STGEVAL(argv[2]);
   callContRestore( &argv[0] );
-  argv[2] = stgCurVal;
+  argv[2] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x1800000000000025UL );
   STGEVAL(argv[5]);
   callContRestore( &argv[0] );
-  argv[5] = stgCurVal;
+  argv[5] = stgCurVal;  // stgCurVal possibly less indirect
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -13403,15 +13403,15 @@ DEFUN0(stgApplyPPNNP) {
   callContSave( &argv[0], (Bitmap64)0x1800000000000027UL );
   STGEVAL(argv[1]);
   callContRestore( &argv[0] );
-  argv[1] = stgCurVal;
+  argv[1] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x1800000000000027UL );
   STGEVAL(argv[2]);
   callContRestore( &argv[0] );
-  argv[2] = stgCurVal;
+  argv[2] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x1800000000000027UL );
   STGEVAL(argv[5]);
   callContRestore( &argv[0] );
-  argv[5] = stgCurVal;
+  argv[5] = stgCurVal;  // stgCurVal possibly less indirect
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -13723,11 +13723,11 @@ DEFUN0(stgApplyNNPNP) {
   callContSave( &argv[0], (Bitmap64)0x1800000000000029UL );
   STGEVAL(argv[3]);
   callContRestore( &argv[0] );
-  argv[3] = stgCurVal;
+  argv[3] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x1800000000000029UL );
   STGEVAL(argv[5]);
   callContRestore( &argv[0] );
-  argv[5] = stgCurVal;
+  argv[5] = stgCurVal;  // stgCurVal possibly less indirect
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -14039,15 +14039,15 @@ DEFUN0(stgApplyPNPNP) {
   callContSave( &argv[0], (Bitmap64)0x180000000000002BUL );
   STGEVAL(argv[1]);
   callContRestore( &argv[0] );
-  argv[1] = stgCurVal;
+  argv[1] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x180000000000002BUL );
   STGEVAL(argv[3]);
   callContRestore( &argv[0] );
-  argv[3] = stgCurVal;
+  argv[3] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x180000000000002BUL );
   STGEVAL(argv[5]);
   callContRestore( &argv[0] );
-  argv[5] = stgCurVal;
+  argv[5] = stgCurVal;  // stgCurVal possibly less indirect
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -14359,15 +14359,15 @@ DEFUN0(stgApplyNPPNP) {
   callContSave( &argv[0], (Bitmap64)0x180000000000002DUL );
   STGEVAL(argv[2]);
   callContRestore( &argv[0] );
-  argv[2] = stgCurVal;
+  argv[2] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x180000000000002DUL );
   STGEVAL(argv[3]);
   callContRestore( &argv[0] );
-  argv[3] = stgCurVal;
+  argv[3] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x180000000000002DUL );
   STGEVAL(argv[5]);
   callContRestore( &argv[0] );
-  argv[5] = stgCurVal;
+  argv[5] = stgCurVal;  // stgCurVal possibly less indirect
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -14679,19 +14679,19 @@ DEFUN0(stgApplyPPPNP) {
   callContSave( &argv[0], (Bitmap64)0x180000000000002FUL );
   STGEVAL(argv[1]);
   callContRestore( &argv[0] );
-  argv[1] = stgCurVal;
+  argv[1] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x180000000000002FUL );
   STGEVAL(argv[2]);
   callContRestore( &argv[0] );
-  argv[2] = stgCurVal;
+  argv[2] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x180000000000002FUL );
   STGEVAL(argv[3]);
   callContRestore( &argv[0] );
-  argv[3] = stgCurVal;
+  argv[3] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x180000000000002FUL );
   STGEVAL(argv[5]);
   callContRestore( &argv[0] );
-  argv[5] = stgCurVal;
+  argv[5] = stgCurVal;  // stgCurVal possibly less indirect
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -15003,11 +15003,11 @@ DEFUN0(stgApplyNNNPP) {
   callContSave( &argv[0], (Bitmap64)0x1800000000000031UL );
   STGEVAL(argv[4]);
   callContRestore( &argv[0] );
-  argv[4] = stgCurVal;
+  argv[4] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x1800000000000031UL );
   STGEVAL(argv[5]);
   callContRestore( &argv[0] );
-  argv[5] = stgCurVal;
+  argv[5] = stgCurVal;  // stgCurVal possibly less indirect
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -15319,15 +15319,15 @@ DEFUN0(stgApplyPNNPP) {
   callContSave( &argv[0], (Bitmap64)0x1800000000000033UL );
   STGEVAL(argv[1]);
   callContRestore( &argv[0] );
-  argv[1] = stgCurVal;
+  argv[1] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x1800000000000033UL );
   STGEVAL(argv[4]);
   callContRestore( &argv[0] );
-  argv[4] = stgCurVal;
+  argv[4] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x1800000000000033UL );
   STGEVAL(argv[5]);
   callContRestore( &argv[0] );
-  argv[5] = stgCurVal;
+  argv[5] = stgCurVal;  // stgCurVal possibly less indirect
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -15639,15 +15639,15 @@ DEFUN0(stgApplyNPNPP) {
   callContSave( &argv[0], (Bitmap64)0x1800000000000035UL );
   STGEVAL(argv[2]);
   callContRestore( &argv[0] );
-  argv[2] = stgCurVal;
+  argv[2] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x1800000000000035UL );
   STGEVAL(argv[4]);
   callContRestore( &argv[0] );
-  argv[4] = stgCurVal;
+  argv[4] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x1800000000000035UL );
   STGEVAL(argv[5]);
   callContRestore( &argv[0] );
-  argv[5] = stgCurVal;
+  argv[5] = stgCurVal;  // stgCurVal possibly less indirect
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -15959,19 +15959,19 @@ DEFUN0(stgApplyPPNPP) {
   callContSave( &argv[0], (Bitmap64)0x1800000000000037UL );
   STGEVAL(argv[1]);
   callContRestore( &argv[0] );
-  argv[1] = stgCurVal;
+  argv[1] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x1800000000000037UL );
   STGEVAL(argv[2]);
   callContRestore( &argv[0] );
-  argv[2] = stgCurVal;
+  argv[2] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x1800000000000037UL );
   STGEVAL(argv[4]);
   callContRestore( &argv[0] );
-  argv[4] = stgCurVal;
+  argv[4] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x1800000000000037UL );
   STGEVAL(argv[5]);
   callContRestore( &argv[0] );
-  argv[5] = stgCurVal;
+  argv[5] = stgCurVal;  // stgCurVal possibly less indirect
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -16283,15 +16283,15 @@ DEFUN0(stgApplyNNPPP) {
   callContSave( &argv[0], (Bitmap64)0x1800000000000039UL );
   STGEVAL(argv[3]);
   callContRestore( &argv[0] );
-  argv[3] = stgCurVal;
+  argv[3] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x1800000000000039UL );
   STGEVAL(argv[4]);
   callContRestore( &argv[0] );
-  argv[4] = stgCurVal;
+  argv[4] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x1800000000000039UL );
   STGEVAL(argv[5]);
   callContRestore( &argv[0] );
-  argv[5] = stgCurVal;
+  argv[5] = stgCurVal;  // stgCurVal possibly less indirect
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -16603,19 +16603,19 @@ DEFUN0(stgApplyPNPPP) {
   callContSave( &argv[0], (Bitmap64)0x180000000000003BUL );
   STGEVAL(argv[1]);
   callContRestore( &argv[0] );
-  argv[1] = stgCurVal;
+  argv[1] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x180000000000003BUL );
   STGEVAL(argv[3]);
   callContRestore( &argv[0] );
-  argv[3] = stgCurVal;
+  argv[3] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x180000000000003BUL );
   STGEVAL(argv[4]);
   callContRestore( &argv[0] );
-  argv[4] = stgCurVal;
+  argv[4] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x180000000000003BUL );
   STGEVAL(argv[5]);
   callContRestore( &argv[0] );
-  argv[5] = stgCurVal;
+  argv[5] = stgCurVal;  // stgCurVal possibly less indirect
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -16927,19 +16927,19 @@ DEFUN0(stgApplyNPPPP) {
   callContSave( &argv[0], (Bitmap64)0x180000000000003DUL );
   STGEVAL(argv[2]);
   callContRestore( &argv[0] );
-  argv[2] = stgCurVal;
+  argv[2] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x180000000000003DUL );
   STGEVAL(argv[3]);
   callContRestore( &argv[0] );
-  argv[3] = stgCurVal;
+  argv[3] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x180000000000003DUL );
   STGEVAL(argv[4]);
   callContRestore( &argv[0] );
-  argv[4] = stgCurVal;
+  argv[4] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x180000000000003DUL );
   STGEVAL(argv[5]);
   callContRestore( &argv[0] );
-  argv[5] = stgCurVal;
+  argv[5] = stgCurVal;  // stgCurVal possibly less indirect
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -17251,23 +17251,23 @@ DEFUN0(stgApplyPPPPP) {
   callContSave( &argv[0], (Bitmap64)0x180000000000003FUL );
   STGEVAL(argv[1]);
   callContRestore( &argv[0] );
-  argv[1] = stgCurVal;
+  argv[1] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x180000000000003FUL );
   STGEVAL(argv[2]);
   callContRestore( &argv[0] );
-  argv[2] = stgCurVal;
+  argv[2] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x180000000000003FUL );
   STGEVAL(argv[3]);
   callContRestore( &argv[0] );
-  argv[3] = stgCurVal;
+  argv[3] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x180000000000003FUL );
   STGEVAL(argv[4]);
   callContRestore( &argv[0] );
-  argv[4] = stgCurVal;
+  argv[4] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x180000000000003FUL );
   STGEVAL(argv[5]);
   callContRestore( &argv[0] );
-  argv[5] = stgCurVal;
+  argv[5] = stgCurVal;  // stgCurVal possibly less indirect
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -17925,7 +17925,7 @@ DEFUN0(stgApplyPNNNNN) {
   callContSave( &argv[0], (Bitmap64)0x1C00000000000003UL );
   STGEVAL(argv[1]);
   callContRestore( &argv[0] );
-  argv[1] = stgCurVal;
+  argv[1] = stgCurVal;  // stgCurVal possibly less indirect
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -18275,7 +18275,7 @@ DEFUN0(stgApplyNPNNNN) {
   callContSave( &argv[0], (Bitmap64)0x1C00000000000005UL );
   STGEVAL(argv[2]);
   callContRestore( &argv[0] );
-  argv[2] = stgCurVal;
+  argv[2] = stgCurVal;  // stgCurVal possibly less indirect
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -18625,11 +18625,11 @@ DEFUN0(stgApplyPPNNNN) {
   callContSave( &argv[0], (Bitmap64)0x1C00000000000007UL );
   STGEVAL(argv[1]);
   callContRestore( &argv[0] );
-  argv[1] = stgCurVal;
+  argv[1] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x1C00000000000007UL );
   STGEVAL(argv[2]);
   callContRestore( &argv[0] );
-  argv[2] = stgCurVal;
+  argv[2] = stgCurVal;  // stgCurVal possibly less indirect
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -18979,7 +18979,7 @@ DEFUN0(stgApplyNNPNNN) {
   callContSave( &argv[0], (Bitmap64)0x1C00000000000009UL );
   STGEVAL(argv[3]);
   callContRestore( &argv[0] );
-  argv[3] = stgCurVal;
+  argv[3] = stgCurVal;  // stgCurVal possibly less indirect
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -19329,11 +19329,11 @@ DEFUN0(stgApplyPNPNNN) {
   callContSave( &argv[0], (Bitmap64)0x1C0000000000000BUL );
   STGEVAL(argv[1]);
   callContRestore( &argv[0] );
-  argv[1] = stgCurVal;
+  argv[1] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x1C0000000000000BUL );
   STGEVAL(argv[3]);
   callContRestore( &argv[0] );
-  argv[3] = stgCurVal;
+  argv[3] = stgCurVal;  // stgCurVal possibly less indirect
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -19683,11 +19683,11 @@ DEFUN0(stgApplyNPPNNN) {
   callContSave( &argv[0], (Bitmap64)0x1C0000000000000DUL );
   STGEVAL(argv[2]);
   callContRestore( &argv[0] );
-  argv[2] = stgCurVal;
+  argv[2] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x1C0000000000000DUL );
   STGEVAL(argv[3]);
   callContRestore( &argv[0] );
-  argv[3] = stgCurVal;
+  argv[3] = stgCurVal;  // stgCurVal possibly less indirect
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -20037,15 +20037,15 @@ DEFUN0(stgApplyPPPNNN) {
   callContSave( &argv[0], (Bitmap64)0x1C0000000000000FUL );
   STGEVAL(argv[1]);
   callContRestore( &argv[0] );
-  argv[1] = stgCurVal;
+  argv[1] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x1C0000000000000FUL );
   STGEVAL(argv[2]);
   callContRestore( &argv[0] );
-  argv[2] = stgCurVal;
+  argv[2] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x1C0000000000000FUL );
   STGEVAL(argv[3]);
   callContRestore( &argv[0] );
-  argv[3] = stgCurVal;
+  argv[3] = stgCurVal;  // stgCurVal possibly less indirect
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -20395,7 +20395,7 @@ DEFUN0(stgApplyNNNPNN) {
   callContSave( &argv[0], (Bitmap64)0x1C00000000000011UL );
   STGEVAL(argv[4]);
   callContRestore( &argv[0] );
-  argv[4] = stgCurVal;
+  argv[4] = stgCurVal;  // stgCurVal possibly less indirect
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -20745,11 +20745,11 @@ DEFUN0(stgApplyPNNPNN) {
   callContSave( &argv[0], (Bitmap64)0x1C00000000000013UL );
   STGEVAL(argv[1]);
   callContRestore( &argv[0] );
-  argv[1] = stgCurVal;
+  argv[1] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x1C00000000000013UL );
   STGEVAL(argv[4]);
   callContRestore( &argv[0] );
-  argv[4] = stgCurVal;
+  argv[4] = stgCurVal;  // stgCurVal possibly less indirect
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -21099,11 +21099,11 @@ DEFUN0(stgApplyNPNPNN) {
   callContSave( &argv[0], (Bitmap64)0x1C00000000000015UL );
   STGEVAL(argv[2]);
   callContRestore( &argv[0] );
-  argv[2] = stgCurVal;
+  argv[2] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x1C00000000000015UL );
   STGEVAL(argv[4]);
   callContRestore( &argv[0] );
-  argv[4] = stgCurVal;
+  argv[4] = stgCurVal;  // stgCurVal possibly less indirect
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -21453,15 +21453,15 @@ DEFUN0(stgApplyPPNPNN) {
   callContSave( &argv[0], (Bitmap64)0x1C00000000000017UL );
   STGEVAL(argv[1]);
   callContRestore( &argv[0] );
-  argv[1] = stgCurVal;
+  argv[1] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x1C00000000000017UL );
   STGEVAL(argv[2]);
   callContRestore( &argv[0] );
-  argv[2] = stgCurVal;
+  argv[2] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x1C00000000000017UL );
   STGEVAL(argv[4]);
   callContRestore( &argv[0] );
-  argv[4] = stgCurVal;
+  argv[4] = stgCurVal;  // stgCurVal possibly less indirect
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -21811,11 +21811,11 @@ DEFUN0(stgApplyNNPPNN) {
   callContSave( &argv[0], (Bitmap64)0x1C00000000000019UL );
   STGEVAL(argv[3]);
   callContRestore( &argv[0] );
-  argv[3] = stgCurVal;
+  argv[3] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x1C00000000000019UL );
   STGEVAL(argv[4]);
   callContRestore( &argv[0] );
-  argv[4] = stgCurVal;
+  argv[4] = stgCurVal;  // stgCurVal possibly less indirect
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -22165,15 +22165,15 @@ DEFUN0(stgApplyPNPPNN) {
   callContSave( &argv[0], (Bitmap64)0x1C0000000000001BUL );
   STGEVAL(argv[1]);
   callContRestore( &argv[0] );
-  argv[1] = stgCurVal;
+  argv[1] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x1C0000000000001BUL );
   STGEVAL(argv[3]);
   callContRestore( &argv[0] );
-  argv[3] = stgCurVal;
+  argv[3] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x1C0000000000001BUL );
   STGEVAL(argv[4]);
   callContRestore( &argv[0] );
-  argv[4] = stgCurVal;
+  argv[4] = stgCurVal;  // stgCurVal possibly less indirect
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -22523,15 +22523,15 @@ DEFUN0(stgApplyNPPPNN) {
   callContSave( &argv[0], (Bitmap64)0x1C0000000000001DUL );
   STGEVAL(argv[2]);
   callContRestore( &argv[0] );
-  argv[2] = stgCurVal;
+  argv[2] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x1C0000000000001DUL );
   STGEVAL(argv[3]);
   callContRestore( &argv[0] );
-  argv[3] = stgCurVal;
+  argv[3] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x1C0000000000001DUL );
   STGEVAL(argv[4]);
   callContRestore( &argv[0] );
-  argv[4] = stgCurVal;
+  argv[4] = stgCurVal;  // stgCurVal possibly less indirect
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -22881,19 +22881,19 @@ DEFUN0(stgApplyPPPPNN) {
   callContSave( &argv[0], (Bitmap64)0x1C0000000000001FUL );
   STGEVAL(argv[1]);
   callContRestore( &argv[0] );
-  argv[1] = stgCurVal;
+  argv[1] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x1C0000000000001FUL );
   STGEVAL(argv[2]);
   callContRestore( &argv[0] );
-  argv[2] = stgCurVal;
+  argv[2] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x1C0000000000001FUL );
   STGEVAL(argv[3]);
   callContRestore( &argv[0] );
-  argv[3] = stgCurVal;
+  argv[3] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x1C0000000000001FUL );
   STGEVAL(argv[4]);
   callContRestore( &argv[0] );
-  argv[4] = stgCurVal;
+  argv[4] = stgCurVal;  // stgCurVal possibly less indirect
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -23243,7 +23243,7 @@ DEFUN0(stgApplyNNNNPN) {
   callContSave( &argv[0], (Bitmap64)0x1C00000000000021UL );
   STGEVAL(argv[5]);
   callContRestore( &argv[0] );
-  argv[5] = stgCurVal;
+  argv[5] = stgCurVal;  // stgCurVal possibly less indirect
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -23593,11 +23593,11 @@ DEFUN0(stgApplyPNNNPN) {
   callContSave( &argv[0], (Bitmap64)0x1C00000000000023UL );
   STGEVAL(argv[1]);
   callContRestore( &argv[0] );
-  argv[1] = stgCurVal;
+  argv[1] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x1C00000000000023UL );
   STGEVAL(argv[5]);
   callContRestore( &argv[0] );
-  argv[5] = stgCurVal;
+  argv[5] = stgCurVal;  // stgCurVal possibly less indirect
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -23947,11 +23947,11 @@ DEFUN0(stgApplyNPNNPN) {
   callContSave( &argv[0], (Bitmap64)0x1C00000000000025UL );
   STGEVAL(argv[2]);
   callContRestore( &argv[0] );
-  argv[2] = stgCurVal;
+  argv[2] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x1C00000000000025UL );
   STGEVAL(argv[5]);
   callContRestore( &argv[0] );
-  argv[5] = stgCurVal;
+  argv[5] = stgCurVal;  // stgCurVal possibly less indirect
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -24301,15 +24301,15 @@ DEFUN0(stgApplyPPNNPN) {
   callContSave( &argv[0], (Bitmap64)0x1C00000000000027UL );
   STGEVAL(argv[1]);
   callContRestore( &argv[0] );
-  argv[1] = stgCurVal;
+  argv[1] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x1C00000000000027UL );
   STGEVAL(argv[2]);
   callContRestore( &argv[0] );
-  argv[2] = stgCurVal;
+  argv[2] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x1C00000000000027UL );
   STGEVAL(argv[5]);
   callContRestore( &argv[0] );
-  argv[5] = stgCurVal;
+  argv[5] = stgCurVal;  // stgCurVal possibly less indirect
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -24659,11 +24659,11 @@ DEFUN0(stgApplyNNPNPN) {
   callContSave( &argv[0], (Bitmap64)0x1C00000000000029UL );
   STGEVAL(argv[3]);
   callContRestore( &argv[0] );
-  argv[3] = stgCurVal;
+  argv[3] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x1C00000000000029UL );
   STGEVAL(argv[5]);
   callContRestore( &argv[0] );
-  argv[5] = stgCurVal;
+  argv[5] = stgCurVal;  // stgCurVal possibly less indirect
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -25013,15 +25013,15 @@ DEFUN0(stgApplyPNPNPN) {
   callContSave( &argv[0], (Bitmap64)0x1C0000000000002BUL );
   STGEVAL(argv[1]);
   callContRestore( &argv[0] );
-  argv[1] = stgCurVal;
+  argv[1] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x1C0000000000002BUL );
   STGEVAL(argv[3]);
   callContRestore( &argv[0] );
-  argv[3] = stgCurVal;
+  argv[3] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x1C0000000000002BUL );
   STGEVAL(argv[5]);
   callContRestore( &argv[0] );
-  argv[5] = stgCurVal;
+  argv[5] = stgCurVal;  // stgCurVal possibly less indirect
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -25371,15 +25371,15 @@ DEFUN0(stgApplyNPPNPN) {
   callContSave( &argv[0], (Bitmap64)0x1C0000000000002DUL );
   STGEVAL(argv[2]);
   callContRestore( &argv[0] );
-  argv[2] = stgCurVal;
+  argv[2] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x1C0000000000002DUL );
   STGEVAL(argv[3]);
   callContRestore( &argv[0] );
-  argv[3] = stgCurVal;
+  argv[3] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x1C0000000000002DUL );
   STGEVAL(argv[5]);
   callContRestore( &argv[0] );
-  argv[5] = stgCurVal;
+  argv[5] = stgCurVal;  // stgCurVal possibly less indirect
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -25729,19 +25729,19 @@ DEFUN0(stgApplyPPPNPN) {
   callContSave( &argv[0], (Bitmap64)0x1C0000000000002FUL );
   STGEVAL(argv[1]);
   callContRestore( &argv[0] );
-  argv[1] = stgCurVal;
+  argv[1] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x1C0000000000002FUL );
   STGEVAL(argv[2]);
   callContRestore( &argv[0] );
-  argv[2] = stgCurVal;
+  argv[2] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x1C0000000000002FUL );
   STGEVAL(argv[3]);
   callContRestore( &argv[0] );
-  argv[3] = stgCurVal;
+  argv[3] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x1C0000000000002FUL );
   STGEVAL(argv[5]);
   callContRestore( &argv[0] );
-  argv[5] = stgCurVal;
+  argv[5] = stgCurVal;  // stgCurVal possibly less indirect
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -26091,11 +26091,11 @@ DEFUN0(stgApplyNNNPPN) {
   callContSave( &argv[0], (Bitmap64)0x1C00000000000031UL );
   STGEVAL(argv[4]);
   callContRestore( &argv[0] );
-  argv[4] = stgCurVal;
+  argv[4] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x1C00000000000031UL );
   STGEVAL(argv[5]);
   callContRestore( &argv[0] );
-  argv[5] = stgCurVal;
+  argv[5] = stgCurVal;  // stgCurVal possibly less indirect
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -26445,15 +26445,15 @@ DEFUN0(stgApplyPNNPPN) {
   callContSave( &argv[0], (Bitmap64)0x1C00000000000033UL );
   STGEVAL(argv[1]);
   callContRestore( &argv[0] );
-  argv[1] = stgCurVal;
+  argv[1] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x1C00000000000033UL );
   STGEVAL(argv[4]);
   callContRestore( &argv[0] );
-  argv[4] = stgCurVal;
+  argv[4] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x1C00000000000033UL );
   STGEVAL(argv[5]);
   callContRestore( &argv[0] );
-  argv[5] = stgCurVal;
+  argv[5] = stgCurVal;  // stgCurVal possibly less indirect
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -26803,15 +26803,15 @@ DEFUN0(stgApplyNPNPPN) {
   callContSave( &argv[0], (Bitmap64)0x1C00000000000035UL );
   STGEVAL(argv[2]);
   callContRestore( &argv[0] );
-  argv[2] = stgCurVal;
+  argv[2] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x1C00000000000035UL );
   STGEVAL(argv[4]);
   callContRestore( &argv[0] );
-  argv[4] = stgCurVal;
+  argv[4] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x1C00000000000035UL );
   STGEVAL(argv[5]);
   callContRestore( &argv[0] );
-  argv[5] = stgCurVal;
+  argv[5] = stgCurVal;  // stgCurVal possibly less indirect
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -27161,19 +27161,19 @@ DEFUN0(stgApplyPPNPPN) {
   callContSave( &argv[0], (Bitmap64)0x1C00000000000037UL );
   STGEVAL(argv[1]);
   callContRestore( &argv[0] );
-  argv[1] = stgCurVal;
+  argv[1] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x1C00000000000037UL );
   STGEVAL(argv[2]);
   callContRestore( &argv[0] );
-  argv[2] = stgCurVal;
+  argv[2] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x1C00000000000037UL );
   STGEVAL(argv[4]);
   callContRestore( &argv[0] );
-  argv[4] = stgCurVal;
+  argv[4] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x1C00000000000037UL );
   STGEVAL(argv[5]);
   callContRestore( &argv[0] );
-  argv[5] = stgCurVal;
+  argv[5] = stgCurVal;  // stgCurVal possibly less indirect
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -27523,15 +27523,15 @@ DEFUN0(stgApplyNNPPPN) {
   callContSave( &argv[0], (Bitmap64)0x1C00000000000039UL );
   STGEVAL(argv[3]);
   callContRestore( &argv[0] );
-  argv[3] = stgCurVal;
+  argv[3] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x1C00000000000039UL );
   STGEVAL(argv[4]);
   callContRestore( &argv[0] );
-  argv[4] = stgCurVal;
+  argv[4] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x1C00000000000039UL );
   STGEVAL(argv[5]);
   callContRestore( &argv[0] );
-  argv[5] = stgCurVal;
+  argv[5] = stgCurVal;  // stgCurVal possibly less indirect
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -27881,19 +27881,19 @@ DEFUN0(stgApplyPNPPPN) {
   callContSave( &argv[0], (Bitmap64)0x1C0000000000003BUL );
   STGEVAL(argv[1]);
   callContRestore( &argv[0] );
-  argv[1] = stgCurVal;
+  argv[1] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x1C0000000000003BUL );
   STGEVAL(argv[3]);
   callContRestore( &argv[0] );
-  argv[3] = stgCurVal;
+  argv[3] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x1C0000000000003BUL );
   STGEVAL(argv[4]);
   callContRestore( &argv[0] );
-  argv[4] = stgCurVal;
+  argv[4] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x1C0000000000003BUL );
   STGEVAL(argv[5]);
   callContRestore( &argv[0] );
-  argv[5] = stgCurVal;
+  argv[5] = stgCurVal;  // stgCurVal possibly less indirect
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -28243,19 +28243,19 @@ DEFUN0(stgApplyNPPPPN) {
   callContSave( &argv[0], (Bitmap64)0x1C0000000000003DUL );
   STGEVAL(argv[2]);
   callContRestore( &argv[0] );
-  argv[2] = stgCurVal;
+  argv[2] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x1C0000000000003DUL );
   STGEVAL(argv[3]);
   callContRestore( &argv[0] );
-  argv[3] = stgCurVal;
+  argv[3] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x1C0000000000003DUL );
   STGEVAL(argv[4]);
   callContRestore( &argv[0] );
-  argv[4] = stgCurVal;
+  argv[4] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x1C0000000000003DUL );
   STGEVAL(argv[5]);
   callContRestore( &argv[0] );
-  argv[5] = stgCurVal;
+  argv[5] = stgCurVal;  // stgCurVal possibly less indirect
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -28605,23 +28605,23 @@ DEFUN0(stgApplyPPPPPN) {
   callContSave( &argv[0], (Bitmap64)0x1C0000000000003FUL );
   STGEVAL(argv[1]);
   callContRestore( &argv[0] );
-  argv[1] = stgCurVal;
+  argv[1] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x1C0000000000003FUL );
   STGEVAL(argv[2]);
   callContRestore( &argv[0] );
-  argv[2] = stgCurVal;
+  argv[2] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x1C0000000000003FUL );
   STGEVAL(argv[3]);
   callContRestore( &argv[0] );
-  argv[3] = stgCurVal;
+  argv[3] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x1C0000000000003FUL );
   STGEVAL(argv[4]);
   callContRestore( &argv[0] );
-  argv[4] = stgCurVal;
+  argv[4] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x1C0000000000003FUL );
   STGEVAL(argv[5]);
   callContRestore( &argv[0] );
-  argv[5] = stgCurVal;
+  argv[5] = stgCurVal;  // stgCurVal possibly less indirect
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -28971,7 +28971,7 @@ DEFUN0(stgApplyNNNNNP) {
   callContSave( &argv[0], (Bitmap64)0x1C00000000000041UL );
   STGEVAL(argv[6]);
   callContRestore( &argv[0] );
-  argv[6] = stgCurVal;
+  argv[6] = stgCurVal;  // stgCurVal possibly less indirect
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -29321,11 +29321,11 @@ DEFUN0(stgApplyPNNNNP) {
   callContSave( &argv[0], (Bitmap64)0x1C00000000000043UL );
   STGEVAL(argv[1]);
   callContRestore( &argv[0] );
-  argv[1] = stgCurVal;
+  argv[1] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x1C00000000000043UL );
   STGEVAL(argv[6]);
   callContRestore( &argv[0] );
-  argv[6] = stgCurVal;
+  argv[6] = stgCurVal;  // stgCurVal possibly less indirect
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -29675,11 +29675,11 @@ DEFUN0(stgApplyNPNNNP) {
   callContSave( &argv[0], (Bitmap64)0x1C00000000000045UL );
   STGEVAL(argv[2]);
   callContRestore( &argv[0] );
-  argv[2] = stgCurVal;
+  argv[2] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x1C00000000000045UL );
   STGEVAL(argv[6]);
   callContRestore( &argv[0] );
-  argv[6] = stgCurVal;
+  argv[6] = stgCurVal;  // stgCurVal possibly less indirect
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -30029,15 +30029,15 @@ DEFUN0(stgApplyPPNNNP) {
   callContSave( &argv[0], (Bitmap64)0x1C00000000000047UL );
   STGEVAL(argv[1]);
   callContRestore( &argv[0] );
-  argv[1] = stgCurVal;
+  argv[1] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x1C00000000000047UL );
   STGEVAL(argv[2]);
   callContRestore( &argv[0] );
-  argv[2] = stgCurVal;
+  argv[2] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x1C00000000000047UL );
   STGEVAL(argv[6]);
   callContRestore( &argv[0] );
-  argv[6] = stgCurVal;
+  argv[6] = stgCurVal;  // stgCurVal possibly less indirect
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -30387,11 +30387,11 @@ DEFUN0(stgApplyNNPNNP) {
   callContSave( &argv[0], (Bitmap64)0x1C00000000000049UL );
   STGEVAL(argv[3]);
   callContRestore( &argv[0] );
-  argv[3] = stgCurVal;
+  argv[3] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x1C00000000000049UL );
   STGEVAL(argv[6]);
   callContRestore( &argv[0] );
-  argv[6] = stgCurVal;
+  argv[6] = stgCurVal;  // stgCurVal possibly less indirect
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -30741,15 +30741,15 @@ DEFUN0(stgApplyPNPNNP) {
   callContSave( &argv[0], (Bitmap64)0x1C0000000000004BUL );
   STGEVAL(argv[1]);
   callContRestore( &argv[0] );
-  argv[1] = stgCurVal;
+  argv[1] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x1C0000000000004BUL );
   STGEVAL(argv[3]);
   callContRestore( &argv[0] );
-  argv[3] = stgCurVal;
+  argv[3] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x1C0000000000004BUL );
   STGEVAL(argv[6]);
   callContRestore( &argv[0] );
-  argv[6] = stgCurVal;
+  argv[6] = stgCurVal;  // stgCurVal possibly less indirect
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -31099,15 +31099,15 @@ DEFUN0(stgApplyNPPNNP) {
   callContSave( &argv[0], (Bitmap64)0x1C0000000000004DUL );
   STGEVAL(argv[2]);
   callContRestore( &argv[0] );
-  argv[2] = stgCurVal;
+  argv[2] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x1C0000000000004DUL );
   STGEVAL(argv[3]);
   callContRestore( &argv[0] );
-  argv[3] = stgCurVal;
+  argv[3] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x1C0000000000004DUL );
   STGEVAL(argv[6]);
   callContRestore( &argv[0] );
-  argv[6] = stgCurVal;
+  argv[6] = stgCurVal;  // stgCurVal possibly less indirect
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -31457,19 +31457,19 @@ DEFUN0(stgApplyPPPNNP) {
   callContSave( &argv[0], (Bitmap64)0x1C0000000000004FUL );
   STGEVAL(argv[1]);
   callContRestore( &argv[0] );
-  argv[1] = stgCurVal;
+  argv[1] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x1C0000000000004FUL );
   STGEVAL(argv[2]);
   callContRestore( &argv[0] );
-  argv[2] = stgCurVal;
+  argv[2] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x1C0000000000004FUL );
   STGEVAL(argv[3]);
   callContRestore( &argv[0] );
-  argv[3] = stgCurVal;
+  argv[3] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x1C0000000000004FUL );
   STGEVAL(argv[6]);
   callContRestore( &argv[0] );
-  argv[6] = stgCurVal;
+  argv[6] = stgCurVal;  // stgCurVal possibly less indirect
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -31819,11 +31819,11 @@ DEFUN0(stgApplyNNNPNP) {
   callContSave( &argv[0], (Bitmap64)0x1C00000000000051UL );
   STGEVAL(argv[4]);
   callContRestore( &argv[0] );
-  argv[4] = stgCurVal;
+  argv[4] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x1C00000000000051UL );
   STGEVAL(argv[6]);
   callContRestore( &argv[0] );
-  argv[6] = stgCurVal;
+  argv[6] = stgCurVal;  // stgCurVal possibly less indirect
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -32173,15 +32173,15 @@ DEFUN0(stgApplyPNNPNP) {
   callContSave( &argv[0], (Bitmap64)0x1C00000000000053UL );
   STGEVAL(argv[1]);
   callContRestore( &argv[0] );
-  argv[1] = stgCurVal;
+  argv[1] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x1C00000000000053UL );
   STGEVAL(argv[4]);
   callContRestore( &argv[0] );
-  argv[4] = stgCurVal;
+  argv[4] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x1C00000000000053UL );
   STGEVAL(argv[6]);
   callContRestore( &argv[0] );
-  argv[6] = stgCurVal;
+  argv[6] = stgCurVal;  // stgCurVal possibly less indirect
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -32531,15 +32531,15 @@ DEFUN0(stgApplyNPNPNP) {
   callContSave( &argv[0], (Bitmap64)0x1C00000000000055UL );
   STGEVAL(argv[2]);
   callContRestore( &argv[0] );
-  argv[2] = stgCurVal;
+  argv[2] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x1C00000000000055UL );
   STGEVAL(argv[4]);
   callContRestore( &argv[0] );
-  argv[4] = stgCurVal;
+  argv[4] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x1C00000000000055UL );
   STGEVAL(argv[6]);
   callContRestore( &argv[0] );
-  argv[6] = stgCurVal;
+  argv[6] = stgCurVal;  // stgCurVal possibly less indirect
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -32889,19 +32889,19 @@ DEFUN0(stgApplyPPNPNP) {
   callContSave( &argv[0], (Bitmap64)0x1C00000000000057UL );
   STGEVAL(argv[1]);
   callContRestore( &argv[0] );
-  argv[1] = stgCurVal;
+  argv[1] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x1C00000000000057UL );
   STGEVAL(argv[2]);
   callContRestore( &argv[0] );
-  argv[2] = stgCurVal;
+  argv[2] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x1C00000000000057UL );
   STGEVAL(argv[4]);
   callContRestore( &argv[0] );
-  argv[4] = stgCurVal;
+  argv[4] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x1C00000000000057UL );
   STGEVAL(argv[6]);
   callContRestore( &argv[0] );
-  argv[6] = stgCurVal;
+  argv[6] = stgCurVal;  // stgCurVal possibly less indirect
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -33251,15 +33251,15 @@ DEFUN0(stgApplyNNPPNP) {
   callContSave( &argv[0], (Bitmap64)0x1C00000000000059UL );
   STGEVAL(argv[3]);
   callContRestore( &argv[0] );
-  argv[3] = stgCurVal;
+  argv[3] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x1C00000000000059UL );
   STGEVAL(argv[4]);
   callContRestore( &argv[0] );
-  argv[4] = stgCurVal;
+  argv[4] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x1C00000000000059UL );
   STGEVAL(argv[6]);
   callContRestore( &argv[0] );
-  argv[6] = stgCurVal;
+  argv[6] = stgCurVal;  // stgCurVal possibly less indirect
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -33609,19 +33609,19 @@ DEFUN0(stgApplyPNPPNP) {
   callContSave( &argv[0], (Bitmap64)0x1C0000000000005BUL );
   STGEVAL(argv[1]);
   callContRestore( &argv[0] );
-  argv[1] = stgCurVal;
+  argv[1] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x1C0000000000005BUL );
   STGEVAL(argv[3]);
   callContRestore( &argv[0] );
-  argv[3] = stgCurVal;
+  argv[3] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x1C0000000000005BUL );
   STGEVAL(argv[4]);
   callContRestore( &argv[0] );
-  argv[4] = stgCurVal;
+  argv[4] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x1C0000000000005BUL );
   STGEVAL(argv[6]);
   callContRestore( &argv[0] );
-  argv[6] = stgCurVal;
+  argv[6] = stgCurVal;  // stgCurVal possibly less indirect
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -33971,19 +33971,19 @@ DEFUN0(stgApplyNPPPNP) {
   callContSave( &argv[0], (Bitmap64)0x1C0000000000005DUL );
   STGEVAL(argv[2]);
   callContRestore( &argv[0] );
-  argv[2] = stgCurVal;
+  argv[2] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x1C0000000000005DUL );
   STGEVAL(argv[3]);
   callContRestore( &argv[0] );
-  argv[3] = stgCurVal;
+  argv[3] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x1C0000000000005DUL );
   STGEVAL(argv[4]);
   callContRestore( &argv[0] );
-  argv[4] = stgCurVal;
+  argv[4] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x1C0000000000005DUL );
   STGEVAL(argv[6]);
   callContRestore( &argv[0] );
-  argv[6] = stgCurVal;
+  argv[6] = stgCurVal;  // stgCurVal possibly less indirect
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -34333,23 +34333,23 @@ DEFUN0(stgApplyPPPPNP) {
   callContSave( &argv[0], (Bitmap64)0x1C0000000000005FUL );
   STGEVAL(argv[1]);
   callContRestore( &argv[0] );
-  argv[1] = stgCurVal;
+  argv[1] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x1C0000000000005FUL );
   STGEVAL(argv[2]);
   callContRestore( &argv[0] );
-  argv[2] = stgCurVal;
+  argv[2] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x1C0000000000005FUL );
   STGEVAL(argv[3]);
   callContRestore( &argv[0] );
-  argv[3] = stgCurVal;
+  argv[3] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x1C0000000000005FUL );
   STGEVAL(argv[4]);
   callContRestore( &argv[0] );
-  argv[4] = stgCurVal;
+  argv[4] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x1C0000000000005FUL );
   STGEVAL(argv[6]);
   callContRestore( &argv[0] );
-  argv[6] = stgCurVal;
+  argv[6] = stgCurVal;  // stgCurVal possibly less indirect
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -34699,11 +34699,11 @@ DEFUN0(stgApplyNNNNPP) {
   callContSave( &argv[0], (Bitmap64)0x1C00000000000061UL );
   STGEVAL(argv[5]);
   callContRestore( &argv[0] );
-  argv[5] = stgCurVal;
+  argv[5] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x1C00000000000061UL );
   STGEVAL(argv[6]);
   callContRestore( &argv[0] );
-  argv[6] = stgCurVal;
+  argv[6] = stgCurVal;  // stgCurVal possibly less indirect
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -35053,15 +35053,15 @@ DEFUN0(stgApplyPNNNPP) {
   callContSave( &argv[0], (Bitmap64)0x1C00000000000063UL );
   STGEVAL(argv[1]);
   callContRestore( &argv[0] );
-  argv[1] = stgCurVal;
+  argv[1] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x1C00000000000063UL );
   STGEVAL(argv[5]);
   callContRestore( &argv[0] );
-  argv[5] = stgCurVal;
+  argv[5] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x1C00000000000063UL );
   STGEVAL(argv[6]);
   callContRestore( &argv[0] );
-  argv[6] = stgCurVal;
+  argv[6] = stgCurVal;  // stgCurVal possibly less indirect
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -35411,15 +35411,15 @@ DEFUN0(stgApplyNPNNPP) {
   callContSave( &argv[0], (Bitmap64)0x1C00000000000065UL );
   STGEVAL(argv[2]);
   callContRestore( &argv[0] );
-  argv[2] = stgCurVal;
+  argv[2] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x1C00000000000065UL );
   STGEVAL(argv[5]);
   callContRestore( &argv[0] );
-  argv[5] = stgCurVal;
+  argv[5] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x1C00000000000065UL );
   STGEVAL(argv[6]);
   callContRestore( &argv[0] );
-  argv[6] = stgCurVal;
+  argv[6] = stgCurVal;  // stgCurVal possibly less indirect
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -35769,19 +35769,19 @@ DEFUN0(stgApplyPPNNPP) {
   callContSave( &argv[0], (Bitmap64)0x1C00000000000067UL );
   STGEVAL(argv[1]);
   callContRestore( &argv[0] );
-  argv[1] = stgCurVal;
+  argv[1] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x1C00000000000067UL );
   STGEVAL(argv[2]);
   callContRestore( &argv[0] );
-  argv[2] = stgCurVal;
+  argv[2] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x1C00000000000067UL );
   STGEVAL(argv[5]);
   callContRestore( &argv[0] );
-  argv[5] = stgCurVal;
+  argv[5] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x1C00000000000067UL );
   STGEVAL(argv[6]);
   callContRestore( &argv[0] );
-  argv[6] = stgCurVal;
+  argv[6] = stgCurVal;  // stgCurVal possibly less indirect
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -36131,15 +36131,15 @@ DEFUN0(stgApplyNNPNPP) {
   callContSave( &argv[0], (Bitmap64)0x1C00000000000069UL );
   STGEVAL(argv[3]);
   callContRestore( &argv[0] );
-  argv[3] = stgCurVal;
+  argv[3] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x1C00000000000069UL );
   STGEVAL(argv[5]);
   callContRestore( &argv[0] );
-  argv[5] = stgCurVal;
+  argv[5] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x1C00000000000069UL );
   STGEVAL(argv[6]);
   callContRestore( &argv[0] );
-  argv[6] = stgCurVal;
+  argv[6] = stgCurVal;  // stgCurVal possibly less indirect
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -36489,19 +36489,19 @@ DEFUN0(stgApplyPNPNPP) {
   callContSave( &argv[0], (Bitmap64)0x1C0000000000006BUL );
   STGEVAL(argv[1]);
   callContRestore( &argv[0] );
-  argv[1] = stgCurVal;
+  argv[1] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x1C0000000000006BUL );
   STGEVAL(argv[3]);
   callContRestore( &argv[0] );
-  argv[3] = stgCurVal;
+  argv[3] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x1C0000000000006BUL );
   STGEVAL(argv[5]);
   callContRestore( &argv[0] );
-  argv[5] = stgCurVal;
+  argv[5] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x1C0000000000006BUL );
   STGEVAL(argv[6]);
   callContRestore( &argv[0] );
-  argv[6] = stgCurVal;
+  argv[6] = stgCurVal;  // stgCurVal possibly less indirect
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -36851,19 +36851,19 @@ DEFUN0(stgApplyNPPNPP) {
   callContSave( &argv[0], (Bitmap64)0x1C0000000000006DUL );
   STGEVAL(argv[2]);
   callContRestore( &argv[0] );
-  argv[2] = stgCurVal;
+  argv[2] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x1C0000000000006DUL );
   STGEVAL(argv[3]);
   callContRestore( &argv[0] );
-  argv[3] = stgCurVal;
+  argv[3] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x1C0000000000006DUL );
   STGEVAL(argv[5]);
   callContRestore( &argv[0] );
-  argv[5] = stgCurVal;
+  argv[5] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x1C0000000000006DUL );
   STGEVAL(argv[6]);
   callContRestore( &argv[0] );
-  argv[6] = stgCurVal;
+  argv[6] = stgCurVal;  // stgCurVal possibly less indirect
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -37213,23 +37213,23 @@ DEFUN0(stgApplyPPPNPP) {
   callContSave( &argv[0], (Bitmap64)0x1C0000000000006FUL );
   STGEVAL(argv[1]);
   callContRestore( &argv[0] );
-  argv[1] = stgCurVal;
+  argv[1] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x1C0000000000006FUL );
   STGEVAL(argv[2]);
   callContRestore( &argv[0] );
-  argv[2] = stgCurVal;
+  argv[2] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x1C0000000000006FUL );
   STGEVAL(argv[3]);
   callContRestore( &argv[0] );
-  argv[3] = stgCurVal;
+  argv[3] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x1C0000000000006FUL );
   STGEVAL(argv[5]);
   callContRestore( &argv[0] );
-  argv[5] = stgCurVal;
+  argv[5] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x1C0000000000006FUL );
   STGEVAL(argv[6]);
   callContRestore( &argv[0] );
-  argv[6] = stgCurVal;
+  argv[6] = stgCurVal;  // stgCurVal possibly less indirect
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -37579,15 +37579,15 @@ DEFUN0(stgApplyNNNPPP) {
   callContSave( &argv[0], (Bitmap64)0x1C00000000000071UL );
   STGEVAL(argv[4]);
   callContRestore( &argv[0] );
-  argv[4] = stgCurVal;
+  argv[4] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x1C00000000000071UL );
   STGEVAL(argv[5]);
   callContRestore( &argv[0] );
-  argv[5] = stgCurVal;
+  argv[5] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x1C00000000000071UL );
   STGEVAL(argv[6]);
   callContRestore( &argv[0] );
-  argv[6] = stgCurVal;
+  argv[6] = stgCurVal;  // stgCurVal possibly less indirect
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -37937,19 +37937,19 @@ DEFUN0(stgApplyPNNPPP) {
   callContSave( &argv[0], (Bitmap64)0x1C00000000000073UL );
   STGEVAL(argv[1]);
   callContRestore( &argv[0] );
-  argv[1] = stgCurVal;
+  argv[1] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x1C00000000000073UL );
   STGEVAL(argv[4]);
   callContRestore( &argv[0] );
-  argv[4] = stgCurVal;
+  argv[4] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x1C00000000000073UL );
   STGEVAL(argv[5]);
   callContRestore( &argv[0] );
-  argv[5] = stgCurVal;
+  argv[5] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x1C00000000000073UL );
   STGEVAL(argv[6]);
   callContRestore( &argv[0] );
-  argv[6] = stgCurVal;
+  argv[6] = stgCurVal;  // stgCurVal possibly less indirect
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -38299,19 +38299,19 @@ DEFUN0(stgApplyNPNPPP) {
   callContSave( &argv[0], (Bitmap64)0x1C00000000000075UL );
   STGEVAL(argv[2]);
   callContRestore( &argv[0] );
-  argv[2] = stgCurVal;
+  argv[2] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x1C00000000000075UL );
   STGEVAL(argv[4]);
   callContRestore( &argv[0] );
-  argv[4] = stgCurVal;
+  argv[4] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x1C00000000000075UL );
   STGEVAL(argv[5]);
   callContRestore( &argv[0] );
-  argv[5] = stgCurVal;
+  argv[5] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x1C00000000000075UL );
   STGEVAL(argv[6]);
   callContRestore( &argv[0] );
-  argv[6] = stgCurVal;
+  argv[6] = stgCurVal;  // stgCurVal possibly less indirect
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -38661,23 +38661,23 @@ DEFUN0(stgApplyPPNPPP) {
   callContSave( &argv[0], (Bitmap64)0x1C00000000000077UL );
   STGEVAL(argv[1]);
   callContRestore( &argv[0] );
-  argv[1] = stgCurVal;
+  argv[1] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x1C00000000000077UL );
   STGEVAL(argv[2]);
   callContRestore( &argv[0] );
-  argv[2] = stgCurVal;
+  argv[2] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x1C00000000000077UL );
   STGEVAL(argv[4]);
   callContRestore( &argv[0] );
-  argv[4] = stgCurVal;
+  argv[4] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x1C00000000000077UL );
   STGEVAL(argv[5]);
   callContRestore( &argv[0] );
-  argv[5] = stgCurVal;
+  argv[5] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x1C00000000000077UL );
   STGEVAL(argv[6]);
   callContRestore( &argv[0] );
-  argv[6] = stgCurVal;
+  argv[6] = stgCurVal;  // stgCurVal possibly less indirect
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -39027,19 +39027,19 @@ DEFUN0(stgApplyNNPPPP) {
   callContSave( &argv[0], (Bitmap64)0x1C00000000000079UL );
   STGEVAL(argv[3]);
   callContRestore( &argv[0] );
-  argv[3] = stgCurVal;
+  argv[3] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x1C00000000000079UL );
   STGEVAL(argv[4]);
   callContRestore( &argv[0] );
-  argv[4] = stgCurVal;
+  argv[4] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x1C00000000000079UL );
   STGEVAL(argv[5]);
   callContRestore( &argv[0] );
-  argv[5] = stgCurVal;
+  argv[5] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x1C00000000000079UL );
   STGEVAL(argv[6]);
   callContRestore( &argv[0] );
-  argv[6] = stgCurVal;
+  argv[6] = stgCurVal;  // stgCurVal possibly less indirect
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -39389,23 +39389,23 @@ DEFUN0(stgApplyPNPPPP) {
   callContSave( &argv[0], (Bitmap64)0x1C0000000000007BUL );
   STGEVAL(argv[1]);
   callContRestore( &argv[0] );
-  argv[1] = stgCurVal;
+  argv[1] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x1C0000000000007BUL );
   STGEVAL(argv[3]);
   callContRestore( &argv[0] );
-  argv[3] = stgCurVal;
+  argv[3] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x1C0000000000007BUL );
   STGEVAL(argv[4]);
   callContRestore( &argv[0] );
-  argv[4] = stgCurVal;
+  argv[4] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x1C0000000000007BUL );
   STGEVAL(argv[5]);
   callContRestore( &argv[0] );
-  argv[5] = stgCurVal;
+  argv[5] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x1C0000000000007BUL );
   STGEVAL(argv[6]);
   callContRestore( &argv[0] );
-  argv[6] = stgCurVal;
+  argv[6] = stgCurVal;  // stgCurVal possibly less indirect
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -39755,23 +39755,23 @@ DEFUN0(stgApplyNPPPPP) {
   callContSave( &argv[0], (Bitmap64)0x1C0000000000007DUL );
   STGEVAL(argv[2]);
   callContRestore( &argv[0] );
-  argv[2] = stgCurVal;
+  argv[2] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x1C0000000000007DUL );
   STGEVAL(argv[3]);
   callContRestore( &argv[0] );
-  argv[3] = stgCurVal;
+  argv[3] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x1C0000000000007DUL );
   STGEVAL(argv[4]);
   callContRestore( &argv[0] );
-  argv[4] = stgCurVal;
+  argv[4] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x1C0000000000007DUL );
   STGEVAL(argv[5]);
   callContRestore( &argv[0] );
-  argv[5] = stgCurVal;
+  argv[5] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x1C0000000000007DUL );
   STGEVAL(argv[6]);
   callContRestore( &argv[0] );
-  argv[6] = stgCurVal;
+  argv[6] = stgCurVal;  // stgCurVal possibly less indirect
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {
@@ -40121,27 +40121,27 @@ DEFUN0(stgApplyPPPPPP) {
   callContSave( &argv[0], (Bitmap64)0x1C0000000000007FUL );
   STGEVAL(argv[1]);
   callContRestore( &argv[0] );
-  argv[1] = stgCurVal;
+  argv[1] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x1C0000000000007FUL );
   STGEVAL(argv[2]);
   callContRestore( &argv[0] );
-  argv[2] = stgCurVal;
+  argv[2] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x1C0000000000007FUL );
   STGEVAL(argv[3]);
   callContRestore( &argv[0] );
-  argv[3] = stgCurVal;
+  argv[3] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x1C0000000000007FUL );
   STGEVAL(argv[4]);
   callContRestore( &argv[0] );
-  argv[4] = stgCurVal;
+  argv[4] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x1C0000000000007FUL );
   STGEVAL(argv[5]);
   callContRestore( &argv[0] );
-  argv[5] = stgCurVal;
+  argv[5] = stgCurVal;  // stgCurVal possibly less indirect
   callContSave( &argv[0], (Bitmap64)0x1C0000000000007FUL );
   STGEVAL(argv[6]);
   callContRestore( &argv[0] );
-  argv[6] = stgCurVal;
+  argv[6] = stgCurVal;  // stgCurVal possibly less indirect
 
   argv[0].op = derefPoL(argv[0]);
   if (getObjType(argv[0].op) == THUNK) {

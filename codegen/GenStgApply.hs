@@ -88,23 +88,12 @@ debugc code =
     code ++
     "#endif\n"
 
-
--- npstring is args, which start at argv[1]
-{-
-evalps npstring =
-    callContArgvSave 0 ('P':npstring) ++
-    concat [ "STGEVAL(argv[" ++ show (i+1) ++ "]);\n"
-             | i <- [0..(length npstring - 1)], npstring!!i == 'P' ] ++
-    callContArgvRestore 0
--}
-
--- paranoid version
 -- npstring is args, which start at argv[1]
 evalps npstring =
     concat [ callContArgvSave 0 ('P':npstring) ++
              "STGEVAL(argv[" ++ show (i+1) ++ "]);\n" ++
              callContArgvRestore 0 ++
-             "argv[" ++ show (i+1) ++ "] = stgCurVal;\n"
+             "argv[" ++ show (i+1) ++ "] = stgCurVal;  // stgCurVal possibly less indirect\n"
              | i <- [0..(length npstring - 1)], npstring!!i == 'P' ]
 
 gen strictness npstring =
