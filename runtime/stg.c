@@ -200,7 +200,7 @@ int getObjSize(Obj *o) {
               (fvs + 1 + PNSIZE(o->payload[fvs].i)) * sizeof(PtrOrLiteral);
     */
     objSize = sizeof(Obj) + 
-      (o->payload[fvs].b.bitmap.size + 1) * sizeof(PtrOrLiteral);
+      (fvs + 1 + o->payload[fvs].b.bitmap.size) * sizeof(PtrOrLiteral);
     objSize = ((objSize + 7)/8)*8;
     /* mkd gc */
     break;
@@ -209,10 +209,21 @@ int getObjSize(Obj *o) {
   case CON:
   case THUNK:
   case BLACKHOLE:
-  case INDIRECT:
+  case INDIRECT: {
+    InfoTab *itp = getInfoPtr(o);
+    /* THUNK payload size is one larger, this is a wart, this check should be in GC
+    if(itp->layoutInfo.boxedCount + itp->layoutInfo.unboxedCount !=
+       itp->layoutInfo.payloadSize) {
+      fprintf(stderr, "%s bc %d, ubc %d, pls %d\n", objTypeNames[type],
+	      itp->layoutInfo.boxedCount, itp->layoutInfo.unboxedCount,
+	      itp->layoutInfo.payloadSize);
+      assert(false);
+    }
+    */
     objSize = sizeof(Obj) + 
-              getInfoPtr(o)->layoutInfo.payloadSize * sizeof(PtrOrLiteral);
+              itp->layoutInfo.payloadSize * sizeof(PtrOrLiteral);
     break;
+  }
   default:
     fprintf(stderr, "stg.c/getObjSize bad ObjType %d\n", type);
     assert(false);
