@@ -127,15 +127,17 @@ DEFUN0(stgUpdateCont) {
     showStgHeap();
     assert(getObjType(p.op) == BLACKHOLE);
   }
+
+  int oldObjSize = getObjSize(p.op);
+
   // the order of the following two operations is important for concurrency
   p.op->payload[0] = stgCurVal;
   p.op->infoPtr = &it_stgIndirect; // this will supersede the # if below
-  // TOFIX--size determination should be more centralized
-  assert(it_stgIndirect.layoutInfo.payloadSize == 1 && "indirect payload size?");
-  size_t objSize = sizeof(Obj) + it_stgIndirect.layoutInfo.payloadSize * sizeof(PtrOrLiteral);
-  objSize = ((objSize + 7)/8)*8;
-  p.op->_objSize = objSize;
+
   strcpy( p.op->ident, it_stgIndirect.name );
+  int newObjSize = getObjSize(p.op);
+  assert(newObjSize <= oldObjSize);
+  memset((char*)p.op+newObjSize, 0, oldObjSize-newObjSize);
 
 #if USE_OBJTYPE
   p.op->objType = INDIRECT;

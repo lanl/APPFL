@@ -287,8 +287,7 @@ void gc(void) {
   }
 
   if (DEBUG) {
-    fprintf(stderr, "can't show old heap because of fragmentation\n");
-    // showStgHeap();
+    showStgHeap();
     fprintf(stderr, "start gc heap size %lx\n", before);
   }
 
