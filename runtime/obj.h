@@ -38,8 +38,8 @@ static inline void checkCONargs(Obj *p) {
 // payload[0] of thunk is result field
 static inline size_t startTHUNKFVsB(Obj *p) { return 1; }
 static inline size_t endTHUNKFVsB(Obj *p) { return getInfoPtr(p)->layoutInfo.boxedCount + 1; }
-static inline size_t startTHUNKFVsU(Obj *p) { return endCONargsB(p); }
-static inline size_t endTHUNKFVsU(Obj *p) { return startCONargsU(p) + getInfoPtr(p)->layoutInfo.unboxedCount; }
+static inline size_t startTHUNKFVsU(Obj *p) { return endTHUNKFVsB(p); }
+static inline size_t endTHUNKFVsU(Obj *p) { return startTHUNKFVsU(p) + getInfoPtr(p)->layoutInfo.unboxedCount; }
 
 // static inline size_t startCALLFVsB(Cont *p) { return 1; }
 // static inline size_t endCALLFVsB(Cont *p) { return p->payload[0].i + 1; }
