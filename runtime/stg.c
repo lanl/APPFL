@@ -20,6 +20,9 @@
 
 void *stgHeap = NULL;
 void *stgHP = NULL;
+void *toPtr = NULL;
+void *fromPtr = NULL;
+
 void *stgStack = NULL;
 void *stgSP = NULL;
 

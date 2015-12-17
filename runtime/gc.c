@@ -10,12 +10,11 @@
 #include "options.h"
 
 const bool DEBUG = true;
-const bool EXTRA = false;  // run extra checks
+const bool EXTRA = true;  // run extra checks
 
 #define EXTRASTART() fprintf(stderr, "EXTRA check file %s line %d\n", __FILE__, __LINE__)
 #define EXTRAEND() fprintf(stderr, "EXTRA check succeeded %s %d\n", __FILE__, __LINE__)
 
-static void *toPtr, *fromPtr;
 static void *scanPtr, *freePtr;
 
 void *getToPtr() {return toPtr;}
@@ -48,17 +47,42 @@ void swapPtrs(void) {
   assert(stgHP - stgHeap <= before && "gc: increased heap size!\n");
 }
 
+Obj *deref1(Obj *op) {
+  while (getObjType(op) == INDIRECT)
+    op = op->payload[0].op;
+  return op;
+}
+
+Obj *deref2(Obj *op) {
+  while (getObjType(op) == INDIRECT) {
+    if (isLSBset(op->infoPtr))
+      // it's not clear to me (yet) whether this can happen
+      assert(false && "INDIRECT/forward branch");
+    op = op->payload[0].op;
+  }
+  return op;
+}
+
 PtrOrLiteral updatePtrByValue (PtrOrLiteral f) {
-  Obj *p = derefPoL(f);
+  assert(isBoxed(f) && "not a HEAPOBJ");
+  Obj *p = deref2(f.op);  
 
   if (isFrom(p)) {
+    // from space
     if (isLSBset(p->infoPtr)) {
+      // from space && forwarding
       if (DEBUG) fprintf(stderr, "update forward %s\n", p->ident);
-      f.op = (Obj *) getInfoPtr(p);
+      f.op = (Obj *)getInfoPtr(p);
+#if USE_ARGTYPE
+      f.argType = HEAPOBJ;
+#endif
+      return f;
     } else {
+      // from space && !forwarding
       int size = getObjSize(p);
       if (DEBUG) {
-        fprintf(stderr, "copy %s %s from->to size=%d\n", objTypeNames[getObjType(p)], p->ident, size);
+        fprintf(stderr, "copy %s %s from->to size=%d\n", 
+		objTypeNames[getObjType(p)], p->ident, size);
       }
 
       memcpy(freePtr, p, size);
@@ -69,20 +93,33 @@ PtrOrLiteral updatePtrByValue (PtrOrLiteral f) {
       }
 
       p->infoPtr = setLSB((InfoTab *)freePtr);
-      f.op = (Obj *) freePtr;
-      freePtr = (char *) freePtr + size;
+      f.op = (Obj *)freePtr;
+#if USE_ARGTYPE
+      f.argType = HEAPOBJ;
+#endif
+      freePtr = (char *)freePtr + size;
+      return f;
     }
   } else if (isTo(p)) {
-    // do nothing
-  } else if (isSHO(p)) { // SHO
-    if (isFrom(f.op) && getObjType(f.op) == INDIRECT) {
-        if (DEBUG) fprintf(stderr, "fix INDIRECT to sho %s\n", f.op->ident);
-        f.op = p;
-    }
+    // to space
+    f.op = p;
+#if USE_ARGTYPE
+    f.argType = HEAPOBJ;
+#endif
+    return f;
+  } else if (isSHO(p)) {
+    // SHO
+    f.op = p;
+#if USE_ARGTYPE
+    f.argType = HEAPOBJ;
+#endif
+    return f;
   } else {
     assert(false && "bad ptr");
+    fprintf(stderr, "bad ptr");  // if asserts are off
+    exit(1);
+    return (PtrOrLiteral){.op = NULL};  // avoid dumb compiler warning/error
   }
-  return f;
 }
 
 void updatePtr(PtrOrLiteral *f) {

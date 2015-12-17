@@ -214,9 +214,12 @@ struct _CInfoTab {
 };
 
 extern void *stgHeap, *stgHP;
-extern void *stgStack, *stgSP;
+extern void *toPtr, *fromPtr;
 extern const size_t stgHeapSize;
 extern const size_t stgStackSize;
+
+extern void *stgStack, *stgSP;
+
 extern size_t stgStatObjCount;
 extern Obj * stgStatObj[];
 extern void initStg();
