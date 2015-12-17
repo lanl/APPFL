@@ -391,7 +391,31 @@ bool isSHO(Obj *p) {
 }
 
 bool isHeap(Obj *p) {
-  return (p >= (Obj *)stgHeap && p < (Obj *)stgHP);
+  return (isTo(p) || isFrom(p));
+}
+
+bool isFrom(void *p) {
+  return (p >= fromPtr && (char *) p < (char *) fromPtr + stgHeapSize / 2);
+}
+
+bool isTo(void *p) {
+  return (p >= toPtr && (char *) p < (char *) toPtr + stgHeapSize / 2);
+}
+
+bool isBoxed(PtrOrLiteral f) {
+#if USE_ARGTYPE
+  return (f.argType == HEAPOBJ && (isHeap(f.op) || isSHO(f.op)));
+#else
+  return (isHeap(f.op) || isSHO(f.op));
+#endif
+}
+
+bool isUnboxed(PtrOrLiteral f) {
+#if USE_ARGTYPE
+  return (f.argType != HEAPOBJ);
+#else
+  return true;
+#endif
 }
 
 void showStgStack() {

@@ -50,22 +50,6 @@ static inline size_t startCASEFVsU(Cont *p) { return endCASEFVsB(p); }
 static inline size_t endCASEFVsU(Cont *p) { return startCASEFVsU(p) + getCInfoPtr(p)->layoutInfo.unboxedCount; }
 
 
-static inline bool isBoxed(PtrOrLiteral f) {
-#if USE_ARGTYPE
-  return (f.argType == HEAPOBJ);
-#else
-  return true;
-#endif
-}
-
-static inline bool isUnboxed(PtrOrLiteral f) {
-#if USE_ARGTYPE
-  return (f.argType != HEAPOBJ);
-#else
-  return true;
-#endif
-}
-
 // use LSB to say it is a FORWARD
 static inline InfoTab *setLSB(InfoTab *ptr) { 
   return (InfoTab *)((uintptr_t)ptr | 1); 

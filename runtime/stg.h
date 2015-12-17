@@ -232,8 +232,16 @@ extern void showIT(InfoTab *);
 extern void showCIT(CInfoTab *);
 extern int  getObjSize(Obj *);
 extern int  getContSize(Cont *);
+
 extern bool isSHO();
 extern bool isHeap(Obj *p);
+extern bool isFrom(void *p);
+extern bool isTo(void *p);
+
+extern bool isBoxed(PtrOrLiteral f);
+
+extern bool isUnboxed(PtrOrLiteral f);
+
 
 #define PACKBITS (sizeof(uintptr_t)/2 * 8)
 #define hibits (~0L << PACKBITS)

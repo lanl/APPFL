@@ -10,7 +10,7 @@
 #include "options.h"
 
 const bool DEBUG = true;
-const bool EXTRA = true;  // run extra checks
+const bool EXTRA = false;  // run extra checks
 
 #define EXTRASTART() fprintf(stderr, "EXTRA check file %s line %d\n", __FILE__, __LINE__)
 #define EXTRAEND() fprintf(stderr, "EXTRA check succeeded %s %d\n", __FILE__, __LINE__)
@@ -18,14 +18,6 @@ const bool EXTRA = true;  // run extra checks
 static void *scanPtr, *freePtr;
 
 void *getToPtr() {return toPtr;}
-
-static inline bool isFrom(void *p) {
-  return (p >= fromPtr && (char *) p < (char *) fromPtr + stgHeapSize / 2);
-}
-
-static inline bool isTo(void *p) {
-  return (p >= toPtr && (char *) p < (char *) toPtr + stgHeapSize / 2);
-}
 
 void initGc(void) {
   assert(stgHeap && "gc: heap not defined");
@@ -182,14 +174,6 @@ void processObj(Obj *p) {
         updatePtr(&p->payload[i]);
       }
     }
-    /* mkd gc
-    // boxed args already applied
-    int start = startPAPargsB(p);
-    int end = endPAPargsB(p);
-    for (i = start; i < end; i++) {
-      updatePtr(&p->payload[i]);
-    }
-    */
     Bitmap64 bm = p->payload[endPAPFVsU(p)].b;
     uint64_t mask = bm.bitmap.mask;
     int i = endPAPFVsU(p) + 1;
@@ -209,22 +193,10 @@ void processObj(Obj *p) {
     break;
   }
 
-  case THUNK: {
-    int start = startTHUNKFVsB(p);
-    int end = endTHUNKFVsB(p);
-    for (i = start; i < end; i++) {
-      updatePtr(&p->payload[i]);
-    }
-    break;
-  }
-
-  // same as THUNK but doing some debugging
+  case THUNK:
   case BLACKHOLE: {
     int start = startTHUNKFVsB(p);
     int end = endTHUNKFVsB(p);
-    if (end > start) {
-      fprintf(stderr, "BLACKHOLE WITH %d boxed FVS\n", end - start);
-    }
     for (i = start; i < end; i++) {
       updatePtr(&p->payload[i]);
     }
@@ -234,6 +206,7 @@ void processObj(Obj *p) {
   case INDIRECT:
     updatePtr(&p->payload[0]);
     break;
+
   default:
     fprintf(stderr, "gc: bad obj. type %d %s", getObjType(p),
         objTypeNames[getObjType(p)]);
@@ -270,15 +243,6 @@ void processCont(Cont *p) {
     break;
   }
   case CALLCONT: {
-    /*
-    int start = startCALLFVsB(p);
-    int end = endCALLFVsB(p);
-    for (i = start; i < end; i++) {
-      if (EXTRA) assert(isBoxed(p->payload[i]) && 
-			"gc: unexpected unboxed arg in CALL");
-      updatePtr(&p->payload[i]);
-    }
-    */
     Bitmap64 bm = p->layout;
     uint64_t mask = bm.bitmap.mask;
     int i = 0;
