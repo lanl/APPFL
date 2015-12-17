@@ -126,7 +126,6 @@ struct _Obj {
 #if USE_OBJTYPE
   ObjType objType;          // to distinguish PAP, FUN, BLACKHOLE, INDIRECT
 #endif
-  int _objSize;              // for debugging
   char ident[32];           // temporary, just for tracing
   PtrOrLiteral payload[];
 };
@@ -215,9 +214,12 @@ struct _CInfoTab {
 };
 
 extern void *stgHeap, *stgHP;
-extern void *stgStack, *stgSP;
+extern void *toPtr, *fromPtr;
 extern const size_t stgHeapSize;
 extern const size_t stgStackSize;
+
+extern void *stgStack, *stgSP;
+
 extern size_t stgStatObjCount;
 extern Obj * stgStatObj[];
 extern void initStg();
@@ -303,6 +305,13 @@ extern Cont *stgAllocCallCont(CInfoTab *it, int payloadSize);
 extern Cont *stgAllocCont(CInfoTab *it);
 // remove Obj from top of continuation stack, returning pointer to de-alloced Obj
 Cont *stgPopCont();
+
+extern void showStgObjPretty(Obj *p);
+extern void showStgObjDebug(Obj *p);
+extern void showStgValDebug(PtrOrLiteral v);
+extern void showStgValPretty(PtrOrLiteral v);
+
+
 
 # define STGCALL0(f)				\
   CALL0_0(f)
