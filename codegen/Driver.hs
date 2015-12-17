@@ -269,7 +269,9 @@ tctest mhs arg =
     hmstgdebug objs
 
 
+-- C AST version
 #if USE_CAST
+
 codegener :: String -> Bool -> Bool -> [EExtDecl]
 codegener inp v mhs = let (tycons, objs) = heapchecker mhs inp
                           typeEnums = cTypeEnums tycons
@@ -295,7 +297,9 @@ printEE (Right x) = x ++ "\n"
 pprinter :: [EExtDecl] -> String
 pprinter xs = concatMap printEE xs
 
+-- text version
 #else
+
 codegener :: String -> Bool -> Bool -> String
 codegener inp v mhs = let (tycons, objs) = heapchecker mhs inp
                           typeEnums = showTypeEnums tycons
@@ -314,6 +318,8 @@ codegener inp v mhs = let (tycons, objs) = heapchecker mhs inp
 
 pprinter :: String -> String
 pprinter = id
+
+-- end of USE_CAST
 #endif
 
 

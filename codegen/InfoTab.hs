@@ -475,7 +475,7 @@ showITType _ = "sho"
 -- showITTType _ = error "bad ITType"
 
 
-
+-- C AST version
 #if USE_CAST
 cInfoTab :: InfoTab -> Maybe CExtDecl
 cInfoTab it@(ITFun {}) = Just (
@@ -550,9 +550,11 @@ cInfoTab _ = Nothing
 cITs :: ITsOf a [InfoTab] => a -> [CExtDecl]
 cITs os =  mapMaybe cInfoTab (itsOf os)
 
+-- not used in C AST version
 showIT = error "showIT"
 showITs = error "showITs"
 
+-- text version
 #else
 
 showIT :: InfoTab -> [Char]
@@ -657,8 +659,9 @@ showITs :: ITsOf a [InfoTab] => a -> [Char]
 showITs os = myConcatMap showIT $ itsOf os
 --showITs os = concatMap showIT $ itsOf os
 
-cITs = error "cIts"
+cITs = error "cIts" -- not used in text version
 
+-- end of USE_CAST
 #endif
 
 -- MODIFIED 6.30 - David ----------------------------------------
