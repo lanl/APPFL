@@ -25,6 +25,7 @@ module CAST (
   cMemberE,
   cNewHeapObj,
   cObjStruct,
+  cPayloadE,
   cPtrD,
   cStringE,
   cStructMember,
@@ -56,7 +57,7 @@ data Ty = EnumTy
         | UserTy
         | StructTy deriving(Show)
 
-type CInitializerMember = ([CPartDesignator NodeInfo], CInitializer NodeInfo)
+type CInitializerMember = ([CDesignator], CInit)
 
 cPtrD = CPtrDeclr [] undefNode
 
@@ -78,17 +79,21 @@ cStringE val = CConst (CStrConst (cString val) undefNode)
 cMemberE :: String -> String -> Bool -> CExpr
 cMemberE x y arrow = CMember (cVarE x) (builtinIdent y) arrow undefNode
 
-cTypeSpec :: String -> CDeclarationSpecifier NodeInfo
+cPayloadE :: String -> Integer -> CExpr
+cPayloadE name n = CIndex (cMemberE name "payload" True)
+                   (cIntE n) undefNode
+
+cTypeSpec :: String -> CDeclSpec
 cTypeSpec name = CTypeSpec (CTypeDef (builtinIdent name) undefNode)
 
-cFunProto :: CDeclarationSpecifier NodeInfo -> String -> CExtDecl
+cFunProto :: CDeclSpec -> String -> CExtDecl
 cFunProto declspec name =
   CDeclExt (CDecl [declspec] [(Just (CDeclr (Just (builtinIdent name))
-  [CFunDeclr (Right ([],False)) [] undefNode] Nothing [] undefNode),Nothing,Nothing)] undefNode)
+  [CFunDeclr (Right ([],False)) [] undefNode] Nothing [] undefNode),
+  Nothing,Nothing)] undefNode)
 
 -- init a Struct Member w/ an Expr
-cStructMemberE :: [String] -> CInitializer NodeInfo
-  -> CInitializerMember
+cStructMemberE :: [String] -> CInit -> CInitializerMember
 cStructMemberE name expr =
   let f x = CMemberDesig (builtinIdent x) undefNode
   in (map f name, expr)
@@ -104,7 +109,8 @@ instance InitStructMember String where
               PtrTy -> CInitExpr (cAddrvarE val) undefNode
               InfoPtrTy -> CInitExpr (cAddrvarE ("it_" ++ val)) undefNode
               -- empty/zero payload
-              StructTy -> CInitList (if null val then [] else [([], CInitExpr (cIntE 0) undefNode)] ) undefNode
+              StructTy -> CInitList (if null val then [] else [([],
+                          CInitExpr (cIntE 0) undefNode)] ) undefNode
               _ -> error ("bad Type in cStructMember (String) " ++ show ty)
     in cStructMemberE (splitOn "." name) e
 
@@ -145,7 +151,8 @@ instance InitStructMember [CInitializerMember] where
 instance InitStructMember [[CInitializerMember]] where
   cStructMember ty name vals =
     let e = case ty of
-              StructTy -> CInitList (map (\x -> ([], CInitList x undefNode)) vals) undefNode
+              StructTy -> CInitList (map (\x -> ([], CInitList x undefNode))
+                          vals) undefNode
               _ -> error "bad Type in cStructMember (Struct)"
     in cStructMemberE  (splitOn "." name) e
 
@@ -174,11 +181,11 @@ cStruct ty name align is =
       in CDeclExt (CDecl t [(Just d, Just i, Nothing)] undefNode)
 
 cEnum :: String -> [String] -> CExtDecl
-cEnum name xs = CDeclExt (CDecl [CTypeSpec (CEnumType (CEnum (Just (builtinIdent ("tycon_" ++ name)))
-                   (Just (map (\y -> (builtinIdent ("con_" ++ y) , Nothing)) xs)) [] undefNode) undefNode)]
-                   [] undefNode)
+cEnum name xs = CDeclExt (CDecl [CTypeSpec (CEnumType (CEnum (Just (builtinIdent
+                ("tycon_" ++ name))) (Just (map (\y -> (builtinIdent ("con_" ++ y),
+                Nothing)) xs)) [] undefNode) undefNode)] [] undefNode)
 
-cFun :: Ty -> String -> String -> [CDerivedDeclarator NodeInfo] -> [CBlockItem] -> CExtDecl
+cFun :: Ty -> String -> String -> [CDerivedDeclr] -> [CBlockItem] -> CExtDecl
 cFun ty tyname name dds cbs =
   let r = case ty of
             IntTy  -> [CTypeSpec (CIntType undefNode)]
@@ -188,10 +195,10 @@ cFun ty tyname name dds cbs =
    in CFDefExt (CFunDef r (CDeclr (Just (builtinIdent name)) dds
       Nothing [] undefNode) [] (CCompound [] cbs undefNode) undefNode)
 
-cCallExpr :: String -> [CExpression NodeInfo] -> CExpr
+cCallExpr :: String -> [CExpr] -> CExpr
 cCallExpr name args = CCall (CVar (builtinIdent name) undefNode) args undefNode
 
-cCall:: String -> [CExpression NodeInfo] -> CBlockItem
+cCall:: String -> [CExpr] -> CBlockItem
 cCall name args = CBlockStmt (CExpr (Just (cCallExpr name args )) undefNode)
 
 cCallVars :: String -> [String] -> CBlockItem
@@ -199,19 +206,21 @@ cCallVars name args = let cvars = map (\a -> CVar (builtinIdent a) undefNode) ar
                    in cCall name cvars
 
 cIntReturn :: Integer -> CBlockItem
-cIntReturn x = CBlockStmt (CReturn (Just (CConst (CIntConst (cInteger x) undefNode))) undefNode)
+cIntReturn x = CBlockStmt (CReturn (Just (CConst (CIntConst
+               (cInteger x) undefNode))) undefNode)
 
-_ptrDecl :: String -> CDeclarator NodeInfo
+_ptrDecl :: String -> CDeclr
 _ptrDecl name = CDeclr (Just (builtinIdent name)) [cPtrD] Nothing [] undefNode
 
-cUserPtrDecl ty name val = CBlockDecl (CDecl [cTypeSpec ty] [(Just (_ptrDecl name)
-                        ,val, Nothing)] undefNode)
+cUserPtrDecl :: String -> String -> Maybe CInit -> CBlockItem
+cUserPtrDecl ty name val = CBlockDecl (CDecl [cTypeSpec ty] [(Just (_ptrDecl name),
+                           val, Nothing)] undefNode)
 
-cInitCall :: String-> [CExpression NodeInfo] -> Maybe (CInitializer NodeInfo)
+cInitCall :: String -> [CExpr] -> Maybe CInit
 cInitCall name args =  Just (CInitExpr (cCallExpr name args) undefNode)
 
 cNewHeapObj :: String -> String -> CBlockItem
 cNewHeapObj name val = cUserPtrDecl "Obj" name (cInitCall "stgNewHeapObj" [cAddrvarE val])
 
-cAssign :: CExpression NodeInfo -> CExpression NodeInfo -> CBlockItem
+cAssign :: CExpr -> CExpr -> CBlockItem
 cAssign lhs rhs = CBlockStmt (CExpr (Just (CAssign CAssignOp lhs rhs undefNode)) undefNode)

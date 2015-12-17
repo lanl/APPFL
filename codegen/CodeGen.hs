@@ -118,22 +118,6 @@ cPoLE :: Atom -> CExpr
 cPoLE a =  CCompoundLit (CDecl [cTypeSpec "PtrOrLiteral"] [] undefNode)
               (_polMembers a) undefNode
 
-cHOTOPLshoE :: String -> CExpr
-cHOTOPLshoE name = CCall (cVarE "HOTOPL") [CUnary CAdrOp (cVarE ("sho_" ++ name)) undefNode] undefNode
-
-cHOTOPLE :: Int-> Int -> CExpr
-cHOTOPLE x y = CCall (cVarE "HOTOPL") [CCast (CDecl [cTypeSpec "Obj"]
-                [(Just (CDeclr Nothing [cPtrD] Nothing [] undefNode),Nothing,Nothing)] undefNode)
-                (CCall (cVarE "STGHEAPAT") [cIntE $ toInteger x, cIntE $ toInteger y] undefNode) undefNode] undefNode
-
-cFVE :: Int -> CExpr
-cFVE x = CIndex (CMember (CMember (cVarE "self") (builtinIdent "op") False undefNode)
-          (builtinIdent "payload") True undefNode) (cIntE $ toInteger x) undefNode
-
-cACE :: String -> Int -> CExpr
-cACE v i = CIndex (cMemberE v "payload" True) (cIntE $ toInteger i) undefNode
-
-
 cFnPtrFun :: String -> CExtDecl
 cFnPtrFun name = cFunProto (cTypeSpec "FnPtr") ("fun_" ++ name)
 
@@ -143,14 +127,24 @@ getEnvRef v env = render $ pretty $ lu v env 0 0
 lu :: String -> Env -> Int -> Int -> CExpr
 lu v [] _ _ = error $ "lu " ++ v ++ " failed"
 
+
 lu v ((v',k):_) size' n | v == v' =
     case k of
-      SHO     -> cHOTOPLshoE v
-      HO size -> cHOTOPLE (size+size') (n+1)
-      FP      -> cVarE v
-      FV i    -> cFVE i
-      AC v i  -> cACE v i
-      AD v    -> cVarE v
+      SHO -> cCallExpr "HOTOPL" [CUnary CAdrOp (cVarE ("sho_" ++ v)) undefNode]
+
+      HO size -> cCallExpr "HOTOPL"
+                [CCast (CDecl [cTypeSpec "Obj"]
+                [(Just (CDeclr Nothing [cPtrD] Nothing [] undefNode), Nothing, Nothing)] undefNode)
+                (cCallExpr "STGHEAPAT" [cIntE $ toInteger (size+size'), cIntE $ toInteger (n+1)]) undefNode]
+
+      FP -> cVarE v
+
+      FV i -> CIndex (CMember (CMember (cVarE "self") (builtinIdent "op") False undefNode)
+              (builtinIdent "payload") True undefNode) (cIntE $ toInteger i) undefNode
+
+      AC v i -> CIndex (cMemberE v "payload" True) (cIntE $ toInteger i) undefNode
+
+      AD v -> cVarE v
 
 lu v ((_, HO size) : xs) size' n =
     lu v xs (size'+size) (n+1)
@@ -653,13 +647,15 @@ cgalt env switch scrutName (ADef it v e) =
 --  CALLCONT,
 --  FUNCONT,
 
+buildHeapObj :: Env -> Obj InfoTab -> (Int, String, String)
 buildHeapObj env o =
     let (size, rval) = bho env o
         name = oname o
         decl = "Obj *" ++ name ++ " = stgNewHeapObj( &it_" ++ name ++ " );\n"
     in (size, decl, rval)
 
-bho :: [(String, RVal)] -> Obj InfoTab -> (Int, [Char])
+
+bho :: Env -> Obj InfoTab -> (Int, String)
 bho env (FUN it vs e name) =
     (length $ fvs it, loadPayloadFVs env (map fst $ fvs it) 0 name)
 
