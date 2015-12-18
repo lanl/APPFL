@@ -5,6 +5,7 @@
 #include <assert.h>
 #include <stdbool.h>
 #include <stdint.h>
+#include <stdio.h>
 #include "options.h"
 
 //------ fake typedef fp (*fp)()
@@ -53,6 +54,7 @@ typedef union Bitmap64 {
 
 //------ stack and heap objects
 
+#if USE_ARGTYPE
 typedef enum {          // superfluous, for sanity checking
   INT, 
   LONG,
@@ -61,6 +63,7 @@ typedef enum {          // superfluous, for sanity checking
   BITMAP,
   HEAPOBJ 
 } ArgType;
+#endif
 
 // heap objects
 typedef enum {
@@ -131,7 +134,7 @@ struct _Obj {
 };
 
 struct _Cont {
-  CInfoTab *cinfoPtr;     // *going away* 
+  CInfoTab *cInfoPtr;     // *going away* 
   CmmFnPtr entryCode;    // new
   ContType contType;
   Bitmap64 layout;        // new
@@ -243,66 +246,73 @@ extern bool isBoxed(PtrOrLiteral f);
 extern bool isUnboxed(PtrOrLiteral f);
 
 
-#define PACKBITS (sizeof(uintptr_t)/2 * 8)
-#define hibits (~0L << PACKBITS)
-#define lobits (~0L & ~hibits)
-
-#define PNPACK(pargc,nargc) ((pargc) | (((uintptr_t)(nargc)) << PACKBITS))
-
-#define PUNPACK(n) (((uintptr_t) (n)) & lobits)
-#define NUNPACK(n) (((uintptr_t) (n)) >> PACKBITS)
-
-#define PNSIZE(n) (PUNPACK(n)+NUNPACK(n))
-
-#define PNUNPACK(n,pargc,nargc) \
-  do { \
-    pargc = PUNPACK(n);	\
-    nargc = NUNPACK(n);	\
-  } while (0)
-
 static inline InfoTab *getInfoPtr(Obj *p)  { 
   return (InfoTab *)((((uintptr_t)(p->infoPtr)) >> 3) << 3); 
 }
 
-static inline CInfoTab *getCInfoPtr(Cont *p)  { return p->cinfoPtr; }
+static inline CInfoTab *getCInfoPtr(Cont *p)  { return p->cInfoPtr; }
 
-static inline InfoTab *setLSB2(InfoTab *ptr) { 
-  return (InfoTab*)((uintptr_t)ptr | 2);
-}
+//static inline InfoTab *setLSB2(InfoTab *ptr) { 
+//  return (InfoTab*)((uintptr_t)ptr | 2);
+//}
 
-static inline bool isLSB2set(InfoTab *ptr) { return (bool)((uintptr_t)ptr & 2); }
+//static inline bool isLSB2set(InfoTab *ptr) { 
+//  return (bool)((uintptr_t)ptr & 2); 
+//}
+
 // for indirect
-static inline InfoTab *setLSB3(InfoTab *ptr) { 
-  return (InfoTab *)((uintptr_t)ptr | 4);
-}
-static inline bool isLSB3set(InfoTab *ptr) { return (bool)((uintptr_t)ptr & 4); }
+//static inline InfoTab *setLSB3(InfoTab *ptr) { 
+//  return (InfoTab *)((uintptr_t)ptr | 4);
+//}
+//static inline bool isLSB3set(InfoTab *ptr) { return (bool)((uintptr_t)ptr & 4); }
 
 
 static inline ObjType getObjType(Obj *p) {
-#if USE_OBJTYPE
-  return p->objType;
-#else
-  InfoTab *infoPtr = getInfoPtr(p);
-  if (isLSB3set((uintptr_t)p->infoPtr)) return INDIRECT;
-  switch(infoPtr->objType) {
+  ObjType objType;
+  /*
+  InfoTab *ip = getInfoPtr(p);
+  switch(ip->objType) {
   case FUN:
-    return (isLSB2set((uintptr_t)p->infoPtr) ? PAP : FUN);
+    objType = (isLSB2set(p->infoPtr) ? PAP : FUN);
+    break;
   case THUNK:
-    return (isLSB2set((uintptr_t)p->infoPtr) ? BLACKHOLE : THUNK);
+    objType = (isLSB2set(p->infoPtr) ? BLACKHOLE : THUNK);
+    break;
   default:
-    return infoPtr->objType;
+    objType = ip->objType;
+  }
+#if USE_OBJTYPE
+  if (objType != p->objType) {
+    fprintf(stderr, "computed objType = %s but p->objType = %s for %s aka %s\n",
+	    objTypeNames[objType], objTypeNames[p->objType], p->ident, ip->name);
+    assert(objType == p->objType);
   }
 #endif
+  */
+#if USE_OBJTYPE
+  objType = p->objType;
+#else
+  assert(false);
+#endif
+
+  return objType;
+
 }
 
+static inline ContType getContType(Cont *p) {
+  return p->contType;
+}
+
+/*
 static inline ContType getContType(Cont *p) {
 #if USE_OBJTYPE
   return p->contType;
 #else
-  CInfoTab *cinfoPtr = getCInfoPtr(p);
-  return cinfoPtr->contType;
+  CInfoTab *cInfoPtr = getCInfoPtr(p);
+  return cInfoPtr->contType;
 #endif
 }
+*/
 
 // allocate Obj on heap, returning pointer to new Obj
 extern Obj* stgNewHeapObj(InfoTab *itp);
@@ -326,15 +336,6 @@ extern void showStgValPretty(PtrOrLiteral v);
 
 # define STGCALL1(f,v1)				\
   CALL1_0(f,v1)
-
-# define STGCALL2(f,v1,v2)			\
-  CALL2_0(f,v1,v2)
-
-# define STGCALL3(f,v1,v2,v3)			\
-  CALL3_0(f,v1,v2,v3)
-
-# define STGCALL4(f,v1,v2,v3,v4)		\
-  CALL4_0(f,v1,v2,v3,v4)
 
 #define STGJUMP0(f)				\
   JUMP0(f)
@@ -378,55 +379,6 @@ extern void showStgValPretty(PtrOrLiteral v);
   do {						\
     stgCurVal = r;				\
     STGRETURN0();				\
-  } while(0)
-
-#define STGAPPLY1(f,v1)				\
-  do {						\
-    assert(getInfoPtr(f.op)->objType == FUN);	\
-    assert(getInfoPtr(f.op)->funFields.arity == 1);\
-    STGJUMP2(f.op->infoPtr->entryCode, f, v1);	\
-  } while(0)
-
-#define STGAPPLY2(f,v1,v2)				\
-  do {							\
-    assert(getInfoPtr(f.op)->objType == FUN);		\
-    assert(getInfoPtr(f.op)->funFields.arity == 2);	\
-    STGJUMP3(getInfoPtr(f.op)->entryCode, f, v1, v2);	\
-  } while(0)
-
-#define STGAPPLY3(f,v1,v2,v3)				\
-  do {							\
-    assert(getInfoPtr(f.op)->objType == FUN);		\
-    assert(getInfoPtr(f.op)->funFields.arity == 3);	\
-    STGJUMP4(getInfoPtr(f.op)->entryCode, f, v1, v2, v3);	\
-  } while(0)
-
-#define STGAPPLY4(f,v1,v2,v3,v4)				\
-  do {								\
-    assert(getInfoPtr(f.op)->objType == FUN);			\
-    assert(getInfoPtr(f.op)->funFields.arity == 4);		\
-    STGJUMP5(getInfoPtr(f.op)->entryCode, f, v1, v2, v3, v4);	\
-  } while(0)
-
-#define STGAPPLY5(f,v1,v2,v3,v4,v5)				\
-  do {								\
-    assert(getInfoPtr(f.op)->objType == FUN);			\
-    assert(getInfoPtr(f.op)->funFields.arity == 5);		\
-    STGJUMP6(getInfoPtr(f.op)->entryCode, f, v1, v2, v3, v4, v5);	\
-  } while(0)
-
-#define STGAPPLY6(f,v1,v2,v3,v4,v5,v6)					\
-  do {									\
-    assert(getInfoPtr(f.op)->objType == FUN);				\
-    assert(getInfoPtr(f.op)->funFields.arity == 6);			\
-    STGJUMP7(getInfoPtr(f.op)->entryCode, f, v1, v2, v3, v4, v5, v6);	\
-  } while(0)
-
-#define STGAPPLY7(f,v1,v2,v3,v4,v5,v6,v7)				\
-  do {									\
-    assert(getInfoPtr(f.op)->objType == FUN);				\
-    assert(getInfoPtr(f.op)->funFields.arity == 7);			\
-    STGJUMP8(getInfoPtr(f.op)->entryCode, f, v1, v2, v3, v4, v5, v6, v7);	\
   } while(0)
 
 #endif  //ifdef stg_h
