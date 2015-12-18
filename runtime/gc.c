@@ -12,16 +12,12 @@
 const bool DEBUG = true;
 const bool EXTRA = false;  // run extra checks
 
-static void *toPtr, *fromPtr;
+#define EXTRASTART() fprintf(stderr, "EXTRA check file %s line %d\n", __FILE__, __LINE__)
+#define EXTRAEND() fprintf(stderr, "EXTRA check succeeded %s %d\n", __FILE__, __LINE__)
+
 static void *scanPtr, *freePtr;
 
-static inline bool isFrom(void *p) {
-  return (p >= fromPtr && (char *) p < (char *) fromPtr + stgHeapSize / 2);
-}
-
-static inline bool isTo(void *p) {
-  return (p >= toPtr && (char *) p < (char *) toPtr + stgHeapSize / 2);
-}
+void *getToPtr() {return toPtr;}
 
 void initGc(void) {
   assert(stgHeap && "gc: heap not defined");
@@ -43,35 +39,79 @@ void swapPtrs(void) {
   assert(stgHP - stgHeap <= before && "gc: increased heap size!\n");
 }
 
+Obj *deref1(Obj *op) {
+  while (getObjType(op) == INDIRECT)
+    op = op->payload[0].op;
+  return op;
+}
+
+Obj *deref2(Obj *op) {
+  while (getObjType(op) == INDIRECT) {
+    if (isLSBset(op->infoPtr))
+      // it's not clear to me (yet) whether this can happen
+      assert(false && "INDIRECT/forward branch");
+    op = op->payload[0].op;
+  }
+  return op;
+}
+
 PtrOrLiteral updatePtrByValue (PtrOrLiteral f) {
-  Obj *p = derefPoL(f);
+  assert(isBoxed(f) && "not a HEAPOBJ");
+  Obj *p = deref2(f.op);  
 
   if (isFrom(p)) {
+    // from space
     if (isLSBset(p->infoPtr)) {
+      // from space && forwarding
       if (DEBUG) fprintf(stderr, "update forward %s\n", p->ident);
-      f.op = (Obj *) getInfoPtr(p);
+      f.op = (Obj *)getInfoPtr(p);
+#if USE_ARGTYPE
+      f.argType = HEAPOBJ;
+#endif
+      return f;
     } else {
+      // from space && !forwarding
       int size = getObjSize(p);
       if (DEBUG) {
-        fprintf(stderr, "copy %s %s from->to size=%d\n", objTypeNames[getObjType(p)], p->ident, size);
+        fprintf(stderr, "copy %s %s from->to size=%d\n", 
+		objTypeNames[getObjType(p)], p->ident, size);
       }
 
       memcpy(freePtr, p, size);
-      if (EXTRA) assert(isLSBset((InfoTab *)freePtr) == 0 && "gc: bad alignment");
+      if (EXTRA) {
+        EXTRASTART();
+	assert(isLSBset((InfoTab *)freePtr) == 0 && "gc: bad alignment");
+        EXTRAEND();
+      }
 
       p->infoPtr = setLSB((InfoTab *)freePtr);
-      f.op = (Obj *) freePtr;
-      freePtr = (char *) freePtr + size;
+      f.op = (Obj *)freePtr;
+#if USE_ARGTYPE
+      f.argType = HEAPOBJ;
+#endif
+      freePtr = (char *)freePtr + size;
+      return f;
     }
   } else if (isTo(p)) {
-    // do nothing
-  } else { // SHO
-    if (isFrom(f.op) && getObjType(f.op) == INDIRECT) {
-        if (DEBUG) fprintf(stderr, "fix INDIRECT to sho %s\n", f.op->ident);
-        f.op = p;
-    }
+    // to space
+    f.op = p;
+#if USE_ARGTYPE
+    f.argType = HEAPOBJ;
+#endif
+    return f;
+  } else if (isSHO(p)) {
+    // SHO
+    f.op = p;
+#if USE_ARGTYPE
+    f.argType = HEAPOBJ;
+#endif
+    return f;
+  } else {
+    assert(false && "bad ptr");
+    fprintf(stderr, "bad ptr");  // if asserts are off
+    exit(1);
+    return (PtrOrLiteral){.op = NULL};  // avoid dumb compiler warning/error
   }
-  return f;
 }
 
 void updatePtr(PtrOrLiteral *f) {
@@ -134,13 +174,12 @@ void processObj(Obj *p) {
         updatePtr(&p->payload[i]);
       }
     }
-
-    // boxed args already applied
-    int start = startPAPargsB(p);
-    int end = endPAPargsB(p);
-    for (i = start; i < end; i++) {
-      updatePtr(&p->payload[i]);
-    }
+    Bitmap64 bm = p->payload[endPAPFVsU(p)].b;
+    uint64_t mask = bm.bitmap.mask;
+    int i = endPAPFVsU(p) + 1;
+    for (int size = bm.bitmap.size; size != 0; size--, i++, mask >>= 1) {
+      if (mask & 0x1UL) updatePtr(&p->payload[i]);
+    } /* mkd gc */
     break;
   }
 
@@ -167,6 +206,7 @@ void processObj(Obj *p) {
   case INDIRECT:
     updatePtr(&p->payload[0]);
     break;
+
   default:
     fprintf(stderr, "gc: bad obj. type %d %s", getObjType(p),
         objTypeNames[getObjType(p)]);
@@ -183,30 +223,49 @@ void processCont(Cont *p) {
     break;
   case CASECONT: {
     if (EXTRA) {
+      EXTRASTART();
       for (i = startCASEFVsU(p); i < endCASEFVsU(p); i++) {
         assert(isUnboxed(p->payload[i]) && "gc: unexpected boxed arg in CASE");
       }
+      EXTRAEND();
     }
 
     int start = startCASEFVsB(p);
     int end = endCASEFVsB(p);
     for (i = start; i < end; i++) {
-      if (EXTRA) assert(isBoxed(p->payload[i]) && "gc: unexpected unboxed arg in CASE");
+      if (EXTRA) {
+	EXTRASTART();
+	assert(isBoxed(p->payload[i]) && "gc: unexpected unboxed arg in CASE");
+	EXTRAEND();
+      }
       updatePtr(&p->payload[i]);
     }
     break;
   }
   case CALLCONT: {
-    int start = startCALLFVsB(p);
-    int end = endCALLFVsB(p);
-    for (i = start; i < end; i++) {
-      if (EXTRA) assert(isBoxed(p->payload[i]) && "gc: unexpected unboxed arg in CALL");
-      updatePtr(&p->payload[i]);
-    }
+    Bitmap64 bm = p->layout;
+    uint64_t mask = bm.bitmap.mask;
+    int i = 0;
+    for (int size = bm.bitmap.size; size != 0; size--, i++, mask >>= 1) {
+      if (EXTRA) {
+	EXTRASTART();
+	if (mask & 0x1UL)
+	  assert(isBoxed(p->payload[i]) && "gc: unexpected unboxed arg in CALLCONT");
+	else
+	  assert(!isBoxed(p->payload[i]) && "gc: unexpected boxed arg in CALLCONT");
+	EXTRAEND();
+      }
+      if (mask & 0x1UL) updatePtr(&p->payload[i]);
+    } /* mkd gc */
+
     break;
   }
   case FUNCONT:
-    if (EXTRA) assert(isBoxed(p->payload[0]) && "gc: unexpected unboxed arg in FUN");
+    if (EXTRA) {
+      EXTRASTART();
+      assert(isBoxed(p->payload[0]) && "gc: unexpected unboxed arg in FUN");
+      EXTRAEND();
+    }
     updatePtr(&p->payload[0]);
     break;
   default:
@@ -218,20 +277,27 @@ void processCont(Cont *p) {
 
 void gc(void) {
 
-  fprintf(stderr, "GARBAGE COLLECTION DISABLED in gc.c/gc(void)\n"); return;
+  // fprintf(stderr, "GARBAGE COLLECTION DISABLED in gc.c/gc(void)\n"); return;
 
   size_t before = stgHP - stgHeap;
 
-  if (EXTRA) checkStgHeap();
+  if (EXTRA) {
+    EXTRASTART();
+    // checkStgHeap(); -- heap is fragmented
+    EXTRAEND();
+  }
 
   if (DEBUG) {
-    fprintf(stderr, "old heap\n");
     showStgHeap();
     fprintf(stderr, "start gc heap size %lx\n", before);
   }
 
   // add stgCurVal
-  if (EXTRA) assert(isBoxed(stgCurVal) && "gc: unexpected unboxed arg in stgCurVal");
+  if (EXTRA) {
+    EXTRASTART();
+    assert(isBoxed(stgCurVal) && "gc: unexpected unboxed arg in stgCurVal");
+    EXTRAEND();
+  }
   processObj(stgCurVal.op);
 
   // all SHO's
@@ -248,7 +314,11 @@ void gc(void) {
   //all roots are now added.
 
   //update stgCurVal
-  if (EXTRA ) assert(isBoxed(stgCurVal) && "gc: unexpected unboxed arg in stgCurVal");
+  if (EXTRA) {
+    EXTRASTART();
+    assert(isBoxed(stgCurVal) && "gc: unexpected unboxed arg in stgCurVal");
+    EXTRASTART();
+  }
   stgCurVal = updatePtrByValue(stgCurVal);
 
   // process "to" space
@@ -259,7 +329,11 @@ void gc(void) {
 
   swapPtrs();
 
-  if (EXTRA) checkStgHeap();
+  if (EXTRA) {
+    EXTRASTART();
+    checkStgHeap();
+    EXTRAEND();
+  }
   if (DEBUG) {
     fprintf(stderr, "new heap\n");
     showStgHeap();

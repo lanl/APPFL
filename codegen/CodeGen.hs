@@ -37,7 +37,9 @@ Alt default var:  "stgCurVal, bind it"
 module CodeGen(
   cgObjs,
   cgStart,
-  cgMain
+  cgMain,
+  cStart,
+  cMain,
 ) where
 
 import ADT
@@ -60,6 +62,9 @@ import qualified Data.Map as Map
 import CAST
 import Text.PrettyPrint(render)
 import Language.C.Pretty
+import Language.C.Syntax
+import Language.C.Data.Node
+import Language.C.Data.Ident
 #endif
 
 
@@ -73,7 +78,53 @@ data RVal = SHO           -- static heap obj
 
 type Env = [(String, RVal)]
 
+--  C AST version
 #if USE_CAST
+
+-- PointerOrLiteral members
+_polMembers(LitI i) = [
+#if USE_ARGTYPE
+                       cStructMember EnumTy "argType" "INT",
+#endif
+                       cStructMember IntTy "i" i]
+
+_polMembers(LitL l) = [
+#if USE_ARGTYPE
+                       cStructMember EnumTy "argType" "LONG",
+#endif
+                       cStructMember IntTy "l" l]
+
+_polMembers (LitF f) = [
+#if USE_ARGTYPE
+                       cStructMember EnumTy "argType" "FLOAT",
+#endif
+                       cStructMember FloatTy "f" f]
+
+_polMembers (LitD d) = [
+#if USE_ARGTYPE
+                       cStructMember EnumTy "argType" "DOUBLE",
+#endif
+                       cStructMember DoubleTy "d" d]
+
+_polMembers(LitC c) = [
+#if USE_ARGTYPE
+                       cStructMember EnumTy "argType" "INT",
+#endif
+                       cStructMember EnumTy "i" ("con_" ++ c)]
+
+_polMembers(Var v) = [
+#if USE_ARGTYPE
+                       cStructMember EnumTy "argType" "HEAPOBJ",
+#endif
+                       cStructMember EnumTy "op" v]
+
+
+cPoLE :: Atom -> CExpr
+cPoLE a =  CCompoundLit (CDecl [cTypeSpec "PtrOrLiteral"] [] undefNode)
+              (_polMembers a) undefNode
+
+cFnPtrFun :: String -> CExtDecl
+cFnPtrFun name = cFunProto (cTypeSpec "FnPtr") ("fun_" ++ name)
 
 getEnvRef :: String -> Env -> String
 getEnvRef v env = render $ pretty $ lu v env 0 0
@@ -81,20 +132,95 @@ getEnvRef v env = render $ pretty $ lu v env 0 0
 lu :: String -> Env -> Int -> Int -> CExpr
 lu v [] _ _ = error $ "lu " ++ v ++ " failed"
 
+
 lu v ((v',k):_) size' n | v == v' =
     case k of
-      SHO     -> cHOTOPLshoE v
-      HO size -> cHOTOPLE (size+size') (n+1)
-      FP      -> cVarE v
-      FV i    -> cFVE i
-      AC v i  -> cACE v i
-      AD v    -> cVarE v
+      SHO -> cCallExpr "HOTOPL" [CUnary CAdrOp (cVarE ("sho_" ++ v)) undefNode]
+
+      HO size -> cCallExpr "HOTOPL"
+                [CCast (CDecl [cTypeSpec "Obj"]
+                [(Just (CDeclr Nothing [cPtrD] Nothing [] undefNode), Nothing, Nothing)] undefNode)
+                (cCallExpr "STGHEAPAT" [cIntE $ toInteger (size+size'), cIntE $ toInteger (n+1)]) undefNode]
+
+      FP -> cVarE v
+
+      FV i -> CIndex (CMember (CMember (cVarE "self") (builtinIdent "op") False undefNode)
+              (builtinIdent "payload") True undefNode) (cIntE $ toInteger i) undefNode
+
+      AC v i -> CIndex (cMemberE v "payload" True) (cIntE $ toInteger i) undefNode
+
+      AD v -> cVarE v
 
 lu v ((_, HO size) : xs) size' n =
     lu v xs (size'+size) (n+1)
 
 lu v (x : xs) size n = lu v xs size n
 
+cgaE :: Env -> Atom -> CExpr
+cgaE env (Var v) = lu v env 0 0
+cgaE _ a = cPoLE a
+
+cga :: Env -> Atom -> String
+cga env (Var v) = cgv env v
+cga _ a =  "(" ++ (render $ pretty $ cPoLE a) ++ ")"
+
+emptyFunDeclr = [CFunDeclr (Right ([],False)) [] undefNode]
+
+_cRegSHOExpr :: String -> CBlockItem
+_cRegSHOExpr name =  CBlockStmt (CExpr
+  (Just (CAssign CAssignOp (CIndex (CVar (builtinIdent "stgStatObj") undefNode)
+  (CUnary CPostIncOp (CVar (builtinIdent "stgStatObjCount") undefNode) undefNode)
+  undefNode) (CUnary CAdrOp (CVar (builtinIdent ("sho_" ++ name)) undefNode) undefNode)
+  undefNode)) undefNode)
+
+cRegisterSHOs :: [String] -> (CExtDecl, CExtDecl)
+cRegisterSHOs names = let name = "registerSHOs"
+                      in (cFunProto (CTypeSpec (CVoidType undefNode)) name,
+                          cFun VoidTy "" name emptyFunDeclr
+                          (map _cRegSHOExpr names))
+
+registerSHOs :: [Obj InfoTab] -> (String, String)
+registerSHOs objs = let (p,f) = cRegisterSHOs (map (name . omd) objs)
+                    in (render $ pretty p, render $ pretty f)
+
+cMain :: Bool -> CExtDecl
+cMain v =
+  let top = [cCallVars "parseArgs" ["argc","argv"]
+            ,cCall "initStg" []
+            ,cCall "initCmm" []
+            ,cCall "initGc" []
+            ,cCallVars "CALL0_0" ["start"]
+             ]
+      body = top ++ [cCallVars "showStgHeap" [] | v] ++ [cIntReturn 0]
+
+  in cFun IntTy "" "main"
+  [CFunDeclr (Right ([CDecl [CTypeSpec (CIntType undefNode)]
+  [(Just (CDeclr (Just (builtinIdent "argc")) [] Nothing [] undefNode),Nothing,Nothing)] undefNode,
+  CDecl [CTypeSpec (CCharType undefNode)] [(Just (CDeclr (Just (builtinIdent "argv"))
+  [cPtrD, cPtrD] Nothing [] undefNode),Nothing,Nothing)]
+  undefNode],False)) [] undefNode] body
+
+cStart :: CExtDecl
+cStart = let body = [cCall "_POPVALS0" []
+                  ,cCall "registerSHOs" []
+                  ,cUserPtrDecl "Cont" "showResultCont"
+                  (cInitCall "stgAllocCallCont"
+                  [cAddrvarE "it_stgShowResultCont", cIntE 0])
+#if USE_ARGTYPE
+                  ,cAssign (cMemberE "stgCurVal" "argType" False) (cVarE "HEAPOBJ")
+#endif
+                  ,cAssign (cMemberE "stgCurVal" "op" False) (cAddrvarE "sho_main")
+                  ,cCall "STGJUMP1"
+                     [CMember (cCallExpr "getInfoPtr" [cMemberE "stgCurVal" "op" False])
+                     (builtinIdent "entryCode") True undefNode, cVarE "stgCurVal"]
+                  ]
+       in cFun UserTy "FnPtr" "start" emptyFunDeclr body
+
+-- unused in C AST version
+cgStart = error "cgStart"
+cgMain = error "cgMain"
+
+-- text version
 #else
 
 getEnvRef :: String -> Env -> String
@@ -116,30 +242,9 @@ lu v ((_, HO size) : xs) size' n =
     lu v xs (size'+size) (n+1)
 
 lu v (x : xs) size n = lu v xs size n
-#endif
--- boxed expression predicate
-{-
-isBoxede e = case typ $ emd e of MCon False _ _ -> False
-                                 MPrim _        -> False
-                                 _              -> True
--}
-isBoxede e = isBoxed $ typ $ emd e
-
--- CG Atom, Var ************************************************************
-
-cgUBa env (Var v)  t   =  "(" ++ cgv env v ++ ")." ++ t
-cgUBa env (LitI i) "i" = show i
-cgUBa env (LitD d) "d" = show d
-cgUBa _ at _ = error $ "CodeGen.cgUBa: not expecting Atom - " ++ show at
--- cgUBa env (LitF f) "f" = show f
-
-cgv env v = getEnvRef v env -- ++ "/* " ++ v ++ " */"
 
 cga :: Env -> Atom -> String
 cga env (Var v) = cgv env v
-#if USE_CAST
-cga _ a =  "(" ++ (render $ pretty $ cPoLE a) ++ ")"
-#else
 #if USE_ARGTYPE
 cga env (LitI i) = "((PtrOrLiteral){.argType = INT,    .i = " ++ show i ++ " })"
 cga env (LitL l) = "((PtrOrLiteral){.argType = LONG,   .l = " ++ show l ++ " })"
@@ -153,41 +258,12 @@ cga env (LitF f) = "((PtrOrLiteral){.f = " ++ show f ++ " })"
 cga env (LitD d) = "((PtrOrLiteral){.d = " ++ show d ++ " })"
 cga env (LitC c) = "((PtrOrLiteral){.i = con_" ++ c ++ " })"
 #endif
-#endif
-
--- cga _ at = error $ "CodeGen.cga: not expecting Atom - " ++ show at
-
--- CG in the state monad ***************************************************
--- CG of objects produces no inline code
---   FUN and THUNK produce a DEFUN
---   all objects produce a (S)HO
--- for CG, objects are heap allocated only by let
-
-cgObjs :: [Obj InfoTab] -> [String] -> ([String],[String])
-cgObjs objs runtimeGlobals =
-    let tlnames = runtimeGlobals ++ map (name . omd) objs
-        env = zip tlnames $ repeat SHO
-        (funcs, _) = runState (cgos env objs) 0
-        (forwards, fundefs) = unzip funcs
-        (forward, fundef) = registerSHOs objs
-    in (forward:forwards, fundef:fundefs)
-
-
-#if USE_CAST
-
-cgStart = error "cgStart"
-cgMain = error "cgMain"
-
-registerSHOs :: [Obj InfoTab] -> (String, String)
-registerSHOs objs = let (p,f) = cRegisterSHOs (map (\o -> (name . omd) o) objs)
-                    in (render $ pretty p, render $ pretty f)
-
-#else
 
 cgStart :: String
 cgStart = "\n\nDEFUN0(start)" ++
             "  registerSHOs();\n" ++
             "  Cont *showResultCont = stgAllocCallCont(&it_stgShowResultCont, 0);\n" ++
+            "  showResultCont->layout.bits = 0x0UL; // empty\n" ++
 #if USE_ARGTYPE
             "  stgCurVal.argType = HEAPOBJ;\n" ++
 #endif
@@ -213,9 +289,49 @@ registerSHOs objs =
                  | s <- shoNames objs ] ++
      "}\n")
 
+-- unused in text version
+cStart = error "cStart"
+cMain = error "cMain"
+
+-- end of USE_CAST
 #endif
 
--- return [(forward,fundef)], will be unzipped at top level
+
+-- boxed expression predicate
+{-
+isBoxede e = case typ $ emd e of MCon False _ _ -> False
+                                 MPrim _        -> False
+                                 _              -> True
+-}
+isBoxede e = isBoxed $ typ $ emd e
+
+
+cgUBa env (Var v)  t   =  "(" ++ cgv env v ++ ")." ++ t
+cgUBa env (LitI i) "i" = show i
+cgUBa env (LitD d) "d" = show d
+cgUBa _ at _ = error $ "CodeGen.cgUBa: not expecting Atom - " ++ show at
+-- cgUBa env (LitF f) "f" = show f
+
+cgv env v = getEnvRef v env -- ++ "/* " ++ v ++ " */"
+
+
+
+-- CG in the state monad ***************************************************
+-- CG of objects produces no inline code
+--   FUN and THUNK produce a DEFUN
+--   all objects produce a (S)HO
+-- for CG, objects are heap allocated only by let
+
+cgObjs :: [Obj InfoTab] -> [String] -> ([String],[String])
+cgObjs objs runtimeGlobals =
+    let tlnames = runtimeGlobals ++ map (name . omd) objs
+        env = zip tlnames $ repeat SHO
+        (funcs, _) = runState (cgos env objs) 0
+        (forwards, fundefs) = unzip funcs
+        (forward, fundef) = registerSHOs objs
+    in (forward:forwards, fundef:fundefs)
+
+
 
 cgos :: Env -> [Obj InfoTab] -> State Int [(String, String)]
 cgos env = concatMapM (cgo env)
@@ -247,7 +363,7 @@ cgo env o@(FUN it vs e name) =
           func =
             "// " ++ show (ctyp it) ++ "\n" ++
 --            "// " ++ show vts ++ "\n" ++
-            "DEFUN" ++ show (length vs + 1) ++ "(fun_" ++ 
+            "DEFUN" ++ show (length vs + 1) ++ "(fun_" ++
             name ++ ", self, " ++
             intercalate ", " vs ++
 --            intercalate ", " (bvs ++ uvs) ++
@@ -395,15 +511,23 @@ cge env (EPrimop it op eas) =
                       "stgCurVal.i = " ++ fun ++ "(" ++ arg0 "i" ++ ", " ++ arg1 "i" ++ ");\n"
     in return (inline, [])
 
+
 cge env (ELet it os e) =
     let names = map oname os
         env'  = (reverse $ zip names (map HO sizes)) ++ env
+#if USE_CAST
+        (sizes, cDecls, cBuildcodes) = unzip3 $ map (buildHeapObj env') os
+        decls = render $ pretty cDecls 
+        buildcodes =  intercalate "\n" (map (render . pretty) cBuildcodes))
+#else
         (sizes, decls, buildcodes) = unzip3 $ map (buildHeapObj env') os
+#endif
     in do
       ofunc <- cgos env' os
       (einline, efunc) <- cge env' e
       return (concat decls ++ concat buildcodes ++ einline,
               ofunc ++ efunc)
+
 
 -- TOFIX:  even if scrutinee doesn't heap alloc it may return through the
 -- continuation stack, so we need better analysis
@@ -540,18 +664,62 @@ cgalt env switch scrutName (ADef it v e) =
 --  CALLCONT,
 --  FUNCONT,
 
+#if USE_CAST
+
+buildHeapObj :: Env -> Obj InfoTab -> (Int, CBlockItem, [CBlockItem])
+buildHeapObj env o =
+    let (size, rvals) = bho env o
+        name = oname o
+        decl = cNewHeapObj name name 
+    in (size, decl, rvals)
+--render $ pretty decl, 
+--        intercalate "\n" (map (render . pretty) rvals))
+
+bho :: Env -> Obj InfoTab -> (Int, [CBlockItem])
+bho env (FUN it vs e name) =
+    (length $ fvs it, cLoadPayloadFVs env (map fst $ fvs it) 0 name)
+
+bho env (PAP it f as name) = error "unsupported explicit PAP"
+
+bho env (CON it c as name) =
+    let ps = [cAssign (cPayloadE name i) (cgaE env a) 
+                | (i,a) <- indexFrom 0 (projectAtoms as) ]
+    in (length ps, ps)
+
+bho env (THUNK it e name) =
+    let fv = fvs it
+    in (1 + (length fv), cLoadPayloadFVs env (map fst fv) 1 name)
+
+bho env (BLACKHOLE it name) = (1,[])
+
+cLoadPayloadFVs env fvs ind name =
+    [cAssign (cPayloadE name i) (lu v env 0 0)
+      | (i,v) <- indexFrom ind $ fvs ]
+
+-- load atoms into payload starting at index ind
+cLoadPayloadAtoms env as ind name =
+    [cAssign (cPayloadE name i) (cgaE env a) 
+      | (i,a) <- indexFrom ind as]
+
+
+#else
+
+buildHeapObj :: Env -> Obj InfoTab -> (Int, String, String)
 buildHeapObj env o =
     let (size, rval) = bho env o
         name = oname o
         decl = "Obj *" ++ name ++ " = stgNewHeapObj( &it_" ++ name ++ " );\n"
     in (size, decl, rval)
 
-bho :: [(String, RVal)] -> Obj InfoTab -> (Int, [Char])
+
+bho :: Env -> Obj InfoTab -> (Int, String)
 bho env (FUN it vs e name) =
     (length $ fvs it, loadPayloadFVs env (map fst $ fvs it) 0 name)
 
 
 bho env (PAP it f as name) = error "unsupported explicit PAP"
+
+
 -- TODO: the size here should be based on the FUN rather than being maxPayload
 {-
 
@@ -577,6 +745,8 @@ bho env (THUNK it e name) =
 
 bho env (BLACKHOLE it name) = (1,"")
 
+#endif
+
 loadPayloadFVs env fvs ind name =
     concat [name ++ "->payload[" ++ show i ++ "] = " ++
             cgv env v ++ "; // " ++ v ++ "\n"
@@ -587,6 +757,7 @@ loadPayloadAtoms env as ind name =
     concat [name ++ "->payload[" ++ show i ++ "] = " ++
             cga env a ++ "; //" ++ showa a ++ "\n"
             | (i,a) <- indexFrom ind as]
+
 
 showas as = intercalate " " $ map showa as
 
@@ -600,3 +771,4 @@ showa (LitC c) = "con_" ++ c
 
 indexFrom :: Int -> [a] -> [(Int, a)]
 indexFrom i xs = zip [i..] xs
+

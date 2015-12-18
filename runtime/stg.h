@@ -126,7 +126,6 @@ struct _Obj {
 #if USE_OBJTYPE
   ObjType objType;          // to distinguish PAP, FUN, BLACKHOLE, INDIRECT
 #endif
-  int _objSize;              // for debugging
   char ident[32];           // temporary, just for tracing
   PtrOrLiteral payload[];
 };
@@ -136,13 +135,13 @@ struct _Cont {
   CmmFnPtr entryCode;    // new
   ContType contType;
   Bitmap64 layout;        // new
-  int _contSize;          // for debugging
+  int _contSize;          // for debugging, should go away
   char ident[32];         // temporary, just for tracing
   PtrOrLiteral payload[];
 };
 
 // see README
-typedef struct {
+typedef struct _LayoutInfo {
   int payloadSize;
   int boxedCount;
   int unboxedCount;
@@ -215,9 +214,12 @@ struct _CInfoTab {
 };
 
 extern void *stgHeap, *stgHP;
-extern void *stgStack, *stgSP;
+extern void *toPtr, *fromPtr;
 extern const size_t stgHeapSize;
 extern const size_t stgStackSize;
+
+extern void *stgStack, *stgSP;
+
 extern size_t stgStatObjCount;
 extern Obj * stgStatObj[];
 extern void initStg();
@@ -230,8 +232,16 @@ extern void showIT(InfoTab *);
 extern void showCIT(CInfoTab *);
 extern int  getObjSize(Obj *);
 extern int  getContSize(Cont *);
+
 extern bool isSHO();
 extern bool isHeap(Obj *p);
+extern bool isFrom(void *p);
+extern bool isTo(void *p);
+
+extern bool isBoxed(PtrOrLiteral f);
+
+extern bool isUnboxed(PtrOrLiteral f);
+
 
 #define PACKBITS (sizeof(uintptr_t)/2 * 8)
 #define hibits (~0L << PACKBITS)
@@ -303,6 +313,13 @@ extern Cont *stgAllocCallCont(CInfoTab *it, int payloadSize);
 extern Cont *stgAllocCont(CInfoTab *it);
 // remove Obj from top of continuation stack, returning pointer to de-alloced Obj
 Cont *stgPopCont();
+
+extern void showStgObjPretty(Obj *p);
+extern void showStgObjDebug(Obj *p);
+extern void showStgValDebug(PtrOrLiteral v);
+extern void showStgValPretty(PtrOrLiteral v);
+
+
 
 # define STGCALL0(f)				\
   CALL0_0(f)

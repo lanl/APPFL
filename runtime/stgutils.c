@@ -122,21 +122,22 @@ DEFUN0(stgUpdateCont) {
   fprintf(stderr, "with\n  ");
   showStgObj(stgCurVal.op);
   if (getObjType(p.op) != BLACKHOLE) {
-    fprintf(stderr, "but updatee is %s not a BLACKHOLE!\n", objTypeNames[getObjType(p.op)]);
+    fprintf(stderr, "but updatee is %s not a BLACKHOLE!\n", 
+	    objTypeNames[getObjType(p.op)]);
     showStgHeap();
     assert(getObjType(p.op) == BLACKHOLE);
   }
+
+  int oldObjSize = getObjSize(p.op);
+
   // the order of the following two operations is important for concurrency
   p.op->payload[0] = stgCurVal;
-  // now zero out the payload
-
   p.op->infoPtr = &it_stgIndirect; // this will supersede the # if below
 
-  // TOFIX--size determination should be more centralized
-  size_t objSize = sizeof(Obj) + it_stgIndirect.layoutInfo.payloadSize * sizeof(PtrOrLiteral);
-  objSize = ((objSize + 7)/8)*8;
-  p.op->_objSize = objSize;
   strcpy( p.op->ident, it_stgIndirect.name );
+  int newObjSize = getObjSize(p.op);
+  assert(newObjSize <= oldObjSize);
+  memset((char*)p.op+newObjSize, 0, oldObjSize-newObjSize);
 
 #if USE_OBJTYPE
   p.op->objType = INDIRECT;
@@ -150,7 +151,6 @@ DEFUN0(stgUpdateCont) {
 
 CInfoTab it_stgUpdateCont __attribute__((aligned(8))) =
   { .name = "default stgUpdateCont",
-    //    .fvCount = 1, // self
     .entryCode = &stgUpdateCont,
     .contType = UPDCONT,
     .layoutInfo.payloadSize = 1, // self
@@ -204,37 +204,24 @@ DEFUN0(stgCallCont) {
 
 CInfoTab it_stgCallCont __attribute__((aligned(8))) =
   { .name = "stgCallCont",
-    //    .fvCount = 0,
     .entryCode = &stgCallCont,
     .contType = CALLCONT,
     .layoutInfo.boxedCount = -1,  // shouldn't be using this
     .layoutInfo.unboxedCount = -1,  // shouldn't be using this
   };
 
-/*
-void callContSave(int argc, PtrOrLiteral argv[]) {
-  Cont *cc = stgAllocCallCont( &it_stgCallCont, argc );
-  for (int i = 0; i != argc; i++) 
-    cc->payload[i+1] = argv[i];
-}
-*/
-
 void callContSave(PtrOrLiteral argv[], Bitmap64 layout) {
-  int argc = BMSIZE(layout);
+  int argc = layout.bitmap.size;
   Cont *cc = stgAllocCallCont( &it_stgCallCont, argc );
   cc->layout = layout;
-  for (int i = 0; i != argc; i++) 
-    cc->payload[i+1] = argv[i];
+  memcpy(cc->payload, argv, argc * sizeof(PtrOrLiteral));
 }
 
 void callContRestore(PtrOrLiteral argv[]) {
   Cont *cc = stgPopCont();
   assert(getContType(cc) == CALLCONT);
-#if USE_ARGTYPE
-  assert(cc->payload[0].argType == INT);
-#endif
-  for (int i = 0; i != cc->payload[0].i; i++) 
-    argv[i] = cc->payload[i+1];
+  int argc = cc->layout.bitmap.size;
+  memcpy(argv, cc->payload, argc * sizeof(PtrOrLiteral));
 }
 
 // ****************************************************************

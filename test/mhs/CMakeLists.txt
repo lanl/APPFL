@@ -22,7 +22,8 @@ file(GLOB ALL_SRCS *.mhs)
        "The answer is[\r\n\t ]gfc_False = False")
        set(tnames ${tname}_strict)
        set(bnames build_${tnames})
-       add_test(${bnames} ${STGCC} -v -s ${SRC_DIR}/${name}.mhs -o ${tnames})
+       add_test(${bnames} ${STGCC} -v -s ${SRC_DIR}/${name}.mhs -o ${tnames}) 
+       set_tests_properties(${bnames} PROPERTIES DEPENDS ${bname}) #hack to deal w/ race in .c output
        add_test(${tnames} ${BINARY_DIR}/mhs/${tnames} 2>&1)
        set_tests_properties(${tnames} PROPERTIES DEPENDS ${bnames})
        set_tests_properties(${tnames} PROPERTIES PASS_REGULAR_EXPRESSION
@@ -47,6 +48,7 @@ file(GLOB ALL_SRCS *.mhs)
        set(tnames ${tname}_strict)
        set(bnames build_${tnames})
        add_test(${bnames} ${STGCC} -v -s ${SRC_DIR}/${name}.mhs -o ${tnames})
+       set_tests_properties(${bnames} PROPERTIES DEPENDS ${bname}) #hack to deal w/ race in .c output
        add_test(${tnames} ${BINARY_DIR}/mhs/${tnames} 2>&1)
        set_tests_properties(${tnames} PROPERTIES DEPENDS ${bnames})
        set_tests_properties(${tnames} PROPERTIES PASS_REGULAR_EXPRESSION

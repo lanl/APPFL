@@ -7,7 +7,7 @@ author:         LANL
 executable stgc
   hs-source-dirs:  .,MHS
   main-is:         stgc.hs
-  ghc-options:     -W -fno-warn-unused-binds -fno-warn-unused-matches -fno-warn-unused-imports
+  ghc-options:      -j -W -fno-warn-unused-binds -fno-warn-unused-matches -fno-warn-unused-imports
   build-depends:   
                      base >= 4
                    , containers
@@ -22,7 +22,7 @@ test-suite test
   type:            exitcode-stdio-1.0
   hs-source-dirs:  .,MHS,tests
   main-is:         test.hs
-  ghc-options:     -W -fno-warn-unused-binds -fno-warn-unused-matches -fno-warn-unused-imports -rtsopts
+  ghc-options:      -j -W -fno-warn-unused-binds -fno-warn-unused-matches -fno-warn-unused-imports -rtsopts
   build-depends:   HUnit
                  , QuickCheck
                  , base >= 4

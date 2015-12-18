@@ -67,10 +67,10 @@ shoNames = map (\o -> showITType o ++ "_" ++ (name . omd) o)
 -- return list of forwards (static declarations) and (static) definitions
 
 
-
+-- C AST version
 #if USE_CAST
 
-showSHOs = error "showSHOs"
+showSHOs = error "showSHOs" -- not used in CAST version
 
 cSHOs :: [Obj InfoTab] -> ([CExtDecl], [CExtDecl])
 cSHOs os = unzip $ map cSHO os
@@ -133,10 +133,10 @@ payload (Var v) = [
 
 payload _ = error "bad payload"
 
--- end of USE_CAST
+-- text version
 #else
 
-cSHOs = error "cSHOs"
+cSHOs = error "cSHOs" -- not used in text version
 
 -- return list of forwards (static declarations) and (static) definitions
 showSHOs :: [Obj InfoTab] -> (String, String)
@@ -255,4 +255,5 @@ ptrOrLitSHO a =
 #endif
     ++ " }"
 
+-- end of USE_CAST
 #endif
