@@ -23,6 +23,7 @@ module CAST (
   cIntE,
   cIntReturn,
   cMemberE,
+  cNewCont,
   cNewHeapObj,
   cObjStruct,
   cPayloadE,
@@ -79,9 +80,9 @@ cStringE val = CConst (CStrConst (cString val) undefNode)
 cMemberE :: String -> String -> Bool -> CExpr
 cMemberE x y arrow = CMember (cVarE x) (builtinIdent y) arrow undefNode
 
-cPayloadE :: String -> Integer -> CExpr
+cPayloadE :: String -> Int -> CExpr
 cPayloadE name n = CIndex (cMemberE name "payload" True)
-                   (cIntE n) undefNode
+                   (cIntE (toInteger n)) undefNode
 
 cTypeSpec :: String -> CDeclSpec
 cTypeSpec name = CTypeSpec (CTypeDef (builtinIdent name) undefNode)
@@ -220,7 +221,12 @@ cInitCall :: String -> [CExpr] -> Maybe CInit
 cInitCall name args =  Just (CInitExpr (cCallExpr name args) undefNode)
 
 cNewHeapObj :: String -> String -> CBlockItem
-cNewHeapObj name val = cUserPtrDecl "Obj" name (cInitCall "stgNewHeapObj" [cAddrvarE val])
+cNewHeapObj name val = cUserPtrDecl "Obj" name (cInitCall "stgNewHeapObj" 
+                       [cAddrvarE ("it_" ++ val)])
+
+cNewCont :: String -> String -> CBlockItem
+cNewCont name val = cUserPtrDecl "Cont" ("ccont" ++ name) (cInitCall "stgAllocCont"
+                    [cAddrvarE ("it_" ++ val)])
 
 cAssign :: CExpr -> CExpr -> CBlockItem
 cAssign lhs rhs = CBlockStmt (CExpr (Just (CAssign CAssignOp lhs rhs undefNode)) undefNode)

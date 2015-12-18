@@ -112,7 +112,12 @@ _polMembers(LitC c) = [
 #endif
                        cStructMember EnumTy "i" ("con_" ++ c)]
 
-_polMembers(Var v) = error "Var Type in _polMembers"
+_polMembers(Var v) = [
+#if USE_ARGTYPE
+                       cStructMember EnumTy "argType" "HEAPOBJ",
+#endif
+                       cStructMember EnumTy "op" v]
+
 
 cPoLE :: Atom -> CExpr
 cPoLE a =  CCompoundLit (CDecl [cTypeSpec "PtrOrLiteral"] [] undefNode)
@@ -150,6 +155,10 @@ lu v ((_, HO size) : xs) size' n =
     lu v xs (size'+size) (n+1)
 
 lu v (x : xs) size n = lu v xs size n
+
+cgaE :: Env -> Atom -> CExpr
+cgaE env (Var v) = lu v env 0 0
+cgaE _ a = cPoLE a
 
 cga :: Env -> Atom -> String
 cga env (Var v) = cgv env v
@@ -502,15 +511,23 @@ cge env (EPrimop it op eas) =
                       "stgCurVal.i = " ++ fun ++ "(" ++ arg0 "i" ++ ", " ++ arg1 "i" ++ ");\n"
     in return (inline, [])
 
+
 cge env (ELet it os e) =
     let names = map oname os
         env'  = (reverse $ zip names (map HO sizes)) ++ env
+#if USE_CAST
+        (sizes, cDecls, cBuildcodes) = unzip3 $ map (buildHeapObj env') os
+        decls = render $ pretty cDecls 
+        buildcodes =  intercalate "\n" (map (render . pretty) cBuildcodes))
+#else
         (sizes, decls, buildcodes) = unzip3 $ map (buildHeapObj env') os
+#endif
     in do
       ofunc <- cgos env' os
       (einline, efunc) <- cge env' e
       return (concat decls ++ concat buildcodes ++ einline,
               ofunc ++ efunc)
+
 
 -- TOFIX:  even if scrutinee doesn't heap alloc it may return through the
 -- continuation stack, so we need better analysis
@@ -647,6 +664,46 @@ cgalt env switch scrutName (ADef it v e) =
 --  CALLCONT,
 --  FUNCONT,
 
+#if USE_CAST
+
+buildHeapObj :: Env -> Obj InfoTab -> (Int, CBlockItem, [CBlockItem])
+buildHeapObj env o =
+    let (size, rvals) = bho env o
+        name = oname o
+        decl = cNewHeapObj name name 
+    in (size, decl, rvals)
+--render $ pretty decl, 
+--        intercalate "\n" (map (render . pretty) rvals))
+
+bho :: Env -> Obj InfoTab -> (Int, [CBlockItem])
+bho env (FUN it vs e name) =
+    (length $ fvs it, cLoadPayloadFVs env (map fst $ fvs it) 0 name)
+
+bho env (PAP it f as name) = error "unsupported explicit PAP"
+
+bho env (CON it c as name) =
+    let ps = [cAssign (cPayloadE name i) (cgaE env a) 
+                | (i,a) <- indexFrom 0 (projectAtoms as) ]
+    in (length ps, ps)
+
+bho env (THUNK it e name) =
+    let fv = fvs it
+    in (1 + (length fv), cLoadPayloadFVs env (map fst fv) 1 name)
+
+bho env (BLACKHOLE it name) = (1,[])
+
+cLoadPayloadFVs env fvs ind name =
+    [cAssign (cPayloadE name i) (lu v env 0 0)
+      | (i,v) <- indexFrom ind $ fvs ]
+
+-- load atoms into payload starting at index ind
+cLoadPayloadAtoms env as ind name =
+    [cAssign (cPayloadE name i) (cgaE env a) 
+      | (i,a) <- indexFrom ind as]
+
+
+#else
+
 buildHeapObj :: Env -> Obj InfoTab -> (Int, String, String)
 buildHeapObj env o =
     let (size, rval) = bho env o
@@ -661,6 +718,8 @@ bho env (FUN it vs e name) =
 
 
 bho env (PAP it f as name) = error "unsupported explicit PAP"
+
+
 -- TODO: the size here should be based on the FUN rather than being maxPayload
 {-
 
@@ -686,6 +745,8 @@ bho env (THUNK it e name) =
 
 bho env (BLACKHOLE it name) = (1,"")
 
+#endif
+
 loadPayloadFVs env fvs ind name =
     concat [name ++ "->payload[" ++ show i ++ "] = " ++
             cgv env v ++ "; // " ++ v ++ "\n"
@@ -696,6 +757,7 @@ loadPayloadAtoms env as ind name =
     concat [name ++ "->payload[" ++ show i ++ "] = " ++
             cga env a ++ "; //" ++ showa a ++ "\n"
             | (i,a) <- indexFrom ind as]
+
 
 showas as = intercalate " " $ map showa as
 
@@ -709,3 +771,4 @@ showa (LitC c) = "con_" ++ c
 
 indexFrom :: Int -> [a] -> [(Int, a)]
 indexFrom i xs = zip [i..] xs
+
