@@ -58,37 +58,6 @@ extern void initCmm();
     _POPVALS0();				\
   } while (0)
 
-#define CALL0_1(R1,F)				\
-  do {						\
-    _PUSHVALS0();				\
-    _CALL(F);					\
-    _POPVALS1(R1);				\
-  } while (0)
-
-#define CALL2_0(F,P1,P2)			\
-  do {						\
-    _PUSHVALS2(P1,P2);				\
-    _CALL(F);					\
-    _POPVALS0();				\
-  } while (0)
-
-
-#define CALL3_0(F,P1,P2,P3)			\
-  do {						\
-    _PUSHVALS3(P1,P2,P3);			\
-    _CALL(F);					\
-    _POPVALS0();				\
-  } while (0)
-
-
-#define CALL4_0(F,P1,P2,P3,P4)			\
-  do {						\
-    _PUSHVALS4(P1,P2,P3,P4);			\
-    _CALL(F);					\
-    _POPVALS0();				\
-  } while (0)
-
-
 #define RETURN0()				\
   do {						\
     _RETURN();					\

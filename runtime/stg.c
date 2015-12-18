@@ -77,7 +77,7 @@ Cont *stgAllocCont(CInfoTab *citp) {
   stgSP = (char *)stgSP - contSize;
   assert(stgSP >= stgStack);
   Cont *contp = (Cont *)stgSP;
-  contp->cinfoPtr = citp;
+  contp->cInfoPtr = citp;
   contp->_contSize = contSize;  // to go away
   contp->layout = layoutInfoToBitmap64(&citp->layoutInfo); // temp hack
   contp->entryCode = citp->entryCode;
@@ -98,7 +98,7 @@ Cont *stgAllocCallCont(CInfoTab *citp, int argc) {
   stgSP = (char *)stgSP - contSize;
   assert(stgSP >= stgStack);
   Cont *contp = (Cont *)stgSP;
-  contp->cinfoPtr = citp;
+  contp->cInfoPtr = citp;
   contp->_contSize = contSize;
   contp->entryCode = citp->entryCode;
   contp->contType = CALLCONT;
@@ -156,10 +156,12 @@ Obj* stgNewHeapObj(InfoTab *itp) {
   stgHP = (char *)stgHP + objSize;
   memset(objp, 0, objSize); //zero out anything left by previous gc passes
   objp->infoPtr = itp;
+  strcpy(objp->ident, itp->name);  // may be overwritten
 #if USE_OBJTYPE
+  fprintf(stderr, "stgNewHeapObj setting %s objType %s\n", 
+	  objp->ident, objTypeNames[itp->objType]);
   objp->objType = itp->objType;
 #endif
-  strcpy(objp->ident, itp->name);  // may be overwritten
   fprintf(stderr, "stgNewHeapObj: "); showStgObj(objp);
   return objp;
 }
@@ -176,15 +178,16 @@ Obj* stgNewHeapPAPmask(InfoTab *itp, Bitmap64 bm) {
   Obj *objp = (Obj *)stgHP;
   stgHP = (char *)stgHP + objSize;
   memset(objp, 0, objSize); //zero out anything left by previous gc passes
-  objp->infoPtr = setLSB2(itp); // set InfoPtr bit to say this is a PAP
-#if USE_OBJTYPE
-  objp->objType = PAP;
-#endif
 #if USE_ARGTYPE
   objp->payload[fvs].argType = LONG;
 #endif
   objp->payload[fvs].b = bm;
   strcpy(objp->ident, itp->name);  // may be overwritten
+  objp->infoPtr = itp;
+//  objp->infoPtr = setLSB2(itp); // set InfoPtr bit to say this is a PAP
+#if USE_OBJTYPE
+  objp->objType = PAP;
+#endif
   fprintf(stderr, "stgNewHeapPAP: "); showStgObj(objp);
   return objp;
 }

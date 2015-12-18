@@ -10,7 +10,7 @@
 #include "options.h"
 
 const bool DEBUG = true;
-const bool EXTRA = false;  // run extra checks
+const bool EXTRA = true;  // run extra checks
 
 #define EXTRASTART() fprintf(stderr, "EXTRA check file %s line %d\n", __FILE__, __LINE__)
 #define EXTRAEND() fprintf(stderr, "EXTRA check succeeded %s %d\n", __FILE__, __LINE__)
@@ -47,9 +47,13 @@ Obj *deref1(Obj *op) {
 
 Obj *deref2(Obj *op) {
   while (getObjType(op) == INDIRECT) {
-    if (isLSBset(op->infoPtr))
+    if (isLSBset(op->infoPtr)) {
       // it's not clear to me (yet) whether this can happen
+      // apparently it can...serious weird, only when USE_ARGTYPE and
+      // USE_OBJTYPE are both turned off
       assert(false && "INDIRECT/forward branch");
+      return op;
+    }
     op = op->payload[0].op;
   }
   return op;

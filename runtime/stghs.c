@@ -242,7 +242,6 @@ void checkStgObjRec(Obj *p) {
   }
 
   InfoTab *itp = getInfoPtr(p);
-  assert((uintptr_t)itp % 8 == 0 && "hc: bad infoPtr alignment");
   InfoTab it = *itp;
 
   for (i = 0; i != depth; i++) if (p == stack[i]) return;

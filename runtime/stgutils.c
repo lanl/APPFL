@@ -132,18 +132,14 @@ DEFUN0(stgUpdateCont) {
 
   // the order of the following two operations is important for concurrency
   p.op->payload[0] = stgCurVal;
-  p.op->infoPtr = &it_stgIndirect; // this will supersede the # if below
-
+  p.op->infoPtr = &it_stgIndirect;
+#if USE_OBJTYPE
+  p.op->objType = INDIRECT;
+#endif
   strcpy( p.op->ident, it_stgIndirect.name );
   int newObjSize = getObjSize(p.op);
   assert(newObjSize <= oldObjSize);
   memset((char*)p.op+newObjSize, 0, oldObjSize-newObjSize);
-
-#if USE_OBJTYPE
-  p.op->objType = INDIRECT;
-#else
-  p.op->infoPtr = setLSB3(p.op->infoPtr);
-#endif
   fprintf(stderr, "stgUpdateCont leaving...\n  ");
   STGRETURN0();
   ENDFUN
@@ -187,12 +183,12 @@ void stgThunk(PtrOrLiteral self) {
   strcpy(contp->ident, self.op->ident); //override default
   // can't do this until we capture the variables in a stack frame
   // self.op->infoPtr = &it_stgBlackHole;
+  fprintf(stderr, "BLACKHOLING %s\n", self.op->ident);
 #if USE_OBJTYPE
   self.op->objType = BLACKHOLE;
-#else
-  self.op->infoPtr = setLSB2(self.op->infoPtr); // update bit to say this is a Blackhole
 #endif
-
+  //  self.op->infoPtr = setLSB2(self.op->infoPtr); // this is a Blackhole
+  assert(getObjType(self.op) == BLACKHOLE);
 }
 
 DEFUN0(stgCallCont) {
