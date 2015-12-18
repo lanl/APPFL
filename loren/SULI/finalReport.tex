@@ -437,7 +437,7 @@ This lambda expression mimics the double function. In impure lambda calculus whe
 
 \hspace{2cm}\texttt{($\lambda$x -> add x x) 3 = add 3 3 = 6}
 
-Here, the expression \texttt{$\lambda$x ->} signifies to substitute \texttt{3} in for \texttt{x}. Although this substitution seemed easy, the general process is much more difficult in pure lambda calculus where predefined constants and functions are not allowed. In pure lambda calculus, lambda expressions are evaluated through a process called reduction. This is primarily through substituting a free variable for an expression in a lambda expression.  In general, an expression \texttt{$(\lambda$ x -> E) E1} is reduced by substituting \texttt{E1} in for all variables \texttt{x} in \texttt{E}. 
+Here, the expression \texttt{$\lambda$x ->} signifies to substitute \texttt{3} in for \texttt{x}. Although this substitution seemed easy, the general process is much more difficult in pure lambda calculus where predefined constants and functions are not allowed. In pure lambda calculus, lambda expressions are evaluated through a process called reduction. In general, an expression \texttt{$(\lambda$x -> E) E1} is reduced by substituting \texttt{E1} in for all free variables \texttt{x} in \texttt{E}. 
 
 \begin{definition}
 An occurrence of a variable $v$ in a lambda expression is called bound if it is within the scope of a "$\lambda v$"; otherwise it is called free.
@@ -449,7 +449,7 @@ We use the notation \texttt{E[v -> E1]} to denote the replacing of every free oc
 A substitution is called valid or safe if no free variable in \emph{\texttt{E1}} becomes bound as a result of the substitution \emph{\texttt{E[v -> E1]}}.
 \end{definition}
 
-If in fact a free variable becomes bound as a result of the substitution, the reduction involved \emph{variable capture}. Variable capture is one of the main difficulties of reducing lambda expressions. The state of variable capture is shown below with the generic addition function. 
+If in fact a free variable becomes bound as a result of the substitution, the reduction involved variable capture; variable capture is one of the main difficulties of reducing lambda expressions. The state of variable capture is shown below with the generic addition function. 
 
 \hspace{2cm}\texttt{($\lambda$x -> ($\lambda$y -> add x y)) [x->y] = ($\lambda$y -> add y y)}
 
@@ -533,7 +533,7 @@ If \emph{\texttt{v}} and \emph{\texttt{w}} are variables and \emph{\texttt{E}} i
 \hspace{1cm}provided that \emph{\texttt{w}} does not occur at all in \emph{\texttt{E}}.
 \end{definition}
 
-Alpha reduction allows one to change the bound variables of a lambda expression barring variable capture. Note that conversion does not change the lambda expression; both the original and new lambda expressions are equivalent. An example alpha conversion from the previous example is shown below.
+Alpha reduction allows one to change the bound variables of a lambda expression barring variable capture. Note that conversion does not change the lambda expression: both the original and new lambda expressions are equivalent. An example alpha conversion from the previous example is shown below.
 
 \hspace{2cm}\texttt{($\lambda$x -> ($\lambda$y -> f x y))[y -> x]}\parskip 0pt
 
@@ -545,7 +545,7 @@ Alpha reduction allows one to change the bound variables of a lambda expression 
 If \emph{\texttt{v}} is a variable and \emph{\texttt{E}} and \emph{\texttt{E1}} are lambda expressions, \emph{\texttt{($\lambda$v -> E) E1 $=>_{\beta}$ E[v -> E1]}} provided that the substitution \emph{\texttt{E[v -> E1]}} is carried out according to the rules for a safe substitution.
 \end{definition}
 
-Due to its frequent appearance, \texttt{($\lambda$v -> E) E1} is called a $\beta$-redex or ``reduction expression". Beta reduction is the most involved rule of evaluation in lambda calculus.
+Due to its frequent appearance, \texttt{($\lambda$v -> E) E1} is called a $\beta$-redex or ``reduction expression." Beta reduction is the most involved rule of evaluation in lambda calculus.
 
 
 \begin{definition}{Normal Form}
@@ -553,7 +553,7 @@ Due to its frequent appearance, \texttt{($\lambda$v -> E) E1} is called a $\beta
 A lambda expression is in normal form if it contains no $\beta$-redexes so that it cannot be further reduced using the beta rule. An expression in normal form has no more function applications to evaluate.
 \end{definition}
 
-We want a methodical approach to choose which beta redexes to reduce first to get to normal form. First, not every lambda expression can be reduced to a normal form due to the classic example illustrated below.
+We want a methodical approach to choose which $\beta$-redexes to reduce first to get to normal form. First, not every lambda expression can be reduced to a normal form due to the classic example illustrated below.
 
 \hspace{2cm}\texttt{($\lambda$x -> x x)($\lambda$x -> x x)}\parskip 0pt
 
@@ -563,7 +563,7 @@ We want a methodical approach to choose which beta redexes to reduce first to ge
 
 \begin{definition}
 
-For any lambda expression of the form \emph{\texttt{E = (($\lambda$x -> B) A)}}, we say that beta redex \emph{\texttt{E}} is outside any beta redex that occurs in \emph{\texttt{B}} or \emph{\texttt{A}} and that these are inside \emph{\texttt{E}}. A $\beta$-redex \emph{\texttt{E}} is outside any $\beta$-redex that occurs in \emph{\texttt{B}} or \emph{\texttt{A}} and that these are inside \emph{\texttt{E}}. A $\beta$-redex in a lambda expression is outermost if there is no $\beta$-redex outside of it, and it is innermost if there is no $\beta$-redex inside of it.
+For any lambda expression of the form \emph{\texttt{E = (($\lambda$x -> B) A)}}, we say that $\beta$-redex \emph{\texttt{E}} is outside any $\beta$-redex that occurs in \emph{\texttt{B}} or \emph{\texttt{A}} and that these are inside \emph{\texttt{E}}. A $\beta$-redex \emph{\texttt{E}} is outside any $\beta$-redex that occurs in \emph{\texttt{B}} or \emph{\texttt{A}} and that these are inside \emph{\texttt{E}}. A $\beta$-redex in a lambda expression is outermost if there is no $\beta$-redex outside of it, and it is innermost if there is no $\beta$-redex inside of it.
 \end{definition}
 
 \begin{definition}{Normal Order and Applicative Order Reduction}
@@ -572,19 +572,19 @@ A normal order reduction always reduces the leftmost outermost $\beta$-redex fir
 
 \end{definition}
 
-The example  below distinguish the differences between outermost and innermost reductions.
+The example  below distinguishes the differences between outermost and innermost reductions.
 
 \begin{center}
-\texttt{($\lambda$x -> ($\lambda$y -> (add x (($\lambda$x -> (sub x 3)) y)))) 5 6}\parskip 0pt
+\texttt{($\lambda$x -> ($\lambda$y -> (add x (($\lambda$x -> (sub x 3)) y)))) 5 6}
 \end{center}
 
 \begin{tabular}{l | l}
 \multicolumn{1}{c}{ \underline{Normal Order Reduction}} & \multicolumn{1}{c}{ \underline{Applcative Order Reduction}}\\
-\texttt{= ($\lambda$y -> (add 5 (($\lambda$x -> (sub x 3)) y))) 6}&\texttt{= ($\lambda$x -> ($\lambda$y -> (add x ((sub y 3))))) 5 6}\\
-\texttt{= (add 5 (($\lambda$x -> (sub x 3)) 6))}&\texttt{= ($\lambda$y -> (add 5 ((sub y 3)))) 6}\\
-\texttt{= (add 5 ((sub 6 3)))}&\texttt{= (add 5 ((sub 6 3)))}\\
-\texttt{= (add 5 3)}&\texttt{= (add 5 3)}\\
-\texttt{= 8}&\texttt{= 8}\\
+\texttt{=($\lambda$y -> (add 5 (($\lambda$x ->(sub x 3))y))) 6}&\texttt{=($\lambda$x -> ($\lambda$y -> (add x((sub y 3))))) 5 6}\\
+\texttt{=(add 5 (($\lambda$x -> (sub x 3)) 6))}&\texttt{=($\lambda$y -> (add 5 ((sub y 3)))) 6}\\
+\texttt{=(add 5 ((sub 6 3)))}&\texttt{=(add 5 ((sub 6 3)))}\\
+\texttt{=(add 5 3)}&\texttt{=(add 5 3)}\\
+\texttt{=8}&\texttt{=8}\\
 \end{tabular}
 
 Note how the substitution of the constant \texttt{5} is made first in normal order reduction, while the innermost redex \texttt{(($\lambda$x -> (sub x 3)) y))} is reduced first in applicative order.
@@ -593,7 +593,7 @@ Note how the substitution of the constant \texttt{5} is made first in normal ord
 
 \textbf{Church-Turing Thesis}: The effectively computable functions of the positive integers are precisely those functions definable in the pure lambda calculus (and computable by Turing machines).
 
-Church's Thesis states that lambda calculus is Turing complete. Motivated by this fact, we demonstrate how to define nonnegative integers, basic mathematical functions, logical operators, list constructors, and how to simulate recursion.
+Church's Thesis states that lambda calculus is Turing-complete. Motivated by this fact, we demonstrate how to define nonnegative integers, basic mathematical functions, logical operators, list constructors, and how to simulate recursion.
 
 The first set of lambda expressions to define is the set of nonnegative integers. There is no `correct' way to do this, so we use the universally accepted method.
 
@@ -659,7 +659,7 @@ The add function is defined in a similar manner.
 
 \hspace{2.5cm}\texttt{= ($\lambda$f -> ($\lambda$x -> f f f f x)) = four}
 
-Other arithmetic operations such as subtract, multiply, exponentiate. The next set of lambda expressions is the set of arithmetic operators. The boolean values true and false are the foundations of the logical operators and many other functions in general. As in the case of defining the nonnegative integers, the stated definitions below of true and false are not the only way to define true, but they may be the most efficient. The operators and, or, and not are also defined below, and they are built from the definitions of true and false.
+Other arithmetic operations implemented include \texttt{subtract}, \texttt{multiply}, and \texttt{exponentiate}. The next set of lambda expressions is the set of logical operators. The boolean values \texttt{true} and \texttt{false} are the foundations of the logical operators and many other functions in general. As in the case of defining the nonnegative integers, the stated definitions below of \texttt{true} and \texttt{false} are not the only definitions, but they may be the most efficient. The operators \texttt{and}, \texttt{or}, and \texttt{not} are also defined below, and they are built from the definitions of \texttt{true} and \texttt{false}.
 
 \hspace{2cm}\texttt{true = ($\lambda$x -> $\lambda$y x)}
 
@@ -697,11 +697,11 @@ Other arithmetic operations such as subtract, multiply, exponentiate. The next s
 \hspace{2.5cm}\texttt{= ($\lambda$x -> ($\lambda$y -> x)) = true}
 
 
-Conditional statements are left to the appendix. It is possible to contruct lists of arbitrary sizes by first constructing a \texttt{pair} function and then continually nesting \texttt{pair} functions in the second slot to the desired length (see appendix). Finally, the most efficient way to simulate recursion is through the fixed point combinator \texttt{Y}.
+Conditional statements are left to the appendix. It is possible to contruct lists of arbitrary sizes by first constructing a \texttt{pair} function and then continually nesting \texttt{pair} functions in the second slot to the desired length (see appendix 7.3). Finally, the most efficient way to simulate recursion is through the fixed point combinator \texttt{Y}.
 
 \hspace{2cm}\texttt{Y = ($\lambda$g -> ($\lambda$x -> g (x x)) ($\lambda$x -> g (x x)))}
 
-As functions do not have names in pure lambda calculus, it is impossible for a function to achieve recursion through calling itself. Luckily, the fixed point combinator acts in the following way: 
+As functions do not have names in pure lambda calculus, it is impossible for a function to achieve recursion through calling itself. Luckily, the fixed point combinator acts as follows:
 
 \hspace{2cm}\texttt{Y f}
 
@@ -713,74 +713,74 @@ As functions do not have names in pure lambda calculus, it is impossible for a f
 
 \hspace{2.5cm}\texttt{= f (Y f)}
 
-True to its name, \texttt{f} is a fixed point of \texttt{Y}. The key to exploiting the property of the fixed-point combinator is to clevely set up a conditional statement within the function. The pseudocode of the \texttt{factorial} function is displayed below with a small evaluation in impure lambda calculus.
+True to its name, \texttt{f} is a fixed point of \texttt{Y}. The key to exploiting the property of the fixed-point combinator is to clevely set up a conditional statement within the input function. The pseudocode of the \texttt{factorial} function is displayed below with a small evaluation in impure lambda calculus.
 
 \small
-\hspace{2cm}\texttt{fac = ($\lambda$m -> ($\lambda$n -> (if n = 0 then 1 else n $\times$ (m (n - 1)))))}
+\hspace{0.5cm}\texttt{fac = ($\lambda$m -> ($\lambda$n -> (if n = 0 then 1 else n $\times$ (m (n - 1)))))}
 
-\hspace{2cm}\texttt{Y fac 3}
+\hspace{0.5cm}\texttt{Y fac 3}
 
-\hspace{2.5cm}\texttt{= fac (Y fac) 3}
+\hspace{1cm}\texttt{= fac (Y fac) 3}
 
-\hspace{2.5cm}\texttt{= ($\lambda$m -> ($\lambda$n -> (if n = 0 then 1 else n $\times$ (m (n - 1))))) (Y fac) 3}
+\hspace{1cm}\texttt{= ($\lambda$m -> ($\lambda$n -> (if n = 0 then 1 else n $\times$ (m (n - 1))))) (Y fac) 3}
 
-\hspace{2.5cm}\texttt{= (if 3 = 0 then 1 else 3 $\times$ ((Y fac) (3 - 1)))}
+\hspace{1cm}\texttt{= (if 3 = 0 then 1 else 3 $\times$ ((Y fac) (3 - 1)))}
 
-\hspace{2.5cm}\texttt{= 3 $\times$ ((Y fac) 2)}
+\hspace{1cm}\texttt{= 3 $\times$ ((Y fac) 2)}
 
-\hspace{2.5cm}\texttt{= 3 $\times$ (fac (Y fac) 2)}
+\hspace{1cm}\texttt{= 3 $\times$ (fac (Y fac) 2)}
 
-\hspace{2.5cm}\texttt{= 3 $\times$ (($\lambda$m -> ($\lambda$n -> (if n = 0 then 1 else n $\times$ (m (n - 1))))) (Y fac) 2)}
+\hspace{1cm}\texttt{= 3 $\times$ (($\lambda$m -> ($\lambda$n -> (if n = 0 then 1 else n $\times$ (m (n - 1))))) (Y fac) 2)}
 
-\hspace{2.5cm}\texttt{= 3 $\times$ ((if 2 = 0 then 1 else 2 $\times$ ((Y fac) (2 - 1))))}
+\hspace{1cm}\texttt{= 3 $\times$ ((if 2 = 0 then 1 else 2 $\times$ ((Y fac) (2 - 1))))}
 
-\hspace{2.5cm}\texttt{= 3 $\times$ (2 $\times$ ((Y fac) 1))}
+\hspace{1cm}\texttt{= 3 $\times$ (2 $\times$ ((Y fac) 1))}
 
-\hspace{2.5cm}\texttt{= 3 $\times$ (2 $\times$ (fac (Y fac) 1))}
+\hspace{1cm}\texttt{= 3 $\times$ (2 $\times$ (fac (Y fac) 1))}
 
-\hspace{2.5cm}\texttt{= 3 $\times$ (2 $\times$ (($\lambda$m -> ($\lambda$n -> (if n = 0 then 1 else n $\times$ (m (n - 1))))) (Y fac) 1))}
+\hspace{1cm}\texttt{= 3 $\times$ (2 $\times$ (($\lambda$m -> ($\lambda$n -> (if n = 0 then 1 else n $\times$ (m (n - 1))))) (Y fac) 1))}
 
-\hspace{2.5cm}\texttt{= 3 $\times$ (2 $\times$ (if 1 = 0 then 1 else 1 $\times$ ((Y fac) (1 - 1))))}
+\hspace{1cm}\texttt{= 3 $\times$ (2 $\times$ (if 1 = 0 then 1 else 1 $\times$ ((Y fac) (1 - 1))))}
 
-\hspace{2.5cm}\texttt{= 3 $\times$ (2 $\times$ (1 $\times$ ((Y fac) 0))}
+\hspace{1cm}\texttt{= 3 $\times$ (2 $\times$ (1 $\times$ ((Y fac) 0))}
 
-\hspace{2.5cm}\texttt{= 3 $\times$ (2 $\times$ (1 $\times$ (fac (Y fac) 0))}
+\hspace{1cm}\texttt{= 3 $\times$ (2 $\times$ (1 $\times$ (fac (Y fac) 0))}
 
-\hspace{2.5cm}\texttt{= 3 $\times$ (2 $\times$ (1 $\times$ (($\lambda$m -> ($\lambda$n -> (if n = 0 then 1 else n $\times$ (m (n - 1)))))(Y fac) 0))}
+\hspace{1cm}\texttt{= 3 $\times$ (2 $\times$ (1 $\times$ (($\lambda$m -> ($\lambda$n -> (if n = 0 then 1 else n $\times$ (m (n - 1)))))(Y fac) 0))}
 
-\hspace{2.5cm}\texttt{= 3 $\times$ (2 $\times$ (1 $\times$ (if 0 = 0 then 1 else 0 $\times$ ((Y fac) (0 - 1)))))}
+\hspace{1cm}\texttt{= 3 $\times$ (2 $\times$ (1 $\times$ (if 0 = 0 then 1 else 0 $\times$ ((Y fac) (0 - 1)))))}
 
-\hspace{2.5cm}\texttt{= 3 $\times$ (2 $\times$ (1 $\times$ 1)) = 6}
+\hspace{1cm}\texttt{= 3 $\times$ (2 $\times$ (1 $\times$ 1)) = 6}
 \normalsize
 
 The first equality followed from the fixed point property defined in the previous block of code
 
 \subsection{Tasks}
 
-My ultimate task was to create a lambda parser and evaluator in Haskell. To
-do this, I first read """""""""""' and completed all exercises.  The
+My overall task was to create a lambda parser and evaluator in Haskell. To
+do this, I first read \textit{Formal Syntax and Semantics of Programming Languages} by Kurtz and Slonneger and completed all exercises.$^5$  The
 content of the material was similar to the content presented here in the
-previous sections. Many exercises were detailed and required $\beta$
+previous sections. Many exercises were detailed and required beta
 reduction to be completed by hand. Following, I created a lambda parser and
 evaluator using both normal order and applicative order evaluation. In
 order to complete the variable substitution with new variables, it was
 necessary to provide a fresh variable supply. The first implementation
 involved creating an infinite list of variables, exploiting Haskell's lazy
 evaluation. This list could be split in half when a substitution needed to
-be made in a combined expression (case d) in definition 4. The easiest way
+be made in a combined expression (case d in Definition 4). The easiest way
 to split the list in half was to create two new lists by appending every
 other element to the end of each list. Since only finitely many fresh
 variables were needed, starting with an infinite list of fresh variables
 was sufficient. The second implementation was to thread the variables
-through the program. After a expression was reduced, the fresh variable
+through the expression. After a expression was reduced, the fresh variable
 supply was passed to inner expressions to complete any reductions. Once all
 inner expressions were reduced, the remaining fresh variable supply was
 passed to another expression until the entire expression was in normal
-form. This method is displayed in appendix .... After creating the parser
+form. This method is displayed in appendix 7.3. After creating the parser
 and evaluator, I constructed the nonnegative integers, arithmetic
 expressions, logical operators, and list operations. The final exercise was
-to code enough functions to parse and evaluate the factorial function in
-lambda calculus, as shown above.
+to code enough functions to parse and evaluate the \texttt{factorial} function in pure
+lambda calculus.
 
 \section{Compiler}
 
