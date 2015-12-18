@@ -1,0 +1,1432 @@
+\documentclass[11pt]{article}
+\usepackage[margin=1.0in]{geometry}
+\usepackage{amsthm}
+ \usepackage{verbatimbox}
+\usepackage{amsfonts}
+\usepackage{longtable}
+\usepackage{amssymb}
+\usepackage{colortbl}
+\usepackage[table]{xcolor}
+\usepackage{graphicx}
+\usepackage{amscd,amsmath,mathrsfs}
+\usepackage{setspace}
+\usepackage{listings}
+\lstset{
+  basicstyle=\ttfamily,
+  mathescape
+}
+\parskip=6pt
+\newtheorem{theorem}{Theorem}
+\newtheorem{definition}{Definition}
+\newtheorem{conjecture}{Conjecture}
+\newtheorem{corollary}{Corollary}
+\newtheorem{lemma}{Lemma}
+\newtheorem{fact}{Fact}
+\newtheorem{pourism}{Pourism}
+\newtheorem{problem}{Problem}
+\setlength\parindent{0pt}
+%-------------------------------------------------------BEGIN DOCUMENT-----------------------------------------------------------------------------------------
+\begin{document}
+\title{Functional Programming in Computer Science}
+\author{Loren James Anderson}
+\date{\today}
+\maketitle
+\begin{abstract}
+\noindent We detail the topics studied and work accomplished by the author during his 16-week internship in functional programming during the Fall 2015 Student Undergraduate Laboratory Internship program at Los Alamos National Laboratory, funded by the Department of Energy. Topics include fundamentals of Haskell programming, combinator parsing, and lambda calculus. We highlight the author's additions to a variable-strictness, autoparallelizing, pure functional compiler and runtime system in STG.
+\end{abstract}
+%-------------------------------------------------------BEGIN INTRODUCTION--------------------------------------------------------------------------------------
+\section{Introduction}
+Functional programming has exploded over the past decade due to its advantages over imperative languages. One clear advantage is the ease of parallelization using functional languages. With ever-increasing computing power, the overheads of parallelization are becoming insignificant compared to the computational efficiency offered by parallelization. Also, the blocks of code in functional languages are individual functions that are connected through composition. This often results in more straightforward and concise code that is easier to comprehend and modify than code of imperative languages. 
+
+During the internship, the first task was to learn the elements of functional programming through the standard language Haskell. I read the textbook \textit{Programming in Haskell} by Graham Hutton and completed all exercises.$^4$ Each chapter was devoted to a feature of Haskell; some were unique to functional programming, and others were unique to Haskell. Second, I supplemented my knowledge of functional programming by learning the fundamentals of combinator parsing through the paper ``Higher-order functions for parsing" by Graham Hutton.$^3$ The idea of combinator parsing is to construct large parsers from smaller parsers, and in doing so, build a library of increasingly powerful parsers. Combinator parsing is effective in lazy functional languages such as Haskell due to its ability to handle ambiguous grammars and ease of implementation. To conclude this section, I implemented both a simple arithmetic expression parser and evaluator and also a reverse Polish notation expression parser and evaluator. The third task was to learn the foundations of all functional programming languages: lambda calculus. Lambda calculus was invented in the 1930s by Alonzo Church to formalize the concept of effective computability. It is a Turing-complete language that has advanced the theory of functional programming and proof theory of computer science in general. I used instructions from the book \textit{Formal Syntax and Semantics of Programming Languages} by  Kurtz and Slonneger to code a lambda calculus evaluator and interpreter.$^5$ Lambda expressions that I implemented include nonnegative integers, basic mathematics functions, logical operators, list operations, and the simulation of recursion through the fixed-point combinator. The final task was to make additions to a variable-strictness, autoparallelizing, pure functional compiler and runtime system in STG. I coded a compiler pass checking for illegal instances of duplicate names between individual files and the prelude, and I coded tests for debugging purposes using exercises from the book \emph{Algorithms} by Sedgewick and Wayne.$^6$ 
+%-------------------------------------------------------BEGIN HASKELL PROGRAMMING----------------------------------------------------------------------------------
+\section{Haskell Programming}
+Haskell is a pure functional language, as the basic blocks of code are functions and there are no side effects. Haskell was conceived during the 1987 conference on Functional Programming Languages and Computer Architecture. A committee was formed to create an open standard for functional languages, employing the best ideas of a few dozen distinct functional programming languages at the time. The standard implementation of Haskell is the Glasgow Haskell Compiler, which is an interpreter and native-code compiler. We now explain the features of Haskell that distinguish it as a standard programming language. Some are unique to functional programming, and others are unique to Haskell.
+
+\subsection{Features}
+
+\hspace{0.5cm}\underline{Functional}
+
+Haskell is classified as a functional language. Functional languages are exploding in popularity recently due the ease of implementing parallelization. The functional programming paradigm involves functions being the main blocks of code in a program. These functions are similar to mathematical functions, as they can be expressed as a list of input/output pairs. For example, the addThree function that adds three integers is defined below.
+
+\hspace{2cm}\begin{verbbox}
+addThree:: Int -> Int -> Int -> Int
+addThree x y z = x + y + z
+\end{verbbox}
+\theverbbox
+
+The first line of code is called the type signature. The type signature of a function denotes both the type of arguments that it accepts as inputs and also the type of its output, the last type in the type signature. As expected, the addThree function above takes three variables of type Int as inputs and returns a value of type Int as an output (where the set of all values of type Int is a finite subset of the integers, due to space constraints). 
+
+The second line of code is the function itself. The infix operator $+$ is already defined in the prelude, so there is no need define it again. Regardless of its inputs, the addThree function only contains one case: it adds $x$, $y$, and $z$ together for all Int values of $x$, $y$, and $z$. Although this function had a single case, we will display functions having multiple cases and are therefore multiple lines long. 
+
+\hspace{0.5cm}\underline{Pure}
+
+Pure languages do not have side effects. A side effect is an interaction using IO or any change to the state of the computer. Values are immutable in Haskell, as their states are unchangeable. Under the functional programming paradigm, any input to a function must be the output of a previous function or an immutable value. Therefore, no function can change the state of the computer by assigning its output to a global variable, a standard side effect. A particularly disastrous consequence of a global variable is when two functions manipulate a common global variable. Consequently, one must take extra precautions when reviewing the logic of such a program, as logical errors easily persist. Although Haskell is intended for use as a pure functional program, IO is supported for purposes of practicality. 
+
+\hspace{0.5cm}\underline{Concise}
+
+Functional languages are considered high-level, as the syntax is more similar to standard human dialogue as opposed to technical machine-level code. In Haskell, few keywords are used and indentation is exploited to alter the program's overall structure. Hutton states,$^4$ ``Haskell programs are often between two and ten times shorter than programs written in other current languages.'' Below, we showcase the concision of Haskell through its ability to solve the classic Tower of Hanoi problem of any level in a few lines of code. 
+
+\hspace{0.2cm}\begin{verbbox}
+solve :: Int -> ([Int],[Int],[Int]) -> ([Int],[Int],[Int])
+solve 1 ((x:xs),int,dst) = (xs,int,x:dst)
+solve n (src,int,dst) = let (src1,int1,dst1) = solve (n-1) (src,dst,int)
+                            (src2,int2,dst2) = solve 1 (src1,dst1,int1)
+                            (src3,int3,dst3) = solve (n-1) (int2,src2,dst2)
+                        in (int3,src3,dst3)
+Input:   solve 10 ([1..10],[],[]) 
+Output: ([],[],[1,2,3,4,5,6,7,8,9,10])
+\end{verbbox}
+\theverbbox
+
+\hspace{0.5cm}\underline{Strongly-typed}
+
+The type system in Haskell is strongly-typed, meaning that a program will not compile if an input type of one function does not match the output type of a second composed function. A notable advantage of a strong type system is that runtime errors are an impossibility, a problem common to imperative languages. Furthermore, Haskell supports type inference, a process where function types signatures are determined by the compiler that maximizes type abstraction. For example consider the function fst that takes the first element of a pair. 
+
+\hspace{2cm}\begin{verbbox}
+fst :: (a,b) -> a
+fst (x,y) = x
+\end{verbbox}
+\theverbbox
+
+The symbols a and b are type variables, or placeholders for types determined by the inputs. Note that types a and b may or may not be distinct, and both type variables a must designate the same type. A type variable is said to be polymorphic, or of many forms, and a type signature containing such a type is called a polymorphic type. The function is subsequently called a polymorphic function. This attention to type abstraction eliminates repetitive code.                                                                                       
+
+\hspace{0.5cm}\underline{Recursion}
+
+Many programming languages are capable of iterating a block of code, and nearly every program implements such a process. The corresponding technique in imperative languages is to invoke the for or do...while statement. These statements allow the programmer to specify either the number of times or the conditions when, respectively, to execute the desired block of code. In contrast, Haskell implements recursive functions cleverly to achieve the same process. Below, we display Haskell code that simulates the mathematical operation of exponentiation. 
+
+\hspace{2cm}\begin{verbbox}
+pow :: Int -> Int -> Int                
+pow x 0 = x                               
+pow x n = x * (pow x (n-1))
+\end{verbbox}
+\theverbbox
+
+In the second and third lines of code, pattern matching is invoked for brevity. The second line of code accepts any value for the first argument and only the value $0$ for the second argument. If those conditions are satisfied the output of the function is x. The elegance of pattern matching is that any remaining patterns (e.g. the third line of code above) are only evaluated if necessary. Therefore, the patterns need not be disjoint. The third line of code is the default case, as it accepts any two values as inputs. If the default case is evoked, x is multiplied to the value produced by the expression pow x (n-1). This corresponds to the recursive case of the exponentiation function.            
+
+\hspace{0.5cm}\underline{List Comprehensions}
+
+The list is the fundamental data structure of Haskell, so it is necessary to possess an efficient means of creating one. List comprehension notation is the syntactic sugar used to construct new sets from existing sets. We can express the first ten positive even integers by doubling the first ten positive integers as shown below. 
+
+\hspace{2cm}\begin{verbbox}
+Input: [2 * x | x <- [1..10]]  
+Output: [2,4,6,8,10,12,14,16,18,20]
+\end{verbbox}
+\theverbbox
+
+The expression \texttt{x <- [1..10]} is called a generator, stating that we take all possibilities of x from 1 to 10. This is quite similar to mathematical set notation: the vertical bar $|$ stands for "such that", and \texttt{<-} denotes the standard element inclusion symbol $\in$. The equivalent mathematical expression is $\{2x | x \in \{1,\ldots,10\}\}$. The beauty of list comprehension is that one can combine generators as shown.
+
+\hspace{2cm}\begin{verbbox}
+[(x,y) | x <- [1..4], y <- [x..4]]. 
+\end{verbbox}
+\theverbbox
+
+This set is all pairs (x,y) such that x and y range from 1 to 4 and x is less than or equal to y. Mathematically, it is $\{(x,y) | x,y \in \{1,...,4\}, x \le y\}$.
+
+\hspace{0.5cm}\underline{Higher-Order Functions}
+One of the most powerful features of functional programming is the use of higher-order functions. When declaring the inputs and outputs of functions through a type signature, inputs and outputs are allowed to be functions themselves. Any function possessing a function input or a function output is called a higher-order function. The main benefit of higher-order functions is the reduction of code length, improving reliability and facilitating the reader's understanding of the program's logic. For example, consider mapping one function over a list of elements. One would desire to code a higher-order function that takes the original function and the list as inputs. The standard function \texttt{map} is defined below.
+
+\hspace{2cm}\begin{verbbox}
+map :: (a -> b) -> [a] -> [b]
+map f xs = [f x | x <- xs]
+\end{verbbox}
+\theverbbox
+
+Here, we take a function f with type signature \texttt{(a -> b)} and a list \texttt{xs} as inputs. Note that the type of element in the list, \texttt{a}, is the domain of the \texttt{f}. The output of \texttt{map} is a list of elements of type \texttt{b}, corresponding to the output type of function \texttt{f}. We display the effect of mapping \texttt{eqZero} to the list \texttt{[0,1,2]}, where \texttt{eqZero} is a predicate that determines if a number is zero.
+
+\hspace{2cm}\begin{verbbox}
+eqZero:: Int -> Bool                                                                                       
+eqZero 0 = True
+eqZero x = False
+
+Input:   map eqZero [0,1,2] 
+Output: [True,False,False]      
+\end{verbbox}
+\theverbbox
+
+\hspace{0.5cm}\underline{Lazy Evaluation}
+
+Haskell has lazy evaluation, meaning that it only evaluates functions when necessary. The possibility of infinite data structures is an immediate consequence of lazy evaluation. For example, consider the infinite list comprised of the positive integers $\{1,2,3,\ldots\}$. In Haskell, this list is represented as \texttt{[1..]}. The expression \texttt{head [1..]} evaluates to 1 because head only needs the first element of the list: lazy evaluation obviates the need to construct the remainder of the list. Also, Haskell evaluates either the alternative or consequent in if statements, but not both. 
+
+\hspace{2cm}\begin{verbbox}
+if (even x) then (x/2) else (x+1)
+\end{verbbox}
+\theverbbox
+
+In the above expression, \texttt{even x} will be evaluated to a boolean value. Then, \texttt{x/2} is evaluated if \texttt{(even x)} evaluates to true, and evaluates \texttt{(x+1)} is evaluated if \texttt{(even x)} evaluates to false. Also, lazy evaluation allows Haskell to evaluate an expression once and not evaluate the expression again. For example, consider the functions \texttt{addOne} and \texttt{addTwo} below.
+
+\hspace{2cm}\begin{verbbox}
+addOne :: Int -> Int
+addOne x = x+1
+addTwo :: Int -> Int
+addTwo x = addOne x + addOne x                                                                                                                              
+Input:  addTwo 3
+Output: addOne 3 + addOne 3                
+\end{verbbox}
+\theverbbox
+                  
+Haskell will only evaluate the subexpression \texttt{addOne 3} once in the expression \texttt{addTwo 3}.
+                                                           
+\subsection{Tasks}
+
+The first task of the internship was solely devoted to reading the textbook \textit{Programming in Haskell} by Graham Hutton and completing all exercises.$^4$ Hutton explained many of the above concepts in detail including concepts of equational reasoning, parsing, and IO. Most chapters concluded with extended examples such as the cracking the Caesar Cipher, a tautology checker, and Conway's Game of Life. One entire chapter was devoted to solving the classic Countdown Problem efficiently by exploiting the advantages of Haskell. The thorough treatment of topics with examples and exercises provided a solid foundation for functional programming and strengthened the my computer science background in general. 
+
+%-------------------------------------------------------BEGIN COMBINATOR PARSING--------------------------------------------------------------------------------
+\section{Combinator Parsing}
+
+Parsing is the act of analyzing text and producing a corresponding parse tree that makes the structure of the text explicit. Combinator parsing is the process of using higher-order functions to build progressively larger parsers from smaller parsers. We explore combinator parsing by building up from the fundamental parsers \texttt{success} and \texttt{failed} and ending with parsing full arithmetic expressions. 
+
+\subsection{Fundamental Parsers}
+
+Parsers take a string of symbols and return a list of pairs containing the result and the remaining string that was unused. The \texttt{Parser} type is shown below.
+
+\hspace{2cm}\begin{verbbox}
+type Parser a b = [a] -> [(b,[a])]
+\end{verbbox}
+\theverbbox
+
+As their names suggest, the parser \texttt{succeed} is always successful, and \texttt{failed} always fails. The parser \texttt{succeed} does not consume the input string, so it is necessary to specify its output. 
+
+\hspace{2cm}\begin{verbbox}
+succeed :: b -> Parser a b
+succeed v inp = [(v,inp)]
+Input:  succeed "success" "1234" 
+Output: [("success","1234")]
+\end{verbbox}
+\theverbbox
+
+As shown, the \texttt{succeed} parser succeeded and returned a singleton list with its result ``succeed" and its unconsumed input string ``1234". The \texttt{failed} parser takes any input and returns an empty list.
+
+\hspace{2cm}\begin{verbbox}
+failed :: Parser a b
+failed inp = []
+Input:  failed "1234"
+Output: []
+\end{verbbox}
+\theverbbox
+
+The empty list signifies failure. The next step after defining \texttt{succeed} and \texttt{failed} is to construct a parser of a single symbol named \texttt{satisfy}. True to its name, an input predicate must be satisfied for the parser \texttt{satisfy} to succeed.
+
+\hspace{2cm}\begin{verbbox}
+satisfy :: (Char -> Bool) -> Parser Char Char
+satisfy p [] = fail []
+satisfy p (x:xs) | p x = succeed x xs
+                 | otherwise = fail xs
+Input:  satisfy isDigit "12345"
+Output: [('1',"2345")]
+\end{verbbox}
+\theverbbox
+
+If the input string is empty, there is failure. Otherwise, there is success if and only if the predicate is satisfied. The string \texttt{"12345"} is parsed using the \texttt{isDigit} predicate from the Data.Char module (returns true if a character is a digit, false otherwise). The predicate is satisfied because the first character is a digit. The output is \texttt{'1'}, and the unconsumed input is \texttt{"2345"}. This success is represented by the singleton list \texttt{[('1',"2345")]}, the list of successful parses. A common predicate to use as input for the \texttt{satisfy} parser is equals. The \texttt{literal} parser succeeds if the first character in the input string is equal to the input of \texttt{literal}. 
+
+\hspace{2cm}\begin{verbbox}
+literal :: Char -> Parser Char Char
+literal x = satisfy (==x)
+Input:  literal '3' "1234" 
+Output: []
+\end{verbbox}
+\theverbbox
+
+The motivation for combinator parsing originates from these basic parsers. The parsers above only parse the first character of an input string. Combinator parsing involves creating larger parsers that combine these fundamental parsers to parse the entire input string.
+
+\subsection{Combinators}
+
+The first combinator parser implemented is \texttt{alt}. It takes two parsers as inputs, evaluates each parsing expression independently, and concatenates the results of each parse. The \texttt{alt} parser is analogous to the mathematical (inclusive) \texttt{OR}. A variety of combinator parsers are most logically expressed in infix notation, similar to logical operators.
+
+\hspace{2cm}\begin{verbbox}
+alt :: Parser a b -> Parser a b -> Parser a b
+(p1 `alt` p2) inp = p1 inp ++ p2 inp
+Input:  (literal '2' `alt` literal '5') "2345" 
+Output: [('2',"345")]
+\end{verbbox}
+\theverbbox
+
+The intermediate evaluations above are as follows: \texttt{literal '2' "2345" = [('2',"345")]} and \texttt{literal '5' = []}. The individual results are simply concatenated by \texttt{alt}. The \texttt{then} parser takes two parsers as inputs. The first parser returns a list of pairs. Following, the second parser takes the remaining parse string from each pair, parses the string, and combines its result to the first result in the pair. We convey this procedure through an example.
+
+\hspace{2cm}\begin{verbbox}
+then :: Parser a b -> Parser a c -> Parser a (b,c) (p1 `then` p2) inp 
+then = [((v1, v2), out2) | (v1, out1) <- p1 inp, (v2,out2) <- p2 out1]
+digit = satisfy isDigit
+Input:  (digit `then` digit) "1234"
+Output: [(('1','2'),"34")]
+\end{verbbox}
+\theverbbox
+
+Next we apply functions to the results of successful parses through the \texttt{using} parser. The \texttt{using} parser takes a function and a parser as inputs, and it applies the input function to the output of the parse.
+
+\hspace{2cm}\begin{verbbox}
+using :: Parser a b -> (b -> c) -> Parser a c 
+(p `using` f) inp = [(f v, out) | (v,out) <- p inp] 
+Input:  ((succeed 'e') `using` toUpper) "anything" 
+Output: [('E',"anything")]
+\end{verbbox}
+\theverbbox
+
+Two parsers that exemplify combinator parsing are \texttt{some} and \texttt{many}, as they combine parsers we have previously defined. The \texttt{many} parser takes a parser as input and applies it to the input string as many times as possible. A notable use of the \texttt{using} parser is its ability to concatenate the results after applying the \texttt{then} parser. The \texttt{many} parser is always guaranteed to succeed.
+
+\hspace{2cm}\begin{verbbox}
+many :: Parser a b -> Parser a [b] 
+many p = ((p `then` many p) `using` cons)`alt` (succeed []) 
+cons :: (a,[a]) -> [a] 
+cons (x,xs) = x:xs
+Input:  many digit "12345" 
+Output: [("12345",""),("1234","5"),("123","45"),
+         ("12","345"),("1","2345"),("","12345")]
+\end{verbbox}
+\theverbbox
+
+The \texttt{some} parser does the same, except that it may fail. 
+
+\hspace{2cm}\begin{verbbox}
+some :: Parser a b -> Parser a [b] 
+some p = (p `then` many p) `using` cons
+Input:  some digit "a12345" 
+Output: []
+Input:  some digit "12345"
+Output: [("12345",""),("1234","5"),("123","45"),
+                      ("12","345"),("1","2345")]
+\end{verbbox}
+\theverbbox
+
+The parsers previously defined above supply all that is necessary to parse arbitrary integers. Utilizing the \texttt{some} parser is necessary, as there should not be success unless an integer is parsed.
+
+\hspace{2cm}\begin{verbbox}
+number :: Parser Char [Char] 
+number = some (satisfy isDigit)
+Input:  number "12345" 
+Output: [("12345",""),("1234","5"),("123","45"),
+                      ("12","345"),("1","2345")]
+Input:  number "a1234" 
+Output: []
+\end{verbbox}
+\theverbbox
+
+The parser \texttt{negNumber} is similar to \texttt{number}, but it parses negative numbers. 
+
+\hspace{2cm}\begin{verbbox}
+negNumber :: Parser Char [Char] 
+negNumber (x:xs) | x == '-' = (x:xs,""): (appendMinus(number xs)) 
+                 | otherwise = failed xs 
+appendMinus :: [([Char],[Char])] -> [([Char],[Char])]
+appendMinus [] = []
+appendMinus (x:xs) = (fst(x),'-':snd(x)):(appendMinus xs)
+Input:  negNumber "12345" 
+Output: [] 
+Intput: negNumber "-12345" 
+Output: [("-12345",""),("12345","-"),("1234","-5"),
+         ("123","-45"),("12","-345"),("1","-2345")]
+\end{verbbox}
+\theverbbox
+
+All that is neccessary to create a parser for general integers is to combine the \texttt{number} and \texttt{negNumber} parsers.
+
+\hspace{2cm}\begin{verbbox}
+int :: Parser Char [Char] 
+int = number `alt` negNumber 
+Input:  int "1234" 
+Output: [("1234",""),("123","4"),
+         ("12","34"),("1","234")] 
+Input:  int "-1234" 
+Output: [("-1234",""),("1234","-"),("123","-4"),
+                      ("12","-34"),("1","-234")]
+\end{verbbox}
+\theverbbox
+
+\subsection{Tasks}
+
+To learn combinator parsing, I read the paper ``Higher-order functions for parsing'' by Graham Hutton and implemented all parsing code.$^3$ Using combinator parsing, I first coded a parser and evaluator for simple arithmetic expressions (appendix 7.1). The BNF grammar is as follows:
+
+\hspace{2cm}\begin{verbbox}
+data Expr = Add Term Term | Sub Term Term | Ter Term   
+data Term = Mul Power Power | Div Power Power | Pow Power 
+data Power = Po Factor Factor | Fact Factor 
+data Factor = Num Int | Exp Expr
+\end{verbbox}
+\theverbbox
+
+First, we create an expression from a parsing \verb|"(1+((2^3)/4))-(2*2)"| as follows:
+
+\hspace{2cm}\begin{verbbox}
+Sub (Pow (Fact (Exp (Add (Pow (Fact (Num 1))) (Pow (Fact (Exp (Ter 
+(Div (Fact (Exp (Ter (Pow (Po (Num 2) (Num 3)))))) (Fact (Num 4)))
+)))))))) (Pow (Fact (Exp (Ter (Mul (Fact (Num 2)) (Fact (Num 2))))))) 
+\end{verbbox}
+\theverbbox
+
+Below is the corresponding abstract syntax tree.
+
+
+\hspace{5cm}\begin{verbbox}
+         Sub 
+       /     \
+    Pow       Pow
+     |         |
+    Fact      Fact
+     |         |
+    Exp       Exp
+     |         |
+    Add       Ter
+   /   \       |
+ Pow   Pow    Mul
+  |     |     / \
+ Fact  Fact Fact Fact
+  |     |    |    |
+ Num   Exp  Num  Num
+  |     |    |    |
+  1    Ter   2    2
+        |
+       Div
+      /   \
+    Fact Fact
+     |    |
+    Exp  Num
+     |    |
+    Ter   4
+     |
+    Pow
+     |
+     Po
+    /  \ 
+  Num  Num
+  |     |
+  2     3
+\end{verbbox}
+\theverbbox
+
+Notice how the syntax of the parse gives explicit structure for evaluation. The idea is to assign addition and subtraction to expressions, multiplication and division to terms, exponentiation to power, and numbers and subexpressions to factor. The evaluation of the parse tree is straightforward, and details can be found in the appendix.
+
+\hspace{2cm}\begin{verbbox}
+Input:  evaluator "(1+((2^3)/4))-(2*2)" 
+Output: -1
+\end{verbbox}
+\theverbbox
+
+I also modified the parser and evaluator to simulate a reverse Polish notation (RPN) calculator (appendix 7.2). 
+%-------------------------------------------------------BEGIN LAMBDA CALCULUS-----------------------------------------------------------------------------------
+\section{Lambda Calculus}
+Lambda calculus was invented in the 1930s by Alonzo Church to formalize the concept of effective computability. The Church-Turing thesis states that lambda calculus is a Turing-complete lanauge. All functional programming langugages are essentially some implementation of lambda calculus, and lambda calculus has advanced the theory of functional programming and proof theory of computer science in general. We describe the basics of lambda calculus, including the syntax of lambda calculus, $\alpha$-conversion, $\beta$-reduction, and variable capture. Then, we display lambda calculus expressions including nonnegative integers, basic mathematics functions, logical operators, list operations, and the simulation of recursion through the fixed-point combinator. The use of definitions in the following pages highlights the rigor in lambda calculus. All definitions are taken from the book \textit{Formal Syntax and Semantics of Programming Languages} by Kurtz and Slonneger.$^5$
+
+\subsection{Basics}
+
+There are four expressions in lambda calculus.
+
+\begin{itemize}
+\item Variables
+\item Constants (only in impure lambda calculus)
+\item Function applications
+\item Lambda Abstractions
+\end{itemize}
+
+The BNF grammar is as follows:
+
+\hspace{2cm}\begin{verbbox}
+<expression> :: = <variable> : lowercase identifiers
+                = <constant> : predefined objects
+                = (<expression> <expression>) : combinations
+                = (lambda <variable> . <expression>) : abstractions
+\end{verbbox}
+\theverbbox
+
+A simple lambda expression is shown below.
+
+
+\hspace{2cm}\texttt{$\lambda$x -> add x x}
+
+
+This lambda expression mimics the double function. In impure lambda calculus where predefined constants and functions are allowed, we can evaluate the expression using the constant 3.
+
+\hspace{2cm}\texttt{($\lambda$x -> add x x) 3 = add 3 3 = 6}
+
+Here, the expression \texttt{$\lambda$x ->} signifies to substitute \texttt{3} in for \texttt{x}. Although this substitution seemed easy, the general process is much more difficult in pure lambda calculus where predefined constants and functions are not allowed. In pure lambda calculus, lambda expressions are evaluated through a process called reduction. This is primarily through substituting a free variable for an expression in a lambda expression.  In general, an expression \texttt{$(\lambda$ x -> E) E1} is reduced by substituting \texttt{E1} in for all variables \texttt{x} in \texttt{E}. 
+
+\begin{definition}
+An occurrence of a variable $v$ in a lambda expression is called bound if it is within the scope of a "$\lambda v$"; otherwise it is called free.
+\end{definition}
+
+We use the notation \texttt{E[v -> E1]} to denote the replacing of every free occurrence of \texttt{v} in \texttt{E} by \texttt{E1}. This creates a new lambda expression, syntactically.
+
+\begin{definition}
+A substitution is called valid or safe if no free variable in \emph{\texttt{E1}} becomes bound as a result of the substitution \emph{\texttt{E[v -> E1]}}.
+\end{definition}
+
+If in fact a free variable becomes bound as a result of the substitution, the reduction involved \emph{variable capture}. Variable capture is one of the main difficulties of reducing lambda expressions. The state of variable capture is shown below with the generic addition function. 
+
+\hspace{2cm}\texttt{($\lambda$x -> ($\lambda$y -> add x y)) [x->y] = ($\lambda$y -> add y y)}
+
+This is a classic case of variable capture, as the new function is the doubling function, while the original function was a generic addition function. The motivation for the rules of variable substitution comes from the valid substitution below. 
+
+\hspace{2cm}\texttt{($\lambda$x -> ($\lambda y$ -> add x y))[x -> y]}
+
+\parskip 0pt
+\hspace{2.5cm}\texttt{= ($\lambda$x -> ($\lambda y$ -> add x y))[x -> v]}
+
+\parskip 0pt
+\hspace{2.5cm}\texttt{= ($\lambda$v -> ($\lambda$y -> add v y))}
+
+\parskip 6pt
+This correct reduction does not change the original function. 
+
+\begin{definition}
+The set of free variables in an expresion \emph{\texttt{E}}, denoted by \emph{\texttt{FV(E)}} is defined as follows:
+\end{definition}
+
+\hspace{1cm}a) \texttt{FV(c) = null} for any constant \texttt{c}
+
+\hspace{1cm}b) \texttt{FV(x) = {x}} for any variable \texttt{x}
+
+\hspace{1cm}c) \texttt{FV(E1 E2) = FV(E1) $\cup$ FV(E2)}
+
+\hspace{1cm}d) \texttt{FV($\lambda$x -> E) = FV(E) - {x}}
+
+A lambda expression \texttt{E} with no free variables \texttt{(FV(E) = null)} is called closed.
+
+\begin{definition}
+The substitution of an expression for a (free) variable in a lambda expression is denoted by \emph{\texttt{E[v -> E1]}} and is defined as follows:
+\end{definition}
+
+\hspace{1cm}a) \texttt{v[v -> E1] = E1} for any variable \texttt{v}
+
+\hspace{1cm}b) \texttt{x[v -> E1] = x} for any variable \texttt{x $\neq$ v}
+
+\hspace{1cm}c) \texttt{c[v -> E1] = c} for any constant \texttt{c}
+
+\hspace{1cm}d) \texttt{(E1 E2)[v -> E3] = ((E1 [v -> E3])(E2 [v-> E3]))}
+
+\hspace{1cm}e) \texttt{($\lambda$v -> E)[v -> E1] = ($\lambda$v -> E)}
+
+\hspace{1cm}f) \texttt{($\lambda$x -> E)[v -> E1] = $\lambda$x -> (E[v -> E1])} when \texttt{x $\neq$ v} and \texttt{x $\not\in$ FV(E1)}
+
+\hspace{1cm}g) \texttt{($\lambda$x -> E)[v -> E1] = $\lambda$z -> (E[x -> z][v -> E1])} when \texttt{x $\neq$ v} and \texttt{x $\in$ FV(E1)},
+
+\parskip 0pt
+\hspace{10cm} where \texttt{z $\neq$ v} and \texttt{z $\not\in$ FV(E E1)}
+
+\parskip 6pt
+An example evaluation using these rules is displayed below. 
+
+\hspace{1cm}\texttt{($\lambda$x -> ($\lambda$y -> f x y))[y -> x]}\parskip 0pt
+
+\hspace{2cm}\texttt{= $\lambda$z -> (($\lambda$y -> f x y)[x -> z][y -> x])\hfill(g)}\parskip 0pt
+
+\hspace{2cm}\texttt{= $\lambda$z -> (($\lambda$y -> ((f x y)[x -> z]))[y -> x])\hfill(f)}\parskip 0pt
+
+\hspace{2cm}\texttt{= $\lambda$z -> (($\lambda$y -> (((f x)[x -> z])(y[x -> z])))[y -> x])\hfill(d)}\parskip 0pt
+
+\hspace{2cm}\texttt{= $\lambda$z -> (($\lambda$y -> (((f[x -> z])(x[x -> z]))(y[x -> z])))[y -> x])\hfill(d)}\parskip 0pt
+
+\hspace{2cm}\texttt{= $\lambda$z -> (($\lambda$y -> ((f (x[x -> z])) y))[y -> x])\hfill(b)}\parskip 0pt
+
+\hspace{2cm}\texttt{= $\lambda$z -> (($\lambda$y -> (f z) y)[y -> x])\hfill(a)}\parskip 0pt
+
+\hspace{2cm}\texttt{= $\lambda$z -> ($\lambda$y -> f z y)\hfill(e)}\parskip 6pt
+
+Notice how variable capture is avoided in the second line.
+
+\subsection{Lambda Reduction}
+
+\begin{definition}{Alpha Reduction}
+
+If \emph{\texttt{v}} and \emph{\texttt{w}} are variables and \emph{\texttt{E}} is a lambda expression,
+
+\emph{\hspace{2cm}\texttt{$\lambda$v -> E $=>_{\alpha}$ $\lambda$w -> E[v -> w]}}
+
+\hspace{1cm}provided that \emph{\texttt{w}} does not occur at all in \emph{\texttt{E}}.
+\end{definition}
+
+Alpha reduction allows one to change the bound variables of a lambda expression barring variable capture. Note that conversion does not change the lambda expression; both the original and new lambda expressions are equivalent. An example alpha conversion from the previous example is shown below.
+
+\hspace{2cm}\texttt{($\lambda$x -> ($\lambda$y -> f x y))[y -> x]}\parskip 0pt
+
+\hspace{2.5cm}\texttt{= $\lambda$z -> (($\lambda$y -> f x y)[x -> z][y -> x])}\parskip 6pt
+
+
+\begin{definition}{Beta Reduction}
+
+If \emph{\texttt{v}} is a variable and \emph{\texttt{E}} and \emph{\texttt{E1}} are lambda expressions, \emph{\texttt{($\lambda$v -> E) E1 $=>_{\beta}$ E[v -> E1]}} provided that the substitution \emph{\texttt{E[v -> E1]}} is carried out according to the rules for a safe substitution.
+\end{definition}
+
+Due to its frequent appearance, \texttt{($\lambda$v -> E) E1} is called a $\beta$-redex or ``reduction expression". Beta reduction is the most involved rule of evaluation in lambda calculus.
+
+
+\begin{definition}{Normal Form}
+
+A lambda expression is in normal form if it contains no $\beta$-redexes so that it cannot be further reduced using the beta rule. An expression in normal form has no more function applications to evaluate.
+\end{definition}
+
+We want a methodical approach to choose which beta redexes to reduce first to get to normal form. First, not every lambda expression can be reduced to a normal form due to the classic example illustrated below.
+
+\hspace{2cm}\texttt{($\lambda$x -> x x)($\lambda$x -> x x)}\parskip 0pt
+
+\hspace{2.5cm}\texttt{= ($\lambda$x -> x x)($\lambda$x -> x x)}\parskip 0pt
+
+\hspace{2.5cm}\texttt{= ($\lambda$x -> x x)($\lambda$x -> x x)\ldots}\parskip 6pt
+
+\begin{definition}
+
+For any lambda expression of the form \emph{\texttt{E = (($\lambda$x -> B) A)}}, we say that beta redex \emph{\texttt{E}} is outside any beta redex that occurs in \emph{\texttt{B}} or \emph{\texttt{A}} and that these are inside \emph{\texttt{E}}. A $\beta$-redex \emph{\texttt{E}} is outside any $\beta$-redex that occurs in \emph{\texttt{B}} or \emph{\texttt{A}} and that these are inside \emph{\texttt{E}}. A $\beta$-redex in a lambda expression is outermost if there is no $\beta$-redex outside of it, and it is innermost if there is no $\beta$-redex inside of it.
+\end{definition}
+
+\begin{definition}{Normal Order and Applicative Order Reduction}
+
+A normal order reduction always reduces the leftmost outermost $\beta$-redex first. An applicative order reduction always reduces the leftmost innermost $\beta$-redex first.
+
+\end{definition}
+
+The example  below distinguish the differences between outermost and innermost reductions.
+
+\begin{center}
+\texttt{($\lambda$x -> ($\lambda$y -> (add x (($\lambda$x -> (sub x 3)) y)))) 5 6}\parskip 0pt
+\end{center}
+
+\begin{tabular}{l | l}
+\multicolumn{1}{c}{ \underline{Normal Order Reduction}} & \multicolumn{1}{c}{ \underline{Applcative Order Reduction}}\\
+\texttt{= ($\lambda$y -> (add 5 (($\lambda$x -> (sub x 3)) y))) 6}&\texttt{= ($\lambda$x -> ($\lambda$y -> (add x ((sub y 3))))) 5 6}\\
+\texttt{= (add 5 (($\lambda$x -> (sub x 3)) 6))}&\texttt{= ($\lambda$y -> (add 5 ((sub y 3)))) 6}\\
+\texttt{= (add 5 ((sub 6 3)))}&\texttt{= (add 5 ((sub 6 3)))}\\
+\texttt{= (add 5 3)}&\texttt{= (add 5 3)}\\
+\texttt{= 8}&\texttt{= 8}\\
+\end{tabular}
+
+Note how the substitution of the constant \texttt{5} is made first in normal order reduction, while the innermost redex \texttt{(($\lambda$x -> (sub x 3)) y))} is reduced first in applicative order.
+
+\subsection{Parser and Evaluator}
+
+\textbf{Church-Turing Thesis}: The effectively computable functions of the positive integers are precisely those functions definable in the pure lambda calculus (and computable by Turing machines).
+
+Church's Thesis states that lambda calculus is Turing complete. Motivated by this fact, we demonstrate how to define nonnegative integers, basic mathematical functions, logical operators, list constructors, and how to simulate recursion.
+
+The first set of lambda expressions to define is the set of nonnegative integers. There is no `correct' way to do this, so we use the universally accepted method.
+
+\hspace{2cm}\texttt{zero = $\lambda$f -> $\lambda$x -> x}
+
+\hspace{2cm}\texttt{one = $\lambda$f -> $\lambda$x -> f (x)}
+
+\hspace{2cm}\texttt{two = $\lambda$f -> $\lambda$x -> f (f (x))}
+
+\hspace{2cm}\texttt{three = $\lambda$f -> $\lambda$x -> f (f (f (x)))}
+
+\hspace{2cm}\texttt{n = $\lambda$f -> $\lambda$x -> $\underbrace{\texttt{f (f (\ldots f (}}_\textrm{n} \texttt{x} \underbrace{\texttt{)) \ldots)}}_\textrm{n}$} 
+
+Above, the nonnegative integers are all assigned names. This is only possible in the impure lambda calculus; in the pure lambda calculus, all functions are anonymous. The first arithmetic function is the \texttt{succ} function or successor function. 
+
+\hspace{2cm}\texttt{succ = ($\lambda$n -> $\lambda$f -> $\lambda$x f (n f x))}
+
+This function adds one to any integer. 
+
+\hspace{2cm}\texttt{succ zero}
+
+\hspace{2.5cm}\texttt{= ($\lambda$n -> ($\lambda$f -> ($\lambda$x -> f n f x))) ($\lambda$f -> ($\lambda$x -> x))}
+
+\hspace{2.5cm}\texttt{= ($\lambda$f  -> ($\lambda$x -> f ($\lambda$f ->($\lambda$x -> x)) f x))}
+
+\hspace{2.5cm}\texttt{= ($\lambda$f -> ($\lambda$x -> f ($\lambda$x -> x) x))}
+
+\hspace{2.5cm}\texttt{= ($\lambda$f -> ($\lambda$x -> f x)) = one}
+\medskip
+
+\hspace{2cm}\texttt{succ one}
+
+\hspace{2.5cm}\texttt{= ($\lambda$n -> ($\lambda$f -> ($\lambda$x -> f n f x))) ($\lambda$f -> ($\lambda$x -> f x))}
+
+\hspace{2.5cm}\texttt{= ($\lambda$f -> ($\lambda$x -> f ($\lambda$f -> ($\lambda$x -> f x)) f x))}
+
+\hspace{2.5cm}\texttt{= ($\lambda$f -> ($\lambda$x -> f ($\lambda$x -> f x) x))}
+
+\hspace{2.5cm}\texttt{= ($\lambda$f -> ($\lambda$x -> f f x)) = two}
+
+The add function is defined in a similar manner.
+
+\hspace{2cm}\texttt{add = ($\lambda$m -> ($\lambda$n -> ($\lambda$f -> ($\lambda$x -> m f (n f x)))))}
+
+
+\hspace{2cm}\texttt{add two two}
+
+\hspace{2.5cm}\texttt{= ($\lambda$m -> ($\lambda$n -> ($\lambda$f -> ($\lambda$x -> m f n f x)))) ($\lambda$f -> ($\lambda$x -> f f x))}
+
+\hspace{4cm}\texttt{($\lambda$f -> ($\lambda$x -> f f x))}
+
+\hspace{2.5cm}\texttt{= ($\lambda$n -> ($\lambda$f -> ($\lambda$x -> ($\lambda$f -> ($\lambda$x -> f f x)) f n f x)))}
+
+\hspace{4cm}\texttt{($\lambda$f -> ($\lambda$x -> f f x))}
+
+\hspace{2.5cm}\texttt{= ($\lambda$f -> ($\lambda$x -> ($\lambda$f -> ($\lambda$x -> f f x)) f ($\lambda$f -> ($\lambda$x -> f f x)) f x))}
+
+\hspace{2.5cm}\texttt{= ($\lambda$f -> ($\lambda$x -> ($\lambda$x -> f f x) ($\lambda$f -> ($\lambda$x -> f f x)) f x))}
+
+\hspace{2.5cm}\texttt{= ($\lambda$f -> ($\lambda$x -> f f ($\lambda$f -> ($\lambda$x -> f f x)) f x))}
+
+\hspace{2.5cm}\texttt{= ($\lambda$f -> ($\lambda$x -> f f ($\lambda$x -> f f x) x))}
+
+\hspace{2.5cm}\texttt{= ($\lambda$f -> ($\lambda$x -> f f f f x)) = four}
+
+Other arithmetic operations such as subtract, multiply, exponentiate. The next set of lambda expressions is the set of arithmetic operators. The boolean values true and false are the foundations of the logical operators and many other functions in general. As in the case of defining the nonnegative integers, the stated definitions below of true and false are not the only way to define true, but they may be the most efficient. The operators and, or, and not are also defined below, and they are built from the definitions of true and false.
+
+\hspace{2cm}\texttt{true = ($\lambda$x -> $\lambda$y x)}
+
+\hspace{2cm}\texttt{false = ($\lambda$x -> $\lambda$y -> y)}
+
+\hspace{2cm}\texttt{and = ($\lambda$p -> $\lambda$q -> p q p)}
+
+\hspace{2cm}\texttt{or = ($\lambda$p -> $\lambda$q -> p p q)}
+
+\hspace{2cm}\texttt{not = ($\lambda$p -> $\lambda$a -> $\lambda$b -> p b a)}
+
+\hspace{2cm}\texttt{and true false}
+
+\hspace{2.5cm}\texttt{= ($\lambda$p -> ($\lambda$q -> p q p)) ($\lambda$x -> ($\lambda$y -> x)) ($\lambda$x -> ($\lambda$y -> y))}
+
+\hspace{2.5cm}\texttt{= ($\lambda$q -> ($\lambda$x -> ($\lambda$y -> x)) q ($\lambda$x -> ($\lambda$y -> x))) ($\lambda$x -> ($\lambda$y -> y))}
+
+\hspace{2.5cm}\texttt{= ($\lambda$x -> ($\lambda$y -> x)) ($\lambda$x -> ($\lambda$y -> y)) ($\lambda$x -> ($\lambda$y -> x))}
+
+\hspace{2.5cm}\texttt{= ($\lambda$y -> ($\lambda$x -> ($\lambda$y -> y))) ($\lambda$x -> ($\lambda$y -> x))}
+
+\hspace{2.5cm}\texttt{= ($\lambda$x -> ($\lambda$y -> y)) = false}
+\medskip 
+
+\hspace{2cm}\texttt{or true false}
+
+\hspace{2.5cm}\texttt{= ($\lambda$p -> ($\lambda$q -> p p q)) ($\lambda$x -> ($\lambda$y -> x)) ($\lambda$x -> ($\lambda$y -> y))}
+
+\hspace{2.5cm}\texttt{= ($\lambda$q -> ($\lambda$x -> ($\lambda$y -> x)) ($\lambda$x -> ($\lambda$y -> x)) q) ($\lambda$x -> ($\lambda$y -> y))}
+
+\hspace{2.5cm}\texttt{= ($\lambda$x -> ($\lambda$y -> x)) ($\lambda$x -> ($\lambda$y -> x)) ($\lambda$x -> ($\lambda$y -> y))}
+
+\hspace{2.5cm}\texttt{= ($\lambda$y -> ($\lambda$x -> ($\lambda$y -> x))) ($\lambda$x -> ($\lambda$y -> y))}
+
+\hspace{2.5cm}\texttt{= ($\lambda$x -> ($\lambda$y -> x)) = true}
+
+
+Conditional statements are left to the appendix. It is possible to contruct lists of arbitrary sizes by first constructing a \texttt{pair} function and then continually nesting \texttt{pair} functions in the second slot to the desired length (see appendix). Finally, the most efficient way to simulate recursion is through the fixed point combinator \texttt{Y}.
+
+\hspace{2cm}\texttt{Y = ($\lambda$g -> ($\lambda$x -> g (x x)) ($\lambda$x -> g (x x)))}
+
+As functions do not have names in pure lambda calculus, it is impossible for a function to achieve recursion through calling itself. Luckily, the fixed point combinator acts in the following way: 
+
+\hspace{2cm}\texttt{Y f}
+
+\hspace{2.5cm}\texttt{= $\lambda$g -> (($\lambda$x -> g (x x)) ($\lambda$x -> g (x x))) f}
+
+\hspace{2.5cm}\texttt{= ($\lambda$x -> f (x x)) ($\lambda$x -> f (x x))}
+
+\hspace{2.5cm}\texttt{= f (($\lambda$x -> f (x x)) ($\lambda$x -> f (x x)))}
+
+\hspace{2.5cm}\texttt{= f (Y f)}
+
+True to its name, \texttt{f} is a fixed point of \texttt{Y}. The key to exploiting the property of the fixed-point combinator is to clevely set up a conditional statement within the function. The pseudocode of the \texttt{factorial} function is displayed below with a small evaluation in impure lambda calculus.
+
+\small
+\hspace{2cm}\texttt{fac = ($\lambda$m -> ($\lambda$n -> (if n = 0 then 1 else n $\times$ (m (n - 1)))))}
+
+\hspace{2cm}\texttt{Y fac 3}
+
+\hspace{2.5cm}\texttt{= fac (Y fac) 3}
+
+\hspace{2.5cm}\texttt{= ($\lambda$m -> ($\lambda$n -> (if n = 0 then 1 else n $\times$ (m (n - 1))))) (Y fac) 3}
+
+\hspace{2.5cm}\texttt{= (if 3 = 0 then 1 else 3 $\times$ ((Y fac) (3 - 1)))}
+
+\hspace{2.5cm}\texttt{= 3 $\times$ ((Y fac) 2)}
+
+\hspace{2.5cm}\texttt{= 3 $\times$ (fac (Y fac) 2)}
+
+\hspace{2.5cm}\texttt{= 3 $\times$ (($\lambda$m -> ($\lambda$n -> (if n = 0 then 1 else n $\times$ (m (n - 1))))) (Y fac) 2)}
+
+\hspace{2.5cm}\texttt{= 3 $\times$ ((if 2 = 0 then 1 else 2 $\times$ ((Y fac) (2 - 1))))}
+
+\hspace{2.5cm}\texttt{= 3 $\times$ (2 $\times$ ((Y fac) 1))}
+
+\hspace{2.5cm}\texttt{= 3 $\times$ (2 $\times$ (fac (Y fac) 1))}
+
+\hspace{2.5cm}\texttt{= 3 $\times$ (2 $\times$ (($\lambda$m -> ($\lambda$n -> (if n = 0 then 1 else n $\times$ (m (n - 1))))) (Y fac) 1))}
+
+\hspace{2.5cm}\texttt{= 3 $\times$ (2 $\times$ (if 1 = 0 then 1 else 1 $\times$ ((Y fac) (1 - 1))))}
+
+\hspace{2.5cm}\texttt{= 3 $\times$ (2 $\times$ (1 $\times$ ((Y fac) 0))}
+
+\hspace{2.5cm}\texttt{= 3 $\times$ (2 $\times$ (1 $\times$ (fac (Y fac) 0))}
+
+\hspace{2.5cm}\texttt{= 3 $\times$ (2 $\times$ (1 $\times$ (($\lambda$m -> ($\lambda$n -> (if n = 0 then 1 else n $\times$ (m (n - 1)))))(Y fac) 0))}
+
+\hspace{2.5cm}\texttt{= 3 $\times$ (2 $\times$ (1 $\times$ (if 0 = 0 then 1 else 0 $\times$ ((Y fac) (0 - 1)))))}
+
+\hspace{2.5cm}\texttt{= 3 $\times$ (2 $\times$ (1 $\times$ 1)) = 6}
+\normalsize
+
+The first equality followed from the fixed point property defined in the previous block of code
+
+\subsection{Tasks}
+
+My ultimate task was to create a lambda parser and evaluator in Haskell. To
+do this, I first read """""""""""' and completed all exercises.  The
+content of the material was similar to the content presented here in the
+previous sections. Many exercises were detailed and required $\beta$
+reduction to be completed by hand. Following, I created a lambda parser and
+evaluator using both normal order and applicative order evaluation. In
+order to complete the variable substitution with new variables, it was
+necessary to provide a fresh variable supply. The first implementation
+involved creating an infinite list of variables, exploiting Haskell's lazy
+evaluation. This list could be split in half when a substitution needed to
+be made in a combined expression (case d) in definition 4. The easiest way
+to split the list in half was to create two new lists by appending every
+other element to the end of each list. Since only finitely many fresh
+variables were needed, starting with an infinite list of fresh variables
+was sufficient. The second implementation was to thread the variables
+through the program. After a expression was reduced, the fresh variable
+supply was passed to inner expressions to complete any reductions. Once all
+inner expressions were reduced, the remaining fresh variable supply was
+passed to another expression until the entire expression was in normal
+form. This method is displayed in appendix .... After creating the parser
+and evaluator, I constructed the nonnegative integers, arithmetic
+expressions, logical operators, and list operations. The final exercise was
+to code enough functions to parse and evaluate the factorial function in
+lambda calculus, as shown above.
+
+\section{Compiler}
+
+The final chapter in my internship was to make contributions to a
+variable-strictness, pure functional, autoparallelizing programming language
+compiler and runtime system in the language STG. Variable-strictness means
+evaluating a parse tree from leaves to root. The opposite, non-strict evaluation or
+evaluating child nodes as needed, is often too costly to provide any benefit. As
+stated previously, being pure allows one to neglect side-effects and any unspecified behavior. The motivation for this new language is due
+to the fact that there have been continual advances in computing power but
+less so in software development. Davis$^2$  states that the new compiler will ``enable both explicit
+parallelism and automatic paralleliztion, including speculative execution, and
+the handling of run-time faults in a more efficient way than whole application
+checkpoint/restart.'' During my last few weeks, I coded both compiler tests and also a compiler pass that checks for illegal instances of duplicate names.
+
+\subsection{Tasks}
+
+The compiler is much too large to check its logic after each change in
+code. Consequently, it is necessary to implement a method to check the
+validity of updates to the compiler that is fast and reliable. The method employed was to create a test suite for the compiler; however, the test suite was deficient
+in number and quality of tests at the time I began the internship. My first task was to write tests in STG using
+exercises from the book \textit{Algorithms} by Sedgewick and Wayne.$^6$ This was a shrewed plan by my advisor, Kei Davis, as I learned some of the most important
+concepts of computer science while making improvements to the project. The
+tests were formatted such that their main expressions would evaluate to
+true. Therefore, the compiler passed a test if it evaluates the main
+expression in the test to be true. An example is of the test \texttt{or} is shown below.
+
+\hspace{3cm}\begin{verbbox}
+--or :: Bool -> Bool -> Bool
+or = FUN(x y -> case x of {
+                         True -> case y of {
+	                	      True -> true;
+				      False -> true};
+                         False -> case y of {
+			      	      True -> true;
+				      False -> false}});
+
+--Test
+main = THUNK(or true false);
+\end{verbbox}
+\theverbbox
+
+The new tests suite indeed boasts speed and reliability. The sheer number of
+tests, currently over 1000, increases the likelihood that a bug will be caught
+if it exists. The complexity of my tests, such as implementations of mergesort
+and heapsort, test a variety of cases for errors. Despite the number and
+complexity of tests, the compiler currently runs all tests within a modest 30
+seconds through parallelization. The new tests have indeed caught a number of
+bugs. Some have been small oversights in the logic of the code that were quick
+fixes, while others were more deeply nested and required a more thorough
+investigation of the logic to correct.
+
+While creating tests, I sometimes duplicated the names of functions between a
+test file and the prelude. These errors are easy to determine with a correct
+error message, but such a message had not been implemented yet. To combat this, I undertook
+the task of creating error messages that checked for illegal instances of
+duplicate names. The names can be of functions, function arguments, variables,
+data types, and data constructors. The error message below indicates a duplication of function argument names.
+
+\hspace{1cm}\begin{verbbox}
+add = FUN(x x -> plusInt x x);
+
+*** Exception:  variable x duplicated 2 times in location: toplevel.add. -- 
+\end{verbbox}
+\theverbbox
+
+These error messages have expedited the debugging process in a number
+of situations, normlly for duplicate names but occasionally for missing
+brackets and semicolons. This is a lasting contribution to the compiler,
+incorporating a substantial amount of previous knowledge gained from the
+earlier months of the internship.
+
+\section{Extra: Grundy Graph Colorings}
+
+Although the majority of my waking hours in Los Alamos, New Mexico were spent
+at Los Alamos National Laboratory, I had enough spare time to embark on
+projects of my own. One such project was to submit my paper, ``Edge Grundy numbers of $P_3 \Box P_n$ and $P_3 \Box C_n$,'' for
+publication.$^1$ This paper filled a difficult gap in one of my previous submitted papers,
+and time was of the essence: my graduate school applications were due
+soon. The problem was to determine the edge Grundy number of $P_3 \Box P_n$ for $n \in \{5,6,7\}$ and $P_3 \Box C_n$ for $n \in \{4,5,6\}$. A graph coloring is \emph{Grundy} if it is a proper coloring with the positive integers such that if $v \in V(G)$ is colored with $c>1$, then all colors $1, \ldots, c-1$ appear on neighbors of $v$.
+
+In spring 2015, I coded a Java program that answered the question; however, the program was much too verbose to display in a
+publication. Under the knowledge that Haskell is concise, I decided to recode
+the program in Haskell to test this assertion. The results were remarkable: the
+text of the program fit in three pages under the standard font size. A second and
+more important advantage to rewriting the code in Haskell was the ease of
+citing the program's logic. Since functions are the building blocks of
+functional languages, I could just cite functions that perform checks and
+iterate through properties of data. Necessary checks include the proper and
+Grundy conditions, and iterations include coloring a vertex all possible
+colors. Due to the high-order nature of Haskell, I assembled a few specific
+functions that completed each of these tasks. I proved that the program was correct by using mathematical induction and simply citing these
+functions from my code - a far cry from the capabilities of imperative
+languages! This paper was accepted to the \emph{International Journal of Mathematics and Computer Science} in November 2015.$^1$
+\begin{center}
+ACKNOWLEDGMENTS
+\end{center}
+
+This work was supported in part by the U.S. Department of Energy, Office of
+Science, Office of Workforce Development for Teachers and Scientists (WDTS)
+under the Science Undergraduate Laboratory Internships Program (SULI). The
+author first thanks Dr. Kei Davis for his outstanding mentorship throughout
+the course of his internship and also Dean Prichard for helpful advice. He thanks
+both Los Alamos National Laboratory for hosting the SULI program and also the SULI
+program itself for its funding. He thanks Los Alamos National Laboratory for the additional funding provided through the Laboratory Directed Research and Development LDRD 20150485ER. 
+%-------------------------------------------------------BEGIN APPENDIX------------------------------------------------------------------------------------------
+\section{Appendix}
+
+\subsection{Arithmetic Parser and Evaluator}
+
+The following is Haskell code for an arithmetic expression parser and evaluator. 
+
+\begin{verbatim}
+import Data.Char
+type Parser a b = [a] -> [(b,[a])]
+
+succeed :: b -> Parser a b
+succeed v inp = [(v, inp)]
+
+failed :: Parser a b
+failed inp = []
+
+satisfy :: (Char -> Bool) -> Parser Char Char
+satisfy p []     = fail []
+satisfy p (x:xs) | p x       = succeed x xs
+                 | otherwise = fail xs
+
+literal :: Char -> Parser Char Char
+literal x = satisfy (==x)
+
+cons :: (a,[a]) -> [a]
+cons (x,xs) = x:xs
+
+alt :: Parser a b -> Parser a b -> Parser a b
+(p1 `alt` p2) inp = p1 inp ++ p2 inp
+
+thens :: Parser a b -> Parser a c -> Parser a (b,c)
+(p1 `thens` p2) inp = [((v1, v2), out2) | (v1, out1) <- 
+    p1 inp, (v2,out2) <- p2 out1]  
+
+xthen :: Parser a b -> Parser a c -> Parser a c
+(p1 `xthen` p2) inp = ((p1 `thens` p2) `using` snd) inp
+
+thenx :: Parser a b -> Parser a c -> Parser a b
+(p1 `thenx` p2) inp = ((p1 `thens` p2) `using` fst) inp
+
+using :: Parser a b -> (b -> c) -> Parser a c
+(p `using` f) inp = [(f v, out) | (v,out) <- p inp]
+
+many :: Parser a b -> Parser a [b]
+many p = ((p `thens` many p) `using` cons)`alt` (succeed [])
+
+some :: Parser a b -> Parser a [b]
+some p = (p `thens` many p) `using` cons
+
+number :: Parser Char [Char]
+number = some (satisfy isDigit)
+
+negNumber :: Parser Char [Char]
+negNumber (x:xs) | x == '-' = (x:xs,""): (appendMinus(number xs))
+                 | otherwise  = failed xs
+
+appendMinus :: [([Char],[Char])] -> [([Char],[Char])]
+appendMinus [] = []
+appendMinus (x:xs) = (fst(x),'-':snd(x)):(appendMinus xs)
+
+digit :: Parser Char Char
+digit = satisfy isDigit
+
+int :: Parser Char [Char]
+int = number `alt` negNumber
+
+
+optMinus :: Parser Char [Char]
+optMinus (x:xs) | x == '-' = [("-",xs)]
+           | otherwise = [("",(x:xs))]
+
+concatPair :: [(([Char],[Char]),[Char])] -> [([Char],[Char])]
+concatPair [] = []
+concatPair (x:xs) = (fst(fst(x)) ++ snd(fst(x)),snd(x)):(concatPair xs)
+
+opt :: Char -> Parser Char [Char]
+opt c (x:xs) | x == c = [([c],xs)]
+             | otherwise = [("", (x:xs))]
+
+int2 :: Parser Char [Char]
+int2 (x:xs) = concatPair (((opt '-') `thens` int) (x:xs))
+
+
+data Expr = Add Term Term | Sub Term Term | Ter Term deriving (Show, Eq, Ord)
+data Term = Mul Power Power | Div Power Power | Pow Power deriving (Show, Eq, Ord)
+data Power = Po Factor Factor | Fact Factor deriving (Show, Eq, Ord)
+data Factor = Num Int | Exp Expr deriving (Show, Eq, Ord)
+
+expr :: Parser Char Expr
+expr = ((term `thenx` (literal '+') `thens` term) `using` plus) 
+    `alt` ((term `thenx` (literal '-') `thens` term) `using` minus) 
+    `alt` (term `using` Ter) 
+
+term :: Parser Char Term
+term = ((power  `thenx` (literal '*') `thens` power) `using` times) 
+    `alt` ((power  `thenx` (literal '/') `thens` power) `using` divide) 
+    `alt` (power `using` Pow)
+
+power :: Parser Char Power
+power = ((factor `thenx` (literal '^') `thens` factor) `using` exponentiate)
+    `alt` (factor `using` Fact)
+
+factor :: Parser Char Factor
+factor = factorNum `alt` parenExpr
+
+parse :: [Char] -> Expr
+parse = fst . head . expr
+
+factorNum :: Parser Char Factor
+factorNum = number `using` value
+
+parenExpr :: Parser Char Factor
+parenExpr = ((literal '(') `xthen` expr `thenx` (literal ')')) `using` Exp
+
+value :: String -> Factor
+value = Num . read
+
+plus :: (Term,Term) -> Expr
+plus (x,y) = Add x y
+
+minus :: (Term,Term) -> Expr
+minus (x,y) = Sub x y
+
+times :: (Power,Power) -> Term
+times (x,y) = Mul x y
+
+divide :: (Power,Power) -> Term
+divide (x,y) = Div x y
+
+exponentiate :: (Factor,Factor) -> Power
+exponentiate (x,y) = Po x y
+
+evaluate :: Expr -> Int
+evaluate (Add x y) = (evaluate1 x) + (evaluate1 y)
+evaluate (Sub x y) = (evaluate1 x) - (evaluate1 y)
+evaluate (Ter x) = (evaluate1 x)
+
+evaluate1 :: Term -> Int
+evaluate1 (Mul x y) = (evaluate2 x) * (evaluate2 y)
+evaluate1 (Div x y) = (evaluate2 x) `div` (evaluate2 y)
+evaluate1 (Pow x) = (evaluate2 x)
+
+evaluate2 :: Power -> Int
+evaluate2 (Po x y) = (evaluate3 x) ^ (evaluate3 y)
+evaluate2 (Fact x) = (evaluate3 x)
+
+evaluate3 :: Factor -> Int
+evaluate3 (Num x) = x
+evaluate3 (Exp x) = evaluate x
+
+evaluator :: [Char] -> Int
+evaluator xs = evaluate (parse xs)
+
+\end{verbatim}
+
+\subsection{Reverse Polish Notation Parser and Evaluator}
+
+The following is Haskell code for a reverse Polish notation expression parser and evaluator. It is necessary to implement the code from appendix 7.1 along with the below code.
+
+\begin{verbatim}
+data RPN = SPush Int | SAdd | SSub | SMul | SDiv | SPow deriving (Show)
+
+toRPN :: [Char] -> [RPN]
+toRPN xs = toRPN1 (parse xs)
+
+toRPN1 :: Expr -> [RPN]
+toRPN1 (Add x y) = (toRPN2 x) ++ (toRPN2 y) ++ [SAdd]
+toRPN1 (Sub x y) = (toRPN2 x) ++ (toRPN2 y) ++ [SSub]
+toRPN1 (Ter x) = (toRPN2 x)
+
+toRPN2 :: Term -> [RPN]
+toRPN2 (Mul x y) = (toRPN3 x) ++ (toRPN3 y) ++ [SMul]
+toRPN2 (Div x y) = (toRPN3 x) ++ (toRPN3 y) ++ [SDiv]
+toRPN2 (Pow x) = (toRPN3 x)
+
+toRPN3 :: Power -> [RPN]
+toRPN3 (Po x y) = (toRPN4 x) ++ (toRPN4 y) ++ [SPow]
+toRPN3 (Fact x) = (toRPN4 x)
+
+toRPN4 :: Factor -> [RPN]
+toRPN4 (Num x) = [SPush x]
+toRPN4 (Exp x) = toRPN1 x
+
+terp1 :: [Int]-> [RPN] -> Int
+terp1 [x] [] = x
+terp1 xs ((SPush z):ys) = terp1 (z:xs) ys
+terp1 (x1:x2:xs) ((SAdd):ys) = terp1 ((x2+x1):xs) ys
+terp1 (x1:x2:xs) ((SSub):ys) = terp1 ((x2-x1):xs) ys
+terp1 (x1:x2:xs) ((SMul):ys) = terp1 ((x2*x1):xs) ys
+terp1 (x1:x2:xs) ((SDiv):ys) = terp1 ((x2`div`x1):xs) ys
+terp1 (x1:x2:xs) ((SPow):ys) = terp1 (((x2)^(x1)):xs) ys
+
+final :: [Char] -> Int
+final xs = terp1 [] (toRPN xs)
+\end{verbatim}
+
+\subsection{Lambda Calculus Parser and Evaluator}
+
+The following is Haskell code for a lambda calculus lexer, parser, and evaluator using variable threading under both applicative and also normal evaluation. 
+
+\begin{verbatim}
+
+import Data.List
+import Data.Char
+
+type Parser a b = a -> [(b,a)]
+
+succeed :: b -> Parser a b
+succeed v inp = [(v, inp)]
+
+failed :: Parser a b
+failed inp = []
+
+satisfy :: (Char -> Bool) -> Parser [Char] Char
+satisfy p []     = fail []
+satisfy p (x:xs) | p x       = succeed x xs
+                 | otherwise = fail xs
+
+literal :: Char -> Parser [Char] Char
+literal x = satisfy (==x)
+
+alt :: Parser a b -> Parser a b -> Parser a b
+(p1 `alt` p2) inp = p1 inp ++ p2 inp
+
+thens :: Parser a b -> Parser a c -> Parser a (b,c)
+(p1 `thens` p2) inp = [((v1, v2), out2) | (v1, out1) <-
+     p1 inp, (v2,out2) <- p2 out1]  
+
+xthen :: Parser a b -> Parser a c -> Parser a c
+(p1 `xthen` p2) inp = ((p1 `thens` p2) `using` snd) inp
+
+thenx :: Parser a b -> Parser a c -> Parser a b
+(p1 `thenx` p2) inp = ((p1 `thens` p2) `using` fst) inp
+
+using :: Parser a b -> (b -> c) -> Parser a c
+(p `using` f) inp = [(f v, out) | (v,out) <- p inp]
+
+cons :: (a,[a]) -> [a]
+cons (x,xs) = x:xs
+
+many :: Parser a b -> Parser a [b]
+many p = ((p `thens` many p) `using` cons)`alt` (succeed [])
+
+some :: Parser a b -> Parser a [b]
+some p = (p `thens` many p) `using` cons
+
+number :: Parser [Char] [Char]
+number = some (satisfy isDigit)
+
+word :: Parser [Char] [Char]
+word = some (satisfy isAlpha)
+
+space :: Parser [Char] Char
+space = literal ' '
+
+tab :: Parser [Char] Char
+tab = literal '\t' 
+
+newLine :: Parser [Char] Char
+newLine = literal '\n'
+
+whitespace :: Parser [Char] Char
+whitespace = space `alt` tab `alt` newLine 
+
+whitespaces :: Parser [Char] [Char]
+whitespaces = many whitespace 
+
+satisfy1 :: (String -> Bool) -> Parser [String] String
+satisfy1 p []     = failed []
+satisfy1 p (x:xs) | p x       = succeed x xs
+                  | otherwise = failed xs
+
+literal1 :: String -> Parser [String] String
+literal1 x = satisfy1 (==x)
+
+lexer :: String -> [String]
+lexer [] = []
+lexer (x:xs) | x == '\n' = lexer(snd(head(whitespace (x:xs))))
+             | x == '\t' = lexer(snd(head(whitespace (x:xs))))
+             | x == ' ' = lexer(snd(head(whitespace (x:xs))))
+             | x == '\\' = "\\":(lexer xs)
+             | x == '(' = "(":(lexer xs)
+             | x == ')' = ")":(lexer xs)
+             | isDigit x = (fst(ys)):lexer(snd(ys))
+             | isAlpha x = (fst(zs)):lexer(snd(zs))
+               where ys = head(number(x:xs))
+                     zs = head(word(x:xs))
+
+data Expr = Var String 
+          | Abs Expr Expr 
+          | Comb Expr Expr  deriving (Eq, Read)
+
+instance Show Expr where
+    show (Var v) = v
+    show (Abs e1 e2) = "(\\" ++ show e1 ++ "." ++ show e2 ++ ")"
+    show (Comb e1 e2) = show e1 ++ " " ++ show e2
+
+parse :: String -> Expr
+parse = fst.head.lexpr.lexer
+
+combing :: Expr -> Expr -> Expr
+combing x y = Comb x y
+
+lexpr :: Parser [String] Expr
+lexpr = (some expr) `using` (foldl1 combing)
+
+expr :: Parser [String] Expr
+expr = var `alt` lambda `alt` parenExpr
+
+var :: Parser [String] Expr
+var = alphaNums `using` Var
+
+lambda :: Parser [String] Expr
+lambda = ((literal1 "\\") `thens` var `thens` lexpr) `using` lambdaing
+
+lambdaing :: ((String,Expr),Expr) -> Expr
+lambdaing ((x,y),z) = Abs y z
+
+parenExpr :: Parser [String] Expr
+parenExpr = ((literal1 "(") `xthen` lexpr  `thenx` (literal1 ")")) 
+
+alphaNums :: Parser [String] String
+alphaNums [] = []
+alphaNums (x:xs) | (isAlpha (head x) && wordt x)= succeed x xs
+                 | otherwise = failed xs
+
+wordt :: String -> Bool
+wordt [] = True
+wordt (x:xs) = if ((isAlpha x) || (isDigit x)) then wordt xs else False
+
+freeVars :: Expr -> [String]
+freeVars (Var x) = [x]
+freeVars (Comb x y) = (freeVars x)++(freeVars y)
+freeVars (Abs x y) = setDiff (freeVars x) (freeVars y) []
+
+setDiff :: [String] -> [String] -> [String] -> [String]
+setDiff [] ys _ = ys
+setDiff (x:xs) [] zs = setDiff xs zs []
+setDiff (x:xs) (y:ys) zs = if x == y then setDiff (x:xs) ys zs else 
+    setDiff (x:xs) ys (y:zs)
+
+betaReduce1 :: [String] -> Expr -> Expr -> Expr -> ([String],Expr)
+betaReduce1 xs (Var a) (Var b) c = if a == b then (xs,c) else (xs,(Var a))
+betaReduce1 xs (Comb a b) c d = reduction1 xs (Comb a b) c d
+betaReduce1 xs (Abs (Var a) b) (Var c) d | a == c = (xs,(Abs (Var a) b))
+                                         | (a /= c) && (not (a `elem` 
+    (freeVars d))) = reduction2 xs (Abs (Var a) b) (Var c) d
+                                         | otherwise = reduction3 xs 
+    (Abs (Var a) b) (Var c) d
+                                          
+reduction1 :: [String] -> Expr -> Expr -> Expr -> ([String],Expr)
+reduction1 xs (Comb a b) c d = (fst z,(Comb (snd y) (snd z)))
+                               where y = betaReduce1 xs a c d
+                                     z = (betaReduce1 (fst y) b c d)
+reduction1 _ _ _ _ = error "Here 1"
+
+reduction2 :: [String] -> Expr -> Expr -> Expr -> ([String],Expr)
+reduction2 xs (Abs (Var a) b) (Var c) d = (fst y, Abs (Var a) (snd y))
+                                          where y = (betaReduce1 xs
+     b (Var c) d)
+reduction2 _ _ _ _ = error "Here 2"
+
+reduction3 :: [String] -> Expr -> Expr -> Expr -> ([String],Expr)
+reduction3 xs (Abs (Var a) b) (Var c) d = 
+    (fst v, Abs (Var (fst r)) (snd v))
+     where r = nextFree xs (Abs (Var a) b) d
+           t = (betaReduce1 (snd r) b  (Var a) (Var (fst r)))
+           v = (betaReduce1 (fst t) (snd t) (Var c) d)
+reduction3 _ _ _ _ = error "Here 3"
+
+nextFree :: [String] -> Expr -> Expr -> (String,[String])
+nextFree [] _ _ = error "ran out"
+nextFree (x:xs) y z | x `elem` (freeVars y)++(freeVars z) =
+     nextFree xs y z
+                    | otherwise = (x,xs)
+
+fvs :: [String]
+fvs = ['v' : show i| i<- [0..]]
+
+oneSplit :: [String] -> [String]
+oneSplit (x:y:xs) = x:(oneSplit(xs))
+
+twoSplit :: [String] -> [String]
+twoSplit (x:y:xs) = y:(twoSplit(xs))
+
+nor e = putStrLn $ intercalate "\n" $ map show $ startEvalNormOrder e
+nor2 e = last (startEvalNormOrder e)
+nor3 e = startLambToInt (nor2 e) 
+
+startEvalNormOrder :: Expr -> [Expr]
+startEvalNormOrder expression = expression:(evaluateNormalOrder 
+    (fvs,expression))
+
+evaluateNormalOrder :: ([String],Expr) -> [Expr] 
+evaluateNormalOrder (xs,expression) = case theEval (xs,expression) of
+                                              Just a -> (snd a):
+    (evaluateNormalOrder (fst a, snd a))
+                                              Nothing -> []
+
+normEval :: ([String],Expr) -> ([String],Expr)
+normEval (ws,(Var x)) = (ws,(Var x))
+normEval (ws,(Comb (Abs (Var x) y) z)) = (betaReduce1 ws y (Var x) z)
+normEval (ws,(Abs x y)) = (t1,(Abs x t2))
+                          where (t1,t2) = (normEval (ws,y))
+normEval (ws,(Comb x y)) | (checkEval x) = (s1, Comb s2 y)
+                         | (checkEval y) = (t1, Comb x t2)             
+                         | otherwise = (ws,(Comb x y))
+                                       where (s1,s2) = normEval (ws, x)
+                                             (t1,t2) = normEval (ws, y)
+theEval :: ([String],Expr) -> Maybe ([String],Expr) 
+theEval (xs,expression) | checkEval expression = Just (normEval 
+    (xs,expression))
+                        | otherwise = Nothing
+
+checkEval :: Expr -> Bool
+checkEval (Var x) = False
+checkEval (Comb (Abs (Var x) y) z) = True
+checkEval (Abs x y) = checkEval y
+checkEval (Comb x y) = (checkEval x) || (checkEval y)
+
+nor1 e = putStrLn $ intercalate "\n" $ map show $ startEvalAppOrder e
+
+startEvalAppOrder :: Expr -> [Expr]
+startEvalAppOrder expression = expression:(evaluateApplicativeOrder 
+    (fvs,expression))
+
+evaluateApplicativeOrder :: ([String],Expr) -> [Expr]
+evaluateApplicativeOrder (xs,expression) = 
+    case anEval (xs,expression) of
+                                             Just a -> 
+    (snd a):(evaluateApplicativeOrder (fst a, snd a))
+                                             Nothing -> []
+
+anEval :: ([String],Expr) -> Maybe ([String],Expr) 
+anEval (xs,expression) | checkEval expression = 
+    Just (appEval (xs,expression))
+                       | otherwise = Nothing
+
+appEval :: ([String],Expr) -> ([String],Expr) 
+appEval (ws,(Var x)) = (ws,(Var x)) 
+appEval (ws,(Comb (Abs (Var x) y) z)) | y /= (snd (appEval (ws,y))) 
+    = (s1, Comb (Abs (Var x) s2) z)
+                                      | z /= (snd (appEval (ws,z))) 
+    = (t1, Comb (Abs (Var x) y) t2)
+                                      | otherwise =
+    (betaReduce1 ws y (Var x) z)    
+     where (s1,s2) = appEval (ws, y)
+     (t1,t2) = appEval (ws, z)
+appEval (ws,(Abs x y)) = (t1,(Abs x t2))
+                         where (t1,t2) = (appEval (ws,y))
+appEval (ws,(Comb x y)) | Comb (snd (appEval (ws, x))) y /=  (Comb x y) 
+    = (s1, Comb s2 y)
+                        | Comb x (snd (appEval (ws, y))) /= (Comb x y) 
+    = (t1, Comb x t2)             
+                        | otherwise = (ws,(Comb x y))
+                                      where (s1,s2) = appEval (ws, x)
+                                            (t1,t2) = appEval (ws, y)
+
+identity = "(\\x x)"
+
+zero = "(\\f \\x x)"
+ones = "(\\f \\x f x)"
+twos = "(\\f \\x f(f x))"
+threes = "(\\f \\x f(f(f x)))"
+fours = "(\\f \\x f(f(f(f x))))"
+fives = "(\\f \\x f(f(f(f(f x)))))"
+
+true1 = "(\\x \\y x)"
+false1 = "(\\x \\y y)"
+and1 = "(\\p \\q p q p)"
+or1 = "(\\p \\q p p q)"
+not1 = "(\\p \\a \\b p b a)"
+ifThenElse = "(\\p \\a \\b p a b)"
+isZero = "(\\n n (\\x (\\x \\y y)) (\\x \\y x))"
+
+succ1  = "(\\n \\f \\x f (n f x))"
+add1 = "(\\m (\\n (\\f (\\x m f (n f x)))))"
+mult = "(\\g (\\h (\\i (g (h i)))))"
+pow = "(\\m (\\e e m))"
+pred1 = "(\\n (\\f (\\x n (\\g  (\\h h (g f))) (\\u x) (\\u u))))"
+sub1 = "(\\m (\\n n " ++ pred1 ++ " m ) )"
+
+startIntToLamb :: (Eq a, Num a) => a -> [Char]
+startIntToLamb n = "(\\f (\\ x (" ++ (intToLamb n) ++ ")))"
+intToLamb 0 = " x"
+intToLamb n = " ( f " ++ (intToLamb (n-1)) ++ " ) " 
+
+startLambToInt :: Expr -> Int
+startLambToInt (Abs x (Abs y z)) = lambToInt z
+lambToInt (Var x) = 0
+lambToInt (Comb x (Comb y z)) = 1  + lambToInt (Comb y z)
+lambToInt (Comb (Var x) (Var y)) = 1
+
+safeSub = "(\\t ( " ++ ifThenElse ++ "( " ++ isZero ++ " t ))" ++
+     "( "++ identity ++ " t ) " ++ "( "++ sub1 ++ " t " ++ ones ++ " )) "
+
+fix = "(\\g (\\x g (x x)) (\\x g (x x)))"
+
+g = "(\\r (\\n (" ++ ifThenElse ++ "( " ++ isZero ++ " n ))" ++
+     "( " ++ ones ++ ")" ++ "( " ++ mult ++ "(n)" ++ "( r (" ++ 
+     sub1 ++ "(n)" ++ ones ++ ")))))"
+
+fac0 = nor $ parse (fix ++ g ++ zero)
+fac1 = nor $ parse (fix ++ g ++ ones)
+fac2 = nor $ parse (fix ++ g ++ twos)
+fac3 = nor $ parse (fix ++ g ++ threes)
+fac4 = nor $ parse (fix ++ g ++ fours)
+fac5 = nor $ parse (fix ++ g ++ fives)
+
+pair = "(\\x (\\y (\\f f x y)))"
+first = "((\\p p)" ++ true1 ++ ")"
+second = "((\\p p)" ++ false1 ++ ")" 
+nil1 = "(\\x " ++ true1 ++ ")"
+null1 = "(\\p p (\\x (\\y " ++ false1 ++ ")))"
+
+single = "(" ++ pair ++ " (first)" ++ nil1 ++ ")"
+double = "(" ++ pair ++ " (first) " ++ "(" ++ pair ++ "(second )" 
+    ++  nil1 ++ "))"
+triple = "(" ++ pair ++ " (first) " ++ "(" ++ pair ++ "(second )" 
+    ++ "( " ++ pair ++ "(third)" ++ nil1 ++ ")))"
+singles = "(" ++ pair ++ twos ++ nil1 ++ ")"
+singles1 = "(" ++ pair ++ zero ++ nil1 ++ ")"
+doubles = "(" ++ pair ++ ones ++ "(" ++ pair ++ twos ++ nil1 ++ "))" 
+triples = "(" ++ pair ++ twos ++ "(" ++ pair ++ threes ++ "(" ++ pair
+     ++ ones ++ nil1 ++ ")))"
+
+\end{verbatim}
+
+%-------------------------------------------------------BEGIN BIBLIOGRAPHY---------------------------------------------------------------------------------------
+\begin{thebibliography}{99}
+\bibitem{Z} L. Anderson, ``Edge Grundy numbers of $P_3 \Box P_n$ and $P_3 \Box C_n$,'' Accepted to Int.\ J.\ Math.\ Comput.\ Sci.\
+\bibitem{Y} K. Davis, ``Enabling automatic parallelization and transparent fault tolerance,'' LANL Laboratory Directed Research and Development proposal LDRD 20150485ER.
+\bibitem{X} G. Hutton, ``Higher-order functions for parsing,'' J.\ Funct.\ Program.\ 2.3, 323-343 (1992).
+\bibitem{W} G. Hutton, \textit{Programming in Haskell}. (Cambridge University Press, Cambridge, ENG, 2011). 
+\bibitem{V} B. Kurtz and K. Slonneger, \textit{Formal Syntax and Semantics of Programming Languages}. (Addison-Wesley, Reading, MA, 1995).
+\bibitem{U} R. Sedgewick and K. Wayne, \textit{Algorithms}, 4th ed. (Addison-Wesley, Upper Saddle River, NJ, 2011).
+
+
+\end{thebibliography}
+
+\end{document}
+%-------------------------------------------------------END DOCUMENT---------------------------------------------------------------------------------------------
+
