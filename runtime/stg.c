@@ -185,7 +185,7 @@ Obj* stgNewHeapPAPmask(InfoTab *itp, Bitmap64 bm) {
   objp->payload[fvs].b = bm;
   strcpy(objp->ident, itp->name);  // may be overwritten
   objp->_infoPtr = itp;
-//  objp->infoPtr = setLSB2(itp); // set InfoPtr bit to say this is a PAP
+  objp->_infoPtr = setLSB2(itp); // set InfoPtr bit to say this is a PAP
 #if USE_OBJTYPE
   objp->objType = PAP;
 #endif

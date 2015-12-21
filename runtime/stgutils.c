@@ -196,7 +196,7 @@ void stgThunk(PtrOrLiteral self) {
 #if USE_OBJTYPE
   self.op->objType = BLACKHOLE;
 #endif
-  //  self.op->infoPtr = setLSB2(self.op->infoPtr); // this is a Blackhole
+  self.op->_infoPtr = setLSB2(self.op->_infoPtr); // this is a Blackhole
   assert(getObjType(self.op) == BLACKHOLE);
 }
 

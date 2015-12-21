@@ -294,11 +294,37 @@ static inline ObjType getObjType(Obj *p) {
   assert(!isLSBset(p->_infoPtr) && "getObjType on forwarding node");
 
   InfoTab *ip = getInfoPtr(p);
-  ObjType iobjType = ip->objType;
+
+  ObjType iobjType; 
+  switch (ip->objType) {
+  case FUN:
+    iobjType = isLSB2set(p->_infoPtr) ? PAP : FUN;
+    break;
+  case PAP:
+    iobjType = PAP;
+    break;
+  case CON:
+    iobjType = CON;
+    break;
+  case THUNK:
+    iobjType = isLSB2set(p->_infoPtr) ? BLACKHOLE : THUNK;
+    break;
+  case BLACKHOLE:
+    iobjType = BLACKHOLE;
+    break;
+  case INDIRECT:
+    iobjType = INDIRECT;
+    break;
+  default:
+    assert(false && "bad objType");
+    break;
+  }
+    
 
 #if USE_OBJTYPE
   ObjType objType = p->objType;
-  bool okay;
+  bool okay = objType == iobjType;
+  /*
   switch(objType) {
   case FUN:
     okay = (iobjType == FUN);
@@ -322,6 +348,7 @@ static inline ObjType getObjType(Obj *p) {
     assert(false && "bad objType");
     break;
   }
+  */
   if (!okay) {
     fprintf(stderr, "getting ObjType of %s aka %s, p->objType = %d, getInfoPtr(p)->objType = %d\n",
 	    p->ident, ip->name, 
