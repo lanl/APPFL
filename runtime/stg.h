@@ -301,7 +301,7 @@ static inline ObjType getObjType(Obj *p) {
 	    p->ident, ip->name, 
 	    objTypeNames[objType],
 	    objTypeNames[iobjType]);
-    //    assert(false);
+    //     assert(false);
   }
 
   /*
