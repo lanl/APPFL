@@ -125,7 +125,7 @@ extern PtrOrLiteral stgCurVal;  // current/return value
 */
 
 struct _Obj {
-  InfoTab *infoPtr;         // canonical location of infoPtr--first word
+  InfoTab *_infoPtr;         // canonical location of infoPtr--first word
 #if USE_OBJTYPE
   ObjType objType;          // to distinguish PAP, FUN, BLACKHOLE, INDIRECT
 #endif
@@ -247,19 +247,19 @@ extern bool isUnboxed(PtrOrLiteral f);
 
 
 static inline InfoTab *getInfoPtr(Obj *p)  { 
-  return (InfoTab *)((((uintptr_t)(p->infoPtr)) >> 3) << 3); 
+  return (InfoTab *)((((uintptr_t)(p->_infoPtr)) >> 3) << 3); 
 }
 
 static inline CInfoTab *getCInfoPtr(Cont *p)  { return p->cInfoPtr; }
+  /*
+static inline InfoTab *setLSB2(InfoTab *ptr) { 
+  return (InfoTab*)((uintptr_t)ptr | 2);
+}
 
-//static inline InfoTab *setLSB2(InfoTab *ptr) { 
-//  return (InfoTab*)((uintptr_t)ptr | 2);
-//}
-
-//static inline bool isLSB2set(InfoTab *ptr) { 
-//  return (bool)((uintptr_t)ptr & 2); 
-//}
-
+static inline bool isLSB2set(InfoTab *ptr) { 
+  return (bool)((uintptr_t)ptr & 2); 
+}
+  */
 // for indirect
 //static inline InfoTab *setLSB3(InfoTab *ptr) { 
 //  return (InfoTab *)((uintptr_t)ptr | 4);
@@ -268,9 +268,43 @@ static inline CInfoTab *getCInfoPtr(Cont *p)  { return p->cInfoPtr; }
 
 
 static inline ObjType getObjType(Obj *p) {
-  ObjType objType;
-  /*
+  ObjType objType, iobjType;
   InfoTab *ip = getInfoPtr(p);
+  bool okay;
+  iobjType = ip->objType;
+  objType = p->objType;
+  switch(objType) {
+  case FUN:
+    okay = (iobjType == FUN);
+    break;
+  case PAP:
+    okay = (iobjType == FUN);
+    break;
+  case CON:
+    okay = (iobjType == CON);
+    break;
+  case THUNK:
+    okay = (iobjType == THUNK);
+    break;
+  case BLACKHOLE:
+    okay = (iobjType == THUNK);
+    break;
+  case INDIRECT:
+    okay = (iobjType == INDIRECT);
+    break;
+  default:
+    assert(false && "bad objType");
+    break;
+  }
+  if (!okay) {
+    fprintf(stderr, "getting ObjType of %s aka %s, p->objType = %s, getInfoPtr(p)->objType = %s\n",
+	    p->ident, ip->name, 
+	    objTypeNames[objType],
+	    objTypeNames[iobjType]);
+    //    assert(false);
+  }
+
+  /*
   switch(ip->objType) {
   case FUN:
     objType = (isLSB2set(p->infoPtr) ? PAP : FUN);
@@ -366,9 +400,6 @@ extern void showStgValPretty(PtrOrLiteral v);
 
 
 // return through continuation stack
-
-#define STGRETURN0_old()				\
-  STGJUMP0(getCInfoPtr((Cont *)stgSP)->entryCode)
 
 #define STGRETURN0()			\
   STGJUMP0(((Cont *)stgSP)->entryCode)

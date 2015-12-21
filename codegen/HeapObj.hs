@@ -1,31 +1,3 @@
-{-
-struct _Obj {
-  InfoTab *infoPtr;         // canonical location of ObjType field
-  ObjType objType;          // to distinguish PAP, FUN, BLACKHOLE, INDIRECT
-  char ident[64];           // temporary, just for tracing
-  PtrOrLiteral payload[32]; // fixed for now
-};
-
-(Obj)
-    { .objType = CON,
-      .infoPtr = &it_Left,
-      .payload[0] = (PtrOrLiteral) {.argType = HEAPOBJ, .op = &sho_one}
-    };
-
-Obj sho_main3 =
-  { .objType = THUNK,
-    .infoPtr = &it_main3,
-  };
-
-Obj sho_one =
-  { .objType = CON,
-    .infoPtr = &it_I,
-    .payload[0].argType = INT,
-    .payload[0].i = 1
-  };
-
--}
-
 {-# LANGUAGE CPP #-}
 #include "options.h"
 
@@ -49,15 +21,6 @@ import CAST
 import Text.PrettyPrint(render)
 import Language.C.Pretty
 #endif
-
-
--- // two = CON(I 2)
--- Obj sho_two =
---   { .objType = CON,
---     .infoPtr = &it_I,
---     .payload[0].argType = INT,
---     .payload[0].i = 2
---   };
 
 -- HOs come from InfoTabs
 
@@ -159,7 +122,7 @@ getIT it = it
 
 showHO it =
     "{\n" ++
-    "  .infoPtr   = &it_" ++ name (getIT it) ++ ",\n" ++
+    "  ._infoPtr   = &it_" ++ name (getIT it) ++ ",\n" ++
 #if USE_OBJTYPE
     "  .objType   = " ++ showObjType it      ++ ",\n" ++
 #endif

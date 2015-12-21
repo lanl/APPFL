@@ -52,7 +52,7 @@ Obj sho_stg_case_not_exhaustive = {
 #if USE_OBJTYPE
   .objType = FUN,
 #endif
-  .infoPtr = &it_stg_case_not_exhaustive,
+  ._infoPtr = &it_stg_case_not_exhaustive,
   .ident = "stg_case_not_exhaustive",
 };
 
@@ -132,7 +132,7 @@ DEFUN0(stgUpdateCont) {
 
   // the order of the following two operations is important for concurrency
   p.op->payload[0] = stgCurVal;
-  p.op->infoPtr = &it_stgIndirect;
+  p.op->_infoPtr = &it_stgIndirect;
 #if USE_OBJTYPE
   p.op->objType = INDIRECT;
 #endif

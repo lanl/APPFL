@@ -155,7 +155,7 @@ Obj* stgNewHeapObj(InfoTab *itp) {
   Obj *objp = (Obj *)stgHP;
   stgHP = (char *)stgHP + objSize;
   memset(objp, 0, objSize); //zero out anything left by previous gc passes
-  objp->infoPtr = itp;
+  objp->_infoPtr = itp;
   strcpy(objp->ident, itp->name);  // may be overwritten
 #if USE_OBJTYPE
   fprintf(stderr, "stgNewHeapObj setting %s objType %s\n", 
@@ -167,6 +167,7 @@ Obj* stgNewHeapObj(InfoTab *itp) {
 }
 
 Obj* stgNewHeapPAPmask(InfoTab *itp, Bitmap64 bm) {
+  assert(!(((uintptr_t)itp) & 0x7));
   assert(itp->objType == FUN && "stgNewHeapPAPmask:  itp->objType != FUN" );
   int fvs = itp->layoutInfo.boxedCount + itp->layoutInfo.unboxedCount;
   // assert(itp->fvCount == fvs);      // fvCount going away
@@ -183,7 +184,7 @@ Obj* stgNewHeapPAPmask(InfoTab *itp, Bitmap64 bm) {
 #endif
   objp->payload[fvs].b = bm;
   strcpy(objp->ident, itp->name);  // may be overwritten
-  objp->infoPtr = itp;
+  objp->_infoPtr = itp;
 //  objp->infoPtr = setLSB2(itp); // set InfoPtr bit to say this is a PAP
 #if USE_OBJTYPE
   objp->objType = PAP;

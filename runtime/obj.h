@@ -26,7 +26,7 @@ static inline size_t startCONargsU(Obj *p) { return endCONargsB(p); }
 static inline size_t endCONargsU(Obj *p) { return startCONargsU(p) + getInfoPtr(p)->layoutInfo.unboxedCount; }
 static inline void checkCONargs(Obj *p) {
   assert(
-      !((uintptr_t) p->infoPtr & (uintptr_t) 1)
+      !((uintptr_t) p->_infoPtr & (uintptr_t) 1)
           && "...odd infoPtr checkCONargs");
   assert(
       getInfoPtr(p)->conFields.arity >= 0 && getInfoPtr(p)->conFields.arity <= 10

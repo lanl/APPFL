@@ -47,7 +47,7 @@ Obj *deref1(Obj *op) {
 
 Obj *deref2(Obj *op) {
   while (getObjType(op) == INDIRECT) {
-    if (isLSBset(op->infoPtr)) {
+    if (isLSBset(op->_infoPtr)) {
       // it's not clear to me (yet) whether this can happen
       // apparently it can...serious weird, only when USE_ARGTYPE and
       // USE_OBJTYPE are both turned off
@@ -65,7 +65,7 @@ PtrOrLiteral updatePtrByValue (PtrOrLiteral f) {
 
   if (isFrom(p)) {
     // from space
-    if (isLSBset(p->infoPtr)) {
+    if (isLSBset(p->_infoPtr)) {
       // from space && forwarding
       if (DEBUG) fprintf(stderr, "update forward %s\n", p->ident);
       f.op = (Obj *)getInfoPtr(p);
@@ -88,7 +88,7 @@ PtrOrLiteral updatePtrByValue (PtrOrLiteral f) {
         EXTRAEND();
       }
 
-      p->infoPtr = setLSB((InfoTab *)freePtr);
+      p->_infoPtr = setLSB((InfoTab *)freePtr);
       f.op = (Obj *)freePtr;
 #if USE_ARGTYPE
       f.argType = HEAPOBJ;
@@ -121,38 +121,6 @@ PtrOrLiteral updatePtrByValue (PtrOrLiteral f) {
 void updatePtr(PtrOrLiteral *f) {
   *f = updatePtrByValue(*f);
 }
-
-/*
-void updatePtr(PtrOrLiteral *f) {
-  Obj *p = derefPoL(*f);
-
-  if (isFrom(p)) {
-    if (isLSBset(p->infoPtr)) {
-      if (DEBUG) fprintf(stderr, "update forward %s\n", p->ident);
-      f->op = (Obj *) getInfoPtr(p);
-    } else {
-      int size = getObjSize(p);
-      if (DEBUG) {
-        fprintf(stderr, "copy %s %s from->to size=%d\n", objTypeNames[getObjType(p)], p->ident, size);
-      }
-
-      memcpy(freePtr, p, size);
-      if (EXTRA) assert(isLSBset((uintptr_t)freePtr) == 0 && "gc: bad alignment");
-
-      p->infoPtr = setLSB((uintptr_t)freePtr);
-      f->op = (Obj *) freePtr;
-      freePtr = (char *) freePtr + size;
-    }
-  } else if (isTo(p)) {
-    // do nothing
-  } else { // SHO
-    if (isFrom(f->op) && getObjType(f->op) == INDIRECT) {
-        if (DEBUG) fprintf(stderr, "fix INDIRECT to sho %s\n", f->op->ident);
-        f->op = p;
-    }
-  }
-}
-*/
 
 void processObj(Obj *p) {
   size_t i;
