@@ -559,97 +559,96 @@ showITs = error "showITs"
 
 showIT :: InfoTab -> [Char]
 showIT it@(ITFun {}) =
-    "InfoTab it_" ++ name it ++ " __attribute__((aligned(8))) = \n" ++
-    "  { .name                = " ++ show (name it) ++ ",\n" ++
-    "    // fvs " ++ show (fvs it) ++ "\n" ++
-    -- "    .fvCount             = " ++ show (length $ fvs it) ++ ",\n" ++
-    "    .entryCode           = &" ++ entryCode it ++ ",\n" ++
-    "    .objType             = FUN,\n" ++
-    "    .layoutInfo.payloadSize  = " ++ show (length $ fvs it) ++ ",\n" ++
---    "    // argPerm = " ++ show (argPerm it) ++ "\n" ++
-    "    .layoutInfo.boxedCount   = " ++ show (bfvc it) ++ ",\n" ++
-    "    .layoutInfo.unboxedCount = " ++ show (ufvc it) ++ ",\n" ++
---    "    .layoutInfo.permString   = \"" ++ concatMap show (argPerm it) ++ "\",\n" ++
-    "    .funFields.arity         = " ++ show (arity it) ++ ",\n" ++
-    "    .funFields.trueEntryCode = " ++ trueEntryCode it ++ ",\n" ++
-    "  };\n"
+    "InfoTab it_" ++ name it ++ " __attribute__((aligned(8))) = {\n" ++
+#if DEBUG_INFOTAB
+    "  .pi = PI(),\n" ++
+#endif
+    "  .name                = " ++ show (name it) ++ ",\n" ++
+    "  // fvs " ++ show (fvs it) ++ "\n" ++
+    "  .entryCode           = &" ++ entryCode it ++ ",\n" ++
+    "  .objType             = FUN,\n" ++
+    "  .layoutInfo.payloadSize  = " ++ show (length $ fvs it) ++ ",\n" ++
+    "  .layoutInfo.boxedCount   = " ++ show (bfvc it) ++ ",\n" ++
+    "  .layoutInfo.unboxedCount = " ++ show (ufvc it) ++ ",\n" ++
+    "  .funFields.arity         = " ++ show (arity it) ++ ",\n" ++
+    "  .funFields.trueEntryCode = " ++ trueEntryCode it ++ ",\n" ++
+    "};\n"
 
 showIT it@(ITPap {}) =
-    "InfoTab it_" ++ name it ++ " __attribute__((aligned(8))) = \n" ++
-    "  { .name                = " ++ show (name it) ++ ",\n" ++
-    "    // fvs " ++ show (fvs it) ++ "\n" ++
-    -- "    .fvCount             = " ++ show (length $ fvs it) ++ ",\n" ++
-    "    .entryCode           = &" ++ entryCode it ++ ",\n" ++
-    "    .objType             = PAP,\n" ++
-    -- payloadSize handled specially for PAP
-    "    .layoutInfo.payloadSize  = " ++ show (length (fvs it) +
-                                               length (args it) +
-                                               1) ++ ",\n" ++
---    "    // argPerm = " ++ show (argPerm it) ++ "\n" ++
-    "    .layoutInfo.boxedCount   = " ++ show (bfvc it) ++ ",\n" ++
-    "    .layoutInfo.unboxedCount = " ++ show (ufvc it) ++ ",\n" ++
---    "    .layoutInfo.permString   = \"" ++ concatMap show (argPerm it) ++ "\",\n" ++
-    "    .papFields.trueEntryCode = " ++ trueEntryCode it ++ ",\n" ++
-    "  };\n"
+    "InfoTab it_" ++ name it ++ " __attribute__((aligned(8))) = {\n" ++
+#if DEBUG_INFOTAB
+    "  .pi = PI(),\n" ++
+#endif
+    "  .name                = " ++ show (name it) ++ ",\n" ++
+    "  // fvs " ++ show (fvs it) ++ "\n" ++
+    "  .entryCode           = &" ++ entryCode it ++ ",\n" ++
+    "  .objType             = PAP,\n" ++
+    "  .layoutInfo.payloadSize  = " ++ show (length (fvs it) +
+                                             length (args it) +
+                                             1) ++ ",\n" ++
+    "  .layoutInfo.boxedCount   = " ++ show (bfvc it) ++ ",\n" ++
+    "  .layoutInfo.unboxedCount = " ++ show (ufvc it) ++ ",\n" ++
+    "  .papFields.trueEntryCode = " ++ trueEntryCode it ++ ",\n" ++
+    "};\n"
 
 showIT it@(ITCon {}) =
-    "InfoTab it_" ++ name it ++ " __attribute__((aligned(8))) = \n" ++
-    "  { .name                = " ++ show (name it) ++ ",\n" ++
-    "    // fvs " ++ show (fvs it) ++ "\n" ++
-    -- "    .fvCount             = " ++ show (length $ fvs it) ++ ",\n" ++
-    "    .entryCode           = &" ++ entryCode it ++ ",\n" ++
-    "    .objType             = CON,\n" ++
-    "    .layoutInfo.payloadSize  = " ++ show (arity it) ++ ",\n" ++
-    "    // argPerm = " ++ show (argPerm it) ++ "\n" ++
-    "    .layoutInfo.boxedCount   = " ++ show (bargc it) ++ ",\n" ++
-    "    .layoutInfo.unboxedCount = " ++ show (uargc it) ++ ",\n" ++
-    "    .layoutInfo.permString   = \"" ++ concatMap show (argPerm it) ++ "\",\n" ++
-    "    .conFields.arity     = " ++ show (arity it) ++ ",\n" ++
-    "    .conFields.tag       = " ++ luConTag (con it) (cmap it) ++ ",\n" ++
-    "    .conFields.conName   = " ++ show (con it) ++ ",\n" ++
-    "  };\n"
+    "InfoTab it_" ++ name it ++ " __attribute__((aligned(8))) = {\n" ++
+#if DEBUG_INFOTAB
+    "  .pi = PI(),\n" ++
+#endif
+    "  .name                = " ++ show (name it) ++ ",\n" ++
+    "  // fvs " ++ show (fvs it) ++ "\n" ++
+    "  .entryCode           = &" ++ entryCode it ++ ",\n" ++
+    "  .objType             = CON,\n" ++
+    "  .layoutInfo.payloadSize  = " ++ show (arity it) ++ ",\n" ++
+    "  // argPerm = " ++ show (argPerm it) ++ "\n" ++
+    "  .layoutInfo.boxedCount   = " ++ show (bargc it) ++ ",\n" ++
+    "  .layoutInfo.unboxedCount = " ++ show (uargc it) ++ ",\n" ++
+    "  .layoutInfo.permString   = \"" ++ concatMap show (argPerm it) ++ "\",\n" ++
+    "  .conFields.arity     = " ++ show (arity it) ++ ",\n" ++
+    "  .conFields.tag       = " ++ luConTag (con it) (cmap it) ++ ",\n" ++
+    "  .conFields.conName   = " ++ show (con it) ++ ",\n" ++
+    "};\n"
 
 showIT it@(ITThunk {}) =
-    "InfoTab it_" ++ name it ++ " __attribute__((aligned(8))) = \n" ++
-    "  { .name                = " ++ show (name it) ++ ",\n" ++
-    "    // fvs " ++ show (fvs it) ++ "\n" ++
-    -- "    .fvCount             = " ++ show (length $ fvs it) ++ ",\n" ++
-    "    .entryCode           = &" ++ entryCode it ++ ",\n" ++
-    "    .objType             = THUNK,\n" ++
-    "    .layoutInfo.payloadSize = " ++ show (1 + (length $ fvs it)) ++ ",\n" ++
---    "    // argPerm = " ++ show (argPerm it) ++ "\n" ++
-    "    .layoutInfo.boxedCount   = " ++ show (bfvc it) ++ ",\n" ++
-    "    .layoutInfo.unboxedCount = " ++ show (ufvc it) ++ ",\n" ++
---    "    .layoutInfo.permString   = \"" ++ concatMap show (argPerm it) ++ "\",\n" ++
-    "  };\n"
+    "InfoTab it_" ++ name it ++ " __attribute__((aligned(8))) = {\n" ++
+#if DEBUG_INFOTAB
+    "  .pi = PI(),\n" ++
+#endif
+    "  .name                = " ++ show (name it) ++ ",\n" ++
+    "  // fvs " ++ show (fvs it) ++ "\n" ++
+    "  .entryCode           = &" ++ entryCode it ++ ",\n" ++
+    "  .objType             = THUNK,\n" ++
+    "  .layoutInfo.payloadSize = " ++ show (1 + (length $ fvs it)) ++ ",\n" ++
+    "  .layoutInfo.boxedCount   = " ++ show (bfvc it) ++ ",\n" ++
+    "  .layoutInfo.unboxedCount = " ++ show (ufvc it) ++ ",\n" ++
+    "};\n"
 
 showIT it@(ITBlackhole {}) =
-    "InfoTab it_" ++ name it ++ "  __attribute__((aligned(8)))= \n" ++
-    "  { .name                = " ++ show (name it) ++ ",\n" ++
-    "    // fvs " ++ show (fvs it) ++ "\n" ++
-    -- "    .fvCount             = " ++ show (length $ fvs it) ++ ",\n" ++
-    "    .entryCode           = &" ++ entryCode it ++ ",\n" ++
-    "    .objType             = BLACKHOLE,\n" ++
-    "    .layoutInfo.payloadSize  = 0,\n" ++
---    "    // argPerm = " ++ show (argPerm it) ++ "\n" ++
-    "    .layoutInfo.boxedCount   = 0,\n" ++
-    "    .layoutInfo.unboxedCount = 0,\n" ++
---    "    .layoutInfo.permString   = \"" ++ concatMap show (argPerm it) ++ "\",\n" ++
-    "  };\n"
+    "InfoTab it_" ++ name it ++ "  __attribute__((aligned(8))) = {\n" ++
+#if DEBUG_INFOTAB
+    "  .pi = PI(),\n" ++
+#endif
+    "  .name                = " ++ show (name it) ++ ",\n" ++
+    "  // fvs " ++ show (fvs it) ++ "\n" ++
+    "  .entryCode           = &" ++ entryCode it ++ ",\n" ++
+    "  .objType             = BLACKHOLE,\n" ++
+    "  .layoutInfo.payloadSize  = 0,\n" ++
+    "  .layoutInfo.boxedCount   = 0,\n" ++
+    "  .layoutInfo.unboxedCount = 0,\n" ++
+    "};\n"
 
+-- this is a continuation CInfoTab
 showIT it@(ITAlts{}) =
-    "CInfoTab it_" ++ name it ++ " __attribute__((aligned(8))) = \n" ++
-    "  { .name                = " ++ show (name it) ++ ",\n" ++
-    "    // fvs " ++ show (fvs it) ++ "\n" ++
-    -- "    .fvCount             = " ++ show (length $ fvs it) ++ ",\n" ++
-    "    .entryCode           = &" ++ entryCode it ++ ",\n" ++
-    "    .contType             = CASECONT,\n" ++
-    "    .layoutInfo.payloadSize = " ++ show (length $ fvs it) ++ ",\n" ++
---    "    // argPerm = " ++ show (argPerm it) ++ "\n" ++
-    "    .layoutInfo.boxedCount   = " ++ show (bfvc it) ++ ",\n" ++
-    "    .layoutInfo.unboxedCount = " ++ show (ufvc it) ++ ",\n" ++
---    "    .layoutInfo.permString   = \"" ++ concatMap show (argPerm it) ++ "\",\n" ++
-    "  };\n"
+    "CInfoTab it_" ++ name it ++ " __attribute__((aligned(8))) = {\n" ++
+    "  .name                = " ++ show (name it) ++ ",\n" ++
+    "  // fvs " ++ show (fvs it) ++ "\n" ++
+    "  .entryCode           = &" ++ entryCode it ++ ",\n" ++
+    "  .contType             = CASECONT,\n" ++
+    "  .layoutInfo.payloadSize = " ++ show (length $ fvs it) ++ ",\n" ++
+    "  .layoutInfo.boxedCount   = " ++ show (bfvc it) ++ ",\n" ++
+    "  .layoutInfo.unboxedCount = " ++ show (ufvc it) ++ ",\n" ++
+    "};\n"
 
 showIT _ = ""
 

@@ -45,30 +45,26 @@ Obj *deref1(Obj *op) {
   return op;
 }
 
-Obj *deref2(Obj *op) {
-  while (getObjType(op) == INDIRECT) {
-    if (isLSBset(op->_infoPtr)) {
-      // it's not clear to me (yet) whether this can happen
-      // apparently it can...serious weird, only when USE_ARGTYPE and
-      // USE_OBJTYPE are both turned off
-      assert(false && "INDIRECT/forward branch");
-      return op;
+Obj *deref2(Obj *p) {
+  while (!(isLSBset(p->_infoPtr))) {
+    if (getObjType(p) != INDIRECT) {
+      return p;
     }
-    op = op->payload[0].op;
+    p = p->payload[0].op;
   }
-  return op;
+  return p;
 }
 
 PtrOrLiteral updatePtrByValue (PtrOrLiteral f) {
   assert(isBoxed(f) && "not a HEAPOBJ");
   Obj *p = deref2(f.op);  
-
   if (isFrom(p)) {
     // from space
     if (isLSBset(p->_infoPtr)) {
       // from space && forwarding
       if (DEBUG) fprintf(stderr, "update forward %s\n", p->ident);
       f.op = (Obj *)getInfoPtr(p);
+      assert(isTo(f.op));
 #if USE_ARGTYPE
       f.argType = HEAPOBJ;
 #endif
@@ -80,14 +76,10 @@ PtrOrLiteral updatePtrByValue (PtrOrLiteral f) {
         fprintf(stderr, "copy %s %s from->to size=%d\n", 
 		objTypeNames[getObjType(p)], p->ident, size);
       }
-
       memcpy(freePtr, p, size);
       if (EXTRA) {
-        EXTRASTART();
 	assert(isLSBset((InfoTab *)freePtr) == 0 && "gc: bad alignment");
-        EXTRAEND();
       }
-
       p->_infoPtr = setLSB((InfoTab *)freePtr);
       f.op = (Obj *)freePtr;
 #if USE_ARGTYPE
@@ -98,6 +90,7 @@ PtrOrLiteral updatePtrByValue (PtrOrLiteral f) {
     }
   } else if (isTo(p)) {
     // to space
+    assert(!isLSBset(p->_infoPtr));
     f.op = p;
 #if USE_ARGTYPE
     f.argType = HEAPOBJ;
@@ -105,6 +98,7 @@ PtrOrLiteral updatePtrByValue (PtrOrLiteral f) {
     return f;
   } else if (isSHO(p)) {
     // SHO
+    assert(!isLSBset(p->_infoPtr));
     f.op = p;
 #if USE_ARGTYPE
     f.argType = HEAPOBJ;
@@ -266,9 +260,7 @@ void gc(void) {
 
   // add stgCurVal
   if (EXTRA) {
-    EXTRASTART();
     assert(isBoxed(stgCurVal) && "gc: unexpected unboxed arg in stgCurVal");
-    EXTRAEND();
   }
   processObj(stgCurVal.op);
 

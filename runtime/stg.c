@@ -200,14 +200,9 @@ int getObjSize(Obj *o) {
   case PAP: {
     InfoTab *itp = getInfoPtr(o);
     int fvs = itp->layoutInfo.boxedCount + itp->layoutInfo.unboxedCount;
-    /* mkd gc
-    objSize = sizeof(Obj) + 
-              (fvs + 1 + PNSIZE(o->payload[fvs].i)) * sizeof(PtrOrLiteral);
-    */
     objSize = sizeof(Obj) + 
       (fvs + 1 + o->payload[fvs].b.bitmap.size) * sizeof(PtrOrLiteral);
     objSize = ((objSize + 7)/8)*8;
-    /* mkd gc */
     break;
   } // PAP
   case FUN:

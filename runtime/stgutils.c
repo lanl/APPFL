@@ -39,6 +39,9 @@ DEFUN2(stg_case_not_exhaustive, self, x) {
 }
 
 InfoTab it_stg_case_not_exhaustive __attribute__((aligned(8))) = {
+#if DEBUG_INFOTAB
+  .pi = PI(),
+#endif
   .name = "stg_case_not_exhaustive",
   .entryCode = &stg_case_not_exhaustive,
   .objType = FUN,
@@ -84,15 +87,18 @@ DEFUN1(stgBlackhole, self) {
 }
 
 // we can't use this until FVs are stashed first
-InfoTab it_stgBlackhole __attribute__((aligned(8))) =
-  { .name = "default stgBlackhole",
-    //    .fvCount = 1, // self
-    .entryCode = &stgBlackhole,
-    .objType = BLACKHOLE,
-    .layoutInfo.payloadSize = 1, // space for indirect
-    .layoutInfo.boxedCount = 1,
-    .layoutInfo.unboxedCount = 0,
-  };
+InfoTab it_stgBlackhole __attribute__((aligned(8))) = {
+#if DEBUG_INFOTAB
+  .pi = PI(),
+#endif
+  .name = "default stgBlackhole",
+  //    .fvCount = 1, // self
+  .entryCode = &stgBlackhole,
+  .objType = BLACKHOLE,
+  .layoutInfo.payloadSize = 1, // space for indirect
+  .layoutInfo.boxedCount = 1,
+  .layoutInfo.unboxedCount = 0,
+};
 
 DEFUN1(stgIndirect, self) {
   fprintf(stderr,"stgIndirect, jumping through indirection\n");
@@ -102,15 +108,18 @@ DEFUN1(stgIndirect, self) {
   ENDFUN;
 }
 
-InfoTab it_stgIndirect __attribute__((aligned(8))) =
-  { .name = "stgIndirect",
-    // .fvCount = 1, // target of indirect
-    .entryCode = &stgIndirect,
-    .objType = INDIRECT,
-    .layoutInfo.payloadSize = 1, // target of indirect
-    .layoutInfo.boxedCount = 1,
-    .layoutInfo.unboxedCount = 0,
-  };
+InfoTab it_stgIndirect __attribute__((aligned(8))) = {
+#if DEBUG_INFOTAB
+  .pi = PI(),
+#endif
+  .name = "stgIndirect",
+  // .fvCount = 1, // target of indirect
+  .entryCode = &stgIndirect,
+  .objType = INDIRECT,
+  .layoutInfo.payloadSize = 1, // target of indirect
+  .layoutInfo.boxedCount = 1,
+  .layoutInfo.unboxedCount = 0,
+};
 
 DEFUN0(stgUpdateCont) {
   Cont *contp = stgPopCont();

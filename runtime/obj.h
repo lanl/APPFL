@@ -50,17 +50,6 @@ static inline size_t startCASEFVsU(Cont *p) { return endCASEFVsB(p); }
 static inline size_t endCASEFVsU(Cont *p) { return startCASEFVsU(p) + getCInfoPtr(p)->layoutInfo.unboxedCount; }
 
 
-// use LSB to say it is a FORWARD
-static inline InfoTab *setLSB(InfoTab *ptr) { 
-  return (InfoTab *)((uintptr_t)ptr | 1); 
-}
-static inline InfoTab *unsetLSB(InfoTab *ptr) { 
-  return (InfoTab *)((uintptr_t)ptr & ~1); 
-}
-static inline bool isLSBset(InfoTab *ptr) { 
-  return (bool)((uintptr_t)ptr & 1); 
-}
-
 // end of wrappers
 
 #endif

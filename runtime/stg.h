@@ -187,11 +187,17 @@ typedef struct {
   //
 } FUNCONTfields;
 
+#if DEBUG_INFOTAB
+#define PI() (3.14159265358979323846)
+#endif
 
 // InfoTab
 struct _InfoTab {
-  char name[32];  // for debugging
+#if DEBUG_INFOTAB
+  double pi;
+#endif
   CmmFnPtr entryCode; 
+  char name[32];  // for debugging
   ObjType objType; // kind of object, tag for union
   LayoutInfo layoutInfo;
   union {
@@ -204,8 +210,8 @@ struct _InfoTab {
 
 // CInfoTab
 struct _CInfoTab {
-  char name[32];  // for debugging
   CmmFnPtr entryCode; 
+  char name[32];  // for debugging
   ContType contType; // kind of continuation, tag for union
   LayoutInfo layoutInfo;
   union {
@@ -245,13 +251,17 @@ extern bool isBoxed(PtrOrLiteral f);
 
 extern bool isUnboxed(PtrOrLiteral f);
 
-
-static inline InfoTab *getInfoPtr(Obj *p)  { 
-  return (InfoTab *)((((uintptr_t)(p->_infoPtr)) >> 3) << 3); 
+// use LSB to say it is a FORWARD
+static inline InfoTab *setLSB(InfoTab *ptr) { 
+  return (InfoTab *)((uintptr_t)ptr | 1); 
+}
+static inline InfoTab *unsetLSB(InfoTab *ptr) { 
+  return (InfoTab *)((uintptr_t)ptr & ~1); 
+}
+static inline bool isLSBset(InfoTab *ptr) { 
+  return (bool)((uintptr_t)ptr & 1); 
 }
 
-static inline CInfoTab *getCInfoPtr(Cont *p)  { return p->cInfoPtr; }
-  /*
 static inline InfoTab *setLSB2(InfoTab *ptr) { 
   return (InfoTab*)((uintptr_t)ptr | 2);
 }
@@ -259,7 +269,7 @@ static inline InfoTab *setLSB2(InfoTab *ptr) {
 static inline bool isLSB2set(InfoTab *ptr) { 
   return (bool)((uintptr_t)ptr & 2); 
 }
-  */
+
 // for indirect
 //static inline InfoTab *setLSB3(InfoTab *ptr) { 
 //  return (InfoTab *)((uintptr_t)ptr | 4);
@@ -267,12 +277,28 @@ static inline bool isLSB2set(InfoTab *ptr) {
 //static inline bool isLSB3set(InfoTab *ptr) { return (bool)((uintptr_t)ptr & 4); }
 
 
+
+// except for some trickiness in the GC this should be the only access to _infoPtr
+static inline InfoTab *getInfoPtr(Obj *p)  { 
+  InfoTab *itp = (InfoTab *)((((uintptr_t)(p->_infoPtr)) >> 3) << 3);
+#if DEBUG_INFOTAB
+  if (!isLSBset(p->_infoPtr))  // not forwarding
+    assert(itp->pi == PI());
+#endif
+  return itp; 
+}
+
+static inline CInfoTab *getCInfoPtr(Cont *p)  { return p->cInfoPtr; }
+
 static inline ObjType getObjType(Obj *p) {
-  ObjType objType, iobjType;
+  assert(!isLSBset(p->_infoPtr) && "getObjType on forwarding node");
+
   InfoTab *ip = getInfoPtr(p);
+  ObjType iobjType = ip->objType;
+
+#if USE_OBJTYPE
+  ObjType objType = p->objType;
   bool okay;
-  iobjType = ip->objType;
-  objType = p->objType;
   switch(objType) {
   case FUN:
     okay = (iobjType == FUN);
@@ -287,7 +313,7 @@ static inline ObjType getObjType(Obj *p) {
     okay = (iobjType == THUNK);
     break;
   case BLACKHOLE:
-    okay = (iobjType == THUNK);
+    okay = (iobjType == THUNK || iobjType == BLACKHOLE);
     break;
   case INDIRECT:
     okay = (iobjType == INDIRECT);
@@ -297,12 +323,13 @@ static inline ObjType getObjType(Obj *p) {
     break;
   }
   if (!okay) {
-    fprintf(stderr, "getting ObjType of %s aka %s, p->objType = %s, getInfoPtr(p)->objType = %s\n",
+    fprintf(stderr, "getting ObjType of %s aka %s, p->objType = %d, getInfoPtr(p)->objType = %d\n",
 	    p->ident, ip->name, 
-	    objTypeNames[objType],
-	    objTypeNames[iobjType]);
-    //     assert(false);
+	    objType,
+	    iobjType);
+    assert(false);
   }
+#endif
 
   /*
   switch(ip->objType) {
@@ -324,12 +351,10 @@ static inline ObjType getObjType(Obj *p) {
 #endif
   */
 #if USE_OBJTYPE
-  objType = p->objType;
+  return p->objType;
 #else
   assert(false);
 #endif
-
-  return objType;
 
 }
 

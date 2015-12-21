@@ -14,4 +14,7 @@
 /* If 1 verbose debug info from stgApply functions */
 #define DEBUGSTGAPPLY 1
 
+/* If 1 use .pi = PI header in InfoTab */
+#define DEBUG_INFOTAB 1
+
 #endif
