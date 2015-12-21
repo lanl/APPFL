@@ -319,37 +319,10 @@ static inline ObjType getObjType(Obj *p) {
     assert(false && "bad objType");
     break;
   }
-    
 
 #if USE_OBJTYPE
   ObjType objType = p->objType;
-  bool okay = objType == iobjType;
-  /*
-  switch(objType) {
-  case FUN:
-    okay = (iobjType == FUN);
-    break;
-  case PAP:
-    okay = (iobjType == FUN);
-    break;
-  case CON:
-    okay = (iobjType == CON);
-    break;
-  case THUNK:
-    okay = (iobjType == THUNK);
-    break;
-  case BLACKHOLE:
-    okay = (iobjType == THUNK || iobjType == BLACKHOLE);
-    break;
-  case INDIRECT:
-    okay = (iobjType == INDIRECT);
-    break;
-  default:
-    assert(false && "bad objType");
-    break;
-  }
-  */
-  if (!okay) {
+  if (objType != iobjType) {
     fprintf(stderr, "getting ObjType of %s aka %s, p->objType = %d, getInfoPtr(p)->objType = %d\n",
 	    p->ident, ip->name, 
 	    objType,
@@ -358,47 +331,12 @@ static inline ObjType getObjType(Obj *p) {
   }
 #endif
 
-  /*
-  switch(ip->objType) {
-  case FUN:
-    objType = (isLSB2set(p->infoPtr) ? PAP : FUN);
-    break;
-  case THUNK:
-    objType = (isLSB2set(p->infoPtr) ? BLACKHOLE : THUNK);
-    break;
-  default:
-    objType = ip->objType;
-  }
-#if USE_OBJTYPE
-  if (objType != p->objType) {
-    fprintf(stderr, "computed objType = %s but p->objType = %s for %s aka %s\n",
-	    objTypeNames[objType], objTypeNames[p->objType], p->ident, ip->name);
-    assert(objType == p->objType);
-  }
-#endif
-  */
-#if USE_OBJTYPE
-  return p->objType;
-#else
-  assert(false);
-#endif
-
+  return iobjType;
 }
 
 static inline ContType getContType(Cont *p) {
   return p->contType;
 }
-
-/*
-static inline ContType getContType(Cont *p) {
-#if USE_OBJTYPE
-  return p->contType;
-#else
-  CInfoTab *cInfoPtr = getCInfoPtr(p);
-  return cInfoPtr->contType;
-#endif
-}
-*/
 
 // allocate Obj on heap, returning pointer to new Obj
 extern Obj* stgNewHeapObj(InfoTab *itp);
