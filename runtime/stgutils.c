@@ -200,6 +200,22 @@ void stgThunk(PtrOrLiteral self) {
   assert(getObjType(self.op) == BLACKHOLE);
 }
 
+DEFUN0(stgStackCont) {
+  // stgPopCont();  user must do this
+  fprintf(stderr,"stgStackCont called, this is not implemented\n");
+  exit(0);
+  //  RETURN0();  // fall back to the cmm trampoline
+  ENDFUN;
+}
+
+CInfoTab it_stgStackCont __attribute__((aligned(8))) =
+  { .name = "stgStackCont",
+    .entryCode = &stgStackCont,
+    .contType = STACKCONT,
+    .layoutInfo.boxedCount = -1,  // shouldn't be using this
+    .layoutInfo.unboxedCount = -1,  // shouldn't be using this
+  };
+
 DEFUN0(stgCallCont) {
   // stgPopCont();  user must do this
   fprintf(stderr,"stgCallCont returning\n");

@@ -402,6 +402,7 @@ cgo env (BLACKHOLE {}) =
 
 -- ****************************************************************
 
+{-
 stgApplyGeneric env f eas =
     let as = map ea eas
         pnstring = [ if b then 'P' else 'N' | b <- map (isBoxed . typ . emd) eas ]
@@ -411,6 +412,19 @@ stgApplyGeneric env f eas =
             intercalate ", " (cgv env f : map (cga env) as) ++
             ");\n"
     in return (inline, [])
+-}
+
+stgApplyGeneric env f eas =
+    let as = map ea eas
+        pnstring = [ if b then 'P' else 'N' | b <- map (isBoxed . typ . emd) eas ]
+        inline =
+            "// INDIRECT TAIL CALL " ++ f ++ " " ++ showas as ++ "\n" ++
+            "STGAPPLY" ++ pnstring ++ "(" ++
+            intercalate ", " (cgv env f : map (cga env) as) ++
+            ");\n"
+    in return (inline, [])
+
+
 
 stgApplyDirect env (EFCall it f eas) =
     let as = map ea eas

@@ -3,7 +3,7 @@
 #define options_h
 
 /* If 1 use argType enum field in PtrOrLiteral */
-#define USE_ARGTYPE 0
+#define USE_ARGTYPE 1
 
 /* If 1 use objType enum field in Obj */
 #define USE_OBJTYPE 1

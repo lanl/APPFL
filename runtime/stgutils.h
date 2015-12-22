@@ -15,7 +15,6 @@ void callContRestore(PtrOrLiteral argv[]);
 Obj *derefHO(Obj *op);
 Obj *derefPoL(PtrOrLiteral f);
 
-// is this a good place to check for BLACKHOLE?
 void derefStgCurVal();
 void pushargs(int argc, PtrOrLiteral argv[]);
 void popargs(int argc, PtrOrLiteral argv[]);

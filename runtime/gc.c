@@ -234,6 +234,7 @@ void processCont(Cont *p) {
     }
     updatePtr(&p->payload[0]);
     break;
+
   default:
     fprintf(stderr, "gc: bad cont. type %d %s\n", getContType(p),
         contTypeNames[getContType(p)]);

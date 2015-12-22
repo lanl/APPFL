@@ -86,7 +86,7 @@ Cont *stgAllocCont(CInfoTab *citp) {
   return contp;
 }
 
-// CALLCONTs have a common InfoTab entries but .layoutInfo is invalid
+// CALLCONTs DON'T have a common InfoTab entries but .layoutInfo is invalid for all
 // payload[0].i == argc, the number of subsequent args
 Cont *stgAllocCallCont(CInfoTab *citp, int argc) {
   assert(citp->contType == CALLCONT && 
@@ -106,6 +106,25 @@ Cont *stgAllocCallCont(CInfoTab *citp, int argc) {
   return contp;
 }
 
+// STACKCONT may converge with CALLCONT, but time will tell
+Cont *stgAllocStackCont(CInfoTab *citp, int argc) {
+  assert(citp->contType == STACKCONT && 
+	 "stgAllocCallCont: citp->contType != STACKCONT");
+  size_t contSize = sizeof(Cont) + argc * sizeof(PtrOrLiteral);
+  contSize = ((contSize + 7)/8)*8; 
+  fprintf(stderr, "allocating stack continuation with argc %d\n", argc);
+  showCIT(citp);
+  stgSP = (char *)stgSP - contSize;
+  assert(stgSP >= stgStack);
+  Cont *contp = (Cont *)stgSP;
+  contp->cInfoPtr = citp;
+  contp->_contSize = contSize;
+  contp->entryCode = citp->entryCode;
+  contp->contType = STACKCONT;
+  strcpy(contp->ident, citp->name);  // may be overwritten
+  return contp;
+}
+
 // TODO: 64 bit align
 // return pointer to popped cont
 // NOTE:  stgAllocCont will invalidate this pointer!
@@ -118,12 +137,12 @@ Cont *stgPopCont() {
   switch (getContType(retVal)) {
   case UPDCONT:
   case CASECONT:
-  case STACKCONT:
   case FUNCONT:
     payloadSize = getCInfoPtr(retVal)->layoutInfo.payloadSize;
     fprintf(stderr, "popping continuation with payloadSize %d\n", payloadSize);
     break;
   case CALLCONT:
+  case STACKCONT:
     payloadSize = retVal->layout.bitmap.size;
     fprintf(stderr, "popping call continuation with argc %d\n", payloadSize);
     break;

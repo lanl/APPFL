@@ -276,9 +276,6 @@ static inline bool isLSB2set(InfoTab *ptr) {
 //}
 //static inline bool isLSB3set(InfoTab *ptr) { return (bool)((uintptr_t)ptr & 4); }
 
-
-
-// except for some trickiness in the GC this should be the only access to _infoPtr
 static inline InfoTab *getInfoPtr(Obj *p)  { 
   InfoTab *itp = (InfoTab *)((((uintptr_t)(p->_infoPtr)) >> 3) << 3);
 #if DEBUG_INFOTAB
@@ -343,6 +340,7 @@ extern Obj* stgNewHeapObj(InfoTab *itp);
 extern Obj* stgNewHeapPAP(InfoTab *itp, int pargc, int nargc);
 extern Obj* stgNewHeapPAPmask(InfoTab *itp, Bitmap64 bitmap);
 // allocate Obj on continuation stack, returning pointer to new Obj
+extern Cont *stgAllocStackCont(CInfoTab *it, int payloadSize);
 extern Cont *stgAllocCallCont(CInfoTab *it, int payloadSize);
 extern Cont *stgAllocCont(CInfoTab *it);
 // remove Obj from top of continuation stack, returning pointer to de-alloced Obj
