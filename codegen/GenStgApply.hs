@@ -119,17 +119,14 @@ gen strictness npstring =
      -- now the function and its arguments are in C "argv[argc+1]"
      (if strictness == Strict1 then indent 2 (evalps npstring) else "") ++
 
-     -- TODO
-     -- STGEVAL is only called from stgApplyXXX so it need not push a call continuation
      "\n" ++
      "  argv[0].op = derefPoL(argv[0]);\n" ++
-     -- this if just saves a possibly
+     -- this if just saves a possibly unneeded call cont save
      "  if (getObjType(argv[0].op) == THUNK) {\n" ++
           indent 4 (callContArgvSave 0 ('P':npstring)) ++
           indent 4 (debugp [fname ++ " THUNK\\n"]) ++
      "    STGEVAL(argv[0]);\n" ++
           indent 4 (callContArgvRestore 0) ++
-     -- this works because stgCurVal is a GC root
      "    // this works because stgCurVal is a GC root\n" ++
      "    argv[0].op = derefPoL(stgCurVal);\n" ++
      "  } // if THUNK\n" ++
@@ -226,20 +223,21 @@ funpos npstring excess =
      "// stash excess args\n" ++
      callContArgvSave (arity+1) (drop arity npstring) ++  -- FUN at index 0
      "// push needed args\n" ++
-     "pushargs(arity, &argv[1]);\n" ++
+     "pushargs(arity+1, argv);\n" ++
      "// call-with-return the FUN\n" ++
-     "STGCALL1(getInfoPtr(argv[0].op)->funFields.trueEntryCode, argv[0]);\n" ++
+     "STGCALL0(getInfoPtr(argv[0].op)->funFields.trueEntryCode);\n" ++
      "// restore excess args left shifted into argv\n" ++
-     callContArgvRestore 0 ++
+     callContArgvRestore 1 ++
+     "argv[0] = stgCurVal;\n" ++
      "// push excess args\n" ++
-     "pushargs(excess, argv);\n" ++ 
+     "pushargs(excess+1, argv);\n" ++ 
      "// try again - tail call stgApply\n" ++
-     "STGJUMP1(stgApply" ++ drop arity npstring  ++ ", stgCurVal);\n"
+     "STGJUMP0(stgApply" ++ drop arity npstring  ++ ");\n"
 
 
 funeq = 
-  "pushargs(argc, &argv[1]);\n" ++
-  "STGJUMP1(getInfoPtr(argv[0].op)->funFields.trueEntryCode, argv[0]);\n"
+  "pushargs(argc+1, argv);\n" ++
+  "STGJUMP0(getInfoPtr(argv[0].op)->funFields.trueEntryCode);\n"
 
 funneg npstring = 
   let arity = length npstring
@@ -275,14 +273,17 @@ pappos npstring excess =
      "pushargs(arity, &argv[1]);\n" ++
      "// push args already in PAP\n" ++
      "pushargs(argCount, &argv[0].op->payload[fvCount+1]);\n" ++
+     "// push self\n" ++
+     "pushargs(1, argv);\n" ++
      "// call-with-return the FUN\n" ++
-     "STGCALL1(getInfoPtr(argv[0].op)->funFields.trueEntryCode, argv[0]);\n" ++
+     "STGCALL0(getInfoPtr(argv[0].op)->funFields.trueEntryCode);\n" ++
      "// restore excess args left shifted into argv\n" ++
-     callContArgvRestore 0 ++
+     "argv[0] = stgCurVal;\n" ++
+     callContArgvRestore 1 ++
      "// push excess args\n" ++
-     "pushargs(excess, argv);\n" ++ 
+     "pushargs(excess+1, argv);\n" ++ 
      "// try again - tail call stgApply \n" ++
-     "STGJUMP1(stgApply" ++ drop arity npstring  ++ ", stgCurVal);\n"
+     "STGJUMP0(stgApply" ++ drop arity npstring  ++ ");\n"
 
 papeq = 
     "// push new args\n" ++
@@ -292,8 +293,10 @@ papeq =
     "// push args already in PAP\n" ++
     debugp ["pushing existing args\\n"] ++ 
     "pushargs(argCount, &argv[0].op->payload[fvCount+1]);\n" ++
+    "// push the FUN\n" ++
+    "pushargs(1, argv);\n" ++
      "// tail call the FUN\n" ++
-     "STGJUMP1(getInfoPtr(argv[0].op)->funFields.trueEntryCode, argv[0]);\n"
+     "STGJUMP0(getInfoPtr(argv[0].op)->funFields.trueEntryCode);\n"
 
 papneg npstring =
   let newargc = length npstring
@@ -314,5 +317,4 @@ papneg npstring =
      "// copy new args to just after fvs, layout info, and old args\n" ++
      debugp ["stgApply PAP inserting " ++ show newargc ++ " new args into new PAP\\n"] ++
      "copyargs(&pap->payload[fvCount+1+argCount], &argv[1], " ++ show newargc ++ ");\n" ++
-      "// 0 new pointers to insert into PAP\n" ++
      "STGRETURN1(HOTOPL(pap));\n"
