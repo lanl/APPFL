@@ -27,6 +27,9 @@ typedef struct _CInfoTab CInfoTab;
 FnPtr stgCallCont();
 extern CInfoTab it_stgCallCont;
 
+FnPtr stgStackCont();
+extern CInfoTab it_stgStackCont;
+
 FnPtr stgUpdateCont();
 extern CInfoTab it_stgUpdateCont;
 

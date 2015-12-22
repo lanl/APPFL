@@ -51,6 +51,7 @@ import State
 import Analysis
 import Util
 import PPrint
+import STGbits
 
 import Prelude
 import Data.List(intercalate,nub)
@@ -418,6 +419,15 @@ stgApplyGeneric env f eas =
     let as = map ea eas
         pnstring = [ if b then 'P' else 'N' | b <- map (isBoxed . typ . emd) eas ]
         inline =
+            "{ Cont *cp = stgAllocStackCont( &it_stgStackCont, " ++ 
+                                             show (length pnstring + 1) ++ ");\n" ++
+            "  cp->layout = " ++ npStrToBMStr ('P' : pnstring ) ++ ";\n" ++
+            "  cp->payload[ 0 ] = " ++ cgv env f ++ ";\n" ++
+            concat ["  cp->payload[ " ++ show i ++ " ] = " ++ cga env a ++ ";\n"
+                    | (i,a) <- zip [1..] as ] ++
+            -- now pop it
+            "  cp = stgPopCont();\n" ++
+            "}\n" ++
             "// INDIRECT TAIL CALL " ++ f ++ " " ++ showas as ++ "\n" ++
             "STGAPPLY" ++ pnstring ++ "(" ++
             intercalate ", " (cgv env f : map (cga env) as) ++
@@ -554,11 +564,11 @@ cge env (ECase _ e a@(Alts italts alts aname)) =
               "Cont *" ++ name ++
               " = stgAllocCont( &it_" ++ aname ++ ");\n" ++
               (if fvs italts == [] then
-                 "    // no FVs\n"
+                 "// no FVs\n"
                else
-                 "    // load payload with FVs " ++
-                   intercalate " " (map fst $ fvs italts) ++ "\n") ++
-                 indent 2 (loadPayloadFVs env (map fst $ fvs italts) 0 name)
+                 "// load payload with FVs " ++
+                 intercalate " " (map fst $ fvs italts) ++ "\n") ++
+                 (loadPayloadFVs env (map fst $ fvs italts) 0 name)
 --           scrut = if isBoxede e then
 --                       "  // boxed scrutinee\n" ++
 --                       "  STGEVAL(stgCurVal);\n"
