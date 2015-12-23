@@ -46,16 +46,13 @@ extern void initCmm();
 
 #define CALL0_0(F)				\
   do {						\
-    _PUSHVALS0();				\
     _CALL(F);					\
-    _POPVALS0();				\
   } while (0)
 
 #define CALL1_0(F,P1)				\
   do {						\
     _PUSHVALS1(P1);				\
     _CALL(F);					\
-    _POPVALS0();				\
   } while (0)
 
 #define RETURN0()				\
@@ -71,7 +68,6 @@ extern void initCmm();
 
 #define JUMP0(F)				\
   do {						\
-    _PUSHVALS0();				\
     _JUMP(F);					\
   } while (0)
 
@@ -84,8 +80,7 @@ extern void initCmm();
 // DEFUN#args(argnames)
 
 #define DEFUN0(F)				\
-  FnPtr F() {					\
-  _POPVALS0();					
+  FnPtr F() {
 
 #define DEFUN1(F,P1)				\
   FnPtr F() {					\
@@ -207,10 +202,6 @@ inline PtrOrLiteral _POP() {
 
 // POPVALSN(P1,...,PN), N >= 0
 
-#define _POPVALS0()				\
-  do {						\
-  } while (0)
-
 #define _POPVALS1(L1)				\
   do {						\
     _POP(L1);					\
@@ -222,101 +213,10 @@ inline PtrOrLiteral _POP() {
     _POP(L2);				\
   } while (0)
 
-#define _POPVALS3(L1,L2,L3)			\
-  do {						\
-    _POP(L1);					\
-    _POP(L2);					\
-    _POP(L3);				\
-  } while (0)
-
-#define _POPVALS4(L1,L2,L3,L4)			\
-  do {						\
-    _POP(L1);				\
-    _POP(L2);				\
-    _POP(L3);				\
-    _POP(L4);				\
-  } while (0)
-
-#define _POPVALS5(L1,L2,L3,L4,L5)	\
-  do {					\
-    _POP(L1);				\
-    _POP(L2);				\
-    _POP(L3);				\
-    _POP(L4);				\
-    _POP(L5);				\
-  } while (0)
-
 // PUSHVALSN(P1,...,PN), N >= 0
-
-#define _PUSHVALS0()				\
-  do {						\
-  } while (0)
 
 #define _PUSHVALS1(L1)				\
   do {						\
-      _PUSH(L1);				\
-  } while (0)
-
-#define _PUSHVALS2(L1,L2)			\
-  do {						\
-      _PUSH(L2);				\
-      _PUSH(L1);				\
-  } while (0)
-
-#define _PUSHVALS3(L1,L2,L3)			\
-  do {						\
-      _PUSH(L3);				\
-      _PUSH(L2);				\
-      _PUSH(L1);				\
-  } while (0)
-
-#define _PUSHVALS4(L1,L2,L3,L4)			\
-  do {						\
-      _PUSH(L4);				\
-      _PUSH(L3);				\
-      _PUSH(L2);				\
-      _PUSH(L1);				\
-  } while (0)
-
-#define _PUSHVALS5(L1,L2,L3,L4,L5)		\
-  do {						\
-      _PUSH(L5);				\
-      _PUSH(L4);				\
-      _PUSH(L3);				\
-      _PUSH(L2);				\
-      _PUSH(L1);				\
-  } while (0)
-
-#define _PUSHVALS6(L1,L2,L3,L4,L5,L6)		\
-  do {						\
-      _PUSH(L6);				\
-      _PUSH(L5);				\
-      _PUSH(L4);				\
-      _PUSH(L3);				\
-      _PUSH(L2);				\
-      _PUSH(L1);				\
-  } while (0)
-
-#define _PUSHVALS7(L1,L2,L3,L4,L5,L6,L7)	\
-  do {						\
-      _PUSH(L7);				\
-      _PUSH(L6);				\
-      _PUSH(L5);				\
-      _PUSH(L4);				\
-      _PUSH(L3);				\
-      _PUSH(L2);				\
-      _PUSH(L1);				\
-  } while (0)
-
-#define _PUSHVALS8(L1,L2,L3,L4,L5,L6,L7,L8)	\
-  do {						\
-      _PUSH(L8);				\
-      _PUSH(L7);				\
-      _PUSH(L6);				\
-      _PUSH(L5);				\
-      _PUSH(L4);				\
-      _PUSH(L3);				\
-      _PUSH(L2);				\
       _PUSH(L1);				\
   } while (0)
 
