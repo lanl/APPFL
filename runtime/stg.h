@@ -373,12 +373,4 @@ extern void showStgValPretty(PtrOrLiteral v);
 #define STGRETURN0()			\
   STGJUMP0(((Cont *)stgSP)->entryCode)
 
-
-// no explicit return value stack
-#define STGRETURN1(r)				\
-  do {						\
-    stgCurVal = r;				\
-    STGRETURN0();				\
-  } while(0)
-
 #endif  //ifdef stg_h

@@ -65,7 +65,8 @@ DEFUN0(stgApplyN) {
       fprintf(stderr, "stgApply FUN inserting 1 args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1], &argv[1], 1);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case FUN
 
@@ -134,7 +135,8 @@ DEFUN0(stgApplyN) {
       fprintf(stderr, "stgApply PAP inserting 1 new args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1+argCount], &argv[1], 1);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case PAP
 
@@ -215,7 +217,8 @@ DEFUN0(stgApplyP) {
       fprintf(stderr, "stgApply FUN inserting 1 args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1], &argv[1], 1);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case FUN
 
@@ -284,7 +287,8 @@ DEFUN0(stgApplyP) {
       fprintf(stderr, "stgApply PAP inserting 1 new args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1+argCount], &argv[1], 1);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case PAP
 
@@ -387,7 +391,8 @@ DEFUN0(stgApplyNN) {
       fprintf(stderr, "stgApply FUN inserting 2 args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1], &argv[1], 2);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case FUN
 
@@ -490,7 +495,8 @@ DEFUN0(stgApplyNN) {
       fprintf(stderr, "stgApply PAP inserting 2 new args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1+argCount], &argv[1], 2);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case PAP
 
@@ -597,7 +603,8 @@ DEFUN0(stgApplyPN) {
       fprintf(stderr, "stgApply FUN inserting 2 args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1], &argv[1], 2);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case FUN
 
@@ -700,7 +707,8 @@ DEFUN0(stgApplyPN) {
       fprintf(stderr, "stgApply PAP inserting 2 new args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1+argCount], &argv[1], 2);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case PAP
 
@@ -807,7 +815,8 @@ DEFUN0(stgApplyNP) {
       fprintf(stderr, "stgApply FUN inserting 2 args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1], &argv[1], 2);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case FUN
 
@@ -910,7 +919,8 @@ DEFUN0(stgApplyNP) {
       fprintf(stderr, "stgApply PAP inserting 2 new args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1+argCount], &argv[1], 2);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case PAP
 
@@ -1021,7 +1031,8 @@ DEFUN0(stgApplyPP) {
       fprintf(stderr, "stgApply FUN inserting 2 args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1], &argv[1], 2);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case FUN
 
@@ -1124,7 +1135,8 @@ DEFUN0(stgApplyPP) {
       fprintf(stderr, "stgApply PAP inserting 2 new args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1+argCount], &argv[1], 2);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case PAP
 
@@ -1255,7 +1267,8 @@ DEFUN0(stgApplyNNN) {
       fprintf(stderr, "stgApply FUN inserting 3 args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1], &argv[1], 3);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case FUN
 
@@ -1394,7 +1407,8 @@ DEFUN0(stgApplyNNN) {
       fprintf(stderr, "stgApply PAP inserting 3 new args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1+argCount], &argv[1], 3);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case PAP
 
@@ -1529,7 +1543,8 @@ DEFUN0(stgApplyPNN) {
       fprintf(stderr, "stgApply FUN inserting 3 args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1], &argv[1], 3);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case FUN
 
@@ -1668,7 +1683,8 @@ DEFUN0(stgApplyPNN) {
       fprintf(stderr, "stgApply PAP inserting 3 new args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1+argCount], &argv[1], 3);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case PAP
 
@@ -1803,7 +1819,8 @@ DEFUN0(stgApplyNPN) {
       fprintf(stderr, "stgApply FUN inserting 3 args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1], &argv[1], 3);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case FUN
 
@@ -1942,7 +1959,8 @@ DEFUN0(stgApplyNPN) {
       fprintf(stderr, "stgApply PAP inserting 3 new args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1+argCount], &argv[1], 3);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case PAP
 
@@ -2081,7 +2099,8 @@ DEFUN0(stgApplyPPN) {
       fprintf(stderr, "stgApply FUN inserting 3 args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1], &argv[1], 3);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case FUN
 
@@ -2220,7 +2239,8 @@ DEFUN0(stgApplyPPN) {
       fprintf(stderr, "stgApply PAP inserting 3 new args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1+argCount], &argv[1], 3);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case PAP
 
@@ -2355,7 +2375,8 @@ DEFUN0(stgApplyNNP) {
       fprintf(stderr, "stgApply FUN inserting 3 args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1], &argv[1], 3);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case FUN
 
@@ -2494,7 +2515,8 @@ DEFUN0(stgApplyNNP) {
       fprintf(stderr, "stgApply PAP inserting 3 new args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1+argCount], &argv[1], 3);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case PAP
 
@@ -2633,7 +2655,8 @@ DEFUN0(stgApplyPNP) {
       fprintf(stderr, "stgApply FUN inserting 3 args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1], &argv[1], 3);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case FUN
 
@@ -2772,7 +2795,8 @@ DEFUN0(stgApplyPNP) {
       fprintf(stderr, "stgApply PAP inserting 3 new args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1+argCount], &argv[1], 3);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case PAP
 
@@ -2911,7 +2935,8 @@ DEFUN0(stgApplyNPP) {
       fprintf(stderr, "stgApply FUN inserting 3 args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1], &argv[1], 3);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case FUN
 
@@ -3050,7 +3075,8 @@ DEFUN0(stgApplyNPP) {
       fprintf(stderr, "stgApply PAP inserting 3 new args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1+argCount], &argv[1], 3);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case PAP
 
@@ -3193,7 +3219,8 @@ DEFUN0(stgApplyPPP) {
       fprintf(stderr, "stgApply FUN inserting 3 args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1], &argv[1], 3);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case FUN
 
@@ -3332,7 +3359,8 @@ DEFUN0(stgApplyPPP) {
       fprintf(stderr, "stgApply PAP inserting 3 new args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1+argCount], &argv[1], 3);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case PAP
 
@@ -3486,7 +3514,8 @@ DEFUN0(stgApplyNNNN) {
       fprintf(stderr, "stgApply FUN inserting 4 args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1], &argv[1], 4);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case FUN
 
@@ -3656,7 +3685,8 @@ DEFUN0(stgApplyNNNN) {
       fprintf(stderr, "stgApply PAP inserting 4 new args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1+argCount], &argv[1], 4);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case PAP
 
@@ -3814,7 +3844,8 @@ DEFUN0(stgApplyPNNN) {
       fprintf(stderr, "stgApply FUN inserting 4 args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1], &argv[1], 4);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case FUN
 
@@ -3984,7 +4015,8 @@ DEFUN0(stgApplyPNNN) {
       fprintf(stderr, "stgApply PAP inserting 4 new args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1+argCount], &argv[1], 4);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case PAP
 
@@ -4142,7 +4174,8 @@ DEFUN0(stgApplyNPNN) {
       fprintf(stderr, "stgApply FUN inserting 4 args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1], &argv[1], 4);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case FUN
 
@@ -4312,7 +4345,8 @@ DEFUN0(stgApplyNPNN) {
       fprintf(stderr, "stgApply PAP inserting 4 new args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1+argCount], &argv[1], 4);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case PAP
 
@@ -4474,7 +4508,8 @@ DEFUN0(stgApplyPPNN) {
       fprintf(stderr, "stgApply FUN inserting 4 args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1], &argv[1], 4);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case FUN
 
@@ -4644,7 +4679,8 @@ DEFUN0(stgApplyPPNN) {
       fprintf(stderr, "stgApply PAP inserting 4 new args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1+argCount], &argv[1], 4);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case PAP
 
@@ -4802,7 +4838,8 @@ DEFUN0(stgApplyNNPN) {
       fprintf(stderr, "stgApply FUN inserting 4 args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1], &argv[1], 4);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case FUN
 
@@ -4972,7 +5009,8 @@ DEFUN0(stgApplyNNPN) {
       fprintf(stderr, "stgApply PAP inserting 4 new args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1+argCount], &argv[1], 4);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case PAP
 
@@ -5134,7 +5172,8 @@ DEFUN0(stgApplyPNPN) {
       fprintf(stderr, "stgApply FUN inserting 4 args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1], &argv[1], 4);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case FUN
 
@@ -5304,7 +5343,8 @@ DEFUN0(stgApplyPNPN) {
       fprintf(stderr, "stgApply PAP inserting 4 new args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1+argCount], &argv[1], 4);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case PAP
 
@@ -5466,7 +5506,8 @@ DEFUN0(stgApplyNPPN) {
       fprintf(stderr, "stgApply FUN inserting 4 args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1], &argv[1], 4);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case FUN
 
@@ -5636,7 +5677,8 @@ DEFUN0(stgApplyNPPN) {
       fprintf(stderr, "stgApply PAP inserting 4 new args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1+argCount], &argv[1], 4);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case PAP
 
@@ -5802,7 +5844,8 @@ DEFUN0(stgApplyPPPN) {
       fprintf(stderr, "stgApply FUN inserting 4 args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1], &argv[1], 4);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case FUN
 
@@ -5972,7 +6015,8 @@ DEFUN0(stgApplyPPPN) {
       fprintf(stderr, "stgApply PAP inserting 4 new args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1+argCount], &argv[1], 4);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case PAP
 
@@ -6130,7 +6174,8 @@ DEFUN0(stgApplyNNNP) {
       fprintf(stderr, "stgApply FUN inserting 4 args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1], &argv[1], 4);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case FUN
 
@@ -6300,7 +6345,8 @@ DEFUN0(stgApplyNNNP) {
       fprintf(stderr, "stgApply PAP inserting 4 new args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1+argCount], &argv[1], 4);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case PAP
 
@@ -6462,7 +6508,8 @@ DEFUN0(stgApplyPNNP) {
       fprintf(stderr, "stgApply FUN inserting 4 args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1], &argv[1], 4);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case FUN
 
@@ -6632,7 +6679,8 @@ DEFUN0(stgApplyPNNP) {
       fprintf(stderr, "stgApply PAP inserting 4 new args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1+argCount], &argv[1], 4);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case PAP
 
@@ -6794,7 +6842,8 @@ DEFUN0(stgApplyNPNP) {
       fprintf(stderr, "stgApply FUN inserting 4 args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1], &argv[1], 4);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case FUN
 
@@ -6964,7 +7013,8 @@ DEFUN0(stgApplyNPNP) {
       fprintf(stderr, "stgApply PAP inserting 4 new args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1+argCount], &argv[1], 4);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case PAP
 
@@ -7130,7 +7180,8 @@ DEFUN0(stgApplyPPNP) {
       fprintf(stderr, "stgApply FUN inserting 4 args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1], &argv[1], 4);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case FUN
 
@@ -7300,7 +7351,8 @@ DEFUN0(stgApplyPPNP) {
       fprintf(stderr, "stgApply PAP inserting 4 new args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1+argCount], &argv[1], 4);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case PAP
 
@@ -7462,7 +7514,8 @@ DEFUN0(stgApplyNNPP) {
       fprintf(stderr, "stgApply FUN inserting 4 args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1], &argv[1], 4);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case FUN
 
@@ -7632,7 +7685,8 @@ DEFUN0(stgApplyNNPP) {
       fprintf(stderr, "stgApply PAP inserting 4 new args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1+argCount], &argv[1], 4);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case PAP
 
@@ -7798,7 +7852,8 @@ DEFUN0(stgApplyPNPP) {
       fprintf(stderr, "stgApply FUN inserting 4 args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1], &argv[1], 4);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case FUN
 
@@ -7968,7 +8023,8 @@ DEFUN0(stgApplyPNPP) {
       fprintf(stderr, "stgApply PAP inserting 4 new args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1+argCount], &argv[1], 4);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case PAP
 
@@ -8134,7 +8190,8 @@ DEFUN0(stgApplyNPPP) {
       fprintf(stderr, "stgApply FUN inserting 4 args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1], &argv[1], 4);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case FUN
 
@@ -8304,7 +8361,8 @@ DEFUN0(stgApplyNPPP) {
       fprintf(stderr, "stgApply PAP inserting 4 new args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1+argCount], &argv[1], 4);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case PAP
 
@@ -8474,7 +8532,8 @@ DEFUN0(stgApplyPPPP) {
       fprintf(stderr, "stgApply FUN inserting 4 args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1], &argv[1], 4);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case FUN
 
@@ -8644,7 +8703,8 @@ DEFUN0(stgApplyPPPP) {
       fprintf(stderr, "stgApply PAP inserting 4 new args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1+argCount], &argv[1], 4);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case PAP
 
@@ -8821,7 +8881,8 @@ DEFUN0(stgApplyNNNNN) {
       fprintf(stderr, "stgApply FUN inserting 5 args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1], &argv[1], 5);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case FUN
 
@@ -9022,7 +9083,8 @@ DEFUN0(stgApplyNNNNN) {
       fprintf(stderr, "stgApply PAP inserting 5 new args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1+argCount], &argv[1], 5);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case PAP
 
@@ -9203,7 +9265,8 @@ DEFUN0(stgApplyPNNNN) {
       fprintf(stderr, "stgApply FUN inserting 5 args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1], &argv[1], 5);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case FUN
 
@@ -9404,7 +9467,8 @@ DEFUN0(stgApplyPNNNN) {
       fprintf(stderr, "stgApply PAP inserting 5 new args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1+argCount], &argv[1], 5);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case PAP
 
@@ -9585,7 +9649,8 @@ DEFUN0(stgApplyNPNNN) {
       fprintf(stderr, "stgApply FUN inserting 5 args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1], &argv[1], 5);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case FUN
 
@@ -9786,7 +9851,8 @@ DEFUN0(stgApplyNPNNN) {
       fprintf(stderr, "stgApply PAP inserting 5 new args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1+argCount], &argv[1], 5);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case PAP
 
@@ -9971,7 +10037,8 @@ DEFUN0(stgApplyPPNNN) {
       fprintf(stderr, "stgApply FUN inserting 5 args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1], &argv[1], 5);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case FUN
 
@@ -10172,7 +10239,8 @@ DEFUN0(stgApplyPPNNN) {
       fprintf(stderr, "stgApply PAP inserting 5 new args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1+argCount], &argv[1], 5);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case PAP
 
@@ -10353,7 +10421,8 @@ DEFUN0(stgApplyNNPNN) {
       fprintf(stderr, "stgApply FUN inserting 5 args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1], &argv[1], 5);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case FUN
 
@@ -10554,7 +10623,8 @@ DEFUN0(stgApplyNNPNN) {
       fprintf(stderr, "stgApply PAP inserting 5 new args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1+argCount], &argv[1], 5);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case PAP
 
@@ -10739,7 +10809,8 @@ DEFUN0(stgApplyPNPNN) {
       fprintf(stderr, "stgApply FUN inserting 5 args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1], &argv[1], 5);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case FUN
 
@@ -10940,7 +11011,8 @@ DEFUN0(stgApplyPNPNN) {
       fprintf(stderr, "stgApply PAP inserting 5 new args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1+argCount], &argv[1], 5);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case PAP
 
@@ -11125,7 +11197,8 @@ DEFUN0(stgApplyNPPNN) {
       fprintf(stderr, "stgApply FUN inserting 5 args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1], &argv[1], 5);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case FUN
 
@@ -11326,7 +11399,8 @@ DEFUN0(stgApplyNPPNN) {
       fprintf(stderr, "stgApply PAP inserting 5 new args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1+argCount], &argv[1], 5);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case PAP
 
@@ -11515,7 +11589,8 @@ DEFUN0(stgApplyPPPNN) {
       fprintf(stderr, "stgApply FUN inserting 5 args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1], &argv[1], 5);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case FUN
 
@@ -11716,7 +11791,8 @@ DEFUN0(stgApplyPPPNN) {
       fprintf(stderr, "stgApply PAP inserting 5 new args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1+argCount], &argv[1], 5);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case PAP
 
@@ -11897,7 +11973,8 @@ DEFUN0(stgApplyNNNPN) {
       fprintf(stderr, "stgApply FUN inserting 5 args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1], &argv[1], 5);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case FUN
 
@@ -12098,7 +12175,8 @@ DEFUN0(stgApplyNNNPN) {
       fprintf(stderr, "stgApply PAP inserting 5 new args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1+argCount], &argv[1], 5);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case PAP
 
@@ -12283,7 +12361,8 @@ DEFUN0(stgApplyPNNPN) {
       fprintf(stderr, "stgApply FUN inserting 5 args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1], &argv[1], 5);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case FUN
 
@@ -12484,7 +12563,8 @@ DEFUN0(stgApplyPNNPN) {
       fprintf(stderr, "stgApply PAP inserting 5 new args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1+argCount], &argv[1], 5);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case PAP
 
@@ -12669,7 +12749,8 @@ DEFUN0(stgApplyNPNPN) {
       fprintf(stderr, "stgApply FUN inserting 5 args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1], &argv[1], 5);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case FUN
 
@@ -12870,7 +12951,8 @@ DEFUN0(stgApplyNPNPN) {
       fprintf(stderr, "stgApply PAP inserting 5 new args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1+argCount], &argv[1], 5);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case PAP
 
@@ -13059,7 +13141,8 @@ DEFUN0(stgApplyPPNPN) {
       fprintf(stderr, "stgApply FUN inserting 5 args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1], &argv[1], 5);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case FUN
 
@@ -13260,7 +13343,8 @@ DEFUN0(stgApplyPPNPN) {
       fprintf(stderr, "stgApply PAP inserting 5 new args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1+argCount], &argv[1], 5);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case PAP
 
@@ -13445,7 +13529,8 @@ DEFUN0(stgApplyNNPPN) {
       fprintf(stderr, "stgApply FUN inserting 5 args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1], &argv[1], 5);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case FUN
 
@@ -13646,7 +13731,8 @@ DEFUN0(stgApplyNNPPN) {
       fprintf(stderr, "stgApply PAP inserting 5 new args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1+argCount], &argv[1], 5);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case PAP
 
@@ -13835,7 +13921,8 @@ DEFUN0(stgApplyPNPPN) {
       fprintf(stderr, "stgApply FUN inserting 5 args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1], &argv[1], 5);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case FUN
 
@@ -14036,7 +14123,8 @@ DEFUN0(stgApplyPNPPN) {
       fprintf(stderr, "stgApply PAP inserting 5 new args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1+argCount], &argv[1], 5);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case PAP
 
@@ -14225,7 +14313,8 @@ DEFUN0(stgApplyNPPPN) {
       fprintf(stderr, "stgApply FUN inserting 5 args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1], &argv[1], 5);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case FUN
 
@@ -14426,7 +14515,8 @@ DEFUN0(stgApplyNPPPN) {
       fprintf(stderr, "stgApply PAP inserting 5 new args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1+argCount], &argv[1], 5);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case PAP
 
@@ -14619,7 +14709,8 @@ DEFUN0(stgApplyPPPPN) {
       fprintf(stderr, "stgApply FUN inserting 5 args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1], &argv[1], 5);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case FUN
 
@@ -14820,7 +14911,8 @@ DEFUN0(stgApplyPPPPN) {
       fprintf(stderr, "stgApply PAP inserting 5 new args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1+argCount], &argv[1], 5);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case PAP
 
@@ -15001,7 +15093,8 @@ DEFUN0(stgApplyNNNNP) {
       fprintf(stderr, "stgApply FUN inserting 5 args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1], &argv[1], 5);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case FUN
 
@@ -15202,7 +15295,8 @@ DEFUN0(stgApplyNNNNP) {
       fprintf(stderr, "stgApply PAP inserting 5 new args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1+argCount], &argv[1], 5);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case PAP
 
@@ -15387,7 +15481,8 @@ DEFUN0(stgApplyPNNNP) {
       fprintf(stderr, "stgApply FUN inserting 5 args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1], &argv[1], 5);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case FUN
 
@@ -15588,7 +15683,8 @@ DEFUN0(stgApplyPNNNP) {
       fprintf(stderr, "stgApply PAP inserting 5 new args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1+argCount], &argv[1], 5);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case PAP
 
@@ -15773,7 +15869,8 @@ DEFUN0(stgApplyNPNNP) {
       fprintf(stderr, "stgApply FUN inserting 5 args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1], &argv[1], 5);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case FUN
 
@@ -15974,7 +16071,8 @@ DEFUN0(stgApplyNPNNP) {
       fprintf(stderr, "stgApply PAP inserting 5 new args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1+argCount], &argv[1], 5);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case PAP
 
@@ -16163,7 +16261,8 @@ DEFUN0(stgApplyPPNNP) {
       fprintf(stderr, "stgApply FUN inserting 5 args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1], &argv[1], 5);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case FUN
 
@@ -16364,7 +16463,8 @@ DEFUN0(stgApplyPPNNP) {
       fprintf(stderr, "stgApply PAP inserting 5 new args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1+argCount], &argv[1], 5);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case PAP
 
@@ -16549,7 +16649,8 @@ DEFUN0(stgApplyNNPNP) {
       fprintf(stderr, "stgApply FUN inserting 5 args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1], &argv[1], 5);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case FUN
 
@@ -16750,7 +16851,8 @@ DEFUN0(stgApplyNNPNP) {
       fprintf(stderr, "stgApply PAP inserting 5 new args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1+argCount], &argv[1], 5);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case PAP
 
@@ -16939,7 +17041,8 @@ DEFUN0(stgApplyPNPNP) {
       fprintf(stderr, "stgApply FUN inserting 5 args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1], &argv[1], 5);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case FUN
 
@@ -17140,7 +17243,8 @@ DEFUN0(stgApplyPNPNP) {
       fprintf(stderr, "stgApply PAP inserting 5 new args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1+argCount], &argv[1], 5);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case PAP
 
@@ -17329,7 +17433,8 @@ DEFUN0(stgApplyNPPNP) {
       fprintf(stderr, "stgApply FUN inserting 5 args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1], &argv[1], 5);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case FUN
 
@@ -17530,7 +17635,8 @@ DEFUN0(stgApplyNPPNP) {
       fprintf(stderr, "stgApply PAP inserting 5 new args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1+argCount], &argv[1], 5);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case PAP
 
@@ -17723,7 +17829,8 @@ DEFUN0(stgApplyPPPNP) {
       fprintf(stderr, "stgApply FUN inserting 5 args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1], &argv[1], 5);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case FUN
 
@@ -17924,7 +18031,8 @@ DEFUN0(stgApplyPPPNP) {
       fprintf(stderr, "stgApply PAP inserting 5 new args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1+argCount], &argv[1], 5);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case PAP
 
@@ -18109,7 +18217,8 @@ DEFUN0(stgApplyNNNPP) {
       fprintf(stderr, "stgApply FUN inserting 5 args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1], &argv[1], 5);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case FUN
 
@@ -18310,7 +18419,8 @@ DEFUN0(stgApplyNNNPP) {
       fprintf(stderr, "stgApply PAP inserting 5 new args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1+argCount], &argv[1], 5);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case PAP
 
@@ -18499,7 +18609,8 @@ DEFUN0(stgApplyPNNPP) {
       fprintf(stderr, "stgApply FUN inserting 5 args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1], &argv[1], 5);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case FUN
 
@@ -18700,7 +18811,8 @@ DEFUN0(stgApplyPNNPP) {
       fprintf(stderr, "stgApply PAP inserting 5 new args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1+argCount], &argv[1], 5);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case PAP
 
@@ -18889,7 +19001,8 @@ DEFUN0(stgApplyNPNPP) {
       fprintf(stderr, "stgApply FUN inserting 5 args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1], &argv[1], 5);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case FUN
 
@@ -19090,7 +19203,8 @@ DEFUN0(stgApplyNPNPP) {
       fprintf(stderr, "stgApply PAP inserting 5 new args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1+argCount], &argv[1], 5);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case PAP
 
@@ -19283,7 +19397,8 @@ DEFUN0(stgApplyPPNPP) {
       fprintf(stderr, "stgApply FUN inserting 5 args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1], &argv[1], 5);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case FUN
 
@@ -19484,7 +19599,8 @@ DEFUN0(stgApplyPPNPP) {
       fprintf(stderr, "stgApply PAP inserting 5 new args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1+argCount], &argv[1], 5);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case PAP
 
@@ -19673,7 +19789,8 @@ DEFUN0(stgApplyNNPPP) {
       fprintf(stderr, "stgApply FUN inserting 5 args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1], &argv[1], 5);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case FUN
 
@@ -19874,7 +19991,8 @@ DEFUN0(stgApplyNNPPP) {
       fprintf(stderr, "stgApply PAP inserting 5 new args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1+argCount], &argv[1], 5);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case PAP
 
@@ -20067,7 +20185,8 @@ DEFUN0(stgApplyPNPPP) {
       fprintf(stderr, "stgApply FUN inserting 5 args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1], &argv[1], 5);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case FUN
 
@@ -20268,7 +20387,8 @@ DEFUN0(stgApplyPNPPP) {
       fprintf(stderr, "stgApply PAP inserting 5 new args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1+argCount], &argv[1], 5);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case PAP
 
@@ -20461,7 +20581,8 @@ DEFUN0(stgApplyNPPPP) {
       fprintf(stderr, "stgApply FUN inserting 5 args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1], &argv[1], 5);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case FUN
 
@@ -20662,7 +20783,8 @@ DEFUN0(stgApplyNPPPP) {
       fprintf(stderr, "stgApply PAP inserting 5 new args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1+argCount], &argv[1], 5);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case PAP
 
@@ -20859,7 +20981,8 @@ DEFUN0(stgApplyPPPPP) {
       fprintf(stderr, "stgApply FUN inserting 5 args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1], &argv[1], 5);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case FUN
 
@@ -21060,7 +21183,8 @@ DEFUN0(stgApplyPPPPP) {
       fprintf(stderr, "stgApply PAP inserting 5 new args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1+argCount], &argv[1], 5);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case PAP
 
@@ -21260,7 +21384,8 @@ DEFUN0(stgApplyNNNNNN) {
       fprintf(stderr, "stgApply FUN inserting 6 args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1], &argv[1], 6);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case FUN
 
@@ -21492,7 +21617,8 @@ DEFUN0(stgApplyNNNNNN) {
       fprintf(stderr, "stgApply PAP inserting 6 new args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1+argCount], &argv[1], 6);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case PAP
 
@@ -21696,7 +21822,8 @@ DEFUN0(stgApplyPNNNNN) {
       fprintf(stderr, "stgApply FUN inserting 6 args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1], &argv[1], 6);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case FUN
 
@@ -21928,7 +22055,8 @@ DEFUN0(stgApplyPNNNNN) {
       fprintf(stderr, "stgApply PAP inserting 6 new args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1+argCount], &argv[1], 6);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case PAP
 
@@ -22132,7 +22260,8 @@ DEFUN0(stgApplyNPNNNN) {
       fprintf(stderr, "stgApply FUN inserting 6 args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1], &argv[1], 6);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case FUN
 
@@ -22364,7 +22493,8 @@ DEFUN0(stgApplyNPNNNN) {
       fprintf(stderr, "stgApply PAP inserting 6 new args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1+argCount], &argv[1], 6);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case PAP
 
@@ -22572,7 +22702,8 @@ DEFUN0(stgApplyPPNNNN) {
       fprintf(stderr, "stgApply FUN inserting 6 args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1], &argv[1], 6);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case FUN
 
@@ -22804,7 +22935,8 @@ DEFUN0(stgApplyPPNNNN) {
       fprintf(stderr, "stgApply PAP inserting 6 new args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1+argCount], &argv[1], 6);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case PAP
 
@@ -23008,7 +23140,8 @@ DEFUN0(stgApplyNNPNNN) {
       fprintf(stderr, "stgApply FUN inserting 6 args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1], &argv[1], 6);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case FUN
 
@@ -23240,7 +23373,8 @@ DEFUN0(stgApplyNNPNNN) {
       fprintf(stderr, "stgApply PAP inserting 6 new args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1+argCount], &argv[1], 6);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case PAP
 
@@ -23448,7 +23582,8 @@ DEFUN0(stgApplyPNPNNN) {
       fprintf(stderr, "stgApply FUN inserting 6 args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1], &argv[1], 6);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case FUN
 
@@ -23680,7 +23815,8 @@ DEFUN0(stgApplyPNPNNN) {
       fprintf(stderr, "stgApply PAP inserting 6 new args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1+argCount], &argv[1], 6);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case PAP
 
@@ -23888,7 +24024,8 @@ DEFUN0(stgApplyNPPNNN) {
       fprintf(stderr, "stgApply FUN inserting 6 args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1], &argv[1], 6);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case FUN
 
@@ -24120,7 +24257,8 @@ DEFUN0(stgApplyNPPNNN) {
       fprintf(stderr, "stgApply PAP inserting 6 new args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1+argCount], &argv[1], 6);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case PAP
 
@@ -24332,7 +24470,8 @@ DEFUN0(stgApplyPPPNNN) {
       fprintf(stderr, "stgApply FUN inserting 6 args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1], &argv[1], 6);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case FUN
 
@@ -24564,7 +24703,8 @@ DEFUN0(stgApplyPPPNNN) {
       fprintf(stderr, "stgApply PAP inserting 6 new args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1+argCount], &argv[1], 6);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case PAP
 
@@ -24768,7 +24908,8 @@ DEFUN0(stgApplyNNNPNN) {
       fprintf(stderr, "stgApply FUN inserting 6 args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1], &argv[1], 6);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case FUN
 
@@ -25000,7 +25141,8 @@ DEFUN0(stgApplyNNNPNN) {
       fprintf(stderr, "stgApply PAP inserting 6 new args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1+argCount], &argv[1], 6);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case PAP
 
@@ -25208,7 +25350,8 @@ DEFUN0(stgApplyPNNPNN) {
       fprintf(stderr, "stgApply FUN inserting 6 args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1], &argv[1], 6);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case FUN
 
@@ -25440,7 +25583,8 @@ DEFUN0(stgApplyPNNPNN) {
       fprintf(stderr, "stgApply PAP inserting 6 new args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1+argCount], &argv[1], 6);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case PAP
 
@@ -25648,7 +25792,8 @@ DEFUN0(stgApplyNPNPNN) {
       fprintf(stderr, "stgApply FUN inserting 6 args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1], &argv[1], 6);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case FUN
 
@@ -25880,7 +26025,8 @@ DEFUN0(stgApplyNPNPNN) {
       fprintf(stderr, "stgApply PAP inserting 6 new args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1+argCount], &argv[1], 6);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case PAP
 
@@ -26092,7 +26238,8 @@ DEFUN0(stgApplyPPNPNN) {
       fprintf(stderr, "stgApply FUN inserting 6 args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1], &argv[1], 6);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case FUN
 
@@ -26324,7 +26471,8 @@ DEFUN0(stgApplyPPNPNN) {
       fprintf(stderr, "stgApply PAP inserting 6 new args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1+argCount], &argv[1], 6);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case PAP
 
@@ -26532,7 +26680,8 @@ DEFUN0(stgApplyNNPPNN) {
       fprintf(stderr, "stgApply FUN inserting 6 args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1], &argv[1], 6);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case FUN
 
@@ -26764,7 +26913,8 @@ DEFUN0(stgApplyNNPPNN) {
       fprintf(stderr, "stgApply PAP inserting 6 new args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1+argCount], &argv[1], 6);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case PAP
 
@@ -26976,7 +27126,8 @@ DEFUN0(stgApplyPNPPNN) {
       fprintf(stderr, "stgApply FUN inserting 6 args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1], &argv[1], 6);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case FUN
 
@@ -27208,7 +27359,8 @@ DEFUN0(stgApplyPNPPNN) {
       fprintf(stderr, "stgApply PAP inserting 6 new args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1+argCount], &argv[1], 6);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case PAP
 
@@ -27420,7 +27572,8 @@ DEFUN0(stgApplyNPPPNN) {
       fprintf(stderr, "stgApply FUN inserting 6 args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1], &argv[1], 6);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case FUN
 
@@ -27652,7 +27805,8 @@ DEFUN0(stgApplyNPPPNN) {
       fprintf(stderr, "stgApply PAP inserting 6 new args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1+argCount], &argv[1], 6);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case PAP
 
@@ -27868,7 +28022,8 @@ DEFUN0(stgApplyPPPPNN) {
       fprintf(stderr, "stgApply FUN inserting 6 args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1], &argv[1], 6);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case FUN
 
@@ -28100,7 +28255,8 @@ DEFUN0(stgApplyPPPPNN) {
       fprintf(stderr, "stgApply PAP inserting 6 new args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1+argCount], &argv[1], 6);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case PAP
 
@@ -28304,7 +28460,8 @@ DEFUN0(stgApplyNNNNPN) {
       fprintf(stderr, "stgApply FUN inserting 6 args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1], &argv[1], 6);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case FUN
 
@@ -28536,7 +28693,8 @@ DEFUN0(stgApplyNNNNPN) {
       fprintf(stderr, "stgApply PAP inserting 6 new args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1+argCount], &argv[1], 6);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case PAP
 
@@ -28744,7 +28902,8 @@ DEFUN0(stgApplyPNNNPN) {
       fprintf(stderr, "stgApply FUN inserting 6 args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1], &argv[1], 6);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case FUN
 
@@ -28976,7 +29135,8 @@ DEFUN0(stgApplyPNNNPN) {
       fprintf(stderr, "stgApply PAP inserting 6 new args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1+argCount], &argv[1], 6);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case PAP
 
@@ -29184,7 +29344,8 @@ DEFUN0(stgApplyNPNNPN) {
       fprintf(stderr, "stgApply FUN inserting 6 args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1], &argv[1], 6);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case FUN
 
@@ -29416,7 +29577,8 @@ DEFUN0(stgApplyNPNNPN) {
       fprintf(stderr, "stgApply PAP inserting 6 new args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1+argCount], &argv[1], 6);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case PAP
 
@@ -29628,7 +29790,8 @@ DEFUN0(stgApplyPPNNPN) {
       fprintf(stderr, "stgApply FUN inserting 6 args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1], &argv[1], 6);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case FUN
 
@@ -29860,7 +30023,8 @@ DEFUN0(stgApplyPPNNPN) {
       fprintf(stderr, "stgApply PAP inserting 6 new args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1+argCount], &argv[1], 6);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case PAP
 
@@ -30068,7 +30232,8 @@ DEFUN0(stgApplyNNPNPN) {
       fprintf(stderr, "stgApply FUN inserting 6 args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1], &argv[1], 6);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case FUN
 
@@ -30300,7 +30465,8 @@ DEFUN0(stgApplyNNPNPN) {
       fprintf(stderr, "stgApply PAP inserting 6 new args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1+argCount], &argv[1], 6);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case PAP
 
@@ -30512,7 +30678,8 @@ DEFUN0(stgApplyPNPNPN) {
       fprintf(stderr, "stgApply FUN inserting 6 args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1], &argv[1], 6);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case FUN
 
@@ -30744,7 +30911,8 @@ DEFUN0(stgApplyPNPNPN) {
       fprintf(stderr, "stgApply PAP inserting 6 new args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1+argCount], &argv[1], 6);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case PAP
 
@@ -30956,7 +31124,8 @@ DEFUN0(stgApplyNPPNPN) {
       fprintf(stderr, "stgApply FUN inserting 6 args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1], &argv[1], 6);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case FUN
 
@@ -31188,7 +31357,8 @@ DEFUN0(stgApplyNPPNPN) {
       fprintf(stderr, "stgApply PAP inserting 6 new args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1+argCount], &argv[1], 6);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case PAP
 
@@ -31404,7 +31574,8 @@ DEFUN0(stgApplyPPPNPN) {
       fprintf(stderr, "stgApply FUN inserting 6 args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1], &argv[1], 6);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case FUN
 
@@ -31636,7 +31807,8 @@ DEFUN0(stgApplyPPPNPN) {
       fprintf(stderr, "stgApply PAP inserting 6 new args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1+argCount], &argv[1], 6);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case PAP
 
@@ -31844,7 +32016,8 @@ DEFUN0(stgApplyNNNPPN) {
       fprintf(stderr, "stgApply FUN inserting 6 args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1], &argv[1], 6);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case FUN
 
@@ -32076,7 +32249,8 @@ DEFUN0(stgApplyNNNPPN) {
       fprintf(stderr, "stgApply PAP inserting 6 new args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1+argCount], &argv[1], 6);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case PAP
 
@@ -32288,7 +32462,8 @@ DEFUN0(stgApplyPNNPPN) {
       fprintf(stderr, "stgApply FUN inserting 6 args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1], &argv[1], 6);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case FUN
 
@@ -32520,7 +32695,8 @@ DEFUN0(stgApplyPNNPPN) {
       fprintf(stderr, "stgApply PAP inserting 6 new args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1+argCount], &argv[1], 6);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case PAP
 
@@ -32732,7 +32908,8 @@ DEFUN0(stgApplyNPNPPN) {
       fprintf(stderr, "stgApply FUN inserting 6 args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1], &argv[1], 6);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case FUN
 
@@ -32964,7 +33141,8 @@ DEFUN0(stgApplyNPNPPN) {
       fprintf(stderr, "stgApply PAP inserting 6 new args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1+argCount], &argv[1], 6);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case PAP
 
@@ -33180,7 +33358,8 @@ DEFUN0(stgApplyPPNPPN) {
       fprintf(stderr, "stgApply FUN inserting 6 args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1], &argv[1], 6);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case FUN
 
@@ -33412,7 +33591,8 @@ DEFUN0(stgApplyPPNPPN) {
       fprintf(stderr, "stgApply PAP inserting 6 new args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1+argCount], &argv[1], 6);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case PAP
 
@@ -33624,7 +33804,8 @@ DEFUN0(stgApplyNNPPPN) {
       fprintf(stderr, "stgApply FUN inserting 6 args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1], &argv[1], 6);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case FUN
 
@@ -33856,7 +34037,8 @@ DEFUN0(stgApplyNNPPPN) {
       fprintf(stderr, "stgApply PAP inserting 6 new args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1+argCount], &argv[1], 6);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case PAP
 
@@ -34072,7 +34254,8 @@ DEFUN0(stgApplyPNPPPN) {
       fprintf(stderr, "stgApply FUN inserting 6 args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1], &argv[1], 6);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case FUN
 
@@ -34304,7 +34487,8 @@ DEFUN0(stgApplyPNPPPN) {
       fprintf(stderr, "stgApply PAP inserting 6 new args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1+argCount], &argv[1], 6);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case PAP
 
@@ -34520,7 +34704,8 @@ DEFUN0(stgApplyNPPPPN) {
       fprintf(stderr, "stgApply FUN inserting 6 args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1], &argv[1], 6);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case FUN
 
@@ -34752,7 +34937,8 @@ DEFUN0(stgApplyNPPPPN) {
       fprintf(stderr, "stgApply PAP inserting 6 new args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1+argCount], &argv[1], 6);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case PAP
 
@@ -34972,7 +35158,8 @@ DEFUN0(stgApplyPPPPPN) {
       fprintf(stderr, "stgApply FUN inserting 6 args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1], &argv[1], 6);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case FUN
 
@@ -35204,7 +35391,8 @@ DEFUN0(stgApplyPPPPPN) {
       fprintf(stderr, "stgApply PAP inserting 6 new args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1+argCount], &argv[1], 6);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case PAP
 
@@ -35408,7 +35596,8 @@ DEFUN0(stgApplyNNNNNP) {
       fprintf(stderr, "stgApply FUN inserting 6 args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1], &argv[1], 6);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case FUN
 
@@ -35640,7 +35829,8 @@ DEFUN0(stgApplyNNNNNP) {
       fprintf(stderr, "stgApply PAP inserting 6 new args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1+argCount], &argv[1], 6);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case PAP
 
@@ -35848,7 +36038,8 @@ DEFUN0(stgApplyPNNNNP) {
       fprintf(stderr, "stgApply FUN inserting 6 args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1], &argv[1], 6);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case FUN
 
@@ -36080,7 +36271,8 @@ DEFUN0(stgApplyPNNNNP) {
       fprintf(stderr, "stgApply PAP inserting 6 new args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1+argCount], &argv[1], 6);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case PAP
 
@@ -36288,7 +36480,8 @@ DEFUN0(stgApplyNPNNNP) {
       fprintf(stderr, "stgApply FUN inserting 6 args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1], &argv[1], 6);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case FUN
 
@@ -36520,7 +36713,8 @@ DEFUN0(stgApplyNPNNNP) {
       fprintf(stderr, "stgApply PAP inserting 6 new args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1+argCount], &argv[1], 6);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case PAP
 
@@ -36732,7 +36926,8 @@ DEFUN0(stgApplyPPNNNP) {
       fprintf(stderr, "stgApply FUN inserting 6 args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1], &argv[1], 6);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case FUN
 
@@ -36964,7 +37159,8 @@ DEFUN0(stgApplyPPNNNP) {
       fprintf(stderr, "stgApply PAP inserting 6 new args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1+argCount], &argv[1], 6);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case PAP
 
@@ -37172,7 +37368,8 @@ DEFUN0(stgApplyNNPNNP) {
       fprintf(stderr, "stgApply FUN inserting 6 args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1], &argv[1], 6);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case FUN
 
@@ -37404,7 +37601,8 @@ DEFUN0(stgApplyNNPNNP) {
       fprintf(stderr, "stgApply PAP inserting 6 new args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1+argCount], &argv[1], 6);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case PAP
 
@@ -37616,7 +37814,8 @@ DEFUN0(stgApplyPNPNNP) {
       fprintf(stderr, "stgApply FUN inserting 6 args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1], &argv[1], 6);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case FUN
 
@@ -37848,7 +38047,8 @@ DEFUN0(stgApplyPNPNNP) {
       fprintf(stderr, "stgApply PAP inserting 6 new args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1+argCount], &argv[1], 6);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case PAP
 
@@ -38060,7 +38260,8 @@ DEFUN0(stgApplyNPPNNP) {
       fprintf(stderr, "stgApply FUN inserting 6 args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1], &argv[1], 6);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case FUN
 
@@ -38292,7 +38493,8 @@ DEFUN0(stgApplyNPPNNP) {
       fprintf(stderr, "stgApply PAP inserting 6 new args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1+argCount], &argv[1], 6);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case PAP
 
@@ -38508,7 +38710,8 @@ DEFUN0(stgApplyPPPNNP) {
       fprintf(stderr, "stgApply FUN inserting 6 args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1], &argv[1], 6);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case FUN
 
@@ -38740,7 +38943,8 @@ DEFUN0(stgApplyPPPNNP) {
       fprintf(stderr, "stgApply PAP inserting 6 new args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1+argCount], &argv[1], 6);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case PAP
 
@@ -38948,7 +39152,8 @@ DEFUN0(stgApplyNNNPNP) {
       fprintf(stderr, "stgApply FUN inserting 6 args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1], &argv[1], 6);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case FUN
 
@@ -39180,7 +39385,8 @@ DEFUN0(stgApplyNNNPNP) {
       fprintf(stderr, "stgApply PAP inserting 6 new args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1+argCount], &argv[1], 6);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case PAP
 
@@ -39392,7 +39598,8 @@ DEFUN0(stgApplyPNNPNP) {
       fprintf(stderr, "stgApply FUN inserting 6 args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1], &argv[1], 6);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case FUN
 
@@ -39624,7 +39831,8 @@ DEFUN0(stgApplyPNNPNP) {
       fprintf(stderr, "stgApply PAP inserting 6 new args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1+argCount], &argv[1], 6);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case PAP
 
@@ -39836,7 +40044,8 @@ DEFUN0(stgApplyNPNPNP) {
       fprintf(stderr, "stgApply FUN inserting 6 args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1], &argv[1], 6);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case FUN
 
@@ -40068,7 +40277,8 @@ DEFUN0(stgApplyNPNPNP) {
       fprintf(stderr, "stgApply PAP inserting 6 new args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1+argCount], &argv[1], 6);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case PAP
 
@@ -40284,7 +40494,8 @@ DEFUN0(stgApplyPPNPNP) {
       fprintf(stderr, "stgApply FUN inserting 6 args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1], &argv[1], 6);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case FUN
 
@@ -40516,7 +40727,8 @@ DEFUN0(stgApplyPPNPNP) {
       fprintf(stderr, "stgApply PAP inserting 6 new args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1+argCount], &argv[1], 6);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case PAP
 
@@ -40728,7 +40940,8 @@ DEFUN0(stgApplyNNPPNP) {
       fprintf(stderr, "stgApply FUN inserting 6 args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1], &argv[1], 6);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case FUN
 
@@ -40960,7 +41173,8 @@ DEFUN0(stgApplyNNPPNP) {
       fprintf(stderr, "stgApply PAP inserting 6 new args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1+argCount], &argv[1], 6);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case PAP
 
@@ -41176,7 +41390,8 @@ DEFUN0(stgApplyPNPPNP) {
       fprintf(stderr, "stgApply FUN inserting 6 args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1], &argv[1], 6);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case FUN
 
@@ -41408,7 +41623,8 @@ DEFUN0(stgApplyPNPPNP) {
       fprintf(stderr, "stgApply PAP inserting 6 new args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1+argCount], &argv[1], 6);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case PAP
 
@@ -41624,7 +41840,8 @@ DEFUN0(stgApplyNPPPNP) {
       fprintf(stderr, "stgApply FUN inserting 6 args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1], &argv[1], 6);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case FUN
 
@@ -41856,7 +42073,8 @@ DEFUN0(stgApplyNPPPNP) {
       fprintf(stderr, "stgApply PAP inserting 6 new args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1+argCount], &argv[1], 6);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case PAP
 
@@ -42076,7 +42294,8 @@ DEFUN0(stgApplyPPPPNP) {
       fprintf(stderr, "stgApply FUN inserting 6 args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1], &argv[1], 6);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case FUN
 
@@ -42308,7 +42527,8 @@ DEFUN0(stgApplyPPPPNP) {
       fprintf(stderr, "stgApply PAP inserting 6 new args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1+argCount], &argv[1], 6);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case PAP
 
@@ -42516,7 +42736,8 @@ DEFUN0(stgApplyNNNNPP) {
       fprintf(stderr, "stgApply FUN inserting 6 args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1], &argv[1], 6);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case FUN
 
@@ -42748,7 +42969,8 @@ DEFUN0(stgApplyNNNNPP) {
       fprintf(stderr, "stgApply PAP inserting 6 new args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1+argCount], &argv[1], 6);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case PAP
 
@@ -42960,7 +43182,8 @@ DEFUN0(stgApplyPNNNPP) {
       fprintf(stderr, "stgApply FUN inserting 6 args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1], &argv[1], 6);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case FUN
 
@@ -43192,7 +43415,8 @@ DEFUN0(stgApplyPNNNPP) {
       fprintf(stderr, "stgApply PAP inserting 6 new args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1+argCount], &argv[1], 6);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case PAP
 
@@ -43404,7 +43628,8 @@ DEFUN0(stgApplyNPNNPP) {
       fprintf(stderr, "stgApply FUN inserting 6 args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1], &argv[1], 6);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case FUN
 
@@ -43636,7 +43861,8 @@ DEFUN0(stgApplyNPNNPP) {
       fprintf(stderr, "stgApply PAP inserting 6 new args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1+argCount], &argv[1], 6);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case PAP
 
@@ -43852,7 +44078,8 @@ DEFUN0(stgApplyPPNNPP) {
       fprintf(stderr, "stgApply FUN inserting 6 args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1], &argv[1], 6);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case FUN
 
@@ -44084,7 +44311,8 @@ DEFUN0(stgApplyPPNNPP) {
       fprintf(stderr, "stgApply PAP inserting 6 new args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1+argCount], &argv[1], 6);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case PAP
 
@@ -44296,7 +44524,8 @@ DEFUN0(stgApplyNNPNPP) {
       fprintf(stderr, "stgApply FUN inserting 6 args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1], &argv[1], 6);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case FUN
 
@@ -44528,7 +44757,8 @@ DEFUN0(stgApplyNNPNPP) {
       fprintf(stderr, "stgApply PAP inserting 6 new args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1+argCount], &argv[1], 6);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case PAP
 
@@ -44744,7 +44974,8 @@ DEFUN0(stgApplyPNPNPP) {
       fprintf(stderr, "stgApply FUN inserting 6 args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1], &argv[1], 6);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case FUN
 
@@ -44976,7 +45207,8 @@ DEFUN0(stgApplyPNPNPP) {
       fprintf(stderr, "stgApply PAP inserting 6 new args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1+argCount], &argv[1], 6);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case PAP
 
@@ -45192,7 +45424,8 @@ DEFUN0(stgApplyNPPNPP) {
       fprintf(stderr, "stgApply FUN inserting 6 args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1], &argv[1], 6);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case FUN
 
@@ -45424,7 +45657,8 @@ DEFUN0(stgApplyNPPNPP) {
       fprintf(stderr, "stgApply PAP inserting 6 new args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1+argCount], &argv[1], 6);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case PAP
 
@@ -45644,7 +45878,8 @@ DEFUN0(stgApplyPPPNPP) {
       fprintf(stderr, "stgApply FUN inserting 6 args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1], &argv[1], 6);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case FUN
 
@@ -45876,7 +46111,8 @@ DEFUN0(stgApplyPPPNPP) {
       fprintf(stderr, "stgApply PAP inserting 6 new args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1+argCount], &argv[1], 6);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case PAP
 
@@ -46088,7 +46324,8 @@ DEFUN0(stgApplyNNNPPP) {
       fprintf(stderr, "stgApply FUN inserting 6 args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1], &argv[1], 6);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case FUN
 
@@ -46320,7 +46557,8 @@ DEFUN0(stgApplyNNNPPP) {
       fprintf(stderr, "stgApply PAP inserting 6 new args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1+argCount], &argv[1], 6);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case PAP
 
@@ -46536,7 +46774,8 @@ DEFUN0(stgApplyPNNPPP) {
       fprintf(stderr, "stgApply FUN inserting 6 args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1], &argv[1], 6);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case FUN
 
@@ -46768,7 +47007,8 @@ DEFUN0(stgApplyPNNPPP) {
       fprintf(stderr, "stgApply PAP inserting 6 new args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1+argCount], &argv[1], 6);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case PAP
 
@@ -46984,7 +47224,8 @@ DEFUN0(stgApplyNPNPPP) {
       fprintf(stderr, "stgApply FUN inserting 6 args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1], &argv[1], 6);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case FUN
 
@@ -47216,7 +47457,8 @@ DEFUN0(stgApplyNPNPPP) {
       fprintf(stderr, "stgApply PAP inserting 6 new args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1+argCount], &argv[1], 6);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case PAP
 
@@ -47436,7 +47678,8 @@ DEFUN0(stgApplyPPNPPP) {
       fprintf(stderr, "stgApply FUN inserting 6 args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1], &argv[1], 6);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case FUN
 
@@ -47668,7 +47911,8 @@ DEFUN0(stgApplyPPNPPP) {
       fprintf(stderr, "stgApply PAP inserting 6 new args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1+argCount], &argv[1], 6);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case PAP
 
@@ -47884,7 +48128,8 @@ DEFUN0(stgApplyNNPPPP) {
       fprintf(stderr, "stgApply FUN inserting 6 args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1], &argv[1], 6);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case FUN
 
@@ -48116,7 +48361,8 @@ DEFUN0(stgApplyNNPPPP) {
       fprintf(stderr, "stgApply PAP inserting 6 new args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1+argCount], &argv[1], 6);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case PAP
 
@@ -48336,7 +48582,8 @@ DEFUN0(stgApplyPNPPPP) {
       fprintf(stderr, "stgApply FUN inserting 6 args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1], &argv[1], 6);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case FUN
 
@@ -48568,7 +48815,8 @@ DEFUN0(stgApplyPNPPPP) {
       fprintf(stderr, "stgApply PAP inserting 6 new args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1+argCount], &argv[1], 6);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case PAP
 
@@ -48788,7 +49036,8 @@ DEFUN0(stgApplyNPPPPP) {
       fprintf(stderr, "stgApply FUN inserting 6 args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1], &argv[1], 6);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case FUN
 
@@ -49020,7 +49269,8 @@ DEFUN0(stgApplyNPPPPP) {
       fprintf(stderr, "stgApply PAP inserting 6 new args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1+argCount], &argv[1], 6);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case PAP
 
@@ -49244,7 +49494,8 @@ DEFUN0(stgApplyPPPPPP) {
       fprintf(stderr, "stgApply FUN inserting 6 args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1], &argv[1], 6);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case FUN
 
@@ -49476,7 +49727,8 @@ DEFUN0(stgApplyPPPPPP) {
       fprintf(stderr, "stgApply PAP inserting 6 new args into new PAP\n");
       #endif
       copyargs(&pap->payload[fvCount+1+argCount], &argv[1], 6);
-      STGRETURN1(HOTOPL(pap));
+      stgCurVal = HOTOPL(pap);
+      STGRETURN0();
     } // if excess
   } // case PAP
 

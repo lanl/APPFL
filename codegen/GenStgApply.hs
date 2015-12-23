@@ -277,7 +277,8 @@ funneg npstring =
      "// copy args to just after fvs and layout info\n" ++
      debugp ["stgApply FUN inserting " ++ show arity ++ " args into new PAP\\n"] ++
      "copyargs(&pap->payload[fvCount+1], &argv[1], " ++ show arity ++ ");\n" ++
-     "STGRETURN1(HOTOPL(pap));\n"
+     "stgCurVal = HOTOPL(pap);\n" ++
+     "STGRETURN0();\n"
 
 {-
 typedef struct Bitmap64proto {
@@ -413,4 +414,5 @@ papneg npstring =
      "// copy new args to just after fvs, layout info, and old args\n" ++
      debugp ["stgApply PAP inserting " ++ show newargc ++ " new args into new PAP\\n"] ++
      "copyargs(&pap->payload[fvCount+1+argCount], &argv[1], " ++ show newargc ++ ");\n" ++
-     "STGRETURN1(HOTOPL(pap));\n"
+     "stgCurVal = HOTOPL(pap);\n" ++
+     "STGRETURN0();\n"
