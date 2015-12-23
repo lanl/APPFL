@@ -60,12 +60,6 @@ extern void initCmm();
     _RETURN();					\
   } while (0)
 
-#define RETURN1(R1)				\
-  do {						\
-    stgCurVal = R1;				\
-    _RETURN();					\
-  } while (0)
-
 #define JUMP0(F)				\
   do {						\
     _JUMP(F);					\
