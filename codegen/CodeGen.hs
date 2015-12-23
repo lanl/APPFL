@@ -427,12 +427,13 @@ stgApplyGeneric env f eas =
             concat ["  cp->payload[ " ++ show i ++ " ] = " ++ cga env a ++ ";\n"
                     | (i,a) <- zip [1..] as ] ++
             -- now pop it
-            "  cp = stgPopCont();\n" ++
+--            "  cp = stgPopCont();\n" ++
             "}\n" ++
 
             "// INDIRECT TAIL CALL " ++ f ++ " " ++ showas as ++ "\n" ++
-            "STGAPPLY" ++ pnstring ++ "(" ++
-            intercalate ", " (cgv env f : map (cga env) as) ++
+--            "STGAPPLY" ++ pnstring ++ "(" ++
+--            intercalate ", " (cgv env f : map (cga env) as) ++
+            "STGJUMP0(stgApply" ++ pnstring ++
             ");\n"
     in return (inline, [])
 

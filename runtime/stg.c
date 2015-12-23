@@ -287,28 +287,15 @@ int getContSize(Cont *o) {
   size_t contSize;
   ContType type = getContType(o);
   switch (type) {
-  /* mkd gc
-  case CALLCONT:
-    contSize = sizeof(Cont) + (o->payload[0].i + 1) * sizeof(PtrOrLiteral);
-    break;
-  case UPDCONT:
-  case CASECONT:
-  case FUNCONT:
-    contSize = sizeof(Cont) + 
-               getCInfoPtr(o)->layoutInfo.payloadSize * sizeof(PtrOrLiteral);
-    break;
-  */
   case CALLCONT:
   case UPDCONT:
   case CASECONT:
   case FUNCONT:
     contSize = sizeof(Cont) + o->layout.bitmap.size * sizeof(PtrOrLiteral);
     break;
-  /*mkd gc*/
 
   case STACKCONT:
-    fprintf(stderr, "stg.c/getContSize STACKCONT not implemented\n");
-    assert(false);
+    contSize = sizeof(Cont) + o->layout.bitmap.size * sizeof(PtrOrLiteral);
     break;
   default:
     fprintf(stderr, "stg.c/getContSize bad ContType %d\n", type);

@@ -251,9 +251,17 @@ void callContRestore(PtrOrLiteral argv[]) {
 void pushargs(int argc, PtrOrLiteral argv[]) {
   for (int i = argc-1; i != -1; i--) _PUSH(argv[i]);
 }
+
 // ...and pop forwards
 void popargs(int argc, PtrOrLiteral argv[]) {
   for (int i = 0; i != argc; i++) _POP(argv[i]);
+}
+
+void popFrameArgs(int argc, PtrOrLiteral argv[]) {
+  Cont *cp = stgPopCont();
+  assert(getContType(cp) == STACKCONT);
+  assert(argc == BMSIZE(cp->layout));  // only current use case
+  memcpy(argv, cp->payload, argc * sizeof(PtrOrLiteral));
 }
 
 void copyargs(PtrOrLiteral *dest, const PtrOrLiteral *src, int count) {

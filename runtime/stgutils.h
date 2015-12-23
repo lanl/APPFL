@@ -20,6 +20,8 @@ void pushargs(int argc, PtrOrLiteral argv[]);
 void popargs(int argc, PtrOrLiteral argv[]);
 void copyargs(PtrOrLiteral *dest, const PtrOrLiteral *src, int count);
 
+void popFrameArgs(int argc, PtrOrLiteral argv[]);
+
 FnPtr stg_funcall();
 FnPtr stg_papcall();
 FnPtr stg_concall();

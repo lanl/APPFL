@@ -115,7 +115,13 @@ gen strictness npstring =
      "  Cont *newframe;  // pointer to STACKCONT to be constructed for call/jump\n" ++
      "  const int argc = " ++ show argc ++ ";\n" ++
      "  PtrOrLiteral argv[argc+1]; // argv[0] is the FUN/PAP/THUNK/BLACKHOLE\n" ++
-     "  popargs(argc+1, argv);\n" ++
+
+
+--     "  popargs(argc+1, argv);\n" ++
+-- new STACKFRAME
+     "  popFrameArgs(argc+1, argv);\n" ++
+
+
         indent 2 (debugp [fname ++ " %s\\n", "getInfoPtr(argv[0].op)->name"]) ++
 
      -- now the function and its arguments are in C "argv[argc+1]"
@@ -240,14 +246,14 @@ funpos npstring excess =
      "// restore excess args left shifted into argv\n" ++
      callContArgvRestore 1 ++
      "argv[0] = stgCurVal;\n" ++
-     "// push excess args\n" ++
-     "pushargs(excess+1, argv);\n" ++ 
 
      -- new STACKFRAME
+     "// push excess args\n" ++
+--     "pushargs(excess+1, argv);\n" ++ 
      "newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );\n" ++
      "newframe->layout = " ++ npStrToBMStr ('P' : drop arity npstring) ++ ";\n" ++
      "memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));\n" ++
-     "newframe = stgPopCont();\n" ++
+--     "newframe = stgPopCont();\n" ++
 
      "// try again - tail call stgApply\n" ++
      "STGJUMP0(stgApply" ++ drop arity npstring  ++ ");\n"
@@ -342,15 +348,15 @@ pappos npstring excess =
      "// restore excess args left shifted into argv[1]\n" ++
      callContArgvRestore 1 ++
      "// push FUN-oid and excess args\n" ++
-     "pushargs(excess + 1, argv);\n" ++ 
 
      -- new STACKFRAME
+--     "pushargs(excess + 1, argv);\n" ++ 
      "newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);\n" ++
      "newframe->layout = " ++ npStrToBMStr ('P' : drop arity npstring) ++ ";\n" ++
      "memcpy(&newframe->payload[0], " ++
             "&argv[0], " ++
             "(1 + excess) * sizeof(PtrOrLiteral));\n" ++
-     "newframe = stgPopCont();\n" ++
+--     "newframe = stgPopCont();\n" ++
 
      "// try again - tail call stgApply \n" ++
      "STGJUMP0(stgApply" ++ drop arity npstring  ++ ");\n"

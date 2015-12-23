@@ -9,7 +9,7 @@ DEFUN0(stgApplyN) {
   Cont *newframe;  // pointer to STACKCONT to be constructed for call/jump
   const int argc = 1;
   PtrOrLiteral argv[argc+1]; // argv[0] is the FUN/PAP/THUNK/BLACKHOLE
-  popargs(argc+1, argv);
+  popFrameArgs(argc+1, argv);
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyN %s\n", getInfoPtr(argv[0].op)->name);
   #endif
@@ -169,7 +169,7 @@ DEFUN0(stgApplyP) {
   Cont *newframe;  // pointer to STACKCONT to be constructed for call/jump
   const int argc = 1;
   PtrOrLiteral argv[argc+1]; // argv[0] is the FUN/PAP/THUNK/BLACKHOLE
-  popargs(argc+1, argv);
+  popFrameArgs(argc+1, argv);
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyP %s\n", getInfoPtr(argv[0].op)->name);
   #endif
@@ -333,7 +333,7 @@ DEFUN0(stgApplyNN) {
   Cont *newframe;  // pointer to STACKCONT to be constructed for call/jump
   const int argc = 2;
   PtrOrLiteral argv[argc+1]; // argv[0] is the FUN/PAP/THUNK/BLACKHOLE
-  popargs(argc+1, argv);
+  popFrameArgs(argc+1, argv);
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyNN %s\n", getInfoPtr(argv[0].op)->name);
   #endif
@@ -381,11 +381,9 @@ DEFUN0(stgApplyNN) {
       callContRestore( &argv[1] );
       argv[0] = stgCurVal;
       // push excess args
-      pushargs(excess+1, argv);
       newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
       newframe->layout = (Bitmap64)0x0800000000000001UL;
       memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-      newframe = stgPopCont();
       // try again - tail call stgApply
       STGJUMP0(stgApplyN);
     } else 
@@ -473,11 +471,9 @@ DEFUN0(stgApplyNN) {
       // restore excess args left shifted into argv[1]
       callContRestore( &argv[1] );
       // push FUN-oid and excess args
-      pushargs(excess + 1, argv);
       newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
       newframe->layout = (Bitmap64)0x0800000000000001UL;
       memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-      newframe = stgPopCont();
       // try again - tail call stgApply 
       STGJUMP0(stgApplyN);
     } else 
@@ -566,7 +562,7 @@ DEFUN0(stgApplyPN) {
   Cont *newframe;  // pointer to STACKCONT to be constructed for call/jump
   const int argc = 2;
   PtrOrLiteral argv[argc+1]; // argv[0] is the FUN/PAP/THUNK/BLACKHOLE
-  popargs(argc+1, argv);
+  popFrameArgs(argc+1, argv);
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyPN %s\n", getInfoPtr(argv[0].op)->name);
   #endif
@@ -618,11 +614,9 @@ DEFUN0(stgApplyPN) {
       callContRestore( &argv[1] );
       argv[0] = stgCurVal;
       // push excess args
-      pushargs(excess+1, argv);
       newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
       newframe->layout = (Bitmap64)0x0800000000000001UL;
       memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-      newframe = stgPopCont();
       // try again - tail call stgApply
       STGJUMP0(stgApplyN);
     } else 
@@ -710,11 +704,9 @@ DEFUN0(stgApplyPN) {
       // restore excess args left shifted into argv[1]
       callContRestore( &argv[1] );
       // push FUN-oid and excess args
-      pushargs(excess + 1, argv);
       newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
       newframe->layout = (Bitmap64)0x0800000000000001UL;
       memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-      newframe = stgPopCont();
       // try again - tail call stgApply 
       STGJUMP0(stgApplyN);
     } else 
@@ -803,7 +795,7 @@ DEFUN0(stgApplyNP) {
   Cont *newframe;  // pointer to STACKCONT to be constructed for call/jump
   const int argc = 2;
   PtrOrLiteral argv[argc+1]; // argv[0] is the FUN/PAP/THUNK/BLACKHOLE
-  popargs(argc+1, argv);
+  popFrameArgs(argc+1, argv);
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyNP %s\n", getInfoPtr(argv[0].op)->name);
   #endif
@@ -855,11 +847,9 @@ DEFUN0(stgApplyNP) {
       callContRestore( &argv[1] );
       argv[0] = stgCurVal;
       // push excess args
-      pushargs(excess+1, argv);
       newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
       newframe->layout = (Bitmap64)0x0800000000000003UL;
       memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-      newframe = stgPopCont();
       // try again - tail call stgApply
       STGJUMP0(stgApplyP);
     } else 
@@ -947,11 +937,9 @@ DEFUN0(stgApplyNP) {
       // restore excess args left shifted into argv[1]
       callContRestore( &argv[1] );
       // push FUN-oid and excess args
-      pushargs(excess + 1, argv);
       newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
       newframe->layout = (Bitmap64)0x0800000000000003UL;
       memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-      newframe = stgPopCont();
       // try again - tail call stgApply 
       STGJUMP0(stgApplyP);
     } else 
@@ -1040,7 +1028,7 @@ DEFUN0(stgApplyPP) {
   Cont *newframe;  // pointer to STACKCONT to be constructed for call/jump
   const int argc = 2;
   PtrOrLiteral argv[argc+1]; // argv[0] is the FUN/PAP/THUNK/BLACKHOLE
-  popargs(argc+1, argv);
+  popFrameArgs(argc+1, argv);
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyPP %s\n", getInfoPtr(argv[0].op)->name);
   #endif
@@ -1096,11 +1084,9 @@ DEFUN0(stgApplyPP) {
       callContRestore( &argv[1] );
       argv[0] = stgCurVal;
       // push excess args
-      pushargs(excess+1, argv);
       newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
       newframe->layout = (Bitmap64)0x0800000000000003UL;
       memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-      newframe = stgPopCont();
       // try again - tail call stgApply
       STGJUMP0(stgApplyP);
     } else 
@@ -1188,11 +1174,9 @@ DEFUN0(stgApplyPP) {
       // restore excess args left shifted into argv[1]
       callContRestore( &argv[1] );
       // push FUN-oid and excess args
-      pushargs(excess + 1, argv);
       newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
       newframe->layout = (Bitmap64)0x0800000000000003UL;
       memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-      newframe = stgPopCont();
       // try again - tail call stgApply 
       STGJUMP0(stgApplyP);
     } else 
@@ -1281,7 +1265,7 @@ DEFUN0(stgApplyNNN) {
   Cont *newframe;  // pointer to STACKCONT to be constructed for call/jump
   const int argc = 3;
   PtrOrLiteral argv[argc+1]; // argv[0] is the FUN/PAP/THUNK/BLACKHOLE
-  popargs(argc+1, argv);
+  popFrameArgs(argc+1, argv);
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyNNN %s\n", getInfoPtr(argv[0].op)->name);
   #endif
@@ -1330,11 +1314,9 @@ DEFUN0(stgApplyNNN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0800000000000001UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyN);
         break;
@@ -1357,11 +1339,9 @@ DEFUN0(stgApplyNNN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0C00000000000001UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyNN);
         break;
@@ -1454,11 +1434,9 @@ DEFUN0(stgApplyNNN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0800000000000001UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyN);
         break;
@@ -1494,11 +1472,9 @@ DEFUN0(stgApplyNNN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0C00000000000001UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNN);
         break;
@@ -1591,7 +1567,7 @@ DEFUN0(stgApplyPNN) {
   Cont *newframe;  // pointer to STACKCONT to be constructed for call/jump
   const int argc = 3;
   PtrOrLiteral argv[argc+1]; // argv[0] is the FUN/PAP/THUNK/BLACKHOLE
-  popargs(argc+1, argv);
+  popFrameArgs(argc+1, argv);
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyPNN %s\n", getInfoPtr(argv[0].op)->name);
   #endif
@@ -1644,11 +1620,9 @@ DEFUN0(stgApplyPNN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0800000000000001UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyN);
         break;
@@ -1671,11 +1645,9 @@ DEFUN0(stgApplyPNN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0C00000000000001UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyNN);
         break;
@@ -1768,11 +1740,9 @@ DEFUN0(stgApplyPNN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0800000000000001UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyN);
         break;
@@ -1808,11 +1778,9 @@ DEFUN0(stgApplyPNN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0C00000000000001UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNN);
         break;
@@ -1905,7 +1873,7 @@ DEFUN0(stgApplyNPN) {
   Cont *newframe;  // pointer to STACKCONT to be constructed for call/jump
   const int argc = 3;
   PtrOrLiteral argv[argc+1]; // argv[0] is the FUN/PAP/THUNK/BLACKHOLE
-  popargs(argc+1, argv);
+  popFrameArgs(argc+1, argv);
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyNPN %s\n", getInfoPtr(argv[0].op)->name);
   #endif
@@ -1958,11 +1926,9 @@ DEFUN0(stgApplyNPN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0800000000000001UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyN);
         break;
@@ -1985,11 +1951,9 @@ DEFUN0(stgApplyNPN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0C00000000000003UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyPN);
         break;
@@ -2082,11 +2046,9 @@ DEFUN0(stgApplyNPN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0800000000000001UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyN);
         break;
@@ -2122,11 +2084,9 @@ DEFUN0(stgApplyNPN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0C00000000000003UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPN);
         break;
@@ -2219,7 +2179,7 @@ DEFUN0(stgApplyPPN) {
   Cont *newframe;  // pointer to STACKCONT to be constructed for call/jump
   const int argc = 3;
   PtrOrLiteral argv[argc+1]; // argv[0] is the FUN/PAP/THUNK/BLACKHOLE
-  popargs(argc+1, argv);
+  popFrameArgs(argc+1, argv);
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyPPN %s\n", getInfoPtr(argv[0].op)->name);
   #endif
@@ -2276,11 +2236,9 @@ DEFUN0(stgApplyPPN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0800000000000001UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyN);
         break;
@@ -2303,11 +2261,9 @@ DEFUN0(stgApplyPPN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0C00000000000003UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyPN);
         break;
@@ -2400,11 +2356,9 @@ DEFUN0(stgApplyPPN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0800000000000001UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyN);
         break;
@@ -2440,11 +2394,9 @@ DEFUN0(stgApplyPPN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0C00000000000003UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPN);
         break;
@@ -2537,7 +2489,7 @@ DEFUN0(stgApplyNNP) {
   Cont *newframe;  // pointer to STACKCONT to be constructed for call/jump
   const int argc = 3;
   PtrOrLiteral argv[argc+1]; // argv[0] is the FUN/PAP/THUNK/BLACKHOLE
-  popargs(argc+1, argv);
+  popFrameArgs(argc+1, argv);
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyNNP %s\n", getInfoPtr(argv[0].op)->name);
   #endif
@@ -2590,11 +2542,9 @@ DEFUN0(stgApplyNNP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0800000000000003UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyP);
         break;
@@ -2617,11 +2567,9 @@ DEFUN0(stgApplyNNP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0C00000000000005UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyNP);
         break;
@@ -2714,11 +2662,9 @@ DEFUN0(stgApplyNNP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0800000000000003UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyP);
         break;
@@ -2754,11 +2700,9 @@ DEFUN0(stgApplyNNP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0C00000000000005UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNP);
         break;
@@ -2851,7 +2795,7 @@ DEFUN0(stgApplyPNP) {
   Cont *newframe;  // pointer to STACKCONT to be constructed for call/jump
   const int argc = 3;
   PtrOrLiteral argv[argc+1]; // argv[0] is the FUN/PAP/THUNK/BLACKHOLE
-  popargs(argc+1, argv);
+  popFrameArgs(argc+1, argv);
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyPNP %s\n", getInfoPtr(argv[0].op)->name);
   #endif
@@ -2908,11 +2852,9 @@ DEFUN0(stgApplyPNP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0800000000000003UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyP);
         break;
@@ -2935,11 +2877,9 @@ DEFUN0(stgApplyPNP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0C00000000000005UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyNP);
         break;
@@ -3032,11 +2972,9 @@ DEFUN0(stgApplyPNP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0800000000000003UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyP);
         break;
@@ -3072,11 +3010,9 @@ DEFUN0(stgApplyPNP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0C00000000000005UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNP);
         break;
@@ -3169,7 +3105,7 @@ DEFUN0(stgApplyNPP) {
   Cont *newframe;  // pointer to STACKCONT to be constructed for call/jump
   const int argc = 3;
   PtrOrLiteral argv[argc+1]; // argv[0] is the FUN/PAP/THUNK/BLACKHOLE
-  popargs(argc+1, argv);
+  popFrameArgs(argc+1, argv);
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyNPP %s\n", getInfoPtr(argv[0].op)->name);
   #endif
@@ -3226,11 +3162,9 @@ DEFUN0(stgApplyNPP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0800000000000003UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyP);
         break;
@@ -3253,11 +3187,9 @@ DEFUN0(stgApplyNPP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0C00000000000007UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyPP);
         break;
@@ -3350,11 +3282,9 @@ DEFUN0(stgApplyNPP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0800000000000003UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyP);
         break;
@@ -3390,11 +3320,9 @@ DEFUN0(stgApplyNPP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0C00000000000007UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPP);
         break;
@@ -3487,7 +3415,7 @@ DEFUN0(stgApplyPPP) {
   Cont *newframe;  // pointer to STACKCONT to be constructed for call/jump
   const int argc = 3;
   PtrOrLiteral argv[argc+1]; // argv[0] is the FUN/PAP/THUNK/BLACKHOLE
-  popargs(argc+1, argv);
+  popFrameArgs(argc+1, argv);
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyPPP %s\n", getInfoPtr(argv[0].op)->name);
   #endif
@@ -3548,11 +3476,9 @@ DEFUN0(stgApplyPPP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0800000000000003UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyP);
         break;
@@ -3575,11 +3501,9 @@ DEFUN0(stgApplyPPP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0C00000000000007UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyPP);
         break;
@@ -3672,11 +3596,9 @@ DEFUN0(stgApplyPPP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0800000000000003UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyP);
         break;
@@ -3712,11 +3634,9 @@ DEFUN0(stgApplyPPP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0C00000000000007UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPP);
         break;
@@ -3809,7 +3729,7 @@ DEFUN0(stgApplyNNNN) {
   Cont *newframe;  // pointer to STACKCONT to be constructed for call/jump
   const int argc = 4;
   PtrOrLiteral argv[argc+1]; // argv[0] is the FUN/PAP/THUNK/BLACKHOLE
-  popargs(argc+1, argv);
+  popFrameArgs(argc+1, argv);
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyNNNN %s\n", getInfoPtr(argv[0].op)->name);
   #endif
@@ -3858,11 +3778,9 @@ DEFUN0(stgApplyNNNN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0800000000000001UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyN);
         break;
@@ -3885,11 +3803,9 @@ DEFUN0(stgApplyNNNN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0C00000000000001UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyNN);
         break;
@@ -3912,11 +3828,9 @@ DEFUN0(stgApplyNNNN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x1000000000000001UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyNNN);
         break;
@@ -4009,11 +3923,9 @@ DEFUN0(stgApplyNNNN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0800000000000001UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyN);
         break;
@@ -4049,11 +3961,9 @@ DEFUN0(stgApplyNNNN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0C00000000000001UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNN);
         break;
@@ -4089,11 +3999,9 @@ DEFUN0(stgApplyNNNN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x1000000000000001UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNNN);
         break;
@@ -4186,7 +4094,7 @@ DEFUN0(stgApplyPNNN) {
   Cont *newframe;  // pointer to STACKCONT to be constructed for call/jump
   const int argc = 4;
   PtrOrLiteral argv[argc+1]; // argv[0] is the FUN/PAP/THUNK/BLACKHOLE
-  popargs(argc+1, argv);
+  popFrameArgs(argc+1, argv);
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyPNNN %s\n", getInfoPtr(argv[0].op)->name);
   #endif
@@ -4239,11 +4147,9 @@ DEFUN0(stgApplyPNNN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0800000000000001UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyN);
         break;
@@ -4266,11 +4172,9 @@ DEFUN0(stgApplyPNNN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0C00000000000001UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyNN);
         break;
@@ -4293,11 +4197,9 @@ DEFUN0(stgApplyPNNN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x1000000000000001UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyNNN);
         break;
@@ -4390,11 +4292,9 @@ DEFUN0(stgApplyPNNN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0800000000000001UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyN);
         break;
@@ -4430,11 +4330,9 @@ DEFUN0(stgApplyPNNN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0C00000000000001UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNN);
         break;
@@ -4470,11 +4368,9 @@ DEFUN0(stgApplyPNNN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x1000000000000001UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNNN);
         break;
@@ -4567,7 +4463,7 @@ DEFUN0(stgApplyNPNN) {
   Cont *newframe;  // pointer to STACKCONT to be constructed for call/jump
   const int argc = 4;
   PtrOrLiteral argv[argc+1]; // argv[0] is the FUN/PAP/THUNK/BLACKHOLE
-  popargs(argc+1, argv);
+  popFrameArgs(argc+1, argv);
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyNPNN %s\n", getInfoPtr(argv[0].op)->name);
   #endif
@@ -4620,11 +4516,9 @@ DEFUN0(stgApplyNPNN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0800000000000001UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyN);
         break;
@@ -4647,11 +4541,9 @@ DEFUN0(stgApplyNPNN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0C00000000000001UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyNN);
         break;
@@ -4674,11 +4566,9 @@ DEFUN0(stgApplyNPNN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x1000000000000003UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyPNN);
         break;
@@ -4771,11 +4661,9 @@ DEFUN0(stgApplyNPNN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0800000000000001UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyN);
         break;
@@ -4811,11 +4699,9 @@ DEFUN0(stgApplyNPNN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0C00000000000001UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNN);
         break;
@@ -4851,11 +4737,9 @@ DEFUN0(stgApplyNPNN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x1000000000000003UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPNN);
         break;
@@ -4948,7 +4832,7 @@ DEFUN0(stgApplyPPNN) {
   Cont *newframe;  // pointer to STACKCONT to be constructed for call/jump
   const int argc = 4;
   PtrOrLiteral argv[argc+1]; // argv[0] is the FUN/PAP/THUNK/BLACKHOLE
-  popargs(argc+1, argv);
+  popFrameArgs(argc+1, argv);
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyPPNN %s\n", getInfoPtr(argv[0].op)->name);
   #endif
@@ -5005,11 +4889,9 @@ DEFUN0(stgApplyPPNN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0800000000000001UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyN);
         break;
@@ -5032,11 +4914,9 @@ DEFUN0(stgApplyPPNN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0C00000000000001UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyNN);
         break;
@@ -5059,11 +4939,9 @@ DEFUN0(stgApplyPPNN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x1000000000000003UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyPNN);
         break;
@@ -5156,11 +5034,9 @@ DEFUN0(stgApplyPPNN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0800000000000001UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyN);
         break;
@@ -5196,11 +5072,9 @@ DEFUN0(stgApplyPPNN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0C00000000000001UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNN);
         break;
@@ -5236,11 +5110,9 @@ DEFUN0(stgApplyPPNN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x1000000000000003UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPNN);
         break;
@@ -5333,7 +5205,7 @@ DEFUN0(stgApplyNNPN) {
   Cont *newframe;  // pointer to STACKCONT to be constructed for call/jump
   const int argc = 4;
   PtrOrLiteral argv[argc+1]; // argv[0] is the FUN/PAP/THUNK/BLACKHOLE
-  popargs(argc+1, argv);
+  popFrameArgs(argc+1, argv);
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyNNPN %s\n", getInfoPtr(argv[0].op)->name);
   #endif
@@ -5386,11 +5258,9 @@ DEFUN0(stgApplyNNPN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0800000000000001UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyN);
         break;
@@ -5413,11 +5283,9 @@ DEFUN0(stgApplyNNPN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0C00000000000003UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyPN);
         break;
@@ -5440,11 +5308,9 @@ DEFUN0(stgApplyNNPN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x1000000000000005UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyNPN);
         break;
@@ -5537,11 +5403,9 @@ DEFUN0(stgApplyNNPN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0800000000000001UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyN);
         break;
@@ -5577,11 +5441,9 @@ DEFUN0(stgApplyNNPN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0C00000000000003UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPN);
         break;
@@ -5617,11 +5479,9 @@ DEFUN0(stgApplyNNPN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x1000000000000005UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNPN);
         break;
@@ -5714,7 +5574,7 @@ DEFUN0(stgApplyPNPN) {
   Cont *newframe;  // pointer to STACKCONT to be constructed for call/jump
   const int argc = 4;
   PtrOrLiteral argv[argc+1]; // argv[0] is the FUN/PAP/THUNK/BLACKHOLE
-  popargs(argc+1, argv);
+  popFrameArgs(argc+1, argv);
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyPNPN %s\n", getInfoPtr(argv[0].op)->name);
   #endif
@@ -5771,11 +5631,9 @@ DEFUN0(stgApplyPNPN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0800000000000001UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyN);
         break;
@@ -5798,11 +5656,9 @@ DEFUN0(stgApplyPNPN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0C00000000000003UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyPN);
         break;
@@ -5825,11 +5681,9 @@ DEFUN0(stgApplyPNPN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x1000000000000005UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyNPN);
         break;
@@ -5922,11 +5776,9 @@ DEFUN0(stgApplyPNPN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0800000000000001UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyN);
         break;
@@ -5962,11 +5814,9 @@ DEFUN0(stgApplyPNPN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0C00000000000003UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPN);
         break;
@@ -6002,11 +5852,9 @@ DEFUN0(stgApplyPNPN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x1000000000000005UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNPN);
         break;
@@ -6099,7 +5947,7 @@ DEFUN0(stgApplyNPPN) {
   Cont *newframe;  // pointer to STACKCONT to be constructed for call/jump
   const int argc = 4;
   PtrOrLiteral argv[argc+1]; // argv[0] is the FUN/PAP/THUNK/BLACKHOLE
-  popargs(argc+1, argv);
+  popFrameArgs(argc+1, argv);
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyNPPN %s\n", getInfoPtr(argv[0].op)->name);
   #endif
@@ -6156,11 +6004,9 @@ DEFUN0(stgApplyNPPN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0800000000000001UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyN);
         break;
@@ -6183,11 +6029,9 @@ DEFUN0(stgApplyNPPN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0C00000000000003UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyPN);
         break;
@@ -6210,11 +6054,9 @@ DEFUN0(stgApplyNPPN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x1000000000000007UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyPPN);
         break;
@@ -6307,11 +6149,9 @@ DEFUN0(stgApplyNPPN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0800000000000001UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyN);
         break;
@@ -6347,11 +6187,9 @@ DEFUN0(stgApplyNPPN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0C00000000000003UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPN);
         break;
@@ -6387,11 +6225,9 @@ DEFUN0(stgApplyNPPN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x1000000000000007UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPPN);
         break;
@@ -6484,7 +6320,7 @@ DEFUN0(stgApplyPPPN) {
   Cont *newframe;  // pointer to STACKCONT to be constructed for call/jump
   const int argc = 4;
   PtrOrLiteral argv[argc+1]; // argv[0] is the FUN/PAP/THUNK/BLACKHOLE
-  popargs(argc+1, argv);
+  popFrameArgs(argc+1, argv);
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyPPPN %s\n", getInfoPtr(argv[0].op)->name);
   #endif
@@ -6545,11 +6381,9 @@ DEFUN0(stgApplyPPPN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0800000000000001UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyN);
         break;
@@ -6572,11 +6406,9 @@ DEFUN0(stgApplyPPPN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0C00000000000003UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyPN);
         break;
@@ -6599,11 +6431,9 @@ DEFUN0(stgApplyPPPN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x1000000000000007UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyPPN);
         break;
@@ -6696,11 +6526,9 @@ DEFUN0(stgApplyPPPN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0800000000000001UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyN);
         break;
@@ -6736,11 +6564,9 @@ DEFUN0(stgApplyPPPN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0C00000000000003UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPN);
         break;
@@ -6776,11 +6602,9 @@ DEFUN0(stgApplyPPPN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x1000000000000007UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPPN);
         break;
@@ -6873,7 +6697,7 @@ DEFUN0(stgApplyNNNP) {
   Cont *newframe;  // pointer to STACKCONT to be constructed for call/jump
   const int argc = 4;
   PtrOrLiteral argv[argc+1]; // argv[0] is the FUN/PAP/THUNK/BLACKHOLE
-  popargs(argc+1, argv);
+  popFrameArgs(argc+1, argv);
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyNNNP %s\n", getInfoPtr(argv[0].op)->name);
   #endif
@@ -6926,11 +6750,9 @@ DEFUN0(stgApplyNNNP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0800000000000003UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyP);
         break;
@@ -6953,11 +6775,9 @@ DEFUN0(stgApplyNNNP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0C00000000000005UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyNP);
         break;
@@ -6980,11 +6800,9 @@ DEFUN0(stgApplyNNNP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x1000000000000009UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyNNP);
         break;
@@ -7077,11 +6895,9 @@ DEFUN0(stgApplyNNNP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0800000000000003UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyP);
         break;
@@ -7117,11 +6933,9 @@ DEFUN0(stgApplyNNNP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0C00000000000005UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNP);
         break;
@@ -7157,11 +6971,9 @@ DEFUN0(stgApplyNNNP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x1000000000000009UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNNP);
         break;
@@ -7254,7 +7066,7 @@ DEFUN0(stgApplyPNNP) {
   Cont *newframe;  // pointer to STACKCONT to be constructed for call/jump
   const int argc = 4;
   PtrOrLiteral argv[argc+1]; // argv[0] is the FUN/PAP/THUNK/BLACKHOLE
-  popargs(argc+1, argv);
+  popFrameArgs(argc+1, argv);
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyPNNP %s\n", getInfoPtr(argv[0].op)->name);
   #endif
@@ -7311,11 +7123,9 @@ DEFUN0(stgApplyPNNP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0800000000000003UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyP);
         break;
@@ -7338,11 +7148,9 @@ DEFUN0(stgApplyPNNP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0C00000000000005UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyNP);
         break;
@@ -7365,11 +7173,9 @@ DEFUN0(stgApplyPNNP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x1000000000000009UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyNNP);
         break;
@@ -7462,11 +7268,9 @@ DEFUN0(stgApplyPNNP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0800000000000003UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyP);
         break;
@@ -7502,11 +7306,9 @@ DEFUN0(stgApplyPNNP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0C00000000000005UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNP);
         break;
@@ -7542,11 +7344,9 @@ DEFUN0(stgApplyPNNP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x1000000000000009UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNNP);
         break;
@@ -7639,7 +7439,7 @@ DEFUN0(stgApplyNPNP) {
   Cont *newframe;  // pointer to STACKCONT to be constructed for call/jump
   const int argc = 4;
   PtrOrLiteral argv[argc+1]; // argv[0] is the FUN/PAP/THUNK/BLACKHOLE
-  popargs(argc+1, argv);
+  popFrameArgs(argc+1, argv);
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyNPNP %s\n", getInfoPtr(argv[0].op)->name);
   #endif
@@ -7696,11 +7496,9 @@ DEFUN0(stgApplyNPNP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0800000000000003UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyP);
         break;
@@ -7723,11 +7521,9 @@ DEFUN0(stgApplyNPNP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0C00000000000005UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyNP);
         break;
@@ -7750,11 +7546,9 @@ DEFUN0(stgApplyNPNP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x100000000000000BUL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyPNP);
         break;
@@ -7847,11 +7641,9 @@ DEFUN0(stgApplyNPNP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0800000000000003UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyP);
         break;
@@ -7887,11 +7679,9 @@ DEFUN0(stgApplyNPNP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0C00000000000005UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNP);
         break;
@@ -7927,11 +7717,9 @@ DEFUN0(stgApplyNPNP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x100000000000000BUL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPNP);
         break;
@@ -8024,7 +7812,7 @@ DEFUN0(stgApplyPPNP) {
   Cont *newframe;  // pointer to STACKCONT to be constructed for call/jump
   const int argc = 4;
   PtrOrLiteral argv[argc+1]; // argv[0] is the FUN/PAP/THUNK/BLACKHOLE
-  popargs(argc+1, argv);
+  popFrameArgs(argc+1, argv);
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyPPNP %s\n", getInfoPtr(argv[0].op)->name);
   #endif
@@ -8085,11 +7873,9 @@ DEFUN0(stgApplyPPNP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0800000000000003UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyP);
         break;
@@ -8112,11 +7898,9 @@ DEFUN0(stgApplyPPNP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0C00000000000005UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyNP);
         break;
@@ -8139,11 +7923,9 @@ DEFUN0(stgApplyPPNP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x100000000000000BUL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyPNP);
         break;
@@ -8236,11 +8018,9 @@ DEFUN0(stgApplyPPNP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0800000000000003UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyP);
         break;
@@ -8276,11 +8056,9 @@ DEFUN0(stgApplyPPNP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0C00000000000005UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNP);
         break;
@@ -8316,11 +8094,9 @@ DEFUN0(stgApplyPPNP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x100000000000000BUL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPNP);
         break;
@@ -8413,7 +8189,7 @@ DEFUN0(stgApplyNNPP) {
   Cont *newframe;  // pointer to STACKCONT to be constructed for call/jump
   const int argc = 4;
   PtrOrLiteral argv[argc+1]; // argv[0] is the FUN/PAP/THUNK/BLACKHOLE
-  popargs(argc+1, argv);
+  popFrameArgs(argc+1, argv);
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyNNPP %s\n", getInfoPtr(argv[0].op)->name);
   #endif
@@ -8470,11 +8246,9 @@ DEFUN0(stgApplyNNPP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0800000000000003UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyP);
         break;
@@ -8497,11 +8271,9 @@ DEFUN0(stgApplyNNPP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0C00000000000007UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyPP);
         break;
@@ -8524,11 +8296,9 @@ DEFUN0(stgApplyNNPP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x100000000000000DUL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyNPP);
         break;
@@ -8621,11 +8391,9 @@ DEFUN0(stgApplyNNPP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0800000000000003UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyP);
         break;
@@ -8661,11 +8429,9 @@ DEFUN0(stgApplyNNPP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0C00000000000007UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPP);
         break;
@@ -8701,11 +8467,9 @@ DEFUN0(stgApplyNNPP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x100000000000000DUL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNPP);
         break;
@@ -8798,7 +8562,7 @@ DEFUN0(stgApplyPNPP) {
   Cont *newframe;  // pointer to STACKCONT to be constructed for call/jump
   const int argc = 4;
   PtrOrLiteral argv[argc+1]; // argv[0] is the FUN/PAP/THUNK/BLACKHOLE
-  popargs(argc+1, argv);
+  popFrameArgs(argc+1, argv);
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyPNPP %s\n", getInfoPtr(argv[0].op)->name);
   #endif
@@ -8859,11 +8623,9 @@ DEFUN0(stgApplyPNPP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0800000000000003UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyP);
         break;
@@ -8886,11 +8648,9 @@ DEFUN0(stgApplyPNPP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0C00000000000007UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyPP);
         break;
@@ -8913,11 +8673,9 @@ DEFUN0(stgApplyPNPP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x100000000000000DUL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyNPP);
         break;
@@ -9010,11 +8768,9 @@ DEFUN0(stgApplyPNPP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0800000000000003UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyP);
         break;
@@ -9050,11 +8806,9 @@ DEFUN0(stgApplyPNPP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0C00000000000007UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPP);
         break;
@@ -9090,11 +8844,9 @@ DEFUN0(stgApplyPNPP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x100000000000000DUL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNPP);
         break;
@@ -9187,7 +8939,7 @@ DEFUN0(stgApplyNPPP) {
   Cont *newframe;  // pointer to STACKCONT to be constructed for call/jump
   const int argc = 4;
   PtrOrLiteral argv[argc+1]; // argv[0] is the FUN/PAP/THUNK/BLACKHOLE
-  popargs(argc+1, argv);
+  popFrameArgs(argc+1, argv);
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyNPPP %s\n", getInfoPtr(argv[0].op)->name);
   #endif
@@ -9248,11 +9000,9 @@ DEFUN0(stgApplyNPPP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0800000000000003UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyP);
         break;
@@ -9275,11 +9025,9 @@ DEFUN0(stgApplyNPPP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0C00000000000007UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyPP);
         break;
@@ -9302,11 +9050,9 @@ DEFUN0(stgApplyNPPP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x100000000000000FUL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyPPP);
         break;
@@ -9399,11 +9145,9 @@ DEFUN0(stgApplyNPPP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0800000000000003UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyP);
         break;
@@ -9439,11 +9183,9 @@ DEFUN0(stgApplyNPPP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0C00000000000007UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPP);
         break;
@@ -9479,11 +9221,9 @@ DEFUN0(stgApplyNPPP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x100000000000000FUL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPPP);
         break;
@@ -9576,7 +9316,7 @@ DEFUN0(stgApplyPPPP) {
   Cont *newframe;  // pointer to STACKCONT to be constructed for call/jump
   const int argc = 4;
   PtrOrLiteral argv[argc+1]; // argv[0] is the FUN/PAP/THUNK/BLACKHOLE
-  popargs(argc+1, argv);
+  popFrameArgs(argc+1, argv);
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyPPPP %s\n", getInfoPtr(argv[0].op)->name);
   #endif
@@ -9641,11 +9381,9 @@ DEFUN0(stgApplyPPPP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0800000000000003UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyP);
         break;
@@ -9668,11 +9406,9 @@ DEFUN0(stgApplyPPPP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0C00000000000007UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyPP);
         break;
@@ -9695,11 +9431,9 @@ DEFUN0(stgApplyPPPP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x100000000000000FUL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyPPP);
         break;
@@ -9792,11 +9526,9 @@ DEFUN0(stgApplyPPPP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0800000000000003UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyP);
         break;
@@ -9832,11 +9564,9 @@ DEFUN0(stgApplyPPPP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0C00000000000007UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPP);
         break;
@@ -9872,11 +9602,9 @@ DEFUN0(stgApplyPPPP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x100000000000000FUL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPPP);
         break;
@@ -9969,7 +9697,7 @@ DEFUN0(stgApplyNNNNN) {
   Cont *newframe;  // pointer to STACKCONT to be constructed for call/jump
   const int argc = 5;
   PtrOrLiteral argv[argc+1]; // argv[0] is the FUN/PAP/THUNK/BLACKHOLE
-  popargs(argc+1, argv);
+  popFrameArgs(argc+1, argv);
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyNNNNN %s\n", getInfoPtr(argv[0].op)->name);
   #endif
@@ -10018,11 +9746,9 @@ DEFUN0(stgApplyNNNNN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0800000000000001UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyN);
         break;
@@ -10045,11 +9771,9 @@ DEFUN0(stgApplyNNNNN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0C00000000000001UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyNN);
         break;
@@ -10072,11 +9796,9 @@ DEFUN0(stgApplyNNNNN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x1000000000000001UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyNNN);
         break;
@@ -10099,11 +9821,9 @@ DEFUN0(stgApplyNNNNN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x1400000000000001UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyNNNN);
         break;
@@ -10196,11 +9916,9 @@ DEFUN0(stgApplyNNNNN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0800000000000001UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyN);
         break;
@@ -10236,11 +9954,9 @@ DEFUN0(stgApplyNNNNN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0C00000000000001UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNN);
         break;
@@ -10276,11 +9992,9 @@ DEFUN0(stgApplyNNNNN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x1000000000000001UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNNN);
         break;
@@ -10316,11 +10030,9 @@ DEFUN0(stgApplyNNNNN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x1400000000000001UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNNNN);
         break;
@@ -10413,7 +10125,7 @@ DEFUN0(stgApplyPNNNN) {
   Cont *newframe;  // pointer to STACKCONT to be constructed for call/jump
   const int argc = 5;
   PtrOrLiteral argv[argc+1]; // argv[0] is the FUN/PAP/THUNK/BLACKHOLE
-  popargs(argc+1, argv);
+  popFrameArgs(argc+1, argv);
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyPNNNN %s\n", getInfoPtr(argv[0].op)->name);
   #endif
@@ -10466,11 +10178,9 @@ DEFUN0(stgApplyPNNNN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0800000000000001UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyN);
         break;
@@ -10493,11 +10203,9 @@ DEFUN0(stgApplyPNNNN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0C00000000000001UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyNN);
         break;
@@ -10520,11 +10228,9 @@ DEFUN0(stgApplyPNNNN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x1000000000000001UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyNNN);
         break;
@@ -10547,11 +10253,9 @@ DEFUN0(stgApplyPNNNN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x1400000000000001UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyNNNN);
         break;
@@ -10644,11 +10348,9 @@ DEFUN0(stgApplyPNNNN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0800000000000001UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyN);
         break;
@@ -10684,11 +10386,9 @@ DEFUN0(stgApplyPNNNN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0C00000000000001UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNN);
         break;
@@ -10724,11 +10424,9 @@ DEFUN0(stgApplyPNNNN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x1000000000000001UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNNN);
         break;
@@ -10764,11 +10462,9 @@ DEFUN0(stgApplyPNNNN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x1400000000000001UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNNNN);
         break;
@@ -10861,7 +10557,7 @@ DEFUN0(stgApplyNPNNN) {
   Cont *newframe;  // pointer to STACKCONT to be constructed for call/jump
   const int argc = 5;
   PtrOrLiteral argv[argc+1]; // argv[0] is the FUN/PAP/THUNK/BLACKHOLE
-  popargs(argc+1, argv);
+  popFrameArgs(argc+1, argv);
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyNPNNN %s\n", getInfoPtr(argv[0].op)->name);
   #endif
@@ -10914,11 +10610,9 @@ DEFUN0(stgApplyNPNNN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0800000000000001UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyN);
         break;
@@ -10941,11 +10635,9 @@ DEFUN0(stgApplyNPNNN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0C00000000000001UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyNN);
         break;
@@ -10968,11 +10660,9 @@ DEFUN0(stgApplyNPNNN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x1000000000000001UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyNNN);
         break;
@@ -10995,11 +10685,9 @@ DEFUN0(stgApplyNPNNN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x1400000000000003UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyPNNN);
         break;
@@ -11092,11 +10780,9 @@ DEFUN0(stgApplyNPNNN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0800000000000001UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyN);
         break;
@@ -11132,11 +10818,9 @@ DEFUN0(stgApplyNPNNN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0C00000000000001UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNN);
         break;
@@ -11172,11 +10856,9 @@ DEFUN0(stgApplyNPNNN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x1000000000000001UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNNN);
         break;
@@ -11212,11 +10894,9 @@ DEFUN0(stgApplyNPNNN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x1400000000000003UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPNNN);
         break;
@@ -11309,7 +10989,7 @@ DEFUN0(stgApplyPPNNN) {
   Cont *newframe;  // pointer to STACKCONT to be constructed for call/jump
   const int argc = 5;
   PtrOrLiteral argv[argc+1]; // argv[0] is the FUN/PAP/THUNK/BLACKHOLE
-  popargs(argc+1, argv);
+  popFrameArgs(argc+1, argv);
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyPPNNN %s\n", getInfoPtr(argv[0].op)->name);
   #endif
@@ -11366,11 +11046,9 @@ DEFUN0(stgApplyPPNNN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0800000000000001UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyN);
         break;
@@ -11393,11 +11071,9 @@ DEFUN0(stgApplyPPNNN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0C00000000000001UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyNN);
         break;
@@ -11420,11 +11096,9 @@ DEFUN0(stgApplyPPNNN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x1000000000000001UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyNNN);
         break;
@@ -11447,11 +11121,9 @@ DEFUN0(stgApplyPPNNN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x1400000000000003UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyPNNN);
         break;
@@ -11544,11 +11216,9 @@ DEFUN0(stgApplyPPNNN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0800000000000001UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyN);
         break;
@@ -11584,11 +11254,9 @@ DEFUN0(stgApplyPPNNN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0C00000000000001UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNN);
         break;
@@ -11624,11 +11292,9 @@ DEFUN0(stgApplyPPNNN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x1000000000000001UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNNN);
         break;
@@ -11664,11 +11330,9 @@ DEFUN0(stgApplyPPNNN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x1400000000000003UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPNNN);
         break;
@@ -11761,7 +11425,7 @@ DEFUN0(stgApplyNNPNN) {
   Cont *newframe;  // pointer to STACKCONT to be constructed for call/jump
   const int argc = 5;
   PtrOrLiteral argv[argc+1]; // argv[0] is the FUN/PAP/THUNK/BLACKHOLE
-  popargs(argc+1, argv);
+  popFrameArgs(argc+1, argv);
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyNNPNN %s\n", getInfoPtr(argv[0].op)->name);
   #endif
@@ -11814,11 +11478,9 @@ DEFUN0(stgApplyNNPNN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0800000000000001UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyN);
         break;
@@ -11841,11 +11503,9 @@ DEFUN0(stgApplyNNPNN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0C00000000000001UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyNN);
         break;
@@ -11868,11 +11528,9 @@ DEFUN0(stgApplyNNPNN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x1000000000000003UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyPNN);
         break;
@@ -11895,11 +11553,9 @@ DEFUN0(stgApplyNNPNN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x1400000000000005UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyNPNN);
         break;
@@ -11992,11 +11648,9 @@ DEFUN0(stgApplyNNPNN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0800000000000001UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyN);
         break;
@@ -12032,11 +11686,9 @@ DEFUN0(stgApplyNNPNN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0C00000000000001UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNN);
         break;
@@ -12072,11 +11724,9 @@ DEFUN0(stgApplyNNPNN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x1000000000000003UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPNN);
         break;
@@ -12112,11 +11762,9 @@ DEFUN0(stgApplyNNPNN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x1400000000000005UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNPNN);
         break;
@@ -12209,7 +11857,7 @@ DEFUN0(stgApplyPNPNN) {
   Cont *newframe;  // pointer to STACKCONT to be constructed for call/jump
   const int argc = 5;
   PtrOrLiteral argv[argc+1]; // argv[0] is the FUN/PAP/THUNK/BLACKHOLE
-  popargs(argc+1, argv);
+  popFrameArgs(argc+1, argv);
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyPNPNN %s\n", getInfoPtr(argv[0].op)->name);
   #endif
@@ -12266,11 +11914,9 @@ DEFUN0(stgApplyPNPNN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0800000000000001UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyN);
         break;
@@ -12293,11 +11939,9 @@ DEFUN0(stgApplyPNPNN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0C00000000000001UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyNN);
         break;
@@ -12320,11 +11964,9 @@ DEFUN0(stgApplyPNPNN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x1000000000000003UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyPNN);
         break;
@@ -12347,11 +11989,9 @@ DEFUN0(stgApplyPNPNN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x1400000000000005UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyNPNN);
         break;
@@ -12444,11 +12084,9 @@ DEFUN0(stgApplyPNPNN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0800000000000001UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyN);
         break;
@@ -12484,11 +12122,9 @@ DEFUN0(stgApplyPNPNN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0C00000000000001UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNN);
         break;
@@ -12524,11 +12160,9 @@ DEFUN0(stgApplyPNPNN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x1000000000000003UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPNN);
         break;
@@ -12564,11 +12198,9 @@ DEFUN0(stgApplyPNPNN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x1400000000000005UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNPNN);
         break;
@@ -12661,7 +12293,7 @@ DEFUN0(stgApplyNPPNN) {
   Cont *newframe;  // pointer to STACKCONT to be constructed for call/jump
   const int argc = 5;
   PtrOrLiteral argv[argc+1]; // argv[0] is the FUN/PAP/THUNK/BLACKHOLE
-  popargs(argc+1, argv);
+  popFrameArgs(argc+1, argv);
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyNPPNN %s\n", getInfoPtr(argv[0].op)->name);
   #endif
@@ -12718,11 +12350,9 @@ DEFUN0(stgApplyNPPNN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0800000000000001UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyN);
         break;
@@ -12745,11 +12375,9 @@ DEFUN0(stgApplyNPPNN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0C00000000000001UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyNN);
         break;
@@ -12772,11 +12400,9 @@ DEFUN0(stgApplyNPPNN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x1000000000000003UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyPNN);
         break;
@@ -12799,11 +12425,9 @@ DEFUN0(stgApplyNPPNN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x1400000000000007UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyPPNN);
         break;
@@ -12896,11 +12520,9 @@ DEFUN0(stgApplyNPPNN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0800000000000001UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyN);
         break;
@@ -12936,11 +12558,9 @@ DEFUN0(stgApplyNPPNN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0C00000000000001UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNN);
         break;
@@ -12976,11 +12596,9 @@ DEFUN0(stgApplyNPPNN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x1000000000000003UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPNN);
         break;
@@ -13016,11 +12634,9 @@ DEFUN0(stgApplyNPPNN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x1400000000000007UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPPNN);
         break;
@@ -13113,7 +12729,7 @@ DEFUN0(stgApplyPPPNN) {
   Cont *newframe;  // pointer to STACKCONT to be constructed for call/jump
   const int argc = 5;
   PtrOrLiteral argv[argc+1]; // argv[0] is the FUN/PAP/THUNK/BLACKHOLE
-  popargs(argc+1, argv);
+  popFrameArgs(argc+1, argv);
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyPPPNN %s\n", getInfoPtr(argv[0].op)->name);
   #endif
@@ -13174,11 +12790,9 @@ DEFUN0(stgApplyPPPNN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0800000000000001UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyN);
         break;
@@ -13201,11 +12815,9 @@ DEFUN0(stgApplyPPPNN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0C00000000000001UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyNN);
         break;
@@ -13228,11 +12840,9 @@ DEFUN0(stgApplyPPPNN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x1000000000000003UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyPNN);
         break;
@@ -13255,11 +12865,9 @@ DEFUN0(stgApplyPPPNN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x1400000000000007UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyPPNN);
         break;
@@ -13352,11 +12960,9 @@ DEFUN0(stgApplyPPPNN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0800000000000001UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyN);
         break;
@@ -13392,11 +12998,9 @@ DEFUN0(stgApplyPPPNN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0C00000000000001UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNN);
         break;
@@ -13432,11 +13036,9 @@ DEFUN0(stgApplyPPPNN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x1000000000000003UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPNN);
         break;
@@ -13472,11 +13074,9 @@ DEFUN0(stgApplyPPPNN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x1400000000000007UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPPNN);
         break;
@@ -13569,7 +13169,7 @@ DEFUN0(stgApplyNNNPN) {
   Cont *newframe;  // pointer to STACKCONT to be constructed for call/jump
   const int argc = 5;
   PtrOrLiteral argv[argc+1]; // argv[0] is the FUN/PAP/THUNK/BLACKHOLE
-  popargs(argc+1, argv);
+  popFrameArgs(argc+1, argv);
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyNNNPN %s\n", getInfoPtr(argv[0].op)->name);
   #endif
@@ -13622,11 +13222,9 @@ DEFUN0(stgApplyNNNPN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0800000000000001UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyN);
         break;
@@ -13649,11 +13247,9 @@ DEFUN0(stgApplyNNNPN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0C00000000000003UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyPN);
         break;
@@ -13676,11 +13272,9 @@ DEFUN0(stgApplyNNNPN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x1000000000000005UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyNPN);
         break;
@@ -13703,11 +13297,9 @@ DEFUN0(stgApplyNNNPN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x1400000000000009UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyNNPN);
         break;
@@ -13800,11 +13392,9 @@ DEFUN0(stgApplyNNNPN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0800000000000001UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyN);
         break;
@@ -13840,11 +13430,9 @@ DEFUN0(stgApplyNNNPN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0C00000000000003UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPN);
         break;
@@ -13880,11 +13468,9 @@ DEFUN0(stgApplyNNNPN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x1000000000000005UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNPN);
         break;
@@ -13920,11 +13506,9 @@ DEFUN0(stgApplyNNNPN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x1400000000000009UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNNPN);
         break;
@@ -14017,7 +13601,7 @@ DEFUN0(stgApplyPNNPN) {
   Cont *newframe;  // pointer to STACKCONT to be constructed for call/jump
   const int argc = 5;
   PtrOrLiteral argv[argc+1]; // argv[0] is the FUN/PAP/THUNK/BLACKHOLE
-  popargs(argc+1, argv);
+  popFrameArgs(argc+1, argv);
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyPNNPN %s\n", getInfoPtr(argv[0].op)->name);
   #endif
@@ -14074,11 +13658,9 @@ DEFUN0(stgApplyPNNPN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0800000000000001UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyN);
         break;
@@ -14101,11 +13683,9 @@ DEFUN0(stgApplyPNNPN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0C00000000000003UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyPN);
         break;
@@ -14128,11 +13708,9 @@ DEFUN0(stgApplyPNNPN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x1000000000000005UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyNPN);
         break;
@@ -14155,11 +13733,9 @@ DEFUN0(stgApplyPNNPN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x1400000000000009UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyNNPN);
         break;
@@ -14252,11 +13828,9 @@ DEFUN0(stgApplyPNNPN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0800000000000001UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyN);
         break;
@@ -14292,11 +13866,9 @@ DEFUN0(stgApplyPNNPN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0C00000000000003UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPN);
         break;
@@ -14332,11 +13904,9 @@ DEFUN0(stgApplyPNNPN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x1000000000000005UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNPN);
         break;
@@ -14372,11 +13942,9 @@ DEFUN0(stgApplyPNNPN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x1400000000000009UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNNPN);
         break;
@@ -14469,7 +14037,7 @@ DEFUN0(stgApplyNPNPN) {
   Cont *newframe;  // pointer to STACKCONT to be constructed for call/jump
   const int argc = 5;
   PtrOrLiteral argv[argc+1]; // argv[0] is the FUN/PAP/THUNK/BLACKHOLE
-  popargs(argc+1, argv);
+  popFrameArgs(argc+1, argv);
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyNPNPN %s\n", getInfoPtr(argv[0].op)->name);
   #endif
@@ -14526,11 +14094,9 @@ DEFUN0(stgApplyNPNPN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0800000000000001UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyN);
         break;
@@ -14553,11 +14119,9 @@ DEFUN0(stgApplyNPNPN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0C00000000000003UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyPN);
         break;
@@ -14580,11 +14144,9 @@ DEFUN0(stgApplyNPNPN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x1000000000000005UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyNPN);
         break;
@@ -14607,11 +14169,9 @@ DEFUN0(stgApplyNPNPN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x140000000000000BUL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyPNPN);
         break;
@@ -14704,11 +14264,9 @@ DEFUN0(stgApplyNPNPN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0800000000000001UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyN);
         break;
@@ -14744,11 +14302,9 @@ DEFUN0(stgApplyNPNPN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0C00000000000003UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPN);
         break;
@@ -14784,11 +14340,9 @@ DEFUN0(stgApplyNPNPN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x1000000000000005UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNPN);
         break;
@@ -14824,11 +14378,9 @@ DEFUN0(stgApplyNPNPN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x140000000000000BUL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPNPN);
         break;
@@ -14921,7 +14473,7 @@ DEFUN0(stgApplyPPNPN) {
   Cont *newframe;  // pointer to STACKCONT to be constructed for call/jump
   const int argc = 5;
   PtrOrLiteral argv[argc+1]; // argv[0] is the FUN/PAP/THUNK/BLACKHOLE
-  popargs(argc+1, argv);
+  popFrameArgs(argc+1, argv);
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyPPNPN %s\n", getInfoPtr(argv[0].op)->name);
   #endif
@@ -14982,11 +14534,9 @@ DEFUN0(stgApplyPPNPN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0800000000000001UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyN);
         break;
@@ -15009,11 +14559,9 @@ DEFUN0(stgApplyPPNPN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0C00000000000003UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyPN);
         break;
@@ -15036,11 +14584,9 @@ DEFUN0(stgApplyPPNPN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x1000000000000005UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyNPN);
         break;
@@ -15063,11 +14609,9 @@ DEFUN0(stgApplyPPNPN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x140000000000000BUL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyPNPN);
         break;
@@ -15160,11 +14704,9 @@ DEFUN0(stgApplyPPNPN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0800000000000001UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyN);
         break;
@@ -15200,11 +14742,9 @@ DEFUN0(stgApplyPPNPN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0C00000000000003UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPN);
         break;
@@ -15240,11 +14780,9 @@ DEFUN0(stgApplyPPNPN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x1000000000000005UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNPN);
         break;
@@ -15280,11 +14818,9 @@ DEFUN0(stgApplyPPNPN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x140000000000000BUL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPNPN);
         break;
@@ -15377,7 +14913,7 @@ DEFUN0(stgApplyNNPPN) {
   Cont *newframe;  // pointer to STACKCONT to be constructed for call/jump
   const int argc = 5;
   PtrOrLiteral argv[argc+1]; // argv[0] is the FUN/PAP/THUNK/BLACKHOLE
-  popargs(argc+1, argv);
+  popFrameArgs(argc+1, argv);
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyNNPPN %s\n", getInfoPtr(argv[0].op)->name);
   #endif
@@ -15434,11 +14970,9 @@ DEFUN0(stgApplyNNPPN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0800000000000001UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyN);
         break;
@@ -15461,11 +14995,9 @@ DEFUN0(stgApplyNNPPN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0C00000000000003UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyPN);
         break;
@@ -15488,11 +15020,9 @@ DEFUN0(stgApplyNNPPN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x1000000000000007UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyPPN);
         break;
@@ -15515,11 +15045,9 @@ DEFUN0(stgApplyNNPPN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x140000000000000DUL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyNPPN);
         break;
@@ -15612,11 +15140,9 @@ DEFUN0(stgApplyNNPPN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0800000000000001UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyN);
         break;
@@ -15652,11 +15178,9 @@ DEFUN0(stgApplyNNPPN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0C00000000000003UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPN);
         break;
@@ -15692,11 +15216,9 @@ DEFUN0(stgApplyNNPPN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x1000000000000007UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPPN);
         break;
@@ -15732,11 +15254,9 @@ DEFUN0(stgApplyNNPPN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x140000000000000DUL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNPPN);
         break;
@@ -15829,7 +15349,7 @@ DEFUN0(stgApplyPNPPN) {
   Cont *newframe;  // pointer to STACKCONT to be constructed for call/jump
   const int argc = 5;
   PtrOrLiteral argv[argc+1]; // argv[0] is the FUN/PAP/THUNK/BLACKHOLE
-  popargs(argc+1, argv);
+  popFrameArgs(argc+1, argv);
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyPNPPN %s\n", getInfoPtr(argv[0].op)->name);
   #endif
@@ -15890,11 +15410,9 @@ DEFUN0(stgApplyPNPPN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0800000000000001UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyN);
         break;
@@ -15917,11 +15435,9 @@ DEFUN0(stgApplyPNPPN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0C00000000000003UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyPN);
         break;
@@ -15944,11 +15460,9 @@ DEFUN0(stgApplyPNPPN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x1000000000000007UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyPPN);
         break;
@@ -15971,11 +15485,9 @@ DEFUN0(stgApplyPNPPN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x140000000000000DUL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyNPPN);
         break;
@@ -16068,11 +15580,9 @@ DEFUN0(stgApplyPNPPN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0800000000000001UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyN);
         break;
@@ -16108,11 +15618,9 @@ DEFUN0(stgApplyPNPPN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0C00000000000003UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPN);
         break;
@@ -16148,11 +15656,9 @@ DEFUN0(stgApplyPNPPN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x1000000000000007UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPPN);
         break;
@@ -16188,11 +15694,9 @@ DEFUN0(stgApplyPNPPN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x140000000000000DUL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNPPN);
         break;
@@ -16285,7 +15789,7 @@ DEFUN0(stgApplyNPPPN) {
   Cont *newframe;  // pointer to STACKCONT to be constructed for call/jump
   const int argc = 5;
   PtrOrLiteral argv[argc+1]; // argv[0] is the FUN/PAP/THUNK/BLACKHOLE
-  popargs(argc+1, argv);
+  popFrameArgs(argc+1, argv);
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyNPPPN %s\n", getInfoPtr(argv[0].op)->name);
   #endif
@@ -16346,11 +15850,9 @@ DEFUN0(stgApplyNPPPN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0800000000000001UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyN);
         break;
@@ -16373,11 +15875,9 @@ DEFUN0(stgApplyNPPPN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0C00000000000003UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyPN);
         break;
@@ -16400,11 +15900,9 @@ DEFUN0(stgApplyNPPPN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x1000000000000007UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyPPN);
         break;
@@ -16427,11 +15925,9 @@ DEFUN0(stgApplyNPPPN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x140000000000000FUL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyPPPN);
         break;
@@ -16524,11 +16020,9 @@ DEFUN0(stgApplyNPPPN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0800000000000001UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyN);
         break;
@@ -16564,11 +16058,9 @@ DEFUN0(stgApplyNPPPN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0C00000000000003UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPN);
         break;
@@ -16604,11 +16096,9 @@ DEFUN0(stgApplyNPPPN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x1000000000000007UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPPN);
         break;
@@ -16644,11 +16134,9 @@ DEFUN0(stgApplyNPPPN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x140000000000000FUL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPPPN);
         break;
@@ -16741,7 +16229,7 @@ DEFUN0(stgApplyPPPPN) {
   Cont *newframe;  // pointer to STACKCONT to be constructed for call/jump
   const int argc = 5;
   PtrOrLiteral argv[argc+1]; // argv[0] is the FUN/PAP/THUNK/BLACKHOLE
-  popargs(argc+1, argv);
+  popFrameArgs(argc+1, argv);
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyPPPPN %s\n", getInfoPtr(argv[0].op)->name);
   #endif
@@ -16806,11 +16294,9 @@ DEFUN0(stgApplyPPPPN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0800000000000001UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyN);
         break;
@@ -16833,11 +16319,9 @@ DEFUN0(stgApplyPPPPN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0C00000000000003UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyPN);
         break;
@@ -16860,11 +16344,9 @@ DEFUN0(stgApplyPPPPN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x1000000000000007UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyPPN);
         break;
@@ -16887,11 +16369,9 @@ DEFUN0(stgApplyPPPPN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x140000000000000FUL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyPPPN);
         break;
@@ -16984,11 +16464,9 @@ DEFUN0(stgApplyPPPPN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0800000000000001UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyN);
         break;
@@ -17024,11 +16502,9 @@ DEFUN0(stgApplyPPPPN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0C00000000000003UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPN);
         break;
@@ -17064,11 +16540,9 @@ DEFUN0(stgApplyPPPPN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x1000000000000007UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPPN);
         break;
@@ -17104,11 +16578,9 @@ DEFUN0(stgApplyPPPPN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x140000000000000FUL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPPPN);
         break;
@@ -17201,7 +16673,7 @@ DEFUN0(stgApplyNNNNP) {
   Cont *newframe;  // pointer to STACKCONT to be constructed for call/jump
   const int argc = 5;
   PtrOrLiteral argv[argc+1]; // argv[0] is the FUN/PAP/THUNK/BLACKHOLE
-  popargs(argc+1, argv);
+  popFrameArgs(argc+1, argv);
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyNNNNP %s\n", getInfoPtr(argv[0].op)->name);
   #endif
@@ -17254,11 +16726,9 @@ DEFUN0(stgApplyNNNNP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0800000000000003UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyP);
         break;
@@ -17281,11 +16751,9 @@ DEFUN0(stgApplyNNNNP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0C00000000000005UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyNP);
         break;
@@ -17308,11 +16776,9 @@ DEFUN0(stgApplyNNNNP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x1000000000000009UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyNNP);
         break;
@@ -17335,11 +16801,9 @@ DEFUN0(stgApplyNNNNP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x1400000000000011UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyNNNP);
         break;
@@ -17432,11 +16896,9 @@ DEFUN0(stgApplyNNNNP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0800000000000003UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyP);
         break;
@@ -17472,11 +16934,9 @@ DEFUN0(stgApplyNNNNP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0C00000000000005UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNP);
         break;
@@ -17512,11 +16972,9 @@ DEFUN0(stgApplyNNNNP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x1000000000000009UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNNP);
         break;
@@ -17552,11 +17010,9 @@ DEFUN0(stgApplyNNNNP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x1400000000000011UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNNNP);
         break;
@@ -17649,7 +17105,7 @@ DEFUN0(stgApplyPNNNP) {
   Cont *newframe;  // pointer to STACKCONT to be constructed for call/jump
   const int argc = 5;
   PtrOrLiteral argv[argc+1]; // argv[0] is the FUN/PAP/THUNK/BLACKHOLE
-  popargs(argc+1, argv);
+  popFrameArgs(argc+1, argv);
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyPNNNP %s\n", getInfoPtr(argv[0].op)->name);
   #endif
@@ -17706,11 +17162,9 @@ DEFUN0(stgApplyPNNNP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0800000000000003UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyP);
         break;
@@ -17733,11 +17187,9 @@ DEFUN0(stgApplyPNNNP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0C00000000000005UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyNP);
         break;
@@ -17760,11 +17212,9 @@ DEFUN0(stgApplyPNNNP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x1000000000000009UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyNNP);
         break;
@@ -17787,11 +17237,9 @@ DEFUN0(stgApplyPNNNP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x1400000000000011UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyNNNP);
         break;
@@ -17884,11 +17332,9 @@ DEFUN0(stgApplyPNNNP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0800000000000003UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyP);
         break;
@@ -17924,11 +17370,9 @@ DEFUN0(stgApplyPNNNP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0C00000000000005UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNP);
         break;
@@ -17964,11 +17408,9 @@ DEFUN0(stgApplyPNNNP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x1000000000000009UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNNP);
         break;
@@ -18004,11 +17446,9 @@ DEFUN0(stgApplyPNNNP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x1400000000000011UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNNNP);
         break;
@@ -18101,7 +17541,7 @@ DEFUN0(stgApplyNPNNP) {
   Cont *newframe;  // pointer to STACKCONT to be constructed for call/jump
   const int argc = 5;
   PtrOrLiteral argv[argc+1]; // argv[0] is the FUN/PAP/THUNK/BLACKHOLE
-  popargs(argc+1, argv);
+  popFrameArgs(argc+1, argv);
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyNPNNP %s\n", getInfoPtr(argv[0].op)->name);
   #endif
@@ -18158,11 +17598,9 @@ DEFUN0(stgApplyNPNNP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0800000000000003UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyP);
         break;
@@ -18185,11 +17623,9 @@ DEFUN0(stgApplyNPNNP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0C00000000000005UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyNP);
         break;
@@ -18212,11 +17648,9 @@ DEFUN0(stgApplyNPNNP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x1000000000000009UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyNNP);
         break;
@@ -18239,11 +17673,9 @@ DEFUN0(stgApplyNPNNP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x1400000000000013UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyPNNP);
         break;
@@ -18336,11 +17768,9 @@ DEFUN0(stgApplyNPNNP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0800000000000003UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyP);
         break;
@@ -18376,11 +17806,9 @@ DEFUN0(stgApplyNPNNP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0C00000000000005UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNP);
         break;
@@ -18416,11 +17844,9 @@ DEFUN0(stgApplyNPNNP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x1000000000000009UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNNP);
         break;
@@ -18456,11 +17882,9 @@ DEFUN0(stgApplyNPNNP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x1400000000000013UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPNNP);
         break;
@@ -18553,7 +17977,7 @@ DEFUN0(stgApplyPPNNP) {
   Cont *newframe;  // pointer to STACKCONT to be constructed for call/jump
   const int argc = 5;
   PtrOrLiteral argv[argc+1]; // argv[0] is the FUN/PAP/THUNK/BLACKHOLE
-  popargs(argc+1, argv);
+  popFrameArgs(argc+1, argv);
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyPPNNP %s\n", getInfoPtr(argv[0].op)->name);
   #endif
@@ -18614,11 +18038,9 @@ DEFUN0(stgApplyPPNNP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0800000000000003UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyP);
         break;
@@ -18641,11 +18063,9 @@ DEFUN0(stgApplyPPNNP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0C00000000000005UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyNP);
         break;
@@ -18668,11 +18088,9 @@ DEFUN0(stgApplyPPNNP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x1000000000000009UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyNNP);
         break;
@@ -18695,11 +18113,9 @@ DEFUN0(stgApplyPPNNP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x1400000000000013UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyPNNP);
         break;
@@ -18792,11 +18208,9 @@ DEFUN0(stgApplyPPNNP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0800000000000003UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyP);
         break;
@@ -18832,11 +18246,9 @@ DEFUN0(stgApplyPPNNP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0C00000000000005UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNP);
         break;
@@ -18872,11 +18284,9 @@ DEFUN0(stgApplyPPNNP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x1000000000000009UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNNP);
         break;
@@ -18912,11 +18322,9 @@ DEFUN0(stgApplyPPNNP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x1400000000000013UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPNNP);
         break;
@@ -19009,7 +18417,7 @@ DEFUN0(stgApplyNNPNP) {
   Cont *newframe;  // pointer to STACKCONT to be constructed for call/jump
   const int argc = 5;
   PtrOrLiteral argv[argc+1]; // argv[0] is the FUN/PAP/THUNK/BLACKHOLE
-  popargs(argc+1, argv);
+  popFrameArgs(argc+1, argv);
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyNNPNP %s\n", getInfoPtr(argv[0].op)->name);
   #endif
@@ -19066,11 +18474,9 @@ DEFUN0(stgApplyNNPNP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0800000000000003UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyP);
         break;
@@ -19093,11 +18499,9 @@ DEFUN0(stgApplyNNPNP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0C00000000000005UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyNP);
         break;
@@ -19120,11 +18524,9 @@ DEFUN0(stgApplyNNPNP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x100000000000000BUL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyPNP);
         break;
@@ -19147,11 +18549,9 @@ DEFUN0(stgApplyNNPNP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x1400000000000015UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyNPNP);
         break;
@@ -19244,11 +18644,9 @@ DEFUN0(stgApplyNNPNP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0800000000000003UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyP);
         break;
@@ -19284,11 +18682,9 @@ DEFUN0(stgApplyNNPNP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0C00000000000005UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNP);
         break;
@@ -19324,11 +18720,9 @@ DEFUN0(stgApplyNNPNP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x100000000000000BUL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPNP);
         break;
@@ -19364,11 +18758,9 @@ DEFUN0(stgApplyNNPNP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x1400000000000015UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNPNP);
         break;
@@ -19461,7 +18853,7 @@ DEFUN0(stgApplyPNPNP) {
   Cont *newframe;  // pointer to STACKCONT to be constructed for call/jump
   const int argc = 5;
   PtrOrLiteral argv[argc+1]; // argv[0] is the FUN/PAP/THUNK/BLACKHOLE
-  popargs(argc+1, argv);
+  popFrameArgs(argc+1, argv);
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyPNPNP %s\n", getInfoPtr(argv[0].op)->name);
   #endif
@@ -19522,11 +18914,9 @@ DEFUN0(stgApplyPNPNP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0800000000000003UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyP);
         break;
@@ -19549,11 +18939,9 @@ DEFUN0(stgApplyPNPNP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0C00000000000005UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyNP);
         break;
@@ -19576,11 +18964,9 @@ DEFUN0(stgApplyPNPNP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x100000000000000BUL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyPNP);
         break;
@@ -19603,11 +18989,9 @@ DEFUN0(stgApplyPNPNP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x1400000000000015UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyNPNP);
         break;
@@ -19700,11 +19084,9 @@ DEFUN0(stgApplyPNPNP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0800000000000003UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyP);
         break;
@@ -19740,11 +19122,9 @@ DEFUN0(stgApplyPNPNP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0C00000000000005UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNP);
         break;
@@ -19780,11 +19160,9 @@ DEFUN0(stgApplyPNPNP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x100000000000000BUL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPNP);
         break;
@@ -19820,11 +19198,9 @@ DEFUN0(stgApplyPNPNP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x1400000000000015UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNPNP);
         break;
@@ -19917,7 +19293,7 @@ DEFUN0(stgApplyNPPNP) {
   Cont *newframe;  // pointer to STACKCONT to be constructed for call/jump
   const int argc = 5;
   PtrOrLiteral argv[argc+1]; // argv[0] is the FUN/PAP/THUNK/BLACKHOLE
-  popargs(argc+1, argv);
+  popFrameArgs(argc+1, argv);
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyNPPNP %s\n", getInfoPtr(argv[0].op)->name);
   #endif
@@ -19978,11 +19354,9 @@ DEFUN0(stgApplyNPPNP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0800000000000003UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyP);
         break;
@@ -20005,11 +19379,9 @@ DEFUN0(stgApplyNPPNP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0C00000000000005UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyNP);
         break;
@@ -20032,11 +19404,9 @@ DEFUN0(stgApplyNPPNP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x100000000000000BUL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyPNP);
         break;
@@ -20059,11 +19429,9 @@ DEFUN0(stgApplyNPPNP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x1400000000000017UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyPPNP);
         break;
@@ -20156,11 +19524,9 @@ DEFUN0(stgApplyNPPNP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0800000000000003UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyP);
         break;
@@ -20196,11 +19562,9 @@ DEFUN0(stgApplyNPPNP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0C00000000000005UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNP);
         break;
@@ -20236,11 +19600,9 @@ DEFUN0(stgApplyNPPNP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x100000000000000BUL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPNP);
         break;
@@ -20276,11 +19638,9 @@ DEFUN0(stgApplyNPPNP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x1400000000000017UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPPNP);
         break;
@@ -20373,7 +19733,7 @@ DEFUN0(stgApplyPPPNP) {
   Cont *newframe;  // pointer to STACKCONT to be constructed for call/jump
   const int argc = 5;
   PtrOrLiteral argv[argc+1]; // argv[0] is the FUN/PAP/THUNK/BLACKHOLE
-  popargs(argc+1, argv);
+  popFrameArgs(argc+1, argv);
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyPPPNP %s\n", getInfoPtr(argv[0].op)->name);
   #endif
@@ -20438,11 +19798,9 @@ DEFUN0(stgApplyPPPNP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0800000000000003UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyP);
         break;
@@ -20465,11 +19823,9 @@ DEFUN0(stgApplyPPPNP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0C00000000000005UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyNP);
         break;
@@ -20492,11 +19848,9 @@ DEFUN0(stgApplyPPPNP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x100000000000000BUL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyPNP);
         break;
@@ -20519,11 +19873,9 @@ DEFUN0(stgApplyPPPNP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x1400000000000017UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyPPNP);
         break;
@@ -20616,11 +19968,9 @@ DEFUN0(stgApplyPPPNP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0800000000000003UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyP);
         break;
@@ -20656,11 +20006,9 @@ DEFUN0(stgApplyPPPNP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0C00000000000005UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNP);
         break;
@@ -20696,11 +20044,9 @@ DEFUN0(stgApplyPPPNP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x100000000000000BUL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPNP);
         break;
@@ -20736,11 +20082,9 @@ DEFUN0(stgApplyPPPNP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x1400000000000017UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPPNP);
         break;
@@ -20833,7 +20177,7 @@ DEFUN0(stgApplyNNNPP) {
   Cont *newframe;  // pointer to STACKCONT to be constructed for call/jump
   const int argc = 5;
   PtrOrLiteral argv[argc+1]; // argv[0] is the FUN/PAP/THUNK/BLACKHOLE
-  popargs(argc+1, argv);
+  popFrameArgs(argc+1, argv);
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyNNNPP %s\n", getInfoPtr(argv[0].op)->name);
   #endif
@@ -20890,11 +20234,9 @@ DEFUN0(stgApplyNNNPP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0800000000000003UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyP);
         break;
@@ -20917,11 +20259,9 @@ DEFUN0(stgApplyNNNPP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0C00000000000007UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyPP);
         break;
@@ -20944,11 +20284,9 @@ DEFUN0(stgApplyNNNPP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x100000000000000DUL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyNPP);
         break;
@@ -20971,11 +20309,9 @@ DEFUN0(stgApplyNNNPP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x1400000000000019UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyNNPP);
         break;
@@ -21068,11 +20404,9 @@ DEFUN0(stgApplyNNNPP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0800000000000003UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyP);
         break;
@@ -21108,11 +20442,9 @@ DEFUN0(stgApplyNNNPP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0C00000000000007UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPP);
         break;
@@ -21148,11 +20480,9 @@ DEFUN0(stgApplyNNNPP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x100000000000000DUL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNPP);
         break;
@@ -21188,11 +20518,9 @@ DEFUN0(stgApplyNNNPP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x1400000000000019UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNNPP);
         break;
@@ -21285,7 +20613,7 @@ DEFUN0(stgApplyPNNPP) {
   Cont *newframe;  // pointer to STACKCONT to be constructed for call/jump
   const int argc = 5;
   PtrOrLiteral argv[argc+1]; // argv[0] is the FUN/PAP/THUNK/BLACKHOLE
-  popargs(argc+1, argv);
+  popFrameArgs(argc+1, argv);
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyPNNPP %s\n", getInfoPtr(argv[0].op)->name);
   #endif
@@ -21346,11 +20674,9 @@ DEFUN0(stgApplyPNNPP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0800000000000003UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyP);
         break;
@@ -21373,11 +20699,9 @@ DEFUN0(stgApplyPNNPP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0C00000000000007UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyPP);
         break;
@@ -21400,11 +20724,9 @@ DEFUN0(stgApplyPNNPP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x100000000000000DUL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyNPP);
         break;
@@ -21427,11 +20749,9 @@ DEFUN0(stgApplyPNNPP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x1400000000000019UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyNNPP);
         break;
@@ -21524,11 +20844,9 @@ DEFUN0(stgApplyPNNPP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0800000000000003UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyP);
         break;
@@ -21564,11 +20882,9 @@ DEFUN0(stgApplyPNNPP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0C00000000000007UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPP);
         break;
@@ -21604,11 +20920,9 @@ DEFUN0(stgApplyPNNPP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x100000000000000DUL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNPP);
         break;
@@ -21644,11 +20958,9 @@ DEFUN0(stgApplyPNNPP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x1400000000000019UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNNPP);
         break;
@@ -21741,7 +21053,7 @@ DEFUN0(stgApplyNPNPP) {
   Cont *newframe;  // pointer to STACKCONT to be constructed for call/jump
   const int argc = 5;
   PtrOrLiteral argv[argc+1]; // argv[0] is the FUN/PAP/THUNK/BLACKHOLE
-  popargs(argc+1, argv);
+  popFrameArgs(argc+1, argv);
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyNPNPP %s\n", getInfoPtr(argv[0].op)->name);
   #endif
@@ -21802,11 +21114,9 @@ DEFUN0(stgApplyNPNPP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0800000000000003UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyP);
         break;
@@ -21829,11 +21139,9 @@ DEFUN0(stgApplyNPNPP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0C00000000000007UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyPP);
         break;
@@ -21856,11 +21164,9 @@ DEFUN0(stgApplyNPNPP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x100000000000000DUL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyNPP);
         break;
@@ -21883,11 +21189,9 @@ DEFUN0(stgApplyNPNPP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x140000000000001BUL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyPNPP);
         break;
@@ -21980,11 +21284,9 @@ DEFUN0(stgApplyNPNPP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0800000000000003UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyP);
         break;
@@ -22020,11 +21322,9 @@ DEFUN0(stgApplyNPNPP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0C00000000000007UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPP);
         break;
@@ -22060,11 +21360,9 @@ DEFUN0(stgApplyNPNPP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x100000000000000DUL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNPP);
         break;
@@ -22100,11 +21398,9 @@ DEFUN0(stgApplyNPNPP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x140000000000001BUL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPNPP);
         break;
@@ -22197,7 +21493,7 @@ DEFUN0(stgApplyPPNPP) {
   Cont *newframe;  // pointer to STACKCONT to be constructed for call/jump
   const int argc = 5;
   PtrOrLiteral argv[argc+1]; // argv[0] is the FUN/PAP/THUNK/BLACKHOLE
-  popargs(argc+1, argv);
+  popFrameArgs(argc+1, argv);
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyPPNPP %s\n", getInfoPtr(argv[0].op)->name);
   #endif
@@ -22262,11 +21558,9 @@ DEFUN0(stgApplyPPNPP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0800000000000003UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyP);
         break;
@@ -22289,11 +21583,9 @@ DEFUN0(stgApplyPPNPP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0C00000000000007UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyPP);
         break;
@@ -22316,11 +21608,9 @@ DEFUN0(stgApplyPPNPP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x100000000000000DUL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyNPP);
         break;
@@ -22343,11 +21633,9 @@ DEFUN0(stgApplyPPNPP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x140000000000001BUL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyPNPP);
         break;
@@ -22440,11 +21728,9 @@ DEFUN0(stgApplyPPNPP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0800000000000003UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyP);
         break;
@@ -22480,11 +21766,9 @@ DEFUN0(stgApplyPPNPP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0C00000000000007UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPP);
         break;
@@ -22520,11 +21804,9 @@ DEFUN0(stgApplyPPNPP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x100000000000000DUL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNPP);
         break;
@@ -22560,11 +21842,9 @@ DEFUN0(stgApplyPPNPP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x140000000000001BUL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPNPP);
         break;
@@ -22657,7 +21937,7 @@ DEFUN0(stgApplyNNPPP) {
   Cont *newframe;  // pointer to STACKCONT to be constructed for call/jump
   const int argc = 5;
   PtrOrLiteral argv[argc+1]; // argv[0] is the FUN/PAP/THUNK/BLACKHOLE
-  popargs(argc+1, argv);
+  popFrameArgs(argc+1, argv);
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyNNPPP %s\n", getInfoPtr(argv[0].op)->name);
   #endif
@@ -22718,11 +21998,9 @@ DEFUN0(stgApplyNNPPP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0800000000000003UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyP);
         break;
@@ -22745,11 +22023,9 @@ DEFUN0(stgApplyNNPPP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0C00000000000007UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyPP);
         break;
@@ -22772,11 +22048,9 @@ DEFUN0(stgApplyNNPPP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x100000000000000FUL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyPPP);
         break;
@@ -22799,11 +22073,9 @@ DEFUN0(stgApplyNNPPP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x140000000000001DUL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyNPPP);
         break;
@@ -22896,11 +22168,9 @@ DEFUN0(stgApplyNNPPP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0800000000000003UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyP);
         break;
@@ -22936,11 +22206,9 @@ DEFUN0(stgApplyNNPPP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0C00000000000007UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPP);
         break;
@@ -22976,11 +22244,9 @@ DEFUN0(stgApplyNNPPP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x100000000000000FUL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPPP);
         break;
@@ -23016,11 +22282,9 @@ DEFUN0(stgApplyNNPPP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x140000000000001DUL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNPPP);
         break;
@@ -23113,7 +22377,7 @@ DEFUN0(stgApplyPNPPP) {
   Cont *newframe;  // pointer to STACKCONT to be constructed for call/jump
   const int argc = 5;
   PtrOrLiteral argv[argc+1]; // argv[0] is the FUN/PAP/THUNK/BLACKHOLE
-  popargs(argc+1, argv);
+  popFrameArgs(argc+1, argv);
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyPNPPP %s\n", getInfoPtr(argv[0].op)->name);
   #endif
@@ -23178,11 +22442,9 @@ DEFUN0(stgApplyPNPPP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0800000000000003UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyP);
         break;
@@ -23205,11 +22467,9 @@ DEFUN0(stgApplyPNPPP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0C00000000000007UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyPP);
         break;
@@ -23232,11 +22492,9 @@ DEFUN0(stgApplyPNPPP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x100000000000000FUL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyPPP);
         break;
@@ -23259,11 +22517,9 @@ DEFUN0(stgApplyPNPPP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x140000000000001DUL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyNPPP);
         break;
@@ -23356,11 +22612,9 @@ DEFUN0(stgApplyPNPPP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0800000000000003UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyP);
         break;
@@ -23396,11 +22650,9 @@ DEFUN0(stgApplyPNPPP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0C00000000000007UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPP);
         break;
@@ -23436,11 +22688,9 @@ DEFUN0(stgApplyPNPPP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x100000000000000FUL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPPP);
         break;
@@ -23476,11 +22726,9 @@ DEFUN0(stgApplyPNPPP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x140000000000001DUL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNPPP);
         break;
@@ -23573,7 +22821,7 @@ DEFUN0(stgApplyNPPPP) {
   Cont *newframe;  // pointer to STACKCONT to be constructed for call/jump
   const int argc = 5;
   PtrOrLiteral argv[argc+1]; // argv[0] is the FUN/PAP/THUNK/BLACKHOLE
-  popargs(argc+1, argv);
+  popFrameArgs(argc+1, argv);
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyNPPPP %s\n", getInfoPtr(argv[0].op)->name);
   #endif
@@ -23638,11 +22886,9 @@ DEFUN0(stgApplyNPPPP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0800000000000003UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyP);
         break;
@@ -23665,11 +22911,9 @@ DEFUN0(stgApplyNPPPP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0C00000000000007UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyPP);
         break;
@@ -23692,11 +22936,9 @@ DEFUN0(stgApplyNPPPP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x100000000000000FUL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyPPP);
         break;
@@ -23719,11 +22961,9 @@ DEFUN0(stgApplyNPPPP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x140000000000001FUL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyPPPP);
         break;
@@ -23816,11 +23056,9 @@ DEFUN0(stgApplyNPPPP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0800000000000003UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyP);
         break;
@@ -23856,11 +23094,9 @@ DEFUN0(stgApplyNPPPP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0C00000000000007UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPP);
         break;
@@ -23896,11 +23132,9 @@ DEFUN0(stgApplyNPPPP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x100000000000000FUL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPPP);
         break;
@@ -23936,11 +23170,9 @@ DEFUN0(stgApplyNPPPP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x140000000000001FUL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPPPP);
         break;
@@ -24033,7 +23265,7 @@ DEFUN0(stgApplyPPPPP) {
   Cont *newframe;  // pointer to STACKCONT to be constructed for call/jump
   const int argc = 5;
   PtrOrLiteral argv[argc+1]; // argv[0] is the FUN/PAP/THUNK/BLACKHOLE
-  popargs(argc+1, argv);
+  popFrameArgs(argc+1, argv);
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyPPPPP %s\n", getInfoPtr(argv[0].op)->name);
   #endif
@@ -24102,11 +23334,9 @@ DEFUN0(stgApplyPPPPP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0800000000000003UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyP);
         break;
@@ -24129,11 +23359,9 @@ DEFUN0(stgApplyPPPPP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0C00000000000007UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyPP);
         break;
@@ -24156,11 +23384,9 @@ DEFUN0(stgApplyPPPPP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x100000000000000FUL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyPPP);
         break;
@@ -24183,11 +23409,9 @@ DEFUN0(stgApplyPPPPP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x140000000000001FUL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyPPPP);
         break;
@@ -24280,11 +23504,9 @@ DEFUN0(stgApplyPPPPP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0800000000000003UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyP);
         break;
@@ -24320,11 +23542,9 @@ DEFUN0(stgApplyPPPPP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0C00000000000007UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPP);
         break;
@@ -24360,11 +23580,9 @@ DEFUN0(stgApplyPPPPP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x100000000000000FUL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPPP);
         break;
@@ -24400,11 +23618,9 @@ DEFUN0(stgApplyPPPPP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x140000000000001FUL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPPPP);
         break;
@@ -24497,7 +23713,7 @@ DEFUN0(stgApplyNNNNNN) {
   Cont *newframe;  // pointer to STACKCONT to be constructed for call/jump
   const int argc = 6;
   PtrOrLiteral argv[argc+1]; // argv[0] is the FUN/PAP/THUNK/BLACKHOLE
-  popargs(argc+1, argv);
+  popFrameArgs(argc+1, argv);
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyNNNNNN %s\n", getInfoPtr(argv[0].op)->name);
   #endif
@@ -24546,11 +23762,9 @@ DEFUN0(stgApplyNNNNNN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0800000000000001UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyN);
         break;
@@ -24573,11 +23787,9 @@ DEFUN0(stgApplyNNNNNN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0C00000000000001UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyNN);
         break;
@@ -24600,11 +23812,9 @@ DEFUN0(stgApplyNNNNNN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x1000000000000001UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyNNN);
         break;
@@ -24627,11 +23837,9 @@ DEFUN0(stgApplyNNNNNN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x1400000000000001UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyNNNN);
         break;
@@ -24654,11 +23862,9 @@ DEFUN0(stgApplyNNNNNN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x1800000000000001UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyNNNNN);
         break;
@@ -24751,11 +23957,9 @@ DEFUN0(stgApplyNNNNNN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0800000000000001UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyN);
         break;
@@ -24791,11 +23995,9 @@ DEFUN0(stgApplyNNNNNN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0C00000000000001UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNN);
         break;
@@ -24831,11 +24033,9 @@ DEFUN0(stgApplyNNNNNN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x1000000000000001UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNNN);
         break;
@@ -24871,11 +24071,9 @@ DEFUN0(stgApplyNNNNNN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x1400000000000001UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNNNN);
         break;
@@ -24911,11 +24109,9 @@ DEFUN0(stgApplyNNNNNN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x1800000000000001UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNNNNN);
         break;
@@ -25008,7 +24204,7 @@ DEFUN0(stgApplyPNNNNN) {
   Cont *newframe;  // pointer to STACKCONT to be constructed for call/jump
   const int argc = 6;
   PtrOrLiteral argv[argc+1]; // argv[0] is the FUN/PAP/THUNK/BLACKHOLE
-  popargs(argc+1, argv);
+  popFrameArgs(argc+1, argv);
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyPNNNNN %s\n", getInfoPtr(argv[0].op)->name);
   #endif
@@ -25061,11 +24257,9 @@ DEFUN0(stgApplyPNNNNN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0800000000000001UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyN);
         break;
@@ -25088,11 +24282,9 @@ DEFUN0(stgApplyPNNNNN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0C00000000000001UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyNN);
         break;
@@ -25115,11 +24307,9 @@ DEFUN0(stgApplyPNNNNN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x1000000000000001UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyNNN);
         break;
@@ -25142,11 +24332,9 @@ DEFUN0(stgApplyPNNNNN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x1400000000000001UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyNNNN);
         break;
@@ -25169,11 +24357,9 @@ DEFUN0(stgApplyPNNNNN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x1800000000000001UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyNNNNN);
         break;
@@ -25266,11 +24452,9 @@ DEFUN0(stgApplyPNNNNN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0800000000000001UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyN);
         break;
@@ -25306,11 +24490,9 @@ DEFUN0(stgApplyPNNNNN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0C00000000000001UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNN);
         break;
@@ -25346,11 +24528,9 @@ DEFUN0(stgApplyPNNNNN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x1000000000000001UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNNN);
         break;
@@ -25386,11 +24566,9 @@ DEFUN0(stgApplyPNNNNN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x1400000000000001UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNNNN);
         break;
@@ -25426,11 +24604,9 @@ DEFUN0(stgApplyPNNNNN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x1800000000000001UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNNNNN);
         break;
@@ -25523,7 +24699,7 @@ DEFUN0(stgApplyNPNNNN) {
   Cont *newframe;  // pointer to STACKCONT to be constructed for call/jump
   const int argc = 6;
   PtrOrLiteral argv[argc+1]; // argv[0] is the FUN/PAP/THUNK/BLACKHOLE
-  popargs(argc+1, argv);
+  popFrameArgs(argc+1, argv);
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyNPNNNN %s\n", getInfoPtr(argv[0].op)->name);
   #endif
@@ -25576,11 +24752,9 @@ DEFUN0(stgApplyNPNNNN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0800000000000001UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyN);
         break;
@@ -25603,11 +24777,9 @@ DEFUN0(stgApplyNPNNNN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0C00000000000001UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyNN);
         break;
@@ -25630,11 +24802,9 @@ DEFUN0(stgApplyNPNNNN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x1000000000000001UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyNNN);
         break;
@@ -25657,11 +24827,9 @@ DEFUN0(stgApplyNPNNNN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x1400000000000001UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyNNNN);
         break;
@@ -25684,11 +24852,9 @@ DEFUN0(stgApplyNPNNNN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x1800000000000003UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyPNNNN);
         break;
@@ -25781,11 +24947,9 @@ DEFUN0(stgApplyNPNNNN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0800000000000001UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyN);
         break;
@@ -25821,11 +24985,9 @@ DEFUN0(stgApplyNPNNNN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0C00000000000001UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNN);
         break;
@@ -25861,11 +25023,9 @@ DEFUN0(stgApplyNPNNNN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x1000000000000001UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNNN);
         break;
@@ -25901,11 +25061,9 @@ DEFUN0(stgApplyNPNNNN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x1400000000000001UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNNNN);
         break;
@@ -25941,11 +25099,9 @@ DEFUN0(stgApplyNPNNNN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x1800000000000003UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPNNNN);
         break;
@@ -26038,7 +25194,7 @@ DEFUN0(stgApplyPPNNNN) {
   Cont *newframe;  // pointer to STACKCONT to be constructed for call/jump
   const int argc = 6;
   PtrOrLiteral argv[argc+1]; // argv[0] is the FUN/PAP/THUNK/BLACKHOLE
-  popargs(argc+1, argv);
+  popFrameArgs(argc+1, argv);
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyPPNNNN %s\n", getInfoPtr(argv[0].op)->name);
   #endif
@@ -26095,11 +25251,9 @@ DEFUN0(stgApplyPPNNNN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0800000000000001UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyN);
         break;
@@ -26122,11 +25276,9 @@ DEFUN0(stgApplyPPNNNN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0C00000000000001UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyNN);
         break;
@@ -26149,11 +25301,9 @@ DEFUN0(stgApplyPPNNNN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x1000000000000001UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyNNN);
         break;
@@ -26176,11 +25326,9 @@ DEFUN0(stgApplyPPNNNN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x1400000000000001UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyNNNN);
         break;
@@ -26203,11 +25351,9 @@ DEFUN0(stgApplyPPNNNN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x1800000000000003UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyPNNNN);
         break;
@@ -26300,11 +25446,9 @@ DEFUN0(stgApplyPPNNNN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0800000000000001UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyN);
         break;
@@ -26340,11 +25484,9 @@ DEFUN0(stgApplyPPNNNN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0C00000000000001UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNN);
         break;
@@ -26380,11 +25522,9 @@ DEFUN0(stgApplyPPNNNN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x1000000000000001UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNNN);
         break;
@@ -26420,11 +25560,9 @@ DEFUN0(stgApplyPPNNNN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x1400000000000001UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNNNN);
         break;
@@ -26460,11 +25598,9 @@ DEFUN0(stgApplyPPNNNN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x1800000000000003UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPNNNN);
         break;
@@ -26557,7 +25693,7 @@ DEFUN0(stgApplyNNPNNN) {
   Cont *newframe;  // pointer to STACKCONT to be constructed for call/jump
   const int argc = 6;
   PtrOrLiteral argv[argc+1]; // argv[0] is the FUN/PAP/THUNK/BLACKHOLE
-  popargs(argc+1, argv);
+  popFrameArgs(argc+1, argv);
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyNNPNNN %s\n", getInfoPtr(argv[0].op)->name);
   #endif
@@ -26610,11 +25746,9 @@ DEFUN0(stgApplyNNPNNN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0800000000000001UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyN);
         break;
@@ -26637,11 +25771,9 @@ DEFUN0(stgApplyNNPNNN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0C00000000000001UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyNN);
         break;
@@ -26664,11 +25796,9 @@ DEFUN0(stgApplyNNPNNN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x1000000000000001UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyNNN);
         break;
@@ -26691,11 +25821,9 @@ DEFUN0(stgApplyNNPNNN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x1400000000000003UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyPNNN);
         break;
@@ -26718,11 +25846,9 @@ DEFUN0(stgApplyNNPNNN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x1800000000000005UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyNPNNN);
         break;
@@ -26815,11 +25941,9 @@ DEFUN0(stgApplyNNPNNN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0800000000000001UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyN);
         break;
@@ -26855,11 +25979,9 @@ DEFUN0(stgApplyNNPNNN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0C00000000000001UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNN);
         break;
@@ -26895,11 +26017,9 @@ DEFUN0(stgApplyNNPNNN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x1000000000000001UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNNN);
         break;
@@ -26935,11 +26055,9 @@ DEFUN0(stgApplyNNPNNN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x1400000000000003UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPNNN);
         break;
@@ -26975,11 +26093,9 @@ DEFUN0(stgApplyNNPNNN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x1800000000000005UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNPNNN);
         break;
@@ -27072,7 +26188,7 @@ DEFUN0(stgApplyPNPNNN) {
   Cont *newframe;  // pointer to STACKCONT to be constructed for call/jump
   const int argc = 6;
   PtrOrLiteral argv[argc+1]; // argv[0] is the FUN/PAP/THUNK/BLACKHOLE
-  popargs(argc+1, argv);
+  popFrameArgs(argc+1, argv);
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyPNPNNN %s\n", getInfoPtr(argv[0].op)->name);
   #endif
@@ -27129,11 +26245,9 @@ DEFUN0(stgApplyPNPNNN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0800000000000001UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyN);
         break;
@@ -27156,11 +26270,9 @@ DEFUN0(stgApplyPNPNNN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0C00000000000001UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyNN);
         break;
@@ -27183,11 +26295,9 @@ DEFUN0(stgApplyPNPNNN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x1000000000000001UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyNNN);
         break;
@@ -27210,11 +26320,9 @@ DEFUN0(stgApplyPNPNNN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x1400000000000003UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyPNNN);
         break;
@@ -27237,11 +26345,9 @@ DEFUN0(stgApplyPNPNNN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x1800000000000005UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyNPNNN);
         break;
@@ -27334,11 +26440,9 @@ DEFUN0(stgApplyPNPNNN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0800000000000001UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyN);
         break;
@@ -27374,11 +26478,9 @@ DEFUN0(stgApplyPNPNNN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0C00000000000001UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNN);
         break;
@@ -27414,11 +26516,9 @@ DEFUN0(stgApplyPNPNNN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x1000000000000001UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNNN);
         break;
@@ -27454,11 +26554,9 @@ DEFUN0(stgApplyPNPNNN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x1400000000000003UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPNNN);
         break;
@@ -27494,11 +26592,9 @@ DEFUN0(stgApplyPNPNNN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x1800000000000005UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNPNNN);
         break;
@@ -27591,7 +26687,7 @@ DEFUN0(stgApplyNPPNNN) {
   Cont *newframe;  // pointer to STACKCONT to be constructed for call/jump
   const int argc = 6;
   PtrOrLiteral argv[argc+1]; // argv[0] is the FUN/PAP/THUNK/BLACKHOLE
-  popargs(argc+1, argv);
+  popFrameArgs(argc+1, argv);
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyNPPNNN %s\n", getInfoPtr(argv[0].op)->name);
   #endif
@@ -27648,11 +26744,9 @@ DEFUN0(stgApplyNPPNNN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0800000000000001UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyN);
         break;
@@ -27675,11 +26769,9 @@ DEFUN0(stgApplyNPPNNN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0C00000000000001UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyNN);
         break;
@@ -27702,11 +26794,9 @@ DEFUN0(stgApplyNPPNNN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x1000000000000001UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyNNN);
         break;
@@ -27729,11 +26819,9 @@ DEFUN0(stgApplyNPPNNN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x1400000000000003UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyPNNN);
         break;
@@ -27756,11 +26844,9 @@ DEFUN0(stgApplyNPPNNN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x1800000000000007UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyPPNNN);
         break;
@@ -27853,11 +26939,9 @@ DEFUN0(stgApplyNPPNNN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0800000000000001UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyN);
         break;
@@ -27893,11 +26977,9 @@ DEFUN0(stgApplyNPPNNN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0C00000000000001UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNN);
         break;
@@ -27933,11 +27015,9 @@ DEFUN0(stgApplyNPPNNN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x1000000000000001UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNNN);
         break;
@@ -27973,11 +27053,9 @@ DEFUN0(stgApplyNPPNNN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x1400000000000003UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPNNN);
         break;
@@ -28013,11 +27091,9 @@ DEFUN0(stgApplyNPPNNN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x1800000000000007UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPPNNN);
         break;
@@ -28110,7 +27186,7 @@ DEFUN0(stgApplyPPPNNN) {
   Cont *newframe;  // pointer to STACKCONT to be constructed for call/jump
   const int argc = 6;
   PtrOrLiteral argv[argc+1]; // argv[0] is the FUN/PAP/THUNK/BLACKHOLE
-  popargs(argc+1, argv);
+  popFrameArgs(argc+1, argv);
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyPPPNNN %s\n", getInfoPtr(argv[0].op)->name);
   #endif
@@ -28171,11 +27247,9 @@ DEFUN0(stgApplyPPPNNN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0800000000000001UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyN);
         break;
@@ -28198,11 +27272,9 @@ DEFUN0(stgApplyPPPNNN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0C00000000000001UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyNN);
         break;
@@ -28225,11 +27297,9 @@ DEFUN0(stgApplyPPPNNN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x1000000000000001UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyNNN);
         break;
@@ -28252,11 +27322,9 @@ DEFUN0(stgApplyPPPNNN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x1400000000000003UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyPNNN);
         break;
@@ -28279,11 +27347,9 @@ DEFUN0(stgApplyPPPNNN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x1800000000000007UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyPPNNN);
         break;
@@ -28376,11 +27442,9 @@ DEFUN0(stgApplyPPPNNN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0800000000000001UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyN);
         break;
@@ -28416,11 +27480,9 @@ DEFUN0(stgApplyPPPNNN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0C00000000000001UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNN);
         break;
@@ -28456,11 +27518,9 @@ DEFUN0(stgApplyPPPNNN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x1000000000000001UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNNN);
         break;
@@ -28496,11 +27556,9 @@ DEFUN0(stgApplyPPPNNN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x1400000000000003UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPNNN);
         break;
@@ -28536,11 +27594,9 @@ DEFUN0(stgApplyPPPNNN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x1800000000000007UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPPNNN);
         break;
@@ -28633,7 +27689,7 @@ DEFUN0(stgApplyNNNPNN) {
   Cont *newframe;  // pointer to STACKCONT to be constructed for call/jump
   const int argc = 6;
   PtrOrLiteral argv[argc+1]; // argv[0] is the FUN/PAP/THUNK/BLACKHOLE
-  popargs(argc+1, argv);
+  popFrameArgs(argc+1, argv);
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyNNNPNN %s\n", getInfoPtr(argv[0].op)->name);
   #endif
@@ -28686,11 +27742,9 @@ DEFUN0(stgApplyNNNPNN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0800000000000001UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyN);
         break;
@@ -28713,11 +27767,9 @@ DEFUN0(stgApplyNNNPNN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0C00000000000001UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyNN);
         break;
@@ -28740,11 +27792,9 @@ DEFUN0(stgApplyNNNPNN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x1000000000000003UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyPNN);
         break;
@@ -28767,11 +27817,9 @@ DEFUN0(stgApplyNNNPNN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x1400000000000005UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyNPNN);
         break;
@@ -28794,11 +27842,9 @@ DEFUN0(stgApplyNNNPNN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x1800000000000009UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyNNPNN);
         break;
@@ -28891,11 +27937,9 @@ DEFUN0(stgApplyNNNPNN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0800000000000001UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyN);
         break;
@@ -28931,11 +27975,9 @@ DEFUN0(stgApplyNNNPNN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0C00000000000001UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNN);
         break;
@@ -28971,11 +28013,9 @@ DEFUN0(stgApplyNNNPNN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x1000000000000003UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPNN);
         break;
@@ -29011,11 +28051,9 @@ DEFUN0(stgApplyNNNPNN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x1400000000000005UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNPNN);
         break;
@@ -29051,11 +28089,9 @@ DEFUN0(stgApplyNNNPNN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x1800000000000009UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNNPNN);
         break;
@@ -29148,7 +28184,7 @@ DEFUN0(stgApplyPNNPNN) {
   Cont *newframe;  // pointer to STACKCONT to be constructed for call/jump
   const int argc = 6;
   PtrOrLiteral argv[argc+1]; // argv[0] is the FUN/PAP/THUNK/BLACKHOLE
-  popargs(argc+1, argv);
+  popFrameArgs(argc+1, argv);
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyPNNPNN %s\n", getInfoPtr(argv[0].op)->name);
   #endif
@@ -29205,11 +28241,9 @@ DEFUN0(stgApplyPNNPNN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0800000000000001UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyN);
         break;
@@ -29232,11 +28266,9 @@ DEFUN0(stgApplyPNNPNN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0C00000000000001UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyNN);
         break;
@@ -29259,11 +28291,9 @@ DEFUN0(stgApplyPNNPNN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x1000000000000003UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyPNN);
         break;
@@ -29286,11 +28316,9 @@ DEFUN0(stgApplyPNNPNN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x1400000000000005UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyNPNN);
         break;
@@ -29313,11 +28341,9 @@ DEFUN0(stgApplyPNNPNN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x1800000000000009UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyNNPNN);
         break;
@@ -29410,11 +28436,9 @@ DEFUN0(stgApplyPNNPNN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0800000000000001UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyN);
         break;
@@ -29450,11 +28474,9 @@ DEFUN0(stgApplyPNNPNN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0C00000000000001UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNN);
         break;
@@ -29490,11 +28512,9 @@ DEFUN0(stgApplyPNNPNN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x1000000000000003UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPNN);
         break;
@@ -29530,11 +28550,9 @@ DEFUN0(stgApplyPNNPNN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x1400000000000005UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNPNN);
         break;
@@ -29570,11 +28588,9 @@ DEFUN0(stgApplyPNNPNN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x1800000000000009UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNNPNN);
         break;
@@ -29667,7 +28683,7 @@ DEFUN0(stgApplyNPNPNN) {
   Cont *newframe;  // pointer to STACKCONT to be constructed for call/jump
   const int argc = 6;
   PtrOrLiteral argv[argc+1]; // argv[0] is the FUN/PAP/THUNK/BLACKHOLE
-  popargs(argc+1, argv);
+  popFrameArgs(argc+1, argv);
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyNPNPNN %s\n", getInfoPtr(argv[0].op)->name);
   #endif
@@ -29724,11 +28740,9 @@ DEFUN0(stgApplyNPNPNN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0800000000000001UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyN);
         break;
@@ -29751,11 +28765,9 @@ DEFUN0(stgApplyNPNPNN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0C00000000000001UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyNN);
         break;
@@ -29778,11 +28790,9 @@ DEFUN0(stgApplyNPNPNN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x1000000000000003UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyPNN);
         break;
@@ -29805,11 +28815,9 @@ DEFUN0(stgApplyNPNPNN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x1400000000000005UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyNPNN);
         break;
@@ -29832,11 +28840,9 @@ DEFUN0(stgApplyNPNPNN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x180000000000000BUL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyPNPNN);
         break;
@@ -29929,11 +28935,9 @@ DEFUN0(stgApplyNPNPNN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0800000000000001UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyN);
         break;
@@ -29969,11 +28973,9 @@ DEFUN0(stgApplyNPNPNN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0C00000000000001UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNN);
         break;
@@ -30009,11 +29011,9 @@ DEFUN0(stgApplyNPNPNN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x1000000000000003UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPNN);
         break;
@@ -30049,11 +29049,9 @@ DEFUN0(stgApplyNPNPNN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x1400000000000005UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNPNN);
         break;
@@ -30089,11 +29087,9 @@ DEFUN0(stgApplyNPNPNN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x180000000000000BUL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPNPNN);
         break;
@@ -30186,7 +29182,7 @@ DEFUN0(stgApplyPPNPNN) {
   Cont *newframe;  // pointer to STACKCONT to be constructed for call/jump
   const int argc = 6;
   PtrOrLiteral argv[argc+1]; // argv[0] is the FUN/PAP/THUNK/BLACKHOLE
-  popargs(argc+1, argv);
+  popFrameArgs(argc+1, argv);
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyPPNPNN %s\n", getInfoPtr(argv[0].op)->name);
   #endif
@@ -30247,11 +29243,9 @@ DEFUN0(stgApplyPPNPNN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0800000000000001UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyN);
         break;
@@ -30274,11 +29268,9 @@ DEFUN0(stgApplyPPNPNN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0C00000000000001UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyNN);
         break;
@@ -30301,11 +29293,9 @@ DEFUN0(stgApplyPPNPNN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x1000000000000003UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyPNN);
         break;
@@ -30328,11 +29318,9 @@ DEFUN0(stgApplyPPNPNN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x1400000000000005UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyNPNN);
         break;
@@ -30355,11 +29343,9 @@ DEFUN0(stgApplyPPNPNN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x180000000000000BUL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyPNPNN);
         break;
@@ -30452,11 +29438,9 @@ DEFUN0(stgApplyPPNPNN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0800000000000001UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyN);
         break;
@@ -30492,11 +29476,9 @@ DEFUN0(stgApplyPPNPNN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0C00000000000001UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNN);
         break;
@@ -30532,11 +29514,9 @@ DEFUN0(stgApplyPPNPNN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x1000000000000003UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPNN);
         break;
@@ -30572,11 +29552,9 @@ DEFUN0(stgApplyPPNPNN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x1400000000000005UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNPNN);
         break;
@@ -30612,11 +29590,9 @@ DEFUN0(stgApplyPPNPNN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x180000000000000BUL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPNPNN);
         break;
@@ -30709,7 +29685,7 @@ DEFUN0(stgApplyNNPPNN) {
   Cont *newframe;  // pointer to STACKCONT to be constructed for call/jump
   const int argc = 6;
   PtrOrLiteral argv[argc+1]; // argv[0] is the FUN/PAP/THUNK/BLACKHOLE
-  popargs(argc+1, argv);
+  popFrameArgs(argc+1, argv);
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyNNPPNN %s\n", getInfoPtr(argv[0].op)->name);
   #endif
@@ -30766,11 +29742,9 @@ DEFUN0(stgApplyNNPPNN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0800000000000001UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyN);
         break;
@@ -30793,11 +29767,9 @@ DEFUN0(stgApplyNNPPNN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0C00000000000001UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyNN);
         break;
@@ -30820,11 +29792,9 @@ DEFUN0(stgApplyNNPPNN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x1000000000000003UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyPNN);
         break;
@@ -30847,11 +29817,9 @@ DEFUN0(stgApplyNNPPNN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x1400000000000007UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyPPNN);
         break;
@@ -30874,11 +29842,9 @@ DEFUN0(stgApplyNNPPNN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x180000000000000DUL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyNPPNN);
         break;
@@ -30971,11 +29937,9 @@ DEFUN0(stgApplyNNPPNN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0800000000000001UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyN);
         break;
@@ -31011,11 +29975,9 @@ DEFUN0(stgApplyNNPPNN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0C00000000000001UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNN);
         break;
@@ -31051,11 +30013,9 @@ DEFUN0(stgApplyNNPPNN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x1000000000000003UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPNN);
         break;
@@ -31091,11 +30051,9 @@ DEFUN0(stgApplyNNPPNN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x1400000000000007UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPPNN);
         break;
@@ -31131,11 +30089,9 @@ DEFUN0(stgApplyNNPPNN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x180000000000000DUL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNPPNN);
         break;
@@ -31228,7 +30184,7 @@ DEFUN0(stgApplyPNPPNN) {
   Cont *newframe;  // pointer to STACKCONT to be constructed for call/jump
   const int argc = 6;
   PtrOrLiteral argv[argc+1]; // argv[0] is the FUN/PAP/THUNK/BLACKHOLE
-  popargs(argc+1, argv);
+  popFrameArgs(argc+1, argv);
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyPNPPNN %s\n", getInfoPtr(argv[0].op)->name);
   #endif
@@ -31289,11 +30245,9 @@ DEFUN0(stgApplyPNPPNN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0800000000000001UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyN);
         break;
@@ -31316,11 +30270,9 @@ DEFUN0(stgApplyPNPPNN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0C00000000000001UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyNN);
         break;
@@ -31343,11 +30295,9 @@ DEFUN0(stgApplyPNPPNN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x1000000000000003UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyPNN);
         break;
@@ -31370,11 +30320,9 @@ DEFUN0(stgApplyPNPPNN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x1400000000000007UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyPPNN);
         break;
@@ -31397,11 +30345,9 @@ DEFUN0(stgApplyPNPPNN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x180000000000000DUL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyNPPNN);
         break;
@@ -31494,11 +30440,9 @@ DEFUN0(stgApplyPNPPNN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0800000000000001UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyN);
         break;
@@ -31534,11 +30478,9 @@ DEFUN0(stgApplyPNPPNN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0C00000000000001UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNN);
         break;
@@ -31574,11 +30516,9 @@ DEFUN0(stgApplyPNPPNN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x1000000000000003UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPNN);
         break;
@@ -31614,11 +30554,9 @@ DEFUN0(stgApplyPNPPNN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x1400000000000007UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPPNN);
         break;
@@ -31654,11 +30592,9 @@ DEFUN0(stgApplyPNPPNN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x180000000000000DUL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNPPNN);
         break;
@@ -31751,7 +30687,7 @@ DEFUN0(stgApplyNPPPNN) {
   Cont *newframe;  // pointer to STACKCONT to be constructed for call/jump
   const int argc = 6;
   PtrOrLiteral argv[argc+1]; // argv[0] is the FUN/PAP/THUNK/BLACKHOLE
-  popargs(argc+1, argv);
+  popFrameArgs(argc+1, argv);
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyNPPPNN %s\n", getInfoPtr(argv[0].op)->name);
   #endif
@@ -31812,11 +30748,9 @@ DEFUN0(stgApplyNPPPNN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0800000000000001UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyN);
         break;
@@ -31839,11 +30773,9 @@ DEFUN0(stgApplyNPPPNN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0C00000000000001UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyNN);
         break;
@@ -31866,11 +30798,9 @@ DEFUN0(stgApplyNPPPNN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x1000000000000003UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyPNN);
         break;
@@ -31893,11 +30823,9 @@ DEFUN0(stgApplyNPPPNN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x1400000000000007UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyPPNN);
         break;
@@ -31920,11 +30848,9 @@ DEFUN0(stgApplyNPPPNN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x180000000000000FUL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyPPPNN);
         break;
@@ -32017,11 +30943,9 @@ DEFUN0(stgApplyNPPPNN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0800000000000001UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyN);
         break;
@@ -32057,11 +30981,9 @@ DEFUN0(stgApplyNPPPNN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0C00000000000001UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNN);
         break;
@@ -32097,11 +31019,9 @@ DEFUN0(stgApplyNPPPNN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x1000000000000003UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPNN);
         break;
@@ -32137,11 +31057,9 @@ DEFUN0(stgApplyNPPPNN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x1400000000000007UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPPNN);
         break;
@@ -32177,11 +31095,9 @@ DEFUN0(stgApplyNPPPNN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x180000000000000FUL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPPPNN);
         break;
@@ -32274,7 +31190,7 @@ DEFUN0(stgApplyPPPPNN) {
   Cont *newframe;  // pointer to STACKCONT to be constructed for call/jump
   const int argc = 6;
   PtrOrLiteral argv[argc+1]; // argv[0] is the FUN/PAP/THUNK/BLACKHOLE
-  popargs(argc+1, argv);
+  popFrameArgs(argc+1, argv);
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyPPPPNN %s\n", getInfoPtr(argv[0].op)->name);
   #endif
@@ -32339,11 +31255,9 @@ DEFUN0(stgApplyPPPPNN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0800000000000001UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyN);
         break;
@@ -32366,11 +31280,9 @@ DEFUN0(stgApplyPPPPNN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0C00000000000001UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyNN);
         break;
@@ -32393,11 +31305,9 @@ DEFUN0(stgApplyPPPPNN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x1000000000000003UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyPNN);
         break;
@@ -32420,11 +31330,9 @@ DEFUN0(stgApplyPPPPNN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x1400000000000007UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyPPNN);
         break;
@@ -32447,11 +31355,9 @@ DEFUN0(stgApplyPPPPNN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x180000000000000FUL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyPPPNN);
         break;
@@ -32544,11 +31450,9 @@ DEFUN0(stgApplyPPPPNN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0800000000000001UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyN);
         break;
@@ -32584,11 +31488,9 @@ DEFUN0(stgApplyPPPPNN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0C00000000000001UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNN);
         break;
@@ -32624,11 +31526,9 @@ DEFUN0(stgApplyPPPPNN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x1000000000000003UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPNN);
         break;
@@ -32664,11 +31564,9 @@ DEFUN0(stgApplyPPPPNN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x1400000000000007UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPPNN);
         break;
@@ -32704,11 +31602,9 @@ DEFUN0(stgApplyPPPPNN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x180000000000000FUL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPPPNN);
         break;
@@ -32801,7 +31697,7 @@ DEFUN0(stgApplyNNNNPN) {
   Cont *newframe;  // pointer to STACKCONT to be constructed for call/jump
   const int argc = 6;
   PtrOrLiteral argv[argc+1]; // argv[0] is the FUN/PAP/THUNK/BLACKHOLE
-  popargs(argc+1, argv);
+  popFrameArgs(argc+1, argv);
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyNNNNPN %s\n", getInfoPtr(argv[0].op)->name);
   #endif
@@ -32854,11 +31750,9 @@ DEFUN0(stgApplyNNNNPN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0800000000000001UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyN);
         break;
@@ -32881,11 +31775,9 @@ DEFUN0(stgApplyNNNNPN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0C00000000000003UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyPN);
         break;
@@ -32908,11 +31800,9 @@ DEFUN0(stgApplyNNNNPN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x1000000000000005UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyNPN);
         break;
@@ -32935,11 +31825,9 @@ DEFUN0(stgApplyNNNNPN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x1400000000000009UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyNNPN);
         break;
@@ -32962,11 +31850,9 @@ DEFUN0(stgApplyNNNNPN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x1800000000000011UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyNNNPN);
         break;
@@ -33059,11 +31945,9 @@ DEFUN0(stgApplyNNNNPN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0800000000000001UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyN);
         break;
@@ -33099,11 +31983,9 @@ DEFUN0(stgApplyNNNNPN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0C00000000000003UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPN);
         break;
@@ -33139,11 +32021,9 @@ DEFUN0(stgApplyNNNNPN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x1000000000000005UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNPN);
         break;
@@ -33179,11 +32059,9 @@ DEFUN0(stgApplyNNNNPN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x1400000000000009UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNNPN);
         break;
@@ -33219,11 +32097,9 @@ DEFUN0(stgApplyNNNNPN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x1800000000000011UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNNNPN);
         break;
@@ -33316,7 +32192,7 @@ DEFUN0(stgApplyPNNNPN) {
   Cont *newframe;  // pointer to STACKCONT to be constructed for call/jump
   const int argc = 6;
   PtrOrLiteral argv[argc+1]; // argv[0] is the FUN/PAP/THUNK/BLACKHOLE
-  popargs(argc+1, argv);
+  popFrameArgs(argc+1, argv);
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyPNNNPN %s\n", getInfoPtr(argv[0].op)->name);
   #endif
@@ -33373,11 +32249,9 @@ DEFUN0(stgApplyPNNNPN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0800000000000001UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyN);
         break;
@@ -33400,11 +32274,9 @@ DEFUN0(stgApplyPNNNPN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0C00000000000003UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyPN);
         break;
@@ -33427,11 +32299,9 @@ DEFUN0(stgApplyPNNNPN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x1000000000000005UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyNPN);
         break;
@@ -33454,11 +32324,9 @@ DEFUN0(stgApplyPNNNPN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x1400000000000009UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyNNPN);
         break;
@@ -33481,11 +32349,9 @@ DEFUN0(stgApplyPNNNPN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x1800000000000011UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyNNNPN);
         break;
@@ -33578,11 +32444,9 @@ DEFUN0(stgApplyPNNNPN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0800000000000001UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyN);
         break;
@@ -33618,11 +32482,9 @@ DEFUN0(stgApplyPNNNPN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0C00000000000003UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPN);
         break;
@@ -33658,11 +32520,9 @@ DEFUN0(stgApplyPNNNPN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x1000000000000005UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNPN);
         break;
@@ -33698,11 +32558,9 @@ DEFUN0(stgApplyPNNNPN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x1400000000000009UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNNPN);
         break;
@@ -33738,11 +32596,9 @@ DEFUN0(stgApplyPNNNPN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x1800000000000011UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNNNPN);
         break;
@@ -33835,7 +32691,7 @@ DEFUN0(stgApplyNPNNPN) {
   Cont *newframe;  // pointer to STACKCONT to be constructed for call/jump
   const int argc = 6;
   PtrOrLiteral argv[argc+1]; // argv[0] is the FUN/PAP/THUNK/BLACKHOLE
-  popargs(argc+1, argv);
+  popFrameArgs(argc+1, argv);
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyNPNNPN %s\n", getInfoPtr(argv[0].op)->name);
   #endif
@@ -33892,11 +32748,9 @@ DEFUN0(stgApplyNPNNPN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0800000000000001UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyN);
         break;
@@ -33919,11 +32773,9 @@ DEFUN0(stgApplyNPNNPN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0C00000000000003UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyPN);
         break;
@@ -33946,11 +32798,9 @@ DEFUN0(stgApplyNPNNPN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x1000000000000005UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyNPN);
         break;
@@ -33973,11 +32823,9 @@ DEFUN0(stgApplyNPNNPN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x1400000000000009UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyNNPN);
         break;
@@ -34000,11 +32848,9 @@ DEFUN0(stgApplyNPNNPN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x1800000000000013UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyPNNPN);
         break;
@@ -34097,11 +32943,9 @@ DEFUN0(stgApplyNPNNPN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0800000000000001UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyN);
         break;
@@ -34137,11 +32981,9 @@ DEFUN0(stgApplyNPNNPN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0C00000000000003UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPN);
         break;
@@ -34177,11 +33019,9 @@ DEFUN0(stgApplyNPNNPN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x1000000000000005UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNPN);
         break;
@@ -34217,11 +33057,9 @@ DEFUN0(stgApplyNPNNPN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x1400000000000009UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNNPN);
         break;
@@ -34257,11 +33095,9 @@ DEFUN0(stgApplyNPNNPN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x1800000000000013UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPNNPN);
         break;
@@ -34354,7 +33190,7 @@ DEFUN0(stgApplyPPNNPN) {
   Cont *newframe;  // pointer to STACKCONT to be constructed for call/jump
   const int argc = 6;
   PtrOrLiteral argv[argc+1]; // argv[0] is the FUN/PAP/THUNK/BLACKHOLE
-  popargs(argc+1, argv);
+  popFrameArgs(argc+1, argv);
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyPPNNPN %s\n", getInfoPtr(argv[0].op)->name);
   #endif
@@ -34415,11 +33251,9 @@ DEFUN0(stgApplyPPNNPN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0800000000000001UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyN);
         break;
@@ -34442,11 +33276,9 @@ DEFUN0(stgApplyPPNNPN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0C00000000000003UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyPN);
         break;
@@ -34469,11 +33301,9 @@ DEFUN0(stgApplyPPNNPN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x1000000000000005UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyNPN);
         break;
@@ -34496,11 +33326,9 @@ DEFUN0(stgApplyPPNNPN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x1400000000000009UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyNNPN);
         break;
@@ -34523,11 +33351,9 @@ DEFUN0(stgApplyPPNNPN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x1800000000000013UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyPNNPN);
         break;
@@ -34620,11 +33446,9 @@ DEFUN0(stgApplyPPNNPN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0800000000000001UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyN);
         break;
@@ -34660,11 +33484,9 @@ DEFUN0(stgApplyPPNNPN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0C00000000000003UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPN);
         break;
@@ -34700,11 +33522,9 @@ DEFUN0(stgApplyPPNNPN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x1000000000000005UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNPN);
         break;
@@ -34740,11 +33560,9 @@ DEFUN0(stgApplyPPNNPN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x1400000000000009UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNNPN);
         break;
@@ -34780,11 +33598,9 @@ DEFUN0(stgApplyPPNNPN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x1800000000000013UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPNNPN);
         break;
@@ -34877,7 +33693,7 @@ DEFUN0(stgApplyNNPNPN) {
   Cont *newframe;  // pointer to STACKCONT to be constructed for call/jump
   const int argc = 6;
   PtrOrLiteral argv[argc+1]; // argv[0] is the FUN/PAP/THUNK/BLACKHOLE
-  popargs(argc+1, argv);
+  popFrameArgs(argc+1, argv);
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyNNPNPN %s\n", getInfoPtr(argv[0].op)->name);
   #endif
@@ -34934,11 +33750,9 @@ DEFUN0(stgApplyNNPNPN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0800000000000001UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyN);
         break;
@@ -34961,11 +33775,9 @@ DEFUN0(stgApplyNNPNPN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0C00000000000003UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyPN);
         break;
@@ -34988,11 +33800,9 @@ DEFUN0(stgApplyNNPNPN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x1000000000000005UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyNPN);
         break;
@@ -35015,11 +33825,9 @@ DEFUN0(stgApplyNNPNPN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x140000000000000BUL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyPNPN);
         break;
@@ -35042,11 +33850,9 @@ DEFUN0(stgApplyNNPNPN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x1800000000000015UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyNPNPN);
         break;
@@ -35139,11 +33945,9 @@ DEFUN0(stgApplyNNPNPN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0800000000000001UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyN);
         break;
@@ -35179,11 +33983,9 @@ DEFUN0(stgApplyNNPNPN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0C00000000000003UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPN);
         break;
@@ -35219,11 +34021,9 @@ DEFUN0(stgApplyNNPNPN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x1000000000000005UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNPN);
         break;
@@ -35259,11 +34059,9 @@ DEFUN0(stgApplyNNPNPN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x140000000000000BUL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPNPN);
         break;
@@ -35299,11 +34097,9 @@ DEFUN0(stgApplyNNPNPN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x1800000000000015UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNPNPN);
         break;
@@ -35396,7 +34192,7 @@ DEFUN0(stgApplyPNPNPN) {
   Cont *newframe;  // pointer to STACKCONT to be constructed for call/jump
   const int argc = 6;
   PtrOrLiteral argv[argc+1]; // argv[0] is the FUN/PAP/THUNK/BLACKHOLE
-  popargs(argc+1, argv);
+  popFrameArgs(argc+1, argv);
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyPNPNPN %s\n", getInfoPtr(argv[0].op)->name);
   #endif
@@ -35457,11 +34253,9 @@ DEFUN0(stgApplyPNPNPN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0800000000000001UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyN);
         break;
@@ -35484,11 +34278,9 @@ DEFUN0(stgApplyPNPNPN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0C00000000000003UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyPN);
         break;
@@ -35511,11 +34303,9 @@ DEFUN0(stgApplyPNPNPN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x1000000000000005UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyNPN);
         break;
@@ -35538,11 +34328,9 @@ DEFUN0(stgApplyPNPNPN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x140000000000000BUL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyPNPN);
         break;
@@ -35565,11 +34353,9 @@ DEFUN0(stgApplyPNPNPN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x1800000000000015UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyNPNPN);
         break;
@@ -35662,11 +34448,9 @@ DEFUN0(stgApplyPNPNPN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0800000000000001UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyN);
         break;
@@ -35702,11 +34486,9 @@ DEFUN0(stgApplyPNPNPN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0C00000000000003UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPN);
         break;
@@ -35742,11 +34524,9 @@ DEFUN0(stgApplyPNPNPN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x1000000000000005UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNPN);
         break;
@@ -35782,11 +34562,9 @@ DEFUN0(stgApplyPNPNPN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x140000000000000BUL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPNPN);
         break;
@@ -35822,11 +34600,9 @@ DEFUN0(stgApplyPNPNPN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x1800000000000015UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNPNPN);
         break;
@@ -35919,7 +34695,7 @@ DEFUN0(stgApplyNPPNPN) {
   Cont *newframe;  // pointer to STACKCONT to be constructed for call/jump
   const int argc = 6;
   PtrOrLiteral argv[argc+1]; // argv[0] is the FUN/PAP/THUNK/BLACKHOLE
-  popargs(argc+1, argv);
+  popFrameArgs(argc+1, argv);
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyNPPNPN %s\n", getInfoPtr(argv[0].op)->name);
   #endif
@@ -35980,11 +34756,9 @@ DEFUN0(stgApplyNPPNPN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0800000000000001UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyN);
         break;
@@ -36007,11 +34781,9 @@ DEFUN0(stgApplyNPPNPN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0C00000000000003UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyPN);
         break;
@@ -36034,11 +34806,9 @@ DEFUN0(stgApplyNPPNPN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x1000000000000005UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyNPN);
         break;
@@ -36061,11 +34831,9 @@ DEFUN0(stgApplyNPPNPN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x140000000000000BUL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyPNPN);
         break;
@@ -36088,11 +34856,9 @@ DEFUN0(stgApplyNPPNPN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x1800000000000017UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyPPNPN);
         break;
@@ -36185,11 +34951,9 @@ DEFUN0(stgApplyNPPNPN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0800000000000001UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyN);
         break;
@@ -36225,11 +34989,9 @@ DEFUN0(stgApplyNPPNPN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0C00000000000003UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPN);
         break;
@@ -36265,11 +35027,9 @@ DEFUN0(stgApplyNPPNPN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x1000000000000005UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNPN);
         break;
@@ -36305,11 +35065,9 @@ DEFUN0(stgApplyNPPNPN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x140000000000000BUL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPNPN);
         break;
@@ -36345,11 +35103,9 @@ DEFUN0(stgApplyNPPNPN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x1800000000000017UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPPNPN);
         break;
@@ -36442,7 +35198,7 @@ DEFUN0(stgApplyPPPNPN) {
   Cont *newframe;  // pointer to STACKCONT to be constructed for call/jump
   const int argc = 6;
   PtrOrLiteral argv[argc+1]; // argv[0] is the FUN/PAP/THUNK/BLACKHOLE
-  popargs(argc+1, argv);
+  popFrameArgs(argc+1, argv);
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyPPPNPN %s\n", getInfoPtr(argv[0].op)->name);
   #endif
@@ -36507,11 +35263,9 @@ DEFUN0(stgApplyPPPNPN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0800000000000001UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyN);
         break;
@@ -36534,11 +35288,9 @@ DEFUN0(stgApplyPPPNPN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0C00000000000003UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyPN);
         break;
@@ -36561,11 +35313,9 @@ DEFUN0(stgApplyPPPNPN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x1000000000000005UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyNPN);
         break;
@@ -36588,11 +35338,9 @@ DEFUN0(stgApplyPPPNPN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x140000000000000BUL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyPNPN);
         break;
@@ -36615,11 +35363,9 @@ DEFUN0(stgApplyPPPNPN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x1800000000000017UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyPPNPN);
         break;
@@ -36712,11 +35458,9 @@ DEFUN0(stgApplyPPPNPN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0800000000000001UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyN);
         break;
@@ -36752,11 +35496,9 @@ DEFUN0(stgApplyPPPNPN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0C00000000000003UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPN);
         break;
@@ -36792,11 +35534,9 @@ DEFUN0(stgApplyPPPNPN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x1000000000000005UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNPN);
         break;
@@ -36832,11 +35572,9 @@ DEFUN0(stgApplyPPPNPN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x140000000000000BUL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPNPN);
         break;
@@ -36872,11 +35610,9 @@ DEFUN0(stgApplyPPPNPN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x1800000000000017UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPPNPN);
         break;
@@ -36969,7 +35705,7 @@ DEFUN0(stgApplyNNNPPN) {
   Cont *newframe;  // pointer to STACKCONT to be constructed for call/jump
   const int argc = 6;
   PtrOrLiteral argv[argc+1]; // argv[0] is the FUN/PAP/THUNK/BLACKHOLE
-  popargs(argc+1, argv);
+  popFrameArgs(argc+1, argv);
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyNNNPPN %s\n", getInfoPtr(argv[0].op)->name);
   #endif
@@ -37026,11 +35762,9 @@ DEFUN0(stgApplyNNNPPN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0800000000000001UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyN);
         break;
@@ -37053,11 +35787,9 @@ DEFUN0(stgApplyNNNPPN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0C00000000000003UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyPN);
         break;
@@ -37080,11 +35812,9 @@ DEFUN0(stgApplyNNNPPN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x1000000000000007UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyPPN);
         break;
@@ -37107,11 +35837,9 @@ DEFUN0(stgApplyNNNPPN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x140000000000000DUL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyNPPN);
         break;
@@ -37134,11 +35862,9 @@ DEFUN0(stgApplyNNNPPN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x1800000000000019UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyNNPPN);
         break;
@@ -37231,11 +35957,9 @@ DEFUN0(stgApplyNNNPPN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0800000000000001UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyN);
         break;
@@ -37271,11 +35995,9 @@ DEFUN0(stgApplyNNNPPN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0C00000000000003UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPN);
         break;
@@ -37311,11 +36033,9 @@ DEFUN0(stgApplyNNNPPN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x1000000000000007UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPPN);
         break;
@@ -37351,11 +36071,9 @@ DEFUN0(stgApplyNNNPPN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x140000000000000DUL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNPPN);
         break;
@@ -37391,11 +36109,9 @@ DEFUN0(stgApplyNNNPPN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x1800000000000019UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNNPPN);
         break;
@@ -37488,7 +36204,7 @@ DEFUN0(stgApplyPNNPPN) {
   Cont *newframe;  // pointer to STACKCONT to be constructed for call/jump
   const int argc = 6;
   PtrOrLiteral argv[argc+1]; // argv[0] is the FUN/PAP/THUNK/BLACKHOLE
-  popargs(argc+1, argv);
+  popFrameArgs(argc+1, argv);
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyPNNPPN %s\n", getInfoPtr(argv[0].op)->name);
   #endif
@@ -37549,11 +36265,9 @@ DEFUN0(stgApplyPNNPPN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0800000000000001UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyN);
         break;
@@ -37576,11 +36290,9 @@ DEFUN0(stgApplyPNNPPN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0C00000000000003UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyPN);
         break;
@@ -37603,11 +36315,9 @@ DEFUN0(stgApplyPNNPPN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x1000000000000007UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyPPN);
         break;
@@ -37630,11 +36340,9 @@ DEFUN0(stgApplyPNNPPN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x140000000000000DUL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyNPPN);
         break;
@@ -37657,11 +36365,9 @@ DEFUN0(stgApplyPNNPPN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x1800000000000019UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyNNPPN);
         break;
@@ -37754,11 +36460,9 @@ DEFUN0(stgApplyPNNPPN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0800000000000001UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyN);
         break;
@@ -37794,11 +36498,9 @@ DEFUN0(stgApplyPNNPPN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0C00000000000003UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPN);
         break;
@@ -37834,11 +36536,9 @@ DEFUN0(stgApplyPNNPPN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x1000000000000007UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPPN);
         break;
@@ -37874,11 +36574,9 @@ DEFUN0(stgApplyPNNPPN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x140000000000000DUL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNPPN);
         break;
@@ -37914,11 +36612,9 @@ DEFUN0(stgApplyPNNPPN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x1800000000000019UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNNPPN);
         break;
@@ -38011,7 +36707,7 @@ DEFUN0(stgApplyNPNPPN) {
   Cont *newframe;  // pointer to STACKCONT to be constructed for call/jump
   const int argc = 6;
   PtrOrLiteral argv[argc+1]; // argv[0] is the FUN/PAP/THUNK/BLACKHOLE
-  popargs(argc+1, argv);
+  popFrameArgs(argc+1, argv);
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyNPNPPN %s\n", getInfoPtr(argv[0].op)->name);
   #endif
@@ -38072,11 +36768,9 @@ DEFUN0(stgApplyNPNPPN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0800000000000001UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyN);
         break;
@@ -38099,11 +36793,9 @@ DEFUN0(stgApplyNPNPPN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0C00000000000003UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyPN);
         break;
@@ -38126,11 +36818,9 @@ DEFUN0(stgApplyNPNPPN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x1000000000000007UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyPPN);
         break;
@@ -38153,11 +36843,9 @@ DEFUN0(stgApplyNPNPPN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x140000000000000DUL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyNPPN);
         break;
@@ -38180,11 +36868,9 @@ DEFUN0(stgApplyNPNPPN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x180000000000001BUL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyPNPPN);
         break;
@@ -38277,11 +36963,9 @@ DEFUN0(stgApplyNPNPPN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0800000000000001UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyN);
         break;
@@ -38317,11 +37001,9 @@ DEFUN0(stgApplyNPNPPN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0C00000000000003UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPN);
         break;
@@ -38357,11 +37039,9 @@ DEFUN0(stgApplyNPNPPN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x1000000000000007UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPPN);
         break;
@@ -38397,11 +37077,9 @@ DEFUN0(stgApplyNPNPPN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x140000000000000DUL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNPPN);
         break;
@@ -38437,11 +37115,9 @@ DEFUN0(stgApplyNPNPPN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x180000000000001BUL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPNPPN);
         break;
@@ -38534,7 +37210,7 @@ DEFUN0(stgApplyPPNPPN) {
   Cont *newframe;  // pointer to STACKCONT to be constructed for call/jump
   const int argc = 6;
   PtrOrLiteral argv[argc+1]; // argv[0] is the FUN/PAP/THUNK/BLACKHOLE
-  popargs(argc+1, argv);
+  popFrameArgs(argc+1, argv);
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyPPNPPN %s\n", getInfoPtr(argv[0].op)->name);
   #endif
@@ -38599,11 +37275,9 @@ DEFUN0(stgApplyPPNPPN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0800000000000001UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyN);
         break;
@@ -38626,11 +37300,9 @@ DEFUN0(stgApplyPPNPPN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0C00000000000003UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyPN);
         break;
@@ -38653,11 +37325,9 @@ DEFUN0(stgApplyPPNPPN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x1000000000000007UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyPPN);
         break;
@@ -38680,11 +37350,9 @@ DEFUN0(stgApplyPPNPPN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x140000000000000DUL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyNPPN);
         break;
@@ -38707,11 +37375,9 @@ DEFUN0(stgApplyPPNPPN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x180000000000001BUL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyPNPPN);
         break;
@@ -38804,11 +37470,9 @@ DEFUN0(stgApplyPPNPPN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0800000000000001UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyN);
         break;
@@ -38844,11 +37508,9 @@ DEFUN0(stgApplyPPNPPN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0C00000000000003UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPN);
         break;
@@ -38884,11 +37546,9 @@ DEFUN0(stgApplyPPNPPN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x1000000000000007UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPPN);
         break;
@@ -38924,11 +37584,9 @@ DEFUN0(stgApplyPPNPPN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x140000000000000DUL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNPPN);
         break;
@@ -38964,11 +37622,9 @@ DEFUN0(stgApplyPPNPPN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x180000000000001BUL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPNPPN);
         break;
@@ -39061,7 +37717,7 @@ DEFUN0(stgApplyNNPPPN) {
   Cont *newframe;  // pointer to STACKCONT to be constructed for call/jump
   const int argc = 6;
   PtrOrLiteral argv[argc+1]; // argv[0] is the FUN/PAP/THUNK/BLACKHOLE
-  popargs(argc+1, argv);
+  popFrameArgs(argc+1, argv);
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyNNPPPN %s\n", getInfoPtr(argv[0].op)->name);
   #endif
@@ -39122,11 +37778,9 @@ DEFUN0(stgApplyNNPPPN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0800000000000001UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyN);
         break;
@@ -39149,11 +37803,9 @@ DEFUN0(stgApplyNNPPPN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0C00000000000003UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyPN);
         break;
@@ -39176,11 +37828,9 @@ DEFUN0(stgApplyNNPPPN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x1000000000000007UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyPPN);
         break;
@@ -39203,11 +37853,9 @@ DEFUN0(stgApplyNNPPPN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x140000000000000FUL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyPPPN);
         break;
@@ -39230,11 +37878,9 @@ DEFUN0(stgApplyNNPPPN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x180000000000001DUL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyNPPPN);
         break;
@@ -39327,11 +37973,9 @@ DEFUN0(stgApplyNNPPPN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0800000000000001UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyN);
         break;
@@ -39367,11 +38011,9 @@ DEFUN0(stgApplyNNPPPN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0C00000000000003UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPN);
         break;
@@ -39407,11 +38049,9 @@ DEFUN0(stgApplyNNPPPN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x1000000000000007UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPPN);
         break;
@@ -39447,11 +38087,9 @@ DEFUN0(stgApplyNNPPPN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x140000000000000FUL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPPPN);
         break;
@@ -39487,11 +38125,9 @@ DEFUN0(stgApplyNNPPPN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x180000000000001DUL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNPPPN);
         break;
@@ -39584,7 +38220,7 @@ DEFUN0(stgApplyPNPPPN) {
   Cont *newframe;  // pointer to STACKCONT to be constructed for call/jump
   const int argc = 6;
   PtrOrLiteral argv[argc+1]; // argv[0] is the FUN/PAP/THUNK/BLACKHOLE
-  popargs(argc+1, argv);
+  popFrameArgs(argc+1, argv);
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyPNPPPN %s\n", getInfoPtr(argv[0].op)->name);
   #endif
@@ -39649,11 +38285,9 @@ DEFUN0(stgApplyPNPPPN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0800000000000001UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyN);
         break;
@@ -39676,11 +38310,9 @@ DEFUN0(stgApplyPNPPPN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0C00000000000003UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyPN);
         break;
@@ -39703,11 +38335,9 @@ DEFUN0(stgApplyPNPPPN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x1000000000000007UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyPPN);
         break;
@@ -39730,11 +38360,9 @@ DEFUN0(stgApplyPNPPPN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x140000000000000FUL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyPPPN);
         break;
@@ -39757,11 +38385,9 @@ DEFUN0(stgApplyPNPPPN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x180000000000001DUL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyNPPPN);
         break;
@@ -39854,11 +38480,9 @@ DEFUN0(stgApplyPNPPPN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0800000000000001UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyN);
         break;
@@ -39894,11 +38518,9 @@ DEFUN0(stgApplyPNPPPN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0C00000000000003UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPN);
         break;
@@ -39934,11 +38556,9 @@ DEFUN0(stgApplyPNPPPN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x1000000000000007UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPPN);
         break;
@@ -39974,11 +38594,9 @@ DEFUN0(stgApplyPNPPPN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x140000000000000FUL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPPPN);
         break;
@@ -40014,11 +38632,9 @@ DEFUN0(stgApplyPNPPPN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x180000000000001DUL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNPPPN);
         break;
@@ -40111,7 +38727,7 @@ DEFUN0(stgApplyNPPPPN) {
   Cont *newframe;  // pointer to STACKCONT to be constructed for call/jump
   const int argc = 6;
   PtrOrLiteral argv[argc+1]; // argv[0] is the FUN/PAP/THUNK/BLACKHOLE
-  popargs(argc+1, argv);
+  popFrameArgs(argc+1, argv);
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyNPPPPN %s\n", getInfoPtr(argv[0].op)->name);
   #endif
@@ -40176,11 +38792,9 @@ DEFUN0(stgApplyNPPPPN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0800000000000001UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyN);
         break;
@@ -40203,11 +38817,9 @@ DEFUN0(stgApplyNPPPPN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0C00000000000003UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyPN);
         break;
@@ -40230,11 +38842,9 @@ DEFUN0(stgApplyNPPPPN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x1000000000000007UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyPPN);
         break;
@@ -40257,11 +38867,9 @@ DEFUN0(stgApplyNPPPPN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x140000000000000FUL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyPPPN);
         break;
@@ -40284,11 +38892,9 @@ DEFUN0(stgApplyNPPPPN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x180000000000001FUL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyPPPPN);
         break;
@@ -40381,11 +38987,9 @@ DEFUN0(stgApplyNPPPPN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0800000000000001UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyN);
         break;
@@ -40421,11 +39025,9 @@ DEFUN0(stgApplyNPPPPN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0C00000000000003UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPN);
         break;
@@ -40461,11 +39063,9 @@ DEFUN0(stgApplyNPPPPN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x1000000000000007UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPPN);
         break;
@@ -40501,11 +39101,9 @@ DEFUN0(stgApplyNPPPPN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x140000000000000FUL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPPPN);
         break;
@@ -40541,11 +39139,9 @@ DEFUN0(stgApplyNPPPPN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x180000000000001FUL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPPPPN);
         break;
@@ -40638,7 +39234,7 @@ DEFUN0(stgApplyPPPPPN) {
   Cont *newframe;  // pointer to STACKCONT to be constructed for call/jump
   const int argc = 6;
   PtrOrLiteral argv[argc+1]; // argv[0] is the FUN/PAP/THUNK/BLACKHOLE
-  popargs(argc+1, argv);
+  popFrameArgs(argc+1, argv);
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyPPPPPN %s\n", getInfoPtr(argv[0].op)->name);
   #endif
@@ -40707,11 +39303,9 @@ DEFUN0(stgApplyPPPPPN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0800000000000001UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyN);
         break;
@@ -40734,11 +39328,9 @@ DEFUN0(stgApplyPPPPPN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0C00000000000003UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyPN);
         break;
@@ -40761,11 +39353,9 @@ DEFUN0(stgApplyPPPPPN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x1000000000000007UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyPPN);
         break;
@@ -40788,11 +39378,9 @@ DEFUN0(stgApplyPPPPPN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x140000000000000FUL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyPPPN);
         break;
@@ -40815,11 +39403,9 @@ DEFUN0(stgApplyPPPPPN) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x180000000000001FUL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyPPPPN);
         break;
@@ -40912,11 +39498,9 @@ DEFUN0(stgApplyPPPPPN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0800000000000001UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyN);
         break;
@@ -40952,11 +39536,9 @@ DEFUN0(stgApplyPPPPPN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0C00000000000003UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPN);
         break;
@@ -40992,11 +39574,9 @@ DEFUN0(stgApplyPPPPPN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x1000000000000007UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPPN);
         break;
@@ -41032,11 +39612,9 @@ DEFUN0(stgApplyPPPPPN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x140000000000000FUL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPPPN);
         break;
@@ -41072,11 +39650,9 @@ DEFUN0(stgApplyPPPPPN) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x180000000000001FUL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPPPPN);
         break;
@@ -41169,7 +39745,7 @@ DEFUN0(stgApplyNNNNNP) {
   Cont *newframe;  // pointer to STACKCONT to be constructed for call/jump
   const int argc = 6;
   PtrOrLiteral argv[argc+1]; // argv[0] is the FUN/PAP/THUNK/BLACKHOLE
-  popargs(argc+1, argv);
+  popFrameArgs(argc+1, argv);
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyNNNNNP %s\n", getInfoPtr(argv[0].op)->name);
   #endif
@@ -41222,11 +39798,9 @@ DEFUN0(stgApplyNNNNNP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0800000000000003UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyP);
         break;
@@ -41249,11 +39823,9 @@ DEFUN0(stgApplyNNNNNP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0C00000000000005UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyNP);
         break;
@@ -41276,11 +39848,9 @@ DEFUN0(stgApplyNNNNNP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x1000000000000009UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyNNP);
         break;
@@ -41303,11 +39873,9 @@ DEFUN0(stgApplyNNNNNP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x1400000000000011UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyNNNP);
         break;
@@ -41330,11 +39898,9 @@ DEFUN0(stgApplyNNNNNP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x1800000000000021UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyNNNNP);
         break;
@@ -41427,11 +39993,9 @@ DEFUN0(stgApplyNNNNNP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0800000000000003UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyP);
         break;
@@ -41467,11 +40031,9 @@ DEFUN0(stgApplyNNNNNP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0C00000000000005UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNP);
         break;
@@ -41507,11 +40069,9 @@ DEFUN0(stgApplyNNNNNP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x1000000000000009UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNNP);
         break;
@@ -41547,11 +40107,9 @@ DEFUN0(stgApplyNNNNNP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x1400000000000011UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNNNP);
         break;
@@ -41587,11 +40145,9 @@ DEFUN0(stgApplyNNNNNP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x1800000000000021UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNNNNP);
         break;
@@ -41684,7 +40240,7 @@ DEFUN0(stgApplyPNNNNP) {
   Cont *newframe;  // pointer to STACKCONT to be constructed for call/jump
   const int argc = 6;
   PtrOrLiteral argv[argc+1]; // argv[0] is the FUN/PAP/THUNK/BLACKHOLE
-  popargs(argc+1, argv);
+  popFrameArgs(argc+1, argv);
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyPNNNNP %s\n", getInfoPtr(argv[0].op)->name);
   #endif
@@ -41741,11 +40297,9 @@ DEFUN0(stgApplyPNNNNP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0800000000000003UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyP);
         break;
@@ -41768,11 +40322,9 @@ DEFUN0(stgApplyPNNNNP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0C00000000000005UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyNP);
         break;
@@ -41795,11 +40347,9 @@ DEFUN0(stgApplyPNNNNP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x1000000000000009UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyNNP);
         break;
@@ -41822,11 +40372,9 @@ DEFUN0(stgApplyPNNNNP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x1400000000000011UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyNNNP);
         break;
@@ -41849,11 +40397,9 @@ DEFUN0(stgApplyPNNNNP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x1800000000000021UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyNNNNP);
         break;
@@ -41946,11 +40492,9 @@ DEFUN0(stgApplyPNNNNP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0800000000000003UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyP);
         break;
@@ -41986,11 +40530,9 @@ DEFUN0(stgApplyPNNNNP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0C00000000000005UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNP);
         break;
@@ -42026,11 +40568,9 @@ DEFUN0(stgApplyPNNNNP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x1000000000000009UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNNP);
         break;
@@ -42066,11 +40606,9 @@ DEFUN0(stgApplyPNNNNP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x1400000000000011UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNNNP);
         break;
@@ -42106,11 +40644,9 @@ DEFUN0(stgApplyPNNNNP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x1800000000000021UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNNNNP);
         break;
@@ -42203,7 +40739,7 @@ DEFUN0(stgApplyNPNNNP) {
   Cont *newframe;  // pointer to STACKCONT to be constructed for call/jump
   const int argc = 6;
   PtrOrLiteral argv[argc+1]; // argv[0] is the FUN/PAP/THUNK/BLACKHOLE
-  popargs(argc+1, argv);
+  popFrameArgs(argc+1, argv);
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyNPNNNP %s\n", getInfoPtr(argv[0].op)->name);
   #endif
@@ -42260,11 +40796,9 @@ DEFUN0(stgApplyNPNNNP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0800000000000003UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyP);
         break;
@@ -42287,11 +40821,9 @@ DEFUN0(stgApplyNPNNNP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0C00000000000005UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyNP);
         break;
@@ -42314,11 +40846,9 @@ DEFUN0(stgApplyNPNNNP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x1000000000000009UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyNNP);
         break;
@@ -42341,11 +40871,9 @@ DEFUN0(stgApplyNPNNNP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x1400000000000011UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyNNNP);
         break;
@@ -42368,11 +40896,9 @@ DEFUN0(stgApplyNPNNNP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x1800000000000023UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyPNNNP);
         break;
@@ -42465,11 +40991,9 @@ DEFUN0(stgApplyNPNNNP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0800000000000003UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyP);
         break;
@@ -42505,11 +41029,9 @@ DEFUN0(stgApplyNPNNNP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0C00000000000005UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNP);
         break;
@@ -42545,11 +41067,9 @@ DEFUN0(stgApplyNPNNNP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x1000000000000009UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNNP);
         break;
@@ -42585,11 +41105,9 @@ DEFUN0(stgApplyNPNNNP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x1400000000000011UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNNNP);
         break;
@@ -42625,11 +41143,9 @@ DEFUN0(stgApplyNPNNNP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x1800000000000023UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPNNNP);
         break;
@@ -42722,7 +41238,7 @@ DEFUN0(stgApplyPPNNNP) {
   Cont *newframe;  // pointer to STACKCONT to be constructed for call/jump
   const int argc = 6;
   PtrOrLiteral argv[argc+1]; // argv[0] is the FUN/PAP/THUNK/BLACKHOLE
-  popargs(argc+1, argv);
+  popFrameArgs(argc+1, argv);
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyPPNNNP %s\n", getInfoPtr(argv[0].op)->name);
   #endif
@@ -42783,11 +41299,9 @@ DEFUN0(stgApplyPPNNNP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0800000000000003UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyP);
         break;
@@ -42810,11 +41324,9 @@ DEFUN0(stgApplyPPNNNP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0C00000000000005UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyNP);
         break;
@@ -42837,11 +41349,9 @@ DEFUN0(stgApplyPPNNNP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x1000000000000009UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyNNP);
         break;
@@ -42864,11 +41374,9 @@ DEFUN0(stgApplyPPNNNP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x1400000000000011UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyNNNP);
         break;
@@ -42891,11 +41399,9 @@ DEFUN0(stgApplyPPNNNP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x1800000000000023UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyPNNNP);
         break;
@@ -42988,11 +41494,9 @@ DEFUN0(stgApplyPPNNNP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0800000000000003UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyP);
         break;
@@ -43028,11 +41532,9 @@ DEFUN0(stgApplyPPNNNP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0C00000000000005UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNP);
         break;
@@ -43068,11 +41570,9 @@ DEFUN0(stgApplyPPNNNP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x1000000000000009UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNNP);
         break;
@@ -43108,11 +41608,9 @@ DEFUN0(stgApplyPPNNNP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x1400000000000011UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNNNP);
         break;
@@ -43148,11 +41646,9 @@ DEFUN0(stgApplyPPNNNP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x1800000000000023UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPNNNP);
         break;
@@ -43245,7 +41741,7 @@ DEFUN0(stgApplyNNPNNP) {
   Cont *newframe;  // pointer to STACKCONT to be constructed for call/jump
   const int argc = 6;
   PtrOrLiteral argv[argc+1]; // argv[0] is the FUN/PAP/THUNK/BLACKHOLE
-  popargs(argc+1, argv);
+  popFrameArgs(argc+1, argv);
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyNNPNNP %s\n", getInfoPtr(argv[0].op)->name);
   #endif
@@ -43302,11 +41798,9 @@ DEFUN0(stgApplyNNPNNP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0800000000000003UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyP);
         break;
@@ -43329,11 +41823,9 @@ DEFUN0(stgApplyNNPNNP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0C00000000000005UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyNP);
         break;
@@ -43356,11 +41848,9 @@ DEFUN0(stgApplyNNPNNP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x1000000000000009UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyNNP);
         break;
@@ -43383,11 +41873,9 @@ DEFUN0(stgApplyNNPNNP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x1400000000000013UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyPNNP);
         break;
@@ -43410,11 +41898,9 @@ DEFUN0(stgApplyNNPNNP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x1800000000000025UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyNPNNP);
         break;
@@ -43507,11 +41993,9 @@ DEFUN0(stgApplyNNPNNP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0800000000000003UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyP);
         break;
@@ -43547,11 +42031,9 @@ DEFUN0(stgApplyNNPNNP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0C00000000000005UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNP);
         break;
@@ -43587,11 +42069,9 @@ DEFUN0(stgApplyNNPNNP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x1000000000000009UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNNP);
         break;
@@ -43627,11 +42107,9 @@ DEFUN0(stgApplyNNPNNP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x1400000000000013UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPNNP);
         break;
@@ -43667,11 +42145,9 @@ DEFUN0(stgApplyNNPNNP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x1800000000000025UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNPNNP);
         break;
@@ -43764,7 +42240,7 @@ DEFUN0(stgApplyPNPNNP) {
   Cont *newframe;  // pointer to STACKCONT to be constructed for call/jump
   const int argc = 6;
   PtrOrLiteral argv[argc+1]; // argv[0] is the FUN/PAP/THUNK/BLACKHOLE
-  popargs(argc+1, argv);
+  popFrameArgs(argc+1, argv);
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyPNPNNP %s\n", getInfoPtr(argv[0].op)->name);
   #endif
@@ -43825,11 +42301,9 @@ DEFUN0(stgApplyPNPNNP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0800000000000003UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyP);
         break;
@@ -43852,11 +42326,9 @@ DEFUN0(stgApplyPNPNNP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0C00000000000005UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyNP);
         break;
@@ -43879,11 +42351,9 @@ DEFUN0(stgApplyPNPNNP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x1000000000000009UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyNNP);
         break;
@@ -43906,11 +42376,9 @@ DEFUN0(stgApplyPNPNNP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x1400000000000013UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyPNNP);
         break;
@@ -43933,11 +42401,9 @@ DEFUN0(stgApplyPNPNNP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x1800000000000025UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyNPNNP);
         break;
@@ -44030,11 +42496,9 @@ DEFUN0(stgApplyPNPNNP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0800000000000003UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyP);
         break;
@@ -44070,11 +42534,9 @@ DEFUN0(stgApplyPNPNNP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0C00000000000005UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNP);
         break;
@@ -44110,11 +42572,9 @@ DEFUN0(stgApplyPNPNNP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x1000000000000009UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNNP);
         break;
@@ -44150,11 +42610,9 @@ DEFUN0(stgApplyPNPNNP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x1400000000000013UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPNNP);
         break;
@@ -44190,11 +42648,9 @@ DEFUN0(stgApplyPNPNNP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x1800000000000025UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNPNNP);
         break;
@@ -44287,7 +42743,7 @@ DEFUN0(stgApplyNPPNNP) {
   Cont *newframe;  // pointer to STACKCONT to be constructed for call/jump
   const int argc = 6;
   PtrOrLiteral argv[argc+1]; // argv[0] is the FUN/PAP/THUNK/BLACKHOLE
-  popargs(argc+1, argv);
+  popFrameArgs(argc+1, argv);
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyNPPNNP %s\n", getInfoPtr(argv[0].op)->name);
   #endif
@@ -44348,11 +42804,9 @@ DEFUN0(stgApplyNPPNNP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0800000000000003UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyP);
         break;
@@ -44375,11 +42829,9 @@ DEFUN0(stgApplyNPPNNP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0C00000000000005UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyNP);
         break;
@@ -44402,11 +42854,9 @@ DEFUN0(stgApplyNPPNNP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x1000000000000009UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyNNP);
         break;
@@ -44429,11 +42879,9 @@ DEFUN0(stgApplyNPPNNP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x1400000000000013UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyPNNP);
         break;
@@ -44456,11 +42904,9 @@ DEFUN0(stgApplyNPPNNP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x1800000000000027UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyPPNNP);
         break;
@@ -44553,11 +42999,9 @@ DEFUN0(stgApplyNPPNNP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0800000000000003UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyP);
         break;
@@ -44593,11 +43037,9 @@ DEFUN0(stgApplyNPPNNP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0C00000000000005UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNP);
         break;
@@ -44633,11 +43075,9 @@ DEFUN0(stgApplyNPPNNP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x1000000000000009UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNNP);
         break;
@@ -44673,11 +43113,9 @@ DEFUN0(stgApplyNPPNNP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x1400000000000013UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPNNP);
         break;
@@ -44713,11 +43151,9 @@ DEFUN0(stgApplyNPPNNP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x1800000000000027UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPPNNP);
         break;
@@ -44810,7 +43246,7 @@ DEFUN0(stgApplyPPPNNP) {
   Cont *newframe;  // pointer to STACKCONT to be constructed for call/jump
   const int argc = 6;
   PtrOrLiteral argv[argc+1]; // argv[0] is the FUN/PAP/THUNK/BLACKHOLE
-  popargs(argc+1, argv);
+  popFrameArgs(argc+1, argv);
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyPPPNNP %s\n", getInfoPtr(argv[0].op)->name);
   #endif
@@ -44875,11 +43311,9 @@ DEFUN0(stgApplyPPPNNP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0800000000000003UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyP);
         break;
@@ -44902,11 +43336,9 @@ DEFUN0(stgApplyPPPNNP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0C00000000000005UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyNP);
         break;
@@ -44929,11 +43361,9 @@ DEFUN0(stgApplyPPPNNP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x1000000000000009UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyNNP);
         break;
@@ -44956,11 +43386,9 @@ DEFUN0(stgApplyPPPNNP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x1400000000000013UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyPNNP);
         break;
@@ -44983,11 +43411,9 @@ DEFUN0(stgApplyPPPNNP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x1800000000000027UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyPPNNP);
         break;
@@ -45080,11 +43506,9 @@ DEFUN0(stgApplyPPPNNP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0800000000000003UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyP);
         break;
@@ -45120,11 +43544,9 @@ DEFUN0(stgApplyPPPNNP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0C00000000000005UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNP);
         break;
@@ -45160,11 +43582,9 @@ DEFUN0(stgApplyPPPNNP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x1000000000000009UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNNP);
         break;
@@ -45200,11 +43620,9 @@ DEFUN0(stgApplyPPPNNP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x1400000000000013UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPNNP);
         break;
@@ -45240,11 +43658,9 @@ DEFUN0(stgApplyPPPNNP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x1800000000000027UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPPNNP);
         break;
@@ -45337,7 +43753,7 @@ DEFUN0(stgApplyNNNPNP) {
   Cont *newframe;  // pointer to STACKCONT to be constructed for call/jump
   const int argc = 6;
   PtrOrLiteral argv[argc+1]; // argv[0] is the FUN/PAP/THUNK/BLACKHOLE
-  popargs(argc+1, argv);
+  popFrameArgs(argc+1, argv);
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyNNNPNP %s\n", getInfoPtr(argv[0].op)->name);
   #endif
@@ -45394,11 +43810,9 @@ DEFUN0(stgApplyNNNPNP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0800000000000003UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyP);
         break;
@@ -45421,11 +43835,9 @@ DEFUN0(stgApplyNNNPNP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0C00000000000005UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyNP);
         break;
@@ -45448,11 +43860,9 @@ DEFUN0(stgApplyNNNPNP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x100000000000000BUL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyPNP);
         break;
@@ -45475,11 +43885,9 @@ DEFUN0(stgApplyNNNPNP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x1400000000000015UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyNPNP);
         break;
@@ -45502,11 +43910,9 @@ DEFUN0(stgApplyNNNPNP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x1800000000000029UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyNNPNP);
         break;
@@ -45599,11 +44005,9 @@ DEFUN0(stgApplyNNNPNP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0800000000000003UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyP);
         break;
@@ -45639,11 +44043,9 @@ DEFUN0(stgApplyNNNPNP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0C00000000000005UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNP);
         break;
@@ -45679,11 +44081,9 @@ DEFUN0(stgApplyNNNPNP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x100000000000000BUL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPNP);
         break;
@@ -45719,11 +44119,9 @@ DEFUN0(stgApplyNNNPNP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x1400000000000015UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNPNP);
         break;
@@ -45759,11 +44157,9 @@ DEFUN0(stgApplyNNNPNP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x1800000000000029UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNNPNP);
         break;
@@ -45856,7 +44252,7 @@ DEFUN0(stgApplyPNNPNP) {
   Cont *newframe;  // pointer to STACKCONT to be constructed for call/jump
   const int argc = 6;
   PtrOrLiteral argv[argc+1]; // argv[0] is the FUN/PAP/THUNK/BLACKHOLE
-  popargs(argc+1, argv);
+  popFrameArgs(argc+1, argv);
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyPNNPNP %s\n", getInfoPtr(argv[0].op)->name);
   #endif
@@ -45917,11 +44313,9 @@ DEFUN0(stgApplyPNNPNP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0800000000000003UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyP);
         break;
@@ -45944,11 +44338,9 @@ DEFUN0(stgApplyPNNPNP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0C00000000000005UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyNP);
         break;
@@ -45971,11 +44363,9 @@ DEFUN0(stgApplyPNNPNP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x100000000000000BUL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyPNP);
         break;
@@ -45998,11 +44388,9 @@ DEFUN0(stgApplyPNNPNP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x1400000000000015UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyNPNP);
         break;
@@ -46025,11 +44413,9 @@ DEFUN0(stgApplyPNNPNP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x1800000000000029UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyNNPNP);
         break;
@@ -46122,11 +44508,9 @@ DEFUN0(stgApplyPNNPNP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0800000000000003UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyP);
         break;
@@ -46162,11 +44546,9 @@ DEFUN0(stgApplyPNNPNP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0C00000000000005UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNP);
         break;
@@ -46202,11 +44584,9 @@ DEFUN0(stgApplyPNNPNP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x100000000000000BUL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPNP);
         break;
@@ -46242,11 +44622,9 @@ DEFUN0(stgApplyPNNPNP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x1400000000000015UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNPNP);
         break;
@@ -46282,11 +44660,9 @@ DEFUN0(stgApplyPNNPNP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x1800000000000029UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNNPNP);
         break;
@@ -46379,7 +44755,7 @@ DEFUN0(stgApplyNPNPNP) {
   Cont *newframe;  // pointer to STACKCONT to be constructed for call/jump
   const int argc = 6;
   PtrOrLiteral argv[argc+1]; // argv[0] is the FUN/PAP/THUNK/BLACKHOLE
-  popargs(argc+1, argv);
+  popFrameArgs(argc+1, argv);
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyNPNPNP %s\n", getInfoPtr(argv[0].op)->name);
   #endif
@@ -46440,11 +44816,9 @@ DEFUN0(stgApplyNPNPNP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0800000000000003UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyP);
         break;
@@ -46467,11 +44841,9 @@ DEFUN0(stgApplyNPNPNP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0C00000000000005UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyNP);
         break;
@@ -46494,11 +44866,9 @@ DEFUN0(stgApplyNPNPNP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x100000000000000BUL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyPNP);
         break;
@@ -46521,11 +44891,9 @@ DEFUN0(stgApplyNPNPNP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x1400000000000015UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyNPNP);
         break;
@@ -46548,11 +44916,9 @@ DEFUN0(stgApplyNPNPNP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x180000000000002BUL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyPNPNP);
         break;
@@ -46645,11 +45011,9 @@ DEFUN0(stgApplyNPNPNP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0800000000000003UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyP);
         break;
@@ -46685,11 +45049,9 @@ DEFUN0(stgApplyNPNPNP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0C00000000000005UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNP);
         break;
@@ -46725,11 +45087,9 @@ DEFUN0(stgApplyNPNPNP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x100000000000000BUL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPNP);
         break;
@@ -46765,11 +45125,9 @@ DEFUN0(stgApplyNPNPNP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x1400000000000015UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNPNP);
         break;
@@ -46805,11 +45163,9 @@ DEFUN0(stgApplyNPNPNP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x180000000000002BUL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPNPNP);
         break;
@@ -46902,7 +45258,7 @@ DEFUN0(stgApplyPPNPNP) {
   Cont *newframe;  // pointer to STACKCONT to be constructed for call/jump
   const int argc = 6;
   PtrOrLiteral argv[argc+1]; // argv[0] is the FUN/PAP/THUNK/BLACKHOLE
-  popargs(argc+1, argv);
+  popFrameArgs(argc+1, argv);
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyPPNPNP %s\n", getInfoPtr(argv[0].op)->name);
   #endif
@@ -46967,11 +45323,9 @@ DEFUN0(stgApplyPPNPNP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0800000000000003UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyP);
         break;
@@ -46994,11 +45348,9 @@ DEFUN0(stgApplyPPNPNP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0C00000000000005UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyNP);
         break;
@@ -47021,11 +45373,9 @@ DEFUN0(stgApplyPPNPNP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x100000000000000BUL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyPNP);
         break;
@@ -47048,11 +45398,9 @@ DEFUN0(stgApplyPPNPNP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x1400000000000015UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyNPNP);
         break;
@@ -47075,11 +45423,9 @@ DEFUN0(stgApplyPPNPNP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x180000000000002BUL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyPNPNP);
         break;
@@ -47172,11 +45518,9 @@ DEFUN0(stgApplyPPNPNP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0800000000000003UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyP);
         break;
@@ -47212,11 +45556,9 @@ DEFUN0(stgApplyPPNPNP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0C00000000000005UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNP);
         break;
@@ -47252,11 +45594,9 @@ DEFUN0(stgApplyPPNPNP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x100000000000000BUL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPNP);
         break;
@@ -47292,11 +45632,9 @@ DEFUN0(stgApplyPPNPNP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x1400000000000015UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNPNP);
         break;
@@ -47332,11 +45670,9 @@ DEFUN0(stgApplyPPNPNP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x180000000000002BUL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPNPNP);
         break;
@@ -47429,7 +45765,7 @@ DEFUN0(stgApplyNNPPNP) {
   Cont *newframe;  // pointer to STACKCONT to be constructed for call/jump
   const int argc = 6;
   PtrOrLiteral argv[argc+1]; // argv[0] is the FUN/PAP/THUNK/BLACKHOLE
-  popargs(argc+1, argv);
+  popFrameArgs(argc+1, argv);
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyNNPPNP %s\n", getInfoPtr(argv[0].op)->name);
   #endif
@@ -47490,11 +45826,9 @@ DEFUN0(stgApplyNNPPNP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0800000000000003UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyP);
         break;
@@ -47517,11 +45851,9 @@ DEFUN0(stgApplyNNPPNP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0C00000000000005UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyNP);
         break;
@@ -47544,11 +45876,9 @@ DEFUN0(stgApplyNNPPNP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x100000000000000BUL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyPNP);
         break;
@@ -47571,11 +45901,9 @@ DEFUN0(stgApplyNNPPNP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x1400000000000017UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyPPNP);
         break;
@@ -47598,11 +45926,9 @@ DEFUN0(stgApplyNNPPNP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x180000000000002DUL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyNPPNP);
         break;
@@ -47695,11 +46021,9 @@ DEFUN0(stgApplyNNPPNP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0800000000000003UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyP);
         break;
@@ -47735,11 +46059,9 @@ DEFUN0(stgApplyNNPPNP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0C00000000000005UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNP);
         break;
@@ -47775,11 +46097,9 @@ DEFUN0(stgApplyNNPPNP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x100000000000000BUL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPNP);
         break;
@@ -47815,11 +46135,9 @@ DEFUN0(stgApplyNNPPNP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x1400000000000017UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPPNP);
         break;
@@ -47855,11 +46173,9 @@ DEFUN0(stgApplyNNPPNP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x180000000000002DUL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNPPNP);
         break;
@@ -47952,7 +46268,7 @@ DEFUN0(stgApplyPNPPNP) {
   Cont *newframe;  // pointer to STACKCONT to be constructed for call/jump
   const int argc = 6;
   PtrOrLiteral argv[argc+1]; // argv[0] is the FUN/PAP/THUNK/BLACKHOLE
-  popargs(argc+1, argv);
+  popFrameArgs(argc+1, argv);
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyPNPPNP %s\n", getInfoPtr(argv[0].op)->name);
   #endif
@@ -48017,11 +46333,9 @@ DEFUN0(stgApplyPNPPNP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0800000000000003UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyP);
         break;
@@ -48044,11 +46358,9 @@ DEFUN0(stgApplyPNPPNP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0C00000000000005UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyNP);
         break;
@@ -48071,11 +46383,9 @@ DEFUN0(stgApplyPNPPNP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x100000000000000BUL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyPNP);
         break;
@@ -48098,11 +46408,9 @@ DEFUN0(stgApplyPNPPNP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x1400000000000017UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyPPNP);
         break;
@@ -48125,11 +46433,9 @@ DEFUN0(stgApplyPNPPNP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x180000000000002DUL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyNPPNP);
         break;
@@ -48222,11 +46528,9 @@ DEFUN0(stgApplyPNPPNP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0800000000000003UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyP);
         break;
@@ -48262,11 +46566,9 @@ DEFUN0(stgApplyPNPPNP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0C00000000000005UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNP);
         break;
@@ -48302,11 +46604,9 @@ DEFUN0(stgApplyPNPPNP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x100000000000000BUL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPNP);
         break;
@@ -48342,11 +46642,9 @@ DEFUN0(stgApplyPNPPNP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x1400000000000017UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPPNP);
         break;
@@ -48382,11 +46680,9 @@ DEFUN0(stgApplyPNPPNP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x180000000000002DUL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNPPNP);
         break;
@@ -48479,7 +46775,7 @@ DEFUN0(stgApplyNPPPNP) {
   Cont *newframe;  // pointer to STACKCONT to be constructed for call/jump
   const int argc = 6;
   PtrOrLiteral argv[argc+1]; // argv[0] is the FUN/PAP/THUNK/BLACKHOLE
-  popargs(argc+1, argv);
+  popFrameArgs(argc+1, argv);
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyNPPPNP %s\n", getInfoPtr(argv[0].op)->name);
   #endif
@@ -48544,11 +46840,9 @@ DEFUN0(stgApplyNPPPNP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0800000000000003UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyP);
         break;
@@ -48571,11 +46865,9 @@ DEFUN0(stgApplyNPPPNP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0C00000000000005UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyNP);
         break;
@@ -48598,11 +46890,9 @@ DEFUN0(stgApplyNPPPNP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x100000000000000BUL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyPNP);
         break;
@@ -48625,11 +46915,9 @@ DEFUN0(stgApplyNPPPNP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x1400000000000017UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyPPNP);
         break;
@@ -48652,11 +46940,9 @@ DEFUN0(stgApplyNPPPNP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x180000000000002FUL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyPPPNP);
         break;
@@ -48749,11 +47035,9 @@ DEFUN0(stgApplyNPPPNP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0800000000000003UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyP);
         break;
@@ -48789,11 +47073,9 @@ DEFUN0(stgApplyNPPPNP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0C00000000000005UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNP);
         break;
@@ -48829,11 +47111,9 @@ DEFUN0(stgApplyNPPPNP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x100000000000000BUL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPNP);
         break;
@@ -48869,11 +47149,9 @@ DEFUN0(stgApplyNPPPNP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x1400000000000017UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPPNP);
         break;
@@ -48909,11 +47187,9 @@ DEFUN0(stgApplyNPPPNP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x180000000000002FUL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPPPNP);
         break;
@@ -49006,7 +47282,7 @@ DEFUN0(stgApplyPPPPNP) {
   Cont *newframe;  // pointer to STACKCONT to be constructed for call/jump
   const int argc = 6;
   PtrOrLiteral argv[argc+1]; // argv[0] is the FUN/PAP/THUNK/BLACKHOLE
-  popargs(argc+1, argv);
+  popFrameArgs(argc+1, argv);
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyPPPPNP %s\n", getInfoPtr(argv[0].op)->name);
   #endif
@@ -49075,11 +47351,9 @@ DEFUN0(stgApplyPPPPNP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0800000000000003UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyP);
         break;
@@ -49102,11 +47376,9 @@ DEFUN0(stgApplyPPPPNP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0C00000000000005UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyNP);
         break;
@@ -49129,11 +47401,9 @@ DEFUN0(stgApplyPPPPNP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x100000000000000BUL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyPNP);
         break;
@@ -49156,11 +47426,9 @@ DEFUN0(stgApplyPPPPNP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x1400000000000017UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyPPNP);
         break;
@@ -49183,11 +47451,9 @@ DEFUN0(stgApplyPPPPNP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x180000000000002FUL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyPPPNP);
         break;
@@ -49280,11 +47546,9 @@ DEFUN0(stgApplyPPPPNP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0800000000000003UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyP);
         break;
@@ -49320,11 +47584,9 @@ DEFUN0(stgApplyPPPPNP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0C00000000000005UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNP);
         break;
@@ -49360,11 +47622,9 @@ DEFUN0(stgApplyPPPPNP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x100000000000000BUL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPNP);
         break;
@@ -49400,11 +47660,9 @@ DEFUN0(stgApplyPPPPNP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x1400000000000017UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPPNP);
         break;
@@ -49440,11 +47698,9 @@ DEFUN0(stgApplyPPPPNP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x180000000000002FUL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPPPNP);
         break;
@@ -49537,7 +47793,7 @@ DEFUN0(stgApplyNNNNPP) {
   Cont *newframe;  // pointer to STACKCONT to be constructed for call/jump
   const int argc = 6;
   PtrOrLiteral argv[argc+1]; // argv[0] is the FUN/PAP/THUNK/BLACKHOLE
-  popargs(argc+1, argv);
+  popFrameArgs(argc+1, argv);
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyNNNNPP %s\n", getInfoPtr(argv[0].op)->name);
   #endif
@@ -49594,11 +47850,9 @@ DEFUN0(stgApplyNNNNPP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0800000000000003UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyP);
         break;
@@ -49621,11 +47875,9 @@ DEFUN0(stgApplyNNNNPP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0C00000000000007UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyPP);
         break;
@@ -49648,11 +47900,9 @@ DEFUN0(stgApplyNNNNPP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x100000000000000DUL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyNPP);
         break;
@@ -49675,11 +47925,9 @@ DEFUN0(stgApplyNNNNPP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x1400000000000019UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyNNPP);
         break;
@@ -49702,11 +47950,9 @@ DEFUN0(stgApplyNNNNPP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x1800000000000031UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyNNNPP);
         break;
@@ -49799,11 +48045,9 @@ DEFUN0(stgApplyNNNNPP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0800000000000003UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyP);
         break;
@@ -49839,11 +48083,9 @@ DEFUN0(stgApplyNNNNPP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0C00000000000007UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPP);
         break;
@@ -49879,11 +48121,9 @@ DEFUN0(stgApplyNNNNPP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x100000000000000DUL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNPP);
         break;
@@ -49919,11 +48159,9 @@ DEFUN0(stgApplyNNNNPP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x1400000000000019UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNNPP);
         break;
@@ -49959,11 +48197,9 @@ DEFUN0(stgApplyNNNNPP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x1800000000000031UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNNNPP);
         break;
@@ -50056,7 +48292,7 @@ DEFUN0(stgApplyPNNNPP) {
   Cont *newframe;  // pointer to STACKCONT to be constructed for call/jump
   const int argc = 6;
   PtrOrLiteral argv[argc+1]; // argv[0] is the FUN/PAP/THUNK/BLACKHOLE
-  popargs(argc+1, argv);
+  popFrameArgs(argc+1, argv);
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyPNNNPP %s\n", getInfoPtr(argv[0].op)->name);
   #endif
@@ -50117,11 +48353,9 @@ DEFUN0(stgApplyPNNNPP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0800000000000003UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyP);
         break;
@@ -50144,11 +48378,9 @@ DEFUN0(stgApplyPNNNPP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0C00000000000007UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyPP);
         break;
@@ -50171,11 +48403,9 @@ DEFUN0(stgApplyPNNNPP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x100000000000000DUL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyNPP);
         break;
@@ -50198,11 +48428,9 @@ DEFUN0(stgApplyPNNNPP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x1400000000000019UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyNNPP);
         break;
@@ -50225,11 +48453,9 @@ DEFUN0(stgApplyPNNNPP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x1800000000000031UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyNNNPP);
         break;
@@ -50322,11 +48548,9 @@ DEFUN0(stgApplyPNNNPP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0800000000000003UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyP);
         break;
@@ -50362,11 +48586,9 @@ DEFUN0(stgApplyPNNNPP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0C00000000000007UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPP);
         break;
@@ -50402,11 +48624,9 @@ DEFUN0(stgApplyPNNNPP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x100000000000000DUL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNPP);
         break;
@@ -50442,11 +48662,9 @@ DEFUN0(stgApplyPNNNPP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x1400000000000019UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNNPP);
         break;
@@ -50482,11 +48700,9 @@ DEFUN0(stgApplyPNNNPP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x1800000000000031UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNNNPP);
         break;
@@ -50579,7 +48795,7 @@ DEFUN0(stgApplyNPNNPP) {
   Cont *newframe;  // pointer to STACKCONT to be constructed for call/jump
   const int argc = 6;
   PtrOrLiteral argv[argc+1]; // argv[0] is the FUN/PAP/THUNK/BLACKHOLE
-  popargs(argc+1, argv);
+  popFrameArgs(argc+1, argv);
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyNPNNPP %s\n", getInfoPtr(argv[0].op)->name);
   #endif
@@ -50640,11 +48856,9 @@ DEFUN0(stgApplyNPNNPP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0800000000000003UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyP);
         break;
@@ -50667,11 +48881,9 @@ DEFUN0(stgApplyNPNNPP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0C00000000000007UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyPP);
         break;
@@ -50694,11 +48906,9 @@ DEFUN0(stgApplyNPNNPP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x100000000000000DUL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyNPP);
         break;
@@ -50721,11 +48931,9 @@ DEFUN0(stgApplyNPNNPP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x1400000000000019UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyNNPP);
         break;
@@ -50748,11 +48956,9 @@ DEFUN0(stgApplyNPNNPP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x1800000000000033UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyPNNPP);
         break;
@@ -50845,11 +49051,9 @@ DEFUN0(stgApplyNPNNPP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0800000000000003UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyP);
         break;
@@ -50885,11 +49089,9 @@ DEFUN0(stgApplyNPNNPP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0C00000000000007UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPP);
         break;
@@ -50925,11 +49127,9 @@ DEFUN0(stgApplyNPNNPP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x100000000000000DUL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNPP);
         break;
@@ -50965,11 +49165,9 @@ DEFUN0(stgApplyNPNNPP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x1400000000000019UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNNPP);
         break;
@@ -51005,11 +49203,9 @@ DEFUN0(stgApplyNPNNPP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x1800000000000033UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPNNPP);
         break;
@@ -51102,7 +49298,7 @@ DEFUN0(stgApplyPPNNPP) {
   Cont *newframe;  // pointer to STACKCONT to be constructed for call/jump
   const int argc = 6;
   PtrOrLiteral argv[argc+1]; // argv[0] is the FUN/PAP/THUNK/BLACKHOLE
-  popargs(argc+1, argv);
+  popFrameArgs(argc+1, argv);
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyPPNNPP %s\n", getInfoPtr(argv[0].op)->name);
   #endif
@@ -51167,11 +49363,9 @@ DEFUN0(stgApplyPPNNPP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0800000000000003UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyP);
         break;
@@ -51194,11 +49388,9 @@ DEFUN0(stgApplyPPNNPP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0C00000000000007UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyPP);
         break;
@@ -51221,11 +49413,9 @@ DEFUN0(stgApplyPPNNPP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x100000000000000DUL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyNPP);
         break;
@@ -51248,11 +49438,9 @@ DEFUN0(stgApplyPPNNPP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x1400000000000019UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyNNPP);
         break;
@@ -51275,11 +49463,9 @@ DEFUN0(stgApplyPPNNPP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x1800000000000033UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyPNNPP);
         break;
@@ -51372,11 +49558,9 @@ DEFUN0(stgApplyPPNNPP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0800000000000003UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyP);
         break;
@@ -51412,11 +49596,9 @@ DEFUN0(stgApplyPPNNPP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0C00000000000007UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPP);
         break;
@@ -51452,11 +49634,9 @@ DEFUN0(stgApplyPPNNPP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x100000000000000DUL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNPP);
         break;
@@ -51492,11 +49672,9 @@ DEFUN0(stgApplyPPNNPP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x1400000000000019UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNNPP);
         break;
@@ -51532,11 +49710,9 @@ DEFUN0(stgApplyPPNNPP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x1800000000000033UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPNNPP);
         break;
@@ -51629,7 +49805,7 @@ DEFUN0(stgApplyNNPNPP) {
   Cont *newframe;  // pointer to STACKCONT to be constructed for call/jump
   const int argc = 6;
   PtrOrLiteral argv[argc+1]; // argv[0] is the FUN/PAP/THUNK/BLACKHOLE
-  popargs(argc+1, argv);
+  popFrameArgs(argc+1, argv);
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyNNPNPP %s\n", getInfoPtr(argv[0].op)->name);
   #endif
@@ -51690,11 +49866,9 @@ DEFUN0(stgApplyNNPNPP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0800000000000003UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyP);
         break;
@@ -51717,11 +49891,9 @@ DEFUN0(stgApplyNNPNPP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0C00000000000007UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyPP);
         break;
@@ -51744,11 +49916,9 @@ DEFUN0(stgApplyNNPNPP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x100000000000000DUL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyNPP);
         break;
@@ -51771,11 +49941,9 @@ DEFUN0(stgApplyNNPNPP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x140000000000001BUL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyPNPP);
         break;
@@ -51798,11 +49966,9 @@ DEFUN0(stgApplyNNPNPP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x1800000000000035UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyNPNPP);
         break;
@@ -51895,11 +50061,9 @@ DEFUN0(stgApplyNNPNPP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0800000000000003UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyP);
         break;
@@ -51935,11 +50099,9 @@ DEFUN0(stgApplyNNPNPP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0C00000000000007UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPP);
         break;
@@ -51975,11 +50137,9 @@ DEFUN0(stgApplyNNPNPP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x100000000000000DUL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNPP);
         break;
@@ -52015,11 +50175,9 @@ DEFUN0(stgApplyNNPNPP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x140000000000001BUL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPNPP);
         break;
@@ -52055,11 +50213,9 @@ DEFUN0(stgApplyNNPNPP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x1800000000000035UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNPNPP);
         break;
@@ -52152,7 +50308,7 @@ DEFUN0(stgApplyPNPNPP) {
   Cont *newframe;  // pointer to STACKCONT to be constructed for call/jump
   const int argc = 6;
   PtrOrLiteral argv[argc+1]; // argv[0] is the FUN/PAP/THUNK/BLACKHOLE
-  popargs(argc+1, argv);
+  popFrameArgs(argc+1, argv);
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyPNPNPP %s\n", getInfoPtr(argv[0].op)->name);
   #endif
@@ -52217,11 +50373,9 @@ DEFUN0(stgApplyPNPNPP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0800000000000003UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyP);
         break;
@@ -52244,11 +50398,9 @@ DEFUN0(stgApplyPNPNPP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0C00000000000007UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyPP);
         break;
@@ -52271,11 +50423,9 @@ DEFUN0(stgApplyPNPNPP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x100000000000000DUL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyNPP);
         break;
@@ -52298,11 +50448,9 @@ DEFUN0(stgApplyPNPNPP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x140000000000001BUL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyPNPP);
         break;
@@ -52325,11 +50473,9 @@ DEFUN0(stgApplyPNPNPP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x1800000000000035UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyNPNPP);
         break;
@@ -52422,11 +50568,9 @@ DEFUN0(stgApplyPNPNPP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0800000000000003UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyP);
         break;
@@ -52462,11 +50606,9 @@ DEFUN0(stgApplyPNPNPP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0C00000000000007UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPP);
         break;
@@ -52502,11 +50644,9 @@ DEFUN0(stgApplyPNPNPP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x100000000000000DUL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNPP);
         break;
@@ -52542,11 +50682,9 @@ DEFUN0(stgApplyPNPNPP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x140000000000001BUL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPNPP);
         break;
@@ -52582,11 +50720,9 @@ DEFUN0(stgApplyPNPNPP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x1800000000000035UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNPNPP);
         break;
@@ -52679,7 +50815,7 @@ DEFUN0(stgApplyNPPNPP) {
   Cont *newframe;  // pointer to STACKCONT to be constructed for call/jump
   const int argc = 6;
   PtrOrLiteral argv[argc+1]; // argv[0] is the FUN/PAP/THUNK/BLACKHOLE
-  popargs(argc+1, argv);
+  popFrameArgs(argc+1, argv);
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyNPPNPP %s\n", getInfoPtr(argv[0].op)->name);
   #endif
@@ -52744,11 +50880,9 @@ DEFUN0(stgApplyNPPNPP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0800000000000003UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyP);
         break;
@@ -52771,11 +50905,9 @@ DEFUN0(stgApplyNPPNPP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0C00000000000007UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyPP);
         break;
@@ -52798,11 +50930,9 @@ DEFUN0(stgApplyNPPNPP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x100000000000000DUL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyNPP);
         break;
@@ -52825,11 +50955,9 @@ DEFUN0(stgApplyNPPNPP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x140000000000001BUL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyPNPP);
         break;
@@ -52852,11 +50980,9 @@ DEFUN0(stgApplyNPPNPP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x1800000000000037UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyPPNPP);
         break;
@@ -52949,11 +51075,9 @@ DEFUN0(stgApplyNPPNPP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0800000000000003UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyP);
         break;
@@ -52989,11 +51113,9 @@ DEFUN0(stgApplyNPPNPP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0C00000000000007UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPP);
         break;
@@ -53029,11 +51151,9 @@ DEFUN0(stgApplyNPPNPP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x100000000000000DUL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNPP);
         break;
@@ -53069,11 +51189,9 @@ DEFUN0(stgApplyNPPNPP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x140000000000001BUL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPNPP);
         break;
@@ -53109,11 +51227,9 @@ DEFUN0(stgApplyNPPNPP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x1800000000000037UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPPNPP);
         break;
@@ -53206,7 +51322,7 @@ DEFUN0(stgApplyPPPNPP) {
   Cont *newframe;  // pointer to STACKCONT to be constructed for call/jump
   const int argc = 6;
   PtrOrLiteral argv[argc+1]; // argv[0] is the FUN/PAP/THUNK/BLACKHOLE
-  popargs(argc+1, argv);
+  popFrameArgs(argc+1, argv);
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyPPPNPP %s\n", getInfoPtr(argv[0].op)->name);
   #endif
@@ -53275,11 +51391,9 @@ DEFUN0(stgApplyPPPNPP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0800000000000003UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyP);
         break;
@@ -53302,11 +51416,9 @@ DEFUN0(stgApplyPPPNPP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0C00000000000007UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyPP);
         break;
@@ -53329,11 +51441,9 @@ DEFUN0(stgApplyPPPNPP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x100000000000000DUL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyNPP);
         break;
@@ -53356,11 +51466,9 @@ DEFUN0(stgApplyPPPNPP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x140000000000001BUL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyPNPP);
         break;
@@ -53383,11 +51491,9 @@ DEFUN0(stgApplyPPPNPP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x1800000000000037UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyPPNPP);
         break;
@@ -53480,11 +51586,9 @@ DEFUN0(stgApplyPPPNPP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0800000000000003UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyP);
         break;
@@ -53520,11 +51624,9 @@ DEFUN0(stgApplyPPPNPP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0C00000000000007UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPP);
         break;
@@ -53560,11 +51662,9 @@ DEFUN0(stgApplyPPPNPP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x100000000000000DUL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNPP);
         break;
@@ -53600,11 +51700,9 @@ DEFUN0(stgApplyPPPNPP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x140000000000001BUL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPNPP);
         break;
@@ -53640,11 +51738,9 @@ DEFUN0(stgApplyPPPNPP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x1800000000000037UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPPNPP);
         break;
@@ -53737,7 +51833,7 @@ DEFUN0(stgApplyNNNPPP) {
   Cont *newframe;  // pointer to STACKCONT to be constructed for call/jump
   const int argc = 6;
   PtrOrLiteral argv[argc+1]; // argv[0] is the FUN/PAP/THUNK/BLACKHOLE
-  popargs(argc+1, argv);
+  popFrameArgs(argc+1, argv);
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyNNNPPP %s\n", getInfoPtr(argv[0].op)->name);
   #endif
@@ -53798,11 +51894,9 @@ DEFUN0(stgApplyNNNPPP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0800000000000003UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyP);
         break;
@@ -53825,11 +51919,9 @@ DEFUN0(stgApplyNNNPPP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0C00000000000007UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyPP);
         break;
@@ -53852,11 +51944,9 @@ DEFUN0(stgApplyNNNPPP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x100000000000000FUL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyPPP);
         break;
@@ -53879,11 +51969,9 @@ DEFUN0(stgApplyNNNPPP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x140000000000001DUL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyNPPP);
         break;
@@ -53906,11 +51994,9 @@ DEFUN0(stgApplyNNNPPP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x1800000000000039UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyNNPPP);
         break;
@@ -54003,11 +52089,9 @@ DEFUN0(stgApplyNNNPPP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0800000000000003UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyP);
         break;
@@ -54043,11 +52127,9 @@ DEFUN0(stgApplyNNNPPP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0C00000000000007UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPP);
         break;
@@ -54083,11 +52165,9 @@ DEFUN0(stgApplyNNNPPP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x100000000000000FUL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPPP);
         break;
@@ -54123,11 +52203,9 @@ DEFUN0(stgApplyNNNPPP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x140000000000001DUL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNPPP);
         break;
@@ -54163,11 +52241,9 @@ DEFUN0(stgApplyNNNPPP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x1800000000000039UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNNPPP);
         break;
@@ -54260,7 +52336,7 @@ DEFUN0(stgApplyPNNPPP) {
   Cont *newframe;  // pointer to STACKCONT to be constructed for call/jump
   const int argc = 6;
   PtrOrLiteral argv[argc+1]; // argv[0] is the FUN/PAP/THUNK/BLACKHOLE
-  popargs(argc+1, argv);
+  popFrameArgs(argc+1, argv);
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyPNNPPP %s\n", getInfoPtr(argv[0].op)->name);
   #endif
@@ -54325,11 +52401,9 @@ DEFUN0(stgApplyPNNPPP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0800000000000003UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyP);
         break;
@@ -54352,11 +52426,9 @@ DEFUN0(stgApplyPNNPPP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0C00000000000007UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyPP);
         break;
@@ -54379,11 +52451,9 @@ DEFUN0(stgApplyPNNPPP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x100000000000000FUL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyPPP);
         break;
@@ -54406,11 +52476,9 @@ DEFUN0(stgApplyPNNPPP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x140000000000001DUL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyNPPP);
         break;
@@ -54433,11 +52501,9 @@ DEFUN0(stgApplyPNNPPP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x1800000000000039UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyNNPPP);
         break;
@@ -54530,11 +52596,9 @@ DEFUN0(stgApplyPNNPPP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0800000000000003UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyP);
         break;
@@ -54570,11 +52634,9 @@ DEFUN0(stgApplyPNNPPP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0C00000000000007UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPP);
         break;
@@ -54610,11 +52672,9 @@ DEFUN0(stgApplyPNNPPP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x100000000000000FUL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPPP);
         break;
@@ -54650,11 +52710,9 @@ DEFUN0(stgApplyPNNPPP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x140000000000001DUL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNPPP);
         break;
@@ -54690,11 +52748,9 @@ DEFUN0(stgApplyPNNPPP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x1800000000000039UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNNPPP);
         break;
@@ -54787,7 +52843,7 @@ DEFUN0(stgApplyNPNPPP) {
   Cont *newframe;  // pointer to STACKCONT to be constructed for call/jump
   const int argc = 6;
   PtrOrLiteral argv[argc+1]; // argv[0] is the FUN/PAP/THUNK/BLACKHOLE
-  popargs(argc+1, argv);
+  popFrameArgs(argc+1, argv);
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyNPNPPP %s\n", getInfoPtr(argv[0].op)->name);
   #endif
@@ -54852,11 +52908,9 @@ DEFUN0(stgApplyNPNPPP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0800000000000003UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyP);
         break;
@@ -54879,11 +52933,9 @@ DEFUN0(stgApplyNPNPPP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0C00000000000007UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyPP);
         break;
@@ -54906,11 +52958,9 @@ DEFUN0(stgApplyNPNPPP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x100000000000000FUL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyPPP);
         break;
@@ -54933,11 +52983,9 @@ DEFUN0(stgApplyNPNPPP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x140000000000001DUL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyNPPP);
         break;
@@ -54960,11 +53008,9 @@ DEFUN0(stgApplyNPNPPP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x180000000000003BUL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyPNPPP);
         break;
@@ -55057,11 +53103,9 @@ DEFUN0(stgApplyNPNPPP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0800000000000003UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyP);
         break;
@@ -55097,11 +53141,9 @@ DEFUN0(stgApplyNPNPPP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0C00000000000007UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPP);
         break;
@@ -55137,11 +53179,9 @@ DEFUN0(stgApplyNPNPPP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x100000000000000FUL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPPP);
         break;
@@ -55177,11 +53217,9 @@ DEFUN0(stgApplyNPNPPP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x140000000000001DUL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNPPP);
         break;
@@ -55217,11 +53255,9 @@ DEFUN0(stgApplyNPNPPP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x180000000000003BUL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPNPPP);
         break;
@@ -55314,7 +53350,7 @@ DEFUN0(stgApplyPPNPPP) {
   Cont *newframe;  // pointer to STACKCONT to be constructed for call/jump
   const int argc = 6;
   PtrOrLiteral argv[argc+1]; // argv[0] is the FUN/PAP/THUNK/BLACKHOLE
-  popargs(argc+1, argv);
+  popFrameArgs(argc+1, argv);
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyPPNPPP %s\n", getInfoPtr(argv[0].op)->name);
   #endif
@@ -55383,11 +53419,9 @@ DEFUN0(stgApplyPPNPPP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0800000000000003UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyP);
         break;
@@ -55410,11 +53444,9 @@ DEFUN0(stgApplyPPNPPP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0C00000000000007UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyPP);
         break;
@@ -55437,11 +53469,9 @@ DEFUN0(stgApplyPPNPPP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x100000000000000FUL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyPPP);
         break;
@@ -55464,11 +53494,9 @@ DEFUN0(stgApplyPPNPPP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x140000000000001DUL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyNPPP);
         break;
@@ -55491,11 +53519,9 @@ DEFUN0(stgApplyPPNPPP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x180000000000003BUL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyPNPPP);
         break;
@@ -55588,11 +53614,9 @@ DEFUN0(stgApplyPPNPPP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0800000000000003UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyP);
         break;
@@ -55628,11 +53652,9 @@ DEFUN0(stgApplyPPNPPP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0C00000000000007UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPP);
         break;
@@ -55668,11 +53690,9 @@ DEFUN0(stgApplyPPNPPP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x100000000000000FUL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPPP);
         break;
@@ -55708,11 +53728,9 @@ DEFUN0(stgApplyPPNPPP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x140000000000001DUL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNPPP);
         break;
@@ -55748,11 +53766,9 @@ DEFUN0(stgApplyPPNPPP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x180000000000003BUL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPNPPP);
         break;
@@ -55845,7 +53861,7 @@ DEFUN0(stgApplyNNPPPP) {
   Cont *newframe;  // pointer to STACKCONT to be constructed for call/jump
   const int argc = 6;
   PtrOrLiteral argv[argc+1]; // argv[0] is the FUN/PAP/THUNK/BLACKHOLE
-  popargs(argc+1, argv);
+  popFrameArgs(argc+1, argv);
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyNNPPPP %s\n", getInfoPtr(argv[0].op)->name);
   #endif
@@ -55910,11 +53926,9 @@ DEFUN0(stgApplyNNPPPP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0800000000000003UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyP);
         break;
@@ -55937,11 +53951,9 @@ DEFUN0(stgApplyNNPPPP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0C00000000000007UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyPP);
         break;
@@ -55964,11 +53976,9 @@ DEFUN0(stgApplyNNPPPP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x100000000000000FUL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyPPP);
         break;
@@ -55991,11 +54001,9 @@ DEFUN0(stgApplyNNPPPP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x140000000000001FUL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyPPPP);
         break;
@@ -56018,11 +54026,9 @@ DEFUN0(stgApplyNNPPPP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x180000000000003DUL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyNPPPP);
         break;
@@ -56115,11 +54121,9 @@ DEFUN0(stgApplyNNPPPP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0800000000000003UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyP);
         break;
@@ -56155,11 +54159,9 @@ DEFUN0(stgApplyNNPPPP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0C00000000000007UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPP);
         break;
@@ -56195,11 +54197,9 @@ DEFUN0(stgApplyNNPPPP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x100000000000000FUL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPPP);
         break;
@@ -56235,11 +54235,9 @@ DEFUN0(stgApplyNNPPPP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x140000000000001FUL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPPPP);
         break;
@@ -56275,11 +54273,9 @@ DEFUN0(stgApplyNNPPPP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x180000000000003DUL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNPPPP);
         break;
@@ -56372,7 +54368,7 @@ DEFUN0(stgApplyPNPPPP) {
   Cont *newframe;  // pointer to STACKCONT to be constructed for call/jump
   const int argc = 6;
   PtrOrLiteral argv[argc+1]; // argv[0] is the FUN/PAP/THUNK/BLACKHOLE
-  popargs(argc+1, argv);
+  popFrameArgs(argc+1, argv);
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyPNPPPP %s\n", getInfoPtr(argv[0].op)->name);
   #endif
@@ -56441,11 +54437,9 @@ DEFUN0(stgApplyPNPPPP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0800000000000003UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyP);
         break;
@@ -56468,11 +54462,9 @@ DEFUN0(stgApplyPNPPPP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0C00000000000007UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyPP);
         break;
@@ -56495,11 +54487,9 @@ DEFUN0(stgApplyPNPPPP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x100000000000000FUL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyPPP);
         break;
@@ -56522,11 +54512,9 @@ DEFUN0(stgApplyPNPPPP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x140000000000001FUL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyPPPP);
         break;
@@ -56549,11 +54537,9 @@ DEFUN0(stgApplyPNPPPP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x180000000000003DUL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyNPPPP);
         break;
@@ -56646,11 +54632,9 @@ DEFUN0(stgApplyPNPPPP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0800000000000003UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyP);
         break;
@@ -56686,11 +54670,9 @@ DEFUN0(stgApplyPNPPPP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0C00000000000007UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPP);
         break;
@@ -56726,11 +54708,9 @@ DEFUN0(stgApplyPNPPPP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x100000000000000FUL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPPP);
         break;
@@ -56766,11 +54746,9 @@ DEFUN0(stgApplyPNPPPP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x140000000000001FUL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPPPP);
         break;
@@ -56806,11 +54784,9 @@ DEFUN0(stgApplyPNPPPP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x180000000000003DUL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNPPPP);
         break;
@@ -56903,7 +54879,7 @@ DEFUN0(stgApplyNPPPPP) {
   Cont *newframe;  // pointer to STACKCONT to be constructed for call/jump
   const int argc = 6;
   PtrOrLiteral argv[argc+1]; // argv[0] is the FUN/PAP/THUNK/BLACKHOLE
-  popargs(argc+1, argv);
+  popFrameArgs(argc+1, argv);
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyNPPPPP %s\n", getInfoPtr(argv[0].op)->name);
   #endif
@@ -56972,11 +54948,9 @@ DEFUN0(stgApplyNPPPPP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0800000000000003UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyP);
         break;
@@ -56999,11 +54973,9 @@ DEFUN0(stgApplyNPPPPP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0C00000000000007UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyPP);
         break;
@@ -57026,11 +54998,9 @@ DEFUN0(stgApplyNPPPPP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x100000000000000FUL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyPPP);
         break;
@@ -57053,11 +55023,9 @@ DEFUN0(stgApplyNPPPPP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x140000000000001FUL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyPPPP);
         break;
@@ -57080,11 +55048,9 @@ DEFUN0(stgApplyNPPPPP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x180000000000003FUL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyPPPPP);
         break;
@@ -57177,11 +55143,9 @@ DEFUN0(stgApplyNPPPPP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0800000000000003UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyP);
         break;
@@ -57217,11 +55181,9 @@ DEFUN0(stgApplyNPPPPP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0C00000000000007UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPP);
         break;
@@ -57257,11 +55219,9 @@ DEFUN0(stgApplyNPPPPP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x100000000000000FUL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPPP);
         break;
@@ -57297,11 +55257,9 @@ DEFUN0(stgApplyNPPPPP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x140000000000001FUL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPPPP);
         break;
@@ -57337,11 +55295,9 @@ DEFUN0(stgApplyNPPPPP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x180000000000003FUL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPPPPP);
         break;
@@ -57434,7 +55390,7 @@ DEFUN0(stgApplyPPPPPP) {
   Cont *newframe;  // pointer to STACKCONT to be constructed for call/jump
   const int argc = 6;
   PtrOrLiteral argv[argc+1]; // argv[0] is the FUN/PAP/THUNK/BLACKHOLE
-  popargs(argc+1, argv);
+  popFrameArgs(argc+1, argv);
   #ifdef DEBUGSTGAPPLY
   fprintf(stderr, "stgApplyPPPPPP %s\n", getInfoPtr(argv[0].op)->name);
   #endif
@@ -57507,11 +55463,9 @@ DEFUN0(stgApplyPPPPPP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0800000000000003UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyP);
         break;
@@ -57534,11 +55488,9 @@ DEFUN0(stgApplyPPPPPP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x0C00000000000007UL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyPP);
         break;
@@ -57561,11 +55513,9 @@ DEFUN0(stgApplyPPPPPP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x100000000000000FUL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyPPP);
         break;
@@ -57588,11 +55538,9 @@ DEFUN0(stgApplyPPPPPP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x140000000000001FUL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyPPPP);
         break;
@@ -57615,11 +55563,9 @@ DEFUN0(stgApplyPPPPPP) {
         callContRestore( &argv[1] );
         argv[0] = stgCurVal;
         // push excess args
-        pushargs(excess+1, argv);
         newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );
         newframe->layout = (Bitmap64)0x180000000000003FUL;
         memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply
         STGJUMP0(stgApplyPPPPP);
         break;
@@ -57712,11 +55658,9 @@ DEFUN0(stgApplyPPPPPP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0800000000000003UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyP);
         break;
@@ -57752,11 +55696,9 @@ DEFUN0(stgApplyPPPPPP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x0C00000000000007UL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPP);
         break;
@@ -57792,11 +55734,9 @@ DEFUN0(stgApplyPPPPPP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x100000000000000FUL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPPP);
         break;
@@ -57832,11 +55772,9 @@ DEFUN0(stgApplyPPPPPP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x140000000000001FUL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPPPP);
         break;
@@ -57872,11 +55810,9 @@ DEFUN0(stgApplyPPPPPP) {
         // restore excess args left shifted into argv[1]
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
-        pushargs(excess + 1, argv);
         newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
         newframe->layout = (Bitmap64)0x180000000000003FUL;
         memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
-        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPPPPP);
         break;
