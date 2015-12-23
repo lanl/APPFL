@@ -75,6 +75,7 @@ DEFUN0(stgApplyN) {
     int fvCount = getInfoPtr(argv[0].op)->layoutInfo.boxedCount + 
                   getInfoPtr(argv[0].op)->layoutInfo.unboxedCount;
     Bitmap64 bitmap = argv[0].op->payload[fvCount].b;
+    Bitmap64 bitmap2;
     int argCount = BMSIZE(bitmap);
     int arity = getInfoPtr(argv[0].op)->funFields.arity - argCount;
     #ifdef DEBUGSTGAPPLY
@@ -104,6 +105,18 @@ DEFUN0(stgApplyN) {
       pushargs(argCount, &argv[0].op->payload[fvCount+1]);
       // push the FUN
       pushargs(1, &argv[0]);
+      bitmap.bitmap.mask <<= 1;
+      bitmap.bitmap.mask |= 0x1;
+      bitmap.bitmap.size += 1;
+      bitmap2 = (Bitmap64)0x0400000000000000UL;
+      bitmap2.bitmap.mask <<= (argCount + 1);
+      bitmap.bits += bitmap2.bits;
+      newframe = stgAllocStackCont( &it_stgStackCont, argCount+arity+1 );
+      newframe->layout = bitmap;
+      newframe->payload[0] = argv[0]; // self
+      memcpy(&newframe->payload[1], &argv[0].op->payload[fvCount+1], argCount * sizeof(PtrOrLiteral)); // old args
+      memcpy(&newframe->payload[1 + argCount], &argv[1], arity * sizeof(PtrOrLiteral));
+      newframe = stgPopCont();
       // tail call the FUN
       STGJUMP0(getInfoPtr(argv[0].op)->funFields.trueEntryCode);
 
@@ -226,6 +239,7 @@ DEFUN0(stgApplyP) {
     int fvCount = getInfoPtr(argv[0].op)->layoutInfo.boxedCount + 
                   getInfoPtr(argv[0].op)->layoutInfo.unboxedCount;
     Bitmap64 bitmap = argv[0].op->payload[fvCount].b;
+    Bitmap64 bitmap2;
     int argCount = BMSIZE(bitmap);
     int arity = getInfoPtr(argv[0].op)->funFields.arity - argCount;
     #ifdef DEBUGSTGAPPLY
@@ -255,6 +269,18 @@ DEFUN0(stgApplyP) {
       pushargs(argCount, &argv[0].op->payload[fvCount+1]);
       // push the FUN
       pushargs(1, &argv[0]);
+      bitmap.bitmap.mask <<= 1;
+      bitmap.bitmap.mask |= 0x1;
+      bitmap.bitmap.size += 1;
+      bitmap2 = (Bitmap64)0x0400000000000001UL;
+      bitmap2.bitmap.mask <<= (argCount + 1);
+      bitmap.bits += bitmap2.bits;
+      newframe = stgAllocStackCont( &it_stgStackCont, argCount+arity+1 );
+      newframe->layout = bitmap;
+      newframe->payload[0] = argv[0]; // self
+      memcpy(&newframe->payload[1], &argv[0].op->payload[fvCount+1], argCount * sizeof(PtrOrLiteral)); // old args
+      memcpy(&newframe->payload[1 + argCount], &argv[1], arity * sizeof(PtrOrLiteral));
+      newframe = stgPopCont();
       // tail call the FUN
       STGJUMP0(getInfoPtr(argv[0].op)->funFields.trueEntryCode);
 
@@ -403,6 +429,7 @@ DEFUN0(stgApplyNN) {
     int fvCount = getInfoPtr(argv[0].op)->layoutInfo.boxedCount + 
                   getInfoPtr(argv[0].op)->layoutInfo.unboxedCount;
     Bitmap64 bitmap = argv[0].op->payload[fvCount].b;
+    Bitmap64 bitmap2;
     int argCount = BMSIZE(bitmap);
     int arity = getInfoPtr(argv[0].op)->funFields.arity - argCount;
     #ifdef DEBUGSTGAPPLY
@@ -430,7 +457,6 @@ DEFUN0(stgApplyNN) {
       bitmap.bitmap.mask <<= 1;
       bitmap.bitmap.mask |= 0x1;
       bitmap.bitmap.size += 1;
-      Bitmap64 bitmap2;
       bitmap2 = (Bitmap64)0x0400000000000000UL;
       bitmap2.bitmap.mask <<= (argCount + 1);
       bitmap.bits += bitmap2.bits;
@@ -448,6 +474,10 @@ DEFUN0(stgApplyNN) {
       callContRestore( &argv[1] );
       // push FUN-oid and excess args
       pushargs(excess + 1, argv);
+      newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+      newframe->layout = (Bitmap64)0x0800000000000001UL;
+      memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+      newframe = stgPopCont();
       // try again - tail call stgApply 
       STGJUMP0(stgApplyN);
     } else 
@@ -472,6 +502,18 @@ DEFUN0(stgApplyNN) {
       pushargs(argCount, &argv[0].op->payload[fvCount+1]);
       // push the FUN
       pushargs(1, &argv[0]);
+      bitmap.bitmap.mask <<= 1;
+      bitmap.bitmap.mask |= 0x1;
+      bitmap.bitmap.size += 1;
+      bitmap2 = (Bitmap64)0x0800000000000000UL;
+      bitmap2.bitmap.mask <<= (argCount + 1);
+      bitmap.bits += bitmap2.bits;
+      newframe = stgAllocStackCont( &it_stgStackCont, argCount+arity+1 );
+      newframe->layout = bitmap;
+      newframe->payload[0] = argv[0]; // self
+      memcpy(&newframe->payload[1], &argv[0].op->payload[fvCount+1], argCount * sizeof(PtrOrLiteral)); // old args
+      memcpy(&newframe->payload[1 + argCount], &argv[1], arity * sizeof(PtrOrLiteral));
+      newframe = stgPopCont();
       // tail call the FUN
       STGJUMP0(getInfoPtr(argv[0].op)->funFields.trueEntryCode);
 
@@ -624,6 +666,7 @@ DEFUN0(stgApplyPN) {
     int fvCount = getInfoPtr(argv[0].op)->layoutInfo.boxedCount + 
                   getInfoPtr(argv[0].op)->layoutInfo.unboxedCount;
     Bitmap64 bitmap = argv[0].op->payload[fvCount].b;
+    Bitmap64 bitmap2;
     int argCount = BMSIZE(bitmap);
     int arity = getInfoPtr(argv[0].op)->funFields.arity - argCount;
     #ifdef DEBUGSTGAPPLY
@@ -651,7 +694,6 @@ DEFUN0(stgApplyPN) {
       bitmap.bitmap.mask <<= 1;
       bitmap.bitmap.mask |= 0x1;
       bitmap.bitmap.size += 1;
-      Bitmap64 bitmap2;
       bitmap2 = (Bitmap64)0x0400000000000001UL;
       bitmap2.bitmap.mask <<= (argCount + 1);
       bitmap.bits += bitmap2.bits;
@@ -669,6 +711,10 @@ DEFUN0(stgApplyPN) {
       callContRestore( &argv[1] );
       // push FUN-oid and excess args
       pushargs(excess + 1, argv);
+      newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+      newframe->layout = (Bitmap64)0x0800000000000001UL;
+      memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+      newframe = stgPopCont();
       // try again - tail call stgApply 
       STGJUMP0(stgApplyN);
     } else 
@@ -693,6 +739,18 @@ DEFUN0(stgApplyPN) {
       pushargs(argCount, &argv[0].op->payload[fvCount+1]);
       // push the FUN
       pushargs(1, &argv[0]);
+      bitmap.bitmap.mask <<= 1;
+      bitmap.bitmap.mask |= 0x1;
+      bitmap.bitmap.size += 1;
+      bitmap2 = (Bitmap64)0x0800000000000001UL;
+      bitmap2.bitmap.mask <<= (argCount + 1);
+      bitmap.bits += bitmap2.bits;
+      newframe = stgAllocStackCont( &it_stgStackCont, argCount+arity+1 );
+      newframe->layout = bitmap;
+      newframe->payload[0] = argv[0]; // self
+      memcpy(&newframe->payload[1], &argv[0].op->payload[fvCount+1], argCount * sizeof(PtrOrLiteral)); // old args
+      memcpy(&newframe->payload[1 + argCount], &argv[1], arity * sizeof(PtrOrLiteral));
+      newframe = stgPopCont();
       // tail call the FUN
       STGJUMP0(getInfoPtr(argv[0].op)->funFields.trueEntryCode);
 
@@ -845,6 +903,7 @@ DEFUN0(stgApplyNP) {
     int fvCount = getInfoPtr(argv[0].op)->layoutInfo.boxedCount + 
                   getInfoPtr(argv[0].op)->layoutInfo.unboxedCount;
     Bitmap64 bitmap = argv[0].op->payload[fvCount].b;
+    Bitmap64 bitmap2;
     int argCount = BMSIZE(bitmap);
     int arity = getInfoPtr(argv[0].op)->funFields.arity - argCount;
     #ifdef DEBUGSTGAPPLY
@@ -872,7 +931,6 @@ DEFUN0(stgApplyNP) {
       bitmap.bitmap.mask <<= 1;
       bitmap.bitmap.mask |= 0x1;
       bitmap.bitmap.size += 1;
-      Bitmap64 bitmap2;
       bitmap2 = (Bitmap64)0x0400000000000000UL;
       bitmap2.bitmap.mask <<= (argCount + 1);
       bitmap.bits += bitmap2.bits;
@@ -890,6 +948,10 @@ DEFUN0(stgApplyNP) {
       callContRestore( &argv[1] );
       // push FUN-oid and excess args
       pushargs(excess + 1, argv);
+      newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+      newframe->layout = (Bitmap64)0x0800000000000003UL;
+      memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+      newframe = stgPopCont();
       // try again - tail call stgApply 
       STGJUMP0(stgApplyP);
     } else 
@@ -914,6 +976,18 @@ DEFUN0(stgApplyNP) {
       pushargs(argCount, &argv[0].op->payload[fvCount+1]);
       // push the FUN
       pushargs(1, &argv[0]);
+      bitmap.bitmap.mask <<= 1;
+      bitmap.bitmap.mask |= 0x1;
+      bitmap.bitmap.size += 1;
+      bitmap2 = (Bitmap64)0x0800000000000002UL;
+      bitmap2.bitmap.mask <<= (argCount + 1);
+      bitmap.bits += bitmap2.bits;
+      newframe = stgAllocStackCont( &it_stgStackCont, argCount+arity+1 );
+      newframe->layout = bitmap;
+      newframe->payload[0] = argv[0]; // self
+      memcpy(&newframe->payload[1], &argv[0].op->payload[fvCount+1], argCount * sizeof(PtrOrLiteral)); // old args
+      memcpy(&newframe->payload[1 + argCount], &argv[1], arity * sizeof(PtrOrLiteral));
+      newframe = stgPopCont();
       // tail call the FUN
       STGJUMP0(getInfoPtr(argv[0].op)->funFields.trueEntryCode);
 
@@ -1070,6 +1144,7 @@ DEFUN0(stgApplyPP) {
     int fvCount = getInfoPtr(argv[0].op)->layoutInfo.boxedCount + 
                   getInfoPtr(argv[0].op)->layoutInfo.unboxedCount;
     Bitmap64 bitmap = argv[0].op->payload[fvCount].b;
+    Bitmap64 bitmap2;
     int argCount = BMSIZE(bitmap);
     int arity = getInfoPtr(argv[0].op)->funFields.arity - argCount;
     #ifdef DEBUGSTGAPPLY
@@ -1097,7 +1172,6 @@ DEFUN0(stgApplyPP) {
       bitmap.bitmap.mask <<= 1;
       bitmap.bitmap.mask |= 0x1;
       bitmap.bitmap.size += 1;
-      Bitmap64 bitmap2;
       bitmap2 = (Bitmap64)0x0400000000000001UL;
       bitmap2.bitmap.mask <<= (argCount + 1);
       bitmap.bits += bitmap2.bits;
@@ -1115,6 +1189,10 @@ DEFUN0(stgApplyPP) {
       callContRestore( &argv[1] );
       // push FUN-oid and excess args
       pushargs(excess + 1, argv);
+      newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+      newframe->layout = (Bitmap64)0x0800000000000003UL;
+      memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+      newframe = stgPopCont();
       // try again - tail call stgApply 
       STGJUMP0(stgApplyP);
     } else 
@@ -1139,6 +1217,18 @@ DEFUN0(stgApplyPP) {
       pushargs(argCount, &argv[0].op->payload[fvCount+1]);
       // push the FUN
       pushargs(1, &argv[0]);
+      bitmap.bitmap.mask <<= 1;
+      bitmap.bitmap.mask |= 0x1;
+      bitmap.bitmap.size += 1;
+      bitmap2 = (Bitmap64)0x0800000000000003UL;
+      bitmap2.bitmap.mask <<= (argCount + 1);
+      bitmap.bits += bitmap2.bits;
+      newframe = stgAllocStackCont( &it_stgStackCont, argCount+arity+1 );
+      newframe->layout = bitmap;
+      newframe->payload[0] = argv[0]; // self
+      memcpy(&newframe->payload[1], &argv[0].op->payload[fvCount+1], argCount * sizeof(PtrOrLiteral)); // old args
+      memcpy(&newframe->payload[1 + argCount], &argv[1], arity * sizeof(PtrOrLiteral));
+      newframe = stgPopCont();
       // tail call the FUN
       STGJUMP0(getInfoPtr(argv[0].op)->funFields.trueEntryCode);
 
@@ -1319,6 +1409,7 @@ DEFUN0(stgApplyNNN) {
     int fvCount = getInfoPtr(argv[0].op)->layoutInfo.boxedCount + 
                   getInfoPtr(argv[0].op)->layoutInfo.unboxedCount;
     Bitmap64 bitmap = argv[0].op->payload[fvCount].b;
+    Bitmap64 bitmap2;
     int argCount = BMSIZE(bitmap);
     int arity = getInfoPtr(argv[0].op)->funFields.arity - argCount;
     #ifdef DEBUGSTGAPPLY
@@ -1347,7 +1438,6 @@ DEFUN0(stgApplyNNN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0800000000000000UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -1365,6 +1455,10 @@ DEFUN0(stgApplyNNN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0800000000000001UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyN);
         break;
@@ -1384,7 +1478,6 @@ DEFUN0(stgApplyNNN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0400000000000000UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -1402,6 +1495,10 @@ DEFUN0(stgApplyNNN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0C00000000000001UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNN);
         break;
@@ -1430,6 +1527,18 @@ DEFUN0(stgApplyNNN) {
       pushargs(argCount, &argv[0].op->payload[fvCount+1]);
       // push the FUN
       pushargs(1, &argv[0]);
+      bitmap.bitmap.mask <<= 1;
+      bitmap.bitmap.mask |= 0x1;
+      bitmap.bitmap.size += 1;
+      bitmap2 = (Bitmap64)0x0C00000000000000UL;
+      bitmap2.bitmap.mask <<= (argCount + 1);
+      bitmap.bits += bitmap2.bits;
+      newframe = stgAllocStackCont( &it_stgStackCont, argCount+arity+1 );
+      newframe->layout = bitmap;
+      newframe->payload[0] = argv[0]; // self
+      memcpy(&newframe->payload[1], &argv[0].op->payload[fvCount+1], argCount * sizeof(PtrOrLiteral)); // old args
+      memcpy(&newframe->payload[1 + argCount], &argv[1], arity * sizeof(PtrOrLiteral));
+      newframe = stgPopCont();
       // tail call the FUN
       STGJUMP0(getInfoPtr(argv[0].op)->funFields.trueEntryCode);
 
@@ -1614,6 +1723,7 @@ DEFUN0(stgApplyPNN) {
     int fvCount = getInfoPtr(argv[0].op)->layoutInfo.boxedCount + 
                   getInfoPtr(argv[0].op)->layoutInfo.unboxedCount;
     Bitmap64 bitmap = argv[0].op->payload[fvCount].b;
+    Bitmap64 bitmap2;
     int argCount = BMSIZE(bitmap);
     int arity = getInfoPtr(argv[0].op)->funFields.arity - argCount;
     #ifdef DEBUGSTGAPPLY
@@ -1642,7 +1752,6 @@ DEFUN0(stgApplyPNN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0800000000000001UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -1660,6 +1769,10 @@ DEFUN0(stgApplyPNN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0800000000000001UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyN);
         break;
@@ -1679,7 +1792,6 @@ DEFUN0(stgApplyPNN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0400000000000001UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -1697,6 +1809,10 @@ DEFUN0(stgApplyPNN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0C00000000000001UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNN);
         break;
@@ -1725,6 +1841,18 @@ DEFUN0(stgApplyPNN) {
       pushargs(argCount, &argv[0].op->payload[fvCount+1]);
       // push the FUN
       pushargs(1, &argv[0]);
+      bitmap.bitmap.mask <<= 1;
+      bitmap.bitmap.mask |= 0x1;
+      bitmap.bitmap.size += 1;
+      bitmap2 = (Bitmap64)0x0C00000000000001UL;
+      bitmap2.bitmap.mask <<= (argCount + 1);
+      bitmap.bits += bitmap2.bits;
+      newframe = stgAllocStackCont( &it_stgStackCont, argCount+arity+1 );
+      newframe->layout = bitmap;
+      newframe->payload[0] = argv[0]; // self
+      memcpy(&newframe->payload[1], &argv[0].op->payload[fvCount+1], argCount * sizeof(PtrOrLiteral)); // old args
+      memcpy(&newframe->payload[1 + argCount], &argv[1], arity * sizeof(PtrOrLiteral));
+      newframe = stgPopCont();
       // tail call the FUN
       STGJUMP0(getInfoPtr(argv[0].op)->funFields.trueEntryCode);
 
@@ -1909,6 +2037,7 @@ DEFUN0(stgApplyNPN) {
     int fvCount = getInfoPtr(argv[0].op)->layoutInfo.boxedCount + 
                   getInfoPtr(argv[0].op)->layoutInfo.unboxedCount;
     Bitmap64 bitmap = argv[0].op->payload[fvCount].b;
+    Bitmap64 bitmap2;
     int argCount = BMSIZE(bitmap);
     int arity = getInfoPtr(argv[0].op)->funFields.arity - argCount;
     #ifdef DEBUGSTGAPPLY
@@ -1937,7 +2066,6 @@ DEFUN0(stgApplyNPN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0800000000000002UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -1955,6 +2083,10 @@ DEFUN0(stgApplyNPN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0800000000000001UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyN);
         break;
@@ -1974,7 +2106,6 @@ DEFUN0(stgApplyNPN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0400000000000000UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -1992,6 +2123,10 @@ DEFUN0(stgApplyNPN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0C00000000000003UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPN);
         break;
@@ -2020,6 +2155,18 @@ DEFUN0(stgApplyNPN) {
       pushargs(argCount, &argv[0].op->payload[fvCount+1]);
       // push the FUN
       pushargs(1, &argv[0]);
+      bitmap.bitmap.mask <<= 1;
+      bitmap.bitmap.mask |= 0x1;
+      bitmap.bitmap.size += 1;
+      bitmap2 = (Bitmap64)0x0C00000000000002UL;
+      bitmap2.bitmap.mask <<= (argCount + 1);
+      bitmap.bits += bitmap2.bits;
+      newframe = stgAllocStackCont( &it_stgStackCont, argCount+arity+1 );
+      newframe->layout = bitmap;
+      newframe->payload[0] = argv[0]; // self
+      memcpy(&newframe->payload[1], &argv[0].op->payload[fvCount+1], argCount * sizeof(PtrOrLiteral)); // old args
+      memcpy(&newframe->payload[1 + argCount], &argv[1], arity * sizeof(PtrOrLiteral));
+      newframe = stgPopCont();
       // tail call the FUN
       STGJUMP0(getInfoPtr(argv[0].op)->funFields.trueEntryCode);
 
@@ -2208,6 +2355,7 @@ DEFUN0(stgApplyPPN) {
     int fvCount = getInfoPtr(argv[0].op)->layoutInfo.boxedCount + 
                   getInfoPtr(argv[0].op)->layoutInfo.unboxedCount;
     Bitmap64 bitmap = argv[0].op->payload[fvCount].b;
+    Bitmap64 bitmap2;
     int argCount = BMSIZE(bitmap);
     int arity = getInfoPtr(argv[0].op)->funFields.arity - argCount;
     #ifdef DEBUGSTGAPPLY
@@ -2236,7 +2384,6 @@ DEFUN0(stgApplyPPN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0800000000000003UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -2254,6 +2401,10 @@ DEFUN0(stgApplyPPN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0800000000000001UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyN);
         break;
@@ -2273,7 +2424,6 @@ DEFUN0(stgApplyPPN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0400000000000001UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -2291,6 +2441,10 @@ DEFUN0(stgApplyPPN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0C00000000000003UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPN);
         break;
@@ -2319,6 +2473,18 @@ DEFUN0(stgApplyPPN) {
       pushargs(argCount, &argv[0].op->payload[fvCount+1]);
       // push the FUN
       pushargs(1, &argv[0]);
+      bitmap.bitmap.mask <<= 1;
+      bitmap.bitmap.mask |= 0x1;
+      bitmap.bitmap.size += 1;
+      bitmap2 = (Bitmap64)0x0C00000000000003UL;
+      bitmap2.bitmap.mask <<= (argCount + 1);
+      bitmap.bits += bitmap2.bits;
+      newframe = stgAllocStackCont( &it_stgStackCont, argCount+arity+1 );
+      newframe->layout = bitmap;
+      newframe->payload[0] = argv[0]; // self
+      memcpy(&newframe->payload[1], &argv[0].op->payload[fvCount+1], argCount * sizeof(PtrOrLiteral)); // old args
+      memcpy(&newframe->payload[1 + argCount], &argv[1], arity * sizeof(PtrOrLiteral));
+      newframe = stgPopCont();
       // tail call the FUN
       STGJUMP0(getInfoPtr(argv[0].op)->funFields.trueEntryCode);
 
@@ -2503,6 +2669,7 @@ DEFUN0(stgApplyNNP) {
     int fvCount = getInfoPtr(argv[0].op)->layoutInfo.boxedCount + 
                   getInfoPtr(argv[0].op)->layoutInfo.unboxedCount;
     Bitmap64 bitmap = argv[0].op->payload[fvCount].b;
+    Bitmap64 bitmap2;
     int argCount = BMSIZE(bitmap);
     int arity = getInfoPtr(argv[0].op)->funFields.arity - argCount;
     #ifdef DEBUGSTGAPPLY
@@ -2531,7 +2698,6 @@ DEFUN0(stgApplyNNP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0800000000000000UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -2549,6 +2715,10 @@ DEFUN0(stgApplyNNP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0800000000000003UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyP);
         break;
@@ -2568,7 +2738,6 @@ DEFUN0(stgApplyNNP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0400000000000000UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -2586,6 +2755,10 @@ DEFUN0(stgApplyNNP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0C00000000000005UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNP);
         break;
@@ -2614,6 +2787,18 @@ DEFUN0(stgApplyNNP) {
       pushargs(argCount, &argv[0].op->payload[fvCount+1]);
       // push the FUN
       pushargs(1, &argv[0]);
+      bitmap.bitmap.mask <<= 1;
+      bitmap.bitmap.mask |= 0x1;
+      bitmap.bitmap.size += 1;
+      bitmap2 = (Bitmap64)0x0C00000000000004UL;
+      bitmap2.bitmap.mask <<= (argCount + 1);
+      bitmap.bits += bitmap2.bits;
+      newframe = stgAllocStackCont( &it_stgStackCont, argCount+arity+1 );
+      newframe->layout = bitmap;
+      newframe->payload[0] = argv[0]; // self
+      memcpy(&newframe->payload[1], &argv[0].op->payload[fvCount+1], argCount * sizeof(PtrOrLiteral)); // old args
+      memcpy(&newframe->payload[1 + argCount], &argv[1], arity * sizeof(PtrOrLiteral));
+      newframe = stgPopCont();
       // tail call the FUN
       STGJUMP0(getInfoPtr(argv[0].op)->funFields.trueEntryCode);
 
@@ -2802,6 +2987,7 @@ DEFUN0(stgApplyPNP) {
     int fvCount = getInfoPtr(argv[0].op)->layoutInfo.boxedCount + 
                   getInfoPtr(argv[0].op)->layoutInfo.unboxedCount;
     Bitmap64 bitmap = argv[0].op->payload[fvCount].b;
+    Bitmap64 bitmap2;
     int argCount = BMSIZE(bitmap);
     int arity = getInfoPtr(argv[0].op)->funFields.arity - argCount;
     #ifdef DEBUGSTGAPPLY
@@ -2830,7 +3016,6 @@ DEFUN0(stgApplyPNP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0800000000000001UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -2848,6 +3033,10 @@ DEFUN0(stgApplyPNP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0800000000000003UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyP);
         break;
@@ -2867,7 +3056,6 @@ DEFUN0(stgApplyPNP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0400000000000001UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -2885,6 +3073,10 @@ DEFUN0(stgApplyPNP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0C00000000000005UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNP);
         break;
@@ -2913,6 +3105,18 @@ DEFUN0(stgApplyPNP) {
       pushargs(argCount, &argv[0].op->payload[fvCount+1]);
       // push the FUN
       pushargs(1, &argv[0]);
+      bitmap.bitmap.mask <<= 1;
+      bitmap.bitmap.mask |= 0x1;
+      bitmap.bitmap.size += 1;
+      bitmap2 = (Bitmap64)0x0C00000000000005UL;
+      bitmap2.bitmap.mask <<= (argCount + 1);
+      bitmap.bits += bitmap2.bits;
+      newframe = stgAllocStackCont( &it_stgStackCont, argCount+arity+1 );
+      newframe->layout = bitmap;
+      newframe->payload[0] = argv[0]; // self
+      memcpy(&newframe->payload[1], &argv[0].op->payload[fvCount+1], argCount * sizeof(PtrOrLiteral)); // old args
+      memcpy(&newframe->payload[1 + argCount], &argv[1], arity * sizeof(PtrOrLiteral));
+      newframe = stgPopCont();
       // tail call the FUN
       STGJUMP0(getInfoPtr(argv[0].op)->funFields.trueEntryCode);
 
@@ -3101,6 +3305,7 @@ DEFUN0(stgApplyNPP) {
     int fvCount = getInfoPtr(argv[0].op)->layoutInfo.boxedCount + 
                   getInfoPtr(argv[0].op)->layoutInfo.unboxedCount;
     Bitmap64 bitmap = argv[0].op->payload[fvCount].b;
+    Bitmap64 bitmap2;
     int argCount = BMSIZE(bitmap);
     int arity = getInfoPtr(argv[0].op)->funFields.arity - argCount;
     #ifdef DEBUGSTGAPPLY
@@ -3129,7 +3334,6 @@ DEFUN0(stgApplyNPP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0800000000000002UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -3147,6 +3351,10 @@ DEFUN0(stgApplyNPP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0800000000000003UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyP);
         break;
@@ -3166,7 +3374,6 @@ DEFUN0(stgApplyNPP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0400000000000000UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -3184,6 +3391,10 @@ DEFUN0(stgApplyNPP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0C00000000000007UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPP);
         break;
@@ -3212,6 +3423,18 @@ DEFUN0(stgApplyNPP) {
       pushargs(argCount, &argv[0].op->payload[fvCount+1]);
       // push the FUN
       pushargs(1, &argv[0]);
+      bitmap.bitmap.mask <<= 1;
+      bitmap.bitmap.mask |= 0x1;
+      bitmap.bitmap.size += 1;
+      bitmap2 = (Bitmap64)0x0C00000000000006UL;
+      bitmap2.bitmap.mask <<= (argCount + 1);
+      bitmap.bits += bitmap2.bits;
+      newframe = stgAllocStackCont( &it_stgStackCont, argCount+arity+1 );
+      newframe->layout = bitmap;
+      newframe->payload[0] = argv[0]; // self
+      memcpy(&newframe->payload[1], &argv[0].op->payload[fvCount+1], argCount * sizeof(PtrOrLiteral)); // old args
+      memcpy(&newframe->payload[1 + argCount], &argv[1], arity * sizeof(PtrOrLiteral));
+      newframe = stgPopCont();
       // tail call the FUN
       STGJUMP0(getInfoPtr(argv[0].op)->funFields.trueEntryCode);
 
@@ -3404,6 +3627,7 @@ DEFUN0(stgApplyPPP) {
     int fvCount = getInfoPtr(argv[0].op)->layoutInfo.boxedCount + 
                   getInfoPtr(argv[0].op)->layoutInfo.unboxedCount;
     Bitmap64 bitmap = argv[0].op->payload[fvCount].b;
+    Bitmap64 bitmap2;
     int argCount = BMSIZE(bitmap);
     int arity = getInfoPtr(argv[0].op)->funFields.arity - argCount;
     #ifdef DEBUGSTGAPPLY
@@ -3432,7 +3656,6 @@ DEFUN0(stgApplyPPP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0800000000000003UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -3450,6 +3673,10 @@ DEFUN0(stgApplyPPP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0800000000000003UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyP);
         break;
@@ -3469,7 +3696,6 @@ DEFUN0(stgApplyPPP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0400000000000001UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -3487,6 +3713,10 @@ DEFUN0(stgApplyPPP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0C00000000000007UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPP);
         break;
@@ -3515,6 +3745,18 @@ DEFUN0(stgApplyPPP) {
       pushargs(argCount, &argv[0].op->payload[fvCount+1]);
       // push the FUN
       pushargs(1, &argv[0]);
+      bitmap.bitmap.mask <<= 1;
+      bitmap.bitmap.mask |= 0x1;
+      bitmap.bitmap.size += 1;
+      bitmap2 = (Bitmap64)0x0C00000000000007UL;
+      bitmap2.bitmap.mask <<= (argCount + 1);
+      bitmap.bits += bitmap2.bits;
+      newframe = stgAllocStackCont( &it_stgStackCont, argCount+arity+1 );
+      newframe->layout = bitmap;
+      newframe->payload[0] = argv[0]; // self
+      memcpy(&newframe->payload[1], &argv[0].op->payload[fvCount+1], argCount * sizeof(PtrOrLiteral)); // old args
+      memcpy(&newframe->payload[1 + argCount], &argv[1], arity * sizeof(PtrOrLiteral));
+      newframe = stgPopCont();
       // tail call the FUN
       STGJUMP0(getInfoPtr(argv[0].op)->funFields.trueEntryCode);
 
@@ -3722,6 +3964,7 @@ DEFUN0(stgApplyNNNN) {
     int fvCount = getInfoPtr(argv[0].op)->layoutInfo.boxedCount + 
                   getInfoPtr(argv[0].op)->layoutInfo.unboxedCount;
     Bitmap64 bitmap = argv[0].op->payload[fvCount].b;
+    Bitmap64 bitmap2;
     int argCount = BMSIZE(bitmap);
     int arity = getInfoPtr(argv[0].op)->funFields.arity - argCount;
     #ifdef DEBUGSTGAPPLY
@@ -3750,7 +3993,6 @@ DEFUN0(stgApplyNNNN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0C00000000000000UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -3768,6 +4010,10 @@ DEFUN0(stgApplyNNNN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0800000000000001UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyN);
         break;
@@ -3787,7 +4033,6 @@ DEFUN0(stgApplyNNNN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0800000000000000UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -3805,6 +4050,10 @@ DEFUN0(stgApplyNNNN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0C00000000000001UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNN);
         break;
@@ -3824,7 +4073,6 @@ DEFUN0(stgApplyNNNN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0400000000000000UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -3842,6 +4090,10 @@ DEFUN0(stgApplyNNNN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x1000000000000001UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNNN);
         break;
@@ -3870,6 +4122,18 @@ DEFUN0(stgApplyNNNN) {
       pushargs(argCount, &argv[0].op->payload[fvCount+1]);
       // push the FUN
       pushargs(1, &argv[0]);
+      bitmap.bitmap.mask <<= 1;
+      bitmap.bitmap.mask |= 0x1;
+      bitmap.bitmap.size += 1;
+      bitmap2 = (Bitmap64)0x1000000000000000UL;
+      bitmap2.bitmap.mask <<= (argCount + 1);
+      bitmap.bits += bitmap2.bits;
+      newframe = stgAllocStackCont( &it_stgStackCont, argCount+arity+1 );
+      newframe->layout = bitmap;
+      newframe->payload[0] = argv[0]; // self
+      memcpy(&newframe->payload[1], &argv[0].op->payload[fvCount+1], argCount * sizeof(PtrOrLiteral)); // old args
+      memcpy(&newframe->payload[1 + argCount], &argv[1], arity * sizeof(PtrOrLiteral));
+      newframe = stgPopCont();
       // tail call the FUN
       STGJUMP0(getInfoPtr(argv[0].op)->funFields.trueEntryCode);
 
@@ -4081,6 +4345,7 @@ DEFUN0(stgApplyPNNN) {
     int fvCount = getInfoPtr(argv[0].op)->layoutInfo.boxedCount + 
                   getInfoPtr(argv[0].op)->layoutInfo.unboxedCount;
     Bitmap64 bitmap = argv[0].op->payload[fvCount].b;
+    Bitmap64 bitmap2;
     int argCount = BMSIZE(bitmap);
     int arity = getInfoPtr(argv[0].op)->funFields.arity - argCount;
     #ifdef DEBUGSTGAPPLY
@@ -4109,7 +4374,6 @@ DEFUN0(stgApplyPNNN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0C00000000000001UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -4127,6 +4391,10 @@ DEFUN0(stgApplyPNNN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0800000000000001UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyN);
         break;
@@ -4146,7 +4414,6 @@ DEFUN0(stgApplyPNNN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0800000000000001UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -4164,6 +4431,10 @@ DEFUN0(stgApplyPNNN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0C00000000000001UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNN);
         break;
@@ -4183,7 +4454,6 @@ DEFUN0(stgApplyPNNN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0400000000000001UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -4201,6 +4471,10 @@ DEFUN0(stgApplyPNNN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x1000000000000001UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNNN);
         break;
@@ -4229,6 +4503,18 @@ DEFUN0(stgApplyPNNN) {
       pushargs(argCount, &argv[0].op->payload[fvCount+1]);
       // push the FUN
       pushargs(1, &argv[0]);
+      bitmap.bitmap.mask <<= 1;
+      bitmap.bitmap.mask |= 0x1;
+      bitmap.bitmap.size += 1;
+      bitmap2 = (Bitmap64)0x1000000000000001UL;
+      bitmap2.bitmap.mask <<= (argCount + 1);
+      bitmap.bits += bitmap2.bits;
+      newframe = stgAllocStackCont( &it_stgStackCont, argCount+arity+1 );
+      newframe->layout = bitmap;
+      newframe->payload[0] = argv[0]; // self
+      memcpy(&newframe->payload[1], &argv[0].op->payload[fvCount+1], argCount * sizeof(PtrOrLiteral)); // old args
+      memcpy(&newframe->payload[1 + argCount], &argv[1], arity * sizeof(PtrOrLiteral));
+      newframe = stgPopCont();
       // tail call the FUN
       STGJUMP0(getInfoPtr(argv[0].op)->funFields.trueEntryCode);
 
@@ -4440,6 +4726,7 @@ DEFUN0(stgApplyNPNN) {
     int fvCount = getInfoPtr(argv[0].op)->layoutInfo.boxedCount + 
                   getInfoPtr(argv[0].op)->layoutInfo.unboxedCount;
     Bitmap64 bitmap = argv[0].op->payload[fvCount].b;
+    Bitmap64 bitmap2;
     int argCount = BMSIZE(bitmap);
     int arity = getInfoPtr(argv[0].op)->funFields.arity - argCount;
     #ifdef DEBUGSTGAPPLY
@@ -4468,7 +4755,6 @@ DEFUN0(stgApplyNPNN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0C00000000000002UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -4486,6 +4772,10 @@ DEFUN0(stgApplyNPNN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0800000000000001UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyN);
         break;
@@ -4505,7 +4795,6 @@ DEFUN0(stgApplyNPNN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0800000000000002UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -4523,6 +4812,10 @@ DEFUN0(stgApplyNPNN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0C00000000000001UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNN);
         break;
@@ -4542,7 +4835,6 @@ DEFUN0(stgApplyNPNN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0400000000000000UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -4560,6 +4852,10 @@ DEFUN0(stgApplyNPNN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x1000000000000003UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPNN);
         break;
@@ -4588,6 +4884,18 @@ DEFUN0(stgApplyNPNN) {
       pushargs(argCount, &argv[0].op->payload[fvCount+1]);
       // push the FUN
       pushargs(1, &argv[0]);
+      bitmap.bitmap.mask <<= 1;
+      bitmap.bitmap.mask |= 0x1;
+      bitmap.bitmap.size += 1;
+      bitmap2 = (Bitmap64)0x1000000000000002UL;
+      bitmap2.bitmap.mask <<= (argCount + 1);
+      bitmap.bits += bitmap2.bits;
+      newframe = stgAllocStackCont( &it_stgStackCont, argCount+arity+1 );
+      newframe->layout = bitmap;
+      newframe->payload[0] = argv[0]; // self
+      memcpy(&newframe->payload[1], &argv[0].op->payload[fvCount+1], argCount * sizeof(PtrOrLiteral)); // old args
+      memcpy(&newframe->payload[1 + argCount], &argv[1], arity * sizeof(PtrOrLiteral));
+      newframe = stgPopCont();
       // tail call the FUN
       STGJUMP0(getInfoPtr(argv[0].op)->funFields.trueEntryCode);
 
@@ -4803,6 +5111,7 @@ DEFUN0(stgApplyPPNN) {
     int fvCount = getInfoPtr(argv[0].op)->layoutInfo.boxedCount + 
                   getInfoPtr(argv[0].op)->layoutInfo.unboxedCount;
     Bitmap64 bitmap = argv[0].op->payload[fvCount].b;
+    Bitmap64 bitmap2;
     int argCount = BMSIZE(bitmap);
     int arity = getInfoPtr(argv[0].op)->funFields.arity - argCount;
     #ifdef DEBUGSTGAPPLY
@@ -4831,7 +5140,6 @@ DEFUN0(stgApplyPPNN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0C00000000000003UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -4849,6 +5157,10 @@ DEFUN0(stgApplyPPNN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0800000000000001UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyN);
         break;
@@ -4868,7 +5180,6 @@ DEFUN0(stgApplyPPNN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0800000000000003UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -4886,6 +5197,10 @@ DEFUN0(stgApplyPPNN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0C00000000000001UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNN);
         break;
@@ -4905,7 +5220,6 @@ DEFUN0(stgApplyPPNN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0400000000000001UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -4923,6 +5237,10 @@ DEFUN0(stgApplyPPNN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x1000000000000003UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPNN);
         break;
@@ -4951,6 +5269,18 @@ DEFUN0(stgApplyPPNN) {
       pushargs(argCount, &argv[0].op->payload[fvCount+1]);
       // push the FUN
       pushargs(1, &argv[0]);
+      bitmap.bitmap.mask <<= 1;
+      bitmap.bitmap.mask |= 0x1;
+      bitmap.bitmap.size += 1;
+      bitmap2 = (Bitmap64)0x1000000000000003UL;
+      bitmap2.bitmap.mask <<= (argCount + 1);
+      bitmap.bits += bitmap2.bits;
+      newframe = stgAllocStackCont( &it_stgStackCont, argCount+arity+1 );
+      newframe->layout = bitmap;
+      newframe->payload[0] = argv[0]; // self
+      memcpy(&newframe->payload[1], &argv[0].op->payload[fvCount+1], argCount * sizeof(PtrOrLiteral)); // old args
+      memcpy(&newframe->payload[1 + argCount], &argv[1], arity * sizeof(PtrOrLiteral));
+      newframe = stgPopCont();
       // tail call the FUN
       STGJUMP0(getInfoPtr(argv[0].op)->funFields.trueEntryCode);
 
@@ -5162,6 +5492,7 @@ DEFUN0(stgApplyNNPN) {
     int fvCount = getInfoPtr(argv[0].op)->layoutInfo.boxedCount + 
                   getInfoPtr(argv[0].op)->layoutInfo.unboxedCount;
     Bitmap64 bitmap = argv[0].op->payload[fvCount].b;
+    Bitmap64 bitmap2;
     int argCount = BMSIZE(bitmap);
     int arity = getInfoPtr(argv[0].op)->funFields.arity - argCount;
     #ifdef DEBUGSTGAPPLY
@@ -5190,7 +5521,6 @@ DEFUN0(stgApplyNNPN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0C00000000000004UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -5208,6 +5538,10 @@ DEFUN0(stgApplyNNPN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0800000000000001UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyN);
         break;
@@ -5227,7 +5561,6 @@ DEFUN0(stgApplyNNPN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0800000000000000UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -5245,6 +5578,10 @@ DEFUN0(stgApplyNNPN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0C00000000000003UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPN);
         break;
@@ -5264,7 +5601,6 @@ DEFUN0(stgApplyNNPN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0400000000000000UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -5282,6 +5618,10 @@ DEFUN0(stgApplyNNPN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x1000000000000005UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNPN);
         break;
@@ -5310,6 +5650,18 @@ DEFUN0(stgApplyNNPN) {
       pushargs(argCount, &argv[0].op->payload[fvCount+1]);
       // push the FUN
       pushargs(1, &argv[0]);
+      bitmap.bitmap.mask <<= 1;
+      bitmap.bitmap.mask |= 0x1;
+      bitmap.bitmap.size += 1;
+      bitmap2 = (Bitmap64)0x1000000000000004UL;
+      bitmap2.bitmap.mask <<= (argCount + 1);
+      bitmap.bits += bitmap2.bits;
+      newframe = stgAllocStackCont( &it_stgStackCont, argCount+arity+1 );
+      newframe->layout = bitmap;
+      newframe->payload[0] = argv[0]; // self
+      memcpy(&newframe->payload[1], &argv[0].op->payload[fvCount+1], argCount * sizeof(PtrOrLiteral)); // old args
+      memcpy(&newframe->payload[1 + argCount], &argv[1], arity * sizeof(PtrOrLiteral));
+      newframe = stgPopCont();
       // tail call the FUN
       STGJUMP0(getInfoPtr(argv[0].op)->funFields.trueEntryCode);
 
@@ -5525,6 +5877,7 @@ DEFUN0(stgApplyPNPN) {
     int fvCount = getInfoPtr(argv[0].op)->layoutInfo.boxedCount + 
                   getInfoPtr(argv[0].op)->layoutInfo.unboxedCount;
     Bitmap64 bitmap = argv[0].op->payload[fvCount].b;
+    Bitmap64 bitmap2;
     int argCount = BMSIZE(bitmap);
     int arity = getInfoPtr(argv[0].op)->funFields.arity - argCount;
     #ifdef DEBUGSTGAPPLY
@@ -5553,7 +5906,6 @@ DEFUN0(stgApplyPNPN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0C00000000000005UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -5571,6 +5923,10 @@ DEFUN0(stgApplyPNPN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0800000000000001UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyN);
         break;
@@ -5590,7 +5946,6 @@ DEFUN0(stgApplyPNPN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0800000000000001UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -5608,6 +5963,10 @@ DEFUN0(stgApplyPNPN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0C00000000000003UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPN);
         break;
@@ -5627,7 +5986,6 @@ DEFUN0(stgApplyPNPN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0400000000000001UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -5645,6 +6003,10 @@ DEFUN0(stgApplyPNPN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x1000000000000005UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNPN);
         break;
@@ -5673,6 +6035,18 @@ DEFUN0(stgApplyPNPN) {
       pushargs(argCount, &argv[0].op->payload[fvCount+1]);
       // push the FUN
       pushargs(1, &argv[0]);
+      bitmap.bitmap.mask <<= 1;
+      bitmap.bitmap.mask |= 0x1;
+      bitmap.bitmap.size += 1;
+      bitmap2 = (Bitmap64)0x1000000000000005UL;
+      bitmap2.bitmap.mask <<= (argCount + 1);
+      bitmap.bits += bitmap2.bits;
+      newframe = stgAllocStackCont( &it_stgStackCont, argCount+arity+1 );
+      newframe->layout = bitmap;
+      newframe->payload[0] = argv[0]; // self
+      memcpy(&newframe->payload[1], &argv[0].op->payload[fvCount+1], argCount * sizeof(PtrOrLiteral)); // old args
+      memcpy(&newframe->payload[1 + argCount], &argv[1], arity * sizeof(PtrOrLiteral));
+      newframe = stgPopCont();
       // tail call the FUN
       STGJUMP0(getInfoPtr(argv[0].op)->funFields.trueEntryCode);
 
@@ -5888,6 +6262,7 @@ DEFUN0(stgApplyNPPN) {
     int fvCount = getInfoPtr(argv[0].op)->layoutInfo.boxedCount + 
                   getInfoPtr(argv[0].op)->layoutInfo.unboxedCount;
     Bitmap64 bitmap = argv[0].op->payload[fvCount].b;
+    Bitmap64 bitmap2;
     int argCount = BMSIZE(bitmap);
     int arity = getInfoPtr(argv[0].op)->funFields.arity - argCount;
     #ifdef DEBUGSTGAPPLY
@@ -5916,7 +6291,6 @@ DEFUN0(stgApplyNPPN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0C00000000000006UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -5934,6 +6308,10 @@ DEFUN0(stgApplyNPPN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0800000000000001UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyN);
         break;
@@ -5953,7 +6331,6 @@ DEFUN0(stgApplyNPPN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0800000000000002UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -5971,6 +6348,10 @@ DEFUN0(stgApplyNPPN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0C00000000000003UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPN);
         break;
@@ -5990,7 +6371,6 @@ DEFUN0(stgApplyNPPN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0400000000000000UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -6008,6 +6388,10 @@ DEFUN0(stgApplyNPPN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x1000000000000007UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPPN);
         break;
@@ -6036,6 +6420,18 @@ DEFUN0(stgApplyNPPN) {
       pushargs(argCount, &argv[0].op->payload[fvCount+1]);
       // push the FUN
       pushargs(1, &argv[0]);
+      bitmap.bitmap.mask <<= 1;
+      bitmap.bitmap.mask |= 0x1;
+      bitmap.bitmap.size += 1;
+      bitmap2 = (Bitmap64)0x1000000000000006UL;
+      bitmap2.bitmap.mask <<= (argCount + 1);
+      bitmap.bits += bitmap2.bits;
+      newframe = stgAllocStackCont( &it_stgStackCont, argCount+arity+1 );
+      newframe->layout = bitmap;
+      newframe->payload[0] = argv[0]; // self
+      memcpy(&newframe->payload[1], &argv[0].op->payload[fvCount+1], argCount * sizeof(PtrOrLiteral)); // old args
+      memcpy(&newframe->payload[1 + argCount], &argv[1], arity * sizeof(PtrOrLiteral));
+      newframe = stgPopCont();
       // tail call the FUN
       STGJUMP0(getInfoPtr(argv[0].op)->funFields.trueEntryCode);
 
@@ -6255,6 +6651,7 @@ DEFUN0(stgApplyPPPN) {
     int fvCount = getInfoPtr(argv[0].op)->layoutInfo.boxedCount + 
                   getInfoPtr(argv[0].op)->layoutInfo.unboxedCount;
     Bitmap64 bitmap = argv[0].op->payload[fvCount].b;
+    Bitmap64 bitmap2;
     int argCount = BMSIZE(bitmap);
     int arity = getInfoPtr(argv[0].op)->funFields.arity - argCount;
     #ifdef DEBUGSTGAPPLY
@@ -6283,7 +6680,6 @@ DEFUN0(stgApplyPPPN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0C00000000000007UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -6301,6 +6697,10 @@ DEFUN0(stgApplyPPPN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0800000000000001UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyN);
         break;
@@ -6320,7 +6720,6 @@ DEFUN0(stgApplyPPPN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0800000000000003UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -6338,6 +6737,10 @@ DEFUN0(stgApplyPPPN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0C00000000000003UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPN);
         break;
@@ -6357,7 +6760,6 @@ DEFUN0(stgApplyPPPN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0400000000000001UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -6375,6 +6777,10 @@ DEFUN0(stgApplyPPPN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x1000000000000007UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPPN);
         break;
@@ -6403,6 +6809,18 @@ DEFUN0(stgApplyPPPN) {
       pushargs(argCount, &argv[0].op->payload[fvCount+1]);
       // push the FUN
       pushargs(1, &argv[0]);
+      bitmap.bitmap.mask <<= 1;
+      bitmap.bitmap.mask |= 0x1;
+      bitmap.bitmap.size += 1;
+      bitmap2 = (Bitmap64)0x1000000000000007UL;
+      bitmap2.bitmap.mask <<= (argCount + 1);
+      bitmap.bits += bitmap2.bits;
+      newframe = stgAllocStackCont( &it_stgStackCont, argCount+arity+1 );
+      newframe->layout = bitmap;
+      newframe->payload[0] = argv[0]; // self
+      memcpy(&newframe->payload[1], &argv[0].op->payload[fvCount+1], argCount * sizeof(PtrOrLiteral)); // old args
+      memcpy(&newframe->payload[1 + argCount], &argv[1], arity * sizeof(PtrOrLiteral));
+      newframe = stgPopCont();
       // tail call the FUN
       STGJUMP0(getInfoPtr(argv[0].op)->funFields.trueEntryCode);
 
@@ -6614,6 +7032,7 @@ DEFUN0(stgApplyNNNP) {
     int fvCount = getInfoPtr(argv[0].op)->layoutInfo.boxedCount + 
                   getInfoPtr(argv[0].op)->layoutInfo.unboxedCount;
     Bitmap64 bitmap = argv[0].op->payload[fvCount].b;
+    Bitmap64 bitmap2;
     int argCount = BMSIZE(bitmap);
     int arity = getInfoPtr(argv[0].op)->funFields.arity - argCount;
     #ifdef DEBUGSTGAPPLY
@@ -6642,7 +7061,6 @@ DEFUN0(stgApplyNNNP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0C00000000000000UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -6660,6 +7078,10 @@ DEFUN0(stgApplyNNNP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0800000000000003UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyP);
         break;
@@ -6679,7 +7101,6 @@ DEFUN0(stgApplyNNNP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0800000000000000UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -6697,6 +7118,10 @@ DEFUN0(stgApplyNNNP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0C00000000000005UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNP);
         break;
@@ -6716,7 +7141,6 @@ DEFUN0(stgApplyNNNP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0400000000000000UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -6734,6 +7158,10 @@ DEFUN0(stgApplyNNNP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x1000000000000009UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNNP);
         break;
@@ -6762,6 +7190,18 @@ DEFUN0(stgApplyNNNP) {
       pushargs(argCount, &argv[0].op->payload[fvCount+1]);
       // push the FUN
       pushargs(1, &argv[0]);
+      bitmap.bitmap.mask <<= 1;
+      bitmap.bitmap.mask |= 0x1;
+      bitmap.bitmap.size += 1;
+      bitmap2 = (Bitmap64)0x1000000000000008UL;
+      bitmap2.bitmap.mask <<= (argCount + 1);
+      bitmap.bits += bitmap2.bits;
+      newframe = stgAllocStackCont( &it_stgStackCont, argCount+arity+1 );
+      newframe->layout = bitmap;
+      newframe->payload[0] = argv[0]; // self
+      memcpy(&newframe->payload[1], &argv[0].op->payload[fvCount+1], argCount * sizeof(PtrOrLiteral)); // old args
+      memcpy(&newframe->payload[1 + argCount], &argv[1], arity * sizeof(PtrOrLiteral));
+      newframe = stgPopCont();
       // tail call the FUN
       STGJUMP0(getInfoPtr(argv[0].op)->funFields.trueEntryCode);
 
@@ -6977,6 +7417,7 @@ DEFUN0(stgApplyPNNP) {
     int fvCount = getInfoPtr(argv[0].op)->layoutInfo.boxedCount + 
                   getInfoPtr(argv[0].op)->layoutInfo.unboxedCount;
     Bitmap64 bitmap = argv[0].op->payload[fvCount].b;
+    Bitmap64 bitmap2;
     int argCount = BMSIZE(bitmap);
     int arity = getInfoPtr(argv[0].op)->funFields.arity - argCount;
     #ifdef DEBUGSTGAPPLY
@@ -7005,7 +7446,6 @@ DEFUN0(stgApplyPNNP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0C00000000000001UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -7023,6 +7463,10 @@ DEFUN0(stgApplyPNNP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0800000000000003UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyP);
         break;
@@ -7042,7 +7486,6 @@ DEFUN0(stgApplyPNNP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0800000000000001UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -7060,6 +7503,10 @@ DEFUN0(stgApplyPNNP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0C00000000000005UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNP);
         break;
@@ -7079,7 +7526,6 @@ DEFUN0(stgApplyPNNP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0400000000000001UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -7097,6 +7543,10 @@ DEFUN0(stgApplyPNNP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x1000000000000009UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNNP);
         break;
@@ -7125,6 +7575,18 @@ DEFUN0(stgApplyPNNP) {
       pushargs(argCount, &argv[0].op->payload[fvCount+1]);
       // push the FUN
       pushargs(1, &argv[0]);
+      bitmap.bitmap.mask <<= 1;
+      bitmap.bitmap.mask |= 0x1;
+      bitmap.bitmap.size += 1;
+      bitmap2 = (Bitmap64)0x1000000000000009UL;
+      bitmap2.bitmap.mask <<= (argCount + 1);
+      bitmap.bits += bitmap2.bits;
+      newframe = stgAllocStackCont( &it_stgStackCont, argCount+arity+1 );
+      newframe->layout = bitmap;
+      newframe->payload[0] = argv[0]; // self
+      memcpy(&newframe->payload[1], &argv[0].op->payload[fvCount+1], argCount * sizeof(PtrOrLiteral)); // old args
+      memcpy(&newframe->payload[1 + argCount], &argv[1], arity * sizeof(PtrOrLiteral));
+      newframe = stgPopCont();
       // tail call the FUN
       STGJUMP0(getInfoPtr(argv[0].op)->funFields.trueEntryCode);
 
@@ -7340,6 +7802,7 @@ DEFUN0(stgApplyNPNP) {
     int fvCount = getInfoPtr(argv[0].op)->layoutInfo.boxedCount + 
                   getInfoPtr(argv[0].op)->layoutInfo.unboxedCount;
     Bitmap64 bitmap = argv[0].op->payload[fvCount].b;
+    Bitmap64 bitmap2;
     int argCount = BMSIZE(bitmap);
     int arity = getInfoPtr(argv[0].op)->funFields.arity - argCount;
     #ifdef DEBUGSTGAPPLY
@@ -7368,7 +7831,6 @@ DEFUN0(stgApplyNPNP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0C00000000000002UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -7386,6 +7848,10 @@ DEFUN0(stgApplyNPNP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0800000000000003UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyP);
         break;
@@ -7405,7 +7871,6 @@ DEFUN0(stgApplyNPNP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0800000000000002UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -7423,6 +7888,10 @@ DEFUN0(stgApplyNPNP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0C00000000000005UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNP);
         break;
@@ -7442,7 +7911,6 @@ DEFUN0(stgApplyNPNP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0400000000000000UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -7460,6 +7928,10 @@ DEFUN0(stgApplyNPNP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x100000000000000BUL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPNP);
         break;
@@ -7488,6 +7960,18 @@ DEFUN0(stgApplyNPNP) {
       pushargs(argCount, &argv[0].op->payload[fvCount+1]);
       // push the FUN
       pushargs(1, &argv[0]);
+      bitmap.bitmap.mask <<= 1;
+      bitmap.bitmap.mask |= 0x1;
+      bitmap.bitmap.size += 1;
+      bitmap2 = (Bitmap64)0x100000000000000AUL;
+      bitmap2.bitmap.mask <<= (argCount + 1);
+      bitmap.bits += bitmap2.bits;
+      newframe = stgAllocStackCont( &it_stgStackCont, argCount+arity+1 );
+      newframe->layout = bitmap;
+      newframe->payload[0] = argv[0]; // self
+      memcpy(&newframe->payload[1], &argv[0].op->payload[fvCount+1], argCount * sizeof(PtrOrLiteral)); // old args
+      memcpy(&newframe->payload[1 + argCount], &argv[1], arity * sizeof(PtrOrLiteral));
+      newframe = stgPopCont();
       // tail call the FUN
       STGJUMP0(getInfoPtr(argv[0].op)->funFields.trueEntryCode);
 
@@ -7707,6 +8191,7 @@ DEFUN0(stgApplyPPNP) {
     int fvCount = getInfoPtr(argv[0].op)->layoutInfo.boxedCount + 
                   getInfoPtr(argv[0].op)->layoutInfo.unboxedCount;
     Bitmap64 bitmap = argv[0].op->payload[fvCount].b;
+    Bitmap64 bitmap2;
     int argCount = BMSIZE(bitmap);
     int arity = getInfoPtr(argv[0].op)->funFields.arity - argCount;
     #ifdef DEBUGSTGAPPLY
@@ -7735,7 +8220,6 @@ DEFUN0(stgApplyPPNP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0C00000000000003UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -7753,6 +8237,10 @@ DEFUN0(stgApplyPPNP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0800000000000003UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyP);
         break;
@@ -7772,7 +8260,6 @@ DEFUN0(stgApplyPPNP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0800000000000003UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -7790,6 +8277,10 @@ DEFUN0(stgApplyPPNP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0C00000000000005UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNP);
         break;
@@ -7809,7 +8300,6 @@ DEFUN0(stgApplyPPNP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0400000000000001UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -7827,6 +8317,10 @@ DEFUN0(stgApplyPPNP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x100000000000000BUL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPNP);
         break;
@@ -7855,6 +8349,18 @@ DEFUN0(stgApplyPPNP) {
       pushargs(argCount, &argv[0].op->payload[fvCount+1]);
       // push the FUN
       pushargs(1, &argv[0]);
+      bitmap.bitmap.mask <<= 1;
+      bitmap.bitmap.mask |= 0x1;
+      bitmap.bitmap.size += 1;
+      bitmap2 = (Bitmap64)0x100000000000000BUL;
+      bitmap2.bitmap.mask <<= (argCount + 1);
+      bitmap.bits += bitmap2.bits;
+      newframe = stgAllocStackCont( &it_stgStackCont, argCount+arity+1 );
+      newframe->layout = bitmap;
+      newframe->payload[0] = argv[0]; // self
+      memcpy(&newframe->payload[1], &argv[0].op->payload[fvCount+1], argCount * sizeof(PtrOrLiteral)); // old args
+      memcpy(&newframe->payload[1 + argCount], &argv[1], arity * sizeof(PtrOrLiteral));
+      newframe = stgPopCont();
       // tail call the FUN
       STGJUMP0(getInfoPtr(argv[0].op)->funFields.trueEntryCode);
 
@@ -8070,6 +8576,7 @@ DEFUN0(stgApplyNNPP) {
     int fvCount = getInfoPtr(argv[0].op)->layoutInfo.boxedCount + 
                   getInfoPtr(argv[0].op)->layoutInfo.unboxedCount;
     Bitmap64 bitmap = argv[0].op->payload[fvCount].b;
+    Bitmap64 bitmap2;
     int argCount = BMSIZE(bitmap);
     int arity = getInfoPtr(argv[0].op)->funFields.arity - argCount;
     #ifdef DEBUGSTGAPPLY
@@ -8098,7 +8605,6 @@ DEFUN0(stgApplyNNPP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0C00000000000004UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -8116,6 +8622,10 @@ DEFUN0(stgApplyNNPP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0800000000000003UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyP);
         break;
@@ -8135,7 +8645,6 @@ DEFUN0(stgApplyNNPP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0800000000000000UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -8153,6 +8662,10 @@ DEFUN0(stgApplyNNPP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0C00000000000007UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPP);
         break;
@@ -8172,7 +8685,6 @@ DEFUN0(stgApplyNNPP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0400000000000000UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -8190,6 +8702,10 @@ DEFUN0(stgApplyNNPP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x100000000000000DUL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNPP);
         break;
@@ -8218,6 +8734,18 @@ DEFUN0(stgApplyNNPP) {
       pushargs(argCount, &argv[0].op->payload[fvCount+1]);
       // push the FUN
       pushargs(1, &argv[0]);
+      bitmap.bitmap.mask <<= 1;
+      bitmap.bitmap.mask |= 0x1;
+      bitmap.bitmap.size += 1;
+      bitmap2 = (Bitmap64)0x100000000000000CUL;
+      bitmap2.bitmap.mask <<= (argCount + 1);
+      bitmap.bits += bitmap2.bits;
+      newframe = stgAllocStackCont( &it_stgStackCont, argCount+arity+1 );
+      newframe->layout = bitmap;
+      newframe->payload[0] = argv[0]; // self
+      memcpy(&newframe->payload[1], &argv[0].op->payload[fvCount+1], argCount * sizeof(PtrOrLiteral)); // old args
+      memcpy(&newframe->payload[1 + argCount], &argv[1], arity * sizeof(PtrOrLiteral));
+      newframe = stgPopCont();
       // tail call the FUN
       STGJUMP0(getInfoPtr(argv[0].op)->funFields.trueEntryCode);
 
@@ -8437,6 +8965,7 @@ DEFUN0(stgApplyPNPP) {
     int fvCount = getInfoPtr(argv[0].op)->layoutInfo.boxedCount + 
                   getInfoPtr(argv[0].op)->layoutInfo.unboxedCount;
     Bitmap64 bitmap = argv[0].op->payload[fvCount].b;
+    Bitmap64 bitmap2;
     int argCount = BMSIZE(bitmap);
     int arity = getInfoPtr(argv[0].op)->funFields.arity - argCount;
     #ifdef DEBUGSTGAPPLY
@@ -8465,7 +8994,6 @@ DEFUN0(stgApplyPNPP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0C00000000000005UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -8483,6 +9011,10 @@ DEFUN0(stgApplyPNPP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0800000000000003UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyP);
         break;
@@ -8502,7 +9034,6 @@ DEFUN0(stgApplyPNPP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0800000000000001UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -8520,6 +9051,10 @@ DEFUN0(stgApplyPNPP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0C00000000000007UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPP);
         break;
@@ -8539,7 +9074,6 @@ DEFUN0(stgApplyPNPP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0400000000000001UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -8557,6 +9091,10 @@ DEFUN0(stgApplyPNPP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x100000000000000DUL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNPP);
         break;
@@ -8585,6 +9123,18 @@ DEFUN0(stgApplyPNPP) {
       pushargs(argCount, &argv[0].op->payload[fvCount+1]);
       // push the FUN
       pushargs(1, &argv[0]);
+      bitmap.bitmap.mask <<= 1;
+      bitmap.bitmap.mask |= 0x1;
+      bitmap.bitmap.size += 1;
+      bitmap2 = (Bitmap64)0x100000000000000DUL;
+      bitmap2.bitmap.mask <<= (argCount + 1);
+      bitmap.bits += bitmap2.bits;
+      newframe = stgAllocStackCont( &it_stgStackCont, argCount+arity+1 );
+      newframe->layout = bitmap;
+      newframe->payload[0] = argv[0]; // self
+      memcpy(&newframe->payload[1], &argv[0].op->payload[fvCount+1], argCount * sizeof(PtrOrLiteral)); // old args
+      memcpy(&newframe->payload[1 + argCount], &argv[1], arity * sizeof(PtrOrLiteral));
+      newframe = stgPopCont();
       // tail call the FUN
       STGJUMP0(getInfoPtr(argv[0].op)->funFields.trueEntryCode);
 
@@ -8804,6 +9354,7 @@ DEFUN0(stgApplyNPPP) {
     int fvCount = getInfoPtr(argv[0].op)->layoutInfo.boxedCount + 
                   getInfoPtr(argv[0].op)->layoutInfo.unboxedCount;
     Bitmap64 bitmap = argv[0].op->payload[fvCount].b;
+    Bitmap64 bitmap2;
     int argCount = BMSIZE(bitmap);
     int arity = getInfoPtr(argv[0].op)->funFields.arity - argCount;
     #ifdef DEBUGSTGAPPLY
@@ -8832,7 +9383,6 @@ DEFUN0(stgApplyNPPP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0C00000000000006UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -8850,6 +9400,10 @@ DEFUN0(stgApplyNPPP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0800000000000003UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyP);
         break;
@@ -8869,7 +9423,6 @@ DEFUN0(stgApplyNPPP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0800000000000002UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -8887,6 +9440,10 @@ DEFUN0(stgApplyNPPP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0C00000000000007UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPP);
         break;
@@ -8906,7 +9463,6 @@ DEFUN0(stgApplyNPPP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0400000000000000UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -8924,6 +9480,10 @@ DEFUN0(stgApplyNPPP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x100000000000000FUL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPPP);
         break;
@@ -8952,6 +9512,18 @@ DEFUN0(stgApplyNPPP) {
       pushargs(argCount, &argv[0].op->payload[fvCount+1]);
       // push the FUN
       pushargs(1, &argv[0]);
+      bitmap.bitmap.mask <<= 1;
+      bitmap.bitmap.mask |= 0x1;
+      bitmap.bitmap.size += 1;
+      bitmap2 = (Bitmap64)0x100000000000000EUL;
+      bitmap2.bitmap.mask <<= (argCount + 1);
+      bitmap.bits += bitmap2.bits;
+      newframe = stgAllocStackCont( &it_stgStackCont, argCount+arity+1 );
+      newframe->layout = bitmap;
+      newframe->payload[0] = argv[0]; // self
+      memcpy(&newframe->payload[1], &argv[0].op->payload[fvCount+1], argCount * sizeof(PtrOrLiteral)); // old args
+      memcpy(&newframe->payload[1 + argCount], &argv[1], arity * sizeof(PtrOrLiteral));
+      newframe = stgPopCont();
       // tail call the FUN
       STGJUMP0(getInfoPtr(argv[0].op)->funFields.trueEntryCode);
 
@@ -9175,6 +9747,7 @@ DEFUN0(stgApplyPPPP) {
     int fvCount = getInfoPtr(argv[0].op)->layoutInfo.boxedCount + 
                   getInfoPtr(argv[0].op)->layoutInfo.unboxedCount;
     Bitmap64 bitmap = argv[0].op->payload[fvCount].b;
+    Bitmap64 bitmap2;
     int argCount = BMSIZE(bitmap);
     int arity = getInfoPtr(argv[0].op)->funFields.arity - argCount;
     #ifdef DEBUGSTGAPPLY
@@ -9203,7 +9776,6 @@ DEFUN0(stgApplyPPPP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0C00000000000007UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -9221,6 +9793,10 @@ DEFUN0(stgApplyPPPP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0800000000000003UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyP);
         break;
@@ -9240,7 +9816,6 @@ DEFUN0(stgApplyPPPP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0800000000000003UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -9258,6 +9833,10 @@ DEFUN0(stgApplyPPPP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0C00000000000007UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPP);
         break;
@@ -9277,7 +9856,6 @@ DEFUN0(stgApplyPPPP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0400000000000001UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -9295,6 +9873,10 @@ DEFUN0(stgApplyPPPP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x100000000000000FUL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPPP);
         break;
@@ -9323,6 +9905,18 @@ DEFUN0(stgApplyPPPP) {
       pushargs(argCount, &argv[0].op->payload[fvCount+1]);
       // push the FUN
       pushargs(1, &argv[0]);
+      bitmap.bitmap.mask <<= 1;
+      bitmap.bitmap.mask |= 0x1;
+      bitmap.bitmap.size += 1;
+      bitmap2 = (Bitmap64)0x100000000000000FUL;
+      bitmap2.bitmap.mask <<= (argCount + 1);
+      bitmap.bits += bitmap2.bits;
+      newframe = stgAllocStackCont( &it_stgStackCont, argCount+arity+1 );
+      newframe->layout = bitmap;
+      newframe->payload[0] = argv[0]; // self
+      memcpy(&newframe->payload[1], &argv[0].op->payload[fvCount+1], argCount * sizeof(PtrOrLiteral)); // old args
+      memcpy(&newframe->payload[1 + argCount], &argv[1], arity * sizeof(PtrOrLiteral));
+      newframe = stgPopCont();
       // tail call the FUN
       STGJUMP0(getInfoPtr(argv[0].op)->funFields.trueEntryCode);
 
@@ -9557,6 +10151,7 @@ DEFUN0(stgApplyNNNNN) {
     int fvCount = getInfoPtr(argv[0].op)->layoutInfo.boxedCount + 
                   getInfoPtr(argv[0].op)->layoutInfo.unboxedCount;
     Bitmap64 bitmap = argv[0].op->payload[fvCount].b;
+    Bitmap64 bitmap2;
     int argCount = BMSIZE(bitmap);
     int arity = getInfoPtr(argv[0].op)->funFields.arity - argCount;
     #ifdef DEBUGSTGAPPLY
@@ -9585,7 +10180,6 @@ DEFUN0(stgApplyNNNNN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x1000000000000000UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -9603,6 +10197,10 @@ DEFUN0(stgApplyNNNNN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0800000000000001UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyN);
         break;
@@ -9622,7 +10220,6 @@ DEFUN0(stgApplyNNNNN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0C00000000000000UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -9640,6 +10237,10 @@ DEFUN0(stgApplyNNNNN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0C00000000000001UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNN);
         break;
@@ -9659,7 +10260,6 @@ DEFUN0(stgApplyNNNNN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0800000000000000UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -9677,6 +10277,10 @@ DEFUN0(stgApplyNNNNN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x1000000000000001UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNNN);
         break;
@@ -9696,7 +10300,6 @@ DEFUN0(stgApplyNNNNN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0400000000000000UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -9714,6 +10317,10 @@ DEFUN0(stgApplyNNNNN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x1400000000000001UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNNNN);
         break;
@@ -9742,6 +10349,18 @@ DEFUN0(stgApplyNNNNN) {
       pushargs(argCount, &argv[0].op->payload[fvCount+1]);
       // push the FUN
       pushargs(1, &argv[0]);
+      bitmap.bitmap.mask <<= 1;
+      bitmap.bitmap.mask |= 0x1;
+      bitmap.bitmap.size += 1;
+      bitmap2 = (Bitmap64)0x1400000000000000UL;
+      bitmap2.bitmap.mask <<= (argCount + 1);
+      bitmap.bits += bitmap2.bits;
+      newframe = stgAllocStackCont( &it_stgStackCont, argCount+arity+1 );
+      newframe->layout = bitmap;
+      newframe->payload[0] = argv[0]; // self
+      memcpy(&newframe->payload[1], &argv[0].op->payload[fvCount+1], argCount * sizeof(PtrOrLiteral)); // old args
+      memcpy(&newframe->payload[1 + argCount], &argv[1], arity * sizeof(PtrOrLiteral));
+      newframe = stgPopCont();
       // tail call the FUN
       STGJUMP0(getInfoPtr(argv[0].op)->funFields.trueEntryCode);
 
@@ -9980,6 +10599,7 @@ DEFUN0(stgApplyPNNNN) {
     int fvCount = getInfoPtr(argv[0].op)->layoutInfo.boxedCount + 
                   getInfoPtr(argv[0].op)->layoutInfo.unboxedCount;
     Bitmap64 bitmap = argv[0].op->payload[fvCount].b;
+    Bitmap64 bitmap2;
     int argCount = BMSIZE(bitmap);
     int arity = getInfoPtr(argv[0].op)->funFields.arity - argCount;
     #ifdef DEBUGSTGAPPLY
@@ -10008,7 +10628,6 @@ DEFUN0(stgApplyPNNNN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x1000000000000001UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -10026,6 +10645,10 @@ DEFUN0(stgApplyPNNNN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0800000000000001UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyN);
         break;
@@ -10045,7 +10668,6 @@ DEFUN0(stgApplyPNNNN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0C00000000000001UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -10063,6 +10685,10 @@ DEFUN0(stgApplyPNNNN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0C00000000000001UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNN);
         break;
@@ -10082,7 +10708,6 @@ DEFUN0(stgApplyPNNNN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0800000000000001UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -10100,6 +10725,10 @@ DEFUN0(stgApplyPNNNN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x1000000000000001UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNNN);
         break;
@@ -10119,7 +10748,6 @@ DEFUN0(stgApplyPNNNN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0400000000000001UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -10137,6 +10765,10 @@ DEFUN0(stgApplyPNNNN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x1400000000000001UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNNNN);
         break;
@@ -10165,6 +10797,18 @@ DEFUN0(stgApplyPNNNN) {
       pushargs(argCount, &argv[0].op->payload[fvCount+1]);
       // push the FUN
       pushargs(1, &argv[0]);
+      bitmap.bitmap.mask <<= 1;
+      bitmap.bitmap.mask |= 0x1;
+      bitmap.bitmap.size += 1;
+      bitmap2 = (Bitmap64)0x1400000000000001UL;
+      bitmap2.bitmap.mask <<= (argCount + 1);
+      bitmap.bits += bitmap2.bits;
+      newframe = stgAllocStackCont( &it_stgStackCont, argCount+arity+1 );
+      newframe->layout = bitmap;
+      newframe->payload[0] = argv[0]; // self
+      memcpy(&newframe->payload[1], &argv[0].op->payload[fvCount+1], argCount * sizeof(PtrOrLiteral)); // old args
+      memcpy(&newframe->payload[1 + argCount], &argv[1], arity * sizeof(PtrOrLiteral));
+      newframe = stgPopCont();
       // tail call the FUN
       STGJUMP0(getInfoPtr(argv[0].op)->funFields.trueEntryCode);
 
@@ -10403,6 +11047,7 @@ DEFUN0(stgApplyNPNNN) {
     int fvCount = getInfoPtr(argv[0].op)->layoutInfo.boxedCount + 
                   getInfoPtr(argv[0].op)->layoutInfo.unboxedCount;
     Bitmap64 bitmap = argv[0].op->payload[fvCount].b;
+    Bitmap64 bitmap2;
     int argCount = BMSIZE(bitmap);
     int arity = getInfoPtr(argv[0].op)->funFields.arity - argCount;
     #ifdef DEBUGSTGAPPLY
@@ -10431,7 +11076,6 @@ DEFUN0(stgApplyNPNNN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x1000000000000002UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -10449,6 +11093,10 @@ DEFUN0(stgApplyNPNNN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0800000000000001UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyN);
         break;
@@ -10468,7 +11116,6 @@ DEFUN0(stgApplyNPNNN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0C00000000000002UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -10486,6 +11133,10 @@ DEFUN0(stgApplyNPNNN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0C00000000000001UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNN);
         break;
@@ -10505,7 +11156,6 @@ DEFUN0(stgApplyNPNNN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0800000000000002UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -10523,6 +11173,10 @@ DEFUN0(stgApplyNPNNN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x1000000000000001UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNNN);
         break;
@@ -10542,7 +11196,6 @@ DEFUN0(stgApplyNPNNN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0400000000000000UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -10560,6 +11213,10 @@ DEFUN0(stgApplyNPNNN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x1400000000000003UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPNNN);
         break;
@@ -10588,6 +11245,18 @@ DEFUN0(stgApplyNPNNN) {
       pushargs(argCount, &argv[0].op->payload[fvCount+1]);
       // push the FUN
       pushargs(1, &argv[0]);
+      bitmap.bitmap.mask <<= 1;
+      bitmap.bitmap.mask |= 0x1;
+      bitmap.bitmap.size += 1;
+      bitmap2 = (Bitmap64)0x1400000000000002UL;
+      bitmap2.bitmap.mask <<= (argCount + 1);
+      bitmap.bits += bitmap2.bits;
+      newframe = stgAllocStackCont( &it_stgStackCont, argCount+arity+1 );
+      newframe->layout = bitmap;
+      newframe->payload[0] = argv[0]; // self
+      memcpy(&newframe->payload[1], &argv[0].op->payload[fvCount+1], argCount * sizeof(PtrOrLiteral)); // old args
+      memcpy(&newframe->payload[1 + argCount], &argv[1], arity * sizeof(PtrOrLiteral));
+      newframe = stgPopCont();
       // tail call the FUN
       STGJUMP0(getInfoPtr(argv[0].op)->funFields.trueEntryCode);
 
@@ -10830,6 +11499,7 @@ DEFUN0(stgApplyPPNNN) {
     int fvCount = getInfoPtr(argv[0].op)->layoutInfo.boxedCount + 
                   getInfoPtr(argv[0].op)->layoutInfo.unboxedCount;
     Bitmap64 bitmap = argv[0].op->payload[fvCount].b;
+    Bitmap64 bitmap2;
     int argCount = BMSIZE(bitmap);
     int arity = getInfoPtr(argv[0].op)->funFields.arity - argCount;
     #ifdef DEBUGSTGAPPLY
@@ -10858,7 +11528,6 @@ DEFUN0(stgApplyPPNNN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x1000000000000003UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -10876,6 +11545,10 @@ DEFUN0(stgApplyPPNNN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0800000000000001UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyN);
         break;
@@ -10895,7 +11568,6 @@ DEFUN0(stgApplyPPNNN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0C00000000000003UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -10913,6 +11585,10 @@ DEFUN0(stgApplyPPNNN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0C00000000000001UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNN);
         break;
@@ -10932,7 +11608,6 @@ DEFUN0(stgApplyPPNNN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0800000000000003UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -10950,6 +11625,10 @@ DEFUN0(stgApplyPPNNN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x1000000000000001UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNNN);
         break;
@@ -10969,7 +11648,6 @@ DEFUN0(stgApplyPPNNN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0400000000000001UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -10987,6 +11665,10 @@ DEFUN0(stgApplyPPNNN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x1400000000000003UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPNNN);
         break;
@@ -11015,6 +11697,18 @@ DEFUN0(stgApplyPPNNN) {
       pushargs(argCount, &argv[0].op->payload[fvCount+1]);
       // push the FUN
       pushargs(1, &argv[0]);
+      bitmap.bitmap.mask <<= 1;
+      bitmap.bitmap.mask |= 0x1;
+      bitmap.bitmap.size += 1;
+      bitmap2 = (Bitmap64)0x1400000000000003UL;
+      bitmap2.bitmap.mask <<= (argCount + 1);
+      bitmap.bits += bitmap2.bits;
+      newframe = stgAllocStackCont( &it_stgStackCont, argCount+arity+1 );
+      newframe->layout = bitmap;
+      newframe->payload[0] = argv[0]; // self
+      memcpy(&newframe->payload[1], &argv[0].op->payload[fvCount+1], argCount * sizeof(PtrOrLiteral)); // old args
+      memcpy(&newframe->payload[1 + argCount], &argv[1], arity * sizeof(PtrOrLiteral));
+      newframe = stgPopCont();
       // tail call the FUN
       STGJUMP0(getInfoPtr(argv[0].op)->funFields.trueEntryCode);
 
@@ -11253,6 +11947,7 @@ DEFUN0(stgApplyNNPNN) {
     int fvCount = getInfoPtr(argv[0].op)->layoutInfo.boxedCount + 
                   getInfoPtr(argv[0].op)->layoutInfo.unboxedCount;
     Bitmap64 bitmap = argv[0].op->payload[fvCount].b;
+    Bitmap64 bitmap2;
     int argCount = BMSIZE(bitmap);
     int arity = getInfoPtr(argv[0].op)->funFields.arity - argCount;
     #ifdef DEBUGSTGAPPLY
@@ -11281,7 +11976,6 @@ DEFUN0(stgApplyNNPNN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x1000000000000004UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -11299,6 +11993,10 @@ DEFUN0(stgApplyNNPNN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0800000000000001UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyN);
         break;
@@ -11318,7 +12016,6 @@ DEFUN0(stgApplyNNPNN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0C00000000000004UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -11336,6 +12033,10 @@ DEFUN0(stgApplyNNPNN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0C00000000000001UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNN);
         break;
@@ -11355,7 +12056,6 @@ DEFUN0(stgApplyNNPNN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0800000000000000UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -11373,6 +12073,10 @@ DEFUN0(stgApplyNNPNN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x1000000000000003UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPNN);
         break;
@@ -11392,7 +12096,6 @@ DEFUN0(stgApplyNNPNN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0400000000000000UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -11410,6 +12113,10 @@ DEFUN0(stgApplyNNPNN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x1400000000000005UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNPNN);
         break;
@@ -11438,6 +12145,18 @@ DEFUN0(stgApplyNNPNN) {
       pushargs(argCount, &argv[0].op->payload[fvCount+1]);
       // push the FUN
       pushargs(1, &argv[0]);
+      bitmap.bitmap.mask <<= 1;
+      bitmap.bitmap.mask |= 0x1;
+      bitmap.bitmap.size += 1;
+      bitmap2 = (Bitmap64)0x1400000000000004UL;
+      bitmap2.bitmap.mask <<= (argCount + 1);
+      bitmap.bits += bitmap2.bits;
+      newframe = stgAllocStackCont( &it_stgStackCont, argCount+arity+1 );
+      newframe->layout = bitmap;
+      newframe->payload[0] = argv[0]; // self
+      memcpy(&newframe->payload[1], &argv[0].op->payload[fvCount+1], argCount * sizeof(PtrOrLiteral)); // old args
+      memcpy(&newframe->payload[1 + argCount], &argv[1], arity * sizeof(PtrOrLiteral));
+      newframe = stgPopCont();
       // tail call the FUN
       STGJUMP0(getInfoPtr(argv[0].op)->funFields.trueEntryCode);
 
@@ -11680,6 +12399,7 @@ DEFUN0(stgApplyPNPNN) {
     int fvCount = getInfoPtr(argv[0].op)->layoutInfo.boxedCount + 
                   getInfoPtr(argv[0].op)->layoutInfo.unboxedCount;
     Bitmap64 bitmap = argv[0].op->payload[fvCount].b;
+    Bitmap64 bitmap2;
     int argCount = BMSIZE(bitmap);
     int arity = getInfoPtr(argv[0].op)->funFields.arity - argCount;
     #ifdef DEBUGSTGAPPLY
@@ -11708,7 +12428,6 @@ DEFUN0(stgApplyPNPNN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x1000000000000005UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -11726,6 +12445,10 @@ DEFUN0(stgApplyPNPNN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0800000000000001UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyN);
         break;
@@ -11745,7 +12468,6 @@ DEFUN0(stgApplyPNPNN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0C00000000000005UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -11763,6 +12485,10 @@ DEFUN0(stgApplyPNPNN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0C00000000000001UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNN);
         break;
@@ -11782,7 +12508,6 @@ DEFUN0(stgApplyPNPNN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0800000000000001UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -11800,6 +12525,10 @@ DEFUN0(stgApplyPNPNN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x1000000000000003UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPNN);
         break;
@@ -11819,7 +12548,6 @@ DEFUN0(stgApplyPNPNN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0400000000000001UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -11837,6 +12565,10 @@ DEFUN0(stgApplyPNPNN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x1400000000000005UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNPNN);
         break;
@@ -11865,6 +12597,18 @@ DEFUN0(stgApplyPNPNN) {
       pushargs(argCount, &argv[0].op->payload[fvCount+1]);
       // push the FUN
       pushargs(1, &argv[0]);
+      bitmap.bitmap.mask <<= 1;
+      bitmap.bitmap.mask |= 0x1;
+      bitmap.bitmap.size += 1;
+      bitmap2 = (Bitmap64)0x1400000000000005UL;
+      bitmap2.bitmap.mask <<= (argCount + 1);
+      bitmap.bits += bitmap2.bits;
+      newframe = stgAllocStackCont( &it_stgStackCont, argCount+arity+1 );
+      newframe->layout = bitmap;
+      newframe->payload[0] = argv[0]; // self
+      memcpy(&newframe->payload[1], &argv[0].op->payload[fvCount+1], argCount * sizeof(PtrOrLiteral)); // old args
+      memcpy(&newframe->payload[1 + argCount], &argv[1], arity * sizeof(PtrOrLiteral));
+      newframe = stgPopCont();
       // tail call the FUN
       STGJUMP0(getInfoPtr(argv[0].op)->funFields.trueEntryCode);
 
@@ -12107,6 +12851,7 @@ DEFUN0(stgApplyNPPNN) {
     int fvCount = getInfoPtr(argv[0].op)->layoutInfo.boxedCount + 
                   getInfoPtr(argv[0].op)->layoutInfo.unboxedCount;
     Bitmap64 bitmap = argv[0].op->payload[fvCount].b;
+    Bitmap64 bitmap2;
     int argCount = BMSIZE(bitmap);
     int arity = getInfoPtr(argv[0].op)->funFields.arity - argCount;
     #ifdef DEBUGSTGAPPLY
@@ -12135,7 +12880,6 @@ DEFUN0(stgApplyNPPNN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x1000000000000006UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -12153,6 +12897,10 @@ DEFUN0(stgApplyNPPNN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0800000000000001UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyN);
         break;
@@ -12172,7 +12920,6 @@ DEFUN0(stgApplyNPPNN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0C00000000000006UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -12190,6 +12937,10 @@ DEFUN0(stgApplyNPPNN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0C00000000000001UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNN);
         break;
@@ -12209,7 +12960,6 @@ DEFUN0(stgApplyNPPNN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0800000000000002UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -12227,6 +12977,10 @@ DEFUN0(stgApplyNPPNN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x1000000000000003UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPNN);
         break;
@@ -12246,7 +13000,6 @@ DEFUN0(stgApplyNPPNN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0400000000000000UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -12264,6 +13017,10 @@ DEFUN0(stgApplyNPPNN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x1400000000000007UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPPNN);
         break;
@@ -12292,6 +13049,18 @@ DEFUN0(stgApplyNPPNN) {
       pushargs(argCount, &argv[0].op->payload[fvCount+1]);
       // push the FUN
       pushargs(1, &argv[0]);
+      bitmap.bitmap.mask <<= 1;
+      bitmap.bitmap.mask |= 0x1;
+      bitmap.bitmap.size += 1;
+      bitmap2 = (Bitmap64)0x1400000000000006UL;
+      bitmap2.bitmap.mask <<= (argCount + 1);
+      bitmap.bits += bitmap2.bits;
+      newframe = stgAllocStackCont( &it_stgStackCont, argCount+arity+1 );
+      newframe->layout = bitmap;
+      newframe->payload[0] = argv[0]; // self
+      memcpy(&newframe->payload[1], &argv[0].op->payload[fvCount+1], argCount * sizeof(PtrOrLiteral)); // old args
+      memcpy(&newframe->payload[1 + argCount], &argv[1], arity * sizeof(PtrOrLiteral));
+      newframe = stgPopCont();
       // tail call the FUN
       STGJUMP0(getInfoPtr(argv[0].op)->funFields.trueEntryCode);
 
@@ -12538,6 +13307,7 @@ DEFUN0(stgApplyPPPNN) {
     int fvCount = getInfoPtr(argv[0].op)->layoutInfo.boxedCount + 
                   getInfoPtr(argv[0].op)->layoutInfo.unboxedCount;
     Bitmap64 bitmap = argv[0].op->payload[fvCount].b;
+    Bitmap64 bitmap2;
     int argCount = BMSIZE(bitmap);
     int arity = getInfoPtr(argv[0].op)->funFields.arity - argCount;
     #ifdef DEBUGSTGAPPLY
@@ -12566,7 +13336,6 @@ DEFUN0(stgApplyPPPNN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x1000000000000007UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -12584,6 +13353,10 @@ DEFUN0(stgApplyPPPNN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0800000000000001UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyN);
         break;
@@ -12603,7 +13376,6 @@ DEFUN0(stgApplyPPPNN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0C00000000000007UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -12621,6 +13393,10 @@ DEFUN0(stgApplyPPPNN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0C00000000000001UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNN);
         break;
@@ -12640,7 +13416,6 @@ DEFUN0(stgApplyPPPNN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0800000000000003UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -12658,6 +13433,10 @@ DEFUN0(stgApplyPPPNN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x1000000000000003UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPNN);
         break;
@@ -12677,7 +13456,6 @@ DEFUN0(stgApplyPPPNN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0400000000000001UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -12695,6 +13473,10 @@ DEFUN0(stgApplyPPPNN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x1400000000000007UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPPNN);
         break;
@@ -12723,6 +13505,18 @@ DEFUN0(stgApplyPPPNN) {
       pushargs(argCount, &argv[0].op->payload[fvCount+1]);
       // push the FUN
       pushargs(1, &argv[0]);
+      bitmap.bitmap.mask <<= 1;
+      bitmap.bitmap.mask |= 0x1;
+      bitmap.bitmap.size += 1;
+      bitmap2 = (Bitmap64)0x1400000000000007UL;
+      bitmap2.bitmap.mask <<= (argCount + 1);
+      bitmap.bits += bitmap2.bits;
+      newframe = stgAllocStackCont( &it_stgStackCont, argCount+arity+1 );
+      newframe->layout = bitmap;
+      newframe->payload[0] = argv[0]; // self
+      memcpy(&newframe->payload[1], &argv[0].op->payload[fvCount+1], argCount * sizeof(PtrOrLiteral)); // old args
+      memcpy(&newframe->payload[1 + argCount], &argv[1], arity * sizeof(PtrOrLiteral));
+      newframe = stgPopCont();
       // tail call the FUN
       STGJUMP0(getInfoPtr(argv[0].op)->funFields.trueEntryCode);
 
@@ -12961,6 +13755,7 @@ DEFUN0(stgApplyNNNPN) {
     int fvCount = getInfoPtr(argv[0].op)->layoutInfo.boxedCount + 
                   getInfoPtr(argv[0].op)->layoutInfo.unboxedCount;
     Bitmap64 bitmap = argv[0].op->payload[fvCount].b;
+    Bitmap64 bitmap2;
     int argCount = BMSIZE(bitmap);
     int arity = getInfoPtr(argv[0].op)->funFields.arity - argCount;
     #ifdef DEBUGSTGAPPLY
@@ -12989,7 +13784,6 @@ DEFUN0(stgApplyNNNPN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x1000000000000008UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -13007,6 +13801,10 @@ DEFUN0(stgApplyNNNPN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0800000000000001UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyN);
         break;
@@ -13026,7 +13824,6 @@ DEFUN0(stgApplyNNNPN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0C00000000000000UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -13044,6 +13841,10 @@ DEFUN0(stgApplyNNNPN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0C00000000000003UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPN);
         break;
@@ -13063,7 +13864,6 @@ DEFUN0(stgApplyNNNPN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0800000000000000UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -13081,6 +13881,10 @@ DEFUN0(stgApplyNNNPN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x1000000000000005UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNPN);
         break;
@@ -13100,7 +13904,6 @@ DEFUN0(stgApplyNNNPN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0400000000000000UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -13118,6 +13921,10 @@ DEFUN0(stgApplyNNNPN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x1400000000000009UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNNPN);
         break;
@@ -13146,6 +13953,18 @@ DEFUN0(stgApplyNNNPN) {
       pushargs(argCount, &argv[0].op->payload[fvCount+1]);
       // push the FUN
       pushargs(1, &argv[0]);
+      bitmap.bitmap.mask <<= 1;
+      bitmap.bitmap.mask |= 0x1;
+      bitmap.bitmap.size += 1;
+      bitmap2 = (Bitmap64)0x1400000000000008UL;
+      bitmap2.bitmap.mask <<= (argCount + 1);
+      bitmap.bits += bitmap2.bits;
+      newframe = stgAllocStackCont( &it_stgStackCont, argCount+arity+1 );
+      newframe->layout = bitmap;
+      newframe->payload[0] = argv[0]; // self
+      memcpy(&newframe->payload[1], &argv[0].op->payload[fvCount+1], argCount * sizeof(PtrOrLiteral)); // old args
+      memcpy(&newframe->payload[1 + argCount], &argv[1], arity * sizeof(PtrOrLiteral));
+      newframe = stgPopCont();
       // tail call the FUN
       STGJUMP0(getInfoPtr(argv[0].op)->funFields.trueEntryCode);
 
@@ -13388,6 +14207,7 @@ DEFUN0(stgApplyPNNPN) {
     int fvCount = getInfoPtr(argv[0].op)->layoutInfo.boxedCount + 
                   getInfoPtr(argv[0].op)->layoutInfo.unboxedCount;
     Bitmap64 bitmap = argv[0].op->payload[fvCount].b;
+    Bitmap64 bitmap2;
     int argCount = BMSIZE(bitmap);
     int arity = getInfoPtr(argv[0].op)->funFields.arity - argCount;
     #ifdef DEBUGSTGAPPLY
@@ -13416,7 +14236,6 @@ DEFUN0(stgApplyPNNPN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x1000000000000009UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -13434,6 +14253,10 @@ DEFUN0(stgApplyPNNPN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0800000000000001UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyN);
         break;
@@ -13453,7 +14276,6 @@ DEFUN0(stgApplyPNNPN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0C00000000000001UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -13471,6 +14293,10 @@ DEFUN0(stgApplyPNNPN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0C00000000000003UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPN);
         break;
@@ -13490,7 +14316,6 @@ DEFUN0(stgApplyPNNPN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0800000000000001UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -13508,6 +14333,10 @@ DEFUN0(stgApplyPNNPN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x1000000000000005UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNPN);
         break;
@@ -13527,7 +14356,6 @@ DEFUN0(stgApplyPNNPN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0400000000000001UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -13545,6 +14373,10 @@ DEFUN0(stgApplyPNNPN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x1400000000000009UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNNPN);
         break;
@@ -13573,6 +14405,18 @@ DEFUN0(stgApplyPNNPN) {
       pushargs(argCount, &argv[0].op->payload[fvCount+1]);
       // push the FUN
       pushargs(1, &argv[0]);
+      bitmap.bitmap.mask <<= 1;
+      bitmap.bitmap.mask |= 0x1;
+      bitmap.bitmap.size += 1;
+      bitmap2 = (Bitmap64)0x1400000000000009UL;
+      bitmap2.bitmap.mask <<= (argCount + 1);
+      bitmap.bits += bitmap2.bits;
+      newframe = stgAllocStackCont( &it_stgStackCont, argCount+arity+1 );
+      newframe->layout = bitmap;
+      newframe->payload[0] = argv[0]; // self
+      memcpy(&newframe->payload[1], &argv[0].op->payload[fvCount+1], argCount * sizeof(PtrOrLiteral)); // old args
+      memcpy(&newframe->payload[1 + argCount], &argv[1], arity * sizeof(PtrOrLiteral));
+      newframe = stgPopCont();
       // tail call the FUN
       STGJUMP0(getInfoPtr(argv[0].op)->funFields.trueEntryCode);
 
@@ -13815,6 +14659,7 @@ DEFUN0(stgApplyNPNPN) {
     int fvCount = getInfoPtr(argv[0].op)->layoutInfo.boxedCount + 
                   getInfoPtr(argv[0].op)->layoutInfo.unboxedCount;
     Bitmap64 bitmap = argv[0].op->payload[fvCount].b;
+    Bitmap64 bitmap2;
     int argCount = BMSIZE(bitmap);
     int arity = getInfoPtr(argv[0].op)->funFields.arity - argCount;
     #ifdef DEBUGSTGAPPLY
@@ -13843,7 +14688,6 @@ DEFUN0(stgApplyNPNPN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x100000000000000AUL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -13861,6 +14705,10 @@ DEFUN0(stgApplyNPNPN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0800000000000001UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyN);
         break;
@@ -13880,7 +14728,6 @@ DEFUN0(stgApplyNPNPN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0C00000000000002UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -13898,6 +14745,10 @@ DEFUN0(stgApplyNPNPN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0C00000000000003UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPN);
         break;
@@ -13917,7 +14768,6 @@ DEFUN0(stgApplyNPNPN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0800000000000002UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -13935,6 +14785,10 @@ DEFUN0(stgApplyNPNPN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x1000000000000005UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNPN);
         break;
@@ -13954,7 +14808,6 @@ DEFUN0(stgApplyNPNPN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0400000000000000UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -13972,6 +14825,10 @@ DEFUN0(stgApplyNPNPN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x140000000000000BUL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPNPN);
         break;
@@ -14000,6 +14857,18 @@ DEFUN0(stgApplyNPNPN) {
       pushargs(argCount, &argv[0].op->payload[fvCount+1]);
       // push the FUN
       pushargs(1, &argv[0]);
+      bitmap.bitmap.mask <<= 1;
+      bitmap.bitmap.mask |= 0x1;
+      bitmap.bitmap.size += 1;
+      bitmap2 = (Bitmap64)0x140000000000000AUL;
+      bitmap2.bitmap.mask <<= (argCount + 1);
+      bitmap.bits += bitmap2.bits;
+      newframe = stgAllocStackCont( &it_stgStackCont, argCount+arity+1 );
+      newframe->layout = bitmap;
+      newframe->payload[0] = argv[0]; // self
+      memcpy(&newframe->payload[1], &argv[0].op->payload[fvCount+1], argCount * sizeof(PtrOrLiteral)); // old args
+      memcpy(&newframe->payload[1 + argCount], &argv[1], arity * sizeof(PtrOrLiteral));
+      newframe = stgPopCont();
       // tail call the FUN
       STGJUMP0(getInfoPtr(argv[0].op)->funFields.trueEntryCode);
 
@@ -14246,6 +15115,7 @@ DEFUN0(stgApplyPPNPN) {
     int fvCount = getInfoPtr(argv[0].op)->layoutInfo.boxedCount + 
                   getInfoPtr(argv[0].op)->layoutInfo.unboxedCount;
     Bitmap64 bitmap = argv[0].op->payload[fvCount].b;
+    Bitmap64 bitmap2;
     int argCount = BMSIZE(bitmap);
     int arity = getInfoPtr(argv[0].op)->funFields.arity - argCount;
     #ifdef DEBUGSTGAPPLY
@@ -14274,7 +15144,6 @@ DEFUN0(stgApplyPPNPN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x100000000000000BUL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -14292,6 +15161,10 @@ DEFUN0(stgApplyPPNPN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0800000000000001UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyN);
         break;
@@ -14311,7 +15184,6 @@ DEFUN0(stgApplyPPNPN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0C00000000000003UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -14329,6 +15201,10 @@ DEFUN0(stgApplyPPNPN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0C00000000000003UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPN);
         break;
@@ -14348,7 +15224,6 @@ DEFUN0(stgApplyPPNPN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0800000000000003UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -14366,6 +15241,10 @@ DEFUN0(stgApplyPPNPN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x1000000000000005UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNPN);
         break;
@@ -14385,7 +15264,6 @@ DEFUN0(stgApplyPPNPN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0400000000000001UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -14403,6 +15281,10 @@ DEFUN0(stgApplyPPNPN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x140000000000000BUL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPNPN);
         break;
@@ -14431,6 +15313,18 @@ DEFUN0(stgApplyPPNPN) {
       pushargs(argCount, &argv[0].op->payload[fvCount+1]);
       // push the FUN
       pushargs(1, &argv[0]);
+      bitmap.bitmap.mask <<= 1;
+      bitmap.bitmap.mask |= 0x1;
+      bitmap.bitmap.size += 1;
+      bitmap2 = (Bitmap64)0x140000000000000BUL;
+      bitmap2.bitmap.mask <<= (argCount + 1);
+      bitmap.bits += bitmap2.bits;
+      newframe = stgAllocStackCont( &it_stgStackCont, argCount+arity+1 );
+      newframe->layout = bitmap;
+      newframe->payload[0] = argv[0]; // self
+      memcpy(&newframe->payload[1], &argv[0].op->payload[fvCount+1], argCount * sizeof(PtrOrLiteral)); // old args
+      memcpy(&newframe->payload[1 + argCount], &argv[1], arity * sizeof(PtrOrLiteral));
+      newframe = stgPopCont();
       // tail call the FUN
       STGJUMP0(getInfoPtr(argv[0].op)->funFields.trueEntryCode);
 
@@ -14673,6 +15567,7 @@ DEFUN0(stgApplyNNPPN) {
     int fvCount = getInfoPtr(argv[0].op)->layoutInfo.boxedCount + 
                   getInfoPtr(argv[0].op)->layoutInfo.unboxedCount;
     Bitmap64 bitmap = argv[0].op->payload[fvCount].b;
+    Bitmap64 bitmap2;
     int argCount = BMSIZE(bitmap);
     int arity = getInfoPtr(argv[0].op)->funFields.arity - argCount;
     #ifdef DEBUGSTGAPPLY
@@ -14701,7 +15596,6 @@ DEFUN0(stgApplyNNPPN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x100000000000000CUL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -14719,6 +15613,10 @@ DEFUN0(stgApplyNNPPN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0800000000000001UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyN);
         break;
@@ -14738,7 +15636,6 @@ DEFUN0(stgApplyNNPPN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0C00000000000004UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -14756,6 +15653,10 @@ DEFUN0(stgApplyNNPPN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0C00000000000003UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPN);
         break;
@@ -14775,7 +15676,6 @@ DEFUN0(stgApplyNNPPN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0800000000000000UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -14793,6 +15693,10 @@ DEFUN0(stgApplyNNPPN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x1000000000000007UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPPN);
         break;
@@ -14812,7 +15716,6 @@ DEFUN0(stgApplyNNPPN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0400000000000000UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -14830,6 +15733,10 @@ DEFUN0(stgApplyNNPPN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x140000000000000DUL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNPPN);
         break;
@@ -14858,6 +15765,18 @@ DEFUN0(stgApplyNNPPN) {
       pushargs(argCount, &argv[0].op->payload[fvCount+1]);
       // push the FUN
       pushargs(1, &argv[0]);
+      bitmap.bitmap.mask <<= 1;
+      bitmap.bitmap.mask |= 0x1;
+      bitmap.bitmap.size += 1;
+      bitmap2 = (Bitmap64)0x140000000000000CUL;
+      bitmap2.bitmap.mask <<= (argCount + 1);
+      bitmap.bits += bitmap2.bits;
+      newframe = stgAllocStackCont( &it_stgStackCont, argCount+arity+1 );
+      newframe->layout = bitmap;
+      newframe->payload[0] = argv[0]; // self
+      memcpy(&newframe->payload[1], &argv[0].op->payload[fvCount+1], argCount * sizeof(PtrOrLiteral)); // old args
+      memcpy(&newframe->payload[1 + argCount], &argv[1], arity * sizeof(PtrOrLiteral));
+      newframe = stgPopCont();
       // tail call the FUN
       STGJUMP0(getInfoPtr(argv[0].op)->funFields.trueEntryCode);
 
@@ -15104,6 +16023,7 @@ DEFUN0(stgApplyPNPPN) {
     int fvCount = getInfoPtr(argv[0].op)->layoutInfo.boxedCount + 
                   getInfoPtr(argv[0].op)->layoutInfo.unboxedCount;
     Bitmap64 bitmap = argv[0].op->payload[fvCount].b;
+    Bitmap64 bitmap2;
     int argCount = BMSIZE(bitmap);
     int arity = getInfoPtr(argv[0].op)->funFields.arity - argCount;
     #ifdef DEBUGSTGAPPLY
@@ -15132,7 +16052,6 @@ DEFUN0(stgApplyPNPPN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x100000000000000DUL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -15150,6 +16069,10 @@ DEFUN0(stgApplyPNPPN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0800000000000001UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyN);
         break;
@@ -15169,7 +16092,6 @@ DEFUN0(stgApplyPNPPN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0C00000000000005UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -15187,6 +16109,10 @@ DEFUN0(stgApplyPNPPN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0C00000000000003UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPN);
         break;
@@ -15206,7 +16132,6 @@ DEFUN0(stgApplyPNPPN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0800000000000001UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -15224,6 +16149,10 @@ DEFUN0(stgApplyPNPPN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x1000000000000007UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPPN);
         break;
@@ -15243,7 +16172,6 @@ DEFUN0(stgApplyPNPPN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0400000000000001UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -15261,6 +16189,10 @@ DEFUN0(stgApplyPNPPN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x140000000000000DUL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNPPN);
         break;
@@ -15289,6 +16221,18 @@ DEFUN0(stgApplyPNPPN) {
       pushargs(argCount, &argv[0].op->payload[fvCount+1]);
       // push the FUN
       pushargs(1, &argv[0]);
+      bitmap.bitmap.mask <<= 1;
+      bitmap.bitmap.mask |= 0x1;
+      bitmap.bitmap.size += 1;
+      bitmap2 = (Bitmap64)0x140000000000000DUL;
+      bitmap2.bitmap.mask <<= (argCount + 1);
+      bitmap.bits += bitmap2.bits;
+      newframe = stgAllocStackCont( &it_stgStackCont, argCount+arity+1 );
+      newframe->layout = bitmap;
+      newframe->payload[0] = argv[0]; // self
+      memcpy(&newframe->payload[1], &argv[0].op->payload[fvCount+1], argCount * sizeof(PtrOrLiteral)); // old args
+      memcpy(&newframe->payload[1 + argCount], &argv[1], arity * sizeof(PtrOrLiteral));
+      newframe = stgPopCont();
       // tail call the FUN
       STGJUMP0(getInfoPtr(argv[0].op)->funFields.trueEntryCode);
 
@@ -15535,6 +16479,7 @@ DEFUN0(stgApplyNPPPN) {
     int fvCount = getInfoPtr(argv[0].op)->layoutInfo.boxedCount + 
                   getInfoPtr(argv[0].op)->layoutInfo.unboxedCount;
     Bitmap64 bitmap = argv[0].op->payload[fvCount].b;
+    Bitmap64 bitmap2;
     int argCount = BMSIZE(bitmap);
     int arity = getInfoPtr(argv[0].op)->funFields.arity - argCount;
     #ifdef DEBUGSTGAPPLY
@@ -15563,7 +16508,6 @@ DEFUN0(stgApplyNPPPN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x100000000000000EUL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -15581,6 +16525,10 @@ DEFUN0(stgApplyNPPPN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0800000000000001UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyN);
         break;
@@ -15600,7 +16548,6 @@ DEFUN0(stgApplyNPPPN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0C00000000000006UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -15618,6 +16565,10 @@ DEFUN0(stgApplyNPPPN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0C00000000000003UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPN);
         break;
@@ -15637,7 +16588,6 @@ DEFUN0(stgApplyNPPPN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0800000000000002UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -15655,6 +16605,10 @@ DEFUN0(stgApplyNPPPN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x1000000000000007UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPPN);
         break;
@@ -15674,7 +16628,6 @@ DEFUN0(stgApplyNPPPN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0400000000000000UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -15692,6 +16645,10 @@ DEFUN0(stgApplyNPPPN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x140000000000000FUL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPPPN);
         break;
@@ -15720,6 +16677,18 @@ DEFUN0(stgApplyNPPPN) {
       pushargs(argCount, &argv[0].op->payload[fvCount+1]);
       // push the FUN
       pushargs(1, &argv[0]);
+      bitmap.bitmap.mask <<= 1;
+      bitmap.bitmap.mask |= 0x1;
+      bitmap.bitmap.size += 1;
+      bitmap2 = (Bitmap64)0x140000000000000EUL;
+      bitmap2.bitmap.mask <<= (argCount + 1);
+      bitmap.bits += bitmap2.bits;
+      newframe = stgAllocStackCont( &it_stgStackCont, argCount+arity+1 );
+      newframe->layout = bitmap;
+      newframe->payload[0] = argv[0]; // self
+      memcpy(&newframe->payload[1], &argv[0].op->payload[fvCount+1], argCount * sizeof(PtrOrLiteral)); // old args
+      memcpy(&newframe->payload[1 + argCount], &argv[1], arity * sizeof(PtrOrLiteral));
+      newframe = stgPopCont();
       // tail call the FUN
       STGJUMP0(getInfoPtr(argv[0].op)->funFields.trueEntryCode);
 
@@ -15970,6 +16939,7 @@ DEFUN0(stgApplyPPPPN) {
     int fvCount = getInfoPtr(argv[0].op)->layoutInfo.boxedCount + 
                   getInfoPtr(argv[0].op)->layoutInfo.unboxedCount;
     Bitmap64 bitmap = argv[0].op->payload[fvCount].b;
+    Bitmap64 bitmap2;
     int argCount = BMSIZE(bitmap);
     int arity = getInfoPtr(argv[0].op)->funFields.arity - argCount;
     #ifdef DEBUGSTGAPPLY
@@ -15998,7 +16968,6 @@ DEFUN0(stgApplyPPPPN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x100000000000000FUL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -16016,6 +16985,10 @@ DEFUN0(stgApplyPPPPN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0800000000000001UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyN);
         break;
@@ -16035,7 +17008,6 @@ DEFUN0(stgApplyPPPPN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0C00000000000007UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -16053,6 +17025,10 @@ DEFUN0(stgApplyPPPPN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0C00000000000003UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPN);
         break;
@@ -16072,7 +17048,6 @@ DEFUN0(stgApplyPPPPN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0800000000000003UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -16090,6 +17065,10 @@ DEFUN0(stgApplyPPPPN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x1000000000000007UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPPN);
         break;
@@ -16109,7 +17088,6 @@ DEFUN0(stgApplyPPPPN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0400000000000001UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -16127,6 +17105,10 @@ DEFUN0(stgApplyPPPPN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x140000000000000FUL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPPPN);
         break;
@@ -16155,6 +17137,18 @@ DEFUN0(stgApplyPPPPN) {
       pushargs(argCount, &argv[0].op->payload[fvCount+1]);
       // push the FUN
       pushargs(1, &argv[0]);
+      bitmap.bitmap.mask <<= 1;
+      bitmap.bitmap.mask |= 0x1;
+      bitmap.bitmap.size += 1;
+      bitmap2 = (Bitmap64)0x140000000000000FUL;
+      bitmap2.bitmap.mask <<= (argCount + 1);
+      bitmap.bits += bitmap2.bits;
+      newframe = stgAllocStackCont( &it_stgStackCont, argCount+arity+1 );
+      newframe->layout = bitmap;
+      newframe->payload[0] = argv[0]; // self
+      memcpy(&newframe->payload[1], &argv[0].op->payload[fvCount+1], argCount * sizeof(PtrOrLiteral)); // old args
+      memcpy(&newframe->payload[1 + argCount], &argv[1], arity * sizeof(PtrOrLiteral));
+      newframe = stgPopCont();
       // tail call the FUN
       STGJUMP0(getInfoPtr(argv[0].op)->funFields.trueEntryCode);
 
@@ -16393,6 +17387,7 @@ DEFUN0(stgApplyNNNNP) {
     int fvCount = getInfoPtr(argv[0].op)->layoutInfo.boxedCount + 
                   getInfoPtr(argv[0].op)->layoutInfo.unboxedCount;
     Bitmap64 bitmap = argv[0].op->payload[fvCount].b;
+    Bitmap64 bitmap2;
     int argCount = BMSIZE(bitmap);
     int arity = getInfoPtr(argv[0].op)->funFields.arity - argCount;
     #ifdef DEBUGSTGAPPLY
@@ -16421,7 +17416,6 @@ DEFUN0(stgApplyNNNNP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x1000000000000000UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -16439,6 +17433,10 @@ DEFUN0(stgApplyNNNNP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0800000000000003UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyP);
         break;
@@ -16458,7 +17456,6 @@ DEFUN0(stgApplyNNNNP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0C00000000000000UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -16476,6 +17473,10 @@ DEFUN0(stgApplyNNNNP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0C00000000000005UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNP);
         break;
@@ -16495,7 +17496,6 @@ DEFUN0(stgApplyNNNNP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0800000000000000UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -16513,6 +17513,10 @@ DEFUN0(stgApplyNNNNP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x1000000000000009UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNNP);
         break;
@@ -16532,7 +17536,6 @@ DEFUN0(stgApplyNNNNP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0400000000000000UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -16550,6 +17553,10 @@ DEFUN0(stgApplyNNNNP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x1400000000000011UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNNNP);
         break;
@@ -16578,6 +17585,18 @@ DEFUN0(stgApplyNNNNP) {
       pushargs(argCount, &argv[0].op->payload[fvCount+1]);
       // push the FUN
       pushargs(1, &argv[0]);
+      bitmap.bitmap.mask <<= 1;
+      bitmap.bitmap.mask |= 0x1;
+      bitmap.bitmap.size += 1;
+      bitmap2 = (Bitmap64)0x1400000000000010UL;
+      bitmap2.bitmap.mask <<= (argCount + 1);
+      bitmap.bits += bitmap2.bits;
+      newframe = stgAllocStackCont( &it_stgStackCont, argCount+arity+1 );
+      newframe->layout = bitmap;
+      newframe->payload[0] = argv[0]; // self
+      memcpy(&newframe->payload[1], &argv[0].op->payload[fvCount+1], argCount * sizeof(PtrOrLiteral)); // old args
+      memcpy(&newframe->payload[1 + argCount], &argv[1], arity * sizeof(PtrOrLiteral));
+      newframe = stgPopCont();
       // tail call the FUN
       STGJUMP0(getInfoPtr(argv[0].op)->funFields.trueEntryCode);
 
@@ -16820,6 +17839,7 @@ DEFUN0(stgApplyPNNNP) {
     int fvCount = getInfoPtr(argv[0].op)->layoutInfo.boxedCount + 
                   getInfoPtr(argv[0].op)->layoutInfo.unboxedCount;
     Bitmap64 bitmap = argv[0].op->payload[fvCount].b;
+    Bitmap64 bitmap2;
     int argCount = BMSIZE(bitmap);
     int arity = getInfoPtr(argv[0].op)->funFields.arity - argCount;
     #ifdef DEBUGSTGAPPLY
@@ -16848,7 +17868,6 @@ DEFUN0(stgApplyPNNNP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x1000000000000001UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -16866,6 +17885,10 @@ DEFUN0(stgApplyPNNNP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0800000000000003UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyP);
         break;
@@ -16885,7 +17908,6 @@ DEFUN0(stgApplyPNNNP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0C00000000000001UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -16903,6 +17925,10 @@ DEFUN0(stgApplyPNNNP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0C00000000000005UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNP);
         break;
@@ -16922,7 +17948,6 @@ DEFUN0(stgApplyPNNNP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0800000000000001UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -16940,6 +17965,10 @@ DEFUN0(stgApplyPNNNP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x1000000000000009UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNNP);
         break;
@@ -16959,7 +17988,6 @@ DEFUN0(stgApplyPNNNP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0400000000000001UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -16977,6 +18005,10 @@ DEFUN0(stgApplyPNNNP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x1400000000000011UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNNNP);
         break;
@@ -17005,6 +18037,18 @@ DEFUN0(stgApplyPNNNP) {
       pushargs(argCount, &argv[0].op->payload[fvCount+1]);
       // push the FUN
       pushargs(1, &argv[0]);
+      bitmap.bitmap.mask <<= 1;
+      bitmap.bitmap.mask |= 0x1;
+      bitmap.bitmap.size += 1;
+      bitmap2 = (Bitmap64)0x1400000000000011UL;
+      bitmap2.bitmap.mask <<= (argCount + 1);
+      bitmap.bits += bitmap2.bits;
+      newframe = stgAllocStackCont( &it_stgStackCont, argCount+arity+1 );
+      newframe->layout = bitmap;
+      newframe->payload[0] = argv[0]; // self
+      memcpy(&newframe->payload[1], &argv[0].op->payload[fvCount+1], argCount * sizeof(PtrOrLiteral)); // old args
+      memcpy(&newframe->payload[1 + argCount], &argv[1], arity * sizeof(PtrOrLiteral));
+      newframe = stgPopCont();
       // tail call the FUN
       STGJUMP0(getInfoPtr(argv[0].op)->funFields.trueEntryCode);
 
@@ -17247,6 +18291,7 @@ DEFUN0(stgApplyNPNNP) {
     int fvCount = getInfoPtr(argv[0].op)->layoutInfo.boxedCount + 
                   getInfoPtr(argv[0].op)->layoutInfo.unboxedCount;
     Bitmap64 bitmap = argv[0].op->payload[fvCount].b;
+    Bitmap64 bitmap2;
     int argCount = BMSIZE(bitmap);
     int arity = getInfoPtr(argv[0].op)->funFields.arity - argCount;
     #ifdef DEBUGSTGAPPLY
@@ -17275,7 +18320,6 @@ DEFUN0(stgApplyNPNNP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x1000000000000002UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -17293,6 +18337,10 @@ DEFUN0(stgApplyNPNNP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0800000000000003UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyP);
         break;
@@ -17312,7 +18360,6 @@ DEFUN0(stgApplyNPNNP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0C00000000000002UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -17330,6 +18377,10 @@ DEFUN0(stgApplyNPNNP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0C00000000000005UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNP);
         break;
@@ -17349,7 +18400,6 @@ DEFUN0(stgApplyNPNNP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0800000000000002UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -17367,6 +18417,10 @@ DEFUN0(stgApplyNPNNP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x1000000000000009UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNNP);
         break;
@@ -17386,7 +18440,6 @@ DEFUN0(stgApplyNPNNP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0400000000000000UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -17404,6 +18457,10 @@ DEFUN0(stgApplyNPNNP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x1400000000000013UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPNNP);
         break;
@@ -17432,6 +18489,18 @@ DEFUN0(stgApplyNPNNP) {
       pushargs(argCount, &argv[0].op->payload[fvCount+1]);
       // push the FUN
       pushargs(1, &argv[0]);
+      bitmap.bitmap.mask <<= 1;
+      bitmap.bitmap.mask |= 0x1;
+      bitmap.bitmap.size += 1;
+      bitmap2 = (Bitmap64)0x1400000000000012UL;
+      bitmap2.bitmap.mask <<= (argCount + 1);
+      bitmap.bits += bitmap2.bits;
+      newframe = stgAllocStackCont( &it_stgStackCont, argCount+arity+1 );
+      newframe->layout = bitmap;
+      newframe->payload[0] = argv[0]; // self
+      memcpy(&newframe->payload[1], &argv[0].op->payload[fvCount+1], argCount * sizeof(PtrOrLiteral)); // old args
+      memcpy(&newframe->payload[1 + argCount], &argv[1], arity * sizeof(PtrOrLiteral));
+      newframe = stgPopCont();
       // tail call the FUN
       STGJUMP0(getInfoPtr(argv[0].op)->funFields.trueEntryCode);
 
@@ -17678,6 +18747,7 @@ DEFUN0(stgApplyPPNNP) {
     int fvCount = getInfoPtr(argv[0].op)->layoutInfo.boxedCount + 
                   getInfoPtr(argv[0].op)->layoutInfo.unboxedCount;
     Bitmap64 bitmap = argv[0].op->payload[fvCount].b;
+    Bitmap64 bitmap2;
     int argCount = BMSIZE(bitmap);
     int arity = getInfoPtr(argv[0].op)->funFields.arity - argCount;
     #ifdef DEBUGSTGAPPLY
@@ -17706,7 +18776,6 @@ DEFUN0(stgApplyPPNNP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x1000000000000003UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -17724,6 +18793,10 @@ DEFUN0(stgApplyPPNNP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0800000000000003UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyP);
         break;
@@ -17743,7 +18816,6 @@ DEFUN0(stgApplyPPNNP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0C00000000000003UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -17761,6 +18833,10 @@ DEFUN0(stgApplyPPNNP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0C00000000000005UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNP);
         break;
@@ -17780,7 +18856,6 @@ DEFUN0(stgApplyPPNNP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0800000000000003UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -17798,6 +18873,10 @@ DEFUN0(stgApplyPPNNP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x1000000000000009UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNNP);
         break;
@@ -17817,7 +18896,6 @@ DEFUN0(stgApplyPPNNP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0400000000000001UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -17835,6 +18913,10 @@ DEFUN0(stgApplyPPNNP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x1400000000000013UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPNNP);
         break;
@@ -17863,6 +18945,18 @@ DEFUN0(stgApplyPPNNP) {
       pushargs(argCount, &argv[0].op->payload[fvCount+1]);
       // push the FUN
       pushargs(1, &argv[0]);
+      bitmap.bitmap.mask <<= 1;
+      bitmap.bitmap.mask |= 0x1;
+      bitmap.bitmap.size += 1;
+      bitmap2 = (Bitmap64)0x1400000000000013UL;
+      bitmap2.bitmap.mask <<= (argCount + 1);
+      bitmap.bits += bitmap2.bits;
+      newframe = stgAllocStackCont( &it_stgStackCont, argCount+arity+1 );
+      newframe->layout = bitmap;
+      newframe->payload[0] = argv[0]; // self
+      memcpy(&newframe->payload[1], &argv[0].op->payload[fvCount+1], argCount * sizeof(PtrOrLiteral)); // old args
+      memcpy(&newframe->payload[1 + argCount], &argv[1], arity * sizeof(PtrOrLiteral));
+      newframe = stgPopCont();
       // tail call the FUN
       STGJUMP0(getInfoPtr(argv[0].op)->funFields.trueEntryCode);
 
@@ -18105,6 +19199,7 @@ DEFUN0(stgApplyNNPNP) {
     int fvCount = getInfoPtr(argv[0].op)->layoutInfo.boxedCount + 
                   getInfoPtr(argv[0].op)->layoutInfo.unboxedCount;
     Bitmap64 bitmap = argv[0].op->payload[fvCount].b;
+    Bitmap64 bitmap2;
     int argCount = BMSIZE(bitmap);
     int arity = getInfoPtr(argv[0].op)->funFields.arity - argCount;
     #ifdef DEBUGSTGAPPLY
@@ -18133,7 +19228,6 @@ DEFUN0(stgApplyNNPNP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x1000000000000004UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -18151,6 +19245,10 @@ DEFUN0(stgApplyNNPNP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0800000000000003UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyP);
         break;
@@ -18170,7 +19268,6 @@ DEFUN0(stgApplyNNPNP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0C00000000000004UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -18188,6 +19285,10 @@ DEFUN0(stgApplyNNPNP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0C00000000000005UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNP);
         break;
@@ -18207,7 +19308,6 @@ DEFUN0(stgApplyNNPNP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0800000000000000UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -18225,6 +19325,10 @@ DEFUN0(stgApplyNNPNP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x100000000000000BUL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPNP);
         break;
@@ -18244,7 +19348,6 @@ DEFUN0(stgApplyNNPNP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0400000000000000UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -18262,6 +19365,10 @@ DEFUN0(stgApplyNNPNP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x1400000000000015UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNPNP);
         break;
@@ -18290,6 +19397,18 @@ DEFUN0(stgApplyNNPNP) {
       pushargs(argCount, &argv[0].op->payload[fvCount+1]);
       // push the FUN
       pushargs(1, &argv[0]);
+      bitmap.bitmap.mask <<= 1;
+      bitmap.bitmap.mask |= 0x1;
+      bitmap.bitmap.size += 1;
+      bitmap2 = (Bitmap64)0x1400000000000014UL;
+      bitmap2.bitmap.mask <<= (argCount + 1);
+      bitmap.bits += bitmap2.bits;
+      newframe = stgAllocStackCont( &it_stgStackCont, argCount+arity+1 );
+      newframe->layout = bitmap;
+      newframe->payload[0] = argv[0]; // self
+      memcpy(&newframe->payload[1], &argv[0].op->payload[fvCount+1], argCount * sizeof(PtrOrLiteral)); // old args
+      memcpy(&newframe->payload[1 + argCount], &argv[1], arity * sizeof(PtrOrLiteral));
+      newframe = stgPopCont();
       // tail call the FUN
       STGJUMP0(getInfoPtr(argv[0].op)->funFields.trueEntryCode);
 
@@ -18536,6 +19655,7 @@ DEFUN0(stgApplyPNPNP) {
     int fvCount = getInfoPtr(argv[0].op)->layoutInfo.boxedCount + 
                   getInfoPtr(argv[0].op)->layoutInfo.unboxedCount;
     Bitmap64 bitmap = argv[0].op->payload[fvCount].b;
+    Bitmap64 bitmap2;
     int argCount = BMSIZE(bitmap);
     int arity = getInfoPtr(argv[0].op)->funFields.arity - argCount;
     #ifdef DEBUGSTGAPPLY
@@ -18564,7 +19684,6 @@ DEFUN0(stgApplyPNPNP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x1000000000000005UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -18582,6 +19701,10 @@ DEFUN0(stgApplyPNPNP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0800000000000003UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyP);
         break;
@@ -18601,7 +19724,6 @@ DEFUN0(stgApplyPNPNP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0C00000000000005UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -18619,6 +19741,10 @@ DEFUN0(stgApplyPNPNP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0C00000000000005UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNP);
         break;
@@ -18638,7 +19764,6 @@ DEFUN0(stgApplyPNPNP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0800000000000001UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -18656,6 +19781,10 @@ DEFUN0(stgApplyPNPNP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x100000000000000BUL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPNP);
         break;
@@ -18675,7 +19804,6 @@ DEFUN0(stgApplyPNPNP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0400000000000001UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -18693,6 +19821,10 @@ DEFUN0(stgApplyPNPNP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x1400000000000015UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNPNP);
         break;
@@ -18721,6 +19853,18 @@ DEFUN0(stgApplyPNPNP) {
       pushargs(argCount, &argv[0].op->payload[fvCount+1]);
       // push the FUN
       pushargs(1, &argv[0]);
+      bitmap.bitmap.mask <<= 1;
+      bitmap.bitmap.mask |= 0x1;
+      bitmap.bitmap.size += 1;
+      bitmap2 = (Bitmap64)0x1400000000000015UL;
+      bitmap2.bitmap.mask <<= (argCount + 1);
+      bitmap.bits += bitmap2.bits;
+      newframe = stgAllocStackCont( &it_stgStackCont, argCount+arity+1 );
+      newframe->layout = bitmap;
+      newframe->payload[0] = argv[0]; // self
+      memcpy(&newframe->payload[1], &argv[0].op->payload[fvCount+1], argCount * sizeof(PtrOrLiteral)); // old args
+      memcpy(&newframe->payload[1 + argCount], &argv[1], arity * sizeof(PtrOrLiteral));
+      newframe = stgPopCont();
       // tail call the FUN
       STGJUMP0(getInfoPtr(argv[0].op)->funFields.trueEntryCode);
 
@@ -18967,6 +20111,7 @@ DEFUN0(stgApplyNPPNP) {
     int fvCount = getInfoPtr(argv[0].op)->layoutInfo.boxedCount + 
                   getInfoPtr(argv[0].op)->layoutInfo.unboxedCount;
     Bitmap64 bitmap = argv[0].op->payload[fvCount].b;
+    Bitmap64 bitmap2;
     int argCount = BMSIZE(bitmap);
     int arity = getInfoPtr(argv[0].op)->funFields.arity - argCount;
     #ifdef DEBUGSTGAPPLY
@@ -18995,7 +20140,6 @@ DEFUN0(stgApplyNPPNP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x1000000000000006UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -19013,6 +20157,10 @@ DEFUN0(stgApplyNPPNP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0800000000000003UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyP);
         break;
@@ -19032,7 +20180,6 @@ DEFUN0(stgApplyNPPNP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0C00000000000006UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -19050,6 +20197,10 @@ DEFUN0(stgApplyNPPNP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0C00000000000005UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNP);
         break;
@@ -19069,7 +20220,6 @@ DEFUN0(stgApplyNPPNP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0800000000000002UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -19087,6 +20237,10 @@ DEFUN0(stgApplyNPPNP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x100000000000000BUL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPNP);
         break;
@@ -19106,7 +20260,6 @@ DEFUN0(stgApplyNPPNP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0400000000000000UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -19124,6 +20277,10 @@ DEFUN0(stgApplyNPPNP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x1400000000000017UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPPNP);
         break;
@@ -19152,6 +20309,18 @@ DEFUN0(stgApplyNPPNP) {
       pushargs(argCount, &argv[0].op->payload[fvCount+1]);
       // push the FUN
       pushargs(1, &argv[0]);
+      bitmap.bitmap.mask <<= 1;
+      bitmap.bitmap.mask |= 0x1;
+      bitmap.bitmap.size += 1;
+      bitmap2 = (Bitmap64)0x1400000000000016UL;
+      bitmap2.bitmap.mask <<= (argCount + 1);
+      bitmap.bits += bitmap2.bits;
+      newframe = stgAllocStackCont( &it_stgStackCont, argCount+arity+1 );
+      newframe->layout = bitmap;
+      newframe->payload[0] = argv[0]; // self
+      memcpy(&newframe->payload[1], &argv[0].op->payload[fvCount+1], argCount * sizeof(PtrOrLiteral)); // old args
+      memcpy(&newframe->payload[1 + argCount], &argv[1], arity * sizeof(PtrOrLiteral));
+      newframe = stgPopCont();
       // tail call the FUN
       STGJUMP0(getInfoPtr(argv[0].op)->funFields.trueEntryCode);
 
@@ -19402,6 +20571,7 @@ DEFUN0(stgApplyPPPNP) {
     int fvCount = getInfoPtr(argv[0].op)->layoutInfo.boxedCount + 
                   getInfoPtr(argv[0].op)->layoutInfo.unboxedCount;
     Bitmap64 bitmap = argv[0].op->payload[fvCount].b;
+    Bitmap64 bitmap2;
     int argCount = BMSIZE(bitmap);
     int arity = getInfoPtr(argv[0].op)->funFields.arity - argCount;
     #ifdef DEBUGSTGAPPLY
@@ -19430,7 +20600,6 @@ DEFUN0(stgApplyPPPNP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x1000000000000007UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -19448,6 +20617,10 @@ DEFUN0(stgApplyPPPNP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0800000000000003UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyP);
         break;
@@ -19467,7 +20640,6 @@ DEFUN0(stgApplyPPPNP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0C00000000000007UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -19485,6 +20657,10 @@ DEFUN0(stgApplyPPPNP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0C00000000000005UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNP);
         break;
@@ -19504,7 +20680,6 @@ DEFUN0(stgApplyPPPNP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0800000000000003UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -19522,6 +20697,10 @@ DEFUN0(stgApplyPPPNP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x100000000000000BUL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPNP);
         break;
@@ -19541,7 +20720,6 @@ DEFUN0(stgApplyPPPNP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0400000000000001UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -19559,6 +20737,10 @@ DEFUN0(stgApplyPPPNP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x1400000000000017UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPPNP);
         break;
@@ -19587,6 +20769,18 @@ DEFUN0(stgApplyPPPNP) {
       pushargs(argCount, &argv[0].op->payload[fvCount+1]);
       // push the FUN
       pushargs(1, &argv[0]);
+      bitmap.bitmap.mask <<= 1;
+      bitmap.bitmap.mask |= 0x1;
+      bitmap.bitmap.size += 1;
+      bitmap2 = (Bitmap64)0x1400000000000017UL;
+      bitmap2.bitmap.mask <<= (argCount + 1);
+      bitmap.bits += bitmap2.bits;
+      newframe = stgAllocStackCont( &it_stgStackCont, argCount+arity+1 );
+      newframe->layout = bitmap;
+      newframe->payload[0] = argv[0]; // self
+      memcpy(&newframe->payload[1], &argv[0].op->payload[fvCount+1], argCount * sizeof(PtrOrLiteral)); // old args
+      memcpy(&newframe->payload[1 + argCount], &argv[1], arity * sizeof(PtrOrLiteral));
+      newframe = stgPopCont();
       // tail call the FUN
       STGJUMP0(getInfoPtr(argv[0].op)->funFields.trueEntryCode);
 
@@ -19829,6 +21023,7 @@ DEFUN0(stgApplyNNNPP) {
     int fvCount = getInfoPtr(argv[0].op)->layoutInfo.boxedCount + 
                   getInfoPtr(argv[0].op)->layoutInfo.unboxedCount;
     Bitmap64 bitmap = argv[0].op->payload[fvCount].b;
+    Bitmap64 bitmap2;
     int argCount = BMSIZE(bitmap);
     int arity = getInfoPtr(argv[0].op)->funFields.arity - argCount;
     #ifdef DEBUGSTGAPPLY
@@ -19857,7 +21052,6 @@ DEFUN0(stgApplyNNNPP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x1000000000000008UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -19875,6 +21069,10 @@ DEFUN0(stgApplyNNNPP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0800000000000003UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyP);
         break;
@@ -19894,7 +21092,6 @@ DEFUN0(stgApplyNNNPP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0C00000000000000UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -19912,6 +21109,10 @@ DEFUN0(stgApplyNNNPP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0C00000000000007UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPP);
         break;
@@ -19931,7 +21132,6 @@ DEFUN0(stgApplyNNNPP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0800000000000000UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -19949,6 +21149,10 @@ DEFUN0(stgApplyNNNPP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x100000000000000DUL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNPP);
         break;
@@ -19968,7 +21172,6 @@ DEFUN0(stgApplyNNNPP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0400000000000000UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -19986,6 +21189,10 @@ DEFUN0(stgApplyNNNPP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x1400000000000019UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNNPP);
         break;
@@ -20014,6 +21221,18 @@ DEFUN0(stgApplyNNNPP) {
       pushargs(argCount, &argv[0].op->payload[fvCount+1]);
       // push the FUN
       pushargs(1, &argv[0]);
+      bitmap.bitmap.mask <<= 1;
+      bitmap.bitmap.mask |= 0x1;
+      bitmap.bitmap.size += 1;
+      bitmap2 = (Bitmap64)0x1400000000000018UL;
+      bitmap2.bitmap.mask <<= (argCount + 1);
+      bitmap.bits += bitmap2.bits;
+      newframe = stgAllocStackCont( &it_stgStackCont, argCount+arity+1 );
+      newframe->layout = bitmap;
+      newframe->payload[0] = argv[0]; // self
+      memcpy(&newframe->payload[1], &argv[0].op->payload[fvCount+1], argCount * sizeof(PtrOrLiteral)); // old args
+      memcpy(&newframe->payload[1 + argCount], &argv[1], arity * sizeof(PtrOrLiteral));
+      newframe = stgPopCont();
       // tail call the FUN
       STGJUMP0(getInfoPtr(argv[0].op)->funFields.trueEntryCode);
 
@@ -20260,6 +21479,7 @@ DEFUN0(stgApplyPNNPP) {
     int fvCount = getInfoPtr(argv[0].op)->layoutInfo.boxedCount + 
                   getInfoPtr(argv[0].op)->layoutInfo.unboxedCount;
     Bitmap64 bitmap = argv[0].op->payload[fvCount].b;
+    Bitmap64 bitmap2;
     int argCount = BMSIZE(bitmap);
     int arity = getInfoPtr(argv[0].op)->funFields.arity - argCount;
     #ifdef DEBUGSTGAPPLY
@@ -20288,7 +21508,6 @@ DEFUN0(stgApplyPNNPP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x1000000000000009UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -20306,6 +21525,10 @@ DEFUN0(stgApplyPNNPP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0800000000000003UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyP);
         break;
@@ -20325,7 +21548,6 @@ DEFUN0(stgApplyPNNPP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0C00000000000001UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -20343,6 +21565,10 @@ DEFUN0(stgApplyPNNPP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0C00000000000007UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPP);
         break;
@@ -20362,7 +21588,6 @@ DEFUN0(stgApplyPNNPP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0800000000000001UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -20380,6 +21605,10 @@ DEFUN0(stgApplyPNNPP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x100000000000000DUL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNPP);
         break;
@@ -20399,7 +21628,6 @@ DEFUN0(stgApplyPNNPP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0400000000000001UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -20417,6 +21645,10 @@ DEFUN0(stgApplyPNNPP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x1400000000000019UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNNPP);
         break;
@@ -20445,6 +21677,18 @@ DEFUN0(stgApplyPNNPP) {
       pushargs(argCount, &argv[0].op->payload[fvCount+1]);
       // push the FUN
       pushargs(1, &argv[0]);
+      bitmap.bitmap.mask <<= 1;
+      bitmap.bitmap.mask |= 0x1;
+      bitmap.bitmap.size += 1;
+      bitmap2 = (Bitmap64)0x1400000000000019UL;
+      bitmap2.bitmap.mask <<= (argCount + 1);
+      bitmap.bits += bitmap2.bits;
+      newframe = stgAllocStackCont( &it_stgStackCont, argCount+arity+1 );
+      newframe->layout = bitmap;
+      newframe->payload[0] = argv[0]; // self
+      memcpy(&newframe->payload[1], &argv[0].op->payload[fvCount+1], argCount * sizeof(PtrOrLiteral)); // old args
+      memcpy(&newframe->payload[1 + argCount], &argv[1], arity * sizeof(PtrOrLiteral));
+      newframe = stgPopCont();
       // tail call the FUN
       STGJUMP0(getInfoPtr(argv[0].op)->funFields.trueEntryCode);
 
@@ -20691,6 +21935,7 @@ DEFUN0(stgApplyNPNPP) {
     int fvCount = getInfoPtr(argv[0].op)->layoutInfo.boxedCount + 
                   getInfoPtr(argv[0].op)->layoutInfo.unboxedCount;
     Bitmap64 bitmap = argv[0].op->payload[fvCount].b;
+    Bitmap64 bitmap2;
     int argCount = BMSIZE(bitmap);
     int arity = getInfoPtr(argv[0].op)->funFields.arity - argCount;
     #ifdef DEBUGSTGAPPLY
@@ -20719,7 +21964,6 @@ DEFUN0(stgApplyNPNPP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x100000000000000AUL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -20737,6 +21981,10 @@ DEFUN0(stgApplyNPNPP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0800000000000003UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyP);
         break;
@@ -20756,7 +22004,6 @@ DEFUN0(stgApplyNPNPP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0C00000000000002UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -20774,6 +22021,10 @@ DEFUN0(stgApplyNPNPP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0C00000000000007UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPP);
         break;
@@ -20793,7 +22044,6 @@ DEFUN0(stgApplyNPNPP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0800000000000002UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -20811,6 +22061,10 @@ DEFUN0(stgApplyNPNPP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x100000000000000DUL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNPP);
         break;
@@ -20830,7 +22084,6 @@ DEFUN0(stgApplyNPNPP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0400000000000000UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -20848,6 +22101,10 @@ DEFUN0(stgApplyNPNPP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x140000000000001BUL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPNPP);
         break;
@@ -20876,6 +22133,18 @@ DEFUN0(stgApplyNPNPP) {
       pushargs(argCount, &argv[0].op->payload[fvCount+1]);
       // push the FUN
       pushargs(1, &argv[0]);
+      bitmap.bitmap.mask <<= 1;
+      bitmap.bitmap.mask |= 0x1;
+      bitmap.bitmap.size += 1;
+      bitmap2 = (Bitmap64)0x140000000000001AUL;
+      bitmap2.bitmap.mask <<= (argCount + 1);
+      bitmap.bits += bitmap2.bits;
+      newframe = stgAllocStackCont( &it_stgStackCont, argCount+arity+1 );
+      newframe->layout = bitmap;
+      newframe->payload[0] = argv[0]; // self
+      memcpy(&newframe->payload[1], &argv[0].op->payload[fvCount+1], argCount * sizeof(PtrOrLiteral)); // old args
+      memcpy(&newframe->payload[1 + argCount], &argv[1], arity * sizeof(PtrOrLiteral));
+      newframe = stgPopCont();
       // tail call the FUN
       STGJUMP0(getInfoPtr(argv[0].op)->funFields.trueEntryCode);
 
@@ -21126,6 +22395,7 @@ DEFUN0(stgApplyPPNPP) {
     int fvCount = getInfoPtr(argv[0].op)->layoutInfo.boxedCount + 
                   getInfoPtr(argv[0].op)->layoutInfo.unboxedCount;
     Bitmap64 bitmap = argv[0].op->payload[fvCount].b;
+    Bitmap64 bitmap2;
     int argCount = BMSIZE(bitmap);
     int arity = getInfoPtr(argv[0].op)->funFields.arity - argCount;
     #ifdef DEBUGSTGAPPLY
@@ -21154,7 +22424,6 @@ DEFUN0(stgApplyPPNPP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x100000000000000BUL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -21172,6 +22441,10 @@ DEFUN0(stgApplyPPNPP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0800000000000003UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyP);
         break;
@@ -21191,7 +22464,6 @@ DEFUN0(stgApplyPPNPP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0C00000000000003UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -21209,6 +22481,10 @@ DEFUN0(stgApplyPPNPP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0C00000000000007UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPP);
         break;
@@ -21228,7 +22504,6 @@ DEFUN0(stgApplyPPNPP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0800000000000003UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -21246,6 +22521,10 @@ DEFUN0(stgApplyPPNPP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x100000000000000DUL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNPP);
         break;
@@ -21265,7 +22544,6 @@ DEFUN0(stgApplyPPNPP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0400000000000001UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -21283,6 +22561,10 @@ DEFUN0(stgApplyPPNPP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x140000000000001BUL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPNPP);
         break;
@@ -21311,6 +22593,18 @@ DEFUN0(stgApplyPPNPP) {
       pushargs(argCount, &argv[0].op->payload[fvCount+1]);
       // push the FUN
       pushargs(1, &argv[0]);
+      bitmap.bitmap.mask <<= 1;
+      bitmap.bitmap.mask |= 0x1;
+      bitmap.bitmap.size += 1;
+      bitmap2 = (Bitmap64)0x140000000000001BUL;
+      bitmap2.bitmap.mask <<= (argCount + 1);
+      bitmap.bits += bitmap2.bits;
+      newframe = stgAllocStackCont( &it_stgStackCont, argCount+arity+1 );
+      newframe->layout = bitmap;
+      newframe->payload[0] = argv[0]; // self
+      memcpy(&newframe->payload[1], &argv[0].op->payload[fvCount+1], argCount * sizeof(PtrOrLiteral)); // old args
+      memcpy(&newframe->payload[1 + argCount], &argv[1], arity * sizeof(PtrOrLiteral));
+      newframe = stgPopCont();
       // tail call the FUN
       STGJUMP0(getInfoPtr(argv[0].op)->funFields.trueEntryCode);
 
@@ -21557,6 +22851,7 @@ DEFUN0(stgApplyNNPPP) {
     int fvCount = getInfoPtr(argv[0].op)->layoutInfo.boxedCount + 
                   getInfoPtr(argv[0].op)->layoutInfo.unboxedCount;
     Bitmap64 bitmap = argv[0].op->payload[fvCount].b;
+    Bitmap64 bitmap2;
     int argCount = BMSIZE(bitmap);
     int arity = getInfoPtr(argv[0].op)->funFields.arity - argCount;
     #ifdef DEBUGSTGAPPLY
@@ -21585,7 +22880,6 @@ DEFUN0(stgApplyNNPPP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x100000000000000CUL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -21603,6 +22897,10 @@ DEFUN0(stgApplyNNPPP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0800000000000003UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyP);
         break;
@@ -21622,7 +22920,6 @@ DEFUN0(stgApplyNNPPP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0C00000000000004UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -21640,6 +22937,10 @@ DEFUN0(stgApplyNNPPP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0C00000000000007UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPP);
         break;
@@ -21659,7 +22960,6 @@ DEFUN0(stgApplyNNPPP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0800000000000000UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -21677,6 +22977,10 @@ DEFUN0(stgApplyNNPPP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x100000000000000FUL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPPP);
         break;
@@ -21696,7 +23000,6 @@ DEFUN0(stgApplyNNPPP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0400000000000000UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -21714,6 +23017,10 @@ DEFUN0(stgApplyNNPPP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x140000000000001DUL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNPPP);
         break;
@@ -21742,6 +23049,18 @@ DEFUN0(stgApplyNNPPP) {
       pushargs(argCount, &argv[0].op->payload[fvCount+1]);
       // push the FUN
       pushargs(1, &argv[0]);
+      bitmap.bitmap.mask <<= 1;
+      bitmap.bitmap.mask |= 0x1;
+      bitmap.bitmap.size += 1;
+      bitmap2 = (Bitmap64)0x140000000000001CUL;
+      bitmap2.bitmap.mask <<= (argCount + 1);
+      bitmap.bits += bitmap2.bits;
+      newframe = stgAllocStackCont( &it_stgStackCont, argCount+arity+1 );
+      newframe->layout = bitmap;
+      newframe->payload[0] = argv[0]; // self
+      memcpy(&newframe->payload[1], &argv[0].op->payload[fvCount+1], argCount * sizeof(PtrOrLiteral)); // old args
+      memcpy(&newframe->payload[1 + argCount], &argv[1], arity * sizeof(PtrOrLiteral));
+      newframe = stgPopCont();
       // tail call the FUN
       STGJUMP0(getInfoPtr(argv[0].op)->funFields.trueEntryCode);
 
@@ -21992,6 +23311,7 @@ DEFUN0(stgApplyPNPPP) {
     int fvCount = getInfoPtr(argv[0].op)->layoutInfo.boxedCount + 
                   getInfoPtr(argv[0].op)->layoutInfo.unboxedCount;
     Bitmap64 bitmap = argv[0].op->payload[fvCount].b;
+    Bitmap64 bitmap2;
     int argCount = BMSIZE(bitmap);
     int arity = getInfoPtr(argv[0].op)->funFields.arity - argCount;
     #ifdef DEBUGSTGAPPLY
@@ -22020,7 +23340,6 @@ DEFUN0(stgApplyPNPPP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x100000000000000DUL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -22038,6 +23357,10 @@ DEFUN0(stgApplyPNPPP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0800000000000003UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyP);
         break;
@@ -22057,7 +23380,6 @@ DEFUN0(stgApplyPNPPP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0C00000000000005UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -22075,6 +23397,10 @@ DEFUN0(stgApplyPNPPP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0C00000000000007UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPP);
         break;
@@ -22094,7 +23420,6 @@ DEFUN0(stgApplyPNPPP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0800000000000001UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -22112,6 +23437,10 @@ DEFUN0(stgApplyPNPPP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x100000000000000FUL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPPP);
         break;
@@ -22131,7 +23460,6 @@ DEFUN0(stgApplyPNPPP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0400000000000001UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -22149,6 +23477,10 @@ DEFUN0(stgApplyPNPPP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x140000000000001DUL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNPPP);
         break;
@@ -22177,6 +23509,18 @@ DEFUN0(stgApplyPNPPP) {
       pushargs(argCount, &argv[0].op->payload[fvCount+1]);
       // push the FUN
       pushargs(1, &argv[0]);
+      bitmap.bitmap.mask <<= 1;
+      bitmap.bitmap.mask |= 0x1;
+      bitmap.bitmap.size += 1;
+      bitmap2 = (Bitmap64)0x140000000000001DUL;
+      bitmap2.bitmap.mask <<= (argCount + 1);
+      bitmap.bits += bitmap2.bits;
+      newframe = stgAllocStackCont( &it_stgStackCont, argCount+arity+1 );
+      newframe->layout = bitmap;
+      newframe->payload[0] = argv[0]; // self
+      memcpy(&newframe->payload[1], &argv[0].op->payload[fvCount+1], argCount * sizeof(PtrOrLiteral)); // old args
+      memcpy(&newframe->payload[1 + argCount], &argv[1], arity * sizeof(PtrOrLiteral));
+      newframe = stgPopCont();
       // tail call the FUN
       STGJUMP0(getInfoPtr(argv[0].op)->funFields.trueEntryCode);
 
@@ -22427,6 +23771,7 @@ DEFUN0(stgApplyNPPPP) {
     int fvCount = getInfoPtr(argv[0].op)->layoutInfo.boxedCount + 
                   getInfoPtr(argv[0].op)->layoutInfo.unboxedCount;
     Bitmap64 bitmap = argv[0].op->payload[fvCount].b;
+    Bitmap64 bitmap2;
     int argCount = BMSIZE(bitmap);
     int arity = getInfoPtr(argv[0].op)->funFields.arity - argCount;
     #ifdef DEBUGSTGAPPLY
@@ -22455,7 +23800,6 @@ DEFUN0(stgApplyNPPPP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x100000000000000EUL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -22473,6 +23817,10 @@ DEFUN0(stgApplyNPPPP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0800000000000003UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyP);
         break;
@@ -22492,7 +23840,6 @@ DEFUN0(stgApplyNPPPP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0C00000000000006UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -22510,6 +23857,10 @@ DEFUN0(stgApplyNPPPP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0C00000000000007UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPP);
         break;
@@ -22529,7 +23880,6 @@ DEFUN0(stgApplyNPPPP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0800000000000002UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -22547,6 +23897,10 @@ DEFUN0(stgApplyNPPPP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x100000000000000FUL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPPP);
         break;
@@ -22566,7 +23920,6 @@ DEFUN0(stgApplyNPPPP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0400000000000000UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -22584,6 +23937,10 @@ DEFUN0(stgApplyNPPPP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x140000000000001FUL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPPPP);
         break;
@@ -22612,6 +23969,18 @@ DEFUN0(stgApplyNPPPP) {
       pushargs(argCount, &argv[0].op->payload[fvCount+1]);
       // push the FUN
       pushargs(1, &argv[0]);
+      bitmap.bitmap.mask <<= 1;
+      bitmap.bitmap.mask |= 0x1;
+      bitmap.bitmap.size += 1;
+      bitmap2 = (Bitmap64)0x140000000000001EUL;
+      bitmap2.bitmap.mask <<= (argCount + 1);
+      bitmap.bits += bitmap2.bits;
+      newframe = stgAllocStackCont( &it_stgStackCont, argCount+arity+1 );
+      newframe->layout = bitmap;
+      newframe->payload[0] = argv[0]; // self
+      memcpy(&newframe->payload[1], &argv[0].op->payload[fvCount+1], argCount * sizeof(PtrOrLiteral)); // old args
+      memcpy(&newframe->payload[1 + argCount], &argv[1], arity * sizeof(PtrOrLiteral));
+      newframe = stgPopCont();
       // tail call the FUN
       STGJUMP0(getInfoPtr(argv[0].op)->funFields.trueEntryCode);
 
@@ -22866,6 +24235,7 @@ DEFUN0(stgApplyPPPPP) {
     int fvCount = getInfoPtr(argv[0].op)->layoutInfo.boxedCount + 
                   getInfoPtr(argv[0].op)->layoutInfo.unboxedCount;
     Bitmap64 bitmap = argv[0].op->payload[fvCount].b;
+    Bitmap64 bitmap2;
     int argCount = BMSIZE(bitmap);
     int arity = getInfoPtr(argv[0].op)->funFields.arity - argCount;
     #ifdef DEBUGSTGAPPLY
@@ -22894,7 +24264,6 @@ DEFUN0(stgApplyPPPPP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x100000000000000FUL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -22912,6 +24281,10 @@ DEFUN0(stgApplyPPPPP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0800000000000003UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyP);
         break;
@@ -22931,7 +24304,6 @@ DEFUN0(stgApplyPPPPP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0C00000000000007UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -22949,6 +24321,10 @@ DEFUN0(stgApplyPPPPP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0C00000000000007UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPP);
         break;
@@ -22968,7 +24344,6 @@ DEFUN0(stgApplyPPPPP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0800000000000003UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -22986,6 +24361,10 @@ DEFUN0(stgApplyPPPPP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x100000000000000FUL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPPP);
         break;
@@ -23005,7 +24384,6 @@ DEFUN0(stgApplyPPPPP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0400000000000001UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -23023,6 +24401,10 @@ DEFUN0(stgApplyPPPPP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x140000000000001FUL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPPPP);
         break;
@@ -23051,6 +24433,18 @@ DEFUN0(stgApplyPPPPP) {
       pushargs(argCount, &argv[0].op->payload[fvCount+1]);
       // push the FUN
       pushargs(1, &argv[0]);
+      bitmap.bitmap.mask <<= 1;
+      bitmap.bitmap.mask |= 0x1;
+      bitmap.bitmap.size += 1;
+      bitmap2 = (Bitmap64)0x140000000000001FUL;
+      bitmap2.bitmap.mask <<= (argCount + 1);
+      bitmap.bits += bitmap2.bits;
+      newframe = stgAllocStackCont( &it_stgStackCont, argCount+arity+1 );
+      newframe->layout = bitmap;
+      newframe->payload[0] = argv[0]; // self
+      memcpy(&newframe->payload[1], &argv[0].op->payload[fvCount+1], argCount * sizeof(PtrOrLiteral)); // old args
+      memcpy(&newframe->payload[1 + argCount], &argv[1], arity * sizeof(PtrOrLiteral));
+      newframe = stgPopCont();
       // tail call the FUN
       STGJUMP0(getInfoPtr(argv[0].op)->funFields.trueEntryCode);
 
@@ -23312,6 +24706,7 @@ DEFUN0(stgApplyNNNNNN) {
     int fvCount = getInfoPtr(argv[0].op)->layoutInfo.boxedCount + 
                   getInfoPtr(argv[0].op)->layoutInfo.unboxedCount;
     Bitmap64 bitmap = argv[0].op->payload[fvCount].b;
+    Bitmap64 bitmap2;
     int argCount = BMSIZE(bitmap);
     int arity = getInfoPtr(argv[0].op)->funFields.arity - argCount;
     #ifdef DEBUGSTGAPPLY
@@ -23340,7 +24735,6 @@ DEFUN0(stgApplyNNNNNN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x1400000000000000UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -23358,6 +24752,10 @@ DEFUN0(stgApplyNNNNNN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0800000000000001UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyN);
         break;
@@ -23377,7 +24775,6 @@ DEFUN0(stgApplyNNNNNN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x1000000000000000UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -23395,6 +24792,10 @@ DEFUN0(stgApplyNNNNNN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0C00000000000001UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNN);
         break;
@@ -23414,7 +24815,6 @@ DEFUN0(stgApplyNNNNNN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0C00000000000000UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -23432,6 +24832,10 @@ DEFUN0(stgApplyNNNNNN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x1000000000000001UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNNN);
         break;
@@ -23451,7 +24855,6 @@ DEFUN0(stgApplyNNNNNN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0800000000000000UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -23469,6 +24872,10 @@ DEFUN0(stgApplyNNNNNN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x1400000000000001UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNNNN);
         break;
@@ -23488,7 +24895,6 @@ DEFUN0(stgApplyNNNNNN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0400000000000000UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -23506,6 +24912,10 @@ DEFUN0(stgApplyNNNNNN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x1800000000000001UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNNNNN);
         break;
@@ -23534,6 +24944,18 @@ DEFUN0(stgApplyNNNNNN) {
       pushargs(argCount, &argv[0].op->payload[fvCount+1]);
       // push the FUN
       pushargs(1, &argv[0]);
+      bitmap.bitmap.mask <<= 1;
+      bitmap.bitmap.mask |= 0x1;
+      bitmap.bitmap.size += 1;
+      bitmap2 = (Bitmap64)0x1800000000000000UL;
+      bitmap2.bitmap.mask <<= (argCount + 1);
+      bitmap.bits += bitmap2.bits;
+      newframe = stgAllocStackCont( &it_stgStackCont, argCount+arity+1 );
+      newframe->layout = bitmap;
+      newframe->payload[0] = argv[0]; // self
+      memcpy(&newframe->payload[1], &argv[0].op->payload[fvCount+1], argCount * sizeof(PtrOrLiteral)); // old args
+      memcpy(&newframe->payload[1 + argCount], &argv[1], arity * sizeof(PtrOrLiteral));
+      newframe = stgPopCont();
       // tail call the FUN
       STGJUMP0(getInfoPtr(argv[0].op)->funFields.trueEntryCode);
 
@@ -23799,6 +25221,7 @@ DEFUN0(stgApplyPNNNNN) {
     int fvCount = getInfoPtr(argv[0].op)->layoutInfo.boxedCount + 
                   getInfoPtr(argv[0].op)->layoutInfo.unboxedCount;
     Bitmap64 bitmap = argv[0].op->payload[fvCount].b;
+    Bitmap64 bitmap2;
     int argCount = BMSIZE(bitmap);
     int arity = getInfoPtr(argv[0].op)->funFields.arity - argCount;
     #ifdef DEBUGSTGAPPLY
@@ -23827,7 +25250,6 @@ DEFUN0(stgApplyPNNNNN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x1400000000000001UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -23845,6 +25267,10 @@ DEFUN0(stgApplyPNNNNN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0800000000000001UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyN);
         break;
@@ -23864,7 +25290,6 @@ DEFUN0(stgApplyPNNNNN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x1000000000000001UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -23882,6 +25307,10 @@ DEFUN0(stgApplyPNNNNN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0C00000000000001UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNN);
         break;
@@ -23901,7 +25330,6 @@ DEFUN0(stgApplyPNNNNN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0C00000000000001UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -23919,6 +25347,10 @@ DEFUN0(stgApplyPNNNNN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x1000000000000001UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNNN);
         break;
@@ -23938,7 +25370,6 @@ DEFUN0(stgApplyPNNNNN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0800000000000001UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -23956,6 +25387,10 @@ DEFUN0(stgApplyPNNNNN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x1400000000000001UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNNNN);
         break;
@@ -23975,7 +25410,6 @@ DEFUN0(stgApplyPNNNNN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0400000000000001UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -23993,6 +25427,10 @@ DEFUN0(stgApplyPNNNNN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x1800000000000001UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNNNNN);
         break;
@@ -24021,6 +25459,18 @@ DEFUN0(stgApplyPNNNNN) {
       pushargs(argCount, &argv[0].op->payload[fvCount+1]);
       // push the FUN
       pushargs(1, &argv[0]);
+      bitmap.bitmap.mask <<= 1;
+      bitmap.bitmap.mask |= 0x1;
+      bitmap.bitmap.size += 1;
+      bitmap2 = (Bitmap64)0x1800000000000001UL;
+      bitmap2.bitmap.mask <<= (argCount + 1);
+      bitmap.bits += bitmap2.bits;
+      newframe = stgAllocStackCont( &it_stgStackCont, argCount+arity+1 );
+      newframe->layout = bitmap;
+      newframe->payload[0] = argv[0]; // self
+      memcpy(&newframe->payload[1], &argv[0].op->payload[fvCount+1], argCount * sizeof(PtrOrLiteral)); // old args
+      memcpy(&newframe->payload[1 + argCount], &argv[1], arity * sizeof(PtrOrLiteral));
+      newframe = stgPopCont();
       // tail call the FUN
       STGJUMP0(getInfoPtr(argv[0].op)->funFields.trueEntryCode);
 
@@ -24286,6 +25736,7 @@ DEFUN0(stgApplyNPNNNN) {
     int fvCount = getInfoPtr(argv[0].op)->layoutInfo.boxedCount + 
                   getInfoPtr(argv[0].op)->layoutInfo.unboxedCount;
     Bitmap64 bitmap = argv[0].op->payload[fvCount].b;
+    Bitmap64 bitmap2;
     int argCount = BMSIZE(bitmap);
     int arity = getInfoPtr(argv[0].op)->funFields.arity - argCount;
     #ifdef DEBUGSTGAPPLY
@@ -24314,7 +25765,6 @@ DEFUN0(stgApplyNPNNNN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x1400000000000002UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -24332,6 +25782,10 @@ DEFUN0(stgApplyNPNNNN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0800000000000001UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyN);
         break;
@@ -24351,7 +25805,6 @@ DEFUN0(stgApplyNPNNNN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x1000000000000002UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -24369,6 +25822,10 @@ DEFUN0(stgApplyNPNNNN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0C00000000000001UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNN);
         break;
@@ -24388,7 +25845,6 @@ DEFUN0(stgApplyNPNNNN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0C00000000000002UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -24406,6 +25862,10 @@ DEFUN0(stgApplyNPNNNN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x1000000000000001UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNNN);
         break;
@@ -24425,7 +25885,6 @@ DEFUN0(stgApplyNPNNNN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0800000000000002UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -24443,6 +25902,10 @@ DEFUN0(stgApplyNPNNNN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x1400000000000001UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNNNN);
         break;
@@ -24462,7 +25925,6 @@ DEFUN0(stgApplyNPNNNN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0400000000000000UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -24480,6 +25942,10 @@ DEFUN0(stgApplyNPNNNN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x1800000000000003UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPNNNN);
         break;
@@ -24508,6 +25974,18 @@ DEFUN0(stgApplyNPNNNN) {
       pushargs(argCount, &argv[0].op->payload[fvCount+1]);
       // push the FUN
       pushargs(1, &argv[0]);
+      bitmap.bitmap.mask <<= 1;
+      bitmap.bitmap.mask |= 0x1;
+      bitmap.bitmap.size += 1;
+      bitmap2 = (Bitmap64)0x1800000000000002UL;
+      bitmap2.bitmap.mask <<= (argCount + 1);
+      bitmap.bits += bitmap2.bits;
+      newframe = stgAllocStackCont( &it_stgStackCont, argCount+arity+1 );
+      newframe->layout = bitmap;
+      newframe->payload[0] = argv[0]; // self
+      memcpy(&newframe->payload[1], &argv[0].op->payload[fvCount+1], argCount * sizeof(PtrOrLiteral)); // old args
+      memcpy(&newframe->payload[1 + argCount], &argv[1], arity * sizeof(PtrOrLiteral));
+      newframe = stgPopCont();
       // tail call the FUN
       STGJUMP0(getInfoPtr(argv[0].op)->funFields.trueEntryCode);
 
@@ -24777,6 +26255,7 @@ DEFUN0(stgApplyPPNNNN) {
     int fvCount = getInfoPtr(argv[0].op)->layoutInfo.boxedCount + 
                   getInfoPtr(argv[0].op)->layoutInfo.unboxedCount;
     Bitmap64 bitmap = argv[0].op->payload[fvCount].b;
+    Bitmap64 bitmap2;
     int argCount = BMSIZE(bitmap);
     int arity = getInfoPtr(argv[0].op)->funFields.arity - argCount;
     #ifdef DEBUGSTGAPPLY
@@ -24805,7 +26284,6 @@ DEFUN0(stgApplyPPNNNN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x1400000000000003UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -24823,6 +26301,10 @@ DEFUN0(stgApplyPPNNNN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0800000000000001UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyN);
         break;
@@ -24842,7 +26324,6 @@ DEFUN0(stgApplyPPNNNN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x1000000000000003UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -24860,6 +26341,10 @@ DEFUN0(stgApplyPPNNNN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0C00000000000001UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNN);
         break;
@@ -24879,7 +26364,6 @@ DEFUN0(stgApplyPPNNNN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0C00000000000003UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -24897,6 +26381,10 @@ DEFUN0(stgApplyPPNNNN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x1000000000000001UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNNN);
         break;
@@ -24916,7 +26404,6 @@ DEFUN0(stgApplyPPNNNN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0800000000000003UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -24934,6 +26421,10 @@ DEFUN0(stgApplyPPNNNN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x1400000000000001UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNNNN);
         break;
@@ -24953,7 +26444,6 @@ DEFUN0(stgApplyPPNNNN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0400000000000001UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -24971,6 +26461,10 @@ DEFUN0(stgApplyPPNNNN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x1800000000000003UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPNNNN);
         break;
@@ -24999,6 +26493,18 @@ DEFUN0(stgApplyPPNNNN) {
       pushargs(argCount, &argv[0].op->payload[fvCount+1]);
       // push the FUN
       pushargs(1, &argv[0]);
+      bitmap.bitmap.mask <<= 1;
+      bitmap.bitmap.mask |= 0x1;
+      bitmap.bitmap.size += 1;
+      bitmap2 = (Bitmap64)0x1800000000000003UL;
+      bitmap2.bitmap.mask <<= (argCount + 1);
+      bitmap.bits += bitmap2.bits;
+      newframe = stgAllocStackCont( &it_stgStackCont, argCount+arity+1 );
+      newframe->layout = bitmap;
+      newframe->payload[0] = argv[0]; // self
+      memcpy(&newframe->payload[1], &argv[0].op->payload[fvCount+1], argCount * sizeof(PtrOrLiteral)); // old args
+      memcpy(&newframe->payload[1 + argCount], &argv[1], arity * sizeof(PtrOrLiteral));
+      newframe = stgPopCont();
       // tail call the FUN
       STGJUMP0(getInfoPtr(argv[0].op)->funFields.trueEntryCode);
 
@@ -25264,6 +26770,7 @@ DEFUN0(stgApplyNNPNNN) {
     int fvCount = getInfoPtr(argv[0].op)->layoutInfo.boxedCount + 
                   getInfoPtr(argv[0].op)->layoutInfo.unboxedCount;
     Bitmap64 bitmap = argv[0].op->payload[fvCount].b;
+    Bitmap64 bitmap2;
     int argCount = BMSIZE(bitmap);
     int arity = getInfoPtr(argv[0].op)->funFields.arity - argCount;
     #ifdef DEBUGSTGAPPLY
@@ -25292,7 +26799,6 @@ DEFUN0(stgApplyNNPNNN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x1400000000000004UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -25310,6 +26816,10 @@ DEFUN0(stgApplyNNPNNN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0800000000000001UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyN);
         break;
@@ -25329,7 +26839,6 @@ DEFUN0(stgApplyNNPNNN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x1000000000000004UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -25347,6 +26856,10 @@ DEFUN0(stgApplyNNPNNN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0C00000000000001UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNN);
         break;
@@ -25366,7 +26879,6 @@ DEFUN0(stgApplyNNPNNN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0C00000000000004UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -25384,6 +26896,10 @@ DEFUN0(stgApplyNNPNNN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x1000000000000001UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNNN);
         break;
@@ -25403,7 +26919,6 @@ DEFUN0(stgApplyNNPNNN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0800000000000000UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -25421,6 +26936,10 @@ DEFUN0(stgApplyNNPNNN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x1400000000000003UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPNNN);
         break;
@@ -25440,7 +26959,6 @@ DEFUN0(stgApplyNNPNNN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0400000000000000UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -25458,6 +26976,10 @@ DEFUN0(stgApplyNNPNNN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x1800000000000005UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNPNNN);
         break;
@@ -25486,6 +27008,18 @@ DEFUN0(stgApplyNNPNNN) {
       pushargs(argCount, &argv[0].op->payload[fvCount+1]);
       // push the FUN
       pushargs(1, &argv[0]);
+      bitmap.bitmap.mask <<= 1;
+      bitmap.bitmap.mask |= 0x1;
+      bitmap.bitmap.size += 1;
+      bitmap2 = (Bitmap64)0x1800000000000004UL;
+      bitmap2.bitmap.mask <<= (argCount + 1);
+      bitmap.bits += bitmap2.bits;
+      newframe = stgAllocStackCont( &it_stgStackCont, argCount+arity+1 );
+      newframe->layout = bitmap;
+      newframe->payload[0] = argv[0]; // self
+      memcpy(&newframe->payload[1], &argv[0].op->payload[fvCount+1], argCount * sizeof(PtrOrLiteral)); // old args
+      memcpy(&newframe->payload[1 + argCount], &argv[1], arity * sizeof(PtrOrLiteral));
+      newframe = stgPopCont();
       // tail call the FUN
       STGJUMP0(getInfoPtr(argv[0].op)->funFields.trueEntryCode);
 
@@ -25755,6 +27289,7 @@ DEFUN0(stgApplyPNPNNN) {
     int fvCount = getInfoPtr(argv[0].op)->layoutInfo.boxedCount + 
                   getInfoPtr(argv[0].op)->layoutInfo.unboxedCount;
     Bitmap64 bitmap = argv[0].op->payload[fvCount].b;
+    Bitmap64 bitmap2;
     int argCount = BMSIZE(bitmap);
     int arity = getInfoPtr(argv[0].op)->funFields.arity - argCount;
     #ifdef DEBUGSTGAPPLY
@@ -25783,7 +27318,6 @@ DEFUN0(stgApplyPNPNNN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x1400000000000005UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -25801,6 +27335,10 @@ DEFUN0(stgApplyPNPNNN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0800000000000001UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyN);
         break;
@@ -25820,7 +27358,6 @@ DEFUN0(stgApplyPNPNNN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x1000000000000005UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -25838,6 +27375,10 @@ DEFUN0(stgApplyPNPNNN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0C00000000000001UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNN);
         break;
@@ -25857,7 +27398,6 @@ DEFUN0(stgApplyPNPNNN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0C00000000000005UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -25875,6 +27415,10 @@ DEFUN0(stgApplyPNPNNN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x1000000000000001UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNNN);
         break;
@@ -25894,7 +27438,6 @@ DEFUN0(stgApplyPNPNNN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0800000000000001UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -25912,6 +27455,10 @@ DEFUN0(stgApplyPNPNNN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x1400000000000003UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPNNN);
         break;
@@ -25931,7 +27478,6 @@ DEFUN0(stgApplyPNPNNN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0400000000000001UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -25949,6 +27495,10 @@ DEFUN0(stgApplyPNPNNN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x1800000000000005UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNPNNN);
         break;
@@ -25977,6 +27527,18 @@ DEFUN0(stgApplyPNPNNN) {
       pushargs(argCount, &argv[0].op->payload[fvCount+1]);
       // push the FUN
       pushargs(1, &argv[0]);
+      bitmap.bitmap.mask <<= 1;
+      bitmap.bitmap.mask |= 0x1;
+      bitmap.bitmap.size += 1;
+      bitmap2 = (Bitmap64)0x1800000000000005UL;
+      bitmap2.bitmap.mask <<= (argCount + 1);
+      bitmap.bits += bitmap2.bits;
+      newframe = stgAllocStackCont( &it_stgStackCont, argCount+arity+1 );
+      newframe->layout = bitmap;
+      newframe->payload[0] = argv[0]; // self
+      memcpy(&newframe->payload[1], &argv[0].op->payload[fvCount+1], argCount * sizeof(PtrOrLiteral)); // old args
+      memcpy(&newframe->payload[1 + argCount], &argv[1], arity * sizeof(PtrOrLiteral));
+      newframe = stgPopCont();
       // tail call the FUN
       STGJUMP0(getInfoPtr(argv[0].op)->funFields.trueEntryCode);
 
@@ -26246,6 +27808,7 @@ DEFUN0(stgApplyNPPNNN) {
     int fvCount = getInfoPtr(argv[0].op)->layoutInfo.boxedCount + 
                   getInfoPtr(argv[0].op)->layoutInfo.unboxedCount;
     Bitmap64 bitmap = argv[0].op->payload[fvCount].b;
+    Bitmap64 bitmap2;
     int argCount = BMSIZE(bitmap);
     int arity = getInfoPtr(argv[0].op)->funFields.arity - argCount;
     #ifdef DEBUGSTGAPPLY
@@ -26274,7 +27837,6 @@ DEFUN0(stgApplyNPPNNN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x1400000000000006UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -26292,6 +27854,10 @@ DEFUN0(stgApplyNPPNNN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0800000000000001UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyN);
         break;
@@ -26311,7 +27877,6 @@ DEFUN0(stgApplyNPPNNN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x1000000000000006UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -26329,6 +27894,10 @@ DEFUN0(stgApplyNPPNNN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0C00000000000001UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNN);
         break;
@@ -26348,7 +27917,6 @@ DEFUN0(stgApplyNPPNNN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0C00000000000006UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -26366,6 +27934,10 @@ DEFUN0(stgApplyNPPNNN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x1000000000000001UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNNN);
         break;
@@ -26385,7 +27957,6 @@ DEFUN0(stgApplyNPPNNN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0800000000000002UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -26403,6 +27974,10 @@ DEFUN0(stgApplyNPPNNN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x1400000000000003UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPNNN);
         break;
@@ -26422,7 +27997,6 @@ DEFUN0(stgApplyNPPNNN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0400000000000000UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -26440,6 +28014,10 @@ DEFUN0(stgApplyNPPNNN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x1800000000000007UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPPNNN);
         break;
@@ -26468,6 +28046,18 @@ DEFUN0(stgApplyNPPNNN) {
       pushargs(argCount, &argv[0].op->payload[fvCount+1]);
       // push the FUN
       pushargs(1, &argv[0]);
+      bitmap.bitmap.mask <<= 1;
+      bitmap.bitmap.mask |= 0x1;
+      bitmap.bitmap.size += 1;
+      bitmap2 = (Bitmap64)0x1800000000000006UL;
+      bitmap2.bitmap.mask <<= (argCount + 1);
+      bitmap.bits += bitmap2.bits;
+      newframe = stgAllocStackCont( &it_stgStackCont, argCount+arity+1 );
+      newframe->layout = bitmap;
+      newframe->payload[0] = argv[0]; // self
+      memcpy(&newframe->payload[1], &argv[0].op->payload[fvCount+1], argCount * sizeof(PtrOrLiteral)); // old args
+      memcpy(&newframe->payload[1 + argCount], &argv[1], arity * sizeof(PtrOrLiteral));
+      newframe = stgPopCont();
       // tail call the FUN
       STGJUMP0(getInfoPtr(argv[0].op)->funFields.trueEntryCode);
 
@@ -26741,6 +28331,7 @@ DEFUN0(stgApplyPPPNNN) {
     int fvCount = getInfoPtr(argv[0].op)->layoutInfo.boxedCount + 
                   getInfoPtr(argv[0].op)->layoutInfo.unboxedCount;
     Bitmap64 bitmap = argv[0].op->payload[fvCount].b;
+    Bitmap64 bitmap2;
     int argCount = BMSIZE(bitmap);
     int arity = getInfoPtr(argv[0].op)->funFields.arity - argCount;
     #ifdef DEBUGSTGAPPLY
@@ -26769,7 +28360,6 @@ DEFUN0(stgApplyPPPNNN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x1400000000000007UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -26787,6 +28377,10 @@ DEFUN0(stgApplyPPPNNN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0800000000000001UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyN);
         break;
@@ -26806,7 +28400,6 @@ DEFUN0(stgApplyPPPNNN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x1000000000000007UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -26824,6 +28417,10 @@ DEFUN0(stgApplyPPPNNN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0C00000000000001UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNN);
         break;
@@ -26843,7 +28440,6 @@ DEFUN0(stgApplyPPPNNN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0C00000000000007UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -26861,6 +28457,10 @@ DEFUN0(stgApplyPPPNNN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x1000000000000001UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNNN);
         break;
@@ -26880,7 +28480,6 @@ DEFUN0(stgApplyPPPNNN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0800000000000003UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -26898,6 +28497,10 @@ DEFUN0(stgApplyPPPNNN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x1400000000000003UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPNNN);
         break;
@@ -26917,7 +28520,6 @@ DEFUN0(stgApplyPPPNNN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0400000000000001UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -26935,6 +28537,10 @@ DEFUN0(stgApplyPPPNNN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x1800000000000007UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPPNNN);
         break;
@@ -26963,6 +28569,18 @@ DEFUN0(stgApplyPPPNNN) {
       pushargs(argCount, &argv[0].op->payload[fvCount+1]);
       // push the FUN
       pushargs(1, &argv[0]);
+      bitmap.bitmap.mask <<= 1;
+      bitmap.bitmap.mask |= 0x1;
+      bitmap.bitmap.size += 1;
+      bitmap2 = (Bitmap64)0x1800000000000007UL;
+      bitmap2.bitmap.mask <<= (argCount + 1);
+      bitmap.bits += bitmap2.bits;
+      newframe = stgAllocStackCont( &it_stgStackCont, argCount+arity+1 );
+      newframe->layout = bitmap;
+      newframe->payload[0] = argv[0]; // self
+      memcpy(&newframe->payload[1], &argv[0].op->payload[fvCount+1], argCount * sizeof(PtrOrLiteral)); // old args
+      memcpy(&newframe->payload[1 + argCount], &argv[1], arity * sizeof(PtrOrLiteral));
+      newframe = stgPopCont();
       // tail call the FUN
       STGJUMP0(getInfoPtr(argv[0].op)->funFields.trueEntryCode);
 
@@ -27228,6 +28846,7 @@ DEFUN0(stgApplyNNNPNN) {
     int fvCount = getInfoPtr(argv[0].op)->layoutInfo.boxedCount + 
                   getInfoPtr(argv[0].op)->layoutInfo.unboxedCount;
     Bitmap64 bitmap = argv[0].op->payload[fvCount].b;
+    Bitmap64 bitmap2;
     int argCount = BMSIZE(bitmap);
     int arity = getInfoPtr(argv[0].op)->funFields.arity - argCount;
     #ifdef DEBUGSTGAPPLY
@@ -27256,7 +28875,6 @@ DEFUN0(stgApplyNNNPNN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x1400000000000008UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -27274,6 +28892,10 @@ DEFUN0(stgApplyNNNPNN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0800000000000001UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyN);
         break;
@@ -27293,7 +28915,6 @@ DEFUN0(stgApplyNNNPNN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x1000000000000008UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -27311,6 +28932,10 @@ DEFUN0(stgApplyNNNPNN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0C00000000000001UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNN);
         break;
@@ -27330,7 +28955,6 @@ DEFUN0(stgApplyNNNPNN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0C00000000000000UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -27348,6 +28972,10 @@ DEFUN0(stgApplyNNNPNN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x1000000000000003UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPNN);
         break;
@@ -27367,7 +28995,6 @@ DEFUN0(stgApplyNNNPNN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0800000000000000UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -27385,6 +29012,10 @@ DEFUN0(stgApplyNNNPNN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x1400000000000005UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNPNN);
         break;
@@ -27404,7 +29035,6 @@ DEFUN0(stgApplyNNNPNN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0400000000000000UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -27422,6 +29052,10 @@ DEFUN0(stgApplyNNNPNN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x1800000000000009UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNNPNN);
         break;
@@ -27450,6 +29084,18 @@ DEFUN0(stgApplyNNNPNN) {
       pushargs(argCount, &argv[0].op->payload[fvCount+1]);
       // push the FUN
       pushargs(1, &argv[0]);
+      bitmap.bitmap.mask <<= 1;
+      bitmap.bitmap.mask |= 0x1;
+      bitmap.bitmap.size += 1;
+      bitmap2 = (Bitmap64)0x1800000000000008UL;
+      bitmap2.bitmap.mask <<= (argCount + 1);
+      bitmap.bits += bitmap2.bits;
+      newframe = stgAllocStackCont( &it_stgStackCont, argCount+arity+1 );
+      newframe->layout = bitmap;
+      newframe->payload[0] = argv[0]; // self
+      memcpy(&newframe->payload[1], &argv[0].op->payload[fvCount+1], argCount * sizeof(PtrOrLiteral)); // old args
+      memcpy(&newframe->payload[1 + argCount], &argv[1], arity * sizeof(PtrOrLiteral));
+      newframe = stgPopCont();
       // tail call the FUN
       STGJUMP0(getInfoPtr(argv[0].op)->funFields.trueEntryCode);
 
@@ -27719,6 +29365,7 @@ DEFUN0(stgApplyPNNPNN) {
     int fvCount = getInfoPtr(argv[0].op)->layoutInfo.boxedCount + 
                   getInfoPtr(argv[0].op)->layoutInfo.unboxedCount;
     Bitmap64 bitmap = argv[0].op->payload[fvCount].b;
+    Bitmap64 bitmap2;
     int argCount = BMSIZE(bitmap);
     int arity = getInfoPtr(argv[0].op)->funFields.arity - argCount;
     #ifdef DEBUGSTGAPPLY
@@ -27747,7 +29394,6 @@ DEFUN0(stgApplyPNNPNN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x1400000000000009UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -27765,6 +29411,10 @@ DEFUN0(stgApplyPNNPNN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0800000000000001UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyN);
         break;
@@ -27784,7 +29434,6 @@ DEFUN0(stgApplyPNNPNN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x1000000000000009UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -27802,6 +29451,10 @@ DEFUN0(stgApplyPNNPNN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0C00000000000001UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNN);
         break;
@@ -27821,7 +29474,6 @@ DEFUN0(stgApplyPNNPNN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0C00000000000001UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -27839,6 +29491,10 @@ DEFUN0(stgApplyPNNPNN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x1000000000000003UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPNN);
         break;
@@ -27858,7 +29514,6 @@ DEFUN0(stgApplyPNNPNN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0800000000000001UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -27876,6 +29531,10 @@ DEFUN0(stgApplyPNNPNN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x1400000000000005UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNPNN);
         break;
@@ -27895,7 +29554,6 @@ DEFUN0(stgApplyPNNPNN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0400000000000001UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -27913,6 +29571,10 @@ DEFUN0(stgApplyPNNPNN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x1800000000000009UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNNPNN);
         break;
@@ -27941,6 +29603,18 @@ DEFUN0(stgApplyPNNPNN) {
       pushargs(argCount, &argv[0].op->payload[fvCount+1]);
       // push the FUN
       pushargs(1, &argv[0]);
+      bitmap.bitmap.mask <<= 1;
+      bitmap.bitmap.mask |= 0x1;
+      bitmap.bitmap.size += 1;
+      bitmap2 = (Bitmap64)0x1800000000000009UL;
+      bitmap2.bitmap.mask <<= (argCount + 1);
+      bitmap.bits += bitmap2.bits;
+      newframe = stgAllocStackCont( &it_stgStackCont, argCount+arity+1 );
+      newframe->layout = bitmap;
+      newframe->payload[0] = argv[0]; // self
+      memcpy(&newframe->payload[1], &argv[0].op->payload[fvCount+1], argCount * sizeof(PtrOrLiteral)); // old args
+      memcpy(&newframe->payload[1 + argCount], &argv[1], arity * sizeof(PtrOrLiteral));
+      newframe = stgPopCont();
       // tail call the FUN
       STGJUMP0(getInfoPtr(argv[0].op)->funFields.trueEntryCode);
 
@@ -28210,6 +29884,7 @@ DEFUN0(stgApplyNPNPNN) {
     int fvCount = getInfoPtr(argv[0].op)->layoutInfo.boxedCount + 
                   getInfoPtr(argv[0].op)->layoutInfo.unboxedCount;
     Bitmap64 bitmap = argv[0].op->payload[fvCount].b;
+    Bitmap64 bitmap2;
     int argCount = BMSIZE(bitmap);
     int arity = getInfoPtr(argv[0].op)->funFields.arity - argCount;
     #ifdef DEBUGSTGAPPLY
@@ -28238,7 +29913,6 @@ DEFUN0(stgApplyNPNPNN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x140000000000000AUL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -28256,6 +29930,10 @@ DEFUN0(stgApplyNPNPNN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0800000000000001UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyN);
         break;
@@ -28275,7 +29953,6 @@ DEFUN0(stgApplyNPNPNN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x100000000000000AUL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -28293,6 +29970,10 @@ DEFUN0(stgApplyNPNPNN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0C00000000000001UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNN);
         break;
@@ -28312,7 +29993,6 @@ DEFUN0(stgApplyNPNPNN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0C00000000000002UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -28330,6 +30010,10 @@ DEFUN0(stgApplyNPNPNN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x1000000000000003UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPNN);
         break;
@@ -28349,7 +30033,6 @@ DEFUN0(stgApplyNPNPNN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0800000000000002UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -28367,6 +30050,10 @@ DEFUN0(stgApplyNPNPNN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x1400000000000005UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNPNN);
         break;
@@ -28386,7 +30073,6 @@ DEFUN0(stgApplyNPNPNN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0400000000000000UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -28404,6 +30090,10 @@ DEFUN0(stgApplyNPNPNN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x180000000000000BUL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPNPNN);
         break;
@@ -28432,6 +30122,18 @@ DEFUN0(stgApplyNPNPNN) {
       pushargs(argCount, &argv[0].op->payload[fvCount+1]);
       // push the FUN
       pushargs(1, &argv[0]);
+      bitmap.bitmap.mask <<= 1;
+      bitmap.bitmap.mask |= 0x1;
+      bitmap.bitmap.size += 1;
+      bitmap2 = (Bitmap64)0x180000000000000AUL;
+      bitmap2.bitmap.mask <<= (argCount + 1);
+      bitmap.bits += bitmap2.bits;
+      newframe = stgAllocStackCont( &it_stgStackCont, argCount+arity+1 );
+      newframe->layout = bitmap;
+      newframe->payload[0] = argv[0]; // self
+      memcpy(&newframe->payload[1], &argv[0].op->payload[fvCount+1], argCount * sizeof(PtrOrLiteral)); // old args
+      memcpy(&newframe->payload[1 + argCount], &argv[1], arity * sizeof(PtrOrLiteral));
+      newframe = stgPopCont();
       // tail call the FUN
       STGJUMP0(getInfoPtr(argv[0].op)->funFields.trueEntryCode);
 
@@ -28705,6 +30407,7 @@ DEFUN0(stgApplyPPNPNN) {
     int fvCount = getInfoPtr(argv[0].op)->layoutInfo.boxedCount + 
                   getInfoPtr(argv[0].op)->layoutInfo.unboxedCount;
     Bitmap64 bitmap = argv[0].op->payload[fvCount].b;
+    Bitmap64 bitmap2;
     int argCount = BMSIZE(bitmap);
     int arity = getInfoPtr(argv[0].op)->funFields.arity - argCount;
     #ifdef DEBUGSTGAPPLY
@@ -28733,7 +30436,6 @@ DEFUN0(stgApplyPPNPNN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x140000000000000BUL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -28751,6 +30453,10 @@ DEFUN0(stgApplyPPNPNN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0800000000000001UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyN);
         break;
@@ -28770,7 +30476,6 @@ DEFUN0(stgApplyPPNPNN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x100000000000000BUL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -28788,6 +30493,10 @@ DEFUN0(stgApplyPPNPNN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0C00000000000001UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNN);
         break;
@@ -28807,7 +30516,6 @@ DEFUN0(stgApplyPPNPNN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0C00000000000003UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -28825,6 +30533,10 @@ DEFUN0(stgApplyPPNPNN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x1000000000000003UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPNN);
         break;
@@ -28844,7 +30556,6 @@ DEFUN0(stgApplyPPNPNN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0800000000000003UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -28862,6 +30573,10 @@ DEFUN0(stgApplyPPNPNN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x1400000000000005UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNPNN);
         break;
@@ -28881,7 +30596,6 @@ DEFUN0(stgApplyPPNPNN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0400000000000001UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -28899,6 +30613,10 @@ DEFUN0(stgApplyPPNPNN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x180000000000000BUL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPNPNN);
         break;
@@ -28927,6 +30645,18 @@ DEFUN0(stgApplyPPNPNN) {
       pushargs(argCount, &argv[0].op->payload[fvCount+1]);
       // push the FUN
       pushargs(1, &argv[0]);
+      bitmap.bitmap.mask <<= 1;
+      bitmap.bitmap.mask |= 0x1;
+      bitmap.bitmap.size += 1;
+      bitmap2 = (Bitmap64)0x180000000000000BUL;
+      bitmap2.bitmap.mask <<= (argCount + 1);
+      bitmap.bits += bitmap2.bits;
+      newframe = stgAllocStackCont( &it_stgStackCont, argCount+arity+1 );
+      newframe->layout = bitmap;
+      newframe->payload[0] = argv[0]; // self
+      memcpy(&newframe->payload[1], &argv[0].op->payload[fvCount+1], argCount * sizeof(PtrOrLiteral)); // old args
+      memcpy(&newframe->payload[1 + argCount], &argv[1], arity * sizeof(PtrOrLiteral));
+      newframe = stgPopCont();
       // tail call the FUN
       STGJUMP0(getInfoPtr(argv[0].op)->funFields.trueEntryCode);
 
@@ -29196,6 +30926,7 @@ DEFUN0(stgApplyNNPPNN) {
     int fvCount = getInfoPtr(argv[0].op)->layoutInfo.boxedCount + 
                   getInfoPtr(argv[0].op)->layoutInfo.unboxedCount;
     Bitmap64 bitmap = argv[0].op->payload[fvCount].b;
+    Bitmap64 bitmap2;
     int argCount = BMSIZE(bitmap);
     int arity = getInfoPtr(argv[0].op)->funFields.arity - argCount;
     #ifdef DEBUGSTGAPPLY
@@ -29224,7 +30955,6 @@ DEFUN0(stgApplyNNPPNN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x140000000000000CUL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -29242,6 +30972,10 @@ DEFUN0(stgApplyNNPPNN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0800000000000001UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyN);
         break;
@@ -29261,7 +30995,6 @@ DEFUN0(stgApplyNNPPNN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x100000000000000CUL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -29279,6 +31012,10 @@ DEFUN0(stgApplyNNPPNN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0C00000000000001UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNN);
         break;
@@ -29298,7 +31035,6 @@ DEFUN0(stgApplyNNPPNN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0C00000000000004UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -29316,6 +31052,10 @@ DEFUN0(stgApplyNNPPNN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x1000000000000003UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPNN);
         break;
@@ -29335,7 +31075,6 @@ DEFUN0(stgApplyNNPPNN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0800000000000000UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -29353,6 +31092,10 @@ DEFUN0(stgApplyNNPPNN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x1400000000000007UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPPNN);
         break;
@@ -29372,7 +31115,6 @@ DEFUN0(stgApplyNNPPNN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0400000000000000UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -29390,6 +31132,10 @@ DEFUN0(stgApplyNNPPNN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x180000000000000DUL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNPPNN);
         break;
@@ -29418,6 +31164,18 @@ DEFUN0(stgApplyNNPPNN) {
       pushargs(argCount, &argv[0].op->payload[fvCount+1]);
       // push the FUN
       pushargs(1, &argv[0]);
+      bitmap.bitmap.mask <<= 1;
+      bitmap.bitmap.mask |= 0x1;
+      bitmap.bitmap.size += 1;
+      bitmap2 = (Bitmap64)0x180000000000000CUL;
+      bitmap2.bitmap.mask <<= (argCount + 1);
+      bitmap.bits += bitmap2.bits;
+      newframe = stgAllocStackCont( &it_stgStackCont, argCount+arity+1 );
+      newframe->layout = bitmap;
+      newframe->payload[0] = argv[0]; // self
+      memcpy(&newframe->payload[1], &argv[0].op->payload[fvCount+1], argCount * sizeof(PtrOrLiteral)); // old args
+      memcpy(&newframe->payload[1 + argCount], &argv[1], arity * sizeof(PtrOrLiteral));
+      newframe = stgPopCont();
       // tail call the FUN
       STGJUMP0(getInfoPtr(argv[0].op)->funFields.trueEntryCode);
 
@@ -29691,6 +31449,7 @@ DEFUN0(stgApplyPNPPNN) {
     int fvCount = getInfoPtr(argv[0].op)->layoutInfo.boxedCount + 
                   getInfoPtr(argv[0].op)->layoutInfo.unboxedCount;
     Bitmap64 bitmap = argv[0].op->payload[fvCount].b;
+    Bitmap64 bitmap2;
     int argCount = BMSIZE(bitmap);
     int arity = getInfoPtr(argv[0].op)->funFields.arity - argCount;
     #ifdef DEBUGSTGAPPLY
@@ -29719,7 +31478,6 @@ DEFUN0(stgApplyPNPPNN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x140000000000000DUL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -29737,6 +31495,10 @@ DEFUN0(stgApplyPNPPNN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0800000000000001UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyN);
         break;
@@ -29756,7 +31518,6 @@ DEFUN0(stgApplyPNPPNN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x100000000000000DUL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -29774,6 +31535,10 @@ DEFUN0(stgApplyPNPPNN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0C00000000000001UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNN);
         break;
@@ -29793,7 +31558,6 @@ DEFUN0(stgApplyPNPPNN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0C00000000000005UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -29811,6 +31575,10 @@ DEFUN0(stgApplyPNPPNN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x1000000000000003UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPNN);
         break;
@@ -29830,7 +31598,6 @@ DEFUN0(stgApplyPNPPNN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0800000000000001UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -29848,6 +31615,10 @@ DEFUN0(stgApplyPNPPNN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x1400000000000007UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPPNN);
         break;
@@ -29867,7 +31638,6 @@ DEFUN0(stgApplyPNPPNN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0400000000000001UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -29885,6 +31655,10 @@ DEFUN0(stgApplyPNPPNN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x180000000000000DUL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNPPNN);
         break;
@@ -29913,6 +31687,18 @@ DEFUN0(stgApplyPNPPNN) {
       pushargs(argCount, &argv[0].op->payload[fvCount+1]);
       // push the FUN
       pushargs(1, &argv[0]);
+      bitmap.bitmap.mask <<= 1;
+      bitmap.bitmap.mask |= 0x1;
+      bitmap.bitmap.size += 1;
+      bitmap2 = (Bitmap64)0x180000000000000DUL;
+      bitmap2.bitmap.mask <<= (argCount + 1);
+      bitmap.bits += bitmap2.bits;
+      newframe = stgAllocStackCont( &it_stgStackCont, argCount+arity+1 );
+      newframe->layout = bitmap;
+      newframe->payload[0] = argv[0]; // self
+      memcpy(&newframe->payload[1], &argv[0].op->payload[fvCount+1], argCount * sizeof(PtrOrLiteral)); // old args
+      memcpy(&newframe->payload[1 + argCount], &argv[1], arity * sizeof(PtrOrLiteral));
+      newframe = stgPopCont();
       // tail call the FUN
       STGJUMP0(getInfoPtr(argv[0].op)->funFields.trueEntryCode);
 
@@ -30186,6 +31972,7 @@ DEFUN0(stgApplyNPPPNN) {
     int fvCount = getInfoPtr(argv[0].op)->layoutInfo.boxedCount + 
                   getInfoPtr(argv[0].op)->layoutInfo.unboxedCount;
     Bitmap64 bitmap = argv[0].op->payload[fvCount].b;
+    Bitmap64 bitmap2;
     int argCount = BMSIZE(bitmap);
     int arity = getInfoPtr(argv[0].op)->funFields.arity - argCount;
     #ifdef DEBUGSTGAPPLY
@@ -30214,7 +32001,6 @@ DEFUN0(stgApplyNPPPNN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x140000000000000EUL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -30232,6 +32018,10 @@ DEFUN0(stgApplyNPPPNN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0800000000000001UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyN);
         break;
@@ -30251,7 +32041,6 @@ DEFUN0(stgApplyNPPPNN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x100000000000000EUL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -30269,6 +32058,10 @@ DEFUN0(stgApplyNPPPNN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0C00000000000001UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNN);
         break;
@@ -30288,7 +32081,6 @@ DEFUN0(stgApplyNPPPNN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0C00000000000006UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -30306,6 +32098,10 @@ DEFUN0(stgApplyNPPPNN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x1000000000000003UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPNN);
         break;
@@ -30325,7 +32121,6 @@ DEFUN0(stgApplyNPPPNN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0800000000000002UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -30343,6 +32138,10 @@ DEFUN0(stgApplyNPPPNN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x1400000000000007UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPPNN);
         break;
@@ -30362,7 +32161,6 @@ DEFUN0(stgApplyNPPPNN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0400000000000000UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -30380,6 +32178,10 @@ DEFUN0(stgApplyNPPPNN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x180000000000000FUL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPPPNN);
         break;
@@ -30408,6 +32210,18 @@ DEFUN0(stgApplyNPPPNN) {
       pushargs(argCount, &argv[0].op->payload[fvCount+1]);
       // push the FUN
       pushargs(1, &argv[0]);
+      bitmap.bitmap.mask <<= 1;
+      bitmap.bitmap.mask |= 0x1;
+      bitmap.bitmap.size += 1;
+      bitmap2 = (Bitmap64)0x180000000000000EUL;
+      bitmap2.bitmap.mask <<= (argCount + 1);
+      bitmap.bits += bitmap2.bits;
+      newframe = stgAllocStackCont( &it_stgStackCont, argCount+arity+1 );
+      newframe->layout = bitmap;
+      newframe->payload[0] = argv[0]; // self
+      memcpy(&newframe->payload[1], &argv[0].op->payload[fvCount+1], argCount * sizeof(PtrOrLiteral)); // old args
+      memcpy(&newframe->payload[1 + argCount], &argv[1], arity * sizeof(PtrOrLiteral));
+      newframe = stgPopCont();
       // tail call the FUN
       STGJUMP0(getInfoPtr(argv[0].op)->funFields.trueEntryCode);
 
@@ -30685,6 +32499,7 @@ DEFUN0(stgApplyPPPPNN) {
     int fvCount = getInfoPtr(argv[0].op)->layoutInfo.boxedCount + 
                   getInfoPtr(argv[0].op)->layoutInfo.unboxedCount;
     Bitmap64 bitmap = argv[0].op->payload[fvCount].b;
+    Bitmap64 bitmap2;
     int argCount = BMSIZE(bitmap);
     int arity = getInfoPtr(argv[0].op)->funFields.arity - argCount;
     #ifdef DEBUGSTGAPPLY
@@ -30713,7 +32528,6 @@ DEFUN0(stgApplyPPPPNN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x140000000000000FUL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -30731,6 +32545,10 @@ DEFUN0(stgApplyPPPPNN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0800000000000001UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyN);
         break;
@@ -30750,7 +32568,6 @@ DEFUN0(stgApplyPPPPNN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x100000000000000FUL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -30768,6 +32585,10 @@ DEFUN0(stgApplyPPPPNN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0C00000000000001UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNN);
         break;
@@ -30787,7 +32608,6 @@ DEFUN0(stgApplyPPPPNN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0C00000000000007UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -30805,6 +32625,10 @@ DEFUN0(stgApplyPPPPNN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x1000000000000003UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPNN);
         break;
@@ -30824,7 +32648,6 @@ DEFUN0(stgApplyPPPPNN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0800000000000003UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -30842,6 +32665,10 @@ DEFUN0(stgApplyPPPPNN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x1400000000000007UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPPNN);
         break;
@@ -30861,7 +32688,6 @@ DEFUN0(stgApplyPPPPNN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0400000000000001UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -30879,6 +32705,10 @@ DEFUN0(stgApplyPPPPNN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x180000000000000FUL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPPPNN);
         break;
@@ -30907,6 +32737,18 @@ DEFUN0(stgApplyPPPPNN) {
       pushargs(argCount, &argv[0].op->payload[fvCount+1]);
       // push the FUN
       pushargs(1, &argv[0]);
+      bitmap.bitmap.mask <<= 1;
+      bitmap.bitmap.mask |= 0x1;
+      bitmap.bitmap.size += 1;
+      bitmap2 = (Bitmap64)0x180000000000000FUL;
+      bitmap2.bitmap.mask <<= (argCount + 1);
+      bitmap.bits += bitmap2.bits;
+      newframe = stgAllocStackCont( &it_stgStackCont, argCount+arity+1 );
+      newframe->layout = bitmap;
+      newframe->payload[0] = argv[0]; // self
+      memcpy(&newframe->payload[1], &argv[0].op->payload[fvCount+1], argCount * sizeof(PtrOrLiteral)); // old args
+      memcpy(&newframe->payload[1 + argCount], &argv[1], arity * sizeof(PtrOrLiteral));
+      newframe = stgPopCont();
       // tail call the FUN
       STGJUMP0(getInfoPtr(argv[0].op)->funFields.trueEntryCode);
 
@@ -31172,6 +33014,7 @@ DEFUN0(stgApplyNNNNPN) {
     int fvCount = getInfoPtr(argv[0].op)->layoutInfo.boxedCount + 
                   getInfoPtr(argv[0].op)->layoutInfo.unboxedCount;
     Bitmap64 bitmap = argv[0].op->payload[fvCount].b;
+    Bitmap64 bitmap2;
     int argCount = BMSIZE(bitmap);
     int arity = getInfoPtr(argv[0].op)->funFields.arity - argCount;
     #ifdef DEBUGSTGAPPLY
@@ -31200,7 +33043,6 @@ DEFUN0(stgApplyNNNNPN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x1400000000000010UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -31218,6 +33060,10 @@ DEFUN0(stgApplyNNNNPN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0800000000000001UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyN);
         break;
@@ -31237,7 +33083,6 @@ DEFUN0(stgApplyNNNNPN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x1000000000000000UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -31255,6 +33100,10 @@ DEFUN0(stgApplyNNNNPN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0C00000000000003UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPN);
         break;
@@ -31274,7 +33123,6 @@ DEFUN0(stgApplyNNNNPN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0C00000000000000UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -31292,6 +33140,10 @@ DEFUN0(stgApplyNNNNPN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x1000000000000005UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNPN);
         break;
@@ -31311,7 +33163,6 @@ DEFUN0(stgApplyNNNNPN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0800000000000000UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -31329,6 +33180,10 @@ DEFUN0(stgApplyNNNNPN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x1400000000000009UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNNPN);
         break;
@@ -31348,7 +33203,6 @@ DEFUN0(stgApplyNNNNPN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0400000000000000UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -31366,6 +33220,10 @@ DEFUN0(stgApplyNNNNPN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x1800000000000011UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNNNPN);
         break;
@@ -31394,6 +33252,18 @@ DEFUN0(stgApplyNNNNPN) {
       pushargs(argCount, &argv[0].op->payload[fvCount+1]);
       // push the FUN
       pushargs(1, &argv[0]);
+      bitmap.bitmap.mask <<= 1;
+      bitmap.bitmap.mask |= 0x1;
+      bitmap.bitmap.size += 1;
+      bitmap2 = (Bitmap64)0x1800000000000010UL;
+      bitmap2.bitmap.mask <<= (argCount + 1);
+      bitmap.bits += bitmap2.bits;
+      newframe = stgAllocStackCont( &it_stgStackCont, argCount+arity+1 );
+      newframe->layout = bitmap;
+      newframe->payload[0] = argv[0]; // self
+      memcpy(&newframe->payload[1], &argv[0].op->payload[fvCount+1], argCount * sizeof(PtrOrLiteral)); // old args
+      memcpy(&newframe->payload[1 + argCount], &argv[1], arity * sizeof(PtrOrLiteral));
+      newframe = stgPopCont();
       // tail call the FUN
       STGJUMP0(getInfoPtr(argv[0].op)->funFields.trueEntryCode);
 
@@ -31663,6 +33533,7 @@ DEFUN0(stgApplyPNNNPN) {
     int fvCount = getInfoPtr(argv[0].op)->layoutInfo.boxedCount + 
                   getInfoPtr(argv[0].op)->layoutInfo.unboxedCount;
     Bitmap64 bitmap = argv[0].op->payload[fvCount].b;
+    Bitmap64 bitmap2;
     int argCount = BMSIZE(bitmap);
     int arity = getInfoPtr(argv[0].op)->funFields.arity - argCount;
     #ifdef DEBUGSTGAPPLY
@@ -31691,7 +33562,6 @@ DEFUN0(stgApplyPNNNPN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x1400000000000011UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -31709,6 +33579,10 @@ DEFUN0(stgApplyPNNNPN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0800000000000001UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyN);
         break;
@@ -31728,7 +33602,6 @@ DEFUN0(stgApplyPNNNPN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x1000000000000001UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -31746,6 +33619,10 @@ DEFUN0(stgApplyPNNNPN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0C00000000000003UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPN);
         break;
@@ -31765,7 +33642,6 @@ DEFUN0(stgApplyPNNNPN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0C00000000000001UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -31783,6 +33659,10 @@ DEFUN0(stgApplyPNNNPN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x1000000000000005UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNPN);
         break;
@@ -31802,7 +33682,6 @@ DEFUN0(stgApplyPNNNPN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0800000000000001UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -31820,6 +33699,10 @@ DEFUN0(stgApplyPNNNPN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x1400000000000009UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNNPN);
         break;
@@ -31839,7 +33722,6 @@ DEFUN0(stgApplyPNNNPN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0400000000000001UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -31857,6 +33739,10 @@ DEFUN0(stgApplyPNNNPN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x1800000000000011UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNNNPN);
         break;
@@ -31885,6 +33771,18 @@ DEFUN0(stgApplyPNNNPN) {
       pushargs(argCount, &argv[0].op->payload[fvCount+1]);
       // push the FUN
       pushargs(1, &argv[0]);
+      bitmap.bitmap.mask <<= 1;
+      bitmap.bitmap.mask |= 0x1;
+      bitmap.bitmap.size += 1;
+      bitmap2 = (Bitmap64)0x1800000000000011UL;
+      bitmap2.bitmap.mask <<= (argCount + 1);
+      bitmap.bits += bitmap2.bits;
+      newframe = stgAllocStackCont( &it_stgStackCont, argCount+arity+1 );
+      newframe->layout = bitmap;
+      newframe->payload[0] = argv[0]; // self
+      memcpy(&newframe->payload[1], &argv[0].op->payload[fvCount+1], argCount * sizeof(PtrOrLiteral)); // old args
+      memcpy(&newframe->payload[1 + argCount], &argv[1], arity * sizeof(PtrOrLiteral));
+      newframe = stgPopCont();
       // tail call the FUN
       STGJUMP0(getInfoPtr(argv[0].op)->funFields.trueEntryCode);
 
@@ -32154,6 +34052,7 @@ DEFUN0(stgApplyNPNNPN) {
     int fvCount = getInfoPtr(argv[0].op)->layoutInfo.boxedCount + 
                   getInfoPtr(argv[0].op)->layoutInfo.unboxedCount;
     Bitmap64 bitmap = argv[0].op->payload[fvCount].b;
+    Bitmap64 bitmap2;
     int argCount = BMSIZE(bitmap);
     int arity = getInfoPtr(argv[0].op)->funFields.arity - argCount;
     #ifdef DEBUGSTGAPPLY
@@ -32182,7 +34081,6 @@ DEFUN0(stgApplyNPNNPN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x1400000000000012UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -32200,6 +34098,10 @@ DEFUN0(stgApplyNPNNPN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0800000000000001UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyN);
         break;
@@ -32219,7 +34121,6 @@ DEFUN0(stgApplyNPNNPN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x1000000000000002UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -32237,6 +34138,10 @@ DEFUN0(stgApplyNPNNPN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0C00000000000003UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPN);
         break;
@@ -32256,7 +34161,6 @@ DEFUN0(stgApplyNPNNPN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0C00000000000002UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -32274,6 +34178,10 @@ DEFUN0(stgApplyNPNNPN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x1000000000000005UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNPN);
         break;
@@ -32293,7 +34201,6 @@ DEFUN0(stgApplyNPNNPN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0800000000000002UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -32311,6 +34218,10 @@ DEFUN0(stgApplyNPNNPN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x1400000000000009UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNNPN);
         break;
@@ -32330,7 +34241,6 @@ DEFUN0(stgApplyNPNNPN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0400000000000000UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -32348,6 +34258,10 @@ DEFUN0(stgApplyNPNNPN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x1800000000000013UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPNNPN);
         break;
@@ -32376,6 +34290,18 @@ DEFUN0(stgApplyNPNNPN) {
       pushargs(argCount, &argv[0].op->payload[fvCount+1]);
       // push the FUN
       pushargs(1, &argv[0]);
+      bitmap.bitmap.mask <<= 1;
+      bitmap.bitmap.mask |= 0x1;
+      bitmap.bitmap.size += 1;
+      bitmap2 = (Bitmap64)0x1800000000000012UL;
+      bitmap2.bitmap.mask <<= (argCount + 1);
+      bitmap.bits += bitmap2.bits;
+      newframe = stgAllocStackCont( &it_stgStackCont, argCount+arity+1 );
+      newframe->layout = bitmap;
+      newframe->payload[0] = argv[0]; // self
+      memcpy(&newframe->payload[1], &argv[0].op->payload[fvCount+1], argCount * sizeof(PtrOrLiteral)); // old args
+      memcpy(&newframe->payload[1 + argCount], &argv[1], arity * sizeof(PtrOrLiteral));
+      newframe = stgPopCont();
       // tail call the FUN
       STGJUMP0(getInfoPtr(argv[0].op)->funFields.trueEntryCode);
 
@@ -32649,6 +34575,7 @@ DEFUN0(stgApplyPPNNPN) {
     int fvCount = getInfoPtr(argv[0].op)->layoutInfo.boxedCount + 
                   getInfoPtr(argv[0].op)->layoutInfo.unboxedCount;
     Bitmap64 bitmap = argv[0].op->payload[fvCount].b;
+    Bitmap64 bitmap2;
     int argCount = BMSIZE(bitmap);
     int arity = getInfoPtr(argv[0].op)->funFields.arity - argCount;
     #ifdef DEBUGSTGAPPLY
@@ -32677,7 +34604,6 @@ DEFUN0(stgApplyPPNNPN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x1400000000000013UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -32695,6 +34621,10 @@ DEFUN0(stgApplyPPNNPN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0800000000000001UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyN);
         break;
@@ -32714,7 +34644,6 @@ DEFUN0(stgApplyPPNNPN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x1000000000000003UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -32732,6 +34661,10 @@ DEFUN0(stgApplyPPNNPN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0C00000000000003UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPN);
         break;
@@ -32751,7 +34684,6 @@ DEFUN0(stgApplyPPNNPN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0C00000000000003UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -32769,6 +34701,10 @@ DEFUN0(stgApplyPPNNPN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x1000000000000005UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNPN);
         break;
@@ -32788,7 +34724,6 @@ DEFUN0(stgApplyPPNNPN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0800000000000003UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -32806,6 +34741,10 @@ DEFUN0(stgApplyPPNNPN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x1400000000000009UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNNPN);
         break;
@@ -32825,7 +34764,6 @@ DEFUN0(stgApplyPPNNPN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0400000000000001UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -32843,6 +34781,10 @@ DEFUN0(stgApplyPPNNPN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x1800000000000013UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPNNPN);
         break;
@@ -32871,6 +34813,18 @@ DEFUN0(stgApplyPPNNPN) {
       pushargs(argCount, &argv[0].op->payload[fvCount+1]);
       // push the FUN
       pushargs(1, &argv[0]);
+      bitmap.bitmap.mask <<= 1;
+      bitmap.bitmap.mask |= 0x1;
+      bitmap.bitmap.size += 1;
+      bitmap2 = (Bitmap64)0x1800000000000013UL;
+      bitmap2.bitmap.mask <<= (argCount + 1);
+      bitmap.bits += bitmap2.bits;
+      newframe = stgAllocStackCont( &it_stgStackCont, argCount+arity+1 );
+      newframe->layout = bitmap;
+      newframe->payload[0] = argv[0]; // self
+      memcpy(&newframe->payload[1], &argv[0].op->payload[fvCount+1], argCount * sizeof(PtrOrLiteral)); // old args
+      memcpy(&newframe->payload[1 + argCount], &argv[1], arity * sizeof(PtrOrLiteral));
+      newframe = stgPopCont();
       // tail call the FUN
       STGJUMP0(getInfoPtr(argv[0].op)->funFields.trueEntryCode);
 
@@ -33140,6 +35094,7 @@ DEFUN0(stgApplyNNPNPN) {
     int fvCount = getInfoPtr(argv[0].op)->layoutInfo.boxedCount + 
                   getInfoPtr(argv[0].op)->layoutInfo.unboxedCount;
     Bitmap64 bitmap = argv[0].op->payload[fvCount].b;
+    Bitmap64 bitmap2;
     int argCount = BMSIZE(bitmap);
     int arity = getInfoPtr(argv[0].op)->funFields.arity - argCount;
     #ifdef DEBUGSTGAPPLY
@@ -33168,7 +35123,6 @@ DEFUN0(stgApplyNNPNPN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x1400000000000014UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -33186,6 +35140,10 @@ DEFUN0(stgApplyNNPNPN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0800000000000001UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyN);
         break;
@@ -33205,7 +35163,6 @@ DEFUN0(stgApplyNNPNPN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x1000000000000004UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -33223,6 +35180,10 @@ DEFUN0(stgApplyNNPNPN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0C00000000000003UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPN);
         break;
@@ -33242,7 +35203,6 @@ DEFUN0(stgApplyNNPNPN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0C00000000000004UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -33260,6 +35220,10 @@ DEFUN0(stgApplyNNPNPN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x1000000000000005UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNPN);
         break;
@@ -33279,7 +35243,6 @@ DEFUN0(stgApplyNNPNPN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0800000000000000UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -33297,6 +35260,10 @@ DEFUN0(stgApplyNNPNPN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x140000000000000BUL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPNPN);
         break;
@@ -33316,7 +35283,6 @@ DEFUN0(stgApplyNNPNPN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0400000000000000UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -33334,6 +35300,10 @@ DEFUN0(stgApplyNNPNPN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x1800000000000015UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNPNPN);
         break;
@@ -33362,6 +35332,18 @@ DEFUN0(stgApplyNNPNPN) {
       pushargs(argCount, &argv[0].op->payload[fvCount+1]);
       // push the FUN
       pushargs(1, &argv[0]);
+      bitmap.bitmap.mask <<= 1;
+      bitmap.bitmap.mask |= 0x1;
+      bitmap.bitmap.size += 1;
+      bitmap2 = (Bitmap64)0x1800000000000014UL;
+      bitmap2.bitmap.mask <<= (argCount + 1);
+      bitmap.bits += bitmap2.bits;
+      newframe = stgAllocStackCont( &it_stgStackCont, argCount+arity+1 );
+      newframe->layout = bitmap;
+      newframe->payload[0] = argv[0]; // self
+      memcpy(&newframe->payload[1], &argv[0].op->payload[fvCount+1], argCount * sizeof(PtrOrLiteral)); // old args
+      memcpy(&newframe->payload[1 + argCount], &argv[1], arity * sizeof(PtrOrLiteral));
+      newframe = stgPopCont();
       // tail call the FUN
       STGJUMP0(getInfoPtr(argv[0].op)->funFields.trueEntryCode);
 
@@ -33635,6 +35617,7 @@ DEFUN0(stgApplyPNPNPN) {
     int fvCount = getInfoPtr(argv[0].op)->layoutInfo.boxedCount + 
                   getInfoPtr(argv[0].op)->layoutInfo.unboxedCount;
     Bitmap64 bitmap = argv[0].op->payload[fvCount].b;
+    Bitmap64 bitmap2;
     int argCount = BMSIZE(bitmap);
     int arity = getInfoPtr(argv[0].op)->funFields.arity - argCount;
     #ifdef DEBUGSTGAPPLY
@@ -33663,7 +35646,6 @@ DEFUN0(stgApplyPNPNPN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x1400000000000015UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -33681,6 +35663,10 @@ DEFUN0(stgApplyPNPNPN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0800000000000001UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyN);
         break;
@@ -33700,7 +35686,6 @@ DEFUN0(stgApplyPNPNPN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x1000000000000005UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -33718,6 +35703,10 @@ DEFUN0(stgApplyPNPNPN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0C00000000000003UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPN);
         break;
@@ -33737,7 +35726,6 @@ DEFUN0(stgApplyPNPNPN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0C00000000000005UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -33755,6 +35743,10 @@ DEFUN0(stgApplyPNPNPN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x1000000000000005UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNPN);
         break;
@@ -33774,7 +35766,6 @@ DEFUN0(stgApplyPNPNPN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0800000000000001UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -33792,6 +35783,10 @@ DEFUN0(stgApplyPNPNPN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x140000000000000BUL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPNPN);
         break;
@@ -33811,7 +35806,6 @@ DEFUN0(stgApplyPNPNPN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0400000000000001UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -33829,6 +35823,10 @@ DEFUN0(stgApplyPNPNPN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x1800000000000015UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNPNPN);
         break;
@@ -33857,6 +35855,18 @@ DEFUN0(stgApplyPNPNPN) {
       pushargs(argCount, &argv[0].op->payload[fvCount+1]);
       // push the FUN
       pushargs(1, &argv[0]);
+      bitmap.bitmap.mask <<= 1;
+      bitmap.bitmap.mask |= 0x1;
+      bitmap.bitmap.size += 1;
+      bitmap2 = (Bitmap64)0x1800000000000015UL;
+      bitmap2.bitmap.mask <<= (argCount + 1);
+      bitmap.bits += bitmap2.bits;
+      newframe = stgAllocStackCont( &it_stgStackCont, argCount+arity+1 );
+      newframe->layout = bitmap;
+      newframe->payload[0] = argv[0]; // self
+      memcpy(&newframe->payload[1], &argv[0].op->payload[fvCount+1], argCount * sizeof(PtrOrLiteral)); // old args
+      memcpy(&newframe->payload[1 + argCount], &argv[1], arity * sizeof(PtrOrLiteral));
+      newframe = stgPopCont();
       // tail call the FUN
       STGJUMP0(getInfoPtr(argv[0].op)->funFields.trueEntryCode);
 
@@ -34130,6 +36140,7 @@ DEFUN0(stgApplyNPPNPN) {
     int fvCount = getInfoPtr(argv[0].op)->layoutInfo.boxedCount + 
                   getInfoPtr(argv[0].op)->layoutInfo.unboxedCount;
     Bitmap64 bitmap = argv[0].op->payload[fvCount].b;
+    Bitmap64 bitmap2;
     int argCount = BMSIZE(bitmap);
     int arity = getInfoPtr(argv[0].op)->funFields.arity - argCount;
     #ifdef DEBUGSTGAPPLY
@@ -34158,7 +36169,6 @@ DEFUN0(stgApplyNPPNPN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x1400000000000016UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -34176,6 +36186,10 @@ DEFUN0(stgApplyNPPNPN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0800000000000001UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyN);
         break;
@@ -34195,7 +36209,6 @@ DEFUN0(stgApplyNPPNPN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x1000000000000006UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -34213,6 +36226,10 @@ DEFUN0(stgApplyNPPNPN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0C00000000000003UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPN);
         break;
@@ -34232,7 +36249,6 @@ DEFUN0(stgApplyNPPNPN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0C00000000000006UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -34250,6 +36266,10 @@ DEFUN0(stgApplyNPPNPN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x1000000000000005UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNPN);
         break;
@@ -34269,7 +36289,6 @@ DEFUN0(stgApplyNPPNPN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0800000000000002UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -34287,6 +36306,10 @@ DEFUN0(stgApplyNPPNPN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x140000000000000BUL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPNPN);
         break;
@@ -34306,7 +36329,6 @@ DEFUN0(stgApplyNPPNPN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0400000000000000UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -34324,6 +36346,10 @@ DEFUN0(stgApplyNPPNPN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x1800000000000017UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPPNPN);
         break;
@@ -34352,6 +36378,18 @@ DEFUN0(stgApplyNPPNPN) {
       pushargs(argCount, &argv[0].op->payload[fvCount+1]);
       // push the FUN
       pushargs(1, &argv[0]);
+      bitmap.bitmap.mask <<= 1;
+      bitmap.bitmap.mask |= 0x1;
+      bitmap.bitmap.size += 1;
+      bitmap2 = (Bitmap64)0x1800000000000016UL;
+      bitmap2.bitmap.mask <<= (argCount + 1);
+      bitmap.bits += bitmap2.bits;
+      newframe = stgAllocStackCont( &it_stgStackCont, argCount+arity+1 );
+      newframe->layout = bitmap;
+      newframe->payload[0] = argv[0]; // self
+      memcpy(&newframe->payload[1], &argv[0].op->payload[fvCount+1], argCount * sizeof(PtrOrLiteral)); // old args
+      memcpy(&newframe->payload[1 + argCount], &argv[1], arity * sizeof(PtrOrLiteral));
+      newframe = stgPopCont();
       // tail call the FUN
       STGJUMP0(getInfoPtr(argv[0].op)->funFields.trueEntryCode);
 
@@ -34629,6 +36667,7 @@ DEFUN0(stgApplyPPPNPN) {
     int fvCount = getInfoPtr(argv[0].op)->layoutInfo.boxedCount + 
                   getInfoPtr(argv[0].op)->layoutInfo.unboxedCount;
     Bitmap64 bitmap = argv[0].op->payload[fvCount].b;
+    Bitmap64 bitmap2;
     int argCount = BMSIZE(bitmap);
     int arity = getInfoPtr(argv[0].op)->funFields.arity - argCount;
     #ifdef DEBUGSTGAPPLY
@@ -34657,7 +36696,6 @@ DEFUN0(stgApplyPPPNPN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x1400000000000017UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -34675,6 +36713,10 @@ DEFUN0(stgApplyPPPNPN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0800000000000001UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyN);
         break;
@@ -34694,7 +36736,6 @@ DEFUN0(stgApplyPPPNPN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x1000000000000007UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -34712,6 +36753,10 @@ DEFUN0(stgApplyPPPNPN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0C00000000000003UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPN);
         break;
@@ -34731,7 +36776,6 @@ DEFUN0(stgApplyPPPNPN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0C00000000000007UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -34749,6 +36793,10 @@ DEFUN0(stgApplyPPPNPN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x1000000000000005UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNPN);
         break;
@@ -34768,7 +36816,6 @@ DEFUN0(stgApplyPPPNPN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0800000000000003UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -34786,6 +36833,10 @@ DEFUN0(stgApplyPPPNPN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x140000000000000BUL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPNPN);
         break;
@@ -34805,7 +36856,6 @@ DEFUN0(stgApplyPPPNPN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0400000000000001UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -34823,6 +36873,10 @@ DEFUN0(stgApplyPPPNPN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x1800000000000017UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPPNPN);
         break;
@@ -34851,6 +36905,18 @@ DEFUN0(stgApplyPPPNPN) {
       pushargs(argCount, &argv[0].op->payload[fvCount+1]);
       // push the FUN
       pushargs(1, &argv[0]);
+      bitmap.bitmap.mask <<= 1;
+      bitmap.bitmap.mask |= 0x1;
+      bitmap.bitmap.size += 1;
+      bitmap2 = (Bitmap64)0x1800000000000017UL;
+      bitmap2.bitmap.mask <<= (argCount + 1);
+      bitmap.bits += bitmap2.bits;
+      newframe = stgAllocStackCont( &it_stgStackCont, argCount+arity+1 );
+      newframe->layout = bitmap;
+      newframe->payload[0] = argv[0]; // self
+      memcpy(&newframe->payload[1], &argv[0].op->payload[fvCount+1], argCount * sizeof(PtrOrLiteral)); // old args
+      memcpy(&newframe->payload[1 + argCount], &argv[1], arity * sizeof(PtrOrLiteral));
+      newframe = stgPopCont();
       // tail call the FUN
       STGJUMP0(getInfoPtr(argv[0].op)->funFields.trueEntryCode);
 
@@ -35120,6 +37186,7 @@ DEFUN0(stgApplyNNNPPN) {
     int fvCount = getInfoPtr(argv[0].op)->layoutInfo.boxedCount + 
                   getInfoPtr(argv[0].op)->layoutInfo.unboxedCount;
     Bitmap64 bitmap = argv[0].op->payload[fvCount].b;
+    Bitmap64 bitmap2;
     int argCount = BMSIZE(bitmap);
     int arity = getInfoPtr(argv[0].op)->funFields.arity - argCount;
     #ifdef DEBUGSTGAPPLY
@@ -35148,7 +37215,6 @@ DEFUN0(stgApplyNNNPPN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x1400000000000018UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -35166,6 +37232,10 @@ DEFUN0(stgApplyNNNPPN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0800000000000001UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyN);
         break;
@@ -35185,7 +37255,6 @@ DEFUN0(stgApplyNNNPPN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x1000000000000008UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -35203,6 +37272,10 @@ DEFUN0(stgApplyNNNPPN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0C00000000000003UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPN);
         break;
@@ -35222,7 +37295,6 @@ DEFUN0(stgApplyNNNPPN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0C00000000000000UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -35240,6 +37312,10 @@ DEFUN0(stgApplyNNNPPN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x1000000000000007UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPPN);
         break;
@@ -35259,7 +37335,6 @@ DEFUN0(stgApplyNNNPPN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0800000000000000UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -35277,6 +37352,10 @@ DEFUN0(stgApplyNNNPPN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x140000000000000DUL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNPPN);
         break;
@@ -35296,7 +37375,6 @@ DEFUN0(stgApplyNNNPPN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0400000000000000UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -35314,6 +37392,10 @@ DEFUN0(stgApplyNNNPPN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x1800000000000019UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNNPPN);
         break;
@@ -35342,6 +37424,18 @@ DEFUN0(stgApplyNNNPPN) {
       pushargs(argCount, &argv[0].op->payload[fvCount+1]);
       // push the FUN
       pushargs(1, &argv[0]);
+      bitmap.bitmap.mask <<= 1;
+      bitmap.bitmap.mask |= 0x1;
+      bitmap.bitmap.size += 1;
+      bitmap2 = (Bitmap64)0x1800000000000018UL;
+      bitmap2.bitmap.mask <<= (argCount + 1);
+      bitmap.bits += bitmap2.bits;
+      newframe = stgAllocStackCont( &it_stgStackCont, argCount+arity+1 );
+      newframe->layout = bitmap;
+      newframe->payload[0] = argv[0]; // self
+      memcpy(&newframe->payload[1], &argv[0].op->payload[fvCount+1], argCount * sizeof(PtrOrLiteral)); // old args
+      memcpy(&newframe->payload[1 + argCount], &argv[1], arity * sizeof(PtrOrLiteral));
+      newframe = stgPopCont();
       // tail call the FUN
       STGJUMP0(getInfoPtr(argv[0].op)->funFields.trueEntryCode);
 
@@ -35615,6 +37709,7 @@ DEFUN0(stgApplyPNNPPN) {
     int fvCount = getInfoPtr(argv[0].op)->layoutInfo.boxedCount + 
                   getInfoPtr(argv[0].op)->layoutInfo.unboxedCount;
     Bitmap64 bitmap = argv[0].op->payload[fvCount].b;
+    Bitmap64 bitmap2;
     int argCount = BMSIZE(bitmap);
     int arity = getInfoPtr(argv[0].op)->funFields.arity - argCount;
     #ifdef DEBUGSTGAPPLY
@@ -35643,7 +37738,6 @@ DEFUN0(stgApplyPNNPPN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x1400000000000019UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -35661,6 +37755,10 @@ DEFUN0(stgApplyPNNPPN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0800000000000001UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyN);
         break;
@@ -35680,7 +37778,6 @@ DEFUN0(stgApplyPNNPPN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x1000000000000009UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -35698,6 +37795,10 @@ DEFUN0(stgApplyPNNPPN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0C00000000000003UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPN);
         break;
@@ -35717,7 +37818,6 @@ DEFUN0(stgApplyPNNPPN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0C00000000000001UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -35735,6 +37835,10 @@ DEFUN0(stgApplyPNNPPN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x1000000000000007UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPPN);
         break;
@@ -35754,7 +37858,6 @@ DEFUN0(stgApplyPNNPPN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0800000000000001UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -35772,6 +37875,10 @@ DEFUN0(stgApplyPNNPPN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x140000000000000DUL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNPPN);
         break;
@@ -35791,7 +37898,6 @@ DEFUN0(stgApplyPNNPPN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0400000000000001UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -35809,6 +37915,10 @@ DEFUN0(stgApplyPNNPPN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x1800000000000019UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNNPPN);
         break;
@@ -35837,6 +37947,18 @@ DEFUN0(stgApplyPNNPPN) {
       pushargs(argCount, &argv[0].op->payload[fvCount+1]);
       // push the FUN
       pushargs(1, &argv[0]);
+      bitmap.bitmap.mask <<= 1;
+      bitmap.bitmap.mask |= 0x1;
+      bitmap.bitmap.size += 1;
+      bitmap2 = (Bitmap64)0x1800000000000019UL;
+      bitmap2.bitmap.mask <<= (argCount + 1);
+      bitmap.bits += bitmap2.bits;
+      newframe = stgAllocStackCont( &it_stgStackCont, argCount+arity+1 );
+      newframe->layout = bitmap;
+      newframe->payload[0] = argv[0]; // self
+      memcpy(&newframe->payload[1], &argv[0].op->payload[fvCount+1], argCount * sizeof(PtrOrLiteral)); // old args
+      memcpy(&newframe->payload[1 + argCount], &argv[1], arity * sizeof(PtrOrLiteral));
+      newframe = stgPopCont();
       // tail call the FUN
       STGJUMP0(getInfoPtr(argv[0].op)->funFields.trueEntryCode);
 
@@ -36110,6 +38232,7 @@ DEFUN0(stgApplyNPNPPN) {
     int fvCount = getInfoPtr(argv[0].op)->layoutInfo.boxedCount + 
                   getInfoPtr(argv[0].op)->layoutInfo.unboxedCount;
     Bitmap64 bitmap = argv[0].op->payload[fvCount].b;
+    Bitmap64 bitmap2;
     int argCount = BMSIZE(bitmap);
     int arity = getInfoPtr(argv[0].op)->funFields.arity - argCount;
     #ifdef DEBUGSTGAPPLY
@@ -36138,7 +38261,6 @@ DEFUN0(stgApplyNPNPPN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x140000000000001AUL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -36156,6 +38278,10 @@ DEFUN0(stgApplyNPNPPN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0800000000000001UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyN);
         break;
@@ -36175,7 +38301,6 @@ DEFUN0(stgApplyNPNPPN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x100000000000000AUL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -36193,6 +38318,10 @@ DEFUN0(stgApplyNPNPPN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0C00000000000003UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPN);
         break;
@@ -36212,7 +38341,6 @@ DEFUN0(stgApplyNPNPPN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0C00000000000002UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -36230,6 +38358,10 @@ DEFUN0(stgApplyNPNPPN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x1000000000000007UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPPN);
         break;
@@ -36249,7 +38381,6 @@ DEFUN0(stgApplyNPNPPN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0800000000000002UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -36267,6 +38398,10 @@ DEFUN0(stgApplyNPNPPN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x140000000000000DUL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNPPN);
         break;
@@ -36286,7 +38421,6 @@ DEFUN0(stgApplyNPNPPN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0400000000000000UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -36304,6 +38438,10 @@ DEFUN0(stgApplyNPNPPN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x180000000000001BUL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPNPPN);
         break;
@@ -36332,6 +38470,18 @@ DEFUN0(stgApplyNPNPPN) {
       pushargs(argCount, &argv[0].op->payload[fvCount+1]);
       // push the FUN
       pushargs(1, &argv[0]);
+      bitmap.bitmap.mask <<= 1;
+      bitmap.bitmap.mask |= 0x1;
+      bitmap.bitmap.size += 1;
+      bitmap2 = (Bitmap64)0x180000000000001AUL;
+      bitmap2.bitmap.mask <<= (argCount + 1);
+      bitmap.bits += bitmap2.bits;
+      newframe = stgAllocStackCont( &it_stgStackCont, argCount+arity+1 );
+      newframe->layout = bitmap;
+      newframe->payload[0] = argv[0]; // self
+      memcpy(&newframe->payload[1], &argv[0].op->payload[fvCount+1], argCount * sizeof(PtrOrLiteral)); // old args
+      memcpy(&newframe->payload[1 + argCount], &argv[1], arity * sizeof(PtrOrLiteral));
+      newframe = stgPopCont();
       // tail call the FUN
       STGJUMP0(getInfoPtr(argv[0].op)->funFields.trueEntryCode);
 
@@ -36609,6 +38759,7 @@ DEFUN0(stgApplyPPNPPN) {
     int fvCount = getInfoPtr(argv[0].op)->layoutInfo.boxedCount + 
                   getInfoPtr(argv[0].op)->layoutInfo.unboxedCount;
     Bitmap64 bitmap = argv[0].op->payload[fvCount].b;
+    Bitmap64 bitmap2;
     int argCount = BMSIZE(bitmap);
     int arity = getInfoPtr(argv[0].op)->funFields.arity - argCount;
     #ifdef DEBUGSTGAPPLY
@@ -36637,7 +38788,6 @@ DEFUN0(stgApplyPPNPPN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x140000000000001BUL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -36655,6 +38805,10 @@ DEFUN0(stgApplyPPNPPN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0800000000000001UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyN);
         break;
@@ -36674,7 +38828,6 @@ DEFUN0(stgApplyPPNPPN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x100000000000000BUL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -36692,6 +38845,10 @@ DEFUN0(stgApplyPPNPPN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0C00000000000003UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPN);
         break;
@@ -36711,7 +38868,6 @@ DEFUN0(stgApplyPPNPPN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0C00000000000003UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -36729,6 +38885,10 @@ DEFUN0(stgApplyPPNPPN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x1000000000000007UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPPN);
         break;
@@ -36748,7 +38908,6 @@ DEFUN0(stgApplyPPNPPN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0800000000000003UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -36766,6 +38925,10 @@ DEFUN0(stgApplyPPNPPN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x140000000000000DUL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNPPN);
         break;
@@ -36785,7 +38948,6 @@ DEFUN0(stgApplyPPNPPN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0400000000000001UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -36803,6 +38965,10 @@ DEFUN0(stgApplyPPNPPN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x180000000000001BUL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPNPPN);
         break;
@@ -36831,6 +38997,18 @@ DEFUN0(stgApplyPPNPPN) {
       pushargs(argCount, &argv[0].op->payload[fvCount+1]);
       // push the FUN
       pushargs(1, &argv[0]);
+      bitmap.bitmap.mask <<= 1;
+      bitmap.bitmap.mask |= 0x1;
+      bitmap.bitmap.size += 1;
+      bitmap2 = (Bitmap64)0x180000000000001BUL;
+      bitmap2.bitmap.mask <<= (argCount + 1);
+      bitmap.bits += bitmap2.bits;
+      newframe = stgAllocStackCont( &it_stgStackCont, argCount+arity+1 );
+      newframe->layout = bitmap;
+      newframe->payload[0] = argv[0]; // self
+      memcpy(&newframe->payload[1], &argv[0].op->payload[fvCount+1], argCount * sizeof(PtrOrLiteral)); // old args
+      memcpy(&newframe->payload[1 + argCount], &argv[1], arity * sizeof(PtrOrLiteral));
+      newframe = stgPopCont();
       // tail call the FUN
       STGJUMP0(getInfoPtr(argv[0].op)->funFields.trueEntryCode);
 
@@ -37104,6 +39282,7 @@ DEFUN0(stgApplyNNPPPN) {
     int fvCount = getInfoPtr(argv[0].op)->layoutInfo.boxedCount + 
                   getInfoPtr(argv[0].op)->layoutInfo.unboxedCount;
     Bitmap64 bitmap = argv[0].op->payload[fvCount].b;
+    Bitmap64 bitmap2;
     int argCount = BMSIZE(bitmap);
     int arity = getInfoPtr(argv[0].op)->funFields.arity - argCount;
     #ifdef DEBUGSTGAPPLY
@@ -37132,7 +39311,6 @@ DEFUN0(stgApplyNNPPPN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x140000000000001CUL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -37150,6 +39328,10 @@ DEFUN0(stgApplyNNPPPN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0800000000000001UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyN);
         break;
@@ -37169,7 +39351,6 @@ DEFUN0(stgApplyNNPPPN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x100000000000000CUL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -37187,6 +39368,10 @@ DEFUN0(stgApplyNNPPPN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0C00000000000003UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPN);
         break;
@@ -37206,7 +39391,6 @@ DEFUN0(stgApplyNNPPPN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0C00000000000004UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -37224,6 +39408,10 @@ DEFUN0(stgApplyNNPPPN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x1000000000000007UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPPN);
         break;
@@ -37243,7 +39431,6 @@ DEFUN0(stgApplyNNPPPN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0800000000000000UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -37261,6 +39448,10 @@ DEFUN0(stgApplyNNPPPN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x140000000000000FUL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPPPN);
         break;
@@ -37280,7 +39471,6 @@ DEFUN0(stgApplyNNPPPN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0400000000000000UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -37298,6 +39488,10 @@ DEFUN0(stgApplyNNPPPN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x180000000000001DUL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNPPPN);
         break;
@@ -37326,6 +39520,18 @@ DEFUN0(stgApplyNNPPPN) {
       pushargs(argCount, &argv[0].op->payload[fvCount+1]);
       // push the FUN
       pushargs(1, &argv[0]);
+      bitmap.bitmap.mask <<= 1;
+      bitmap.bitmap.mask |= 0x1;
+      bitmap.bitmap.size += 1;
+      bitmap2 = (Bitmap64)0x180000000000001CUL;
+      bitmap2.bitmap.mask <<= (argCount + 1);
+      bitmap.bits += bitmap2.bits;
+      newframe = stgAllocStackCont( &it_stgStackCont, argCount+arity+1 );
+      newframe->layout = bitmap;
+      newframe->payload[0] = argv[0]; // self
+      memcpy(&newframe->payload[1], &argv[0].op->payload[fvCount+1], argCount * sizeof(PtrOrLiteral)); // old args
+      memcpy(&newframe->payload[1 + argCount], &argv[1], arity * sizeof(PtrOrLiteral));
+      newframe = stgPopCont();
       // tail call the FUN
       STGJUMP0(getInfoPtr(argv[0].op)->funFields.trueEntryCode);
 
@@ -37603,6 +39809,7 @@ DEFUN0(stgApplyPNPPPN) {
     int fvCount = getInfoPtr(argv[0].op)->layoutInfo.boxedCount + 
                   getInfoPtr(argv[0].op)->layoutInfo.unboxedCount;
     Bitmap64 bitmap = argv[0].op->payload[fvCount].b;
+    Bitmap64 bitmap2;
     int argCount = BMSIZE(bitmap);
     int arity = getInfoPtr(argv[0].op)->funFields.arity - argCount;
     #ifdef DEBUGSTGAPPLY
@@ -37631,7 +39838,6 @@ DEFUN0(stgApplyPNPPPN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x140000000000001DUL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -37649,6 +39855,10 @@ DEFUN0(stgApplyPNPPPN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0800000000000001UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyN);
         break;
@@ -37668,7 +39878,6 @@ DEFUN0(stgApplyPNPPPN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x100000000000000DUL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -37686,6 +39895,10 @@ DEFUN0(stgApplyPNPPPN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0C00000000000003UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPN);
         break;
@@ -37705,7 +39918,6 @@ DEFUN0(stgApplyPNPPPN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0C00000000000005UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -37723,6 +39935,10 @@ DEFUN0(stgApplyPNPPPN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x1000000000000007UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPPN);
         break;
@@ -37742,7 +39958,6 @@ DEFUN0(stgApplyPNPPPN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0800000000000001UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -37760,6 +39975,10 @@ DEFUN0(stgApplyPNPPPN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x140000000000000FUL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPPPN);
         break;
@@ -37779,7 +39998,6 @@ DEFUN0(stgApplyPNPPPN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0400000000000001UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -37797,6 +40015,10 @@ DEFUN0(stgApplyPNPPPN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x180000000000001DUL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNPPPN);
         break;
@@ -37825,6 +40047,18 @@ DEFUN0(stgApplyPNPPPN) {
       pushargs(argCount, &argv[0].op->payload[fvCount+1]);
       // push the FUN
       pushargs(1, &argv[0]);
+      bitmap.bitmap.mask <<= 1;
+      bitmap.bitmap.mask |= 0x1;
+      bitmap.bitmap.size += 1;
+      bitmap2 = (Bitmap64)0x180000000000001DUL;
+      bitmap2.bitmap.mask <<= (argCount + 1);
+      bitmap.bits += bitmap2.bits;
+      newframe = stgAllocStackCont( &it_stgStackCont, argCount+arity+1 );
+      newframe->layout = bitmap;
+      newframe->payload[0] = argv[0]; // self
+      memcpy(&newframe->payload[1], &argv[0].op->payload[fvCount+1], argCount * sizeof(PtrOrLiteral)); // old args
+      memcpy(&newframe->payload[1 + argCount], &argv[1], arity * sizeof(PtrOrLiteral));
+      newframe = stgPopCont();
       // tail call the FUN
       STGJUMP0(getInfoPtr(argv[0].op)->funFields.trueEntryCode);
 
@@ -38102,6 +40336,7 @@ DEFUN0(stgApplyNPPPPN) {
     int fvCount = getInfoPtr(argv[0].op)->layoutInfo.boxedCount + 
                   getInfoPtr(argv[0].op)->layoutInfo.unboxedCount;
     Bitmap64 bitmap = argv[0].op->payload[fvCount].b;
+    Bitmap64 bitmap2;
     int argCount = BMSIZE(bitmap);
     int arity = getInfoPtr(argv[0].op)->funFields.arity - argCount;
     #ifdef DEBUGSTGAPPLY
@@ -38130,7 +40365,6 @@ DEFUN0(stgApplyNPPPPN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x140000000000001EUL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -38148,6 +40382,10 @@ DEFUN0(stgApplyNPPPPN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0800000000000001UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyN);
         break;
@@ -38167,7 +40405,6 @@ DEFUN0(stgApplyNPPPPN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x100000000000000EUL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -38185,6 +40422,10 @@ DEFUN0(stgApplyNPPPPN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0C00000000000003UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPN);
         break;
@@ -38204,7 +40445,6 @@ DEFUN0(stgApplyNPPPPN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0C00000000000006UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -38222,6 +40462,10 @@ DEFUN0(stgApplyNPPPPN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x1000000000000007UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPPN);
         break;
@@ -38241,7 +40485,6 @@ DEFUN0(stgApplyNPPPPN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0800000000000002UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -38259,6 +40502,10 @@ DEFUN0(stgApplyNPPPPN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x140000000000000FUL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPPPN);
         break;
@@ -38278,7 +40525,6 @@ DEFUN0(stgApplyNPPPPN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0400000000000000UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -38296,6 +40542,10 @@ DEFUN0(stgApplyNPPPPN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x180000000000001FUL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPPPPN);
         break;
@@ -38324,6 +40574,18 @@ DEFUN0(stgApplyNPPPPN) {
       pushargs(argCount, &argv[0].op->payload[fvCount+1]);
       // push the FUN
       pushargs(1, &argv[0]);
+      bitmap.bitmap.mask <<= 1;
+      bitmap.bitmap.mask |= 0x1;
+      bitmap.bitmap.size += 1;
+      bitmap2 = (Bitmap64)0x180000000000001EUL;
+      bitmap2.bitmap.mask <<= (argCount + 1);
+      bitmap.bits += bitmap2.bits;
+      newframe = stgAllocStackCont( &it_stgStackCont, argCount+arity+1 );
+      newframe->layout = bitmap;
+      newframe->payload[0] = argv[0]; // self
+      memcpy(&newframe->payload[1], &argv[0].op->payload[fvCount+1], argCount * sizeof(PtrOrLiteral)); // old args
+      memcpy(&newframe->payload[1 + argCount], &argv[1], arity * sizeof(PtrOrLiteral));
+      newframe = stgPopCont();
       // tail call the FUN
       STGJUMP0(getInfoPtr(argv[0].op)->funFields.trueEntryCode);
 
@@ -38605,6 +40867,7 @@ DEFUN0(stgApplyPPPPPN) {
     int fvCount = getInfoPtr(argv[0].op)->layoutInfo.boxedCount + 
                   getInfoPtr(argv[0].op)->layoutInfo.unboxedCount;
     Bitmap64 bitmap = argv[0].op->payload[fvCount].b;
+    Bitmap64 bitmap2;
     int argCount = BMSIZE(bitmap);
     int arity = getInfoPtr(argv[0].op)->funFields.arity - argCount;
     #ifdef DEBUGSTGAPPLY
@@ -38633,7 +40896,6 @@ DEFUN0(stgApplyPPPPPN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x140000000000001FUL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -38651,6 +40913,10 @@ DEFUN0(stgApplyPPPPPN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0800000000000001UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyN);
         break;
@@ -38670,7 +40936,6 @@ DEFUN0(stgApplyPPPPPN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x100000000000000FUL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -38688,6 +40953,10 @@ DEFUN0(stgApplyPPPPPN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0C00000000000003UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPN);
         break;
@@ -38707,7 +40976,6 @@ DEFUN0(stgApplyPPPPPN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0C00000000000007UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -38725,6 +40993,10 @@ DEFUN0(stgApplyPPPPPN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x1000000000000007UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPPN);
         break;
@@ -38744,7 +41016,6 @@ DEFUN0(stgApplyPPPPPN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0800000000000003UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -38762,6 +41033,10 @@ DEFUN0(stgApplyPPPPPN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x140000000000000FUL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPPPN);
         break;
@@ -38781,7 +41056,6 @@ DEFUN0(stgApplyPPPPPN) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0400000000000001UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -38799,6 +41073,10 @@ DEFUN0(stgApplyPPPPPN) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x180000000000001FUL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPPPPN);
         break;
@@ -38827,6 +41105,18 @@ DEFUN0(stgApplyPPPPPN) {
       pushargs(argCount, &argv[0].op->payload[fvCount+1]);
       // push the FUN
       pushargs(1, &argv[0]);
+      bitmap.bitmap.mask <<= 1;
+      bitmap.bitmap.mask |= 0x1;
+      bitmap.bitmap.size += 1;
+      bitmap2 = (Bitmap64)0x180000000000001FUL;
+      bitmap2.bitmap.mask <<= (argCount + 1);
+      bitmap.bits += bitmap2.bits;
+      newframe = stgAllocStackCont( &it_stgStackCont, argCount+arity+1 );
+      newframe->layout = bitmap;
+      newframe->payload[0] = argv[0]; // self
+      memcpy(&newframe->payload[1], &argv[0].op->payload[fvCount+1], argCount * sizeof(PtrOrLiteral)); // old args
+      memcpy(&newframe->payload[1 + argCount], &argv[1], arity * sizeof(PtrOrLiteral));
+      newframe = stgPopCont();
       // tail call the FUN
       STGJUMP0(getInfoPtr(argv[0].op)->funFields.trueEntryCode);
 
@@ -39092,6 +41382,7 @@ DEFUN0(stgApplyNNNNNP) {
     int fvCount = getInfoPtr(argv[0].op)->layoutInfo.boxedCount + 
                   getInfoPtr(argv[0].op)->layoutInfo.unboxedCount;
     Bitmap64 bitmap = argv[0].op->payload[fvCount].b;
+    Bitmap64 bitmap2;
     int argCount = BMSIZE(bitmap);
     int arity = getInfoPtr(argv[0].op)->funFields.arity - argCount;
     #ifdef DEBUGSTGAPPLY
@@ -39120,7 +41411,6 @@ DEFUN0(stgApplyNNNNNP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x1400000000000000UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -39138,6 +41428,10 @@ DEFUN0(stgApplyNNNNNP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0800000000000003UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyP);
         break;
@@ -39157,7 +41451,6 @@ DEFUN0(stgApplyNNNNNP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x1000000000000000UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -39175,6 +41468,10 @@ DEFUN0(stgApplyNNNNNP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0C00000000000005UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNP);
         break;
@@ -39194,7 +41491,6 @@ DEFUN0(stgApplyNNNNNP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0C00000000000000UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -39212,6 +41508,10 @@ DEFUN0(stgApplyNNNNNP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x1000000000000009UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNNP);
         break;
@@ -39231,7 +41531,6 @@ DEFUN0(stgApplyNNNNNP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0800000000000000UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -39249,6 +41548,10 @@ DEFUN0(stgApplyNNNNNP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x1400000000000011UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNNNP);
         break;
@@ -39268,7 +41571,6 @@ DEFUN0(stgApplyNNNNNP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0400000000000000UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -39286,6 +41588,10 @@ DEFUN0(stgApplyNNNNNP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x1800000000000021UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNNNNP);
         break;
@@ -39314,6 +41620,18 @@ DEFUN0(stgApplyNNNNNP) {
       pushargs(argCount, &argv[0].op->payload[fvCount+1]);
       // push the FUN
       pushargs(1, &argv[0]);
+      bitmap.bitmap.mask <<= 1;
+      bitmap.bitmap.mask |= 0x1;
+      bitmap.bitmap.size += 1;
+      bitmap2 = (Bitmap64)0x1800000000000020UL;
+      bitmap2.bitmap.mask <<= (argCount + 1);
+      bitmap.bits += bitmap2.bits;
+      newframe = stgAllocStackCont( &it_stgStackCont, argCount+arity+1 );
+      newframe->layout = bitmap;
+      newframe->payload[0] = argv[0]; // self
+      memcpy(&newframe->payload[1], &argv[0].op->payload[fvCount+1], argCount * sizeof(PtrOrLiteral)); // old args
+      memcpy(&newframe->payload[1 + argCount], &argv[1], arity * sizeof(PtrOrLiteral));
+      newframe = stgPopCont();
       // tail call the FUN
       STGJUMP0(getInfoPtr(argv[0].op)->funFields.trueEntryCode);
 
@@ -39583,6 +41901,7 @@ DEFUN0(stgApplyPNNNNP) {
     int fvCount = getInfoPtr(argv[0].op)->layoutInfo.boxedCount + 
                   getInfoPtr(argv[0].op)->layoutInfo.unboxedCount;
     Bitmap64 bitmap = argv[0].op->payload[fvCount].b;
+    Bitmap64 bitmap2;
     int argCount = BMSIZE(bitmap);
     int arity = getInfoPtr(argv[0].op)->funFields.arity - argCount;
     #ifdef DEBUGSTGAPPLY
@@ -39611,7 +41930,6 @@ DEFUN0(stgApplyPNNNNP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x1400000000000001UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -39629,6 +41947,10 @@ DEFUN0(stgApplyPNNNNP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0800000000000003UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyP);
         break;
@@ -39648,7 +41970,6 @@ DEFUN0(stgApplyPNNNNP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x1000000000000001UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -39666,6 +41987,10 @@ DEFUN0(stgApplyPNNNNP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0C00000000000005UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNP);
         break;
@@ -39685,7 +42010,6 @@ DEFUN0(stgApplyPNNNNP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0C00000000000001UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -39703,6 +42027,10 @@ DEFUN0(stgApplyPNNNNP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x1000000000000009UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNNP);
         break;
@@ -39722,7 +42050,6 @@ DEFUN0(stgApplyPNNNNP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0800000000000001UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -39740,6 +42067,10 @@ DEFUN0(stgApplyPNNNNP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x1400000000000011UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNNNP);
         break;
@@ -39759,7 +42090,6 @@ DEFUN0(stgApplyPNNNNP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0400000000000001UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -39777,6 +42107,10 @@ DEFUN0(stgApplyPNNNNP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x1800000000000021UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNNNNP);
         break;
@@ -39805,6 +42139,18 @@ DEFUN0(stgApplyPNNNNP) {
       pushargs(argCount, &argv[0].op->payload[fvCount+1]);
       // push the FUN
       pushargs(1, &argv[0]);
+      bitmap.bitmap.mask <<= 1;
+      bitmap.bitmap.mask |= 0x1;
+      bitmap.bitmap.size += 1;
+      bitmap2 = (Bitmap64)0x1800000000000021UL;
+      bitmap2.bitmap.mask <<= (argCount + 1);
+      bitmap.bits += bitmap2.bits;
+      newframe = stgAllocStackCont( &it_stgStackCont, argCount+arity+1 );
+      newframe->layout = bitmap;
+      newframe->payload[0] = argv[0]; // self
+      memcpy(&newframe->payload[1], &argv[0].op->payload[fvCount+1], argCount * sizeof(PtrOrLiteral)); // old args
+      memcpy(&newframe->payload[1 + argCount], &argv[1], arity * sizeof(PtrOrLiteral));
+      newframe = stgPopCont();
       // tail call the FUN
       STGJUMP0(getInfoPtr(argv[0].op)->funFields.trueEntryCode);
 
@@ -40074,6 +42420,7 @@ DEFUN0(stgApplyNPNNNP) {
     int fvCount = getInfoPtr(argv[0].op)->layoutInfo.boxedCount + 
                   getInfoPtr(argv[0].op)->layoutInfo.unboxedCount;
     Bitmap64 bitmap = argv[0].op->payload[fvCount].b;
+    Bitmap64 bitmap2;
     int argCount = BMSIZE(bitmap);
     int arity = getInfoPtr(argv[0].op)->funFields.arity - argCount;
     #ifdef DEBUGSTGAPPLY
@@ -40102,7 +42449,6 @@ DEFUN0(stgApplyNPNNNP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x1400000000000002UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -40120,6 +42466,10 @@ DEFUN0(stgApplyNPNNNP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0800000000000003UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyP);
         break;
@@ -40139,7 +42489,6 @@ DEFUN0(stgApplyNPNNNP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x1000000000000002UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -40157,6 +42506,10 @@ DEFUN0(stgApplyNPNNNP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0C00000000000005UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNP);
         break;
@@ -40176,7 +42529,6 @@ DEFUN0(stgApplyNPNNNP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0C00000000000002UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -40194,6 +42546,10 @@ DEFUN0(stgApplyNPNNNP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x1000000000000009UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNNP);
         break;
@@ -40213,7 +42569,6 @@ DEFUN0(stgApplyNPNNNP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0800000000000002UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -40231,6 +42586,10 @@ DEFUN0(stgApplyNPNNNP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x1400000000000011UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNNNP);
         break;
@@ -40250,7 +42609,6 @@ DEFUN0(stgApplyNPNNNP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0400000000000000UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -40268,6 +42626,10 @@ DEFUN0(stgApplyNPNNNP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x1800000000000023UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPNNNP);
         break;
@@ -40296,6 +42658,18 @@ DEFUN0(stgApplyNPNNNP) {
       pushargs(argCount, &argv[0].op->payload[fvCount+1]);
       // push the FUN
       pushargs(1, &argv[0]);
+      bitmap.bitmap.mask <<= 1;
+      bitmap.bitmap.mask |= 0x1;
+      bitmap.bitmap.size += 1;
+      bitmap2 = (Bitmap64)0x1800000000000022UL;
+      bitmap2.bitmap.mask <<= (argCount + 1);
+      bitmap.bits += bitmap2.bits;
+      newframe = stgAllocStackCont( &it_stgStackCont, argCount+arity+1 );
+      newframe->layout = bitmap;
+      newframe->payload[0] = argv[0]; // self
+      memcpy(&newframe->payload[1], &argv[0].op->payload[fvCount+1], argCount * sizeof(PtrOrLiteral)); // old args
+      memcpy(&newframe->payload[1 + argCount], &argv[1], arity * sizeof(PtrOrLiteral));
+      newframe = stgPopCont();
       // tail call the FUN
       STGJUMP0(getInfoPtr(argv[0].op)->funFields.trueEntryCode);
 
@@ -40569,6 +42943,7 @@ DEFUN0(stgApplyPPNNNP) {
     int fvCount = getInfoPtr(argv[0].op)->layoutInfo.boxedCount + 
                   getInfoPtr(argv[0].op)->layoutInfo.unboxedCount;
     Bitmap64 bitmap = argv[0].op->payload[fvCount].b;
+    Bitmap64 bitmap2;
     int argCount = BMSIZE(bitmap);
     int arity = getInfoPtr(argv[0].op)->funFields.arity - argCount;
     #ifdef DEBUGSTGAPPLY
@@ -40597,7 +42972,6 @@ DEFUN0(stgApplyPPNNNP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x1400000000000003UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -40615,6 +42989,10 @@ DEFUN0(stgApplyPPNNNP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0800000000000003UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyP);
         break;
@@ -40634,7 +43012,6 @@ DEFUN0(stgApplyPPNNNP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x1000000000000003UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -40652,6 +43029,10 @@ DEFUN0(stgApplyPPNNNP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0C00000000000005UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNP);
         break;
@@ -40671,7 +43052,6 @@ DEFUN0(stgApplyPPNNNP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0C00000000000003UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -40689,6 +43069,10 @@ DEFUN0(stgApplyPPNNNP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x1000000000000009UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNNP);
         break;
@@ -40708,7 +43092,6 @@ DEFUN0(stgApplyPPNNNP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0800000000000003UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -40726,6 +43109,10 @@ DEFUN0(stgApplyPPNNNP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x1400000000000011UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNNNP);
         break;
@@ -40745,7 +43132,6 @@ DEFUN0(stgApplyPPNNNP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0400000000000001UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -40763,6 +43149,10 @@ DEFUN0(stgApplyPPNNNP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x1800000000000023UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPNNNP);
         break;
@@ -40791,6 +43181,18 @@ DEFUN0(stgApplyPPNNNP) {
       pushargs(argCount, &argv[0].op->payload[fvCount+1]);
       // push the FUN
       pushargs(1, &argv[0]);
+      bitmap.bitmap.mask <<= 1;
+      bitmap.bitmap.mask |= 0x1;
+      bitmap.bitmap.size += 1;
+      bitmap2 = (Bitmap64)0x1800000000000023UL;
+      bitmap2.bitmap.mask <<= (argCount + 1);
+      bitmap.bits += bitmap2.bits;
+      newframe = stgAllocStackCont( &it_stgStackCont, argCount+arity+1 );
+      newframe->layout = bitmap;
+      newframe->payload[0] = argv[0]; // self
+      memcpy(&newframe->payload[1], &argv[0].op->payload[fvCount+1], argCount * sizeof(PtrOrLiteral)); // old args
+      memcpy(&newframe->payload[1 + argCount], &argv[1], arity * sizeof(PtrOrLiteral));
+      newframe = stgPopCont();
       // tail call the FUN
       STGJUMP0(getInfoPtr(argv[0].op)->funFields.trueEntryCode);
 
@@ -41060,6 +43462,7 @@ DEFUN0(stgApplyNNPNNP) {
     int fvCount = getInfoPtr(argv[0].op)->layoutInfo.boxedCount + 
                   getInfoPtr(argv[0].op)->layoutInfo.unboxedCount;
     Bitmap64 bitmap = argv[0].op->payload[fvCount].b;
+    Bitmap64 bitmap2;
     int argCount = BMSIZE(bitmap);
     int arity = getInfoPtr(argv[0].op)->funFields.arity - argCount;
     #ifdef DEBUGSTGAPPLY
@@ -41088,7 +43491,6 @@ DEFUN0(stgApplyNNPNNP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x1400000000000004UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -41106,6 +43508,10 @@ DEFUN0(stgApplyNNPNNP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0800000000000003UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyP);
         break;
@@ -41125,7 +43531,6 @@ DEFUN0(stgApplyNNPNNP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x1000000000000004UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -41143,6 +43548,10 @@ DEFUN0(stgApplyNNPNNP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0C00000000000005UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNP);
         break;
@@ -41162,7 +43571,6 @@ DEFUN0(stgApplyNNPNNP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0C00000000000004UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -41180,6 +43588,10 @@ DEFUN0(stgApplyNNPNNP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x1000000000000009UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNNP);
         break;
@@ -41199,7 +43611,6 @@ DEFUN0(stgApplyNNPNNP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0800000000000000UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -41217,6 +43628,10 @@ DEFUN0(stgApplyNNPNNP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x1400000000000013UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPNNP);
         break;
@@ -41236,7 +43651,6 @@ DEFUN0(stgApplyNNPNNP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0400000000000000UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -41254,6 +43668,10 @@ DEFUN0(stgApplyNNPNNP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x1800000000000025UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNPNNP);
         break;
@@ -41282,6 +43700,18 @@ DEFUN0(stgApplyNNPNNP) {
       pushargs(argCount, &argv[0].op->payload[fvCount+1]);
       // push the FUN
       pushargs(1, &argv[0]);
+      bitmap.bitmap.mask <<= 1;
+      bitmap.bitmap.mask |= 0x1;
+      bitmap.bitmap.size += 1;
+      bitmap2 = (Bitmap64)0x1800000000000024UL;
+      bitmap2.bitmap.mask <<= (argCount + 1);
+      bitmap.bits += bitmap2.bits;
+      newframe = stgAllocStackCont( &it_stgStackCont, argCount+arity+1 );
+      newframe->layout = bitmap;
+      newframe->payload[0] = argv[0]; // self
+      memcpy(&newframe->payload[1], &argv[0].op->payload[fvCount+1], argCount * sizeof(PtrOrLiteral)); // old args
+      memcpy(&newframe->payload[1 + argCount], &argv[1], arity * sizeof(PtrOrLiteral));
+      newframe = stgPopCont();
       // tail call the FUN
       STGJUMP0(getInfoPtr(argv[0].op)->funFields.trueEntryCode);
 
@@ -41555,6 +43985,7 @@ DEFUN0(stgApplyPNPNNP) {
     int fvCount = getInfoPtr(argv[0].op)->layoutInfo.boxedCount + 
                   getInfoPtr(argv[0].op)->layoutInfo.unboxedCount;
     Bitmap64 bitmap = argv[0].op->payload[fvCount].b;
+    Bitmap64 bitmap2;
     int argCount = BMSIZE(bitmap);
     int arity = getInfoPtr(argv[0].op)->funFields.arity - argCount;
     #ifdef DEBUGSTGAPPLY
@@ -41583,7 +44014,6 @@ DEFUN0(stgApplyPNPNNP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x1400000000000005UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -41601,6 +44031,10 @@ DEFUN0(stgApplyPNPNNP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0800000000000003UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyP);
         break;
@@ -41620,7 +44054,6 @@ DEFUN0(stgApplyPNPNNP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x1000000000000005UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -41638,6 +44071,10 @@ DEFUN0(stgApplyPNPNNP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0C00000000000005UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNP);
         break;
@@ -41657,7 +44094,6 @@ DEFUN0(stgApplyPNPNNP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0C00000000000005UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -41675,6 +44111,10 @@ DEFUN0(stgApplyPNPNNP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x1000000000000009UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNNP);
         break;
@@ -41694,7 +44134,6 @@ DEFUN0(stgApplyPNPNNP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0800000000000001UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -41712,6 +44151,10 @@ DEFUN0(stgApplyPNPNNP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x1400000000000013UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPNNP);
         break;
@@ -41731,7 +44174,6 @@ DEFUN0(stgApplyPNPNNP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0400000000000001UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -41749,6 +44191,10 @@ DEFUN0(stgApplyPNPNNP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x1800000000000025UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNPNNP);
         break;
@@ -41777,6 +44223,18 @@ DEFUN0(stgApplyPNPNNP) {
       pushargs(argCount, &argv[0].op->payload[fvCount+1]);
       // push the FUN
       pushargs(1, &argv[0]);
+      bitmap.bitmap.mask <<= 1;
+      bitmap.bitmap.mask |= 0x1;
+      bitmap.bitmap.size += 1;
+      bitmap2 = (Bitmap64)0x1800000000000025UL;
+      bitmap2.bitmap.mask <<= (argCount + 1);
+      bitmap.bits += bitmap2.bits;
+      newframe = stgAllocStackCont( &it_stgStackCont, argCount+arity+1 );
+      newframe->layout = bitmap;
+      newframe->payload[0] = argv[0]; // self
+      memcpy(&newframe->payload[1], &argv[0].op->payload[fvCount+1], argCount * sizeof(PtrOrLiteral)); // old args
+      memcpy(&newframe->payload[1 + argCount], &argv[1], arity * sizeof(PtrOrLiteral));
+      newframe = stgPopCont();
       // tail call the FUN
       STGJUMP0(getInfoPtr(argv[0].op)->funFields.trueEntryCode);
 
@@ -42050,6 +44508,7 @@ DEFUN0(stgApplyNPPNNP) {
     int fvCount = getInfoPtr(argv[0].op)->layoutInfo.boxedCount + 
                   getInfoPtr(argv[0].op)->layoutInfo.unboxedCount;
     Bitmap64 bitmap = argv[0].op->payload[fvCount].b;
+    Bitmap64 bitmap2;
     int argCount = BMSIZE(bitmap);
     int arity = getInfoPtr(argv[0].op)->funFields.arity - argCount;
     #ifdef DEBUGSTGAPPLY
@@ -42078,7 +44537,6 @@ DEFUN0(stgApplyNPPNNP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x1400000000000006UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -42096,6 +44554,10 @@ DEFUN0(stgApplyNPPNNP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0800000000000003UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyP);
         break;
@@ -42115,7 +44577,6 @@ DEFUN0(stgApplyNPPNNP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x1000000000000006UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -42133,6 +44594,10 @@ DEFUN0(stgApplyNPPNNP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0C00000000000005UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNP);
         break;
@@ -42152,7 +44617,6 @@ DEFUN0(stgApplyNPPNNP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0C00000000000006UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -42170,6 +44634,10 @@ DEFUN0(stgApplyNPPNNP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x1000000000000009UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNNP);
         break;
@@ -42189,7 +44657,6 @@ DEFUN0(stgApplyNPPNNP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0800000000000002UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -42207,6 +44674,10 @@ DEFUN0(stgApplyNPPNNP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x1400000000000013UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPNNP);
         break;
@@ -42226,7 +44697,6 @@ DEFUN0(stgApplyNPPNNP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0400000000000000UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -42244,6 +44714,10 @@ DEFUN0(stgApplyNPPNNP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x1800000000000027UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPPNNP);
         break;
@@ -42272,6 +44746,18 @@ DEFUN0(stgApplyNPPNNP) {
       pushargs(argCount, &argv[0].op->payload[fvCount+1]);
       // push the FUN
       pushargs(1, &argv[0]);
+      bitmap.bitmap.mask <<= 1;
+      bitmap.bitmap.mask |= 0x1;
+      bitmap.bitmap.size += 1;
+      bitmap2 = (Bitmap64)0x1800000000000026UL;
+      bitmap2.bitmap.mask <<= (argCount + 1);
+      bitmap.bits += bitmap2.bits;
+      newframe = stgAllocStackCont( &it_stgStackCont, argCount+arity+1 );
+      newframe->layout = bitmap;
+      newframe->payload[0] = argv[0]; // self
+      memcpy(&newframe->payload[1], &argv[0].op->payload[fvCount+1], argCount * sizeof(PtrOrLiteral)); // old args
+      memcpy(&newframe->payload[1 + argCount], &argv[1], arity * sizeof(PtrOrLiteral));
+      newframe = stgPopCont();
       // tail call the FUN
       STGJUMP0(getInfoPtr(argv[0].op)->funFields.trueEntryCode);
 
@@ -42549,6 +45035,7 @@ DEFUN0(stgApplyPPPNNP) {
     int fvCount = getInfoPtr(argv[0].op)->layoutInfo.boxedCount + 
                   getInfoPtr(argv[0].op)->layoutInfo.unboxedCount;
     Bitmap64 bitmap = argv[0].op->payload[fvCount].b;
+    Bitmap64 bitmap2;
     int argCount = BMSIZE(bitmap);
     int arity = getInfoPtr(argv[0].op)->funFields.arity - argCount;
     #ifdef DEBUGSTGAPPLY
@@ -42577,7 +45064,6 @@ DEFUN0(stgApplyPPPNNP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x1400000000000007UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -42595,6 +45081,10 @@ DEFUN0(stgApplyPPPNNP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0800000000000003UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyP);
         break;
@@ -42614,7 +45104,6 @@ DEFUN0(stgApplyPPPNNP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x1000000000000007UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -42632,6 +45121,10 @@ DEFUN0(stgApplyPPPNNP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0C00000000000005UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNP);
         break;
@@ -42651,7 +45144,6 @@ DEFUN0(stgApplyPPPNNP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0C00000000000007UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -42669,6 +45161,10 @@ DEFUN0(stgApplyPPPNNP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x1000000000000009UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNNP);
         break;
@@ -42688,7 +45184,6 @@ DEFUN0(stgApplyPPPNNP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0800000000000003UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -42706,6 +45201,10 @@ DEFUN0(stgApplyPPPNNP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x1400000000000013UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPNNP);
         break;
@@ -42725,7 +45224,6 @@ DEFUN0(stgApplyPPPNNP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0400000000000001UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -42743,6 +45241,10 @@ DEFUN0(stgApplyPPPNNP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x1800000000000027UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPPNNP);
         break;
@@ -42771,6 +45273,18 @@ DEFUN0(stgApplyPPPNNP) {
       pushargs(argCount, &argv[0].op->payload[fvCount+1]);
       // push the FUN
       pushargs(1, &argv[0]);
+      bitmap.bitmap.mask <<= 1;
+      bitmap.bitmap.mask |= 0x1;
+      bitmap.bitmap.size += 1;
+      bitmap2 = (Bitmap64)0x1800000000000027UL;
+      bitmap2.bitmap.mask <<= (argCount + 1);
+      bitmap.bits += bitmap2.bits;
+      newframe = stgAllocStackCont( &it_stgStackCont, argCount+arity+1 );
+      newframe->layout = bitmap;
+      newframe->payload[0] = argv[0]; // self
+      memcpy(&newframe->payload[1], &argv[0].op->payload[fvCount+1], argCount * sizeof(PtrOrLiteral)); // old args
+      memcpy(&newframe->payload[1 + argCount], &argv[1], arity * sizeof(PtrOrLiteral));
+      newframe = stgPopCont();
       // tail call the FUN
       STGJUMP0(getInfoPtr(argv[0].op)->funFields.trueEntryCode);
 
@@ -43040,6 +45554,7 @@ DEFUN0(stgApplyNNNPNP) {
     int fvCount = getInfoPtr(argv[0].op)->layoutInfo.boxedCount + 
                   getInfoPtr(argv[0].op)->layoutInfo.unboxedCount;
     Bitmap64 bitmap = argv[0].op->payload[fvCount].b;
+    Bitmap64 bitmap2;
     int argCount = BMSIZE(bitmap);
     int arity = getInfoPtr(argv[0].op)->funFields.arity - argCount;
     #ifdef DEBUGSTGAPPLY
@@ -43068,7 +45583,6 @@ DEFUN0(stgApplyNNNPNP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x1400000000000008UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -43086,6 +45600,10 @@ DEFUN0(stgApplyNNNPNP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0800000000000003UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyP);
         break;
@@ -43105,7 +45623,6 @@ DEFUN0(stgApplyNNNPNP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x1000000000000008UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -43123,6 +45640,10 @@ DEFUN0(stgApplyNNNPNP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0C00000000000005UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNP);
         break;
@@ -43142,7 +45663,6 @@ DEFUN0(stgApplyNNNPNP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0C00000000000000UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -43160,6 +45680,10 @@ DEFUN0(stgApplyNNNPNP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x100000000000000BUL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPNP);
         break;
@@ -43179,7 +45703,6 @@ DEFUN0(stgApplyNNNPNP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0800000000000000UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -43197,6 +45720,10 @@ DEFUN0(stgApplyNNNPNP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x1400000000000015UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNPNP);
         break;
@@ -43216,7 +45743,6 @@ DEFUN0(stgApplyNNNPNP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0400000000000000UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -43234,6 +45760,10 @@ DEFUN0(stgApplyNNNPNP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x1800000000000029UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNNPNP);
         break;
@@ -43262,6 +45792,18 @@ DEFUN0(stgApplyNNNPNP) {
       pushargs(argCount, &argv[0].op->payload[fvCount+1]);
       // push the FUN
       pushargs(1, &argv[0]);
+      bitmap.bitmap.mask <<= 1;
+      bitmap.bitmap.mask |= 0x1;
+      bitmap.bitmap.size += 1;
+      bitmap2 = (Bitmap64)0x1800000000000028UL;
+      bitmap2.bitmap.mask <<= (argCount + 1);
+      bitmap.bits += bitmap2.bits;
+      newframe = stgAllocStackCont( &it_stgStackCont, argCount+arity+1 );
+      newframe->layout = bitmap;
+      newframe->payload[0] = argv[0]; // self
+      memcpy(&newframe->payload[1], &argv[0].op->payload[fvCount+1], argCount * sizeof(PtrOrLiteral)); // old args
+      memcpy(&newframe->payload[1 + argCount], &argv[1], arity * sizeof(PtrOrLiteral));
+      newframe = stgPopCont();
       // tail call the FUN
       STGJUMP0(getInfoPtr(argv[0].op)->funFields.trueEntryCode);
 
@@ -43535,6 +46077,7 @@ DEFUN0(stgApplyPNNPNP) {
     int fvCount = getInfoPtr(argv[0].op)->layoutInfo.boxedCount + 
                   getInfoPtr(argv[0].op)->layoutInfo.unboxedCount;
     Bitmap64 bitmap = argv[0].op->payload[fvCount].b;
+    Bitmap64 bitmap2;
     int argCount = BMSIZE(bitmap);
     int arity = getInfoPtr(argv[0].op)->funFields.arity - argCount;
     #ifdef DEBUGSTGAPPLY
@@ -43563,7 +46106,6 @@ DEFUN0(stgApplyPNNPNP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x1400000000000009UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -43581,6 +46123,10 @@ DEFUN0(stgApplyPNNPNP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0800000000000003UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyP);
         break;
@@ -43600,7 +46146,6 @@ DEFUN0(stgApplyPNNPNP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x1000000000000009UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -43618,6 +46163,10 @@ DEFUN0(stgApplyPNNPNP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0C00000000000005UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNP);
         break;
@@ -43637,7 +46186,6 @@ DEFUN0(stgApplyPNNPNP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0C00000000000001UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -43655,6 +46203,10 @@ DEFUN0(stgApplyPNNPNP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x100000000000000BUL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPNP);
         break;
@@ -43674,7 +46226,6 @@ DEFUN0(stgApplyPNNPNP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0800000000000001UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -43692,6 +46243,10 @@ DEFUN0(stgApplyPNNPNP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x1400000000000015UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNPNP);
         break;
@@ -43711,7 +46266,6 @@ DEFUN0(stgApplyPNNPNP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0400000000000001UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -43729,6 +46283,10 @@ DEFUN0(stgApplyPNNPNP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x1800000000000029UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNNPNP);
         break;
@@ -43757,6 +46315,18 @@ DEFUN0(stgApplyPNNPNP) {
       pushargs(argCount, &argv[0].op->payload[fvCount+1]);
       // push the FUN
       pushargs(1, &argv[0]);
+      bitmap.bitmap.mask <<= 1;
+      bitmap.bitmap.mask |= 0x1;
+      bitmap.bitmap.size += 1;
+      bitmap2 = (Bitmap64)0x1800000000000029UL;
+      bitmap2.bitmap.mask <<= (argCount + 1);
+      bitmap.bits += bitmap2.bits;
+      newframe = stgAllocStackCont( &it_stgStackCont, argCount+arity+1 );
+      newframe->layout = bitmap;
+      newframe->payload[0] = argv[0]; // self
+      memcpy(&newframe->payload[1], &argv[0].op->payload[fvCount+1], argCount * sizeof(PtrOrLiteral)); // old args
+      memcpy(&newframe->payload[1 + argCount], &argv[1], arity * sizeof(PtrOrLiteral));
+      newframe = stgPopCont();
       // tail call the FUN
       STGJUMP0(getInfoPtr(argv[0].op)->funFields.trueEntryCode);
 
@@ -44030,6 +46600,7 @@ DEFUN0(stgApplyNPNPNP) {
     int fvCount = getInfoPtr(argv[0].op)->layoutInfo.boxedCount + 
                   getInfoPtr(argv[0].op)->layoutInfo.unboxedCount;
     Bitmap64 bitmap = argv[0].op->payload[fvCount].b;
+    Bitmap64 bitmap2;
     int argCount = BMSIZE(bitmap);
     int arity = getInfoPtr(argv[0].op)->funFields.arity - argCount;
     #ifdef DEBUGSTGAPPLY
@@ -44058,7 +46629,6 @@ DEFUN0(stgApplyNPNPNP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x140000000000000AUL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -44076,6 +46646,10 @@ DEFUN0(stgApplyNPNPNP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0800000000000003UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyP);
         break;
@@ -44095,7 +46669,6 @@ DEFUN0(stgApplyNPNPNP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x100000000000000AUL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -44113,6 +46686,10 @@ DEFUN0(stgApplyNPNPNP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0C00000000000005UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNP);
         break;
@@ -44132,7 +46709,6 @@ DEFUN0(stgApplyNPNPNP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0C00000000000002UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -44150,6 +46726,10 @@ DEFUN0(stgApplyNPNPNP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x100000000000000BUL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPNP);
         break;
@@ -44169,7 +46749,6 @@ DEFUN0(stgApplyNPNPNP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0800000000000002UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -44187,6 +46766,10 @@ DEFUN0(stgApplyNPNPNP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x1400000000000015UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNPNP);
         break;
@@ -44206,7 +46789,6 @@ DEFUN0(stgApplyNPNPNP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0400000000000000UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -44224,6 +46806,10 @@ DEFUN0(stgApplyNPNPNP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x180000000000002BUL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPNPNP);
         break;
@@ -44252,6 +46838,18 @@ DEFUN0(stgApplyNPNPNP) {
       pushargs(argCount, &argv[0].op->payload[fvCount+1]);
       // push the FUN
       pushargs(1, &argv[0]);
+      bitmap.bitmap.mask <<= 1;
+      bitmap.bitmap.mask |= 0x1;
+      bitmap.bitmap.size += 1;
+      bitmap2 = (Bitmap64)0x180000000000002AUL;
+      bitmap2.bitmap.mask <<= (argCount + 1);
+      bitmap.bits += bitmap2.bits;
+      newframe = stgAllocStackCont( &it_stgStackCont, argCount+arity+1 );
+      newframe->layout = bitmap;
+      newframe->payload[0] = argv[0]; // self
+      memcpy(&newframe->payload[1], &argv[0].op->payload[fvCount+1], argCount * sizeof(PtrOrLiteral)); // old args
+      memcpy(&newframe->payload[1 + argCount], &argv[1], arity * sizeof(PtrOrLiteral));
+      newframe = stgPopCont();
       // tail call the FUN
       STGJUMP0(getInfoPtr(argv[0].op)->funFields.trueEntryCode);
 
@@ -44529,6 +47127,7 @@ DEFUN0(stgApplyPPNPNP) {
     int fvCount = getInfoPtr(argv[0].op)->layoutInfo.boxedCount + 
                   getInfoPtr(argv[0].op)->layoutInfo.unboxedCount;
     Bitmap64 bitmap = argv[0].op->payload[fvCount].b;
+    Bitmap64 bitmap2;
     int argCount = BMSIZE(bitmap);
     int arity = getInfoPtr(argv[0].op)->funFields.arity - argCount;
     #ifdef DEBUGSTGAPPLY
@@ -44557,7 +47156,6 @@ DEFUN0(stgApplyPPNPNP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x140000000000000BUL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -44575,6 +47173,10 @@ DEFUN0(stgApplyPPNPNP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0800000000000003UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyP);
         break;
@@ -44594,7 +47196,6 @@ DEFUN0(stgApplyPPNPNP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x100000000000000BUL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -44612,6 +47213,10 @@ DEFUN0(stgApplyPPNPNP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0C00000000000005UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNP);
         break;
@@ -44631,7 +47236,6 @@ DEFUN0(stgApplyPPNPNP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0C00000000000003UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -44649,6 +47253,10 @@ DEFUN0(stgApplyPPNPNP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x100000000000000BUL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPNP);
         break;
@@ -44668,7 +47276,6 @@ DEFUN0(stgApplyPPNPNP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0800000000000003UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -44686,6 +47293,10 @@ DEFUN0(stgApplyPPNPNP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x1400000000000015UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNPNP);
         break;
@@ -44705,7 +47316,6 @@ DEFUN0(stgApplyPPNPNP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0400000000000001UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -44723,6 +47333,10 @@ DEFUN0(stgApplyPPNPNP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x180000000000002BUL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPNPNP);
         break;
@@ -44751,6 +47365,18 @@ DEFUN0(stgApplyPPNPNP) {
       pushargs(argCount, &argv[0].op->payload[fvCount+1]);
       // push the FUN
       pushargs(1, &argv[0]);
+      bitmap.bitmap.mask <<= 1;
+      bitmap.bitmap.mask |= 0x1;
+      bitmap.bitmap.size += 1;
+      bitmap2 = (Bitmap64)0x180000000000002BUL;
+      bitmap2.bitmap.mask <<= (argCount + 1);
+      bitmap.bits += bitmap2.bits;
+      newframe = stgAllocStackCont( &it_stgStackCont, argCount+arity+1 );
+      newframe->layout = bitmap;
+      newframe->payload[0] = argv[0]; // self
+      memcpy(&newframe->payload[1], &argv[0].op->payload[fvCount+1], argCount * sizeof(PtrOrLiteral)); // old args
+      memcpy(&newframe->payload[1 + argCount], &argv[1], arity * sizeof(PtrOrLiteral));
+      newframe = stgPopCont();
       // tail call the FUN
       STGJUMP0(getInfoPtr(argv[0].op)->funFields.trueEntryCode);
 
@@ -45024,6 +47650,7 @@ DEFUN0(stgApplyNNPPNP) {
     int fvCount = getInfoPtr(argv[0].op)->layoutInfo.boxedCount + 
                   getInfoPtr(argv[0].op)->layoutInfo.unboxedCount;
     Bitmap64 bitmap = argv[0].op->payload[fvCount].b;
+    Bitmap64 bitmap2;
     int argCount = BMSIZE(bitmap);
     int arity = getInfoPtr(argv[0].op)->funFields.arity - argCount;
     #ifdef DEBUGSTGAPPLY
@@ -45052,7 +47679,6 @@ DEFUN0(stgApplyNNPPNP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x140000000000000CUL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -45070,6 +47696,10 @@ DEFUN0(stgApplyNNPPNP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0800000000000003UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyP);
         break;
@@ -45089,7 +47719,6 @@ DEFUN0(stgApplyNNPPNP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x100000000000000CUL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -45107,6 +47736,10 @@ DEFUN0(stgApplyNNPPNP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0C00000000000005UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNP);
         break;
@@ -45126,7 +47759,6 @@ DEFUN0(stgApplyNNPPNP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0C00000000000004UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -45144,6 +47776,10 @@ DEFUN0(stgApplyNNPPNP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x100000000000000BUL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPNP);
         break;
@@ -45163,7 +47799,6 @@ DEFUN0(stgApplyNNPPNP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0800000000000000UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -45181,6 +47816,10 @@ DEFUN0(stgApplyNNPPNP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x1400000000000017UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPPNP);
         break;
@@ -45200,7 +47839,6 @@ DEFUN0(stgApplyNNPPNP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0400000000000000UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -45218,6 +47856,10 @@ DEFUN0(stgApplyNNPPNP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x180000000000002DUL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNPPNP);
         break;
@@ -45246,6 +47888,18 @@ DEFUN0(stgApplyNNPPNP) {
       pushargs(argCount, &argv[0].op->payload[fvCount+1]);
       // push the FUN
       pushargs(1, &argv[0]);
+      bitmap.bitmap.mask <<= 1;
+      bitmap.bitmap.mask |= 0x1;
+      bitmap.bitmap.size += 1;
+      bitmap2 = (Bitmap64)0x180000000000002CUL;
+      bitmap2.bitmap.mask <<= (argCount + 1);
+      bitmap.bits += bitmap2.bits;
+      newframe = stgAllocStackCont( &it_stgStackCont, argCount+arity+1 );
+      newframe->layout = bitmap;
+      newframe->payload[0] = argv[0]; // self
+      memcpy(&newframe->payload[1], &argv[0].op->payload[fvCount+1], argCount * sizeof(PtrOrLiteral)); // old args
+      memcpy(&newframe->payload[1 + argCount], &argv[1], arity * sizeof(PtrOrLiteral));
+      newframe = stgPopCont();
       // tail call the FUN
       STGJUMP0(getInfoPtr(argv[0].op)->funFields.trueEntryCode);
 
@@ -45523,6 +48177,7 @@ DEFUN0(stgApplyPNPPNP) {
     int fvCount = getInfoPtr(argv[0].op)->layoutInfo.boxedCount + 
                   getInfoPtr(argv[0].op)->layoutInfo.unboxedCount;
     Bitmap64 bitmap = argv[0].op->payload[fvCount].b;
+    Bitmap64 bitmap2;
     int argCount = BMSIZE(bitmap);
     int arity = getInfoPtr(argv[0].op)->funFields.arity - argCount;
     #ifdef DEBUGSTGAPPLY
@@ -45551,7 +48206,6 @@ DEFUN0(stgApplyPNPPNP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x140000000000000DUL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -45569,6 +48223,10 @@ DEFUN0(stgApplyPNPPNP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0800000000000003UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyP);
         break;
@@ -45588,7 +48246,6 @@ DEFUN0(stgApplyPNPPNP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x100000000000000DUL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -45606,6 +48263,10 @@ DEFUN0(stgApplyPNPPNP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0C00000000000005UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNP);
         break;
@@ -45625,7 +48286,6 @@ DEFUN0(stgApplyPNPPNP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0C00000000000005UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -45643,6 +48303,10 @@ DEFUN0(stgApplyPNPPNP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x100000000000000BUL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPNP);
         break;
@@ -45662,7 +48326,6 @@ DEFUN0(stgApplyPNPPNP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0800000000000001UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -45680,6 +48343,10 @@ DEFUN0(stgApplyPNPPNP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x1400000000000017UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPPNP);
         break;
@@ -45699,7 +48366,6 @@ DEFUN0(stgApplyPNPPNP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0400000000000001UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -45717,6 +48383,10 @@ DEFUN0(stgApplyPNPPNP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x180000000000002DUL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNPPNP);
         break;
@@ -45745,6 +48415,18 @@ DEFUN0(stgApplyPNPPNP) {
       pushargs(argCount, &argv[0].op->payload[fvCount+1]);
       // push the FUN
       pushargs(1, &argv[0]);
+      bitmap.bitmap.mask <<= 1;
+      bitmap.bitmap.mask |= 0x1;
+      bitmap.bitmap.size += 1;
+      bitmap2 = (Bitmap64)0x180000000000002DUL;
+      bitmap2.bitmap.mask <<= (argCount + 1);
+      bitmap.bits += bitmap2.bits;
+      newframe = stgAllocStackCont( &it_stgStackCont, argCount+arity+1 );
+      newframe->layout = bitmap;
+      newframe->payload[0] = argv[0]; // self
+      memcpy(&newframe->payload[1], &argv[0].op->payload[fvCount+1], argCount * sizeof(PtrOrLiteral)); // old args
+      memcpy(&newframe->payload[1 + argCount], &argv[1], arity * sizeof(PtrOrLiteral));
+      newframe = stgPopCont();
       // tail call the FUN
       STGJUMP0(getInfoPtr(argv[0].op)->funFields.trueEntryCode);
 
@@ -46022,6 +48704,7 @@ DEFUN0(stgApplyNPPPNP) {
     int fvCount = getInfoPtr(argv[0].op)->layoutInfo.boxedCount + 
                   getInfoPtr(argv[0].op)->layoutInfo.unboxedCount;
     Bitmap64 bitmap = argv[0].op->payload[fvCount].b;
+    Bitmap64 bitmap2;
     int argCount = BMSIZE(bitmap);
     int arity = getInfoPtr(argv[0].op)->funFields.arity - argCount;
     #ifdef DEBUGSTGAPPLY
@@ -46050,7 +48733,6 @@ DEFUN0(stgApplyNPPPNP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x140000000000000EUL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -46068,6 +48750,10 @@ DEFUN0(stgApplyNPPPNP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0800000000000003UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyP);
         break;
@@ -46087,7 +48773,6 @@ DEFUN0(stgApplyNPPPNP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x100000000000000EUL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -46105,6 +48790,10 @@ DEFUN0(stgApplyNPPPNP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0C00000000000005UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNP);
         break;
@@ -46124,7 +48813,6 @@ DEFUN0(stgApplyNPPPNP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0C00000000000006UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -46142,6 +48830,10 @@ DEFUN0(stgApplyNPPPNP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x100000000000000BUL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPNP);
         break;
@@ -46161,7 +48853,6 @@ DEFUN0(stgApplyNPPPNP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0800000000000002UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -46179,6 +48870,10 @@ DEFUN0(stgApplyNPPPNP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x1400000000000017UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPPNP);
         break;
@@ -46198,7 +48893,6 @@ DEFUN0(stgApplyNPPPNP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0400000000000000UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -46216,6 +48910,10 @@ DEFUN0(stgApplyNPPPNP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x180000000000002FUL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPPPNP);
         break;
@@ -46244,6 +48942,18 @@ DEFUN0(stgApplyNPPPNP) {
       pushargs(argCount, &argv[0].op->payload[fvCount+1]);
       // push the FUN
       pushargs(1, &argv[0]);
+      bitmap.bitmap.mask <<= 1;
+      bitmap.bitmap.mask |= 0x1;
+      bitmap.bitmap.size += 1;
+      bitmap2 = (Bitmap64)0x180000000000002EUL;
+      bitmap2.bitmap.mask <<= (argCount + 1);
+      bitmap.bits += bitmap2.bits;
+      newframe = stgAllocStackCont( &it_stgStackCont, argCount+arity+1 );
+      newframe->layout = bitmap;
+      newframe->payload[0] = argv[0]; // self
+      memcpy(&newframe->payload[1], &argv[0].op->payload[fvCount+1], argCount * sizeof(PtrOrLiteral)); // old args
+      memcpy(&newframe->payload[1 + argCount], &argv[1], arity * sizeof(PtrOrLiteral));
+      newframe = stgPopCont();
       // tail call the FUN
       STGJUMP0(getInfoPtr(argv[0].op)->funFields.trueEntryCode);
 
@@ -46525,6 +49235,7 @@ DEFUN0(stgApplyPPPPNP) {
     int fvCount = getInfoPtr(argv[0].op)->layoutInfo.boxedCount + 
                   getInfoPtr(argv[0].op)->layoutInfo.unboxedCount;
     Bitmap64 bitmap = argv[0].op->payload[fvCount].b;
+    Bitmap64 bitmap2;
     int argCount = BMSIZE(bitmap);
     int arity = getInfoPtr(argv[0].op)->funFields.arity - argCount;
     #ifdef DEBUGSTGAPPLY
@@ -46553,7 +49264,6 @@ DEFUN0(stgApplyPPPPNP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x140000000000000FUL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -46571,6 +49281,10 @@ DEFUN0(stgApplyPPPPNP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0800000000000003UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyP);
         break;
@@ -46590,7 +49304,6 @@ DEFUN0(stgApplyPPPPNP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x100000000000000FUL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -46608,6 +49321,10 @@ DEFUN0(stgApplyPPPPNP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0C00000000000005UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNP);
         break;
@@ -46627,7 +49344,6 @@ DEFUN0(stgApplyPPPPNP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0C00000000000007UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -46645,6 +49361,10 @@ DEFUN0(stgApplyPPPPNP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x100000000000000BUL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPNP);
         break;
@@ -46664,7 +49384,6 @@ DEFUN0(stgApplyPPPPNP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0800000000000003UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -46682,6 +49401,10 @@ DEFUN0(stgApplyPPPPNP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x1400000000000017UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPPNP);
         break;
@@ -46701,7 +49424,6 @@ DEFUN0(stgApplyPPPPNP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0400000000000001UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -46719,6 +49441,10 @@ DEFUN0(stgApplyPPPPNP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x180000000000002FUL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPPPNP);
         break;
@@ -46747,6 +49473,18 @@ DEFUN0(stgApplyPPPPNP) {
       pushargs(argCount, &argv[0].op->payload[fvCount+1]);
       // push the FUN
       pushargs(1, &argv[0]);
+      bitmap.bitmap.mask <<= 1;
+      bitmap.bitmap.mask |= 0x1;
+      bitmap.bitmap.size += 1;
+      bitmap2 = (Bitmap64)0x180000000000002FUL;
+      bitmap2.bitmap.mask <<= (argCount + 1);
+      bitmap.bits += bitmap2.bits;
+      newframe = stgAllocStackCont( &it_stgStackCont, argCount+arity+1 );
+      newframe->layout = bitmap;
+      newframe->payload[0] = argv[0]; // self
+      memcpy(&newframe->payload[1], &argv[0].op->payload[fvCount+1], argCount * sizeof(PtrOrLiteral)); // old args
+      memcpy(&newframe->payload[1 + argCount], &argv[1], arity * sizeof(PtrOrLiteral));
+      newframe = stgPopCont();
       // tail call the FUN
       STGJUMP0(getInfoPtr(argv[0].op)->funFields.trueEntryCode);
 
@@ -47016,6 +49754,7 @@ DEFUN0(stgApplyNNNNPP) {
     int fvCount = getInfoPtr(argv[0].op)->layoutInfo.boxedCount + 
                   getInfoPtr(argv[0].op)->layoutInfo.unboxedCount;
     Bitmap64 bitmap = argv[0].op->payload[fvCount].b;
+    Bitmap64 bitmap2;
     int argCount = BMSIZE(bitmap);
     int arity = getInfoPtr(argv[0].op)->funFields.arity - argCount;
     #ifdef DEBUGSTGAPPLY
@@ -47044,7 +49783,6 @@ DEFUN0(stgApplyNNNNPP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x1400000000000010UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -47062,6 +49800,10 @@ DEFUN0(stgApplyNNNNPP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0800000000000003UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyP);
         break;
@@ -47081,7 +49823,6 @@ DEFUN0(stgApplyNNNNPP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x1000000000000000UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -47099,6 +49840,10 @@ DEFUN0(stgApplyNNNNPP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0C00000000000007UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPP);
         break;
@@ -47118,7 +49863,6 @@ DEFUN0(stgApplyNNNNPP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0C00000000000000UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -47136,6 +49880,10 @@ DEFUN0(stgApplyNNNNPP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x100000000000000DUL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNPP);
         break;
@@ -47155,7 +49903,6 @@ DEFUN0(stgApplyNNNNPP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0800000000000000UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -47173,6 +49920,10 @@ DEFUN0(stgApplyNNNNPP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x1400000000000019UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNNPP);
         break;
@@ -47192,7 +49943,6 @@ DEFUN0(stgApplyNNNNPP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0400000000000000UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -47210,6 +49960,10 @@ DEFUN0(stgApplyNNNNPP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x1800000000000031UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNNNPP);
         break;
@@ -47238,6 +49992,18 @@ DEFUN0(stgApplyNNNNPP) {
       pushargs(argCount, &argv[0].op->payload[fvCount+1]);
       // push the FUN
       pushargs(1, &argv[0]);
+      bitmap.bitmap.mask <<= 1;
+      bitmap.bitmap.mask |= 0x1;
+      bitmap.bitmap.size += 1;
+      bitmap2 = (Bitmap64)0x1800000000000030UL;
+      bitmap2.bitmap.mask <<= (argCount + 1);
+      bitmap.bits += bitmap2.bits;
+      newframe = stgAllocStackCont( &it_stgStackCont, argCount+arity+1 );
+      newframe->layout = bitmap;
+      newframe->payload[0] = argv[0]; // self
+      memcpy(&newframe->payload[1], &argv[0].op->payload[fvCount+1], argCount * sizeof(PtrOrLiteral)); // old args
+      memcpy(&newframe->payload[1 + argCount], &argv[1], arity * sizeof(PtrOrLiteral));
+      newframe = stgPopCont();
       // tail call the FUN
       STGJUMP0(getInfoPtr(argv[0].op)->funFields.trueEntryCode);
 
@@ -47511,6 +50277,7 @@ DEFUN0(stgApplyPNNNPP) {
     int fvCount = getInfoPtr(argv[0].op)->layoutInfo.boxedCount + 
                   getInfoPtr(argv[0].op)->layoutInfo.unboxedCount;
     Bitmap64 bitmap = argv[0].op->payload[fvCount].b;
+    Bitmap64 bitmap2;
     int argCount = BMSIZE(bitmap);
     int arity = getInfoPtr(argv[0].op)->funFields.arity - argCount;
     #ifdef DEBUGSTGAPPLY
@@ -47539,7 +50306,6 @@ DEFUN0(stgApplyPNNNPP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x1400000000000011UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -47557,6 +50323,10 @@ DEFUN0(stgApplyPNNNPP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0800000000000003UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyP);
         break;
@@ -47576,7 +50346,6 @@ DEFUN0(stgApplyPNNNPP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x1000000000000001UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -47594,6 +50363,10 @@ DEFUN0(stgApplyPNNNPP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0C00000000000007UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPP);
         break;
@@ -47613,7 +50386,6 @@ DEFUN0(stgApplyPNNNPP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0C00000000000001UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -47631,6 +50403,10 @@ DEFUN0(stgApplyPNNNPP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x100000000000000DUL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNPP);
         break;
@@ -47650,7 +50426,6 @@ DEFUN0(stgApplyPNNNPP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0800000000000001UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -47668,6 +50443,10 @@ DEFUN0(stgApplyPNNNPP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x1400000000000019UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNNPP);
         break;
@@ -47687,7 +50466,6 @@ DEFUN0(stgApplyPNNNPP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0400000000000001UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -47705,6 +50483,10 @@ DEFUN0(stgApplyPNNNPP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x1800000000000031UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNNNPP);
         break;
@@ -47733,6 +50515,18 @@ DEFUN0(stgApplyPNNNPP) {
       pushargs(argCount, &argv[0].op->payload[fvCount+1]);
       // push the FUN
       pushargs(1, &argv[0]);
+      bitmap.bitmap.mask <<= 1;
+      bitmap.bitmap.mask |= 0x1;
+      bitmap.bitmap.size += 1;
+      bitmap2 = (Bitmap64)0x1800000000000031UL;
+      bitmap2.bitmap.mask <<= (argCount + 1);
+      bitmap.bits += bitmap2.bits;
+      newframe = stgAllocStackCont( &it_stgStackCont, argCount+arity+1 );
+      newframe->layout = bitmap;
+      newframe->payload[0] = argv[0]; // self
+      memcpy(&newframe->payload[1], &argv[0].op->payload[fvCount+1], argCount * sizeof(PtrOrLiteral)); // old args
+      memcpy(&newframe->payload[1 + argCount], &argv[1], arity * sizeof(PtrOrLiteral));
+      newframe = stgPopCont();
       // tail call the FUN
       STGJUMP0(getInfoPtr(argv[0].op)->funFields.trueEntryCode);
 
@@ -48006,6 +50800,7 @@ DEFUN0(stgApplyNPNNPP) {
     int fvCount = getInfoPtr(argv[0].op)->layoutInfo.boxedCount + 
                   getInfoPtr(argv[0].op)->layoutInfo.unboxedCount;
     Bitmap64 bitmap = argv[0].op->payload[fvCount].b;
+    Bitmap64 bitmap2;
     int argCount = BMSIZE(bitmap);
     int arity = getInfoPtr(argv[0].op)->funFields.arity - argCount;
     #ifdef DEBUGSTGAPPLY
@@ -48034,7 +50829,6 @@ DEFUN0(stgApplyNPNNPP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x1400000000000012UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -48052,6 +50846,10 @@ DEFUN0(stgApplyNPNNPP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0800000000000003UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyP);
         break;
@@ -48071,7 +50869,6 @@ DEFUN0(stgApplyNPNNPP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x1000000000000002UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -48089,6 +50886,10 @@ DEFUN0(stgApplyNPNNPP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0C00000000000007UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPP);
         break;
@@ -48108,7 +50909,6 @@ DEFUN0(stgApplyNPNNPP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0C00000000000002UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -48126,6 +50926,10 @@ DEFUN0(stgApplyNPNNPP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x100000000000000DUL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNPP);
         break;
@@ -48145,7 +50949,6 @@ DEFUN0(stgApplyNPNNPP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0800000000000002UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -48163,6 +50966,10 @@ DEFUN0(stgApplyNPNNPP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x1400000000000019UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNNPP);
         break;
@@ -48182,7 +50989,6 @@ DEFUN0(stgApplyNPNNPP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0400000000000000UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -48200,6 +51006,10 @@ DEFUN0(stgApplyNPNNPP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x1800000000000033UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPNNPP);
         break;
@@ -48228,6 +51038,18 @@ DEFUN0(stgApplyNPNNPP) {
       pushargs(argCount, &argv[0].op->payload[fvCount+1]);
       // push the FUN
       pushargs(1, &argv[0]);
+      bitmap.bitmap.mask <<= 1;
+      bitmap.bitmap.mask |= 0x1;
+      bitmap.bitmap.size += 1;
+      bitmap2 = (Bitmap64)0x1800000000000032UL;
+      bitmap2.bitmap.mask <<= (argCount + 1);
+      bitmap.bits += bitmap2.bits;
+      newframe = stgAllocStackCont( &it_stgStackCont, argCount+arity+1 );
+      newframe->layout = bitmap;
+      newframe->payload[0] = argv[0]; // self
+      memcpy(&newframe->payload[1], &argv[0].op->payload[fvCount+1], argCount * sizeof(PtrOrLiteral)); // old args
+      memcpy(&newframe->payload[1 + argCount], &argv[1], arity * sizeof(PtrOrLiteral));
+      newframe = stgPopCont();
       // tail call the FUN
       STGJUMP0(getInfoPtr(argv[0].op)->funFields.trueEntryCode);
 
@@ -48505,6 +51327,7 @@ DEFUN0(stgApplyPPNNPP) {
     int fvCount = getInfoPtr(argv[0].op)->layoutInfo.boxedCount + 
                   getInfoPtr(argv[0].op)->layoutInfo.unboxedCount;
     Bitmap64 bitmap = argv[0].op->payload[fvCount].b;
+    Bitmap64 bitmap2;
     int argCount = BMSIZE(bitmap);
     int arity = getInfoPtr(argv[0].op)->funFields.arity - argCount;
     #ifdef DEBUGSTGAPPLY
@@ -48533,7 +51356,6 @@ DEFUN0(stgApplyPPNNPP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x1400000000000013UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -48551,6 +51373,10 @@ DEFUN0(stgApplyPPNNPP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0800000000000003UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyP);
         break;
@@ -48570,7 +51396,6 @@ DEFUN0(stgApplyPPNNPP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x1000000000000003UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -48588,6 +51413,10 @@ DEFUN0(stgApplyPPNNPP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0C00000000000007UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPP);
         break;
@@ -48607,7 +51436,6 @@ DEFUN0(stgApplyPPNNPP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0C00000000000003UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -48625,6 +51453,10 @@ DEFUN0(stgApplyPPNNPP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x100000000000000DUL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNPP);
         break;
@@ -48644,7 +51476,6 @@ DEFUN0(stgApplyPPNNPP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0800000000000003UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -48662,6 +51493,10 @@ DEFUN0(stgApplyPPNNPP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x1400000000000019UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNNPP);
         break;
@@ -48681,7 +51516,6 @@ DEFUN0(stgApplyPPNNPP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0400000000000001UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -48699,6 +51533,10 @@ DEFUN0(stgApplyPPNNPP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x1800000000000033UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPNNPP);
         break;
@@ -48727,6 +51565,18 @@ DEFUN0(stgApplyPPNNPP) {
       pushargs(argCount, &argv[0].op->payload[fvCount+1]);
       // push the FUN
       pushargs(1, &argv[0]);
+      bitmap.bitmap.mask <<= 1;
+      bitmap.bitmap.mask |= 0x1;
+      bitmap.bitmap.size += 1;
+      bitmap2 = (Bitmap64)0x1800000000000033UL;
+      bitmap2.bitmap.mask <<= (argCount + 1);
+      bitmap.bits += bitmap2.bits;
+      newframe = stgAllocStackCont( &it_stgStackCont, argCount+arity+1 );
+      newframe->layout = bitmap;
+      newframe->payload[0] = argv[0]; // self
+      memcpy(&newframe->payload[1], &argv[0].op->payload[fvCount+1], argCount * sizeof(PtrOrLiteral)); // old args
+      memcpy(&newframe->payload[1 + argCount], &argv[1], arity * sizeof(PtrOrLiteral));
+      newframe = stgPopCont();
       // tail call the FUN
       STGJUMP0(getInfoPtr(argv[0].op)->funFields.trueEntryCode);
 
@@ -49000,6 +51850,7 @@ DEFUN0(stgApplyNNPNPP) {
     int fvCount = getInfoPtr(argv[0].op)->layoutInfo.boxedCount + 
                   getInfoPtr(argv[0].op)->layoutInfo.unboxedCount;
     Bitmap64 bitmap = argv[0].op->payload[fvCount].b;
+    Bitmap64 bitmap2;
     int argCount = BMSIZE(bitmap);
     int arity = getInfoPtr(argv[0].op)->funFields.arity - argCount;
     #ifdef DEBUGSTGAPPLY
@@ -49028,7 +51879,6 @@ DEFUN0(stgApplyNNPNPP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x1400000000000014UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -49046,6 +51896,10 @@ DEFUN0(stgApplyNNPNPP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0800000000000003UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyP);
         break;
@@ -49065,7 +51919,6 @@ DEFUN0(stgApplyNNPNPP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x1000000000000004UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -49083,6 +51936,10 @@ DEFUN0(stgApplyNNPNPP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0C00000000000007UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPP);
         break;
@@ -49102,7 +51959,6 @@ DEFUN0(stgApplyNNPNPP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0C00000000000004UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -49120,6 +51976,10 @@ DEFUN0(stgApplyNNPNPP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x100000000000000DUL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNPP);
         break;
@@ -49139,7 +51999,6 @@ DEFUN0(stgApplyNNPNPP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0800000000000000UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -49157,6 +52016,10 @@ DEFUN0(stgApplyNNPNPP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x140000000000001BUL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPNPP);
         break;
@@ -49176,7 +52039,6 @@ DEFUN0(stgApplyNNPNPP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0400000000000000UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -49194,6 +52056,10 @@ DEFUN0(stgApplyNNPNPP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x1800000000000035UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNPNPP);
         break;
@@ -49222,6 +52088,18 @@ DEFUN0(stgApplyNNPNPP) {
       pushargs(argCount, &argv[0].op->payload[fvCount+1]);
       // push the FUN
       pushargs(1, &argv[0]);
+      bitmap.bitmap.mask <<= 1;
+      bitmap.bitmap.mask |= 0x1;
+      bitmap.bitmap.size += 1;
+      bitmap2 = (Bitmap64)0x1800000000000034UL;
+      bitmap2.bitmap.mask <<= (argCount + 1);
+      bitmap.bits += bitmap2.bits;
+      newframe = stgAllocStackCont( &it_stgStackCont, argCount+arity+1 );
+      newframe->layout = bitmap;
+      newframe->payload[0] = argv[0]; // self
+      memcpy(&newframe->payload[1], &argv[0].op->payload[fvCount+1], argCount * sizeof(PtrOrLiteral)); // old args
+      memcpy(&newframe->payload[1 + argCount], &argv[1], arity * sizeof(PtrOrLiteral));
+      newframe = stgPopCont();
       // tail call the FUN
       STGJUMP0(getInfoPtr(argv[0].op)->funFields.trueEntryCode);
 
@@ -49499,6 +52377,7 @@ DEFUN0(stgApplyPNPNPP) {
     int fvCount = getInfoPtr(argv[0].op)->layoutInfo.boxedCount + 
                   getInfoPtr(argv[0].op)->layoutInfo.unboxedCount;
     Bitmap64 bitmap = argv[0].op->payload[fvCount].b;
+    Bitmap64 bitmap2;
     int argCount = BMSIZE(bitmap);
     int arity = getInfoPtr(argv[0].op)->funFields.arity - argCount;
     #ifdef DEBUGSTGAPPLY
@@ -49527,7 +52406,6 @@ DEFUN0(stgApplyPNPNPP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x1400000000000015UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -49545,6 +52423,10 @@ DEFUN0(stgApplyPNPNPP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0800000000000003UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyP);
         break;
@@ -49564,7 +52446,6 @@ DEFUN0(stgApplyPNPNPP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x1000000000000005UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -49582,6 +52463,10 @@ DEFUN0(stgApplyPNPNPP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0C00000000000007UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPP);
         break;
@@ -49601,7 +52486,6 @@ DEFUN0(stgApplyPNPNPP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0C00000000000005UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -49619,6 +52503,10 @@ DEFUN0(stgApplyPNPNPP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x100000000000000DUL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNPP);
         break;
@@ -49638,7 +52526,6 @@ DEFUN0(stgApplyPNPNPP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0800000000000001UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -49656,6 +52543,10 @@ DEFUN0(stgApplyPNPNPP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x140000000000001BUL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPNPP);
         break;
@@ -49675,7 +52566,6 @@ DEFUN0(stgApplyPNPNPP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0400000000000001UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -49693,6 +52583,10 @@ DEFUN0(stgApplyPNPNPP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x1800000000000035UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNPNPP);
         break;
@@ -49721,6 +52615,18 @@ DEFUN0(stgApplyPNPNPP) {
       pushargs(argCount, &argv[0].op->payload[fvCount+1]);
       // push the FUN
       pushargs(1, &argv[0]);
+      bitmap.bitmap.mask <<= 1;
+      bitmap.bitmap.mask |= 0x1;
+      bitmap.bitmap.size += 1;
+      bitmap2 = (Bitmap64)0x1800000000000035UL;
+      bitmap2.bitmap.mask <<= (argCount + 1);
+      bitmap.bits += bitmap2.bits;
+      newframe = stgAllocStackCont( &it_stgStackCont, argCount+arity+1 );
+      newframe->layout = bitmap;
+      newframe->payload[0] = argv[0]; // self
+      memcpy(&newframe->payload[1], &argv[0].op->payload[fvCount+1], argCount * sizeof(PtrOrLiteral)); // old args
+      memcpy(&newframe->payload[1 + argCount], &argv[1], arity * sizeof(PtrOrLiteral));
+      newframe = stgPopCont();
       // tail call the FUN
       STGJUMP0(getInfoPtr(argv[0].op)->funFields.trueEntryCode);
 
@@ -49998,6 +52904,7 @@ DEFUN0(stgApplyNPPNPP) {
     int fvCount = getInfoPtr(argv[0].op)->layoutInfo.boxedCount + 
                   getInfoPtr(argv[0].op)->layoutInfo.unboxedCount;
     Bitmap64 bitmap = argv[0].op->payload[fvCount].b;
+    Bitmap64 bitmap2;
     int argCount = BMSIZE(bitmap);
     int arity = getInfoPtr(argv[0].op)->funFields.arity - argCount;
     #ifdef DEBUGSTGAPPLY
@@ -50026,7 +52933,6 @@ DEFUN0(stgApplyNPPNPP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x1400000000000016UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -50044,6 +52950,10 @@ DEFUN0(stgApplyNPPNPP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0800000000000003UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyP);
         break;
@@ -50063,7 +52973,6 @@ DEFUN0(stgApplyNPPNPP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x1000000000000006UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -50081,6 +52990,10 @@ DEFUN0(stgApplyNPPNPP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0C00000000000007UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPP);
         break;
@@ -50100,7 +53013,6 @@ DEFUN0(stgApplyNPPNPP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0C00000000000006UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -50118,6 +53030,10 @@ DEFUN0(stgApplyNPPNPP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x100000000000000DUL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNPP);
         break;
@@ -50137,7 +53053,6 @@ DEFUN0(stgApplyNPPNPP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0800000000000002UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -50155,6 +53070,10 @@ DEFUN0(stgApplyNPPNPP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x140000000000001BUL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPNPP);
         break;
@@ -50174,7 +53093,6 @@ DEFUN0(stgApplyNPPNPP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0400000000000000UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -50192,6 +53110,10 @@ DEFUN0(stgApplyNPPNPP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x1800000000000037UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPPNPP);
         break;
@@ -50220,6 +53142,18 @@ DEFUN0(stgApplyNPPNPP) {
       pushargs(argCount, &argv[0].op->payload[fvCount+1]);
       // push the FUN
       pushargs(1, &argv[0]);
+      bitmap.bitmap.mask <<= 1;
+      bitmap.bitmap.mask |= 0x1;
+      bitmap.bitmap.size += 1;
+      bitmap2 = (Bitmap64)0x1800000000000036UL;
+      bitmap2.bitmap.mask <<= (argCount + 1);
+      bitmap.bits += bitmap2.bits;
+      newframe = stgAllocStackCont( &it_stgStackCont, argCount+arity+1 );
+      newframe->layout = bitmap;
+      newframe->payload[0] = argv[0]; // self
+      memcpy(&newframe->payload[1], &argv[0].op->payload[fvCount+1], argCount * sizeof(PtrOrLiteral)); // old args
+      memcpy(&newframe->payload[1 + argCount], &argv[1], arity * sizeof(PtrOrLiteral));
+      newframe = stgPopCont();
       // tail call the FUN
       STGJUMP0(getInfoPtr(argv[0].op)->funFields.trueEntryCode);
 
@@ -50501,6 +53435,7 @@ DEFUN0(stgApplyPPPNPP) {
     int fvCount = getInfoPtr(argv[0].op)->layoutInfo.boxedCount + 
                   getInfoPtr(argv[0].op)->layoutInfo.unboxedCount;
     Bitmap64 bitmap = argv[0].op->payload[fvCount].b;
+    Bitmap64 bitmap2;
     int argCount = BMSIZE(bitmap);
     int arity = getInfoPtr(argv[0].op)->funFields.arity - argCount;
     #ifdef DEBUGSTGAPPLY
@@ -50529,7 +53464,6 @@ DEFUN0(stgApplyPPPNPP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x1400000000000017UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -50547,6 +53481,10 @@ DEFUN0(stgApplyPPPNPP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0800000000000003UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyP);
         break;
@@ -50566,7 +53504,6 @@ DEFUN0(stgApplyPPPNPP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x1000000000000007UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -50584,6 +53521,10 @@ DEFUN0(stgApplyPPPNPP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0C00000000000007UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPP);
         break;
@@ -50603,7 +53544,6 @@ DEFUN0(stgApplyPPPNPP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0C00000000000007UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -50621,6 +53561,10 @@ DEFUN0(stgApplyPPPNPP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x100000000000000DUL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNPP);
         break;
@@ -50640,7 +53584,6 @@ DEFUN0(stgApplyPPPNPP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0800000000000003UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -50658,6 +53601,10 @@ DEFUN0(stgApplyPPPNPP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x140000000000001BUL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPNPP);
         break;
@@ -50677,7 +53624,6 @@ DEFUN0(stgApplyPPPNPP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0400000000000001UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -50695,6 +53641,10 @@ DEFUN0(stgApplyPPPNPP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x1800000000000037UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPPNPP);
         break;
@@ -50723,6 +53673,18 @@ DEFUN0(stgApplyPPPNPP) {
       pushargs(argCount, &argv[0].op->payload[fvCount+1]);
       // push the FUN
       pushargs(1, &argv[0]);
+      bitmap.bitmap.mask <<= 1;
+      bitmap.bitmap.mask |= 0x1;
+      bitmap.bitmap.size += 1;
+      bitmap2 = (Bitmap64)0x1800000000000037UL;
+      bitmap2.bitmap.mask <<= (argCount + 1);
+      bitmap.bits += bitmap2.bits;
+      newframe = stgAllocStackCont( &it_stgStackCont, argCount+arity+1 );
+      newframe->layout = bitmap;
+      newframe->payload[0] = argv[0]; // self
+      memcpy(&newframe->payload[1], &argv[0].op->payload[fvCount+1], argCount * sizeof(PtrOrLiteral)); // old args
+      memcpy(&newframe->payload[1 + argCount], &argv[1], arity * sizeof(PtrOrLiteral));
+      newframe = stgPopCont();
       // tail call the FUN
       STGJUMP0(getInfoPtr(argv[0].op)->funFields.trueEntryCode);
 
@@ -50996,6 +53958,7 @@ DEFUN0(stgApplyNNNPPP) {
     int fvCount = getInfoPtr(argv[0].op)->layoutInfo.boxedCount + 
                   getInfoPtr(argv[0].op)->layoutInfo.unboxedCount;
     Bitmap64 bitmap = argv[0].op->payload[fvCount].b;
+    Bitmap64 bitmap2;
     int argCount = BMSIZE(bitmap);
     int arity = getInfoPtr(argv[0].op)->funFields.arity - argCount;
     #ifdef DEBUGSTGAPPLY
@@ -51024,7 +53987,6 @@ DEFUN0(stgApplyNNNPPP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x1400000000000018UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -51042,6 +54004,10 @@ DEFUN0(stgApplyNNNPPP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0800000000000003UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyP);
         break;
@@ -51061,7 +54027,6 @@ DEFUN0(stgApplyNNNPPP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x1000000000000008UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -51079,6 +54044,10 @@ DEFUN0(stgApplyNNNPPP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0C00000000000007UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPP);
         break;
@@ -51098,7 +54067,6 @@ DEFUN0(stgApplyNNNPPP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0C00000000000000UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -51116,6 +54084,10 @@ DEFUN0(stgApplyNNNPPP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x100000000000000FUL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPPP);
         break;
@@ -51135,7 +54107,6 @@ DEFUN0(stgApplyNNNPPP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0800000000000000UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -51153,6 +54124,10 @@ DEFUN0(stgApplyNNNPPP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x140000000000001DUL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNPPP);
         break;
@@ -51172,7 +54147,6 @@ DEFUN0(stgApplyNNNPPP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0400000000000000UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -51190,6 +54164,10 @@ DEFUN0(stgApplyNNNPPP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x1800000000000039UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNNPPP);
         break;
@@ -51218,6 +54196,18 @@ DEFUN0(stgApplyNNNPPP) {
       pushargs(argCount, &argv[0].op->payload[fvCount+1]);
       // push the FUN
       pushargs(1, &argv[0]);
+      bitmap.bitmap.mask <<= 1;
+      bitmap.bitmap.mask |= 0x1;
+      bitmap.bitmap.size += 1;
+      bitmap2 = (Bitmap64)0x1800000000000038UL;
+      bitmap2.bitmap.mask <<= (argCount + 1);
+      bitmap.bits += bitmap2.bits;
+      newframe = stgAllocStackCont( &it_stgStackCont, argCount+arity+1 );
+      newframe->layout = bitmap;
+      newframe->payload[0] = argv[0]; // self
+      memcpy(&newframe->payload[1], &argv[0].op->payload[fvCount+1], argCount * sizeof(PtrOrLiteral)); // old args
+      memcpy(&newframe->payload[1 + argCount], &argv[1], arity * sizeof(PtrOrLiteral));
+      newframe = stgPopCont();
       // tail call the FUN
       STGJUMP0(getInfoPtr(argv[0].op)->funFields.trueEntryCode);
 
@@ -51495,6 +54485,7 @@ DEFUN0(stgApplyPNNPPP) {
     int fvCount = getInfoPtr(argv[0].op)->layoutInfo.boxedCount + 
                   getInfoPtr(argv[0].op)->layoutInfo.unboxedCount;
     Bitmap64 bitmap = argv[0].op->payload[fvCount].b;
+    Bitmap64 bitmap2;
     int argCount = BMSIZE(bitmap);
     int arity = getInfoPtr(argv[0].op)->funFields.arity - argCount;
     #ifdef DEBUGSTGAPPLY
@@ -51523,7 +54514,6 @@ DEFUN0(stgApplyPNNPPP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x1400000000000019UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -51541,6 +54531,10 @@ DEFUN0(stgApplyPNNPPP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0800000000000003UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyP);
         break;
@@ -51560,7 +54554,6 @@ DEFUN0(stgApplyPNNPPP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x1000000000000009UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -51578,6 +54571,10 @@ DEFUN0(stgApplyPNNPPP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0C00000000000007UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPP);
         break;
@@ -51597,7 +54594,6 @@ DEFUN0(stgApplyPNNPPP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0C00000000000001UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -51615,6 +54611,10 @@ DEFUN0(stgApplyPNNPPP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x100000000000000FUL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPPP);
         break;
@@ -51634,7 +54634,6 @@ DEFUN0(stgApplyPNNPPP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0800000000000001UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -51652,6 +54651,10 @@ DEFUN0(stgApplyPNNPPP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x140000000000001DUL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNPPP);
         break;
@@ -51671,7 +54674,6 @@ DEFUN0(stgApplyPNNPPP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0400000000000001UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -51689,6 +54691,10 @@ DEFUN0(stgApplyPNNPPP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x1800000000000039UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNNPPP);
         break;
@@ -51717,6 +54723,18 @@ DEFUN0(stgApplyPNNPPP) {
       pushargs(argCount, &argv[0].op->payload[fvCount+1]);
       // push the FUN
       pushargs(1, &argv[0]);
+      bitmap.bitmap.mask <<= 1;
+      bitmap.bitmap.mask |= 0x1;
+      bitmap.bitmap.size += 1;
+      bitmap2 = (Bitmap64)0x1800000000000039UL;
+      bitmap2.bitmap.mask <<= (argCount + 1);
+      bitmap.bits += bitmap2.bits;
+      newframe = stgAllocStackCont( &it_stgStackCont, argCount+arity+1 );
+      newframe->layout = bitmap;
+      newframe->payload[0] = argv[0]; // self
+      memcpy(&newframe->payload[1], &argv[0].op->payload[fvCount+1], argCount * sizeof(PtrOrLiteral)); // old args
+      memcpy(&newframe->payload[1 + argCount], &argv[1], arity * sizeof(PtrOrLiteral));
+      newframe = stgPopCont();
       // tail call the FUN
       STGJUMP0(getInfoPtr(argv[0].op)->funFields.trueEntryCode);
 
@@ -51994,6 +55012,7 @@ DEFUN0(stgApplyNPNPPP) {
     int fvCount = getInfoPtr(argv[0].op)->layoutInfo.boxedCount + 
                   getInfoPtr(argv[0].op)->layoutInfo.unboxedCount;
     Bitmap64 bitmap = argv[0].op->payload[fvCount].b;
+    Bitmap64 bitmap2;
     int argCount = BMSIZE(bitmap);
     int arity = getInfoPtr(argv[0].op)->funFields.arity - argCount;
     #ifdef DEBUGSTGAPPLY
@@ -52022,7 +55041,6 @@ DEFUN0(stgApplyNPNPPP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x140000000000001AUL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -52040,6 +55058,10 @@ DEFUN0(stgApplyNPNPPP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0800000000000003UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyP);
         break;
@@ -52059,7 +55081,6 @@ DEFUN0(stgApplyNPNPPP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x100000000000000AUL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -52077,6 +55098,10 @@ DEFUN0(stgApplyNPNPPP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0C00000000000007UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPP);
         break;
@@ -52096,7 +55121,6 @@ DEFUN0(stgApplyNPNPPP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0C00000000000002UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -52114,6 +55138,10 @@ DEFUN0(stgApplyNPNPPP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x100000000000000FUL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPPP);
         break;
@@ -52133,7 +55161,6 @@ DEFUN0(stgApplyNPNPPP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0800000000000002UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -52151,6 +55178,10 @@ DEFUN0(stgApplyNPNPPP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x140000000000001DUL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNPPP);
         break;
@@ -52170,7 +55201,6 @@ DEFUN0(stgApplyNPNPPP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0400000000000000UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -52188,6 +55218,10 @@ DEFUN0(stgApplyNPNPPP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x180000000000003BUL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPNPPP);
         break;
@@ -52216,6 +55250,18 @@ DEFUN0(stgApplyNPNPPP) {
       pushargs(argCount, &argv[0].op->payload[fvCount+1]);
       // push the FUN
       pushargs(1, &argv[0]);
+      bitmap.bitmap.mask <<= 1;
+      bitmap.bitmap.mask |= 0x1;
+      bitmap.bitmap.size += 1;
+      bitmap2 = (Bitmap64)0x180000000000003AUL;
+      bitmap2.bitmap.mask <<= (argCount + 1);
+      bitmap.bits += bitmap2.bits;
+      newframe = stgAllocStackCont( &it_stgStackCont, argCount+arity+1 );
+      newframe->layout = bitmap;
+      newframe->payload[0] = argv[0]; // self
+      memcpy(&newframe->payload[1], &argv[0].op->payload[fvCount+1], argCount * sizeof(PtrOrLiteral)); // old args
+      memcpy(&newframe->payload[1 + argCount], &argv[1], arity * sizeof(PtrOrLiteral));
+      newframe = stgPopCont();
       // tail call the FUN
       STGJUMP0(getInfoPtr(argv[0].op)->funFields.trueEntryCode);
 
@@ -52497,6 +55543,7 @@ DEFUN0(stgApplyPPNPPP) {
     int fvCount = getInfoPtr(argv[0].op)->layoutInfo.boxedCount + 
                   getInfoPtr(argv[0].op)->layoutInfo.unboxedCount;
     Bitmap64 bitmap = argv[0].op->payload[fvCount].b;
+    Bitmap64 bitmap2;
     int argCount = BMSIZE(bitmap);
     int arity = getInfoPtr(argv[0].op)->funFields.arity - argCount;
     #ifdef DEBUGSTGAPPLY
@@ -52525,7 +55572,6 @@ DEFUN0(stgApplyPPNPPP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x140000000000001BUL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -52543,6 +55589,10 @@ DEFUN0(stgApplyPPNPPP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0800000000000003UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyP);
         break;
@@ -52562,7 +55612,6 @@ DEFUN0(stgApplyPPNPPP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x100000000000000BUL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -52580,6 +55629,10 @@ DEFUN0(stgApplyPPNPPP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0C00000000000007UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPP);
         break;
@@ -52599,7 +55652,6 @@ DEFUN0(stgApplyPPNPPP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0C00000000000003UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -52617,6 +55669,10 @@ DEFUN0(stgApplyPPNPPP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x100000000000000FUL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPPP);
         break;
@@ -52636,7 +55692,6 @@ DEFUN0(stgApplyPPNPPP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0800000000000003UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -52654,6 +55709,10 @@ DEFUN0(stgApplyPPNPPP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x140000000000001DUL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNPPP);
         break;
@@ -52673,7 +55732,6 @@ DEFUN0(stgApplyPPNPPP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0400000000000001UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -52691,6 +55749,10 @@ DEFUN0(stgApplyPPNPPP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x180000000000003BUL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPNPPP);
         break;
@@ -52719,6 +55781,18 @@ DEFUN0(stgApplyPPNPPP) {
       pushargs(argCount, &argv[0].op->payload[fvCount+1]);
       // push the FUN
       pushargs(1, &argv[0]);
+      bitmap.bitmap.mask <<= 1;
+      bitmap.bitmap.mask |= 0x1;
+      bitmap.bitmap.size += 1;
+      bitmap2 = (Bitmap64)0x180000000000003BUL;
+      bitmap2.bitmap.mask <<= (argCount + 1);
+      bitmap.bits += bitmap2.bits;
+      newframe = stgAllocStackCont( &it_stgStackCont, argCount+arity+1 );
+      newframe->layout = bitmap;
+      newframe->payload[0] = argv[0]; // self
+      memcpy(&newframe->payload[1], &argv[0].op->payload[fvCount+1], argCount * sizeof(PtrOrLiteral)); // old args
+      memcpy(&newframe->payload[1 + argCount], &argv[1], arity * sizeof(PtrOrLiteral));
+      newframe = stgPopCont();
       // tail call the FUN
       STGJUMP0(getInfoPtr(argv[0].op)->funFields.trueEntryCode);
 
@@ -52996,6 +56070,7 @@ DEFUN0(stgApplyNNPPPP) {
     int fvCount = getInfoPtr(argv[0].op)->layoutInfo.boxedCount + 
                   getInfoPtr(argv[0].op)->layoutInfo.unboxedCount;
     Bitmap64 bitmap = argv[0].op->payload[fvCount].b;
+    Bitmap64 bitmap2;
     int argCount = BMSIZE(bitmap);
     int arity = getInfoPtr(argv[0].op)->funFields.arity - argCount;
     #ifdef DEBUGSTGAPPLY
@@ -53024,7 +56099,6 @@ DEFUN0(stgApplyNNPPPP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x140000000000001CUL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -53042,6 +56116,10 @@ DEFUN0(stgApplyNNPPPP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0800000000000003UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyP);
         break;
@@ -53061,7 +56139,6 @@ DEFUN0(stgApplyNNPPPP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x100000000000000CUL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -53079,6 +56156,10 @@ DEFUN0(stgApplyNNPPPP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0C00000000000007UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPP);
         break;
@@ -53098,7 +56179,6 @@ DEFUN0(stgApplyNNPPPP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0C00000000000004UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -53116,6 +56196,10 @@ DEFUN0(stgApplyNNPPPP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x100000000000000FUL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPPP);
         break;
@@ -53135,7 +56219,6 @@ DEFUN0(stgApplyNNPPPP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0800000000000000UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -53153,6 +56236,10 @@ DEFUN0(stgApplyNNPPPP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x140000000000001FUL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPPPP);
         break;
@@ -53172,7 +56259,6 @@ DEFUN0(stgApplyNNPPPP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0400000000000000UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -53190,6 +56276,10 @@ DEFUN0(stgApplyNNPPPP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x180000000000003DUL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNPPPP);
         break;
@@ -53218,6 +56308,18 @@ DEFUN0(stgApplyNNPPPP) {
       pushargs(argCount, &argv[0].op->payload[fvCount+1]);
       // push the FUN
       pushargs(1, &argv[0]);
+      bitmap.bitmap.mask <<= 1;
+      bitmap.bitmap.mask |= 0x1;
+      bitmap.bitmap.size += 1;
+      bitmap2 = (Bitmap64)0x180000000000003CUL;
+      bitmap2.bitmap.mask <<= (argCount + 1);
+      bitmap.bits += bitmap2.bits;
+      newframe = stgAllocStackCont( &it_stgStackCont, argCount+arity+1 );
+      newframe->layout = bitmap;
+      newframe->payload[0] = argv[0]; // self
+      memcpy(&newframe->payload[1], &argv[0].op->payload[fvCount+1], argCount * sizeof(PtrOrLiteral)); // old args
+      memcpy(&newframe->payload[1 + argCount], &argv[1], arity * sizeof(PtrOrLiteral));
+      newframe = stgPopCont();
       // tail call the FUN
       STGJUMP0(getInfoPtr(argv[0].op)->funFields.trueEntryCode);
 
@@ -53499,6 +56601,7 @@ DEFUN0(stgApplyPNPPPP) {
     int fvCount = getInfoPtr(argv[0].op)->layoutInfo.boxedCount + 
                   getInfoPtr(argv[0].op)->layoutInfo.unboxedCount;
     Bitmap64 bitmap = argv[0].op->payload[fvCount].b;
+    Bitmap64 bitmap2;
     int argCount = BMSIZE(bitmap);
     int arity = getInfoPtr(argv[0].op)->funFields.arity - argCount;
     #ifdef DEBUGSTGAPPLY
@@ -53527,7 +56630,6 @@ DEFUN0(stgApplyPNPPPP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x140000000000001DUL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -53545,6 +56647,10 @@ DEFUN0(stgApplyPNPPPP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0800000000000003UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyP);
         break;
@@ -53564,7 +56670,6 @@ DEFUN0(stgApplyPNPPPP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x100000000000000DUL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -53582,6 +56687,10 @@ DEFUN0(stgApplyPNPPPP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0C00000000000007UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPP);
         break;
@@ -53601,7 +56710,6 @@ DEFUN0(stgApplyPNPPPP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0C00000000000005UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -53619,6 +56727,10 @@ DEFUN0(stgApplyPNPPPP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x100000000000000FUL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPPP);
         break;
@@ -53638,7 +56750,6 @@ DEFUN0(stgApplyPNPPPP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0800000000000001UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -53656,6 +56767,10 @@ DEFUN0(stgApplyPNPPPP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x140000000000001FUL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPPPP);
         break;
@@ -53675,7 +56790,6 @@ DEFUN0(stgApplyPNPPPP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0400000000000001UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -53693,6 +56807,10 @@ DEFUN0(stgApplyPNPPPP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x180000000000003DUL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyNPPPP);
         break;
@@ -53721,6 +56839,18 @@ DEFUN0(stgApplyPNPPPP) {
       pushargs(argCount, &argv[0].op->payload[fvCount+1]);
       // push the FUN
       pushargs(1, &argv[0]);
+      bitmap.bitmap.mask <<= 1;
+      bitmap.bitmap.mask |= 0x1;
+      bitmap.bitmap.size += 1;
+      bitmap2 = (Bitmap64)0x180000000000003DUL;
+      bitmap2.bitmap.mask <<= (argCount + 1);
+      bitmap.bits += bitmap2.bits;
+      newframe = stgAllocStackCont( &it_stgStackCont, argCount+arity+1 );
+      newframe->layout = bitmap;
+      newframe->payload[0] = argv[0]; // self
+      memcpy(&newframe->payload[1], &argv[0].op->payload[fvCount+1], argCount * sizeof(PtrOrLiteral)); // old args
+      memcpy(&newframe->payload[1 + argCount], &argv[1], arity * sizeof(PtrOrLiteral));
+      newframe = stgPopCont();
       // tail call the FUN
       STGJUMP0(getInfoPtr(argv[0].op)->funFields.trueEntryCode);
 
@@ -54002,6 +57132,7 @@ DEFUN0(stgApplyNPPPPP) {
     int fvCount = getInfoPtr(argv[0].op)->layoutInfo.boxedCount + 
                   getInfoPtr(argv[0].op)->layoutInfo.unboxedCount;
     Bitmap64 bitmap = argv[0].op->payload[fvCount].b;
+    Bitmap64 bitmap2;
     int argCount = BMSIZE(bitmap);
     int arity = getInfoPtr(argv[0].op)->funFields.arity - argCount;
     #ifdef DEBUGSTGAPPLY
@@ -54030,7 +57161,6 @@ DEFUN0(stgApplyNPPPPP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x140000000000001EUL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -54048,6 +57178,10 @@ DEFUN0(stgApplyNPPPPP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0800000000000003UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyP);
         break;
@@ -54067,7 +57201,6 @@ DEFUN0(stgApplyNPPPPP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x100000000000000EUL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -54085,6 +57218,10 @@ DEFUN0(stgApplyNPPPPP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0C00000000000007UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPP);
         break;
@@ -54104,7 +57241,6 @@ DEFUN0(stgApplyNPPPPP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0C00000000000006UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -54122,6 +57258,10 @@ DEFUN0(stgApplyNPPPPP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x100000000000000FUL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPPP);
         break;
@@ -54141,7 +57281,6 @@ DEFUN0(stgApplyNPPPPP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0800000000000002UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -54159,6 +57298,10 @@ DEFUN0(stgApplyNPPPPP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x140000000000001FUL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPPPP);
         break;
@@ -54178,7 +57321,6 @@ DEFUN0(stgApplyNPPPPP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0400000000000000UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -54196,6 +57338,10 @@ DEFUN0(stgApplyNPPPPP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x180000000000003FUL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPPPPP);
         break;
@@ -54224,6 +57370,18 @@ DEFUN0(stgApplyNPPPPP) {
       pushargs(argCount, &argv[0].op->payload[fvCount+1]);
       // push the FUN
       pushargs(1, &argv[0]);
+      bitmap.bitmap.mask <<= 1;
+      bitmap.bitmap.mask |= 0x1;
+      bitmap.bitmap.size += 1;
+      bitmap2 = (Bitmap64)0x180000000000003EUL;
+      bitmap2.bitmap.mask <<= (argCount + 1);
+      bitmap.bits += bitmap2.bits;
+      newframe = stgAllocStackCont( &it_stgStackCont, argCount+arity+1 );
+      newframe->layout = bitmap;
+      newframe->payload[0] = argv[0]; // self
+      memcpy(&newframe->payload[1], &argv[0].op->payload[fvCount+1], argCount * sizeof(PtrOrLiteral)); // old args
+      memcpy(&newframe->payload[1 + argCount], &argv[1], arity * sizeof(PtrOrLiteral));
+      newframe = stgPopCont();
       // tail call the FUN
       STGJUMP0(getInfoPtr(argv[0].op)->funFields.trueEntryCode);
 
@@ -54509,6 +57667,7 @@ DEFUN0(stgApplyPPPPPP) {
     int fvCount = getInfoPtr(argv[0].op)->layoutInfo.boxedCount + 
                   getInfoPtr(argv[0].op)->layoutInfo.unboxedCount;
     Bitmap64 bitmap = argv[0].op->payload[fvCount].b;
+    Bitmap64 bitmap2;
     int argCount = BMSIZE(bitmap);
     int arity = getInfoPtr(argv[0].op)->funFields.arity - argCount;
     #ifdef DEBUGSTGAPPLY
@@ -54537,7 +57696,6 @@ DEFUN0(stgApplyPPPPPP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x140000000000001FUL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -54555,6 +57713,10 @@ DEFUN0(stgApplyPPPPPP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0800000000000003UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyP);
         break;
@@ -54574,7 +57736,6 @@ DEFUN0(stgApplyPPPPPP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x100000000000000FUL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -54592,6 +57753,10 @@ DEFUN0(stgApplyPPPPPP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x0C00000000000007UL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPP);
         break;
@@ -54611,7 +57776,6 @@ DEFUN0(stgApplyPPPPPP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0C00000000000007UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -54629,6 +57793,10 @@ DEFUN0(stgApplyPPPPPP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x100000000000000FUL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPPP);
         break;
@@ -54648,7 +57816,6 @@ DEFUN0(stgApplyPPPPPP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0800000000000003UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -54666,6 +57833,10 @@ DEFUN0(stgApplyPPPPPP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x140000000000001FUL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPPPP);
         break;
@@ -54685,7 +57856,6 @@ DEFUN0(stgApplyPPPPPP) {
         bitmap.bitmap.mask <<= 1;
         bitmap.bitmap.mask |= 0x1;
         bitmap.bitmap.size += 1;
-        Bitmap64 bitmap2;
         bitmap2 = (Bitmap64)0x0400000000000001UL;
         bitmap2.bitmap.mask <<= (argCount + 1);
         bitmap.bits += bitmap2.bits;
@@ -54703,6 +57873,10 @@ DEFUN0(stgApplyPPPPPP) {
         callContRestore( &argv[1] );
         // push FUN-oid and excess args
         pushargs(excess + 1, argv);
+        newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);
+        newframe->layout = (Bitmap64)0x180000000000003FUL;
+        memcpy(&newframe->payload[0], &argv[0], (1 + excess) * sizeof(PtrOrLiteral));
+        newframe = stgPopCont();
         // try again - tail call stgApply 
         STGJUMP0(stgApplyPPPPP);
         break;
@@ -54731,6 +57905,18 @@ DEFUN0(stgApplyPPPPPP) {
       pushargs(argCount, &argv[0].op->payload[fvCount+1]);
       // push the FUN
       pushargs(1, &argv[0]);
+      bitmap.bitmap.mask <<= 1;
+      bitmap.bitmap.mask |= 0x1;
+      bitmap.bitmap.size += 1;
+      bitmap2 = (Bitmap64)0x180000000000003FUL;
+      bitmap2.bitmap.mask <<= (argCount + 1);
+      bitmap.bits += bitmap2.bits;
+      newframe = stgAllocStackCont( &it_stgStackCont, argCount+arity+1 );
+      newframe->layout = bitmap;
+      newframe->payload[0] = argv[0]; // self
+      memcpy(&newframe->payload[1], &argv[0].op->payload[fvCount+1], argCount * sizeof(PtrOrLiteral)); // old args
+      memcpy(&newframe->payload[1 + argCount], &argv[1], arity * sizeof(PtrOrLiteral));
+      newframe = stgPopCont();
       // tail call the FUN
       STGJUMP0(getInfoPtr(argv[0].op)->funFields.trueEntryCode);
 
