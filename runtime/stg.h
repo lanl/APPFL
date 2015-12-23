@@ -368,28 +368,6 @@ extern void showStgValPretty(PtrOrLiteral v);
 #define STGJUMP1(f,v1)				\
   JUMP1(f,v1)
 
-#define STGJUMP2(f,v1,v2)			\
-  JUMP2(f,v1,v2)
-
-#define STGJUMP3(f,v1,v2,v3)			\
-  JUMP3(f,v1,v2,v3)
-
-#define STGJUMP4(f,v1,v2,v3,v4)			\
-  JUMP4(f,v1,v2,v3,v4)
-
-#define STGJUMP5(f,v1,v2,v3,v4,v5)		\
-  JUMP5(f,v1,v2,v3,v4,v5)
-
-#define STGJUMP6(f,v1,v2,v3,v4,v5,v6)		\
-  JUMP6(f,v1,v2,v3,v4,v5,v6)
-
-#define STGJUMP7(f,v1,v2,v3,v4,v5,v6,v7)	\
-  JUMP7(f,v1,v2,v3,v4,v5,v6,v7)
-
-#define STGJUMP8(f,v1,v2,v3,v4,v5,v6,v7,v8)	\
-  JUMP8(f,v1,v2,v3,v4,v5,v6,v7,v8)
-
-
 // return through continuation stack
 
 #define STGRETURN0()			\

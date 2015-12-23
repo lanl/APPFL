@@ -364,7 +364,7 @@ cgo env o@(FUN it vs e name) =
           func =
             "// " ++ show (ctyp it) ++ "\n" ++
 --            "// " ++ show vts ++ "\n" ++
-            "DEFUN" ++ show (length vs + 1) ++ "(fun_" ++
+            "DEFUNS" ++ show (length vs + 1) ++ "(fun_" ++
             name ++ ", self, " ++
             intercalate ", " vs ++
 --            intercalate ", " (bvs ++ uvs) ++

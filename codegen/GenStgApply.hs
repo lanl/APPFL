@@ -103,12 +103,7 @@ gen strictness npstring =
     fname = "stgApply" ++ npstring
     forward = "FnPtr " ++ fname ++ "();\n"
     arglist = 'f' : concat [',':'v':show i | i <- [1..argc]]
-    macro = 
-      "#define STGAPPLY" ++ npstring ++ "(" ++ arglist ++ ") \\\n" ++
-      "do { \\\n" ++
-      "  STGJUMP" ++ show (argc+1) ++ "(stgApply" ++ npstring ++ "," ++ arglist ++ "); \\\n" ++
-      "  } while(0)\n\n"
-
+    macro = ""
     fun = 
      "DEFUN0(" ++ fname ++ ") {\n" ++
 --     "  Cont *argframe;  // pointer to STACKCONT with actual parameters\n" ++
@@ -232,14 +227,14 @@ funpos npstring excess =
   in debugp ["stgApply FUN " ++ show excess ++ " excess args\\n"] ++
      "// stash excess args\n" ++
      callContArgvSave (arity+1) (drop arity npstring) ++  -- FUN at index 0
-     "// push needed args\n" ++
-     "pushargs(arity+1, argv);\n" ++
-
      -- new STACKFRAME
+     "// push needed args\n" ++
+--     "pushargs(arity+1, argv);\n" ++
+
      "newframe = stgAllocStackCont( &it_stgStackCont, arity+1 );\n" ++
      "newframe->layout = " ++ npStrToBMStr ('P' : take arity npstring) ++ ";\n" ++
      "memcpy(newframe->payload, argv, (arity+1) * sizeof(PtrOrLiteral));\n" ++
-     "newframe = stgPopCont();\n" ++
+--     "newframe = stgPopCont();\n" ++
 
      "// call-with-return the FUN\n" ++
      "STGCALL0(getInfoPtr(argv[0].op)->funFields.trueEntryCode);\n" ++
@@ -260,13 +255,12 @@ funpos npstring excess =
 
 
 funeq npstring =
-  "pushargs(argc+1, argv);\n" ++
-
    -- new STACKFRAME
+--  "pushargs(argc+1, argv);\n" ++
   "newframe = stgAllocStackCont( &it_stgStackCont, argc+1 );\n" ++
   "newframe->layout = " ++ npStrToBMStr ('P' : npstring) ++ ";\n" ++
   "memcpy(newframe->payload, argv, (argc+1) * sizeof(PtrOrLiteral));\n" ++
-  "newframe = stgPopCont();\n" ++
+--  "newframe = stgPopCont();\n" ++
 
   "STGJUMP0(getInfoPtr(argv[0].op)->funFields.trueEntryCode);\n"
 
@@ -309,16 +303,16 @@ pappos npstring excess =
   in debugp ["stgApply PAP to " ++ show excess ++ " excess args\\n"] ++
      "// stash excess args\n" ++
      callContArgvSave (arity+1) (drop arity npstring) ++  -- PAP at index 0
+     -- new STACKFRAME
 --   1.  push new needed args
 --   2.  push args already in pap from PAP[fvCount+1...]
-     "// push needed args\n" ++
-     "pushargs(arity, &argv[1]);\n" ++
-     "// push args already in PAP\n" ++
-     "pushargs(argCount, &argv[0].op->payload[fvCount+1]);\n" ++
-     "// push self\n" ++
-     "pushargs(1, argv);\n" ++
+--     "// push needed args\n" ++
+--     "pushargs(arity, &argv[1]);\n" ++
+--     "// push args already in PAP\n" ++
+--     "pushargs(argCount, &argv[0].op->payload[fvCount+1]);\n" ++
+--     "// push self\n" ++
+--     "pushargs(1, argv);\n" ++
 
-     -- new STACKFRAME
      -- 1.  shift bitmap left by one for slot for FUN-like obj
      -- 2.  add bit for FUN-like obj
      -- 4.  update size
@@ -339,7 +333,7 @@ pappos npstring excess =
      "memcpy(&newframe->payload[1 + argCount], " ++ 
             "&argv[1], " ++ 
             "arity * sizeof(PtrOrLiteral));\n" ++
-     "newframe = stgPopCont();\n" ++
+--     "newframe = stgPopCont();\n" ++
 
      "// call-with-return the FUN\n" ++
      "STGCALL0(getInfoPtr(argv[0].op)->funFields.trueEntryCode);\n" ++
@@ -364,7 +358,7 @@ pappos npstring excess =
 papeq npstring = 
     "// push new args\n" ++
     debugp ["PAP just right:  %d args in PAP, %d new args\\n", "argCount", "arity"] ++
-
+{-
     debugp ["pushing new args\\n"] ++ 
     "pushargs(arity, &argv[1]);\n" ++
     "// push args already in PAP\n" ++
@@ -372,7 +366,7 @@ papeq npstring =
     "pushargs(argCount, &argv[0].op->payload[fvCount+1]);\n" ++
     "// push the FUN\n" ++
     "pushargs(1, &argv[0]);\n" ++
-
+-}
 
      -- new STACKFRAME
      -- 1.  shift bitmap left by one for slot for FUN-like obj
@@ -395,7 +389,7 @@ papeq npstring =
      "memcpy(&newframe->payload[1 + argCount], " ++ 
             "&argv[1], " ++ 
             "arity * sizeof(PtrOrLiteral));\n" ++
-     "newframe = stgPopCont();\n" ++
+--     "newframe = stgPopCont();\n" ++
 
      "// tail call the FUN\n" ++
      "STGJUMP0(getInfoPtr(argv[0].op)->funFields.trueEntryCode);\n"

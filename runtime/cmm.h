@@ -81,48 +81,6 @@ extern void initCmm();
     _JUMP(F);					\
   } while (0)
 
-#define JUMP2(F,V1,V2)				\
-  do {						\
-    _PUSHVALS2(V1,V2);				\
-    _JUMP(F);					\
-  } while (0)
-
-#define JUMP3(F,V1,V2,V3)			\
-  do {						\
-    _PUSHVALS3(V1,V2,V3);			\
-    _JUMP(F);					\
-  } while (0)
-
-#define JUMP4(F,V1,V2,V3,V4)			\
-  do {						\
-    _PUSHVALS4(V1,V2,V3,V4);			\
-    _JUMP(F);					\
-  } while (0)
-
-#define JUMP5(F,V1,V2,V3,V4,V5)			\
-  do {						\
-    _PUSHVALS5(V1,V2,V3,V4,V5);			\
-    _JUMP(F);					\
-  } while (0)
-
-#define JUMP6(F,V1,V2,V3,V4,V5,V6)		\
-  do {						\
-    _PUSHVALS6(V1,V2,V3,V4,V5,V6);		\
-    _JUMP(F);					\
-  } while (0)
-
-#define JUMP7(F,V1,V2,V3,V4,V5,V6,V7)		\
-  do {						\
-    _PUSHVALS7(V1,V2,V3,V4,V5,V6,V7);		\
-    _JUMP(F);					\
-  } while (0)
-
-#define JUMP8(F,V1,V2,V3,V4,V5,V6,V7,V8)	\
-  do {						\
-    _PUSHVALS8(V1,V2,V3,V4,V5,V6,V7,V8);	\
-    _JUMP(F);					\
-  } while (0)
-
 // DEFUN#args(argnames)
 
 #define DEFUN0(F)				\
@@ -139,20 +97,55 @@ extern void initCmm();
   PtrOrLiteral P1, P2;				\
   _POPVALS2(P1,P2);					
 
-#define DEFUN3(F,P1,P2,P3)			\
+// new STACKCONT
+
+#define DEFUNS0(F)				\
   FnPtr F() {					\
+  Cont *stg_cp = stgPopCont();
+
+#define DEFUNS1(F,P1)				\
+  FnPtr F() {					\
+  Cont *stg_cp = stgPopCont();			\
+  PtrOrLiteral P1;				\
+  P1 = stg_cp->payload[0];
+
+#define DEFUNS2(F,P1,P2)			\
+  FnPtr F() {					\
+  Cont *stg_cp = stgPopCont();			\
+  PtrOrLiteral P1, P2;				\
+  P1 = stg_cp->payload[0];			\
+  P2 = stg_cp->payload[1];
+
+
+#define DEFUNS3(F,P1,P2,P3)			\
+  FnPtr F() {					\
+  Cont *stg_cp = stgPopCont();			\
   PtrOrLiteral P1, P2, P3;			\
-  _POPVALS3(P1,P2,P3);					
+  P1 = stg_cp->payload[0];			\
+  P2 = stg_cp->payload[1];			\
+  P3 = stg_cp->payload[2];
 
-#define DEFUN4(F,P1,P2,P3,P4)			\
+
+#define DEFUNS4(F,P1,P2,P3,P4)			\
   FnPtr F() {					\
+  Cont *stg_cp = stgPopCont();			\
   PtrOrLiteral P1, P2, P3, P4;			\
-  _POPVALS4(P1,P2,P3,P4);					
+  P1 = stg_cp->payload[0];			\
+  P2 = stg_cp->payload[1];			\
+  P3 = stg_cp->payload[2];			\
+  P4 = stg_cp->payload[3];
 
-#define DEFUN5(F,P1,P2,P3,P4,P5)		\
+
+#define DEFUNS5(F,P1,P2,P3,P4,P5)		\
   FnPtr F() {					\
+  Cont *stg_cp = stgPopCont();			\
   PtrOrLiteral P1, P2, P3, P4, P5;		\
-  _POPVALS5(P1,P2,P3,P4,P5);					
+  P1 = stg_cp->payload[0];			\
+  P2 = stg_cp->payload[1];			\
+  P3 = stg_cp->payload[2];			\
+  P4 = stg_cp->payload[3];			\
+  P5 = stg_cp->payload[4];
+
 
 #define ENDFUN return NULL;}
 
