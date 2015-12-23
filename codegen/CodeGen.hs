@@ -419,6 +419,7 @@ stgApplyGeneric env f eas =
     let as = map ea eas
         pnstring = [ if b then 'P' else 'N' | b <- map (isBoxed . typ . emd) eas ]
         inline =
+            -- new STACKFRAME
             "{ Cont *cp = stgAllocStackCont( &it_stgStackCont, " ++ 
                                              show (length pnstring + 1) ++ ");\n" ++
             "  cp->layout = " ++ npStrToBMStr ('P' : pnstring ) ++ ";\n" ++
@@ -428,6 +429,7 @@ stgApplyGeneric env f eas =
             -- now pop it
             "  cp = stgPopCont();\n" ++
             "}\n" ++
+
             "// INDIRECT TAIL CALL " ++ f ++ " " ++ showas as ++ "\n" ++
             "STGAPPLY" ++ pnstring ++ "(" ++
             intercalate ", " (cgv env f : map (cga env) as) ++
