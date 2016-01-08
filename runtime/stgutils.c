@@ -104,7 +104,6 @@ DEFUN1(stgIndirect, self) {
   fprintf(stderr,"stgIndirect, jumping through indirection\n");
   PtrOrLiteral next = self.op->payload[0];
   STGJUMP1(getInfoPtr(next.op)->entryCode, next);
-  RETURN0();
   ENDFUN;
 }
 
@@ -202,9 +201,8 @@ void stgThunk(PtrOrLiteral self) {
 
 DEFUN0(stgStackCont) {
   // stgPopCont();  user must do this
-  fprintf(stderr,"stgStackCont called, this is not implemented\n");
-  exit(0);
-  //  RETURN0();  // fall back to the cmm trampoline
+  fprintf(stderr,"stgStackCont returning\n");
+  RETURN0();  // fall back to the cmm trampoline
   ENDFUN;
 }
 
@@ -235,14 +233,20 @@ void callContSave(PtrOrLiteral argv[], Bitmap64 layout) {
   int argc = layout.bitmap.size;
   Cont *cc = stgAllocCallCont( &it_stgCallCont, argc );
   cc->layout = layout;
-  memcpy(cc->payload, argv, argc * sizeof(PtrOrLiteral));
+  if (argc > 0) {
+    assert(argv != NULL);  // need isStack() predicate
+    memcpy(cc->payload, argv, argc * sizeof(PtrOrLiteral));
+  }
 }
 
 void callContRestore(PtrOrLiteral argv[]) {
   Cont *cc = stgPopCont();
   assert(getContType(cc) == CALLCONT);
   int argc = cc->layout.bitmap.size;
-  memcpy(argv, cc->payload, argc * sizeof(PtrOrLiteral));
+  if (argc > 0) {
+    assert(argv != NULL);  // need isStack() predicate
+    memcpy(argv, cc->payload, argc * sizeof(PtrOrLiteral));
+  }
 }
 
 // ****************************************************************

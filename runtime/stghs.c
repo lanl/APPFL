@@ -42,6 +42,10 @@ void showStgCont(Cont *c) {
     fprintf(stderr,"FUNCONT  %s\n", c->ident);
     return;
 
+  case STACKCONT:
+    fprintf(stderr,"STACKCONT  %s\n", c->ident);
+    return;
+
   default:
     fprintf(stderr,"showStgCont default case! %d %s\n", type, objTypeNames[type]);
     exit(0);

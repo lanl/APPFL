@@ -138,13 +138,19 @@ Cont *stgPopCont() {
   case UPDCONT:
   case CASECONT:
   case FUNCONT:
+    fprintf(stderr, "popping other continuation with payloadSize ");
     payloadSize = getCInfoPtr(retVal)->layoutInfo.payloadSize;
-    fprintf(stderr, "popping continuation with payloadSize %d\n", payloadSize);
+    fprintf(stderr, "%d\n", payloadSize);
     break;
   case CALLCONT:
-  case STACKCONT:
+    fprintf(stderr, "popping CALLCONT with argc ");
     payloadSize = retVal->layout.bitmap.size;
-    fprintf(stderr, "popping call continuation with argc %d\n", payloadSize);
+    fprintf(stderr, "%d\n", payloadSize);
+    break;
+  case STACKCONT:
+    fprintf(stderr, "popping STACKCONT with argc ");
+    payloadSize = retVal->layout.bitmap.size;
+    fprintf(stderr, "%d\n", payloadSize);
     break;
   default:
     fprintf(stderr, "bad continuation value %d\n", getContType(retVal));
@@ -157,6 +163,36 @@ Cont *stgPopCont() {
   stgSP = (char *)retVal + contSize;
   return retVal;
 }
+
+// could return pointer to .payload but that thwarts a sanity check,
+// though could perhaps pass in expected size
+Cont *stgGetStackArgp() {
+  Cont *scp = (Cont *)stgSP;
+  CInfoTab *citp = getCInfoPtr(scp);
+  assert(citp->contType == getContType(scp));
+  assert(getContType(scp) == STACKCONT);
+  return scp;
+}
+
+// top two elements of STG stack should be STACKCONTS
+// overwrite penultimate with topmost
+Cont *stgJumpAdjust() {
+  fprintf(stderr, "ENTER stgJumpAdjust\n");
+  Cont *scp = (Cont *)stgSP;
+  assert(getContType(scp) == STACKCONT);
+  size_t contSize = getContSize(scp);
+  fprintf(stderr, "  top cont size is %lu\n", contSize);
+  Cont *pscp = (Cont *)((char *)stgSP + contSize);
+  assert(getContType(pscp) == STACKCONT);
+  size_t pContSize = getContSize(pscp);
+  fprintf(stderr, "  penultimate cont size is %lu\n", pContSize);
+  stgSP += pContSize;
+  memmove(stgSP, scp, contSize);
+  fprintf(stderr, "EXIT stgJumpAdjust\n");
+  return (Cont *) stgSP;
+}
+
+
 
 Obj* stgNewHeapObj(InfoTab *itp) {
   fprintf(stderr, "stgNewHeapObj: "); showIT(itp);
@@ -291,9 +327,6 @@ int getContSize(Cont *o) {
   case UPDCONT:
   case CASECONT:
   case FUNCONT:
-    contSize = sizeof(Cont) + o->layout.bitmap.size * sizeof(PtrOrLiteral);
-    break;
-
   case STACKCONT:
     contSize = sizeof(Cont) + o->layout.bitmap.size * sizeof(PtrOrLiteral);
     break;

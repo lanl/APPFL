@@ -184,9 +184,11 @@ void processCont(Cont *p) {
   size_t i;
   if (DEBUG) fprintf(stderr, "processCont %s %s\n", contTypeNames[getContType(p)], p->ident);
   switch (getContType(p)) {
+
   case UPDCONT:
     updatePtr(&p->payload[0]);
     break;
+
   case CASECONT: {
     if (EXTRA) {
       EXTRASTART();
@@ -195,7 +197,6 @@ void processCont(Cont *p) {
       }
       EXTRAEND();
     }
-
     int start = startCASEFVsB(p);
     int end = endCASEFVsB(p);
     for (i = start; i < end; i++) {
@@ -208,6 +209,8 @@ void processCont(Cont *p) {
     }
     break;
   }
+
+  case STACKCONT:
   case CALLCONT: {
     Bitmap64 bm = p->layout;
     uint64_t mask = bm.bitmap.mask;
@@ -216,9 +219,9 @@ void processCont(Cont *p) {
       if (EXTRA) {
 	EXTRASTART();
 	if (mask & 0x1UL)
-	  assert(isBoxed(p->payload[i]) && "gc: unexpected unboxed arg in CALLCONT");
+	  assert(isBoxed(p->payload[i]) && "gc: unexpected unboxed arg in CALLCONT or STACKCONT");
 	else
-	  assert(!isBoxed(p->payload[i]) && "gc: unexpected boxed arg in CALLCONT");
+	  assert(!isBoxed(p->payload[i]) && "gc: unexpected boxed arg in CALLCONT or STACKCONT");
 	EXTRAEND();
       }
       if (mask & 0x1UL) updatePtr(&p->payload[i]);
@@ -226,6 +229,7 @@ void processCont(Cont *p) {
 
     break;
   }
+
   case FUNCONT:
     if (EXTRA) {
       EXTRASTART();

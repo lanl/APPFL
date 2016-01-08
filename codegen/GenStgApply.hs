@@ -1,3 +1,6 @@
+{-# LANGUAGE CPP #-}
+#include "options.h"
+
 module GenStgApply (
   doit
 ) where
@@ -55,12 +58,6 @@ pns n | n == 0 = [""]
         pref [] = []
         pref (x:xs) = ('N':x):('P':x):pref xs
 
-callContArgvSave offset npstring =
-    "callContSave( &argv[" ++ show offset ++ "], " ++ npStrToBMStr npstring ++ " );\n" 
-
-callContArgvRestore offset =
-    "callContRestore( &argv[" ++ show offset ++ "] );\n"
-
 optSwitch scrut lo hi f =
   if lo > hi then 
       "// empty switch(" ++ scrut ++ ") range [" ++ show lo ++ ".." ++ show hi ++ "]\n" else
@@ -78,10 +75,17 @@ optSwitch scrut lo hi f =
                                    " reached default!\\n\"); exit(0);\n" ++
       "} // switch(" ++ scrut ++ ")\n"
 
+-- debugc code = 
+--     "#ifdef DEBUGSTGAPPLY\n" ++
+--     code ++
+--     "#endif\n"
+
 debugp (x:xs) = 
-    "#ifdef DEBUGSTGAPPLY\n" ++
-    "fprintf(stderr, \"" ++ x ++ "\"" ++ concatMap (", " ++) xs ++ ");\n" ++
-    "#endif\n"
+#ifdef DEBUGSTGAPPLY
+    "fprintf(stderr, \"" ++ x ++ "\"" ++ concatMap (", " ++) xs ++ ");\n"
+#else
+    ""
+#endif
 
 debugc code = 
     "#ifdef DEBUGSTGAPPLY\n" ++
@@ -90,10 +94,9 @@ debugc code =
 
 -- npstring is args, which start at argv[1]
 evalps npstring =
-    concat [ callContArgvSave 0 ('P':npstring) ++
-             "STGEVAL(argv[" ++ show (i+1) ++ "]);\n" ++
-             callContArgvRestore 0 ++
-             "argv[" ++ show (i+1) ++ "] = stgCurVal;  // stgCurVal possibly less indirect\n"
+    concat [ "STGEVAL(argv[" ++ show (i+1) ++ "]);\n" ++
+             "// stgCurVal possibly less indirect\n" ++
+             "argv[" ++ show (i+1) ++ "] = stgCurVal;\n"
              | i <- [0..(length npstring - 1)], npstring!!i == 'P' ]
 
 gen strictness npstring =
@@ -104,165 +107,148 @@ gen strictness npstring =
     forward = "FnPtr " ++ fname ++ "();\n"
     arglist = 'f' : concat [',':'v':show i | i <- [1..argc]]
     macro = ""
-    fun = 
-     "DEFUN0(" ++ fname ++ ") {\n" ++
---     "  Cont *argframe;  // pointer to STACKCONT with actual parameters\n" ++
-     "  Cont *newframe;  // pointer to STACKCONT to be constructed for call/jump\n" ++
-     "  const int argc = " ++ show argc ++ ";\n" ++
-     "  PtrOrLiteral argv[argc+1]; // argv[0] is the FUN/PAP/THUNK/BLACKHOLE\n" ++
+    fun = "DEFUN0(" ++ fname ++ ") {\n" ++ indent 2 body ++ "}\n\n"
+    body =
+     "// STACKCONT with actual parameters\n" ++
+     "Cont *argframe = stgGetStackArgp();\n" ++
+     "// continuations don't move in GC\n" ++
+     "PtrOrLiteral * const argv = argframe->payload;\n" ++
+     "// STACKCONT to be constructed for call/jump\n" ++
+     "Cont *newframe;\n" ++
+     "// pointer to args in argframe\n" ++
+     "const int argc = " ++ show argc ++ ";\n" ++
+      debugp [fname ++ " %s\\n", "getInfoPtr(argv[0].op)->name"] ++
 
+     (if strictness == Strict1 then evalps npstring else "") ++
 
---     "  popargs(argc+1, argv);\n" ++
--- new STACKFRAME
-     "  popFrameArgs(argc+1, argv);\n" ++
+     "argv[0].op = derefPoL(argv[0]);\n" ++
+     "// this if just saves a possibly unneeded call\n" ++
+     "if (getObjType(argv[0].op) == THUNK) {\n" ++
+        indent 2 (debugp [fname ++ " THUNK\\n"]) ++
+     "  // return through top-of-stack STACKCONT\n" ++
+     "  STGEVAL(argv[0]);\n" ++
+     "  // this works because stgCurVal is a GC root\n" ++
+     "  argv[0].op = derefPoL(stgCurVal);\n" ++
+     "} // if THUNK\n\n" ++
 
+     "switch (getObjType(argv[0].op)) {\n\n" ++
 
-        indent 2 (debugp [fname ++ " %s\\n", "getInfoPtr(argv[0].op)->name"]) ++
+     "case FUN: {\n" ++
+     "  int arity = getInfoPtr(argv[0].op)->funFields.arity;\n" ++
+        indent 2 (debugp ["FUN %s arity %d\\n", 
+                          "getInfoPtr(argv[0].op)->name", 
+                          "getInfoPtr(argv[0].op)->funFields.arity"]) ++
+     "  int excess = argc - arity;  // may be negative\n\n" ++
 
-     -- now the function and its arguments are in C "argv[argc+1]"
-     (if strictness == Strict1 then indent 2 (evalps npstring) else "") ++
-
+     (if argc == 1 then 
+        "  // too many args not possible\n"
+      else 
+        "  // too many args?\n" ++
+        "  if (excess > 0) {\n" ++
+             indent 4 (debugp [fname ++ " FUN too many args\\n"]) ++
+             indent 4 (optSwitch "excess" 
+                                 1 
+                                 (argc-1) 
+                                 (\excess -> funpos npstring excess)) ++
+        "  } else \n") ++
      "\n" ++
-     "  argv[0].op = derefPoL(argv[0]);\n" ++
-     -- this if just saves a possibly unneeded call cont save
-     "  if (getObjType(argv[0].op) == THUNK) {\n" ++
-          indent 4 (callContArgvSave 0 ('P':npstring)) ++
-          indent 4 (debugp [fname ++ " THUNK\\n"]) ++
-     "    STGEVAL(argv[0]);\n" ++
-          indent 4 (callContArgvRestore 0) ++
-     "    // this works because stgCurVal is a GC root\n" ++
-     "    argv[0].op = derefPoL(stgCurVal);\n" ++
-     "  } // if THUNK\n" ++
+     "  // just right?\n" ++
+     "  if (excess == 0) {\n" ++
+          indent 4 (debugp [fname ++ " FUN just right\\n"]) ++
+          indent 4 (funeq npstring) ++
+     "  }\n" ++
+     "  // excess < 0, too few args\n" ++
+     "  else {\n" ++
+          indent 4 (debugp [fname ++ " FUN too few args\\n"]) ++
+          indent 4 (funneg npstring) ++
+     "  } // if excess\n" ++
+     "} // case FUN\n" ++
+     "\n\n" ++
 
-     "\n" ++
-     "  switch (getObjType(argv[0].op)) {\n" ++
-
-
-     "  case FUN: {\n" ++
-     "    int arity = getInfoPtr(argv[0].op)->funFields.arity;\n" ++
-          indent 4 (debugp ["FUN %s arity %d\\n", 
-                            "getInfoPtr(argv[0].op)->name", 
-                            "getInfoPtr(argv[0].op)->funFields.arity"]) ++
-     "    int excess = argc - arity;  // may be negative\n" ++
+     "case PAP: {\n" ++
+     "  int fvCount = getInfoPtr(argv[0].op)->layoutInfo.boxedCount + \n" ++
+     "                getInfoPtr(argv[0].op)->layoutInfo.unboxedCount;\n" ++
+     "  Bitmap64 bitmap = argv[0].op->payload[fvCount].b;\n" ++
+     "  Bitmap64 bitmap2;\n" ++
+     "  int argCount = BMSIZE(bitmap);\n" ++
+     "  int arity = getInfoPtr(argv[0].op)->funFields.arity - argCount;\n" ++
+        indent 2 (debugp ["PAP/FUN %s arity %d\\n", 
+                          "getInfoPtr(argv[0].op)->name", 
+                          "getInfoPtr(argv[0].op)->funFields.arity"]) ++
+     "  int excess = argc - arity;    // may be negative\n" ++
      "\n" ++
      (if argc == 1 then 
-        "    // too many args not possible\n"
+        "  // too many args not possible\n"
       else 
-        "    // too many args?\n" ++
-        "    if (excess > 0) {\n" ++
-               indent 6 (debugp [fname ++ " FUN too many args\\n"]) ++
-               indent 6 (optSwitch "excess" 
-                                   1 
-                                   (argc-1) 
-                                   (\excess -> funpos npstring excess)) ++
-        "    } else \n") ++
+        "  // too many args?\n" ++
+        "  if (excess > 0) {\n" ++
+             indent 4 (debugp [fname ++ " PAP too many args\\n"]) ++
+             indent 4 (optSwitch "excess" 
+                                 1 
+                                 (argc-1) 
+                                 (\excess -> pappos npstring excess)) ++
+        "  } else \n") ++
      "\n" ++
-     "    // just right?\n" ++
-     "    if (excess == 0) {\n" ++
-            indent 6 (debugp [fname ++ " FUN just right\\n"]) ++
-            (indent 6 $ funeq npstring) ++
-     "    }\n" ++
-     "    // excess < 0, too few args\n" ++
-     "    else {\n" ++
-            indent 6 (debugp [fname ++ " FUN too few args\\n"]) ++
-            (indent 6 $ funneg npstring) ++
-     "    } // if excess\n" ++
-     "  } // case FUN\n" ++
+     "  // just right?\n" ++
+     "  if (excess == 0) {\n" ++
+          indent 4 (debugp [fname ++ " PAP just right\\n"]) ++
+          indent 4 (papeq npstring) ++
      "\n" ++
-
-
-     "  case PAP: {\n" ++
-     "    int fvCount = getInfoPtr(argv[0].op)->layoutInfo.boxedCount + \n" ++
-     "                  getInfoPtr(argv[0].op)->layoutInfo.unboxedCount;\n" ++
-     "    Bitmap64 bitmap = argv[0].op->payload[fvCount].b;\n" ++
-     "    Bitmap64 bitmap2;\n" ++
-     "    int argCount = BMSIZE(bitmap);\n" ++
-     "    int arity = getInfoPtr(argv[0].op)->funFields.arity - argCount;\n" ++
-          indent 4 (debugp ["PAP/FUN %s arity %d\\n", 
-                            "getInfoPtr(argv[0].op)->name", 
-                            "getInfoPtr(argv[0].op)->funFields.arity"]) ++
-     "    int excess = argc - arity;    // may be negative\n" ++
-     "\n" ++
-     (if argc == 1 then 
-        "    // too many args not possible\n"
-      else 
-        "    // too many args?\n" ++
-        "    if (excess > 0) {\n" ++
-               indent 6 (debugp [fname ++ " PAP too many args\\n"]) ++
-               indent 6 (optSwitch "excess" 
-                                   1 
-                                   (argc-1) 
-                                   (\excess -> pappos npstring excess)) ++
-        "    } else \n") ++
-     "\n" ++
-     "    // just right?\n" ++
-     "    if (excess == 0) {\n" ++
-            indent 6 (debugp [fname ++ " PAP just right\\n"]) ++
-            (indent 6 $ papeq npstring) ++
-     "\n" ++
-     "    // excess < 0, too few args\n" ++
-     "    } else {\n" ++
-            indent 6 (debugp [fname ++ " PAP too few args\\n"]) ++
-            (indent 6 $ papneg npstring) ++
-     "    } // if excess\n" ++
-     "  } // case PAP\n" ++
+     "  // excess < 0, too few args\n" ++
+     "  } else {\n" ++
+          indent 4 (debugp [fname ++ " PAP too few args\\n"]) ++
+          indent 4 (papneg npstring) ++
+     "  } // if excess\n" ++
+     "} // case PAP\n" ++
      "\n" ++
 
+     "case BLACKHOLE: {\n" ++
+     "  fprintf(stderr, \"infinite loop detected in " ++ fname ++ "!\\n\");\n" ++
+     "  showStgHeap();\n" ++
+     "  assert(0);\n" ++
+     "} // case BLACKHOLE\n" ++
 
-     "  case BLACKHOLE: {\n" ++
-     "    fprintf(stderr, \"infinite loop detected in " ++ fname ++ "!\\n\");\n" ++
-     "    showStgHeap();\n" ++
-     "    assert(0);\n" ++
-     "  } // case BLACKHOLE\n" ++
      "\n" ++
-     "  default:\n" ++
-     "    fprintf(stderr, \"" ++ fname ++ " not a THUNK, FUN, or PAP\\n\");\n" ++
-     "    exit(0);\n" ++
-     "  }  // switch\n" ++
-     "  ENDFUN;\n" ++
-     "}\n\n"
+     "default:\n" ++
+     "  fprintf(stderr, \"" ++ fname ++ " not a THUNK, FUN, or PAP\\n\");\n" ++
+     "  exit(0);\n" ++
+     "}  // switch\n" ++
+     "ENDFUN;\n"
 
 funpos npstring excess =
   let arity = (length npstring) - excess
   in debugp ["stgApply FUN " ++ show excess ++ " excess args\\n"] ++
-     "// stash excess args\n" ++
-     callContArgvSave (arity+1) (drop arity npstring) ++  -- FUN at index 0
-     -- new STACKFRAME
-     "// push needed args\n" ++
---     "pushargs(arity+1, argv);\n" ++
 
-     "newframe = stgAllocStackCont( &it_stgStackCont, arity+1 );\n" ++
+     "// arity args\n" ++
+     "newframe = stgAllocStackCont( &it_stgStackCont, 1+arity );\n" ++
      "newframe->layout = " ++ npStrToBMStr ('P' : take arity npstring) ++ ";\n" ++
-     "memcpy(newframe->payload, argv, (arity+1) * sizeof(PtrOrLiteral));\n" ++
---     "newframe = stgPopCont();\n" ++
-
+     "memcpy(newframe->payload, argv, (1+arity) * sizeof(PtrOrLiteral));\n" ++
      "// call-with-return the FUN\n" ++
+      debugp [ "stgApply" ++ npstring ++ " CALLing " ++ " %s\\n", "getInfoPtr(argv[0].op)->name"] ++
      "STGCALL0(getInfoPtr(argv[0].op)->funFields.trueEntryCode);\n" ++
-     "// restore excess args left shifted into argv\n" ++
-     callContArgvRestore 1 ++
+      debugp [ "stgApply" ++ npstring ++ " back from CALLing " ++ " %s\\n", "getInfoPtr(argv[0].op)->name"] ++
      "argv[0] = stgCurVal;\n" ++
+     -- FUN popped its own STACKCONT "stgPopCont();\n" ++
 
-     -- new STACKFRAME
-     "// push excess args\n" ++
---     "pushargs(excess+1, argv);\n" ++ 
-     "newframe = stgAllocStackCont( &it_stgStackCont, excess+1 );\n" ++
+     "// excess args\n" ++
+     "newframe = stgAllocStackCont( &it_stgStackCont, 1+excess );\n" ++
      "newframe->layout = " ++ npStrToBMStr ('P' : drop arity npstring) ++ ";\n" ++
-     "memcpy(newframe->payload, argv, (excess+1) * sizeof(PtrOrLiteral));\n" ++
---     "newframe = stgPopCont();\n" ++
-
+     "newframe->payload[0] = argv[0];" ++
+     "memcpy(&newframe->payload[1],\n" ++ 
+     "       &argv[1+arity],\n" ++
+     "       excess * sizeof(PtrOrLiteral));\n" ++
      "// try again - tail call stgApply\n" ++
+     "// jump means replace stgApply stack frame with new\n" ++
+     "stgJumpAdjust();\n" ++
      "STGJUMP0(stgApply" ++ drop arity npstring  ++ ");\n"
 
-
 funeq npstring =
-   -- new STACKFRAME
---  "pushargs(argc+1, argv);\n" ++
   "newframe = stgAllocStackCont( &it_stgStackCont, argc+1 );\n" ++
   "newframe->layout = " ++ npStrToBMStr ('P' : npstring) ++ ";\n" ++
   "memcpy(newframe->payload, argv, (argc+1) * sizeof(PtrOrLiteral));\n" ++
---  "newframe = stgPopCont();\n" ++
-
-  "STGJUMP0(getInfoPtr(argv[0].op)->funFields.trueEntryCode);\n"
+  "// stgJumpAdjust invalidates argv and newframe\n" ++
+  "newframe = stgJumpAdjust();\n" ++
+  "STGJUMP0(getInfoPtr(newframe->payload[0].op)->funFields.trueEntryCode);\n"
 
 funneg npstring = 
   let arity = length npstring
@@ -278,6 +264,8 @@ funneg npstring =
      debugp ["stgApply FUN inserting " ++ show arity ++ " args into new PAP\\n"] ++
      "copyargs(&pap->payload[fvCount+1], &argv[1], " ++ show arity ++ ");\n" ++
      "stgCurVal = HOTOPL(pap);\n" ++
+     "// pop stgApply cont\n" ++
+     "stgPopCont();\n" ++
      "STGRETURN0();\n"
 
 {-
@@ -299,13 +287,14 @@ define BMMAP(bm) (bm.bitmap.mask)
 -- C arity
 -- C excess
 -- C bitmap
+-- C fvCount
 pappos npstring excess =
   let arity = length npstring - excess -- effective arity of PAP
   in debugp ["stgApply PAP to " ++ show excess ++ " excess args\\n"] ++
      "// stash excess args\n" ++
-     callContArgvSave (arity+1) (drop arity npstring) ++  -- PAP at index 0
+--     callContArgvSave (arity+1) (drop arity npstring) ++  -- PAP at index 0
      -- new STACKFRAME
---   1.  push new needed args
+--   1.  push needed new args
 --   2.  push args already in pap from PAP[fvCount+1...]
 --     "// push needed args\n" ++
 --     "pushargs(arity, &argv[1]);\n" ++
@@ -325,35 +314,33 @@ pappos npstring excess =
      "bitmap2.bitmap.mask <<= (argCount + 1);\n" ++
      "bitmap.bits += bitmap2.bits;\n" ++
 
-     "newframe = stgAllocStackCont( &it_stgStackCont, argCount+arity+1 );\n" ++
+     "newframe = stgAllocStackCont( &it_stgStackCont, 1+argCount+arity );\n" ++
      "newframe->layout = bitmap;\n" ++
      "newframe->payload[0] = argv[0]; // self\n" ++
      "memcpy(&newframe->payload[1], " ++
-            "&argv[0].op->payload[fvCount+1], " ++
+            "&argv[0].op->payload[1 + fvCount], " ++
             "argCount * sizeof(PtrOrLiteral)); // old args\n" ++
      "memcpy(&newframe->payload[1 + argCount], " ++ 
             "&argv[1], " ++ 
             "arity * sizeof(PtrOrLiteral));\n" ++
---     "newframe = stgPopCont();\n" ++
 
-     "// call-with-return the FUN\n" ++
+     "// call-with-return the FUN-oid\n" ++
      "STGCALL0(getInfoPtr(argv[0].op)->funFields.trueEntryCode);\n" ++
+--     "// pop newframe\n" ++
+--     "stgPopCont();\n" ++
+
      "// stash the FUN-oid\n" ++
      "argv[0] = stgCurVal;\n" ++
-     "// restore excess args left shifted into argv[1]\n" ++
-     callContArgvRestore 1 ++
-     "// push FUN-oid and excess args\n" ++
-
-     -- new STACKFRAME
---     "pushargs(excess + 1, argv);\n" ++ 
      "newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);\n" ++
      "newframe->layout = " ++ npStrToBMStr ('P' : drop arity npstring) ++ ";\n" ++
-     "memcpy(&newframe->payload[0], " ++
-            "&argv[0], " ++
-            "(1 + excess) * sizeof(PtrOrLiteral));\n" ++
---     "newframe = stgPopCont();\n" ++
+     "// fun-oid\n" ++
+     "newframe->payload[0] = argv[0];\n" ++
+     "memcpy(&newframe->payload[1], " ++
+            "&argv[1+arity], " ++
+            "excess * sizeof(PtrOrLiteral));\n" ++
 
      "// try again - tail call stgApply \n" ++
+     "stgJumpAdjust();\n" ++
      "STGJUMP0(stgApply" ++ drop arity npstring  ++ ");\n"
 
 papeq npstring = 
@@ -381,19 +368,23 @@ papeq npstring =
      "bitmap2.bitmap.mask <<= (argCount + 1);\n" ++
      "bitmap.bits += bitmap2.bits;\n" ++
 
-     "newframe = stgAllocStackCont( &it_stgStackCont, argCount+arity+1 );\n" ++
+     "newframe = stgAllocStackCont( &it_stgStackCont, argCount+1+arity );\n" ++
      "newframe->layout = bitmap;\n" ++
-     "newframe->payload[0] = argv[0]; // self\n" ++
+     "// self\n" ++
+     "newframe->payload[0] = argv[0];\n" ++
+     "// old args\n" ++
      "memcpy(&newframe->payload[1], " ++
-            "&argv[0].op->payload[fvCount+1], " ++
-            "argCount * sizeof(PtrOrLiteral)); // old args\n" ++
+            "&argv[0].op->payload[1 + fvCount], " ++
+            "argCount * sizeof(PtrOrLiteral));\n" ++
+     "// new args\n" ++
      "memcpy(&newframe->payload[1 + argCount], " ++ 
             "&argv[1], " ++ 
             "arity * sizeof(PtrOrLiteral));\n" ++
---     "newframe = stgPopCont();\n" ++
 
+     "// stgJumpAdjust invalidates argv and newframe\n" ++
+     "newframe = stgJumpAdjust();\n" ++
      "// tail call the FUN\n" ++
-     "STGJUMP0(getInfoPtr(argv[0].op)->funFields.trueEntryCode);\n"
+     "STGJUMP0(getInfoPtr(newframe->payload[0].op)->funFields.trueEntryCode);\n"
 
 papneg npstring =
   let newargc = length npstring
@@ -415,4 +406,5 @@ papneg npstring =
      debugp ["stgApply PAP inserting " ++ show newargc ++ " new args into new PAP\\n"] ++
      "copyargs(&pap->payload[fvCount+1+argCount], &argv[1], " ++ show newargc ++ ");\n" ++
      "stgCurVal = HOTOPL(pap);\n" ++
+     "stgPopCont();\n" ++
      "STGRETURN0();\n"

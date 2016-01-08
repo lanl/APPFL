@@ -233,7 +233,7 @@ extern const size_t stgStackSize;
 extern void *stgStack, *stgSP;
 
 extern size_t stgStatObjCount;
-extern Obj * stgStatObj[];
+extern Obj *stgStatObj[];
 extern void initStg();
 extern void showStgObj(Obj *);
 extern void showStgHeap();
@@ -348,6 +348,9 @@ extern Cont *stgAllocCallCont(CInfoTab *it, int payloadSize);
 extern Cont *stgAllocCont(CInfoTab *it);
 // remove Obj from top of continuation stack, returning pointer to de-alloced Obj
 Cont *stgPopCont();
+// get top of stack pointer, must be STACKCONT
+Cont *stgGetStackArgp();
+Cont *stgJumpAdjust();
 
 extern void showStgObjPretty(Obj *p);
 extern void showStgObjDebug(Obj *p);
@@ -356,10 +359,10 @@ extern void showStgValPretty(PtrOrLiteral v);
 
 
 
-# define STGCALL0(f)				\
+#define STGCALL0(f)				\
   CALL0_0(f)
 
-# define STGCALL1(f,v1)				\
+#define STGCALL1(f,v1)				\
   CALL1_0(f,v1)
 
 #define STGJUMP0(f)				\
