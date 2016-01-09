@@ -39,13 +39,4 @@ void initCmm() {
   cmmSP = ((char *)cmmStack) + cmmStackSize;
   fprintf(stderr,"Cmm stack %p allocated, initial cmmSP %p\n", cmmStack, cmmSP);
 
-  /* sanity test
-  PtrOrLiteral v;
-  for (int i = 0; i != cmmStackSize/sizeof(PtrOrLiteral); i++) _PUSH(v);
-  for (int i = 0; i != cmmStackSize/sizeof(PtrOrLiteral); i++) _POP();
-  if (cmmSP != ((char *)cmmStack) + cmmStackSize)
-    fprintf(stderr,"cmm stack failed test!\n");
-  */
-    
-  
 }

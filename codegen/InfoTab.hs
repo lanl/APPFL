@@ -363,7 +363,7 @@ instance MakeIT (Obj ([Var],[Var])) where
                 typ = typUndef,
                 ctyp = ctypUndef,
     --            entryCode = showITType o ++ "_" ++ n
-                entryCode = "fun_" ++ n
+                entryCode = "thunk_" ++ n
               }
 
     makeIT o@(BLACKHOLE (fvs,truefvs) n) =

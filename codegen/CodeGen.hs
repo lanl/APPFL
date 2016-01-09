@@ -269,7 +269,8 @@ cgStart = "\n\nDEFUN0(start)" ++
             "  stgCurVal.argType = HEAPOBJ;\n" ++
 #endif
             "  stgCurVal.op = &sho_main;\n" ++
-            "  STGJUMP1(getInfoPtr(stgCurVal.op)->entryCode, stgCurVal);\n" ++
+--            "  STGJUMP1(getInfoPtr(stgCurVal.op)->entryCode, stgCurVal);\n" ++
+            "  STGJUMP0(getInfoPtr(stgCurVal.op)->entryCode);\n" ++
             "}\n\n"
 
 cgMain :: Bool -> String
@@ -319,7 +320,9 @@ cgv env v = getEnvRef v env -- ++ "/* " ++ v ++ " */"
 
 -- CG in the state monad ***************************************************
 -- CG of objects produces no inline code
---   FUN and THUNK produce a DEFUN
+-- THUNK produces a DEFOBJ, other OBJ types have single global DEFOBJ
+--    (ignore explicit PAP for now)
+-- FUN produces a DEFUNS, the underlying function (not object)
 --   all objects produce a (S)HO
 -- for CG, objects are heap allocated only by let
 
@@ -383,12 +386,15 @@ cgo env o@(THUNK it e name) =
     do
       let env' = zip (map fst $ fvs it) (map FV [1..]) ++ env
       (inline, funcs) <- cge env' e
-      let forward = "FnPtr fun_" ++ name ++ "();"
+      let forward = "FnPtr thunk_" ++ name ++ "();"
       let func =
             "// " ++ show (ctyp it) ++ "\n" ++
-            "DEFUN1(fun_" ++ name ++ ", self) {\n" ++
+--            "DEFOBJ(thunk_" ++ name ++ ", self) {\n" ++
+            "DEFOBJ(thunk_" ++ name ++ ") {\n" ++
             "  fprintf(stderr, \"" ++ name ++ " here\\n\");\n" ++
+            "  PtrOrLiteral self = stgCurVal;\n" ++
             "  stgThunk(self);\n" ++
+--            "  stgThunkSelf();\n" ++
             indent 2 inline ++
             "  fprintf(stderr, \"" ++ name ++ " returning\\n\");\n" ++
             "  STGRETURN0();\n" ++  -- in case inline doesn't jump somewhere else

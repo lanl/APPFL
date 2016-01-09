@@ -71,22 +71,35 @@ extern void initCmm();
     _JUMP(F);					\
   } while (0)
 
+// objects take self through stgCurVal
+
+#define DEFOBJworks(F,P1)				\
+  FnPtr F() {					\
+  PtrOrLiteral P1 = stgCurVal;
+
+#define DEFOBJ(F)				\
+  FnPtr F() {
+
 // DEFUN#args(argnames)
 
 #define DEFUN0(F)				\
   FnPtr F() {
 
-#define DEFUN1(F,P1)				\
+#define DEFUN1works(F,P1)				\
   FnPtr F() {					\
   PtrOrLiteral P1;				\
   _POPVALS1(P1);
+
+#define DEFUN1(F,P1)				\
+  FnPtr F() {					\
+  PtrOrLiteral P1 = stgCurVal;
 
 #define DEFUN2(F,P1,P2)				\
   FnPtr F() {					\
   PtrOrLiteral P1, P2;				\
   _POPVALS2(P1,P2);					
 
-// new STACKCONT
+// new STACKCONT, for actual functions, not objects
 
 #define DEFUNS0(F)				\
   FnPtr F() {					\
@@ -156,7 +169,7 @@ extern void initCmm();
 extern void _cmmCall(CmmFnPtr f);
 
 extern const size_t cmmStackSize;
-
+/*
 inline void _PUSH(PtrOrLiteral V) {
   fprintf(stderr, "_PUSH() ");			
   showStgVal(V);   fprintf(stderr, "\n");
@@ -164,7 +177,7 @@ inline void _PUSH(PtrOrLiteral V) {
   assert(cmmSP >= cmmStack);
   *((PtrOrLiteral *)cmmSP) = V;
 }
-
+*/
 /*
 inline PtrOrLiteral _POP() {
   assert((char *)cmmSP + sizeof(PtrOrLiteral) <= (char *)cmmStack + cmmStackSize);

@@ -59,28 +59,55 @@ Obj sho_stg_case_not_exhaustive = {
   .ident = "stg_case_not_exhaustive",
 };
 
+/*
 DEFUN1(stg_funcall, self) {
   fprintf(stderr,"stg_funcall, returning self\n");
-  stgCurVal = self;
+  stgCurVal = self;  // goes away, for now suppress compiler warning
   STGRETURN0();
   ENDFUN;
 }
 
 DEFUN1(stg_papcall, self) {
   fprintf(stderr,"top-level PAP call, returning self\n");
-  stgCurVal = self;
+  stgCurVal = self;  // goes away, for now suppress compiler warning
   STGRETURN0();
   ENDFUN;
 }
 
 DEFUN1(stg_concall, self) {
   fprintf(stderr,"stg_concall, returning self\n");
-  stgCurVal = self;
+  stgCurVal = self;  // goes away, for now suppress compiler warning
   STGRETURN0();
   ENDFUN;
 }
 
 DEFUN1(stgBlackhole, self) {
+  stgCurVal = self;  // goes away, for now suppress compiler warning
+  fprintf(stderr, "stgBlackhole, exiting!\n");
+  exit(0);
+  ENDFUN;
+}
+*/
+
+DEFOBJ(stg_funcall) {
+  fprintf(stderr,"stg_funcall, returning self\n");
+  STGRETURN0();
+  ENDFUN;
+}
+
+DEFOBJ(stg_papcall) {
+  fprintf(stderr,"top-level PAP call, returning self\n");
+  STGRETURN0();
+  ENDFUN;
+}
+
+DEFOBJ(stg_concall) {
+  fprintf(stderr,"stg_concall, returning self\n");
+  STGRETURN0();
+  ENDFUN;
+}
+
+DEFOBJ(stgBlackhole) {
   fprintf(stderr, "stgBlackhole, exiting!\n");
   exit(0);
   ENDFUN;
@@ -100,12 +127,22 @@ InfoTab it_stgBlackhole __attribute__((aligned(8))) = {
   .layoutInfo.unboxedCount = 0,
 };
 
+/*
 DEFUN1(stgIndirect, self) {
   fprintf(stderr,"stgIndirect, jumping through indirection\n");
   PtrOrLiteral next = self.op->payload[0];
   STGJUMP1(getInfoPtr(next.op)->entryCode, next);
   ENDFUN;
 }
+*/
+
+DEFOBJ(stgIndirect) {
+  fprintf(stderr,"stgIndirect, jumping through indirection\n");
+  stgCurVal = stgCurVal.op->payload[0];
+  STGJUMP0(getInfoPtr(stgCurVal.op)->entryCode);
+  ENDFUN;
+}
+
 
 InfoTab it_stgIndirect __attribute__((aligned(8))) = {
 #if DEBUG_INFOTAB
@@ -199,6 +236,22 @@ void stgThunk(PtrOrLiteral self) {
   assert(getObjType(self.op) == BLACKHOLE);
 }
 
+// self is stgCurVal
+void stgThunkSelf() {
+  assert(isBoxed(stgCurVal) && "stgThunk:  not HEAPOBJ\n");
+  Cont *contp = stgAllocCont(&it_stgUpdateCont);
+  contp->payload[0] = stgCurVal;
+  strcpy(contp->ident, stgCurVal.op->ident); //override default
+  // can't do this until we capture the variables in a stack frame
+  // stgCurVal.op->infoPtr = &it_stgBlackHole;
+  fprintf(stderr, "BLACKHOLING %s\n", stgCurVal.op->ident);
+#if USE_OBJTYPE
+  stgCurVal.op->objType = BLACKHOLE;
+#endif
+  stgCurVal.op->_infoPtr = setLSB2(stgCurVal.op->_infoPtr); // this is a Blackhole
+  assert(getObjType(stgCurVal.op) == BLACKHOLE);
+}
+
 DEFUN0(stgStackCont) {
   // stgPopCont();  user must do this
   fprintf(stderr,"stgStackCont returning\n");
@@ -251,15 +304,6 @@ void callContRestore(PtrOrLiteral argv[]) {
 
 // ****************************************************************
 // stgApply 
-
-void pushargs(int argc, PtrOrLiteral argv[]) {
-  for (int i = argc-1; i != -1; i--) _PUSH(argv[i]);
-}
-
-// ...and pop forwards
-void popargs(int argc, PtrOrLiteral argv[]) {
-  for (int i = 0; i != argc; i++) _POP(argv[i]);
-}
 
 void popFrameArgs(int argc, PtrOrLiteral argv[]) {
   Cont *cp = stgPopCont();
