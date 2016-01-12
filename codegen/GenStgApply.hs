@@ -1,10 +1,6 @@
 {-# LANGUAGE CPP #-}
 #include "options.h"
 
-module GenStgApply (
-  doit
-) where
-
 import Util
 import Data.List(intercalate)
 import STGbits
@@ -13,7 +9,7 @@ data Strictness = Nonstrict
                 | Strict1   -- evaluate args first, then fun
                   deriving(Eq)
     
-doit = mapM (dumpStgApply 6) [Nonstrict, Strict1]
+main = mapM (dumpStgApply 6) [Nonstrict, Strict1]
 
 name strictness =
     case strictness of
@@ -57,6 +53,7 @@ pns n | n == 0 = [""]
       where
         pref [] = []
         pref (x:xs) = ('N':x):('P':x):pref xs
+pns _ = error "invalid param in pns"
 
 optSwitch scrut lo hi f =
   if lo > hi then 
@@ -86,6 +83,8 @@ debugp (x:xs) =
 #else
     ""
 #endif
+debugp [] = ""
+
 
 debugc code = 
     "#ifdef DEBUGSTGAPPLY\n" ++

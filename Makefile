@@ -6,7 +6,7 @@ build_dir := $(CURDIR)/build
 
 all: codegen runtime
 
-codegen: setup codegen_
+codegen: setup codegen_ stgapply
 
 runtime: setup runtime_
 
@@ -17,11 +17,16 @@ setup: FORCE
 	@((test -d $(build_dir)) || (mkdir $(build_dir)))
 	@((test -d $(build_dir)/bin) || (mkdir $(build_dir)/bin))
 	@((test -d $(build_dir)/etc) || (mkdir $(build_dir)/etc))
+	@((test -d stgApply) || (mkdir stgApply))
 	@(cp -f codegen/Prelude.stg $(build_dir)/etc/)
 	@(cp -f codegen/Prelude.mhs $(build_dir)/etc/)
 
+stgapply : FORCE
+	@(cd codegen && $(build_dir)/bin/genStgApply)
+
 codegen_: FORCE
 	@(cd codegen && cabal build $(build_flags))
+	@(cp -f codegen/dist/build/genStgApply/genStgApply $(build_dir)/bin/)
 	@(cp -f codegen/dist/build/stgc/stgc $(build_dir)/bin/)
 
 runtime_: FORCE
