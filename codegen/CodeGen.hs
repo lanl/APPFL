@@ -71,7 +71,8 @@ import Language.C.Data.Ident
 
 data RVal = SHO           -- static heap obj
           | HO Int        -- heap obj,  payload size
-          | FP            -- formal param or local var, use name as is
+          | FP            -- formal param, access STACKCONT
+          | LV            -- local var, use name as is
           | FV Int        -- free var, self->payload[Int]
           | AC Var Int    -- alt con
           | AD Var        -- alt def

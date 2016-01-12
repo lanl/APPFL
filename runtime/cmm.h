@@ -10,22 +10,6 @@
   If a jump, cmmCall makes the call.  This allows the interleaving of
   returns and jumps to work properly.
 
-  using explicit Cmm stack for arg and return values.
-
-  calling convention:
-    push args, right to left
-    do C call (via cmmCall)
-    pop results
-
-  return:
-    pop args
-    push results, right to left
-    return NULL to cmmCall
-
-  jump:
-    pop args
-    push args, right to left
-    return destfp to cmmCall
 */
 
 #ifndef cmm_h
@@ -63,11 +47,6 @@
 
 #define DEFUN0(F)				\
   FnPtr F() {
-
-#define DEFUN1works(F,P1)				\
-  FnPtr F() {					\
-  PtrOrLiteral P1;				\
-  _POPVALS1(P1);
 
 #define DEFUN1(F,P1)				\
   FnPtr F() {					\
