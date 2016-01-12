@@ -441,6 +441,6 @@ extern void showStgValPretty(PtrOrLiteral v);
 
 #define ENDFUN						\
   fprintf(stderr, "ENDFUN should not be reached\n");	\
-  return NULL;}
+  assert(false);}
 
 #endif  //ifdef stg_h

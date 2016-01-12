@@ -100,36 +100,6 @@ Obj sho_stg_case_not_exhaustiveN = {
   .ident = "stg_case_not_exhaustiveN",
 };
 
-/*
-DEFUN1(stg_funcall, self) {
-  fprintf(stderr,"stg_funcall, returning self\n");
-  stgCurVal = self;  // goes away, for now suppress compiler warning
-  STGRETURN0();
-  ENDFUN;
-}
-
-DEFUN1(stg_papcall, self) {
-  fprintf(stderr,"top-level PAP call, returning self\n");
-  stgCurVal = self;  // goes away, for now suppress compiler warning
-  STGRETURN0();
-  ENDFUN;
-}
-
-DEFUN1(stg_concall, self) {
-  fprintf(stderr,"stg_concall, returning self\n");
-  stgCurVal = self;  // goes away, for now suppress compiler warning
-  STGRETURN0();
-  ENDFUN;
-}
-
-DEFUN1(stgBlackhole, self) {
-  stgCurVal = self;  // goes away, for now suppress compiler warning
-  fprintf(stderr, "stgBlackhole, exiting!\n");
-  exit(0);
-  ENDFUN;
-}
-*/
-
 DEFOBJ(stg_funcall) {
   fprintf(stderr,"stg_funcall, returning self\n");
   STGRETURN0();

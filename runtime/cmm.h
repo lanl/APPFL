@@ -41,18 +41,6 @@ typedef FnPtr (*CmmFnPtr)();
   } while (0)
 
 /* ********** NON-USER STUFF! ********* */
-// 
-// these need to be auto-generated!
-// another approach would be to generate MN CALL macros (or functions)
-// M results, N args
-// CALL32(r1,r2,f,p1,p2,p3)
-//
-// This all isn't the most efficient, since accessing args via the stack
-// would be faster.  For hand-coding experiments, however, this will be
-// less error prone.
-
-// these _MACRO are for use by other macros, not generated code
-
 
 // dispatch loop
 extern void _cmmCall(CmmFnPtr f);
