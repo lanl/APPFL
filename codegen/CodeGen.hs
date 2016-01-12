@@ -269,7 +269,6 @@ cgStart = "\n\nDEFUN0(start)" ++
             "  stgCurVal.argType = HEAPOBJ;\n" ++
 #endif
             "  stgCurVal.op = &sho_main;\n" ++
---            "  STGJUMP1(getInfoPtr(stgCurVal.op)->entryCode, stgCurVal);\n" ++
             "  STGJUMP0(getInfoPtr(stgCurVal.op)->entryCode);\n" ++
             "}\n\n"
 
@@ -405,18 +404,6 @@ cgo env (BLACKHOLE {}) =
 
 -- ****************************************************************
 
-{-
-stgApplyGeneric env f eas =
-    let as = map ea eas
-        pnstring = [ if b then 'P' else 'N' | b <- map (isBoxed . typ . emd) eas ]
-        inline =
-            "// INDIRECT TAIL CALL " ++ f ++ " " ++ showas as ++ "\n" ++
-            "STGAPPLY" ++ pnstring ++ "(" ++
-            intercalate ", " (cgv env f : map (cga env) as) ++
-            ");\n"
-    in return (inline, [])
--}
-
 stgApplyGeneric env f eas =
     let as = map ea eas
         pnstring = [ if b then 'P' else 'N' | b <- map (isBoxed . typ . emd) eas ]
@@ -472,18 +459,6 @@ cge env e@(EFCall it f eas) =
                   then stgApplyGeneric env f eas -- stgApplyDirect env e
                   else stgApplyGeneric env f eas
 
-
-{-
-cge env e@(EFCall it f eas) =
-    let as = map ea eas
-        pnstring = [ if b then 'P' else 'N' | b <- map (isBoxed . typ . emd) eas ]
-        inline =
-            "// " ++ f ++ " " ++ showas as ++ "\n" ++
-            "STGAPPLY" ++ pnstring ++ "(" ++
-            intercalate ", " (cgv env f : map (cga env) as) ++
-            ");\n"
-    in return (inline, [])
--}
 
 cge env (EPrimop it op eas) =
     let as = map ea eas

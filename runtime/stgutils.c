@@ -284,26 +284,6 @@ CInfoTab it_stgCallCont __attribute__((aligned(8))) =
     .layoutInfo.unboxedCount = -1,  // shouldn't be using this
   };
 
-void callContSave(PtrOrLiteral argv[], Bitmap64 layout) {
-  int argc = layout.bitmap.size;
-  Cont *cc = stgAllocCallCont( &it_stgCallCont, argc );
-  cc->layout = layout;
-  if (argc > 0) {
-    assert(argv != NULL);  // need isStack() predicate
-    memcpy(cc->payload, argv, argc * sizeof(PtrOrLiteral));
-  }
-}
-
-void callContRestore(PtrOrLiteral argv[]) {
-  Cont *cc = stgPopCont();
-  assert(getContType(cc) == CALLCONT);
-  int argc = cc->layout.bitmap.size;
-  if (argc > 0) {
-    assert(argv != NULL);  // need isStack() predicate
-    memcpy(argv, cc->payload, argc * sizeof(PtrOrLiteral));
-  }
-}
-
 // ****************************************************************
 // stgApply 
 

@@ -10,9 +10,6 @@
 extern void stgThunk(PtrOrLiteral self);
 extern void stgThunkSelf();
 
-void callContSave(PtrOrLiteral argv[], Bitmap64 layout);
-void callContRestore(PtrOrLiteral argv[]);
-
 Obj *derefHO(Obj *op);
 Obj *derefPoL(PtrOrLiteral f);
 
