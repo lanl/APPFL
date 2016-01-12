@@ -17,7 +17,13 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include "stg.h"
+
+//------ fake typedef fp (*fp)()
+// how to roll these into one?
+// seems like the only way to get a recursive type is to use a struct
+typedef void (*vvfp)();
+typedef vvfp (*FnPtr)();
+typedef FnPtr (*CmmFnPtr)();
 
 #define CALL0_0(F)				\
   do {						\
@@ -33,76 +39,6 @@
   do {						\
     _JUMP(F);					\
   } while (0)
-
-// objects take self through stgCurVal
-
-#define DEFOBJworks(F,P1)				\
-  FnPtr F() {					\
-  PtrOrLiteral P1 = stgCurVal;
-
-#define DEFOBJ(F)				\
-  FnPtr F() {
-
-// DEFUN#args(argnames)
-
-#define DEFUN0(F)				\
-  FnPtr F() {
-
-#define DEFUN1(F,P1)				\
-  FnPtr F() {					\
-  PtrOrLiteral P1 = stgCurVal;
-
-// new STACKCONT, for actual functions, not objects
-
-#define DEFUNS0(F)				\
-  FnPtr F() {					\
-  Cont *stg_cp = stgPopCont();
-
-#define DEFUNS1(F,P1)				\
-  FnPtr F() {					\
-  Cont *stg_cp = stgPopCont();			\
-  PtrOrLiteral P1;				\
-  P1 = stg_cp->payload[0];
-
-#define DEFUNS2(F,P1,P2)			\
-  FnPtr F() {					\
-  Cont *stg_cp = stgPopCont();			\
-  PtrOrLiteral P1, P2;				\
-  P1 = stg_cp->payload[0];			\
-  P2 = stg_cp->payload[1];
-
-
-#define DEFUNS3(F,P1,P2,P3)			\
-  FnPtr F() {					\
-  Cont *stg_cp = stgPopCont();			\
-  PtrOrLiteral P1, P2, P3;			\
-  P1 = stg_cp->payload[0];			\
-  P2 = stg_cp->payload[1];			\
-  P3 = stg_cp->payload[2];
-
-
-#define DEFUNS4(F,P1,P2,P3,P4)			\
-  FnPtr F() {					\
-  Cont *stg_cp = stgPopCont();			\
-  PtrOrLiteral P1, P2, P3, P4;			\
-  P1 = stg_cp->payload[0];			\
-  P2 = stg_cp->payload[1];			\
-  P3 = stg_cp->payload[2];			\
-  P4 = stg_cp->payload[3];
-
-
-#define DEFUNS5(F,P1,P2,P3,P4,P5)		\
-  FnPtr F() {					\
-  Cont *stg_cp = stgPopCont();			\
-  PtrOrLiteral P1, P2, P3, P4, P5;		\
-  P1 = stg_cp->payload[0];			\
-  P2 = stg_cp->payload[1];			\
-  P3 = stg_cp->payload[2];			\
-  P4 = stg_cp->payload[3];			\
-  P5 = stg_cp->payload[4];
-
-
-#define ENDFUN return NULL;}
 
 /* ********** NON-USER STUFF! ********* */
 // 
