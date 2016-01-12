@@ -35,9 +35,6 @@
 #include <stdlib.h>
 #include "stg.h"
 
-extern void *cmmStack, *cmmSP;
-extern void initCmm();
-
 // CMM types
 
 // CMM stack item tag -- for debugging purposes only
@@ -94,10 +91,12 @@ extern void initCmm();
   FnPtr F() {					\
   PtrOrLiteral P1 = stgCurVal;
 
-#define DEFUN2(F,P1,P2)				\
+/*
+define DEFUN2(F,P1,P2)			\
   FnPtr F() {					\
   PtrOrLiteral P1, P2;				\
   _POPVALS2(P1,P2);					
+*/
 
 // new STACKCONT, for actual functions, not objects
 
@@ -168,36 +167,6 @@ extern void initCmm();
 // dispatch loop
 extern void _cmmCall(CmmFnPtr f);
 
-extern const size_t cmmStackSize;
-/*
-inline void _PUSH(PtrOrLiteral V) {
-  fprintf(stderr, "_PUSH() ");			
-  showStgVal(V);   fprintf(stderr, "\n");
-  cmmSP = ((char *)cmmSP) - sizeof(PtrOrLiteral);
-  assert(cmmSP >= cmmStack);
-  *((PtrOrLiteral *)cmmSP) = V;
-}
-*/
-/*
-inline PtrOrLiteral _POP() {
-  assert((char *)cmmSP + sizeof(PtrOrLiteral) <= (char *)cmmStack + cmmStackSize);
-  PtrOrLiteral v = *((PtrOrLiteral *)cmmSP);
-  cmmSP = (char *)cmmSP + sizeof(PtrOrLiteral);
-  return v;
-}
-*/
-
-#define _POP(V)								\
-  do {									\
-    fprintf(stderr, "_POP() ");						\
-    assert((char *)cmmSP + sizeof(PtrOrLiteral) <=			\
-	   (char *)cmmStack + cmmStackSize);				\
-    PtrOrLiteral v = *((PtrOrLiteral *)cmmSP);				\
-    showStgVal(v); fprintf(stderr, "\n");				\
-    cmmSP = (char *)cmmSP + sizeof(PtrOrLiteral);			\
-    V = v;								\
-  } while (0)
-
 #define _RETURN() return NULL
 
 #define _JUMP(f)  return ((FnPtr)f)
@@ -228,3 +197,4 @@ inline PtrOrLiteral _POP() {
   } while (0)
 
 #endif //ifdef cmm_h
+ 

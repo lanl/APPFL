@@ -4,6 +4,7 @@
 
 #include "stgutils.h"
 #include "stg.h"
+#include "cmm.h"
 #include "obj.h"
 
 // ****************************************************************
@@ -28,6 +29,7 @@ Obj *derefHO(Obj *op) {
   return op;
 }
 
+/*
 // stg_case_not_exhaustive = FUN( x ->  );
 DEFUN2(stg_case_not_exhaustive, self, x) {
   fprintf(stderr, "stg_case_not_exhaustive: ");
@@ -37,13 +39,24 @@ DEFUN2(stg_case_not_exhaustive, self, x) {
   exit(0);
   ENDFUN;
 }
+*/
 
-InfoTab it_stg_case_not_exhaustive __attribute__((aligned(8))) = {
+
+DEFUNS2(stg_case_not_exhaustiveP, self, x) {
+  fprintf(stderr, "stg_case_not_exhaustive_boxed: ");
+  showStgVal(x);
+  fprintf(stderr, "\n");
+  showStgHeap();
+  exit(0);
+  ENDFUN;
+}
+
+InfoTab it_stg_case_not_exhaustiveP __attribute__((aligned(8))) = {
 #if DEBUG_INFOTAB
   .pi = PI(),
 #endif
-  .name = "stg_case_not_exhaustive",
-  .entryCode = &stg_case_not_exhaustive,
+  .name = "stg_case_not_exhaustiveP",
+  .entryCode = &stg_case_not_exhaustiveP,
   .objType = FUN,
   //  .fvCount = 0,
   .funFields.arity = 1,
@@ -51,12 +64,40 @@ InfoTab it_stg_case_not_exhaustive __attribute__((aligned(8))) = {
   .layoutInfo.unboxedCount = 0,
 };
 
-Obj sho_stg_case_not_exhaustive = {
+Obj sho_stg_case_not_exhaustiveP = {
 #if USE_OBJTYPE
   .objType = FUN,
 #endif
-  ._infoPtr = &it_stg_case_not_exhaustive,
-  .ident = "stg_case_not_exhaustive",
+  ._infoPtr = &it_stg_case_not_exhaustiveP,
+  .ident = "stg_case_not_exhaustiveP",
+};
+
+DEFUNS2(stg_case_not_exhaustiveN, self, x) {
+  fprintf(stderr, "stg_case_not_exhaustive_unboxed: %lux\n", x.u);
+  showStgHeap();
+  exit(0);
+  ENDFUN;
+}
+
+InfoTab it_stg_case_not_exhaustiveN __attribute__((aligned(8))) = {
+#if DEBUG_INFOTAB
+  .pi = PI(),
+#endif
+  .name = "stg_case_not_exhaustiveN",
+  .entryCode = &stg_case_not_exhaustiveN,
+  .objType = FUN,
+  //  .fvCount = 0,
+  .funFields.arity = 1,
+  .layoutInfo.boxedCount = 0,
+  .layoutInfo.unboxedCount = 0,
+};
+
+Obj sho_stg_case_not_exhaustiveN = {
+#if USE_OBJTYPE
+  .objType = FUN,
+#endif
+  ._infoPtr = &it_stg_case_not_exhaustiveN,
+  .ident = "stg_case_not_exhaustiveN",
 };
 
 /*

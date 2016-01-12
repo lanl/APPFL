@@ -29,8 +29,10 @@ FnPtr stgBlackhole();
 FnPtr stgIndirect();
 
 // this is not a real object, should not need an sho_, TODO fix CodeGen.hs
-FnPtr stg_case_not_exhaustive();
-extern Obj sho_stg_case_not_exhaustive;
+FnPtr stg_case_not_exhaustiveP();
+extern Obj sho_stg_case_not_exhaustiveP;
+FnPtr stg_case_not_exhaustiveN();
+extern Obj sho_stg_case_not_exhaustiveN;
 
 #if USE_ARGTYPE
 #define HOTOPL(HO) ((PtrOrLiteral) {.argType = HEAPOBJ, .op = (HO) })
@@ -59,7 +61,6 @@ do {							    \
     showStgVal(stgCurVal);				     \
     assert(false);					     \
   }							     \
-  assert (cmmSP == cmmStack + cmmStackSize && "Non empty cmm stack in stgeval");\
   GC();					\
 } while (0)
 
@@ -77,7 +78,6 @@ do {							    \
     showStgVal(stgCurVal);				     \
     assert(false);					     \
   }							     \
-  assert (cmmSP == cmmStack + cmmStackSize && "Non empty cmm stack in stgeval");\
   GC();					\
 } while (0)
 

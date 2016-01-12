@@ -61,6 +61,7 @@ typedef union Bitmap64 {
 typedef enum {          // superfluous, for sanity checking
   INT, 
   LONG,
+  ULONG,
   FLOAT,
   DOUBLE,
   BITMAP,
@@ -107,6 +108,7 @@ typedef struct {
   union {
     int64_t i;
     int64_t l;
+    uint64_t u;
     float f;
     double d;
     Bitmap64 b;

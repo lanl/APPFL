@@ -303,7 +303,15 @@ exhaustAlts cmap aa@Alts{alts, aname} =
                 else alts ++ [defAlt aname]  --get it?
   in aa{alts = newAlts}
 
+{- this seems overly elaborate
 
+  x -> let { aname_exhaust = THUNK(stg_case_not_exhaustive x) } in aname_exhaust
+
+why not just
+
+  x -> stg_case_not_exhaustive x
+
+-}
 defAlt :: String -> Alt a
 defAlt name =
   let
