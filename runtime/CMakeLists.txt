@@ -18,7 +18,6 @@ project(runtime)
      )
 
   set(rt_srcs args.c 
-              cmm.c
               gc.c
               stg.c
               stgutils.c
