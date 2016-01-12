@@ -168,15 +168,6 @@ InfoTab it_stgBlackhole __attribute__((aligned(8))) = {
   .layoutInfo.unboxedCount = 0,
 };
 
-/*
-DEFUN1(stgIndirect, self) {
-  fprintf(stderr,"stgIndirect, jumping through indirection\n");
-  PtrOrLiteral next = self.op->payload[0];
-  STGJUMP1(getInfoPtr(next.op)->entryCode, next);
-  ENDFUN;
-}
-*/
-
 DEFOBJ(stgIndirect) {
   fprintf(stderr,"stgIndirect, jumping through indirection\n");
   stgCurVal = stgCurVal.op->payload[0];
@@ -228,7 +219,7 @@ DEFUN0(stgUpdateCont) {
   memset((char*)p.op+newObjSize, 0, oldObjSize-newObjSize);
   fprintf(stderr, "stgUpdateCont leaving...\n  ");
   STGRETURN0();
-  ENDFUN
+  ENDFUN;
 }
 
 CInfoTab it_stgUpdateCont __attribute__((aligned(8))) =

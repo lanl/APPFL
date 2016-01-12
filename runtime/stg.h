@@ -358,14 +358,8 @@ extern void showStgValPretty(PtrOrLiteral v);
 #define STGCALL0(f)				\
   CALL0_0(f)
 
-#define STGCALL1(f,v1)				\
-  CALL1_0(f,v1)
-
 #define STGJUMP0(f)				\
   JUMP0(f)
-
-#define STGJUMP1(f,v1)				\
-  JUMP1(f,v1)
 
 // return through continuation stack
 
@@ -445,6 +439,8 @@ extern void showStgValPretty(PtrOrLiteral v);
   stgPopCont();
 
 
-#define ENDFUN return NULL;}
+#define ENDFUN						\
+  fprintf(stderr, "ENDFUN should not be reached\n");	\
+  return NULL;}
 
 #endif  //ifdef stg_h

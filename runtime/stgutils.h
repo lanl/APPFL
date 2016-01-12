@@ -64,23 +64,6 @@ do {							    \
   GC();					\
 } while (0)
 
-#define STGEVALworks(e)					    \
-do {							    \
-  stgCurVal = e;					    \
-  STGCALL1(getInfoPtr(stgCurVal.op)->entryCode, stgCurVal); \
-  if (getObjType(stgCurVal.op) == BLACKHOLE) {		     \
-    fprintf(stderr, "infinite loop detected in STGEVAL!\n"); \
-    showStgVal(stgCurVal);				     \
-    assert(false);					     \
-  }							     \
-  if (getObjType(stgCurVal.op) == THUNK) {		     \
-    fprintf(stderr, "THUNK at end of STGEVAL!\n");	     \
-    showStgVal(stgCurVal);				     \
-    assert(false);					     \
-  }							     \
-  GC();					\
-} while (0)
-
 // bye bye!
 #define STGJUMP()						     \
   do {								     \
@@ -93,19 +76,6 @@ do {							    \
   }								     \
   STGJUMP0(getInfoPtr(stgCurVal.op)->entryCode);		     \
 } while (0)
-
-#define STGJUMPworks()						     \
-  do {								     \
-  GC();								     \
-  derefStgCurVal();						     \
-  if (getObjType(stgCurVal.op) == BLACKHOLE) {			     \
-    fprintf(stderr, "infinite loop detected in STGEVAL!\n");	     \
-    showStgVal(stgCurVal);					     \
-    assert(false);						     \
-  }								     \
-  STGJUMP1(getInfoPtr(stgCurVal.op)->entryCode, stgCurVal);	     \
-} while (0)
-
 
 #endif
 
