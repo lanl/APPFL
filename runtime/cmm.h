@@ -35,20 +35,8 @@
 #include <stdlib.h>
 #include "stg.h"
 
-// CMM types
-
-// CMM stack item tag -- for debugging purposes only
-
-// N*M of these
-
 #define CALL0_0(F)				\
   do {						\
-    _CALL(F);					\
-  } while (0)
-
-#define CALL1_0(F,P1)				\
-  do {						\
-    _PUSHVALS1(P1);				\
     _CALL(F);					\
   } while (0)
 
@@ -59,12 +47,6 @@
 
 #define JUMP0(F)				\
   do {						\
-    _JUMP(F);					\
-  } while (0)
-
-#define JUMP1(F,V1)				\
-  do {						\
-    _PUSHVALS1(V1);				\
     _JUMP(F);					\
   } while (0)
 
@@ -90,13 +72,6 @@
 #define DEFUN1(F,P1)				\
   FnPtr F() {					\
   PtrOrLiteral P1 = stgCurVal;
-
-/*
-define DEFUN2(F,P1,P2)			\
-  FnPtr F() {					\
-  PtrOrLiteral P1, P2;				\
-  _POPVALS2(P1,P2);					
-*/
 
 // new STACKCONT, for actual functions, not objects
 
@@ -175,26 +150,6 @@ extern void _cmmCall(CmmFnPtr f);
 // define _JUMP(f)  return ((FnPtr)(f()))
 
 #define _CALL(f)  for (CmmFnPtr _f = (CmmFnPtr)f; _f; _f = (CmmFnPtr)_f())
-
-// POPVALSN(P1,...,PN), N >= 0
-
-#define _POPVALS1(L1)				\
-  do {						\
-    _POP(L1);					\
-  } while (0)
-
-#define _POPVALS2(L1,L2)			\
-  do {						\
-    _POP(L1);				\
-    _POP(L2);				\
-  } while (0)
-
-// PUSHVALSN(P1,...,PN), N >= 0
-
-#define _PUSHVALS1(L1)				\
-  do {						\
-      _PUSH(L1);				\
-  } while (0)
 
 #endif //ifdef cmm_h
  
