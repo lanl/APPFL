@@ -29,26 +29,16 @@ Obj *derefHO(Obj *op) {
   return op;
 }
 
-/*
-// stg_case_not_exhaustive = FUN( x ->  );
-DEFUN2(stg_case_not_exhaustive, self, x) {
-  fprintf(stderr, "stg_case_not_exhaustive: ");
-  showStgVal(x);
-  fprintf(stderr, "\n");
-  showStgHeap();
-  exit(0);
-  ENDFUN;
-}
-*/
-
-
-DEFUNS2(stg_case_not_exhaustiveP, self, x) {
+// stg_case_not_exhaustiveP(self, x)
+FnPtr stg_case_not_exhaustiveP() {
+  Cont *stg_sc = stgGetStackArgp();
+  //  PtrOrLiteral self = stg_sc->payload[0];
+  PtrOrLiteral x    = stg_sc->payload[1];
   fprintf(stderr, "stg_case_not_exhaustive_boxed: ");
   showStgVal(x);
   fprintf(stderr, "\n");
   showStgHeap();
   exit(0);
-  ENDFUN;
 }
 
 InfoTab it_stg_case_not_exhaustiveP __attribute__((aligned(8))) = {
@@ -72,11 +62,14 @@ Obj sho_stg_case_not_exhaustiveP = {
   .ident = "stg_case_not_exhaustiveP",
 };
 
-DEFUNS2(stg_case_not_exhaustiveN, self, x) {
+// stg_case_not_exhaustiveN(self, x)
+FnPtr stg_case_not_exhaustiveN() {
+  Cont *stg_sc = stgGetStackArgp();
+  //  PtrOrLiteral self = stg_sc->payload[0];
+  PtrOrLiteral x    = stg_sc->payload[1];
   fprintf(stderr, "stg_case_not_exhaustive_unboxed: %lux\n", x.u);
   showStgHeap();
   exit(0);
-  ENDFUN;
 }
 
 InfoTab it_stg_case_not_exhaustiveN __attribute__((aligned(8))) = {

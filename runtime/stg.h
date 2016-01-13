@@ -354,7 +354,7 @@ extern void showStgValDebug(PtrOrLiteral v);
 extern void showStgValPretty(PtrOrLiteral v);
 
 // Codegen.hs currently uses STGJUMP(), STGJUMP0(f), and STGRETURN0() to
-// exit DEFUNS
+// exit functions
 
 #define STGRETURNS()					\
   do {							\
@@ -398,51 +398,6 @@ extern void showStgValPretty(PtrOrLiteral v);
 #define DEFUN1(F,P1)				\
   FnPtr F() {					\
   PtrOrLiteral P1 = stgCurVal;
-
-// new STACKCONT, for actual functions, not objects
-
-#define DEFUNS0(F)				\
-  FnPtr F() {
-
-#define DEFUNS1(F,P1)				\
-  FnPtr F() {					\
-  Cont *stg_sc = stgGetStackArgp();		\
-  PtrOrLiteral P1;				\
-  P1 = stg_sc->payload[0];
-
-#define DEFUNS2(F,P1,P2)			\
-  FnPtr F() {					\
-  Cont *stg_sc = stgGetStackArgp();		\
-  PtrOrLiteral P1, P2;				\
-  P1 = stg_sc->payload[0];			\
-  P2 = stg_sc->payload[1];
-
-#define DEFUNS3(F,P1,P2,P3)			\
-  FnPtr F() {					\
-  Cont *stg_sc = stgGetStackArgp();		\
-  PtrOrLiteral P1, P2, P3;			\
-  P1 = stg_sc->payload[0];			\
-  P2 = stg_sc->payload[1];			\
-  P3 = stg_sc->payload[2];
-
-#define DEFUNS4(F,P1,P2,P3,P4)			\
-  FnPtr F() {					\
-  Cont *stg_sc = stgGetStackArgp();		\
-  PtrOrLiteral P1, P2, P3, P4;			\
-  P1 = stg_sc->payload[0];			\
-  P2 = stg_sc->payload[1];			\
-  P3 = stg_sc->payload[2];			\
-  P4 = stg_sc->payload[3];
-
-#define DEFUNS5(F,P1,P2,P3,P4,P5)		\
-  FnPtr F() {					\
-  Cont *stg_sc = stgGetStackArgp();		\
-  PtrOrLiteral P1, P2, P3, P4, P5;		\
-  P1 = stg_sc->payload[0];			\
-  P2 = stg_sc->payload[1];			\
-  P3 = stg_sc->payload[2];			\
-  P4 = stg_sc->payload[3];			\
-  P5 = stg_sc->payload[4];
 
 #define ENDFUN						\
   fprintf(stderr, "ENDFUN should not be reached\n");	\
