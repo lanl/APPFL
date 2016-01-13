@@ -8,7 +8,7 @@
   to find each variable.  This is done by maintaining a stack of different
   kinds of `exposures' of variable values:
 
-  * SHOs - just one set of these at the bottom of the stack
+  * SOs - just one set of these at the bottom of the stack
   * HOs, following a "let"
   * Formal function parameters, these are named parameters (alternatively,
     could not name and use a CallCont like stgApply--TODO:  think about this)
@@ -18,7 +18,7 @@
 
 In more detail:
 
-SHO:  referenced with absolute memory address, e.g. "sho_unit"
+SO:  referenced with absolute memory address, e.g. "sho_unit"
 
 HO:  address calculated from TOH pointer, e.g. "((Obj *)TOH_ptr)[-3]"
 
@@ -69,9 +69,9 @@ import Language.C.Data.Ident
 #endif
 
 
-data RVal = SHO           -- static heap obj
+data RVal = SO            -- static object
           | HO Int        -- heap obj,  payload size
-          | FP            -- formal param, access STACKCONT
+          | FP Int        -- formal param, access STACKCONT
           | LV            -- local var, use name as is
           | FV Int        -- free var, self->payload[Int]
           | AC Var Int    -- alt con
@@ -137,14 +137,16 @@ lu v [] _ _ = error $ "lu " ++ v ++ " failed"
 
 lu v ((v',k):_) size' n | v == v' =
     case k of
-      SHO -> cCallExpr "HOTOPL" [CUnary CAdrOp (cVarE ("sho_" ++ v)) undefNode]
+      SO -> cCallExpr "HOTOPL" [CUnary CAdrOp (cVarE ("sho_" ++ v)) undefNode]
 
       HO size -> cCallExpr "HOTOPL"
                 [CCast (CDecl [cTypeSpec "Obj"]
                 [(Just (CDeclr Nothing [cPtrD] Nothing [] undefNode), Nothing, Nothing)] undefNode)
                 (cCallExpr "STGHEAPAT" [cIntE $ toInteger (size+size'), cIntE $ toInteger (n+1)]) undefNode]
 
-      FP -> cVarE v
+      FP i -> error "fixme"
+
+      LV -> cVarE v
 
       FV i -> CIndex (CMember (CMember (cVarE "self") (builtinIdent "op") False undefNode)
               (builtinIdent "payload") True undefNode) (cIntE $ toInteger i) undefNode
@@ -168,22 +170,22 @@ cga _ a =  "(" ++ (render $ pretty $ cPoLE a) ++ ")"
 
 emptyFunDeclr = [CFunDeclr (Right ([],False)) [] undefNode]
 
-_cRegSHOExpr :: String -> CBlockItem
-_cRegSHOExpr name =  CBlockStmt (CExpr
+_cRegSOExpr :: String -> CBlockItem
+_cRegSOExpr name =  CBlockStmt (CExpr
   (Just (CAssign CAssignOp (CIndex (CVar (builtinIdent "stgStatObj") undefNode)
   (CUnary CPostIncOp (CVar (builtinIdent "stgStatObjCount") undefNode) undefNode)
   undefNode) (CUnary CAdrOp (CVar (builtinIdent ("sho_" ++ name)) undefNode) undefNode)
   undefNode)) undefNode)
 
-cRegisterSHOs :: [String] -> (CExtDecl, CExtDecl)
-cRegisterSHOs names = let name = "registerSHOs"
-                      in (cFunProto (CTypeSpec (CVoidType undefNode)) name,
-                          cFun VoidTy "" name emptyFunDeclr
-                          (map _cRegSHOExpr names))
+cRegisterSOs :: [String] -> (CExtDecl, CExtDecl)
+cRegisterSOs names = let name = "registerSOs"
+                     in (cFunProto (CTypeSpec (CVoidType undefNode)) name,
+                         cFun VoidTy "" name emptyFunDeclr
+                         (map _cRegSOExpr names))
 
-registerSHOs :: [Obj InfoTab] -> (String, String)
-registerSHOs objs = let (p,f) = cRegisterSHOs (map (name . omd) objs)
-                    in (render $ pretty p, render $ pretty f)
+registerSOs :: [Obj InfoTab] -> (String, String)
+registerSOs objs = let (p,f) = cRegisterSOs (map (name . omd) objs)
+                   in (render $ pretty p, render $ pretty f)
 
 cMain :: Bool -> CExtDecl
 cMain v =
@@ -203,7 +205,7 @@ cMain v =
 
 cStart :: CExtDecl
 cStart = let body = [cCall "_POPVALS0" []
-                  ,cCall "registerSHOs" []
+                  ,cCall "registerSOs" []
                   ,cUserPtrDecl "Cont" "showResultCont"
                   (cInitCall "stgAllocCallCont"
                   [cAddrvarE "it_stgShowResultCont", cIntE 0])
@@ -232,9 +234,10 @@ lu v [] _ _ = error $ "lu " ++ v ++ " failed"
 
 lu v ((v',k):_) size' n | v == v' =
     case k of
-      SHO     -> "HOTOPL(&sho_" ++ v ++ ")"
+      SO      -> "HOTOPL(&sho_" ++ v ++ ")"
       HO size -> "HOTOPL((Obj *)STGHEAPAT(" ++ show (size+size') ++ "," ++ show (n+1) ++ "))"
-      FP      -> v
+      FP i    -> "stg_pl[" ++ show i ++ "]"
+      LV      -> v
       FV i    -> "self.op->payload[" ++ show i ++ "]"
       AC v i  -> v ++ "->payload[" ++ show i ++ "]"
       AD v    -> v
@@ -262,7 +265,7 @@ cga env (LitC c) = "((PtrOrLiteral){.i = con_" ++ c ++ " })"
 
 cgStart :: String
 cgStart = "\n\nDEFUN0(start)" ++
-            "  registerSHOs();\n" ++
+            "  registerSOs();\n" ++
             "  Cont *showResultCont = stgAllocCallCont(&it_stgShowResultCont, 0);\n" ++
             "  showResultCont->layout.bits = 0x0UL; // empty\n" ++
 #if USE_ARGTYPE
@@ -281,10 +284,10 @@ cgMain v = let top = "int main (int argc, char **argv) {\n" ++
                bot = "  return 0;\n" ++ "}\n\n"
   in if v then top ++ "  showStgHeap();\n  GC();\n" ++ bot else top ++ bot
 
-registerSHOs :: [Obj InfoTab] -> (String, String)
-registerSHOs objs =
-    ("void registerSHOs();",
-     "void registerSHOs() {\n" ++
+registerSOs :: [Obj InfoTab] -> (String, String)
+registerSOs objs =
+    ("void registerSOs();",
+     "void registerSOs() {\n" ++
         concat [ "  stgStatObj[stgStatObjCount++] = &" ++ s ++ ";\n"
                  | s <- shoNames objs ] ++
      "}\n")
@@ -327,10 +330,10 @@ cgv env v = getEnvRef v env -- ++ "/* " ++ v ++ " */"
 cgObjs :: [Obj InfoTab] -> [String] -> ([String],[String])
 cgObjs objs runtimeGlobals =
     let tlnames = runtimeGlobals ++ map (name . omd) objs
-        env = zip tlnames $ repeat SHO
+        env = zip tlnames $ repeat SO
         (funcs, _) = runState (cgos env objs) 0
         (forwards, fundefs) = unzip funcs
-        (forward, fundef) = registerSHOs objs
+        (forward, fundef) = registerSOs objs
     in (forward:forwards, fundef:fundefs)
 
 
@@ -354,24 +357,25 @@ permArgs vs ft =
           part x y = error "CodeGen.part length mismatch"
 
 cgo :: Env -> Obj InfoTab -> State Int [(String, String)]
+
 cgo env o@(FUN it vs e name) =
     do
       let env' = zip (map fst $ fvs it) (map FV [0..]) ++
-                 zip vs (repeat FP) ++
+                 zip ("self":vs) (map FP [0..]) ++
                  env
       (inline, funcs) <- cge env' e
       let forward = "FnPtr fun_" ++ name ++ "();"
           func =
             "// " ++ show (ctyp it) ++ "\n" ++
-            "DEFUNS" ++ show (length vs + 1) ++ "(fun_" ++
-            name ++ ", self, " ++
-            intercalate ", " vs ++
-            ") {\n" ++
+            "// " ++ name ++ "(self, " ++ intercalate ", " vs ++ ")\n" ++
+            "FnPtr fun_" ++ name ++ "() {\n" ++
             "  fprintf(stderr, \"" ++ name ++ " here\\n\");\n" ++
+            "  PtrOrLiteral *stg_pl = &(stgGetStackArgp()->payload[0]);\n" ++
                indent 2 inline ++
-            "  fprintf(stderr, \"" ++ name ++ " returning\\n\");\n" ++
-            "  STGRETURN0();\n" ++  -- in case inline doesn't jump somewhere else
-            "  ENDFUN;\n}"
+            -- default return in case inline doesn't jump somewhere else--FIXME
+            "  fprintf(stderr, \"" ++ name ++ " default returning\\n\");\n" ++
+            "  STGRETURN0();\n" ++  
+            "}\n"
       return $ (forward, func) : funcs
 
 cgo env (PAP it f as name) =
@@ -593,7 +597,7 @@ cgalts env (Alts it alts name) boxed =
     let contName = "ccont_" ++ name
         scrutName = "scrut_" ++ name
         -- altenv = zip (fvs it) [ CC contName i | i <- [0..] ]
-        altenv = zip (map fst $ fvs it) (repeat FP)
+        altenv = zip (map fst $ fvs it) (repeat LV)
         env' = altenv ++ env
         forward = "FnPtr " ++ name ++ "();"
     in do

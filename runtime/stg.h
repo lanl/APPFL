@@ -402,57 +402,47 @@ extern void showStgValPretty(PtrOrLiteral v);
 // new STACKCONT, for actual functions, not objects
 
 #define DEFUNS0(F)				\
-  FnPtr F() {					\
-
+  FnPtr F() {
 
 #define DEFUNS1(F,P1)				\
   FnPtr F() {					\
   Cont *stg_sc = stgGetStackArgp();		\
   PtrOrLiteral P1;				\
-  P1 = stg_sc->payload[0];				\
-
+  P1 = stg_sc->payload[0];
 
 #define DEFUNS2(F,P1,P2)			\
   FnPtr F() {					\
   Cont *stg_sc = stgGetStackArgp();		\
   PtrOrLiteral P1, P2;				\
-  P1 = stg_sc->payload[0];				\
-  P2 = stg_sc->payload[1];				\
-
-
+  P1 = stg_sc->payload[0];			\
+  P2 = stg_sc->payload[1];
 
 #define DEFUNS3(F,P1,P2,P3)			\
   FnPtr F() {					\
   Cont *stg_sc = stgGetStackArgp();		\
   PtrOrLiteral P1, P2, P3;			\
-  P1 = stg_sc->payload[0];				\
-  P2 = stg_sc->payload[1];				\
-  P3 = stg_sc->payload[2];				\
-
-
+  P1 = stg_sc->payload[0];			\
+  P2 = stg_sc->payload[1];			\
+  P3 = stg_sc->payload[2];
 
 #define DEFUNS4(F,P1,P2,P3,P4)			\
   FnPtr F() {					\
   Cont *stg_sc = stgGetStackArgp();		\
   PtrOrLiteral P1, P2, P3, P4;			\
-  P1 = stg_sc->payload[0];				\
-  P2 = stg_sc->payload[1];				\
-  P3 = stg_sc->payload[2];				\
-  P4 = stg_sc->payload[3];				\
-
-
+  P1 = stg_sc->payload[0];			\
+  P2 = stg_sc->payload[1];			\
+  P3 = stg_sc->payload[2];			\
+  P4 = stg_sc->payload[3];
 
 #define DEFUNS5(F,P1,P2,P3,P4,P5)		\
   FnPtr F() {					\
   Cont *stg_sc = stgGetStackArgp();		\
   PtrOrLiteral P1, P2, P3, P4, P5;		\
-  P1 = stg_sc->payload[0];				\
-  P2 = stg_sc->payload[1];				\
-  P3 = stg_sc->payload[2];				\
-  P4 = stg_sc->payload[3];				\
-  P5 = stg_sc->payload[4];				\
-
-
+  P1 = stg_sc->payload[0];			\
+  P2 = stg_sc->payload[1];			\
+  P3 = stg_sc->payload[2];			\
+  P4 = stg_sc->payload[3];			\
+  P5 = stg_sc->payload[4];
 
 #define ENDFUN						\
   fprintf(stderr, "ENDFUN should not be reached\n");	\
