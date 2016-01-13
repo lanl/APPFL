@@ -165,7 +165,8 @@ Cont *stgPopCont() {
 }
 
 // could return pointer to .payload but that thwarts a sanity check,
-// though could perhaps pass in expected size
+// though could perhaps pass in expected size--TODO: change name,
+// should get args from any continuation
 Cont *stgGetStackArgp() {
   Cont *scp = (Cont *)stgSP;
   CInfoTab *citp = getCInfoPtr(scp);
