@@ -106,7 +106,7 @@ Cont *stgAllocCallCont(CInfoTab *citp, int argc) {
   return contp;
 }
 
-// STACKCONT may converge with CALLCONT, but time will tell
+// STACKCONT have different code than CALLCONT, but same structure
 Cont *stgAllocStackCont(CInfoTab *citp, int argc) {
   assert(citp->contType == STACKCONT && 
 	 "stgAllocCallCont: citp->contType != STACKCONT");

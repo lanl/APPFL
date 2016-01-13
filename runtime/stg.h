@@ -395,10 +395,6 @@ extern void showStgValPretty(PtrOrLiteral v);
 #define DEFUN0(F)				\
   FnPtr F() {
 
-#define DEFUN1(F,P1)				\
-  FnPtr F() {					\
-  PtrOrLiteral P1 = stgCurVal;
-
 #define ENDFUN						\
   fprintf(stderr, "ENDFUN should not be reached\n");	\
   assert(false);}
