@@ -87,13 +87,13 @@ Cont *stgAllocCont(CInfoTab *citp) {
 }
 
 // CALLCONTs DON'T have a common InfoTab entries but .layoutInfo is invalid for all
-// payload[0].i == argc, the number of subsequent args
-Cont *stgAllocCallCont(CInfoTab *citp, int argc) {
-  assert(citp->contType == CALLCONT && 
-	 "stgAllocCallCont: citp->contType != CALLCONT");
+Cont *stgAllocCallOrStackCont(CInfoTab *citp, int argc) {
+  assert((citp->contType == CALLCONT || citp->contType == STACKCONT) && 
+	 "stgAllocCallOrStackCont: citp->contType != CALLCONT/STACKCONT");
   size_t contSize = sizeof(Cont) + argc * sizeof(PtrOrLiteral);
   contSize = ((contSize + 7)/8)*8; 
-  fprintf(stderr, "allocating CALL continuation with argc %d\n", argc);
+  fprintf(stderr, "allocating %s continuation with argc %d\n", 
+	  contTypeNames[citp->contType], argc);
   showCIT(citp);
   stgSP = (char *)stgSP - contSize;
   assert(stgSP >= stgStack);
@@ -101,26 +101,7 @@ Cont *stgAllocCallCont(CInfoTab *citp, int argc) {
   contp->cInfoPtr = citp;
   contp->_contSize = contSize;
   contp->entryCode = citp->entryCode;
-  contp->contType = CALLCONT;
-  strcpy(contp->ident, citp->name);  // may be overwritten
-  return contp;
-}
-
-// STACKCONT have different code than CALLCONT, but same structure
-Cont *stgAllocStackCont(CInfoTab *citp, int argc) {
-  assert(citp->contType == STACKCONT && 
-	 "stgAllocCallCont: citp->contType != STACKCONT");
-  size_t contSize = sizeof(Cont) + argc * sizeof(PtrOrLiteral);
-  contSize = ((contSize + 7)/8)*8; 
-  fprintf(stderr, "allocating STACK continuation with argc %d\n", argc);
-  showCIT(citp);
-  stgSP = (char *)stgSP - contSize;
-  assert(stgSP >= stgStack);
-  Cont *contp = (Cont *)stgSP;
-  contp->cInfoPtr = citp;
-  contp->_contSize = contSize;
-  contp->entryCode = citp->entryCode;
-  contp->contType = STACKCONT;
+  contp->contType = citp->contType;
   strcpy(contp->ident, citp->name);  // may be overwritten
   return contp;
 }

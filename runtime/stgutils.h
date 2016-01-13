@@ -47,7 +47,7 @@ extern Obj sho_stg_case_not_exhaustiveN;
 #define STGEVAL(e)					     \
   do {							     \
   stgCurVal = e;					     \
-  Cont *callCont = stgAllocCallCont(&it_stgCallCont, 0);     \
+  Cont *callCont = stgAllocCallOrStackCont(&it_stgCallCont, 0);     \
   callCont->layout.bits = 0x0UL;			     \
   STGCALL0(getInfoPtr(stgCurVal.op)->entryCode);	     \
   if (getObjType(stgCurVal.op) == BLACKHOLE) {		     \

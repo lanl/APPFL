@@ -207,7 +207,7 @@ cStart :: CExtDecl
 cStart = let body = [cCall "_POPVALS0" []
                   ,cCall "registerSOs" []
                   ,cUserPtrDecl "Cont" "showResultCont"
-                  (cInitCall "stgAllocCallCont"
+                  (cInitCall "stgAllocCallOrStackCont"
                   [cAddrvarE "it_stgShowResultCont", cIntE 0])
 #if USE_ARGTYPE
                   ,cAssign (cMemberE "stgCurVal" "argType" False) (cVarE "HEAPOBJ")
@@ -266,7 +266,7 @@ cga env (LitC c) = "((PtrOrLiteral){.i = con_" ++ c ++ " })"
 cgStart :: String
 cgStart = "\n\nDEFUN0(start)" ++
             "  registerSOs();\n" ++
-            "  Cont *showResultCont = stgAllocCallCont(&it_stgShowResultCont, 0);\n" ++
+            "  Cont *showResultCont = stgAllocCallOrStackCont(&it_stgShowResultCont, 0);\n" ++
             "  showResultCont->layout.bits = 0x0UL; // empty\n" ++
 #if USE_ARGTYPE
             "  stgCurVal.argType = HEAPOBJ;\n" ++
@@ -417,7 +417,7 @@ stgApplyGeneric env f eas =
              else f
         inline =
             -- new STACKFRAME
-            "{ Cont *cp = stgAllocStackCont( &it_stgStackCont, " ++ 
+            "{ Cont *cp = stgAllocCallOrStackCont( &it_stgStackCont, " ++ 
                                              show (length pnstring + 1) ++ ");\n" ++
             "  cp->layout = " ++ npStrToBMStr ('P' : pnstring ) ++ ";\n" ++
             "  cp->payload[ 0 ] = " ++ cgv env f' ++ ";\n" ++

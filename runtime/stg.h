@@ -339,8 +339,7 @@ extern Obj* stgNewHeapObj(InfoTab *itp);
 extern Obj* stgNewHeapPAP(InfoTab *itp, int pargc, int nargc);
 extern Obj* stgNewHeapPAPmask(InfoTab *itp, Bitmap64 bitmap);
 // allocate Obj on continuation stack, returning pointer to new Obj
-extern Cont *stgAllocStackCont(CInfoTab *it, int payloadSize);
-extern Cont *stgAllocCallCont(CInfoTab *it, int payloadSize);
+extern Cont *stgAllocCallOrStackCont(CInfoTab *it, int payloadSize);
 extern Cont *stgAllocCont(CInfoTab *it);
 // remove Obj from top of continuation stack, returning pointer to de-alloced Obj
 Cont *stgPopCont();

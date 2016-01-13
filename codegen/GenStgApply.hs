@@ -218,7 +218,7 @@ funpos npstring excess =
   in debugp ["stgApply FUN " ++ show excess ++ " excess args\\n"] ++
 
      "// arity args\n" ++
-     "newframe = stgAllocCallCont( &it_stgCallCont, 1+arity );\n" ++
+     "newframe = stgAllocCallOrStackCont( &it_stgCallCont, 1+arity );\n" ++
      "newframe->layout = " ++ npStrToBMStr ('P' : take arity npstring) ++ ";\n" ++
      "memcpy(newframe->payload, argv, (1+arity) * sizeof(PtrOrLiteral));\n" ++
      "// call-with-return the FUN\n" ++
@@ -230,7 +230,7 @@ funpos npstring excess =
      "argv[0] = stgCurVal;\n" ++
 
      "// excess args\n" ++
-     "newframe = stgAllocStackCont( &it_stgStackCont, 1+excess );\n" ++
+     "newframe = stgAllocCallOrStackCont( &it_stgStackCont, 1+excess );\n" ++
      "newframe->layout = " ++ npStrToBMStr ('P' : drop arity npstring) ++ ";\n" ++
      "newframe->payload[0] = argv[0];" ++
      "memcpy(&newframe->payload[1],\n" ++ 
@@ -242,7 +242,7 @@ funpos npstring excess =
      "STGJUMP0(stgApply" ++ drop arity npstring  ++ ");\n"
 
 funeq npstring =
-  "newframe = stgAllocStackCont( &it_stgStackCont, argc+1 );\n" ++
+  "newframe = stgAllocCallOrStackCont( &it_stgStackCont, argc+1 );\n" ++
   "newframe->layout = " ++ npStrToBMStr ('P' : npstring) ++ ";\n" ++
   "memcpy(newframe->payload, argv, (argc+1) * sizeof(PtrOrLiteral));\n" ++
   "// stgJumpAdjust invalidates argv and newframe\n" ++
@@ -313,7 +313,7 @@ pappos npstring excess =
      "bitmap2.bitmap.mask <<= (argCount + 1);\n" ++
      "bitmap.bits += bitmap2.bits;\n" ++
 
-     "newframe = stgAllocCallCont( &it_stgCallCont, 1+argCount+arity );\n" ++
+     "newframe = stgAllocCallOrStackCont( &it_stgCallCont, 1+argCount+arity );\n" ++
      "newframe->layout = bitmap;\n" ++
      "newframe->payload[0] = argv[0]; // self\n" ++
      "memcpy(&newframe->payload[1], " ++
@@ -330,7 +330,7 @@ pappos npstring excess =
 
      "// stash the FUN-oid\n" ++
      "argv[0] = stgCurVal;\n" ++
-     "newframe = stgAllocStackCont(&it_stgStackCont, 1 + excess);\n" ++
+     "newframe = stgAllocCallOrStackCont(&it_stgStackCont, 1 + excess);\n" ++
      "newframe->layout = " ++ npStrToBMStr ('P' : drop arity npstring) ++ ";\n" ++
      "// fun-oid\n" ++
      "newframe->payload[0] = argv[0];\n" ++
@@ -367,7 +367,7 @@ papeq npstring =
      "bitmap2.bitmap.mask <<= (argCount + 1);\n" ++
      "bitmap.bits += bitmap2.bits;\n" ++
 
-     "newframe = stgAllocStackCont( &it_stgStackCont, argCount+1+arity );\n" ++
+     "newframe = stgAllocCallOrStackCont( &it_stgStackCont, argCount+1+arity );\n" ++
      "newframe->layout = bitmap;\n" ++
      "// self\n" ++
      "newframe->payload[0] = argv[0];\n" ++
