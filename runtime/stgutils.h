@@ -44,10 +44,12 @@ extern Obj sho_stg_case_not_exhaustiveN;
 
 // evaluate Object (not actual function) IN PLACE, 
 // this should probably only happen in stgApply
-#define STGEVAL(e)					    \
-do {							    \
-  stgCurVal = e;					    \
-  STGCALL0(getInfoPtr(stgCurVal.op)->entryCode); \
+#define STGEVAL(e)					     \
+  do {							     \
+  stgCurVal = e;					     \
+  Cont *callCont = stgAllocCallCont(&it_stgCallCont, 0);     \
+  callCont->layout.bits = 0x0UL;			     \
+  STGCALL0(getInfoPtr(stgCurVal.op)->entryCode);	     \
   if (getObjType(stgCurVal.op) == BLACKHOLE) {		     \
     fprintf(stderr, "infinite loop detected in STGEVAL!\n"); \
     showStgVal(stgCurVal);				     \

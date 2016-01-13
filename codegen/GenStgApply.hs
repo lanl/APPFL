@@ -124,7 +124,6 @@ gen strictness npstring =
      "// this if just saves a possibly unneeded call\n" ++
      "if (getObjType(argv[0].op) == THUNK) {\n" ++
         indent 2 (debugp [fname ++ " THUNK\\n"]) ++
-     "  // return through top-of-stack STACKCONT\n" ++
      "  STGEVAL(argv[0]);\n" ++
      "  // this works because stgCurVal is a GC root\n" ++
      "  argv[0].op = derefPoL(stgCurVal);\n" ++
@@ -219,15 +218,16 @@ funpos npstring excess =
   in debugp ["stgApply FUN " ++ show excess ++ " excess args\\n"] ++
 
      "// arity args\n" ++
-     "newframe = stgAllocStackCont( &it_stgStackCont, 1+arity );\n" ++
+     "newframe = stgAllocCallCont( &it_stgCallCont, 1+arity );\n" ++
      "newframe->layout = " ++ npStrToBMStr ('P' : take arity npstring) ++ ";\n" ++
      "memcpy(newframe->payload, argv, (1+arity) * sizeof(PtrOrLiteral));\n" ++
      "// call-with-return the FUN\n" ++
-      debugp [ "stgApply" ++ npstring ++ " CALLing " ++ " %s\\n", "getInfoPtr(argv[0].op)->name"] ++
+      debugp [ "stgApply" ++ npstring ++ " CALLing " ++ " %s\\n", 
+               "getInfoPtr(argv[0].op)->name"] ++
      "STGCALL0(getInfoPtr(argv[0].op)->funFields.trueEntryCode);\n" ++
-      debugp [ "stgApply" ++ npstring ++ " back from CALLing " ++ " %s\\n", "getInfoPtr(argv[0].op)->name"] ++
+      debugp [ "stgApply" ++ npstring ++ " back from CALLing " ++ " %s\\n", 
+               "getInfoPtr(argv[0].op)->name"] ++
      "argv[0] = stgCurVal;\n" ++
-     -- FUN popped its own STACKCONT "stgPopCont();\n" ++
 
      "// excess args\n" ++
      "newframe = stgAllocStackCont( &it_stgStackCont, 1+excess );\n" ++
@@ -313,7 +313,7 @@ pappos npstring excess =
      "bitmap2.bitmap.mask <<= (argCount + 1);\n" ++
      "bitmap.bits += bitmap2.bits;\n" ++
 
-     "newframe = stgAllocStackCont( &it_stgStackCont, 1+argCount+arity );\n" ++
+     "newframe = stgAllocCallCont( &it_stgCallCont, 1+argCount+arity );\n" ++
      "newframe->layout = bitmap;\n" ++
      "newframe->payload[0] = argv[0]; // self\n" ++
      "memcpy(&newframe->payload[1], " ++

@@ -43,7 +43,6 @@ typedef FnPtr (*CmmFnPtr)();
 /* ********** NON-USER STUFF! ********* */
 
 // dispatch loop
-extern void _cmmCall(CmmFnPtr f);
 
 #define _RETURN() return NULL
 
@@ -52,7 +51,8 @@ extern void _cmmCall(CmmFnPtr f);
 // this works so there's hope for tail calls
 // define _JUMP(f)  return ((FnPtr)(f()))
 
-#define _CALL(f)  for (CmmFnPtr _f = (CmmFnPtr)f; _f; _f = (CmmFnPtr)_f())
+#define _CALL(f) \
+  for (CmmFnPtr _f = (CmmFnPtr)f; _f; _f = (CmmFnPtr)_f())
 
 #endif //ifdef cmm_h
  

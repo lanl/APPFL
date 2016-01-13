@@ -93,7 +93,7 @@ Cont *stgAllocCallCont(CInfoTab *citp, int argc) {
 	 "stgAllocCallCont: citp->contType != CALLCONT");
   size_t contSize = sizeof(Cont) + argc * sizeof(PtrOrLiteral);
   contSize = ((contSize + 7)/8)*8; 
-  fprintf(stderr, "allocating call continuation with argc %d\n", argc);
+  fprintf(stderr, "allocating CALL continuation with argc %d\n", argc);
   showCIT(citp);
   stgSP = (char *)stgSP - contSize;
   assert(stgSP >= stgStack);
@@ -112,7 +112,7 @@ Cont *stgAllocStackCont(CInfoTab *citp, int argc) {
 	 "stgAllocCallCont: citp->contType != STACKCONT");
   size_t contSize = sizeof(Cont) + argc * sizeof(PtrOrLiteral);
   contSize = ((contSize + 7)/8)*8; 
-  fprintf(stderr, "allocating stack continuation with argc %d\n", argc);
+  fprintf(stderr, "allocating STACK continuation with argc %d\n", argc);
   showCIT(citp);
   stgSP = (char *)stgSP - contSize;
   assert(stgSP >= stgStack);
@@ -170,7 +170,7 @@ Cont *stgGetStackArgp() {
   Cont *scp = (Cont *)stgSP;
   CInfoTab *citp = getCInfoPtr(scp);
   assert(citp->contType == getContType(scp));
-  assert(getContType(scp) == STACKCONT);
+  assert(getContType(scp) == STACKCONT || getContType(scp) == CALLCONT);
   return scp;
 }
 

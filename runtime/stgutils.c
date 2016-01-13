@@ -255,9 +255,11 @@ void stgThunkSelf() {
 }
 
 DEFUN0(stgStackCont) {
-  // stgPopCont();  user must do this
   fprintf(stderr,"stgStackCont returning\n");
-  RETURN0();  // fall back to the cmm trampoline
+  // exit(0);
+  stgPopCont();
+  STGRETURN0();  // return through continuation stack
+  //  RETURN0();  // fall back to the cmm trampoline
   ENDFUN;
 }
 
@@ -270,7 +272,7 @@ CInfoTab it_stgStackCont __attribute__((aligned(8))) =
   };
 
 DEFUN0(stgCallCont) {
-  // stgPopCont();  user must do this
+  stgPopCont();
   fprintf(stderr,"stgCallCont returning\n");
   RETURN0();  // fall back to the cmm trampoline
   ENDFUN;

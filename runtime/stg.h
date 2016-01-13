@@ -353,6 +353,21 @@ extern void showStgObjDebug(Obj *p);
 extern void showStgValDebug(PtrOrLiteral v);
 extern void showStgValPretty(PtrOrLiteral v);
 
+// Codegen.hs currently uses STGJUMP(), STGJUMP0(f), and STGRETURN0() to
+// exit DEFUNS
+
+#define STGRETURNS()					\
+  do {							\
+  stgPopCont();						\
+  JUMP0(((Cont *)stgSP)->entryCode);			\
+  } while (0)
+
+#define STGTAILCALLS(f)					\
+  do {							\
+  stgJumpAdjust();					\
+  JUMP0(f);						\
+  } while (0)
+
 
 
 #define STGCALL0(f)				\
@@ -388,14 +403,14 @@ extern void showStgValPretty(PtrOrLiteral v);
 
 #define DEFUNS0(F)				\
   FnPtr F() {					\
-  stgPopCont();
+
 
 #define DEFUNS1(F,P1)				\
   FnPtr F() {					\
   Cont *stg_sc = stgGetStackArgp();		\
   PtrOrLiteral P1;				\
   P1 = stg_sc->payload[0];				\
-  stgPopCont();
+
 
 #define DEFUNS2(F,P1,P2)			\
   FnPtr F() {					\
@@ -403,7 +418,7 @@ extern void showStgValPretty(PtrOrLiteral v);
   PtrOrLiteral P1, P2;				\
   P1 = stg_sc->payload[0];				\
   P2 = stg_sc->payload[1];				\
-  stgPopCont();
+
 
 
 #define DEFUNS3(F,P1,P2,P3)			\
@@ -413,7 +428,7 @@ extern void showStgValPretty(PtrOrLiteral v);
   P1 = stg_sc->payload[0];				\
   P2 = stg_sc->payload[1];				\
   P3 = stg_sc->payload[2];				\
-  stgPopCont();
+
 
 
 #define DEFUNS4(F,P1,P2,P3,P4)			\
@@ -424,7 +439,7 @@ extern void showStgValPretty(PtrOrLiteral v);
   P2 = stg_sc->payload[1];				\
   P3 = stg_sc->payload[2];				\
   P4 = stg_sc->payload[3];				\
-  stgPopCont();
+
 
 
 #define DEFUNS5(F,P1,P2,P3,P4,P5)		\
@@ -436,7 +451,7 @@ extern void showStgValPretty(PtrOrLiteral v);
   P3 = stg_sc->payload[2];				\
   P4 = stg_sc->payload[3];				\
   P5 = stg_sc->payload[4];				\
-  stgPopCont();
+
 
 
 #define ENDFUN						\
