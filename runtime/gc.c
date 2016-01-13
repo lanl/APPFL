@@ -189,6 +189,7 @@ void processCont(Cont *p) {
     updatePtr(&p->payload[0]);
     break;
 
+/*
   case CASECONT: {
     if (EXTRA) {
       EXTRASTART();
@@ -209,7 +210,9 @@ void processCont(Cont *p) {
     }
     break;
   }
+*/
 
+  case CASECONT:
   case STACKCONT:
   case CALLCONT: {
     Bitmap64 bm = p->layout;

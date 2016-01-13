@@ -68,7 +68,8 @@ Bitmap64 layoutInfoToBitmap64(LayoutInfo *lip) {
 
 Cont *stgAllocCont(CInfoTab *citp) {
   assert(citp->contType != CALLCONT &&
-          "stgAllocCont: citp->contType == CALLCONT" );
+         citp->contType != STACKCONT &&
+          "stgAllocCont: citp->contType == CALLCONT/STACKCONT" );
   int payloadSize = citp->layoutInfo.payloadSize;
   size_t contSize = sizeof(Cont) + payloadSize * sizeof(PtrOrLiteral);
   contSize = ((contSize + 7)/8)*8; 
@@ -86,7 +87,7 @@ Cont *stgAllocCont(CInfoTab *citp) {
   return contp;
 }
 
-// CALLCONTs DON'T have a common InfoTab entries but .layoutInfo is invalid for all
+// CALL/STACK CONTs DON'T have common InfoTab entries, .layoutInfo is invalid for all
 Cont *stgAllocCallOrStackCont(CInfoTab *citp, int argc) {
   assert((citp->contType == CALLCONT || citp->contType == STACKCONT) && 
 	 "stgAllocCallOrStackCont: citp->contType != CALLCONT/STACKCONT");
