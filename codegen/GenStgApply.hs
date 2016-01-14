@@ -106,7 +106,7 @@ gen strictness npstring =
     forward = "FnPtr " ++ fname ++ "();\n"
     arglist = 'f' : concat [',':'v':show i | i <- [1..argc]]
     macro = ""
-    fun = "DEFUN0(" ++ fname ++ ") {\n" ++ indent 2 body ++ "}\n\n"
+    fun = "FnPtr " ++ fname ++ "() {\n" ++ indent 2 body ++ "}\n\n"
     body =
      "// STACKCONT with actual parameters\n" ++
      "Cont *argframe = stgGetStackArgp();\n" ++
@@ -210,8 +210,7 @@ gen strictness npstring =
      "default:\n" ++
      "  fprintf(stderr, \"" ++ fname ++ " not a THUNK, FUN, or PAP\\n\");\n" ++
      "  exit(0);\n" ++
-     "}  // switch\n" ++
-     "ENDFUN;\n"
+     "}  // switch\n"
 
 funpos npstring excess =
   let arity = (length npstring) - excess

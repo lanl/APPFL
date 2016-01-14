@@ -93,28 +93,24 @@ Obj sho_stg_case_not_exhaustiveN = {
   .ident = "stg_case_not_exhaustiveN",
 };
 
-DEFOBJ(stg_funcall) {
+FnPtr stg_funcall() {
   fprintf(stderr,"stg_funcall, returning self\n");
   STGRETURN0();
-  ENDFUN;
 }
 
-DEFOBJ(stg_papcall) {
+FnPtr stg_papcall() {
   fprintf(stderr,"top-level PAP call, returning self\n");
   STGRETURN0();
-  ENDFUN;
 }
 
-DEFOBJ(stg_concall) {
+FnPtr stg_concall() {
   fprintf(stderr,"stg_concall, returning self\n");
   STGRETURN0();
-  ENDFUN;
 }
 
-DEFOBJ(stgBlackhole) {
+FnPtr stgBlackhole() {
   fprintf(stderr, "stgBlackhole, exiting!\n");
   exit(0);
-  ENDFUN;
 }
 
 // we can't use this until FVs are stashed first
@@ -131,11 +127,10 @@ InfoTab it_stgBlackhole __attribute__((aligned(8))) = {
   .layoutInfo.unboxedCount = 0,
 };
 
-DEFOBJ(stgIndirect) {
+FnPtr stgIndirect() {
   fprintf(stderr,"stgIndirect, jumping through indirection\n");
   stgCurVal = stgCurVal.op->payload[0];
   STGJUMP0(getInfoPtr(stgCurVal.op)->entryCode);
-  ENDFUN;
 }
 
 
@@ -152,7 +147,7 @@ InfoTab it_stgIndirect __attribute__((aligned(8))) = {
   .layoutInfo.unboxedCount = 0,
 };
 
-DEFUN0(stgUpdateCont) {
+FnPtr stgUpdateCont() {
   Cont *contp = stgPopCont();
   assert(getContType(contp) == UPDCONT && "I'm not an UPDCONT!");
   PtrOrLiteral p = contp->payload[0];
@@ -182,7 +177,6 @@ DEFUN0(stgUpdateCont) {
   memset((char*)p.op+newObjSize, 0, oldObjSize-newObjSize);
   fprintf(stderr, "stgUpdateCont leaving...\n  ");
   STGRETURN0();
-  ENDFUN;
 }
 
 CInfoTab it_stgUpdateCont __attribute__((aligned(8))) =
@@ -194,7 +188,7 @@ CInfoTab it_stgUpdateCont __attribute__((aligned(8))) =
     .layoutInfo.unboxedCount = 0,
   };
 
-DEFUN0(fun_stgShowResultCont) {
+FnPtr fun_stgShowResultCont() {
   fprintf(stderr,"done!\n");
   stgPopCont();  // clean up--normally the job of the returnee
   fprintf(stderr,"The answer is\n");
@@ -204,7 +198,6 @@ DEFUN0(fun_stgShowResultCont) {
   showStgObj(stgCurVal.op);
 #endif
   RETURN0();
-  ENDFUN;
 }
 
 CInfoTab it_stgShowResultCont __attribute__((aligned(8))) =
@@ -247,13 +240,12 @@ void stgThunkSelf() {
   assert(getObjType(stgCurVal.op) == BLACKHOLE);
 }
 
-DEFUN0(stgStackCont) {
+FnPtr stgStackCont() {
   fprintf(stderr,"stgStackCont returning\n");
   // exit(0);
   stgPopCont();
   STGRETURN0();  // return through continuation stack
   //  RETURN0();  // fall back to the cmm trampoline
-  ENDFUN;
 }
 
 CInfoTab it_stgStackCont __attribute__((aligned(8))) =
@@ -264,11 +256,10 @@ CInfoTab it_stgStackCont __attribute__((aligned(8))) =
     .layoutInfo.unboxedCount = -1,  // shouldn't be using this
   };
 
-DEFUN0(stgCallCont) {
+FnPtr stgCallCont() {
   stgPopCont();
   fprintf(stderr,"stgCallCont returning\n");
   RETURN0();  // fall back to the cmm trampoline
-  ENDFUN;
 }
 
 CInfoTab it_stgCallCont __attribute__((aligned(8))) =

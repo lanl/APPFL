@@ -380,22 +380,4 @@ extern void showStgValPretty(PtrOrLiteral v);
 #define STGRETURN0()			\
   STGJUMP0(((Cont *)stgSP)->entryCode)
 
-// objects take self through stgCurVal
-
-#define DEFOBJworks(F,P1)				\
-  FnPtr F() {					\
-  PtrOrLiteral P1 = stgCurVal;
-
-#define DEFOBJ(F)				\
-  FnPtr F() {
-
-// DEFUN#args(argnames)
-
-#define DEFUN0(F)				\
-  FnPtr F() {
-
-#define ENDFUN						\
-  fprintf(stderr, "ENDFUN should not be reached\n");	\
-  assert(false);}
-
 #endif  //ifdef stg_h

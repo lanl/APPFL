@@ -264,7 +264,7 @@ cga env (LitC c) = "((PtrOrLiteral){.i = con_" ++ c ++ " })"
 #endif
 
 cgStart :: String
-cgStart = "\n\nDEFUN0(start)" ++
+cgStart = "\n\nFnPtr start() {\n" ++
             "  registerSOs();\n" ++
             "  Cont *showResultCont = stgAllocCallOrStackCont(&it_stgShowResultCont, 0);\n" ++
             "  showResultCont->layout.bits = 0x0UL; // empty\n" ++
@@ -321,9 +321,9 @@ cgv env v = getEnvRef v env -- ++ "/* " ++ v ++ " */"
 
 -- CG in the state monad ***************************************************
 -- CG of objects produces no inline code
--- THUNK produces a DEFOBJ, other OBJ types have single global DEFOBJ
+-- THUNK produces a function, other OBJ types have single global function
 --    (ignore explicit PAP for now)
--- FUN produces a DEFUNS, the underlying function (not object)
+-- FUN produces a function (not object)
 --   all objects produce a (S)HO
 -- for CG, objects are heap allocated only by let
 
@@ -391,8 +391,7 @@ cgo env o@(THUNK it e name) =
       let forward = "FnPtr thunk_" ++ name ++ "();"
       let func =
             "// " ++ show (ctyp it) ++ "\n" ++
---            "DEFOBJ(thunk_" ++ name ++ ", self) {\n" ++
-            "DEFOBJ(thunk_" ++ name ++ ") {\n" ++
+            "FnPtr thunk_" ++ name ++ "() {\n" ++
             "  fprintf(stderr, \"" ++ name ++ " here\\n\");\n" ++
             "  PtrOrLiteral self = stgCurVal;\n" ++
             "  stgThunk(self);\n" ++
@@ -400,7 +399,7 @@ cgo env o@(THUNK it e name) =
             indent 2 inline ++
             "  fprintf(stderr, \"" ++ name ++ " returning\\n\");\n" ++
             "  STGRETURN0();\n" ++  -- in case inline doesn't jump somewhere else
-            "  ENDFUN;\n}"
+            "}\n"
       return $ (forward, func) : funcs
 
 cgo env (BLACKHOLE {}) =
@@ -576,8 +575,7 @@ cgalts_noheapalloc env (Alts it alts name) boxed =
       codefuncs <- mapM (cgalt env switch scrutName) alts
       let (codes, funcss) = unzip codefuncs
       let phonyforward = "FnPtr " ++ name ++ "();"
-          phonyfun = "DEFUN0("++ name ++ ") {\n" ++
-                     "  ENDFUN;\n" ++
+          phonyfun = "FnPtr "++ name ++ "() {\n" ++
                      "}\n"
       let inl = "// " ++ show (ctyp it) ++ "\n" ++
                 "PtrOrLiteral " ++ scrutName ++ " = stgCurVal;\n" ++
@@ -605,7 +603,7 @@ cgalts env (Alts it alts name) boxed =
       codefuncs <- mapM (cgalt env' switch scrutName) alts
       let (codes, funcss) = unzip codefuncs
       let fun = "// " ++ show (ctyp it) ++ "\n" ++
-                "DEFUN0("++ name ++ ") {\n" ++
+                "FnPtr "++ name ++ "() {\n" ++
                 "  fprintf(stderr, \"" ++ name ++ " here\\n\");\n" ++
                 -- actually need the ccont?
                 -- any fvs in the expressions on the rhs's?
@@ -626,7 +624,6 @@ cgalts env (Alts it alts name) boxed =
                      indent 4 (concat codes) ++
                    "  }\n"
                  else indent 2 $ concat codes) ++
-                "  ENDFUN;\n" ++
                 "}\n"
       return ("", (forward, fun) : concat funcss)
 
