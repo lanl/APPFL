@@ -224,34 +224,31 @@ void stgThunk(PtrOrLiteral self) {
   assert(getObjType(self.op) == BLACKHOLE);
 }
 
-// self is stgCurVal
-void stgThunkSelf() {
-  assert(isBoxed(stgCurVal) && "stgThunk:  not HEAPOBJ\n");
-  Cont *contp = stgAllocCont(&it_stgUpdateCont);
-  contp->payload[0] = stgCurVal;
-  strcpy(contp->ident, stgCurVal.op->ident); //override default
-  // can't do this until we capture the variables in a stack frame
-  // stgCurVal.op->infoPtr = &it_stgBlackHole;
-  fprintf(stderr, "BLACKHOLING %s\n", stgCurVal.op->ident);
-#if USE_OBJTYPE
-  stgCurVal.op->objType = BLACKHOLE;
-#endif
-  stgCurVal.op->_infoPtr = setLSB2(stgCurVal.op->_infoPtr); // this is a Blackhole
-  assert(getObjType(stgCurVal.op) == BLACKHOLE);
-}
-
 FnPtr stgStackCont() {
   fprintf(stderr,"stgStackCont returning\n");
   // exit(0);
   stgPopCont();
   STGRETURN0();  // return through continuation stack
-  //  RETURN0();  // fall back to the cmm trampoline
 }
 
 CInfoTab it_stgStackCont __attribute__((aligned(8))) =
   { .name = "stgStackCont",
     .entryCode = &stgStackCont,
     .contType = STACKCONT,
+    .layoutInfo.boxedCount = -1,  // shouldn't be using this
+    .layoutInfo.unboxedCount = -1,  // shouldn't be using this
+  };
+
+FnPtr stgPopMeCont() {
+  fprintf(stderr,"stgPopMeCont returning\n");
+  stgPopCont();
+  STGRETURN0();  // return through continuation stack
+}
+
+CInfoTab it_stgPopMeCont __attribute__((aligned(8))) =
+  { .name = "stgPopMeCont",
+    .entryCode = &stgPopMeCont,
+    .contType = POPMECONT,
     .layoutInfo.boxedCount = -1,  // shouldn't be using this
     .layoutInfo.unboxedCount = -1,  // shouldn't be using this
   };

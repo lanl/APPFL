@@ -8,7 +8,6 @@
 #include "options.h"
 
 extern void stgThunk(PtrOrLiteral self);
-extern void stgThunkSelf();
 
 Obj *derefHO(Obj *op);
 Obj *derefPoL(PtrOrLiteral f);

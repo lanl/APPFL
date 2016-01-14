@@ -395,10 +395,9 @@ cgo env o@(THUNK it e name) =
             "  fprintf(stderr, \"" ++ name ++ " here\\n\");\n" ++
             "  PtrOrLiteral self = stgCurVal;\n" ++
             "  stgThunk(self);\n" ++
---            "  stgThunkSelf();\n" ++
             indent 2 inline ++
             "  fprintf(stderr, \"" ++ name ++ " returning\\n\");\n" ++
-            "  STGRETURN0();\n" ++  -- in case inline doesn't jump somewhere else
+            "  STGRETURN0();\n" ++ -- in case inline doesn't jump somewhere else
             "}\n"
       return $ (forward, func) : funcs
 
@@ -594,7 +593,6 @@ cgalts_noheapalloc env (Alts it alts name) boxed =
 cgalts env (Alts it alts name) boxed =
     let contName = "ccont_" ++ name
         scrutName = "scrut_" ++ name
-        -- altenv = zip (fvs it) [ CC contName i | i <- [0..] ]
         altenv = zip (map fst $ fvs it) (repeat LV)
         env' = altenv ++ env
         forward = "FnPtr " ++ name ++ "();"
@@ -605,22 +603,17 @@ cgalts env (Alts it alts name) boxed =
       let fun = "// " ++ show (ctyp it) ++ "\n" ++
                 "FnPtr "++ name ++ "() {\n" ++
                 "  fprintf(stderr, \"" ++ name ++ " here\\n\");\n" ++
-                -- actually need the ccont?
-                -- any fvs in the expressions on the rhs's?
-                (if (length $ fvs it) > 0 then
-                     "  Cont *" ++ contName ++ " = stgPopCont();\n" ++
-                     concat ["  PtrOrLiteral " ++ v ++
-                             " = " ++ contName ++ "->payload[" ++ show i ++ "];\n"
-                             | (i,v) <- indexFrom 0 $ map fst $ fvs it ]
-                 else
-                     "  stgPopCont();\n") ++
+                "  Cont *" ++ contName ++ " = stgPopCont();\n" ++
+                   concat ["  PtrOrLiteral " ++ v ++
+                           " = " ++ contName ++ "->payload[" ++ show i ++ "];\n"
+                           | (i,v) <- indexFrom 0 $ map fst $ fvs it ] ++
                 "  PtrOrLiteral " ++ scrutName ++ " = stgCurVal;\n" ++
                 (if switch then
-                     (if boxed then
-                          "  switch(getInfoPtr(stgCurVal.op)->conFields.tag) {\n"
-                      else
-                          "  switch(stgCurVal.i) {\n"
-                     ) ++
+                   (if boxed then
+                      "  switch(getInfoPtr(stgCurVal.op)->conFields.tag) {\n"
+                    else
+                      "  switch(stgCurVal.i) {\n"
+                   ) ++
                      indent 4 (concat codes) ++
                    "  }\n"
                  else indent 2 $ concat codes) ++
