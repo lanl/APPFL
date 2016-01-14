@@ -221,7 +221,6 @@ typedef enum {
   UPDCONT, 
   CASECONT, 
   CALLCONT, 
-  FUNCONT        // for strict evaluation
   //
   ...
 } ContType;
@@ -248,8 +247,6 @@ STACKCONT  The intent here is to have function arguments passedand referenced
              contains the address of the Alts, STACKCONT could contain the
 	     address of a fixed "pop-me" routine that then jumps through
              the next continuation on the stack.
-
-FUNCONT  - <none yet>
 
 The layout of continuation stack objects is as follows.
 
@@ -300,17 +297,6 @@ payload[0] = # free vars
 payload[1]..payload[payload[0]] are the free vars
 
 
-FUNCONT - IGNORE FOR NOW, not yet implemented
-                               | payload 
------------------------------------------------------------------------------
-| infoPtr | objType |          | single free var                            |
------------------------------------------------------------------------------
-
-objType = FUNCONT infoPtr->objType = FUN payload[0] is the sole free var (the
-function to be applied), i.e. is the only root.  NOT CORRECT?  should be
-all other args not currently being evaluated?
-
-
 ------------------------------------------------------------------------------
 InfoTab
 -------
@@ -352,9 +338,6 @@ typedef struct {
 typedef struct {
 } CALLCONTfields;
 
-typedef struct {
-} FUNCONTfields;
-
 struct _InfoTab {
   char name[32];  // for debugging
   int fvCount;    // lexically determined, should be in layout
@@ -369,7 +352,6 @@ struct _InfoTab {
     UPDCONTfields updcontFields;
     CASECONTfields casecontFields;
     CALLCONTfields callcontFields;
-    FUNCONTfields funcontFields;
   };
 };
 

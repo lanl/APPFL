@@ -668,7 +668,6 @@ cgalt env switch scrutName (ADef it v e) =
 --  UPDCONT,
 --  CASECONT,
 --  CALLCONT,
---  FUNCONT,
 
 #if USE_CAST
 

@@ -38,12 +38,12 @@ void showStgCont(Cont *c) {
     fprintf(stderr,"CALLCONT %s\n", c->ident);
     return;
 
-  case FUNCONT:
-    fprintf(stderr,"FUNCONT  %s\n", c->ident);
-    return;
-
   case STACKCONT:
     fprintf(stderr,"STACKCONT  %s\n", c->ident);
+    return;
+
+  case POPMECONT:
+    fprintf(stderr,"POPMECONT  %s\n", c->ident);
     return;
 
   default:
@@ -252,7 +252,7 @@ void checkStgObjRec(Obj *p) {
   stack[depth++] = p;
 
   ObjType type = getObjType(p);
-  assert(type > OBJTYPE0BAD && type < PHONYENDOBJ && "hc: bad obj type");
+  assert(type > PHONYSTARTOBJ && type < PHONYENDOBJ && "hc: bad obj type");
 
   if (strcmp(it.name, p->ident)) {
     if (type != PAP) {

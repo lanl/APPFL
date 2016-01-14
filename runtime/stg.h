@@ -65,14 +65,14 @@ typedef enum {          // superfluous, for sanity checking
 
 // heap objects
 typedef enum {
-  OBJTYPE0BAD,
+  PHONYSTARTOBJ,
   FUN, 
   PAP, 
   CON,
   THUNK,
   BLACKHOLE,
   INDIRECT,
-  PHONYENDOBJ
+  PHONYENDOBJ,
 } ObjType;
 const char *objTypeNames[PHONYENDOBJ];
 
@@ -84,12 +84,12 @@ typedef enum {
   BADCONTTYPE3,
   BADCONTTYPE4,
   BADCONTTYPE5,
-  BADCONTTYPE6,
+  PHONYSTARTCONT,
   UPDCONT, 
   CASECONT, 
   CALLCONT,
   STACKCONT,
-  FUNCONT,        // for strict evaluation
+  POPMECONT,
   PHONYENDCONT
 } ContType;
 const char *contTypeNames[PHONYENDCONT];
@@ -184,7 +184,7 @@ typedef struct {
 
 typedef struct {
   //
-} FUNCONTfields;
+} POPMECONTfields;
 
 #if DEBUG_INFOTAB
 #define PI() (3.14159265358979323846)
@@ -217,7 +217,7 @@ struct _CInfoTab {
     UPDCONTfields updcontFields;
     CASECONTfields casecontFields;
     CALLCONTfields callcontFields;
-    FUNCONTfields funcontFields;
+    POPMECONTfields popmecontFields;
   };
 };
 

@@ -33,7 +33,7 @@ PtrOrLiteral stgCurVal;  // current/return value
 #endif
 
 const char *objTypeNames[] = {
-  "OBJTYPE0BAD",
+  "PHONYSTARTOBJ",
   "FUN", 
   "PAP", 
   "CON",
@@ -49,12 +49,12 @@ const char *contTypeNames[] = {
   "BADCONTTYPE3",
   "BADCONTTYPE4",
   "BADCONTTYPE5",
-  "BADCONTTYPE6",
+  "PHONYSTARTCONT",
   "UPDCONT", 
   "CASECONT", 
   "CALLCONT", 
   "STACKCONT",
-  "FUNCONT"
+  "POPMECONT",
 };
 
 
@@ -115,29 +115,13 @@ Cont *stgPopCont() {
   Cont *retVal = (Cont *)stgSP;
   CInfoTab *citp = getCInfoPtr(retVal);
   assert(citp->contType == getContType(retVal));
-  int payloadSize;
-  switch (getContType(retVal)) {
-  case UPDCONT:
-  case CASECONT:
-  case FUNCONT:
-    fprintf(stderr, "popping other continuation with payloadSize ");
-    payloadSize = getCInfoPtr(retVal)->layoutInfo.payloadSize;
-    fprintf(stderr, "%d\n", payloadSize);
-    break;
-  case CALLCONT:
-    fprintf(stderr, "popping CALLCONT with argc ");
-    payloadSize = retVal->layout.bitmap.size;
-    fprintf(stderr, "%d\n", payloadSize);
-    break;
-  case STACKCONT:
-    fprintf(stderr, "popping STACKCONT with argc ");
-    payloadSize = retVal->layout.bitmap.size;
-    fprintf(stderr, "%d\n", payloadSize);
-    break;
-  default:
-    fprintf(stderr, "bad continuation value %d\n", getContType(retVal));
-    assert(false);
-  }
+  int contType = getContType(retVal);
+  assert(contType > PHONYSTARTCONT && 
+	 contType < PHONYENDCONT &&
+	 "bad cont type");
+  int payloadSize = retVal->layout.bitmap.size;
+  fprintf(stderr, "popping %s continuation with payloadSize %d\n",
+	  contTypeNames[contType], payloadSize);
   size_t contSize = sizeof(Cont) + payloadSize * sizeof(PtrOrLiteral);
   contSize = ((contSize + 7)/8)*8; 
   showCIT(getCInfoPtr(retVal));
@@ -309,8 +293,8 @@ int getContSize(Cont *o) {
   case CALLCONT:
   case UPDCONT:
   case CASECONT:
-  case FUNCONT:
   case STACKCONT:
+  case POPMECONT:
     contSize = sizeof(Cont) + o->layout.bitmap.size * sizeof(PtrOrLiteral);
     break;
   default:

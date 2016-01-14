@@ -145,7 +145,7 @@ void processObj(Obj *p) {
     int i = endPAPFVsU(p) + 1;
     for (int size = bm.bitmap.size; size != 0; size--, i++, mask >>= 1) {
       if (mask & 0x1UL) updatePtr(&p->payload[i]);
-    } /* mkd gc */
+    }
     break;
   }
 
@@ -181,71 +181,22 @@ void processObj(Obj *p) {
 }
 
 void processCont(Cont *p) {
-  size_t i;
-  if (DEBUG) fprintf(stderr, "processCont %s %s\n", contTypeNames[getContType(p)], p->ident);
-  switch (getContType(p)) {
-
-  case UPDCONT:
-    updatePtr(&p->payload[0]);
-    break;
-
-/*
-  case CASECONT: {
+  int contType = getContType(p);
+  assert(contType > PHONYSTARTCONT && contType < PHONYENDCONT && "bad cont type");
+  if (DEBUG) fprintf(stderr, "processCont %s %s\n", contTypeNames[contType], p->ident);
+  Bitmap64 bm = p->layout;
+  uint64_t mask = bm.bitmap.mask;
+  int i = 0;
+  for (int size = bm.bitmap.size; size != 0; size--, i++, mask >>= 1) {
     if (EXTRA) {
-      EXTRASTART();
-      for (i = startCASEFVsU(p); i < endCASEFVsU(p); i++) {
-        assert(isUnboxed(p->payload[i]) && "gc: unexpected boxed arg in CASE");
-      }
-      EXTRAEND();
+  	EXTRASTART();
+  	if (mask & 0x1UL)
+  	  assert(isBoxed(p->payload[i]) && "gc: unexpected unboxed arg in CONT");
+  	else
+  	  assert(!isBoxed(p->payload[i]) && "gc: unexpected boxed arg in CONT");
+  	EXTRAEND();
     }
-    int start = startCASEFVsB(p);
-    int end = endCASEFVsB(p);
-    for (i = start; i < end; i++) {
-      if (EXTRA) {
-	EXTRASTART();
-	assert(isBoxed(p->payload[i]) && "gc: unexpected unboxed arg in CASE");
-	EXTRAEND();
-      }
-      updatePtr(&p->payload[i]);
-    }
-    break;
-  }
-*/
-
-  case CASECONT:
-  case STACKCONT:
-  case CALLCONT: {
-    Bitmap64 bm = p->layout;
-    uint64_t mask = bm.bitmap.mask;
-    int i = 0;
-    for (int size = bm.bitmap.size; size != 0; size--, i++, mask >>= 1) {
-      if (EXTRA) {
-	EXTRASTART();
-	if (mask & 0x1UL)
-	  assert(isBoxed(p->payload[i]) && "gc: unexpected unboxed arg in CALLCONT or STACKCONT");
-	else
-	  assert(!isBoxed(p->payload[i]) && "gc: unexpected boxed arg in CALLCONT or STACKCONT");
-	EXTRAEND();
-      }
-      if (mask & 0x1UL) updatePtr(&p->payload[i]);
-    } /* mkd gc */
-
-    break;
-  }
-
-  case FUNCONT:
-    if (EXTRA) {
-      EXTRASTART();
-      assert(isBoxed(p->payload[0]) && "gc: unexpected unboxed arg in FUN");
-      EXTRAEND();
-    }
-    updatePtr(&p->payload[0]);
-    break;
-
-  default:
-    fprintf(stderr, "gc: bad cont. type %d %s\n", getContType(p),
-        contTypeNames[getContType(p)]);
-    assert(false);
+    if (mask & 0x1UL) updatePtr(&p->payload[i]);
   }
 }
 
