@@ -21,7 +21,7 @@ project(runtime)
               gc.c
               stg.c
               stgutils.c
-	      stghs.c
+	      show.c
     )
 
 include_directories("../codegen"

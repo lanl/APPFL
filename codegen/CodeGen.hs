@@ -593,31 +593,38 @@ cgalts_noheapalloc env (Alts it alts name) boxed =
 cgalts env (Alts it alts name) boxed =
     let contName = "ccont_" ++ name
         scrutName = "scrut_" ++ name
-        altenv = zip (map fst $ fvs it) (repeat LV)
+        -- altenv = zip (map fst $ fvs it) (repeat LV)
+        altenv = zip (map fst $ fvs it) (map FP [0..])
         env' = altenv ++ env
         forward = "FnPtr " ++ name ++ "();"
+        switch = length alts > 1
     in do
-      let switch = length alts > 1
       codefuncs <- mapM (cgalt env' switch scrutName) alts
       let (codes, funcss) = unzip codefuncs
-      let fun = "// " ++ show (ctyp it) ++ "\n" ++
-                "FnPtr "++ name ++ "() {\n" ++
-                "  fprintf(stderr, \"" ++ name ++ " here\\n\");\n" ++
-                "  Cont *" ++ contName ++ " = stgPopCont();\n" ++
-                   concat ["  PtrOrLiteral " ++ v ++
-                           " = " ++ contName ++ "->payload[" ++ show i ++ "];\n"
-                           | (i,v) <- indexFrom 0 $ map fst $ fvs it ] ++
-                "  PtrOrLiteral " ++ scrutName ++ " = stgCurVal;\n" ++
-                (if switch then
-                   (if boxed then
-                      "  switch(getInfoPtr(stgCurVal.op)->conFields.tag) {\n"
-                    else
-                      "  switch(stgCurVal.i) {\n"
-                   ) ++
-                     indent 4 (concat codes) ++
-                   "  }\n"
-                 else indent 2 $ concat codes) ++
-                "}\n"
+      let body =
+              "fprintf(stderr, \"" ++ name ++ " here\\n\");\n" ++
+--            "Cont *" ++ contName ++ " = stgPopCont();\n" ++
+              "Cont *" ++ contName ++ " = stgGetStackArgp();\n" ++
+              "// make self-popping\n" ++
+              "stgCaseToPopMe(" ++ contName ++ ");\n" ++
+              "PtrOrLiteral *stg_pl = &(" ++ contName ++ "->payload[0]);\n" ++
+--              concat ["  PtrOrLiteral " ++ v ++
+--                      " = " ++ contName ++ "->payload[" ++ show i ++ "];\n"
+--                      | (i,v) <- indexFrom 0 $ map fst $ fvs it ] ++
+              "PtrOrLiteral " ++ scrutName ++ " = stgCurVal;\n" ++
+              (if switch then
+                 (if boxed then
+                    "switch(getInfoPtr(stgCurVal.op)->conFields.tag) {\n"
+                  else
+                    "switch(stgCurVal.i) {\n"
+                 ) ++
+                   indent 2 (concat codes) ++
+                 "}\n"
+               else concat codes)
+      let fun = 
+              "// " ++ show (ctyp it) ++ "\n" ++ 
+              "FnPtr "++ name ++ "() {\n" ++ indent 2 body ++ "}\n"
+
       return ("", (forward, fun) : concat funcss)
 
 cgalt env switch scrutName (ACon it c vs e) =

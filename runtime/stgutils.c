@@ -226,7 +226,6 @@ void stgThunk(PtrOrLiteral self) {
 
 FnPtr stgStackCont() {
   fprintf(stderr,"stgStackCont returning\n");
-  // exit(0);
   stgPopCont();
   STGRETURN0();  // return through continuation stack
 }
@@ -252,6 +251,14 @@ CInfoTab it_stgPopMeCont __attribute__((aligned(8))) =
     .layoutInfo.boxedCount = -1,  // shouldn't be using this
     .layoutInfo.unboxedCount = -1,  // shouldn't be using this
   };
+
+void stgCaseToPopMe(Cont *contp) {
+  assert(contp->contType == CASECONT);
+  contp->cInfoPtr = &it_stgPopMeCont;
+  contp->entryCode = it_stgPopMeCont.entryCode;
+  contp->contType = it_stgPopMeCont.contType;
+  // keep contp->ident unchanged
+}
 
 FnPtr stgCallCont() {
   stgPopCont();

@@ -137,7 +137,6 @@ Cont *stgGetStackArgp() {
   Cont *scp = (Cont *)stgSP;
   CInfoTab *citp = getCInfoPtr(scp);
   assert(citp->contType == getContType(scp));
-  assert(getContType(scp) == STACKCONT || getContType(scp) == CALLCONT);
   return scp;
 }
 
