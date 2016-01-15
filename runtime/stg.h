@@ -372,12 +372,20 @@ extern void showStgValPretty(PtrOrLiteral v);
 #define STGCALL0(f)				\
   CALL0_0(f)
 
+// change context
+// note that the popping of a POPMECONT is just an optimization
 #define STGJUMP0(f)				\
-  JUMP0(f)
+  do {						\
+    stgPopContIfPopMe();			\
+    JUMP0(f);					\
+  } while(0)
 
 // return through continuation stack
-
-#define STGRETURN0()			\
-  STGJUMP0(((Cont *)stgSP)->entryCode)
+// note that the popping of a POPMECONT is just an optimization
+#define STGRETURN0()					\
+  do {							\
+    stgPopContIfPopMe();				\
+    STGJUMP0(((Cont *)stgSP)->entryCode);		\
+  } while(0)
 
 #endif  //ifdef stg_h

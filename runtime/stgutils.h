@@ -31,6 +31,7 @@ FnPtr stg_case_not_exhaustiveN();
 extern Obj sho_stg_case_not_exhaustiveN;
 
 void stgCaseToPopMe(Cont *contp);
+void stgPopContIfPopMe();
 
 #if USE_ARGTYPE
 #define HOTOPL(HO) ((PtrOrLiteral) {.argType = HEAPOBJ, .op = (HO) })
