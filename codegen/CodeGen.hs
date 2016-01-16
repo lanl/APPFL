@@ -69,13 +69,14 @@ import Language.C.Data.Ident
 #endif
 
 
-data RVal = SO            -- static object
-          | HO Int        -- heap obj,  payload size
-          | FP Int        -- formal param, access STACKCONT
-          | LV            -- local var, use name as is
-          | FV Int        -- free var, self->payload[Int]
-          | AC Var Int    -- alt con
-          | AD Var        -- alt def
+data RVal = SO              -- static object
+          | HO Int          -- heap obj,  payload size
+          | LV              -- local var, use name as is
+          | FP String Int   -- stack formal param, pointer to stack payload
+          | FV String Int   -- payload in heap via pointer to pointer in stack, 
+                            --   e.g. fvpp->op->payload[i]
+          | AC Var Int      -- alt con
+          | AD Var          -- alt def
             deriving(Eq,Show)
 
 type Env = [(String, RVal)]
@@ -144,11 +145,13 @@ lu v ((v',k):_) size' n | v == v' =
                 [(Just (CDeclr Nothing [cPtrD] Nothing [] undefNode), Nothing, Nothing)] undefNode)
                 (cCallExpr "STGHEAPAT" [cIntE $ toInteger (size+size'), cIntE $ toInteger (n+1)]) undefNode]
 
-      FP i -> error "fixme"
+      FP{} -> error "fixme"
+
+      FV{} -> error "fixme"
 
       LV -> cVarE v
 
-      FV i -> CIndex (CMember (CMember (cVarE "self") (builtinIdent "op") False undefNode)
+--      FV i -> CIndex (CMember (CMember (cVarE "self") (builtinIdent "op") False undefNode)
               (builtinIdent "payload") True undefNode) (cIntE $ toInteger i) undefNode
 
       AC v i -> CIndex (cMemberE v "payload" True) (cIntE $ toInteger i) undefNode
@@ -236,9 +239,9 @@ lu v ((v',k):_) size' n | v == v' =
     case k of
       SO      -> "HOTOPL(&sho_" ++ v ++ ")"
       HO size -> "HOTOPL((Obj *)STGHEAPAT(" ++ show (size+size') ++ "," ++ show (n+1) ++ "))"
-      FP i    -> "stg_pl[" ++ show i ++ "]"
-      LV      -> v
-      FV i    -> "self.op->payload[" ++ show i ++ "]"
+      LV       -> v
+      FP fp i -> fp ++ "[" ++ show i ++ "]"
+      FV fpp i -> fpp ++ "->op->payload[" ++ show i ++ "]"
       AC v i  -> v ++ "->payload[" ++ show i ++ "]"
       AD v    -> v
 
@@ -359,18 +362,21 @@ permArgs vs ft =
 cgo :: Env -> Obj InfoTab -> State Int [(String, String)]
 
 cgo env o@(FUN it vs e name) =
-    do
-      let env' = zip (map fst $ fvs it) (map FV [0..]) ++
-                 zip ("self":vs) (map FP [0..]) ++
-                 env
+    let forward = "FnPtr fun_" ++ name ++ "();"
+        argp = "argp" -- also free variable pointer pointer
+        fps = "self":vs
+        env' = zip (map fst $ fvs it) (map (FV argp) [0..]) ++
+               zip fps (map (FP argp) [0..]) ++
+               env
+    in do
       (inline, funcs) <- cge env' e
-      let forward = "FnPtr fun_" ++ name ++ "();"
-          func =
+      let func =
             "// " ++ show (ctyp it) ++ "\n" ++
             "// " ++ name ++ "(self, " ++ intercalate ", " vs ++ ")\n" ++
             "FnPtr fun_" ++ name ++ "() {\n" ++
             "  fprintf(stderr, \"" ++ name ++ " here\\n\");\n" ++
-            "  PtrOrLiteral *stg_pl = &(stgGetStackArgp()->payload[0]);\n" ++
+            "  PtrOrLiteral *" ++ argp ++ 
+                 " = &(stgGetStackArgp()->payload[0]);\n" ++
                indent 2 inline ++
             -- default return in case inline doesn't jump somewhere else--FIXME
             "  fprintf(stderr, \"" ++ name ++ " default returning\\n\");\n" ++
@@ -385,16 +391,22 @@ cgo env (CON it c as name) =
     return []
 
 cgo env o@(THUNK it e name) =
-    do
-      let env' = zip (map fst $ fvs it) (map FV [1..]) ++ env
+    let
+      fvpp = "fvpp"
+      env' = zip (map fst $ fvs it) (map (FV fvpp) [1..]) ++ env
+      forward = "FnPtr thunk_" ++ name ++ "();"
+    in do
       (inline, funcs) <- cge env' e
-      let forward = "FnPtr thunk_" ++ name ++ "();"
       let func =
             "// " ++ show (ctyp it) ++ "\n" ++
             "FnPtr thunk_" ++ name ++ "() {\n" ++
             "  fprintf(stderr, \"" ++ name ++ " here\\n\");\n" ++
-            "  PtrOrLiteral self = stgCurVal;\n" ++
-            "  stgThunk(self);\n" ++
+            " // if alloc triggers GC, stgCurVal is a root\n" ++
+            "  Cont *stg_fp = stgAllocCallOrStackCont(&it_stgStackCont, 1);\n" ++
+            "  stg_fp->layout = " ++ npStrToBMStr "P" ++ ";\n" ++
+            "  stg_fp->payload[0] = stgCurVal;\n" ++
+            "  PtrOrLiteral *" ++ fvpp ++ " = &(stg_fp->payload[0]);\n" ++
+            "  stgThunk(stgCurVal);\n" ++
             indent 2 inline ++
             "  fprintf(stderr, \"" ++ name ++ " returning\\n\");\n" ++
             "  STGRETURN0();\n" ++ -- in case inline doesn't jump somewhere else
@@ -515,7 +527,6 @@ cge env (EPrimop it op eas) =
                       "stgCurVal.i = " ++ fun ++ "(" ++ arg0 "i" ++ ", " ++ arg1 "i" ++ ");\n"
     in return (inline, [])
 
-
 cge env (ELet it os e) =
     let names = map oname os
         env'  = (reverse $ zip names (map HO sizes)) ++ env
@@ -532,7 +543,6 @@ cge env (ELet it os e) =
       return (concat decls ++ concat buildcodes ++ einline,
               ofunc ++ efunc)
 
-
 -- TOFIX:  even if scrutinee doesn't heap alloc it may return through the
 -- continuation stack, so we need better analysis
 -- cge env (ECase _ e a@(Alts italts alts aname)) | (not $ noHeapAlloc $ emd e) =
@@ -547,7 +557,7 @@ cge env (ECase _ e a@(Alts italts alts aname)) =
                  "// no FVs\n"
                else
                  "// load payload with FVs " ++
-                 intercalate " " (map fst $ fvs italts) ++ "\n") ++
+                   intercalate " " (map fst $ fvs italts) ++ "\n") ++
                  (loadPayloadFVs env (map fst $ fvs italts) 0 name)
 --           scrut = if isBoxede e then
 --                       "  // boxed scrutinee\n" ++
@@ -593,8 +603,8 @@ cgalts_noheapalloc env (Alts it alts name) boxed =
 cgalts env (Alts it alts name) boxed =
     let contName = "ccont_" ++ name
         scrutName = "scrut_" ++ name
-        -- altenv = zip (map fst $ fvs it) (repeat LV)
-        altenv = zip (map fst $ fvs it) (map FP [0..])
+        fvp = "fvp"
+        altenv = zip (map fst $ fvs it) (map (FP fvp) [0..])
         env' = altenv ++ env
         forward = "FnPtr " ++ name ++ "();"
         switch = length alts > 1
@@ -603,11 +613,11 @@ cgalts env (Alts it alts name) boxed =
       let (codes, funcss) = unzip codefuncs
       let body =
               "fprintf(stderr, \"" ++ name ++ " here\\n\");\n" ++
---            "Cont *" ++ contName ++ " = stgPopCont();\n" ++
               "Cont *" ++ contName ++ " = stgGetStackArgp();\n" ++
               "// make self-popping\n" ++
               "stgCaseToPopMe(" ++ contName ++ ");\n" ++
-              "PtrOrLiteral *stg_pl = &(" ++ contName ++ "->payload[0]);\n" ++
+              "PtrOrLiteral *" ++ fvp ++ 
+                  " = &(" ++ contName ++ "->payload[0]);\n" ++
 --              concat ["  PtrOrLiteral " ++ v ++
 --                      " = " ++ contName ++ "->payload[" ++ show i ++ "];\n"
 --                      | (i,v) <- indexFrom 0 $ map fst $ fvs it ] ++
@@ -721,13 +731,6 @@ bho env (FUN it vs e name) =
 
 bho env (PAP it f as name) = error "unsupported explicit PAP"
 
-
--- TODO: the size here should be based on the FUN rather than being maxPayload
-{-
-
-    (maxPayload, loadPayloadFVs env (map fst $ fvs it) 0 name ++
-                 loadPayloadAtoms env (projectAtoms as) (length $ fvs it) name)
--}
 
 -- CON is special in that the payload contains not just FVs but literals
 -- as well, and we need their types.  This could be done:
