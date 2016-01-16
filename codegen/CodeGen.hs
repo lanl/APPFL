@@ -746,7 +746,9 @@ bho env (CON it c as name) =
 
 bho env (THUNK it e name) =
     let fv = fvs it
-    in (1 + (length fv), loadPayloadFVs env (map fst fv) 1 name)
+    in (1 + (length fv), 
+        name ++ "->payload[0].op = NULL;\n" ++
+        loadPayloadFVs env (map fst fv) 1 name)
 
 bho env (BLACKHOLE it name) = (1,"")
 

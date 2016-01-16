@@ -35,8 +35,9 @@ static inline void checkCONargs(Obj *p) {
       getInfoPtr(p)->conFields.arity == endCONargsU(p) && "gc: CON args mismatch");
 }
 
-// payload[0] of thunk is result field
-static inline size_t startTHUNKFVsB(Obj *p) { return 1; }
+// payload[0] of thunk is result field, NULL if not valid
+static inline size_t startTHUNKFVsB(Obj *p) { 
+  if (p->payload[0].op == NULL) return 1; else return 0; }
 static inline size_t endTHUNKFVsB(Obj *p) { return getInfoPtr(p)->layoutInfo.boxedCount + 1; }
 static inline size_t startTHUNKFVsU(Obj *p) { return endTHUNKFVsB(p); }
 static inline size_t endTHUNKFVsU(Obj *p) { return startTHUNKFVsU(p) + getInfoPtr(p)->layoutInfo.unboxedCount; }

@@ -175,7 +175,11 @@ Obj* stgNewHeapObj(InfoTab *itp) {
   objSize = ((objSize + 7)/8)*8; 
   Obj *objp = (Obj *)stgHP;
   stgHP = (char *)stgHP + objSize;
-  memset(objp, 0, objSize); //zero out anything left by previous gc passes
+  // zero out anything left by previous gc passes
+  // this shouldn't be necessary, could masks bugs
+  memset(objp, 0, objSize); 
+
+
   objp->_infoPtr = itp;
   strcpy(objp->ident, itp->name);  // may be overwritten
 #if USE_OBJTYPE
