@@ -177,7 +177,7 @@ Obj* stgNewHeapObj(InfoTab *itp) {
   stgHP = (char *)stgHP + objSize;
   // zero out anything left by previous gc passes
   // this shouldn't be necessary, could masks bugs
-  memset(objp, 0, objSize); 
+  // memset(objp, 0, objSize); 
 
 
   objp->_infoPtr = itp;
@@ -313,8 +313,8 @@ int getContSize(Cont *o) {
   return contSize;
 }
 
-const size_t stgHeapSize  = (size_t)4*(size_t)(1024*1024*1024);
-const size_t stgStackSize  = (size_t)4*(size_t)(1024*1024*1024);
+const size_t stgHeapSize  = (size_t)(1024*1024*1024);
+const size_t stgStackSize  = (size_t)(1024*1024*1024);
 
 void initStg() {
   stgHeap =
