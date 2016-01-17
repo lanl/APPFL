@@ -73,7 +73,8 @@ Cont *stgAllocCont(CInfoTab *citp) {
   int payloadSize = citp->layoutInfo.payloadSize;
   size_t contSize = sizeof(Cont) + payloadSize * sizeof(PtrOrLiteral);
   contSize = ((contSize + 7)/8)*8; 
-  fprintf(stderr, "allocating continuation with payloadSize %d\n", payloadSize);
+  fprintf(stderr, "allocating %s continuation with payloadSize %d\n", 
+	  contTypeNames[citp->contType], payloadSize);
   showCIT(citp);
   stgSP = (char *)stgSP - contSize;
   assert(stgSP >= stgStack);
@@ -100,17 +101,15 @@ Cont *stgAllocCallOrStackCont(CInfoTab *citp, int argc) {
   assert(stgSP >= stgStack);
   Cont *contp = (Cont *)stgSP;
   contp->cInfoPtr = citp;
-  contp->_contSize = contSize;
+  contp->_contSize = contSize;  // to go away
   contp->entryCode = citp->entryCode;
   contp->contType = citp->contType;
   strcpy(contp->ident, citp->name);  // may be overwritten
   return contp;
 }
 
-// TODO: 64 bit align
 // return pointer to popped cont
-// NOTE:  stgAllocCont will invalidate this pointer!
-// CALLCONT is special
+// NOTE:  stgAllocCont will invalidate what this points to!
 Cont *stgPopCont() {
   Cont *retVal = (Cont *)stgSP;
   CInfoTab *citp = getCInfoPtr(retVal);
@@ -158,8 +157,6 @@ Cont *stgJumpAdjust() {
   return (Cont *) stgSP;
 }
 
-
-
 Obj* stgNewHeapObj(InfoTab *itp) {
   fprintf(stderr, "stgNewHeapObj: "); showIT(itp);
   int payloadSize = itp->layoutInfo.payloadSize;
@@ -175,10 +172,19 @@ Obj* stgNewHeapObj(InfoTab *itp) {
   objSize = ((objSize + 7)/8)*8; 
   Obj *objp = (Obj *)stgHP;
   stgHP = (char *)stgHP + objSize;
+
   // zero out anything left by previous gc passes
   // this shouldn't be necessary, could masks bugs
   // memset(objp, 0, objSize); 
+  // but THUNK is special
 
+  if (itp->objType == THUNK) {
+    assert(payloadSize >= 1 && "stgNewHeapObj");
+    objp->payload[0].op = NULL;
+#if USE_ARGTYPE
+    objp->payload[0].argType = HEAPOBJ;
+#endif
+  }
 
   objp->_infoPtr = itp;
   strcpy(objp->ident, itp->name);  // may be overwritten
@@ -187,7 +193,8 @@ Obj* stgNewHeapObj(InfoTab *itp) {
 	  objp->ident, objTypeNames[itp->objType]);
   objp->objType = itp->objType;
 #endif
-  fprintf(stderr, "stgNewHeapObj: "); showStgObj(objp);
+  //  Can't display it--payload values not set
+  //  fprintf(stderr, "stgNewHeapObj: "); showStgObj(objp);
   return objp;
 }
 
