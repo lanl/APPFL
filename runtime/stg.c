@@ -73,7 +73,7 @@ Cont *stgAllocCont(CInfoTab *citp) {
   int payloadSize = citp->layoutInfo.payloadSize;
   size_t contSize = sizeof(Cont) + payloadSize * sizeof(PtrOrLiteral);
   contSize = ((contSize + 7)/8)*8; 
-  fprintf(stderr, "allocating %s continuation with payloadSize %d\n", 
+  PRINTF( "allocating %s continuation with payloadSize %d\n", 
 	  contTypeNames[citp->contType], payloadSize);
   showCIT(citp);
   stgSP = (char *)stgSP - contSize;
@@ -94,7 +94,7 @@ Cont *stgAllocCallOrStackCont(CInfoTab *citp, int argc) {
 	 "stgAllocCallOrStackCont: citp->contType != CALLCONT/STACKCONT");
   size_t contSize = sizeof(Cont) + argc * sizeof(PtrOrLiteral);
   contSize = ((contSize + 7)/8)*8; 
-  fprintf(stderr, "allocating %s continuation with argc %d\n", 
+  PRINTF( "allocating %s continuation with argc %d\n", 
 	  contTypeNames[citp->contType], argc);
   showCIT(citp);
   stgSP = (char *)stgSP - contSize;
@@ -119,7 +119,7 @@ Cont *stgPopCont() {
 	 contType < PHONYENDCONT &&
 	 "bad cont type");
   int payloadSize = retVal->layout.bitmap.size;
-  fprintf(stderr, "popping %s continuation with payloadSize %d\n",
+  PRINTF( "popping %s continuation with payloadSize %d\n",
 	  contTypeNames[contType], payloadSize);
   size_t contSize = sizeof(Cont) + payloadSize * sizeof(PtrOrLiteral);
   contSize = ((contSize + 7)/8)*8; 
@@ -142,23 +142,23 @@ Cont *stgGetStackArgp() {
 // top two elements of STG stack should be STACKCONTS
 // overwrite penultimate with topmost
 Cont *stgJumpAdjust() {
-  fprintf(stderr, "ENTER stgJumpAdjust\n");
+  PRINTF( "ENTER stgJumpAdjust\n");
   Cont *scp = (Cont *)stgSP;
   assert(getContType(scp) == STACKCONT);
   size_t contSize = getContSize(scp);
-  fprintf(stderr, "  top cont size is %lu\n", contSize);
+  PRINTF( "  top cont size is %lu\n", contSize);
   Cont *pscp = (Cont *)((char *)stgSP + contSize);
   assert(getContType(pscp) == STACKCONT);
   size_t pContSize = getContSize(pscp);
-  fprintf(stderr, "  penultimate cont size is %lu\n", pContSize);
+  PRINTF( "  penultimate cont size is %lu\n", pContSize);
   stgSP += pContSize;
   memmove(stgSP, scp, contSize);
-  fprintf(stderr, "EXIT stgJumpAdjust\n");
+  PRINTF( "EXIT stgJumpAdjust\n");
   return (Cont *) stgSP;
 }
 
 Obj* stgNewHeapObj(InfoTab *itp) {
-  fprintf(stderr, "stgNewHeapObj: "); showIT(itp);
+  PRINTF( "stgNewHeapObj: "); showIT(itp);
   int payloadSize = itp->layoutInfo.payloadSize;
   int fvs = itp->layoutInfo.boxedCount + itp->layoutInfo.unboxedCount;
   // assert(itp->fvCount == fvs);  // fvCount going away
@@ -189,12 +189,12 @@ Obj* stgNewHeapObj(InfoTab *itp) {
   objp->_infoPtr = itp;
   strcpy(objp->ident, itp->name);  // may be overwritten
 #if USE_OBJTYPE
-  fprintf(stderr, "stgNewHeapObj setting %s objType %s\n", 
+  PRINTF( "stgNewHeapObj setting %s objType %s\n", 
 	  objp->ident, objTypeNames[itp->objType]);
   objp->objType = itp->objType;
 #endif
   //  Can't display it--payload values not set
-  //  fprintf(stderr, "stgNewHeapObj: "); showStgObj(objp);
+  //  PRINTF( "stgNewHeapObj: "); showStgObj(objp);
   return objp;
 }
 
@@ -204,7 +204,7 @@ Obj* stgNewHeapPAPmask(InfoTab *itp, Bitmap64 bm) {
   int fvs = itp->layoutInfo.boxedCount + itp->layoutInfo.unboxedCount;
   // assert(itp->fvCount == fvs);      // fvCount going away
   assert(itp->layoutInfo.payloadSize == fvs);  // FUN
-  fprintf(stderr, "stgNewHeapPap: "); showIT(itp);
+  PRINTF( "stgNewHeapPap: "); showIT(itp);
   size_t objSize = sizeof(Obj) + 
     (fvs + bm.bitmap.size + 1) * sizeof(PtrOrLiteral);
   objSize = ((objSize + 7)/8)*8;
@@ -221,7 +221,7 @@ Obj* stgNewHeapPAPmask(InfoTab *itp, Bitmap64 bm) {
 #if USE_OBJTYPE
   objp->objType = PAP;
 #endif
-  fprintf(stderr, "stgNewHeapPAP: "); showStgObj(objp);
+  PRINTF( "stgNewHeapPAP: "); showStgObj(objp);
   return objp;
 }
 
@@ -246,7 +246,7 @@ int getObjSize(Obj *o) {
     /* THUNK payload size is one larger, this is a wart, this check should be in GC
     if(itp->layoutInfo.boxedCount + itp->layoutInfo.unboxedCount !=
        itp->layoutInfo.payloadSize) {
-      fprintf(stderr, "%s bc %d, ubc %d, pls %d\n", objTypeNames[type],
+      PRINTF( "%s bc %d, ubc %d, pls %d\n", objTypeNames[type],
 	      itp->layoutInfo.boxedCount, itp->layoutInfo.unboxedCount,
 	      itp->layoutInfo.payloadSize);
       assert(false);
@@ -257,7 +257,7 @@ int getObjSize(Obj *o) {
     break;
   }
   default:
-    fprintf(stderr, "stg.c/getObjSize bad ObjType %d\n", type);
+    PRINTF( "stg.c/getObjSize bad ObjType %d\n", type);
     assert(false);
     break;
   }
@@ -277,7 +277,7 @@ void showStgVal(PtrOrLiteral v) {
 }
 
 void showIT(InfoTab *itp) {
-  fprintf(stderr, "showIT: %s %s, bc %d ubc %d layoutInfo.payloadSize %d\n", 
+  PRINTF( "showIT: %s %s, bc %d ubc %d layoutInfo.payloadSize %d\n", 
 	  objTypeNames[itp->objType], 
 	  itp->name, 
 	  itp->layoutInfo.boxedCount,
@@ -286,14 +286,14 @@ void showIT(InfoTab *itp) {
 }  
 
 void showCIT(CInfoTab *citp) {
-  fprintf(stderr, "showCIT: %s %s, bc %d ubc %d", 
+  PRINTF( "showCIT: %s %s, bc %d ubc %d", 
 	  contTypeNames[citp->contType], 
 	  citp->name, 
 	  citp->layoutInfo.boxedCount,
           citp->layoutInfo.unboxedCount);
   if (citp->contType != CALLCONT)
-    fprintf(stderr, ", layoutInfo.payloadSize %d", citp->layoutInfo.payloadSize);
-  fprintf(stderr, "\n");
+    PRINTF( ", layoutInfo.payloadSize %d", citp->layoutInfo.payloadSize);
+  PRINTF( "\n");
 }  
 
 int getContSize(Cont *o) {
@@ -308,12 +308,12 @@ int getContSize(Cont *o) {
     contSize = sizeof(Cont) + o->layout.bitmap.size * sizeof(PtrOrLiteral);
     break;
   default:
-    fprintf(stderr, "stg.c/getContSize bad ContType %d\n", type);
+    PRINTF( "stg.c/getContSize bad ContType %d\n", type);
     assert(false);
   }
   contSize = ((contSize + 7)/8)*8;
   if (contSize != o->_contSize) {
-    fprintf(stderr, "contSize is %lu, o->_contSize is %d for %s\n",
+    PRINTF( "contSize is %lu, o->_contSize is %d for %s\n",
 	    contSize, o->_contSize, contTypeNames[type]);
     assert(contSize == o->_contSize && "bad contSize");
   }
@@ -333,7 +333,7 @@ void initStg() {
 	  0 );                    // off_t offset
 
   if (stgHeap == MAP_FAILED) {
-    fprintf(stderr,"mmap stg heap failed!!\n"); 
+    PRINTF("mmap stg heap failed!!\n"); 
     exit(1);
   }
 
@@ -348,13 +348,13 @@ void initStg() {
 	  0 );                    // off_t offset
 
   if (stgStack == MAP_FAILED) {
-    fprintf(stderr,"mmap stg stack failed!!\n"); 
+    PRINTF("mmap stg stack failed!!\n"); 
     exit(1);
   }
   
   stgSP = (char *)stgStack + stgStackSize;
 
-  fprintf(stderr,"Stg stack at %p and heap at %p\n", stgStack, stgHP);
+  PRINTF("Stg stack at %p and heap at %p\n", stgStack, stgHP);
 
   stgStatObjCount = 0;
 

@@ -98,22 +98,22 @@ Obj sho_stg_case_not_exhaustiveN = {
 };
 
 FnPtr stg_funcall() {
-  fprintf(stderr,"stg_funcall, returning self\n");
+  PRINTF("stg_funcall, returning self\n");
   STGRETURN0();
 }
 
 FnPtr stg_papcall() {
-  fprintf(stderr,"top-level PAP call, returning self\n");
+  PRINTF("top-level PAP call, returning self\n");
   STGRETURN0();
 }
 
 FnPtr stg_concall() {
-  fprintf(stderr,"stg_concall, returning self\n");
+  PRINTF("stg_concall, returning self\n");
   STGRETURN0();
 }
 
 FnPtr stgBlackhole() {
-  fprintf(stderr, "stgBlackhole, exiting!\n");
+  PRINTF( "stgBlackhole, exiting!\n");
   exit(0);
 }
 
@@ -132,7 +132,7 @@ InfoTab it_stgBlackhole __attribute__((aligned(8))) = {
 };
 
 FnPtr stgIndirect() {
-  fprintf(stderr,"stgIndirect, jumping through indirection\n");
+  PRINTF("stgIndirect, jumping through indirection\n");
   stgCurVal = stgCurVal.op->payload[0];
   STGJUMP0(getInfoPtr(stgCurVal.op)->entryCode);
 }
@@ -156,12 +156,12 @@ FnPtr stgUpdateCont() {
   assert(getContType(contp) == UPDCONT && "I'm not an UPDCONT!");
   PtrOrLiteral p = contp->payload[0];
   assert(isBoxed(p) && "not a HEAPOBJ!");
-  fprintf(stderr, "stgUpdateCont updating\n  ");
+  PRINTF( "stgUpdateCont updating\n  ");
   showStgObj(p.op);
-  fprintf(stderr, "with\n  ");
+  PRINTF( "with\n  ");
   showStgObj(stgCurVal.op);
   if (getObjType(p.op) != BLACKHOLE) {
-    fprintf(stderr, "but updatee is %s not a BLACKHOLE!\n", 
+    PRINTF( "but updatee is %s not a BLACKHOLE!\n", 
 	    objTypeNames[getObjType(p.op)]);
     showStgHeap();
     assert(getObjType(p.op) == BLACKHOLE);
@@ -179,7 +179,7 @@ FnPtr stgUpdateCont() {
   int newObjSize = getObjSize(p.op);
   assert(newObjSize <= oldObjSize);
   memset((char*)p.op+newObjSize, 0, oldObjSize-newObjSize);
-  fprintf(stderr, "stgUpdateCont leaving...\n  ");
+  PRINTF( "stgUpdateCont leaving...\n  ");
   STGRETURN0();
 }
 
@@ -193,9 +193,9 @@ CInfoTab it_stgUpdateCont __attribute__((aligned(8))) =
   };
 
 FnPtr fun_stgShowResultCont() {
-  fprintf(stderr,"done!\n");
+  PRINTF("done!\n");
   stgPopCont();  // clean up--normally the job of the returnee
-  fprintf(stderr,"The answer is\n");
+  fprintf(stderr, "The answer is\n");
 #if USE_ARGTYPE
   showStgVal(stgCurVal);
 #else
@@ -220,7 +220,7 @@ void stgThunk(PtrOrLiteral self) {
   strcpy(contp->ident, self.op->ident); //override default
   // can't do this until we capture the variables in a stack frame
   // self.op->infoPtr = &it_stgBlackHole;
-  fprintf(stderr, "BLACKHOLING %s\n", self.op->ident);
+  PRINTF( "BLACKHOLING %s\n", self.op->ident);
 #if USE_OBJTYPE
   self.op->objType = BLACKHOLE;
 #endif
@@ -229,7 +229,7 @@ void stgThunk(PtrOrLiteral self) {
 }
 
 FnPtr stgStackCont() {
-  fprintf(stderr,"stgStackCont returning\n");
+  PRINTF("stgStackCont returning\n");
   stgPopCont();
   STGRETURN0();  // return through continuation stack
 }
@@ -243,7 +243,7 @@ CInfoTab it_stgStackCont __attribute__((aligned(8))) =
   };
 
 FnPtr stgPopMeCont() {
-  fprintf(stderr,"stgPopMeCont returning\n");
+  PRINTF("stgPopMeCont returning\n");
   stgPopCont();
   STGRETURN0();  // return through continuation stack
 }
@@ -271,7 +271,7 @@ void stgCaseToPopMe(Cont *contp) {
 
 FnPtr stgCallCont() {
   stgPopCont();
-  fprintf(stderr,"stgCallCont returning\n");
+  PRINTF("stgCallCont returning\n");
   RETURN0();  // fall back to the cmm trampoline
 }
 

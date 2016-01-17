@@ -12,8 +12,8 @@
 const bool DEBUG = true;
 const bool EXTRA = true;  // run extra checks
 
-#define EXTRASTART() fprintf(stderr, "EXTRA check file %s line %d\n", __FILE__, __LINE__)
-#define EXTRAEND() fprintf(stderr, "EXTRA check succeeded %s %d\n", __FILE__, __LINE__)
+#define EXTRASTART() PRINTF( "EXTRA check file %s line %d\n", __FILE__, __LINE__)
+#define EXTRAEND() PRINTF( "EXTRA check succeeded %s %d\n", __FILE__, __LINE__)
 
 static void *scanPtr, *freePtr;
 
@@ -62,7 +62,7 @@ PtrOrLiteral updatePtrByValue (PtrOrLiteral f) {
     // from space
     if (isLSBset(p->_infoPtr)) {
       // from space && forwarding
-      if (DEBUG) fprintf(stderr, "update forward %s\n", p->ident);
+      if (DEBUG) PRINTF( "update forward %s\n", p->ident);
       f.op = (Obj *)getInfoPtr(p);
       assert(isTo(f.op));
 #if USE_ARGTYPE
@@ -73,7 +73,7 @@ PtrOrLiteral updatePtrByValue (PtrOrLiteral f) {
       // from space && !forwarding
       int size = getObjSize(p);
       if (DEBUG) {
-        fprintf(stderr, "copy %s %s from->to size=%d\n", 
+        PRINTF( "copy %s %s from->to size=%d\n", 
 		objTypeNames[getObjType(p)], p->ident, size);
       }
       memcpy(freePtr, p, size);
@@ -106,7 +106,7 @@ PtrOrLiteral updatePtrByValue (PtrOrLiteral f) {
     return f;
   } else {
     assert(false && "bad ptr");
-    fprintf(stderr, "bad ptr");  // if asserts are off
+    PRINTF( "bad ptr");  // if asserts are off
     exit(1);
     return (PtrOrLiteral){.op = NULL};  // avoid dumb compiler warning/error
   }
@@ -118,7 +118,7 @@ void updatePtr(PtrOrLiteral *f) {
 
 void processObj(Obj *p) {
   size_t i;
-  if (DEBUG) fprintf(stderr, "processObj %s %s\n", objTypeNames[getObjType(p)], p->ident);
+  if (DEBUG) PRINTF( "processObj %s %s\n", objTypeNames[getObjType(p)], p->ident);
 
   switch (getObjType(p)) {
   case FUN: {
@@ -174,7 +174,7 @@ void processObj(Obj *p) {
     break;
 
   default:
-    fprintf(stderr, "gc: bad obj. type %d %s", getObjType(p),
+    PRINTF( "gc: bad obj. type %d %s", getObjType(p),
         objTypeNames[getObjType(p)]);
     assert(false);
   }
@@ -183,7 +183,7 @@ void processObj(Obj *p) {
 void processCont(Cont *p) {
   int contType = getContType(p);
   assert(contType > PHONYSTARTCONT && contType < PHONYENDCONT && "bad cont type");
-  if (DEBUG) fprintf(stderr, "processCont %s %s\n", contTypeNames[contType], p->ident);
+  if (DEBUG) PRINTF( "processCont %s %s\n", contTypeNames[contType], p->ident);
   Bitmap64 bm = p->layout;
   uint64_t mask = bm.bitmap.mask;
   int i = 0;
@@ -202,7 +202,7 @@ void processCont(Cont *p) {
 
 void gc(void) {
 
-  // fprintf(stderr, "GARBAGE COLLECTION DISABLED in gc.c/gc(void)\n"); return;
+  // PRINTF( "GARBAGE COLLECTION DISABLED in gc.c/gc(void)\n"); return;
 
   size_t before = stgHP - stgHeap;
 
@@ -214,7 +214,7 @@ void gc(void) {
 
   if (DEBUG) {
     showStgHeap();
-    fprintf(stderr, "start gc heap size %lx\n", before);
+    PRINTF( "start gc heap size %lx\n", before);
   }
 
   // add stgCurVal
@@ -258,10 +258,10 @@ void gc(void) {
     EXTRAEND();
   }
   if (DEBUG) {
-    fprintf(stderr, "new heap\n");
+    PRINTF( "new heap\n");
     showStgHeap();
     size_t after = stgHP - stgHeap;
-    fprintf(stderr, "end gc heap size %lx (change %lx)\n", after, before - after);
+    PRINTF( "end gc heap size %lx (change %lx)\n", after, before - after);
   }
 }
 
