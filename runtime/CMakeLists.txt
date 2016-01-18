@@ -41,7 +41,7 @@ include_directories("../codegen"
     set(CMAKE_C_FLAGS "-Wno-unused-const-variable")
   endif()
 
-  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g -std=gnu99 -Wall" )
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g -std=gnu99 -Wall -O1" )
 
   include_directories(
     "/usr/include/malloc"
