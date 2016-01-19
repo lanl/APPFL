@@ -7,7 +7,7 @@
 {-# LANGUAGE TupleSections         #-}
 
 {-# LANGUAGE CPP #-}
-#include "options.h"
+#include "../options.h"
 
 module InfoTab(
   InfoTab(..),

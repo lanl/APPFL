@@ -1,6 +1,6 @@
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE CPP #-}
-#include "options.h"
+#include "../options.h"
 
 module CAST (
   CExpr,

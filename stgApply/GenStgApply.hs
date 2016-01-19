@@ -1,5 +1,5 @@
 {-# LANGUAGE CPP #-}
-#include "options.h"
+#include "../options.h"
 
 import Util
 import Data.List(intercalate)
@@ -18,8 +18,8 @@ name strictness =
 
 dumpStgApply n strictness = 
     let (forward, macros, fun) = genAllstgApply strictness n
-    in do writeFile "../stgApply/stgApply.h" (includehtop ++ forward ++ macros ++ includehbot)
-          writeFile ("../stgApply/" ++ name strictness ++ ".c") (includec ++ fun)
+    in do writeFile "build/include/stgApply.h" (includehtop ++ forward ++ macros ++ includehbot)
+          writeFile ("build/stgApply/" ++ name strictness ++ ".c") (includec ++ fun)
           return ()
         where
           includehtop =

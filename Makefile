@@ -6,9 +6,6 @@ build_dir := $(CURDIR)/build
 
 all: codegen runtime
 
-codegen: codegen_ stgapply
-
-runtime: runtime_
 
 config: FORCE
 	@(cd codegen && cabal configure)
@@ -17,35 +14,36 @@ setup: FORCE
 	@((test -d $(build_dir)) || (mkdir $(build_dir)))
 	@((test -d $(build_dir)/bin) || (mkdir $(build_dir)/bin))
 	@((test -d $(build_dir)/etc) || (mkdir $(build_dir)/etc))
-	@((test -d stgApply) || (mkdir stgApply))
+	@((test -d $(build_dir)/include) || (mkdir $(build_dir)/include))
+	@((test -d $(build_dir)/stgApply) || (mkdir $(build_dir)/stgApply))
 	@(cp -f codegen/Prelude.stg $(build_dir)/etc/)
 	@(cp -f codegen/Prelude.mhs $(build_dir)/etc/)
 
 stgapply : FORCE setup
-	@(cd codegen && $(build_dir)/bin/genStgApply)
+	@(cd stgApply && cabal build $(build_flags))
+	@(cp -f stgApply/dist/build/genStgApply/genStgApply $(build_dir)/bin/)
+	@($(build_dir)/bin/genStgApply)
 
-codegen_: FORCE setup
+codegen: FORCE setup stgapply
 	@(cd codegen && cabal build $(build_flags))
-	@(cp -f codegen/dist/build/genStgApply/genStgApply $(build_dir)/bin/)
 	@(cp -f codegen/dist/build/stgc/stgc $(build_dir)/bin/)
 
-runtime_: FORCE setup
+runtime: FORCE setup stgapply
 	@(cd $(build_dir); cmake $(cmake_flags) ..)
 	@(cd $(build_dir); make $(build_flags))
 
 test: ctest tastytest
 
-tastytest: FORCE 
+tastytest: FORCE codegen runtime
 	@(cd codegen && cabal test)
 
-ctest: setup ctest_
-
-ctest_: FORCE
+ctest: FORCE codegen runtime
 	@(cd $(build_dir); cmake $(cmake_flags) ..)
 	@(cd $(build_dir) &&  ARGS="$(build_flags) -D ExperimentalTest --no-compress-output" $(MAKE) test && cp Testing/`head -n 1 Testing/TAG`/Test.xml ./CTestResults.xml)
 
 clean: FORCE
 	@(cd codegen && cabal clean)
+	@(cd stgApply && cabal clean)
 	@(cd test && rm -f *.stg.c 2>/dev/null)
 	@(cd test/error && rm -f *.stg.c 2>/dev/null)
 	@(cd test/mhs && rm -f *.mhs.c 2>/dev/null)

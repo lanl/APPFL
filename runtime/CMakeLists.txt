@@ -13,9 +13,12 @@ project(runtime)
 	      stgc.h
     )
 
-  set(xrt_hdrs ../codegen/options.h
-               ../stgApply/stgApply.h
+  set(xrt_hdrs ../options.h
+               ${PROJECT_BINARY_DIR}/../include/stgApply.h
      )
+
+  set(strict_src     ${PROJECT_BINARY_DIR}/../stgApply/strict.c)
+  set(nonstrict_src  ${PROJECT_BINARY_DIR}/../stgApply/nonstrict.c)
 
   set(rt_srcs args.c 
               gc.c
@@ -24,7 +27,8 @@ project(runtime)
 	      show.c
     )
 
-include_directories("../codegen"
+include_directories(".."
+                    ${PROJECT_BINARY_DIR}/../include
                    .
                    )
 
@@ -32,8 +36,7 @@ include_directories("../codegen"
   foreach (header ${rt_hdrs})
     configure_file(${header} ${PROJECT_BINARY_DIR}/../include/${header} COPYONLY)
   endforeach()
-  configure_file(../codegen/options.h ${PROJECT_BINARY_DIR}/../include/options.h COPYONLY)
-  configure_file(../stgApply/stgApply.h ${PROJECT_BINARY_DIR}/../include/stgApply.h COPYONLY)
+  configure_file(../options.h ${PROJECT_BINARY_DIR}/../include/options.h COPYONLY)
 
   if(NOT APPLE) 
     set(CMAKE_C_FLAGS "-Wno-unused-but-set-variable")
@@ -50,11 +53,11 @@ include_directories("../codegen"
   # put in build/lib
   if(SHAREDLIB) 
     set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/../lib)
-    add_library(runtime-ns SHARED ${rt_srcs} ../stgApply/nonstrict.c ${rt_hdrs} ${xrt_hdrs})
-    add_library(runtime-s SHARED ${rt_srcs} ../stgApply/strict.c ${rt_hdrs} ${xrt_hdrs})
+    add_library(runtime-ns SHARED ${rt_srcs} ${nonstrict_src} ${rt_hdrs} ${xrt_hdrs})
+    add_library(runtime-s SHARED ${rt_srcs} ${strict_src} ${rt_hdrs} ${xrt_hdrs})
   else()
     set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/../lib)
-    add_library(runtime-ns STATIC ${rt_srcs} ../stgApply/nonstrict.c ${rt_hdrs} ${xrt_hdrs})
-    add_library(runtime-s STATIC ${rt_srcs} ../stgApply/strict.c ${rt_hdrs} ${xrt_hdrs})
+    add_library(runtime-ns STATIC ${rt_srcs} ${nonstrict_src} ${rt_hdrs} ${xrt_hdrs})
+    add_library(runtime-s STATIC ${rt_srcs} ${strict_src} ${rt_hdrs} ${xrt_hdrs})
   endif()
 
