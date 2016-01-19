@@ -17,6 +17,12 @@
 /* If 1 use .pi = PI header in InfoTab */
 #define DEBUG_INFOTAB 1
 
+/* if 1 verbose debug info from gc() */
+#define DEBUG_GC 1
+
+/* if 1 extra gc() checks */
+#define EXTRA_CHECKS_GC 1   
+
 /* ghc cpp doesn't like varargs */
 /* define PRINTF(...) fprintf (stderr, __VA_ARGS__) */
 #if __STDC__

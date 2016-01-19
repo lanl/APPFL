@@ -9,8 +9,6 @@
 #include "obj.h"
 #include "options.h"
 
-const bool DEBUG = true;
-const bool EXTRA = true;  // run extra checks
 
 #define EXTRASTART() PRINTF( "EXTRA check file %s line %d\n", __FILE__, __LINE__)
 #define EXTRAEND() PRINTF( "EXTRA check succeeded %s %d\n", __FILE__, __LINE__)
@@ -62,7 +60,7 @@ PtrOrLiteral updatePtrByValue (PtrOrLiteral f) {
     // from space
     if (isLSBset(p->_infoPtr)) {
       // from space && forwarding
-      if (DEBUG) PRINTF( "update forward %s\n", p->ident);
+      if (DEBUG_GC) PRINTF( "update forward %s\n", p->ident);
       f.op = (Obj *)getInfoPtr(p);
       assert(isTo(f.op));
 #if USE_ARGTYPE
@@ -72,12 +70,12 @@ PtrOrLiteral updatePtrByValue (PtrOrLiteral f) {
     } else {
       // from space && !forwarding
       int size = getObjSize(p);
-      if (DEBUG) {
+      if (DEBUG_GC) {
         PRINTF( "copy %s %s from->to size=%d\n", 
 		objTypeNames[getObjType(p)], p->ident, size);
       }
       memcpy(freePtr, p, size);
-      if (EXTRA) {
+      if (EXTRA_CHECKS_GC) {
 	assert(isLSBset((InfoTab *)freePtr) == 0 && "gc: bad alignment");
       }
       p->_infoPtr = setLSB((InfoTab *)freePtr);
@@ -118,7 +116,7 @@ void updatePtr(PtrOrLiteral *f) {
 
 void processObj(Obj *p) {
   size_t i;
-  if (DEBUG) PRINTF( "processObj %s %s\n", objTypeNames[getObjType(p)], p->ident);
+  if (DEBUG_GC) PRINTF( "processObj %s %s\n", objTypeNames[getObjType(p)], p->ident);
 
   switch (getObjType(p)) {
   case FUN: {
@@ -183,12 +181,12 @@ void processObj(Obj *p) {
 void processCont(Cont *p) {
   int contType = getContType(p);
   assert(contType > PHONYSTARTCONT && contType < PHONYENDCONT && "bad cont type");
-  if (DEBUG) PRINTF( "processCont %s %s\n", contTypeNames[contType], p->ident);
+  if (DEBUG_GC) PRINTF( "processCont %s %s\n", contTypeNames[contType], p->ident);
   Bitmap64 bm = p->layout;
   uint64_t mask = bm.bitmap.mask;
   int i = 0;
   for (int size = bm.bitmap.size; size != 0; size--, i++, mask >>= 1) {
-    if (EXTRA) {
+    if (EXTRA_CHECKS_GC) {
   	EXTRASTART();
   	if (mask & 0x1UL)
   	  assert(isBoxed(p->payload[i]) && "gc: unexpected unboxed arg in CONT");
@@ -206,19 +204,19 @@ void gc(void) {
 
   size_t before = stgHP - stgHeap;
 
-  if (EXTRA) {
+  if (EXTRA_CHECKS_GC) {
     EXTRASTART();
     // checkStgHeap(); -- heap is fragmented
     EXTRAEND();
   }
 
-  if (DEBUG) {
+  if (DEBUG_GC) {
     showStgHeap();
     PRINTF( "start gc heap size %lx\n", before);
   }
 
   // add stgCurVal
-  if (EXTRA) {
+  if (EXTRA_CHECKS_GC) {
     assert(isBoxed(stgCurVal) && "gc: unexpected unboxed arg in stgCurVal");
   }
   processObj(stgCurVal.op);
@@ -237,7 +235,7 @@ void gc(void) {
   //all roots are now added.
 
   //update stgCurVal
-  if (EXTRA) {
+  if (EXTRA_CHECKS_GC) {
     EXTRASTART();
     assert(isBoxed(stgCurVal) && "gc: unexpected unboxed arg in stgCurVal");
     EXTRASTART();
@@ -252,16 +250,19 @@ void gc(void) {
 
   swapPtrs();
 
-  if (EXTRA) {
+  if (EXTRA_CHECKS_GC) {
     EXTRASTART();
     checkStgHeap();
     EXTRAEND();
   }
-  if (DEBUG) {
+  if (DEBUG_GC) {
     PRINTF( "new heap\n");
     showStgHeap();
     size_t after = stgHP - stgHeap;
     PRINTF( "end gc heap size %lx (change %lx)\n", after, before - after);
+    // suppress unused var warnings
+    (void)after;
+    (void)before;
   }
 }
 
