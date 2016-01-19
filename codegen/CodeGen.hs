@@ -75,6 +75,8 @@ data RVal = SO              -- static object
           | FP String Int   -- stack formal param, pointer to stack payload
           | FV String Int   -- payload in heap via pointer to pointer in stack, 
                             --   e.g. fvpp->op->payload[i]
+          | LB String Int   -- stack frame with let block bindings,
+                            --   e.g. fvp->payload[i]
           | AC Var Int      -- alt con
           | AD Var          -- alt def
             deriving(Eq,Show)
