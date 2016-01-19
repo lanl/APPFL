@@ -1,3 +1,4 @@
+#include <inttypes.h>
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -67,11 +68,7 @@ FnPtr stg_case_not_exhaustiveN() {
   Cont *stg_sc = stgGetStackArgp();
   //  PtrOrLiteral self = stg_sc->payload[0];
   PtrOrLiteral x    = stg_sc->payload[1];
-#ifndef __clang__
-  fprintf(stderr, "stg_case_not_exhaustive_unboxed: %lux\n", x.u);
-#else
-  fprintf(stderr, "stg_case_not_exhaustive_unboxed: %llux\n", x.u);
-#endif
+  fprintf(stderr, "stg_case_not_exhaustive_unboxed: %" PRIx64 "\n", x.u);
   showStgHeap();
   exit(0);
 }
