@@ -92,6 +92,8 @@ data RVal = SO              -- static object
 
 type Env = [(String, RVal)]
 
+optStr b s = if b then s else ""
+
 --  C AST version
 #if USE_CAST
 
@@ -632,10 +634,8 @@ cgalts env (Alts it alts name) boxed scrutName =
 --              concat ["  PtrOrLiteral " ++ v ++
 --                      " = " ++ contName ++ "->payload[" ++ show i ++ "];\n"
 --                      | (i,v) <- indexFrom 0 $ map fst $ fvs it ] ++
-              fvp ++ "->[0] = stgCurVal;\n" ++
-              contName ++ "->layout.bitmap.mask " ++ (if boxed 
-                                                      then "|="
-                                                      else "&=") ++ " 0x1;\n" ++
+              fvp ++ "[0] = stgCurVal;\n" ++
+              optStr boxed (contName ++ "->layout.bitmap.mask |= 0x1;\n") ++
               "PtrOrLiteral " ++ scrutName ++ " = stgCurVal;\n" ++
               (if switch then
                  (if boxed then
