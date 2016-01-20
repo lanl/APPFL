@@ -591,29 +591,28 @@ cgalts_noheapalloc env (Alts it alts name) boxed =
 -- continuation stack, so we need better analysis
 -- cge env (ECase _ e a@(Alts italts alts aname)) | (not $ noHeapAlloc $ emd e) =
 cge env (ECase _ e a@(Alts italts alts aname)) =
-    do (ecode, efunc) <- cge env e
-       (acode, afunc) <- cgalts env a (isBoxede e)
-       let name = "ccont_" ++ aname
-           pre = "// scrutinee may heap alloc\n" ++
-              "Cont *" ++ name ++
-              " = stgAllocCont( &it_" ++ aname ++ ");\n" ++
-                 "// dummy value for scrutinee\n" ++
-                 name ++ "->payload[0].i = 0;\n" ++
+    let scrutName = "scrut_" ++ aname
+        cname = "ccont_" ++ aname
+        pre = "// scrutinee may heap alloc\n" ++
+              "Cont *" ++ cname ++ " = stgAllocCont( &it_" ++ aname ++ ");\n" ++
+              "// dummy value for scrutinee\n" ++
+              cname ++ "->payload[0].i = 0;\n" ++
 #if USE_ARGTYPE
-                 name ++ "->payload[0].argType = INT;\n" ++
+              cname ++ "->payload[0].argType = INT;\n" ++
 #endif
               (if fvs italts == [] then
                  "// no FVs\n"
                else
                  "// load payload with FVs " ++
                          intercalate " " (map fst $ fvs italts) ++ "\n") ++
-                 (loadPayloadFVs env (map fst $ fvs italts) 1 name)
-       return (pre ++ ecode ++ acode, efunc ++ afunc)
+                 (loadPayloadFVs env (map fst $ fvs italts) 1 cname)
+    in do (ecode, efunc) <- cge env e
+          (acode, afunc) <- cgalts env a (isBoxede e) scrutName
+          return (pre ++ ecode ++ acode, efunc ++ afunc)
 
 -- ADef only or unary sum => no C switch
-cgalts env (Alts it alts name) boxed =
+cgalts env (Alts it alts name) boxed scrutName =
     let contName = "ccont_" ++ name
-        scrutName = "scrut_" ++ name
         fvp = "fvp"
         altenv = zip (map fst $ fvs it) (map (FP fvp) [1..])
         env' = altenv ++ env
