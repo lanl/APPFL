@@ -614,7 +614,8 @@ cge env (ECase _ e a@(Alts italts alts aname)) =
 cgalts env (Alts it alts name) boxed scrutName =
     let contName = "ccont_" ++ name
         fvp = "fvp"
-        altenv = zip (map fst $ fvs it) (map (FP fvp) [1..])
+        -- scrutName in case scrutinee is explicitly bound to variable
+        altenv = zip (scrutName : (map fst $ fvs it)) (map (FP fvp) [0..])
         env' = altenv ++ env
         forward = "FnPtr " ++ name ++ "();"
         switch = length alts > 1
@@ -631,6 +632,10 @@ cgalts env (Alts it alts name) boxed scrutName =
 --              concat ["  PtrOrLiteral " ++ v ++
 --                      " = " ++ contName ++ "->payload[" ++ show i ++ "];\n"
 --                      | (i,v) <- indexFrom 0 $ map fst $ fvs it ] ++
+              fvp ++ "->[0] = stgCurVal;\n" ++
+              contName ++ "->layout.bitmap.mask " ++ (if boxed 
+                                                      then "|="
+                                                      else "&=") ++ " 0x1;\n" ++
               "PtrOrLiteral " ++ scrutName ++ " = stgCurVal;\n" ++
               (if switch then
                  (if boxed then
