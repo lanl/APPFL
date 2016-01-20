@@ -3,15 +3,13 @@ version:        0.1
 cabal-version:  >= 1.2
 build-type:     Simple
 author:         LANL
-                
+
 
 executable genStgApply
   hs-source-dirs: .,../codegen
   main-is: GenStgApply.hs
   ghc-options:      -j -W -fno-warn-unused-binds -fno-warn-unused-matches -fno-warn-unused-imports
-  build-depends:   
+  build-depends:
                      base >= 4
                    , containers
-
-  
-
+                   , split
