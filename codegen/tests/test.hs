@@ -1,9 +1,8 @@
 module Main where
 import qualified ADT.Test
-import qualified CodeGen.Test
+--import qualified CodeGen.Test
 import qualified ConMap.Test
 import qualified InfoTab.Test
-
 import qualified Parser.Test
 import qualified Rename.Test
 import qualified SetFVs.Test
@@ -26,6 +25,6 @@ tests = testGroup "Tests" [ Tokenizer.Test.unitTests
                           , SetFVs.Test.unitTests
                           , InfoTab.Test.unitTests
                           , ConMap.Test.unitTests
-                          , CodeGen.Test.unitTests
+--                          , CodeGen.Test.unitTests
                           ]
                       
