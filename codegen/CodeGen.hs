@@ -622,7 +622,7 @@ cgalts env (Alts it alts name) boxed scrutName =
         forward = "FnPtr " ++ name ++ "();"
         switch = length alts > 1
     in do
-      codefuncs <- mapM (cgalt env' switch scrutName fvp) alts
+      codefuncs <- mapM (cgalt env' switch scrutName) alts
       let (codes, funcss) = unzip codefuncs
       let body =
               "fprintf(stderr, \"" ++ name ++ " here\\n\");\n" ++
@@ -652,12 +652,11 @@ cgalts env (Alts it alts name) boxed scrutName =
 
       return ("", (forward, fun) : concat funcss)
 
-cgalt env switch scrutName fvp (ACon it c vs e) =
+cgalt env switch scrutName (ACon it c vs e) =
     let DataCon c' ms = luDCon c (cmap it)
         (_,_,perm) = partPerm isBoxed ms
         -- eenv = zip vs (map (AC $ scrutName ++ ".op") [0..])
---        eenv = zzip vs (map (AC $ scrutName ++ ".op") perm)
-        eenv = zzip vs (map (FV fvp) perm)
+        eenv = zzip vs (map (AC $ scrutName ++ ".op") perm)
         env' = eenv ++ env
     in do
       (inline, func) <- cge env' e
@@ -671,8 +670,8 @@ cgalt env switch scrutName fvp (ACon it c vs e) =
                  else inline ++ "STGRETURN0();\n"
       return (code, func)
 
-cgalt env switch scrutName fvp (ADef it v e) =
-    let env' = (v, FP fvp 0) : env
+cgalt env switch scrutName (ADef it v e) =
+    let env' = (v, AD scrutName) : env
     in do
       (inline, func) <- cge env' e
       let code = "// " ++ v ++ " ->\n" ++
