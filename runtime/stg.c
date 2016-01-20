@@ -66,11 +66,19 @@ Bitmap64 layoutInfoToBitmap64(LayoutInfo *lip) {
   return bm;
 }
 
+Bitmap64 cLayoutInfoToBitmap64(CLayoutInfo *lip) {
+  Bitmap64 bm;
+  bm.bitmap.mask = (0x1UL << lip->boxedCount) - 1;  // boxed vals first
+  bm.bitmap.size = lip->boxedCount + lip->unboxedCount;
+  return bm;
+}
+
 Cont *stgAllocCont(CInfoTab *citp) {
   assert(citp->contType != CALLCONT &&
          citp->contType != STACKCONT &&
+         citp->contType != POPMECONT &&
           "stgAllocCont: citp->contType == CALLCONT/STACKCONT" );
-  int payloadSize = citp->layoutInfo.payloadSize;
+  int payloadSize = citp->cLayoutInfo.payloadSize;
   size_t contSize = sizeof(Cont) + payloadSize * sizeof(PtrOrLiteral);
   contSize = ((contSize + 7)/8)*8; 
   PRINTF( "allocating %s continuation with payloadSize %d\n", 
@@ -80,8 +88,13 @@ Cont *stgAllocCont(CInfoTab *citp) {
   assert(stgSP >= stgStack);
   Cont *contp = (Cont *)stgSP;
   contp->cInfoPtr = citp;
+
+  //  contp->layout = citp->cLayoutInfo.bm;
   contp->_contSize = contSize;  // to go away
-  contp->layout = layoutInfoToBitmap64(&citp->layoutInfo); // temp hack
+  contp->layout = cLayoutInfoToBitmap64(&citp->cLayoutInfo); // temp hack
+  if (contp->layout.bits != citp->cLayoutInfo.bm.bits) {
+    assert(false);
+  }
   contp->entryCode = citp->entryCode;
   contp->contType = citp->contType;
   strcpy(contp->ident, citp->name);  // may be overwritten
@@ -289,10 +302,10 @@ void showCIT(CInfoTab *citp) {
   PRINTF( "showCIT: %s %s, bc %d ubc %d", 
 	  contTypeNames[citp->contType], 
 	  citp->name, 
-	  citp->layoutInfo.boxedCount,
-          citp->layoutInfo.unboxedCount);
+	  citp->cLayoutInfo.boxedCount,
+          citp->cLayoutInfo.unboxedCount);
   if (citp->contType != CALLCONT)
-    PRINTF( ", layoutInfo.payloadSize %d", citp->layoutInfo.payloadSize);
+    PRINTF( ", layoutInfo.payloadSize %d", citp->cLayoutInfo.payloadSize);
   PRINTF( "\n");
 }  
 

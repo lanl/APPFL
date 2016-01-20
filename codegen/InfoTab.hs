@@ -23,6 +23,7 @@ module InfoTab(
 ) where
 
 import Prelude
+import STGbits
 import PPrint
 import AST
 import ADT
@@ -193,6 +194,8 @@ data InfoTab =
 
       cmap :: CMap }
 
+-- should continuations have InfoTabs at all???
+
 -- Alts - this is used for CASECONTs
   | ITAlts {
       typ :: Monotype,
@@ -203,11 +206,12 @@ data InfoTab =
       truefvs :: [Var],
       name :: String,         -- for C infotab
       entryCode :: String }   -- for C infotab
+
   -- the following may be useful later
   -- for now case continuation is handled by Alts.ITAlts
   -- similarly function continuation could be handled by EFCall.ITFCall
   -- update continuation by THUNK.ITThunk?
-  -- call continuation by ???
+
   | ITUpdcont
   | ITCasecont
   | ITCallcont
@@ -638,16 +642,22 @@ showIT it@(ITBlackhole {}) =
     "  .layoutInfo.unboxedCount = 0,\n" ++
     "};\n"
 
--- this is a continuation CInfoTab
+-- CONTINUATION CInfoTab
+
 showIT it@(ITAlts{}) =
     "CInfoTab it_" ++ name it ++ " __attribute__((aligned(8))) = {\n" ++
-    "  .name                = " ++ show (name it) ++ ",\n" ++
+    "  .name                     = " ++ show (name it) ++ ",\n" ++
     "  // fvs " ++ show (fvs it) ++ "\n" ++
-    "  .entryCode           = &" ++ entryCode it ++ ",\n" ++
-    "  .contType             = CASECONT,\n" ++
-    "  .layoutInfo.payloadSize = " ++ show (length $ fvs it) ++ ",\n" ++
-    "  .layoutInfo.boxedCount   = " ++ show (bfvc it) ++ ",\n" ++
-    "  .layoutInfo.unboxedCount = " ++ show (ufvc it) ++ ",\n" ++
+    "  .entryCode                = &" ++ entryCode it ++ ",\n" ++
+    "  .contType                 = CASECONT,\n" ++
+--  "  .cLayoutInfo.payloadSize  = " ++ show ((length $ fvs it) + 1) ++ ",\n" ++
+    "  .cLayoutInfo.payloadSize  = " ++ show (length $ fvs it) ++ ",\n" ++
+    "  .cLayoutInfo.boxedCount   = " ++ show (bfvc it) ++ ",\n" ++
+    "  .cLayoutInfo.unboxedCount = " ++ show (ufvc it) ++ ",\n" ++
+    "  .cLayoutInfo.bm           = " ++ 
+          npStrToBMStr ( -- 'N' : 
+                        replicate (bfvc it) 'P' ++
+                        replicate (ufvc it) 'N') ++ ",\n" ++
     "};\n"
 
 showIT _ = ""

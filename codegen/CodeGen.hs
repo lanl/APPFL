@@ -70,13 +70,17 @@ import Language.C.Data.Ident
 
 
 data RVal = SO              -- static object
-          | HO Int          -- heap obj,  payload size
-          | LV              -- local var, use name as is
-          | FP String Int   -- stack formal param, pointer to stack payload
-          | FV String Int   -- payload in heap via pointer to pointer in stack, 
-                            --   e.g. fvpp->op->payload[i]
-          | LB String Int   -- stack frame with let block bindings,
+          | HO Int          -- Heap Obj, payload size, TO GO?
+          | LV              -- Local Var, use name as is, TO GO?
+          | FP String Int   -- stack Formal Param, pointer to stack payload
+          | FV String Int   -- Free Variable, payload in heap via pointer to 
+                            --   pointer in stack, e.g. fvpp->op->payload[i]
+--        | LB String Int   -- stack frame with let block bindings,
                             --   e.g. fvp->payload[i]
+-- because we don't have fresh names for the Let Blocks we use existing 
+-- names for let-bound variables for now.  We could have done the same
+-- dereference scheme for FP above
+          | LB String       -- e.g. *(vp.op), i.e. pointer to payload
           | AC Var Int      -- alt con
           | AD Var          -- alt def
             deriving(Eq,Show)

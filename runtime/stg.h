@@ -150,6 +150,14 @@ typedef struct _LayoutInfo {
   char permString[64];  // this is just for e.g. displaying the heap
 } LayoutInfo;
 
+typedef struct _CLayoutInfo {
+  int payloadSize;
+  int boxedCount;
+  int unboxedCount;
+  Bitmap64 bm;
+  char permString[64];  // this is just for e.g. displaying the heap
+} CLayoutInfo;
+
 typedef struct {
   int arity;
   // curry paper suggests that we need type info
@@ -212,13 +220,15 @@ struct _CInfoTab {
   CmmFnPtr entryCode; 
   char name[32];  // for debugging
   ContType contType; // kind of continuation, tag for union
-  LayoutInfo layoutInfo;
+  CLayoutInfo cLayoutInfo;
+  /* not currently needed
   union {
     UPDCONTfields updcontFields;
     CASECONTfields casecontFields;
     CALLCONTfields callcontFields;
     POPMECONTfields popmecontFields;
   };
+  */
 };
 
 extern void *stgHeap, *stgHP;

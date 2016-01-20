@@ -18,9 +18,10 @@
 #define DEBUG_INFOTAB 1
 
 /* ghc cpp doesn't like varargs */
+/* define PRINTF(...) */
 /* define PRINTF(...) fprintf (stderr, __VA_ARGS__) */
 #if __STDC__
-#define PRINTF(...)
+#define PRINTF(...) fprintf (stderr, __VA_ARGS__)
 #endif
 
 #endif

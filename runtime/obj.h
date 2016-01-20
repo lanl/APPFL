@@ -46,9 +46,9 @@ static inline size_t endTHUNKFVsU(Obj *p) { return startTHUNKFVsU(p) + getInfoPt
 // static inline size_t endCALLFVsB(Cont *p) { return p->payload[0].i + 1; }
 
 static inline size_t startCASEFVsB(Cont *p) { return 0; }
-static inline size_t endCASEFVsB(Cont *p) { return getCInfoPtr(p)->layoutInfo.boxedCount; }
+static inline size_t endCASEFVsB(Cont *p) { return getCInfoPtr(p)->cLayoutInfo.boxedCount; }
 static inline size_t startCASEFVsU(Cont *p) { return endCASEFVsB(p); }
-static inline size_t endCASEFVsU(Cont *p) { return startCASEFVsU(p) + getCInfoPtr(p)->layoutInfo.unboxedCount; }
+static inline size_t endCASEFVsU(Cont *p) { return startCASEFVsU(p) + getCInfoPtr(p)->cLayoutInfo.unboxedCount; }
 
 
 // end of wrappers
