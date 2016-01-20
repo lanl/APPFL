@@ -68,6 +68,11 @@ import Language.C.Data.Node
 import Language.C.Data.Ident
 #endif
 
+#if USE_ARGTYPE
+useArgType = True
+#else
+useArgType = False
+#endif
 
 data RVal = SO              -- static object
           | HO Int          -- Heap Obj, payload size, TO GO?
@@ -549,29 +554,6 @@ cge env (ELet it os e) =
       return (concat decls ++ concat buildcodes ++ einline,
               ofunc ++ efunc)
 
--- TOFIX:  even if scrutinee doesn't heap alloc it may return through the
--- continuation stack, so we need better analysis
--- cge env (ECase _ e a@(Alts italts alts aname)) | (not $ noHeapAlloc $ emd e) =
-cge env (ECase _ e a@(Alts italts alts aname)) =
-    do (ecode, efunc) <- cge env e
-       (acode, afunc) <- cgalts env a (isBoxede e)
-       let name = "ccont_" ++ aname
-           pre = "// scrutinee may heap alloc\n" ++
-              "Cont *" ++ name ++
-              " = stgAllocCont( &it_" ++ aname ++ ");\n" ++
-              (if fvs italts == [] then
-                 "// no FVs\n"
-               else
-                 "// load payload with FVs " ++
-                   intercalate " " (map fst $ fvs italts) ++ "\n") ++
-                 (loadPayloadFVs env (map fst $ fvs italts) 0 name)
---           scrut = if isBoxede e then
---                       "  // boxed scrutinee\n" ++
---                       "  STGEVAL(stgCurVal);\n"
---                   else "  // unboxed scrutinee\n"
---       return (pre ++ ecode ++ scrut ++ acode, efunc ++ afunc)
-       return (pre ++ ecode ++ acode, efunc ++ afunc)
-
 -- scrutinee does no heap allocation
 {-
 cge env (ECase _ e a@(Alts italts alts aname)) =
@@ -580,7 +562,6 @@ cge env (ECase _ e a@(Alts italts alts aname)) =
        let name = "ccont_" ++ aname
            pre = "// scrutinee no heap allocation\n"
        return (pre ++ ecode ++ acode, efunc ++ afunc)
--}
 
 -- ADef only or unary sum => no C switch
 cgalts_noheapalloc env (Alts it alts name) boxed =
@@ -604,13 +585,37 @@ cgalts_noheapalloc env (Alts it alts name) boxed =
                    "}\n"
                  else concat codes)
       return (inl, (phonyforward, phonyfun) : concat funcss)
+-}
+
+-- TOFIX:  even if scrutinee doesn't heap alloc it may return through the
+-- continuation stack, so we need better analysis
+-- cge env (ECase _ e a@(Alts italts alts aname)) | (not $ noHeapAlloc $ emd e) =
+cge env (ECase _ e a@(Alts italts alts aname)) =
+    do (ecode, efunc) <- cge env e
+       (acode, afunc) <- cgalts env a (isBoxede e)
+       let name = "ccont_" ++ aname
+           pre = "// scrutinee may heap alloc\n" ++
+              "Cont *" ++ name ++
+              " = stgAllocCont( &it_" ++ aname ++ ");\n" ++
+                 "// dummy value for scrutinee\n" ++
+                 name ++ "->payload[0].i = 0;\n" ++
+#if USE_ARGTYPE
+                 name ++ "->payload[0].argType = INT;\n" ++
+#endif
+              (if fvs italts == [] then
+                 "// no FVs\n"
+               else
+                 "// load payload with FVs " ++
+                         intercalate " " (map fst $ fvs italts) ++ "\n") ++
+                 (loadPayloadFVs env (map fst $ fvs italts) 1 name)
+       return (pre ++ ecode ++ acode, efunc ++ afunc)
 
 -- ADef only or unary sum => no C switch
 cgalts env (Alts it alts name) boxed =
     let contName = "ccont_" ++ name
         scrutName = "scrut_" ++ name
         fvp = "fvp"
-        altenv = zip (map fst $ fvs it) (map (FP fvp) [0..])
+        altenv = zip (map fst $ fvs it) (map (FP fvp) [1..])
         env' = altenv ++ env
         forward = "FnPtr " ++ name ++ "();"
         switch = length alts > 1

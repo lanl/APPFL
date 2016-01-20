@@ -88,13 +88,15 @@ Cont *stgAllocCont(CInfoTab *citp) {
   assert(stgSP >= stgStack);
   Cont *contp = (Cont *)stgSP;
   contp->cInfoPtr = citp;
-
-  //  contp->layout = citp->cLayoutInfo.bm;
   contp->_contSize = contSize;  // to go away
+
+  contp->layout = citp->cLayoutInfo.bm;
+  /*
   contp->layout = cLayoutInfoToBitmap64(&citp->cLayoutInfo); // temp hack
   if (contp->layout.bits != citp->cLayoutInfo.bm.bits) {
     assert(false);
   }
+  */
   contp->entryCode = citp->entryCode;
   contp->contType = citp->contType;
   strcpy(contp->ident, citp->name);  // may be overwritten

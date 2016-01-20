@@ -650,12 +650,12 @@ showIT it@(ITAlts{}) =
     "  // fvs " ++ show (fvs it) ++ "\n" ++
     "  .entryCode                = &" ++ entryCode it ++ ",\n" ++
     "  .contType                 = CASECONT,\n" ++
---  "  .cLayoutInfo.payloadSize  = " ++ show ((length $ fvs it) + 1) ++ ",\n" ++
-    "  .cLayoutInfo.payloadSize  = " ++ show (length $ fvs it) ++ ",\n" ++
+    "  .cLayoutInfo.payloadSize  = " ++ show ((length $ fvs it) + 1) ++ ",\n" ++
+--    "  .cLayoutInfo.payloadSize  = " ++ show (length $ fvs it) ++ ",\n" ++
     "  .cLayoutInfo.boxedCount   = " ++ show (bfvc it) ++ ",\n" ++
     "  .cLayoutInfo.unboxedCount = " ++ show (ufvc it) ++ ",\n" ++
     "  .cLayoutInfo.bm           = " ++ 
-          npStrToBMStr ( -- 'N' : 
+          npStrToBMStr ( 'N' : 
                         replicate (bfvc it) 'P' ++
                         replicate (ufvc it) 'N') ++ ",\n" ++
     "};\n"
