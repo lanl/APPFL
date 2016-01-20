@@ -4,44 +4,45 @@ endif
 
 build_dir := $(CURDIR)/build
 
+.PHONY: all config setup stgapply codegen runtime test tastytest ctest clean
+
 all: codegen runtime
 
-
-config: FORCE
+config: 
 	@(cd codegen && cabal configure)
 
-setup: FORCE
+setup: 
 	@((test -d $(build_dir)) || (mkdir $(build_dir)))
 	@((test -d $(build_dir)/bin) || (mkdir $(build_dir)/bin))
 	@((test -d $(build_dir)/etc) || (mkdir $(build_dir)/etc))
 	@((test -d $(build_dir)/include) || (mkdir $(build_dir)/include))
 	@((test -d $(build_dir)/stgApply) || (mkdir $(build_dir)/stgApply))
-	@(cp -f codegen/Prelude.stg $(build_dir)/etc/)
-	@(cp -f codegen/Prelude.mhs $(build_dir)/etc/)
+	@(cp -f prelude/Prelude.stg $(build_dir)/etc/)
+	@(cp -f prelude/Prelude.mhs $(build_dir)/etc/)
 
-stgapply : FORCE setup
+stgapply: setup
 	@(cd stgApply && cabal build $(build_flags))
 	@(cp -f stgApply/dist/build/genStgApply/genStgApply $(build_dir)/bin/)
 	@($(build_dir)/bin/genStgApply)
 
-codegen: FORCE setup stgapply
+codegen: stgapply
 	@(cd codegen && cabal build $(build_flags))
 	@(cp -f codegen/dist/build/stgc/stgc $(build_dir)/bin/)
 
-runtime: FORCE setup stgapply
+runtime: stgapply
 	@(cd $(build_dir); cmake $(cmake_flags) ..)
 	@(cd $(build_dir); make $(build_flags))
 
 test: ctest tastytest
 
-tastytest: FORCE codegen runtime
+tastytest: all
 	@(cd codegen && cabal test)
 
-ctest: FORCE codegen runtime
+ctest: all
 	@(cd $(build_dir); cmake $(cmake_flags) ..)
 	@(cd $(build_dir) &&  ARGS="$(build_flags) -D ExperimentalTest --no-compress-output" $(MAKE) test && cp Testing/`head -n 1 Testing/TAG`/Test.xml ./CTestResults.xml)
 
-clean: FORCE
+clean: 
 	@(cd codegen && cabal clean)
 	@(cd stgApply && cabal clean)
 	@(cd test && rm -f *.stg.c 2>/dev/null)
@@ -49,4 +50,3 @@ clean: FORCE
 	@(cd test/mhs && rm -f *.mhs.c 2>/dev/null)
 	@(rm -rf $(build_dir))
 
-FORCE:
