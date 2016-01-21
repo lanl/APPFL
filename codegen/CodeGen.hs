@@ -75,7 +75,7 @@ useArgType = False
 #endif
 
 data RVal = SO              -- static object
-          | HO Int          -- Heap Obj, payload size, TO GO?
+          | HO String       -- Heap Obj, payload size, TO GO?
           | LV              -- Local Var, use name as is, TO GO?
           | FP String Int   -- stack Formal Param, pointer to stack payload
           | FV String Int   -- Free Variable, payload in heap via pointer to 
@@ -251,15 +251,16 @@ lu v [] _ _ = error $ "lu " ++ v ++ " failed"
 lu v ((v',k):_) size' n | v == v' =
     case k of
       SO      -> "HOTOPL(&sho_" ++ v ++ ")"
-      HO size -> "HOTOPL((Obj *)STGHEAPAT(" ++ show (size+size') ++ "," ++ show (n+1) ++ "))"
+--      HO size -> "HOTOPL((Obj *)STGHEAPAT(" ++ show (size+size') ++ "," ++ show (n+1) ++ "))"
+      HO name -> "(*" ++ name ++ ")"
       LV       -> v
       FP fp i -> fp ++ "[" ++ show i ++ "]"
       FV fpp i -> fpp ++ "->op->payload[" ++ show i ++ "]"
       AC v i  -> v ++ "->payload[" ++ show i ++ "]"
       AD v    -> v
 
-lu v ((_, HO size) : xs) size' n =
-    lu v xs (size'+size) (n+1)
+lu v ((_, HO _) : xs) size' n =
+    lu v xs (size') (n+1)
 
 lu v (x : xs) size n = lu v xs size n
 
@@ -542,7 +543,14 @@ cge env (EPrimop it op eas) =
 
 cge env (ELet it os e) =
     let names = map oname os
-        env'  = (reverse $ zip names (map HO sizes)) ++ env
+        decl = concat [ "PtrOrLiteral *" ++ name ++ ";\n" | name <- names ] ++
+               "{Cont *contp = stgAllocCallOrStackCont(&it_stgStackCont, " ++ 
+                               show (length os) ++ ");\n" ++
+               concat [ name ++ " = &(contp->payload[" ++ show i ++ "]);\n" |
+                        (name, i) <- zip names [0..] ] ++
+               "contp->layout = " ++ npStrToBMStr (replicate (length os) 'P') ++
+               ";}\n"
+        env'  = zip names (map HO names) ++ env
 #if USE_CAST
         (sizes, cDecls, cBuildcodes) = unzip3 $ map (buildHeapObj env') os
         decls = render $ pretty cDecls 
@@ -553,7 +561,7 @@ cge env (ELet it os e) =
     in do
       ofunc <- cgos env' os
       (einline, efunc) <- cge env' e
-      return (concat decls ++ concat buildcodes ++ einline,
+      return (decl ++ concat decls ++ concat buildcodes ++ einline,
               ofunc ++ efunc)
 
 -- scrutinee does no heap allocation
@@ -736,13 +744,14 @@ buildHeapObj :: Env -> Obj InfoTab -> (Int, String, String)
 buildHeapObj env o =
     let (size, rval) = bho env o
         name = oname o
-        decl = "Obj *" ++ name ++ " = stgNewHeapObj( &it_" ++ name ++ " );\n"
+--        decl = "Obj *" ++ name ++ " = stgNewHeapObj( &it_" ++ name ++ " );\n"
+        decl = name ++ "->op = stgNewHeapObj( &it_" ++ name ++ " );\n"
     in (size, decl, rval)
 
 
 bho :: Env -> Obj InfoTab -> (Int, String)
 bho env (FUN it vs e name) =
-    (length $ fvs it, loadPayloadFVs env (map fst $ fvs it) 0 name)
+    (length $ fvs it, loadPayloadFVs env (map fst $ fvs it) 0 (name ++ "->op"))
 
 
 bho env (PAP it f as name) = error "unsupported explicit PAP"
@@ -755,7 +764,7 @@ bho env (PAP it f as name) = error "unsupported explicit PAP"
 -- 2.  Use fvs type information
 -- 3.  Embedding the Atoms into typed expressions
 bho env (CON it c as name) =
-    let ps = [name ++ "->payload[" ++ show i ++ "] = " ++
+    let ps = [name ++ "->op->payload[" ++ show i ++ "] = " ++
                        cga env a ++ "; // " ++ showa a ++ "\n"
                        | (i,a) <- indexFrom 0 (projectAtoms as) ]
     in (length ps, concat ps)
@@ -763,8 +772,8 @@ bho env (CON it c as name) =
 bho env (THUNK it e name) =
     let fv = fvs it
     in (1 + (length fv), 
-        name ++ "->payload[0].op = NULL;\n" ++
-        loadPayloadFVs env (map fst fv) 1 name)
+        name ++ "->op->payload[0].op = NULL;\n" ++
+        loadPayloadFVs env (map fst fv) 1 (name ++ "->op"))
 
 bho env (BLACKHOLE it name) = (1,"")
 
