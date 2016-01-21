@@ -188,10 +188,17 @@ void processCont(Cont *p) {
   for (int size = bm.bitmap.size; size != 0; size--, i++, mask >>= 1) {
     if (EXTRA_CHECKS_GC) {
   	EXTRASTART();
-  	if (mask & 0x1UL)
-  	  assert(isBoxed(p->payload[i]) && "gc: unexpected unboxed arg in CONT");
-  	else
-  	  assert(!isBoxed(p->payload[i]) && "gc: unexpected boxed arg in CONT");
+  	if (mask & 0x1UL) {
+  	  if (!isBoxed(p->payload[i])) {
+	    PRINTF("gc: unexpected unboxed arg in CONT index %d\n", i);
+	    assert(false);
+	  }
+	} else {
+	  if (isBoxed(p->payload[i])) {
+	    PRINTF("gc: unexpected boxed arg in CONT index %d\n", i);
+	    assert(false);
+	  }
+	}
   	EXTRAEND();
     }
     if (mask & 0x1UL) updatePtr(&p->payload[i]);

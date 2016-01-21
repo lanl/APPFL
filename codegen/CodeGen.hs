@@ -68,18 +68,31 @@ import Language.C.Data.Node
 import Language.C.Data.Ident
 #endif
 
+#if USE_ARGTYPE
+useArgType = True
+#else
+useArgType = False
+#endif
 
 data RVal = SO              -- static object
-          | HO Int          -- heap obj,  payload size
-          | LV              -- local var, use name as is
-          | FP String Int   -- stack formal param, pointer to stack payload
-          | FV String Int   -- payload in heap via pointer to pointer in stack, 
-                            --   e.g. fvpp->op->payload[i]
+          | HO String       -- Heap Obj, payload size, TO GO?
+          | LV              -- Local Var, use name as is, TO GO?
+          | FP String Int   -- stack Formal Param, pointer to stack payload
+          | FV String Int   -- Free Variable, payload in heap via pointer to 
+                            --   pointer in stack, e.g. fvpp->op->payload[i]
+--        | LB String Int   -- stack frame with let block bindings,
+                            --   e.g. fvp->payload[i]
+-- because we don't have fresh names for the Let Blocks we use existing 
+-- names for let-bound variables for now.  We could have done the same
+-- dereference scheme for FP above
+          | LB String       -- e.g. *(vp.op), i.e. pointer to payload
           | AC Var Int      -- alt con
           | AD Var          -- alt def
             deriving(Eq,Show)
 
 type Env = [(String, RVal)]
+
+optStr b s = if b then s else ""
 
 --  C AST version
 #if USE_CAST
@@ -229,26 +242,23 @@ cgMain = error "cgMain"
 -- text version
 #else
 
+listLookup k [] = Nothing
+listLookup k ((k',v):xs) | k == k' = Just v
+                         | otherwise = listLookup k xs
+
 getEnvRef :: String -> Env -> String
-getEnvRef v env = lu v env 0 0
-
-lu :: String -> Env -> Int -> Int -> String
-lu v [] _ _ = error $ "lu " ++ v ++ " failed"
-
-lu v ((v',k):_) size' n | v == v' =
-    case k of
-      SO      -> "HOTOPL(&sho_" ++ v ++ ")"
-      HO size -> "HOTOPL((Obj *)STGHEAPAT(" ++ show (size+size') ++ "," ++ show (n+1) ++ "))"
-      LV       -> v
-      FP fp i -> fp ++ "[" ++ show i ++ "]"
-      FV fpp i -> fpp ++ "->op->payload[" ++ show i ++ "]"
-      AC v i  -> v ++ "->payload[" ++ show i ++ "]"
-      AD v    -> v
-
-lu v ((_, HO size) : xs) size' n =
-    lu v xs (size'+size) (n+1)
-
-lu v (x : xs) size n = lu v xs size n
+getEnvRef v kvs = 
+    case listLookup v kvs of
+      Nothing -> error $ "getEnvRef " ++ v ++ " failed"
+      Just k ->
+          case k of
+            SO      -> "HOTOPL(&sho_" ++ v ++ ")"
+            HO name -> "(*" ++ name ++ ")"
+            LV       -> v
+            FP fp i -> fp ++ "[" ++ show i ++ "]"
+            FV fpp i -> fpp ++ "->op->payload[" ++ show i ++ "]"
+            AC v i  -> v ++ "->payload[" ++ show i ++ "]"
+            AD v    -> v
 
 cga :: Env -> Atom -> String
 cga env (Var v) = cgv env v
@@ -529,42 +539,26 @@ cge env (EPrimop it op eas) =
 
 cge env (ELet it os e) =
     let names = map oname os
-        env'  = (reverse $ zip names (map HO sizes)) ++ env
+        decl = concat [ "PtrOrLiteral *" ++ name ++ ";\n" | name <- names ] ++
+               "{Cont *contp = stgAllocCallOrStackCont(&it_stgStackCont, " ++ 
+                               show (length os) ++ ");\n" ++
+               concat [ name ++ " = &(contp->payload[" ++ show i ++ "]);\n" |
+                        (name, i) <- zip names [0..] ] ++
+               "contp->layout = " ++ npStrToBMStr (replicate (length os) 'P') ++
+               ";}\n"
+        env'  = zip names (map HO names) ++ env
 #if USE_CAST
         (sizes, cDecls, cBuildcodes) = unzip3 $ map (buildHeapObj env') os
         decls = render $ pretty cDecls 
         buildcodes =  intercalate "\n" (map (render . pretty) cBuildcodes))
 #else
-        (sizes, decls, buildcodes) = unzip3 $ map (buildHeapObj env') os
+        (decls, buildcodes) = unzip $ map (buildHeapObj env') os
 #endif
     in do
       ofunc <- cgos env' os
       (einline, efunc) <- cge env' e
-      return (concat decls ++ concat buildcodes ++ einline,
+      return (decl ++ concat decls ++ concat buildcodes ++ einline,
               ofunc ++ efunc)
-
--- TOFIX:  even if scrutinee doesn't heap alloc it may return through the
--- continuation stack, so we need better analysis
--- cge env (ECase _ e a@(Alts italts alts aname)) | (not $ noHeapAlloc $ emd e) =
-cge env (ECase _ e a@(Alts italts alts aname)) =
-    do (ecode, efunc) <- cge env e
-       (acode, afunc) <- cgalts env a (isBoxede e)
-       let name = "ccont_" ++ aname
-           pre = "// scrutinee may heap alloc\n" ++
-              "Cont *" ++ name ++
-              " = stgAllocCont( &it_" ++ aname ++ ");\n" ++
-              (if fvs italts == [] then
-                 "// no FVs\n"
-               else
-                 "// load payload with FVs " ++
-                   intercalate " " (map fst $ fvs italts) ++ "\n") ++
-                 (loadPayloadFVs env (map fst $ fvs italts) 0 name)
---           scrut = if isBoxede e then
---                       "  // boxed scrutinee\n" ++
---                       "  STGEVAL(stgCurVal);\n"
---                   else "  // unboxed scrutinee\n"
---       return (pre ++ ecode ++ scrut ++ acode, efunc ++ afunc)
-       return (pre ++ ecode ++ acode, efunc ++ afunc)
 
 -- scrutinee does no heap allocation
 {-
@@ -574,7 +568,6 @@ cge env (ECase _ e a@(Alts italts alts aname)) =
        let name = "ccont_" ++ aname
            pre = "// scrutinee no heap allocation\n"
        return (pre ++ ecode ++ acode, efunc ++ afunc)
--}
 
 -- ADef only or unary sum => no C switch
 cgalts_noheapalloc env (Alts it alts name) boxed =
@@ -598,18 +591,42 @@ cgalts_noheapalloc env (Alts it alts name) boxed =
                    "}\n"
                  else concat codes)
       return (inl, (phonyforward, phonyfun) : concat funcss)
+-}
+
+-- TOFIX:  even if scrutinee doesn't heap alloc it may return through the
+-- continuation stack, so we need better analysis
+-- cge env (ECase _ e a@(Alts italts alts aname)) | (not $ noHeapAlloc $ emd e) =
+cge env (ECase _ e a@(Alts italts alts aname)) =
+    let scrutName = "scrut_" ++ aname
+        cname = "ccont_" ++ aname
+        pre = "// scrutinee may heap alloc\n" ++
+              "Cont *" ++ cname ++ " = stgAllocCont( &it_" ++ aname ++ ");\n" ++
+              "// dummy value for scrutinee\n" ++
+              cname ++ "->payload[0].i = 0;\n" ++
+#if USE_ARGTYPE
+              cname ++ "->payload[0].argType = INT;\n" ++
+#endif
+              (if fvs italts == [] then
+                 "// no FVs\n"
+               else
+                 "// load payload with FVs " ++
+                         intercalate " " (map fst $ fvs italts) ++ "\n") ++
+                 (loadPayloadFVs env (map fst $ fvs italts) 1 cname)
+    in do (ecode, efunc) <- cge env e
+          (acode, afunc) <- cgalts env a (isBoxede e) scrutName
+          return (pre ++ ecode ++ acode, efunc ++ afunc)
 
 -- ADef only or unary sum => no C switch
-cgalts env (Alts it alts name) boxed =
+cgalts env (Alts it alts name) boxed scrutName =
     let contName = "ccont_" ++ name
-        scrutName = "scrut_" ++ name
         fvp = "fvp"
-        altenv = zip (map fst $ fvs it) (map (FP fvp) [0..])
+        -- scrutName in case scrutinee is explicitly bound to variable
+        altenv = zip (scrutName : (map fst $ fvs it)) (map (FP fvp) [0..])
         env' = altenv ++ env
         forward = "FnPtr " ++ name ++ "();"
         switch = length alts > 1
     in do
-      codefuncs <- mapM (cgalt env' switch scrutName) alts
+      codefuncs <- mapM (cgalt env' switch scrutName fvp) alts
       let (codes, funcss) = unzip codefuncs
       let body =
               "fprintf(stderr, \"" ++ name ++ " here\\n\");\n" ++
@@ -621,6 +638,8 @@ cgalts env (Alts it alts name) boxed =
 --              concat ["  PtrOrLiteral " ++ v ++
 --                      " = " ++ contName ++ "->payload[" ++ show i ++ "];\n"
 --                      | (i,v) <- indexFrom 0 $ map fst $ fvs it ] ++
+              fvp ++ "[0] = stgCurVal;\n" ++
+              optStr boxed (contName ++ "->layout.bitmap.mask |= 0x1;\n") ++
               "PtrOrLiteral " ++ scrutName ++ " = stgCurVal;\n" ++
               (if switch then
                  (if boxed then
@@ -637,11 +656,12 @@ cgalts env (Alts it alts name) boxed =
 
       return ("", (forward, fun) : concat funcss)
 
-cgalt env switch scrutName (ACon it c vs e) =
+cgalt env switch scrutName fvp (ACon it c vs e) =
     let DataCon c' ms = luDCon c (cmap it)
         (_,_,perm) = partPerm isBoxed ms
         -- eenv = zip vs (map (AC $ scrutName ++ ".op") [0..])
-        eenv = zzip vs (map (AC $ scrutName ++ ".op") perm)
+--        eenv = zzip vs (map (AC $ scrutName ++ ".op") perm)
+        eenv = zzip vs (map (FV fvp) perm)
         env' = eenv ++ env
     in do
       (inline, func) <- cge env' e
@@ -655,8 +675,8 @@ cgalt env switch scrutName (ACon it c vs e) =
                  else inline ++ "STGRETURN0();\n"
       return (code, func)
 
-cgalt env switch scrutName (ADef it v e) =
-    let env' = (v, AD scrutName) : env
+cgalt env switch scrutName fvp (ADef it v e) =
+    let env' = (v, FP fvp 0) : env
     in do
       (inline, func) <- cge env' e
       let code = "// " ++ v ++ " ->\n" ++
@@ -671,10 +691,6 @@ cgalt env switch scrutName (ADef it v e) =
 
 -- ****************************************************************
 -- buildHeapObj is only invoked by ELet so TLDs not built
-
---  UPDCONT,
---  CASECONT,
---  CALLCONT,
 
 #if USE_CAST
 
@@ -716,17 +732,18 @@ cLoadPayloadAtoms env as ind name =
 
 #else
 
-buildHeapObj :: Env -> Obj InfoTab -> (Int, String, String)
+buildHeapObj :: Env -> Obj InfoTab -> (String, String)
 buildHeapObj env o =
-    let (size, rval) = bho env o
+    let rval = bho env o
         name = oname o
-        decl = "Obj *" ++ name ++ " = stgNewHeapObj( &it_" ++ name ++ " );\n"
-    in (size, decl, rval)
+        decl = name ++ "->op = stgNewHeapObj( &it_" ++ name ++ " );\n" ++
+               optStr useArgType (name ++ "->argType = HEAPOBJ;\n")
+    in (decl, rval)
 
 
-bho :: Env -> Obj InfoTab -> (Int, String)
+bho :: Env -> Obj InfoTab -> String
 bho env (FUN it vs e name) =
-    (length $ fvs it, loadPayloadFVs env (map fst $ fvs it) 0 name)
+    loadPayloadFVs env (map fst $ fvs it) 0 (name ++ "->op")
 
 
 bho env (PAP it f as name) = error "unsupported explicit PAP"
@@ -739,18 +756,18 @@ bho env (PAP it f as name) = error "unsupported explicit PAP"
 -- 2.  Use fvs type information
 -- 3.  Embedding the Atoms into typed expressions
 bho env (CON it c as name) =
-    let ps = [name ++ "->payload[" ++ show i ++ "] = " ++
+    let ps = [name ++ "->op->payload[" ++ show i ++ "] = " ++
                        cga env a ++ "; // " ++ showa a ++ "\n"
                        | (i,a) <- indexFrom 0 (projectAtoms as) ]
-    in (length ps, concat ps)
+    in concat ps
 
 bho env (THUNK it e name) =
     let fv = fvs it
-    in (1 + (length fv), 
-        name ++ "->payload[0].op = NULL;\n" ++
-        loadPayloadFVs env (map fst fv) 1 name)
+    in name ++ "->op->payload[0].op = NULL;\n" ++
+       optStr useArgType (name ++ "->op->payload[0].argType = HEAPOBJ;\n") ++
+       loadPayloadFVs env (map fst fv) 1 (name ++ "->op")
 
-bho env (BLACKHOLE it name) = (1,"")
+bho env (BLACKHOLE it name) = ""
 
 #endif
 
