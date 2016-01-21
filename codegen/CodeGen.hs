@@ -242,27 +242,23 @@ cgMain = error "cgMain"
 -- text version
 #else
 
+listLookup k [] = Nothing
+listLookup k ((k',v):xs) | k == k' = Just v
+                         | otherwise = listLookup k xs
+
 getEnvRef :: String -> Env -> String
-getEnvRef v env = lu v env 0 0
-
-lu :: String -> Env -> Int -> Int -> String
-lu v [] _ _ = error $ "lu " ++ v ++ " failed"
-
-lu v ((v',k):_) size' n | v == v' =
-    case k of
-      SO      -> "HOTOPL(&sho_" ++ v ++ ")"
---      HO size -> "HOTOPL((Obj *)STGHEAPAT(" ++ show (size+size') ++ "," ++ show (n+1) ++ "))"
-      HO name -> "(*" ++ name ++ ")"
-      LV       -> v
-      FP fp i -> fp ++ "[" ++ show i ++ "]"
-      FV fpp i -> fpp ++ "->op->payload[" ++ show i ++ "]"
-      AC v i  -> v ++ "->payload[" ++ show i ++ "]"
-      AD v    -> v
-
-lu v ((_, HO _) : xs) size' n =
-    lu v xs (size') (n+1)
-
-lu v (x : xs) size n = lu v xs size n
+getEnvRef v kvs = 
+    case listLookup v kvs of
+      Nothing -> error $ "getEnvRef " ++ v ++ " failed"
+      Just k ->
+          case k of
+            SO      -> "HOTOPL(&sho_" ++ v ++ ")"
+            HO name -> "(*" ++ name ++ ")"
+            LV       -> v
+            FP fp i -> fp ++ "[" ++ show i ++ "]"
+            FV fpp i -> fpp ++ "->op->payload[" ++ show i ++ "]"
+            AC v i  -> v ++ "->payload[" ++ show i ++ "]"
+            AD v    -> v
 
 cga :: Env -> Atom -> String
 cga env (Var v) = cgv env v
@@ -556,7 +552,7 @@ cge env (ELet it os e) =
         decls = render $ pretty cDecls 
         buildcodes =  intercalate "\n" (map (render . pretty) cBuildcodes))
 #else
-        (sizes, decls, buildcodes) = unzip3 $ map (buildHeapObj env') os
+        (decls, buildcodes) = unzip $ map (buildHeapObj env') os
 #endif
     in do
       ofunc <- cgos env' os
@@ -736,19 +732,18 @@ cLoadPayloadAtoms env as ind name =
 
 #else
 
-buildHeapObj :: Env -> Obj InfoTab -> (Int, String, String)
+buildHeapObj :: Env -> Obj InfoTab -> (String, String)
 buildHeapObj env o =
-    let (size, rval) = bho env o
+    let rval = bho env o
         name = oname o
---        decl = "Obj *" ++ name ++ " = stgNewHeapObj( &it_" ++ name ++ " );\n"
         decl = name ++ "->op = stgNewHeapObj( &it_" ++ name ++ " );\n" ++
                optStr useArgType (name ++ "->argType = HEAPOBJ;\n")
-    in (size, decl, rval)
+    in (decl, rval)
 
 
-bho :: Env -> Obj InfoTab -> (Int, String)
+bho :: Env -> Obj InfoTab -> String
 bho env (FUN it vs e name) =
-    (length $ fvs it, loadPayloadFVs env (map fst $ fvs it) 0 (name ++ "->op"))
+    loadPayloadFVs env (map fst $ fvs it) 0 (name ++ "->op")
 
 
 bho env (PAP it f as name) = error "unsupported explicit PAP"
@@ -764,15 +759,15 @@ bho env (CON it c as name) =
     let ps = [name ++ "->op->payload[" ++ show i ++ "] = " ++
                        cga env a ++ "; // " ++ showa a ++ "\n"
                        | (i,a) <- indexFrom 0 (projectAtoms as) ]
-    in (length ps, concat ps)
+    in concat ps
 
 bho env (THUNK it e name) =
     let fv = fvs it
-    in (1 + (length fv), 
-        name ++ "->op->payload[0].op = NULL;\n" ++
-        loadPayloadFVs env (map fst fv) 1 (name ++ "->op"))
+    in name ++ "->op->payload[0].op = NULL;\n" ++
+       optStr useArgType (name ++ "->op->payload[0].argType = HEAPOBJ;\n") ++
+       loadPayloadFVs env (map fst fv) 1 (name ++ "->op")
 
-bho env (BLACKHOLE it name) = (1,"")
+bho env (BLACKHOLE it name) = ""
 
 #endif
 
