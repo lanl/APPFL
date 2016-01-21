@@ -696,10 +696,6 @@ cgalt env switch scrutName fvp (ADef it v e) =
 -- ****************************************************************
 -- buildHeapObj is only invoked by ELet so TLDs not built
 
---  UPDCONT,
---  CASECONT,
---  CALLCONT,
-
 #if USE_CAST
 
 buildHeapObj :: Env -> Obj InfoTab -> (Int, CBlockItem, [CBlockItem])
@@ -745,7 +741,8 @@ buildHeapObj env o =
     let (size, rval) = bho env o
         name = oname o
 --        decl = "Obj *" ++ name ++ " = stgNewHeapObj( &it_" ++ name ++ " );\n"
-        decl = name ++ "->op = stgNewHeapObj( &it_" ++ name ++ " );\n"
+        decl = name ++ "->op = stgNewHeapObj( &it_" ++ name ++ " );\n" ++
+               optStr useArgType (name ++ "->argType = HEAPOBJ;\n")
     in (size, decl, rval)
 
 
