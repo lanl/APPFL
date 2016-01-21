@@ -303,11 +303,6 @@ cMain = error "cMain"
 
 
 -- boxed expression predicate
-{-
-isBoxede e = case typ $ emd e of MCon False _ _ -> False
-                                 MPrim _        -> False
-                                 _              -> True
--}
 isBoxede e = isBoxed $ typ $ emd e
 
 
@@ -318,30 +313,6 @@ cgUBa _ at _ = error $ "CodeGen.cgUBa: not expecting Atom - " ++ show at
 -- cgUBa env (LitF f) "f" = show f
 
 cgv env v = getEnvRef v env -- ++ "/* " ++ v ++ " */"
-
-
-
--- CG in the state monad ***************************************************
--- CG of objects produces no inline code
--- THUNK produces a function, other OBJ types have single global function
---    (ignore explicit PAP for now)
--- FUN produces a function (not object)
---   all objects produce a (S)HO
--- for CG, objects are heap allocated only by let
-
-cgObjs :: [Obj InfoTab] -> [String] -> ([String],[String])
-cgObjs objs runtimeGlobals =
-    let tlnames = runtimeGlobals ++ map (name . omd) objs
-        env = zip tlnames $ repeat SO
-        (funcs, _) = runState (cgos env objs) 0
-        (forwards, fundefs) = unzip funcs
-        (forward, fundef) = registerSOs objs
-    in (forward:forwards, fundef:fundefs)
-
-
-
-cgos :: Env -> [Obj InfoTab] -> State Int [(String, String)]
-cgos env = concatMapM (cgo env)
 
 
 -- given function type and formal parameter list, return the args
@@ -358,8 +329,32 @@ permArgs vs ft =
                    False -> ((bvs,v:uvs),(bts,t:uts))
           part x y = error "CodeGen.part length mismatch"
 
-cgo :: Env -> Obj InfoTab -> State Int [(String, String)]
 
+-- CG in the state monad ***************************************************
+-- CG of objects produces no inline code
+-- THUNK produces a function, other OBJ types have single global function
+--    (ignore explicit PAP for now)
+-- FUN produces a function (not object)
+--   all objects produce a (S)HO
+-- for CG, objects are heap allocated only by let
+
+data YPN = Yes | Possible | No -- could use Maybe Bool but seems obscure
+           deriving(Eq, Show)
+
+--entry point, not recursive
+cgObjs :: [Obj InfoTab] -> [String] -> ([String],[String])
+cgObjs objs runtimeGlobals =
+    let tlnames = runtimeGlobals ++ map (name . omd) objs
+        env = zip tlnames $ repeat SO
+        (funcs, _) = runState (cgos env objs) 0
+        (forwards, fundefs) = unzip funcs
+        (forward, fundef) = registerSOs objs
+    in (forward:forwards, fundef:fundefs)
+
+cgos :: Env -> [Obj InfoTab] -> State Int [(String, String)]
+cgos env = concatMapM (cgo env)
+
+cgo :: Env -> Obj InfoTab -> State Int [(String, String)]
 cgo env o@(FUN it vs e name) =
     let forward = "FnPtr fun_" ++ name ++ "();"
         argp = "argp" -- also free variable pointer pointer
@@ -368,7 +363,7 @@ cgo env o@(FUN it vs e name) =
                zip fps (map (FP argp) [0..]) ++
                env
     in do
-      (inline, funcs) <- cge env' e
+      ((inline, ypn), funcs) <- cge env' e
       let func =
             "// " ++ show (ctyp it) ++ "\n" ++
             "// " ++ name ++ "(self, " ++ intercalate ", " vs ++ ")\n" ++
@@ -377,9 +372,7 @@ cgo env o@(FUN it vs e name) =
             "  PtrOrLiteral *" ++ argp ++ 
                  " = &(stgGetStackArgp()->payload[0]);\n" ++
                indent 2 inline ++
-            -- default return in case inline doesn't jump somewhere else--FIXME
-            "  fprintf(stderr, \"" ++ name ++ " default returning\\n\");\n" ++
-            "  STGRETURN0();\n" ++  
+               optStr (ypn /= Yes) "  STGRETURN0();\n" ++
             "}\n"
       return $ (forward, func) : funcs
 
@@ -395,7 +388,7 @@ cgo env o@(THUNK it e name) =
       env' = zip (map fst $ fvs it) (map (FV fvpp) [1..]) ++ env
       forward = "FnPtr thunk_" ++ name ++ "();"
     in do
-      (inline, funcs) <- cge env' e
+      ((inline,ypn), funcs) <- cge env' e
       let func =
             "// " ++ show (ctyp it) ++ "\n" ++
             "FnPtr thunk_" ++ name ++ "() {\n" ++
@@ -407,8 +400,7 @@ cgo env o@(THUNK it e name) =
             "  PtrOrLiteral *" ++ fvpp ++ " = &(stg_fp->payload[0]);\n" ++
             "  stgThunk(stgCurVal);\n" ++
             indent 2 inline ++
-            "  fprintf(stderr, \"" ++ name ++ " returning\\n\");\n" ++
-            "  STGRETURN0();\n" ++ -- in case inline doesn't jump somewhere else
+              optStr (ypn /= Yes) "  STGRETURN0();\n" ++
             "}\n"
       return $ (forward, func) : funcs
 
@@ -427,7 +419,7 @@ stgApplyGeneric env f eas =
         inline =
             -- new STACKFRAME
             "{ Cont *cp = stgAllocCallOrStackCont( &it_stgStackCont, " ++ 
-                                             show (length pnstring + 1) ++ ");\n" ++
+                 show (length pnstring + 1) ++ ");\n" ++
             "  cp->layout = " ++ npStrToBMStr ('P' : pnstring ) ++ ";\n" ++
             "  cp->payload[ 0 ] = " ++ cgv env f' ++ ";\n" ++
             concat ["  cp->payload[ " ++ show i ++ " ] = " ++ cga env a ++ ";\n"
@@ -435,7 +427,7 @@ stgApplyGeneric env f eas =
             "}\n" ++
             "// INDIRECT TAIL CALL " ++ f' ++ " " ++ showas as ++ "\n" ++
             "STGJUMP0(stgApply" ++ pnstring ++ ");\n"
-    in return (inline, [])
+    in return ((inline, Yes), [])
 
 
 
@@ -446,24 +438,25 @@ stgApplyDirect env (EFCall it f eas) =
             "STGAPPLY" ++ show (length as) ++ "(" ++
               intercalate ", " (cgv env f : map (cga env) as) ++
             ");\n"
-    in return (inline, [])
+    in return ((inline, Yes), [])
 
 
 stgApplyDirect env expr =
-    error $ "CodeGen.stgApplyDirect: not expecting Expr - " ++ show (pprint expr)
+    error $ "CodeGen.stgApplyDirect: not expecting Expr - " ++ 
+            show (pprint expr)
 
 
 -- return (inline code, [(forward, fundef)])
-cge :: Env -> Expr InfoTab -> State Int (String, [(String, String)])
+cge :: Env -> Expr InfoTab -> State Int ((String,YPN), [(String, String)])
 
 cge env e@(EAtom it a) =
-    let inline = "stgCurVal = " ++ cga env a ++ "; " ++ "// " ++ showa a ++ "\n" ++
+    let inline = "stgCurVal = " ++ cga env a ++ "; // " ++ showa a ++ "\n" ++
                  (if isBoxede e then
                       "// boxed EAtom, stgCurVal updates itself \n" ++
                       "STGJUMP();\n"
                   else
                       "// unboxed EAtom\n")
-    in return (inline, [])
+    in return ((inline, if isBoxede e then Yes else No), [])
 
 cge env e@(EFCall it f eas) =
     case (knownCall it) of
@@ -524,7 +517,7 @@ cge env (EPrimop it op eas) =
                       "stgCurVal.argType = INT;\n" ++
 #endif
                       "stgCurVal.i = " ++ fun ++ "(" ++ arg0 "i" ++ ", " ++ arg1 "i" ++ ");\n"
-    in return (inline, [])
+    in return ((inline, No), [])
 
 cge env (ELet it os e) =
     let names = map oname os
@@ -545,8 +538,8 @@ cge env (ELet it os e) =
 #endif
     in do
       ofunc <- cgos env' os
-      (einline, efunc) <- cge env' e
-      return (decl ++ concat decls ++ concat buildcodes ++ einline,
+      ((einline, ypn), efunc) <- cge env' e
+      return ((decl ++ concat decls ++ concat buildcodes ++ einline, ypn),
               ofunc ++ efunc)
 
 -- scrutinee does no heap allocation
@@ -601,9 +594,9 @@ cge env (ECase _ e a@(Alts italts alts aname)) =
                  "// load payload with FVs " ++
                          intercalate " " (map fst $ fvs italts) ++ "\n") ++
                  (loadPayloadFVs env (map fst $ fvs italts) 1 cname)
-    in do (ecode, efunc) <- cge env e
+    in do ((ecode, eypn), efunc) <- cge env e
           (acode, afunc) <- cgalts env a (isBoxede e) scrutName
-          return (pre ++ ecode ++ acode, efunc ++ afunc)
+          return ((pre ++ ecode ++ acode, eypn), efunc ++ afunc)
 
 -- ADef only or unary sum => no C switch
 cgalts env (Alts it alts name) boxed scrutName =
@@ -651,28 +644,28 @@ cgalt env switch scrutName fvp (ACon it c vs e) =
         eenv = zzip vs (map (FV fvp) perm)
         env' = eenv ++ env
     in do
-      (inline, func) <- cge env' e
+      ((inline, ypn), func) <- cge env' e
       let tag = luConTag c $ cmap it -- ConTags returned as Strings!
       let code = "// " ++ c ++ " " ++ intercalate " " vs ++ " ->\n" ++
                  if switch then
                    "case " ++ tag ++ ": {\n" ++
                    indent 2 inline ++
-                   "  STGRETURN0();\n" ++
+                   (optStr (ypn /= Yes) "  STGRETURN0();\n") ++
                    "}\n"
-                 else inline ++ "STGRETURN0();\n"
+                 else inline ++ optStr (ypn /= Yes) "STGRETURN0();\n"
       return (code, func)
 
 cgalt env switch scrutName fvp (ADef it v e) =
     let env' = (v, FP fvp 0) : env
     in do
-      (inline, func) <- cge env' e
+      ((inline, ypn), func) <- cge env' e
       let code = "// " ++ v ++ " ->\n" ++
                  if switch then
                      "default: {\n" ++
                         indent 2 inline ++
-                     "  STGRETURN0();\n" ++
+                        optStr (ypn /= Yes) "  STGRETURN0();\n" ++
                      "}\n"
-                 else inline ++ "STGRETURN0();\n"
+                 else inline ++ optStr (ypn /= Yes) "STGRETURN0();\n"
       return (code, func)
 
 
