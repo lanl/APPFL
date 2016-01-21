@@ -80,14 +80,9 @@ data RVal = SO              -- static object
           | FP String Int   -- stack Formal Param, pointer to stack payload
           | FV String Int   -- Free Variable, payload in heap via pointer to 
                             --   pointer in stack, e.g. fvpp->op->payload[i]
---        | LB String Int   -- stack frame with let block bindings,
-                            --   e.g. fvp->payload[i]
 -- because we don't have fresh names for the Let Blocks we use existing 
 -- names for let-bound variables for now.  We could have done the same
 -- dereference scheme for FP above
-          | LB String       -- e.g. *(vp.op), i.e. pointer to payload
-          | AC Var Int      -- alt con
-          | AD Var          -- alt def
             deriving(Eq,Show)
 
 type Env = [(String, RVal)]
@@ -166,10 +161,6 @@ lu v ((v',k):_) size' n | v == v' =
 
 --      FV i -> CIndex (CMember (CMember (cVarE "self") (builtinIdent "op") False undefNode)
               (builtinIdent "payload") True undefNode) (cIntE $ toInteger i) undefNode
-
-      AC v i -> CIndex (cMemberE v "payload" True) (cIntE $ toInteger i) undefNode
-
-      AD v -> cVarE v
 
 lu v ((_, HO size) : xs) size' n =
     lu v xs (size'+size) (n+1)
@@ -257,8 +248,6 @@ getEnvRef v kvs =
             LV       -> v
             FP fp i -> fp ++ "[" ++ show i ++ "]"
             FV fpp i -> fpp ++ "->op->payload[" ++ show i ++ "]"
-            AC v i  -> v ++ "->payload[" ++ show i ++ "]"
-            AD v    -> v
 
 cga :: Env -> Atom -> String
 cga env (Var v) = cgv env v
@@ -659,8 +648,6 @@ cgalts env (Alts it alts name) boxed scrutName =
 cgalt env switch scrutName fvp (ACon it c vs e) =
     let DataCon c' ms = luDCon c (cmap it)
         (_,_,perm) = partPerm isBoxed ms
-        -- eenv = zip vs (map (AC $ scrutName ++ ".op") [0..])
---        eenv = zzip vs (map (AC $ scrutName ++ ".op") perm)
         eenv = zzip vs (map (FV fvp) perm)
         env' = eenv ++ env
     in do
