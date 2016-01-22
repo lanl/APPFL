@@ -409,7 +409,7 @@ cgo env (BLACKHOLE {}) =
 
 -- ****************************************************************
 
-stgApplyGeneric env f eas =
+stgApplyGeneric env f eas direct =
     let as = map ea eas
         pnstring = [ if b then 'P' else 'N' | b <- map (isBoxed . typ . emd) eas ]
         -- HACK
@@ -424,26 +424,15 @@ stgApplyGeneric env f eas =
             "  cp->payload[ 0 ] = " ++ cgv env f' ++ ";\n" ++
             concat ["  cp->payload[ " ++ show i ++ " ] = " ++ cga env a ++ ";\n"
                     | (i,a) <- zip [1..] as ] ++
-            "}\n" ++
-            "// INDIRECT TAIL CALL " ++ f' ++ " " ++ showas as ++ "\n" ++
-            "STGJUMP0(stgApply" ++ pnstring ++ ");\n"
+
+            (if direct then
+                "// DIRECT TAIL CALL " ++ f ++ " " ++ showas as ++ "\n" ++
+                "STGJUMP0(getInfoPtr(cp->payload[0].op)->funFields.trueEntryCode);\n"
+            else
+                "// INDIRECT TAIL CALL " ++ f' ++ " " ++ showas as ++ "\n" ++
+                "STGJUMP0(stgApply" ++ pnstring ++ ");\n") ++
+            "}\n"
     in return ((inline, Yes), [])
-
-
-
-stgApplyDirect env (EFCall it f eas) =
-    let as = map ea eas
-        inline =
-            "// DIRECT TAIL CALL " ++ f ++ " " ++ showas as ++ "\n" ++
-            "STGAPPLY" ++ show (length as) ++ "(" ++
-              intercalate ", " (cgv env f : map (cga env) as) ++
-            ");\n"
-    in return ((inline, Yes), [])
-
-
-stgApplyDirect env expr =
-    error $ "CodeGen.stgApplyDirect: not expecting Expr - " ++ 
-            show (pprint expr)
 
 
 -- return (inline code, [(forward, fundef)])
@@ -460,10 +449,10 @@ cge env e@(EAtom it a) =
 
 cge env e@(EFCall it f eas) =
     case (knownCall it) of
-      Nothing -> stgApplyGeneric env f eas
+      Nothing -> stgApplyGeneric env f eas False
       Just kit -> if arity kit == length eas
-                  then stgApplyGeneric env f eas -- stgApplyDirect env e
-                  else stgApplyGeneric env f eas
+                  then stgApplyGeneric env f eas True
+                  else stgApplyGeneric env f eas False
 
 
 cge env (EPrimop it op eas) =
@@ -649,8 +638,8 @@ cgalt env switch scrutName fvp (ACon it c vs e) =
       let code = "// " ++ c ++ " " ++ intercalate " " vs ++ " ->\n" ++
                  if switch then
                    "case " ++ tag ++ ": {\n" ++
-                   indent 2 inline ++
-                   (optStr (ypn /= Yes) "  STGRETURN0();\n") ++
+                     indent 2 inline ++
+                     (optStr (ypn /= Yes) "  STGRETURN0();\n") ++
                    "}\n"
                  else inline ++ optStr (ypn /= Yes) "STGRETURN0();\n"
       return (code, func)
