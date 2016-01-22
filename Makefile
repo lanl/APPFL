@@ -4,7 +4,7 @@ endif
 
 build_dir := $(CURDIR)/build
 
-.PHONY: all config setup stgapply codegen runtime test tastytest ctest clean
+.PHONY: all config setup stgapply codegen runtime _runtime test tastytest ctest _ctest clean
 
 all: codegen runtime
 
@@ -30,6 +30,9 @@ codegen: stgapply
 	@(cp -f codegen/dist/build/stgc/stgc $(build_dir)/bin/)
 
 runtime: stgapply
+	$(MAKE) _runtime
+
+_runtime:
 	@(cd $(build_dir); cmake $(cmake_flags) ..)
 	@(cd $(build_dir); make $(build_flags))
 
@@ -39,6 +42,9 @@ tastytest: all
 	@(cd codegen && cabal test)
 
 ctest: all
+	$(MAKE) _ctest
+
+_ctest: 
 	@(cd $(build_dir); cmake $(cmake_flags) ..)
 	@(cd $(build_dir) &&  ARGS="$(build_flags) -D ExperimentalTest --no-compress-output" $(MAKE) test && cp Testing/`head -n 1 Testing/TAG`/Test.xml ./CTestResults.xml)
 
