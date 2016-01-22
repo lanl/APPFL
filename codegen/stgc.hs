@@ -44,10 +44,10 @@ mhs2stg input =  let update x = x {optInput = Just input, optDumpSTG = True}
 
 
 buildit :: String -> Bool -> IO()
-buildit input gcc = let update x = x {optInput = Just input}
+buildit input ccompile = let update x = x {optInput = Just input}
                         -- assumes we are in codegen dir
-                        buildDir = "../build"
-                    in compile (update defaultOptions) (buildDir ++ "/etc") (buildDir ++ "/lib") (buildDir ++ "/include") gcc
+                             buildDir = "../build"
+                         in compile (update defaultOptions) (buildDir ++ "/etc") (buildDir ++ "/lib") (buildDir ++ "/include") ccompile
 
 -- generate c code from stg (no prelude)
 stgc :: String -> IO ()
@@ -138,7 +138,7 @@ checkOpts (Options {optHelp}) optInputs =
                    _ ->  ioError (userError ("bad input\n" ++ usageInfo header options))
 
 compile :: Options -> String -> String -> String -> Bool -> IO ()
-compile  (Options {optVerbose, optDumpParse, optNoPrelude, optStrict, optInput, optOutput, optDumpSTG}) preludeDir rtLibDir rtIncDir gcc =
+compile  (Options {optVerbose, optDumpParse, optNoPrelude, optStrict, optInput, optOutput, optDumpSTG}) preludeDir rtLibDir rtIncDir ccompile =
   do
     let input = fromJust optInput
         minihs = ".mhs" `isSuffixOf` input
@@ -161,11 +161,17 @@ compile  (Options {optVerbose, optDumpParse, optNoPrelude, optStrict, optInput, 
                  writeFile (input ++ ".dump") stgtext
 
       False -> do
+                 ccenv <- lookupEnv "CC"
+                 let cc = fromMaybe "gcc" ccenv
+                 cflagsenv <- lookupEnv "CFLAGS"
+                 let cflags = fromMaybe "" cflagsenv
                  let coutput = input ++ ".c"
-                 let flags = " -std=gnu99 -Wl,-rpath " ++ rtIncDir ++ " -L" ++ rtLibDir ++ " -I" ++ rtIncDir ++ if optStrict then " -lruntime-s " else " -lruntime-ns"
+                 let flags = " " ++ cflags ++ " -std=gnu99 -Wl,-rpath " ++
+                               rtIncDir ++ " -L" ++ rtLibDir ++ " -I" ++ rtIncDir
+                               ++ if optStrict then " -lruntime-s " else " -lruntime-ns"
                  writeFile coutput (pprinter $ codegener source optVerbose minihs)
-                 if gcc
-                   then system ("gcc " ++ coutput ++ " -o " ++ (fromJust optOutput) ++ flags)
+                 if ccompile
+                   then system (cc ++ " " ++ coutput ++ " -o " ++ (fromJust optOutput) ++ flags)
                    else return ExitSuccess
                  return ()
 
