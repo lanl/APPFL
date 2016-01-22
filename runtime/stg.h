@@ -365,20 +365,6 @@ extern void showStgValPretty(PtrOrLiteral v);
 // Codegen.hs currently uses STGJUMP(), STGJUMP0(f), and STGRETURN0() to
 // exit functions
 
-#define STGRETURNS()					\
-  do {							\
-  stgPopCont();						\
-  JUMP0(((Cont *)stgSP)->entryCode);			\
-  } while (0)
-
-#define STGTAILCALLS(f)					\
-  do {							\
-  stgJumpAdjust();					\
-  JUMP0(f);						\
-  } while (0)
-
-
-
 #define STGCALL0(f)				\
   CALL0_0(f)
 

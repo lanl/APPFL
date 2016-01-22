@@ -18,41 +18,50 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-//------ fake typedef fp (*fp)()
-// how to roll these into one?
-// seems like the only way to get a recursive type is to use a struct
+#define TRAMPOLINE 0
+
+#if TRAMPOLINE
+//------ fake typedef fp (*fp)() -- no recursive types in C
 typedef void (*vvfp)();
 typedef vvfp (*FnPtr)();
 typedef FnPtr (*CmmFnPtr)();
 
-#define CALL0_0(F)				\
+#define CALL0_0(f)				\
   do {						\
-    _CALL(F);					\
+    for (CmmFnPtr _f = (CmmFnPtr)f; _f; _f = (CmmFnPtr)_f());	\
   } while (0)
 
 #define RETURN0()				\
   do {						\
-    _RETURN();					\
+    return NULL;				\
   } while (0)
 
-#define JUMP0(F)				\
+#define JUMP0(f)				\
   do {						\
-    _JUMP(F);					\
+    return ((FnPtr)f);				\
   } while (0)
 
-/* ********** NON-USER STUFF! ********* */
+#else
 
-// dispatch loop
+typedef void FnPtr;
+typedef FnPtr (*CmmFnPtr)();
 
-#define _RETURN() return NULL
+#define CALL0_0(f)				\
+  do {						\
+    (((CmmFnPtr)f)());				\
+  } while (0)
 
-#define _JUMP(f)  return ((FnPtr)f)
+#define JUMP0(f)				\
+  do {						\
+    (((CmmFnPtr)f)());				\
+    return;					\
+  } while (0)
 
-// this works so there's hope for tail calls
-// define _JUMP(f)  return ((FnPtr)(f()))
+#define RETURN0() return
 
-#define _CALL(f) \
-  for (CmmFnPtr _f = (CmmFnPtr)f; _f; _f = (CmmFnPtr)_f())
+#endif // if TRAMPOLINE
+
+
 
 #endif //ifdef cmm_h
  
