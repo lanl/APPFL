@@ -1,9 +1,9 @@
 #Deprecated use make runtime at top level
 CC=gcc
-CFLAGS=-c -g -std=gnu99 -I/usr/include/malloc
+CFLAGS=-c -g -std=gnu99 -I/usr/include/malloc -O2 -save-temps
 LDFLAGS=
-HEADERS=args.h stg.h cmm.h stgutils.h gc.h stgApply.h
-SOURCES=args.c stg.c cmm.c stgutils.c gc.c stgApply.c
+HEADERS=../options.h args.h stg.h cmm.h stgutils.h gc.h stgApply.h
+SOURCES=args.c stg.c stgutils.c gc.c nonstrict.c
 OBJECTS=$(SOURCES:.c=.o)
 LIB=libruntime.a
 ALL=$(LIB) 

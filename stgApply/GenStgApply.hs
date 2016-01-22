@@ -246,12 +246,15 @@ funpos npstring excess =
      "STGJUMP0(stgApply" ++ drop arity npstring  ++ ");\n"
 
 funeq npstring =
+{- Reuse existing frame
   "newframe = stgAllocCallOrStackCont( &it_stgStackCont, argc+1 );\n" ++
   "newframe->layout = " ++ npStrToBMStr ('P' : npstring) ++ ";\n" ++
   "memcpy(newframe->payload, argv, (argc+1) * sizeof(PtrOrLiteral));\n" ++
   "// stgJumpAdjust invalidates argv and newframe\n" ++
   "newframe = stgJumpAdjust();\n" ++
   "STGJUMP0(getInfoPtr(newframe->payload[0].op)->funFields.trueEntryCode);\n"
+-}
+  "STGJUMP0(getInfoPtr(argframe->payload[0].op)->funFields.trueEntryCode);\n"
 
 funneg npstring =
   let arity = length npstring
