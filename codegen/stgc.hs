@@ -16,7 +16,7 @@ import           Control.Monad (when)
 -- build a.out from stg/mhs and run it
 _eval :: String -> Bool -> IO()
 _eval input showerr = do
-  system("rm -f a.out")
+  system "rm -f a.out"
   build input
   let erStr = if showerr then "" else " &2>/dev/null"
   system("./a.out" ++ erStr)
@@ -40,33 +40,36 @@ mhs2stg :: String -> IO()
 mhs2stg input =  let update x = x {optInput = Just input, optDumpSTG = True}
                       -- assumes we are in codegen dir
                      buildDir = "../build"
-                 in compile (update defaultOptions) (buildDir ++ "/etc") (buildDir ++ "/lib") (buildDir ++ "/include") False
+                 in compile (update defaultOptions)
+                            (buildDir ++ "/etc")
+                            (buildDir ++ "/lib")
+                            (buildDir ++ "/include")
+                            False
 
 
 buildit :: String -> Bool -> IO()
 buildit input ccompile = let update x = x {optInput = Just input}
                         -- assumes we are in codegen dir
                              buildDir = "../build"
-                         in compile (update defaultOptions) (buildDir ++ "/etc") (buildDir ++ "/lib") (buildDir ++ "/include") ccompile
+                         in compile (update defaultOptions)
+                                    (buildDir ++ "/etc")
+                                    (buildDir ++ "/lib")
+                                    (buildDir ++ "/include")
+                                    ccompile
 
 -- generate c code from stg (no prelude)
 stgc :: String -> IO ()
-stgc arg =
-  do
-    ifd <- openFile arg ReadMode
-    source <- hGetContents ifd
-    let prog = pprinter $ codegener source True False
-    putStrLn prog
-    hClose ifd
-    writeFile "../runtime/userprog.c" prog
-
+stgc arg = genc arg False
 -- generate c code from mhs (no prelude)
 mhsc :: String -> IO ()
-mhsc arg =
+mhsc arg = genc arg True
+
+genc :: String -> Bool -> IO ()
+genc arg mhs =
   do
     ifd <- openFile arg ReadMode
     source <- hGetContents ifd
-    let prog = pprinter $ codegener source True True
+    let prog = pprinter $ codegener source True mhs
     putStrLn prog
     hClose ifd
     writeFile "../runtime/userprog.c" prog
@@ -95,7 +98,7 @@ defaultOptions       = Options
 
 options :: [OptDescr (Options -> Options)]
 options =
-    [ Option ['v']     ["verbose"]
+    [ Option ['v'] ["verbose"]
         (NoArg (\ opts -> opts { optVerbose = True }))
         "debug output on stderr"
     , Option ['?', 'h'] ["help"]
@@ -113,8 +116,8 @@ options =
      , Option ['s'] ["strict"]
         (NoArg (\ opts -> opts { optStrict = True }))
         "strict evaluation"
-    , Option ['o']     ["output"]
-        (ReqArg ((\ f opts -> opts { optOutput = Just f })) "FILE")
+    , Option ['o'] ["output"]
+        (ReqArg (\ f opts -> opts { optOutput = Just f }) "FILE")
         "output FILE"
     ]
 
@@ -128,17 +131,16 @@ compilerOpts argv =
 
 checkOpts :: Options ->  [String] -> IO ()
 checkOpts (Options {optHelp}) optInputs =
-  do
     case optHelp of
       True -> ioError (userError (usageInfo header options))
-      False -> do
-                 case length optInputs of
+      False -> case length optInputs of
                    0 -> ioError (userError ("No input files\n" ++ usageInfo header options))
                    1 -> return ()
                    _ ->  ioError (userError ("bad input\n" ++ usageInfo header options))
 
 compile :: Options -> String -> String -> String -> Bool -> IO ()
-compile  (Options {optVerbose, optDumpParse, optNoPrelude, optStrict, optInput, optOutput, optDumpSTG}) preludeDir rtLibDir rtIncDir ccompile =
+compile  (Options {optVerbose, optDumpParse, optNoPrelude, optStrict, optInput,
+           optOutput, optDumpSTG}) preludeDir rtLibDir rtIncDir ccompile =
   do
     let input = fromJust optInput
         minihs = ".mhs" `isSuffixOf` input
@@ -157,7 +159,7 @@ compile  (Options {optVerbose, optDumpParse, optNoPrelude, optStrict, optInput, 
 
     case optDumpParse of
       True  -> do
-                 let stgtext = (show $ toCMap $ ts) ++ (show os)
+                 let stgtext = (show $ toCMap $ ts) ++ show os
                  writeFile (input ++ ".dump") stgtext
 
       False -> do
@@ -171,7 +173,7 @@ compile  (Options {optVerbose, optDumpParse, optNoPrelude, optStrict, optInput, 
                                ++ if optStrict then " -lruntime-s " else " -lruntime-ns"
                  writeFile coutput (pprinter $ codegener source optVerbose minihs)
                  if ccompile
-                   then system (cc ++ " " ++ coutput ++ " -o " ++ (fromJust optOutput) ++ flags)
+                   then system (cc ++ " " ++ coutput ++ " -o " ++ fromJust optOutput ++ flags)
                    else return ExitSuccess
                  return ()
 
@@ -184,4 +186,8 @@ main =
       args <- getArgs
       (opts, args') <- compilerOpts args
       checkOpts opts args'
-      compile (update opts (head args')) (binaryDir ++ "/../etc") (binaryDir ++ "/../lib") (binaryDir ++ "/../include") True
+      compile (update opts (head args'))
+              (binaryDir ++ "/../etc")
+              (binaryDir ++ "/../lib")
+              (binaryDir ++ "/../include")
+              True
