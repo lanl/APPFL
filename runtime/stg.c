@@ -123,6 +123,41 @@ Cont *stgAllocCallOrStackCont(CInfoTab *citp, int argc) {
   return contp;
 }
 
+// delta is in units of sizeof(PtrOrLiteral)
+Cont *stgAdjustTopContSize(Cont *cp, int delta) {
+
+  // we're really passing in the TOSP, important when there are multiple stacks
+  assert(stgGetArgp() == cp);
+
+  // adjust bitmap size
+  int oldPayloadSize = cp->layout.bitmap.size;
+  int newPayloadSize = oldPayloadSize + delta;
+  cp->layout.bitmap.size = newPayloadSize;
+
+  // calculate actual cont sizes
+  int oldContSize = sizeof(Cont) + oldPayloadSize * sizeof(PtrOrLiteral);
+      oldContSize = ((oldContSize + 7)/8)*8; 
+  int newContSize = sizeof(Cont) + newPayloadSize * sizeof(PtrOrLiteral);
+      newContSize = ((newContSize + 7)/8)*8;
+  if (newContSize == oldContSize) 
+    return cp;
+
+  cp ->_contSize = newContSize; // to go away
+
+  // move
+  char *newStgSP = (char *)stgSP - (newContSize - oldContSize);
+  if (newContSize < oldContSize)
+    memmove(newStgSP, stgSP, newContSize); // shrinking
+  else
+    memmove(newStgSP, stgSP, oldContSize); // growing
+
+  // adjust stgSP and return
+  stgSP = newStgSP;
+  return stgSP;
+}
+  
+  
+
 // return pointer to popped cont
 // NOTE:  stgAllocCont will invalidate what this points to!
 Cont *stgPopCont() {
