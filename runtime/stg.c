@@ -188,11 +188,6 @@ Obj* stgNewHeapObj(InfoTab *itp) {
   Obj *objp = (Obj *)stgHP;
   stgHP = (char *)stgHP + objSize;
 
-  // zero out anything left by previous gc passes
-  // this shouldn't be necessary, could masks bugs
-  // memset(objp, 0, objSize); 
-  // but THUNK is special
-
   if (itp->objType == THUNK) {
     assert(payloadSize >= 1 && "stgNewHeapObj");
     objp->payload[0].op = NULL;
