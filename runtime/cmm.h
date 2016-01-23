@@ -18,7 +18,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#define TRAMPOLINE 0
+#define TRAMPOLINE 1
 
 #if TRAMPOLINE
 //------ fake typedef fp (*fp)() -- no recursive types in C
