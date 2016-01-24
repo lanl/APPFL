@@ -356,6 +356,9 @@ Cont *stgPopCont();
 // get top of stack pointer, must be STACKCONT
 Cont *stgGetStackArgp();
 Cont *stgJumpAdjust();
+Cont *stgAdjustTopContSize(Cont *cp, int delta);
+
+void copyargs(PtrOrLiteral *dest, PtrOrLiteral *src, int count);
 
 extern void showStgObjPretty(Obj *p);
 extern void showStgObjDebug(Obj *p);

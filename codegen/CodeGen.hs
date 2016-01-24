@@ -426,11 +426,11 @@ stgApplyGeneric env f eas direct =
                     | (i,a) <- zip [1..] as ] ++
 
             (if direct then
-                "// DIRECT TAIL CALL " ++ f ++ " " ++ showas as ++ "\n" ++
-                "STGJUMP0(getInfoPtr(cp->payload[0].op)->funFields.trueEntryCode);\n"
+                "  // DIRECT TAIL CALL " ++ f ++ " " ++ showas as ++ "\n" ++
+                "  STGJUMP0(getInfoPtr(cp->payload[0].op)->funFields.trueEntryCode);\n"
             else
-                "// INDIRECT TAIL CALL " ++ f' ++ " " ++ showas as ++ "\n" ++
-                "STGJUMP0(stgApply" ++ pnstring ++ ");\n") ++
+                "  // INDIRECT TAIL CALL " ++ f' ++ " " ++ showas as ++ "\n" ++
+                "  STGJUMP0(stgApply);\n") ++
             "}\n"
     in return ((inline, Yes), [])
 

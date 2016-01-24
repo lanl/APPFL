@@ -57,6 +57,9 @@ const char *contTypeNames[] = {
   "POPMECONT",
 };
 
+void copyargs(PtrOrLiteral *dest, PtrOrLiteral *src, int count) {
+  memcpy(dest, src, count * sizeof(PtrOrLiteral));
+}
 
 // this is a temporary hack as we incorporate Bitmap64s into continuations
 Bitmap64 layoutInfoToBitmap64(LayoutInfo *lip) {
@@ -127,7 +130,7 @@ Cont *stgAllocCallOrStackCont(CInfoTab *citp, int argc) {
 Cont *stgAdjustTopContSize(Cont *cp, int delta) {
 
   // we're really passing in the TOSP, important when there are multiple stacks
-  assert(stgGetArgp() == cp);
+  assert(stgGetStackArgp() == cp);
 
   // adjust bitmap size
   int oldPayloadSize = cp->layout.bitmap.size;
