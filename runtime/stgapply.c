@@ -20,7 +20,8 @@ FnPtr stgApply() {
     PRINTF("stgApply THUNK\n");
     STGEVAL(argv[0]);
     // argType already set
-    argv[0].op = derefPoL(argv[0]);  // must be indirect
+    // argv[0].op = derefPoL(argv[0]);  // must be indirect
+    argv[0].op = derefPoL(stgCurVal);  // must be indirect
   } // if THUNK
 
   switch (getObjType(argv[0].op)) {
@@ -140,7 +141,7 @@ FnPtr stgApply() {
       // restore the funoid
       argv[0] = stgCurVal;
       // shift the args down
-      memmove(&argv[1], &argv[1 + arity], arity * sizeof(PtrOrLiteral));
+      memmove(&argv[1], &argv[1 + arity], excess * sizeof(PtrOrLiteral));
       // adjust the bitmap
       // stgAdjustContSize will adjust the size
       bm.bitmap.mask >>= arity;  // arity + 1 - 1
@@ -176,10 +177,8 @@ FnPtr stgApply() {
     // excess < 0, too few args
     } else {
       PRINTF("stgApply PAP too few args\n");
-      // invalidates argv, adjusts bitmap size (not used)
-      stackframe = stgAdjustTopContSize(stackframe, argc);
-      PtrOrLiteral *argv = stackframe->payload;
-      // papargmap for new args
+      bm.bitmap.mask >>= 1;  // zap funoid bit
+      bm.bitmap.size -= 1;
       bm.bitmap.mask <<= argc;
       bm.bits += papargmap.bits;
       // stgNewHeapPAP puts layout info at payload[fvCount]
