@@ -12,66 +12,60 @@ project(stgc_test)
 
   foreach (test ${ALL_SRCS})
     get_filename_component(tname ${test} NAME_WE) 
-    if(tname STREQUAL "repminlist")
+    if(tname STREQUAL "repminlist") # non-strict only
        set(bname build_${tname})
        add_test(${bname} ${STGCC} -v ${SRC_DIR}/${tname}.stg -o ${tname})
-       add_test(${tname} ${BINARY_DIR}/${tname} 2>&1)
+       add_test(${tname} ${BINARY_DIR}/${tname} -e0 2>&1) #non-strict w/ gc
        set_tests_properties(${tname} PROPERTIES DEPENDS ${bname})
        set_tests_properties(${tname} PROPERTIES PASS_REGULAR_EXPRESSION
        "The answer is[\r\n\t ]*true = True")
        set(t2name ${tname}_nogc)
-       add_test(${t2name} ${BINARY_DIR}/${tname} -g 2>&1)
+       add_test(${t2name} ${BINARY_DIR}/${tname} -e0 -g 2>&1) #non-strict w/o gc
        set_tests_properties(${t2name} PROPERTIES DEPENDS ${bname})
        set_tests_properties(${t2name} PROPERTIES PASS_REGULAR_EXPRESSION
        "The answer is[\r\n\t ]*true = True")
     elseif(tname STREQUAL "eqintfalse")
        set(bname build_${tname})
        add_test(${bname} ${STGCC} -v ${SRC_DIR}/${tname}.stg -o ${tname})
-       add_test(${tname} ${BINARY_DIR}/${tname} 2>&1)
+       add_test(${tname} ${BINARY_DIR}/${tname} -e0 2>&1) #non-strict w/ gc
        set_tests_properties(${tname} PROPERTIES DEPENDS ${bname})
        set_tests_properties(${tname} PROPERTIES PASS_REGULAR_EXPRESSION
        "The answer is[\r\n\t ]*false = False")
        set(t2name ${tname}_nogc)
-       add_test(${t2name} ${BINARY_DIR}/${tname} -g 2>&1)
+       add_test(${t2name} ${BINARY_DIR}/${tname} -e0 -g 2>&1)  #non-strict w/o gc
        set_tests_properties(${t2name} PROPERTIES DEPENDS ${bname})
        set_tests_properties(${t2name} PROPERTIES PASS_REGULAR_EXPRESSION
        "The answer is[\r\n\t ]*false = False")
        set(tnames ${tname}_strict)
-       set(bnames build_${tnames})
-       add_test(${bnames} ${STGCC} -v -s ${SRC_DIR}/${tname}.stg -o ${tnames})
-       set_tests_properties(${bnames} PROPERTIES DEPENDS ${bname}) #hack to deal w/ race in .c output
-       add_test(${tnames} ${BINARY_DIR}/${tnames} 2>&1)
-       set_tests_properties(${tnames} PROPERTIES DEPENDS ${bnames})
+       add_test(${tnames} ${BINARY_DIR}/${tname} -e1 2>&1) #strict w/ gc
+       set_tests_properties(${tnames} PROPERTIES DEPENDS ${bname})
        set_tests_properties(${tnames} PROPERTIES PASS_REGULAR_EXPRESSION
        "The answer is[\r\n\t ]*false = False")
        set(t2names ${tnames}_nogc)
-       add_test(${t2names} ${BINARY_DIR}/${tnames} -g 2>&1)
-       set_tests_properties(${t2names} PROPERTIES DEPENDS ${bnames})
+       add_test(${t2names} ${BINARY_DIR}/${tname} -e1 -g 2>&1) #strict w/o gc
+       set_tests_properties(${t2names} PROPERTIES DEPENDS ${bname})
        set_tests_properties(${t2names} PROPERTIES PASS_REGULAR_EXPRESSION
        "The answer is[\r\n\t ]*false = False")
     else()
        set(bname build_${tname})
        add_test(${bname} ${STGCC} -v ${SRC_DIR}/${tname}.stg -o ${tname})
-       add_test(${tname} ${BINARY_DIR}/${tname} 2>&1)
+       add_test(${tname} ${BINARY_DIR}/${tname} -e0 2>&1)  #non-strict w/ gc
        set_tests_properties(${tname} PROPERTIES DEPENDS ${bname})
        set_tests_properties(${tname} PROPERTIES PASS_REGULAR_EXPRESSION
        "The answer is[\r\n\t ]*true = True")
        set(t2name ${tname}_nogc)
-       add_test(${t2name} ${BINARY_DIR}/${tname} -g 2>&1)
+       add_test(${t2name} ${BINARY_DIR}/${tname} -e0 -g 2>&1) #non-strict w/o gc
        set_tests_properties(${t2name} PROPERTIES DEPENDS ${bname})
        set_tests_properties(${t2name} PROPERTIES PASS_REGULAR_EXPRESSION
        "The answer is[\r\n\t ]*true = True")
        set(tnames ${tname}_strict)
-       set(bnames build_${tnames})
-       add_test(${bnames} ${STGCC} -v -s ${SRC_DIR}/${tname}.stg -o ${tnames})
-       set_tests_properties(${bnames} PROPERTIES DEPENDS ${bname}) #hack to deal w/ race in .c output
-       add_test(${tnames} ${BINARY_DIR}/${tnames} 2>&1)
-       set_tests_properties(${tnames} PROPERTIES DEPENDS ${bnames})
+       add_test(${tnames} ${BINARY_DIR}/${tname} -e1 2>&1)  #strict w/ gc
+       set_tests_properties(${tnames} PROPERTIES DEPENDS ${bname})
        set_tests_properties(${tnames} PROPERTIES PASS_REGULAR_EXPRESSION
        "The answer is[\r\n\t ]*true = True")
-        set(t2names ${tnames}_nogc)
-       add_test(${t2names} ${BINARY_DIR}/${tnames} -g 2>&1)
-       set_tests_properties(${t2names} PROPERTIES DEPENDS ${bnames})
+        set(t2names ${tnmes}_nogc)
+       add_test(${t2names} ${BINARY_DIR}/${tname} -e1 -g 2>&1)  #strict w/o gc
+       set_tests_properties(${t2names} PROPERTIES DEPENDS ${bname})
        set_tests_properties(${t2names} PROPERTIES PASS_REGULAR_EXPRESSION
        "The answer is[\r\n\t ]*true = True")
     endif()

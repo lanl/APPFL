@@ -17,7 +17,6 @@ by the stgc codegenerator.
 #include "gc.h"
 
 #include "cruntime.h"
-#include "stgApply.h"
 #include "stgapply.h"
 
 #endif

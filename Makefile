@@ -4,7 +4,7 @@ endif
 
 build_dir := $(CURDIR)/build
 
-.PHONY: all config setup stgapply codegen runtime _runtime test tastytest ctest _ctest clean
+.PHONY: all config setup codegen runtime test tastytest ctest _ctest clean
 
 all: codegen runtime
 
@@ -16,23 +16,15 @@ setup:
 	@((test -d $(build_dir)/bin) || (mkdir $(build_dir)/bin))
 	@((test -d $(build_dir)/etc) || (mkdir $(build_dir)/etc))
 	@((test -d $(build_dir)/include) || (mkdir $(build_dir)/include))
-	@((test -d $(build_dir)/stgApply) || (mkdir $(build_dir)/stgApply))
 	@(cp -f prelude/Prelude.stg $(build_dir)/etc/)
 	@(cp -f prelude/Prelude.mhs $(build_dir)/etc/)
 
-stgapply: setup
-	@(cd stgApply && cabal build $(build_flags))
-	@(cp -f stgApply/dist/build/genStgApply/genStgApply $(build_dir)/bin/)
-	@($(build_dir)/bin/genStgApply)
-
-codegen: stgapply
+codegen: setup 
 	@(cd codegen && cabal build $(build_flags))
 	@(cp -f codegen/dist/build/stgc/stgc $(build_dir)/bin/)
 
-runtime: stgapply
-	$(MAKE) _runtime
 
-_runtime:
+runtime: setup
 	@(cd $(build_dir); cmake $(cmake_flags) ..)
 	@(cd $(build_dir); make $(build_flags))
 
@@ -50,7 +42,6 @@ _ctest:
 
 clean: 
 	@(cd codegen && cabal clean)
-	@(cd stgApply && cabal clean)
 	@(cd test && rm -f *.stg.c 2>/dev/null)
 	@(cd test/error && rm -f *.stg.c 2>/dev/null)
 	@(cd test/mhs && rm -f *.mhs.c 2>/dev/null)

@@ -15,11 +15,7 @@ project(runtime)
     )
 
   set(xrt_hdrs ../options.h
-               ${PROJECT_BINARY_DIR}/../include/stgApply.h
      )
-
-  set(strict_src     ${PROJECT_BINARY_DIR}/../stgApply/strict.c)
-  set(nonstrict_src  ${PROJECT_BINARY_DIR}/../stgApply/nonstrict.c)
 
   set(rt_srcs args.c 
               gc.c
@@ -49,11 +45,9 @@ include_directories(".."
   # put in build/lib
   if(SHAREDLIB) 
     set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/../lib)
-    add_library(runtime-ns SHARED ${rt_srcs} ${nonstrict_src} ${rt_hdrs} ${xrt_hdrs})
-    add_library(runtime-s SHARED ${rt_srcs} ${strict_src} ${rt_hdrs} ${xrt_hdrs})
+    add_library(runtime SHARED ${rt_srcs} ${rt_hdrs} ${xrt_hdrs})
   else()
     set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/../lib)
-    add_library(runtime-ns STATIC ${rt_srcs} ${nonstrict_src} ${rt_hdrs} ${xrt_hdrs})
-    add_library(runtime-s STATIC ${rt_srcs} ${strict_src} ${rt_hdrs} ${xrt_hdrs})
+    add_library(runtime STATIC ${rt_srcs} ${rt_hdrs} ${xrt_hdrs})
   endif()
 
