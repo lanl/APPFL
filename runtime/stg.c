@@ -175,7 +175,6 @@ void stgPopCont() {
   showCIT(getCInfoPtr(cp));
   assert((char *)cp + contSize <= (char *)stgStack + stgStackSize);
   stgSP = (char *)cp + contSize;
-  return cp;
 }
 
 // could return pointer to .payload but that thwarts a sanity check,
