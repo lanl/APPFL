@@ -1,0 +1,24 @@
+
+f0 = THUNK(zero);
+
+f1 = THUNK(one);
+
+f2 = THUNK(plusInt f0 f1);
+
+f3 = THUNK(plusInt f1 f2);
+
+f4 = THUNK(plusInt f2 f3);
+
+f5 = THUNK(plusInt f3 f4);
+
+f6 = THUNK(plusInt f4 f5);
+
+f7 = THUNK(plusInt f5 f6);
+
+f8 = THUNK(plusInt f6 f7);
+
+f9 = THUNK(plusInt f7 f8);
+
+main = THUNK(eqInt f9 f9);
+
+
