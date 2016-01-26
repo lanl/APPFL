@@ -4,9 +4,11 @@
 
 float GCThreshold = 0.0;
 
+int evalStrategy = LAZY;
+
 void parseArgs (int argc, char **argv) {
   int c;
-  while ((c = getopt (argc, argv, "gt:")) != -1)
+  while ((c = getopt (argc, argv, "gt:e:")) != -1)
     switch (c)
     {
     case 'g':
@@ -17,5 +19,8 @@ void parseArgs (int argc, char **argv) {
       GCThreshold = atof(optarg);
       break;
 
+    case 'e':
+      evalStrategy = atoi(optarg);
+      break;
     }
 }

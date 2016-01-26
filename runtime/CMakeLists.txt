@@ -46,7 +46,7 @@ include_directories(".."
     set(CMAKE_C_FLAGS "-Wno-unused-const-variable")
   endif()
 
-  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g -std=gnu99 -Wall -O0 -save-temps" )
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g -std=gnu99 -Wall -Werror -O0 -save-temps" )
 
   include_directories(
     "/usr/include/malloc"

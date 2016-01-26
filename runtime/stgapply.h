@@ -2,5 +2,6 @@
 #define stgapply_h
 
 FnPtr stgApply();
+void stgEvalStackFrameArgs(Cont *);
 
 #endif

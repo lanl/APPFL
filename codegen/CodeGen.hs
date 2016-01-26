@@ -429,6 +429,7 @@ stgApplyGeneric env f eas direct =
                 "// DIRECT TAIL CALL " ++ f ++ " " ++ showas as ++ "\n" ++
 --                "STGJUMP0(getInfoPtr(cp->payload[0].op)->funFields.trueEntryCode);\n"
                 -- really direct
+                "if (evalStrategy == STRICT1) stgEvalStackFrameArgs(cp);\n" ++
                 "STGJUMP0(fun_" ++ f ++ ");\n"
             else
                 "  // INDIRECT TAIL CALL " ++ f' ++ " " ++ showas as ++ "\n" ++

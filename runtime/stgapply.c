@@ -1,6 +1,22 @@
+#include "args.h"
 #include "stg.h"
 #include "stgutils.h"
 #include "stgapply.h"
+
+// might want to pass in bitmap and argv instead
+void stgEvalStackFrameArgs(Cont *cp) {
+  // don't evaluate the funoid
+  int i = cp->layout.bitmap.size - 1;
+  uintptr_t bits = (cp->layout.bitmap.mask >> 1);
+  PtrOrLiteral *polp = &cp->payload[1];
+  for ( ; i != 0; i--, polp++, bits >>= 1) {
+    if (bits & 0x1) {
+      STGEVAL(*polp);
+      polp->op = derefPoL(stgCurVal);
+    }
+  }
+}
+
 
 FnPtr stgApply() {
 
@@ -15,6 +31,9 @@ FnPtr stgApply() {
   int argc = bm.bitmap.size - 1;
 
   PRINTF("stgApply %s\n", getInfoPtr(argv[0].op)->name);
+
+  if (evalStrategy == STRICT1) stgEvalStackFrameArgs(stackframe);
+
   argv[0].op = derefPoL(argv[0]);
   // this if just saves a possibly unneeded call
   if (getObjType(argv[0].op) == THUNK) {
