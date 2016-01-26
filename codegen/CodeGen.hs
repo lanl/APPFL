@@ -428,12 +428,11 @@ stgApplyGeneric env f eas direct =
             (if direct then
                 "// DIRECT TAIL CALL " ++ f ++ " " ++ showas as ++ "\n" ++
 --                "STGJUMP0(getInfoPtr(cp->payload[0].op)->funFields.trueEntryCode);\n"
-                  -- really direct
-                  "STGJUMP0(fun_" ++ f ++ ");\n"
-
+                -- really direct
+                "STGJUMP0(fun_" ++ f ++ ");\n"
             else
-                "// INDIRECT TAIL CALL " ++ f' ++ " " ++ showas as ++ "\n" ++
-                "STGJUMP0(stgApply" ++ pnstring ++ ");\n") ++
+                "  // INDIRECT TAIL CALL " ++ f' ++ " " ++ showas as ++ "\n" ++
+                "  STGJUMP0(stgApply);\n") ++
             "}\n"
     in return ((inline, Yes), [])
 

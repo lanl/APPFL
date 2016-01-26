@@ -11,6 +11,8 @@ data Strictness = Nonstrict
                 | Strict1   -- evaluate args first, then fun
                   deriving(Eq)
 
+maxArgs = 2
+
 main = do
          binaryPath <- getExecutablePath
          let binaryDir = intercalate "/" $ init $ splitOn "/" binaryPath

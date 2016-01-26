@@ -13,9 +13,6 @@ Obj *derefHO(Obj *op);
 Obj *derefPoL(PtrOrLiteral f);
 
 void derefStgCurVal();
-void copyargs(PtrOrLiteral *dest, const PtrOrLiteral *src, int count);
-
-void popFrameArgs(int argc, PtrOrLiteral argv[]);
 
 FnPtr stg_funcall();
 FnPtr stg_papcall();

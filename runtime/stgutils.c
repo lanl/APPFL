@@ -149,7 +149,7 @@ InfoTab it_stgIndirect __attribute__((aligned(8))) = {
 };
 
 FnPtr stgUpdateCont() {
-  Cont *contp = stgPopCont();
+  Cont *contp = stgGetStackArgp();
   assert(getContType(contp) == UPDCONT && "I'm not an UPDCONT!");
   PtrOrLiteral p = contp->payload[0];
   assert(isBoxed(p) && "not a HEAPOBJ!");
@@ -177,6 +177,7 @@ FnPtr stgUpdateCont() {
   assert(newObjSize <= oldObjSize);
   memset((char*)p.op+newObjSize, 0, oldObjSize-newObjSize);
   PRINTF( "stgUpdateCont leaving...\n  ");
+  stgPopCont();
   STGRETURN0();
 }
 
@@ -291,18 +292,4 @@ CInfoTab it_stgCallCont __attribute__((aligned(8))) =
     .cLayoutInfo.bm.bitmap.mask = 0x0,   // shouldn't be using this
     .cLayoutInfo.bm.bitmap.size = 0,  // shouldn't be using this
   };
-
-// ****************************************************************
-// stgApply 
-
-void popFrameArgs(int argc, PtrOrLiteral argv[]) {
-  Cont *cp = stgPopCont();
-  assert(getContType(cp) == STACKCONT);
-  assert(argc == BMSIZE(cp->layout));  // only current use case
-  memcpy(argv, cp->payload, argc * sizeof(PtrOrLiteral));
-}
-
-void copyargs(PtrOrLiteral *dest, const PtrOrLiteral *src, int count) {
-  for (int i = 0; i != count; i++) dest[i] = src[i];
-}
 

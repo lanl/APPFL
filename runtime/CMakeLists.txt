@@ -11,6 +11,7 @@ project(runtime)
               stgutils.h
 	      cruntime.h
 	      stgc.h
+              stgapply.h
     )
 
   set(xrt_hdrs ../options.h
@@ -25,6 +26,7 @@ project(runtime)
               stg.c
               stgutils.c
 	      show.c
+	      stgapply.c
     )
 
 include_directories(".."
@@ -44,7 +46,7 @@ include_directories(".."
     set(CMAKE_C_FLAGS "-Wno-unused-const-variable")
   endif()
 
-  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g -std=gnu99 -Wall -O2 -save-temps" )
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g -std=gnu99 -Wall -O0 -save-temps" )
 
   include_directories(
     "/usr/include/malloc"
