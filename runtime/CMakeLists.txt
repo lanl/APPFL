@@ -40,13 +40,7 @@ include_directories(".."
   endforeach()
   configure_file(../options.h ${PROJECT_BINARY_DIR}/../include/options.h COPYONLY)
 
-  if(NOT APPLE) 
-    set(CMAKE_C_FLAGS "-Wno-unused-but-set-variable")
-  else()
-    set(CMAKE_C_FLAGS "-Wno-unused-const-variable")
-  endif()
-
-  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g -std=gnu99 -Wall -O0 -save-temps" )
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g -std=gnu99 -Wall -Werror -O0" )
 
   include_directories(
     "/usr/include/malloc"
