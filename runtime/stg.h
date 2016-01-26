@@ -352,7 +352,7 @@ extern Obj* stgNewHeapPAPmask(InfoTab *itp, Bitmap64 bitmap);
 extern Cont *stgAllocCallOrStackCont(CInfoTab *it, int payloadSize);
 extern Cont *stgAllocCont(CInfoTab *it);
 // remove Obj from top of continuation stack, returning pointer to de-alloced Obj
-Cont *stgPopCont();
+void stgPopCont();
 // get top of stack pointer, must be STACKCONT
 Cont *stgGetStackArgp();
 Cont *stgJumpAdjust();

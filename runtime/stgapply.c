@@ -6,6 +6,7 @@ FnPtr stgApply() {
 
   // STACKCONT with actual parameters
   Cont *stackframe = stgGetStackArgp();
+  assert(getContType(stackframe) == STACKCONT);
 
   // &argv[0] is args to stgApply, &argv[1] is args to funoid
   PtrOrLiteral *argv = stackframe->payload;
@@ -20,8 +21,9 @@ FnPtr stgApply() {
     PRINTF("stgApply THUNK\n");
     STGEVAL(argv[0]);
     // argType already set
-    // argv[0].op = derefPoL(argv[0]);  // must be indirect
-    argv[0].op = derefPoL(stgCurVal);  // must be indirect
+    // might be INDIRECT if no GC
+    // argv[0].op = derefPoL(argv[0]);
+    argv[0].op = derefPoL(stgCurVal);
   } // if THUNK
 
   switch (getObjType(argv[0].op)) {
@@ -35,15 +37,17 @@ FnPtr stgApply() {
   
     // too many args?
     if (excess > 0) {
-      PRINTF("stgApply FUN %d excess\n", excess);
+      PRINTF("stgApply FUNPOS %d\n", excess);
 
       // call with return FUN with arity args
       // funoid + arity payload
       { Cont *newframe = stgAllocCallOrStackCont( &it_stgCallCont, 1 + arity );
       	Bitmap64 newbm = bm; 
-      	newbm.bitmap.size = 1 + arity; // high excess bits will be ignored
+        // keep arity #bits, zero high bits to avoid overflow in combining
+        newbm.bitmap.mask &= (0x1UL << (1 + arity)) - 1;
+      	newbm.bitmap.size = 1 + arity;
       	newframe->layout = newbm;
-      	memcpy(newframe->payload, argv, (1+arity) * sizeof(PtrOrLiteral));
+      	memcpy(newframe->payload, argv, (1 + arity) * sizeof(PtrOrLiteral));
       	PRINTF("stgApply CALLing  %s\n", getInfoPtr(argv[0].op)->name);
       	STGCALL0(getInfoPtr(argv[0].op)->funFields.trueEntryCode);
       	PRINTF("stgApply back from CALLing  %s\n", getInfoPtr(argv[0].op)->name);
@@ -56,7 +60,7 @@ FnPtr stgApply() {
       memmove(&argv[1], &argv[1 + arity], excess * sizeof(PtrOrLiteral));
       // adjust the bitmap
       bm.bitmap.mask >>= arity;  // arity + 1 - 1
-      bm.bitmap.mask |= 0x1;  // funoid is boxed
+      bm.bitmap.mask |= 0x1UL;  // funoid is boxed
       stackframe->layout = bm;
       // adjust stackframe size, invalidates argv, stackframe, updates bitmap.size
       stackframe = stgAdjustTopContSize(stackframe, -arity);
@@ -66,13 +70,14 @@ FnPtr stgApply() {
   
     // just right?
     if (excess == 0) {
+      PRINTF("stgApply FUNEQ\n");
       // reuse call frame
-      STGJUMP0(getInfoPtr(stackframe->payload[0].op)->funFields.trueEntryCode);
+      STGJUMP0(getInfoPtr(argv[0].op)->funFields.trueEntryCode);
 
     // excess < 0, too few args
     } else {
 
-      PRINTF("stgApply FUN %d too few args\n", -excess);
+      PRINTF("stgApply FUNNEG %d\n", -excess);
       int fvCount = getInfoPtr(argv[0].op)->layoutInfo.boxedCount + 
                     getInfoPtr(argv[0].op)->layoutInfo.unboxedCount;
       // stgNewHeapPAPmask puts layout info at payload[fvCount]
@@ -81,7 +86,9 @@ FnPtr stgApply() {
       Obj *pap = stgNewHeapPAPmask(getInfoPtr(argv[0].op), bm);
       // copy fvs
       PRINTF("stgApply FUN inserting %d FVs into new PAP\n", fvCount);
-      memcpy(&pap->payload[0], &argv[0].op->payload[0], fvCount * sizeof(PtrOrLiteral));
+      memcpy(&pap->payload[0], 
+             &argv[0].op->payload[0], 
+             fvCount * sizeof(PtrOrLiteral));
       // copy args to just after fvs and layout info
       PRINTF("stgApply FUN inserting %d args into new PAP\n", argc);
       memcpy(&pap->payload[fvCount+1], &argv[1], argc * sizeof(PtrOrLiteral));
@@ -97,7 +104,6 @@ FnPtr stgApply() {
                   getInfoPtr(argv[0].op)->layoutInfo.unboxedCount;
     Bitmap64 papargmap = argv[0].op->payload[fvCount].b;
     int papargc = papargmap.bitmap.size;
-    PtrOrLiteral *papargv = &argv[0].op->payload[0];
     int arity = getInfoPtr(argv[0].op)->funFields.arity - papargc;
     PRINTF("stgapply PAP/FUN %s arity %d\n", 
             getInfoPtr(argv[0].op)->name, 
@@ -106,27 +112,32 @@ FnPtr stgApply() {
   
     // too many args?
     if (excess > 0) {
-      PRINTF("stgApply PAP %d excess\n", excess);
+      PRINTF("stgApply PAPPOS %d\n", excess);
 
-      { Cont *newframe = stgAllocCallOrStackCont( &it_stgCallCont, 1 + arity + papargc);
+      { Cont *newframe = stgAllocCallOrStackCont( &it_stgCallCont, 
+						  1 + arity + papargc);
         // make space for funoid
       	papargmap.bitmap.mask <<= 1;
-      	papargmap.bitmap.mask |= 0x1;
+      	papargmap.bitmap.mask |= 0x1UL;
       	papargmap.bitmap.size += 1;
 
       	// need first arity bits of bm less funoid
       	Bitmap64 newbm = bm;
       	newbm.bitmap.mask >>= 1; // remove funoid
-      	newbm.bitmap.mask <<= (papargc + 1);  // excess high bits ignored
+        // keep arity #bits, zero high bits to avoid overflow in combining
+        newbm.bitmap.mask &= (0x1UL << arity) - 1;
+        // make room for papargc args
+      	newbm.bitmap.mask <<= 1 + papargc;
+        // arity new args
       	newbm.bitmap.size = arity;
       	// combine and insert
-      	papargmap.bits += newbm.bits;
-      	newframe->layout = papargmap;
+      	newframe->layout.bits = papargmap.bits + newbm.bits;
+
         // CALLCONT args
       	newframe->payload[0] = argv[0]; // self
       	// copy old args
       	memcpy(&newframe->payload[1], 
-      	       &argv[0].op->payload[1 + fvCount], 
+	       &argv[0].op->payload[fvCount + 1],
       	       papargc * sizeof(PtrOrLiteral));
       	// copy new args
       	memcpy(&newframe->payload[1 + papargc], 
@@ -145,7 +156,7 @@ FnPtr stgApply() {
       // adjust the bitmap
       // stgAdjustContSize will adjust the size
       bm.bitmap.mask >>= arity;  // arity + 1 - 1
-      bm.bitmap.mask |= 0x1;  // funoid is boxed
+      bm.bitmap.mask |= 0x1UL;  // funoid is boxed
       stackframe->layout = bm;
       // adjust stackframe size, invalidates argv, stackframe, updates bitmap.size
       stackframe = stgAdjustTopContSize(stackframe, -arity); // units are PtrOrLiterals
@@ -155,48 +166,55 @@ FnPtr stgApply() {
 
     // just right?
     if (excess == 0) {
-      PRINTF("stgApply PAP just right: %d args in PAP, %d new args\n", 
-             papargc, arity);
+      PRINTF("stgApply PAPEQ: %d args in PAP, %d new args\n", 
+             papargc, argc);
 
       // re-use existing stgApply frame
-      // adjust stackframe size, invalidates argv, stackframe, updates bitmap.size
+      // grow stackframe, invalidates argv, stackframe
       stackframe = stgAdjustTopContSize(stackframe, papargc); 
       PtrOrLiteral *argv = &stackframe->payload[0];
       // shift new args up
-      memmove(&argv[1 + papargc], &argv[1], argc * sizeof(PtrOrLiteral));
+      memmove(&argv[1 + papargc], 
+	      &argv[1], 
+	      argc * sizeof(PtrOrLiteral));
       // copy old args in
-      memcpy(&argv[1], &papargv[0], papargc * sizeof(PtrOrLiteral));
+      memcpy(&argv[1], 
+	     &argv[0].op->payload[fvCount + 1],
+	     papargc * sizeof(PtrOrLiteral));
       // adjust bitmap
       bm.bitmap.mask <<= papargc; // overwrite funoid bit
       bm.bitmap.mask |= (papargmap.bitmap.mask << 1); // room for funoid bit
-      bm.bitmap.mask |= 0x1;  // funoid bit
+      bm.bitmap.mask |= 0x1UL;  // restore funoid bit
+      bm.bitmap.size = 1 + papargc + argc;
       stackframe->layout = bm;
       // tail call the FUN
-      STGJUMP0(getInfoPtr(stackframe->payload[0].op)->funFields.trueEntryCode);
+      STGJUMP0(getInfoPtr(argv[0].op)->funFields.trueEntryCode);
   
     // excess < 0, too few args
     } else {
-      PRINTF("stgApply PAP too few args\n");
+      PRINTF("stgApply PAPNEG %d too few args\n", -excess);
       bm.bitmap.mask >>= 1;  // zap funoid bit
       bm.bitmap.size -= 1;
       bm.bitmap.mask <<= argc;
       bm.bits += papargmap.bits;
       // stgNewHeapPAP puts layout info at payload[fvCount]
-      Obj *pap = stgNewHeapPAPmask(getInfoPtr(argv[0].op), bm);
+      Obj *newpap = stgNewHeapPAPmask(getInfoPtr(argv[0].op), bm);
       // copy fvs
       PRINTF("stgApply PAP inserting %d FVs into new PAP\n", fvCount);
-      memcpy(&pap->payload[0], 
+      memcpy(&newpap->payload[0], 
 	     &argv[0].op->payload[0], 
 	     fvCount * sizeof(PtrOrLiteral));
       // copy old args
       PRINTF("stgApply PAP inserting %d old args into new PAP\n", papargc);
-      memcpy(&pap->payload[fvCount+1], 
-	     &argv[0].op->payload[fvCount+1], 
+      memcpy(&newpap->payload[fvCount+1], 
+	     &argv[0].op->payload[0], 
 	     papargc * sizeof(PtrOrLiteral));
       // copy new args to just after fvs, layout info, and old args
       PRINTF("stgApply PAP inserting %d new args into new PAP\n", argc);
-      memcpy(&pap->payload[fvCount+1+papargc], &argv[1], argc * sizeof(PtrOrLiteral));
-      stgCurVal = HOTOPL(pap);
+      memcpy(&newpap->payload[fvCount+1+papargc], 
+	     &argv[1], 
+	     argc * sizeof(PtrOrLiteral));
+      stgCurVal = HOTOPL(newpap);
       stgPopCont();
       STGRETURN0();
     } // if excess
@@ -209,7 +227,7 @@ FnPtr stgApply() {
   } // case BLACKHOLE
   
   default:
-    PRINTF("stgApply not a THUNK, FUN, or PAP\n");
+    PRINTF("stgApply not a FUN or PAP\n");
     exit(0);
   }  // switch
 }
