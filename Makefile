@@ -42,8 +42,9 @@ _ctest:
 
 clean: 
 	@(cd codegen && cabal clean)
-	@(cd test && rm -f *.stg.c 2>/dev/null)
-	@(cd test/error && rm -f *.stg.c 2>/dev/null)
+	@(cd test/stg && rm -f *.stg.c 2>/dev/null)
+	@(cd test/stg/error && rm -f *.stg.c 2>/dev/null)
+	@(cd test/stg/nonstrict && rm -f *.stg.c 2>/dev/null)
 	@(cd test/mhs && rm -f *.mhs.c 2>/dev/null)
 	@(rm -rf $(build_dir))
 

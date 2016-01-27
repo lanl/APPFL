@@ -1,7 +1,7 @@
 project(stgc_test_error)
 
-set(STGCC "${CMAKE_CURRENT_BINARY_DIR}/../../bin/stgc")
-set(SRC_DIR ${CMAKE_SOURCE_DIR}/test/error)
+set(STGCC "${CMAKE_CURRENT_BINARY_DIR}/../../../bin/stgc")
+set(SRC_DIR ${CMAKE_SOURCE_DIR}/test/stg/error)
 
 set(name comment)
 set(tname error_${name})
