@@ -175,7 +175,10 @@ FnPtr stgUpdateCont() {
   strcpy( p.op->ident, it_stgIndirect.name );
   int newObjSize = getObjSize(p.op);
   assert(newObjSize <= oldObjSize);
+
+  // this is for displaying a fragmented heap
   memset((char*)p.op+newObjSize, 0, oldObjSize-newObjSize);
+
   PRINTF( "stgUpdateCont leaving...\n  ");
   stgPopCont();
   STGRETURN0();

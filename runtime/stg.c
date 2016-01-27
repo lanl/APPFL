@@ -117,12 +117,31 @@ Cont *stgAllocCallOrStackCont(CInfoTab *citp, int argc) {
   contp->cInfoPtr = citp;
   contp->_contSize = contSize;  // to go away
 
-  contp->layout.bits = 0x0UL;
+  contp->layout.bits = 0x0UL;  // for GC
 
   contp->entryCode = citp->entryCode;
   contp->contType = citp->contType;
   strcpy(contp->ident, citp->name);  // may be overwritten
   return contp;
+}
+
+// not used in favor of StgAdjustTopContSize
+// top two elements of STG stack should be STACKCONTS
+// overwrite penultimate with topmost
+Cont *stgJumpAdjust() {
+  PRINTF("ENTER stgJumpAdjust\n");
+  Cont *scp = (Cont *)stgSP;
+  assert(getContType(scp) == STACKCONT);
+  size_t contSize = getContSize(scp);
+  PRINTF("  top cont size is %lu\n", contSize);
+  Cont *pscp = (Cont *)((char *)stgSP + contSize);
+  assert(getContType(pscp) == STACKCONT);
+  size_t pContSize = getContSize(pscp);
+  PRINTF("  penultimate cont size is %lu\n", pContSize);
+  stgSP += pContSize;
+  memmove(stgSP, scp, contSize);
+  PRINTF("EXIT stgJumpAdjust\n");
+  return (Cont *) stgSP;
 }
 
 // delta is in units of sizeof(PtrOrLiteral)
@@ -187,24 +206,6 @@ Cont *stgGetStackArgp() {
   return scp;
 }
 
-// top two elements of STG stack should be STACKCONTS
-// overwrite penultimate with topmost
-Cont *stgJumpAdjust() {
-  PRINTF("ENTER stgJumpAdjust\n");
-  Cont *scp = (Cont *)stgSP;
-  assert(getContType(scp) == STACKCONT);
-  size_t contSize = getContSize(scp);
-  PRINTF("  top cont size is %lu\n", contSize);
-  Cont *pscp = (Cont *)((char *)stgSP + contSize);
-  assert(getContType(pscp) == STACKCONT);
-  size_t pContSize = getContSize(pscp);
-  PRINTF("  penultimate cont size is %lu\n", pContSize);
-  stgSP += pContSize;
-  memmove(stgSP, scp, contSize);
-  PRINTF("EXIT stgJumpAdjust\n");
-  return (Cont *) stgSP;
-}
-
 Obj* stgNewHeapObj(InfoTab *itp) {
   PRINTF("stgNewHeapObj: "); showIT(itp);
   int payloadSize = itp->layoutInfo.payloadSize;
@@ -254,9 +255,8 @@ Obj* stgNewHeapPAPmask(InfoTab *itp, Bitmap64 bm) {
   objSize = ((objSize + 7)/8)*8;
   Obj *objp = (Obj *)stgHP;
   stgHP = (char *)stgHP + objSize;
-  // memset(objp, 0, objSize); //zero out anything left by previous gc passes
 #if USE_ARGTYPE
-  objp->payload[fvCount].argType = LONG;
+  objp->payload[fvCount].argType = BITMAP;
 #endif
   objp->payload[fvCount].b = bm;
   strcpy(objp->ident, itp->name);  // may be overwritten
@@ -289,15 +289,6 @@ int getObjSize(Obj *o) {
   case BLACKHOLE:
   case INDIRECT: {
     InfoTab *itp = getInfoPtr(o);
-    /* THUNK payload size is one larger, this is a wart, this check should be in GC
-    if(itp->layoutInfo.boxedCount + itp->layoutInfo.unboxedCount !=
-       itp->layoutInfo.payloadSize) {
-      PRINTF("%s bc %d, ubc %d, pls %d\n", objTypeNames[type],
-	      itp->layoutInfo.boxedCount, itp->layoutInfo.unboxedCount,
-	      itp->layoutInfo.payloadSize);
-      assert(false);
-    }
-    */
     objSize = sizeof(Obj) + 
               itp->layoutInfo.payloadSize * sizeof(PtrOrLiteral);
     break;

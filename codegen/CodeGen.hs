@@ -76,7 +76,6 @@ useArgType = False
 
 data RVal = SO              -- static object
           | HO String       -- Heap Obj, payload size, TO GO?
-          | LV              -- Local Var, use name as is, TO GO?
           | FP String Int   -- stack Formal Param, pointer to stack payload
           | FV String Int   -- Free Variable, payload in heap via pointer to 
                             --   pointer in stack, e.g. fvpp->op->payload[i]
@@ -156,8 +155,6 @@ lu v ((v',k):_) size' n | v == v' =
       FP{} -> error "fixme"
 
       FV{} -> error "fixme"
-
-      LV -> cVarE v
 
 --      FV i -> CIndex (CMember (CMember (cVarE "self") (builtinIdent "op") False undefNode)
               (builtinIdent "payload") True undefNode) (cIntE $ toInteger i) undefNode
@@ -244,8 +241,7 @@ getEnvRef v kvs =
       Just k ->
           case k of
             SO      -> "HOTOPL(&sho_" ++ v ++ ")"
-            HO name -> "(*" ++ name ++ ")"
-            LV       -> v
+            HO name -> "(*" ++ name ++ ")" -- pointer to STACKCONT payload
             FP fp i -> fp ++ "[" ++ show i ++ "]"
             FV fpp i -> fpp ++ "->op->payload[" ++ show i ++ "]"
 
@@ -268,8 +264,8 @@ cga env (LitC c) = "((PtrOrLiteral){.i = con_" ++ c ++ " })"
 cgStart :: String
 cgStart = "\n\nFnPtr start() {\n" ++
             "  registerSOs();\n" ++
-            "  Cont *showResultCont = stgAllocCallOrStackCont(&it_stgShowResultCont, 0);\n" ++
-            "  showResultCont->layout.bits = 0x0UL; // empty\n" ++
+            "  Cont *showResultCont = " ++ 
+               "stgAllocCallOrStackCont(&it_stgShowResultCont, 0);\n" ++
 #if USE_ARGTYPE
             "  stgCurVal.argType = HEAPOBJ;\n" ++
 #endif

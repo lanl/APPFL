@@ -50,9 +50,9 @@ void stgPopContIfPopMe();
   callCont->layout.bits = 0x0UL;			     \
   STGCALL0(getInfoPtr(stgCurVal.op)->entryCode);	     \
   if (getObjType(stgCurVal.op) == BLACKHOLE) {		     \
-    fprintf(stderr, "infinite loop detected in STGEVAL!\n"); \
+    fprintf(stderr, "STGEVAL terminating on BLACKHOLE\n");   \
     showStgVal(stgCurVal);				     \
-    assert(false);					     \
+    exit(0);						     \
   }							     \
   if (getObjType(stgCurVal.op) == THUNK) {		     \
     fprintf(stderr, "THUNK at end of STGEVAL!\n");	     \
@@ -68,9 +68,9 @@ void stgPopContIfPopMe();
   GC();								     \
   derefStgCurVal();						     \
   if (getObjType(stgCurVal.op) == BLACKHOLE) {			     \
-    fprintf(stderr, "infinite loop detected in STGJUMP!\n");	     \
+    fprintf(stderr, "STGJUMP terminating on BLACKHOLE\n");	     \
     showStgVal(stgCurVal);					     \
-    assert(false);						     \
+    exit(0);							     \
   }								     \
   STGJUMP0(getInfoPtr(stgCurVal.op)->entryCode);		     \
 } while (0)

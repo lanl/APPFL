@@ -240,9 +240,9 @@ FnPtr stgApply() {
   } // case PAP
   
   case BLACKHOLE: {
-    PRINTF("infinite loop detected in stgApply!\n");
+    PRINTF("stgApply terminating on BLACKHOLE\n");
     showStgHeap();
-    assert(0);
+    exit(0);
   } // case BLACKHOLE
   
   default:
