@@ -164,7 +164,8 @@ compile  (Options {optVerbose, optDumpParse, optNoPrelude, optInput,
                  cflagsenv <- lookupEnv "CFLAGS"
                  let cflags = fromMaybe "" cflagsenv
                  let coutput = input ++ ".c"
-                 let flags = " " ++ cflags ++ " -std=gnu99 -Wl,-rpath " ++ rtIncDir 
+                 let flags = " -Wno-return-type " 
+                               ++ cflags ++ " -std=gnu99 -Wl,-rpath " ++ rtIncDir 
                                ++ " -L" ++ rtLibDir ++ " -I" ++ rtIncDir
                                ++ " -lruntime"
                  writeFile coutput (pprinter $ codegener source optVerbose minihs)

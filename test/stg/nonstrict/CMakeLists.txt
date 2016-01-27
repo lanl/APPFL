@@ -19,7 +19,7 @@ macro(add_test_blackhole name build command)
     set_tests_properties(${name} PROPERTIES PASS_REGULAR_EXPRESSION
       "infinite loop detected in STGJUMP")
     set_property(TEST ${name} PROPERTY WILL_FAIL) 
-endmacro(add_test_true)
+endmacro(add_test_blackhole)
 
 file(GLOB ALL_SRCS *.stg)
 
