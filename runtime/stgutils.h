@@ -7,6 +7,8 @@
 #include "string.h"
 #include "options.h"
 
+#include <stdlib.h>
+
 extern void stgThunk(PtrOrLiteral self);
 
 Obj *derefHO(Obj *op);
@@ -70,7 +72,7 @@ void stgPopContIfPopMe();
   if (getObjType(stgCurVal.op) == BLACKHOLE) {			     \
     fprintf(stderr, "infinite loop detected in STGJUMP!\n");	     \
     showStgVal(stgCurVal);					     \
-    assert(false);						     \
+    exit(1);						     \
   }								     \
   STGJUMP0(getInfoPtr(stgCurVal.op)->entryCode);		     \
 } while (0)

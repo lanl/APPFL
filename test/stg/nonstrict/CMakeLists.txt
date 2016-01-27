@@ -13,6 +13,14 @@ macro(add_test_crashed name command)
     add_test(NAME ${name} COMMAND test_that_crash ${command} ${ARGN})
 endmacro(add_test_crashed)
 
+macro(add_test_blackhole name build command)
+    add_test(${name} ${command} ${ARGN})
+    set_tests_properties(${name} PROPERTIES DEPENDS ${build})
+    set_tests_properties(${name} PROPERTIES PASS_REGULAR_EXPRESSION
+      "infinite loop detected in STGJUMP")
+    set_property(TEST ${name} PROPERTY WILL_FAIL) 
+endmacro(add_test_true)
+
 file(GLOB ALL_SRCS *.stg)
 
 foreach (test ${ALL_SRCS})
@@ -27,15 +35,10 @@ foreach (test ${ALL_SRCS})
     #non-strict w/o gc
     add_test_true(${tname}_nonstrict_nogc ${build} ${binary} -e0 -g 2>&1)     
 
-
     #strict w/ gc 
-    set(tnames ${tname}_strict)
-    add_test_crashed(${tnames} ${binary} -e1 2>&1)  
-    set_tests_properties(${tnames} PROPERTIES DEPENDS ${build})
+    add_test_blackhole(${tname}_strict ${build} ${binary} -e1 2>&1)           
 
     #strict w/o gc
-    set(t2names ${tnames}_nogc)
-    add_test_crashed(${t2names} ${binary} -e1 -g 2>&1)  
-    set_tests_properties(${t2names} PROPERTIES DEPENDS ${build})
+    add_test_blackhole(${tname}_strict_nogc ${build} ${binary} -e1 -g 2>&1)           
 endforeach(test)
 
