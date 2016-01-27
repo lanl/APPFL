@@ -4,21 +4,11 @@ set(STGCC "${CMAKE_CURRENT_BINARY_DIR}/../../../bin/stgc")
 set(SRC_DIR ${CMAKE_SOURCE_DIR}/test/stg/nonstrict)
 set(BIN_DIR ${BINARY_DIR}/stg/nonstrict)
 
-#build crash wrapper
-add_executable(test_that_crash test_that_crash.c)
-
-# Similar to add_test(name command), but test is assumed successfull 
-# only if it is crashed(signalled)
-macro(add_test_crashed name command)
-    add_test(NAME ${name} COMMAND test_that_crash ${command} ${ARGN})
-endmacro(add_test_crashed)
-
 macro(add_test_blackhole name build command)
     add_test(${name} ${command} ${ARGN})
     set_tests_properties(${name} PROPERTIES DEPENDS ${build})
     set_tests_properties(${name} PROPERTIES PASS_REGULAR_EXPRESSION
-      "infinite loop detected in STGJUMP")
-    set_property(TEST ${name} PROPERTY WILL_FAIL) 
+      "terminating on BLACKHOLE")
 endmacro(add_test_blackhole)
 
 file(GLOB ALL_SRCS *.stg)
