@@ -16,6 +16,7 @@ import           Control.Monad (when)
 -- build a.out from stg/mhs and run it
 _eval :: String -> Bool -> IO()
 _eval input showerr = do
+  system "cd .. && make runtime"
   system "rm -f a.out"
   build input
   let erStr = if showerr then "" else " &2>/dev/null"
@@ -80,7 +81,6 @@ data Options = Options
     , optDumpParse :: Bool
     , optDumpSTG   :: Bool
     , optNoPrelude :: Bool
-    , optStrict    :: Bool
     , optOutput    :: Maybe FilePath
     , optInput     :: Maybe FilePath
     } deriving Show
@@ -91,7 +91,6 @@ defaultOptions       = Options
     , optDumpParse   = False
     , optDumpSTG     = False
     , optNoPrelude   = False
-    , optStrict      = False
     , optInput       = Nothing
     , optOutput      = Just "a.out"
     }
@@ -113,9 +112,6 @@ options =
     , Option ['p'] ["no-prelude"]
         (NoArg (\ opts -> opts { optNoPrelude = True }))
         "do not include prelude"
-     , Option ['s'] ["strict"]
-        (NoArg (\ opts -> opts { optStrict = True }))
-        "strict evaluation"
     , Option ['o'] ["output"]
         (ReqArg (\ f opts -> opts { optOutput = Just f }) "FILE")
         "output FILE"
@@ -139,7 +135,7 @@ checkOpts (Options {optHelp}) optInputs =
                    _ ->  ioError (userError ("bad input\n" ++ usageInfo header options))
 
 compile :: Options -> String -> String -> String -> Bool -> IO ()
-compile  (Options {optVerbose, optDumpParse, optNoPrelude, optStrict, optInput,
+compile  (Options {optVerbose, optDumpParse, optNoPrelude, optInput,
            optOutput, optDumpSTG}) preludeDir rtLibDir rtIncDir ccompile =
   do
     let input = fromJust optInput
@@ -168,9 +164,10 @@ compile  (Options {optVerbose, optDumpParse, optNoPrelude, optStrict, optInput,
                  cflagsenv <- lookupEnv "CFLAGS"
                  let cflags = fromMaybe "" cflagsenv
                  let coutput = input ++ ".c"
-                 let flags = " " ++ cflags ++ " -std=gnu99 -Wl,-rpath " ++
-                               rtIncDir ++ " -L" ++ rtLibDir ++ " -I" ++ rtIncDir
-                               ++ if optStrict then " -lruntime-s " else " -lruntime-ns"
+                 let flags = " -Wno-return-type " 
+                               ++ cflags ++ " -std=gnu99 -Wl,-rpath " ++ rtIncDir 
+                               ++ " -L" ++ rtLibDir ++ " -I" ++ rtIncDir
+                               ++ " -lruntime"
                  writeFile coutput (pprinter $ codegener source optVerbose minihs)
                  if ccompile
                    then system (cc ++ " " ++ coutput ++ " -o " ++ fromJust optOutput ++ flags)

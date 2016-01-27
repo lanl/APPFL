@@ -1,1 +1,0 @@
-main = THUNK(eqInt one five);

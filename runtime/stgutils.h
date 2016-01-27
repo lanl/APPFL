@@ -7,6 +7,8 @@
 #include "string.h"
 #include "options.h"
 
+#include <stdlib.h>
+
 extern void stgThunk(PtrOrLiteral self);
 
 Obj *derefHO(Obj *op);
