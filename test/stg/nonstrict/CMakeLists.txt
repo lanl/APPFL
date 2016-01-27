@@ -13,27 +13,29 @@ macro(add_test_crashed name command)
     add_test(NAME ${name} COMMAND test_that_crash ${command} ${ARGN})
 endmacro(add_test_crashed)
 
-
 file(GLOB ALL_SRCS *.stg)
 
 foreach (test ${ALL_SRCS})
     get_filename_component(tname ${test} NAME_WE) 
-     set(bname build_${tname})
-     add_test(${bname} ${STGCC} -v ${SRC_DIR}/${tname}.stg -o ${tname})
-     add_test(${tname} ${BIN_DIR}/${tname} -e0 2>&1)  #non-strict w/ gc
-     set_tests_properties(${tname} PROPERTIES DEPENDS ${bname})
-     set_tests_properties(${tname} PROPERTIES PASS_REGULAR_EXPRESSION
-     "The answer is[\r\n\t ]*true = True")
-     set(t2name ${tname}_nogc)
-     add_test(${t2name} ${BIN_DIR}/${tname} -e0 -g 2>&1) #non-strict w/o gc
-     set_tests_properties(${t2name} PROPERTIES DEPENDS ${bname})
-     set_tests_properties(${t2name} PROPERTIES PASS_REGULAR_EXPRESSION
-     "The answer is[\r\n\t ]*true = True")
-     set(tnames ${tname}_strict)
-     add_test_crashed(${tnames} ${BIN_DIR}/${tname} -e1 2>&1)  #strict w/ gc
-     set_tests_properties(${tnames} PROPERTIES DEPENDS ${bname})
-     set(t2names ${tnames}_nogc)
-     add_test_crashed(${t2names} ${BIN_DIR}/${tname} -e1 -g 2>&1)  #strict w/o gc
-     set_tests_properties(${t2names} PROPERTIES DEPENDS ${bname})
+    set(build build_${tname})
+    set(binary ${BIN_DIR}/${tname})
+    add_test(${build} ${STGCC} -v ${SRC_DIR}/${tname}.stg -o ${tname})
+     
+    #non-strict w/ gc
+    add_test_true(${tname}_nonstrict ${build} ${binary} -e0 2>&1)           
+     
+    #non-strict w/o gc
+    add_test_true(${tname}_nonstrict_nogc ${build} ${binary} -e0 -g 2>&1)     
+
+
+    #strict w/ gc 
+    set(tnames ${tname}_strict)
+    add_test_crashed(${tnames} ${binary} -e1 2>&1)  
+    set_tests_properties(${tnames} PROPERTIES DEPENDS ${build})
+
+    #strict w/o gc
+    set(t2names ${tnames}_nogc)
+    add_test_crashed(${t2names} ${binary} -e1 -g 2>&1)  
+    set_tests_properties(${t2names} PROPERTIES DEPENDS ${build})
 endforeach(test)
 
