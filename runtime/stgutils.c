@@ -251,6 +251,16 @@ CInfoTab it_stgStackCont __attribute__((aligned(8))) =
     .cLayoutInfo.bm.bitmap.size = 0,  // shouldn't be using this
   };
 
+CInfoTab it_stgLetCont __attribute__((aligned(8))) =
+  { .name = "stgStackCont",
+    .entryCode = &stgStackCont,
+    .contType = LETCONT,
+    .cLayoutInfo.boxedCount = -1,  // shouldn't be using this
+    .cLayoutInfo.unboxedCount = -1,  // shouldn't be using this
+    .cLayoutInfo.bm.bitmap.mask = 0x0,   // shouldn't be using this
+    .cLayoutInfo.bm.bitmap.size = 0,  // shouldn't be using this
+  };
+
 FnPtr stgPopMeCont() {
   PRINTF("stgPopMeCont returning\n");
   stgPopCont();

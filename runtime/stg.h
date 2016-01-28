@@ -23,6 +23,7 @@ extern CInfoTab it_stgCallCont;
 
 FnPtr stgStackCont();
 extern CInfoTab it_stgStackCont;
+extern CInfoTab it_stgLetCont;
 
 FnPtr stgUpdateCont();
 extern CInfoTab it_stgUpdateCont;
@@ -90,7 +91,8 @@ typedef enum {
   CALLCONT,
   STACKCONT,
   POPMECONT,
-  PHONYENDCONT
+  LETCONT,
+  PHONYENDCONT,
 } ContType;
 const char *contTypeNames[PHONYENDCONT];
 

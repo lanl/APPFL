@@ -46,6 +46,10 @@ void showStgCont(Cont *c) {
     fprintf(stderr,"POPMECONT  %s\n", c->ident);
     return;
 
+  case LETCONT:
+    fprintf(stderr,"LETCONT  %s\n", c->ident);
+    return;
+
   default:
     fprintf(stderr,"showStgCont default case! %d %s\n", type, objTypeNames[type]);
     exit(0);

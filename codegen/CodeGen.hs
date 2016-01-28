@@ -510,12 +510,12 @@ cge env (EPrimop it op eas) =
 cge env (ELet it os e) =
     let names = map oname os
         decl = concat [ "PtrOrLiteral *" ++ name ++ ";\n" | name <- names ] ++
-               "{Cont *contp = stgAllocCallOrStackCont(&it_stgStackCont, " ++ 
+               "{Cont *contp = stgAllocCallOrStackCont(&it_stgLetCont, " ++ 
                                show (length os) ++ ");\n" ++
                concat [ name ++ " = &(contp->payload[" ++ show i ++ "]);\n" |
                         (name, i) <- zip names [0..] ] ++
                "contp->layout = " ++ npStrToBMStr (replicate (length os) 'P') ++
-               ";}\n"
+               ";}\n" -- only size actually matters
         env'  = zip names (map HO names) ++ env
 #if USE_CAST
         (sizes, cDecls, cBuildcodes) = unzip3 $ map (buildHeapObj env') os

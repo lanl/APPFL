@@ -180,28 +180,46 @@ void processObj(Obj *p) {
 
 void processCont(Cont *p) {
   int contType = getContType(p);
-  assert(contType > PHONYSTARTCONT && contType < PHONYENDCONT && "bad cont type");
-  if (DEBUG_GC) PRINTF( "processCont %s %s\n", contTypeNames[contType], p->ident);
+  assert(contType > PHONYSTARTCONT && 
+	 contType < PHONYENDCONT && "bad cont type");
+  if (DEBUG_GC) PRINTF("processCont %s %s\n", 
+		       contTypeNames[contType], p->ident);
   Bitmap64 bm = p->layout;
   uint64_t mask = bm.bitmap.mask;
-  int i = 0;
-  for (int size = bm.bitmap.size; size != 0; size--, i++, mask >>= 1) {
-    if (EXTRA_CHECKS_GC) {
-  	EXTRASTART();
-  	if (mask & 0x1UL) {
-  	  if (!isBoxed(p->payload[i])) {
-	    PRINTF("gc: unexpected unboxed arg in CONT index %d\n", i);
+  int size = bm.bitmap.size;
+  if (contType != LETCONT) {
+    for (int i = 0; i != size; i++, mask >>= 1) {
+      if (EXTRA_CHECKS_GC) {
+    	EXTRASTART();
+    	if (mask & 0x1UL) {
+    	  if (!isBoxed(p->payload[i])) {
+    	    PRINTF("gc: unexpected unboxed arg in CONT index %d\n", i);
+    	    assert(false);
+    	  }
+    	} else {
+    	  if (isBoxed(p->payload[i])) {
+    	    PRINTF("gc: unexpected boxed arg in CONT index %d\n", i);
+    	    assert(false);
+    	  }
+    	}
+    	EXTRAEND();
+      }
+      if (mask & 0x1UL) updatePtr(&p->payload[i]);
+    }  // for
+  } else { // LETCONT
+    for (int i = 0; i != size; i++) {
+      if (p->payload[i].op != NULL) {
+	if (EXTRA_CHECKS_GC) {
+	  EXTRASTART();
+	  if (!isBoxed(p->payload[i])) {
+	    PRINTF("gc: unexpected unboxed arg in LETCONT index %d\n", i);
 	    assert(false);
 	  }
-	} else {
-	  if (isBoxed(p->payload[i])) {
-	    PRINTF("gc: unexpected boxed arg in CONT index %d\n", i);
-	    assert(false);
-	  }
+	  EXTRAEND();
 	}
-  	EXTRAEND();
+	updatePtr(&p->payload[i]);
+      }
     }
-    if (mask & 0x1UL) updatePtr(&p->payload[i]);
   }
 }
 

@@ -54,6 +54,7 @@ const char *contTypeNames[] = {
   "CASECONT", 
   "CALLCONT", 
   "STACKCONT",
+  "LETCONT",
   "POPMECONT",
 };
 
@@ -104,7 +105,9 @@ Cont *stgAllocCont(CInfoTab *citp) {
 
 // CALL/STACK CONTs DON'T have common InfoTab entries, .layoutInfo is invalid for all
 Cont *stgAllocCallOrStackCont(CInfoTab *citp, int argc) {
-  assert((citp->contType == CALLCONT || citp->contType == STACKCONT) && 
+  assert((citp->contType == LETCONT || 
+	  citp->contType == CALLCONT || 
+	  citp->contType == STACKCONT) && 
 	 "stgAllocCallOrStackCont: citp->contType != CALLCONT/STACKCONT");
   size_t contSize = sizeof(Cont) + argc * sizeof(PtrOrLiteral);
   contSize = ((contSize + 7)/8)*8; 
@@ -342,6 +345,7 @@ int getContSize(Cont *o) {
   case CASECONT:
   case STACKCONT:
   case POPMECONT:
+  case LETCONT:
     contSize = sizeof(Cont) + o->layout.bitmap.size * sizeof(PtrOrLiteral);
     break;
   default:
