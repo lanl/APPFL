@@ -10,6 +10,8 @@
 #include "cmm.h"
 #include "args.h"
 
+void startCheck();
+
 void gc(void);
 
 #define GC() if(stgHP-stgHeap > GCThreshold*stgHeapSize) gc();
@@ -117,20 +119,25 @@ typedef struct {
   };
 } PtrOrLiteral;
 
+// we can't be certain a value is boxed or unboxed without enabling USE_ARGTYPE
+// but we can do some sanity checking.  mayBeBoxed(v) means that v is not
+// definitely unboxed
+bool mayBeBoxed(PtrOrLiteral v);
+bool mayBeUnboxed(PtrOrLiteral v);
+
 // STG registers
 // %rbx, %rbp, %r10, %r13, %r14, %r15 callee saved
 // TODO:  make heap, stack pointers registers, test performance
 // TODO:  distinguish stgCurVal as stgCurPtr and stgCurUbx
-#ifndef __clang__
+#if !defined(__clang__) && !USE_ARGTYPE
 register PtrOrLiteral stgCurVal asm("%r14");  // current/return value
-//register PtrOrLiteral stgCurValU asm("%r15");  // current/return value
+register PtrOrLiteral stgCurValU asm("%r13");  // current/return value
 #else
 extern PtrOrLiteral stgCurVal;  // current/return value
+extern PtrOrLiteral stgCurValU;  // current/return value
 #endif
-/*
-  payload -- see README
-*/
 
+// with empty payload sizeof(Obj) must be multiple of 4
 struct _Obj {
   InfoTab *_infoPtr;         // canonical location of infoPtr--first word
 #if USE_OBJTYPE

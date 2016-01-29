@@ -263,7 +263,6 @@ cga env (LitC c) = "((PtrOrLiteral){.i = con_" ++ c ++ " })"
 
 cgStart :: String
 cgStart = "\n\nFnPtr start() {\n" ++
-            "  registerSOs();\n" ++
             "  Cont *showResultCont = " ++ 
                "stgAllocCallOrStackCont(&it_stgShowResultCont, 0);\n" ++
 #if USE_ARGTYPE
@@ -275,9 +274,11 @@ cgStart = "\n\nFnPtr start() {\n" ++
 
 cgMain :: Bool -> String
 cgMain v = let top = "int main (int argc, char **argv) {\n" ++
+                     "  startCheck();\n" ++
                      "  parseArgs(argc, argv);\n" ++
                      "  initStg();\n" ++
                      "  initGc();\n" ++
+                     "  registerSOs();\n" ++
                      "  CALL0_0(start);\n"
                bot = "  return 0;\n" ++ "}\n\n"
   in if v then top ++ "  showStgHeap();\n  GC();\n" ++ bot else top ++ bot

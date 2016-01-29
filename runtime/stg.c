@@ -26,7 +26,7 @@ void *fromPtr = NULL;
 void *stgStack = NULL;
 void *stgSP = NULL;
 
-#ifndef __clang__
+#if !defined(__clang__) && !USE_ARGTYPE
 // register PtrOrLiteral stgCurVal asm("%r15");  // current value STG register
 #else
 PtrOrLiteral stgCurVal;  // current/return value
@@ -58,6 +58,34 @@ const char *contTypeNames[] = {
   "POPMECONT",
 };
 
+void startCheck() {
+  if (sizeof(Obj) % OBJ_ALIGN != 0) {
+    fprintf(stderr, "sizeof(Obj) is %lu not multiple of %d", sizeof(Obj), OBJ_ALIGN);
+    exit(1);
+  }
+}
+
+// we can't be certain a value is boxed or unboxed without enabling ARG_TYPE
+// but we can do some sanity checking.  mayBeBoxed(v) means that v is not
+// definitely unboxed
+bool mayBeBoxed(PtrOrLiteral f) {
+  #if USE_ARGTYPE
+  return f.argType == HEAPOBJ && (f.op == NULL || isHeap(f.op) || isSHO(f.op)) &&
+    ((f.u & (OBJ_ALIGN - 1)) == 0);
+#else
+  return (f.op == NULL || isHeap(f.op) || isSHO(f.op)) &&
+    ((f.u & (OBJ_ALIGN - 1)) == 0);
+#endif
+}
+
+bool mayBeUnboxed(PtrOrLiteral f) {
+  #if USE_ARGTYPE
+  return f.argType != HEAPOBJ;
+#else
+  return true;
+#endif
+}
+
 void copyargs(PtrOrLiteral *dest, PtrOrLiteral *src, int count) {
   memcpy(dest, src, count * sizeof(PtrOrLiteral));
 }
@@ -84,7 +112,7 @@ Cont *stgAllocCont(CInfoTab *citp) {
           "stgAllocCont: citp->contType == CALLCONT/STACKCONT" );
   int payloadSize = citp->cLayoutInfo.payloadSize;
   size_t contSize = sizeof(Cont) + payloadSize * sizeof(PtrOrLiteral);
-  contSize = ((contSize + 7)/8)*8; 
+  //  contSize = ((contSize + 7)/8)*8; 
   PRINTF("allocating %s continuation with payloadSize %d\n", 
 	  contTypeNames[citp->contType], payloadSize);
   showCIT(citp);
@@ -110,7 +138,7 @@ Cont *stgAllocCallOrStackCont(CInfoTab *citp, int argc) {
 	  citp->contType == STACKCONT) && 
 	 "stgAllocCallOrStackCont: citp->contType != CALLCONT/STACKCONT");
   size_t contSize = sizeof(Cont) + argc * sizeof(PtrOrLiteral);
-  contSize = ((contSize + 7)/8)*8; 
+  //  contSize = ((contSize + 7)/8)*8; 
   PRINTF("allocating %s continuation with argc %d\n", 
 	  contTypeNames[citp->contType], argc);
   showCIT(citp);
@@ -161,9 +189,9 @@ Cont *stgAdjustTopContSize(Cont *cp, int delta) {
 
   // calculate actual cont sizes
   int oldContSize = sizeof(Cont) + oldPayloadSize * sizeof(PtrOrLiteral);
-      oldContSize = ((oldContSize + 7)/8)*8; 
+  //      oldContSize = ((oldContSize + 7)/8)*8; 
   int newContSize = sizeof(Cont) + newPayloadSize * sizeof(PtrOrLiteral);
-      newContSize = ((newContSize + 7)/8)*8;
+  //      newContSize = ((newContSize + 7)/8)*8;
 
   if (newContSize == oldContSize) 
     return cp;
@@ -193,7 +221,7 @@ void stgPopCont() {
   PRINTF("popping %s continuation with payloadSize %d\n",
 	  contTypeNames[contType], payloadSize);
   size_t contSize = sizeof(Cont) + payloadSize * sizeof(PtrOrLiteral);
-  contSize = ((contSize + 7)/8)*8; 
+  //  contSize = ((contSize + 7)/8)*8; 
   showCIT(getCInfoPtr(cp));
   assert((char *)cp + contSize <= (char *)stgStack + stgStackSize);
   stgSP = (char *)cp + contSize;

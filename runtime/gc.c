@@ -54,7 +54,7 @@ Obj *deref2(Obj *p) {
 }
 
 PtrOrLiteral updatePtrByValue (PtrOrLiteral f) {
-  assert(isBoxed(f) && "not a HEAPOBJ");
+  assert(mayBeBoxed(f) && "not a HEAPOBJ");
   Obj *p = deref2(f.op);  
   if (isFrom(p)) {
     // from space
@@ -192,12 +192,12 @@ void processCont(Cont *p) {
       if (EXTRA_CHECKS_GC) {
     	EXTRASTART();
     	if (mask & 0x1UL) {
-    	  if (!isBoxed(p->payload[i])) {
+    	  if (!mayBeBoxed(p->payload[i])) {
     	    PRINTF("gc: unexpected unboxed arg in CONT index %d\n", i);
     	    assert(false);
     	  }
     	} else {
-    	  if (isBoxed(p->payload[i])) {
+    	  if (!mayBeUnboxed(p->payload[i])) {
     	    PRINTF("gc: unexpected boxed arg in CONT index %d\n", i);
     	    assert(false);
     	  }
@@ -211,7 +211,7 @@ void processCont(Cont *p) {
       if (p->payload[i].op != NULL) {
 	if (EXTRA_CHECKS_GC) {
 	  EXTRASTART();
-	  if (!isBoxed(p->payload[i])) {
+	  if (!mayBeBoxed(p->payload[i])) {
 	    PRINTF("gc: unexpected unboxed arg in LETCONT index %d\n", i);
 	    assert(false);
 	  }
@@ -242,7 +242,7 @@ void gc(void) {
 
   // add stgCurVal
   if (EXTRA_CHECKS_GC) {
-    assert(isBoxed(stgCurVal) && "gc: unexpected unboxed arg in stgCurVal");
+    assert(mayBeBoxed(stgCurVal) && "gc: unexpected unboxed arg in stgCurVal");
   }
   if (stgCurVal.op != NULL)
     processObj(stgCurVal.op);
@@ -263,7 +263,7 @@ void gc(void) {
   //update stgCurVal
   if (EXTRA_CHECKS_GC) {
     EXTRASTART();
-    assert(isBoxed(stgCurVal) && "gc: unexpected unboxed arg in stgCurVal");
+    assert(mayBeBoxed(stgCurVal) && "gc: unexpected unboxed arg in stgCurVal");
     EXTRASTART();
   }
   if (stgCurVal.op != NULL)

@@ -240,7 +240,7 @@ void checkStgObjRec(Obj *p) {
   size_t i;
 
   assert(depth + 1 < showDepthLimit && "hc: checkStgObjRec depth exceeded\n");
-  assert((uintptr_t)p % 8 == 0 && "hc: bad Obj alignment");
+  assert((uintptr_t)p % OBJ_ALIGN == 0 && "hc: bad Obj alignment");
   // following causes test symbolT10 to fail!!!
   if (!(isHeap(p) || isSHO(p))) {
     showObjSpaceInfo();
