@@ -411,9 +411,9 @@ bool isTo(void *p) {
 
 bool isBoxed(PtrOrLiteral f) {
 #if USE_ARGTYPE
-  return (f.argType == HEAPOBJ && (isHeap(f.op) || isSHO(f.op)));
+  return (f.argType == HEAPOBJ && (f.op == NULL || isHeap(f.op) || isSHO(f.op)));
 #else
-  return (isHeap(f.op) || isSHO(f.op));
+  return (f.op == NULL || isHeap(f.op) || isSHO(f.op));
 #endif
 }
 

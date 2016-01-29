@@ -19,14 +19,19 @@ Obj *derefPoL(PtrOrLiteral f) {
 }
 
 void derefStgCurVal() {
-  while (isBoxed(stgCurVal) && getObjType(stgCurVal.op) == INDIRECT) {
-    stgCurVal = stgCurVal.op->payload[0];
+  assert(isBoxed(stgCurVal)); // return stgCurVal
+  while (getObjType(stgCurVal.op) == INDIRECT) { // return stgCurVal
+    stgCurVal = stgCurVal.op->payload[0]; // return stgCurVal
+    assert(isBoxed(stgCurVal)); // return stgCurVal
   }
 }
 
 Obj *derefHO(Obj *op) {
-  while (getObjType(op) == INDIRECT)
-    op = op->payload[0].op;
+  while (getObjType(op) == INDIRECT) {
+    PtrOrLiteral v = op->payload[0];
+    assert(isBoxed(v));
+    op = v.op;
+  }
   return op;
 }
 
@@ -130,7 +135,7 @@ InfoTab it_stgBlackhole __attribute__((aligned(8))) = {
 
 FnPtr stgIndirect() {
   PRINTF("stgIndirect, jumping through indirection\n");
-  stgCurVal = stgCurVal.op->payload[0];
+  stgCurVal = stgCurVal.op->payload[0]; // Obj takes self in stgCurVal
   STGJUMP0(getInfoPtr(stgCurVal.op)->entryCode);
 }
 
@@ -167,7 +172,7 @@ FnPtr stgUpdateCont() {
   int oldObjSize = getObjSize(p.op);
 
   // the order of the following two operations is important for concurrency
-  p.op->payload[0] = stgCurVal;
+  p.op->payload[0] = stgCurVal;  // return stgCurVal, not the indirect, for efficiency
   p.op->_infoPtr = &it_stgIndirect;
 #if USE_OBJTYPE
   p.op->objType = INDIRECT;
@@ -179,8 +184,9 @@ FnPtr stgUpdateCont() {
   // this is for displaying a fragmented heap
   memset((char*)p.op+newObjSize, 0, oldObjSize-newObjSize);
 
-  PRINTF( "stgUpdateCont leaving...\n  ");
+  PRINTF("stgUpdateCont leaving...\n  ");
   stgPopCont();
+  // this returns stgCurVal, not the indirect, for efficiency
   STGRETURN0();
 }
 
@@ -202,9 +208,9 @@ FnPtr fun_stgShowResultCont() {
   stgPopCont();  // clean up--normally the job of the returnee
   fprintf(stderr, "The answer is\n");
 #if USE_ARGTYPE
-  showStgVal(stgCurVal);
+  showStgVal(stgCurVal); stgCurVal.op = NULL;
 #else
-  showStgObj(stgCurVal.op);
+  showStgObj(stgCurVal.op); stgCurVal.op = NULL;
 #endif
   RETURN0();
 }

@@ -389,7 +389,6 @@ cgo env o@(THUNK it e name) =
             "// " ++ show (ctyp it) ++ "\n" ++
             "FnPtr thunk_" ++ name ++ "() {\n" ++
             "  fprintf(stderr, \"" ++ name ++ " here\\n\");\n" ++
-            " // if alloc triggers GC, stgCurVal is a root\n" ++
             "  Cont *stg_fp = stgAllocCallOrStackCont(&it_stgStackCont, 1);\n" ++
             "  stg_fp->layout = " ++ npStrToBMStr "P" ++ ";\n" ++
             "  stg_fp->payload[0] = stgCurVal;\n" ++
@@ -512,6 +511,8 @@ cge env (ELet it os e) =
         decl = concat [ "PtrOrLiteral *" ++ name ++ ";\n" | name <- names ] ++
                "{Cont *contp = stgAllocCallOrStackCont(&it_stgLetCont, " ++ 
                                show (length os) ++ ");\n" ++
+               "memset(contp->payload, 0, " ++ 
+                  show (length os) ++ " * sizeof(PtrOrLiteral));\n" ++
                concat [ name ++ " = &(contp->payload[" ++ show i ++ "]);\n" |
                         (name, i) <- zip names [0..] ] ++
                "contp->layout = " ++ npStrToBMStr (replicate (length os) 'P') ++
@@ -596,7 +597,7 @@ cgalts env (Alts it alts name) boxed scrutName =
         forward = "FnPtr " ++ name ++ "();"
         switch = length alts > 1
     in do
-      codefuncs <- mapM (cgalt env' switch scrutName fvp) alts
+      codefuncs <- mapM (cgalt env' switch fvp) alts
       let (codes, funcss) = unzip codefuncs
       let body =
               "fprintf(stderr, \"" ++ name ++ " here\\n\");\n" ++
@@ -610,10 +611,11 @@ cgalts env (Alts it alts name) boxed scrutName =
 --                      | (i,v) <- indexFrom 0 $ map fst $ fvs it ] ++
               fvp ++ "[0] = stgCurVal;\n" ++
               optStr boxed (contName ++ "->layout.bitmap.mask |= 0x1;\n") ++
-              "PtrOrLiteral " ++ scrutName ++ " = stgCurVal;\n" ++
               (if switch then
                  (if boxed then
-                    "switch(getInfoPtr(stgCurVal.op)->conFields.tag) {\n"
+--                    "switch(getInfoPtr(stgCurVal.op)->conFields.tag) {\n"
+                    "stgCurVal.op = NULL;\n" ++
+                    "switch(getInfoPtr(" ++ fvp ++ "[0].op)->conFields.tag) {\n"
                   else
                     "switch(stgCurVal.i) {\n"
                  ) ++
@@ -626,7 +628,7 @@ cgalts env (Alts it alts name) boxed scrutName =
 
       return ("", (forward, fun) : concat funcss)
 
-cgalt env switch scrutName fvp (ACon it c vs e) =
+cgalt env switch fvp (ACon it c vs e) =
     let DataCon c' ms = luDCon c (cmap it)
         (_,_,perm) = partPerm isBoxed ms
         eenv = zzip vs (map (FV fvp) perm)
@@ -643,7 +645,7 @@ cgalt env switch scrutName fvp (ACon it c vs e) =
                  else inline ++ optStr (ypn /= Yes) "STGRETURN0();\n"
       return (code, func)
 
-cgalt env switch scrutName fvp (ADef it v e) =
+cgalt env switch fvp (ADef it v e) =
     let env' = (v, FP fvp 0) : env
     in do
       ((inline, ypn), func) <- cge env' e

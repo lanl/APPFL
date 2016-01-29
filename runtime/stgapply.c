@@ -12,7 +12,9 @@ void stgEvalStackFrameArgs(Cont *cp) {
   for ( ; i != 0; i--, polp++, bits >>= 1) {
     if (bits & 0x1) {
       STGEVAL(*polp);
+      // stgCurValB
       polp->op = derefPoL(stgCurVal);
+      stgCurVal.op = NULL;
     }
   }
 }
@@ -43,6 +45,7 @@ FnPtr stgApply() {
     // might be INDIRECT if no GC
     // argv[0].op = derefPoL(argv[0]);
     argv[0].op = derefPoL(stgCurVal);
+    stgCurVal.op = NULL;
   } // if THUNK
 
   switch (getObjType(argv[0].op)) {
@@ -75,6 +78,7 @@ FnPtr stgApply() {
       // re-use existing stgApply frame
       // new funoid
       argv[0] = stgCurVal;
+      stgCurVal.op = NULL;
       // shift excess args
       memmove(&argv[1], &argv[1 + arity], excess * sizeof(PtrOrLiteral));
       // adjust the bitmap
@@ -111,6 +115,7 @@ FnPtr stgApply() {
       // copy args to just after fvs and layout info
       PRINTF("stgApply FUN inserting %d args into new PAP\n", argc);
       memcpy(&pap->payload[fvCount+1], &argv[1], argc * sizeof(PtrOrLiteral));
+      // this is return value, don't NULLify
       stgCurVal = HOTOPL(pap);
       // pop stgApply cont - superfluous, it's self-popping
       stgPopCont();
@@ -170,6 +175,7 @@ FnPtr stgApply() {
       // re-use existing stgApply frame
       // restore the funoid
       argv[0] = stgCurVal;
+      stgCurVal.op = NULL;
       // shift the args down
       memmove(&argv[1], &argv[1 + arity], excess * sizeof(PtrOrLiteral));
       // adjust the bitmap
@@ -233,6 +239,7 @@ FnPtr stgApply() {
       memcpy(&newpap->payload[fvCount+1+papargc], 
 	     &argv[1], 
 	     argc * sizeof(PtrOrLiteral));
+      // this is return value
       stgCurVal = HOTOPL(newpap);
       stgPopCont();
       STGRETURN0();

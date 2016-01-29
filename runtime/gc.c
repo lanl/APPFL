@@ -244,7 +244,8 @@ void gc(void) {
   if (EXTRA_CHECKS_GC) {
     assert(isBoxed(stgCurVal) && "gc: unexpected unboxed arg in stgCurVal");
   }
-  processObj(stgCurVal.op);
+  if (stgCurVal.op != NULL)
+    processObj(stgCurVal.op);
 
   // all SHO's
   for (int i = 0; i < stgStatObjCount; i++) {
@@ -265,7 +266,8 @@ void gc(void) {
     assert(isBoxed(stgCurVal) && "gc: unexpected unboxed arg in stgCurVal");
     EXTRASTART();
   }
-  stgCurVal = updatePtrByValue(stgCurVal);
+  if (stgCurVal.op != NULL)
+    stgCurVal = updatePtrByValue(stgCurVal);
 
   // process "to" space
   while (scanPtr < freePtr) {

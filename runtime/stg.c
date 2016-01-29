@@ -211,6 +211,9 @@ Cont *stgGetStackArgp() {
 
 Obj* stgNewHeapObj(InfoTab *itp) {
   PRINTF("stgNewHeapObj: "); showIT(itp);
+  //  PRINTF("stgNewHeapObj before GC");
+  //  GC();
+  //  PRINTF("stgNewHeapObj after GC");
   int payloadSize = itp->layoutInfo.payloadSize;
   int fvs = itp->layoutInfo.boxedCount + itp->layoutInfo.unboxedCount;
   // assert(itp->fvCount == fvs);  // fvCount going away

@@ -8,6 +8,11 @@
 #include <stdio.h>
 #include "options.h"
 #include "cmm.h"
+#include "args.h"
+
+void gc(void);
+
+#define GC() if(stgHP-stgHeap > GCThreshold*stgHeapSize) gc();
 
 struct _Obj;
 typedef struct _Obj Obj;
@@ -118,6 +123,7 @@ typedef struct {
 // TODO:  distinguish stgCurVal as stgCurPtr and stgCurUbx
 #ifndef __clang__
 register PtrOrLiteral stgCurVal asm("%r14");  // current/return value
+//register PtrOrLiteral stgCurValU asm("%r15");  // current/return value
 #else
 extern PtrOrLiteral stgCurVal;  // current/return value
 #endif
