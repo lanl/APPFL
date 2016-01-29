@@ -255,25 +255,22 @@ extern void *stgStack, *stgSP;
 
 extern size_t stgStatObjCount;
 extern Obj *stgStatObj[];
-extern void initStg();
-extern void showStgObj(Obj *);
-extern void showStgHeap();
-extern void showStgStack();
-extern void showStgVal(PtrOrLiteral);
-extern void checkStgHeap();
-extern void showIT(InfoTab *);
-extern void showCIT(CInfoTab *);
-extern int  getObjSize(Obj *);
-extern int  getContSize(Cont *);
 
-extern bool isSHO();
-extern bool isHeap(Obj *p);
-extern bool isFrom(void *p);
-extern bool isTo(void *p);
+void initStg();
+void showStgObj(Obj *);
+void showStgHeap();
+void showStgStack();
+void showStgVal(PtrOrLiteral);
+void checkStgHeap();
+void showIT(InfoTab *);
+void showCIT(CInfoTab *);
+int  getObjSize(Obj *);
+int  getContSize(Cont *);
 
-extern bool isBoxed(PtrOrLiteral f);
-
-extern bool isUnboxed(PtrOrLiteral f);
+bool isSHO();
+bool isHeap(Obj *p);
+bool isFrom(void *p);
+bool isTo(void *p);
 
 // use LSB to say it is a FORWARD
 static inline InfoTab *setLSB(InfoTab *ptr) { 

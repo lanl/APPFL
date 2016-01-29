@@ -60,7 +60,8 @@ const char *contTypeNames[] = {
 
 void startCheck() {
   if (sizeof(Obj) % OBJ_ALIGN != 0) {
-    fprintf(stderr, "sizeof(Obj) is %lu not multiple of %d", sizeof(Obj), OBJ_ALIGN);
+    fprintf(stderr, "sizeof(Obj) is %lu not multiple of %d\n", 
+                    sizeof(Obj), OBJ_ALIGN);
     exit(1);
   }
 }
@@ -252,7 +253,7 @@ Obj* stgNewHeapObj(InfoTab *itp) {
   default:  assert(false && "stgNewHeapObj");
   }
   size_t objSize = sizeof(Obj) + payloadSize * sizeof(PtrOrLiteral);
-  objSize = ((objSize + 7)/8)*8; 
+  objSize = ((objSize + OBJ_ALIGNM1)/OBJ_ALIGN)*OBJ_ALIGN; 
   Obj *objp = (Obj *)stgHP;
   stgHP = (char *)stgHP + objSize;
 
@@ -286,7 +287,7 @@ Obj* stgNewHeapPAPmask(InfoTab *itp, Bitmap64 bm) {
   PRINTF("stgNewHeapPap: "); showIT(itp);
   size_t objSize = sizeof(Obj) + 
     (fvCount + bm.bitmap.size + 1) * sizeof(PtrOrLiteral);
-  objSize = ((objSize + 7)/8)*8;
+  objSize = ((objSize + OBJ_ALIGNM1)/OBJ_ALIGN)*OBJ_ALIGN;
   Obj *objp = (Obj *)stgHP;
   stgHP = (char *)stgHP + objSize;
 #if USE_ARGTYPE
@@ -314,7 +315,7 @@ int getObjSize(Obj *o) {
     objSize = sizeof(Obj) + 
       (fvCount + 1 + o->payload[fvCount].b.bitmap.size) * 
         sizeof(PtrOrLiteral);
-    objSize = ((objSize + 7)/8)*8;
+    objSize = ((objSize + OBJ_ALIGNM1)/OBJ_ALIGN)*OBJ_ALIGN;
     break;
   } // PAP
   case FUN:
@@ -332,7 +333,7 @@ int getObjSize(Obj *o) {
     assert(false);
     break;
   }
-  objSize = ((objSize + 7)/8)*8;
+  objSize = ((objSize + OBJ_ALIGNM1)/OBJ_ALIGN)*OBJ_ALIGN;
   return objSize;
 }
 
@@ -383,7 +384,7 @@ int getContSize(Cont *o) {
     PRINTF("stg.c/getContSize bad ContType %d\n", type);
     assert(false);
   }
-  contSize = ((contSize + 7)/8)*8;
+  //  contSize = ((contSize + 7)/8)*8;
   if (contSize != o->_contSize) {
     PRINTF("contSize is %lu, o->_contSize is %d for %s\n",
 	    contSize, o->_contSize, contTypeNames[type]);
@@ -409,6 +410,10 @@ void initStg() {
     exit(1);
   }
 
+  if ((uintptr_t)stgHP % OBJ_ALIGN != 0) {
+    fprintf(stderr, "stgHP not OBJ_ALIGNed\n");
+    exit(1);
+  }
   stgHP = stgHeap; // first free address
 
   stgStack = 

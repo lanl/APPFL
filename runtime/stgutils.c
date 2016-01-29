@@ -14,22 +14,22 @@
 // from stg land back to cmm land via RETURN0() rather than STGRETURN(0)
 
 Obj *derefPoL(PtrOrLiteral f) {
-  assert(isBoxed(f) && "derefPoL: not a HEAPOBJ");
+  assert(mayBeBoxed(f) && "derefPoL: not a HEAPOBJ");
   return derefHO(f.op);
 }
 
 void derefStgCurVal() {
-  assert(isBoxed(stgCurVal)); // return stgCurVal
+  assert(mayBeBoxed(stgCurVal)); // return stgCurVal
   while (getObjType(stgCurVal.op) == INDIRECT) { // return stgCurVal
     stgCurVal = stgCurVal.op->payload[0]; // return stgCurVal
-    assert(isBoxed(stgCurVal)); // return stgCurVal
+    assert(mayBeBoxed(stgCurVal)); // return stgCurVal
   }
 }
 
 Obj *derefHO(Obj *op) {
   while (getObjType(op) == INDIRECT) {
     PtrOrLiteral v = op->payload[0];
-    assert(isBoxed(v));
+    assert(mayBeBoxed(v));
     op = v.op;
   }
   return op;
@@ -157,7 +157,7 @@ FnPtr stgUpdateCont() {
   Cont *contp = stgGetStackArgp();
   assert(getContType(contp) == UPDCONT && "I'm not an UPDCONT!");
   PtrOrLiteral p = contp->payload[0];
-  assert(isBoxed(p) && "not a HEAPOBJ!");
+  assert(mayBeBoxed(p) && "not a HEAPOBJ!");
   PRINTF( "stgUpdateCont updating\n  ");
   showStgObj(p.op);
   PRINTF( "with\n  ");
@@ -227,7 +227,7 @@ CInfoTab it_stgShowResultCont __attribute__((aligned(8))) =
   };
 
 void stgThunk(PtrOrLiteral self) {
-  assert(isBoxed(self) && "stgThunk:  not HEAPOBJ\n");
+  assert(mayBeBoxed(self) && "stgThunk:  not HEAPOBJ\n");
   Cont *contp = stgAllocCont(&it_stgUpdateCont);
   contp->payload[0] = self;
   strcpy(contp->ident, self.op->ident); //override default

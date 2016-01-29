@@ -3,12 +3,13 @@
 #define options_h
 
 #define OBJ_ALIGN 8
+#define OBJ_ALIGNM1 7
 
 /* If 1 use argType enum field in PtrOrLiteral */
 #define USE_ARGTYPE 1
 
 /* If 1 use objType enum field in Obj */
-#define USE_OBJTYPE 1
+#define USE_OBJTYPE 0
 
 /* If 1 generate C AST rather than text */
 #define USE_CAST 0 
