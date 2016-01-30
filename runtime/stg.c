@@ -241,9 +241,11 @@ Cont *stgGetStackArgp() {
 
 Obj* stgNewHeapObj(InfoTab *itp) {
   PRINTF("stgNewHeapObj: "); showIT(itp);
-  //  PRINTF("stgNewHeapObj before GC");
-  //  GC();
-  //  PRINTF("stgNewHeapObj after GC");
+#if ALLOC_GC
+  PRINTF("******** stgNewHeapObj before GC\n");
+  GC();
+  PRINTF("******** stgNewHeapObj after GC\n");
+#endif
   int payloadSize = itp->layoutInfo.payloadSize;
   int fvs = itp->layoutInfo.boxedCount + itp->layoutInfo.unboxedCount;
   // assert(itp->fvCount == fvs);  // fvCount going away
@@ -258,13 +260,12 @@ Obj* stgNewHeapObj(InfoTab *itp) {
   Obj *objp = (Obj *)stgHP;
   stgHP = (char *)stgHP + objSize;
 
-  if (itp->objType == THUNK) {
-    assert(payloadSize >= 1 && "stgNewHeapObj");
-    objp->payload[0].op = NULL;
+  // this memset is important for garbage collection with LET construction
+  memset(objp->payload, 0, payloadSize * sizeof(PtrOrLiteral));
 #if USE_ARGTYPE
-    objp->payload[0].argType = HEAPOBJ;
+  int boxed = itp->layoutInfo.boxedCount + (itp->objType==THUNK ? 1 : 0);
+  for (int i = 0; i != boxed; i++) objp->payload[i].argType = HEAPOBJ;
 #endif
-  }
 
   objp->_infoPtr = itp;
   strcpy(objp->ident, itp->name);  // may be overwritten
@@ -273,12 +274,17 @@ Obj* stgNewHeapObj(InfoTab *itp) {
 	  objp->ident, objTypeNames[itp->objType]);
   objp->objType = itp->objType;
 #endif
-  //  Can't display it--payload values not set
+  //  Can't display it--payload values not set, fix showStgObj
   //  PRINTF("stgNewHeapObj: "); showStgObj(objp);
   return objp;
 }
 
 Obj* stgNewHeapPAPmask(InfoTab *itp, Bitmap64 bm) {
+#if ALLOC_GC
+  PRINTF("******** stgNewHeapPAPmask before GC\n");
+  GC();
+  PRINTF("******** stgNewHeapPAPmask after GC\n");
+#endif
   assert(!(((uintptr_t)itp) & 0x7));
   assert(itp->objType == FUN && "stgNewHeapPAPmask:  itp->objType != FUN" );
   int fvCount = itp->layoutInfo.boxedCount + 

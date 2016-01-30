@@ -58,6 +58,11 @@ void showStgCont(Cont *c) {
 
 void showStgObjRecPretty(Obj *p) {
 
+  if (p == NULL) {
+    fprintf(stderr, "NULL");
+    return;
+  }
+
   // depth check first
   if (depth+1 >= showDepthLimit) {
     fprintf(stderr, "******showStgObjRec depth exceeded\n");
@@ -237,6 +242,8 @@ void showStgValDebug(PtrOrLiteral v) {
 void showObjSpaceInfo();
 
 void checkStgObjRec(Obj *p) {
+  if (p == NULL) return;
+
   size_t i;
 
   assert(depth + 1 < showDepthLimit && "hc: checkStgObjRec depth exceeded\n");

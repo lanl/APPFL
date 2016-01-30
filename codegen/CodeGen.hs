@@ -511,23 +511,18 @@ cge env (EPrimop it op eas) =
 
 cge env (ELet it os e) =
     let names = map oname os
-        decl = concat [ "PtrOrLiteral *" ++ name ++ ";\n" | name <- names ] ++
-               "{Cont *contp = stgAllocCallOrStackCont(&it_stgLetCont, " ++ 
+        decl = 
+            concat [ "PtrOrLiteral *" ++ name ++ ";\n" | name <- names ] ++
+            "{Cont *contp = stgAllocCallOrStackCont(&it_stgLetCont, " ++ 
                                show (length os) ++ ");\n" ++
-               "memset(contp->payload, 0, " ++ 
+            "memset(contp->payload, 0, " ++ 
                   show (length os) ++ " * sizeof(PtrOrLiteral));\n" ++
-               concat [ name ++ " = &(contp->payload[" ++ show i ++ "]);\n" |
-                        (name, i) <- zip names [0..] ] ++
-               "contp->layout = " ++ npStrToBMStr (replicate (length os) 'P') ++
-               ";}\n" -- only size actually matters
+            concat [ name ++ " = &(contp->payload[" ++ show i ++ "]);\n" |
+                     (name, i) <- zip names [0..] ] ++
+            "contp->layout = " ++ npStrToBMStr (replicate (length os) 'P') ++ ";}\n"
         env'  = zip names (map HO names) ++ env
-#if USE_CAST
-        (sizes, cDecls, cBuildcodes) = unzip3 $ map (buildHeapObj env') os
-        decls = render $ pretty cDecls 
-        buildcodes =  intercalate "\n" (map (render . pretty) cBuildcodes))
-#else
         (decls, buildcodes) = unzip $ map (buildHeapObj env') os
-#endif
+
     in do
       ofunc <- cgos env' os
       ((einline, ypn), efunc) <- cge env' e

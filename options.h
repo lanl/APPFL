@@ -26,6 +26,9 @@
 /* if 1 extra gc() checks */
 #define EXTRA_CHECKS_GC 1 
 
+/* if 1 initiate GC with every object allocation */
+#define ALLOC_GC 0
+
 /* ghc cpp doesn't like varargs */
 /* define PRINTF(...) */
 /* define PRINTF(...) fprintf (stderr, __VA_ARGS__) */

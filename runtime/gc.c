@@ -55,6 +55,8 @@ Obj *deref2(Obj *p) {
 
 PtrOrLiteral updatePtrByValue (PtrOrLiteral f) {
   assert(mayBeBoxed(f) && "not a HEAPOBJ");
+  if (f.op == NULL) return f;
+  
   Obj *p = deref2(f.op);  
   if (isFrom(p)) {
     // from space
@@ -115,6 +117,7 @@ void updatePtr(PtrOrLiteral *f) {
 }
 
 void processObj(Obj *p) {
+  if (p == NULL) return;
   size_t i;
   if (DEBUG_GC) PRINTF( "processObj %s %s\n", objTypeNames[getObjType(p)], p->ident);
 
