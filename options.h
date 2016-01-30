@@ -9,7 +9,7 @@
 #define USE_ARGTYPE 1
 
 /* If 1 use objType enum field in Obj */
-#define USE_OBJTYPE 0
+#define USE_OBJTYPE 1
 
 /* If 1 generate C AST rather than text */
 #define USE_CAST 0 

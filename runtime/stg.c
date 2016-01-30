@@ -30,6 +30,7 @@ void *stgSP = NULL;
 // register PtrOrLiteral stgCurVal asm("%r15");  // current value STG register
 #else
 PtrOrLiteral stgCurVal;  // current/return value
+PtrOrLiteral stgCurValU;  // current/return value
 #endif
 
 const char *objTypeNames[] = {

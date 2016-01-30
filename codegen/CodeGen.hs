@@ -438,12 +438,14 @@ stgApplyGeneric env f eas direct =
 cge :: Env -> Expr InfoTab -> State Int ((String,YPN), [(String, String)])
 
 cge env e@(EAtom it a) =
-    let inline = "stgCurVal = " ++ cga env a ++ "; // " ++ showa a ++ "\n" ++
-                 (if isBoxede e then
-                      "// boxed EAtom, stgCurVal updates itself \n" ++
-                      "STGJUMP();\n"
-                  else
-                      "// unboxed EAtom\n")
+    let inline = 
+            if isBoxede e then
+                "stgCurVal = " ++ cga env a ++ "; // " ++ showa a ++ "\n" ++
+                "// boxed EAtom, stgCurVal updates itself \n" ++
+                "STGJUMP();\n"
+            else
+                "stgCurValU = " ++ cga env a ++ "; // " ++ showa a ++ "\n" ++
+                "// unboxed EAtom\n"
     in return ((inline, if isBoxede e then Yes else No), [])
 
 cge env e@(EFCall it f eas) =
@@ -478,33 +480,33 @@ cge env (EPrimop it op eas) =
                    Pimax -> cFunIII "imax"
 
                    PintToBool ->
-                       "stgCurVal = " ++
+                       "stgCurValU = " ++
                        arg0 "i" ++ "?" ++ getEnvRef "true"  env ++
                                    ":" ++ getEnvRef "false" env ++ ";\n"
 
         cPrefixII op =
 #if USE_ARGTYPE
-                        "stgCurVal.argType = INT;\n" ++
+                        "stgCurValU.argType = INT;\n" ++
 #endif
-                        "stgCurVal.i = " ++ op ++ arg0 "i" ++ ";\n"
+                        "stgCurValU.i = " ++ op ++ arg0 "i" ++ ";\n"
 
         cInfixIII op =
 #if USE_ARGTYPE
-                        "stgCurVal.argType = INT;\n" ++
+                        "stgCurValU.argType = INT;\n" ++
 #endif
-                        "stgCurVal.i = " ++ arg0 "i" ++ op ++ arg1 "i" ++ ";\n"
+                        "stgCurValU.i = " ++ arg0 "i" ++ op ++ arg1 "i" ++ ";\n"
 
         cInfixIIB op =
 #if USE_ARGTYPE
-                        "stgCurVal.argType = BOOL;\n" ++
+                        "stgCurValU.argType = BOOL;\n" ++
 #endif
-                        "stgCurVal.i = " ++ arg0 "i" ++ op ++ arg1 "i" ++ ";\n"
+                        "stgCurValU.i = " ++ arg0 "i" ++ op ++ arg1 "i" ++ ";\n"
 
         cFunIII fun =
 #if USE_ARGTYPE
-                      "stgCurVal.argType = INT;\n" ++
+                      "stgCurValU.argType = INT;\n" ++
 #endif
-                      "stgCurVal.i = " ++ fun ++ "(" ++ arg0 "i" ++ ", " ++ arg1 "i" ++ ");\n"
+                      "stgCurValU.i = " ++ fun ++ "(" ++ arg0 "i" ++ ", " ++ arg1 "i" ++ ");\n"
     in return ((inline, No), [])
 
 cge env (ELet it os e) =
@@ -610,7 +612,11 @@ cgalts env (Alts it alts name) boxed scrutName =
 --              concat ["  PtrOrLiteral " ++ v ++
 --                      " = " ++ contName ++ "->payload[" ++ show i ++ "];\n"
 --                      | (i,v) <- indexFrom 0 $ map fst $ fvs it ] ++
-              fvp ++ "[0] = stgCurVal;\n" ++
+              (if boxed then 
+                   fvp ++ "[0] = stgCurVal;\n"
+               else
+                   fvp ++ "[0] = stgCurValU;\n") ++
+
               optStr boxed (contName ++ "->layout.bitmap.mask |= 0x1;\n") ++
               (if switch then
                  (if boxed then
@@ -618,7 +624,7 @@ cgalts env (Alts it alts name) boxed scrutName =
                     "stgCurVal.op = NULL;\n" ++
                     "switch(getInfoPtr(" ++ fvp ++ "[0].op)->conFields.tag) {\n"
                   else
-                    "switch(stgCurVal.i) {\n"
+                    "switch(stgCurValU.i) {\n"
                  ) ++
                    indent 2 (concat codes) ++
                  "}\n"
