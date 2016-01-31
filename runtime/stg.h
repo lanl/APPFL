@@ -260,7 +260,13 @@ void initStg();
 void showStgObj(Obj *);
 void showStgHeap();
 void showStgStack();
+
 void showStgVal(PtrOrLiteral);
+void showStgObjPretty(Obj *p);
+void showStgObjDebug(Obj *p);
+void showStgValDebug(PtrOrLiteral v);
+void showStgValPretty(PtrOrLiteral v);
+
 void checkStgHeap();
 void showIT(InfoTab *);
 void showCIT(CInfoTab *);
@@ -371,12 +377,6 @@ Cont *stgJumpAdjust();
 Cont *stgAdjustTopContSize(Cont *cp, int delta);
 
 void copyargs(PtrOrLiteral *dest, PtrOrLiteral *src, int count);
-
-extern void showStgObjPretty(Obj *p);
-extern void showStgObjDebug(Obj *p);
-extern void showStgValDebug(PtrOrLiteral v);
-extern void showStgValPretty(PtrOrLiteral v);
-
 // Codegen.hs currently uses STGJUMP(), STGJUMP0(f), and STGRETURN0() to
 // exit functions
 

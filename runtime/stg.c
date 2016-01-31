@@ -72,11 +72,12 @@ void startCheck() {
 // definitely unboxed
 bool mayBeBoxed(PtrOrLiteral f) {
   #if USE_ARGTYPE
-  return f.argType == HEAPOBJ && (f.op == NULL || isHeap(f.op) || isSHO(f.op)) &&
-    ((f.u & (OBJ_ALIGN - 1)) == 0);
+  return f.argType == HEAPOBJ && 
+         (f.op == NULL || isHeap(f.op) || isSHO(f.op)) &&
+         ((f.u & (OBJ_ALIGN - 1)) == 0);
 #else
   return (f.op == NULL || isHeap(f.op) || isSHO(f.op)) &&
-    ((f.u & (OBJ_ALIGN - 1)) == 0);
+         ((f.u & (OBJ_ALIGN - 1)) == 0);
 #endif
 }
 
@@ -306,7 +307,6 @@ Obj* stgNewHeapPAPmask(InfoTab *itp, Bitmap64 bm) {
 #if USE_OBJTYPE
   objp->objType = PAP;
 #endif
-  PRINTF("stgNewHeapPAP: "); showStgObj(objp);
   return objp;
 }
 
@@ -344,15 +344,6 @@ int getObjSize(Obj *o) {
 }
 
 
-
-void showStgObj(Obj *p) {
-  showStgObjPretty(p);
-  // showStgObjDebug(Obj *p)
-}
-void showStgVal(PtrOrLiteral v) {
-  showStgValPretty(v);
-  // showStgValDebug(v);
-}
 
 void showIT(InfoTab *itp) {
   PRINTF("showIT: %s %s, bc %d ubc %d layoutInfo.payloadSize %d\n", 

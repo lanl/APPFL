@@ -137,15 +137,19 @@ void processObj(Obj *p) {
       // boxed free vars
       int start = startPAPFVsB(p);
       int end = endPAPFVsB(p);
+      PRINTF("  %d free variables\n", end - start);
       for (i = start; i < end; i++) {
         updatePtr(&p->payload[i]);
-      }
-    }
+      } 
+    } else { PRINTF("  no free variables\n");}
     Bitmap64 bm = p->payload[endPAPFVsU(p)].b;
     uint64_t mask = bm.bitmap.mask;
     int i = endPAPFVsU(p) + 1;
     for (int size = bm.bitmap.size; size != 0; size--, i++, mask >>= 1) {
-      if (mask & 0x1UL) updatePtr(&p->payload[i]);
+      if (mask & 0x1UL) {
+	PRINTF("  call updatePtr boxed payload[%d]\n", i);
+	updatePtr(&p->payload[i]);
+      } else PRINTF("  don't call updatePtr unboxed\n");
     }
     break;
   }

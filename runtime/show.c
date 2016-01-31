@@ -6,6 +6,15 @@
 #include "stdlib.h"
 #include "string.h"
 
+void showStgObj(Obj *p) {
+  showStgObjPretty(p);
+  // showStgObjDebug(Obj *p)
+}
+void showStgVal(PtrOrLiteral v) {
+  showStgValPretty(v);
+  // showStgValDebug(v);
+}
+
 static const int showDepthLimit = 1000;
 static int depth;
 static Obj *stack[1000];
@@ -98,12 +107,42 @@ void showStgObjRecPretty(Obj *p) {
   }
 
   switch (type) {
+  case PAP: {
+    fprintf(stderr, "%s = <%s>", p->ident, objTypeNames[type]);
+    int start = startPAPFVsB(p);
+    int div = endPAPFVsB(p);
+    int end = endPAPFVsU(p);
+    fprintf(stderr, "[");
+    for (int i = start; i != end; i++ ) {
+      if (i == div) fprintf(stderr, "|");
+      PtrOrLiteral v = p->payload[i];
+      if (mayBeBoxed(v) && mayBeUnboxed(v)) fprintf(stderr, "?");
+      else if (mayBeBoxed(v)) fprintf(stderr, "B");
+           else fprintf(stderr, "U");
+    }
+    fprintf(stderr, "][");
+    Bitmap64 bm = p->payload[end].b;
+    int size = bm.bitmap.size;
+    uint64_t mask = bm.bitmap.mask;
+    fprintf(stderr, "%d,0x%lx,", size, mask);
+    for ( int i = 0; i != size; i++, mask >>= 1 ) {
+      PtrOrLiteral v = p->payload[end + 1 + i];
+      if (mask & 0x1) {
+	if (!mayBeBoxed(v)) fprintf(stderr, "!"); else fprintf(stderr, "B");
+      } else {
+	if (!mayBeUnboxed(v)) fprintf(stderr, "!"); else fprintf(stderr, "U");
+      }
+    }
+    fprintf(stderr, "]");
+    break;
+  }
+
   case FUN:
-  case PAP:
   case THUNK:
-  case BLACKHOLE:
+  case BLACKHOLE: {
     fprintf(stderr, "%s = <%s>", p->ident, objTypeNames[type]);
     break;
+  }
 
   case CON:
     fprintf(stderr, "%s = %s", p->ident, it.conFields.conName );

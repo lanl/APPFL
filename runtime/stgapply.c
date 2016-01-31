@@ -32,7 +32,10 @@ FnPtr stgApply() {
   // argc is number of arguments funoid applied to
   int argc = bm.bitmap.size - 1;
 
-  PRINTF("stgApply %s\n", getInfoPtr(argv[0].op)->name);
+  PRINTF("stgApply %s ", getInfoPtr(argv[0].op)->name);
+  for (int i = 1; i != argc+1; i++) {
+    showStgVal(argv[i]); PRINTF(" ");
+  } PRINTF("\n");
 
   if (evalStrategy == STRICT1) stgEvalStackFrameArgs(stackframe);
 
@@ -117,6 +120,7 @@ FnPtr stgApply() {
       memcpy(&pap->payload[fvCount+1], &argv[1], argc * sizeof(PtrOrLiteral));
       // this is return value, don't NULLify
       stgCurVal = HOTOPL(pap);
+      PRINTF("new PAP:  "); showStgObj(pap);
       // pop stgApply cont - superfluous, it's self-popping
       stgPopCont();
       STGRETURN0();
@@ -218,12 +222,21 @@ FnPtr stgApply() {
     // excess < 0, too few args
     } else {
       PRINTF("stgApply PAPNEG %d too few args\n", -excess);
-      bm.bitmap.mask >>= 1;  // zap funoid bit
-      bm.bitmap.size -= 1;
-      bm.bitmap.mask <<= argc;
-      bm.bits += papargmap.bits;
+      /* this should be correct, not tried
+      bm.bitmap.mask >>= 1;  // zap funoid
+      bm.bitmap.mask <<= papargc;  // make room for old args
+      bm.bitmap.mask |= papargmap.bitmap.mask; // add in old args
+      bm.bitmap.size = papargc + argc; // correct size
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *newpap = stgNewHeapPAPmask(getInfoPtr(argv[0].op), bm);
+      */
+      
+      papargmap.bitmap.mask |= ((bm.bitmap.mask >> 1) << papargc);
+      papargmap.bitmap.size += argc;
+
+      // stgNewHeapPAP puts layout info at payload[fvCount]
+      Obj *newpap = stgNewHeapPAPmask(getInfoPtr(argv[0].op), papargmap);
+
       // copy fvs
       PRINTF("stgApply PAP inserting %d FVs into new PAP\n", fvCount);
       memcpy(&newpap->payload[0], 
@@ -231,14 +244,23 @@ FnPtr stgApply() {
 	     fvCount * sizeof(PtrOrLiteral));
       // copy old args
       PRINTF("stgApply PAP inserting %d old args into new PAP\n", papargc);
+      for (int i = 0; i != papargc; i++) {
+	PRINTF("  "); showStgVal(argv[0].op->payload[fvCount+1+i]); PRINTF("\n");
+      }
       memcpy(&newpap->payload[fvCount+1], 
-	     &argv[0].op->payload[0], 
+	     &argv[0].op->payload[fvCount+1], 
 	     papargc * sizeof(PtrOrLiteral));
+
       // copy new args to just after fvs, layout info, and old args
       PRINTF("stgApply PAP inserting %d new args into new PAP\n", argc);
+      for (int i = 0; i != argc; i++) {
+	PRINTF("  "); showStgVal(argv[i+1]); PRINTF("\n");
+      }
       memcpy(&newpap->payload[fvCount+1+papargc], 
 	     &argv[1], 
 	     argc * sizeof(PtrOrLiteral));
+
+      PRINTF("new PAP:  "); showStgObj(newpap);
       // this is return value
       stgCurVal = HOTOPL(newpap);
       stgPopCont();
