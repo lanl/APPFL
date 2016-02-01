@@ -309,7 +309,7 @@ cgUBa env (LitD d) "d" = show d
 cgUBa _ at _ = error $ "CodeGen.cgUBa: not expecting Atom - " ++ show at
 -- cgUBa env (LitF f) "f" = show f
 
-cgv env v = getEnvRef v env -- ++ "/* " ++ v ++ " */"
+cgv env v = getEnvRef v env ++ "/* " ++ v ++ " */"
 
 
 -- given function type and formal parameter list, return the args
@@ -395,6 +395,8 @@ cgo env o@(THUNK it e name) =
             "  stg_fp->payload[0] = stgCurVal;\n" ++
             "  PtrOrLiteral *" ++ fvpp ++ " = &(stg_fp->payload[0]);\n" ++
             "  stgThunk(stgCurVal);\n" ++
+            -- expression code doesn't take stgCurVal as arg
+            "  stgCurVal.op = NULL;\n" ++
             indent 2 inline ++
               optStr (ypn /= Yes) "  STGRETURN0();\n" ++
             "}\n"
@@ -562,13 +564,21 @@ cgalts_noheapalloc env (Alts it alts name) boxed =
       return (inl, (phonyforward, phonyfun) : concat funcss)
 -}
 
--- TOFIX:  even if scrutinee doesn't heap alloc it may return through the
--- continuation stack, so we need better analysis
--- cge env (ECase _ e a@(Alts italts alts aname)) | (not $ noHeapAlloc $ emd e) =
-cge env (ECase _ e a@(Alts italts alts aname)) =
+cge env ecase@(ECase _ e a) =
+    do ((ecode, eypn), efunc) <- cge env e
+       -- weird:  compiler requires parens around if, ghci does not
+       (if eypn == No then
+            cgeInline env (isBoxede e) (ecode, efunc) a
+        else
+            cgeNoInline env (isBoxede e) (ecode, efunc) a)
+
+-- TODO:  inline
+-- TODO:  YPN from Alts, Alt
+
+cgeInline env boxed (ecode, efunc) a@(Alts italts alts aname) =
     let scrutName = "scrut_" ++ aname
         cname = "ccont_" ++ aname
-        pre = "// scrutinee may heap alloc\n" ++
+        pre = "// scrutinee does not STGJUMP or STGRETURN\n" ++
               "Cont *" ++ cname ++ " = stgAllocCont( &it_" ++ aname ++ ");\n" ++
               "// dummy value for scrutinee\n" ++
               cname ++ "->payload[0].i = 0;\n" ++
@@ -581,9 +591,34 @@ cge env (ECase _ e a@(Alts italts alts aname)) =
                  "// load payload with FVs " ++
                          intercalate " " (map fst $ fvs italts) ++ "\n") ++
                  (loadPayloadFVs env (map fst $ fvs italts) 1 cname)
-    in do ((ecode, eypn), efunc) <- cge env e
-          (acode, afunc) <- cgalts env a (isBoxede e) scrutName
-          return ((pre ++ ecode ++ acode, eypn), efunc ++ afunc)
+    in do (acode, afunc) <- cgalts env a boxed scrutName
+--        need YPN results from Alts
+          return ((pre ++ "/* no inline */\n" ++ ecode ++ acode, Possible), 
+--          return ((pre ++ "/* no inline */\n" ++ ecode ++ acode, eypn), 
+                  efunc ++ afunc)
+
+
+cgeNoInline env boxed (ecode, efunc) a@(Alts italts alts aname) =
+    let scrutName = "scrut_" ++ aname
+        cname = "ccont_" ++ aname
+        pre = "// scrutinee may STGJUMP or STGRETURN\n" ++
+              "Cont *" ++ cname ++ " = stgAllocCont( &it_" ++ aname ++ ");\n" ++
+              "// dummy value for scrutinee\n" ++
+              cname ++ "->payload[0].i = 0;\n" ++
+#if USE_ARGTYPE
+              cname ++ "->payload[0].argType = INT;\n" ++
+#endif
+              (if fvs italts == [] then
+                 "// no FVs\n"
+               else
+                 "// load payload with FVs " ++
+                         intercalate " " (map fst $ fvs italts) ++ "\n") ++
+                 (loadPayloadFVs env (map fst $ fvs italts) 1 cname)
+    in do (acode, afunc) <- cgalts env a boxed scrutName
+--        need YPN results from Alts
+          return ((pre ++ "/* no inline */\n" ++ ecode ++ acode, Possible), 
+--          return ((pre ++ "/* no inline */\n" ++ ecode ++ acode, eypn), 
+                  efunc ++ afunc)
 
 -- ADef only or unary sum => no C switch
 cgalts env (Alts it alts name) boxed scrutName =
