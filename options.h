@@ -9,7 +9,7 @@
 #define USE_ARGTYPE 1
 
 /* If 1 use objType enum field in Obj */
-#define USE_OBJTYPE 1
+#define USE_OBJTYPE 0
 
 /* If 1 generate C AST rather than text */
 #define USE_CAST 0 
@@ -27,7 +27,7 @@
 #define EXTRA_CHECKS_GC 1 
 
 /* if 1 initiate GC with every object allocation */
-#define ALLOC_GC 0
+#define ALLOC_GC 1
 
 /* ghc cpp doesn't like varargs */
 /* define PRINTF(...) */
