@@ -390,6 +390,7 @@ cgo env o@(THUNK it e name) =
             "// " ++ show (ctyp it) ++ "\n" ++
             "FnPtr thunk_" ++ name ++ "() {\n" ++
             "  fprintf(stderr, \"" ++ name ++ " here\\n\");\n" ++
+            "  // access free vars through frame pointer so that we can use blackhole\n" ++
             "  Cont *stg_fp = stgAllocCallOrStackCont(&it_stgStackCont, 1);\n" ++
             "  stg_fp->layout = " ++ npStrToBMStr "P" ++ ";\n" ++
             "  stg_fp->payload[0] = stgCurVal;\n" ++
