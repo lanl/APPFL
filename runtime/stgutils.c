@@ -115,7 +115,7 @@ FnPtr stg_concall() {
 }
 
 FnPtr stgBlackhole() {
-  PRINTF( "stgBlackhole, exiting!\n");
+  PRINTF("stgBlackhole, exiting!\n");
   exit(0);
 }
 
@@ -163,7 +163,7 @@ FnPtr stgUpdateCont() {
   PRINTF( "with\n  ");
   showStgObj(stgCurVal.op);
   if (getObjType(p.op) != BLACKHOLE) {
-    PRINTF( "but updatee is %s not a BLACKHOLE!\n", 
+    PRINTF("but updatee is %s not a BLACKHOLE!\n", 
 	    objTypeNames[getObjType(p.op)]);
     showStgHeap();
     assert(getObjType(p.op) == BLACKHOLE);
