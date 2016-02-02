@@ -8,6 +8,13 @@
 #include <stdio.h>
 #include "options.h"
 #include "cmm.h"
+#include "args.h"
+
+void startCheck();
+
+void gc(void);
+
+#define GC() if(stgHP-stgHeap > GCThreshold*stgHeapSize) gc();
 
 struct _Obj;
 typedef struct _Obj Obj;
@@ -112,19 +119,25 @@ typedef struct {
   };
 } PtrOrLiteral;
 
+// we can't be certain a value is boxed or unboxed without enabling USE_ARGTYPE
+// but we can do some sanity checking.  mayBeBoxed(v) means that v is not
+// definitely unboxed
+bool mayBeBoxed(PtrOrLiteral v);
+bool mayBeUnboxed(PtrOrLiteral v);
+
 // STG registers
 // %rbx, %rbp, %r10, %r13, %r14, %r15 callee saved
 // TODO:  make heap, stack pointers registers, test performance
 // TODO:  distinguish stgCurVal as stgCurPtr and stgCurUbx
-#ifndef __clang__
+#if !defined(__clang__) && !USE_ARGTYPE
 register PtrOrLiteral stgCurVal asm("%r14");  // current/return value
+register PtrOrLiteral stgCurValU asm("%r13");  // current/return value
 #else
 extern PtrOrLiteral stgCurVal;  // current/return value
+extern PtrOrLiteral stgCurValU;  // current/return value
 #endif
-/*
-  payload -- see README
-*/
 
+// with empty payload sizeof(Obj) must be multiple of 4
 struct _Obj {
   InfoTab *_infoPtr;         // canonical location of infoPtr--first word
 #if USE_OBJTYPE
@@ -242,25 +255,28 @@ extern void *stgStack, *stgSP;
 
 extern size_t stgStatObjCount;
 extern Obj *stgStatObj[];
-extern void initStg();
-extern void showStgObj(Obj *);
-extern void showStgHeap();
-extern void showStgStack();
-extern void showStgVal(PtrOrLiteral);
-extern void checkStgHeap();
-extern void showIT(InfoTab *);
-extern void showCIT(CInfoTab *);
-extern int  getObjSize(Obj *);
-extern int  getContSize(Cont *);
 
-extern bool isSHO();
-extern bool isHeap(Obj *p);
-extern bool isFrom(void *p);
-extern bool isTo(void *p);
+void initStg();
+void showStgObj(Obj *);
+void showStgHeap();
+void showStgStack();
 
-extern bool isBoxed(PtrOrLiteral f);
+void showStgVal(PtrOrLiteral);
+void showStgObjPretty(Obj *p);
+void showStgObjDebug(Obj *p);
+void showStgValDebug(PtrOrLiteral v);
+void showStgValPretty(PtrOrLiteral v);
 
-extern bool isUnboxed(PtrOrLiteral f);
+void checkStgHeap();
+void showIT(InfoTab *);
+void showCIT(CInfoTab *);
+int  getObjSize(Obj *);
+int  getContSize(Cont *);
+
+bool isSHO();
+bool isHeap(Obj *p);
+bool isFrom(void *p);
+bool isTo(void *p);
 
 // use LSB to say it is a FORWARD
 static inline InfoTab *setLSB(InfoTab *ptr) { 
@@ -361,12 +377,6 @@ Cont *stgJumpAdjust();
 Cont *stgAdjustTopContSize(Cont *cp, int delta);
 
 void copyargs(PtrOrLiteral *dest, PtrOrLiteral *src, int count);
-
-extern void showStgObjPretty(Obj *p);
-extern void showStgObjDebug(Obj *p);
-extern void showStgValDebug(PtrOrLiteral v);
-extern void showStgValPretty(PtrOrLiteral v);
-
 // Codegen.hs currently uses STGJUMP(), STGJUMP0(f), and STGRETURN0() to
 // exit functions
 

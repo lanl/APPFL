@@ -54,7 +54,9 @@ Obj *deref2(Obj *p) {
 }
 
 PtrOrLiteral updatePtrByValue (PtrOrLiteral f) {
-  assert(isBoxed(f) && "not a HEAPOBJ");
+  assert(mayBeBoxed(f) && "not a HEAPOBJ");
+  if (f.op == NULL) return f;
+  
   Obj *p = deref2(f.op);  
   if (isFrom(p)) {
     // from space
@@ -115,6 +117,7 @@ void updatePtr(PtrOrLiteral *f) {
 }
 
 void processObj(Obj *p) {
+  if (p == NULL) return;
   size_t i;
   if (DEBUG_GC) PRINTF( "processObj %s %s\n", objTypeNames[getObjType(p)], p->ident);
 
@@ -134,15 +137,19 @@ void processObj(Obj *p) {
       // boxed free vars
       int start = startPAPFVsB(p);
       int end = endPAPFVsB(p);
+      PRINTF("  %d free variables\n", end - start);
       for (i = start; i < end; i++) {
         updatePtr(&p->payload[i]);
-      }
-    }
+      } 
+    } else { PRINTF("  no free variables\n");}
     Bitmap64 bm = p->payload[endPAPFVsU(p)].b;
     uint64_t mask = bm.bitmap.mask;
     int i = endPAPFVsU(p) + 1;
     for (int size = bm.bitmap.size; size != 0; size--, i++, mask >>= 1) {
-      if (mask & 0x1UL) updatePtr(&p->payload[i]);
+      if (mask & 0x1UL) {
+	PRINTF("  call updatePtr boxed payload[%d]\n", i);
+	updatePtr(&p->payload[i]);
+      } else PRINTF("  don't call updatePtr unboxed\n");
     }
     break;
   }
@@ -192,12 +199,12 @@ void processCont(Cont *p) {
       if (EXTRA_CHECKS_GC) {
     	EXTRASTART();
     	if (mask & 0x1UL) {
-    	  if (!isBoxed(p->payload[i])) {
+    	  if (!mayBeBoxed(p->payload[i])) {
     	    PRINTF("gc: unexpected unboxed arg in CONT index %d\n", i);
     	    assert(false);
     	  }
     	} else {
-    	  if (isBoxed(p->payload[i])) {
+    	  if (!mayBeUnboxed(p->payload[i])) {
     	    PRINTF("gc: unexpected boxed arg in CONT index %d\n", i);
     	    assert(false);
     	  }
@@ -211,7 +218,7 @@ void processCont(Cont *p) {
       if (p->payload[i].op != NULL) {
 	if (EXTRA_CHECKS_GC) {
 	  EXTRASTART();
-	  if (!isBoxed(p->payload[i])) {
+	  if (!mayBeBoxed(p->payload[i])) {
 	    PRINTF("gc: unexpected unboxed arg in LETCONT index %d\n", i);
 	    assert(false);
 	  }
@@ -242,9 +249,10 @@ void gc(void) {
 
   // add stgCurVal
   if (EXTRA_CHECKS_GC) {
-    assert(isBoxed(stgCurVal) && "gc: unexpected unboxed arg in stgCurVal");
+    assert(mayBeBoxed(stgCurVal) && "gc: unexpected unboxed arg in stgCurVal");
   }
-  processObj(stgCurVal.op);
+  if (stgCurVal.op != NULL)
+    processObj(stgCurVal.op);
 
   // all SHO's
   for (int i = 0; i < stgStatObjCount; i++) {
@@ -262,10 +270,11 @@ void gc(void) {
   //update stgCurVal
   if (EXTRA_CHECKS_GC) {
     EXTRASTART();
-    assert(isBoxed(stgCurVal) && "gc: unexpected unboxed arg in stgCurVal");
+    assert(mayBeBoxed(stgCurVal) && "gc: unexpected unboxed arg in stgCurVal");
     EXTRASTART();
   }
-  stgCurVal = updatePtrByValue(stgCurVal);
+  if (stgCurVal.op != NULL)
+    stgCurVal = updatePtrByValue(stgCurVal);
 
   // process "to" space
   while (scanPtr < freePtr) {

@@ -14,19 +14,24 @@
 // from stg land back to cmm land via RETURN0() rather than STGRETURN(0)
 
 Obj *derefPoL(PtrOrLiteral f) {
-  assert(isBoxed(f) && "derefPoL: not a HEAPOBJ");
+  assert(mayBeBoxed(f) && "derefPoL: not a HEAPOBJ");
   return derefHO(f.op);
 }
 
 void derefStgCurVal() {
-  while (isBoxed(stgCurVal) && getObjType(stgCurVal.op) == INDIRECT) {
-    stgCurVal = stgCurVal.op->payload[0];
+  assert(mayBeBoxed(stgCurVal)); // return stgCurVal
+  while (getObjType(stgCurVal.op) == INDIRECT) { // return stgCurVal
+    stgCurVal = stgCurVal.op->payload[0]; // return stgCurVal
+    assert(mayBeBoxed(stgCurVal)); // return stgCurVal
   }
 }
 
 Obj *derefHO(Obj *op) {
-  while (getObjType(op) == INDIRECT)
-    op = op->payload[0].op;
+  while (getObjType(op) == INDIRECT) {
+    PtrOrLiteral v = op->payload[0];
+    assert(mayBeBoxed(v));
+    op = v.op;
+  }
   return op;
 }
 
@@ -110,7 +115,7 @@ FnPtr stg_concall() {
 }
 
 FnPtr stgBlackhole() {
-  PRINTF( "stgBlackhole, exiting!\n");
+  PRINTF("stgBlackhole, exiting!\n");
   exit(0);
 }
 
@@ -130,7 +135,7 @@ InfoTab it_stgBlackhole __attribute__((aligned(8))) = {
 
 FnPtr stgIndirect() {
   PRINTF("stgIndirect, jumping through indirection\n");
-  stgCurVal = stgCurVal.op->payload[0];
+  stgCurVal = stgCurVal.op->payload[0]; // Obj takes self in stgCurVal
   STGJUMP0(getInfoPtr(stgCurVal.op)->entryCode);
 }
 
@@ -152,13 +157,13 @@ FnPtr stgUpdateCont() {
   Cont *contp = stgGetStackArgp();
   assert(getContType(contp) == UPDCONT && "I'm not an UPDCONT!");
   PtrOrLiteral p = contp->payload[0];
-  assert(isBoxed(p) && "not a HEAPOBJ!");
+  assert(mayBeBoxed(p) && "not a HEAPOBJ!");
   PRINTF( "stgUpdateCont updating\n  ");
   showStgObj(p.op);
   PRINTF( "with\n  ");
   showStgObj(stgCurVal.op);
   if (getObjType(p.op) != BLACKHOLE) {
-    PRINTF( "but updatee is %s not a BLACKHOLE!\n", 
+    PRINTF("but updatee is %s not a BLACKHOLE!\n", 
 	    objTypeNames[getObjType(p.op)]);
     showStgHeap();
     assert(getObjType(p.op) == BLACKHOLE);
@@ -167,7 +172,7 @@ FnPtr stgUpdateCont() {
   int oldObjSize = getObjSize(p.op);
 
   // the order of the following two operations is important for concurrency
-  p.op->payload[0] = stgCurVal;
+  p.op->payload[0] = stgCurVal;  // return stgCurVal, not the indirect, for efficiency
   p.op->_infoPtr = &it_stgIndirect;
 #if USE_OBJTYPE
   p.op->objType = INDIRECT;
@@ -179,8 +184,9 @@ FnPtr stgUpdateCont() {
   // this is for displaying a fragmented heap
   memset((char*)p.op+newObjSize, 0, oldObjSize-newObjSize);
 
-  PRINTF( "stgUpdateCont leaving...\n  ");
+  PRINTF("stgUpdateCont leaving...\n  ");
   stgPopCont();
+  // this returns stgCurVal, not the indirect, for efficiency
   STGRETURN0();
 }
 
@@ -202,9 +208,9 @@ FnPtr fun_stgShowResultCont() {
   stgPopCont();  // clean up--normally the job of the returnee
   fprintf(stderr, "The answer is\n");
 #if USE_ARGTYPE
-  showStgVal(stgCurVal);
+  showStgVal(stgCurVal); stgCurVal.op = NULL;
 #else
-  showStgObj(stgCurVal.op);
+  showStgObj(stgCurVal.op); stgCurVal.op = NULL;
 #endif
   RETURN0();
 }
@@ -221,7 +227,7 @@ CInfoTab it_stgShowResultCont __attribute__((aligned(8))) =
   };
 
 void stgThunk(PtrOrLiteral self) {
-  assert(isBoxed(self) && "stgThunk:  not HEAPOBJ\n");
+  assert(mayBeBoxed(self) && "stgThunk:  not HEAPOBJ\n");
   Cont *contp = stgAllocCont(&it_stgUpdateCont);
   contp->payload[0] = self;
   strcpy(contp->ident, self.op->ident); //override default

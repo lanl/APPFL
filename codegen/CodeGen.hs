@@ -263,7 +263,6 @@ cga env (LitC c) = "((PtrOrLiteral){.i = con_" ++ c ++ " })"
 
 cgStart :: String
 cgStart = "\n\nFnPtr start() {\n" ++
-            "  registerSOs();\n" ++
             "  Cont *showResultCont = " ++ 
                "stgAllocCallOrStackCont(&it_stgShowResultCont, 0);\n" ++
 #if USE_ARGTYPE
@@ -275,9 +274,11 @@ cgStart = "\n\nFnPtr start() {\n" ++
 
 cgMain :: Bool -> String
 cgMain v = let top = "int main (int argc, char **argv) {\n" ++
+                     "  startCheck();\n" ++
                      "  parseArgs(argc, argv);\n" ++
                      "  initStg();\n" ++
                      "  initGc();\n" ++
+                     "  registerSOs();\n" ++
                      "  CALL0_0(start);\n"
                bot = "  return 0;\n" ++ "}\n\n"
   in if v then top ++ "  showStgHeap();\n  GC();\n" ++ bot else top ++ bot
@@ -308,7 +309,7 @@ cgUBa env (LitD d) "d" = show d
 cgUBa _ at _ = error $ "CodeGen.cgUBa: not expecting Atom - " ++ show at
 -- cgUBa env (LitF f) "f" = show f
 
-cgv env v = getEnvRef v env -- ++ "/* " ++ v ++ " */"
+cgv env v = getEnvRef v env ++ "/* " ++ v ++ " */"
 
 
 -- given function type and formal parameter list, return the args
@@ -389,12 +390,14 @@ cgo env o@(THUNK it e name) =
             "// " ++ show (ctyp it) ++ "\n" ++
             "FnPtr thunk_" ++ name ++ "() {\n" ++
             "  fprintf(stderr, \"" ++ name ++ " here\\n\");\n" ++
-            " // if alloc triggers GC, stgCurVal is a root\n" ++
+            "  // access free vars through frame pointer so that we can use blackhole\n" ++
             "  Cont *stg_fp = stgAllocCallOrStackCont(&it_stgStackCont, 1);\n" ++
             "  stg_fp->layout = " ++ npStrToBMStr "P" ++ ";\n" ++
             "  stg_fp->payload[0] = stgCurVal;\n" ++
             "  PtrOrLiteral *" ++ fvpp ++ " = &(stg_fp->payload[0]);\n" ++
             "  stgThunk(stgCurVal);\n" ++
+            -- expression code doesn't take stgCurVal as arg
+            "  stgCurVal.op = NULL;\n" ++
             indent 2 inline ++
               optStr (ypn /= Yes) "  STGRETURN0();\n" ++
             "}\n"
@@ -438,12 +441,14 @@ stgApplyGeneric env f eas direct =
 cge :: Env -> Expr InfoTab -> State Int ((String,YPN), [(String, String)])
 
 cge env e@(EAtom it a) =
-    let inline = "stgCurVal = " ++ cga env a ++ "; // " ++ showa a ++ "\n" ++
-                 (if isBoxede e then
-                      "// boxed EAtom, stgCurVal updates itself \n" ++
-                      "STGJUMP();\n"
-                  else
-                      "// unboxed EAtom\n")
+    let inline = 
+            if isBoxede e then
+                "stgCurVal = " ++ cga env a ++ "; // " ++ showa a ++ "\n" ++
+                "// boxed EAtom, stgCurVal updates itself \n" ++
+                "STGJUMP();\n"
+            else
+                "stgCurValU = " ++ cga env a ++ "; // " ++ showa a ++ "\n" ++
+                "// unboxed EAtom\n"
     in return ((inline, if isBoxede e then Yes else No), [])
 
 cge env e@(EFCall it f eas) =
@@ -478,59 +483,91 @@ cge env (EPrimop it op eas) =
                    Pimax -> cFunIII "imax"
 
                    PintToBool ->
-                       "stgCurVal = " ++
+                       "stgCurValU = " ++
                        arg0 "i" ++ "?" ++ getEnvRef "true"  env ++
                                    ":" ++ getEnvRef "false" env ++ ";\n"
 
         cPrefixII op =
 #if USE_ARGTYPE
-                        "stgCurVal.argType = INT;\n" ++
+                        "stgCurValU.argType = INT;\n" ++
 #endif
-                        "stgCurVal.i = " ++ op ++ arg0 "i" ++ ";\n"
+                        "stgCurValU.i = " ++ op ++ arg0 "i" ++ ";\n"
 
         cInfixIII op =
 #if USE_ARGTYPE
-                        "stgCurVal.argType = INT;\n" ++
+                        "stgCurValU.argType = INT;\n" ++
 #endif
-                        "stgCurVal.i = " ++ arg0 "i" ++ op ++ arg1 "i" ++ ";\n"
+                        "stgCurValU.i = " ++ arg0 "i" ++ op ++ arg1 "i" ++ ";\n"
 
         cInfixIIB op =
 #if USE_ARGTYPE
-                        "stgCurVal.argType = BOOL;\n" ++
+                        "stgCurValU.argType = BOOL;\n" ++
 #endif
-                        "stgCurVal.i = " ++ arg0 "i" ++ op ++ arg1 "i" ++ ";\n"
+                        "stgCurValU.i = " ++ arg0 "i" ++ op ++ arg1 "i" ++ ";\n"
 
         cFunIII fun =
 #if USE_ARGTYPE
-                      "stgCurVal.argType = INT;\n" ++
+                      "stgCurValU.argType = INT;\n" ++
 #endif
-                      "stgCurVal.i = " ++ fun ++ "(" ++ arg0 "i" ++ ", " ++ arg1 "i" ++ ");\n"
+                      "stgCurValU.i = " ++ fun ++ "(" ++ arg0 "i" ++ ", " ++ arg1 "i" ++ ");\n"
     in return ((inline, No), [])
 
 cge env (ELet it os e) =
     let names = map oname os
-        decl = concat [ "PtrOrLiteral *" ++ name ++ ";\n" | name <- names ] ++
-               "{Cont *contp = stgAllocCallOrStackCont(&it_stgLetCont, " ++ 
+        decl = 
+            concat [ "PtrOrLiteral *" ++ name ++ ";\n" | name <- names ] ++
+            "{Cont *contp = stgAllocCallOrStackCont(&it_stgLetCont, " ++ 
                                show (length os) ++ ");\n" ++
-               concat [ name ++ " = &(contp->payload[" ++ show i ++ "]);\n" |
-                        (name, i) <- zip names [0..] ] ++
-               "contp->layout = " ++ npStrToBMStr (replicate (length os) 'P') ++
-               ";}\n" -- only size actually matters
+            "memset(contp->payload, 0, " ++ 
+                  show (length os) ++ " * sizeof(PtrOrLiteral));\n" ++
+            concat [ name ++ " = &(contp->payload[" ++ show i ++ "]);\n" |
+                     (name, i) <- zip names [0..] ] ++
+            "contp->layout = " ++ npStrToBMStr (replicate (length os) 'P') ++ ";}\n"
         env'  = zip names (map HO names) ++ env
-#if USE_CAST
-        (sizes, cDecls, cBuildcodes) = unzip3 $ map (buildHeapObj env') os
-        decls = render $ pretty cDecls 
-        buildcodes =  intercalate "\n" (map (render . pretty) cBuildcodes))
-#else
         (decls, buildcodes) = unzip $ map (buildHeapObj env') os
-#endif
+
     in do
       ofunc <- cgos env' os
       ((einline, ypn), efunc) <- cge env' e
       return ((decl ++ concat decls ++ concat buildcodes ++ einline, ypn),
               ofunc ++ efunc)
 
--- scrutinee does no heap allocation
+cge env ecase@(ECase _ e a) =
+    do ((ecode, eypn), efunc) <- cge env e
+       -- weird:  compiler requires parens around if, ghci does not
+       (if eypn == No then
+            cgeNoInline env (isBoxede e) (ecode, efunc) a
+        else
+            cgeNoInline env (isBoxede e) (ecode, efunc) a)
+
+-- TODO:  inline
+-- TODO:  YPN from Alts, Alt
+
+
+cgeInline env boxed (ecode, efunc) a@(Alts italts alts aname) =
+-- TODO:  efunc should be empty
+    let contName = "ccont_" ++ aname
+        pre = "// inline:  scrutinee does not STGJUMP or STGRETURN\n" ++
+              "Cont *" ++ contName ++ " = stgAllocCallOrStackCont(&it_stgStackCont, 1);\n" ++
+              contName ++ "->layout = " ++ npStrToBMStr "N" ++ ";\n" ++
+#if USE_ARGTYPE
+              contName ++ "->payload[0].argType = INT;\n" ++
+#endif
+              contName ++ "->payload[0].i = 0;\n"
+    in do (acode, afunc) <- cgaltsInline env a boxed
+--        need YPN results from Alts
+          return ((pre ++ ecode ++ acode, Possible), 
+                  efunc ++ afunc)
+
+cgaltsInline = error "not implemented"
+
+-- cgaltsInline env a@(Alts it alts name) boxed =
+--     let phonyforward = "FnPtr " ++ name ++ "();"
+--         phonyfun = "FnPtr "++ name ++ "() {}\n"
+--         switch = length alts - 1
+--     in do
+
+
 {-
 cge env (ECase _ e a@(Alts italts alts aname)) =
     do (ecode, efunc) <- cge env e
@@ -563,40 +600,37 @@ cgalts_noheapalloc env (Alts it alts name) boxed =
       return (inl, (phonyforward, phonyfun) : concat funcss)
 -}
 
--- TOFIX:  even if scrutinee doesn't heap alloc it may return through the
--- continuation stack, so we need better analysis
--- cge env (ECase _ e a@(Alts italts alts aname)) | (not $ noHeapAlloc $ emd e) =
-cge env (ECase _ e a@(Alts italts alts aname)) =
-    let scrutName = "scrut_" ++ aname
-        cname = "ccont_" ++ aname
-        pre = "// scrutinee may heap alloc\n" ++
-              "Cont *" ++ cname ++ " = stgAllocCont( &it_" ++ aname ++ ");\n" ++
-              "// dummy value for scrutinee\n" ++
-              cname ++ "->payload[0].i = 0;\n" ++
+cgeNoInline env boxed (ecode, efunc) a@(Alts italts alts aname) =
+    let contName = "ccont_" ++ aname
+        pre = "// scrutinee may STGJUMP or STGRETURN\n" ++
+              "Cont *" ++ contName ++ " = stgAllocCont( &it_" ++ aname ++ ");\n" ++
+              "// dummy value for scrutinee, InfoTab initializes to unboxed\n" ++
+              contName ++ "->payload[0].i = 0;\n" ++
 #if USE_ARGTYPE
-              cname ++ "->payload[0].argType = INT;\n" ++
+              contName ++ "->payload[0].argType = INT;\n" ++
 #endif
               (if fvs italts == [] then
                  "// no FVs\n"
                else
                  "// load payload with FVs " ++
                          intercalate " " (map fst $ fvs italts) ++ "\n") ++
-                 (loadPayloadFVs env (map fst $ fvs italts) 1 cname)
-    in do ((ecode, eypn), efunc) <- cge env e
-          (acode, afunc) <- cgalts env a (isBoxede e) scrutName
-          return ((pre ++ ecode ++ acode, eypn), efunc ++ afunc)
+                 (loadPayloadFVs env (map fst $ fvs italts) 1 contName)
+    in do (acode, afunc) <- cgalts env a boxed
+--        need YPN results from Alts
+          return ((pre ++ ecode ++ acode, Possible), 
+                  efunc ++ afunc)
 
 -- ADef only or unary sum => no C switch
-cgalts env (Alts it alts name) boxed scrutName =
+cgalts env (Alts it alts name) boxed =
     let contName = "ccont_" ++ name
         fvp = "fvp"
-        -- scrutName in case scrutinee is explicitly bound to variable
-        altenv = zip (scrutName : (map fst $ fvs it)) (map (FP fvp) [0..])
+        -- case scrutinee is not current explicitly bound to variable
+        altenv = zip (map fst $ fvs it) (map (FP fvp) [1..])
         env' = altenv ++ env
         forward = "FnPtr " ++ name ++ "();"
         switch = length alts > 1
     in do
-      codefuncs <- mapM (cgalt env' switch scrutName fvp) alts
+      codefuncs <- mapM (cgalt env' switch fvp) alts
       let (codes, funcss) = unzip codefuncs
       let body =
               "fprintf(stderr, \"" ++ name ++ " here\\n\");\n" ++
@@ -608,14 +642,19 @@ cgalts env (Alts it alts name) boxed scrutName =
 --              concat ["  PtrOrLiteral " ++ v ++
 --                      " = " ++ contName ++ "->payload[" ++ show i ++ "];\n"
 --                      | (i,v) <- indexFrom 0 $ map fst $ fvs it ] ++
-              fvp ++ "[0] = stgCurVal;\n" ++
+              (if boxed then 
+                   fvp ++ "[0] = stgCurVal;\n"
+               else
+                   fvp ++ "[0] = stgCurValU;\n") ++
+
               optStr boxed (contName ++ "->layout.bitmap.mask |= 0x1;\n") ++
-              "PtrOrLiteral " ++ scrutName ++ " = stgCurVal;\n" ++
               (if switch then
                  (if boxed then
-                    "switch(getInfoPtr(stgCurVal.op)->conFields.tag) {\n"
+--                    "switch(getInfoPtr(stgCurVal.op)->conFields.tag) {\n"
+                    "stgCurVal.op = NULL;\n" ++
+                    "switch(getInfoPtr(" ++ fvp ++ "[0].op)->conFields.tag) {\n"
                   else
-                    "switch(stgCurVal.i) {\n"
+                    "switch(stgCurValU.i) {\n"
                  ) ++
                    indent 2 (concat codes) ++
                  "}\n"
@@ -626,7 +665,7 @@ cgalts env (Alts it alts name) boxed scrutName =
 
       return ("", (forward, fun) : concat funcss)
 
-cgalt env switch scrutName fvp (ACon it c vs e) =
+cgalt env switch fvp (ACon it c vs e) =
     let DataCon c' ms = luDCon c (cmap it)
         (_,_,perm) = partPerm isBoxed ms
         eenv = zzip vs (map (FV fvp) perm)
@@ -643,7 +682,7 @@ cgalt env switch scrutName fvp (ACon it c vs e) =
                  else inline ++ optStr (ypn /= Yes) "STGRETURN0();\n"
       return (code, func)
 
-cgalt env switch scrutName fvp (ADef it v e) =
+cgalt env switch fvp (ADef it v e) =
     let env' = (v, FP fvp 0) : env
     in do
       ((inline, ypn), func) <- cge env' e

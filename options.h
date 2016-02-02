@@ -2,6 +2,9 @@
 #ifndef options_h
 #define options_h
 
+#define OBJ_ALIGN 8
+#define OBJ_ALIGNM1 7
+
 /* If 1 use argType enum field in PtrOrLiteral */
 #define USE_ARGTYPE 1
 
@@ -21,7 +24,10 @@
 #define DEBUG_GC 1
 
 /* if 1 extra gc() checks */
-#define EXTRA_CHECKS_GC 1   
+#define EXTRA_CHECKS_GC 1 
+
+/* if 1 initiate GC with every object allocation */
+#define ALLOC_GC 1
 
 /* ghc cpp doesn't like varargs */
 /* define PRINTF(...) */

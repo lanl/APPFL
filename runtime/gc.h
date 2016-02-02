@@ -6,8 +6,10 @@
 
 void initGc(void);
 
+/* moved to stg.h
 void gc(void);
 
-#define GC() if(stgHP-stgHeap > GCThreshold*stgHeapSize) gc();
+define GC() if(stgHP-stgHeap > GCThreshold*stgHeapSize) gc();
+*/
 
 #endif

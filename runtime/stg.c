@@ -26,10 +26,11 @@ void *fromPtr = NULL;
 void *stgStack = NULL;
 void *stgSP = NULL;
 
-#ifndef __clang__
+#if !defined(__clang__) && !USE_ARGTYPE
 // register PtrOrLiteral stgCurVal asm("%r15");  // current value STG register
 #else
 PtrOrLiteral stgCurVal;  // current/return value
+PtrOrLiteral stgCurValU;  // current/return value
 #endif
 
 const char *objTypeNames[] = {
@@ -58,6 +59,36 @@ const char *contTypeNames[] = {
   "POPMECONT",
 };
 
+void startCheck() {
+  if (sizeof(Obj) % OBJ_ALIGN != 0) {
+    fprintf(stderr, "sizeof(Obj) is %lu not multiple of %d\n", 
+                    sizeof(Obj), OBJ_ALIGN);
+    exit(1);
+  }
+}
+
+// we can't be certain a value is boxed or unboxed without enabling ARG_TYPE
+// but we can do some sanity checking.  mayBeBoxed(v) means that v is not
+// definitely unboxed
+bool mayBeBoxed(PtrOrLiteral f) {
+  #if USE_ARGTYPE
+  return f.argType == HEAPOBJ && 
+         (f.op == NULL || isHeap(f.op) || isSHO(f.op)) &&
+         ((f.u & (OBJ_ALIGN - 1)) == 0);
+#else
+  return (f.op == NULL || isHeap(f.op) || isSHO(f.op)) &&
+         ((f.u & (OBJ_ALIGN - 1)) == 0);
+#endif
+}
+
+bool mayBeUnboxed(PtrOrLiteral f) {
+  #if USE_ARGTYPE
+  return f.argType != HEAPOBJ;
+#else
+  return true;
+#endif
+}
+
 void copyargs(PtrOrLiteral *dest, PtrOrLiteral *src, int count) {
   memcpy(dest, src, count * sizeof(PtrOrLiteral));
 }
@@ -84,7 +115,7 @@ Cont *stgAllocCont(CInfoTab *citp) {
           "stgAllocCont: citp->contType == CALLCONT/STACKCONT" );
   int payloadSize = citp->cLayoutInfo.payloadSize;
   size_t contSize = sizeof(Cont) + payloadSize * sizeof(PtrOrLiteral);
-  contSize = ((contSize + 7)/8)*8; 
+  //  contSize = ((contSize + 7)/8)*8; 
   PRINTF("allocating %s continuation with payloadSize %d\n", 
 	  contTypeNames[citp->contType], payloadSize);
   showCIT(citp);
@@ -110,7 +141,7 @@ Cont *stgAllocCallOrStackCont(CInfoTab *citp, int argc) {
 	  citp->contType == STACKCONT) && 
 	 "stgAllocCallOrStackCont: citp->contType != CALLCONT/STACKCONT");
   size_t contSize = sizeof(Cont) + argc * sizeof(PtrOrLiteral);
-  contSize = ((contSize + 7)/8)*8; 
+  //  contSize = ((contSize + 7)/8)*8; 
   PRINTF("allocating %s continuation with argc %d\n", 
 	  contTypeNames[citp->contType], argc);
   showCIT(citp);
@@ -161,9 +192,9 @@ Cont *stgAdjustTopContSize(Cont *cp, int delta) {
 
   // calculate actual cont sizes
   int oldContSize = sizeof(Cont) + oldPayloadSize * sizeof(PtrOrLiteral);
-      oldContSize = ((oldContSize + 7)/8)*8; 
+  //      oldContSize = ((oldContSize + 7)/8)*8; 
   int newContSize = sizeof(Cont) + newPayloadSize * sizeof(PtrOrLiteral);
-      newContSize = ((newContSize + 7)/8)*8;
+  //      newContSize = ((newContSize + 7)/8)*8;
 
   if (newContSize == oldContSize) 
     return cp;
@@ -193,7 +224,7 @@ void stgPopCont() {
   PRINTF("popping %s continuation with payloadSize %d\n",
 	  contTypeNames[contType], payloadSize);
   size_t contSize = sizeof(Cont) + payloadSize * sizeof(PtrOrLiteral);
-  contSize = ((contSize + 7)/8)*8; 
+  //  contSize = ((contSize + 7)/8)*8; 
   showCIT(getCInfoPtr(cp));
   assert((char *)cp + contSize <= (char *)stgStack + stgStackSize);
   stgSP = (char *)cp + contSize;
@@ -211,6 +242,11 @@ Cont *stgGetStackArgp() {
 
 Obj* stgNewHeapObj(InfoTab *itp) {
   PRINTF("stgNewHeapObj: "); showIT(itp);
+#if ALLOC_GC
+  PRINTF("******** stgNewHeapObj before GC\n");
+  GC();
+  PRINTF("******** stgNewHeapObj after GC\n");
+#endif
   int payloadSize = itp->layoutInfo.payloadSize;
   int fvs = itp->layoutInfo.boxedCount + itp->layoutInfo.unboxedCount;
   // assert(itp->fvCount == fvs);  // fvCount going away
@@ -221,17 +257,16 @@ Obj* stgNewHeapObj(InfoTab *itp) {
   default:  assert(false && "stgNewHeapObj");
   }
   size_t objSize = sizeof(Obj) + payloadSize * sizeof(PtrOrLiteral);
-  objSize = ((objSize + 7)/8)*8; 
+  objSize = ((objSize + OBJ_ALIGNM1)/OBJ_ALIGN)*OBJ_ALIGN; 
   Obj *objp = (Obj *)stgHP;
   stgHP = (char *)stgHP + objSize;
 
-  if (itp->objType == THUNK) {
-    assert(payloadSize >= 1 && "stgNewHeapObj");
-    objp->payload[0].op = NULL;
+  // this memset is important for garbage collection with LET construction
+  memset(objp->payload, 0, payloadSize * sizeof(PtrOrLiteral));
 #if USE_ARGTYPE
-    objp->payload[0].argType = HEAPOBJ;
+  int boxed = itp->layoutInfo.boxedCount + (itp->objType==THUNK ? 1 : 0);
+  for (int i = 0; i != boxed; i++) objp->payload[i].argType = HEAPOBJ;
 #endif
-  }
 
   objp->_infoPtr = itp;
   strcpy(objp->ident, itp->name);  // may be overwritten
@@ -240,12 +275,17 @@ Obj* stgNewHeapObj(InfoTab *itp) {
 	  objp->ident, objTypeNames[itp->objType]);
   objp->objType = itp->objType;
 #endif
-  //  Can't display it--payload values not set
+  //  Can't display it--payload values not set, fix showStgObj
   //  PRINTF("stgNewHeapObj: "); showStgObj(objp);
   return objp;
 }
 
 Obj* stgNewHeapPAPmask(InfoTab *itp, Bitmap64 bm) {
+#if ALLOC_GC
+  PRINTF("******** stgNewHeapPAPmask before GC\n");
+  GC();
+  PRINTF("******** stgNewHeapPAPmask after GC\n");
+#endif
   assert(!(((uintptr_t)itp) & 0x7));
   assert(itp->objType == FUN && "stgNewHeapPAPmask:  itp->objType != FUN" );
   int fvCount = itp->layoutInfo.boxedCount + 
@@ -255,7 +295,7 @@ Obj* stgNewHeapPAPmask(InfoTab *itp, Bitmap64 bm) {
   PRINTF("stgNewHeapPap: "); showIT(itp);
   size_t objSize = sizeof(Obj) + 
     (fvCount + bm.bitmap.size + 1) * sizeof(PtrOrLiteral);
-  objSize = ((objSize + 7)/8)*8;
+  objSize = ((objSize + OBJ_ALIGNM1)/OBJ_ALIGN)*OBJ_ALIGN;
   Obj *objp = (Obj *)stgHP;
   stgHP = (char *)stgHP + objSize;
 #if USE_ARGTYPE
@@ -263,12 +303,10 @@ Obj* stgNewHeapPAPmask(InfoTab *itp, Bitmap64 bm) {
 #endif
   objp->payload[fvCount].b = bm;
   strcpy(objp->ident, itp->name);  // may be overwritten
-  objp->_infoPtr = itp;
   objp->_infoPtr = setLSB2(itp); // set InfoPtr bit to say this is a PAP
 #if USE_OBJTYPE
   objp->objType = PAP;
 #endif
-  PRINTF("stgNewHeapPAP: "); showStgObj(objp);
   return objp;
 }
 
@@ -283,7 +321,7 @@ int getObjSize(Obj *o) {
     objSize = sizeof(Obj) + 
       (fvCount + 1 + o->payload[fvCount].b.bitmap.size) * 
         sizeof(PtrOrLiteral);
-    objSize = ((objSize + 7)/8)*8;
+    objSize = ((objSize + OBJ_ALIGNM1)/OBJ_ALIGN)*OBJ_ALIGN;
     break;
   } // PAP
   case FUN:
@@ -301,20 +339,11 @@ int getObjSize(Obj *o) {
     assert(false);
     break;
   }
-  objSize = ((objSize + 7)/8)*8;
+  objSize = ((objSize + OBJ_ALIGNM1)/OBJ_ALIGN)*OBJ_ALIGN;
   return objSize;
 }
 
 
-
-void showStgObj(Obj *p) {
-  showStgObjPretty(p);
-  // showStgObjDebug(Obj *p)
-}
-void showStgVal(PtrOrLiteral v) {
-  showStgValPretty(v);
-  // showStgValDebug(v);
-}
 
 void showIT(InfoTab *itp) {
   PRINTF("showIT: %s %s, bc %d ubc %d layoutInfo.payloadSize %d\n", 
@@ -352,7 +381,7 @@ int getContSize(Cont *o) {
     PRINTF("stg.c/getContSize bad ContType %d\n", type);
     assert(false);
   }
-  contSize = ((contSize + 7)/8)*8;
+  //  contSize = ((contSize + 7)/8)*8;
   if (contSize != o->_contSize) {
     PRINTF("contSize is %lu, o->_contSize is %d for %s\n",
 	    contSize, o->_contSize, contTypeNames[type]);
@@ -378,6 +407,10 @@ void initStg() {
     exit(1);
   }
 
+  if ((uintptr_t)stgHP % OBJ_ALIGN != 0) {
+    fprintf(stderr, "stgHP not OBJ_ALIGNed\n");
+    exit(1);
+  }
   stgHP = stgHeap; // first free address
 
   stgStack = 

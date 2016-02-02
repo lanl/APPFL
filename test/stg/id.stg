@@ -1,0 +1,10 @@
+
+id = FUN(x -> x);
+
+-- type inference exponential in number of ids
+main = THUNK(id id id id 
+             id id id id 
+             id id id id
+             id id id id
+             id id id id
+             true);
