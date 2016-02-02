@@ -32,7 +32,7 @@ Alt default var:  "stgCurVal, bind it"
 
 {-# LANGUAGE NamedFieldPuns    #-}
 {-# LANGUAGE CPP #-}
-#include "../options.h"
+#include "options.h"
 
 module CodeGen(
   cgObjs,

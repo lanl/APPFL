@@ -6,7 +6,7 @@
 #endif
 
 {-# LANGUAGE CPP #-}
-#include "../options.h"
+#include "options.h"
 
 ----------------------------  Alternative interface to ConMap idea ----------------------
 -- Originally had a container for TyCons with an internal Assoc list of Con --> Arity,

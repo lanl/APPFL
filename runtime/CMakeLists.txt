@@ -14,7 +14,7 @@ project(runtime)
               stgapply.h
     )
 
-  set(xrt_hdrs ../options.h
+  set(xrt_hdrs ../build/include/options.h
      )
 
   set(rt_srcs args.c 
@@ -34,7 +34,6 @@ include_directories(".."
   foreach (header ${rt_hdrs})
     configure_file(${header} ${PROJECT_BINARY_DIR}/../include/${header} COPYONLY)
   endforeach()
-  configure_file(../options.h ${PROJECT_BINARY_DIR}/../include/options.h COPYONLY)
 
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g -std=gnu99 -Wall -Werror -O0" )
 

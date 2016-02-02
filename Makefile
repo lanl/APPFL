@@ -18,6 +18,7 @@ setup:
 	@((test -d $(build_dir)/include) || (mkdir $(build_dir)/include))
 	@(cp -f prelude/Prelude.stg $(build_dir)/etc/)
 	@(cp -f prelude/Prelude.mhs $(build_dir)/etc/)
+	@(cp -f options.h $(build_dir)/include/) 
 
 codegen: setup 
 	@(cd codegen && cabal build $(build_flags))

@@ -1,5 +1,5 @@
 {-# LANGUAGE CPP #-}
-#include "../options.h"
+#include "options.h"
 
 module HeapObj (
   showSHOs,
