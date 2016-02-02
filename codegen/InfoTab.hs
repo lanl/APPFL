@@ -650,10 +650,12 @@ showIT it@(ITAlts{}) =
     "  // fvs " ++ show (fvs it) ++ "\n" ++
     "  .entryCode                = &" ++ entryCode it ++ ",\n" ++
     "  .contType                 = CASECONT,\n" ++
+    -- one extra for scrutinee
     "  .cLayoutInfo.payloadSize  = " ++ show ((length $ fvs it) + 1) ++ ",\n" ++
---    "  .cLayoutInfo.payloadSize  = " ++ show (length $ fvs it) ++ ",\n" ++
     "  .cLayoutInfo.boxedCount   = " ++ show (bfvc it) ++ ",\n" ++
     "  .cLayoutInfo.unboxedCount = " ++ show (ufvc it) ++ ",\n" ++
+    -- initially indicate scrutinee as unboxed for GC, could also indicate
+    -- correctly and make NULL in CodeGen
     "  .cLayoutInfo.bm           = " ++ 
           npStrToBMStr ( 'N' : 
                         replicate (bfvc it) 'P' ++
