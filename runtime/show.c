@@ -1,5 +1,6 @@
 
 // no header of this file's own for now
+#include <inttypes.h>
 #include <stdio.h>
 #include "stg.h"
 #include "obj.h"
@@ -124,7 +125,7 @@ void showStgObjRecPretty(Obj *p) {
     Bitmap64 bm = p->payload[end].b;
     int size = bm.bitmap.size;
     uint64_t mask = bm.bitmap.mask;
-    fprintf(stderr, "%d,0x%lx,", size, mask);
+    fprintf(stderr, "%d,%" PRIx64 ",", size, mask);
     for ( int i = 0; i != size; i++, mask >>= 1 ) {
       PtrOrLiteral v = p->payload[end + 1 + i];
       if (mask & 0x1) {
