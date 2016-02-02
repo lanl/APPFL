@@ -532,6 +532,32 @@ cge env (ELet it os e) =
               ofunc ++ efunc)
 
 -- scrutinee does no heap allocation
+cge env ecase@(ECase _ e a) =
+    do ((ecode, eypn), efunc) <- cge env e
+       -- weird:  compiler requires parens around if, ghci does not
+       (if eypn == No then
+            cgeNoInline env (isBoxede e) (ecode, efunc) a
+        else
+            cgeNoInline env (isBoxede e) (ecode, efunc) a)
+
+-- TODO:  inline
+-- TODO:  YPN from Alts, Alt
+
+{-
+cgeInline env boxed (ecode, efunc) alts =
+    let pre = "// scrutinee does not STGJUMP or STGRETURN\n" ++
+    in do (acode, afunc) <- cgaltsInline env boxed alts
+--        need YPN results from Alts
+          return ((pre ++ ecode ++ acode, Possible), efunc ++ afunc)
+
+cgaltsInline env boxed a@(Alts it alts name) =
+    let contName = "ccont_" ++ name
+        phonyforward = "FnPtr " ++ name ++ "();"
+        phonyfun = "FnPtr "++ name ++ "() {}\n"
+        switch = length alts - 1
+    in do
+-}
+
 {-
 cge env (ECase _ e a@(Alts italts alts aname)) =
     do (ecode, efunc) <- cge env e
@@ -564,42 +590,8 @@ cgalts_noheapalloc env (Alts it alts name) boxed =
       return (inl, (phonyforward, phonyfun) : concat funcss)
 -}
 
-cge env ecase@(ECase _ e a) =
-    do ((ecode, eypn), efunc) <- cge env e
-       -- weird:  compiler requires parens around if, ghci does not
-       (if eypn == No then
-            cgeInline env (isBoxede e) (ecode, efunc) a
-        else
-            cgeNoInline env (isBoxede e) (ecode, efunc) a)
-
--- TODO:  inline
--- TODO:  YPN from Alts, Alt
-
-cgeInline env boxed (ecode, efunc) a@(Alts italts alts aname) =
-    let scrutName = "scrut_" ++ aname
-        cname = "ccont_" ++ aname
-        pre = "// scrutinee does not STGJUMP or STGRETURN\n" ++
-              "Cont *" ++ cname ++ " = stgAllocCont( &it_" ++ aname ++ ");\n" ++
-              "// dummy value for scrutinee\n" ++
-              cname ++ "->payload[0].i = 0;\n" ++
-#if USE_ARGTYPE
-              cname ++ "->payload[0].argType = INT;\n" ++
-#endif
-              (if fvs italts == [] then
-                 "// no FVs\n"
-               else
-                 "// load payload with FVs " ++
-                         intercalate " " (map fst $ fvs italts) ++ "\n") ++
-                 (loadPayloadFVs env (map fst $ fvs italts) 1 cname)
-    in do (acode, afunc) <- cgalts env a boxed scrutName
---        need YPN results from Alts
-          return ((pre ++ "/* no inline */\n" ++ ecode ++ acode, Possible), 
---          return ((pre ++ "/* no inline */\n" ++ ecode ++ acode, eypn), 
-                  efunc ++ afunc)
-
-
 cgeNoInline env boxed (ecode, efunc) a@(Alts italts alts aname) =
-    let scrutName = "scrut_" ++ aname
+    let -- scrutName = "scrut_" ++ aname
         cname = "ccont_" ++ aname
         pre = "// scrutinee may STGJUMP or STGRETURN\n" ++
               "Cont *" ++ cname ++ " = stgAllocCont( &it_" ++ aname ++ ");\n" ++
@@ -614,18 +606,18 @@ cgeNoInline env boxed (ecode, efunc) a@(Alts italts alts aname) =
                  "// load payload with FVs " ++
                          intercalate " " (map fst $ fvs italts) ++ "\n") ++
                  (loadPayloadFVs env (map fst $ fvs italts) 1 cname)
-    in do (acode, afunc) <- cgalts env a boxed scrutName
+    in do (acode, afunc) <- cgalts env a boxed
 --        need YPN results from Alts
           return ((pre ++ "/* no inline */\n" ++ ecode ++ acode, Possible), 
 --          return ((pre ++ "/* no inline */\n" ++ ecode ++ acode, eypn), 
                   efunc ++ afunc)
 
 -- ADef only or unary sum => no C switch
-cgalts env (Alts it alts name) boxed scrutName =
+cgalts env (Alts it alts name) boxed =
     let contName = "ccont_" ++ name
         fvp = "fvp"
-        -- scrutName in case scrutinee is explicitly bound to variable
-        altenv = zip (scrutName : (map fst $ fvs it)) (map (FP fvp) [0..])
+        -- case scrutinee is not current explicitly bound to variable
+        altenv = zip (map fst $ fvs it) (map (FP fvp) [1..])
         env' = altenv ++ env
         forward = "FnPtr " ++ name ++ "();"
         switch = length alts > 1
