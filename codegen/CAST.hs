@@ -56,6 +56,7 @@ data Ty = EnumTy
         | InfoPtrTy
         | VoidTy
         | UserTy
+        | CallTy
         | StructTy deriving(Show)
 
 type CInitializerMember = ([CDesignator], CInit)
@@ -112,6 +113,8 @@ instance InitStructMember String where
               -- empty/zero payload
               StructTy -> CInitList (if null val then [] else [([],
                           CInitExpr (cIntE 0) undefNode)] ) undefNode
+              -- call w/ no arguments
+              CallTy -> CInitExpr (cCallExpr val []) undefNode
               _ -> error ("bad Type in cStructMember (String) " ++ show ty)
     in cStructMemberE (splitOn "." name) e
 

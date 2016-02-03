@@ -30,6 +30,7 @@ import ADT
 import CMap
 import Data.Maybe
 import Data.List(nub,(\\),intercalate)
+import Data.List.Split
 
 import Data.Map (Map)
 import qualified Data.Map as Map
@@ -485,10 +486,13 @@ cInfoTab :: InfoTab -> Maybe CExtDecl
 cInfoTab it@(ITFun {}) = Just (
     cInfoTabStruct (name it)
         [cStructMember StringTy "name" (name it)
+#if DEBUG_INFOTAB
+        ,cStructMember CallTy "pi" "PI"
+#endif
         ,cStructMember PtrTy "entryCode" (entryCode it)
         ,cStructMember EnumTy "objType" "FUN"
         ,cStructMember IntTy "layoutInfo.payloadSize" (length $ fvs it)
-        ,cStructMember IntTy "layoutInfo.boxedCount" (length $ fvs it)
+        ,cStructMember IntTy "layoutInfo.boxedCount" (bfvc it)
         ,cStructMember IntTy "layoutInfo.unboxedCount" (ufvc it)
         ,cStructMember IntTy "funFields.arity" (arity it)
         ,cStructMember EnumTy "funFields.trueEntryCode" (trueEntryCode it)
@@ -497,6 +501,9 @@ cInfoTab it@(ITFun {}) = Just (
 cInfoTab it@(ITPap {}) =  Just (
     cInfoTabStruct (name it)
         [cStructMember StringTy "name" (name it)
+#if DEBUG_INFOTAB
+        ,cStructMember CallTy "pi" "PI"
+#endif
         ,cStructMember PtrTy "entryCode" (entryCode it)
         ,cStructMember EnumTy "objType" "PAP"
         ,cStructMember IntTy "layoutInfo.payloadSize" (length (fvs it) + length (args it) + 1)
@@ -508,6 +515,9 @@ cInfoTab it@(ITPap {}) =  Just (
 cInfoTab it@(ITCon {}) =  Just (
     cInfoTabStruct (name it)
         [cStructMember StringTy "name" (name it)
+#if DEBUG_INFOTAB
+        ,cStructMember CallTy "pi" "PI"
+#endif
         ,cStructMember PtrTy "entryCode" (entryCode it)
         ,cStructMember EnumTy "objType" "CON"
         ,cStructMember IntTy "layoutInfo.payloadSize" (arity it)
@@ -522,6 +532,9 @@ cInfoTab it@(ITCon {}) =  Just (
 cInfoTab it@(ITThunk {}) =  Just (
     cInfoTabStruct (name it)
         [cStructMember StringTy "name" (name it)
+#if DEBUG_INFOTAB
+        ,cStructMember CallTy "pi" "PI"
+#endif
         ,cStructMember PtrTy "entryCode" (entryCode it)
         ,cStructMember EnumTy "objType" "THUNK"
         ,cStructMember IntTy "layoutInfo.payloadSize" (1 + (length $ fvs it))
@@ -532,6 +545,9 @@ cInfoTab it@(ITThunk {}) =  Just (
 cInfoTab it@(ITBlackhole {}) =  Just (
     cInfoTabStruct (name it)
         [cStructMember StringTy "name" (name it)
+#if DEBUG_INFOTAB
+        ,cStructMember CallTy "pi" "PI"
+#endif
         ,cStructMember PtrTy "entryCode" (entryCode it)
         ,cStructMember EnumTy "objType" "BLACKHOLE"
         ,cStructMember IntTy "layoutInfo.payloadSize" (0 :: Int)
@@ -544,9 +560,13 @@ cInfoTab it@(ITAlts {}) =  Just (
         [cStructMember StringTy "name" (name it)
         ,cStructMember PtrTy "entryCode" (entryCode it)
         ,cStructMember EnumTy "contType" "CASECONT"
-         ,cStructMember IntTy "layoutInfo.payloadSize" (length $ fvs it)
-        ,cStructMember IntTy "layoutInfo.boxedCount" (bfvc it)
-        ,cStructMember IntTy "layoutInfo.unboxedCount" (ufvc it)
+        ,cStructMember IntTy "cLayoutInfo.payloadSize" ((length $ fvs it) + 1)
+        ,cStructMember IntTy "cLayoutInfo.boxedCount" (bfvc it)
+        ,cStructMember IntTy "cLayoutInfo.unboxedCount" (ufvc it)
+        ,cStructMember IntTy "cLayoutInfo.bm" (npStrToBMInt ( 'N' :
+                        replicate (bfvc it) 'P' ++
+                        replicate (ufvc it) 'N'))
+
         ])
 
 cInfoTab _ = Nothing

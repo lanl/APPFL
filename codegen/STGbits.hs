@@ -1,6 +1,7 @@
 {-# LANGUAGE BangPatterns #-}
 module STGbits (
-  npStrToBMStr
+  npStrToBMStr,
+  npStrToBMInt
 ) where
 
 -- C Bitmap64
@@ -32,7 +33,11 @@ strBaseNToWord64 s b = f (reverse s) 0
       f (x:xs) !n = f xs ((fromIntegral b) * n + indexOf x lbet)
 
 -- "NP string to bitmap C unsigned long string"
-npStrToBMStr s = 
+npStrToBMStr s = _npStrToBMStr s True
+
+npStrToBMInt s = read (_npStrToBMStr s False) :: Int
+
+_npStrToBMStr s f = 
     let offset = length $ takeWhile (=='-') s
         bitstr = dropWhile (=='-') s
         len = length bitstr
@@ -42,7 +47,8 @@ npStrToBMStr s =
         bin = map nptobin bitstr
         w1 = shiftL (strBaseNToWord64 bin 2) offset
         w2 = shiftL (fromIntegral len :: Word64) 58
-    in word64ToCULHex (w1 .|. w2)
+    in if f then (word64ToCULHex (w1 .|. w2)) 
+            else (word64ToHex (w1 .|. w2))
 
 -- unneeded
 
@@ -60,7 +66,10 @@ strBaseNToM s n m = word64ToBaseNStr (strBaseNToWord64 s n) m
 
 word64ToCULHex w64 =
     let hex = word64ToBaseNStr w64 16
-    in "(Bitmap64)0x" ++ take (16 - length hex) (repeat '0') ++ hex ++ "UL"
+    in "(Bitmap64)" ++ word64ToHex w64 ++ "UL"
 
 
+word64ToHex w64 =
+    let hex = word64ToBaseNStr w64 16
+    in "0x" ++ take (16 - length hex) (repeat '0') ++ hex 
 

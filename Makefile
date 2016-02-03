@@ -11,7 +11,7 @@ all: codegen runtime
 config: 
 	@(cd codegen && cabal configure)
 
-setup: 
+setup: prelude/Prelude.stg prelude/Prelude.mhs options.h
 	@((test -d $(build_dir)) || (mkdir $(build_dir)))
 	@((test -d $(build_dir)/bin) || (mkdir $(build_dir)/bin))
 	@((test -d $(build_dir)/etc) || (mkdir $(build_dir)/etc))

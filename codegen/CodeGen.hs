@@ -91,87 +91,6 @@ optStr b s = if b then s else ""
 --  C AST version
 #if USE_CAST
 
--- PointerOrLiteral members
-_polMembers(LitI i) = [
-#if USE_ARGTYPE
-                       cStructMember EnumTy "argType" "INT",
-#endif
-                       cStructMember IntTy "i" i]
-
-_polMembers(LitL l) = [
-#if USE_ARGTYPE
-                       cStructMember EnumTy "argType" "LONG",
-#endif
-                       cStructMember IntTy "l" l]
-
-_polMembers (LitF f) = [
-#if USE_ARGTYPE
-                       cStructMember EnumTy "argType" "FLOAT",
-#endif
-                       cStructMember FloatTy "f" f]
-
-_polMembers (LitD d) = [
-#if USE_ARGTYPE
-                       cStructMember EnumTy "argType" "DOUBLE",
-#endif
-                       cStructMember DoubleTy "d" d]
-
-_polMembers(LitC c) = [
-#if USE_ARGTYPE
-                       cStructMember EnumTy "argType" "INT",
-#endif
-                       cStructMember EnumTy "i" ("con_" ++ c)]
-
-_polMembers(Var v) = [
-#if USE_ARGTYPE
-                       cStructMember EnumTy "argType" "HEAPOBJ",
-#endif
-                       cStructMember EnumTy "op" v]
-
-
-cPoLE :: Atom -> CExpr
-cPoLE a =  CCompoundLit (CDecl [cTypeSpec "PtrOrLiteral"] [] undefNode)
-              (_polMembers a) undefNode
-
-cFnPtrFun :: String -> CExtDecl
-cFnPtrFun name = cFunProto (cTypeSpec "FnPtr") ("fun_" ++ name)
-
-getEnvRef :: String -> Env -> String
-getEnvRef v env = render $ pretty $ lu v env 0 0
-
-lu :: String -> Env -> Int -> Int -> CExpr
-lu v [] _ _ = error $ "lu " ++ v ++ " failed"
-
-
-lu v ((v',k):_) size' n | v == v' =
-    case k of
-      SO -> cCallExpr "HOTOPL" [CUnary CAdrOp (cVarE ("sho_" ++ v)) undefNode]
-
-      HO size -> cCallExpr "HOTOPL"
-                [CCast (CDecl [cTypeSpec "Obj"]
-                [(Just (CDeclr Nothing [cPtrD] Nothing [] undefNode), Nothing, Nothing)] undefNode)
-                (cCallExpr "STGHEAPAT" [cIntE $ toInteger (size+size'), cIntE $ toInteger (n+1)]) undefNode]
-
-      FP{} -> error "fixme"
-
-      FV{} -> error "fixme"
-
---      FV i -> CIndex (CMember (CMember (cVarE "self") (builtinIdent "op") False undefNode)
-              (builtinIdent "payload") True undefNode) (cIntE $ toInteger i) undefNode
-
-lu v ((_, HO size) : xs) size' n =
-    lu v xs (size'+size) (n+1)
-
-lu v (x : xs) size n = lu v xs size n
-
-cgaE :: Env -> Atom -> CExpr
-cgaE env (Var v) = lu v env 0 0
-cgaE _ a = cPoLE a
-
-cga :: Env -> Atom -> String
-cga env (Var v) = cgv env v
-cga _ a =  "(" ++ (render $ pretty $ cPoLE a) ++ ")"
-
 emptyFunDeclr = [CFunDeclr (Right ([],False)) [] undefNode]
 
 _cRegSOExpr :: String -> CBlockItem
@@ -193,9 +112,11 @@ registerSOs objs = let (p,f) = cRegisterSOs (map (name . omd) objs)
 
 cMain :: Bool -> CExtDecl
 cMain v =
-  let top = [cCallVars "parseArgs" ["argc","argv"]
+  let top = [cCall "startCheck" []
+            ,cCallVars "parseArgs" ["argc","argv"]
             ,cCall "initStg" []
             ,cCall "initGc" []
+            ,cCall "registerSOs" []
             ,cCallVars "CALL0_0" ["start"]
              ]
       body = top ++ [cCallVars "showStgHeap" [] | v] ++ [cIntReturn 0]
@@ -208,18 +129,16 @@ cMain v =
   undefNode],False)) [] undefNode] body
 
 cStart :: CExtDecl
-cStart = let body = [cCall "_POPVALS0" []
-                  ,cCall "registerSOs" []
-                  ,cUserPtrDecl "Cont" "showResultCont"
+cStart = let body = [cUserPtrDecl "Cont" "showResultCont"
                   (cInitCall "stgAllocCallOrStackCont"
                   [cAddrvarE "it_stgShowResultCont", cIntE 0])
 #if USE_ARGTYPE
                   ,cAssign (cMemberE "stgCurVal" "argType" False) (cVarE "HEAPOBJ")
 #endif
                   ,cAssign (cMemberE "stgCurVal" "op" False) (cAddrvarE "sho_main")
-                  ,cCall "STGJUMP1"
+                  ,cCall "STGJUMP0"
                      [CMember (cCallExpr "getInfoPtr" [cMemberE "stgCurVal" "op" False])
-                     (builtinIdent "entryCode") True undefNode, cVarE "stgCurVal"]
+                     (builtinIdent "entryCode") True undefNode]
                   ]
        in cFun UserTy "FnPtr" "start" emptyFunDeclr body
 
@@ -230,40 +149,9 @@ cgMain = error "cgMain"
 -- text version
 #else
 
-listLookup k [] = Nothing
-listLookup k ((k',v):xs) | k == k' = Just v
-                         | otherwise = listLookup k xs
-
-getEnvRef :: String -> Env -> String
-getEnvRef v kvs = 
-    case listLookup v kvs of
-      Nothing -> error $ "getEnvRef " ++ v ++ " failed"
-      Just k ->
-          case k of
-            SO      -> "HOTOPL(&sho_" ++ v ++ ")"
-            HO name -> "(*" ++ name ++ ")" -- pointer to STACKCONT payload
-            FP fp i -> fp ++ "[" ++ show i ++ "]"
-            FV fpp i -> fpp ++ "->op->payload[" ++ show i ++ "]"
-
-cga :: Env -> Atom -> String
-cga env (Var v) = cgv env v
-#if USE_ARGTYPE
-cga env (LitI i) = "((PtrOrLiteral){.argType = INT,    .i = " ++ show i ++ " })"
-cga env (LitL l) = "((PtrOrLiteral){.argType = LONG,   .l = " ++ show l ++ " })"
-cga env (LitF f) = "((PtrOrLiteral){.argType = FLOAT,  .f = " ++ show f ++ " })"
-cga env (LitD d) = "((PtrOrLiteral){.argType = DOUBLE, .d = " ++ show d ++ " })"
-cga env (LitC c) = "((PtrOrLiteral){.argType = INT,    .i = con_" ++ c ++ " })"
-#else
-cga env (LitI i) = "((PtrOrLiteral){.i = " ++ show i ++ " })"
-cga env (LitL l) = "((PtrOrLiteral){.l = " ++ show l ++ " })"
-cga env (LitF f) = "((PtrOrLiteral){.f = " ++ show f ++ " })"
-cga env (LitD d) = "((PtrOrLiteral){.d = " ++ show d ++ " })"
-cga env (LitC c) = "((PtrOrLiteral){.i = con_" ++ c ++ " })"
-#endif
-
 cgStart :: String
 cgStart = "\n\nFnPtr start() {\n" ++
-            "  Cont *showResultCont = " ++ 
+            "  Cont *showResultCont = " ++
                "stgAllocCallOrStackCont(&it_stgShowResultCont, 0);\n" ++
 #if USE_ARGTYPE
             "  stgCurVal.argType = HEAPOBJ;\n" ++
@@ -298,6 +186,36 @@ cMain = error "cMain"
 -- end of USE_CAST
 #endif
 
+listLookup k [] = Nothing
+listLookup k ((k',v):xs) | k == k' = Just v
+                         | otherwise = listLookup k xs
+
+getEnvRef :: String -> Env -> String
+getEnvRef v kvs = 
+    case listLookup v kvs of
+      Nothing -> error $ "getEnvRef " ++ v ++ " failed"
+      Just k ->
+          case k of
+            SO      -> "HOTOPL(&sho_" ++ v ++ ")"
+            HO name -> "(*" ++ name ++ ")" -- pointer to STACKCONT payload
+            FP fp i -> fp ++ "[" ++ show i ++ "]"
+            FV fpp i -> fpp ++ "->op->payload[" ++ show i ++ "]"
+
+cga :: Env -> Atom -> String
+cga env (Var v) = cgv env v
+#if USE_ARGTYPE
+cga env (LitI i) = "((PtrOrLiteral){.argType = INT,    .i = " ++ show i ++ " })"
+cga env (LitL l) = "((PtrOrLiteral){.argType = LONG,   .l = " ++ show l ++ " })"
+cga env (LitF f) = "((PtrOrLiteral){.argType = FLOAT,  .f = " ++ show f ++ " })"
+cga env (LitD d) = "((PtrOrLiteral){.argType = DOUBLE, .d = " ++ show d ++ " })"
+cga env (LitC c) = "((PtrOrLiteral){.argType = INT,    .i = con_" ++ c ++ " })"
+#else
+cga env (LitI i) = "((PtrOrLiteral){.i = " ++ show i ++ " })"
+cga env (LitL l) = "((PtrOrLiteral){.l = " ++ show l ++ " })"
+cga env (LitF f) = "((PtrOrLiteral){.f = " ++ show f ++ " })"
+cga env (LitD d) = "((PtrOrLiteral){.d = " ++ show d ++ " })"
+cga env (LitC c) = "((PtrOrLiteral){.i = con_" ++ c ++ " })"
+#endif
 
 -- boxed expression predicate
 isBoxede e = isBoxed $ typ $ emd e
@@ -699,46 +617,6 @@ cgalt env switch fvp (ADef it v e) =
 -- ****************************************************************
 -- buildHeapObj is only invoked by ELet so TLDs not built
 
-#if USE_CAST
-
-buildHeapObj :: Env -> Obj InfoTab -> (Int, CBlockItem, [CBlockItem])
-buildHeapObj env o =
-    let (size, rvals) = bho env o
-        name = oname o
-        decl = cNewHeapObj name name 
-    in (size, decl, rvals)
---render $ pretty decl, 
---        intercalate "\n" (map (render . pretty) rvals))
-
-bho :: Env -> Obj InfoTab -> (Int, [CBlockItem])
-bho env (FUN it vs e name) =
-    (length $ fvs it, cLoadPayloadFVs env (map fst $ fvs it) 0 name)
-
-bho env (PAP it f as name) = error "unsupported explicit PAP"
-
-bho env (CON it c as name) =
-    let ps = [cAssign (cPayloadE name i) (cgaE env a) 
-                | (i,a) <- indexFrom 0 (projectAtoms as) ]
-    in (length ps, ps)
-
-bho env (THUNK it e name) =
-    let fv = fvs it
-    in (1 + (length fv), cLoadPayloadFVs env (map fst fv) 1 name)
-
-bho env (BLACKHOLE it name) = (1,[])
-
-cLoadPayloadFVs env fvs ind name =
-    [cAssign (cPayloadE name i) (lu v env 0 0)
-      | (i,v) <- indexFrom ind $ fvs ]
-
--- load atoms into payload starting at index ind
-cLoadPayloadAtoms env as ind name =
-    [cAssign (cPayloadE name i) (cgaE env a) 
-      | (i,a) <- indexFrom ind as]
-
-
-#else
-
 buildHeapObj :: Env -> Obj InfoTab -> (String, String)
 buildHeapObj env o =
     let rval = bho env o
@@ -775,8 +653,6 @@ bho env (THUNK it e name) =
        loadPayloadFVs env (map fst fv) 1 (name ++ "->op")
 
 bho env (BLACKHOLE it name) = ""
-
-#endif
 
 loadPayloadFVs env fvs ind name =
     concat [name ++ "->payload[" ++ show i ++ "] = " ++

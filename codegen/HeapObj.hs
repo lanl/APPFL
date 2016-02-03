@@ -42,7 +42,7 @@ cSHO :: Obj InfoTab -> (CExtDecl, CExtDecl)
 cSHO o =
    let it = omd o
        n = name it
-       infoPtr = cStructMember InfoPtrTy "infoPtr" n
+       infoPtr = cStructMember InfoPtrTy "_infoPtr" n
        objType = cStructMember EnumTy "objType" (showObjType it)
        ident = cStructMember StringTy "ident" n
        payload = cSHOspec it
