@@ -1,11 +1,11 @@
 {-# LANGUAGE FlexibleInstances    #-}
 {-# LANGUAGE TypeSynonymInstances #-}
 {-# LANGUAGE CPP #-}
+
 #if __GLASGOW_HASKELL__ < 710
 {-# LANGUAGE OverlappingInstances #-}
 #endif
 
-{-# LANGUAGE CPP #-}
 #include "options.h"
 
 ----------------------------  Alternative interface to ConMap idea ----------------------

@@ -10,7 +10,7 @@ import qualified Data.Set as Set
 import qualified Data.Map as Map
 import Control.Monad.State
 
-type Subst = Map.Map TyVar Monotype 
+type Subst = Map.Map TyVar Monotype
 idSubst = Map.empty
 
 compose :: Subst -> Subst -> Subst
@@ -104,7 +104,7 @@ instance Show LExpr where
     show LLitB{typ,mtvs,b} = show b ++ "::" ++ showj mtvs typ
     show LVar{typ,mtvs,ftv,v} = v ++ "::" ++ showj mtvs typ
     show LApp{typ,mtvs,ftv,e1,e2} = show e1 ++ " (" ++ show e2 ++ ")" ++ "::" ++ showj mtvs typ
-    show LLam{typ,mtvs,ftv,v,e1} = "\\" ++ v ++ " ->\n" ++ 
+    show LLam{typ,mtvs,ftv,v,e1} = "\\" ++ v ++ " ->\n" ++
                                indent 2 (show e1) ++ "::" ++ showj mtvs typ
     show LLet{typ,mtvs,v,e1,e2} = "let " ++ v ++ " = \n" ++
                                   indent 2 (show e1) ++ "\n" ++
@@ -186,7 +186,7 @@ doit e0 =
 -- need a fresh variable supply
 
 freshTyVar :: State Int TyVar
-freshTyVar = 
+freshTyVar =
     do i <- get
        put $ i+1
        return $ 't':show i
@@ -197,7 +197,7 @@ freshMonoVar =
        return $ MVar v
 
 freshMonoVars 0 = return []
-freshMonoVars n = 
+freshMonoVars n =
     do
       v <- freshMonoVar
       vs <- freshMonoVars (n-1)
@@ -209,7 +209,7 @@ instantiate (PPoly as m) =
        let s = Map.fromList $ zip as ms
        return $ apply s m
 
-generalize ms t = 
+generalize ms t =
     let as = Set.toList $ Set.difference (freevars t) (freevars ms)
     in PPoly as t
 
@@ -227,7 +227,7 @@ data Constraint = EqC  Monotype Monotype
 instance Show Constraint where
     show (EqC m1 m2) = "EqC " ++ show m1 ++ " " ++ show m2
     show (ExpC m p) = "ExpC " ++ show m ++ " " ++ show p
-    show (ImpC m1 ms m2) = "ImpC " ++ show m1 ++ " " ++ 
+    show (ImpC m1 ms m2) = "ImpC " ++ show m1 ++ " " ++
                            show (Set.toList ms) ++ " " ++ show m2
 
 type Constraints = Set.Set Constraint
@@ -281,22 +281,22 @@ dv e@LLitI{} mtvs = return e{mtvs = mtvs}
 dv e@LLitB{} mtvs = return e{mtvs = mtvs}
 
 dv e@LVar{} mtvs =
-    do b <- freshMonoVar 
+    do b <- freshMonoVar
        return e{ftv = b, mtvs = mtvs}
 
 dv e@LApp{e1,e2} mtvs =
     do b <- freshMonoVar
        e1' <- dv e1 mtvs
        e2' <- dv e2 mtvs
-       return e{ftv = b, 
+       return e{ftv = b,
                 mtvs = mtvs,
-                e1 = e1', 
+                e1 = e1',
                 e2 = e2'}
 
 dv e@LLam{e1} mtvs =
     do b <- freshMonoVar
        e1' <- dv e1 (Set.insert b mtvs) -- new mono type var
-       return e{ftv = b, 
+       return e{ftv = b,
                 mtvs = mtvs,  -- per the paper, doesn't matter mtvs or mtvs + {b}
                 e1 = e1'}
 
@@ -304,7 +304,7 @@ dv e@LLet{e1,e2} mtvs =
     do e1' <- dv e1 mtvs
        e2' <- dv e2 mtvs
        return e{mtvs = mtvs,
-                e1 = e1', 
+                e1 = e1',
                 e2 = e2'}
 
 dv e@LLetrec{defs, e1} mtvs =
@@ -315,7 +315,7 @@ dv e@LLetrec{defs, e1} mtvs =
                 e1 = e1'}
 
 dvdefs [] _ = return []
-dvdefs ((v,e):defs) mtvs = 
+dvdefs ((v,e):defs) mtvs =
     do e' <- dv e mtvs
        es' <- dvdefs defs mtvs
        return $ (v, e') : es'
@@ -348,7 +348,7 @@ bu e@LApp{ftv, mtvs, e1, e2} =
             Set.singleton (EqC t1 (MFun t2 ftv)),
         e{typ = Just ftv, e1 = e1', e2 = e2'})
 
-bu e@LLam{ftv, mtvs, v, e1} = 
+bu e@LLam{ftv, mtvs, v, e1} =
     let (as, cs, e1') = bu e1
         Just t = typ e1'
         cs1 = Set.fromList [EqC t' ftv | (v', t') <- Set.toList as, v == v']
@@ -356,7 +356,7 @@ bu e@LLam{ftv, mtvs, v, e1} =
         Set.union cs cs1,
         e{typ = Just $ MFun ftv t, e1 = e1'})
 
-bu e@LLet{mtvs,v,e1,e2} = 
+bu e@LLet{mtvs,v,e1,e2} =
     let (as1, cs1, e1') = bu e1
         (as2, cs2, e2') = bu e2
         Just t1 = typ e1'
@@ -379,14 +379,14 @@ buRec xs es mtvs =
     let (ass, css, es') = unzip3 $ map bu es
         ias = zip [0..] ass
         ixts = zip3 [0..] xs [t | Just t <- map typ es']
-        ncs = Set.fromList 
+        ncs = Set.fromList
               [ if (i==j) then EqC t' t else ImpC t' mtvs t
                 | (i,x,t) <- ixts, (j,as) <- ias, (x',t') <- Set.toList as, x == x' ]
         cs = foldr Set.union ncs css
         as = foldr Set.union Set.empty ass
     in (as, cs, es')
 
-buIn xts mtvs e1 = 
+buIn xts mtvs e1 =
     let (as1, cs1, e1') = bu e1
         ncs = [ ImpC t' mtvs t | (x,t) <- xts, (x',t') <- Set.toList as1, x == x' ]
         cs' = cs1 `Set.union` Set.fromList ncs
@@ -401,18 +401,18 @@ solve1 :: [Constraint] -> [Constraint] -> Bool -> State Int Subst
 solve1 [] [] _ = return idSubst
 solve1 [] ys False = error $ "can't make progress with " ++ show ys
 solve1 [] ys True  = solve1 ys [] False
-solve1 (EqC t1 t2 : cs) ys _ = 
+solve1 (EqC t1 t2 : cs) ys _ =
     let s = unify t1 t2
     in do
       res <- solve1 (apply s cs) (apply s ys) True
       return $ compose res s
 
-solve1 (ExpC t p : cs) ys _ = 
+solve1 (ExpC t p : cs) ys _ =
     do t' <- instantiate p
        solve1 (EqC t t' : cs) ys True
 
-solve1 (c@(ImpC t1 ms t2) : cs) ys progress = 
-    if Set.null $ (freevars t2 `Set.difference` freevars ms) 
+solve1 (c@(ImpC t1 ms t2) : cs) ys progress =
+    if Set.null $ (freevars t2 `Set.difference` freevars ms)
                   `Set.intersection` activeVars cs
     then solve1 (ExpC t1 (generalize ms t2) : cs) ys True
     else solve1 cs (c:ys) progress
@@ -450,5 +450,3 @@ backSub s e@LLetrec{typ,mtvs,defs,e1} =
       mtvs = apply s mtvs,
       defs = [(x,backSub s e) | (x,e) <- defs],
       e1 = backSub s e1}
-
-

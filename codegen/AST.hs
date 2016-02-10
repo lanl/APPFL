@@ -31,8 +31,8 @@ import Data.Int as Int (Int64)
 -- not really the place for this, maybe need to factor
 -- the common types into a module
 --data BuiltinType = UBInt
---                 | UBDouble             
---                   deriving (Eq,Show,Ord)           
+--                 | UBDouble
+--                   deriving (Eq,Show,Ord)
 
 type Var = String
 type Con = String
@@ -87,7 +87,7 @@ projectAtoms (a:as) = error $ "InfoTab.projectAtoms: non-EAtom"
 -- code is generated for them.
 
 data Primop = Piadd -- Int -> Int -> Int
-            | Pisub 
+            | Pisub
             | Pimul
             | Pidiv
             | Pimod
@@ -112,8 +112,8 @@ primArity op = case op of
   _ -> 2
 
 -- these are the C names, not STG names
-primopTab = 
-    [("iplus_h",  Piadd), 
+primopTab =
+    [("iplus_h",  Piadd),
      ("isub_h",   Pisub),
      ("imul_h",   Pimul),
      ("idiv_h",   Pidiv),
@@ -171,7 +171,7 @@ preludeObjNames =
    "take"]
 
 
--- functions for removing some or all standard Prelude objects from the 
+-- functions for removing some or all standard Prelude objects from the
 -- list of objects in a parsed STG program.  Useful for debugging.
 rmPrelude :: [Obj a] -> [Obj a]
 rmPrelude = rmPreludeLess []
@@ -194,7 +194,7 @@ instance Unparse Atom where
   unparse (LitC c) = text c
 
 instance Unparse Primop where
-  unparse = text.stgPrimName 
+  unparse = text.stgPrimName
 
 instance Unparse a => Unparse (Alt a) where
   unparse ACon{amd, ac, avs, ae} =
@@ -263,7 +263,7 @@ instance Unparse a => Unparse (Obj a) where
 
 
 instance Unparse a => Unparse [Obj a] where
-  unparse objs = vcat $ postpunctuate semi $ map unparse objs  
+  unparse objs = vcat $ postpunctuate semi $ map unparse objs
          
 
 
@@ -290,14 +290,14 @@ instance (PPrint a) => PPrint (Obj a) where
                (text "FUN:" $+$
                 nest 2
                 (text "name:" <+> text oname $+$
-                 text "vars:" <+> listText vs $+$                        
+                 text "vars:" <+> listText vs $+$
                  text "metadata:" $+$
                  nest 2 (pprint omd) $+$
                  text "expr:" $+$
                  nest 2 (pprint e)
                 )
                )
-    PAP{..} -> braces 
+    PAP{..} -> braces
                (text "PAP:" $+$
                 nest 2
                 (text "name:" <+> text oname $+$
@@ -350,7 +350,7 @@ instance (PPrint a) => PPrint (Expr a) where
                    nest 2
                    (text "function:" <+> text ev $+$
                     -- 7.9 changed, grab atoms from eas (same in primop below)
-                    text "args:" <+> (brackets $ vcat $ punctuate comma $ map pprint eas) $+$ 
+                    text "args:" <+> (brackets $ vcat $ punctuate comma $ map pprint eas) $+$
                     text "metadata:" $+$
                     nest 2 (pprint emd)
                    )
@@ -392,13 +392,13 @@ instance (PPrint a) => PPrint (Alts a) where
                     (text "Alts:" $+$
                      nest 2
                      (text "name:" <+> text aname $+$
-                      text "metadata:" $+$ 
+                      text "metadata:" $+$
                       nest 2 (pprint altsmd) $+$
                       text "alt defs:" $+$
                       nest 2 (vcat (map pprint alts))
                      )
                     )
-instance (PPrint a) => PPrint (Alt a) where  
+instance (PPrint a) => PPrint (Alt a) where
   pprint a = case a of
     ACon{..} -> braces
                 (text "ACon:" $+$

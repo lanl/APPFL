@@ -10,10 +10,10 @@ module ADT (
   Polytype(..),
   Monotype(..),
   Con,
-  biIntMCon,    
-  biLongMCon,   
-  biFloatMCon,  
-  biDoubleMCon, 
+  biIntMCon,
+  biLongMCon,
+  biFloatMCon,
+  biDoubleMCon,
   dataConName,
   tyConName,
   getDataCons,
@@ -49,7 +49,7 @@ import PPrint
   data unboxed \Chi# \alpha_1 .. \alpha_t =
   c_1# \tau_11 .. \tau_1a_1 | ... | c_n# \tau_n1 .. \tau_na_1
   
-  Polytype      \sigma ::=  \forall \alpha . \sigma 
+  Polytype      \sigma ::=  \forall \alpha . \sigma
                         |   \tau
 
   Monotype      \tau   ::=  \pi | \nu
@@ -72,14 +72,14 @@ data Def a = ObjDef (Obj a)
              deriving(Eq, Show)
 
 -- Boxed: data \Chi \alpha_1 .. \alpha_t =
--- c_1 \tau_11 .. \tau_1a_1 | ... | c_n \tau_n1 .. \tau_na_1  
+-- c_1 \tau_11 .. \tau_1a_1 | ... | c_n \tau_n1 .. \tau_na_1
 -- Unboxed: data unboxed \Chi# \alpha_1 .. \alpha_t =
--- c_1# \tau_11 .. \tau_1a_1 | ... | c_n# \tau_n1 .. \tau_na_1   
+-- c_1# \tau_11 .. \tau_1a_1 | ... | c_n# \tau_n1 .. \tau_na_1
 data TyCon = TyCon Bool Con [TyVar] [DataCon]
              deriving(Eq,Show)
              
--- Boxed True: c_x \tau_x1 .. \tau_xa_1 
--- Boxed False: c_x# \tau_x1 .. \tau_xa_1  
+-- Boxed True: c_x \tau_x1 .. \tau_xa_1
+-- Boxed False: c_x# \tau_x1 .. \tau_xa_1
 data DataCon = DataCon Con [Monotype]
                deriving(Eq,Show)
 
@@ -116,10 +116,10 @@ isBoxed m = case m of
 boxMTypes :: [TyCon] -> [TyCon]
 boxMTypes tycons =
   let -- create assoc list for TyCon names -> TyCons
-      tycons' = makeIntTyCon "0" : 
-                makeLongTyCon "0" : 
-                makeFloatTyCon "0" : 
-                makeDoubleTyCon "0" : 
+      tycons' = makeIntTyCon "0" :
+                makeLongTyCon "0" :
+                makeFloatTyCon "0" :
+                makeDoubleTyCon "0" :
                 tycons
       tmap = zip (map tyConName tycons') tycons'
       
@@ -135,7 +135,7 @@ boxMTypes tycons =
 --                     MPrim{} -> m
                      _ -> error $ "CMap.cMapTyCons matching bad Monotype: " ++ show m
                      
-  in map mapFunc tycons -- don't need built-ins in TyCon list (?) 
+  in map mapFunc tycons -- don't need built-ins in TyCon list (?)
 
 -- helpers to make TyCons for built-in types
 -- this is a bit of a hack to fudge the fact that there are no explicit
@@ -181,8 +181,8 @@ instance Show Polytype where
 instance Show Monotype where
     show (MVar v) = v
     show (MPVar v) = "p_" ++ v
-    show (MFun m1@(MFun _ _) m2) = "(" ++ show m1 ++ ") -> " ++ show m2      
-    show (MFun m1 m2) = show m1 ++ " -> " ++ show m2 
+    show (MFun m1@(MFun _ _) m2) = "(" ++ show m1 ++ ") -> " ++ show m2
+    show (MFun m1 m2) = show m1 ++ " -> " ++ show m2
     show (MCon bxt con ms) = con ++
                              (if bxt
                               then "[B] "

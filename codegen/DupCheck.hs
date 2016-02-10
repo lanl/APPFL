@@ -2,7 +2,7 @@
 
 module DupCheck (
  dupCheck
-) where 
+) where
 
 -- [X] Need to check for duplicates in
 --  [X] Objects/expressions
@@ -24,18 +24,18 @@ import Data.List
 dupCheck :: ([TyCon], [Obj ()]) -> ([TyCon], [Obj ()])
 dupCheck (ts,os) = let odups = dupCheckObjs os ("toplevel":[])
                        tdups = dupCheckTyCons ts ++ dupCheckDataCons ts
-                   in case (odups ++ tdups) of 
+                   in case (odups ++ tdups) of
                       [] -> (ts,os)
-                      ys -> error ys 
+                      ys -> error ys
 
 --               --------------Begin OBJ/EXPR/ALTS/ALT Recursive Traversal------------
 -- Checks the list of Objects
 dupCheckObjs :: [Obj ()] -> [String] -> String
-dupCheckObjs os ys = dupCheckTopLevelObjects os ys ++ concatMapGen dupCheckObj os ys 
+dupCheckObjs os ys = dupCheckTopLevelObjects os ys ++ concatMapGen dupCheckObj os ys
 
 -- checks OBJ
 dupCheckObj :: Obj () -> [String] -> String
-dupCheckObj x ys = case x of 
+dupCheckObj x ys = case x of
                      PAP{} -> []
                      BLACKHOLE{} -> []
                      CON{} -> []
@@ -44,7 +44,7 @@ dupCheckObj x ys = case x of
 
 -- checks EXPR
 dupCheckExpr :: Expr () -> [String] -> String
-dupCheckExpr expr ys = case expr of 
+dupCheckExpr expr ys = case expr of
                          EAtom{} -> []
                          EFCall{} -> []
                          EPrimop{} -> []
@@ -53,12 +53,12 @@ dupCheckExpr expr ys = case expr of
 
 -- checks ALTS
 dupCheckAlts :: Alts () -> [String] -> String
-dupCheckAlts a ys = case a of 
+dupCheckAlts a ys = case a of
                       Alts{alts,aname} -> dupCheckCons alts (ys ++ (aname:[])) ++ concatMapGen dupCheckAlt alts (ys ++ (aname:[]))
 
 -- Checks ALT
 dupCheckAlt :: Alt () -> [String] -> String
-dupCheckAlt a ys = case a of 
+dupCheckAlt a ys = case a of
                      ACon{avs,ae,ac} -> dupCheckVars avs (ys ++ (ac:[])) ++ dupCheckExpr ae (ys ++ (ac:[]))
                      ADef{ae} -> dupCheckExpr ae (ys ++ ("def":[]))
 --               --------------End OBJ/EXPR/ALTS/ALT Recursive Traversal--------------
@@ -75,20 +75,20 @@ dupCheckTopLevelObjects :: [Obj ()] -> [String] -> String
 dupCheckTopLevelObjects xs ys = printFunNameDups (group (sort (map oname xs))) [] ys
 
 -- creates and concatenates error message for top level object names
-printFunNameDups :: [[String]] -> String -> [String] -> String 
-printFunNameDups [] ys zs = ys 
+printFunNameDups :: [[String]] -> String -> [String] -> String
+printFunNameDups [] ys zs = ys
 printFunNameDups (x:xs) ys zs | length x <= 1 = printFunNameDups xs ys zs
                               | otherwise = printFunNameDups xs (ys ++ " function name " ++ (head x) ++ " duplicated " ++ (show (length x)) ++ " times " ++ "in location: " ++ (locationToString zs) ++ " -- ") zs
 --               --------------End Object Check-------------
 
 --               --------------Begin Variable Check---------
--- checks for duplicates in list of variables     
+-- checks for duplicates in list of variables
 dupCheckVars :: [Var] -> [String] -> String
 dupCheckVars xs ys = printDupVars (group (sort xs)) [] ys
 
 -- prints duplicates in list of variables
 printDupVars :: [[Var]] -> String -> [String] -> String
-printDupVars [] ys zs = ys 
+printDupVars [] ys zs = ys
 printDupVars (x:xs) ys zs | length x <= 1 = printDupVars xs ys zs
                           | otherwise = printDupVars xs (ys ++ " variable " ++  (head x) ++ " duplicated " ++ (show (length x)) ++ " times " ++ "in location: " ++ (locationToString zs) ++ " -- ") zs
 --               --------------End Variable Check-----------
@@ -101,8 +101,8 @@ dupCheckCons xs ys =  printDupCons (group (sort (dupGetCons xs))) [] ys
 -- gets list of Cons from list of ALT
 dupGetCons :: [Alt ()] -> [Con]
 dupGetCons [] = []
-dupGetCons (x:xs) = case x of 
-                      ACon{ac} -> ac:(dupGetCons xs)  
+dupGetCons (x:xs) = case x of
+                      ACon{ac} -> ac:(dupGetCons xs)
                       ADef{} -> []
 
 -- prints duplicates in list of constructors
@@ -115,19 +115,19 @@ printDupCons (x:xs) ys zs | length x <= 1 = printDupCons xs ys zs
 --               --------------Begin TyCon Check------------
 -- checks for duplicates of Cons in list of TyCons
 dupCheckTyCons :: [TyCon] -> String
-dupCheckTyCons ts = printDupTyCons (group (sort (dupGetTyCons ts))) [] 
+dupCheckTyCons ts = printDupTyCons (group (sort (dupGetTyCons ts))) []
 
--- get list of Cons from list of TyCons 
+-- get list of Cons from list of TyCons
 dupGetTyCons :: [TyCon] -> [Con]
 dupGetTyCons [] = []
-dupGetTyCons (x:xs) = case x of 
+dupGetTyCons (x:xs) = case x of
                         TyCon _ con _ _  -> con:(dupGetTyCons xs)
 
 -- prints duplicates in list of Cons from TyCons
 printDupTyCons :: [[Con]] -> String ->  String
 printDupTyCons [] ys = ys
-printDupTyCons (x:xs) ys | length x <= 1 = printDupTyCons xs ys 
-                         | otherwise = printDupTyCons xs (ys ++ " data type " ++ (head x) ++ " duplicated " ++ (show (length x)) ++ " times " ++ " -- ") 
+printDupTyCons (x:xs) ys | length x <= 1 = printDupTyCons xs ys
+                         | otherwise = printDupTyCons xs (ys ++ " data type " ++ (head x) ++ " duplicated " ++ (show (length x)) ++ " times " ++ " -- ")
 --               --------------End TyCon Check--------------
 
 --               --------------Begin DataCon Check----------
@@ -139,18 +139,18 @@ dupCheckDataCons ts = printDupDataCons (group (sort a)) [] b
 -- get List of DataCons from list of TyCons
 dupGetDataCons :: [TyCon] -> [(Con,(Con,Con))]
 dupGetDataCons [] = []
-dupGetDataCons (x:xs) = case x of 
+dupGetDataCons (x:xs) = case x of
                           TyCon _ con _ cons -> (dupGetDataConsCon cons con) ++ (dupGetDataCons xs)
 
 -- getList of Cons from list of DataCons
 dupGetDataConsCon :: [DataCon] -> Con -> [(Con,(Con,Con))]
 dupGetDataConsCon [] _ = []
-dupGetDataConsCon (x:xs) y = case x of 
+dupGetDataConsCon (x:xs) y = case x of
                                DataCon con _ -> (con,(y,con)):(dupGetDataConsCon xs y)
 
 -- prints duplicates in list of DataCons from TyCons
 printDupDataCons :: [[Con]] -> String -> [(Con,Con)] -> String
-printDupDataCons [] ys zs = ys 
+printDupDataCons [] ys zs = ys
 printDupDataCons (x:xs) ys zs | length x <= 1 = printDupDataCons xs ys zs
                               | otherwise = printDupDataCons xs (ys ++ " data constructor " ++ (head x) ++ " duplicated " ++ (show (length x)) ++ " times in " ++ (getConDupMessage (head x) zs)  ++ " -- ") zs
 

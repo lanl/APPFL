@@ -123,14 +123,14 @@ primopTable =
     ("imul#",    Pimul),
     ("idiv#",    Pidiv),
     ("imod#",    Pimod),
-    ("imax#",    Pimax), 
+    ("imax#",    Pimax),
     ("ieq#",     Pieq),
     ("ine#",     Pine),
     ("ilt#",     Pilt),
     ("ile#",     Pile),
     ("igt#",     Pigt),
     ("ige#",     Pige),
-    ("ineg#",    Pineg),           
+    ("ineg#",    Pineg),
     ("imin#",    Pimin),
     ("imax#",    Pimax)
   ]
@@ -195,7 +195,7 @@ tokenize ls = aux (None (0,0)) (0,0) (stripComments ls) []
     -- special case for '.':
          -- must only appear in a NumTok once, not at the start or end
          -- cannot start a token (yet)
-         -- currently 
+         -- currently
       | x == '.' =
         case st of
         NumTok {tS} | elem '.' tS
@@ -218,7 +218,7 @@ tokenize ls = aux (None (0,0)) (0,0) (stripComments ls) []
          None {} -> aux (NumTok [x] (l,c)) (l,c+1) xs toks
 
          -- accept digits mid-token, whether numeric or stringy
-         _       -> aux st{tS = x:(tS st)} (l,c+1) xs toks 
+         _       -> aux st{tS = x:(tS st)} (l,c+1) xs toks
 
     -- only valid as a non-beginning part of an identifier or constructor
     -- if found outside of such, should it be read as a comment in the comment stripper?

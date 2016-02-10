@@ -184,7 +184,7 @@ inSeq f sd = foldr aux sd
 
 -- version of inSeq that appends the results of Parsers in the list
 inSeq' :: [Parser i v] -> Parser i [v]
-inSeq' = inSeq cons (accept [])              
+inSeq' = inSeq cons (accept [])
 
 
 -- versions of ordP that ignore part of the input
@@ -247,7 +247,7 @@ p >>> f = \i -> case p i of
 cutP :: Show i => String -> Parser i v -> Parser i v
 cutP m p inp = case p inp of
   [] -> error m
-  x  -> x                 
+  x  -> x
 
 
 -- try to parse with given parser, but don't consume input
@@ -263,4 +263,3 @@ isNextP :: Parser i v -> Parser i Bool
 isNextP p inp =
   let b = not $ null $ p inp
   in accept b inp
-

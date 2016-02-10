@@ -14,7 +14,7 @@ import Data.Char (isDigit)
 
 withsuff :: String -> [String] -> (String, String)
 withsuff _ [] = error "this should never happen"
-withsuff s (x:xs) = 
+withsuff s (x:xs) =
     let (h,t) = splitAt (length s) x in
     if h == s && t /= [] && head t == '_' && all isDigit (tail t) then
         (h, tail t)
@@ -34,13 +34,13 @@ suffixname v = State $ \used -> let nv = nextv v used in (nv, nv:used)
 suffixnames :: [String] -> State [String] [String]
 suffixnames = mapM suffixname
 
--- uniquify obj names, systematically renaming 
+-- uniquify obj names, systematically renaming
 
 -- no need to flail in the monad at Atom level
 nameVar v tt = condrepl v tt
 
 nameAtom :: Atom -> [(Var, Var)] -> Atom
-nameAtom (Var v) tt = Var $ nameVar v tt 
+nameAtom (Var v) tt = Var $ nameVar v tt
 nameAtom x _ = x
 
 nameAtoms :: [Atom] -> [(Var, Var)] -> [Atom]
@@ -91,7 +91,7 @@ nameObj (CON md c as name) tt =
     do as' <- mapM ((flip nameExpr) tt) as
        return (CON md c as' name)
 
-nameObj (BLACKHOLE md name) tt = 
+nameObj (BLACKHOLE md name) tt =
     return (BLACKHOLE md name)
 
 nameExpr :: Expr a -> [(Var, String)] -> State [String] (Expr a)
@@ -115,7 +115,7 @@ nameExpr e@EAtom{ea} tt =
 nameExpr e@EFCall{ev, eas} tt =
    do
      let ev' = nameVar ev tt
-     eas' <- mapM (flip nameExpr tt) eas 
+     eas' <- mapM (flip nameExpr tt) eas
      return e{ev = ev', eas = eas'}
 
 nameExpr e@EPrimop{eas} tt =
@@ -125,17 +125,17 @@ nameExpr e@EPrimop{eas} tt =
 
 nameAlts :: Alts a -> [(Var, String)] -> State [String] (Alts a)
 nameAlts (Alts md alts name) tt =
-    do 
+    do
       name' <- suffixname name
       alts' <- mapM ((flip nameAlt) tt) alts
       return (Alts md alts' name')
 
-nameAlt (ACon md c vs e) tt = 
+nameAlt (ACon md c vs e) tt =
     do
       e' <- nameExpr e (dropall vs tt)
       return (ACon md c vs e')
 
-nameAlt (ADef md v e) tt = 
+nameAlt (ADef md v e) tt =
     do
       e' <- nameExpr e (dropall [v] tt)
       return (ADef md v e')
@@ -152,4 +152,3 @@ condrepl :: Eq b => b -> [(b, b)] -> b
 condrepl v tt = case lookup v tt of
                   Just v' -> v'
                   Nothing -> v
-

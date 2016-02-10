@@ -8,7 +8,7 @@ import qualified Data.Set as Set
 import qualified Data.Map as Map
 import Control.Monad.State
 
-type Subst = Map.Map TyVar Monotype 
+type Subst = Map.Map TyVar Monotype
 idSubst = Map.empty
 
 compose :: Subst -> Subst -> Subst
@@ -101,7 +101,7 @@ data LExpr = LLitI   Monotype Int
 -- need a fresh variable supply
 
 freshTyVar :: State Int Monotype
-freshTyVar = 
+freshTyVar =
     do i <- get
        put $ i+1
        return $ MVar $ 't':show i
@@ -123,12 +123,12 @@ monoInt  = MCon True "I" []
 -- newtype State s a = State (s -> (a, s))
 algW :: TypeEnv -> LExpr -> State Int (LExpr, Subst, Monotype)
 
-algW env (LLitI _ i) = 
+algW env (LLitI _ i) =
     return (LLitI monoInt i,
                   idSubst,
                   monoInt)
 
-algW env (LLitB _ b) = 
+algW env (LLitB _ b) =
     return (LLitB monoBool b,
             idSubst,
             monoBool)
@@ -151,12 +151,12 @@ algW env (LApp _ e1 e2) =
               s4,
               m3)
 
-algW env (LLam _ x e) = 
+algW env (LLam _ x e) =
     do tv <- freshTyVar
        let env' = extendEnv (x, PPoly [] tv) env
        (e1, s1, m1) <- algW env' e
-       return (LLam m1 x e1, 
-               s1, 
+       return (LLam m1 x e1,
+               s1,
                MFun (apply s1 tv) m1)
 
 algW env (LLet _ x e f) =
@@ -194,6 +194,3 @@ algW env (LIf _ e1 e2 e3) =
 
 algW env (LOp _ o e1 e2) =
     error "not implemented"
-
-
-

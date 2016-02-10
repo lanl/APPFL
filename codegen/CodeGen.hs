@@ -77,9 +77,9 @@ useArgType = False
 data RVal = SO              -- static object
           | HO String       -- Heap Obj, payload size, TO GO?
           | FP String Int   -- stack Formal Param, pointer to stack payload
-          | FV String Int   -- Free Variable, payload in heap via pointer to 
+          | FV String Int   -- Free Variable, payload in heap via pointer to
                             --   pointer in stack, e.g. fvpp->op->payload[i]
--- because we don't have fresh names for the Let Blocks we use existing 
+-- because we don't have fresh names for the Let Blocks we use existing
 -- names for let-bound variables for now.  We could have done the same
 -- dereference scheme for FP above
             deriving(Eq,Show)
@@ -192,7 +192,7 @@ listLookup k ((k',v):xs) | k == k' = Just v
                          | otherwise = listLookup k xs
 
 getEnvRef :: String -> Env -> String
-getEnvRef v kvs = 
+getEnvRef v kvs =
     case listLookup v kvs of
       Nothing -> error $ "getEnvRef " ++ v ++ " failed"
       Just k ->
@@ -285,7 +285,7 @@ cgo env o@(FUN it vs e name) =
             "// " ++ name ++ "(self, " ++ intercalate ", " vs ++ ")\n" ++
             "FnPtr fun_" ++ name ++ "() {\n" ++
             "  fprintf(stderr, \"" ++ name ++ " here\\n\");\n" ++
-            "  PtrOrLiteral *" ++ argp ++ 
+            "  PtrOrLiteral *" ++ argp ++
                  " = &(stgGetStackArgp()->payload[0]);\n" ++
                indent 2 inline ++
                optStr (ypn /= Yes) "  STGRETURN0();\n" ++
@@ -337,7 +337,7 @@ stgApplyGeneric env f eas direct =
              else f
         inline =
             -- new STACKFRAME
-            "{ Cont *cp = stgAllocCallOrStackCont( &it_stgStackCont, " ++ 
+            "{ Cont *cp = stgAllocCallOrStackCont( &it_stgStackCont, " ++
                  show (length pnstring + 1) ++ ");\n" ++
             "  cp->layout = " ++ npStrToBMStr ('P' : pnstring ) ++ ";\n" ++
             "  cp->payload[ 0 ] = " ++ cgv env f' ++ ";\n" ++
@@ -358,14 +358,14 @@ stgApplyGeneric env f eas direct =
 
 
 -- return (inline code, [(forward, fundef)])
-cge :: Env 
-    -> Expr InfoTab 
+cge :: Env
+    -> Expr InfoTab
     -> State Int ((String,YPN), [(String, String)])
 -- State Int ((inline code, inline code ends in JUMP/RETURN),
 --            [(forward, function)])
 
 cge env e@(EAtom it a) =
-    let inline = 
+    let inline =
             if isBoxede e then
                 "stgCurVal = " ++ cga env a ++ "; // " ++ showa a ++ "\n" ++
                 "// boxed EAtom, stgCurVal updates itself \n" ++
@@ -438,11 +438,11 @@ cge env (EPrimop it op eas) =
 
 cge env (ELet it os e) =
     let names = map oname os
-        decl = 
+        decl =
             concat [ "PtrOrLiteral *" ++ name ++ ";\n" | name <- names ] ++
-            "{Cont *contp = stgAllocCallOrStackCont(&it_stgLetCont, " ++ 
+            "{Cont *contp = stgAllocCallOrStackCont(&it_stgLetCont, " ++
                                show (length os) ++ ");\n" ++
-            "memset(contp->payload, 0, " ++ 
+            "memset(contp->payload, 0, " ++
                   show (length os) ++ " * sizeof(PtrOrLiteral));\n" ++
             concat [ name ++ " = &(contp->payload[" ++ show i ++ "]);\n" |
                      (name, i) <- zip names [0..] ] ++
@@ -478,15 +478,15 @@ cgeInline env boxed (ecode, efunc) a@(Alts italts alts aname) =
 -- TODO:  efunc should be empty
     let contName = "ccont_" ++ aname
         pre = "// inline:  scrutinee does not STGJUMP or STGRETURN\n"
-    in do 
+    in do
       ((acode, ypn), afunc) <- cgaltsInline env a boxed
-      return ((pre ++ ecode ++ acode, ypn), 
+      return ((pre ++ ecode ++ acode, ypn),
               efunc ++ afunc)
 
 cgaltsInline
   :: [(Var, RVal)]
-     -> Alts InfoTab 
-     -> Bool 
+     -> Alts InfoTab
+     -> Bool
      -> State Int (([Char], YPN), [([Char], [Char])])
 
 cgaltsInline env a@(Alts it alts name) boxed =
@@ -502,15 +502,15 @@ cgaltsInline env a@(Alts it alts name) boxed =
        let myypn = if all (==Yes) ypns then Yes
                    else if all (==No) ypns then No
                         else Possible
-       let inl = "Cont *" ++ contName ++ 
+       let inl = "Cont *" ++ contName ++
                  " = stgAllocCallOrStackCont(&it_stgStackCont, 1);\n" ++
                  "// " ++ show (ctyp it) ++ "\n" ++
-                 contName ++ "->layout = " ++ 
+                 contName ++ "->layout = " ++
                     npStrToBMStr (iff boxed "P" "N") ++ ";\n" ++
                  contName ++ "->payload[0] = " ++
                     (iff boxed "stgCurVal" "stgCurValU") ++ ";\n" ++
                  optStr boxed "stgCurVal.op = NULL;\n" ++
-                 "PtrOrLiteral *" ++ scrutPtr ++ 
+                 "PtrOrLiteral *" ++ scrutPtr ++
                      " = &(" ++ contName ++ "->payload[0]);\n" ++
                  (if switch then
                     (if boxed then
@@ -548,12 +548,12 @@ cgeNoInline env boxed (ecode, efunc) a@(Alts italts alts aname) =
                  (loadPayloadFVs env (map fst $ fvs italts) 1 contName)
     in do (acode, afunc) <- cgalts env a boxed
 --        need YPN results from Alts
-          return ((pre ++ ecode ++ acode, Possible), 
+          return ((pre ++ ecode ++ acode, Possible),
                   efunc ++ afunc)
 cgalts
   :: [(Var, RVal)]
-     -> Alts InfoTab 
-     -> Bool 
+     -> Alts InfoTab
+     -> Bool
      -> State Int ([Char], [([Char], [Char])])
 
 -- ADef only or unary sum => no C switch
@@ -574,12 +574,12 @@ cgalts env (Alts it alts name) boxed =
               "Cont *" ++ contName ++ " = stgGetStackArgp();\n" ++
               "// make self-popping\n" ++
               "stgCaseToPopMe(" ++ contName ++ ");\n" ++
-              "PtrOrLiteral *" ++ fvp ++ 
+              "PtrOrLiteral *" ++ fvp ++
                   " = &(" ++ contName ++ "->payload[0]);\n" ++
 --              concat ["  PtrOrLiteral " ++ v ++
 --                      " = " ++ contName ++ "->payload[" ++ show i ++ "];\n"
 --                      | (i,v) <- indexFrom 0 $ map fst $ fvs it ] ++
-              (if boxed then 
+              (if boxed then
                    fvp ++ "[0] = stgCurVal;\n"
                else
                    fvp ++ "[0] = stgCurValU;\n") ++
@@ -596,8 +596,8 @@ cgalts env (Alts it alts name) boxed =
                    indent 2 (concat codes) ++
                  "}\n"
                else concat codes)
-      let fun = 
-              "// " ++ show (ctyp it) ++ "\n" ++ 
+      let fun =
+              "// " ++ show (ctyp it) ++ "\n" ++
               "FnPtr "++ name ++ "() {\n" ++ indent 2 body ++ "}\n"
 
       return ("", (forward, fun) : concat funcss)
@@ -704,4 +704,3 @@ showa (LitC c) = "con_" ++ c
 
 indexFrom :: Int -> [a] -> [(Int, a)]
 indexFrom i xs = zip [i..] xs
-

@@ -139,7 +139,7 @@ groupParsed =
 
     
 
--- uncurried cons is used on several occasions to combine the results of 
+-- uncurried cons is used on several occasions to combine the results of
 -- ordered parsers
 cons = uncurry (:)
       
@@ -231,7 +231,7 @@ tokcutP msg p inp = cutP (show $
 ---------------------------- Object Parsing -------------------------------
 
 -- Parse an Object definition (no semicolon) as Obj ()
-objDefP :: Parser Token (Obj ())              
+objDefP :: Parser Token (Obj ())
 objDefP =
   varNameP >>> \name ->
   eqP >>> \_ ->
@@ -366,10 +366,10 @@ eCaseP =
 
 
 -- parse an Alts section in a case expression, accept an Alts object
-altsP :: Parser Token (Alts ())               
+altsP :: Parser Token (Alts ())
 altsP =
   let
-    name = "alts" --error "this alts not given a name!" 
+    name = "alts" --error "this alts not given a name!"
   in
    tokcutP "Expected one or more alts separated by semicolons" $
    sepByP' altP semiP >>> \alts ->

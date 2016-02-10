@@ -38,12 +38,12 @@ indent i xs = space ++ indent' i xs
       indent' i (x:xs)      = x : indent' i xs
       indent' i ""          = ""
 
-lookupOrElse :: (Ord k) => k -> Map.Map k v -> v      
+lookupOrElse :: (Ord k) => k -> Map.Map k v -> v
 lookupOrElse k map = case Map.lookup k map of
                       Just k -> k
                       Nothing -> error "lookupOrElse failed!"
       
-maxPayload :: Int     
+maxPayload :: Int
 maxPayload = 32
 
 -- sanity-checking zip
@@ -56,7 +56,7 @@ precalate s ss = concatMap (s++) ss
 
 -- given a predicate and a list
 --   stably permute list according to the predicate, satisfies first
--- return 
+-- return
 --   new - permuted list
 --   permutation lists such that
 --     old[i] = new[perm[i]]
@@ -82,7 +82,7 @@ groupAllBy f xs =
   let nubbed = nubBy f xs
   in if (length nubbed == length xs)
 -- if list is full of uniques, package them in lists
-     then map (:[]) xs 
+     then map (:[]) xs
 -- else fold on the uniques, accumulating the groups (hence reverse) and the unsorted
      else reverse $ fst $ foldl ffun ([],xs) nubbed
   where ffun (groups, xs) it = let (matches, rest) = partition (f it) xs

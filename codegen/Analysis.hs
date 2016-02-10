@@ -108,7 +108,7 @@ propCallsAlt env scrut a = case a of
     let env' = deleteAll avs env
     in a{ ae = propCallsExpr env' ae }
   
-  ADef{amd, av, ae}  -> 
+  ADef{amd, av, ae}  ->
     let env' = case knownFunExprIT env scrut of
           Just it -> Map.insert av it env -- if scrut is known function, bind var in env
           Nothing -> Map.delete av env -- else honor shadowing and delete it
@@ -188,7 +188,7 @@ instance SetHA (Expr InfoTab) where
             then False
             else
               case Map.lookup (name it) fmp of
-               Just b -> b 
+               Just b -> b
                Nothing -> False -- unknown function may grow heap
           Nothing ->
             -- this works independently of knownCall analysis (for simple tests)
@@ -241,9 +241,9 @@ instance SetHA (Alt InfoTab) where
 
 addDefsToMap defs funmap =
   let
-    fmp  = deleteAll (map oname defs) funmap -- remove shadowed bindings 
+    fmp  = deleteAll (map oname defs) funmap -- remove shadowed bindings
     toAdd = Map.fromList $ map ((,True) . oname) $ filter isKFun defs
-    fmp' = Map.union toAdd fmp 
+    fmp' = Map.union toAdd fmp
     isKFun o = case o of
       FUN{} -> True
       PAP{} -> False -- Don't want PAPs for now
@@ -370,7 +370,7 @@ knownFunExprIT env e =
       [its] -> head its
       _ -> Nothing
 
-    -- check single alt  
+    -- check single alt
     checkAlt env e ADef{av, ae} = case knownFunExprIT env e of
       Just it -> knownFunExprIT (Map.insert av it env) ae
       Nothing -> knownFunExprIT env ae

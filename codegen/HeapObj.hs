@@ -1,4 +1,5 @@
 {-# LANGUAGE CPP #-}
+
 #include "options.h"
 
 module HeapObj (

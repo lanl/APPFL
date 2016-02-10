@@ -676,8 +676,8 @@ showIT it@(ITAlts{}) =
     "  .cLayoutInfo.unboxedCount = " ++ show (ufvc it) ++ ",\n" ++
     -- initially indicate scrutinee as unboxed for GC, could also indicate
     -- correctly and make NULL in CodeGen
-    "  .cLayoutInfo.bm           = " ++ 
-          npStrToBMStr ( 'N' : 
+    "  .cLayoutInfo.bm           = " ++
+          npStrToBMStr ( 'N' :
                         replicate (bfvc it) 'P' ++
                         replicate (ufvc it) 'N') ++ ",\n" ++
     "};\n"

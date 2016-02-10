@@ -25,7 +25,7 @@ import Control.Monad.State
 -- import AST(Var) -- shouldn't depend on AST
 type Var = String
 
-type Subst = Map.Map TyVar Monotype 
+type Subst = Map.Map TyVar Monotype
 idSubst = Map.empty
 
 compose :: Subst -> Subst -> Subst
@@ -115,7 +115,7 @@ unifys (x:xs) (y:ys) =
 -- need a fresh variable supply
 
 freshTyVar :: State Int TyVar
-freshTyVar = 
+freshTyVar =
     do i <- get
        put $ i+1
        return $ 't':show i
@@ -127,7 +127,7 @@ freshPolyVar =
        return $ MPVar v
 
 freshPolyVars 0 = return []
-freshPolyVars n = 
+freshPolyVars n =
     do
       v <- freshPolyVar
       vs <- freshPolyVars (n-1)
@@ -139,7 +139,7 @@ freshMonoVar =
        return $ MVar v
 
 freshMonoVars 0 = return []
-freshMonoVars n = 
+freshMonoVars n =
     do
       v <- freshMonoVar
       vs <- freshMonoVars (n-1)
@@ -162,7 +162,7 @@ monoToPoly as m = error $
                   "HMStg.monoToPoly: m=" ++ show m
 
 generalize :: Substitutable a => a -> Monotype -> Polytype
-generalize ms t = 
+generalize ms t =
     let as = Set.difference (freevars t) (freevars ms)
     -- necessary?  as in t become MPVar--not necessary, just skating on thin ice
     --    t' = monoToPoly as t
@@ -179,7 +179,7 @@ data Constraint = EqC  Monotype Monotype
 instance Show Constraint where
     show (EqC m1 m2) = "EqC " ++ show m1 ++ " , " ++ show m2
     show (ExpC m p) = "ExpC " ++ show m ++ " , " ++ show p
-    show (ImpC m1 ms m2) = "ImpC " ++ show m1 ++ " " ++ 
+    show (ImpC m1 ms m2) = "ImpC " ++ show m1 ++ " " ++
                            show (Set.toList ms) ++ " " ++ show m2
 
 type Constraints = Set.Set Constraint
@@ -234,18 +234,18 @@ solve1 :: [Constraint] -> [Constraint] -> Bool -> State Int Subst
 solve1 [] [] _ = return idSubst
 solve1 [] ys False = error $ "can't make progress with " ++ show ys
 solve1 [] ys True  = solve1 ys [] False
-solve1 (EqC t1 t2 : cs) ys _ = 
+solve1 (EqC t1 t2 : cs) ys _ =
     let s = unify t1 t2
     in do
       res <- solve1 (apply s cs) (apply s ys) True
       return $ compose res s
 
-solve1 (ExpC t p : cs) ys _ = 
+solve1 (ExpC t p : cs) ys _ =
     do t' <- instantiate p
        solve1 (EqC t t' : cs) ys True
 
-solve1 (c@(ImpC t1 ms t2) : cs) ys progress = 
-    if Set.null $ (freevars t2 `Set.difference` freevars ms) 
+solve1 (c@(ImpC t1 ms t2) : cs) ys progress =
+    if Set.null $ (freevars t2 `Set.difference` freevars ms)
        `Set.intersection` activeVars (cs ++ ys)
     then solve1 (ExpC t1 (generalize ms t2) : cs) ys True
     else solve1 cs (c:ys) progress
@@ -255,4 +255,3 @@ instance Substitutable (Maybe Monotype) where
 
     apply s Nothing = Nothing
     apply s (Just t) = Just (apply s t)
-

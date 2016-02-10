@@ -19,7 +19,7 @@ abet = ['0'..'9'] ++ ['A'..'F'] -- no we are not exceeding base 16
 
 indexOf :: (Eq a, Num a1, Show a) => a -> [a] -> a1
 indexOf k xs = f xs 0
-    where f []      _             = error $ "indexOf " ++ 
+    where f []      _             = error $ "indexOf " ++
                                             show k ++ " not found"
           f (x:_)  !n | k == x    = n
           f (_:xs) !n | otherwise = f xs (n+1)
@@ -37,17 +37,17 @@ npStrToBMStr s = _npStrToBMStr s True
 
 npStrToBMInt s = read (_npStrToBMStr s False) :: Int
 
-_npStrToBMStr s f = 
+_npStrToBMStr s f =
     let offset = length $ takeWhile (=='-') s
         bitstr = dropWhile (=='-') s
         len = length bitstr
         nptobin c = case c of 'N' -> '0'
-                              'P' -> '1' 
+                              'P' -> '1'
                               _ -> error "not N or P"
         bin = map nptobin bitstr
         w1 = shiftL (strBaseNToWord64 bin 2) offset
         w2 = shiftL (fromIntegral len :: Word64) 58
-    in if f then (word64ToCULHex (w1 .|. w2)) 
+    in if f then (word64ToCULHex (w1 .|. w2))
             else (word64ToHex (w1 .|. w2))
 
 -- unneeded
@@ -58,7 +58,7 @@ word64ToBaseNStr n b = reverse $ f n
     where
       f :: Word64 -> String
       f 0 = ""
-      f n = (abet !! fromIntegral (n `mod` (fromIntegral b))) : 
+      f n = (abet !! fromIntegral (n `mod` (fromIntegral b))) :
              f (n `div` (fromIntegral b))
 
 strBaseNToM :: String -> Int -> Int -> String
@@ -71,5 +71,4 @@ word64ToCULHex w64 =
 
 word64ToHex w64 =
     let hex = word64ToBaseNStr w64 16
-    in "0x" ++ take (16 - length hex) (repeat '0') ++ hex 
-
+    in "0x" ++ take (16 - length hex) (repeat '0') ++ hex

@@ -14,7 +14,7 @@ module SCC (
 
 import AST
 import qualified Data.Map as Map
-import qualified Data.Set as Set 
+import qualified Data.Set as Set
 
 newtype Graph v = Graph (Map.Map v [v])
 
@@ -48,7 +48,7 @@ transpose g@(Graph m)
 
 --  Depth first search and forests
 
-data Tree v   = Node v (Forest v) 
+data Tree v   = Node v (Forest v)
 type Forest v = [Tree v]
 
 dff :: Ord v => Graph v -> Forest v
@@ -84,7 +84,7 @@ preorderF fs = concatMap preorderT fs
 preorderT (Node v fs) = v:preorderF fs
 
 postorder :: Ord v => Graph v -> [v]
-postorder g = postorderF (dff g) 
+postorder g = postorderF (dff g)
 
 postorderT t = postorderF [t]
 
@@ -121,14 +121,14 @@ instance Show v => Show (Graph v) where
   showsPrec d (Graph m) = shows m
   
 instance Show v => Show (Tree v) where
-  showsPrec d (Node v []) = shows v 
+  showsPrec d (Node v []) = shows v
   showsPrec d (Node v fs) = shows v . showList fs
 
 
 --  Quick Test
 
 tgraph0 :: Graph Int
-tgraph0 = graph 
+tgraph0 = graph
           [(0,[1])
           ,(1,[2,1,3])
           ,(2,[1])
@@ -136,7 +136,7 @@ tgraph0 = graph
           ]
 
 tgraph1 = graph
-          [  ('a',"jg") 
+          [  ('a',"jg")
           ,  ('b',"ia")
           ,  ('c',"he")
           ,  ('d',"")
@@ -187,7 +187,7 @@ instance SCCDepTrans (Obj [Var]) where
 
 instance SCCDepTrans (Expr [Var]) where
     dt e@ECase{ee, ealts} = e{ee = dt ee, ealts = dt ealts}
-    dt ELet{edefs, ee} = 
+    dt ELet{edefs, ee} =
         let ee' = dt ee
             edefs' = dt edefs
             allfvsl = map getFvsObj edefs'
@@ -198,19 +198,19 @@ instance SCCDepTrans (Expr [Var]) where
             -- translate list of lists of onames to list of lists of Objs
             nameobjmap = Map.fromList $ zip namel edefs'
             sccsobj = (map . map) (findItOrElse nameobjmap) sccs
-            fl = map (\edefs -> 
-                          \ee -> 
+            fl = map (\edefs ->
+                          \ee ->
                               let onames = Set.fromList $ map oname edefs
-                                  fvs = foldr Set.union 
+                                  fvs = foldr Set.union
                                               (getFvsExpr ee)
-                                              (map getFvsObj edefs) 
+                                              (map getFvsObj edefs)
                                   fvs' = Set.difference fvs onames
                               in putFvsExpr fvs' ELet{emd = ["i n v a l i d"], -- invalid Var
-                                                      edefs = edefs, 
+                                                      edefs = edefs,
                                                       ee = ee})
                      sccsobj
         in (foldr1 (.) fl) ee'
-    -- all the rest        
+    -- all the rest
     dt e = e
 
 findItOrElse map x =

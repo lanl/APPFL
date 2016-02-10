@@ -224,7 +224,7 @@ cInitCall :: String -> [CExpr] -> Maybe CInit
 cInitCall name args =  Just (CInitExpr (cCallExpr name args) undefNode)
 
 cNewHeapObj :: String -> String -> CBlockItem
-cNewHeapObj name val = cUserPtrDecl "Obj" name (cInitCall "stgNewHeapObj" 
+cNewHeapObj name val = cUserPtrDecl "Obj" name (cInitCall "stgNewHeapObj"
                        [cAddrvarE ("it_" ++ val)])
 
 cNewCont :: String -> String -> CBlockItem

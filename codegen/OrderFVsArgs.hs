@@ -20,16 +20,16 @@ orderFVsArgs = typeFVs Map.empty
 -- replace bogus type with correct type, sort by boxedness, Var flavor
 repv m vts = boxedFirst [(k, f k) | (k,_) <- vts]
     where f k = case Map.lookup k m of
-                  Nothing -> error $ "HMStg.repv:  unbound variable " ++ show k ++ 
+                  Nothing -> error $ "HMStg.repv:  unbound variable " ++ show k ++
                                      " " ++ show m
                   Just m -> m
 
 -- replace bogus type with correct type, sort by boxedness, Atom flavor
 repa m ats = boxedFirst [(k, f k) | (k,_) <- ats]
     where f a = case a of
-                  Var v -> 
+                  Var v ->
                       case Map.lookup v m of
-                        Nothing -> error $ "HMStg.repa:  unbound variable " ++ 
+                        Nothing -> error $ "HMStg.repa:  unbound variable " ++
                                            show v ++ " " ++ show m
                         Just m -> m
                   LitI{} -> biIntMCon
@@ -68,8 +68,8 @@ instance TypeFVs (Obj InfoTab) where
             m' = foldr (uncurry Map.insert) m (zip vs vstyps)
         in o{e = typeFVsCommon m' e}
 
-    typeFVs m o@PAP{omd,as} = 
-        let (bc, uc, args', perm) = repa m $ zzip (map fst $ args omd) 
+    typeFVs m o@PAP{omd,as} =
+        let (bc, uc, args', perm) = repa m $ zzip (map fst $ args omd)
                                                   (map (typ . emd) as)
         in o{omd = omd{args = args',
                        bargc = bc,
@@ -77,8 +77,8 @@ instance TypeFVs (Obj InfoTab) where
                        argPerm = perm},
              as = map (typeFVsCommon m) as}
 
-    typeFVs m o@CON{omd,as} = 
-        let (bc, uc, args', perm) = repa m $ zzip (map fst $ args omd) 
+    typeFVs m o@CON{omd,as} =
+        let (bc, uc, args', perm) = repa m $ zzip (map fst $ args omd)
                                                   (map (typ . emd) as)
         in o{omd = omd{args = args',
                        bargc = bc,
@@ -105,14 +105,14 @@ instance TypeFVs (Expr InfoTab) where
             eas' = map (typeFVsCommon m') eas
         in e{eas = eas'}
 
-    typeFVs m e@EPrimop{eas} = 
+    typeFVs m e@EPrimop{eas} =
         e{eas = map (typeFVsCommon m) eas}
 
     typeFVs m e@ELet{edefs, ee} =
         let edefs' = typeFVs m edefs -- [Obj InfoTab] entry point
             m' = foldr (uncurry Map.insert) m [(oname o, typ $ omd o) | o <- edefs]
             ee' = typeFVsCommon m' ee
-        in e{edefs = edefs', 
+        in e{edefs = edefs',
              ee = ee'}
 
     typeFVs m e@ECase{ee, ealts} =
@@ -167,4 +167,3 @@ typeFVsCommonAlt t0 m a =
         let (bc, uc, fvs', _) = repv m (fvs $ amd a)
             a' = a{amd = (amd a){fvs=fvs', bfvc=bc, ufvc=uc}}
         in typeFVsAlt t0 m a'
-
