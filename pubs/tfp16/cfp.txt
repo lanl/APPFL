@@ -1,0 +1,181 @@
+Message: 1
+Date: Tue, 2 Feb 2016 10:33:28 +0100
+From: Peter Achten <P.Achten@cs.ru.nl>
+To: haskell@haskell.org
+Subject: [Haskell] [TFP 2016] 1st call for papers
+Message-ID: <56B077E8.1000401@cs.ru.nl>
+Content-Type: text/plain; charset=utf-8; format=flowed
+
+                     -----------------------------
+                     C A L L   F O R   P A P E R S
+                     -----------------------------
+
+                     ======== TFP 2016 ===========
+
+           17th Symposium on Trends in Functional Programming
+                            June 8-10, 2016
+                  University of Maryland, College Park
+                          Near Washington, DC
+                          http://tfp2016.org/
+
+
+The symposium on Trends in Functional Programming (TFP) is an
+international forum for researchers with interests in all aspects of
+functional programming, taking a broad view of current and future
+trends in the area. It aspires to be a lively environment for
+presenting the latest research results, and other contributions (see
+below). Authors of draft papers will be invited to submit revised
+papers based on the feedback receive at the symposium.  A
+post-symposium refereeing process will then select a subset of these
+articles for formal publication.
+
+TFP 2016 will be the main event of a pair of functional programming
+events. TFP 2016 will be accompanied by the International Workshop on
+Trends in Functional Programming in Education (TFPIE), which will take
+place on June 7nd.
+
+The TFP symposium is the heir of the successful series of Scottish
+Functional Programming Workshops. Previous TFP symposia were held in
+    * Edinburgh (Scotland) in 2003;
+    * Munich (Germany) in 2004;
+    * Tallinn (Estonia) in 2005;
+    * Nottingham (UK) in 2006;
+    * New York (USA) in 2007;
+    * Nijmegen (The Netherlands) in 2008;
+    * Komarno (Slovakia) in 2009;
+    * Oklahoma (USA) in 2010;
+    * Madrid (Spain) in 2011;
+    * St. Andrews (UK) in 2012;
+    * Provo (Utah, USA) in 2013;
+    * Soesterberg (The Netherlands) in 2014;
+    * and Inria Sophia-Antipolis (France) in 2015.
+For further general information about TFP please see the TFP homepage.
+(http://www.tifp.org/).
+
+
+== SCOPE ==
+
+The symposium recognizes that new trends may arise through various
+routes.  As part of the Symposium's focus on trends we therefore
+identify the following five article categories. High-quality articles
+are solicited in any of these categories:
+
+Research Articles: leading-edge, previously unpublished research work
+Position Articles: on what new trends should or should not be
+Project Articles: descriptions of recently started new projects
+Evaluation Articles: what lessons can be drawn from a finished project
+Overview Articles: summarizing work with respect to a trendy subject
+
+Articles must be original and not simultaneously submitted for
+publication to any other forum. They may consider any aspect of
+functional programming: theoretical, implementation-oriented, or
+experience-oriented.  Applications of functional programming
+techniques to other languages are also within the scope of the
+symposium.
+
+Topics suitable for the symposium include, but are not limited to:
+
+      Functional programming and multicore/manycore computing
+      Functional programming in the cloud
+      High performance functional computing
+      Extra-functional (behavioural) properties of functional programs
+      Dependently typed functional programming
+      Validation and verification of functional programs
+      Debugging and profiling for functional languages
+      Functional programming in different application areas:
+        security, mobility, telecommunications applications, embedded
+        systems, global computing, grids, etc.
+      Interoperability with imperative programming languages
+      Novel memory management techniques
+      Program analysis and transformation techniques
+      Empirical performance studies
+      Abstract/virtual machines and compilers for functional languages
+      (Embedded) domain specific languages
+      New implementation strategies
+      Any new emerging trend in the functional programming area
+
+If you are in doubt on whether your article is within the scope of
+TFP, please contact the TFP 2016 program chair, David Van Horn.
+
+
+== BEST PAPER AWARDS ==
+
+To reward excellent contributions, TFP awards a prize for the best paper
+accepted for the formal proceedings.
+
+TFP traditionally pays special attention to research students,
+acknowledging that students are almost by definition part of new
+subject trends. A student paper is one for which the authors state
+that the paper is mainly the work of students, the students are listed
+as first authors, and a student would present the paper. A prize for
+the best student paper is awarded each year.
+
+In both cases, it is the PC of TFP that awards the prize. In case the
+best paper happens to be a student paper, that paper will then receive
+both prizes.
+
+
+== SPONSORS ==
+
+TFP is financially supported by CyberPoint, Galois, Trail of Bits, and
+the University of Maryland Computer Science Department.
+
+
+== PAPER SUBMISSIONS ==
+
+Acceptance of articles for presentation at the symposium is based on a
+lightweight peer review process of extended abstracts (4 to 10 pages
+in length) or full papers (20 pages). The submission must clearly
+indicate which category it belongs to: research, position, project,
+evaluation, or overview paper. It should also indicate which authors
+are research students, and whether the main author(s) are students.  A
+draft paper for which ALL authors are students will receive additional
+feedback by one of the PC members shortly after the symposium has
+taken place.
+
+We use EasyChair for the refereeing process. Papers must be submitted at:
+
+    https://easychair.org/conferences/?conf=tfp2016
+
+Papers must be written in English, and written using the LNCS
+style. For more information about formatting please consult the
+Springer LNCS web site:
+
+http://www.springer.com/computer/lncs?SGWID=0-164-6-793341-0
+
+
+== IMPORTANT DATES ==
+
+Submission of draft papers:     April 8, 2016
+Notification:                   April 15, 2016
+Registration:                   May 13, 2016
+TFP Symposium:                  June 8-10, 2016
+Student papers feedback:        June 14, 2016
+Submission for formal review:   July 14, 2016
+Notification of acceptance:     September 14, 2016
+Camera ready paper:             October 14, 2016
+
+
+== PROGRAM COMMITTEE ==
+
+Amal Ahmed              Northeastern University (US)
+Nada Amin               ?cole Polytechnique F?d?rale de Lausanne (CH)
+Kenichi Asai            Ochanomizu University (JP)
+Ma?gorzata Biernacka    University of Wroclaw (PL)
+Laura Castro            University of A Coru?a (ES)
+Ravi Chugh              University of Chicago (US)
+Silvia Ghilezan         University of Novi Sad (SR)
+Clemens Grelck          University of Amsterdam (NL)
+John Hughes             Chalmers University of Technology (SE)
+Suresh Jagannathan      Purdue University (US)
+Pieter Koopman          Radboud University Nijmegen (NL)
+Geoffrey Mainland       Drexel University (US)
+Chris Martens           University of California, Santa Cruz (US)
+Jay McCarthy            University of Massachusetts, Lowell (US)
+Heather Miller          ?cole Polytechnique F?d?rale de Lausanne (CH)
+Manuel Serrano          INRIA, Sophia-Antipolis (FR)
+Scott Smith             Johns Hopkins University (US)
+?ric Tanter             University of Chile (CL)
+David Van Horn (Chair)  University of Maryland (US)
+Niki Vazou              University of California, San Diego (US)
+
