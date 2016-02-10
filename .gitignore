@@ -3,6 +3,7 @@
 *.a
 *.hi
 *~
+a.out
 #mac os crud
 ._*
 .DS_Store

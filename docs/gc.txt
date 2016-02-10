@@ -1,0 +1,42 @@
+Garbage Collector Notes
+------------------------
+
+The best reference for the GHC GC is:
+
+Parallel Generational-Copying Garbage Collection with a Block-Structured Heap.
+http://community.haskell.org/~simonmar/papers/parallel-gc.pdf
+
+Other useful resources:
+
+GHC's Garbage Collector SM and SPJ
+www.mm-net.org.uk/workshop190404/GHC's_Garbage_Collector.ppt
+
+GHC(STG,Cmm,asm) illustrated for hardware persons
+https://takenobu-hs.github.io/downloads/haskell_ghc_illustrated.pdf
+
+The parallel-gc paper has a rather terse description of the block allocator.
+The following are helpful:
+
+The GHC Block allocator Edward Z Yang
+http://web.mit.edu/~ezyang/Public/blocks.pdf
+
+https://ghc.haskell.org/trac/ghc/wiki/Commentary/Rts/Storage/BlockAlloc
+
+
+Other papers:
+
+Exploring the Barrier to Entry: Incremental Generational Garbage Collection for Haskell.
+http://research.microsoft.com/en-us/um/people/simonpj/Papers/non-stop/ExploringBarrierToEntry.pdf
+
+Runtime Support for Multicore Haskell. SM and SPJ
+http://community.haskell.org/~simonmar/papers/multicore-ghc.pdf
+
+Multicore Garbage Collection with Local Heaps. SM and SBJ (experimental)
+http://community.haskell.org/~simonmar/papers/local-gc.pdf
+
+To quote SM "There is also an experimental version of the collector that 
+collects the young generation independently on each processor, see 
+Multicore Garbage Collection with Local Heaps, although this version was 
+never merged into the mainline GHC branch due to concerns about complexity 
+and patchy performance."
+https://www.quora.com/How-does-garbage-collection-work-in-Haskell

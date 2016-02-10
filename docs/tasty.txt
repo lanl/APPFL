@@ -1,0 +1,9 @@
+To setup the tasty test framework:
+
+cabal install tasty tasty-golden tasty-quickcheck tasty-hunit tasty-ant-xml
+cd codegen && cabal configure --enable-tests
+
+then run:
+make test
+
+

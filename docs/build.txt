@@ -1,4 +1,13 @@
 build notes:
+-------------------------------
+
+Requirements:
+
+Haskell Platform 7.10.x (may work with 7.8.x as well but not currently used for development)
+CMake > 2.8.12.2
+recent gcc/clang (gcc 4.8.x tested on linux, xcode 6 tested on mac)
+
+------------------------------
 
 to build full compiler:
 
@@ -15,7 +24,7 @@ $ make ctest
 
 to run all tests:
 (note this requires installation of tasty test framework 
-which is a bit of a pain. see codegen/tests/README)
+see tasty.txt)
 
 $ make test
 
@@ -78,5 +87,5 @@ Runtime flags to binaries:
 
 -g         -- disable Garbage Collection
 -t <float> -- set Garbage Collection Threshold
-
+-e <int>   -- evaluation strategy (0->non-strict 1->strict)  
 
