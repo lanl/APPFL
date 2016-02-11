@@ -1,6 +1,6 @@
 {-# LANGUAGE CPP #-}
 
-#include "options.h"
+#include "../options.h"
 
 module HeapObj (
   showSHOs,
@@ -10,6 +10,7 @@ module HeapObj (
 
 import AST
 import InfoTab
+import Options
 import Prelude
 import Util
 import Data.List (intercalate)
@@ -22,6 +23,7 @@ import CAST
 import Text.PrettyPrint(render)
 import Language.C.Pretty
 #endif
+
 
 -- HOs come from InfoTabs
 
@@ -64,36 +66,22 @@ cSHOspec (ITBlackhole {}) = payloads "0"
 
 cSHOspec it = error "bad IT in Obj"
 
+cArgTypeElem :: String ->  [CInitializerMember]
+cArgTypeElem ty = [cStructMember EnumTy "argType" ty | useArgType]
+
 payload ::  Atom -> [CInitializerMember]
-payload (LitI i) = [
-#if USE_ARGTYPE
-    cStructMember EnumTy "argType" "INT",
-#endif
-    cStructMember IntTy "i" i
-    ]
+payload (LitI i) = cArgTypeElem "INT" ++
+                   [cStructMember IntTy "i" i]
 
-payload (LitD d) = [
-#if USE_ARGTYPE
-    cStructMember EnumTy "argType" "DOUBLE",
-#endif
-    cStructMember DoubleTy "d" d
-    ]
+payload (LitD d) = cArgTypeElem "DOUBLE" ++
+                   [cStructMember DoubleTy "d" d]
 
-
-payload (LitF f) = [
-#if USE_ARGTYPE
-    cStructMember EnumTy "argType" "FLOAT",
-#endif
-    cStructMember FloatTy "f" f
-    ]
+payload (LitF f) = cArgTypeElem "FLOAT" ++
+                   [cStructMember FloatTy "f" f]
 
 -- for SHOs atoms that are variables must be SHOs, so not unboxed
-payload (Var v) = [
-#if USE_ARGTYPE
-    cStructMember EnumTy "argType" "HEAPOBJ",
-#endif
-    cStructMember PtrTy "op" ("sho_" ++ v)
-    ]
+payload (Var v) = cArgTypeElem "HEAPOBJ" ++
+                  [cStructMember PtrTy "op" ("sho_" ++ v)]
 
 payload _ = error "bad payload"
 
@@ -124,9 +112,9 @@ getIT it = it
 showHO it =
     "{\n" ++
     "  ._infoPtr   = &it_" ++ name (getIT it) ++ ",\n" ++
-#if USE_OBJTYPE
-    "  .objType   = " ++ showObjType it      ++ ",\n" ++
-#endif
+    (if useObjType
+    then "  .objType   = " ++ showObjType it      ++ ",\n"
+    else "") ++
     "  .ident     = " ++ show (name it)      ++ ",\n" ++
        showSHOspec it ++
     "};\n"
@@ -160,63 +148,36 @@ isVar _ = False
 payloads as = let ps = indent 4 $ concatMap payload as
               in  indent 2 ".payload = {\n" ++ ps ++ "},\n"
 
-payload (LitI i) =
-#if USE_ARGTYPE
-    "{.argType = INT, .i = " ++ show i ++ "},\n"
-#else
-    "{.i = " ++ show i ++ "},\n"
-#endif
+argTypeElem :: String -> String
+argTypeElem ty = if useArgType then ".argType = " ++ ty ++ "," else ""
 
+payload (LitI i) = "{" ++ argTypeElem "INT" ++
+                  " .i = " ++ show i ++ "},\n"
 
-payload (LitD d) =
-#if USE_ARGTYPE
-    "{.argType = DOUBLE, .d = " ++ show d ++ "},\n"
-#else
-    "{.d = " ++ show d ++ "},\n"
-#endif
+payload (LitD d) = "{" ++ argTypeElem "DOUBLE" ++
+                   " .d = " ++ show d ++ "},\n"
 
-payload (LitF f) =
-#if USE_ARGTYPE
-   "{.argType = FLOAT, .f = " ++ show f ++ "},\n"
-#else
-    "{.f = " ++ show f ++ "},\n"
-#endif
+payload (LitF f) = "{" ++ argTypeElem "FLOAT" ++
+                   " .f = " ++ show f ++ "},\n"
 
-payload (LitC c) =
-#if USE_ARGTYPE
-   "{.argType = INT, .i = con_" ++ c ++  "},\n"
-#else
-   "{.i = con_" ++ c ++ "},\n"
-#endif
+payload (LitC c) = "{" ++ argTypeElem "INT" ++
+                   " .i = con_" ++ c ++ "},\n"
 
 -- for SHOs atoms that are variables must be SHOs, so not unboxed
-payload (Var v) =
-#if USE_ARGTYPE
-    "{.argType = HEAPOBJ, .op = &sho_" ++ v ++ "},\n"
-#else
-    "{.op = &sho_" ++ v ++ "},\n"
-#endif
+payload (Var v) = "{" ++ argTypeElem "HEAPOBJ" ++
+                  " .op = &sho_" ++ v ++ "},\n"
 
 payload at = error $ "HeapObj.payload: not expecting Atom - " ++ show at
 
 ptrOrLitSHO a =
     "{ " ++
     case a of
-#if USE_ARGTYPE
-      Var v  -> ".argType = HEAPOBJ, .op = &sho_" ++ v   -- these must be global
-      LitI i -> ".argType = INT, .i = " ++ show i
-      LitL l -> ".argType = LONG, .d = " ++ show l
-      LitF f -> ".argType = FLOAT, .f = " ++ show f
-      LitD d -> ".argType = DOUBLE, .d = " ++ show d
-      LitC c -> ".argType = INT, .i = " ++ "con_" ++ c
-#else
-      Var  v -> ".op = &sho_" ++ v   -- these must be global
-      LitI i -> ".i = " ++ show i
-      LitL l -> ".l = " ++ show l
-      LitF f -> ".f = " ++ show f
-      LitD d -> ".d = " ++ show d
-      LitC c -> ".i = " ++ "con_" ++ c
-#endif
+      Var v  -> argTypeElem "HEAPOBJ" ++ " .op = &sho_" ++ v   -- these must be global
+      LitI i -> argTypeElem "INT" ++ " .i = " ++ show i
+      LitL l -> argTypeElem "LONG" ++ " .d = " ++ show l
+      LitF f -> argTypeElem "FLOAT" ++ " .f = " ++ show f
+      LitD d -> argTypeElem "DOUBLE" ++ " .d = " ++ show d
+      LitC c -> argTypeElem "INT" ++ " .i = " ++ "con_" ++ c
     ++ " }"
 
 -- end of USE_CAST

@@ -31,8 +31,9 @@ Alt default var:  "stgCurVal, bind it"
 -}
 
 {-# LANGUAGE NamedFieldPuns    #-}
-{-# LANGUAGE CPP #-}
-#include "options.h"
+{-# LANGUAGE CPP               #-}
+
+#include "../options.h"
 
 module CodeGen(
   cgObjs,
@@ -52,6 +53,7 @@ import Analysis
 import Util
 import PPrint
 import STGbits
+import Options
 
 import Prelude
 import Data.List(intercalate,nub)
@@ -66,12 +68,6 @@ import Language.C.Pretty
 import Language.C.Syntax
 import Language.C.Data.Node
 import Language.C.Data.Ident
-#endif
-
-#if USE_ARGTYPE
-useArgType = True
-#else
-useArgType = False
 #endif
 
 data RVal = SO              -- static object
@@ -129,14 +125,16 @@ cMain v =
   [cPtrD, cPtrD] Nothing [] undefNode),Nothing,Nothing)]
   undefNode],False)) [] undefNode] body
 
+stgCurValArgType :: [CBlockItem]
+stgCurValArgType = [cAssign (cMemberE "stgCurVal" "argType" False) (cVarE "HEAPOBJ") | useArgType]
+
 cStart :: CExtDecl
 cStart = let body = [cUserPtrDecl "Cont" "showResultCont"
                   (cInitCall "stgAllocCallOrStackCont"
                   [cAddrvarE "it_stgShowResultCont", cIntE 0])
-#if USE_ARGTYPE
-                  ,cAssign (cMemberE "stgCurVal" "argType" False) (cVarE "HEAPOBJ")
-#endif
-                  ,cAssign (cMemberE "stgCurVal" "op" False) (cAddrvarE "sho_main")
+                  ]
+                  ++ stgCurValArgType ++
+                  [cAssign (cMemberE "stgCurVal" "op" False) (cAddrvarE "sho_main")
                   ,cCall "STGJUMP0"
                      [CMember (cCallExpr "getInfoPtr" [cMemberE "stgCurVal" "op" False])
                      (builtinIdent "entryCode") True undefNode]
@@ -153,10 +151,8 @@ cgMain = error "cgMain"
 cgStart :: String
 cgStart = "\n\nFnPtr start() {\n" ++
             "  Cont *showResultCont = " ++
-               "stgAllocCallOrStackCont(&it_stgShowResultCont, 0);\n" ++
-#if USE_ARGTYPE
-            "  stgCurVal.argType = HEAPOBJ;\n" ++
-#endif
+            "  stgAllocCallOrStackCont(&it_stgShowResultCont, 0);\n" ++
+            (if useArgType then "  stgCurVal.argType = HEAPOBJ;\n" else "") ++
             "  stgCurVal.op = &sho_main;\n" ++
             "  STGJUMP0(getInfoPtr(stgCurVal.op)->entryCode);\n" ++
             "}\n\n"
@@ -202,21 +198,21 @@ getEnvRef v kvs =
             FP fp i -> fp ++ "[" ++ show i ++ "]"
             FV fpp i -> fpp ++ "->op->payload[" ++ show i ++ "]"
 
+argTypeElem :: String -> String
+argTypeElem ty = if useArgType then ".argType = " ++ ty ++ "," else ""
+
 cga :: Env -> Atom -> String
 cga env (Var v) = cgv env v
-#if USE_ARGTYPE
-cga env (LitI i) = "((PtrOrLiteral){.argType = INT,    .i = " ++ show i ++ " })"
-cga env (LitL l) = "((PtrOrLiteral){.argType = LONG,   .l = " ++ show l ++ " })"
-cga env (LitF f) = "((PtrOrLiteral){.argType = FLOAT,  .f = " ++ show f ++ " })"
-cga env (LitD d) = "((PtrOrLiteral){.argType = DOUBLE, .d = " ++ show d ++ " })"
-cga env (LitC c) = "((PtrOrLiteral){.argType = INT,    .i = con_" ++ c ++ " })"
-#else
-cga env (LitI i) = "((PtrOrLiteral){.i = " ++ show i ++ " })"
-cga env (LitL l) = "((PtrOrLiteral){.l = " ++ show l ++ " })"
-cga env (LitF f) = "((PtrOrLiteral){.f = " ++ show f ++ " })"
-cga env (LitD d) = "((PtrOrLiteral){.d = " ++ show d ++ " })"
-cga env (LitC c) = "((PtrOrLiteral){.i = con_" ++ c ++ " })"
-#endif
+cga env (LitI i) = "((PtrOrLiteral){" ++ argTypeElem "INT" ++
+                   " .i = " ++ show i ++ " })"
+cga env (LitL l) = "((PtrOrLiteral){" ++ argTypeElem "LONG" ++
+                   " .l = " ++ show l ++ " })"
+cga env (LitF f) = "((PtrOrLiteral){" ++ argTypeElem "FLOAT" ++
+                   " .f = " ++ show f ++ " })"
+cga env (LitD d) = "((PtrOrLiteral){" ++ argTypeElem "DOUBLE" ++
+                   " .d = " ++ show d ++ " })"
+cga env (LitC c) = "((PtrOrLiteral){" ++ argTypeElem "INT" ++
+                   " .i = con_" ++ c ++ " })"
 
 -- boxed expression predicate
 isBoxede e = isBoxed $ typ $ emd e
@@ -356,6 +352,10 @@ stgApplyGeneric env f eas direct =
             "}\n"
     in return ((inline, Yes), [])
 
+stgCurValUArgType :: String -> String
+stgCurValUArgType ty = if useArgType
+                       then "stgCurValU.argType = " ++ ty ++ ";\n"
+                       else ""
 
 -- return (inline code, [(forward, fundef)])
 cge :: Env
@@ -382,7 +382,6 @@ cge env e@(EFCall it f eas) =
                   then stgApplyGeneric env f eas True
                   else stgApplyGeneric env f eas False
 
-
 cge env (EPrimop it op eas) =
     let as = map ea eas
         arg0 = cgUBa env (as !! 0) -- these take a type indicator
@@ -405,34 +404,18 @@ cge env (EPrimop it op eas) =
 
                    Pimin -> cFunIII "imin"
                    Pimax -> cFunIII "imax"
+                   _ -> error "Eprimop"
 
-                   PintToBool ->
-                       "stgCurValU = " ++
-                       arg0 "i" ++ "?" ++ getEnvRef "true"  env ++
-                                   ":" ++ getEnvRef "false" env ++ ";\n"
+        cPrefixII op = stgCurValUArgType "INT" ++
+                       "stgCurValU.i = " ++ op ++ arg0 "i" ++ ";\n"
 
-        cPrefixII op =
-#if USE_ARGTYPE
-                        "stgCurValU.argType = INT;\n" ++
-#endif
-                        "stgCurValU.i = " ++ op ++ arg0 "i" ++ ";\n"
+        cInfixIII op = stgCurValUArgType "INT" ++
+                       "stgCurValU.i = " ++ arg0 "i" ++ op ++ arg1 "i" ++ ";\n"
 
-        cInfixIII op =
-#if USE_ARGTYPE
-                        "stgCurValU.argType = INT;\n" ++
-#endif
-                        "stgCurValU.i = " ++ arg0 "i" ++ op ++ arg1 "i" ++ ";\n"
+        cInfixIIB op = stgCurValUArgType "BOOL" ++
+                       "stgCurValU.i = " ++ arg0 "i" ++ op ++ arg1 "i" ++ ";\n"
 
-        cInfixIIB op =
-#if USE_ARGTYPE
-                        "stgCurValU.argType = BOOL;\n" ++
-#endif
-                        "stgCurValU.i = " ++ arg0 "i" ++ op ++ arg1 "i" ++ ";\n"
-
-        cFunIII fun =
-#if USE_ARGTYPE
-                      "stgCurValU.argType = INT;\n" ++
-#endif
+        cFunIII fun = stgCurValUArgType "INT" ++
                       "stgCurValU.i = " ++ fun ++ "(" ++ arg0 "i" ++ ", " ++ arg1 "i" ++ ");\n"
     in return ((inline, No), [])
 
@@ -523,6 +506,10 @@ cgaltsInline env a@(Alts it alts name) boxed =
                   else concat codes)
        return ((inl, myypn), (phonyforward, phonyfun) : concat funcss)
 
+payloadArgType :: String -> String -> String
+payloadArgType name ty = if useArgType
+                         then name ++ "->payload[0].argType = " ++ ty ++ ";\n"
+                         else ""
 
 cgeNoInline
   :: [(Var, RVal)]
@@ -537,9 +524,7 @@ cgeNoInline env boxed (ecode, efunc) a@(Alts italts alts aname) =
               "Cont *" ++ contName ++ " = stgAllocCont( &it_" ++ aname ++ ");\n" ++
               "// dummy value for scrutinee, InfoTab initializes to unboxed\n" ++
               contName ++ "->payload[0].i = 0;\n" ++
-#if USE_ARGTYPE
-              contName ++ "->payload[0].argType = INT;\n" ++
-#endif
+              payloadArgType contName "INT" ++
               (if fvs italts == [] then
                  "// no FVs\n"
                else

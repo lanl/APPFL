@@ -39,7 +39,6 @@ import Util (deleteAll)
 type KCMap = Map.Map Var InfoTab
 
 
-
 propKnownCalls :: [Obj InfoTab] -> [Obj InfoTab]
 propKnownCalls objs =
   let
@@ -61,10 +60,7 @@ addDefsToKCMap defs env =
     env' = foldr f env defs
   in
     -- fix it
-    case env == env' of
-     True -> env
-     False -> addDefsToKCMap defs env'
-
+    (if env == env' then env else addDefsToKCMap defs env')
 
 propCallsObj :: KCMap -> Obj InfoTab -> Obj InfoTab
 propCallsObj env o = case o of
@@ -143,7 +139,7 @@ instance SetHA (Obj InfoTab) where
   getHA o = case o of
     FUN{e}   -> getHA e
     THUNK{e} -> getHA e
-    _ -> error $ "DAnalysis.getHA " ++ (show $ pprint o)
+    _ -> error $ "DAnalysis.getHA " ++ show (pprint o)
 
 instance SetHA (Expr InfoTab) where
   setHA fmp e = case e of
@@ -196,7 +192,7 @@ instance SetHA (Expr InfoTab) where
             case Map.lookup ev fmp of
              Just b -> b
              Nothing -> False
-          Just it -> error $ "Analysis.setHA (EFCall): unexpected infotab: " ++ (show $ pprint it)
+          Just it -> error $ "Analysis.setHA (EFCall): unexpected infotab: " ++ show (pprint it)
              
         nha = fnha -- and (fnha:map getHA eas') -- ignoring args for now
         emd' = emd {noHeapAlloc = nha}
@@ -204,7 +200,7 @@ instance SetHA (Expr InfoTab) where
 
     EPrimop{emd, eas} ->
       let eas' = map (setHA fmp) eas -- for consistency
-          nha = and $ map getHA eas -- for consistency
+          nha = all getHA eas -- for consistency
           emd' = emd {noHeapAlloc = True} -- hack, typechecker not working?
       in e { emd = emd' }
 
@@ -216,7 +212,7 @@ instance SetHA (Alts InfoTab) where
     let alts' = map (setHA fmp) alts
     in a { alts = alts' }
 
-  getHA Alts{alts} = and $ map getHA alts
+  getHA Alts{alts} = all getHA alts
 
 
 instance SetHA (Alt InfoTab) where

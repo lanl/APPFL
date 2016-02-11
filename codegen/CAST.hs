@@ -1,6 +1,4 @@
 {-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE CPP #-}
-#include "options.h"
 
 module CAST (
   CExpr,
@@ -40,10 +38,8 @@ import           Data.List.Split
 import           GHC.Int
 import           GHC.Float
 import           Language.C.Data.Ident
---import           Language.C.Data.InputStream
 import           Language.C.Data.Node
 import           Language.C.Syntax
-
 import           AST
 
 data Ty = EnumTy

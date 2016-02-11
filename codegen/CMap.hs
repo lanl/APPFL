@@ -6,11 +6,7 @@
 {-# LANGUAGE OverlappingInstances #-}
 #endif
 
-#include "options.h"
-
-----------------------------  Alternative interface to ConMap idea ----------------------
--- Originally had a container for TyCons with an internal Assoc list of Con --> Arity,
--- but I'm not sure if that's useful.
+#include "../options.h"
 
 module CMap
 (
@@ -197,7 +193,7 @@ instantiateDataConAt c cmap subms =
     in apply subst ms
 
 isInt :: String -> Bool
-isInt = and . (map isNumber)
+isInt = all isNumber
 
 -- Pending
 isBuiltInType :: Con -> Bool
@@ -221,7 +217,7 @@ instance {-# OVERLAPPING #-} Show CMap where
 instance PPrint CMap where
   pprint m =
     let
-      f (con, tyc) = text con <+> arw $+$ (nest 4 $ tyDoc tyc)
+      f (con, tyc) = text con <+> arw $+$ nest 4 (tyDoc tyc)
       tyDoc (TyCon b n vs dcs) = text "TyCon name:" <+> text n $+$
                                  text "boxed:" <+> boolean b $+$
                                  text "TyVars:" <+> listText vs $+$

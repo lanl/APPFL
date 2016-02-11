@@ -1,4 +1,3 @@
-{-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE NamedFieldPuns    #-}
 
@@ -78,8 +77,7 @@ data Def a = ObjDef (Obj a)
 data TyCon = TyCon Bool Con [TyVar] [DataCon]
              deriving(Eq,Show)
              
--- Boxed True: c_x \tau_x1 .. \tau_xa_1
--- Boxed False: c_x# \tau_x1 .. \tau_xa_1
+--  c_x \tau_x1 .. \tau_xa_1
 data DataCon = DataCon Con [Monotype]
                deriving(Eq,Show)
 
@@ -92,7 +90,6 @@ data Polytype = PPoly [TyVar] Monotype
 data Monotype = MVar TyVar
               | MFun Monotype Monotype
               | MCon Bool Con [Monotype]
---              | MPrim BuiltinType
               | MPVar TyVar -- should be used only in BU.hs
               | MPhony
                 deriving(Eq,Ord)
@@ -106,7 +103,6 @@ isBoxed m = case m of
   MVar{}     -> True -- polymorphic
   MFun{}     -> True -- expr / obj :: MFun --> PAP created --> boxed
   MCon b _ _ -> b
---  MPrim{}    -> False
   MPVar{}    -> True
   m          -> error $ "ADT.isBoxed called with " ++ show m
   
@@ -132,7 +128,6 @@ boxMTypes tycons =
                        in MCon bxt c $ map setMtypes mts
                      MFun mts1 mts2 -> MFun (setMtypes mts1) (setMtypes mts2)
                      MVar{} -> m
---                     MPrim{} -> m
                      _ -> error $ "CMap.cMapTyCons matching bad Monotype: " ++ show m
                      
   in map mapFunc tycons -- don't need built-ins in TyCon list (?)
@@ -175,7 +170,7 @@ getDataCons (TyCon _ _ _ cons) = cons
 
 instance Show Polytype where
     show (PPoly [] m) = show m
-    show (PPoly xs m) = "forall " ++ (intercalate "," xs) ++ "." ++ show m
+    show (PPoly xs m) = "forall " ++ intercalate "," xs ++ "." ++ show m
     show (PMono m) = show m
 
 instance Show Monotype where
@@ -186,8 +181,7 @@ instance Show Monotype where
     show (MCon bxt con ms) = con ++
                              (if bxt
                               then "[B] "
-                              else "[U] ") ++ intercalate " " (map show ms)
---    show (MPrim p) = show p
+                              else "[U] ") ++ unwords (map show ms)
     show MPhony = "MPhony"
 
 --------------- ADT Pretty Printing -----------------------
@@ -200,9 +194,6 @@ instance Unparse Monotype where
   unparse (MFun m1 m2) = unparse m1 <+> arw <+> unparse m2
   unparse (MCon b c ms) = (if null ms then (empty <>) else parens)
                           (text c <+> hsep (map unparse ms))
---  unparse (MPrim p) = case p of
---    UBInt    -> text "Int#"
---    UBDouble -> text "Double#"
   unparse m = error $ "ADT.unparse (Monotype) m=" ++ show m
 
   
@@ -222,7 +213,7 @@ instance Unparse TyCon where
         text name <+> hsep (map text vars) <+> equals
 
       sepr = bar <> text " "
-      ind = (length $ show lh) + 1
+      ind = length (show lh) + 1
       rh = nest ind
            (unparse d $$
             nest (-2) (vcat $ prepunctuate sepr $ map unparse ds))
@@ -252,7 +243,6 @@ instance PPrint Monotype where
                    (text (if b then "boxed" else "unboxed") <+>
                     text c $+$
                     nest 2 (vcat $ map pprint ms))
---    MPrim p -> text "MPrim" <> braces (pprint p)
     MPVar v -> text "MPVar" <> braces (text v)
     MPhony -> text "MPhony"
     

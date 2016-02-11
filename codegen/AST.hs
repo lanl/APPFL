@@ -1,7 +1,7 @@
-{-# LANGUAGE
-NamedFieldPuns,
-RecordWildCards,
-FlexibleInstances #-}
+{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE NamedFieldPuns    #-}
+{-# LANGUAGE RecordWildCards   #-}
+
 module AST (
   Var,
   Con,
@@ -11,7 +11,6 @@ module AST (
   Alts(..),
   Obj(..),
   Primop(..),
---  BuiltinType(..),
   rmPrelude,
   primopTab,
   show,
@@ -24,15 +23,7 @@ import PPrint
 import Data.List (find, (\\))
 import Data.Int as Int (Int64)
 
-
 --  See Parser.hs for grammar
-
-
--- not really the place for this, maybe need to factor
--- the common types into a module
---data BuiltinType = UBInt
---                 | UBDouble
---                   deriving (Eq,Show,Ord)
 
 type Var = String
 type Con = String
@@ -78,7 +69,7 @@ data Alt a = ACon {amd :: a, ac :: Con, avs :: [Var], ae :: Expr a}
 
 projectAtoms [] = []
 projectAtoms (EAtom{ea}:as) = ea:projectAtoms as
-projectAtoms (a:as) = error $ "InfoTab.projectAtoms: non-EAtom"
+projectAtoms (a:as) = error "InfoTab.projectAtoms: non-EAtom"
 
 -- when calculating free variables we need an enclosing environment that
 -- includes the known primops.  This will allow proper scoping.  As such
@@ -102,9 +93,7 @@ data Primop = Piadd -- Int -> Int -> Int
             | Pige
 
             | Pineg -- Int -> Int
-
-            -- the following are deprecated
-            | PintToBool
+            | Pinvalid
               deriving(Eq,Show, Ord)
 
 primArity op = case op of
@@ -129,10 +118,7 @@ primopTab =
      ("ineg_h",   Pineg),
 
      ("imin_h",   Pimax),
-     ("imax_h",   Pimin),
-
-     -- the following are deprecated
-     ("intToBool_h", PintToBool)
+     ("imax_h",   Pimin)
     ]
 
 
@@ -183,7 +169,7 @@ rmPreludeLess keeps =
 stgPrimName p =
   case find ((==p).snd) primopTab of
    Nothing -> error $ "primop lookup failed for " ++ show p
-   Just x -> reverse ('#' : (drop 2 $ reverse $ fst x))
+   Just x -> reverse ('#' : drop 2 (reverse $ fst x))
      
 instance Unparse Atom where
   unparse (Var v)  = text v
@@ -199,7 +185,7 @@ instance Unparse Primop where
 instance Unparse a => Unparse (Alt a) where
   unparse ACon{amd, ac, avs, ae} =
     bcomment (unparse amd) $+$
-    text ac <+> (hsep $ map text avs) <+> arw <+> unparse ae
+    text ac <+> hsep (map text avs) <+> arw <+> unparse ae
 
   unparse ADef{amd, av, ae} =
     bcomment (unparse amd) $+$
@@ -208,7 +194,7 @@ instance Unparse a => Unparse (Alt a) where
 instance Unparse a => Unparse (Alts a) where
   unparse Alts{altsmd, alts} = -- Note aname field is *not* in use here
     bcomment (unparse altsmd) $+$
-    (vcat $ punctuate semi $ map unparse alts)
+    vcat (punctuate semi $ map unparse alts)
 
 instance Unparse a => Unparse (Expr a) where
   unparse EAtom{emd, ea} =
@@ -217,40 +203,40 @@ instance Unparse a => Unparse (Expr a) where
 
   unparse EFCall{emd, ev, eas} =
     bcomment (unparse emd) $+$
-    text ev <+> (hsep $ map unparse eas)
+    text ev <+> hsep (map unparse eas)
 
   unparse EPrimop{emd, eprimop, eas} =
     bcomment (unparse emd) $+$
-    unparse eprimop <+> (hsep $ map unparse eas)
+    unparse eprimop <+> hsep (map unparse eas)
 
   unparse ELet{emd, edefs, ee} =
     bcomment (unparse emd) $+$
     text "let" <+> lbrace $+$
-    (nest 2 $ vcat $ punctuate semi $ map unparse edefs) <> rbrace $+$
+    nest 2 (vcat $ punctuate semi $ map unparse edefs) <> rbrace $+$
     text "in" <+> unparse ee
 
   unparse ECase{emd, ee, ealts} =
     bcomment (unparse emd) $+$
     text "case" <+> unparse ee <+> text "of" <+> lbrace $+$
-    (nest 2 $ unparse ealts) <> rbrace
+    nest 2 (unparse ealts) <> rbrace
 
 
 instance Unparse a => Unparse (Obj a) where
   unparse FUN{omd, vs, e, oname} =
     bcomment (unparse omd) $+$
     text oname <+> equals <+> text "FUN" <>
-    parens ((hsep $ map text vs) <+> arw $+$ nest ident (unparse e))
-    where ident = length vs + (sum $ map length vs) -- aligns expr with arrow
+    parens (hsep (map text vs) <+> arw $+$ nest ident (unparse e))
+    where ident = length vs + sum (map length vs) -- aligns expr with arrow
 
   unparse PAP{omd, f, as, oname} =
     bcomment (unparse omd) $+$
     text oname <+> equals <+> text "PAP" <>
-    parens (text f <+> (hsep $ map unparse as))
+    parens (text f <+> hsep (map unparse as))
 
   unparse CON{omd, c, as, oname} =
     bcomment (unparse omd) $+$
     text oname <+> equals <+> text "CON" <>
-    parens (text c <+> (hsep $ map unparse as))
+    parens (text c <+> hsep (map unparse as))
 
   unparse THUNK{omd, e, oname} =
     bcomment (unparse omd) $+$
@@ -350,7 +336,7 @@ instance (PPrint a) => PPrint (Expr a) where
                    nest 2
                    (text "function:" <+> text ev $+$
                     -- 7.9 changed, grab atoms from eas (same in primop below)
-                    text "args:" <+> (brackets $ vcat $ punctuate comma $ map pprint eas) $+$
+                    text "args:" <+> brackets (vcat $ punctuate comma $ map pprint eas) $+$
                     text "metadata:" $+$
                     nest 2 (pprint emd)
                    )
@@ -359,7 +345,7 @@ instance (PPrint a) => PPrint (Expr a) where
                    (text "EPrimop:" $+$
                     nest 2
                     (text "primop:" <+> pprint eprimop $+$
-                     text "args:" <+> (brackets $ vcat $ punctuate comma $ map pprint eas) $+$
+                     text "args:" <+> brackets (vcat $ punctuate comma $ map pprint eas) $+$
                      text "metadata" $+$
                      nest 2 (pprint emd)
                     )
@@ -429,7 +415,7 @@ instance PPrint Atom where
     LitL l -> text "LitL" <> braces (text $ show l)
     LitD d -> text "LitD" <> braces (double d)
     LitC c -> text "LitC" <> braces (text c)
-    a -> error $ "AST.pprint (Atom): not expecting Atom - " ++ (show a)
+    a -> error $ "AST.pprint (Atom): not expecting Atom - " ++ show a
 
 instance PPrint Primop where
   pprint = unparse

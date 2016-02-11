@@ -7,7 +7,7 @@
 {-# LANGUAGE TupleSections         #-}
 
 {-# LANGUAGE CPP #-}
-#include "options.h"
+#include "../options.h"
 
 module InfoTab(
   InfoTab(..),
@@ -28,6 +28,7 @@ import PPrint
 import AST
 import ADT
 import CMap
+import Options
 import Data.Maybe
 import Data.List(nub,(\\),intercalate)
 import Data.List.Split
@@ -482,13 +483,14 @@ showITType _ = "sho"
 
 -- C AST version
 #if USE_CAST
+  
+cInfoTabHeader :: [CInitializerMember]  
+cInfoTabHeader = [cStructMember CallTy "pi" "PI" | useInfoTabHeader]
+
 cInfoTab :: InfoTab -> Maybe CExtDecl
 cInfoTab it@(ITFun {}) = Just (
     cInfoTabStruct (name it)
-        [cStructMember StringTy "name" (name it)
-#if DEBUG_INFOTAB
-        ,cStructMember CallTy "pi" "PI"
-#endif
+        ([cStructMember StringTy "name" (name it)
         ,cStructMember PtrTy "entryCode" (entryCode it)
         ,cStructMember EnumTy "objType" "FUN"
         ,cStructMember IntTy "layoutInfo.payloadSize" (length $ fvs it)
@@ -496,28 +498,22 @@ cInfoTab it@(ITFun {}) = Just (
         ,cStructMember IntTy "layoutInfo.unboxedCount" (ufvc it)
         ,cStructMember IntTy "funFields.arity" (arity it)
         ,cStructMember EnumTy "funFields.trueEntryCode" (trueEntryCode it)
-        ])
+        ] ++ cInfoTabHeader))
 
 cInfoTab it@(ITPap {}) =  Just (
     cInfoTabStruct (name it)
-        [cStructMember StringTy "name" (name it)
-#if DEBUG_INFOTAB
-        ,cStructMember CallTy "pi" "PI"
-#endif
+        ([cStructMember StringTy "name" (name it)
         ,cStructMember PtrTy "entryCode" (entryCode it)
         ,cStructMember EnumTy "objType" "PAP"
         ,cStructMember IntTy "layoutInfo.payloadSize" (length (fvs it) + length (args it) + 1)
         ,cStructMember IntTy "layoutInfo.boxedCount" (bfvc it)
         ,cStructMember IntTy "layoutInfo.unboxedCount" (ufvc it)
         ,cStructMember EnumTy "funFields.trueEntryCode" (trueEntryCode it)
-        ])
+        ] ++ cInfoTabHeader))
 
 cInfoTab it@(ITCon {}) =  Just (
     cInfoTabStruct (name it)
-        [cStructMember StringTy "name" (name it)
-#if DEBUG_INFOTAB
-        ,cStructMember CallTy "pi" "PI"
-#endif
+        ([cStructMember StringTy "name" (name it)
         ,cStructMember PtrTy "entryCode" (entryCode it)
         ,cStructMember EnumTy "objType" "CON"
         ,cStructMember IntTy "layoutInfo.payloadSize" (arity it)
@@ -527,33 +523,27 @@ cInfoTab it@(ITCon {}) =  Just (
         ,cStructMember IntTy "conFields.arity" (arity it)
         ,cStructMember EnumTy "conFields.tag"  (luConTag (con it) (cmap it))
         ,cStructMember StringTy "conFields.conName" (con it)
-        ])
+        ] ++ cInfoTabHeader))
 
 cInfoTab it@(ITThunk {}) =  Just (
     cInfoTabStruct (name it)
-        [cStructMember StringTy "name" (name it)
-#if DEBUG_INFOTAB
-        ,cStructMember CallTy "pi" "PI"
-#endif
+        ([cStructMember StringTy "name" (name it)
         ,cStructMember PtrTy "entryCode" (entryCode it)
         ,cStructMember EnumTy "objType" "THUNK"
         ,cStructMember IntTy "layoutInfo.payloadSize" (1 + (length $ fvs it))
         ,cStructMember IntTy "layoutInfo.boxedCount" (bfvc it)
         ,cStructMember IntTy "layoutInfo.unboxedCount" (ufvc it)
-        ])
+        ] ++ cInfoTabHeader))
 
 cInfoTab it@(ITBlackhole {}) =  Just (
     cInfoTabStruct (name it)
-        [cStructMember StringTy "name" (name it)
-#if DEBUG_INFOTAB
-        ,cStructMember CallTy "pi" "PI"
-#endif
+        ([cStructMember StringTy "name" (name it)
         ,cStructMember PtrTy "entryCode" (entryCode it)
         ,cStructMember EnumTy "objType" "BLACKHOLE"
         ,cStructMember IntTy "layoutInfo.payloadSize" (0 :: Int)
         ,cStructMember IntTy "layoutInfo.boxedCount" (0 :: Int)
         ,cStructMember IntTy "layoutInfo.unboxedCount" (0 :: Int)
-        ])
+        ] ++ cInfoTabHeader))
 
 cInfoTab it@(ITAlts {}) =  Just (
     cCInfoTabStruct (name it)
@@ -581,12 +571,15 @@ showITs = error "showITs"
 -- text version
 #else
 
+infoTabHeader :: String
+infoTabHeader = if useInfoTabHeader
+                then "  .pi = PI(),\n"
+                else ""
+
 showIT :: InfoTab -> [Char]
 showIT it@(ITFun {}) =
     "InfoTab it_" ++ name it ++ " __attribute__((aligned(8))) = {\n" ++
-#if DEBUG_INFOTAB
-    "  .pi = PI(),\n" ++
-#endif
+    infoTabHeader ++
     "  .name                = " ++ show (name it) ++ ",\n" ++
     "  // fvs " ++ show (fvs it) ++ "\n" ++
     "  .entryCode           = &" ++ entryCode it ++ ",\n" ++
@@ -600,9 +593,7 @@ showIT it@(ITFun {}) =
 
 showIT it@(ITPap {}) =
     "InfoTab it_" ++ name it ++ " __attribute__((aligned(8))) = {\n" ++
-#if DEBUG_INFOTAB
-    "  .pi = PI(),\n" ++
-#endif
+    infoTabHeader ++
     "  .name                = " ++ show (name it) ++ ",\n" ++
     "  // fvs " ++ show (fvs it) ++ "\n" ++
     "  .entryCode           = &" ++ entryCode it ++ ",\n" ++
@@ -617,9 +608,7 @@ showIT it@(ITPap {}) =
 
 showIT it@(ITCon {}) =
     "InfoTab it_" ++ name it ++ " __attribute__((aligned(8))) = {\n" ++
-#if DEBUG_INFOTAB
-    "  .pi = PI(),\n" ++
-#endif
+    infoTabHeader ++
     "  .name                = " ++ show (name it) ++ ",\n" ++
     "  // fvs " ++ show (fvs it) ++ "\n" ++
     "  .entryCode           = &" ++ entryCode it ++ ",\n" ++
@@ -636,9 +625,7 @@ showIT it@(ITCon {}) =
 
 showIT it@(ITThunk {}) =
     "InfoTab it_" ++ name it ++ " __attribute__((aligned(8))) = {\n" ++
-#if DEBUG_INFOTAB
-    "  .pi = PI(),\n" ++
-#endif
+    infoTabHeader ++
     "  .name                = " ++ show (name it) ++ ",\n" ++
     "  // fvs " ++ show (fvs it) ++ "\n" ++
     "  .entryCode           = &" ++ entryCode it ++ ",\n" ++
@@ -650,9 +637,7 @@ showIT it@(ITThunk {}) =
 
 showIT it@(ITBlackhole {}) =
     "InfoTab it_" ++ name it ++ "  __attribute__((aligned(8))) = {\n" ++
-#if DEBUG_INFOTAB
-    "  .pi = PI(),\n" ++
-#endif
+    infoTabHeader ++
     "  .name                = " ++ show (name it) ++ ",\n" ++
     "  // fvs " ++ show (fvs it) ++ "\n" ++
     "  .entryCode           = &" ++ entryCode it ++ ",\n" ++

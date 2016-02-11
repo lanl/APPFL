@@ -9,10 +9,9 @@ module Util
   precalate,
   partPerm,
   groupAllBy,
-  lookupOrElse
+  lookupOrElse,
 )
 where
-
 
 import qualified Data.Map as Map
 import Data.List (nubBy, partition)

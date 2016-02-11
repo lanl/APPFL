@@ -216,27 +216,8 @@ heapchecker :: Bool -> String -> ([TyCon], [Obj InfoTab])
 heapchecker mhs inp  = let (tycons, objs) = knowncaller mhs inp
                        in (tycons, setHeapAllocs objs)
 
-{-
--- use MHS front end, pass through all MHS and STG transforms
--- and checks
-mhsCheckAll :: String -> ([TyCon],[Obj InfoTab])
-mhsCheckAll inp = let (ts0,os0,assums) = mhsSTGer inp
-                      os1 = setITs $
-                            setFVsObjs stgRTSGlobals $
-                            exhaustCases (toCMap ts0) os0
-                      (tsF, os2) = setCMaps ts0 os1
-                      osF = setHeapAllocs $
-                            propKnownCalls $
-                            orderFVsArgs $
-                            hmstgAssums os2 assums
-                  in (tsF, osF)
--}
-
-
 printObjsVerbose :: ([TyCon], [Obj InfoTab]) -> IO ()
 printObjsVerbose (tycons, objs) = print $ objListDoc objs
-
-
 
 tester :: (String -> a) -> (a -> String) -> FilePath -> IO ()
 tester tfun sfun infile =
