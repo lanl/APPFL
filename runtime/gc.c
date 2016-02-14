@@ -10,9 +10,6 @@
 #include "options.h"
 
 
-#define EXTRASTART() PRINTF( "EXTRA check file %s line %d\n", __FILE__, __LINE__)
-#define EXTRAEND() PRINTF( "EXTRA check succeeded %s %d\n", __FILE__, __LINE__)
-
 static void *scanPtr, *freePtr;
 
 void *getToPtr() {return toPtr;}
@@ -57,34 +54,28 @@ PtrOrLiteral updatePtrByValue (PtrOrLiteral f) {
   assert(mayBeBoxed(f) && "not a HEAPOBJ");
   if (f.op == NULL) return f;
   
-  Obj *p = deref2(f.op);  
+  Obj *p = deref2(f.op);
   if (isFrom(p)) {
     // from space
     if (isLSBset(p->_infoPtr)) {
       // from space && forwarding
-      if (DEBUG_GC) PRINTF( "update forward %s\n", p->ident);
+      log(LOG_SPEW, "update forward %s\n", p->ident);
       f.op = (Obj *)getInfoPtr(p);
       assert(isTo(f.op));
-#if USE_ARGTYPE
-      f.argType = HEAPOBJ;
-#endif
+      setArgType(&f, HEAPOBJ);
       return f;
     } else {
       // from space && !forwarding
       int size = getObjSize(p);
-      if (DEBUG_GC) {
-        PRINTF( "copy %s %s from->to size=%d\n", 
-		objTypeNames[getObjType(p)], p->ident, size);
-      }
+      log(LOG_SPEW, "copy %s %s from->to size=%d\n",
+                    objTypeNames[getObjType(p)], p->ident, size);
       memcpy(freePtr, p, size);
       if (EXTRA_CHECKS_GC) {
-	assert(isLSBset((InfoTab *)freePtr) == 0 && "gc: bad alignment");
+	      assert(isLSBset((InfoTab *)freePtr) == 0 && "gc: bad alignment");
       }
       p->_infoPtr = setLSB((InfoTab *)freePtr);
       f.op = (Obj *)freePtr;
-#if USE_ARGTYPE
-      f.argType = HEAPOBJ;
-#endif
+      setArgType(&f, HEAPOBJ);
       freePtr = (char *)freePtr + size;
       return f;
     }
@@ -92,21 +83,17 @@ PtrOrLiteral updatePtrByValue (PtrOrLiteral f) {
     // to space
     assert(!isLSBset(p->_infoPtr));
     f.op = p;
-#if USE_ARGTYPE
-    f.argType = HEAPOBJ;
-#endif
+    setArgType(&f, HEAPOBJ);
     return f;
   } else if (isSHO(p)) {
     // SHO
     assert(!isLSBset(p->_infoPtr));
     f.op = p;
-#if USE_ARGTYPE
-    f.argType = HEAPOBJ;
-#endif
+    setArgType(&f, HEAPOBJ);
     return f;
   } else {
     assert(false && "bad ptr");
-    PRINTF( "bad ptr");  // if asserts are off
+    log(LOG_FATAL, "bad ptr");  // if asserts are off
     exit(1);
     return (PtrOrLiteral){.op = NULL};  // avoid dumb compiler warning/error
   }
@@ -119,7 +106,7 @@ void updatePtr(PtrOrLiteral *f) {
 void processObj(Obj *p) {
   if (p == NULL) return;
   size_t i;
-  if (DEBUG_GC) PRINTF( "processObj %s %s\n", objTypeNames[getObjType(p)], p->ident);
+  log(LOG_SPEW, "processObj %s %s\n", objTypeNames[getObjType(p)], p->ident);
 
   switch (getObjType(p)) {
   case FUN: {
@@ -137,19 +124,21 @@ void processObj(Obj *p) {
       // boxed free vars
       int start = startPAPFVsB(p);
       int end = endPAPFVsB(p);
-      PRINTF("  %d free variables\n", end - start);
+      log(LOG_SPEW, "  %d free variables\n", end - start);
       for (i = start; i < end; i++) {
         updatePtr(&p->payload[i]);
-      } 
-    } else { PRINTF("  no free variables\n");}
+      }
+    } else { log(LOG_SPEW, "  no free variables\n");}
     Bitmap64 bm = p->payload[endPAPFVsU(p)].b;
     uint64_t mask = bm.bitmap.mask;
     int i = endPAPFVsU(p) + 1;
     for (int size = bm.bitmap.size; size != 0; size--, i++, mask >>= 1) {
       if (mask & 0x1UL) {
-	PRINTF("  call updatePtr boxed payload[%d]\n", i);
-	updatePtr(&p->payload[i]);
-      } else PRINTF("  don't call updatePtr unboxed\n");
+      	log(LOG_SPEW, "  call updatePtr boxed payload[%d]\n", i);
+      	updatePtr(&p->payload[i]);
+      } else {
+        log(LOG_SPEW, "  don't call updatePtr unboxed\n");
+      }
     }
     break;
   }
@@ -179,7 +168,7 @@ void processObj(Obj *p) {
     break;
 
   default:
-    PRINTF( "gc: bad obj. type %d %s", getObjType(p),
+    log(LOG_ERROR, "gc: bad obj. type %d %s", getObjType(p),
         objTypeNames[getObjType(p)]);
     assert(false);
   }
@@ -187,52 +176,50 @@ void processObj(Obj *p) {
 
 void processCont(Cont *p) {
   int contType = getContType(p);
-  assert(contType > PHONYSTARTCONT && 
+  assert(contType > PHONYSTARTCONT &&
 	 contType < PHONYENDCONT && "bad cont type");
-  if (DEBUG_GC) PRINTF("processCont %s %s\n", 
-		       contTypeNames[contType], p->ident);
+  log(LOG_SPEW, "processCont %s %s\n", contTypeNames[contType], p->ident);
   Bitmap64 bm = p->layout;
   uint64_t mask = bm.bitmap.mask;
   int size = bm.bitmap.size;
   if (contType != LETCONT) {
     for (int i = 0; i != size; i++, mask >>= 1) {
       if (EXTRA_CHECKS_GC) {
-    	EXTRASTART();
-    	if (mask & 0x1UL) {
-    	  if (!mayBeBoxed(p->payload[i])) {
-    	    PRINTF("gc: unexpected unboxed arg in CONT index %d\n", i);
-    	    assert(false);
+    	  EXTRASTART();
+    	  if (mask & 0x1UL) {
+    	    if (!mayBeBoxed(p->payload[i])) {
+            log(LOG_ERROR, "gc: unexpected unboxed arg in CONT index %d\n", i);
+    	      assert(false);
+    	    }
+    	  } else {
+          if (!mayBeUnboxed(p->payload[i])) {
+            log(LOG_ERROR, "gc: unexpected boxed arg in CONT index %d\n", i);
+    	      assert(false);
+    	    }
     	  }
-    	} else {
-    	  if (!mayBeUnboxed(p->payload[i])) {
-    	    PRINTF("gc: unexpected boxed arg in CONT index %d\n", i);
-    	    assert(false);
-    	  }
-    	}
-    	EXTRAEND();
+    	  EXTRAEND();
       }
       if (mask & 0x1UL) updatePtr(&p->payload[i]);
     }  // for
   } else { // LETCONT
     for (int i = 0; i != size; i++) {
       if (p->payload[i].op != NULL) {
-	if (EXTRA_CHECKS_GC) {
-	  EXTRASTART();
-	  if (!mayBeBoxed(p->payload[i])) {
-	    PRINTF("gc: unexpected unboxed arg in LETCONT index %d\n", i);
-	    assert(false);
-	  }
-	  EXTRAEND();
-	}
-	updatePtr(&p->payload[i]);
+	      if (EXTRA_CHECKS_GC) {
+	        EXTRASTART();
+	        if (!mayBeBoxed(p->payload[i])) {
+	           log(LOG_ERROR, "gc: unexpected unboxed arg in LETCONT index %d\n", i);
+	            assert(false);
+	        }
+	        EXTRAEND();
+	      }
+	      updatePtr(&p->payload[i]);
       }
     }
   }
 }
 
 void gc(void) {
-
-  // PRINTF( "GARBAGE COLLECTION DISABLED in gc.c/gc(void)\n"); return;
+  //log(LOG_INFO, "GARBAGE COLLECTION DISABLED in gc.c/gc(void)\n"); return;
 
   size_t before = stgHP - stgHeap;
 
@@ -242,9 +229,11 @@ void gc(void) {
     EXTRAEND();
   }
 
-  if (DEBUG_GC) {
-    showStgHeap();
-    PRINTF( "start gc heap size %lx\n", before);
+  if(LOG_LEVEL == LOG_SPEW) {
+    if(LoggingLevel == LOG_SPEW) {
+      showStgHeap();
+      log(LOG_SPEW, "start gc heap size %lx\n", before);
+    }
   }
 
   // add stgCurVal
@@ -259,8 +248,8 @@ void gc(void) {
     processObj(stgStatObj[i]);
   }
   //Cont. stack
-  for (Cont *p = (Cont *)stgSP; 
-       (char *)p < (char*) stgStack + stgStackSize; 
+  for (Cont *p = (Cont *)stgSP;
+       (char *)p < (char*) stgStack + stgStackSize;
        p = (Cont *)((char*)p + getContSize(p))) {
     processCont(p);
   }
@@ -289,14 +278,13 @@ void gc(void) {
     checkStgHeap();
     EXTRAEND();
   }
-  if (DEBUG_GC) {
-    PRINTF( "new heap\n");
-    showStgHeap();
-    size_t after = stgHP - stgHeap;
-    PRINTF( "end gc heap size %lx (change %lx)\n", after, before - after);
-    // suppress unused var warnings
-    (void)after;
-    (void)before;
+  
+  if(LOG_LEVEL == LOG_SPEW) {
+    if(LoggingLevel == LOG_SPEW) {
+      log(LOG_SPEW, "new heap\n");
+      showStgHeap();
+      size_t after = stgHP - stgHeap;
+      log(LOG_SPEW, "end gc heap size %lx (change %lx)\n", after, before - after);
+    }
   }
 }
-

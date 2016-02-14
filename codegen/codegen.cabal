@@ -8,7 +8,6 @@ executable stgc
   hs-source-dirs:  .,MHS
   main-is:         stgc.hs
   ghc-options:      -j -W -fno-warn-unused-binds -fno-warn-unused-matches -fno-warn-unused-imports 
-  include-dirs: ../build/include
   build-depends:   
                      base >= 4
                    , containers

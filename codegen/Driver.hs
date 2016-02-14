@@ -1,6 +1,6 @@
 {-# LANGUAGE CPP #-}
 
-#include "options.h"
+#include "../options.h"
 
 module Driver (
   tokenizer,

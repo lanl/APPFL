@@ -6,11 +6,12 @@ project(runtime)
   set(rt_hdrs args.h 
               cmm.h
               gc.h
+              log.h
               obj.h
               stg.h
               stgutils.h
-	      cruntime.h
-	      stgc.h
+    	      cruntime.h
+	          stgc.h
               stgapply.h
     )
 
