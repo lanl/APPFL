@@ -9,6 +9,7 @@
 #include "options.h"
 #include "cmm.h"
 #include "args.h"
+#include "log.h"
 
 void startCheck();
 
@@ -61,21 +62,21 @@ typedef union Bitmap64 {
 
 #if USE_ARGTYPE
 typedef enum {          // superfluous, for sanity checking
-  INT, 
+  INT,
   LONG,
   ULONG,
   FLOAT,
   DOUBLE,
   BITMAP,
-  HEAPOBJ 
+  HEAPOBJ
 } ArgType;
 #endif
 
 // heap objects
 typedef enum {
   PHONYSTARTOBJ,
-  FUN, 
-  PAP, 
+  FUN,
+  PAP,
   CON,
   THUNK,
   BLACKHOLE,
@@ -93,8 +94,8 @@ typedef enum {
   BADCONTTYPE4,
   BADCONTTYPE5,
   PHONYSTARTCONT,
-  UPDCONT, 
-  CASECONT, 
+  UPDCONT,
+  CASECONT,
   CALLCONT,
   STACKCONT,
   POPMECONT,
@@ -103,7 +104,7 @@ typedef enum {
 } ContType;
 const char *contTypeNames[PHONYENDCONT];
 
-// PtrOrLiteral -- literal value or pointer to heap object 
+// PtrOrLiteral -- literal value or pointer to heap object
 typedef struct {
 #if USE_ARGTYPE
   ArgType argType;        // superfluous, for sanity checking
@@ -148,7 +149,7 @@ struct _Obj {
 };
 
 struct _Cont {
-  CInfoTab *cInfoPtr;     // *going away* 
+  CInfoTab *cInfoPtr;     // *going away*
   CmmFnPtr entryCode;    // new
   ContType contType;
   Bitmap64 layout;        // new
@@ -218,7 +219,7 @@ struct _InfoTab {
 #if DEBUG_INFOTAB
   double pi;
 #endif
-  CmmFnPtr entryCode; 
+  CmmFnPtr entryCode;
   char name[32];  // for debugging
   ObjType objType; // kind of object, tag for union
   LayoutInfo layoutInfo;
@@ -232,7 +233,7 @@ struct _InfoTab {
 
 // CInfoTab
 struct _CInfoTab {
-  CmmFnPtr entryCode; 
+  CmmFnPtr entryCode;
   char name[32];  // for debugging
   ContType contType; // kind of continuation, tag for union
   CLayoutInfo cLayoutInfo;
@@ -257,15 +258,15 @@ extern size_t stgStatObjCount;
 extern Obj *stgStatObj[];
 
 void initStg();
-void showStgObj(Obj *);
-void showStgHeap();
-void showStgStack();
+void showStgObj(LogLevel priority, Obj *);
+void showStgHeap(LogLevel priority);
+void showStgStack(LogLevel priority);
 
-void showStgVal(PtrOrLiteral);
-void showStgObjPretty(Obj *p);
-void showStgObjDebug(Obj *p);
-void showStgValDebug(PtrOrLiteral v);
-void showStgValPretty(PtrOrLiteral v);
+void showStgVal(LogLevel priority,PtrOrLiteral);
+void showStgObjPretty(LogLevel priority, Obj *p);
+void showStgObjDebug(LogLevel priority, Obj *p);
+void showStgValDebug(LogLevel priority, PtrOrLiteral v);
+void showStgValPretty(LogLevel priority, PtrOrLiteral v);
 
 void checkStgHeap();
 void showIT(InfoTab *);
@@ -279,37 +280,37 @@ bool isFrom(void *p);
 bool isTo(void *p);
 
 // use LSB to say it is a FORWARD
-static inline InfoTab *setLSB(InfoTab *ptr) { 
-  return (InfoTab *)((uintptr_t)ptr | 1); 
+static inline InfoTab *setLSB(InfoTab *ptr) {
+  return (InfoTab *)((uintptr_t)ptr | 1);
 }
-static inline InfoTab *unsetLSB(InfoTab *ptr) { 
-  return (InfoTab *)((uintptr_t)ptr & ~1); 
+static inline InfoTab *unsetLSB(InfoTab *ptr) {
+  return (InfoTab *)((uintptr_t)ptr & ~1);
 }
-static inline bool isLSBset(InfoTab *ptr) { 
-  return (bool)((uintptr_t)ptr & 1); 
+static inline bool isLSBset(InfoTab *ptr) {
+  return (bool)((uintptr_t)ptr & 1);
 }
 
-static inline InfoTab *setLSB2(InfoTab *ptr) { 
+static inline InfoTab *setLSB2(InfoTab *ptr) {
   return (InfoTab*)((uintptr_t)ptr | 2);
 }
 
-static inline bool isLSB2set(InfoTab *ptr) { 
-  return (bool)((uintptr_t)ptr & 2); 
+static inline bool isLSB2set(InfoTab *ptr) {
+  return (bool)((uintptr_t)ptr & 2);
 }
 
 // for indirect
-//static inline InfoTab *setLSB3(InfoTab *ptr) { 
+//static inline InfoTab *setLSB3(InfoTab *ptr) {
 //  return (InfoTab *)((uintptr_t)ptr | 4);
 //}
 //static inline bool isLSB3set(InfoTab *ptr) { return (bool)((uintptr_t)ptr & 4); }
 
-static inline InfoTab *getInfoPtr(Obj *p)  { 
+static inline InfoTab *getInfoPtr(Obj *p)  {
   InfoTab *itp = (InfoTab *)((((uintptr_t)(p->_infoPtr)) >> 3) << 3);
 #if DEBUG_INFOTAB
   if (!isLSBset(p->_infoPtr))  // not forwarding
     assert(itp->pi == PI());
 #endif
-  return itp; 
+  return itp;
 }
 
 static inline CInfoTab *getCInfoPtr(Cont *p)  { return p->cInfoPtr; }
@@ -319,7 +320,7 @@ static inline ObjType getObjType(Obj *p) {
 
   InfoTab *ip = getInfoPtr(p);
 
-  ObjType iobjType; 
+  ObjType iobjType;
   switch (ip->objType) {
   case FUN:
     iobjType = isLSB2set(p->_infoPtr) ? PAP : FUN;
@@ -348,7 +349,7 @@ static inline ObjType getObjType(Obj *p) {
   ObjType objType = p->objType;
   if (objType != iobjType) {
     fprintf(stderr, "getting ObjType of %s aka %s, p->objType = %d, getInfoPtr(p)->objType = %d\n",
-	    p->ident, ip->name, 
+	    p->ident, ip->name,
 	    objType,
 	    iobjType);
     assert(false);

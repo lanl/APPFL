@@ -10,7 +10,7 @@
 
 // ****************************************************************
 // since we always jump through the top of the stg stack we need some
-// place to go when we're done this continuation is special, dropping 
+// place to go when we're done this continuation is special, dropping
 // from stg land back to cmm land via RETURN0() rather than STGRETURN(0)
 
 Obj *derefPoL(PtrOrLiteral f) {
@@ -40,10 +40,10 @@ FnPtr stg_case_not_exhaustiveP() {
   Cont *stg_sc = stgGetStackArgp();
   //  PtrOrLiteral self = stg_sc->payload[0];
   PtrOrLiteral x    = stg_sc->payload[1];
-  fprintf(stderr, "stg_case_not_exhaustive_boxed: ");
-  showStgVal(x);
-  fprintf(stderr, "\n");
-  showStgHeap();
+  LOG(LOG_ERROR, "stg_case_not_exhaustive_boxed: ");
+  showStgVal(LOG_ERROR, x);
+  LOG(LOG_ERROR, "\n");
+  showStgHeap(LOG_ERROR);
   exit(0);
 }
 
@@ -73,8 +73,8 @@ FnPtr stg_case_not_exhaustiveN() {
   Cont *stg_sc = stgGetStackArgp();
   //  PtrOrLiteral self = stg_sc->payload[0];
   PtrOrLiteral x    = stg_sc->payload[1];
-  fprintf(stderr, "stg_case_not_exhaustive_unboxed: %" PRIx64 "\n", x.u);
-  showStgHeap();
+  LOG(LOG_ERROR, "stg_case_not_exhaustive_unboxed: %" PRIx64 "\n", x.u);
+  showStgHeap(LOG_ERROR);
   exit(0);
 }
 
@@ -100,22 +100,22 @@ Obj sho_stg_case_not_exhaustiveN = {
 };
 
 FnPtr stg_funcall() {
-  PRINTF("stg_funcall, returning self\n");
+  LOG(LOG_INFO, "stg_funcall, returning self\n");
   STGRETURN0();
 }
 
 FnPtr stg_papcall() {
-  PRINTF("top-level PAP call, returning self\n");
+  LOG(LOG_INFO, "top-level PAP call, returning self\n");
   STGRETURN0();
 }
 
 FnPtr stg_concall() {
-  PRINTF("stg_concall, returning self\n");
+  LOG(LOG_INFO, "stg_concall, returning self\n");
   STGRETURN0();
 }
 
 FnPtr stgBlackhole() {
-  PRINTF("stgBlackhole, exiting!\n");
+  LOG(LOG_ERROR, "stgBlackhole, exiting!\n");
   exit(0);
 }
 
@@ -134,7 +134,7 @@ InfoTab it_stgBlackhole __attribute__((aligned(8))) = {
 };
 
 FnPtr stgIndirect() {
-  PRINTF("stgIndirect, jumping through indirection\n");
+  LOG(LOG_INFO, "stgIndirect, jumping through indirection\n");
   stgCurVal = stgCurVal.op->payload[0]; // Obj takes self in stgCurVal
   STGJUMP0(getInfoPtr(stgCurVal.op)->entryCode);
 }
@@ -158,14 +158,14 @@ FnPtr stgUpdateCont() {
   assert(getContType(contp) == UPDCONT && "I'm not an UPDCONT!");
   PtrOrLiteral p = contp->payload[0];
   assert(mayBeBoxed(p) && "not a HEAPOBJ!");
-  PRINTF( "stgUpdateCont updating\n  ");
-  showStgObj(p.op);
-  PRINTF( "with\n  ");
-  showStgObj(stgCurVal.op);
+  LOG(LOG_INFO, "stgUpdateCont updating\n  ");
+  showStgObj(LOG_INFO, p.op);
+  LOG(LOG_INFO, "with\n  ");
+  showStgObj(LOG_INFO, stgCurVal.op);
   if (getObjType(p.op) != BLACKHOLE) {
-    PRINTF("but updatee is %s not a BLACKHOLE!\n", 
+    LOG(LOG_INFO, "but updatee is %s not a BLACKHOLE!\n",
 	    objTypeNames[getObjType(p.op)]);
-    showStgHeap();
+    showStgHeap(LOG_INFO);
     assert(getObjType(p.op) == BLACKHOLE);
   }
 
@@ -184,7 +184,7 @@ FnPtr stgUpdateCont() {
   // this is for displaying a fragmented heap
   memset((char*)p.op+newObjSize, 0, oldObjSize-newObjSize);
 
-  PRINTF("stgUpdateCont leaving...\n  ");
+  LOG(LOG_INFO, "stgUpdateCont leaving...\n  ");
   stgPopCont();
   // this returns stgCurVal, not the indirect, for efficiency
   STGRETURN0();
@@ -197,20 +197,20 @@ CInfoTab it_stgUpdateCont __attribute__((aligned(8))) =
     .cLayoutInfo.payloadSize = 1, // self
     .cLayoutInfo.boxedCount = 1,
     .cLayoutInfo.unboxedCount = 0,
-    //    .cLayoutInfo.bm = (Bitmap64) {.bitmap.mask = 0x1, 
+    //    .cLayoutInfo.bm = (Bitmap64) {.bitmap.mask = 0x1,
     //				  .bitmap.size = 1},
-    .cLayoutInfo.bm.bitmap.mask = 0x1, 
+    .cLayoutInfo.bm.bitmap.mask = 0x1,
     .cLayoutInfo.bm.bitmap.size = 1,
   };
 
 FnPtr fun_stgShowResultCont() {
-  PRINTF("done!\n");
+  LOG(LOG_INFO, "done!\n");
   stgPopCont();  // clean up--normally the job of the returnee
-  fprintf(stderr, "The answer is\n");
+  LOG(LOG_RESULT, "The answer is\n");
 #if USE_ARGTYPE
-  showStgVal(stgCurVal); stgCurVal.op = NULL;
+  showStgVal(LOG_RESULT, stgCurVal); stgCurVal.op = NULL;
 #else
-  showStgObj(stgCurVal.op); stgCurVal.op = NULL;
+  showStgObj(LOG_RESULT, stgCurVal.op); stgCurVal.op = NULL;
 #endif
   RETURN0();
 }
@@ -233,7 +233,7 @@ void stgThunk(PtrOrLiteral self) {
   strcpy(contp->ident, self.op->ident); //override default
   // can't do this until we capture the variables in a stack frame
   // self.op->infoPtr = &it_stgBlackHole;
-  PRINTF( "BLACKHOLING %s\n", self.op->ident);
+  LOG(LOG_INFO, "BLACKHOLING %s\n", self.op->ident);
 #if USE_OBJTYPE
   self.op->objType = BLACKHOLE;
 #endif
@@ -242,7 +242,7 @@ void stgThunk(PtrOrLiteral self) {
 }
 
 FnPtr stgStackCont() {
-  PRINTF("stgStackCont returning\n");
+  LOG(LOG_INFO, "stgStackCont returning\n");
   stgPopCont();
   STGRETURN0();  // return through continuation stack
 }
@@ -268,7 +268,7 @@ CInfoTab it_stgLetCont __attribute__((aligned(8))) =
   };
 
 FnPtr stgPopMeCont() {
-  PRINTF("stgPopMeCont returning\n");
+  LOG(LOG_INFO, "stgPopMeCont returning\n");
   stgPopCont();
   STGRETURN0();  // return through continuation stack
 }
@@ -298,7 +298,7 @@ void stgCaseToPopMe(Cont *contp) {
 
 FnPtr stgCallCont() {
   stgPopCont();
-  PRINTF("stgCallCont returning\n");
+  LOG(LOG_INFO, "stgCallCont returning\n");
   RETURN0();  // fall back to the cmm trampoline
 }
 
@@ -311,4 +311,3 @@ CInfoTab it_stgCallCont __attribute__((aligned(8))) =
     .cLayoutInfo.bm.bitmap.mask = 0x0,   // shouldn't be using this
     .cLayoutInfo.bm.bitmap.size = 0,  // shouldn't be using this
   };
-

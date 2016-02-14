@@ -22,19 +22,12 @@
 #define OBJ_ALIGNM1 7
 
 /* log level defined in log.h */
-#define LOG_LEVEL 5 
+#define LOG_LEVEL 7
 
 /* if 1 extra gc() checks */
 #define EXTRA_CHECKS_GC 1
 
 /* if 1 initiate GC with every object allocation */
 #define ALLOC_GC 1
-
-/* ghc cpp doesn't like varargs */
-/* define PRINTF(...) */
-/* define PRINTF(...) fprintf (stderr, __VA_ARGS__) */
-#if __STDC__
-#define PRINTF(...) fprintf (stderr, __VA_ARGS__)
-#endif
 
 #endif

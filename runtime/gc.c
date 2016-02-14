@@ -59,7 +59,7 @@ PtrOrLiteral updatePtrByValue (PtrOrLiteral f) {
     // from space
     if (isLSBset(p->_infoPtr)) {
       // from space && forwarding
-      log(LOG_SPEW, "update forward %s\n", p->ident);
+      LOG(LOG_SPEW, "update forward %s\n", p->ident);
       f.op = (Obj *)getInfoPtr(p);
       assert(isTo(f.op));
       setArgType(&f, HEAPOBJ);
@@ -67,7 +67,7 @@ PtrOrLiteral updatePtrByValue (PtrOrLiteral f) {
     } else {
       // from space && !forwarding
       int size = getObjSize(p);
-      log(LOG_SPEW, "copy %s %s from->to size=%d\n",
+      LOG(LOG_SPEW, "copy %s %s from->to size=%d\n",
                     objTypeNames[getObjType(p)], p->ident, size);
       memcpy(freePtr, p, size);
       if (EXTRA_CHECKS_GC) {
@@ -93,7 +93,7 @@ PtrOrLiteral updatePtrByValue (PtrOrLiteral f) {
     return f;
   } else {
     assert(false && "bad ptr");
-    log(LOG_FATAL, "bad ptr");  // if asserts are off
+    LOG(LOG_FATAL, "bad ptr");  // if asserts are off
     exit(1);
     return (PtrOrLiteral){.op = NULL};  // avoid dumb compiler warning/error
   }
@@ -106,7 +106,7 @@ void updatePtr(PtrOrLiteral *f) {
 void processObj(Obj *p) {
   if (p == NULL) return;
   size_t i;
-  log(LOG_SPEW, "processObj %s %s\n", objTypeNames[getObjType(p)], p->ident);
+  LOG(LOG_SPEW, "processObj %s %s\n", objTypeNames[getObjType(p)], p->ident);
 
   switch (getObjType(p)) {
   case FUN: {
@@ -124,20 +124,20 @@ void processObj(Obj *p) {
       // boxed free vars
       int start = startPAPFVsB(p);
       int end = endPAPFVsB(p);
-      log(LOG_SPEW, "  %d free variables\n", end - start);
+      LOG(LOG_SPEW, "  %d free variables\n", end - start);
       for (i = start; i < end; i++) {
         updatePtr(&p->payload[i]);
       }
-    } else { log(LOG_SPEW, "  no free variables\n");}
+    } else { LOG(LOG_SPEW, "  no free variables\n");}
     Bitmap64 bm = p->payload[endPAPFVsU(p)].b;
     uint64_t mask = bm.bitmap.mask;
     int i = endPAPFVsU(p) + 1;
     for (int size = bm.bitmap.size; size != 0; size--, i++, mask >>= 1) {
       if (mask & 0x1UL) {
-      	log(LOG_SPEW, "  call updatePtr boxed payload[%d]\n", i);
+      	LOG(LOG_SPEW, "  call updatePtr boxed payload[%d]\n", i);
       	updatePtr(&p->payload[i]);
       } else {
-        log(LOG_SPEW, "  don't call updatePtr unboxed\n");
+        LOG(LOG_SPEW, "  don't call updatePtr unboxed\n");
       }
     }
     break;
@@ -168,7 +168,7 @@ void processObj(Obj *p) {
     break;
 
   default:
-    log(LOG_ERROR, "gc: bad obj. type %d %s", getObjType(p),
+    LOG(LOG_ERROR, "gc: bad obj. type %d %s", getObjType(p),
         objTypeNames[getObjType(p)]);
     assert(false);
   }
@@ -178,7 +178,7 @@ void processCont(Cont *p) {
   int contType = getContType(p);
   assert(contType > PHONYSTARTCONT &&
 	 contType < PHONYENDCONT && "bad cont type");
-  log(LOG_SPEW, "processCont %s %s\n", contTypeNames[contType], p->ident);
+  LOG(LOG_SPEW, "processCont %s %s\n", contTypeNames[contType], p->ident);
   Bitmap64 bm = p->layout;
   uint64_t mask = bm.bitmap.mask;
   int size = bm.bitmap.size;
@@ -188,12 +188,12 @@ void processCont(Cont *p) {
     	  EXTRASTART();
     	  if (mask & 0x1UL) {
     	    if (!mayBeBoxed(p->payload[i])) {
-            log(LOG_ERROR, "gc: unexpected unboxed arg in CONT index %d\n", i);
+            LOG(LOG_ERROR, "gc: unexpected unboxed arg in CONT index %d\n", i);
     	      assert(false);
     	    }
     	  } else {
           if (!mayBeUnboxed(p->payload[i])) {
-            log(LOG_ERROR, "gc: unexpected boxed arg in CONT index %d\n", i);
+            LOG(LOG_ERROR, "gc: unexpected boxed arg in CONT index %d\n", i);
     	      assert(false);
     	    }
     	  }
@@ -207,7 +207,7 @@ void processCont(Cont *p) {
 	      if (EXTRA_CHECKS_GC) {
 	        EXTRASTART();
 	        if (!mayBeBoxed(p->payload[i])) {
-	           log(LOG_ERROR, "gc: unexpected unboxed arg in LETCONT index %d\n", i);
+	           LOG(LOG_ERROR, "gc: unexpected unboxed arg in LETCONT index %d\n", i);
 	            assert(false);
 	        }
 	        EXTRAEND();
@@ -219,7 +219,7 @@ void processCont(Cont *p) {
 }
 
 void gc(void) {
-  //log(LOG_INFO, "GARBAGE COLLECTION DISABLED in gc.c/gc(void)\n"); return;
+  //LOG(LOG_INFO, "GARBAGE COLLECTION DISABLED in gc.c/gc(void)\n"); return;
 
   size_t before = stgHP - stgHeap;
 
@@ -231,8 +231,8 @@ void gc(void) {
 
   if(LOG_LEVEL == LOG_SPEW) {
     if(LoggingLevel == LOG_SPEW) {
-      showStgHeap();
-      log(LOG_SPEW, "start gc heap size %lx\n", before);
+      showStgHeap(LOG_SPEW);
+      LOG(LOG_SPEW, "start gc heap size %lx\n", before);
     }
   }
 
@@ -281,10 +281,10 @@ void gc(void) {
   
   if(LOG_LEVEL == LOG_SPEW) {
     if(LoggingLevel == LOG_SPEW) {
-      log(LOG_SPEW, "new heap\n");
-      showStgHeap();
+      LOG(LOG_SPEW, "new heap\n");
+      showStgHeap(LOG_SPEW);
       size_t after = stgHP - stgHeap;
-      log(LOG_SPEW, "end gc heap size %lx (change %lx)\n", after, before - after);
+      LOG(LOG_SPEW, "end gc heap size %lx (change %lx)\n", after, before - after);
     }
   }
 }

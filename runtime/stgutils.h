@@ -6,6 +6,7 @@
 #include "gc.h"
 #include "string.h"
 #include "options.h"
+#include "log.h"
 
 #include <stdlib.h>
 
@@ -43,7 +44,7 @@ void stgPopContIfPopMe();
 // NP = number of PtrOrLiterals NO = Number of Objs
 #define STGHEAPAT(NP,NO) ((char*)stgHP - (NP*sizeof(PtrOrLiteral)) - (NO*sizeof(Obj)))
 
-// evaluate Object (not actual function) IN PLACE, 
+// evaluate Object (not actual function) IN PLACE,
 // this should probably only happen in stgApply
 #define STGEVAL(e)					     \
   do {							     \
@@ -52,13 +53,13 @@ void stgPopContIfPopMe();
   callCont->layout.bits = 0x0UL;			     \
   STGCALL0(getInfoPtr(stgCurVal.op)->entryCode);	     \
   if (getObjType(stgCurVal.op) == BLACKHOLE) {		     \
-    fprintf(stderr, "STGEVAL terminating on BLACKHOLE\n");   \
-    showStgVal(stgCurVal);				     \
+    LOG(LOG_ERROR, "STGEVAL terminating on BLACKHOLE\n");   \
+    showStgVal(LOG_ERROR, stgCurVal);				     \
     exit(0);						     \
   }							     \
   if (getObjType(stgCurVal.op) == THUNK) {		     \
-    fprintf(stderr, "THUNK at end of STGEVAL!\n");	     \
-    showStgVal(stgCurVal);				     \
+    LOG(LOG_ERROR, "THUNK at end of STGEVAL!\n");	     \
+    showStgVal(LOG_ERROR, stgCurVal);				     \
     assert(false);					     \
   }							     \
   GC();					\
@@ -70,13 +71,11 @@ void stgPopContIfPopMe();
   GC();								     \
   derefStgCurVal();						     \
   if (getObjType(stgCurVal.op) == BLACKHOLE) {			     \
-    fprintf(stderr, "STGJUMP terminating on BLACKHOLE\n");	     \
-    showStgVal(stgCurVal);					     \
+    LOG(LOG_ERROR, "STGJUMP terminating on BLACKHOLE\n");	     \
+    showStgVal(LOG_ERROR, stgCurVal);					     \
     exit(0);							     \
   }								     \
   STGJUMP0(getInfoPtr(stgCurVal.op)->entryCode);		     \
 } while (0)
 
 #endif
-
-

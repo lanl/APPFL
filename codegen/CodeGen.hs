@@ -116,7 +116,7 @@ cMain v =
             ,cCall "registerSOs" []
             ,cCallVars "CALL0_0" ["start"]
              ]
-      body = top ++ [cCallVars "showStgHeap" [] | v] ++ [cIntReturn 0]
+      body = top ++ [cCallVars "showStgHeap" ["LOG_DEBUG"] | v] ++ [cIntReturn 0]
 
   in cFun IntTy "" "main"
   [CFunDeclr (Right ([CDecl [CTypeSpec (CIntType undefNode)]
@@ -166,7 +166,7 @@ cgMain v = let top = "int main (int argc, char **argv) {\n" ++
                      "  registerSOs();\n" ++
                      "  CALL0_0(start);\n"
                bot = "  return 0;\n" ++ "}\n\n"
-  in if v then top ++ "  showStgHeap();\n  GC();\n" ++ bot else top ++ bot
+  in if v then top ++ "  showStgHeap(LOG_DEBUG);\n  GC();\n" ++ bot else top ++ bot
 
 registerSOs :: [Obj InfoTab] -> (String, String)
 registerSOs objs =
@@ -280,7 +280,7 @@ cgo env o@(FUN it vs e name) =
             "// " ++ show (ctyp it) ++ "\n" ++
             "// " ++ name ++ "(self, " ++ intercalate ", " vs ++ ")\n" ++
             "FnPtr fun_" ++ name ++ "() {\n" ++
-            "  fprintf(stderr, \"" ++ name ++ " here\\n\");\n" ++
+            "  LOG(LOG_INFO, \"" ++ name ++ " here\\n\");\n" ++
             "  PtrOrLiteral *" ++ argp ++
                  " = &(stgGetStackArgp()->payload[0]);\n" ++
                indent 2 inline ++
@@ -304,7 +304,7 @@ cgo env o@(THUNK it e name) =
       let func =
             "// " ++ show (ctyp it) ++ "\n" ++
             "FnPtr thunk_" ++ name ++ "() {\n" ++
-            "  fprintf(stderr, \"" ++ name ++ " here\\n\");\n" ++
+            "  LOG(LOG_INFO, \"" ++ name ++ " here\\n\");\n" ++
             "  // access free vars through frame pointer for GC safety\n" ++
             "  // is this really necessary???\n" ++
             "  Cont *stg_fp = stgAllocCallOrStackCont(&it_stgStackCont, 1);\n" ++
@@ -555,7 +555,7 @@ cgalts env (Alts it alts name) boxed =
       let (codeypns, funcss) = unzip codefuncs
       let (codes, ypns) = unzip codeypns
       let body =
-              "fprintf(stderr, \"" ++ name ++ " here\\n\");\n" ++
+              "LOG(LOG_INFO, \"" ++ name ++ " here\\n\");\n" ++
               "Cont *" ++ contName ++ " = stgGetStackArgp();\n" ++
               "// make self-popping\n" ++
               "stgCaseToPopMe(" ++ contName ++ ");\n" ++
