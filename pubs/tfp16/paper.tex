@@ -15,13 +15,19 @@
 %
 %mkd \mainmatter              % start of the contributions
 %
-\title{Strict Pure Functional Programming and Automatic Parallelization}
+\title{Strict Pure Functional Programming and Automatic Parallelization\\
+       (Project-in-progess Paper)}
 %
 \titlerunning{Automatic Parallelization}  % abbreviated title (for running head)
 %                                     also used for the TOC unless
 %                                     \toctitle is used
 %
-\author{Kei Davis\inst{1} \and Dean Prichard\inst{1} \and David Ringo\inst{1,2}}
+\author{Kei Davis\inst{1} \and 
+        Dean Prichard\inst{1} \and 
+        David Ringo\inst{1,2} \and
+        Loren Anderson\inst{1,3} \and
+        Jacob Marks\inst{1,4}\thanks{All contributors, past and present, are listed.}
+}
 %
 \authorrunning{Kei Davis et al.} % abbreviated author list (for running head)
 %
@@ -34,35 +40,380 @@
 \texttt{http://ccsweb.lanl.gov/\homedir kei/}
 \and
 University of New Mexico,
-Albuquerque, NM, USA}
+Albuquerque, NM, USA
+\and
+North Dakota State University,
+Fargo, North Dakota, USA
+\and 
+New Mexico Institute of Mining and Technology,
+Socorro, New Mexico, USA
+}
 
 \maketitle              % typeset the title of the contribution
 
+% moronic author listing code increments footnote counter
+\setcounter{footnote}{0}
+
 \begin{abstract}
 The trend is functional programming in scientific computing, and in particular
-strict (by default) functional programming, in various guises.  The project is
-the demonstration of a light-weight, higher-order, polymorphic,
-strict-by-default purely functional language implementation in which we can
-experiment with automatic parallelization strategies and varying degrees of
-default strictess.
+strict (by default) functional programming, in various guises.  Our project is
+the demonstration of a light-weight, higher-order, polymorphic pure functional
+language implementation in which we can experiment with automatic
+parallelization strategies and varying degrees of default strictness.
+Strictness prescribes the degree of potential parallelism, that is, we are not
+exploring speculative evaluation.
+
+\emph{Preliminary paper note: We are reporting work in progress.  At the time
+  of writing we have a complete serial implementation and are currently
+  developing the parallel runtime.  We expect to have preliminary results from
+  our parallel implementation by the time of the symposium.}
 
 \keywords{strict pure functional programming, automatic parallelization}
 
 \end{abstract}
 
 \section{Background and Motivation}
+The practice of highest-performance scientific computing (HPC) is, overall,
+highly conservative with respect to change.  Even as the US government commits
+to a push for exascale computing ($10^{18}$ FLOPS) within the next decade, a
+highly respected member of the HPC community recently stated ``Fortran is
+essential for exascale programming.''~\cite{Heroux16}.  Existing HPC codes run
+to hundreds of thousands of lines and complete rewrites are infeasible.  C++
+has become more common for new code starts, but their nature remains the same:
+huge codes with poor (or non-existent) encapsulation of side effects, and
+multiple levels of parallelism also poorly abstracted, especially at the
+thread (shared-memory) level.  Thread-level parallel efficiency can be poor
+and is explained by Amdahl's law because the parallel model is bulk synchronous.
 
-\section{Goals}
+\subsection{The trend: strict but still pure functional programming}
+There is a small but growing understanding that \emph{pure functional
+  semantics}, in some form, is essential to reining in the complexity of these
+ever-evolving scientific codes.  Such semantics are expressed in a number
+of ways as highlighted following.
+
+\subsubsection{Rely on programmer discipline.}
+Legacy Fortran scientific codes likely represent worst practices in state
+encapsulation, with most data global and accessible to all.  It is almost
+ironic, then, that of the mainstream high-performance scientific programming
+languages (Fortran, C, and C++), Fortran 95 was the first to introduce the
+\texttt{pure} function qualifier, and with enforcement by the compiler.
+Otherwise it is entirely up to the programmer to make functions composable
+and thread safe.  Here at LANL this approach is being used to good effect
+to clean up some legacy code bases.
+
+\subsubsection{Obey constraints prescribed by a parallel runtime system.}
+There are a number of parallel runtime systems that encourage (but cannot
+enforce) a pure functional style.  We will highlight Stanford's Legion
+runtime as an example~\cite{Bauer12}.
+
+In Legion, non-function-local data, or \emph{regions}, are requested from the
+runtime system.  Regions may be shared among \emph{tasks} (essentially C++
+functions), and each task registers its access (read, write, read/write, etc.)
+and coherency requirements for each region to which it will have access.
+Other than registered access to regions tasks must not access non-constant
+global data.  In serial execution these access requirements are notionally
+superfluous, but in parallel execution the runtime can dynamically calculate
+the dependency graph and relax the programmatically defined strict ordering of
+task execution.  Very high parallel efficiency has been demonstrated on extremely
+large computing systems~\cite{Bauer14}.  Here at LANL the Legion system is
+being strongly considered for a new large-scale C++ code effort.\footnote{
+It is interesting to note that the PI of the Legion project was previously a
+co-developer of a strict, arguably pure functional language
+implementation~\cite{AikenFL}.}
+
+\subsubsection{Use a pure functional language.}
+Some twenty years after the US Department of Energy laboratory complex was
+presented with the most performant and highly parallel implementation of a
+pure functional language to date~\cite{Davis96}, and collectively had no
+conceptual understanding of what it was, much less why it might be useful or
+important, there is a small number of laboratory HPC practioners who are
+developing an appreciation for pure functional programming in Haskell.  Still,
+they see their needs as different than other Haskell users: performance is
+paramount, unboxed arrays are a (perhaps \emph{the}) primary data structure,
+and laziness is more of a nuisance--even a serious hindrance--than a
+convenience, much less algorithmically essential in the sense of Bird's
+\emph{repmin}~\cite{Bird84} or Johnsson's general attribute
+grammars~\cite{Johnsson87}.
+
+A common complaint among these budding high-performance functional programmers
+is the need to get strictness just right: to remove space leaks,
+improve performance, get communication (e.g.\ MPI) and IO to work as they
+expect, and so on.  More specifically, they expect to be able to reason about
+space and time usage using their existing mental models. While they are
+happy to write code that is strongly reminiscent of the numerical examples in
+Hughes' classic piece (whether they've read it or not)~\cite{Hughes89},
+they would also be happy to write in a slightly modified style that does
+not require non-strictness---after all, that's how they've been thinking their
+entire careers.
+
+Much anecdotal evidence suggests that many others have similar difficulties
+with lazy (or non-strict) by default semantics, with the most telling recent
+concrete evidence being the push for, and realization of, the \texttt{Strict}
+and \texttt{StrictData} language extensions newly available in GHC 8.0.
+Quoting the documentation:
+\begin{quote}
+High-performance Haskell code (e.g. numeric code) can sometimes be littered
+with bang patterns, making it harder to read. The reason is that laziness
+isn't the right default in this particular code, but the programmer has no way
+to say that except by repeatedly adding bang patterns~\cite{strict-strictdata}.
+\end{quote}
+
+We claim, then, that there is a trend towards \emph{strict-by-default pure
+  functional programming}, whether as imposed by programmer discipline, a parallel
+runtime system (such as the aforementioned Legion, wherein the pure semantics
+at function granularity allows the runtime system to relax the nominal serial
+ordering), or the language itself (e.g.\ strict Haskell).
+
+Intel's TBB?  Cilk++?
+
+\subsection{Strictness and Parallelism}
+
+It is a trivial observation that given strict functional semantics, wherein
+function arguments may be safely evaluated before function evaluation, it is
+safe to evaluate the arguments, and the function, in parallel, and that this
+principle applies recursively in the (dynamic) expression tree (or graph).
+
+\section{Project and Goals}
+
+Our project is the light-weight implementation of a pure, higher-order,
+polymorphic, functional language and runtime system with which we can
+experiment with automatic parallelization strategies with degrees of language
+strictness ranging from lazy to fully strict.  Light-weight has several
+meanings or implications.  First and foremost it means that \emph{we are not
+  attempting to compete with ghc in any respect}.\footnote{We estimate that we
+  will have, to within an order of magnitude, one person-hour of available
+  development time for each person-year that ghc currently represents, or put
+  another way, one second for each hour, respectively.}
+
+\begin{itemize}
+\item The implementation must be feasible in terms of effort;
+\item The language must be strongly typed, implicitly or explicitly.  More
+  specifically, the language should explicitly support both Hindley-Milner
+  polymorphism and unboxed types~\cite{firstclass};
+\item Straighforward direct linkage with C, preferably without a sophisticated
+  foreign function interface, is essential;
+\item The language should be ``currying-friendly'' as described in the ``fast
+  curry'' paper~\cite{fastcurry};
+\item Choice of degree of strictness is easily selected;
+\item Sharing, in the sense of what ``lazy'' means vs.\ merely non-strict,
+  should be preserved for all degrees of strictness;
+\item Tail calling should be properly implemented, i.e., not as a trampoline;
+\item etc.
+\end{itemize}
+
+For feasibility, we restrict ourselves to shared-memory implicit parallelism,
+but distributed-memory parallelism should be straightforwardly realizable
+using e.g.\ MPI or POSIX sockets.
+
+\subsection{Varying degrees of strictness}
+
+First some words about terminology.  For all degrees of strictness sharing (as
+implied by lazy but not by non-strict) of heap-allocated objects is preserved
+we will not use the term \emph{lazy} and simply refer to strictness
+properties.  As is common we will use strict in an operational sense, meaning
+that argument(s) are evaluated before being passed in a function call.
+Similarly, when referring to language semantics we refer to the operational
+rather than denotational semantics.
+
+Greater strictness implies more opportunities for parallelism, possible losses
+or gains in space efficiency, and less expressiveness.  We seek to explore
+the interplay of all of these.
+
+ghc 8.0 gives three possibilities: conventional non-strict, constructor
+strict, and function- and constructor strict, but there are possible
+variations.  The obvious variation is function, but not constructor, strict.
+In Haskell the distinction between constructors and functions is somewhat
+blurred because constructors behave like functions (outside of pattern
+matching), but this need not be the case.  In STG---ghc's intermediate
+language---the distinction is clear: heap objects are explicitly constructed
+by \texttt{let} constructs in which constructor names are explicitly mentioned
+(not aliased); constructor names are not functions.
+
+Other possible variations concern the notional arity of the underlying
+function being applied.  This is readily explained in terms of the operation of the
+STG machine described next.
+
+In STG the arity of a function is syntactically defined as the number of
+manifest formal parameters, thus \texttt{id x = x} has by definition arity 1
+regardless of what type it might be dynamically ``instantiated'' at.  We distinguish
+\emph{application}, e.g.\ \texttt{f x y}, which is a syntactic notion, from
+actually calling a function. Thus \texttt{id id x} is an application of \texttt{id}
+to two arguments, but the underlying \emph{FUN} (user- or system- defined function)
+when actually called is given exactly one argument.
+
+In the eval-apply model, given application \texttt{f x y}, in the standard
+(non-strict) semantics \texttt{f} is first evaluated and the arity of the
+underlying \emph{FUN} (user- or system- defined function) or \emph{PAP}
+(partial application of a \emph{FUN}) is determined---in the case of
+\emph{PAP} the arity is that of the underlying \emph{FUN} less the number of
+arguments already provided.  If the arity is greater than two then a new
+\emph{PAP} is created with arguments \texttt{x} and \texttt{y} inserted and
+the new \emph{PAP} returned.  If the arity is equal to two then the underlying
+\emph{FUN} is tail-called with any previous argument (in case of \emph{PAP})
+and new arguments \texttt{x} and \texttt{y}.  If the arity is less than two
+(it must be at least one, so one in this case) the underlying \emph{FUN} is
+called-with-return with any previous argument (in case of \emph{PAP}) and new
+argument \texttt{x}, then the object returned applied to remaining argument
+\texttt{y}.
+
+Given application \texttt{f x y} when might \texttt{x} and \texttt{y} be
+evaluated?  In the non-strict semantics evaluation is on demand, after
+\texttt{f} has been evaluated, the underlying \emph{FUN} actually called
+(i.e., not just partially applied and wrapped up in a \emph{PAP}), and one of
+those arguments forced in subsequent evaluation (assuming that they weren't
+forced in the evaluation of \texttt{f} itself).  
+
+In a strict semantics one can come up with various evaluation orders, but
+excluding the absurd, as far as distinguishing termination properties goes
+these can be distilled down to two possibilities, namely whether on
+construction of a \emph{PAP} the (new) arguments are forced or not.  (An
+absurd strategy might force every second argument.)  These are in fact
+distinguishable because (in Haskell) the first argument to \texttt{seq} might
+evaluate to a \emph{PAP}.
+
+This then gives three reasonable operational modes that are strictly ordered
+in terms of termination properties: non-strict, fully strict---all arguments
+in an application are evaluated---and the intermediate in which only those
+arguments needed by a function call are evaluated.
+
+
+
+-- spell out STG syntax?
 
 \section{Design and Implementation}
 
-\section{Current Status and Expected Results (by the time of the symposium)}
+Our wish list sounds much like the ghc Haskell implementation, and indeed ghc
+is part of our master plan.  In short, our plan is to use ghc as our front-end
+to generate its intermediate form, STG, then escape to our system from there.
+There are various possible ways to accomplish the former: using ghc's option
+to dump STG as text (see Stuart's report~\cite{Stuart}), hacking ghc itself
+and, optionally, using ghc as a library.  We note that this approach has 
+a precedent in the aforementioned Nvidia research compiler.
+
+\subsection{STG to C}
+
+The back-end is written in Haskell and generates proper tail-calling C code;
+the runtime system is written in C/C++.  The system fairly faithfully
+implements the STG machine as described in Peyton-Jones and Marlow's ``fast
+curry'' paper~\cite{fastcurry} and dynamically illustrated by Pope's
+miniSTG~\cite{ministg} with the exception of the state transition rules which,
+of course, are different than those for lazy semantics.  Sharing is preserved.
+
+\subsection{Strictness}
+
+The STG machinery makes the choice of evaluation strategy easy to change, both
+in terms of function and constructor application.
+
+
+\section{Current Status, and Expected Results by the time of the symposium}
+
+No bridge from ghc STG to our STG yet.
+
+At the time of writing we have a complete serial implementation:  STG parser, type inferencer, code
+generator, and runtime system including a garbage collector.
+
+C stack, our stack.
+
+Mutual exclusion for garbage collector--heap check with every heap allocation.  In fact garbage collector
+can be invoked at any point in time except when populating a heap object immediately after its allocation.
+
+\subsection{Mini-Haskell}
+
+\subsection{Type system}
+
+We perform standard Hindley-Milner type inference and enforcement, augmented
+with built-in and user-defined unboxed types as described by Peyton-Jones and
+Launchbury's seminal work~\cite{unboxed}, but for unboxed types code
+generation is currently limited to built-in single-word (64-bit) or smaller
+types (e.g., \texttt{Int\#}, \texttt{UInt\#}, \texttt{Float\#}, \texttt{Double\#})
+and user-defined enumerations, e.g., \texttt{data unboxed Bool\# = False\# |
+  True\#}.
+
+\subsection{Test suite and testing}
+
+Extensive prelude.
+
+Test suite of several hundred small programs.
+
+Students learning Haskell and STG, writing Mini-Haskell and STG programs that
+serendipitously go into our automated testing suite which is partitioned
+according to our lattice of evaluation strategies (3 degrees of function
+strictness by two degrees of constructor strictness), which tells us how much
+non-strictness each program needs and something about the style in which
+programs are written.
+
+Continuous build system (Jenkins)
+
+
+\subsection{Parallel evaluation}
+
+Parallel runtime is being implemented following the ideas of~\cite{SPJs-many-papers}, thread pool,
+stack and heap for each thread, blah, blah.
+
+\section{Other Related Work}
+Nvidia research compiler.
+
+\section{Summary, Future Work, Conclusions?}
 
 
 %
 % ---- Bibliography ----
 %
 \begin{thebibliography}{5}
+
+\bibitem{Heroux}
+January 14, 2016
+Exascale Programming: Adapting What We Have Can (and Must) Work
+Michael A. Heroux, Sandia National Laboratories
+http://www.hpcwire.com/2016/01/14/24151/
+
+
+\bibitem{Davis96}
+MPP Parallel Haskell. 
+K. Davis. 
+Draft Proceedings Implementation of Functional Languages 1996 (IFL '96) LNCS
+1268, pp49-54, Bonn/Bad-Godesberg, Germany, LNCS 1268, Springer-Verlag.
+
+\bibitem{Bauer12} 
+Legion: Expressing Locality and Independence with Logical
+  Regions. M. Bauer, S. Treichler, E. Slaughter and A. Aiken. In Proceedings
+  of the Conference on Supercomputing, pages 1-11, November 2012.
+
+\bibitem{Bauer14} 
+Structure Slicing: Extending Logical Regions with Fields. M. Bauer, S. Treichler, E. Slaughter and A. Aiken. In Proceedings of the Conference on Supercomputing, pages 845-856, November 2014.
+
+\bibitem{AikenFL}
+A. Aiken, J.H. Williams, and E.L. Wimmers
+The FL Project:  The Design of a Functional Language
+(technical report not published elsewhere), September 1993.
+http://theory.stanford.edu/~aiken/publications/trs/FLProject.pdf
+
+\bibitem{Bird84}
+R. S. Bird, 
+Using circular programs to eliminate multiple traversals of data, 
+Acta Informatica, 21(3), 239-250 (1984).
+
+\bibitem{Johnsson87}
+Thomas Johnsson
+Attribute Grammars as a Functional Programming Paradigm
+Proc. of a conference on Functional programming languages and computer architecture
+Pages 154-173 
+Springer-Verlag London, UK ©1987 
+table of contents ISBN:0-387-18317-5
+
+\bibitem{Hughes89}
+J. Hughes,
+Why Functional Programming Matters,
+Computer Journal,
+32,
+2,
+98--107,
+1989.
+
+\bibitem{strict-strictdata}
+http://ghc.haskell.org/trac/ghc/wiki/StrictPragma
+
+[ghclib] GHC/As a library http://wiki.haskell.org/GHC/As\_a\_library
 
 \end{thebibliography}
 
