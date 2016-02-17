@@ -6,5 +6,8 @@ project(stgc_test)
 
   set(BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR})
 
+  # default log level result/fatal/error only.
+  set(RT_LOG_LEVEL 3)
+
   add_subdirectory(stg)
   add_subdirectory(mhs)

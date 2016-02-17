@@ -2,17 +2,19 @@
 // no header of this file's own for now
 #include <inttypes.h>
 #include <stdio.h>
+#include "log.h"
 #include "stg.h"
 #include "obj.h"
 #include "stdlib.h"
 #include "string.h"
 
-void showStgObj(Obj *p) {
-  showStgObjPretty(p);
+
+void showStgObj(LogLevel priority, Obj *p) {
+  showStgObjPretty(priority, p);
   // showStgObjDebug(Obj *p)
 }
-void showStgVal(PtrOrLiteral v) {
-  showStgValPretty(v);
+void showStgVal(LogLevel priority, PtrOrLiteral v) {
+  showStgValPretty(priority, v);
   // showStgValDebug(v);
 }
 
@@ -20,62 +22,62 @@ static const int showDepthLimit = 1000;
 static int depth;
 static Obj *stack[1000];
 
-void showStgObjRecDebug(Obj *p);
-void showStgObjDebug(Obj *p) {
+void showStgObjRecDebug(LogLevel priority, Obj *p);
+void showStgObjDebug(LogLevel priority, Obj *p) {
   depth = 0;
-  showStgObjRecDebug(p);
+  showStgObjRecDebug(priority, p);
 }
 
-void showStgObjRecPretty(Obj *p);
-void showStgObjPretty(Obj *p) {
+void showStgObjRecPretty(LogLevel priority, Obj *p);
+void showStgObjPretty(LogLevel priority,Obj *p) {
   depth = 0;
-  showStgObjRecPretty(p);
-  fprintf(stderr,"\n");
+  showStgObjRecPretty(priority, p);
+  LOG(priority,"\n");
 }
 
-void showStgCont(Cont *c) {
+void showStgCont(LogLevel priority, Cont *c) {
   ContType type = getContType(c);
   switch (type) {
   case UPDCONT:
-    fprintf(stderr,"UPDCONT  %s\n", c->ident);
+    LOG(priority, "UPDCONT  %s\n", c->ident);
     return;
 
   case CASECONT:
-    fprintf(stderr,"CASECONT %s\n", c->ident);
+    LOG(priority, "CASECONT %s\n", c->ident);
     return;
 
   case CALLCONT:
-    fprintf(stderr,"CALLCONT %s\n", c->ident);
+    LOG(priority, "CALLCONT %s\n", c->ident);
     return;
 
   case STACKCONT:
-    fprintf(stderr,"STACKCONT  %s\n", c->ident);
+    LOG(priority, "STACKCONT  %s\n", c->ident);
     return;
 
   case POPMECONT:
-    fprintf(stderr,"POPMECONT  %s\n", c->ident);
+    LOG(priority, "POPMECONT  %s\n", c->ident);
     return;
 
   case LETCONT:
-    fprintf(stderr,"LETCONT  %s\n", c->ident);
+    LOG(priority, "LETCONT  %s\n", c->ident);
     return;
 
   default:
-    fprintf(stderr,"showStgCont default case! %d %s\n", type, objTypeNames[type]);
+    LOG(LOG_ERROR, "showStgCont default case! %d %s\n", type, objTypeNames[type]);
     exit(0);
   }
 }
 
-void showStgObjRecPretty(Obj *p) {
+void showStgObjRecPretty(LogLevel priority, Obj *p) {
 
   if (p == NULL) {
-    fprintf(stderr, "NULL");
+    LOG(priority, "NULL");
     return;
   }
 
   // depth check first
   if (depth+1 >= showDepthLimit) {
-    fprintf(stderr, "******showStgObjRec depth exceeded\n");
+    LOG(LOG_ERROR, "******showStgObjRec depth exceeded\n");
     return;
   }
 
@@ -83,7 +85,7 @@ void showStgObjRecPretty(Obj *p) {
 
   for (int i=0; i != depth; i++) {
     if (p == stack[i]) {
-      fprintf(stderr, "((%s))", it.name);
+      LOG(priority, "((%s))", it.name);
       return;
     }
   }
@@ -94,14 +96,14 @@ void showStgObjRecPretty(Obj *p) {
       type != INDIRECT &&
       type != it.objType) {
     if (!(type == PAP && it.objType == FUN)) {
-      fprintf(stderr, "getObjType(p) = %s, it.objType = %s\n",
+      LOG(LOG_ERROR, "getObjType(p) = %s, it.objType = %s\n",
 	      objTypeNames[type], objTypeNames[it.objType]);
       assert(false);
     }
   }
   if (strcmp(it.name, p->ident)) {
     if(type != PAP) {
-      fprintf(stderr, "mismatch in infotab and object names \"%s\" != \"%s\"\n",
+      LOG(LOG_ERROR, "mismatch in infotab and object names \"%s\" != \"%s\"\n",
 	      it.name, p->ident);
       assert(false);
     }
@@ -109,106 +111,102 @@ void showStgObjRecPretty(Obj *p) {
 
   switch (type) {
   case PAP: {
-    fprintf(stderr, "%s = <%s>", p->ident, objTypeNames[type]);
+    LOG(priority, "%s = <%s>", p->ident, objTypeNames[type]);
     int start = startPAPFVsB(p);
     int div = endPAPFVsB(p);
     int end = endPAPFVsU(p);
-    fprintf(stderr, "[");
+    LOG(priority, "[");
     for (int i = start; i != end; i++ ) {
       if (i == div) fprintf(stderr, "|");
       PtrOrLiteral v = p->payload[i];
       if (mayBeBoxed(v) && mayBeUnboxed(v)) fprintf(stderr, "?");
       else if (mayBeBoxed(v)) fprintf(stderr, "B");
-           else fprintf(stderr, "U");
+           else LOG(priority, "U");
     }
-    fprintf(stderr, "][");
+    LOG(priority, "][");
     Bitmap64 bm = p->payload[end].b;
     int size = bm.bitmap.size;
     uint64_t mask = bm.bitmap.mask;
-    fprintf(stderr, "%d,%" PRIx64 ",", size, mask);
+    LOG(priority, "%d,%" PRIx64 ",", size, mask);
     for ( int i = 0; i != size; i++, mask >>= 1 ) {
       PtrOrLiteral v = p->payload[end + 1 + i];
       if (mask & 0x1) {
-	if (!mayBeBoxed(v)) fprintf(stderr, "!"); else fprintf(stderr, "B");
+	if (!mayBeBoxed(v)) LOG(priority, "!"); else LOG(priority, "B");
       } else {
-	if (!mayBeUnboxed(v)) fprintf(stderr, "!"); else fprintf(stderr, "U");
+	if (!mayBeUnboxed(v)) LOG(priority, "!"); else LOG(priority, "U");
       }
     }
-    fprintf(stderr, "]");
+    LOG(priority, "]");
     break;
   }
 
   case FUN:
   case THUNK:
   case BLACKHOLE: {
-    fprintf(stderr, "%s = <%s>", p->ident, objTypeNames[type]);
+    LOG(priority, "%s = <%s>", p->ident, objTypeNames[type]);
     break;
   }
 
   case CON:
-    fprintf(stderr, "%s = %s", p->ident, it.conFields.conName );
+    LOG(priority, "%s = %s", p->ident, it.conFields.conName );
     int arity = it.conFields.arity;
     if (arity > 0) {
-      if (arity > 1) fprintf(stderr, "(");
-      else fprintf(stderr, " ");
-      showStgValPretty(p->payload[0]);
+      if (arity > 1) LOG(priority, "(");
+      else LOG(priority, " ");
+      showStgValPretty(priority, p->payload[0]);
       for (int i = 1; i < arity; i++) {
-	    fprintf(stderr, ", ");
-	    showStgValPretty(p->payload[i]);
+	    LOG(priority, ", ");
+	    showStgValPretty(priority, p->payload[i]);
       }
       if (arity > 1) fprintf(stderr, ")");
     }
     break;
 
   case INDIRECT:
-    fprintf(stderr, "%s --> ", p->ident );
-    showStgObjRecPretty(p->payload[0].op);
+    LOG(priority, "%s --> ", p->ident );
+    showStgObjRecPretty(priority, p->payload[0].op);
     break;
 
   default:
-    fprintf(stderr,"********* default in showStgObj!\n");
+    LOG(LOG_ERROR,"********* default in showStgObj!\n");
     // exit(0);
   }
   depth--;
 }
 
-void showStgValPretty(PtrOrLiteral v) {
+void showStgValPretty(LogLevel priority, PtrOrLiteral v) {
 #if USE_ARGTYPE
   switch (v.argType) {
   case INT:
-#ifdef __clang__
-    fprintf(stderr,"%lld", v.i);
-#else
-    fprintf(stderr,"%ld", v.i);
-#endif
+    LOG(priority, "%" PRId64, v.i);
     break;
   case DOUBLE:
-    fprintf(stderr,"%f", v.d);
+    LOG(priority, "%f", v.d);
     break;
     //  case FLOAT:
     //    fprintf(stderr,"%f", v.f);
     //    break;
   case HEAPOBJ:
-    showStgObjRecPretty(v.op);
+    showStgObjRecPretty(priority, v.op);
     break;
   default:
-    fprintf(stderr,"undefined PtrOrLiteral.tag! tag=%d\n", v.argType);
+    LOG(LOG_FATAL, "undefined PtrOrLiteral.tag! tag=%d\n", v.argType);
     exit(1);
   }
 #endif
 }
 
 
-void showStgObjRecDebug(Obj *p) {
+void showStgObjRecDebug(LogLevel priority, Obj *p) {
 
   // depth check first
   if (depth+1 >= showDepthLimit) {
-    fprintf(stderr, "******showStgObjRec depth exceeded\n");
+    LOG(LOG_ERROR, "******showStgObjRec depth exceeded\n");
     return;
   }
   for (int i=0; i != depth; i++) {
     if (p == stack[i]) {
-      fprintf(stderr, "   ***cycle\n");
+      LOG(LOG_ERROR, "   ***cycle\n");
       return;
     }
   }
@@ -218,62 +216,62 @@ void showStgObjRecDebug(Obj *p) {
 
   InfoTab it = *(getInfoPtr(p));
   ObjType type = getObjType(p);
-  fprintf(stderr, "%s %s %s ", objTypeNames[type],
+  LOG(priority, "%s %s %s ", objTypeNames[type],
 	  objTypeNames[it.objType], it.name);
   switch (type) {
   case FUN:
-    fprintf(stderr,"\n");
+    LOG(priority, "\n");
     break;
 
   case PAP:
-    fprintf(stderr,"\n");
+    LOG(priority, "\n");
     break;
 
   case CON:
-    fprintf(stderr,"tag %d arity %d\n", it.conFields.tag, it.conFields.arity );
+    LOG(priority, "tag %d arity %d\n", it.conFields.tag, it.conFields.arity );
     for (int i = 0; i != it.conFields.arity; i++)
-      showStgValDebug(p->payload[i]);
+      showStgValDebug(priority, p->payload[i]);
     break;
 
   case THUNK:
-    fprintf(stderr,"\n");
+    LOG(priority, "\n");
     break;
 
   case BLACKHOLE:
-    fprintf(stderr,"\n");
+    LOG(priority, "\n");
     break;
 
   case INDIRECT:
-    fprintf(stderr,"INDIRECT to\n");
-    showStgObjRecDebug(p->payload[0].op);
+    LOG(priority, "INDIRECT to\n");
+    showStgObjRecDebug(priority, p->payload[0].op);
     break;
 
   default:
-    fprintf(stderr,"default in showStgObj!\n");
+    LOG(LOG_FATAL, "default in showStgObj!\n");
     exit(1);
   }
   depth--;
 }
 
-void showStgValDebug(PtrOrLiteral v) {
+void showStgValDebug(LogLevel priority, PtrOrLiteral v) {
 #if USE_ARGTYPE
   switch (v.argType) {
   case INT:
 #ifdef  __clang__
-    fprintf(stderr,"INT %lld\n", v.i);
+    LOG(priority, "INT %lld\n", v.i);
 #else
-    fprintf(stderr,"INT %ld\n", v.i);
+    LOG(priority, "INT %ld\n", v.i);
 #endif
     break;
   case DOUBLE:
-    fprintf(stderr,"DOUBLE %f\n", v.d);
+    LOG(priority, "DOUBLE %f\n", v.d);
     break;
   case HEAPOBJ:
-    fprintf(stderr,"HEAPOBJ %p ", v.op);
-    showStgObjRecDebug(v.op);
+    LOG(priority, "HEAPOBJ %p ", v.op);
+    showStgObjRecDebug(priority, v.op);
     break;
   default:
-    fprintf(stderr,"undefined PtrOrLiteral.tag!\n");
+    LOG(LOG_ERROR, "undefined PtrOrLiteral.tag!\n");
     exit(0);
   }
 #endif
@@ -291,8 +289,8 @@ void checkStgObjRec(Obj *p) {
   // following causes test symbolT10 to fail!!!
   if (!(isHeap(p) || isSHO(p))) {
     showObjSpaceInfo();
-    fprintf(stderr, "hc:  bad Obj location, object addr is %p, recursive depth %d\n", p, depth);
-    showStgObjRecPretty(p);
+    LOG(LOG_ERROR, "hc:  bad Obj location, object addr is %p, recursive depth %d\n", p, depth);
+    showStgObjRecPretty(LOG_ERROR, p);
     assert(false);
   }
 
@@ -307,7 +305,7 @@ void checkStgObjRec(Obj *p) {
 
   if (strcmp(it.name, p->ident)) {
     if (type != PAP) {
-      fprintf(stderr, "mismatch in infotab and object names \"%s\" != \"%s\"\n",
+      LOG(LOG_ERROR, "mismatch in infotab and object names \"%s\" != \"%s\"\n",
           it.name, p->ident);
       assert(false);
     }
@@ -363,10 +361,10 @@ void checkStgObjRec(Obj *p) {
       int i = endPAPFVsU(p) + 1;
       for (int size = bm.bitmap.size; size != 0; size--, i++, mask >>= 1) {
         if (mask & 0x1UL) {
-	  assert(mayBeBoxed(p->payload[i]) && "hc: unexpected unboxed arg in PAP");
-	} else {
-	  assert(mayBeUnboxed(p->payload[i]) && "hc: unexpected boxed arg in PAP");
-	}
+      	  assert(mayBeBoxed(p->payload[i]) && "hc: unexpected unboxed arg in PAP");
+      	} else {
+      	  assert(mayBeUnboxed(p->payload[i]) && "hc: unexpected boxed arg in PAP");
+      	}
       }
     } /* mkd gc */
     break;
@@ -412,15 +410,16 @@ void checkStgObjRec(Obj *p) {
 
 void checkStgObj(Obj *p) {
   depth = 0;
-  fprintf(stderr, "checkSTgObj \n");
-  showStgObjRecPretty(p);   fprintf(stderr, "\n");
+  LOG(LOG_INFO, "checkSTgObj \n");
+  showStgObjRecPretty(LOG_INFO, p);
+  LOG(LOG_INFO, "\n");
 
   checkStgObjRec(p);
 }
 
 void checkStgHeap() {
-  for (char *p = (char*) stgHeap; 
-       p < (char*) stgHP; 
+  for (char *p = (char*) stgHeap;
+       p < (char*) stgHP;
        p += getObjSize((Obj *) p)) {
     checkStgObj((Obj *) p);
   }
@@ -432,12 +431,12 @@ Obj * stgStatObj[100];
 
 //tmp hack!
 void *getToPtr();
-void showObjSpaceInfo() {
-  fprintf(stderr, "SHO range is %p to %p\n", 
-	  &stgStatObj[0], 
+void showObjSpaceInfo(LogLevel priority) {
+  LOG(priority, "SHO range is %p to %p\n",
+	  &stgStatObj[0],
 	  &stgStatObj[stgStatObjCount-1]);
-  fprintf(stderr, "heap range is %p to %p\n", stgHeap, stgHP);
-  fprintf(stderr, "heap toPtr is %p\n", getToPtr());
+  LOG(priority, "heap range is %p to %p\n", stgHeap, stgHP);
+  LOG(priority, "heap toPtr is %p\n", getToPtr());
 }
 
 bool isSHO(Obj *p) {
@@ -456,33 +455,31 @@ bool isTo(void *p) {
   return (p >= toPtr && (char *) p < (char *) toPtr + stgHeapSize / 2);
 }
 
-void showStgStack() {
-  fprintf(stderr,"\nSTG Stack:\n\n");
+void showStgStack(LogLevel priority) {
+  LOG(priority, "\nSTG Stack:\n\n");
   for (char *p = (char*)stgSP;
        p < (char*)stgStack + stgStackSize;
        p += getContSize((Cont *)p)) {
-     showStgCont((Cont *)p);
+     showStgCont(priority, (Cont *)p);
    }
 }
 
-void showStgHeap() {
+void showStgHeap(LogLevel priority) {
   //  return;
-  fprintf(stderr,"\nSTG static objects: \n\n");
+  LOG(priority, "\nSTG static objects: \n\n");
   for (int i = 0; i != stgStatObjCount; i++) {
-    showStgObj(stgStatObj[i]);
-    fprintf(stderr,"\n");
+    showStgObj(priority, stgStatObj[i]);
+    LOG(priority, "\n");
   }
 
-  fprintf(stderr,"\nSTG heap:\n\n");
+  LOG(priority, "\nSTG heap:\n\n");
   char *p = (char*)stgHeap;
   while (p < (char*)stgHP) {
-    showStgObj((Obj *)p);
+    showStgObj(priority, (Obj *)p);
     p += getObjSize((Obj *)p);
     while (p < (char*)stgHP && *((uintptr_t *)p) == 0) {
       p += sizeof(uintptr_t);
     }
   }
-
-  showStgStack();
+  showStgStack(priority);
 }
-
