@@ -56,8 +56,8 @@ const char *contTypeNames[] = {
   "CASECONT",
   "CALLCONT",
   "STACKCONT",
-  "LETCONT",
   "POPMECONT",
+  "LETCONT",
 };
 
 void startCheck() {
