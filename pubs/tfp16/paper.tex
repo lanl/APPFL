@@ -299,6 +299,17 @@ curry'' paper~\cite{fastcurry} and dynamically illustrated by Pope's
 miniSTG~\cite{ministg} with the exception of the state transition rules which,
 of course, are different than those for lazy semantics.  Sharing is preserved.
 
+Proper tail calling is achieved.  Because we maintain our own data and control
+(continuation) stack all generated C functions take no arguments and have return
+type void, and with a single exception are invoked in tail call position, both
+gcc and Clang/LLVM generate jumps instead of calls.  The exception is a convenience.
+As described in the fast curry paper we have a generic stgApply function that
+is used for applications of non-known functions, and known functions with
+a deficit or excess number of arguments.  The stgApply function takes as arguments
+the object (FUN, PAP, or THUNK) and its arguments, and if a THUNK, evaluates it
+with a call (rather than jump) to yield a FUN or PAP.  This allows us to implement
+a single stgApply function...can we split this?
+
 \subsection{Strictness}
 
 The STG machinery makes the choice of evaluation strategy easy to change, both
@@ -311,8 +322,6 @@ No bridge from ghc STG to our STG yet.
 
 At the time of writing we have a complete serial implementation:  STG parser, type inferencer, code
 generator, and runtime system including a garbage collector.
-
-C stack, our stack.
 
 Mutual exclusion for garbage collector--heap check with every heap allocation.  In fact garbage collector
 can be invoked at any point in time except when populating a heap object immediately after its allocation.
