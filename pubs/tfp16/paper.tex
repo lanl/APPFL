@@ -16,7 +16,7 @@
 %mkd \mainmatter              % start of the contributions
 %
 \title{Strict Pure Functional Programming and Automatic Parallelization\\
-       (Project-in-progess Paper)}
+       (New Project-in-progess Paper)}
 %
 \titlerunning{Automatic Parallelization}  % abbreviated title (for running head)
 %                                     also used for the TOC unless
@@ -63,10 +63,15 @@ parallelization strategies and varying degrees of default strictness.
 Strictness prescribes the degree of potential parallelism, that is, we are not
 exploring speculative evaluation.
 
-\emph{Preliminary paper note: We are reporting work in progress.  At the time
-  of writing we have a complete serial implementation and are currently
-  developing the parallel runtime.  We expect to have preliminary results from
-  our parallel implementation by the time of the symposium.}
+\emph{Preliminary paper note 1: We are reporting work in progress.  At the time
+  of writing we have a complete serial implementation, a primitive
+  proof-of-concept parallel implementation, and are currently developing a
+  more realistic parallel runtime.  We expect to have preliminary results from
+  our new parallel implementation by the time of the symposium.}
+
+\emph{Note 2:  While this does not qualify as a student paper, students (undergraduate!)
+have contributed considerably to this effort, and if accepted we plan to have one of these students
+present this paper.}
 
 \keywords{strict pure functional programming, automatic parallelization}
 
@@ -77,13 +82,17 @@ The practice of highest-performance scientific computing (HPC) is, overall,
 highly conservative with respect to change.  Even as the US government commits
 to a push for exascale computing ($10^{18}$ FLOPS) within the next decade, a
 highly respected member of the HPC community recently stated ``Fortran is
-essential for exascale programming.''~\cite{Heroux16}.  Existing HPC codes run
-to hundreds of thousands of lines and complete rewrites are infeasible.  C++
-has become more common for new code starts, but their nature remains the same:
-huge codes with poor (or non-existent) encapsulation of side effects, and
+essential for exascale programming.''~\cite{Heroux16} Existing US government
+laboratory HPC codes run to hundreds of thousands of lines and complete
+rewrites are infeasible.\footnote{A European consortium is anticipating
+  exascale computing as well~\cite{EUexascale}, but the authors are not
+  knowledgeable about the state of large-scale, non-USA HPC codes.}  C++ has
+become more common for new code starts, but their nature remains the same:
+huge codes with fair to non-existent encapsulation of side effects, and
 multiple levels of parallelism also poorly abstracted, especially at the
 thread (shared-memory) level.  Thread-level parallel efficiency can be poor
-and is explained by Amdahl's law because the parallel model is bulk synchronous.
+and is explained by Amdahl's law because the parallel model is bulk
+synchronous.
 
 \subsection{The trend: strict but still pure functional programming}
 There is a small but growing understanding that \emph{pure functional
@@ -299,16 +308,32 @@ curry'' paper~\cite{fastcurry} and dynamically illustrated by Pope's
 miniSTG~\cite{ministg} with the exception of the state transition rules which,
 of course, are different than those for lazy semantics.  Sharing is preserved.
 
+\subsubsection{Proper tail calls}
+
 Proper tail calling is achieved.  Because we maintain our own data and control
-(continuation) stack all generated C functions take no arguments and have return
-type void, and with a single exception are invoked in tail call position, both
-gcc and Clang/LLVM generate jumps instead of calls.  The exception is a convenience.
-As described in the fast curry paper we have a generic stgApply function that
-is used for applications of non-known functions, and known functions with
-a deficit or excess number of arguments.  The stgApply function takes as arguments
-the object (FUN, PAP, or THUNK) and its arguments, and if a THUNK, evaluates it
-with a call (rather than jump) to yield a FUN or PAP.  This allows us to implement
-a single stgApply function...can we split this?
+(continuation) stack all generated C functions take no arguments and have
+return type void, and with a single exception in the non-strict case are
+invoked in tail call positions, both gcc and Clang/LLVM generate jumps instead
+of calls for C calls in tail call positions.
+
+The exceptions to tail calling are for convenience.  Similar to what is
+described in the \emph{fast curry} paper we have a generic variadic stgApply
+function that is used for applications of non-known functions, and known
+functions with a deficit or excess number of arguments.  The stgApply function
+takes as arguments the first element of the application (FUN, PAP, THUNK, or
+BLACKHOLE) and its arguments, and if a THUNK, evaluates it with a call (rather
+than jump) to yield a FUN or PAP.  This allows us to implement a single
+stgApply function as a single C function.  The implementation of stgApply as
+described in \emph{fast curry} makes the same concession.
+
+For stgApply in the non-strict semantics the alternative to call-with-return
+would be a pair of functions stgApply1 and stgApply2.  In one possible variation, 
+stgApply1 would push a continuation with stgApply2 as the return address, then
+invoke the first element of the application.  Call-with-return becomes more
+convenient when considering the various forms of strictness:  when evaluating
+function or constructor arguments it is simpler, and arguably more efficient
+in terms of time (but not space in general) to ``evaluate in place'' than
+implement the continuation style to the logical limit.
 
 \subsection{Strictness}
 
@@ -364,6 +389,10 @@ Nvidia research compiler.
 
 \section{Summary, Future Work, Conclusions?}
 
+\section{Acknowledgments}
+
+DOE/NNSA/LANL LDRD, DOE/NNSA SULI.
+
 
 %
 % ---- Bibliography ----
@@ -376,6 +405,10 @@ Exascale Programming: Adapting What We Have Can (and Must) Work
 Michael A. Heroux, Sandia National Laboratories
 http://www.hpcwire.com/2016/01/14/24151/
 
+\bititem{EUexascale}
+Toward Exascale Computing.
+European Exascale Software Initiative.
+http://www.eesi-project.eu/
 
 \bibitem{Davis96}
 MPP Parallel Haskell. 
