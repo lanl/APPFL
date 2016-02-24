@@ -1,0 +1,44 @@
+\documentclass[pdf]{beamer}
+
+\mode<presentation>{}
+
+\begin{document}
+
+\begin{frame}
+
+\begin{table}
+\scriptsize % tiny scriptsize footnotesize small
+\centering
+\begin{tabular}{r r c l l}
+
+Variable     & $f,\ x$        &     &                                              & Initial lower-case letter \\
+Constructor  & $C$            &     &                                              & Initial upper-case letter \\
+Literal      & $\mathit{lit}$ & ::= & $i\ |\ d$                                    & Integral or floating point type \\
+Atom         & $a$            & ::= & $\mathit{lit}\ |\ x$                         & \\ % Function, constructor args are atoms \\
+\\
+Expression   & $e$            & ::= & $a$                                          & Atom \\
+             &                & $|$ & $f\ a_1\dots a_n$                            & Function application, $n\ge 1$ \\
+             &                & $|$ & $\oplus\ a_1\dots a_n$                       & Saturated primitive operation, $n\ge 1$ \\
+             &                & $|$ & \texttt{let} $x = \mathit{obj}$ 
+                                         \texttt{in} $e$                           & \\
+             &                & $|$ & \texttt{case} $e$ \texttt{as} 
+                                        $x$ \texttt{of} $\mathit{alt}_i$           & Case expression, $1\le i \le n$\\
+\\
+Alternatives & $\mathit{alt}$ & ::= & $C\ x_1\dots x_n$ \texttt{->} $e$            & Pattern match, $n \ge 0$ \\
+             &                & $|$ & \texttt{\_ ->} $e$                           & Default \\
+\\
+Heap objects & $\mathit{obj}$ & ::= &\texttt{FUN} $x_1\dots x_n$ \texttt{->} $e$   & Function definition, arity $=n\ge 1$ \\
+             &                & $|$ &\texttt{CON} $C\ a_1\dots a_n$                & Saturated constructor, $n \ge 0$ \\
+             &                & $|$ &\texttt{THUNK} $e$                            & Thunk \\
+             &                & $|$ & $\mathit{PAP}\ f\ a_1\dots a_n$               & Evaluation-time partial application \\
+             &                & $|$ & $\mathit{BLACKHOLE}$                         & Evaluation-time black hole \\
+\\
+Program      & $\mathit{prog}$& ::= & $f_i\ =\ \mathit{obj}_i$                      & $n\ge 1$, distinguished $\mathit{main}$ \\
+
+\end{tabular}
+\end{table}
+
+
+\end{frame}
+
+\end{document}

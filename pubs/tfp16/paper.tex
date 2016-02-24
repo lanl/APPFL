@@ -322,13 +322,16 @@ Expression   & $e$            & ::= & $a$                                       
                                         $x$ \texttt{of} $\mathit{alt}_i$           & Case expression, $1\le i \le n$\\
 \\
 Alternatives & $\mathit{alt}$ & ::= & $C\ x_1\dots x_n$ \texttt{->} $e$            & Pattern match, $n \ge 0$ \\
-             &                & $|$ & \_                \texttt{->} $e$            & Default \\
+             &                & $|$ & \texttt{\_ ->} $e$                           & Default \\
 \\
 Heap objects & $\mathit{obj}$ & ::= &\texttt{FUN} $x_1\dots x_n$ \texttt{->} $e$   & Function definition, arity $=n\ge 1$ \\
              &                & $|$ &\texttt{CON} $C\ a_1\dots a_n$                & Saturated constructor, $n \ge 0$ \\
              &                & $|$ &\texttt{THUNK} $e$                            & Thunk \\
              &                & $|$ & $\mathit{PAP}\ f\ a_1\dots a_n$               & Evaluation-time partial application \\
-             &                & $|$ & $\mathit{BLACKHOLE}$                         & Evaluation-time black hole
+             &                & $|$ & $\mathit{BLACKHOLE}$                         & Evaluation-time black hole \\
+\\
+Program      & $\mathit{prog}$& ::= & $f_i\ =\ \mathit{obj}_i$                      & $n\ge 1$, distinguished $\mathit{main}$ \\
+
 \end{tabular}
 \end{table}
 
