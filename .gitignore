@@ -11,6 +11,7 @@ a.out
 build
 #ministg crud
 sandbox/ministg-0.3/src/trace
+sandbox/ministg-0.3/dist
 #runtime crud
 runtime/main
 runtime/mymain

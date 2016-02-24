@@ -1,0 +1,29 @@
+one = CON(I 1);
+three = CON(I 3);
+
+multInt = FUN(x y ->
+           case x of {
+               I i ->
+                  case y of {
+                      I j -> case mult# i j of
+                                 { x -> let { result = CON (I x) } in result }}});
+subInt = FUN(x y ->
+           case x of
+              { I i ->
+                  case y of
+                     { I j -> case sub# i j of
+                                 { x -> let { result = CON (I x) } in result }}});
+
+eqZero = FUN(x -> 
+           case x of {
+             I i -> case eq# i 0 of {x -> intToBool# x}});
+
+fac = FUN (x -> 
+         case eqZero x of {
+            True -> one;
+            False -> let { s = THUNK(subInt x one);
+                           rec = THUNK(fac s) }
+                     in multInt x rec
+         });
+                 
+main = THUNK (fac three) 

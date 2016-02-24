@@ -1,0 +1,51 @@
+data Int = I Int#;
+data Bool = False | True;
+one = CON(I 1);
+three = CON(I 3);
+false = CON(False);
+true = CON(True);
+
+
+multInt = FUN(x y ->
+           case x of {
+               I i# ->
+                  case y of {
+                      I j# -> case imul# i# j# of
+                                 { x# -> let { result = CON (I x#) } in result }}});
+
+subInt = FUN(x y ->
+           case x of
+              { I i# ->
+                  case y of
+                     { I j# -> case isub# i# j# of
+                                 { x# -> let { result = CON (I x#) } in result }}});
+
+subOne = FUN(x ->
+           case x of {
+             I i# -> case isub# i# 1 of
+                        { x# -> let { result = CON (I x#) } in result }});
+
+eqZero = FUN(x -> 
+           case x of {
+             I i# -> case ieq# i# 0 of {
+                      0 -> false;
+                      1 -> true}});
+
+fac = FUN (x ->
+  case x of
+  {
+    I #i -> case #i of
+                 {
+                   d -> let {y = THUNK(
+                         let {z = THUNK(
+                           let {one = CON(I 1)} in subInt x one 
+                         )}
+                         in fac z 
+                       )}
+                       in multInt x y;
+                   0 -> one
+                 }
+  }
+);
+                 
+main = THUNK (fac three) 

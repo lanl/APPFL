@@ -212,6 +212,7 @@ FnPtr fun_stgShowResultCont() {
 #else
   showStgObj(LOG_RESULT, stgCurVal.op); stgCurVal.op = NULL;
 #endif
+  LOG(LOG_RESULT, "\n");
   RETURN0();
 }
 

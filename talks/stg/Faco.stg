@@ -1,0 +1,49 @@
+--real STG
+Fac.$wfac [InlPrag=[0], Occ=LoopBreaker]
+  :: GHC.Prim.Int# -> GHC.Prim.Int#
+[GblId,
+ Arity=1,
+ Caf=NoCafRefs,
+ Str=DmdType <S,1*U>,
+ Unf=OtherCon []] =
+    \r srt:SRT:[] [ww_sT2]
+        case ww_sT2 of ds_sT3 {
+          __DEFAULT ->
+              case -# [ds_sT3 1] of sat_sT4 {
+                __DEFAULT ->
+                    case Fac.$wfac sat_sT4 of ww1_sT5 {
+                      __DEFAULT -> *# [ds_sT3 ww1_sT5];
+                    };
+              };
+          0 -> 1;
+        };
+Fac.fac [InlPrag=INLINE[0]] :: GHC.Types.Int -> GHC.Types.Int
+[GblId,
+ Arity=1,
+ Caf=NoCafRefs,
+ Str=DmdType <S(S),1*U(1*U)>m,
+ Unf=OtherCon []] =
+    \r srt:SRT:[] [w_sT6]
+        case w_sT6 of _ [Occ=Dead] {
+          GHC.Types.I# ww1_sT8 [Occ=Once] ->
+              case Fac.$wfac ww1_sT8 of ww2_sT9 {
+                __DEFAULT -> GHC.Types.I# [ww2_sT9];
+              };
+        };
+-- simple stg:
+fac = FUN(w_sT6 ->
+         case w_sT6 of {
+           I ww1_sT8 -> case wfac ww1_sT8 of {
+                      ww2_sT9 -> let {r = CON(I ww2_sT9)} in r }});
+
+wfac = FUN(ww_sT2 ->
+  case ww_sT2 of {
+    0 -> 1;
+    ds_sT3 -> case isub# ww_sT2 1 of {
+       sat_sT4 -> case wfac sat_sT4 of {
+         ww1_st5 -> imul# ww_sT2 sat_sT4
+       }
+    }
+ });
+
+           

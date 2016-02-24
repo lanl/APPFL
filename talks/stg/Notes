@@ -1,0 +1,106 @@
+Slide 1:
+
+Slide 2:
+
+From Making a Fast Curry Paper.
+
+Constructors
+Unboxed values
+function calls
+let
+case
+
++ there is also data types
+
+Slide 3:
+
+Let: 
+box an unboxed int 
+declare a function 
+flip back to 2 and show Heap Objs
+
+Case:
+evaulate sub-expression (scrutinee) and then perform case analysis
+
+Slide 4:
+
+mult 2 ints in haskell and stg
+
+stg:
+
+unbox x and y
+evaluate primitive unboxed multiply
+rebox
+
+Slide 5:
+
+factorial in haskel and stg
+
+Slide 6:
+--
+Demos:
+
+Now Real STG:
+
+more Fac.hs
+
+script:
+more dump-stg.sh
+
+./dump-stg.hs
+
+ugly mess!
+
+view Fac.stg 
+
+compare
+
+not so different than example:
+
+one pulled to top level
+letrec -> nested lets 
+eqZero function
+
+here is orig:
+
+more fac.stg
+
+run through our compiler
+./stg-run.sh
+
+cleanup naming: 
+more fac2.stg 
+
+./stg2-run.sh
+
+yeah it is the same
+
+--
+Optimize!
+
+script:
+more dump-stg-o.sh
+
+./dump-stg-o.sh 
+
+view Faco.stg
+
+cleanup naming:
+
+more faco.stg
+
+./stgo-run.stg 
+
+--
+ministg
+
+more fac.mstg (slightly different syntax)
+
+./ministg-run.sh
+
+file:///Users/dpx/workspace/stg/trace/step0.html
+
+--
+Slide 7:
+
+
