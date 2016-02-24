@@ -285,10 +285,6 @@ in terms of termination properties: non-strict, fully strict---all arguments
 in an application are evaluated---and the intermediate in which only those
 arguments needed by a function call are evaluated.
 
-
-
--- spell out STG syntax?
-
 \section{Design and Implementation}
 
 Our wish list sounds much like the ghc Haskell implementation, and indeed ghc
@@ -298,6 +294,47 @@ There are various possible ways to accomplish the former: using ghc's option
 to dump STG as text (see Stuart's report~\cite{Stuart}), hacking ghc itself
 and, optionally, using ghc as a library.  We note that this approach has 
 a precedent in the aforementioned Nvidia research compiler.
+
+\subsection{STG Language}
+\setlength{\tabcolsep}{5pt}
+
+The STG language is ...
+
+Our incarnation of STG is very similar to that given in EA, as is
+our presentation which is meant to evoke both an abstract and concrete syntax.
+
+\begin{table}
+\footnotesize % tiny scriptsize footnotesize small
+\centering
+\begin{tabular}{r r c l l}
+
+Variable     & $f,\ x$        &     &                                              & Initial lower-case letter \\
+Constructor  & $C$            &     &                                              & Initial upper-case letter \\
+Literal      & $\mathit{lit}$ & ::= & $i\ |\ d$                                    & Integral or floating point \\
+Atom         & $a$            & ::= & $\mathit{lit}\ |\ x$                         & \\ % Function, constructor args are atoms \\
+\\
+Expression   & $e$            & ::= & $a$                                          & Atom \\
+             &                & $|$ & $f\ a_1\dots a_n$                            & Function application, $n\ge 1$ \\
+             &                & $|$ & $\oplus\ a_1\dots a_n$                       & Saturated primitive operation, $n\ge 1$ \\
+             &                & $|$ & \texttt{let} $x_i = \mathit{obj}_i$ 
+                                         \texttt{in} $e$                           & Recursive let $1\le i \le n$\\
+             &                & $|$ & \texttt{case} $e$ \texttt{as} 
+                                        $x$ \texttt{of} $\mathit{alt}_i$           & Case expression, $1\le i \le n$\\
+\\
+Alternatives & $\mathit{alt}$ & ::= & $C\ x_1\dots x_n$ \texttt{->} $e$            & Pattern match, $n \ge 0$ \\
+             &                & $|$ & \_                \texttt{->} $e$            & Default \\
+\\
+Heap objects & $\mathit{obj}$ & ::= &\texttt{FUN} $x_1\dots x_n$ \texttt{->} $e$   & Function definition, arity $=n\ge 1$ \\
+             &                & $|$ &\texttt{CON} $C\ a_1\dots a_n$                & Saturated constructor, $n \ge 0$ \\
+             &                & $|$ &\texttt{THUNK} $e$                            & Thunk \\
+             &                & $|$ & $\mathit{PAP}\ f\ a_1\dots a_n$               & Evaluation-time partial application \\
+             &                & $|$ & $\mathit{BLACKHOLE}$                         & Evaluation-time black hole
+\end{tabular}
+\end{table}
+
+While our interpretation of STG is a higher-order, polymorphic, pure functional
+language, some syntactic restrictions make direct programming rather tedious.
+This is discussed further in a later section.
 
 \subsection{STG to C}
 
@@ -345,13 +382,30 @@ in terms of function and constructor application.
 
 No bridge from ghc STG to our STG yet.
 
-At the time of writing we have a complete serial implementation:  STG parser, type inferencer, code
-generator, and runtime system including a garbage collector.
+At the time of writing we have a complete serial implementation: STG parser,
+type inferencer, code generator, and runtime system including a garbage
+collector.
 
-Mutual exclusion for garbage collector--heap check with every heap allocation.  In fact garbage collector
-can be invoked at any point in time except when populating a heap object immediately after its allocation.
+Mutual exclusion for garbage collector--heap check with every heap allocation.
+In fact garbage collector can be invoked at any point in time except when
+populating a heap object immediately after its allocation.
 
 \subsection{Mini-Haskell}
+
+While our interpretation of STG is a higher-order, polymorphic, pure
+functional language, some syntactic restrictions make direct programming
+rather tedious.  While a near-term goal is to bridge the gap\ldots
+
+First while the scrutinee of a case expression may be an arbitrary expression,
+arguments in function applications, constructor allocation, and primitive
+operations are constrained to be atoms.  For unboxed types a case
+a trivial case expression to alleviates
+the difficulty.
+\begin{verbatim}
+  f ... e ... -> case e as x of _ -> f ... x ...
+\end{verbatim}
+
+
 
 \subsection{Type system}
 
@@ -405,7 +459,7 @@ Exascale Programming: Adapting What We Have Can (and Must) Work
 Michael A. Heroux, Sandia National Laboratories
 http://www.hpcwire.com/2016/01/14/24151/
 
-\bititem{EUexascale}
+\bibitem{EUexascale}
 Toward Exascale Computing.
 European Exascale Software Initiative.
 http://www.eesi-project.eu/
