@@ -21,11 +21,10 @@ Expression   & $e$            & ::= & $a$                                       
              &                & $|$ & $\oplus\ a_1\dots a_n$                       & Saturated primitive operation, $n\ge 1$ \\
              &                & $|$ & \texttt{let} $x = \mathit{obj}$ 
                                          \texttt{in} $e$                           & \\
-             &                & $|$ & \texttt{case} $e$ \texttt{as} 
-                                        $x$ \texttt{of} $\mathit{alt}_i$           & Case expression, $1\le i \le n$\\
+             &                & $|$ & \texttt{case} $e$ \texttt{of} $\mathit{alt}_i$           & Case expression, $1\le i \le n$\\
 \\
 Alternatives & $\mathit{alt}$ & ::= & $C\ x_1\dots x_n$ \texttt{->} $e$            & Pattern match, $n \ge 0$ \\
-             &                & $|$ & \texttt{\_ ->} $e$                           & Default \\
+             &                & $|$ & $x$ \texttt{->} $e$                           & Default \\
 \\
 Heap objects & $\mathit{obj}$ & ::= &\texttt{FUN} $x_1\dots x_n$ \texttt{->} $e$   & Function definition, arity $=n\ge 1$ \\
              &                & $|$ &\texttt{CON} $C\ a_1\dots a_n$                & Saturated constructor, $n \ge 0$ \\
