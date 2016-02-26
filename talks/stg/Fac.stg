@@ -46,5 +46,14 @@ fac = FUN (ds_sL0 ->
   }
 );
 
-          
+-- original STG:
+
+fac = FUN (x -> 
+         case eqZero x of {
+            True -> one;
+            False -> let { s = THUNK(subInt x one);
+                           rec = THUNK(fac s) }
+                     in multInt x rec
+         });
+                           
   
