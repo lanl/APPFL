@@ -102,13 +102,17 @@ of ways as highlighted following.
 
 \subsubsection{Rely on programmer discipline.}
 Legacy Fortran scientific codes likely represent worst practices in state
-encapsulation, with most data global and accessible to all.  It is almost
+encapsulation, with most data global and accessible to all; indeed, Fortran
+was designed to make this easy via \texttt{COMMON} blocks---aggregates of
+global variables---which further obfuscate program meaning by allowing
+arbitrary naming of a block's variables at a subroutine/function granularity,
+and requiring that the entire block be brought into scope.  It is almost
 ironic, then, that of the mainstream high-performance scientific programming
-languages (Fortran, C, and C++), Fortran 95 was the first to introduce the
+languages (Fortran, C, and C++), Fortran~95 was the first to introduce the
 \texttt{pure} function qualifier, and with enforcement by the compiler.
-Otherwise it is entirely up to the programmer to make functions composable
-and thread safe.  Here at LANL this approach is being used to good effect
-to clean up some legacy code bases.
+Otherwise it is entirely up to the programmer to make functions composable and
+thread safe.  Here at LANL this approach is being used to good effect to clean
+up some legacy code bases.
 
 \subsubsection{Obey constraints prescribed by a parallel runtime system.}
 There are a number of parallel runtime systems that encourage (but cannot
@@ -117,42 +121,42 @@ runtime as an example~\cite{Bauer12}.
 
 In Legion, non-function-local data, or \emph{regions}, are requested from the
 runtime system.  Regions may be shared among \emph{tasks} (essentially C++
-functions), and each task registers its access (read, write, read/write, etc.)
-and coherency requirements for each region to which it will have access.
-Other than registered access to regions tasks must not access non-constant
-global data.  In serial execution these access requirements are notionally
-superfluous, but in parallel execution the runtime can dynamically calculate
-the dependency graph and relax the programmatically defined strict ordering of
-task execution.  Very high parallel efficiency has been demonstrated on extremely
-large computing systems~\cite{Bauer14}.  Here at LANL the Legion system is
-being strongly considered for a new large-scale C++ code effort.\footnote{
-It is interesting to note that the PI of the Legion project was previously a
-co-developer of a strict, arguably pure functional language
-implementation~\cite{AikenFL}.}
+functions), and each task is prescribed access privileges (read, write,
+read/write, etc.)  and coherency requirements for each region to which it will
+have access.  Other than registered access to regions tasks must not access
+non-constant global data.  In serial execution these access requirements are
+notionally superfluous, but in parallel execution the runtime can dynamically
+calculate the data dependency graph and relax the programmatically defined
+serial ordering of task execution.  Very high parallel efficiency has been
+demonstrated on extremely large computing systems~\cite{Bauer14}.  Here at
+LANL the Legion system is being strongly considered for a new large-scale C++
+code effort.\footnote{It seems significant that the PI of the Legion
+  project was previously a co-developer of a strict, arguably pure functional
+  language implementation~\cite{AikenFL}.}
 
 \subsubsection{Use a pure functional language.}
 Some twenty years after the US Department of Energy laboratory complex was
-presented with the most performant and highly parallel implementation of a
-pure functional language to date~\cite{Davis96}, and collectively had no
-conceptual understanding of what it was, much less why it might be useful or
-important, there is a small number of laboratory HPC practioners who are
-developing an appreciation for pure functional programming in Haskell.  Still,
-they see their needs as different than other Haskell users: performance is
-paramount, unboxed arrays are a (perhaps \emph{the}) primary data structure,
-and laziness is more of a nuisance--even a serious hindrance--than a
-convenience, much less algorithmically essential in the sense of Bird's
-\emph{repmin}~\cite{Bird84} or Johnsson's general attribute
+presented with the most highly parallel (and thereby performant)
+implementation of a pure functional language to date~\cite{Davis96}, and
+collectively had no conceptual understanding of what it was, much less why it
+might be useful or important, there is now a small number of laboratory HPC
+practioners who are developing an appreciation for pure functional programming
+in Haskell.  Still, they see their needs as different than other Haskell
+users: performance is paramount, unboxed arrays are a (perhaps \emph{the})
+primary data structure, and laziness is more of a nuisance--even a serious
+hindrance--than a convenience, much less ever algorithmically essential in the
+sense of Bird's \emph{repmin}~\cite{Bird84} or Johnsson's general attribute
 grammars~\cite{Johnsson87}.
 
 A common complaint among these budding high-performance functional programmers
-is the need to get strictness just right: to remove space leaks,
-improve performance, get communication (e.g.\ MPI) and IO to work as they
+is the need to get strictness just right: to remove space leaks, achieve
+acceptable performance, get communication (e.g.\ MPI) and IO to work as they
 expect, and so on.  More specifically, they expect to be able to reason about
-space and time usage using their existing mental models. While they are
-happy to write code that is strongly reminiscent of the numerical examples in
-Hughes' classic piece (whether they've read it or not)~\cite{Hughes89},
-they would also be happy to write in a slightly modified style that does
-not require non-strictness---after all, that's how they've been thinking their
+space and time usage using their existing mental models. While they are happy
+to write code that is strongly reminiscent of the numerical examples in
+Hughes' classic piece (whether they've read it or not)~\cite{Hughes89}, they
+would also be happy to write in a slightly modified style that does not
+require non-strictness---after all, that's how they've been thinking their
 entire careers.
 
 Much anecdotal evidence suggests that many others have similar difficulties
@@ -201,10 +205,10 @@ meanings or implications.  First and foremost it means that \emph{we are not
   polymorphism and unboxed types~\cite{firstclass};
 \item Straighforward direct linkage with C, preferably without a sophisticated
   foreign function interface, is essential;
-\item The language should be ``currying-friendly'' as described in the ``fast
+\item The language should be \emph{currying-friendly} as described in the ``fast
   curry'' paper~\cite{fastcurry};
 \item Choice of degree of strictness is easily selected;
-\item Sharing, in the sense of what ``lazy'' means vs.\ merely non-strict,
+\item Sharing, in the sense of what \emph{lazy} means vs.\ merely non-strict,
   should be preserved for all degrees of strictness;
 \item Tail calling should be properly implemented, i.e., not as a trampoline;
 \item etc.
@@ -216,13 +220,14 @@ using e.g.\ MPI or POSIX sockets.
 
 \subsection{Varying degrees of strictness}
 
-First some words about terminology.  For all degrees of strictness sharing (as
-implied by lazy but not by non-strict) of heap-allocated objects is preserved
-we will not use the term \emph{lazy} and simply refer to strictness
-properties.  As is common we will use strict in an operational sense, meaning
-that argument(s) are evaluated before being passed in a function call.
-Similarly, when referring to language semantics we refer to the operational
-rather than denotational semantics.
+First some words about terminology.  For all degrees of strictness, sharing
+(as implied by lazy but not by non-strict) of heap-allocated objects is
+preserved so we will not use the term \emph{lazy} and simply refer to
+strictness properties.  As is common we will use strict in an operational
+sense, meaning that argument(s) are evaluated before being passed in a
+function call, rather than the denotational sense.  Similarly, when referring
+to language semantics we refer to the operational rather than denotational
+semantics.
 
 Greater strictness implies more opportunities for parallelism, possible losses
 or gains in space efficiency, and less expressiveness.  We seek to explore
@@ -230,17 +235,77 @@ the interplay of all of these.
 
 ghc 8.0 gives three possibilities: conventional non-strict, constructor
 strict, and function- and constructor strict, but there are possible
-variations.  The obvious variation is function, but not constructor, strict.
+variations.  The obvious variation is function, but not constructor, strictness.
 In Haskell the distinction between constructors and functions is somewhat
 blurred because constructors behave like functions (outside of pattern
-matching), but this need not be the case.  In STG---ghc's intermediate
-language---the distinction is clear: heap objects are explicitly constructed
-by \texttt{let} constructs in which constructor names are explicitly mentioned
+matching), but this need not be the case.  In STG---one of ghc's intermediate
+representations---the distinction is clear: heap objects are explicitly constructed
+by \texttt{let} constructs in which constructor names are given explicitly
 (not aliased); constructor names are not functions.
 
+\section{Design and Implementation}
+
+Our wish list sounds much like the ghc Haskell implementation, and indeed ghc
+is part of our master plan.  In short, our plan is to use ghc as our front-end
+to generate its intermediate form, STG, then escape to our system from there.
+There are various possible ways to accomplish the former: using ghc's option
+to dump STG as text (see Stuart's report~\cite{Stuart}), hacking ghc itself
+and, optionally, using ghc as a library.  We note that this approach has 
+a precedent in the aforementioned Nvidia research compiler.
+
+\subsection{STG Language}
+\setlength{\tabcolsep}{5pt}
+
+The STG language is ...
+
+Our incarnation of STG is very similar to that given in EA, as is
+our presentation which is meant to evoke both an abstract and concrete syntax.
+
+\begin{table}
+\footnotesize % tiny scriptsize footnotesize small
+\centering
+\begin{tabular}{r r c l l}
+
+Variable     & $f,\ x$        &     &                                              & Initial lower-case letter \\
+Constructor  & $C$            &     &                                              & Initial upper-case letter \\
+Literal      & $\mathit{lit}$ & ::= & $i\ |\ d$                                    & Integral or floating point literal \\
+Atom         & $a$            & ::= & $\mathit{lit}\ |\ x$                         & \\ % Function, constructor args are atoms \\
+\\
+Expression   & $e$            & ::= & $a$                                          & Atom \\
+             &                & $|$ & $f\ a_1\dots a_n$                            & Application, $n\ge 1$ \\
+             &                & $|$ & $\oplus\ a_1\dots a_n$                       & Saturated primitive operation, $n\ge 1$ \\
+             &                & $|$ & \texttt{let} $x_i = \mathit{obj}_i$ 
+                                         \texttt{in} $e$                           & Recursive let $1\le i \le n$\\
+             &                & $|$ & \texttt{case} $e$ \texttt{as} 
+                                        $x$ \texttt{of} $\mathit{alt}_i$           & Case expression, $1\le i \le n \ge 1$\\
+\\
+Alternatives & $\mathit{alt}$ & ::= & $C\ x_1\dots x_n$ \texttt{->} $e$            & Pattern match, $n \ge 0$ \\
+             &                & $|$ & \texttt{\_ ->} $e$                           & Default \\
+\\
+Heap objects & $\mathit{obj}$ & ::= &\texttt{FUN} $x_1\dots x_n$ \texttt{->} $e$   & Function definition, arity $=n\ge 1$ \\
+             &                & $|$ &\texttt{CON} $C\ a_1\dots a_n$                & Saturated constructor, $n \ge 0$ \\
+             &                & $|$ &\texttt{THUNK} $e$                            & Thunk---explicit deferred evaluation \\
+             &                & $|$ & $\mathit{PAP}\ f\ a_1\dots a_n$               & Evaluation-time partial application \\
+             &                & $|$ & $\mathit{BLACKHOLE}$                         & Evaluation-time black hole \\
+\\
+Program      & $\mathit{prog}$& ::= & $f_i\ =\ \mathit{obj}_i$                      & $1\le i \le n \ge 1$, distinguished $\mathit{main}$ \\
+
+\end{tabular}
+\end{table}
+
+While our interpretation of STG is as a simple higher-order, polymorphic, pure
+functional language, some syntactic restrictions make direct programming
+rather tedious.  This is discussed further in a later section.
+
+\subsection{Degrees of strictness, take two}
+
 Other possible variations concern the notional arity of the underlying
-function being applied.  This is readily explained in terms of the operation of the
-STG machine described next.
+function being applied.  This is readily explained in terms of the operation
+of the STG machine described later.  Our description is based on that given in
+Marlow and Peyton Jones' \emph{fast curry} paper~\cite{fastcurry}, to which we
+refer so many times that we subsequenty refer to it as
+\emph{EA}.\footnote{\emph{Eval/Apply} from the title because \emph{FC} likely has another
+  connotation to the reader.}
 
 In STG the arity of a function is syntactically defined as the number of
 manifest formal parameters, thus \texttt{id x = x} has by definition arity 1
@@ -283,61 +348,9 @@ evaluate to a \emph{PAP}.
 This then gives three reasonable operational modes that are strictly ordered
 in terms of termination properties: non-strict, fully strict---all arguments
 in an application are evaluated---and the intermediate in which only those
-arguments needed by a function call are evaluated.
-
-\section{Design and Implementation}
-
-Our wish list sounds much like the ghc Haskell implementation, and indeed ghc
-is part of our master plan.  In short, our plan is to use ghc as our front-end
-to generate its intermediate form, STG, then escape to our system from there.
-There are various possible ways to accomplish the former: using ghc's option
-to dump STG as text (see Stuart's report~\cite{Stuart}), hacking ghc itself
-and, optionally, using ghc as a library.  We note that this approach has 
-a precedent in the aforementioned Nvidia research compiler.
-
-\subsection{STG Language}
-\setlength{\tabcolsep}{5pt}
-
-The STG language is ...
-
-Our incarnation of STG is very similar to that given in EA, as is
-our presentation which is meant to evoke both an abstract and concrete syntax.
-
-\begin{table}
-\footnotesize % tiny scriptsize footnotesize small
-\centering
-\begin{tabular}{r r c l l}
-
-Variable     & $f,\ x$        &     &                                              & Initial lower-case letter \\
-Constructor  & $C$            &     &                                              & Initial upper-case letter \\
-Literal      & $\mathit{lit}$ & ::= & $i\ |\ d$                                    & Integral or floating point \\
-Atom         & $a$            & ::= & $\mathit{lit}\ |\ x$                         & \\ % Function, constructor args are atoms \\
-\\
-Expression   & $e$            & ::= & $a$                                          & Atom \\
-             &                & $|$ & $f\ a_1\dots a_n$                            & Function application, $n\ge 1$ \\
-             &                & $|$ & $\oplus\ a_1\dots a_n$                       & Saturated primitive operation, $n\ge 1$ \\
-             &                & $|$ & \texttt{let} $x_i = \mathit{obj}_i$ 
-                                         \texttt{in} $e$                           & Recursive let $1\le i \le n$\\
-             &                & $|$ & \texttt{case} $e$ \texttt{as} 
-                                        $x$ \texttt{of} $\mathit{alt}_i$           & Case expression, $1\le i \le n$\\
-\\
-Alternatives & $\mathit{alt}$ & ::= & $C\ x_1\dots x_n$ \texttt{->} $e$            & Pattern match, $n \ge 0$ \\
-             &                & $|$ & \texttt{\_ ->} $e$                           & Default \\
-\\
-Heap objects & $\mathit{obj}$ & ::= &\texttt{FUN} $x_1\dots x_n$ \texttt{->} $e$   & Function definition, arity $=n\ge 1$ \\
-             &                & $|$ &\texttt{CON} $C\ a_1\dots a_n$                & Saturated constructor, $n \ge 0$ \\
-             &                & $|$ &\texttt{THUNK} $e$                            & Thunk \\
-             &                & $|$ & $\mathit{PAP}\ f\ a_1\dots a_n$               & Evaluation-time partial application \\
-             &                & $|$ & $\mathit{BLACKHOLE}$                         & Evaluation-time black hole \\
-\\
-Program      & $\mathit{prog}$& ::= & $f_i\ =\ \mathit{obj}_i$                      & $n\ge 1$, distinguished $\mathit{main}$ \\
-
-\end{tabular}
-\end{table}
-
-While our interpretation of STG is a higher-order, polymorphic, pure functional
-language, some syntactic restrictions make direct programming rather tedious.
-This is discussed further in a later section.
+arguments needed by a function call are evaluated.  The STG machinery makes
+the choice of evaluation strategy easy to change, both in terms of function
+and constructor application.
 
 \subsection{STG to C}
 
@@ -375,24 +388,6 @@ function or constructor arguments it is simpler, and arguably more efficient
 in terms of time (but not space in general) to ``evaluate in place'' than
 implement the continuation style to the logical limit.
 
-\subsection{Strictness}
-
-The STG machinery makes the choice of evaluation strategy easy to change, both
-in terms of function and constructor application.
-
-
-\section{Current Status, and Expected Results by the time of the symposium}
-
-No bridge from ghc STG to our STG yet.
-
-At the time of writing we have a complete serial implementation: STG parser,
-type inferencer, code generator, and runtime system including a garbage
-collector.
-
-Mutual exclusion for garbage collector--heap check with every heap allocation.
-In fact garbage collector can be invoked at any point in time except when
-populating a heap object immediately after its allocation.
-
 \subsection{Mini-Haskell}
 
 While our interpretation of STG is a higher-order, polymorphic, pure
@@ -407,6 +402,20 @@ the difficulty.
 \begin{verbatim}
   f ... e ... -> case e as x of _ -> f ... x ...
 \end{verbatim}
+
+
+
+\section{Current Status, and Expected Results by the time of the symposium}
+
+No bridge from ghc STG to our STG yet.
+
+At the time of writing we have a complete serial implementation: STG parser,
+type inferencer, code generator, and runtime system including a garbage
+collector.
+
+Mutual exclusion for garbage collector--heap check with every heap allocation.
+In fact garbage collector can be invoked at any point in time except when
+populating a heap object immediately after its allocation.
 
 
 
