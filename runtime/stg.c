@@ -68,28 +68,6 @@ void startCheck() {
   }
 }
 
-// we can't be certain a value is boxed or unboxed without enabling ARG_TYPE
-// but we can do some sanity checking.  mayBeBoxed(v) means that v is not
-// definitely unboxed
-bool mayBeBoxed(PtrOrLiteral f) {
-  #if USE_ARGTYPE
-  return f.argType == HEAPOBJ &&
-         (f.op == NULL || isHeap(f.op) || isSHO(f.op)) &&
-         ((f.u & (OBJ_ALIGN - 1)) == 0);
-#else
-  return (f.op == NULL || isHeap(f.op) || isSHO(f.op)) &&
-         ((f.u & (OBJ_ALIGN - 1)) == 0);
-#endif
-}
-
-bool mayBeUnboxed(PtrOrLiteral f) {
-  #if USE_ARGTYPE
-  return f.argType != HEAPOBJ;
-#else
-  return true;
-#endif
-}
-
 void copyargs(PtrOrLiteral *dest, PtrOrLiteral *src, int count) {
   memcpy(dest, src, count * sizeof(PtrOrLiteral));
 }

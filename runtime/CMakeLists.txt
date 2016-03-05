@@ -11,7 +11,7 @@ project(runtime)
               stg.h
               stgutils.h
     	      cruntime.h
-	          stgc.h
+	      stgc.h
               stgapply.h
     )
 
@@ -24,6 +24,7 @@ project(runtime)
               stgutils.c
 	      show.c
 	      stgapply.c
+	      heap.c
     )
 
 include_directories(".."

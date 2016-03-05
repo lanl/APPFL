@@ -30,4 +30,8 @@
 /* if 1 initiate GC with every object allocation */
 #define ALLOC_GC 1
 
+/* number of threads, temporary solution */
+
+#define NTHREADS 2
+
 #endif
