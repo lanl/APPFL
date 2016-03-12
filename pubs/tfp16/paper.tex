@@ -55,13 +55,14 @@ Socorro, New Mexico, USA
 \setcounter{footnote}{0}
 
 \begin{abstract}
-The trend is functional programming in scientific computing, and in particular
-strict (by default) functional programming, in various guises.  Our project is
-the demonstration of a light-weight, higher-order, polymorphic pure functional
-language implementation in which we can experiment with automatic
-parallelization strategies and varying degrees of default strictness.
-Strictness prescribes the degree of potential parallelism, that is, we are not
-exploring speculative evaluation.
+The claimed trend is an increasing appreciation and practice of functional
+programming in scientific computing, and in particular strict (by default)
+functional programming, in various guises.  Our project is the demonstration
+of a light-weight, higher-order, polymorphic pure functional language
+implementation in which we can experiment with automatic parallelization
+strategies and varying degrees of default strictness.  Strictness constrains
+the degree of potential parallelism, that is, we are not exploring speculative
+evaluation.
 
 \emph{Preliminary paper note 1: We are reporting work in progress.  At the
   time of writing we have a complete serial implementation, a primitive
@@ -83,21 +84,25 @@ exploring speculative evaluation.
 \end{abstract}
 
 \section{Background and Motivation}
-The practice of highest-performance scientific computing (HPC) is, overall,
-highly conservative with respect to change.  Even as the US government commits
-to a push for exascale computing ($10^{18}$ FLOPS) within the next decade, a
-highly respected member of the HPC community recently stated ``Fortran is
-essential for exascale programming.''~\cite{Heroux16} Existing US government
-laboratory HPC codes run to hundreds of thousands of lines and complete
-rewrites are infeasible.\footnote{A European consortium is anticipating
-  exascale computing as well~\cite{EUexascale}, but the authors are not
-  knowledgeable about the state of large-scale, non-USA HPC codes.}  C++ has
-become more common for new code starts, but their nature remains the same:
-huge codes with fair to non-existent encapsulation of side effects, and
-multiple levels of parallelism also poorly abstracted, especially at the
-thread (shared-memory) level.  Thread-level parallel efficiency can be poor
-and is explained by Amdahl's law because the parallel model is bulk
-synchronous.
+The practice of so-called high-performance scientific computing (HPC) is,
+overall, highly conservative with respect to change.  Even as the US
+government commits to a push for exascale computing ($10^{18}$ FLOPS in a
+single system) within the next decade, a highly respected member of the HPC
+community recently stated publicly that ``Fortran is essential for exascale
+programming.''~\cite{Heroux16}\footnote{Various EU, Japanese, and
+  international groups are also anticipating exascale
+  computing.~\cite{EUexascale,Exascale-org}} Existing US government laboratory
+HPC codes run to hundreds of thousands of lines of Fortran and complete
+rewrites are infeasible.~\footnote{The codes of our lab's British counterpart
+  are reportedly in the same state.}  C++ has become more common for new code
+starts, but their nature remains the same: huge codes with fair to
+non-existent encapsulation of side effects, with multiple levels of
+parallelism also poorly abstracted, especially at the thread (shared-memory)
+level.  Thread-level parallel efficiency can be poor and is explained by
+Amdahl's law because the parallel model \emph{as typically implemented} is
+bulk synchronous.
+
+
 
 \subsection{The trend: strict but still pure functional programming}
 There is a small but growing understanding that \emph{pure functional
@@ -399,9 +404,15 @@ implement the continuation style to the logical limit.
 
 \subsection{Mini-Haskell}
 
-While our interpretation of STG is a higher-order, polymorphic, pure
-functional language, some syntactic restrictions make direct programming
-rather tedious.  While a near-term goal is to bridge the gap\ldots
+As mentioned, a current near-term goal is to use ghc as our front-end
+to generate STG as input to our system.  In the meantime, as a stop-gap
+measure to make the generation of test cases easier, we have implemented
+a \emph{mini-Haskell} front-end, a strict subset of standard Haskell syntax.
+
+???give a proper grammar and summarize any tricky translations???   
+
+
+
 
 First while the scrutinee of a case expression may be an arbitrary expression,
 arguments in function applications, constructor allocation, and primitive
@@ -477,6 +488,7 @@ NNSA LANL Laboratory Directed Research and Development program award
 and Mathematics Talent Expansion Program (STEP) program for undergraduate
 students, and the DOE Science Undergraduate Laboratory Internship program for
 undergraduate students.
+%
 Los Alamos National Laboratory is managed and operated by Los Alamos National
 Security, LLC (LANS), under contract number DE-AC52-06NA25396 for the
 Department of Energy’s National Nuclear Security Administration (NNSA).
