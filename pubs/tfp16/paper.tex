@@ -22,8 +22,8 @@
 %                                     also used for the TOC unless
 %                                     \toctitle is used
 %
-\author{Kei Davis\inst{1} \and 
-        Dean Prichard\inst{1} \and 
+\author{Kei Davis\inst{1} \and
+        Dean Prichard\inst{1} \and
         David Ringo\inst{1,2} \and
         Loren Anderson\inst{1,3} \and
         Jacob Marks\inst{1,4}\thanks{All contributors, past and present, are listed.}
@@ -44,7 +44,7 @@ Albuquerque, NM, USA
 \and
 North Dakota State University,
 Fargo, North Dakota, USA
-\and 
+\and
 New Mexico Institute of Mining and Technology,
 Socorro, New Mexico, USA
 }
@@ -261,7 +261,7 @@ is part of our master plan.  In short, our plan is to use ghc as our front-end
 to generate its intermediate form, STG, then escape to our system from there.
 There are various possible ways to accomplish the former: using ghc's option
 to dump STG as text (see Stuart's report~\cite{Stuart}), hacking ghc itself
-and, optionally, using ghc as a library.  We note that this approach has 
+and, optionally, using ghc as a library.  We note that this approach has
 a precedent in the aforementioned Nvidia research compiler.
 
 \subsection{STG Language}
@@ -285,9 +285,9 @@ Atom         & $a$            & ::= & $\mathit{lit}\ |\ x$                      
 Expression   & $e$            & ::= & $a$                                          & Atom \\
              &                & $|$ & $f\ a_1\dots a_n$                            & Application, $n\ge 1$ \\
              &                & $|$ & $\oplus\ a_1\dots a_n$                       & Saturated primitive operation, $n\ge 1$ \\
-             &                & $|$ & \texttt{let} $x_i = \mathit{obj}_i$ 
+             &                & $|$ & \texttt{let} $x_i = \mathit{obj}_i$
                                          \texttt{in} $e$                           & Recursive let $1\le i \le n$\\
-             &                & $|$ & \texttt{case} $e$ \texttt{as} 
+             &                & $|$ & \texttt{case} $e$ \texttt{as}
                                         $x$ \texttt{of} $\mathit{alt}_i$           & Case expression, $1\le i \le n \ge 1$\\
 \\
 Alternatives & $\mathit{alt}$ & ::= & $C\ x_1\dots x_n$ \texttt{->} $e$            & Pattern match, $n \ge 0$ \\
@@ -308,7 +308,7 @@ While our interpretation of STG is as a simple higher-order, polymorphic, pure
 functional language, some syntactic restrictions make direct programming
 rather tedious.  This is discussed further in a later section.
 
-Operationally, when an application such as 
+Operationally, when an application such as
 
 \subsection{Degrees of strictness, take two}
 
@@ -349,7 +349,7 @@ evaluated?  In the non-strict semantics evaluation is on demand, after
 \texttt{f} has been evaluated, the underlying \emph{FUN} actually called
 (i.e., not just partially applied and wrapped up in a \emph{PAP}), and one of
 those arguments forced in subsequent evaluation (assuming that they weren't
-forced in the evaluation of \texttt{f} itself).  
+forced in the evaluation of \texttt{f} itself).
 
 In a strict semantics one can come up with various evaluation orders, but
 excluding the absurd, as far as distinguishing termination properties goes
@@ -394,7 +394,7 @@ stgApply function as a single C function.  The implementation of stgApply as
 described in \emph{fast curry} makes the same concession.
 
 For stgApply in the non-strict semantics the alternative to call-with-return
-would be a pair of functions stgApply1 and stgApply2.  In one possible variation, 
+would be a pair of functions stgApply1 and stgApply2.  In one possible variation,
 stgApply1 would push a continuation with stgApply2 as the return address, then
 invoke the first element of the application.  Call-with-return becomes more
 convenient when considering the various forms of strictness:  when evaluating
@@ -409,7 +409,7 @@ to generate STG as input to our system.  In the meantime, as a stop-gap
 measure to make the generation of test cases easier, we have implemented
 a \emph{mini-Haskell} front-end, a strict subset of standard Haskell syntax.
 
-???give a proper grammar and summarize any tricky translations???   
+???give a proper grammar and summarize any tricky translations???
 
 
 
@@ -454,6 +454,24 @@ and user-defined enumerations, e.g., \texttt{data unboxed Bool\# = False\# |
   True\#}.
 
 \subsection{Test suite and testing}
+
+We have developed a extensive test suite using the CMake \cite{cmake-book}
+CTest tool. The full test suite is automatically run and any failures reported
+using a Jenkins continuous integration server \cite{jenkins-book}. There are
+test programs for both STG and mini-Haskell. We also run each test with various
+levels of garbage collection enabled.
+
+The test suite is partitioned into a number of directories which control what
+testing is done for a specific program. Given our goal of exploring various
+levels of strictness, most tests are run with all evaluation strategies (3
+degrees of function strictness by two degrees of constructor strictness).
+One interesting class of test programs are those which require non-strict
+semantics. For these programs we test not only that the test leads to the expected
+result with non-strict semantics, but also that the program returns a
+"blackhole" in the case of strict semantics. Another important class of test
+programs are those which should fail with a known error (e.g. a parsing error)
+for these programs the test suite checks the output against an expected error
+regular expression.
 
 Extensive prelude.
 
