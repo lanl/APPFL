@@ -437,6 +437,11 @@ At the time of writing we have a complete serial implementation, including
 \item runtime system including a garbage collector
 \end{itemize}
 
+We have implemented a simple copying garbage collector \cite{Cheney:1970}
+with small "nurseries" in the multithreaded case \cite{Marlow:2008}. We have not
+focused on the development of a moire sophisticated garbage collector, as the goal
+of this project is to explore levels of strictness.
+
 Mutual exclusion for garbage collector--heap check with every heap allocation.
 In fact garbage collector can be invoked at any point in time except when
 populating a heap object immediately after its allocation.
@@ -455,37 +460,40 @@ and user-defined enumerations, e.g., \texttt{data unboxed Bool\# = False\# |
 
 \subsection{Test suite and testing}
 
-We have developed a extensive test suite using the CMake \cite{cmake-book}
-CTest tool. The full test suite is automatically run and any failures reported
-using a Jenkins continuous integration server \cite{jenkins-book}. There are
-test programs for both STG and mini-Haskell. We also run each test with various
-levels of garbage collection enabled.
+We have developed a extensive test suite which uses the CMake \cite{cmake-book}
+CTest tool. The full test suite is automatically run, and any failures reported,
+after every comment to the version control system. We use a Jenkins continuous
+integration server \cite{jenkins-book} to automate this build and testing process.
+The (git) version control repository is hosted externally so our student
+collaborators can contribute at their leisure.
 
-The test suite is partitioned into a number of directories which control what
+There are several hundred small STG and mini-Haskell programs in the test suite.
+It is partitioned into a number of directories which control what
 testing is done for a specific program. Given our goal of exploring various
 levels of strictness, most tests are run with all evaluation strategies (3
 degrees of function strictness by two degrees of constructor strictness).
 One interesting class of test programs are those which require non-strict
 semantics. For these programs we test not only that the test leads to the expected
 result with non-strict semantics, but also that the program returns a
-"blackhole" in the case of strict semantics. Another important class of test
-programs are those which should fail with a known error (e.g. a parsing error)
-for these programs the test suite checks the output against an expected error
-regular expression.
+"blackhole" in the case of strict semantics. Students who were Haskell/STG
+beginners have contributed substantially to the test suite. We have also found
+that the test suite has be of use as a learning tool for these students to
+discover  what level of non-strictness was required for their programs,
+a benefit that we did not initially envision. Over time we have developed
+extensive STG and mini-haskell preludes of common programming patterns, to
+aid in the writing of test programs.
 
-Extensive prelude.
+Another important class of test programs are those which should fail with a
+known error (e.g. a parsing error) for these programs the test suite checks
+the output against an expected error regular expression. This class of test
+programs has proved valuable in development and debugging of both the STG
+and mini-haskell frontends.
 
-Test suite of several hundred small programs.
+We also run each test with various levels of garbage collection enabled, this
+has helped us to find bugs not only in the garbage collector, but also in the
+code generator.
 
-Students learning Haskell and STG, writing Mini-Haskell and STG programs that
-serendipitously go into our automated testing suite which is partitioned
-according to our lattice of evaluation strategies (3 degrees of function
-strictness by two degrees of constructor strictness), which tells us how much
-non-strictness each program needs and something about the style in which
-programs are written.
-
-Continuous build system (Jenkins)
-
+debug level (runtime/compile time)
 
 \subsection{Parallel evaluation}
 
