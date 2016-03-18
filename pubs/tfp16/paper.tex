@@ -439,7 +439,7 @@ At the time of writing we have a complete serial implementation, including
 
 We have implemented a simple copying garbage collector \cite{Cheney:1970}
 with small "nurseries" in the multithreaded case \cite{Marlow:2008}. We have not
-focused on the development of a moire sophisticated garbage collector, as the goal
+focused on the development of a more sophisticated garbage collector, as the goal
 of this project is to explore levels of strictness.
 
 Mutual exclusion for garbage collector--heap check with every heap allocation.
@@ -480,18 +480,22 @@ beginners have contributed substantially to the test suite. We have also found
 that the test suite has be of use as a learning tool for these students to
 discover  what level of non-strictness was required for their programs,
 a benefit that we did not initially envision. Over time we have developed
-extensive STG and mini-haskell preludes of common programming patterns, to
+extensive STG and mini-Haskell preludes of common programming patterns, to
 aid in the writing of test programs.
 
 Another important class of test programs are those which should fail with a
 known error (e.g. a parsing error) for these programs the test suite checks
 the output against an expected error regular expression. This class of test
 programs has proved valuable in development and debugging of both the STG
-and mini-haskell frontends.
+and mini-Haskell front-ends.
 
 We also run each test with various levels of garbage collection enabled, this
 has helped us to find bugs not only in the garbage collector, but also in the
 code generator.
+
+The various enumerations of strictness and garbage collection levels mean that
+we run a quite large number of tests. However, this is fully automated via the
+testing and continuous integration infrastructure.
 
 debug level (runtime/compile time)
 
