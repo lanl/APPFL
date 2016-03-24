@@ -6,6 +6,10 @@
 \documentclass{llncs}
 %
 \usepackage{makeidx}  % allows for indexgeneration
+
+% mkd for preliminary paper notes
+\usepackage{enumitem} 
+
 %
 \begin{document}
 %
@@ -58,28 +62,33 @@ Socorro, New Mexico, USA
 The claimed trend is an increasing appreciation and practice of functional
 programming in scientific computing, and in particular strict (by default)
 functional programming, in various guises.  Our project is the demonstration
-of a light-weight, higher-order, polymorphic pure functional language
+of a light-weight, higher-order, polymorphic, pure functional language
 implementation in which we can experiment with automatic parallelization
-strategies and varying degrees of default strictness.  Strictness constrains
-the degree of potential parallelism, that is, we are not exploring speculative
-evaluation.
+strategies and varying degrees of default strictness.  Non-strictness
+constrains the degree of potential parallelism, that is, we are not exploring
+speculative evaluation.
+\\\ \\
+\emph{Preliminatry paper notes:}
+\begin{enumerate}[before=\itshape]
+  \item We are reporting work in progress.  At the time of writing we have a
+    complete serial implementation, a primitive proof-of-concept parallel
+    implementation, and are currently developing a more realistic parallel
+    runtime.  We expect to have preliminary results from our new parallel
+    implementation by the time of the workshop.
 
-\emph{Preliminary paper note 1: We are reporting work in progress.  At the
-  time of writing we have a complete serial implementation, a primitive
-  proof-of-concept parallel implementation, and are currently developing a
-  more realistic parallel runtime.  We expect to have preliminary results from
-  our new parallel implementation by the time of the symposium.}
+  \item While this does not qualify as a student paper, students
+    (undergraduate!)  have contributed considerably to this effort, and if
+    accepted we plan to have one of these students present this paper.
 
-\emph{Note 2: While this does not qualify as a student paper, students
-  (undergraduate!)  have contributed considerably to this effort, and if
-  accepted we plan to have one of these students present this paper.}
+  \item Hopefully in the spirit of a student-friendly workshop, for this draft
+    version we have chosen a more informal, conversational style of
+    presentation than necessarily appropriate for a final paper, have
+    highlighted the major student contributions and involvement, and included
+    perhaps gratuitous detail about process.
+  \end{enumerate}
 
-\emph{Note 3: Hopefully in the spirit of a student-friendly workshop, in this
-  draft we have chosen a more conversational style of presentation than
-  necessarily appropriate for a final paper, and have also highlighted the
-  major student contributions, and perhaps gratuitous detail about process.}
 
-\keywords{strict pure functional programming, automatic parallelization}
+\keywords{strict pure functional programming, automatic parallelization, Haskell, STG}
 
 \end{abstract}
 
@@ -133,7 +142,7 @@ In Legion, non-function-local data, or \emph{regions}, are requested from the
 runtime system.  Regions may be shared among \emph{tasks} (essentially C++
 functions), and each task is prescribed access privileges (read, write,
 read/write, etc.)  and coherency requirements for each region to which it will
-have access.  Other than registered access to regions tasks must not access
+have access.  Other than registered access to regions, tasks must not access
 non-constant global data.  In serial execution these access requirements are
 notionally superfluous, but in parallel execution the runtime can dynamically
 calculate the data dependency graph and relax the programmatically defined
@@ -142,7 +151,7 @@ demonstrated on extremely large computing systems~\cite{Bauer14}.  Here at
 LANL the Legion system is being strongly considered for a new large-scale C++
 code effort.\footnote{It seems significant that the PI of the Legion
   project was previously a co-developer of a strict, arguably pure functional
-  language implementation~\cite{AikenFL,FLreport89}, in conjunction with
+  language implementation~\cite{AikenFL,FLreport89}, in collaboration with
 John Backus as a refinement of his FP language~\cite{Backus:1978}.}
 
 \subsubsection{Use a pure functional language.}
@@ -154,10 +163,10 @@ might be useful or important, there is now a small number of laboratory HPC
 practioners who are developing an appreciation for pure functional programming
 in Haskell.  Still, they see their needs as different than other Haskell
 users: performance is paramount, unboxed arrays are a (perhaps \emph{the})
-primary data structure, and laziness is more of a nuisance--even a serious
-hindrance--than a convenience, much less ever algorithmically essential in the
-sense of Bird's \emph{repmin}~\cite{Bird84} or Johnsson's general attribute
-grammars~\cite{Johnsson87}.
+primary data structure, and non-strictness or laziness is more of a
+nuisance--even a serious hindrance--than a convenience, much less ever
+algorithmically essential in the sense of Bird's \emph{repmin}~\cite{Bird84}
+or Johnsson's general attribute grammars~\cite{Johnsson87}.
 
 A common complaint among these budding high-performance functional programmers
 is the need to get strictness just right: to remove space leaks, achieve
@@ -228,6 +237,12 @@ and Peyton Jones~\cite{Marlow2004};
 For feasibility, we restrict ourselves to shared-memory implicit parallelism,
 but distributed-memory parallelism should be straightforwardly realizable
 using e.g.\ MPI or POSIX sockets.
+
+A secondary, informal goal is to gain a sense of how often relatively
+inexperienced functional programmers make essential use of
+non-strictness.\footnote{The starting experience of our student interns to
+  date has been normalized by having them complete Hutton's \emph{Programming in Haskell} textbook
+as baseline preparation.~\cite{Hutton-book}}
 
 \subsection{Varying degrees of strictness}
 
