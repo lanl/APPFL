@@ -577,17 +577,17 @@ defined in Haskell-style, with the parameters following the function's
 identifier on the left side of the equality. With these simple changes, the
 syntax becomes a subset of Haskell's*.
 
+{\color{red}
+* With only these changes, the semantics are a little different; numeric
+  literals would still be treated as unboxed values, for example.  I don't know
+  if that's worth noting though.}
+
 Heap objects are still only created at the top level or in \texttt{let}
 expressions, so the translation is straightforward: \texttt{FUN} objects are
 identifiable by the inclusion of these parameters.  \texttt{PAP} objects are
 created when a known function is partially applied.  \texttt{CON} objects are
 created when constructors are fully applied.  Every other object becomes a
 \texttt{THUNK}.
-
-{\color{red}
-* With only these changes, the semantics are a little different; numeric
-  literals would still be treated as unboxed values, for example.  I don't know
-  if that's worth noting though.}
 
 
 
@@ -647,7 +647,7 @@ append l1 l2 = case l1 of
 \end{verbatim}
 
 This also serves as a good example of expression to expression application is
-transformed into STG.  Any non-atomic expression in a expression application is
+transformed into STG.  Any non-atomic expression in an application expression is
 bound to a heap object in a generated \texttt{let} expression.  These
 expressions are thus properly "atomized" for STG.  The above mini-Haskell code
 is transformed in STG that is structurally identical to the STG code that
