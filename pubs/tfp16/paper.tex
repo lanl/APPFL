@@ -6,6 +6,7 @@
 \documentclass{llncs}
 %
 \usepackage{makeidx}  % allows for indexgeneration
+\usepackage{color} % for parenthetical notes while paper is in progress
 %
 \begin{document}
 %
@@ -16,7 +17,7 @@
 %mkd \mainmatter              % start of the contributions
 %
 \title{Strict Pure Functional Programming and Automatic Parallelization\\
-       (New-project-in-progess Paper)}
+       (New-project-in-progress Paper)}
 %
 \titlerunning{Automatic Parallelization}  % abbreviated title (for running head)
 %                                     also used for the TOC unless
@@ -214,9 +215,9 @@ meanings or implications.  First and foremost it means that \emph{we are not
 \item The language must be strongly typed, implicitly or explicitly.  More
   specifically, the language should explicitly support both Hindley-Milner
   polymorphism and unboxed types~\cite{Jones:1991};
-\item Straighforward direct linkage with C, preferably without a sophisticated
+\item Straightforward direct linkage with C, preferably without a sophisticated
   foreign function interface, is essential;
-\item The language should be \emph{currying-friendly} as described by Marlow
+  \item The language should be \emph{currying-friendly} as described by Marlow
 and Peyton Jones~\cite{Marlow2004};
 \item Choice of degree of strictness is easily selected;
 \item Sharing, in the sense of what \emph{lazy} means vs.\ merely non-strict,
@@ -409,11 +410,6 @@ to generate STG as input to our system.  In the meantime, as a stop-gap
 measure to make the generation of test cases easier, we have implemented
 a \emph{mini-Haskell} front-end, a strict subset of standard Haskell syntax.
 
-???give a proper grammar and summarize any tricky translations???
-
-
-
-
 First while the scrutinee of a case expression may be an arbitrary expression,
 arguments in function applications, constructor allocation, and primitive
 operations are constrained to be atoms.  For unboxed types a case
@@ -423,6 +419,267 @@ the difficulty.
   f ... e ... -> case e as x of _ -> f ... x ...
 \end{verbatim}
 
+{\color{red} I didn't want to touch the above text, but there's obviously some 
+redundancy in the content here...}
+
+Writing STG in the concrete syntax conceived for our project is tedious and
+prone to errors.  Compared to Haskell, the eventual source language for the
+compiler, STG is relatively verbose, requiring explicit block and expression
+delimiters, and classification of heap objects. Though its general structure is
+similar to primitive Haskell, it lacks many of the conveniences that make
+Haskell a pleasure to work with.  The motivation for a more expressive language
+for testing our compiler in its nascent stages is then clear.  This language,
+mini-Haskell, was progressively "grown" from the STG syntax towards a subset of
+Haskell itself*, removing much of the frustrating syntactic cruft and adding
+some of the core features that are often taken for granted in Haskell (and other
+languages).
+
+{\color{red}
+* Exceptions include the "unboxed" keyword allowed in datatype definitions and
+the ability to specify unboxed ints and doubles with a postfix "\#" character.
+The former feature is not in any extension of Haskell, while the latter can be
+included using the MagicHash extension.}
+
+
+An informal specification of the mini-Haskell grammar is given in
+{\color{red}numbered table?}.  There is significant overlap with STG, resulting
+from the structural similarities, but the redundancies are included for
+completeness. {\color{red} should they be?}
+
+
+% Haskell Report:
+%   https://www.haskell.org/onlinereport/haskell2010/haskell.html
+% (PDF):
+%   https://www.haskell.org/definition/haskell2010.pdf
+
+% Chapter 10:
+%   https://www.haskell.org/onlinereport/haskell2010/haskellch10.html
+% (No standalone PDF)
+
+
+% because # looks strangely large next to math terms
+\newcommand{\hash}{{\scriptsize\#}}
+
+\begin{table}
+\centering
+\begin{tabular}{r r c l l}
+Variable         & $f,\ x$             &     &
+& Initial lower-case letter \\
+
+Constructor        & $C$                 &     & 
+& Initial upper-case letter \\
+
+Literal            & $\mathit{lit}$      & ::= & $i\ |\ d\ 
+                                                 |\ i$\hash\ $|\ d$\hash
+& Integral or floating point literal (boxed) \\
+
+                   &                     &     & 
+& optional \# suffix denotes unboxed value \\
+
+Atom               & $a$                 & ::= & $\mathit{lit}\ |\ x\ |\ C$
+& Constructors are first class \\ 
+% not sure if that's the right terminology 
+\\
+
+
+Expression         & $e$                 & ::= & $a$
+& Atomic expression \\
+
+                   &                     & $|$ & $e\ e$
+& Expression application \\
+
+                   &                     & $|$ & \texttt{\textbackslash} $\mathit{pat}_i$ 
+                                               \texttt{->} $e$
+& Lambda expression, $i > 0$ \\
+
+                   &                     & $|$ & \texttt{case} $e$ \texttt{of} $\mathit{alt}_i$
+& Case expression, $i > 0$\\
+
+                   &                     & $|$ & \texttt{let} $\mathit{odecl}_i$ \texttt{in} $e$
+& Recursive let expression, $i > 0$ \\
+
+\\
+
+
+Pattern            & $\mathit{pat}$      & ::= & $C\ \mathit{pat}_i$
+& Nested constructor matching \\
+                   &                     & $|$ & $\mathit{lit}$
+& Match numeric literals \\
+                   &                     & $|$ & $x$
+& Bind to variable \\
+
+\\
+
+
+Alternative        & $\mathit{alt}$      & ::= & $\mathit{pat}_i$ \texttt{->} $e$
+& $i > 0$ \\
+
+\\
+
+
+Type               & $\mathit{type}$     & $|$ & $C$
+& Concrete type (constructor naming) \\
+                   &                     & $|$ & $x$
+& polymorphic type variable \\
+                   &                     & $|$ & $\mathit{type}$ \texttt{->} $\mathit{type}$
+& Function type \\
+
+\\
+
+
+Object Declaration & $\mathit{odecl}$    & ::= & $x$ \texttt{::} $\mathit{type}$
+& Type signature \\
+                   &                     & $|$ & $x = e$
+& Simple binding \\
+                   &                     & $|$ & $f\ \mathit{pat}_i = e$
+& Function declaration \\
+                   &                     &     &
+& $e$ cannot be an unboxed literal \\
+
+\\
+
+
+Constructor Definition & $\mathit{con}$  & ::= & $C\ \mathit{type}_i$
+& $i \ge 0$ \\
+
+Datatype Declaration &  $\mathit{ddecl}$ & ::= & \texttt{data} 
+                                                 [\texttt{unboxed}]
+                                                 $C\ x_i =$ 
+& User-defined data type, $i \ge 1, n > 0$ \\
+                     &                   &     & $\mathit{con}_1 | \dots |
+                                                 \mathit{con}_n$
+& \\
+
+\\
+
+
+Program                & $\mathit{prog}$ & ::= & $(o|d)\mathit{decl}_i$
+& Objects and datatypes, no order necessary
+
+\end{tabular}
+\end{table}
+
+
+Because mini-Haskell was designed to replace STG, it makes sense to talk about
+it in terms of the differences between the two and how mini-Haskell is
+translated into STG for the backend.  Here, the differences are given in order
+of perceived utility, or importance to someone transition from STG to
+mini-Haskell.
+
+
+\paragraph{Removal of explicit heap objects} -\\
+
+In STG, all object definitions require explicit classification with
+\texttt{CON}, \texttt{PAP}, \texttt{THUNK}, \texttt{FUN}, or
+\texttt{BLACKHOLE}. This classification can be inferred from context by the
+compiler, so these keywords are no longer necessary.  Functions can then be
+defined in Haskell-style, with the parameters following the function's
+identifier on the left side of the equality. With these simple changes, the
+syntax becomes a subset of Haskell's*.
+
+Heap objects are still only created at the top level or in \texttt{let}
+expressions, so the translation is straightforward: \texttt{FUN} objects are
+identifiable by the inclusion of these parameters.  \texttt{PAP} objects are
+created when a known function is partially applied.  \texttt{CON} objects are
+created when constructors are fully applied.  Every other object becomes a
+\texttt{THUNK}.
+
+{\color{red}
+* With only these changes, the semantics are a little different; numeric
+  literals would still be treated as unboxed values, for example.  I don't know
+  if that's worth noting though.}
+
+
+
+\paragraph{The Layout Rule} -\\
+
+Mini-Haskell implements Haskell's Layout Rule in an almost direct translation of
+the specification given in section 10.3 of the Haskell 2010 Report.  The notable
+exception is the omission of any attempt to define the \texttt{parse-error}
+function.  This is apparently a tricky spot for Haskell compilers (even GHC has
+not always had it right) so, in the name of tradition, it remains a tricky spot
+for our mini-Haskell front end.  The edge cases that it will incorrectly handle
+as a result of this are exactly that: edge cases.  As such, they are easy to
+avoid in practical usage.
+
+The inclusion of the layout rule may seem small and insignificant, but it allows
+its users to produce code that is visually similar to Haskell code.  This makes
+it easier to read and write for any Haskell programmer who relies on layout to
+delineate context (I assume this is ~99.9% of human Haskell users).  It also
+allows for the use of Haskell programming environments that support "smart"
+indentation.
+
+
+
+% Layout Rule Spec:
+%   https://www.haskell.org/onlinereport/haskell2010/haskellch10.html\#x17-17800010.3
+% GHC's syntax "infelicities":
+%   https://downloads.haskell.org/~ghc/latest/docs/html/users\_guide/bugs-and-infelicities.html\#infelicities-syntax
+% More on parse-error:
+%   http://www.dcs.gla.ac.uk/mail-www/haskell/msg01711.html
+
+
+\paragraph{Expression to Expression application} -\\
+
+In STG, function application must be to atomic values, i.e. either literals or
+variables.  This often requires introducing bindings with either \texttt{let} or
+\texttt{case} expressions.  Consider the \texttt{append} function that
+concatenates its two list parameters.  In STG, it is written as:
+
+\begin{verbatim}
+append = FUN(l1 l2 ->
+            case l1 of
+              { Nil -> l2;
+                Cons hd tl -> 
+                  let { rec = THUNK(append tl l2);
+                        result = CON(Cons hd rec) }
+                  in result });
+\end{verbatim}
+
+In mini-Haskell, expressions may be applied to other expressions, so the
+recursive call to \texttt{append} can be parenthesized. There is no need for the
+\texttt{let} expression:
+
+\begin{verbatim}
+append l1 l2 = case l1 of
+                Nil -> l2
+                Cons hd tl -> Cons hd (append tl l2)
+\end{verbatim}
+
+This also serves as a good example of expression to expression application is
+transformed into STG.  Any non-atomic expression in a expression application is
+bound to a heap object in a generated \texttt{let} expression.  These
+expressions are thus properly "atomized" for STG.  The above mini-Haskell code
+is transformed in STG that is structurally identical to the STG code that
+precedes it.
+
+
+
+\paragraph{Fancy Pattern Matching} -\\
+
+{\color{red}\dots}
+
+
+
+\paragraph{Less significant features} -\\
+
+\begin{itemize}
+\item Constructors as functions \\
+  (partial application uses generated functions, full creates CONS)
+
+\item Primitive operations as functions \\
+  (partial application uses generated functions, full creates EPrimop)
+
+\item Lambda Expressions \\
+  (desugar to let-bound FUN objects)
+
+\item Type Annotations \\
+  (passed on to type checker)
+
+\item Haskell Block \\
+  (ignored by MHS frontend, not other Haskell compilers;
+  allows the same file to be tested on our compiler vs GHC)
+\end{itemize}
 
 
 \section{Current Status, and Expected Results by the time of the symposium}
