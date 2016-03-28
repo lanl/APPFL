@@ -7,6 +7,14 @@ year = {2016},
 note = "[Online; accessed 27-Feb-2016]",
 }
 
+@misc{Exascale-roadmap,
+author = {Jack Dongarra and others},
+title = {{The International Exascale Software Project Roadmap}},
+howpublished = "\url{https://www.nersc.gov/assets/pubs\_presos/IESP-Roadmap.pdf}",
+note = "[Online; accessed 27-Feb-2016]",
+}
+%also \url{http://www.exascale.org/mediawiki/images/2/20/IESP\-roadmap.pdf}",
+
 @misc{EUexascale,
 author = {},
 title = {{European Exascale Software Initiative,
@@ -22,30 +30,6 @@ howpublished = "\url{http://www.exascale.org/iesp/Main\_Page}",
 note = "[Online; accessed 27-Feb-2016]",
 }
 
-@misc{Exascale-roadmap,
-author = {Jack Dongarra and others},
-title = {{The International Exascale Software Project Roadmap}},
-howpublished = "\url{https://www.nersc.gov/assets/pubs_presos/IESP-Roadmap.pdf}",
-note = "[Online; accessed 27-Feb-2016]",
-}
-% also http://www.exascale.org/mediawiki/images/2/20/IESP-roadmap.pdf
-
-
-@conference{Davis96,
-author = {Davis, Kei},
-title = {{MPP Parallel Haskell}},
-booktitle = {Draft Proceedings Implementation of Functional Languages (IFL '96)},
-year = {1996}, 
-OPTeditor = {},
-number = {1268},
-series = {LNCS},
-pages = {49-54},
-address = {Bonn/Bad-Godesberg, Germany},
-OPTmonth = {},
-OPTorganization = {},
-publisher = {Springer-Verlag},
-OPTnote = {},
-}
 
 @conference{Bauer12,
 author = {Bauer, M. and Treichler, S. and Slaughter, E. and Aiken, A.},
@@ -78,6 +62,7 @@ OPTorganization = {},
 OPTpublisher = {},
 OPTnote = {},
 }
+
 
 @unpublished{AikenFL,
 author = {Alexander Aiken and John H. Williams and Edward L. Wimmers},
@@ -123,6 +108,22 @@ note = {\url{http://theory.stanford.edu/~aiken/publications/trs/RJ7100.pdf}},
                   transformation, programming languages, von Neumann
                   computers, von Neumann languages},
 } 
+
+@conference{Davis96,
+author = {Davis, Kei},
+title = {{MPP Parallel Haskell}},
+booktitle = {Draft Proceedings Implementation of Functional Languages (IFL '96)},
+year = {1996}, 
+OPTeditor = {},
+number = {1268},
+series = {LNCS},
+pages = {49-54},
+address = {Bonn/Bad-Godesberg, Germany},
+OPTmonth = {},
+OPTorganization = {},
+publisher = {Springer-Verlag},
+OPTnote = {},
+}
 
 @article{Bird84,
 author = {Richard Bird},
@@ -171,6 +172,45 @@ howpublished = "\url{http://ghc.haskell.org/trac/ghc/wiki/StrictPragma/}",
 note = "[Online; accessed 27-Feb-2016]",
 }
 
+@misc{MPI,
+    author = {{Message Passing Interface Forum}},
+    title = {{MPI: A Message-Passing Interface Standard Version 3.1}},
+    year = 2015,
+    month = June,
+    url = {http://www.mpi-forum.org/},
+    howpublished={\url{http://www.mpi-forum.org/}},
+}
+
+@book{Reinders:2007,
+ author = {Reinders, James},
+ title = {Intel Threading Building Blocks},
+ year = {2007},
+ isbn = {9780596514808},
+ edition = {First},
+ publisher = {O'Reilly \& Associates, Inc.},
+ address = {Sebastopol, CA, USA},
+} 
+
+@misc{HPX,
+    author = {{The Stellar Group}},
+    title = {{HPX}},
+    OPTyear = 2015,
+    OPTmonth = June,
+    url = {http://stellar.cct.lsu.edu/projects/hpx/},
+    howpublished = {\url{http://stellar.cct.lsu.edu/projects/hpx/}},
+}
+
+
+@book{Cesarini:2009,
+ author = {Cesarini, Francesco and Thompson, Simon},
+ title = {ERLANG Programming},
+ year = {2009},
+ isbn = {0596518188, 9780596518189},
+ edition = {1st},
+ publisher = {O'Reilly Media, Inc.},
+} 
+
+
 @Inbook{Jones:1991,
 author="Jones, Simon L. Peyton
 and Launchbury, John",
@@ -186,6 +226,27 @@ doi="10.1007/3540543961\_30",
 url="http://dx.doi.org/10.1007/3540543961\_30"
 }
 
+ 
+
+@book{Hutton-book,
+author = "Graham Hutton",
+title = "{Programming in Haskell}",
+publisher = "Cambridge University Press",
+month = jan,
+year = 2007
+}
+
+@article{Hutton-parsing:1992,
+        author = "Graham Hutton",
+        title = "{Higher-order Functions for Parsing}",
+        journal = "Journal of Functional Programming",
+        publisher = "Cambridge University Press",
+        volume = 2,
+        number = 3,
+        pages = "323--343",
+        month = jul,
+        year = 1992
+}
 
 @inproceedings{Marlow:2004,
  author = {Marlow, Simon and Jones, Simon Peyton},
@@ -203,6 +264,34 @@ url="http://dx.doi.org/10.1007/3540543961\_30"
  publisher = {ACM},
  address = {New York, NY, USA},
 } 
+
+@misc{ministg,
+    author = {{Bernie Pope}},
+    title = {{Ministg}},
+    OPTyear = 2015,
+    OPTmonth = June,
+    url = {http://wiki.haskell.org/Ministg},
+    howpublished = {\url{http://wiki.haskell.org/Ministg}}
+}
+
+@Article {PJ-stockhardware,
+abstract     = {<p>"The Spineless Tagless G-Machine is an abstract machine designed to support
+                higher-order functional languages. This presentation of the machine falls into
+                three parts. Firstly we give a general discussion of the design issues involved
+                in implementing non-strict functional languages. Next, we present the  STG
+                language,</p>},
+author       = {Peyton Jones and Simon L},
+journal      = {Journal of Functional Programming},
+month        = {April},
+number       = {2},
+pages        = {127–202},
+publisher    = {Cambridge University Press},
+title        = {Implementing Lazy Functional Languages on Stock Hardware: The Spineless Tagless
+                G-machine},
+url          = {http://research.microsoft.com/apps/pubs/default.aspx?id=67083},
+volume       = {2},
+year         = {1992},
+}
 
 @techreport{Heren02,
 author = {Bastiaan Heren and Jurriaan Hage and Doaitse Swierstra},
@@ -277,6 +366,28 @@ note = "[Online; accessed 27-Feb-2016]",
  address = {New York, NY, USA},
  keywords = {parallel garbage collection},
 } 
+
+@INPROCEEDINGS{Jones91unboxedvalues,
+    author = {Simon L Peyton Jones and John Launchbury},
+    title = {Unboxed values as first class citizens in a non-strict functional language},
+    booktitle = {Proceedings of the 5th ACM conference on Functional programming languages and computer architecture},
+    year = {1991},
+    pages = {636--666},
+    publisher = {Springer-Verlag New York, Inc.}
+}
+
+@mastersthesis{Stewart-BSc,
+author = {Don Stewart},
+title = {{Multi-paradigm Just-In-Time Compilation}},
+school = {The University of New South Wales},
+year = {2002}, 
+type = {{BSc (Computer Science) Honours Thesis}},
+OPTaddress = {},
+month = {Nov.},
+note = {\url{http://www.cse.unsw.edu.au/~pls/thesis/dons-thesis.ps.gz}},
+}
+
+
 
 % An article from a journal or magazine. 
 @article{key1,
