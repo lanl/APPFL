@@ -655,9 +655,15 @@ precedes it.
 
 
 
-\paragraph{Fancy Pattern Matching} -\\
+\paragraph{Nested Pattern Matching} -\\
 
-{\color{red}\dots}
+STG supports pattern matching but only in a simple form and only in
+\texttt{case} expressions.  mini-Haskell extends this to something approaching
+what is found in Haskell.  Functions, including lambda expressions, may match on
+all their arguments (with multiple non-anonymous definitions allowed to exhaust
+the pattern combinations).  Patterns in all contexts (functions and case
+expressions) may be nested arbitrarily deep.  These two features greatly
+simplify the programmer's job.
 
 
 
