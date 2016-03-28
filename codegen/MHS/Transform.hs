@@ -554,11 +554,21 @@ instance SimpleExp Clause where
 
 {---------------------------------------------------------------------------------
 Desugar numeric literals to Boxed Int/Doubles
-This transformation adds its own datatype definitions for boxed Ints and Doubles
-as well as functions that call to them in the same convention as that used when
-generating functions for constructors used by a program.  This keeps the transform
-from being reliant on any previous transform while still compliant with the naming
-convention used to generate the abstract STG
+
+This transformation adds its own datatype definitions for boxed Ints
+and Doubles as well as functions that call to them in the same
+convention as that used when generating functions for constructors
+used by a program.  This keeps the transform from being reliant on any
+previous transform while still compliant with the naming convention
+used to generate the abstract STG
+
+Note to future David (from past David) so you don't panic:
+
+This does not modify unboxed literals. It does create top level boxed
+objects for each unique literal number.  Unboxed literals do not need
+to be processed specially, or, at least not here.  Their behavior in
+MHS should be identical to that found in MagicHash programs (i.e. no
+recursive bindings, including at the top level).
 -----------------------------------------------------------------------------------}
 
 

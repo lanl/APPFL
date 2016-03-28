@@ -199,11 +199,12 @@ exprP =
                                              accept $ foldl1 EAp es  
 -- if only one Exp is parsed, foldl1 leaves it unchanged,
 -- otherwise left-associative application is parsed, so
--- e1 e2 e3 e4 == ((((e1) e2) e3) e4)
--- let, case and lambda expressions are all treated slightly differently
--- to conform with haskell parsing of function application
--- case (+) of f -> f; 1 2 produces a compile error (even with braces in alts)
--- but surrounding it with parens makes the application parse correctly
+--- e1 e2 e3 e4 == ((((e1) e2) e3) e4)
+-- let, case and lambda expressions are all treated slightly
+-- differently to conform with haskell parsing of function application
+-- case (+) of f -> f; 1 2 produces a compile error (even with braces
+-- in alts) but surrounding it with parens allows the case expression
+-- to be applied to 1 and 2.
   in orExList
      [eLetP, eCaseP, eFunP, mults]
 
