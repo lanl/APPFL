@@ -271,7 +271,22 @@ year = 2007
     OPTyear = 2015,
     OPTmonth = June,
     url = {http://wiki.haskell.org/Ministg},
-    howpublished = {\url{http://wiki.haskell.org/Ministg}}
+}
+
+@misc{haskell2010report,
+    author = {{Simon Marlow (ed.)}},
+    title = {{Haskell 2010 Language Report}},
+    OPTyear = 2015,
+    OPTmonth = June,
+    url = {http://www.haskell.org/onlinereport/haskell2010/},
+}
+
+@misc{haskellmode,
+    OPTauthor = {{}},
+    title = {{Emacs mode for Haskell}},
+    OPTyear = 2015,
+    OPTmonth = June,
+    url = {http://github.com/haskell/haskell-mode},
 }
 
 
@@ -296,15 +311,16 @@ year         = {1992},
 }
 
 @techreport{Heren02,
-author = {Bastiaan Heren and Jurriaan Hage and Doaitse Swierstra},
-title = {{Generalizing Hindley-Milner Type Inference Algorithmsa}},
-institution = {Institute of Information and Computing Sciences, Utrecht University},
-year = {2002}, 
-OPTtype = {},
-number = {Technical Report UU-CS-2002-031},
-OPTaddress = {},
-OPTmonth = {},
-note = {\url{http://soft.vub.ac.be/~cfscholl/Capita-Selecta-2015/papers/2002\%20Heeren.pdf} [Online; accessed 27-Feb-2016]},
+  author = {Bastiaan Heren and Jurriaan Hage and Doaitse Swierstra},
+  title = {{Generalizing Hindley-Milner Type Inference Algorithmsa}},
+  institution = {Institute of Information and Computing Sciences, Utrecht University},
+  year = {2002}, 
+  OPTtype = {},
+  number = {Technical Report UU-CS-2002-031},
+  OPTaddress = {},
+  OPTmonth = {},
+  url = {http://soft.vub.ac.be/~cfscholl/Capita-Selecta-2015/papers/2002\%20Heeren.pdf}
+  note = {[Online; accessed 27-Feb-2016]},
 }
 
 @misc{ghc-as-library,
@@ -389,7 +405,116 @@ month = {Nov.},
 note = {\url{http://www.cse.unsw.edu.au/~pls/thesis/dons-thesis.ps.gz}},
 }
 
+@inproceedings{Liu:2013,
+ author = {Liu, Hai and Glew, Neal and Petersen, Leaf and Anderson, Todd A.},
+ title = {The Intel Labs Haskell Research Compiler},
+ booktitle = {Proceedings of the 2013 ACM SIGPLAN Symposium on Haskell},
+ series = {Haskell '13},
+ year = {2013},
+ isbn = {978-1-4503-2383-3},
+ location = {Boston, Massachusetts, USA},
+ pages = {105--116},
+ numpages = {12},
+ url = {http://doi.acm.org/10.1145/2503778.2503779},
+ doi = {10.1145/2503778.2503779},
+ acmid = {2503779},
+ publisher = {ACM},
+ address = {New York, NY, USA},
+ keywords = {compiler optimization, functional language compiler, haskell},
+} 
 
+@inproceedings{Petersen:2013,
+ author = {Petersen, Leaf and Orchard, Dominic and Glew, Neal},
+ title = {Automatic SIMD Vectorization for Haskell},
+ booktitle = {Proceedings of the 18th ACM SIGPLAN International Conference on Functional Programming},
+ series = {ICFP '13},
+ year = {2013},
+ isbn = {978-1-4503-2326-0},
+ location = {Boston, Massachusetts, USA},
+ pages = {25--36},
+ numpages = {12},
+ url = {http://doi.acm.org/10.1145/2500365.2500605},
+ doi = {10.1145/2500365.2500605},
+ acmid = {2500605},
+ publisher = {ACM},
+ address = {New York, NY, USA},
+ keywords = {compiler optimization, functional languages, haskell, simd, vectorization},
+} 
+
+@techreport{NVIDIA:2013,
+author = {Alexander Collins and Dominik Grewe and Vinod Grover
+          and Sean Lee and Adriana Susnea},
+title = {{NOVA:  A Functional Language for Data Parallelism}},
+institution = {NVIDIA Corporation},
+year = {2013}, 
+type = {Technical Report},
+number = {NVR-2013-002},
+OPTaddress = {},
+OPTmonth = {},
+OPTnote = {},
+url = {http://research.nvidia.com/publication/nova-functional-language-data-parallelism-2},
+}
+
+% A PhD thesis. 
+@phdthesis{Stewart:1993,
+author = {Robert Stewart},
+title = {{Reliable Massively Parallel Symbolic Computing:
+          Fault Tolerance for a Distributed Haskell}},
+school = {Heriot Watt University},
+year = {2013}, 
+
+OPTtype = {},
+OPTaddress = {},
+OPTmonth = {Nov},
+OPTnote = {},
+}
+
+@misc{hdph,
+author = {},
+title = {{Haskell distribued parallel Haskell, Control.Parallel.HdpH}},
+url = {http://hackage.haskell.org/package/hdph-0.0.1/docs/Control-Parallel-HdpH.html}
+note = "[Hackage, accessed 29-Mar-2016]",
+}
+@inproceedings{Trinder:2000,
+ author = {Trinder, Philip W. and Pointon, Robert F. and Loidl, Hans-Wolfgang},
+ title = {Runtime System Level Fault Tolerance for a Distributed Functional Language},
+ booktitle = {Selected Papers from the 2Nd Scottish Functional Programming Workshop (SFP00)},
+ year = {2000},
+ isbn = {1-84150-058-5},
+ pages = {103--114},
+ numpages = {12},
+ url = {http://dl.acm.org/citation.cfm?id=647187.719998},
+ acmid = {719998},
+ publisher = {Intellect Books},
+ address = {Exeter, UK, UK},
+} 
+
+\bibitem{explicit-lazy}
+Tim Sheard, 
+A Pure Language with Default Strict Evaluation Order and Explicit Laziness.
+Presented at the 2003 Haskell Workshop, Uppsala, Sweden, Aug.\ 28, 2003.
+\url{http://web.cecs.pdx.edu/~sheard/papers/ExplicitLazy.ps}
+
+\bibitem{strict-ghc-plugin}
+GHC plugin for making functions strict.
+\url{https://github.com/thoughtpolice/strict-ghc-plugin}
+
+@Inbook{Pointon:2001,
+author="Pointon, R.F.
+and Trinder, P.W.
+and Loidl, H.-W.",
+editor="Mohnen, Markus
+and Koopman, Pieter",
+chapter="The Design and Implementation of Glasgow Distributed Haskell",
+title="Implementation of Functional Languages: 12th International Workshop, IFL 2000 Aachen, Germany, September 4--7, 2000 Selected Papers",
+year="2001",
+publisher="Springer Berlin Heidelberg",
+address="Berlin, Heidelberg",
+pages="53--70",
+isbn="978-3-540-45361-1",
+doi="10.1007/3-540-45361-X_4",
+url="http://dx.doi.org/10.1007/3-540-45361-X_4"
+}
 
 % An article from a journal or magazine. 
 @article{key1,
