@@ -173,12 +173,11 @@ note = "[Online; accessed 27-Feb-2016]",
 }
 
 @misc{MPI,
-    author = {{Message Passing Interface Forum}},
-    title = {{MPI: A Message-Passing Interface Standard Version 3.1}},
-    year = 2015,
-    month = June,
-    url = {http://www.mpi-forum.org/},
-    howpublished={\url{http://www.mpi-forum.org/}},
+  author = {{Message Passing Interface Forum}},
+  title = {{MPI: A Message-Passing Interface Standard Version 3.1}},
+  year = 2015,
+  month = jun,
+  url = {http://www.mpi-forum.org/},
 }
 
 @book{Reinders:2007,
@@ -319,7 +318,7 @@ year         = {1992},
   number = {Technical Report UU-CS-2002-031},
   OPTaddress = {},
   OPTmonth = {},
-  url = {http://soft.vub.ac.be/~cfscholl/Capita-Selecta-2015/papers/2002\%20Heeren.pdf}
+  url = {http://soft.vub.ac.be/~cfscholl/Capita-Selecta-2015/papers/2002\%20Heeren.pdf},
   note = {[Online; accessed 27-Feb-2016]},
 }
 
@@ -456,7 +455,7 @@ url = {http://research.nvidia.com/publication/nova-functional-language-data-para
 }
 
 % A PhD thesis. 
-@phdthesis{Stewart:1993,
+@phdthesis{Stewart:2013,
 author = {Robert Stewart},
 title = {{Reliable Massively Parallel Symbolic Computing:
           Fault Tolerance for a Distributed Haskell}},
@@ -472,9 +471,10 @@ OPTnote = {},
 @misc{hdph,
 author = {},
 title = {{Haskell distribued parallel Haskell, Control.Parallel.HdpH}},
-url = {http://hackage.haskell.org/package/hdph-0.0.1/docs/Control-Parallel-HdpH.html}
+url = {http://hackage.haskell.org/package/hdph-0.0.1/docs/Control-Parallel-HdpH.html},
 note = "[Hackage, accessed 29-Mar-2016]",
 }
+
 @inproceedings{Trinder:2000,
  author = {Trinder, Philip W. and Pointon, Robert F. and Loidl, Hans-Wolfgang},
  title = {Runtime System Level Fault Tolerance for a Distributed Functional Language},
@@ -489,31 +489,48 @@ note = "[Hackage, accessed 29-Mar-2016]",
  address = {Exeter, UK, UK},
 } 
 
-\bibitem{explicit-lazy}
-Tim Sheard, 
-A Pure Language with Default Strict Evaluation Order and Explicit Laziness.
-Presented at the 2003 Haskell Workshop, Uppsala, Sweden, Aug.\ 28, 2003.
-\url{http://web.cecs.pdx.edu/~sheard/papers/ExplicitLazy.ps}
+@misc{Sheard:2003,
+author = {Tim Sheard},
+title = {{A Pure Language with Default Strict Evaluation Order and Explicit Laziness}},
+url = {http://web.cecs.pdx.edu/~sheard/papers/ExplicitLazy.ps},
+note = "Presented at the 2003 Haskell Workshop, Uppsala, Sweden, Aug.\ 28, 2003.",
+}
 
-\bibitem{strict-ghc-plugin}
-GHC plugin for making functions strict.
-\url{https://github.com/thoughtpolice/strict-ghc-plugin}
+@misc{strict-ghc-plugin,
+author = {The GHC authors},
+title = {{strict-ghc-plugin: Compiler plugin for making Haskell strict}},
+url = {https://hackage.haskell.org/package/strict-ghc-plugin},
+OPTmonth = {},
+OPTyear = {},
+OPTnote = "[Online; accessed 27-March-1961]",
+}
+
+http://trac.ouroborus.net/ddc/
+The Disciplined Disciple Compiler (DDC)
 
 @Inbook{Pointon:2001,
-author="Pointon, R.F.
-and Trinder, P.W.
-and Loidl, H.-W.",
-editor="Mohnen, Markus
-and Koopman, Pieter",
+author="Pointon, R.F. and Trinder, P.W. and Loidl, H.-W.",
+editor="Mohnen, Markus and Koopman, Pieter",
 chapter="The Design and Implementation of Glasgow Distributed Haskell",
-title="Implementation of Functional Languages: 12th International Workshop, IFL 2000 Aachen, Germany, September 4--7, 2000 Selected Papers",
+title="Implementation of Functional Languages: 12th International Workshop, 
+       IFL 2000 Aachen, Germany, September 4--7, 2000 Selected Papers",
 year="2001",
 publisher="Springer Berlin Heidelberg",
 address="Berlin, Heidelberg",
 pages="53--70",
 isbn="978-3-540-45361-1",
-doi="10.1007/3-540-45361-X_4",
-url="http://dx.doi.org/10.1007/3-540-45361-X_4"
+doi="10.1007/3-540-45361-X\_4",
+url="http://dx.doi.org/10.1007/3-540-45361-X\_4"
+}
+
+@misc{key9,
+OPTauthor = {},
+OPTtitle = {{}},
+OPThowpublished = "",
+OPTurl = {http://www.lanl.gov},
+OPTmonth = {},
+OPTyear = {},
+OPTnote = "[Online; accessed 27-March-1961]",
 }
 
 % An article from a journal or magazine. 
@@ -637,16 +654,6 @@ OPTtype = {},
 OPTaddress = {},
 OPTmonth = {},
 OPTnote = {},
-}
-
-% Use this type when nothing else fits. 
-@misc{key9,
-OPTauthor = {},
-OPTtitle = {{}},
-OPThowpublished = "\url{http://www.lanl.gov}",
-OPTmonth = {},
-OPTyear = {},
-OPTnote = "[Online; accessed 27-March-1961]",
 }
 
 % A PhD thesis. 
