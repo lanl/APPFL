@@ -285,8 +285,14 @@ and Peyton Jones~\cite{Marlow:2004};
 \item Choice of degree of strictness should be easily selected;
 \item Sharing, in the sense of what \emph{lazy} means vs.\ merely non-strict,
   should be preserved for all degrees of strictness;
-\item Tail calling should be properly implemented, i.e., not as a trampoline.
+\item Tail calling must be properly and consistently implemented;
+\item The generated code is C.
 \end{itemize}
+
+The requirement for tail calling is not primarily for efficiency, rather it
+is for a reasonable parallel implementation.  Achieving this, and thereby
+sufficiently limiting the use of the native C stack, makes this an interesting
+exercise that we discuss at some length.
 
 For feasibility, we restrict ourselves to shared-memory implicit parallelism,
 but distributed-memory parallelism should be straightforwardly realizable
@@ -474,7 +480,7 @@ Other dimensions are possible, for example whether \texttt{let} bindings
 to function/application and constructor strictness.
 
 \subsection{STG to C}
-The back-end is written in Haskell and generates proper tail-calling C code;
+The back-end is written in Haskell and generates C code;
 the runtime system is written in C/C++.  The system fairly faithfully
 implements the STG machine as described in \emph{EA} and dynamically
 illustrated by Pope's Ministg~\cite{ministg} with the exception of the state
@@ -482,55 +488,101 @@ transition rules which, of course, may be different than those for non-strict
 semantics.  Sharing is preserved.
 
 \subsubsection{Proper tail calls.}
-While performance is not a high priority, we attain proper tail calling
-instead of using the trampoline used in earlier versions of
-GHC~\cite{PJ-stockhardware}.  Because we maintain our own data and control
-(continuation) stack all generated C functions take no explicit arguments and
-have return type \emph{void}, and with a single exception in the non-strict
-case are invoked in tail call positions, at non-zero optimization levels both
-gcc and Clang/LLVM generate jumps instead of calls for C calls.  When using
-gcc we also use a fixed set of machine registers for passing/returning values.
+Parallelism is achieved by multi-threading; our model is based on Harris et
+al.'s.~\cite{Harris:2005}; later developments by Marlow et al.\ are beyond our
+aspirations~\cite{Marlow:2009}.  To achieve efficient execution they
+identified the need for the ability to examine and unwind the stack.  This
+requires that use of the C stack be highly constrained if we are to 
+avoid complex and ugly hacks using, e.g., \emph{setjmp/longjmp}, or
+non-portable code to directly manipulate the C stack, complicating an
+already non-trivial implementation effort.  We therefore must limit the
+use of the C stack to calls to the runtime, in other words, when executing
+code generated from the user program (and not in a runtime call), there
+must be no growing of (pushing return addresses or data onto) the C stack.
 
-The exceptions to tail calling are for convenience.  Similar to what is
-described in \emph{EA} we have a generic variadic \emph{stgApply} function
-that is used for applications of non-known functions, and known functions with
-a deficit or excess number of the arguments.  The \emph{stgApply} function takes
+First we establish that this is possible.  By maintaining our own data
+and control (continuation) stack all generated C functions can take no
+explicit arguments and have return type \emph{void}. If we arrange that
+generated C code has only calls (other than runtime calls, which do not call
+back to user-program code) in tail call positions, that is, immediately before
+a return in the control flow graph, then at non-zero optimization levels both
+gcc and Clang/LLVM will generate jumps instead of calls for C calls.  When using
+gcc we can also use a fixed set of machine registers for passing/returning
+values, much like GHC.
+
+\subsubsection{A taste of the continuation style.}
+Now to implementation, which we discuss for a simple case, then the most complex
+case.  To clearly distinguish between a notional C call (a syntactic concept)
+and a machine-level call (pushing a return address onto the native C stack) we
+will refer to the latter as \emph{call-with-return}, and to a machine-level
+tail call as \emph{jump}.
+
+First a detail.  Our implementation of the STG abstract machine has an
+abstract register called the \emph{current value register} or \emph{CVR}.
+Roughly speaking, it can hold the pointer to what is about to be evaluated or
+what was just evaluated.  Now consider the evaluation of \texttt{case e of
+  <alts>} if call-with-return is disallowed.  If the compiler cannot determine
+that evaluating \texttt{e} does not jump somewhere then there must be some
+mechanism to get to the \texttt{alts}.  Our solution is to have a separate C
+function for the \texttt{alts}, and before executing the code to evaluate
+\texttt{e}, to push a continuation---the address of this function and the free
+variables of the \texttt{alts}---onto the stack.  Whatever the code for
+\texttt{e} might do, ultimately (in the absence of error or non-termination)
+the value of \texttt{e} is in the CVR, and some code somewhere reaches its end
+and ``returns''---jumps to the address
+in the continuation on the top of the stack, thus entering the code for
+\texttt{alts}.  Thus continuations direct where to go to, not how to return
+to caller as in a stack for an imperative language.
+
+\subsubsection{Is this too much for this paper?}
+Similar to what is described in \emph{EA}, in an earlier
+implementation we have a generic variadic \emph{stgApply} C function that is
+used for applications of non-known functions, and known functions with a
+deficit or excess number of the arguments.  The \emph{stgApply} function takes
 as arguments the first element of the application (\emph{FUN}, \emph{PAP},
 \emph{THUNK}, or \emph{BLACKHOLE}) and its arguments, and if a \emph{THUNK},
-evaluates it with a call (rather than jump) to yield a \emph{FUN} or
-\emph{PAP}.  This allows us to implement a single \emph{stgApply} function as
-a C function taking a contiguous block of machine words (unboxed values
-or pointers) on the explicit stack.  The implementation of \emph{stgApply}
-as described in \emph{EA} makes the same concession regarding
-call-with-return, but the scheme described there uses an auto-generated family
-of \emph{stgApply} functions parameterized by number and type (unboxed or
-pointer) of arguments.  We used this scheme initially as well, but because the
-parameter block contains a bitmap describing which arguments are boxed/unboxed
-for the benefit of the garbage collector, this elaboration is unnecessary.
-For \emph{direct calls}, in which a known function is applied to a number
-of arguments equal to its arity, \emph{stgApply} need not be invoked:
-the \emph{FUN} is tail-called directly.
+evaluates it with a call-with-return to yield a \emph{FUN} or \emph{PAP}.
+This allows us to implement a single \emph{stgApply} function as a C function
+taking a contiguous block of machine words (unboxed values or pointers) on the
+explicit stack.  The implementation of \emph{stgApply} as described in
+\emph{EA} performs the same call-with-return, but the scheme described there
+uses an auto-generated family of \emph{stgApply} functions parameterized by
+number and type (unboxed or pointer) of arguments.  (We used this scheme
+initially as well, but because the stack is now fully explicit and the stack
+frame is self-describing (e.g., contains a bitmap describing which arguments
+are boxed/unboxed for the benefit of the garbage collector), this elaboration
+is unnecessary.) Call-with-return was also used in the case that a \emph{FUN}
+or \emph{PAP} is provided more than its arity number of arguments, in which
+case \emph{FUN} or \emph{PAP} is called-with-return with its arity number
+of objects, and the returned object and remaining argument passed (via jump)
+to \emph{stgApply}.  Finally, for strict evaluation orders it is straightforward
+to evaluate function or constructor arguments one at a time with call-with-return.
 
-Call-with-return becomes even more convenient when considering the various
-forms of strictness: when evaluating function or constructor arguments it is
-simpler, and arguably more efficient in terms of time (but not space in
-general beca) to ``evaluate in place'' than implement the continuation style
-to the logical limit.  We are aware, however, that we may need to eliminate
-this use of the native C stack so that we can properly unwind the stack in a
-more sophisticated parallel runtime when pruning multiple evaluations of the
-same thunk, and we have determined that this is a relatively minor exercise:
-one possibility is that \emph{stgApply} takes an additional argument
-indicating which of its subsequent arguments have already been forced, and at
-each invocation if unforced arguments remain, evaluates the next (possibly)
-unevaluated argument and tail calls itself, re-using the stack frame with just
-this new argument updated.
+At that point of development these calls-with-return were clearly a hack
+in an otherwise continuation-passing (via the explicit stack) control flow.
+Because call-with-return could be of unbounded call depth this would be
+problematic for stack unwinding.
 
-\emph{It seems that we can dispose with call-with-return of STG functions,
-  including stgApply (as opposed to runtime functions) without too much
-  effort.  It also seems like this is needed if we want to be able to unwind
-  the stack as described in the ``grey hole'' paper.  I'll try to do this this
-  week (3/31/16-4/1/16) to verify the feasibility before changing the
-  preceding description (which isn't quite right)}
+The solution, slightly simplified, entailed adding a new parameter to \emph{stgApply}
+and make the first parameter, the object to be applied, implicit.  The implicit
+parameter is in the CVR---a pointer to the object to be applied when jumping to \emph{stgApply}.
+The new argument simply indicates which of the boxed arguments
+
+For \emph{direct calls}, in which a known function is applied
+to a number of arguments equal to its arity, \emph{stgApply} need not be
+invoked: the \emph{FUN} is tail-called directly.
+
+
+In addition to being in a tail call position, the gcc constraints for
+generating a tail call (jump) are (approximately) that the total size of the
+caller and callee arguments be equal, and the return type sizes be equal.  For
+Clang the requirement is slightly more strict: caller and callee type
+signatures must be the same.  These are a consequence of the C calling
+convention that the caller, not callee, cleans up the stack (removes the
+callee's stack frame).  However, because we maintain our own stack we can
+define our own calling convention(s), so tail calls can be made to functions
+of notionally differing type.  In particular, top-of-stack frames can be
+adjusted in size and content without undue copying.
 
 \subsection{Mini-Haskell}
 As mentioned, a current near-term goal is to use GHC as our front-end to
