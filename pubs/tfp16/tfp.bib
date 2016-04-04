@@ -173,12 +173,11 @@ note = "[Online; accessed 27-Feb-2016]",
 }
 
 @misc{MPI,
-    author = {{Message Passing Interface Forum}},
-    title = {{MPI: A Message-Passing Interface Standard Version 3.1}},
-    year = 2015,
-    month = June,
-    url = {http://www.mpi-forum.org/},
-    howpublished={\url{http://www.mpi-forum.org/}},
+  author = {{Message Passing Interface Forum}},
+  title = {{MPI: A Message-Passing Interface Standard Version 3.1}},
+  year = 2015,
+  month = jun,
+  url = {http://www.mpi-forum.org/},
 }
 
 @book{Reinders:2007,
@@ -271,7 +270,22 @@ year = 2007
     OPTyear = 2015,
     OPTmonth = June,
     url = {http://wiki.haskell.org/Ministg},
-    howpublished = {\url{http://wiki.haskell.org/Ministg}}
+}
+
+@misc{haskell2010report,
+    author = {{Simon Marlow (ed.)}},
+    title = {{Haskell 2010 Language Report}},
+    OPTyear = 2015,
+    OPTmonth = June,
+    url = {http://www.haskell.org/onlinereport/haskell2010/},
+}
+
+@misc{haskellmode,
+    OPTauthor = {{}},
+    title = {{Emacs mode for Haskell}},
+    OPTyear = 2015,
+    OPTmonth = June,
+    url = {http://github.com/haskell/haskell-mode},
 }
 
 
@@ -296,15 +310,16 @@ year         = {1992},
 }
 
 @techreport{Heren02,
-author = {Bastiaan Heren and Jurriaan Hage and Doaitse Swierstra},
-title = {{Generalizing Hindley-Milner Type Inference Algorithmsa}},
-institution = {Institute of Information and Computing Sciences, Utrecht University},
-year = {2002}, 
-OPTtype = {},
-number = {Technical Report UU-CS-2002-031},
-OPTaddress = {},
-OPTmonth = {},
-note = {\url{http://soft.vub.ac.be/~cfscholl/Capita-Selecta-2015/papers/2002\%20Heeren.pdf} [Online; accessed 27-Feb-2016]},
+  author = {Bastiaan Heren and Jurriaan Hage and Doaitse Swierstra},
+  title = {{Generalizing Hindley-Milner Type Inference Algorithmsa}},
+  institution = {Institute of Information and Computing Sciences, Utrecht University},
+  year = {2002}, 
+  OPTtype = {},
+  number = {Technical Report UU-CS-2002-031},
+  OPTaddress = {},
+  OPTmonth = {},
+  url = {http://soft.vub.ac.be/~cfscholl/Capita-Selecta-2015/papers/2002\%20Heeren.pdf},
+  note = {[Online; accessed 27-Feb-2016]},
 }
 
 @misc{ghc-as-library,
@@ -389,7 +404,203 @@ month = {Nov.},
 note = {\url{http://www.cse.unsw.edu.au/~pls/thesis/dons-thesis.ps.gz}},
 }
 
+@inproceedings{Liu:2013,
+ author = {Liu, Hai and Glew, Neal and Petersen, Leaf and Anderson, Todd A.},
+ title = {The Intel Labs Haskell Research Compiler},
+ booktitle = {Proceedings of the 2013 ACM SIGPLAN Symposium on Haskell},
+ series = {Haskell '13},
+ year = {2013},
+ isbn = {978-1-4503-2383-3},
+ location = {Boston, Massachusetts, USA},
+ pages = {105--116},
+ numpages = {12},
+ url = {http://doi.acm.org/10.1145/2503778.2503779},
+ doi = {10.1145/2503778.2503779},
+ acmid = {2503779},
+ publisher = {ACM},
+ address = {New York, NY, USA},
+ keywords = {compiler optimization, functional language compiler, haskell},
+} 
 
+@inproceedings{Petersen:2013,
+ author = {Petersen, Leaf and Orchard, Dominic and Glew, Neal},
+ title = {Automatic SIMD Vectorization for Haskell},
+ booktitle = {Proceedings of the 18th ACM SIGPLAN International Conference on Functional Programming},
+ series = {ICFP '13},
+ year = {2013},
+ isbn = {978-1-4503-2326-0},
+ location = {Boston, Massachusetts, USA},
+ pages = {25--36},
+ numpages = {12},
+ url = {http://doi.acm.org/10.1145/2500365.2500605},
+ doi = {10.1145/2500365.2500605},
+ acmid = {2500605},
+ publisher = {ACM},
+ address = {New York, NY, USA},
+ keywords = {compiler optimization, functional languages, haskell, simd, vectorization},
+} 
+
+@techreport{NVIDIA:2013,
+author = {Alexander Collins and Dominik Grewe and Vinod Grover
+          and Sean Lee and Adriana Susnea},
+title = {{NOVA:  A Functional Language for Data Parallelism}},
+institution = {NVIDIA Corporation},
+year = {2013}, 
+type = {Technical Report},
+number = {NVR-2013-002},
+OPTaddress = {},
+OPTmonth = {},
+OPTnote = {},
+url = {http://research.nvidia.com/publication/nova-functional-language-data-parallelism-2},
+}
+
+% A PhD thesis. 
+@phdthesis{Stewart:2013,
+author = {Robert Stewart},
+title = {{Reliable Massively Parallel Symbolic Computing:
+          Fault Tolerance for a Distributed Haskell}},
+school = {Heriot Watt University},
+year = {2013}, 
+
+OPTtype = {},
+OPTaddress = {},
+OPTmonth = {Nov},
+OPTnote = {},
+}
+
+@misc{hdph,
+author = {},
+title = {{Haskell distribued parallel Haskell, Control.Parallel.HdpH}},
+url = {http://hackage.haskell.org/package/hdph-0.0.1/docs/Control-Parallel-HdpH.html},
+note = "[Hackage, accessed 29-Mar-2016]",
+}
+
+@inproceedings{Trinder:2000,
+ author = {Trinder, Philip W. and Pointon, Robert F. and Loidl, Hans-Wolfgang},
+ title = {Runtime System Level Fault Tolerance for a Distributed Functional Language},
+ booktitle = {Selected Papers from the 2Nd Scottish Functional Programming Workshop (SFP00)},
+ year = {2000},
+ isbn = {1-84150-058-5},
+ pages = {103--114},
+ numpages = {12},
+ url = {http://dl.acm.org/citation.cfm?id=647187.719998},
+ acmid = {719998},
+ publisher = {Intellect Books},
+ address = {Exeter, UK, UK},
+} 
+
+@misc{Sheard:2003,
+author = {Tim Sheard},
+title = {{A Pure Language with Default Strict Evaluation Order and Explicit Laziness}},
+url = {http://web.cecs.pdx.edu/~sheard/papers/ExplicitLazy.ps},
+note = "Presented at the 2003 Haskell Workshop, Uppsala, Sweden, Aug.\ 28, 2003.",
+}
+
+@misc{strict-ghc-plugin,
+author = {The GHC authors},
+title = {{strict-ghc-plugin: Compiler plugin for making Haskell strict}},
+url = {https://hackage.haskell.org/package/strict-ghc-plugin},
+OPTmonth = {},
+OPTyear = {},
+OPTnote = "[Online; accessed 27-March-1961]",
+}
+
+@misc{disciplined-disciple,
+author = {Ben Lippmeier},
+title = {{The Disciplined Disciple Compiler (DDC)}},
+url = {http://trac.ouroborus.net/ddc/},
+}
+
+@misc{tying-the-knot,
+author = {Haskell Wiki},                  
+title = {{Tying the Knot}},
+url = {http://wiki.haskell.org/Tying\_the\_Knot},
+}
+
+@inproceedings{Sulzmann:2007,
+ author = {Sulzmann, Martin and Chakravarty, Manuel M. T. and Jones, Simon Peyton and Donnelly, Kevin},
+ title = {System F with Type Equality Coercions},
+ booktitle = {Proceedings of the 2007 ACM SIGPLAN International Workshop on Types in Languages Design and Implementation},
+ series = {TLDI '07},
+ year = {2007},
+ isbn = {1-59593-393-X},
+ location = {Nice, France},
+ pages = {53--66},
+ numpages = {14},
+ url = {http://doi.acm.org/10.1145/1190315.1190324},
+ doi = {10.1145/1190315.1190324},
+ acmid = {1190324},
+ publisher = {ACM},
+ address = {New York, NY, USA},
+ keywords = {advanced type features, typed intermediate language},
+} 
+
+@misc{ghc-core,
+author = {Andrew Tolmach and Tim Chevalier and The GHC Team},                  
+title = {{An External Representation for the GHC Core Language (For GHC 6.10)}},
+url = {http://downloads.haskell.org/~ghc/7.8.1/docs/html/users\_guide/an-external-representation-for-the-ghc-core-language-for-ghc-6.10.html},
+}
+
+@inproceedings{Harris:2005,
+ author = {Harris, Tim and Marlow, Simon and Jones, Simon Peyton},
+ title = {Haskell on a Shared-memory Multiprocessor},
+ booktitle = {Proceedings of the 2005 ACM SIGPLAN Workshop on Haskell},
+ series = {Haskell '05},
+ year = {2005},
+ isbn = {1-59593-071-X},
+ location = {Tallinn, Estonia},
+ pages = {49--61},
+ numpages = {13},
+ url = {http://doi.acm.org/10.1145/1088348.1088354},
+ doi = {10.1145/1088348.1088354},
+ acmid = {1088354},
+ publisher = {ACM},
+ address = {New York, NY, USA},
+} 
+
+@inproceedings{Marlow:2009,
+ author = {Marlow, Simon and Peyton Jones, Simon and Singh, Satnam},
+ title = {Runtime Support for Multicore Haskell},
+ booktitle = {Proceedings of the 14th ACM SIGPLAN International Conference on Functional Programming},
+ series = {ICFP '09},
+ year = {2009},
+ isbn = {978-1-60558-332-7},
+ location = {Edinburgh, Scotland},
+ pages = {65--78},
+ numpages = {14},
+ url = {http://doi.acm.org/10.1145/1596550.1596563},
+ doi = {10.1145/1596550.1596563},
+ acmid = {1596563},
+ publisher = {ACM},
+ address = {New York, NY, USA},
+ keywords = {Haskell parallel runtime},
+} 
+
+
+@Inbook{Pointon:2001,
+author="Pointon, R.F. and Trinder, P.W. and Loidl, H.-W.",
+editor="Mohnen, Markus and Koopman, Pieter",
+chapter="The Design and Implementation of Glasgow Distributed Haskell",
+title="Implementation of Functional Languages: 12th International Workshop, 
+       IFL 2000 Aachen, Germany, September 4--7, 2000 Selected Papers",
+year="2001",
+publisher="Springer Berlin Heidelberg",
+address="Berlin, Heidelberg",
+pages="53--70",
+isbn="978-3-540-45361-1",
+doi="10.1007/3-540-45361-X\_4",
+url="http://dx.doi.org/10.1007/3-540-45361-X\_4"
+}
+
+@misc{key9,
+OPTauthor = {},
+OPTtitle = {{}},
+OPThowpublished = "",
+OPTurl = {http://www.lanl.gov},
+OPTmonth = {},
+OPTyear = {},
+OPTnote = "[Online; accessed 27-March-1961]",
+}
 
 % An article from a journal or magazine. 
 @article{key1,
@@ -512,16 +723,6 @@ OPTtype = {},
 OPTaddress = {},
 OPTmonth = {},
 OPTnote = {},
-}
-
-% Use this type when nothing else fits. 
-@misc{key9,
-OPTauthor = {},
-OPTtitle = {{}},
-OPThowpublished = "\url{http://www.lanl.gov}",
-OPTmonth = {},
-OPTyear = {},
-OPTnote = "[Online; accessed 27-March-1961]",
 }
 
 % A PhD thesis. 
