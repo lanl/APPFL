@@ -3,6 +3,54 @@
 #include "stgutils.h"
 #include "stgapply.h"
 
+// split current stack cont into two
+
+FnPtr stgApplyCurVal();
+
+Cont *stgContSplit(int excess) {
+  Cont *cont1 = (Cont *)stgSP;
+  size_t size1 = getContSize(cont1);
+  int pls1 = cont1->layout.bitmap.size;
+  int arity1 = pls1 - excess - 1;
+
+  int pls2 = 1 + excess; // funoid + excess
+  Cont *cont2 = stgAllocCallOrStackCont( &it_stgStackCont, pls2 );
+  size_t size2 = sizeof(Cont) + pls2 * sizeof(PtrOrLiteral);
+
+  int pls3 = pls1 - excess;
+  Cont *cont3 = stgAllocCallOrStackCont( &it_stgStackCont, pls3 );
+  size_t size3 = sizeof(Cont) + pls3 * sizeof(PtrOrLiteral);
+
+  Bitmap64 bm = cont1->layout;
+  bm.bitmap.size = pls2;
+  bm.bitmap.mask <<= (pls3 - 1); // room for funoid
+  bm.bitmap.mask |= 0x1UL;
+  cont2->layout = bm;
+  cont2->entryCode = &stgApplyCurVal;
+  cont2->payload[0].op = NULL;
+  #if USE_ARGTYPE
+  cont2->payload[0].argType = HEAPOBJ;
+  #endif
+  memcpy(&cont2->payload[1],
+         &cont1->payload[1 + arity1],
+	 excess * sizeof(PtrOrLiteral));
+
+  bm = cont1->layout;
+  bm.bitmap.size = pls3;  // mask can stay the same
+  cont3->layout = bm;
+  memcpy(&cont3->payload[0],
+         &cont1->payload[0],
+	 pls3 * sizeof(PtrOrLiteral));
+  //  cont3->entryCode = getInfoPtr(cont3->payload[0].op)->funFields.trueEntryCode;
+
+  // quash cont1
+  memmove(cont1, cont2, size2 + size3);
+  stgSP += size1;
+  return (Cont *)stgSP;
+}
+
+
+
 // might want to pass in bitmap and argv instead
 void stgEvalStackFrameArgs(Cont *cp) {
   // don't evaluate the funoid
@@ -20,11 +68,100 @@ void stgEvalStackFrameArgs(Cont *cp) {
 }
 
 
+FnPtr stgApply1();
+FnPtr stgApply2();
+FnPtr stgApply3();
+
+
+FnPtr stgApplyCurVal() {
+  Cont *stackframe = stgGetStackArgp();
+  stackframe->payload[0] = stgCurVal;
+  stackframe->entryCode = &stgApply;
+  STGRETURN0();
+}
+
+// hack for now, should do in codegen
 FnPtr stgApply() {
+  Cont *stackframe = stgGetStackArgp();
+  int argc = stackframe->layout.bitmap.size;
+  stackframe = stgAdjustTopContSize(stackframe, 1); // extra param to stgApply2
+  // updates size but not mask
+  stackframe->layout.bitmap.mask <<= 1; // new param is unboxed
+  memmove(&stackframe->payload[1], 
+	  &stackframe->payload[0], 
+	  argc * sizeof(PtrOrLiteral));
+
+  stackframe->payload[0].i = 0;  // arg index 0 (after new param) will have been forced
+  #if USE_ARGTYPE
+  stackframe->payload[0].argType = INT;
+  #endif
+
+  stackframe->entryCode = &stgApply2;
+  stgCurVal = stackframe->payload[1];  // the funoid
+  STGJUMP();  // bye bye
+}
+
+FnPtr stgApply2() {
+  Cont *stackframe = stgGetStackArgp();
+  derefStgCurVal();
+  // capture something just evaluated
+  int argNum = stackframe->payload[0].i;
+  // argv is old stgApply args
+  PtrOrLiteral *argv = &stackframe->payload[1];
+  // argNum == 0 is funoid
+  argv[argNum] = stgCurVal;
+  // any more?
+  int argsToEval = 0;
+  int fargc = stackframe->layout.bitmap.size - 2;  // skip new arg, funoid
+  switch (evalStrategy) {
+  case LAZY:
+    argsToEval = 0;
+    break;
+  case STRICT2:
+    argsToEval = fargc;
+    break;
+  case STRICT1: {
+    int arity = getInfoPtr(argv[0].op)->funFields.arity;
+    if (getObjType(argv[0].op) == PAP) {
+      int fvCount = getInfoPtr(argv[0].op)->layoutInfo.boxedCount +
+	            getInfoPtr(argv[0].op)->layoutInfo.unboxedCount;
+      Bitmap64 papargmap = argv[0].op->payload[fvCount].b;
+      int papargc = papargmap.bitmap.size;
+      arity -= papargc;
+      int excess = fargc - arity;
+      argsToEval = excess >= 0 ? arity : 0;
+      break;
+    }} // switch
+
+    if (argNum < argsToEval) {
+      argNum++;
+      stackframe->payload[0].i = argNum;
+      stgCurVal = argv[argNum];
+      // tail call self after evaluating arg
+      STGJUMP();
+    }
+  }
+
+
+  // fix stack frame for old stgApply
+  int argc = stackframe->layout.bitmap.size;
+  memmove(&stackframe->payload[0], 
+	  &stackframe->payload[1], 
+	  (argc - 1) * sizeof(PtrOrLiteral));
+  // updates size but not mask
+  stackframe = stgAdjustTopContSize(stackframe, -1); // elim extra param
+  stackframe->layout.bitmap.mask >>= 1; 
+  stackframe->entryCode = &stgApply3;
+  STGRETURN0();
+}
+
+FnPtr stgApply3() {
 
   // STACKCONT with actual parameters
   Cont *stackframe = stgGetStackArgp();
   assert(getContType(stackframe) == STACKCONT);
+  // back to normal
+  stackframe->entryCode = &stgStackCont;
 
   // &argv[0] is args to stgApply, &argv[1] is args to funoid
   PtrOrLiteral *argv = stackframe->payload;
@@ -37,6 +174,7 @@ FnPtr stgApply() {
     showStgVal(LOG_INFO, argv[i]); LOG(LOG_INFO, " ");
   } LOG(LOG_INFO, "\n");
 
+  /*
   if (evalStrategy == STRICT1) stgEvalStackFrameArgs(stackframe);
 
   argv[0].op = derefPoL(argv[0]);
@@ -50,6 +188,7 @@ FnPtr stgApply() {
     argv[0].op = derefPoL(stgCurVal);
     stgCurVal.op = NULL;
   } // if THUNK
+  */
 
   switch (getObjType(argv[0].op)) {
   
@@ -61,9 +200,23 @@ FnPtr stgApply() {
     int excess = argc - arity;  // may be negative
   
     // too many args?
+
+
     if (excess > 0) {
+      // in the new scheme we need to split the stack frame into two,
+      // and have an stgEval function that takes the funoid from stgCurVal
+
       LOG(LOG_INFO, "stgApply FUNPOS %d\n", excess);
 
+      // split current stack frame into two, one to tail call the FUN
+      // the other to stgApplyCurVal to the excess args
+      stgContSplit(excess);
+
+      //      STGRETURN0();
+      Cont *topCont = (Cont *)stgSP;
+      STGJUMP0(getInfoPtr(topCont->payload[0].op)->funFields.trueEntryCode);
+
+      /*
       // call with return FUN with arity args
       // funoid + arity payload
       { Cont *newframe = stgAllocCallOrStackCont( &it_stgCallCont, 1 + arity );
@@ -92,6 +245,8 @@ FnPtr stgApply() {
       stackframe = stgAdjustTopContSize(stackframe, -arity);
       // tail call stgApply
       STGJUMP0(stgApply);
+      */
+
     } else
   
     // just right?

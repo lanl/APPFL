@@ -54,15 +54,15 @@ void stgPopContIfPopMe();
   STGCALL0(getInfoPtr(stgCurVal.op)->entryCode);	     \
   if (getObjType(stgCurVal.op) == BLACKHOLE) {		     \
     LOG(LOG_ERROR, "STGEVAL terminating on BLACKHOLE\n");   \
-    showStgVal(LOG_ERROR, stgCurVal);				     \
+    showStgVal(LOG_ERROR, stgCurVal);			     \
     exit(0);						     \
   }							     \
   if (getObjType(stgCurVal.op) == THUNK) {		     \
     LOG(LOG_ERROR, "THUNK at end of STGEVAL!\n");	     \
-    showStgVal(LOG_ERROR, stgCurVal);				     \
+    showStgVal(LOG_ERROR, stgCurVal);			     \
     assert(false);					     \
   }							     \
-  GC();					\
+  GC();							     \
 } while (0)
 
 // bye bye!
@@ -72,7 +72,7 @@ void stgPopContIfPopMe();
   derefStgCurVal();						     \
   if (getObjType(stgCurVal.op) == BLACKHOLE) {			     \
     LOG(LOG_ERROR, "STGJUMP terminating on BLACKHOLE\n");	     \
-    showStgVal(LOG_ERROR, stgCurVal);					     \
+    showStgVal(LOG_ERROR, stgCurVal);				     \
     exit(0);							     \
   }								     \
   STGJUMP0(getInfoPtr(stgCurVal.op)->entryCode);		     \

@@ -61,37 +61,38 @@ Socorro, New Mexico, USA
 \setcounter{footnote}{0}
 
 \begin{abstract}
-The claimed trend is an increasing appreciation and practice of functional
+A claimed trend is an increasing appreciation and practice of functional
 programming in scientific computing, and in particular strict (by default)
-functional programming, in various guises.  Our project is the demonstration
-of a light-weight, higher-order, polymorphic, pure functional language
-implementation in which we can experiment with automatic parallelization
-strategies and varying degrees of default strictness.  Non-strictness
-constrains the degree of potential parallelism, that is, we are not exploring
-speculative evaluation.  A secondary goal is to experiment with mechanisms
-for transparent fault tolerance, another trend in scientific computing, and
-by transitivity functional programming.
+functional programming, in various guises.  A second claimed trend in both
+scientific computing and functional programming is transparent fault
+tolerance.  Our project goal is the demonstration of a light-weight,
+higher-order, polymorphic, pure functional language implementation in which we
+can experiment with automatic parallelization strategies, varying degrees of
+strictness, and mechanisms for transparent fault tolerance.
+%We do not consider speculative evaluation, or semantic strictness inferred by
+%program analysis, so potential parallelism is dictated by the degree of
+%strictness.
 \\
 \emph{Draft paper notes:}
 \begin{enumerate}[before=\itshape]
-  \item We are reporting work in progress.  At the time of writing we have a
-    complete serial implementation, a primitive proof-of-concept parallel
-    implementation, and are currently developing a more realistic parallel
-    runtime.  We expect to have preliminary results from our new parallel
-    implementation by the time of the symposium.  The fault-tolerance mechanisms
-    remain future work.
+\item We are reporting work in progress.  At the time of writing we have a
+  complete serial implementation, a primitive proof-of-concept parallel
+  implementation, and are currently developing a more realistic parallel
+  runtime.  We expect to have preliminary results from our new parallel
+  implementation by the time of the symposium.  The fault-tolerance mechanisms
+  remain future work.
 
-  \item While this does not qualify as a student paper, students
-    (undergraduate!)  have contributed considerably to this effort, and to the
-    writing of this paper, and will continue to do so.  If this paper is
-    accepted we plan to have one of these students present it at TiFP.
+\item While this does not qualify as a student paper, students
+  (undergraduate!)  have contributed considerably to this effort, and to the
+  writing of this paper, and will continue to do so.  If this paper is
+  accepted we plan to have one of these students present it at TiFP.
 
-  \item Hopefully in the spirit of a student-friendly symposium, for this
-    draft version we have chosen a more informal, conversational style of
-    presentation than necessarily appropriate for a final paper, have
-    highlighted student involvement and its influence on our approach, and
-    included perhaps gratuitous detail about student contributions in particular.
-  \end{enumerate}
+\item Hopefully in the spirit of a student-friendly symposium, for this draft
+  version we have chosen a more informal, conversational style of presentation
+  than necessarily appropriate for a final paper, have highlighted student
+  involvement and its influence on our approach, and pointed out
+  student contributions in particular.
+\end{enumerate}
 
 
 \keywords{strict pure functional programming, automatic parallelization, Haskell, STG,
