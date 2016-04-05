@@ -932,7 +932,7 @@ not worked on the development of a more sophisticated garbage collector
 because this would be a distraction from our main goals.
 
 Mutual exclusion for garbage collector--heap check with every heap allocation.
-In fact garbage collector can be invoked at any point in time except when
+In fact the garbage collector can be invoked at any point in time except when
 populating a heap object immediately after its allocation.
 
 
@@ -941,7 +941,7 @@ populating a heap object immediately after its allocation.
 
 We perform standard Hindley-Milner type inference and
 enforcement~\cite{Heren02}, augmented with built-in and user-defined unboxed
-types as described by Peyton-Jones and Launchbury~\cite{Jone:1991},
+types as described by Peyton-Jones and Launchbury~\cite{Jones:1991},
 but for unboxed types code generation and runtime support is currently limited
 to built-in single-word (64-bit) or smaller types (e.g., \texttt{Int\#},
 \texttt{UInt\#}, \texttt{Float\#}, \texttt{Double\#}) and user-defined
@@ -1010,9 +1010,9 @@ Sheard's.~\cite{Sheard:2003}
 %
 A plug-in for GHC (prior to 8.0) exists for making functions, but not data
 structures, strict.~\cite{strict-ghc-plugin}.  The transformation is on GHC
-Core, recursively expand non-recursive let bindings into case bindings.  Thus
+Core, recursively expanding non-recursive let bindings into case bindings.  Thus
 it seems that while it makes functions denotationally strict, function arguments
-are still evaluated after function call.
+are still evaluated after function calls.
 %
 The Disciplined Disciple Compiler project appears to intend implementation of
 a strict, higher order functional language (or family of languages) compiler
@@ -1064,7 +1064,7 @@ fault tolerance.
 Currently we are developing the parallel runtime.  This summer (2016) a
 returning student will (partially) bridge the gap between GHC STG and our STG,
 and augment our runtime as needed in this effort.  Just as in the Intel Haskell
-Research Compiler effort, we will not 
+Research Compiler effort, we will use GHC as the front-end.
 
 \section{Acknowledgments}
 
