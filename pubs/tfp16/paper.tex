@@ -120,7 +120,7 @@ bulk synchronous.
 
 \subsection{The trend: strict but still pure functional programming in HPC}
 Interest in functional programming for HPC in general is not new, as evidenced
-by the Workshop on Functional High Performance Computing, held in conjuction
+by the Workshop on Functional High Performance Computing, held in conjunction
 with the International Conference on Functional Programming, being now in its fifth
 consecutive year.  A more precise characterization of the trend is that there
 is a small but growing understanding by practicing computational scientists
@@ -491,10 +491,10 @@ semantics.  Sharing is preserved.
 \subsubsection{Proper tail calls.}
 Parallelism is achieved by multi-threading; our model is based on Harris et
 al.'s.~\cite{Harris:2005}; later developments by Marlow et al.\ are beyond our
-aspirations~\cite{Marlow:2009}.  To achieve efficient parallel execution they
-identified the need for the ability to examine and unwind the stack.  This
-requires that use of the C stack be highly constrained if we are to 
-avoid complex and ugly hacks using, e.g., \emph{setjmp/longjmp}, or
+aspirations~\cite{Marlow:2009,Marlow:2011}.  To achieve efficient parallel 
+execution they identified the need for the ability to examine and unwind the 
+stack.  This requires that use of the C stack be highly constrained if we are 
+to avoid complex and ugly hacks using, e.g., \emph{setjmp/longjmp}, or
 non-portable code to directly manipulate the C stack, complicating an
 already non-trivial implementation effort.  We therefore must limit the
 use of the C stack to calls to the runtime, in other words, when executing
@@ -954,7 +954,8 @@ use a Jenkins continuous integration server to automate this build and testing
 process.~\cite{jenkins-book} The Git repository is hosted externally so our
 student collaborators can contribute at their leisure.
 
-There are several hundred small STG and mini-Haskell programs in the test suite.
+There are several hundred small STG and mini-Haskell programs in the test suite 
+(Most of which were written by students).
 It is partitioned into a number of directories which control what
 testing is done for a specific program. Given our goal of exploring various
 levels of strictness, most tests are run with all evaluation strategies (three
@@ -986,13 +987,14 @@ we run a quite large number of tests (currently order thousands). However,
 this is fully automated via the testing and continuous integration
 infrastructure.
 
-debug level (runtime/compile time)
+We have also implemented a simple logging facility that can be controlled at 
+both compile and runtime which helps in debugging why a test is failing.
 
 \subsection{Parallel evaluation}
 
 Parallel runtime is being implemented following the ideas
-of~\cite{SPJs-many-papers}, thread pool, stack and heap for each thread, blah,
-blah.
+of~\cite{Harris:2005,Marlow:2008,Marlow:2009}, thread pool, stack and heap 
+for each thread, blah, blah.
 
 \section{Related Work}
 
