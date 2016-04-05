@@ -210,13 +210,13 @@ FnPtr stgApply3() {
 
       // split current stack frame into two, one to tail call the FUN
       // the other to stgApplyCurVal to the excess args
-      stgContSplit(excess);
+      ///// stgContSplit(excess);
 
       //      STGRETURN0();
-      Cont *topCont = (Cont *)stgSP;
-      STGJUMP0(getInfoPtr(topCont->payload[0].op)->funFields.trueEntryCode);
+      ///// Cont *topCont = (Cont *)stgSP;
+      ///// STGJUMP0(getInfoPtr(topCont->payload[0].op)->funFields.trueEntryCode);
 
-      /*
+      /**/
       // call with return FUN with arity args
       // funoid + arity payload
       { Cont *newframe = stgAllocCallOrStackCont( &it_stgCallCont, 1 + arity );
@@ -245,7 +245,7 @@ FnPtr stgApply3() {
       stackframe = stgAdjustTopContSize(stackframe, -arity);
       // tail call stgApply
       STGJUMP0(stgApply);
-      */
+      /**/
 
     } else
   

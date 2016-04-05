@@ -150,7 +150,7 @@ There are a number of parallel runtime systems that encourage (but cannot
 enforce) a pure functional style.  We highlight Stanford's Legion
 runtime as an example~\cite{Bauer12}.
 
-Using Legion, all non-function-local variables, or \emph{regions}, must
+Using Legion, all non-function-local variables, or \emph{regions}, must be
 requested from the runtime system.  Regions may be shared among \emph{tasks}
 (essentially C++ functions), and each task is prescribed access privileges
 (read, write, read/write, etc.) and coherency requirements for each region to
@@ -224,7 +224,7 @@ aforementioned Legion, Intel's Threading Building Blocks~\cite{Reinders:2007},
 and the HPX C++11/14 extension~\cite{HPX}.  While the concept of task is
 somewhat vague, the general idea is a unit of computation with no or
 minimal/constrained side effects.  A function in a pure functional language
-could be regarded as the essence of the concept of task.  All of these
+could be regarded as the essence of the concept of a task.  All of these
 systems are of course in languages with strict function-call semantics.
 
 In the quest for computing platforms approaching exascale, it is widely
@@ -482,8 +482,9 @@ terms of function application and building a constructor in the heap.
 
 \subsection{STG to C}
 The back-end is written in Haskell and generates C code;
-the runtime system is written in C/C++.  The system fairly faithfully
-implements the STG machine as described in \emph{EA} and dynamically
+the runtime system is written in C/C++. This allows us to leverage the extensive
+optimizers in modern C compilers such as gcc and Clang/LLVM. The system fairly 
+faithfully implements the STG machine as described in \emph{EA} and dynamically
 illustrated by Pope's Ministg~\cite{ministg} with the exception of the state
 transition rules which, of course, may be different than those for non-strict
 semantics.  Sharing is preserved.
@@ -942,7 +943,7 @@ because this would be a distraction from our main goals.
 
 We perform standard Hindley-Milner type inference and
 enforcement~\cite{Heren02}, augmented with built-in and user-defined unboxed
-types as described by Peyton-Jones and Launchbury~\cite{Jones91unboxedvalues},
+types as described by Peyton-Jones and Launchbury~\cite{Jones:1991},
 but for unboxed types code generation and runtime support is currently limited
 to built-in single-word (64-bit) or smaller types (e.g., \texttt{Int\#},
 \texttt{UInt\#}, \texttt{Float\#}, \texttt{Double\#}) and user-defined
@@ -1062,9 +1063,9 @@ goals:  implementing and evaluating mechanisms for automatic parallelism and
 fault tolerance.
 
 Currently we are developing the parallel runtime.  This summer (2016) a
-returning student will (partially) bridge the gap between GHC STG (or Core)
-and our STG, and augment our runtime as needed in this effort.  Just as in the
-Intel Haskell Research Compiler effort, we will not attempt to reuse the GHC
+returning student will bridge the gap between GHC STG (or Core) and our STG,
+and augment our runtime as needed in this effort.  Just as in the Intel
+Haskell Research Compiler effort, we will not attempt to reuse the GHC
 runtime.
 
 \section{Acknowledgments}
