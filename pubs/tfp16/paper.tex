@@ -121,7 +121,7 @@ bulk synchronous.
 
 \subsection{The trend: strict but still pure functional programming in HPC}
 Interest in functional programming for HPC in general is not new, as evidenced
-by the Workshop on Functional High Performance Computing, held in conjuction
+by the Workshop on Functional High Performance Computing, held in conjunction
 with the International Conference on Functional Programming, being now in its fifth
 consecutive year.  A more precise characterization of the trend is that there
 is a small but growing understanding by practicing computational scientists
@@ -173,7 +173,7 @@ presented with the most highly parallel (and thereby performant)
 implementation of a pure functional language to date~\cite{Davis96}, and
 collectively had no conceptual understanding of what it was, much less why it
 might be useful or important, there is now a small number of laboratory HPC
-practioners who are developing an appreciation for pure functional programming
+practitioners who are developing an appreciation for pure functional programming
 in Haskell.  Still, they see their needs as different than other Haskell
 users: performance is paramount, unboxed arrays are a (perhaps \emph{the})
 primary data structure, and non-strictness or laziness is more of a
@@ -205,7 +205,7 @@ GHC 8.0.  Quoting the documentation:
   way to say that except by repeatedly adding bang
   patterns~\cite{strict-strictdata}.
 \end{quote}
-It is a fact that \emph{HPC practioners are by and large not computer
+It is a fact that \emph{HPC practitioners are by and large not computer
   scientists}, they are domain scientists (physicists, chemists, etc.) or
 computational scientists specialized in numerical or numerically-oriented
 algorithmic methods (e.g., Lagrangian, Eulerian, adaptive mesh refinement).
@@ -492,10 +492,10 @@ semantics.  Sharing is preserved.
 \subsubsection{Proper tail calls.}
 Parallelism is achieved by multi-threading; our model is based on Harris et
 al.'s.~\cite{Harris:2005}; later developments by Marlow et al.\ are beyond our
-aspirations~\cite{Marlow:2009}.  To achieve efficient parallel execution they
-identified the need for the ability to examine and unwind the stack.  This
-requires that use of the C stack be highly constrained if we are to 
-avoid complex and ugly hacks using, e.g., \emph{setjmp/longjmp}, or
+aspirations~\cite{Marlow:2009,Marlow:2011}.  To achieve efficient parallel 
+execution they identified the need for the ability to examine and unwind the 
+stack.  This requires that use of the C stack be highly constrained if we are 
+to avoid complex and ugly hacks using, e.g., \emph{setjmp/longjmp}, or
 non-portable code to directly manipulate the C stack, complicating an
 already non-trivial implementation effort.  We therefore must limit the
 use of the C stack to calls to the runtime, in other words, when executing
@@ -904,7 +904,7 @@ precedes it.
   (passed on to type checker)
 
 \item Haskell Block \\
-  (ignored by MHS frontend, not other Haskell compilers;
+  (ignored by MHS front-end, not other Haskell compilers;
   allows the same file to be tested on our compiler vs GHC)
 \end{itemize}
 
@@ -955,7 +955,8 @@ use a Jenkins continuous integration server to automate this build and testing
 process.~\cite{jenkins-book} The Git repository is hosted externally so our
 student collaborators can contribute at their leisure.
 
-There are several hundred small STG and mini-Haskell programs in the test suite.
+There are several hundred small STG and mini-Haskell programs in the test suite 
+(Most of which were written by students).
 It is partitioned into a number of directories which control what
 testing is done for a specific program. Given our goal of exploring various
 levels of strictness, most tests are run with all evaluation strategies (three
@@ -987,13 +988,14 @@ we run a quite large number of tests (currently order thousands). However,
 this is fully automated via the testing and continuous integration
 infrastructure.
 
-debug level (runtime/compile time)
+We have also implemented a simple logging facility that can be controlled at 
+both compile and runtime which helps in debugging why a test is failing.
 
 \subsection{Parallel evaluation}
 
 Parallel runtime is being implemented following the ideas
-of~\cite{SPJs-many-papers}, thread pool, stack and heap for each thread, blah,
-blah.
+of~\cite{Harris:2005,Marlow:2008,Marlow:2009}, thread pool, stack and heap 
+for each thread, blah, blah.
 
 \section{Related Work}
 
@@ -1053,7 +1055,7 @@ replication.~\cite{Stewart:2013}.
 \section{Future Work}
 
 An almost unbounded amount of interesting work suggests itself; one such path
-would lead to the recreation of GHC.  However, given the miniscule budget (and
+would lead to the recreation of GHC.  However, given the minuscule budget (and
 thus the emphasis on student labor) we must maintain sharp focus on the main
 goals:  implementing and evaluating mechanisms for automatic parallelism and
 fault tolerance.
