@@ -492,7 +492,7 @@ illustrated by Pope's Ministg~\cite{ministg} with the exception of the state
 transition rules which may be different than those for non-strict semantics.
 Sharing is preserved.
 
-\subsubsection{Proper tail calls in C}
+\subsubsection{Proper tail calls in C.}
 Parallelism is achieved by multi-threading; our model is based on Harris et
 al.'s.~\cite{Harris:2005}; later developments by Marlow et al.\ are beyond our
 aspirations~\cite{Marlow:2009,Marlow:2011}.  To achieve efficient parallel
@@ -868,7 +868,7 @@ values) in argument positions, naive translation of Haskell \texttt{f e} to
 an unnecessary heap allocation.  An alternative is to translate to
 \texttt{case e of x \{\_ -> f x\}}.
 
-\subsubsection{The Layout Rule}
+\subsubsection{The layout rule.}
 Mini-Haskell implements Haskell's layout rule in an almost direct translation
 of the specification given in section 10.3 of the Haskell 2010
 Report.~\cite{haskell2010report} The notable exception is the omission of any
@@ -895,7 +895,7 @@ indentation, e.g., \emph{haskell-mode} for Emacs.~\cite{haskellmode}.
 %   http://www.dcs.gla.ac.uk/mail-www/haskell/msg01711.html
 
 
-\subsubsection{Expression to Expression application}
+\subsubsection{Expression to expression application.}
 
 In STG, function application must be to atomic values, i.e., either literals or
 variables.  This often requires introducing bindings with either \texttt{let} or
@@ -929,7 +929,7 @@ expressions are thus properly ``atomized'' for STG.  The above mini-Haskell code
 is transformed into STG that is structurally identical to the STG code that
 precedes it.
 
-\subsubsection{Fancy Pattern Matching.}
+\subsubsection{Fancy pattern matching.}
 
 STG supports pattern matching but only in a simple form and only in
 \texttt{case} expressions.  mini-Haskell extends this to something approaching
@@ -986,9 +986,9 @@ expression), but the additional complexity outweighs the benefit for a testing
 language.
 
 
-\subsubsection{Less significant features}
+\subsubsection{Less significant features.}
 
-mini-Haskell provides some smaller conveniences that don't warrant their own
+Mini-Haskell provides some smaller conveniences that don't warrant their own
 section, but are worth mentioning.
 
 \begin{itemize}
