@@ -396,7 +396,7 @@ so \texttt{case} is similar to \texttt{pseq} (as opposed to \texttt{seq}) in
 Haskell, that is, the scrutinee is evaluated first.  Second, constructors are
 not functions, rather they are named in the construction (heap allocation) of
 a data object.  More generally, the operational notion of allocating a heap
-object is made explicit: this is the ``side effect'' of \texttt{let} bindings.
+object is explicit: this is the ``side effect'' of \texttt{let} bindings.
 As such a variable of unboxed type cannot be let-bound; instead it can be
 bound with \texttt{case}, e.g., \texttt{case e of x\# \{ \_ -> e \}}
 %\begin{verbatim}
@@ -405,7 +405,7 @@ bound with \texttt{case}, e.g., \texttt{case e of x\# \{ \_ -> e \}}
 %    }
 %\end{verbatim}
 where the \texttt{\#} suffix is merely a convention to signify that
-\texttt{x\#} has unboxed type.  Finally, deferred evaluation is made explicit:
+\texttt{x\#} has unboxed type.  Finally, deferred evaluation is explicit:
 a deferred expression evaluation is encoded by a thunk.
 
 \subsection{Degrees of strictness}
@@ -546,7 +546,7 @@ because arguments can be evaluated in a tight loop.  Unfortunately these uses
 of call-with-return can result in the C stack growing unboundedly.  Our
 solution uses a single C \emph{stgApply} function with no calls-with-return.
 This is straightforwardly realizable because the stack is explicit, and with
-the C compiler call optimization, the continuation style provides a proper
+modern C compiler call optimization, the continuation style enables a proper
 \emph{goto} mechanism where the \emph{code labels}---entities that name blocks
 of code, can be treated as first class (e.g.\ stored), and serve as targets of
 a jump---are C function addresses (c.f.\ \S 6.1~\cite{PJ-stockhardware}).
@@ -627,8 +627,8 @@ If the object to be applied, or some argument (because of the strictness
 level), remains to be evaluated, it is jumped to, with return as ever through
 the continuation stack.  This is actually fairly efficient because we can
 arrange that the stack frame for \emph{stgApply} is reused, updating only
-\emph{index}, so except for the indirect jumps on return this is essentially a
-loop.  For the cases of arguments in excess of the arity of the object being
+\emph{index}, so this is realized as a machine-level loop using an indirect
+jump.  For the cases of arguments in excess of the arity of the object being
 applied, in effect \emph{stgApply}'s argument frame is popped and two
 continuations are pushed, the first one to jump to \emph{stgApply} with the
 excess arguments, the next an argument frame for the object to applied, then
@@ -688,7 +688,149 @@ adjusted in size and content without undue copying.
 \end{comment}
 
 
-\subsection{Mini-Haskell}
+\subsection{Type system}
+
+We perform standard Hindley-Milner type inference and
+enforcement~\cite{Heren02}, augmented with built-in and user-defined unboxed
+types as described by Peyton-Jones and Launchbury~\cite{Jones:1991},
+but for unboxed types code generation and runtime support is currently limited
+to built-in single-word (64-bit) or smaller types (e.g., \texttt{Int\#},
+\texttt{UInt\#}, \texttt{Float\#}, \texttt{Double\#}) and user-defined
+enumerations, e.g., \texttt{data unboxed Bool\# = False\# | True\#}.
+
+\subsection{Parallel evaluation and other developments}
+
+Parallel runtime is being implemented following the ideas
+of~\cite{Harris:2005,Marlow:2008,Marlow:2009}, thread pool, stack and heap 
+for each thread, blah, blah.
+
+For ease of developing the test suite we have implemented a \emph{mini-Haskell}
+front end as detailed in Appendix~A.
+
+We use a continuous integration system augmented with logic to categorize
+programs in a large and growing test suite according to which degrees of non-strictness they
+require to terminate correctly, and to provide other logging and debugging
+information.  This is detailed in Appendix~B.
+
+\section{Current Status, Future Work}
+
+Developing the bridge between GHC Core or STG to our system is scheduled
+to start immediately after TiFP'16.
+
+At the time of writing we have a complete serial implementation, including
+\begin{itemize}
+\item STG parsers \emph{(by student)},
+\item mini-Haskell parser, mini-Haskell to STG transformer \emph{(by student)},
+\item type inferencer,
+\item various analysis and transformation passes \emph{(some by students)},
+\item code generator \emph{(some student contribution)},
+\item runtime system including a garbage collector,
+\item continuous integration and testing system,
+\item extensive test suite \emph{(mostly by students)}.
+\end{itemize}
+
+We have implemented a simple copying garbage collector~\cite{Cheney:1970} with
+small \emph{nurseries} in the multithreaded case~\cite{Marlow:2008}. We have
+not worked on the development of a more sophisticated garbage collector
+because this would be a distraction from our main goals.
+
+%Mutual exclusion for garbage collector--heap check with every heap allocation.
+%In fact garbage collector can be invoked at any point in time except when
+%populating a heap object immediately after its allocation.
+
+An almost unbounded amount of interesting work suggests itself; one such path
+would lead to the recreation of GHC.  However, given the minuscule budget (and
+thus the emphasis on student labor) we must maintain sharp focus on the main
+goals:  implementing and evaluating mechanisms for automatic parallelism and
+fault tolerance.
+
+Currently we are developing the parallel runtime.  This summer (2016) a
+returning student will bridge the gap between GHC STG (or Core) and our STG,
+and augment our runtime as needed in this effort.  Just as in the Intel
+Haskell Research Compiler effort, we will not attempt to reuse the GHC
+runtime.
+
+\section{Related Work}
+
+Various papers describing some of the inner workings of GHC at various points
+in its evolution have greatly informed our approach and these have all been
+previously cited.
+
+\subsubsection{Strict but still pure.}
+The concept of strict but still pure dates back to early studies of the lambda
+calculus.  In terms of a notionally concrete programming language the first
+thorough explications may be of Backus' FP~\cite{Backus:1978} and follow-on
+FL implementation~\cite{AikenFL,FLreport89}.
+%
+Perhaps the first explication of the potential merits of a strict-by-default
+pure functional language over a non-strict one is by Sheard, who also provided
+a very simple prototype implementation~\cite{Sheard:2003}.
+%
+A plug-in for GHC (prior to 8.0) exists for making functions, but not data
+structures, strict using a transformation on GHC Core that recursively expands
+non-recursive let bindings into case bindings~\cite{strict-ghc-plugin}.  Thus
+it seems that while it makes functions denotationally strict, function
+arguments are still evaluated after function call.
+%
+The Disciplined Disciple Compiler project appears to intend implementation of
+a strict, higher order functional language (or family of languages) compiler
+that has been underway for some time, but the emphasis appears to be on a much
+more complex type system for handling stateful computation, and the prospects
+for its eventual completion are unknown~\cite{disciplined-disciple}.
+%
+NVIDIA's NOVA language, and corresponding compiler, implements a strict
+(``call by value''), pure, polymorphic, higher-order functional language with
+built-in parallel operators (e.g., \emph{map}, \emph{reduce}, and
+\emph{scan})~\cite{NVIDIA:2013}. Three back-ends were implemented: for
+sequential C, parallel (multi-threaded) C, and CUDA C, the lattermost
+targeting NVIDIA GPUs.
+
+\subsubsection{GHC as a front-end.}
+The Intel Labs Haskell Research Compiler (HRC) is the most closely related
+work to ours of which we are aware~\cite{Liu:2013,Petersen:2013}.  As in our
+planned approach they use GHC as the front end, but exit the GHC toolchain
+at the final GHC Core stage, just before transformation to STG.  The essence
+of their effort is to target an existing, highly optimizing, Intel functional
+language compiler that is ``largely language agnostic'' and performs (among
+many other optimization) SIMD vectorization.
+
+Don Stewart described an implementation wherein GHC was used as a Haskell compiler
+front-end, dumping STG code as text, parsing that text, then translating to
+code for execution on the Java Virtual Machine~\cite{Stewart-BSc}.
+
+\subsubsection{Fault tolerance for functional programming.}
+Pointon et al.\ developed a limited fault tolerance mechanism for Glasgow
+distributed Haskell based on distributed exception
+handling~\cite{Pointon:2001}.  However, it appears that their scheme for
+handling failed processing elements correctly~\cite{} may have never been
+implemented.
+
+Recently, Robert Stewart extended Haskell Distributed Parallel Haskell
+(HdpH)~\cite{hdph} to be fault resilient at an impressive scale---1400 cores
+on a distributed memory system.  Here the key recovery strategy is task
+replication~\cite{Stewart:2013}.
+
+\section{Acknowledgments}
+
+Funding for this project has been provided by the DOE NNSA LANL Laboratory
+Directed Research and Development program award 20150845ER; the National
+Science Foundation Science, Technology, Engineering, and Mathematics Talent
+Expansion Program (STEP) program for undergraduate students; and the DOE
+Science Undergraduate Laboratory Internship (SULI) program.
+%
+Los Alamos National Laboratory is managed and operated by Los Alamos National
+Security, LLC (LANS), under contract number DE-AC52-06NA25396 for the
+Department of Energy's National Nuclear Security Administration (NNSA).
+
+
+%
+% ---- Appendix ----
+%
+
+\appendix
+
+\section{Mini-Haskell}
+
 As mentioned, a current near-term goal is to use GHC as our front-end to
 generate STG (or Core) as input to our system.  In the meantime, as a stop-gap
 measure to make the generation of test cases easier, we have implemented a
@@ -838,7 +980,7 @@ Program                & $\mathit{prog}$ & ::= & $(o|d)\mathit{decl}_i$
 
 Because mini-Haskell was designed to replace STG, it makes sense to talk about
 it in terms of the differences between the two and how mini-Haskell is
-translated into STG for the backend.  Here, the differences are given in order
+translated into STG for the back-end.  Here, the differences are given in order
 of perceived utility, or importance to someone transitioning from STG to
 mini-Haskell.
 
@@ -871,7 +1013,7 @@ an unnecessary heap allocation.  An alternative is to translate to
 \subsubsection{The layout rule.}
 Mini-Haskell implements Haskell's layout rule in an almost direct translation
 of the specification given in section 10.3 of the Haskell 2010
-Report.~\cite{haskell2010report} The notable exception is the omission of any
+Report~\cite{haskell2010report}. The notable exception is the omission of any
 attempt to define the \texttt{parse-error} function.  This is apparently a
 tricky spot for Haskell compilers (even GHC has not always had it right) so,
 in the name of tradition, it remains a tricky spot for our mini-Haskell front
@@ -883,7 +1025,7 @@ allows users to produce code that is visually similar to Haskell code.
 This makes it easier to read and write for any Haskell programmer who relies
 on layout to delineate context, presumably the vast majority.  It also allows
 for the use of Haskell programming environments that support ``smart''
-indentation, e.g., \emph{haskell-mode} for Emacs.~\cite{haskellmode}.
+indentation, e.g., \emph{haskell-mode} for Emacs~\cite{haskellmode}.
 
 
 
@@ -937,9 +1079,9 @@ what is found in Haskell.  Functions, including lambda expressions, may match on
 all their arguments. Named functions may have multiple definitions to exhaust
 the combinations of patterns in their arguments and patterns in all contexts
 (functions and case expressions) may be nested arbitrarily deep.  This feature
-greatly simplifies the task of definining more complex behavior.  Without it,
+greatly simplifies the task of defining more complex behavior.  Without it,
 each matched parameter of a function requires an additional level of nested
-\texttt{case} expresssions. The same is true of each level of nesting within a
+\texttt{case} expressions. The same is true of each level of nesting within a
 single pattern.
 
 Even relatively simple functions can be painful to write, such as \texttt{unzip}.
@@ -1016,11 +1158,11 @@ section, but are worth mentioning.
   The ability to assert the type of some variable is often valuable as a
   sanity-check and provides documentation that the compiler can verify.
   mini-Haskell's type annotations (or signatures) behave like those in
-  Haskell, being passed to the typechecker as initial assumptions.
+  Haskell, being passed to the type checker as initial assumptions.
 
 % I don't think I've described this very well at all... - david
 \item Haskell Block \\
-  Being a subset of Haskell, it may be desireable to test a mini-Haskell program
+  Being a subset of Haskell, it may be desirable to test a mini-Haskell program
   compiled through our toolchain against the same program (and same source file)
   compiled with another Haskell compiler.  Because mini-Haskell exposes a
   different set of primitives, the Haskell Block was introduced, to allow the
@@ -1034,48 +1176,13 @@ section, but are worth mentioning.
 \end{itemize}
 
 
-\section{Current Status, and Expected Results by the time of TiFP'16}
-
-Developing the bridge between GHC Core or STG to our system is scheduled
-to start immediately after TiFP'16.
-
-At the time of writing we have a complete serial implementation, including
-\begin{itemize}
-\item STG and mini-Haskell (inc. ADT w/unboxed) parsers \emph{(both by students)},
-\item mini-Haskell to STG transformer \emph{(by student)},
-\item type inferencer,
-\item various analysis and transformation passes \emph{(most by students)},
-\item code generator \emph{(some student contribution)},
-\item runtime system including a garbage collector,
-\item extensive test suite \emph{(mostly by students)}.
-\end{itemize}
-
-We have implemented a simple copying garbage collector~\cite{Cheney:1970} with
-small \emph{nurseries} in the multithreaded case~\cite{Marlow:2008}. We have
-not worked on the development of a more sophisticated garbage collector
-because this would be a distraction from our main goals.
-
-%Mutual exclusion for garbage collector--heap check with every heap allocation.
-%In fact garbage collector can be invoked at any point in time except when
-%populating a heap object immediately after its allocation.
-
-\subsection{Type system}
-
-We perform standard Hindley-Milner type inference and
-enforcement~\cite{Heren02}, augmented with built-in and user-defined unboxed
-types as described by Peyton-Jones and Launchbury~\cite{Jones:1991},
-but for unboxed types code generation and runtime support is currently limited
-to built-in single-word (64-bit) or smaller types (e.g., \texttt{Int\#},
-\texttt{UInt\#}, \texttt{Float\#}, \texttt{Double\#}) and user-defined
-enumerations, e.g., \texttt{data unboxed Bool\# = False\# | True\#}.
-
-\subsection{Test suite and testing}
+\section{Test suite and testing}
 
 We have developed a extensive test suite which uses the CMake CTest
-tool.~\cite{cmake-book} The full test suite is automatically run, and any
+tool~\cite{cmake-book}. The full test suite is automatically run, and any
 failures reported, after every commit to the Git revision control system. We
 use a Jenkins continuous integration server to automate this build and testing
-process.~\cite{jenkins-book} The Git repository is hosted externally so our
+process~\cite{jenkins-book}. The Git repository is hosted externally so our
 student collaborators can contribute at their leisure.
 
 There are several hundred small STG and mini-Haskell programs in the test suite 
@@ -1113,93 +1220,6 @@ infrastructure.
 
 We have also implemented a simple logging facility that can be controlled at 
 both compile and runtime which helps in debugging why a test is failing.
-
-\subsection{Parallel evaluation}
-
-Parallel runtime is being implemented following the ideas
-of~\cite{Harris:2005,Marlow:2008,Marlow:2009}, thread pool, stack and heap 
-for each thread, blah, blah.
-
-\section{Related Work}
-
-Various papers describing some of the inner workings of GHC at various points
-in its evolution have greatly informed our approach and these have all been
-previously cited.
-
-\subsubsection{\emph{Strict but still pure} is not new.}
-Very simple implementations have been prototyped, for example
-Sheard's.~\cite{Sheard:2003}
-%
-A plug-in for GHC (prior to 8.0) exists for making functions, but not data
-structures, strict using a transformation on GHC Core that recursively expands
-non-recursive let bindings into case bindings.~\cite{strict-ghc-plugin}.  Thus
-it seems that while it makes functions denotationally strict, function
-arguments are still evaluated after function call.
-%
-The Disciplined Disciple Compiler project appears to intend implementation of
-a strict, higher order functional language (or family of languages) compiler
-that has been underway for some time, but the emphasis appears to be on a much
-more complex type system for handling stateful computation, and the prospects
-for its eventual completion are unknown~\cite{disciplined-disciple}.
-%
-NVIDIA's NOVA language, and corresponding compiler, implements a strict
-(``call by value''), pure, polymorphic, higher-order functional language with
-built-in parallel operators (e.g., \emph{map}, \emph{reduce}, and
-\emph{scan})~\cite{NVIDIA:2013}. Three back-ends were implemented: for
-sequential C, parallel (multi-threaded) C, and CUDA C, the lattermost
-targeting NVIDIA GPUs.
-
-\subsubsection{GHC as a front-end.}
-The Intel Labs Haskell Research Compiler (HRC) is the most closely related
-work to ours of which we are aware~\cite{Liu:2013,Petersen:2013}.  As in our
-planned approach they use GHC as the front end, but exit the GHC toolchain
-at the final GHC Core stage, just before transformation to STG.  The essence
-of their effort is to target an existing, highly optimizing, Intel functional
-language compiler that is ``largely language agnostic'' and performs (among
-many other optimization) SIMD vectorization.
-
-Don Stewart described an implementation wherein GHC was used as a Haskell compiler
-front-end, dumping STG code as text, parsing that text, then translating to
-code for execution on the Java Virtual Machine.~\cite{Stewart-BSc}.
-
-\subsubsection{Fault tolerance for functional programming.}
-Pointon et al.\ developed a limited fault tolerance mechanism for Glasgow
-distributed Haskell based on distributed exception
-handling~\cite{Pointon:2001}.  However, it appears that their scheme for
-handling failed processing elements correctly~\cite{} may have never been
-implemented.
-
-Recently, Robert Stewart extended Haskell Distributed Parallel Haskell
-(HdpH)~\cite{hdph} to be fault resilient at an impressive scale---1400 cores
-on a distributed memory system.  Here the key recovery strategy is task
-replication.~\cite{Stewart:2013}.
-
-\section{Future Work}
-
-An almost unbounded amount of interesting work suggests itself; one such path
-would lead to the recreation of GHC.  However, given the minuscule budget (and
-thus the emphasis on student labor) we must maintain sharp focus on the main
-goals:  implementing and evaluating mechanisms for automatic parallelism and
-fault tolerance.
-
-Currently we are developing the parallel runtime.  This summer (2016) a
-returning student will bridge the gap between GHC STG (or Core) and our STG,
-and augment our runtime as needed in this effort.  Just as in the Intel
-Haskell Research Compiler effort, we will not attempt to reuse the GHC
-runtime.
-
-\section{Acknowledgments}
-
-Funding for this project has been provided by the DOE NNSA LANL Laboratory
-Directed Research and Development program award 20150845ER; the National
-Science Foundation Science, Technology, Engineering, and Mathematics Talent
-Expansion Program (STEP) program for undergraduate students; and the DOE
-Science Undergraduate Laboratory Internship (SULI) program.
-%
-Los Alamos National Laboratory is managed and operated by Los Alamos National
-Security, LLC (LANS), under contract number DE-AC52-06NA25396 for the
-Department of Energy's National Nuclear Security Administration (NNSA).
-
 
 %
 % ---- Bibliography ----
