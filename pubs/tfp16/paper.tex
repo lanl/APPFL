@@ -792,7 +792,7 @@ Program                & $\mathit{prog}$ & ::= & $(o|d)\mathit{decl}_i$
 Because mini-Haskell was designed to replace STG, it makes sense to talk about
 it in terms of the differences between the two and how mini-Haskell is
 translated into STG for the backend.  Here, the differences are given in order
-of perceived utility, or importance to someone transition from STG to
+of perceived utility, or importance to someone transitioning from STG to
 mini-Haskell.
 
 \subsubsection{Removal of explicit heap objects.}
@@ -879,44 +879,111 @@ This also serves as a good example of how expression to expression application i
 transformed into STG.  Any non-atomic expression in an application expression is
 bound to a heap object in a generated \texttt{let} expression.  These
 expressions are thus properly ``atomized'' for STG.  The above mini-Haskell code
-is transformed in STG that is structurally identical to the STG code that
+is transformed into STG that is structurally identical to the STG code that
 precedes it.
 
 \subsubsection{Fancy Pattern Matching.}
-{\color{red}Implemented, not documented\dots}
-
-
-<<<<<<< HEAD
-\paragraph{Fancy Pattern Matching} -\\
 
 STG supports pattern matching but only in a simple form and only in
 \texttt{case} expressions.  mini-Haskell extends this to something approaching
 what is found in Haskell.  Functions, including lambda expressions, may match on
-all their arguments (with multiple non-anonymous definitions allowed to exhaust
-the pattern combinations).  Patterns in all contexts (functions and case
-expressions) may be nested arbitrarily deep.  These two features greatly
-simplify the programmer's job.
-=======
->>>>>>> fb0b84e3162684212b211a7c6fbc2a9ad5bb26fd
+all their arguments. Named functions may have multiple definitions to exhaust
+the combinations of patterns in their arguments and patterns in all contexts
+(functions and case expressions) may be nested arbitrarily deep.  This feature
+greatly simplifies the task of definining more complex behavior.  Without it,
+each matched parameter of a function requires an additional level of nested
+\texttt{case} expresssions. The same is true of each level of nesting within a
+single pattern.
+
+Even relatively simple functions can be painful to write, such as \texttt{unzip}.
+
+\begin{verbatim}
+unzip = FUN(list ->
+  case list of { Nil -> let {res = CON( TP2 nil nil)} in res;
+                 Cons x xs ->
+                   case x of {
+                     TP2 a b ->     --TP2 is the Tuple constructor
+                       case unzip xs of {
+                         TP2 as bs ->
+                           let {aas = CON(Cons a as);
+                                bbs = CON(Cons b bs);
+                                res = CON(TP2 aas bbs)}
+                           in res; }}});
+\end{verbatim}
+
+In mini-Haskell, this becomes
+
+\begin{verbatim}
+unzip :: List (Tupl2 a b) -> Tupl2 (List a) (List b)
+unzip Nil = TP2 Nil Nil
+unzip (Cons (TP2 a b) xs) =
+  case unzip xs of
+    TP2 as bs -> TP2 (Cons a as) (Cons b bs)
+\end{verbatim}
+
+
+Of course, this complex pattern matching must eventually be transformed into the
+primitive, nested case expressions. Luckily, there are well-documented processes
+for achieving this, and Philip Wadler's chapter in \emph{The Implementation of
+  Functional Programming Languages} \cite{Jones:1987} % doing this right?
+on the compilation of this type of pattern matching proved invaluable in
+bringing it to mini-Haskell.  Wadler describes the \texttt{match} function that
+that, in its simplest form, produces a correct, but potentially large
+translation with some redundancy.  This function was implemented with only minor
+modifications to fit the shape of mini-Haskell's abstract form.  The
+implementation is augmented by some light flow-analysis to eliminate some of the
+redundancy and make the resulting code easier to read.  There are further
+optimizations suggested by Wadler to address the size of the generated code from
+this process (for example, when multiple branches lead to the same large
+expression), but the additional complexity outweighs the benefit for a testing
+language.
+
 
 \subsubsection{Less significant features}
 
+mini-Haskell provides some smaller conveniences that don't warrant their own
+section, but are worth mentioning.
+
 \begin{itemize}
 \item Constructors as functions \\
-  (partial application uses generated functions, full creates CONS)
+  As in Haskell, constructors are first class, acting as true functions.  This
+  is implemented by simply generating a function that wraps the appropriate
+  \texttt{let}-bound \texttt{CON} object in STG.  Any partially applied
+  constructor generates a call to this function.  Fully applied constructors
+  generate local \texttt{let}-bound objects to avoid an unnecessary function
+  call.
 
 \item Primitive operations as functions \\
-  (partial application uses generated functions, full creates EPrimop)
+  Similar to constructors, primitive operations are given first-class status as
+  functions, with roughly the same rules.  Partially applied calls are
+  translated to generated functions that wrap the actual primitive
+  operations. Fully applied calls generate true primitive operation calls.
 
 \item Lambda Expressions \\
-  (desugar to let-bound FUN objects)
+  mini-Haskell supports anonymous lambda expressions for the simple, one-off
+  functions that often find a place in Haskell code.  This was certainly the
+  simplest feature to add, requiring only that the function be given a unique
+  identifier to bind it to a \texttt{FUN} object in STG.
 
 \item Type Annotations \\
-  (passed on to type checker)
+  The ability to assert the type of some variable is often valuable as a
+  sanity-check and provides documentation that the compiler can verify.
+  mini-Haskell's type annotations (or signatures) behave similarly to those in
+  Haskell, being passed to the typechecker as initial assumptions.
 
+% I don't think I've described this very well at all... - david
 \item Haskell Block \\
-  (ignored by MHS front-end, not other Haskell compilers;
-  allows the same file to be tested on our compiler vs GHC)
+  Being a subset of Haskell, it may be desireable to test a mini-Haskell program
+  compiled through our toolchain against the same program (and same source file)
+  compiled with another Haskell compiler.  Because mini-Haskell exposes a
+  different set of primitives, the Haskell Block was introduced, to allow the
+  inclusion of the \texttt{MagicHash} extension and the aliasing Haskell's
+  primitives (e.g. \texttt{(+)} and \texttt{(-)}) to the names given in
+  mini-Haskell.  This block, delimited by \texttt{\{-\#-\}} strings, is ignored
+  by the mini-Haskell compiler, and arbitrary ``real'' Haskell code can be
+  placed therein to create the same mini-Haskell environment for full Haskell
+  compilers.
+
 \end{itemize}
 
 
