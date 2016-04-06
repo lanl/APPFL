@@ -61,71 +61,72 @@ Socorro, New Mexico, USA
 \setcounter{footnote}{0}
 
 \begin{abstract}
-The claimed trend is an increasing appreciation and practice of functional
+A claimed trend is an increasing appreciation and practice of functional
 programming in scientific computing, and in particular strict (by default)
-functional programming, in various guises.  Our project is the demonstration
-of a light-weight, higher-order, polymorphic, pure functional language
-implementation in which we can experiment with automatic parallelization
-strategies and varying degrees of default strictness.  Non-strictness
-constrains the degree of potential parallelism, that is, we are not exploring
-speculative evaluation.  A secondary goal is to experiment with mechanisms
-for transparent fault tolerance, another trend in scientific computing, and
-by transitivity functional programming.
+functional programming, in various guises.  A second claimed trend in both
+scientific computing and functional programming is transparent fault
+tolerance.  Our project goal is the demonstration of a light-weight,
+higher-order, polymorphic, pure functional language implementation in which we
+can experiment with automatic parallelization strategies, varying degrees of
+strictness, and mechanisms for transparent fault tolerance.
+%We do not consider speculative evaluation, or semantic strictness inferred by
+%program analysis, so potential parallelism is dictated by the degree of
+%strictness.
 \\
 \emph{Draft paper notes:}
 \begin{enumerate}[before=\itshape]
-  \item We are reporting work in progress.  At the time of writing we have a
-    complete serial implementation, a primitive proof-of-concept parallel
-    implementation, and are currently developing a more realistic parallel
-    runtime.  We expect to have preliminary results from our new parallel
-    implementation by the time of the symposium.  The fault-tolerance mechanisms
-    remain future work.
+\item We are reporting work in progress.  At the time of writing we have a
+  complete serial implementation, a primitive proof-of-concept parallel
+  implementation, and are currently developing a more realistic parallel
+  runtime.  We expect to have preliminary results from our new parallel
+  implementation by the time of the symposium.  The fault-tolerance mechanisms
+  remain future work.
 
-  \item While this does not qualify as a student paper, students
-    (undergraduate!)  have contributed considerably to this effort, and to the
-    writing of this paper, and will continue to do so.  If this paper is
-    accepted we plan to have one of these students present it at TiFP.
+\item While this does not qualify as a student paper, students
+  (undergraduate!)  have contributed considerably to this effort, and to the
+  writing of this paper, and will continue to do so.  If this paper is
+  accepted we plan to have one of these students present it at TiFP.
 
-  \item Hopefully in the spirit of a student-friendly symposium, for this
-    draft version we have chosen a more informal, conversational style of
-    presentation than necessarily appropriate for a final paper, have
-    highlighted student involvement and its influence on our approach, and
-    included perhaps gratuitous detail about student contributions in particular.
-  \end{enumerate}
+\item Hopefully in the spirit of a student-friendly symposium, for this draft
+  version we have chosen a more informal, conversational style of presentation
+  than necessarily appropriate for a final paper, have highlighted student
+  involvement and its influence on our approach, and pointed out student
+  contributions in particular.
+\end{enumerate}
 
 
-\keywords{strict pure functional programming, automatic parallelization, Haskell, STG,
-transparent fault tolerance.}
+\keywords{Strict pure functional programming, automatic parallelization,
+  Haskell, STG, GHC, GHC Core, transparent fault tolerance.}
 
 \end{abstract}
 
 \section{Background and Motivation}
 The practice of so-called high-performance scientific computing (HPC) is,
-overall, highly conservative with respect to change.  Even as the US
-government commits to a push for exascale computing ($10^{18}$ FLOPS in a
-single system) within the next decade~\cite{Exascale-roadmap} a highly
-respected member of the HPC community recently stated publicly that ``Fortran
-is essential for exascale programming.''~\cite{Heroux16}\footnote{Various EU,
-  Japanese, and international groups are also anticipating the realization
-  exascale computing.~\cite{EUexascale,Exascale-org}} Existing US government
-laboratory HPC codes run to hundreds of thousands of lines of Fortran and
+overall, highly conservative with respect to change.  Even as the USA and
+other governments commit to a push for exascale computing ($10^{18}$ FLOPS in
+a single system) within the next
+decade~\cite{Exascale-roadmap,EUexascale,Exascale-org} a highly respected
+member of the HPC community recently stated publicly that ``Fortran is
+essential for exascale programming.''~\cite{Heroux16} Existing US government
+laboratory HPC codes run to hundreds of thousands of lines of Fortran each and
 complete rewrites are infeasible.\footnote{The codes of our lab's British
-  counterpart are reportedly in the same state.}  C++ has become more common
-for new code starts, but their nature remains the same: huge codes with fair
-to non-existent encapsulation of side effects, with multiple levels of
-parallelism also poorly abstracted, especially at the thread (shared-memory)
-level.  Thread-level parallel efficiency can be poor and is explained by
-Amdahl's law because the parallel model \emph{as typically implemented} is
-bulk synchronous.
+  counterpart are similar.}  C++ has become more common for new code starts,
+but their nature remains the same: huge codes with fair to non-existent
+encapsulation of side effects, with multiple levels of parallelism sometimes
+poorly abstracted, especially at the thread (shared-memory) and computational
+accelerator (e.g., GPU) levels.  Thread-level parallel efficiency can be good
+when the parallel model is bulk synchronous; tasking models are generally
+avoided unless abstracted by, e.g., a C++ template or runtime library, because
+of the programming complexity.
 
-\subsection{The trend: strict but still pure functional programming in HPC}
-Interest in functional programming for HPC in general is not new, as evidenced
+\subsection{A trend: strict but still pure functional programming in HPC}
+Interest in functional programming for HPC in general is not new as evidenced
 by the Workshop on Functional High Performance Computing, held in conjunction
 with the International Conference on Functional Programming, being now in its fifth
 consecutive year.  A more precise characterization of the trend is that there
 is a small but growing understanding by practicing computational scientists
 that \emph{pure functional semantics}, in some form, is essential to reining
-in the complexity of these ever-evolving scientific codes and informing the
+in the complexity of ever-evolving scientific codes and informing the
 designs of new ones.  Such semantics are expressed in a number of ways as
 highlighted following.
 
@@ -135,32 +136,32 @@ encapsulation, with most data global and accessible to all; indeed, Fortran
 was designed to make this easy via \texttt{COMMON} blocks---aggregates of
 global variables---which further obfuscate program meaning by allowing
 arbitrary naming of a block's variables at a subroutine/function granularity,
-and requiring that the entire block be brought into scope.  It is almost
-ironic, then, that of the mainstream high-performance scientific programming
-languages (Fortran, C, and C++), Fortran~95 was the first to introduce the
-\texttt{pure} function qualifier, and with enforcement by the compiler.
-Otherwise it is entirely up to the programmer to make functions composable and
-thread safe.  Here at LANL the use of pure functions (among other techniques
-for reducing global data dependencies) is being used to good effect to clean
-up some legacy code bases.
+and requiring that entire blocks be brought into scope.  It is almost ironic,
+then, that of the mainstream high-performance scientific programming languages
+(Fortran, C, and C++), Fortran~95 was the first to introduce the \texttt{pure}
+function qualifier, and with enforcement by the compiler.  Otherwise it is
+entirely up to the programmer to make functions composable and thread safe.
+%Here at LANL the use of pure functions (among other techniques for reducing
+%global data dependencies) is being used to good effect to clean up some legacy
+%code bases.
 
 \subsubsection{Obey constraints prescribed by a parallel runtime system.}
 There are a number of parallel runtime systems that encourage (but cannot
 enforce) a pure functional style.  We highlight Stanford's Legion
 runtime as an example~\cite{Bauer12}.
 
-Using Legion, all non-function-local variables, or \emph{regions}, must
+Using Legion, all non-function-local variables, or \emph{regions}, must be
 requested from the runtime system.  Regions may be shared among \emph{tasks}
 (essentially C++ functions), and each task is prescribed access privileges
 (read, write, read/write, etc.) and coherency requirements for each region to
 which it will have access.  Other than registered access to regions, tasks
-must not access non-constant global data.  In serial execution these access
+must not access non-constant global data.  Thus the inputs and outputs of
+tasks are exactly known to the runtime system.  In serial execution these access
 requirements are notionally superfluous, but in parallel execution the runtime
 can dynamically calculate the data dependency graph and relax the
 programmatically defined serial ordering of task execution.  Very high
 parallel efficiency has been demonstrated on extremely large computing
-systems~\cite{Bauer14}.  Here at LANL the Legion system is being strongly
-considered for a new large-scale C++ code effort.\footnote{It seems
+systems~\cite{Bauer14}.\footnote{It seems
   significant that the PI of the Legion project was previously a co-developer
   of a strict, arguably pure functional language
   implementation~\cite{AikenFL,FLreport89}, in collaboration with John Backus
@@ -171,21 +172,22 @@ Some twenty years after the US Department of Energy laboratory complex was
 presented with the most highly parallel (and thereby performant)
 implementation of a pure functional language to date~\cite{Davis96}, and
 collectively had no conceptual understanding of what it was, much less why it
-might be useful or important, there is now a small number of laboratory HPC
-practitioners who are developing an appreciation for pure functional programming
-in Haskell.  Still, they see their needs as different than other Haskell
-users: performance is paramount, unboxed arrays are a (perhaps \emph{the})
-primary data structure, and non-strictness or laziness is more of a
-nuisance--even a serious hindrance--than a convenience, much less ever
-algorithmically essential in the sense of Bird's \emph{repmin}~\cite{Bird84},
-Johnsson's general attribute grammars~\cite{Johnsson87}, or other instances
-of \emph{tying the knot}~\cite{tying-the-knot}.
+might be of some import, there is now a small number of laboratory HPC
+practitioners who are developing an appreciation for pure functional
+programming in Haskell.  Still, they see their needs as different than other
+Haskell users:  performance is paramount, vectors (``Efficient
+Arrays''~\cite{vector}) are a (perhaps \emph{the}) primary data structure, and
+non-strictness or laziness is more of a nuisance---even a serious
+hindrance---than a convenience, much less ever algorithmically essential in
+the sense of Bird's \emph{repmin}~\cite{Bird84}, Johnsson's general attribute
+grammars~\cite{Johnsson87}, or other instances of \emph{tying the
+  knot}~\cite{tying-the-knot}.
 
 A common complaint among these aspiring high-performance functional
 programmers is the need to get strictness just right: to remove space leaks,
-achieve acceptable performance, get communication (e.g.\ MPI) and IO to work
+achieve acceptable performance, get I/O and inter-process communication to work
 as they expect, and so on.  More specifically, they expect to be able to
-reason about space and time usage, and order of execution, using their
+reason about space and time usage, and order of evaluation, using their
 existing mental models. While they are happy to write code that is strongly
 reminiscent of the numerical examples in Hughes' classic piece (whether
 they've read it or not)~\cite{Hughes89}, they would also be happy to write in
@@ -204,7 +206,7 @@ GHC 8.0.  Quoting the documentation:
   way to say that except by repeatedly adding bang
   patterns~\cite{strict-strictdata}.
 \end{quote}
-It is a fact that \emph{HPC practitioners are by and large not computer
+It is a fact that \emph{HPC practitioners are generally not computer
   scientists}, they are domain scientists (physicists, chemists, etc.) or
 computational scientists specialized in numerical or numerically-oriented
 algorithmic methods (e.g., Lagrangian, Eulerian, adaptive mesh refinement).
@@ -216,27 +218,28 @@ understand and not something they particularly want to try to understand.
 
 More generally, \emph{task-based} parallelism is becoming increasingly popular
 for HPC, often in conjunction with a higher-level (typically inter-node) bulk
-synchronous model typically implemented with the Message Passing Interface
-(MPI)~\cite{MPI}.  In the imperative world, example systems include the
+synchronous model usually implemented with the Message Passing Interface
+(MPI)~\cite{MPI}\@.  In the imperative world, example systems include the
 aforementioned Legion, Intel's Threading Building Blocks~\cite{Reinders:2007},
 and the HPX C++11/14 extension~\cite{HPX}.  While the concept of task is
 somewhat vague, the general idea is a unit of computation with no or
 minimal/constrained side effects.  A function in a pure functional language
-could be regarded as the essence of the concept of task.  All of these
+could be regarded as the essence of the concept of a task.  All of these
 systems are of course in languages with strict function-call semantics.
 
+\subsection{Another trend: transparent fault tolerance}
 In the quest for computing platforms approaching exascale, it is widely
 recognized that new mechanisms for fault tolerance will need to be built into
 the software stack.  Current practice in HPC is checkpoint/restart, wherein at
-various points in time sufficient program state is dumped to backing store such
-that the program, in case of a fault, can be (manually) restarted from the
-latest stored state.  Most implementations are explicit, though there has been
-some success with transparent (invisible to the programmer) systems.  Wiring
-checkpoint/restart into a large-scale application is not only burdensome and
-error-prone, it can severely warp the engineering of a large-scale application
+various points in time sufficient program state is dumped to backing store
+such that the program, in case of a fault, can be (manually) restarted from
+the last stored state.  Most implementations are explicit, though there has
+been some success with transparent (invisible to the programmer) systems.
+Wiring checkpoint/restart into a large-scale application is not only burdensome and
+error-prone, it can severely warp the engineering of the application
 because it must be designed such that essential state can be readily captured.
-And now, it is widely believed that the scalability of checkpoint/restart may
-be reaching its end.
+Furthermore, there is a concern that the scalability of checkpoint/restart is
+reaching its end.
 
 In the imperative world side-effect-free tasks could be safely restarted after
 failure, needing only their well-defined inputs and not arbitrary access to
@@ -246,8 +249,8 @@ programmer.  Ericsson's quasi-functional language Erlang and its runtime
 system were designed for fault tolerance~\cite{Cesarini:2009}.  It has long
 been recognized that the pure parts of a functional program (excluding, e.g.,
 the I/O monad in Haskell) could be safely restarted.  The recent work of
-Stewart impressively demonstrates this on a large-scale distributed-memory
-system~\cite{Stewart:2013}.
+Stewart impressively demonstrates this, in a pure functional setting, on a
+large-scale distributed-memory system~\cite{Stewart:2013}.
 
 We claim, then, that there is a trend, in HPC at least, towards
 \emph{strict-by-default pure functional programming}, whether as imposed by
@@ -278,8 +281,9 @@ divert us from our central goals.\footnote{We estimate that we will have, to
 not undertaking significant morphing of GHC itself: because this is in large
 part a student project it must be kept as simple as reasonably possible in
 various respects.  Our initial requirements are that
+%
 \begin{itemize}
-\item The implementation must be feasible in terms of effort;
+\item The implementation must be feasible in terms of available effort;
 \item The language must be strongly typed, implicitly or explicitly.  More
   specifically, the language should explicitly support both Hindley-Milner
   polymorphism and unboxed types~\cite{Jones:1991};
@@ -293,12 +297,12 @@ and Peyton Jones~\cite{Marlow:2004};
 \item Tail calling must be properly and consistently implemented;
 \item The generated code is C.
 \end{itemize}
-
+%
 For feasibility, we restrict ourselves to shared-memory implicit parallelism.
 The requirement for tail calling is not primarily for efficiency, rather it
 is for a reasonable parallel implementation.  Achieving this, and thereby
 sufficiently limiting the use of the native C stack, makes this an interesting
-exercise that we discuss at some length.
+exercise that we will discuss at some length.
 
 A minor, informal goal is to gain a sense of how often relatively
 inexperienced functional programmers make essential use of
@@ -316,15 +320,15 @@ compiler are 1) parsing and type checking; 2) transformation to the GHC
 \emph{Core} intermediate representation~\cite{Sulzmann:2007,ghc-core}; 3)
 analysis and transformation on Core; 4) transformation of Core to the
 \emph{STG} intermediate representation~\cite{PJ-stockhardware}; 5)
-transformation of STG to machine code via one of various imperative
-representations (Cmm, LLVM, C).
+transformation of STG to machine code via various imperative
+representations (Cmm, LLVM, C, native code generation).
 
 In short, our plan is to use GHC as our front-end to generate one of its
 intermediate forms, STG or Core, then escape to our system from there.  There
 are various possible ways to accomplish the this: using GHC's option to dump
 STG or Core as text, hacking GHC itself and, optionally, using GHC as a
 library~\cite{ghc-as-library}.  For now we start with our own STG, with
-bridging the gap with GHC scheduled to commence soon.
+bridging the gap with GHC scheduled to commence quite soon.
 
 \subsection{STG Language}
 
@@ -431,26 +435,25 @@ of the STG abstract machine.  Our partial description is based on that given
 in \emph{EA}.
 
 In STG the arity of a function is syntactically defined as the number of
-manifest formal parameters, thus \texttt{id x = x} has by definition arity 1
-regardless of the type of the argument (e.g., some function type) it might be
-applied to.  We distinguish \emph{application}, e.g., \texttt{f x y}, which is
-a syntactic notion, from actually calling a function. Thus \texttt{id id x} is
-an application of \texttt{id} to two arguments, but the underlying \emph{FUN}
-(user- or system- defined function) when actually called is given exactly one
-argument (the first one).
+manifest formal parameters in a function definition, thus \texttt{id x = x}
+has by definition arity one regardless of the type of the argument (e.g., some
+function type) it might be applied to.  We distinguish \emph{application},
+e.g., \texttt{f x y}, which is a syntactic notion, from actually calling a
+function. Thus \texttt{id id x} is an application of \texttt{id} to two
+arguments, but the underlying \emph{FUN} (user- or system- defined function)
+when actually called is given exactly one argument (the first one).
 
 In the eval-apply model, given application \texttt{f x y}, in the standard
 (non-strict) semantics \texttt{f} is first evaluated and the arity of the
-underlying \emph{FUN} (user- or system- defined function) or \emph{PAP}
-(partial application of a \emph{FUN}) is determined---in the case of
-\emph{PAP} the arity is that of the underlying \emph{FUN} less the number of
-arguments previously provided.  If the arity is greater than two a new
-\emph{PAP} is created with arguments \texttt{x} and \texttt{y} inserted and
-the new \emph{PAP} returned.  If the arity is equal to two the underlying
-\emph{FUN} is tail-called (jumped to) with any previous arguments (in case of
-\emph{PAP}) and new arguments \texttt{x} and \texttt{y}.  If the arity is less
-than two (it must be at least one, so one in this case) the underlying
-\emph{FUN} is called-with-return with any previous arguments (in case of
+underlying \emph{FUN} or \emph{PAP} (partial application of a \emph{FUN}) is
+determined---in the case of \emph{PAP} the arity is that of the underlying
+\emph{FUN} less the number of arguments previously provided.  If the arity is
+greater than two a new \emph{PAP} is created with arguments \texttt{x} and
+\texttt{y} inserted and the new \emph{PAP} returned.  If the arity is equal to
+two the underlying \emph{FUN} is tail-called (jumped to) with any previous
+arguments (in case of \emph{PAP}) and new arguments \texttt{x} and \texttt{y}.
+If the arity is less than two (it must be at least one, so one in this case)
+the underlying \emph{FUN} is called with any previous arguments (in case of
 \emph{PAP}) and new argument \texttt{x}, then the object returned applied to
 remaining argument \texttt{y}.
 
@@ -458,48 +461,55 @@ Given application \texttt{f x y} when might \texttt{x} and \texttt{y} be
 evaluated?  In the non-strict semantics evaluation is on demand, after
 \texttt{f} has been evaluated, the underlying \emph{FUN} actually called
 (i.e., not just partially applied and wrapped up in a \emph{PAP}), and one or
-both of those arguments forced in subsequent evaluation (assuming that they
-weren't forced in the evaluation of \texttt{f} itself).
+both of those arguments possibly forced in subsequent evaluation (assuming
+that they weren't forced in the evaluation of \texttt{f} itself).
 
 In a strict semantics one could devise various evaluation orders, but as far
-as distinguishing termination properties these can be distilled down to two
-reasonable possibilities, namely whether on construction of a \emph{PAP} the
-(new) arguments are forced or not.  In other words, the question is whether
-application is strict, or actual function call is strict.  These are in fact
-distinguishable because (in Haskell) the first argument to \texttt{seq} might
-evaluate to a \emph{PAP}.
+as distinguishing termination properties it seems these can be distilled down
+to two reasonable possibilities, namely whether on construction of a
+\emph{PAP} the (new) arguments are forced or not.  In other words, the
+question is whether application is strict, or actual function call is strict.
+These are in fact distinguishable because (in Haskell) the first argument to
+\texttt{seq} might evaluate to a \emph{PAP}.
 
 This then gives three reasonable operational modes that are strictly ordered
-in terms of termination properties: non-strict, fully strict---all arguments
-in an application are evaluated---and the intermediate in which only those
-arguments needed by a function call are evaluated.  The STG machinery makes
-the choice of evaluation strategy easy to change, both in terms of function
-application and building a constructor in the heap.
-
-The other dimension we vary is whether or not constructors are strict.  Other
-dimensions are possible, for example whether \texttt{let} bindings are strict,
-but we restrict ourselves to function/application and constructor strictness.
+in terms of termination properties: non-strict; function strict, in which only
+those arguments needed by a function call are evaluated; and application
+strict, in which all arguments of an application are evaluated.  The other
+dimension we vary is whether or not constructors are strict.  Other dimensions
+are possible, for example whether \texttt{let} bindings are strict, but we
+restrict ourselves to function/application and constructor strictness.  The
+STG machinery makes the choice of evaluation strategy easy to change.
+%, both in terms of function application and building a constructor in the
+%heap.
 
 \subsection{STG to C}
-The back-end is written in Haskell and generates C code;
-the runtime system is written in C/C++.  The system fairly faithfully
+The back-end is written in Haskell and generates C code; the runtime system is
+written in C/C++. This gives us the extensive optimization performed by modern
+C compilers such as gcc and Clang/LLVM. The system fairly faithfully
 implements the STG machine as described in \emph{EA} and dynamically
 illustrated by Pope's Ministg~\cite{ministg} with the exception of the state
-transition rules which, of course, may be different than those for non-strict
-semantics.  Sharing is preserved.
+transition rules which may be different than those for non-strict semantics.
+Sharing is preserved.
 
-\subsubsection{Proper tail calls.}
+\subsubsection{Proper tail calls in C}
 Parallelism is achieved by multi-threading; our model is based on Harris et
 al.'s.~\cite{Harris:2005}; later developments by Marlow et al.\ are beyond our
-aspirations~\cite{Marlow:2009,Marlow:2011}.  To achieve efficient parallel 
-execution they identified the need for the ability to examine and unwind the 
-stack.  This requires that use of the C stack be highly constrained if we are 
-to avoid complex and ugly hacks using, e.g., \emph{setjmp/longjmp}, or
-non-portable code to directly manipulate the C stack, complicating an
-already non-trivial implementation effort.  We therefore must limit the
-use of the C stack to calls to the runtime, in other words, when executing
-code generated from the user program (and not in a runtime call), there
-must be no growing of (pushing return addresses or data onto) the C stack.
+aspirations~\cite{Marlow:2009,Marlow:2011}.  To achieve efficient parallel
+execution they identified the need for the ability to examine and unwind the
+stack in quashing concurrent evaluation of the same \emph{THUNK}.  This
+requires that use of the C stack be highly constrained if we are to avoid
+complex and ugly hacks using, e.g., \emph{setjmp/longjmp}, or non-portable
+code to directly manipulate the C stack, complicating an already non-trivial
+implementation effort.  We therefore must limit the use of the C stack to
+calls to the runtime, in other words, when executing code generated from the
+user program (and not in a runtime call), there must be no growing of (pushing
+return addresses or data onto) the C stack.
+%
+To clearly distinguish between a notional C call (a syntactic concept) and a
+machine-level call (pushing a return address onto the native C stack) we will
+refer to the latter as \emph{call-with-return}, and to a machine-level tail
+call as \emph{jump}.
 
 First we establish that this is possible in principle.  By maintaining our own
 data and control (continuation) stack all generated C functions can take no
@@ -507,10 +517,41 @@ explicit arguments and have return type \emph{void}. If we arrange that
 generated C code has only calls (other than runtime calls, which do not call
 back to user-program code) in tail call positions, that is, immediately before
 a return in the control flow graph, then at non-zero optimization levels both
-gcc and Clang/LLVM will generate jumps instead of calls for C calls.  When
-using gcc we can also use a fixed set of machine registers for
-passing/returning values, much like GHC.
+gcc and Clang/LLVM will generate jumps instead of calls-with-return for C
+calls.  When using gcc we can also use a fixed set of machine registers for
+passing/returning values, much like GHC using the LLVM back-end with its
+custom GHC calling convention.
 
+
+The STG abstract machine is implemented using a continuation stack.
+Continuations contain a code pointer, optionally some data, and layout
+information for the benefit of the garbage collector.  For example, the
+argument frame for a function call is one type of continuation.  When the
+evaluation of a C function (corresponding to some STG code) is completed its
+return is by jumping through the code pointer of the continuation on the top
+of the stack (``returning through the continuation stack'').  In the case of
+an argument frame for a function, the associated code simply pops the
+continuation off the stack and returns through the next continuation on the
+stack.
+
+\emph{EA} describes a family of generic C-{}- \emph{stgApply} runtime
+functions used for applications of non-known (not statically identifiable)
+functions, and applications of known functions to other than their arity
+number of arguments.  Here the object to be applied is first evaluated with
+call-with-return.  When a resulting \emph{FUN} is applied to more than its
+arity number of arguments, it is called-with-return with its arity number of
+arguments, and the resulting value applied to the remaining arguments.  When
+considering more strict semantics call-with-return is even more convenient
+because arguments can be evaluated in a tight loop.  Unfortunately these uses
+of call-with-return can result in the C stack growing unboundedly.  Our
+solution uses a single C \emph{stgApply} function with no calls-with-return.
+This is straightforwardly realizable because the stack is explicit, and with
+the C compiler call optimization, the continuation style provides a proper
+\emph{goto} mechanism where the \emph{code labels}---entities that name blocks
+of code, can be treated as first class (e.g.\ stored), and serve as targets of
+a jump---are C function addresses (c.f.\ \S 6.1~\cite{PJ-stockhardware}).
+
+\begin{comment}
 \subsubsection{A taste of the continuation style.}
 Now to implementation.  To clearly distinguish between a notional C call (a
 syntactic concept) and a machine-level call (pushing a return address onto the
@@ -532,7 +573,7 @@ is, to a \emph{FUN}, \emph{PAP}, or \emph{CON}.
 % These latter, if evaluated, simply return through the continuation stack,
 %effectively returning \emph{self}.
 
-All continuations contain a code pointer, optionally some data, and layout
+Continuations contain a code pointer, optionally some data, and layout
 information.  These continuations are maintained on a stack.  When the
 evaluation of an object is completed its return is by jumping through the code
 pointer of the continuation on the top of the stack (``returning through the
@@ -549,44 +590,50 @@ that continuations direct \emph{where to go to}, not \emph{how to return
 to the caller} as in a stack for an imperative language, despite the use of
 the term ``return.''
 
-Now consider the evaluation of \texttt{case e of x \{ alts \}} if call-with-return
-is disallowed.  If the compiler cannot determine that evaluating \texttt{e}
-does not jump somewhere then there must be some mechanism to get to the
-\texttt{alts}.  Our solution follows \emph{EA}, using a separate C function
-for the \texttt{alts}, and before executing the code to evaluate \texttt{e},
-to push a continuation---the address of this function and the free variables
-of the \texttt{alts}---onto the stack.  Whatever the code for \texttt{e} might
-do, ultimately (in the absence of error or non-termination) the value of
-\texttt{e} is in \emph{CV}, and some code somewhere reaches its end and returns
-through the continuation stack, thus entering the code for \texttt{alts},
-which immediately binds \emph{x} to the value in \emph{CV}.
+Now consider the evaluation of \texttt{case e of x \{ alts \}} if
+call-with-return is disallowed.  If the compiler cannot determine that
+evaluating \texttt{e} does not jump somewhere then there must be some
+mechanism to get to the \texttt{alts}.  Our solution follows \emph{EA}, using
+a separate C function for the \texttt{alts}, and before executing the code to
+evaluate \texttt{e}, to push a continuation---the address of this function and
+the free variables of the \texttt{alts}---onto the stack.  Whatever the code
+for \texttt{e} might do, ultimately (in the absence of error or
+non-termination) the value of \texttt{e} is in \emph{CV}, and some code
+somewhere has reached its end and returns through the continuation stack, thus
+entering the code for \texttt{alts}, which immediately associates \texttt{x}
+with the value in \emph{CV}.
 
 \emph{EA} describes a family of generic C-{}- \emph{stgApply} runtime
 functions used for applications of non-known (not statically identifiable)
 functions, and applications of known functions to other than their arity
 number of arguments.  This family is parameterized by the number of actual
-arguments in the application and whether each is boxed or unboxed.  Because
-we have an explicit stack we are able to use a single C \emph{stgApply} function
-taking a contiguous block of machine words (unboxed values or
-pointers) on the explicit stack.  Some modifications are required, however,
-because \emph{EA} uses call-with-return.  Specifically, when a \emph{FUN} or is
-\emph{PAP} applied to more than its arity number of arguments
-a call-with-return to the (underlying) \emph{FUN} is made with the arity
-number of arguments, then the appropriate \emph{stgApply} function is jumped
-to, passing the newly returned object and the remaining arguments.  Our
-solution to this entails passing \emph{stgApply} the object to be applied in
-\emph{CV}, together with an extra argument indicating which of the object
-to be applied and its boxed arguments have been already been evaluated (by
-\emph{stgApply}).  If the object to be applied, or some argument, remains to
-be evaluated (because of the strictness level), it is jumped to, with
-return as ever through the continuation stack.  This is actually fairly
-efficient because we can arrange that the stack frame for \emph{stgApply}
-is reused, so except for the indirect jumps on return this is essentially
-a loop.  For the cases of arguments in excess of the arity of the object
-being applied, in effect \emph{stgApply}'s argument frame is popped and
-two continuations are pushed, first one to jump to \emph{stgApply} with
-the excess arguments, and the next an argument frame for the object to
-applied, then the code for the object to be applied is jumped to.
+arguments in the application and whether each is boxed or unboxed.  Because we
+have an explicit stack we are able to use a single C \emph{stgApply} function
+taking a contiguous block of machine words (unboxed values or pointers) on the
+explicit stack.  Some modifications are required, however, because \emph{EA}
+uses call-with-return.  Specifically, when a \emph{FUN} or is \emph{PAP}
+applied to more than its arity number of arguments a call-with-return to the
+(underlying) \emph{FUN} is made with the arity number of arguments, then the
+appropriate \emph{stgApply} function is jumped to, passing the newly returned
+object and the remaining arguments.  Call-with-return becomes even more
+convenient for strict evaluation:  arguments can be evaluated in a tight
+loop.
+
+Our solution to this entails passing \emph{stgApply} the object to be applied
+in \emph{CV}, together with an extra argument---call it
+\emph{index}---indicating which of the object to be applied and its boxed
+arguments have been already been evaluated (previously by \emph{stgApply}).
+If the object to be applied, or some argument (because of the strictness
+level), remains to be evaluated, it is jumped to, with return as ever through
+the continuation stack.  This is actually fairly efficient because we can
+arrange that the stack frame for \emph{stgApply} is reused, updating only
+\emph{index}, so except for the indirect jumps on return this is essentially a
+loop.  For the cases of arguments in excess of the arity of the object being
+applied, in effect \emph{stgApply}'s argument frame is popped and two
+continuations are pushed, the first one to jump to \emph{stgApply} with the
+excess arguments, the next an argument frame for the object to applied, then
+the code for the object to be applied is jumped to.
+\end{comment}
 
 \begin{comment}
 \subsubsection{Is this too much for this paper?}
@@ -968,7 +1015,7 @@ section, but are worth mentioning.
 \item Type Annotations \\
   The ability to assert the type of some variable is often valuable as a
   sanity-check and provides documentation that the compiler can verify.
-  mini-Haskell's type annotations (or signatures) behave similarly to those in
+  mini-Haskell's type annotations (or signatures) behave like those in
   Haskell, being passed to the typechecker as initial assumptions.
 
 % I don't think I've described this very well at all... - david
@@ -1008,17 +1055,15 @@ small \emph{nurseries} in the multithreaded case~\cite{Marlow:2008}. We have
 not worked on the development of a more sophisticated garbage collector
 because this would be a distraction from our main goals.
 
-Mutual exclusion for garbage collector--heap check with every heap allocation.
-In fact garbage collector can be invoked at any point in time except when
-populating a heap object immediately after its allocation.
-
-
+%Mutual exclusion for garbage collector--heap check with every heap allocation.
+%In fact garbage collector can be invoked at any point in time except when
+%populating a heap object immediately after its allocation.
 
 \subsection{Type system}
 
 We perform standard Hindley-Milner type inference and
 enforcement~\cite{Heren02}, augmented with built-in and user-defined unboxed
-types as described by Peyton-Jones and Launchbury~\cite{Jones91unboxedvalues},
+types as described by Peyton-Jones and Launchbury~\cite{Jones:1991},
 but for unboxed types code generation and runtime support is currently limited
 to built-in single-word (64-bit) or smaller types (e.g., \texttt{Int\#},
 \texttt{UInt\#}, \texttt{Float\#}, \texttt{Double\#}) and user-defined
@@ -1077,8 +1122,8 @@ for each thread, blah, blah.
 
 \section{Related Work}
 
-Various papers describing some of the inner workings of GHC at various point
-of its evolution have greatly informed our approach and these have all been
+Various papers describing some of the inner workings of GHC at various points
+in its evolution have greatly informed our approach and these have all been
 previously cited.
 
 \subsubsection{\emph{Strict but still pure} is not new.}
@@ -1086,10 +1131,10 @@ Very simple implementations have been prototyped, for example
 Sheard's.~\cite{Sheard:2003}
 %
 A plug-in for GHC (prior to 8.0) exists for making functions, but not data
-structures, strict.~\cite{strict-ghc-plugin}.  The transformation is on GHC
-Core, recursively expand non-recursive let bindings into case bindings.  Thus
-it seems that while it makes functions denotationally strict, function arguments
-are still evaluated after function call.
+structures, strict using a transformation on GHC Core that recursively expands
+non-recursive let bindings into case bindings.~\cite{strict-ghc-plugin}.  Thus
+it seems that while it makes functions denotationally strict, function
+arguments are still evaluated after function call.
 %
 The Disciplined Disciple Compiler project appears to intend implementation of
 a strict, higher order functional language (or family of languages) compiler
@@ -1100,28 +1145,27 @@ for its eventual completion are unknown~\cite{disciplined-disciple}.
 NVIDIA's NOVA language, and corresponding compiler, implements a strict
 (``call by value''), pure, polymorphic, higher-order functional language with
 built-in parallel operators (e.g., \emph{map}, \emph{reduce}, and
-\emph{scan}).~\cite{NVIDIA:2013} Three back-ends were implemented: for
+\emph{scan})~\cite{NVIDIA:2013}. Three back-ends were implemented: for
 sequential C, parallel (multi-threaded) C, and CUDA C, the lattermost
 targeting NVIDIA GPUs.
 
 \subsubsection{GHC as a front-end.}
 The Intel Labs Haskell Research Compiler (HRC) is the most closely related
-work to ours of which we are aware.~\cite{Liu:2013,Petersen:2013} As in our
-(planned) approach they use GHC as the front end, but exit the GHC toolchain
+work to ours of which we are aware~\cite{Liu:2013,Petersen:2013}.  As in our
+planned approach they use GHC as the front end, but exit the GHC toolchain
 at the final GHC Core stage, just before transformation to STG.  The essence
 of their effort is to target an existing, highly optimizing, Intel functional
 language compiler that is ``largely language agnostic'' and performs (among
 many other optimization) SIMD vectorization.
 
-In his BSc thesis, Don Stewart described an implementation wherein GHC was
-used as a Haskell compiler front-end, dumping STG code as text, parsing that
-text, then translating to code for execution on the Java Virtual
-Machine.~\cite{Stewart-BSc}.
+Don Stewart described an implementation wherein GHC was used as a Haskell compiler
+front-end, dumping STG code as text, parsing that text, then translating to
+code for execution on the Java Virtual Machine.~\cite{Stewart-BSc}.
 
 \subsubsection{Fault tolerance for functional programming.}
 Pointon et al.\ developed a limited fault tolerance mechanism for Glasgow
 distributed Haskell based on distributed exception
-handling.~\cite{Pointon:2001}.  However, it appears that their scheme for
+handling~\cite{Pointon:2001}.  However, it appears that their scheme for
 handling failed processing elements correctly~\cite{} may have never been
 implemented.
 
@@ -1139,9 +1183,10 @@ goals:  implementing and evaluating mechanisms for automatic parallelism and
 fault tolerance.
 
 Currently we are developing the parallel runtime.  This summer (2016) a
-returning student will (partially) bridge the gap between GHC STG and our STG,
-and augment our runtime as needed in this effort.  Just as in the Intel Haskell
-Research Compiler effort, we will not 
+returning student will bridge the gap between GHC STG (or Core) and our STG,
+and augment our runtime as needed in this effort.  Just as in the Intel
+Haskell Research Compiler effort, we will not attempt to reuse the GHC
+runtime.
 
 \section{Acknowledgments}
 
@@ -1153,7 +1198,7 @@ Science Undergraduate Laboratory Internship (SULI) program.
 %
 Los Alamos National Laboratory is managed and operated by Los Alamos National
 Security, LLC (LANS), under contract number DE-AC52-06NA25396 for the
-Department of Energy’s National Nuclear Security Administration (NNSA).
+Department of Energy's National Nuclear Security Administration (NNSA).
 
 
 %

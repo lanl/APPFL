@@ -157,7 +157,10 @@ Cont *stgJumpAdjust() {
   return (Cont *) stgSP;
 }
 
+
+
 // delta is in units of sizeof(PtrOrLiteral)
+// updates bitmap.size but not bitmap.mask
 Cont *stgAdjustTopContSize(Cont *cp, int delta) {
 
   // we're really passing in the TOSP, important when there
