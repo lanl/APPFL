@@ -107,14 +107,14 @@ other governments commit to a push for exascale computing ($10^{18}$ FLOPS in
 a single system) within the next
 decade~\cite{Exascale-roadmap,EUexascale,Exascale-org} a highly respected
 member of the HPC community recently stated publicly that ``Fortran is
-essential for exascale programming.''~\cite{Heroux16} Existing US government
+essential for exascale programming''~\cite{Heroux16}.  Existing US government
 laboratory HPC codes run to hundreds of thousands of lines of Fortran each and
 complete rewrites are infeasible.\footnote{The codes of our lab's British
   counterpart are similar.}  C++ has become more common for new code starts,
 but their nature remains the same: huge codes with fair to non-existent
 encapsulation of side effects, with multiple levels of parallelism sometimes
 poorly abstracted, especially at the thread (shared-memory) and computational
-accelerator (e.g., GPU) levels.  Thread-level parallel efficiency can be good
+accelerator (e.g.\ GPU) levels.  Thread-level parallel efficiency can be good
 when the parallel model is bulk synchronous; tasking models are generally
 avoided unless abstracted by, e.g., a C++ template or runtime library, because
 of the programming complexity.
@@ -122,7 +122,7 @@ of the programming complexity.
 \subsection{A trend: strict but still pure functional programming in HPC}
 Interest in functional programming for HPC in general is not new as evidenced
 by the Workshop on Functional High Performance Computing, held in conjunction
-with the International Conference on Functional Programming, being now in its fifth
+with the International Conference on Functional Programming, now in its fifth
 consecutive year.  A more precise characterization of the trend is that there
 is a small but growing understanding by practicing computational scientists
 that \emph{pure functional semantics}, in some form, is essential to reining
@@ -156,32 +156,29 @@ requested from the runtime system.  Regions may be shared among \emph{tasks}
 (read, write, read/write, etc.) and coherency requirements for each region to
 which it will have access.  Other than registered access to regions, tasks
 must not access non-constant global data.  Thus the inputs and outputs of
-tasks are exactly known to the runtime system.  In serial execution these access
-requirements are notionally superfluous, but in parallel execution the runtime
-can dynamically calculate the data dependency graph and relax the
+tasks are exactly known to the runtime system.  In serial execution these
+access requirements are notionally superfluous, but in parallel execution the
+runtime can dynamically calculate the data dependency graph and relax the
 programmatically defined serial ordering of task execution.  Very high
 parallel efficiency has been demonstrated on extremely large computing
-systems~\cite{Bauer14}.\footnote{It seems
-  significant that the PI of the Legion project was previously a co-developer
-  of a strict, arguably pure functional language
+systems~\cite{Bauer14}.\footnote{We note that the PI of the Legion project was
+  previously a co-developer of a strict, arguably pure functional language
   implementation~\cite{AikenFL,FLreport89}, in collaboration with John Backus
   as a refinement of his FP language~\cite{Backus:1978}.}
 
 \subsubsection{Use a pure functional language.}
 Some twenty years after the US Department of Energy laboratory complex was
 presented with the most highly parallel (and thereby performant)
-implementation of a pure functional language to date~\cite{Davis96}, and
-collectively had no conceptual understanding of what it was, much less why it
-might be of some import, there is now a small number of laboratory HPC
-practitioners who are developing an appreciation for pure functional
-programming in Haskell.  Still, they see their needs as different than other
-Haskell users:  performance is paramount, vectors (``Efficient
-Arrays''~\cite{vector}) are a (perhaps \emph{the}) primary data structure, and
-non-strictness or laziness is more of a nuisance---even a serious
-hindrance---than a convenience, much less ever algorithmically essential in
-the sense of Bird's \emph{repmin}~\cite{Bird84}, Johnsson's general attribute
-grammars~\cite{Johnsson87}, or other instances of \emph{tying the
-  knot}~\cite{tying-the-knot}.
+implementation of a pure functional language to date~\cite{Davis96}, to no
+effect whatsoever, there is now a small number of laboratory HPC practitioners
+who are developing an appreciation for pure functional programming in Haskell.
+However, they see their needs as different than other Haskell users: performance
+is paramount, vectors~\cite{vector} are a (perhaps \emph{the}) primary data
+structure, and non-strictness or laziness is more of a nuisance---even a
+serious hindrance---than a convenience, much less ever algorithmically
+essential in the sense of Bird's \emph{repmin}~\cite{Bird84}, Johnsson's
+general attribute grammars~\cite{Johnsson87}, or other instances of
+\emph{tying the knot}~\cite{tying-the-knot}.
 
 A common complaint among these aspiring high-performance functional
 programmers is the need to get strictness just right: to remove space leaks,
@@ -196,9 +193,9 @@ that's how they've been thinking their entire careers.
 
 Much anecdotal evidence suggests that many others have similar difficulties
 with semantics that are lazy (or non-strict) by default, with the most telling
-recent concrete evidence being the push for, and realization of, the
-\texttt{Strict} and \texttt{StrictData} language extensions newly available in
-GHC 8.0.  Quoting the documentation:
+recent concrete evidence being the push for the \texttt{Strict} and
+\texttt{StrictData} language extensions newly available in GHC 8.0.  Quoting
+the documentation:
 \begin{quote}
   High-performance Haskell code (e.g.\ numeric code) can sometimes be littered
   with bang patterns, making it harder to read. The reason is that laziness
@@ -212,7 +209,7 @@ computational scientists specialized in numerical or numerically-oriented
 algorithmic methods (e.g., Lagrangian, Eulerian, adaptive mesh refinement).
 The concept of a space leak, for example, caused by other than a missing
 explicit deallocation statement (C \emph{free}, etc.) is difficult to
-understand and not something they particularly want to try to understand.
+understand and not something they care to need to understand.
 %Hence, we eschew explicit strictness annotations for varying uniform degrees
 %of strictness.
 
@@ -235,11 +232,12 @@ various points in time sufficient program state is dumped to backing store
 such that the program, in case of a fault, can be (manually) restarted from
 the last stored state.  Most implementations are explicit, though there has
 been some success with transparent (invisible to the programmer) systems.
-Wiring checkpoint/restart into a large-scale application is not only burdensome and
-error-prone, it can severely warp the engineering of the application
-because it must be designed such that essential state can be readily captured.
-Furthermore, there is a concern that the scalability of checkpoint/restart is
-reaching its end.
+Wiring checkpoint/restart into a large-scale application is not only
+burdensome and error-prone, it can severely warp the engineering of the
+application because it must be designed such that consistent, essential state
+can be readily captured.  Furthermore, there is a concern that the scalability
+of checkpoint/restart is reaching its end as data transfer to backing store
+becomes an increasing bottleneck.
 
 In the imperative world side-effect-free tasks could be safely restarted after
 failure, needing only their well-defined inputs and not arbitrary access to
@@ -247,10 +245,11 @@ mutable global state.  The Legion system is being augmented with this
 capability, and in such a way that it will be largely transparent to the
 programmer.  Ericsson's quasi-functional language Erlang and its runtime
 system were designed for fault tolerance~\cite{Cesarini:2009}.  It has long
-been recognized that the pure parts of a functional program (excluding, e.g.,
-the I/O monad in Haskell) could be safely restarted.  The recent work of
-Stewart impressively demonstrates this, in a pure functional setting, on a
-large-scale distributed-memory system~\cite{Stewart:2013}.
+been recognized that the side-effect-free parts of a functional program
+(excluding, e.g., the I/O monad in Haskell) could be safely replicated or
+restarted.  The recent work of Stewart impressively demonstrates this, in a
+pure functional setting, on a large-scale distributed-memory
+system~\cite{Stewart:2013}.
 
 We claim, then, that there is a trend, in HPC at least, towards
 \emph{strict-by-default pure functional programming}, whether as imposed by
@@ -299,10 +298,10 @@ and Peyton Jones~\cite{Marlow:2004};
 \end{itemize}
 %
 For feasibility, we restrict ourselves to shared-memory implicit parallelism.
-The requirement for tail calling is not primarily for efficiency, rather it
-is for a reasonable parallel implementation.  Achieving this, and thereby
-sufficiently limiting the use of the native C stack, makes this an interesting
-exercise that we will discuss at some length.
+The requirement for tail calling is not primarily for efficiency, rather it is
+for a reasonable parallel implementation.  Achieving this, and thereby
+sufficiently limiting the use of the native C stack, will be discussed at some
+length.
 
 A minor, informal goal is to gain a sense of how often relatively
 inexperienced functional programmers make essential use of
@@ -316,19 +315,19 @@ non-strictness.\footnote{The starting experience of our student interns to
 \section{Design and Implementation}
 Our wish list has much in common with the GHC Haskell implementation, and
 indeed GHC is part of our master plan.  In brief, the phases of the GHC
-compiler are 1) parsing and type checking; 2) transformation to the GHC
-\emph{Core} intermediate representation~\cite{Sulzmann:2007,ghc-core}; 3)
-analysis and transformation on Core; 4) transformation of Core to the
-\emph{STG} intermediate representation~\cite{PJ-stockhardware}; 5)
+compiler are (1) parsing and type checking; (2) transformation to the GHC
+\emph{Core} intermediate representation~\cite{Sulzmann:2007,ghc-core}; (3)
+analysis and transformation on Core; (4) transformation of Core to the
+\emph{STG} intermediate representation~\cite{PJ-stockhardware}; (5)
 transformation of STG to machine code via various imperative
 representations (Cmm, LLVM, C, native code generation).
 
 In short, our plan is to use GHC as our front-end to generate one of its
 intermediate forms, STG or Core, then escape to our system from there.  There
 are various possible ways to accomplish the this: using GHC's option to dump
-STG or Core as text, hacking GHC itself and, optionally, using GHC as a
-library~\cite{ghc-as-library}.  For now we start with our own STG, with
-bridging the gap with GHC scheduled to commence quite soon.
+STG or Core as text, hacking GHC itself, and, possibly, using GHC as a
+library~\cite{ghc-as-library}.  Initially we start with our own STG.
+%, with bridging the gap with GHC scheduled to commence quite soon.
 
 \subsection{STG Language}
 
@@ -337,10 +336,8 @@ evoke both an abstract and concrete syntax.  This presentation is adapted from
 Marlow and Peyton Jones' \emph{Eval/Apply} paper~\cite{Marlow:2004}, to which
 we refer so many times that we will subsequently refer to it as simply
 \emph{EA}. Partial application (\emph{PAP}) and black hole (\emph{BLACKHOLE}),
-i.e., a thunk being evaluated, are only runtime entities and not actually part
-of our STG language.
-
-
+signifying a \emph{THUNK} being evaluated, are only runtime entities and not
+actually part of our STG language.
 
 \setlength{\tabcolsep}{5pt}
 \begin{figure}
@@ -396,17 +393,13 @@ so \texttt{case} is similar to \texttt{pseq} (as opposed to \texttt{seq}) in
 Haskell, that is, the scrutinee is evaluated first.  Second, constructors are
 not functions, rather they are named in the construction (heap allocation) of
 a data object.  More generally, the operational notion of allocating a heap
-object is explicit: this is the ``side effect'' of \texttt{let} bindings.
-As such a variable of unboxed type cannot be let-bound; instead it can be
-bound with \texttt{case}, e.g., \texttt{case e of x\# \{ \_ -> e \}}
-%\begin{verbatim}
-%    case e of x# {
-%      _ -> e
-%    }
-%\end{verbatim}
-where the \texttt{\#} suffix is merely a convention to signify that
-\texttt{x\#} has unboxed type.  Finally, deferred evaluation is explicit:
-a deferred expression evaluation is encoded by a thunk.
+object is explicit: this is the operational semantics of \texttt{let} bindings.
+%As such a variable of unboxed type cannot be let-bound; instead it can be
+%bound with \texttt{case}, e.g., \texttt{case e of x\# \{ \_ -> e \}}
+%where the \texttt{\#} suffix is merely a convention to signify that
+%\texttt{x\#} has unboxed type.  
+Finally, deferred evaluation is explicit:
+a deferred expression evaluation is encoded by a \emph{THUNK}.
 
 \subsection{Degrees of strictness}
 First some words about terminology.  For all degrees of strictness, sharing
@@ -418,16 +411,17 @@ function call, rather than the denotational sense, unless stated otherwise.
 Similarly, when referring to language semantics we refer by default to the
 operational rather than denotational semantics.
 
-Greater strictness implies more opportunities for parallelism, possible losses
-or gains in space efficiency, and less expressiveness.  We seek to explore
-the interplay of all of these.
+Greater strictness implies more opportunities for automatic parallelism,
+possible losses or gains in space efficiency, and less expressiveness.  We
+seek to explore the interplay of all of these.
 
-GHC 8.0 gives three possibilities: conventional non-strict, constructor
-strict, and function- and constructor strict, but there are possible
-variations.  The obvious variation is function, but not constructor,
-strictness.  In Haskell the distinction between constructors and functions is
-somewhat blurred because constructors behave like functions (outside of
-pattern matching), but in STG the distinction is clear.
+GHC 8.0 gives three defaults: conventional non-strict, constructor strict, and
+function- and constructor strict, but there are possible variations.  The
+obvious variation is function, but not constructor, strictness.  In Haskell
+the distinction between constructors and functions is somewhat blurred
+%because constructors behave like functions 
+(outside of data definitions and pattern matching), but in STG the distinction
+is clear.
 
 Other possible variations concern the notional arity of the underlying
 function being applied.  This is readily explained in terms of the operation
