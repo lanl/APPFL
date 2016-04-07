@@ -331,21 +331,12 @@ library~\cite{ghc-as-library}.  Initially we start with our own STG.
 
 \subsection{STG Language}
 
-Our incarnation of STG, as shown in Figure~\ref{fig:STGsyntax}, is meant to
-evoke both an abstract and concrete syntax.  This presentation is adapted from
-Marlow and Peyton Jones' \emph{Eval/Apply} paper~\cite{Marlow:2004}, to which
-we refer so many times that we will subsequently refer to it as simply
-\emph{EA}. Partial application (\emph{PAP}) and black hole (\emph{BLACKHOLE}),
-signifying a \emph{THUNK} being evaluated, are only runtime entities and not
-actually part of our STG language.
-
 \setlength{\tabcolsep}{5pt}
 \begin{figure}
-%\centering
-\begin{centering}
+\centering
+%\begin{centering}
 \footnotesize % tiny scriptsize footnotesize small
 \begin{tabular}{r r c l l}
-
 Variable     & $f,\ x$        &     &                                              & Initial lower-case letter \\
 Constructor  & $C$            &     &                                              & Initial upper-case letter \\
 Literal      & $\mathit{lit}$ & ::= & $i\ |\ d$                                    & Integral or floating point literal \\
@@ -356,16 +347,19 @@ Expression   & $e$            & ::= & $a$                                       
              &                & $|$ & $\oplus\ a_1\dots a_n$                       & Saturated primitive operation, $n\ge 1$ \\
 
              &                & $|$ & \texttt{let \{}                              & Recursive let, $n\ge 1$ \\
-             &                &     & \texttt{ } $x_1$ \texttt{=} $\mathit{obj}_1$ \texttt{;} \\
+             &                &     & \texttt{ } $\mathit{odecl}_1$ \texttt{;} \\
              &                &     & \hspace{0.2in} $\dots$ \texttt{;} \\
-             &                &     & \texttt{ } $x_n$ \texttt{=} $\mathit{obj}_n$ \\
+             &                &     & \texttt{ } $\mathit{odecl}_n$ \texttt{;} \\
+%             &                &     & \texttt{ } $x_1$ \texttt{=} $\mathit{obj}_1$ \texttt{;} \\
+%             &                &     & \hspace{0.2in} $\dots$ \texttt{;} \\
+%             &                &     & \texttt{ } $x_n$ \texttt{=} $\mathit{obj}_n$ \\
              &                &     & \texttt{\} in} $e$  \\
 
              &                & $|$ & \texttt{case} $e$ \texttt{of} $x$ \texttt{\{}  & Case expression, $n \ge 1$\\
              &                &     & \texttt{ } $\mathit{alt}_1$ \texttt{;} \\
              &                &     & \hspace{0.2in} $\dots$ \texttt{;} \\
-             &                &     & \texttt{ } $\mathit{alt}_n$ \\
-             &                &     & \texttt{\}} \\
+             &                &     & \texttt{ } $\mathit{alt}_n$ \texttt{\}} \\
+%            &                &     & \texttt{\}} \\
 \\
 Alternatives & $\mathit{alt}$ & ::= & $C\ x_1\dots x_n$ \texttt{->} $e$            & Pattern match, $n \ge 0$ \\
              &                & $|$ & \texttt{\_ ->} $e$                           & Default \\
@@ -376,15 +370,35 @@ Heap objects & $\mathit{obj}$ & ::= &\texttt{FUN} $x_1\dots x_n$ \texttt{->} $e$
              &                & $|$ & $\mathit{PAP}\ f\ a_1\dots a_n$               & Evaluation-time partial application \\
              &                & $|$ & $\mathit{BLACKHOLE}$                         & Evaluation-time black hole \\
 \\
-Program      & $\mathit{prog}$& ::= & $f_1\ =\ \mathit{obj}_1$ \texttt{;}          & $n \ge 1$, distinguished \texttt{main}\\
-             &                &     & \texttt{ } $\dots$ \texttt{;} \\
-             &                &     & $f_n\ =\ \mathit{obj}_n$
+Object decl. & $\mathit{odecl}$ &     & $x = \mathit{obj}$                           & Simple binding \\
+\\
+Constructor defn. & $\mathit{con}$  & ::= & $C\ \mathit{type}_i$ & $i \ge 0$ \\
+\\
+Datatype defn. &  $\mathit{ddecl}$ & ::= & \texttt{data} [\texttt{unboxed}] & User-defined data type  \\
+               &                   &     & $C\ x_i =$                       & $i \ge 0, n > 0$         \\
+               &                   &     & $\mathit{con}_1 | \dots |  \mathit{con}_n$ \\
+
+\\
+Program      & $\mathit{prog}$ & ::= & $\mathit{(o|d)decl}_1$ & Object and data defns \\
+             &                 &     & \texttt{ } $\dots$ \texttt{;} \\
+             &                 &     & $\mathit{(o|d)decl}_n$ & 
+%Program      & $\mathit{prog}$& ::= & $f_1\ =\ \mathit{obj}_1$ \texttt{;}          & $n \ge 1$, distinguished \texttt{main}\\
+%             &                &     & \texttt{ } $\dots$ \texttt{;} \\
+%             &                &     & $f_n\ =\ \mathit{obj}_n$
 
 \end{tabular}
-\end{centering}
+%\end{centering}
 \caption{STG syntax}
 \label{fig:STGsyntax}
 \end{figure}
+
+Our incarnation of STG, as shown in Figure~\ref{fig:STGsyntax}, is meant to
+evoke both an abstract and concrete syntax.  This presentation is adapted from
+Marlow and Peyton Jones' \emph{Eval/Apply} paper~\cite{Marlow:2004}, to which
+we refer so many times that we will subsequently refer to it as simply
+\emph{EA}. Partial application (\emph{PAP}) and black hole (\emph{BLACKHOLE}),
+signifying a \emph{THUNK} being evaluated, are only runtime entities and not
+actually part of our STG language.
 
 The semantics of STG is what one would expect for a higher-order, polymorphic,
 pure functional language, with a few exceptions for a Haskell programmer
@@ -522,9 +536,9 @@ Continuations contain a code pointer, optionally some data, and layout
 information for the benefit of the garbage collector.  For example, the
 argument frame for a function call is one type of continuation.  When the
 evaluation of a C function (corresponding to some STG code) is completed its
-return is by jumping through the code pointer of the continuation on the top
-of the stack (``returning through the continuation stack'').  In the case of
-an argument frame for a function, the associated code simply pops the
+return is by an indirect jump using the code pointer in the continuation on
+the top of the stack (``returning through the continuation stack'').  In the
+case of an argument frame for a function, the associated code simply pops the
 continuation off the stack and returns through the next continuation on the
 stack.
 
@@ -537,7 +551,7 @@ arity number of arguments, it is called-with-return with its arity number of
 arguments, and the resulting value applied to the remaining arguments.  When
 considering more strict semantics call-with-return is even more convenient
 because arguments can be evaluated in a tight loop.  Unfortunately these uses
-of call-with-return can result in the C stack growing unboundedly.  Our
+of call-with-return can result in the C stack growing without bound.  Our
 solution uses a single C \emph{stgApply} function with no calls-with-return.
 This is straightforwardly realizable because the stack is explicit, and with
 modern C compiler call optimization, the continuation style enables a proper
@@ -569,11 +583,12 @@ is, to a \emph{FUN}, \emph{PAP}, or \emph{CON}.
 
 Continuations contain a code pointer, optionally some data, and layout
 information.  These continuations are maintained on a stack.  When the
-evaluation of an object is completed its return is by jumping through the code
-pointer of the continuation on the top of the stack (``returning through the
-continuation stack'').  For example, the argument frame for a function is one
-type of continuation and its associated code simply pops the continuation off
-the stack and returns through the next continuation on the stack.
+evaluation of an object is completed its return is by an indirect jump using
+the code pointer in the continuation on the top of the stack (``returning
+through the continuation stack'').  For example, the argument frame for a
+function is one type of continuation and its associated code simply pops the
+continuation off the stack and returns through the next continuation on the
+stack.
 
 Before evaluating a user program an initial continuation is pushed onto
 the stack that points to a C function that performs whatever post-user-program
@@ -681,39 +696,29 @@ of notionally differing type.  In particular, top-of-stack frames can be
 adjusted in size and content without undue copying.
 \end{comment}
 
-
 \subsection{Type system}
 
-We perform standard Hindley-Milner type inference and
-enforcement~\cite{Heren02}, augmented with built-in and user-defined unboxed
-types as described by Peyton-Jones and Launchbury~\cite{Jones:1991},
-but for unboxed types code generation and runtime support is currently limited
-to built-in single-word (64-bit) or smaller types (e.g., \texttt{Int\#},
-\texttt{UInt\#}, \texttt{Float\#}, \texttt{Double\#}) and user-defined
-enumerations, e.g., \texttt{data unboxed Bool\# = False\# | True\#}.
+Type information is required for code generation.  For example, at the
+coarsest level it is necessary to know whether values are boxed, and so
+represented by pointers, or unboxed, to avoid expensive tagging.  Because we
+do not yet get type information directly from GHC we use a subset of Haskell
+syntax (e.g., no named fields) for defining algebraic data types, extended
+with built-in and user-defined unboxed types.  We perform standard
+Hindley-Milner type inference and enforcement following Heren et
+al.~\cite{Heren02}, again extended with unboxed types.  The syntax,
+restrictions, and extensions to the type inference algorithm for unboxed types
+follow Peyton Jones and Launchbury~\cite{Jones:1991}.
 
-\subsection{Parallel evaluation and other developments}
+\section{Current Status (April 8, 2016), Future Work}
 
-Parallel runtime is being implemented following the ideas
-of~\cite{Harris:2005,Marlow:2008,Marlow:2009}, thread pool, stack and heap 
-for each thread, blah, blah.
-
-For ease of developing the test suite we have implemented a \emph{mini-Haskell}
-front end as detailed in Appendix~A.
-
-We use a continuous integration system augmented with logic to categorize
-programs in a large and growing test suite according to which degrees of non-strictness they
-require to terminate correctly, and to provide other logging and debugging
-information.  This is detailed in Appendix~B.
-
-\section{Current Status, Future Work}
-
-Developing the bridge between GHC Core or STG to our system is scheduled
-to start immediately after TiFP'16.
-
-At the time of writing we have a complete serial implementation, including
+An almost unbounded amount of interesting development suggests itself; one
+such path would lead to the recreation of GHC.  However, given the minuscule
+budget (and therefore the employment of student interns) we must maintain
+sharp focus on the main goals: implementing and evaluating mechanisms for
+automatic parallelism and fault tolerance.  At the time of writing we have a
+fully functioning serial implementation including
 \begin{itemize}
-\item STG parsers \emph{(by student)},
+\item STG parser \emph{(by student)},
 \item mini-Haskell parser, mini-Haskell to STG transformer \emph{(by student)},
 \item type inferencer,
 \item various analysis and transformation passes \emph{(some by students)},
@@ -723,26 +728,36 @@ At the time of writing we have a complete serial implementation, including
 \item extensive test suite \emph{(mostly by students)}.
 \end{itemize}
 
-We have implemented a simple copying garbage collector~\cite{Cheney:1970} with
-small \emph{nurseries} in the multithreaded case~\cite{Marlow:2008}. We have
-not worked on the development of a more sophisticated garbage collector
-because this would be a distraction from our main goals.
+The \emph{mini-Haskell} front-end is detailed in Appendix~A.
 
-%Mutual exclusion for garbage collector--heap check with every heap allocation.
-%In fact garbage collector can be invoked at any point in time except when
-%populating a heap object immediately after its allocation.
+This summer (2016) a returning student will bridge the gap between GHC STG (or
+Core) and our STG, augmenting the runtime as needed.  Just as in the Intel
+Haskell Research Compiler effort we will not attempt to reuse the GHC runtime.
 
-An almost unbounded amount of interesting work suggests itself; one such path
-would lead to the recreation of GHC.  However, given the minuscule budget (and
-thus the emphasis on student labor) we must maintain sharp focus on the main
-goals:  implementing and evaluating mechanisms for automatic parallelism and
-fault tolerance.
+For unboxed types code generation and runtime support is currently limited
+to built-in single-word (64-bit) or smaller types (e.g., \texttt{Int\#},
+\texttt{UInt\#}, \texttt{Float\#}, \texttt{Double\#}) and user-defined
+enumerations, e.g.,
+\begin{verbatim}
+     data unboxed Bool# = False# | True# .
+\end{verbatim}
 
-Currently we are developing the parallel runtime.  This summer (2016) a
-returning student will bridge the gap between GHC STG (or Core) and our STG,
-and augment our runtime as needed in this effort.  Just as in the Intel
-Haskell Research Compiler effort, we will not attempt to reuse the GHC
-runtime.
+We use a continuous integration system augmented with logic to categorize
+programs in a large and growing test suite according to which degrees of
+non-strictness they require to terminate correctly, and to provide other
+logging and debugging information.  This is detailed in Appendix~B.
+
+% For various reasons we have chosen to make our implementation 64-bit only.
+
+We are currently developing the parallel runtime.  Parallel garbage collection
+is likely out of scope.
+
+%We have implemented a simple copying garbage collector~\cite{Cheney:1970} with
+%small \emph{nurseries} in the multithreaded case~\cite{Marlow:2008}. 
+
+
+%\cite{Harris:2005,Marlow:2008,Marlow:2009}
+
 
 \section{Related Work}
 
@@ -751,12 +766,13 @@ in its evolution have greatly informed our approach and these have all been
 previously cited.
 
 \subsubsection{Strict but still pure.}
-The concept of strict but still pure dates back to early studies of the lambda
-calculus.  In terms of a notionally concrete programming language the first
-thorough explications may be of Backus' FP~\cite{Backus:1978} and follow-on
-FL implementation~\cite{AikenFL,FLreport89}.
+The concept of strict but still pure in some sense dates back to the concept
+of applicative order reduction in the lambda calculus.  In terms of a
+notionally concrete programming language the first thorough explications may
+be Backus' FP~\cite{Backus:1978} and follow-on FL
+implementation~\cite{AikenFL,FLreport89}.
 %
-Perhaps the first explication of the potential merits of a strict-by-default
+A notable argument for the potential merits of a strict-by-default
 pure functional language over a non-strict one is by Sheard, who also provided
 a very simple prototype implementation~\cite{Sheard:2003}.
 %
@@ -796,8 +812,8 @@ code for execution on the Java Virtual Machine~\cite{Stewart-BSc}.
 Pointon et al.\ developed a limited fault tolerance mechanism for Glasgow
 distributed Haskell based on distributed exception
 handling~\cite{Pointon:2001}.  However, it appears that their scheme for
-handling failed processing elements correctly~\cite{} may have never been
-implemented.
+handling failed processing elements correctly may have
+never been implemented~\cite{Trinder:2000}.
 
 Recently, Robert Stewart extended Haskell Distributed Parallel Haskell
 (HdpH)~\cite{hdph} to be fault resilient at an impressive scale---1400 cores
@@ -873,99 +889,55 @@ completeness.
 \centering
 \footnotesize % tiny scriptsize footnotesize small
 \begin{tabular}{r r c l l}
-Variable         & $f,\ x$             &     &
-& Initial lower-case letter \\
+Variable         & $f,\ x$             &     &  & Initial lower-case letter \\
 
-Constructor        & $C$                 &     & 
-& Initial upper-case letter \\
+Constructor        & $C$                 &     & & Initial upper-case letter \\
 
 Literal            & $\mathit{lit}$      & ::= & $i\ |\ d\ 
-                                                 |\ i$\hash\ $|\ d$\hash
-& Integral or floating point literal (boxed) \\
+                                                 |\ i$\hash\ $|\ d$\hash & Integral or floating point literal \\
 
-                   &                     &     & 
-& optional \# suffix denotes unboxed value \\
+                   &                     &     &  & \# suffix denotes unboxed value \\
 
-Atom               & $a$                 & ::= & $\mathit{lit}\ |\ x\ |\ C$
-& Constructors are first class \\ 
-% not sure if that's the right terminology 
+Atom               & $a$                 & ::= & $\mathit{lit}\ |\ x\ |\ C$ & Constructors are first class \\% not sure if that's the right terminology 
 \\
 
 
-Expression         & $e$                 & ::= & $a$
-& Atomic expression \\
+Expression         & $e$                 & ::= & $a$ & Atomic expression \\
 
-                   &                     & $|$ & $e\ e$
-& Expression application \\
+                   &                     & $|$ & $e\ e$ & Expression application \\
 
                    &                     & $|$ & \texttt{\textbackslash} $\mathit{pat}_i$ 
-                                               \texttt{->} $e$
-& Lambda expression, $i > 0$ \\
+                                                 \texttt{->} $e$ & Lambda expression, $i > 0$ \\
 
-                   &                     & $|$ & \texttt{case} $e$ \texttt{of} $\mathit{alt}_i$
-& Case expression, $i > 0$\\
+                   &                     & $|$ & \texttt{case} $e$ \texttt{of} $\mathit{alt}_i$ & Case expression, $i > 0$\\
 
-                   &                     & $|$ & \texttt{let} $\mathit{odecl}_i$ \texttt{in} $e$
-& Recursive let expression, $i > 0$ \\
+                   &                     & $|$ & \texttt{let} $\mathit{odecl}_i$ \texttt{in} $e$ & Recursive let expression, $i > 0$ \\
 
 \\
-
-
-Pattern            & $\mathit{pat}$      & ::= & $C\ \mathit{pat}_i$
-& Nested constructor matching \\
-                   &                     & $|$ & $\mathit{lit}$
-& Match numeric literals \\
-                   &                     & $|$ & $x$
-& Bind to variable \\
+Pattern            & $\mathit{pat}$      & ::= & $C\ \mathit{pat}_i$ & Nested constructor matching \\
+                   &                     & $|$ & $\mathit{lit}$ & Match numeric literals \\
+                   &                     & $|$ & $x$ & Bind to variable \\
 
 \\
-
-
-Alternative        & $\mathit{alt}$      & ::= & $\mathit{pat}_i$ \texttt{->} $e$
-& $i > 0$ \\
+Alternative        & $\mathit{alt}$      & ::= & $\mathit{pat}_i$ \texttt{->} $e$ & $i > 0$ \\
+\\
+Type               & $\mathit{type}$     & $|$ & $C$ & Concrete type (constructor naming) \\
+                   &                     & $|$ & $x$ & polymorphic type variable \\
+                   &                     & $|$ & $\mathit{type}$ \texttt{->} $\mathit{type}$ & Function type \\
+\\
+Object decl. & $\mathit{odecl}$    & ::= & $x$ \texttt{::} $\mathit{type}$ & Type signature \\
+                   &                     & $|$ & $x = e$ & Simple binding \\
+                   &                     & $|$ & $f\ \mathit{pat}_i = e$ & Function declaration \\
+                   &                     &     & & $e$ cannot be an unboxed literal \\
+\\
+Constructor defn. & $\mathit{con}$  & ::= & $C\ \mathit{type}_i$ & $i \ge 0$ \\
+\\
+Datatype defn. &  $\mathit{ddecl}$ & ::= & \texttt{data} [\texttt{unboxed}] & User-defined data type  \\
+               &                   &     & $C\ x_i =$                       & $i \ge 0, n > 0$         \\
+               &                   &     & $\mathit{con}_1 | \dots |  \mathit{con}_n$ \\
 
 \\
-
-
-Type               & $\mathit{type}$     & $|$ & $C$
-& Concrete type (constructor naming) \\
-                   &                     & $|$ & $x$
-& polymorphic type variable \\
-                   &                     & $|$ & $\mathit{type}$ \texttt{->} $\mathit{type}$
-& Function type \\
-
-\\
-
-
-Object decl. & $\mathit{odecl}$    & ::= & $x$ \texttt{::} $\mathit{type}$
-& Type signature \\
-                   &                     & $|$ & $x = e$
-& Simple binding \\
-                   &                     & $|$ & $f\ \mathit{pat}_i = e$
-& Function declaration \\
-                   &                     &     &
-& $e$ cannot be an unboxed literal \\
-
-\\
-
-
-Constructor defn. & $\mathit{con}$  & ::= & $C\ \mathit{type}_i$
-& $i \ge 0$ \\
-
-Datatype defn. &  $\mathit{ddecl}$ & ::= & \texttt{data} 
-                                                 [\texttt{unboxed}]
-                                                 $C\ x_i =$ 
-& User-defined data type, $i \ge 1, n > 0$ \\
-                     &                   &     & $\mathit{con}_1 | \dots |
-                                                 \mathit{con}_n$
-& \\
-
-\\
-
-
-Program                & $\mathit{prog}$ & ::= & $(o|d)\mathit{decl}_i$
-& Objects and datatypes
-
+Program                & $\mathit{prog}$ & ::= & $\mathit{(o|d)decl}_i$ & Object and data defns
 \end{tabular}
 \label{fig:miniHaskell}
 \caption{mini-Haskell syntax}
@@ -1180,7 +1152,6 @@ process~\cite{jenkins-book}. The Git repository is hosted externally so our
 student collaborators can contribute at their leisure.
 
 There are several hundred small STG and mini-Haskell programs in the test suite 
-(Most of which were written by students).
 It is partitioned into a number of directories which control what
 testing is done for a specific program. Given our goal of exploring various
 levels of strictness, most tests are run with all evaluation strategies (three
@@ -1203,9 +1174,9 @@ programs has proved valuable in development and debugging of both the STG
 and mini-Haskell front-ends.
 
 We also run each test with various levels of garbage collection enabled. This
-has helped us to find bugs not only in the garbage collector, but also in the
-code generator.  Interestingly, in practice garbage collection can both mask
-and expose bugs.
+has exposed bugs not only in the garbage collector, but also in the code
+generator and runtime.  Interestingly, in practice garbage collection both
+masks and exposes bugs.
 
 The various enumerations of strictness and garbage collection levels mean that
 we run a quite large number of tests (currently order thousands). However,
@@ -1213,7 +1184,7 @@ this is fully automated via the testing and continuous integration
 infrastructure.
 
 We have also implemented a simple logging facility that can be controlled at 
-both compile and runtime which helps in debugging why a test is failing.
+both compile and run time which helps in determining why a test is failing.
 
 %
 % ---- Bibliography ----
