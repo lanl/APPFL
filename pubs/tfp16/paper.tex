@@ -367,7 +367,7 @@ Alternatives & $\mathit{alt}$ & ::= & $C\ x_1\dots x_n$ \texttt{->} $e$         
 Heap objects & $\mathit{obj}$ & ::= &\texttt{FUN} $x_1\dots x_n$ \texttt{->} $e$   & Function definition, arity $=n\ge 1$ \\
              &                & $|$ &\texttt{CON} $C\ a_1\dots a_n$                & Saturated constructor, $n \ge 0$ \\
              &                & $|$ &\texttt{THUNK} $e$                            & Thunk---explicit deferred evaluation \\
-             &                & $|$ & $\mathit{PAP}\ f\ a_1\dots a_n$               & Evaluation-time partial application \\
+             &                & $|$ & $\texttt{PAP}\ f\ a_1\dots a_n$               & Evaluation-time partial application \\
              &                & $|$ & $\mathit{BLACKHOLE}$                         & Evaluation-time black hole \\
 \\
 Object decl. & $\mathit{odecl}$ &     & $x = \mathit{obj}$                           & Simple binding \\
@@ -379,7 +379,7 @@ Datatype defn. &  $\mathit{ddecl}$ & ::= & \texttt{data} [\texttt{unboxed}] & Us
                &                   &     & $\mathit{con}_1 | \dots |  \mathit{con}_n$ \\
 
 \\
-Program      & $\mathit{prog}$ & ::= & $\mathit{(o|d)decl}_1$ & Object and data defns \\
+Program      & $\mathit{prog}$ & ::= & $\mathit{(o|d)decl}_1$ \texttt{;}            & Object and data defns \\
              &                 &     & \texttt{ } $\dots$ \texttt{;} \\
              &                 &     & $\mathit{(o|d)decl}_n$ & 
 %Program      & $\mathit{prog}$& ::= & $f_1\ =\ \mathit{obj}_1$ \texttt{;}          & $n \ge 1$, distinguished \texttt{main}\\
@@ -396,9 +396,8 @@ Our incarnation of STG, as shown in Figure~\ref{fig:STGsyntax}, is meant to
 evoke both an abstract and concrete syntax.  This presentation is adapted from
 Marlow and Peyton Jones' \emph{Eval/Apply} paper~\cite{Marlow:2004}, to which
 we refer so many times that we will subsequently refer to it as simply
-\emph{EA}. Partial application (\emph{PAP}) and black hole (\emph{BLACKHOLE}),
-signifying a \emph{THUNK} being evaluated, are only runtime entities and not
-actually part of our STG language.
+\emph{EA}.  Black hole (\emph{BLACKHOLE}), signifying a \emph{THUNK} being
+evaluated, is only a runtime entity and not actually part of our STG language.
 
 The semantics of STG is what one would expect for a higher-order, polymorphic,
 pure functional language, with a few exceptions for a Haskell programmer
@@ -480,16 +479,17 @@ question is whether application is strict, or actual function call is strict.
 These are in fact distinguishable because (in Haskell) the first argument to
 \texttt{seq} might evaluate to a \emph{PAP}.
 
-This then gives three reasonable operational modes that are strictly ordered
+This then gives three reasonable operational modes which are strictly ordered
 in terms of termination properties: non-strict; function strict, in which only
 those arguments needed by a function call are evaluated; and application
 strict, in which all arguments of an application are evaluated.  The other
 dimension we vary is whether or not constructors are strict.  Other dimensions
 are possible, for example whether \texttt{let} bindings are strict, but we
 restrict ourselves to function/application and constructor strictness.  The
-STG machinery makes the choice of evaluation strategy easy to change.
-%, both in terms of function application and building a constructor in the
-%heap.
+STG machinery makes the choice of evaluation strategy easy to change, though
+changing code generation can be more efficient by avoiding the unnecessary
+creation of \emph{THUNKS} as discussed in Appendix~A.
+
 
 \subsection{STG to C}
 The back-end is written in Haskell and generates C code; the runtime system is
@@ -734,13 +734,14 @@ This summer (2016) a returning student will bridge the gap between GHC STG (or
 Core) and our STG, augmenting the runtime as needed.  Just as in the Intel
 Haskell Research Compiler effort we will not attempt to reuse the GHC runtime.
 
-For unboxed types code generation and runtime support is currently limited
-to built-in single-word (64-bit) or smaller types (e.g., \texttt{Int\#},
-\texttt{UInt\#}, \texttt{Float\#}, \texttt{Double\#}) and user-defined
-enumerations, e.g.,
-\begin{verbatim}
-     data unboxed Bool# = False# | True# .
-\end{verbatim}
+While we can parse and type-check more general unboxed types, code generation
+and runtime support is currently limited to built-in single-word (64-bit) or
+smaller types (e.g., \texttt{Int\#}, \texttt{UInt\#}, \texttt{Float\#},
+\texttt{Double\#}) and user-defined enumerations (simple sums), e.g.,
+\texttt{data unboxed Bool\# = False\# | True\#}.
+%\begin{verbatim}
+%     data unboxed Bool# = False# | True# .
+%\end{verbatim}
 
 We use a continuous integration system augmented with logic to categorize
 programs in a large and growing test suite according to which degrees of
