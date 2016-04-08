@@ -22,7 +22,7 @@
 %mkd \mainmatter              % start of the contributions
 %
 \title{Automatic Parallelization and Transparent Fault Tolerance\\
-       (New project paper)}
+       (\emph{New project} paper)}
 %
 \titlerunning{Automatic Parallelization}  % abbreviated title (for running head)
 %                                     also used for the TOC unless
@@ -32,7 +32,7 @@
         Dean Prichard\inst{1} \and
         David Ringo\inst{1,2} \and
         Loren Anderson\inst{1,3} \and
-        Jacob Marks\inst{1,4}\thanks{All project contributors, past and present, are listed.}
+        Jacob Marks\inst{1,4}\thanks{Ringo, Anderson, and Marks are undergraduate students.}
 }
 %
 \authorrunning{Kei Davis et al.} % abbreviated author list (for running head)
@@ -63,11 +63,19 @@ Socorro, New Mexico, USA
 \begin{abstract}
 A claimed trend is an increasing appreciation and practice of functional
 programming in scientific computing, and in particular strict (by default)
-functional programming, in various guises.  A second claimed trend in both
-scientific computing and functional programming is transparent fault
-tolerance.  Our project goal is the demonstration of a light-weight,
-higher-order, polymorphic, pure functional language implementation in which we
-can experiment with automatic parallelization strategies, varying degrees of
+functional programming, in various guises.  
+%
+%A second claimed trend is, given a strict functional semantics, in the
+%development of automatically parallelizing runtime systems.
+Besides making programs easier to reason about, this enables automatic
+parallelization to various degrees.
+%
+A second claimed trend in both scientific computing and functional programming
+is transparent fault tolerance.  
+%
+Our project goal is the demonstration of a light-weight, higher-order,
+polymorphic, pure functional language implementation in which we can
+experiment with automatic parallelization strategies, varying degrees of
 strictness, and mechanisms for transparent fault tolerance.
 %We do not consider speculative evaluation, or semantic strictness inferred by
 %program analysis, so potential parallelism is dictated by the degree of
@@ -82,16 +90,16 @@ strictness, and mechanisms for transparent fault tolerance.
   implementation by the time of the symposium.  The fault-tolerance mechanisms
   remain future work.
 
-\item While this does not qualify as a student paper, students
-  (undergraduate!)  have contributed considerably to this effort, and to the
-  writing of this paper, and will continue to do so.  If this paper is
-  accepted we plan to have one of these students present it at TiFP.
-
 \item Hopefully in the spirit of a student-friendly symposium, for this draft
   version we have chosen a more informal, conversational style of presentation
   than necessarily appropriate for a final paper, have highlighted student
-  involvement and its influence on our approach, and pointed out student
-  contributions in particular.
+  preparation, involvement, and its influence on our approach, and pointed out
+  some specific student contributions.
+
+\item While this \emph{does not qualify} as a student paper, students
+  (undergraduate!) have contributed considerably to this effort, and to the
+  writing of this paper, and will continue to do so.  If this paper is
+  accepted we plan to have one of these students present it at TiFP.
 \end{enumerate}
 
 
@@ -119,16 +127,16 @@ when the parallel model is bulk synchronous; tasking models are generally
 avoided unless abstracted by, e.g., a C++ template or runtime library, because
 of the programming complexity.
 
-\subsection{A trend: strict but still pure functional programming in HPC}
+\subsection{A trend: strict, pure functional programming in HPC and FP}
 Interest in functional programming for HPC in general is not new as evidenced
 by the Workshop on Functional High Performance Computing, held in conjunction
 with the International Conference on Functional Programming, now in its fifth
 consecutive year.  A more precise characterization of the trend is that there
 is a small but growing understanding by practicing computational scientists
 that \emph{pure functional semantics}, in some form, is essential to reining
-in the complexity of ever-evolving scientific codes and informing the
-designs of new ones.  Such semantics are expressed in a number of ways as
-highlighted following.
+in the complexity of ever-evolving scientific codes and informing the designs
+of new ones, and that strict semantics tend to be preferred.  Such semantics
+are expressed in a number of ways as highlighted following.
 
 \subsubsection{Rely on programmer discipline.}
 Legacy Fortran scientific codes likely represent worst practices in state
@@ -176,9 +184,9 @@ However, they see their needs as different than other Haskell users: performance
 is paramount, vectors~\cite{vector} are a (perhaps \emph{the}) primary data
 structure, and non-strictness or laziness is more of a nuisance---even a
 serious hindrance---than a convenience, much less ever algorithmically
-essential in the sense of Bird's \emph{repmin}~\cite{Bird84}, Johnsson's
-general attribute grammars~\cite{Johnsson87}, or other instances of
-\emph{tying the knot}~\cite{tying-the-knot}.
+essential in the sense of Bird's \emph{repmin}~\cite{Bird84},
+Johnsson's general attribute grammars~\cite{Johnsson87}, 
+or other instances of \emph{tying the knot}~\cite{tying-the-knot}.
 
 A common complaint among these aspiring high-performance functional
 programmers is the need to get strictness just right: to remove space leaks,
@@ -218,13 +226,14 @@ for HPC, often in conjunction with a higher-level (typically inter-node) bulk
 synchronous model usually implemented with the Message Passing Interface
 (MPI)~\cite{MPI}\@.  In the imperative world, example systems include the
 aforementioned Legion, Intel's Threading Building Blocks~\cite{Reinders:2007},
-and the HPX C++11/14 extension~\cite{HPX}.  While the concept of task is
+and the HPX C++11/14 extension~\cite{HPX}, all of which also seek to
+make parallelism automatic and transparent.  While the concept of task is
 somewhat vague, the general idea is a unit of computation with no or
 minimal/constrained side effects.  A function in a pure functional language
 could be regarded as the essence of the concept of a task.  All of these
 systems are of course in languages with strict function-call semantics.
 
-\subsection{Another trend: transparent fault tolerance}
+\subsection{Another trend: transparent fault tolerance in HPC and FP}
 In the quest for computing platforms approaching exascale, it is widely
 recognized that new mechanisms for fault tolerance will need to be built into
 the software stack.  Current practice in HPC is checkpoint/restart, wherein at
@@ -252,9 +261,11 @@ pure functional setting, on a large-scale distributed-memory
 system~\cite{Stewart:2013}.
 
 We claim, then, that there is a trend, in HPC at least, towards
-\emph{strict-by-default pure functional programming}, whether as imposed by
-programmer discipline, a parallel runtime system, or the language itself
-(e.g.\ strict Haskell).  Second, we claim that there is a trend in
+\emph{strict-by-default pure functional programming} and automatic
+parallelism.
+%whether as imposed by programmer discipline, a parallel runtime system, or the
+%language itself (e.g.\ strict Haskell).
+Second, we claim that there is a trend in
 high-performance computing, and by transitivity (in addition to Stewart's
 work) in functional programming, towards transparent fault tolerance.
 
@@ -278,8 +289,10 @@ divert us from our central goals.\footnote{We estimate that we will have, to
   time for each person-year that GHC currently represents, or put another way,
   one second for each hour, respectively.}  For another, it means that we are
 not undertaking significant morphing of GHC itself: because this is in large
-part a student project it must be kept as simple as reasonably possible in
-various respects.  Our initial requirements are that
+part an undergraduate student project it must be kept as simple as reasonably
+possible.  
+
+Our initial requirements are that
 %
 \begin{itemize}
 \item The implementation must be feasible in terms of available effort;
@@ -297,7 +310,7 @@ and Peyton Jones~\cite{Marlow:2004};
 \item The generated code is C.
 \end{itemize}
 %
-For feasibility, we restrict ourselves to shared-memory implicit parallelism.
+For feasibility we restrict ourselves to shared-memory implicit parallelism.
 The requirement for tail calling is not primarily for efficiency, rather it is
 for a reasonable parallel implementation.  Achieving this, and thereby
 sufficiently limiting the use of the native C stack, will be discussed at some
@@ -393,31 +406,34 @@ Program      & $\mathit{prog}$ & ::= & $\mathit{(o|d)decl}_1$ \texttt{;}        
 \end{figure}
 
 Our incarnation of STG, as shown in Figure~\ref{fig:STGsyntax}, is meant to
-evoke both an abstract and concrete syntax.  This presentation is adapted from
-Marlow and Peyton Jones' \emph{Eval/Apply} paper~\cite{Marlow:2004}, to which
-we refer so many times that we will subsequently refer to it as simply
-\emph{EA}.  Black hole (\emph{BLACKHOLE}), signifying a \emph{THUNK} being
-evaluated, is only a runtime entity and not actually part of our STG language.
+evoke both an abstract and concrete syntax.  This formulation and presentation
+is adapted from Marlow and Peyton Jones' \emph{Eval/Apply}
+paper~\cite{Marlow:2004}, to which we refer so many times that we will
+subsequently refer to it as simply \emph{EA}.  A (\emph{BLACKHOLE}),
+signifying a \emph{THUNK} being evaluated, is only a runtime entity and
+not part of the language.
 
-The semantics of STG is what one would expect for a higher-order, polymorphic,
-pure functional language, with a few exceptions for a Haskell programmer
-familiar with unboxed types.  First, \texttt{case} is strict in the scrutinee,
-so \texttt{case} is similar to \texttt{pseq} (as opposed to \texttt{seq}) in
-Haskell, that is, the scrutinee is evaluated first.  Second, constructors are
-not functions, rather they are named in the construction (heap allocation) of
-a data object.  More generally, the operational notion of allocating a heap
-object is explicit: this is the operational semantics of \texttt{let} bindings.
+With a few exceptions the semantics of STG is what a Haskell programmer
+familiar with unboxed types would expect for a higher-order, polymorphic, pure
+functional language.  Points to note are, first, that \texttt{case} is strict
+in the scrutinee (the \emph{e} in \texttt{case} \emph{e} \texttt{of}), so \texttt{case} is
+similar to \texttt{pseq} (as opposed to \texttt{seq}) in Haskell, that is, the
+scrutinee is evaluated first.  Second, constructors are not functions, rather
+they are named in the construction (heap allocation) of a data object.  More
+generally, the operational notion of allocating a heap object is explicit:
+this is the operational semantics of \texttt{let} bindings.
 %As such a variable of unboxed type cannot be let-bound; instead it can be
 %bound with \texttt{case}, e.g., \texttt{case e of x\# \{ \_ -> e \}}
 %where the \texttt{\#} suffix is merely a convention to signify that
 %\texttt{x\#} has unboxed type.  
 Finally, deferred evaluation is explicit:
-a deferred expression evaluation is encoded by a \emph{THUNK}.
+a deferred expression evaluation is encoded as a \emph{THUNK}.
+
 
 \subsection{Degrees of strictness}
 First some words about terminology.  For all degrees of strictness, sharing
 (as implied by lazy but not by non-strict) of heap-allocated objects is
-preserved so we will not use the term \emph{lazy} and simply refer to
+preserved so we will not use the term lazy and simply refer to
 strictness properties.  As is common we will use strict in an operational
 sense, meaning that argument(s) are evaluated before being passed in a
 function call, rather than the denotational sense, unless stated otherwise.
@@ -441,14 +457,14 @@ function being applied.  This is readily explained in terms of the operation
 of the STG abstract machine.  Our partial description is based on that given
 in \emph{EA}.
 
-In STG the arity of a function is syntactically defined as the number of
-manifest formal parameters in a function definition, thus \texttt{id x = x}
-has by definition arity one regardless of the type of the argument (e.g., some
-function type) it might be applied to.  We distinguish \emph{application},
-e.g., \texttt{f x y}, which is a syntactic notion, from actually calling a
-function. Thus \texttt{id id x} is an application of \texttt{id} to two
-arguments, but the underlying \emph{FUN} (user- or system- defined function)
-when actually called is given exactly one argument (the first one).
+In STG the arity of a function is defined as the number of formal parameters
+in the function definition, thus \texttt{id x = x} has by definition arity one
+regardless of the type of the argument (e.g., some function type) it might be
+applied to.  We distinguish \emph{application}, e.g., \texttt{f x y}, which is
+a syntactic notion, from actual function \emph{call}. Thus \texttt{id id x} is
+an application of \texttt{id} to two arguments, but the underlying \emph{FUN}
+(user- or system- defined function) when called is given exactly one
+argument (the first one).
 
 In the eval-apply model, given application \texttt{f x y}, in the standard
 (non-strict) semantics \texttt{f} is first evaluated and the arity of the
@@ -464,7 +480,7 @@ the underlying \emph{FUN} is called with any previous arguments (in case of
 \emph{PAP}) and new argument \texttt{x}, then the object returned applied to
 remaining argument \texttt{y}.
 
-Given application \texttt{f x y} when might \texttt{x} and \texttt{y} be
+Given application \texttt{f x y}, when might \texttt{x} and \texttt{y} be
 evaluated?  In the non-strict semantics evaluation is on demand, after
 \texttt{f} has been evaluated, the underlying \emph{FUN} actually called
 (i.e., not just partially applied and wrapped up in a \emph{PAP}), and one or
@@ -472,23 +488,25 @@ both of those arguments possibly forced in subsequent evaluation (assuming
 that they weren't forced in the evaluation of \texttt{f} itself).
 
 In a strict semantics one could devise various evaluation orders, but as far
-as distinguishing termination properties it seems these can be distilled down
-to two reasonable possibilities, namely whether on construction of a
+as distinguishing termination properties it seems that these can be distilled
+down to two reasonable possibilities, namely whether on construction of a
 \emph{PAP} the (new) arguments are forced or not.  In other words, the
-question is whether application is strict, or actual function call is strict.
-These are in fact distinguishable because (in Haskell) the first argument to
+question is whether application is strict, or function call is strict.  These
+are in fact distinguishable because (in Haskell) the first argument to
 \texttt{seq} might evaluate to a \emph{PAP}.
 
 This then gives three reasonable operational modes which are strictly ordered
-in terms of termination properties: non-strict; function strict, in which only
-those arguments needed by a function call are evaluated; and application
-strict, in which all arguments of an application are evaluated.  The other
-dimension we vary is whether or not constructors are strict.  Other dimensions
-are possible, for example whether \texttt{let} bindings are strict, but we
-restrict ourselves to function/application and constructor strictness.  The
-STG machinery makes the choice of evaluation strategy easy to change, though
-changing code generation can be more efficient by avoiding the unnecessary
-creation of \emph{THUNKS} as discussed in Appendix~A.
+in terms of termination properties: 
+non-strict, function strict, and application strict.
+% non-strict; function strict, in which only
+%those arguments needed by a function call are evaluated; and application
+%strict, in which all arguments of an application are evaluated.  
+The other dimension we vary is whether or not constructors are strict.  Other
+dimensions are possible, for example whether \texttt{let} bindings are strict,
+but we restrict ourselves to function/application and constructor strictness.
+The STG machinery makes the choice of evaluation strategy easy to change,
+though changing code generation can be more efficient by avoiding the
+unnecessary creation of \emph{THUNKS} as discussed in Appendix~A.
 
 
 \subsection{STG to C}
@@ -505,7 +523,7 @@ Parallelism is achieved by multi-threading; our model is based on Harris et
 al.'s.~\cite{Harris:2005}; later developments by Marlow et al.\ are beyond our
 aspirations~\cite{Marlow:2009,Marlow:2011}.  To achieve efficient parallel
 execution they identified the need for the ability to examine and unwind the
-stack in quashing concurrent evaluation of the same \emph{THUNK}.  This
+stack in quashing concurrent evaluation of the same \emph{THUNK}\@.  This
 requires that use of the C stack be highly constrained if we are to avoid
 complex and ugly hacks using, e.g., \emph{setjmp/longjmp}, or non-portable
 code to directly manipulate the C stack, complicating an already non-trivial
@@ -545,7 +563,7 @@ stack.
 \emph{EA} describes a family of generic C-{}- \emph{stgApply} runtime
 functions used for applications of non-known (not statically identifiable)
 functions, and applications of known functions to other than their arity
-number of arguments.  Here the object to be applied is first evaluated with
+number of arguments.  There the object to be applied is first evaluated with
 call-with-return.  When a resulting \emph{FUN} is applied to more than its
 arity number of arguments, it is called-with-return with its arity number of
 arguments, and the resulting value applied to the remaining arguments.  When
@@ -554,10 +572,11 @@ because arguments can be evaluated in a tight loop.  Unfortunately these uses
 of call-with-return can result in the C stack growing without bound.  Our
 solution uses a single C \emph{stgApply} function with no calls-with-return.
 This is straightforwardly realizable because the stack is explicit, and with
-modern C compiler call optimization, the continuation style enables a proper
-\emph{goto} mechanism where the \emph{code labels}---entities that name blocks
-of code, can be treated as first class (e.g.\ stored), and serve as targets of
-a jump---are C function addresses (c.f.\ \S 6.1~\cite{PJ-stockhardware}).
+modern C compiler call optimization, the continuation style enables a jump
+(\emph{go to}) mechanism where the \emph{code labels}---entities that name
+blocks of code, can be treated as first class (e.g., stored for later use),
+and serve as targets of a jump---are C function addresses (c.f.\ \S
+6.1~\cite{PJ-stockhardware}).
 
 \begin{comment}
 \subsubsection{A taste of the continuation style.}
@@ -752,6 +771,8 @@ logging and debugging information.  This is detailed in Appendix~B.
 
 We are currently developing the parallel runtime.  Parallel garbage collection
 is likely out of scope.
+%
+The fault-tolerance mechanisms remain future work.
 
 %We have implemented a simple copying garbage collector~\cite{Cheney:1970} with
 %small \emph{nurseries} in the multithreaded case~\cite{Marlow:2008}. 
@@ -777,18 +798,18 @@ A notable argument for the potential merits of a strict-by-default
 pure functional language over a non-strict one is by Sheard, who also provided
 a very simple prototype implementation~\cite{Sheard:2003}.
 %
-A plug-in for GHC (prior to 8.0) exists for making functions, but not data
-structures, strict using a transformation on GHC Core that recursively expands
-non-recursive let bindings into case bindings~\cite{strict-ghc-plugin}.  Thus
-it seems that while it makes functions denotationally strict, function
-arguments are still evaluated after function call.
+A plug-in for GHC (prior to 8.0) exists that makes function bodies strict in
+their non-recursive \texttt{let} bindings using a transformation on GHC Core
+that recursively expands those \texttt{let} bindings into \texttt{case}
+bindings~\cite{Bolingbroke:2008,strict-ghc-plugin}.
 %
 The Disciplined Disciple Compiler project appears to intend implementation of
 a strict, higher order functional language (or family of languages) compiler
 that has been underway for some time, but the emphasis appears to be on a much
 more complex type system for handling stateful computation, and the prospects
 for its eventual completion are unknown~\cite{disciplined-disciple}.
-%
+
+\subsubsection{Strict, pure, auto-parallelizing.}
 NVIDIA's NOVA language, and corresponding compiler, implements a strict
 (``call by value''), pure, polymorphic, higher-order functional language with
 built-in parallel operators (e.g., \emph{map}, \emph{reduce}, and
@@ -803,7 +824,7 @@ planned approach they use GHC as the front end, but exit the GHC toolchain
 at the final GHC Core stage, just before transformation to STG.  The essence
 of their effort is to target an existing, highly optimizing, Intel functional
 language compiler that is ``largely language agnostic'' and performs (among
-many other optimization) SIMD vectorization.
+many other optimizations) SIMD vectorization.
 
 Don Stewart described an implementation wherein GHC was used as a Haskell compiler
 front-end, dumping STG code as text, parsing that text, then translating to
@@ -848,7 +869,7 @@ measure to make the generation of test cases easier, we have implemented a
 \emph{mini-Haskell} front-end that supports a subset of standard Haskell
 syntax with \emph{MagicHash} enabled, with a single extension.  Recall that
 \emph{MagicHash} allows \texttt{\#} to be a suffix of an identifier, or denote
-an unboxed literal value.  Our extension (to STG as well) is the provision of
+an unboxed literal value.  Our extension (as for STG) is the provision of
 the optional \texttt{unboxed} keyword in datatype definitions to allow
 user-defined unboxed data types, e.g.,
 \begin{verbatim}
@@ -868,10 +889,7 @@ frustrating syntactic cruft and adding some of the core features that are
 often taken for granted in Haskell (and other languages).
 
 An informal specification of the mini-Haskell grammar is given in
-%something really broken
-Figure~\ref{fig:miniHaskell}.  
-%Figure~2.  
-There is significant overlap with STG resulting
+Figure~\ref{fig:miniHaskell}.  There is significant overlap with STG resulting
 from the structural similarities, but the redundancies are included for
 completeness.
 
@@ -951,7 +969,7 @@ Program                & $\mathit{prog}$ & ::= & $\mathit{(o|d)decl}_i$ & Object
 Because mini-Haskell was designed to supplement STG for test generation, it
 makes sense to talk about it in terms of the differences between the two and
 how mini-Haskell is translated into STG for the back-end.  Here, the
-differences are given in order of perceived utility, or importance to someone
+differences are given in order of perceived utility, or importance in
 transitioning from STG to mini-Haskell.
 
 \subsubsection{Removal of explicit heap objects.}
@@ -1023,17 +1041,14 @@ append = FUN(l1 l2 ->
                         result = CON(Cons hd rec) }
                   in result });
 \end{verbatim}
-
 In mini-Haskell, expressions may be applied to other expressions, so the
 recursive call to \texttt{append} can be parenthesized. There is no need for the
 \texttt{let} expression:
-
 \begin{verbatim}
 append l1 l2 = case l1 of
-                Nil -> l2
-                Cons hd tl -> Cons hd (append tl l2)
+                 Nil -> l2
+                 Cons hd tl -> Cons hd (append tl l2)
 \end{verbatim}
-
 This also serves as a good example of how expression to expression application is
 transformed into STG.  Any non-atomic expression in an application expression is
 bound to a heap object in a generated \texttt{let} expression.  These
@@ -1044,7 +1059,7 @@ precedes it.
 \subsubsection{Fancy pattern matching.}
 
 STG supports pattern matching but only in a simple form and only in
-\texttt{case} expressions.  mini-Haskell extends this to something approaching
+\texttt{case} expressions.  Mini-Haskell extends this to something approaching
 what is found in Haskell.  Functions, including lambda expressions, may match on
 all their arguments. Named functions may have multiple definitions to exhaust
 the combinations of patterns in their arguments and patterns in all contexts
@@ -1055,7 +1070,6 @@ each matched parameter of a function requires an additional level of nested
 single pattern.
 
 Even relatively simple functions can be painful to write, such as \texttt{unzip}.
-
 \begin{verbatim}
 unzip = FUN(list ->
   case list of { Nil -> let {res = CON( TP2 nil nil)} in res;
@@ -1069,9 +1083,7 @@ unzip = FUN(list ->
                                 res = CON(TP2 aas bbs)}
                            in res; }}});
 \end{verbatim}
-
 In mini-Haskell, this becomes
-
 \begin{verbatim}
 unzip :: List (Tupl2 a b) -> Tupl2 (List a) (List b)
 unzip Nil = TP2 Nil Nil
@@ -1080,31 +1092,28 @@ unzip (Cons (TP2 a b) xs) =
     TP2 as bs -> TP2 (Cons a as) (Cons b bs)
 \end{verbatim}
 
-
-Of course, this complex pattern matching must eventually be transformed into the
-primitive, nested case expressions. Luckily, there are well-documented processes
-for achieving this, and Philip Wadler's chapter in \emph{The Implementation of
-  Functional Programming Languages} \cite{Jones:1987} % doing this right?
-on the compilation of this type of pattern matching proved invaluable in
-bringing it to mini-Haskell.  Wadler describes the \texttt{match} function that
-that, in its simplest form, produces a correct, but potentially large
-translation with some redundancy.  This function was implemented with only minor
-modifications to fit the shape of mini-Haskell's abstract form.  The
-implementation is augmented by some light flow-analysis to eliminate some of the
-redundancy and make the resulting code easier to read.  There are further
-optimizations suggested by Wadler to address the size of the generated code from
-this process (for example, when multiple branches lead to the same large
-expression), but the additional complexity outweighs the benefit for a testing
-language.
+Of course, this complex pattern matching must eventually be transformed into
+the primitive, nested case expressions. Fortunately there are well-documented
+algorithms for achieving this, and Philip Wadler's chapter in \emph{The
+  Implementation of Functional Programming Languages}~\cite{Jones:1987} %
+doing this right?  on the compilation of this type of pattern matching proved
+invaluable.  Wadler describes the \emph{match} function that which, in its
+simplest form, produces a correct, but potentially large translation with some
+redundancy.  This function was implemented with only minor modifications to
+fit the shape of mini-Haskell's abstract form.  The implementation is
+augmented by some light flow-analysis to eliminate some of the redundancy and
+make the resulting code easier to read.  There are further optimizations
+suggested by Wadler to address the size of the generated code ,for example,
+when multiple branches lead to the same large expression, but the additional
+complexity outweighs the benefit for a testing language.
 
 
 \subsubsection{Less significant features.}
 
-Mini-Haskell provides some smaller conveniences that don't warrant their own
-section, but are worth mentioning.
-
+Mini-Haskell provides some smaller conveniences that don't warrant individual
+sections but are worth mentioning.
 \begin{itemize}
-\item Constructors as functions \\
+\item \emph{Constructors as functions.}
   As in Haskell, constructors are first class, acting as true functions.  This
   is implemented by simply generating a function that wraps the appropriate
   \texttt{let}-bound \texttt{CON} object in STG.  Any partially applied
@@ -1112,26 +1121,26 @@ section, but are worth mentioning.
   generate local \texttt{let}-bound objects to avoid an unnecessary function
   call.
 
-\item Primitive operations as functions \\
+\item \emph{Primitive operations as functions.}
   Similar to constructors, primitive operations are given first-class status as
-  functions, with roughly the same rules.  Partially applied calls are
-  translated to generated functions that wrap the actual primitive
+  functions, with roughly the same rules.  Partial applications are
+  translated to calls to generated functions that wrap the actual primitive
   operations. Fully applied calls generate true primitive operation calls.
 
-\item Lambda Expressions \\
+\item \emph{Lambda expressions.}
   mini-Haskell supports anonymous lambda expressions for the simple, one-off
   functions that often find a place in Haskell code.  This was certainly the
   simplest feature to add, requiring only that the function be given a unique
   identifier to bind it to a \texttt{FUN} object in STG.
 
-\item Type Annotations \\
+\item \emph{Type annotations.}
   The ability to assert the type of some variable is often valuable as a
   sanity-check and provides documentation that the compiler can verify.
   mini-Haskell's type annotations (or signatures) behave like those in
   Haskell, being passed to the type checker as initial assumptions.
 
 % I don't think I've described this very well at all... - david
-\item Haskell Block \\
+\item \emph{Haskell Block.}
   Being a subset of Haskell, it may be desirable to test a mini-Haskell program
   compiled through our toolchain against the same program (and same source file)
   compiled with another Haskell compiler.  Because mini-Haskell exposes a
@@ -1148,34 +1157,34 @@ section, but are worth mentioning.
 
 \section{Test suite and testing}
 
-We have developed a extensive test suite which uses the CMake CTest
+We have developed an extensive test suite which uses the CMake CTest
 tool~\cite{cmake-book}. The full test suite is automatically run, and any
 failures reported, after every commit to the Git revision control system. We
 use a Jenkins continuous integration server to automate this build and testing
 process~\cite{jenkins-book}. The Git repository is hosted externally so our
 student collaborators can contribute at their leisure.
 
-There are several hundred small STG and mini-Haskell programs in the test suite 
-It is partitioned into a number of directories which control what
-testing is done for a specific program. Given our goal of exploring various
+There are several hundred small STG and mini-Haskell programs in the test suite, 
+which is partitioned into a number of directories which control what
+testing is done. Given our goal of exploring various
 levels of strictness, most tests are run with all evaluation strategies (three
 degrees of function strictness by two degrees of constructor strictness).
-One interesting class of test programs are those which require lazy
+One interesting class of test programs are those which require lazy or non-strict
 semantics. For these programs we test not only that the test leads to the expected
 result with non-strict semantics, but also that the program returns a
 \emph{BLACKHOLE} in the case of strict semantics. Students who were Haskell/STG
 beginners have contributed substantially to the test suite. We have also found
-that the test suite has be of use as a learning tool for these students to
+that the test suite has been of use as a learning tool for these students to
 discover what level of non-strictness was required for their programs,
 a benefit that we did not initially envision. Over time we have developed
 extensive STG and mini-Haskell preludes of common programming patterns to
 aid in the writing of test programs.
 
 Another important class of test programs are those which should fail with a
-known error (e.g. a parsing error) for these programs the test suite checks
-the output against an expected error regular expression. This class of test
-programs has proved valuable in development and debugging of both the STG
-and mini-Haskell front-ends.
+known error, e.g., a parsing or typing error.  For these programs the test
+suite checks the output against an expected error regular expression. This
+class of test programs has proved valuable in development and debugging of
+both the STG and mini-Haskell front-ends.
 
 We also run each test with various levels of garbage collection enabled. This
 has exposed bugs not only in the garbage collector, but also in the code
