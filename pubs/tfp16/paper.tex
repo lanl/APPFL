@@ -880,7 +880,9 @@ language for testing our compiler and runtime system in their nascent stages
 is then clear.  This language, mini-Haskell, was progressively ``grown'' from
 the STG syntax towards a subset of Haskell itself, removing much of the
 frustrating syntactic cruft and adding some of the core features that are
-often taken for granted in Haskell (and other languages).
+often taken for granted in Haskell (and other languages).  An alternative
+approach would translate from mini-Haskell to GHC Core, then either to STG or,
+in the case that the back end eventually take, compiling Core directly.
 
 An informal specification of the mini-Haskell grammar is given in
 Figure~\ref{fig:miniHaskell}.  There is significant overlap with STG resulting
