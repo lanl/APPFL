@@ -61,26 +61,20 @@ Socorro, New Mexico, USA
 \setcounter{footnote}{0}
 
 \begin{abstract}
+
 A claimed trend is an increasing appreciation and practice of functional
 programming in scientific computing, and in particular strict (by default)
-functional programming, in various guises.  
-%
-%A second claimed trend is, given a strict functional semantics, in the
-%development of automatically parallelizing runtime systems.
-Besides making programs easier to reason about, this enables automatic
-parallelization to various degrees.
-%
-A second claimed trend in both scientific computing and functional programming
-is transparent fault tolerance.  
-%
-Our project goal is the demonstration of a light-weight, higher-order,
-polymorphic, pure functional language implementation in which we can
-experiment with automatic parallelization strategies, varying degrees of
-strictness, and mechanisms for transparent fault tolerance.
+functional programming, in various guises.  Besides making programs easier to
+reason about, this enables automatic parallelization to various degrees.  A
+second claimed trend in both scientific computing and functional programming
+is transparent fault tolerance.  Our project goal is the demonstration of a
+light-weight, higher-order, polymorphic, pure functional language
+implementation in which we can experiment with automatic parallelization
+strategies, varying degrees of strictness, and mechanisms for transparent
+fault tolerance.\\
 %We do not consider speculative evaluation, or semantic strictness inferred by
 %program analysis, so potential parallelism is dictated by the degree of
 %strictness.
-\\
 \emph{Draft paper notes:}
 \begin{enumerate}[before=\itshape]
 \item We are reporting work in progress.  At the time of writing we have a
@@ -103,8 +97,8 @@ strictness, and mechanisms for transparent fault tolerance.
 \end{enumerate}
 
 
-\keywords{Strict pure functional programming, automatic parallelization,
-  Haskell, STG, GHC, GHC Core, transparent fault tolerance.}
+\keywords{ Strict pure functional programming, automatic parallelization,
+  Haskell, STG, GHC, GHC Core, transparent fault tolerance.  }
 
 \end{abstract}
 
@@ -1006,9 +1000,9 @@ attempt to define the \texttt{parse-error} function.  This is apparently a
 tricky spot for Haskell compilers (even GHC has not always had it right) so,
 in the name of tradition, it remains a tricky spot for our mini-Haskell front
 end.  The edge cases that it will incorrectly handle as a result of this are
-exactly that: edge cases.  As such, they are easy to avoid in practical usage.
+exactly that: edge cases.  As such, they are easy to avoid in practice.
 
-The inclusion of the layout rule may seem small and insignificant, but it
+The inclusion of the layout rule may seem insignificant, but it
 allows users to produce code that is visually similar to Haskell code.
 This makes it easier to read and write for any Haskell programmer who relies
 on layout to delineate context, presumably the vast majority.  It also allows
@@ -1094,18 +1088,18 @@ unzip (Cons (TP2 a b) xs) =
 
 Of course, this complex pattern matching must eventually be transformed into
 the primitive, nested case expressions. Fortunately there are well-documented
-algorithms for achieving this, and Philip Wadler's chapter in \emph{The
-  Implementation of Functional Programming Languages}~\cite{Jones:1987} %
-doing this right?  on the compilation of this type of pattern matching proved
-invaluable.  Wadler describes the \emph{match} function that which, in its
-simplest form, produces a correct, but potentially large translation with some
-redundancy.  This function was implemented with only minor modifications to
-fit the shape of mini-Haskell's abstract form.  The implementation is
-augmented by some light flow-analysis to eliminate some of the redundancy and
-make the resulting code easier to read.  There are further optimizations
-suggested by Wadler to address the size of the generated code ,for example,
-when multiple branches lead to the same large expression, but the additional
-complexity outweighs the benefit for a testing language.
+algorithms for achieving this, and Philip Wadler's chapter
+% in \emph{The Implementation of Functional Programming Languages}
+on the compilation of this type of pattern matching proved
+invaluable~\cite{Jones:1987}.  Wadler describes the \emph{match} function
+which, in its simplest form, produces a correct, but potentially large
+translation with some redundancy.  This function was implemented with only
+minor modifications to fit the shape of mini-Haskell's abstract form.  The
+implementation is augmented by some light flow-analysis to eliminate some of
+the redundancy and make the resulting code easier to read.  There are further
+optimizations suggested by Wadler to address the size of the generated code,
+for example, when multiple branches lead to the same large expression, but the
+additional complexity outweighs the benefit for a testing language.
 
 
 \subsubsection{Less significant features.}
