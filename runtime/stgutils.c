@@ -252,11 +252,6 @@ FnPtr stgPopMeCont() {
   STGRETURN0();  // return through continuation stack
 }
 
-void stgPopContIfPopMe() {
-  if (getContType(stgGetStackArgp()) == POPMECONT)
-    stgPopCont();
-}
-
 CInfoTab it_stgPopMeCont __attribute__((aligned(8))) =
   { .name = "stgPopMeCont",
     .entryCode = &stgPopMeCont,

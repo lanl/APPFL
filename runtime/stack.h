@@ -11,6 +11,6 @@ static inline ContType getContType(Cont *p) {
   return p->contType;
 }
 
-
+void stgPopContIfPopMe();
 
 #endif // ifndef stack_h

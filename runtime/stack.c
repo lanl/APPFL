@@ -153,6 +153,11 @@ void stgPopCont() {
   stgSP = (char *)cp + contSize;
 }
 
+void stgPopContIfPopMe() {
+  if (getContType(stgGetStackArgp()) == POPMECONT)
+    stgPopCont();
+}
+
 // could return pointer to .payload but that thwarts a sanity check,
 // though could perhaps pass in expected size--TODO: change name,
 // should get args from any continuation
