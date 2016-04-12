@@ -72,24 +72,6 @@ typedef enum {
 } ObjType;
 const char *objTypeNames[PHONYENDOBJ];
 
-  // stack continuations--change the names for compiler help finding them
-typedef enum {
-  BADCONTTYPE0,
-  BADCONTTYPE1,
-  BADCONTTYPE2,
-  BADCONTTYPE3,
-  BADCONTTYPE4,
-  BADCONTTYPE5,
-  PHONYSTARTCONT,
-  UPDCONT,
-  CASECONT,
-  CALLCONT,
-  STACKCONT,
-  POPMECONT,
-  LETCONT,
-  PHONYENDCONT,
-} ContType;
-const char *contTypeNames[PHONYENDCONT];
 
 // PtrOrLiteral -- literal value or pointer to heap object
 typedef struct {
@@ -135,16 +117,6 @@ struct _Obj {
   PtrOrLiteral payload[];
 };
 
-struct _Cont {
-  CInfoTab *cInfoPtr;     // *going away*
-  CmmFnPtr entryCode;    // new
-  ContType contType;
-  Bitmap64 layout;        // new
-  int _contSize;          // for debugging, should go away
-  char ident[32];         // temporary, just for tracing
-  PtrOrLiteral payload[];
-};
-
 // see README
 typedef struct _LayoutInfo {
   int payloadSize;
@@ -152,14 +124,6 @@ typedef struct _LayoutInfo {
   int unboxedCount;
   char permString[64];  // this is just for e.g. displaying the heap
 } LayoutInfo;
-
-typedef struct _CLayoutInfo {
-  int payloadSize;
-  int boxedCount;
-  int unboxedCount;
-  Bitmap64 bm;
-  char permString[64];  // this is just for e.g. displaying the heap
-} CLayoutInfo;
 
 typedef struct {
   int arity;
@@ -181,22 +145,6 @@ typedef struct {
   //
 } THUNKfields;
 
-typedef struct {
-  //
-} UPDCONTfields;
-
-typedef struct {
-  //
-} CASECONTfields;
-
-typedef struct {
-  //
-} CALLCONTfields;
-
-typedef struct {
-  //
-} POPMECONTfields;
-
 #if DEBUG_INFOTAB
 #define PI() (3.14159265358979323846)
 #endif
@@ -216,22 +164,6 @@ struct _InfoTab {
     CONfields conFields;
     THUNKfields thunkFields;
   };
-};
-
-// CInfoTab
-struct _CInfoTab {
-  CmmFnPtr entryCode;
-  char name[32];  // for debugging
-  ContType contType; // kind of continuation, tag for union
-  CLayoutInfo cLayoutInfo;
-  /* not currently needed
-  union {
-    UPDCONTfields updcontFields;
-    CASECONTfields casecontFields;
-    CALLCONTfields callcontFields;
-    POPMECONTfields popmecontFields;
-  };
-  */
 };
 
 extern void *stgHeap, *stgHP;

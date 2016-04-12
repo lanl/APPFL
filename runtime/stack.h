@@ -3,6 +3,75 @@
 
 #include "stg.h"
 
+// stack continuations--change the names for compiler help finding them
+typedef enum {
+  BADCONTTYPE0,
+  BADCONTTYPE1,
+  BADCONTTYPE2,
+  BADCONTTYPE3,
+  BADCONTTYPE4,
+  BADCONTTYPE5,
+  PHONYSTARTCONT,
+  UPDCONT,
+  CASECONT,
+  CALLCONT,
+  STACKCONT,
+  POPMECONT,
+  LETCONT,
+  PHONYENDCONT,
+} ContType;
+const char *contTypeNames[PHONYENDCONT];
+
+typedef struct {
+  //
+} UPDCONTfields;
+
+typedef struct {
+  //
+} CASECONTfields;
+
+typedef struct {
+  //
+} CALLCONTfields;
+
+typedef struct {
+  //
+} POPMECONTfields;
+
+typedef struct _CLayoutInfo {
+  int payloadSize;
+  int boxedCount;
+  int unboxedCount;
+  Bitmap64 bm;
+  char permString[64];  // this is just for e.g. displaying the heap
+} CLayoutInfo;
+
+struct _Cont {
+  CInfoTab *cInfoPtr;     // *going away*
+  CmmFnPtr entryCode;    // new
+  ContType contType;
+  Bitmap64 layout;        // new
+  int _contSize;          // for debugging, should go away
+  char ident[32];         // temporary, just for tracing
+  PtrOrLiteral payload[];
+};
+
+// CInfoTab
+struct _CInfoTab {
+  CmmFnPtr entryCode;
+  char name[32];  // for debugging
+  ContType contType; // kind of continuation, tag for union
+  CLayoutInfo cLayoutInfo;
+  /* not currently needed
+  union {
+    UPDCONTfields updcontFields;
+    CASECONTfields casecontFields;
+    CALLCONTfields callcontFields;
+    POPMECONTfields popmecontFields;
+  };
+  */
+};
+
 static inline CInfoTab *getCInfoPtr(Cont *p)  { return p->cInfoPtr; }
 
 Bitmap64 cLayoutInfoToBitmap64(CLayoutInfo *lip);
