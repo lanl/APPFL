@@ -8,6 +8,7 @@ project(runtime)
               gc.h
               log.h
               obj.h
+	      heap.h
               stack.h
               stg.h
               stgutils.h

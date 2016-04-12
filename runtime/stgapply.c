@@ -1,5 +1,6 @@
 #include "args.h"
 #include "stg.h"
+#include "heap.h"
 #include "stack.h"
 #include "stgutils.h"
 #include "stgapply.h"

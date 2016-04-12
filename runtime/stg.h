@@ -274,11 +274,6 @@ static inline ObjType getObjType(Obj *p) {
   return iobjType;
 }
 
-// allocate Obj on heap, returning pointer to new Obj
-extern Obj* stgNewHeapObj(InfoTab *itp);
-extern Obj* stgNewHeapPAP(InfoTab *itp, int pargc, int nargc);
-extern Obj* stgNewHeapPAPmask(InfoTab *itp, Bitmap64 bitmap);
-
 void copyargs(PtrOrLiteral *dest, PtrOrLiteral *src, int count);
 // Codegen.hs currently uses STGJUMP(), STGJUMP0(f), and STGRETURN0() to
 // exit functions
