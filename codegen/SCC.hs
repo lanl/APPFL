@@ -8,7 +8,9 @@ module SCC (
 ) where
 
 {-
-   David King and John Launchbury, Lazy Depth-First Search and Linear Graph Algorithms in Haskell,
+   David King and John Launchbury, Lazy Depth-First Search and Linear Graph Algorithms in Haskell
+
+    Structuring depth-first search algorithms in Haskell,
     ACM Principles of Programming Languages, San Francisco, 1995.
 -}
 

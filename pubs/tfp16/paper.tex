@@ -175,7 +175,7 @@ implementation of a pure functional language to date~\cite{Davis96}, to no
 effect whatsoever, there is now a small number of laboratory HPC practitioners
 who are developing an appreciation for pure functional programming in Haskell.
 However, they see their needs as different than other Haskell users: performance
-is paramount, vectors~\cite{vector} are a (perhaps \emph{the}) primary data
+is paramount, array/vector~\cite{vector} is a (perhaps \emph{the}) primary data
 structure, and non-strictness or laziness is more of a nuisance---even a
 serious hindrance---than a convenience, much less ever algorithmically
 essential in the sense of Bird's \emph{repmin}~\cite{Bird84},
@@ -304,11 +304,11 @@ and Peyton Jones~\cite{Marlow:2004};
 \item The generated code is C.
 \end{itemize}
 %
-For feasibility we restrict ourselves to shared-memory implicit parallelism.
-The requirement for tail calling is not primarily for efficiency, rather it is
-for a reasonable parallel implementation.  Achieving this, and thereby
-sufficiently limiting the use of the native C stack, will be discussed at some
-length.
+For feasibility we restrict ourselves to implicit parallelism on shared-memory
+multiprocessors.  The requirement for tail calling is not primarily for
+efficiency, rather for an efficient parallel implementation.  Achieving
+this, and thereby sufficiently limiting the use of the native C stack, will be
+discussed at some length.
 
 A minor, informal goal is to gain a sense of how often relatively
 inexperienced functional programmers make essential use of
@@ -374,7 +374,7 @@ Alternatives & $\mathit{alt}$ & ::= & $C\ x_1\dots x_n$ \texttt{->} $e$         
 Heap objects & $\mathit{obj}$ & ::= &\texttt{FUN} $x_1\dots x_n$ \texttt{->} $e$   & Function definition, arity $=n\ge 1$ \\
              &                & $|$ &\texttt{CON} $C\ a_1\dots a_n$                & Saturated constructor, $n \ge 0$ \\
              &                & $|$ &\texttt{THUNK} $e$                            & Thunk---explicit deferred evaluation \\
-             &                & $|$ & $\texttt{PAP}\ f\ a_1\dots a_n$               & Evaluation-time partial application \\
+             &                & $|$ & $\texttt{PAP}\ f\ a_1\dots a_n$               & Partial application \\
              &                & $|$ & $\mathit{BLACKHOLE}$                         & Evaluation-time black hole \\
 \\
 Object decl. & $\mathit{odecl}$ &     & $x = \mathit{obj}$                           & Simple binding \\
@@ -718,9 +718,24 @@ do not yet get type information directly from GHC we use a subset of Haskell
 syntax (e.g., no named fields) for defining algebraic data types, extended
 with built-in and user-defined unboxed types.  We perform standard
 Hindley-Milner type inference and enforcement following Heren et
-al.~\cite{Heren02}, again extended with unboxed types.  The syntax,
-restrictions, and extensions to the type inference algorithm for unboxed types
-follow Peyton Jones and Launchbury~\cite{Jones:1991}.
+al.~\cite{Heren02}, again extended with unboxed types.  The extensions to the
+type inference algorithm, syntax, and restrictions for unboxed types follow
+Peyton Jones and Launchbury~\cite{Jones:1991}.
+\begin{comment}
+% breaks the page limit
+For convenience general recursive
+\texttt{let}s are implicitly factored in the usual way to maximize let-polymorphism;
+this would normally already be performed by a front-end.
+\end{comment}
+\begin{comment}
+% breaks the page limit
+One would expect an automated STG generator such as GHC to factor recursive
+\texttt{let} expressions into nested recursive and non-recursive \texttt{let}s
+in the usual way to maximize let-polymorphism.  Because our STG is intended
+to be somewhat convenient to write by hand we relax this constraint and perform
+this transformation implicitly using a strongly-connected components algorithm
+inspired by King and Launchbury~\cite{King:1995}.
+\end{comment}
 
 \section{Current Status (April 8, 2016), Future Work}
 
@@ -745,7 +760,7 @@ The \emph{mini-Haskell} front-end is detailed in Appendix~A.
 
 This summer (2016) a returning student will bridge the gap between GHC STG (or
 Core) and our STG, augmenting the runtime as needed.  Just as in the Intel
-Haskell Research Compiler effort we will not attempt to reuse the GHC runtime.
+Haskell Research Compiler effort we will not use the GHC runtime.
 
 While we can parse and type-check more general unboxed types, code generation
 and runtime support is currently limited to built-in single-word (64-bit) or

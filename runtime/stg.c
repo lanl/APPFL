@@ -130,7 +130,8 @@ Cont *stgAllocCallOrStackCont(CInfoTab *citp, int argc) {
   contp->cInfoPtr = citp;
   contp->_contSize = contSize;  // to go away
 
-  contp->layout.bits = 0x0UL;  // for GC
+  contp->layout.bitmap.mask = 0x0UL;  // for GC
+  contp->layout.bitmap.size = argc;   // make consistent
 
   contp->entryCode = citp->entryCode;
   contp->contType = citp->contType;

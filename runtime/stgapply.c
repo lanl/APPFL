@@ -7,27 +7,24 @@
 
 FnPtr stgApplyCurVal();
 
-Cont *stgContSplit(int excess) {
+Cont *stgContSplit(int arity1, int excess) {
+  // arity1 is arity of funoid
+  // cont1 is cont to split
   Cont *cont1 = (Cont *)stgSP;
-  size_t size1 = getContSize(cont1);
-  int pls1 = cont1->layout.bitmap.size;
-  int arity1 = pls1 - excess - 1;
-
-  int pls2 = 1 + excess; // funoid + excess
+  // funoid + excess, subsequent application
+  int pls2 = 1 + excess; 
   Cont *cont2 = stgAllocCallOrStackCont( &it_stgStackCont, pls2 );
-  size_t size2 = sizeof(Cont) + pls2 * sizeof(PtrOrLiteral);
-
-  int pls3 = pls1 - excess;
+  // funoid + arity1
+  int pls3 = arity1 + 1;
   Cont *cont3 = stgAllocCallOrStackCont( &it_stgStackCont, pls3 );
-  size_t size3 = sizeof(Cont) + pls3 * sizeof(PtrOrLiteral);
 
   Bitmap64 bm = cont1->layout;
-  bm.bitmap.size = pls2;
-  bm.bitmap.mask <<= (pls3 - 1); // room for funoid
-  bm.bitmap.mask |= 0x1UL;
+  // bm.bitmap.size is set by alloc
+  bm.bitmap.mask >>= arity1; // room for funoid, eliminate just right
+  bm.bitmap.mask |= 0x1UL;   // funoid is boxed
   cont2->layout = bm;
-  cont2->entryCode = &stgApplyCurVal;
-  cont2->payload[0].op = NULL;
+  cont2->entryCode = &stgApplyCurVal;  // goto stgApplyCurVal
+  cont2->payload[0].op = NULL;  // no funoid yet
   #if USE_ARGTYPE
   cont2->payload[0].argType = HEAPOBJ;
   #endif
@@ -44,8 +41,8 @@ Cont *stgContSplit(int excess) {
   //  cont3->entryCode = getInfoPtr(cont3->payload[0].op)->funFields.trueEntryCode;
 
   // quash cont1
-  memmove(cont1, cont2, size2 + size3);
-  stgSP += size1;
+  memmove(cont1, cont2, getContSize(cont2) + getContSize(cont3));
+  stgSP += getContSize(cont1);
   return (Cont *)stgSP;
 }
 
@@ -212,14 +209,15 @@ FnPtr stgApply3() {
 
       LOG(LOG_INFO, "stgApply FUNPOS %d\n", excess);
 
+      /*
       // split current stack frame into two, one to tail call the FUN
       // the other to stgApplyCurVal to the excess args
-      ///// stgContSplit(excess);
+      stgContSplit(arity, excess);
 
       //      STGRETURN0();
-      ///// Cont *topCont = (Cont *)stgSP;
-      ///// STGJUMP0(getInfoPtr(topCont->payload[0].op)->funFields.trueEntryCode);
-
+      Cont *topCont = (Cont *)stgSP;
+      STGJUMP0(getInfoPtr(topCont->payload[0].op)->funFields.trueEntryCode);
+      */
       /**/
       // call with return FUN with arity args
       // funoid + arity payload
@@ -249,7 +247,7 @@ FnPtr stgApply3() {
       stackframe = stgAdjustTopContSize(stackframe, -arity);
       // tail call stgApply
       STGJUMP0(stgApply);
-      /**/
+      /*      */
 
     } else
   
