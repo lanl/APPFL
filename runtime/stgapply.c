@@ -105,11 +105,11 @@ FnPtr stgApply2() {
   Cont *stackframe = stgGetStackArgp();
   derefStgCurVal();
   // capture something just evaluated
-  int argNum = stackframe->payload[0].i;
+  int argvInd = stackframe->payload[0].i;
   // argv is old stgApply args
   PtrOrLiteral *argv = &stackframe->payload[1];
-  // argNum == 0 is funoid
-  argv[argNum] = stgCurVal;
+  // argvInd == 0 is funoid
+  argv[argvInd] = stgCurVal;
   // any more?
   int argsToEval = 0;
   int fargc = stackframe->layout.bitmap.size - 2;  // skip new arg, funoid
@@ -131,17 +131,21 @@ FnPtr stgApply2() {
       int excess = fargc - arity;
       argsToEval = excess >= 0 ? arity : 0;
       break;
-    }} // switch
+    } // if PAP
+  } // STRICT1
+  } // switch
 
-    if (argNum < argsToEval) {
-      argNum++;
-      stackframe->payload[0].i = argNum;
-      stgCurVal = argv[argNum];
-      // tail call self after evaluating arg
-      STGJUMP();
-    }
+  for (argvInd++;  // next one
+       argvInd < argsToEval && // more left
+	 !(stackframe->layout.bitmap.mask & (0x1 << (1+argvInd))); // and it's unboxed
+       argvInd++);  // skip to next
+
+  if (argvInd < argsToEval) {
+    stackframe->payload[0].i = argvInd;
+    stgCurVal = argv[argvInd];
+    // tail call self after evaluating arg
+    STGJUMP();
   }
-
 
   // fix stack frame for old stgApply
   int argc = stackframe->layout.bitmap.size;

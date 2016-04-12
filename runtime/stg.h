@@ -386,18 +386,22 @@ void copyargs(PtrOrLiteral *dest, PtrOrLiteral *src, int count);
 
 // change context
 // note that the popping of a POPMECONT is just an optimization
+// RETURN0() is to let compiler know we really mean it
 #define STGJUMP0(f)				\
   do {						\
     stgPopContIfPopMe();			\
     JUMP0(f);					\
+    RETURN0();					\
   } while(0)
 
 // return through continuation stack
 // note that the popping of a POPMECONT is just an optimization
+// RETURN0() is to let compiler know we really mean it
 #define STGRETURN0()					\
   do {							\
     stgPopContIfPopMe();				\
     STGJUMP0(((Cont *)stgSP)->entryCode);		\
+    RETURN0();						\
   } while(0)
 
 #endif  //ifdef stg_h
