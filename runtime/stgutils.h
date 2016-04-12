@@ -12,10 +12,6 @@
 
 extern void stgThunk(PtrOrLiteral self);
 
-Obj *derefHO(Obj *op);
-Obj *derefPoL(PtrOrLiteral f);
-
-void derefStgCurVal();
 
 FnPtr stg_funcall();
 FnPtr stg_papcall();

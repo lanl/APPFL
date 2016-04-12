@@ -13,6 +13,7 @@ by the stgc codegenerator.
 
 #include "stg.h"
 #include "cmm.h"
+#include "stack.h"
 #include "stgutils.h"
 #include "gc.h"
 

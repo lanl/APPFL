@@ -13,28 +13,6 @@
 // place to go when we're done this continuation is special, dropping
 // from stg land back to cmm land via RETURN0() rather than STGRETURN(0)
 
-Obj *derefPoL(PtrOrLiteral f) {
-  assert(mayBeBoxed(f) && "derefPoL: not a HEAPOBJ");
-  return derefHO(f.op);
-}
-
-void derefStgCurVal() {
-  assert(mayBeBoxed(stgCurVal)); // return stgCurVal
-  while (getObjType(stgCurVal.op) == INDIRECT) { // return stgCurVal
-    stgCurVal = stgCurVal.op->payload[0]; // return stgCurVal
-    assert(mayBeBoxed(stgCurVal)); // return stgCurVal
-  }
-}
-
-Obj *derefHO(Obj *op) {
-  while (getObjType(op) == INDIRECT) {
-    PtrOrLiteral v = op->payload[0];
-    assert(mayBeBoxed(v));
-    op = v.op;
-  }
-  return op;
-}
-
 // stg_case_not_exhaustiveP(self, x)
 FnPtr stg_case_not_exhaustiveP() {
   Cont *stg_sc = stgGetStackArgp();

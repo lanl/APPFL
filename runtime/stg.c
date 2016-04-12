@@ -72,6 +72,28 @@ void copyargs(PtrOrLiteral *dest, PtrOrLiteral *src, int count) {
   memcpy(dest, src, count * sizeof(PtrOrLiteral));
 }
 
+Obj *derefPoL(PtrOrLiteral f) {
+  assert(mayBeBoxed(f) && "derefPoL: not a HEAPOBJ");
+  return derefHO(f.op);
+}
+
+void derefStgCurVal() {
+  assert(mayBeBoxed(stgCurVal)); // return stgCurVal
+  while (getObjType(stgCurVal.op) == INDIRECT) { // return stgCurVal
+    stgCurVal = stgCurVal.op->payload[0]; // return stgCurVal
+    assert(mayBeBoxed(stgCurVal)); // return stgCurVal
+  }
+}
+
+Obj *derefHO(Obj *op) {
+  while (getObjType(op) == INDIRECT) {
+    PtrOrLiteral v = op->payload[0];
+    assert(mayBeBoxed(v));
+    op = v.op;
+  }
+  return op;
+}
+
 // this is a temporary hack as we incorporate Bitmap64s into continuations
 Bitmap64 layoutInfoToBitmap64(LayoutInfo *lip) {
   Bitmap64 bm;

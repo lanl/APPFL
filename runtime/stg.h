@@ -257,6 +257,10 @@ extern void *stgStack, *stgSP;
 extern size_t stgStatObjCount;
 extern Obj *stgStatObj[];
 
+Obj *derefHO(Obj *op);
+Obj *derefPoL(PtrOrLiteral f);
+void derefStgCurVal();
+
 void initStg();
 void showStgObj(LogLevel priority, Obj *);
 void showStgHeap(LogLevel priority);
