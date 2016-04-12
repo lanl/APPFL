@@ -3,6 +3,11 @@
 
 #include "stg.h"
 
+struct _Cont;
+typedef struct _Cont Cont;
+struct _CInfoTab;
+typedef struct _CInfoTab CInfoTab;
+
 // stack continuations--change the names for compiler help finding them
 typedef enum {
   BADCONTTYPE0,
@@ -93,5 +98,7 @@ void stgPopCont();
 Cont *stgGetStackArgp();
 Cont *stgJumpAdjust();
 Cont *stgAdjustTopContSize(Cont *cp, int delta);
+
+void showCIT(CInfoTab *);
 
 #endif // ifndef stack_h

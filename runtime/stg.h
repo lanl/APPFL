@@ -21,10 +21,6 @@ struct _Obj;
 typedef struct _Obj Obj;
 struct _InfoTab;
 typedef struct _InfoTab InfoTab;
-struct _Cont;
-typedef struct _Cont Cont;
-struct _CInfoTab;
-typedef struct _CInfoTab CInfoTab;
 
 // bitmap for specifying boxed/unboxed values
 // assume 64 bits, high six bits for length,
@@ -193,7 +189,6 @@ void showStgValPretty(LogLevel priority, PtrOrLiteral v);
 
 void checkStgHeap();
 void showIT(InfoTab *);
-void showCIT(CInfoTab *);
 int  getObjSize(Obj *);
 
 bool isSHO();
