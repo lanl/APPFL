@@ -313,8 +313,6 @@ static inline InfoTab *getInfoPtr(Obj *p)  {
   return itp;
 }
 
-static inline CInfoTab *getCInfoPtr(Cont *p)  { return p->cInfoPtr; }
-
 static inline ObjType getObjType(Obj *p) {
   assert(!isLSBset(p->_infoPtr) && "getObjType on forwarding node");
 
@@ -357,10 +355,6 @@ static inline ObjType getObjType(Obj *p) {
 #endif
 
   return iobjType;
-}
-
-static inline ContType getContType(Cont *p) {
-  return p->contType;
 }
 
 // allocate Obj on heap, returning pointer to new Obj

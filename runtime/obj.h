@@ -3,6 +3,8 @@
 
 #include "options.h"
 #include "stg.h"
+// need to factor this out
+#include "stack.h"
 
 // wrapper functions for possible interface changes
 // see README-heapobj.txt

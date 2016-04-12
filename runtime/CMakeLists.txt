@@ -8,6 +8,7 @@ project(runtime)
               gc.h
               log.h
               obj.h
+              stack.h
               stg.h
               stgutils.h
     	      cruntime.h
@@ -23,6 +24,7 @@ project(runtime)
               stg.c
               stgutils.c
 	      show.c
+              stack.c
 	      stgapply.c
 	      heap.c
     )
