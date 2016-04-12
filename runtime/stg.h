@@ -85,6 +85,25 @@ typedef enum {
 } ObjType;
 const char *objTypeNames[PHONYENDOBJ];
 
+  // stack continuations--change the names for compiler help finding them
+typedef enum {
+  BADCONTTYPE0,
+  BADCONTTYPE1,
+  BADCONTTYPE2,
+  BADCONTTYPE3,
+  BADCONTTYPE4,
+  BADCONTTYPE5,
+  PHONYSTARTCONT,
+  UPDCONT,
+  CASECONT,
+  CALLCONT,
+  STACKCONT,
+  POPMECONT,
+  LETCONT,
+  PHONYENDCONT,
+} ContType;
+const char *contTypeNames[PHONYENDCONT];
+
 // PtrOrLiteral -- literal value or pointer to heap object
 typedef struct {
 #if USE_ARGTYPE
@@ -129,6 +148,16 @@ struct _Obj {
   PtrOrLiteral payload[];
 };
 
+struct _Cont {
+  CInfoTab *cInfoPtr;     // *going away*
+  CmmFnPtr entryCode;    // new
+  ContType contType;
+  Bitmap64 layout;        // new
+  int _contSize;          // for debugging, should go away
+  char ident[32];         // temporary, just for tracing
+  PtrOrLiteral payload[];
+};
+
 // see README
 typedef struct _LayoutInfo {
   int payloadSize;
@@ -136,6 +165,14 @@ typedef struct _LayoutInfo {
   int unboxedCount;
   char permString[64];  // this is just for e.g. displaying the heap
 } LayoutInfo;
+
+typedef struct _CLayoutInfo {
+  int payloadSize;
+  int boxedCount;
+  int unboxedCount;
+  Bitmap64 bm;
+  char permString[64];  // this is just for e.g. displaying the heap
+} CLayoutInfo;
 
 typedef struct {
   int arity;
@@ -157,6 +194,22 @@ typedef struct {
   //
 } THUNKfields;
 
+typedef struct {
+  //
+} UPDCONTfields;
+
+typedef struct {
+  //
+} CASECONTfields;
+
+typedef struct {
+  //
+} CALLCONTfields;
+
+typedef struct {
+  //
+} POPMECONTfields;
+
 #if DEBUG_INFOTAB
 #define PI() (3.14159265358979323846)
 #endif
@@ -176,6 +229,22 @@ struct _InfoTab {
     CONfields conFields;
     THUNKfields thunkFields;
   };
+};
+
+// CInfoTab
+struct _CInfoTab {
+  CmmFnPtr entryCode;
+  char name[32];  // for debugging
+  ContType contType; // kind of continuation, tag for union
+  CLayoutInfo cLayoutInfo;
+  /* not currently needed
+  union {
+    UPDCONTfields updcontFields;
+    CASECONTfields casecontFields;
+    CALLCONTfields callcontFields;
+    POPMECONTfields popmecontFields;
+  };
+  */
 };
 
 extern void *stgHeap, *stgHP;
@@ -203,6 +272,7 @@ void checkStgHeap();
 void showIT(InfoTab *);
 void showCIT(CInfoTab *);
 int  getObjSize(Obj *);
+int  getContSize(Cont *);
 
 bool isSHO();
 bool isHeap(Obj *p);
@@ -291,6 +361,15 @@ static inline ObjType getObjType(Obj *p) {
 extern Obj* stgNewHeapObj(InfoTab *itp);
 extern Obj* stgNewHeapPAP(InfoTab *itp, int pargc, int nargc);
 extern Obj* stgNewHeapPAPmask(InfoTab *itp, Bitmap64 bitmap);
+// allocate Obj on continuation stack, returning pointer to new Obj
+extern Cont *stgAllocCallOrStackCont(CInfoTab *it, int payloadSize);
+extern Cont *stgAllocCont(CInfoTab *it);
+// remove Obj from top of continuation stack, returning pointer to de-alloced Obj
+void stgPopCont();
+// get top of stack pointer, must be STACKCONT
+Cont *stgGetStackArgp();
+Cont *stgJumpAdjust();
+Cont *stgAdjustTopContSize(Cont *cp, int delta);
 
 void copyargs(PtrOrLiteral *dest, PtrOrLiteral *src, int count);
 // Codegen.hs currently uses STGJUMP(), STGJUMP0(f), and STGRETURN0() to
