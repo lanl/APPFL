@@ -5,11 +5,26 @@
 #include "stgutils.h"
 #include "stgapply.h"
 
+
+// might want to pass in bitmap and argv instead
+void stgEvalStackFrameArgs(Cont *cp) {
+  // don't evaluate the funoid
+  int i = cp->layout.bitmap.size - 1;
+  uintptr_t bits = (cp->layout.bitmap.mask >> 1);
+  PtrOrLiteral *polp = &cp->payload[1];
+  for ( ; i != 0; i--, polp++, bits >>= 1) {
+    if (bits & 0x1) {
+      STGEVAL(*polp);
+      // stgCurValB
+      polp->op = derefPoL(stgCurVal);
+      stgCurVal.op = NULL;
+    }
+  }
+}
+
 // split current stack cont into two
 
-FnPtr stgApplyCurVal();
-
-Cont *stgContSplit(int arity1, int excess) {
+Cont *stgContSplit(int arity1, int excess, FnPtr (*dest)()) {
   // arity1 is arity of funoid
   // cont1 is cont to split
   Cont *cont1 = (Cont *)stgSP;
@@ -25,7 +40,7 @@ Cont *stgContSplit(int arity1, int excess) {
   bm.bitmap.mask >>= arity1; // room for funoid, eliminate just right
   bm.bitmap.mask |= 0x1UL;   // funoid is boxed
   cont2->layout = bm;
-  cont2->entryCode = &stgApplyCurVal;  // goto stgApplyCurVal
+  cont2->entryCode = dest;  // goto dest
   cont2->payload[0].op = NULL;  // no funoid yet
   #if USE_ARGTYPE
   cont2->payload[0].argType = HEAPOBJ;
@@ -50,21 +65,7 @@ Cont *stgContSplit(int arity1, int excess) {
 
 
 
-// might want to pass in bitmap and argv instead
-void stgEvalStackFrameArgs(Cont *cp) {
-  // don't evaluate the funoid
-  int i = cp->layout.bitmap.size - 1;
-  uintptr_t bits = (cp->layout.bitmap.mask >> 1);
-  PtrOrLiteral *polp = &cp->payload[1];
-  for ( ; i != 0; i--, polp++, bits >>= 1) {
-    if (bits & 0x1) {
-      STGEVAL(*polp);
-      // stgCurValB
-      polp->op = derefPoL(stgCurVal);
-      stgCurVal.op = NULL;
-    }
-  }
-}
+
 
 
 FnPtr stgApply1();
@@ -214,7 +215,7 @@ FnPtr stgApply3() {
       /*
       // split current stack frame into two, one to tail call the FUN
       // the other to stgApplyCurVal to the excess args
-      stgContSplit(arity, excess);
+      stgContSplit(arity, excess, &stgApplyCurVal);
 
       //      STGRETURN0();
       Cont *topCont = (Cont *)stgSP;

@@ -134,6 +134,7 @@ Cont *stgAdjustTopContSize(Cont *cp, int delta) {
   stgSP = newStgSP;
   return stgSP;
 }
+
   
 void stgPopCont() {
   Cont *cp = (Cont *)stgSP;
