@@ -26,19 +26,6 @@ typedef struct _Cont Cont;
 struct _CInfoTab;
 typedef struct _CInfoTab CInfoTab;
 
-FnPtr stgCallCont();
-extern CInfoTab it_stgCallCont;
-
-FnPtr stgStackCont();
-extern CInfoTab it_stgStackCont;
-extern CInfoTab it_stgLetCont;
-
-FnPtr stgUpdateCont();
-extern CInfoTab it_stgUpdateCont;
-
-FnPtr fun_stgShowResultCont();
-extern CInfoTab it_stgShowResultCont;
-
 // bitmap for specifying boxed/unboxed values
 // assume 64 bits, high six bits for length,
 // low bit is index 0,
@@ -276,7 +263,6 @@ void checkStgHeap();
 void showIT(InfoTab *);
 void showCIT(CInfoTab *);
 int  getObjSize(Obj *);
-int  getContSize(Cont *);
 
 bool isSHO();
 bool isHeap(Obj *p);
@@ -365,15 +351,6 @@ static inline ObjType getObjType(Obj *p) {
 extern Obj* stgNewHeapObj(InfoTab *itp);
 extern Obj* stgNewHeapPAP(InfoTab *itp, int pargc, int nargc);
 extern Obj* stgNewHeapPAPmask(InfoTab *itp, Bitmap64 bitmap);
-// allocate Obj on continuation stack, returning pointer to new Obj
-extern Cont *stgAllocCallOrStackCont(CInfoTab *it, int payloadSize);
-extern Cont *stgAllocCont(CInfoTab *it);
-// remove Obj from top of continuation stack, returning pointer to de-alloced Obj
-void stgPopCont();
-// get top of stack pointer, must be STACKCONT
-Cont *stgGetStackArgp();
-Cont *stgJumpAdjust();
-Cont *stgAdjustTopContSize(Cont *cp, int delta);
 
 void copyargs(PtrOrLiteral *dest, PtrOrLiteral *src, int count);
 // Codegen.hs currently uses STGJUMP(), STGJUMP0(f), and STGRETURN0() to

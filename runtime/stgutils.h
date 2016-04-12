@@ -20,6 +20,19 @@ FnPtr stg_concall();
 FnPtr stgBlackhole();
 FnPtr stgIndirect();
 
+FnPtr stgCallCont();
+extern CInfoTab it_stgCallCont;
+
+FnPtr stgStackCont();
+extern CInfoTab it_stgStackCont;
+extern CInfoTab it_stgLetCont;
+
+FnPtr stgUpdateCont();
+extern CInfoTab it_stgUpdateCont;
+
+FnPtr fun_stgShowResultCont();
+extern CInfoTab it_stgShowResultCont;
+
 // this is not a real object, should not need an sho_, TODO fix CodeGen.hs
 FnPtr stg_case_not_exhaustiveP();
 extern Obj sho_stg_case_not_exhaustiveP;
