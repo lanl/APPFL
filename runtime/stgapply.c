@@ -22,8 +22,8 @@ void stgEvalStackFrameArgs(Cont *cp) {
   }
 }
 
-// split current stack cont into two
-
+// this could also be done by creating just one new Cont
+// for arity args, adjusting the old Cont, and shifting both
 Cont *stgFunContSplit(int arity1, int excess, FnPtr (*dest)()) {
   // arity1 is arity of funoid
   // cont1 is cont to split
