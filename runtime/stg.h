@@ -278,6 +278,9 @@ void copyargs(PtrOrLiteral *dest, PtrOrLiteral *src, int count);
 // Codegen.hs currently uses STGJUMP(), STGJUMP0(f), and STGRETURN0() to
 // exit functions
 
+// ---------------------------------------------------
+// Control flow, see also cmm.h
+
 #define STGCALL0(f)				\
   CALL0_0(f)
 
@@ -291,6 +294,19 @@ void copyargs(PtrOrLiteral *dest, PtrOrLiteral *src, int count);
     RETURN0();					\
   } while(0)
 
+// bye bye!
+#define STGJUMP()						     \
+  do {								     \
+  GC();								     \
+  derefStgCurVal();						     \
+  if (getObjType(stgCurVal.op) == BLACKHOLE) {			     \
+    LOG(LOG_ERROR, "STGJUMP terminating on BLACKHOLE\n");	     \
+    showStgVal(LOG_ERROR, stgCurVal);				     \
+    exit(0);							     \
+  }								     \
+  STGJUMP0(getInfoPtr(stgCurVal.op)->entryCode);		     \
+} while (0)
+
 // return through continuation stack
 // note that the popping of a POPMECONT is just an optimization
 // RETURN0() is to let compiler know we really mean it
@@ -300,5 +316,26 @@ void copyargs(PtrOrLiteral *dest, PtrOrLiteral *src, int count);
     STGJUMP0(((Cont *)stgSP)->entryCode);		\
     RETURN0();						\
   } while(0)
+
+// evaluate Object (not actual function) IN PLACE,
+// this should probably only happen in stgApply
+#define STGEVAL(e)					     \
+  do {							     \
+  stgCurVal = e;					     \
+  Cont *callCont = stgAllocCallOrStackCont(&it_stgCallCont, 0);     \
+  callCont->layout.bits = 0x0UL;			     \
+  STGCALL0(getInfoPtr(stgCurVal.op)->entryCode);	     \
+  if (getObjType(stgCurVal.op) == BLACKHOLE) {		     \
+    LOG(LOG_ERROR, "STGEVAL terminating on BLACKHOLE\n");   \
+    showStgVal(LOG_ERROR, stgCurVal);			     \
+    exit(0);						     \
+  }							     \
+  if (getObjType(stgCurVal.op) == THUNK) {		     \
+    LOG(LOG_ERROR, "THUNK at end of STGEVAL!\n");	     \
+    showStgVal(LOG_ERROR, stgCurVal);			     \
+    assert(false);					     \
+  }							     \
+  GC();							     \
+} while (0)
 
 #endif  //ifdef stg_h

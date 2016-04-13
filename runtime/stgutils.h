@@ -50,41 +50,5 @@ void stgCaseToPopMe(Cont *contp);
 #define INTTOPL(L) ((PtrOrLiteral) {.i = L   })
 #endif
 
-// NP = number of PtrOrLiterals NO = Number of Objs
-#define STGHEAPAT(NP,NO) ((char*)stgHP - (NP*sizeof(PtrOrLiteral)) - (NO*sizeof(Obj)))
 
-// evaluate Object (not actual function) IN PLACE,
-// this should probably only happen in stgApply
-#define STGEVAL(e)					     \
-  do {							     \
-  stgCurVal = e;					     \
-  Cont *callCont = stgAllocCallOrStackCont(&it_stgCallCont, 0);     \
-  callCont->layout.bits = 0x0UL;			     \
-  STGCALL0(getInfoPtr(stgCurVal.op)->entryCode);	     \
-  if (getObjType(stgCurVal.op) == BLACKHOLE) {		     \
-    LOG(LOG_ERROR, "STGEVAL terminating on BLACKHOLE\n");   \
-    showStgVal(LOG_ERROR, stgCurVal);			     \
-    exit(0);						     \
-  }							     \
-  if (getObjType(stgCurVal.op) == THUNK) {		     \
-    LOG(LOG_ERROR, "THUNK at end of STGEVAL!\n");	     \
-    showStgVal(LOG_ERROR, stgCurVal);			     \
-    assert(false);					     \
-  }							     \
-  GC();							     \
-} while (0)
-
-// bye bye!
-#define STGJUMP()						     \
-  do {								     \
-  GC();								     \
-  derefStgCurVal();						     \
-  if (getObjType(stgCurVal.op) == BLACKHOLE) {			     \
-    LOG(LOG_ERROR, "STGJUMP terminating on BLACKHOLE\n");	     \
-    showStgVal(LOG_ERROR, stgCurVal);				     \
-    exit(0);							     \
-  }								     \
-  STGJUMP0(getInfoPtr(stgCurVal.op)->entryCode);		     \
-} while (0)
-
-#endif
+#endif // ifndef stgutils_h
