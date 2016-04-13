@@ -25,6 +25,7 @@ void stgEvalStackFrameArgs(Cont *cp) {
 // split current stack cont into two
 
 Cont *stgContSplit(int arity1, int excess, FnPtr (*dest)()) {
+  fprintf(stderr, "entering stgContSplit with arity = %d, excess = %d\n", arity1, excess);
   // arity1 is arity of funoid
   // cont1 is cont to split
   Cont *cont1 = (Cont *)stgSP;
@@ -39,27 +40,35 @@ Cont *stgContSplit(int arity1, int excess, FnPtr (*dest)()) {
   // bm.bitmap.size is set by alloc
   bm.bitmap.mask >>= arity1; // room for funoid, eliminate just right
   bm.bitmap.mask |= 0x1UL;   // funoid is boxed
-  cont2->layout = bm;
+  cont2->layout.bitmap.mask = bm.bitmap.mask;
   cont2->entryCode = dest;  // goto dest
   cont2->payload[0].op = NULL;  // no funoid yet
   #if USE_ARGTYPE
   cont2->payload[0].argType = HEAPOBJ;
   #endif
+  fprintf(stderr, "  stgContSplit 1\n");
   memcpy(&cont2->payload[1],
          &cont1->payload[1 + arity1],
 	 excess * sizeof(PtrOrLiteral));
+  fprintf(stderr, "  stgContSplit 2\n");
 
   bm = cont1->layout;
   bm.bitmap.size = pls3;  // mask can stay the same
+  assert(cont3->layout.bitmap.size == pls3);
   cont3->layout = bm;
   memcpy(&cont3->payload[0],
          &cont1->payload[0],
 	 pls3 * sizeof(PtrOrLiteral));
   //  cont3->entryCode = getInfoPtr(cont3->payload[0].op)->funFields.trueEntryCode;
+  fprintf(stderr, "  stgContSplit 3\n");
 
+  int cont1Size = getContSize(cont1);
   // quash cont1
-  memmove(cont1, cont2, getContSize(cont2) + getContSize(cont3));
-  stgSP += getContSize(cont1);
+  memmove((char *)cont3 + cont1Size, cont3, getContSize(cont2) + getContSize(cont3));
+  fprintf(stderr, "  stgContSplit 4\n");
+
+  stgSP += cont1Size;
+  fprintf(stderr, "exiting stgContSplit with arity = %d, excess = %d\n", arity1, excess);
   return (Cont *)stgSP;
 }
 
@@ -207,16 +216,18 @@ FnPtr stgApply3() {
 
       LOG(LOG_INFO, "stgApply FUNPOS %d\n", excess);
 
-      /*
+      /**/
       // split current stack frame into two, one to tail call the FUN
       // the other to stgApplyCurVal to the excess args
       stgContSplit(arity, excess, &stgApplyCurVal);
-
-      //      STGRETURN0();
       Cont *topCont = (Cont *)stgSP;
       STGJUMP0(getInfoPtr(topCont->payload[0].op)->funFields.trueEntryCode);
-      */
+      // don't want to put funoid in cont.entryCode and use STGRETURN0()
+      // because funoid expects a self-popping stack cont
+
+
       /**/
+      /*
       // call with return FUN with arity args
       // funoid + arity payload
       { Cont *newframe = stgAllocCallOrStackCont( &it_stgCallCont, 1 + arity );
@@ -245,7 +256,7 @@ FnPtr stgApply3() {
       stackframe = stgAdjustTopContSize(stackframe, -arity);
       // tail call stgApply
       STGJUMP0(stgApply);
-      /*      */
+      */
 
     } else
   
