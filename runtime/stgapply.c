@@ -219,8 +219,7 @@ FnPtr stgApply3() {
       /**/
       // split current stack frame into two, one to tail call the FUN
       // the other to stgApplyCurVal to the excess args
-      stgContSplit(arity, excess, &stgApplyCurVal);
-      Cont *topCont = (Cont *)stgSP;
+      Cont *topCont = stgContSplit(arity, excess, &stgApplyCurVal);
       STGJUMP0(getInfoPtr(topCont->payload[0].op)->funFields.trueEntryCode);
       // don't want to put funoid in cont.entryCode and use STGRETURN0()
       // because funoid expects a self-popping stack cont
