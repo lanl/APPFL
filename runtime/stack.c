@@ -79,6 +79,8 @@ Cont *stgAllocCallOrStackCont(CInfoTab *citp, int argc) {
   return contp;
 }
 
+
+/*
 // not used in favor of StgAdjustTopContSize
 // top two elements of STG stack should be STACKCONTS
 // overwrite penultimate with topmost
@@ -97,38 +99,37 @@ Cont *stgJumpAdjust() {
   LOG(LOG_DEBUG, "EXIT stgJumpAdjust\n");
   return (Cont *) stgSP;
 }
-
-
+*/
 
 // delta is in units of sizeof(PtrOrLiteral)
 // updates bitmap.size but not bitmap.mask
 Cont *stgAdjustTopContSize(Cont *cp, int delta) {
+  if (delta == 0) return cp;
 
   // we're really passing in the TOSP, important when there
   // are multiple stacks
   assert(stgGetStackArgp() == cp);
+  int oldContSize = getContSize(cp);
+  int oldPayloadSize = cp->layout.bitmap.size;
 
   // adjust bitmap size
-  int oldPayloadSize = cp->layout.bitmap.size;
   int newPayloadSize = oldPayloadSize + delta;
   cp->layout.bitmap.size = newPayloadSize;
 
-  // calculate actual cont sizes
-  int oldContSize = sizeof(Cont) + oldPayloadSize * sizeof(PtrOrLiteral);
-  //      oldContSize = ((oldContSize + 7)/8)*8;
+  // can't use getContSize because it does sanity check with _contSize
   int newContSize = sizeof(Cont) + newPayloadSize * sizeof(PtrOrLiteral);
-  //      newContSize = ((newContSize + 7)/8)*8;
-
-  if (newContSize == oldContSize)
-    return cp;
-
   cp ->_contSize = newContSize; // to go away
+  assert(newContSize == getContSize(cp));
+
   // move
   char *newStgSP = (char *)stgSP - (newContSize - oldContSize);
   if (newContSize < oldContSize)
     memmove(newStgSP, stgSP, newContSize); // shrinking
   else
     memmove(newStgSP, stgSP, oldContSize); // growing
+  // just because
+  cp = (Cont *)newStgSP;
+  assert(newContSize == getContSize(cp));
 
   // adjust stgSP and return
   stgSP = newStgSP;

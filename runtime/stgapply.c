@@ -63,11 +63,6 @@ Cont *stgContSplit(int arity1, int excess, FnPtr (*dest)()) {
   return (Cont *)stgSP;
 }
 
-
-
-
-
-
 FnPtr stgApply1();
 FnPtr stgApply2();
 FnPtr stgApply3();
