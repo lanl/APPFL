@@ -16,11 +16,4 @@ define GC() if(stgHP-stgHeap > GCThreshold*stgHeapSize) gc();
 #define EXTRASTART() LOG(LOG_SPEW, "EXTRA check file %s line %d\n", __FILE__, __LINE__)
 #define EXTRAEND() LOG(LOG_SPEW, "EXTRA check succeeded %s %d\n", __FILE__, __LINE__)
 
-static inline __attribute__((always_inline))
-void setArgType(PtrOrLiteral *f, ArgType type) {
-#if USE_ARGTYPE
-  f->argType = type;
-#endif
-}
-
-#endif
+#endif // ifndef gc_h

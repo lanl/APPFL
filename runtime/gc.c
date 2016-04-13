@@ -62,7 +62,9 @@ PtrOrLiteral updatePtrByValue (PtrOrLiteral f) {
       LOG(LOG_SPEW, "update forward %s\n", p->ident);
       f.op = (Obj *)getInfoPtr(p);
       assert(isTo(f.op));
-      setArgType(&f, HEAPOBJ);
+#if USE_ARGTYPE
+      f.argType = HEAPOBJ;
+#endif
       return f;
     } else {
       // from space && !forwarding
@@ -75,7 +77,9 @@ PtrOrLiteral updatePtrByValue (PtrOrLiteral f) {
       }
       p->_infoPtr = setLSB((InfoTab *)freePtr);
       f.op = (Obj *)freePtr;
-      setArgType(&f, HEAPOBJ);
+#if USE_ARGTYPE
+      f.argType = HEAPOBJ;
+#endif
       freePtr = (char *)freePtr + size;
       return f;
     }
@@ -83,13 +87,17 @@ PtrOrLiteral updatePtrByValue (PtrOrLiteral f) {
     // to space
     assert(!isLSBset(p->_infoPtr));
     f.op = p;
-    setArgType(&f, HEAPOBJ);
+#if USE_ARGTYPE
+    f.argType = HEAPOBJ;
+#endif
     return f;
   } else if (isSHO(p)) {
     // SHO
     assert(!isLSBset(p->_infoPtr));
     f.op = p;
-    setArgType(&f, HEAPOBJ);
+#if USE_ARGTYPE
+    f.argType = HEAPOBJ;
+#endif
     return f;
   } else {
     assert(false && "bad ptr");
