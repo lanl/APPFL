@@ -244,6 +244,8 @@ void gc(void) {
     }
   }
 
+  if(stgHP-stgHeap <= GCThreshold*stgHeapSize) return;
+
   // add stgCurVal
   if (EXTRA_CHECKS_GC) {
     assert(mayBeBoxed(stgCurVal) && "gc: unexpected unboxed arg in stgCurVal");

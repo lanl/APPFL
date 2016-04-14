@@ -15,7 +15,7 @@ void startCheck();
 
 void gc(void);
 
-#define GC() if(stgHP-stgHeap > GCThreshold*stgHeapSize) gc();
+#define GC() gc();
 
 struct _Obj;
 typedef struct _Obj Obj;
