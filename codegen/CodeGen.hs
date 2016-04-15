@@ -263,7 +263,8 @@ cgObjs objs runtimeGlobals =
         (forward, fundef) = registerSOs objs
     in (forward:forwards, fundef:fundefs)
 
-cgos :: Env -> [Obj InfoTab] -> State Int [(String, String)]
+cgos :: Env -> [Obj InfoTab] -> State Int [(String,  String)]
+--                                        [(forward, func)]
 cgos env = concatMapM (cgo env)
 
 cgo :: Env -> Obj InfoTab -> State Int [(String, String)]
@@ -420,24 +421,31 @@ cge env (EPrimop it op eas) =
                       "stgCurValU.i = " ++ fun ++ "(" ++ arg0 "i" ++ ", " ++ arg1 "i" ++ ");\n"
     in return ((inline, No), [])
 
+-- Allocating all objs in ELet before making their payloads valid is somewhat problematic
+-- if GC can be initiated by a single object allocation.  This is exacerbated by strict
+-- constructors.  This is not readily fixed by changing the order of things here because
+-- of mutually recursive definitions.  
+-- TODO:
+--   Make runtime more robust
+--   then for strict constructors evaluate the args
 cge env (ELet it os e) =
     let names = map oname os
         decl =
             concat [ "PtrOrLiteral *" ++ name ++ ";\n" | name <- names ] ++
             "{Cont *contp = stgAllocCallOrStackCont(&it_stgLetCont, " ++
                                show (length os) ++ ");\n" ++
-            "memset(contp->payload, 0, " ++
-                  show (length os) ++ " * sizeof(PtrOrLiteral));\n" ++
             concat [ name ++ " = &(contp->payload[" ++ show i ++ "]);\n" |
                      (name, i) <- zip names [0..] ] ++
             "contp->layout = " ++ npStrToBMStr (replicate (length os) 'P') ++ ";}\n"
         env'  = zip names (map HO names) ++ env
         (decls, buildcodes) = unzip $ map (buildHeapObj env') os
+--        declbuildcodes = map (buildHeapObj env') os
 
     in do
       ofunc <- cgos env' os
       ((einline, ypn), efunc) <- cge env' e
       return ((decl ++ concat decls ++ concat buildcodes ++ einline, ypn),
+--      return ((decl ++ concat declbuildcodes ++ einline, ypn),
               ofunc ++ efunc)
 
 cge env ecase@(ECase _ e a) =
@@ -630,13 +638,14 @@ cgalt env switch fvp (ADef it v e) =
 -- buildHeapObj is only invoked by ELet so TLDs not built
 
 buildHeapObj :: Env -> Obj InfoTab -> (String, String)
+-- buildHeapObj :: Env -> Obj InfoTab -> String
 buildHeapObj env o =
     let rval = bho env o
         name = oname o
         decl = name ++ "->op = stgNewHeapObj( &it_" ++ name ++ " );\n" ++
                optStr useArgType (name ++ "->argType = HEAPOBJ;\n")
     in (decl, rval)
-
+--    in decl ++ rval
 
 bho :: Env -> Obj InfoTab -> String
 bho env (FUN it vs e name) =

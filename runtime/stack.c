@@ -76,6 +76,7 @@ Cont *stgAllocCallOrStackCont(CInfoTab *citp, int argc) {
   contp->entryCode = citp->entryCode;
   contp->contType = citp->contType;
   strcpy(contp->ident, citp->name);  // may be overwritten
+  memset(contp->payload, 0, argc * sizeof(PtrOrLiteral));
   return contp;
 }
 
