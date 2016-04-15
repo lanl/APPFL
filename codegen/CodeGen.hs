@@ -334,11 +334,12 @@ stgApplyGeneric env f eas direct =
         inline =
             -- new STACKFRAME
             "{ Cont *cp = stgAllocCallOrStackCont( &it_stgStackCont, " ++
-                 show (length pnstring + 1) ++ ");\n" ++
-            "  cp->layout = " ++ npStrToBMStr ('P' : pnstring ) ++ ";\n" ++
-            "  cp->payload[ 0 ] = " ++ cgv env f' ++ ";\n" ++
+                 show (length pnstring + 2) ++ ");\n" ++
+            "  cp->layout = " ++ npStrToBMStr ('N' : 'P' : pnstring ) ++ ";\n" ++
+            "  cp->payload[ 0 ] = " ++ cga [] (LitI 0) ++ ";\n" ++
+            "  cp->payload[ 1 ] = " ++ cgv env f' ++ ";\n" ++
             concat ["  cp->payload[ " ++ show i ++ " ] = " ++ cga env a ++ ";\n"
-                    | (i,a) <- zip [1..] as ] ++
+                    | (i,a) <- zip [2..] as ] ++
 
             (if direct then
                 "  // DIRECT TAIL CALL " ++ f ++ " " ++ showas as ++ "\n" ++
@@ -348,7 +349,7 @@ stgApplyGeneric env f eas direct =
                 "  STGJUMP0(fun_" ++ f ++ ");\n"
             else
                 "  // INDIRECT TAIL CALL " ++ f' ++ " " ++ showas as ++ "\n" ++
-                "  STGJUMP0(stgApply);\n") ++
+                "  STGJUMP0(stgApplyNew);\n") ++
             "}\n"
     in return ((inline, Yes), [])
 
@@ -379,7 +380,7 @@ cge env e@(EFCall it f eas) =
     case (knownCall it) of
       Nothing -> stgApplyGeneric env f eas False
       Just kit -> if arity kit == length eas
-                  then stgApplyGeneric env f eas True
+                  then stgApplyGeneric env f eas False
                   else stgApplyGeneric env f eas False
 
 cge env (EPrimop it op eas) =

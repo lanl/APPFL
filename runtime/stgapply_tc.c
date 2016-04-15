@@ -150,6 +150,13 @@ FnPtr stgApply() {
   STGJUMP();  // bye bye
 }
 
+FnPtr stgApplyNew() {
+  Cont *stackframe = stgGetStackArgp();
+  stackframe->entryCode = &stgApply2;
+  stgCurVal = stackframe->payload[1];  // the funoid
+  STGJUMP();  // bye bye
+}
+
 FnPtr stgApply2() {
   Cont *stackframe = stgGetStackArgp();
   derefStgCurVal();
@@ -177,10 +184,10 @@ FnPtr stgApply2() {
       Bitmap64 papargmap = argv[0].op->payload[fvCount].b;
       int papargc = papargmap.bitmap.size;
       arity -= papargc;
-      int excess = fargc - arity;
-      argsToEval = excess >= 0 ? arity : 0;
-      break;
     } // if PAP
+    int excess = fargc - arity;
+    argsToEval = excess >= 0 ? arity : 0;
+    break;
   } // STRICT1
   } // switch
 

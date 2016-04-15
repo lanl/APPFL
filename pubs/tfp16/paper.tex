@@ -753,7 +753,9 @@ fully functioning serial implementation including
 \item code generator \emph{(some student contribution)},
 \item runtime system including a garbage collector,
 \item continuous integration and testing system,
-\item extensive test suite \emph{(mostly by students)}.
+\item extensive test suite \emph{(mostly by students\footnote{Many are
+    students' solutions to exercises in learning algorithms and data
+    structures.})}.
 \end{itemize}
 
 The \emph{mini-Haskell} front-end is detailed in Appendix~A.
@@ -792,9 +794,8 @@ The fault-tolerance mechanisms remain future work.
 
 \section{Related Work}
 
-Various papers describing some of the inner workings of GHC at various points
-in its evolution have greatly informed our approach and these have all been
-previously cited.
+Previously cited papers describing some of the inner workings of GHC at
+various points in its evolution have greatly informed our approach.
 
 \subsubsection{Strict but still pure.}
 The concept of strict but still pure in some sense dates back to the concept
@@ -846,7 +847,7 @@ handling~\cite{Pointon:2001}.  However, it appears that their scheme for
 handling failed processing elements correctly may have
 never been implemented~\cite{Trinder:2000}.
 
-Recently, Robert Stewart extended Haskell Distributed Parallel Haskell
+More recently, Robert Stewart extended Haskell Distributed Parallel Haskell
 (HdpH)~\cite{hdph} to be fault resilient at an impressive scale---1400 cores
 on a distributed memory system.  Here the key recovery strategy is task
 replication~\cite{Stewart:2013}.
