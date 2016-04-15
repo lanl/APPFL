@@ -23,6 +23,8 @@ ten = CON(I 10);
 false = CON(False);
 true = CON(True);
 
+blackhole = THUNK(blackhole);
+
 
 -------------- Primop Aliases  ----------------------------
 -- allows treatment of primops as functions
