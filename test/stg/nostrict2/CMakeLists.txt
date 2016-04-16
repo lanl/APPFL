@@ -1,4 +1,4 @@
-project(stgc_test_stg_nonstrict)
+project(stgc_test_stg_nostrict2)
   
 set(STGCC "${CMAKE_CURRENT_BINARY_DIR}/../../../bin/stgc")
 set(SRC_DIR ${CMAKE_SOURCE_DIR}/test/stg/nonstrict)
@@ -19,21 +19,26 @@ foreach (test ${ALL_SRCS})
     set(binary ${BIN_DIR}/${tname})
     add_test(${build} ${STGCC} -v ${SRC_DIR}/${tname}.stg -o ${tname})
 
-    #with gc     
-    add_test_true(${tname}_nonstrict ${build} ${binary} -l${RT_LOG_LEVEL} -e0 2>&1)           
-    
-    #w/o gc 
-    add_test_true(${tname}_nonstrict_nogc ${build} ${binary} -l${RT_LOG_LEVEL} -e0 -g 2>&1)     
+    foreach (strict 0 1 2)
+      if(strict EQUAL 0) 
+         set(name ${tname}_nonstrict)
+      else()
+         set(name ${tname}_strict${strict})
+      endif() 
 
-    foreach (strict 1 2)
-      set(name ${tname}_strict${strict})
- 
-      #with gc
-      add_test_blackhole(${name} ${build} ${binary} -l${RT_LOG_LEVEL} -e${strict} 2>&1)  
+      if (strict EQUAL 2)
+        #with gc
+        add_test_blackhole(${name} ${build} ${binary} -l${RT_LOG_LEVEL} -e${strict} 2>&1)  
 
-      #w/o gc
-      add_test_blackhole(${name}_nogc ${build} ${binary} -l${RT_LOG_LEVEL} -e${strict} -g 2>&1)  
+        #w/o gc
+        add_test_blackhole(${name}_nogc ${build} ${binary} -l${RT_LOG_LEVEL} -e${strict} -g 2>&1)  
+      else()
+        #with gc
+        add_test_true(${name} ${build} ${binary} -l${RT_LOG_LEVEL} -e${strict} 2>&1)  
 
+        #w/o gc
+        add_test_true(${name}_nogc ${build} ${binary} -l${RT_LOG_LEVEL} -e${strict} -g 2>&1)  
+      endif()
     endforeach()
 endforeach(test)
 
