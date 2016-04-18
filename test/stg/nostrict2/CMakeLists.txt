@@ -1,8 +1,8 @@
 project(stgc_test_stg_nostrict2)
   
 set(STGCC "${CMAKE_CURRENT_BINARY_DIR}/../../../bin/stgc")
-set(SRC_DIR ${CMAKE_SOURCE_DIR}/test/stg/nonstrict)
-set(BIN_DIR ${BINARY_DIR}/stg/nonstrict)
+set(SRC_DIR ${CMAKE_SOURCE_DIR}/test/stg/nostrict2)
+set(BIN_DIR ${BINARY_DIR}/stg/nostrict2)
 
 macro(add_test_blackhole name build command)
     add_test(${name} ${command} ${ARGN})
