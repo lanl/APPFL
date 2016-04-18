@@ -38,4 +38,5 @@ foreach (test ${ALL_SRCS})
 endforeach(test)
 
 add_subdirectory(nonstrict)
+add_subdirectory(nostrict2)
 add_subdirectory(error)

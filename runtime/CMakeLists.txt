@@ -8,12 +8,12 @@ project(runtime)
               gc.h
               log.h
               obj.h
-	      heap.h
+	          heap.h
               stack.h
               stg.h
               stgutils.h
     	      cruntime.h
-	      stgc.h
+	          stgc.h
               stgapply.h
     )
 
@@ -24,10 +24,11 @@ project(runtime)
               gc.c
               stg.c
               stgutils.c
-	      show.c
+	          show.c
               stack.c
-	      stgapply.c
-	      heap.c
+              stgapply_cwr.c
+              stgapply_tc.c
+	          heap.c
     )
 
 include_directories(".."

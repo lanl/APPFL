@@ -18,17 +18,22 @@ foreach (test ${ALL_SRCS})
     set(build build_${tname})
     set(binary ${BIN_DIR}/${tname})
     add_test(${build} ${STGCC} -v ${SRC_DIR}/${tname}.stg -o ${tname})
-     
-    #non-strict w/ gc
+
+    #with gc     
     add_test_true(${tname}_nonstrict ${build} ${binary} -l${RT_LOG_LEVEL} -e0 2>&1)           
-     
-    #non-strict w/o gc
+    
+    #w/o gc 
     add_test_true(${tname}_nonstrict_nogc ${build} ${binary} -l${RT_LOG_LEVEL} -e0 -g 2>&1)     
 
-    #strict w/ gc 
-    add_test_blackhole(${tname}_strict ${build} ${binary} -l${RT_LOG_LEVEL} -e1 2>&1)           
+    foreach (strict 1 2)
+      set(name ${tname}_strict${strict})
+ 
+      #with gc
+      add_test_blackhole(${name} ${build} ${binary} -l${RT_LOG_LEVEL} -e${strict} 2>&1)  
 
-    #strict w/o gc
-    add_test_blackhole(${tname}_strict_nogc ${build} ${binary} -l${RT_LOG_LEVEL} -e1 -g 2>&1)           
+      #w/o gc
+      add_test_blackhole(${name}_nogc ${build} ${binary} -l${RT_LOG_LEVEL} -e${strict} -g 2>&1)  
+
+    endforeach()
 endforeach(test)
 
