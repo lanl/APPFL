@@ -1,5 +1,0 @@
-I ->
-    TyCon name: Int
-    boxed: True
-    TyVars: []
-    DataCons: [I Int_h]
