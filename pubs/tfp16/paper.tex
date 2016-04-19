@@ -76,7 +76,7 @@ fault tolerance.
 We do not consider speculative evaluation, or semantic strictness inferred by
 program analysis, so potential parallelism is dictated by the degree of
 strictness.\\
-{\color{OliveGreen}
+{\color{OliveGreen} % \bf
 \emph{Draft paper notes:}
 \begin{enumerate}[before=\itshape]
 \item We are reporting work in progress.  At the time of writing we have a
@@ -86,11 +86,11 @@ strictness.\\
   implementation by the time of the symposium.  The fault-tolerance mechanisms
   remain future work.
 
-\item Hopefully in the spirit of a student-friendly symposium, this draft
-  is liberally annotated with indicators of student contributions, 
-  student preparation, the influence of their involvement on our approach,
-  and other ancillary comments.
-  A final paper would of course be cleaned up.
+\item Hopefully in the spirit of a student-friendly symposium, this draft is
+  liberally annotated with indicators of student contributions, student
+  preparation, the influence of their involvement on our approach, and other
+  incidental and ancillary comments.  A final paper would of course be cleaned
+  up.
 
 \item While \textcolor{OrangeRed}{this does not qualify as a student paper}, students
   (undergraduate!) have contributed considerably to this effort, and to the
@@ -242,7 +242,7 @@ burdensome and error-prone, it can severely warp the engineering of the
 application because it must be designed such that consistent, essential state
 can be readily captured.  Finally, the scalability of global
 checkpoint/restart is reaching its end as data transfer to backing store
-becomes an increasing bottleneck~\cite{DOE:2009}.
+becomes an increasing bottleneck~\cite{Daly:2006,DOE:2009}.
 
 In the imperative world side-effect-free tasks could be safely restarted after
 failure, needing only their well-defined inputs and not arbitrary access to
@@ -793,7 +793,7 @@ The fault-tolerance mechanisms remain future work.
 Parallel garbage collection is likely out of scope.
 
 %We have implemented a simple copying garbage collector~\cite{Cheney:1970} with
-%small \emph{nurseries} in the multithreaded case~\cite{Marlow:2008}. 
+%small \emph{nurseries} in the multithreaded case~\cite{Marlow:2008}. Marlow:2011 as well
 
 
 %\cite{Harris:2005,Marlow:2008,Marlow:2009}
@@ -1095,7 +1095,7 @@ unzip = FUN(list ->
   case list of { Nil -> let {res = CON( TP2 nil nil)} in res;
                  Cons x xs ->
                    case x of {
-                     TP2 a b ->     --TP2 is the Tuple constructor
+                     TP2 a b ->     --TP2 is the pair constructor
                        case unzip xs of {
                          TP2 as bs ->
                            let {aas = CON(Cons a as);
