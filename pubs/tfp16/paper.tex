@@ -506,7 +506,7 @@ unnecessary creation of \emph{THUNKS} as discussed in Appendix~A.
 \subsection{STG to C}
 The back-end is written in Haskell and generates C code; the runtime system is
 written in C/C++. This gives us the extensive optimization performed by modern
-C compilers such as gcc and Clang/LLVM. The system fairly faithfully
+C compilers such as GCC and Clang/LLVM. The system fairly faithfully
 implements the STG machine as described in \emph{EA} and dynamically
 illustrated by Pope's Ministg~\cite{ministg} with the exception of the state
 transition rules which may be different than those for non-strict semantics.
@@ -526,33 +526,34 @@ calls to the runtime, in other words, when executing code generated from the
 user program (and not in a runtime call), there must be no growing of (pushing
 return addresses or data onto) the C stack.
 %
-To clearly distinguish between a notional C call (a syntactic concept) and a
-machine-level call (pushing a return address onto the native C stack) we will
-refer to the latter as \emph{call-with-return}, and to a machine-level tail
-call as \emph{jump}.
+To clearly distinguish what a C call (a syntactic concept) can compile to, we
+will refer to a machine-level call (pushing a return address onto the native C stack)
+as \emph{call-with-return}, and to a machine-level jump as \emph{jump}.
 
-First we establish that this is possible in principle.  By maintaining our own
-data and control (continuation) stack all generated C functions can take no
-explicit arguments and have return type \emph{void}. If we arrange that
-generated C code has only calls (other than runtime calls, which do not call
-back to user-program code) in tail call positions, that is, immediately before
-a return in the control flow graph, then at non-zero optimization levels both
-gcc and Clang/LLVM will generate jumps instead of calls-with-return for C
-calls.  When using gcc we can also use a fixed set of machine registers for
-passing/returning values, much like GHC using the LLVM back-end with its
+First we establish that this is possible in principle on x86-64/Linux.  By
+maintaining our own data and control (continuation) stack all generated C
+functions can take a uniform (including empty) set of explicit arguments and
+have uniform return type). If we arrange that generated C code has only calls
+(other than runtime or other external calls, which do not call back to
+user-program code) in tail call positions, that is, immediately before a
+return in the control flow graph, then at non-zero optimization levels both
+GCC and Clang/LLVM will generate jumps instead of calls-with-return for C
+calls.  When using GCC we can also use an explicit set of machine registers
+for passing/returning values, much like GHC using the LLVM back-end with its
 custom GHC calling convention.
 
-
-The STG abstract machine is implemented using a continuation stack.
+The STG abstract machine is implemented using a combined data and continuation stack.
 Continuations contain a code pointer, optionally some data, and layout
-information for the benefit of the garbage collector.  For example, the
-argument frame for a function call is one type of continuation.  When the
-evaluation of a C function (corresponding to some STG code) is completed its
-return is by an indirect jump using the code pointer in the continuation on
-the top of the stack (``returning through the continuation stack'').  In the
-case of an argument frame for a function, the associated code simply pops the
-continuation off the stack and returns through the next continuation on the
-stack.
+information for the benefit of the garbage collector.  
+% For example, the argument frame for a function call is one type of
+% continuation.
+When the evaluation of a C function (corresponding to some STG code) is
+completed its return is by an indirect jump using the code pointer in the
+continuation on the top of the stack (``returning through the continuation
+stack'').
+%In the case of an argument frame for a function, the associated code simply
+%pops the continuation off the stack and returns through the next continuation
+%on the stack.
 
 \emph{EA} describes a family of generic C-{}- \emph{stgApply} runtime
 functions used for applications of non-known (not statically identifiable)
@@ -697,7 +698,7 @@ to a number of arguments equal to its arity, \emph{stgApply} need not be
 invoked: the \emph{FUN} is tail-called directly.
 
 
-In addition to being in a tail call position, the gcc constraints for
+In addition to being in a tail call position, the GCC constraints for
 generating a tail call (jump) are (approximately) that the total size of the
 caller and callee arguments be equal, and the return type sizes be equal.  For
 Clang the requirement is slightly more strict: caller and callee type
@@ -780,10 +781,15 @@ logging and debugging information.  This is detailed in Appendix~B.
 
 % For various reasons we have chosen to make our implementation 64-bit only.
 
-We are currently developing the parallel runtime.  Parallel garbage collection
-is likely out of scope.
+For simplicity the implementation is 64-bit only.
+%
+The current prototype parallel runtime is based on Pthreads and a non-blocking
+work queue~\cite{Michael:1996}.  We are currently developing a more realistic
+parallel runtime, experimenting with using the Argobots user-level thread library~\cite{Seo:2015}.
 %
 The fault-tolerance mechanisms remain future work.
+%
+Parallel garbage collection is likely out of scope.
 
 %We have implemented a simple copying garbage collector~\cite{Cheney:1970} with
 %small \emph{nurseries} in the multithreaded case~\cite{Marlow:2008}. 
@@ -857,8 +863,8 @@ replication~\cite{Stewart:2013}.
 Funding for this project has been provided by the DOE NNSA LANL Laboratory
 Directed Research and Development program award 20150845ER; the National
 Science Foundation Science, Technology, Engineering, and Mathematics Talent
-Expansion Program (STEP) program for undergraduate students; and the DOE
-Science Undergraduate Laboratory Internship (SULI) program.
+Expansion Program (NSF STEP) program for undergraduate students; and the Department of Energy
+Science Undergraduate Laboratory Internship (DOE SULI) program.
 %
 Los Alamos National Laboratory is managed and operated by Los Alamos National
 Security, LLC (LANS), under contract number DE-AC52-06NA25396 for the
@@ -1008,7 +1014,8 @@ argument type).  Because STG allows only \emph{atoms} (variables or literal
 values) in argument positions, naive translation of Haskell \texttt{f e} to
 \texttt{let \{x = e\} in f x}, followed by naive code generation, will result in
 an unnecessary heap allocation.  An alternative is to translate to
-\texttt{case e of x \{\_ -> f x\}}.
+\texttt{case e of x \{\_ -> f x\}}, which we regard as a role of a front-end
+such as mini-Haskell.
 
 \subsubsection{The layout rule.}
 Mini-Haskell implements Haskell's layout rule in an almost direct translation
@@ -1051,7 +1058,7 @@ append = FUN(l1 l2 ->
                 Cons hd tl -> 
                   let { rec = THUNK(append tl l2);
                         result = CON(Cons hd rec) }
-                  in result });
+                  in result })
 \end{verbatim}
 In mini-Haskell, expressions may be applied to other expressions, so the
 recursive call to \texttt{append} can be parenthesized. There is no need for the
@@ -1093,7 +1100,7 @@ unzip = FUN(list ->
                            let {aas = CON(Cons a as);
                                 bbs = CON(Cons b bs);
                                 res = CON(TP2 aas bbs)}
-                           in res; }}});
+                           in res }}})
 \end{verbatim}
 In mini-Haskell, this becomes
 \begin{verbatim}
