@@ -9,7 +9,7 @@
 %
 % mkd for preliminary paper notes
 \usepackage{enumitem} 
-\usepackage{color} % for parenthetical notes while paper is in progress
+\usepackage[dvipsnames]{xcolor} % for parenthetical notes while paper is in progress
 \usepackage{comment} % comment environment
 \usepackage{hyperref} 
 %
@@ -75,27 +75,26 @@ fault tolerance.\\
 %We do not consider speculative evaluation, or semantic strictness inferred by
 %program analysis, so potential parallelism is dictated by the degree of
 %strictness.
+{\color{OliveGreen}
 \emph{Draft paper notes:}
 \begin{enumerate}[before=\itshape]
 \item We are reporting work in progress.  At the time of writing we have a
-  complete serial implementation, a primitive proof-of-concept parallel
+  serial implementation, a primitive proof-of-concept parallel
   implementation, and are currently developing a more realistic parallel
   runtime.  We expect to have preliminary results from our new parallel
   implementation by the time of the symposium.  The fault-tolerance mechanisms
   remain future work.
 
-\item Hopefully in the spirit of a student-friendly symposium, for this draft
-  version we have chosen a more informal, conversational style of presentation
-  than necessarily appropriate for a final paper, have highlighted student
-  preparation, involvement, and its influence on our approach, and pointed out
-  some specific student contributions.
+\item Hopefully in the spirit of a student-friendly symposium, this draft
+  version is liberally annotated with indicators of student contributions, 
+  student preparation, and the influence of their involvement on our approach.
 
-\item While this \emph{does not qualify} as a student paper, students
+\item While \textcolor{OrangeRed}{this does not qualify as a student paper}, students
   (undergraduate!) have contributed considerably to this effort, and to the
   writing of this paper, and will continue to do so.  If this paper is
   accepted we plan to have one of these students present it at TiFP.
 \end{enumerate}
-
+}
 
 \keywords{ Strict pure functional programming, automatic parallelization,
   Haskell, STG, GHC, GHC Core, transparent fault tolerance.  }
@@ -783,7 +782,7 @@ logging and debugging information.  This is detailed in Appendix~B.
 
 For simplicity the implementation is 64-bit only.
 %
-The current prototype parallel runtime is based on Pthreads and a non-blocking
+The current, primitive parallel runtime is based on Pthreads and a non-blocking
 work queue~\cite{Michael:1996}.  We are currently developing a more realistic
 parallel runtime, experimenting with using the Argobots user-level thread library~\cite{Seo:2015}.
 %
