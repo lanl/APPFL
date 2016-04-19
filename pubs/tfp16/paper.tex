@@ -71,10 +71,11 @@ is transparent fault tolerance.  Our project goal is the demonstration of a
 light-weight, higher-order, polymorphic, pure functional language
 implementation in which we can experiment with automatic parallelization
 strategies, varying degrees of strictness, and mechanisms for transparent
-fault tolerance.\\
-%We do not consider speculative evaluation, or semantic strictness inferred by
-%program analysis, so potential parallelism is dictated by the degree of
-%strictness.
+fault tolerance.
+%
+We do not consider speculative evaluation, or semantic strictness inferred by
+program analysis, so potential parallelism is dictated by the degree of
+strictness.\\
 {\color{OliveGreen}
 \emph{Draft paper notes:}
 \begin{enumerate}[before=\itshape]
@@ -86,18 +87,20 @@ fault tolerance.\\
   remain future work.
 
 \item Hopefully in the spirit of a student-friendly symposium, this draft
-  version is liberally annotated with indicators of student contributions, 
-  student preparation, and the influence of their involvement on our approach.
+  is liberally annotated with indicators of student contributions, 
+  student preparation, the influence of their involvement on our approach,
+  and other ancillary comments.
+  A final paper would of course be cleaned up.
 
 \item While \textcolor{OrangeRed}{this does not qualify as a student paper}, students
   (undergraduate!) have contributed considerably to this effort, and to the
   writing of this paper, and will continue to do so.  If this paper is
-  accepted we plan to have one of these students present it at TiFP.
+  accepted we plan to have one of these students present it at TiFP'16.
 \end{enumerate}
 }
 
-\keywords{ Strict pure functional programming, automatic parallelization,
-  Haskell, STG, GHC, GHC Core, transparent fault tolerance.  }
+\keywords{Strict pure functional programming, automatic parallelization,
+  transparent fault tolerance, Haskell, STG, GHC, Core.}
 
 \end{abstract}
 
@@ -230,16 +233,16 @@ systems are of course in languages with strict function-call semantics.
 In the quest for computing platforms approaching exascale, it is widely
 recognized that new mechanisms for fault tolerance will need to be built into
 the software stack.  Current practice in HPC is checkpoint/restart, wherein at
-various points in time sufficient program state is dumped to backing store
+various points in time sufficient global program state is dumped to backing store
 such that the program, in case of a fault, can be (manually) restarted from
 the last stored state.  Most implementations are explicit, though there has
 been some success with transparent (invisible to the programmer) systems.
 Wiring checkpoint/restart into a large-scale application is not only
 burdensome and error-prone, it can severely warp the engineering of the
 application because it must be designed such that consistent, essential state
-can be readily captured.  Furthermore, there is a concern that the scalability
-of checkpoint/restart is reaching its end as data transfer to backing store
-becomes an increasing bottleneck.
+can be readily captured.  Finally, the scalability of global
+checkpoint/restart is reaching its end as data transfer to backing store
+becomes an increasing bottleneck~\cite{DOE:2009}.
 
 In the imperative world side-effect-free tasks could be safely restarted after
 failure, needing only their well-defined inputs and not arbitrary access to
@@ -254,13 +257,12 @@ pure functional setting, on a large-scale distributed-memory
 system~\cite{Stewart:2013}.
 
 We claim, then, that there is a trend, in HPC at least, towards
-\emph{strict-by-default pure functional programming} and automatic
-parallelism.
+\emph{strict-by-default pure functional programming} and \emph{automatic
+parallelism}.
 %whether as imposed by programmer discipline, a parallel runtime system, or the
 %language itself (e.g.\ strict Haskell).
-Second, we claim that there is a trend in
-high-performance computing, and by transitivity (in addition to Stewart's
-work) in functional programming, towards transparent fault tolerance.
+Second, we claim that there is a trend in high-performance computing, and
+functional programming, towards \emph{transparent fault tolerance}.
 
 \subsection{Strictness and Parallelism}
 It is a trivial observation that given strict functional semantics, wherein
@@ -312,7 +314,7 @@ discussed at some length.
 A minor, informal goal is to gain a sense of how often relatively
 inexperienced functional programmers make essential use of
 non-strictness.\footnote{The starting experience of our student interns to
-  date has been normalized by having them complete Hutton's \emph{Programming
+  date has been normalized by having them work through the entirety of Hutton's \emph{Programming
     in Haskell} textbook~\cite{Hutton-book} as baseline preparation,
   substituting his article \emph{Higher-order Functions for
     Parsing}~\cite{Hutton-parsing:1992} for the corresponding material in the
@@ -401,10 +403,9 @@ Program      & $\mathit{prog}$ & ::= & $\mathit{(o|d)decl}_1$ \texttt{;}        
 Our incarnation of STG, as shown in Figure~\ref{fig:STGsyntax}, is meant to
 evoke both an abstract and concrete syntax.  This formulation and presentation
 is adapted from Marlow and Peyton Jones' \emph{Eval/Apply}
-paper~\cite{Marlow:2004}, to which we refer so many times that we will
-subsequently refer to it as simply \emph{EA}.  A (\emph{BLACKHOLE}),
-signifying a \emph{THUNK} being evaluated, is only a runtime entity and
-not part of the language.
+paper~\cite{Marlow:2004}, to which we will subsequently refer as \emph{EA}\@.  A
+\emph{BLACKHOLE}, signifying a \emph{THUNK} being evaluated, is only a
+runtime entity and not part of the language.
 
 With a few exceptions the semantics of STG is what a Haskell programmer
 familiar with unboxed types would expect for a higher-order, polymorphic, pure
@@ -526,13 +527,14 @@ user program (and not in a runtime call), there must be no growing of (pushing
 return addresses or data onto) the C stack.
 %
 To clearly distinguish what a C call (a syntactic concept) can compile to, we
-will refer to a machine-level call (pushing a return address onto the native C stack)
-as \emph{call-with-return}, and to a machine-level jump as \emph{jump}.
+will refer to a machine-level call---pushing a return address onto the native
+C stack---as \emph{call-with-return}, and to a machine-level jump as
+\emph{jump}.
 
 First we establish that this is possible in principle on x86-64/Linux.  By
 maintaining our own data and control (continuation) stack all generated C
 functions can take a uniform (including empty) set of explicit arguments and
-have uniform return type). If we arrange that generated C code has only calls
+have uniform return type. If we arrange that generated C code has only calls
 (other than runtime or other external calls, which do not call back to
 user-program code) in tail call positions, that is, immediately before a
 return in the control flow graph, then at non-zero optimization levels both
@@ -721,14 +723,14 @@ Hindley-Milner type inference and enforcement following Heren et
 al.~\cite{Heren02}, again extended with unboxed types.  The extensions to the
 type inference algorithm, syntax, and restrictions for unboxed types follow
 Peyton Jones and Launchbury~\cite{Jones:1991}.
-\begin{comment}
+%\begin{comment}
 % breaks the page limit
-For convenience general recursive
-\texttt{let}s are implicitly factored in the usual way to maximize let-polymorphism;
+For convenience we allow general recursive
+\texttt{let}s that are implicitly factored in the usual way to maximize let-polymorphism;
 this would normally already be performed by a front-end.
-\end{comment}
+%\end{comment}
 \begin{comment}
-% breaks the page limit
+ breaks the page limit
 One would expect an automated STG generator such as GHC to factor recursive
 \texttt{let} expressions into nested recursive and non-recursive \texttt{let}s
 in the usual way to maximize let-polymorphism.  Because our STG is intended
@@ -740,7 +742,7 @@ inspired by King and Launchbury~\cite{King:1995}.
 \section{Current Status (April 8, 2016), Future Work}
 
 An almost unbounded amount of interesting development suggests itself; one
-such path would lead to the recreation of GHC.  However, given the minuscule
+such path could in principle lead to the recreation of GHC\@.  However, given the minuscule
 budget (and therefore the employment of student interns) we must maintain
 sharp focus on the main goals: implementing and evaluating mechanisms for
 automatic parallelism and fault tolerance.  At the time of writing we have a
@@ -1187,10 +1189,10 @@ which is partitioned into a number of directories which control what
 testing is done. Given our goal of exploring various
 levels of strictness, most tests are run with all evaluation strategies (three
 degrees of function strictness by two degrees of constructor strictness).
-One interesting class of test programs are those which require lazy or non-strict
+One interesting class of test programs are those that require lazy or non-strict
 semantics. For these programs we test not only that the test leads to the expected
 result with non-strict semantics, but also that the program returns a
-\emph{BLACKHOLE} in the case of strict semantics. Students who were Haskell/STG
+\emph{BLACKHOLE} in the case of a stricter semantics. Students who were Haskell/STG
 beginners have contributed substantially to the test suite. We have also found
 that the test suite has been of use as a learning tool for these students to
 discover what level of non-strictness was required for their programs,
@@ -1198,18 +1200,17 @@ a benefit that we did not initially envision. Over time we have developed
 extensive STG and mini-Haskell preludes of common programming patterns to
 aid in the writing of test programs.
 
-Another important class of test programs are those which should fail with a
+Another important class of test programs are those that should fail with a
 known error, e.g., a parsing or typing error.  For these programs the test
 suite checks the output against an expected error regular expression. This
 class of test programs has proved valuable in development and debugging of
 both the STG and mini-Haskell front-ends.
 
 We also run each test with various levels of garbage collection enabled. This
-has exposed bugs not only in the garbage collector, but also in the code
-generator and runtime.  Interestingly, in practice garbage collection both
-masks and exposes bugs.
+has exposed bugs in both the code generator and runtime system.
+Interestingly, in practice garbage collection can both mask and expose bugs.
 
-The various enumerations of strictness and garbage collection levels mean that
+The various combinations of strictness and garbage collection levels mean that
 we run a quite large number of tests (currently order thousands). However,
 this is fully automated via the testing and continuous integration
 infrastructure.
