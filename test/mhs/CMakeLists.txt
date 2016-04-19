@@ -15,25 +15,21 @@ endmacro(add_test_true)
 file(GLOB ALL_SRCS *.mhs)
 
 foreach (test ${ALL_SRCS})
-    get_filename_component(name ${test} NAME_WE)
-    set(tname mhs_${name})
+    get_filename_component(fname ${test} NAME_WE)
+    set(tname mhs_${fname})
     set(build build_${tname})
     set(binary ${BIN_DIR}/${tname})
-    add_test(${build} ${STGCC} -v ${SRC_DIR}/${name}.mhs -o ${tname})
+    add_test(${build} ${STGCC} -v ${SRC_DIR}/${fname}.mhs -o ${tname})
 
     foreach (strict 0 1 2)
-      if(strict EQUAL 0)
-         set(name ${tname}_nonstrict)
-      else()
-         set(name ${tname}_strict${strict})
-      endif()
+      foreach (constr 0)
+        set(name ${tname}_e${strict}_c${constr})
 
-      #with gc
-      add_test_true(${name} ${build} ${binary} -l${RT_LOG_LEVEL} -e${strict} 2>&1)
+        #with gc
+        add_test_true(${name} ${build} ${binary} -l${RT_LOG_LEVEL} -e${strict} 2>&1)
 
-      #w/o gc
-      add_test_true(${name}_nogc ${build} ${binary} -l${RT_LOG_LEVEL} -e${strict} -g 2>&1)
-
+        #w/o gc
+        add_test_true(${name}_g ${build} ${binary} -l${RT_LOG_LEVEL} -e${strict} -g 2>&1)
+      endforeach(constr)
     endforeach(strict)
-
 endforeach(test)

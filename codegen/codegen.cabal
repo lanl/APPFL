@@ -18,21 +18,3 @@ executable stgc
                    , ghc-prim
 --                   , language-c
 
-test-suite test
-  type:            exitcode-stdio-1.0
-  hs-source-dirs:  .,MHS,tests
-  main-is:         test.hs
-  ghc-options:      -j -W -fno-warn-unused-binds -fno-warn-unused-matches -fno-warn-unused-imports -rtsopts
-  build-depends:   HUnit
-                 , QuickCheck
-                 , base >= 4
-                 , bytestring
-                 , pretty >= 1.1.1.1
-                 , tasty > 0.10
-                 , tasty-ant-xml
-                 , tasty-golden
-                 , tasty-hunit
-                 , tasty-quickcheck
- 
-
-

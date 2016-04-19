@@ -29,10 +29,7 @@ runtime: setup
 	@(cd $(build_dir); cmake $(cmake_flags) ..)
 	@(cd $(build_dir); make $(build_flags))
 
-test: ctest tastytest
-
-tastytest: all
-	@(cd codegen && cabal test)
+test: ctest 
 
 ctest: all
 	$(MAKE) _ctest

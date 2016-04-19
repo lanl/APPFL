@@ -20,25 +20,23 @@ foreach (test ${ALL_SRCS})
     add_test(${build} ${STGCC} -v ${SRC_DIR}/${tname}.stg -o ${tname})
 
     foreach (strict 0 1 2)
-      if(strict EQUAL 0) 
-         set(name ${tname}_nonstrict)
-      else()
-         set(name ${tname}_strict${strict})
-      endif() 
+      foreach (constr 0) 
+        set(name ${tname}_e${strict}_c${constr})
 
-      if (strict EQUAL 2)
-        #with gc
-        add_test_blackhole(${name} ${build} ${binary} -l${RT_LOG_LEVEL} -e${strict} 2>&1)  
+        if (strict EQUAL 2)
+          #with gc
+          add_test_blackhole(${name} ${build} ${binary} -l${RT_LOG_LEVEL} -e${strict} 2>&1)  
 
-        #w/o gc
-        add_test_blackhole(${name}_nogc ${build} ${binary} -l${RT_LOG_LEVEL} -e${strict} -g 2>&1)  
-      else()
-        #with gc
-        add_test_true(${name} ${build} ${binary} -l${RT_LOG_LEVEL} -e${strict} 2>&1)  
+          #w/o gc
+          add_test_blackhole(${name}_g ${build} ${binary} -l${RT_LOG_LEVEL} -e${strict} -g 2>&1)  
+        else()
+          #with gc
+          add_test_true(${name} ${build} ${binary} -l${RT_LOG_LEVEL} -e${strict} 2>&1)  
 
-        #w/o gc
-        add_test_true(${name}_nogc ${build} ${binary} -l${RT_LOG_LEVEL} -e${strict} -g 2>&1)  
-      endif()
-    endforeach()
+          #w/o gc
+          add_test_true(${name}_g ${build} ${binary} -l${RT_LOG_LEVEL} -e${strict} -g 2>&1)  
+        endif()
+      endforeach(constr)
+    endforeach(strict)
 endforeach(test)
 

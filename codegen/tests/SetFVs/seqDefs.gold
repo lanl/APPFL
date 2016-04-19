@@ -1,3 +1,0 @@
-seq = ([] ,[] ) FUN( x y ->
-    ([x y] ,[x y] ) case ([x] ,[x] ) x
-    of { ([y] ,[y] ) z -> ([y] ,[y] ) y})

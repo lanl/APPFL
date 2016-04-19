@@ -26,8 +26,7 @@ project(runtime)
               stgutils.c
 	          show.c
               stack.c
-              stgapply_cwr.c
-              stgapply_tc.c
+              stgapply.c
 	          heap.c
     )
 

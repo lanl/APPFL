@@ -7,11 +7,14 @@ float GCThreshold = 0.0;
 
 int evalStrategy = LAZY;
 
+int constStrict = 0;
+
 int LoggingLevel = LOG_LEVEL;
+
 
 void parseArgs (int argc, char **argv) {
   int c;
-  while ((c = getopt (argc, argv, "gt:e:l:")) != -1)
+  while ((c = getopt (argc, argv, "gt:e:c:l:")) != -1)
     switch (c) {
     case 'g':
       GCThreshold = 1.0; // never run
@@ -25,6 +28,10 @@ void parseArgs (int argc, char **argv) {
       evalStrategy = atoi(optarg);
       break;
       
+    case 'c':
+      constStrict = atoi(optarg);
+      break;
+
     case 'l':
       LoggingLevel = atoi(optarg);
       break;
