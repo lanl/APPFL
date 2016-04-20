@@ -1,4 +1,24 @@
 
+------- Summer 2016 Student Projects ---------------------------------------
+
+* Bridge gap GHC STG to our STG (David)
+
+* ultra-paranoid heap and stack analysis and display (Rajat)
+
+* change case syntax, backwards compatibility with old syntax likely harder than
+** automatically transform the test suite
+** change type checking (Kei?)
+
+* make PAP first class
+** known functions straightforward
+** unknown functions requires
+*** type information for sanity checking
+*** pointer to underlying FUN in PAP instead of FVs (Kei)
+
+
+
+
+
 ------- DONE ----------------------------------------------------------------
 
 - Change evaluation strategy such that stgEval is not a loop, just trivially
@@ -15,9 +35,9 @@ frame then the BLACKHOLE can be safely GC'd.
 
 - Make stack objects a type different than Obj.
 
-------- TODO ----------------------------------------------------------------
-
 - separate stgCurVal into stgCurValBoxed and stgCurValUnboxed
+
+------- TODO ----------------------------------------------------------------
 
 - STGEVAL is invoked only by stgApplyXXX.  STGCALL1 is only invoked by STGEVAL
   (check this).  STGJUMP1 is called...  The parameters to the latter two are

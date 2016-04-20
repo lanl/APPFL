@@ -12,6 +12,8 @@
 \usepackage[dvipsnames]{xcolor} % for parenthetical notes while paper is in progress
 \usepackage{comment} % comment environment
 \usepackage{hyperref} 
+
+\renewcommand{\floatpagefraction}{0.8}
 %
 \begin{document}
 %
@@ -342,7 +344,6 @@ library~\cite{ghc-as-library}.  Initially we start with our own STG.
 \setlength{\tabcolsep}{5pt}
 \begin{figure}
 \centering
-%\begin{centering}
 \footnotesize % tiny scriptsize footnotesize small
 \begin{tabular}{r r c l l}
 Variable     & $f,\ x$        &     &                                              & Initial lower-case letter \\
@@ -357,7 +358,7 @@ Expression   & $e$            & ::= & $a$                                       
              &                & $|$ & \texttt{let \{}                              & Recursive let, $n\ge 1$ \\
              &                &     & \texttt{ } $\mathit{odecl}_1$ \texttt{;} \\
              &                &     & \hspace{0.2in} $\dots$ \texttt{;} \\
-             &                &     & \texttt{ } $\mathit{odecl}_n$ \texttt{;} \\
+             &                &     & \texttt{ } $\mathit{odecl}_n$ \\
 %             &                &     & \texttt{ } $x_1$ \texttt{=} $\mathit{obj}_1$ \texttt{;} \\
 %             &                &     & \hspace{0.2in} $\dots$ \texttt{;} \\
 %             &                &     & \texttt{ } $x_n$ \texttt{=} $\mathit{obj}_n$ \\
@@ -375,27 +376,28 @@ Alternatives & $\mathit{alt}$ & ::= & $C\ x_1\dots x_n$ \texttt{->} $e$         
 Heap objects & $\mathit{obj}$ & ::= &\texttt{FUN} $x_1\dots x_n$ \texttt{->} $e$   & Function definition, arity $=n\ge 1$ \\
              &                & $|$ &\texttt{CON} $C\ a_1\dots a_n$                & Saturated constructor, $n \ge 0$ \\
              &                & $|$ &\texttt{THUNK} $e$                            & Thunk---explicit deferred evaluation \\
-             &                & $|$ & $\texttt{PAP}\ f\ a_1\dots a_n$               & Partial application \\
+             &                & $|$ &\texttt{PAP} $f\ a_1\dots a_n$               & Partial application \\
              &                & $|$ & $\mathit{BLACKHOLE}$                         & Evaluation-time black hole \\
 \\
-Object decl. & $\mathit{odecl}$ &     & $x = \mathit{obj}$                           & Simple binding \\
+Object decl. & $\mathit{odecl}$ & ::=  & $x = \mathit{obj}$                           & Simple binding \\
 \\
-Constructor defn. & $\mathit{con}$  & ::= & $C\ \mathit{type}_i$ & $i \ge 0$ \\
-\\
-Datatype defn. &  $\mathit{ddecl}$ & ::= & \texttt{data} [\texttt{unboxed}] & User-defined data type  \\
-               &                   &     & $C\ x_i =$                       & $i \ge 0, n > 0$         \\
-               &                   &     & $\mathit{con}_1 | \dots |  \mathit{con}_n$ \\
-
-\\
-Program      & $\mathit{prog}$ & ::= & $\mathit{(o|d)decl}_1$ \texttt{;}            & Object and data defns \\
-             &                 &     & \texttt{ } $\dots$ \texttt{;} \\
-             &                 &     & $\mathit{(o|d)decl}_n$ & 
+%%%Constructor defn. & $\mathit{con}$  & ::= & $C\ \mathit{type}_i$ & $i \ge 0$ \\
+%%%\\
+%%%Datatype defn. &  $\mathit{ddecl}$ & ::= & \texttt{data} [\texttt{unboxed}] & User-defined data type  \\
+%%%               &                   &     & $C\ x_i =$                       & $i \ge 0, n > 0$         \\
+%%%               &                   &     & $\mathit{con}_1 | \dots |  \mathit{con}_n$ \\
+%%%\\
+%%%Program      & $\mathit{prog}$ & ::= & $\mathit{(o|d)decl}_1$ \texttt{;}            & Object and data defns, \\
+%%%             &                 &     & \texttt{ } $\dots$ \texttt{;}                & distinguished \texttt{main}\\
+%%%             &                 &     & $\mathit{(o|d)decl}_n$ & 
+Program      & $\mathit{prog}$ & ::= & $\mathit{odecl}_1$ \texttt{;}            & Object and data defns, \\
+             &                 &     & \texttt{ } $\dots$ \texttt{;}                & distinguished \texttt{main}\\
+             &                 &     & $\mathit{odecl}_n$ & 
 %Program      & $\mathit{prog}$& ::= & $f_1\ =\ \mathit{obj}_1$ \texttt{;}          & $n \ge 1$, distinguished \texttt{main}\\
 %             &                &     & \texttt{ } $\dots$ \texttt{;} \\
 %             &                &     & $f_n\ =\ \mathit{obj}_n$
 
 \end{tabular}
-%\end{centering}
 \caption{STG syntax}
 \label{fig:STGsyntax}
 \end{figure}
@@ -403,9 +405,11 @@ Program      & $\mathit{prog}$ & ::= & $\mathit{(o|d)decl}_1$ \texttt{;}        
 Our incarnation of STG, as shown in Figure~\ref{fig:STGsyntax}, is meant to
 evoke both an abstract and concrete syntax.  This formulation and presentation
 is adapted from Marlow and Peyton Jones' \emph{Eval/Apply}
-paper~\cite{Marlow:2004}, to which we will subsequently refer as \emph{EA}\@.  A
-\emph{BLACKHOLE}, signifying a \emph{THUNK} being evaluated, is only a
-runtime entity and not part of the language.
+paper~\cite{Marlow:2004}, to which we will subsequently refer as \emph{EA}\@.
+A \emph{BLACKHOLE} object, signifying a \emph{THUNK} being evaluated, is only
+a run-time entity and not part of the language.  Omitted is the syntax for
+algebraic data type definitions which is given in
+Appendix~\ref{app:minihaskell}.
 
 With a few exceptions the semantics of STG is what a Haskell programmer
 familiar with unboxed types would expect for a higher-order, polymorphic, pure
@@ -486,8 +490,8 @@ as distinguishing termination properties it seems that these can be distilled
 down to two reasonable possibilities, namely whether on construction of a
 \emph{PAP} the (new) arguments are forced or not.  In other words, the
 question is whether application is strict, or function call is strict.  These
-are in fact distinguishable because (in Haskell) the first argument to
-\texttt{seq} might evaluate to a \emph{PAP}.
+are in fact distinguishable because (in Haskell, for example) the first
+argument to \texttt{seq} could evaluate to a \emph{PAP}.
 
 This then gives three reasonable operational modes which are strictly ordered
 in terms of termination properties: 
@@ -562,9 +566,16 @@ functions, and applications of known functions to other than their arity
 number of arguments.  There the object to be applied is first evaluated with
 call-with-return.  When a resulting \emph{FUN} is applied to more than its
 arity number of arguments, it is called-with-return with its arity number of
-arguments, and the resulting value applied to the remaining arguments.  When
-considering more strict semantics call-with-return is even more convenient
-because arguments can be evaluated in a tight loop.  Unfortunately these uses
+arguments, and the resulting value applied to the remaining arguments.  
+%
+Call-with-return becomes even more convenient for strict evaluation: arguments
+can be evaluated in a tight loop, and similarly for strict constructors, if
+the STG generator (human or otherwise) has not arranged for them to be already
+evaluated.
+%When considering more strict semantics call-with-return is even more
+%convenient because arguments can be evaluated in a tight loop.
+
+Unfortunately these uses
 of call-with-return can result in the C stack growing without bound.  Our
 solution uses a single C \emph{stgApply} function with no calls-with-return.
 This is straightforwardly realizable because the stack is explicit, and with
@@ -573,6 +584,9 @@ modern C compiler call optimization, the continuation style enables a jump
 blocks of code, can be treated as first class (e.g., stored for later use),
 and serve as targets of a jump---are C function addresses (c.f.\ \S
 6.1~\cite{PJ-stockhardware}).
+%For \emph{direct calls}, in which a known function is applied a number of
+%arguments equal to its arity, \emph{stgApply} need not be invoked: the
+%\emph{FUN} can be tail-called directly.
 
 \begin{comment}
 \subsubsection{A taste of the continuation style.}
@@ -630,18 +644,19 @@ with the value in \emph{CV}.
 \emph{EA} describes a family of generic C-{}- \emph{stgApply} runtime
 functions used for applications of non-known (not statically identifiable)
 functions, and applications of known functions to other than their arity
-number of arguments.  This family is parameterized by the number of actual
-arguments in the application and whether each is boxed or unboxed.  Because we
-have an explicit stack we are able to use a single C \emph{stgApply} function
-taking a contiguous block of machine words (unboxed values or pointers) on the
-explicit stack.  Some modifications are required, however, because \emph{EA}
-uses call-with-return.  Specifically, when a \emph{FUN} or is \emph{PAP}
-applied to more than its arity number of arguments a call-with-return to the
-(underlying) \emph{FUN} is made with the arity number of arguments, then the
-appropriate \emph{stgApply} function is jumped to, passing the newly returned
-object and the remaining arguments.  Call-with-return becomes even more
-convenient for strict evaluation:  arguments can be evaluated in a tight
-loop.
+number of arguments.  This family is parameterized by the number of arguments
+in the application and whether each is boxed or unboxed.  Because we have an
+explicit stack we are able to use a single C \emph{stgApply} function taking a
+contiguous block of machine words (unboxed values or pointers) on the explicit
+stack.  Some modifications are required, however, because \emph{EA} uses
+call-with-return.  Specifically, when a \emph{FUN} or is \emph{PAP} applied to
+more than its arity number of arguments a call-with-return to the (underlying)
+\emph{FUN} is made with the arity number of arguments, then the appropriate
+\emph{stgApply} function is jumped to, passing the newly returned object and
+the remaining arguments.  Call-with-return becomes even more convenient for
+strict evaluation: arguments can be evaluated in a tight loop, and similarly
+for strict constructors, if the STG generator (human or otherwise) has not
+arranged for them to be already evaluated.
 
 Our solution to this entails passing \emph{stgApply} the object to be applied
 in \emph{CV}, together with an extra argument---call it
@@ -725,9 +740,9 @@ type inference algorithm, syntax, and restrictions for unboxed types follow
 Peyton Jones and Launchbury~\cite{Jones:1991}.
 %\begin{comment}
 % breaks the page limit
-For convenience we allow general recursive
-\texttt{let}s that are implicitly factored in the usual way to maximize let-polymorphism;
-this would normally already be performed by a front-end.
+For convenience we allow general recursive \texttt{let}s that are implicitly
+factored in the usual way to maximize let-polymorphism; this would normally
+already be performed by a front-end.
 %\end{comment}
 \begin{comment}
  breaks the page limit
@@ -742,11 +757,11 @@ inspired by King and Launchbury~\cite{King:1995}.
 \section{Current Status (April 8, 2016), Future Work}
 
 An almost unbounded amount of interesting development suggests itself; one
-such path could in principle lead to the recreation of GHC\@.  However, given the minuscule
-budget (and therefore the employment of student interns) we must maintain
-sharp focus on the main goals: implementing and evaluating mechanisms for
-automatic parallelism and fault tolerance.  At the time of writing we have a
-fully functioning serial implementation including
+such path could in principle lead to the recreation of GHC\@.  However, given
+the minuscule budget (and therefore the employment of student interns) we must
+maintain sharp focus on the main goals: implementing and evaluating mechanisms
+for automatic parallelism and fault tolerance.  At the time of writing we have
+a fully functioning serial implementation including
 \begin{itemize}
 \item STG parser \emph{(by student)},
 \item mini-Haskell parser, mini-Haskell to STG transformer \emph{(by student)},
@@ -760,11 +775,14 @@ fully functioning serial implementation including
     structures.})}.
 \end{itemize}
 
-The \emph{mini-Haskell} front-end is detailed in Appendix~A.
+The \emph{mini-Haskell} front-end is detailed in Appendix~\ref{app:minihaskell}.
 
 This summer (2016) a returning student will bridge the gap between GHC STG (or
-Core) and our STG, augmenting the runtime as needed.  Just as in the Intel
-Haskell Research Compiler effort we will not use the GHC runtime.
+Core) and our STG, augmenting the runtime as needed.  Another student will
+develop an instrumentation infrastructure
+concurrently with getting up to speed in functional programming.
+%Just as in the Intel
+%Haskell Research Compiler effort we will not use the GHC runtime.
 
 While we can parse and type-check more general unboxed types, code generation
 and runtime support is currently limited to built-in single-word (64-bit) or
@@ -778,7 +796,7 @@ smaller types (e.g., \texttt{Int\#}, \texttt{UInt\#}, \texttt{Float\#},
 We use a continuous integration system augmented with logic to categorize
 programs in a large and growing test suite according to which degrees of
 non-strictness they require to terminate correctly, and to provide other
-logging and debugging information.  This is detailed in Appendix~B.
+logging and debugging information.  This is detailed in Appendix~\ref{app:testing}.
 
 % For various reasons we have chosen to make our implementation 64-bit only.
 
@@ -821,8 +839,8 @@ that recursively expands those \texttt{let} bindings into \texttt{case}
 bindings~\cite{Bolingbroke:2008,strict-ghc-plugin}.
 %
 The Disciplined Disciple Compiler project appears to intend implementation of
-a strict, higher order functional language (or family of languages) compiler
-that has been underway for some time, but the emphasis appears to be on a much
+a strict, higher order, functional language (or family of languages) compiler
+and has been underway for some time, but the emphasis appears to be on a much
 more complex type system for handling stateful computation, and the prospects
 for its eventual completion are unknown~\cite{disciplined-disciple}.
 
@@ -879,7 +897,7 @@ Department of Energy's National Nuclear Security Administration (NNSA).
 \appendix
 
 \section{Mini-Haskell}
-
+\label{app:minihaskell}
 As mentioned, a current near-term goal is to use GHC as our front-end to
 generate STG (or Core) as input to our system.  In the meantime, as a stop-gap
 measure to make the generation of test cases easier, we have implemented a
@@ -889,9 +907,10 @@ syntax with \emph{MagicHash} enabled, with a single extension.  Recall that
 an unboxed literal value.  Our extension (as for STG) is the provision of
 the optional \texttt{unboxed} keyword in datatype definitions to allow
 user-defined unboxed data types, e.g.,
+{\footnotesize
 \begin{verbatim}
   data unboxed Bool# = False# | True# .
-\end{verbatim}
+\end{verbatim}}
 
 Writing STG in the concrete syntax conceived for our project is tedious and
 prone to errors.  Compared to Haskell, the eventual source language for the
@@ -1052,6 +1071,7 @@ variables.  This often requires introducing bindings with either \texttt{let} or
 \texttt{case} expressions.  Consider the \texttt{append} function that
 concatenates its two list parameters.  In STG, it is written as
 
+{\footnotesize
 \begin{verbatim}
 append = FUN(l1 l2 ->
             case l1 of
@@ -1060,15 +1080,16 @@ append = FUN(l1 l2 ->
                   let { rec = THUNK(append tl l2);
                         result = CON(Cons hd rec) }
                   in result })
-\end{verbatim}
+\end{verbatim}}
 In mini-Haskell, expressions may be applied to other expressions, so the
 recursive call to \texttt{append} can be parenthesized. There is no need for the
 \texttt{let} expression:
+{\footnotesize
 \begin{verbatim}
 append l1 l2 = case l1 of
                  Nil -> l2
                  Cons hd tl -> Cons hd (append tl l2)
-\end{verbatim}
+\end{verbatim}}
 This also serves as a good example of how expression to expression application is
 transformed into STG.  Any non-atomic expression in an application expression is
 bound to a heap object in a generated \texttt{let} expression.  These
@@ -1090,6 +1111,7 @@ each matched parameter of a function requires an additional level of nested
 single pattern.
 
 Even relatively simple functions can be painful to write, such as \texttt{unzip}.
+{\footnotesize
 \begin{verbatim}
 unzip = FUN(list ->
   case list of { Nil -> let {res = CON( TP2 nil nil)} in res;
@@ -1102,15 +1124,16 @@ unzip = FUN(list ->
                                 bbs = CON(Cons b bs);
                                 res = CON(TP2 aas bbs)}
                            in res }}})
-\end{verbatim}
-In mini-Haskell, this becomes
+\end{verbatim}}
+\noindent In mini-Haskell, this becomes
+{\footnotesize
 \begin{verbatim}
 unzip :: List (Tupl2 a b) -> Tupl2 (List a) (List b)
 unzip Nil = TP2 Nil Nil
 unzip (Cons (TP2 a b) xs) =
   case unzip xs of
     TP2 as bs -> TP2 (Cons a as) (Cons b bs)
-\end{verbatim}
+\end{verbatim}}
 
 Of course, this complex pattern matching must eventually be transformed into
 the primitive, nested case expressions. Fortunately there are well-documented
@@ -1153,18 +1176,18 @@ sections but are worth mentioning.
   simplest feature to add, requiring only that the function be given a unique
   identifier to bind it to a \texttt{FUN} object in STG.
 
-\item \emph{Type annotations.}
-  The ability to assert the type of some variable is often valuable as a
-  sanity-check and provides documentation that the compiler can verify.
-  mini-Haskell's type annotations (or signatures) behave like those in
-  Haskell, being passed to the type checker as initial assumptions.
+\item \emph{Type annotations.}  The ability to assert the type of some
+  variable is often valuable as a sanity-check and provides documentation that
+  the compiler can verify.  Mini-Haskell's type annotations (or signatures)
+  behave like those in Haskell, being passed to the type checker as initial
+  assumptions.
 
 % I don't think I've described this very well at all... - david
 \item \emph{Haskell Block.}
   Being a subset of Haskell, it may be desirable to test a mini-Haskell program
   compiled through our toolchain against the same program (and same source file)
   compiled with another Haskell compiler.  Because mini-Haskell exposes a
-  different set of primitives, the Haskell Block was introduced, to allow the
+  different set of primitives the Haskell Block was introduced to allow the
   inclusion of the \texttt{MagicHash} extension and the aliasing Haskell's
   primitives (e.g. \texttt{(+)} and \texttt{(-)}) to the names given in
   mini-Haskell.  This block, delimited by \texttt{\{-\#-\}} strings, is ignored
@@ -1176,7 +1199,7 @@ sections but are worth mentioning.
 
 
 \section{Test suite and testing}
-
+\label{app:testing}
 We have developed an extensive test suite which uses the CMake CTest
 tool~\cite{cmake-book}. The full test suite is automatically run, and any
 failures reported, after every commit to the Git revision control system. We
@@ -1215,7 +1238,7 @@ we run a quite large number of tests (currently order thousands). However,
 this is fully automated via the testing and continuous integration
 infrastructure.
 
-We have also implemented a simple logging facility that can be controlled at 
+We have also implemented a simple logging facility which can be controlled at 
 both compile and run time which helps in determining why a test is failing.
 
 %
