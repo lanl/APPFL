@@ -41,7 +41,7 @@ typedef FnPtr (*CmmFnPtr)();
     return ((FnPtr)f);				\
   } while (0)
 
-#else
+#else  // not trampoline
 
 typedef void FnPtr;
 typedef FnPtr (*CmmFnPtr)();

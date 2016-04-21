@@ -179,7 +179,9 @@ implementation of a pure functional language to date~\cite{Davis96}, to no
 effect whatsoever, there is now a small number of laboratory HPC practitioners
 who are developing an appreciation for pure functional programming in Haskell.
 However, they see their needs as different than other Haskell users: performance
-is paramount, array/vector~\cite{vector} is a (perhaps \emph{the}) primary data
+is paramount, array/vector
+%~\cite{vector} 
+is a (perhaps \emph{the}) primary data
 structure, and non-strictness or laziness is more of a nuisance---even a
 serious hindrance---than a convenience, much less ever algorithmically
 essential in the sense of Bird's \emph{repmin}~\cite{Bird84},
@@ -315,12 +317,12 @@ discussed at some length.
 
 A minor, informal goal is to gain a sense of how often relatively
 inexperienced functional programmers make essential use of
-non-strictness.\footnote{The starting experience of our student interns to
-  date has been normalized by having them work through the entirety of Hutton's \emph{Programming
-    in Haskell} textbook~\cite{Hutton-book} as baseline preparation,
-  substituting his article \emph{Higher-order Functions for
-    Parsing}~\cite{Hutton-parsing:1992} for the corresponding material in the
-  book.}
+non-strictness.%\footnote{The starting experience of our student interns to
+%  date has been normalized by having them work through the entirety of Hutton's \emph{Programming
+%    in Haskell} textbook~\cite{Hutton-book} as baseline preparation,
+%  substituting his article \emph{Higher-order Functions for
+%    Parsing}~\cite{Hutton-parsing:1992} for the corresponding material in the
+%  book.}
 
 \section{Design and Implementation}
 Our wish list has much in common with the GHC Haskell implementation, and
@@ -419,7 +421,8 @@ similar to \texttt{pseq} (as opposed to \texttt{seq}) in Haskell, that is, the
 scrutinee is evaluated first.  Second, constructors are not functions, rather
 they are named in the construction (heap allocation) of a data object.  More
 generally, the operational notion of allocating a heap object is explicit:
-this is the operational semantics of \texttt{let} bindings.
+this is the operational semantics of \texttt{let} bindings.  Numeric literals
+are considered constructors in pattern matching.
 %As such a variable of unboxed type cannot be let-bound; instead it can be
 %bound with \texttt{case}, e.g., \texttt{case e of x\# \{ \_ -> e \}}
 %where the \texttt{\#} suffix is merely a convention to signify that
@@ -439,7 +442,7 @@ Similarly, when referring to language semantics we refer by default to the
 operational rather than denotational semantics.
 
 Greater strictness implies more opportunities for automatic parallelism,
-possible losses or gains in space efficiency, and less expressiveness.  We
+possible losses or gains in space and time efficiency, and less expressiveness.  We
 seek to explore the interplay of all of these.
 
 GHC 8.0 gives three defaults: conventional non-strict, constructor strict, and
@@ -777,12 +780,10 @@ a fully functioning serial implementation including
 
 The \emph{mini-Haskell} front-end is detailed in Appendix~\ref{app:minihaskell}.
 
-This summer (2016) a returning student will bridge the gap between GHC STG (or
-Core) and our STG, augmenting the runtime as needed.  Another student will
-develop an instrumentation infrastructure
-concurrently with getting up to speed in functional programming.
-%Just as in the Intel
-%Haskell Research Compiler effort we will not use the GHC runtime.
+We use a continuous integration system augmented with logic to categorize
+programs in a large and growing test suite according to which degrees of
+non-strictness they require to terminate correctly, and to provide other
+logging and debugging information.  This is detailed in Appendix~\ref{app:testing}.
 
 While we can parse and type-check more general unboxed types, code generation
 and runtime support is currently limited to built-in single-word (64-bit) or
@@ -792,13 +793,6 @@ smaller types (e.g., \texttt{Int\#}, \texttt{UInt\#}, \texttt{Float\#},
 %\begin{verbatim}
 %     data unboxed Bool# = False# | True# .
 %\end{verbatim}
-
-We use a continuous integration system augmented with logic to categorize
-programs in a large and growing test suite according to which degrees of
-non-strictness they require to terminate correctly, and to provide other
-logging and debugging information.  This is detailed in Appendix~\ref{app:testing}.
-
-% For various reasons we have chosen to make our implementation 64-bit only.
 
 For simplicity the implementation is 64-bit only.
 %
@@ -810,10 +804,15 @@ The fault-tolerance mechanisms remain future work.
 %
 Parallel garbage collection is likely out of scope.
 
+This summer (2016) a returning student will bridge the gap between GHC STG (or
+Core) and our STG, augmenting the runtime as needed.  Another student will
+develop an instrumentation infrastructure integrated with the testing
+framework to record and present runtime statistics such as number of heap and
+stack allocations and maximum stack depth.
+
+
 %We have implemented a simple copying garbage collector~\cite{Cheney:1970} with
 %small \emph{nurseries} in the multithreaded case~\cite{Marlow:2008}. Marlow:2011 as well
-
-
 %\cite{Harris:2005,Marlow:2008,Marlow:2009}
 
 
@@ -855,11 +854,11 @@ targeting NVIDIA GPUs.
 \subsubsection{GHC as a front-end.}
 The Intel Labs Haskell Research Compiler (HRC) is the most closely related
 work to ours of which we are aware~\cite{Liu:2013,Petersen:2013}.  As in our
-planned approach they use GHC as the front end, but exit the GHC toolchain
-at the final GHC Core stage, just before transformation to STG.  The essence
-of their effort is to target an existing, highly optimizing, Intel functional
-language compiler that is ``largely language agnostic'' and performs (among
-many other optimizations) SIMD vectorization.
+planned approach they use GHC as the front end, but exit GHC at the final GHC
+Core stage, just before transformation to STG.  The essence of their effort is
+to target an existing, highly optimizing, Intel functional language compiler
+that is ``largely language agnostic'' and performs (among many other
+optimizations) SIMD vectorization.
 
 Don Stewart described an implementation wherein GHC was used as a Haskell compiler
 front-end, dumping STG code as text, parsing that text, then translating to
@@ -1081,7 +1080,7 @@ append = FUN(l1 l2 ->
                         result = CON(Cons hd rec) }
                   in result })
 \end{verbatim}}
-In mini-Haskell, expressions may be applied to other expressions, so the
+In mini-Haskell expressions may be applied to other expressions, so the
 recursive call to \texttt{append} can be parenthesized. There is no need for the
 \texttt{let} expression:
 {\footnotesize
@@ -1125,7 +1124,7 @@ unzip = FUN(list ->
                                 res = CON(TP2 aas bbs)}
                            in res }}})
 \end{verbatim}}
-\noindent In mini-Haskell, this becomes
+\noindent In mini-Haskell this becomes
 {\footnotesize
 \begin{verbatim}
 unzip :: List (Tupl2 a b) -> Tupl2 (List a) (List b)
@@ -1240,6 +1239,27 @@ infrastructure.
 
 We have also implemented a simple logging facility which can be controlled at 
 both compile and run time which helps in determining why a test is failing.
+
+\section{Student Development}
+
+Student interns' backgrounds in computer programming has ranged from minimal
+to some exposure to one or more mainstream imperative languages, Lisp, and
+Haskell.  To bring them to a normalized level of proficiency their first
+assignment has been to work through the entirety of Hutton's \emph{Programming
+  in Haskell} textbook~\cite{Hutton-book}, substituting one of his articles
+\emph{Higher-order Functions for Parsing}~\cite{Hutton-parsing:1992} or
+\emph{Monadic Parser Combinators}~\cite{Hutton:1996} for the corresponding
+material in the book.  This may be followed by writing a parser and ADT for a
+progressively enriched lambda calculus, together with call-by-value,
+call-by-name, and (in one case) call-by-need interpreters.  The concept of
+compilation can be illustrated with an exercise in parsing infix arithmetic
+expressions to an AST, and transforming that to a sequence of operations for a
+simple stack machine.
+% breaks page limit
+%  This learning phase can take the
+%better part of a summer or one-semester internship, so we particularly
+%seek return interns.
+
 
 %
 % ---- Bibliography ----
