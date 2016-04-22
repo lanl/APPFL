@@ -34,7 +34,7 @@
         Dean Prichard\inst{1} \and
         David Ringo\inst{1,2} \and
         Loren Anderson\inst{1,3} \and
-        Jacob Marks\inst{1,4}\thanks{Ringo, Anderson, and Marks are undergraduate students.}
+        Jacob Marks\inst{1,4}%\thanks{Ringo, Anderson, and Marks are undergraduate students.}
 }
 %
 \authorrunning{Kei Davis et al.} % abbreviated author list (for running head)
@@ -76,8 +76,14 @@ strategies, varying degrees of strictness, and mechanisms for transparent
 fault tolerance.
 %
 We do not consider speculative evaluation, or semantic strictness inferred by
-program analysis, so potential parallelism is dictated by the degree of
-strictness.\\
+program analysis, so potential parallelism is dictated by the specified degree of
+strictness.
+
+\hspace{0.2in} Our development has been greatly informed by the extant
+literature and we indicate both where we follow, and deviate from,
+these sources.
+%
+\\
 {\color{OliveGreen} % \bf
 \emph{Draft paper notes:}
 \begin{enumerate}[before=\itshape]
@@ -92,17 +98,17 @@ strictness.\\
   liberally annotated with indicators of student contributions, student
   preparation, the influence of their involvement on our approach, and other
   incidental and ancillary comments.  A final paper would of course be cleaned
-  up.
+  up and potentially considerably shortened.
 
 \item While \textcolor{OrangeRed}{this does not qualify as a student paper}, students
-  (undergraduate!) have contributed considerably to this effort, and to the
+  (all undergraduate) have contributed considerably to this effort, and to the
   writing of this paper, and will continue to do so.  If this paper is
   accepted we plan to have one of these students present it at TiFP'16.
 \end{enumerate}
 }
 
 \keywords{Strict pure functional programming, automatic parallelization,
-  transparent fault tolerance, Haskell, STG, GHC, Core.}
+  transparent fault tolerance, Haskell, STG, GHC, GHC Core.}
 
 \end{abstract}
 
@@ -111,7 +117,7 @@ The practice of so-called high-performance scientific computing (HPC) is,
 overall, highly conservative with respect to change.  Even as the USA and
 other governments commit to a push for exascale computing ($10^{18}$ FLOPS in
 a single system) within the next
-decade~\cite{Exascale-roadmap,EUexascale,Exascale-org} a highly respected
+decade~\cite{Exascale-roadmap,EUexascale,Exascale-org} a respected
 member of the HPC community recently stated publicly that ``Fortran is
 essential for exascale programming''~\cite{Heroux16}.  Existing US government
 laboratory HPC codes run to hundreds of thousands of lines of Fortran each and
@@ -190,7 +196,7 @@ or other instances of \emph{tying the knot}~\cite{tying-the-knot}.
 
 A common complaint among these aspiring high-performance functional
 programmers is the need to get strictness just right: to remove space leaks,
-achieve acceptable performance, get I/O and inter-process communication to work
+achieve competitive performance, get I/O and inter-process communication to work
 as they expect, and so on.  More specifically, they expect to be able to
 reason about space and time usage, and order of evaluation, using their
 existing mental models. While they are happy to write code that is strongly
@@ -292,7 +298,6 @@ part an undergraduate student project it must be kept as simple as reasonably
 possible.  
 
 Our initial requirements are that
-%
 \begin{itemize}
 \item The implementation must be feasible in terms of available effort;
 \item The language must be strongly typed, implicitly or explicitly.  More
@@ -330,7 +335,7 @@ indeed GHC is part of our master plan.  In brief, the phases of the GHC
 compiler are (1) parsing and type checking; (2) transformation to the GHC
 \emph{Core} intermediate representation~\cite{Sulzmann:2007,ghc-core}; (3)
 analysis and transformation on Core; (4) transformation of Core to the
-\emph{STG} intermediate representation~\cite{PJ-stockhardware}; (5)
+\emph{STG} intermediate representation~\cite{PJ-stockhardware}; and (5)
 transformation of STG to machine code via various imperative
 representations (Cmm, LLVM, C, native code generation).
 
@@ -443,14 +448,13 @@ operational rather than denotational semantics.
 
 Greater strictness implies more opportunities for automatic parallelism,
 possible losses or gains in space and time efficiency, and less expressiveness.  We
-seek to explore the interplay of all of these.
+seek to explore the interplay of all of these in various ways.
 
 GHC 8.0 gives three defaults: conventional non-strict, constructor strict, and
 function- and constructor strict, but there are possible variations.  The
 obvious variation is function, but not constructor, strictness.  In Haskell
 the distinction between constructors and functions is somewhat blurred
-%because constructors behave like functions 
-(outside of data definitions and pattern matching), but in STG the distinction
+(outside of data definitions and pattern matching) but in STG the distinction
 is clear.
 
 Other possible variations concern the notional arity of the underlying
@@ -460,36 +464,36 @@ in \emph{EA}.
 
 In STG the arity of a function is defined as the number of formal parameters
 in the function definition, thus \texttt{id x = x} has by definition arity one
-regardless of the type of the argument (e.g., some function type) it might be
-applied to.  We distinguish \emph{application}, e.g., \texttt{f x y}, which is
-a syntactic notion, from actual function \emph{call}. Thus \texttt{id id x} is
-an application of \texttt{id} to two arguments, but the underlying \emph{FUN}
-(user- or system- defined function) when called is given exactly one
-argument (the first one).
+regardless of the type of the argument it might be applied to (e.g., some
+function type).  We distinguish \emph{application}, e.g., \texttt{f x y},
+which is a syntactic notion, from actual function \emph{call}. Thus \texttt{id
+  id x} is an application of \texttt{id} to two arguments, but the underlying
+\emph{FUN} (user- or system- defined function) when called is given exactly
+one argument (the first one).
 
-In the eval-apply model, given application \texttt{f x y}, in the standard
-(non-strict) semantics \texttt{f} is first evaluated and the arity of the
-underlying \emph{FUN} or \emph{PAP} (partial application of a \emph{FUN}) is
-determined---in the case of \emph{PAP} the arity is that of the underlying
-\emph{FUN} less the number of arguments previously provided.  If the arity is
-greater than two a new \emph{PAP} is created with arguments \texttt{x} and
-\texttt{y} inserted and the new \emph{PAP} returned.  If the arity is equal to
-two the underlying \emph{FUN} is tail-called (jumped to) with any previous
-arguments (in case of \emph{PAP}) and new arguments \texttt{x} and \texttt{y}.
-If the arity is less than two (it must be at least one, so one in this case)
-the underlying \emph{FUN} is called with any previous arguments (in case of
-\emph{PAP}) and new argument \texttt{x}, then the object returned applied to
-remaining argument \texttt{y}.
+In the eval-apply model, given application \texttt{f x y}, in the general case, with standard
+(non-strict) semantics, \texttt{f} is first evaluated and the
+arity of the underlying \emph{FUN} or \emph{PAP} (partial application of a
+\emph{FUN}) is determined---in the case of \emph{PAP} the arity is that of the
+underlying \emph{FUN} less the number of arguments previously provided.  If
+the arity is greater than two a new \emph{PAP} is created with arguments
+\texttt{x} and \texttt{y} inserted and the new \emph{PAP} returned.  If the
+arity is equal to two the underlying \emph{FUN} is tail-called (jumped to)
+with any previous arguments (in case of \emph{PAP}) and new arguments
+\texttt{x} and \texttt{y}.  If the arity is less than two (it must be at least
+one, so one in this case) the underlying \emph{FUN} is called with any
+previous arguments (in case of \emph{PAP}) and new argument \texttt{x}, then
+the object returned applied to remaining argument \texttt{y}.
 
 Given application \texttt{f x y}, when might \texttt{x} and \texttt{y} be
 evaluated?  In the non-strict semantics evaluation is on demand, after
 \texttt{f} has been evaluated, the underlying \emph{FUN} actually called
 (i.e., not just partially applied and wrapped up in a \emph{PAP}), and one or
-both of those arguments possibly forced in subsequent evaluation (assuming
-that they weren't forced in the evaluation of \texttt{f} itself).
+both of those arguments possibly forced in subsequent evaluation, assuming
+that they weren't forced in the evaluation of \texttt{f} itself.
 
-In a strict semantics one could devise various evaluation orders, but as far
-as distinguishing termination properties it seems that these can be distilled
+In a more strict semantics one could devise various evaluation orders, but as far
+as distinguishing termination properties it seems that these come
 down to two reasonable possibilities, namely whether on construction of a
 \emph{PAP} the (new) arguments are forced or not.  In other words, the
 question is whether application is strict, or function call is strict.  These
@@ -506,7 +510,7 @@ The other dimension we vary is whether or not constructors are strict.  Other
 dimensions are possible, for example whether \texttt{let} bindings are strict,
 but we restrict ourselves to function/application and constructor strictness.
 The STG machinery makes the choice of evaluation strategy easy to change,
-though changing code generation can be more efficient by avoiding the
+though changing STG generation can be more efficient by avoiding the
 unnecessary creation of \emph{THUNKS} as discussed in Appendix~A.
 
 
@@ -567,9 +571,10 @@ stack'').
 functions used for applications of non-known (not statically identifiable)
 functions, and applications of known functions to other than their arity
 number of arguments.  There the object to be applied is first evaluated with
-call-with-return.  When a resulting \emph{FUN} is applied to more than its
-arity number of arguments, it is called-with-return with its arity number of
-arguments, and the resulting value applied to the remaining arguments.  
+call-with-return.  When a resulting \emph{FUN} or \emph{PAP} is applied to
+more than its arity number of arguments, it is called-with-return with its
+arity number of arguments, and the resulting value applied to the remaining
+arguments.
 %
 Call-with-return becomes even more convenient for strict evaluation: arguments
 can be evaluated in a tight loop, and similarly for strict constructors, if
@@ -732,8 +737,8 @@ adjusted in size and content without undue copying.
 \subsection{Type system}
 
 Type information is required for code generation.  For example, at the
-coarsest level it is necessary to know whether values are boxed, and so
-represented by pointers, or unboxed, to avoid expensive tagging.  Because we
+coarsest level it is necessary to know whether values are boxed, or otherwise
+represented by pointers, to avoid expensive tagging.  Because we
 do not yet get type information directly from GHC we use a subset of Haskell
 syntax (e.g., no named fields) for defining algebraic data types, extended
 with built-in and user-defined unboxed types.  We perform standard
@@ -796,9 +801,10 @@ smaller types (e.g., \texttt{Int\#}, \texttt{UInt\#}, \texttt{Float\#},
 
 For simplicity the implementation is 64-bit only.
 %
-The current, primitive parallel runtime is based on Pthreads and a non-blocking
-work queue~\cite{Michael:1996}.  We are currently developing a more realistic
-parallel runtime, experimenting with using the Argobots user-level thread library~\cite{Seo:2015}.
+The current, primitive parallel runtime is based on Pthreads and a
+non-blocking work queue~\cite{Michael:1996}.  We are currently developing a
+more realistic parallel runtime, experimenting with using the Argobots
+user-level thread library~\cite{Seo:2015}.
 %
 The fault-tolerance mechanisms remain future work.
 %
@@ -818,8 +824,11 @@ stack allocations and maximum stack depth.
 
 \section{Related Work}
 
-Previously cited papers describing some of the inner workings of GHC at
-various points in its evolution have greatly informed our approach.
+\emph{Nihil sub sole novum}---there is nothing new under the sun (Ecclesistes 1:9).
+%every new idea has some sort of precedent or echo from the past~\cite{nihil}.
+
+%Previously cited papers describing some of the inner workings of GHC at
+%various points in its evolution have greatly informed our approach.
 
 \subsubsection{Strict but still pure.}
 The concept of strict but still pure in some sense dates back to the concept
@@ -830,7 +839,7 @@ implementation~\cite{AikenFL,FLreport89}.
 %
 A notable argument for the potential merits of a strict-by-default
 pure functional language over a non-strict one is by Sheard, who also provided
-a very simple prototype implementation~\cite{Sheard:2003}.
+a very simple embedded implementation~\cite{Sheard:2003}.
 %
 A plug-in for GHC (prior to 8.0) exists that makes function bodies strict in
 their non-recursive \texttt{let} bindings using a transformation on GHC Core
@@ -860,9 +869,10 @@ to target an existing, highly optimizing, Intel functional language compiler
 that is ``largely language agnostic'' and performs (among many other
 optimizations) SIMD vectorization.
 
-Don Stewart described an implementation wherein GHC was used as a Haskell compiler
-front-end, dumping STG code as text, parsing that text, then translating to
-code for execution on the Java Virtual Machine~\cite{Stewart-BSc}.
+Don Stewart described an implementation wherein GHC was used as a Haskell
+compiler front-end, dumping STG code as text, parsing that text, then
+translating to Java code for compilation and execution on the Java Virtual
+Machine~\cite{Stewart-BSc}.
 
 \subsubsection{Fault tolerance for functional programming.}
 Pointon et al.\ developed a limited fault tolerance mechanism for Glasgow
@@ -1240,7 +1250,7 @@ infrastructure.
 We have also implemented a simple logging facility which can be controlled at 
 both compile and run time which helps in determining why a test is failing.
 
-\section{Student Development}
+\section{Student Preparation}
 
 Student interns' backgrounds in computer programming has ranged from minimal
 to some exposure to one or more mainstream imperative languages, Lisp, and
@@ -1254,7 +1264,9 @@ progressively enriched lambda calculus, together with call-by-value,
 call-by-name, and (in one case) call-by-need interpreters.  The concept of
 compilation can be illustrated with an exercise in parsing infix arithmetic
 expressions to an AST, and transforming that to a sequence of operations for a
-simple stack machine.
+simple stack machine.  From this point they have then been able to substantively
+contribute to the project.
+
 % breaks page limit
 %  This learning phase can take the
 %better part of a summer or one-semester internship, so we particularly

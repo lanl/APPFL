@@ -18,6 +18,8 @@
 * Use e.g. Data.DList instead of plain String
   https://hackage.haskell.org/package/dlist-0.7.1.2/docs/Data-DList.html
 
+* Demonstrate use with MPI
+** Interface with external C libraries 
 
 ------- DONE ----------------------------------------------------------------
 
