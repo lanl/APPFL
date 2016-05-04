@@ -26,12 +26,12 @@ inferred by program analysis, so potential parallelism is dictated by the
 specified degree of default strictness and any strictness annotations.
 
 Our approach is similar to that of the
-\href{https://dl.acm.org/citation.cfm?id=2503779}{Intel
-  Labs Haskell Research Compiler}: to use GHC as a front-end to generate STG
-(or Core), then exit to our own back-end compiler.  As in their case we do not
-attempt to use the GHC runtime.  Our implementation is \emph{light-weight} in
-that we are not attempting to support or recreate the vast functionality of
-GHC and its runtime.  This approach is also similar to
+\href{https://dl.acm.org/citation.cfm?id=2503779}{Intel Labs Haskell Research
+  Compiler}: to use GHC as a front-end to generate STG (or Core), then exit to
+our own back-end compiler that is itself written in Haskell.  As in their case
+we do not attempt to use the GHC runtime.  Our implementation is
+\emph{light-weight} in that we are not attempting to support or recreate the
+vast functionality of GHC and its runtime.  This approach is also similar to
 \href{http://www.cse.unsw.edu.au/~pls/thesis/dons-thesis.ps.gz}{Don Stewart's}
 except that we generate C instead of Java.
 
