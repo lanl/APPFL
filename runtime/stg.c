@@ -128,8 +128,8 @@ void initStg() {
     exit(1);
   }
 
-  if ((uintptr_t)stgHP % OBJ_ALIGN != 0) {
-    LOG(LOG_FATAL, "stgHP not OBJ_ALIGNed\n");
+  if ((uintptr_t)stgHeap % OBJ_ALIGN != 0) {
+    LOG(LOG_FATAL, "stgHeap not OBJ_ALIGNed\n");
     exit(1);
   }
   stgHP = stgHeap; // first free address
@@ -147,7 +147,15 @@ void initStg() {
     exit(1);
   }
   
+  if ((uintptr_t)stgStack % OBJ_ALIGN != 0) {
+    LOG(LOG_FATAL, "stgStack not OBJ_ALIGNed\n");
+    exit(1);
+  }
   stgSP = (char *)stgStack + stgStackSize;
+  if ((uintptr_t)stgSP % OBJ_ALIGN != 0) {
+    LOG(LOG_FATAL, "stgSP not OBJ_ALIGNed\n");
+    exit(1);
+  }
 
   LOG(LOG_INFO, "Stg stack at %p and heap at %p\n", stgStack, stgHP);
 
