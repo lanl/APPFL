@@ -4,7 +4,6 @@
 
 module HeapObj (
   showSHOs,
-  cSHOs,
   shoNames
 ) where
 
@@ -18,77 +17,11 @@ import Data.Bits
 import Foreign.Storable
 import Foreign.C.Types
 
-#if USE_CAST
-import CAST
-import Text.PrettyPrint(render)
-import Language.C.Pretty
-#endif
-
-
 -- HOs come from InfoTabs
 
 shoNames :: [Obj InfoTab] -> [String]
 shoNames = map (\o -> showITType o ++ "_" ++ (name . omd) o)
 
--- return list of forwards (static declarations) and (static) definitions
-
-
--- C AST version
-#if USE_CAST
-
-showSHOs = error "showSHOs" -- not used in CAST version
-
-cSHOs :: [Obj InfoTab] -> ([CExtDecl], [CExtDecl])
-cSHOs os = unzip $ map cSHO os
-
-cSHO :: Obj InfoTab -> (CExtDecl, CExtDecl)
-cSHO o =
-   let it = omd o
-       n = name it
-       infoPtr = cStructMember InfoPtrTy "_infoPtr" n
-       objType = cStructMember EnumTy "objType" (showObjType it)
-       ident = cStructMember StringTy "ident" n
-       payload = cSHOspec it
-   in cObjStruct n [infoPtr, objType, ident, payload]
-
-payloads xs = cStructMember StructTy "payload" xs
-
-cSHOspec :: InfoTab -> CInitializerMember
-cSHOspec (ITFun {}) = payloads ""
-
-cSHOspec (ITPap {}) = error "top level PAP"
-
-cSHOspec it@(ITCon {}) = payloads (map payload (map fst (args it)))
-
-cSHOspec (ITThunk {}) = payloads "0"
-
-cSHOspec (ITBlackhole {}) = payloads "0"
-
-cSHOspec it = error "bad IT in Obj"
-
-cArgTypeElem :: String ->  [CInitializerMember]
-cArgTypeElem ty = [cStructMember EnumTy "argType" ty | useArgType]
-
-payload ::  Atom -> [CInitializerMember]
-payload (LitI i) = cArgTypeElem "INT" ++
-                   [cStructMember IntTy "i" i]
-
-payload (LitD d) = cArgTypeElem "DOUBLE" ++
-                   [cStructMember DoubleTy "d" d]
-
-payload (LitF f) = cArgTypeElem "FLOAT" ++
-                   [cStructMember FloatTy "f" f]
-
--- for SHOs atoms that are variables must be SHOs, so not unboxed
-payload (Var v) = cArgTypeElem "HEAPOBJ" ++
-                  [cStructMember PtrTy "op" ("sho_" ++ v)]
-
-payload _ = error "bad payload"
-
--- text version
-#else
-
-cSHOs = error "cSHOs" -- not used in text version
 
 -- return list of forwards (static declarations) and (static) definitions
 showSHOs :: [Obj InfoTab] -> (String, String)
@@ -180,5 +113,3 @@ ptrOrLitSHO a =
       LitC c -> argTypeElem "INT" ++ " .i = " ++ "con_" ++ c
     ++ " }"
 
--- end of USE_CAST
-#endif

@@ -57,13 +57,6 @@ import           Data.List
 import qualified Data.Set as Set
 import           System.IO
 
-#if USE_CAST
-import CAST
-import Text.PrettyPrint(render)
-import Language.C.Pretty
-type EExtDecl = Either CExtDecl String
-#endif
-
 header :: String
 header = "#include \"stgc.h\"\n"
 
@@ -253,37 +246,6 @@ tctest mhs arg =
     hmstgdebug objs
 
 
--- C AST version
-#if USE_CAST
-
-codegener :: String -> Bool -> Bool -> [EExtDecl]
-codegener inp v mhs = let (tycons, objs) = heapchecker mhs inp
-                          typeEnums = cTypeEnums tycons
-                          infotab = cITs objs
-                          (shoForward, shoDef) = cSHOs objs
-                          (funForwards, funDefs) = cgObjs objs stgRTSGlobals
-                       in [Right header] ++
-                          map Right funForwards ++
-                          map Left typeEnums ++
-                          map Left infotab ++
-                          map Left shoForward ++
-                          map Left shoDef ++
-                          map Right funDefs ++
-                          [Left cStart] ++
-                          [Left $ cMain v]
-
-
-
-printEE :: EExtDecl -> String
-printEE (Left x) = (render . pretty) x ++ "\n"
-printEE (Right x) = x ++ "\n"
-
-pprinter :: [EExtDecl] -> String
-pprinter xs = concatMap printEE xs
-
--- text version
-#else
-
 codegener :: String -> Bool -> Bool -> String
 codegener inp v mhs = let (tycons, objs) = heapchecker mhs inp
                           typeEnums = showTypeEnums tycons
@@ -302,10 +264,6 @@ codegener inp v mhs = let (tycons, objs) = heapchecker mhs inp
 
 pprinter :: String -> String
 pprinter = id
-
--- end of USE_CAST
-#endif
-
 
 -- parse minihaskell in a file, add a block comment at the end
 -- showing the unparsed STG code

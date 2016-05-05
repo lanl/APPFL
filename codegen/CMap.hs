@@ -35,27 +35,8 @@ import Data.List ((\\), find, intercalate)
 import Data.Char (isNumber)
 import Debug.Trace
 
-#if USE_CAST
-import CAST
-import Text.PrettyPrint(render)
-import Language.C.Pretty
-#endif
-
-
 type CMap = Map.Map Con TyCon
 
--- C AST version
-#if USE_CAST
-showTypeEnums = error "showTypeEnums" -- not used in CAST version
-
-cTypeEnums :: [TyCon] -> [CExtDecl]
-cTypeEnums tycons = map cTypeEnum tycons
-
-cTypeEnum :: TyCon -> CExtDecl
-cTypeEnum  (TyCon _ con _ dataCons) = cEnum con [ _mhsSanitize c | DataCon c _ <- dataCons ]
-
--- text version
-#else
 cTypeEnums = error "cTypeEnums" -- not used in text version
 
 showTypeEnums tycons =
@@ -70,8 +51,6 @@ showTypeEnum (TyCon _ con _ dataCons) =
                           | DataCon c _ <- dataCons ] ++
       " };\n"
 
--- end ofUSE_CAST
-#endif
 
 -- MHS HACK FIX, see also CMap.luConTag
 _mhsSanitize c | c == "D#" = "D"

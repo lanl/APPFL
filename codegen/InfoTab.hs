@@ -14,7 +14,6 @@ module InfoTab(
   setCMaps,
   setITs,
   showITs,
-  cITs,
   showITType,
   showObjType,
   show,
@@ -38,12 +37,6 @@ import qualified Data.Map as Map
 
 import Data.Set (Set)
 import qualified Data.Set as Set
-
-#if USE_CAST
-import CAST
-import Language.C.Pretty
-#endif
-
 
 -- need an infoTab entry for each lexically distinct HO or SHO
 
@@ -481,96 +474,6 @@ showITType _ = "sho"
 -- showITTType _ = error "bad ITType"
 
 
--- C AST version
-#if USE_CAST
-  
-cInfoTabHeader :: [CInitializerMember]  
-cInfoTabHeader = [cStructMember CallTy "pi" "PI" | useInfoTabHeader]
-
-cInfoTab :: InfoTab -> Maybe CExtDecl
-cInfoTab it@(ITFun {}) = Just (
-    cInfoTabStruct (name it)
-        ([cStructMember StringTy "name" (name it)
-        ,cStructMember PtrTy "entryCode" (entryCode it)
-        ,cStructMember EnumTy "objType" "FUN"
-        ,cStructMember IntTy "layoutInfo.payloadSize" (length $ fvs it)
-        ,cStructMember IntTy "layoutInfo.boxedCount" (bfvc it)
-        ,cStructMember IntTy "layoutInfo.unboxedCount" (ufvc it)
-        ,cStructMember IntTy "funFields.arity" (arity it)
-        ,cStructMember EnumTy "funFields.trueEntryCode" (trueEntryCode it)
-        ] ++ cInfoTabHeader))
-
-cInfoTab it@(ITPap {}) =  Just (
-    cInfoTabStruct (name it)
-        ([cStructMember StringTy "name" (name it)
-        ,cStructMember PtrTy "entryCode" (entryCode it)
-        ,cStructMember EnumTy "objType" "PAP"
-        ,cStructMember IntTy "layoutInfo.payloadSize" (length (fvs it) + length (args it) + 1)
-        ,cStructMember IntTy "layoutInfo.boxedCount" (bfvc it)
-        ,cStructMember IntTy "layoutInfo.unboxedCount" (ufvc it)
-        ,cStructMember EnumTy "funFields.trueEntryCode" (trueEntryCode it)
-        ] ++ cInfoTabHeader))
-
-cInfoTab it@(ITCon {}) =  Just (
-    cInfoTabStruct (name it)
-        ([cStructMember StringTy "name" (name it)
-        ,cStructMember PtrTy "entryCode" (entryCode it)
-        ,cStructMember EnumTy "objType" "CON"
-        ,cStructMember IntTy "layoutInfo.payloadSize" (arity it)
-        ,cStructMember IntTy "layoutInfo.boxedCount" (bargc it)
-        ,cStructMember IntTy "layoutInfo.unboxedCount" (uargc it)
-        ,cStructMember StringTy "layoutInfo.permString" (concatMap show (argPerm it))
-        ,cStructMember IntTy "conFields.arity" (arity it)
-        ,cStructMember EnumTy "conFields.tag"  (luConTag (con it) (cmap it))
-        ,cStructMember StringTy "conFields.conName" (con it)
-        ] ++ cInfoTabHeader))
-
-cInfoTab it@(ITThunk {}) =  Just (
-    cInfoTabStruct (name it)
-        ([cStructMember StringTy "name" (name it)
-        ,cStructMember PtrTy "entryCode" (entryCode it)
-        ,cStructMember EnumTy "objType" "THUNK"
-        ,cStructMember IntTy "layoutInfo.payloadSize" (1 + (length $ fvs it))
-        ,cStructMember IntTy "layoutInfo.boxedCount" (bfvc it)
-        ,cStructMember IntTy "layoutInfo.unboxedCount" (ufvc it)
-        ] ++ cInfoTabHeader))
-
-cInfoTab it@(ITBlackhole {}) =  Just (
-    cInfoTabStruct (name it)
-        ([cStructMember StringTy "name" (name it)
-        ,cStructMember PtrTy "entryCode" (entryCode it)
-        ,cStructMember EnumTy "objType" "BLACKHOLE"
-        ,cStructMember IntTy "layoutInfo.payloadSize" (0 :: Int)
-        ,cStructMember IntTy "layoutInfo.boxedCount" (0 :: Int)
-        ,cStructMember IntTy "layoutInfo.unboxedCount" (0 :: Int)
-        ] ++ cInfoTabHeader))
-
-cInfoTab it@(ITAlts {}) =  Just (
-    cCInfoTabStruct (name it)
-        [cStructMember StringTy "name" (name it)
-        ,cStructMember PtrTy "entryCode" (entryCode it)
-        ,cStructMember EnumTy "contType" "CASECONT"
-        ,cStructMember IntTy "cLayoutInfo.payloadSize" ((length $ fvs it) + 1)
-        ,cStructMember IntTy "cLayoutInfo.boxedCount" (bfvc it)
-        ,cStructMember IntTy "cLayoutInfo.unboxedCount" (ufvc it)
-        ,cStructMember IntTy "cLayoutInfo.bm" (npStrToBMInt ( 'N' :
-                        replicate (bfvc it) 'P' ++
-                        replicate (ufvc it) 'N'))
-
-        ])
-
-cInfoTab _ = Nothing
-
-cITs :: ITsOf a [InfoTab] => a -> [CExtDecl]
-cITs os =  mapMaybe cInfoTab (itsOf os)
-
--- not used in C AST version
-showIT = error "showIT"
-showITs = error "showITs"
-
--- text version
-#else
-
 infoTabHeader :: String
 infoTabHeader = if useInfoTabHeader
                 then "  .pi = PI(),\n"
@@ -675,10 +578,6 @@ showITs :: ITsOf a [InfoTab] => a -> [Char]
 showITs os = myConcatMap showIT $ itsOf os
 --showITs os = concatMap showIT $ itsOf os
 
-cITs = error "cIts" -- not used in text version
-
--- end of USE_CAST
-#endif
 
 -- MODIFIED 6.30 - David ----------------------------------------
 -- code below replaces code from ConMaps.hs to set the CMaps in

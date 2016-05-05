@@ -12,9 +12,6 @@
 /* If 1 use .pi = PI header in InfoTab */
 #define DEBUG_INFOTAB 0
 
-/* If 1 generate C AST rather than text */
-#define USE_CAST 0
-
 
 /* C side options */
 

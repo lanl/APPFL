@@ -39,8 +39,6 @@ module CodeGen(
   cgObjs,
   cgStart,
   cgMain,
-  cStart,
-  cMain,
 ) where
 
 import ADT
@@ -61,15 +59,6 @@ import Data.List(intercalate,nub)
 import Data.Map (Map)
 import qualified Data.Map as Map
 
-#if USE_CAST
-import CAST
-import Text.PrettyPrint(render)
-import Language.C.Pretty
-import Language.C.Syntax
-import Language.C.Data.Node
-import Language.C.Data.Ident
-#endif
-
 data RVal = SO              -- static object
           | HO String       -- Heap Obj, payload size, TO GO?
           | FP String Int   -- stack Formal Param, pointer to stack payload
@@ -84,69 +73,6 @@ type Env = [(String, RVal)]
 
 optStr b s = if b then s else ""
 iff b x y = if b then x else y
-
---  C AST version
-#if USE_CAST
-
-emptyFunDeclr = [CFunDeclr (Right ([],False)) [] undefNode]
-
-_cRegSOExpr :: String -> CBlockItem
-_cRegSOExpr name =  CBlockStmt (CExpr
-  (Just (CAssign CAssignOp (CIndex (CVar (builtinIdent "stgStatObj") undefNode)
-  (CUnary CPostIncOp (CVar (builtinIdent "stgStatObjCount") undefNode) undefNode)
-  undefNode) (CUnary CAdrOp (CVar (builtinIdent ("sho_" ++ name)) undefNode) undefNode)
-  undefNode)) undefNode)
-
-cRegisterSOs :: [String] -> (CExtDecl, CExtDecl)
-cRegisterSOs names = let name = "registerSOs"
-                     in (cFunProto (CTypeSpec (CVoidType undefNode)) name,
-                         cFun VoidTy "" name emptyFunDeclr
-                         (map _cRegSOExpr names))
-
-registerSOs :: [Obj InfoTab] -> (String, String)
-registerSOs objs = let (p,f) = cRegisterSOs (map (name . omd) objs)
-                   in (render $ pretty p, render $ pretty f)
-
-cMain :: Bool -> CExtDecl
-cMain v =
-  let top = [cCall "startCheck" []
-            ,cCallVars "parseArgs" ["argc","argv"]
-            ,cCall "initStg" []
-            ,cCall "initGc" []
-            ,cCall "registerSOs" []
-            ,cCallVars "CALL0_0" ["start"]
-             ]
-      body = top ++ [cCallVars "showStgHeap" ["LOG_DEBUG"] | v] ++ [cIntReturn 0]
-
-  in cFun IntTy "" "main"
-  [CFunDeclr (Right ([CDecl [CTypeSpec (CIntType undefNode)]
-  [(Just (CDeclr (Just (builtinIdent "argc")) [] Nothing [] undefNode),Nothing,Nothing)] undefNode,
-  CDecl [CTypeSpec (CCharType undefNode)] [(Just (CDeclr (Just (builtinIdent "argv"))
-  [cPtrD, cPtrD] Nothing [] undefNode),Nothing,Nothing)]
-  undefNode],False)) [] undefNode] body
-
-stgCurValArgType :: [CBlockItem]
-stgCurValArgType = [cAssign (cMemberE "stgCurVal" "argType" False) (cVarE "HEAPOBJ") | useArgType]
-
-cStart :: CExtDecl
-cStart = let body = [cUserPtrDecl "Cont" "showResultCont"
-                  (cInitCall "stgAllocCallOrStackCont"
-                  [cAddrvarE "it_stgShowResultCont", cIntE 0])
-                  ]
-                  ++ stgCurValArgType ++
-                  [cAssign (cMemberE "stgCurVal" "op" False) (cAddrvarE "sho_main")
-                  ,cCall "STGJUMP0"
-                     [CMember (cCallExpr "getInfoPtr" [cMemberE "stgCurVal" "op" False])
-                     (builtinIdent "entryCode") True undefNode]
-                  ]
-       in cFun UserTy "FnPtr" "start" emptyFunDeclr body
-
--- unused in C AST version
-cgStart = error "cgStart"
-cgMain = error "cgMain"
-
--- text version
-#else
 
 cgStart :: String
 cgStart = "\n\nFnPtr start() {\n" ++
@@ -175,13 +101,6 @@ registerSOs objs =
         concat [ "  stgStatObj[stgStatObjCount++] = &" ++ s ++ ";\n"
                  | s <- shoNames objs ] ++
      "}\n")
-
--- unused in text version
-cStart = error "cStart"
-cMain = error "cMain"
-
--- end of USE_CAST
-#endif
 
 listLookup k [] = Nothing
 listLookup k ((k',v):xs) | k == k' = Just v
