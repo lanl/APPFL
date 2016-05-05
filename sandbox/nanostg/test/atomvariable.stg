@@ -1,2 +1,0 @@
-one = CON(I 1);
-main = THUNK(one);

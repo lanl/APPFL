@@ -1,5 +1,0 @@
-nil = CON(Nil);
-zero = CON (I 0);
-one = CON(I 1);
-list1 = CON(Cons zero nil);
-main = CON(Cons one list1);

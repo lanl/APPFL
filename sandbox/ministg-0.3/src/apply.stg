@@ -1,2 +1,0 @@
-twentytwo = CON(I 22);
-main = THUNK(apply const true twentytwo)

@@ -1,9 +1,0 @@
-! with function call
-one = CON(I 1);
-two = CON(I 2);
-plusInt = FUN(x y ->
-    case x of {
-        I i -> case y of {
-            I j -> case plus# i j of {
-                z -> let { result = CON (I z) } in result }}});
-main = THUNK(plusInt one two);

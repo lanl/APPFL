@@ -1,6 +1,0 @@
-! not working yet
-true = CON(True);
-const = FUN(x y -> x);
-apply = FUN(f x -> f x);
-twentytwo = CON(I 22);
-main = THUNK(apply const true twentytwo);

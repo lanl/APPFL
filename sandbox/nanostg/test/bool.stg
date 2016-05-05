@@ -1,2 +1,0 @@
-true = CON(True);
-main = THUNK(true);

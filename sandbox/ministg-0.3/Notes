@@ -1,8 +1,0 @@
-cd ministg-0.3/src
-
-ghci
- :l Main.hs
-
-should compile the modules and give you a prompt.  Try
-
- *Main> :main -s ea --nogc -t -a -c fac.stg

@@ -1,2 +1,0 @@
-ones = CON(Cons one ones);
-main = THUNK(ones)
