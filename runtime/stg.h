@@ -66,7 +66,7 @@ typedef enum {
   INDIRECT,
   PHONYENDOBJ,
 } ObjType;
-const char *objTypeNames[PHONYENDOBJ];
+extern const char *objTypeNames[PHONYENDOBJ];
 
 
 // PtrOrLiteral -- literal value or pointer to heap object
