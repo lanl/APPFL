@@ -86,7 +86,7 @@ cStart = [cfun|
            typename FnPtr start()
            {
              typename Cont *showResultCont = stgAllocCallOrStackCont(&it_stgShowResultCont, 0);
-#if USE_ARGTPYE
+#if USE_ARGTYPE
              stgCurVal.argType = HEAPOBJ;
 #endif
              stgCurVal.op = &sho_main;
@@ -132,33 +132,14 @@ cregisterSOs objs =
   in (proto, fun)
 
 cgStart :: String
-cgStart = "\n\nFnPtr start() {\n" ++
-            "  Cont *showResultCont = " ++
-            "  stgAllocCallOrStackCont(&it_stgShowResultCont, 0);\n" ++
-            (if useArgType then "  stgCurVal.argType = HEAPOBJ;\n" else "") ++
-            "  stgCurVal.op = &sho_main;\n" ++
-            "  STGJUMP0(getInfoPtr(stgCurVal.op)->entryCode);\n" ++
-            "}\n\n"
+cgStart = pp cStart
 
 cgMain :: Bool -> String
-cgMain v = let top = "int main (int argc, char **argv) {\n" ++
-                     "  startCheck();\n" ++
-                     "  parseArgs(argc, argv);\n" ++
-                     "  initStg();\n" ++
-                     "  initGc();\n" ++
-                     "  registerSOs();\n" ++
-                     "  CALL0_0(start);\n"
-               bot = "  return 0;\n" ++ "}\n\n"
-  in if v then top ++ "  showStgHeap(LOG_DEBUG);\n  GC();\n" ++ bot else top ++ bot
-
+cgMain v = pp $ cMain v
 
 registerSOs :: [Obj InfoTab] -> (String, String)
-registerSOs objs =
-    ("void registerSOs();",
-     "void registerSOs() {\n" ++
-        concat [ "  stgStatObj[stgStatObjCount++] = &" ++ s ++ ";\n"
-                 | s <- shoNames objs ] ++
-     "}\n")
+registerSOs objs = let (p,f) = cregisterSOs objs
+                   in (pp p, pp f)
 
 listLookup k [] = Nothing
 listLookup k ((k',v):xs) | k == k' = Just v
