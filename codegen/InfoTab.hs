@@ -39,6 +39,7 @@ import Data.Set (Set)
 import qualified Data.Set as Set
 
 import Language.C.Quote.GCC
+import Language.C.Syntax (Definition, Initializer)
 import qualified Text.PrettyPrint.Mainland as PP
 
 pp f = PP.pretty 80 $ PP.ppr f
@@ -465,8 +466,8 @@ showIT :: InfoTab -> [Char]
 showIT it = 
   let x = cshowIT it
   in maybe "" pp x
-
-
+  
+cshowIT :: InfoTab -> Maybe Definition
 cshowIT it@(ITAlts {}) =
   let init = cshowITinit it
       itname = "it_" ++ name it
@@ -483,7 +484,7 @@ cshowIT it =
                |]
   in maybe Nothing f init
 
-
+cshowITinit :: InfoTab -> Maybe Initializer
 cshowITinit it@(ITFun {}) = 
   Just [cinit|
          {

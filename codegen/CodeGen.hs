@@ -31,6 +31,7 @@ Alt default var:  "stgCurVal, bind it"
 -}
 
 {-# LANGUAGE NamedFieldPuns    #-}
+{-# LANGUAGE QuasiQuotes       #-}
 {-# LANGUAGE CPP               #-}
 
 #include "../options.h"
@@ -59,6 +60,12 @@ import Data.List(intercalate,nub)
 import Data.Map (Map)
 import qualified Data.Map as Map
 
+import Language.C.Quote.GCC
+import Language.C.Syntax (Definition, Initializer, Func)
+import qualified Text.PrettyPrint.Mainland as PP
+
+pp f = PP.pretty 80 $ PP.ppr f
+
 data RVal = SO              -- static object
           | HO String       -- Heap Obj, payload size, TO GO?
           | FP String Int   -- stack Formal Param, pointer to stack payload
@@ -73,6 +80,56 @@ type Env = [(String, RVal)]
 
 optStr b s = if b then s else ""
 iff b x y = if b then x else y
+
+cStart :: Func
+cStart = [cfun|
+           typename FnPtr start()
+           {
+             typename Cont *showResultCont = stgAllocCallOrStackCont(&it_stgShowResultCont, 0);
+#if USE_ARGTPYE
+             stgCurVal.argType = HEAPOBJ;
+#endif
+             stgCurVal.op = &sho_main;
+             STGJUMP0(getInfoPtr(stgCurVal.op)->entryCode);
+           }
+         |]
+
+cMain :: Bool -> Func
+cMain v =    
+  let top = [citems|
+              startCheck();
+              parseArgs(argc, argv);
+              initStg();
+              initGc();
+              registerSOs();
+              CALL0_0(start);
+            |]
+      extra = [citems|
+                 showStgHeap(LOG_DEBUG); 
+                 GC();
+              |]
+   in if v then [cfun|
+                  int main (int argc, char **argv)
+                  {
+                    $items:top
+                    $items:extra
+                    return 0;
+                  }
+                |]
+      else [cfun|
+              int main (int argc, char **argv)
+              {
+                $items:top
+                return 0;
+               }
+            |]
+
+cregisterSOs :: [Obj InfoTab] -> (Definition, Func)
+cregisterSOs objs = 
+  let proto = [cedecl| void registerSOs(); |]
+      items = [ [citem|stgStatObj[stgStatObjCount++] = &$id:s; |] | s <- shoNames objs]
+      fun = [cfun| void registerSOs() { $items:items } |]
+  in (proto, fun)
 
 cgStart :: String
 cgStart = "\n\nFnPtr start() {\n" ++
@@ -93,6 +150,7 @@ cgMain v = let top = "int main (int argc, char **argv) {\n" ++
                      "  CALL0_0(start);\n"
                bot = "  return 0;\n" ++ "}\n\n"
   in if v then top ++ "  showStgHeap(LOG_DEBUG);\n  GC();\n" ++ bot else top ++ bot
+
 
 registerSOs :: [Obj InfoTab] -> (String, String)
 registerSOs objs =

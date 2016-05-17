@@ -1,4 +1,4 @@
-{-# LANGUAGE QuasiQuotes #-}
+{-# LANGUAGE QuasiQuotes #-} 
 
 {-# LANGUAGE CPP #-}
 #include "../options.h"
@@ -18,6 +18,7 @@ import Data.Bits
 import Foreign.Storable
 import Foreign.C.Types
 import Language.C.Quote.GCC
+import Language.C.Syntax (Definition, Initializer)
 import qualified Text.PrettyPrint.Mainland as PP
 
 pp f = PP.pretty 80 $ PP.ppr f
@@ -33,17 +34,19 @@ showSHOs objs =
   let (forwards, defs) = unzip $ map cshowSHO objs
    in (pp [cunit|$edecls:forwards|], pp [cunit|$edecls:defs|]) 
 
+cshowSHO :: Obj InfoTab -> (Definition, Definition)
 cshowSHO o = 
   ([cedecl| extern typename Obj $id:n; |],
    [cedecl| typename Obj $id:n = $init:(cshowHO (omd o)); |])
   where n = "sho_" ++ (name . omd) o
 
-
+getIT :: InfoTab -> InfoTab
 getIT it@(ITPap {}) = case knownCall it of
                         Just fit -> fit
                         Nothing -> error "unknown call in PAP"
 getIT it = it
 
+cshowHO :: InfoTab -> Initializer
 cshowHO it = 
    [cinit|
      {
@@ -55,7 +58,8 @@ cshowHO it =
        .payload = $init:(cSHOspec it)
      }     
    |]
-
+   
+cSHOspec :: InfoTab -> Initializer
 cSHOspec it@(ITFun {}) = [cinit| {0} |]
 cSHOspec it@(ITThunk {}) = [cinit| {0} |]
 cSHOspec it@(ITBlackhole {}) = [cinit| {0} |]
@@ -63,6 +67,7 @@ cSHOspec it@(ITCon {}) = [cinit| { $inits:(cpayloads $ map fst $ args it) } |]
 cSHOspec it@(ITPap {}) = cpapPayloads it
 cSHOspec it = error $ "cSHOspec " ++ show it
 
+cpapPayloads :: InfoTab -> Initializer
 cpapPayloads it = let as = map fst $ args it
                       n = cpayload $ LitI $ papArgsLayout as
                       ap = map cpayload as
@@ -76,8 +81,10 @@ papArgsLayout as = let nv = length $ filter isVar as
 isVar (Var _) = True
 isVar _ = False
 
-cpayloads as = map cpayload as
+cpayloads :: [Atom] -> [Initializer]
+cpayloads = map cpayload
 
+cpayload :: Atom -> Initializer
 cpayload (LitI i) = 
   if useArgType then
     [cinit| {.argType = INT, .i = $int:i}|]
