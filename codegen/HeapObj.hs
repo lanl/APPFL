@@ -1,6 +1,6 @@
-{-# LANGUAGE CPP #-}
 {-# LANGUAGE QuasiQuotes #-}
 
+{-# LANGUAGE CPP #-}
 #include "../options.h"
 
 module HeapObj (
@@ -25,7 +25,7 @@ pp f = PP.pretty 80 $ PP.ppr f
 -- HOs come from InfoTabs
 
 shoNames :: [Obj InfoTab] -> [String]
-shoNames = map (\o -> showITType o ++ "_" ++ (name . omd) o)
+shoNames = map (\o -> "sho_" ++ (name . omd) o)
 
 -- return list of forwards (static declarations) and (static) definitions
 showSHOs :: [Obj InfoTab] -> (String, String)
@@ -36,7 +36,7 @@ showSHOs objs =
 cshowSHO o = 
   ([cedecl| extern typename Obj $id:n; |],
    [cedecl| typename Obj $id:n = $init:(cshowHO (omd o)); |])
-  where n = showITType o ++ "_" ++ (name . omd) o
+  where n = "sho_" ++ (name . omd) o
 
 
 getIT it@(ITPap {}) = case knownCall it of
@@ -45,26 +45,16 @@ getIT it@(ITPap {}) = case knownCall it of
 getIT it = it
 
 cshowHO it = 
- if useObjType then
    [cinit|
      {
-       ._infoPtr = $id:ip,
+       ._infoPtr = &$id:("it_" ++ name (getIT it)),
+#if USE_OBJTYPE
        .objType = $id:(showObjType it),
-       .ident = $string:ident,
-       .payload = $init:pload
+#endif
+       .ident = $string:(name it),
+       .payload = $init:(cSHOspec it)
      }     
    |]
- else
-   [cinit|
-     {
-       ._infoPtr = $id:ip,
-       .ident = $string:ident,
-       .payload = $init:pload
-     }
-   |]
- where ip = "&it_" ++ name (getIT it)
-       ident = name it
-       pload = cSHOspec it
 
 cSHOspec it@(ITFun {}) = [cinit| {0} |]
 cSHOspec it@(ITThunk {}) = [cinit| {0} |]
@@ -117,10 +107,10 @@ cpayload (LitC c) =
 
 cpayload (Var v) = 
   if useArgType then
-    [cinit| {.argType = HEAPOBJ, .op = $id:sho}|]
+    [cinit| {.argType = HEAPOBJ, .op = &$id:sho}|]
   else
-    [cinit| {.i = $id:sho}|]
-  where sho = "&sho_" ++ v
+    [cinit| {.i = &$id:sho}|]
+  where sho = "sho_" ++ v
 
 cpayload at = error $ "HeapObj.cpayload: not expecting Atom - " ++ show at
  
