@@ -61,7 +61,7 @@ import Data.Map (Map)
 import qualified Data.Map as Map
 
 import Language.C.Quote.GCC
-import Language.C.Syntax (Definition, Initializer, Func)
+import Language.C.Syntax (Definition, Initializer, Func, Exp)
 import qualified Text.PrettyPrint.Mainland as PP
 
 pp f = PP.pretty 80 $ PP.ppr f
@@ -145,6 +145,18 @@ listLookup k [] = Nothing
 listLookup k ((k',v):xs) | k == k' = Just v
                          | otherwise = listLookup k xs
 
+cgetEnvRef :: String -> Env -> Exp
+cgetEnvRef v kvs = 
+  case listLookup v kvs of
+    Nothing -> error $ "cgetEnvRef " ++ v ++ " failed"
+    Just k ->
+        case k of
+          SO       -> [cexp| HOTOPL(&$id:("sho_" ++ v)) |]
+          HO name  -> [cexp| (*$id:name) |]
+          FP fp i  -> [cexp| $id:fp[$int:i] |]
+          FV fpp i -> [cexp| $id:fpp->op->payload[$int:i] |]
+
+
 getEnvRef :: String -> Env -> String
 getEnvRef v kvs =
     case listLookup v kvs of
@@ -156,21 +168,55 @@ getEnvRef v kvs =
             FP fp i -> fp ++ "[" ++ show i ++ "]"
             FV fpp i -> fpp ++ "->op->payload[" ++ show i ++ "]"
 
-argTypeElem :: String -> String
-argTypeElem ty = if useArgType then ".argType = " ++ ty ++ "," else ""
 
-cga :: Env -> Atom -> String
-cga env (Var v) = cgv env v
-cga env (LitI i) = "((PtrOrLiteral){" ++ argTypeElem "INT" ++
-                   " .i = " ++ show i ++ " })"
-cga env (LitL l) = "((PtrOrLiteral){" ++ argTypeElem "LONG" ++
-                   " .l = " ++ show l ++ " })"
-cga env (LitF f) = "((PtrOrLiteral){" ++ argTypeElem "FLOAT" ++
-                   " .f = " ++ show f ++ " })"
-cga env (LitD d) = "((PtrOrLiteral){" ++ argTypeElem "DOUBLE" ++
-                   " .d = " ++ show d ++ " })"
-cga env (LitC c) = "((PtrOrLiteral){" ++ argTypeElem "INT" ++
-                   " .i = con_" ++ c ++ " })"
+
+-- 2nd arg is comment to attach to statement
+ccga :: Env -> Atom -> (Exp, Maybe String)
+ccga env (Var v) =  ccgv env v
+
+ccga env (LitI i) = (
+  if useArgType then 
+    [cexp| ((typename PtrOrLiteral){.argType = INT, .i = $int:i}) |]
+  else
+    [cexp| ((typename PtrOrLiteral){.i = $int:i}) |], Nothing)
+
+
+ccga env (LitL l) = (              
+  if useArgType then 
+    [cexp| ((typename PtrOrLiteral){.argType = LONG, .l = $lint:l}) |]
+  else
+    [cexp| ((typename PtrOrLiteral){.l = $lint:l}) |], Nothing)    
+    
+ccga env (LitF f) =
+  let f' = toRational f
+      e = if useArgType then 
+            [cexp| ((typename PtrOrLiteral){.argType = FLOAT, .f = $float:f'}) |]
+          else
+            [cexp| ((typename PtrOrLiteral){.f = $float:f'}) |] 
+  in (e, Nothing)
+ 
+  
+ccga env (LitD d) = 
+  let d' = toRational d          
+      e = if useArgType then 
+            [cexp| ((typename PtrOrLiteral){.argType = DOUBLE, .d = $double:d'}) |]
+          else
+            [cexp| ((typename PtrOrLiteral){.d = $double:d'}) |] 
+  in (e, Nothing)   
+
+ccga env (LitC c) = 
+  let c' = "con_" ++ c        
+      e = if useArgType then 
+            [cexp| ((typename PtrOrLiteral){.argType = INT, .i = $id:c'}) |]
+          else
+            [cexp| ((typename PtrOrLiteral){.c = $id:c'}) |] 
+  in (e, Nothing)
+  
+ccgv :: Env -> String -> (Exp, Maybe String)
+ccgv env v = (cgetEnvRef v env, Just $ "/* " ++ v ++ " */") 
+
+cga env x = pp $ fst $ ccga env x
+
 
 -- boxed expression predicate
 isBoxede e = isBoxed $ typ $ emd e
