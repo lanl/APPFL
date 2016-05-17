@@ -221,14 +221,15 @@ cga env x = pp $ fst $ ccga env x
 -- boxed expression predicate
 isBoxede e = isBoxed $ typ $ emd e
 
+ccgUBa :: Env -> Atom -> String -> Exp
+ccgUBa env (Var v)  t   = [cexp| ($exp:(fst $ ccgv env v)).$id:t |] 
+ccgUBa env (LitI i) "i" = [cexp| $int:i |]
+ccgUBa env (LitD d) "d" = [cexp| $double:(toRational d) |]
+ccgUBa _ at _ = error $ "CodeGen.cgUBa: not expecting Atom - " ++ show at
 
-cgUBa env (Var v)  t   =  "(" ++ cgv env v ++ ")." ++ t
-cgUBa env (LitI i) "i" = show i
-cgUBa env (LitD d) "d" = show d
-cgUBa _ at _ = error $ "CodeGen.cgUBa: not expecting Atom - " ++ show at
--- cgUBa env (LitF f) "f" = show f
 
-cgv env v = getEnvRef v env ++ "/* " ++ v ++ " */"
+--cgv env v = getEnvRef v env ++ "/* " ++ v ++ " */"
+cgv env v = pp $ fst $ ccgv env v
 
 
 -- given function type and formal parameter list, return the args
@@ -274,6 +275,7 @@ cgos env = concatMapM (cgo env)
 cgo :: Env -> Obj InfoTab -> State Int [(String, String)]
 cgo env o@(FUN it vs e name) =
     let forward = "FnPtr fun_" ++ name ++ "();"
+        cforward = [cedecl| typename FnPtr $id:("fun_" ++ name)();|]
         argp = "argp" -- also free variable pointer pointer
         fps = "self":vs
         env' = zip (map fst $ fvs it) (map (FV argp) [0..]) ++
@@ -291,6 +293,29 @@ cgo env o@(FUN it vs e name) =
                indent 2 inline ++
                optStr (ypn /= Yes) "  STGRETURN0();\n" ++
             "}\n"
+          top = [citems|
+                  $comment:("// " ++ show (ctyp it))
+                  $comment:("// " ++ name ++ "(self, " ++ intercalate ", " vs ++ ")")
+                  LOG(LOG_INFO, $string:(name ++ " here\n"));
+                  typename PtrOrLiteral *$id:argp = &(stgGetStackArgp()->payload[0]);
+                |]
+          -- TODO: inline needs to go in functions      
+          cfunc = if (ypn /= Yes ) then 
+                    [cfun|
+                      typename FnPtr $id:("fun_" ++ name)()
+                      {
+                        $items:top
+                        STGRETURN0();
+                      }
+                    |]
+                  else 
+                    [cfun|
+                      typename FnPtr $id:("fun_" ++ name)()
+                      {
+                        $items:top
+                      }
+                    |]
+                         
       return $ (forward, func) : funcs
 
 cgo env (PAP it f as name) =
@@ -304,6 +329,7 @@ cgo env o@(THUNK it e name) =
       fvpp = "fvpp"
       env' = zip (map fst $ fvs it) (map (FV fvpp) [1..]) ++ env
       forward = "FnPtr thunk_" ++ name ++ "();"
+      cforward = [cedecl| typename FnPtr $id:("thunk_" ++ name)();|]
     in do
       ((inline,ypn), funcs) <- cge env' e
       let func =
@@ -322,6 +348,36 @@ cgo env o@(THUNK it e name) =
             indent 2 inline ++
               optStr (ypn /= Yes) "  STGRETURN0();\n" ++
             "}\n"
+          
+          top = [citems|
+                  $comment:("// " ++ show (ctyp it))
+                  LOG(LOG_INFO, $string:(name ++ " here\n"));
+                  $comment:("// access free vars through frame pointer for GC safety")
+                  $comment:("// is this really necessary???");
+                  typename Cont *stg_fp = stgAllocCallOrStackCont(&it_stgStackCont, 1);
+                  stg_fp->layout = $string:(npStrToBMStr "P");
+                  stg_fp->payload[0] = stgCurVal;
+                  typename PtrOrLiteral *$id:fvpp = &(stg_fp->payload[0]);
+                  stgThunk(stgCurVal);
+                  stgCurVal.op = NULL;  
+                |]
+          -- TODO: inline needs to go in functions       
+          cfunc = if (ypn /= Yes ) then 
+                    [cfun|
+                      typename FnPtr $id:("thunk_" ++ name)()
+                      {
+                        $items:top
+                        STGRETURN0();
+                      }
+                    |]
+                  else 
+                    [cfun|
+                      typename FnPtr $id:("thunk_" ++ name)()
+                      {
+                        $items:top
+                      }
+                    |]
+          
       return $ (forward, func) : funcs
 
 cgo env (BLACKHOLE {}) =
@@ -390,8 +446,8 @@ cge env e@(EFCall it f eas) =
 
 cge env (EPrimop it op eas) =
     let as = map ea eas
-        arg0 = cgUBa env (as !! 0) -- these take a type indicator
-        arg1 = cgUBa env (as !! 1)
+        arg0 = pp . ccgUBa env (as !! 0) -- these take a type indicator
+        arg1 = pp . ccgUBa env (as !! 1)
         inline = case op of
                    Piadd -> cInfixIII " + "
                    Pisub -> cInfixIII " - "
