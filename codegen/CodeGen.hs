@@ -61,7 +61,7 @@ import Data.Map (Map)
 import qualified Data.Map as Map
 
 import Language.C.Quote.GCC
-import Language.C.Syntax (Definition, Initializer, Func, Exp)
+import Language.C.Syntax (Definition, Initializer, Func, Exp, BlockItem)
 import qualified Text.PrettyPrint.Mainland as PP
 
 pp f = PP.pretty 80 $ PP.ppr f
@@ -108,22 +108,16 @@ cMain v =
                  showStgHeap(LOG_DEBUG); 
                  GC();
               |]
-   in if v then [cfun|
-                  int main (int argc, char **argv)
-                  {
-                    $items:top
-                    $items:extra
-                    return 0;
-                  }
-                |]
-      else [cfun|
-              int main (int argc, char **argv)
-              {
-                $items:top
-                return 0;
-               }
-            |]
-
+      bot = [citems|return 0;|]
+      items = if v then top ++ extra ++ bot else top ++ bot 
+   in [cfun|
+        int main (int argc, char **argv)
+        {
+          $items:items
+              
+        }
+      |]
+    
 cregisterSOs :: [Obj InfoTab] -> (Definition, Func)
 cregisterSOs objs = 
   let proto = [cedecl| void registerSOs(); |]
@@ -171,21 +165,21 @@ getEnvRef v kvs =
 
 
 -- 2nd arg is comment to attach to statement
-ccga :: Env -> Atom -> (Exp, Maybe String)
+ccga :: Env -> Atom -> (Exp, String)
 ccga env (Var v) =  ccgv env v
 
 ccga env (LitI i) = (
   if useArgType then 
     [cexp| ((typename PtrOrLiteral){.argType = INT, .i = $int:i}) |]
   else
-    [cexp| ((typename PtrOrLiteral){.i = $int:i}) |], Nothing)
+    [cexp| ((typename PtrOrLiteral){.i = $int:i}) |], "")
 
 
 ccga env (LitL l) = (              
   if useArgType then 
     [cexp| ((typename PtrOrLiteral){.argType = LONG, .l = $lint:l}) |]
   else
-    [cexp| ((typename PtrOrLiteral){.l = $lint:l}) |], Nothing)    
+    [cexp| ((typename PtrOrLiteral){.l = $lint:l}) |], "")    
     
 ccga env (LitF f) =
   let f' = toRational f
@@ -193,7 +187,7 @@ ccga env (LitF f) =
             [cexp| ((typename PtrOrLiteral){.argType = FLOAT, .f = $float:f'}) |]
           else
             [cexp| ((typename PtrOrLiteral){.f = $float:f'}) |] 
-  in (e, Nothing)
+  in (e, "")
  
   
 ccga env (LitD d) = 
@@ -202,7 +196,7 @@ ccga env (LitD d) =
             [cexp| ((typename PtrOrLiteral){.argType = DOUBLE, .d = $double:d'}) |]
           else
             [cexp| ((typename PtrOrLiteral){.d = $double:d'}) |] 
-  in (e, Nothing)   
+  in (e, "")   
 
 ccga env (LitC c) = 
   let c' = "con_" ++ c        
@@ -210,10 +204,10 @@ ccga env (LitC c) =
             [cexp| ((typename PtrOrLiteral){.argType = INT, .i = $id:c'}) |]
           else
             [cexp| ((typename PtrOrLiteral){.c = $id:c'}) |] 
-  in (e, Nothing)
+  in (e, "")
   
-ccgv :: Env -> String -> (Exp, Maybe String)
-ccgv env v = (cgetEnvRef v env, Just $ "/* " ++ v ++ " */") 
+ccgv :: Env -> String -> (Exp, String)
+ccgv env v = (cgetEnvRef v env, "/* " ++ v ++ " */") 
 
 cga env x = pp $ fst $ ccga env x
 
@@ -299,20 +293,13 @@ cgo env o@(FUN it vs e name) =
                   LOG(LOG_INFO, $string:(name ++ " here\n"));
                   typename PtrOrLiteral *$id:argp = &(stgGetStackArgp()->payload[0]);
                 |]
-          -- TODO: inline needs to go in functions      
-          cfunc = if (ypn /= Yes ) then 
-                    [cfun|
+          inlines = []  -- TODO: inline needs to go in functions
+          bot = [citems| STGRETURN0;|] 
+          items = if (ypn /= Yes ) then top ++ inlines ++ bot else top ++ inlines      
+          cfunc = [cfun|
                       typename FnPtr $id:("fun_" ++ name)()
                       {
-                        $items:top
-                        STGRETURN0();
-                      }
-                    |]
-                  else 
-                    [cfun|
-                      typename FnPtr $id:("fun_" ++ name)()
-                      {
-                        $items:top
+                        $items:items
                       }
                     |]
                          
@@ -361,20 +348,13 @@ cgo env o@(THUNK it e name) =
                   stgThunk(stgCurVal);
                   stgCurVal.op = NULL;  
                 |]
-          -- TODO: inline needs to go in functions       
-          cfunc = if (ypn /= Yes ) then 
-                    [cfun|
+          inlines = []  -- TODO: inline needs to go in functions
+          bot = [citems| STGRETURN0;|] 
+          items = if (ypn /= Yes ) then top ++ inlines ++ bot else top ++ inlines             
+          cfunc = [cfun|
                       typename FnPtr $id:("thunk_" ++ name)()
                       {
-                        $items:top
-                        STGRETURN0();
-                      }
-                    |]
-                  else 
-                    [cfun|
-                      typename FnPtr $id:("thunk_" ++ name)()
-                      {
-                        $items:top
+                        $items:items
                       }
                     |]
           
@@ -385,13 +365,44 @@ cgo env (BLACKHOLE {}) =
 
 -- ****************************************************************
 
-stgApplyGeneric env f eas direct =
+cstgApplyGeneric env f eas direct =
     let as = map ea eas
         pnstring = [ if b then 'P' else 'N' | b <- map (isBoxed . typ . emd) eas ]
         -- HACK
         f' = if f == "stg_case_not_exhaustive" then
                  f ++ pnstring
              else f
+        (expr0, comment0) = ccga [] (LitI 0) 
+        (expr1, comment1) = ccgv env f'  
+        in1 = [citems|
+                typename Cont *cp = stgAllocCallOrStackCont( &it_stgStackCont,
+                $int:(length pnstring + 2));
+                cp->layout =  $lint:(npStrToBMInt ('N' : 'P' : pnstring ));
+                cp->payload[ 0 ] = $exp:(expr0); $comment:(comment0)
+                cp->payload[ 1 ] = $exp:(expr1); $comment:(comment1)
+              |]
+        in2 = [ [citem| cp->payload[$int:i] = $exp:(expr); $comment:(comm) |] 
+                  | (i,a) <- zip [2..] as, let (expr, comm) = ccga env a ]
+        in3 = if direct then 
+                [citems|
+                  $comment:("// DIRECT TAIL CALL " ++ f ++ " " ++ showas as)
+                  if (evalStrategy == STRICT1) stgEvalStackFrameArgs(cp);
+                  STGJUMP0($id:("fun_" ++ f)); 
+                |]
+              else 
+                [citems|
+                  $comment:("// INDIRECT TAIL CALL " ++ f' ++ " " ++ showas as)
+                  STGJUMP0(stgApplyNew); 
+                |]
+    in return ((in1 ++ in2 ++ in3, Yes), [])
+
+stgApplyGeneric env f eas direct =
+    let as = map ea eas
+        pnstring = [ if b then 'P' else 'N' | b <- map (isBoxed . typ . emd) eas ]
+        -- HACK
+        f' = if f == "stg_case_not_exhaustive" then
+                 f ++ pnstring
+             else f     
         inline =
             -- new STACKFRAME
             "{ Cont *cp = stgAllocCallOrStackCont( &it_stgStackCont, " ++
@@ -413,6 +424,11 @@ stgApplyGeneric env f eas direct =
                 "  STGJUMP0(stgApplyNew);\n") ++
             "}\n"
     in return ((inline, Yes), [])
+
+cstgCurValUArgType :: String -> [BlockItem]
+cstgCurValUArgType ty = if useArgType
+                           then [citems| stgCurValU.argType = $id:ty; |]
+                           else []
 
 stgCurValUArgType :: String -> String
 stgCurValUArgType ty = if useArgType
