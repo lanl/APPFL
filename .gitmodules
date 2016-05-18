@@ -1,3 +1,0 @@
-[submodule "sandbox"]
-	path = sandbox
-	url = git@gitlab.com:appfl/appfl-sandbox.git

@@ -23,3 +23,6 @@ test/mhs/*.c
 test/stg/error/*.c
 test/stg/nonstrict/*.c
 test/stg/nostrict2/*.c
+#sandbox stuff
+sandbox
+appfl-sandbox
