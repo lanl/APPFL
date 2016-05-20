@@ -435,6 +435,94 @@ stgCurValUArgType ty = if useArgType
                        then "stgCurValU.argType = " ++ ty ++ ";\n"
                        else ""
 
+
+ccge env e@(EAtom it a) =
+  let (expr,comm) = ccga env a
+      inline = 
+        if isBoxede e then
+          [citems|
+            stgCurVal = $exp:expr; $comment:(comm)
+            $comment:("// boxed EAtom, stgCurVal updates itself")
+            STGJUMP();
+          |]
+        else
+          [citems|
+            stgCurValU = $exp:expr; $comment:("// " ++ showa a);
+            $comment:("// unboxed EAtom")
+          |]
+  in return ((inline, if isBoxede e then Yes else No), [])    
+    
+ccge env e@(EFCall it f eas) =
+  case (knownCall it) of
+    Nothing -> cstgApplyGeneric env f eas False
+    Just kit -> if arity kit == length eas
+                then cstgApplyGeneric env f eas False
+                else cstgApplyGeneric env f eas False  
+
+ccge env (EPrimop it op eas) =
+    let as = map ea eas
+        arg0 = ccgUBa env (as !! 0) "i" 
+        arg1 = ccgUBa env (as !! 1) "i"
+        inline = case op of
+                   Piadd -> cstgCurValUArgType "INT" ++ 
+                            [citems| stgCurValU.i = $exp:arg0 + $exp:arg1; |]
+                   Pisub -> cstgCurValUArgType "INT" ++ 
+                            [citems| stgCurValU.i = $exp:arg0 - $exp:arg1; |]
+                   Pimul -> cstgCurValUArgType "INT" ++ 
+                            [citems| stgCurValU.i = $exp:arg0 * $exp:arg1; |]
+                   Pidiv -> cstgCurValUArgType "INT" ++ 
+                            [citems| stgCurValU.i = $exp:arg0 / $exp:arg1; |]
+                   Pimod -> cstgCurValUArgType "INT" ++ 
+                            [citems| stgCurValU.i = $exp:arg0 % $exp:arg1; |]
+                   Pieq ->  cstgCurValUArgType "INT" ++ 
+                            [citems| stgCurValU.i = $exp:arg0 == $exp:arg1; |]
+                   Pine ->  cstgCurValUArgType "INT" ++ 
+                            [citems| stgCurValU.i = $exp:arg0 != $exp:arg1; |]
+                   Pilt ->  cstgCurValUArgType "INT" ++ 
+                            [citems| stgCurValU.i = $exp:arg0 < $exp:arg1; |]
+                   Pile ->  cstgCurValUArgType "INT" ++ 
+                            [citems| stgCurValU.i = $exp:arg0 <= $exp:arg1; |]
+                   Pigt ->  cstgCurValUArgType "INT" ++ 
+                            [citems| stgCurValU.i = $exp:arg0 > $exp:arg1; |]
+                   Pige ->  cstgCurValUArgType "INT" ++ 
+                            [citems| stgCurValU.i = $exp:arg0 >= $exp:arg1; |]
+                   Pineg -> cstgCurValUArgType "INT" ++
+                            [citems| stgCurValU.i = -$exp:arg0; |]
+                   Pimin -> cstgCurValUArgType "INT" ++
+                            [citems| stgCurValU.i = imin($exp:arg0,$exp:arg1); |]
+                   Pimax -> cstgCurValUArgType "INT" ++
+                            [citems| stgCurValU.i = imax($exp:arg0,$exp:arg1); |]
+                   _ -> error "Eprimop"
+    in return ((inline, No), [])    
+
+
+ccge env (ELet it os e) =
+  let names = map oname os
+      decl1 = [ [citem|typename PtrOrLiteral *$id:name; |] | name <- names ] 
+      decl2 = [citems|
+                typename Cont *contp = stgAllocCallOrStackCont(&it_stgLetCont, $int:(length os));
+              |]
+      decl3 =  [ [citem| $id:name = &(contp->payload[$int:i]); |] 
+                  | (name, i) <- zip names [0..] ]        
+      decl4 = [citems| contp->layout = $lint:(npStrToBMInt (replicate (length os) 'P'));|]    
+      decl = decl1 ++ decl2 ++ decl3 ++ decl4  
+        
+      env'  = zip names (map HO names) ++ env
+      (decls, buildcodes) = unzip $ map (cbuildHeapObj env') os
+  in do
+    ofunc <- cgos env' os
+    ((einline, ypn), efunc) <- ccge env' e
+    return ((decl ++ concat decls ++ concat buildcodes ++ einline, ypn),
+            ofunc ++ efunc)                  
+
+ccge env ecase@(ECase _ e a) =
+  do ((ecode, eypn), efunc) <- cge env e
+     -- weird:  compiler requires parens around if, ghci does not
+     (if eypn == No then
+          ccgeInline env (isBoxede e) (ecode, efunc) a
+      else
+          ccgeNoInline env (isBoxede e) (ecode, efunc) a)
+
 -- return (inline code, [(forward, fundef)])
 cge :: Env
     -> Expr InfoTab
@@ -535,6 +623,8 @@ cge env ecase@(ECase _ e a) =
 -- TODO:  inline
 -- TODO:  YPN from Alts, Alt
 
+ccgeInline = undefined -- TODO
+
 cgeInline
   :: [(Var, RVal)]
      -> Bool
@@ -595,6 +685,8 @@ payloadArgType :: String -> String -> String
 payloadArgType name ty = if useArgType
                          then name ++ "->payload[0].argType = " ++ ty ++ ";\n"
                          else ""
+
+ccgeNoInline = undefined -- TODO
 
 cgeNoInline
   :: [(Var, RVal)]
@@ -713,6 +805,18 @@ cgalt env switch fvp (ADef it v e) =
 -- ****************************************************************
 -- buildHeapObj is only invoked by ELet so TLDs not built
 
+cbuildHeapObj :: Env -> Obj InfoTab -> ([BlockItem], [BlockItem])
+cbuildHeapObj env o =
+    let rval = cbho env o 
+        name = oname o
+        decl = [citems| $id:name->op = stgNewHeapObj($id:("&it_" ++ name)); |]
+        decl2 = if useArgType then 
+                  [citems| $id:name->argType = HEAPOBJ; |] 
+                else []
+                        
+    in (decl ++ decl2, rval)
+
+
 buildHeapObj :: Env -> Obj InfoTab -> (String, String)
 -- buildHeapObj :: Env -> Obj InfoTab -> String
 buildHeapObj env o =
@@ -723,10 +827,29 @@ buildHeapObj env o =
     in (decl, rval)
 --    in decl ++ rval
 
+cbho :: Env -> Obj InfoTab -> [BlockItem]
+cbho env (FUN it vs e name) = 
+  cloadPayloadFVs env (map fst $ fvs it) 0 (name ++ "->op")
+
+cbho env (PAP it f as name) = error "unsupported explicit PAP"
+  
+cbho env (CON it c as name) =
+  [ [citem| $id:name->op->payload[$int:i] = $exp:(fst $ ccga env a); $comment:("// " ++ showa a) |]
+    | (i,a) <- indexFrom 0 (projectAtoms as) ]
+
+cbho env (THUNK it e name) =
+    let top = [citems| $id:name->op->payload[0].op = NULL; |] ++
+              if useArgType then 
+                [citems| $id:name->op->payload[0].argType = HEAPOBJ; |] 
+              else []
+    in top ++ cloadPayloadFVs env (map fst (fvs it)) 1 (name ++ "->op")
+
+cbho env (BLACKHOLE it name) = []
+
+
 bho :: Env -> Obj InfoTab -> String
 bho env (FUN it vs e name) =
     loadPayloadFVs env (map fst $ fvs it) 0 (name ++ "->op")
-
 
 bho env (PAP it f as name) = error "unsupported explicit PAP"
 
@@ -750,6 +873,16 @@ bho env (THUNK it e name) =
        loadPayloadFVs env (map fst fv) 1 (name ++ "->op")
 
 bho env (BLACKHOLE it name) = ""
+
+cloadPayloadFVs :: Env -> [String] -> Int -> String -> [BlockItem]
+cloadPayloadFVs env fvs ind name =
+  [ [citem| $id:name->payload[$int:i] = $exp:(fst $ ccgv env v); $comment:("// " ++ v) |] 
+    | (i,v) <- indexFrom ind $ fvs]
+  
+cloadPayloadAtoms :: Env -> [Atom] -> Int -> String -> [BlockItem]
+cloadPayloadAtoms env as ind name =
+  [ [citem| $id:name->payload[$int:i] = $exp:(fst $ ccga env a); $comment:("// " ++ showa a) |]
+    | (i,a) <- indexFrom ind as]
 
 loadPayloadFVs env fvs ind name =
     concat [name ++ "->payload[" ++ show i ++ "] = " ++
