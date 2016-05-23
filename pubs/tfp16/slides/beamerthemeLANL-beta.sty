@@ -1,0 +1,234 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% 
+% This is the Los Alamos Beamer theme.  It is a Beamer approximation
+% of the beta version Powerpoint theme introduced in January 2016.
+% Author:  Charles Ferenbaugh cferenba@lanl.gov
+% Last modified:  April 2016
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+% This theme reuses some elements from the following earlier
+% themes:
+%
+% Theme for the Lagrangian Applications Project at Los Alamos
+% Author:  Jimmy Fung fung@lanl.gov
+% Last modified:  October 2010
+%
+% Theme for the DDMA team at Los Alamos
+% Author:  Bryan Rasmussen, LANL Postdoc bryanras@lanl.gov
+% Last modified:  October 2006
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\ProvidesPackage{beamerthemeLANL-beta}
+
+% Load packages we will need.
+\usepackage{helvet}
+\usepackage{graphicx}
+
+% Define a few colors.
+\definecolor{LANLYellow}{RGB}{241,155,32}
+\definecolor{LANLDarkBlue}{RGB}{27,21,93}
+\definecolor{LANLGray}{RGB}{60,60,59}
+
+\newcommand{\classColor}{}
+\newcommand{\blockColor}{}
+
+% Add commands to display LA-UR (or similar ID) on title page.
+\newcommand{\markLAUR}{}
+\newcommand{\LAUR}[1]{\renewcommand{\markLAUR}{{#1}}}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%%%
+%%%% Processing options.
+%%%%
+
+% Classification markings.
+% Use a vphantom for noclass to keep vertical spacing correct.
+\DeclareOptionBeamer{noclass}{%
+    \providecommand{\markClass}{\vphantom{X}}}
+
+\DeclareOptionBeamer{unclass}{%
+    \renewcommand{\markClass}{{\color{\classColor}{UNCLASSIFIED}}}}
+
+\DeclareOptionBeamer{myclass}{%
+    \renewcommand{\markClass}{{\color{\classColor}{#1}}}}
+
+\DeclareOptionBeamer{classcolor}{%
+    \renewcommand{\classColor}{#1}}
+
+% Page numbers.
+\DeclareOptionBeamer{slidenum}{%
+    \providecommand{\markPage}{\insertframenumber}}
+
+% Use a vphantom for noslidenum to keep vertical spacing correct.
+\DeclareOptionBeamer{noslidenum}{%
+    \renewcommand{\markPage}{\vphantom{X}}}
+
+\DeclareOptionBeamer{blue}{%
+    \renewcommand{\blockColor}{LANLDarkBlue}}
+
+\DeclareOptionBeamer{gray}{%
+    \renewcommand{\blockColor}{LANLGray}}
+
+% Set default options.
+\ExecuteOptionsBeamer{noclass,slidenum,classcolor=white,blue}
+\ProcessOptionsBeamer
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% Use default themes, then modify.
+\useoutertheme{default}
+\useinnertheme{default}
+\usefonttheme{default}
+\usecolortheme{default}
+
+% Get rid of navigation symbols.
+\setbeamertemplate{navigation symbols}{}
+
+% Set up basic fonts and colors.
+\setbeamerfont{title}{size=\LARGE}
+\setbeamerfont{subtitle}{size=\large}
+\setbeamerfont{author}{size=\normalsize,series=\bfseries}
+\setbeamerfont{frametitle}{size=\Large,series=\bfseries}
+\setbeamerfont{framesubtitle}{size=\large,series=\bfseries}
+\setbeamerfont{headline}{size=\tiny}
+\setbeamerfont{footline}{size=\tiny}
+
+\setbeamercolor{titlelike}{fg=black}
+\setbeamercolor{title}{bg=\blockColor,fg=white}
+\setbeamercolor{headline}{bg=\blockColor,fg=white}
+\setbeamercolor{footline}{bg=\blockColor,fg=white}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% Set up overall page dimensions.
+
+% These are the left and right margins.
+% We'll need them in multiple places.
+\newdimen\lskip
+\newdimen\rskip
+\lskip=0.05\paperwidth
+\rskip=0.05\paperwidth
+\textwidth=\paperwidth
+\addtolength{\textwidth}{-\lskip}
+\addtolength{\textwidth}{-\rskip}
+
+% Kill the sidebar and shift everything to the same left margin.
+\setbeamersize{sidebar width left=0pt}
+\setbeamersize{sidebar width right=0pt}
+\setbeamersize{text margin left=\lskip}
+\setbeamersize{text margin right=\rskip}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% Now we set up the basic page layout.
+
+% Set background for title page only.
+\setbeamertemplate{background}{
+    \ifnum\c@framenumber=1
+        \vbox to \paperheight{
+            \vspace{0.28\paperheight}
+            \vfill
+            \includegraphics[height=0.32\paperheight]{LANL-logo-gray}
+            \vfill
+        }
+    \fi
+}
+
+
+% Set up the head of the page.
+\setbeamertemplate{headline}{%
+    \begin{beamercolorbox}[wd=\paperwidth,ht=2.75ex,dp=1ex]{headline}%
+        \makebox[0pt][l]{\hspace{0.01\paperwidth}%
+            Los Alamos National Laboratory%
+        }%
+        \hfill%
+        \makebox[0pt][c]{\textbf{\markClass}}%
+        \hfill%
+        \makebox[0pt][r]{%
+            \ifnum\c@framenumber=1%
+                \textbf{\markLAUR}\hspace{0.01\paperwidth}%
+            \fi%
+        }
+    \end{beamercolorbox} 
+}
+
+% Set up the foot of the page.
+\setbeamertemplate{footline}{%
+    \begin{beamercolorbox}[wd=\paperwidth,ht=2.75ex,dp=1ex]{footline}%
+        \hfill%
+        \makebox[0pt][c]{\textbf{\markClass}}%
+        \hfill%
+        \makebox[0pt][r]{%
+            \ifnum\c@framenumber>1%
+                {\insertshortdate\hspace{0.5em}\textbar\hspace{0.5em}%
+                \markPage\hspace{0.01\paperwidth}}%
+            \fi%
+        }
+    \end{beamercolorbox} 
+}
+
+
+% Set up the title page.
+\setbeamertemplate{title page}{%
+    \vspace{-0.5ex}%
+    \begin{beamercolorbox}[wd=\paperwidth,ht=0.24\paperheight,
+              dp=1ex,center]{title}%
+        \usebeamerfont*{title}%
+        \parbox[b]{\textwidth}{\raggedleft\inserttitle}
+    \end{beamercolorbox}
+    \vbox to 0.28\paperheight{%
+        \usebeamerfont*{subtitle}%
+        \vspace{1ex}%
+        \parbox[b]{\textwidth}{\raggedleft\insertsubtitle}%
+        \vfill
+    }
+    \vbox to 0.36\paperheight{%
+        \parbox[b]{\textwidth}{\raggedleft%
+            \usebeamerfont*{author}\insertauthor\par%
+            \vspace{1ex}%
+            \usebeamerfont*{date}\insertdate\par%
+        }\\%
+        \vfill%
+        \parbox[b]{0.94\paperwidth}{\raggedleft%
+            \includegraphics[height=0.05\paperheight]{NNSA-logo-gray}%
+            \\[-1.6ex]%
+            {\Tiny Operated by Los Alamos National Security, LLC for
+            the U.S. Department of Energy's NNSA}%
+        }%
+    }%
+}
+
+
+% Set up the frame title for each slide.
+\setbeamertemplate{frametitle}{%
+    \begin{beamercolorbox}[wd=0.9\paperwidth,ht=0.12\paperheight,
+            dp=0pt,left]{frametitle}%
+        \usebeamerfont*{frametitle}%
+        \setlength{\baselineskip}{2.0ex}%
+        \insertframetitle\par%
+        \ifx\insertframesubtitle\empty%
+        \else%
+            \usebeamerfont*{framesubtitle}%
+            \insertframesubtitle\par%
+        \fi
+    \end{beamercolorbox}
+}
+
+
+% Set up bulleted lists.
+\setbeamertemplate{itemize items}[circle]
+\setbeamercolor{itemize item}{fg=black}
+\setbeamercolor{itemize subitem}{fg=black}
+\setbeamercolor{itemize subsubitem}{fg=black}
+\setlength{\leftmargini}{1.5em}
+\setlength{\leftmarginii}{1.5em}
+\setlength{\leftmarginiii}{1.5em}
+\setlength{\labelsep}{1em}
+
+
