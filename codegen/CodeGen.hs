@@ -793,7 +793,64 @@ cgeNoInline env boxed (ecode, efunc) a@(Alts italts alts aname) =
 --        need YPN results from Alts
           return ((pre ++ ecode ++ acode, Possible),
                   efunc ++ afunc)
-                  
+
+
+
+-- ADef only or unary sum => no C switch
+ccgalts :: Env -> Alts InfoTab -> Bool 
+  -> State Int (String, [(Definition, Func)])
+
+ccgalts env (Alts it alts name) boxed =
+    let contName = "ccont_" ++ name
+        fvp = "fvp"
+        -- case scrutinee is not current explicitly bound to variable
+        altenv = zip (map fst $ fvs it) (map (FP fvp) [1..])
+        env' = altenv ++ env
+        cforward = [cedecl| typename FnPtr $id:name();|]
+        switch = length alts > 1
+    in do
+      codefuncs <- mapM (ccgalt env' switch fvp) alts
+      let (codeypns, funcss) = unzip codefuncs
+      let (codes, ypns) = unzip codeypns
+      let it1 = [citems|
+                  LOG(LOG_INFO, $string:(name ++ " here"));
+                  typename Cont *$id:contName = stgGetStackArgp();
+                  $comment:("// make self-popping")
+                  stgCaseToPopMe($id:contName);
+                  typename PtrOrLiteral *$id:fvp = &($id:contName->payload[0]);
+                |]
+      let it2 = if boxed then 
+                  [citems| 
+                    $id:fvp[0] = stgCurVal; 
+                    $id:contName->layout.bitmap.mask |= 0x1;
+                  |]
+                else 
+                  [citems| $id:fvp[0] = stgCurValU;|]
+      let it3 = if switch then 
+                  if boxed then 
+                    [citems|
+                      stgCurVal.op = NULL;
+                      switch(getInfoPtr($id:fvp[0].op)->conFields.tag) {
+                        $items:(concat codes)
+                      }
+                   |]
+                  else 
+                    [citems|
+                      switch(stgCurValU.i) {
+                       $items:(concat codes)
+                      }
+                    |]
+                else [citems| $items:(concat codes) |] 
+      let body = it1 ++ it2 ++ it3         
+      let fun = [cfun|
+                   typename FnPtr $id:name() {
+                     $comment:("//" ++ show (ctyp it) )
+                     $items:body
+                   }
+                |]
+
+      return ("", (cforward, fun) : concat funcss)                
+
 cgalts :: Env -> Alts InfoTab -> Bool
   -> State Int ([Char], [([Char], [Char])])
 
