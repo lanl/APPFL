@@ -252,6 +252,11 @@ permArgs vs ft =
 data YPN = Yes | Possible | No -- could use Maybe Bool but seems obscure
            deriving(Eq, Show)
 
+cgObjs' :: [Obj InfoTab] -> [String] -> ([String],[String])
+cgObjs' objs runtimeGlobals = 
+  let (defs, funs) = ccgObjs objs runtimeGlobals
+  in (map pp defs, map pp funs)
+
 ccgObjs :: [Obj InfoTab] -> [String] -> ([Definition],[Func])
 ccgObjs objs runtimeGlobals =
    let tlnames = runtimeGlobals ++ map (name . omd) objs
@@ -326,6 +331,7 @@ ccgo env o@(THUNK it e name) =
 ccgo env (BLACKHOLE {}) = return []    
 
 --entry point, not recursive
+
 cgObjs :: [Obj InfoTab] -> [String] -> ([String],[String])
 cgObjs objs runtimeGlobals =
     let tlnames = runtimeGlobals ++ map (name . omd) objs
@@ -334,6 +340,7 @@ cgObjs objs runtimeGlobals =
         (forwards, fundefs) = unzip funcs
         (forward, fundef) = registerSOs objs
     in (forward:forwards, fundef:fundefs)
+
 
 cgos :: Env -> [Obj InfoTab] -> State Int [(String,  String)]
 --                                        [(forward, func)]
@@ -764,12 +771,10 @@ payloadArgType name ty = if useArgType
 
 ccgeNoInline = undefined -- TODO
 
-cgeNoInline
-  :: [(Var, RVal)]
-     -> Bool
-     -> ([Char], [([Char], [Char])])
-     -> Alts InfoTab
-     -> State Int (([Char], YPN), [([Char], [Char])])
+cgeNoInline :: Env -> Bool
+  -> ([Char], [([Char], [Char])])
+  -> Alts InfoTab
+  -> State Int (([Char], YPN), [([Char], [Char])])
 
 cgeNoInline env boxed (ecode, efunc) a@(Alts italts alts aname) =
     let contName = "ccont_" ++ aname
@@ -788,11 +793,9 @@ cgeNoInline env boxed (ecode, efunc) a@(Alts italts alts aname) =
 --        need YPN results from Alts
           return ((pre ++ ecode ++ acode, Possible),
                   efunc ++ afunc)
-cgalts
-  :: [(Var, RVal)]
-     -> Alts InfoTab
-     -> Bool
-     -> State Int ([Char], [([Char], [Char])])
+                  
+cgalts :: Env -> Alts InfoTab -> Bool
+  -> State Int ([Char], [([Char], [Char])])
 
 -- ADef only or unary sum => no C switch
 cgalts env (Alts it alts name) boxed =
@@ -839,6 +842,52 @@ cgalts env (Alts it alts name) boxed =
               "FnPtr "++ name ++ "() {\n" ++ indent 2 body ++ "}\n"
 
       return ("", (forward, fun) : concat funcss)
+
+
+ccgalt:: Env -> Bool -> String -> Alt InfoTab
+  -> State Int (([BlockItem], YPN), [(Definition, Func)])
+
+ccgalt env switch fvp (ACon it c vs e) =
+  let DataCon c' ms = luDCon c (cmap it)
+      (_,_,perm) = partPerm isBoxed ms
+      eenv = zzip vs (map (FV fvp) perm)
+      env' = eenv ++ env
+  in do
+    ((inline, ypn), func) <- ccge env' e
+    let tag = luConTag c $ cmap it -- ConTags returned as Strings!
+    let top = [citems|
+                 $comment:("// " ++ c ++ " " ++ intercalate " " vs ++ " ->");
+               |]
+    let its = if ypn /= Yes then 
+                inline ++ [citems| STGRETURN0();|]
+              else inline
+    let extra = if switch then 
+                  [citems|
+                    case $id:tag: {
+                    $items:its
+                    }
+                  |] 
+                else 
+                  [citems| $items:its|] 
+    return ((top ++ extra, Yes), func)
+
+ccgalt env switch fvp (ADef it v e) =
+    let env' = (v, FP fvp 0) : env
+    in do
+      ((inline, ypn), func) <- ccge env' e
+      let top = [citems| $comment:("// " ++ v ++ " ->");|]
+      let its = if ypn /= Yes then 
+                  inline ++ [citems| STGRETURN0();|]
+                else inline
+      let extra = if switch then 
+                    [citems|
+                      default: {
+                        $items:its
+                      }
+                    |] 
+                  else 
+                    [citems| $items:its|] 
+      return ((top ++ extra, Yes), func)
 
 cgalt
   :: [(Var, RVal)]
