@@ -252,6 +252,79 @@ permArgs vs ft =
 data YPN = Yes | Possible | No -- could use Maybe Bool but seems obscure
            deriving(Eq, Show)
 
+ccgObjs :: [Obj InfoTab] -> [String] -> ([Definition],[Func])
+ccgObjs objs runtimeGlobals =
+   let tlnames = runtimeGlobals ++ map (name . omd) objs
+       env = zip tlnames $ repeat SO
+       (funcs, _) = runState (ccgos env objs) 0
+       (forwards, fundefs) = unzip funcs
+       (forward, fundef) = cregisterSOs objs
+   in (forward:forwards, fundef:fundefs)
+
+
+ccgos :: Env -> [Obj InfoTab] -> State Int [(Definition,  Func)]
+ccgos env = concatMapM (ccgo env)
+
+ccgo :: Env -> Obj InfoTab -> State Int [(Definition, Func)]
+ccgo env o@(FUN it vs e name) =
+    let cforward = [cedecl| typename FnPtr $id:("fun_" ++ name)();|]
+        argp = "argp" -- also free variable pointer pointer
+        fps = "self":vs
+        env' = zip (map fst $ fvs it) (map (FV argp) [0..]) ++
+               zip fps (map (FP argp) [0..]) ++
+               env
+    in do
+      ((inline, ypn), funcs) <- ccge env' e
+      let top = [citems|
+                  $comment:("// " ++ show (ctyp it))
+                  $comment:("// " ++ name ++ "(self, " ++ intercalate ", " vs ++ ")")
+                  LOG(LOG_INFO, $string:(name ++ " here\n"));
+                  typename PtrOrLiteral *$id:argp = &(stgGetStackArgp()->payload[0]);
+                |]
+          bot = [citems| STGRETURN0();|] 
+          items = if (ypn /= Yes ) then top ++ inline ++ bot else top ++ inline      
+          cfunc = [cfun|
+                      typename FnPtr $id:("fun_" ++ name)()
+                      {
+                        $items:items
+                      }
+                    |]                     
+      return $ (cforward, cfunc) : funcs
+      
+ccgo env (PAP it f as name) = return []
+
+ccgo env (CON it c as name) = return []  
+  
+ccgo env o@(THUNK it e name) =
+  let fvpp = "fvpp"
+      env' = zip (map fst $ fvs it) (map (FV fvpp) [1..]) ++ env
+      cforward = [cedecl| typename FnPtr $id:("thunk_" ++ name)();|]
+  in do
+    ((inline,ypn), funcs) <- ccge env' e
+    let top = [citems|
+                $comment:("// " ++ show (ctyp it))
+                LOG(LOG_INFO, $string:(name ++ " here\n"));
+                $comment:("// access free vars through frame pointer for GC safety")
+                $comment:("// is this really necessary???");
+                typename Cont *stg_fp = stgAllocCallOrStackCont(&it_stgStackCont, 1);
+                stg_fp->layout = $string:(npStrToBMStr "P");
+                stg_fp->payload[0] = stgCurVal;
+                typename PtrOrLiteral *$id:fvpp = &(stg_fp->payload[0]);
+                stgThunk(stgCurVal);
+                stgCurVal.op = NULL;  
+              |]
+        bot = [citems| STGRETURN0;|] 
+        items = if (ypn /= Yes ) then top ++ inline ++ bot else top ++ inline             
+        cfunc = [cfun|
+                    typename FnPtr $id:("thunk_" ++ name)()
+                    {
+                      $items:items
+                    }
+                  |]        
+    return $ (cforward, cfunc) : funcs
+
+ccgo env (BLACKHOLE {}) = return []    
+
 --entry point, not recursive
 cgObjs :: [Obj InfoTab] -> [String] -> ([String],[String])
 cgObjs objs runtimeGlobals =
@@ -436,6 +509,9 @@ stgCurValUArgType ty = if useArgType
                        else ""
 
 
+ccge :: Env
+  -> Expr InfoTab
+  -> State Int (([BlockItem], YPN), [(Definition, Func)])
 ccge env e@(EAtom it a) =
   let (expr,comm) = ccga env a
       inline = 
@@ -510,13 +586,13 @@ ccge env (ELet it os e) =
       env'  = zip names (map HO names) ++ env
       (decls, buildcodes) = unzip $ map (cbuildHeapObj env') os
   in do
-    ofunc <- cgos env' os
+    ofunc <- ccgos env' os
     ((einline, ypn), efunc) <- ccge env' e
     return ((decl ++ concat decls ++ concat buildcodes ++ einline, ypn),
             ofunc ++ efunc)                  
 
 ccge env ecase@(ECase _ e a) =
-  do ((ecode, eypn), efunc) <- cge env e
+  do ((ecode, eypn), efunc) <- ccge env e
      -- weird:  compiler requires parens around if, ghci does not
      (if eypn == No then
           ccgeInline env (isBoxede e) (ecode, efunc) a
