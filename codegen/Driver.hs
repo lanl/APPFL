@@ -258,15 +258,10 @@ codegener inp v mhs = let (tycons, objs) = heapchecker mhs inp
                           infotab = showITs objs
                           (shoForward, shoDef) = showSHOs objs
                           (funForwards, funDefs) = cgObjs objs stgRTSGlobals
-
-                 in header ++ "\n" ++
-                    intercalate "\n" (map pp funForwards) ++ "\n\n" ++
-                    intercalate "\n" (map pp typeEnums) ++ "\n" ++
-                    pp infotab ++ "\n" ++
-                    pp shoForward ++ "\n" ++
-                    pp shoDef ++ "\n" ++
-                    intercalate "\n\n" (map pp funDefs) ++
-                    intercalate "\n" (map pp (footer v))
+                          defs = funForwards ++ typeEnums ++ infotab ++ shoForward
+                                 ++ shoDef ++ [[cedecl| $func:x|]  | x <- funDefs] ++ footer v
+                          code = [cunit|$edecls:defs |]
+                 in header ++ "\n" ++ pp code
 
 pprinter :: String -> String
 pprinter = id
