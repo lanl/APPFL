@@ -16,8 +16,8 @@ module InfoTab(
   setITs,
   showITs,
   showObjType,
-  show,
-  showIT,
+  --show,
+  --showIT,
   itsOf,
 ) where
 
@@ -462,10 +462,12 @@ showObjType ITThunk {} = "THUNK"
 showObjType ITBlackhole {} = "BLACKHOLE"
 showObjType _ = error "bad ObjType"
 
+
 showIT :: InfoTab -> [Char]
 showIT it = 
   let x = cshowIT it
   in maybe "" pp x
+
   
 cshowIT :: InfoTab -> Maybe Definition
 cshowIT it@(ITAlts {}) =
@@ -590,7 +592,7 @@ cshowITinit it = Nothing
 
 myConcatMap f = intercalate "\n" . map f
 
-showITs :: ITsOf a [InfoTab] => a -> [Char]
+showITs :: ITsOf a [InfoTab] => a -> String
 showITs os = myConcatMap showIT $ itsOf os
 
 

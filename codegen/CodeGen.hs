@@ -62,9 +62,7 @@ import qualified Data.Map as Map
 
 import Language.C.Quote.GCC
 import Language.C.Syntax (Definition, Initializer, Func, Exp, BlockItem)
-import qualified Text.PrettyPrint.Mainland as PP
 
-pp f = PP.pretty 80 $ PP.ppr f
 
 data RVal = SO              -- static object
           | HO String       -- Heap Obj, payload size, TO GO?
@@ -81,8 +79,8 @@ type Env = [(String, RVal)]
 optStr b s = if b then s else ""
 iff b x y = if b then x else y
 
-cStart :: Func
-cStart = [cfun|
+cgStart :: Func
+cgStart = [cfun|
            typename FnPtr start()
            {
              typename Cont *showResultCont = stgAllocCallOrStackCont(&it_stgShowResultCont, 0);
@@ -94,8 +92,8 @@ cStart = [cfun|
            }
          |]
 
-cMain :: Bool -> Func
-cMain v =    
+cgMain :: Bool -> Func
+cgMain v =    
   let top = [citems|
               startCheck();
               parseArgs(argc, argv);
@@ -125,11 +123,6 @@ cregisterSOs objs =
       fun = [cfun| void registerSOs() { $items:items } |]
   in (proto, fun)
 
-cgStart :: String
-cgStart = pp cStart
-
-cgMain :: Bool -> String
-cgMain v = pp $ cMain v
                
 listLookup k [] = Nothing
 listLookup k ((k',v):xs) | k == k' = Just v
@@ -192,9 +185,6 @@ ccga env (LitC c) =
 ccgv :: Env -> String -> (Exp, String)
 ccgv env v = (cgetEnvRef v env, "/* " ++ v ++ " */") 
 
-cga env x = pp $ fst $ ccga env x
-
-
 -- boxed expression predicate
 isBoxede e = isBoxed $ typ $ emd e
 
@@ -230,13 +220,9 @@ permArgs vs ft =
 data YPN = Yes | Possible | No -- could use Maybe Bool but seems obscure
            deriving(Eq, Show)
 
-cgObjs :: [Obj InfoTab] -> [String] -> ([String],[String])
-cgObjs objs runtimeGlobals = 
-  let (defs, funs) = ccgObjs objs runtimeGlobals
-  in (map pp defs, map pp funs)
 
-ccgObjs :: [Obj InfoTab] -> [String] -> ([Definition],[Func])
-ccgObjs objs runtimeGlobals =
+cgObjs :: [Obj InfoTab] -> [String] -> ([Definition],[Func])
+cgObjs objs runtimeGlobals =
    let tlnames = runtimeGlobals ++ map (name . omd) objs
        env = zip tlnames $ repeat SO
        (funcs, _) = runState (ccgos env objs) 0

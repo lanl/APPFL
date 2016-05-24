@@ -19,9 +19,6 @@ import Foreign.Storable
 import Foreign.C.Types
 import Language.C.Quote.GCC
 import Language.C.Syntax (Definition, Initializer)
-import qualified Text.PrettyPrint.Mainland as PP
-
-pp f = PP.pretty 80 $ PP.ppr f
 
 -- HOs come from InfoTabs
 
@@ -29,10 +26,8 @@ shoNames :: [Obj InfoTab] -> [String]
 shoNames = map (\o -> "sho_" ++ (name . omd) o)
 
 -- return list of forwards (static declarations) and (static) definitions
-showSHOs :: [Obj InfoTab] -> (String, String)
-showSHOs objs =
-  let (forwards, defs) = unzip $ map cshowSHO objs
-   in (pp [cunit|$edecls:forwards|], pp [cunit|$edecls:defs|]) 
+showSHOs :: [Obj InfoTab] -> ([Definition], [Definition])
+showSHOs objs =  unzip $ map cshowSHO objs
 
 cshowSHO :: Obj InfoTab -> (Definition, Definition)
 cshowSHO o = 

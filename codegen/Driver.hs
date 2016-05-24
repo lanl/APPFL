@@ -56,12 +56,15 @@ import           OrderFVsArgs
 import           Data.List
 import qualified Data.Set as Set
 import           System.IO
+import qualified Text.PrettyPrint.Mainland as PP
+
+pp f = PP.pretty 80 $ PP.ppr f
 
 header :: String
 header = "#include \"stgc.h\"\n"
 
 footer :: Bool -> String
-footer v = cgStart ++ cgMain v
+footer v = (pp cgStart) ++ (pp $ cgMain v)
 
 -- nameDefs
 --  :: [([Char], Obj)] ->
@@ -254,12 +257,12 @@ codegener inp v mhs = let (tycons, objs) = heapchecker mhs inp
                           (funForwards, funDefs) = cgObjs objs stgRTSGlobals
 
                  in header ++ "\n" ++
-                    intercalate "\n" funForwards ++ "\n\n" ++
+                    intercalate "\n" ( map pp funForwards) ++ "\n\n" ++
                     typeEnums ++ "\n" ++
                     infotab ++ "\n" ++
-                    shoForward ++ "\n" ++
-                    shoDef ++ "\n" ++
-                    intercalate "\n\n" funDefs ++
+                    pp shoForward ++ "\n" ++
+                    pp shoDef ++ "\n" ++
+                    intercalate "\n\n" (map pp funDefs) ++
                     footer v
 
 pprinter :: String -> String
