@@ -147,7 +147,6 @@ mhsPupSTG inp = let (ts, os, as) = mhsSTGer inp
 tokenizer :: String -> [Token]
 tokenizer = tokenize
 
-
 -- parse tokenized input
 -- checks for valid syntax
 parser :: String -> ([TyCon], [Obj ()])

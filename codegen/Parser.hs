@@ -73,27 +73,13 @@ prog       ::= <def>*  -- is an empty program still a valid program? I think so.
 
 -}
 
-{-
-notes 6.26
-literal integers are tentatively being considered data constructors
-for their corresponding unboxed values. For parsing, this means that
-a TokInt is valid in place of XX in
-case e0 of { XX -> e1 }
-num = CON (XX)
-as of this writing, there is some contradiction in the Prelude.stg
-file being used for testing.
-case expressions are used as above but so too are
-one = CON(I 1) and so on though I as a data constructor is defined
-as
-data Int = I Int#
-implying only unboxed ints can be used to construct it.
--}
 
 module Parser
 (
-  Parsed(..),
-  parse,
-  fromParsed,
+ Parsed(..),
+ parse,
+ fromParsed,
+ parseWithComments,
 ) where
 
 import Tokenizer
@@ -102,10 +88,20 @@ import AST
 import ADT
 import Data.List (groupBy)
 import PPrint
-
+import Data.Char (isNumber)
+    
+type Comment = String
 
 parse :: [Token] -> ([TyCon], [Obj ()]) -- (ObjDefs, DataDefs)
-parse = splitDefs . fst . head . prog
+parse = splitDefs . fst . head . prog 
+
+parseWithComments :: [Token] -> [Either Comment (Def ())]
+parseWithComments = fst . head . progWithComments
+
+progWithComments :: Parser Token] [Either Comment (Def ())]
+progWithComments = 
+   (many' $ orEx commentP (defP `thenx` optP semiP))
+   `thenx` tokcutP "Expected semicolon or EOF after object definition" eofP
 
 prog :: Parser Token [Def ()]
 prog = sepByP' defP semiP `thenx`
@@ -150,15 +146,14 @@ tokP :: Token -> Parser Token Token
 tokP _ [] = reject []
 tokP t1 (t2:inp) =
   case (t1,t2) of
-   (TokInt _ _  , TokInt _ _ ) -> accept t2 inp
-   (TokFlt _ _  , TokFlt _ _ ) -> accept t2 inp
-   (TokId _ _   , TokId _ _  ) -> accept t2 inp
-   (TokCon _ _  , TokCon _ _ ) -> accept t2 inp
-   (TokPrim _ _ , TokPrim _ _) -> accept t2 inp
-   (TokRsv x _  , TokRsv y _ ) -> if x == y then accept t2 inp else reject inp
-   (TokEOF _    , TokEOF _   ) -> accept t2 inp
-   _                           -> reject inp
-
+   (TokNum _ _   , TokNum _ _  ) -> accept t2 inp
+   (TokId _ _    , TokId _ _   ) -> accept t2 inp
+   (TokCon _ _   , TokCon _ _  ) -> accept t2 inp
+   (TokPrim _ _  , TokPrim _ _ ) -> accept t2 inp
+   (TokRsv x _   , TokRsv y _  ) -> if x == y then accept t2 inp else reject inp
+   (TokEOF _     , TokEOF _    ) -> accept t2 inp
+   (TokWht _ _ _ , TokWht _ _ _) -> accept t2 inp
+   _                             -> reject inp
 
 -- hacky way of ignoring warnings when simply trying to match equality in Token
 -- data constructors (don't want to make instance of Eq for this)
@@ -166,6 +161,8 @@ tokP1 :: (a -> Token) -> Parser Token Token
 tokP1 t = tokP $ t undefined
 tokP2 :: (a -> b -> Token) -> Parser Token Token
 tokP2 t = tokP1 $ t undefined
+tokP3 :: (a -> b -> c -> Token) -> Parser Token Token
+tokP3 t = tokP2 $ t undefined
 
 -- Match a TokRsv with string s
 rsvP :: String -> Parser Token Token
@@ -183,13 +180,19 @@ conNameP = tokP2 (TokCon) `using` (subHash.tks)
 varNameP :: Parser Token String
 varNameP = tokP2 (TokId) `using` (subHash.tks)
 
--- Match Integer Token, accept Int
+-- Match numeric literals
 intP :: Parser Token Int
-intP = tokP2 (TokInt) `using` ivl
+intP = satisfy f `using` (read . tks)
+  where f (TokNum s _) = all isNumber s
+        f _ = False
 
--- Match Float Token, accept Float
 fltP :: Parser Token Float
-fltP = tokP2 (TokFlt) `using` fvl
+fltP = satisfy f `using` (read . tks)
+  where f (TokNum s _) | '.' `elem` s =
+                         let (w, d:ds) = break (== '.') s
+                         in all isNumber w && all isNumber ds
+        f _ = False
+
 
 -- Match Primop Token, accept Primop
 primP :: Parser Token Primop
@@ -212,6 +215,14 @@ semiP = rsvP ";"
 -- match EOF Token
 eofP = tokP1 (TokEOF)
 
+
+-- match comment token, pull out comment
+commentP :: Parser Token Comment
+commentP = satisfy f `using` tks
+    where f TokWht{cmnt} = cmnt
+          f _ = False
+                           
+    
 -- Given a parser, match parens surrounding what it would match
 inparensP :: Parser Token v -> Parser Token v
 inparensP p = xthenx lparenP p rparenP
