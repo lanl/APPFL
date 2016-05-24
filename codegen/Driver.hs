@@ -1,5 +1,6 @@
-{-# LANGUAGE CPP #-}
+{-# LANGUAGE QuasiQuotes #-} 
 
+{-# LANGUAGE CPP #-}
 #include "../options.h"
 
 module Driver (
@@ -56,6 +57,8 @@ import           OrderFVsArgs
 import           Data.List
 import qualified Data.Set as Set
 import           System.IO
+import Language.C.Quote.GCC 
+import Language.C.Syntax (Definition)
 import qualified Text.PrettyPrint.Mainland as PP
 
 pp f = PP.pretty 80 $ PP.ppr f
@@ -63,8 +66,8 @@ pp f = PP.pretty 80 $ PP.ppr f
 header :: String
 header = "#include \"stgc.h\"\n"
 
-footer :: Bool -> String
-footer v = (pp cgStart) ++ (pp $ cgMain v)
+footer :: Bool -> [Definition]
+footer v  = [[cedecl| $func:(cgStart) |], [cedecl| $func:(cgMain v) |]]
 
 -- nameDefs
 --  :: [([Char], Obj)] ->
@@ -257,13 +260,13 @@ codegener inp v mhs = let (tycons, objs) = heapchecker mhs inp
                           (funForwards, funDefs) = cgObjs objs stgRTSGlobals
 
                  in header ++ "\n" ++
-                    intercalate "\n" ( map pp funForwards) ++ "\n\n" ++
-                    typeEnums ++ "\n" ++
+                    intercalate "\n" (map pp funForwards) ++ "\n\n" ++
+                    intercalate "\n" (map pp typeEnums) ++ "\n" ++
                     pp infotab ++ "\n" ++
                     pp shoForward ++ "\n" ++
                     pp shoDef ++ "\n" ++
                     intercalate "\n\n" (map pp funDefs) ++
-                    footer v
+                    intercalate "\n" (map pp (footer v))
 
 pprinter :: String -> String
 pprinter = id
