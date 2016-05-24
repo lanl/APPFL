@@ -259,7 +259,7 @@ codegener inp v mhs = let (tycons, objs) = heapchecker mhs inp
                  in header ++ "\n" ++
                     intercalate "\n" ( map pp funForwards) ++ "\n\n" ++
                     typeEnums ++ "\n" ++
-                    infotab ++ "\n" ++
+                    pp infotab ++ "\n" ++
                     pp shoForward ++ "\n" ++
                     pp shoDef ++ "\n" ++
                     intercalate "\n\n" (map pp funDefs) ++

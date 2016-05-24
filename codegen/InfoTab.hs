@@ -16,8 +16,6 @@ module InfoTab(
   setITs,
   showITs,
   showObjType,
-  --show,
-  --showIT,
   itsOf,
 ) where
 
@@ -40,9 +38,6 @@ import qualified Data.Set as Set
 
 import Language.C.Quote.GCC
 import Language.C.Syntax (Definition, Initializer)
-import qualified Text.PrettyPrint.Mainland as PP
-
-pp f = PP.pretty 80 $ PP.ppr f
 
 -- need an infoTab entry for each lexically distinct HO or SHO
 
@@ -463,10 +458,10 @@ showObjType ITBlackhole {} = "BLACKHOLE"
 showObjType _ = error "bad ObjType"
 
 
-showIT :: InfoTab -> [Char]
-showIT it = 
-  let x = cshowIT it
-  in maybe "" pp x
+--showIT :: InfoTab -> [Char]
+--showIT it = 
+--  let x = cshowIT it
+--  in maybe "" pp x
 
   
 cshowIT :: InfoTab -> Maybe Definition
@@ -589,12 +584,8 @@ cshowITinit it@(ITAlts {}) =
 
 cshowITinit it = Nothing
 
-
-myConcatMap f = intercalate "\n" . map f
-
-showITs :: ITsOf a [InfoTab] => a -> String
-showITs os = myConcatMap showIT $ itsOf os
-
+showITs :: ITsOf a [InfoTab] => a -> [Definition]
+showITs os = catMaybes (map cshowIT $ itsOf os)
 
 -- MODIFIED 6.30 - David ----------------------------------------
 -- code below replaces code from ConMaps.hs to set the CMaps in
