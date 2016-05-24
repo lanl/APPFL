@@ -724,6 +724,53 @@ cgeInline env boxed (ecode, efunc) a@(Alts italts alts aname) =
       return ((pre ++ ecode ++ acode, ypn),
               efunc ++ afunc)
 
+ccgaltsInline :: Env -> Alts InfoTab -> Bool
+     -> State Int (([BlockItem], YPN), [(Definition, Func)])
+ccgaltsInline env a@(Alts it alts name) boxed =
+    let contName = "ccont_" ++ name
+        scrutPtr = "scrutPtr_" ++ name
+        phonyforward = [cedecl| typename FnPtr $id:name();|]
+        phonyfun = [cfun| typename FnPtr $id:name() {}|]
+        switch = length alts > 1
+     in do
+       codefuncs <- mapM (ccgalt env switch scrutPtr) alts
+       let (codeypns, funcss) = unzip codefuncs
+       let (codes, ypns) = unzip codeypns
+       let myypn = if all (==Yes) ypns then Yes
+                   else if all (==No) ypns then No
+                        else Possible
+       let in1 = [citems|
+                   typename Cont *$id:contName = stgAllocCallOrStackCont(&it_stgStackCont, 1);
+                   $comment:("// " ++ show (ctyp it))
+                   $id:contName->layout = $lint:(npStrToBMInt (iff boxed "P" "N"));
+                |] 
+       let in2 = if boxed then 
+                  [citems|
+                    $id:contName->payload[0] = stgCurVal;
+                    stgCurVal.op = NULL;
+                  |] 
+                else 
+                  [citems|$id:contName->payload[0] = stgCurValU;|] 
+       let in3 = [citems|
+                   typename PtrOrLiteral *$id:scrutPtr = &($id:contName->payload[0]);
+                 |] 
+       let in4 = if switch then 
+                  if boxed then 
+                     [citems| 
+                       switch(getInfoPtr($id:scrutPtr[0].op)->conFields.tag) {
+                         $items:(concat codes)
+                       }
+                     |] 
+                   else
+                     [citems|
+                       switch(stgCurValU.i) {
+                          $items:(concat codes)
+                       }
+                     |]
+                 else
+                   [citems| $items:(concat codes)|]
+       return ((in1 ++ in2 ++ in3 ++ in4, myypn), (phonyforward, phonyfun) : concat funcss)
+       
 cgaltsInline
   :: [(Var, RVal)]
      -> Alts InfoTab
@@ -769,7 +816,35 @@ payloadArgType name ty = if useArgType
                          then name ++ "->payload[0].argType = " ++ ty ++ ";\n"
                          else ""
 
-ccgeNoInline = undefined -- TODO
+
+ccgeNoInline :: Env -> Bool
+    -> ([BlockItem], [(Definition, Func)])
+    -> Alts InfoTab
+    -> State Int (([BlockItem], YPN), [(Definition, Func)])
+ccgeNoInline env boxed (ecode, efunc) a@(Alts italts alts aname) =
+    let contName = "ccont_" ++ aname
+        its1 = [citems| 
+                $comment:("// scrutinee may STGJUMP or STGRETURN")
+                typename Cont *$id:contName = stgAllocCont(&$id:("it_" ++ aname));
+                $comment:("// dummy value for scrutinee, InfoTab initializes to unboxed") 
+                $id:contName->payload[0].i = 0;
+              |]
+        its2 = if useArgType then 
+                 [citems|$id:contName-> payload[0].argType = "INT"; |]
+               else []
+        its3 = if fvs italts == [] then
+                 [citems| $comment:("// no FVs");|]
+               else 
+                 [citems| 
+                   $comment:("// load payload with FVs" 
+                     ++ intercalate " " (map fst $ fvs italts))
+                   $items:(cloadPayloadFVs env (map fst $ fvs italts) 1 contName)
+                 |]
+    in do (acode, afunc) <- ccgalts env a boxed
+--        need YPN results from Alts
+          return ((its1 ++ its2 ++ its3 ++ ecode ++ acode, Possible),
+                  efunc ++ afunc)
+      
 
 cgeNoInline :: Env -> Bool
   -> ([Char], [([Char], [Char])])
@@ -798,7 +873,7 @@ cgeNoInline env boxed (ecode, efunc) a@(Alts italts alts aname) =
 
 -- ADef only or unary sum => no C switch
 ccgalts :: Env -> Alts InfoTab -> Bool 
-  -> State Int (String, [(Definition, Func)])
+  -> State Int ([BlockItem], [(Definition, Func)])
 
 ccgalts env (Alts it alts name) boxed =
     let contName = "ccont_" ++ name
@@ -849,7 +924,7 @@ ccgalts env (Alts it alts name) boxed =
                    }
                 |]
 
-      return ("", (cforward, fun) : concat funcss)                
+      return ([], (cforward, fun) : concat funcss)                
 
 cgalts :: Env -> Alts InfoTab -> Bool
   -> State Int ([Char], [([Char], [Char])])
