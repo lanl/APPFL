@@ -67,7 +67,7 @@ header :: String
 header = "#include \"stgc.h\"\n"
 
 footer :: Bool -> [Definition]
-footer v  = [[cedecl| $func:(cgStart) |], [cedecl| $func:(cgMain v) |]]
+footer v  = [cgStart, cgMain v]
 
 -- nameDefs
 --  :: [([Char], Obj)] ->
@@ -259,7 +259,7 @@ codegener inp v mhs = let (tycons, objs) = heapchecker mhs inp
                           (shoForward, shoDef) = showSHOs objs
                           (funForwards, funDefs) = cgObjs objs stgRTSGlobals
                           defs = funForwards ++ typeEnums ++ infotab ++ shoForward
-                                 ++ shoDef ++ [[cedecl| $func:x|]  | x <- funDefs] ++ footer v
+                                 ++ shoDef ++ funDefs ++ footer v
                           code = [cunit|$edecls:defs |]
                  in header ++ "\n" ++ pp code
 

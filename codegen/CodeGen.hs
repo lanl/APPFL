@@ -79,20 +79,22 @@ type Env = [(String, RVal)]
 optStr b s = if b then s else ""
 iff b x y = if b then x else y
 
-cgStart :: Func
-cgStart = [cfun|
-           typename FnPtr start()
-           {
-             typename Cont *showResultCont = stgAllocCallOrStackCont(&it_stgShowResultCont, 0);
+cgStart :: Definition
+cgStart = 
+  let f = [cfun|
+            typename FnPtr start()
+            {
+              typename Cont *showResultCont = stgAllocCallOrStackCont(&it_stgShowResultCont, 0);
 #if USE_ARGTYPE
-             stgCurVal.argType = HEAPOBJ;
+              stgCurVal.argType = HEAPOBJ;
 #endif
-             stgCurVal.op = &sho_main;
-             STGJUMP0(getInfoPtr(stgCurVal.op)->entryCode);
-           }
-         |]
+              stgCurVal.op = &sho_main;
+              STGJUMP0(getInfoPtr(stgCurVal.op)->entryCode);
+            }
+          |]
+  in [cedecl| $func:f |]
 
-cgMain :: Bool -> Func
+cgMain :: Bool -> Definition
 cgMain v =    
   let top = [citems|
               startCheck();
@@ -108,13 +110,13 @@ cgMain v =
               |]
       bot = [citems|return 0;|]
       items = if v then top ++ extra ++ bot else top ++ bot 
-   in [cfun|
-        int main (int argc, char **argv)
-        {
-          $items:items
-              
-        }
-      |]
+      fun = [cfun|
+               int main (int argc, char **argv)
+               {
+                 $items:items
+               }
+            |]
+  in [cedecl| $func:fun |]
     
 cregisterSOs :: [Obj InfoTab] -> (Definition, Func)
 cregisterSOs objs = 
@@ -221,14 +223,14 @@ data YPN = Yes | Possible | No -- could use Maybe Bool but seems obscure
            deriving(Eq, Show)
 
 
-cgObjs :: [Obj InfoTab] -> [String] -> ([Definition],[Func])
+cgObjs :: [Obj InfoTab] -> [String] -> ([Definition], [Definition])
 cgObjs objs runtimeGlobals =
    let tlnames = runtimeGlobals ++ map (name . omd) objs
        env = zip tlnames $ repeat SO
        (funcs, _) = runState (ccgos env objs) 0
-       (forwards, fundefs) = unzip funcs
-       (forward, fundef) = cregisterSOs objs
-   in (forward:forwards, fundef:fundefs)
+       (forwards, funs) = unzip funcs
+       (forward, fun) = cregisterSOs objs
+   in (forward:forwards, [[cedecl| $func:x|]  | x <- fun:funs])
 
 
 ccgos :: Env -> [Obj InfoTab] -> State Int [(Definition,  Func)]
