@@ -108,7 +108,7 @@ isBoxed m = case m of
   
 
 -- set Monotype boxity in TyCons (this should be done before CMaps are built
--- for InfoTabs
+-- for InfoTabs)
 boxMTypes :: [TyCon] -> [TyCon]
 boxMTypes tycons =
   let -- create assoc list for TyCon names -> TyCons

@@ -103,8 +103,9 @@ nameExpr e@ELet{edefs, ee} tt =
       ee' <- nameExpr ee ((zip names names')++tt)
       return e{edefs = edefs', ee = ee'}
 
-nameExpr e@ECase{ee, ealts} tt =
+nameExpr e@ECase{ee, ealts, scbnd} tt =
     do
+      scbnd' <- nameExpr scbnd tt
       ee' <- nameExpr ee tt
       ealts' <- nameAlts ealts tt
       return e{ee = ee', ealts = ealts'}

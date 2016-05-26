@@ -249,24 +249,35 @@ class ToSTG a b where
   stgify :: DCMap -> a -> STGState b
 
 type DCMap = Map.Map Con Constr
-type STGState a = State (Int,Int) (a ())
+type STGState a = State (Int,Int,Int) (a ())
 
-letVar :: State (Int,Int) Var
-letVar =
-  do
-    (i,j) <- get
-    put (i+1, j)
-    return $ letvarPfx ++ show i
+incfst (a,b,c) = (succ a, b, c)
+incsnd (a,b,c) = (a, succ b, c)
+incthd (a,b,c) = (a, b, succ c)
 
-altsVar :: State (Int,Int) Var
-altsVar =
-  do
-    (i,j) <- get
-    put (i, j+1)
-    return $ altsPfx ++ show j    
+leti (a,_,_) = a
+alti (_,b,_) = b
+scri (_,_,c) = c
+
+newVar :: ((Int,Int,Int) -> (Int,Int,Int)) -- ^ increment state function
+       -> String -- ^ Prefix to add to Var
+       -> ((Int,Int,Int) -> Int) -- ^ function selects field of State
+       -> State (Int, Int, Int) Var -- ^ return new Variable
+newVar increment pfx selector =
+    get >>= \s -> put (increment s) >>= return (pfx ++ show (selector s))
+               
+letVar :: State (Int,Int,Int) Var
+letVar = newVar incfst letvarPfx leti
+
+altsVar :: State (Int,Int,Int) Var
+altsVar = newVar incsnd altsPfx alti
+
+scrutVar :: State (Int,Int,Int) Var
+scrutVar = newvar incthd scrPfx scri
 
 altsPfx = "gal_"  
 letvarPfx = "glv_"
+scrPfx = "gsc_"
 gcfunPfx = "gfc_"
 gpfunPfx = "gfp_"
 
@@ -418,7 +429,8 @@ instance ToSTG Exp Expr where
          do
            expr <- stgify dcmap eexp
            ealts <- stgify dcmap cls
-           return $ ECase () expr ealts
+           scrvar <- scrutVar -- new 2016.05.25, reflects STG change
+           return $ ECase () expr ealts (EAtom () $ Var scrvar)
 
        ELt{eexp, defns} ->
          do
