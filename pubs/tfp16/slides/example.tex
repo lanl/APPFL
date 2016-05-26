@@ -1,0 +1,64 @@
+\documentclass{beamer}
+
+\usetheme[unclass]{LANL-beta}
+\usepackage{graphicx}
+
+\title{A Beamer Version of the LANL Presentation Template}
+\subtitle{Beta version, January 2016}
+\author{Charles R. Ferenbaugh}
+\date[4/26/2016]{Some Random Meeting \\ April 26, 2016}
+\LAUR{LA-UR-YY-NNNNN}
+
+\begin{document}
+
+\begin{frame}
+\maketitle
+\end{frame}
+
+\begin{frame}
+\frametitle{Here is a simple frame}
+    \begin{itemize}
+        \item Here is the first bullet in a standard bulleted list,
+            as is customary for a presentation like this
+        \begin{itemize}
+            \item It includes some sub-bullets
+            \item Here they are
+        \end{itemize}
+        \item Here is another bullet
+        \item And here is another, with some math:
+            \[ e^{i\theta} = \cos \theta + i \sin \theta \]
+    \end{itemize}
+\end{frame}
+
+
+\begin{frame}
+\frametitle{Here is a more complicated frame, including some graphics}
+    \begin{columns}[t]
+        \begin{column}{.48\linewidth}
+            \begin{itemize}
+                \item Here is a bulleted list that sits alongside a graphic
+                \item With a second bullet item
+                \item And a third
+                \begin{itemize}
+                   \item It can have sub-bullets too
+                   \item Like this
+                \end{itemize}
+            \end{itemize}
+        \end{column}
+        \begin{column}[T]{.48\linewidth}
+            \begin{figure}
+                \begin{center}
+                    \fbox{\includegraphics[width=0.9\linewidth]%
+                        {LANL-logo-gray}}\\[2.0ex]
+                    insert caption here
+                \end{center}
+            \end{figure}%
+        \end{column}
+    \end{columns}
+\end{frame}
+
+
+\end{document}
+
+
+
