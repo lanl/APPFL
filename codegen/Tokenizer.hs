@@ -7,7 +7,8 @@ module Tokenizer
 (
   Token(..),
   primopTable,
-  tokenize
+  tokenize,
+  tokenizeWithComments,
 ) where
 
 import MHS.AST (Primop (..))
@@ -21,7 +22,7 @@ testtok file =
   do
     lns <- readFile file
     let t1 = tokenize lns
-    print $ vcat $ map (text . tks) t1
+    print $ vcat $ map pprint t1
 
 tokenize' inp keepComments =
   let inp' = numberize inp
@@ -47,7 +48,15 @@ numberize inp = aux inp (1,1)
           '\n' -> (x,(l,c)) : aux xs (l+1,1)
           _ | isControl x -> aux xs (l,c) -- ignore other control chars
             | otherwise -> (x, (l,c)) : aux xs (l,c+1)
-                           
+
+failP msg parser inp =
+    cutP (show (text "Tokenization Error at "
+               <+> case inp of
+                     []  -> text "end of input:"
+                     i:_ -> pprint i <> char ':'
+               $+$ text msg))
+          parser inp
+
 satisfyFst f = satisfy (f.fst)
 
 litC c = satisfyFst (== c)
@@ -61,10 +70,11 @@ litStr cs = case cs of
                    
 anyEq' cs = satisfyFst (\c -> or $ map (== c) cs)
 
-prog = many' (whitespace `xorP` lexeme) `ordP` eof >>> \(tks, lst) ->
-       accept (tks ++ [lst])
+prog = many' (whitespace `xorP` lexeme) `thenx` optP eof >>> \tks ->
+       let (l,c) = maximum $ map pos tks
+       in accept (tks ++ [TokEOF "EOF" (l,c+1)])
 
-eof = litC '\NUL' >>> \(c,p) -> accept $ TokEOF p
+eof = litC '\NUL' >>> \(c,p) -> accept $ TokEOF "EOF" p
 
 whitespace = orExList [whtChrs, comment, ncomment]
 
@@ -103,11 +113,11 @@ ncomment =
   in
    opencom >>> \(op,p) ->
    many' inner >>> \chars ->
-   closecom >>> \(cls,_) ->
+   failP "Expected end of nested comment" closecom >>> \(cls,_) ->
                  accept $ TokWht (op ++ concat chars ++ cls) p True
 
 lexeme = orExList
-         [ varid, conid, special, reserved, primitive, literal]
+         [varid, conid, special, primitive, reserved, literal]
 
 
 upper = satisfyFst isUpper
@@ -131,7 +141,7 @@ primitive = orExList
                                       accept $ TokPrim s p
                                        
 varid =
-  lower >>> \(s,p) ->
+  orExList [lower, underscore, hash] >>> \(s,p) ->
   many idchar >>> \ss ->
                    let str = s:map fst ss
                    in
@@ -144,7 +154,10 @@ varid =
 conid =
   upper >>> \(s,p) ->
   many idchar >>> \ss ->
-                   accept $ TokCon (s:map fst ss) p
+      let con = (s:map fst ss)
+      in if con `elem` reserveds
+         then reject
+         else accept $ TokCon con p
 
 
 literal = orExList
@@ -180,7 +193,7 @@ data Token
     | TokCon  {tks::String, pos::Pos}
     | TokRsv  {tks::String, pos::Pos}
     | TokWht  {tks::String, pos::Pos, cmnt::Bool}
-    | TokEOF  {             pos::Pos}
+    | TokEOF  {tks::String, pos::Pos}
 
 
 
@@ -189,23 +202,23 @@ instance PPrint Pos where
 
 instance PPrint Token where
   pprint tk = case tk of
-    TokNum s p  -> text "TokNum" <> braces
+    TokNum s p   -> text "TokNum" <> braces
                    (text s <> comma <+> pprint p)
-    TokPrim s p -> text "TokPrim" <> braces
+    TokPrim s p  -> text "TokPrim" <> braces
                    (text s <> comma <+> pprint p)
-    TokId s p   -> text "TokId" <> braces
+    TokId s p    -> text "TokId" <> braces
                    (text s <> comma <+> pprint p)
-    TokCon s p  -> text "TokCon" <> braces
+    TokCon s p   -> text "TokCon" <> braces
                    (text s <> comma <+> pprint p)
-    TokRsv s p  -> text "TokRsv" <> braces
+    TokRsv s p   -> text "TokRsv" <> braces
                    (text s <> comma <+> pprint p)
     TokWht s p _ -> text "TokWht" <> braces
                    (text s <> comma <+> pprint p)
-    TokEOF p    -> text "TokEOF" <> braces (pprint p)
+    TokEOF s p   -> text "TokEOF" <> braces
+                   (text s <> comma <+> pprint p)
 
 instance Show Token where
-  show (TokEOF p) = bracketize "EOF" (showpos p)
-  show tok        = bracketize (tks tok) (showpos $ pos tok)
+    show tok = bracketize (tks tok) (showpos $ pos tok)
 
 bracketize a b = "{" ++ a ++ " @ " ++ b ++ "}"
 showpos (l,c) = "(ln:" ++ show l ++ "," ++ "col:" ++ show c ++ ")"
