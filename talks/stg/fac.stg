@@ -1,30 +1,52 @@
-data Int = I Int#;
-data Bool = False | True;
-one = CON(I 1);
-three = CON(I 3);
-false = CON(False);
-true = CON(True);
+-- real STG:
+
+Fac.fac [Occ=LoopBreaker] :: GHC.Types.Int -> GHC.Types.Int
+[GblId, Arity=1, Str=DmdType, Unf=OtherCon []] =
+    \r srt:SRT:[rjG :-> Fac.fac, rlH :-> GHC.Num.$fNumInt] [ds_sL0]
+        case ds_sL0 of wild_sL1 {
+          GHC.Types.I# ds1_sL2 [Occ=Once!] ->
+              case ds1_sL2 of _ [Occ=Dead] {
+                __DEFAULT ->
+                    let {
+                      sat_sL6 [Occ=Once] :: GHC.Types.Int
+                      [LclId, Str=DmdType] =
+                          \u srt:SRT:[rjG :-> Fac.fac, rlH :-> GHC.Num.$fNumInt] []
+                              let {
+                                sat_sL5 [Occ=Once] :: GHC.Types.Int
+                                [LclId, Str=DmdType] =
+                                    \u srt:SRT:[rlH :-> GHC.Num.$fNumInt] []
+                                        let {
+                                          sat_sL4 [Occ=Once] :: GHC.Types.Int
+                                          [LclId, Str=DmdType] =
+                                              NO_CCS GHC.Types.I#! [1];
+                                        } in  GHC.Num.- GHC.Num.$fNumInt wild_sL1 sat_sL4;
+                              } in  Fac.fac sat_sL5;
+                    } in  GHC.Num.* GHC.Num.$fNumInt wild_sL1 sat_sL6;
+                0 -> GHC.Types.I# [1];
+              };
+        };
 
 
-multInt = FUN(x y ->
-           case x of {
-               I i# ->
-                  case y of {
-                      I j# -> case imul# i# j# of
-                                 { x# -> let { result = CON (I x#) } in result }}});
+-- simple STG:
 
-subInt = FUN(x y ->
-           case x of
-              { I i# ->
-                  case y of
-                     { I j# -> case isub# i# j# of
-                                 { x# -> let { result = CON (I x#) } in result }}});
+fac = FUN (ds_sL0 ->
+  case ds_sL0 of
+  {
+    I ds1_sL2 -> case ds1_sL2 of
+                 {
+                   d -> let {sat_sL6 = THUNK(
+                         let {sat_sL5 = THUNK(
+                           let {sat_sL4 = CON(I 1)} in subInt ds_sL0 sat_sL4
+                         )}
+                         in fac sat_sL5
+                       )}
+                       in multInt ds_sL0 sat_sL6;
+                   0 -> one
+                 }
+  }
+);
 
-eqZero = FUN(x -> 
-           case x of {
-             I i# -> case ieq# i# 0 of {
-                      0 -> false;
-                      1 -> true}});
+-- original STG:
 
 fac = FUN (x -> 
          case eqZero x of {
@@ -33,5 +55,5 @@ fac = FUN (x ->
                            rec = THUNK(fac s) }
                      in multInt x rec
          });
-                 
-main = THUNK (fac three) 
+                           
+  

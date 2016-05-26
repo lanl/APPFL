@@ -92,6 +92,7 @@ stgRTSGlobals = [ "stg_case_not_exhaustive", -- before type checking
                   "stg_case_not_exhaustiveN"  -- during codegen
                 ] ++ map fst primopTab -- from AST.hs
 
+
 -- Tokenizes input, stripping comments and handling the layout rule
 -- (roughly)
 mhsTokenizer :: String -> [MHS.Tokenizer.Token]

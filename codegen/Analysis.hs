@@ -263,11 +263,14 @@ addDefsToMap defs funmap =
    fixDefs defs fmp'
      
 
-                                             
 
+-- Entry point for ensuring exhaustive Alts in case expressions
+-- CMap is necessary for finding all the constructors for
+-- any type being matched against in the case expression
 exhaustCases :: CMap -> [Obj a] -> [Obj a]
 exhaustCases cmap = map (exhaustObj cmap)
 
+-------------------------------------------------- Obj Level
 exhaustObj :: CMap -> Obj a -> Obj a
 exhaustObj cmap obj =
   case obj of
@@ -276,7 +279,8 @@ exhaustObj cmap obj =
    PAP{} -> obj
    CON{} -> obj
    BLACKHOLE{} -> obj
-   
+
+-------------------------------------------------- Expr Level
 exhaustExpr :: CMap -> Expr a -> Expr a
 exhaustExpr cmap expr =
   case expr of
@@ -289,6 +293,7 @@ exhaustExpr cmap expr =
    EPrimop{} -> expr
    EFCall{}  -> expr
 
+-------------------------------------------------- Alts level
 exhaustAlts :: CMap -> Alts a -> Alts a
 exhaustAlts cmap aa@Alts{alts, aname} =
   let acons = filter isACon alts
@@ -307,7 +312,11 @@ why not just
 
   x -> stg_case_not_exhaustive x
 
+simplified, 2016.05.25 - dmr
+
 -}
+-- default Alt for non exhaustive cases
+-- stg_case_not_exhaustive is defined in the C runtime
 defAlt :: String -> Alt a
 defAlt name =
   let
@@ -317,18 +326,9 @@ defAlt name =
     fcall = EFCall{emd = mdErr "EFCall",
                    ev  = "stg_case_not_exhaustive",
                    eas = [arg]}
-    thunk = THUNK{omd   = mdErr "THUNK",
-                  e     = fcall,
-                  oname = name ++ "_exhaust"}
-    letee = EAtom{emd = mdErr "EAtom",
-                  ea  = Var $ oname thunk}
-    elet  = ELet{emd   = mdErr "ELet",
-                 edefs = [thunk],
-                 ee    = letee}
   in ADef {amd = mdErr "ADef",
            av  = "x",
-           ae  = elet}
-
+           ae  = fcall}
 
 
 
