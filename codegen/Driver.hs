@@ -56,6 +56,7 @@ import           OrderFVsArgs
 import           Data.List
 import qualified Data.Set as Set
 import           System.IO
+import Debug.Trace
 
 header :: String
 header = "#include \"stgc.h\"\n"
@@ -211,17 +212,17 @@ heapchecker mhs inp  = let (tycons, objs) = knowncaller mhs inp
 printObjsVerbose :: ([TyCon], [Obj InfoTab]) -> IO ()
 printObjsVerbose (tycons, objs) = print $ objListDoc objs
 
-tester :: (String -> a) -> (a -> String) -> FilePath -> IO ()
-tester tfun sfun infile =
+tester :: (String -> a) -> (a -> String) -> [FilePath] -> IO ()
+tester tfun sfun infiles =
  do
-   ihandle <- openFile infile ReadMode
-   _tester tfun sfun ihandle stdout
+   ihandles <- mapM (flip openFile $ ReadMode) infiles
+   _tester tfun sfun ihandles stdout
 
-_tester :: (String -> a) -> (a -> String) -> Handle -> Handle -> IO ()
-_tester testfun showfun ifd ofd =
+_tester :: (String -> a) -> (a -> String) -> [Handle] -> Handle -> IO ()
+_tester testfun showfun ifds ofd =
   do
-    inp <- hGetContents ifd
-    let res = testfun inp
+    inp <- mapM hGetContents ifds
+    let res = testfun $ trace (concat inp) (concat inp)
         out = showfun res
     hPutStrLn ofd out
     return ()

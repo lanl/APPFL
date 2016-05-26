@@ -77,6 +77,7 @@ prog       ::= <def>*  -- is an empty program still a valid program? I think so.
 module Parser
 (
  Parsed(..),
+ Comment,
  parse,
  fromParsed,
  parseWithComments,
@@ -98,7 +99,7 @@ parse = splitDefs . fst . head . prog
 parseWithComments :: [Token] -> [Either Comment (Def ())]
 parseWithComments = fst . head . progWithComments
 
-progWithComments :: Parser Token] [Either Comment (Def ())]
+progWithComments :: Parser Token [Either Comment (Def ())]
 progWithComments = 
    (many' $ orEx commentP (defP `thenx` optP semiP))
    `thenx` tokcutP "Expected semicolon or EOF after object definition" eofP
@@ -151,7 +152,7 @@ tokP t1 (t2:inp) =
    (TokCon _ _   , TokCon _ _  ) -> accept t2 inp
    (TokPrim _ _  , TokPrim _ _ ) -> accept t2 inp
    (TokRsv x _   , TokRsv y _  ) -> if x == y then accept t2 inp else reject inp
-   (TokEOF _     , TokEOF _    ) -> accept t2 inp
+   (TokEOF _ _   , TokEOF _ _  ) -> accept t2 inp
    (TokWht _ _ _ , TokWht _ _ _) -> accept t2 inp
    _                             -> reject inp
 
@@ -213,7 +214,7 @@ barP = rsvP "|"
 semiP = rsvP ";"
 
 -- match EOF Token
-eofP = tokP1 (TokEOF)
+eofP = tokP2 (TokEOF)
 
 
 -- match comment token, pull out comment
@@ -373,7 +374,7 @@ eCaseP =
   altsP >>> \alts ->
   tokcutP "Expected right brace to close the alt block of a case expr"
   rbraceP >>> \_ ->
-               accept $ ECase () exp alts
+               accept $ ECase () exp alts $ EAtom () $ Var ""
 
 
 -- parse an Alts section in a case expression, accept an Alts object

@@ -99,6 +99,8 @@ instance PPrint a => PPrint (Maybe a) where
   pprint (Just a) = text "Just" <+> pprint a
   pprint Nothing = text "Nothing"
 
-
 instance PPrint () where
   pprint () = empty
+
+instance PPrint Char where
+  pprint = char

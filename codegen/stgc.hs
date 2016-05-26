@@ -148,7 +148,7 @@ compile  (Options {optVerbose, optDumpParse, optNoPrelude, optInput,
     let source = if optNoPrelude then src
                  else prelude ++ src
         (ts,os) = let (t,o,_) =  mhsSTGer source
-                 in if minihs then (t,o) else parser source
+                  in if minihs then (t,o) else parser source
 
     when optDumpSTG $
       writeFile (input ++ ".dump.stg") (show $ unparse ts $+$ unparse os)

@@ -53,11 +53,22 @@ data Obj a = FUN   {omd :: a, vs :: [Var],   e :: Expr a   , oname :: String}
 
 -- 7.9 EFCalls (and EPrimops, for consistency) changed to accept Expr args.
 -- Parser (and other traversals) should enforce use of *only* EAtom as args
-data Expr a = EAtom   {emd :: a,                    ea :: Atom}
-            | EFCall  {emd :: a, ev :: Var,         eas :: [Expr a]} -- invariant the eas are EAtoms
-            | EPrimop {emd :: a, eprimop :: Primop, eas :: [Expr a]} -- invariant the eas are EAtoms
-            | ELet    {emd :: a, edefs :: [Obj a],  ee :: Expr a}
-            | ECase   {emd :: a, ee :: Expr a,      ealts :: Alts a}
+data Expr a
+    = EAtom   {emd :: a,
+               ea :: Atom}
+    | EFCall  {emd :: a,
+               ev :: Var,
+               eas :: [Expr a]} -- invariant the eas are EAtoms
+    | EPrimop {emd :: a,
+               eprimop :: Primop,
+               eas :: [Expr a]} -- invariant the eas are EAtoms
+    | ELet    {emd :: a,
+               edefs :: [Obj a],
+               ee :: Expr a}
+    | ECase   {emd :: a,
+               ee :: Expr a,
+               ealts :: Alts a,
+               scbnd :: Expr a} -- invariant the scbnd is an EAtom
               deriving(Eq,Show)
 
 data Alts a = Alts {altsmd :: a, alts :: [Alt a], aname :: String}
@@ -122,39 +133,28 @@ primopTab =
     ]
 
 
+-- generate with
+-- awk '/^[a-z_#].*=/ {if ($1 != "data") {printf "\42%s\42, ", $1}}' \
+-- appfl/prelude/Prelude.stg | fmt -w 80
+
 preludeObjNames =
-  ["error",
-   "unit",
-   "nil",
-   "zero",
-   "one",
-   "two",
-   "three",
-   "four",
-   "five",
-   "six",
-   "seven",
-   "eight",
-   "nine",
-   "ten",
-   "false",
-   "true",
-   "eqInt",
-   "multInt",
-   "plusInt",
-   "subInt",
-   "append",
-   "const",
-   "apply",
-   "map",
-   "head",
-   "tail",
-   "foldl",
-   "sum",
-   "zipWith",
-   "seq",
-   "forcelist",
-   "take"]
+    [
+     "error", "unit", "nil", "zero", "one", "two", "three", "four", "five", "six",
+     "seven", "eight", "nine", "ten", "false", "true", "blackhole", "_iplus",
+     "_isub", "_imul", "_idiv", "_imod", "_ieq", "_ine", "_ilt", "_ile", "_igt",
+     "_ige", "_imin", "_imax", "_ineg", "cons", "int", "tupl2", "fst", "snd",
+     "tupl3", "eqInt", "multInt", "plusInt", "subInt", "modInt", "_intPrimop",
+     "_intComp", "intLE", "minInt", "gcd#", "gcd", "append", "map", "head",
+     "tail", "foldl", "foldr", "length", "_length", "forcelist", "take", "drop",
+     "zipWith", "zip", "strictList", "null", "init", "filter", "all", "any",
+     "sum", "const", "apply", "seq", "repeat", "replicate", "odd#", "even#",
+     "odd", "even", "not", "compose", "divInt", "compareInt", "intLT", "intGE",
+     "intGT", "switch", "move", "removeAtIndex", "insertAtIndex", "index",
+     "eqList", "createNormArray", "cNArr", "createNormBackArray", "cNBArr",
+     "createArray", "cArr", "createOddBackArray", "cOBArr", "createEvenArray",
+     "cEArr", "createEvenBackArray", "cEBArr", "createOddArray", "cOArr"
+    ]
+
 
 
 -- functions for removing some or all standard Prelude objects from the
@@ -215,9 +215,9 @@ instance Unparse a => Unparse (Expr a) where
     nest 2 (vcat $ punctuate semi $ map unparse edefs) <> rbrace $+$
     text "in" <+> unparse ee
 
-  unparse ECase{emd, ee, ealts} =
+  unparse ECase{emd, ee, ealts, scbnd} =
     bcomment (unparse emd) $+$
-    text "case" <+> unparse ee <+> text "of" <+> lbrace $+$
+    text "case" <+> unparse ee <+> text "of" <+> unparse scbnd <+> lbrace $+$
     nest 2 (unparse ealts) <> rbrace
 
 
@@ -368,6 +368,8 @@ instance (PPrint a) => PPrint (Expr a) where
                    nest 2 (pprint emd) $+$
                    text "scrutinee:" $+$
                    nest 2 (pprint ee) $+$
+                   text "scrutinee binding:" $+$
+                   nest 2 (pprint scbnd) $+$
                    text "alts:" $+$
                    nest 2 (pprint ealts)
                   )
