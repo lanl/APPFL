@@ -81,22 +81,23 @@ iff b x y = if b then x else y
 
 cgStart :: Definition
 cgStart = 
-  let f = [cfun|
+  let its = [citems| typename Cont *showResultCont = stgAllocCallOrStackCont(&it_stgShowResultCont, 0); |]
+          ++ (if useArgType then [citems| stgCurVal.argType = HEAPOBJ; |] else [])
+          ++ [citems|
+                stgCurVal.op = &sho_main;
+                STGJUMP0(getInfoPtr(stgCurVal.op)->entryCode);
+            |] 
+      f = [cfun|
             typename FnPtr start()
             {
-              typename Cont *showResultCont = stgAllocCallOrStackCont(&it_stgShowResultCont, 0);
-#if USE_ARGTYPE
-              stgCurVal.argType = HEAPOBJ;
-#endif
-              stgCurVal.op = &sho_main;
-              STGJUMP0(getInfoPtr(stgCurVal.op)->entryCode);
+               $items:its
             }
           |]
   in [cedecl| $func:f |]
 
 cgMain :: Bool -> Definition
 cgMain v =    
-  let top = [citems|
+  let its = [citems|
               startCheck();
               parseArgs(argc, argv);
               initStg();
@@ -104,16 +105,17 @@ cgMain v =
               registerSOs();
               CALL0_0(start);
             |]
-      extra = [citems|
-                 showStgHeap(LOG_DEBUG); 
-                 GC();
-              |]
-      bot = [citems|return 0;|]
-      items = if v then top ++ extra ++ bot else top ++ bot 
+          ++ (if v then 
+                [citems|
+                  showStgHeap(LOG_DEBUG); 
+                   GC();
+                |]
+              else [])
+          ++ [citems|return 0;|]
       fun = [cfun|
                int main (int argc, char **argv)
                {
-                 $items:items
+                 $items:its
                }
             |]
   in [cedecl| $func:fun |]
@@ -121,8 +123,8 @@ cgMain v =
 cregisterSOs :: [Obj InfoTab] -> (Definition, Func)
 cregisterSOs objs = 
   let proto = [cedecl| void registerSOs(); |]
-      items = [ [citem|stgStatObj[stgStatObjCount++] = &$id:s; |] | s <- shoNames objs]
-      fun = [cfun| void registerSOs() { $items:items } |]
+      its = [ [citem|stgStatObj[stgStatObjCount++] = &$id:s; |] | s <- shoNames objs]
+      fun = [cfun| void registerSOs() { $items:its } |]
   in (proto, fun)
 
                
@@ -306,27 +308,27 @@ cstgApplyGeneric env f eas direct =
              else f
         (expr0, comment0) = ccga [] (LitI 0) 
         (expr1, comment1) = ccgv env f'  
-        in1 = [citems|
+        its = [citems|
                 typename Cont *cp = stgAllocCallOrStackCont( &it_stgStackCont,
                 $int:(length pnstring + 2));
                 cp->layout =  (typename Bitmap64)$ulint:(npStrToBMInt ('N' : 'P' : pnstring ));
                 cp->payload[ 0 ] = $exp:(expr0); $comment:(comment0)
                 cp->payload[ 1 ] = $exp:(expr1); $comment:(comment1)
               |]
-        in2 = [ [citem| cp->payload[$int:i] = $exp:(expr); $comment:(comm) |] 
+            ++ [ [citem| cp->payload[$int:i] = $exp:(expr); $comment:(comm) |] 
                   | (i,a) <- zip [2..] as, let (expr, comm) = ccga env a ]
-        in3 = if direct then 
-                [citems|
-                  $comment:("// DIRECT TAIL CALL " ++ f ++ " " ++ showas as)
-                  if (evalStrategy == STRICT1) stgEvalStackFrameArgs(cp);
-                  STGJUMP0($id:("fun_" ++ f)); 
-                |]
-              else 
-                [citems|
-                  $comment:("// INDIRECT TAIL CALL " ++ f' ++ " " ++ showas as)
-                  STGJUMP0(stgApplyNew); 
-                |]
-    in return ((in1 ++ in2 ++ in3, Yes), [])
+            ++ (if direct then 
+                 [citems|
+                   $comment:("// DIRECT TAIL CALL " ++ f ++ " " ++ showas as)
+                   if (evalStrategy == STRICT1) stgEvalStackFrameArgs(cp);
+                   STGJUMP0($id:("fun_" ++ f)); 
+                 |]
+               else 
+                 [citems|
+                   $comment:("// INDIRECT TAIL CALL " ++ f' ++ " " ++ showas as)
+                   STGJUMP0(stgApplyNew); 
+                 |])
+    in return ((its, Yes), [])
 
 cstgCurValUArgType :: String -> [BlockItem]
 cstgCurValUArgType ty = if useArgType
@@ -408,12 +410,12 @@ ccge env (ELet it os e) =
       decl2 = [citems|
                 typename Cont *contp = stgAllocCallOrStackCont(&it_stgLetCont, $int:(length os));
               |]
-      decl3 =  [ [citem| $id:name = &(contp->payload[$int:i]); |] 
+            ++ [ [citem| $id:name = &(contp->payload[$int:i]); |] 
                   | (name, i) <- zip names [0..] ]        
-      decl4 = [citems| 
-                contp->layout = (typename Bitmap64)$ulint:(npStrToBMInt (replicate (length os) 'P'));
-              |]    
-      decl = decl1 ++ [citems| { $items:(decl2 ++ decl3 ++ decl4) } |]  
+            ++ [citems| 
+                 contp->layout = (typename Bitmap64)$ulint:(npStrToBMInt (replicate (length os) 'P'));
+               |]    
+      decl = decl1 ++ [citems| { $items:decl2 } |]  
         
       env'  = zip names (map HO names) ++ env
       (decls, buildcodes) = unzip $ map (cbuildHeapObj env') os
@@ -459,37 +461,37 @@ ccgaltsInline env a@(Alts it alts name) boxed =
        let myypn = if all (==Yes) ypns then Yes
                    else if all (==No) ypns then No
                         else Possible
-       let in1 = [citems|
+       let its = [citems|
                    typename Cont *$id:contName = stgAllocCallOrStackCont(&it_stgStackCont, 1);
                    $comment:("// " ++ show (ctyp it))
                    $id:contName->layout = (typename Bitmap64)$ulint:(npStrToBMInt (iff boxed "P" "N"));
                 |] 
-       let in2 = if boxed then 
-                  [citems|
-                    $id:contName->payload[0] = stgCurVal;
-                    stgCurVal.op = NULL;
+               ++ (if boxed then 
+                    [citems|
+                      $id:contName->payload[0] = stgCurVal;
+                      stgCurVal.op = NULL;
+                    |] 
+                  else 
+                    [citems|$id:contName->payload[0] = stgCurValU;|]) 
+               ++ [citems|
+                    typename PtrOrLiteral *$id:scrutPtr = &($id:contName->payload[0]);
                   |] 
-                else 
-                  [citems|$id:contName->payload[0] = stgCurValU;|] 
-       let in3 = [citems|
-                   typename PtrOrLiteral *$id:scrutPtr = &($id:contName->payload[0]);
-                 |] 
-       let in4 = if switch then 
-                  if boxed then 
-                     [citems| 
-                       switch(getInfoPtr($id:scrutPtr[0].op)->conFields.tag) {
-                         $items:(concat codes)
-                       }
-                     |] 
+               ++ (if switch then 
+                    if boxed then 
+                       [citems| 
+                         switch(getInfoPtr($id:scrutPtr[0].op)->conFields.tag) {
+                           $items:(concat codes)
+                         }
+                       |] 
+                     else
+                       [citems|
+                         switch(stgCurValU.i) {
+                            $items:(concat codes)
+                         }
+                       |]
                    else
-                     [citems|
-                       switch(stgCurValU.i) {
-                          $items:(concat codes)
-                       }
-                     |]
-                 else
-                   [citems| $items:(concat codes)|]
-       return ((in1 ++ in2 ++ in3 ++ in4, myypn), (phonyforward, phonyfun) : concat funcss)
+                     [citems| $items:(concat codes)|])
+       return ((its, myypn), (phonyforward, phonyfun) : concat funcss)
 
 ccgeNoInline :: Env -> Bool
     -> ([BlockItem], [(Definition, Func)])
@@ -497,26 +499,26 @@ ccgeNoInline :: Env -> Bool
     -> State Int (([BlockItem], YPN), [(Definition, Func)])
 ccgeNoInline env boxed (ecode, efunc) a@(Alts italts alts aname) =
     let contName = "ccont_" ++ aname
-        its1 = [citems| 
+        its = [citems| 
                 $comment:("// scrutinee may STGJUMP or STGRETURN")
                 typename Cont *$id:contName = stgAllocCont(&$id:("it_" ++ aname));
                 $comment:("// dummy value for scrutinee, InfoTab initializes to unboxed") 
                 $id:contName->payload[0].i = 0;
               |]
-        its2 = if useArgType then 
-                 [citems|$id:contName-> payload[0].argType = INT; |]
-               else []
-        its3 = if fvs italts == [] then
-                 [citems| $comment:("// no FVs");|]
-               else 
-                 [citems| 
-                   $comment:("// load payload with FVs" 
-                     ++ intercalate " " (map fst $ fvs italts))
-                   $items:(cloadPayloadFVs env (map fst $ fvs italts) 1 contName)
-                 |]
+            ++ (if useArgType then 
+                  [citems|$id:contName-> payload[0].argType = INT; |]
+                else [])
+            ++ (if fvs italts == [] then
+                  [citems| $comment:("// no FVs");|]
+                else 
+                  [citems| 
+                    $comment:("// load payload with FVs" 
+                      ++ intercalate " " (map fst $ fvs italts))
+                    $items:(cloadPayloadFVs env (map fst $ fvs italts) 1 contName)
+                  |])
     in do (acode, afunc) <- ccgalts env a boxed
 --        need YPN results from Alts
-          return ((its1 ++ its2 ++ its3 ++ ecode ++ acode, Possible),
+          return ((its ++ ecode ++ acode, Possible),
                   efunc ++ afunc)
       
 
@@ -536,40 +538,39 @@ ccgalts env (Alts it alts name) boxed =
       codefuncs <- mapM (ccgalt env' switch fvp) alts
       let (codeypns, funcss) = unzip codefuncs
       let (codes, ypns) = unzip codeypns
-      let it1 = [citems|
+      let its = [citems|
                   LOG(LOG_INFO, $string:(name ++ " here"));
                   typename Cont *$id:contName = stgGetStackArgp();
                   $comment:("// make self-popping")
                   stgCaseToPopMe($id:contName);
                   typename PtrOrLiteral *$id:fvp = &($id:contName->payload[0]);
                 |]
-      let it2 = if boxed then 
-                  [citems| 
-                    $id:fvp[0] = stgCurVal; 
-                    $id:contName->layout.bitmap.mask |= 0x1;
-                  |]
-                else 
-                  [citems| $id:fvp[0] = stgCurValU;|]
-      let it3 = if switch then 
-                  if boxed then 
-                    [citems|
-                      stgCurVal.op = NULL;
-                      switch(getInfoPtr($id:fvp[0].op)->conFields.tag) {
-                        $items:(concat codes)
-                      }
-                   |]
-                  else 
-                    [citems|
-                      switch(stgCurValU.i) {
-                       $items:(concat codes)
-                      }
+              ++ (if boxed then 
+                   [citems| 
+                      $id:fvp[0] = stgCurVal; 
+                      $id:contName->layout.bitmap.mask |= 0x1;
                     |]
-                else [citems| $items:(concat codes) |] 
-      let body = it1 ++ it2 ++ it3         
+                  else 
+                    [citems| $id:fvp[0] = stgCurValU;|])
+              ++ (if switch then 
+                    if boxed then 
+                      [citems|
+                        stgCurVal.op = NULL;
+                        switch(getInfoPtr($id:fvp[0].op)->conFields.tag) {
+                          $items:(concat codes)
+                        }
+                     |]
+                    else 
+                      [citems|
+                        switch(stgCurValU.i) {
+                         $items:(concat codes)
+                        }
+                      |]
+                  else [citems| $items:(concat codes) |]) 
       let fun = [cfun|
                    typename FnPtr $id:name() {
                      $comment:("//" ++ show (ctyp it) )
-                     $items:body
+                     $items:its
                    }
                 |]
 
