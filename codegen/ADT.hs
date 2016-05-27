@@ -155,6 +155,11 @@ biLongMCon   = MCon False "Long_h" []
 biFloatMCon  = MCon False "Float_h" []
 biDoubleMCon = MCon False "Double_h" []
 
+conAList = [("Int_h",    "Int#"),
+            ("Long_h",   "Long#"),
+            ("Float_h",  "Float#"),
+            ("Double_h", "Double#")]
+
 -- helper field accessor functions --
 
 dataConName :: DataCon -> Con
@@ -188,17 +193,18 @@ instance Show Monotype where
 
 
 
+
 instance Unparse Monotype where
-  unparse (MVar c) = text c
+  unparse (MVar c) = stgName c
   unparse (MFun m1@MFun{} m2) = parens (unparse m1) <+> arw <+> unparse m2
   unparse (MFun m1 m2) = unparse m1 <+> arw <+> unparse m2
   unparse (MCon b c ms) = (if null ms then (empty <>) else parens)
-                          (text c <+> hsep (map unparse ms))
+                            (stgName c <+> hsep (map unparse ms))
   unparse m = error $ "ADT.unparse (Monotype) m=" ++ show m
 
   
 instance Unparse DataCon where
-  unparse (DataCon con mTypes) = text con <+> hsep (map unparse mTypes)
+  unparse (DataCon con mTypes) = stgName con <+> hsep (map unparse mTypes)
 
 instance PPrint DataCon where
   pprint = unparse
@@ -210,7 +216,7 @@ instance Unparse TyCon where
       lh =
         text "data" <+>
         (if boxed then empty else text "unboxed") <+>
-        text name <+> hsep (map text vars) <+> equals
+        stgName name <+> hsep (map stgName vars) <+> equals
 
       sepr = bar <> text " "
       ind = length (show lh) + 1

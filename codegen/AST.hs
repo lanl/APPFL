@@ -20,7 +20,7 @@ module AST (
 ) where
 
 import PPrint
-import Data.List (find, (\\))
+import Data.List (find, (\\), isSuffixOf)
 import Data.Int as Int (Int64)
 
 --  See Parser.hs for grammar
@@ -166,13 +166,14 @@ rmPreludeLess keeps =
   let objs = preludeObjNames \\ keeps
   in filter (not . (`elem` objs) . oname)
 
-stgPrimName p =
+primID p =
   case find ((==p).snd) primopTab of
-   Nothing -> error $ "primop lookup failed for " ++ show p
-   Just x -> reverse ('#' : drop 2 (reverse $ fst x))
+    Nothing -> error $ "primop lookup failed for " ++ show p
+    Just x -> fst x
+
      
 instance Unparse Atom where
-  unparse (Var v)  = text v
+  unparse (Var v)  = stgName v
   unparse (LitI i) = int i
   unparse (LitL l) = text $ show l
   unparse (LitF f) = float f
@@ -180,16 +181,16 @@ instance Unparse Atom where
   unparse (LitC c) = text c
 
 instance Unparse Primop where
-  unparse = text.stgPrimName
+  unparse = stgName . primID
 
 instance Unparse a => Unparse (Alt a) where
   unparse ACon{amd, ac, avs, ae} =
     bcomment (unparse amd) $+$
-    text ac <+> hsep (map text avs) <+> arw <+> unparse ae
+    stgName ac <+> hsep (map stgName avs) <+> arw <+> unparse ae
 
   unparse ADef{amd, av, ae} =
     bcomment (unparse amd) $+$
-    text av <+> arw <+> unparse ae
+    stgName av <+> arw <+> unparse ae
 
 instance Unparse a => Unparse (Alts a) where
   unparse Alts{altsmd, alts} = -- Note aname field is *not* in use here
@@ -203,7 +204,7 @@ instance Unparse a => Unparse (Expr a) where
 
   unparse EFCall{emd, ev, eas} =
     bcomment (unparse emd) $+$
-    text ev <+> hsep (map unparse eas)
+    stgName ev <+> hsep (map unparse eas)
 
   unparse EPrimop{emd, eprimop, eas} =
     bcomment (unparse emd) $+$
@@ -224,28 +225,28 @@ instance Unparse a => Unparse (Expr a) where
 instance Unparse a => Unparse (Obj a) where
   unparse FUN{omd, vs, e, oname} =
     bcomment (unparse omd) $+$
-    text oname <+> equals <+> text "FUN" <>
-    parens (hsep (map text vs) <+> arw $+$ nest ident (unparse e))
+    stgName oname <+> equals <+> text "FUN" <>
+    parens (hsep (map stgName vs) <+> arw $+$ nest ident (unparse e))
     where ident = length vs + sum (map length vs) -- aligns expr with arrow
 
   unparse PAP{omd, f, as, oname} =
     bcomment (unparse omd) $+$
-    text oname <+> equals <+> text "PAP" <>
-    parens (text f <+> hsep (map unparse as))
+    stgName oname <+> equals <+> text "PAP" <>
+    parens (stgName f <+> hsep (map unparse as))
 
   unparse CON{omd, c, as, oname} =
     bcomment (unparse omd) $+$
-    text oname <+> equals <+> text "CON" <>
-    parens (text c <+> hsep (map unparse as))
+    stgName oname <+> equals <+> text "CON" <>
+    parens (stgName c <+> hsep (map unparse as))
 
   unparse THUNK{omd, e, oname} =
     bcomment (unparse omd) $+$
-    text oname <+> equals <+> text "THUNK" <>
+    stgName oname <+> equals <+> text "THUNK" <>
     parens (unparse e)
 
   unparse BLACKHOLE{omd, oname} =
     bcomment (unparse omd) $+$
-    text oname <+> equals <+> text "ERROR"
+    stgName oname <+> equals <+> text "ERROR"
 
 
 instance Unparse a => Unparse [Obj a] where

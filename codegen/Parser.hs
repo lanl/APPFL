@@ -93,6 +93,11 @@ import Data.Char (isNumber)
     
 type Comment = String
 
+-- Flag used to indicate grammar of Case expressions
+-- if True, the scrutinee binding will hold a dummy string
+--  this is useful for converting old syntax to new using ConvertSTG.hs
+reWriteSTG = True
+
 parse :: [Token] -> ([TyCon], [Obj ()]) -- (ObjDefs, DataDefs)
 parse = splitDefs . fst . head . prog 
 
@@ -179,7 +184,7 @@ conNameP = tokP2 (TokCon) `using` (subHash.tks)
 
 -- Match variable token, accept its String
 varNameP :: Parser Token String
-varNameP = tokP2 (TokId) `using` (subHash.tks)
+varNameP = tokP2 (TokId) `using` (subHash . tks)
 
 -- Match numeric literals
 intP :: Parser Token Int
@@ -335,8 +340,8 @@ eAtomP = atomP `using` (EAtom ())
 eFCallP :: Parser Token (Expr ())
 eFCallP =
   varNameP >>> \fn ->
-  some' atomP >>> \args ->
-                   accept $ EFCall () fn $ map (EAtom ()) args
+  some' eAtomP >>> \args ->
+                   accept $ EFCall () fn args
 
 -- parse a primitive operation expression (e.g. isub# 1# 2#)
 ePrimopP :: Parser Token (Expr ())
@@ -365,16 +370,21 @@ eLetP =
 -- parse a case expression
 eCaseP :: Parser Token (Expr ())
 eCaseP =
-  rsvP "case" >>> \_ ->
-  exprP >>> \exp ->
-  tokcutP "Expected 'of' Token to close the scrutinee of a case expr" $
-  rsvP "of" >>> \_ ->
-  tokcutP "Expected left brace to open the alt block of a case expr"
-  lbraceP >>> \_ ->
-  altsP >>> \alts ->
-  tokcutP "Expected right brace to close the alt block of a case expr"
-  rbraceP >>> \_ ->
-               accept $ ECase () exp alts $ EAtom () $ Var ""
+  let scrtP | reWriteSTG = emptyP `using` const (EAtom () $ Var "parsed_rewrite_stg")
+            | otherwise = tokcutP "Expected variable binding the case scrutinee" $
+                          eAtomP
+  in
+    rsvP "case" >>> \_ ->
+    exprP >>> \exp ->
+    tokcutP "Expected 'of' Token to close the scrutinee of a case expr" $
+    rsvP "of" >>> \_ ->
+    scrtP >>> \scbnd ->
+    tokcutP "Expected left brace to open the alt block of a case expr"
+    lbraceP >>> \_ ->
+    altsP >>> \alts ->
+    tokcutP "Expected right brace to close the alt block of a case expr"
+    rbraceP >>> \_ ->
+                  accept $ ECase () exp alts scbnd
 
 
 -- parse an Alts section in a case expression, accept an Alts object

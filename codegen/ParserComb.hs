@@ -1,3 +1,4 @@
+{-# LANGUAGE TypeSynonymInstances #-}
 module ParserComb
 (
   Parsed (..),
@@ -6,6 +7,7 @@ module ParserComb
   groupParsed,
   accept,
   reject,
+  emptyP,
   satisfy,
   notP,
   litP,
@@ -41,24 +43,26 @@ import PPrint
 import Data.List (groupBy)
 
 instance (PPrint a, PPrint b) => PPrint (Parsed a b) where
-  pprint (Parsed a) =
-    (lcomment $ text "PARSED:") $+$ pprint a
-  pprint (Unparsed b) =
-    bcomment $ text "UNPARSED:" $+$ pprint b
+    pprint (Parsed a) =
+        lcomment $ text "PARSED:" $+$ pprint a
+    pprint (Unparsed b) =
+        bcomment $ text "UNPARSED:" $+$ pprint b
 
 
 -- make it easy to group parsed and unparsed input together for later filtration
 data Parsed a b = Parsed a | Unparsed b deriving (Show)
 
--- type pseudonym for Parsers
+-- type alias for Parsers
 type Parser inp val = [inp] -> [(val, [inp])]
 
+    
 fromParsed :: [Parsed a b] -> ([a],[b])
 fromParsed =
-  let f x (ps, us) = case x of
-        (Parsed p)   -> (p:ps, us)
-        (Unparsed u) -> (ps, u:us)
-  in foldr f ([],[])
+    let f x (ps, us) =
+            case x of
+              (Parsed p)   -> (p:ps, us)
+              (Unparsed u) -> (ps, u:us)
+    in foldr f ([],[])
 
 
 groupParsed :: [Parsed a b] -> [[Parsed a b]]
@@ -82,6 +86,8 @@ accept a inp = [(a,inp)]
 reject :: Parser i v
 reject inp = []
 
+emptyP :: Parser a ()
+emptyP inp = [((),inp)]
 
 -- satisfy a predicate NOTE: Failure does not yield unconsumed input in any form
 satisfy :: (a -> Bool) -> Parser a a
@@ -151,7 +157,7 @@ notFollowedBy p1 p2 inp = [ (v1, inp') | (v1, inp') <- p1 inp, null $ p2 inp']
 -- many parser matches 0 or more chained matches of a given parser.  All possible matches
 -- are returned in the [(i,v)] format, in descending order by length of match in i
 many :: Parser i v -> Parser i [v]
-many p = ((ordP p (many p)) `using` cons) `orInc` (accept [])
+many p = (ordP p (many p) `using` cons) `orInc` accept []
 
 
 -- Greedy form of many, matches only the longest chain matched
@@ -163,13 +169,13 @@ many' p = orExList [ordP p (many' p) `using` cons, accept []]
 -- match one or more chained matches given a parser (returns all possible chainings of length
 -- 1 or more)
 some :: Parser i v -> Parser i [v]
-some p = (ordP p (many p)) `using` cons
+some p = ordP p (many p) `using` cons
 
 
 -- Greedy form of some.  Does not return all possible matches
 -- Useful when p is already a complex parser. roughly equivalent to head.some
 some' :: Parser i v -> Parser i [v]
-some' p = (ordP p (many' p)) `using` cons
+some' p = ordP p (many' p) `using` cons
 
 
 
@@ -240,7 +246,7 @@ optP p inp = case p inp of
 (>>>) :: Parser i v1 -> (v1 -> Parser i v2) -> Parser i v2
 p >>> f = \i -> case p i of
                  [] -> reject i
-                 ((v,o):_) -> (f v) o
+                 ((v,o):_) -> f v o
 
 -- cutP accepts a parser and an error message and fails hard, displaying the message
 -- and some context information if the parser does not match input

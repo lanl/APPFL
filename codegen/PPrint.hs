@@ -24,6 +24,8 @@ module PPrint
   prepunctuate,
   postpunctuate,
   vertList,
+  reHash,
+  stgName,
   PPrint,
   Unparse,
   module Text.PrettyPrint
@@ -32,7 +34,7 @@ module PPrint
 
 import Text.PrettyPrint
 import qualified Data.Set as Set
-import Data.List (find)
+import Data.List (find, isSuffixOf)
 
 
 
@@ -43,6 +45,11 @@ class PPrint a where
 
 class Unparse a where
   unparse :: a -> Doc
+
+reHash str | "_h" `isSuffixOf` str = reverse ('#' : drop 2 (reverse str))
+           | otherwise = str
+
+stgName = text . reHash           
 
 
 bar = text "|"
