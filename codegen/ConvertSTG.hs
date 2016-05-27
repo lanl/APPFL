@@ -8,14 +8,22 @@ module ConvertSTG () where
 
 import           ADT
 import           AST
+import DupCheck
+import Rename
 import           Data.Either        (rights)
 import qualified Data.Set           as Set
 import           Parser
 import           PPrint
 import           State
 import           System.Environment (getArgs)
+import System.IO 
 import           Tokenizer
+import DupCheck
+import SetFVs
+import CMap
+import Analysis
 
+type Assumptions = Set.Set (Var, Monotype)
 
 
 -- ^ Modify an old STG file to update the syntax of case expressions
@@ -39,8 +47,9 @@ rewriteScruts infile outfile =
 instance (Unparse a, Unparse b) => Unparse (Either a b) where
   unparse (Left x) = unparse x
 
-  -- want to leave space between definitions, for readability
-  unparse (Right x) = unparse x <> char '\n' 
+  -- want to leave space between definitions for readability
+  -- Semi-colons are good too
+  unparse (Right x) = unparse x <> text ";\n"
 
 instance Unparse Comment where
   unparse = text . init -- hack, removes newline character for cleaner printing
@@ -158,3 +167,69 @@ instance ASB (Alt a) where
     in asb newEnv (ae alt) >>=
        \ae1 -> return alt{ae = ae1}
       
+
+
+
+-- Test conversion with Driver in Progress
+-------------------------------------------------- 
+tester :: (String -> a) -> (a -> String) -> [FilePath] -> IO ()
+tester tfun sfun infiles =
+ do
+   ihandles <- mapM (flip openFile $ ReadMode) infiles
+   _tester tfun sfun ihandles stdout
+
+_tester :: (String -> a) -> (a -> String) -> [Handle] -> Handle -> IO ()
+_tester testfun showfun ifds ofd =
+  do
+    inp <- mapM hGetContents ifds
+    let res = testfun $ concat inp
+        out = showfun res
+    hPutStrLn ofd out
+
+-- need a better way, like reading from a .h file
+stgRTSGlobals :: [String]
+stgRTSGlobals = [ "stg_case_not_exhaustive", -- before type checking
+                  "stg_case_not_exhaustiveP", -- during codegen
+                  "stg_case_not_exhaustiveN"  -- during codegen
+                ] ++ map fst primopTab -- from AST.hs
+
+
+
+-- strip comments, tokenize input
+-- includes basic checking for valid characters and character strings
+tokenizer :: String -> [Token]
+tokenizer = tokenize
+
+-- parse tokenized input
+-- checks for valid syntax
+parser :: String -> ([TyCon], [Obj ()])
+parser = parse . tokenizer
+
+--checks for duplicates
+dupChecker ::  String -> ([TyCon], [Obj ()])
+dupChecker = dupCheck . parser
+
+-- set boxity in Monotypes of TyCon DataCons
+boxer :: String -> ([TyCon], [Obj ()])
+boxer inp = let (tycons, objs) = dupChecker inp
+            in (boxMTypes tycons, objs)
+
+
+renamer :: String -> ([TyCon], [Obj ()])
+renamer inp = let (tycons, objs) = boxer inp
+              in (tycons, renameObjs objs)
+
+
+-- generate default cases in Alts blocks that need them
+-- The ordering here is important to allow the freevarer and
+-- infotaber steps to properly handle the newly generated ADef
+-- objects
+-- might be worth starting to pass CMap around starting here
+-- (currently generated again when setting CMaps in InfoTabs)
+defaultcaser :: String -> ([TyCon], [Obj ()], Assumptions)
+defaultcaser inp = let (tycons, objs) = renamer inp
+                   in (tycons, exhaustCases (toCMap tycons) objs, Set.empty)
+
+freevarer :: String -> ([TyCon], [Obj ([Var],[Var])], Assumptions)
+freevarer inp = let (tycons, objs, assums) = defaultcaser inp
+                in (tycons, setFVsObjs stgRTSGlobals objs, assums)
