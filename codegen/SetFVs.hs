@@ -91,10 +91,12 @@ instance STGToList (Expr (Set.Set Var, Set.Set Var)) (Expr ([Var],[Var])) where
     stgToList EFCall{..} = EFCall{emd = p2p emd, eas = map stgToList eas, ..}
     stgToList EPrimop{..} = EPrimop{emd = p2p emd, eas = map stgToList eas, ..}
     stgToList ELet{..} = ELet{emd = p2p emd, edefs = map stgToList edefs, ee = stgToList ee, ..}
-    stgToList ECase{..} = ECase{emd = p2p emd, ee = stgToList ee, ealts = stgToList ealts, scbnd = stgToList scbnd, ..}
+    stgToList ECase{..} = ECase{emd = p2p emd, ee = stgToList ee, ealts = stgToList ealts, ..}
         
 instance STGToList (Alts (Set.Set Var, Set.Set Var)) (Alts ([Var],[Var])) where
-    stgToList Alts{..} = Alts{altsmd = p2p altsmd, alts = map stgToList alts, ..}
+    stgToList Alts{..} = Alts{altsmd = p2p altsmd,
+                              alts = map stgToList alts,
+                              scrt = stgToList scrt, ..}
 
 instance STGToList (Alt (Set.Set Var, Set.Set Var)) (Alt ([Var],[Var])) where
     stgToList ACon{..} = ACon{amd = p2p amd, ae = stgToList ae, ..}
@@ -104,6 +106,12 @@ showFVs vs = "[" ++ List.intercalate " " vs ++ "] "
 
 instance {-# OVERLAPPING #-} Show ([Var],[Var]) where
     show (a,b) = "(" ++ showFVs a ++ "," ++ showFVs b ++ ")"
+
+instance Unparse ([Var],[Var]) where
+  unparse (a,b) = parens $
+                  brackList (map stgName a)
+                  <> comma <+>
+                  brackList (map stgName b)
 
 toplevel :: (Set.Set Var) -> [Obj a] -> [Obj (Set.Set Var, Set.Set Var)]
 toplevel rtgs defs =
@@ -172,21 +180,15 @@ instance SetFVs (Expr a) (Expr (Set.Set Var, Set.Set Var)) where
             myfvs    = (defsfvs     `Set.union` efvs)     `Set.difference` names
             truefvs  = (defstruefvs `Set.union` etruefvs) `Set.difference` names
         in ELet (myfvs,truefvs) defs' e'
-
-    -- case scrutinee binding introduces scope
-    setfvs tlds (ECase _ e alts scbnd) =
-        let vset = Set.singleton scvar
-            e' = setfvs tlds e
+    
+    setfvs tlds (ECase _ e alts) =
+        let e' = setfvs tlds e
             (efvs, etruefvs) = emd e'
-            alts' = setfvs (tlds Set.\\ vset) alts
+            alts' = setfvs tlds alts
             (altsfvs, altstruefvs) = altsmd alts'
-            myfvs   = Set.union efvs     altsfvs
+            myfvs   = Set.union efvs altsfvs
             truefvs = Set.union etruefvs altstruefvs
-            scbnd' = setfvs tlds scbnd
-            scvar = case scbnd of
-              EAtom _ (Var v) -> v
-              _ -> error "SetFVs.setfvs: case scrutinee not an atomic var"
-        in ECase (myfvs,truefvs) e' alts' scbnd'
+        in ECase (myfvs,truefvs) e' alts'
       
 
 -- alts introduce scope
@@ -208,12 +210,17 @@ instance SetFVs (Alt a) (Alt (Set.Set Var, Set.Set Var)) where
         in  ADef (myfvs,truefvs) v e'
 
 instance SetFVs (Alts a) (Alts (Set.Set Var, Set.Set Var)) where
-    setfvs tlds (Alts _ alts name) =
-        let alts' = setfvs tlds alts
+    setfvs tlds (Alts _ alts name scrt) =
+        let vset = Set.singleton scvar
+            scrt' = setfvs tlds scrt
+            alts' = setfvs tlds alts
             (altsfvls, altstruefvls) = unzip $ map amd alts'
-            myfvs   = Set.unions altsfvls
-            truefvs = Set.unions altstruefvls
-        in Alts (myfvs,truefvs) alts' name
+            myfvs   = Set.unions altsfvls     Set.\\ vset
+            truefvs = Set.unions altstruefvls Set.\\ vset
+            scvar = case scrt of
+              EAtom _ (Var v) -> v
+              _ -> error "SetFVs.setfvs: case scrutinee not an atomic var"
+        in Alts (myfvs,truefvs) alts' name scrt'
 
 
 instance SetFVs (Obj a) (Obj (Set.Set Var, Set.Set Var)) where

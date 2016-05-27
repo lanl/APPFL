@@ -90,13 +90,9 @@ import ADT
 import Data.List (groupBy)
 import PPrint
 import Data.Char (isNumber)
+import Options (reWriteSTG) -- controls grammar of case/alts expressions
     
 type Comment = String
-
--- Flag used to indicate grammar of Case expressions
--- if True, the scrutinee binding will hold a dummy string
---  this is useful for converting old syntax to new using ConvertSTG.hs
-reWriteSTG = True
 
 parse :: [Token] -> ([TyCon], [Obj ()]) -- (ObjDefs, DataDefs)
 parse = splitDefs . fst . head . prog 
@@ -370,32 +366,32 @@ eLetP =
 -- parse a case expression
 eCaseP :: Parser Token (Expr ())
 eCaseP =
-  let scrtP | reWriteSTG = emptyP `using` const (EAtom () $ Var "parsed_rewrite_stg")
-            | otherwise = tokcutP "Expected variable binding the case scrutinee" $
-                          eAtomP
-  in
     rsvP "case" >>> \_ ->
     exprP >>> \exp ->
     tokcutP "Expected 'of' Token to close the scrutinee of a case expr" $
-    rsvP "of" >>> \_ ->
-    scrtP >>> \scbnd ->
-    tokcutP "Expected left brace to open the alt block of a case expr"
-    lbraceP >>> \_ ->
-    altsP >>> \alts ->
-    tokcutP "Expected right brace to close the alt block of a case expr"
-    rbraceP >>> \_ ->
-                  accept $ ECase () exp alts scbnd
+    rsvP "of" >>> \_ ->    
+    altsP >>> \alts -> -- scrutinee binding
+                accept $ ECase () exp $ alts
 
 
 -- parse an Alts section in a case expression, accept an Alts object
+-- (partially applied: scrutinee binding is parsed by eCaseP
 altsP :: Parser Token (Alts ())
-altsP =
+altsP = 
   let
     name = "alts" --error "this alts not given a name!"
+    scrtP | reWriteSTG = emptyP `using` const (EAtom () $ Var "parsed_rewrite_stg")
+            | otherwise = tokcutP "Expected variable binding the case scrutinee" $
+                          eAtomP
   in
-   tokcutP "Expected one or more alts separated by semicolons" $
-   sepByP' altP semiP >>> \alts ->
-                             accept $ Alts () alts name
+    scrtP >>> \scrt ->
+    tokcutP "Expected left brace to open the alt block of a case expr"
+    lbraceP >>> \_ ->
+    tokcutP "Expected one or more alts separated by semicolons" $
+    sepByP' altP semiP >>> \alts ->
+    tokcutP "Expected right brace to close the alt block of a case expr"
+    rbraceP >>> \_ ->                
+                  accept $ Alts () alts name scrt
 
 
 -- parse a case expression alternative, accept an Alt object

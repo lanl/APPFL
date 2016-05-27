@@ -235,6 +235,7 @@ instance SetHA (Alt InfoTab) where
   getHA = getHA . ae
       
 
+addDefsToMap :: [Obj InfoTab] -> FunMap -> FunMap
 addDefsToMap defs funmap =
   let
     fmp  = deleteAll (map oname defs) funmap -- remove shadowed bindings
@@ -255,10 +256,11 @@ addDefsToMap defs funmap =
     -- iterate until fixed point is found
     fixDefs defs fmp =
       let
-          fmp' = foldr foldfunc fmp $ map (setHA fmp) defs in
-       if fmp == fmp'
-       then fmp'
-       else fixDefs defs fmp'
+        fmp' = foldr (foldfunc . setHA fmp) fmp defs
+      in
+        if fmp == fmp'
+        then fmp'
+        else fixDefs defs fmp'
   in
    fixDefs defs fmp'
      
@@ -398,7 +400,7 @@ knownFunExprIT env e =
 
     EFCall {emd, ev, eas} -> case Map.lookup ev env of
                               Just i@ITFun{arity} | length eas < arity -> Just i
-                                                | otherwise -> Nothing
+                                                  | otherwise -> Nothing
                               _ -> Nothing
 
 --    This will break heap allocation analysis if it depends on known calls

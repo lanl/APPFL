@@ -163,8 +163,7 @@ data InfoTab =
       fvs :: [(Var,Monotype)],
       bfvc :: Int,  -- boxed FV count
       ufvc :: Int,  -- unboxed FV count
-      truefvs :: [Var],
-      scVar :: Var,
+      truefvs :: [Var],      
       noHeapAlloc :: Bool,
       cmap :: CMap}
 
@@ -199,6 +198,7 @@ data InfoTab =
       bfvc :: Int,  -- boxed FV count
       ufvc :: Int,  -- unboxed FV count
       truefvs :: [Var],
+      scVar :: Var,
       name :: String,         -- for C infotab
       entryCode :: String }   -- for C infotab
 
@@ -225,8 +225,8 @@ instance ITsOf (Obj a) [a] where
     itsOf o = [omd o] -- PAP, CON, BLACKHOLE
 
 instance ITsOf (Expr a) [a] where
-    itsOf ELet{emd, edefs, ee}  = emd : (itsOf edefs) ++ (itsOf ee)
-    itsOf ECase{emd, ee, ealts, scbnd} = emd : (itsOf ee) ++ (itsOf ealts) --FIXME
+    itsOf ELet{emd, edefs, ee}  = emd : (itsOf edefs) ++ itsOf ee
+    itsOf ECase{emd, ee, ealts} = emd : (itsOf ee) ++ itsOf ealts
     itsOf e = [emd e] -- EAtom, EFCall, EPrimop
 
 instance ITsOf (Alt a) [a] where
@@ -254,8 +254,8 @@ instance SetITs (Expr ([Var],[Var])) (Expr InfoTab) where
     setITs e@(ELet emd defs ee) =
         ELet (makeIT e) (setITs defs) (setITs ee)
 
-    setITs e@(ECase emd ee alts scbnd) =
-        ECase (makeIT e) (setITs ee) (setITs alts) (setITs scbnd)
+    setITs e@(ECase emd ee alts) =
+        ECase (makeIT e) (setITs ee) (setITs alts)
 
     setITs e@(EAtom emd a) =
         EAtom (makeIT e) a
@@ -267,8 +267,8 @@ instance SetITs (Expr ([Var],[Var])) (Expr InfoTab) where
         EPrimop (makeIT e) p (map setITs eas)
 
 instance SetITs (Alts ([Var],[Var])) (Alts InfoTab) where
-    setITs as@(Alts altsmd alts name) =
-       Alts (makeIT as) (map setITs alts) name
+    setITs as@(Alts altsmd alts name scrt) =
+       Alts (makeIT as) (map setITs alts) name (setITs scrt)
 
 instance SetITs (Alt ([Var],[Var])) (Alt InfoTab) where
     setITs a@(ACon amd c vs e) =
@@ -387,7 +387,7 @@ instance MakeIT (Expr ([Var],[Var])) where
                ctyp = ctypUndef,
                noHeapAlloc = False}
 
-    makeIT ECase{emd = (fvs,truefvs), scbnd} =
+    makeIT ECase{emd = (fvs,truefvs)} =
         ITCase{fvs = zip fvs $ repeat typUndef,
                bfvc = -1,
                ufvc = -1,
@@ -395,12 +395,8 @@ instance MakeIT (Expr ([Var],[Var])) where
                typ = typUndef,
                ctyp = ctypUndef,
                noHeapAlloc = False,
-               scVar = scvar,
                cmap = Map.empty}
-        where
-          scvar = case scbnd of
-                    EAtom _ (Var v) -> v
-                    _ -> error "InfoTab.makeIT: scbnd should always be EAtom _ (Var _)"
+
 
     makeIT EAtom{emd = (fvs,truefvs)} =
         ITAtom{fvs = zip fvs $ repeat typUndef,
@@ -432,15 +428,20 @@ instance MakeIT (Expr ([Var],[Var])) where
                  noHeapAlloc = False}
 
 instance MakeIT (Alts ([Var],[Var])) where
-    makeIT Alts{altsmd = (fvs,truefvs), aname} =
+    makeIT Alts{altsmd = (fvs,truefvs), aname, scrt} =
         ITAlts {fvs = zip fvs $ repeat typUndef,
                 bfvc = -1,
                 ufvc = -1,
                 truefvs = truefvs,
                 typ = typUndef,
+                scVar = scvar,
                 ctyp = ctypUndef,
                 entryCode = aname,
                 name = aname}
+      where
+        scvar = case scrt of
+                  EAtom _ (Var v) -> v
+                  _ -> error "InfoTab.makeIT: scbnd should always be EAtom _ (Var _)"
 
 instance MakeIT (Alt ([Var],[Var])) where
     makeIT ACon{amd = (fvs,truefvs)} =

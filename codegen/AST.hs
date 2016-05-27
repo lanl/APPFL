@@ -67,11 +67,13 @@ data Expr a
                ee :: Expr a}
     | ECase   {emd :: a,
                ee :: Expr a,
-               ealts :: Alts a,
-               scbnd :: Expr a} -- invariant the scbnd is an EAtom
+               ealts :: Alts a}               
               deriving(Eq,Show)
 
-data Alts a = Alts {altsmd :: a, alts :: [Alt a], aname :: String}
+data Alts a = Alts {altsmd :: a,
+                    alts :: [Alt a],
+                    aname :: String,
+                    scrt :: Expr a} -- invariant the scbnd is an EAtom
               deriving(Eq,Show)
 
 data Alt a = ACon {amd :: a, ac :: Con, avs :: [Var], ae :: Expr a}
@@ -135,7 +137,7 @@ primopTab =
 
 -- generate with
 -- awk '/^[a-z_#].*=/ {if ($1 != "data") {printf "\42%s\42, ", $1}}' \
--- appfl/prelude/Prelude.stg | fmt -w 80
+-- appfl/prelude/Prelude.stg | head -c-2 | fmt -w80
 
 preludeObjNames =
     [
@@ -193,9 +195,11 @@ instance Unparse a => Unparse (Alt a) where
     stgName av <+> arw <+> unparse ae
 
 instance Unparse a => Unparse (Alts a) where
-  unparse Alts{altsmd, alts} = -- Note aname field is *not* in use here
-    bcomment (unparse altsmd) $+$
-    vcat (punctuate semi $ map unparse alts)
+  unparse Alts{altsmd, alts, scrt} = -- Note aname field is *not* in use here
+    unparse scrt <+> lbrace $+$
+    nest 2 
+    (bcomment (unparse altsmd) $+$
+     vcat (punctuate semi $ map unparse alts) <+> rbrace)
 
 instance Unparse a => Unparse (Expr a) where
   unparse EAtom{emd, ea} =
@@ -216,10 +220,9 @@ instance Unparse a => Unparse (Expr a) where
     nest 2 (vcat $ punctuate semi $ map unparse edefs) <> rbrace $+$
     text "in" <+> unparse ee
 
-  unparse ECase{emd, ee, ealts, scbnd} =
+  unparse ECase{emd, ee, ealts} =
     bcomment (unparse emd) $+$
-    text "case" <+> unparse ee <+> text "of" <+> unparse scbnd <+> lbrace $+$
-    nest 2 (unparse ealts) <> rbrace
+    text "case" <+> unparse ee <+> text "of" <+> unparse ealts
 
 
 instance Unparse a => Unparse (Obj a) where
@@ -369,8 +372,6 @@ instance (PPrint a) => PPrint (Expr a) where
                    nest 2 (pprint emd) $+$
                    text "scrutinee:" $+$
                    nest 2 (pprint ee) $+$
-                   text "scrutinee binding:" $+$
-                   nest 2 (pprint scbnd) $+$
                    text "alts:" $+$
                    nest 2 (pprint ealts)
                   )
@@ -383,6 +384,8 @@ instance (PPrint a) => PPrint (Alts a) where
                      (text "name:" <+> text aname $+$
                       text "metadata:" $+$
                       nest 2 (pprint altsmd) $+$
+                       text "scrutinee binding:" $+$
+                       nest 2 (pprint scrt) $+$
                       text "alt defs:" $+$
                       nest 2 (vcat (map pprint alts))
                      )

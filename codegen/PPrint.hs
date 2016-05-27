@@ -51,6 +51,8 @@ reHash str | "_h" `isSuffixOf` str = reverse ('#' : drop 2 (reverse str))
 
 stgName = text . reHash           
 
+nLines :: (Show a) => a -> Int
+nLines = length . lines . show
 
 bar = text "|"
 arw = text "->"
@@ -58,9 +60,13 @@ hash = char '#'
 doubleColon = text "::"
 lambda = text "\\"
 lcomment d = text "--" <> d
-bcomment d = if isEmpty d
-             then empty
-             else text "{-" <+> (nest 3 d) $+$ text "-}"
+bcomment d | isEmpty d = empty
+           | otherwise =
+             -- only line break for long comments
+             let sep | nLines d == 1 = (<+>)
+                     | otherwise = ($+$)
+             in text "{-" `sep` (nest 3 d) `sep` text "-}"
+             
 
 boolean :: Bool -> Doc
 boolean = text . show

@@ -1,29 +1,50 @@
-{-# LANGUAGE
-NamedFieldPuns,
-TypeSynonymInstances,
-FlexibleInstances #-}
+-- #!/usr/local/bin/runhaskell -XCPP -cpp -DREWRITE_STG=1
+-- not working: Flags don't seem to be passed properly
+{-# LANGUAGE FlexibleInstances    #-}
+{-# LANGUAGE NamedFieldPuns       #-}
+{-# LANGUAGE TypeSynonymInstances #-}
+
+
 
 
 module ConvertSTG () where
 
 import           ADT
+import           Analysis
 import           AST
-import DupCheck
-import Rename
+import           CMap
 import           Data.Either        (rights)
 import qualified Data.Set           as Set
+import           DupCheck
+import           DupCheck
 import           Parser
 import           PPrint
+import           Rename
+import           SetFVs
 import           State
 import           System.Environment (getArgs)
-import System.IO 
+import           System.IO
 import           Tokenizer
-import DupCheck
-import SetFVs
-import CMap
-import Analysis
+import           Control.Monad(when)
+import           Options
 
 type Assumptions = Set.Set (Var, Monotype)
+
+
+-- args are the STG files to port to the new syntax.
+-- All files are written out with the same name (including old
+-- extension) with a '.new' suffix.  If we want to do this on
+-- all the STG files en masse, I'll make it a little more usable.
+-- use runhaskell -cpp -DREWRITE_STG=1 [files] to run as a script
+main :: IO ()
+main =
+  if reWriteSTG
+  then
+     do
+       files <- getArgs
+       mapM_ (uncurry rewriteScruts) . zip files . map (++ ".new") $ files
+  else
+    print "run/compile ConvertSTG with -cpp -DREWRITE_STG flags for GHC"
 
 
 -- ^ Modify an old STG file to update the syntax of case expressions
@@ -42,7 +63,7 @@ rewriteScruts infile outfile =
         (modified, n) = runState (asb env eithers) 0
     print $ show n ++ " case scrutinee bindings added"
     writeFile outfile . show . vcat . map unparse $ modified
-    return ()
+
 
 instance (Unparse a, Unparse b) => Unparse (Either a b) where
   unparse (Left x) = unparse x
@@ -54,10 +75,7 @@ instance (Unparse a, Unparse b) => Unparse (Either a b) where
 instance Unparse Comment where
   unparse = text . init -- hack, removes newline character for cleaner printing
 
-main :: IO ()
-main = do
-  files <- getArgs
-  mapM_ (uncurry rewriteScruts) . zip files . map (++ ".new") $ files
+
 
 
 -- ^ Get the next unique variable name ensuring it does not
@@ -72,7 +90,7 @@ nextBind env =
     put $ i + 1
     let v = "_scrt" ++ show i
     if v `Set.member` env
-      
+
       -- v would shadow something, get next potential name.
       -- Ints *are* Bounded, so this is not perfectly robust,
       -- but should be fine for its purpose
@@ -136,42 +154,42 @@ instance ASB (Expr a) where
 
       -- Variable addition happens here.
       -- Awful lot of work for such a small change...
-      ECase{ee, ealts, scbnd} ->
-        
+      ECase{ee, ealts} ->
+
         do
           ee1      <- asb env ee
           ealts1   <- asb env ealts
-          scrtBind <- nextBind env
-
           return expr{ee    = ee1,
-                      ealts = ealts1,
-                      scbnd = scbnd{ea = Var scrtBind}}
-                      
-                      
+                      ealts = ealts1}
+
+
       _ -> return expr
 
 
 -------------------------------------------------- Alts Level
 instance ASB (Alts a) where
-  asb env a@Alts{alts} = asb env alts >>=
-                         \alts1 -> return a{alts = alts1}
+  asb env a@Alts{alts, scrt} =
+    asb env alts >>= \alts1 ->
+    nextBind env >>= \v ->
+    return a{alts = alts1,
+            scrt = scrt{ea = Var v}}
 
 instance ASB (Alt a) where
   asb env alt =
     -- Both Alternative types introduce new bindings
-    -- creating a new environment 
+    -- creating a new environment
     let newEnv = Set.union newSet env
         newSet = case alt of
                    ACon{avs} -> Set.fromList avs
                    ADef{av} -> Set.singleton av
     in asb newEnv (ae alt) >>=
        \ae1 -> return alt{ae = ae1}
-      
+
 
 
 
 -- Test conversion with Driver in Progress
--------------------------------------------------- 
+--------------------------------------------------
 tester :: (String -> a) -> (a -> String) -> [FilePath] -> IO ()
 tester tfun sfun infiles =
  do

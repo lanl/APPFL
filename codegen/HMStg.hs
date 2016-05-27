@@ -71,7 +71,6 @@ hmstgAssumsdebug os0 assums =
                                                       [Obj InfoTab])
         (subst, _) = runState (solve cs) i1
     in
-     do
 --       putStrLn $ show $ vcat $ map (text . show) $ Set.toList cs
        putStrLn $ showObjs (co Set.empty $ backSub subst os2)
 ---}
@@ -226,6 +225,7 @@ instance DV (Expr InfoTab) (Expr InfoTab) where
 instance DV (Alts InfoTab) (Alts InfoTab) where
     dv Alts{..} =
         do alts <- mapM dv alts
+           scrt <- dv scrt
            return Alts{..}
 
 instance DV (Alt InfoTab) (Alt InfoTab) where
@@ -291,7 +291,7 @@ instance BU (Expr InfoTab) where
 
     bu mtvs e@EFCall{ev,eas} =
         let (ass, css, eas') = unzip3 $ map (bu mtvs) eas
-            ftyp = foldr MFun (getTyp e) (map getTyp eas')
+            ftyp = foldr (MFun . getTyp) (getTyp e) eas'
         in (Set.insert (ev,ftyp) $ Set.unions ass,
             Set.unions css,
             e{eas=eas'}) -- EFCall monotype set in dv
@@ -345,10 +345,10 @@ buNest mtvs os assums =
         -- get strongly connected components
         let fvss = map (Set.fromList . truefvs . omd) os
             onamel = map oname os
-            localfvll = map Set.toList $ map (Set.intersection (Set.fromList onamel)) fvss
+            localfvll = map (Set.toList . Set.intersection (Set.fromList onamel)) fvss
             sccnames = scc $ zip onamel localfvll -- sccnames is list of lists of onames
             nameobjm = Map.fromList $ zip onamel os
-            sccobjs = map (map ((flip lookupOrElse) nameobjm)) sccnames
+            sccobjs = map (map (flip lookupOrElse nameobjm)) sccnames
 --        in error $ show sccobjs
         in foldr f (assums, Set.empty, []) sccobjs -- seed with initial assumptions
             where

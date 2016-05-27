@@ -112,7 +112,8 @@ unifys (x:xs) (y:ys) =
         s2 = unifys (map (apply s1) xs) (map (apply s1) ys)
     in compose s2 s1
 
--- need a fresh variable supply
+-- need a fresh
+variable supply
 
 freshTyVar :: State Int TyVar
 freshTyVar =
