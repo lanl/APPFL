@@ -182,7 +182,7 @@ instance SetFVs (Expr a) (Expr (Set.Set Var, Set.Set Var)) where
             (altsfvs, altstruefvs) = altsmd alts'
             myfvs   = Set.union efvs     altsfvs
             truefvs = Set.union etruefvs altstruefvs
-            scbnd' = undefined
+            scbnd' = setfvs tlds scbnd
             scvar = case scbnd of
               EAtom _ (Var v) -> v
               _ -> error "SetFVs.setfvs: case scrutinee not an atomic var"
