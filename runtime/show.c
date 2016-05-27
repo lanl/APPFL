@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include "log.h"
 #include "stg.h"
+#include "heap.h"
 #include "stack.h"
 #include "obj.h"
 #include "stdlib.h"
