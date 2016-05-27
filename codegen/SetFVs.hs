@@ -91,7 +91,7 @@ instance STGToList (Expr (Set.Set Var, Set.Set Var)) (Expr ([Var],[Var])) where
     stgToList EFCall{..} = EFCall{emd = p2p emd, eas = map stgToList eas, ..}
     stgToList EPrimop{..} = EPrimop{emd = p2p emd, eas = map stgToList eas, ..}
     stgToList ELet{..} = ELet{emd = p2p emd, edefs = map stgToList edefs, ee = stgToList ee, ..}
-    stgToList ECase{..} = ECase{emd = p2p emd, ee = stgToList ee, ealts = stgToList ealts, ..}
+    stgToList ECase{..} = ECase{emd = p2p emd, ee = stgToList ee, ealts = stgToList ealts, scbnd = stgToList scbnd, ..}
         
 instance STGToList (Alts (Set.Set Var, Set.Set Var)) (Alts ([Var],[Var])) where
     stgToList Alts{..} = Alts{altsmd = p2p altsmd, alts = map stgToList alts, ..}
@@ -173,14 +173,21 @@ instance SetFVs (Expr a) (Expr (Set.Set Var, Set.Set Var)) where
             truefvs  = (defstruefvs `Set.union` etruefvs) `Set.difference` names
         in ELet (myfvs,truefvs) defs' e'
 
-    setfvs tlds (ECase _ e alts) =
-        let e' = setfvs tlds e
+    -- case scrutinee binding introduces scope
+    setfvs tlds (ECase _ e alts scbnd) =
+        let vset = Set.singleton scvar
+            e' = setfvs tlds e
             (efvs, etruefvs) = emd e'
-            alts' = setfvs tlds alts
+            alts' = setfvs (tlds Set.\\ vset) alts
             (altsfvs, altstruefvs) = altsmd alts'
             myfvs   = Set.union efvs     altsfvs
             truefvs = Set.union etruefvs altstruefvs
-        in ECase (myfvs,truefvs) e' alts'
+            scbnd' = undefined
+            scvar = case scbnd of
+              EAtom _ (Var v) -> v
+              _ -> error "SetFVs.setfvs: case scrutinee not an atomic var"
+        in ECase (myfvs,truefvs) e' alts' scbnd'
+      
 
 -- alts introduce scope
 instance SetFVs (Alt a) (Alt (Set.Set Var, Set.Set Var)) where
@@ -208,37 +215,38 @@ instance SetFVs (Alts a) (Alts (Set.Set Var, Set.Set Var)) where
             truefvs = Set.unions altstruefvls
         in Alts (myfvs,truefvs) alts' name
 
--- FUN introduces scope
+
 instance SetFVs (Obj a) (Obj (Set.Set Var, Set.Set Var)) where
-    setfvs tlds (FUN _ vs e n) =
-        let vset = Set.fromList vs
-            e' = setfvs (Set.difference tlds vset) e
-            (efvs, etruefvs) = emd e'
-            myfvs   = Set.difference efvs     vset
-            truefvs = Set.difference etruefvs vset
-        in FUN (myfvs,truefvs) vs e' n
+  -- FUN introduces scope
+  setfvs tlds (FUN _ vs e n) =
+    let vset = Set.fromList vs
+        e' = setfvs (Set.difference tlds vset) e
+        (efvs, etruefvs) = emd e'
+        myfvs   = Set.difference efvs     vset
+        truefvs = Set.difference etruefvs vset
+    in FUN (myfvs,truefvs) vs e' n
 
-    -- PAP introduces a var
-    setfvs tlds (PAP _ f as n) =
-        let as' = map (setfvs tlds) as
-            (asFVs, asTFVs) = unzip $ map emd as'
-            (asfvs, astruefvs) = (Set.unions asFVs, Set.unions asTFVs)
-            fset = Set.singleton f
-            myfvs   = (fset `Set.union` asfvs) `Set.difference` tlds
-            truefvs = fset `Set.union` astruefvs
-        in PAP (myfvs,truefvs) f as' n
+  -- PAP introduces a var
+  setfvs tlds (PAP _ f as n) =
+    let as' = map (setfvs tlds) as
+        (asFVs, asTFVs) = unzip $ map emd as'
+        (asfvs, astruefvs) = (Set.unions asFVs, Set.unions asTFVs)
+        fset = Set.singleton f
+        myfvs   = (fset `Set.union` asfvs) `Set.difference` tlds
+        truefvs = fset `Set.union` astruefvs
+    in PAP (myfvs,truefvs) f as' n
 
-    setfvs tlds (CON _ c as n) =
-        let as' = map (setfvs tlds) as
-            (asFVs, asTFVs) = unzip $ map emd as'
-        in CON (Set.unions asFVs, Set.unions asTFVs) c as' n
+  setfvs tlds (CON _ c as n) =
+    let as' = map (setfvs tlds) as
+        (asFVs, asTFVs) = unzip $ map emd as'
+    in CON (Set.unions asFVs, Set.unions asTFVs) c as' n
 
-    setfvs tlds (THUNK _ e n) =
-        let e' = setfvs tlds e
-        in THUNK (emd e') e' n
+  setfvs tlds (THUNK _ e n) =
+    let e' = setfvs tlds e
+    in THUNK (emd e') e' n
 
-    setfvs tlds (BLACKHOLE _ n) =
-        BLACKHOLE (Set.empty,Set.empty) n
+  setfvs tlds (BLACKHOLE _ n) =
+    BLACKHOLE (Set.empty,Set.empty) n
 
 instance SetFVs a b => SetFVs [a] [b] where
     setfvs tlds = map (setfvs tlds)

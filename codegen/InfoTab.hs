@@ -164,7 +164,7 @@ data InfoTab =
       bfvc :: Int,  -- boxed FV count
       ufvc :: Int,  -- unboxed FV count
       truefvs :: [Var],
-
+      scVar :: Var,
       noHeapAlloc :: Bool,
       cmap :: CMap}
 
@@ -226,7 +226,7 @@ instance ITsOf (Obj a) [a] where
 
 instance ITsOf (Expr a) [a] where
     itsOf ELet{emd, edefs, ee}  = emd : (itsOf edefs) ++ (itsOf ee)
-    itsOf ECase{emd, ee, ealts} = emd : (itsOf ee) ++ (itsOf ealts)
+    itsOf ECase{emd, ee, ealts, scbnd} = emd : (itsOf ee) ++ (itsOf ealts) --FIXME
     itsOf e = [emd e] -- EAtom, EFCall, EPrimop
 
 instance ITsOf (Alt a) [a] where
@@ -254,8 +254,8 @@ instance SetITs (Expr ([Var],[Var])) (Expr InfoTab) where
     setITs e@(ELet emd defs ee) =
         ELet (makeIT e) (setITs defs) (setITs ee)
 
-    setITs e@(ECase emd ee alts) =
-        ECase (makeIT e) (setITs ee) (setITs alts)
+    setITs e@(ECase emd ee alts scbnd) =
+        ECase (makeIT e) (setITs ee) (setITs alts) (setITs scbnd)
 
     setITs e@(EAtom emd a) =
         EAtom (makeIT e) a
@@ -387,7 +387,7 @@ instance MakeIT (Expr ([Var],[Var])) where
                ctyp = ctypUndef,
                noHeapAlloc = False}
 
-    makeIT ECase{emd = (fvs,truefvs)} =
+    makeIT ECase{emd = (fvs,truefvs), scbnd} =
         ITCase{fvs = zip fvs $ repeat typUndef,
                bfvc = -1,
                ufvc = -1,
@@ -395,7 +395,12 @@ instance MakeIT (Expr ([Var],[Var])) where
                typ = typUndef,
                ctyp = ctypUndef,
                noHeapAlloc = False,
+               scVar = scvar,
                cmap = Map.empty}
+        where
+          scvar = case scbnd of
+                    EAtom _ (Var v) -> v
+                    _ -> error "InfoTab.makeIT: scbnd should always be EAtom _ (Var _)"
 
     makeIT EAtom{emd = (fvs,truefvs)} =
         ITAtom{fvs = zip fvs $ repeat typUndef,
