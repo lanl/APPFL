@@ -3,10 +3,10 @@
 
 /* options used by both C and haskell side for conditional compilation */
 
-/* If 1 use argType enum field in PtrOrLiteral */
+/* 0/1, If 1 use argType enum field in PtrOrLiteral */
 #define USE_ARGTYPE 1
 
-/* If 1 use objType enum field in Obj */
+/* 0/1, If 1 use objType enum field in Obj */
 #define USE_OBJTYPE 1
 
 /* If 1 use .pi = PI header in InfoTab */

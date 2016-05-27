@@ -1,32 +1,42 @@
 This is intended to document the structure of heap/continuation stack objects.
 
-For now we will assume a 64-bit architecture, *nix.  Whether or not we will be
-tied to gcc, gcc or LLVM, etc., remains to be seen.  There is no fundamental
-reason for not supporting 32-bit other than effort.
+For now we will assume x86-64-bit architecture, Linux or MacOS, gcc or Clang/LLVM.
 
 We have fixed in stone that there will be a universal fixed-size data type
-that can exist outside the heap, called PtrOrLiteral (TODO: or maybe PtrOrLit
-later).  Unboxed types may be multiples of this.  Initially, for simplicity
-and debugging purposes, it will contain a discrimator tag.  This tag will be
-eliminated now that we have typing information.  Currently the tag discrimates
-C int, C double (float if 32-bit supported), and a pointer to a heap object
-(type Obj).  Absent the discriminator tag this will be a 64-bit (32-bit)
-entity.
+that can exist outside the heap, called PtrOrLiteral.  Unboxed types may be
+multiples of this (TODO, they are currently as single PtrOrLiteral).  For
+debugging purposes there is a compile-time optional contain a discrimator tag
+(options.h/USE_ARGTYPE) Currently the tag discrimates C int, C double, C
+float, etc., and a pointer to a heap object (type Obj).  Absent the
+discriminator tag this will be a 64-bit entity.
 
-typedef enum {
-  INT, 
+runtime/stg.h
+#if USE_ARGTYPE
+typedef enum {          // superfluous, for sanity checking
+  INT,
+  LONG,
+  ULONG,
+  FLOAT,
   DOUBLE,
-  // FLOAT,
-  HEAPOBJ 
+  BITMAP,
+  HEAPOBJ
 } ArgType;
+#endif
 
+runtime/stg.h
 // PtrOrLiteral -- literal value or pointer to heap object
 typedef struct {
-  ArgType argType;  -- will be eliminated
+#if USE_ARGTYPE
+  ArgType argType;        // superfluous, for sanity checking
+#endif
   union {
-    int i;
+    int64_t i;
+    int64_t l;
+    uint64_t u;
+    float f;
     double d;
-    Obj *op;   //object pointer
+    Bitmap64 b;
+    Obj *op;
   };
 } PtrOrLiteral;
 
@@ -38,21 +48,26 @@ are referred to as static heap objects or SHOs.  Both are of type Obj.
 There are six types of (static) heap objects: FUN, PAP, CON, THUNK, BLACKHOLE,
 and INDIRECT.
 
+runtime/stg.h
+// heap objects
 typedef enum {
-  // heap objects
-  FUN, 
-  PAP, 
+  PHONYSTARTOBJ,
+  FUN,
+  PAP,
   CON,
   THUNK,
   BLACKHOLE,
   INDIRECT,
+  PHONYENDOBJ,
 } ObjType;
+extern const char *objTypeNames[PHONYENDOBJ];
+
 
 In general it must be possible to determine the size of a heap object
 dynamically, given only a pointer to it (this does not apply to (SHOs)), so
-that it can be copied during garbage collection, because at some point heap
-objects will become variably sized, not just between object types (FUN, PAP,
-etc.), but for each type as well.  
+that it can be copied during garbage collection, because heap objects are
+variably sized, not just between object types (FUN, PAP, etc.), but for each
+type as well.
 
 For all HO types except PAP the positions of the valid PtrOrLiteral values
 that may be pointers to HOs can be determined from solely from the "info
@@ -66,16 +81,18 @@ PtrOrLiterals in a PAP grows dynamically as it applied to successively more
 arguments.  Thus we include a field in the object itself indicating how many
 of these arguments it currently has.
 
+runtime/stg.h
 struct _Obj;
-
 typedef struct _Obj Obj;
-
+// with empty payload sizeof(Obj) must be multiple of 4
 struct _Obj {
-  InfoTab *infoPtr;         // canonical location of ObjType field
+  InfoTab *_infoPtr;         // canonical location of infoPtr--first word
+#if USE_OBJTYPE
   ObjType objType;          // to distinguish PAP, FUN, BLACKHOLE, INDIRECT
-  PtrOrLiteral payload[];   // variably sized
+#endif
+  char ident[32];           // temporary, just for tracing
+  PtrOrLiteral payload[];
 };
-
 
 All HOs have three parts (using Obj field names, not the field name C types):
 

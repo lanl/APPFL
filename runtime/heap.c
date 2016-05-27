@@ -1,5 +1,16 @@
 #include "stg.h"
+#include "heap.h"
 #include <string.h>  // for memcpy()
+
+// this is a temporary hack as we incorporate Bitmap64s into continuations
+/*
+Bitmap64 layoutInfoToBitmap64(LayoutInfo *lip) {
+  Bitmap64 bm;
+  bm.bitmap.mask = (0x1UL << lip->boxedCount) - 1;  // boxed vals first
+  bm.bitmap.size = lip->boxedCount + lip->unboxedCount;
+  return bm;
+}
+*/
 
 // we can't be certain a value is boxed or unboxed without enabling ARG_TYPE
 // but we can do some sanity checking.  mayBeBoxed(v) means that v is not
@@ -21,6 +32,28 @@ bool mayBeUnboxed(PtrOrLiteral f) {
 #else
   return true;
 #endif
+}
+
+Obj *derefPoL(PtrOrLiteral f) {
+  assert(mayBeBoxed(f) && "derefPoL: not a HEAPOBJ");
+  return derefHO(f.op);
+}
+
+void derefStgCurVal() {
+  assert(mayBeBoxed(stgCurVal)); // return stgCurVal
+  while (getObjType(stgCurVal.op) == INDIRECT) { // return stgCurVal
+    stgCurVal = stgCurVal.op->payload[0]; // return stgCurVal
+    assert(mayBeBoxed(stgCurVal)); // return stgCurVal
+  }
+}
+
+Obj *derefHO(Obj *op) {
+  while (getObjType(op) == INDIRECT) {
+    PtrOrLiteral v = op->payload[0];
+    assert(mayBeBoxed(v));
+    op = v.op;
+  }
+  return op;
 }
 
 Obj* stgNewHeapObj(InfoTab *itp) {

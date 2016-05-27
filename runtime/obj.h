@@ -3,6 +3,7 @@
 
 #include "options.h"
 #include "stg.h"
+#include "heap.h"
 // need to factor this out
 #include "stack.h"
 
