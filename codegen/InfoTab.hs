@@ -457,32 +457,26 @@ showObjType ITThunk {} = "THUNK"
 showObjType ITBlackhole {} = "BLACKHOLE"
 showObjType _ = error "bad ObjType"
 
-
---showIT :: InfoTab -> [Char]
---showIT it = 
---  let x = cshowIT it
---  in maybe "" pp x
-
   
-cshowIT :: InfoTab -> Maybe Definition
-cshowIT it@(ITAlts {}) =
-  let init = cshowITinit it
+showIT :: InfoTab -> Maybe Definition
+showIT it@(ITAlts {}) =
+  let init = showITinit it
       itname = "it_" ++ name it
       f x = Just [cedecl|
                  typename CInfoTab $id:itname __attribute__((aligned(8))) = $init:x;
                |]
   in maybe Nothing f init
 
-cshowIT it =
-  let init = cshowITinit it
+showIT it =
+  let init = showITinit it
       itname = "it_" ++ name it
       f x = Just [cedecl|
                  typename InfoTab $id:itname __attribute__((aligned(8))) = $init:x;
                |]
   in maybe Nothing f init
 
-cshowITinit :: InfoTab -> Maybe Initializer
-cshowITinit it@(ITFun {}) = 
+showITinit :: InfoTab -> Maybe Initializer
+showITinit it@(ITFun {}) =
   Just [cinit|
          {
 #if DEBUG_INFOTAB
@@ -496,10 +490,10 @@ cshowITinit it@(ITFun {}) =
             .layoutInfo.unboxedCount = $int:(ufvc it),
             .funFields.arity = $int:(arity it),
             .funFields.trueEntryCode = $id:(trueEntryCode it)
-          } 
+          }
        |]
 
-cshowITinit it@(ITPap {}) =
+showITinit it@(ITPap {}) =
    Just [cinit|
                {
 #if DEBUG_INFOTAB
@@ -518,7 +512,7 @@ cshowITinit it@(ITPap {}) =
              |]
 
 
-cshowITinit it@(ITCon {}) =
+showITinit it@(ITCon {}) =
   Just [cinit|
                {
 #if DEBUG_INFOTAB
@@ -537,7 +531,7 @@ cshowITinit it@(ITCon {}) =
                }
              |]
 
-cshowITinit it@(ITThunk {}) =
+showITinit it@(ITThunk {}) =
   Just [cinit|
                {
 #if DEBUG_INFOTAB
@@ -552,7 +546,7 @@ cshowITinit it@(ITThunk {}) =
                }
              |]
 
-cshowITinit it@(ITBlackhole {}) =
+showITinit it@(ITBlackhole {}) =
   Just [cinit|
                {
 #if DEBUG_INFOTAB
@@ -563,11 +557,11 @@ cshowITinit it@(ITBlackhole {}) =
                  .objType = BLACKHOLE,
                  .layoutInfo.payloadSize = 0,
                  .layoutInfo.boxedCount = 0,
-                 .layoutInfo.unboxedCount = 0 
+                 .layoutInfo.unboxedCount = 0
                }
              |]
 
-cshowITinit it@(ITAlts {}) =
+showITinit it@(ITAlts {}) =
   Just [cinit|
                {
                  .name = $string:(name it),
@@ -582,10 +576,10 @@ cshowITinit it@(ITAlts {}) =
                }
              |]
 
-cshowITinit it = Nothing
+showITinit it = Nothing
 
 showITs :: ITsOf a [InfoTab] => a -> [Definition]
-showITs os = catMaybes (map cshowIT $ itsOf os)
+showITs os = catMaybes (map showIT $ itsOf os)
 
 -- MODIFIED 6.30 - David ----------------------------------------
 -- code below replaces code from ConMaps.hs to set the CMaps in
