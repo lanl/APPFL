@@ -186,7 +186,7 @@ cga env (LitC c) =
   in (e, "")
   
 cgv :: Env -> String -> (Exp, String)
-cgv env v = (getEnvRef v env, "/* " ++ v ++ " */")
+cgv env v = (getEnvRef v env, "// " ++ v)
 
 -- boxed expression predicate
 isBoxede e = isBoxed $ typ $ emd e
@@ -297,8 +297,10 @@ stgApplyGeneric env f eas direct =
                 typename Cont *cp = stgAllocCallOrStackCont( &it_stgStackCont,
                 $int:(length pnstring + 2));
                 cp->layout =  (typename Bitmap64)$ulint:(npStrToBMInt ('N' : 'P' : pnstring ));
-                cp->payload[ 0 ] = $exp:(expr0); $comment:(comment0)
-                cp->payload[ 1 ] = $exp:(expr1); $comment:(comment1)
+                $comment:(comment0)
+                cp->payload[ 0 ] = $exp:(expr0);
+                $comment:(comment1)
+                cp->payload[ 1 ] = $exp:(expr1);
               |]
             ++ [ [citem| cp->payload[$int:i] = $exp:(expr); $comment:(comm) |]
                   | (i,a) <- zip [2..] as, let (expr, comm) = cga env a ]
@@ -324,17 +326,19 @@ cge :: Env
   -> Expr InfoTab
   -> State Int (([BlockItem], YPN), [(Definition, Func)])
 cge env e@(EAtom it a) =
-  let (expr,comm) = cga env a
+  let (expr, comm) = cga env a
       inline =
         if isBoxede e then
           [citems|
-            stgCurVal = $exp:expr; $comment:(comm)
+            $comment:(comm)
+            stgCurVal = $exp:expr;
             $comment:("// boxed EAtom, stgCurVal updates itself")
             STGJUMP();
           |]
         else
           [citems|
-            stgCurValU = $exp:expr; $comment:("// " ++ showa a);
+            $comment:("// " ++ showa a)
+            stgCurValU = $exp:expr;
             $comment:("// unboxed EAtom")
           |]
   in return ((inline, if isBoxede e then Yes else No), [])
@@ -546,7 +550,8 @@ cgalts env (Alts it alts name) boxed =
                       |]
                   else [citems| $items:(concat codes) |])
       let fun = [cfun|
-                   typename FnPtr $id:name() {
+                   typename FnPtr $id:name()
+                   {
                      $comment:("//" ++ show (ctyp it) )
                      $items:its
                    }
@@ -617,8 +622,9 @@ bho env (FUN it vs e name) =
 bho env (PAP it f as name) = error "unsupported explicit PAP"
   
 bho env (CON it c as name) =
-  [ [citem| $id:name->op->payload[$int:i] = $exp:(fst $ cga env a); $comment:("// " ++ showa a) |]
-    | (i,a) <- indexFrom 0 (projectAtoms as) ]
+  [ [citem| $comment:("// " ++ showa a)
+            $id:name->op->payload[$int:i] = $exp:(fst $ cga env a);
+    |] | (i,a) <- indexFrom 0 (projectAtoms as) ]
 
 bho env (THUNK it e name) =
     let top = [citems| $id:name->op->payload[0].op = NULL; |] ++
@@ -631,13 +637,15 @@ bho env (BLACKHOLE it name) = []
 
 loadPayloadFVs :: Env -> [String] -> Int -> String -> [BlockItem]
 loadPayloadFVs env fvs ind name =
-  [ [citem| $id:name->payload[$int:i] = $exp:(fst $ cgv env v); $comment:("// " ++ v) |]
-    | (i,v) <- indexFrom ind $ fvs]
+  [ [citem| $comment:("// " ++ v)
+            $id:name->payload[$int:i] = $exp:(fst $ cgv env v);
+          |] | (i,v) <- indexFrom ind $ fvs]
   
 loadPayloadAtoms :: Env -> [Atom] -> Int -> String -> [BlockItem]
 loadPayloadAtoms env as ind name =
-  [ [citem| $id:name->payload[$int:i] = $exp:(fst $ cga env a); $comment:("// " ++ showa a) |]
-    | (i,a) <- indexFrom ind as]
+  [ [citem| $comment:("// " ++ showa a)
+            $id:name->payload[$int:i] = $exp:(fst $ cga env a);
+          |] | (i,a) <- indexFrom ind as]
 
 showas :: [Atom] -> String
 showas as = intercalate " " $ map showa as
