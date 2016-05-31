@@ -16,4 +16,6 @@ executable stgc
                    , process
                    , split
                    , ghc-prim
+                   , language-c-quote
+                   , mainland-pretty
 
