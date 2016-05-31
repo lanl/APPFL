@@ -18,6 +18,60 @@
 \end{frame}
 
 \begin{frame}
+\frametitle{In Search of Automatic Parallelization\\
+\emph{or at least automatic scheduling}}
+  \begin{figure}
+    \begin{center}
+%      \fbox{
+      \includegraphics[width=0.95\linewidth,height=1in]%
+        {figures/S3Dtaskgraph.png}~\footnote{Courtesy Stanford Legion project}
+%}
+\\[2.0ex]  % vertical space
+      S3D task dependency, combustion chemistry calculation
+    \end{center}
+  \end{figure}
+Simplest interesting chemistry, task graph much larger with more complex reactants.
+\vspace{0.1in}
+Schedule by hand?
+\end{frame}
+
+
+\begin{frame}
+\frametitle{Scientific Computing in our Microcosm}
+Local evolution of scientific computing
+\begin{itemize}
+  \item Serial Fortran programs
+  \item MPI everywhere (inter- and intra-node)
+  \item C, C++
+  \item MPI+X, X is Pthreads, OpenMP, OpenCL, CUDA, etc.
+  \item Parallel runtimes, e.g., Cilk++, Intel Threading Building Blocks, Stanford's Legion, etc.
+\end{itemize}
+
+We have a `new' generation of scientific programmers, aka computational scientists, who
+have some understanding of meaning and virtue of \emph{pure functional}, and even dabble
+in Haskell programming.
+\vspace{0.1in}
+
+\emph{In a multi-100,000-line program, do not temporarily alter the global speed-of-light
+`constant' variable.}
+\end{frame}
+
+
+\begin{frame}
+\frametitle{Non-strictness/laziness Anathema to Parallelism}
+How to get around?
+\begin{itemize}
+  \item Strictness analysis
+  \item Bang patterns
+  \item Par/pseq, other specifications
+  \item Speculative evaluation
+  \item \ldots
+  \item \emph{Strict(er) default semantics}
+\end{itemize}
+\end{frame}
+
+
+\begin{frame}
 \frametitle{Here is a simple frame}
     \begin{itemize}
         \item Here is the first bullet in a standard bulleted list,
@@ -34,7 +88,8 @@
 
 
 \begin{frame}
-\frametitle{Here is a more complicated frame, including some graphics}
+\frametitle{In Search of Automatic Parallelization\\
+\emph{or at least automatic scheduling}}
     \begin{columns}[t]
         \begin{column}{.48\linewidth}
             \begin{itemize}
