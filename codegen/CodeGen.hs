@@ -564,39 +564,36 @@ cgalt env switch fvp (ACon it c vs e) =
   in do
     ((inline, ypn), func) <- cge env' e
     let tag = luConTag c $ cmap it -- ConTags returned as Strings!
-    let top = [citems|
-                 $comment:("// " ++ c ++ " " ++ intercalate " " vs ++ " ->");
-               |]
     let its = if ypn /= Yes then
                 inline ++ [citems| STGRETURN0();|]
               else inline
-    let extra = if switch then
+    let casei = if switch then
                   [citems|
-                    case $id:tag: {
-                    $items:its
+                    case $id:tag: $comment:("// " ++ c ++ " " ++ intercalate " " vs ++ " ->")
+                    {
+                      $items:its
                     }
                   |]
                 else
-                  [citems| $items:its|]
-    return ((top ++ extra, Yes), func)
+                  [citems|$items:its|]
+    return ((casei, Yes), func)
 
 cgalt env switch fvp (ADef it v e) =
     let env' = (v, FP fvp 0) : env
     in do
       ((inline, ypn), func) <- cge env' e
-      let top = [citems| $comment:("// " ++ v ++ " ->");|]
       let its = if ypn /= Yes then
                   inline ++ [citems| STGRETURN0();|]
                 else inline
-      let extra = if switch then
+      let casei = if switch then
                     [citems|
-                      default: {
+                      default: $comment:("// " ++ v ++ " ->") {
                         $items:its
                       }
                     |]
                   else
                     [citems| $items:its|]
-      return ((top ++ extra, Yes), func)
+      return ((casei, Yes), func)
 
 -- ****************************************************************
 -- buildHeapObj is only invoked by ELet so TLDs not built
