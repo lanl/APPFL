@@ -19,12 +19,6 @@ foreach (test ${ALL_SRCS})
     set(binary ${BIN_DIR}/${tname})
     add_test(${build} ${STGCC} -v ${SRC_DIR}/${tname}.stg -o ${tname})
 
-    #with gc     
-    add_test_true(${tname}_nonstrict ${build} ${binary} -l${RT_LOG_LEVEL} -e0 2>&1)           
-    
-    #w/o gc 
-    add_test_true(${tname}_nonstrict_nogc ${build} ${binary} -l${RT_LOG_LEVEL} -e0 -g 2>&1)     
-
     foreach (strict 0 1 2)
       foreach (constr 0) 
 

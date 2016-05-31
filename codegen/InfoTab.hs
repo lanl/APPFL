@@ -5,6 +5,7 @@
 {-# LANGUAGE NamedFieldPuns        #-}
 {-# LANGUAGE FlexibleContexts      #-}
 {-# LANGUAGE TupleSections         #-}
+{-# LANGUAGE QuasiQuotes           #-}
 
 {-# LANGUAGE CPP #-}
 #include "../options.h"
@@ -14,10 +15,7 @@ module InfoTab(
   setCMaps,
   setITs,
   showITs,
-  showITType,
   showObjType,
-  show,
-  showIT,
   itsOf,
 ) where
 
@@ -37,6 +35,9 @@ import qualified Data.Map as Map
 
 import Data.Set (Set)
 import qualified Data.Set as Set
+
+import Language.C.Quote.GCC
+import Language.C.Syntax (Definition, Initializer)
 
 -- need an infoTab entry for each lexically distinct HO or SHO
 
@@ -308,9 +309,7 @@ instance MakeIT (Obj ([Var],[Var])) where
               truefvs = truefvs,
               typ = typUndef,
               ctyp = ctypUndef,
-    -- --         entryCode = showITType o ++ "_" ++ n,
               entryCode = "stg_funcall",
-    --          entryCode = "fun_" ++ n,
               trueEntryCode = "fun_" ++ n
             }
 
@@ -326,8 +325,6 @@ instance MakeIT (Obj ([Var],[Var])) where
               truefvs = truefvs,
               typ = typUndef,
               ctyp = ctypUndef,
-    --          entryCode = showITType o ++ "_" ++ n
-    --          entryCode = "stg_papcall",
               entryCode = "fun_" ++ f,
               trueEntryCode = "fun_" ++ f,
               knownCall = Nothing
@@ -347,9 +344,7 @@ instance MakeIT (Obj ([Var],[Var])) where
               truefvs = truefvs,
               typ = typUndef,
               ctyp = ctypUndef,
-    --          entryCode = showITType o ++ "_" ++ n
               entryCode = "stg_concall",
-              -- cmap = error "ITCon cmap undefined in InfoTab.hs"
               cmap = Map.empty
             }
 
@@ -361,7 +356,6 @@ instance MakeIT (Obj ([Var],[Var])) where
                 truefvs = truefvs,
                 typ = typUndef,
                 ctyp = ctypUndef,
-    --            entryCode = showITType o ++ "_" ++ n
                 entryCode = "thunk_" ++ n
               }
 
@@ -373,7 +367,6 @@ instance MakeIT (Obj ([Var],[Var])) where
                     bfvc = -1,
                     ufvc = -1,
                     truefvs = truefvs,
-    --                entryCode = showITType o ++ "_" ++ n
                     entryCode = "stgBlackhole"
                   }
 
@@ -454,7 +447,6 @@ instance MakeIT (Alt ([Var],[Var])) where
                truefvs = truefvs,
                typ = typUndef,
                ctyp = ctypUndef,
-               -- cmap = error "ADef cmap set undefined in InfoTab.hs"}
                cmap = Map.empty}
 
 
@@ -465,119 +457,129 @@ showObjType ITThunk {} = "THUNK"
 showObjType ITBlackhole {} = "BLACKHOLE"
 showObjType _ = error "bad ObjType"
 
-showITType _ = "sho"
--- showITType FUN {} = "ofun"
--- showITType PAP {} = "opap"
--- showITType CON {} = "ocon"
--- showITType THUNK {} = "otnk"
--- showITType BLACKHOLE {} = "obhl"
--- showITTType _ = error "bad ITType"
+  
+showIT :: InfoTab -> Maybe Definition
+showIT it@(ITAlts {}) =
+  let init = showITinit it
+      itname = "it_" ++ name it
+      f x = Just [cedecl|
+                 typename CInfoTab $id:itname __attribute__((aligned(8))) = $init:x;
+               |]
+  in maybe Nothing f init
 
+showIT it =
+  let init = showITinit it
+      itname = "it_" ++ name it
+      f x = Just [cedecl|
+                 typename InfoTab $id:itname __attribute__((aligned(8))) = $init:x;
+               |]
+  in maybe Nothing f init
 
-infoTabHeader :: String
-infoTabHeader = if useInfoTabHeader
-                then "  .pi = PI(),\n"
-                else ""
+showITinit :: InfoTab -> Maybe Initializer
+showITinit it@(ITFun {}) =
+  Just [cinit|
+         {
+#if DEBUG_INFOTAB
+           .pi = PI(),
+#endif
+            .name = $string:(name it),
+            .entryCode = &$id:(entryCode it),
+            .objType = FUN,
+            .layoutInfo.payloadSize  = $int:(length $ fvs it),
+            .layoutInfo.boxedCount = $int:(bfvc it),
+            .layoutInfo.unboxedCount = $int:(ufvc it),
+            .funFields.arity = $int:(arity it),
+            .funFields.trueEntryCode = $id:(trueEntryCode it)
+          }
+       |]
 
-showIT :: InfoTab -> [Char]
-showIT it@(ITFun {}) =
-    "InfoTab it_" ++ name it ++ " __attribute__((aligned(8))) = {\n" ++
-    infoTabHeader ++
-    "  .name                = " ++ show (name it) ++ ",\n" ++
-    "  // fvs " ++ show (fvs it) ++ "\n" ++
-    "  .entryCode           = &" ++ entryCode it ++ ",\n" ++
-    "  .objType             = FUN,\n" ++
-    "  .layoutInfo.payloadSize  = " ++ show (length $ fvs it) ++ ",\n" ++
-    "  .layoutInfo.boxedCount   = " ++ show (bfvc it) ++ ",\n" ++
-    "  .layoutInfo.unboxedCount = " ++ show (ufvc it) ++ ",\n" ++
-    "  .funFields.arity         = " ++ show (arity it) ++ ",\n" ++
-    "  .funFields.trueEntryCode = " ++ trueEntryCode it ++ ",\n" ++
-    "};\n"
-
-showIT it@(ITPap {}) =
-    "InfoTab it_" ++ name it ++ " __attribute__((aligned(8))) = {\n" ++
-    infoTabHeader ++
-    "  .name                = " ++ show (name it) ++ ",\n" ++
-    "  // fvs " ++ show (fvs it) ++ "\n" ++
-    "  .entryCode           = &" ++ entryCode it ++ ",\n" ++
-    "  .objType             = PAP,\n" ++
-    "  .layoutInfo.payloadSize  = " ++ show (length (fvs it) +
+showITinit it@(ITPap {}) =
+   Just [cinit|
+               {
+#if DEBUG_INFOTAB
+                 .pi = PI(),
+#endif
+                 .name = $string:(name it),
+                 .entryCode = &$id:(entryCode it),
+                 .objType = PAP,
+                 .layoutInfo.payloadSize = $int:(length (fvs it) +
                                              length (args it) +
-                                             1) ++ ",\n" ++
-    "  .layoutInfo.boxedCount   = " ++ show (bfvc it) ++ ",\n" ++
-    "  .layoutInfo.unboxedCount = " ++ show (ufvc it) ++ ",\n" ++
-    "  .papFields.trueEntryCode = " ++ trueEntryCode it ++ ",\n" ++
-    "};\n"
+                                             1),
+                 .layoutInfo.boxedCount = $int:(bfvc it),
+                 .layoutInfo.unboxedCount = $int:(ufvc it),
+                 .papFields.trueEntryCode = $id:(trueEntryCode it)
+               }
+             |]
 
-showIT it@(ITCon {}) =
-    "InfoTab it_" ++ name it ++ " __attribute__((aligned(8))) = {\n" ++
-    infoTabHeader ++
-    "  .name                = " ++ show (name it) ++ ",\n" ++
-    "  // fvs " ++ show (fvs it) ++ "\n" ++
-    "  .entryCode           = &" ++ entryCode it ++ ",\n" ++
-    "  .objType             = CON,\n" ++
-    "  .layoutInfo.payloadSize  = " ++ show (arity it) ++ ",\n" ++
-    "  // argPerm = " ++ show (argPerm it) ++ "\n" ++
-    "  .layoutInfo.boxedCount   = " ++ show (bargc it) ++ ",\n" ++
-    "  .layoutInfo.unboxedCount = " ++ show (uargc it) ++ ",\n" ++
-    "  .layoutInfo.permString   = \"" ++ concatMap show (argPerm it) ++ "\",\n" ++
-    "  .conFields.arity     = " ++ show (arity it) ++ ",\n" ++
-    "  .conFields.tag       = " ++ luConTag (con it) (cmap it) ++ ",\n" ++
-    "  .conFields.conName   = " ++ show (con it) ++ ",\n" ++
-    "};\n"
 
-showIT it@(ITThunk {}) =
-    "InfoTab it_" ++ name it ++ " __attribute__((aligned(8))) = {\n" ++
-    infoTabHeader ++
-    "  .name                = " ++ show (name it) ++ ",\n" ++
-    "  // fvs " ++ show (fvs it) ++ "\n" ++
-    "  .entryCode           = &" ++ entryCode it ++ ",\n" ++
-    "  .objType             = THUNK,\n" ++
-    "  .layoutInfo.payloadSize = " ++ show (1 + (length $ fvs it)) ++ ",\n" ++
-    "  .layoutInfo.boxedCount   = " ++ show (bfvc it) ++ ",\n" ++
-    "  .layoutInfo.unboxedCount = " ++ show (ufvc it) ++ ",\n" ++
-    "};\n"
+showITinit it@(ITCon {}) =
+  Just [cinit|
+               {
+#if DEBUG_INFOTAB
+                 .pi = PI(),
+#endif
+                 .name = $string:(name it),
+                 .entryCode = &$id:(entryCode it),
+                 .objType = CON,
+                 .layoutInfo.payloadSize = $int:(arity it),
+                 .layoutInfo.boxedCount = $int:(bargc it),
+                 .layoutInfo.unboxedCount = $int:(uargc it),
+                 .layoutInfo.permString = $string:(concatMap show (argPerm it)),
+                 .conFields.arity = $int:(arity it),
+                 .conFields.tag = $id:(luConTag (con it) (cmap it)),
+                 .conFields.conName  = $string:(con it)
+               }
+             |]
 
-showIT it@(ITBlackhole {}) =
-    "InfoTab it_" ++ name it ++ "  __attribute__((aligned(8))) = {\n" ++
-    infoTabHeader ++
-    "  .name                = " ++ show (name it) ++ ",\n" ++
-    "  // fvs " ++ show (fvs it) ++ "\n" ++
-    "  .entryCode           = &" ++ entryCode it ++ ",\n" ++
-    "  .objType             = BLACKHOLE,\n" ++
-    "  .layoutInfo.payloadSize  = 0,\n" ++
-    "  .layoutInfo.boxedCount   = 0,\n" ++
-    "  .layoutInfo.unboxedCount = 0,\n" ++
-    "};\n"
+showITinit it@(ITThunk {}) =
+  Just [cinit|
+               {
+#if DEBUG_INFOTAB
+                 .pi = PI(),
+#endif
+                 .name = $string:(name it),
+                 .entryCode = &$id:(entryCode it),
+                 .objType = THUNK,
+                 .layoutInfo.payloadSize = $int:(1 + (length $ fvs it)),
+                 .layoutInfo.boxedCount = $int:(bfvc it),
+                 .layoutInfo.unboxedCount = $int:(ufvc it)
+               }
+             |]
 
--- CONTINUATION CInfoTab
+showITinit it@(ITBlackhole {}) =
+  Just [cinit|
+               {
+#if DEBUG_INFOTAB
+                 .pi = PI(),
+#endif
+                 .name = $string:(name it),
+                 .entryCode = &$id:(entryCode it),
+                 .objType = BLACKHOLE,
+                 .layoutInfo.payloadSize = 0,
+                 .layoutInfo.boxedCount = 0,
+                 .layoutInfo.unboxedCount = 0
+               }
+             |]
 
-showIT it@(ITAlts{}) =
-    "CInfoTab it_" ++ name it ++ " __attribute__((aligned(8))) = {\n" ++
-    "  .name                     = " ++ show (name it) ++ ",\n" ++
-    "  // fvs " ++ show (fvs it) ++ "\n" ++
-    "  .entryCode                = &" ++ entryCode it ++ ",\n" ++
-    "  .contType                 = CASECONT,\n" ++
-    -- one extra for scrutinee
-    "  .cLayoutInfo.payloadSize  = " ++ show ((length $ fvs it) + 1) ++ ",\n" ++
-    "  .cLayoutInfo.boxedCount   = " ++ show (bfvc it) ++ ",\n" ++
-    "  .cLayoutInfo.unboxedCount = " ++ show (ufvc it) ++ ",\n" ++
-    -- initially indicate scrutinee as unboxed for GC, could also indicate
-    -- correctly and make NULL in CodeGen
-    "  .cLayoutInfo.bm           = " ++
-          npStrToBMStr ( 'N' :
+showITinit it@(ITAlts {}) =
+  Just [cinit|
+               {
+                 .name = $string:(name it),
+                 .entryCode = &$id:(entryCode it),
+                 .contType = CASECONT,
+                 .cLayoutInfo.payloadSize = $int:((length $ fvs it) + 1),
+                 .cLayoutInfo.boxedCount = $int:(bfvc it),
+                 .cLayoutInfo.unboxedCount = $int:(ufvc it),
+                 .cLayoutInfo.bm = $ulint:(npStrToBMInt ( 'N' :
                         replicate (bfvc it) 'P' ++
-                        replicate (ufvc it) 'N') ++ ",\n" ++
-    "};\n"
+                        replicate (ufvc it) 'N') )
+               }
+             |]
 
-showIT _ = ""
+showITinit it = Nothing
 
-myConcatMap f = intercalate "\n" . map f
-
-showITs :: ITsOf a [InfoTab] => a -> [Char]
-showITs os = myConcatMap showIT $ itsOf os
---showITs os = concatMap showIT $ itsOf os
-
+showITs :: ITsOf a [InfoTab] => a -> [Definition]
+showITs os = catMaybes (map showIT $ itsOf os)
 
 -- MODIFIED 6.30 - David ----------------------------------------
 -- code below replaces code from ConMaps.hs to set the CMaps in
@@ -711,5 +713,3 @@ instance PPrint InfoTab where
 
 instance Show InfoTab where
     show it = show (typ it)
---    show it = show (ctyp it)
---    show it = show (truefvs it)
