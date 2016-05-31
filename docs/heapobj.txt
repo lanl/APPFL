@@ -101,8 +101,7 @@ C type
 | infoPtr | objType |          |          payload           |
 -------------------------------------------------------------
 
-While the ObjType is also in the InfoTab, we choose to have a dedicated field
-in the HO as well for reasons that will be detailed later.
+ObjType objType is optional, for debugging.
 
 Next the layouts of each object type.  In the following, "free variables"
 means a sequence PtrOrLiteral where field argType = HEAPOBJ, and "arguments"
@@ -179,8 +178,9 @@ BLACKHOLE
 | infoPtr | objType |          | result | bfvs (they're still live!) | ubfvs      |
 -----------------------------------------------------------------------------------
 
-Black holes only come from THUNKs.  For convenience and arguable efficiency, a
-BLACKHOLE will be created by simply overwriting objType with value BLACKHOLE,
+Black holes only come from THUNKs.  That a thunk is a BLACKHOLE is indicated
+by setting a low-order bit in infoPtr, and when for debugging overwriting
+objType with value BLACKHOLE,
 
 objType = BLACKHOLE
 
@@ -192,11 +192,12 @@ infoPtr->layoutInfo.unboxedCount is number of unboxed free variables
 INDIRECT
                                |       payload[0]         |
 ------------------------------------------------------------------------
-| infoPtr | objType |          | ptr to some other object | irrelevant |
+| infoPtr | objType |          | ptr to some other object | garbage    |
 ------------------------------------------------------------------------
 
 INDIRECTs arise from BLACKHOLEs being updated.  The THUNK object is again
-reused, so 
+reused but infoPtr is updated to a common InfoTab it_stgIndirect so that
+the former payload can be garbage collected.
 
 objType = INDIRECT
 
@@ -235,31 +236,27 @@ void initPredefs() {
 Continuation Stack Objects
 
 typedef enum {
-  UPDCONT, 
-  CASECONT, 
-  CALLCONT, 
-  //
-  ...
+  BADCONTTYPE0,
+  BADCONTTYPE1,
+  BADCONTTYPE2,
+  BADCONTTYPE3,
+  BADCONTTYPE4,
+  BADCONTTYPE5,
+  PHONYSTARTCONT,
+  UPDCONT,
+  CASECONT,
+  CALLCONT,
+  STACKCONT,
+  POPMECONT,
+  LETCONT,
+  PHONYENDCONT,
 } ContType;
+const char *contTypeNames[PHONYENDCONT];
 
-
-Continuation stack objects are manipulated in the following places.
-
-UPDCONT  - runtime/ stg.h, stg.c, gc.c
-           codegen/ CodeGen.hs
-
-CASECONT - codegen/Codegen.hs, cge _ ECase
-           codegen/CodeGen.hs, cgalts _ Alts
-
-CALLCONT - runtime/ stg.h, stg.c, stgutils.h, stgutils.c, gc.c
-           codegen/ CodeGen.hs
-
-           CALLCONT current use assumes that the call will return
-	   so it is used to store only boxed values
+CALLCONT   obsolete
 
 STACKCONT  The intent here is to have function arguments passedand referenced 
            through this structure so that the GC can see them.
-           - should this subsume CALLCONT?
            - does it differ substantively from CASECONT?  While CASECONT
              contains the address of the Alts, STACKCONT could contain the
 	     address of a fixed "pop-me" routine that then jumps through
@@ -267,8 +264,7 @@ STACKCONT  The intent here is to have function arguments passedand referenced
 
 The layout of continuation stack objects is as follows.
 
-TODO:  objType field will go away, should use a pair of macros
-  SETOBJTYPE and GETOBJTYPE
+ObjType objType
 
 STACKCONT
                                | payload[0]
