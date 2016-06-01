@@ -64,10 +64,9 @@ rewriteScruts infile outfile =
         (modified, n) = runState (asb env eithers) 0
     putStrLn $ show n ++ " case scrutinee bindings added"
     writeFile outfile . show $
-      (vcat $ map unparse modified) $+$
+      (vcat $ map unparse modified) <>
       -- newline defeats the
-      -- "Last line is a comment and messes up file concatenation"
-      -- bug
+      -- "Last line is a comment and messes up file concatenation" bug
       text "\n"
 
 

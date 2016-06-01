@@ -113,12 +113,14 @@ tupl2 = FUN(a b ->
                 in t);
 
 fst = FUN(t2 ->
-             case t2 of _scrt0 {
-                          TP2 a b -> a });
+             case t2 of
+               _scrt0 {
+                 TP2 a b -> a });
 
 snd = FUN(t2 ->
-             case t2 of _scrt1 {
-                          TP2 a b -> b });
+             case t2 of
+               _scrt1 {
+                 TP2 a b -> b });
 
 -- construct a size-3 tuple
 -- tupl3 :: a -> b -> c -> Tupl3 a b c
@@ -132,195 +134,237 @@ tupl3 = FUN(a b c ->
 -- check boxed Ints for equality
 -- eqInt :: Int -> Int -> Bool
 eqInt = FUN(x y ->
-                case x of _scrt4 {
-                            I i# -> case y of _scrt3 {
-                                                I j# -> case ieq# i# j# of _scrt2 {
-                                                                             0 -> false;
-                                                                             x -> true } } });
+                case x of
+                  _scrt4 {
+                    I i# -> case y of
+                              _scrt3 {
+                                I j# -> case ieq# i# j# of
+                                          _scrt2 {
+                                            0 -> false;
+                                            x -> true } } });
 
 -- multiply boxed Ints
 -- multInt :: Int -> Int -> Int
 multInt = FUN(x y ->
-                  case x of _scrt7 {
-                              I i# -> case y of _scrt6 {
-                                                  I j# -> case imul# i# j# of _scrt5 {
-                                                                                x# -> let {
-                                                                                        result = CON(I x#)}
-                                                                                      in result } } });
+                  case x of
+                    _scrt7 {
+                      I i# -> case y of
+                                _scrt6 {
+                                  I j# -> case imul# i# j# of
+                                            _scrt5 {
+                                              x# -> let {
+                                                      result = CON(I x#)}
+                                                    in result } } });
 
 -- add boxed Ints
 -- plusInt :: Int -> Int -> Int
 plusInt = FUN(x y ->
-                  case x of _scrt10 {
-                              I i# -> case y of _scrt9 {
-                                                  I j# -> case iplus# i# j# of _scrt8 {
-                                                                                 x# -> let {
-                                                                                         result = CON(I x#)}
-                                                                                       in result } } });
+                  case x of
+                    _scrt10 {
+                      I i# -> case y of
+                                _scrt9 {
+                                  I j# -> case iplus# i# j# of
+                                            _scrt8 {
+                                              x# -> let {
+                                                      result = CON(I x#)}
+                                                    in result } } });
 
 -- subtract boxed Ints | subInt x y = Haskell(x - y)
 -- subInt :: Int -> Int -> Int
 subInt = FUN(x y ->
-                 case x of _scrt13 {
-                             I i# -> case y of _scrt12 {
-                                                 I j# -> case isub# i# j# of _scrt11 {
-                                                                               x# -> let {
-                                                                                       result = CON(I x#)}
-                                                                                     in result } } });
+                 case x of
+                   _scrt13 {
+                     I i# -> case y of
+                               _scrt12 {
+                                 I j# -> case isub# i# j# of
+                                           _scrt11 {
+                                             x# -> let {
+                                                     result = CON(I x#)}
+                                                   in result } } });
 
 -- modulus operation for boxed Ints | modInt a b == Haskell(a `mod` b)
 -- modInt :: Int -> Int -> Int
 modInt = FUN(x y ->
-                 case x of _scrt16 {
-                             I x# -> case y of _scrt15 {
-                                                 I y# -> case imod# x# y# of _scrt14 {
-                                                                               r# -> int r# } } });
+                 case x of
+                   _scrt16 {
+                     I x# -> case y of
+                               _scrt15 {
+                                 I y# -> case imod# x# y# of
+                                           _scrt14 {
+                                             r# -> int r# } } });
 
 _intPrimop = FUN(op a b ->
-                        case a of _scrt19 {
-                                    I a# -> case b of _scrt18 {
-                                                        I b# -> case op a# b# of _scrt17 {
-                                                                                   r# -> int r# } } });
+                        case a of
+                          _scrt19 {
+                            I a# -> case b of
+                                      _scrt18 {
+                                        I b# -> case op a# b# of
+                                                  _scrt17 {
+                                                    r# -> int r# } } });
 
 _intComp = FUN(op a b ->
-                      case _intPrimop op a b of _scrt21 {
-                                                  I x# -> case x# of _scrt20 {
-                                                                       0 -> false;
-                                                                       x -> true } });
+                      case _intPrimop op a b of
+                        _scrt21 {
+                          I x# -> case x# of
+                                    _scrt20 {
+                                      0 -> false;
+                                      x -> true } });
 
 intLE = THUNK(_intComp _ile);
 
 minInt = FUN(a b ->
-                 case intLE a b of _scrt22 {
-                                     True -> a;
-                                     False -> b });
+                 case intLE a b of
+                   _scrt22 {
+                     True -> a;
+                     False -> b });
 
 -- calcuate greatest common divisor of two unboxed ints
 -- gcd# :: Int# -> Int# -> Int#
 gcd# = FUN(a# b# ->
-                   case b# of _scrt24 {
-                                0 -> a#;
-                                x -> case imod# a# b# of _scrt23 {
-                                                           r# -> gcd# b# r# } });
+                   case b# of
+                     _scrt24 {
+                       0 -> a#;
+                       x -> case imod# a# b# of
+                              _scrt23 {
+                                r# -> gcd# b# r# } });
 
 -- calculate the greatest common divisor of two boxed ints
 -- gcd :: Int -> Int -> Int
 gcd = FUN(a b ->
-              case a of _scrt27 {
-                          I a# -> case b of _scrt26 {
-                                              I b# -> case gcd# a# b# of _scrt25 {
-                                                                           r# -> int r# } } });
+              case a of
+                _scrt27 {
+                  I a# -> case b of
+                            _scrt26 {
+                              I b# -> case gcd# a# b# of
+                                        _scrt25 {
+                                          r# -> int r# } } });
 
 ----------- List operations ----------------------------------
 -- append two lists (elements of first precede elements of second)
 -- append :: List a -> List a -> List a
 append = FUN(l1 l2 ->
-                   case l1 of _scrt28 {
-                                Nil -> l2;
-                                Cons hd tl -> let {
-                                                rec = THUNK(append tl l2);
-                                                result = CON(Cons hd rec)}
-                                              in result });
+                   case l1 of
+                     _scrt28 {
+                       Nil -> l2;
+                       Cons hd tl -> let {
+                                       rec = THUNK(append tl l2);
+                                       result = CON(Cons hd rec)}
+                                     in result });
 
 -- apply a function to all elements of a list
 -- map :: (a -> b) -> List a -> List b
 map = FUN(f list ->
-                 case list of _scrt29 {
-                                Nil -> nil;
-                                Cons h t -> let {
-                                              x = THUNK(f h);
-                                              rec = THUNK(map f t);
-                                              res = CON(Cons x rec)}
-                                            in res });
+                 case list of
+                   _scrt29 {
+                     Nil -> nil;
+                     Cons h t -> let {
+                                   x = THUNK(f h);
+                                   rec = THUNK(map f t);
+                                   res = CON(Cons x rec)}
+                                 in res });
 
 -- take the first element of a list
 -- head :: List a -> a
 head = FUN(xs ->
-              case xs of _scrt30 {
-                           Cons hd tl -> hd });
+              case xs of
+                _scrt30 {
+                  Cons hd tl -> hd });
 
 -- remove the first element of a list
 -- tail :: List a -> List a
 tail = FUN(xs ->
-              case xs of _scrt31 {
-                           Cons hd tl -> tl });
+              case xs of
+                _scrt31 {
+                  Cons hd tl -> tl });
 
 -- fold a function through a list, from left to right with accumulator
 -- foldl :: (b -> a -> b) -> b -> List a -> b
 foldl = FUN(f acc list ->
-                       case list of _scrt32 {
-                                      Nil -> acc;
-                                      Cons h t -> let {
-                                                    newAcc = THUNK(f acc h)}
-                                                  in foldl f newAcc t });
+                       case list of
+                         _scrt32 {
+                           Nil -> acc;
+                           Cons h t -> let {
+                                         newAcc = THUNK(f acc h)}
+                                       in foldl f newAcc t });
 
 -- fold a function through a list, from right to left
 -- foldr :: (a -> b -> b) -> b -> List a -> b
 foldr = FUN(f sd list ->
-                      case list of _scrt33 {
-                                     Nil -> sd;
-                                     Cons h t -> let {
-                                                   res = THUNK(foldr f sd t)}
-                                                 in f h res });
+                      case list of
+                        _scrt33 {
+                          Nil -> sd;
+                          Cons h t -> let {
+                                        res = THUNK(foldr f sd t)}
+                                      in f h res });
 
 -- calculate length of a list
 -- length :: List a -> Int
 length = FUN(xs ->
-                case _length xs 0 of _scrt34 {
-                                       r# -> int r# });
+                case _length xs 0 of
+                  _scrt34 {
+                    r# -> int r# });
 
 -- tail recursive, non-heap-growing helper for length
 _length = FUN(xs ac# ->
-                      case xs of _scrt36 {
-                                   Nil -> ac#;
-                                   Cons h t -> case iplus# ac# 1 of _scrt35 {
-                                                                      r# -> _length t r# } });
+                      case xs of
+                        _scrt36 {
+                          Nil -> ac#;
+                          Cons h t -> case iplus# ac# 1 of
+                                        _scrt35 {
+                                          r# -> _length t r# } });
 
 -- forcelist: seq elements of a list, return unit
 -- forcelist :: List a -> Unit
 forcelist = FUN(list ->
-                     case list of _scrt37 {
-                                    Nil -> unit;
-                                    Cons h t -> let {
-                                                  rec = THUNK(forcelist t)}
-                                                in seq h rec });
+                     case list of
+                       _scrt37 {
+                         Nil -> unit;
+                         Cons h t -> let {
+                                       rec = THUNK(forcelist t)}
+                                     in seq h rec });
 
 -- take n objects from a list, starting at the head
 -- take :: Int -> List a -> List a
 take = FUN(n xs ->
-                case eqInt n zero of _scrt39 {
-                                       True -> nil;
-                                       False -> case xs of _scrt38 {
-                                                             Nil -> nil;
-                                                             Cons hd tl -> let {
-                                                                             m = THUNK(subInt n one);
-                                                                             rec = THUNK(take m tl);
-                                                                             result = CON(Cons hd rec)}
-                                                                           in result } });
+                case eqInt n zero of
+                  _scrt39 {
+                    True -> nil;
+                    False -> case xs of
+                               _scrt38 {
+                                 Nil -> nil;
+                                 Cons hd tl -> let {
+                                                 m = THUNK(subInt n one);
+                                                 rec = THUNK(take m tl);
+                                                 result = CON(Cons hd rec)}
+                                               in result } });
 
 -- remove n elements from the head of a list
 -- drop :: Int -> List a -> List a
 drop = FUN(n xs ->
-                case eqInt n zero of _scrt41 {
-                                       True -> xs;
-                                       False -> case xs of _scrt40 {
-                                                             Nil -> nil;
-                                                             Cons h t -> let {
-                                                                           m = THUNK(subInt n one)}
-                                                                         in drop m t } });
+                case eqInt n zero of
+                  _scrt41 {
+                    True -> xs;
+                    False -> case xs of
+                               _scrt40 {
+                                 Nil -> nil;
+                                 Cons h t -> let {
+                                               m = THUNK(subInt n one)}
+                                             in drop m t } });
 
 -- zip two lists together element-wise with a combining function
 -- zipWith :: (a -> b -> c) -> List a -> List b -> List c
 zipWith = FUN(f list1 list2 ->
-                            case list1 of _scrt43 {
-                                            Nil -> nil;
-                                            Cons h1 t1 -> case list2 of _scrt42 {
-                                                                          Nil -> nil;
-                                                                          Cons h2 t2 -> let {
-                                                                                          newHead = THUNK(f h1 h2);
-                                                                                          newTail = THUNK(zipWith f t1 t2);
-                                                                                          result = CON(Cons newHead newTail)}
-                                                                                        in result } });
+                            case list1 of
+                              _scrt43 {
+                                Nil -> nil;
+                                Cons h1 t1 -> case list2 of
+                                                _scrt42 {
+                                                  Nil -> nil;
+                                                  Cons h2 t2 -> let {
+                                                                  newHead = THUNK(f h1 h2);
+                                                                  newTail = THUNK(zipWith f t1 t2);
+                                                                  result = CON(Cons newHead newTail)}
+                                                                in result } });
 
 -- zip two lists element-wise into a list of Tuples 
 -- zip :: List a -> List b -> List (Tupl2 a b)
@@ -330,57 +374,68 @@ zip = THUNK(zipWith tupl2);
 -- de-thunk a list by scrutinizing each of its elements
 -- strictList :: List a -> List a
 strictList = FUN(xs ->
-                    case xs of _scrt45 {
-                                 Nil -> nil;
-                                 Cons h t -> case strictList t of _scrt44 {
-                                                                    x -> cons h x } });
+                    case xs of
+                      _scrt45 {
+                        Nil -> nil;
+                        Cons h t -> case strictList t of
+                                      _scrt44 {
+                                        x -> cons h x } });
 
 -- is a list empty?
 -- null :: List a -> Bool
 null = FUN(xs ->
-              case xs of _scrt46 {
-                           Nil -> true;
-                           x -> false });
+              case xs of
+                _scrt46 {
+                  Nil -> true;
+                  x -> false });
 
 -- take all but the last element of a list
 -- init :: List a -> List a
 init = FUN(xs ->
-              case xs of _scrt48 {
-                           Nil -> nil;
-                           Cons h t -> case null t of _scrt47 {
-                                                        True -> nil;
-                                                        False -> let {
-                                                                   l = THUNK(init t)}
-                                                                 in cons h l } });
+              case xs of
+                _scrt48 {
+                  Nil -> nil;
+                  Cons h t -> case null t of
+                                _scrt47 {
+                                  True -> nil;
+                                  False -> let {
+                                             l = THUNK(init t)}
+                                           in cons h l } });
 
 -- keep all the elements in a list that satisfy a predicate
 -- filter :: (a -> Bool) -> List a -> List a
 filter = FUN(p xs ->
-                  case xs of _scrt50 {
-                               Nil -> nil;
-                               Cons h t -> let {
-                                             tail = THUNK(filter p t)}
-                                           in case p h of _scrt49 {
-                                                            True -> cons h tail;
-                                                            False -> tail } });
+                  case xs of
+                    _scrt50 {
+                      Nil -> nil;
+                      Cons h t -> let {
+                                    tail = THUNK(filter p t)}
+                                  in case p h of
+                                       _scrt49 {
+                                         True -> cons h tail;
+                                         False -> tail } });
 
 -- check if all elements of a list satisfy a predicate
 -- all :: (a -> Bool) -> List a -> Bool
 all = FUN(p xs ->
-               case xs of _scrt52 {
-                            Nil -> true;
-                            Cons h t -> case p h of _scrt51 {
-                                                      False -> false;
-                                                      True -> all p t } });
+               case xs of
+                 _scrt52 {
+                   Nil -> true;
+                   Cons h t -> case p h of
+                                 _scrt51 {
+                                   False -> false;
+                                   True -> all p t } });
 
 -- check if any elements of a list satisfy a predicate
 -- any :: (a -> Bool) -> List a -> Bool
 any = FUN(p xs ->
-               case xs of _scrt54 {
-                            Nil -> false;
-                            Cons h t -> case p h of _scrt53 {
-                                                      True -> true;
-                                                      False -> any p t } });
+               case xs of
+                 _scrt54 {
+                   Nil -> false;
+                   Cons h t -> case p h of
+                                 _scrt53 {
+                                   True -> true;
+                                   False -> any p t } });
 
 -- add the elements of a list of boxed Ints
 -- sum :: List Int -> Int
@@ -400,8 +455,9 @@ apply = FUN(f x ->
 -- scrutinize an object to force evaluation, return arbitrary (specified) value
 -- seq :: a -> b -> b
 seq = FUN(x y ->
-              case x of _scrt55 {
-                          z -> y });
+              case x of
+                _scrt55 {
+                  z -> y });
 
 -- make an infinite list of a repeated element
 -- repeat :: a -> List a
@@ -419,28 +475,32 @@ replicate = FUN(n x ->
 
 -- odd# :: Int# -> Bool
 odd# = FUN(i# ->
-               case imod# i# 2 of _scrt56 {
-                                    0 -> false;
-                                    x -> true });
+               case imod# i# 2 of
+                 _scrt56 {
+                   0 -> false;
+                   x -> true });
 
 -- even# :: Int# -> Bool
 even# = FUN(i# ->
-                case odd# i# of _scrt57 {
-                                  x -> not x });
+                case odd# i# of
+                  _scrt57 {
+                    x -> not x });
 
 -- odd :: Int -> Bool
 odd = FUN(i ->
-            case i of _scrt58 {
-                        I i# -> odd# i# });
+            case i of
+              _scrt58 {
+                I i# -> odd# i# });
 
 -- even :: Int -> Bool
 even = THUNK(compose not odd);
 
 -- not :: Bool -> Bool
 not = FUN(b ->
-            case b of _scrt59 {
-                        False -> true;
-                        True -> false });
+            case b of
+              _scrt59 {
+                False -> true;
+                True -> false });
 
 compose = FUN(f g x ->
                     let {
@@ -453,24 +513,31 @@ compose = FUN(f g x ->
 -- divInt :: Int -> Int -> Int
 -- Integer Division
 divInt = FUN(x y ->
-                 case x of _scrt62 {
-                             I i# -> case y of _scrt61 {
-                                                 I j# -> case idiv# i# j# of _scrt60 {
-                                                                               x# -> let {
-                                                                                       result = CON(I x#)}
-                                                                                     in result } } });
+                 case x of
+                   _scrt62 {
+                     I i# -> case y of
+                               _scrt61 {
+                                 I j# -> case idiv# i# j# of
+                                           _scrt60 {
+                                             x# -> let {
+                                                     result = CON(I x#)}
+                                                   in result } } });
 
 --compares two ints for >,=,or <
 --compareInt :: Int -> Int -> Int 
 --outputs zero if first number is less, two if first number is greater, and one if equal
 compareInt = FUN(x y ->
-                     case x of _scrt66 {
-                                 I a# -> case y of _scrt65 {
-                                                     I b# -> case _ile a# b# of _scrt64 {
-                                                                                  0 -> two;
-                                                                                  x -> case _ige a# b# of _scrt63 {
-                                                                                                            0 -> zero;
-                                                                                                            x -> one } } } });
+                     case x of
+                       _scrt66 {
+                         I a# -> case y of
+                                   _scrt65 {
+                                     I b# -> case _ile a# b# of
+                                               _scrt64 {
+                                                 0 -> two;
+                                                 x -> case _ige a# b# of
+                                                        _scrt63 {
+                                                          0 -> zero;
+                                                          x -> one } } } });
 
 --compares ints for <
 --intLT :: Int -> Int -> Bool
@@ -488,19 +555,21 @@ intGT = THUNK(_intComp _igt);
 --switches two elements at two designated indices in a list
 --switch :: List a -> Int -> Int -> List a
 switch = FUN(xs a b ->
-                    case eqInt a b of _scrt68 {
-                                        True -> xs;
-                                        False -> case intLT a b of _scrt67 {
-                                                                     True -> let {
-                                                                               q = THUNK(move xs a b);
-                                                                               s = THUNK(subInt b one);
-                                                                               r = THUNK(move q s a)}
-                                                                             in r;
-                                                                     False -> let {
-                                                                                q = THUNK(move xs b a);
-                                                                                s = THUNK(subInt a one);
-                                                                                r = THUNK(move q s b)}
-                                                                              in r } });
+                    case eqInt a b of
+                      _scrt68 {
+                        True -> xs;
+                        False -> case intLT a b of
+                                   _scrt67 {
+                                     True -> let {
+                                               q = THUNK(move xs a b);
+                                               s = THUNK(subInt b one);
+                                               r = THUNK(move q s a)}
+                                             in r;
+                                     False -> let {
+                                                q = THUNK(move xs b a);
+                                                s = THUNK(subInt a one);
+                                                r = THUNK(move q s b)}
+                                              in r } });
 
 --moves element at index a to index b, possibly shifting other elements in the list
 --move :: List a -> Int -> Int -> List a
@@ -514,61 +583,71 @@ move = FUN(xs a b ->
 --removes an element at a specific index in a list
 --removeAtIndex :: List a -> Int -> List a
 removeAtIndex = FUN(xs n ->
-                         case xs of _scrt70 {
-                                      Nil -> nil;
-                                      Cons h1 t1 -> case eqInt n zero of _scrt69 {
-                                                                           False -> let {
-                                                                                      r = THUNK(subInt n one);
-                                                                                      s = THUNK(removeAtIndex t1 r);
-                                                                                      q = CON(Cons h1 s)}
-                                                                                    in q;
-                                                                           True -> t1 } });
+                         case xs of
+                           _scrt70 {
+                             Nil -> nil;
+                             Cons h1 t1 -> case eqInt n zero of
+                                             _scrt69 {
+                                               False -> let {
+                                                          r = THUNK(subInt n one);
+                                                          s = THUNK(removeAtIndex t1 r);
+                                                          q = CON(Cons h1 s)}
+                                                        in q;
+                                               True -> t1 } });
 
 --inserts an element at a specific index in a list
 -- List, element, Index
 --insertAtIndex :: List a -> a -> Int -> List a
 insertAtIndex = FUN(xs a n ->
-                           case eqInt n zero of _scrt72 {
-                                                  True -> let {
-                                                            r = CON(Cons a xs)}
-                                                          in r;
-                                                  False -> case xs of _scrt71 {
-                                                                        Nil -> nil;
-                                                                        Cons h1 t1 -> let {
-                                                                                        r = THUNK(subInt n one);
-                                                                                        s = THUNK(insertAtIndex t1 a r);
-                                                                                        q = CON(Cons h1 s)}
-                                                                                      in q } });
+                           case eqInt n zero of
+                             _scrt72 {
+                               True -> let {
+                                         r = CON(Cons a xs)}
+                                       in r;
+                               False -> case xs of
+                                          _scrt71 {
+                                            Nil -> nil;
+                                            Cons h1 t1 -> let {
+                                                            r = THUNK(subInt n one);
+                                                            s = THUNK(insertAtIndex t1 a r);
+                                                            q = CON(Cons h1 s)}
+                                                          in q } });
 
 -- retrieves value at specified index in a list 
 -- index :: List a -> Int -> a
 index = FUN(xs n ->
-                 case xs of _scrt74 {
-                              Cons h1 t1 -> let {
-                                              a = THUNK(eqInt n zero)}
-                                            in case a of _scrt73 {
-                                                           True -> h1;
-                                                           False -> let {
-                                                                      c = THUNK(subInt n one);
-                                                                      d = THUNK(index t1 c)}
-                                                                    in d } });
+                 case xs of
+                   _scrt74 {
+                     Cons h1 t1 -> let {
+                                     a = THUNK(eqInt n zero)}
+                                   in case a of
+                                        _scrt73 {
+                                          True -> h1;
+                                          False -> let {
+                                                     c = THUNK(subInt n one);
+                                                     d = THUNK(index t1 c)}
+                                                   in d } });
 
 -- Compare if two lists of ints are the same
 -- eqList :: List a -> List a -> Bool
 eqList = FUN(xs ys ->
-                   case xs of _scrt78 {
-                                Nil -> case ys of _scrt75 {
-                                                    Nil -> true;
-                                                    Cons h t -> false };
-                                Cons h1 t1 -> case ys of _scrt77 {
-                                                           Nil -> false;
-                                                           Cons h2 t2 -> let {
-                                                                           expr = THUNK(eqInt h1 h2)}
-                                                                         in case expr of _scrt76 {
-                                                                                           True -> let {
-                                                                                                     final = THUNK(eqList t1 t2)}
-                                                                                                   in final;
-                                                                                           False -> false } } });
+                   case xs of
+                     _scrt78 {
+                       Nil -> case ys of
+                                _scrt75 {
+                                  Nil -> true;
+                                  Cons h t -> false };
+                       Cons h1 t1 -> case ys of
+                                       _scrt77 {
+                                         Nil -> false;
+                                         Cons h2 t2 -> let {
+                                                         expr = THUNK(eqInt h1 h2)}
+                                                       in case expr of
+                                                            _scrt76 {
+                                                              True -> let {
+                                                                        final = THUNK(eqList t1 t2)}
+                                                                      in final;
+                                                              False -> false } } });
 
 ---------------------FOR USE IN TESTS-------------------
 -- creates array of specified size with whole numbers in the usual order
@@ -577,15 +656,16 @@ eqList = FUN(xs ys ->
 createNormArray = FUN(n xs ->
                            let {
                              a = THUNK(eqInt n zero)}
-                           in case a of _scrt79 {
-                                          True -> let {
-                                                    b = CON(Cons n xs)}
-                                                  in b;
-                                          False -> let {
-                                                     b = CON(Cons n xs);
-                                                     d = THUNK(subInt n one);
-                                                     c = THUNK(createNormArray d b)}
-                                                   in c });
+                           in case a of
+                                _scrt79 {
+                                  True -> let {
+                                            b = CON(Cons n xs)}
+                                          in b;
+                                  False -> let {
+                                             b = CON(Cons n xs);
+                                             d = THUNK(subInt n one);
+                                             c = THUNK(createNormArray d b)}
+                                           in c });
 
 -- initializes array creation
 -- cNArr :: Int -> List Int
@@ -601,14 +681,15 @@ cNArr = FUN(n ->
 createNormBackArray = FUN(n m xs ->
                                  let {
                                    a = THUNK(eqInt n zero)}
-                                 in case a of _scrt80 {
-                                                True -> xs;
-                                                False -> let {
-                                                           b = CON(Cons m xs);
-                                                           e = THUNK(plusInt m one);
-                                                           d = THUNK(subInt n one);
-                                                           c = THUNK(createNormBackArray d e b)}
-                                                         in c });
+                                 in case a of
+                                      _scrt80 {
+                                        True -> xs;
+                                        False -> let {
+                                                   b = CON(Cons m xs);
+                                                   e = THUNK(plusInt m one);
+                                                   d = THUNK(subInt n one);
+                                                   c = THUNK(createNormBackArray d e b)}
+                                                 in c });
 
 -- initializes array creation
 -- cNBArr :: Int -> List Int
@@ -622,13 +703,14 @@ cNBArr = FUN(n ->
 createArray = FUN(n xs ->
                        let {
                          a = THUNK(eqInt n zero)}
-                       in case a of _scrt81 {
-                                      True -> xs;
-                                      False -> let {
-                                                 b = CON(Cons zero xs);
-                                                 d = THUNK(subInt n one);
-                                                 c = THUNK(createArray d b)}
-                                               in c });
+                       in case a of
+                            _scrt81 {
+                              True -> xs;
+                              False -> let {
+                                         b = CON(Cons zero xs);
+                                         d = THUNK(subInt n one);
+                                         c = THUNK(createArray d b)}
+                                       in c });
 
 -- initializes array creation
 -- cArr :: Int -> List Int
@@ -643,14 +725,15 @@ cArr = FUN(n ->
 createOddBackArray = FUN(n m xs ->
                                 let {
                                   a = THUNK(eqInt n zero)}
-                                in case a of _scrt82 {
-                                               True -> xs;
-                                               False -> let {
-                                                          b = CON(Cons m xs);
-                                                          e = THUNK(plusInt two m);
-                                                          d = THUNK(subInt n one);
-                                                          c = THUNK(createOddBackArray d e b)}
-                                                        in c });
+                                in case a of
+                                     _scrt82 {
+                                       True -> xs;
+                                       False -> let {
+                                                  b = CON(Cons m xs);
+                                                  e = THUNK(plusInt two m);
+                                                  d = THUNK(subInt n one);
+                                                  c = THUNK(createOddBackArray d e b)}
+                                                in c });
 
 -- initializes array creation
 -- cOBArr :: Int -> List Int
@@ -665,16 +748,17 @@ cOBArr = FUN(n ->
 createEvenArray = FUN(n xs ->
                            let {
                              a = THUNK(eqInt n zero)}
-                           in case a of _scrt83 {
-                                          True -> let {
-                                                    g = CON(Cons zero xs)}
-                                                  in g;
-                                          False -> let {
-                                                     e = THUNK(multInt n two);
-                                                     b = CON(Cons e xs);
-                                                     d = THUNK(subInt n one);
-                                                     c = THUNK(createEvenArray d b)}
-                                                   in c });
+                           in case a of
+                                _scrt83 {
+                                  True -> let {
+                                            g = CON(Cons zero xs)}
+                                          in g;
+                                  False -> let {
+                                             e = THUNK(multInt n two);
+                                             b = CON(Cons e xs);
+                                             d = THUNK(subInt n one);
+                                             c = THUNK(createEvenArray d b)}
+                                           in c });
 
 --initializes array creation
 --cEArr :: Int -> List Int
@@ -690,14 +774,15 @@ cEArr = FUN(n ->
 createEvenBackArray = FUN(n m xs ->
                                  let {
                                    a = THUNK(eqInt n zero)}
-                                 in case a of _scrt84 {
-                                                True -> xs;
-                                                False -> let {
-                                                           b = CON(Cons m xs);
-                                                           e = THUNK(plusInt two m);
-                                                           d = THUNK(subInt n one);
-                                                           c = THUNK(createEvenBackArray d e b)}
-                                                         in c });
+                                 in case a of
+                                      _scrt84 {
+                                        True -> xs;
+                                        False -> let {
+                                                   b = CON(Cons m xs);
+                                                   e = THUNK(plusInt two m);
+                                                   d = THUNK(subInt n one);
+                                                   c = THUNK(createEvenBackArray d e b)}
+                                                 in c });
 
 --initializes array creation
 --cEBArr :: Int -> List Int
@@ -712,15 +797,16 @@ cEBArr = FUN(n ->
 createOddArray = FUN(n xs ->
                           let {
                             a = THUNK(eqInt n zero)}
-                          in case a of _scrt85 {
-                                         True -> xs;
-                                         False -> let {
-                                                    e = THUNK(multInt n two);
-                                                    f = THUNK(subInt e one);
-                                                    b = CON(Cons f xs);
-                                                    d = THUNK(subInt n one);
-                                                    c = THUNK(createOddArray d b)}
-                                                  in c });
+                          in case a of
+                               _scrt85 {
+                                 True -> xs;
+                                 False -> let {
+                                            e = THUNK(multInt n two);
+                                            f = THUNK(subInt e one);
+                                            b = CON(Cons f xs);
+                                            d = THUNK(subInt n one);
+                                            c = THUNK(createOddArray d b)}
+                                          in c });
 
 -- initializes array creation
 -- cOArr :: Int -> List Int

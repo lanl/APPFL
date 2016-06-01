@@ -5,7 +5,9 @@
 
 /* Controls syntax of case expressions and allows main in ConvertSTG
    to convert old STG files to new syntax */
+#ifndef REWRITE_STG
 #define REWRITE_STG 0
+#endif
 
 /* If 1 use argType enum field in PtrOrLiteral */
 #define USE_ARGTYPE 1

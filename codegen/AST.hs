@@ -227,7 +227,8 @@ instance Unparse a => Unparse (Expr a) where
 
   unparse ECase{emd, ee, ealts} =
     bcomment (unparse emd) $+$
-    text "case" <+> unparse ee <+> text "of" <+> unparse ealts
+    text "case" <+> unparse ee <+> text "of" $+$
+    (nest 2 $ unparse ealts)
 
 
 instance Unparse a => Unparse (Obj a) where
