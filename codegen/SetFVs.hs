@@ -23,10 +23,14 @@ import Debug.Trace
 dropkey k = filter (\(k',_)->k==k')
 
 -- transitive closure
-
-tc :: (Show a, Ord a) => Set.Set a
-                         -> [(a, Set.Set a)]
-                           -> Set.Set a
+-- i.e. given a graph in adjacency list (or Set, in this case) form
+--   what nodes (type 'a' below) in the rhs can be reached
+--   from the those in the lhs
+tc  ::
+  (Show a, Ord a)
+  => Set.Set a        -- ^ lhs, "roots" of connectivity
+  -> [(a, Set.Set a)] -- ^ rhs, list of (node, neighbors) pairs
+  -> Set.Set a        -- ^ set of all reachable nodes from roots
 
 tc lhs rhs = tc' lhs lhs rhs
     where
@@ -44,7 +48,14 @@ tc lhs rhs = tc' lhs lhs rhs
                                      (Set.unions $ map snd rhsl)
                                      rhsr
 
-a = tcList [1] [(1,[1,2]), (1, [3]), (2, []), (3,[1]), (4,[])]
+rhsTest = [(1, [1,2]),
+           (1, []),
+           (2, [5]),
+           (3, [1]),
+           (4, []),
+           (5, [3])]
+lhsTest = [1]
+a = tcList lhsTest rhsTest
 
 tcList :: (Show a, Ord a) => [a] -> [(a, [a])] -> [a]
 
@@ -82,9 +93,6 @@ instance STGToList (Obj (Set.Set Var, Set.Set Var)) (Obj ([Var],[Var])) where
     stgToList CON{..} = CON{omd = p2p omd, as = map stgToList as, ..}
     stgToList THUNK{..} = THUNK{omd = p2p omd, e = stgToList e, ..}
     stgToList BLACKHOLE{..} = BLACKHOLE{omd = p2p omd,..}
-
--- instance STGToList a b => STGToList [a] [b] where
---    stgToList = map stgToList
 
 instance STGToList (Expr (Set.Set Var, Set.Set Var)) (Expr ([Var],[Var])) where
     stgToList EAtom{..} = EAtom{emd = p2p emd, ..}
@@ -213,19 +221,16 @@ instance SetFVs (Alt a) (Alt (Set.Set Var, Set.Set Var)) where
 -- alts block introduces scope with scrutinee binding
 instance SetFVs (Alts a) (Alts (Set.Set Var, Set.Set Var)) where
     setfvs tlds (Alts _ alts name scrt) =
-        let vset = Set.singleton scvar
+        let vset = Set.singleton $ scrtVarName scrt
             -- I'm not positive there's much meaning to the notion of a
             -- free variable in the scrt (EAtom type), but it's set here
             -- for completeness. -dmr
             scrt' = setfvs tlds scrt
-            alts' = setfvs tlds alts
+            alts' = setfvs (tlds Set.\\ vset) alts
             (altsfvls, altstruefvls) = unzip $ map amd alts'
             -- variable bound to scrutinee is not free in Alts block
-            myfvs   = Set.unions altsfvls --     Set.\\ vset
-            truefvs = Set.unions altstruefvls --Set.\\ vset
-            scvar = case scrt of
-              EAtom _ (Var v) -> v
-              _ -> error "SetFVs.setfvs: case scrutinee not an atomic var"
+            myfvs   = Set.unions altsfvls Set.\\ vset
+            truefvs = Set.unions altstruefvls Set.\\ vset
         in Alts (myfvs,truefvs) alts' name scrt'
 
 

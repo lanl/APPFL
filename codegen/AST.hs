@@ -16,7 +16,8 @@ module AST (
   show,
   objListDoc,
   primArity,
-  projectAtoms
+  projectAtoms,
+  scrtVarName
 ) where
 
 import PPrint
@@ -73,8 +74,12 @@ data Expr a
 data Alts a = Alts {altsmd :: a,
                     alts :: [Alt a],
                     aname :: String,
-                    scrt :: Expr a} -- invariant the scbnd is an EAtom
+                    scrt :: Expr a} -- invariant the scrt is an EAtom holding a Var
               deriving(Eq,Show)
+
+-- Grab the variable name of the scrutinee binding, enforce the invariant above
+scrtVarName (EAtom _ (Var v)) = v
+scrtVarName _ = error "scrutinee is not an atomic variable"
 
 data Alt a = ACon {amd :: a, ac :: Con, avs :: [Var], ae :: Expr a}
            | ADef {amd :: a,            av :: Var,    ae :: Expr a}

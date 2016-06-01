@@ -439,9 +439,7 @@ instance MakeIT (Alts ([Var],[Var])) where
                 entryCode = aname,
                 name = aname}
       where
-        scvar = case scrt of
-                  EAtom _ (Var v) -> v
-                  _ -> error "InfoTab.makeIT: scrt should always be EAtom _ (Var _)"
+        scvar = scrtVarName scrt
 
 instance MakeIT (Alt ([Var],[Var])) where
     makeIT ACon{amd = (fvs,truefvs)} =

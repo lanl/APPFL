@@ -63,7 +63,12 @@ rewriteScruts infile outfile =
               filter isObj . rights $ eithers
         (modified, n) = runState (asb env eithers) 0
     putStrLn $ show n ++ " case scrutinee bindings added"
-    writeFile outfile . show . vcat . map unparse $ modified
+    writeFile outfile . show $
+      (vcat $ map unparse modified) $+$
+      -- newline defeats the
+      -- "Last line is a comment and messes up file concatenation"
+      -- bug
+      text "\n"
 
 
 instance (Unparse a, Unparse b) => Unparse (Either a b) where
