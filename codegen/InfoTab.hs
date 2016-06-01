@@ -568,8 +568,6 @@ showITinit it@(ITAlts {}) =
                  .entryCode = &$id:(entryCode it),
                  .contType = CASECONT,
                  .cLayoutInfo.payloadSize = $int:((length $ fvs it) + 1),
-                 .cLayoutInfo.boxedCount = $int:(bfvc it),
-                 .cLayoutInfo.unboxedCount = $int:(ufvc it),
                  .cLayoutInfo.bm = $ulint:(npStrToBMInt ( 'N' :
                         replicate (bfvc it) 'P' ++
                         replicate (ufvc it) 'N') )

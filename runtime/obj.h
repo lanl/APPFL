@@ -8,7 +8,7 @@
 #include "stack.h"
 
 // wrapper functions for possible interface changes
-// see README-heapobj.txt
+// see docs/heapobj.txt
 static inline size_t startFUNFVsB(Obj *p) { return 0; }
 static inline size_t endFUNFVsB(Obj *p) { return getInfoPtr(p)->layoutInfo.boxedCount; }
 static inline size_t startFUNFVsU(Obj *p) { return endFUNFVsB(p); }
@@ -48,10 +48,10 @@ static inline size_t endTHUNKFVsU(Obj *p) { return startTHUNKFVsU(p) + getInfoPt
 // static inline size_t startCALLFVsB(Cont *p) { return 1; }
 // static inline size_t endCALLFVsB(Cont *p) { return p->payload[0].i + 1; }
 
-static inline size_t startCASEFVsB(Cont *p) { return 0; }
-static inline size_t endCASEFVsB(Cont *p) { return getCInfoPtr(p)->cLayoutInfo.boxedCount; }
-static inline size_t startCASEFVsU(Cont *p) { return endCASEFVsB(p); }
-static inline size_t endCASEFVsU(Cont *p) { return startCASEFVsU(p) + getCInfoPtr(p)->cLayoutInfo.unboxedCount; }
+//static inline size_t startCASEFVsB(Cont *p) { return 0; }
+//static inline size_t endCASEFVsB(Cont *p) { return getCInfoPtr(p)->cLayoutInfo.boxedCount; }
+//static inline size_t startCASEFVsU(Cont *p) { return endCASEFVsB(p); }
+//static inline size_t endCASEFVsU(Cont *p) { return startCASEFVsU(p) + getCInfoPtr(p)->cLayoutInfo.unboxedCount; }
 
 
 // end of wrappers
