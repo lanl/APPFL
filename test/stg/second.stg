@@ -1,17 +1,23 @@
 --second element in a list
 --second :: List a -> a
-second = FUN(xs -> 
-       case xs of {
-       	    Cons h1 t1 -> 
-	    	 case t1 of {
-		      Cons h2 t2 -> h2}});
+second = FUN(xs ->
+                case xs of
+                  _scrt1 {
+                    Cons h1 t1 -> case t1 of
+                                    _scrt0 {
+                                      Cons h2 t2 -> h2 } });
 
 --list3: [3,2,1]
 list1 = CON(Cons one nil);
+
 list2 = CON(Cons two list1);
+
 list3 = CON(Cons three list2);
 
 --test second
 result = CON(I 2);
+
 output = THUNK(second list3);
+
 main = THUNK(eqInt result output);
+

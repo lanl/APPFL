@@ -155,7 +155,7 @@ compile  (Options {optVerbose, optDumpParse, optNoPrelude, optInput,
 
     case optDumpParse of
       True  -> do
-                 let stgtext = (show $ toCMap $ ts) ++ show os
+                 let stgtext = show (toCMap $ ts) ++ show os
                  writeFile (input ++ ".dump") stgtext
 
       False -> do

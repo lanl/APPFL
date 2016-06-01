@@ -1,4 +1,6 @@
-f1 = FUN(b -> case b of {
+-- Duplicate identifiers in let block
+-- syntax migrated by hand
+f1 = FUN(b -> case b of sc{
       	       False -> true;
 	       List a -> true;
 	       True -> false;

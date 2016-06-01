@@ -26,3 +26,7 @@ test/stg/nostrict2/*.c
 #sandbox stuff
 sandbox
 appfl-sandbox
+
+# testing files with old case syntax
+*.stg.old
+

@@ -1,1 +1,2 @@
+-- empty function definition (need vars, arrow, expr)
 un = FUN();

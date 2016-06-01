@@ -1,2 +1,3 @@
+-- Duplicate function definitions (identifiers)
 badArgs = FUN(x y -> y);
 badArgs = FUN(x y -> y);

@@ -1,14 +1,28 @@
-eqTriple = FUN(x y -> case x of {
-	   	      	   TP3 a1 b1 c1 -> case y of {
-			       	     	   	TP3 a2 b2 c2 -> let {d = THUNK(eqInt a1 a2)} in case d of {
-						       	     	       	 	     	     	     False -> false;
-												     True -> let {e = THUNK(eqInt b1 b2)} in case e of {
-						       	     	       	 	     	     	                                                  False -> false;
-												                                                  True -> let {f = THUNK(eqInt c1 c2)} in case f of {
-						       	     	       	 	     	     	                                                                                               False -> false;
-												                                                                                               True -> true}}}}});
+eqTriple = FUN(x y ->
+                   case x of
+                     _scrt4 {
+                       TP3 a1 b1 c1 -> case y of
+                                         _scrt3 {
+                                           TP3 a2 b2 c2 -> let {
+                                                             d = THUNK(eqInt a1 a2)}
+                                                           in case d of
+                                                                _scrt2 {
+                                                                  False -> false;
+                                                                  True -> let {
+                                                                            e = THUNK(eqInt b1 b2)}
+                                                                          in case e of
+                                                                               _scrt1 {
+                                                                                 False -> false;
+                                                                                 True -> let {
+                                                                                           f = THUNK(eqInt c1 c2)}
+                                                                                         in case f of
+                                                                                              _scrt0 {
+                                                                                                False -> false;
+                                                                                                True -> true } } } } });
 
 result = CON(TP3 one two three);
+
 result1 = CON(TP3 one two three);
 
 main = THUNK(eqTriple result result1);
+

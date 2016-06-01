@@ -135,8 +135,8 @@ primopTab =
 
      ("ineg_h",   Pineg),
 
-     ("imin_h",   Pimax),
-     ("imax_h",   Pimin)
+     ("imax_h",   Pimax),
+     ("imin_h",   Pimin)
     ]
 
 

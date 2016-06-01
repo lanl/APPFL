@@ -1,47 +1,48 @@
 data Pair a b = Pair a b;
 
-repminlist =
-  FUN( xs ->
-       let {
-         mlist = THUNK( rep m xs );
-         m = THUNK( case mlist of {
-	              Pair m xxx -> m 
-                    } 
-                  )
-       } in case mlist of {
-	      Pair yyy list -> list
-            } 
-     );
+repminlist = FUN(xs ->
+                    let {
+                      mlist = THUNK(rep m xs);
+                      m = THUNK(case mlist of
+                                  _scrt0 {
+                                    Pair m xxx -> m })}
+                    in case mlist of
+                         _scrt1 {
+                           Pair yyy list -> list });
 
-rep =
-  FUN( m xs ->
-       case xs of {
-         Nil ->
-           let {res = CON(Pair error nil)} in res ;
-         Cons y ys ->
-           case ys of {
-	     Nil -> let { mlist = CON(Cons m nil);
-                          res   = CON(Pair y mlist) }
-                    in res;
-             xxx -> case rep m ys of {
-	              Pair mp list -> 
-                       let { res1 = THUNK(minInt mp y);
-                             res2 = CON(Cons m list);
-                             res = CON(Pair res1 res2)
-                           } in res
-                    }
-           }
-       }
-  );
+rep = FUN(m xs ->
+               case xs of
+                 _scrt4 {
+                   Nil -> let {
+                            res = CON(Pair error nil)}
+                          in res;
+                   Cons y ys -> case ys of
+                                  _scrt3 {
+                                    Nil -> let {
+                                             mlist = CON(Cons m nil);
+                                             res = CON(Pair y mlist)}
+                                           in res;
+                                    xxx -> case rep m ys of
+                                             _scrt2 {
+                                               Pair mp list -> let {
+                                                                 res1 = THUNK(minInt mp y);
+                                                                 res2 = CON(Cons m list);
+                                                                 res = CON(Pair res1 res2)}
+                                                               in res } } });
 
 list2 = CON(Cons two nil);
+
 list12 = CON(Cons one list2);
+
 list212 = CON(Cons two list12);
 
-output = THUNK(let {result = THUNK(repminlist list212);
-                  f = THUNK(forcelist result)}
-             in seq f result);
+output = THUNK(let {
+                 result = THUNK(repminlist list212);
+                 f = THUNK(forcelist result)}
+               in seq f result);
 
 -- test head
 hout = THUNK(head output);
+
 main = THUNK(eqInt hout one);
+

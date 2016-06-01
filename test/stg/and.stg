@@ -1,11 +1,16 @@
 --and :: Bool -> Bool -> Bool
-and = FUN(x y -> case x of {
-       	       	    	 True -> case y of {
-			      	      True -> true;
-				      False -> false};
-                         False -> case y of {
-			      	      True -> false;
-				      False -> false}});
+and = FUN(x y ->
+              case x of
+                _scrt2 {
+                  True -> case y of
+                            _scrt0 {
+                              True -> true;
+                              False -> false };
+                  False -> case y of
+                             _scrt1 {
+                               True -> false;
+                               False -> false } });
 
 --Test
 main = THUNK(and true true);
+

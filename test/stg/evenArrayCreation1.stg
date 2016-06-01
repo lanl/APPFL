@@ -1,7 +1,11 @@
 list1 = CON(Cons zero nil);
+
 list2 = CON(Cons two list1);
+
 list3 = CON(Cons four list2);
 
 --Test
 output = THUNK(cEBArr three);
+
 main = THUNK(eqList list3 output);
+

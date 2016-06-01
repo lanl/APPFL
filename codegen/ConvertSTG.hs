@@ -62,7 +62,7 @@ rewriteScruts infile outfile =
         env = Set.fromList . map (\(ObjDef o) -> oname o) .
               filter isObj . rights $ eithers
         (modified, n) = runState (asb env eithers) 0
-    putStrLn $ show n ++ " case scrutinee bindings added"
+    putStrLn $ show infile ++ ": " ++ show n ++ " case scrutinee bindings added"
     writeFile outfile . show $
       vcat (map unparse modified) <>
       -- newline defeats the

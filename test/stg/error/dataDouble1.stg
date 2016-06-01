@@ -1,8 +1,10 @@
-not1 = FUN(b -> case b of {
+-- Duplicate constructors in Alts
+-- syntax migrated by hand
+not1 = FUN(b -> case b of sc{
       	       False -> true;
 	       List a -> true;
 	       True  -> false;
-	       x -> let {a = THUNK(b)} in case a of {
+	       x -> let {a = THUNK(b)} in case a of sc{
 	       	    	     	       	  False -> true;
 					  False -> true;
 					  y -> true}});

@@ -1,1 +1,2 @@
+-- No arrow, expr in fun definition
 fun = FUN(x y x);

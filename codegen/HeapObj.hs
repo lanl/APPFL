@@ -1,5 +1,6 @@
-{-# LANGUAGE CPP #-}
+{-# LANGUAGE QuasiQuotes #-}
 
+{-# LANGUAGE CPP #-}
 #include "../options.h"
 
 module HeapObj (
@@ -16,100 +17,114 @@ import Data.List (intercalate)
 import Data.Bits
 import Foreign.Storable
 import Foreign.C.Types
+import Language.C.Quote.GCC
+import Language.C.Syntax (Definition, Initializer)
 
 -- HOs come from InfoTabs
 
 shoNames :: [Obj InfoTab] -> [String]
-shoNames = map (\o -> showITType o ++ "_" ++ (name . omd) o)
-
+shoNames = map (\o -> "sho_" ++ (name . omd) o)
 
 -- return list of forwards (static declarations) and (static) definitions
-showSHOs :: [Obj InfoTab] -> (String, String)
-showSHOs objs =
-  let (forwards, defs) = unzip $ map showSHO objs
-  in (concat forwards, intercalate "\n" defs)
+showSHOs :: [Obj InfoTab] -> ([Definition], [Definition])
+showSHOs objs =  unzip $ map showSHO objs
 
-
--- maybe should use "static" instead of "extern"
+showSHO :: Obj InfoTab -> (Definition, Definition)
 showSHO o =
-    let base = "Obj " ++ showITType o ++ "_" ++ (name . omd) o
-    in ("extern " ++ base ++ ";\n",
-                     base ++ " =\n" ++ showHO (omd o))
+  ([cedecl| extern typename Obj $id:n; |],
+   [cedecl| typename Obj $id:n = $init:(showHO (omd o)); |])
+  where n = "sho_" ++ (name . omd) o
 
+getIT :: InfoTab -> InfoTab
 getIT it@(ITPap {}) = case knownCall it of
                         Just fit -> fit
                         Nothing -> error "unknown call in PAP"
 getIT it = it
 
 
+showHO :: InfoTab -> Initializer
 showHO it =
-    "{\n" ++
-    "  ._infoPtr   = &it_" ++ name (getIT it) ++ ",\n" ++
-    (if useObjType
-    then "  .objType   = " ++ showObjType it      ++ ",\n"
-    else "") ++
-    "  .ident     = " ++ show (name it)      ++ ",\n" ++
-       showSHOspec it ++
-    "};\n"
-
-showSHOspec it@(ITFun {}) = payloads []
-
+  if useObjType then
+   [cinit|
+     {
+       ._infoPtr = &$id:("it_" ++ name (getIT it)),
+       .objType = $id:(showObjType it),
+       .ident = $string:(name it),
+       .payload = $init:(showSHOspec it)
+     }
+   |]
+  else
+    [cinit|
+      {
+        ._infoPtr = &$id:("it_" ++ name (getIT it)),
+        .ident = $string:(name it),
+        .payload = $init:(showSHOspec it)
+      }
+    |]
+   
+showSHOspec :: InfoTab -> Initializer
+showSHOspec it@(ITFun {}) = [cinit| {0} |]
+showSHOspec it@(ITThunk {}) = [cinit| {0} |]
+showSHOspec it@(ITBlackhole {}) = [cinit| {0} |]
+showSHOspec it@(ITCon {}) = [cinit| { $inits:(payloads $ map fst $ args it) } |]
 showSHOspec it@(ITPap {}) = papPayloads it
+showSHOspec it = error $ "showSHOspec " ++ show it
 
-showSHOspec it@(ITCon {}) = payloads $ map fst $ args it
+papPayloads :: InfoTab -> Initializer
+papPayloads it =
+  let as = map fst $ args it
+      n = payload $ LitI $ papArgsLayout as
+      ap = map payload as
+  in [cinit| { $inits:(n:ap) } |]
 
--- need at least a payload of length 1 for thunks
-showSHOspec it@(ITThunk {}) = indent 2 ".payload = {0}\n"
+papArgsLayout :: [Atom] -> Int
+papArgsLayout as =
+  let nv = length $ filter isVar as
+      nl = length as - nv
+      bits = 8*sizeOf (CUIntPtr 0)
+  in nv .|. shiftL nl (bits `div` 2)
 
-showSHOspec it@(ITBlackhole {}) = indent 2 ".payload = {0}\n"
-
-showSHOspec it = ""
-
-papPayloads it = let as = map fst $ args it
-                     n = indent 4 $ payload $ LitI $ papArgsLayout as
-                     ap =   indent 4 $ concatMap payload as
-                 in  indent 2 ".payload = {\n" ++ n ++ ap ++ "},\n"
-
-papArgsLayout as = let nv = length $ filter isVar as
-                       nl = length as - nv
-                       bits = 8*sizeOf (CUIntPtr 0)
-                   in nv .|. shiftL nl (bits `div` 2)
-
+isVar :: Atom -> Bool
 isVar (Var _) = True
 isVar _ = False
 
-payloads as = let ps = indent 4 $ concatMap payload as
-              in  indent 2 ".payload = {\n" ++ ps ++ "},\n"
+payloads :: [Atom] -> [Initializer]
+payloads = map payload
 
-argTypeElem :: String -> String
-argTypeElem ty = if useArgType then ".argType = " ++ ty ++ "," else ""
+payload :: Atom -> Initializer
+payload (LitI i) =
+  if useArgType then
+    [cinit| {.argType = INT, .i = $int:i}|]
+  else
+    [cinit| {.i = $int:i}|]
+   
+payload (LitD d) =
+  if useArgType then
+    [cinit| {.argType = DOUBLE, .d = $double:d'}|]
+  else
+    [cinit| {.d = $double:d'}|]
+  where d' = toRational d
 
-payload (LitI i) = "{" ++ argTypeElem "INT" ++
-                  " .i = " ++ show i ++ "},\n"
+payload (LitF f) =
+  if useArgType then
+    [cinit| {.argType = FLOAT, .f = $float:f'}|]
+  else
+    [cinit| {.f = $float:f'}|]
+  where f' = toRational f
 
-payload (LitD d) = "{" ++ argTypeElem "DOUBLE" ++
-                   " .d = " ++ show d ++ "},\n"
+payload (LitC c) =
+  if useArgType then
+    [cinit| {.argType = INT, .i = $id:con}|]
+  else
+    [cinit| {.i = $id:con}|]
+  where con = "con_" ++ c
 
-payload (LitF f) = "{" ++ argTypeElem "FLOAT" ++
-                   " .f = " ++ show f ++ "},\n"
-
-payload (LitC c) = "{" ++ argTypeElem "INT" ++
-                   " .i = con_" ++ c ++ "},\n"
-
--- for SHOs atoms that are variables must be SHOs, so not unboxed
-payload (Var v) = "{" ++ argTypeElem "HEAPOBJ" ++
-                  " .op = &sho_" ++ v ++ "},\n"
+payload (Var v) =
+  if useArgType then
+    [cinit| {.argType = HEAPOBJ, .op = &$id:sho}|]
+  else
+    [cinit| {.i = &$id:sho}|]
+  where sho = "sho_" ++ v
 
 payload at = error $ "HeapObj.payload: not expecting Atom - " ++ show at
-
-ptrOrLitSHO a =
-    "{ " ++
-    case a of
-      Var v  -> argTypeElem "HEAPOBJ" ++ " .op = &sho_" ++ v   -- these must be global
-      LitI i -> argTypeElem "INT" ++ " .i = " ++ show i
-      LitL l -> argTypeElem "LONG" ++ " .d = " ++ show l
-      LitF f -> argTypeElem "FLOAT" ++ " .f = " ++ show f
-      LitD d -> argTypeElem "DOUBLE" ++ " .d = " ++ show d
-      LitC c -> argTypeElem "INT" ++ " .i = " ++ "con_" ++ c
-    ++ " }"
-
+ 

@@ -25,7 +25,7 @@ makeSTG defs =
   let (ds, os, _) = partitionDefs defs
       dcmap = makeDCMap ds
       tycons = map stgTycon ds
-      (objs,_) = runState (mapM (stgify dcmap) os) (0,0)
+      (objs,_) = runState (mapM (stgify dcmap) os) (0,0,0)
       assums = makeAssumptions os
   in (tycons, objs, assums)
 
@@ -263,7 +263,7 @@ newVar :: ((Int,Int,Int) -> (Int,Int,Int)) -- ^ increment state function
        -> ((Int,Int,Int) -> Int)           -- ^ function selects field of State
        -> State (Int, Int, Int) Var        -- ^ return new Variable
 newVar increment pfx selector =
-    get >>= \s -> put (increment s) >>= return (pfx ++ show (selector s))
+    get >>= \s -> put (increment s) >>= \_ -> return (pfx ++ show (selector s))
 
 letVar :: State (Int,Int,Int) Var
 letVar = newVar incfst letvarPfx leti
@@ -272,7 +272,7 @@ altsVar :: State (Int,Int,Int) Var
 altsVar = newVar incsnd altsPfx alti
 
 scrutVar :: State (Int,Int,Int) Var
-scrutVar = newvar incthd scrPfx scri
+scrutVar = newVar incthd scrPfx scri
 
 altsPfx   = "gal_"
 letvarPfx = "glv_"

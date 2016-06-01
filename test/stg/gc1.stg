@@ -1,18 +1,27 @@
-l1 = THUNK(let { x = CON(I 1); 
-                   y = CON(I 2); 
-                   z = CON(I 3); 
-                   r = THUNK(x)} in r);
+l1 = THUNK(let {
+             x = CON(I 1);
+             y = CON(I 2);
+             z = CON(I 3);
+             r = THUNK(x)}
+           in r);
 
-l2 = THUNK(let { x = CON(I 1); 
-                   y = CON(I 2); 
-                   z = CON(I 3); 
-                   r = THUNK(y); } in r);
+l2 = THUNK(let {
+             x = CON(I 1);
+             y = CON(I 2);
+             z = CON(I 3);
+             r = THUNK(y)}
+           in r);
 
-l3 = THUNK(let { x = CON(I 1); 
-                   y = CON(I 2); 
-                   z = CON(I 3); 
-                   r = THUNK(z); } in r);
+l3 = THUNK(let {
+             x = CON(I 1);
+             y = CON(I 2);
+             z = CON(I 3);
+             r = THUNK(z)}
+           in r);
 
 min1 = THUNK(minInt l3 l2);
+
 min2 = THUNK(minInt min1 l1);
+
 main = THUNK(eqInt min2 one);
+

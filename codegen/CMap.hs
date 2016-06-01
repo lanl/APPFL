@@ -1,5 +1,6 @@
 {-# LANGUAGE FlexibleInstances    #-}
 {-# LANGUAGE TypeSynonymInstances #-}
+{-# LANGUAGE QuasiQuotes #-}
 {-# LANGUAGE CPP #-}
 
 #if __GLASGOW_HASKELL__ < 710
@@ -34,23 +35,22 @@ import Data.Maybe (fromJust)
 import Data.List ((\\), find, intercalate)
 import Data.Char (isNumber)
 import Debug.Trace
-import Options
+import Language.C.Syntax (Definition)
+import Language.C.Quote.GCC
+
 
 type CMap = Map.Map Con TyCon
 
 cTypeEnums = error "cTypeEnums" -- not used in text version
 
-showTypeEnums tycons =
-    intercalate "\n" $ map showTypeEnum tycons
+showTypeEnums :: [TyCon] -> [Definition]
+showTypeEnums tycons = map showTypeEnum tycons
 
+showTypeEnum :: TyCon -> Definition
 showTypeEnum (TyCon _ con _ dataCons) =
-    "enum tycon_" ++ con ++ " {\n" ++
-      -- this would be a nice touch but should be done when ingesting data decls
-      -- renaming the constructors with tycon as prefix instead of "con_" here
-      -- intercalate ",\n" [ "  " ++ con ++ "_" ++ mhsSanitize c
-       intercalate ",\n" [ "  " ++ "con_" ++ _mhsSanitize c
-                          | DataCon c _ <- dataCons ] ++
-      " };\n"
+  let es = [ [cenum| $id:("con_" ++  _mhsSanitize c) |] | DataCon c _ <- dataCons ]
+      typ = [cty| enum $id:("tycon_" ++ con) { $enums:es} |]
+  in [cedecl| $ty:typ;|]
 
 
 -- MHS HACK FIX, see also CMap.luConTag

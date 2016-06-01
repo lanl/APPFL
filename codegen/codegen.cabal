@@ -9,11 +9,13 @@ executable stgc
   main-is:         stgc.hs
   ghc-options:      -j -W -fno-warn-unused-binds -fno-warn-unused-matches -fno-warn-unused-imports 
   build-depends:   
-                     base >= 4
+                         base >= 4
                    , containers
+                   , ghc-prim
+                   , language-c-quote
+                   , mainland-pretty
                    , mtl
                    , pretty >= 1.1.1.1
                    , process
                    , split
-                   , ghc-prim
 

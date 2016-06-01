@@ -1,7 +1,12 @@
 list1 = CON(Cons two nil);
+
 list2 = CON(Cons zero list1);
+
 list3 = CON(Cons zero list2);
 
 result = CON(I 2);
+
 output = THUNK(index list3 two);
-main = THUNK(eqInt output result); 
+
+main = THUNK(eqInt output result);
+

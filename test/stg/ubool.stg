@@ -1,44 +1,55 @@
+data unboxed Bool# = False#
+                   | True#;
 
-data unboxed Bool# = False# | True#;
 data B = B Bool#;
 
-bfalse = CON(B False#);
+bfalse = CON(B False_h);
 
-btrue = THUNK(case True# of {
-                b# -> let { b = CON(B b#) } in b 
-              });
+btrue = THUNK(case True_h of
+                _scrt0 {
+                  b# -> let {
+                          b = CON(B b#)}
+                        in b });
 
-not# = FUN(x# -> case x# of {
-                   True#  -> False#;
-                   False# -> True#
-                 });
+not# = FUN(x# ->
+               case x# of
+                 _scrt1 {
+                   True# -> False_h;
+                   False# -> True_h });
 
 -- this illustrates why either B = B Int# or having "deriving(Eq)" is a good idea
+beq# = FUN(x# y# ->
+                   case x# of
+                     _scrt2 {
+                       True# -> y#;
+                       False# -> not# y# });
 
-beq# = FUN(x# y# -> case x# of {
-                      True#  -> y#;
-                      False# -> not# y#
-                    });
+beq = FUN(x y ->
+              case x of
+                _scrt4 {
+                  x# -> case y of
+                          _scrt3 {
+                            y# -> beq# x# y# } });
 
-beq = FUN(x y -> case x of {
-                   x# -> case y of {
-                           y# -> beq# x# y#
-                         }
-                 });
+bnot = FUN(x ->
+             case x of
+               _scrt6 {
+                 B b# -> case not# b# of
+                           _scrt5 {
+                             y# -> let {
+                                     z = CON(B y#)}
+                                   in z } });
 
-bnot = FUN(x -> case x of {
-                  B b# -> case not# b# of {
-                            y# -> let {z = CON(B y#)} in z
-                          }
-                });
+bToBool = FUN(b ->
+                case b of
+                  _scrt8 {
+                    B b# -> case b# of
+                              _scrt7 {
+                                True# -> true;
+                                False# -> false } });
 
-bToBool = FUN(b -> case b of {
-	             B b# -> case b# of {
-                               True#  -> true;
-                               False# -> false
-                             }
-                   });
+main = THUNK(let {
+               f = THUNK(bnot btrue);
+               g = THUNK(bnot f)}
+             in bToBool g);
 
-main = THUNK(let {f = THUNK(bnot btrue);
-                  g = THUNK(bnot f)}
-             in bToBool g)

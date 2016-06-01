@@ -1,5 +1,8 @@
-output = THUNK(let { x = CON (I 2);
-                   y = CON(I 4);
-                   result = THUNK(plusInt x y) } in result);
+output = THUNK(let {
+                 x = CON(I 2);
+                 y = CON(I 4);
+                 result = THUNK(plusInt x y)}
+               in result);
 
 main = THUNK(eqInt output six);
+

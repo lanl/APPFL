@@ -1,8 +1,11 @@
 list1 = CON(Cons zero nil);
-list2 = CON(Cons zero list1);
-list3 = CON(Cons zero list2);
 
+list2 = CON(Cons zero list1);
+
+list3 = CON(Cons zero list2);
 
 --Test
 output = THUNK(cArr three);
+
 main = THUNK(eqList list3 output);
+

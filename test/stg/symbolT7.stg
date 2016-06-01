@@ -1,106 +1,173 @@
 -- put :: List (TP2 Int Int) -> TP2 Int Int -> List (TP2 Int Int) 
-put = FUN(xs y -> let {q1 = CON(Cons y xs)} in q1);
+put = FUN(xs y ->
+               let {
+                 q1 = CON(Cons y xs)}
+               in q1);
 
 -- get :: List (TP2 Int Int) -> Int -> Int
-get = FUN(xs n -> case xs of {
-      	       	  Nil -> zero;
-		  Cons h1 t1 -> case h1 of {
-		       	     	TP2 a1 b1 -> case eqInt a1 n of {
-				       	     True -> b1;
-					     False -> get t1 n}}});
+get = FUN(xs n ->
+               case xs of
+                 _scrt2 {
+                   Nil -> zero;
+                   Cons h1 t1 -> case h1 of
+                                   _scrt1 {
+                                     TP2 a1 b1 -> case eqInt a1 n of
+                                                    _scrt0 {
+                                                      True -> b1;
+                                                      False -> get t1 n } } });
 
 -- eqTP2 :: TP2 Int Int -> Bool
-eqTP2 = FUN(x y -> case x of {
-      	      	TP2 a1 b1 -> case y of {
-		    TP2 a2 b2 -> case eqInt a1 a2 of {
-		    	False -> false;
-			True -> case eqInt b1 b2 of {
-			     False -> false; 
-			     True -> true}}}});
+eqTP2 = FUN(x y ->
+                case x of
+                  _scrt6 {
+                    TP2 a1 b1 -> case y of
+                                   _scrt5 {
+                                     TP2 a2 b2 -> case eqInt a1 a2 of
+                                                    _scrt4 {
+                                                      False -> false;
+                                                      True -> case eqInt b1 b2 of
+                                                                _scrt3 {
+                                                                  False -> false;
+                                                                  True -> true } } } });
 
 -- eqKeyList :: List (TP2 Int Int) -> Bool
-eqKeyList = FUN(xs ys -> case xs of {
-	    	   Nil -> case ys of {
-		      Nil -> true;
-		      x -> false};
-		   Cons h1 t1 -> case ys of {
-		      Nil -> false;
-		      Cons h2 t2 -> case eqTP2 h1 h2 of {
-		      	      	    False -> false;
-				    True -> eqKeyList t1 t2}}});
+eqKeyList = FUN(xs ys ->
+                      case xs of
+                        _scrt10 {
+                          Nil -> case ys of
+                                   _scrt7 {
+                                     Nil -> true;
+                                     x -> false };
+                          Cons h1 t1 -> case ys of
+                                          _scrt9 {
+                                            Nil -> false;
+                                            Cons h2 t2 -> case eqTP2 h1 h2 of
+                                                            _scrt8 {
+                                                              False -> false;
+                                                              True -> eqKeyList t1 t2 } } });
 
 -- delete :: List (TP2 Int Int) -> Int -> List (TP2 Int Int)
-delete = FUN(xs n -> case xs of {
-       	 	     Nil -> nil;
-	  	     Cons h1 t1 -> case h1 of {
-		      	      	   TP2 a1 b1 -> case eqInt a1 n of {
-				    	      	True -> t1;
-						False -> let {q1 = THUNK(delete t1 n);
-						      	      q2 = CON(Cons h1 q1)} in q2}}});
+delete = FUN(xs n ->
+                  case xs of
+                    _scrt13 {
+                      Nil -> nil;
+                      Cons h1 t1 -> case h1 of
+                                      _scrt12 {
+                                        TP2 a1 b1 -> case eqInt a1 n of
+                                                       _scrt11 {
+                                                         True -> t1;
+                                                         False -> let {
+                                                                    q1 = THUNK(delete t1 n);
+                                                                    q2 = CON(Cons h1 q1)}
+                                                                  in q2 } } });
 
 -- contains :: List (TP2 Int Int) -> Int -> Bool
-contains = FUN(xs n -> case xs of {
-	   	       Nil -> false;
-		       Cons h1 t1 -> case h1 of {
-		       	       	     TP2 a1 b1 -> case eqInt a1 n of {
-				     	       	  True -> true;
-						  False -> contains t1 n}}});
+contains = FUN(xs n ->
+                    case xs of
+                      _scrt16 {
+                        Nil -> false;
+                        Cons h1 t1 -> case h1 of
+                                        _scrt15 {
+                                          TP2 a1 b1 -> case eqInt a1 n of
+                                                         _scrt14 {
+                                                           True -> true;
+                                                           False -> contains t1 n } } });
 
 -- isEmpty :: List (TP2 Int Int) -> Bool
-isEmpty = FUN(xs -> case xs of {
-	  	    Nil -> true;
-		    Cons h1 t1 -> false});
+isEmpty = FUN(xs ->
+                 case xs of
+                   _scrt17 {
+                     Nil -> true;
+                     Cons h1 t1 -> false });
 
 -- size :: List (TP2 Int Int) -> Int 
-size = FUN(xs n -> case xs of {
-       	      	   Nil -> n;
-		   Cons h1 t1 -> let {q1 = THUNK(plusInt one n);
-		   	      	      q2 = THUNK(size t1 q1)} in q2});
+size = FUN(xs n ->
+                case xs of
+                  _scrt18 {
+                    Nil -> n;
+                    Cons h1 t1 -> let {
+                                    q1 = THUNK(plusInt one n);
+                                    q2 = THUNK(size t1 q1)}
+                                  in q2 });
 
 -- keys :: List (TP2 Int Int) -> List Int
-keys = FUN(xs -> case xs of {
-       	      	 Nil -> nil;
-		 Cons h1 t1 -> case h1 of {
-		    	       TP2 a1 b1 -> let {q0 = THUNK(keys t1); 
-						 q1 = CON(Cons a1 q0)} in q1}});
+keys = FUN(xs ->
+              case xs of
+                _scrt20 {
+                  Nil -> nil;
+                  Cons h1 t1 -> case h1 of
+                                  _scrt19 {
+                                    TP2 a1 b1 -> let {
+                                                   q0 = THUNK(keys t1);
+                                                   q1 = CON(Cons a1 q0)}
+                                                 in q1 } });
 
 -- Test
 t1 = CON(TP2 one eight);
+
 t2 = CON(TP2 two six);
+
 t3 = CON(TP2 three five);
+
 t4 = CON(TP2 four two);
+
 t5 = CON(TP2 five one);
+
 t6 = CON(TP2 six three);
+
 t7 = CON(TP2 seven four);
 
 l1 = CON(Cons t1 nil);
+
 l2 = CON(Cons t2 l1);
+
 l3 = CON(Cons t3 l2);
+
 l4 = CON(Cons t4 l3);
+
 l5 = CON(Cons t5 l4);
+
 l6 = CON(Cons t6 l5);
+
 l7 = CON(Cons t7 l6);
- 
+
 h1 = CON(TP2 one eight);
+
 h2 = CON(TP2 two six);
+
 h3 = CON(TP2 three five);
+
 h4 = CON(TP2 four two);
+
 h5 = CON(TP2 five one);
+
 h7 = CON(TP2 seven four);
 
 j1 = CON(Cons h1 nil);
+
 j2 = CON(Cons h2 j1);
+
 j3 = CON(Cons h3 j2);
+
 j4 = CON(Cons h4 j3);
+
 j5 = CON(Cons h5 j4);
+
 j7 = CON(Cons h7 j5);
 
 i1 = CON(Cons one nil);
+
 i2 = CON(Cons two i1);
+
 i3 = CON(Cons three i2);
+
 i4 = CON(Cons four i3);
+
 i5 = CON(Cons five i4);
+
 i6 = CON(Cons seven i5);
 
 output = THUNK(keys j7);
+
 main = THUNK(eqList output i6);
+

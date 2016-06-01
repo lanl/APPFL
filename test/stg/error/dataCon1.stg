@@ -1,2 +1,3 @@
+-- duplicate data constructors
 data Bool = True | False;
 data Bool1 = True | False;

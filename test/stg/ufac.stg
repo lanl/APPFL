@@ -1,21 +1,27 @@
 -- unboxed fac 
-
 fac = FUN(x ->
-         case x of {
-           I i# -> case wfac i# of { 
-                      j# -> let {r = CON(I j#)} in r }});
+            case x of
+              _scrt1 {
+                I i# -> case wfac i# of
+                          _scrt0 {
+                            j# -> let {
+                                    r = CON(I j#)}
+                                  in r } });
 
 wfac = FUN(i# ->
-  case i# of {
-    0 -> 1;
-    j# -> case isub# i# 1 of {
-       k# -> case wfac k# of {
-         l# -> imul# i# l#  
-       }
-    }
- });   
+               case i# of
+                 _scrt4 {
+                   0 -> 1;
+                   j# -> case isub# i# 1 of
+                           _scrt3 {
+                             k# -> case wfac k# of
+                                     _scrt2 {
+                                       l# -> imul# i# l# } } });
 
 --Test
-output = THUNK (fac seven);
+output = THUNK(fac seven);
+
 result = CON(I 5040);
+
 main = THUNK(eqInt output result);
+

@@ -1,4 +1,7 @@
---Test	 
+--Test   
 result = CON(I 1);
+
 output = THUNK(compareInt four four);
+
 main = THUNK(eqInt result output);
+

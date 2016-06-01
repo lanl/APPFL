@@ -1,4 +1,7 @@
 --test
 result = CON(I 2);
+
 output = THUNK(divInt two one);
+
 main = THUNK(eqInt result output);
+

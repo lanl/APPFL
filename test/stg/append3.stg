@@ -1,9 +1,15 @@
 list1 = CON(Cons one nil);
+
 list2 = CON(Cons one list1);
+
 list3 = THUNK(append list1 list2);
-output = THUNK(let { f = THUNK(forcelist list3)} in seq f list3);
+
+output = THUNK(let {
+                 f = THUNK(forcelist list3)}
+               in seq f list3);
 
 -- just test sum
 sumout = THUNK(sum output);
+
 main = THUNK(eqInt sumout three);
 

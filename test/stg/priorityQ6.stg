@@ -1,79 +1,138 @@
 k1 = CON(TP2 one two);
+
 k2 = CON(TP2 two one);
+
 k3 = CON(TP2 two ten);
+
 k4 = CON(TP2 two one);
+
 k5 = CON(TP2 three seven);
+
 k6 = CON(TP2 four one);
+
 k7 = CON(TP2 four two);
 
 q0 = THUNK(nil);
+
 q1 = CON(Cons k1 q0);
+
 q2 = CON(Cons k2 q1);
+
 q3 = CON(Cons k3 q2);
+
 q4 = CON(Cons k4 q3);
+
 q5 = CON(Cons k5 q4);
+
 q6 = CON(Cons k6 q5);
+
 q7 = CON(Cons k7 q6);
 
-max = FUN(xs -> case xs of {
-      	     	     Cons h1 t1 -> case h1 of {
-		     	     	   	TP2 a b -> a}});
+max = FUN(xs ->
+             case xs of
+               _scrt1 {
+                 Cons h1 t1 -> case h1 of
+                                 _scrt0 {
+                                   TP2 a b -> a } });
 
-delMax = FUN(xs -> case xs of {
-       	 	   	Nil -> nil;
-       	 	   	Cons h1 t1 -> t1});
+delMax = FUN(xs ->
+                case xs of
+                  _scrt2 {
+                    Nil -> nil;
+                    Cons h1 t1 -> t1 });
 
-insert = FUN(xs k -> let {q = CON(Cons k xs)} in q);
-       	 	       
-sink = FUN(xs k -> case xs of {
-       	      	   	Nil -> insert nil k;
-       	      	   	Cons h1 t1 -> case k of {
-			     	      	   TP2 a b -> let {r = THUNK(max xs);
-						           q = THUNK(intLT a r)} in case q of {
-							       		     	    True -> let {t = THUNK(sink t1 k);
-										    	    	 u = CON(Cons h1 t)} in u;
-										    False -> let {v = CON(Cons k xs)} in v}}});
+insert = FUN(xs k ->
+                  let {
+                    q = CON(Cons k xs)}
+                  in q);
 
-eqTP2 = FUN(x y -> case x of {
-      	      	TP2 a1 b1 -> case y of {
-		    TP2 a2 b2 -> case eqInt a1 a2 of {
-		    	False -> false;
-			True -> case eqInt b1 b2 of {
-			     False -> false; 
-			     True -> true}}}});
+sink = FUN(xs k ->
+                case xs of
+                  _scrt5 {
+                    Nil -> insert nil k;
+                    Cons h1 t1 -> case k of
+                                    _scrt4 {
+                                      TP2 a b -> let {
+                                                   r = THUNK(max xs);
+                                                   q = THUNK(intLT a r)}
+                                                 in case q of
+                                                      _scrt3 {
+                                                        True -> let {
+                                                                  t = THUNK(sink t1 k);
+                                                                  u = CON(Cons h1 t)}
+                                                                in u;
+                                                        False -> let {
+                                                                   v = CON(Cons k xs)}
+                                                                 in v } } });
 
-eqKeyList = FUN(xs ys -> case xs of {
-	    	   Nil -> case ys of {
-		      Nil -> true;
-		      x -> false};
-		   Cons h1 t1 -> case ys of {
-		      Nil -> false;
-		      Cons h2 t2 -> case eqTP2 h1 h2 of {
-		      	      	    False -> false;
-				    True -> eqKeyList t1 t2}}});
+eqTP2 = FUN(x y ->
+                case x of
+                  _scrt9 {
+                    TP2 a1 b1 -> case y of
+                                   _scrt8 {
+                                     TP2 a2 b2 -> case eqInt a1 a2 of
+                                                    _scrt7 {
+                                                      False -> false;
+                                                      True -> case eqInt b1 b2 of
+                                                                _scrt6 {
+                                                                  False -> false;
+                                                                  True -> true } } } });
+
+eqKeyList = FUN(xs ys ->
+                      case xs of
+                        _scrt13 {
+                          Nil -> case ys of
+                                   _scrt10 {
+                                     Nil -> true;
+                                     x -> false };
+                          Cons h1 t1 -> case ys of
+                                          _scrt12 {
+                                            Nil -> false;
+                                            Cons h2 t2 -> case eqTP2 h1 h2 of
+                                                            _scrt11 {
+                                                              False -> false;
+                                                              True -> eqKeyList t1 t2 } } });
 
 --Test 
 helper1 = CON(TP2 three six);
 
 j0 = CON(TP2 one two);
+
 j1 = CON(TP2 two one);
+
 j2 = CON(TP2 two ten);
+
 j3 = CON(TP2 two one);
+
 j4 = CON(TP2 three seven);
+
 j5 = CON(TP2 three six);
+
 j6 = CON(TP2 four one);
+
 j7 = CON(TP2 four two);
 
 w0 = THUNK(nil);
+
 w1 = CON(Cons j0 w0);
+
 w2 = CON(Cons j1 w1);
+
 w3 = CON(Cons j2 w2);
+
 w4 = CON(Cons j3 w3);
+
 w5 = CON(Cons j4 w4);
+
 w6 = CON(Cons j5 w5);
+
 w7 = CON(Cons j6 w6);
+
 w8 = CON(Cons j7 w7);
 
 output = THUNK(sink q7 helper1);
+
 result = THUNK(w8);
+
 main = THUNK(eqKeyList output result);
+

@@ -1,90 +1,142 @@
-data BTree a = Leaf a | B (BTree a) a (BTree a);
+data BTree a = Leaf a
+             | B (BTree a) a (BTree a);
 
 --eqBTree :: BTree -> BTree -> Bool
-eqBTree = FUN(x y -> case x of {
-	  	     Leaf a1 -> case y of {
-		    	 Leaf a2 -> case eqInt a1 a2 of {
-			      True -> true;
-			      False -> false};
-			 B b3 a2 b4 -> false};
-	             B b1 a1 b2 -> case y of {
-		       	 Leaf a2 -> false;
-			 B b3 a2 b4 -> let {q1 = THUNK(eqBTree b1 b3);
-			       	     	  q2 = THUNK(eqBTree b2 b4);
-					  q3 = THUNK(and q1 q2)} in q3}});
+eqBTree = FUN(x y ->
+                  case x of
+                    _scrt3 {
+                      Leaf a1 -> case y of
+                                   _scrt1 {
+                                     Leaf a2 -> case eqInt a1 a2 of
+                                                  _scrt0 {
+                                                    True -> true;
+                                                    False -> false };
+                                     B b3 a2 b4 -> false };
+                      B b1 a1 b2 -> case y of
+                                      _scrt2 {
+                                        Leaf a2 -> false;
+                                        B b3 a2 b4 -> let {
+                                                        q1 = THUNK(eqBTree b1 b3);
+                                                        q2 = THUNK(eqBTree b2 b4);
+                                                        q3 = THUNK(and q1 q2)}
+                                                      in q3 } });
 
 --and :: Bool -> Bool -> Bool
-and = FUN(x y -> case x of {
-      	      	      True -> case y of {
-		      	      	   True -> true;
-				   False -> false};
-	              False -> case y of {
-		      	       False -> false;
-			       True -> false}});			  
+and = FUN(x y ->
+              case x of
+                _scrt6 {
+                  True -> case y of
+                            _scrt4 {
+                              True -> true;
+                              False -> false };
+                  False -> case y of
+                             _scrt5 {
+                               False -> false;
+                               True -> false } });
 
 --max :: Int -> Int -> Int 
-max = FUN(x y -> case intLE x y of {
-      	      	 True -> y;
-		 False -> x}); 	
+max = FUN(x y ->
+              case intLE x y of
+                _scrt7 {
+                  True -> y;
+                  False -> x });
 
 --tHeight :: BTree -> Int -> Int 
-tHeight = FUN(x h -> case x of {
-       	       	    	 Leaf a1 -> h;
-       	       	    	 B b1 a2 b2 -> let {r1 = THUNK(plusInt one h);
-			      	      	   r2 = THUNK(tHeight b1 r1);
-					   r3 = THUNK(tHeight b2 r1);
-					   r4 = THUNK(max r2 r3)} in r4});
+tHeight = FUN(x h ->
+                  case x of
+                    _scrt8 {
+                      Leaf a1 -> h;
+                      B b1 a2 b2 -> let {
+                                      r1 = THUNK(plusInt one h);
+                                      r2 = THUNK(tHeight b1 r1);
+                                      r3 = THUNK(tHeight b2 r1);
+                                      r4 = THUNK(max r2 r3)}
+                                    in r4 });
 
 --sinkRight :: BTree -> BTree
-sinkRight = FUN(x -> case x of {
-	   	    Leaf a1 -> x;
-		    B b1 a2 b2 -> case b2 of {
-		      	       	  Leaf a3 -> let {q1 = CON(Leaf a2);
-				       	     	  q2 = CON(B b1 a3 q1)} in q2;
-				  B b3 a4 b4 -> let {q3 = CON(B b3 a2 b4);
-				       	     	     q4 = CON(B b1 a4 q3)} in q4}});
+sinkRight = FUN(x ->
+                  case x of
+                    _scrt10 {
+                      Leaf a1 -> x;
+                      B b1 a2 b2 -> case b2 of
+                                      _scrt9 {
+                                        Leaf a3 -> let {
+                                                     q1 = CON(Leaf a2);
+                                                     q2 = CON(B b1 a3 q1)}
+                                                   in q2;
+                                        B b3 a4 b4 -> let {
+                                                        q3 = CON(B b3 a2 b4);
+                                                        q4 = CON(B b1 a4 q3)}
+                                                      in q4 } });
 
 --sinkLeft :: BTree -> BTree
-sinkLeft = FUN(x -> case x of {
-	   	    Leaf a1 -> x;
-		    B b1 a2 b2 -> case b1 of {
-		      	       	  Leaf a3 -> let {q1 = CON(Leaf a2);
-				       	     	  q2 = CON(B q1 a3 b2)} in q2;
-				  B b3 a4 b4 -> let {q3 = CON(B b3 a2 b4);
-				       	     	     q4 = CON(B q3 a4 b2)} in q4}});
+sinkLeft = FUN(x ->
+                 case x of
+                   _scrt12 {
+                     Leaf a1 -> x;
+                     B b1 a2 b2 -> case b1 of
+                                     _scrt11 {
+                                       Leaf a3 -> let {
+                                                    q1 = CON(Leaf a2);
+                                                    q2 = CON(B q1 a3 b2)}
+                                                  in q2;
+                                       B b3 a4 b4 -> let {
+                                                       q3 = CON(B b3 a2 b4);
+                                                       q4 = CON(B q3 a4 b2)}
+                                                     in q4 } });
 
 --findHeight :: BTree -> Int 
-findHeight = FUN(x -> tHeight x zero);
+findHeight = FUN(x ->
+                   tHeight x zero);
 
 --canSinkLeft :: BTree -> Bool
-canSinkLeft = FUN(x -> case x of {
-	  	       Leaf a1 -> false;
-		       B b1 a2 b2 -> case b1 of {
-		       	       	     Leaf a3 -> intLE a2 a3;
-				     B b3 a4 b4 -> intLE a2 a4}});
+canSinkLeft = FUN(x ->
+                    case x of
+                      _scrt14 {
+                        Leaf a1 -> false;
+                        B b1 a2 b2 -> case b1 of
+                                        _scrt13 {
+                                          Leaf a3 -> intLE a2 a3;
+                                          B b3 a4 b4 -> intLE a2 a4 } });
 
 --canSinkRight :: BTree -> Bool
-canSinkRight = FUN(x -> case x of {
-	  	       Leaf a1 -> false;
-		       B b1 a2 b2 -> case b2 of {
-		       	       	     Leaf a3 -> intLE a2 a3;
-				     B b3 a4 b4 -> intLE a2 a4}});
+canSinkRight = FUN(x ->
+                     case x of
+                       _scrt16 {
+                         Leaf a1 -> false;
+                         B b1 a2 b2 -> case b2 of
+                                         _scrt15 {
+                                           Leaf a3 -> intLE a2 a3;
+                                           B b3 a4 b4 -> intLE a2 a4 } });
 
 --Test
 l1 = CON(Leaf one);
+
 l2 = CON(Leaf two);
+
 l3 = CON(Leaf three);
+
 l4 = CON(Leaf four);
+
 l5 = CON(B l1 five l2);
+
 l6 = CON(B l3 six l4);
+
 l7 = CON(B l5 seven l6);
 
 k1 = CON(Leaf one);
+
 k2 = CON(Leaf two);
+
 k3 = CON(Leaf three);
+
 k4 = CON(Leaf four);
+
 k5 = CON(B k1 seven k2);
+
 k6 = CON(B k3 six k4);
+
 k7 = CON(B k5 five k6);
 
 main = THUNK(canSinkRight k7);
+

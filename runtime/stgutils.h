@@ -7,6 +7,7 @@
 #include "string.h"
 #include "options.h"
 #include "log.h"
+#include "heap.h"
 #include "stack.h"
 
 #include <stdlib.h>

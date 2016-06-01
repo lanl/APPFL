@@ -1,1 +1,2 @@
+-- non-existant constructor (not in conmap)
 foo = CON(J 1);

@@ -1,5 +1,6 @@
-{-# LANGUAGE CPP #-}
+{-# LANGUAGE QuasiQuotes #-} 
 
+{-# LANGUAGE CPP #-}
 #include "../options.h"
 
 module Driver (
@@ -56,19 +57,23 @@ import           OrderFVsArgs
 import           Data.List
 import qualified Data.Set as Set
 import           System.IO
-import Debug.Trace
+import Language.C.Quote.GCC 
+import Language.C.Syntax (Definition)
+import qualified Text.PrettyPrint.Mainland as PP
+
+pp f = PP.pretty 80 $ PP.ppr f
 
 tester :: (String -> a) -> (a -> String) -> [FilePath] -> IO ()
 tester tfun sfun infiles =
  do
-   ihandles <- mapM (flip openFile $ ReadMode) infiles
+   ihandles <- mapM (flip openFile ReadMode) infiles
    _tester tfun sfun ihandles stdout
 
 _tester :: (String -> a) -> (a -> String) -> [Handle] -> Handle -> IO ()
 _tester testfun showfun ifds ofd =
   do
     inp <- mapM hGetContents ifds
-    let res = testfun $ trace (concat inp) (concat inp)
+    let res = testfun (concat inp)
         out = showfun res
     hPutStrLn ofd out
     return ()
@@ -76,8 +81,8 @@ _tester testfun showfun ifds ofd =
 header :: String
 header = "#include \"stgc.h\"\n"
 
-footer :: Bool -> String
-footer v = cgStart ++ cgMain v
+footer :: Bool -> [Definition]
+footer v  = [cgStart, cgMain v]
 
 -- nameDefs
 --  :: [([Char], Obj)] ->
@@ -255,15 +260,10 @@ codegener inp v mhs = let (tycons, objs) = heapchecker mhs inp
                           infotab = showITs objs
                           (shoForward, shoDef) = showSHOs objs
                           (funForwards, funDefs) = cgObjs objs stgRTSGlobals
-
-                 in header ++ "\n" ++
-                    intercalate "\n" funForwards ++ "\n\n" ++
-                    typeEnums ++ "\n" ++
-                    infotab ++ "\n" ++
-                    shoForward ++ "\n" ++
-                    shoDef ++ "\n" ++
-                    intercalate "\n\n" funDefs ++
-                    footer v
+                          defs = funForwards ++ typeEnums ++ infotab ++ shoForward
+                                 ++ shoDef ++ funDefs ++ footer v
+                          code = [cunit|$edecls:defs |]
+                 in header ++ "\n" ++ pp code
 
 pprinter :: String -> String
 pprinter = id
@@ -277,4 +277,4 @@ addSTGComment filename =
     src <- readFile filename
     let (ts,os) = heapchecker True (src++prld)
         stg = show $ bcomment (unparse ts $+$ unparse os)
-    (length src) `seq` (writeFile filename (src ++ stg))
+    length src `seq` writeFile filename (src ++ stg)

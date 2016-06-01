@@ -1,1 +1,2 @@
+-- lowercase constructor
 foo = CON(i 1);

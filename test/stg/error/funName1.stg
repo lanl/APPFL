@@ -1,2 +1,3 @@
+-- Duplicate identifiers in let block
 badFunc = FUN(x -> let {y = THUNK(x);
 	  	   	y = THUNK(x)} in y);
