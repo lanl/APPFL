@@ -15,13 +15,13 @@ import           CMap
 import           Data.Either        (rights)
 import qualified Data.Set           as Set
 import           DupCheck
-import           DupCheck
 import           Parser
 import           PPrint
 import           Rename
 import           SetFVs
 import InfoTab
 import HMStg
+import OrderFVsArgs
 import           State
 import           System.Environment (getArgs)
 import           System.IO
@@ -64,7 +64,7 @@ rewriteScruts infile outfile =
         (modified, n) = runState (asb env eithers) 0
     putStrLn $ show n ++ " case scrutinee bindings added"
     writeFile outfile . show $
-      (vcat $ map unparse modified) <>
+      vcat (map unparse modified) <>
       -- newline defeats the
       -- "Last line is a comment and messes up file concatenation" bug
       text "\n"
@@ -274,3 +274,14 @@ typechecker :: String -> ([TyCon], [Obj InfoTab])
 typechecker inp =
   let (tycons, objs, assums) = conmaper inp
   in (tycons, hmstg objs)
+
+orderfvsargser :: String -> ([TyCon], [Obj InfoTab])
+orderfvsargser inp = let (tycons, objs) = typechecker inp
+                     in (tycons, orderFVsArgs objs)
+knowncaller :: String -> ([TyCon], [Obj InfoTab])
+knowncaller inp  = let (tycons, objs) = orderfvsargser inp
+                   in (tycons, propKnownCalls objs)
+
+heapchecker :: String -> ([TyCon], [Obj InfoTab])
+heapchecker inp  = let (tycons, objs) = knowncaller inp
+                   in (tycons, setHeapAllocs objs)

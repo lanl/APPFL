@@ -191,7 +191,7 @@ getBuiltInType c
   | otherwise = error "builtin TyCon not found!"
 
 instance {-# OVERLAPPING #-} Show CMap where
-  show = show.pprint
+  show = show . pprint
 
 
 instance PPrint CMap where
