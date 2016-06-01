@@ -32,16 +32,16 @@ compose :: Subst -> Subst -> Subst
 compose s1 s2 = Map.map (apply s1) s2 `Map.union` s1
 
 class Substitutable a where
-    apply :: Subst -> a -> a
-    freevars   :: a -> Set.Set TyVar
+    apply    :: Subst -> a -> a
+    freevars :: a -> Set.Set TyVar
 
 instance Substitutable Polytype where
     freevars (PPoly tvs mt) = (freevars mt) `Set.difference` (Set.fromList tvs)
     freevars (PMono mt)     = freevars mt
 
-    apply s (PPoly tvs mt)  = PPoly tvs $ apply s' mt
+    apply s  (PPoly tvs mt) = PPoly tvs $ apply s' mt
                               where s' = foldr Map.delete s tvs
-    apply s (PMono mt)      = PMono $ apply s mt
+    apply s  (PMono mt)     = PMono $ apply s mt
 
 instance Substitutable Monotype where
     freevars (MVar v)        = Set.singleton v
@@ -112,8 +112,7 @@ unifys (x:xs) (y:ys) =
         s2 = unifys (map (apply s1) xs) (map (apply s1) ys)
     in compose s2 s1
 
--- need a fresh
-variable supply
+-- need a fresh variable supply
 
 freshTyVar :: State Int TyVar
 freshTyVar =

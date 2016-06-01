@@ -1,25 +1,24 @@
-{-# LANGUAGE
-NamedFieldPuns,
-TypeSynonymInstances,
-FlexibleInstances,
-MultiParamTypeClasses#-}
+{-# LANGUAGE FlexibleInstances     #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE NamedFieldPuns        #-}
+{-# LANGUAGE TypeSynonymInstances  #-}
 
 module MHS.ToSTG
 (
   makeSTG
 ) where
 
-import MHS.Transform
-import MHS.AST
-import Analysis (defAlt)
-import BU (Assumption, Assumptions)
-import PPrint
-import State
-import qualified Data.Set as Set
-import qualified Data.Map as Map
-import Data.List (isPrefixOf, partition)
-import Data.Function (on)
-import Debug.Trace
+import           Analysis      (defAlt)
+import           BU            (Assumption, Assumptions)
+import           Data.Function (on)
+import           Data.List     (isPrefixOf, partition)
+import qualified Data.Map      as Map
+import qualified Data.Set      as Set
+import           Debug.Trace
+import           MHS.AST
+import           MHS.Transform
+import           PPrint
+import           State
 
 makeSTG :: [Defn] -> ([TyCon], [Obj ()], Assumptions)
 makeSTG defs =
@@ -67,23 +66,23 @@ newMtyp m dict =
       makeDict (MCon _ c1 ms) (MCon _ c2 ns) =
         Map.unions (Map.singleton c1 c2 : zipWith makeDict ms ns)
       makeDict _ _ = Map.empty
-        
+
   in case m of
       MCon b c ms ->
         do
           ms' <- foldy dict ms
           return $ MCon b c ms'
-       
+
       MVar v ->
         do
           v' <- monoVar
           return $ MVar v'
-          
+
       MFun m1 m2 ->
         do
           [m1',m2'] <- foldy dict [m1,m2]
           return $ MFun m1' m2'
-          
+
       m -> return m
 
 
@@ -101,7 +100,7 @@ instance Assume Defn where
          do
            assume oexp
            insertAS (bnd,m)
-               
+
     _ -> error $ unlines
          ["ToSTG.stgAssum given non ODefn arg:",
           show $ pprint def]
@@ -142,9 +141,9 @@ stgTycon ddef =
       _ -> error $ unlines
            ["ToSTG.stgTycon passed non DDefn argument",
             show $ pprint ddef]
-                    
-                                        
-      
+
+
+
 addErr (Just d1) (Just d2) = Just (d1 $+$ d2)
 addErr (Just d1) _ = Just d1
 addErr _ x = x
@@ -158,14 +157,14 @@ mkErrs tups = addErrs $ map (uncurry mkErr) tups
 isUniqueBy _ [] = True
 isUniqueBy f (x:xs) = not (any (f x) xs) &&
                       isUniqueBy f xs
-              
+
 class STGable a where
   stgbl :: a -> Maybe Doc
 
 instance STGable [Defn] where
   stgbl defs =
     let (ds, os, ts) = partitionDefs defs
-        dcerr d1 d2 = 
+        dcerr d1 d2 =
           let (DDefn (MCon _ c1 _) dcs1) = d1
               (DDefn (MCon _ c2 _) dcs2) = d2
               e1 = mkErr (c1 == c2 )
@@ -201,7 +200,7 @@ instance STGable Defn where
           oerr = mkErr (isErr exerr)
                  (text "Can't translate object" <+> text bnd <+> text "into STG:")
       in addErr oerr exerr
-         
+
     DDefn{mtyp, dcons} -> Nothing -- short of duplicates, DDefns should be fine
 
 instance STGable Exp where
@@ -228,9 +227,9 @@ instance STGable Exp where
 
     EAp{} ->
       let (f,args) = unfoldEAp e
-          ferr = mkErr (not $ isEAt f)
+          ferr     = mkErr (not $ isEAt f)
                  (text "function applied is not in atomic form:" $+$ pprint f)
-          argerr = mkErr (not $ all isEAt args)
+          argerr   = mkErr (not $ all isEAt args)
                    (text "function arguments are not in atomic form:" $+$ pprint args)
       in addErr ferr argerr
 
@@ -244,7 +243,7 @@ instance STGable Pattern where
     Match{npats} -> mkErr (not $ all isDefaultPat npats)
                     (text "Non-simple pattern found:" <+> pprint p)
 
-  
+
 class ToSTG a b where
   stgify :: DCMap -> a -> STGState b
 
@@ -260,12 +259,12 @@ alti (_,b,_) = b
 scri (_,_,c) = c
 
 newVar :: ((Int,Int,Int) -> (Int,Int,Int)) -- ^ increment state function
-       -> String -- ^ Prefix to add to Var
-       -> ((Int,Int,Int) -> Int) -- ^ function selects field of State
-       -> State (Int, Int, Int) Var -- ^ return new Variable
+       -> String                           -- ^ Prefix to add to Var
+       -> ((Int,Int,Int) -> Int)           -- ^ function selects field of State
+       -> State (Int, Int, Int) Var        -- ^ return new Variable
 newVar increment pfx selector =
     get >>= \s -> put (increment s) >>= return (pfx ++ show (selector s))
-               
+
 letVar :: State (Int,Int,Int) Var
 letVar = newVar incfst letvarPfx leti
 
@@ -275,11 +274,11 @@ altsVar = newVar incsnd altsPfx alti
 scrutVar :: State (Int,Int,Int) Var
 scrutVar = newvar incthd scrPfx scri
 
-altsPfx = "gal_"  
+altsPfx   = "gal_"
 letvarPfx = "glv_"
-scrPfx = "gsc_"
-gcfunPfx = "gfc_"
-gpfunPfx = "gfp_"
+scrPfx    = "gsc_"
+gcfunPfx  = "gfc_"
+gpfunPfx  = "gfp_"
 
 conCall = (gcfunPfx `isPrefixOf`)
 conAr dcmap str =
@@ -304,7 +303,7 @@ makeObj dcmap e name =
           EAt{atm} = f
       in case atm of
           AtmCon c -> conit c args
-          AtmVar v -> thunk            
+          AtmVar v -> thunk
           AtmOp p -> thunk
           a -> error $ unlines
                ["attempt to apply literal as function",
@@ -316,7 +315,7 @@ makeObj dcmap e name =
       LUBInt _ -> error "illegal recursive binding of unboxed int"
       LUBDbl _ -> error "illegal recursive binding of unboxed double"
       _ -> error "ToStg.makeObj: shouldn't happen"
-      
+
     EFn{pats,eexp} ->
       do
         let vs = map str pats
@@ -334,31 +333,31 @@ makeObj dcmap e name =
                eas <- mapM (stgify dcmap) args
                --let as = map ea eas
                return $ CON () c eas name
-               
+
          | otherwise ->
              error $ unlines
              ["ToStg.makeObj.conOrThunk:",
               "why is there a definition with a partially applied Con still?"]
-            
+
        Nothing -> error $ "can't find con in map: " ++ c
-    thunk = do 
+    thunk = do
       expr <- stgify dcmap e
       return $ THUNK () expr name
-    
+
 
 instance ToSTG Defn Obj where
   stgify dcmap d = case stgbl d of
     Just e -> error $ show e
     Nothing ->
-      case d of      
+      case d of
        ODefn{bnd,oexp} -> makeObj dcmap oexp bnd
        _ -> error "Why is stgify given non-ODefn?"
-      
+
 
 letCon :: DCMap
-       -> Con -- name of the CON to be applied
-       -> [Exp] -- Exp args to the CON
-       -> STGState Expr -- Return ELet
+       -> Con           -- ^ name of the CON to be applied
+       -> [Exp]         -- ^ Exp args to the CON
+       -> STGState Expr -- ^ Return ELet
 letCon dcmap conName args =
   do
     eas <- mapM (stgify dcmap) args
@@ -389,7 +388,7 @@ instance ToSTG Exp Expr where
                  conAr dcmap v == length args ->
                    let conName = drop (length gcfunPfx) v
                    in letCon dcmap conName args
-                            
+
                | primCall v &&
                  length args == primAr v ->
                    do
@@ -397,7 +396,7 @@ instance ToSTG Exp Expr where
                          Just op = lookup v' primopTab
                      eas <- mapM (stgify dcmap) args
                      return $ EPrimop () op eas
-                         
+
                | otherwise ->
                    do
                      eas <- mapM (stgify dcmap) args
@@ -406,15 +405,15 @@ instance ToSTG Exp Expr where
             -- previous transforms guarantee that this is only
             -- a result of generated functions, so we can safely
             -- make let-bound CON expression
-             EAt{atm = AtmCon c} -> letCon dcmap c args              
-                       
+             EAt{atm = AtmCon c} -> letCon dcmap c args
+
              -- previous transforms guarantee that this is only
              -- a result of generated functions.
              EAt{atm = AtmOp o} ->
                do
                  eas <- mapM (stgify dcmap) args
                  return $ EPrimop () o eas
-                 
+
              _ -> error $ unlines
                   ["EAp in stgify not simplified:",
                    show $ pprint e]
@@ -429,8 +428,7 @@ instance ToSTG Exp Expr where
          do
            expr <- stgify dcmap eexp
            ealts <- stgify dcmap cls
-           scrvar <- scrutVar -- new 2016.05.25, reflects STG change
-           return $ ECase () expr ealts (EAtom () $ Var scrvar)
+           return $ ECase () expr ealts
 
        ELt{eexp, defns} ->
          do
@@ -442,11 +440,14 @@ instance ToSTG Exp Expr where
 instance ToSTG [Clause] Alts where
   stgify dcmap cls = case addErrs $ map stgbl cls of
     Just e -> error $ show e
-    Nothing -> 
+    Nothing ->
       do
         aname <- altsVar
+        -- new 2016.05.25, reflects STG change
+        -- case e of x { [alts] }
+        scrvar <- scrutVar 
         alts <- mapM (stgify dcmap) cls
-        return $ Alts () alts aname
+        return $ Alts () alts aname (EAtom () $ Var scrvar)
 
 instance ToSTG Clause Alt where
   stgify dcmap (pat, exp) = case stgbl (pat,exp) of
@@ -463,11 +464,11 @@ instance ToSTG Clause Alt where
                            av = var,
                            ae = exp}
 
-                               
+
        _ ->
          do
            expr <- stgify dcmap exp
-           return $       
+           return $
              case pat of
               Default{str} ->
                 ADef () str expr
@@ -476,5 +477,5 @@ instance ToSTG Clause Alt where
                           then init s else s
                 in ACon () con (map str npats) expr
 
-         
-                
+
+

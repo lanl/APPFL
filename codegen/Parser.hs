@@ -381,8 +381,8 @@ altsP =
   let
     name = "alts" --error "this alts not given a name!"
     scrtP | reWriteSTG = emptyP `using` const (EAtom () $ Var "parsed_rewrite_stg")
-            | otherwise = tokcutP "Expected variable binding the case scrutinee" $
-                          eAtomP
+          | otherwise = tokcutP "Expected variable binding the case scrutinee" $
+                        eAtomP
   in
     scrtP >>> \scrt ->
     tokcutP "Expected left brace to open the alt block of a case expr"
@@ -414,10 +414,10 @@ altP =
 atomP :: Parser Token Atom
 atomP = orExList [
   varNameP `using` Var,
-  intP `using` LitI,
-  --longP `using` LitL,
-  fltP `using` LitF,
-  --dblP `using` LitD,
+  intP     `using` LitI,
+  --longP  `using` LitL,
+  fltP     `using` LitF,
+  --dblP   `using` LitD,
   conNameP `using` LitC
   ]
 

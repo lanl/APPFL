@@ -343,7 +343,7 @@ cge env (EPrimop it op eas) =
 -- Allocating all objs in ELet before making their payloads valid is somewhat problematic
 -- if GC can be initiated by a single object allocation.  This is exacerbated by strict
 -- constructors.  This is not readily fixed by changing the order of things here because
--- of mutually recursive definitions.  
+-- of mutually recursive definitions.
 -- TODO:
 --   Make runtime more robust
 --   then for strict constructors evaluate the args
@@ -370,10 +370,12 @@ cge env (ELet it os e) =
 cge env ecase@(ECase _ e a) =
     do ((ecode, eypn), efunc) <- cge env e
        -- weird:  compiler requires parens around if, ghci does not
-       (if eypn == No then
+       -- fixed: if-then-else has special layout in do blocks
+       if eypn == No
+         then
             cgeInline env (isBoxede e) (ecode, efunc) a
-        else
-            cgeNoInline env (isBoxede e) (ecode, efunc) a)
+         else
+            cgeNoInline env (isBoxede e) (ecode, efunc) a
 
 -- TODO:  inline
 -- TODO:  YPN from Alts, Alt
@@ -400,9 +402,9 @@ cgaltsInline
      -> Bool
      -> State Int (([Char], YPN), [([Char], [Char])])
 
-cgaltsInline env a@(Alts it alts name) boxed =
+cgaltsInline env a@(Alts it alts name scrt) boxed =
     let contName = "ccont_" ++ name
-        scrutPtr = "scrutPtr_" ++ name
+        scrutPtr = "scrutPtr_" ++ name -- TODO: scrt var here?
         phonyforward = "FnPtr " ++ name ++ "();"
         phonyfun = "FnPtr "++ name ++ "() {}\n"
         switch = length alts > 1
@@ -446,7 +448,7 @@ cgeNoInline
      -> Alts InfoTab
      -> State Int (([Char], YPN), [([Char], [Char])])
 
-cgeNoInline env boxed (ecode, efunc) a@(Alts italts alts aname) =
+cgeNoInline env boxed (ecode, efunc) a@(Alts italts alts aname scrt) =
     let contName = "ccont_" ++ aname
         pre = "// scrutinee may STGJUMP or STGRETURN\n" ++
               "Cont *" ++ contName ++ " = stgAllocCont( &it_" ++ aname ++ ");\n" ++
@@ -470,9 +472,9 @@ cgalts
      -> State Int ([Char], [([Char], [Char])])
 
 -- ADef only or unary sum => no C switch
-cgalts env (Alts it alts name) boxed =
+cgalts env (Alts it alts name scrt) boxed =
     let contName = "ccont_" ++ name
-        fvp = "fvp"
+        fvp = "fvp" -- TODO: scrt here?
         -- case scrutinee is not current explicitly bound to variable
         altenv = zip (map fst $ fvs it) (map (FP fvp) [1..])
         env' = altenv ++ env

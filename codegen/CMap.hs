@@ -6,7 +6,7 @@
 {-# LANGUAGE OverlappingInstances #-}
 #endif
 
-#include "../options.h"
+-- #include "../options.h"
 
 module CMap
 (
@@ -34,6 +34,7 @@ import Data.Maybe (fromJust)
 import Data.List ((\\), find, intercalate)
 import Data.Char (isNumber)
 import Debug.Trace
+import Options
 
 type CMap = Map.Map Con TyCon
 

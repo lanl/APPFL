@@ -7,7 +7,7 @@
 {-# LANGUAGE TupleSections         #-}
 
 {-# LANGUAGE CPP #-}
-#include "../options.h"
+-- #include "../options.h"
 
 module InfoTab(
   InfoTab(..),
@@ -195,12 +195,12 @@ data InfoTab =
       typ :: Monotype,
       ctyp :: Polytype,
       fvs :: [(Var,Monotype)],
-      bfvc :: Int,  -- boxed FV count
-      ufvc :: Int,  -- unboxed FV count
+      bfvc :: Int,          -- boxed FV count
+      ufvc :: Int,          -- unboxed FV count
       truefvs :: [Var],
-      scVar :: Var,
-      name :: String,         -- for C infotab
-      entryCode :: String }   -- for C infotab
+      scVar :: Var,         -- binding for scrutinee
+      name :: String,       -- for C infotab
+      entryCode :: String } -- for C infotab
 
   -- the following may be useful later
   -- for now case continuation is handled by Alts.ITAlts
@@ -441,7 +441,7 @@ instance MakeIT (Alts ([Var],[Var])) where
       where
         scvar = case scrt of
                   EAtom _ (Var v) -> v
-                  _ -> error "InfoTab.makeIT: scbnd should always be EAtom _ (Var _)"
+                  _ -> error "InfoTab.makeIT: scrt should always be EAtom _ (Var _)"
 
 instance MakeIT (Alt ([Var],[Var])) where
     makeIT ACon{amd = (fvs,truefvs)} =
@@ -557,7 +557,8 @@ showIT it@(ITBlackhole {}) =
     "};\n"
 
 -- CONTINUATION CInfoTab
-
+-- TODO: Do something with the scrutinee binding here?
+--   don't think so... only useful as a binding in codegen
 showIT it@(ITAlts{}) =
     "CInfoTab it_" ++ name it ++ " __attribute__((aligned(8))) = {\n" ++
     "  .name                     = " ++ show (name it) ++ ",\n" ++

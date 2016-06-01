@@ -155,11 +155,11 @@ instance SetFVs (Expr a) (Expr (Set.Set Var, Set.Set Var)) where
 
     -- EFCall introduces a Var
     setfvs tlds (EFCall _ f as) =
-        let as' = map (setfvs tlds) as
-            (easFVs, easTFVs) = unzip $ map emd as'
+        let as'                = map (setfvs tlds) as
+            (easFVs, easTFVs)  = unzip $ map emd as'
             (asfvs, astruefvs) = (Set.unions easFVs, Set.unions easTFVs)
-            myfvs   = (Set.singleton f `Set.union` asfvs) `Set.difference` tlds
-            truefvs = Set.singleton f `Set.union` astruefvs
+            myfvs              = (Set.singleton f `Set.union` asfvs) `Set.difference` tlds
+            truefvs            = Set.singleton f  `Set.union` astruefvs
         in EFCall (myfvs,truefvs) f as'
 
     setfvs tlds (EPrimop _ p as) =
@@ -197,6 +197,7 @@ instance SetFVs (Alt a) (Alt (Set.Set Var, Set.Set Var)) where
         let vset = Set.fromList vs
             e' = setfvs (Set.difference tlds vset) e
             (efvs, etruefvs) = emd e'
+
             myfvs =   Set.difference efvs     vset
             truefvs = Set.difference etruefvs vset
         in ACon (myfvs,truefvs) c vs e'
@@ -209,14 +210,19 @@ instance SetFVs (Alt a) (Alt (Set.Set Var, Set.Set Var)) where
             truefvs = Set.difference etruefvs vset
         in  ADef (myfvs,truefvs) v e'
 
+-- alts block introduces scope with scrutinee binding
 instance SetFVs (Alts a) (Alts (Set.Set Var, Set.Set Var)) where
     setfvs tlds (Alts _ alts name scrt) =
         let vset = Set.singleton scvar
+            -- I'm not positive there's much meaning to the notion of a
+            -- free variable in the scrt (EAtom type), but it's set here
+            -- for completeness. -dmr
             scrt' = setfvs tlds scrt
             alts' = setfvs tlds alts
             (altsfvls, altstruefvls) = unzip $ map amd alts'
-            myfvs   = Set.unions altsfvls     Set.\\ vset
-            truefvs = Set.unions altstruefvls Set.\\ vset
+            -- variable bound to scrutinee is not free in Alts block
+            myfvs   = Set.unions altsfvls --     Set.\\ vset
+            truefvs = Set.unions altstruefvls --Set.\\ vset
             scvar = case scrt of
               EAtom _ (Var v) -> v
               _ -> error "SetFVs.setfvs: case scrutinee not an atomic var"
@@ -226,11 +232,11 @@ instance SetFVs (Alts a) (Alts (Set.Set Var, Set.Set Var)) where
 instance SetFVs (Obj a) (Obj (Set.Set Var, Set.Set Var)) where
   -- FUN introduces scope
   setfvs tlds (FUN _ vs e n) =
-    let vset = Set.fromList vs
-        e' = setfvs (Set.difference tlds vset) e
+    let vset             = Set.fromList vs
+        e'               = setfvs (Set.difference tlds vset) e
         (efvs, etruefvs) = emd e'
-        myfvs   = Set.difference efvs     vset
-        truefvs = Set.difference etruefvs vset
+        myfvs            = Set.difference efvs     vset
+        truefvs          = Set.difference etruefvs vset
     in FUN (myfvs,truefvs) vs e' n
 
   -- PAP introduces a var
@@ -259,4 +265,6 @@ instance SetFVs a b => SetFVs [a] [b] where
     setfvs tlds = map (setfvs tlds)
 
 instance  {-# OVERLAPPING #-} PPrint (Set.Set Var, Set.Set Var) where
-  pprint (fvs, tfvs) = parens (text "fvs:" <+> pprint fvs <> comma <+> text "tfvs:" <+> pprint tfvs)
+  pprint (fvs, tfvs) = parens (text "fvs:" <+> pprint fvs
+                               <> comma <+>
+                               text "tfvs:" <+> pprint tfvs)

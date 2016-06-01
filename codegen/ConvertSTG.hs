@@ -1,9 +1,8 @@
--- #!/usr/local/bin/runhaskell -XCPP -cpp -DREWRITE_STG=1
--- not working: Flags don't seem to be passed properly
 {-# LANGUAGE FlexibleInstances    #-}
 {-# LANGUAGE NamedFieldPuns       #-}
 {-# LANGUAGE TypeSynonymInstances #-}
-
+-- #!/usr/local/bin/runhaskell -XCPP -cpp -DREWRITE_STG=1
+-- not working: Flags don't seem to be passed properly
 
 
 
@@ -21,6 +20,8 @@ import           Parser
 import           PPrint
 import           Rename
 import           SetFVs
+import InfoTab
+import HMStg
 import           State
 import           System.Environment (getArgs)
 import           System.IO
@@ -44,7 +45,7 @@ main =
        files <- getArgs
        mapM_ (uncurry rewriteScruts) . zip files . map (++ ".new") $ files
   else
-    print "run/compile ConvertSTG with -cpp -DREWRITE_STG flags for GHC"
+    error "Only run/compile ConvertSTG.hs with -cpp -DREWRITE_STG flags for GHC"
 
 
 -- ^ Modify an old STG file to update the syntax of case expressions
@@ -61,7 +62,7 @@ rewriteScruts infile outfile =
         env = Set.fromList . map (\(ObjDef o) -> oname o) .
               filter isObj . rights $ eithers
         (modified, n) = runState (asb env eithers) 0
-    print $ show n ++ " case scrutinee bindings added"
+    putStrLn $ show n ++ " case scrutinee bindings added"
     writeFile outfile . show . vcat . map unparse $ modified
 
 
@@ -102,7 +103,7 @@ nextBind env =
 
 type Env = Set.Set Var
 
-
+-- ^ ASB  = Add Scrutinee Binding
 class ASB a where
   -- ^ Traverse STG AST and add unique scrutinee bindings to convert
   -- an old STG file to the new syntax
@@ -190,6 +191,9 @@ instance ASB (Alt a) where
 
 -- Test conversion with Driver in Progress
 --------------------------------------------------
+
+withPrelude x = "../prelude/Prelude.stg.new":[x]
+
 tester :: (String -> a) -> (a -> String) -> [FilePath] -> IO ()
 tester tfun sfun infiles =
  do
@@ -251,3 +255,18 @@ defaultcaser inp = let (tycons, objs) = renamer inp
 freevarer :: String -> ([TyCon], [Obj ([Var],[Var])], Assumptions)
 freevarer inp = let (tycons, objs, assums) = defaultcaser inp
                 in (tycons, setFVsObjs stgRTSGlobals objs, assums)
+
+infotaber :: String -> ([TyCon], [Obj InfoTab], Assumptions)
+infotaber inp = let (tycons, objs, assums) = freevarer inp
+                in (tycons, setITs objs :: [Obj InfoTab], assums)
+
+conmaper :: String -> ([TyCon], [Obj InfoTab], Assumptions)
+conmaper inp =
+  let (tycons, objs, assums) = infotaber inp
+      (tycons', objs')       = setCMaps tycons objs
+  in (tycons', objs', assums)
+
+typechecker :: String -> ([TyCon], [Obj InfoTab])
+typechecker inp =
+  let (tycons, objs, assums) = conmaper inp
+  in (tycons, hmstg objs)
