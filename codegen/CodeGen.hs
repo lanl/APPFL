@@ -519,7 +519,7 @@ cgalts env (Alts it alts name scrt) boxed =
       let (codeypns, funcss) = unzip codefuncs
       let (codes, ypns) = unzip codeypns
       let its = [citems|
-                  LOG(LOG_INFO, $string:(name ++ " here"));
+                  LOG(LOG_INFO, $string:(name ++ " here\n"));
                   typename Cont *$id:contName = stgGetStackArgp();
                   $comment:("// make self-popping")
                   stgCaseToPopMe($id:contName);
