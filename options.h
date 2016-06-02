@@ -9,6 +9,12 @@
 /* 0/1, If 1 use objType enum field in Obj */
 #define USE_OBJTYPE 1
 
+/* If 1 use .ident in Obj/Cont */
+#define USE_IDENT 1 
+
+/* If 1 use .name in Infotab */
+#define USE_INFOTAB_NAME 1 
+
 /* If 1 use .pi = PI header in InfoTab */
 #define DEBUG_INFOTAB 0
 
@@ -30,5 +36,8 @@
 /* number of threads, temporary solution */
 
 #define NTHREADS 2
+
+/* if 1, sanity checker enabled */
+#define HEAP_SANITY_CHECK 0
 
 #endif
