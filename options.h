@@ -31,4 +31,7 @@
 
 #define NTHREADS 2
 
+/* if 1, sanity checker enabled */
+#define HEAP_SANITY_CHECK 0
+
 #endif
