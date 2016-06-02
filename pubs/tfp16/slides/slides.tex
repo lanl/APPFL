@@ -1,7 +1,14 @@
 \documentclass{beamer}
 
 %\usetheme[unclass]{LANL-beta}
-\usetheme{LANL-beta}
+
+% Use make print to create less inky slides for printing
+\ifdefined\printableSlides
+\usetheme[lessInk]{LANL-beta}
+\else
+\usetheme[blue]{LANL-beta}
+\fi
+
 \usepackage{graphicx}
 
 \title{Automatic Parallelization and Transparent Fault Tolerance (project in progress)}
