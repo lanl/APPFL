@@ -15,6 +15,7 @@ project(runtime)
     	      cruntime.h
 	          stgc.h
               stgapply.h
+              sanity.h
     )
 
   set(xrt_hdrs ../build/include/options.h
@@ -28,6 +29,7 @@ project(runtime)
               stack.c
               stgapply.c
 	          heap.c
+            sanity.c
     )
 
 include_directories(".."

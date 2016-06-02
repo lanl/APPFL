@@ -4,7 +4,7 @@
 \usetheme{LANL-beta}
 \usepackage{graphicx}
 
-\title{Automatic Parallelization and Transparent Fault Tolerance (project article)}
+\title{Automatic Parallelization and Transparent Fault Tolerance (project in progress)}
 %\subtitle{(Project article)}
 \author{Kei Davis, Dean Prichard, \\\emph{David Ringo}, Loren Anderson, \\and Jacob Marks\\ \ \\}
 %\date[4/26/2016]{Some Random Meeting \\ April 26, 2016}
@@ -16,6 +16,259 @@
 \begin{frame}
 \maketitle
 \end{frame}
+
+\begin{frame}
+\frametitle{Scientific Computing in our Microcosm}
+Local evolution of scientific computing
+\begin{itemize}
+  \item Serial Fortran programs
+  \item MPI everywhere (inter- and intra-node)
+  \item C, C++
+  \item MPI+X, X is Pthreads, OpenMP, OpenCL, CUDA, etc.
+  \item Parallel runtimes, e.g., Cilk++, Intel Threading Building Blocks, Stanford's Legion, etc.
+\end{itemize}
+Currently MPI+threading model dominates.
+\end{frame}
+
+\begin{frame}
+\frametitle{In Search of Automatic Parallelization\\
+\emph{or at least automatic scheduling}}
+  \begin{figure}
+    \begin{center}
+%      \fbox{
+      \includegraphics[width=0.95\linewidth,height=1in]%
+        {figures/S3Dtaskgraph.png}~\footnote{Courtesy Stanford Legion project}
+%}
+\\[2.0ex]  % vertical space
+      S3D task dependency, combustion chemistry calculation
+    \end{center}
+  \end{figure}
+Simplest interesting chemistry, task graph much larger with more complex reactants.
+\vspace{0.1in}
+Schedule by hand?
+\end{frame}
+
+
+\begin{frame}
+  \frametitle{Transparent Fault Tolerance?}
+  \begin{columns}[t]
+    \begin{column}{.48\linewidth}
+      Checkpoint:
+      \begin{enumerate}
+      \item Processes synchronize at predetermined point;
+      \item Stop the world;
+      \item Dump global state;
+      \item Resume computation.
+      \end{enumerate}
+    \end{column}
+    \begin{column}[T]{.48\linewidth}
+      Restart:
+      \begin{enumerate}
+      \item Observe that application has hung/crashed;
+      \item Identify last valid (complete) checkpoint image;
+      \item Re-launch application specifying checkpoint image.
+      \end{enumerate}
+    \end{column}
+  \end{columns}
+\vspace{0.1in}
+General claim:  ``data movement costs more energy than computation.''
+
+Fact 1: In C/R, idle processors may cost more energy than data movement.
+
+Fact 2:  C/R isn't scaling.
+\end{frame}
+
+
+\begin{frame}
+\frametitle{Pure Functional Semantics}
+Now we have a `new' generation of scientific programmers, aka computational scientists, who
+have some understanding of meaning and virtue of \emph{pure functional}, and even dabble
+in Haskell programming.
+\vspace{0.1in}
+
+\emph{In a multi-100,000-line program, do not temporarily alter the global speed-of-light
+`constant' variable.}
+\vspace{0.1in}
+
+\emph{But}, these are not computer scientists:  
+\begin{itemize}
+\item Passing functions as arguments is familiar (since early Fortran);
+\item Implicit space leaks are confusing;
+\item Non-strict evaluation is largely irrelevant, strictness annotations are unintuitive.
+\item Unboxed primitives and arrays of the same (unboxed vector) are the primary data.
+\end{itemize}
+\end{frame}
+
+\begin{frame}
+\frametitle{Claimed Trends}
+Trends in functional programming
+\begin{itemize}
+  \item Appreciation of the virtues of strict-by-default semantics;
+  \item Transparent fault tolerance.
+\end{itemize}
+Trends in scientific computing
+\begin{itemize}
+  \item Implementation of pure functional computational concepts/components.
+  \item Recognition that checkpoint/restart is increasingly intractable and unscalable.
+\end{itemize}
+\end{frame}
+
+
+\begin{frame}
+\frametitle{Non-strictness/laziness Anathema to Parallelism}
+(Semantic) function strictness $\implies$ \\
+\ \ \ function arguments can be evaluated early, in parallel
+
+\begin{itemize}
+  \item Strictness analysis
+  \item Bang patterns
+  \item Par/pseq, other specifications
+  \item Speculative evaluation
+  \item \ldots
+  \item \emph{Strict(er) default semantics}
+\end{itemize}
+Similarly constructors.
+\\\vspace{0.1in}
+Update:  Strict \texttt{let} bindings.
+\end{frame}
+
+
+\begin{frame}
+  \frametitle{Musings}
+  Suppose we had a strict(-er) pure functional language implementation than Haskell?
+  \begin{itemize}
+  \item Could we keep a large number of hardware threads (e.g., up to 256) busy with
+    \emph{implicit} parallelism?
+    \begin{itemize}
+    \item With what parallel efficiency?
+      \begin{itemize}
+      \item With different scheduling strategies?
+      \end{itemize}
+    \end{itemize}
+  \item How often do new functional programmers/old scientific programmers
+    make essential use of non-strictness?  \emph{(very rarely)}
+    \begin{itemize}
+    \item Laziness? \emph{(never)}
+    \end{itemize}
+  \end{itemize}
+\end{frame}
+
+\begin{frame}
+\frametitle{Project} 
+A \emph{light-weight} implementation of a pure, higher-order, polymorphic,
+functional language and runtime system with which we can experiment with
+automatic parallelization strategies with varying degrees of language
+strictness, and secondarily, with mechanisms for transparent fault tolerance.
+\begin{enumerate}
+\item Haskell to STG (or Core) via GHC \emph{(todo)};
+\item STG to C \emph{(serial done, parallel in progress)};
+\item Fault tolerance \emph{TBD};
+\item Mini-Haskell front end (done).
+\end{enumerate}
+STG and Core are higher-order polymorphic functional languages in their own right.
+\end{frame}
+
+
+\begin{frame}
+\frametitle{Reinventing the wheel?}  Why not use Manticore, MultiMLton, F\#,
+multicore OCaml, etc., or even GHC in toto?
+\begin{itemize}
+  \item Very light weight:  easy to instrument, modify;
+  \item Know exactly what is going on under the hood;
+  \item There exist conduits for getting student interns up to speed inexpensively;
+  \item We have a small cadre of scientists already interested in Haskell/GHC.
+\end{itemize}
+\end{frame}
+
+
+\begin{frame}
+\frametitle{Technical hurdles:  tail calling and unwinding the stack}
+Following SPJ/STG our control structure is a stack of continuations.  
+\\\vspace{0.1in}
+Each continuation contains an address to \emph{go to next}, not \emph{go back
+  to}, so we want something like \emph{goto} or \emph{tail calling}.
+\\\vspace{0.1in}
+SPJ identifies defines the term \emph{code label} as something that can be
+\begin{itemize}
+  \item used to name an arbitrary block of code;
+  \item can be manipulated, i.e., stored for later use;
+  \item can be used as the destination of a jump (not just call).
+\end{itemize}
+\end{frame}
+
+
+\begin{frame}[fragile] % for verbatim
+\frametitle{All the myriad ways in C}
+\begin{itemize}
+\item setjmp/longjmp;
+\item giant switch;
+\item computed goto (gcc extension);
+\item trampoline, the simplest of which parameterless C functions return the
+  address (function pointer) of where to go to next:
+\begin{verbatim}
+      while (1) f = (*f)();
+\end{verbatim}
+\item implement an intermediate language, e.g., C-{}-/Cmm, where tail call is primitive;
+\item generate assembly code, e.g., LLVM, directly.
+\end{itemize}
+\end{frame}
+
+
+\begin{frame}[fragile]
+\frametitle{Modern compilers to the rescue:  sibling call}
+Clang/LLVM and GCC implement a restricted form of tail call, the \emph{sibling}
+call, i.e, jump reusing the TOS frame.  Here
+\begin{verbatim}
+void f() {
+  ...
+  g();
+}
+\end{verbatim}
+function \texttt{g} is jumped to; there is no (implicit) return following
+\texttt{g();}.  
+\\\vspace{0.1in}
+Critically, this also works for indirect calls to previously stored addresses.
+\begin{verbatim}
+    (getInfoPtr(stgCurVal.op)->entryCode)();
+\end{verbatim}
+
+\end{frame}
+
+\begin{frame}
+\frametitle{Sibling Call}
+The restrictions are due to the x86(-64)/*nix/C calling
+conventions---caller clean-up---and the possibility of pointer aliasing.
+\\\vspace{0.1in}
+Sufficient formula for recent gcc and Clang/LLVM on Linux or MacOS X
+\begin{itemize}
+\item Call in leaf position of CFG;
+\item Caller and callee have the same type signature
+\item No addresses taken of formal params;
+\item -O3.
+\end{itemize}
+Obviously this is not portable.
+\end{frame}
+
+
+\begin{frame}
+\frametitle{Unwinding stacks}
+In one version of GHC, Harris et al.\ identify the need to unwind thread stacks for shared
+memory parallelism.
+\\\vspace{0.1in}
+Again, we do not want to contemplate using, e.g., setjmp/longjmp.
+\\\vspace{0.1in}
+Therefore, we do not want the C main stack or Pthreads stacks to grow.
+\\\vspace{0.1in}
+Exception:  calls to the runtime.
+\\\vspace{0.1in}
+Again, sibling call saves us.
+\end{frame}
+
+
+\begin{frame}
+\frametitle{Here is a simple frame}
+\end{frame}
+
 
 \begin{frame}
 \frametitle{Here is a simple frame}
@@ -34,7 +287,7 @@
 
 
 \begin{frame}
-\frametitle{Here is a more complicated frame, including some graphics}
+\frametitle{Example frame}
     \begin{columns}[t]
         \begin{column}{.48\linewidth}
             \begin{itemize}
