@@ -18,10 +18,10 @@
 /* If 1 use .pi = PI header in InfoTab */
 #define DEBUG_INFOTAB 0
 
+#define OBJ_ALIGN 8
 
 /* C side options */
 
-#define OBJ_ALIGN 8
 #define OBJ_ALIGNM1 7
 
 /* log level defined in log.h */

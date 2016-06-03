@@ -463,7 +463,8 @@ showIT it@(ITAlts {}) =
   let init = showITinit it
       itname = "it_" ++ name it
       f x = Just [cedecl|
-                 typename CInfoTab $id:itname __attribute__((aligned(8))) = $init:x;
+                 typename CInfoTab $id:itname __attribute__((aligned(OBJ_ALIGN)))
+                   = $init:x;
                |]
   in maybe Nothing f init
 
@@ -471,7 +472,8 @@ showIT it =
   let init = showITinit it
       itname = "it_" ++ name it
       f x = Just [cedecl|
-                 typename InfoTab $id:itname __attribute__((aligned(8))) = $init:x;
+                 typename InfoTab $id:itname __attribute__((aligned(OBJ_ALIGN)))
+                   = $init:x;
                |]
   in maybe Nothing f init
 
