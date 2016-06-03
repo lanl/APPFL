@@ -428,6 +428,7 @@ void checkStgHeap() {
 }
 
 
+// declared in stg.h
 size_t stgStatObjCount;
 Obj * stgStatObj[100];
 

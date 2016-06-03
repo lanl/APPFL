@@ -80,12 +80,14 @@ iff b x y = if b then x else y
 
 cgStart :: Definition
 cgStart =
-  let its = [citems| typename Cont *showResultCont = stgAllocCallOrStackCont(&it_stgShowResultCont, 0); |]
+  let its = [citems| 
+              typename Cont *showResultCont = stgAllocCallOrStackCont(&it_stgShowResultCont, 0); 
+            |]
           ++ (if useArgType then [citems| stgCurVal.argType = HEAPOBJ; |] else [])
           ++ [citems|
                 stgCurVal.op = &sho_main;
                 STGJUMP0(getInfoPtr(stgCurVal.op)->entryCode);
-            |]
+             |]
       f = [cfun|
             typename FnPtr start()
             {
