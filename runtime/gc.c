@@ -8,7 +8,7 @@
 #include "stgutils.h"
 #include "obj.h"
 #include "options.h"
-
+#include "sanity.h"
 
 static void *scanPtr, *freePtr;
 
@@ -115,6 +115,7 @@ void processObj(Obj *p) {
   if (p == NULL) return;
   size_t i;
   LOG(LOG_SPEW, "processObj %s %s\n", objTypeNames[getObjType(p)], p->ident);
+
 
   switch (getObjType(p)) {
   case FUN: {
@@ -228,6 +229,8 @@ void processCont(Cont *p) {
 
 void gc(void) {
   //LOG(LOG_INFO, "GARBAGE COLLECTION DISABLED in gc.c/gc(void)\n"); return;
+
+  heapCheck();
 
   size_t before = stgHP - stgHeap;
 

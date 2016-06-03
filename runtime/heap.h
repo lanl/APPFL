@@ -46,9 +46,6 @@ typedef struct {
   //
 } THUNKfields;
 
-#if DEBUG_INFOTAB
-#define PI() (3.14159265358979323846)
-#endif
 
 // InfoTab
 struct _InfoTab {

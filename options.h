@@ -18,6 +18,9 @@
 /* If 1 use .pi = PI header in InfoTab */
 #define DEBUG_INFOTAB 0
 
+#if DEBUG_INFOTAB
+#define PI() (3.14159265358979323846)
+#endif
 
 /* C side options */
 
@@ -38,6 +41,6 @@
 #define NTHREADS 2
 
 /* if 1, sanity checker enabled */
-#define HEAP_SANITY_CHECK 0
+#define HEAP_SANITY_CHECK 1
 
 #endif
