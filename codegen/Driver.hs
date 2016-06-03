@@ -63,8 +63,8 @@ import qualified Text.PrettyPrint.Mainland as PP
 
 pp f = PP.pretty 80 $ PP.ppr f
 
-header :: String
-header = "#include \"stgc.h\"\n"
+header :: Definition
+header = [cedecl| $esc:("#include \"stgc.h\"")|]
 
 footer :: Bool -> [Definition]
 footer v  = [cgStart, cgMain v]
@@ -258,10 +258,10 @@ codegener inp v mhs = let (tycons, objs) = heapchecker mhs inp
                           infotab = showITs objs
                           (shoForward, shoDef) = showSHOs objs
                           (funForwards, funDefs) = cgObjs objs stgRTSGlobals
-                          defs = funForwards ++ typeEnums ++ infotab ++ shoForward
-                                 ++ shoDef ++ funDefs ++ footer v
+                          defs =  header : funForwards ++ typeEnums ++ infotab 
+                                 ++ shoForward ++ shoDef ++ funDefs ++ footer v
                           code = [cunit|$edecls:defs |]
-                 in header ++ "\n" ++ pp code
+                 in pp code
 
 pprinter :: String -> String
 pprinter = id

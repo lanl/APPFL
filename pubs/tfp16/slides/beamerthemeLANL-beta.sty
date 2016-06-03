@@ -33,6 +33,7 @@
 
 \newcommand{\classColor}{}
 \newcommand{\blockColor}{}
+\newcommand{\blockFGColor}{}
 
 % Add commands to display LA-UR (or similar ID) on title page.
 \newcommand{\markLAUR}{}
@@ -68,10 +69,16 @@
     \renewcommand{\markPage}{\vphantom{X}}}
 
 \DeclareOptionBeamer{blue}{%
-    \renewcommand{\blockColor}{LANLDarkBlue}}
+  \renewcommand{\blockColor}{LANLDarkBlue}%
+  \renewcommand{\blockFGColor}{white}}
 
 \DeclareOptionBeamer{gray}{%
-    \renewcommand{\blockColor}{LANLGray}}
+  \renewcommand{\blockColor}{LANLGray}%
+  \renewcommand{\blockFGColor}{white}}
+
+\DeclareOptionBeamer{lessInk}{%
+  \renewcommand{\blockColor}{white}%
+  \renewcommand{\blockFGColor}{LANLDarkBlue}}
 
 % Set default options.
 \ExecuteOptionsBeamer{noclass,slidenum,classcolor=white,blue}
@@ -98,9 +105,9 @@
 \setbeamerfont{footline}{size=\tiny}
 
 \setbeamercolor{titlelike}{fg=black}
-\setbeamercolor{title}{bg=\blockColor,fg=white}
-\setbeamercolor{headline}{bg=\blockColor,fg=white}
-\setbeamercolor{footline}{bg=\blockColor,fg=white}
+\setbeamercolor{title}{bg=\blockColor,fg=\blockFGColor}
+\setbeamercolor{headline}{bg=\blockColor,fg=\blockFGColor}
+\setbeamercolor{footline}{bg=\blockColor,fg=\blockFGColor}
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
