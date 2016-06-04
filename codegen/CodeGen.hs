@@ -508,9 +508,11 @@ cgalts :: Env -> Alts InfoTab -> Bool
 
 cgalts env (Alts it alts name scrt) boxed =
     let contName = "ccont_" ++ name
-        fvp = "fvp" -- TODO: scrt here?
-        -- case scrutinee is not current explicitly bound to variable
-        altenv = zip (map fst $ fvs it) (map (FP fvp) [1..])
+        fvp = "fvp"
+        -- scrutinee now has a name in the environment
+        -- can I do more with it?
+        -- e.g. Should fvp[0] be bound to a named PtrOrLiteral? (and used in its place)
+        altenv = zip (scrtVarName scrt : map fst $ (fvs it)) (map (FP fvp) [0..])
         env' = altenv ++ env
         cforward = [cedecl| typename FnPtr $id:name();|]
         switch = length alts > 1
