@@ -29,7 +29,7 @@ project(runtime)
               stack.c
               stgapply.c
               heap.c
-              sanity.c #disable this untill it will build
+              #sanity.c #disable this until it will pass tests
     )
 
 include_directories(".."
