@@ -64,7 +64,7 @@ import Language.C.Quote.GCC
 import Language.C.Syntax (Definition, Initializer, Exp, BlockItem)
 
 -- use a list of Definitions rather than Func
--- this allows use to put comments before functions
+-- this allows us to put comments before functions
 -- using "esc"
 type CFun = [Definition]
 
@@ -239,10 +239,9 @@ cgo env o@(FUN it vs e name) =
                env
     in do
       ((inline, ypn), funcs) <- cge env' e
-      let comm1 = [cedecl|$esc:("// " ++ show (ctyp it)) |]
-          comm2 = [cedecl|
-                   $esc:("// " ++ name ++ "(self, " ++ intercalate ", " vs ++ ")")
-                  |]
+      let comm = [cedecl|$esc:("\n// " ++ show (ctyp it) ++ "\n" ++ 
+                           "// " ++ name ++ "(self, " ++ 
+                           intercalate ", " vs ++ ")"  ) |]
           top = [citems|
                   LOG(LOG_INFO, $string:(name ++ " here\n"));
                   typename PtrOrLiteral *$id:argp = &(stgGetStackArgp()->payload[0]);
@@ -255,7 +254,7 @@ cgo env o@(FUN it vs e name) =
                   $items:items
                 }
               |]
-          cfunc = [comm1, comm2, [cedecl|$func:f|]]
+          cfunc = [comm, [cedecl|$func:f|]]
       return $ (cforward, cfunc) : funcs
       
 cgo env (PAP it f as name) = return []
@@ -268,9 +267,9 @@ cgo env o@(THUNK it e name) =
       cforward = [cedecl| typename FnPtr $id:("thunk_" ++ name)();|]
   in do
     ((inline,ypn), funcs) <- cge env' e
-    let comm = [cedecl|$esc:("// " ++ show (ctyp it))|]
+    let comm = [cedecl|$esc:("\n// " ++ show (ctyp it))|]
         top = [citems|
-                LOG(LOG_INFO, $string:(name ++ " here\n"));
+                LOG(LOG_INFO, $string:(name ++ " here7\n"));
                 $comment:("// access free vars through frame pointer for GC safety")
                 $comment:("// is this really necessary???");
                 typename Cont *stg_fp = stgAllocCallOrStackCont(&it_stgStackCont, 1);
@@ -301,15 +300,15 @@ stgApplyGeneric env f eas direct =
         f' = if f == "stg_case_not_exhaustive" then
                  f ++ pnstring
              else f
-        (expr0, comment0) = cga [] (LitI 0)
-        (expr1, comment1) = cgv env f'
+        (expr0, comm0) = cga [] (LitI 0)
+        (expr1, comm1) = cgv env f'
         its = [citems|
                 typename Cont *cp = stgAllocCallOrStackCont( &it_stgStackCont,
                 $int:(length pnstring + 2));
                 cp->layout = (typename Bitmap64)$ulint:(npStrToBMInt ('N' : 'P' : pnstring ));
-                $comment:(comment0)
+                $comment:comm0
                 cp->payload[ 0 ] = $exp:(expr0);
-                $comment:(comment1)
+                $comment:comm1
                 cp->payload[ 1 ] = $exp:(expr1);
               |]
             ++ [ [citem| cp->payload[$int:i] = $exp:(expr); $comment:(comm) |]
@@ -340,7 +339,7 @@ cge env e@(EAtom it a) =
       inline =
         if isBoxede e then
           [citems|
-            $comment:(comm)
+            $comment:comm
             stgCurVal = $exp:expr;
             $comment:("// boxed EAtom, stgCurVal updates itself")
             STGJUMP();
@@ -561,7 +560,7 @@ cgalts env (Alts it alts name) boxed =
                         }
                       |]
                   else [citems| $items:(concat codes) |])
-      let comm = [cedecl| $esc:("//" ++ show (ctyp it))|]
+      let comm = [cedecl| $esc:("\n//" ++ show (ctyp it))|]
       let fun = [cfun|
                    typename FnPtr $id:name()
                    {
