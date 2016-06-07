@@ -248,7 +248,7 @@ cgo env o@(FUN it vs e name) =
                   typename PtrOrLiteral *$id:argp = &(stgGetStackArgp()->payload[0]);
                 |]
           bot = [citems| STGRETURN0();|]
-          items = if (ypn /= Yes ) then top ++ inline ++ bot else top ++ inline
+          items = if ypn /= Yes then top ++ inline ++ bot else top ++ inline
           f = [cfun|
                 typename FnPtr $id:("fun_" ++ name)()
                 {
@@ -281,7 +281,7 @@ cgo env o@(THUNK it e name) =
                 stgCurVal.op = NULL;
               |]
         bot = [citems| STGRETURN0();|]
-        items = if (ypn /= Yes ) then top ++ inline ++ bot else top ++ inline
+        items = if ypn /= Yes then top ++ inline ++ bot else top ++ inline
         f = [cfun|
               typename FnPtr $id:("thunk_" ++ name)()
               {
@@ -306,7 +306,7 @@ stgApplyGeneric env f eas direct =
         its = [citems|
                 typename Cont *cp = stgAllocCallOrStackCont( &it_stgStackCont,
                 $int:(length pnstring + 2));
-                cp->layout =  (typename Bitmap64)$ulint:(npStrToBMInt ('N' : 'P' : pnstring ));
+                cp->layout = (typename Bitmap64)$ulint:(npStrToBMInt ('N' : 'P' : pnstring ));
                 $comment:(comment0)
                 cp->payload[ 0 ] = $exp:(expr0);
                 $comment:(comment1)
@@ -357,8 +357,9 @@ cge env e@(EFCall it f eas) =
   case (knownCall it) of
     Nothing -> stgApplyGeneric env f eas False
     Just kit -> if arity kit == length eas
-                then stgApplyGeneric env f eas False
+                then stgApplyGeneric env f eas False  -- disabled was True
                 else stgApplyGeneric env f eas False
+
 
 cge env (EPrimop it op eas) =
     let as = map ea eas
@@ -451,9 +452,9 @@ cgaltsInline env a@(Alts it alts name) boxed =
        codefuncs <- mapM (cgalt env switch scrutPtr) alts
        let (codeypns, funcss) = unzip codefuncs
        let (codes, ypns) = unzip codeypns
-       let myypn = if all (==Yes) ypns then Yes
-                   else if all (==No) ypns then No
-                        else Possible
+       let myypn | all (== Yes) ypns = Yes
+                 | all (== No) ypns = No
+                 | otherwise = Possible
        let its = [citems|
                    typename Cont *$id:contName = stgAllocCallOrStackCont(&it_stgStackCont, 1);
                    $comment:("// " ++ show (ctyp it))
@@ -650,7 +651,7 @@ loadPayloadFVs :: Env -> [String] -> Int -> String -> [BlockItem]
 loadPayloadFVs env fvs ind name =
   [ [citem| $comment:("// " ++ v)
             $id:name->payload[$int:i] = $exp:(fst $ cgv env v);
-          |] | (i,v) <- indexFrom ind $ fvs]
+          |] | (i,v) <- indexFrom ind fvs]
   
 loadPayloadAtoms :: Env -> [Atom] -> Int -> String -> [BlockItem]
 loadPayloadAtoms env as ind name =
@@ -659,7 +660,7 @@ loadPayloadAtoms env as ind name =
           |] | (i,a) <- indexFrom ind as]
 
 showas :: [Atom] -> String
-showas as = intercalate " " $ map showa as
+showas as = unwords $ map showa as
 
 showa (Var  v) = v
 showa (LitI i) = show i
