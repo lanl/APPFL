@@ -61,8 +61,12 @@ import Data.Map (Map)
 import qualified Data.Map as Map
 
 import Language.C.Quote.GCC
-import Language.C.Syntax (Definition, Initializer, Func, Exp, BlockItem)
+import Language.C.Syntax (Definition, Initializer, Exp, BlockItem)
 
+-- use a list of Definitions rather than Func
+-- this allows use to put comments before functions
+-- using "esc"
+type CFun = [Definition]
 
 data RVal = SO              -- static object
           | HO String       -- Heap Obj, payload size, TO GO?
@@ -80,8 +84,8 @@ iff b x y = if b then x else y
 
 cgStart :: Definition
 cgStart =
-  let its = [citems| 
-              typename Cont *showResultCont = stgAllocCallOrStackCont(&it_stgShowResultCont, 0); 
+  let its = [citems|
+              typename Cont *showResultCont = stgAllocCallOrStackCont(&it_stgShowResultCont, 0);
             |]
           ++ (if useArgType then [citems| stgCurVal.argType = HEAPOBJ; |] else [])
           ++ [citems|
@@ -121,12 +125,12 @@ cgMain v =
             |]
   in [cedecl| $func:fun |]
     
-registerSOs :: [Obj InfoTab] -> (Definition, Func)
+registerSOs :: [Obj InfoTab] -> (Definition, CFun)
 registerSOs objs =
   let proto = [cedecl| void registerSOs(); |]
       its = [ [citem|stgStatObj[stgStatObjCount++] = &$id:s; |] | s <- shoNames objs]
-      fun = [cfun| void registerSOs() { $items:its } |]
-  in (proto, fun)
+      f = [cfun| void registerSOs() { $items:its } |]
+  in (proto, [[cedecl|$func:f|]])
 
                
 listLookup k [] = Nothing
@@ -212,20 +216,20 @@ data YPN = Yes | Possible | No -- could use Maybe Bool but seems obscure
            deriving(Eq, Show)
 
 
-cgObjs :: [Obj InfoTab] -> [String] -> ([Definition], [Definition])
+cgObjs :: [Obj InfoTab] -> [String] -> ([Definition], [CFun])
 cgObjs objs runtimeGlobals =
    let tlnames = runtimeGlobals ++ map (name . omd) objs
        env = zip tlnames $ repeat SO
        (funcs, _) = runState (cgos env objs) 0
        (forwards, funs) = unzip funcs
        (forward, fun) = registerSOs objs
-   in (forward:forwards, [[cedecl| $func:x|]  | x <- fun:funs])
+   in (forward:forwards, fun:funs)
 
 
-cgos :: Env -> [Obj InfoTab] -> State Int [(Definition,  Func)]
+cgos :: Env -> [Obj InfoTab] -> State Int [(Definition,  CFun)]
 cgos env = concatMapM (cgo env)
 
-cgo :: Env -> Obj InfoTab -> State Int [(Definition, Func)]
+cgo :: Env -> Obj InfoTab -> State Int [(Definition, CFun)]
 cgo env o@(FUN it vs e name) =
     let cforward = [cedecl| typename FnPtr $id:("fun_" ++ name)();|]
         argp = "argp" -- also free variable pointer pointer
@@ -235,20 +239,23 @@ cgo env o@(FUN it vs e name) =
                env
     in do
       ((inline, ypn), funcs) <- cge env' e
-      let top = [citems|
-                  $comment:("// " ++ show (ctyp it))
-                  $comment:("// " ++ name ++ "(self, " ++ intercalate ", " vs ++ ")")
+      let comm1 = [cedecl|$esc:("// " ++ show (ctyp it)) |]
+          comm2 = [cedecl|
+                   $esc:("// " ++ name ++ "(self, " ++ intercalate ", " vs ++ ")")
+                  |]
+          top = [citems|
                   LOG(LOG_INFO, $string:(name ++ " here\n"));
                   typename PtrOrLiteral *$id:argp = &(stgGetStackArgp()->payload[0]);
                 |]
           bot = [citems| STGRETURN0();|]
           items = if (ypn /= Yes ) then top ++ inline ++ bot else top ++ inline
-          cfunc = [cfun|
-                      typename FnPtr $id:("fun_" ++ name)()
-                      {
-                        $items:items
-                      }
-                    |]
+          f = [cfun|
+                typename FnPtr $id:("fun_" ++ name)()
+                {
+                  $items:items
+                }
+              |]
+          cfunc = [comm1, comm2, [cedecl|$func:f|]]
       return $ (cforward, cfunc) : funcs
       
 cgo env (PAP it f as name) = return []
@@ -261,8 +268,8 @@ cgo env o@(THUNK it e name) =
       cforward = [cedecl| typename FnPtr $id:("thunk_" ++ name)();|]
   in do
     ((inline,ypn), funcs) <- cge env' e
-    let top = [citems|
-                $comment:("// " ++ show (ctyp it))
+    let comm = [cedecl|$esc:("// " ++ show (ctyp it))|]
+        top = [citems|
                 LOG(LOG_INFO, $string:(name ++ " here\n"));
                 $comment:("// access free vars through frame pointer for GC safety")
                 $comment:("// is this really necessary???");
@@ -275,12 +282,13 @@ cgo env o@(THUNK it e name) =
               |]
         bot = [citems| STGRETURN0();|]
         items = if (ypn /= Yes ) then top ++ inline ++ bot else top ++ inline
-        cfunc = [cfun|
-                    typename FnPtr $id:("thunk_" ++ name)()
-                    {
-                      $items:items
-                    }
-                  |]
+        f = [cfun|
+              typename FnPtr $id:("thunk_" ++ name)()
+              {
+                $items:items
+              }
+            |]
+        cfunc = [comm, [cedecl|$func:f|]]
     return $ (cforward, cfunc) : funcs
 
 cgo env (BLACKHOLE {}) = return []
@@ -326,7 +334,7 @@ stgCurValUArgType ty = if useArgType
 
 cge :: Env
   -> Expr InfoTab
-  -> State Int (([BlockItem], YPN), [(Definition, Func)])
+  -> State Int (([BlockItem], YPN), [(Definition, CFun)])
 cge env e@(EAtom it a) =
   let (expr, comm) = cga env a
       inline =
@@ -419,9 +427,9 @@ cge env ecase@(ECase _ e a) =
                  
 
 cgeInline :: Env -> Bool
-     -> ([BlockItem], [(Definition, Func)])
+     -> ([BlockItem], [(Definition, CFun)])
      -> Alts InfoTab
-     -> State Int (([BlockItem], YPN), [(Definition, Func)])
+     -> State Int (([BlockItem], YPN), [(Definition, CFun)])
 cgeInline env boxed (ecode, efunc) a@(Alts italts alts aname) =
   let pre = [citems| $comment:("// inline:  scrutinee does not STGJUMP or STGRETURN"); |]
   in do
@@ -431,12 +439,13 @@ cgeInline env boxed (ecode, efunc) a@(Alts italts alts aname) =
 
 
 cgaltsInline :: Env -> Alts InfoTab -> Bool
-     -> State Int (([BlockItem], YPN), [(Definition, Func)])
+     -> State Int (([BlockItem], YPN), [(Definition, CFun)])
 cgaltsInline env a@(Alts it alts name) boxed =
     let contName = "ccont_" ++ name
         scrutPtr = "scrutPtr_" ++ name
         phonyforward = [cedecl| typename FnPtr $id:name();|]
-        phonyfun = [cfun| typename FnPtr $id:name() {}|]
+        f = [cfun| typename FnPtr $id:name() {}|]
+        phonyfun = [[cedecl|$func:f|]]
         switch = length alts > 1
      in do
        codefuncs <- mapM (cgalt env switch scrutPtr) alts
@@ -478,9 +487,9 @@ cgaltsInline env a@(Alts it alts name) boxed =
        return ((its, myypn), (phonyforward, phonyfun) : concat funcss)
 
 cgeNoInline :: Env -> Bool
-    -> ([BlockItem], [(Definition, Func)])
+    -> ([BlockItem], [(Definition, CFun)])
     -> Alts InfoTab
-    -> State Int (([BlockItem], YPN), [(Definition, Func)])
+    -> State Int (([BlockItem], YPN), [(Definition, CFun)])
 cgeNoInline env boxed (ecode, efunc) a@(Alts italts alts aname) =
     let contName = "ccont_" ++ aname
         its = [citems|
@@ -508,7 +517,7 @@ cgeNoInline env boxed (ecode, efunc) a@(Alts italts alts aname) =
 
 -- ADef only or unary sum => no C switch
 cgalts :: Env -> Alts InfoTab -> Bool
-  -> State Int ([BlockItem], [(Definition, Func)])
+  -> State Int ([BlockItem], [(Definition, CFun)])
 
 cgalts env (Alts it alts name) boxed =
     let contName = "ccont_" ++ name
@@ -551,18 +560,18 @@ cgalts env (Alts it alts name) boxed =
                         }
                       |]
                   else [citems| $items:(concat codes) |])
+      let comm = [cedecl| $esc:("//" ++ show (ctyp it))|]
       let fun = [cfun|
                    typename FnPtr $id:name()
                    {
-                     $comment:("//" ++ show (ctyp it) )
                      $items:its
                    }
                 |]
-
-      return ([], (cforward, fun) : concat funcss)
+      let cfunc = [comm, [cedecl| $func:fun |]]
+      return ([], (cforward, cfunc) : concat funcss)
 
 cgalt:: Env -> Bool -> String -> Alt InfoTab
-  -> State Int (([BlockItem], YPN), [(Definition, Func)])
+  -> State Int (([BlockItem], YPN), [(Definition, CFun)])
 cgalt env switch fvp (ACon it c vs e) =
   let DataCon c' ms = luDCon c (cmap it)
       (_,_,perm) = partPerm isBoxed ms
