@@ -231,7 +231,9 @@ void gc(void) {
   //LOG(LOG_INFO, "GARBAGE COLLECTION DISABLED in gc.c/gc(void)\n"); return;
 
   //heapCheck(); // disable untill it passes tests
-
+  Obj **array = mallocArrayOfAllObjects();
+  addObjects(array);
+  
   size_t before = stgHP - stgHeap;
 
   if (EXTRA_CHECKS_GC) {
