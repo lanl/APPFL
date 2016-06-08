@@ -231,8 +231,10 @@ void gc(void) {
   //LOG(LOG_INFO, "GARBAGE COLLECTION DISABLED in gc.c/gc(void)\n"); return;
 
   //heapCheck(); // disable untill it passes tests
-  Obj **array = mallocArrayOfAllObjects();
-  addObjects(array);
+  
+  //successfully made about 1400 test segfault :)
+  //Obj **array = mallocArrayOfAllObjects();
+  //addObjects(array);
   
   size_t before = stgHP - stgHeap;
 
