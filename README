@@ -6,3 +6,6 @@ but the semantics support varying degrees of strictness necessary for
 automatic parallelization.
 
 This code is unclassified and has been assigned LA-CC-15-073.
+
+Note that this is currently just a snapshot of a branch of a repository hosted
+elsewhere and is not regularly kept up to date.
