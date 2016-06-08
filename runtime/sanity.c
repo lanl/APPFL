@@ -77,7 +77,9 @@ void addObjects (Obj **objArray) {
     if (flag) {
       continue;
     }
-  
+ 
+    //TODO: figure out why boxed count is always 0, that's most likely why it's segfaulting
+
     //copy all boxed values, or pointers to objects, into the
     //array of objects
     printf("j = %d\n", j);
