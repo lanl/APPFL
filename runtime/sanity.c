@@ -11,15 +11,16 @@
 
 #include "sanity.h"
 
+//number of heap objects. a safe overestimate is (stgHP - stgHeap) / sizeof(Obj)
+#define numHeapObjs (((char *)stgHP - (char *)stgHeap) / sizeof(Obj))
+//number of static heap objects
+#define numStaticHeapObjs stgStatObjCount
+
 /**
  *this function creates an array of pointers to all of the objects.
  */
 Obj **mallocArrayOfAllObjects() {
 
-  //number of heap objects. a safe overestimate is (stgHP - stgHeap) * sizeof(Obj)
-  size_t numHeapObjs = (stgHP - stgHeap) * sizeof(Obj);
-  //number of static heap objects
-  size_t numStaticHeapObjs = stgStatObjCount;
   //the total array size will be the number of heap objects + the number of static heap objects
   //times size the of an object pointer
   Obj **objArray = malloc (sizeof(Obj *) * (numHeapObjs + numStaticHeapObjs));
@@ -34,14 +35,19 @@ Obj **mallocArrayOfAllObjects() {
  */
 void addObjects (Obj **objArray) {
 
-  int i;
+  //i stays at the beginning of the array, 
+  //j moves to keep track of how many objects have been added
+  //k is for going through the payload boxed objects
+  //flag is for forced continuation in while loop
+  int i, j, k, flag;
+  
   //mark the end of the static heap object range
-  //int end = stgStatObjCount;
+  int end = stgStatObjCount;
 
   //first add static heap objects
   for (i = 0; i < stgStatObjCount; i++) {
     // before you add the object, make sure that the pointer to the 
-    //object itself is valid
+    // object itself is valid
     sanityCheckSingleSHO(stgStatObj[i]);
     objArray[i] = stgStatObj[i];
   }
@@ -49,15 +55,49 @@ void addObjects (Obj **objArray) {
   //now we have to check the payloads of the static heap objects
   //and add them to the part of the array which isn't comprised
   //of static heap objects
-  i = 0;
-
   //TODO add payload objects to end of array
 
-  /*while (i != end) {
-    Obj *temp_payload = objArray[i]->payload->op;
+  //temp -> payload[0].op
+  //end + i
+  //boxed count, dumbass
+  j = 0;
+  while (j != end) {
+   
+    flag = 0;
+    //search the range of added objects to see if the current object
+    //you're adding is already there
+    for (i = 0; i < j; i++) {
+      if (objArray[i] == objArray[j]) {
+        flag = 1;
+        break;
+      }
+    }
+    //if you found the object in the array already, you don't want to add it again
+    //duplicates will screw up malloc
+    if (flag) {
+      continue;
+    }
+ 
+    //TODO: figure out why boxed count is always 0, that's most likely why it's segfaulting
+
+    //copy all boxed values, or pointers to objects, into the
+    //array of objects
+    printf("j = %d\n", j);
+    printf("boxed count for this object = %d\n", getInfoPtr(objArray[j])->layoutInfo.boxedCount);
+    for (k = 0; k < objArray[j]->_infoPtr->layoutInfo.boxedCount; k++) {
+      objArray[end + k] = objArray[j]->payload[k].op;
+    }
+    printf("k = %d\n", k);
+    //move high water mark
+    end += (k + 1);
+    printf("end = %d\n", end);
+    j++;
+    /*Obj *temp_payload = objArray[i]->payload[0].op;
     sanityCheckObj(temp_payload);
-    i++;
-  }*/
+    if (temp_payload != NULL) {
+      objArray[end + i] = temp_payload;
+    }*/
+  }
 }
 
 /**
@@ -77,7 +117,7 @@ void sanityCheckSingleSHO (Obj *obj) {
  *three simple checks for any obj. make sure it's not null, has the right size, and is aligned
  */
 void sanityCheckObj (Obj *obj) {
-  
+
   if (obj == NULL) {
     LOG(LOG_FATAL, "problem: pointer to object is wonky");
     exit(1);
