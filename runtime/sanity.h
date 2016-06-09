@@ -6,6 +6,8 @@
 
 Obj **mallocArrayOfAllObjects();
 void addObjects (Obj **objArray);
+void printObjInfo (Obj *obj);
+char *objTypeToString(Obj *obj);
 void sanityCheckSingleSHO (Obj *obj);
 void sanityCheckObj (Obj *obj);
 bool checkPtr8BitAligned (Obj *obj);

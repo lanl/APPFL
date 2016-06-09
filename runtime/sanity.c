@@ -13,8 +13,12 @@
 
 //number of heap objects. a safe overestimate is (stgHP - stgHeap) / sizeof(Obj)
 #define numHeapObjs (((char *)stgHP - (char *)stgHeap) / sizeof(Obj))
+
 //number of static heap objects
 #define numStaticHeapObjs stgStatObjCount
+
+//macro for fprintf
+#define PRINTF(...) fprintf(stderr, __VA_ARGS__)
 
 /**
  *this function creates an array of pointers to all of the objects.
@@ -38,8 +42,8 @@ void addObjects (Obj **objArray) {
   //i stays at the beginning of the array, 
   //j moves to keep track of how many objects have been added
   //k is for going through the payload boxed objects
-  //flag is for forced continuation in while loop
-  int i, j, k, flag;
+  //dup_exists is for forced continuation in while loop so as to not copy duplicate objects over
+  int i, j, k, dup_exists;
   
   //mark the end of the static heap object range
   int end = stgStatObjCount;
@@ -55,49 +59,105 @@ void addObjects (Obj **objArray) {
   //now we have to check the payloads of the static heap objects
   //and add them to the part of the array which isn't comprised
   //of static heap objects
-  //TODO add payload objects to end of array
 
-  //temp -> payload[0].op
-  //end + i
-  //boxed count, dumbass
   j = 0;
+
+  PRINTF("\nstgStatObjCount: %zd\n\n", stgStatObjCount);
   while (j != end) {
    
-    flag = 0;
+    //TODO: wtf is going on
+
+    //why you're doing this:
+    //you just wanted to make sure that the first chunk of the array
+    //was the static heap objects loaded correctly
+    //that's why the last j+1 should match stgStatObjCount
+
+
+    //current dilemma: 
+    //apparently, everything you've added is a SHO
+    //and you always get two more SHO's than stgStatObjCount
+    //?
+
+    if (isSHO(objArray[j])) {
+      PRINTF("SHO #%d", j+1);
+    }
+
+    printObjInfo(objArray[j]);
+    
+    //if there are no boxed variables to copy over, move to the next
+    //object in the array and continue
+    if (objArray[j]->_infoPtr->layoutInfo.boxedCount == 0) {
+      j++;
+      continue;
+    }
+    
+    dup_exists = 0;
     //search the range of added objects to see if the current object
     //you're adding is already there
     for (i = 0; i < j; i++) {
       if (objArray[i] == objArray[j]) {
-        flag = 1;
+        dup_exists = 1;
         break;
       }
     }
     //if you found the object in the array already, you don't want to add it again
     //duplicates will screw up malloc
-    if (flag) {
+    if (dup_exists) {
       continue;
     }
- 
-    //TODO: figure out why boxed count is always 0, that's most likely why it's segfaulting
-
+    
+    //get infoTab pointer for current object
+    InfoTab *itp = getInfoPtr(objArray[j]);
+    
     //copy all boxed values, or pointers to objects, into the
     //array of objects
-    printf("j = %d\n", j);
-    printf("boxed count for this object = %d\n", getInfoPtr(objArray[j])->layoutInfo.boxedCount);
-    for (k = 0; k < objArray[j]->_infoPtr->layoutInfo.boxedCount; k++) {
+    for (k = 0; k < itp->layoutInfo.boxedCount; k++) {
       objArray[end + k] = objArray[j]->payload[k].op;
     }
-    printf("k = %d\n", k);
+    
     //move high water mark
     end += (k + 1);
-    printf("end = %d\n", end);
+    
     j++;
-    /*Obj *temp_payload = objArray[i]->payload[0].op;
-    sanityCheckObj(temp_payload);
-    if (temp_payload != NULL) {
-      objArray[end + i] = temp_payload;
-    }*/
   }
+}
+
+/**
+ *printing stuff for debugging
+ */
+void printObjInfo (Obj *obj) {
+  PRINTF("\nobject identifier: %s\n", obj->ident);
+  PRINTF("object name: %s\n", obj->_infoPtr->name);
+  PRINTF("object type: %s\n", objTypeToString(obj));
+  PRINTF("object boxed count: %d\n", obj->_infoPtr->layoutInfo.boxedCount);
+  PRINTF("object unboxed count: %d\n\n", obj->_infoPtr->layoutInfo.unboxedCount);
+}
+
+/**
+ *convert enum ObjType to a string
+ */
+char *objTypeToString(Obj *obj) {
+
+  switch (getObjType(obj)) {
+    case PHONYSTARTOBJ:
+      return "PHONYSTARTOBJ";
+    case FUN:
+      return "FUN";
+    case PAP:
+      return "PAP";
+    case CON:
+      return "CON";
+    case THUNK:
+      return "THUNK";
+    case BLACKHOLE:
+      return "BLACKHOLE";
+    case INDIRECT:
+      return "INDIRECT";
+    case PHONYENDOBJ:
+      return "PHONYENDOBJ";
+  }
+
+  return "BAD OBJTYPE";
 }
 
 /**
