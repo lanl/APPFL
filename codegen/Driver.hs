@@ -258,9 +258,15 @@ codegener inp v mhs = let (tycons, objs) = heapchecker mhs inp
                           infotab = showITs objs
                           (shoForward, shoDef) = showSHOs objs
                           (funForwards, funDefs) = cgObjs objs stgRTSGlobals
-                          defs =  header : funForwards ++ typeEnums ++ infotab
-                                 ++ shoForward ++ shoDef ++ concat funDefs
-                                 ++ footer v
+                          (stgStatObjCount, stgStatObj) = shos objs
+                          defs =  header : funForwards ++ 
+                                  typeEnums ++ 
+                                  infotab ++
+                                  shoForward ++ 
+                                  shoDef ++ 
+                                  [ stgStatObjCount, stgStatObj ] ++
+                                  concat funDefs ++
+                                  footer v
                           code = [cunit|$edecls:defs |]
                  in pp code
 
