@@ -37,6 +37,8 @@ Obj **mallocArrayOfAllObjects() {
  * rest of the objects will be the heap objects
  * @param objArray for the array of object pointers that the function works with
  */
+// kei:  if you're thinking about it an array of pointers, not a pointer to a pointer,
+// kei:  write it that way, i.e. Obj *objArray[]
 void addObjects (Obj **objArray) {
 
   //i stays at the beginning of the array, 
@@ -94,6 +96,9 @@ void addObjects (Obj **objArray) {
     dup_exists = 0;
     //search the range of added objects to see if the current object
     //you're adding is already there
+    // kei:  at this point your logic no longer makes any sense
+    // kei:  what is it you think you're adding here?
+    // kei:  it's the payload items of objArray[j] that you're supposed to be adding
     for (i = 0; i < j; i++) {
       if (objArray[i] == objArray[j]) {
         dup_exists = 1;
@@ -111,6 +116,7 @@ void addObjects (Obj **objArray) {
     
     //copy all boxed values, or pointers to objects, into the
     //array of objects
+    //kei:  NO, only copy those of these that aren't already in objArray
     for (k = 0; k < itp->layoutInfo.boxedCount; k++) {
       objArray[end + k] = objArray[j]->payload[k].op;
     }
@@ -136,6 +142,7 @@ void printObjInfo (Obj *obj) {
 /**
  *convert enum ObjType to a string
  */
+// kei:  there's an array defined somewhere that does this for you
 char *objTypeToString(Obj *obj) {
 
   switch (getObjType(obj)) {
@@ -199,6 +206,8 @@ void sanityCheckObj (Obj *obj) {
  */
 bool checkPtr8BitAligned (Obj *obj) {
   // make sure the object is aligned
+  // kei:  if (b) then return true; return false;
+  // kei:  if (b) then return true; else return false;
   if ((uintptr_t)obj % OBJ_ALIGN != 0) 
     return false;
   return true;
@@ -207,6 +216,7 @@ bool checkPtr8BitAligned (Obj *obj) {
 /**
  *makes sure the size of the object is not 
  */
+// kei:  this isn't checking obj at all, what is this checking?
 bool checkPtrCorrectSize (Obj *obj) {
   //make sure the pointer is of a size which is a multiple of OBJ_ALIGN
   if ((sizeof(Obj) % OBJ_ALIGN) != 0)
