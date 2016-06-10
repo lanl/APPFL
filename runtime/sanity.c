@@ -37,16 +37,14 @@ Obj **mallocArrayOfAllObjects() {
  * rest of the objects will be the heap objects
  * @param objArray for the array of object pointers that the function works with
  */
-// kei:  if you're thinking about it an array of pointers, not a pointer to a pointer,
-// kei:  write it that way, i.e. Obj *objArray[]
-void addObjects (Obj **objArray) {
+void addObjects (Obj *objArray[]) {
 
   //i stays at the beginning of the array, 
   //j moves to keep track of how many objects have been added
   //k is for going through the payload boxed objects
   //dup_exists is for forced continuation in while loop so as to not copy duplicate objects over
-  int i, j, k, dup_exists;
-  
+  int i, j, k;
+
   //mark the end of the static heap object range
   int end = stgStatObjCount;
 
@@ -56,76 +54,92 @@ void addObjects (Obj **objArray) {
     // object itself is valid
     sanityCheckSingleSHO(stgStatObj[i]);
     objArray[i] = stgStatObj[i];
+    printObjInfo(objArray[i]);
   }
-
+   
+  //outer (i) loop traverses the objarray by object
+  for (i = 0; i < end; i++) {    
+    //if the object doesn't have boxed variables in it's payload
+    //go to the next one
+    if (objArray[i]->_infoPtr->layoutInfo.boxedCount == 0) {
+      continue;
+    }
+    //inner loop (j) does the same thing except checks each object per iteration of the outer loop
+    for (j = 0; j < end; j++) {      
+      //innermost loop (k) checks each payload element of the jth object
+      for (k = 0; k < objArray[i]->_infoPtr->layoutInfo.boxedCount; k++) {
+        //if you've moved through all the objects using the jth index,
+        //this means the kth payload element is unique and should be added
+        //to the objarray
+        if (j + 1 == end) {
+          objArray[end] = objArray[i]->payload[k].op;
+          end++;
+          break;
+        }
+        //if current payload index's object pointer matches the one in the object array, check the next payload item
+        //and set i back to 0
+        if (objArray[j] == objArray[j]->payload[k].op) {
+          j = 0;
+          continue;
+        }
+        //otherwise, if they don't match, check the current kth payload element
+        //with the next ith object pointer in the objArray
+        else if (objArray[j] != objArray[j]->payload[k].op) {
+          k--;
+          j++;
+          continue;
+        }
+      }
+    }
+  }
   //now we have to check the payloads of the static heap objects
   //and add them to the part of the array which isn't comprised
   //of static heap objects
 
-  j = 0;
+  /*j = 0;
 
-  PRINTF("\nstgStatObjCount: %zd\n\n", stgStatObjCount);
-  while (j != end) {
-   
-    //TODO: wtf is going on
-
-    //why you're doing this:
-    //you just wanted to make sure that the first chunk of the array
-    //was the static heap objects loaded correctly
-    //that's why the last j+1 should match stgStatObjCount
-
-
-    //current dilemma: 
-    //apparently, everything you've added is a SHO
-    //and you always get two more SHO's than stgStatObjCount
-    //?
-
-    if (isSHO(objArray[j])) {
-      PRINTF("SHO #%d", j+1);
-    }
+    PRINTF("\nstgStatObjCount: %zd\n\n", stgStatObjCount);
+    while (j != end) {
 
     printObjInfo(objArray[j]);
-    
-    //if there are no boxed variables to copy over, move to the next
-    //object in the array and continue
-    if (objArray[j]->_infoPtr->layoutInfo.boxedCount == 0) {
-      j++;
-      continue;
-    }
-    
+
+
     dup_exists = 0;
-    //search the range of added objects to see if the current object
-    //you're adding is already there
-    // kei:  at this point your logic no longer makes any sense
-    // kei:  what is it you think you're adding here?
-    // kei:  it's the payload items of objArray[j] that you're supposed to be adding
-    for (i = 0; i < j; i++) {
-      if (objArray[i] == objArray[j]) {
-        dup_exists = 1;
-        break;
-      }
-    }
-    //if you found the object in the array already, you don't want to add it again
-    //duplicates will screw up malloc
-    if (dup_exists) {
-      continue;
-    }
-    
-    //get infoTab pointer for current object
-    InfoTab *itp = getInfoPtr(objArray[j]);
-    
-    //copy all boxed values, or pointers to objects, into the
-    //array of objects
-    //kei:  NO, only copy those of these that aren't already in objArray
-    for (k = 0; k < itp->layoutInfo.boxedCount; k++) {
-      objArray[end + k] = objArray[j]->payload[k].op;
-    }
-    
-    //move high water mark
-    end += (k + 1);
-    
-    j++;
+  //search the range of added objects to see if the current object
+  //you're adding is already there
+
+  // kei:  at this point your logic no longer makes any sense
+  // kei:  what is it you think you're adding here?
+  // kei:  it's the payload items of objArray[j] that you're supposed to be adding
+
+  for (i = 0; i < j; i++) {
+  if (objArray[i] == objArray[j]) {
+  dup_exists = 1;
+  break;
   }
+  }
+
+  //if you found the object in the array already, you don't want to add it again
+  //duplicates will screw up malloc
+  if (dup_exists) {
+  continue;
+  }
+
+  //get infoTab pointer for current object
+  InfoTab *itp = getInfoPtr(objArray[j]);
+
+  //copy all boxed values, or pointers to objects, into the
+  //array of objects
+  //kei:  NO, only copy those of these that aren't already in objArray
+  for (k = 0; k < itp->layoutInfo.boxedCount; k++) {
+  objArray[end + k] = objArray[j]->payload[k].op;
+  }
+
+  //move high water mark
+  //end += (k + 1);
+
+  j++;*/
+  //}
 }
 
 /**
@@ -142,7 +156,6 @@ void printObjInfo (Obj *obj) {
 /**
  *convert enum ObjType to a string
  */
-// kei:  there's an array defined somewhere that does this for you
 char *objTypeToString(Obj *obj) {
 
   switch (getObjType(obj)) {
@@ -206,8 +219,6 @@ void sanityCheckObj (Obj *obj) {
  */
 bool checkPtr8BitAligned (Obj *obj) {
   // make sure the object is aligned
-  // kei:  if (b) then return true; return false;
-  // kei:  if (b) then return true; else return false;
   if ((uintptr_t)obj % OBJ_ALIGN != 0) 
     return false;
   return true;
@@ -216,10 +227,9 @@ bool checkPtr8BitAligned (Obj *obj) {
 /**
  *makes sure the size of the object is not 
  */
-// kei:  this isn't checking obj at all, what is this checking?
 bool checkPtrCorrectSize (Obj *obj) {
   //make sure the pointer is of a size which is a multiple of OBJ_ALIGN
-  if ((sizeof(Obj) % OBJ_ALIGN) != 0)
+  if ((sizeof(obj) % OBJ_ALIGN) != 0)
     return false;
   return true;
 }
