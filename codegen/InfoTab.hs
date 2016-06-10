@@ -580,6 +580,17 @@ showITinit it = Nothing
 
 showITs :: ITsOf a [InfoTab] => a -> [Definition]
 showITs os = catMaybes (map showIT $ itsOf os)
+{-
+-- quick hack to get names as well
+let its = itsOf os
+                 maybeDefs = map showIT its
+                 zippedMaybe = zip maybeDefs (map name its)
+                 zipped = [(itDef, name) | (Just itDef, name) <- zippedMaybe]
+                 (itDefs, names) = unzip zipped
+                 inits = [[cinit| & $id:name |] | name <- names ]
+                 compoundInit = [cinit| { $inits:inits } |]
+                 cedecl = [cedecl| typename
+-}
 
 -- MODIFIED 6.30 - David ----------------------------------------
 -- code below replaces code from ConMaps.hs to set the CMaps in
