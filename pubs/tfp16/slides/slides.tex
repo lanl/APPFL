@@ -11,7 +11,7 @@
 
 \usepackage{graphicx}
 
-\title{Automatic Parallelization and Transparent Fault Tolerance (project in progress)}
+\title{Automatic Parallelization and Transparent Fault Tolerance}
 %\subtitle{(Project article)}
 \author{Kei Davis, Dean Prichard, \\\emph{David Ringo}, Loren Anderson, \\and Jacob Marks\\ \ \\}
 %\date[4/26/2016]{Some Random Meeting \\ April 26, 2016}
@@ -26,28 +26,38 @@
 
 \begin{frame}
 \frametitle{Scientific Computing in our Microcosm}
-Local evolution of scientific computing
+\only<1-9>{\textbf{Local evolution of scientific computing}}
 \begin{itemize}
-  \item Serial Fortran programs
-  \item C
-  \item Vendor communication libraries
-  \item MPI everywhere (inter- and intra-node)
-  \item C++
-  \item MPI+X, X is Pthreads, OpenMP, OpenCL, CUDA, etc.
-  \item Parallel runtimes, e.g., Cilk++, Intel Threading Building Blocks, Stanford's Legion, etc.
+  \item<2-9> Serial Fortran programs
+    \\\only<2>{\ \ Simple, imperative.}
+  \item<3-9> C
+    \\\only<3>{\ \ Similar. More pleasant syntax (Free form source code!)}
+  \item<4-9> Vendor communication libraries
+    \\\only<4>{\ \  Non-portable, but parallel}
+  \item<5-9> MPI everywhere (inter- and intra-node)
+    \\\only<5>{\ \ De facto standard emerges to solve portability}
+  \item<6-9> C++
+    \\\only<6>{\ \ Object oriented goodness (and more!)}
+  \item<7-9> MPI+\{Pthreads, OpenMP, OpenCL, CUDA, etc\}
+    \\\only<7>{\ \ We augment MPI now with other explicit parallel models}
+  \item<8-9> Parallel runtimes, e.g., Cilk Plus, Intel Threading Building Blocks,
+    Stanford's Legion, etc.
+    \\\only<8>{\ \ Automated scheduling for irregularly shaped problems. Task-based}
 \end{itemize}
-Currently MPI+threading model dominates.
+\only<9>{%
+\textbf{
+Currently MPI+threading model dominates.}}
+
 \end{frame}
+
 
 \begin{frame}
 \frametitle{In Search of Automatic Parallelization\\
 \emph{or at least automatic scheduling}}
   \begin{figure}
     \begin{center}
-%      \fbox{
       \includegraphics[width=0.95\linewidth,height=1in]%
         {figures/S3Dtaskgraph.png}~\footnote{Courtesy Stanford Legion project}
-%}
 \\[2.0ex]  % vertical space
       S3D task dependency, combustion chemistry calculation
     \end{center}
@@ -55,6 +65,27 @@ Currently MPI+threading model dominates.
 Simplest interesting chemistry, task graph much larger with more complex reactants.
 \vspace{0.1in}
 Schedule by hand?
+\end{frame}
+
+
+
+\begin{frame}
+  \frametitle{Transparent Fault Tolerance?}  
+
+  \onslide<1->{%
+    Processor clock speeds stopped growing a decade ago
+    \\\vspace{0.1in}}
+
+  \onslide<2->{%
+    Solution? More processors.
+    \\\vspace{0.1in}}
+  
+  \onslide<3->{%
+    But, with more processors comes smaller Mean Time to Failure.
+    \\\vspace{0.1in}}
+
+  \onslide<4->{%
+    Obviously, we can't just hope to get lucky on a months-long calculation}
 \end{frame}
 
 
@@ -70,6 +101,7 @@ Schedule by hand?
       \item Resume computation.
       \end{enumerate}
     \end{column}
+    \onslide<2->{%
     \begin{column}[T]{.48\linewidth}
       Restart:
       \begin{enumerate}
@@ -77,14 +109,15 @@ Schedule by hand?
       \item Identify last valid (complete) checkpoint image;
       \item Re-launch application specifying checkpoint image.
       \end{enumerate}
-    \end{column}
+    \end{column}}
   \end{columns}
 \vspace{0.1in}
-General claim:  ``data movement costs more energy than computation.''
-
-Fact 1: In C/R, idle processors may cost more energy than data movement.
-
-Fact 2:  C/R isn't scaling.
+\onslide<3>{%
+Inherent problems:
+\begin{itemize}
+\item Idle processors during relatively slow writes burn tight energy budgets.
+\item MTTF is shrinking and C/R isn't scaling.
+\end{itemize}}
 \end{frame}
 
 
@@ -95,30 +128,39 @@ have some understanding of meaning and virtue of \emph{pure functional}, and eve
 in Haskell programming.
 \vspace{0.1in}
 
-\emph{In a multi-100,000-line program, do not temporarily alter the global speed-of-light
-`constant' variable.}
-\vspace{0.1in}
+\onslide<2->{%
+  They understand:\\
+  \emph{In a multi-100,000-line program, do not temporarily alter the global speed-of-light
+    `constant' variable.}
+  \vspace{0.1in}}
 
-\emph{But}, these are not computer scientists:  
-\begin{itemize}
-\item Passing functions as arguments is familiar (since early Fortran);
-\item Implicit space leaks are confusing;
-\item Non-strict evaluation is largely irrelevant, strictness annotations are unintuitive.
-\item Unboxed primitives and arrays of the same (unboxed vector) are the primary data.
-\end{itemize}
+\onslide<3->{%
+  \emph{But}, these are not computer scientists:
+  \begin{itemize}
+  \item Passing functions as arguments is familiar (since early Fortran).
+  \item Implicit space leaks are confusing.
+  \item Non-strict evaluation is largely irrelevant
+  \item Unboxed primitives and arrays of the same (unboxed vector) are the primary data.
+  \end{itemize}}
 \end{frame}
+
 
 \begin{frame}
 \frametitle{Claimed Trends}
-Trends in functional programming
+\textbf{Trends in functional programming}
 \begin{itemize}
-  \item Appreciation of the virtues of strict-by-default semantics;
-  \item Transparent fault tolerance.
+  \item<1-> Appreciation of the virtues of strict-by-default semantics.
+    \\\only<1>{\ \ GHC Strict and StrictData for HPC}
+  \item<2-> Transparent fault tolerance.
+    \\\only<2>{\ \ Stewart's HdpH-RS}
 \end{itemize}
-Trends in scientific computing
+\onslide<3->{\textbf{Trends in scientific computing}}
 \begin{itemize}
-  \item Implementation of pure functional computational concepts/components.
-  \item Recognition that checkpoint/restart is increasingly intractable and unscalable.
+  \item<4-> Implementation of pure functional computational concepts/components.    
+  \item<4-> Recognition that checkpoint/restart is increasingly intractable and unscalable.
+    \\\only<4>{%
+      \ \ Legion is ``pure with respect to $X$''\\
+      \ \ Also adding task-restarting for fault-tolerance}
 \end{itemize}
 \end{frame}
 
@@ -126,19 +168,25 @@ Trends in scientific computing
 \begin{frame}
 \frametitle{Non-strictness/laziness Anathema to Parallelism}
 (Semantic) function strictness $\implies$ \\
-\ \ \ function arguments can be evaluated early, in parallel
-
+\ \ \ function arguments can be evaluated early, in parallel\\
+\ \ \ How can we achieve this?
 \begin{itemize}
-  \item Strictness analysis
-  \item Bang patterns
-  \item Par/pseq, other specifications
-  \item Speculative evaluation
-  \item \ldots
-  \item \emph{Strict(er) default semantics}
+  \item<2-> Strictness analysis
+    \\\only<2>{\ \ Can be inconclusive.}
+  \item<3-> Bang patterns in bindings
+    \\\only<3>{\ \ Prone to error. Hard to read.}
+  \item<4-> Par/pseq, other specifications on expressions
+    \\\only<4>{\ \ Ditto.}
+  \item<5-> Speculative evaluation
+    \\\only<5>{\ \ Difficult to get right without annotation.}
+  \item<6-> \ldots
+  \item<7-> \emph{Strict(er) default semantics}
 \end{itemize}
+\onslide<8->{%
 Similarly constructors.
 \\\vspace{0.1in}
 Update:  Strict \texttt{let} bindings.
+}
 \end{frame}
 
 
@@ -146,7 +194,7 @@ Update:  Strict \texttt{let} bindings.
   \frametitle{Musings}
   Suppose we had a strict(-er) pure functional language implementation than Haskell?
   \begin{itemize}
-  \item Could we keep a large number of hardware threads (e.g., up to 256) busy with
+  \item<1-> Could we keep a large number of hardware threads (e.g., up to 256) busy with
     \emph{implicit} parallelism?
     \begin{itemize}
     \item With what parallel efficiency?
@@ -154,13 +202,14 @@ Update:  Strict \texttt{let} bindings.
       \item With different scheduling strategies?
       \end{itemize}
     \end{itemize}
-  \item How often do new functional programmers/old scientific programmers
+  \item<2-> How often do new functional programmers/old scientific programmers
     make essential use of non-strictness?  \emph{(very rarely)}
     \begin{itemize}
     \item Laziness? \emph{(never)}
     \end{itemize}
   \end{itemize}
 \end{frame}
+
 
 \begin{frame}
 \frametitle{Project} 
@@ -169,23 +218,28 @@ functional language and runtime system with which we can experiment with
 automatic parallelization strategies with varying degrees of language
 strictness, and secondarily, with mechanisms for transparent fault tolerance.
 \begin{enumerate}
-\item Haskell to STG (or Core) via GHC \emph{(todo)};
-\item STG to C \emph{(serial done, parallel in progress)};
-\item Fault tolerance \emph{TBD};
-\item Mini-Haskell front end (done).
+\item<2-> Haskell to STG (or Core) via GHC \emph{(todo)};
+  \\\only<2>{%
+    \ \ STG and Core are higher-order polymorphic functional languages in their own right.}
+\item<3-> STG to C \emph{(serial done, parallel in progress)};
+  \\\only<3>{%
+    \ \ Fairly faithful to STG papers}
+\item<4-> Mini-Haskell front end (done).
+  \\\only<4>{%
+    \ \ Close to ML, syntatically}
+\item<5-> Fault tolerance \emph{TBD};
 \end{enumerate}
-STG and Core are higher-order polymorphic functional languages in their own right.
 \end{frame}
 
 
 \begin{frame}
 \frametitle{Reinventing the wheel?}  Why not use Manticore, MultiMLton, F\#,
-multicore OCaml, etc., or even GHC in toto?
+multicore OCaml, SAC etc., \onslide<3->{or even GHC in toto?}
 \begin{itemize}
-  \item Very light weight:  easy to instrument, modify;
-  \item Know exactly what is going on under the hood;
-  \item There exist conduits for getting student interns up to speed inexpensively;
-  \item We have a small cadre of scientists already interested in Haskell/GHC.
+  \item<2-> We have a small cadre of scientists already interested in Haskell/GHC.
+  \item<3-> Very light weight:  easy to instrument, modify;
+  \item<4-> Know exactly what is going on under the hood;
+  \item<5-> There exist conduits for getting student interns up to speed inexpensively;
 \end{itemize}
 \end{frame}
 
@@ -209,16 +263,22 @@ SPJ identifies defines the term \emph{code label} as something that can be
 \begin{frame}[fragile] % for verbatim
 \frametitle{All the myriad ways in C}
 \begin{itemize}
-\item setjmp/longjmp;
-\item giant switch;
-\item computed goto (gcc extension);
-\item trampoline, the simplest of which parameterless C functions return the
+\item<1-> setjmp/longjmp;
+\only<1>{Significant overhead and bookkeeping}
+\item<2-> giant switch;
+\only<2>{Ugly hack, not really linkable}
+\item<3-> computed goto (gcc extension);
+\only<3>{Limited to gcc}
+\item<4-> trampoline, the simplest of which parameterless C functions return the
   address (function pointer) of where to go to next:
 \begin{verbatim}
       while (1) f = (*f)();
 \end{verbatim}
-\item implement an intermediate language, e.g., C-{}-/Cmm, where tail call is primitive;
-\item generate assembly code, e.g., LLVM, directly.
+\only<4>{Our intial implementation used this approach}
+\item<5-> implement an intermediate language, e.g., C-{}-/Cmm, where tail call is primitive;
+\only<5>{Fun, but out of scope}
+\item<6-> generate assembly code, e.g., LLVM, directly.
+\only<6>{Ambitious. Haskell LLVM bindings are unreliable}
 \end{itemize}
 \end{frame}
 
@@ -275,52 +335,16 @@ Again, sibling call saves us.
 
 
 \begin{frame}
-\frametitle{Here is a simple frame}
+  \frametitle{Our Future}
+  
+  \begin{itemize}
+  \item<1-> GHC tie-in and parallel implementation (hopefully) this summer
+  \item<2-> Experimentation with non-trivial code
+  \item<3-> Fault tolerance sometime thereafter
+  \end{itemize}
+  
+  \onslide<4->\textbf{Questions?}
 \end{frame}
-
-
-\begin{frame}
-\frametitle{Here is a simple frame}
-    \begin{itemize}
-        \item Here is the first bullet in a standard bulleted list,
-            as is customary for a presentation like this
-        \begin{itemize}
-            \item It includes some sub-bullets
-            \item Here they are
-        \end{itemize}
-        \item Here is another bullet
-        \item And here is another, with some math:
-            \[ e^{i\theta} = \cos \theta + i \sin \theta \]
-    \end{itemize}
-\end{frame}
-
-
-\begin{frame}
-\frametitle{Example frame}
-    \begin{columns}[t]
-        \begin{column}{.48\linewidth}
-            \begin{itemize}
-                \item Here is a bulleted list that sits alongside a graphic
-                \item With a second bullet item
-                \item And a third
-                \begin{itemize}
-                   \item It can have sub-bullets too
-                   \item Like this
-                \end{itemize}
-            \end{itemize}
-        \end{column}
-        \begin{column}[T]{.48\linewidth}
-            \begin{figure}
-                \begin{center}
-                    \fbox{\includegraphics[width=0.9\linewidth]%
-                        {LANL-logo-gray}}\\[2.0ex]
-                    insert caption here
-                \end{center}
-            \end{figure}%
-        \end{column}
-    \end{columns}
-\end{frame}
-
 
 \end{document}
 
