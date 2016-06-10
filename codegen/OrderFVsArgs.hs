@@ -89,7 +89,7 @@ instance TypeFVs (Obj InfoTab) where
     typeFVs m o@THUNK{omd, e} =
         o{e = typeFVsCommon m e}
 
-    typeFVs m o@BLACKHOLE{omd} = o
+--BH    typeFVs m o@BLACKHOLE{omd} = o
 
 instance TypeFVs [Expr InfoTab] where
     typeFVs m = map (typeFVsCommon m)

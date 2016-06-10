@@ -275,7 +275,7 @@ exhaustObj cmap obj =
    THUNK{e} -> obj {e = exhaustExpr cmap e}
    PAP{} -> obj
    CON{} -> obj
-   BLACKHOLE{} -> obj
+--BH   BLACKHOLE{} -> obj
    
 exhaustExpr :: CMap -> Expr a -> Expr a
 exhaustExpr cmap expr =

@@ -105,15 +105,15 @@ data InfoTab =
       truefvs :: [Var],
       entryCode :: String }
 
-  | ITBlackhole {
-      typ :: Monotype,
-      ctyp :: Polytype,
-      name :: String,
-      fvs :: [(Var,Monotype)],  -- why is this here?
-      bfvc :: Int,  -- boxed FV count
-      ufvc :: Int,  -- unboxed FV count
-      truefvs :: [Var],
-      entryCode :: String }
+--BH   | ITBlackhole {
+--BH       typ :: Monotype,
+--BH       ctyp :: Polytype,
+--BH       name :: String,
+--BH       fvs :: [(Var,Monotype)],  -- why is this here?
+--BH       bfvc :: Int,  -- boxed FV count
+--BH       ufvc :: Int,  -- unboxed FV count
+--BH       truefvs :: [Var],
+--BH       entryCode :: String }
 
   | ITAtom {
       typ :: Monotype,
@@ -290,8 +290,8 @@ instance SetITs (Obj ([Var],[Var])) (Obj InfoTab) where
     setITs o@(THUNK omd e n) =
         THUNK (makeIT o) (setITs e) n
 
-    setITs o@(BLACKHOLE omd n) =
-        BLACKHOLE (makeIT o) n
+--BH    setITs o@(BLACKHOLE omd n) =
+--BH        BLACKHOLE (makeIT o) n
 
 
 -- ****************************************************************
@@ -359,16 +359,16 @@ instance MakeIT (Obj ([Var],[Var])) where
                 entryCode = "thunk_" ++ n
               }
 
-    makeIT o@(BLACKHOLE (fvs,truefvs) n) =
-        ITBlackhole { name = n,
-                    typ = typUndef,
-                    ctyp = ctypUndef,
-                    fvs = zip fvs $ repeat typUndef,
-                    bfvc = -1,
-                    ufvc = -1,
-                    truefvs = truefvs,
-                    entryCode = "stgBlackhole"
-                  }
+--BH    makeIT o@(BLACKHOLE (fvs,truefvs) n) =
+--BH        ITBlackhole { name = n,
+--BH                    typ = typUndef,
+--BH                    ctyp = ctypUndef,
+--BH                    fvs = zip fvs $ repeat typUndef,
+--BH                    bfvc = -1,
+--BH                    ufvc = -1,
+--BH                    truefvs = truefvs,
+--BH                    entryCode = "stgBlackhole"
+--BH                  }
 
 instance MakeIT (Expr ([Var],[Var])) where
     makeIT ELet{emd = (fvs,truefvs)} =
@@ -454,7 +454,7 @@ showObjType ITFun {} = "FUN"
 showObjType ITPap {} = "PAP"
 showObjType ITCon {} = "CON"
 showObjType ITThunk {} = "THUNK"
-showObjType ITBlackhole {} = "BLACKHOLE"
+--BH showObjType ITBlackhole {} = "BLACKHOLE"
 showObjType _ = error "bad ObjType"
 
   
@@ -548,20 +548,20 @@ showITinit it@(ITThunk {}) =
                }
              |]
 
-showITinit it@(ITBlackhole {}) =
-  Just [cinit|
-               {
-#if DEBUG_INFOTAB
-                 .pi = PI(),
-#endif
-                 .name = $string:(name it),
-                 .entryCode = &$id:(entryCode it),
-                 .objType = BLACKHOLE,
-                 .layoutInfo.payloadSize = 0,
-                 .layoutInfo.boxedCount = 0,
-                 .layoutInfo.unboxedCount = 0
-               }
-             |]
+--BH showITinit it@(ITBlackhole {}) =
+--BH   Just [cinit|
+--BH                {
+--BH if DEBUG_INFOTAB
+--BH                  .pi = PI(),
+--BH endif
+--BH                  .name = $string:(name it),
+--BH                  .entryCode = &$id:(entryCode it),
+--BH                  .objType = BLACKHOLE,
+--BH                  .layoutInfo.payloadSize = 0,
+--BH                  .layoutInfo.boxedCount = 0,
+--BH                  .layoutInfo.unboxedCount = 0
+--BH                }
+--BH              |]
 
 showITinit it@(ITAlts {}) =
   Just [cinit|
@@ -693,9 +693,9 @@ instance PPrint InfoTab where
              ITThunk{..} ->
                (text "ITThunk", makeName name $+$
                               frvarsDoc fvs truefvs)
-             ITBlackhole{..} ->
-               (text "ITBlackhole", makeName name $+$
-                                  frvarsDoc fvs truefvs)
+--BH              ITBlackhole{..} ->
+--BH                (text "ITBlackhole", makeName name $+$
+--BH                                   frvarsDoc fvs truefvs)
              ITAtom{..} ->
                (text "ITAtom", makeHADoc noHeapAlloc $+$
                                frvarsDoc fvs truefvs)

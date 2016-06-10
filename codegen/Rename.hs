@@ -91,8 +91,8 @@ nameObj (CON md c as name) tt =
     do as' <- mapM ((flip nameExpr) tt) as
        return (CON md c as' name)
 
-nameObj (BLACKHOLE md name) tt =
-    return (BLACKHOLE md name)
+--BH nameObj (BLACKHOLE md name) tt =
+--BH     return (BLACKHOLE md name)
 
 nameExpr :: Expr a -> [(Var, String)] -> State [String] (Expr a)
 nameExpr e@ELet{edefs, ee} tt =

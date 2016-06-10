@@ -306,7 +306,7 @@ cgo env o@(THUNK it e name) =
         cfunc = [comm, [cedecl|$func:f|]]
     return $ (cforward, cfunc) : funcs
 
-cgo env (BLACKHOLE {}) = return []
+--BH cgo env (BLACKHOLE {}) = return []
 
 
 stgApplyGeneric env f eas direct =
@@ -660,7 +660,7 @@ bho env (THUNK it e name) =
               else []
     in top ++ loadPayloadFVs env (map fst (fvs it)) 1 (name ++ "->op")
 
-bho env (BLACKHOLE it name) = []
+--BH bho env (BLACKHOLE it name) = []
 
 loadPayloadFVs :: Env -> [String] -> Int -> String -> [BlockItem]
 loadPayloadFVs env fvs ind name =
