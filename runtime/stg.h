@@ -96,8 +96,9 @@ extern const size_t stgStackSize;
 
 extern void *stgStack, *stgSP;
 
-extern size_t stgStatObjCount;
-extern Obj *stgStatObj[];
+// these are defined in the generated code
+extern const int stgStatObjCount;
+extern Obj *const stgStatObj[];
 
 void initStg();
 void showStgObj(LogLevel priority, Obj *);

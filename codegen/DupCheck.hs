@@ -37,7 +37,7 @@ dupCheckObjs os ys = dupCheckTopLevelObjects os ys ++ concatMapGen dupCheckObj o
 dupCheckObj :: Obj () -> [String] -> String
 dupCheckObj x ys = case x of
                      PAP{} -> []
-                     BLACKHOLE{} -> []
+--BH                     BLACKHOLE{} -> []
                      CON{} -> []
                      THUNK{e,oname} -> dupCheckExpr e (ys ++ [oname])
                      FUN{vs,e,oname} -> dupCheckVars vs (ys ++ [oname]) ++ dupCheckExpr e (ys ++ [oname])

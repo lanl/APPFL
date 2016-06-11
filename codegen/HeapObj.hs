@@ -65,7 +65,7 @@ showHO it =
 showSHOspec :: InfoTab -> Initializer
 showSHOspec it@(ITFun {}) = [cinit| {0} |]
 showSHOspec it@(ITThunk {}) = [cinit| {0} |]
-showSHOspec it@(ITBlackhole {}) = [cinit| {0} |]
+--BH showSHOspec it@(ITBlackhole {}) = [cinit| {0} |]
 showSHOspec it@(ITCon {}) = [cinit| { $inits:(payloads $ map fst $ args it) } |]
 showSHOspec it@(ITPap {}) = papPayloads it
 showSHOspec it = error $ "showSHOspec " ++ show it

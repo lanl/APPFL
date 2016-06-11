@@ -40,6 +40,7 @@ module CodeGen(
   cgObjs,
   cgStart,
   cgMain,
+  shos
 ) where
 
 import ADT
@@ -60,8 +61,14 @@ import Data.List(intercalate,nub)
 import Data.Map (Map)
 import qualified Data.Map as Map
 
+--import Data.Loc(noLoc)
 import Language.C.Quote.GCC
-import Language.C.Syntax (Definition, Initializer, Exp, BlockItem)
+import Language.C.Syntax(Initializer(..), 
+                         Definition, 
+                         Initializer, 
+                         Exp, 
+                         BlockItem,
+                         InitGroup)
 
 -- use a list of Definitions rather than Func
 -- this allows us to put comments before functions
@@ -107,7 +114,6 @@ cgMain v =
               parseArgs(argc, argv);
               initStg();
               initGc();
-              registerSOs();
               CALL0_0(start);
             |]
           ++ (if v then
@@ -132,6 +138,16 @@ registerSOs objs =
       f = [cfun| void registerSOs() { $items:its } |]
   in (proto, [[cedecl|$func:f|]])
 
+shos :: [Obj InfoTab] -> (Definition, Definition)
+shos objs = 
+    let names = shoNames objs
+        inits = [[cinit| &$id:name |] | name <- names ]
+        compoundInit = [cinit| { $inits:inits } |]
+    -- const int stgStatObjCount = #static objects;
+    -- Obj *const stgStatObj[#static objects] = {&obj, &obj, ... } ;
+    in ([cedecl| const int stgStatObjCount = $exp:(length names) ; |] ,
+        [cedecl| typename Obj *const stgStatObj [ $exp:(length names) ] = 
+                   $init:compoundInit ; |])
                
 listLookup k [] = Nothing
 listLookup k ((k',v):xs) | k == k' = Just v
@@ -222,9 +238,9 @@ cgObjs objs runtimeGlobals =
        env = zip tlnames $ repeat SO
        (funcs, _) = runState (cgos env objs) 0
        (forwards, funs) = unzip funcs
-       (forward, fun) = registerSOs objs
-   in (forward:forwards, fun:funs)
-
+--       (forward, fun) = registerSOs objs
+--   in (forward:forwards, fun:funs)
+   in (forwards, funs)
 
 cgos :: Env -> [Obj InfoTab] -> State Int [(Definition,  CFun)]
 cgos env = concatMapM (cgo env)
@@ -290,7 +306,7 @@ cgo env o@(THUNK it e name) =
         cfunc = [comm, [cedecl|$func:f|]]
     return $ (cforward, cfunc) : funcs
 
-cgo env (BLACKHOLE {}) = return []
+--BH cgo env (BLACKHOLE {}) = return []
 
 
 stgApplyGeneric env f eas direct =
@@ -644,7 +660,7 @@ bho env (THUNK it e name) =
               else []
     in top ++ loadPayloadFVs env (map fst (fvs it)) 1 (name ++ "->op")
 
-bho env (BLACKHOLE it name) = []
+--BH bho env (BLACKHOLE it name) = []
 
 loadPayloadFVs :: Env -> [String] -> Int -> String -> [BlockItem]
 loadPayloadFVs env fvs ind name =

@@ -13,8 +13,12 @@
 
 //number of heap objects. a safe overestimate is (stgHP - stgHeap) / sizeof(Obj)
 #define numHeapObjs (((char *)stgHP - (char *)stgHeap) / sizeof(Obj))
+
 //number of static heap objects
 #define numStaticHeapObjs stgStatObjCount
+
+//macro for fprintf
+#define PRINTF(...) fprintf(stderr, __VA_ARGS__)
 
 /**
  *this function creates an array of pointers to all of the objects.
@@ -33,14 +37,14 @@ Obj **mallocArrayOfAllObjects() {
  * rest of the objects will be the heap objects
  * @param objArray for the array of object pointers that the function works with
  */
-void addObjects (Obj **objArray) {
+void addObjects (Obj *objArray[]) {
 
   //i stays at the beginning of the array, 
   //j moves to keep track of how many objects have been added
   //k is for going through the payload boxed objects
-  //flag is for forced continuation in while loop
-  int i, j, k, flag;
-  
+  //dup_exists is for forced continuation in while loop so as to not copy duplicate objects over
+  int i, j, k;
+
   //mark the end of the static heap object range
   int end = stgStatObjCount;
 
@@ -50,54 +54,130 @@ void addObjects (Obj **objArray) {
     // object itself is valid
     sanityCheckSingleSHO(stgStatObj[i]);
     objArray[i] = stgStatObj[i];
+    printObjInfo(objArray[i]);
   }
-
+   
+  //outer (i) loop traverses the objarray by object
+  for (i = 0; i < end; i++) {    
+    //if the object doesn't have boxed variables in it's payload
+    //go to the next one
+    if (objArray[i]->_infoPtr->layoutInfo.boxedCount == 0) {
+      continue;
+    }
+    //inner loop (j) does the same thing except checks each object per iteration of the outer loop
+    for (j = 0; j < end; j++) {      
+      //innermost loop (k) checks each payload element of the jth object
+      for (k = 0; k < objArray[i]->_infoPtr->layoutInfo.boxedCount; k++) {
+        //if you've moved through all the objects using the jth index,
+        //this means the kth payload element is unique and should be added
+        //to the objarray
+        if (j + 1 == end) {
+          objArray[end] = objArray[i]->payload[k].op;
+          end++;
+          break;
+        }
+        //if current payload index's object pointer matches the one in the object array, check the next payload item
+        //and set i back to 0
+        if (objArray[j] == objArray[j]->payload[k].op) {
+          j = 0;
+          continue;
+        }
+        //otherwise, if they don't match, check the current kth payload element
+        //with the next ith object pointer in the objArray
+        else if (objArray[j] != objArray[j]->payload[k].op) {
+          k--;
+          j++;
+          continue;
+        }
+      }
+    }
+  }
   //now we have to check the payloads of the static heap objects
   //and add them to the part of the array which isn't comprised
   //of static heap objects
-  //TODO add payload objects to end of array
 
-  //temp -> payload[0].op
-  //end + i
-  //boxed count, dumbass
-  j = 0;
-  while (j != end) {
-   
-    flag = 0;
-    //search the range of added objects to see if the current object
-    //you're adding is already there
-    for (i = 0; i < j; i++) {
-      if (objArray[i] == objArray[j]) {
-        flag = 1;
-        break;
-      }
-    }
-    //if you found the object in the array already, you don't want to add it again
-    //duplicates will screw up malloc
-    if (flag) {
-      continue;
-    }
- 
-    //TODO: figure out why boxed count is always 0, that's most likely why it's segfaulting
+  /*j = 0;
 
-    //copy all boxed values, or pointers to objects, into the
-    //array of objects
-    printf("j = %d\n", j);
-    printf("boxed count for this object = %d\n", getInfoPtr(objArray[j])->layoutInfo.boxedCount);
-    for (k = 0; k < objArray[j]->_infoPtr->layoutInfo.boxedCount; k++) {
-      objArray[end + k] = objArray[j]->payload[k].op;
-    }
-    printf("k = %d\n", k);
-    //move high water mark
-    end += (k + 1);
-    printf("end = %d\n", end);
-    j++;
-    /*Obj *temp_payload = objArray[i]->payload[0].op;
-    sanityCheckObj(temp_payload);
-    if (temp_payload != NULL) {
-      objArray[end + i] = temp_payload;
-    }*/
+    PRINTF("\nstgStatObjCount: %zd\n\n", stgStatObjCount);
+    while (j != end) {
+
+    printObjInfo(objArray[j]);
+
+
+    dup_exists = 0;
+  //search the range of added objects to see if the current object
+  //you're adding is already there
+
+  // kei:  at this point your logic no longer makes any sense
+  // kei:  what is it you think you're adding here?
+  // kei:  it's the payload items of objArray[j] that you're supposed to be adding
+
+  for (i = 0; i < j; i++) {
+  if (objArray[i] == objArray[j]) {
+  dup_exists = 1;
+  break;
   }
+  }
+
+  //if you found the object in the array already, you don't want to add it again
+  //duplicates will screw up malloc
+  if (dup_exists) {
+  continue;
+  }
+
+  //get infoTab pointer for current object
+  InfoTab *itp = getInfoPtr(objArray[j]);
+
+  //copy all boxed values, or pointers to objects, into the
+  //array of objects
+  //kei:  NO, only copy those of these that aren't already in objArray
+  for (k = 0; k < itp->layoutInfo.boxedCount; k++) {
+  objArray[end + k] = objArray[j]->payload[k].op;
+  }
+
+  //move high water mark
+  //end += (k + 1);
+
+  j++;*/
+  //}
+}
+
+/**
+ *printing stuff for debugging
+ */
+void printObjInfo (Obj *obj) {
+  PRINTF("\nobject identifier: %s\n", obj->ident);
+  PRINTF("object name: %s\n", obj->_infoPtr->name);
+  PRINTF("object type: %s\n", objTypeToString(obj));
+  PRINTF("object boxed count: %d\n", obj->_infoPtr->layoutInfo.boxedCount);
+  PRINTF("object unboxed count: %d\n\n", obj->_infoPtr->layoutInfo.unboxedCount);
+}
+
+/**
+ *convert enum ObjType to a string
+ */
+char *objTypeToString(Obj *obj) {
+
+  switch (getObjType(obj)) {
+    case PHONYSTARTOBJ:
+      return "PHONYSTARTOBJ";
+    case FUN:
+      return "FUN";
+    case PAP:
+      return "PAP";
+    case CON:
+      return "CON";
+    case THUNK:
+      return "THUNK";
+    case BLACKHOLE:
+      return "BLACKHOLE";
+    case INDIRECT:
+      return "INDIRECT";
+    case PHONYENDOBJ:
+      return "PHONYENDOBJ";
+  }
+
+  return "BAD OBJTYPE";
 }
 
 /**
@@ -149,7 +229,7 @@ bool checkPtr8BitAligned (Obj *obj) {
  */
 bool checkPtrCorrectSize (Obj *obj) {
   //make sure the pointer is of a size which is a multiple of OBJ_ALIGN
-  if ((sizeof(Obj) % OBJ_ALIGN) != 0)
+  if ((sizeof(obj) % OBJ_ALIGN) != 0)
     return false;
   return true;
 }
