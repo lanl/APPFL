@@ -42,7 +42,7 @@
     \\\only<7>{\ \ We augment MPI now with other explicit parallel models}
   \item<8-9> Parallel runtimes, e.g., Cilk Plus, Intel Threading Building Blocks,
     Stanford's Legion, etc.
-    \\\only<8>{\ \ Automated scheduling for irregularly shaped problems. Task-based}
+    \\\only<8>{\ \ Automated scheduling for irregularly shaped problems.}
 \end{itemize}
 \only<9>{%
 \textbf{
@@ -62,9 +62,12 @@ Currently MPI+threading model dominates.}}
       S3D task dependency, combustion chemistry calculation
     \end{center}
   \end{figure}
-Simplest interesting chemistry, task graph much larger with more complex reactants.
-\vspace{0.1in}
-Schedule by hand?
+  \onslide<2->{%
+    Simplest interesting chemistry, task graph much larger with more complex reactants.
+    \vspace{0.1in}
+    Schedule by hand?}
+  \\\onslide<3->{%
+    \textbf{This comes for free in the pure functional world}}
 \end{frame}
 
 
@@ -112,12 +115,14 @@ Schedule by hand?
     \end{column}}
   \end{columns}
 \vspace{0.1in}
-\onslide<3>{%
+\onslide<3->{%
 Inherent problems:
 \begin{itemize}
-\item Idle processors during relatively slow writes burn tight energy budgets.
+\item Idle processors burn tight energy budgets.
 \item MTTF is shrinking and C/R isn't scaling.
 \end{itemize}}
+\onslide<4->{%
+  \textbf{With referential transparency, this is a much smaller problem}}
 \end{frame}
 
 
@@ -139,7 +144,7 @@ in Haskell programming.
   \begin{itemize}
   \item Passing functions as arguments is familiar (since early Fortran).
   \item Implicit space leaks are confusing.
-  \item Non-strict evaluation is largely irrelevant
+  \item Non-strict evaluation is largely irrelevant.
   \item Unboxed primitives and arrays of the same (unboxed vector) are the primary data.
   \end{itemize}}
 \end{frame}
@@ -224,10 +229,10 @@ strictness, and secondarily, with mechanisms for transparent fault tolerance.
 \item<3-> STG to C \emph{(serial done, parallel in progress)};
   \\\only<3>{%
     \ \ Fairly faithful to STG papers}
-\item<4-> Mini-Haskell front end (done).
+\item<4-> Mini-Haskell front end (done);
   \\\only<4>{%
     \ \ Close to ML, syntatically}
-\item<5-> Fault tolerance \emph{TBD};
+\item<5-> Fault tolerance \emph{TBD}.
 \end{enumerate}
 \end{frame}
 
@@ -236,10 +241,10 @@ strictness, and secondarily, with mechanisms for transparent fault tolerance.
 \frametitle{Reinventing the wheel?}  Why not use Manticore, MultiMLton, F\#,
 multicore OCaml, SAC etc., \onslide<3->{or even GHC in toto?}
 \begin{itemize}
-  \item<2-> We have a small cadre of scientists already interested in Haskell/GHC.
+  \item<2-> We have a small cadre of scientists already interested in Haskell/GHC;
   \item<3-> Very light weight:  easy to instrument, modify;
   \item<4-> Know exactly what is going on under the hood;
-  \item<5-> There exist conduits for getting student interns up to speed inexpensively;
+  \item<5-> There exist conduits for getting student interns up to speed inexpensively.
 \end{itemize}
 \end{frame}
 
@@ -264,21 +269,21 @@ SPJ identifies defines the term \emph{code label} as something that can be
 \frametitle{All the myriad ways in C}
 \begin{itemize}
 \item<1-> setjmp/longjmp;
-\only<1>{Significant overhead and bookkeeping}
+\\\only<1>{\ \ Significant overhead and bookkeeping}
 \item<2-> giant switch;
-\only<2>{Ugly hack, not really linkable}
+\\\only<2>{\ \ Ugly hack, not really linkable}
 \item<3-> computed goto (gcc extension);
-\only<3>{Limited to gcc}
+\\\only<3>{\ \ Limited to gcc}
 \item<4-> trampoline, the simplest of which parameterless C functions return the
   address (function pointer) of where to go to next:
 \begin{verbatim}
       while (1) f = (*f)();
 \end{verbatim}
-\only<4>{Our intial implementation used this approach}
+\only<4>{\ \ Our intial implementation used this approach}
 \item<5-> implement an intermediate language, e.g., C-{}-/Cmm, where tail call is primitive;
-\only<5>{Fun, but out of scope}
+\\\only<5>{\ \ Fun, but out of scope}
 \item<6-> generate assembly code, e.g., LLVM, directly.
-\only<6>{Ambitious. Haskell LLVM bindings are unreliable}
+\\\only<6>{\ \ Ambitious. Haskell LLVM bindings are unreliable}
 \end{itemize}
 \end{frame}
 
@@ -343,7 +348,13 @@ Again, sibling call saves us.
   \item<3-> Fault tolerance sometime thereafter
   \end{itemize}
   
-  \onslide<4->\textbf{Questions?}
+  
+\end{frame}
+
+
+\begin{frame}
+  \frametitle{Thank you}
+  \textbf{Questions?}
 \end{frame}
 
 \end{document}
