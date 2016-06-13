@@ -81,7 +81,7 @@ instance STGToList (Obj (Set.Set Var, Set.Set Var)) (Obj ([Var],[Var])) where
     stgToList PAP{..} = PAP{omd = p2p omd, as = map stgToList as, ..}
     stgToList CON{..} = CON{omd = p2p omd, as = map stgToList as, ..}
     stgToList THUNK{..} = THUNK{omd = p2p omd, e = stgToList e, ..}
-    stgToList BLACKHOLE{..} = BLACKHOLE{omd = p2p omd,..}
+--BH     stgToList BLACKHOLE{..} = BLACKHOLE{omd = p2p omd,..}
 
 -- instance STGToList a b => STGToList [a] [b] where
 --    stgToList = map stgToList
@@ -237,8 +237,8 @@ instance SetFVs (Obj a) (Obj (Set.Set Var, Set.Set Var)) where
         let e' = setfvs tlds e
         in THUNK (emd e') e' n
 
-    setfvs tlds (BLACKHOLE _ n) =
-        BLACKHOLE (Set.empty,Set.empty) n
+--BH    setfvs tlds (BLACKHOLE _ n) =
+--BH        BLACKHOLE (Set.empty,Set.empty) n
 
 instance SetFVs a b => SetFVs [a] [b] where
     setfvs tlds = map (setfvs tlds)

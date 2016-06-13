@@ -306,7 +306,7 @@ cgo env o@(THUNK it e name) =
         cfunc = [comm, [cedecl|$func:f|]]
     return $ (cforward, cfunc) : funcs
 
-cgo env (BLACKHOLE {}) = return []
+--BH cgo env (BLACKHOLE {}) = return []
 
 
 stgApplyGeneric env f eas direct =
@@ -446,7 +446,7 @@ cgeInline :: Env -> Bool
      -> ([BlockItem], [(Definition, CFun)])
      -> Alts InfoTab
      -> State Int (([BlockItem], YPN), [(Definition, CFun)])
-cgeInline env boxed (ecode, efunc) a@(Alts italts alts aname) =
+cgeInline env boxed (ecode, efunc) a@(Alts{}) =
   let pre = [citems| $comment:("// inline:  scrutinee does not STGJUMP or STGRETURN"); |]
   in do
     ((acode, ypn), afunc) <- cgaltsInline env a boxed
@@ -471,9 +471,11 @@ cgaltsInline env a@(Alts it alts name) boxed =
                  | all (== No) ypns = No
                  | otherwise = Possible
        let its = [citems|
-                   typename Cont *$id:contName = stgAllocCallOrStackCont(&it_stgStackCont, 1);
+                   typename Cont *$id:contName = 
+                     stgAllocCallOrStackCont(&it_stgStackCont, 1);
                    $comment:("// " ++ show (ctyp it))
-                   $id:contName->layout = (typename Bitmap64)$ulint:(npStrToBMInt (iff boxed "P" "N"));
+                   $id:contName->layout = 
+                     (typename Bitmap64)$ulint:(npStrToBMInt (iff boxed "P" "N"));
                 |]
                ++ (if boxed then
                     [citems|
@@ -483,7 +485,8 @@ cgaltsInline env a@(Alts it alts name) boxed =
                   else
                     [citems|$id:contName->payload[0] = stgCurValU;|])
                ++ [citems|
-                    typename PtrOrLiteral *$id:scrutPtr = &($id:contName->payload[0]);
+                    typename PtrOrLiteral *$id:scrutPtr = 
+                      &($id:contName->payload[0]);
                   |]
                ++ (if switch then
                     if boxed then
@@ -660,7 +663,7 @@ bho env (THUNK it e name) =
               else []
     in top ++ loadPayloadFVs env (map fst (fvs it)) 1 (name ++ "->op")
 
-bho env (BLACKHOLE it name) = []
+--BH bho env (BLACKHOLE it name) = []
 
 loadPayloadFVs :: Env -> [String] -> Int -> String -> [BlockItem]
 loadPayloadFVs env fvs ind name =
