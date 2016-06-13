@@ -582,6 +582,14 @@ showITinit it@(ITAlts {}) =
 
 showITinit it = Nothing
 
+preDefInfoTabs =
+    [ "it_stgCallCont",
+      "it_stgStackCont",
+      "it_stgLetCont",
+      "it_stgUpdateCont",
+      "it_stgShowResultCont" ]
+
+
 showITs :: ITsOf a [InfoTab] => a -> [Definition]
 --showITs os = catMaybes (map showIT $ itsOf os)
 
@@ -589,21 +597,37 @@ showITs os =
     let ps = catMaybes (map showIT $ itsOf os)
         -- quick hack
         (itnames, itdefs) =   unzip [ (name, defn) | (True, name, defn) <- ps ]
-        (citnames, citdefs) = unzip [ (name, defn) | (False, name, defn) <- ps ]
+        (ucitnames, citdefs) = unzip [ (name, defn) | (False, name, defn) <- ps ]
+        citnames = preDefInfoTabs ++ ucitnames
         itcount = length itnames
+        citcount = length citnames
         -- const int stgInfoTabCount = #InfoTabs ;
         stgInfoTabCount = 
             [cedecl| const int stgInfoTabCount = $exp:(itcount) ; |]
-        inits = [[cinit| & $id:itname |] | itname <- itnames ]
+        initsIT = [[cinit| & $id:itname |] | itname <- itnames ]
         -- {&it, &it, ...}
-        compoundInit = [cinit| { $inits:inits } |]
+        compoundInitIT = [cinit| { $inits:initsIT } |]
         -- InfoTab *const stgInfoTab[#InfoTabs] = {&it, &it, ...} ;
         stgInfoTab = 
             [cedecl| typename InfoTab *const stgInfoTab [ $exp:(itcount) ] =
-                       $init:compoundInit ; |]
+                       $init:compoundInitIT ; |]
+
+        -- const int stgCInfoTabCount = #CInfoTabs ;
+        stgCInfoTabCount = 
+            [cedecl| const int stgCInfoTabCount = $exp:(citcount) ; |]
+        initsCIT = [[cinit| & $id:citname |] | citname <- citnames ]
+        -- {&it, &it, ...}
+        compoundInitCIT = [cinit| { $inits:initsCIT } |]
+        -- stgCInfoTab *const stgCInfoTab[#CInfoTabs] = {&it, &it, ...} ;
+        stgCInfoTab = 
+            [cedecl| typename InfoTab *const stgCInfoTab [ $exp:(citcount) ] =
+                       $init:compoundInitCIT ; |]
     in itdefs ++
        citdefs ++
-       [ stgInfoTabCount, stgInfoTab ]
+       [ stgInfoTabCount, 
+         stgInfoTab,
+         stgCInfoTabCount,
+         stgCInfoTab]
         
 {-
 -- quick hack to get names as well
