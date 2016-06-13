@@ -99,6 +99,8 @@ extern void *stgStack, *stgSP;
 // these are defined in the generated code
 extern const int stgStatObjCount;
 extern Obj *const stgStatObj[];
+extern const int stgInfoTabCount;
+extern InfoTab *const stgInfoTab[];
 
 void initStg();
 void showStgObj(LogLevel priority, Obj *);
