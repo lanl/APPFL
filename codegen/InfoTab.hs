@@ -37,7 +37,7 @@ import Data.Set (Set)
 import qualified Data.Set as Set
 
 import Language.C.Quote.GCC
-import Language.C.Syntax (Definition, Initializer)
+import Language.C.Syntax (Definition, Initializer, Type)
 
 -- need an infoTab entry for each lexically distinct HO or SHO
 
@@ -457,6 +457,12 @@ showObjType ITThunk {} = "THUNK"
 --BH showObjType ITBlackhole {} = "BLACKHOLE"
 showObjType _ = error "bad ObjType"
 
+alignedDecl:: Type -> String -> Initializer -> Definition
+alignedDecl typ name ini = 
+  [cedecl|$ty:typ $id:name __attribute__((aligned(OBJ_ALIGN)))
+    = $init:ini;
+  |]
+
 -- want to separate CInfoTab and InfoTab--Data.Either seems
 -- to be overkill since we wouldn't be using it to enforce type safety
 showIT :: InfoTab -> Maybe (Bool, String, Definition)
@@ -464,20 +470,14 @@ showIT it@(ITAlts {}) =
   let init = showITinit it
       citname = "it_" ++ name it
       f x = Just $ (False, citname, ) 
-                     [cedecl|
-                      typename CInfoTab $id:citname __attribute__((aligned(OBJ_ALIGN)))
-                          = $init:x ;
-               |]
+                     (alignedDecl [cty| typename CInfoTab|] citname x)
   in maybe Nothing f init
 
 showIT it =
   let init = showITinit it
       itname = "it_" ++ name it
       f x = Just $ (True, itname, )
-              [cedecl|
-               typename InfoTab $id:itname __attribute__((aligned(OBJ_ALIGN)))
-                   = $init:x ;
-               |]
+                      (alignedDecl [cty| typename InfoTab|] itname x)
   in maybe Nothing f init
 
 
