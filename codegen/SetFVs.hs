@@ -4,9 +4,6 @@
 {-# LANGUAGE NamedFieldPuns        #-}
 {-# LANGUAGE RecordWildCards       #-}
 {-# LANGUAGE CPP #-}
-#if __GLASGOW_HASKELL__ < 710
- {-# LANGUAGE OverlappingInstances #-}
-#endif
 
 module SetFVs (
   setFVsObjs
@@ -102,7 +99,7 @@ instance STGToList (Alt (Set.Set Var, Set.Set Var)) (Alt ([Var],[Var])) where
 
 showFVs vs = "[" ++ List.intercalate " " vs ++ "] "
 
-instance {-# OVERLAPPING #-} Show ([Var],[Var]) where
+instance Show ([Var],[Var]) where
     show (a,b) = "(" ++ showFVs a ++ "," ++ showFVs b ++ ")"
 
 toplevel :: (Set.Set Var) -> [Obj a] -> [Obj (Set.Set Var, Set.Set Var)]
@@ -243,5 +240,5 @@ instance SetFVs (Obj a) (Obj (Set.Set Var, Set.Set Var)) where
 instance SetFVs a b => SetFVs [a] [b] where
     setfvs tlds = map (setfvs tlds)
 
-instance  {-# OVERLAPPING #-} PPrint (Set.Set Var, Set.Set Var) where
+instance PPrint (Set.Set Var, Set.Set Var) where
   pprint (fvs, tfvs) = parens (text "fvs:" <+> pprint fvs <> comma <+> text "tfvs:" <+> pprint tfvs)
