@@ -21,8 +21,8 @@ struct _Obj;
 typedef struct _Obj Obj;
 struct _InfoTab;
 typedef struct _InfoTab InfoTab;
-struct _CInfoTab;
-typedef struct _CInfoTab CInfoTab;
+//struct _CInfoTab;
+//typedef struct _CInfoTab CInfoTab;
 
 // bitmap for specifying boxed/unboxed values
 // assume 64 bits, high six bits for length,
