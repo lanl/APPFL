@@ -43,17 +43,36 @@ void addObjects (Obj *objArray[]) {
   //j moves to keep track of how many objects have been added
   //k is for going through the payload boxed objects
   int i, j = 0, k;
-
+  //flag to check whether or not we need to add stgCurVal to the objArray
+  int addStgCurVal = 0, extraFlag = 1;
   //mark the end of the static heap object range
   int end = stgStatObjCount;
 
   //first add static heap objects
   for (i = 0; i < stgStatObjCount; i++) {
+    EPRINTF("address of stgCurVal.op = %p\n", stgCurVal.op);
+    EPRINTF("address of SHO number %d = %p\n\n", i, stgStatObj[i]);
+    //check if StgCurVal points to a SHO
+    if (stgCurVal.op == stgStatObj[i] && extraFlag) {
+        //to avoid infinite loop in checking stgCurVal
+        //with current statObj
+        extraFlag = 0;
+        addStgCurVal = 1;
+        i--;
+        continue;
+    }
     // before you add the object, make sure that the pointer to the 
     // object itself is valid
     sanityCheckSingleSHO(stgStatObj[i]);
     objArray[i] = stgStatObj[i];
-    printObjInfo(objArray[i]);
+    //printObjInfo(objArray[i]);
+  }
+
+  //add stgCurVal if it doesn't point to anything
+  //in the SHO array
+  if (addStgCurVal) {
+    objArray[end] = stgCurVal.op;
+    end++;
   }
 
   //outer (i) loop traverses the objarray by object
@@ -75,13 +94,27 @@ void addObjects (Obj *objArray[]) {
     }
     //otherwise add it when j = end
     if (j == end) {
-      //sanityCheckObj(objArray[i]->payload[k].op);
+      //make sure pointer is to a heap/static heap object
+      if (!(isSHO(objArray[i]->payload[k].op) || isHeap(objArray[i]->payload[k].op))) {
+        LOG(LOG_FATAL, "Object isn't a heap object or a SHO");
+        end++;
+        break;
+      }
+      //make sure pointer is aligned and right size 
+      if (!checkPtr8BitAligned(objArray[i]->payload[k].op) || !(checkPtrCorrectSize(objArray[i]->payload[k].op))) {
+        LOG(LOG_FATAL, "problem: bad object alignment");
+        end++;
+        break;
+      }
+      //add new payload object to end of array
       objArray[end] = objArray[i]->payload[k].op;
       end++;
       break;
     }
   }
 }
+
+
 
 /**
  *printing stuff for debugging
