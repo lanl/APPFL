@@ -620,7 +620,7 @@ showITs os =
         compoundInitCIT = [cinit| { $inits:initsCIT } |]
         -- stgCInfoTab *const stgCInfoTab[#CInfoTabs] = {&it, &it, ...} ;
         stgCInfoTab = 
-            [cedecl| typename InfoTab *const stgCInfoTab [ $exp:(citcount) ] =
+            [cedecl| typename CInfoTab *const stgCInfoTab [ $exp:(citcount) ] =
                        $init:compoundInitCIT ; |]
     in itdefs ++
        citdefs ++
