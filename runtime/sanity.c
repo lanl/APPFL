@@ -27,7 +27,8 @@ Obj **mallocArrayOfAllObjects() {
 
   //the total array size will be the number of heap objects + the number of static heap objects
   //times size the of an object pointer
-  Obj **objArray = malloc (sizeof(Obj *) * (numHeapObjs + numStaticHeapObjs));
+  //remember: make more space for stgCurVal
+  Obj **objArray = malloc (sizeof(Obj *) * (numHeapObjs + numStaticHeapObjs + 1));
 
   return objArray;
 }
@@ -42,41 +43,50 @@ void addObjects (Obj *objArray[]) {
   //i stays at the beginning of the array, 
   //j moves to keep track of how many objects have been added
   //k is for going through the payload boxed objects
-  int i, j = 0, k;
-  //flag to check whether or not we need to add stgCurVal to the objArray
-  int addStgCurVal = 0, extraFlag = 1;
-  //mark the end of the static heap object range
-  int end = stgStatObjCount;
 
+  //int i, j = 0, k;
+  //mark the end of the static heap object range
+
+  int i;
   //first add static heap objects
-  for (i = 0; i < stgStatObjCount; i++) {
-    EPRINTF("address of stgCurVal.op = %p\n", stgCurVal.op);
-    EPRINTF("address of SHO number %d = %p\n\n", i, stgStatObj[i]);
-    //check if StgCurVal points to a SHO
-    if (stgCurVal.op == stgStatObj[i] && extraFlag) {
-        //to avoid infinite loop in checking stgCurVal
-        //with current statObj
-        extraFlag = 0;
-        addStgCurVal = 1;
-        i--;
-        continue;
-    }
+  for (i = 0; i != stgStatObjCount; i++) {
     // before you add the object, make sure that the pointer to the 
     // object itself is valid
     sanityCheckSingleSHO(stgStatObj[i]);
     objArray[i] = stgStatObj[i];
-    //printObjInfo(objArray[i]);
+    printObjInfo(objArray[i]);
   }
 
-  //add stgCurVal if it doesn't point to anything
-  //in the SHO array
-  if (addStgCurVal) {
-    objArray[end] = stgCurVal.op;
-    end++;
+  //could be j = i
+  int j = stgStatObjCount;
+  
+  //search for / add stgCurVal
+  if (stgCurVal.op != NULL) {
+    int k;
+    for(k = 0; k != j; k++) {
+      if (objArray[k] == stgCurVal.op) {
+        break;
+      }
+    }
+    if (k == j) {
+      objArray[j] = stgCurVal.op;
+    }
   }
+  //reset i to mark beginning of array
+  /*i = 0;
+  int p;
+  while (i != j) {
+    for (p = 0; p != objArray[i]->_infoPtr->layoutInfo.boxedCount; p++) {
+      if (!isInObjArray(objArray, objArray[i]->payload[p].op, i, j)) {
+          objArray[j] = objArray[i]->payload[p].op;
+          j++;
+      }
+    }
+    i++;
+  }*/
 
   //outer (i) loop traverses the objarray by object
-  for (i = 0; i < end; i++) {    
+  /*for (i = 0; i < end; i++) {    
     //if the object doesn't have boxed variables in it's payload
     //go to the next one
     if (objArray[i]->_infoPtr->layoutInfo.boxedCount == 0) {
@@ -111,10 +121,20 @@ void addObjects (Obj *objArray[]) {
       end++;
       break;
     }
-  }
+  }*/
+
 }
 
-
+bool isInObjArray (Obj *objArray[], Obj *obj, int start, int end) {
+  
+  int i;
+  for (i = start; i != end; i++) {
+    if (objArray[i] == obj) {
+      return true;
+    }
+  }
+  return false;
+}
 
 /**
  *printing stuff for debugging
