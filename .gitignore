@@ -26,3 +26,6 @@ test/stg/nostrict2/*.c
 #sandbox stuff
 sandbox
 appfl-sandbox
+
+# stack stuff
+.stack-work
