@@ -458,7 +458,7 @@ showObjType ITThunk {} = "THUNK"
 showObjType _ = error "bad ObjType"
 
 alignedDecl:: Type -> String -> Initializer -> Definition
-alignedDecl typ name ini = 
+alignedDecl typ name ini =
   [cedecl|$ty:typ $id:name __attribute__((aligned(OBJ_ALIGN)))
     = $init:ini;
   |]
@@ -469,7 +469,7 @@ showIT :: InfoTab -> Maybe (Bool, String, Definition)
 showIT it@(ITAlts {}) =
   let init = showITinit it
       citname = "it_" ++ name it
-      f x = Just $ (False, citname, ) 
+      f x = Just $ (False, citname, )
                      (alignedDecl [cty| typename CInfoTab|] citname x)
   in maybe Nothing f init
 
@@ -574,7 +574,7 @@ showITinit it@(ITAlts {}) =
                  .entryCode = &$id:(entryCode it),
                  .contType = CASECONT,
                  .cLayoutInfo.payloadSize = $int:((length $ fvs it) + 1),
-                 .cLayoutInfo.bm = $ulint:(npStrToBMInt ( 'N' :
+                 .cLayoutInfo.bm.bits = $ulint:(npStrToBMInt ( 'N' :
                         replicate (bfvc it) 'P' ++
                         replicate (ufvc it) 'N') )
                }
@@ -602,33 +602,33 @@ showITs os =
         itcount = length itnames
         citcount = length citnames
         -- const int stgInfoTabCount = #InfoTabs ;
-        stgInfoTabCount = 
+        stgInfoTabCount =
             [cedecl| const int stgInfoTabCount = $exp:(itcount) ; |]
         initsIT = [[cinit| & $id:itname |] | itname <- itnames ]
         -- {&it, &it, ...}
         compoundInitIT = [cinit| { $inits:initsIT } |]
         -- InfoTab *const stgInfoTab[#InfoTabs] = {&it, &it, ...} ;
-        stgInfoTab = 
+        stgInfoTab =
             [cedecl| typename InfoTab *const stgInfoTab [ $exp:(itcount) ] =
                        $init:compoundInitIT ; |]
 
         -- const int stgCInfoTabCount = #CInfoTabs ;
-        stgCInfoTabCount = 
+        stgCInfoTabCount =
             [cedecl| const int stgCInfoTabCount = $exp:(citcount) ; |]
         initsCIT = [[cinit| & $id:citname |] | citname <- citnames ]
         -- {&it, &it, ...}
         compoundInitCIT = [cinit| { $inits:initsCIT } |]
         -- stgCInfoTab *const stgCInfoTab[#CInfoTabs] = {&it, &it, ...} ;
-        stgCInfoTab = 
+        stgCInfoTab =
             [cedecl| typename CInfoTab *const stgCInfoTab [ $exp:(citcount) ] =
                        $init:compoundInitCIT ; |]
     in itdefs ++
        citdefs ++
-       [ stgInfoTabCount, 
+       [ stgInfoTabCount,
          stgInfoTab,
          stgCInfoTabCount,
          stgCInfoTab]
-        
+
 {-
 -- quick hack to get names as well
 let its = itsOf os
