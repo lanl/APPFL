@@ -37,7 +37,7 @@ import Data.Set (Set)
 import qualified Data.Set as Set
 
 import Language.C.Quote.GCC
-import Language.C.Syntax (Definition, Initializer)
+import Language.C.Syntax (Definition, Initializer, Type)
 
 -- need an infoTab entry for each lexically distinct HO or SHO
 
@@ -115,18 +115,6 @@ data InfoTab =
 --BH       truefvs :: [Var],
 --BH       entryCode :: String }
 
-  | ITAtom {
-      typ :: Monotype,
-      ctyp :: Polytype,
-      fvs :: [(Var,Monotype)],
-      bfvc :: Int,  -- boxed FV count
-      ufvc :: Int,  -- unboxed FV count
-      truefvs :: [Var],
-      noHeapAlloc :: Bool,
-
-      maybeCMap :: Maybe CMap  -- only needed for LitC
-    }
-
 -- Expr
   | ITFCall {
       typ :: Monotype,
@@ -169,6 +157,18 @@ data InfoTab =
       noHeapAlloc :: Bool,
       cmap :: CMap}
 
+  | ITAtom {
+      typ :: Monotype,
+      ctyp :: Polytype,
+      fvs :: [(Var,Monotype)],
+      bfvc :: Int,  -- boxed FV count
+      ufvc :: Int,  -- unboxed FV count
+      truefvs :: [Var],
+      noHeapAlloc :: Bool,
+
+      maybeCMap :: Maybe CMap  -- only needed for LitC
+    }
+
 -- Alt
   | ITACon {
       typ :: Monotype,
@@ -208,10 +208,10 @@ data InfoTab =
   -- similarly function continuation could be handled by EFCall.ITFCall
   -- update continuation by THUNK.ITThunk?
 
-  | ITUpdcont
-  | ITCasecont
-  | ITCallcont
-  | ITFuncont
+--CInfoTab   | ITUpdcont
+--CInfoTab   | ITCasecont
+--CInfoTab   | ITCallcont
+--CInfoTab   | ITFuncont
     deriving(Eq)
 
 class ITsOf a b where
@@ -457,25 +457,29 @@ showObjType ITThunk {} = "THUNK"
 --BH showObjType ITBlackhole {} = "BLACKHOLE"
 showObjType _ = error "bad ObjType"
 
-  
-showIT :: InfoTab -> Maybe Definition
+alignedDecl:: Type -> String -> Initializer -> Definition
+alignedDecl typ name ini = 
+  [cedecl|$ty:typ $id:name __attribute__((aligned(OBJ_ALIGN)))
+    = $init:ini;
+  |]
+
+-- want to separate CInfoTab and InfoTab--Data.Either seems
+-- to be overkill since we wouldn't be using it to enforce type safety
+showIT :: InfoTab -> Maybe (Bool, String, Definition)
 showIT it@(ITAlts {}) =
   let init = showITinit it
-      itname = "it_" ++ name it
-      f x = Just [cedecl|
-                 typename CInfoTab $id:itname __attribute__((aligned(OBJ_ALIGN)))
-                   = $init:x;
-               |]
+      citname = "it_" ++ name it
+      f x = Just $ (False, citname, ) 
+                     (alignedDecl [cty| typename CInfoTab|] citname x)
   in maybe Nothing f init
 
 showIT it =
   let init = showITinit it
       itname = "it_" ++ name it
-      f x = Just [cedecl|
-                 typename InfoTab $id:itname __attribute__((aligned(OBJ_ALIGN)))
-                   = $init:x;
-               |]
+      f x = Just $ (True, itname, )
+                      (alignedDecl [cty| typename InfoTab|] itname x)
   in maybe Nothing f init
+
 
 showITinit :: InfoTab -> Maybe Initializer
 showITinit it@(ITFun {}) =
@@ -578,8 +582,53 @@ showITinit it@(ITAlts {}) =
 
 showITinit it = Nothing
 
+preDefInfoTabs =
+    [ "it_stgCallCont",
+      "it_stgStackCont",
+      "it_stgLetCont",
+      "it_stgUpdateCont",
+      "it_stgShowResultCont" ]
+
+
 showITs :: ITsOf a [InfoTab] => a -> [Definition]
-showITs os = catMaybes (map showIT $ itsOf os)
+--showITs os = catMaybes (map showIT $ itsOf os)
+
+showITs os =
+    let ps = catMaybes (map showIT $ itsOf os)
+        -- quick hack
+        (itnames, itdefs) =   unzip [ (name, defn) | (True, name, defn) <- ps ]
+        (ucitnames, citdefs) = unzip [ (name, defn) | (False, name, defn) <- ps ]
+        citnames = preDefInfoTabs ++ ucitnames
+        itcount = length itnames
+        citcount = length citnames
+        -- const int stgInfoTabCount = #InfoTabs ;
+        stgInfoTabCount = 
+            [cedecl| const int stgInfoTabCount = $exp:(itcount) ; |]
+        initsIT = [[cinit| & $id:itname |] | itname <- itnames ]
+        -- {&it, &it, ...}
+        compoundInitIT = [cinit| { $inits:initsIT } |]
+        -- InfoTab *const stgInfoTab[#InfoTabs] = {&it, &it, ...} ;
+        stgInfoTab = 
+            [cedecl| typename InfoTab *const stgInfoTab [ $exp:(itcount) ] =
+                       $init:compoundInitIT ; |]
+
+        -- const int stgCInfoTabCount = #CInfoTabs ;
+        stgCInfoTabCount = 
+            [cedecl| const int stgCInfoTabCount = $exp:(citcount) ; |]
+        initsCIT = [[cinit| & $id:citname |] | citname <- citnames ]
+        -- {&it, &it, ...}
+        compoundInitCIT = [cinit| { $inits:initsCIT } |]
+        -- stgCInfoTab *const stgCInfoTab[#CInfoTabs] = {&it, &it, ...} ;
+        stgCInfoTab = 
+            [cedecl| typename CInfoTab *const stgCInfoTab [ $exp:(citcount) ] =
+                       $init:compoundInitCIT ; |]
+    in itdefs ++
+       citdefs ++
+       [ stgInfoTabCount, 
+         stgInfoTab,
+         stgCInfoTabCount,
+         stgCInfoTab]
+        
 {-
 -- quick hack to get names as well
 let its = itsOf os
@@ -719,7 +768,7 @@ instance PPrint InfoTab where
              ITAlts{..} ->
                (text "ITAlts", makeName name $+$
                                frvarsDoc fvs truefvs)
-             _ -> (text "Other InfoTab",empty)
+--             _ -> (text "Other InfoTab",empty)
 
 
 instance Show InfoTab where

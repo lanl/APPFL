@@ -61,7 +61,6 @@ import Language.C.Quote.GCC
 import Language.C.Syntax (Definition)
 import qualified Text.PrettyPrint.Mainland as PP
 
-pp f = PP.pretty 80 $ PP.ppr f
 
 header :: Definition
 header = [cedecl| $esc:("#include \"stgc.h\"")|]
@@ -252,7 +251,7 @@ tctest mhs arg =
     hmstgdebug objs
 
 
-codegener :: String -> Bool -> Bool -> String
+codegener :: String -> Bool -> Bool -> [Definition]
 codegener inp v mhs = let (tycons, objs) = heapchecker mhs inp
                           typeEnums = showTypeEnums tycons
                           infotab = showITs objs
@@ -267,11 +266,10 @@ codegener inp v mhs = let (tycons, objs) = heapchecker mhs inp
                                   [ stgStatObjCount, stgStatObj ] ++
                                   concat funDefs ++
                                   footer v
-                          code = [cunit|$edecls:defs |]
-                 in pp code
+                 in [cunit|$edecls:defs |]
 
-pprinter :: String -> String
-pprinter = id
+pprinter :: [Definition] -> String
+pprinter = PP.pretty 80 . PP.ppr
 
 -- parse minihaskell in a file, add a block comment at the end
 -- showing the unparsed STG code

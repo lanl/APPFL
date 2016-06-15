@@ -47,4 +47,11 @@ Things To Check:
 
 7) Probably a bunch of other stuff.
 
+--Stack stuff: bitmask, first six bits tell you size of payload and how many of 
+the lower bits of the 64 bit bitmask are set. All the ones that are set
+to 1 correspond to payload objects that point to something. All you have
+to do differently than the heap objects is add these payloads right after the SHOs
+or StgCurVal and treat them like the SHOS. process them once and forget about them.
+
+
 
