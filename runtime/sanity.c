@@ -40,9 +40,6 @@ Obj **mallocArrayOfAllObjects() {
  */
 void addObjects (Obj *objArray[]) {
 
-  //i stays at the beginning of the array, 
-  //j moves to keep track of how many objects have been added
-  //k is for going through the payload boxed objects
 
   //int i, j = 0, k;
   //mark the end of the static heap object range
@@ -54,7 +51,7 @@ void addObjects (Obj *objArray[]) {
     // object itself is valid
     sanityCheckSingleSHO(stgStatObj[i]);
     objArray[i] = stgStatObj[i];
-    printObjInfo(objArray[i]);
+    //printObjInfo(objArray[i]);
   }
 
   //could be j = i
@@ -70,59 +67,42 @@ void addObjects (Obj *objArray[]) {
     }
     if (k == j) {
       objArray[j] = stgCurVal.op;
+      j++;
     }
   }
+
   //reset i to mark beginning of array
-  /*i = 0;
+  i = 0;
   int p;
   while (i != j) {
-    for (p = 0; p != objArray[i]->_infoPtr->layoutInfo.boxedCount; p++) {
-      if (!isInObjArray(objArray, objArray[i]->payload[p].op, i, j)) {
+ 
+  //these change based on whether the object is a thunk / blackhole or not
+  int start = 0;
+  int end = getInfoPtr(objArray[i])->layoutInfo.boxedCount;
+   
+    switch (getObjType(objArray[i])) {
+      
+      case THUNK:
+      case BLACKHOLE:
+        start = startTHUNKFVsB(objArray[i]);
+        end = endTHUNKFVsB(objArray[i]);
+        break; 
+      default:
+        break;
+    }
+
+    for (p = start; p != end; p++) {
+      //otherwise if the payload isn't in the array, add it
+      if (!isInObjArray(objArray, objArray[i]->payload[p].op, 0, j-1)) {
+          //make sure pointer is aligned, not null, and in the heap before you
+          //add it 
+          sanityCheckPtr(objArray[i]->payload[p].op);
           objArray[j] = objArray[i]->payload[p].op;
           j++;
       }
     }
     i++;
-  }*/
-
-  //outer (i) loop traverses the objarray by object
-  /*for (i = 0; i < end; i++) {    
-    //if the object doesn't have boxed variables in it's payload
-    //go to the next one
-    if (objArray[i]->_infoPtr->layoutInfo.boxedCount == 0) {
-      continue;
-    }
-    //inner loop (k) goes through the payload of each object
-    for (k = 0; k < objArray[i]->_infoPtr->layoutInfo.boxedCount; k++) {
-      //the j loop goes through the objarray, from o to end to make sure we don't add duplicates
-      for (j = 0; j < end; j++) {      
-        //if payload already exists in obj array, don't copy it over
-        if (objArray[j] == objArray[i]->payload[k].op) {
-          break;
-        }
-      }
-    }
-    //otherwise add it when j = end
-    if (j == end) {
-      //make sure pointer is to a heap/static heap object
-      if (!(isSHO(objArray[i]->payload[k].op) || isHeap(objArray[i]->payload[k].op))) {
-        LOG(LOG_FATAL, "Object isn't a heap object or a SHO");
-        end++;
-        break;
-      }
-      //make sure pointer is aligned and right size 
-      if (!checkPtr8BitAligned(objArray[i]->payload[k].op) || !(checkPtrCorrectSize(objArray[i]->payload[k].op))) {
-        LOG(LOG_FATAL, "problem: bad object alignment");
-        end++;
-        break;
-      }
-      //add new payload object to end of array
-      objArray[end] = objArray[i]->payload[k].op;
-      end++;
-      break;
-    }
-  }*/
-
+  }
 }
 
 bool isInObjArray (Obj *objArray[], Obj *obj, int start, int end) {
@@ -188,22 +168,30 @@ void sanityCheckSingleSHO (Obj *obj) {
 }
 
 /**
- *three simple checks for any obj. make sure it's not null, has the right size, and is aligned
+ *to check if a pointer is not null, aligned, and is in the heap range
+ */
+void sanityCheckPtr(Obj *obj) {
+
+  sanityCheckObj(obj);
+  if (!(isHeap(obj))) {
+    LOG(LOG_FATAL, "problem: pointer is not in heap range");
+    exit(1);
+  }
+  
+}
+
+/**
+ *two simple checks for any obj. make sure it's not null, has the right size, and is aligned
  */
 void sanityCheckObj (Obj *obj) {
 
   if (obj == NULL) {
-    LOG(LOG_FATAL, "problem: pointer to object is wonky");
+    LOG(LOG_FATAL, "problem: pointer points to null");
     exit(1);
   }
 
   if (!checkPtr8BitAligned(obj)) {
     LOG(LOG_FATAL, "problem: bad object alignment");
-    exit(1);
-  }
-
-  if (!checkPtrCorrectSize(obj)) {
-    LOG(LOG_FATAL, "problem: sizeof obj is not a multiple of OBJ_ALIGN");
     exit(1);
   }
 }
@@ -218,12 +206,3 @@ bool checkPtr8BitAligned (Obj *obj) {
   return true;
 }
 
-/**
- *makes sure the size of the object is not funky
- */
-bool checkPtrCorrectSize (Obj *obj) {
-  //make sure the pointer is of a size which is a multiple of OBJ_ALIGN
-  if ((sizeof(obj) % OBJ_ALIGN) != 0)
-    return false;
-  return true;
-}
