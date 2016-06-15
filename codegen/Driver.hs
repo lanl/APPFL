@@ -258,11 +258,11 @@ codegener inp v mhs = let (tycons, objs) = heapchecker mhs inp
                           (shoForward, shoDef) = showSHOs objs
                           (funForwards, funDefs) = cgObjs objs stgRTSGlobals
                           (stgStatObjCount, stgStatObj) = shos objs
-                          defs =  header : funForwards ++ 
-                                  typeEnums ++ 
+                          defs =  header : funForwards ++
+                                  typeEnums ++
                                   infotab ++
-                                  shoForward ++ 
-                                  shoDef ++ 
+                                  shoForward ++
+                                  shoDef ++
                                   [ stgStatObjCount, stgStatObj ] ++
                                   concat funDefs ++
                                   footer v
