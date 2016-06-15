@@ -231,7 +231,7 @@ strictness, and secondarily, with mechanisms for transparent fault tolerance.
     \ \ Fairly faithful to STG papers}
 \item<4-> Mini-Haskell front end (done);
   \\\only<4>{%
-    \ \ Close to ML, syntatically}
+    \ \ Close to ML, syntactically}
 \item<5-> Fault tolerance \emph{TBD}.
 \end{enumerate}
 \end{frame}
@@ -279,7 +279,7 @@ SPJ identifies defines the term \emph{code label} as something that can be
 \begin{verbatim}
       while (1) f = (*f)();
 \end{verbatim}
-\only<4>{\ \ Our intial implementation used this approach}
+\only<4>{\ \ Our initial implementation used this approach}
 \item<5-> implement an intermediate language, e.g., C-{}-/Cmm, where tail call is primitive;
 \\\only<5>{\ \ Fun, but out of scope}
 \item<6-> generate assembly code, e.g., LLVM, directly.
@@ -313,7 +313,7 @@ Critically, this also works for indirect calls to previously stored addresses.
 The restrictions are due to the x86(-64)/*nix/C calling
 conventions---caller clean-up---and the possibility of pointer aliasing.
 \\\vspace{0.1in}
-Sufficient formula for recent gcc and Clang/LLVM on Linux or MacOS X
+Sufficient formula for recent gcc and Clang/LLVM on Linux or Mac OS X
 \begin{itemize}
 \item Call in leaf position of CFG;
 \item Caller and callee have the same type signature
@@ -352,7 +352,7 @@ Again, sibling call saves us.
 
 
 \begin{frame}
-  \frametitle{Acknowledgements}
+  \frametitle{Acknowledgments}
 
   \footnotesize{Funding for this project has been provided by the DOE
     NNSA LANL Laboratory Directed Research and Development program
