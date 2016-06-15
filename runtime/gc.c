@@ -230,9 +230,10 @@ void processCont(Cont *p) {
 void gc(void) {
   //LOG(LOG_INFO, "GARBAGE COLLECTION DISABLED in gc.c/gc(void)\n"); return;
 
-  //successfully made about 1400 test segfault :
-  //Obj **array = mallocArrayOfAllObjects();
-  //addObjects(array);
+  if (HEAP_SANITY_CHECK)  {
+    Obj **array = mallocArrayOfAllObjects();
+    addObjects(array);
+  }
   
   size_t before = stgHP - stgHeap;
 

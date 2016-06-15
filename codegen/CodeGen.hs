@@ -446,7 +446,7 @@ cgeInline :: Env -> Bool
      -> ([BlockItem], [(Definition, CFun)])
      -> Alts InfoTab
      -> State Int (([BlockItem], YPN), [(Definition, CFun)])
-cgeInline env boxed (ecode, efunc) a@(Alts italts alts aname) =
+cgeInline env boxed (ecode, efunc) a@(Alts{}) =
   let pre = [citems| $comment:("// inline:  scrutinee does not STGJUMP or STGRETURN"); |]
   in do
     ((acode, ypn), afunc) <- cgaltsInline env a boxed
@@ -471,9 +471,11 @@ cgaltsInline env a@(Alts it alts name) boxed =
                  | all (== No) ypns = No
                  | otherwise = Possible
        let its = [citems|
-                   typename Cont *$id:contName = stgAllocCallOrStackCont(&it_stgStackCont, 1);
+                   typename Cont *$id:contName = 
+                     stgAllocCallOrStackCont(&it_stgStackCont, 1);
                    $comment:("// " ++ show (ctyp it))
-                   $id:contName->layout = (typename Bitmap64)$ulint:(npStrToBMInt (iff boxed "P" "N"));
+                   $id:contName->layout = 
+                     (typename Bitmap64)$ulint:(npStrToBMInt (iff boxed "P" "N"));
                 |]
                ++ (if boxed then
                     [citems|
@@ -483,7 +485,8 @@ cgaltsInline env a@(Alts it alts name) boxed =
                   else
                     [citems|$id:contName->payload[0] = stgCurValU;|])
                ++ [citems|
-                    typename PtrOrLiteral *$id:scrutPtr = &($id:contName->payload[0]);
+                    typename PtrOrLiteral *$id:scrutPtr = 
+                      &($id:contName->payload[0]);
                   |]
                ++ (if switch then
                     if boxed then
