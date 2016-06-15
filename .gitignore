@@ -26,3 +26,12 @@ test/stg/nostrict2/*.c
 #sandbox stuff
 sandbox
 appfl-sandbox
+
+# stack stuff
+.stack-work
+
+# latex, beamer output
+*.toc
+*.nav
+*.vrb
+*.snm
