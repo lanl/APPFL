@@ -1,0 +1,17 @@
+\frametitle{Modern compilers to the rescue:  sibling call}
+Clang/LLVM and GCC implement a restricted form of tail call, the \emph{sibling}
+call, i.e, jump reusing the TOS frame.  Here
+\begin{verbatim}
+void f() {
+  ...
+  g();
+}
+\end{verbatim}
+function \texttt{g} is jumped to; there is no (implicit) return following
+\texttt{g();}.
+\\\vspace{0.1in}
+Critically, this also works for indirect calls to previously stored addresses.
+\begin{verbatim}
+    (getInfoPtr(stgCurVal.op)->entryCode)();
+\end{verbatim}
+
