@@ -29,3 +29,9 @@ appfl-sandbox
 
 # stack stuff
 .stack-work
+
+# latex, beamer output
+*.toc
+*.nav
+*.vrb
+*.snm
