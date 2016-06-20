@@ -547,7 +547,7 @@ cgalts env (Alts it alts name scrt) boxed =
         -- scrutinee now has a name in the environment
         -- can I do more with it?
         -- e.g. Should fvp[0] be bound to a named PtrOrLiteral? (and used in its place)
-        altenv = zip (scrtVarName scrt : map fst $ fvs it) (map (FP fvp) [0..])
+        altenv = zip (scrtVarName scrt : (map fst $ fvs it)) (map (FP fvp) [0..])
         env' = altenv ++ env
         cforward = [cedecl| typename FnPtr $id:name();|]
         switch = length alts > 1
