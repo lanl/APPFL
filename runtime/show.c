@@ -428,8 +428,9 @@ void checkStgHeap() {
 }
 
 
-size_t stgStatObjCount;
-Obj * stgStatObj[100];
+// declared in stg.h
+//size_t stgStatObjCount;
+//Obj * stgStatObj[100];
 
 //tmp hack!
 void *getToPtr();

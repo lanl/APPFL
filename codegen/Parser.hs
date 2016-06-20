@@ -11,7 +11,7 @@ prog       ::= <def>*  -- is an empty program still a valid program? I think so.
              |  "PAP" "(" <var> <atom>+ ")"
              |  "CON" "(" <con> <atom>* ")"
              |  "THUNK" <expr>
-             |  "ERROR"  (aka BLACKHOLE)
+--BH             |  "ERROR"  (aka BLACKHOLE)
 
 <dataDef>  ::= "data" ["unboxed"] <typeCon> "=" <dataCons>
 
@@ -250,7 +250,8 @@ objDefP =
   eqP >>> \_ ->
   tokcutP "Expected object definition"
   (orExList
-   [funP, papP, conP, thunkP, errorP]) >>> \obj -> -- partially applied Obj constructor
+--BH   [funP, papP, conP, thunkP, errorP]) >>> \obj -> -- partially applied Obj constructor
+   [funP, papP, conP, thunkP]) >>> \obj -> -- partially applied Obj constructor
                                           accept $ obj name -- apply name to constructor
 
 
@@ -307,8 +308,8 @@ thunkP = objPat "THUNK" $
 
 -- parse an Error/Blackhole object,
 -- accept partially applied BLACKHOLE constructor
-errorP :: Parser Token (String -> Obj ())
-errorP = rsvP "ERROR" >>> \_ -> accept $ BLACKHOLE ()
+--BH errorP :: Parser Token (String -> Obj ())
+--BH errorP = rsvP "ERROR" >>> \_ -> accept $ BLACKHOLE ()
 
 
 -- parse an expression, accept an Expr () object

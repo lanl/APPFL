@@ -12,7 +12,8 @@ data Tupl2 a b = TP2 a b;
 
 data Tupl3 a b c = TP3 a b c;
 
-error = ERROR;
+--BH error = ERROR;
+error = THUNK(error);
 
 unit = CON(Unit);
 

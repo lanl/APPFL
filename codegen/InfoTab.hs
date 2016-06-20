@@ -37,7 +37,7 @@ import Data.Set (Set)
 import qualified Data.Set as Set
 
 import Language.C.Quote.GCC
-import Language.C.Syntax (Definition, Initializer)
+import Language.C.Syntax (Definition, Initializer, Type)
 
 -- need an infoTab entry for each lexically distinct HO or SHO
 
@@ -105,27 +105,15 @@ data InfoTab =
       truefvs :: [Var],
       entryCode :: String }
 
-  | ITBlackhole {
-      typ :: Monotype,
-      ctyp :: Polytype,
-      name :: String,
-      fvs :: [(Var,Monotype)],  -- why is this here?
-      bfvc :: Int,  -- boxed FV count
-      ufvc :: Int,  -- unboxed FV count
-      truefvs :: [Var],
-      entryCode :: String }
-
-  | ITAtom {
-      typ :: Monotype,
-      ctyp :: Polytype,
-      fvs :: [(Var,Monotype)],
-      bfvc :: Int,  -- boxed FV count
-      ufvc :: Int,  -- unboxed FV count
-      truefvs :: [Var],
-      noHeapAlloc :: Bool,
-
-      maybeCMap :: Maybe CMap  -- only needed for LitC
-    }
+--BH   | ITBlackhole {
+--BH       typ :: Monotype,
+--BH       ctyp :: Polytype,
+--BH       name :: String,
+--BH       fvs :: [(Var,Monotype)],  -- why is this here?
+--BH       bfvc :: Int,  -- boxed FV count
+--BH       ufvc :: Int,  -- unboxed FV count
+--BH       truefvs :: [Var],
+--BH       entryCode :: String }
 
 -- Expr
   | ITFCall {
@@ -168,6 +156,18 @@ data InfoTab =
       noHeapAlloc :: Bool,
       cmap :: CMap}
 
+  | ITAtom {
+      typ :: Monotype,
+      ctyp :: Polytype,
+      fvs :: [(Var,Monotype)],
+      bfvc :: Int,  -- boxed FV count
+      ufvc :: Int,  -- unboxed FV count
+      truefvs :: [Var],
+      noHeapAlloc :: Bool,
+
+      maybeCMap :: Maybe CMap  -- only needed for LitC
+    }
+
 -- Alt
   | ITACon {
       typ :: Monotype,
@@ -208,10 +208,10 @@ data InfoTab =
   -- similarly function continuation could be handled by EFCall.ITFCall
   -- update continuation by THUNK.ITThunk?
 
-  | ITUpdcont
-  | ITCasecont
-  | ITCallcont
-  | ITFuncont
+--CInfoTab   | ITUpdcont
+--CInfoTab   | ITCasecont
+--CInfoTab   | ITCallcont
+--CInfoTab   | ITFuncont
     deriving(Eq)
 
 class ITsOf a b where
@@ -290,8 +290,8 @@ instance SetITs (Obj ([Var],[Var])) (Obj InfoTab) where
     setITs o@(THUNK omd e n) =
         THUNK (makeIT o) (setITs e) n
 
-    setITs o@(BLACKHOLE omd n) =
-        BLACKHOLE (makeIT o) n
+--BH    setITs o@(BLACKHOLE omd n) =
+--BH        BLACKHOLE (makeIT o) n
 
 
 -- ****************************************************************
@@ -359,16 +359,16 @@ instance MakeIT (Obj ([Var],[Var])) where
                 entryCode = "thunk_" ++ n
               }
 
-    makeIT o@(BLACKHOLE (fvs,truefvs) n) =
-        ITBlackhole { name = n,
-                    typ = typUndef,
-                    ctyp = ctypUndef,
-                    fvs = zip fvs $ repeat typUndef,
-                    bfvc = -1,
-                    ufvc = -1,
-                    truefvs = truefvs,
-                    entryCode = "stgBlackhole"
-                  }
+--BH    makeIT o@(BLACKHOLE (fvs,truefvs) n) =
+--BH        ITBlackhole { name = n,
+--BH                    typ = typUndef,
+--BH                    ctyp = ctypUndef,
+--BH                    fvs = zip fvs $ repeat typUndef,
+--BH                    bfvc = -1,
+--BH                    ufvc = -1,
+--BH                    truefvs = truefvs,
+--BH                    entryCode = "stgBlackhole"
+--BH                  }
 
 instance MakeIT (Expr ([Var],[Var])) where
     makeIT ELet{emd = (fvs,truefvs)} =
@@ -458,26 +458,32 @@ showObjType ITFun {} = "FUN"
 showObjType ITPap {} = "PAP"
 showObjType ITCon {} = "CON"
 showObjType ITThunk {} = "THUNK"
-showObjType ITBlackhole {} = "BLACKHOLE"
+--BH showObjType ITBlackhole {} = "BLACKHOLE"
 showObjType _ = error "bad ObjType"
 
-  
-showIT :: InfoTab -> Maybe Definition
+alignedDecl:: Type -> String -> Initializer -> Definition
+alignedDecl typ name ini =
+  [cedecl|$ty:typ $id:name __attribute__((aligned(OBJ_ALIGN)))
+    = $init:ini;
+  |]
+
+-- want to separate CInfoTab and InfoTab--Data.Either seems
+-- to be overkill since we wouldn't be using it to enforce type safety
+showIT :: InfoTab -> Maybe (Bool, String, Definition)
 showIT it@(ITAlts {}) =
   let init = showITinit it
-      itname = "it_" ++ name it
-      f x = Just [cedecl|
-                 typename CInfoTab $id:itname __attribute__((aligned(8))) = $init:x;
-               |]
+      citname = "it_" ++ name it
+      f x = Just $ (False, citname, )
+                     (alignedDecl [cty| typename CInfoTab|] citname x)
   in maybe Nothing f init
 
 showIT it =
   let init = showITinit it
       itname = "it_" ++ name it
-      f x = Just [cedecl|
-                 typename InfoTab $id:itname __attribute__((aligned(8))) = $init:x;
-               |]
+      f x = Just $ (True, itname, )
+                      (alignedDecl [cty| typename InfoTab|] itname x)
   in maybe Nothing f init
+
 
 showITinit :: InfoTab -> Maybe Initializer
 showITinit it@(ITFun {}) =
@@ -550,20 +556,20 @@ showITinit it@(ITThunk {}) =
                }
              |]
 
-showITinit it@(ITBlackhole {}) =
-  Just [cinit|
-               {
-#if DEBUG_INFOTAB
-                 .pi = PI(),
-#endif
-                 .name = $string:(name it),
-                 .entryCode = &$id:(entryCode it),
-                 .objType = BLACKHOLE,
-                 .layoutInfo.payloadSize = 0,
-                 .layoutInfo.boxedCount = 0,
-                 .layoutInfo.unboxedCount = 0
-               }
-             |]
+--BH showITinit it@(ITBlackhole {}) =
+--BH   Just [cinit|
+--BH                {
+--BH if DEBUG_INFOTAB
+--BH                  .pi = PI(),
+--BH endif
+--BH                  .name = $string:(name it),
+--BH                  .entryCode = &$id:(entryCode it),
+--BH                  .objType = BLACKHOLE,
+--BH                  .layoutInfo.payloadSize = 0,
+--BH                  .layoutInfo.boxedCount = 0,
+--BH                  .layoutInfo.unboxedCount = 0
+--BH                }
+--BH              |]
 
 showITinit it@(ITAlts {}) =
   Just [cinit|
@@ -572,9 +578,7 @@ showITinit it@(ITAlts {}) =
                  .entryCode = &$id:(entryCode it),
                  .contType = CASECONT,
                  .cLayoutInfo.payloadSize = $int:((length $ fvs it) + 1),
-                 .cLayoutInfo.boxedCount = $int:(bfvc it),
-                 .cLayoutInfo.unboxedCount = $int:(ufvc it),
-                 .cLayoutInfo.bm = $ulint:(npStrToBMInt ( 'N' :
+                 .cLayoutInfo.bm.bits = $ulint:(npStrToBMInt ( 'N' :
                         replicate (bfvc it) 'P' ++
                         replicate (ufvc it) 'N') )
                }
@@ -582,8 +586,64 @@ showITinit it@(ITAlts {}) =
 
 showITinit it = Nothing
 
+preDefInfoTabs =
+    [ "it_stgCallCont",
+      "it_stgStackCont",
+      "it_stgLetCont",
+      "it_stgUpdateCont",
+      "it_stgShowResultCont" ]
+
+
 showITs :: ITsOf a [InfoTab] => a -> [Definition]
-showITs os = catMaybes (map showIT $ itsOf os)
+--showITs os = catMaybes (map showIT $ itsOf os)
+
+showITs os =
+    let ps = catMaybes (map showIT $ itsOf os)
+        -- quick hack
+        (itnames, itdefs) =   unzip [ (name, defn) | (True, name, defn) <- ps ]
+        (ucitnames, citdefs) = unzip [ (name, defn) | (False, name, defn) <- ps ]
+        citnames = preDefInfoTabs ++ ucitnames
+        itcount = length itnames
+        citcount = length citnames
+        -- const int stgInfoTabCount = #InfoTabs ;
+        stgInfoTabCount =
+            [cedecl| const int stgInfoTabCount = $exp:(itcount) ; |]
+        initsIT = [[cinit| & $id:itname |] | itname <- itnames ]
+        -- {&it, &it, ...}
+        compoundInitIT = [cinit| { $inits:initsIT } |]
+        -- InfoTab *const stgInfoTab[#InfoTabs] = {&it, &it, ...} ;
+        stgInfoTab =
+            [cedecl| typename InfoTab *const stgInfoTab [ $exp:(itcount) ] =
+                       $init:compoundInitIT ; |]
+
+        -- const int stgCInfoTabCount = #CInfoTabs ;
+        stgCInfoTabCount =
+            [cedecl| const int stgCInfoTabCount = $exp:(citcount) ; |]
+        initsCIT = [[cinit| & $id:citname |] | citname <- citnames ]
+        -- {&it, &it, ...}
+        compoundInitCIT = [cinit| { $inits:initsCIT } |]
+        -- stgCInfoTab *const stgCInfoTab[#CInfoTabs] = {&it, &it, ...} ;
+        stgCInfoTab =
+            [cedecl| typename CInfoTab *const stgCInfoTab [ $exp:(citcount) ] =
+                       $init:compoundInitCIT ; |]
+    in itdefs ++
+       citdefs ++
+       [ stgInfoTabCount,
+         stgInfoTab,
+         stgCInfoTabCount,
+         stgCInfoTab]
+
+{-
+-- quick hack to get names as well
+let its = itsOf os
+                 maybeDefs = map showIT its
+                 zippedMaybe = zip maybeDefs (map name its)
+                 zipped = [(itDef, name) | (Just itDef, name) <- zippedMaybe]
+                 (itDefs, names) = unzip zipped
+                 inits = [[cinit| & $id:name |] | name <- names ]
+                 compoundInit = [cinit| { $inits:inits } |]
+                 cedecl = [cedecl| typename
+-}
 
 
 setCMaps :: [TyCon] -> [Obj InfoTab] -> ([TyCon], [Obj InfoTab])
@@ -682,9 +742,9 @@ instance PPrint InfoTab where
              ITThunk{..} ->
                (text "ITThunk", makeName name $+$
                               frvarsDoc fvs truefvs)
-             ITBlackhole{..} ->
-               (text "ITBlackhole", makeName name $+$
-                                  frvarsDoc fvs truefvs)
+--BH              ITBlackhole{..} ->
+--BH                (text "ITBlackhole", makeName name $+$
+--BH                                   frvarsDoc fvs truefvs)
              ITAtom{..} ->
                (text "ITAtom", makeHADoc noHeapAlloc $+$
                                frvarsDoc fvs truefvs)
@@ -708,7 +768,7 @@ instance PPrint InfoTab where
              ITAlts{..} ->
                (text "ITAlts", makeName name $+$
                                frvarsDoc fvs truefvs)
-             _ -> (text "Other InfoTab",empty)
+--             _ -> (text "Other InfoTab",empty)
 
 
 instance Show InfoTab where

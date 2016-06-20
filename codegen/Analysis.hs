@@ -280,9 +280,10 @@ exhaustObj cmap obj =
    THUNK{e} -> obj {e = exhaustExpr cmap e}
    PAP{} -> obj
    CON{} -> obj
-   BLACKHOLE{} -> obj
+   --BLACKHOLE{} -> obj
 
 -------------------------------------------------- Expr Level
+   
 exhaustExpr :: CMap -> Expr a -> Expr a
 exhaustExpr cmap expr =
   case expr of

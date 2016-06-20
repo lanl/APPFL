@@ -4,9 +4,6 @@
 {-# LANGUAGE NamedFieldPuns        #-}
 {-# LANGUAGE RecordWildCards       #-}
 {-# LANGUAGE CPP #-}
-#if __GLASGOW_HASKELL__ < 710
- {-# LANGUAGE OverlappingInstances #-}
-#endif
 
 module SetFVs (
   setFVsObjs
@@ -92,7 +89,7 @@ instance STGToList (Obj (Set.Set Var, Set.Set Var)) (Obj ([Var],[Var])) where
     stgToList PAP{..} = PAP{omd = p2p omd, as = map stgToList as, ..}
     stgToList CON{..} = CON{omd = p2p omd, as = map stgToList as, ..}
     stgToList THUNK{..} = THUNK{omd = p2p omd, e = stgToList e, ..}
-    stgToList BLACKHOLE{..} = BLACKHOLE{omd = p2p omd,..}
+--BH     stgToList BLACKHOLE{..} = BLACKHOLE{omd = p2p omd,..}
 
 instance STGToList (Expr (Set.Set Var, Set.Set Var)) (Expr ([Var],[Var])) where
     stgToList EAtom{..} = EAtom{emd = p2p emd, ..}
@@ -112,7 +109,7 @@ instance STGToList (Alt (Set.Set Var, Set.Set Var)) (Alt ([Var],[Var])) where
 
 showFVs vs = "[" ++ List.intercalate " " vs ++ "] "
 
-instance {-# OVERLAPPING #-} Show ([Var],[Var]) where
+instance Show ([Var],[Var]) where
     show (a,b) = "(" ++ showFVs a ++ "," ++ showFVs b ++ ")"
 
 instance Unparse ([Var],[Var]) where
@@ -263,13 +260,12 @@ instance SetFVs (Obj a) (Obj (Set.Set Var, Set.Set Var)) where
     let e' = setfvs tlds e
     in THUNK (emd e') e' n
 
-  setfvs tlds (BLACKHOLE _ n) =
-    BLACKHOLE (Set.empty,Set.empty) n
+  --BH setfvs tlds (BLACKHOLE _ n) =
+  --BH   BLACKHOLE (Set.empty,Set.empty) n
+
 
 instance SetFVs a b => SetFVs [a] [b] where
     setfvs tlds = map (setfvs tlds)
 
-instance  {-# OVERLAPPING #-} PPrint (Set.Set Var, Set.Set Var) where
-  pprint (fvs, tfvs) = parens (text "fvs:" <+> pprint fvs
-                               <> comma <+>
-                               text "tfvs:" <+> pprint tfvs)
+instance PPrint (Set.Set Var, Set.Set Var) where
+  pprint (fvs, tfvs) = parens (text "fvs:" <+> pprint fvs <> comma <+> text "tfvs:" <+> pprint tfvs)

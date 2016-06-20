@@ -126,6 +126,6 @@ void initStg() {
 
   LOG(LOG_INFO, "Stg stack at %p and heap at %p\n", stgStack, stgHP);
 
-  stgStatObjCount = 0;
+  //stgStatObjCount = 0;
 
 }

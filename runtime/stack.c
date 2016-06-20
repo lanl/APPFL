@@ -20,12 +20,14 @@
 #include "obj.h"
 #include "log.h"
 
+/*
 Bitmap64 cLayoutInfoToBitmap64(CLayoutInfo *lip) {
   Bitmap64 bm;
   bm.bitmap.mask = (0x1UL << lip->boxedCount) - 1;  // boxed vals first
   bm.bitmap.size = lip->boxedCount + lip->unboxedCount;
   return bm;
 }
+*/
 
 Cont *stgAllocCont(CInfoTab *citp) {
   assert(citp->contType != CALLCONT &&
@@ -172,11 +174,11 @@ Cont *stgGetStackArgp() {
 }
 
 void showCIT(CInfoTab *citp) {
-   LOG(LOG_DEBUG,"showCIT: %s %s, bc %d ubc %d",
+   LOG(LOG_DEBUG,"showCIT: %s %s %lu",
 	  contTypeNames[citp->contType],
 	  citp->name,
-	  citp->cLayoutInfo.boxedCount,
-          citp->cLayoutInfo.unboxedCount);
+	  citp->cLayoutInfo.bm.bits);
+        
   if (citp->contType != CALLCONT) {
     LOG(LOG_DEBUG, ", layoutInfo.payloadSize %d", citp->cLayoutInfo.payloadSize);
   }

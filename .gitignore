@@ -30,3 +30,11 @@ appfl-sandbox
 # testing files with old case syntax
 *.stg.old
 
+# stack stuff
+.stack-work
+
+# latex, beamer output
+*.toc
+*.nav
+*.vrb
+*.snm

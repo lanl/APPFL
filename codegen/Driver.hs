@@ -1,4 +1,4 @@
-{-# LANGUAGE QuasiQuotes #-} 
+{-# LANGUAGE QuasiQuotes #-}
 
 {-# LANGUAGE CPP #-}
 #include "../options.h"
@@ -57,11 +57,10 @@ import           OrderFVsArgs
 import           Data.List
 import qualified Data.Set as Set
 import           System.IO
-import Language.C.Quote.GCC 
+import Language.C.Quote.GCC
 import Language.C.Syntax (Definition)
 import qualified Text.PrettyPrint.Mainland as PP
 
-pp f = PP.pretty 80 $ PP.ppr f
 
 tester :: (String -> a) -> (a -> String) -> [FilePath] -> IO ()
 tester tfun sfun infiles =
@@ -78,8 +77,8 @@ _tester testfun showfun ifds ofd =
     hPutStrLn ofd out
     return ()
     
-header :: String
-header = "#include \"stgc.h\"\n"
+header :: Definition
+header = [cedecl| $esc:("#include \"stgc.h\"")|]
 
 footer :: Bool -> [Definition]
 footer v  = [cgStart, cgMain v]
@@ -254,19 +253,25 @@ tctest mhs arg =
     hmstgdebug objs
 
 
-codegener :: String -> Bool -> Bool -> String
+codegener :: String -> Bool -> Bool -> [Definition]
 codegener inp v mhs = let (tycons, objs) = heapchecker mhs inp
                           typeEnums = showTypeEnums tycons
                           infotab = showITs objs
                           (shoForward, shoDef) = showSHOs objs
                           (funForwards, funDefs) = cgObjs objs stgRTSGlobals
-                          defs = funForwards ++ typeEnums ++ infotab ++ shoForward
-                                 ++ shoDef ++ funDefs ++ footer v
-                          code = [cunit|$edecls:defs |]
-                 in header ++ "\n" ++ pp code
+                          (stgStatObjCount, stgStatObj) = shos objs
+                          defs =  header : funForwards ++
+                                  typeEnums ++
+                                  infotab ++
+                                  shoForward ++
+                                  shoDef ++
+                                  [ stgStatObjCount, stgStatObj ] ++
+                                  concat funDefs ++
+                                  footer v
+                 in [cunit|$edecls:defs |]
 
-pprinter :: String -> String
-pprinter = id
+pprinter :: [Definition] -> String
+pprinter = PP.pretty 80 . PP.ppr
 
 -- parse minihaskell in a file, add a block comment at the end
 -- showing the unparsed STG code

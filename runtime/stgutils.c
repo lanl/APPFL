@@ -173,8 +173,8 @@ CInfoTab it_stgUpdateCont __attribute__((aligned(8))) =
     .entryCode = &stgUpdateCont,
     .contType = UPDCONT,
     .cLayoutInfo.payloadSize = 1, // self
-    .cLayoutInfo.boxedCount = 1,
-    .cLayoutInfo.unboxedCount = 0,
+    //.cLayoutInfo.boxedCount = 1,
+    //.cLayoutInfo.unboxedCount = 0,
     //    .cLayoutInfo.bm = (Bitmap64) {.bitmap.mask = 0x1,
     //				  .bitmap.size = 1},
     .cLayoutInfo.bm.bitmap.mask = 0x1,
@@ -199,8 +199,8 @@ CInfoTab it_stgShowResultCont __attribute__((aligned(8))) =
     //    .fvCount    = 0,
     .entryCode  = &fun_stgShowResultCont,
     .contType    = CALLCONT,
-    .cLayoutInfo.boxedCount = -1,  // shouldn't be using this
-    .cLayoutInfo.unboxedCount = -1,  // shouldn't be using this
+    //.cLayoutInfo.boxedCount = -1,  // shouldn't be using this
+    //.cLayoutInfo.unboxedCount = -1,  // shouldn't be using this
     .cLayoutInfo.bm.bitmap.mask = 0x0,   // shouldn't be using this
     .cLayoutInfo.bm.bitmap.size = 0,  // shouldn't be using this
   };
@@ -230,8 +230,8 @@ CInfoTab it_stgStackCont __attribute__((aligned(8))) =
   { .name = "stgStackCont",
     .entryCode = &stgStackCont,
     .contType = STACKCONT,
-    .cLayoutInfo.boxedCount = -1,  // shouldn't be using this
-    .cLayoutInfo.unboxedCount = -1,  // shouldn't be using this
+    //.cLayoutInfo.boxedCount = -1,  // shouldn't be using this
+    //.cLayoutInfo.unboxedCount = -1,  // shouldn't be using this
     .cLayoutInfo.bm.bitmap.mask = 0x0,   // shouldn't be using this
     .cLayoutInfo.bm.bitmap.size = 0,  // shouldn't be using this
   };
@@ -240,8 +240,8 @@ CInfoTab it_stgLetCont __attribute__((aligned(8))) =
   { .name = "stgStackCont",
     .entryCode = &stgStackCont,
     .contType = LETCONT,
-    .cLayoutInfo.boxedCount = -1,  // shouldn't be using this
-    .cLayoutInfo.unboxedCount = -1,  // shouldn't be using this
+    //.cLayoutInfo.boxedCount = -1,  // shouldn't be using this
+    //.cLayoutInfo.unboxedCount = -1,  // shouldn't be using this
     .cLayoutInfo.bm.bitmap.mask = 0x0,   // shouldn't be using this
     .cLayoutInfo.bm.bitmap.size = 0,  // shouldn't be using this
   };
@@ -256,8 +256,8 @@ CInfoTab it_stgPopMeCont __attribute__((aligned(8))) =
   { .name = "stgPopMeCont",
     .entryCode = &stgPopMeCont,
     .contType = POPMECONT,
-    .cLayoutInfo.boxedCount = -1,  // shouldn't be using this
-    .cLayoutInfo.unboxedCount = -1,  // shouldn't be using this
+    //.cLayoutInfo.boxedCount = -1,  // shouldn't be using this
+    //.cLayoutInfo.unboxedCount = -1,  // shouldn't be using this
     .cLayoutInfo.bm.bitmap.mask = 0x0,   // shouldn't be using this
     .cLayoutInfo.bm.bitmap.size = 0,  // shouldn't be using this
   };
@@ -280,8 +280,8 @@ CInfoTab it_stgCallCont __attribute__((aligned(8))) =
   { .name = "stgCallCont",
     .entryCode = &stgCallCont,
     .contType = CALLCONT,
-    .cLayoutInfo.boxedCount = -1,  // shouldn't be using this
-    .cLayoutInfo.unboxedCount = -1,  // shouldn't be using this
+    //.cLayoutInfo.boxedCount = -1,  // shouldn't be using this
+    //.cLayoutInfo.unboxedCount = -1,  // shouldn't be using this
     .cLayoutInfo.bm.bitmap.mask = 0x0,   // shouldn't be using this
     .cLayoutInfo.bm.bitmap.size = 0,  // shouldn't be using this
   };

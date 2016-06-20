@@ -46,9 +46,6 @@ typedef struct {
   //
 } THUNKfields;
 
-#if DEBUG_INFOTAB
-#define PI() (3.14159265358979323846)
-#endif
 
 // InfoTab
 struct _InfoTab {
@@ -56,7 +53,9 @@ struct _InfoTab {
   double pi;
 #endif
   CmmFnPtr entryCode;
+#if USE_INFOTAB_NAME
   char name[32];  // for debugging
+#endif
   ObjType objType; // kind of object, tag for union
   LayoutInfo layoutInfo;
   union {
@@ -105,7 +104,9 @@ struct _Obj {
 #if USE_OBJTYPE
   ObjType objType;          // to distinguish PAP, FUN, BLACKHOLE, INDIRECT
 #endif
+#if USE_IDENT
   char ident[32];           // temporary, just for tracing
+#endif
   PtrOrLiteral payload[];
 };
 

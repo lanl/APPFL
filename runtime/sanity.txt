@@ -1,0 +1,57 @@
+This file chronicles all of the sanity checks i'll be performing and the overall strategy for sanity checking everything.
+
+Top Level Algorithm: 
+------------------------------
+
+1) Beginning of time: malloc space for an array that will contain all SHO's and Heap Objects
+
+2) Sanity check (very generally, for alignment, size, etc) and add all SHOs to the array first and then add all necessary payload objects for these SHO's after that, to the end of the array.
+   --Note: if stgCurVal is pointing to a SHO, don't add it to the SHO range because it will screw up malloc.
+
+3) Go through this whole array of objects and sanity check each object more thoroughly.
+
+Things To Check: 
+------------------------------
+
+1)Beginning of time, make sure Obj's are aligned, the right size, and in the heap range (if they're heap objects)
+
+2) If it's an _infoPtr, mask out LSB 2
+   -- If it's set, check ObjType
+   --check if _infoPtr has an infoTab entry in the array of infoTabs (which is being made)
+
+3) Check ObjType. If LSB2 is set, make sure it's either BLACKHOLE or a THUNK (?)
+   -- Othwerwise, make sure the ObjType is between PHONYSTARTOBJ and PHONYENDOBJ
+
+4) Check ident for validity. Make sure it's null-terminated and and that the elements of that character array
+   are all between a valid range of ASCII values (we don't want any \BELs or \BS').
+
+5) Infotab checking
+   -- if DEBUG_INFOTAB is set, check pi
+   -- make sure cmmFn is 8 bit aligned
+   -- compare Obj objType to _infoPtr objType
+      -- if _infoPtr objType is FUN and Obj objType is PAP, it's okay if LSB2 is set
+      -- THUNK turns into BLACKHOLE by LSB2
+      -- When a BLACKHOLE turns into an INDIRECT, the infoPtr points to the INDIRECT entry now
+   -- check the union of fields
+      -- make sure arity in FUNfields is strictly less than 8 (?)
+      -- do something with the tag in CONFields and make sure conName is a valid array of characters.
+      -- probably other stuff for the fields
+
+6) LayoutInfo checking
+   -- roughly speaking, payloadSize = boxedCount + unboxedCount
+   -- payLoad is either a pointer or a scalar, check sanity if its a pointer
+   -- In THUNKs, payLoad[0] is special. It's always a pointer. If this pointer is NULL, no problem, but if it's not, it should pass all sanity checks.
+   -- length of permString = boxedCount + unboxedCount
+      -- make sure each index of permString is a digit
+      -- make sure each number, 0 to length appears once in the permutation
+
+7) Probably a bunch of other stuff.
+
+--Stack stuff: bitmask, first six bits tell you size of payload and how many of 
+the lower bits of the 64 bit bitmask are set. All the ones that are set
+to 1 correspond to payload objects that point to something. All you have
+to do differently than the heap objects is add these payloads right after the SHOs
+or StgCurVal and treat them like the SHOS. process them once and forget about them.
+
+
+

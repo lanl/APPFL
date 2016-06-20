@@ -5,8 +5,8 @@
 
 struct _Cont;
 typedef struct _Cont Cont;
-struct _CInfoTab;
-typedef struct _CInfoTab CInfoTab;
+//struct _CInfoTab;
+//typedef struct _CInfoTab CInfoTab;
 
 // stack continuations--change the names for compiler help finding them
 typedef enum {
@@ -27,6 +27,7 @@ typedef enum {
 } ContType;
 const char *contTypeNames[PHONYENDCONT];
 
+/* not currently needed
 typedef struct {
   //
 } UPDCONTfields;
@@ -42,11 +43,12 @@ typedef struct {
 typedef struct {
   //
 } POPMECONTfields;
+*/
 
 typedef struct _CLayoutInfo {
   int payloadSize;
-  int boxedCount;
-  int unboxedCount;
+  //int boxedCount;
+  //int unboxedCount;
   Bitmap64 bm;
   char permString[64];  // this is just for e.g. displaying the heap
 } CLayoutInfo;
@@ -57,14 +59,18 @@ struct _Cont {
   ContType contType;
   Bitmap64 layout;        // new
   int _contSize;          // for debugging, should go away
+#if USE_IDENT  
   char ident[32];         // temporary, just for tracing
+#endif
   PtrOrLiteral payload[];
 };
 
 // CInfoTab
 struct _CInfoTab {
   CmmFnPtr entryCode;
+#if USE_INFOTAB_NAME
   char name[32];  // for debugging
+#endif
   ContType contType; // kind of continuation, tag for union
   CLayoutInfo cLayoutInfo;
   /* not currently needed

@@ -249,9 +249,9 @@ instance DV (Obj InfoTab) (Obj InfoTab) where
         do e' <- dv e
            return o{e = e'} -- don't need setTyp as bu is done on e
 
-    dv o@BLACKHOLE{} =
-        do typ <- freshMonoVar
-           return $ setTyp typ o
+--BH    dv o@BLACKHOLE{} =
+--BH        do typ <- freshMonoVar
+--BH           return $ setTyp typ o
 
 instance DV [Obj InfoTab] [Obj InfoTab] where
   dv = mapM dv
@@ -512,8 +512,8 @@ instance BU (Obj InfoTab) where
       let (as,cs,e') = bu mtvs e
       in (as, cs, setTyp (getTyp e') o{e = e'})
 
-  bu mtvs o@BLACKHOLE{} =
-      (Set.empty, Set.empty, o) -- typ as fresh var set in dv
+--BH  bu mtvs o@BLACKHOLE{} =
+--BH      (Set.empty, Set.empty, o) -- typ as fresh var set in dv
 
 
 -- MPVar is just for type inference
@@ -712,8 +712,8 @@ instance Show a => Ppstg (Obj a) where
                  ["% )"]
         in indents n ss
 
-    ppstg n (BLACKHOLE omd _) =
-        indents n [show omd ++ " BLACKHOLE"]
+--BH    ppstg n (BLACKHOLE omd _) =
+--BH        indents n [show omd ++ " BLACKHOLE"]
 
 instance Show a => Ppstg [Obj a] where
     -- ppstg n defs = intercalate ["\n"] $ map (ppstg n) defs

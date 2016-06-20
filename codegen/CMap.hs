@@ -3,11 +3,7 @@
 {-# LANGUAGE QuasiQuotes #-}
 {-# LANGUAGE CPP #-}
 
-#if __GLASGOW_HASKELL__ < 710
-{-# LANGUAGE OverlappingInstances #-}
-#endif
-
--- #include "../options.h"
+#include "../options.h"
 
 module CMap
 (
@@ -167,7 +163,7 @@ instantiateDataConAt c cmap subms =
                [ms] -> ms
                _ -> error $ "butAlt: not finding " ++ c ++ " in " ++ show dcs ++
                     " for TyCon: " ++ tcon ++
-                    "\nCMap:\n" ++ show cmap
+                    "\nCMap:\n" ++ (show . pprint) cmap
         -- instantiate the Monotypes
         subst = Map.fromList $ zzip tvs subms
     in apply subst ms
@@ -189,10 +185,6 @@ getBuiltInType c
 -- one whose name matches what it looked up)
   | isInt c   = makeIntTyCon c
   | otherwise = error "builtin TyCon not found!"
-
-instance {-# OVERLAPPING #-} Show CMap where
-  show = show . pprint
-
 
 instance PPrint CMap where
   pprint m =

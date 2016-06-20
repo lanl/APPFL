@@ -49,7 +49,7 @@ data Obj a = FUN   {omd :: a, vs :: [Var],   e :: Expr a   , oname :: String}
            | PAP   {omd :: a, f  :: Var,     as :: [Expr a], oname :: String} -- invariant the as are EAtoms
            | CON   {omd :: a, c  :: Con,     as :: [Expr a], oname :: String} -- invariant the as are EAtoms
            | THUNK {omd :: a, e  :: Expr a                 , oname :: String}
-           | BLACKHOLE {omd :: a                           , oname :: String}
+--BH           | BLACKHOLE {omd :: a                           , oname :: String}
              deriving(Eq,Show)
 
 -- 7.9 EFCalls (and EPrimops, for consistency) changed to accept Expr args.
@@ -253,9 +253,9 @@ instance Unparse a => Unparse (Obj a) where
     stgName oname <+> equals <+> text "THUNK" <>
     parens (unparse e)
 
-  unparse BLACKHOLE{omd, oname} =
-    bcomment (unparse omd) $+$
-    stgName oname <+> equals <+> text "ERROR"
+--BH  unparse BLACKHOLE{omd, oname} =
+--BH    bcomment (unparse omd) $+$
+--BH    text oname <+> equals <+> text "ERROR"
 
 
 instance Unparse a => Unparse [Obj a] where
@@ -323,14 +323,14 @@ instance (PPrint a) => PPrint (Obj a) where
                    nest 2 (pprint e)
                   )
                  )
-    BLACKHOLE{..} -> braces
-                     (text "BLACKHOLE" $+$
-                      nest 2
-                      (text "name:" <+> text oname $+$
-                       text "metadata:" $+$
-                       nest 2 (pprint omd)
-                      )
-                     )
+--BH    BLACKHOLE{..} -> braces
+--BH                     (text "BLACKHOLE" $+$
+--BH                      nest 2
+--BH                      (text "name:" <+> text oname $+$
+--BH                       text "metadata:" $+$
+--BH                       nest 2 (pprint omd)
+--BH                      )
+--BH                     )
 instance (PPrint a) => PPrint (Expr a) where
   pprint e = case e of
     EAtom{..} -> braces
