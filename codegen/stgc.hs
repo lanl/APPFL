@@ -164,7 +164,7 @@ compile  (Options {optVerbose, optDumpParse, optNoPrelude, optInput,
                  cflagsenv <- lookupEnv "CFLAGS"
                  let cflags = fromMaybe "" cflagsenv
                  let coutput = input ++ ".c"
-                 let flags = " -Wall -Werror "
+                 let flags = " -Wall -Werror -Wno-missing-braces "
                                ++ cflags ++ " -std=gnu99 -Wl,-rpath " ++ rtIncDir
                                ++ " -L" ++ rtLibDir ++ " -I" ++ rtIncDir
                                ++ " -lruntime"

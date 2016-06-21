@@ -3,7 +3,19 @@ version:        0.1
 cabal-version:  >= 1.2
 build-type:     Simple
 author:         LANL
+
+Flag useD
+  Description: Use command line cpp flags
+  Default:     False
                 
+Flag argtype
+  Description: Use argType if useD is set
+  Default:     False
+
+Flag objtype
+  Description: Use objType if useD is set
+  Default:     False
+
 executable stgc
   hs-source-dirs:  .,MHS
   main-is:         stgc.hs
@@ -18,4 +30,15 @@ executable stgc
                    , pretty >= 1.1.1.1
                    , process
                    , split
-
+  -- allow command line control of USE_ARGTYPE/USE_OBJTYPE
+  if flag(useD)
+    if flag(argType)
+      cpp-options: -DDEF_ARGTYPE -DUSE_ARGTYPE=1
+    else
+      cpp-options: -DDEF_ARGTYPE -DUSE_ARGTYPE=0
+    if flag(objType)
+      cpp-options: -DDEF_OBJTYPE -DUSE_OBJTYPE=1
+    else
+      cpp-options: -DDEF_OBJTYPE -DUSE_OBJTYPE=0
+  else
+    cpp-options:

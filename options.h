@@ -11,10 +11,14 @@
 
 
 /* 0/1, If 1 use argType enum field in PtrOrLiteral */
+#ifndef DEF_ARGTYPE  /* used by make multi */
 #define USE_ARGTYPE 1
+#endif
 
 /* 0/1, If 1 use objType enum field in Obj */
+#ifndef DEF_OBJTYPE  /* used by make multi */
 #define USE_OBJTYPE 1
+#endif
 
 /* If 1 use .ident in Obj/Cont */
 #define USE_IDENT 1 

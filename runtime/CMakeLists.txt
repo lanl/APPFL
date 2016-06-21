@@ -29,7 +29,7 @@ project(runtime)
               stack.c
               stgapply.c
               heap.c
-              sanity.c #disable this until it will pass tests
+              sanity.c
     )
 
 include_directories(".."
@@ -43,6 +43,20 @@ include_directories(".."
   endforeach()
 
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g -std=gnu99 -Wall -Werror -O3" )
+
+  # allow control of USE_ARGTYPE/USE_OBJTYPE from command line
+  if(USE_D)
+    if(USE_ARGTYPE)
+      set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DDEF_ARGTYPE -DUSE_ARGTYPE=1")
+    else()
+      set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DDEF_ARGTYPE -DUSE_ARGTYPE=0")
+    endif()
+    if(USE_OBJTYPE)
+      set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DDEF_OBJTYPE -DUSE_OBJTYPE=1")
+    else()
+      set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DDEF_OBJTYPE -DUSE_OBJTYPE=0")
+    endif()
+  endif()
 
   include_directories(
     "/usr/include/malloc"
