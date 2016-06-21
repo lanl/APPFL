@@ -123,7 +123,7 @@ payload (Var v) =
   if useArgType then
     [cinit| {.argType = HEAPOBJ, .op = &$id:sho}|]
   else
-    [cinit| {.i = &$id:sho}|]
+    [cinit| {.op = &$id:sho}|]
   where sho = "sho_" ++ v
 
 payload at = error $ "HeapObj.payload: not expecting Atom - " ++ show at
