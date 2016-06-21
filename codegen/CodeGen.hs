@@ -205,7 +205,7 @@ cga env (LitC c) =
       e = if useArgType then
             [cexp| ((typename PtrOrLiteral){.argType = INT, .i = $id:c'}) |]
           else
-            [cexp| ((typename PtrOrLiteral){.c = $id:c'}) |]
+            [cexp| ((typename PtrOrLiteral){.i = $id:c'}) |]
   in (e, "")
 
 cgv :: Env -> String -> (Exp, String)
