@@ -18,13 +18,7 @@ If you happen to get a cabal error saying to run configure
 
 $ make config && make
 
-to run normal tests:
-
-$ make ctest
-
-to run all tests:
-(note this requires installation of tasty test framework 
-see tasty.txt)
+to run tests:
 
 $ make test
 
@@ -35,7 +29,7 @@ $ make runtime
 to build/test in parallel:
 
 $ export BUILD_NTHREADS=4
-$ make clean && make && make ctest
+$ make clean && make && make test
 
 ---------------------------------------
 Using the compiler from inside ghci:
