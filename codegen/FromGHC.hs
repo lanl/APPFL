@@ -65,8 +65,10 @@ import           Control.Monad (liftM, mapAndUnzipM
                                , (>=>), (<=<), (=<<))
 import           Control.Arrow ((>>>))
 
-target = "Driver.hs"
---main = compileTarget target >>= putStr
+testDir = "../test/haskell/"
+target f = testDir ++ f
+
+main = compileTarget $ target "Fibo.hs"
 
 
 compileTarget fileName = do
