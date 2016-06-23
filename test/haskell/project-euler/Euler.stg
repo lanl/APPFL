@@ -1,0 +1,1312 @@
+[1 of 1] Compiling Euler            ( Euler.hs, Euler.o )
+
+==================== STG syntax: ====================
+solve_roR
+  :: GHC.Integer.Type.Integer
+     -> Euler.MaxPair -> Euler.Digits -> Euler.Digits -> Euler.MaxPair
+[GblId, Arity=4, Str=DmdType, Unf=OtherCon []] =
+    sat-only \r srt:SRT:[03 :-> GHC.Base.++, 05 :-> GHC.Err.error,
+                         0k :-> GHC.CString.unpackCString#, r29 :-> GHC.List.take,
+                         roR :-> solve_roR, roT :-> GHC.Integer.Type.$fOrdInteger,
+                         rpO :-> GHC.Integer.Type.$fEqInteger, ryk :-> GHC.Num.$fNumInteger,
+                         rAd :-> GHC.Real.$fIntegralInteger,
+                         r16y :-> Data.Foldable.$fFoldable[]] [ds_s2pB
+                                                               tp_s2pC
+                                                               ds1_s2pD
+                                                               ds2_s2pE]
+        case ds2_s2pE of wild_s2pF {
+          [] -> tp_s2pC;
+          : _ [Occ=Dead] _ [Occ=Dead] ->
+              let-no-escape {
+                fail_s2pI [Occ=Once*!] :: GHC.Prim.Void# -> Euler.MaxPair
+                [LclId, Arity=1, Str=DmdType, Unf=OtherCon []] =
+                    sat-only \r srt:SRT:[05 :-> GHC.Err.error,
+                                         0k :-> GHC.CString.unpackCString#] [ds3_s2pJ]
+                        case
+                            GHC.CString.unpackCString#
+                                "Why are there more digits in the first list than the second?"#
+                        of
+                        sat_s2pK
+                        { __DEFAULT -> GHC.Err.error sat_s2pK;
+                        };
+              } in 
+                case tp_s2pC of wild1_s2pL {
+                  (,) mx_s2pM [Occ=Once] _ [Occ=Dead] ->
+                      case ds1_s2pD of _ [Occ=Dead] {
+                        [] -> fail_s2pI GHC.Prim.void#;
+                        : y_s2pP ys_s2pQ ->
+                            case wild_s2pF of _ [Occ=Dead] {
+                              [] -> fail_s2pI GHC.Prim.void#;
+                              : x_s2pS xs_s2pT [Occ=Once] ->
+                                  let {
+                                    overlap_s2pU :: [GHC.Integer.Type.Integer]
+                                    [LclId, Str=DmdType] =
+                                        \u srt:SRT:[r29 :-> GHC.List.take] []
+                                            let {
+                                              sat_s2pV [Occ=Once] :: GHC.Types.Int
+                                              [LclId, Str=DmdType] =
+                                                  NO_CCS GHC.Types.I#! [12];
+                                            } in  GHC.List.take sat_s2pV ys_s2pQ; } in
+                                  let {
+                                    tmp_s2pW :: GHC.Integer.Type.Integer
+                                    [LclId, Str=DmdType] =
+                                        \u srt:SRT:[rpO :-> GHC.Integer.Type.$fEqInteger,
+                                                    ryk :-> GHC.Num.$fNumInteger,
+                                                    rAd :-> GHC.Real.$fIntegralInteger,
+                                                    r16y :-> Data.Foldable.$fFoldable[]] []
+                                            let {
+                                              sat_s2pX [Occ=Once] :: GHC.Integer.Type.Integer
+                                              [LclId, Str=DmdType] =
+                                                  NO_CCS GHC.Integer.Type.S#! [0];
+                                            } in 
+                                              case
+                                                  GHC.Classes.==
+                                                      GHC.Integer.Type.$fEqInteger y_s2pP sat_s2pX
+                                              of
+                                              _ [Occ=Dead]
+                                              { GHC.Types.False ->
+                                                    let {
+                                                      sat_s2pZ [Occ=Once]
+                                                        :: GHC.Integer.Type.Integer
+                                                      [LclId, Str=DmdType] =
+                                                          \u srt:SRT:[ryk :-> GHC.Num.$fNumInteger] []
+                                                              GHC.Num.*
+                                                                  GHC.Num.$fNumInteger
+                                                                  x_s2pS
+                                                                  ds_s2pB;
+                                                    } in 
+                                                      GHC.Real.div
+                                                          GHC.Real.$fIntegralInteger
+                                                          sat_s2pZ
+                                                          y_s2pP;
+                                                GHC.Types.True ->
+                                                    let {
+                                                      sat_s2q0 [Occ=Once]
+                                                        :: GHC.Integer.Type.Integer
+                                                      [LclId, Str=DmdType] =
+                                                          \u srt:SRT:[ryk :-> GHC.Num.$fNumInteger,
+                                                                      r16y :-> Data.Foldable.$fFoldable[]] []
+                                                              Data.Foldable.product
+                                                                  Data.Foldable.$fFoldable[]
+                                                                  GHC.Num.$fNumInteger
+                                                                  overlap_s2pU;
+                                                    } in 
+                                                      GHC.Num.*
+                                                          GHC.Num.$fNumInteger x_s2pS sat_s2q0;
+                                              }; } in
+                                  let {
+                                    sat_s2q4 [Occ=Once] :: Euler.MaxPair
+                                    [LclId, Str=DmdType] =
+                                        \u srt:SRT:[03 :-> GHC.Base.++,
+                                                    roT :-> GHC.Integer.Type.$fOrdInteger] []
+                                            case
+                                                GHC.Classes.>
+                                                    GHC.Integer.Type.$fOrdInteger tmp_s2pW mx_s2pM
+                                            of
+                                            _ [Occ=Dead]
+                                            { GHC.Types.False -> wild1_s2pL;
+                                              GHC.Types.True ->
+                                                  let {
+                                                    sat_s2q3 [Occ=Once]
+                                                      :: [GHC.Integer.Type.Integer]
+                                                    [LclId, Str=DmdType] =
+                                                        \u srt:SRT:[03 :-> GHC.Base.++] []
+                                                            let {
+                                                              sat_s2q2 [Occ=Once]
+                                                                :: [GHC.Integer.Type.Integer]
+                                                              [LclId, Str=DmdType] =
+                                                                  NO_CCS :! [x_s2pS GHC.Types.[]];
+                                                            } in  GHC.Base.++ overlap_s2pU sat_s2q2;
+                                                  } in  (,) [tmp_s2pW sat_s2q3];
+                                            };
+                                  } in  solve_roR tmp_s2pW sat_s2q4 ys_s2pQ xs_s2pT;
+                            };
+                      };
+                };
+        };
+square_roK :: forall a_aMt. GHC.Num.Num a_aMt => a_aMt -> a_aMt
+[GblId, Arity=2, Caf=NoCafRefs, Str=DmdType, Unf=OtherCon []] =
+    sat-only \r srt:SRT:[] [$dNum2_s2q5 n1_s2q6]
+        GHC.Num.* $dNum2_s2q5 n1_s2q6 n1_s2q6;
+$dReal_r2eM :: GHC.Real.Real GHC.Types.Int
+[GblId, Str=DmdType] =
+    \u srt:SRT:[reB :-> GHC.Real.$fIntegralInt] []
+        GHC.Real.$p1Integral GHC.Real.$fIntegralInt;
+$dNum_r2pl :: GHC.Num.Num GHC.Types.Int
+[GblId, Str=DmdType] =
+    \u srt:SRT:[r2eM :-> $dReal_r2eM] [] GHC.Real.$p1Real $dReal_r2eM;
+a_r2pm :: GHC.Classes.Ord GHC.Types.Int
+[GblId, Str=DmdType] =
+    \u srt:SRT:[r2eM :-> $dReal_r2eM] [] GHC.Real.$p2Real $dReal_r2eM;
+$dEq_r2pn :: GHC.Classes.Eq GHC.Types.Int
+[GblId, Str=DmdType] =
+    \u srt:SRT:[r2pm :-> a_r2pm] [] GHC.Classes.$p1Ord a_r2pm;
+aux_r2po :: GHC.Types.Int -> GHC.Types.Int -> GHC.Types.Int
+[GblId, Arity=2, Str=DmdType, Unf=OtherCon []] =
+    sat-only \r srt:SRT:[reB :-> GHC.Real.$fIntegralInt,
+                         r2pl :-> $dNum_r2pl, r2pn :-> $dEq_r2pn, r2po :-> aux_r2po] [d_s2q7
+                                                                                      p_s2q8]
+        case GHC.Classes.== $dEq_r2pn d_s2q7 p_s2q8 of _ [Occ=Dead] {
+          GHC.Types.False ->
+              let {
+                sat_s2qc [Occ=Once] :: GHC.Types.Int
+                [LclId, Str=DmdType] =
+                    \u srt:SRT:[r2pl :-> $dNum_r2pl] []
+                        let {
+                          sat_s2qb [Occ=Once] :: GHC.Integer.Type.Integer
+                          [LclId, Str=DmdType] =
+                              NO_CCS GHC.Integer.Type.S#! [0];
+                        } in  GHC.Num.fromInteger $dNum_r2pl sat_s2qb; } in
+              let {
+                sat_s2qa [Occ=Once] :: GHC.Types.Int
+                [LclId, Str=DmdType] =
+                    \u srt:SRT:[reB :-> GHC.Real.$fIntegralInt] []
+                        GHC.Real.mod GHC.Real.$fIntegralInt p_s2q8 d_s2q7;
+              } in 
+                case GHC.Classes.== $dEq_r2pn sat_s2qa sat_s2qc of _ [Occ=Dead] {
+                  GHC.Types.False ->
+                      let {
+                        sat_s2qg [Occ=Once] :: GHC.Types.Int
+                        [LclId, Str=DmdType] =
+                            \u srt:SRT:[r2pl :-> $dNum_r2pl] []
+                                let {
+                                  sat_s2qf [Occ=Once] :: GHC.Types.Int
+                                  [LclId, Str=DmdType] =
+                                      \u srt:SRT:[r2pl :-> $dNum_r2pl] []
+                                          let {
+                                            sat_s2qe [Occ=Once] :: GHC.Integer.Type.Integer
+                                            [LclId, Str=DmdType] =
+                                                NO_CCS GHC.Integer.Type.S#! [1];
+                                          } in  GHC.Num.fromInteger $dNum_r2pl sat_s2qe;
+                                } in  GHC.Num.+ $dNum_r2pl d_s2q7 sat_s2qf;
+                      } in  aux_r2po sat_s2qg p_s2q8;
+                  GHC.Types.True ->
+                      let {
+                        sat_s2qh [Occ=Once] :: GHC.Types.Int
+                        [LclId, Str=DmdType] =
+                            \u srt:SRT:[reB :-> GHC.Real.$fIntegralInt] []
+                                GHC.Real.div GHC.Real.$fIntegralInt p_s2q8 d_s2q7;
+                      } in  aux_r2po d_s2q7 sat_s2qh;
+                };
+          GHC.Types.True -> p_s2q8;
+        };
+sat_s2qj :: GHC.Types.Int
+[LclId, Str=DmdType] =
+    NO_CCS GHC.Types.I#! [600851475143];
+sat_s2qi :: GHC.Types.Int
+[LclId, Str=DmdType] =
+    NO_CCS GHC.Types.I#! [2];
+Euler.euler0003 :: GHC.Types.Int
+[GblId, Str=DmdType] =
+    \u srt:SRT:[r2po :-> aux_r2po, s2qi :-> sat_s2qi,
+                s2qj :-> sat_s2qj] []
+        aux_r2po sat_s2qi sat_s2qj;
+sat_s2qp :: [GHC.Types.Int]
+[LclId, Str=DmdType] =
+    \u srt:SRT:[rzG :-> GHC.Enum.$fEnumInt] []
+        let {
+          sat_s2qo [Occ=Once] :: GHC.Types.Int
+          [LclId, Str=DmdType] =
+              NO_CCS GHC.Types.I#! [100]; } in
+        let {
+          sat_s2qn [Occ=Once] :: GHC.Types.Int
+          [LclId, Str=DmdType] =
+              NO_CCS GHC.Types.I#! [998]; } in
+        let {
+          sat_s2qm [Occ=Once] :: GHC.Types.Int
+          [LclId, Str=DmdType] =
+              NO_CCS GHC.Types.I#! [999];
+        } in 
+          GHC.Enum.enumFromThenTo
+              GHC.Enum.$fEnumInt sat_s2qm sat_s2qn sat_s2qo;
+sat_s2ql :: GHC.Types.Int -> [GHC.Types.Int]
+[LclId, Str=DmdType] =
+    \r srt:SRT:[r2i :-> GHC.List.replicate] [a5_s2qk]
+        GHC.List.replicate a5_s2qk a5_s2qk;
+nums_r2pp :: [[GHC.Types.Int]]
+[GblId, Str=DmdType] =
+    \u srt:SRT:[01X :-> GHC.Base.map, s2ql :-> sat_s2ql,
+                s2qp :-> sat_s2qp] []
+        GHC.Base.map sat_s2ql sat_s2qp;
+sat_s2qI :: [GHC.Types.Int]
+[LclId, Str=DmdType] =
+    \u srt:SRT:[0e :-> Control.Exception.Base.patError,
+                0w :-> GHC.List.filter, 01X :-> GHC.Base.map,
+                r24 :-> GHC.List.zipWith, r2h :-> GHC.List.reverse,
+                r2R :-> Data.Foldable.concat, rym :-> GHC.Num.$fNumInt,
+                rzG :-> GHC.Enum.$fEnumInt, rNE :-> GHC.Classes.$fEq[],
+                rP5 :-> GHC.Classes.$fEqChar, r10i :-> GHC.Show.$fShowInt,
+                r16y :-> Data.Foldable.$fFoldable[], r2pp :-> nums_r2pp] []
+        let {
+          sat_s2qH [Occ=Once] :: [GHC.Types.Int]
+          [LclId, Str=DmdType] =
+              \u srt:SRT:[0e :-> Control.Exception.Base.patError,
+                          01X :-> GHC.Base.map, r24 :-> GHC.List.zipWith,
+                          r2R :-> Data.Foldable.concat, rym :-> GHC.Num.$fNumInt,
+                          rzG :-> GHC.Enum.$fEnumInt, r16y :-> Data.Foldable.$fFoldable[],
+                          r2pp :-> nums_r2pp] []
+                  let {
+                    sat_s2qG [Occ=Once] :: [GHC.Types.Int]
+                    [LclId, Str=DmdType] =
+                        \u srt:SRT:[0e :-> Control.Exception.Base.patError,
+                                    01X :-> GHC.Base.map, r2R :-> Data.Foldable.concat,
+                                    rym :-> GHC.Num.$fNumInt, rzG :-> GHC.Enum.$fEnumInt,
+                                    r16y :-> Data.Foldable.$fFoldable[], r2pp :-> nums_r2pp] []
+                            let {
+                              sat_s2qF [Occ=Once] :: [[GHC.Types.Int]]
+                              [LclId, Str=DmdType] =
+                                  \u srt:SRT:[0e :-> Control.Exception.Base.patError,
+                                              01X :-> GHC.Base.map, rym :-> GHC.Num.$fNumInt,
+                                              rzG :-> GHC.Enum.$fEnumInt, r2pp :-> nums_r2pp] []
+                                      let {
+                                        sat_s2qE [Occ=Once] :: [GHC.Types.Int] -> [GHC.Types.Int]
+                                        [LclId, Str=DmdType] =
+                                            \r srt:SRT:[0e :-> Control.Exception.Base.patError,
+                                                        rym :-> GHC.Num.$fNumInt,
+                                                        rzG :-> GHC.Enum.$fEnumInt] [ds_s2qx]
+                                                case ds_s2qx of _ [Occ=Dead] {
+                                                  [] ->
+                                                      Control.Exception.Base.patError
+                                                          "Euler.hs:84:22-46|lambda"#;
+                                                  : x_s2qz _ [Occ=Dead] ->
+                                                      let {
+                                                        sat_s2qD [Occ=Once] :: GHC.Types.Int
+                                                        [LclId, Str=DmdType] =
+                                                            NO_CCS GHC.Types.I#! [1]; } in
+                                                      let {
+                                                        sat_s2qC [Occ=Once] :: GHC.Types.Int
+                                                        [LclId, Str=DmdType] =
+                                                            \u srt:SRT:[rym :-> GHC.Num.$fNumInt] []
+                                                                let {
+                                                                  sat_s2qB [Occ=Once]
+                                                                    :: GHC.Types.Int
+                                                                  [LclId, Str=DmdType] =
+                                                                      NO_CCS GHC.Types.I#! [1];
+                                                                } in 
+                                                                  GHC.Num.-
+                                                                      GHC.Num.$fNumInt
+                                                                      x_s2qz
+                                                                      sat_s2qB;
+                                                      } in 
+                                                        GHC.Enum.enumFromThenTo
+                                                            GHC.Enum.$fEnumInt
+                                                            x_s2qz
+                                                            sat_s2qC
+                                                            sat_s2qD;
+                                                };
+                                      } in  GHC.Base.map sat_s2qE nums_r2pp;
+                            } in 
+                              Data.Foldable.concat Data.Foldable.$fFoldable[] sat_s2qF; } in
+                  let {
+                    sat_s2qw [Occ=Once] :: [GHC.Types.Int]
+                    [LclId, Str=DmdType] =
+                        \u srt:SRT:[r2R :-> Data.Foldable.concat,
+                                    r16y :-> Data.Foldable.$fFoldable[], r2pp :-> nums_r2pp] []
+                            Data.Foldable.concat Data.Foldable.$fFoldable[] nums_r2pp; } in
+                  let {
+                    sat_s2qv [Occ=Once]
+                      :: GHC.Types.Int -> GHC.Types.Int -> GHC.Types.Int
+                    [LclId, Str=DmdType] =
+                        \u srt:SRT:[rym :-> GHC.Num.$fNumInt] []
+                            GHC.Num.* GHC.Num.$fNumInt;
+                  } in  GHC.List.zipWith sat_s2qv sat_s2qw sat_s2qG; } in
+        let {
+          sat_s2qu [Occ=Once] :: GHC.Types.Int -> GHC.Types.Bool
+          [LclId, Str=DmdType] =
+              \r srt:SRT:[r2h :-> GHC.List.reverse, rNE :-> GHC.Classes.$fEq[],
+                          rP5 :-> GHC.Classes.$fEqChar,
+                          r10i :-> GHC.Show.$fShowInt] [n1_s2qq]
+                  let {
+                    str_s2qr :: [GHC.Types.Char]
+                    [LclId, Str=DmdType] =
+                        \u srt:SRT:[r10i :-> GHC.Show.$fShowInt] []
+                            GHC.Show.show GHC.Show.$fShowInt n1_s2qq; } in
+                  let {
+                    sat_s2qt [Occ=Once] :: [GHC.Types.Char]
+                    [LclId, Str=DmdType] =
+                        \u srt:SRT:[r2h :-> GHC.List.reverse] [] GHC.List.reverse str_s2qr;
+                  } in 
+                    case GHC.Classes.$fEq[] GHC.Classes.$fEqChar of sat_s2qs {
+                      __DEFAULT -> GHC.Classes.== sat_s2qs str_s2qr sat_s2qt;
+                    };
+        } in  GHC.List.filter sat_s2qu sat_s2qH;
+Euler.euler0004 :: GHC.Types.Int
+[GblId, Str=DmdType] =
+    \u srt:SRT:[ryl :-> GHC.Classes.$fOrdInt,
+                r16y :-> Data.Foldable.$fFoldable[], s2qI :-> sat_s2qI] []
+        Data.Foldable.maximum
+            Data.Foldable.$fFoldable[] GHC.Classes.$fOrdInt sat_s2qI;
+$dNum1_r2pq :: GHC.Num.Num GHC.Types.Double
+[GblId, Str=DmdType] =
+    \u srt:SRT:[rhr :-> GHC.Float.$fFractionalDouble] []
+        GHC.Real.$p1Fractional GHC.Float.$fFractionalDouble;
+n_r2pr :: GHC.Types.Double
+[GblId, Caf=NoCafRefs, Str=DmdType, Unf=OtherCon []] =
+    NO_CCS GHC.Types.D#! [100.0];
+sat_s2qW :: GHC.Types.Double
+[LclId, Str=DmdType] =
+    \u srt:SRT:[01X :-> GHC.Base.map, re3 :-> GHC.Float.$fEnumDouble,
+                r16y :-> Data.Foldable.$fFoldable[], r2pq :-> $dNum1_r2pq] []
+        let {
+          sat_s2qV [Occ=Once] :: [GHC.Types.Double]
+          [LclId, Str=DmdType] =
+              \u srt:SRT:[01X :-> GHC.Base.map, re3 :-> GHC.Float.$fEnumDouble,
+                          r2pq :-> $dNum1_r2pq] []
+                  let {
+                    sat_s2qU [Occ=Once] :: [GHC.Types.Double]
+                    [LclId, Str=DmdType] =
+                        \u srt:SRT:[re3 :-> GHC.Float.$fEnumDouble,
+                                    r2pq :-> $dNum1_r2pq] []
+                            let {
+                              sat_s2qT [Occ=Once] :: GHC.Types.Double
+                              [LclId, Str=DmdType] =
+                                  \u srt:SRT:[r2pq :-> $dNum1_r2pq] []
+                                      let {
+                                        sat_s2qS [Occ=Once] :: GHC.Integer.Type.Integer
+                                        [LclId, Str=DmdType] =
+                                            NO_CCS GHC.Integer.Type.S#! [1];
+                                      } in  GHC.Num.fromInteger $dNum1_r2pq sat_s2qS;
+                            } in 
+                              GHC.Enum.enumFromTo GHC.Float.$fEnumDouble sat_s2qT n_r2pr; } in
+                  let {
+                    sat_s2qR [Occ=Once] :: GHC.Types.Double -> GHC.Types.Double
+                    [LclId, Str=DmdType] =
+                        \r srt:SRT:[r2pq :-> $dNum1_r2pq] [eta_B1]
+                            square_roK $dNum1_r2pq eta_B1;
+                  } in  GHC.Base.map sat_s2qR sat_s2qU;
+        } in 
+          Data.Foldable.sum Data.Foldable.$fFoldable[] $dNum1_r2pq sat_s2qV;
+sat_s2qQ :: GHC.Types.Double
+[LclId, Str=DmdType] =
+    \u srt:SRT:[rhr :-> GHC.Float.$fFractionalDouble,
+                r2pq :-> $dNum1_r2pq] []
+        let {
+          n1_s2qJ :: GHC.Types.Double
+          [LclId, Str=DmdType] =
+              \u srt:SRT:[rhr :-> GHC.Float.$fFractionalDouble,
+                          r2pq :-> $dNum1_r2pq] []
+                  let {
+                    sat_s2qP [Occ=Once] :: GHC.Types.Double
+                    [LclId, Str=DmdType] =
+                        \u srt:SRT:[r2pq :-> $dNum1_r2pq] []
+                            let {
+                              sat_s2qO [Occ=Once] :: GHC.Integer.Type.Integer
+                              [LclId, Str=DmdType] =
+                                  NO_CCS GHC.Integer.Type.S#! [2];
+                            } in  GHC.Num.fromInteger $dNum1_r2pq sat_s2qO; } in
+                  let {
+                    sat_s2qN [Occ=Once] :: GHC.Types.Double
+                    [LclId, Str=DmdType] =
+                        \u srt:SRT:[r2pq :-> $dNum1_r2pq] []
+                            let {
+                              sat_s2qM [Occ=Once] :: GHC.Types.Double
+                              [LclId, Str=DmdType] =
+                                  \u srt:SRT:[r2pq :-> $dNum1_r2pq] []
+                                      let {
+                                        sat_s2qL [Occ=Once] :: GHC.Types.Double
+                                        [LclId, Str=DmdType] =
+                                            \u srt:SRT:[r2pq :-> $dNum1_r2pq] []
+                                                let {
+                                                  sat_s2qK [Occ=Once] :: GHC.Integer.Type.Integer
+                                                  [LclId, Str=DmdType] =
+                                                      NO_CCS GHC.Integer.Type.S#! [1];
+                                                } in  GHC.Num.fromInteger $dNum1_r2pq sat_s2qK;
+                                      } in  GHC.Num.- $dNum1_r2pq n_r2pr sat_s2qL;
+                            } in  GHC.Num.* $dNum1_r2pq n_r2pr sat_s2qM;
+                  } in  GHC.Real./ GHC.Float.$fFractionalDouble sat_s2qN sat_s2qP;
+        } in  GHC.Num.* $dNum1_r2pq n1_s2qJ n1_s2qJ;
+Euler.euler0006 :: GHC.Types.Double
+[GblId, Str=DmdType] =
+    \u srt:SRT:[r2pq :-> $dNum1_r2pq, s2qQ :-> sat_s2qQ,
+                s2qW :-> sat_s2qW] []
+        GHC.Num.- $dNum1_r2pq sat_s2qQ sat_s2qW;
+a1_r2ps :: GHC.Integer.Type.Integer
+[GblId, Caf=NoCafRefs, Str=DmdType, Unf=OtherCon []] =
+    NO_CCS GHC.Integer.Type.S#! [1];
+a2_r2pt :: GHC.Integer.Type.Integer
+[GblId, Caf=NoCafRefs, Str=DmdType, Unf=OtherCon []] =
+    NO_CCS GHC.Integer.Type.S#! [1];
+sat_s2qY :: [GHC.Integer.Type.Integer]
+[LclId, Str=DmdType] =
+    \u srt:SRT:[r2a :-> GHC.List.tail, roA :-> fibs_roA] []
+        GHC.List.tail fibs_roA;
+sat_s2qX
+  :: GHC.Integer.Type.Integer
+     -> GHC.Integer.Type.Integer -> GHC.Integer.Type.Integer
+[LclId, Str=DmdType] =
+    \u srt:SRT:[ryk :-> GHC.Num.$fNumInteger] []
+        GHC.Num.+ GHC.Num.$fNumInteger;
+a3_r2pu :: [GHC.Integer.Type.Integer]
+[GblId, Str=DmdType, Unf=OtherCon []] =
+    NO_CCS :! [a1_r2ps a4_r2pv];
+fibs_roA :: [GHC.Integer.Type.Integer]
+[GblId, Str=DmdType, Unf=OtherCon []] =
+    NO_CCS :! [a2_r2pt a3_r2pu];
+a4_r2pv :: [GHC.Integer.Type.Integer]
+[GblId, Str=DmdType] =
+    \u srt:SRT:[r24 :-> GHC.List.zipWith, roA :-> fibs_roA,
+                s2qX :-> sat_s2qX, s2qY :-> sat_s2qY] []
+        GHC.List.zipWith sat_s2qX fibs_roA sat_s2qY;
+sat_s2rS :: [GHC.Integer.Type.Integer]
+[LclId, Str=DmdType] =
+    \u srt:SRT:[0e :-> Control.Exception.Base.patError,
+                0G :-> Data.Tuple.snd, r2Q :-> Data.Foldable.concatMap,
+                r3f :-> Data.Map.Base.toList, r4r :-> Data.Map.Base.empty,
+                r4K :-> Data.Map.insertWith', r5B :-> Data.OldList.group,
+                ryl :-> GHC.Classes.$fOrdInt, rAd :-> GHC.Real.$fIntegralInteger,
+                r16y :-> Data.Foldable.$fFoldable[]] []
+        let {
+          sat_s2rR [Occ=Once]
+            :: [(GHC.Integer.Type.Integer, [GHC.Integer.Type.Integer])]
+          [LclId, Str=DmdType] =
+              \u srt:SRT:[0e :-> Control.Exception.Base.patError,
+                          r3f :-> Data.Map.Base.toList, r4r :-> Data.Map.Base.empty,
+                          r4K :-> Data.Map.insertWith', r5B :-> Data.OldList.group,
+                          ryl :-> GHC.Classes.$fOrdInt, rAd :-> GHC.Real.$fIntegralInteger,
+                          r16y :-> Data.Foldable.$fFoldable[]] []
+                  let {
+                    sat_s2rQ [Occ=Once]
+                      :: Data.Map.Base.Map
+                           GHC.Integer.Type.Integer [GHC.Integer.Type.Integer]
+                    [LclId, Str=DmdType] =
+                        \u srt:SRT:[0e :-> Control.Exception.Base.patError,
+                                    r4r :-> Data.Map.Base.empty, r4K :-> Data.Map.insertWith',
+                                    r5B :-> Data.OldList.group, ryl :-> GHC.Classes.$fOrdInt,
+                                    rAd :-> GHC.Real.$fIntegralInteger,
+                                    r16y :-> Data.Foldable.$fFoldable[]] []
+                            let {
+                              $dReal1_s2qZ :: GHC.Real.Real GHC.Integer.Type.Integer
+                              [LclId, Str=DmdType] =
+                                  \u srt:SRT:[rAd :-> GHC.Real.$fIntegralInteger] []
+                                      GHC.Real.$p1Integral GHC.Real.$fIntegralInteger; } in
+                            let {
+                              $dOrd_s2r0 :: GHC.Classes.Ord GHC.Integer.Type.Integer
+                              [LclId, Str=DmdType] =
+                                  \u srt:SRT:[] [] GHC.Real.$p2Real $dReal1_s2qZ; } in
+                            let {
+                              $dEq1_s2r1 :: GHC.Classes.Eq GHC.Integer.Type.Integer
+                              [LclId, Str=DmdType] =
+                                  \u srt:SRT:[] [] GHC.Classes.$p1Ord $dOrd_s2r0; } in
+                            let {
+                              $dNum2_s2r2 :: GHC.Num.Num GHC.Integer.Type.Integer
+                              [LclId, Str=DmdType] =
+                                  \u srt:SRT:[] [] GHC.Real.$p1Real $dReal1_s2qZ;
+                            } in 
+                              let-no-escape {
+                                aux1_s2r3 [Occ=LoopBreaker]
+                                  :: Data.Map.Base.Map
+                                       GHC.Integer.Type.Integer [GHC.Integer.Type.Integer]
+                                     -> GHC.Integer.Type.Integer
+                                     -> Data.Map.Base.Map
+                                          GHC.Integer.Type.Integer [GHC.Integer.Type.Integer]
+                                [LclId, Arity=2, Str=DmdType, Unf=OtherCon []] =
+                                    sat-only \r srt:SRT:[0e :-> Control.Exception.Base.patError,
+                                                         r4K :-> Data.Map.insertWith',
+                                                         r5B :-> Data.OldList.group,
+                                                         ryl :-> GHC.Classes.$fOrdInt,
+                                                         rAd :-> GHC.Real.$fIntegralInteger,
+                                                         r16y :-> Data.Foldable.$fFoldable[]] [mp_s2r4
+                                                                                               ds_s2r5]
+                                        let {
+                                          sat_s2r7 [Occ=Once] :: GHC.Integer.Type.Integer
+                                          [LclId, Str=DmdType] =
+                                              \u srt:SRT:[] []
+                                                  let {
+                                                    sat_s2r6 [Occ=Once] :: GHC.Integer.Type.Integer
+                                                    [LclId, Str=DmdType] =
+                                                        NO_CCS GHC.Integer.Type.S#! [1];
+                                                  } in  GHC.Num.fromInteger $dNum2_s2r2 sat_s2r6;
+                                        } in 
+                                          case
+                                              GHC.Classes.== $dEq1_s2r1 ds_s2r5 sat_s2r7
+                                          of
+                                          _ [Occ=Dead]
+                                          { GHC.Types.False ->
+                                                let {
+                                                  sat_s2rO [Occ=Once] :: GHC.Integer.Type.Integer
+                                                  [LclId, Str=DmdType] =
+                                                      \u srt:SRT:[] []
+                                                          let {
+                                                            sat_s2rN [Occ=Once]
+                                                              :: GHC.Integer.Type.Integer
+                                                            [LclId, Str=DmdType] =
+                                                                \u srt:SRT:[] []
+                                                                    let {
+                                                                      sat_s2rM [Occ=Once]
+                                                                        :: GHC.Integer.Type.Integer
+                                                                      [LclId, Str=DmdType] =
+                                                                          NO_CCS GHC.Integer.Type.S#! [1];
+                                                                    } in 
+                                                                      GHC.Num.fromInteger
+                                                                          $dNum2_s2r2 sat_s2rM;
+                                                          } in 
+                                                            GHC.Num.-
+                                                                $dNum2_s2r2 ds_s2r5 sat_s2rN; } in
+                                                let {
+                                                  sat_s2rL [Occ=Once]
+                                                    :: Data.Map.Base.Map
+                                                         GHC.Integer.Type.Integer
+                                                         [GHC.Integer.Type.Integer]
+                                                  [LclId, Str=DmdType] =
+                                                      \u srt:SRT:[0e :-> Control.Exception.Base.patError,
+                                                                  r4K :-> Data.Map.insertWith',
+                                                                  r5B :-> Data.OldList.group,
+                                                                  ryl :-> GHC.Classes.$fOrdInt,
+                                                                  rAd :-> GHC.Real.$fIntegralInteger,
+                                                                  r16y :-> Data.Foldable.$fFoldable[]] []
+                                                          let {
+                                                            sat_s2rK [Occ=Once]
+                                                              :: [[GHC.Integer.Type.Integer]]
+                                                            [LclId, Str=DmdType] =
+                                                                \u srt:SRT:[r5B :-> Data.OldList.group,
+                                                                            rAd :-> GHC.Real.$fIntegralInteger] []
+                                                                    let {
+                                                                      sat_s2rJ [Occ=Once]
+                                                                        :: [GHC.Integer.Type.Integer]
+                                                                      [LclId, Str=DmdType] =
+                                                                          \u srt:SRT:[rAd :-> GHC.Real.$fIntegralInteger] []
+                                                                              let {
+                                                                                $dReal2_s2rl
+                                                                                  :: GHC.Real.Real
+                                                                                       GHC.Integer.Type.Integer
+                                                                                [LclId,
+                                                                                 Str=DmdType] =
+                                                                                    \u srt:SRT:[rAd :-> GHC.Real.$fIntegralInteger] []
+                                                                                        GHC.Real.$p1Integral
+                                                                                            GHC.Real.$fIntegralInteger; } in
+                                                                              let {
+                                                                                a5_s2rm
+                                                                                  :: GHC.Classes.Ord
+                                                                                       GHC.Integer.Type.Integer
+                                                                                [LclId,
+                                                                                 Str=DmdType] =
+                                                                                    \u srt:SRT:[] []
+                                                                                        GHC.Real.$p2Real
+                                                                                            $dReal2_s2rl; } in
+                                                                              let {
+                                                                                $dEq2_s2rn
+                                                                                  :: GHC.Classes.Eq
+                                                                                       GHC.Integer.Type.Integer
+                                                                                [LclId,
+                                                                                 Str=DmdType] =
+                                                                                    \u srt:SRT:[] []
+                                                                                        GHC.Classes.$p1Ord
+                                                                                            a5_s2rm; } in
+                                                                              let {
+                                                                                $dNum3_s2ro
+                                                                                  :: GHC.Num.Num
+                                                                                       GHC.Integer.Type.Integer
+                                                                                [LclId,
+                                                                                 Str=DmdType] =
+                                                                                    \u srt:SRT:[] []
+                                                                                        GHC.Real.$p1Real
+                                                                                            $dReal2_s2rl;
+                                                                              } in 
+                                                                                let-no-escape {
+                                                                                  aux2_s2rp [Occ=LoopBreaker]
+                                                                                    :: GHC.Integer.Type.Integer
+                                                                                       -> GHC.Integer.Type.Integer
+                                                                                       -> [GHC.Integer.Type.Integer]
+                                                                                       -> [GHC.Integer.Type.Integer]
+                                                                                  [LclId,
+                                                                                   Arity=3,
+                                                                                   Str=DmdType,
+                                                                                   Unf=OtherCon []] =
+                                                                                      sat-only \r srt:SRT:[rAd :-> GHC.Real.$fIntegralInteger] [ds1_s2rq
+                                                                                                                                                ds2_s2rr
+                                                                                                                                                xs_s2rs]
+                                                                                          let {
+                                                                                            sat_s2ru [Occ=Once]
+                                                                                              :: GHC.Integer.Type.Integer
+                                                                                            [LclId,
+                                                                                             Str=DmdType] =
+                                                                                                \u srt:SRT:[] []
+                                                                                                    let {
+                                                                                                      sat_s2rt [Occ=Once]
+                                                                                                        :: GHC.Integer.Type.Integer
+                                                                                                      [LclId,
+                                                                                                       Str=DmdType] =
+                                                                                                          NO_CCS GHC.Integer.Type.S#! [1];
+                                                                                                    } in 
+                                                                                                      GHC.Num.fromInteger
+                                                                                                          $dNum3_s2ro
+                                                                                                          sat_s2rt;
+                                                                                          } in 
+                                                                                            case
+                                                                                                GHC.Classes.==
+                                                                                                    $dEq2_s2rn
+                                                                                                    ds1_s2rq
+                                                                                                    sat_s2ru
+                                                                                            of
+                                                                                            _ [Occ=Dead]
+                                                                                            { GHC.Types.False ->
+                                                                                                  let {
+                                                                                                    sat_s2ry [Occ=Once]
+                                                                                                      :: GHC.Integer.Type.Integer
+                                                                                                    [LclId,
+                                                                                                     Str=DmdType] =
+                                                                                                        \u srt:SRT:[] []
+                                                                                                            let {
+                                                                                                              sat_s2rx [Occ=Once]
+                                                                                                                :: GHC.Integer.Type.Integer
+                                                                                                              [LclId,
+                                                                                                               Str=DmdType] =
+                                                                                                                  NO_CCS GHC.Integer.Type.S#! [0];
+                                                                                                            } in 
+                                                                                                              GHC.Num.fromInteger
+                                                                                                                  $dNum3_s2ro
+                                                                                                                  sat_s2rx; } in
+                                                                                                  let {
+                                                                                                    sat_s2rw [Occ=Once]
+                                                                                                      :: GHC.Integer.Type.Integer
+                                                                                                    [LclId,
+                                                                                                     Str=DmdType] =
+                                                                                                        \u srt:SRT:[rAd :-> GHC.Real.$fIntegralInteger] []
+                                                                                                            GHC.Real.mod
+                                                                                                                GHC.Real.$fIntegralInteger
+                                                                                                                ds1_s2rq
+                                                                                                                ds2_s2rr;
+                                                                                                  } in 
+                                                                                                    case
+                                                                                                        GHC.Classes.==
+                                                                                                            $dEq2_s2rn
+                                                                                                            sat_s2rw
+                                                                                                            sat_s2ry
+                                                                                                    of
+                                                                                                    _ [Occ=Dead]
+                                                                                                    { GHC.Types.False ->
+                                                                                                          let {
+                                                                                                            sat_s2rC [Occ=Once]
+                                                                                                              :: GHC.Integer.Type.Integer
+                                                                                                            [LclId,
+                                                                                                             Str=DmdType] =
+                                                                                                                \u srt:SRT:[] []
+                                                                                                                    let {
+                                                                                                                      sat_s2rB [Occ=Once]
+                                                                                                                        :: GHC.Integer.Type.Integer
+                                                                                                                      [LclId,
+                                                                                                                       Str=DmdType] =
+                                                                                                                          \u srt:SRT:[] []
+                                                                                                                              let {
+                                                                                                                                sat_s2rA [Occ=Once]
+                                                                                                                                  :: GHC.Integer.Type.Integer
+                                                                                                                                [LclId,
+                                                                                                                                 Str=DmdType] =
+                                                                                                                                    NO_CCS GHC.Integer.Type.S#! [1];
+                                                                                                                              } in 
+                                                                                                                                GHC.Num.fromInteger
+                                                                                                                                    $dNum3_s2ro
+                                                                                                                                    sat_s2rA;
+                                                                                                                    } in 
+                                                                                                                      GHC.Num.+
+                                                                                                                          $dNum3_s2ro
+                                                                                                                          ds2_s2rr
+                                                                                                                          sat_s2rB;
+                                                                                                          } in 
+                                                                                                            aux2_s2rp
+                                                                                                                ds1_s2rq
+                                                                                                                sat_s2rC
+                                                                                                                xs_s2rs;
+                                                                                                      GHC.Types.True ->
+                                                                                                          let {
+                                                                                                            sat_s2rE [Occ=Once]
+                                                                                                              :: [GHC.Integer.Type.Integer]
+                                                                                                            [LclId,
+                                                                                                             Str=DmdType] =
+                                                                                                                NO_CCS :! [ds2_s2rr
+                                                                                                                           xs_s2rs]; } in
+                                                                                                          let {
+                                                                                                            sat_s2rD [Occ=Once]
+                                                                                                              :: GHC.Integer.Type.Integer
+                                                                                                            [LclId,
+                                                                                                             Str=DmdType] =
+                                                                                                                \u srt:SRT:[rAd :-> GHC.Real.$fIntegralInteger] []
+                                                                                                                    GHC.Real.div
+                                                                                                                        GHC.Real.$fIntegralInteger
+                                                                                                                        ds1_s2rq
+                                                                                                                        ds2_s2rr;
+                                                                                                          } in 
+                                                                                                            aux2_s2rp
+                                                                                                                sat_s2rD
+                                                                                                                ds2_s2rr
+                                                                                                                sat_s2rE;
+                                                                                                    };
+                                                                                              GHC.Types.True ->
+                                                                                                  xs_s2rs;
+                                                                                            };
+                                                                                } in 
+                                                                                  let {
+                                                                                    sat_s2rI [Occ=Once]
+                                                                                      :: GHC.Integer.Type.Integer
+                                                                                    [LclId,
+                                                                                     Str=DmdType] =
+                                                                                        \u srt:SRT:[rAd :-> GHC.Real.$fIntegralInteger] []
+                                                                                            let {
+                                                                                              sat_s2rH [Occ=Once]
+                                                                                                :: GHC.Integer.Type.Integer
+                                                                                              [LclId,
+                                                                                               Str=DmdType] =
+                                                                                                  NO_CCS GHC.Integer.Type.S#! [2];
+                                                                                            } in 
+                                                                                              case
+                                                                                                  GHC.Real.$p1Integral
+                                                                                                      GHC.Real.$fIntegralInteger
+                                                                                              of
+                                                                                              sat_s2rF
+                                                                                              { __DEFAULT ->
+                                                                                                    case
+                                                                                                        GHC.Real.$p1Real
+                                                                                                            sat_s2rF
+                                                                                                    of
+                                                                                                    sat_s2rG
+                                                                                                    { __DEFAULT ->
+                                                                                                          GHC.Num.fromInteger
+                                                                                                              sat_s2rG
+                                                                                                              sat_s2rH;
+                                                                                                    };
+                                                                                              };
+                                                                                  } in 
+                                                                                    aux2_s2rp
+                                                                                        ds_s2r5
+                                                                                        sat_s2rI
+                                                                                        GHC.Types.[];
+                                                                    } in 
+                                                                      Data.OldList.group
+                                                                          $dEq1_s2r1 sat_s2rJ; } in
+                                                          let {
+                                                            sat_s2rk [Occ=Once]
+                                                              :: [GHC.Integer.Type.Integer]
+                                                                 -> Data.Map.Base.Map
+                                                                      GHC.Integer.Type.Integer
+                                                                      [GHC.Integer.Type.Integer]
+                                                                 -> Data.Map.Base.Map
+                                                                      GHC.Integer.Type.Integer
+                                                                      [GHC.Integer.Type.Integer]
+                                                            [LclId, Str=DmdType] =
+                                                                \r srt:SRT:[0e :-> Control.Exception.Base.patError,
+                                                                            r4K :-> Data.Map.insertWith',
+                                                                            ryl :-> GHC.Classes.$fOrdInt,
+                                                                            r16y :-> Data.Foldable.$fFoldable[]] [xx_s2r9
+                                                                                                                  pmap_s2ra]
+                                                                    case xx_s2r9 of wild1_s2rb {
+                                                                      [] ->
+                                                                          Control.Exception.Base.patError
+                                                                              "Euler.hs:132:11-67|function fun"#;
+                                                                      : x_s2rc [Occ=Once]
+                                                                        _ [Occ=Dead] ->
+                                                                          let {
+                                                                            sat_s2rj [Occ=Once]
+                                                                              :: [GHC.Integer.Type.Integer]
+                                                                                 -> [GHC.Integer.Type.Integer]
+                                                                                 -> [GHC.Integer.Type.Integer]
+                                                                            [LclId, Str=DmdType] =
+                                                                                \r srt:SRT:[ryl :-> GHC.Classes.$fOrdInt,
+                                                                                            r16y :-> Data.Foldable.$fFoldable[]] [xs_s2re
+                                                                                                                                  ys_s2rf]
+                                                                                    let {
+                                                                                      sat_s2rh [Occ=Once]
+                                                                                        :: GHC.Types.Int
+                                                                                      [LclId,
+                                                                                       Str=DmdType] =
+                                                                                          \u srt:SRT:[r16y :-> Data.Foldable.$fFoldable[]] []
+                                                                                              Data.Foldable.length
+                                                                                                  Data.Foldable.$fFoldable[]
+                                                                                                  ys_s2rf; } in
+                                                                                    let {
+                                                                                      sat_s2rg [Occ=Once]
+                                                                                        :: GHC.Types.Int
+                                                                                      [LclId,
+                                                                                       Str=DmdType] =
+                                                                                          \u srt:SRT:[r16y :-> Data.Foldable.$fFoldable[]] []
+                                                                                              Data.Foldable.length
+                                                                                                  Data.Foldable.$fFoldable[]
+                                                                                                  xs_s2re;
+                                                                                    } in 
+                                                                                      case
+                                                                                          GHC.Classes.>
+                                                                                              GHC.Classes.$fOrdInt
+                                                                                              sat_s2rg
+                                                                                              sat_s2rh
+                                                                                      of
+                                                                                      _ [Occ=Dead]
+                                                                                      { GHC.Types.False ->
+                                                                                            ys_s2rf;
+                                                                                        GHC.Types.True ->
+                                                                                            xs_s2re;
+                                                                                      };
+                                                                          } in 
+                                                                            Data.Map.insertWith'
+                                                                                $dOrd_s2r0
+                                                                                sat_s2rj
+                                                                                x_s2rc
+                                                                                wild1_s2rb
+                                                                                pmap_s2ra;
+                                                                    };
+                                                          } in 
+                                                            Data.Foldable.foldr
+                                                                Data.Foldable.$fFoldable[]
+                                                                sat_s2rk
+                                                                mp_s2r4
+                                                                sat_s2rK;
+                                                } in  aux1_s2r3 sat_s2rL sat_s2rO;
+                                            GHC.Types.True -> mp_s2r4;
+                                          };
+                              } in 
+                                let {
+                                  sat_s2rP [Occ=Once] :: GHC.Integer.Type.Integer
+                                  [LclId, Str=DmdType] =
+                                      NO_CCS GHC.Integer.Type.S#! [20];
+                                } in  aux1_s2r3 Data.Map.Base.empty sat_s2rP;
+                  } in  Data.Map.Base.toList sat_s2rQ;
+        } in 
+          Data.Foldable.concatMap
+              Data.Foldable.$fFoldable[] Data.Tuple.snd sat_s2rR;
+Euler.euler0005 :: GHC.Integer.Type.Integer
+[GblId, Str=DmdType] =
+    \u srt:SRT:[ryk :-> GHC.Num.$fNumInteger,
+                r16y :-> Data.Foldable.$fFoldable[], s2rS :-> sat_s2rS] []
+        Data.Foldable.product
+            Data.Foldable.$fFoldable[] GHC.Num.$fNumInteger sat_s2rS;
+sat_s2rY :: [GHC.Integer.Type.Integer]
+[LclId, Str=DmdType] =
+    \u srt:SRT:[0w :-> GHC.List.filter, r1X :-> GHC.Real.even,
+                r28 :-> GHC.List.takeWhile, roA :-> fibs_roA,
+                roT :-> GHC.Integer.Type.$fOrdInteger,
+                rAd :-> GHC.Real.$fIntegralInteger] []
+        let {
+          sat_s2rX [Occ=Once] :: [GHC.Integer.Type.Integer]
+          [LclId, Str=DmdType] =
+              \u srt:SRT:[r28 :-> GHC.List.takeWhile, roA :-> fibs_roA,
+                          roT :-> GHC.Integer.Type.$fOrdInteger] []
+                  let {
+                    ds_s2rU [Occ=OnceL] :: GHC.Integer.Type.Integer
+                    [LclId, Str=DmdType, Unf=OtherCon []] =
+                        NO_CCS GHC.Integer.Type.S#! [4000000]; } in
+                  let {
+                    sat_s2rW [Occ=Once] :: GHC.Integer.Type.Integer -> GHC.Types.Bool
+                    [LclId, Str=DmdType] =
+                        \r srt:SRT:[roT :-> GHC.Integer.Type.$fOrdInteger] [ds1_s2rV]
+                            GHC.Classes.< GHC.Integer.Type.$fOrdInteger ds1_s2rV ds_s2rU;
+                  } in  GHC.List.takeWhile sat_s2rW fibs_roA; } in
+        let {
+          sat_s2rT [Occ=Once] :: GHC.Integer.Type.Integer -> GHC.Types.Bool
+          [LclId, Str=DmdType] =
+              \u srt:SRT:[r1X :-> GHC.Real.even,
+                          rAd :-> GHC.Real.$fIntegralInteger] []
+                  GHC.Real.even GHC.Real.$fIntegralInteger;
+        } in  GHC.List.filter sat_s2rT sat_s2rX;
+Euler.euler0002 :: GHC.Integer.Type.Integer
+[GblId, Str=DmdType] =
+    \u srt:SRT:[ryk :-> GHC.Num.$fNumInteger,
+                r16y :-> Data.Foldable.$fFoldable[], s2rY :-> sat_s2rY] []
+        Data.Foldable.sum
+            Data.Foldable.$fFoldable[] GHC.Num.$fNumInteger sat_s2rY;
+sat_s2sh :: [GHC.Integer.Type.Integer]
+[LclId, Str=DmdType] =
+    \u srt:SRT:[0w :-> GHC.List.filter, r2C :-> GHC.Base..,
+                r2S :-> Data.Foldable.any, rzv :-> GHC.Enum.$fEnumInteger,
+                rAd :-> GHC.Real.$fIntegralInteger,
+                r16y :-> Data.Foldable.$fFoldable[]] []
+        let {
+          sat_s2sg [Occ=Once] :: [GHC.Integer.Type.Integer]
+          [LclId, Str=DmdType] =
+              \u srt:SRT:[rzv :-> GHC.Enum.$fEnumInteger] []
+                  let {
+                    sat_s2sf [Occ=Once] :: GHC.Integer.Type.Integer
+                    [LclId, Str=DmdType] =
+                        NO_CCS GHC.Integer.Type.S#! [999]; } in
+                  let {
+                    sat_s2se [Occ=Once] :: GHC.Integer.Type.Integer
+                    [LclId, Str=DmdType] =
+                        NO_CCS GHC.Integer.Type.S#! [1];
+                  } in 
+                    GHC.Enum.enumFromTo GHC.Enum.$fEnumInteger sat_s2se sat_s2sf; } in
+        let {
+          $dReal1_s2rZ :: GHC.Real.Real GHC.Integer.Type.Integer
+          [LclId, Str=DmdType] =
+              \u srt:SRT:[rAd :-> GHC.Real.$fIntegralInteger] []
+                  GHC.Real.$p1Integral GHC.Real.$fIntegralInteger; } in
+        let {
+          $dNum2_s2s0 [Occ=OnceL] :: GHC.Num.Num GHC.Integer.Type.Integer
+          [LclId, Str=DmdType] =
+              \u srt:SRT:[] [] GHC.Real.$p1Real $dReal1_s2rZ; } in
+        let {
+          a5_s2s1 :: GHC.Classes.Ord GHC.Integer.Type.Integer
+          [LclId, Str=DmdType] =
+              \u srt:SRT:[] [] GHC.Real.$p2Real $dReal1_s2rZ; } in
+        let {
+          $dEq1_s2s2 [Occ=OnceL] :: GHC.Classes.Eq GHC.Integer.Type.Integer
+          [LclId, Str=DmdType] =
+              \u srt:SRT:[] [] GHC.Classes.$p1Ord a5_s2s1; } in
+        let {
+          a6_s2s3 :: GHC.Integer.Type.Integer
+          [LclId, Str=DmdType, Unf=OtherCon []] =
+              NO_CCS GHC.Integer.Type.S#! [3]; } in
+        let {
+          a7_s2s4 :: GHC.Integer.Type.Integer
+          [LclId, Str=DmdType, Unf=OtherCon []] =
+              NO_CCS GHC.Integer.Type.S#! [5]; } in
+        let {
+          a8_s2s5 :: [GHC.Integer.Type.Integer]
+          [LclId, Str=DmdType, Unf=OtherCon []] =
+              NO_CCS :! [a7_s2s4 GHC.Types.[]]; } in
+        let {
+          nums2_s2s6 [Occ=OnceL] :: [GHC.Integer.Type.Integer]
+          [LclId, Str=DmdType, Unf=OtherCon []] =
+              NO_CCS :! [a6_s2s3 a8_s2s5]; } in
+        let {
+          sat_s2sd [Occ=Once] :: GHC.Integer.Type.Integer -> GHC.Types.Bool
+          [LclId, Str=DmdType] =
+              \r srt:SRT:[r2C :-> GHC.Base.., r2S :-> Data.Foldable.any,
+                          rAd :-> GHC.Real.$fIntegralInteger,
+                          r16y :-> Data.Foldable.$fFoldable[]] [test_s2s7]
+                  let {
+                    sat_s2sc [Occ=Once] :: GHC.Integer.Type.Integer -> GHC.Types.Bool
+                    [LclId, Str=DmdType] =
+                        \u srt:SRT:[r2C :-> GHC.Base..,
+                                    rAd :-> GHC.Real.$fIntegralInteger] []
+                            let {
+                              sat_s2sb [Occ=Once]
+                                :: GHC.Integer.Type.Integer -> GHC.Integer.Type.Integer
+                              [LclId, Str=DmdType] =
+                                  \u srt:SRT:[rAd :-> GHC.Real.$fIntegralInteger] []
+                                      GHC.Real.mod GHC.Real.$fIntegralInteger test_s2s7; } in
+                            let {
+                              sat_s2sa [Occ=Once] :: GHC.Integer.Type.Integer -> GHC.Types.Bool
+                              [LclId, Str=DmdType] =
+                                  \u srt:SRT:[] []
+                                      let {
+                                        sat_s2s9 [Occ=Once] :: GHC.Integer.Type.Integer
+                                        [LclId, Str=DmdType] =
+                                            \u srt:SRT:[] []
+                                                let {
+                                                  sat_s2s8 [Occ=Once] :: GHC.Integer.Type.Integer
+                                                  [LclId, Str=DmdType] =
+                                                      NO_CCS GHC.Integer.Type.S#! [0];
+                                                } in  GHC.Num.fromInteger $dNum2_s2s0 sat_s2s8;
+                                      } in  GHC.Classes.== $dEq1_s2s2 sat_s2s9;
+                            } in  GHC.Base.. sat_s2sa sat_s2sb;
+                  } in 
+                    Data.Foldable.any Data.Foldable.$fFoldable[] sat_s2sc nums2_s2s6;
+        } in  GHC.List.filter sat_s2sd sat_s2sg;
+Euler.euler0001 :: GHC.Integer.Type.Integer
+[GblId, Str=DmdType] =
+    \u srt:SRT:[ryk :-> GHC.Num.$fNumInteger,
+                r16y :-> Data.Foldable.$fFoldable[], s2sh :-> sat_s2sh] []
+        Data.Foldable.sum
+            Data.Foldable.$fFoldable[] GHC.Num.$fNumInteger sat_s2sh;
+sat_s2t2 :: [GHC.Integer.Type.Integer]
+[LclId, Str=DmdType] =
+    \u srt:SRT:[034 :-> GHC.Real.fromIntegral,
+                r28 :-> GHC.List.takeWhile, r2C :-> GHC.Base..,
+                r2S :-> Data.Foldable.any, r5y :-> Data.OldList.insert,
+                rg5 :-> GHC.Float.$fFloatingDouble,
+                rg6 :-> GHC.Float.$fRealFracDouble, rgB :-> GHC.Float.$fNumDouble,
+                rAd :-> GHC.Real.$fIntegralInteger,
+                r16y :-> Data.Foldable.$fFoldable[]] []
+        let {
+          $dReal1_s2si :: GHC.Real.Real GHC.Integer.Type.Integer
+          [LclId, Str=DmdType] =
+              \u srt:SRT:[rAd :-> GHC.Real.$fIntegralInteger] []
+                  GHC.Real.$p1Integral GHC.Real.$fIntegralInteger; } in
+        let {
+          $dNum2_s2sj :: GHC.Num.Num GHC.Integer.Type.Integer
+          [LclId, Str=DmdType] =
+              \u srt:SRT:[] [] GHC.Real.$p1Real $dReal1_s2si; } in
+        let {
+          $dOrd_s2sk :: GHC.Classes.Ord GHC.Integer.Type.Integer
+          [LclId, Str=DmdType] =
+              \u srt:SRT:[] [] GHC.Real.$p2Real $dReal1_s2si; } in
+        let {
+          $dEq1_s2sl [Occ=OnceL] :: GHC.Classes.Eq GHC.Integer.Type.Integer
+          [LclId, Str=DmdType] =
+              \u srt:SRT:[] [] GHC.Classes.$p1Ord $dOrd_s2sk; } in
+        let {
+          n1_s2sm [Occ=OnceL] :: GHC.Integer.Type.Integer
+          [LclId, Str=DmdType, Unf=OtherCon []] =
+              NO_CCS GHC.Integer.Type.S#! [10001]; } in
+        let {
+          $dReal2_s2sn :: GHC.Real.Real GHC.Integer.Type.Integer
+          [LclId, Str=DmdType] =
+              \u srt:SRT:[rAd :-> GHC.Real.$fIntegralInteger] []
+                  GHC.Real.$p1Integral GHC.Real.$fIntegralInteger; } in
+        let {
+          $dOrd1_s2so :: GHC.Classes.Ord GHC.Integer.Type.Integer
+          [LclId, Str=DmdType] =
+              \u srt:SRT:[] [] GHC.Real.$p2Real $dReal2_s2sn; } in
+        let {
+          $dNum3_s2sp :: GHC.Num.Num GHC.Integer.Type.Integer
+          [LclId, Str=DmdType] =
+              \u srt:SRT:[] [] GHC.Real.$p1Real $dReal2_s2sn; } in
+        let {
+          $dEq2_s2sq [Occ=OnceL] :: GHC.Classes.Eq GHC.Integer.Type.Integer
+          [LclId, Str=DmdType] =
+              \u srt:SRT:[] [] GHC.Classes.$p1Ord $dOrd1_s2so;
+        } in 
+          let-no-escape {
+            aux1_s2sr [Occ=LoopBreaker]
+              :: [GHC.Integer.Type.Integer]
+                 -> GHC.Integer.Type.Integer
+                 -> GHC.Integer.Type.Integer
+                 -> [GHC.Integer.Type.Integer]
+            [LclId, Arity=3, Str=DmdType, Unf=OtherCon []] =
+                sat-only \r srt:SRT:[034 :-> GHC.Real.fromIntegral,
+                                     r28 :-> GHC.List.takeWhile, r2C :-> GHC.Base..,
+                                     r2S :-> Data.Foldable.any, r5y :-> Data.OldList.insert,
+                                     rg5 :-> GHC.Float.$fFloatingDouble,
+                                     rg6 :-> GHC.Float.$fRealFracDouble,
+                                     rgB :-> GHC.Float.$fNumDouble,
+                                     rAd :-> GHC.Real.$fIntegralInteger,
+                                     r16y :-> Data.Foldable.$fFoldable[]] [acc_s2ss p_s2st m_s2su]
+                    case GHC.Classes.== $dEq1_s2sl m_s2su n1_s2sm of _ [Occ=Dead] {
+                      GHC.Types.False ->
+                          let {
+                            sat_s2sG [Occ=Once] :: [GHC.Integer.Type.Integer]
+                            [LclId, Str=DmdType] =
+                                \u srt:SRT:[034 :-> GHC.Real.fromIntegral,
+                                            r28 :-> GHC.List.takeWhile,
+                                            rg5 :-> GHC.Float.$fFloatingDouble,
+                                            rg6 :-> GHC.Float.$fRealFracDouble,
+                                            rgB :-> GHC.Float.$fNumDouble,
+                                            rAd :-> GHC.Real.$fIntegralInteger] []
+                                    let {
+                                      ds_s2sB [Occ=OnceL] :: GHC.Integer.Type.Integer
+                                      [LclId, Str=DmdType] =
+                                          \u srt:SRT:[034 :-> GHC.Real.fromIntegral,
+                                                      rg5 :-> GHC.Float.$fFloatingDouble,
+                                                      rg6 :-> GHC.Float.$fRealFracDouble,
+                                                      rgB :-> GHC.Float.$fNumDouble,
+                                                      rAd :-> GHC.Real.$fIntegralInteger] []
+                                              let {
+                                                sat_s2sD [Occ=Once] :: GHC.Types.Double
+                                                [LclId, Str=DmdType] =
+                                                    \u srt:SRT:[034 :-> GHC.Real.fromIntegral,
+                                                                rg5 :-> GHC.Float.$fFloatingDouble,
+                                                                rgB :-> GHC.Float.$fNumDouble,
+                                                                rAd :-> GHC.Real.$fIntegralInteger] []
+                                                        let {
+                                                          sat_s2sC [Occ=Once] :: GHC.Types.Double
+                                                          [LclId, Str=DmdType] =
+                                                              \u srt:SRT:[034 :-> GHC.Real.fromIntegral,
+                                                                          rgB :-> GHC.Float.$fNumDouble,
+                                                                          rAd :-> GHC.Real.$fIntegralInteger] []
+                                                                  GHC.Real.fromIntegral
+                                                                      GHC.Real.$fIntegralInteger
+                                                                      GHC.Float.$fNumDouble
+                                                                      p_s2st;
+                                                        } in 
+                                                          GHC.Float.sqrt
+                                                              GHC.Float.$fFloatingDouble sat_s2sC;
+                                              } in 
+                                                GHC.Real.ceiling
+                                                    GHC.Float.$fRealFracDouble
+                                                    GHC.Real.$fIntegralInteger
+                                                    sat_s2sD; } in
+                                    let {
+                                      sat_s2sF [Occ=Once]
+                                        :: GHC.Integer.Type.Integer -> GHC.Types.Bool
+                                      [LclId, Str=DmdType] =
+                                          \r srt:SRT:[] [ds1_s2sE]
+                                              GHC.Classes.<= $dOrd1_s2so ds1_s2sE ds_s2sB;
+                                    } in  GHC.List.takeWhile sat_s2sF acc_s2ss; } in
+                          let {
+                            sat_s2sA [Occ=Once] :: GHC.Integer.Type.Integer -> GHC.Types.Bool
+                            [LclId, Str=DmdType] =
+                                \u srt:SRT:[r2C :-> GHC.Base..,
+                                            rAd :-> GHC.Real.$fIntegralInteger] []
+                                    let {
+                                      sat_s2sz [Occ=Once]
+                                        :: GHC.Integer.Type.Integer -> GHC.Integer.Type.Integer
+                                      [LclId, Str=DmdType] =
+                                          \u srt:SRT:[rAd :-> GHC.Real.$fIntegralInteger] []
+                                              GHC.Real.mod GHC.Real.$fIntegralInteger p_s2st; } in
+                                    let {
+                                      sat_s2sy [Occ=Once]
+                                        :: GHC.Integer.Type.Integer -> GHC.Types.Bool
+                                      [LclId, Str=DmdType] =
+                                          \u srt:SRT:[] []
+                                              let {
+                                                sat_s2sx [Occ=Once] :: GHC.Integer.Type.Integer
+                                                [LclId, Str=DmdType] =
+                                                    \u srt:SRT:[] []
+                                                        let {
+                                                          sat_s2sw [Occ=Once]
+                                                            :: GHC.Integer.Type.Integer
+                                                          [LclId, Str=DmdType] =
+                                                              NO_CCS GHC.Integer.Type.S#! [0];
+                                                        } in 
+                                                          GHC.Num.fromInteger $dNum3_s2sp sat_s2sw;
+                                              } in  GHC.Classes.== $dEq2_s2sq sat_s2sx;
+                                    } in  GHC.Base.. sat_s2sy sat_s2sz;
+                          } in 
+                            case
+                                Data.Foldable.any Data.Foldable.$fFoldable[] sat_s2sA sat_s2sG
+                            of
+                            _ [Occ=Dead]
+                            { GHC.Types.False ->
+                                  let {
+                                    sat_s2sO [Occ=Once] :: GHC.Integer.Type.Integer
+                                    [LclId, Str=DmdType] =
+                                        \u srt:SRT:[] []
+                                            let {
+                                              sat_s2sN [Occ=Once] :: GHC.Integer.Type.Integer
+                                              [LclId, Str=DmdType] =
+                                                  \u srt:SRT:[] []
+                                                      let {
+                                                        sat_s2sM [Occ=Once]
+                                                          :: GHC.Integer.Type.Integer
+                                                        [LclId, Str=DmdType] =
+                                                            NO_CCS GHC.Integer.Type.S#! [1];
+                                                      } in 
+                                                        GHC.Num.fromInteger $dNum2_s2sj sat_s2sM;
+                                            } in  GHC.Num.+ $dNum2_s2sj m_s2su sat_s2sN; } in
+                                  let {
+                                    sat_s2sL [Occ=Once] :: GHC.Integer.Type.Integer
+                                    [LclId, Str=DmdType] =
+                                        \u srt:SRT:[] []
+                                            let {
+                                              sat_s2sK [Occ=Once] :: GHC.Integer.Type.Integer
+                                              [LclId, Str=DmdType] =
+                                                  \u srt:SRT:[] []
+                                                      let {
+                                                        sat_s2sJ [Occ=Once]
+                                                          :: GHC.Integer.Type.Integer
+                                                        [LclId, Str=DmdType] =
+                                                            NO_CCS GHC.Integer.Type.S#! [2];
+                                                      } in 
+                                                        GHC.Num.fromInteger $dNum3_s2sp sat_s2sJ;
+                                            } in  GHC.Num.+ $dNum3_s2sp p_s2st sat_s2sK; } in
+                                  let {
+                                    sat_s2sI [Occ=Once] :: [GHC.Integer.Type.Integer]
+                                    [LclId, Str=DmdType] =
+                                        \u srt:SRT:[r5y :-> Data.OldList.insert] []
+                                            Data.OldList.insert $dOrd1_s2so p_s2st acc_s2ss;
+                                  } in  aux1_s2sr sat_s2sI sat_s2sL sat_s2sO;
+                              GHC.Types.True ->
+                                  let {
+                                    sat_s2sR [Occ=Once] :: GHC.Integer.Type.Integer
+                                    [LclId, Str=DmdType] =
+                                        \u srt:SRT:[] []
+                                            let {
+                                              sat_s2sQ [Occ=Once] :: GHC.Integer.Type.Integer
+                                              [LclId, Str=DmdType] =
+                                                  \u srt:SRT:[] []
+                                                      let {
+                                                        sat_s2sP [Occ=Once]
+                                                          :: GHC.Integer.Type.Integer
+                                                        [LclId, Str=DmdType] =
+                                                            NO_CCS GHC.Integer.Type.S#! [2];
+                                                      } in 
+                                                        GHC.Num.fromInteger $dNum3_s2sp sat_s2sP;
+                                            } in  GHC.Num.+ $dNum3_s2sp p_s2st sat_s2sQ;
+                                  } in  aux1_s2sr acc_s2ss sat_s2sR m_s2su;
+                            };
+                      GHC.Types.True -> acc_s2ss;
+                    };
+          } in 
+            let {
+              sat_s2t1 [Occ=Once] :: GHC.Integer.Type.Integer
+              [LclId, Str=DmdType] =
+                  \u srt:SRT:[] []
+                      let {
+                        sat_s2t0 [Occ=Once] :: GHC.Integer.Type.Integer
+                        [LclId, Str=DmdType] =
+                            NO_CCS GHC.Integer.Type.S#! [2];
+                      } in  GHC.Num.fromInteger $dNum2_s2sj sat_s2t0; } in
+            let {
+              sat_s2sZ [Occ=Once] :: GHC.Integer.Type.Integer
+              [LclId, Str=DmdType] =
+                  \u srt:SRT:[] []
+                      let {
+                        sat_s2sY [Occ=Once] :: GHC.Integer.Type.Integer
+                        [LclId, Str=DmdType] =
+                            NO_CCS GHC.Integer.Type.S#! [5];
+                      } in  GHC.Num.fromInteger $dNum2_s2sj sat_s2sY; } in
+            let {
+              sat_s2sV [Occ=Once] :: GHC.Integer.Type.Integer
+              [LclId, Str=DmdType] =
+                  \u srt:SRT:[] []
+                      let {
+                        sat_s2sU [Occ=Once] :: GHC.Integer.Type.Integer
+                        [LclId, Str=DmdType] =
+                            NO_CCS GHC.Integer.Type.S#! [3];
+                      } in  GHC.Num.fromInteger $dNum2_s2sj sat_s2sU; } in
+            let {
+              sat_s2sW [Occ=Once] :: [GHC.Integer.Type.Integer]
+              [LclId, Str=DmdType] =
+                  NO_CCS :! [sat_s2sV GHC.Types.[]]; } in
+            let {
+              sat_s2sT [Occ=Once] :: GHC.Integer.Type.Integer
+              [LclId, Str=DmdType] =
+                  \u srt:SRT:[] []
+                      let {
+                        sat_s2sS [Occ=Once] :: GHC.Integer.Type.Integer
+                        [LclId, Str=DmdType] =
+                            NO_CCS GHC.Integer.Type.S#! [2];
+                      } in  GHC.Num.fromInteger $dNum2_s2sj sat_s2sS; } in
+            let {
+              sat_s2sX [Occ=Once] :: [GHC.Integer.Type.Integer]
+              [LclId, Str=DmdType] =
+                  NO_CCS :! [sat_s2sT sat_s2sW];
+            } in  aux1_s2sr sat_s2sX sat_s2sZ sat_s2t1;
+Euler.euler0007 :: GHC.Integer.Type.Integer
+[GblId, Str=DmdType] =
+    \u srt:SRT:[r2l :-> GHC.List.last, s2t2 :-> sat_s2t2] []
+        GHC.List.last sat_s2t2;
+sat_s2t7 :: [GHC.Types.Char]
+[LclId, Str=DmdType] =
+    \u srt:SRT:[0k :-> GHC.CString.unpackCString#] []
+        GHC.CString.unpackCString#
+            "7316717653133062491922511967442657474235534919493496983520312774506326239578318016984801869478851843858615607891129494954595017379583319528532088055111254069874715852386305071569329096329522744304355766896648950445244523161731856403098711121722383113622298934233803081353362766142828064444866452387493035890729629049156044077239071381051585930796086670172427121883998797908792274921901699720888093776657273330010533678812202354218097512545405947522435258490771167055601360483958644670632441572215539753697817977846174064955149290862569321978468622482839722413756570560574902614079729686524145351004748216637048440319989000889524345065854122758866688116427171479924442928230863465674813919123162824586178664583591245665294765456828489128831426076900422421902267105562632111110937054421750694165896040807198403850962455444362981230987879927244284909188845801561660979191338754992005240636899125607176060588611646710940507754100225698315520005593572972571636269561882670428252483600823257530420752963450"#;
+sat_s2t6 :: GHC.Types.Char -> GHC.Integer.Type.Integer
+[LclId, Str=DmdType] =
+    \u srt:SRT:[r1D :-> Text.Read.read, r2C :-> GHC.Base..,
+                r1NW :-> GHC.Read.$fReadInteger] []
+        let {
+          sat_s2t5 [Occ=Once] :: GHC.Types.Char -> GHC.Base.String
+          [LclId, Str=DmdType] =
+              \r srt:SRT:[] [ds_s2t4] : [ds_s2t4 GHC.Types.[]]; } in
+        let {
+          sat_s2t3 [Occ=Once] :: GHC.Base.String -> GHC.Integer.Type.Integer
+          [LclId, Str=DmdType] =
+              \u srt:SRT:[r1D :-> Text.Read.read,
+                          r1NW :-> GHC.Read.$fReadInteger] []
+                  Text.Read.read GHC.Read.$fReadInteger;
+        } in  GHC.Base.. sat_s2t3 sat_s2t5;
+nums1_r2pw :: [GHC.Integer.Type.Integer]
+[GblId, Str=DmdType] =
+    \u srt:SRT:[01X :-> GHC.Base.map, s2t6 :-> sat_s2t6,
+                s2t7 :-> sat_s2t7] []
+        GHC.Base.map sat_s2t6 sat_s2t7;
+sat_s2t8 :: GHC.Types.Int
+[LclId, Str=DmdType] =
+    NO_CCS GHC.Types.I#! [13];
+digits0_r2px :: [GHC.Integer.Type.Integer]
+[GblId, Str=DmdType] =
+    \u srt:SRT:[r29 :-> GHC.List.take, r2pw :-> nums1_r2pw,
+                s2t8 :-> sat_s2t8] []
+        GHC.List.take sat_s2t8 nums1_r2pw;
+prod0_r2py :: GHC.Integer.Type.Integer
+[GblId, Str=DmdType] =
+    \u srt:SRT:[ryk :-> GHC.Num.$fNumInteger,
+                r16y :-> Data.Foldable.$fFoldable[], r2px :-> digits0_r2px] []
+        Data.Foldable.product
+            Data.Foldable.$fFoldable[] GHC.Num.$fNumInteger digits0_r2px;
+sat_s2tb :: Euler.Digits
+[LclId, Str=DmdType] =
+    \u srt:SRT:[r2q :-> GHC.List.drop, r2pw :-> nums1_r2pw] []
+        let {
+          sat_s2ta [Occ=Once] :: GHC.Types.Int
+          [LclId, Str=DmdType] =
+              NO_CCS GHC.Types.I#! [13];
+        } in  GHC.List.drop sat_s2ta nums1_r2pw;
+sat_s2t9 :: Euler.MaxPair
+[LclId, Str=DmdType] =
+    NO_CCS (,)! [prod0_r2py digits0_r2px];
+Euler.euler0008 :: Euler.MaxPair
+[GblId, Str=DmdType] =
+    \u srt:SRT:[roR :-> solve_roR, r2pw :-> nums1_r2pw,
+                r2py :-> prod0_r2py, s2t9 :-> sat_s2t9, s2tb :-> sat_s2tb] []
+        solve_roR prod0_r2py sat_s2t9 nums1_r2pw sat_s2tb;
+
+

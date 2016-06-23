@@ -1,6 +1,5 @@
 {-# LANGUAGE
-NamedFieldPuns
-#-}
+NamedFieldPuns #-}
 
 module FromGHC
   ()
@@ -65,7 +64,10 @@ import           StgSyn ( StgBinding, GenStgBinding (..)
                         , StgAlt, GenStgAlt, AltType (..)
                         , StgLiveVars, GenStgLiveVars (..)
                         , UpdateFlag (..), SRT (..), StgBinderInfo
-                        )
+                        , pprStgBindings)
+import           Name ( NamedThing (..)
+                      , getOccString)
+import           Var (Var (..))
 
 import qualified TyCon as HsTyCon (isDataTyCon, TyCon)
 
@@ -195,21 +197,38 @@ compileTarget fileName = do
             stg2stg dflags mod stg_binds
 
       (stg, ccs) <- mapAndUnzipM gutsToSTG cgGuts
-      return stg
-
-        
-            
-
-g2aObj :: StgBinding -> Obj ()
-g2aObj = undefined      
-
+      dflags <- getSessionDynFlags
+      return $ showSDoc dflags (pprStgBindings (concat stg))
   
+      
 
-makeStg = undefined
+-- | Translate bindings (let/letrec, including top level) into APPFL Obj types.
+g2aObj :: StgBinding -> [Obj ()]
+g2aObj bind =
+  case bind of
+    -- We don't distinguish between recursive bindings and otherwise
+    -- at the data level, so no need to do anything special here.
+    -- occNames passed to procRhs are probably not what we want, but
+    -- serve for now
+    StgNonRec id rhs -> [procRhs rhs $ getOccString id]
+    StgRec pairs -> [procRhs rhs $ getOccString id | (id,rhs) <- pairs]
+
+  where
+    procRhs rhs name =
+      case rhs of
+        -- FUN or THUNK
+        StgRhsClosure ccs bindInfo fvs updFlag srt args expr
+          -- it's a THUNK
+          | null args -> THUNK () (g2aExpr expr) name
+          
+          -- it's a FUN 
+          | otherwise -> FUN () (map getOccString fvs) (g2aExpr expr) name
+          
+        -- CON type, I think
+        StgRhsCon ccs dataCon args
+          -> undefined
 
 
-
-
-
+g2aExpr = undefined
 
 

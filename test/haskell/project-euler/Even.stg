@@ -1,0 +1,129 @@
+[1 of 1] Compiling Even             ( Even.hs, Even.o )
+
+==================== STG syntax: ====================
+Even.parity
+  :: forall b_aP2.
+     (GHC.Num.Num b_aP2, GHC.Classes.Ord b_aP2) =>
+     b_aP2 -> Even.Parity
+[GblId, Arity=3, Str=DmdType, Unf=OtherCon []] =
+    \r srt:SRT:[r1A :-> GHC.Classes.not, r2C :-> GHC.Base..] [$dNum_sQw
+                                                              $dOrd_sQx
+                                                              eta_sQy]
+        let {
+          $dEq_sQz [Occ=OnceL] :: GHC.Classes.Eq b_aP6
+          [LclId, Str=DmdType] =
+              \u srt:SRT:[] [] GHC.Classes.$p1Ord $dOrd_sQx; } in
+        let {
+          toZero_sQA
+            :: forall a_aM7.
+               (GHC.Num.Num a_aM7, GHC.Classes.Ord a_aM7) =>
+               a_aM7 -> a_aM7
+          [LclId, Arity=3, Str=DmdType, Unf=OtherCon []] =
+              sat-only \r srt:SRT:[] [$dNum1_sQB $dOrd1_sQC n_sQD]
+                  let {
+                    sat_sQF [Occ=Once] :: a_aMb
+                    [LclId, Str=DmdType] =
+                        \u srt:SRT:[] []
+                            let {
+                              sat_sQE [Occ=Once] :: GHC.Integer.Type.Integer
+                              [LclId, Str=DmdType] =
+                                  NO_CCS GHC.Integer.Type.S#! [0];
+                            } in  GHC.Num.fromInteger $dNum1_sQB sat_sQE;
+                  } in 
+                    case GHC.Classes.> $dOrd1_sQC n_sQD sat_sQF of _ [Occ=Dead] {
+                      GHC.Types.False ->
+                          let {
+                            sat_sQI [Occ=Once] :: a_aMb
+                            [LclId, Str=DmdType] =
+                                \u srt:SRT:[] []
+                                    let {
+                                      sat_sQH [Occ=Once] :: GHC.Integer.Type.Integer
+                                      [LclId, Str=DmdType] =
+                                          NO_CCS GHC.Integer.Type.S#! [1];
+                                    } in  GHC.Num.fromInteger $dNum1_sQB sat_sQH;
+                          } in  GHC.Num.+ $dNum1_sQB n_sQD sat_sQI;
+                      GHC.Types.True ->
+                          let {
+                            sat_sQK [Occ=Once] :: a_aMb
+                            [LclId, Str=DmdType] =
+                                \u srt:SRT:[] []
+                                    let {
+                                      sat_sQJ [Occ=Once] :: GHC.Integer.Type.Integer
+                                      [LclId, Str=DmdType] =
+                                          NO_CCS GHC.Integer.Type.S#! [1];
+                                    } in  GHC.Num.fromInteger $dNum1_sQB sat_sQJ;
+                          } in  GHC.Num.- $dNum1_sQB n_sQD sat_sQK;
+                    }; } in
+        let {
+          odd_sQL [Occ=OnceL!] :: b_aP6 -> GHC.Types.Bool
+          [LclId, Str=DmdType] =
+              \u srt:SRT:[r1A :-> GHC.Classes.not, r2C :-> GHC.Base..] []
+                  let {
+                    sat_sQO [Occ=Once] :: b_aP6 -> GHC.Types.Bool
+                    [LclId, Str=DmdType] =
+                        \u srt:SRT:[r2C :-> GHC.Base..] []
+                            let {
+                              sat_sQN [Occ=Once] :: b_aP6 -> b_aP6
+                              [LclId, Str=DmdType] =
+                                  \r srt:SRT:[] [eta_B1] toZero_sQA $dNum_sQw $dOrd_sQx eta_B1;
+                            } in  GHC.Base.. even_sQM sat_sQN;
+                  } in  GHC.Base.. GHC.Classes.not sat_sQO;
+          even_sQM [Occ=LoopBreaker] :: b_aP6 -> GHC.Types.Bool
+          [LclId, Arity=1, Str=DmdType, Unf=OtherCon []] =
+              \r srt:SRT:[] [ds_sQP]
+                  let {
+                    sat_sQR [Occ=Once] :: b_aP6
+                    [LclId, Str=DmdType] =
+                        \u srt:SRT:[] []
+                            let {
+                              sat_sQQ [Occ=Once] :: GHC.Integer.Type.Integer
+                              [LclId, Str=DmdType] =
+                                  NO_CCS GHC.Integer.Type.S#! [0];
+                            } in  GHC.Num.fromInteger $dNum_sQw sat_sQQ;
+                  } in 
+                    case GHC.Classes.== $dEq_sQz ds_sQP sat_sQR of _ [Occ=Dead] {
+                      GHC.Types.False ->
+                          let {
+                            sat_sQT [Occ=Once] :: b_aP6
+                            [LclId, Str=DmdType] =
+                                \u srt:SRT:[] [] toZero_sQA $dNum_sQw $dOrd_sQx ds_sQP;
+                          } in  odd_sQL sat_sQT;
+                      GHC.Types.True -> GHC.Types.True [];
+                    };
+        } in 
+          case even_sQM eta_sQy of _ [Occ=Dead] {
+            GHC.Types.False -> Even.Odd [];
+            GHC.Types.True -> Even.Even [];
+          };
+Even.nValue
+  :: forall b_aPv.
+     (GHC.Num.Num b_aPv, GHC.Classes.Ord b_aPv) =>
+     b_aPv -> Even.TorJ b_aPv b_aPv
+[GblId, Arity=3, Str=DmdType, Unf=OtherCon []] =
+    \r srt:SRT:[rlC :-> Even.parity] [$dNum_sQV $dOrd_sQW n_sQX]
+        case Even.parity $dNum_sQV $dOrd_sQW n_sQX of _ [Occ=Dead] {
+          Even.Even -> Even.Treasure [n_sQX];
+          Even.Odd -> Even.Junk [n_sQX];
+        };
+Even.Treasure :: forall a_alF b_alG. a_alF -> Even.TorJ a_alF b_alG
+[GblId[DataCon],
+ Arity=1,
+ Caf=NoCafRefs,
+ Str=DmdType <L,U>m1,
+ Unf=OtherCon []] =
+    \r srt:SRT:[] [eta_B1] Even.Treasure [eta_B1];
+Even.Junk :: forall a_alF b_alG. b_alG -> Even.TorJ a_alF b_alG
+[GblId[DataCon],
+ Arity=1,
+ Caf=NoCafRefs,
+ Str=DmdType <L,U>m2,
+ Unf=OtherCon []] =
+    \r srt:SRT:[] [eta_B1] Even.Junk [eta_B1];
+Even.Even :: Even.Parity
+[GblId[DataCon], Caf=NoCafRefs, Str=DmdType, Unf=OtherCon []] =
+    NO_CCS Even.Even! [];
+Even.Odd :: Even.Parity
+[GblId[DataCon], Caf=NoCafRefs, Str=DmdType, Unf=OtherCon []] =
+    NO_CCS Even.Odd! [];
+
+
