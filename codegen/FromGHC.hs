@@ -1,4 +1,6 @@
-{-# LANGUAGE NamedFieldPuns #-}
+{-# LANGUAGE
+NamedFieldPuns
+#-}
 
 module FromGHC
   ()
@@ -56,14 +58,22 @@ import           CorePrep (corePrepPgm)
 import           CoreToStg (coreToStg)
 import           CoreSyn (CoreProgram)
 import           SimplStg (stg2stg)
-import           StgSyn (StgBinding)
+
+import           StgSyn ( StgBinding, GenStgBinding (..)
+                        , StgExpr, GenStgExpr (..), StgOp (..)
+                        , StgRhs, GenStgRhs (..)
+                        , StgAlt, GenStgAlt, AltType (..)
+                        , StgLiveVars, GenStgLiveVars (..)
+                        , UpdateFlag (..), SRT (..), StgBinderInfo
+                        )
+
 import qualified TyCon as HsTyCon (isDataTyCon, TyCon)
 
 import           CostCentre (CollectedCCs)
 import           Outputable
 import           Control.Monad (liftM, mapAndUnzipM
                                , (>=>), (<=<), (=<<))
-import           Control.Arrow ((>>>))
+
 
 testDir = "../test/haskell/"
 target f = testDir ++ f
@@ -188,12 +198,11 @@ compileTarget fileName = do
       return stg
 
         
-        
-    
+            
 
+g2aObj :: StgBinding -> Obj ()
+g2aObj = undefined      
 
-      
-      
   
 
 makeStg = undefined
