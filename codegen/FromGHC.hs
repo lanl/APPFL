@@ -112,7 +112,7 @@ compileTarget fileName = do
             -- files to disk, so it's turned off for now.
             , ghcLink = NoLink
             --Should parameterize this
-            , verbosity = 0}
+            , verbosity = 3}
 
       setSessionDynFlags dflags
       -- construct (and add) a Target from the given file name.  The
@@ -164,10 +164,10 @@ compileTarget fileName = do
         mapAndUnzipM (liftIO . tidyProgram hscEnv <=< liftIO . hscSimplify hscEnv) modGuts
 
       let
-        gutsToSTG CgGuts{ cg_module -- :: Module
-                       , cg_binds  -- :: CoreProgram
-                       , cg_tycons -- :: [TyCon]
-                       }
+        gutsToSTG CgGuts { cg_module -- :: Module
+                         , cg_binds  -- :: CoreProgram
+                         , cg_tycons -- :: [TyCon]
+                         }
           =
           do
             ModSummary{ms_location} <- getModSummary $ moduleName cg_module
@@ -180,16 +180,17 @@ compileTarget fileName = do
             liftIO $ toStg cg_module cg_binds ms_location datacons hscEnv dflags
 
         
-        toStg :: Module -- this module
-              -> CoreProgram -- its Core bindings
-              -> ModLocation -- Where is it? (I think)
-              -> [HsTyCon.TyCon] -- Its data constructors
-              -> HscEnv -- The compiler session
-              -> DynFlags -- Dynamic flags
-              -> IO ([StgBinding], CollectedCCs)
+        toStg :: Module            -- this module
+              -> CoreProgram       -- its Core bindings
+              -> ModLocation       -- Where is it? (I think)
+              -> [HsTyCon.TyCon]   -- Its data constructors
+              -> HscEnv            -- The compiler session
+              -> DynFlags          -- Dynamic flags
+              -> IO ([StgBinding], -- The STG program
+                     CollectedCCs) -- Cost centres (don't care about these)
         toStg mod core modLoc datacons hscEnv dflags = 
           do
-            prepped <- corePrepPgm hscEnv modLoc core datacons
+            prepped   <- corePrepPgm hscEnv modLoc core datacons
             stg_binds <- coreToStg dflags mod prepped
 
             -- Not clear if this is necessary.
@@ -197,8 +198,9 @@ compileTarget fileName = do
             stg2stg dflags mod stg_binds
 
       (stg, ccs) <- mapAndUnzipM gutsToSTG cgGuts
-      dflags <- getSessionDynFlags
-      return $ showSDoc dflags (pprStgBindings (concat stg))
+      dflags     <- getSessionDynFlags
+      
+      return $ (stg, modGraph, dflags)
   
       
 
