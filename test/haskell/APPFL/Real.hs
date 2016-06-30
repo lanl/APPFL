@@ -25,7 +25,7 @@ import APPFL.Num
 import APPFL.List
 import APPFL.Enum
 import APPFL.Show
-import {-# SOURCE #-} APPFL.Exception( divZeroException, overflowException, ratioZeroDenomException )
+-- import {-# SOURCE #-} APPFL.Exception( divZeroException, overflowException, ratioZeroDenomException )
 
 #ifdef OPTIMISE_INTEGER_GCD_LCM
 # if defined(MIN_VERSION_integer_gmp)
@@ -51,15 +51,15 @@ default ()              -- Double isn't available yet,
 
 {-# NOINLINE divZeroError #-}
 divZeroError :: a
-divZeroError = raise# divZeroException
+divZeroError = error "div by zero"
 
 {-# NOINLINE ratioZeroDenominatorError #-}
 ratioZeroDenominatorError :: a
-ratioZeroDenominatorError = raise# ratioZeroDenomException
+ratioZeroDenominatorError = error "zero in ratio denominator"
 
 {-# NOINLINE overflowError #-}
 overflowError :: a
-overflowError = raise# overflowException
+overflowError = error "arithmetic overflow"
 
 --------------------------------------------------------------
 -- The Ratio and Rational types

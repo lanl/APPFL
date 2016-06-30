@@ -28,8 +28,8 @@ module APPFL.Integer.Type where
 
 import GHC.Prim
 import APPFL.Classes
-import APPFL.Types
-import APPFL.Tuple ()
+import GHC.Types
+import GHC.Tuple ()
 
 -- We are only targeting 64 bit platforms.  IntWord64.hs is just a bunch
 -- of foreign calls that I don't want to figure out at the moment

@@ -55,11 +55,11 @@ module Data.Bits (
 -- See library document for details on the semantics of the
 -- individual operations.
 
--- #include "MachDeps.h"
+#include "MachDeps.h"
 
--- #ifdef MIN_VERSION_integer_gmp
--- # define HAVE_INTEGER_GMP1 MIN_VERSION_integer_gmp(1,0,0)
--- #endif
+#ifdef MIN_VERSION_integer_gmp
+# define HAVE_INTEGER_GMP1 MIN_VERSION_integer_gmp(1,0,0)
+#endif
 
 import Data.Maybe
 import APPFL.Enum
@@ -67,9 +67,9 @@ import APPFL.Num
 import APPFL.Base
 import APPFL.Real
 
--- #if HAVE_INTEGER_GMP1
--- import GHC.Integer.GMP.Internals (bitInteger, popCountInteger)
--- #endif
+#if HAVE_INTEGER_GMP1
+import GHC.Integer.GMP.Internals (bitInteger, popCountInteger)
+#endif
 
 infixl 8 `shift`, `rotate`, `shiftL`, `shiftR`, `rotateL`, `rotateR`
 infixl 7 .&.

@@ -6,7 +6,7 @@
 -- file for proper currying of Primops in the Core stages [dmr]
 module APPFL.PrimopWrappers where
 import qualified GHC.Prim
-import APPFL.Tuple ()
+import GHC.Tuple ()
 import GHC.Prim (Char#, Int#, Word#, Float#, Double#, State#, MutableArray#, Array#, SmallMutableArray#, SmallArray#, MutableByteArray#, ByteArray#, Addr#, StablePtr#, MutableArrayArray#, ArrayArray#, MutVar#, RealWorld, TVar#, MVar#, ThreadId#, Weak#, StableName#, BCO#)
 {-# NOINLINE gtChar# #-}
 gtChar# :: Char# -> Char# -> Int#

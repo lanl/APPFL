@@ -1,0 +1,600 @@
+[1 of 7] Compiling APPFL.Prim       ( APPFL/Prim.hs, APPFL/Prim.o )
+
+==================== STG syntax: ====================
+APPFL.Prim.imin# :: GHC.Prim.Int# -> GHC.Prim.Int# -> GHC.Prim.Int#
+[GblId, Str=DmdType] =
+    \u srt:SRT:[r6 :-> x_r6] [] x_r6;
+x_r6 :: GHC.Prim.Int# -> GHC.Prim.Int# -> GHC.Prim.Int#
+[GblId, Str=DmdType] =
+    \u srt:SRT:[r4 :-> APPFL.Prim.imin#] [] APPFL.Prim.imin#;
+APPFL.Prim.imax# :: GHC.Prim.Int# -> GHC.Prim.Int# -> GHC.Prim.Int#
+[GblId, Str=DmdType] =
+    \u srt:SRT:[r13 :-> x1_r13] [] x1_r13;
+x1_r13 :: GHC.Prim.Int# -> GHC.Prim.Int# -> GHC.Prim.Int#
+[GblId, Str=DmdType] =
+    \u srt:SRT:[r3 :-> APPFL.Prim.imax#] [] APPFL.Prim.imax#;
+APPFL.Prim.ineg# [InlPrag=INLINE (sat-args=1)]
+  :: GHC.Prim.Int# -> GHC.Prim.Int#
+[GblId, Arity=1, Caf=NoCafRefs, Str=DmdType, Unf=OtherCon []] =
+    \r srt:SRT:[] [eta_B1] negateInt# [eta_B1];
+APPFL.Prim./# [InlPrag=INLINE (sat-args=2)]
+  :: GHC.Prim.Int# -> GHC.Prim.Int# -> GHC.Prim.Int#
+[GblId, Arity=2, Caf=NoCafRefs, Str=DmdType, Unf=OtherCon []] =
+    \r srt:SRT:[] [eta_B2 eta_B1] quotInt# [eta_B2 eta_B1];
+APPFL.Prim.%# [InlPrag=INLINE (sat-args=2)]
+  :: GHC.Prim.Int# -> GHC.Prim.Int# -> GHC.Prim.Int#
+[GblId, Arity=2, Caf=NoCafRefs, Str=DmdType, Unf=OtherCon []] =
+    \r srt:SRT:[] [eta_B2 eta_B1] remInt# [eta_B2 eta_B1];
+APPFL.Prim.quotRemInt#
+  :: GHC.Prim.Int#
+     -> GHC.Prim.Int# -> (# GHC.Prim.Int#, GHC.Prim.Int# #)
+[GblId, Arity=2, Caf=NoCafRefs, Str=DmdType, Unf=OtherCon []] =
+    \r srt:SRT:[] [a_sa1 b_sa2]
+        case quotInt# [a_sa1 b_sa2] of q_sa3 {
+          __DEFAULT ->
+              case remInt# [a_sa1 b_sa2] of r_sa4 {
+                __DEFAULT -> (#,#) [q_sa3 r_sa4];
+              };
+        };
+
+
+[2 of 7] Compiling APPFL.Types      ( APPFL/Types.hs, APPFL/Types.o )
+
+==================== STG syntax: ====================
+APPFL.Types.isTrue# :: GHC.Prim.Int# -> GHC.Types.Bool
+[GblId, Arity=1, Caf=NoCafRefs, Str=DmdType, Unf=OtherCon []] =
+    \r srt:SRT:[] [ds_sdu]
+        case ds_sdu of _ [Occ=Dead] {
+          __DEFAULT -> GHC.Types.False [];
+          1 -> GHC.Types.True [];
+        };
+APPFL.Types.MkCoercible
+  :: forall a_aco b_acp.
+     a_aco GHC.Prim.~# b_acp -> APPFL.Types.Coercible a_aco b_acp
+[GblId[DataCon],
+ Arity=1,
+ Caf=NoCafRefs,
+ Str=DmdType <L,U>m,
+ Unf=OtherCon []] =
+    \r srt:SRT:[] [eta_B1]
+        APPFL.Types.MkCoercible [GHC.Prim.coercionToken#];
+APPFL.Types.Cons
+  :: forall a_acq.
+     a_acq -> APPFL.Types.List a_acq -> APPFL.Types.List a_acq
+[GblId[DataCon],
+ Arity=2,
+ Caf=NoCafRefs,
+ Str=DmdType <L,U><L,U>m1,
+ Unf=OtherCon []] =
+    \r srt:SRT:[] [eta_B2 eta_B1] APPFL.Types.Cons [eta_B2 eta_B1];
+APPFL.Types.Nil :: forall a_acq. APPFL.Types.List a_acq
+[GblId[DataCon], Caf=NoCafRefs, Str=DmdType, Unf=OtherCon []] =
+    NO_CCS APPFL.Types.Nil! [];
+APPFL.Types.Unit :: APPFL.Types.Unit
+[GblId[DataCon], Caf=NoCafRefs, Str=DmdType, Unf=OtherCon []] =
+    NO_CCS APPFL.Types.Unit! [];
+APPFL.Types.I# :: GHC.Prim.Int# -> APPFL.Types.Int
+[GblId[DataCon],
+ Arity=1,
+ Caf=NoCafRefs,
+ Str=DmdType <L,U>m,
+ Unf=OtherCon []] =
+    \r srt:SRT:[] [eta_B1] APPFL.Types.I# [eta_B1];
+APPFL.Types.False :: APPFL.Types.Bool
+[GblId[DataCon], Caf=NoCafRefs, Str=DmdType, Unf=OtherCon []] =
+    NO_CCS APPFL.Types.False! [];
+APPFL.Types.True :: APPFL.Types.Bool
+[GblId[DataCon], Caf=NoCafRefs, Str=DmdType, Unf=OtherCon []] =
+    NO_CCS APPFL.Types.True! [];
+
+
+[3 of 7] Compiling APPFL.Classes    ( APPFL/Classes.hs, APPFL/Classes.o )
+
+==================== STG syntax: ====================
+APPFL.Classes.not :: GHC.Types.Bool -> GHC.Types.Bool
+[GblId, Arity=1, Caf=NoCafRefs, Str=DmdType, Unf=OtherCon []] =
+    \r srt:SRT:[] [ds_siM]
+        case ds_siM of _ [Occ=Dead] {
+          GHC.Types.False -> GHC.Types.True [];
+          GHC.Types.True -> GHC.Types.False [];
+        };
+APPFL.Classes.||
+  :: GHC.Types.Bool -> GHC.Types.Bool -> GHC.Types.Bool
+[GblId, Arity=2, Caf=NoCafRefs, Str=DmdType, Unf=OtherCon []] =
+    \r srt:SRT:[] [ds_siO ds1_siP]
+        case ds_siO of _ [Occ=Dead] {
+          GHC.Types.False -> ds1_siP;
+          GHC.Types.True -> GHC.Types.True [];
+        };
+APPFL.Classes.&&
+  :: GHC.Types.Bool -> GHC.Types.Bool -> GHC.Types.Bool
+[GblId, Arity=2, Caf=NoCafRefs, Str=DmdType, Unf=OtherCon []] =
+    \r srt:SRT:[] [ds_siR x_siS]
+        case ds_siR of _ [Occ=Dead] {
+          GHC.Types.False -> GHC.Types.False [];
+          GHC.Types.True -> x_siS;
+        };
+APPFL.Classes.divInt#
+  :: GHC.Prim.Int# -> GHC.Prim.Int# -> GHC.Prim.Int#
+[GblId, Arity=2, Str=DmdType, Unf=OtherCon []] =
+    \r srt:SRT:[rcm :-> APPFL.Types.isTrue#] [x#_siU y#_siV]
+        let-no-escape {
+          $j_siW [Occ=Once*!] :: GHC.Prim.Void# -> GHC.Prim.Int#
+          [LclId, Arity=1, Str=DmdType, Unf=OtherCon []] =
+              sat-only \r srt:SRT:[rcm :-> APPFL.Types.isTrue#] [w_siX]
+                  case <# [x#_siU 0] of sat_siY {
+                    __DEFAULT ->
+                        case APPFL.Types.isTrue# sat_siY of _ [Occ=Dead] {
+                          GHC.Types.False -> quotInt# [x#_siU y#_siV];
+                          GHC.Types.True ->
+                              case ># [y#_siV 0] of sat_sj0 {
+                                __DEFAULT ->
+                                    case APPFL.Types.isTrue# sat_sj0 of _ [Occ=Dead] {
+                                      GHC.Types.False -> quotInt# [x#_siU y#_siV];
+                                      GHC.Types.True ->
+                                          case +# [x#_siU 1] of sat_sj2 {
+                                            __DEFAULT ->
+                                                case quotInt# [sat_sj2 y#_siV] of wild2_sj3 {
+                                                  __DEFAULT -> -# [wild2_sj3 1];
+                                                };
+                                          };
+                                    };
+                              };
+                        };
+                  };
+        } in 
+          case ># [x#_siU 0] of sat_sj4 {
+            __DEFAULT ->
+                case APPFL.Types.isTrue# sat_sj4 of _ [Occ=Dead] {
+                  GHC.Types.False -> $j_siW GHC.Prim.void#;
+                  GHC.Types.True ->
+                      case <# [y#_siV 0] of sat_sj6 {
+                        __DEFAULT ->
+                            case APPFL.Types.isTrue# sat_sj6 of _ [Occ=Dead] {
+                              GHC.Types.False -> $j_siW GHC.Prim.void#;
+                              GHC.Types.True ->
+                                  case -# [x#_siU 1] of sat_sj8 {
+                                    __DEFAULT ->
+                                        case quotInt# [sat_sj8 y#_siV] of wild2_sj9 {
+                                          __DEFAULT -> -# [wild2_sj9 1];
+                                        };
+                                  };
+                            };
+                      };
+                };
+          };
+APPFL.Classes.modInt#
+  :: GHC.Prim.Int# -> GHC.Prim.Int# -> GHC.Prim.Int#
+[GblId, Arity=2, Str=DmdType, Unf=OtherCon []] =
+    \r srt:SRT:[rcm :-> APPFL.Types.isTrue#] [x#_sja y#_sjb]
+        case remInt# [x#_sja y#_sjb] of r#_sjc {
+          __DEFAULT ->
+              let-no-escape {
+                $j_sjd :: GHC.Prim.Void# -> GHC.Prim.Int#
+                [LclId, Arity=1, Str=DmdType, Unf=OtherCon []] =
+                    sat-only \r srt:SRT:[rcm :-> APPFL.Types.isTrue#] [w_sje]
+                        case r#_sjc of wild_sjf {
+                          __DEFAULT ->
+                              case APPFL.Types.isTrue# 1 of _ [Occ=Dead] {
+                                GHC.Types.False -> 0;
+                                GHC.Types.True -> +# [wild_sjf y#_sjb];
+                              };
+                          0 ->
+                              case APPFL.Types.isTrue# 0 of _ [Occ=Dead] {
+                                GHC.Types.False -> 0;
+                                GHC.Types.True -> y#_sjb;
+                              };
+                        };
+              } in 
+                let-no-escape {
+                  $j1_sji [Occ=Once*!] :: GHC.Prim.Void# -> GHC.Prim.Int#
+                  [LclId, Arity=1, Str=DmdType, Unf=OtherCon []] =
+                      sat-only \r srt:SRT:[rcm :-> APPFL.Types.isTrue#] [w_sjj]
+                          case <# [x#_sja 0] of sat_sjk {
+                            __DEFAULT ->
+                                case APPFL.Types.isTrue# sat_sjk of _ [Occ=Dead] {
+                                  GHC.Types.False -> r#_sjc;
+                                  GHC.Types.True ->
+                                      case ># [y#_sjb 0] of sat_sjm {
+                                        __DEFAULT ->
+                                            case APPFL.Types.isTrue# sat_sjm of _ [Occ=Dead] {
+                                              GHC.Types.False -> r#_sjc;
+                                              GHC.Types.True -> $j_sjd GHC.Prim.void#;
+                                            };
+                                      };
+                                };
+                          };
+                } in 
+                  case ># [x#_sja 0] of sat_sjo {
+                    __DEFAULT ->
+                        case APPFL.Types.isTrue# sat_sjo of _ [Occ=Dead] {
+                          GHC.Types.False -> $j1_sji GHC.Prim.void#;
+                          GHC.Types.True ->
+                              case <# [y#_sjb 0] of sat_sjq {
+                                __DEFAULT ->
+                                    case APPFL.Types.isTrue# sat_sjq of _ [Occ=Dead] {
+                                      GHC.Types.False -> $j1_sji GHC.Prim.void#;
+                                      GHC.Types.True -> $j_sjd GHC.Prim.void#;
+                                    };
+                              };
+                        };
+                  };
+        };
+APPFL.Classes.leInt [InlPrag=INLINE (sat-args=2)]
+  :: GHC.Types.Int -> GHC.Types.Int -> GHC.Types.Bool
+[GblId, Arity=2, Str=DmdType, Unf=OtherCon []] =
+    \r srt:SRT:[rcm :-> APPFL.Types.isTrue#] [eta_sjs eta1_sjt]
+        case eta_sjs of _ [Occ=Dead] {
+          GHC.Types.I# x_sjv [Occ=Once] ->
+              case eta1_sjt of _ [Occ=Dead] {
+                GHC.Types.I# y_sjx [Occ=Once] ->
+                    case <=# [x_sjv y_sjx] of sat_sjy {
+                      __DEFAULT -> APPFL.Types.isTrue# sat_sjy;
+                    };
+              };
+        };
+APPFL.Classes.ltInt [InlPrag=INLINE (sat-args=2)]
+  :: GHC.Types.Int -> GHC.Types.Int -> GHC.Types.Bool
+[GblId, Arity=2, Str=DmdType, Unf=OtherCon []] =
+    \r srt:SRT:[rcm :-> APPFL.Types.isTrue#] [eta_sjz eta1_sjA]
+        case eta_sjz of _ [Occ=Dead] {
+          GHC.Types.I# x_sjC [Occ=Once] ->
+              case eta1_sjA of _ [Occ=Dead] {
+                GHC.Types.I# y_sjE [Occ=Once] ->
+                    case <# [x_sjC y_sjE] of sat_sjF {
+                      __DEFAULT -> APPFL.Types.isTrue# sat_sjF;
+                    };
+              };
+        };
+APPFL.Classes.geInt [InlPrag=INLINE (sat-args=2)]
+  :: GHC.Types.Int -> GHC.Types.Int -> GHC.Types.Bool
+[GblId, Arity=2, Str=DmdType, Unf=OtherCon []] =
+    \r srt:SRT:[rcm :-> APPFL.Types.isTrue#] [eta_sjG eta1_sjH]
+        case eta_sjG of _ [Occ=Dead] {
+          GHC.Types.I# x_sjJ [Occ=Once] ->
+              case eta1_sjH of _ [Occ=Dead] {
+                GHC.Types.I# y_sjL [Occ=Once] ->
+                    case >=# [x_sjJ y_sjL] of sat_sjM {
+                      __DEFAULT -> APPFL.Types.isTrue# sat_sjM;
+                    };
+              };
+        };
+APPFL.Classes.gtInt [InlPrag=INLINE (sat-args=2)]
+  :: GHC.Types.Int -> GHC.Types.Int -> GHC.Types.Bool
+[GblId, Arity=2, Str=DmdType, Unf=OtherCon []] =
+    \r srt:SRT:[rcm :-> APPFL.Types.isTrue#] [eta_sjN eta1_sjO]
+        case eta_sjN of _ [Occ=Dead] {
+          GHC.Types.I# x_sjQ [Occ=Once] ->
+              case eta1_sjO of _ [Occ=Dead] {
+                GHC.Types.I# y_sjS [Occ=Once] ->
+                    case ># [x_sjQ y_sjS] of sat_sjT {
+                      __DEFAULT -> APPFL.Types.isTrue# sat_sjT;
+                    };
+              };
+        };
+APPFL.Classes.neInt [InlPrag=INLINE (sat-args=2)]
+  :: GHC.Types.Int -> GHC.Types.Int -> GHC.Types.Bool
+[GblId, Arity=2, Str=DmdType, Unf=OtherCon []] =
+    \r srt:SRT:[rcm :-> APPFL.Types.isTrue#] [eta_sjU eta1_sjV]
+        case eta_sjU of _ [Occ=Dead] {
+          GHC.Types.I# x_sjX [Occ=Once] ->
+              case eta1_sjV of _ [Occ=Dead] {
+                GHC.Types.I# y_sjZ [Occ=Once] ->
+                    case /=# [x_sjX y_sjZ] of sat_sk0 {
+                      __DEFAULT -> APPFL.Types.isTrue# sat_sk0;
+                    };
+              };
+        };
+APPFL.Classes.eqInt [InlPrag=INLINE (sat-args=2)]
+  :: GHC.Types.Int -> GHC.Types.Int -> GHC.Types.Bool
+[GblId, Arity=2, Str=DmdType, Unf=OtherCon []] =
+    \r srt:SRT:[rcm :-> APPFL.Types.isTrue#] [eta_sk1 eta1_sk2]
+        case eta_sk1 of _ [Occ=Dead] {
+          GHC.Types.I# x_sk4 [Occ=Once] ->
+              case eta1_sk2 of _ [Occ=Dead] {
+                GHC.Types.I# y_sk6 [Occ=Once] ->
+                    case ==# [x_sk4 y_sk6] of sat_sk7 {
+                      __DEFAULT -> APPFL.Types.isTrue# sat_sk7;
+                    };
+              };
+        };
+
+
+[4 of 7] Compiling APPFL.Base       ( APPFL/Base.hs, APPFL/Base.o )
+
+==================== STG syntax: ====================
+APPFL.Base.quotRemInt
+  :: GHC.Types.Int -> GHC.Types.Int -> (GHC.Types.Int, GHC.Types.Int)
+[GblId, Arity=2, Str=DmdType, Unf=OtherCon []] =
+    \r srt:SRT:[r5 :-> APPFL.Prim.quotRemInt#] [ds_sxg ds1_sxh]
+        case ds_sxg of _ [Occ=Dead] {
+          GHC.Types.I# x_sxj [Occ=Once] ->
+              case ds1_sxh of _ [Occ=Dead] {
+                GHC.Types.I# y_sxl [Occ=Once] ->
+                    case APPFL.Prim.quotRemInt# x_sxj y_sxl of ds2_sxm {
+                      (#,#) _ [Occ=Dead] _ [Occ=Dead] ->
+                          case (#,#) [ipv_sxn ipv1_sxo] of _ [Occ=Dead] {
+                            (#,#) q_sxq [Occ=Once] r_sxr [Occ=Once] ->
+                                let {
+                                  sat_sxt [Occ=Once] :: GHC.Types.Int
+                                  [LclId, Str=DmdType] =
+                                      NO_CCS GHC.Types.I#! [r_sxr]; } in
+                                let {
+                                  sat_sxs [Occ=Once] :: GHC.Types.Int
+                                  [LclId, Str=DmdType] =
+                                      NO_CCS GHC.Types.I#! [q_sxq];
+                                } in  (,) [sat_sxs sat_sxt];
+                          };
+                    };
+              };
+        };
+APPFL.Base.modInt
+  :: GHC.Types.Int -> GHC.Types.Int -> GHC.Types.Int
+[GblId, Arity=2, Str=DmdType, Unf=OtherCon []] =
+    \r srt:SRT:[rfF :-> APPFL.Classes.modInt#] [ds_sxu ds1_sxv]
+        case ds_sxu of _ [Occ=Dead] {
+          GHC.Types.I# x_sxx [Occ=Once] ->
+              case ds1_sxv of _ [Occ=Dead] {
+                GHC.Types.I# y_sxz [Occ=Once] ->
+                    case APPFL.Classes.modInt# x_sxx y_sxz of wild2_sxA {
+                      __DEFAULT -> GHC.Types.I# [wild2_sxA];
+                    };
+              };
+        };
+APPFL.Base.divInt
+  :: GHC.Types.Int -> GHC.Types.Int -> GHC.Types.Int
+[GblId, Arity=2, Str=DmdType, Unf=OtherCon []] =
+    \r srt:SRT:[rfE :-> APPFL.Classes.divInt#] [ds_sxB ds1_sxC]
+        case ds_sxB of _ [Occ=Dead] {
+          GHC.Types.I# x_sxE [Occ=Once] ->
+              case ds1_sxC of _ [Occ=Dead] {
+                GHC.Types.I# y_sxG [Occ=Once] ->
+                    case APPFL.Classes.divInt# x_sxE y_sxG of wild2_sxH {
+                      __DEFAULT -> GHC.Types.I# [wild2_sxH];
+                    };
+              };
+        };
+APPFL.Base.remInt [InlPrag=INLINE (sat-args=2)]
+  :: GHC.Types.Int -> GHC.Types.Int -> GHC.Types.Int
+[GblId, Arity=2, Str=DmdType, Unf=OtherCon []] =
+    \r srt:SRT:[r0 :-> APPFL.Prim.%#] [eta_sxI eta1_sxJ]
+        case eta_sxI of _ [Occ=Dead] {
+          GHC.Types.I# x_sxL [Occ=Once] ->
+              case eta1_sxJ of _ [Occ=Dead] {
+                GHC.Types.I# y_sxN [Occ=Once] ->
+                    case APPFL.Prim.%# x_sxL y_sxN of wild2_sxO {
+                      __DEFAULT -> GHC.Types.I# [wild2_sxO];
+                    };
+              };
+        };
+APPFL.Base.quotInt [InlPrag=INLINE (sat-args=2)]
+  :: GHC.Types.Int -> GHC.Types.Int -> GHC.Types.Int
+[GblId, Arity=2, Str=DmdType, Unf=OtherCon []] =
+    \r srt:SRT:[r1 :-> APPFL.Prim./#] [eta_sxP eta1_sxQ]
+        case eta_sxP of _ [Occ=Dead] {
+          GHC.Types.I# x_sxS [Occ=Once] ->
+              case eta1_sxQ of _ [Occ=Dead] {
+                GHC.Types.I# y_sxU [Occ=Once] ->
+                    case APPFL.Prim./# x_sxS y_sxU of wild2_sxV {
+                      __DEFAULT -> GHC.Types.I# [wild2_sxV];
+                    };
+              };
+        };
+APPFL.Base.otherwise :: GHC.Types.Bool
+[GblId, Caf=NoCafRefs, Str=DmdType, Unf=OtherCon []] =
+    NO_CCS GHC.Types.True! [];
+APPFL.Base.divModInt#
+  :: GHC.Prim.Int#
+     -> GHC.Prim.Int# -> (# GHC.Prim.Int#, GHC.Prim.Int# #)
+[GblId, Arity=2, Str=DmdType, Unf=OtherCon []] =
+    \r srt:SRT:[r5 :-> APPFL.Prim.quotRemInt#,
+                rcm :-> APPFL.Types.isTrue#, rfB :-> APPFL.Classes.&&] [x#_sxW
+                                                                        y#_sxX]
+        let {
+          sat_sy1 [Occ=Once] :: GHC.Types.Bool
+          [LclId, Str=DmdType] =
+              \u srt:SRT:[rcm :-> APPFL.Types.isTrue#] []
+                  case <# [y#_sxX 0] of sat_sy0 {
+                    __DEFAULT -> APPFL.Types.isTrue# sat_sy0;
+                  }; } in
+        let {
+          sat_sxZ [Occ=Once] :: GHC.Types.Bool
+          [LclId, Str=DmdType] =
+              \u srt:SRT:[rcm :-> APPFL.Types.isTrue#] []
+                  case ># [x#_sxW 0] of sat_sxY {
+                    __DEFAULT -> APPFL.Types.isTrue# sat_sxY;
+                  };
+        } in 
+          case APPFL.Classes.&& sat_sxZ sat_sy1 of _ [Occ=Dead] {
+            GHC.Types.False ->
+                let {
+                  sat_sy6 [Occ=Once] :: GHC.Types.Bool
+                  [LclId, Str=DmdType] =
+                      \u srt:SRT:[rcm :-> APPFL.Types.isTrue#] []
+                          case ># [y#_sxX 0] of sat_sy5 {
+                            __DEFAULT -> APPFL.Types.isTrue# sat_sy5;
+                          }; } in
+                let {
+                  sat_sy4 [Occ=Once] :: GHC.Types.Bool
+                  [LclId, Str=DmdType] =
+                      \u srt:SRT:[rcm :-> APPFL.Types.isTrue#] []
+                          case <# [x#_sxW 0] of sat_sy3 {
+                            __DEFAULT -> APPFL.Types.isTrue# sat_sy3;
+                          };
+                } in 
+                  case APPFL.Classes.&& sat_sy4 sat_sy6 of _ [Occ=Dead] {
+                    GHC.Types.False -> APPFL.Prim.quotRemInt# x#_sxW y#_sxX;
+                    GHC.Types.True ->
+                        case +# [x#_sxW 1] of sat_sy8 {
+                          __DEFAULT ->
+                              case APPFL.Prim.quotRemInt# sat_sy8 y#_sxX of ds_sy9 {
+                                (#,#) _ [Occ=Dead] _ [Occ=Dead] ->
+                                    case (#,#) [ipv_sya ipv1_syb] of _ [Occ=Dead] {
+                                      (#,#) q_syd [Occ=Once] r_sye [Occ=Once] ->
+                                          case +# [r_sye y#_sxX] of sat_syg {
+                                            __DEFAULT ->
+                                                case -# [sat_syg 1] of sat_syh {
+                                                  __DEFAULT ->
+                                                      case -# [q_syd 1] of sat_syf {
+                                                        __DEFAULT -> (#,#) [sat_syf sat_syh];
+                                                      };
+                                                };
+                                          };
+                                    };
+                              };
+                        };
+                  };
+            GHC.Types.True ->
+                case -# [x#_sxW 1] of sat_syi {
+                  __DEFAULT ->
+                      case APPFL.Prim.quotRemInt# sat_syi y#_sxX of ds_syj {
+                        (#,#) _ [Occ=Dead] _ [Occ=Dead] ->
+                            case (#,#) [ipv_syk ipv1_syl] of _ [Occ=Dead] {
+                              (#,#) q_syn [Occ=Once] r_syo [Occ=Once] ->
+                                  case +# [r_syo y#_sxX] of sat_syq {
+                                    __DEFAULT ->
+                                        case +# [sat_syq 1] of sat_syr {
+                                          __DEFAULT ->
+                                              case -# [q_syn 1] of sat_syp {
+                                                __DEFAULT -> (#,#) [sat_syp sat_syr];
+                                              };
+                                        };
+                                  };
+                            };
+                      };
+                };
+          };
+APPFL.Base.divModInt
+  :: GHC.Types.Int -> GHC.Types.Int -> (GHC.Types.Int, GHC.Types.Int)
+[GblId, Arity=2, Str=DmdType, Unf=OtherCon []] =
+    \r srt:SRT:[ruV :-> APPFL.Base.divModInt#] [ds_sys ds1_syt]
+        case ds_sys of _ [Occ=Dead] {
+          GHC.Types.I# x_syv [Occ=Once] ->
+              case ds1_syt of _ [Occ=Dead] {
+                GHC.Types.I# y_syx [Occ=Once] ->
+                    case APPFL.Base.divModInt# x_syv y_syx of ds2_syy {
+                      (#,#) _ [Occ=Dead] _ [Occ=Dead] ->
+                          case (#,#) [ipv_syz ipv1_syA] of _ [Occ=Dead] {
+                            (#,#) q_syC [Occ=Once] r_syD [Occ=Once] ->
+                                let {
+                                  sat_syF [Occ=Once] :: GHC.Types.Int
+                                  [LclId, Str=DmdType] =
+                                      NO_CCS GHC.Types.I#! [r_syD]; } in
+                                let {
+                                  sat_syE [Occ=Once] :: GHC.Types.Int
+                                  [LclId, Str=DmdType] =
+                                      NO_CCS GHC.Types.I#! [q_syC];
+                                } in  (,) [sat_syE sat_syF];
+                          };
+                    };
+              };
+        };
+
+
+[5 of 7] Compiling APPFL.Num        ( APPFL/Num.hs, APPFL/Num.o )
+
+==================== STG syntax: ====================
+APPFL.Num.mulInt :: GHC.Types.Int -> GHC.Types.Int -> GHC.Types.Int
+[GblId, Arity=2, Caf=NoCafRefs, Str=DmdType, Unf=OtherCon []] =
+    \r srt:SRT:[] [ds_sHk ds1_sHl]
+        case ds_sHk of _ [Occ=Dead] {
+          GHC.Types.I# a#_sHn [Occ=Once] ->
+              case ds1_sHl of _ [Occ=Dead] {
+                GHC.Types.I# b#_sHp [Occ=Once] ->
+                    case *# [a#_sHn b#_sHp] of sat_sHq {
+                      __DEFAULT -> GHC.Types.I# [sat_sHq];
+                    };
+              };
+        };
+APPFL.Num.subInt :: GHC.Types.Int -> GHC.Types.Int -> GHC.Types.Int
+[GblId, Arity=2, Caf=NoCafRefs, Str=DmdType, Unf=OtherCon []] =
+    \r srt:SRT:[] [ds_sHr ds1_sHs]
+        case ds_sHr of _ [Occ=Dead] {
+          GHC.Types.I# a#_sHu [Occ=Once] ->
+              case ds1_sHs of _ [Occ=Dead] {
+                GHC.Types.I# b#_sHw [Occ=Once] ->
+                    case -# [a#_sHu b#_sHw] of sat_sHx {
+                      __DEFAULT -> GHC.Types.I# [sat_sHx];
+                    };
+              };
+        };
+APPFL.Num.addInt :: GHC.Types.Int -> GHC.Types.Int -> GHC.Types.Int
+[GblId, Arity=2, Caf=NoCafRefs, Str=DmdType, Unf=OtherCon []] =
+    \r srt:SRT:[] [ds_sHy ds1_sHz]
+        case ds_sHy of _ [Occ=Dead] {
+          GHC.Types.I# a#_sHB [Occ=Once] ->
+              case ds1_sHz of _ [Occ=Dead] {
+                GHC.Types.I# b#_sHD [Occ=Once] ->
+                    case +# [a#_sHB b#_sHD] of sat_sHE {
+                      __DEFAULT -> GHC.Types.I# [sat_sHE];
+                    };
+              };
+        };
+APPFL.Num.negate :: GHC.Types.Int -> GHC.Types.Int
+[GblId, Arity=1, Caf=NoCafRefs, Str=DmdType, Unf=OtherCon []] =
+    \r srt:SRT:[] [ds_sHF]
+        case ds_sHF of _ [Occ=Dead] {
+          GHC.Types.I# i#_sHH [Occ=Once] ->
+              case negateInt# [i#_sHH] of sat_sHI {
+                __DEFAULT -> GHC.Types.I# [sat_sHI];
+              };
+        };
+APPFL.Num.% :: GHC.Types.Int -> GHC.Types.Int -> GHC.Types.Int
+[GblId, Str=DmdType] =
+    \u srt:SRT:[ruQ :-> APPFL.Base.remInt] [] APPFL.Base.remInt;
+APPFL.Num.mod :: GHC.Types.Int -> GHC.Types.Int -> GHC.Types.Int
+[GblId, Str=DmdType] =
+    \u srt:SRT:[ruQ :-> APPFL.Base.remInt] [] APPFL.Base.remInt;
+APPFL.Num.* :: GHC.Types.Int -> GHC.Types.Int -> GHC.Types.Int
+[GblId, Arity=2, Caf=NoCafRefs, Str=DmdType, Unf=OtherCon []] =
+    \r srt:SRT:[] [eta_B2 eta_B1] APPFL.Num.mulInt eta_B2 eta_B1;
+APPFL.Num./ :: GHC.Types.Int -> GHC.Types.Int -> GHC.Types.Int
+[GblId, Str=DmdType] =
+    \u srt:SRT:[ruP :-> APPFL.Base.quotInt] [] APPFL.Base.quotInt;
+APPFL.Num.div :: GHC.Types.Int -> GHC.Types.Int -> GHC.Types.Int
+[GblId, Str=DmdType] =
+    \u srt:SRT:[ruP :-> APPFL.Base.quotInt] [] APPFL.Base.quotInt;
+APPFL.Num.- :: GHC.Types.Int -> GHC.Types.Int -> GHC.Types.Int
+[GblId, Arity=2, Caf=NoCafRefs, Str=DmdType, Unf=OtherCon []] =
+    \r srt:SRT:[] [eta_B2 eta_B1] APPFL.Num.subInt eta_B2 eta_B1;
+APPFL.Num.+ :: GHC.Types.Int -> GHC.Types.Int -> GHC.Types.Int
+[GblId, Arity=2, Caf=NoCafRefs, Str=DmdType, Unf=OtherCon []] =
+    \r srt:SRT:[] [eta_B2 eta_B1] APPFL.Num.addInt eta_B2 eta_B1;
+
+
+[6 of 7] Compiling Prelude          ( Prelude.hs, Prelude.o )
+
+==================== STG syntax: ====================
+
+
+[7 of 7] Compiling Fact             ( Fact.hs, Fact.o )
+
+==================== STG syntax: ====================
+Fact.fact [Occ=LoopBreaker] :: GHC.Types.Int -> GHC.Types.Int
+[GblId, Arity=1, Str=DmdType, Unf=OtherCon []] =
+    \r srt:SRT:[rFZ :-> APPFL.Num.-, rG1 :-> APPFL.Num.*,
+                rG9 :-> Fact.fact] [ds_s10D]
+        case ds_s10D of wild_s10E {
+          GHC.Types.I# ds1_s10F [Occ=Once!] ->
+              case ds1_s10F of _ [Occ=Dead] {
+                __DEFAULT ->
+                    let {
+                      sat_s10J [Occ=Once] :: GHC.Types.Int
+                      [LclId, Str=DmdType] =
+                          \u srt:SRT:[rFZ :-> APPFL.Num.-, rG9 :-> Fact.fact] []
+                              let {
+                                sat_s10I [Occ=Once] :: GHC.Types.Int
+                                [LclId, Str=DmdType] =
+                                    \u srt:SRT:[rFZ :-> APPFL.Num.-] []
+                                        let {
+                                          sat_s10H [Occ=Once] :: GHC.Types.Int
+                                          [LclId, Str=DmdType] =
+                                              NO_CCS GHC.Types.I#! [1];
+                                        } in  APPFL.Num.- wild_s10E sat_s10H;
+                              } in  Fact.fact sat_s10I;
+                    } in  APPFL.Num.* wild_s10E sat_s10J;
+                0 -> GHC.Types.I# [1];
+              };
+        };
+
+

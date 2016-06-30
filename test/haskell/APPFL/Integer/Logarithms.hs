@@ -5,7 +5,7 @@ module APPFL.Integer.Logarithms
     , wordLog2#
     ) where
 
-import APPFL.Prim
+import GHC.Prim
 import APPFL.Integer
 import qualified APPFL.Integer.Logarithms.Internals as I
 

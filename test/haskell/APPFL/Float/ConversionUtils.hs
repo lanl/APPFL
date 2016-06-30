@@ -17,15 +17,15 @@
 --
 -----------------------------------------------------------------------------
 
--- #include "MachDeps.h"
+#include "MachDeps.h"
 
 module APPFL.Float.ConversionUtils ( elimZerosInteger, elimZerosInt# ) where
 
 import APPFL.Base
 import APPFL.Integer
--- #if WORD_SIZE_IN_BITS < 64
--- import GHC.IntWord64
--- #endif
+#if WORD_SIZE_IN_BITS < 64
+import GHC.IntWord64
+#endif
 
 default ()
 

@@ -20,7 +20,7 @@ module APPFL.CString (
         unpackCStringUtf8#, unpackNBytes#
     ) where
 
-import APPFL.Types
+import GHC.Types
 import GHC.Prim
 
 -----------------------------------------------------------------------------

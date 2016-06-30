@@ -25,46 +25,54 @@ module Prelude (
     Bool(False, True),
     (&&), (||), not, otherwise,
 
-    Maybe(Nothing, Just),
-    maybe,
+    -- Maybe(Nothing, Just),
+    -- maybe,
 
-    Either(Left, Right),
-    either,
+    -- Either(Left, Right),
+    -- either,
 
-    Ordering(LT, EQ, GT),
-    Char, String,
+    -- Ordering(LT, EQ, GT),
+    -- Char, String,
 
-    -- *** Tuples
-    fst, snd, curry, uncurry,
+    -- -- *** Tuples
+    -- fst, snd, curry, uncurry,
 
-    -- ** Basic type classes
-    Eq((==), (/=)),
-    Ord(compare, (<), (<=), (>=), (>), max, min),
-    Enum(succ, pred, toEnum, fromEnum, enumFrom, enumFromThen,
-         enumFromTo, enumFromThenTo),
-    Bounded(minBound, maxBound),
+    -- -- ** Basic type classes
+    -- Eq((==), (/=)),
+    -- Ord(compare, (<), (<=), (>=), (>), max, min),
+    -- Enum(succ, pred, toEnum, fromEnum, enumFrom, enumFromThen,
+    --      enumFromTo, enumFromThenTo),
+    -- Bounded(minBound, maxBound),
 
     -- ** Numbers
 
     -- *** Numeric types
-    Int, Integer, Float, Double,
-    Rational, Word,
+    Int, (+), (-), (*), (/), mod, div, negate,
+    
+    
+    -- Integer, Float, Double,
+    -- Rational, Word,
 
-    -- *** Numeric type classes
-    Num((+), (-), (*), negate, abs, signum, fromInteger),
-    Real(toRational),
-    Integral(quot, rem, div, mod, quotRem, divMod, toInteger),
-    Fractional((/), recip, fromRational),
-    Floating(pi, exp, log, sqrt, (**), logBase, sin, cos, tan,
-             asin, acos, atan, sinh, cosh, tanh, asinh, acosh, atanh),
-    RealFrac(properFraction, truncate, round, ceiling, floor),
-    RealFloat(floatRadix, floatDigits, floatRange, decodeFloat,
-              encodeFloat, exponent, significand, scaleFloat, isNaN,
-              isInfinite, isDenormalized, isIEEE, isNegativeZero, atan2),
+    
+    -- -- *** Numeric type classes
+    -- Num((+), (-), (*), negate, abs, signum, fromInteger),
+    -- Real(toRational),
+    -- Integral(quot, rem, div, mod, quotRem, divMod, toInteger),
+    -- Fractional((/), recip, fromRational),
+    -- Floating(pi, exp, log, sqrt, (**), logBase, sin, cos, tan,
+    --          asin, acos, atan, sinh, cosh, tanh, asinh, acosh, atanh),
+    -- RealFrac(properFraction, truncate, round, ceiling, floor),
+    -- RealFloat(floatRadix, floatDigits, floatRange, decodeFloat,
+    --           encodeFloat, exponent, significand, scaleFloat, isNaN,
+    --           isInfinite, isDenormalized, isIEEE, isNegativeZero, atan2),
 
-    -- *** Numeric functions
-    subtract, even, odd, gcd, lcm, (^), (^^),
-    fromIntegral, realToFrac,
+    -- -- *** Numeric functions
+    -- subtract, even, odd, gcd, lcm, (^), (^^),
+    -- fromIntegral, realToFrac,
+
+{----------------------------------------------------------------------
+
+This may make it in later
 
     -- ** Monoids
     Monoid(mempty, mappend, mconcat),
@@ -92,43 +100,49 @@ module Prelude (
              -- toList) -- :: Foldable t => t a -> [a]
 
     Traversable(traverse, sequenceA, mapM, sequence),
+----------------------------------------------------------------------}
+    -- -- ** Miscellaneous functions
+    -- id, const, (.), flip, ($), until,
+    -- asTypeOf, error, undefined,
+    -- seq, ($!),
 
-    -- ** Miscellaneous functions
-    id, const, (.), flip, ($), until,
-    asTypeOf, error, undefined,
-    seq, ($!),
+    -- -- * List operations
+    -- map, (++), filter,
+    -- head, last, tail, init, null, length, (!!),
+    -- reverse,
+    -- -- *** Special folds
+    -- and, or, any, all,
+    -- concat, concatMap,
+    -- -- ** Building lists
+    -- -- *** Scans
+    -- scanl, scanl1, scanr, scanr1,
+    -- -- *** Infinite lists
+    -- iterate, repeat, replicate, cycle,
+    -- -- ** Sublists
+    -- take, drop, splitAt, takeWhile, dropWhile, span, break,
+    -- -- ** Searching lists
+    -- notElem, lookup,
+    -- -- ** Zipping and unzipping lists
+    -- zip, zip3, zipWith, zipWith3, unzip, unzip3,
+    -- -- ** Functions on strings
+    -- lines, words, unlines, unwords,
 
-    -- * List operations
-    map, (++), filter,
-    head, last, tail, init, null, length, (!!),
-    reverse,
-    -- *** Special folds
-    and, or, any, all,
-    concat, concatMap,
-    -- ** Building lists
-    -- *** Scans
-    scanl, scanl1, scanr, scanr1,
-    -- *** Infinite lists
-    iterate, repeat, replicate, cycle,
-    -- ** Sublists
-    take, drop, splitAt, takeWhile, dropWhile, span, break,
-    -- ** Searching lists
-    notElem, lookup,
-    -- ** Zipping and unzipping lists
-    zip, zip3, zipWith, zipWith3, unzip, unzip3,
-    -- ** Functions on strings
-    lines, words, unlines, unwords,
+    -- -- * Converting to and from @String@
+    -- -- ** Converting to @String@
+    -- ShowS,
+    -- Show(showsPrec, showList, show),
+    -- shows,
+    -- showChar, showString, showParen,
 
-    -- * Converting to and from @String@
-    -- ** Converting to @String@
-    ShowS,
-    Show(showsPrec, showList, show),
-    shows,
-    showChar, showString, showParen,
+    
+{----------------------------------------------------------------------
+    Read typeclass stuff. Has lots of dependencies.
+
     -- ** Converting from @String@
     ReadS,
     Read(readsPrec, readList),
     reads, readParen, read, lex,
+----------------------------------------------------------------------}
     
 {----------------------------------------------------------------------
 No IO Support
@@ -156,21 +170,61 @@ No IO Support
 
   ) where
 
---import Control.Monad
---import System.IO
---import System.IO.Error
-import Data.List
-import Data.Either
-import Data.Foldable    ( Foldable(..) )
-import Data.Functor     ( (<$>) )
-import Data.Maybe
-import Data.Traversable ( Traversable(..) )
-import Data.Tuple
+-- import Control.Monad
+-- import System.IO
+-- import System.IO.Error
+-- import Data.List
+-- import Data.Either
+-- import Data.Foldable    ( Foldable(..) )
+-- import Data.Functor     ( (<$>) )
+-- import Data.Maybe
+-- import Data.Traversable ( Traversable(..) )
+-- import Data.Tuple
 
-import APPFL.Base hiding ( foldr, mapM, sequence )
---import Text.Read
-import APPFL.Enum
+-- import GHC.Base hiding ( foldr, mapM, sequence )
+-- import Text.Read
+-- import GHC.Enum
+-- import GHC.Num
+-- import GHC.Real
+-- import GHC.Float
+-- import GHC.Show
+
+{-
+The Prelude Problem:
+
+GHC does not reparse and compile the Prelude dependencies every time
+it's invoked.  It seems to know where it can find the compiled object
+files and link them with the user code.  APPFL has no such
+functionality: it needs the full program, less builtin primops, with each
+invocation.
+
+A simple solution to this would be to compile without the implicit
+Prelude, or to redefine it in terms of our own base libraries,
+borrowing the source files from GHC.  GHC will use a custom Prelude
+file in place of the normal one, provided the custom Prelude is in the
+directory where the target source file is located.  If that Prelude is
+defined in terms of similarly local imports, the entire program will
+be compiled each time.
+
+But, there are some syntactic constructs that desugar to code
+dependent on the GHC base libraries (do blocks, list comprehensions,
+list ranges, numeric literals).  There is, as far as I can tell, no
+way around this dependency.
+
+The 1:1 solution would be to implement these dependencies in STG code
+and pull them into the program as necessary, but that's annoying and
+would certainly be prone to bugs.
+
+The "simpler" solution is a little silly: Provide a qualified
+implementation of the base functions that parallels GHC's and import
+them.  GHC will produce their STG, regardless of whether they're
+actually referenced in code.  The translation from GHC STG to APPFL
+STG must then handle the substitution.
+
+-}
+
+
+
+import APPFL.Base
 import APPFL.Num
-import APPFL.Real
-import APPFL.Float
-import APPFL.Show
+

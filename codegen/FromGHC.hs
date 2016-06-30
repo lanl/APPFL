@@ -112,7 +112,7 @@ compileTarget fileName = do
             -- files to disk, so it's turned off for now.
             , ghcLink = NoLink
             --Should parameterize this
-            , verbosity = 3}
+            , verbosity = 0}
 
       setSessionDynFlags dflags
       -- construct (and add) a Target from the given file name.  The
@@ -203,6 +203,7 @@ compileTarget fileName = do
       return $ (stg, modGraph, dflags)
   
       
+-- g2a prefix => GHC to APPFL
 
 -- | Translate bindings (let/letrec, including top level) into APPFL Obj types.
 g2aObj :: StgBinding -> [Obj ()]
@@ -232,5 +233,3 @@ g2aObj bind =
 
 
 g2aExpr = undefined
-
-

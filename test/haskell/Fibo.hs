@@ -1,10 +1,5 @@
 module Fibo (fib) where
 
-import AST
-       -- This is ok?
-       ( primArity
-       , Var )
-
 fib = head . flip drop fibs
 
 

@@ -79,8 +79,8 @@ import Data.Foldable ( Foldable, sequence_, msum, mapM_, foldlM, forM_ )
 import Data.Functor ( void )
 import Data.Traversable ( forM, mapM, sequence )
 
-import GHC.Base hiding ( mapM, sequence )
-import GHC.List ( zipWith, unzip, replicate )
+import APPFL.Base hiding ( mapM, sequence )
+import APPFL.List ( zipWith, unzip, replicate )
 
 -- -----------------------------------------------------------------------------
 -- Functions mandated by the Prelude

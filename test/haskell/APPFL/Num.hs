@@ -17,86 +17,83 @@
 -----------------------------------------------------------------------------
 
 module APPFL.Num ( module APPFL.Num
-                 , module APPFL.Integer
+--                 , module APPFL.Integer
                  ) where
 
 import APPFL.Base
-import APPFL.Integer
+-- import APPFL.Integer
 
-infixl 7  *
+-- Ordinarily, the Num typeclass is defined here, but we
+-- do want to really use the normal Num class, rather than
+-- an APPFL parallel
+-- import GHC.Num (Num (..))
+
+infixl 7  *, /, %
 infixl 6  +, -
 
 default ()              -- Double isn't available yet,
                         -- and we shouldn't be using defaults anyway
 
--- | Basic numeric class.
-class  Num a  where
-    {-# MINIMAL (+), (*), abs, signum, fromInteger, (negate | (-)) #-}
 
-    (+), (-), (*)       :: a -> a -> a
-    -- | Unary negation.
-    negate              :: a -> a
-    -- | Absolute value.
-    abs                 :: a -> a
-    -- | Sign of a number.
-    -- The functions 'abs' and 'signum' should satisfy the law:
-    --
-    -- > abs x * signum x == x
-    --
-    -- For real numbers, the 'signum' is either @-1@ (negative), @0@ (zero)
-    -- or @1@ (positive).
-    signum              :: a -> a
-    -- | Conversion from an 'Integer'.
-    -- An integer literal represents the application of the function
-    -- 'fromInteger' to the appropriate value of type 'Integer',
-    -- so such literals have type @('Num' a) => a@.
-    fromInteger         :: Integer -> a
+(+) = addInt
+(-) = subInt
+(/) = quotInt
+(*) = mulInt
+(%) = remInt
 
-    {-# INLINE (-) #-}
-    {-# INLINE negate #-}
-    x - y               = x + negate y
-    negate x            = 0 - x
+mod = (%)
+div = (/)
+negate (I# i#) = I# (negateInt# i#)
 
--- | the same as @'flip' ('-')@.
---
--- Because @-@ is treated specially in the Haskell grammar,
--- @(-@ /e/@)@ is not a section, but an application of prefix negation.
--- However, @('subtract'@ /exp/@)@ is equivalent to the disallowed section.
-{-# INLINE subtract #-}
-subtract :: (Num a) => a -> a -> a
-subtract x y = y - x
+addInt :: Int -> Int -> Int
+I# a# `addInt` I# b# = I# (a# +# b#)
 
-instance  Num Int  where
-    I# x + I# y = I# (x +# y)
-    I# x - I# y = I# (x -# y)
-    negate (I# x) = I# (negateInt# x)
-    I# x * I# y = I# (x *# y)
-    abs n  = if n `geInt` 0 then n else negate n
+subInt :: Int -> Int -> Int
+I# a# `subInt` I# b# = I# (a# -# b#)
 
-    signum n | n `ltInt` 0 = negate 1
-             | n `eqInt` 0 = 0
-             | otherwise   = 1
+mulInt :: Int -> Int -> Int
+I# a# `mulInt` I# b# = I# (a# *# b#)
 
-    {-# INLINE fromInteger #-}   -- Just to be sure!
-    fromInteger i = I# (integerToInt i)
-{-
-instance Num Word where
-    (W# x#) + (W# y#)      = W# (x# `plusWord#` y#)
-    (W# x#) - (W# y#)      = W# (x# `minusWord#` y#)
-    (W# x#) * (W# y#)      = W# (x# `timesWord#` y#)
-    negate (W# x#)         = W# (int2Word# (negateInt# (word2Int# x#)))
-    abs x                  = x
-    signum 0               = 0
-    signum _               = 1
-    fromInteger i          = W# (integerToWord i)
+-- -- | the same as @'flip' ('-')@.
+-- --
+-- -- Because @-@ is treated specially in the Haskell grammar,
+-- -- @(-@ /e/@)@ is not a section, but an application of prefix negation.
+-- -- However, @('subtract'@ /exp/@)@ is equivalent to the disallowed section.
+-- {-# INLINE subtract #-}
+-- subtract :: (Num a) => a -> a -> a
+-- subtract x y = y - x
 
-instance  Num Integer  where
-    (+) = plusInteger
-    (-) = minusInteger
-    (*) = timesInteger
-    negate         = negateInteger
-    fromInteger x  =  x
+-- instance  Num Int  where
+--     I# x + I# y = I# (x +# y)
+--     I# x - I# y = I# (x -# y)
+--     negate (I# x) = I# (negateInt# x)
+--     I# x * I# y = I# (x *# y)
+--     abs n  = if n `geInt` 0 then n else negate n
 
-    abs = absInteger
-    signum = signumInteger
--}
+--     signum n | n `ltInt` 0 = negate 1
+--              | n `eqInt` 0 = 0
+--              | otherwise   = 1
+
+--     {-# INLINE fromInteger #-}   -- Just to be sure!
+--     fromInteger i = I# (integerToInt i)
+
+-- instance Num Word where
+--     (W# x#) + (W# y#)      = W# (x# `plusWord#` y#)
+--     (W# x#) - (W# y#)      = W# (x# `minusWord#` y#)
+--     (W# x#) * (W# y#)      = W# (x# `timesWord#` y#)
+--     negate (W# x#)         = W# (int2Word# (negateInt# (word2Int# x#)))
+--     abs x                  = x
+--     signum 0               = 0
+--     signum _               = 1
+--     fromInteger i          = W# (integerToWord i)
+
+-- instance  Num Integer  where
+--     (+) = plusInteger
+--     (-) = minusInteger
+--     (*) = timesInteger
+--     negate         = negateInteger
+--     fromInteger x  =  x
+
+--     abs = absInteger
+--     signum = signumInteger
+

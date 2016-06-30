@@ -92,7 +92,7 @@ import Data.Type.Equality
 
 import Unsafe.Coerce
 import Data.Maybe
-import GHC.Base
+import APPFL.Base
 
 -------------------------------------------------------------
 --

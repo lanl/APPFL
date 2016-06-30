@@ -19,7 +19,7 @@ module APPFL.Integer.Logarithms.Internals
 
 import GHC.Prim
 import APPFL.Integer.Type
-import APPFL.Types
+import GHC.Types
 
 default ()
 

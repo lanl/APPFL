@@ -17,21 +17,23 @@
 --
 -----------------------------------------------------------------------------
 
-module GHC.Classes where
+module APPFL.Classes where
+
+import APPFL.Types (Bool (..), Int (..), isTrue#)
+import APPFL.Prim
 
 -- GHC.Magic is used in some derived instances
-import GHC.Magic ()
-import GHC.Prim
-import GHC.Tuple
-import GHC.Types
+--import GHC.Magic
+--import GHC.Tuple
 
 
-infix  4  ==, /=, <, <=, >=, >
+--infix  4  ==, /=, <, <=, >=, >
 infixr 3  &&
 infixr 2  ||
 
 default ()              -- Double isn't available yet
 
+{-
 -- | The 'Eq' class defines equality ('==') and inequality ('/=').
 -- All the basic datatypes exported by the "Prelude" are instances of 'Eq',
 -- and 'Eq' may be derived for any datatype whose constituents are also
@@ -107,13 +109,14 @@ instance Eq Double where
 instance Eq Int where
     (==) = eqInt
     (/=) = neInt
-
+-}
 {-# INLINE eqInt #-}
 {-# INLINE neInt #-}
 eqInt, neInt :: Int -> Int -> Bool
 (I# x) `eqInt` (I# y) = isTrue# (x ==# y)
 (I# x) `neInt` (I# y) = isTrue# (x /=# y)
 
+{-
 -- | The 'Ord' class is used for totally ordered datatypes.
 --
 -- Instances of 'Ord' can be derived for any user-defined
@@ -234,6 +237,7 @@ instance Ord Int where
     (<=)    = leInt
     (>=)    = geInt
     (>)     = gtInt
+-}
 
 {-# INLINE gtInt #-}
 {-# INLINE geInt #-}
@@ -245,14 +249,14 @@ gtInt, geInt, ltInt, leInt :: Int -> Int -> Bool
 (I# x) `ltInt` (I# y) = isTrue# (x <#  y)
 (I# x) `leInt` (I# y) = isTrue# (x <=# y)
 
-compareInt :: Int -> Int -> Ordering
-(I# x#) `compareInt` (I# y#) = compareInt# x# y#
+-- compareInt :: Int -> Int -> Ordering
+-- (I# x#) `compareInt` (I# y#) = compareInt# x# y#
 
-compareInt# :: Int# -> Int# -> Ordering
-compareInt# x# y#
-    | isTrue# (x# <#  y#) = LT
-    | isTrue# (x# ==# y#) = EQ
-    | True                = GT
+-- compareInt# :: Int# -> Int# -> Ordering
+-- compareInt# x# y#
+--     | isTrue# (x# <#  y#) = LT
+--     | isTrue# (x# ==# y#) = EQ
+--     | True                = GT
 
 -- OK, so they're technically not part of a class...:
 

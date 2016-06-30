@@ -17,7 +17,7 @@
 --
 -----------------------------------------------------------------------------
 
-module GHC.Magic ( inline, lazy, oneShot ) where
+module APPFL.Magic ( inline, lazy, oneShot ) where
 
 -- | The call @inline f@ arranges that 'f' is inlined, regardless of
 -- its size. More precisely, the call @inline f@ rewrites to the

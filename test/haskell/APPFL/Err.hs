@@ -23,7 +23,7 @@
 
 module APPFL.Err( absentErr, error, undefined ) where
 import APPFL.CString ()
-import APPFL.Types
+import GHC.Types
 import GHC.Prim
 import APPFL.Integer ()   -- Make sure Integer is compiled first
                         -- because GHC depends on it in a wired-in way
