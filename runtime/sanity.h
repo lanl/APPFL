@@ -9,7 +9,7 @@ void addObjects (Obj **objArray);
 void printObjInfo (Obj *obj);
 char *objTypeToString(Obj *obj);
 void sanityCheckPtr(Obj *obj);
-bool isInObjArray (Obj *objArray[], Obj *obj, int start, int end);
+bool isInObjArray (Obj *objArray[], size_t objCount, Obj *obj); 
 void sanityCheckSingleSHO (Obj *obj);
 void sanityCheckObj (Obj *obj);
 bool checkPtr8BitAligned (Obj *obj);
