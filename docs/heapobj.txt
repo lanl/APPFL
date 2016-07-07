@@ -201,7 +201,7 @@ the former payload can be garbage collected.
 
 objType = INDIRECT
 
-infoPtr->objType = THUNK
+infoPtr->objType = INDIRECT
 infoPtr->fvCount = ***NO LONGER VALID, ANY FREE VARS WILL BE CAPTURED ELSEWHERE***
 payload[0] = the pointer to the next object in the indirect chain
 payload[1..] = garbage
