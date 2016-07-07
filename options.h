@@ -22,6 +22,7 @@
 
 /* If 1 use .ident in Obj/Cont */
 #define USE_IDENT 1 
+#define IDENT_SIZE 32
 
 /* If 1 use .name in Infotab */
 #define USE_INFOTAB_NAME 1 

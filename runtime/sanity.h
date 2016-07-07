@@ -1,18 +1,51 @@
 #ifndef SANITY_H
 #define SANITY_H
 
-//void heapCheck ();
-//void checkSingleHeapObject (Obj *obj);
+#include <ctype.h>
 
-Obj **mallocArrayOfAllObjects();
-void addObjects (Obj **objArray);
-void printObjInfo (Obj *obj);
-char *objTypeToString(Obj *obj);
-void sanityCheckPtr(Obj *obj);
-bool isInObjArray (Obj *objArray[], size_t objCount, Obj *obj); 
-void sanityCheckSingleSHO (Obj *obj);
-void sanityCheckObj (Obj *obj);
-bool checkPtr8BitAligned (Obj *obj);
-bool checkPtrCorrectSize (Obj *obj);
+void heapCheck(bool display);
+void stackCheck(bool display);
+
+static inline char *getIdent(Obj *obj) {
+  #if USE_IDENT
+    return obj->ident;
+  #else
+    return NULL;
+  #endif
+}
+
+static inline bool checkObjType(Obj *obj, ObjType objType) {
+  #if USE_OBJTYPE
+    return (obj->objType == objType);
+  #else
+    return true;
+  #endif
+}
+
+static inline bool checkInfoTabName(InfoTab *it, char *name) {
+  #if USE_INFOTAB_NAME
+    return (strcmp(it->name, "stgIndirect") == 0);
+  #else
+    return true;
+  #endif
+}
+
+static inline bool checkIdent(Obj *obj) {
+  #if USE_IDENT
+    for (int i = 0; obj->ident[i] != '\0'; i++) {
+      assert(i < IDENT_SIZE && "sanity: bad ident size");
+      if(!isprint(obj->ident[i])) return false;
+    }
+  #endif
+  return true;
+}
+
+static inline bool checkInfoTabHeader(InfoTab *it) {
+  #if DEBUG_INFOTAB
+    return (it->pi = PI());
+  #else
+    return true;
+  #endif
+}
 
 #endif

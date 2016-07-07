@@ -230,18 +230,9 @@ void processCont(Cont *p) {
 void gc(void) {
   //LOG(LOG_INFO, "GARBAGE COLLECTION DISABLED in gc.c/gc(void)\n"); return;
 
-  if (HEAP_SANITY_CHECK)  {
-    Obj **array = mallocArrayOfAllObjects();
-    addObjects(array);
-  }
+  if (HEAP_SANITY_CHECK) heapCheck(true);
   
   size_t before = stgHP - stgHeap;
-
-  if (EXTRA_CHECKS_GC) {
-    EXTRASTART();
-    // checkStgHeap(); -- heap is fragmented
-    EXTRAEND();
-  }
 
   if(LOG_LEVEL == LOG_SPEW) {
     if(LoggingLevel == LOG_SPEW) {

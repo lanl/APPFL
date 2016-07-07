@@ -2,6 +2,7 @@
 #define heap_h
 
 #include "stg.h"
+#include "options.h"
 
 // heap objects
 typedef enum {
@@ -105,7 +106,7 @@ struct _Obj {
   ObjType objType;          // to distinguish PAP, FUN, BLACKHOLE, INDIRECT
 #endif
 #if USE_IDENT
-  char ident[32];           // temporary, just for tracing
+  char ident[IDENT_SIZE];           // temporary, just for tracing
 #endif
   PtrOrLiteral payload[];
 };
