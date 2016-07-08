@@ -1,312 +1,247 @@
-[1 of 2] Compiling Prelude          ( Prelude.hs, Prelude.o )
+[1 of 1] Compiling Even             ( Even.hs, Even.o )
 
 ==================== STG syntax: ====================
-
-
-[2 of 2] Compiling Even             ( Even.hs, Even.o )
-
-==================== STG syntax: ====================
-sat_s1DF :: GHC.Integer.Type.Integer
-[LclId, Str=DmdType] =
+sat_s1ad :: GHC.Integer.Type.Integer =
     NO_CCS GHC.Integer.Type.S#! [6];
-sat_s1DE :: GHC.Integer.Type.Integer
-[LclId, Str=DmdType] =
+sat_s1ac :: GHC.Integer.Type.Integer =
     NO_CCS GHC.Integer.Type.S#! [1];
-Even.someList :: [GHC.Integer.Type.Integer]
-[GblId, Str=DmdType] =
-    \u srt:SRT:[ruZ :-> GHC.Enum.$fEnumInteger, s1DE :-> sat_s1DE,
-                s1DF :-> sat_s1DF] []
-        GHC.Enum.enumFromTo GHC.Enum.$fEnumInteger sat_s1DE sat_s1DF;
-$cshowsPrec_r1vY
-  :: forall a_a1BE b_a1BF.
-     (GHC.Show.Show a_a1BE, GHC.Show.Show b_a1BF) =>
-     GHC.Types.Int -> Even.TorJ a_a1BE b_a1BF -> GHC.Show.ShowS
-[GblId, Arity=4, Str=DmdType, Unf=OtherCon []] =
+Even.someList :: [GHC.Integer.Type.Integer] =
+    \u srt:SRT:[rUF :-> GHC.Enum.$fEnumInteger,
+                s1ac :-> sat_s1ac, s1ad :-> sat_s1ad] []
+        GHC.Enum.enumFromTo
+            GHC.Enum.$fEnumInteger sat_s1ac sat_s1ad;
+$cshowsPrec_r12z
+  :: forall a_a189 b_a18a.
+     (GHC.Show.Show a_a189, GHC.Show.Show b_a18a) =>
+     GHC.Types.Int -> Even.TorJ a_a189 b_a18a -> GHC.Show.ShowS =
     sat-only \r srt:SRT:[0k :-> GHC.CString.unpackCString#,
-                         rpJ :-> GHC.Base.., rE3 :-> GHC.Classes.$fOrdInt,
-                         r10f :-> GHC.Show.showString,
-                         r10i :-> GHC.Show.showParen] [$dShow_s1DG
-                                                       $dShow1_s1DH
-                                                       a1_s1DI
-                                                       ds_s1DJ]
-        case ds_s1DJ of _ [Occ=Dead] {
-          Even.Treasure b1_s1DL [Occ=Once] ->
+                         r1R :-> GHC.Show.showString, r1S :-> GHC.Show.showParen,
+                         r2C :-> GHC.Base..,
+                         ruB :-> GHC.Classes.$fOrdInt] [$dShow_s1ae
+                                                        $dShow1_s1af
+                                                        a1_s1ag
+                                                        ds_s1ah]
+        case ds_s1ah of _ {
+          Even.Treasure b1_s1aj ->
               let {
-                sat_s1DS [Occ=Once] :: GHC.Show.ShowS
-                [LclId, Str=DmdType] =
-                    \u srt:SRT:[0k :-> GHC.CString.unpackCString#, rpJ :-> GHC.Base..,
-                                r10f :-> GHC.Show.showString] []
+                sat_s1aq :: GHC.Show.ShowS =
+                    \u srt:SRT:[0k :-> GHC.CString.unpackCString#,
+                                r1R :-> GHC.Show.showString, r2C :-> GHC.Base..] []
                         let {
-                          sat_s1DR [Occ=Once] :: GHC.Base.String -> GHC.Base.String
-                          [LclId, Str=DmdType] =
+                          sat_s1ap :: GHC.Base.String -> GHC.Base.String =
                               \u srt:SRT:[] []
                                   let {
-                                    sat_s1DQ [Occ=Once] :: GHC.Types.Int
-                                    [LclId, Str=DmdType] =
-                                        NO_CCS GHC.Types.I#! [11];
-                                  } in  GHC.Show.showsPrec $dShow_s1DG sat_s1DQ b1_s1DL; } in
+                                    sat_s1ao :: GHC.Types.Int = NO_CCS GHC.Types.I#! [11];
+                                  } in 
+                                    GHC.Show.showsPrec $dShow_s1ae sat_s1ao b1_s1aj; } in
                         let {
-                          sat_s1DP [Occ=Once] :: GHC.Base.String -> GHC.Base.String
-                          [LclId, Str=DmdType] =
+                          sat_s1an :: GHC.Base.String -> GHC.Base.String =
                               \u srt:SRT:[0k :-> GHC.CString.unpackCString#,
-                                          r10f :-> GHC.Show.showString] []
+                                          r1R :-> GHC.Show.showString] []
                                   let {
-                                    sat_s1DO [Occ=Once] :: GHC.Base.String
-                                    [LclId, Str=DmdType] =
+                                    sat_s1am :: GHC.Base.String =
                                         \u srt:SRT:[0k :-> GHC.CString.unpackCString#] []
                                             GHC.CString.unpackCString# "Treasure "#;
-                                  } in  GHC.Show.showString sat_s1DO;
-                        } in  GHC.Base.. sat_s1DP sat_s1DR; } in
+                                  } in  GHC.Show.showString sat_s1am;
+                        } in  GHC.Base.. sat_s1an sat_s1ap; } in
               let {
-                sat_s1DN [Occ=Once] :: GHC.Types.Bool
-                [LclId, Str=DmdType] =
-                    \u srt:SRT:[rE3 :-> GHC.Classes.$fOrdInt] []
-                        let {
-                          sat_s1DM [Occ=Once] :: GHC.Types.Int
-                          [LclId, Str=DmdType] =
-                              NO_CCS GHC.Types.I#! [11];
-                        } in  GHC.Classes.>= GHC.Classes.$fOrdInt a1_s1DI sat_s1DM;
-              } in  GHC.Show.showParen sat_s1DN sat_s1DS;
-          Even.Junk b1_s1DT [Occ=Once] ->
+                sat_s1al :: GHC.Types.Bool =
+                    \u srt:SRT:[ruB :-> GHC.Classes.$fOrdInt] []
+                        let { sat_s1ak :: GHC.Types.Int = NO_CCS GHC.Types.I#! [11];
+                        } in  GHC.Classes.>= GHC.Classes.$fOrdInt a1_s1ag sat_s1ak;
+              } in  GHC.Show.showParen sat_s1al sat_s1aq;
+          Even.Junk b1_s1ar ->
               let {
-                sat_s1E0 [Occ=Once] :: GHC.Show.ShowS
-                [LclId, Str=DmdType] =
-                    \u srt:SRT:[0k :-> GHC.CString.unpackCString#, rpJ :-> GHC.Base..,
-                                r10f :-> GHC.Show.showString] []
+                sat_s1ay :: GHC.Show.ShowS =
+                    \u srt:SRT:[0k :-> GHC.CString.unpackCString#,
+                                r1R :-> GHC.Show.showString, r2C :-> GHC.Base..] []
                         let {
-                          sat_s1DZ [Occ=Once] :: GHC.Base.String -> GHC.Base.String
-                          [LclId, Str=DmdType] =
+                          sat_s1ax :: GHC.Base.String -> GHC.Base.String =
                               \u srt:SRT:[] []
                                   let {
-                                    sat_s1DY [Occ=Once] :: GHC.Types.Int
-                                    [LclId, Str=DmdType] =
-                                        NO_CCS GHC.Types.I#! [11];
-                                  } in  GHC.Show.showsPrec $dShow1_s1DH sat_s1DY b1_s1DT; } in
+                                    sat_s1aw :: GHC.Types.Int = NO_CCS GHC.Types.I#! [11];
+                                  } in 
+                                    GHC.Show.showsPrec $dShow1_s1af sat_s1aw b1_s1ar; } in
                         let {
-                          sat_s1DX [Occ=Once] :: GHC.Base.String -> GHC.Base.String
-                          [LclId, Str=DmdType] =
+                          sat_s1av :: GHC.Base.String -> GHC.Base.String =
                               \u srt:SRT:[0k :-> GHC.CString.unpackCString#,
-                                          r10f :-> GHC.Show.showString] []
+                                          r1R :-> GHC.Show.showString] []
                                   let {
-                                    sat_s1DW [Occ=Once] :: GHC.Base.String
-                                    [LclId, Str=DmdType] =
+                                    sat_s1au :: GHC.Base.String =
                                         \u srt:SRT:[0k :-> GHC.CString.unpackCString#] []
                                             GHC.CString.unpackCString# "Junk "#;
-                                  } in  GHC.Show.showString sat_s1DW;
-                        } in  GHC.Base.. sat_s1DX sat_s1DZ; } in
+                                  } in  GHC.Show.showString sat_s1au;
+                        } in  GHC.Base.. sat_s1av sat_s1ax; } in
               let {
-                sat_s1DV [Occ=Once] :: GHC.Types.Bool
-                [LclId, Str=DmdType] =
-                    \u srt:SRT:[rE3 :-> GHC.Classes.$fOrdInt] []
-                        let {
-                          sat_s1DU [Occ=Once] :: GHC.Types.Int
-                          [LclId, Str=DmdType] =
-                              NO_CCS GHC.Types.I#! [11];
-                        } in  GHC.Classes.>= GHC.Classes.$fOrdInt a1_s1DI sat_s1DU;
-              } in  GHC.Show.showParen sat_s1DV sat_s1E0;
+                sat_s1at :: GHC.Types.Bool =
+                    \u srt:SRT:[ruB :-> GHC.Classes.$fOrdInt] []
+                        let { sat_s1as :: GHC.Types.Int = NO_CCS GHC.Types.I#! [11];
+                        } in  GHC.Classes.>= GHC.Classes.$fOrdInt a1_s1ag sat_s1as;
+              } in  GHC.Show.showParen sat_s1at sat_s1ay;
         };
-Even.$fShowTorJ [InlPrag=[ALWAYS] CONLIKE]
-  :: forall a_a1uA b_a1uB.
-     (GHC.Show.Show a_a1uA, GHC.Show.Show b_a1uB) =>
-     GHC.Show.Show (Even.TorJ a_a1uA b_a1uB)
-[GblId[DFunId], Arity=2, Str=DmdType, Unf=OtherCon []] =
-    \r srt:SRT:[r1vY :-> $cshowsPrec_r1vY, r1Dz :-> $cshowList_r1Dz,
-                r1DA :-> $cshow_r1DA] [$dShow_s1E1 $dShow1_s1E2]
+Even.$fShowTorJ
+  :: forall a_aU7 b_aU8.
+     (GHC.Show.Show a_aU7, GHC.Show.Show b_aU8) =>
+     GHC.Show.Show (Even.TorJ a_aU7 b_aU8) =
+    \r srt:SRT:[r12z :-> $cshowsPrec_r12z,
+                r1a9 :-> $cshowList_r1a9, r1aa :-> $cshow_r1aa] [$dShow_s1az
+                                                                 $dShow1_s1aA]
         let {
-          sat_s1E5 [Occ=Once] :: [Even.TorJ a_a1BE b_a1BF] -> GHC.Show.ShowS
-          [LclId, Str=DmdType] =
-              \u srt:SRT:[r1Dz :-> $cshowList_r1Dz] []
-                  $cshowList_r1Dz $dShow_s1E1 $dShow1_s1E2; } in
+          sat_s1aD :: [Even.TorJ a_a189 b_a18a] -> GHC.Show.ShowS =
+              \u srt:SRT:[r1a9 :-> $cshowList_r1a9] []
+                  $cshowList_r1a9 $dShow_s1az $dShow1_s1aA; } in
         let {
-          sat_s1E4 [Occ=Once] :: Even.TorJ a_a1BE b_a1BF -> GHC.Base.String
-          [LclId, Str=DmdType] =
-              \u srt:SRT:[r1DA :-> $cshow_r1DA] []
-                  $cshow_r1DA $dShow_s1E1 $dShow1_s1E2; } in
+          sat_s1aC :: Even.TorJ a_a189 b_a18a -> GHC.Base.String =
+              \u srt:SRT:[r1aa :-> $cshow_r1aa] []
+                  $cshow_r1aa $dShow_s1az $dShow1_s1aA; } in
         let {
-          sat_s1E3 [Occ=Once]
-            :: GHC.Types.Int -> Even.TorJ a_a1BE b_a1BF -> GHC.Show.ShowS
-          [LclId, Str=DmdType] =
-              \r srt:SRT:[r1vY :-> $cshowsPrec_r1vY] [eta_B2 eta_B1]
-                  $cshowsPrec_r1vY $dShow_s1E1 $dShow1_s1E2 eta_B2 eta_B1;
-        } in  GHC.Show.D:Show [sat_s1E3 sat_s1E4 sat_s1E5];
-$cshowList_r1Dz
-  :: forall a_a1BE b_a1BF.
-     (GHC.Show.Show a_a1BE, GHC.Show.Show b_a1BF) =>
-     [Even.TorJ a_a1BE b_a1BF] -> GHC.Show.ShowS
-[GblId, Arity=2, Str=DmdType, Unf=OtherCon []] =
-    \r srt:SRT:[r9R :-> GHC.Show.showList__,
-                r1rK :-> Even.$fShowTorJ] [$dShow_s1E6 $dShow1_s1E7]
+          sat_s1aB
+            :: GHC.Types.Int
+               -> Even.TorJ a_a189 b_a18a -> GHC.Show.ShowS =
+              \r srt:SRT:[r12z :-> $cshowsPrec_r12z] [eta_B2 eta_B1]
+                  $cshowsPrec_r12z $dShow_s1az $dShow1_s1aA eta_B2 eta_B1;
+        } in  GHC.Show.D:Show [sat_s1aB sat_s1aC sat_s1aD];
+$cshowList_r1a9
+  :: forall a_a189 b_a18a.
+     (GHC.Show.Show a_a189, GHC.Show.Show b_a18a) =>
+     [Even.TorJ a_a189 b_a18a] -> GHC.Show.ShowS =
+    \r srt:SRT:[rbU :-> GHC.Show.showList__,
+                rJ0 :-> Even.$fShowTorJ] [$dShow_s1aE $dShow1_s1aF]
         let {
-          sat_s1Ea [Occ=Once] :: Even.TorJ a_a1BE b_a1BF -> GHC.Show.ShowS
-          [LclId, Str=DmdType] =
-              \u srt:SRT:[r1rK :-> Even.$fShowTorJ] []
-                  let {
-                    sat_s1E9 [Occ=Once] :: GHC.Types.Int
-                    [LclId, Str=DmdType] =
-                        NO_CCS GHC.Types.I#! [0];
+          sat_s1aI :: Even.TorJ a_a189 b_a18a -> GHC.Show.ShowS =
+              \u srt:SRT:[rJ0 :-> Even.$fShowTorJ] []
+                  let { sat_s1aH :: GHC.Types.Int = NO_CCS GHC.Types.I#! [0];
                   } in 
-                    case Even.$fShowTorJ $dShow_s1E6 $dShow1_s1E7 of sat_s1E8 {
-                      __DEFAULT -> GHC.Show.showsPrec sat_s1E8 sat_s1E9;
+                    case Even.$fShowTorJ $dShow_s1aE $dShow1_s1aF of sat_s1aG {
+                      __DEFAULT -> GHC.Show.showsPrec sat_s1aG sat_s1aH;
                     };
-        } in  GHC.Show.showList__ sat_s1Ea;
-$cshow_r1DA
-  :: forall a_a1BE b_a1BF.
-     (GHC.Show.Show a_a1BE, GHC.Show.Show b_a1BF) =>
-     Even.TorJ a_a1BE b_a1BF -> GHC.Base.String
-[GblId, Arity=2, Str=DmdType, Unf=OtherCon []] =
-    \r srt:SRT:[r10s :-> GHC.Show.$dmshow,
-                r1rK :-> Even.$fShowTorJ] [$dShow_s1Eb $dShow1_s1Ec]
+        } in  GHC.Show.showList__ sat_s1aI;
+$cshow_r1aa
+  :: forall a_a189 b_a18a.
+     (GHC.Show.Show a_a189, GHC.Show.Show b_a18a) =>
+     Even.TorJ a_a189 b_a18a -> GHC.Base.String =
+    \r srt:SRT:[rpG :-> GHC.Show.$dmshow,
+                rJ0 :-> Even.$fShowTorJ] [$dShow_s1aJ $dShow1_s1aK]
         let {
-          sat_s1Ed [Occ=Once] :: GHC.Show.Show (Even.TorJ a_a1BE b_a1BF)
-          [LclId, Str=DmdType] =
-              \u srt:SRT:[r1rK :-> Even.$fShowTorJ] []
-                  Even.$fShowTorJ $dShow_s1Eb $dShow1_s1Ec;
-        } in  GHC.Show.$dmshow sat_s1Ed;
-Even.parity :: GHC.Types.Int -> Even.Parity
-[GblId, Arity=1, Str=DmdType, Unf=OtherCon []] =
-    \r srt:SRT:[rpJ :-> GHC.Base.., rC2 :-> GHC.Num.$fNumInt,
-                rE3 :-> GHC.Classes.$fOrdInt] [n1_s1Ee]
+          sat_s1aL :: GHC.Show.Show (Even.TorJ a_a189 b_a18a) =
+              \u srt:SRT:[rJ0 :-> Even.$fShowTorJ] []
+                  Even.$fShowTorJ $dShow_s1aJ $dShow1_s1aK;
+        } in  GHC.Show.$dmshow sat_s1aL;
+Even.parity :: GHC.Types.Int -> Even.Parity =
+    \r srt:SRT:[r2C :-> GHC.Base..,
+                ruB :-> GHC.Classes.$fOrdInt,
+                rHs :-> GHC.Num.$fNumInt] [n1_s1aM]
         let {
-          toZero_s1Ef
-            :: forall a_a1y1.
-               (GHC.Num.Num a_a1y1, GHC.Classes.Ord a_a1y1) =>
-               a_a1y1 -> a_a1y1
-          [LclId, Arity=3, Str=DmdType, Unf=OtherCon []] =
-              sat-only \r srt:SRT:[] [$dNum_s1Eg $dOrd_s1Eh n2_s1Ei]
+          toZero_s1aN
+            :: forall a_a14z.
+               (GHC.Num.Num a_a14z, GHC.Classes.Ord a_a14z) =>
+               a_a14z -> a_a14z =
+              sat-only \r srt:SRT:[] [$dNum_s1aO $dOrd_s1aP n2_s1aQ]
                   let {
-                    sat_s1Ek [Occ=Once] :: a_a1y5
-                    [LclId, Str=DmdType] =
+                    sat_s1aS :: a_a14D =
                         \u srt:SRT:[] []
                             let {
-                              sat_s1Ej [Occ=Once] :: GHC.Integer.Type.Integer
-                              [LclId, Str=DmdType] =
+                              sat_s1aR :: GHC.Integer.Type.Integer =
                                   NO_CCS GHC.Integer.Type.S#! [0];
-                            } in  GHC.Num.fromInteger $dNum_s1Eg sat_s1Ej;
+                            } in  GHC.Num.fromInteger $dNum_s1aO sat_s1aR;
                   } in 
-                    case GHC.Classes.> $dOrd_s1Eh n2_s1Ei sat_s1Ek of _ [Occ=Dead] {
+                    case GHC.Classes.> $dOrd_s1aP n2_s1aQ sat_s1aS of _ {
                       GHC.Types.False ->
                           let {
-                            sat_s1En [Occ=Once] :: a_a1y5
-                            [LclId, Str=DmdType] =
+                            sat_s1aV :: a_a14D =
                                 \u srt:SRT:[] []
                                     let {
-                                      sat_s1Em [Occ=Once] :: GHC.Integer.Type.Integer
-                                      [LclId, Str=DmdType] =
+                                      sat_s1aU :: GHC.Integer.Type.Integer =
                                           NO_CCS GHC.Integer.Type.S#! [1];
-                                    } in  GHC.Num.fromInteger $dNum_s1Eg sat_s1Em;
-                          } in  GHC.Num.+ $dNum_s1Eg n2_s1Ei sat_s1En;
+                                    } in  GHC.Num.fromInteger $dNum_s1aO sat_s1aU;
+                          } in  GHC.Num.+ $dNum_s1aO n2_s1aQ sat_s1aV;
                       GHC.Types.True ->
                           let {
-                            sat_s1Ep [Occ=Once] :: a_a1y5
-                            [LclId, Str=DmdType] =
+                            sat_s1aX :: a_a14D =
                                 \u srt:SRT:[] []
                                     let {
-                                      sat_s1Eo [Occ=Once] :: GHC.Integer.Type.Integer
-                                      [LclId, Str=DmdType] =
+                                      sat_s1aW :: GHC.Integer.Type.Integer =
                                           NO_CCS GHC.Integer.Type.S#! [1];
-                                    } in  GHC.Num.fromInteger $dNum_s1Eg sat_s1Eo;
-                          } in  GHC.Num.- $dNum_s1Eg n2_s1Ei sat_s1Ep;
+                                    } in  GHC.Num.fromInteger $dNum_s1aO sat_s1aW;
+                          } in  GHC.Num.- $dNum_s1aO n2_s1aQ sat_s1aX;
                     }; } in
         let {
-          $dEq_s1Eq :: GHC.Classes.Eq GHC.Types.Int
-          [LclId, Str=DmdType] =
-              \u srt:SRT:[rE3 :-> GHC.Classes.$fOrdInt] []
+          $dEq_s1aY :: GHC.Classes.Eq GHC.Types.Int =
+              \u srt:SRT:[ruB :-> GHC.Classes.$fOrdInt] []
                   GHC.Classes.$p1Ord GHC.Classes.$fOrdInt; } in
         let {
-          odd_s1Er [Occ=OnceL] :: GHC.Types.Int -> GHC.Types.Bool
-          [LclId, Arity=1, Str=DmdType, Unf=OtherCon []] =
-              \r srt:SRT:[rpJ :-> GHC.Base.., rC2 :-> GHC.Num.$fNumInt,
-                          rE3 :-> GHC.Classes.$fOrdInt] [ds_s1Et]
+          odd_s1aZ :: GHC.Types.Int -> GHC.Types.Bool =
+              \r srt:SRT:[r2C :-> GHC.Base..,
+                          ruB :-> GHC.Classes.$fOrdInt,
+                          rHs :-> GHC.Num.$fNumInt] [ds_s1b1]
                   let {
-                    sat_s1Ev [Occ=Once] :: GHC.Types.Int
-                    [LclId, Str=DmdType] =
-                        \u srt:SRT:[rC2 :-> GHC.Num.$fNumInt] []
+                    sat_s1b3 :: GHC.Types.Int =
+                        \u srt:SRT:[rHs :-> GHC.Num.$fNumInt] []
                             let {
-                              sat_s1Eu [Occ=Once] :: GHC.Integer.Type.Integer
-                              [LclId, Str=DmdType] =
+                              sat_s1b2 :: GHC.Integer.Type.Integer =
                                   NO_CCS GHC.Integer.Type.S#! [0];
-                            } in  GHC.Num.fromInteger GHC.Num.$fNumInt sat_s1Eu;
+                            } in  GHC.Num.fromInteger GHC.Num.$fNumInt sat_s1b2;
                   } in 
-                    case GHC.Classes.== $dEq_s1Eq ds_s1Et sat_s1Ev of _ [Occ=Dead] {
+                    case GHC.Classes.== $dEq_s1aY ds_s1b1 sat_s1b3 of _ {
                       GHC.Types.False ->
                           let {
-                            sat_s1Ex [Occ=Once] :: GHC.Types.Int -> GHC.Types.Int
-                            [LclId, Str=DmdType] =
-                                \r srt:SRT:[rC2 :-> GHC.Num.$fNumInt,
-                                            rE3 :-> GHC.Classes.$fOrdInt] [eta_B1]
-                                    toZero_s1Ef GHC.Num.$fNumInt GHC.Classes.$fOrdInt eta_B1;
-                          } in  GHC.Base.. even_s1Es sat_s1Ex ds_s1Et;
+                            sat_s1b5 :: GHC.Types.Int -> GHC.Types.Int =
+                                \r srt:SRT:[ruB :-> GHC.Classes.$fOrdInt,
+                                            rHs :-> GHC.Num.$fNumInt] [eta_B1]
+                                    toZero_s1aN
+                                        GHC.Num.$fNumInt GHC.Classes.$fOrdInt eta_B1;
+                          } in  GHC.Base.. even_s1b0 sat_s1b5 ds_s1b1;
                       GHC.Types.True -> GHC.Types.False [];
                     };
-          even_s1Es [Occ=LoopBreaker] :: GHC.Types.Int -> GHC.Types.Bool
-          [LclId, Arity=1, Str=DmdType, Unf=OtherCon []] =
-              \r srt:SRT:[rpJ :-> GHC.Base.., rC2 :-> GHC.Num.$fNumInt,
-                          rE3 :-> GHC.Classes.$fOrdInt] [ds_s1Ey]
+          even_s1b0 :: GHC.Types.Int -> GHC.Types.Bool =
+              \r srt:SRT:[r2C :-> GHC.Base..,
+                          ruB :-> GHC.Classes.$fOrdInt,
+                          rHs :-> GHC.Num.$fNumInt] [ds_s1b6]
                   let {
-                    sat_s1EA [Occ=Once] :: GHC.Types.Int
-                    [LclId, Str=DmdType] =
-                        \u srt:SRT:[rC2 :-> GHC.Num.$fNumInt] []
+                    sat_s1b8 :: GHC.Types.Int =
+                        \u srt:SRT:[rHs :-> GHC.Num.$fNumInt] []
                             let {
-                              sat_s1Ez [Occ=Once] :: GHC.Integer.Type.Integer
-                              [LclId, Str=DmdType] =
+                              sat_s1b7 :: GHC.Integer.Type.Integer =
                                   NO_CCS GHC.Integer.Type.S#! [0];
-                            } in  GHC.Num.fromInteger GHC.Num.$fNumInt sat_s1Ez;
+                            } in  GHC.Num.fromInteger GHC.Num.$fNumInt sat_s1b7;
                   } in 
-                    case GHC.Classes.== $dEq_s1Eq ds_s1Ey sat_s1EA of _ [Occ=Dead] {
+                    case GHC.Classes.== $dEq_s1aY ds_s1b6 sat_s1b8 of _ {
                       GHC.Types.False ->
                           let {
-                            sat_s1EC [Occ=Once] :: GHC.Types.Int -> GHC.Types.Int
-                            [LclId, Str=DmdType] =
-                                \r srt:SRT:[rC2 :-> GHC.Num.$fNumInt,
-                                            rE3 :-> GHC.Classes.$fOrdInt] [eta_B1]
-                                    toZero_s1Ef GHC.Num.$fNumInt GHC.Classes.$fOrdInt eta_B1;
-                          } in  GHC.Base.. odd_s1Er sat_s1EC ds_s1Ey;
+                            sat_s1ba :: GHC.Types.Int -> GHC.Types.Int =
+                                \r srt:SRT:[ruB :-> GHC.Classes.$fOrdInt,
+                                            rHs :-> GHC.Num.$fNumInt] [eta_B1]
+                                    toZero_s1aN
+                                        GHC.Num.$fNumInt GHC.Classes.$fOrdInt eta_B1;
+                          } in  GHC.Base.. odd_s1aZ sat_s1ba ds_s1b6;
                       GHC.Types.True -> GHC.Types.True [];
                     };
         } in 
-          case even_s1Es n1_s1Ee of _ [Occ=Dead] {
+          case even_s1b0 n1_s1aM of _ {
             GHC.Types.False -> Even.Odd [];
             GHC.Types.True -> Even.Even [];
           };
 Even.nValue
-  :: GHC.Types.Int -> Even.TorJ GHC.Types.Int GHC.Types.Int
-[GblId, Arity=1, Str=DmdType, Unf=OtherCon []] =
-    \r srt:SRT:[r1dW :-> Even.parity] [n1_s1EE]
-        case Even.parity n1_s1EE of _ [Occ=Dead] {
-          Even.Even -> Even.Treasure [n1_s1EE];
-          Even.Odd -> Even.Junk [n1_s1EE];
+  :: GHC.Types.Int -> Even.TorJ GHC.Types.Int GHC.Types.Int =
+    \r srt:SRT:[rlC :-> Even.parity] [n1_s1bc]
+        case Even.parity n1_s1bc of _ {
+          Even.Even -> Even.Treasure [n1_s1bc];
+          Even.Odd -> Even.Junk [n1_s1bc];
         };
-n_r1DB :: GHC.Types.Int
-[GblId, Caf=NoCafRefs, Str=DmdType, Unf=OtherCon []] =
-    NO_CCS GHC.Types.I#! [3];
-Even.main :: Even.TorJ GHC.Types.Int GHC.Types.Int
-[GblId, Str=DmdType] =
-    \u srt:SRT:[r1dW :-> Even.parity] []
-        case Even.parity n_r1DB of _ [Occ=Dead] {
-          Even.Even -> Even.Treasure [n_r1DB];
-          Even.Odd -> Even.Junk [n_r1DB];
+n_r1ab :: GHC.Types.Int = NO_CCS GHC.Types.I#! [3];
+Even.main :: Even.TorJ GHC.Types.Int GHC.Types.Int =
+    \u srt:SRT:[rlC :-> Even.parity] []
+        case Even.parity n_r1ab of _ {
+          Even.Even -> Even.Treasure [n_r1ab];
+          Even.Odd -> Even.Junk [n_r1ab];
         };
 Even.Treasure
-  :: forall a_a1e1 b_a1e2. a_a1e1 -> Even.TorJ a_a1e1 b_a1e2
-[GblId[DataCon],
- Arity=1,
- Caf=NoCafRefs,
- Str=DmdType <L,U>m1,
- Unf=OtherCon []] =
+  :: forall a_alH b_alI. a_alH -> Even.TorJ a_alH b_alI =
     \r srt:SRT:[] [eta_B1] Even.Treasure [eta_B1];
 Even.Junk
-  :: forall a_a1e1 b_a1e2. b_a1e2 -> Even.TorJ a_a1e1 b_a1e2
-[GblId[DataCon],
- Arity=1,
- Caf=NoCafRefs,
- Str=DmdType <L,U>m2,
- Unf=OtherCon []] =
+  :: forall a_alH b_alI. b_alI -> Even.TorJ a_alH b_alI =
     \r srt:SRT:[] [eta_B1] Even.Junk [eta_B1];
-Even.Even :: Even.Parity
-[GblId[DataCon], Caf=NoCafRefs, Str=DmdType, Unf=OtherCon []] =
-    NO_CCS Even.Even! [];
-Even.Odd :: Even.Parity
-[GblId[DataCon], Caf=NoCafRefs, Str=DmdType, Unf=OtherCon []] =
-    NO_CCS Even.Odd! [];
+Even.Even :: Even.Parity = NO_CCS Even.Even! [];
+Even.Odd :: Even.Parity = NO_CCS Even.Odd! [];
 
 

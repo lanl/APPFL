@@ -167,7 +167,6 @@ getDataCons :: TyCon -> [DataCon]
 getDataCons (TyCon _ _ _ cons) = cons
 
 
-
 instance Show Polytype where
     show (PPoly [] m) = show m
     show (PPoly xs m) = "forall " ++ intercalate "," xs ++ "." ++ show m
