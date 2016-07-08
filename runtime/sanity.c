@@ -9,6 +9,7 @@
 #include "obj.h"
 #include "options.h"
 #include "log.h"
+#include "show.h"
 #include "sanity.h"
 
 
@@ -178,9 +179,11 @@ Obj **mallocArrayOfAllObjects() {
   return objArray;
 }
 
+
 void checkObjFull(Obj *obj) {
   //TODO
 }
+
 
 void heapCheck(bool display) {
   Obj **objArray = mallocArrayOfAllObjects();
@@ -192,3 +195,37 @@ void heapCheck(bool display) {
   }
   if (display) LOG(LOG_INFO, "\n");
 }
+
+
+void stackCheck(bool display) {
+  if (display) LOG(LOG_INFO, "stg STACK\n");
+  for (Cont *p = (Cont *)stgSP;
+       (char *)p < (char*) stgStack + stgStackSize;
+       p = (Cont *)((char*)p + getContSize(p))) {
+    int contType = getContType(p);
+    assert(contType > PHONYSTARTCONT &&
+     contType < PHONYENDCONT && "sanity: bad cont type");
+    LOG(LOG_SPEW, "check Cont %s %s\n", contTypeNames[contType], p->ident);
+    Bitmap64 bm = p->layout;
+    uint64_t mask = bm.bitmap.mask;
+    int size = bm.bitmap.size;
+    if (contType != LETCONT) {
+     for (int i = 0; i != size; i++, mask >>= 1) {
+     	  if (mask & 0x1UL) {
+          assert(mayBeBoxed(p->payload[i]) && "sanity: unexpected unboxed arg in CONT");
+     	  } else {
+          assert(mayBeUnboxed(p->payload[i]) && "sanity: unexpected boxed arg in CONT");
+   	    }    
+     }  // for
+    } else { // LETCONT
+      for (int i = 0; i != size; i++) {
+        if (p->payload[i].op != NULL) {
+          assert(mayBeBoxed(p->payload[i]) && "sanity: unexpected unboxed arg in LETCONT");
+        }
+      }
+    }
+    if (display) showStgCont(LOG_LEVEL, (Cont *)p);         
+  }
+  if (display) LOG(LOG_INFO, "\n");
+}
+

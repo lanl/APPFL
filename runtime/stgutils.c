@@ -7,6 +7,7 @@
 #include "stg.h"
 #include "cmm.h"
 #include "obj.h"
+#include "show.h"
 
 // ****************************************************************
 // since we always jump through the top of the stg stack we need some

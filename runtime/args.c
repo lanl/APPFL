@@ -9,12 +9,14 @@ int evalStrategy = LAZY;
 
 int constStrict = 0;
 
+bool sanityChecker = false;
+
 int LoggingLevel = LOG_LEVEL;
 
 
 void parseArgs (int argc, char **argv) {
   int c;
-  while ((c = getopt (argc, argv, "gt:e:c:l:")) != -1)
+  while ((c = getopt (argc, argv, "gt:e:c:l:s")) != -1)
     switch (c) {
     case 'g':
       GCThreshold = 1.0; // never run
@@ -35,5 +37,10 @@ void parseArgs (int argc, char **argv) {
     case 'l':
       LoggingLevel = atoi(optarg);
       break;
+      
+    case 's':
+      sanityChecker = true;
+      break;
+        
     }
 }
