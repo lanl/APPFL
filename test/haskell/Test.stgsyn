@@ -1,0 +1,800 @@
+(StgNonRec)
+  Test.isTrue# =
+  (FUN) Upd: r
+  [eta]
+    (Op) (Prim) tagToEnum# [eta]
+(StgNonRec)
+  Test.efdtIntDnFB =
+  (FUN) Upd: r
+  [c, n, x1, x2, y]
+    (Case) (Op) (Prim) ># [y, x2] = sat
+      (PrimAlt)
+        (DEFAULT) _
+          -> (Case) (Op) (Prim) tagToEnum# [sat] = wild
+               (AlgAlt)
+                 (DataAlt) GHC.Types.False
+                   -> (Case) (Op) (Prim) -# [x2, x1] = delta
+                        (PrimAlt)
+                          (DEFAULT) _
+                            -> (Case) (Op) (Prim) -# [y, delta] = y'
+                                 (PrimAlt)
+                                   (DEFAULT) _
+                                     -> (Let) let
+                                          (StgNonRec)
+                                            sat =
+                                            (THUNK) Upd: u
+                                              (Let) let
+                                                (StgRec)
+                                                  go_dn =
+                                                  (FUN) Upd: r
+                                                  [x]
+                                                    (Case) (Op) (Prim) <# [x, y'] = sat
+                                                      (PrimAlt)
+                                                        (DEFAULT) _
+                                                          -> (Case) (Op) (Prim) tagToEnum# [sat] = wild1
+                                                               (AlgAlt)
+                                                                 (DataAlt) GHC.Types.False
+                                                                   -> (Let) let
+                                                                        (StgNonRec)
+                                                                          sat =
+                                                                          (THUNK) Upd: u
+                                                                            (Case) (Op) (Prim) +# [x,
+                                                                                                   delta] = sat
+                                                                              (PrimAlt)
+                                                                                (DEFAULT) _
+                                                                                  -> (App) go_dn sat
+                                                                      in (Let) let
+                                                                           (StgNonRec)
+                                                                             sat =
+                                                                             (CONish) Test.I# [x]
+                                                                         in (App) c sat sat
+                                                                 (DataAlt) GHC.Types.True
+                                                                   -> (Let) let
+                                                                        (StgNonRec)
+                                                                          sat =
+                                                                          (CONish) Test.I# [x]
+                                                                      in (App) c sat n
+                                              in (App) go_dn x2
+                                        in (Let) let
+                                             (StgNonRec)
+                                               sat =
+                                               (CONish) Test.I# [x1]
+                                           in (App) c sat sat
+                 (DataAlt) GHC.Types.True
+                   -> (Case) (Op) (Prim) ># [y, x1] = sat
+                        (PrimAlt)
+                          (DEFAULT) _
+                            -> (Case) (Op) (Prim) tagToEnum# [sat] = wild1
+                                 (AlgAlt)
+                                   (DataAlt) GHC.Types.False
+                                     -> (Let) let
+                                          (StgNonRec)
+                                            sat =
+                                            (CONish) Test.I# [x1]
+                                        in (App) c sat n
+                                   (DataAlt) GHC.Types.True -> (App) n
+(StgNonRec)
+  Test.efdtIntDn =
+  (FUN) Upd: r
+  [x1, x2, y]
+    (Case) (Op) (Prim) ># [y, x2] = sat
+      (PrimAlt)
+        (DEFAULT) _
+          -> (Case) (Op) (Prim) tagToEnum# [sat] = wild
+               (AlgAlt)
+                 (DataAlt) GHC.Types.False
+                   -> (Case) (Op) (Prim) -# [x2, x1] = delta
+                        (PrimAlt)
+                          (DEFAULT) _
+                            -> (Case) (Op) (Prim) -# [y, delta] = y'
+                                 (PrimAlt)
+                                   (DEFAULT) _
+                                     -> (Let) let
+                                          (StgNonRec)
+                                            sat =
+                                            (THUNK) Upd: u
+                                              (Let) let
+                                                (StgRec)
+                                                  go_dn =
+                                                  (FUN) Upd: r
+                                                  [x]
+                                                    (Case) (Op) (Prim) <# [x, y'] = sat
+                                                      (PrimAlt)
+                                                        (DEFAULT) _
+                                                          -> (Case) (Op) (Prim) tagToEnum# [sat] = wild1
+                                                               (AlgAlt)
+                                                                 (DataAlt) GHC.Types.False
+                                                                   -> (Let) let
+                                                                        (StgNonRec)
+                                                                          sat =
+                                                                          (THUNK) Upd: u
+                                                                            (Case) (Op) (Prim) +# [x,
+                                                                                                   delta] = sat
+                                                                              (PrimAlt)
+                                                                                (DEFAULT) _
+                                                                                  -> (App) go_dn sat
+                                                                      in (Let) let
+                                                                           (StgNonRec)
+                                                                             sat =
+                                                                             (CONish) Test.I# [x]
+                                                                         in (ConApp) GHC.Types.: [sat,
+                                                                                                  sat]
+                                                                 (DataAlt) GHC.Types.True
+                                                                   -> (Let) let
+                                                                        (StgNonRec)
+                                                                          sat =
+                                                                          (CONish) Test.I# [x]
+                                                                      in (ConApp) GHC.Types.: [sat,
+                                                                                               GHC.Types.[]]
+                                              in (App) go_dn x2
+                                        in (Let) let
+                                             (StgNonRec)
+                                               sat =
+                                               (CONish) Test.I# [x1]
+                                           in (ConApp) GHC.Types.: [sat, sat]
+                 (DataAlt) GHC.Types.True
+                   -> (Case) (Op) (Prim) ># [y, x1] = sat
+                        (PrimAlt)
+                          (DEFAULT) _
+                            -> (Case) (Op) (Prim) tagToEnum# [sat] = wild1
+                                 (AlgAlt)
+                                   (DataAlt) GHC.Types.False
+                                     -> (Let) let
+                                          (StgNonRec)
+                                            sat =
+                                            (CONish) Test.I# [x1]
+                                        in (ConApp) GHC.Types.: [sat, GHC.Types.[]]
+                                   (DataAlt) GHC.Types.True -> (ConApp) GHC.Types.[] []
+(StgNonRec)
+  Test.efdtIntUpFB =
+  (FUN) Upd: r
+  [c, n, x1, x2, y]
+    (Case) (Op) (Prim) <# [y, x2] = sat
+      (PrimAlt)
+        (DEFAULT) _
+          -> (Case) (Op) (Prim) tagToEnum# [sat] = wild
+               (AlgAlt)
+                 (DataAlt) GHC.Types.False
+                   -> (Case) (Op) (Prim) -# [x2, x1] = delta
+                        (PrimAlt)
+                          (DEFAULT) _
+                            -> (Case) (Op) (Prim) -# [y, delta] = y'
+                                 (PrimAlt)
+                                   (DEFAULT) _
+                                     -> (Let) let
+                                          (StgNonRec)
+                                            sat =
+                                            (THUNK) Upd: u
+                                              (Let) let
+                                                (StgRec)
+                                                  go_up =
+                                                  (FUN) Upd: r
+                                                  [x]
+                                                    (Case) (Op) (Prim) ># [x, y'] = sat
+                                                      (PrimAlt)
+                                                        (DEFAULT) _
+                                                          -> (Case) (Op) (Prim) tagToEnum# [sat] = wild1
+                                                               (AlgAlt)
+                                                                 (DataAlt) GHC.Types.False
+                                                                   -> (Let) let
+                                                                        (StgNonRec)
+                                                                          sat =
+                                                                          (THUNK) Upd: u
+                                                                            (Case) (Op) (Prim) +# [x,
+                                                                                                   delta] = sat
+                                                                              (PrimAlt)
+                                                                                (DEFAULT) _
+                                                                                  -> (App) go_up sat
+                                                                      in (Let) let
+                                                                           (StgNonRec)
+                                                                             sat =
+                                                                             (CONish) Test.I# [x]
+                                                                         in (App) c sat sat
+                                                                 (DataAlt) GHC.Types.True
+                                                                   -> (Let) let
+                                                                        (StgNonRec)
+                                                                          sat =
+                                                                          (CONish) Test.I# [x]
+                                                                      in (App) c sat n
+                                              in (App) go_up x2
+                                        in (Let) let
+                                             (StgNonRec)
+                                               sat =
+                                               (CONish) Test.I# [x1]
+                                           in (App) c sat sat
+                 (DataAlt) GHC.Types.True
+                   -> (Case) (Op) (Prim) <# [y, x1] = sat
+                        (PrimAlt)
+                          (DEFAULT) _
+                            -> (Case) (Op) (Prim) tagToEnum# [sat] = wild1
+                                 (AlgAlt)
+                                   (DataAlt) GHC.Types.False
+                                     -> (Let) let
+                                          (StgNonRec)
+                                            sat =
+                                            (CONish) Test.I# [x1]
+                                        in (App) c sat n
+                                   (DataAlt) GHC.Types.True -> (App) n
+(StgNonRec)
+  Test.efdtIntUp =
+  (FUN) Upd: r
+  [x1, x2, y]
+    (Case) (Op) (Prim) <# [y, x2] = sat
+      (PrimAlt)
+        (DEFAULT) _
+          -> (Case) (Op) (Prim) tagToEnum# [sat] = wild
+               (AlgAlt)
+                 (DataAlt) GHC.Types.False
+                   -> (Case) (Op) (Prim) -# [x2, x1] = delta
+                        (PrimAlt)
+                          (DEFAULT) _
+                            -> (Case) (Op) (Prim) -# [y, delta] = y'
+                                 (PrimAlt)
+                                   (DEFAULT) _
+                                     -> (Let) let
+                                          (StgNonRec)
+                                            sat =
+                                            (THUNK) Upd: u
+                                              (Let) let
+                                                (StgRec)
+                                                  go_up =
+                                                  (FUN) Upd: r
+                                                  [x]
+                                                    (Case) (Op) (Prim) ># [x, y'] = sat
+                                                      (PrimAlt)
+                                                        (DEFAULT) _
+                                                          -> (Case) (Op) (Prim) tagToEnum# [sat] = wild1
+                                                               (AlgAlt)
+                                                                 (DataAlt) GHC.Types.False
+                                                                   -> (Let) let
+                                                                        (StgNonRec)
+                                                                          sat =
+                                                                          (THUNK) Upd: u
+                                                                            (Case) (Op) (Prim) +# [x,
+                                                                                                   delta] = sat
+                                                                              (PrimAlt)
+                                                                                (DEFAULT) _
+                                                                                  -> (App) go_up sat
+                                                                      in (Let) let
+                                                                           (StgNonRec)
+                                                                             sat =
+                                                                             (CONish) Test.I# [x]
+                                                                         in (ConApp) GHC.Types.: [sat,
+                                                                                                  sat]
+                                                                 (DataAlt) GHC.Types.True
+                                                                   -> (Let) let
+                                                                        (StgNonRec)
+                                                                          sat =
+                                                                          (CONish) Test.I# [x]
+                                                                      in (ConApp) GHC.Types.: [sat,
+                                                                                               GHC.Types.[]]
+                                              in (App) go_up x2
+                                        in (Let) let
+                                             (StgNonRec)
+                                               sat =
+                                               (CONish) Test.I# [x1]
+                                           in (ConApp) GHC.Types.: [sat, sat]
+                 (DataAlt) GHC.Types.True
+                   -> (Case) (Op) (Prim) <# [y, x1] = sat
+                        (PrimAlt)
+                          (DEFAULT) _
+                            -> (Case) (Op) (Prim) tagToEnum# [sat] = wild1
+                                 (AlgAlt)
+                                   (DataAlt) GHC.Types.False
+                                     -> (Let) let
+                                          (StgNonRec)
+                                            sat =
+                                            (CONish) Test.I# [x1]
+                                        in (ConApp) GHC.Types.: [sat, GHC.Types.[]]
+                                   (DataAlt) GHC.Types.True -> (ConApp) GHC.Types.[] []
+(StgNonRec)
+  Test.efdtIntFB =
+  (FUN) Upd: r
+  [eta, eta1, eta2, eta3, eta4]
+    (Case) (Op) (Prim) >=# [eta3, eta2] = sat
+      (PrimAlt)
+        (DEFAULT) _
+          -> (Case) (Op) (Prim) tagToEnum# [sat] = wild
+               (AlgAlt)
+                 (DataAlt) GHC.Types.False
+                   -> (App) Test.efdtIntDnFB eta eta1 eta2 eta3 eta4
+                 (DataAlt) GHC.Types.True
+                   -> (App) Test.efdtIntUpFB eta eta1 eta2 eta3 eta4
+(StgNonRec)
+  Test.efdtInt =
+  (FUN) Upd: r
+  [x1, x2, y]
+    (Case) (Op) (Prim) >=# [x2, x1] = sat
+      (PrimAlt)
+        (DEFAULT) _
+          -> (Case) (Op) (Prim) tagToEnum# [sat] = wild
+               (AlgAlt)
+                 (DataAlt) GHC.Types.False -> (App) Test.efdtIntDn x1 x2 y
+                 (DataAlt) GHC.Types.True -> (App) Test.efdtIntUp x1 x2 y
+(StgNonRec)
+  Test.eftIntFB =
+  (FUN) Upd: r
+  [eta, eta1, eta2, eta3]
+    (Case) (Op) (Prim) ># [eta2, eta3] = sat
+      (PrimAlt)
+        (DEFAULT) _
+          -> (Case) (Op) (Prim) tagToEnum# [sat] = wild
+               (AlgAlt)
+                 (DataAlt) GHC.Types.False
+                   -> (Let) let
+                        (StgRec)
+                          go =
+                          (FUN) Upd: r
+                          [x]
+                            (Let) let
+                              (StgNonRec)
+                                sat =
+                                (THUNK) Upd: u
+                                  (Case) (Op) (Prim) ==# [x, eta3] = sat
+                                    (PrimAlt)
+                                      (DEFAULT) _
+                                        -> (Case) (Op) (Prim) tagToEnum# [sat] = wild1
+                                             (AlgAlt)
+                                               (DataAlt) GHC.Types.False
+                                                 -> (Case) (Op) (Prim) +# [x, 1] = sat
+                                                      (PrimAlt) (DEFAULT) _ -> (App) go sat
+                                               (DataAlt) GHC.Types.True -> (App) eta1
+                            in (Let) let
+                                 (StgNonRec)
+                                   sat =
+                                   (CONish) Test.I# [x]
+                               in (App) eta sat sat
+                      in (App) go eta2
+                 (DataAlt) GHC.Types.True -> (App) eta1
+(StgNonRec)
+  Test.eftInt =
+  (FUN) Upd: r
+  [x0, y]
+    (Case) (Op) (Prim) ># [x0, y] = sat
+      (PrimAlt)
+        (DEFAULT) _
+          -> (Case) (Op) (Prim) tagToEnum# [sat] = wild
+               (AlgAlt)
+                 (DataAlt) GHC.Types.False
+                   -> (Let) let
+                        (StgRec)
+                          go =
+                          (FUN) Upd: r
+                          [x]
+                            (Let) let
+                              (StgNonRec)
+                                sat =
+                                (THUNK) Upd: u
+                                  (Case) (Op) (Prim) ==# [x, y] = sat
+                                    (PrimAlt)
+                                      (DEFAULT) _
+                                        -> (Case) (Op) (Prim) tagToEnum# [sat] = wild1
+                                             (AlgAlt)
+                                               (DataAlt) GHC.Types.False
+                                                 -> (Case) (Op) (Prim) +# [x, 1] = sat
+                                                      (PrimAlt) (DEFAULT) _ -> (App) go sat
+                                               (DataAlt) GHC.Types.True -> (ConApp) GHC.Types.[] []
+                            in (Let) let
+                                 (StgNonRec)
+                                   sat =
+                                   (CONish) Test.I# [x]
+                               in (ConApp) GHC.Types.: [sat, sat]
+                      in (App) go x0
+                 (DataAlt) GHC.Types.True -> (ConApp) GHC.Types.[] []
+(StgNonRec)
+  Test.maxInt =
+  (CONish) Test.I# [7]
+(StgNonRec)
+  Test.minInt =
+  (CONish) Test.I# [(-8)]
+(StgNonRec)
+  Test.efdInt =
+  (FUN) Upd: r
+  [x1, x2]
+    (Case) (Op) (Prim) >=# [x2, x1] = sat
+      (PrimAlt)
+        (DEFAULT) _
+          -> (Case) (Op) (Prim) tagToEnum# [sat] = wild
+               (AlgAlt)
+                 (DataAlt) GHC.Types.False
+                   -> (Case) (App) Test.minInt = wild1
+                        (AlgAlt) (DataAlt) Test.I# y -> (App) Test.efdtIntDn x1 x2 y
+                 (DataAlt) GHC.Types.True
+                   -> (Case) (App) Test.maxInt = wild1
+                        (AlgAlt) (DataAlt) Test.I# y -> (App) Test.efdtIntUp x1 x2 y
+(StgNonRec)
+  Test.leInt =
+  (FUN) Upd: r
+  [eta, eta1]
+    (Case) (App) eta = wild
+      (AlgAlt)
+        (DataAlt) Test.I# x
+          -> (Case) (App) eta1 = wild1
+               (AlgAlt)
+                 (DataAlt) Test.I# y
+                   -> (Case) (Op) (Prim) <=# [x, y] = sat
+                        (PrimAlt) (DEFAULT) _ -> (Op) (Prim) tagToEnum# [sat]
+(StgNonRec)
+  Test.ltInt =
+  (FUN) Upd: r
+  [eta, eta1]
+    (Case) (App) eta = wild
+      (AlgAlt)
+        (DataAlt) Test.I# x
+          -> (Case) (App) eta1 = wild1
+               (AlgAlt)
+                 (DataAlt) Test.I# y
+                   -> (Case) (Op) (Prim) <# [x, y] = sat
+                        (PrimAlt) (DEFAULT) _ -> (Op) (Prim) tagToEnum# [sat]
+(StgNonRec)
+  Test.geInt =
+  (FUN) Upd: r
+  [eta, eta1]
+    (Case) (App) eta = wild
+      (AlgAlt)
+        (DataAlt) Test.I# x
+          -> (Case) (App) eta1 = wild1
+               (AlgAlt)
+                 (DataAlt) Test.I# y
+                   -> (Case) (Op) (Prim) >=# [x, y] = sat
+                        (PrimAlt) (DEFAULT) _ -> (Op) (Prim) tagToEnum# [sat]
+(StgNonRec)
+  Test.gtInt =
+  (FUN) Upd: r
+  [eta, eta1]
+    (Case) (App) eta = wild
+      (AlgAlt)
+        (DataAlt) Test.I# x
+          -> (Case) (App) eta1 = wild1
+               (AlgAlt)
+                 (DataAlt) Test.I# y
+                   -> (Case) (Op) (Prim) ># [x, y] = sat
+                        (PrimAlt) (DEFAULT) _ -> (Op) (Prim) tagToEnum# [sat]
+(StgNonRec)
+  Test.neInt =
+  (FUN) Upd: r
+  [eta, eta1]
+    (Case) (App) eta = wild
+      (AlgAlt)
+        (DataAlt) Test.I# x
+          -> (Case) (App) eta1 = wild1
+               (AlgAlt)
+                 (DataAlt) Test.I# y
+                   -> (Case) (Op) (Prim) /=# [x, y] = sat
+                        (PrimAlt) (DEFAULT) _ -> (Op) (Prim) tagToEnum# [sat]
+(StgNonRec)
+  Test.eqInt =
+  (FUN) Upd: r
+  [eta, eta1]
+    (Case) (App) eta = wild
+      (AlgAlt)
+        (DataAlt) Test.I# x
+          -> (Case) (App) eta1 = wild1
+               (AlgAlt)
+                 (DataAlt) Test.I# y
+                   -> (Case) (Op) (Prim) ==# [x, y] = sat
+                        (PrimAlt) (DEFAULT) _ -> (Op) (Prim) tagToEnum# [sat]
+(StgNonRec)
+  Test.zero =
+  (CONish) GHC.Integer.Type.S# [0]
+(StgNonRec)
+  Test.naught =
+  (THUNK) Upd: u
+    (App) GHC.Integer.Type.mkInteger GHC.Types.True GHC.Types.[]
+(StgNonRec)
+  $cfromInteger =
+  (FUN) Upd: r
+  [eta]
+    (Case) (App) GHC.Integer.Type.integerToInt eta = wild
+      (PrimAlt) (DEFAULT) _ -> (ConApp) Test.I# [wild]
+(StgNonRec)
+  $cnegate =
+  (FUN) Upd: r
+  [ds]
+    (Case) (App) ds = wild
+      (AlgAlt)
+        (DataAlt) Test.I# x
+          -> (Case) (Op) (Prim) negateInt# [x] = sat
+               (PrimAlt) (DEFAULT) _ -> (ConApp) Test.I# [sat]
+(StgNonRec)
+  $c* =
+  (FUN) Upd: r
+  [ds, ds1]
+    (Case) (App) ds = wild
+      (AlgAlt)
+        (DataAlt) Test.I# x
+          -> (Case) (App) ds1 = wild1
+               (AlgAlt)
+                 (DataAlt) Test.I# y
+                   -> (Case) (Op) (Prim) *# [x, y] = sat
+                        (PrimAlt) (DEFAULT) _ -> (ConApp) Test.I# [sat]
+(StgNonRec)
+  $c- =
+  (FUN) Upd: r
+  [ds, ds1]
+    (Case) (App) ds = wild
+      (AlgAlt)
+        (DataAlt) Test.I# x
+          -> (Case) (App) ds1 = wild1
+               (AlgAlt)
+                 (DataAlt) Test.I# y
+                   -> (Case) (Op) (Prim) -# [x, y] = sat
+                        (PrimAlt) (DEFAULT) _ -> (ConApp) Test.I# [sat]
+(StgNonRec)
+  $c+ =
+  (FUN) Upd: r
+  [ds, ds1]
+    (Case) (App) ds = wild
+      (AlgAlt)
+        (DataAlt) Test.I# x
+          -> (Case) (App) ds1 = wild1
+               (AlgAlt)
+                 (DataAlt) Test.I# y
+                   -> (Case) (Op) (Prim) +# [x, y] = sat
+                        (PrimAlt) (DEFAULT) _ -> (ConApp) Test.I# [sat]
+(StgNonRec)
+  Test.$fEqInt =
+  (CONish) GHC.Classes.D:Eq [Test.eqInt, Test.neInt]
+(StgNonRec)
+  Test.$fBoundedInt =
+  (CONish) GHC.Enum.D:Bounded [Test.minInt, Test.maxInt]
+(StgNonRec)
+  $cenumFromThenTo =
+  (FUN) Upd: r
+  [eta, eta1, eta2]
+    (Case) (App) eta = wild
+      (AlgAlt)
+        (DataAlt) Test.I# x1
+          -> (Case) (App) eta1 = wild1
+               (AlgAlt)
+                 (DataAlt) Test.I# x2
+                   -> (Case) (App) eta2 = wild2
+                        (AlgAlt) (DataAlt) Test.I# y -> (App) Test.efdtInt x1 x2 y
+(StgNonRec)
+  $cenumFromTo =
+  (FUN) Upd: r
+  [eta, eta1]
+    (Case) (App) eta = wild
+      (AlgAlt)
+        (DataAlt) Test.I# x
+          -> (Case) (App) eta1 = wild1
+               (AlgAlt) (DataAlt) Test.I# y -> (App) Test.eftInt x y
+(StgNonRec)
+  $cenumFromThen =
+  (FUN) Upd: r
+  [eta, eta1]
+    (Case) (App) eta = wild
+      (AlgAlt)
+        (DataAlt) Test.I# x1
+          -> (Case) (App) eta1 = wild1
+               (AlgAlt) (DataAlt) Test.I# x2 -> (App) Test.efdInt x1 x2
+(StgNonRec)
+  $cenumFrom =
+  (FUN) Upd: r
+  [eta]
+    (Case) (App) eta = wild
+      (AlgAlt)
+        (DataAlt) Test.I# x
+          -> (Case) (App) Test.maxInt = wild1
+               (AlgAlt) (DataAlt) Test.I# maxInt# -> (App) Test.eftInt x maxInt#
+(StgNonRec)
+  $cfromEnum =
+  (FUN) Upd: r
+  [ds]
+    (Case) (App) ds = wild
+      (AlgAlt) (DataAlt) Test.I# x -> (ConApp) GHC.Types.I# [x]
+(StgNonRec)
+  $ctoEnum =
+  (FUN) Upd: r
+  [ds]
+    (Case) (App) ds = wild
+      (AlgAlt) (DataAlt) GHC.Types.I# x -> (ConApp) Test.I# [x]
+(StgRec)
+  Test.$fNumInt =
+  (CONish) GHC.Num.D:Num [$c+,
+                          $c-,
+                          $c*,
+                          $cnegate,
+                          $cabs,
+                          $csignum,
+                          $cfromInteger]
+  $cabs =
+  (FUN) Upd: r
+  [n]
+    (Case) (App) n = wild
+      (AlgAlt)
+        (DataAlt) Test.I# x
+          -> (Let) let
+               (StgNonRec)
+                 sat =
+                 (CONish) GHC.Integer.Type.S# [0]
+             in (Case) (App) GHC.Num.fromInteger Test.$fNumInt sat = wild1
+                  (AlgAlt)
+                    (DataAlt) Test.I# y
+                      -> (Case) (Op) (Prim) >=# [x, y] = sat
+                           (PrimAlt)
+                             (DEFAULT) _
+                               -> (Case) (Op) (Prim) tagToEnum# [sat] = wild2
+                                    (AlgAlt)
+                                      (DataAlt) GHC.Types.False
+                                        -> (App) GHC.Num.negate Test.$fNumInt wild
+                                      (DataAlt) GHC.Types.True -> (App) wild
+  $csignum =
+  (FUN) Upd: r
+  [n]
+    (Case) (App) n = wild
+      (AlgAlt)
+        (DataAlt) Test.I# x
+          -> (Let) let
+               (StgNonRec)
+                 sat =
+                 (CONish) GHC.Integer.Type.S# [0]
+             in (Case) (App) GHC.Num.fromInteger Test.$fNumInt sat = wild1
+                  (AlgAlt)
+                    (DataAlt) Test.I# y
+                      -> (Case) (Op) (Prim) <# [x, y] = sat
+                           (PrimAlt)
+                             (DEFAULT) _
+                               -> (Case) (Op) (Prim) tagToEnum# [sat] = wild2
+                                    (AlgAlt)
+                                      (DataAlt) GHC.Types.False
+                                        -> (Case) (App) wild = wild3
+                                             (AlgAlt)
+                                               (DataAlt) Test.I# x1
+                                                 -> (Let) let
+                                                      (StgNonRec)
+                                                        sat =
+                                                        (CONish) GHC.Integer.Type.S# [0]
+                                                    in (Case) (App) GHC.Num.fromInteger Test.$fNumInt sat = wild4
+                                                         (AlgAlt)
+                                                           (DataAlt) Test.I# y1
+                                                             -> (Case) (Op) (Prim) ==# [x1,
+                                                                                        y1] = sat
+                                                                  (PrimAlt)
+                                                                    (DEFAULT) _
+                                                                      -> (Case) (Op) (Prim) tagToEnum# [sat] = wild5
+                                                                           (AlgAlt)
+                                                                             (DataAlt) GHC.Types.False
+                                                                               -> (Let) let
+                                                                                    (StgNonRec)
+                                                                                      sat =
+                                                                                      (CONish) GHC.Integer.Type.S# [1]
+                                                                                  in (App) GHC.Num.fromInteger Test.$fNumInt sat
+                                                                             (DataAlt) GHC.Types.True
+                                                                               -> (Let) let
+                                                                                    (StgNonRec)
+                                                                                      sat =
+                                                                                      (CONish) GHC.Integer.Type.S# [0]
+                                                                                  in (App) GHC.Num.fromInteger Test.$fNumInt sat
+                                      (DataAlt) GHC.Types.True
+                                        -> (Let) let
+                                             (StgNonRec)
+                                               sat =
+                                               (THUNK) Upd: u
+                                                 (Let) let
+                                                   (StgNonRec)
+                                                     sat =
+                                                     (CONish) GHC.Integer.Type.S# [1]
+                                                 in (App) GHC.Num.fromInteger Test.$fNumInt sat
+                                           in (App) GHC.Num.negate Test.$fNumInt sat
+(StgNonRec)
+  $cpred =
+  (FUN) Upd: r
+  [x]
+    (Let) let
+      (StgNonRec)
+        sat =
+        (THUNK) Upd: u (App) GHC.Enum.minBound Test.$fBoundedInt
+    in (Case) (App) GHC.Classes.== Test.$fEqInt x sat = wild
+         (AlgAlt)
+           (DataAlt) GHC.Types.False
+             -> (Let) let
+                  (StgNonRec)
+                    sat =
+                    (THUNK) Upd: u
+                      (Let) let
+                        (StgNonRec)
+                          sat =
+                          (CONish) GHC.Integer.Type.S# [1]
+                      in (App) GHC.Num.fromInteger Test.$fNumInt sat
+                in (App) GHC.Num.- Test.$fNumInt x sat
+           (DataAlt) GHC.Types.True
+             -> (Case) (App) GHC.CString.unpackCString# "Prelude.Enum.pred{Int}: tried to take `pred' of minBound"# = sat
+                  (AlgAlt) (DEFAULT) _ -> (App) GHC.Err.error sat
+(StgNonRec)
+  $csucc =
+  (FUN) Upd: r
+  [x]
+    (Let) let
+      (StgNonRec)
+        sat =
+        (THUNK) Upd: u (App) GHC.Enum.maxBound Test.$fBoundedInt
+    in (Case) (App) GHC.Classes.== Test.$fEqInt x sat = wild
+         (AlgAlt)
+           (DataAlt) GHC.Types.False
+             -> (Let) let
+                  (StgNonRec)
+                    sat =
+                    (THUNK) Upd: u
+                      (Let) let
+                        (StgNonRec)
+                          sat =
+                          (CONish) GHC.Integer.Type.S# [1]
+                      in (App) GHC.Num.fromInteger Test.$fNumInt sat
+                in (App) GHC.Num.+ Test.$fNumInt x sat
+           (DataAlt) GHC.Types.True
+             -> (Case) (App) GHC.CString.unpackCString# "Prelude.Enum.succ{Int}: tried to take `succ' of maxBound"# = sat
+                  (AlgAlt) (DEFAULT) _ -> (App) GHC.Err.error sat
+(StgNonRec)
+  Test.$fEnumInt =
+  (CONish) GHC.Enum.D:Enum [$csucc,
+                            $cpred,
+                            $ctoEnum,
+                            $cfromEnum,
+                            $cenumFrom,
+                            $cenumFromThen,
+                            $cenumFromTo,
+                            $cenumFromThenTo]
+(StgNonRec)
+  $cshowsPrec =
+  (FUN) Upd: r
+  [a, ds]
+    (Case) (App) ds = wild
+      (AlgAlt)
+        (DataAlt) Test.I# b1
+          -> (Let) let
+               (StgNonRec)
+                 sat =
+                 (THUNK) Upd: u
+                   (Let) let
+                     (StgNonRec)
+                       sat =
+                       (THUNK) Upd: u
+                         (Let) let
+                           (StgNonRec)
+                             sat =
+                             (CONish) GHC.Types.I# [b1]
+                         in (Let) let
+                              (StgNonRec)
+                                sat =
+                                (CONish) GHC.Types.I# [11]
+                            in (App) GHC.Show.showsPrec GHC.Show.$fShowInt sat sat
+                   in (Let) let
+                        (StgNonRec)
+                          sat =
+                          (THUNK) Upd: u
+                            (Let) let
+                              (StgNonRec)
+                                sat =
+                                (THUNK) Upd: u (App) GHC.CString.unpackCString# "I# "#
+                            in (App) GHC.Show.showString sat
+                      in (App) GHC.Base.. sat sat
+             in (Let) let
+                  (StgNonRec)
+                    sat =
+                    (THUNK) Upd: u
+                      (Let) let
+                        (StgNonRec)
+                          sat =
+                          (CONish) GHC.Types.I# [11]
+                      in (App) GHC.Classes.>= GHC.Classes.$fOrdInt a sat
+                in (App) GHC.Show.showParen sat sat
+(StgRec)
+  sat =
+  (THUNK) Upd: u
+    (Let) let
+      (StgNonRec)
+        sat =
+        (CONish) GHC.Types.I# [0]
+    in (App) GHC.Show.showsPrec Test.$fShowInt sat
+  Test.$fShowInt =
+  (CONish) GHC.Show.D:Show [$cshowsPrec, $cshow, $cshowList]
+  $cshowList =
+  (THUNK) Upd: u (App) GHC.Show.showList__ sat
+  $cshow =
+  (THUNK) Upd: u (App) GHC.Show.$dmshow Test.$fShowInt
+(StgNonRec)
+  Test.I# =
+  (FUN) Upd: r
+  [eta]
+    (ConApp) Test.I# [eta]

@@ -120,7 +120,10 @@ import           Control.Monad
 testDir = "../test/haskell/"
 target f = testDir ++ f
 
-pprStgSyn file = compileAndThen stgSynString file >>= putStrLn . snd
+putStgSyn file = compileAndThen stgSynString file >>= putStrLn . snd
+writeStgSyn infile outfile =
+  compileAndThen stgSynString infile >>= writeFile outfile . snd
+  
 
 stgSynString stg = do
   dynflags <- getSessionDynFlags
@@ -351,16 +354,17 @@ instance OutputSyn StgExpr where
         -> hang (prefix "Case" <+> pprSyn scrut <+> equals <+> pprSyn bind) 2
            (hang (pprSyn altT) 2 (vcat (map pprSyn alts)))
       StgLet bindings body 
-        -> prefix "Let" <+> pprSynLet bindings body
+        -> pprSynLet "Let" bindings body
       StgLetNoEscape _ _ bindings body 
-        -> prefix "LetNE" <+> pprSynLet bindings body        
+        -> pprSynLet "LetNE" bindings body        
       StgTick _ realExpr 
         -> prefix "Tick" <+> pprSyn realExpr
 
 -- Handle the bindings and body of the two varieties of Let expressions
-pprSynLet :: StgBinding -> StgExpr -> SDoc
-pprSynLet binds body = pprSyn binds $+$
-                       text "in" <+> pprSyn body
+pprSynLet :: String -> StgBinding -> StgExpr -> SDoc
+pprSynLet pfxStr binds body = hang (prefix pfxStr <+> text "let") 2
+                              (pprSyn binds) $+$
+                              text "in" <+> pprSyn body
 
 instance OutputSyn StgAlt where
   pprSyn (acon, params, useMask, rhs) =
