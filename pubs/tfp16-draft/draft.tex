@@ -13,7 +13,7 @@
 \usepackage{comment} % comment environment
 \usepackage{hyperref} 
 
-\renewcommand{\floatpagefraction}{0.99}
+\renewcommand{\floatpagefraction}{0.8}
 %
 \begin{document}
 %
@@ -23,7 +23,8 @@
 %
 %mkd \mainmatter              % start of the contributions
 %
-\title{Automatic Parallelization and Transparent Fault Tolerance}
+\title{Automatic Parallelization and Transparent Fault Tolerance\\
+       (\emph{draft})}
 %
 \titlerunning{Automatic Parallelization}  % abbreviated title (for running head)
 %                                     also used for the TOC unless
@@ -81,6 +82,31 @@ strictness.
 \hspace{0.2in} Our development has been greatly informed by the extant
 literature and we indicate both where we follow, and deviate from,
 these sources.
+%
+\\
+{\color{OliveGreen} % \bf
+\emph{Draft paper notes:}
+\begin{enumerate}[before=\itshape]
+\item We are reporting work in progress.  At the time of writing we have a
+  serial implementation, a primitive proof-of-concept parallel
+  implementation, and are currently developing a more realistic parallel
+  runtime.  
+%We expect to have preliminary results from our new parallel
+%implementation by the time of the symposium.  
+The fault-tolerance mechanisms remain future work.
+
+\item Hopefully in the spirit of a student-friendly symposium, this draft is
+  liberally annotated with indicators of student contributions, student
+  preparation, the influence of their involvement on our approach, and other
+  incidental and ancillary comments.  A final paper would of course be cleaned
+  up and potentially considerably shortened.
+
+\item While \textcolor{OrangeRed}{this does not qualify as a student paper}, students
+  (all undergraduate) have contributed considerably to this effort, and to the
+  writing of this paper, and will continue to do so.  If this paper is
+  accepted we plan to have one of these students present it at TiFP'16.
+\end{enumerate}
+}
 
 \keywords{Strict pure functional programming, automatic parallelization,
   transparent fault tolerance, Haskell, STG, GHC, GHC Core.}
@@ -307,7 +333,14 @@ this, and thereby sufficiently limiting the use of the native C stack, will be
 discussed at some length.
 
 A minor, informal goal is to gain a sense of how often relatively
-inexperienced functional programmers make essential use of non-strictness.
+inexperienced functional programmers make essential use of
+non-strictness and laziness.
+%\footnote{The starting experience of our student interns to
+%  date has been normalized by having them work through the entirety of Hutton's \emph{Programming
+%    in Haskell} textbook~\cite{Hutton-book} as baseline preparation,
+%  substituting his article \emph{Higher-order Functions for
+%    Parsing}~\cite{Hutton-parsing:1992} for the corresponding material in the
+%  book.}
 
 \section{Design and Implementation}
 Our wish list has much in common with the GHC Haskell implementation, and
@@ -323,19 +356,10 @@ In short, our plan is to use GHC as our front-end to generate one of its
 intermediate forms, STG or Core, then escape to our system from there.  There
 are various possible ways to accomplish the this: using GHC's option to dump
 STG or Core as text, hacking GHC itself, and, possibly, using GHC as a
-library~\cite{ghc-as-library}.  Initially we started with our own STG.
+library~\cite{ghc-as-library}.  Initially we start with our own STG.
+%, with bridging the gap with GHC scheduled to commence quite soon.
 
 \subsection{STG Language}
-\renewcommand{\floatpagefraction}{0.99}
-
-Our incarnation of STG, as shown in Figure~\ref{fig:STGsyntax}, is meant to
-evoke both an abstract and concrete syntax.  This formulation and presentation
-is adapted from Marlow and Peyton Jones' \emph{Eval/Apply}
-paper~\cite{Marlow:2004}, to which we will subsequently refer as \emph{EA}\@.
-A \emph{BLACKHOLE} object, signifying a \emph{THUNK} being evaluated, is only
-a run-time entity and not part of the language.  Omitted is the syntax for
-algebraic data type definitions which is given in
-Appendix~\ref{app:minihaskell}.
 
 \setlength{\tabcolsep}{5pt}
 \begin{figure}
@@ -397,6 +421,15 @@ Program      & $\mathit{prog}$ & ::= & $\mathit{odecl}_1$ \texttt{;}            
 \caption{STG syntax}
 \label{fig:STGsyntax}
 \end{figure}
+
+Our incarnation of STG, as shown in Figure~\ref{fig:STGsyntax}, is meant to
+evoke both an abstract and concrete syntax.  This formulation and presentation
+is adapted from Marlow and Peyton Jones' \emph{Eval/Apply}
+paper~\cite{Marlow:2004}, to which we will subsequently refer as \emph{EA}\@.
+A \emph{BLACKHOLE} object, signifying a \emph{THUNK} being evaluated, is only
+a run-time entity and not part of the language.  Omitted is the syntax for
+algebraic data type definitions which is given in
+Appendix~\ref{app:minihaskell}.
 
 With a few exceptions the semantics of STG is what a Haskell programmer
 familiar with unboxed types would expect for a higher-order, polymorphic, pure
@@ -741,23 +774,25 @@ this transformation implicitly using a strongly-connected components algorithm
 inspired by King and Launchbury~\cite{King:1995}.
 \end{comment}
 
-\section{Current Status, Future Work}
+\section{Current Status (June 8, 2016), Future Work}
 
 An almost unbounded amount of interesting development suggests itself; one
 such path could in principle lead to the recreation of GHC\@.  However, given
 the minuscule budget (and therefore the employment of student interns) we must
 maintain sharp focus on the main goals: implementing and evaluating mechanisms
-for automatic parallelism and fault tolerance.  Currently we have
+for automatic parallelism and fault tolerance.  At the time of writing we have
 a fully functioning serial implementation including
 \begin{itemize}
-\item STG parser,
-\item mini-Haskell parser, mini-Haskell to STG transformer,
+\item STG parser \emph{(by student)},
+\item mini-Haskell parser, mini-Haskell to STG transformer \emph{(by student)},
 \item type inferencer,
-\item various analysis and transformation passes,
-\item code generator,
+\item various analysis and transformation passes \emph{(some by students)},
+\item code generator \emph{(some student contribution)},
 \item runtime system including a garbage collector,
 \item continuous integration and testing system,
-\item extensive test suite, automated testing.
+\item extensive test suite \emph{(mostly by students)}.\footnote{Many are
+    students' solutions to exercises in learning algorithms and data
+    structures.}
 \end{itemize}
 
 The \emph{mini-Haskell} front-end is detailed in Appendix~\ref{app:minihaskell}.
@@ -783,17 +818,17 @@ non-blocking work queue~\cite{Michael:1996}.  We are currently developing a
 more realistic parallel runtime, experimenting with using the Argobots
 user-level thread library~\cite{Seo:2015}.
 %
-Bridging the gap between GHC STG and our STG, and the corresponding
-augmentation of the runtime is showing early signs of success.
-%
-An instrumentation infrastructure, integrated with the testing framework to
-record and present time and space run-time statistics such as number of heap
-and stack allocations and maximum stack depth, is planned for the near future.
-%
 The fault-tolerance mechanisms remain future work.
 %
 Parallel garbage collection is likely out of scope.
-%
+
+This summer (2016) a returning student will bridge the gap between GHC STG (or
+Core) and our STG, augmenting the runtime as needed.  Another student will
+develop an instrumentation infrastructure integrated with the testing
+framework to record and present time and space run-time statistics such as
+number of heap and stack allocations and maximum stack depth.
+
+
 %We have implemented a simple copying garbage collector~\cite{Cheney:1970} with
 %small \emph{nurseries} in the multithreaded case~\cite{Marlow:2008}. Marlow:2011 as well
 %\cite{Harris:2005,Marlow:2008,Marlow:2009}
@@ -929,10 +964,9 @@ completeness.
 
 
 % because # looks strangely large next to math terms
-
-
 \newcommand{\hash}{{\scriptsize\#}}
-\begin{figure}[h!tb]
+
+\begin{figure}
 \centering
 \footnotesize % tiny scriptsize footnotesize small
 \begin{tabular}{r r c l l}
@@ -1226,6 +1260,33 @@ infrastructure.
 
 We have also implemented a simple logging facility which can be controlled at 
 both compile and run time which helps in determining why a test is failing.
+
+\section{Student Preparation}
+
+Student interns' backgrounds in computer programming has ranged from minimal
+to some exposure to one or more mainstream imperative languages, Lisp, and
+Haskell.  To bring them to a normalized level of proficiency their first
+assignment has been to work through the entirety of Hutton's \emph{Programming
+  in Haskell} textbook~\cite{Hutton-book}, substituting one of his articles
+\emph{Higher-order Functions for Parsing}~\cite{Hutton-parsing:1992} or
+\emph{Monadic Parser Combinators}~\cite{Hutton:1996} for the corresponding
+material in the book.  This may be followed by writing a parser and ADT for a
+progressively enriched lambda calculus, together with call-by-value,
+call-by-name, and (in one case) call-by-need interpreters.  The concept of
+compilation can be illustrated with an exercise in parsing infix arithmetic
+expressions to an AST, and transforming that to a sequence of operations for a
+simple stack machine.  From this point they have then been able to substantively
+contribute to this project.
+
+% breaks page limit
+%  This learning phase can take the
+%better part of a summer or one-semester internship, so we particularly
+%seek return interns.
+
+
+%
+% ---- Bibliography ----
+%
 
 \bibliographystyle{splncs03}
 
