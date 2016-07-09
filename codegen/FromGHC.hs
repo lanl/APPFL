@@ -55,8 +55,10 @@ import           GHC
 import           GhcMonad
                  ( withSession, liftIO )   
 import           DynFlags
-                 ( defaultFatalMessager
+                 ( ExtensionFlag (..)
+                 , defaultFatalMessager
                  , defaultFlushOut
+                 , xopt_set, xopt_unset -- for LANGUAGE Extensions
                  )
 
 import           HscTypes
@@ -100,29 +102,39 @@ import           Var
 
 import qualified TyCon as GHC
                  ( TyCon, isDataTyCon )
+
 import           Literal ( Literal (..) )
 import           PrimOp
                  ( PrimOp (..), PrimCall (..)
                  , primOpOcc )
-
-import           ForeignCall ( ForeignCall (..), CCallSpec (..), CCallTarget (..) )
+import           ForeignCall
+                 ( ForeignCall (..), CCallSpec (..)
+                 , CCallTarget (..) )
 
 import           CostCentre
                  ( CollectedCCs )
+
 import           Outputable
 import           FastString ( unpackFS )
 import           Control.Monad
                  (liftM, mapAndUnzipM, zipWithM
                  , (>=>), (<=<), (=<<)
                  )
+import           Data.List (nubBy)
+import           Data.Function (on)
 
 
 testDir = "../test/haskell/"
 target f = testDir ++ f
 
-putStgSyn file = compileAndThen stgSynString file >>= putStrLn . snd
+-- For in-progress tests.
+testPreludeDir = "../prelude/"
+
+
+
+putStgSyn file = compileAndThen stgSynString testPreludeDir file >>= putStrLn . snd
 writeStgSyn infile outfile =
-  compileAndThen stgSynString infile >>= writeFile outfile . snd
+  compileAndThen stgSynString testPreludeDir infile >>= writeFile outfile . snd
   
 
 stgSynString stg = do
@@ -131,7 +143,7 @@ stgSynString stg = do
       text = showSDoc dynflags sdoc
   return text
 
-compileAndThen stgFun file = do
+compileAndThen stgFun preludeDir file = do
 
   -- Install an error handler with functions for printing errors and flushing
   -- the stdout stream
@@ -148,19 +160,8 @@ compileAndThen stgFun file = do
       -- compiler/main/SysTools.hs:initSysTools
       
       oldFlags <- getSessionDynFlags
-      let dflags = oldFlags
-            -- hscTarget determines what form the backend takes (Native,
-            -- LLVM, etc.)  We don't want any code generation but our own,
-            -- so HscNothing is appropriate
-            { hscTarget = HscNothing
-            -- When using HscNothing, Linking appears to only happen
-            -- if GHC is being used as an interface to ld (e.g. if a
-            -- .o file is given as an argument) or if explicitly
-            -- requested with flags.  Linking generally means writing
-            -- files to disk, so it's turned off for now.
-            , ghcLink = NoLink
-            --Should parameterize this
-            , verbosity = 0}
+      let dflags = makeAppflFlags preludeDir oldFlags
+
 
       setSessionDynFlags dflags
       -- construct (and add) a Target from the given file name.  The
@@ -184,6 +185,7 @@ compileAndThen stgFun file = do
       -- If GHC.compileCore is any indicator, it *is* important:
       --  it calls 'load' and then parses and typechecks again before
       --  producing a CoreModule (not exactly what we want)
+
 
       modGraph <- getModuleGraph
 
@@ -216,6 +218,56 @@ compileAndThen stgFun file = do
       let stg = concat nestedStg
       res <- stgFun stg
       return $ (stg, res)
+
+makeAppflFlags :: String -> DynFlags -> DynFlags
+makeAppflFlags preludeDir
+  flags@DynFlags
+  { extensions  = oldExts
+  , importPaths = oldIPaths }
+  =
+  foldr xopt_modify newFlags appflExts
+ 
+  where
+    
+    xopt_modify (xflag, turnOn) dfs
+      | turnOn    = xopt_set dfs xflag
+      | otherwise = xopt_unset dfs xflag
+    newFlags =
+      flags {
+      -- hscTarget determines what form the backend takes (Native,
+      -- LLVM, etc.)  We don't want any code generation but our own,
+      -- so HscNothing is appropriate
+      hscTarget      = HscNothing
+    
+      -- When using HscNothing, Linking appears to only happen
+      -- if GHC is being used as an interface to ld (e.g. if a
+      -- .o file is given as an argument) or if explicitly
+      -- requested with flags.  Linking generally means writing
+      -- files to disk, so it's turned off for now.
+      , ghcLink        = NoLink
+
+      -- Make sure our Prelude and Base libs are visible
+      , importPaths    = oldIPaths ++ [preludeDir, preludeDir ++ "/APPFL/" ]
+      
+      --Should parameterize this
+      , verbosity      = 0
+      }
+
+-- List of language extensions we want to require of Appfl-haskell
+-- source files.    
+appflExts :: [(ExtensionFlag, Bool)]
+appflExts =
+  [
+    -- We want to enforce the use of our Prelude to have a better
+    -- chance of getting full STG programs from GHC
+    (Opt_ImplicitPrelude  , False)
+
+    -- We want to escape as much of the built-in stuff as possible,
+    -- so we'll use our own "fromInteger", "ifthenelse" etc.
+    -- This actually implies NoImplicitPrelude; I'm just being extra explicit 
+    -- see the GHC Syntactic Extensions docs or the definitions in APPFL.Base
+  , (Opt_RebindableSyntax , True)
+  ]
 
 
 -- | In the GhcMonad, given a CgGuts object, pull out the

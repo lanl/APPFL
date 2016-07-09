@@ -2,6 +2,9 @@ ifdef BUILD_NTHREADS
   build_flags := -j$(BUILD_NTHREADS)
 endif
 
+# APPFL haskell Prelude + Base
+HSLIB_FILES := $(shell find prelude/APPFL/ -type f -name '*.hs')
+
 build_dir := $(CURDIR)/build
 
 .PHONY: all config setup codegen runtime test tastytest ctest _ctest clean
@@ -11,14 +14,15 @@ all: codegen runtime
 config: 
 	@(cd codegen && cabal configure)
 
-setup: prelude/Prelude.stg prelude/Prelude.mhs options.h
+setup: prelude/Prelude.stg prelude/Prelude.mhs options.h $(HSLIB_FILES)
 	@((test -d $(build_dir)) || (mkdir $(build_dir)))
 	@((test -d $(build_dir)/bin) || (mkdir $(build_dir)/bin))
 	@((test -d $(build_dir)/etc) || (mkdir $(build_dir)/etc))
 	@((test -d $(build_dir)/include) || (mkdir $(build_dir)/include))
 	@(cp -f prelude/Prelude.stg $(build_dir)/etc/)
 	@(cp -f prelude/Prelude.mhs $(build_dir)/etc/)
-	@(cp -f options.h $(build_dir)/include/) 
+	@(cp -fr prelude/APPFL $(build_dir)/etc/)
+	@(cp -f options.h $(build_dir)/include/)
 
 codegen: setup 
 	@(cd codegen && cabal build $(build_flags))
