@@ -107,7 +107,8 @@ extern const int stgCInfoTabCount;
 extern CInfoTab *const stgCInfoTab[];
 
 void initStg();
-void showStgObj(LogLevel priority, Obj *);
+//void showStgObj(LogLevel priority, Obj *);
+//void showStgCont(LogLevel priority, Cont *c);
 void showStgHeap(LogLevel priority);
 void showStgStack(LogLevel priority);
 

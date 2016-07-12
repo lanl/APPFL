@@ -9,6 +9,7 @@ project(runtime)
               log.h
               obj.h
               heap.h
+              show.h
               stack.h
               stg.h
               stgutils.h

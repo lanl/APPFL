@@ -230,7 +230,11 @@ void processCont(Cont *p) {
 void gc(void) {
   //LOG(LOG_INFO, "GARBAGE COLLECTION DISABLED in gc.c/gc(void)\n"); return;
 
-  if (HEAP_SANITY_CHECK) heapCheck(true);
+  if (sanityChecker) {
+    LOG(LOG_SPEW, "before GC\n");
+    heapCheck(true);
+    stackCheck(true);
+  }
   
   size_t before = stgHP - stgHeap;
 
@@ -284,6 +288,12 @@ void gc(void) {
     EXTRASTART();
     checkStgHeap();
     EXTRAEND();
+  }
+  
+  if (sanityChecker) {
+    LOG(LOG_SPEW, "after GC\n");
+    heapCheck(true);
+    stackCheck(true);
   }
   
   if(LOG_LEVEL == LOG_SPEW) {
