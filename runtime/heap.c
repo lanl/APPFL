@@ -1,5 +1,6 @@
 #include "stg.h"
 #include "heap.h"
+#include "gc.h"
 #include <string.h>  // for memcpy()
 
 // this is a temporary hack as we incorporate Bitmap64s into continuations
@@ -60,7 +61,7 @@ Obj* stgNewHeapObj(InfoTab *itp) {
   LOG(LOG_DEBUG, "stgNewHeapObj: "); showIT(itp);
 #if ALLOC_GC
   LOG(LOG_DEBUG, "******** stgNewHeapObj before GC\n");
-  GC();
+  gc();
   LOG(LOG_DEBUG, "******** stgNewHeapObj after GC\n");
 #endif
   int payloadSize = itp->layoutInfo.payloadSize;
@@ -99,7 +100,7 @@ Obj* stgNewHeapObj(InfoTab *itp) {
 Obj* stgNewHeapPAPmask(InfoTab *itp, Bitmap64 bm) {
 #if ALLOC_GC
   LOG(LOG_DEBUG,"******** stgNewHeapPAPmask before GC\n");
-  GC();
+  gc();
   LOG(LOG_DEBUG,"******** stgNewHeapPAPmask after GC\n");
 #endif
   assert(!(((uintptr_t)itp) & 0x7));
@@ -158,5 +159,3 @@ int getObjSize(Obj *o) {
   objSize = ((objSize + OBJ_ALIGNM1)/OBJ_ALIGN)*OBJ_ALIGN;
   return objSize;
 }
-
-

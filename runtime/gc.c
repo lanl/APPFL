@@ -4,6 +4,7 @@
 #include <string.h>
 
 #include "gc.h"
+#include "heap.h"
 #include "stg.h"
 #include "stgutils.h"
 #include "obj.h"
@@ -12,7 +13,11 @@
 
 static void *scanPtr, *freePtr;
 
-void *getToPtr() {return toPtr;}
+__attribute__((always_inline)) inline void setHeapArgType(PtrOrLiteral *f) {
+  #if USE_ARGTYPE
+        f->argType = HEAPOBJ;
+  #endif
+}
 
 void initGc(void) {
   assert(stgHeap && "gc: heap not defined");
@@ -34,13 +39,7 @@ void swapPtrs(void) {
   assert(stgHP - stgHeap <= before && "gc: increased heap size!\n");
 }
 
-Obj *deref1(Obj *op) {
-  while (getObjType(op) == INDIRECT)
-    op = op->payload[0].op;
-  return op;
-}
-
-Obj *deref2(Obj *p) {
+Obj *deref(Obj *p) {
   while (!(isLSBset(p->_infoPtr))) {
     if (getObjType(p) != INDIRECT) {
       return p;
@@ -53,8 +52,8 @@ Obj *deref2(Obj *p) {
 PtrOrLiteral updatePtrByValue (PtrOrLiteral f) {
   assert(mayBeBoxed(f) && "not a HEAPOBJ");
   if (f.op == NULL) return f;
-  
-  Obj *p = deref2(f.op);
+
+  Obj *p = deref(f.op);
   if (isFrom(p)) {
     // from space
     if (isLSBset(p->_infoPtr)) {
@@ -62,9 +61,7 @@ PtrOrLiteral updatePtrByValue (PtrOrLiteral f) {
       LOG(LOG_SPEW, "update forward %s\n", p->ident);
       f.op = (Obj *)getInfoPtr(p);
       assert(isTo(f.op));
-#if USE_ARGTYPE
-      f.argType = HEAPOBJ;
-#endif
+      setHeapArgType(&f);
       return f;
     } else {
       // from space && !forwarding
@@ -77,9 +74,7 @@ PtrOrLiteral updatePtrByValue (PtrOrLiteral f) {
       }
       p->_infoPtr = setLSB((InfoTab *)freePtr);
       f.op = (Obj *)freePtr;
-#if USE_ARGTYPE
-      f.argType = HEAPOBJ;
-#endif
+      setHeapArgType(&f);
       freePtr = (char *)freePtr + size;
       return f;
     }
@@ -87,17 +82,13 @@ PtrOrLiteral updatePtrByValue (PtrOrLiteral f) {
     // to space
     assert(!isLSBset(p->_infoPtr));
     f.op = p;
-#if USE_ARGTYPE
-    f.argType = HEAPOBJ;
-#endif
+    setHeapArgType(&f);
     return f;
   } else if (isSHO(p)) {
     // SHO
     assert(!isLSBset(p->_infoPtr));
     f.op = p;
-#if USE_ARGTYPE
-    f.argType = HEAPOBJ;
-#endif
+    setHeapArgType(&f);
     return f;
   } else {
     assert(false && "bad ptr");
@@ -107,9 +98,11 @@ PtrOrLiteral updatePtrByValue (PtrOrLiteral f) {
   }
 }
 
-void updatePtr(PtrOrLiteral *f) {
+
+__attribute__((always_inline)) inline void updatePtr(PtrOrLiteral *f) {
   *f = updatePtrByValue(*f);
 }
+
 
 void processObj(Obj *p) {
   if (p == NULL) return;
@@ -185,42 +178,17 @@ void processObj(Obj *p) {
 
 void processCont(Cont *p) {
   int contType = getContType(p);
-  assert(contType > PHONYSTARTCONT &&
-	 contType < PHONYENDCONT && "bad cont type");
   LOG(LOG_SPEW, "processCont %s %s\n", contTypeNames[contType], p->ident);
   Bitmap64 bm = p->layout;
   uint64_t mask = bm.bitmap.mask;
   int size = bm.bitmap.size;
   if (contType != LETCONT) {
     for (int i = 0; i != size; i++, mask >>= 1) {
-      if (EXTRA_CHECKS_GC) {
-    	  EXTRASTART();
-    	  if (mask & 0x1UL) {
-    	    if (!mayBeBoxed(p->payload[i])) {
-            LOG(LOG_ERROR, "gc: unexpected unboxed arg in CONT index %d\n", i);
-    	      assert(false);
-    	    }
-    	  } else {
-          if (!mayBeUnboxed(p->payload[i])) {
-            LOG(LOG_ERROR, "gc: unexpected boxed arg in CONT index %d\n", i);
-    	      assert(false);
-    	    }
-    	  }
-    	  EXTRAEND();
-      }
       if (mask & 0x1UL) updatePtr(&p->payload[i]);
     }  // for
   } else { // LETCONT
     for (int i = 0; i != size; i++) {
       if (p->payload[i].op != NULL) {
-	      if (EXTRA_CHECKS_GC) {
-	        EXTRASTART();
-	        if (!mayBeBoxed(p->payload[i])) {
-	           LOG(LOG_ERROR, "gc: unexpected unboxed arg in LETCONT index %d\n", i);
-	            assert(false);
-	        }
-	        EXTRAEND();
-	      }
 	      updatePtr(&p->payload[i]);
       }
     }
@@ -228,29 +196,25 @@ void processCont(Cont *p) {
 }
 
 void gc(void) {
-  //LOG(LOG_INFO, "GARBAGE COLLECTION DISABLED in gc.c/gc(void)\n"); return;
 
-  if (sanityChecker) {
-    LOG(LOG_SPEW, "before GC\n");
-    heapCheck(true);
-    stackCheck(true);
-  }
-  
   size_t before = stgHP - stgHeap;
 
   if(LOG_LEVEL == LOG_SPEW) {
     if(LoggingLevel == LOG_SPEW) {
-      showStgHeap(LOG_SPEW);
       LOG(LOG_SPEW, "start gc heap size %lx\n", before);
     }
   }
 
+  if (sanityChecker) {
+    LOG(LOG_SPEW, "before GC\n");
+    heapCheck(true, LOG_DEBUG);
+    stackCheck(true, LOG_DEBUG);
+  }
+
+  // check if GC should run at all
   if(stgHP-stgHeap <= GCThreshold*stgHeapSize) return;
 
   // add stgCurVal
-  if (EXTRA_CHECKS_GC) {
-    assert(mayBeBoxed(stgCurVal) && "gc: unexpected unboxed arg in stgCurVal");
-  }
   if (stgCurVal.op != NULL)
     processObj(stgCurVal.op);
 
@@ -258,6 +222,7 @@ void gc(void) {
   for (int i = 0; i < stgStatObjCount; i++) {
     processObj(stgStatObj[i]);
   }
+
   //Cont. stack
   for (Cont *p = (Cont *)stgSP;
        (char *)p < (char*) stgStack + stgStackSize;
@@ -268,11 +233,6 @@ void gc(void) {
   //all roots are now added.
 
   //update stgCurVal
-  if (EXTRA_CHECKS_GC) {
-    EXTRASTART();
-    assert(mayBeBoxed(stgCurVal) && "gc: unexpected unboxed arg in stgCurVal");
-    EXTRASTART();
-  }
   if (stgCurVal.op != NULL)
     stgCurVal = updatePtrByValue(stgCurVal);
 
@@ -284,22 +244,14 @@ void gc(void) {
 
   swapPtrs();
 
-  if (EXTRA_CHECKS_GC) {
-    EXTRASTART();
-    checkStgHeap();
-    EXTRAEND();
-  }
-  
   if (sanityChecker) {
     LOG(LOG_SPEW, "after GC\n");
-    heapCheck(true);
-    stackCheck(true);
+    heapCheck(true, LOG_DEBUG);
+    stackCheck(true, LOG_DEBUG);
   }
-  
+
   if(LOG_LEVEL == LOG_SPEW) {
     if(LoggingLevel == LOG_SPEW) {
-      LOG(LOG_SPEW, "new heap\n");
-      showStgHeap(LOG_SPEW);
       size_t after = stgHP - stgHeap;
       LOG(LOG_SPEW, "end gc heap size %lx (change %lx)\n", after, before - after);
     }

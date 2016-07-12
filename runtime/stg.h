@@ -13,10 +13,6 @@
 
 void startCheck();
 
-void gc(void);
-
-#define GC() gc();
-
 struct _Obj;
 typedef struct _Obj Obj;
 struct _InfoTab;
@@ -143,7 +139,6 @@ void showIT(InfoTab *);
 // bye bye!
 #define STGJUMP()						     \
   do {								     \
-  GC();								     \
   derefStgCurVal();						     \
   if (getObjType(stgCurVal.op) == BLACKHOLE) {			     \
     LOG(LOG_ERROR, "STGJUMP terminating on BLACKHOLE\n");	     \
@@ -181,7 +176,6 @@ void showIT(InfoTab *);
     showStgVal(LOG_ERROR, stgCurVal);			     \
     assert(false);					     \
   }							     \
-  GC();							     \
 } while (0)
 
 #endif  //ifdef stg_h

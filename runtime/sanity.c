@@ -12,6 +12,49 @@
 #include "show.h"
 #include "sanity.h"
 
+__attribute__((always_inline)) inline char *getIdent(Obj *obj) {
+  #if USE_IDENT
+    return obj->ident;
+  #else
+    return NULL;
+  #endif
+}
+
+__attribute__((always_inline)) inline bool checkObjType(Obj *obj, ObjType objType) {
+  #if USE_OBJTYPE
+    return (obj->objType == objType);
+  #else
+    return true;
+  #endif
+}
+
+__attribute__((always_inline)) inline bool checkInfoTabName(InfoTab *it, char *name) {
+  #if USE_INFOTAB_NAME
+    return (strcmp(it->name, "stgIndirect") == 0);
+  #else
+    return true;
+  #endif
+}
+
+__attribute__((always_inline)) inline bool checkIdent(Obj *obj) {
+  #if USE_IDENT
+    for (int i = 0; obj->ident[i] != '\0'; i++) {
+      assert(i < IDENT_SIZE && "sanity: bad ident size");
+      if(!isprint(obj->ident[i])) return false;
+    }
+  #endif
+  return true;
+}
+
+__attribute__((always_inline)) inline bool checkInfoTabHeader(InfoTab *it) {
+  #if DEBUG_INFOTAB
+    return (it->pi = PI());
+  #else
+    return true;
+  #endif
+}
+
+
 
 bool checkPtr8BitAligned(void *p) {
   // make sure the object is aligned
@@ -126,7 +169,7 @@ int addObjects(Obj *objArray[]) {
 
   int i = 0;
   while (i < objCount) {
-    LOG(LOG_SPEW, "i %d\n",i);
+    //LOG(LOG_SPEW, "i %d\n",i);
     size_t start, end;
 
     assert(getObjType(objArray[i]) != INDIRECT && "sanity: indirect in objArray");
@@ -181,31 +224,126 @@ Obj **mallocArrayOfAllObjects() {
 
 
 void checkObjFull(Obj *obj) {
-  //TODO
+  if (!(isHeap(obj) || isSHO(obj))) {
+    LOG(LOG_ERROR, "sanity: bad obj location");
+    assert(false);
+  }
+  InfoTab *itp = getInfoPtr(obj);
+  InfoTab it = *itp;
+  ObjType type = getObjType(obj);
+  assert(type > PHONYSTARTOBJ && type < PHONYENDOBJ && "sanity: bad obj type");
+
+  #if USE_IDENT && USE_INFOTAB_NAME
+    if (strcmp(it.name, obj->ident)) {
+      if (type != PAP) {
+        LOG(LOG_ERROR, "sanity: mismatch in infotab and object names \"%s\" != \"%s\"\n",
+          it.name, obj->ident);
+        assert(false);
+      }
+    }
+  #endif
+
+  switch (type) {
+  case FUN: {
+    assert(it.objType == FUN && "sanity: FUN infotab type mismatch");
+    int FVCount = endFUNFVsU(obj);
+    if (FVCount) {
+      // check that unboxed FVs really are unboxed
+      for (int i = startFUNFVsU(obj); i < FVCount; i++) {
+        assert(mayBeUnboxed(obj->payload[i]) && "sanity: unexpected boxed FV in FUN");
+      }
+      // check that boxed FVs really are boxed
+      for (int i = startFUNFVsB(obj); i < endFUNFVsB(obj); i++) {
+        assert(mayBeBoxed(obj->payload[i]) && "sanity: unexpected unboxed FV in FUN");
+      }
+    }
+    break;
+  }
+
+  case PAP: {
+    assert(it.objType == FUN && "sanity: PAP infotab type mismatch");
+    int FVCount = endPAPFVsU(obj);
+    if (FVCount) {
+      // check that unboxed FVs really are unboxed
+      for (int i = startPAPFVsU(obj); i < FVCount; i++) {
+        assert(mayBeUnboxed(obj->payload[i]) && "sanity: unexpected boxed FV in PAP");
+      }
+      // check that boxed FVs really are boxed
+      for (int i = startPAPFVsB(obj); i < endPAPFVsB(obj); i++) {
+        assert(mayBeBoxed(obj->payload[i]) && "sanity: unexpected unboxed FV in PAP");
+      }
+    }
+
+    Bitmap64 bm = obj->payload[endPAPFVsU(obj)].b;
+    uint64_t mask = bm.bitmap.mask;
+    int i = endPAPFVsU(obj) + 1;
+    for (int size = bm.bitmap.size; size != 0; size--, i++, mask >>= 1) {
+      if (mask & 0x1UL) {
+        assert(mayBeBoxed(obj->payload[i]) && "sanity: unexpected unboxed arg in PAP");
+      } else {
+        assert(mayBeUnboxed(obj->payload[i]) && "sanity: unexpected boxed arg in PAP");
+      }
+    }
+    break;
+  }
+  case CON:
+    assert(it.objType == CON && "sanity: CON infotab type mismatch");
+    checkCONargs(obj);
+    // check that unboxed args really are unboxed
+    for (int i = startCONargsU(obj); i < endCONargsU(obj); i++) {
+      assert(mayBeUnboxed(obj->payload[i]) && "sanity: unexpected boxed arg in CON");
+    }
+    // check that boxed args really are boxed
+    for (int i = startCONargsB(obj); i < endCONargsB(obj); i++) {
+      assert(mayBeBoxed(obj->payload[i]) && "sanity: unexpected unboxed arg in CON");
+    }
+    break;
+  case THUNK:
+    assert(it.objType == THUNK && "sanity: THUNK infotab type mismatch");
+    //fallthrough..
+  case BLACKHOLE:
+    // check that unboxed FVs really are unboxed
+    for (int i = startTHUNKFVsU(obj); i < endTHUNKFVsU(obj); i++) {
+      assert(mayBeUnboxed(obj->payload[i]) && "sanity: unexpected boxed arg in THUNK");
+    }
+    // check that boxed FVs really are boxed
+    for (int i = startTHUNKFVsB(obj); i < endTHUNKFVsB(obj); i++) {
+        assert(mayBeBoxed(obj->payload[i]) && "sanity: unexpected unboxed arg in THUNK");
+    }
+    break;
+
+  case INDIRECT:
+    assert(mayBeBoxed(obj->payload[0]) && "sanity: unexpected unboxed arg in INDIRECT");
+    break;
+
+  default:
+    assert(false && "sanity: bad obj in checkObjFull");
+  }
+
 }
 
 
-void heapCheck(bool display) {
+void heapCheck(bool display, LogLevel logLevel) {
   Obj **objArray = mallocArrayOfAllObjects();
   int objCount = addObjects(objArray);
-  if (display) LOG(LOG_INFO, "stg HEAP\n");
+  if (display) LOG(logLevel, "stg HEAP:\n------------\n");
   for (int i = 0; i < objCount; i++) {
     checkObjFull(objArray[i]);
-    if (display) showStgObj(LOG_INFO, objArray[i]);
+    if (display) showStgObj(logLevel, objArray[i]);
   }
-  if (display) LOG(LOG_INFO, "\n");
+  if (display) LOG(logLevel, "\n");
 }
 
 
-void stackCheck(bool display) {
-  if (display) LOG(LOG_INFO, "stg STACK\n");
+void stackCheck(bool display, LogLevel logLevel) {
+  if (display) LOG(logLevel, "stg STACK:\n-----------\n");
   for (Cont *p = (Cont *)stgSP;
        (char *)p < (char*) stgStack + stgStackSize;
        p = (Cont *)((char*)p + getContSize(p))) {
     int contType = getContType(p);
     assert(contType > PHONYSTARTCONT &&
      contType < PHONYENDCONT && "sanity: bad cont type");
-    LOG(LOG_SPEW, "check Cont %s %s\n", contTypeNames[contType], p->ident);
+    LOG(logLevel, "check Cont %s %s\n", contTypeNames[contType], p->ident);
     Bitmap64 bm = p->layout;
     uint64_t mask = bm.bitmap.mask;
     int size = bm.bitmap.size;
@@ -215,7 +353,7 @@ void stackCheck(bool display) {
           assert(mayBeBoxed(p->payload[i]) && "sanity: unexpected unboxed arg in CONT");
      	  } else {
           assert(mayBeUnboxed(p->payload[i]) && "sanity: unexpected boxed arg in CONT");
-   	    }    
+   	    }
      }  // for
     } else { // LETCONT
       for (int i = 0; i != size; i++) {
@@ -224,8 +362,7 @@ void stackCheck(bool display) {
         }
       }
     }
-    if (display) showStgCont(LOG_LEVEL, (Cont *)p);         
+    if (display) showStgCont(logLevel, (Cont *)p);
   }
-  if (display) LOG(LOG_INFO, "\n");
+  if (display) LOG(logLevel, "\n");
 }
-
