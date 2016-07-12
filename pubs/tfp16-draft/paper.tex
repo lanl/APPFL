@@ -420,7 +420,12 @@ a deferred expression evaluation is encoded as a \emph{THUNK}.
 First some words about terminology.  For all degrees of strictness, sharing
 (as implied by lazy but not by non-strict) of heap-allocated objects is
 preserved so we will not use the term lazy and simply refer to
-strictness properties.  As is common we will use strict in an operational
+strictness properties.\footnote{%
+  We can readily simulate the absence of sharing (i.e, call by name instead of
+  call by need), in the serial case at least, simply by not updating \emph{THUNK}s
+after evaluation, resulting in, for example, exponential running time for
+simple mergesort on lists.}
+  As is common we will use strict in an operational
 sense, meaning that argument(s) are evaluated before being passed in a
 function call, rather than the denotational sense, unless stated otherwise.
 Similarly, when referring to language semantics we refer by default to the
