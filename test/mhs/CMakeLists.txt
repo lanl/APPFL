@@ -23,13 +23,13 @@ foreach (test ${ALL_SRCS})
 
     foreach (strict 0 1 2)
       foreach (constr 0)
-        set(name ${tname}_e${strict}_c${constr})
-
-        #with gc
-        add_test_true(${name} ${build} ${binary} -l${RT_LOG_LEVEL} -e${strict} 2>&1)
-
-        #w/o gc
-        add_test_true(${name}_g ${build} ${binary} -l${RT_LOG_LEVEL} -e${strict} -g 2>&1)
+         foreach (gc "" "-g")
+          foreach (sanity "" "-s")
+            set(name ${tname}-e${strict}-c${constr}${gc}${sanity})
+      
+            add_test_true(${name} ${build} ${binary} -l${RT_LOG_LEVEL} -e${strict} -c${constr} ${gc} ${sanity} 2>&1)  
+          endforeach(sanity)
+        endforeach(gc)
       endforeach(constr)
     endforeach(strict)
 endforeach(test)

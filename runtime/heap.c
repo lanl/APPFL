@@ -1,6 +1,6 @@
 #include "stg.h"
 #include "heap.h"
-#include "gc.c"
+#include "gc.h"
 #include <string.h>  // for memcpy()
 
 // this is a temporary hack as we incorporate Bitmap64s into continuations

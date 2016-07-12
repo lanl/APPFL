@@ -13,7 +13,7 @@
 
 static void *scanPtr, *freePtr;
 
-__attribute__((always_inline)) void setHeapArgType(PtrOrLiteral *f) {
+__attribute__((always_inline)) inline void setHeapArgType(PtrOrLiteral *f) {
   #if USE_ARGTYPE
         f->argType = HEAPOBJ;
   #endif
@@ -99,7 +99,7 @@ PtrOrLiteral updatePtrByValue (PtrOrLiteral f) {
 }
 
 
-__attribute__((always_inline)) void updatePtr(PtrOrLiteral *f) {
+__attribute__((always_inline)) inline void updatePtr(PtrOrLiteral *f) {
   *f = updatePtrByValue(*f);
 }
 
