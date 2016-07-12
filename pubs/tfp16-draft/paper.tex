@@ -997,9 +997,8 @@ completeness.
 
 
 % because # looks strangely large next to math terms
-
-
 \newcommand{\hash}{{\scriptsize\#}}
+
 \begin{figure}[h!tb]
 \centering
 \footnotesize % tiny scriptsize footnotesize small
@@ -1013,7 +1012,7 @@ Literal            & $\mathit{lit}$      & ::= & $i\ |\ d\
 
                    &                     &     &  & \# suffix denotes unboxed value \\
 
-Atom               & $a$                 & ::= & $\mathit{lit}\ |\ x\ |\ C$ & Constructors are first class \\% not sure if that's the right terminology 
+Atom               & $a$                 & ::= & $\mathit{lit}\ |\ x\ |\ C$ & Constructors are first class \\
 \\
 
 
@@ -1067,18 +1066,22 @@ transitioning from STG to mini-Haskell.
 
 \subsubsection{Removal of explicit heap objects.}
 In STG, all object definitions require explicit classification with
-\texttt{FUN}, \texttt{PAP}, \texttt{CON}, \texttt{THUNK}. This classification can be
-inferred from context by the compiler so these keywords are not necessary.
-Functions can then be defined in Haskell style with the formal parameters following
-the function's identifier on the left side of the equality. With these simple
-changes the syntax becomes a subset of Haskell.
+\texttt{FUN}, \texttt{PAP}, \texttt{CON}, \texttt{THUNK}. This
+classification can be inferred from context by the compiler so these
+keywords are not necessary.  Functions can then be defined in Haskell
+style with the formal parameters following the function's identifier
+on the left side of the equality. With these simple changes the syntax
+becomes a subset of Haskell. Heap objects are still only created at
+the top level or in \texttt{let} expressions, so the translation is
+straightforward.
 
-Heap objects are still only created at the top level or in \texttt{let}
-expressions, so the translation is straightforward: \texttt{FUN} objects are
+\begin{comment} Trimming Mini-Haskell to fit page limit
+\texttt{FUN} objects are
 identifiable by the inclusion of these parameters.  A \texttt{PAP} object is
 created when a known function is partially applied.  \texttt{CON} objects are
 created when constructors are fully applied.  Every other object becomes a
 \texttt{THUNK}.
+\end{comment}
 
 \subsubsection{Avoiding building thunks.}
 As \emph{EA} points out, there is no need to build a thunk for the scrutinee
@@ -1102,13 +1105,15 @@ in the name of tradition, it remains a tricky spot for our mini-Haskell front
 end.  The edge cases that it will incorrectly handle as a result of this are
 exactly that: edge cases.  As such, they are easy to avoid in practice.
 
+
+\begin{comment} Trimming Mini-Haskell to fit page limit
 The inclusion of the layout rule may seem insignificant, but it
 allows users to produce code that is visually similar to Haskell code.
 This makes it easier to read and write for any Haskell programmer who relies
 on layout to delineate context, presumably the vast majority.  It also allows
 for the use of Haskell programming environments that support ``smart''
 indentation, e.g., \emph{haskell-mode} for Emacs~\cite{haskellmode}.
-
+\end{comment}
 
 
 % Layout Rule Spec:
@@ -1127,13 +1132,11 @@ variables.  This often requires introducing bindings with either \texttt{let} or
 concatenates its two list parameters, which can be expressed in STG by
 {\footnotesize
 \begin{verbatim}
-   append = FUN(l1 l2 ->
-               case l1 of
-                 { Nil -> l2;
-                   Cons hd tl -> 
-                     let { rec = THUNK(append tl l2);
-                           result = CON(Cons hd rec) }
-                     in result })
+   append = FUN(l1 l2 -> case l1 of x {
+               Nil -> l2; 
+               Cons hd tl -> let { rec = THUNK(append tl l2);
+                                   result = CON(Cons hd rec) }
+                             in result })
 \end{verbatim}}
 \noindent In mini-Haskell expressions may be applied to other expressions, so the
 recursive call to \texttt{append} can be parenthesized. There is no need for the
@@ -1157,7 +1160,7 @@ STG supports pattern matching but only in a simple form and only in
 \texttt{case} expressions.  Mini-Haskell extends this to something approaching
 what is found in Haskell.  Functions, including lambda expressions, may match on
 all their arguments. Named functions may have multiple definitions to exhaust
-the combinations of patterns in their arguments and patterns in all contexts
+the combinations of patterns in their arguments, and patterns in all contexts
 (functions and case expressions) may be nested arbitrarily deep.  This feature
 greatly simplifies the task of defining more complex behavior.  Without it,
 each matched parameter of a function requires an additional level of nested
@@ -1167,26 +1170,23 @@ single pattern.
 Even relatively simple functions can be painful to write, such as \texttt{unzip}:
 {\footnotesize
 \begin{verbatim}
-   unzip = FUN(list ->
-     case list of { Nil -> let {res = CON( TP2 nil nil)} in res;
-                    Cons x xs ->
-                      case x of {
-                        TP2 a b ->     --TP2 is the pair constructor
-                          case unzip xs of {
-                            TP2 as bs ->
-                              let {aas = CON(Cons a as);
-                                   bbs = CON(Cons b bs);
-                                   res = CON(TP2 aas bbs)}
-                              in res }}})
+   unzip = FUN(list -> 
+     case list of s1 { Nil -> let {res = CON( Pair nil nil)} in res;
+                    Cons x xs -> case x of s2 {
+                      Pair a b -> case unzip xs of s3 {
+                        Pair as bs -> let {aas = CON(Cons a as);
+                                           bbs = CON(Cons b bs);
+                                           res = CON(Pair aas bbs)}
+                                      in res }}})
 \end{verbatim}}
 \noindent In mini-Haskell this becomes
 {\footnotesize
 \begin{verbatim}
-   unzip :: List (Tupl2 a b) -> Tupl2 (List a) (List b)
-   unzip Nil = TP2 Nil Nil
-   unzip (Cons (TP2 a b) xs) =
+   unzip :: List (Pair a b) -> Pair (List a) (List b)
+   unzip Nil = Pair Nil Nil
+   unzip (Cons (Pair a b) xs) =
      case unzip xs of
-       TP2 as bs -> TP2 (Cons a as) (Cons b bs)
+       Pair as bs -> Pair (Cons a as) (Cons b bs)
 \end{verbatim}}
 
 Of course, this complex pattern matching must eventually be transformed into
@@ -1194,7 +1194,10 @@ the primitive, nested case expressions. Fortunately there are well-documented
 algorithms for achieving this, and Philip Wadler's chapter
 % in \emph{The Implementation of Functional Programming Languages}
 on the compilation of this type of pattern matching proved
-invaluable~\cite{Jones:1987}.  Wadler describes the \emph{match} function
+invaluable~\cite{Jones:1987}.
+
+\begin{comment} Trimming Mini-Haskell to fit page limit
+Wadler describes the \emph{match} function
 which, in its simplest form, produces a correct, but potentially large
 translation with some redundancy.  This function was implemented with only
 minor modifications to fit the shape of mini-Haskell's abstract form.  The
@@ -1203,6 +1206,7 @@ the redundancy and make the resulting code easier to read.  There are further
 optimizations suggested by Wadler to address the size of the generated code,
 for example, when multiple branches lead to the same large expression, but the
 additional complexity outweighs the benefit for a testing language.
+\end{comment}
 
 
 \subsubsection{Less significant features.}
@@ -1213,22 +1217,22 @@ sections but are worth mentioning.
 \item \emph{Constructors as functions.}
   As in Haskell, constructors are first class, acting as true functions.  This
   is implemented by simply generating a function that wraps the appropriate
-  \texttt{let}-bound \texttt{CON} object in STG.  Any partially applied
-  constructor generates a call to this function.  Fully applied constructors
-  generate local \texttt{let}-bound objects to avoid an unnecessary function
-  call.
+  \texttt{let}-bound \texttt{CON} object in STG.  %% Any partially applied
+  %% constructor generates a call to this function.  Fully applied constructors
+  %% generate local \texttt{let}-bound objects to avoid an unnecessary function
+  %% call.
 
 \item \emph{Primitive operations as functions.}
   Similar to constructors, primitive operations are given first-class status as
-  functions, with roughly the same rules.  Partial applications are
-  translated to calls to generated functions that wrap the actual primitive
-  operations. Fully applied calls generate true primitive operation calls.
+  functions, with roughly the same rules.  %% Partial applications are
+  %% translated to calls to generated functions that wrap the actual primitive
+  %% operations. Fully applied calls generate true primitive operation calls.
 
 \item \emph{Lambda expressions.}
   mini-Haskell supports anonymous lambda expressions for the simple, one-off
-  functions that often find a place in Haskell code.  This was certainly the
-  simplest feature to add, requiring only that the function be given a unique
-  identifier to bind it to a \texttt{FUN} object in STG.
+  functions that often find a place in Haskell code.%%   This was certainly the
+  %% simplest feature to add, requiring only that the function be given a unique
+  %% identifier to bind it to a \texttt{FUN} object in STG.
 
 \item \emph{Type annotations.}  The ability to assert the type of some
   variable is often valuable as a sanity-check and provides documentation that
@@ -1243,7 +1247,7 @@ sections but are worth mentioning.
   compiled with another Haskell compiler.  Because mini-Haskell exposes a
   different set of primitives the Haskell Block was introduced to allow the
   inclusion of the \texttt{MagicHash} extension and the aliasing Haskell's
-  primitives (e.g. \texttt{(+)} and \texttt{(-)}) to the names given in
+  primitives (e.g. \texttt{(+#)} and \texttt{(-#)}) to the names given in
   mini-Haskell.  This block, delimited by \texttt{\{-\#-\}} strings, is ignored
   by the mini-Haskell compiler, and arbitrary ``real'' Haskell code can be
   placed therein to create the same mini-Haskell environment for full Haskell
