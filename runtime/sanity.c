@@ -323,27 +323,27 @@ void checkObjFull(Obj *obj) {
 }
 
 
-void heapCheck(bool display) {
+void heapCheck(bool display, LogLevel logLevel) {
   Obj **objArray = mallocArrayOfAllObjects();
   int objCount = addObjects(objArray);
-  if (display) LOG(LOG_INFO, "stg HEAP:\n------------\n");
+  if (display) LOG(logLevel, "stg HEAP:\n------------\n");
   for (int i = 0; i < objCount; i++) {
     checkObjFull(objArray[i]);
-    if (display) showStgObj(LOG_INFO, objArray[i]);
+    if (display) showStgObj(logLevel, objArray[i]);
   }
-  if (display) LOG(LOG_INFO, "\n");
+  if (display) LOG(logLevel, "\n");
 }
 
 
-void stackCheck(bool display) {
-  if (display) LOG(LOG_INFO, "stg STACK:\n-----------\n");
+void stackCheck(bool display, LogLevel logLevel) {
+  if (display) LOG(logLevel, "stg STACK:\n-----------\n");
   for (Cont *p = (Cont *)stgSP;
        (char *)p < (char*) stgStack + stgStackSize;
        p = (Cont *)((char*)p + getContSize(p))) {
     int contType = getContType(p);
     assert(contType > PHONYSTARTCONT &&
      contType < PHONYENDCONT && "sanity: bad cont type");
-    LOG(LOG_SPEW, "check Cont %s %s\n", contTypeNames[contType], p->ident);
+    LOG(logLevel, "check Cont %s %s\n", contTypeNames[contType], p->ident);
     Bitmap64 bm = p->layout;
     uint64_t mask = bm.bitmap.mask;
     int size = bm.bitmap.size;
@@ -362,7 +362,7 @@ void stackCheck(bool display) {
         }
       }
     }
-    if (display) showStgCont(LOG_LEVEL, (Cont *)p);
+    if (display) showStgCont(logLevel, (Cont *)p);
   }
-  if (display) LOG(LOG_INFO, "\n");
+  if (display) LOG(logLevel, "\n");
 }

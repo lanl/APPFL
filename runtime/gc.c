@@ -207,8 +207,8 @@ void gc(void) {
 
   if (sanityChecker) {
     LOG(LOG_SPEW, "before GC\n");
-    heapCheck(true);
-    stackCheck(true);
+    heapCheck(true, LOG_DEBUG);
+    stackCheck(true, LOG_DEBUG);
   }
 
   // check if GC should run at all
@@ -246,8 +246,8 @@ void gc(void) {
 
   if (sanityChecker) {
     LOG(LOG_SPEW, "after GC\n");
-    heapCheck(true);
-    stackCheck(true);
+    heapCheck(true, LOG_DEBUG);
+    stackCheck(true, LOG_DEBUG);
   }
 
   if(LOG_LEVEL == LOG_SPEW) {

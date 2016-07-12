@@ -13,22 +13,15 @@
 
 void showStgObj(LogLevel priority, Obj *p) {
   showStgObjPretty(priority, p);
-  // showStgObjDebug(Obj *p)
 }
+
 void showStgVal(LogLevel priority, PtrOrLiteral v) {
   showStgValPretty(priority, v);
-  // showStgValDebug(v);
 }
 
 static const int showDepthLimit = 1000;
 static int depth;
 static Obj *stack[1000];
-
-void showStgObjRecDebug(LogLevel priority, Obj *p);
-void showStgObjDebug(LogLevel priority, Obj *p) {
-  depth = 0;
-  showStgObjRecDebug(priority, p);
-}
 
 void showStgObjRecPretty(LogLevel priority, Obj *p);
 void showStgObjPretty(LogLevel priority,Obj *p) {
@@ -198,87 +191,6 @@ void showStgValPretty(LogLevel priority, PtrOrLiteral v) {
 #endif
 }
 
-
-void showStgObjRecDebug(LogLevel priority, Obj *p) {
-
-  // depth check first
-  if (depth+1 >= showDepthLimit) {
-    LOG(LOG_ERROR, "******showStgObjRec depth exceeded\n");
-    return;
-  }
-  for (int i=0; i != depth; i++) {
-    if (p == stack[i]) {
-      LOG(LOG_ERROR, "   ***cycle\n");
-      return;
-    }
-  }
-  stack[depth++] = p;
-
-
-
-  InfoTab it = *(getInfoPtr(p));
-  ObjType type = getObjType(p);
-  LOG(priority, "%s %s %s ", objTypeNames[type],
-	  objTypeNames[it.objType], it.name);
-  switch (type) {
-  case FUN:
-    LOG(priority, "\n");
-    break;
-
-  case PAP:
-    LOG(priority, "\n");
-    break;
-
-  case CON:
-    LOG(priority, "tag %d arity %d\n", it.conFields.tag, it.conFields.arity );
-    for (int i = 0; i != it.conFields.arity; i++)
-      showStgValDebug(priority, p->payload[i]);
-    break;
-
-  case THUNK:
-    LOG(priority, "\n");
-    break;
-
-  case BLACKHOLE:
-    LOG(priority, "\n");
-    break;
-
-  case INDIRECT:
-    LOG(priority, "INDIRECT to\n");
-    showStgObjRecDebug(priority, p->payload[0].op);
-    break;
-
-  default:
-    LOG(LOG_FATAL, "default in showStgObj!\n");
-    exit(1);
-  }
-  depth--;
-}
-
-void showStgValDebug(LogLevel priority, PtrOrLiteral v) {
-#if USE_ARGTYPE
-  switch (v.argType) {
-  case INT:
-#ifdef  __clang__
-    LOG(priority, "INT %lld\n", v.i);
-#else
-    LOG(priority, "INT %ld\n", v.i);
-#endif
-    break;
-  case DOUBLE:
-    LOG(priority, "DOUBLE %f\n", v.d);
-    break;
-  case HEAPOBJ:
-    LOG(priority, "HEAPOBJ %p ", v.op);
-    showStgObjRecDebug(priority, v.op);
-    break;
-  default:
-    LOG(LOG_ERROR, "undefined PtrOrLiteral.tag!\n");
-    exit(0);
-  }
-#endif
-}
-
 void showObjSpaceInfo();
 
 void showObjSpaceInfo(LogLevel priority) {
@@ -303,33 +215,4 @@ bool isFrom(void *p) {
 
 bool isTo(void *p) {
   return (p >= toPtr && (char *) p < (char *) toPtr + stgHeapSize / 2);
-}
-
-void showStgStack(LogLevel priority) {
-  LOG(priority, "\nSTG Stack:\n\n");
-  for (char *p = (char*)stgSP;
-       p < (char*)stgStack + stgStackSize;
-       p += getContSize((Cont *)p)) {
-     showStgCont(priority, (Cont *)p);
-   }
-}
-
-void showStgHeap(LogLevel priority) {
-  //  return;
-  LOG(priority, "\nSTG static objects: \n\n");
-  for (int i = 0; i != stgStatObjCount; i++) {
-    showStgObj(priority, stgStatObj[i]);
-    LOG(priority, "\n");
-  }
-
-  LOG(priority, "\nSTG heap:\n\n");
-  char *p = (char*)stgHeap;
-  while (p < (char*)stgHP) {
-    showStgObj(priority, (Obj *)p);
-    p += getObjSize((Obj *)p);
-    while (p < (char*)stgHP && *((uintptr_t *)p) == 0) {
-      p += sizeof(uintptr_t);
-    }
-  }
-  showStgStack(priority);
 }
