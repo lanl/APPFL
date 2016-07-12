@@ -122,6 +122,7 @@ cgMain v =
                   showStgHeap(LOG_DEBUG);
                 |]
               else [])
+          ++ [citems|showPerfCounters(LOG_NONE);|]
           ++ [citems|return 0;|]
       fun = [cfun|
                int main (int argc, char **argv)

@@ -12,6 +12,7 @@
 #include "log.h"
 
 void startCheck();
+void showPerfCounters(LogLevel priority);
 
 struct _Obj;
 typedef struct _Obj Obj;
@@ -35,6 +36,17 @@ typedef union Bitmap64 {
   Bitmap64proto bitmap;
 } Bitmap64;
 
+
+typedef struct PrefCounters {
+  long heapBytesAllocated;
+  long heapBytesCopied;
+  long heapMaxSize;
+  long heapCollections;
+  long heapAllocations;
+  long stackBytesAllocated;
+  long stackAllocations;
+  long stackMaxSize;
+} PrefCounters;
 
 #define BMSIZE(bm) (bm.bitmap.size)
 #define BMMAP(bm) (bm.bitmap.mask)
@@ -93,6 +105,7 @@ extern const size_t stgHeapSize;
 extern const size_t stgStackSize;
 
 extern void *stgStack, *stgSP;
+extern PrefCounters perfCounter;
 
 // these are defined in the generated code
 extern const int stgStatObjCount;

@@ -9,7 +9,27 @@
 #include "obj.h"
 #include "stdlib.h"
 #include "string.h"
+#include "args.h"
 
+void showPerfCounters(LogLevel priority) {
+  if(perfCounters) {
+    LOG(priority, "Performance Counters\n--------------------------------\n");
+    LOG(priority, "%ld bytes allocated in heap\n", perfCounter.heapBytesAllocated);
+    LOG(priority, "%ld bytes copied during GC\n", perfCounter.heapBytesCopied);
+    LOG(priority, "%ld collections\n", perfCounter.heapCollections);
+    LOG(priority, "%ld heap allocations\n", perfCounter.heapAllocations);
+  }
+  if(perfCounters > 1) {
+    LOG(priority, "%ld bytes maximum heap size\n", perfCounter.heapMaxSize);
+  }
+  if(perfCounters) {
+    LOG(priority, "%ld bytes allocated in stack\n", perfCounter.stackBytesAllocated);
+    LOG(priority, "%ld stack allocations\n", perfCounter.stackAllocations);
+  }
+  if(perfCounters > 1) {
+    LOG(priority, "%ld bytes maximum stack size\n", perfCounter.stackMaxSize);
+  }
+}
 
 void showStgObj(LogLevel priority, Obj *p) {
   showStgObjPretty(priority, p);
@@ -112,10 +132,10 @@ void showStgObjRecPretty(LogLevel priority, Obj *p) {
     int end = endPAPFVsU(p);
     LOG(priority, "[");
     for (int i = start; i != end; i++ ) {
-      if (i == div) fprintf(stderr, "|");
+      if (i == div) LOG(priority, "|");
       PtrOrLiteral v = p->payload[i];
-      if (mayBeBoxed(v) && mayBeUnboxed(v)) fprintf(stderr, "?");
-      else if (mayBeBoxed(v)) fprintf(stderr, "B");
+      if (mayBeBoxed(v) && mayBeUnboxed(v)) LOG(priority, "?");
+      else if (mayBeBoxed(v)) LOG(priority, "B");
            else LOG(priority, "U");
     }
     LOG(priority, "][");
@@ -153,7 +173,7 @@ void showStgObjRecPretty(LogLevel priority, Obj *p) {
 	    LOG(priority, ", ");
 	    showStgValPretty(priority, p->payload[i]);
       }
-      if (arity > 1) fprintf(stderr, ")");
+      if (arity > 1) LOG(priority, ")");
     }
     break;
 
@@ -179,7 +199,7 @@ void showStgValPretty(LogLevel priority, PtrOrLiteral v) {
     LOG(priority, "%f", v.d);
     break;
     //  case FLOAT:
-    //    fprintf(stderr,"%f", v.f);
+    //    LOG(priority,"%f", v.f);
     //    break;
   case HEAPOBJ:
     showStgObjRecPretty(priority, v.op);

@@ -28,6 +28,8 @@ void *fromPtr = NULL;
 void *stgStack = NULL;
 void *stgSP = NULL;
 
+PrefCounters perfCounter = {0};
+
 #if !defined(__clang__) && !USE_ARGTYPE
 // register PtrOrLiteral stgCurVal asm("%r15");  // current value STG register
 #else
