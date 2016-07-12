@@ -46,6 +46,8 @@ typedef struct PrefCounters {
   long stackBytesAllocated;
   long stackAllocations;
   long stackMaxSize;
+  double totalTime;
+  double gcTime;
 } PrefCounters;
 
 #define BMSIZE(bm) (bm.bitmap.size)

@@ -2,6 +2,7 @@
 #include <assert.h>
 #include <stdbool.h>
 #include <string.h>
+#include <time.h>
 
 #include "gc.h"
 #include "heap.h"
@@ -198,7 +199,7 @@ void processCont(Cont *p) {
 }
 
 void gc(void) {
-
+  
   size_t before = stgHP - stgHeap;
 
   if (perfCounters > 1) {
@@ -219,7 +220,10 @@ void gc(void) {
   // check if GC should run at all
   if(stgHP-stgHeap <= GCThreshold*stgHeapSize) return;
   
+  clock_t start_t = 0;
+  (void)start_t;
   if (perfCounters) perfCounter.heapCollections++;
+  if (perfCounters > 2)  start_t = clock();
 
   // add stgCurVal
   if (stgCurVal.op != NULL)
@@ -262,5 +266,9 @@ void gc(void) {
       size_t after = stgHP - stgHeap;
       LOG(LOG_SPEW, "end gc heap size %lx (change %lx)\n", after, before - after);
     }
+  }
+  
+  if (perfCounters > 2) {
+    perfCounter.gcTime += (double)(clock() - start_t) / CLOCKS_PER_SEC;
   }
 }

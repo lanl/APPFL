@@ -29,6 +29,10 @@ void showPerfCounters(LogLevel priority) {
   if(perfCounters > 1) {
     LOG(priority, "%ld bytes maximum stack size\n", perfCounter.stackMaxSize);
   }
+  if(perfCounters > 2) {
+    LOG(priority, "total time %f sec\n", perfCounter.totalTime);
+    LOG(priority, "GC time %f sec (%f%%)\n", perfCounter.gcTime, 100*perfCounter.gcTime/perfCounter.totalTime);
+  }
 }
 
 void showStgObj(LogLevel priority, Obj *p) {

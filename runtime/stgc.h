@@ -10,6 +10,7 @@ by the stgc codegenerator.
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
 #include "stg.h"
 #include "cmm.h"

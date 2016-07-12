@@ -111,11 +111,13 @@ cgStart =
 cgMain :: Bool -> Definition
 cgMain v =
   let its = [citems|
+              typename clock_t start_t = clock();
               startCheck();
               parseArgs(argc, argv);
               initStg();
               initGc();
               CALL0_0(start);
+              perfCounter.totalTime = (double)(clock() - start_t) / CLOCKS_PER_SEC;
             |]
           ++ (if v then
                 [citems|
