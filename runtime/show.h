@@ -7,5 +7,4 @@
 void showStgObj(LogLevel priority, Obj *);
 void showStgCont(LogLevel priority, Cont *c);
 
-
 #endif

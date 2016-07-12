@@ -10,6 +10,7 @@
 #include "obj.h"
 #include "options.h"
 #include "sanity.h"
+#include "args.h"
 
 static void *scanPtr, *freePtr;
 
@@ -68,6 +69,7 @@ PtrOrLiteral updatePtrByValue (PtrOrLiteral f) {
       int size = getObjSize(p);
       LOG(LOG_SPEW, "copy %s %s from->to size=%d\n",
                     objTypeNames[getObjType(p)], p->ident, size);
+      if (perfCounters) perfCounter.heapBytesCopied += size;
       memcpy(freePtr, p, size);
       if (EXTRA_CHECKS_GC) {
 	      assert(isLSBset((InfoTab *)freePtr) == 0 && "gc: bad alignment");
@@ -199,6 +201,9 @@ void gc(void) {
 
   size_t before = stgHP - stgHeap;
 
+  if (perfCounters > 1) {
+    if (before > perfCounter.heapMaxSize) perfCounter.heapMaxSize = before;
+  }
   if(LOG_LEVEL == LOG_SPEW) {
     if(LoggingLevel == LOG_SPEW) {
       LOG(LOG_SPEW, "start gc heap size %lx\n", before);
@@ -206,13 +211,15 @@ void gc(void) {
   }
 
   if (sanityChecker) {
-    LOG(LOG_SPEW, "before GC\n");
-    heapCheck(true, LOG_DEBUG);
-    stackCheck(true, LOG_DEBUG);
+    LOG(LOG_NONE, "before GC\n");
+    heapCheck(true, LOG_NONE);
+    stackCheck(true, LOG_NONE);
   }
 
   // check if GC should run at all
   if(stgHP-stgHeap <= GCThreshold*stgHeapSize) return;
+  
+  if (perfCounters) perfCounter.heapCollections++;
 
   // add stgCurVal
   if (stgCurVal.op != NULL)
@@ -245,9 +252,9 @@ void gc(void) {
   swapPtrs();
 
   if (sanityChecker) {
-    LOG(LOG_SPEW, "after GC\n");
-    heapCheck(true, LOG_DEBUG);
-    stackCheck(true, LOG_DEBUG);
+    LOG(LOG_NONE, "after GC\n");
+    heapCheck(true, LOG_NONE);
+    stackCheck(true, LOG_NONE);
   }
 
   if(LOG_LEVEL == LOG_SPEW) {

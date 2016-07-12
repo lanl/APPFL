@@ -11,12 +11,14 @@ int constStrict = 0;
 
 bool sanityChecker = false;
 
+int perfCounters = 0;
+
 int LoggingLevel = LOG_LEVEL;
 
 
 void parseArgs (int argc, char **argv) {
   int c;
-  while ((c = getopt (argc, argv, "gt:e:c:l:s")) != -1)
+  while ((c = getopt (argc, argv, "gt:e:c:l:sp:")) != -1)
     switch (c) {
     case 'g':
       GCThreshold = 1.0; // never run
@@ -40,6 +42,10 @@ void parseArgs (int argc, char **argv) {
       
     case 's':
       sanityChecker = true;
+      break;
+      
+    case 'p':
+      perfCounters = atoi(optarg);
       break;
         
     }
