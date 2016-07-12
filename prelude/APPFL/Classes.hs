@@ -27,12 +27,13 @@ import APPFL.Prim
 --import GHC.Tuple
 
 
---infix  4  ==, /=, <, <=, >=, >
+infix  4  == --, /=, <, <=, >=, >
 infixr 3  &&
 infixr 2  ||
 
 default ()              -- Double isn't available yet
 
+(==) = eqInt
 {-
 -- | The 'Eq' class defines equality ('==') and inequality ('/=').
 -- All the basic datatypes exported by the "Prelude" are instances of 'Eq',

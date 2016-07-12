@@ -1,20 +1,20 @@
 {-# LANGUAGE
 NamedFieldPuns, CPP, FlexibleInstances,
-LiberalTypeSynonyms, TypeOperators #-}
+LiberalTypeSynonyms, TypeOperators, BangPatterns, MagicHash #-}
 
 module FromGHC
-  ()
 where
 
 -- This may be bad practice, or an indicator of bad design.
 -- It is, however, more convenient than manually typing a message
 -- for every non-provably exhaustive pattern match
 #define _unreachable (error ("Should not be reached: " ++ __FILE__ ++ ":" ++ show __LINE__))
+#define _TODO (error ("Definition incomplete at" ++ __FILE__ ++ ":" ++ show __LINE__))
 
-import           ADT
-import           AST
+import           ADT as A hiding (unfoldr)
+import           AST as A
 import           State hiding (liftM)
-import qualified Data.Set as Set
+import qualified Data.Map as Map
 
 -- Let's be explicit about what comes from where, and what it's related to.
 -- It's hard enough dealing with the massive GHC codebase
@@ -45,11 +45,6 @@ import           GHC
                  , ModLocation (..), ModuleName
                  , getModSummary, getModuleGraph
                  , moduleName, moduleNameString
-
-                 -- Identifiers/Name
-                 , Id -- Var synonym: basicTypes/Var.hs
-                 , Name, NamedThing (..)
-                 , nameModule
                  )                 
 
 import           GhcMonad
@@ -76,10 +71,12 @@ import           CoreToStg
                  ( coreToStg )
 import           CoreSyn
                  ( CoreProgram, AltCon (..) )
-import           DataCon
+import           DataCon as G
                  ( DataCon
-                 , isVanillaDataCon
+                 , isVanillaDataCon, dataConTag
+                 , dataConTyCon, dataConRepType
                  )
+import           TypeRep (Type (..))                 
 import           SimplStg
                  ( stg2stg )
 
@@ -94,13 +91,25 @@ import           StgSyn
                  , pprStgBindings
                  )
 
-import           Name ( getOccString, nameModule_maybe )
+import           Name
+                 ( Name, NamedThing (..)
+                 , getOccString, nameModule_maybe, nameUnique
+                 , nameModule )
+                 
 import           OccName ( occNameString )
+import           FastTypes
+                 ( FastInt
+                 , shiftRLFastInt, bitAndFastInt
+                 , iBox, cBox, fastChr
+                 )
+import           Unique ( Unique, getKey )
 
-import           Var
-                 ( Var (..) )
+import           GHC.Exts
+                 ( Int(..), indexCharOffAddr# )
 
-import qualified TyCon as GHC
+import           Id ( Id, idName, idUnique )
+
+import           TyCon as G
                  ( TyCon, isDataTyCon )
 
 import           Literal ( Literal (..) )
@@ -117,10 +126,11 @@ import           CostCentre
 import           Outputable
 import           FastString ( unpackFS )
 import           Control.Monad
-                 (liftM, mapAndUnzipM, zipWithM
+                 (liftM, mapAndUnzipM, zipWithM, when
                  , (>=>), (<=<), (=<<)
                  )
-import           Data.List (nubBy)
+import           Control.Exception ( assert )
+import           Data.List as List (nubBy, unfoldr, insertBy) 
 import           Data.Function (on)
 
 
@@ -225,13 +235,14 @@ makeAppflFlags preludeDir
   { extensions  = oldExts
   , importPaths = oldIPaths }
   =
-  foldr xopt_modify newFlags appflExts
+  foldr xoptModify newFlags appflExts
  
-  where
-    
-    xopt_modify (xflag, turnOn) dfs
-      | turnOn    = xopt_set dfs xflag
-      | otherwise = xopt_unset dfs xflag
+  where    
+    xoptModify :: (ExtensionFlag, Bool) -> DynFlags -> DynFlags
+    xoptModify (xflag, turnOn) flags
+      | turnOn    = xopt_set flags xflag
+      | otherwise = xopt_unset flags xflag
+
     newFlags =
       flags {
       -- hscTarget determines what form the backend takes (Native,
@@ -249,7 +260,7 @@ makeAppflFlags preludeDir
       -- Make sure our Prelude and Base libs are visible
       , importPaths    = oldIPaths ++ [preludeDir, preludeDir ++ "/APPFL/" ]
       
-      --Should parameterize this
+      -- Should parameterize this (maybe with Options.h?)
       , verbosity      = 0
       }
 
@@ -285,7 +296,7 @@ gutsToSTG CgGuts { cg_module -- :: Module
       -- above.  Grab them again here for safety.
     hscEnv <- getSession
     dflags <- getSessionDynFlags
-    let datacons = filter GHC.isDataTyCon cg_tycons
+    let datacons = filter G.isDataTyCon cg_tycons
           
     liftIO $ toStg cg_module cg_binds ms_location datacons hscEnv dflags
 
@@ -296,7 +307,7 @@ gutsToSTG CgGuts { cg_module -- :: Module
 toStg :: Module             -- this module (being compiled)
       -> CoreProgram        -- its Core bindings
       -> ModLocation        -- Where is it? (I think)
-      -> [GHC.TyCon]        -- Its data constructors
+      -> [G.TyCon]          -- Its data constructors
       -> HscEnv             -- The compiler session
       -> DynFlags           -- Dynamic flags
       -> IO ([StgBinding],  -- The STG program
@@ -311,6 +322,188 @@ toStg mod core modLoc datacons hscEnv dflags =
     -- Not clear if this is necessary.
     -- It may only do cost center analysis, which we don't use for now
     stg2stg dflags mod stg_binds
+
+
+      
+-- g2a prefix => GHC to APPFL
+
+
+-- A TyMap holds the information required to build TyCons (TyCon name
+-- -> (GHC)DataCon).  We only see one data constructor at a time in
+-- the STG syntax, so we add them to the Map as we see them. Once
+-- accumulated, the DataCons can be translate to APPFL DataCon.  This
+-- translation does not happen immediately because we want to preserve
+-- the ordering of constructors in the data definition (based on the
+-- ConTag field of the GHC DataCons).  This tag is occasionally used by
+-- GHC (in deriving Enum instances, in particular) and we don't want
+-- to break that logic.
+type TyMap = Map.Map A.Con [G.DataCon]
+
+-- We want a "stateful" traversal, since, once a TyCon is in the TySet,
+-- any new DataCon associated with it should be inserted into its
+-- constructor list.  If we don't order the traversal, we'd have to merge
+-- the TySets intelligently; not impossible, but extra work.
+-- Sidenote: I had no idea type variables could be higher-kinded
+
+type TyST stg = State TyMap (stg ())
+
+
+-- This is a littly silly: composition of types. The LiberalTypeSynonyms
+-- extension is absolutely required for this to be partially applied
+-- (for example, for use in the 'stg' parameter of TyST above)
+type (:.:) a b c = a (b c)
+
+
+instance Ord A.TyCon where
+  -- Type constructors names must be unique,
+  -- so this is a reasonable instance for the Map requirement.
+  -- Further, we'll be inserting DataCons into the Tycons as we
+  -- encounter them, and we don't want the list-in-progress to change
+  -- how the TyCons are interpreted by the Set operations
+  compare (A.TyCon _ c1 _  _) (A.TyCon _ c2 _  _)
+    = compare c1 c2
+
+
+
+
+-- putDataCon :: G.DataCon -> ?
+putDataCon dc =
+  do
+    let tcname  = qualifyName (dataConTyCon dc)        
+    tymap <- get
+    when (not $ dcPresent dc tymap) $ do
+      put $ Map.insertWith insertDC tcname [dc] tymap
+      
+
+  where
+    insertDC [new] dcs = List.insertBy (compare `on` dataConTag) new dcs
+    insertDC _ _       = _unreachable
+    
+dcPresent :: G.DataCon -> TyMap -> Bool
+dcPresent dc tmap = any (any (== dc)) tmap
+  
+-- | Merge two incomplete TyCons.  TyCons are incomplete
+-- because their data constructors are added as they are encountered
+-- in the STG tree.  The merging is a simple union of the TyCon TyVars and
+-- DataCons. Note: the tyvar union might have to be tweaked, depending on how
+-- GHC maintains the types of *its* DataCons    
+
+g2aDataCon :: G.DataCon -> A.DataCon
+g2aDataCon dc = DataCon con mtypes
+  where con    = qualifyName dc
+        mtypes = go (g2aMonoType $ dataConRepType dc)
+        go (MFun m1 m2) = m1 : go m2
+        go m            = [m]
+
+-- | Convert a GHC Type to an Appfl Monotype
+--   for use in DataCons
+g2aMonoType :: Type -> Monotype
+g2aMonoType t =
+  case t of
+    -- Simplest case, a type variable
+    TyVarTy v        -> MVar (getOccString v)
+
+    -- AppTy will never be an application of a TyConnApp to
+    -- some other type.  The first param is always another AppTy or
+    -- a TyVarTy.  This seems like it would show up in contexts like
+    -- f :: Monad m => m a -> m b.  In Haskell, this is fine, but there are
+    -- no typeclasses or synonyms at the STG level, so this type may have
+    -- been excised/simplified by the time we start touching the STG tree
+    AppTy t1 t2      ->
+      case g2aMonoType t1 of
+        MVar v        -> MCon True v [g2aMonoType t2]
+        MCon b c args -> MCon b c (args ++ [g2aMonoType t2])
+        -- Anything else would be strange, but let's be sure
+        _           -> panicType
+
+    -- e.g. List a, Maybe Int, etc.
+    TyConApp tc args -> MCon True -- Assuming everything boxed for now
+                        (qualifyName tc) (map g2aMonoType args)
+
+    -- e.g a -> a
+    -- This assumes right-associativity is expressed just as in our MFun,
+    -- which is probably reasonable. Anything else would be counterintuitive
+    FunTy t1 t2      -> MFun (g2aMonoType t1) (g2aMonoType t2)
+
+    -- If this is nested in a type (as in higher-rank types) just ignoring the
+    -- universal quantifier may be a problem.  We'll see...
+    ForAllTy var ty  -> g2aMonoType ty
+
+    -- Type-level Literals are definitely beyond what we support.
+    -- They *should* only appear in programs with -XDataKinds,
+    -- so they could be rejected early, in theory.
+    LitTy _          -> panicType
+
+  where panicType = panic $ showSDocUnsafe $
+                    text "Having trouble converting Type to MonoType:" <+> ppr t
+
+
+
+-- TODO: Sanitize names for use in C codegen
+makeStgName :: Id -> String
+makeStgName = qualifyName
+
+
+g2a :: [StgBinding] -> [Def ()]
+g2a binds =
+  let (objs, tycons) = runState (mapM g2aObj binds) Map.empty
+  in _TODO
+
+-- | Translate bindings (let/letrec, including top level) into APPFL Obj types.
+g2aObj :: StgBinding -> TyST ([] :.: Obj) -- this is why I wanted type composition
+g2aObj bind =
+  case bind of
+    -- We don't distinguish between recursive bindings and otherwise
+    -- at the type level, so no need to do anything special here.
+    -- occNames passed to procRhs are probably not what we want, but
+    -- serve for now
+    StgNonRec id rhs -> procRhs rhs id >>= return . (:[])
+    StgRec pairs -> mapM (\(id,rhs) -> procRhs rhs id) pairs
+
+  where
+    procRhs :: StgRhs -> Id -> TyST Obj
+    procRhs rhs id =
+      case rhs of
+        -- FUN or THUNK
+        StgRhsClosure ccs bindInfo fvs updFlag srt args expr
+
+          -- it's a THUNK
+          | null args
+            -> do
+              e <- g2aExpr expr
+              return $ THUNK () e (makeStgName id)
+
+          -- it's a FUN(ish) thing.  Data constructors are functions too
+          -- but they are not given a distinguished definition as in APPFL
+          -- STG or full Haskell. This is fine; we can leave function wrappers
+          -- for the CONs, and only use them when constructors are 
+          | otherwise
+            -> do
+              e <- g2aExpr expr
+              return $ FUN () (map makeStgName args) e (makeStgName id)
+          
+        -- It's either a top-level empty constructor (a la Nil/Nothing) or it's
+        -- being used in a let binding. Either way, we make sure it's accumulated
+        StgRhsCon _ dataCon args
+
+          -- DataCon does not have a "fancy" type.
+          -- "No existentials, no coercions, nothing" (basicTypes/DataCon.hs)
+          | isVanillaDataCon dataCon
+            -> do
+              putDataCon dataCon
+              return _TODO
+              
+              
+
+          -- Something fancy going on with the DataCon, fail hard until we figure
+          -- out how to handle it.
+          | otherwise         ->
+              panic $ showSDocUnsafe $
+              (text "Not sure how to handle non-vanilla DataCons like:" $+$ ppr dataCon)
+
+
+g2aExpr :: StgExpr -> TyST Expr
+g2aExpr = _TODO
 
 
 
@@ -333,33 +526,61 @@ pprSynList :: OutputSyn a => [a] -> SDoc
 pprSynList = brackets . sep . punctuate comma . map pprSyn
 
 -- | Produce a qualified name for a NamedThing as a String. (e.g. Module.Submodule.idname)
---   Does not add package information
+--   Does not add package information, but does add characters to express the underlying
+--   Unique for Names that don't have a Module. (Internal/System names)
 qualifyName :: NamedThing a => a -> String
-qualifyName thing = modPrefix ++ idname
+qualifyName thing = qualify idname
   where name           = getName thing
+        qualify n      = case nameModule_maybe name of
+                              Just m  -> makePrefix m ++ n
+                              Nothing -> n ++ '!':showUnique (nameUnique name)
         modPrefix      = maybe "" makePrefix (nameModule_maybe name)
         makePrefix mod = moduleNameString (moduleName mod) ++ "."
         idname         = getOccString name
+
+
+-- This is based on the (uglier, imo) base62 encoding from basicTypes/Unique.hs
+-- Because this is a base64 encoding (with '-' and '_'), it needs to be sanitized
+-- for C codegen.  There's other sanitization to be done on non-uniquified names,
+-- so it's deferred for now.
+showUnique :: Unique -> String
+showUnique u = unfoldr op (getKey u)
+  where chr64 n    = cBox ( indexCharOffAddr# chars64 n)
+        !chars64   = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_"#
+        op (I# 0#) = Nothing
+        op (I# i#) = case i# `shiftRLFastInt` 6# {- 2^6 = 64 -} of
+                       shifted# ->
+                         case i# `bitAndFastInt` 63# of
+                           low5# -> Just ( chr64 low5#, iBox shifted# )                
+          
+
 
 -- | PrettyPrint a qualified name for NamedThing
 pprSynName :: NamedThing a => a -> SDoc
 pprSynName = text . qualifyName . getName
 
+
+-- | Make a string representation of a foreign call
 nameForeignCall :: ForeignCall -> String
 nameForeignCall (CCall (CCallSpec target _ _))
   = case target of
       StaticTarget fstring _ _ -> unpackFS fstring
       DynamicTarget            -> "Dynamic:Unnamed"
 
+
+
 instance OutputSyn Id where
   pprSyn = pprSynName
+
 
 instance OutputSyn StgArg where
   pprSyn (StgVarArg id)  = pprSyn id
   pprSyn (StgLitArg lit) = pprSyn lit
 
+
 instance OutputSyn Literal where
   pprSyn = ppr
+
 
 instance OutputSyn StgBinding where
   pprSyn bind = 
@@ -373,7 +594,8 @@ instance OutputSyn StgBinding where
     where pprPair id rhs =
             pprSynName id <+> equals $+$
             pprSyn rhs
-      
+
+
 instance OutputSyn StgRhs where
   pprSyn rhs =
     case rhs of
@@ -412,11 +634,14 @@ instance OutputSyn StgExpr where
       StgTick _ realExpr 
         -> prefix "Tick" <+> pprSyn realExpr
 
--- Handle the bindings and body of the two varieties of Let expressions
+
+-- Prettyprint the bindings and body of the two varieties of Let expressions
 pprSynLet :: String -> StgBinding -> StgExpr -> SDoc
 pprSynLet pfxStr binds body = hang (prefix pfxStr <+> text "let") 2
                               (pprSyn binds) $+$
                               text "in" <+> pprSyn body
+
+
 
 instance OutputSyn StgAlt where
   pprSyn (acon, params, useMask, rhs) =
@@ -437,6 +662,7 @@ instance OutputSyn AltType where
     AlgAlt _    -> prefix "AlgAlt"
     PrimAlt _   -> prefix "PrimAlt"
     
+
 instance OutputSyn StgOp where
   pprSyn op =
     case op of
@@ -448,90 +674,3 @@ instance OutputSyn StgOp where
         -> text $ "(Foreign) " ++ nameForeignCall fcall
 
       
-      
--- g2a prefix => GHC to APPFL
-
-
--- A TySet holds the set of TyCons-In-Progress.  We only see one
--- data constructor at a time in the STG syntax, so we add them to the
--- Set as we see them, creating a new TyCon if necessary and appending the
--- DataCon to the list of constructors for the TyCon
-type TySet = Set.Set TyCon
-
--- We want a "stateful" traversal, since, once a TyCon is in the TySet,
--- any new DataCon associated with it should be inserted into its
--- constructor list.  If we don't order the traversal, we'd have to merge
--- the TySets intelligently; not impossible, but extra work.
--- Sidenote: I had no idea type variables could be higher-kinded
-
-type TyST stg = State TySet (stg ())
-
--- This is a littly silly: composition of types. The LiberalTypeSynonyms
--- extension is absolutely required for this
-type (:.:) a b c= a (b c)
-
-instance Ord TyCon where
-  -- Type constructors names must be unique,
-  -- so this is a reasonable instance
-  compare (TyCon _ c1 _  _) (TyCon _ c2 _  _)
-    = compare c1 c2
-
-
-
-
-g2a :: [StgBinding] -> [Def ()]
-g2a binds =
-  let (objs, tycons) = runState (mapM g2aObj binds) Set.empty
-  in undefined
-
--- | Translate bindings (let/letrec, including top level) into APPFL Obj types.
-g2aObj :: StgBinding -> TyST ([] :.: Obj) -- this is why I wanted type composition
-g2aObj bind =
-  case bind of
-    -- We don't distinguish between recursive bindings and otherwise
-    -- at the type level, so no need to do anything special here.
-    -- occNames passed to procRhs are probably not what we want, but
-    -- serve for now
-    StgNonRec id rhs -> procRhs rhs (getOccString id) >>= return . (:[])
-    StgRec pairs -> mapM (\(id,rhs) -> procRhs rhs $ getOccString id) pairs
-
-  where
-    procRhs :: StgRhs -> String -> TyST Obj
-    procRhs rhs name =
-      case rhs of
-        -- FUN or THUNK
-        StgRhsClosure ccs bindInfo fvs updFlag srt args expr
-
-          -- it's a THUNK
-          | null args -> do
-              e <- g2aExpr expr
-              return $ THUNK () e name
-          
-          -- it's a FUN 
-          | otherwise -> do
-              e <- g2aExpr expr
-              return $ FUN () (map getOccString fvs) e name
-          
-        -- it's a DataCon definition
-        -- Given a datatype: data T <type vars> = T1 <types> | T2 ..
-        -- There are top level bindings to ModuleName.{T1,T2...} with
-        -- definitions as either:
-        -- functions that construct the object: M.T1 = \a b .. -> M.T1 a b ..
-        -- or
-        -- constants: M.T1 = M.T1
-        -- We'll need to chase all these down to build our full TyCons
-        StgRhsCon _ dataCon args
-
-          -- DataCon does not have a "fancy" type.
-          -- "No existentials, no coercions, nothing" (basicTypes/DataCon.hs)
-          | isVanillaDataCon dataCon -> undefined
-
-          -- Something fancy going on with the DataCon, fail hard
-          | otherwise         ->
-              panic $ showSDocUnsafe $
-              (text "Not sure how to handle non-vanilla DataCons like:" $+$ ppr dataCon)
-            
-            
-
-g2aExpr :: StgExpr -> TyST Expr
-g2aExpr = undefined

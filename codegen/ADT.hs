@@ -18,6 +18,8 @@ module ADT (
   getDataCons,
   makeIntTyCon,
   makeDoubleTyCon,
+  dataConTyVars,
+  monoTypeVars,
   boxMTypes,
   isBoxed,
   unfoldr
@@ -166,6 +168,16 @@ tyConName (TyCon _ n _ _) = n
 getDataCons :: TyCon -> [DataCon]
 getDataCons (TyCon _ _ _ cons) = cons
 
+dataConTyVars :: DataCon -> [TyVar]
+dataConTyVars (DataCon _ mts) = concatMap monoTypeVars mts
+
+monoTypeVars :: Monotype -> [TyVar]
+monoTypeVars mt = go mt []
+  where go (MVar v) vs      = v:vs
+        go (MFun m1 m2) vs  = let vs' = go m1 vs
+                              in go m2 vs'
+        go (MCon _ _ ms) vs = concatMap (flip go []) ms ++ vs
+        go m _ = error $ "ADT.monoTypeVars: " ++ show m
 
 instance Show Polytype where
     show (PPoly [] m) = show m

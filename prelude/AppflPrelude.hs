@@ -39,6 +39,7 @@ module AppflPrelude (
     -- fst, snd, curry, uncurry,
 
     -- -- ** Basic type classes
+    (==),
     -- Eq((==), (/=)),
     -- Ord(compare, (<), (<=), (>=), (>), max, min),
     -- Enum(succ, pred, toEnum, fromEnum, enumFrom, enumFromThen,

@@ -41,6 +41,7 @@ default ()              -- Double isn't available yet,
 (*) = mulInt
 (%) = remInt
 
+
 mod = (%)
 div = (/)
 negate (I# i#) = I# (negateInt# i#)
