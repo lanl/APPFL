@@ -254,19 +254,20 @@ parallelism}.
 Second, we claim that there is a trend in high-performance computing, and
 functional programming, towards \emph{transparent fault tolerance}.
 
-\subsection{Strictness and Parallelism}
+%\subsection{Strictness and Parallelism}
 %It is a trivial observation that given strict functional semantics, wherein
 %function arguments may be safely evaluated before function evaluation, it is
 %safe to evaluate the arguments, and the function, in parallel, and that this
 %principle applies recursively in the (dynamic) expression tree (or graph).
 
+
+\section{Project and Goals}
 Given strict functional semantics wherein function arguments may be safely
 evaluated before function evaluation or call, it is safe to evaluate the
 arguments, and the function, in parallel, and that this applies recursively in
 the (dynamic) expression tree (or graph), and similarly for data constructors
 as functions.
-
-\section{Project and Goals}
+%
 Our project is the light-weight implementation of a pure, higher-order,
 polymorphic, functional language and runtime system with which we can
 experiment with automatic parallelization strategies with varying degrees of
@@ -282,7 +283,7 @@ optimization, would simply divert us from our central goals.\footnote{We
 For another, it means that we are not undertaking significant morphing of GHC
 itself: because this is in large part an undergraduate student project it must
 be kept as simple as reasonably possible.
-
+%
 Our initial requirements are that
 \begin{itemize}
 \item The implementation must be feasible in terms of available effort;
@@ -806,13 +807,16 @@ Parallel garbage collection is likely out of scope.
 
 \section{Related Work}
 
-\emph{Nihil sub sole novum}---there is nothing new under the sun. % (Ecclesistes 1:9).
+%\emph{Nihil sub sole novum}---there is nothing new under the sun. % (Ecclesistes 1:9).
 %every new idea has some sort of precedent or echo from the past~\cite{nihil}.
+There is a vast body of related work; we highlight only the very most closely related.
 
 %Previously cited papers describing some of the inner workings of GHC at
 %various points in its evolution have greatly informed our approach.
 
 \subsubsection{Strict but still pure.}
+\vspace{-0.1in}
+%\paragraph{Strict but still pure.}
 The concept of strict but still pure in some sense dates back to the concept
 of applicative order reduction in the lambda calculus.  In terms of a
 notionally concrete programming language the first thorough explications may
@@ -834,7 +838,9 @@ and has been underway for some time, but the emphasis appears to be on a much
 more complex type system for handling stateful computation, and the prospects
 for its eventual completion are unknown~\cite{disciplined-disciple}.
 
+\vspace{-0.1in}
 \subsubsection{Strict, pure, auto-parallelizing.}
+%\paragraph{Strict, pure, auto-parallelizing.}
 NVIDIA's NOVA language, and corresponding compiler, implements a strict
 (``call by value''), pure, polymorphic, higher-order functional language with
 built-in parallel operators (e.g., \emph{map}, \emph{reduce}, and
@@ -842,7 +848,9 @@ built-in parallel operators (e.g., \emph{map}, \emph{reduce}, and
 sequential C, parallel (multi-threaded) C, and CUDA C, the lattermost
 targeting NVIDIA GPUs.
 
+\vspace{-0.1in}
 \subsubsection{GHC as a front-end.}
+%\paragraph{GHC as a front-end.}
 The Intel Labs Haskell Research Compiler (HRC) is the most closely related
 work to ours of which we are aware~\cite{Liu:2013,Petersen:2013}.  As in our
 planned approach they use GHC as the front end, but exit GHC at the final GHC
@@ -856,7 +864,9 @@ compiler front-end, dumping STG code as text, parsing that text, then
 translating to Java code for compilation and execution on the Java Virtual
 Machine~\cite{Stewart-BSc}.
 
+\vspace{-0.1in}
 \subsubsection{Fault tolerance for functional programming.}
+%\paragraph{Fault tolerance for functional programming.}
 Pointon et al.\ developed a limited fault tolerance mechanism for Glasgow
 distributed Haskell based on distributed exception
 handling~\cite{Pointon:2001}.  However, it appears that their scheme for
@@ -1065,6 +1075,7 @@ how mini-Haskell is translated into STG for the back-end.  Here, the
 differences are given in order of perceived utility, or importance in
 transitioning from STG to mini-Haskell.
 
+\vspace{-0.1in}
 \subsubsection{Removal of explicit heap objects.}
 In STG, all object definitions require explicit classification with
 \texttt{FUN}, \texttt{PAP}, \texttt{CON}, \texttt{THUNK}. This classification can be
@@ -1080,6 +1091,7 @@ created when a known function is partially applied.  \texttt{CON} objects are
 created when constructors are fully applied.  Every other object becomes a
 \texttt{THUNK}.
 
+\vspace{-0.1in}
 \subsubsection{Avoiding building thunks.}
 As \emph{EA} points out, there is no need to build a thunk for the scrutinee
 of a \texttt{case} expression because if the \texttt{case} is evaluated the
@@ -1092,6 +1104,7 @@ an unnecessary heap allocation.  An alternative is to translate to
 \texttt{case e of x \{\_ -> f x\}}, which we regard as a role of a front-end
 such as mini-Haskell.
 
+\vspace{-0.1in}
 \subsubsection{The layout rule.}
 Mini-Haskell implements Haskell's layout rule in an almost direct translation
 of the specification given in section 10.3 of the Haskell 2010
@@ -1119,8 +1132,8 @@ indentation, e.g., \emph{haskell-mode} for Emacs~\cite{haskellmode}.
 %   http://www.dcs.gla.ac.uk/mail-www/haskell/msg01711.html
 
 
+\vspace{-0.1in}
 \subsubsection{Expression to expression application.}
-
 In STG function application must be to atomic values, i.e., either literals or
 variables.  This often requires introducing bindings with either \texttt{let} or
 \texttt{case} expressions.  Consider the \texttt{append} function that
@@ -1130,10 +1143,9 @@ concatenates its two list parameters, which can be expressed in STG by
    append = FUN(l1 l2 ->
                case l1 of
                  { Nil -> l2;
-                   Cons hd tl -> 
-                     let { rec = THUNK(append tl l2);
-                           result = CON(Cons hd rec) }
-                     in result })
+                   Cons hd tl -> let { rec = THUNK(append tl l2);
+                                       result = CON(Cons hd rec) }
+                                 in result })
 \end{verbatim}}
 \noindent In mini-Haskell expressions may be applied to other expressions, so the
 recursive call to \texttt{append} can be parenthesized. There is no need for the
@@ -1151,8 +1163,8 @@ expressions are thus properly ``atomized'' for STG.  The above mini-Haskell code
 is transformed into STG that is structurally identical to the STG code that
 precedes it.
 
+\vspace{-0.1in}
 \subsubsection{Fancy pattern matching.}
-
 STG supports pattern matching but only in a simple form and only in
 \texttt{case} expressions.  Mini-Haskell extends this to something approaching
 what is found in Haskell.  Functions, including lambda expressions, may match on
@@ -1205,8 +1217,8 @@ for example, when multiple branches lead to the same large expression, but the
 additional complexity outweighs the benefit for a testing language.
 
 
+\vspace{-0.1in}
 \subsubsection{Less significant features.}
-
 Mini-Haskell provides some smaller conveniences that don't warrant individual
 sections but are worth mentioning.
 \begin{itemize}
