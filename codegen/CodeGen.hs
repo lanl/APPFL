@@ -120,7 +120,6 @@ cgMain v =
           ++ (if v then
                 [citems|
                   showStgHeap(LOG_DEBUG);
-                   GC();
                 |]
               else [])
           ++ [citems|return 0;|]

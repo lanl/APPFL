@@ -428,18 +428,12 @@ void checkStgHeap() {
 }
 
 
-// declared in stg.h
-//size_t stgStatObjCount;
-//Obj * stgStatObj[100];
-
-//tmp hack!
-void *getToPtr();
 void showObjSpaceInfo(LogLevel priority) {
   LOG(priority, "SHO range is %p to %p\n",
 	  &stgStatObj[0],
 	  &stgStatObj[stgStatObjCount-1]);
   LOG(priority, "heap range is %p to %p\n", stgHeap, stgHP);
-  LOG(priority, "heap toPtr is %p\n", getToPtr());
+  LOG(priority, "heap toPtr is %p\n", toPtr);
 }
 
 bool isSHO(Obj *p) {

@@ -19,7 +19,7 @@ foreach (test ${ALL_SRCS})
     set(tname mhs_${fname})
     set(build build_${tname})
     set(binary ${BIN_DIR}/${tname})
-    add_test(${build} ${STGCC} -v ${SRC_DIR}/${fname}.mhs -o ${tname})
+    add_test(${build} ${STGCC} ${SRC_DIR}/${fname}.mhs -o ${tname})
 
     foreach (strict 0 1 2)
       foreach (constr 0)

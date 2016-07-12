@@ -12,6 +12,49 @@
 #include "show.h"
 #include "sanity.h"
 
+__attribute__((always_inline)) char *getIdent(Obj *obj) {
+  #if USE_IDENT
+    return obj->ident;
+  #else
+    return NULL;
+  #endif
+}
+
+__attribute__((always_inline)) bool checkObjType(Obj *obj, ObjType objType) {
+  #if USE_OBJTYPE
+    return (obj->objType == objType);
+  #else
+    return true;
+  #endif
+}
+
+__attribute__((always_inline)) bool checkInfoTabName(InfoTab *it, char *name) {
+  #if USE_INFOTAB_NAME
+    return (strcmp(it->name, "stgIndirect") == 0);
+  #else
+    return true;
+  #endif
+}
+
+__attribute__((always_inline)) bool checkIdent(Obj *obj) {
+  #if USE_IDENT
+    for (int i = 0; obj->ident[i] != '\0'; i++) {
+      assert(i < IDENT_SIZE && "sanity: bad ident size");
+      if(!isprint(obj->ident[i])) return false;
+    }
+  #endif
+  return true;
+}
+
+__attribute__((always_inline)) bool checkInfoTabHeader(InfoTab *it) {
+  #if DEBUG_INFOTAB
+    return (it->pi = PI());
+  #else
+    return true;
+  #endif
+}
+
+
 
 bool checkPtr8BitAligned(void *p) {
   // make sure the object is aligned
@@ -215,7 +258,7 @@ void stackCheck(bool display) {
           assert(mayBeBoxed(p->payload[i]) && "sanity: unexpected unboxed arg in CONT");
      	  } else {
           assert(mayBeUnboxed(p->payload[i]) && "sanity: unexpected boxed arg in CONT");
-   	    }    
+   	    }
      }  // for
     } else { // LETCONT
       for (int i = 0; i != size; i++) {
@@ -224,8 +267,7 @@ void stackCheck(bool display) {
         }
       }
     }
-    if (display) showStgCont(LOG_LEVEL, (Cont *)p);         
+    if (display) showStgCont(LOG_LEVEL, (Cont *)p);
   }
   if (display) LOG(LOG_INFO, "\n");
 }
-

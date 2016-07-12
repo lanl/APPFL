@@ -18,7 +18,7 @@ foreach (test ${ALL_SRCS})
     get_filename_component(tname ${test} NAME_WE) 
     set(build build_${tname})
     set(binary ${BIN_DIR}/${tname})
-    add_test(${build} ${STGCC} -v ${SRC_DIR}/${tname}.stg -o ${tname})
+    add_test(${build} ${STGCC} ${SRC_DIR}/${tname}.stg -o ${tname})
    
     foreach (strict 0 1 2)
       foreach (constr 0) 
