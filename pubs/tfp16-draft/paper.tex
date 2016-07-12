@@ -1187,6 +1187,7 @@ Even relatively simple functions can be painful to write, such as \texttt{unzip}
    unzip (Cons (Pair a b) xs) =
      case unzip xs of
        Pair as bs -> Pair (Cons a as) (Cons b bs)
+
 \end{verbatim}}
 
 Of course, this complex pattern matching must eventually be transformed into
