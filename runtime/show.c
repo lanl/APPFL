@@ -24,7 +24,7 @@ void showHistogram(LogLevel priority, int *data, char *name) {
 
 void showPerfCounters(LogLevel priority) {
   if (USE_PERFCOUNTERS) {
-    if(perfCounters) {
+    if(rtArg.perfCounters) {
       LOG(priority, "Performance Counters\n--------------------------------\n");
       LOG(priority, "%ld bytes allocated in heap\n", perfCounter.heapBytesAllocated);
       LOG(priority, "%ld bytes copied during GC\n", perfCounter.heapBytesCopied);
@@ -32,18 +32,18 @@ void showPerfCounters(LogLevel priority) {
       LOG(priority, "%ld heap allocations\n", perfCounter.heapAllocations);
       showHistogram(priority, perfCounter.heapHistogram, "heap");
     }
-    if(perfCounters > 1) {
+    if(rtArg.perfCounters > 1) {
       LOG(priority, "%ld bytes maximum heap size\n", perfCounter.heapMaxSize);
     }
-    if(perfCounters) {
+    if(rtArg.perfCounters) {
       LOG(priority, "%ld bytes allocated in stack\n", perfCounter.stackBytesAllocated);
       LOG(priority, "%ld stack allocations\n", perfCounter.stackAllocations);
       showHistogram(priority, perfCounter.stackHistogram, "stack");
     }
-    if(perfCounters > 1) {
+    if(rtArg.perfCounters > 1) {
       LOG(priority, "%ld bytes maximum stack size\n", perfCounter.stackMaxSize);
     }
-    if(perfCounters > 2) {
+    if(rtArg.perfCounters > 2) {
       LOG(priority, "total time %f sec\n", perfCounter.totalTime);
       LOG(priority, "GC time %f sec (%f%%)\n", perfCounter.gcTime, 100*perfCounter.gcTime/perfCounter.totalTime);
     }

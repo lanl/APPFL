@@ -38,7 +38,7 @@ Cont *stgAllocCont(CInfoTab *citp) {
   int payloadSize = citp->cLayoutInfo.payloadSize;
   size_t contSize = sizeof(Cont) + payloadSize * sizeof(PtrOrLiteral);
   //  contSize = ((contSize + 7)/8)*8;
-  if (USE_PERFCOUNTERS && perfCounters) {
+  if (USE_PERFCOUNTERS && rtArg.perfCounters) {
     perfCounter.stackBytesAllocated += contSize;
     perfCounter.stackAllocations++;
     perfCounter.stackHistogram[payloadSize]++;
@@ -48,7 +48,7 @@ Cont *stgAllocCont(CInfoTab *citp) {
   showCIT(citp);
   stgSP = (char *)stgSP - contSize;
   assert(stgSP >= stgStack);
-  if (USE_PERFCOUNTERS && perfCounters > 1) {
+  if (USE_PERFCOUNTERS && rtArg.perfCounters > 1) {
     size_t before = stgStack + stgStackSize - stgSP;
     if (before > perfCounter.stackMaxSize) perfCounter.stackMaxSize = before;
   }
@@ -74,7 +74,7 @@ Cont *stgAllocCallOrStackCont(CInfoTab *citp, int argc) {
 	 "stgAllocCallOrStackCont: citp->contType != CALLCONT/STACKCONT");
   size_t contSize = sizeof(Cont) + argc * sizeof(PtrOrLiteral);
   //  contSize = ((contSize + 7)/8)*8;
-  if (USE_PERFCOUNTERS && perfCounters) {
+  if (USE_PERFCOUNTERS && rtArg.perfCounters) {
     perfCounter.stackBytesAllocated += contSize;
     perfCounter.stackAllocations++;
     perfCounter.stackHistogram[argc]++;
@@ -84,7 +84,7 @@ Cont *stgAllocCallOrStackCont(CInfoTab *citp, int argc) {
   showCIT(citp);
   stgSP = (char *)stgSP - contSize;
   assert(stgSP >= stgStack);
-  if (USE_PERFCOUNTERS && perfCounters > 1) {
+  if (USE_PERFCOUNTERS && rtArg.perfCounters > 1) {
     size_t before = stgStack + stgStackSize - stgSP;
     if (before > perfCounter.stackMaxSize) perfCounter.stackMaxSize = before;
   }
@@ -155,7 +155,7 @@ Cont *stgAdjustTopContSize(Cont *cp, int delta) {
   cp = (Cont *)newStgSP;
   assert(newContSize == getContSize(cp));
 
-  if (perfCounters) {
+  if (rtArg.perfCounters) {
     perfCounter.stackBytesAllocated += (newContSize - oldContSize);
     perfCounter.stackHistogram[oldPayloadSize]--;
     perfCounter.stackHistogram[newPayloadSize]++;
@@ -163,7 +163,7 @@ Cont *stgAdjustTopContSize(Cont *cp, int delta) {
 
   // adjust stgSP and return
   stgSP = newStgSP;
-  if (USE_PERFCOUNTERS && perfCounters > 1) {
+  if (USE_PERFCOUNTERS && rtArg.perfCounters > 1) {
     size_t before = stgStack + stgStackSize - stgSP;
     if (before > perfCounter.stackMaxSize) perfCounter.stackMaxSize = before;
   }

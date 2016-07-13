@@ -70,7 +70,7 @@ PtrOrLiteral updatePtrByValue (PtrOrLiteral f) {
       int size = getObjSize(p);
       LOG(LOG_SPEW, "copy %s %s from->to size=%d\n",
                     objTypeNames[getObjType(p)], p->ident, size);
-      if (USE_PERFCOUNTERS && perfCounters) perfCounter.heapBytesCopied += size;
+      if (USE_PERFCOUNTERS && rtArg.perfCounters) perfCounter.heapBytesCopied += size;
       memcpy(freePtr, p, size);
 
 	    assert(isLSBset((InfoTab *)freePtr) == 0 && "gc: bad alignment");
@@ -202,28 +202,28 @@ void gc(void) {
 
   size_t before = stgHP - stgHeap;
 
-  if (USE_PERFCOUNTERS && perfCounters > 1) {
+  if (USE_PERFCOUNTERS && rtArg.perfCounters > 1) {
     if (before > perfCounter.heapMaxSize) perfCounter.heapMaxSize = before;
   }
   if(LOG_LEVEL == LOG_SPEW) {
-    if(LoggingLevel == LOG_SPEW) {
+    if(rtArg.loggingLevel == LOG_SPEW) {
       LOG(LOG_SPEW, "start gc heap size %lx\n", before);
     }
   }
 
-  if (sanityChecker) {
+  if (rtArg.sanityChecker) {
     LOG(LOG_NONE, "before GC\n");
     heapCheck(true, LOG_NONE);
     stackCheck(true, LOG_NONE);
   }
 
   // check if GC should run at all
-  if(stgHP-stgHeap <= GCThreshold*stgHeapSize) return;
+  if(stgHP-stgHeap <= rtArg.gcThreshold * stgHeapSize) return;
 
   clock_t start_t = 0;
   (void)start_t;
-  if (USE_PERFCOUNTERS && perfCounters) perfCounter.heapCollections++;
-  if (USE_PERFCOUNTERS && perfCounters > 2)  start_t = clock();
+  if (USE_PERFCOUNTERS && rtArg.perfCounters) perfCounter.heapCollections++;
+  if (USE_PERFCOUNTERS && rtArg.perfCounters > 2)  start_t = clock();
 
   // add stgCurVal
   if (stgCurVal.op != NULL)
@@ -255,20 +255,20 @@ void gc(void) {
 
   swapPtrs();
 
-  if (sanityChecker) {
+  if (rtArg.sanityChecker) {
     LOG(LOG_NONE, "after GC\n");
     heapCheck(true, LOG_NONE);
     stackCheck(true, LOG_NONE);
   }
 
   if(LOG_LEVEL == LOG_SPEW) {
-    if(LoggingLevel == LOG_SPEW) {
+    if(rtArg.loggingLevel == LOG_SPEW) {
       size_t after = stgHP - stgHeap;
       LOG(LOG_SPEW, "end gc heap size %lx (change %lx)\n", after, before - after);
     }
   }
 
-  if (USE_PERFCOUNTERS && perfCounters > 2) {
+  if (USE_PERFCOUNTERS && rtArg.perfCounters > 2) {
     perfCounter.gcTime += (double)(clock() - start_t) / CLOCKS_PER_SEC;
   }
 }

@@ -172,7 +172,7 @@ FnPtr stgApply2() {
   // any more?
   int argsToEval = 0;
   int appargc = stackframe->layout.bitmap.size - 2;  // skip new arg, funoid
-  switch (evalStrategy) {
+  switch (rtArg.evalStrategy) {
   case LAZY:
     argsToEval = 0;
     break;

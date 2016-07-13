@@ -73,7 +73,7 @@ Obj* stgNewHeapObj(InfoTab *itp) {
   }
   size_t objSize = sizeof(Obj) + payloadSize * sizeof(PtrOrLiteral);
   objSize = ((objSize + OBJ_ALIGNM1)/OBJ_ALIGN)*OBJ_ALIGN;
-  if (USE_PERFCOUNTERS && perfCounters) {
+  if (USE_PERFCOUNTERS && rtArg.perfCounters) {
     perfCounter.heapBytesAllocated += objSize;
     perfCounter.heapAllocations++;
     perfCounter.heapHistogram[payloadSize]++;
@@ -114,7 +114,7 @@ Obj* stgNewHeapPAPmask(InfoTab *itp, Bitmap64 bm) {
   size_t objSize = sizeof(Obj) +
     (fvCount + bm.bitmap.size + 1) * sizeof(PtrOrLiteral);
   objSize = ((objSize + OBJ_ALIGNM1)/OBJ_ALIGN)*OBJ_ALIGN;
-  if (USE_PERFCOUNTERS && perfCounters) {
+  if (USE_PERFCOUNTERS && rtArg.perfCounters) {
     perfCounter.heapBytesAllocated += objSize;
     perfCounter.heapAllocations++;
     perfCounter.heapHistogram[fvCount + bm.bitmap.size + 1]++;
