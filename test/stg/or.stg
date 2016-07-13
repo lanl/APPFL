@@ -1,11 +1,16 @@
 --or :: Bool -> Bool -> Bool
-or = FUN(x y -> case x of {
-                         True -> case y of {
-	                	      True -> true;
-				      False -> true};
-                         False -> case y of {
-			      	      True -> true;
-				      False -> false}});
+or = FUN(x y ->
+             case x of
+               _scrt2 {
+                 True -> case y of
+                           _scrt0 {
+                             True -> true;
+                             False -> true };
+                 False -> case y of
+                            _scrt1 {
+                              True -> true;
+                              False -> false } });
 
 --Test
 main = THUNK(or true false);
+

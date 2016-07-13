@@ -1,2 +1,4 @@
 output = THUNK(minInt two three);
+
 main = THUNK(eqInt output two);
+

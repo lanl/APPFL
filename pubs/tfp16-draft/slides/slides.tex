@@ -1,0 +1,382 @@
+\documentclass{beamer}
+
+%\usetheme[unclass]{LANL-beta}
+
+% Use make print to create less inky slides for printing
+\ifdefined\printableSlides
+\usetheme[lessInk]{LANL-beta}
+\else
+\usetheme[blue]{LANL-beta}
+\fi
+
+\usepackage{graphicx}
+
+\title{Automatic Parallelization and Transparent Fault Tolerance}
+%\subtitle{(Project article)}
+\author{Kei Davis, Dean Prichard, \\\emph{David Ringo}, Loren Anderson, \\and Jacob Marks\\ \ \\}
+%\date[4/26/2016]{Some Random Meeting \\ April 26, 2016}
+\date{Trends in Functional Programming, June 8-10, 2016}
+\LAUR{LA-UR-16-24056}
+
+\begin{document}
+
+\begin{frame}
+\maketitle
+\end{frame}
+
+\begin{frame}
+\frametitle{Scientific Computing in our Microcosm}
+\only<1-9>{\textbf{Local evolution of scientific computing}}
+\begin{itemize}
+  \item<2-9> Serial Fortran programs
+    \\\only<2>{\ \ Simple, imperative.}
+  \item<3-9> C
+    \\\only<3>{\ \ Similar. More pleasant syntax (Free form source code!)}
+  \item<4-9> Vendor communication libraries
+    \\\only<4>{\ \  Non-portable, but parallel}
+  \item<5-9> MPI everywhere (inter- and intra-node)
+    \\\only<5>{\ \ De facto standard emerges to solve portability}
+  \item<6-9> C++
+    \\\only<6>{\ \ Object oriented goodness (and more!)}
+  \item<7-9> MPI+\{Pthreads, OpenMP, OpenCL, CUDA, etc\}
+    \\\only<7>{\ \ We augment MPI now with other explicit parallel models}
+  \item<8-9> Parallel runtimes, e.g., Cilk Plus, Intel Threading Building Blocks,
+    Stanford's Legion, etc.
+    \\\only<8>{\ \ Automated scheduling for irregularly shaped problems.}
+\end{itemize}
+\only<9>{%
+\textbf{
+Currently MPI+threading model dominates.}}
+
+\end{frame}
+
+
+\begin{frame}
+\frametitle{In Search of Automatic Parallelization\\
+\emph{or at least automatic scheduling}}
+  \begin{figure}
+    \begin{center}
+      \includegraphics[width=0.95\linewidth,height=1in]%
+        {figures/S3Dtaskgraph.png}~\footnote{Courtesy Stanford Legion project}
+\\[2.0ex]  % vertical space
+      S3D task dependency, combustion chemistry calculation
+    \end{center}
+  \end{figure}
+  \onslide<2->{%
+    Simplest interesting chemistry, task graph much larger with more complex reactants.
+    \vspace{0.1in}
+    Schedule by hand?}
+  \\\onslide<3->{%
+    \textbf{This comes for free in the pure functional world}}
+\end{frame}
+
+
+
+\begin{frame}
+  \frametitle{Transparent Fault Tolerance?}  
+
+  \onslide<1->{%
+    Processor clock speeds stopped growing a decade ago
+    \\\vspace{0.1in}}
+
+  \onslide<2->{%
+    Solution? More processors.
+    \\\vspace{0.1in}}
+  
+  \onslide<3->{%
+    But, with more processors comes smaller Mean Time to Failure.
+    \\\vspace{0.1in}}
+
+  \onslide<4->{%
+    Obviously, we can't just hope to get lucky on a months-long calculation}
+\end{frame}
+
+
+\begin{frame}
+  \frametitle{Transparent Fault Tolerance?}
+  \begin{columns}[t]
+    \begin{column}{.48\linewidth}
+      Checkpoint:
+      \begin{enumerate}
+      \item Processes synchronize at predetermined point;
+      \item Stop the world;
+      \item Dump global state;
+      \item Resume computation.
+      \end{enumerate}
+    \end{column}
+    \onslide<2->{%
+    \begin{column}[T]{.48\linewidth}
+      Restart:
+      \begin{enumerate}
+      \item Observe that application has hung/crashed;
+      \item Identify last valid (complete) checkpoint image;
+      \item Re-launch application specifying checkpoint image.
+      \end{enumerate}
+    \end{column}}
+  \end{columns}
+\vspace{0.1in}
+\onslide<3->{%
+Inherent problems:
+\begin{itemize}
+\item Idle processors burn tight energy budgets.
+\item MTTF is shrinking and C/R isn't scaling.
+\end{itemize}}
+\onslide<4->{%
+  \textbf{With referential transparency, this is a much smaller problem}}
+\end{frame}
+
+
+\begin{frame}
+\frametitle{Pure Functional Semantics}
+Now we have a `new' generation of scientific programmers, aka computational scientists, who
+have some understanding of meaning and virtue of \emph{pure functional}, and even dabble
+in Haskell programming.
+\vspace{0.1in}
+
+\onslide<2->{%
+  They understand:\\
+  \emph{In a multi-100,000-line program, do not temporarily alter the global speed-of-light
+    `constant' variable.}
+  \vspace{0.1in}}
+
+\onslide<3->{%
+  \emph{But}, these are not computer scientists:
+  \begin{itemize}
+  \item Passing functions as arguments is familiar (since early Fortran).
+  \item Implicit space leaks are confusing.
+  \item Non-strict evaluation is largely irrelevant.
+  \item Unboxed primitives and arrays of the same (unboxed vector) are the primary data.
+  \end{itemize}}
+\end{frame}
+
+
+\begin{frame}
+\frametitle{Claimed Trends}
+\textbf{Trends in functional programming}
+\begin{itemize}
+  \item<1-> Appreciation of the virtues of strict-by-default semantics.
+    \\\only<1>{\ \ GHC Strict and StrictData for HPC}
+  \item<2-> Transparent fault tolerance.
+    \\\only<2>{\ \ Stewart's HdpH-RS}
+\end{itemize}
+\onslide<3->{\textbf{Trends in scientific computing}}
+\begin{itemize}
+  \item<4-> Implementation of pure functional computational concepts/components.    
+  \item<4-> Recognition that checkpoint/restart is increasingly intractable and unscalable.
+    \\\only<4>{%
+      \ \ Legion is ``pure with respect to $X$''\\
+      \ \ Also adding task-restarting for fault-tolerance}
+\end{itemize}
+\end{frame}
+
+
+\begin{frame}
+\frametitle{Non-strictness/laziness Anathema to Parallelism}
+(Semantic) function strictness $\implies$ \\
+\ \ \ function arguments can be evaluated early, in parallel\\
+\ \ \ How can we achieve this?
+\begin{itemize}
+  \item<2-> Strictness analysis
+    \\\only<2>{\ \ Can be inconclusive.}
+  \item<3-> Bang patterns in bindings
+    \\\only<3>{\ \ Prone to error. Hard to read.}
+  \item<4-> Par/pseq, other specifications on expressions
+    \\\only<4>{\ \ Ditto.}
+  \item<5-> Speculative evaluation
+    \\\only<5>{\ \ Difficult to get right without annotation.}
+  \item<6-> \ldots
+  \item<7-> \emph{Strict(er) default semantics}
+\end{itemize}
+\onslide<8->{%
+Similarly constructors.
+\\\vspace{0.1in}
+Update:  Strict \texttt{let} bindings.
+}
+\end{frame}
+
+
+\begin{frame}
+  \frametitle{Musings}
+  Suppose we had a strict(-er) pure functional language implementation than Haskell?
+  \begin{itemize}
+  \item<1-> Could we keep a large number of hardware threads (e.g., up to 256) busy with
+    \emph{implicit} parallelism?
+    \begin{itemize}
+    \item With what parallel efficiency?
+      \begin{itemize}
+      \item With different scheduling strategies?
+      \end{itemize}
+    \end{itemize}
+  \item<2-> How often do new functional programmers/old scientific programmers
+    make essential use of non-strictness?  \emph{(very rarely)}
+    \begin{itemize}
+    \item Laziness? \emph{(never)}
+    \end{itemize}
+  \end{itemize}
+\end{frame}
+
+
+\begin{frame}
+\frametitle{Project} 
+A \emph{light-weight} implementation of a pure, higher-order, polymorphic,
+functional language and runtime system with which we can experiment with
+automatic parallelization strategies with varying degrees of language
+strictness, and secondarily, with mechanisms for transparent fault tolerance.
+\begin{enumerate}
+\item<2-> Haskell to STG (or Core) via GHC \emph{(todo)};
+  \\\only<2>{%
+    \ \ STG and Core are higher-order polymorphic functional languages in their own right.}
+\item<3-> STG to C \emph{(serial done, parallel in progress)};
+  \\\only<3>{%
+    \ \ Fairly faithful to STG papers}
+\item<4-> Mini-Haskell front end (done);
+  \\\only<4>{%
+    \ \ Close to ML, syntactically}
+\item<5-> Fault tolerance \emph{TBD}.
+\end{enumerate}
+\end{frame}
+
+
+\begin{frame}
+\frametitle{Reinventing the wheel?}  Why not use Manticore, MultiMLton, F\#,
+multicore OCaml, SAC etc., \onslide<3->{or even GHC in toto?}
+\begin{itemize}
+  \item<2-> We have a small cadre of scientists already interested in Haskell/GHC;
+  \item<3-> Very light weight:  easy to instrument, modify;
+  \item<4-> Know exactly what is going on under the hood;
+  \item<5-> There exist conduits for getting student interns up to speed inexpensively.
+\end{itemize}
+\end{frame}
+
+
+\begin{frame}
+\frametitle{Technical hurdles:  tail calling and unwinding the stack}
+Following SPJ/STG our control structure is a stack of continuations.  
+\\\vspace{0.1in}
+Each continuation contains an address to \emph{go to next}, not \emph{go back
+  to}, so we want something like \emph{goto} or \emph{tail calling}.
+\\\vspace{0.1in}
+SPJ identifies defines the term \emph{code label} as something that can be
+\begin{itemize}
+  \item used to name an arbitrary block of code;
+  \item can be manipulated, i.e., stored for later use;
+  \item can be used as the destination of a jump (not just call).
+\end{itemize}
+\end{frame}
+
+
+\begin{frame}[fragile] % for verbatim
+\frametitle{All the myriad ways in C}
+\begin{itemize}
+\item<1-> setjmp/longjmp;
+\\\only<1>{\ \ Significant overhead and bookkeeping}
+\item<2-> giant switch;
+\\\only<2>{\ \ Ugly hack, not really linkable}
+\item<3-> computed goto (gcc extension);
+\\\only<3>{\ \ Limited to gcc}
+\item<4-> trampoline, the simplest of which parameterless C functions return the
+  address (function pointer) of where to go to next:
+\begin{verbatim}
+      while (1) f = (*f)();
+\end{verbatim}
+\only<4>{\ \ Our initial implementation used this approach}
+\item<5-> implement an intermediate language, e.g., C-{}-/Cmm, where tail call is primitive;
+\\\only<5>{\ \ Fun, but out of scope}
+\item<6-> generate assembly code, e.g., LLVM, directly.
+\\\only<6>{\ \ Ambitious. Haskell LLVM bindings are unreliable}
+\end{itemize}
+\end{frame}
+
+
+\begin{frame}[fragile]
+\frametitle{Modern compilers to the rescue:  sibling call}
+Clang/LLVM and GCC implement a restricted form of tail call, the \emph{sibling}
+call, i.e, jump reusing the TOS frame.  Here
+\begin{verbatim}
+void f() {
+  ...
+  g();
+}
+\end{verbatim}
+function \texttt{g} is jumped to; there is no (implicit) return following
+\texttt{g();}.  
+\\\vspace{0.1in}
+Critically, this also works for indirect calls to previously stored addresses.
+\begin{verbatim}
+    (getInfoPtr(stgCurVal.op)->entryCode)();
+\end{verbatim}
+
+\end{frame}
+
+\begin{frame}
+\frametitle{Sibling Call}
+The restrictions are due to the x86(-64)/*nix/C calling
+conventions---caller clean-up---and the possibility of pointer aliasing.
+\\\vspace{0.1in}
+Sufficient formula for recent gcc and Clang/LLVM on Linux or Mac OS X
+\begin{itemize}
+\item Call in leaf position of CFG;
+\item Caller and callee have the same type signature
+\item No addresses taken of formal params;
+\item -O3.
+\end{itemize}
+Obviously this is not portable.
+\end{frame}
+
+
+\begin{frame}
+\frametitle{Unwinding stacks}
+In one version of GHC, Harris et al.\ identify the need to unwind thread stacks for shared
+memory parallelism.
+\\\vspace{0.1in}
+Again, we do not want to contemplate using, e.g., setjmp/longjmp.
+\\\vspace{0.1in}
+Therefore, we do not want the C main stack or Pthreads stacks to grow.
+\\\vspace{0.1in}
+Exception:  calls to the runtime.
+\\\vspace{0.1in}
+Again, sibling call saves us.
+\end{frame}
+
+
+\begin{frame}
+  \frametitle{Our Future}
+  
+  \begin{itemize}
+  \item<1-> GHC tie-in and parallel implementation (hopefully) this summer
+  \item<2-> Experimentation with non-trivial code
+  \item<3-> Fault tolerance sometime thereafter
+  \end{itemize}
+   
+\end{frame}
+
+
+\begin{frame}
+  \frametitle{Acknowledgments}
+
+  \footnotesize{Funding for this project has been provided by the DOE
+    NNSA LANL Laboratory Directed Research and Development program
+    award 20150845ER; the National Science Foundation Science,
+    Technology, Engineering, and Mathematics Talent Expansion Program
+    (NSF STEP) program for undergraduate students; and the Department
+    of Energy Science Undergraduate Laboratory Internship (DOE SULI)
+    program.}
+
+  \vspace{0.2in}
+  
+  \footnotesize{Los Alamos National Laboratory is managed and operated
+    by Los Alamos National Security, LLC (LANS), under contract number
+    DE-AC52-06NA25396 for the Department of Energy’s National Nuclear
+    Security Administration (NNSA).}
+\end{frame}
+
+
+\begin{frame}
+  \frametitle{Thank you}
+  \textbf{Questions?}
+\end{frame}
+
+\end{document}
+
+
+

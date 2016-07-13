@@ -1,16 +1,10 @@
 #ifndef SANITY_H
 #define SANITY_H
 
-//void heapCheck ();
-//void checkSingleHeapObject (Obj *obj);
+#include "log.h"
+#include <ctype.h>
 
-Obj **mallocArrayOfAllObjects();
-void addObjects (Obj **objArray);
-void printObjInfo (Obj *obj);
-char *objTypeToString(Obj *obj);
-void sanityCheckSingleSHO (Obj *obj);
-void sanityCheckObj (Obj *obj);
-bool checkPtr8BitAligned (Obj *obj);
-bool checkPtrCorrectSize (Obj *obj);
+void heapCheck(bool display, LogLevel logLevel);
+void stackCheck(bool display, LogLevel logLevel);
 
 #endif

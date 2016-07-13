@@ -24,14 +24,18 @@ testtok file =
     let t1 = tokenize lns
     print $ vcat $ map (text.tks) t1
 
-tokenize inp =
+tokenize' inp keepComments =
   let inp' = numberize inp
       toks = case prog inp' of
               [] -> error $ unlines
                     ["tokenization error, not sure where.."]
               x:xs -> fst x
       noLayout = rmLayout toks
-  in rmWhitespace noLayout
+  in rmWhitespace keepComments noLayout
+
+tokenize i = tokenize' i False
+
+tokenizeWithComments i = tokenize' i True
 
 {-     
 numberize inp =
@@ -82,7 +86,7 @@ whtChrs =
   let whtChr = orExList [newline, htab, space]
   in
    some' whtChr  >>> \((c,p):cs) ->
-   accept $ TokWht (c:map fst cs) p
+   accept $ TokWht (c:map fst cs) p False
 
 newline = orExList [winNL, lF, cR]
 htab = litC '\t'
@@ -101,7 +105,7 @@ comment =
   dashes >>> \(ds, p) ->
   many' (notP newline) >>> \tups ->
   newline >>> \(c,_) ->
-               accept $ TokWht (ds ++ (fst $ unzip tups) ++ [c]) p
+               accept $ TokWht (ds ++ (fst $ unzip tups) ++ [c]) p True
 
 opencom = litStr "{-"
 closecom = litStr "-}"
@@ -112,17 +116,17 @@ haskBlock =
   haskDelim >>> \(opn,p) ->
   many' (notP haskDelim) >>> \tups ->
   haskDelim >>> \(end,_) ->
-                 accept $ TokWht (opn ++ map fst tups ++ end) p
+                 accept $ TokWht (opn ++ map fst tups ++ end) p True
 
 ncomment =
   let inner = orExList
-              [ ncomment >>> \(TokWht cs p) -> accept cs,
+              [ ncomment >>> \(TokWht cs p _) -> accept cs,
                 notP closecom >>> \(c, p) -> accept [c] ]
   in
    opencom >>> \(op,p) ->
    many' inner >>> \chars ->
    closecom >>> \(cls,_) ->
-                 accept $ TokWht (op ++ concat chars ++ cls) p
+                 accept $ TokWht (op ++ concat chars ++ cls) p True
 
 lexeme = orExList
          [ varid, conid, special, reserved, primitive, literal]
@@ -241,7 +245,7 @@ addDelims toks = chkFirst toks
       [] -> error "Tokenizer.rmLayout.notOpenBrcNxt, no EOF at end of program?"
       
     newWhite tk = case tk of
-      TokWht s p -> '\n' `elem` s
+      TokWht s _ _-> '\n' `elem` s
       _ -> False
                             
 
@@ -297,13 +301,13 @@ rmLayout toks =
       -- close any still open braces at end of token stream
       aux [t@TokEOF{}] (m:ms) = TokRsv "}" (0,m) : aux [t] ms
       
-      -- no layout signaling token: keep token, stack, process remainder
+      -- no layout signaling token: keep token and stack, process remainder
       aux (t:tks) ms = t : aux tks ms
   in aux toks' []
 
-rmWhitespace =
+rmWhitespace wComments =
   let f tok = case tok of
-               TokWht{} -> False
+               TokWht{cmnt} -> (wComments && cmnt) || False
                _ -> True
   in filter f
 
@@ -316,14 +320,12 @@ data Token = TokNum  {tks::String, pos::Pos}
            | TokId   {tks::String, pos::Pos}
            | TokCon  {tks::String, pos::Pos}
            | TokRsv  {tks::String, pos::Pos}
-           | TokWht  {tks::String, pos::Pos}
+           | TokWht  {tks::String, pos::Pos, cmnt::Bool}
            | TokBrc  {col :: Int} -- added only when parsing layout indicators (rmLayout)
            | TokSem  {col :: Int} -- added only when parsing layout indicators (rmLayout)
            | TokEOF  {pos::Pos}
              deriving (Eq)
 
-instance PPrint Pos where
-  pprint (l,c) = parens (int l <> comma <+> int c)
 
 instance PPrint Token where
   pprint tk = case tk of
@@ -337,7 +339,7 @@ instance PPrint Token where
                    (text s <> comma <+> pprint p)
     TokRsv s p  -> text "TokRsv" <> braces
                    (text s <> comma <+> pprint p)
-    TokWht s p  -> text "TokWht" <> braces
+    TokWht s p _ -> text "TokWht" <> braces
                    (text s <> comma <+> pprint p)
     TokEOF p    -> text "TokEOF" <> braces (pprint p)
     TokBrc col  -> text "TokBrc" <> braces (int col)

@@ -1,5 +1,7 @@
-f0 = FUN( x1 x2 -> x1 );
+f0 = FUN(x1 x2 ->
+               x1);
 
-f1 = THUNK( f0 true ); 
+f1 = THUNK(f0 true);
 
-main = THUNK( f1 true );
+main = THUNK(f1 true);
+

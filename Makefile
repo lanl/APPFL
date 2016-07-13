@@ -25,13 +25,12 @@ setup: prelude/Prelude.stg prelude/Prelude.mhs options.h $(HSLIB_FILES)
 	@(cp -f options.h $(build_dir)/include/)
 
 codegen: setup 
-	@(cd codegen && cabal build $(build_flags))
+	@(cd codegen && cabal configure && cabal build $(build_flags))
 	@(cp -f codegen/dist/build/stgc/stgc $(build_dir)/bin/)
-
 
 runtime: setup
 	@(cd $(build_dir); cmake $(cmake_flags) ..)
-	@(cd $(build_dir); make $(build_flags))
+	@(cd $(build_dir); $(MAKE) $(build_flags))
 
 test: ctest 
 
@@ -47,6 +46,41 @@ clean:
 	@(cd test/stg && rm -f *.stg.c 2>/dev/null)
 	@(cd test/stg/error && rm -f *.stg.c 2>/dev/null)
 	@(cd test/stg/nonstrict && rm -f *.stg.c 2>/dev/null)
+	@(cd test/stg/nostrict2 && rm -f *.stg.c 2>/dev/null)
 	@(cd test/mhs && rm -f *.mhs.c 2>/dev/null)
 	@(rm -rf $(build_dir))
 
+multi:
+	@echo "USE_ARGTYPE=0 && USE_OBJTYPE=0"
+	$(MAKE) clean && $(MAKE) setup
+	@(cd codegen && cabal configure -f useD && cabal build $(build_flags))
+	@(cp -f codegen/dist/build/stgc/stgc $(build_dir)/bin/)
+	@(cd $(build_dir); cmake $(cmake_flags) -DUSE_D:BOOL=ON  ..)
+	@(cd $(build_dir); $(MAKE) $(build_flags))
+	@(echo "#undef USE_ARGTYPE\n#define USE_ARGTYPE 0\n#undef USE_OBJTYPE\n#define USE_OBJTYPE 0\n" >> $(build_dir)/include/options.h)
+	@(cd $(build_dir) &&  ARGS="$(build_flags) -D ExperimentalTest --no-compress-output" $(MAKE) test)
+	@echo "USE_ARGTYPE=1 && USE_OBJTYPE=0"
+	$(MAKE) clean && $(MAKE) setup
+	@(cd codegen && cabal configure -f useD -fargType  && cabal build $(build_flags))
+	@(cp -f codegen/dist/build/stgc/stgc $(build_dir)/bin/)
+	@(cd $(build_dir); cmake $(cmake_flags) -DUSE_D:BOOL=ON -DUSE_ARGTYPE:BOOL=ON  ..)
+	@(cd $(build_dir); $(MAKE) $(build_flags))
+	@(echo "#undef USE_ARGTYPE\n#define USE_ARGTYPE 1\n#undef USE_OBJTYPE\n#define USE_OBJTYPE 0\n" >> $(build_dir)/include/options.h)
+	@(cd $(build_dir) &&  ARGS="$(build_flags) -D ExperimentalTest --no-compress-output" $(MAKE) test)
+	@echo "USE_ARGTYPE=0 && USE_OBJTYPE=1"
+	$(MAKE) clean && $(MAKE) setup
+	@(cd codegen && cabal configure -f useD -fobjType  && cabal build $(build_flags))
+	@(cp -f codegen/dist/build/stgc/stgc $(build_dir)/bin/)
+	@(cd $(build_dir); cmake $(cmake_flags) -DUSE_D:BOOL=ON -DUSE_OBJTYPE:BOOL=ON  ..)
+	@(cd $(build_dir); $(MAKE) $(build_flags))
+	@(echo "#undef USE_ARGTYPE\n#define USE_ARGTYPE 0\n#undef USE_OBJTYPE\n#define USE_OBJTYPE 1\n" >> $(build_dir)/include/options.h)
+	@(cd $(build_dir) &&  ARGS="$(build_flags) -D ExperimentalTest --no-compress-output" $(MAKE) test)
+	@echo "USE_ARGTYPE=1 && USE_OBJTYPE=1"
+	$(MAKE) clean && $(MAKE) setup
+	@(cd codegen && cabal configure -f useD -fargType -fobjType  && cabal build $(build_flags))
+	@(cp -f codegen/dist/build/stgc/stgc $(build_dir)/bin/)
+	@(cd $(build_dir); cmake $(cmake_flags) -DUSE_D:BOOL=ON -DUSE_ARGTYPE:BOOL=ON -DUSE_OBJTYPE:BOOL=ON  ..)
+	@(cd $(build_dir); $(MAKE) $(build_flags))
+	@(echo "#undef USE_ARGTYPE\n#define USE_ARGTYPE 1\n#undef USE_OBJTYPE\n#define USE_OBJTYPE 1\n" >> $(build_dir)/include/options.h)
+	@(cd $(build_dir) &&  ARGS="$(build_flags) -D ExperimentalTest --no-compress-output" $(MAKE) test)
+	$(MAKE) clean

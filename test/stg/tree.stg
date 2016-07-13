@@ -1,15 +1,31 @@
-data Tree a = Leaf a | Branch (Tree a) (Tree a);
- 
-leaf1 = CON(Leaf one);   
-leaf2 = CON(Leaf two);   
+data Tree a = Leaf a
+            | Branch (Tree a) (Tree a);
 
-branch = FUN(l r -> let { result = CON(Branch l r) } in result);
+leaf1 = CON(Leaf one);
+
+leaf2 = CON(Leaf two);
+
+branch = FUN(l r ->
+                 let {
+                   result = CON(Branch l r)}
+                 in result);
 
 output = THUNK(branch leaf1 leaf2);
 
 -- test left
-left = FUN(xs -> case xs of {Branch l r -> l});
+left = FUN(xs ->
+              case xs of
+                _scrt0 {
+                  Branch l r -> l });
+
 l = THUNK(left output);
-val = FUN(xs -> case xs of {Leaf x -> x});
+
+val = FUN(xs ->
+             case xs of
+               _scrt1 {
+                 Leaf x -> x });
+
 v = THUNK(val l);
+
 main = THUNK(eqInt v one);
+

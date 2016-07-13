@@ -4,9 +4,6 @@
 {-# LANGUAGE NamedFieldPuns        #-}
 {-# LANGUAGE RecordWildCards       #-}
 {-# LANGUAGE CPP #-}
-#if __GLASGOW_HASKELL__ < 710
- {-# LANGUAGE OverlappingInstances #-}
-#endif
 
 module SetFVs (
   setFVsObjs
@@ -23,10 +20,14 @@ import Debug.Trace
 dropkey k = filter (\(k',_)->k==k')
 
 -- transitive closure
-
-tc :: (Show a, Ord a) => Set.Set a
-                         -> [(a, Set.Set a)]
-                           -> Set.Set a
+-- i.e. given a graph in adjacency list (or Set, in this case) form
+--   what nodes (type 'a' below) in the rhs can be reached
+--   from the those in the lhs
+tc  ::
+  (Show a, Ord a)
+  => Set.Set a        -- ^ lhs, "roots" of connectivity
+  -> [(a, Set.Set a)] -- ^ rhs, list of (node, neighbors) pairs
+  -> Set.Set a        -- ^ set of all reachable nodes from roots
 
 tc lhs rhs = tc' lhs lhs rhs
     where
@@ -44,7 +45,14 @@ tc lhs rhs = tc' lhs lhs rhs
                                      (Set.unions $ map snd rhsl)
                                      rhsr
 
-a = tcList [1] [(1,[1,2]), (1, [3]), (2, []), (3,[1]), (4,[])]
+rhsTest = [(1, [1,2]),
+           (1, []),
+           (2, [5]),
+           (3, [1]),
+           (4, []),
+           (5, [3])]
+lhsTest = [1]
+a = tcList lhsTest rhsTest
 
 tcList :: (Show a, Ord a) => [a] -> [(a, [a])] -> [a]
 
@@ -83,9 +91,6 @@ instance STGToList (Obj (Set.Set Var, Set.Set Var)) (Obj ([Var],[Var])) where
     stgToList THUNK{..} = THUNK{omd = p2p omd, e = stgToList e, ..}
 --BH     stgToList BLACKHOLE{..} = BLACKHOLE{omd = p2p omd,..}
 
--- instance STGToList a b => STGToList [a] [b] where
---    stgToList = map stgToList
-
 instance STGToList (Expr (Set.Set Var, Set.Set Var)) (Expr ([Var],[Var])) where
     stgToList EAtom{..} = EAtom{emd = p2p emd, ..}
     stgToList EFCall{..} = EFCall{emd = p2p emd, eas = map stgToList eas, ..}
@@ -94,7 +99,9 @@ instance STGToList (Expr (Set.Set Var, Set.Set Var)) (Expr ([Var],[Var])) where
     stgToList ECase{..} = ECase{emd = p2p emd, ee = stgToList ee, ealts = stgToList ealts, ..}
         
 instance STGToList (Alts (Set.Set Var, Set.Set Var)) (Alts ([Var],[Var])) where
-    stgToList Alts{..} = Alts{altsmd = p2p altsmd, alts = map stgToList alts, ..}
+    stgToList Alts{..} = Alts{altsmd = p2p altsmd,
+                              alts = map stgToList alts,
+                              scrt = stgToList scrt, ..}
 
 instance STGToList (Alt (Set.Set Var, Set.Set Var)) (Alt ([Var],[Var])) where
     stgToList ACon{..} = ACon{amd = p2p amd, ae = stgToList ae, ..}
@@ -102,8 +109,14 @@ instance STGToList (Alt (Set.Set Var, Set.Set Var)) (Alt ([Var],[Var])) where
 
 showFVs vs = "[" ++ List.intercalate " " vs ++ "] "
 
-instance {-# OVERLAPPING #-} Show ([Var],[Var]) where
+instance Show ([Var],[Var]) where
     show (a,b) = "(" ++ showFVs a ++ "," ++ showFVs b ++ ")"
+
+instance Unparse ([Var],[Var]) where
+  unparse (a,b) = parens $
+                  brackList (map stgName a)
+                  <> comma <+>
+                  brackList (map stgName b)
 
 toplevel :: (Set.Set Var) -> [Obj a] -> [Obj (Set.Set Var, Set.Set Var)]
 toplevel rtgs defs =
@@ -147,11 +160,11 @@ instance SetFVs (Expr a) (Expr (Set.Set Var, Set.Set Var)) where
 
     -- EFCall introduces a Var
     setfvs tlds (EFCall _ f as) =
-        let as' = map (setfvs tlds) as
-            (easFVs, easTFVs) = unzip $ map emd as'
+        let as'                = map (setfvs tlds) as
+            (easFVs, easTFVs)  = unzip $ map emd as'
             (asfvs, astruefvs) = (Set.unions easFVs, Set.unions easTFVs)
-            myfvs   = (Set.singleton f `Set.union` asfvs) `Set.difference` tlds
-            truefvs = Set.singleton f `Set.union` astruefvs
+            myfvs              = (Set.singleton f `Set.union` asfvs) `Set.difference` tlds
+            truefvs            = Set.singleton f  `Set.union` astruefvs
         in EFCall (myfvs,truefvs) f as'
 
     setfvs tlds (EPrimop _ p as) =
@@ -172,15 +185,16 @@ instance SetFVs (Expr a) (Expr (Set.Set Var, Set.Set Var)) where
             myfvs    = (defsfvs     `Set.union` efvs)     `Set.difference` names
             truefvs  = (defstruefvs `Set.union` etruefvs) `Set.difference` names
         in ELet (myfvs,truefvs) defs' e'
-
+    
     setfvs tlds (ECase _ e alts) =
         let e' = setfvs tlds e
             (efvs, etruefvs) = emd e'
             alts' = setfvs tlds alts
             (altsfvs, altstruefvs) = altsmd alts'
-            myfvs   = Set.union efvs     altsfvs
+            myfvs   = Set.union efvs altsfvs
             truefvs = Set.union etruefvs altstruefvs
         in ECase (myfvs,truefvs) e' alts'
+      
 
 -- alts introduce scope
 instance SetFVs (Alt a) (Alt (Set.Set Var, Set.Set Var)) where
@@ -188,6 +202,7 @@ instance SetFVs (Alt a) (Alt (Set.Set Var, Set.Set Var)) where
         let vset = Set.fromList vs
             e' = setfvs (Set.difference tlds vset) e
             (efvs, etruefvs) = emd e'
+
             myfvs =   Set.difference efvs     vset
             truefvs = Set.difference etruefvs vset
         in ACon (myfvs,truefvs) c vs e'
@@ -200,48 +215,57 @@ instance SetFVs (Alt a) (Alt (Set.Set Var, Set.Set Var)) where
             truefvs = Set.difference etruefvs vset
         in  ADef (myfvs,truefvs) v e'
 
+-- alts block introduces scope with scrutinee binding
 instance SetFVs (Alts a) (Alts (Set.Set Var, Set.Set Var)) where
-    setfvs tlds (Alts _ alts name) =
-        let alts' = setfvs tlds alts
+    setfvs tlds (Alts _ alts name scrt) =
+        let vset = Set.singleton $ scrtVarName scrt
+            -- I'm not positive there's much meaning to the notion of a
+            -- free variable in the scrt (EAtom type), but it's set here
+            -- for completeness. -dmr
+            scrt' = setfvs tlds scrt
+            alts' = setfvs (tlds Set.\\ vset) alts
             (altsfvls, altstruefvls) = unzip $ map amd alts'
-            myfvs   = Set.unions altsfvls
-            truefvs = Set.unions altstruefvls
-        in Alts (myfvs,truefvs) alts' name
+            -- variable bound to scrutinee is not free in Alts block
+            myfvs   = Set.unions altsfvls Set.\\ vset
+            truefvs = Set.unions altstruefvls Set.\\ vset
+        in Alts (myfvs,truefvs) alts' name scrt'
 
--- FUN introduces scope
+
 instance SetFVs (Obj a) (Obj (Set.Set Var, Set.Set Var)) where
-    setfvs tlds (FUN _ vs e n) =
-        let vset = Set.fromList vs
-            e' = setfvs (Set.difference tlds vset) e
-            (efvs, etruefvs) = emd e'
-            myfvs   = Set.difference efvs     vset
-            truefvs = Set.difference etruefvs vset
-        in FUN (myfvs,truefvs) vs e' n
+  -- FUN introduces scope
+  setfvs tlds (FUN _ vs e n) =
+    let vset             = Set.fromList vs
+        e'               = setfvs (Set.difference tlds vset) e
+        (efvs, etruefvs) = emd e'
+        myfvs            = Set.difference efvs     vset
+        truefvs          = Set.difference etruefvs vset
+    in FUN (myfvs,truefvs) vs e' n
 
-    -- PAP introduces a var
-    setfvs tlds (PAP _ f as n) =
-        let as' = map (setfvs tlds) as
-            (asFVs, asTFVs) = unzip $ map emd as'
-            (asfvs, astruefvs) = (Set.unions asFVs, Set.unions asTFVs)
-            fset = Set.singleton f
-            myfvs   = (fset `Set.union` asfvs) `Set.difference` tlds
-            truefvs = fset `Set.union` astruefvs
-        in PAP (myfvs,truefvs) f as' n
+  -- PAP introduces a var
+  setfvs tlds (PAP _ f as n) =
+    let as' = map (setfvs tlds) as
+        (asFVs, asTFVs) = unzip $ map emd as'
+        (asfvs, astruefvs) = (Set.unions asFVs, Set.unions asTFVs)
+        fset = Set.singleton f
+        myfvs   = (fset `Set.union` asfvs) `Set.difference` tlds
+        truefvs = fset `Set.union` astruefvs
+    in PAP (myfvs,truefvs) f as' n
 
-    setfvs tlds (CON _ c as n) =
-        let as' = map (setfvs tlds) as
-            (asFVs, asTFVs) = unzip $ map emd as'
-        in CON (Set.unions asFVs, Set.unions asTFVs) c as' n
+  setfvs tlds (CON _ c as n) =
+    let as' = map (setfvs tlds) as
+        (asFVs, asTFVs) = unzip $ map emd as'
+    in CON (Set.unions asFVs, Set.unions asTFVs) c as' n
 
-    setfvs tlds (THUNK _ e n) =
-        let e' = setfvs tlds e
-        in THUNK (emd e') e' n
+  setfvs tlds (THUNK _ e n) =
+    let e' = setfvs tlds e
+    in THUNK (emd e') e' n
 
---BH    setfvs tlds (BLACKHOLE _ n) =
---BH        BLACKHOLE (Set.empty,Set.empty) n
+  --BH setfvs tlds (BLACKHOLE _ n) =
+  --BH   BLACKHOLE (Set.empty,Set.empty) n
+
 
 instance SetFVs a b => SetFVs [a] [b] where
     setfvs tlds = map (setfvs tlds)
 
-instance  {-# OVERLAPPING #-} PPrint (Set.Set Var, Set.Set Var) where
+instance PPrint (Set.Set Var, Set.Set Var) where
   pprint (fvs, tfvs) = parens (text "fvs:" <+> pprint fvs <> comma <+> text "tfvs:" <+> pprint tfvs)

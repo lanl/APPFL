@@ -1,1 +1,2 @@
+-- Fun definition missing expression
 fun = FUN(x -> );

@@ -19,6 +19,7 @@
 #include "cmm.h"
 #include "obj.h"
 #include "log.h"
+#include "args.h"
 
 /*
 Bitmap64 cLayoutInfoToBitmap64(CLayoutInfo *lip) {
@@ -37,11 +38,20 @@ Cont *stgAllocCont(CInfoTab *citp) {
   int payloadSize = citp->cLayoutInfo.payloadSize;
   size_t contSize = sizeof(Cont) + payloadSize * sizeof(PtrOrLiteral);
   //  contSize = ((contSize + 7)/8)*8;
+  if (perfCounters) {
+    perfCounter.stackBytesAllocated += contSize;
+    perfCounter.stackAllocations++;
+  }
   LOG(LOG_DEBUG, "allocating %s continuation with payloadSize %d\n",
 	  contTypeNames[citp->contType], payloadSize);
   showCIT(citp);
   stgSP = (char *)stgSP - contSize;
   assert(stgSP >= stgStack);
+  if (perfCounters > 1) {
+    size_t before = stgStack + stgStackSize - stgSP;
+    if (before > perfCounter.stackMaxSize) perfCounter.stackMaxSize = before;
+  }
+  
   Cont *contp = (Cont *)stgSP;
   contp->cInfoPtr = citp;
   contp->_contSize = contSize;  // to go away
@@ -63,11 +73,20 @@ Cont *stgAllocCallOrStackCont(CInfoTab *citp, int argc) {
 	 "stgAllocCallOrStackCont: citp->contType != CALLCONT/STACKCONT");
   size_t contSize = sizeof(Cont) + argc * sizeof(PtrOrLiteral);
   //  contSize = ((contSize + 7)/8)*8;
+  if (perfCounters) {
+    perfCounter.stackBytesAllocated += contSize;
+    perfCounter.stackAllocations++;
+  }
   LOG(LOG_DEBUG,"allocating %s continuation with argc %d\n",
 	  contTypeNames[citp->contType], argc);
   showCIT(citp);
   stgSP = (char *)stgSP - contSize;
   assert(stgSP >= stgStack);
+  if (perfCounters > 1) {
+    size_t before = stgStack + stgStackSize - stgSP;
+    if (before > perfCounter.stackMaxSize) perfCounter.stackMaxSize = before;
+  }
+  
   Cont *contp = (Cont *)stgSP;
   contp->cInfoPtr = citp;
   contp->_contSize = contSize;  // to go away
@@ -134,8 +153,16 @@ Cont *stgAdjustTopContSize(Cont *cp, int delta) {
   cp = (Cont *)newStgSP;
   assert(newContSize == getContSize(cp));
 
+  if (perfCounters) {
+    perfCounter.stackBytesAllocated += (newContSize - oldContSize);
+  }
+
   // adjust stgSP and return
   stgSP = newStgSP;
+  if (perfCounters > 1) {
+    size_t before = stgStack + stgStackSize - stgSP;
+    if (before > perfCounter.stackMaxSize) perfCounter.stackMaxSize = before;
+  }
   return stgSP;
 }
 

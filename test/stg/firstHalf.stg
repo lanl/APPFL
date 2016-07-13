@@ -1,20 +1,31 @@
 -- firstHalf a list, rounding down
 -- firstHalf :: List a -> List a
-firstHalf = FUN(xs -> let {l = THUNK(length xs);
-      	       	       a = THUNK(divInt l two);
-		       final = THUNK(take a xs)} in final);
+firstHalf = FUN(xs ->
+                   let {
+                     l = THUNK(length xs);
+                     a = THUNK(divInt l two);
+                     final = THUNK(take a xs)}
+                   in final);
 
 --list5: [5,4,3,2,1]
 list1 = CON(Cons one nil);
+
 list2 = CON(Cons two list1);
+
 list3 = CON(Cons three list2);
+
 list4 = CON(Cons four list3);
+
 list5 = CON(Cons five list4);
 
 list6 = CON(Cons four nil);
+
 list7 = CON(Cons five list6);
 
 --test
 result = THUNK(firstHalf list5);
+
 output = THUNK(list7);
+
 main = THUNK(eqList output result);
+

@@ -80,9 +80,9 @@ groupAllBy :: (a -> a -> Bool) -> [a] -> [[a]]
 groupAllBy f xs =
   let nubbed = nubBy f xs
   in if (length nubbed == length xs)
--- if list is full of uniques, package them in lists
+  -- if list is full of uniques, package them in lists
      then map (:[]) xs
--- else fold on the uniques, accumulating the groups (hence reverse) and the unsorted
+  -- else fold on the uniques, accumulating the groups (hence reverse) and the unsorted
      else reverse $ fst $ foldl ffun ([],xs) nubbed
   where ffun (groups, xs) it = let (matches, rest) = partition (f it) xs
                                in (matches:groups, rest)

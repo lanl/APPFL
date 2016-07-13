@@ -1,34 +1,56 @@
 --sort three integers in a triple
 --threeSort :: Tupl3 Int Int Int -> Tupl3 Int Int Int 
-threeSort = FUN(x -> case x of {
-	    	     	  TP3 a b c -> threeSort1 a b c});
+threeSort = FUN(x ->
+                  case x of
+                    _scrt0 {
+                      TP3 a b c -> threeSort1 a b c });
 
-threeSort1 = FUN(a b c -> case intLE b a of {
-	    	      	      True -> threeSort2 b a c;
-			      False -> threeSort2 a b c});
-	    	      	     	  		     	    
-threeSort2 = FUN(a b c -> case intLE c a of {
-	    	      	       True -> threeSort3 c b a;
-			       False -> threeSort3 a b c});
+threeSort1 = FUN(a b c ->
+                       case intLE b a of
+                         _scrt1 {
+                           True -> threeSort2 b a c;
+                           False -> threeSort2 a b c });
 
+threeSort2 = FUN(a b c ->
+                       case intLE c a of
+                         _scrt2 {
+                           True -> threeSort3 c b a;
+                           False -> threeSort3 a b c });
 
-threeSort3 = FUN(a b c -> case intLE c b of {
-	    	      	       True -> tupl3 a c b;
-			       False -> tupl3 a b c});
+threeSort3 = FUN(a b c ->
+                       case intLE c b of
+                         _scrt3 {
+                           True -> tupl3 a c b;
+                           False -> tupl3 a b c });
 
 --Test
 result = THUNK(tupl3 one two three);
+
 temp = THUNK(tupl3 three two one);
+
 output = THUNK(threeSort temp);
+
 main = THUNK(eqTriple result output);
 
+eqTriple = FUN(x y ->
+                   case x of
+                     _scrt8 {
+                       TP3 a1 b1 c1 -> case y of
+                                         _scrt7 {
+                                           TP3 a2 b2 c2 -> let {
+                                                             d = THUNK(eqInt a1 a2)}
+                                                           in case d of
+                                                                _scrt6 {
+                                                                  False -> false;
+                                                                  True -> let {
+                                                                            e = THUNK(eqInt b1 b2)}
+                                                                          in case e of
+                                                                               _scrt5 {
+                                                                                 False -> false;
+                                                                                 True -> let {
+                                                                                           f = THUNK(eqInt c1 c2)}
+                                                                                         in case f of
+                                                                                              _scrt4 {
+                                                                                                False -> false;
+                                                                                                True -> true } } } } });
 
-eqTriple = FUN(x y -> case x of {
-	   	      	   TP3 a1 b1 c1 -> case y of {
-			       	     	   	TP3 a2 b2 c2 -> let {d = THUNK(eqInt a1 a2)} in case d of {
-						       	     	       	 	     	     	     False -> false;
-												     True -> let {e = THUNK(eqInt b1 b2)} in case e of {
-						       	     	       	 	     	     	                                                  False -> false;
-												                                                  True -> let {f = THUNK(eqInt c1 c2)} in case f of {
-						       	     	       	 	     	     	                                                                                               False -> false;
-												                                                                                               True -> true}}}}});

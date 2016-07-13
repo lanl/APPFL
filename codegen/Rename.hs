@@ -124,11 +124,12 @@ nameExpr e@EPrimop{eas} tt =
     return e{eas = eas'}
 
 nameAlts :: Alts a -> [(Var, String)] -> State [String] (Alts a)
-nameAlts (Alts md alts name) tt =
+nameAlts (Alts md alts name scrt) tt =
     do
       name' <- suffixname name
-      alts' <- mapM ((flip nameAlt) tt) alts
-      return (Alts md alts' name')
+      scrt' <- nameExpr scrt tt 
+      alts' <- mapM (flip nameAlt tt) alts
+      return (Alts md alts' name' scrt')
 
 nameAlt (ACon md c vs e) tt =
     do

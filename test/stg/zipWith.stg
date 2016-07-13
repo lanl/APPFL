@@ -1,11 +1,19 @@
 l1 = CON(Cons one nil);
-l2 = CON(Cons one l1); 
+
+l2 = CON(Cons one l1);
+
 l3 = CON(Cons two nil);
-l4 = CON(Cons two l3); 
+
+l4 = CON(Cons two l3);
 
 z1 = THUNK(zipWith plusInt l2 l4);
-output = THUNK(let { f = THUNK(forcelist z1)} in seq f z1);
+
+output = THUNK(let {
+                 f = THUNK(forcelist z1)}
+               in seq f z1);
 
 -- test sum
 s = THUNK(sum output);
+
 main = THUNK(eqInt s six);
+

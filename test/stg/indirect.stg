@@ -1,4 +1,3 @@
-
 f0 = THUNK(zero);
 
 f1 = THUNK(one);
@@ -20,5 +19,4 @@ f8 = THUNK(plusInt f6 f7);
 f9 = THUNK(plusInt f7 f8);
 
 main = THUNK(eqInt f9 f9);
-
 

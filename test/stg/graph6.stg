@@ -1,44 +1,72 @@
-data Graph = Nothing | G VE Graph;
+data Graph = Nothing
+           | G VE Graph;
+
 data VE = VE Int (List Int);
 
-degree = FUN(x -> case x of {
-       	       	  VE y zs -> length zs});
+degree = FUN(x ->
+               case x of
+                 _scrt0 {
+                   VE y zs -> length zs });
 
-elem = FUN(xs x -> case xs of {
-       	      	   Nil -> false;
-		   Cons a1 b1 -> case eqInt a1 x of {
-		      	       	      True -> true;
-				      False -> elem b1 x}}); 
+elem = FUN(xs x ->
+                case xs of
+                  _scrt2 {
+                    Nil -> false;
+                    Cons a1 b1 -> case eqInt a1 x of
+                                    _scrt1 {
+                                      True -> true;
+                                      False -> elem b1 x } });
 
-getVE = FUN(x g -> case g of {
-      	      	   G ve g1 -> case ve of {
-		     	      VE y z -> case eqInt y x of {
-			      	     	True -> ve;
-					False -> getVE x g1}}});
+getVE = FUN(x g ->
+                case g of
+                  _scrt5 {
+                    G ve g1 -> case ve of
+                                 _scrt4 {
+                                   VE y z -> case eqInt y x of
+                                               _scrt3 {
+                                                 True -> ve;
+                                                 False -> getVE x g1 } } });
 
-degree2 = FUN(x g -> case getVE x g of {
-	  	     y -> degree y});
-		     	      
-vertices = FUN(g -> case g of {
-	   	    Nothing -> zero;
-		    G ve g1 -> let {q1 = THUNK(vertices g1);
-		      	       	    q2 = THUNK(plusInt one q1)} in q2});
+degree2 = FUN(x g ->
+                  case getVE x g of
+                    _scrt6 {
+                      y -> degree y });
 
-vertexSet = FUN(g -> case g of {
-	    	     Nothing -> nil;
-	    	     G ve g1 -> case ve of {
-		                VE y zs -> let {q1 = THUNK(vertexSet g1);
-				     	       	q2 = CON(Cons y q1)} in q2}});
-	    	  
-isVertex = FUN(x g -> let {q1 = THUNK(vertexSet g);
-	   	    	   q2 = THUNK(elem q1 x)} in q2);
+vertices = FUN(g ->
+                 case g of
+                   _scrt7 {
+                     Nothing -> zero;
+                     G ve g1 -> let {
+                                  q1 = THUNK(vertices g1);
+                                  q2 = THUNK(plusInt one q1)}
+                                in q2 });
+
+vertexSet = FUN(g ->
+                  case g of
+                    _scrt9 {
+                      Nothing -> nil;
+                      G ve g1 -> case ve of
+                                   _scrt8 {
+                                     VE y zs -> let {
+                                                  q1 = THUNK(vertexSet g1);
+                                                  q2 = CON(Cons y q1)}
+                                                in q2 } });
+
+isVertex = FUN(x g ->
+                   let {
+                     q1 = THUNK(vertexSet g);
+                     q2 = THUNK(elem q1 x)}
+                   in q2);
 
 --Test
 nothing = CON(Nothing);
 
 edge10 = CON(Cons two nil);
+
 edge11 = CON(Cons three edge10);
+
 edge12 = CON(Cons four edge11);
+
 edge13 = CON(Cons five edge12);
 
 edge20 = CON(Cons one nil);
@@ -46,27 +74,42 @@ edge20 = CON(Cons one nil);
 edge30 = CON(Cons three nil);
 
 edge40 = CON(Cons one nil);
+
 edge41 = CON(Cons five edge40);
 
 edge50 = CON(Cons one nil);
-edge51 = CON(Cons four edge50); 
+
+edge51 = CON(Cons four edge50);
 
 set1 = CON(VE one edge13);
+
 set2 = CON(VE two edge20);
+
 set3 = CON(VE three edge30);
+
 set4 = CON(VE four edge41);
+
 set5 = CON(VE five edge51);
 
 graph1 = CON(G set1 nothing);
+
 graph2 = CON(G set2 graph1);
+
 graph3 = CON(G set3 graph2);
+
 graph4 = CON(G set4 graph3);
+
 graph5 = CON(G set5 graph4);
 
 l1 = CON(Cons one nil);
+
 l2 = CON(Cons two l1);
+
 l3 = CON(Cons three l2);
+
 l4 = CON(Cons four l3);
+
 tempList = CON(Cons five l4);
 
 main = THUNK(isVertex two graph5);
+

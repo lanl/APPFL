@@ -18,6 +18,7 @@ import CMap
 import PPrint
 import qualified Data.Map as Map
 import Data.List (group)
+import Data.Maybe (fromMaybe)
 import Debug.Trace
 import Util (deleteAll)
 
@@ -107,7 +108,7 @@ propCallsAlt env scrut a = case a of
   ADef{amd, av, ae}  ->
     let env' = case knownFunExprIT env scrut of
           Just it -> Map.insert av it env -- if scrut is known function, bind var in env
-          Nothing -> Map.delete av env -- else honor shadowing and delete it
+          Nothing -> Map.delete av env    -- else honor shadowing and delete it
     in a { ae = propCallsExpr env' ae}
        
 
@@ -146,9 +147,6 @@ instance SetHA (Expr InfoTab) where
     EAtom{emd} ->
       let nha = case typ emd of
                  MCon b c _ -> not b
---                 MPrim _    -> True
-                 -- MVar => polymorphic => boxed?
-                 -- MFun => PAP created dynamically? => boxed
                  _        -> False
           emd' = emd {noHeapAlloc = nha}
       in e { emd = emd' }
@@ -180,18 +178,19 @@ instance SetHA (Expr InfoTab) where
         eas' = map (setHA fmp) eas
         fnha = case knownCall emd of
           Just it@ITFun{arity} ->
-            if arity /= length eas -- (under|over)saturated call grows heap
-            then False
-            else
-              case Map.lookup (name it) fmp of
-               Just b -> b
-               Nothing -> False -- unknown function may grow heap
+            -- (under|over)saturated call grows heap
+            arity == length eas
+            -- if function is known, this lookup should always
+            -- succeed, but let's be safe
+            && fromMaybe False (Map.lookup (name it) fmp)
+
           Nothing ->
-            -- this works independently of knownCall analysis (for simple tests)
-            -- it shouldn't break anything in its presence either, I think.
-            case Map.lookup ev fmp of
-             Just b -> b
-             Nothing -> False
+            -- if knownCall analysis hasn't been performed, try to
+            -- do it here.  If it has, this just wastes cycles
+            -- (does not change result)
+            fromMaybe False (Map.lookup ev fmp)
+
+          -- be exhaustive
           Just it -> error $ "Analysis.setHA (EFCall): unexpected infotab: " ++ show (pprint it)
              
         nha = fnha -- and (fnha:map getHA eas') -- ignoring args for now
@@ -199,17 +198,18 @@ instance SetHA (Expr InfoTab) where
       in e { emd = emd' }
 
     EPrimop{emd, eas} ->
-      let eas' = map (setHA fmp) eas -- for consistency
-          nha = all getHA eas -- for consistency
+      let eas' = map (setHA fmp) eas      -- for consistency
+          nha  = all getHA eas            -- for consistency
           emd' = emd {noHeapAlloc = True} -- hack, typechecker not working?
       in e { emd = emd' }
 
-  getHA = noHeapAlloc.emd
+  getHA = noHeapAlloc . emd
     
 
 instance SetHA (Alts InfoTab) where
-  setHA fmp a@Alts{alts} =
+  setHA fmp a@Alts{alts, scrt} =
     let alts' = map (setHA fmp) alts
+        scrt' = setHA fmp scrt
     in a { alts = alts' }
 
   getHA Alts{alts} = all getHA alts
@@ -235,6 +235,7 @@ instance SetHA (Alt InfoTab) where
   getHA = getHA . ae
       
 
+addDefsToMap :: [Obj InfoTab] -> FunMap -> FunMap
 addDefsToMap defs funmap =
   let
     fmp  = deleteAll (map oname defs) funmap -- remove shadowed bindings
@@ -255,19 +256,23 @@ addDefsToMap defs funmap =
     -- iterate until fixed point is found
     fixDefs defs fmp =
       let
-          fmp' = foldr foldfunc fmp $ map (setHA fmp) defs in
-       if fmp == fmp'
-       then fmp'
-       else fixDefs defs fmp'
+        fmp' = foldr (foldfunc . setHA fmp) fmp defs
+      in
+        if fmp == fmp'
+        then fmp'
+        else fixDefs defs fmp'
   in
    fixDefs defs fmp'
      
 
-                                             
 
+-- Entry point for ensuring exhaustive Alts in case expressions
+-- CMap is necessary for finding all the constructors for
+-- any type being matched against in the case expression
 exhaustCases :: CMap -> [Obj a] -> [Obj a]
 exhaustCases cmap = map (exhaustObj cmap)
 
+-------------------------------------------------- Obj Level
 exhaustObj :: CMap -> Obj a -> Obj a
 exhaustObj cmap obj =
   case obj of
@@ -275,7 +280,9 @@ exhaustObj cmap obj =
    THUNK{e} -> obj {e = exhaustExpr cmap e}
    PAP{} -> obj
    CON{} -> obj
---BH   BLACKHOLE{} -> obj
+   --BLACKHOLE{} -> obj
+
+-------------------------------------------------- Expr Level
    
 exhaustExpr :: CMap -> Expr a -> Expr a
 exhaustExpr cmap expr =
@@ -289,6 +296,7 @@ exhaustExpr cmap expr =
    EPrimop{} -> expr
    EFCall{}  -> expr
 
+-------------------------------------------------- Alts level
 exhaustAlts :: CMap -> Alts a -> Alts a
 exhaustAlts cmap aa@Alts{alts, aname} =
   let acons = filter isACon alts
@@ -307,7 +315,11 @@ why not just
 
   x -> stg_case_not_exhaustive x
 
+simplified, 2016.05.25 - dmr
+
 -}
+-- default Alt for non exhaustive cases
+-- stg_case_not_exhaustive is defined in the C runtime
 defAlt :: String -> Alt a
 defAlt name =
   let
@@ -317,18 +329,9 @@ defAlt name =
     fcall = EFCall{emd = mdErr "EFCall",
                    ev  = "stg_case_not_exhaustive",
                    eas = [arg]}
-    thunk = THUNK{omd   = mdErr "THUNK",
-                  e     = fcall,
-                  oname = name ++ "_exhaust"}
-    letee = EAtom{emd = mdErr "EAtom",
-                  ea  = Var $ oname thunk}
-    elet  = ELet{emd   = mdErr "ELet",
-                 edefs = [thunk],
-                 ee    = letee}
   in ADef {amd = mdErr "ADef",
            av  = "x",
-           ae  = elet}
-
+           ae  = fcall}
 
 
 
@@ -398,7 +401,7 @@ knownFunExprIT env e =
 
     EFCall {emd, ev, eas} -> case Map.lookup ev env of
                               Just i@ITFun{arity} | length eas < arity -> Just i
-                                                | otherwise -> Nothing
+                                                  | otherwise -> Nothing
                               _ -> Nothing
 
 --    This will break heap allocation analysis if it depends on known calls

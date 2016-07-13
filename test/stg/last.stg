@@ -1,17 +1,24 @@
 --last element in a list
 --last :: List a -> a
-last = FUN(xs ->  case xs of {
-	      	       Cons h1 t1 -> 
-                            case t1 of {
-			         Nil -> h1;
-			         Cons h2 t2 -> last t1}});
+last = FUN(xs ->
+              case xs of
+                _scrt1 {
+                  Cons h1 t1 -> case t1 of
+                                  _scrt0 {
+                                    Nil -> h1;
+                                    Cons h2 t2 -> last t1 } });
 
---list3: [3,2,1]	      	
+--list3: [3,2,1]                
 list1 = CON(Cons one nil);
+
 list2 = CON(Cons two list1);
+
 list3 = CON(Cons three list2);
 
 --test 
 result = CON(I 1);
+
 output = THUNK(last list3);
+
 main = THUNK(eqInt result output);
+

@@ -1,6 +1,5 @@
-
 -- eval to PAP if not STRICT2
 constBH = THUNK(const blackhole);
 
-main = THUNK(seq constBH true)
+main = THUNK(seq constBH true);
 

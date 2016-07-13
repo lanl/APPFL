@@ -1,3 +1,4 @@
+-- Duplicate type+data constructors (with Prelude)
 data Bool1 = True | False;
 data Bool1 = Nil | False;
 data Bool1 = True | Nothing;

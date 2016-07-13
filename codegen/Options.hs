@@ -4,6 +4,7 @@
 
 module Options
 (
+    reWriteSTG,
     useArgType,
     useObjType,
     useInfoTabHeader
@@ -25,4 +26,13 @@ useObjType = False
 useInfoTabHeader = True
 #else
 useInfoTabHeader = False
+#endif
+
+-- Flag used to indicate grammar of Case expressions for Parser.hs
+-- if True, the scrutinee binding will hold a dummy string
+-- this is useful for converting old syntax to new using ConvertSTG.hs
+#if REWRITE_STG
+reWriteSTG = True
+#else
+reWriteSTG = False
 #endif

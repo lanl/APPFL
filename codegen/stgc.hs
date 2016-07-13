@@ -148,14 +148,14 @@ compile  (Options {optVerbose, optDumpParse, optNoPrelude, optInput,
     let source = if optNoPrelude then src
                  else prelude ++ src
         (ts,os) = let (t,o,_) =  mhsSTGer source
-                 in if minihs then (t,o) else parser source
+                  in if minihs then (t,o) else parser source
 
     when optDumpSTG $
       writeFile (input ++ ".dump.stg") (show $ unparse ts $+$ unparse os)
 
     case optDumpParse of
       True  -> do
-                 let stgtext = (show $ toCMap $ ts) ++ show os
+                 let stgtext = show (toCMap $ ts) ++ show os
                  writeFile (input ++ ".dump") stgtext
 
       False -> do
@@ -164,7 +164,7 @@ compile  (Options {optVerbose, optDumpParse, optNoPrelude, optInput,
                  cflagsenv <- lookupEnv "CFLAGS"
                  let cflags = fromMaybe "" cflagsenv
                  let coutput = input ++ ".c"
-                 let flags = " -Wno-return-type "
+                 let flags = " -Wall -Werror -Wno-missing-braces "
                                ++ cflags ++ " -std=gnu99 -Wl,-rpath " ++ rtIncDir
                                ++ " -L" ++ rtLibDir ++ " -I" ++ rtIncDir
                                ++ " -lruntime"

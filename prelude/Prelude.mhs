@@ -219,9 +219,24 @@ zip = zipWith TP2
 
 unzip :: List (Tupl2 a b) -> Tupl2 (List a) (List b)
 unzip Nil = TP2 Nil Nil
-unzip (Cons (TP2 a b) xs) = case unzip xs of
-  TP2 as bs -> TP2 (Cons a as) (Cons b bs)
+unzip (Cons (TP2 a b) xs) =
+  case unzip xs of
+   TP2 as bs -> TP2 (Cons a as) (Cons b bs)
 
+{- STG unzip
+unzip = FUN(list ->
+  case list of { Nil -> let {res = CON( TP2 nil nil)} in res;
+                 Cons x xs ->
+                   case x of {
+                     TP2 a b ->
+                       case unzip xs of {
+                         TP2 as bs ->
+                           let {aas = CON(Cons a as);
+                                bbs = CON(Cons b bs);
+                                res = CON(TP2 aas bbs)}
+                           in res; }}});
+-}
+        
 
 repeat :: a -> List a
 repeat x = Cons x (repeat x)

@@ -2,19 +2,23 @@ data TupUBUB = TupUBUB Int# Int Int# Int;
 
 t1 = CON(TupUBUB 6 seven 8 nine);
 
-f = THUNK(case t1 of {
-            TupUBUB u6# b7 u8# b9 ->
-              case b7 of {
-                I u7# ->
-                  case b9 of {
-                    I u9# -> 
-                      case iplus# u6# u7# of {
-                        i# -> case iplus# u8# u9# of {
-			  j# -> case iplus# i# j# of {
-			    k# -> let {result = CON(I k#)}
-			          in result }}}}}});
-
+f = THUNK(case t1 of
+            _scrt5 {
+              TupUBUB u6# b7 u8# b9 -> case b7 of
+                                         _scrt4 {
+                                           I u7# -> case b9 of
+                                                      _scrt3 {
+                                                        I u9# -> case iplus# u6# u7# of
+                                                                   _scrt2 {
+                                                                     i# -> case iplus# u8# u9# of
+                                                                             _scrt1 {
+                                                                               j# -> case iplus# i# j# of
+                                                                                       _scrt0 {
+                                                                                         k# -> let {
+                                                                                                 result = CON(I k#)}
+                                                                                               in result } } } } } });
 
 answer = CON(I 30);
 
 main = THUNK(eqInt answer f);
+

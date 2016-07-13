@@ -1,22 +1,37 @@
 list6 = CON(Cons one list5);
+
 list5 = CON(Cons one list4);
+
 list4 = CON(Cons two list3);
+
 list3 = CON(Cons three list2);
+
 list2 = CON(Cons four list1);
+
 list1 = CON(Cons five nil);
 
 list10 = CON(Cons one list11);
+
 list11 = CON(Cons one list12);
+
 list12 = CON(Cons two list13);
+
 list13 = CON(Cons three list14);
+
 list14 = CON(Cons five nil);
 
 list21 = CON(Cons one list22);
+
 list22 = CON(Cons three list23);
+
 list23 = CON(Cons six list24);
+
 list24 = CON(Cons one nil);
 
 --Test
 result = THUNK(removeAtIndex list6 four);
+
 output = THUNK(list10);
+
 main = THUNK(eqList result output);
+

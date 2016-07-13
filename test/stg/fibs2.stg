@@ -1,15 +1,17 @@
 -- classic fib
-
-fib = FUN(x -> case x of {
-                 I i# -> case i# of
-                           { 0 -> zero;
-                             1 -> one;
-		 	     y -> let { m1 = THUNK(subInt x one);
-		 	                m2 = THUNK(subInt x two);
-		 	     	        f1 = THUNK(fib m1);
-		 	     	        f2 = THUNK(fib m2) }
-                                  in plusInt f1 f2 }
-               });
+fib = FUN(x ->
+            case x of
+              _scrt1 {
+                I i# -> case i# of
+                          _scrt0 {
+                            0 -> zero;
+                            1 -> one;
+                            y -> let {
+                                   m1 = THUNK(subInt x one);
+                                   m2 = THUNK(subInt x two);
+                                   f1 = THUNK(fib m1);
+                                   f2 = THUNK(fib m2)}
+                                 in plusInt f1 f2 } });
 
 f8 = THUNK(fib eight);
 
@@ -17,6 +19,7 @@ f9 = THUNK(fib nine);
 
 f10 = THUNK(fib ten);
 
-main = THUNK( let { f10a = THUNK(plusInt f8 f9) }
-              in eqInt f10 f10a )
+main = THUNK(let {
+               f10a = THUNK(plusInt f8 f9)}
+             in eqInt f10 f10a);
 

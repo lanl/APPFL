@@ -1,2 +1,3 @@
+-- Duplicate type+data constructors (with Prelude)
 data Mybool = True | False;
 data Mybool = Zero | Else;

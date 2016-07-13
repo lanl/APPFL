@@ -24,6 +24,8 @@ module PPrint
   prepunctuate,
   postpunctuate,
   vertList,
+  reHash,
+  stgName,
   PPrint,
   Unparse,
   module Text.PrettyPrint
@@ -32,7 +34,7 @@ module PPrint
 
 import Text.PrettyPrint
 import qualified Data.Set as Set
-import Data.List (find)
+import Data.List (find, isSuffixOf)
 
 
 
@@ -44,6 +46,13 @@ class PPrint a where
 class Unparse a where
   unparse :: a -> Doc
 
+reHash str | "_h" `isSuffixOf` str = reverse ('#' : drop 2 (reverse str))
+           | otherwise = str
+
+stgName = text . reHash           
+
+nLines :: (Show a) => a -> Int
+nLines = length . lines . show
 
 bar = text "|"
 arw = text "->"
@@ -51,9 +60,13 @@ hash = char '#'
 doubleColon = text "::"
 lambda = text "\\"
 lcomment d = text "--" <> d
-bcomment d = if isEmpty d
-             then empty
-             else text "{-" <+> (nest 3 d) $+$ text "-}"
+bcomment d | isEmpty d = empty
+           | otherwise =
+             -- only line break for long comments
+             let sep | nLines d == 1 = (<+>)
+                     | otherwise = ($+$)
+             in text "{-" `sep` (nest 3 d) `sep` text "-}"
+             
 
 boolean :: Bool -> Doc
 boolean = text . show
@@ -99,6 +112,8 @@ instance PPrint a => PPrint (Maybe a) where
   pprint (Just a) = text "Just" <+> pprint a
   pprint Nothing = text "Nothing"
 
-
 instance PPrint () where
   pprint () = empty
+
+instance PPrint Char where
+  pprint = char

@@ -5,8 +5,8 @@
 
 struct _Cont;
 typedef struct _Cont Cont;
-struct _CInfoTab;
-typedef struct _CInfoTab CInfoTab;
+//struct _CInfoTab;
+//typedef struct _CInfoTab CInfoTab;
 
 // stack continuations--change the names for compiler help finding them
 typedef enum {

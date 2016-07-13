@@ -11,7 +11,7 @@ macro(add_test_regex_fail name regex)
 endmacro(add_test_regex_fail)
 
 add_test_regex_fail(comment 
-  "mismatched comment braces:")
+  "Expected end of nested comment")
 
 add_test_regex_fail(semi
     "Expected semicolon or EOF after object definition")

@@ -1,91 +1,151 @@
-max = FUN(xs -> case xs of {
-      	     	     Cons h1 t1 -> case h1 of {
-		     	     	   	TP2 a b -> a}});
+max = FUN(xs ->
+             case xs of
+               _scrt1 {
+                 Cons h1 t1 -> case h1 of
+                                 _scrt0 {
+                                   TP2 a b -> a } });
 
-delMax = FUN(xs -> case xs of {
-       	 	   	Nil -> nil;
-       	 	   	Cons h1 t1 -> t1});
+delMax = FUN(xs ->
+                case xs of
+                  _scrt2 {
+                    Nil -> nil;
+                    Cons h1 t1 -> t1 });
 
-insert = FUN(xs k -> let {q = CON(Cons k xs)} in q);
+insert = FUN(xs k ->
+                  let {
+                    q = CON(Cons k xs)}
+                  in q);
 
-sink = FUN(xs -> case xs of {
-       	      	   	Nil -> nil;
-       	      	   	Cons h1 t1 -> case t1 of {
-			     	      Nil -> xs;
-			     	      Cons h2 t2 -> case shouldSink h1 h2 of {
-				      	      	    False -> xs;
-						    True -> let {r = CON(Cons h1 t2);
-						    	         s = THUNK(sink r);
-								 u = CON(Cons h2 s)} in u}}});
+sink = FUN(xs ->
+              case xs of
+                _scrt5 {
+                  Nil -> nil;
+                  Cons h1 t1 -> case t1 of
+                                  _scrt4 {
+                                    Nil -> xs;
+                                    Cons h2 t2 -> case shouldSink h1 h2 of
+                                                    _scrt3 {
+                                                      False -> xs;
+                                                      True -> let {
+                                                                r = CON(Cons h1 t2);
+                                                                s = THUNK(sink r);
+                                                                u = CON(Cons h2 s)}
+                                                              in u } } });
 
-shouldSink = FUN(x y -> case x of {
-	     	     	TP2 a1 b1 -> case y of {
-			       	     TP2 a2 b2 -> case intLT a1 a2 of {
-				     	       	       True -> true;
-						       False -> false}}});
+shouldSink = FUN(x y ->
+                     case x of
+                       _scrt8 {
+                         TP2 a1 b1 -> case y of
+                                        _scrt7 {
+                                          TP2 a2 b2 -> case intLT a1 a2 of
+                                                         _scrt6 {
+                                                           True -> true;
+                                                           False -> false } } });
 
-eqTP2 = FUN(x y -> case x of {
-      	      	TP2 a1 b1 -> case y of {
-		    TP2 a2 b2 -> case eqInt a1 a2 of {
-		    	False -> false;
-			True -> case eqInt b1 b2 of {
-			     False -> false; 
-			     True -> true}}}});
+eqTP2 = FUN(x y ->
+                case x of
+                  _scrt12 {
+                    TP2 a1 b1 -> case y of
+                                   _scrt11 {
+                                     TP2 a2 b2 -> case eqInt a1 a2 of
+                                                    _scrt10 {
+                                                      False -> false;
+                                                      True -> case eqInt b1 b2 of
+                                                                _scrt9 {
+                                                                  False -> false;
+                                                                  True -> true } } } });
 
-eqKeyList = FUN(xs ys -> case xs of {
-	    	   Nil -> case ys of {
-		      Nil -> true;
-		      x -> false};
-		   Cons h1 t1 -> case ys of {
-		      Nil -> false;
-		      Cons h2 t2 -> case eqTP2 h1 h2 of {
-		      	      	    False -> false;
-				    True -> eqKeyList t1 t2}}});
+eqKeyList = FUN(xs ys ->
+                      case xs of
+                        _scrt16 {
+                          Nil -> case ys of
+                                   _scrt13 {
+                                     Nil -> true;
+                                     x -> false };
+                          Cons h1 t1 -> case ys of
+                                          _scrt15 {
+                                            Nil -> false;
+                                            Cons h2 t2 -> case eqTP2 h1 h2 of
+                                                            _scrt14 {
+                                                              False -> false;
+                                                              True -> eqKeyList t1 t2 } } });
 
-
-push = FUN(k xs -> let {q = CON(Cons k xs);
-       	     	       	r = THUNK(sink q)} in r);
-
+push = FUN(k xs ->
+                let {
+                  q = CON(Cons k xs);
+                  r = THUNK(sink q)}
+                in r);
 
 --Test 
-
 k1 = CON(TP2 one two);
+
 k2 = CON(TP2 two one);
+
 k3 = CON(TP2 two ten);
+
 k4 = CON(TP2 two one);
+
 k5 = CON(TP2 three seven);
+
 k6 = CON(TP2 four one);
+
 k7 = CON(TP2 four two);
+
 k8 = CON(TP2 three six);
 
 q0 = THUNK(nil);
+
 q1 = CON(Cons k1 q0);
+
 q2 = CON(Cons k2 q1);
+
 q3 = CON(Cons k3 q2);
+
 q4 = CON(Cons k4 q3);
+
 q5 = CON(Cons k5 q4);
+
 q6 = CON(Cons k6 q5);
+
 q7 = CON(Cons k7 q6);
 
 j0 = CON(TP2 one two);
+
 j1 = CON(TP2 two one);
+
 j2 = CON(TP2 two ten);
+
 j3 = CON(TP2 two one);
+
 j4 = CON(TP2 three seven);
+
 j5 = CON(TP2 three six);
+
 j6 = CON(TP2 four one);
+
 j7 = CON(TP2 four two);
 
 w0 = THUNK(nil);
+
 w1 = CON(Cons j0 w0);
+
 w2 = CON(Cons j1 w1);
+
 w3 = CON(Cons j2 w2);
+
 w4 = CON(Cons j3 w3);
+
 w5 = CON(Cons j4 w4);
+
 w6 = CON(Cons j5 w5);
+
 w7 = CON(Cons j6 w6);
+
 w8 = CON(Cons j7 w7);
 
 output = THUNK(push k8 q7);
+
 result = THUNK(w8);
+
 main = THUNK(eqKeyList output result);
+

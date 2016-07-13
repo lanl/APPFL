@@ -1,1 +1,2 @@
-main = THUNK(const true blackhole)
+main = THUNK(const true blackhole);
+

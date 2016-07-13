@@ -120,9 +120,16 @@ instance TypeFVs (Expr InfoTab) where
             ealts' = typeFVsCommonAlts (typ $ emd ee) m ealts
         in e{ee = ee', ealts = ealts'}
 
-typeFVsAlts t0 m a@Alts{alts} =
-    let alts' = map (typeFVsCommonAlt t0 m) alts
-    in a{alts = alts'}
+typeFVsAlts
+  :: Monotype             -- ^ type of scrutinee of enclosing ECase
+  -> Map.Map Var Monotype -- ^ Var-Type map
+  -> Alts InfoTab         -- ^ Alts block to process
+  -> Alts InfoTab         -- ^ Alts block processes
+typeFVsAlts t0 m a@Alts{alts,scrt} =
+    let m' = Map.insert (scrtVarName scrt) t0 m
+        scrt' = typeFVsCommon m' scrt
+        alts' = map (typeFVsCommonAlt t0 m') alts
+    in a{alts = alts', scrt = scrt'}
 
 typeFVsAlt t0 m a@ADef{av, ae} =
     let m' = Map.insert av t0 m

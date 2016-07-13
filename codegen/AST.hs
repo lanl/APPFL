@@ -16,11 +16,12 @@ module AST (
   show,
   objListDoc,
   primArity,
-  projectAtoms
+  projectAtoms,
+  scrtVarName
 ) where
 
 import PPrint
-import Data.List (find, (\\))
+import Data.List (find, (\\), isSuffixOf)
 import Data.Int as Int (Int64)
 
 --  See Parser.hs for grammar
@@ -53,15 +54,32 @@ data Obj a = FUN   {omd :: a, vs :: [Var],   e :: Expr a   , oname :: String}
 
 -- 7.9 EFCalls (and EPrimops, for consistency) changed to accept Expr args.
 -- Parser (and other traversals) should enforce use of *only* EAtom as args
-data Expr a = EAtom   {emd :: a,                    ea :: Atom}
-            | EFCall  {emd :: a, ev :: Var,         eas :: [Expr a]} -- invariant the eas are EAtoms
-            | EPrimop {emd :: a, eprimop :: Primop, eas :: [Expr a]} -- invariant the eas are EAtoms
-            | ELet    {emd :: a, edefs :: [Obj a],  ee :: Expr a}
-            | ECase   {emd :: a, ee :: Expr a,      ealts :: Alts a}
+data Expr a
+    = EAtom   {emd :: a,
+               ea :: Atom}
+    | EFCall  {emd :: a,
+               ev :: Var,
+               eas :: [Expr a]} -- invariant the eas are EAtoms
+    | EPrimop {emd :: a,
+               eprimop :: Primop,
+               eas :: [Expr a]} -- invariant the eas are EAtoms
+    | ELet    {emd :: a,
+               edefs :: [Obj a],
+               ee :: Expr a}
+    | ECase   {emd :: a,
+               ee :: Expr a,
+               ealts :: Alts a}               
               deriving(Eq,Show)
 
-data Alts a = Alts {altsmd :: a, alts :: [Alt a], aname :: String}
+data Alts a = Alts {altsmd :: a,
+                    alts :: [Alt a],
+                    aname :: String,
+                    scrt :: Expr a} -- invariant the scrt is an EAtom holding a Var
               deriving(Eq,Show)
+
+-- Grab the variable name of the scrutinee binding, enforce the invariant above
+scrtVarName (EAtom _ (Var v)) = v
+scrtVarName _ = error "scrutinee is not an atomic variable"
 
 data Alt a = ACon {amd :: a, ac :: Con, avs :: [Var], ae :: Expr a}
            | ADef {amd :: a,            av :: Var,    ae :: Expr a}
@@ -117,44 +135,33 @@ primopTab =
 
      ("ineg_h",   Pineg),
 
-     ("imin_h",   Pimax),
-     ("imax_h",   Pimin)
+     ("imax_h",   Pimax),
+     ("imin_h",   Pimin)
     ]
 
 
+-- generate with
+-- awk '/^[a-z_#].*=/ {if ($1 != "data") {printf "\42%s\42, ", $1}}' \
+-- appfl/prelude/Prelude.stg | head -c-2 | fmt -w80
+
 preludeObjNames =
-  ["error",
-   "unit",
-   "nil",
-   "zero",
-   "one",
-   "two",
-   "three",
-   "four",
-   "five",
-   "six",
-   "seven",
-   "eight",
-   "nine",
-   "ten",
-   "false",
-   "true",
-   "eqInt",
-   "multInt",
-   "plusInt",
-   "subInt",
-   "append",
-   "const",
-   "apply",
-   "map",
-   "head",
-   "tail",
-   "foldl",
-   "sum",
-   "zipWith",
-   "seq",
-   "forcelist",
-   "take"]
+    [
+     "error", "unit", "nil", "zero", "one", "two", "three", "four", "five", "six",
+     "seven", "eight", "nine", "ten", "false", "true", "blackhole", "_iplus",
+     "_isub", "_imul", "_idiv", "_imod", "_ieq", "_ine", "_ilt", "_ile", "_igt",
+     "_ige", "_imin", "_imax", "_ineg", "cons", "int", "tupl2", "fst", "snd",
+     "tupl3", "eqInt", "multInt", "plusInt", "subInt", "modInt", "_intPrimop",
+     "_intComp", "intLE", "minInt", "gcd#", "gcd", "append", "map", "head",
+     "tail", "foldl", "foldr", "length", "_length", "forcelist", "take", "drop",
+     "zipWith", "zip", "strictList", "null", "init", "filter", "all", "any",
+     "sum", "const", "apply", "seq", "repeat", "replicate", "odd#", "even#",
+     "odd", "even", "not", "compose", "divInt", "compareInt", "intLT", "intGE",
+     "intGT", "switch", "move", "removeAtIndex", "insertAtIndex", "index",
+     "eqList", "createNormArray", "cNArr", "createNormBackArray", "cNBArr",
+     "createArray", "cArr", "createOddBackArray", "cOBArr", "createEvenArray",
+     "cEArr", "createEvenBackArray", "cEBArr", "createOddArray", "cOArr"
+    ]
+
 
 
 -- functions for removing some or all standard Prelude objects from the
@@ -166,13 +173,14 @@ rmPreludeLess keeps =
   let objs = preludeObjNames \\ keeps
   in filter (not . (`elem` objs) . oname)
 
-stgPrimName p =
+primID p =
   case find ((==p).snd) primopTab of
-   Nothing -> error $ "primop lookup failed for " ++ show p
-   Just x -> reverse ('#' : drop 2 (reverse $ fst x))
+    Nothing -> error $ "primop lookup failed for " ++ show p
+    Just x -> fst x
+
      
 instance Unparse Atom where
-  unparse (Var v)  = text v
+  unparse (Var v)  = stgName v
   unparse (LitI i) = int i
   unparse (LitL l) = text $ show l
   unparse (LitF f) = float f
@@ -180,21 +188,23 @@ instance Unparse Atom where
   unparse (LitC c) = text c
 
 instance Unparse Primop where
-  unparse = text.stgPrimName
+  unparse = stgName . primID
 
 instance Unparse a => Unparse (Alt a) where
   unparse ACon{amd, ac, avs, ae} =
     bcomment (unparse amd) $+$
-    text ac <+> hsep (map text avs) <+> arw <+> unparse ae
+    stgName ac <+> hsep (map stgName avs) <+> arw <+> unparse ae
 
   unparse ADef{amd, av, ae} =
     bcomment (unparse amd) $+$
-    text av <+> arw <+> unparse ae
+    stgName av <+> arw <+> unparse ae
 
 instance Unparse a => Unparse (Alts a) where
-  unparse Alts{altsmd, alts} = -- Note aname field is *not* in use here
-    bcomment (unparse altsmd) $+$
-    vcat (punctuate semi $ map unparse alts)
+  unparse Alts{altsmd, alts, scrt} = -- Note aname field is *not* in use here
+    unparse scrt <+> lbrace $+$
+    nest 2 
+    (bcomment (unparse altsmd) $+$
+     vcat (punctuate semi $ map unparse alts) <+> rbrace)
 
 instance Unparse a => Unparse (Expr a) where
   unparse EAtom{emd, ea} =
@@ -203,7 +213,7 @@ instance Unparse a => Unparse (Expr a) where
 
   unparse EFCall{emd, ev, eas} =
     bcomment (unparse emd) $+$
-    text ev <+> hsep (map unparse eas)
+    stgName ev <+> hsep (map unparse eas)
 
   unparse EPrimop{emd, eprimop, eas} =
     bcomment (unparse emd) $+$
@@ -217,30 +227,30 @@ instance Unparse a => Unparse (Expr a) where
 
   unparse ECase{emd, ee, ealts} =
     bcomment (unparse emd) $+$
-    text "case" <+> unparse ee <+> text "of" <+> lbrace $+$
-    nest 2 (unparse ealts) <> rbrace
+    text "case" <+> unparse ee <+> text "of" $+$
+    (nest 2 $ unparse ealts)
 
 
 instance Unparse a => Unparse (Obj a) where
   unparse FUN{omd, vs, e, oname} =
     bcomment (unparse omd) $+$
-    text oname <+> equals <+> text "FUN" <>
-    parens (hsep (map text vs) <+> arw $+$ nest ident (unparse e))
+    stgName oname <+> equals <+> text "FUN" <>
+    parens (hsep (map stgName vs) <+> arw $+$ nest ident (unparse e))
     where ident = length vs + sum (map length vs) -- aligns expr with arrow
 
   unparse PAP{omd, f, as, oname} =
     bcomment (unparse omd) $+$
-    text oname <+> equals <+> text "PAP" <>
-    parens (text f <+> hsep (map unparse as))
+    stgName oname <+> equals <+> text "PAP" <>
+    parens (stgName f <+> hsep (map unparse as))
 
   unparse CON{omd, c, as, oname} =
     bcomment (unparse omd) $+$
-    text oname <+> equals <+> text "CON" <>
-    parens (text c <+> hsep (map unparse as))
+    stgName oname <+> equals <+> text "CON" <>
+    parens (stgName c <+> hsep (map unparse as))
 
   unparse THUNK{omd, e, oname} =
     bcomment (unparse omd) $+$
-    text oname <+> equals <+> text "THUNK" <>
+    stgName oname <+> equals <+> text "THUNK" <>
     parens (unparse e)
 
 --BH  unparse BLACKHOLE{omd, oname} =
@@ -380,6 +390,8 @@ instance (PPrint a) => PPrint (Alts a) where
                      (text "name:" <+> text aname $+$
                       text "metadata:" $+$
                       nest 2 (pprint altsmd) $+$
+                       text "scrutinee binding:" $+$
+                       nest 2 (pprint scrt) $+$
                       text "alt defs:" $+$
                       nest 2 (vcat (map pprint alts))
                      )

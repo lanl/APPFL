@@ -1,9 +1,13 @@
 maxInt = FUN(x y ->
-           case x of
-              { I i# ->
-                  case y of
-                     { I j# -> case imax# i# j# of
-                                 { x# -> let { result = CON (I x#) } in result }}});
+                 case x of
+                   _scrt2 {
+                     I i# -> case y of
+                               _scrt1 {
+                                 I j# -> case imax# i# j# of
+                                           _scrt0 {
+                                             x# -> let {
+                                                     result = CON(I x#)}
+                                                   in result } } });
 
 output = THUNK(maxInt two seven);
 

@@ -12,15 +12,14 @@
 #include "log.h"
 
 void startCheck();
-
-void gc(void);
-
-#define GC() gc();
+void showPerfCounters(LogLevel priority);
 
 struct _Obj;
 typedef struct _Obj Obj;
 struct _InfoTab;
 typedef struct _InfoTab InfoTab;
+struct _CInfoTab;
+typedef struct _CInfoTab CInfoTab;
 
 // bitmap for specifying boxed/unboxed values
 // assume 64 bits, high six bits for length,
@@ -37,6 +36,19 @@ typedef union Bitmap64 {
   Bitmap64proto bitmap;
 } Bitmap64;
 
+
+typedef struct PrefCounters {
+  long heapBytesAllocated;
+  long heapBytesCopied;
+  long heapMaxSize;
+  long heapCollections;
+  long heapAllocations;
+  long stackBytesAllocated;
+  long stackAllocations;
+  long stackMaxSize;
+  double totalTime;
+  double gcTime;
+} PrefCounters;
 
 #define BMSIZE(bm) (bm.bitmap.size)
 #define BMMAP(bm) (bm.bitmap.mask)
@@ -95,13 +107,19 @@ extern const size_t stgHeapSize;
 extern const size_t stgStackSize;
 
 extern void *stgStack, *stgSP;
+extern PrefCounters perfCounter;
 
 // these are defined in the generated code
 extern const int stgStatObjCount;
 extern Obj *const stgStatObj[];
+extern const int stgInfoTabCount;
+extern InfoTab *const stgInfoTab[];
+extern const int stgCInfoTabCount;
+extern CInfoTab *const stgCInfoTab[];
 
 void initStg();
-void showStgObj(LogLevel priority, Obj *);
+//void showStgObj(LogLevel priority, Obj *);
+//void showStgCont(LogLevel priority, Cont *c);
 void showStgHeap(LogLevel priority);
 void showStgStack(LogLevel priority);
 
@@ -136,7 +154,6 @@ void showIT(InfoTab *);
 // bye bye!
 #define STGJUMP()						     \
   do {								     \
-  GC();								     \
   derefStgCurVal();						     \
   if (getObjType(stgCurVal.op) == BLACKHOLE) {			     \
     LOG(LOG_ERROR, "STGJUMP terminating on BLACKHOLE\n");	     \
@@ -174,7 +191,6 @@ void showIT(InfoTab *);
     showStgVal(LOG_ERROR, stgCurVal);			     \
     assert(false);					     \
   }							     \
-  GC();							     \
 } while (0)
 
 #endif  //ifdef stg_h

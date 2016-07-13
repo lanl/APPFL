@@ -1,32 +1,48 @@
-data BTree a = Leaf a | B (BTree a) a (BTree a);
+data BTree a = Leaf a
+             | B (BTree a) a (BTree a);
 
 l1 = CON(Leaf one);
+
 l2 = CON(Leaf two);
+
 q1 = CON(B l1 two l2);
 
 l3 = CON(Leaf one);
+
 l4 = CON(Leaf two);
+
 q2 = CON(B l3 two l4);
 
-eqBTree = FUN(x y -> case x of {
-	  	     Leaf a1 -> case y of {
-		    	 Leaf a2 -> case eqInt a1 a2 of {
-			      True -> true;
-			      False -> false};
-			 B b3 a2 b4 -> false};
-	             B b1 a1 b2 -> case y of {
-		       	 Leaf a2 -> false;
-			 B b3 a2 b4 -> let {q1 = THUNK(eqBTree b1 b3);
-			       	     	  q2 = THUNK(eqBTree b2 b4);
-					  q3 = THUNK(and23 q1 q2)} in q3}});
+eqBTree = FUN(x y ->
+                  case x of
+                    _scrt3 {
+                      Leaf a1 -> case y of
+                                   _scrt1 {
+                                     Leaf a2 -> case eqInt a1 a2 of
+                                                  _scrt0 {
+                                                    True -> true;
+                                                    False -> false };
+                                     B b3 a2 b4 -> false };
+                      B b1 a1 b2 -> case y of
+                                      _scrt2 {
+                                        Leaf a2 -> false;
+                                        B b3 a2 b4 -> let {
+                                                        q1 = THUNK(eqBTree b1 b3);
+                                                        q2 = THUNK(eqBTree b2 b4);
+                                                        q3 = THUNK(and23 q1 q2)}
+                                                      in q3 } });
 
-and23 = FUN(x y -> case x of {
-      	      	      True -> case y of {
-		      	      	   True -> true;
-				   False -> false};
-	              False -> case y of {
-		      	       False -> false;
-			       True -> false}});			  
+and23 = FUN(x y ->
+                case x of
+                  _scrt6 {
+                    True -> case y of
+                              _scrt4 {
+                                True -> true;
+                                False -> false };
+                    False -> case y of
+                               _scrt5 {
+                                 False -> false;
+                                 True -> false } });
 
 main = THUNK(eqBTree q1 q2);
 

@@ -2,6 +2,7 @@
 #define heap_h
 
 #include "stg.h"
+#include "options.h"
 
 // heap objects
 typedef enum {
@@ -105,7 +106,7 @@ struct _Obj {
   ObjType objType;          // to distinguish PAP, FUN, BLACKHOLE, INDIRECT
 #endif
 #if USE_IDENT
-  char ident[32];           // temporary, just for tracing
+  char ident[IDENT_SIZE];           // temporary, just for tracing
 #endif
   PtrOrLiteral payload[];
 };
@@ -161,7 +162,7 @@ static inline ObjType getObjType(Obj *p) {
 #if USE_OBJTYPE
   ObjType objType = p->objType;
   if (objType != iobjType) {
-    fprintf(stderr, "getting ObjType of %s aka %s, p->objType = %d, getInfoPtr(p)->objType = %d\n",
+    LOG(LOG_ERROR, "getting ObjType of %s aka %s, p->objType = %d, getInfoPtr(p)->objType = %d\n",
 	    p->ident, ip->name,
 	    objType,
 	    iobjType);

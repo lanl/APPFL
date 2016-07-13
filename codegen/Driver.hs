@@ -61,8 +61,22 @@ import Language.C.Quote.GCC
 import Language.C.Syntax (Definition)
 import qualified Text.PrettyPrint.Mainland as PP
 
-pp f = PP.pretty 80 $ PP.ppr f
 
+tester :: (String -> a) -> (a -> String) -> [FilePath] -> IO ()
+tester tfun sfun infiles =
+ do
+   ihandles <- mapM (flip openFile ReadMode) infiles
+   _tester tfun sfun ihandles stdout
+
+_tester :: (String -> a) -> (a -> String) -> [Handle] -> Handle -> IO ()
+_tester testfun showfun ifds ofd =
+  do
+    inp <- mapM hGetContents ifds
+    let res = testfun (concat inp)
+        out = showfun res
+    hPutStrLn ofd out
+    return ()
+    
 header :: Definition
 header = [cedecl| $esc:("#include \"stgc.h\"")|]
 
@@ -81,6 +95,7 @@ stgRTSGlobals = [ "stg_case_not_exhaustive", -- before type checking
                   "stg_case_not_exhaustiveP", -- during codegen
                   "stg_case_not_exhaustiveN"  -- during codegen
                 ] ++ map fst primopTab -- from AST.hs
+
 
 -- Tokenizes input, stripping comments and handling the layout rule
 -- (roughly)
@@ -153,7 +168,6 @@ mhsPupSTG inp = let (ts, os, as) = mhsSTGer inp
 tokenizer :: String -> [Token]
 tokenizer = tokenize
 
-
 -- parse tokenized input
 -- checks for valid syntax
 parser :: String -> ([TyCon], [Obj ()])
@@ -218,20 +232,7 @@ heapchecker mhs inp  = let (tycons, objs) = knowncaller mhs inp
 printObjsVerbose :: ([TyCon], [Obj InfoTab]) -> IO ()
 printObjsVerbose (tycons, objs) = print $ objListDoc objs
 
-tester :: (String -> a) -> (a -> String) -> FilePath -> IO ()
-tester tfun sfun infile =
- do
-   ihandle <- openFile infile ReadMode
-   _tester tfun sfun ihandle stdout
 
-_tester :: (String -> a) -> (a -> String) -> Handle -> Handle -> IO ()
-_tester testfun showfun ifd ofd =
-  do
-    inp <- hGetContents ifd
-    let res = testfun inp
-        out = showfun res
-    hPutStrLn ofd out
-    return ()
 
 mhsTCTest filepath =
   do
@@ -252,26 +253,25 @@ tctest mhs arg =
     hmstgdebug objs
 
 
-codegener :: String -> Bool -> Bool -> String
+codegener :: String -> Bool -> Bool -> [Definition]
 codegener inp v mhs = let (tycons, objs) = heapchecker mhs inp
                           typeEnums = showTypeEnums tycons
                           infotab = showITs objs
                           (shoForward, shoDef) = showSHOs objs
                           (funForwards, funDefs) = cgObjs objs stgRTSGlobals
                           (stgStatObjCount, stgStatObj) = shos objs
-                          defs =  header : funForwards ++ 
-                                  typeEnums ++ 
+                          defs =  header : funForwards ++
+                                  typeEnums ++
                                   infotab ++
-                                  shoForward ++ 
-                                  shoDef ++ 
+                                  shoForward ++
+                                  shoDef ++
                                   [ stgStatObjCount, stgStatObj ] ++
                                   concat funDefs ++
                                   footer v
-                          code = [cunit|$edecls:defs |]
-                 in pp code
+                 in [cunit|$edecls:defs |]
 
-pprinter :: String -> String
-pprinter = id
+pprinter :: [Definition] -> String
+pprinter = PP.pretty 80 . PP.ppr
 
 -- parse minihaskell in a file, add a block comment at the end
 -- showing the unparsed STG code
@@ -282,4 +282,4 @@ addSTGComment filename =
     src <- readFile filename
     let (ts,os) = heapchecker True (src++prld)
         stg = show $ bcomment (unparse ts $+$ unparse os)
-    (length src) `seq` (writeFile filename (src ++ stg))
+    length src `seq` writeFile filename (src ++ stg)

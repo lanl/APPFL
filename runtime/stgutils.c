@@ -7,6 +7,8 @@
 #include "stg.h"
 #include "cmm.h"
 #include "obj.h"
+#include "show.h"
+#include "sanity.h"
 
 // ****************************************************************
 // since we always jump through the top of the stg stack we need some
@@ -21,7 +23,7 @@ FnPtr stg_case_not_exhaustiveP() {
   LOG(LOG_ERROR, "stg_case_not_exhaustive_boxed: ");
   showStgVal(LOG_ERROR, x);
   LOG(LOG_ERROR, "\n");
-  showStgHeap(LOG_ERROR);
+  heapCheck(true, LOG_ERROR);
   exit(0);
 }
 
@@ -52,7 +54,7 @@ FnPtr stg_case_not_exhaustiveN() {
   //  PtrOrLiteral self = stg_sc->payload[0];
   PtrOrLiteral x    = stg_sc->payload[1];
   LOG(LOG_ERROR, "stg_case_not_exhaustive_unboxed: %" PRIx64 "\n", x.u);
-  showStgHeap(LOG_ERROR);
+  heapCheck(true, LOG_ERROR);
   exit(0);
 }
 
@@ -143,7 +145,7 @@ FnPtr stgUpdateCont() {
   if (getObjType(p.op) != BLACKHOLE) {
     LOG(LOG_INFO, "but updatee is %s not a BLACKHOLE!\n",
 	    objTypeNames[getObjType(p.op)]);
-    showStgHeap(LOG_INFO);
+    heapCheck(true, LOG_ERROR);
     assert(getObjType(p.op) == BLACKHOLE);
   }
 

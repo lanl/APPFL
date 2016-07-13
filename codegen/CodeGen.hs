@@ -63,10 +63,10 @@ import qualified Data.Map as Map
 
 --import Data.Loc(noLoc)
 import Language.C.Quote.GCC
-import Language.C.Syntax(Initializer(..), 
-                         Definition, 
-                         Initializer, 
-                         Exp, 
+import Language.C.Syntax(Initializer(..),
+                         Definition,
+                         Initializer,
+                         Exp,
                          BlockItem,
                          InitGroup)
 
@@ -93,6 +93,7 @@ cgStart :: Definition
 cgStart =
   let its = [citems|
               typename Cont *showResultCont = stgAllocCallOrStackCont(&it_stgShowResultCont, 0);
+              (void)showResultCont; // suppress warning
             |]
           ++ (if useArgType then [citems| stgCurVal.argType = HEAPOBJ; |] else [])
           ++ [citems|
@@ -110,18 +111,20 @@ cgStart =
 cgMain :: Bool -> Definition
 cgMain v =
   let its = [citems|
+              typename clock_t start_t = clock();
               startCheck();
               parseArgs(argc, argv);
               initStg();
               initGc();
               CALL0_0(start);
+              perfCounter.totalTime = (double)(clock() - start_t) / CLOCKS_PER_SEC;
             |]
           ++ (if v then
                 [citems|
                   showStgHeap(LOG_DEBUG);
-                   GC();
                 |]
               else [])
+          ++ [citems|showPerfCounters(LOG_NONE);|]
           ++ [citems|return 0;|]
       fun = [cfun|
                int main (int argc, char **argv)
@@ -130,7 +133,7 @@ cgMain v =
                }
             |]
   in [cedecl| $func:fun |]
-    
+
 registerSOs :: [Obj InfoTab] -> (Definition, CFun)
 registerSOs objs =
   let proto = [cedecl| void registerSOs(); |]
@@ -139,16 +142,16 @@ registerSOs objs =
   in (proto, [[cedecl|$func:f|]])
 
 shos :: [Obj InfoTab] -> (Definition, Definition)
-shos objs = 
+shos objs =
     let names = shoNames objs
         inits = [[cinit| &$id:name |] | name <- names ]
         compoundInit = [cinit| { $inits:inits } |]
     -- const int stgStatObjCount = #static objects;
     -- Obj *const stgStatObj[#static objects] = {&obj, &obj, ... } ;
     in ([cedecl| const int stgStatObjCount = $exp:(length names) ; |] ,
-        [cedecl| typename Obj *const stgStatObj [ $exp:(length names) ] = 
+        [cedecl| typename Obj *const stgStatObj [ $exp:(length names) ] =
                    $init:compoundInit ; |])
-               
+
 listLookup k [] = Nothing
 listLookup k ((k',v):xs) | k == k' = Just v
                          | otherwise = listLookup k xs
@@ -181,7 +184,7 @@ cga env (LitL l) = (
     [cexp| ((typename PtrOrLiteral){.argType = LONG, .l = $lint:l}) |]
   else
     [cexp| ((typename PtrOrLiteral){.l = $lint:l}) |], "")
-    
+
 cga env (LitF f) =
   let f' = toRational f
       e = if useArgType then
@@ -189,8 +192,8 @@ cga env (LitF f) =
           else
             [cexp| ((typename PtrOrLiteral){.f = $float:f'}) |]
   in (e, "")
- 
-  
+
+
 cga env (LitD d) =
   let d' = toRational d
       e = if useArgType then
@@ -204,9 +207,9 @@ cga env (LitC c) =
       e = if useArgType then
             [cexp| ((typename PtrOrLiteral){.argType = INT, .i = $id:c'}) |]
           else
-            [cexp| ((typename PtrOrLiteral){.c = $id:c'}) |]
+            [cexp| ((typename PtrOrLiteral){.i = $id:c'}) |]
   in (e, "")
-  
+
 cgv :: Env -> String -> (Exp, String)
 cgv env v = (getEnvRef v env, "// " ++ v)
 
@@ -255,8 +258,8 @@ cgo env o@(FUN it vs e name) =
                env
     in do
       ((inline, ypn), funcs) <- cge env' e
-      let comm = [cedecl|$esc:("\n// " ++ show (ctyp it) ++ "\n" ++ 
-                           "// " ++ name ++ "(self, " ++ 
+      let comm = [cedecl|$esc:("\n// " ++ show (ctyp it) ++ "\n" ++
+                           "// " ++ name ++ "(self, " ++
                            intercalate ", " vs ++ ")"  ) |]
           top = [citems|
                   LOG(LOG_INFO, $string:(name ++ " here\n"));
@@ -272,11 +275,11 @@ cgo env o@(FUN it vs e name) =
               |]
           cfunc = [comm, [cedecl|$func:f|]]
       return $ (cforward, cfunc) : funcs
-      
+
 cgo env (PAP it f as name) = return []
 
 cgo env (CON it c as name) = return []
-  
+
 cgo env o@(THUNK it e name) =
   let fvpp = "fvpp"
       env' = zip (map fst $ fvs it) (map (FV fvpp) [1..]) ++ env
@@ -292,6 +295,7 @@ cgo env o@(THUNK it e name) =
                 stg_fp->layout = (typename Bitmap64)$ulint:(npStrToBMInt "P");
                 stg_fp->payload[0] = stgCurVal;
                 typename PtrOrLiteral *$id:fvpp = &(stg_fp->payload[0]);
+                (void)$id:fvpp; // suppress warning
                 stgThunk(stgCurVal);
                 stgCurVal.op = NULL;
               |]
@@ -367,7 +371,7 @@ cge env e@(EAtom it a) =
             $comment:("// unboxed EAtom")
           |]
   in return ((inline, if isBoxede e then Yes else No), [])
-    
+
 cge env e@(EFCall it f eas) =
   case (knownCall it) of
     Nothing -> stgApplyGeneric env f eas False
@@ -424,7 +428,7 @@ cge env (ELet it os e) =
                  contp->layout = (typename Bitmap64)$ulint:(npStrToBMInt (replicate (length os) 'P'));
                |]
       decl = decl1 ++ [citems| { $items:decl2 } |]
-        
+
       env'  = zip names (map HO names) ++ env
       (decls, buildcodes) = unzip $ map (buildHeapObj env') os
   in do
@@ -440,13 +444,13 @@ cge env ecase@(ECase _ e a) =
           cgeInline env (isBoxede e) (ecode, efunc) a
       else
           cgeNoInline env (isBoxede e) (ecode, efunc) a)
-                 
+
 
 cgeInline :: Env -> Bool
      -> ([BlockItem], [(Definition, CFun)])
      -> Alts InfoTab
      -> State Int (([BlockItem], YPN), [(Definition, CFun)])
-cgeInline env boxed (ecode, efunc) a@(Alts italts alts aname) =
+cgeInline env boxed (ecode, efunc) a@(Alts{}) =
   let pre = [citems| $comment:("// inline:  scrutinee does not STGJUMP or STGRETURN"); |]
   in do
     ((acode, ypn), afunc) <- cgaltsInline env a boxed
@@ -456,7 +460,7 @@ cgeInline env boxed (ecode, efunc) a@(Alts italts alts aname) =
 
 cgaltsInline :: Env -> Alts InfoTab -> Bool
      -> State Int (([BlockItem], YPN), [(Definition, CFun)])
-cgaltsInline env a@(Alts it alts name) boxed =
+cgaltsInline env a@(Alts it alts name scrt) boxed =
     let contName = "ccont_" ++ name
         scrutPtr = "scrutPtr_" ++ name
         phonyforward = [cedecl| typename FnPtr $id:name();|]
@@ -471,9 +475,11 @@ cgaltsInline env a@(Alts it alts name) boxed =
                  | all (== No) ypns = No
                  | otherwise = Possible
        let its = [citems|
-                   typename Cont *$id:contName = stgAllocCallOrStackCont(&it_stgStackCont, 1);
+                   typename Cont *$id:contName =
+                     stgAllocCallOrStackCont(&it_stgStackCont, 1);
                    $comment:("// " ++ show (ctyp it))
-                   $id:contName->layout = (typename Bitmap64)$ulint:(npStrToBMInt (iff boxed "P" "N"));
+                   $id:contName->layout =
+                     (typename Bitmap64)$ulint:(npStrToBMInt (iff boxed "P" "N"));
                 |]
                ++ (if boxed then
                     [citems|
@@ -483,7 +489,9 @@ cgaltsInline env a@(Alts it alts name) boxed =
                   else
                     [citems|$id:contName->payload[0] = stgCurValU;|])
                ++ [citems|
-                    typename PtrOrLiteral *$id:scrutPtr = &($id:contName->payload[0]);
+                    typename PtrOrLiteral *$id:scrutPtr =
+                      &($id:contName->payload[0]);
+                    (void)$id:scrutPtr; // suppress warning
                   |]
                ++ (if switch then
                     if boxed then
@@ -506,7 +514,7 @@ cgeNoInline :: Env -> Bool
     -> ([BlockItem], [(Definition, CFun)])
     -> Alts InfoTab
     -> State Int (([BlockItem], YPN), [(Definition, CFun)])
-cgeNoInline env boxed (ecode, efunc) a@(Alts italts alts aname) =
+cgeNoInline env boxed (ecode, efunc) a@(Alts italts alts aname scrt) =
     let contName = "ccont_" ++ aname
         its = [citems|
                 $comment:("// scrutinee may STGJUMP or STGRETURN")
@@ -529,17 +537,19 @@ cgeNoInline env boxed (ecode, efunc) a@(Alts italts alts aname) =
 --        need YPN results from Alts
           return ((its ++ ecode ++ acode, Possible),
                   efunc ++ afunc)
-      
+
 
 -- ADef only or unary sum => no C switch
 cgalts :: Env -> Alts InfoTab -> Bool
   -> State Int ([BlockItem], [(Definition, CFun)])
 
-cgalts env (Alts it alts name) boxed =
+cgalts env (Alts it alts name scrt) boxed =
     let contName = "ccont_" ++ name
         fvp = "fvp"
-        -- case scrutinee is not current explicitly bound to variable
-        altenv = zip (map fst $ fvs it) (map (FP fvp) [1..])
+        -- scrutinee now has a name in the environment
+        -- can I do more with it?
+        -- e.g. Should fvp[0] be bound to a named PtrOrLiteral? (and used in its place)
+        altenv = zip (scrtVarName scrt : (map fst $ fvs it)) (map (FP fvp) [0..])
         env' = altenv ++ env
         cforward = [cedecl| typename FnPtr $id:name();|]
         switch = length alts > 1
@@ -548,7 +558,7 @@ cgalts env (Alts it alts name) boxed =
       let (codeypns, funcss) = unzip codefuncs
       let (codes, ypns) = unzip codeypns
       let its = [citems|
-                  LOG(LOG_INFO, $string:(name ++ " here"));
+                  LOG(LOG_INFO, $string:(name ++ " here\n"));
                   typename Cont *$id:contName = stgGetStackArgp();
                   $comment:("// make self-popping")
                   stgCaseToPopMe($id:contName);
@@ -638,7 +648,7 @@ buildHeapObj env o =
         decl2 = if useArgType then
                   [citems| $id:name->argType = HEAPOBJ; |]
                 else []
-                        
+
     in (decl ++ decl2, rval)
 
 
@@ -647,7 +657,7 @@ bho env (FUN it vs e name) =
   loadPayloadFVs env (map fst $ fvs it) 0 (name ++ "->op")
 
 bho env (PAP it f as name) = error "unsupported explicit PAP"
-  
+
 bho env (CON it c as name) =
   [ [citem| $comment:("// " ++ showa a)
             $id:name->op->payload[$int:i] = $exp:(fst $ cga env a);
@@ -667,7 +677,7 @@ loadPayloadFVs env fvs ind name =
   [ [citem| $comment:("// " ++ v)
             $id:name->payload[$int:i] = $exp:(fst $ cgv env v);
           |] | (i,v) <- indexFrom ind fvs]
-  
+
 loadPayloadAtoms :: Env -> [Atom] -> Int -> String -> [BlockItem]
 loadPayloadAtoms env as ind name =
   [ [citem| $comment:("// " ++ showa a)

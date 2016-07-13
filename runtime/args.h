@@ -13,6 +13,8 @@ typedef enum {
 
 extern int evalStrategy;
 extern int constStrict;
+extern bool sanityChecker;
+extern int perfCounters;
 
 void parseArgs (int argc, char **argv);
 

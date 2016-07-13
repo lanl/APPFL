@@ -61,10 +61,10 @@ showHO it =
         .payload = $init:(showSHOspec it)
       }
     |]
-   
+
 showSHOspec :: InfoTab -> Initializer
-showSHOspec it@(ITFun {}) = [cinit| {0} |]
-showSHOspec it@(ITThunk {}) = [cinit| {0} |]
+showSHOspec it@(ITFun {}) = [cinit| {{0}} |]
+showSHOspec it@(ITThunk {}) = [cinit| {{0}} |]
 --BH showSHOspec it@(ITBlackhole {}) = [cinit| {0} |]
 showSHOspec it@(ITCon {}) = [cinit| { $inits:(payloads $ map fst $ args it) } |]
 showSHOspec it@(ITPap {}) = papPayloads it
@@ -97,7 +97,7 @@ payload (LitI i) =
     [cinit| {.argType = INT, .i = $int:i}|]
   else
     [cinit| {.i = $int:i}|]
-   
+
 payload (LitD d) =
   if useArgType then
     [cinit| {.argType = DOUBLE, .d = $double:d'}|]
@@ -123,8 +123,7 @@ payload (Var v) =
   if useArgType then
     [cinit| {.argType = HEAPOBJ, .op = &$id:sho}|]
   else
-    [cinit| {.i = &$id:sho}|]
+    [cinit| {.op = &$id:sho}|]
   where sho = "sho_" ++ v
 
 payload at = error $ "HeapObj.payload: not expecting Atom - " ++ show at
- 

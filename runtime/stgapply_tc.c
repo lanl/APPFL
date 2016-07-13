@@ -1,9 +1,11 @@
 #include "args.h"
 #include "stg.h"
 #include "heap.h"
+#include "show.h"
 #include "stack.h"
 #include "stgutils.h"
 #include "stgapply.h"
+#include "sanity.h"
 
 // this could also be done by creating just one new Cont
 // for arity args, adjusting the old Cont, and shifting both
@@ -12,7 +14,7 @@ Cont *stgFunContSplit(int arity1, int excess, FnPtr (*dest)()) {
   // cont1 is cont to split
   Cont *cont1 = (Cont *)stgSP;
   // funoid + excess, subsequent application
-  int pls2 = 1 + excess; 
+  int pls2 = 1 + excess;
   Cont *cont2 = stgAllocCallOrStackCont( &it_stgStackCont, pls2 );
   // funoid + arity1
   int pls3 = arity1 + 1;
@@ -44,19 +46,19 @@ Cont *stgFunContSplit(int arity1, int excess, FnPtr (*dest)()) {
 
   // quash cont1
   int cont1Size = getContSize(cont1);
-  memmove((char *)cont3 + cont1Size, 
-	  cont3, 
+  memmove((char *)cont3 + cont1Size,
+	  cont3,
 	  getContSize(cont2) + getContSize(cont3));
   stgSP += cont1Size;
   return (Cont *)stgSP;
 }
 
-Cont *stgPapContSplit(int arity, 
-		      int excess, 
+Cont *stgPapContSplit(int arity,
+		      int excess,
 		      FnPtr (*dest)(), // where apply with excess goes
 		      PtrOrLiteral *papargv, // PAP args, not whole payload
                       Bitmap64 papargmap) // of the PAPs args
-{ 
+{
   Cont *contold = (Cont *)stgSP;
   Cont *contexcess = stgAllocCallOrStackCont( &it_stgStackCont, excess + 1);
   int papargc = papargmap.bitmap.size;
@@ -109,7 +111,7 @@ Cont *stgPapContSplit(int arity,
    // quash oldcont
   int contoldsize = getContSize(contold);
   memmove((char *)contexact + contoldsize,
-	  contexact, 
+	  contexact,
 	  getContSize(contexcess) + getContSize(contexact));
   stgSP += contoldsize;
   return (Cont *)stgSP;
@@ -136,11 +138,11 @@ FnPtr stgApply() {
   stackframe = stgAdjustTopContSize(stackframe, 1);
   // updates size but not mask
   stackframe->layout.bitmap.mask <<= 1; // new param is unboxed
-  memmove(&stackframe->payload[1], 
-	  &stackframe->payload[0], 
+  memmove(&stackframe->payload[1],
+	  &stackframe->payload[0],
 	  argc * sizeof(PtrOrLiteral));
   // arg index 0 (after new param) will have been forced
-  stackframe->payload[0].i = 0;  
+  stackframe->payload[0].i = 0;
   #if USE_ARGTYPE
   stackframe->payload[0].argType = INT;
   #endif
@@ -194,7 +196,7 @@ FnPtr stgApply2() {
 
   for (argvInd++;  // next one
        argvInd <= argsToEval && // more left
-	 !(stackframe->layout.bitmap.mask & (0x1 << (1+argvInd))); 
+	 !(stackframe->layout.bitmap.mask & (0x1 << (1+argvInd)));
        argvInd++);  // skip to next
 
   if (argvInd <= argsToEval) {
@@ -206,12 +208,12 @@ FnPtr stgApply2() {
 
   // fix stack frame for old stgApply
   int argc = stackframe->layout.bitmap.size;
-  memmove(&stackframe->payload[0], 
-	  &stackframe->payload[1], 
+  memmove(&stackframe->payload[0],
+	  &stackframe->payload[1],
 	  (argc - 1) * sizeof(PtrOrLiteral));
   // updates size but not mask
   stackframe = stgAdjustTopContSize(stackframe, -1); // elim extra param
-  stackframe->layout.bitmap.mask >>= 1; 
+  stackframe->layout.bitmap.mask >>= 1;
   stackframe->entryCode = &stgApply3;
   STGRETURN0();
 }
@@ -236,14 +238,14 @@ FnPtr stgApply3() {
   } LOG(LOG_INFO, "\n");
 
   switch (getObjType(argv[0].op)) {
-  
+
   case FUN: {
     int arity = getInfoPtr(argv[0].op)->funFields.arity;
     LOG(LOG_INFO, "stgapply FUN %s arity %d\n",
            getInfoPtr(argv[0].op)->name,
            getInfoPtr(argv[0].op)->funFields.arity);
     int excess = argc - arity;  // may be negative
-  
+
     // too many args?
 
 
@@ -262,7 +264,7 @@ FnPtr stgApply3() {
       // because funoid expects a self-popping stack cont
 
     } else
-  
+
     // just right?
     if (excess == 0) {
       LOG(LOG_INFO,"stgApply FUNEQ\n");
@@ -295,7 +297,7 @@ FnPtr stgApply3() {
       STGRETURN0();
     } // if excess
   } // case FUN
-  
+
   case PAP: {
     int fvCount = getInfoPtr(argv[0].op)->layoutInfo.boxedCount +
                   getInfoPtr(argv[0].op)->layoutInfo.unboxedCount;
@@ -306,13 +308,13 @@ FnPtr stgApply3() {
             getInfoPtr(argv[0].op)->name,
             getInfoPtr(argv[0].op)->funFields.arity);
     int excess = argc - arity;    // may be negative
-  
+
     // too many args?
     if (excess > 0) {
       LOG(LOG_INFO, "stgApply PAPPOS %d\n", excess);
 
-      Cont *topCont = stgPapContSplit(arity, 
-				      excess, 
+      Cont *topCont = stgPapContSplit(arity,
+				      excess,
 				      &stgApplyCurVal,
 				      &argv[0].op->payload[fvCount + 1],
 				      papargmap);
@@ -345,7 +347,7 @@ FnPtr stgApply3() {
       stackframe->layout = bm;
       // tail call the FUN
       STGJUMP0(getInfoPtr(argv[0].op)->funFields.trueEntryCode);
-  
+
     // excess < 0, too few args
     } else {
       LOG(LOG_INFO, "stgApply PAPNEG %d too few args\n", -excess);
@@ -357,7 +359,7 @@ FnPtr stgApply3() {
       // stgNewHeapPAP puts layout info at payload[fvCount]
       Obj *newpap = stgNewHeapPAPmask(getInfoPtr(argv[0].op), bm);
       */
-      
+
       papargmap.bitmap.mask |= ((bm.bitmap.mask >> 1) << papargc);
       papargmap.bitmap.size += argc;
 
@@ -399,18 +401,15 @@ FnPtr stgApply3() {
       STGRETURN0();
     } // if excess
   } // case PAP
-  
+
   case BLACKHOLE: {
     LOG(LOG_ERROR, "stgApply terminating on BLACKHOLE\n");
-    showStgHeap(LOG_ERROR);
+    heapCheck(true, LOG_ERROR);
     exit(0);
   } // case BLACKHOLE
-  
+
   default:
     LOG(LOG_ERROR, "stgApply not a FUN or PAP\n");
     exit(0);
   }  // switch
 }
-
-
-  
