@@ -59,11 +59,9 @@ Obj *derefHO(Obj *op) {
 
 Obj* stgNewHeapObj(InfoTab *itp) {
   LOG(LOG_DEBUG, "stgNewHeapObj: "); showIT(itp);
-#if ALLOC_GC
   LOG(LOG_DEBUG, "******** stgNewHeapObj before GC\n");
   gc();
   LOG(LOG_DEBUG, "******** stgNewHeapObj after GC\n");
-#endif
   int payloadSize = itp->layoutInfo.payloadSize;
   int fvs = itp->layoutInfo.boxedCount + itp->layoutInfo.unboxedCount;
   // assert(itp->fvCount == fvs);  // fvCount going away
@@ -75,9 +73,10 @@ Obj* stgNewHeapObj(InfoTab *itp) {
   }
   size_t objSize = sizeof(Obj) + payloadSize * sizeof(PtrOrLiteral);
   objSize = ((objSize + OBJ_ALIGNM1)/OBJ_ALIGN)*OBJ_ALIGN;
-  if (perfCounters) {
+  if (USE_PERFCOUNTERS && perfCounters) {
     perfCounter.heapBytesAllocated += objSize;
     perfCounter.heapAllocations++;
+    perfCounter.heapHistogram[payloadSize]++;
   }
   Obj *objp = (Obj *)stgHP;
   stgHP = (char *)stgHP + objSize;
@@ -102,11 +101,9 @@ Obj* stgNewHeapObj(InfoTab *itp) {
 }
 
 Obj* stgNewHeapPAPmask(InfoTab *itp, Bitmap64 bm) {
-#if ALLOC_GC
   LOG(LOG_DEBUG,"******** stgNewHeapPAPmask before GC\n");
   gc();
   LOG(LOG_DEBUG,"******** stgNewHeapPAPmask after GC\n");
-#endif
   assert(!(((uintptr_t)itp) & 0x7));
   assert(itp->objType == FUN && "stgNewHeapPAPmask:  itp->objType != FUN" );
   int fvCount = itp->layoutInfo.boxedCount +
@@ -117,9 +114,10 @@ Obj* stgNewHeapPAPmask(InfoTab *itp, Bitmap64 bm) {
   size_t objSize = sizeof(Obj) +
     (fvCount + bm.bitmap.size + 1) * sizeof(PtrOrLiteral);
   objSize = ((objSize + OBJ_ALIGNM1)/OBJ_ALIGN)*OBJ_ALIGN;
-  if (perfCounters) {
+  if (USE_PERFCOUNTERS && perfCounters) {
     perfCounter.heapBytesAllocated += objSize;
     perfCounter.heapAllocations++;
+    perfCounter.heapHistogram[fvCount + bm.bitmap.size + 1]++;
   }
   Obj *objp = (Obj *)stgHP;
   stgHP = (char *)stgHP + objSize;

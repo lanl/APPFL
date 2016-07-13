@@ -38,20 +38,21 @@ Cont *stgAllocCont(CInfoTab *citp) {
   int payloadSize = citp->cLayoutInfo.payloadSize;
   size_t contSize = sizeof(Cont) + payloadSize * sizeof(PtrOrLiteral);
   //  contSize = ((contSize + 7)/8)*8;
-  if (perfCounters) {
+  if (USE_PERFCOUNTERS && perfCounters) {
     perfCounter.stackBytesAllocated += contSize;
     perfCounter.stackAllocations++;
+    perfCounter.stackHistogram[payloadSize]++;
   }
   LOG(LOG_DEBUG, "allocating %s continuation with payloadSize %d\n",
 	  contTypeNames[citp->contType], payloadSize);
   showCIT(citp);
   stgSP = (char *)stgSP - contSize;
   assert(stgSP >= stgStack);
-  if (perfCounters > 1) {
+  if (USE_PERFCOUNTERS && perfCounters > 1) {
     size_t before = stgStack + stgStackSize - stgSP;
     if (before > perfCounter.stackMaxSize) perfCounter.stackMaxSize = before;
   }
-  
+
   Cont *contp = (Cont *)stgSP;
   contp->cInfoPtr = citp;
   contp->_contSize = contSize;  // to go away
@@ -73,20 +74,21 @@ Cont *stgAllocCallOrStackCont(CInfoTab *citp, int argc) {
 	 "stgAllocCallOrStackCont: citp->contType != CALLCONT/STACKCONT");
   size_t contSize = sizeof(Cont) + argc * sizeof(PtrOrLiteral);
   //  contSize = ((contSize + 7)/8)*8;
-  if (perfCounters) {
+  if (USE_PERFCOUNTERS && perfCounters) {
     perfCounter.stackBytesAllocated += contSize;
     perfCounter.stackAllocations++;
+    perfCounter.stackHistogram[argc]++;
   }
   LOG(LOG_DEBUG,"allocating %s continuation with argc %d\n",
 	  contTypeNames[citp->contType], argc);
   showCIT(citp);
   stgSP = (char *)stgSP - contSize;
   assert(stgSP >= stgStack);
-  if (perfCounters > 1) {
+  if (USE_PERFCOUNTERS && perfCounters > 1) {
     size_t before = stgStack + stgStackSize - stgSP;
     if (before > perfCounter.stackMaxSize) perfCounter.stackMaxSize = before;
   }
-  
+
   Cont *contp = (Cont *)stgSP;
   contp->cInfoPtr = citp;
   contp->_contSize = contSize;  // to go away
@@ -155,18 +157,20 @@ Cont *stgAdjustTopContSize(Cont *cp, int delta) {
 
   if (perfCounters) {
     perfCounter.stackBytesAllocated += (newContSize - oldContSize);
+    perfCounter.stackHistogram[oldPayloadSize]--;
+    perfCounter.stackHistogram[newPayloadSize]++;
   }
 
   // adjust stgSP and return
   stgSP = newStgSP;
-  if (perfCounters > 1) {
+  if (USE_PERFCOUNTERS && perfCounters > 1) {
     size_t before = stgStack + stgStackSize - stgSP;
     if (before > perfCounter.stackMaxSize) perfCounter.stackMaxSize = before;
   }
   return stgSP;
 }
 
-  
+
 void stgPopCont() {
   Cont *cp = (Cont *)stgSP;
   CInfoTab *citp = getCInfoPtr(cp);
@@ -205,7 +209,7 @@ void showCIT(CInfoTab *citp) {
 	  contTypeNames[citp->contType],
 	  citp->name,
 	  citp->cLayoutInfo.bm.bits);
-        
+
   if (citp->contType != CALLCONT) {
     LOG(LOG_DEBUG, ", layoutInfo.payloadSize %d", citp->cLayoutInfo.payloadSize);
   }
@@ -236,4 +240,3 @@ int getContSize(Cont *o) {
   }
   return contSize;
 }
-

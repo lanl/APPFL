@@ -70,11 +70,11 @@ PtrOrLiteral updatePtrByValue (PtrOrLiteral f) {
       int size = getObjSize(p);
       LOG(LOG_SPEW, "copy %s %s from->to size=%d\n",
                     objTypeNames[getObjType(p)], p->ident, size);
-      if (perfCounters) perfCounter.heapBytesCopied += size;
+      if (USE_PERFCOUNTERS && perfCounters) perfCounter.heapBytesCopied += size;
       memcpy(freePtr, p, size);
-      if (EXTRA_CHECKS_GC) {
-	      assert(isLSBset((InfoTab *)freePtr) == 0 && "gc: bad alignment");
-      }
+
+	    assert(isLSBset((InfoTab *)freePtr) == 0 && "gc: bad alignment");
+
       p->_infoPtr = setLSB((InfoTab *)freePtr);
       f.op = (Obj *)freePtr;
       setHeapArgType(&f);
@@ -199,10 +199,10 @@ void processCont(Cont *p) {
 }
 
 void gc(void) {
-  
+
   size_t before = stgHP - stgHeap;
 
-  if (perfCounters > 1) {
+  if (USE_PERFCOUNTERS && perfCounters > 1) {
     if (before > perfCounter.heapMaxSize) perfCounter.heapMaxSize = before;
   }
   if(LOG_LEVEL == LOG_SPEW) {
@@ -219,11 +219,11 @@ void gc(void) {
 
   // check if GC should run at all
   if(stgHP-stgHeap <= GCThreshold*stgHeapSize) return;
-  
+
   clock_t start_t = 0;
   (void)start_t;
-  if (perfCounters) perfCounter.heapCollections++;
-  if (perfCounters > 2)  start_t = clock();
+  if (USE_PERFCOUNTERS && perfCounters) perfCounter.heapCollections++;
+  if (USE_PERFCOUNTERS && perfCounters > 2)  start_t = clock();
 
   // add stgCurVal
   if (stgCurVal.op != NULL)
@@ -267,8 +267,8 @@ void gc(void) {
       LOG(LOG_SPEW, "end gc heap size %lx (change %lx)\n", after, before - after);
     }
   }
-  
-  if (perfCounters > 2) {
+
+  if (USE_PERFCOUNTERS && perfCounters > 2) {
     perfCounter.gcTime += (double)(clock() - start_t) / CLOCKS_PER_SEC;
   }
 }
