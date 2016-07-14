@@ -751,22 +751,32 @@ inspired by King and Launchbury~\cite{King:1995}.
 
 An almost unbounded amount of interesting development suggests itself; one
 such path could in principle lead to the recreation of GHC\@.  However, given
-the minuscule budget (and therefore the employment of student interns) we must
-maintain sharp focus on the main goals: implementing and evaluating mechanisms
-for automatic parallelism and fault tolerance.  Currently we have
-a fully functioning serial implementation including
+the time constraints we must maintain sharp focus on the main goals:
+implementing and evaluating mechanisms for automatic parallelism and fault
+tolerance.  Currently we have a fully functioning serial implementation
+including
 \begin{itemize}
 \item STG parser,
-\item mini-Haskell parser, mini-Haskell to STG transformer,
+\item mini-Haskell parser, mini-Haskell to STG AST transformer,
+\item partial coupling with the GHC front-end,
 \item type inferencer,
 \item various analysis and transformation passes,
 \item code generator,
-\item runtime system including a garbage collector,
+\item runtime system including a (serial) garbage collector and instrumentation framework,
 \item continuous integration and testing system,
 \item extensive test suite, automated testing.
 \end{itemize}
+Appendixes~\ref{app:minihaskell} and~\ref{app:ghclibrary}
+describe the \emph{mini-Haskell} front-end and our approach to using GHC as a front end, respectively.
+%
 
-The \emph{mini-Haskell} front-end is detailed in Appendix~\ref{app:minihaskell}.
+While wall-clock time can be used to simply compare the relative efficiency of
+execution under various evaluation strategies, we seek more detailed
+information.  We have in place a simple infrastructure for optionally logging
+a thorough collection of run-time statistics such as number, size, and type of heap
+and stack allocations, as well as various garbage collection statistics.  We also
+measure cumulative time spent in various operations.  Future work includes processing
+these measurement in an other than ad hoc fashion.
 
 We use a continuous integration system augmented with logic to categorize
 programs in a large and growing test suite according to which degrees of
@@ -789,8 +799,8 @@ non-blocking work queue~\cite{Michael:1996}.  We are currently developing a
 more realistic parallel runtime, experimenting with using the Argobots
 user-level thread library~\cite{Seo:2015}.
 %
-Bridging the gap between GHC STG and our STG, and the corresponding
-augmentation of the runtime is showing early signs of success.
+%Bridging the gap between GHC STG and our STG, and the corresponding
+%augmentation of the runtime is showing early signs of success.
 %
 An instrumentation infrastructure, integrated with the testing framework to
 record and present time and space run-time statistics such as number of heap
@@ -820,8 +830,8 @@ There is a vast body of related work; we highlight only the very most closely re
 The concept of strict but still pure in some sense dates back to the concept
 of applicative order reduction in the lambda calculus.  In terms of a
 notionally concrete programming language the first thorough explications may
-be Backus' FP~\cite{Backus:1978} and follow-on FL
-implementation~\cite{AikenFL,FLreport89}.
+be Backus' FP~\cite{Backus:1978} (building on Landin's ``theory''~\cite{Landin64}).
+% and follow-on FL implementation~\cite{AikenFL,FLreport89}.
 %
 A notable argument for the potential merits of a strict-by-default
 pure functional language over a non-strict one is by Sheard, who also provided
@@ -896,69 +906,6 @@ Department of Energy's National Nuclear Security Administration (NNSA).
 %
 
 \appendix
-
-\section{(Ab)Using GHC}
-
-The bridge to full Haskell is in progress, with GHC providing much of
-the structure.  We are using GHC as a library (as opposed to modifying
-its source to use our code generation and runtime system).  This
-choice was made primarily due to the size and complexity of a project
-as large as GHC.  Fully understanding and modifying even its build
-system would be a significant undertaking.
-
-We are using GHC's pipeline to translate Haskell source to GHC's
-representation of the STG language, which we then translate to our
-own.  Up to the STG generation stage, this usage is equivalent to
-GHC's \texttt{--make} behavior, which allows us to benefit from the
-module dependency analysis, typechecking, Core-level transformations
-and informative error messages for invalid programs.
-
-Though we follow the same rough idea as GHC in implementing the STG
-abstract machine, this bridging process is not entirely
-straightforward.  The challenges we've seen fit into two categories.
-
-\subsection{Producing Full STG Programs}
-
-When compiling a standard Haskell program with GHC, modules imported
-from other packages have already been compiled, and GHC simply links
-the user object code with them.  Our compiler has no facility for
-linking GHC-produced object code, so we need it to produce
-\textit{full} STG programs built up from primitive operations.  GHC
-does not offer object-to-STG translation, so this means we must
-produce our own Prelude and supporting Base libraries to be included
-with every program, and decoupling Haskell from GHC's wired-in types
-as much as possible.
-
-This is partially accomplished with extensions like
-\texttt{NoImplicitPrelude} and \texttt{RebindableSyntax} (which
-implies the former).  We cannot get a complete separation, however:
-Numeric literals are tied to GHC's \texttt{Integer} and
-\texttt{Rational} types, and guards are tied to GHC's \texttt{Bool}.
-Lists and tuples, being special syntactic forms are also tightly
-wired-in. To get around this, we provide placeholder definitions that
-parallel any that we cannot replace, and use them to crudely translate
-the exceptional cases.
-
-\subsection{Navigating GHC's Internals}
-
-One of the goals of using GHC as a library was to avoid being
-overwhelmed with the necessary complexity of such a large and mature
-tool, but this has not been entirely unavoidable.  Simply producing
-STG without incurring any (non-temporary) file creation proved not to
-be a difficult task, and can be accomplished using only the interface
-exposed via the primary API, the \texttt{GHC} module.  This abstract
-STG is even ostensibly very close to our own, but the auxiliary data
-structures (e.g. those encapsulating identifier information and types)
-are rich and deeply nested.  Determining what is strictly necessary
-for our backend and what we have no implementation of (e.g. the
-Foreign Function Interface) has taken considerable time and effort.
-
-It is a testament to the talents of the GHC contributors and
-maintainers that we have managed to come even this far.  Their
-documentation and exposed interfaces have made navigating and
-comprehending the project internals much more pleasant than expected.
-
-
 
 \section{Mini-Haskell}
 \label{app:minihaskell}
@@ -1269,6 +1216,68 @@ sections but are worth mentioning.
 
 \end{itemize}
 
+
+\section{Using GHC as a Library}
+\label{app:ghclibrary}
+
+The bridge to full Haskell is in progress, with GHC providing much of
+the structure.  We are using GHC as a library (as opposed to modifying
+its source to use our code generation and runtime system).  This
+choice was made primarily due to the size and complexity of a project
+as large as GHC.  Fully understanding and modifying even its build
+system would be a significant undertaking.
+
+We are using GHC's pipeline to translate Haskell source to GHC's
+representation of the STG language, which we then translate to our
+own.  Up to the STG generation stage, this usage is equivalent to
+GHC's \texttt{--make} behavior, which allows us to benefit from the
+module dependency analysis, typechecking, Core-level transformations
+and informative error messages for invalid programs.
+
+Though we follow the same rough idea as GHC in implementing the STG
+abstract machine, this bridging process is not entirely
+straightforward.  The challenges we've seen fit into two categories.
+
+%\subsection{Producing Full STG Programs}
+\subsubsection{Producing full STG programs.}
+When compiling a standard Haskell program with GHC, modules imported
+from other packages have already been compiled, and GHC simply links
+the user object code with them.  Our compiler has no facility for
+linking GHC-produced object code, so we need it to produce
+\textit{full}\/ STG programs built up from primitive operations.  GHC
+does not offer object-to-STG translation, so this means we must
+produce our own Prelude and supporting Base libraries to be included
+with every program, and decoupling Haskell from GHC's wired-in types
+as much as possible.
+
+This is partially accomplished with extensions like
+\texttt{NoImplicitPrelude} and \texttt{RebindableSyntax} (which
+implies the former).  We cannot get a complete separation, however:
+numeric literals are tied to GHC's \texttt{Integer} and
+\texttt{Rational} types, and guards are tied to GHC's \texttt{Bool}.
+Lists and tuples, being special syntactic forms, are also tightly
+wired-in. To get around this we provide placeholder definitions that
+parallel any that we cannot replace, and use them to crudely translate
+the exceptional cases.
+
+%\subsection{Navigating GHC's Internals}
+\subsubsection{Navigating GHC's internals.}
+One of the goals of using GHC as a library was to avoid
+the internal complexity of such a large and mature
+tool, but this has not been entirely unavoidable.  Simply producing
+STG without incurring any (non-temporary) file creation proved not to
+be a difficult task, and can be accomplished using only the interface
+exposed via the primary API, the \texttt{GHC} module.  This abstract
+STG is even ostensibly very close to our own, but the auxiliary data
+structures (e.g. those encapsulating identifier information and types)
+are rich and deeply nested.  Determining what is strictly necessary
+for our backend and what we have no implementation of (e.g. the
+Foreign Function Interface) has taken considerable time and effort.
+
+It is a testament to the talents of the GHC contributors and
+maintainers that we have managed to come even this far.  Their
+documentation and exposed interfaces have made navigating and
+comprehending the project internals much more pleasant than expected.
 
 \section{Test suite and testing}
 \label{app:testing}
