@@ -23,7 +23,8 @@ import           Control.Exception ( assert )
 import           Data.List as List (nubBy, unfoldr, insertBy, isPrefixOf)
 import           Data.Maybe (isJust)
 import           Data.Function (on)
-
+import           Data.Int (Int64)
+import           Data.Char (ord)
 
 -- Let's be explicit about what comes from where, and what it's related to.
 -- It's hard enough dealing with the massive GHC codebase
@@ -86,7 +87,7 @@ import           DataCon as G
                  , isVanillaDataCon, dataConTag
                  , dataConTyCon, dataConRepType
                  , dataConWrapId, dataConWrapId_maybe
-                 , dataConName
+                 , dataConName, isUnboxedTupleCon
                  )
 import           TypeRep (Type (..))                 
 import           SimplStg
@@ -338,9 +339,19 @@ toStg mod core modLoc datacons hscEnv dflags =
     stg2stg dflags mod stg_binds
 
 
-      
--- g2a prefix => GHC to APPFL
+-- | Fail with a message about what feature we're not (yet)
+-- supporting
+unsupported msg = error $ unlines ["Unsupported:", msg]
 
+
+-- | Used to indicate an unsanitized STG tree
+data Dirty = Dirty
+
+-- | Alias to indicate a santized STG tree
+type Clean = ()
+
+                  
+-- g2a prefix => GHC to APPFL
 
 -- A TyMap holds the information required to build TyCons (TyCon name
 -- -> (GHC)DataCon).  We only see one data constructor at a time in
@@ -466,13 +477,13 @@ renameGHC str | "GHC" `isPrefixOf` str = "APPFL" ++ drop 3 str
               | otherwise              = str
 
 -- | Entry point to the GHC to APPFL STG conversion
-g2a :: [StgBinding] -> [Def ()]
+g2a :: [StgBinding] -> [Def Dirty]
 g2a binds =
   let (objs, tymap) = runState (mapM g2aObj binds) Map.empty
   in _TODO
 
 -- | Translate bindings (let/letrec, including top level) into APPFL Obj types.
-g2aObj :: StgBinding -> TyST [Obj ()]
+g2aObj :: StgBinding -> TyST [Obj Dirty]
 g2aObj bind =
   case bind of
     -- We don't distinguish between recursive bindings and otherwise
@@ -483,7 +494,7 @@ g2aObj bind =
     StgRec pairs -> mapM (\(id, rhs) -> procRhs rhs id) pairs
 
   where
-    procRhs :: StgRhs -> Id -> TyST (Obj ())
+    procRhs :: StgRhs -> Id -> TyST (Obj Dirty)
     procRhs rhs id =
       case rhs of
         -- FUN or THUNK
@@ -493,7 +504,7 @@ g2aObj bind =
           | null args
             -> do
               e <- g2aExpr expr
-              return $ THUNK () e (makeStgName id)
+              return $ THUNK Dirty e (makeStgName id)
 
           -- it's a FUN(ish) thing.  Data constructors are functions
           -- too but they are not given a distinguished definition as
@@ -503,7 +514,7 @@ g2aObj bind =
           | otherwise
             -> do
               e <- g2aExpr expr
-              return $ FUN () (map makeStgName args) e (makeStgName id)
+              return $ FUN Dirty (map makeStgName args) e (makeStgName id)
           
         -- It's either a top-level empty constructor (a la
         -- Nil/Nothing) or it's being used in a let binding. Either
@@ -528,50 +539,118 @@ g2aObj bind =
                   -- https://ghc.haskell.org/trac/ghc/wiki/Commentary/Compiler/StgSynType
                   else mkConObj dataCon args name
 
-
           -- Something fancy going on with the DataCon, fail hard until we figure
           -- out how to handle it.
           | otherwise         ->
               panic $ showSDocUnsafe $
               (text "Not sure how to handle non-vanilla DataCons like:" $+$ ppr dataCon)
 
+
 hasWrapper :: G.DataCon -> Bool
 hasWrapper = isJust . dataConWrapId_maybe
 
 
 -- | Make a THUNK function call to a DataCon's wrapper function
-mkWrapperCall :: G.DataCon -> [StgArg] -> String -> Obj ()
-mkWrapperCall dc args name = THUNK () expr name
-  where expr = EFCall () (makeStgName $ dataConWrapId dc) (map g2aArg args)
+mkWrapperCall :: G.DataCon -> [StgArg] -> String -> Obj Dirty
+mkWrapperCall dc args name = THUNK Dirty expr name
+  where expr = EFCall Dirty (makeStgName $ dataConWrapId dc) (map g2aArg args)
     
 -- | Make a CON Object from a DataCon and its StgArgs
-mkConObj :: G.DataCon -> [StgArg] -> String -> Obj ()
-mkConObj dc args name = CON () (makeStgName dc) (map g2aArg args) name
+mkConObj :: G.DataCon -> [StgArg] -> String -> Obj Dirty
+mkConObj dc args name = CON Dirty (makeStgName dc) (map g2aArg args) name
 
-
-g2aArg :: StgArg -> Expr ()
-g2aArg (StgVarArg id)  = EAtom () (Var $ makeStgName id)
-g2aArg (StgLitArg lit) = EAtom () (g2aLit lit)
+-- | Turn an StgArg into an APPFL Expr.  Invariant: Expr is an EAtom
+g2aArg :: StgArg -> Expr Dirty
+g2aArg (StgVarArg id)  = EAtom Dirty (Var $ makeStgName id)
+g2aArg (StgLitArg lit) = EAtom Dirty (g2aLit lit)
 
 g2aLit :: Literal -> Atom
 g2aLit lit = case lit of
-  MachChar chr         -> _TODO
-  LitInteger i typ     -> _TODO
-  MachInt i            -> _TODO
-  MachInt64 i          -> _TODO
-  MachWord i           -> _TODO
-  MachWord64 i         -> _TODO
-  MachFloat r          -> _TODO
-  MachDouble r         -> _TODO
-  MachStr bs           -> _TODO
-  MachNullAddr         -> _TODO
-  MachLabel fs mi fORd -> _TODO
-  
+  LitInteger i typ
+    | Just int  <- toInt i   -> LitI int
+    | Just long <- toInt64 i -> LitL long
+    | otherwise              -> unsupported $ "LitInteger val too large: " ++ show i
+  MachChar chr               -> LitI $ ord chr
+  MachInt i                  -> LitI (fromInteger i)
+  MachInt64 i                -> LitL (fromInteger i)
+  MachWord i                 -> LitL (fromInteger i)
+  MachWord64 i               -> LitL (fromInteger i)
+  MachFloat r                -> LitF (fromRational r)
+  MachDouble r               -> LitD (fromRational r)
+  MachStr bs                 -> unsupported "Machine Strings"
+  MachNullAddr               -> unsupported "Machine (Null) Address"
+  MachLabel fs mi fORd       -> unsupported "Machine Labels"
 
-g2aExpr :: StgExpr -> TyST (Expr ())
-g2aExpr = _TODO
 
+toInt :: Integer -> Maybe Int
+toInt i | int_able i = Just (fromInteger i)
+        | otherwise  = Nothing
 
+int_able :: Integer -> Bool
+int_able = (> toInteger (maxBound :: Int))
+
+toInt64 :: Integer -> Maybe Int64
+toInt64 i | long_able i = Just (fromInteger i)
+          | otherwise   = Nothing
+
+long_able :: Integer -> Bool
+long_able = (> toInteger (maxBound :: Int64))
+
+g2aExpr :: StgExpr -> TyST (Expr Dirty)
+g2aExpr e = case e of
+  StgApp id args
+    | null args -> return $ EAtom Dirty (Var $ makeStgName id)
+    | otherwise -> return $ EFCall Dirty (makeStgName id) (map g2aArg args)
+    
+  StgLit lit
+    -> return $ EAtom Dirty $ g2aLit lit
+
+  -- CONs are only valid in let-bindings in our STG, but this appears
+  -- anywhere Exprs are valid in GHC's version.  For boxed types, we
+  -- need to make a new ELet.  The only unboxed constructors are
+  -- unboxed tuple constructors.  For now, we can simply box them up
+  -- and let-bind them (or fail) but we'll want to do something
+  -- different if we ever really support them.
+  StgConApp datacon args
+    | isUnboxedTupleCon datacon -> unsupported "No Unboxed Tuples yet"
+    | otherwise                 -> return $ letBindCon datacon args
+  StgOpApp stgop args resType
+    | StgPrimOp op <- stgop ->
+      return $ EPrimop Dirty (mkAppflPrimop op) (map g2aArg args)
+
+    -- Anything that's not a PrimOp is essentially a foreign call
+    -- Don't ask me the difference between a PrimCall and Foreign
+    | otherwise -> unsupported "PrimCall/ForeignCall"
+  StgCase scrut _ _ bind _ altT alts 
+    -> _TODO
+  StgLet bindings body 
+    -> makeLetExpr bindings body
+  StgLetNoEscape _ _ bindings body 
+    -> makeLetExpr bindings body
+  StgTick _ realExpr 
+    -> g2aExpr realExpr
+
+  StgLam args body 
+    -> _unreachable -- "used *only* during CoreToStg's work"
+                    -- stgSyn/StgSyn.hs
+
+mkAppflPrimop :: PrimOp -> A.Primop
+mkAppflPrimop = _TODO
+
+letBindCon :: G.DataCon -> [StgArg] -> Expr Dirty
+letBindCon dc args =
+  let
+    -- We don't want to shadow names, but maintaining an environment
+    -- to guarantee this is annoying. For such a small scope, we can
+    -- use an invalid name and rely on sanitization to fix it before
+    -- codegen.
+    bind   = "@"  -- hack
+    conObj = mkConObj dc args bind
+    inBody = EAtom Dirty (Var bind)
+  in ELet Dirty [conObj] inBody
+
+makeLetExpr :: StgBinding -> StgExpr -> TyST (Expr Dirty)
+makeLetExpr = _TODO
 
 -- Custom Pretty Printer for better inspection of STG tree.
 -- This will make it easier to figure out what Haskell values
@@ -645,7 +724,22 @@ instance OutputSyn StgArg where
 
 
 instance OutputSyn Literal where
-  pprSyn = ppr
+  pprSyn lit = (<+> ppr lit) . prefix $
+    case lit of
+      LitInteger i typ
+        | Just int <- toInt i    -> "LitInteger-int"
+        | Just long <- toInt64 i -> "LitInteger-int64"
+        | otherwise              -> "LitInteger-big"
+      MachChar chr               -> "MachChar"
+      MachInt i                  -> "MachInt"
+      MachInt64 i                -> "MachInt64"
+      MachWord i                 -> "Machword"
+      MachWord64 i               -> "MachWord64"
+      MachFloat r                -> "MachFloat"
+      MachDouble r               -> "MachDouble"
+      MachStr bs                 -> "MachStr"
+      MachNullAddr               -> "MachNull"
+      MachLabel fs mi fORd       -> "MachLabel"
 
 
 instance OutputSyn StgBinding where
@@ -686,8 +780,9 @@ instance OutputSyn StgExpr where
       StgLit lit
         -> prefix "Lit" <+> pprSyn lit
       StgConApp datacon args
-        -- If GHC made a wrapper, let's use (and print) it
-        -> prefix "ConApp" <+> pprSynName (dataConWrapId datacon) <+> pprSynList args
+        -- Any StgConApp is a 'real' constructor. Use of the wrapper function
+        -- shows up as an StgApp.
+        -> prefix "ConApp" <+> pprSynName datacon <+> pprSynList args
       StgOpApp op args resT 
         -> prefix "Op" <+> pprSyn op <+> pprSynList args
       StgLam args body 
