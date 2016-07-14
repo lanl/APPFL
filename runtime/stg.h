@@ -26,6 +26,7 @@ typedef struct _CInfoTab CInfoTab;
 // low bit is index 0,
 // 0 => unboxed, 1 => boxed
 
+
 typedef struct Bitmap64proto {
   uintptr_t mask : 58;
   unsigned int size : 6;
@@ -36,7 +37,7 @@ typedef union Bitmap64 {
   Bitmap64proto bitmap;
 } Bitmap64;
 
-
+#define HIST_SIZE 64
 typedef struct PrefCounters {
   long heapBytesAllocated;
   long heapBytesCopied;
@@ -48,6 +49,8 @@ typedef struct PrefCounters {
   long stackMaxSize;
   double totalTime;
   double gcTime;
+  int heapHistogram[HIST_SIZE];
+  int stackHistogram[HIST_SIZE];
 } PrefCounters;
 
 #define BMSIZE(bm) (bm.bitmap.size)

@@ -5,7 +5,7 @@
 #include <stdio.h>
 #include <stdarg.h>
 
-extern int LoggingLevel;
+struct rtArg;
 
 typedef enum {
   LOG_NONE = 0,
@@ -21,7 +21,7 @@ typedef enum {
 #define LOG(priority, ...) \
 do {	\
   if(LOG_LEVEL >= (priority)) {  \
-    if(LoggingLevel >= (priority)) {  \
+    if(rtArg.loggingLevel >= (priority)) {  \
       fprintf(stderr, __VA_ARGS__); \
     } \
   } \

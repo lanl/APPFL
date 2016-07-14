@@ -11,27 +11,42 @@
 #include "string.h"
 #include "args.h"
 
+
+void showHistogram(LogLevel priority, int *data, char *name) {
+  LOG(priority, "%s histogram:\n", name);
+  LOG(priority, "size  number\n");
+  for(int i = HIST_SIZE-1; i >= 0; i--) {
+    if (data[i] > 0) {
+       LOG(priority, " %d      %d\n", i, data[i]);
+    }
+  }
+}
+
 void showPerfCounters(LogLevel priority) {
-  if(perfCounters) {
-    LOG(priority, "Performance Counters\n--------------------------------\n");
-    LOG(priority, "%ld bytes allocated in heap\n", perfCounter.heapBytesAllocated);
-    LOG(priority, "%ld bytes copied during GC\n", perfCounter.heapBytesCopied);
-    LOG(priority, "%ld collections\n", perfCounter.heapCollections);
-    LOG(priority, "%ld heap allocations\n", perfCounter.heapAllocations);
-  }
-  if(perfCounters > 1) {
-    LOG(priority, "%ld bytes maximum heap size\n", perfCounter.heapMaxSize);
-  }
-  if(perfCounters) {
-    LOG(priority, "%ld bytes allocated in stack\n", perfCounter.stackBytesAllocated);
-    LOG(priority, "%ld stack allocations\n", perfCounter.stackAllocations);
-  }
-  if(perfCounters > 1) {
-    LOG(priority, "%ld bytes maximum stack size\n", perfCounter.stackMaxSize);
-  }
-  if(perfCounters > 2) {
-    LOG(priority, "total time %f sec\n", perfCounter.totalTime);
-    LOG(priority, "GC time %f sec (%f%%)\n", perfCounter.gcTime, 100*perfCounter.gcTime/perfCounter.totalTime);
+  if (USE_PERFCOUNTERS) {
+    if(rtArg.perfCounters) {
+      LOG(priority, "Performance Counters\n--------------------------------\n");
+      LOG(priority, "%ld bytes allocated in heap\n", perfCounter.heapBytesAllocated);
+      LOG(priority, "%ld bytes copied during GC\n", perfCounter.heapBytesCopied);
+      LOG(priority, "%ld collections\n", perfCounter.heapCollections);
+      LOG(priority, "%ld heap allocations\n", perfCounter.heapAllocations);
+      showHistogram(priority, perfCounter.heapHistogram, "heap");
+    }
+    if(rtArg.perfCounters > 1) {
+      LOG(priority, "%ld bytes maximum heap size\n", perfCounter.heapMaxSize);
+    }
+    if(rtArg.perfCounters) {
+      LOG(priority, "%ld bytes allocated in stack\n", perfCounter.stackBytesAllocated);
+      LOG(priority, "%ld stack allocations\n", perfCounter.stackAllocations);
+      showHistogram(priority, perfCounter.stackHistogram, "stack");
+    }
+    if(rtArg.perfCounters > 1) {
+      LOG(priority, "%ld bytes maximum stack size\n", perfCounter.stackMaxSize);
+    }
+    if(rtArg.perfCounters > 2) {
+      LOG(priority, "total time %f sec\n", perfCounter.totalTime);
+      LOG(priority, "GC time %f sec (%f%%)\n", perfCounter.gcTime, 100*perfCounter.gcTime/perfCounter.totalTime);
+    }
   }
 }
 
