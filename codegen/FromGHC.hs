@@ -1,5 +1,5 @@
 {-# LANGUAGE
-NamedFieldPuns, CPP, FlexibleInstances,
+NamedFieldPuns, CPP, FlexibleInstances, RankNTypes,
 LiberalTypeSynonyms, TypeOperators, BangPatterns, MagicHash #-}
 
 module FromGHC
@@ -14,7 +14,16 @@ where
 import           ADT as A hiding (unfoldr)
 import           AST as A
 import           State hiding (liftM)
-import qualified Data.Map as Map
+import qualified Data.Map.Strict as Map
+import           Control.Monad
+                 (liftM, mapAndUnzipM, zipWithM, when
+                 , (>=>), (<=<), (=<<)
+                 )
+import           Control.Exception ( assert )
+import           Data.List as List (nubBy, unfoldr, insertBy, isPrefixOf)
+import           Data.Maybe (isJust)
+import           Data.Function (on)
+
 
 -- Let's be explicit about what comes from where, and what it's related to.
 -- It's hard enough dealing with the massive GHC codebase
@@ -50,10 +59,11 @@ import           GHC
 import           GhcMonad
                  ( withSession, liftIO )   
 import           DynFlags
-                 ( ExtensionFlag (..)
+                 ( ExtensionFlag (..), GeneralFlag (..)
                  , defaultFatalMessager
                  , defaultFlushOut
                  , xopt_set, xopt_unset -- for LANGUAGE Extensions
+                 , gopt_set, gopt_unset -- for general flags
                  )
 
 import           HscTypes
@@ -75,6 +85,8 @@ import           DataCon as G
                  ( DataCon
                  , isVanillaDataCon, dataConTag
                  , dataConTyCon, dataConRepType
+                 , dataConWrapId, dataConWrapId_maybe
+                 , dataConName
                  )
 import           TypeRep (Type (..))                 
 import           SimplStg
@@ -125,14 +137,6 @@ import           CostCentre
 
 import           Outputable
 import           FastString ( unpackFS )
-import           Control.Monad
-                 (liftM, mapAndUnzipM, zipWithM, when
-                 , (>=>), (<=<), (=<<)
-                 )
-import           Control.Exception ( assert )
-import           Data.List as List (nubBy, unfoldr, insertBy) 
-import           Data.Function (on)
-
 
 testDir = "../test/haskell/"
 target f = testDir ++ f
@@ -141,8 +145,7 @@ target f = testDir ++ f
 testPreludeDir = "../prelude/"
 
 
-
-putStgSyn file = compileAndThen stgSynString testPreludeDir file >>= putStrLn . snd
+printStgSyn file = compileAndThen stgSynString testPreludeDir file >>= putStrLn . snd
 writeStgSyn infile outfile =
   compileAndThen stgSynString testPreludeDir infile >>= writeFile outfile . snd
   
@@ -183,6 +186,12 @@ compileAndThen stgFun preludeDir file = do
       -- with it)
       guessTarget file Nothing >>= addTarget
 
+      -- An alternative approach to enforcing inclusion of our Prelude
+      -- would be to allow the implicit Prelude and add ours as a target.
+      -- There'd be no guarantees on what was referenced in the code though
+      -- so there'd be a greater chance of failing on our end.
+      --      guessTarget (preludeDir ++ "AppflPrelude.hs") Nothing >>= addTarget
+
       -- GHC.load normally initiates most of the heavy lifting for the
       -- compiler.  When the hscTarget is HscNothing (as it is here),
       -- this only incurs module dependency analysis, parsing,
@@ -196,7 +205,6 @@ compileAndThen stgFun preludeDir file = do
       --  it calls 'load' and then parses and typechecks again before
       --  producing a CoreModule (not exactly what we want)
 
-
       modGraph <- getModuleGraph
 
       
@@ -208,8 +216,9 @@ compileAndThen stgFun preludeDir file = do
                       -- Left-fish operator (as I call it) composes
                       -- monadic operations right to left (as in (.) )
                       desugarModule <=< typecheckModule <=< parseModule)
-              -- I don't think we'll see .hs-boot files, but let's be
-              -- safe and filter them out
+                 -- I don't think we'll see .hs-boot files, but let's
+                 -- be safe and filter them out since I don't know
+                 -- what to do with them.
               . filter (not . isBootSummary) $ modGraph
 
 
@@ -229,12 +238,16 @@ compileAndThen stgFun preludeDir file = do
       res <- stgFun stg
       return $ (stg, res)
 
-makeAppflFlags :: String -> DynFlags -> DynFlags
+
+-- | Modify a DynFlags to include the settings that we want to enforce
+-- during compilation.
+makeAppflFlags :: FilePath -- | Location of AppflPrelude.hs and APPFL subdir
+               -> DynFlags -- | Base DynFlags (get from GhcMonad)
+               -> DynFlags -- | Modified DynFlags
 makeAppflFlags preludeDir
-  flags@DynFlags
-  { extensions  = oldExts
-  , importPaths = oldIPaths }
+  flags@DynFlags { importPaths  = oldIPaths }
   =
+  -- fold in the requisite language extensions
   foldr xoptModify newFlags appflExts
  
   where    
@@ -257,27 +270,28 @@ makeAppflFlags preludeDir
       -- files to disk, so it's turned off for now.
       , ghcLink        = NoLink
 
-      -- Make sure our Prelude and Base libs are visible
+      -- Make sure our Prelude and Base libs are visible.
+      -- Unfortunately, we can't implicitly import them (as far as I've found)
       , importPaths    = oldIPaths ++ [preludeDir, preludeDir ++ "/APPFL/" ]
       
       -- Should parameterize this (maybe with Options.h?)
       , verbosity      = 0
       }
 
--- List of language extensions we want to require of Appfl-haskell
+-- | List of language extensions we want to require of APPFL-haskell
 -- source files.    
 appflExts :: [(ExtensionFlag, Bool)]
 appflExts =
   [
     -- We want to enforce the use of our Prelude to have a better
     -- chance of getting full STG programs from GHC
-    (Opt_ImplicitPrelude  , False)
+    (Opt_ImplicitPrelude, False)
 
     -- We want to escape as much of the built-in stuff as possible,
     -- so we'll use our own "fromInteger", "ifthenelse" etc.
     -- This actually implies NoImplicitPrelude; I'm just being extra explicit 
     -- see the GHC Syntactic Extensions docs or the definitions in APPFL.Base
-  , (Opt_RebindableSyntax , True)
+  , (Opt_RebindableSyntax, True)
   ]
 
 
@@ -339,19 +353,11 @@ toStg mod core modLoc datacons hscEnv dflags =
 -- to break that logic.
 type TyMap = Map.Map A.Con [G.DataCon]
 
--- We want a "stateful" traversal, since, once a TyCon is in the TySet,
+-- We want a "stateful" traversal, since, once a TyCon is identified
 -- any new DataCon associated with it should be inserted into its
--- constructor list.  If we don't order the traversal, we'd have to merge
--- the TySets intelligently; not impossible, but extra work.
--- Sidenote: I had no idea type variables could be higher-kinded
-
-type TyST stg = State TyMap (stg ())
-
-
--- This is a littly silly: composition of types. The LiberalTypeSynonyms
--- extension is absolutely required for this to be partially applied
--- (for example, for use in the 'stg' parameter of TyST above)
-type (:.:) a b c = a (b c)
+-- constructor list.  If we don't linearize the traversal, we'd have to merge
+-- the TyMaps intelligently; not impossible, but extra work.
+type TyST t = State TyMap t
 
 
 instance Ord A.TyCon where
@@ -365,39 +371,47 @@ instance Ord A.TyCon where
 
 
 
-
--- putDataCon :: G.DataCon -> ?
+-- | Add a GHC DataCon to the TyMap
+putDataCon :: G.DataCon -> TyST ()
 putDataCon dc =
   do
     let tcname  = qualifyName (dataConTyCon dc)        
     tymap <- get
-    when (not $ dcPresent dc tymap) $ do
-      put $ Map.insertWith insertDC tcname [dc] tymap
+    when (not $ dcPresent dc tymap) $
+      put (Map.insertWith insertDC tcname [dc] tymap)
       
-
   where
     insertDC [new] dcs = List.insertBy (compare `on` dataConTag) new dcs
-    insertDC _ _       = _unreachable
-    
+
+    -- (Map.insertWith f key new map) Promises that, if the (key,old)
+    -- pair is present in the map, the new pair in the map will be
+    -- (key, f new old). If the key is not in the map, the new val is
+    -- added without calling f
+    insertDC _ _ = _unreachable
+
+
+-- | Is a GHC DataCon in the TyMap?
 dcPresent :: G.DataCon -> TyMap -> Bool
 dcPresent dc tmap = any (any (== dc)) tmap
   
--- | Merge two incomplete TyCons.  TyCons are incomplete
--- because their data constructors are added as they are encountered
--- in the STG tree.  The merging is a simple union of the TyCon TyVars and
--- DataCons. Note: the tyvar union might have to be tweaked, depending on how
--- GHC maintains the types of *its* DataCons    
-
+-- | Convert a GHC DataCon to an APPFL DataCon
 g2aDataCon :: G.DataCon -> A.DataCon
 g2aDataCon dc = DataCon con mtypes
   where con    = qualifyName dc
         mtypes = go (g2aMonoType $ dataConRepType dc)
+
+        -- The type of a GHC DataCon is a function type.  We represent
+        -- this as a list of Monotypes, rather than nested MFuns.
+        -- 'go' unfolds MFun(s) resulting from the GHC to APPFL type
+        -- conversion into the list form
+        go :: A.Monotype -> [A.Monotype]
         go (MFun m1 m2) = m1 : go m2
         go m            = [m]
 
--- | Convert a GHC Type to an Appfl Monotype
+
+-- | Convert a GHC Type to an APPFL Monotype
 --   for use in DataCons
-g2aMonoType :: Type -> Monotype
+g2aMonoType :: Type -> A.Monotype
 g2aMonoType t =
   case t of
     -- Simplest case, a type variable
@@ -425,7 +439,7 @@ g2aMonoType t =
     -- which is probably reasonable. Anything else would be counterintuitive
     FunTy t1 t2      -> MFun (g2aMonoType t1) (g2aMonoType t2)
 
-    -- If this is nested in a type (as in higher-rank types) just ignoring the
+    -- If this is nested in a type (as in higher-rank types), just ignoring the
     -- universal quantifier may be a problem.  We'll see...
     ForAllTy var ty  -> g2aMonoType ty
 
@@ -440,17 +454,25 @@ g2aMonoType t =
 
 
 -- TODO: Sanitize names for use in C codegen
-makeStgName :: Id -> String
-makeStgName = qualifyName
+makeStgName :: NamedThing t => t -> String
+makeStgName = renameGHC . qualifyName
 
 
+-- | Replace GHC prefix with APPFL.  If we structure our Prelude and Base
+-- correctly, this is all that should be necessary to map inescapable GHC
+-- modules.  This is a delicate hack.
+renameGHC :: String -> String
+renameGHC str | "GHC" `isPrefixOf` str = "APPFL" ++ drop 3 str
+              | otherwise              = str
+
+-- | Entry point to the GHC to APPFL STG conversion
 g2a :: [StgBinding] -> [Def ()]
 g2a binds =
-  let (objs, tycons) = runState (mapM g2aObj binds) Map.empty
+  let (objs, tymap) = runState (mapM g2aObj binds) Map.empty
   in _TODO
 
 -- | Translate bindings (let/letrec, including top level) into APPFL Obj types.
-g2aObj :: StgBinding -> TyST ([] :.: Obj) -- this is why I wanted type composition
+g2aObj :: StgBinding -> TyST [Obj ()]
 g2aObj bind =
   case bind of
     -- We don't distinguish between recursive bindings and otherwise
@@ -458,10 +480,10 @@ g2aObj bind =
     -- occNames passed to procRhs are probably not what we want, but
     -- serve for now
     StgNonRec id rhs -> procRhs rhs id >>= return . (:[])
-    StgRec pairs -> mapM (\(id,rhs) -> procRhs rhs id) pairs
+    StgRec pairs -> mapM (\(id, rhs) -> procRhs rhs id) pairs
 
   where
-    procRhs :: StgRhs -> Id -> TyST Obj
+    procRhs :: StgRhs -> Id -> TyST (Obj ())
     procRhs rhs id =
       case rhs of
         -- FUN or THUNK
@@ -473,27 +495,39 @@ g2aObj bind =
               e <- g2aExpr expr
               return $ THUNK () e (makeStgName id)
 
-          -- it's a FUN(ish) thing.  Data constructors are functions too
-          -- but they are not given a distinguished definition as in APPFL
-          -- STG or full Haskell. This is fine; we can leave function wrappers
-          -- for the CONs, and only use them when constructors are 
+          -- it's a FUN(ish) thing.  Data constructors are functions
+          -- too but they are not given a distinguished definition as
+          -- in APPFL STG or full Haskell. This is fine; we can leave
+          -- function wrappers for the CONs, and only use them when
+          -- constructors aren't fully saturated.
           | otherwise
             -> do
               e <- g2aExpr expr
               return $ FUN () (map makeStgName args) e (makeStgName id)
           
-        -- It's either a top-level empty constructor (a la Nil/Nothing) or it's
-        -- being used in a let binding. Either way, we make sure it's accumulated
+        -- It's either a top-level empty constructor (a la
+        -- Nil/Nothing) or it's being used in a let binding. Either
+        -- way, we make sure the DataCon is added to the TyMap.
         StgRhsCon _ dataCon args
 
           -- DataCon does not have a "fancy" type.
           -- "No existentials, no coercions, nothing" (basicTypes/DataCon.hs)
           | isVanillaDataCon dataCon
-            -> do
-              putDataCon dataCon
-              return _TODO
-              
-              
+            ->
+            let name = makeStgName id
+                
+            in
+              do
+                putDataCon dataCon
+                return $
+                  if hasWrapper dataCon
+                  -- If GHC generated a wrapper, let's try to use it
+                  then mkWrapperCall dataCon args name
+                  -- Constructors are always saturated at this point so
+                  -- we can safely make a CON. See StgSyn commentary:
+                  -- https://ghc.haskell.org/trac/ghc/wiki/Commentary/Compiler/StgSynType
+                  else mkConObj dataCon args name
+
 
           -- Something fancy going on with the DataCon, fail hard until we figure
           -- out how to handle it.
@@ -501,8 +535,40 @@ g2aObj bind =
               panic $ showSDocUnsafe $
               (text "Not sure how to handle non-vanilla DataCons like:" $+$ ppr dataCon)
 
+hasWrapper :: G.DataCon -> Bool
+hasWrapper = isJust . dataConWrapId_maybe
 
-g2aExpr :: StgExpr -> TyST Expr
+
+-- | Make a THUNK function call to a DataCon's wrapper function
+mkWrapperCall :: G.DataCon -> [StgArg] -> String -> Obj ()
+mkWrapperCall dc args name = THUNK () expr name
+  where expr = EFCall () (makeStgName $ dataConWrapId dc) (map g2aArg args)
+    
+-- | Make a CON Object from a DataCon and its StgArgs
+mkConObj :: G.DataCon -> [StgArg] -> String -> Obj ()
+mkConObj dc args name = CON () (makeStgName dc) (map g2aArg args) name
+
+
+g2aArg :: StgArg -> Expr ()
+g2aArg (StgVarArg id)  = EAtom () (Var $ makeStgName id)
+g2aArg (StgLitArg lit) = EAtom () (g2aLit lit)
+
+g2aLit :: Literal -> Atom
+g2aLit lit = case lit of
+  MachChar chr         -> _TODO
+  LitInteger i typ     -> _TODO
+  MachInt i            -> _TODO
+  MachInt64 i          -> _TODO
+  MachWord i           -> _TODO
+  MachWord64 i         -> _TODO
+  MachFloat r          -> _TODO
+  MachDouble r         -> _TODO
+  MachStr bs           -> _TODO
+  MachNullAddr         -> _TODO
+  MachLabel fs mi fORd -> _TODO
+  
+
+g2aExpr :: StgExpr -> TyST (Expr ())
 g2aExpr = _TODO
 
 
@@ -539,7 +605,7 @@ qualifyName thing = qualify idname
         idname         = getOccString name
 
 
--- This is based on the (uglier, imo) base62 encoding from basicTypes/Unique.hs
+-- This is based on the (uglier, IMO) base62 encoding from basicTypes/Unique.hs
 -- Because this is a base64 encoding (with '-' and '_'), it needs to be sanitized
 -- for C codegen.  There's other sanitization to be done on non-uniquified names,
 -- so it's deferred for now.
@@ -555,9 +621,9 @@ showUnique u = unfoldr op (getKey u)
           
 
 
--- | PrettyPrint a qualified name for NamedThing
+-- | PrettyPrint a qualified name for a NamedThing
 pprSynName :: NamedThing a => a -> SDoc
-pprSynName = text . qualifyName . getName
+pprSynName = text . renameGHC . qualifyName . getName
 
 
 -- | Make a string representation of a foreign call
@@ -608,8 +674,9 @@ instance OutputSyn StgRhs where
                 (pprSyn expr)
 
       StgRhsCon ccs datacon args
-        -> prefix "CONish" <+> pprSynName datacon <+> pprSynList args
-                
+        -> prefix "CONish" <+> pprSynName datacon <+> pprSynList args $+$
+           text "Worker/Wrapper:" <+> pprSynName (dataConWrapId datacon)
+
 
 instance OutputSyn StgExpr where
   pprSyn e =
@@ -619,7 +686,8 @@ instance OutputSyn StgExpr where
       StgLit lit
         -> prefix "Lit" <+> pprSyn lit
       StgConApp datacon args
-        -> prefix "ConApp" <+> pprSynName datacon <+> pprSynList args
+        -- If GHC made a wrapper, let's use (and print) it
+        -> prefix "ConApp" <+> pprSynName (dataConWrapId datacon) <+> pprSynList args
       StgOpApp op args resT 
         -> prefix "Op" <+> pprSyn op <+> pprSynList args
       StgLam args body 
@@ -635,7 +703,8 @@ instance OutputSyn StgExpr where
         -> prefix "Tick" <+> pprSyn realExpr
 
 
--- Prettyprint the bindings and body of the two varieties of Let expressions
+-- | PrettyPrint the bindings and body of the two varieties of Let
+-- expressions
 pprSynLet :: String -> StgBinding -> StgExpr -> SDoc
 pprSynLet pfxStr binds body = hang (prefix pfxStr <+> text "let") 2
                               (pprSyn binds) $+$
