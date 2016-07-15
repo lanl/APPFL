@@ -1,8 +1,8 @@
 {-# LANGUAGE
-NamedFieldPuns, CPP, FlexibleInstances, RankNTypes,
-LiberalTypeSynonyms, TypeOperators, BangPatterns, MagicHash #-}
+NamedFieldPuns, CPP, FlexibleInstances,
+UndecidableInstances, BangPatterns, MagicHash #-}
 
-module FromGHC
+module FromGHC.FromGHC
 where
 
 -- This may be bad practice, or an indicator of bad design.
@@ -11,9 +11,20 @@ where
 #define _unreachable (error ("Should not be reached: " ++ __FILE__ ++ ":" ++ show __LINE__))
 #define _TODO (error ("Definition incomplete at" ++ __FILE__ ++ ":" ++ show __LINE__))
 
+
+-- As much as practical, I'll be explicit about what comes from where,
+-- and what it's related to.  It's hard enough dealing with the
+-- massive GHC codebase.
+
+-- Local imports
 import           ADT as A hiding (unfoldr)
 import           AST as A
+import           FromGHC.BuiltIn (lookupAppflPrimop)
+import           Analysis (defAlt)
 import           State hiding (liftM)
+import           Util (splits)
+
+-- Standard library
 import qualified Data.Map.Strict as Map
 import           Control.Monad
                  (liftM, mapAndUnzipM, zipWithM, when
@@ -26,8 +37,7 @@ import           Data.Function (on)
 import           Data.Int (Int64)
 import           Data.Char (ord)
 
--- Let's be explicit about what comes from where, and what it's related to.
--- It's hard enough dealing with the massive GHC codebase
+-- GHC specific stuff
 import           GHC.Paths (libdir)
 import           GHC
                  -- These categorizations are ripped directly from GHC.hs
@@ -139,10 +149,13 @@ import           CostCentre
 import           Outputable
 import           FastString ( unpackFS )
 
+
+-- For in-progress tests. Note that $PWD is appfl/codegen when loading
+-- this file in an Emacs Cabal REPL.  I have a feeling that's not true
+-- when running GHCi from the command line.
 testDir = "../test/haskell/"
 target f = testDir ++ f
 
--- For in-progress tests.
 testPreludeDir = "../prelude/"
 
 
@@ -464,9 +477,14 @@ g2aMonoType t =
 
 
 
+
+
 -- TODO: Sanitize names for use in C codegen
+-- TODO: use the PrelNames module to make less hacky
+-- mapping onto our types
 makeStgName :: NamedThing t => t -> String
 makeStgName = renameGHC . qualifyName
+
 
 
 -- | Replace GHC prefix with APPFL.  If we structure our Prelude and Base
@@ -570,8 +588,13 @@ g2aLit lit = case lit of
     | Just int  <- toInt i   -> LitI int
     | Just long <- toInt64 i -> LitL long
     | otherwise              -> unsupported $ "LitInteger val too large: " ++ show i
+
+  -- This may not be wise, particularly if someone is counting on
+  -- 8-bit overflow
   MachChar chr               -> LitI $ ord chr
   MachInt i                  -> LitI (fromInteger i)
+
+  -- Word == Int64 == Word64 == 64 bit types for APPFL
   MachInt64 i                -> LitL (fromInteger i)
   MachWord i                 -> LitL (fromInteger i)
   MachWord64 i               -> LitL (fromInteger i)
@@ -598,10 +621,12 @@ long_able = (> toInteger (maxBound :: Int64))
 
 g2aExpr :: StgExpr -> TyST (Expr Dirty)
 g2aExpr e = case e of
+  -- Function Application or a Var 
   StgApp id args
     | null args -> return $ EAtom Dirty (Var $ makeStgName id)
     | otherwise -> return $ EFCall Dirty (makeStgName id) (map g2aArg args)
-    
+
+  -- Literal Expr (all primitive)
   StgLit lit
     -> return $ EAtom Dirty $ g2aLit lit
 
@@ -613,7 +638,13 @@ g2aExpr e = case e of
   -- different if we ever really support them.
   StgConApp datacon args
     | isUnboxedTupleCon datacon -> unsupported "No Unboxed Tuples yet"
-    | otherwise                 -> return $ letBindCon datacon args
+    | otherwise -> do
+        putDataCon datacon
+        return $ bindConInLet datacon args
+
+
+  -- Primop application.  ForeignCalls and PrimCalls fall into this
+  -- category too, but we're not dealing with them.
   StgOpApp stgop args resType
     | StgPrimOp op <- stgop ->
       return $ EPrimop Dirty (mkAppflPrimop op) (map g2aArg args)
@@ -621,12 +652,20 @@ g2aExpr e = case e of
     -- Anything that's not a PrimOp is essentially a foreign call
     -- Don't ask me the difference between a PrimCall and Foreign
     | otherwise -> unsupported "PrimCall/ForeignCall"
+    
   StgCase scrut _ _ bind _ altT alts 
-    -> _TODO
-  StgLet bindings body 
+    -> do
+    ealts <- g2aAlts altT bind alts
+    escrt <- g2aExpr scrut
+    return $ ECase Dirty escrt ealts
+
+  -- Treat the two forms of Let as identical
+  StgLet bindings body
     -> makeLetExpr bindings body
   StgLetNoEscape _ _ bindings body 
     -> makeLetExpr bindings body
+
+  -- Ignore the tick, make the expr
   StgTick _ realExpr 
     -> g2aExpr realExpr
 
@@ -634,11 +673,73 @@ g2aExpr e = case e of
     -> _unreachable -- "used *only* during CoreToStg's work"
                     -- stgSyn/StgSyn.hs
 
-mkAppflPrimop :: PrimOp -> A.Primop
-mkAppflPrimop = _TODO
+-- | Make an Alts object given the AltType (unused), scrutinee binder
+-- and list of StgAlts
+g2aAlts :: AltType -> Id -> [StgAlt] -> TyST (Alts Dirty)
+g2aAlts altT bind alts =
+    do
+      let escrt = EAtom Dirty (Var $ makeStgName bind)
+      altsList <- mapM g2aAlt (reorderAlts alts)
+      return $ Alts Dirty altsList "alts" escrt
 
-letBindCon :: G.DataCon -> [StgArg] -> Expr Dirty
-letBindCon dc args =
+
+-- The DEFAULT pattern match, if present, is always at the head of the
+-- alts list. Since we're producing C switch statements, we really
+-- want any DEFAULT (ADef for us) to be the *last* one.  This should
+-- be safe, since shadowed matches seem to be excised by GHC.
+-- Similarly, though we don't modify the order otherwise, the order of
+-- rest of the patterns doesn't matter for the same reason. Somewhere
+-- (coreSyn/CoreSyn.hs, maybe) it's stated that the DataAlts are
+-- ordered by their Tag (which is based simply on the order they're
+-- defined, as it is for us as well), so other than the DEFAULT, we
+-- don't need to worry at all about this ordering.
+reorderAlts :: [StgAlt] -> [StgAlt]
+reorderAlts (a@(DEFAULT,_,_,_):alts) = alts ++ [a]
+reorderAlts alts = alts
+
+
+g2aAlt :: StgAlt -> TyST (Alt Dirty)
+g2aAlt (acon, binders, usemask, rhsExpr) =
+  do
+    appflRhs <- g2aExpr rhsExpr
+    let conParams = map makeStgName binders
+    conName <- case acon of   
+                 DataAlt datacon -> do
+                   putDataCon datacon
+                   return $ makeStgName datacon
+
+                 -- primitive literal pattern match
+                 LitAlt lit      ->
+                   case g2aLit lit of
+                     LitI i -> return $ show i
+                     _      -> unsupported
+                               "Only pattern matching on literal Int# for now"
+
+                 DEFAULT -> _TODO
+    return $ ACon Dirty conName conParams appflRhs
+                               
+
+   
+   
+     where
+       -- This is fragile. If Analysis.defAlt changes form, this will
+       -- break.  It may be better to just leave the error metadata vals
+       fcall = ae defAlt
+       [eatom] = eas fcall
+       dirtyEAtom = eatom {emd = Dirty}
+       dirtyFCall = fcall {emd = Dirty, eas = [dirtyEAtom]}
+       dirtyDefAlt = defAlt {amd = Dirty, ae = dirtyFCall}
+
+
+mkAppflPrimop :: PrimOp -> A.Primop
+mkAppflPrimop p = case lookupAppflPrimop p of
+  Just op -> op
+  Nothing -> unsupported $ showSDocUnsafe $ ppr p
+    
+  
+
+bindConInLet :: G.DataCon -> [StgArg] -> Expr Dirty
+bindConInLet dc args =
   let
     -- We don't want to shadow names, but maintaining an environment
     -- to guarantee this is annoying. For such a small scope, we can
@@ -650,7 +751,13 @@ letBindCon dc args =
   in ELet Dirty [conObj] inBody
 
 makeLetExpr :: StgBinding -> StgExpr -> TyST (Expr Dirty)
-makeLetExpr = _TODO
+makeLetExpr ghcBindings ghcBody =
+  do
+    appflObjs <- g2aObj ghcBindings
+    appflBody <- g2aExpr ghcBody
+    return $ ELet Dirty appflObjs appflBody
+    
+  
 
 -- Custom Pretty Printer for better inspection of STG tree.
 -- This will make it easier to figure out what Haskell values
@@ -662,6 +769,7 @@ class OutputSyn a where
 -- Modify this to make the printing a little less text-y
 verbosePrint = True
 
+-- Add a prefix
 prefix :: String -> SDoc
 prefix | verbosePrint = parens . text
        | otherwise    = const empty
@@ -684,10 +792,11 @@ qualifyName thing = qualify idname
         idname         = getOccString name
 
 
--- This is based on the (uglier, IMO) base62 encoding from basicTypes/Unique.hs
--- Because this is a base64 encoding (with '-' and '_'), it needs to be sanitized
--- for C codegen.  There's other sanitization to be done on non-uniquified names,
--- so it's deferred for now.
+-- This is roughly based on the (uglier, IMO) base62 encoding from
+-- basicTypes/Unique.hs Because this is a base64 encoding (with '-'
+-- and '_'), it needs to be sanitized for C codegen.  There's other
+-- sanitization to be done on non-uniquified names, so it's deferred
+-- for now.
 showUnique :: Unique -> String
 showUnique u = unfoldr op (getKey u)
   where chr64 n    = cBox ( indexCharOffAddr# chars64 n)
@@ -713,10 +822,10 @@ nameForeignCall (CCall (CCallSpec target _ _))
       DynamicTarget            -> "Dynamic:Unnamed"
 
 
-
-instance OutputSyn Id where
+-- Default to the NamedThing instance if no specific (overlapping) instance
+-- is defined
+instance {-# OVERLAPPABLE #-} NamedThing a => OutputSyn a where
   pprSyn = pprSynName
-
 
 instance OutputSyn StgArg where
   pprSyn (StgVarArg id)  = pprSyn id
@@ -799,7 +908,7 @@ instance OutputSyn StgExpr where
 
 
 -- | PrettyPrint the bindings and body of the two varieties of Let
--- expressions
+-- expressions.
 pprSynLet :: String -> StgBinding -> StgExpr -> SDoc
 pprSynLet pfxStr binds body = hang (prefix pfxStr <+> text "let") 2
                               (pprSyn binds) $+$
