@@ -28,6 +28,8 @@ main = 3
 
 f = \x -> x
 
+str = "helloWorld"
+
 twoOrThree b = case b of
   True  -> 3#
   False -> 2#
