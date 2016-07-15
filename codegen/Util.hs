@@ -10,6 +10,7 @@ module Util
   partPerm,
   groupAllBy,
   lookupOrElse,
+  splits, splitsBy
 )
 where
 
@@ -68,6 +69,23 @@ partPerm pred xs =
         g ts fs i j p (x:xs) | pred x = g (x:ts) fs     (i+1) j     (i:p)      xs
                              | True   = g ts     (x:fs) i     (j+1) ((j+tc):p) xs
     in (length ts, reverse ts ++ reverse fs, reverse p)
+
+
+
+-- | Given a predicate on a single element of a list, split the list
+-- into sublists, breaking on (and omitting) all non-empty sequences
+-- of elements that satisfy the predicate.
+splitsBy :: (a -> Bool) -> [a] -> [[a]]
+splitsBy p xs = case break p xs of
+                  ([],[])   -> []
+                  ([],_:bs) -> splitsBy p bs
+                  (as,[])   -> [as]
+                  (as,_:bs) -> as : splitsBy p bs
+
+-- | Special case of splitsBy in which the predicate is (== e)
+splits :: Eq a => a -> [a] -> [[a]]
+splits e = splitsBy (== e)
+
 
 
 lookupBy :: (a -> b -> Bool) -> a -> [(b,c)] -> Maybe c
