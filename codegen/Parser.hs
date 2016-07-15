@@ -398,17 +398,20 @@ altsP =
 -- parse a case expression alternative, accept an Alt object
 altP :: Parser Token (Alt ())
 altP =
-  let aconNameP = orExList [intP `using` show, conNameP] in
-   orExList [varNameP >>> \v ->
-                          accept $ ADef () v,
-             aconNameP >>> \con ->
-             many' varNameP >>> \vs ->
-                                 accept $ ACon () con vs
-            ] >>> \alt ->
-   tokcutP "Expected a '->' symbol after an alt's pattern"
-   arrowP >>> \_ ->
-   exprP >>> \exp ->
-              accept $ alt exp -- fully apply Alt constructor to Expr
+  let aconNameP = orExList [intP `using` show,
+                           -- fltP `using` show,
+                            conNameP]
+      adefP = varNameP >>> \v ->
+                             accept $ ADef () v
+      aconP = aconNameP >>> \con ->
+                 many' varNameP >>> \vs ->
+                                      accept $ ACon () con vs
+  in
+    orExList [adefP, aconP] >>> \alt ->
+    tokcutP "Expected a '->' symbol after an alt's pattern"
+    arrowP >>> \_ ->
+    exprP >>> \exp ->
+                accept $ alt exp -- fully apply Alt constructor to Expr
 
 
 -- parse an atom (variable or literal)

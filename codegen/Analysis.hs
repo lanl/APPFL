@@ -3,6 +3,7 @@
 {-# LANGUAGE FlexibleContexts     #-}
 {-# LANGUAGE TupleSections        #-}
 
+
 module Analysis
 (exhaustCases,
  propKnownCalls,
@@ -304,26 +305,15 @@ exhaustAlts cmap aa@Alts{alts, aname} =
       isACon x = case x of ACon{} -> True; _ -> False
       newAlts = if not (null adefs) || consExhaust (map ac acons) cmap
                 then alts
-                else alts ++ [defAlt aname]  --get it?
+                else alts ++ [defAlt]
   in aa{alts = newAlts}
 
-{- this seems overly elaborate
-
-  x -> let { aname_exhaust = THUNK(stg_case_not_exhaustive x) } in aname_exhaust
-
-why not just
-
-  x -> stg_case_not_exhaustive x
-
-simplified, 2016.05.25 - dmr
-
--}
 -- default Alt for non exhaustive cases
 -- stg_case_not_exhaustive is defined in the C runtime
-defAlt :: String -> Alt a
-defAlt name =
+defAlt :: Alt a
+defAlt =
   let
-    mdErr s = error $ s ++ " metadeta not set!"
+    mdErr s = error $ s ++ " metadeta not set in Analysis.defAlt"
     arg   = EAtom{emd = mdErr "EAtom",
                   ea  = Var "x"}
     fcall = EFCall{emd = mdErr "EFCall",

@@ -8,7 +8,7 @@ module MHS.ToSTG
   makeSTG
 ) where
 
-import           Analysis      (defAlt)
+
 import           BU            (Assumption, Assumptions)
 import           Data.Function (on)
 import           Data.List     (isPrefixOf, partition)
