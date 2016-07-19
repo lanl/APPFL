@@ -334,7 +334,7 @@ quotInt, remInt, divInt, modInt :: Int -> Int -> Int
 
 quotRemInt :: Int -> Int -> (Int, Int)
 (I# x) `quotRemInt` (I# y) = case x `quotRemInt#` y of
-                             (# q, r #) ->
+                               (# q, r #) ->
                                  (I# q, I# r)
 
 divModInt :: Int -> Int -> (Int, Int)

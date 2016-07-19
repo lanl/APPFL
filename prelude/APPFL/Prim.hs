@@ -72,7 +72,7 @@ imin# :: Int# -> Int# -> Int#
 imin# = let x = x in x
 
 
--- Helpful primitive functions
+-- Implemented Primops
 
 -- | Calculate quotient and remainder of a division operation.
 --   (C-style divison and modulus)

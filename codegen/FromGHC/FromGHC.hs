@@ -1,5 +1,5 @@
 {-# LANGUAGE
-NamedFieldPuns, CPP, FlexibleInstances,
+NamedFieldPuns, CPP, FlexibleInstances, ScopedTypeVariables,
 UndecidableInstances, BangPatterns, MagicHash #-}
 
 module FromGHC.FromGHC
@@ -16,13 +16,14 @@ where
 -- and what it's related to.  It's hard enough dealing with the
 -- massive GHC codebase.
 
--- Local imports
+-- Local (APPFL) imports
 import           ADT as A hiding (unfoldr)
 import           AST as A
-import           FromGHC.BuiltIn (lookupAppflPrimop)
+import           FromGHC.BuiltIn
 import           Analysis (defAlt)
 import           State hiding (liftM)
 import           Util (splits)
+import qualified PPrint as A
 
 -- Standard library
 import qualified Data.Map.Strict as Map
@@ -32,7 +33,7 @@ import           Control.Monad
                  )
 import           Control.Exception ( assert )
 import           Data.List as List (nubBy, unfoldr, insertBy, isPrefixOf)
-import           Data.Maybe (isJust)
+import           Data.Maybe (isJust, fromMaybe)
 import           Data.Function (on)
 import           Data.Int (Int64)
 import           Data.Char (ord)
@@ -159,16 +160,20 @@ target f = testDir ++ f
 testPreludeDir = "../prelude/"
 
 
-printStgSyn file = compileAndThen stgSynString testPreludeDir file >>= putStrLn . snd
+printStgSyn file = writeStgSyn file "/dev/stdout" >> putStrLn "" 
 writeStgSyn infile outfile =
   compileAndThen stgSynString testPreludeDir infile >>= writeFile outfile . snd
   
+
+printAppfl file = compileAndThen (return . g2a) testPreludeDir file >>=
+                  print . A.unparse . snd
 
 stgSynString stg = do
   dynflags <- getSessionDynFlags
   let sdoc = vcat (map pprSyn stg)
       text = showSDoc dynflags sdoc
   return text
+
 
 compileAndThen stgFun preludeDir file = do
 
@@ -360,6 +365,9 @@ unsupported msg = error $ unlines ["Unsupported:", msg]
 -- | Used to indicate an unsanitized STG tree
 data Dirty = Dirty
 
+instance A.Unparse Dirty where
+  unparse _ = A.text "Dirty"
+
 -- | Alias to indicate a santized STG tree
 type Clean = ()
 
@@ -410,7 +418,8 @@ putDataCon dc =
     -- (Map.insertWith f key new map) Promises that, if the (key,old)
     -- pair is present in the map, the new pair in the map will be
     -- (key, f new old). If the key is not in the map, the new val is
-    -- added without calling f
+    -- added without calling f.  Since 'new' is always the singleton list
+    -- [dc] above, the above match should never fail
     insertDC _ _ = _unreachable
 
 
@@ -439,7 +448,7 @@ g2aMonoType :: Type -> A.Monotype
 g2aMonoType t =
   case t of
     -- Simplest case, a type variable
-    TyVarTy v        -> MVar (getOccString v)
+    TyVarTy v        -> MVar (makeStgName v)
 
     -- AppTy will never be an application of a TyConnApp to
     -- some other type.  The first param is always another AppTy or
@@ -456,11 +465,12 @@ g2aMonoType t =
 
     -- e.g. List a, Maybe Int, etc.
     TyConApp tc args -> MCon True -- Assuming everything boxed for now
-                        (qualifyName tc) (map g2aMonoType args)
+                        (makeStgName tc) (map g2aMonoType args)
 
     -- e.g a -> a
-    -- This assumes right-associativity is expressed just as in our MFun,
-    -- which is probably reasonable. Anything else would be counterintuitive
+    -- This assumes the right-associativity of (->) is
+    -- expressed just as in our MFun, which is probably
+    -- reasonable. Anything else would be counterintuitive
     FunTy t1 t2      -> MFun (g2aMonoType t1) (g2aMonoType t2)
 
     -- If this is nested in a type (as in higher-rank types), just ignoring the
@@ -475,15 +485,25 @@ g2aMonoType t =
   where panicType = panic $ showSDocUnsafe $
                     text "Having trouble converting Type to MonoType:" <+> ppr t
 
+-- | Given the TyMap produced by the G2A functions, construct the
+-- actual TyCons.
+makeTyCons :: TyMap -> [A.TyCon]
+makeTyCons tymap = map constrTyCon (Map.toList tymap)
+  where constrTyCon (con, dcs) =
+          let appflDCs = map g2aDataCon dcs
+              tyvars   = concatMap dataConTyVars appflDCs
+          -- Assuming boxed for now
+          in TyCon True con tyvars appflDCs
 
 
-
-
--- TODO: Sanitize names for use in C codegen
--- TODO: use the PrelNames module to make less hacky
--- mapping onto our types
+-- | Produce a String name for a NamedThing.  Everything GHC names
+-- should be converted via this function.  This is hard to enforce at
+-- the Type level, given that all of our data structures only require
+-- Strings as identifiers.
 makeStgName :: NamedThing t => t -> String
-makeStgName = renameGHC . qualifyName
+makeStgName thing = fromMaybe hackName realName
+  where hackName = renameGHC (qualifyName thing)
+        realName = getAppflName thing
 
 
 
@@ -498,7 +518,8 @@ renameGHC str | "GHC" `isPrefixOf` str = "APPFL" ++ drop 3 str
 g2a :: [StgBinding] -> [Def Dirty]
 g2a binds =
   let (objs, tymap) = runState (mapM g2aObj binds) Map.empty
-  in _TODO
+      tycons = makeTyCons tymap
+  in map ObjDef (concat objs) ++ map DataDef tycons
 
 -- | Translate bindings (let/letrec, including top level) into APPFL Obj types.
 g2aObj :: StgBinding -> TyST [Obj Dirty]
@@ -600,35 +621,49 @@ g2aLit lit = case lit of
   MachWord64 i               -> LitL (fromInteger i)
   MachFloat r                -> LitF (fromRational r)
   MachDouble r               -> LitD (fromRational r)
+
+  
   MachStr bs                 -> unsupported "Machine Strings"
   MachNullAddr               -> unsupported "Machine (Null) Address"
   MachLabel fs mi fORd       -> unsupported "Machine Labels"
 
 
+-- | Maybe convert and Integer to an Int (if it's within Int bounds)
 toInt :: Integer -> Maybe Int
-toInt i | int_able i = Just (fromInteger i)
-        | otherwise  = Nothing
+toInt = safeIntegerConvert
 
-int_able :: Integer -> Bool
-int_able = (> toInteger (maxBound :: Int))
-
+-- | Is an Integer within Int64 bounds?
 toInt64 :: Integer -> Maybe Int64
-toInt64 i | long_able i = Just (fromInteger i)
-          | otherwise   = Nothing
+toInt64 = safeIntegerConvert
 
-long_able :: Integer -> Bool
-long_able = (> toInteger (maxBound :: Int64))
+-- | More general implementation of safely converting an Integer to a
+-- Bounded Integral type.
+safeIntegerConvert :: forall a . (Bounded a, Integral a) => Integer -> Maybe a
+safeIntegerConvert i
+  | i > maxVal || i < minVal  = Nothing 
+  | otherwise = Just $ fromInteger i
+  -- ScopedTypeVariables lets us refer to the type variable 'a' from above.
+  -- I *think* giving the *Bound variables a type is necessary here
+  where maxVal = toInteger (maxBound :: a) 
+        minVal = toInteger (minBound :: a)
 
+
+-- | Convert a GHC STG Expression to an APPFL Expression
 g2aExpr :: StgExpr -> TyST (Expr Dirty)
 g2aExpr e = case e of
   -- Function Application or a Var 
   StgApp id args
+    -- No args ==> EAtom with a Var.  Literals are StgLit below
     | null args -> return $ EAtom Dirty (Var $ makeStgName id)
+
+    -- Actually a function call
     | otherwise -> return $ EFCall Dirty (makeStgName id) (map g2aArg args)
+
 
   -- Literal Expr (all primitive)
   StgLit lit
     -> return $ EAtom Dirty $ g2aLit lit
+
 
   -- CONs are only valid in let-bindings in our STG, but this appears
   -- anywhere Exprs are valid in GHC's version.  For boxed types, we
@@ -637,7 +672,10 @@ g2aExpr e = case e of
   -- and let-bind them (or fail) but we'll want to do something
   -- different if we ever really support them.
   StgConApp datacon args
-    | isUnboxedTupleCon datacon -> unsupported "No Unboxed Tuples yet"
+    | isUnboxedTupleCon datacon -> do
+        -- Letting them stay for now
+        putDataCon datacon
+        return $ bindConInLet datacon args
     | otherwise -> do
         putDataCon datacon
         return $ bindConInLet datacon args
@@ -647,17 +685,19 @@ g2aExpr e = case e of
   -- category too, but we're not dealing with them.
   StgOpApp stgop args resType
     | StgPrimOp op <- stgop ->
-      return $ EPrimop Dirty (mkAppflPrimop op) (map g2aArg args)
+      return $ mkAppflPrimop op args
 
     -- Anything that's not a PrimOp is essentially a foreign call
     -- Don't ask me the difference between a PrimCall and Foreign
     | otherwise -> unsupported "PrimCall/ForeignCall"
     
+
   StgCase scrut _ _ bind _ altT alts 
     -> do
     ealts <- g2aAlts altT bind alts
     escrt <- g2aExpr scrut
     return $ ECase Dirty escrt ealts
+
 
   -- Treat the two forms of Let as identical
   StgLet bindings body
@@ -665,21 +705,24 @@ g2aExpr e = case e of
   StgLetNoEscape _ _ bindings body 
     -> makeLetExpr bindings body
 
-  -- Ignore the tick, make the expr
+
+  -- Ignore the profiler tick, make the expr
   StgTick _ realExpr 
     -> g2aExpr realExpr
 
+
+  -- "used *only* during CoreToStg's work". See stgSyn/StgSyn.hs
   StgLam args body 
-    -> _unreachable -- "used *only* during CoreToStg's work"
-                    -- stgSyn/StgSyn.hs
+    -> _unreachable 
 
 -- | Make an Alts object given the AltType (unused), scrutinee binder
 -- and list of StgAlts
 g2aAlts :: AltType -> Id -> [StgAlt] -> TyST (Alts Dirty)
 g2aAlts altT bind alts =
     do
-      let escrt = EAtom Dirty (Var $ makeStgName bind)
-      altsList <- mapM g2aAlt (reorderAlts alts)
+      let scrtName = makeStgName bind
+          escrt = EAtom Dirty (Var scrtName)
+      altsList <- mapM (g2aAlt scrtName) (reorderAlts alts)
       return $ Alts Dirty altsList "alts" escrt
 
 
@@ -698,43 +741,41 @@ reorderAlts (a@(DEFAULT,_,_,_):alts) = alts ++ [a]
 reorderAlts alts = alts
 
 
-g2aAlt :: StgAlt -> TyST (Alt Dirty)
-g2aAlt (acon, binders, usemask, rhsExpr) =
+-- | Make an APPFL Alt from a GHC STG Alt.  "Default" cases, where no
+-- constructor or literal is matched, do not bind variables in GHC's
+-- STG since a case expression has exactly such a binding.  This
+-- variable parameter must be given to make the APPFL version of the
+-- same.
+g2aAlt :: A.Var  -- | Scrutinee Binding
+       -> StgAlt -- | GHC Alt to convert
+       -> TyST (Alt Dirty)
+g2aAlt scrtName (acon, binders, usemask, rhsExpr) =
   do
     appflRhs <- g2aExpr rhsExpr
     let conParams = map makeStgName binders
-    conName <- case acon of   
-                 DataAlt datacon -> do
-                   putDataCon datacon
-                   return $ makeStgName datacon
+    case acon of
+      -- Constructor match (Maybe a, I# i, etc.)
+      DataAlt datacon -> do
+        putDataCon datacon
+        return $ ACon Dirty (makeStgName datacon) conParams appflRhs
 
-                 -- primitive literal pattern match
-                 LitAlt lit      ->
-                   case g2aLit lit of
-                     LitI i -> return $ show i
-                     _      -> unsupported
-                               "Only pattern matching on literal Int# for now"
-
-                 DEFAULT -> _TODO
-    return $ ACon Dirty conName conParams appflRhs
-                               
-
-   
-   
-     where
-       -- This is fragile. If Analysis.defAlt changes form, this will
-       -- break.  It may be better to just leave the error metadata vals
-       fcall = ae defAlt
-       [eatom] = eas fcall
-       dirtyEAtom = eatom {emd = Dirty}
-       dirtyFCall = fcall {emd = Dirty, eas = [dirtyEAtom]}
-       dirtyDefAlt = defAlt {amd = Dirty, ae = dirtyFCall}
+      -- primitive literal pattern match (3#, 1.0#, etc)
+      LitAlt lit ->
+        case g2aLit lit of
+          LitI i -> return $ ACon Dirty (show i) conParams appflRhs
+          _      -> unsupported "Only pattern matching on literal Int# for now"
+  
+      DEFAULT -> return $ ADef Dirty scrtName appflRhs
 
 
-mkAppflPrimop :: PrimOp -> A.Primop
-mkAppflPrimop p = case lookupAppflPrimop p of
-  Just op -> op
-  Nothing -> unsupported $ showSDocUnsafe $ ppr p
+
+mkAppflPrimop :: PrimOp -> [StgArg] -> Expr Dirty
+mkAppflPrimop primop args = case lookupAppflPrimop primop of
+  Just op -> EPrimop Dirty op (map g2aArg args)
+  Nothing ->
+    let name = fromMaybe (unsupported $ showSDocUnsafe $ ppr primop)
+               (lookupImplementedPrimop primop)
+    in EFCall Dirty name (map g2aArg args)
     
   
 
