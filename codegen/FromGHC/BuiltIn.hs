@@ -1,13 +1,29 @@
+{-# LANGUAGE BangPatterns #-}
+
 module FromGHC.BuiltIn where
 
-import Data.Map.Strict as Map
+import qualified Data.Map.Strict as Map
+import Data.Function (on)
+import Data.Maybe (fromMaybe)
 
 import AST as A (Primop (..))
 import PrimOp as G
 
+-- GHC Wired-in things come from these modules
+import TysWiredIn as G
+import PrelNames as G
+import MkCore as G
+
+import Name as G (Name, NamedThing (..))
+import BasicTypes (TupleSort (..))
+import Constants (mAX_TUPLE_SIZE{-62-}) --  Maybe use an APPFL constant?
+
+
 lookupAppflPrimop :: G.PrimOp -> Maybe A.Primop
 lookupAppflPrimop = (`Map.lookup` primopMap)
 
+
+primopMap :: Map.Map G.PrimOp A.Primop
 primopMap = Map.fromList
   [ (CharGtOp   , Pigt)
   , (CharGeOp   , Pige)
@@ -36,7 +52,7 @@ primopMap = Map.fromList
   , (WordSubOp  , Pieq) 
   , (WordMulOp  , Pine) 
   , (WordQuotOp , Pile) 
-  , (WordRemOp  , Pilt) 
+  , (WordRemOp  , Pilt)
 --  , (RaiseOp    , Pexcept)
 --
 --  I want to figure out a way to get this in eventually, even in a
@@ -45,7 +61,93 @@ primopMap = Map.fromList
 --  particularly useful. - dmr
   ]
 
+lookupImplementedPrimop :: G.PrimOp -> Maybe String
+lookupImplementedPrimop = (`Map.lookup` implementedOpMap)
 
+implementedOpMap :: Map.Map G.PrimOp String
+implementedOpMap = Map.fromList
+  [ (IntQuotRemOp, primDot "quotRemInt#")
+  ]
+
+
+isErrorCall :: NamedThing a => a -> Bool
+isErrorCall thing =
+  let name = getName thing
+  in any ((name ==) . getName) patErrorIDs
+
+
+getAppflName :: NamedThing a => a -> Maybe String
+getAppflName thing = Map.lookup (getName thing) builtInMap
+
+infixr 5 \.
+
+(\.) :: String -> String -> String
+a \. b = a ++ '.' : b
+  
+appflDot !s = "APPFL" \. s
+typesDot !s = appflDot $ "Types" \. s
+tupleDot !s = appflDot $ "Tuple" \. s
+primDot  !s = appflDot $ "Prim"  \. s
+
+
+builtInMap :: Map.Map G.Name String
+builtInMap =
+  -- It should be OK to put all kinds of Names in this map.  GHC's
+  -- disambiguation strategies seem to eliminate the chances of any
+  -- naming overlap, even between the different NameSpaces.
+  Map.fromList
+  [ (G.consDataConName, typesDot "Cons")
+  , (G.nilDataConName, typesDot "Nil")
+  , (G.listTyConName, typesDot "List")
+  ]
+  `Map.union` tupleMap
+  `Map.union` errorCallMap
+
+tupleMap = (Map.union `on` Map.fromList)
+  [ (getName (tupleCon BoxedTuple i)   , tupleDot ("TP" ++ show i))
+   | i <- [0..mAX_TUPLE_SIZE]]
+  [ (getName (tupleCon UnboxedTuple i) , tupleDot ("TP#" ++ show i))
+   | i <- [0..mAX_TUPLE_SIZE]]
+
+
+errorCallMap :: Map.Map G.Name String
+errorCallMap = Map.fromList $
+               map (\id -> (getName id ,"stg_case_not_exhaustive"))
+               patErrorIDs
+
+patErrorIDs =
+  [ pAT_ERROR_ID
+  , nON_EXHAUSTIVE_GUARDS_ERROR_ID
+  , iRREFUT_PAT_ERROR_ID
+  ]
+
+
+
+
+-- | Generate the APPFL.Tuple module (wherever you'd like).
+genTupleModule :: FilePath  -- | Location to write the file to
+               -> Maybe Int -- | Maybe you want to specify a max tuple size
+               -> IO ()
+genTupleModule outFileName m_size =
+  writeFile outFileName fileString
+  where
+    maxSize = fromMaybe mAX_TUPLE_SIZE m_size
+    fileString = unlines 
+                 $ "{-# LANGUAGE MagicHash #-}" 
+                 : "module APPFL.Tuple where" 
+                 : "\n\n------ Boxed Tuples ------\n\n" 
+                 : mkTupls "TP"
+                 ++ "\n\n------ Unboxed Tuples ------\n\n" 
+                 : mkTupls "TP#"
+    mkTupls con = 
+      [let constr = con ++ show i
+           tyvars = concatMap (' ':) $ take i allNameStrings
+       in "data " ++ constr ++  tyvars ++ "\n   = " ++  constr ++ tyvars
+      | i <- [0..maxSize]]
+      
+      
+     
+  
 
 
 
@@ -53,8 +155,8 @@ primopMap = Map.fromList
 
 --- No code below this line
 
-{----- Unimplemented Ops
-(or implemented in terms of others as Haskell functions)
+{----- Unimplemented Primitive Ops
+(or implemented in terms of others as Haskell functions in APPFL.Prim)
 
 
 -------------------- Int Ops --------------------
@@ -79,7 +181,7 @@ primopMap = Map.fromList
     correct answer for small args, since otherwise the performance of
     (*) :: Integer -> Integer -> Integer will be poor.
 
-   | IntQuotRemOp -- i# -> i# -> (# i#, i# #)
+
    | AndIOp
    | OrIOp
    | XorIOp
