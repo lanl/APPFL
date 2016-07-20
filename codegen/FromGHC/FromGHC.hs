@@ -1,5 +1,6 @@
 {-# LANGUAGE
 NamedFieldPuns, CPP, FlexibleInstances, ScopedTypeVariables,
+LiberalTypeSynonyms,
 UndecidableInstances, BangPatterns, MagicHash #-}
 
 module FromGHC.FromGHC
@@ -28,15 +29,17 @@ import qualified PPrint as A
 -- Standard library
 import qualified Data.Map.Strict as Map
 import           Control.Monad
-                 (liftM, mapAndUnzipM, zipWithM, when
+                 (liftM, liftM2, mapAndUnzipM, zipWithM, when
                  , (>=>), (<=<), (=<<)
                  )
-import           Control.Exception ( assert )
-import           Data.List as List (nubBy, unfoldr, insertBy, isPrefixOf)
+import           Data.List as List (nubBy, unfoldr, insertBy, isPrefixOf, intersperse)
 import           Data.Maybe (isJust, fromMaybe)
 import           Data.Function (on)
 import           Data.Int (Int64)
 import           Data.Char (ord)
+import           Control.Monad.Trans
+import           Control.Monad.Trans.Except
+
 
 -- GHC specific stuff
 import           GHC.Paths (libdir)
@@ -100,7 +103,15 @@ import           DataCon as G
                  , dataConWrapId, dataConWrapId_maybe
                  , dataConName, isUnboxedTupleCon
                  )
-import           TypeRep (Type (..))                 
+import           TypeRep (Type (..), )
+
+-- Finding where (in the source file) something came from
+import           SrcLoc
+                 ( SrcSpan(..), RealSrcSpan
+                 , srcSpanStartLine, srcSpanEndLine
+                 , srcSpanStartCol, srcSpanEndCol
+                 , srcSpanFile)
+
 import           SimplStg
                  ( stg2stg )
 
@@ -118,14 +129,18 @@ import           StgSyn
 import           Name
                  ( Name, NamedThing (..)
                  , getOccString, nameModule_maybe, nameUnique
-                 , nameModule )
+                 , nameModule, nameSrcSpan )
                  
 import           OccName ( occNameString )
+
 import           FastTypes
                  ( FastInt
                  , shiftRLFastInt, bitAndFastInt
                  , iBox, cBox, fastChr
                  )
+
+import           FastString (mkFastString, unpackFS)
+
 import           Unique ( Unique, getKey )
 
 import           GHC.Exts
@@ -238,7 +253,7 @@ compileAndThen stgFun preludeDir file = do
                  -- I don't think we'll see .hs-boot files, but let's
                  -- be safe and filter them out since I don't know
                  -- what to do with them.
-              . filter (not . isBootSummary) $ modGraph
+                 . filter (not . isBootSummary) $ modGraph
 
 
       -- Now we simplify the core.  This is where transformations and
@@ -357,9 +372,6 @@ toStg mod core modLoc datacons hscEnv dflags =
     stg2stg dflags mod stg_binds
 
 
--- | Fail with a message about what feature we're not (yet)
--- supporting
-unsupported msg = error $ unlines ["Unsupported:", msg]
 
 
 -- | Used to indicate an unsanitized STG tree
@@ -385,13 +397,7 @@ type Clean = ()
 -- to break that logic.
 type TyMap = Map.Map A.Con [G.DataCon]
 
--- We want a "stateful" traversal, since, once a TyCon is identified
--- any new DataCon associated with it should be inserted into its
--- constructor list.  If we don't linearize the traversal, we'd have to merge
--- the TyMaps intelligently; not impossible, but extra work.
-type TyST t = State TyMap t
-
-
+-- Need an Ord instance to do anything useful with the Map
 instance Ord A.TyCon where
   -- Type constructors names must be unique,
   -- so this is a reasonable instance for the Map requirement.
@@ -402,15 +408,88 @@ instance Ord A.TyCon where
     = compare c1 c2
 
 
+-- We want a "stateful" traversal, since, once a TyCon is identified
+-- any new DataCon associated with it should be inserted into its
+-- constructor list.  If we don't linearize the traversal, we'd have to merge
+-- the TyMaps intelligently; not impossible, but extra work.
+type TyST = State TyMap
+
+
+-- Because this is likely to have all kinds of errors, and we'd like
+-- to know as much as possible about them, we'll use the ExceptT
+-- transformer to marry State and Exception
+data G2AException
+  = Except
+    { srcSpan :: SrcSpan
+    , msg     :: String  }
+type G2AMonad t = ExceptT G2AException TyST t
+
+
+-- lift the State primitive operators into the G2AMonad
+--lget :: G2AMonad a
+lget = lift get
+--lput :: a -> G2AMonad ()
+lput = lift . put
+
+
+-- | Fail with a message about what feature we're not (yet)
+-- supporting
+unsupported :: String -> G2AMonad a
+unsupported = unsupportedAt (UnhelpfulSpan $ mkFastString "Uncertain location")
+unsupportedAt :: SrcSpan -> String -> G2AMonad a
+unsupportedAt srcSpan msg = throwE $ Except srcSpan msg
+unsupportedWithName :: NamedThing a => a -> String -> G2AMonad a
+unsupportedWithName nthing = unsupportedAt (nameSrcSpan $ getName nthing)
+
+-- | Given a NamedThing, if some computation produces an exception and
+-- has no useful SrcSpan, use the SrcSpan of the NamedThing instead
+rethrowAtName nthing e = catchE e relocate
+  where relocate (Except UnhelpfulSpan{} msg) = unsupportedAt newLoc msg
+        relocate e = throwE e
+        newLoc = nameSrcSpan (getName nthing)
+
+
+-- can use this as a 'catchE' handler in the G2AMonad, but, as the
+-- name suggests, it fails hard when an Exception is encountered.
+-- There's not much use trying to recover from an Exception, so maybe
+-- that's fine.
+failHard :: G2AException -> a
+failHard Except{srcSpan, msg} =
+  let locstr = case srcSpan of
+        UnhelpfulSpan s -> unpackFS s
+        RealSrcSpan rss ->
+          let (start, end) = unpackRSS rss
+              file         = unpackFS $ srcSpanFile rss
+          in concat $ intersperse " "
+             ["file:", file, show start, "to", show end]
+  in error $ unlines
+     ["Exception in G2A:", msg,
+      "Occurring at or near", locstr]
+      
+
+runG2AorElse comp = case runState (runExceptT comp) Map.empty of
+  (Left e, _) -> failHard e
+  (Right r, t) -> (r,t)
+  
+runG2ANoState = fst . runG2AorElse
+
+runG2A handler comp = runState (runExceptT (catchE comp handler)) Map.empty
+
+unpackRSS rss = ((srcSpanStartLine rss, srcSpanStartCol rss),
+                 (srcSpanEndLine rss  , srcSpanEndCol rss  ))
+  
+
+
+    
 
 -- | Add a GHC DataCon to the TyMap
-putDataCon :: G.DataCon -> TyST ()
+putDataCon :: G.DataCon -> G2AMonad ()
 putDataCon dc =
   do
     let tcname  = qualifyName (dataConTyCon dc)        
-    tymap <- get
+    tymap <- lget
     when (not $ dcPresent dc tymap) $
-      put (Map.insertWith insertDC tcname [dc] tymap)
+      lput (Map.insertWith insertDC tcname [dc] tymap)
       
   where
     insertDC [new] dcs = List.insertBy (compare `on` dataConTag) new dcs
@@ -428,27 +507,31 @@ dcPresent :: G.DataCon -> TyMap -> Bool
 dcPresent dc tmap = any (any (== dc)) tmap
   
 -- | Convert a GHC DataCon to an APPFL DataCon
-g2aDataCon :: G.DataCon -> A.DataCon
-g2aDataCon dc = DataCon con mtypes
-  where con    = qualifyName dc
-        mtypes = go (g2aMonoType $ dataConRepType dc)
+g2aDataCon :: G.DataCon -> G2AMonad A.DataCon
+g2aDataCon dc = rethrowAtName dc $ do
+  let con  = qualifyName dc
+      -- The type of a GHC DataCon is a function type.  We represent
+      -- this as a list of Monotypes, rather than nested MFuns.
+      -- 'go' unfolds MFun(s) resulting from the GHC to APPFL type
+      -- conversion into the list form
+      go :: A.Monotype -> [A.Monotype]
+      go (MFun m1 m2) = m1 : go m2
+      go m            = [m]
+      
+  mtypes <- liftM go (g2aMonoType $ dataConRepType dc)
+  return $ A.DataCon con mtypes
 
-        -- The type of a GHC DataCon is a function type.  We represent
-        -- this as a list of Monotypes, rather than nested MFuns.
-        -- 'go' unfolds MFun(s) resulting from the GHC to APPFL type
-        -- conversion into the list form
-        go :: A.Monotype -> [A.Monotype]
-        go (MFun m1 m2) = m1 : go m2
-        go m            = [m]
+        
+
 
 
 -- | Convert a GHC Type to an APPFL Monotype
 --   for use in DataCons
-g2aMonoType :: Type -> A.Monotype
+g2aMonoType :: Type -> G2AMonad A.Monotype
 g2aMonoType t =
   case t of
     -- Simplest case, a type variable
-    TyVarTy v        -> MVar (makeStgName v)
+    TyVarTy v        -> return $ MVar (makeStgName v)
 
     -- AppTy will never be an application of a TyConnApp to
     -- some other type.  The first param is always another AppTy or
@@ -456,22 +539,25 @@ g2aMonoType t =
     -- f :: Monad m => m a -> m b.  In Haskell, this is fine, but there are
     -- no typeclasses or synonyms at the STG level, so this type may have
     -- been excised/simplified by the time we start touching the STG tree
-    AppTy t1 t2      ->
-      case g2aMonoType t1 of
-        MVar v        -> MCon True v [g2aMonoType t2]
-        MCon b c args -> MCon b c (args ++ [g2aMonoType t2])
-        -- Anything else would be strange, but let's be sure
-        _           -> panicType
+    AppTy t1 t2      ->  do
+      m1 <- g2aMonoType t1
+      m2 <- g2aMonoType t2
+      case m1 of
+        MVar v        -> return $ MCon True v [m2]
+        MCon b c args -> return $ MCon b c (args ++ [m2])
+          -- Anything else would be strange, but let's be sure
+        _             -> panicType
 
     -- e.g. List a, Maybe Int, etc.
-    TyConApp tc args -> MCon True -- Assuming everything boxed for now
-                        (makeStgName tc) (map g2aMonoType args)
+    TyConApp tc args -> do
+      mtypes <- mapM g2aMonoType args
+      return $ MCon True (makeStgName tc) mtypes
 
     -- e.g a -> a
     -- This assumes the right-associativity of (->) is
     -- expressed just as in our MFun, which is probably
     -- reasonable. Anything else would be counterintuitive
-    FunTy t1 t2      -> MFun (g2aMonoType t1) (g2aMonoType t2)
+    FunTy t1 t2      -> liftM2 MFun (g2aMonoType t1) (g2aMonoType t2)
 
     -- If this is nested in a type (as in higher-rank types), just ignoring the
     -- universal quantifier may be a problem.  We'll see...
@@ -482,7 +568,7 @@ g2aMonoType t =
     -- so they could be rejected early, in theory.
     LitTy _          -> panicType
 
-  where panicType = panic $ showSDocUnsafe $
+  where panicType = unsupported $ showSDocUnsafe $
                     text "Having trouble converting Type to MonoType:" <+> ppr t
 
 -- | Given the TyMap produced by the G2A functions, construct the
@@ -490,7 +576,7 @@ g2aMonoType t =
 makeTyCons :: TyMap -> [A.TyCon]
 makeTyCons tymap = map constrTyCon (Map.toList tymap)
   where constrTyCon (con, dcs) =
-          let appflDCs = map g2aDataCon dcs
+          let appflDCs = runG2ANoState $ mapM g2aDataCon dcs
               tyvars   = concatMap dataConTyVars appflDCs
           -- Assuming boxed for now
           in TyCon True con tyvars appflDCs
@@ -522,7 +608,7 @@ g2a binds =
   in map ObjDef (concat objs) ++ map DataDef tycons
 
 -- | Translate bindings (let/letrec, including top level) into APPFL Obj types.
-g2aObj :: StgBinding -> TyST [Obj Dirty]
+g2aObj :: StgBinding -> G2AMonad [Obj Dirty]
 g2aObj bind =
   case bind of
     -- We don't distinguish between recursive bindings and otherwise
@@ -533,8 +619,8 @@ g2aObj bind =
     StgRec pairs -> mapM (\(id, rhs) -> procRhs rhs id) pairs
 
   where
-    procRhs :: StgRhs -> Id -> TyST (Obj Dirty)
-    procRhs rhs id =
+    procRhs :: StgRhs -> Id -> G2AMonad (Obj Dirty)
+    procRhs rhs id = rethrowAtName id $
       case rhs of
         -- FUN or THUNK
         StgRhsClosure ccs bindInfo fvs updFlag srt args expr
@@ -603,7 +689,7 @@ g2aArg :: StgArg -> Expr Dirty
 g2aArg (StgVarArg id)  = EAtom Dirty (Var $ makeStgName id)
 g2aArg (StgLitArg lit) = EAtom Dirty (g2aLit lit)
 
-g2aLit :: Literal -> Atom
+g2aLit :: Literal -> G2AMonad Atom
 g2aLit lit = case lit of
   LitInteger i typ
     | Just int  <- toInt i   -> LitI int
@@ -649,7 +735,7 @@ safeIntegerConvert i
 
 
 -- | Convert a GHC STG Expression to an APPFL Expression
-g2aExpr :: StgExpr -> TyST (Expr Dirty)
+g2aExpr :: StgExpr -> G2AMonad (Expr Dirty)
 g2aExpr e = case e of
   -- Function Application or a Var 
   StgApp id args
