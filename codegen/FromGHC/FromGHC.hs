@@ -4,6 +4,9 @@ LiberalTypeSynonyms,
 UndecidableInstances, BangPatterns, MagicHash #-}
 
 module FromGHC.FromGHC
+  ( ghc2stg
+  , compileAndThen
+  )
 where
 
 -- This may be bad practice, or an indicator of bad design.
@@ -175,13 +178,17 @@ target f = testDir ++ f
 testPreludeDir = "../prelude/"
 
 
-printStgSyn file = writeStgSyn file "/dev/stdout" >> putStrLn "" 
-writeStgSyn infile outfile =
+printGhcSyn file = writeGhcSyn file "/dev/stdout" >> putStrLn "" 
+writeGhcSyn infile outfile =
   compileAndThen stgSynString testPreludeDir infile >>= writeFile outfile . snd
   
 
-printAppfl file = compileAndThen (return . g2a) testPreludeDir file >>=
-                  print . A.unparse . snd
+printAppflSyn file = writeAppflSyn file "/dev/stdout" >> putStrLn "" 
+                  
+writeAppflSyn infile outfile =
+  do
+    (ghc, (ts,os)) <- compileAndThen (return . g2a) testPreludeDir infile
+    writeFile outfile (show $ A.unparse ts A.$+$ A.unparse os)
 
 stgSynString stg = do
   dynflags <- getSessionDynFlags
@@ -189,7 +196,9 @@ stgSynString stg = do
       text = showSDoc dynflags sdoc
   return text
 
+ghc2stg preludeDir file = compileAndThen (return . g2a) preludeDir file >>= return . snd
 
+-- stgFun gives access to GHC Stg within the GHC Monad
 compileAndThen stgFun preludeDir file = do
 
   -- Install an error handler with functions for printing errors and flushing
@@ -421,6 +430,7 @@ type TyST = State TyMap
 data G2AException
   = Except
     { srcSpan :: SrcSpan
+    , mName   :: Maybe Name
     , msg     :: String  }
 type G2AMonad t = ExceptT G2AException TyST t
 
@@ -432,55 +442,76 @@ lget = lift get
 lput = lift . put
 
 
--- | Fail with a message about what feature we're not (yet)
--- supporting
+-- | Throw an exception for an unsupported feature without any name/location
+-- information
 unsupported :: String -> G2AMonad a
 unsupported = unsupportedAt (UnhelpfulSpan $ mkFastString "Uncertain location")
+
+
+-- | Throw a fully parameterized exception
+exceptG2A :: SrcSpan    -- | location in source code
+          -> Maybe Name -- | Name of the thing that caused it
+          -> String     -- | Some helpful message
+          -> G2AMonad a
+exceptG2A srcSpan mName msg = throwE $ Except srcSpan mName msg
+
+-- | Throw an exception with location information and a message
 unsupportedAt :: SrcSpan -> String -> G2AMonad a
-unsupportedAt srcSpan msg = throwE $ Except srcSpan msg
-unsupportedWithName :: NamedThing a => a -> String -> G2AMonad a
-unsupportedWithName nthing = unsupportedAt (nameSrcSpan $ getName nthing)
+unsupportedAt srcSpan msg = exceptG2A srcSpan Nothing msg
 
--- | Given a NamedThing, if some computation produces an exception and
--- has no useful SrcSpan, use the SrcSpan of the NamedThing instead
+-- | Throw an exception caused by a NamedThing.  The SrcSpan is derived from the
+-- thing's Name.
+unsupportedWithName :: NamedThing t => t -> String -> G2AMonad a
+unsupportedWithName nthing = let name = getName nthing
+                                 srcSpan = (nameSrcSpan name)
+                             in exceptG2A srcSpan (Just name)
+
+-- | Given a NamedThing, if some computation produces an exception and has no
+-- useful SrcSpan and/or Name, replace the useless values with those derived
+-- from the NamedThing
+rethrowAtName :: NamedThing t => t -> G2AMonad a -> G2AMonad a
 rethrowAtName nthing e = catchE e relocate
-  where relocate (Except UnhelpfulSpan{} msg) = unsupportedAt newLoc msg
+  where relocate (Except UnhelpfulSpan{} Nothing msg) = exceptG2A newLoc (Just name) msg
+        relocate (Except UnhelpfulSpan{} mName msg) = exceptG2A newLoc mName msg
+        relocate (Except span Nothing msg) = exceptG2A span (Just name) msg        
         relocate e = throwE e
-        newLoc = nameSrcSpan (getName nthing)
+        name = getName nthing
+        newLoc = nameSrcSpan name
 
 
--- can use this as a 'catchE' handler in the G2AMonad, but, as the
--- name suggests, it fails hard when an Exception is encountered.
--- There's not much use trying to recover from an Exception, so maybe
--- that's fine.
+-- can use this as a 'catchE' handler in the G2AMonad, but, as the name
+-- suggests, it fails hard when an Exception is encountered.  There's not much
+-- use trying to recover from an Exception, so maybe that's fine.
 failHard :: G2AException -> a
-failHard Except{srcSpan, msg} =
-  let locstr = case srcSpan of
-        UnhelpfulSpan s -> unpackFS s
-        RealSrcSpan rss ->
-          let (start, end) = unpackRSS rss
-              file         = unpackFS $ srcSpanFile rss
-          in concat $ intersperse " "
-             ["file:", file, show start, "to", show end]
-  in error $ unlines
-     ["Exception in G2A:", msg,
-      "Occurring at or near", locstr]
-      
+failHard Except{srcSpan, mName, msg} =
+  error $ unlines $
+  ["Exception in G2A:", msg] ++ 
+  (maybe [] (\n -> ["Caused by or near something named " ++ (show $ getOccString n)]) mName) ++
+  ["Occurring at or near", locstr]
+  
+  where locstr :: String
+        locstr = case srcSpan of
+          UnhelpfulSpan s -> unpackFS s
+          RealSrcSpan rss ->
+            let (start, end) = unpackRSS rss
+                file         = unpackFS $ srcSpanFile rss
+            in concat $ intersperse " "
+               ["file:", file, show start, "to", show end]
 
+        unpackRSS rss = ((srcSpanStartLine rss, srcSpanStartCol rss),
+                         (srcSpanEndLine rss  , srcSpanEndCol rss  ))
+  
+
+-- | Run a computation in the G2A monad, failing hard on exceptions
+runG2AorElse :: G2AMonad a -> (a, TyMap)
 runG2AorElse comp = case runState (runExceptT comp) Map.empty of
   (Left e, _) -> failHard e
   (Right r, t) -> (r,t)
-  
+
+-- | Run a computation in the G2A monad, failing hard when an exception is
+-- encountered and ignoring state.
+runG2ANoState :: G2AMonad a -> a
 runG2ANoState = fst . runG2AorElse
-
-runG2A handler comp = runState (runExceptT (catchE comp handler)) Map.empty
-
-unpackRSS rss = ((srcSpanStartLine rss, srcSpanStartCol rss),
-                 (srcSpanEndLine rss  , srcSpanEndCol rss  ))
-  
-
-
-    
 
 -- | Add a GHC DataCon to the TyMap
 putDataCon :: G.DataCon -> G2AMonad ()
@@ -494,35 +525,57 @@ putDataCon dc =
   where
     insertDC [new] dcs = List.insertBy (compare `on` dataConTag) new dcs
 
-    -- (Map.insertWith f key new map) Promises that, if the (key,old)
-    -- pair is present in the map, the new pair in the map will be
-    -- (key, f new old). If the key is not in the map, the new val is
-    -- added without calling f.  Since 'new' is always the singleton list
-    -- [dc] above, the above match should never fail
+    -- (Map.insertWith f key new map) Promises that, if the (key,old) pair is
+    -- present in the map, the new pair in the map will be (key, f new old). If
+    -- the key is not in the map, the new val is added without calling f.  Since
+    -- 'new' is always the singleton list [dc] above, the above match should
+    -- never fail
     insertDC _ _ = _unreachable
 
 
 -- | Is a GHC DataCon in the TyMap?
 dcPresent :: G.DataCon -> TyMap -> Bool
 dcPresent dc tmap = any (any (== dc)) tmap
+
   
 -- | Convert a GHC DataCon to an APPFL DataCon
 g2aDataCon :: G.DataCon -> G2AMonad A.DataCon
-g2aDataCon dc = rethrowAtName dc $ do
-  let con  = qualifyName dc
-      -- The type of a GHC DataCon is a function type.  We represent
-      -- this as a list of Monotypes, rather than nested MFuns.
-      -- 'go' unfolds MFun(s) resulting from the GHC to APPFL type
-      -- conversion into the list form
-      go :: A.Monotype -> [A.Monotype]
-      go (MFun m1 m2) = m1 : go m2
-      go m            = [m]
-      
-  mtypes <- liftM go (g2aMonoType $ dataConRepType dc)
-  return $ A.DataCon con mtypes
-
+g2aDataCon dc = rethrowAtName dc $
+  do
+    let con  = qualifyName dc
+        -- The type of a GHC DataCon is a function type.  We represent
+        -- this as a list of Monotypes, rather than nested MFuns.
+        -- 'go' unfolds MFun(s) resulting from the GHC to APPFL type
+        -- conversion into the list form
+        go :: A.Monotype -> [A.Monotype]
+        go (MFun m1 m2) = m1 : go m2
+        go m            = [m]
         
+    -- See note below about why we need the init here
+    mtypes <- liftM (init . go) (g2aMonoType $ dataConRepType dc)    
+    return $ A.DataCon con mtypes 
 
+{- Getting data constructor definitions from GHC:
+
+data constructor definitions do not exist at the STG level in GHC.  The
+constructors are simply functions.  We can recreate the definitions from the
+types of these functions.  For example, the list constructors look like this:
+
+       |- argument types -|    |- result type -|
+(:) ::    a    ->   [] a    ->      [] a
+       |-    no args     -|    |- result type -|
+[]  ::                              [] a
+
+We can convert these to Monotypes, but we need only the 'argument' types and not
+the 'result' type to form the DataCon's Monotype. (The result type could be used
+to make the TyCon, but that's accessible in simpler ways.)
+
+What this means is that when we convert the dataConRepType of the GHC DataCon to
+an APPFL Monotype and unfold it into a list, the last item in the list is the
+result and we need to discard it.  This is why we need the init from the result
+of 'go' above.
+
+-}
 
 
 -- | Convert a GHC Type to an APPFL Monotype
@@ -571,6 +624,8 @@ g2aMonoType t =
   where panicType = unsupported $ showSDocUnsafe $
                     text "Having trouble converting Type to MonoType:" <+> ppr t
 
+        debug t   = unsupported $ show $ A.unparse t
+
 -- | Given the TyMap produced by the G2A functions, construct the
 -- actual TyCons.
 makeTyCons :: TyMap -> [A.TyCon]
@@ -600,21 +655,23 @@ renameGHC :: String -> String
 renameGHC str | "GHC" `isPrefixOf` str = "APPFL" ++ drop 3 str
               | otherwise              = str
 
+
 -- | Entry point to the GHC to APPFL STG conversion
-g2a :: [StgBinding] -> [Def Dirty]
+g2a :: [StgBinding] -> ([A.TyCon], [Obj Clean])
 g2a binds =
-  let (objs, tymap) = runState (mapM g2aObj binds) Map.empty
+  let (objs, tymap) = runG2AorElse -- We do want to fail hard at the moment.
+                      (mapM g2aObj binds)
       tycons = makeTyCons tymap
-  in map ObjDef (concat objs) ++ map DataDef tycons
+  in sanitize (tycons, objs)
+
 
 -- | Translate bindings (let/letrec, including top level) into APPFL Obj types.
 g2aObj :: StgBinding -> G2AMonad [Obj Dirty]
 g2aObj bind =
   case bind of
-    -- We don't distinguish between recursive bindings and otherwise
-    -- at the type level, so no need to do anything special here.
-    -- occNames passed to procRhs are probably not what we want, but
-    -- serve for now
+    -- We don't distinguish between recursive bindings and otherwise at the type level, so
+    -- no need to do anything special here.  occNames passed to procRhs are probably not
+    -- what we want, but serve for now
     StgNonRec id rhs -> procRhs rhs id >>= return . (:[])
     StgRec pairs -> mapM (\(id, rhs) -> procRhs rhs id) pairs
 
@@ -631,44 +688,38 @@ g2aObj bind =
               e <- g2aExpr expr
               return $ THUNK Dirty e (makeStgName id)
 
-          -- it's a FUN(ish) thing.  Data constructors are functions
-          -- too but they are not given a distinguished definition as
-          -- in APPFL STG or full Haskell. This is fine; we can leave
-          -- function wrappers for the CONs, and only use them when
+          -- it's a FUN(ish) thing.  Data constructors are functions too but they are not
+          -- given a distinguished definition as in APPFL STG or full Haskell. This is
+          -- fine; we can leave function wrappers for the CONs, and only use them when
           -- constructors aren't fully saturated.
           | otherwise
             -> do
               e <- g2aExpr expr
               return $ FUN Dirty (map makeStgName args) e (makeStgName id)
           
-        -- It's either a top-level empty constructor (a la
-        -- Nil/Nothing) or it's being used in a let binding. Either
-        -- way, we make sure the DataCon is added to the TyMap.
+        -- It's either a top-level empty constructor (a la Nil/Nothing) or it's being used
+        -- in a let binding. Either way, we make sure the DataCon is added to the TyMap.
         StgRhsCon _ dataCon args
 
           -- DataCon does not have a "fancy" type.
           -- "No existentials, no coercions, nothing" (basicTypes/DataCon.hs)
           | isVanillaDataCon dataCon
-            ->
-            let name = makeStgName id
-                
-            in
-              do
-                putDataCon dataCon
-                return $
-                  if hasWrapper dataCon
-                  -- If GHC generated a wrapper, let's try to use it
-                  then mkWrapperCall dataCon args name
-                  -- Constructors are always saturated at this point so
-                  -- we can safely make a CON. See StgSyn commentary:
-                  -- https://ghc.haskell.org/trac/ghc/wiki/Commentary/Compiler/StgSynType
-                  else mkConObj dataCon args name
+            -> do
+              let name = makeStgName id
+              putDataCon dataCon
+              if hasWrapper dataCon
+                -- If GHC generated a wrapper, let's try to use it
+                then mkWrapperCall dataCon args name
+                -- Constructors are always saturated at this point so we can safely make a
+                -- CON. See StgSyn commentary:
+                -- https://ghc.haskell.org/trac/ghc/wiki/Commentary/Compiler/StgSynType
+                else mkConObj dataCon args name
 
-          -- Something fancy going on with the DataCon, fail hard until we figure
-          -- out how to handle it.
-          | otherwise         ->
-              panic $ showSDocUnsafe $
-              (text "Not sure how to handle non-vanilla DataCons like:" $+$ ppr dataCon)
+          -- Something fancy going on with the DataCon, fail hard until we figure out how
+          -- to handle it.
+          | otherwise ->
+              unsupportedWithName dataCon (showSDocUnsafe $ ppr dataCon)
+
 
 
 hasWrapper :: G.DataCon -> Bool
@@ -676,37 +727,43 @@ hasWrapper = isJust . dataConWrapId_maybe
 
 
 -- | Make a THUNK function call to a DataCon's wrapper function
-mkWrapperCall :: G.DataCon -> [StgArg] -> String -> Obj Dirty
-mkWrapperCall dc args name = THUNK Dirty expr name
-  where expr = EFCall Dirty (makeStgName $ dataConWrapId dc) (map g2aArg args)
+mkWrapperCall :: G.DataCon -> [StgArg] -> String -> G2AMonad (Obj Dirty)
+mkWrapperCall dc args name = 
+  do
+    args' <- mapM g2aArg args
+    let expr = EFCall Dirty (makeStgName $ dataConWrapId dc) args'
+    return $ THUNK Dirty expr name
     
 -- | Make a CON Object from a DataCon and its StgArgs
-mkConObj :: G.DataCon -> [StgArg] -> String -> Obj Dirty
-mkConObj dc args name = CON Dirty (makeStgName dc) (map g2aArg args) name
+mkConObj :: G.DataCon -> [StgArg] -> String -> G2AMonad (Obj Dirty)
+mkConObj dc args name =
+  do
+    args' <- mapM g2aArg args
+    return $ CON Dirty (makeStgName dc) args' name
 
 -- | Turn an StgArg into an APPFL Expr.  Invariant: Expr is an EAtom
-g2aArg :: StgArg -> Expr Dirty
-g2aArg (StgVarArg id)  = EAtom Dirty (Var $ makeStgName id)
-g2aArg (StgLitArg lit) = EAtom Dirty (g2aLit lit)
+g2aArg :: StgArg -> G2AMonad (Expr Dirty)
+g2aArg (StgVarArg id)  = return $ EAtom Dirty (Var $ makeStgName id)
+g2aArg (StgLitArg lit) = liftM (EAtom Dirty) (g2aLit lit)
 
 g2aLit :: Literal -> G2AMonad Atom
 g2aLit lit = case lit of
   LitInteger i typ
-    | Just int  <- toInt i   -> LitI int
-    | Just long <- toInt64 i -> LitL long
+    | Just int  <- toInt i   -> return $ LitI int
+    | Just long <- toInt64 i -> return $ LitL long
     | otherwise              -> unsupported $ "LitInteger val too large: " ++ show i
 
   -- This may not be wise, particularly if someone is counting on
   -- 8-bit overflow
-  MachChar chr               -> LitI $ ord chr
-  MachInt i                  -> LitI (fromInteger i)
+  MachChar chr               -> return $ LitI $ ord chr
+  MachInt i                  -> return $ LitI (fromInteger i)
 
   -- Word == Int64 == Word64 == 64 bit types for APPFL
-  MachInt64 i                -> LitL (fromInteger i)
-  MachWord i                 -> LitL (fromInteger i)
-  MachWord64 i               -> LitL (fromInteger i)
-  MachFloat r                -> LitF (fromRational r)
-  MachDouble r               -> LitD (fromRational r)
+  MachInt64 i                -> return $ LitL (fromInteger i)
+  MachWord i                 -> return $ LitL (fromInteger i)
+  MachWord64 i               -> return $ LitL (fromInteger i)
+  MachFloat r                -> return $ LitF (fromRational r)
+  MachDouble r               -> return $ LitD (fromRational r)
 
   
   MachStr bs                 -> unsupported "Machine Strings"
@@ -743,12 +800,15 @@ g2aExpr e = case e of
     | null args -> return $ EAtom Dirty (Var $ makeStgName id)
 
     -- Actually a function call
-    | otherwise -> return $ EFCall Dirty (makeStgName id) (map g2aArg args)
+    | otherwise ->
+      do
+        args' <- mapM g2aArg args
+        return $ EFCall Dirty (makeStgName id) args'
 
 
   -- Literal Expr (all primitive)
   StgLit lit
-    -> return $ EAtom Dirty $ g2aLit lit
+    -> liftM (EAtom Dirty) $ g2aLit lit
 
 
   -- CONs are only valid in let-bindings in our STG, but this appears
@@ -761,17 +821,16 @@ g2aExpr e = case e of
     | isUnboxedTupleCon datacon -> do
         -- Letting them stay for now
         putDataCon datacon
-        return $ bindConInLet datacon args
+        bindConInLet datacon args
     | otherwise -> do
         putDataCon datacon
-        return $ bindConInLet datacon args
+        bindConInLet datacon args
 
 
   -- Primop application.  ForeignCalls and PrimCalls fall into this
   -- category too, but we're not dealing with them.
   StgOpApp stgop args resType
-    | StgPrimOp op <- stgop ->
-      return $ mkAppflPrimop op args
+    | StgPrimOp op <- stgop -> mkAppflPrimop op args
 
     -- Anything that's not a PrimOp is essentially a foreign call
     -- Don't ask me the difference between a PrimCall and Foreign
@@ -803,8 +862,8 @@ g2aExpr e = case e of
 
 -- | Make an Alts object given the AltType (unused), scrutinee binder
 -- and list of StgAlts
-g2aAlts :: AltType -> Id -> [StgAlt] -> TyST (Alts Dirty)
-g2aAlts altT bind alts =
+g2aAlts :: AltType -> Id -> [StgAlt] -> G2AMonad (Alts Dirty)
+g2aAlts altT bind alts = rethrowAtName bind $  
     do
       let scrtName = makeStgName bind
           escrt = EAtom Dirty (Var scrtName)
@@ -834,57 +893,61 @@ reorderAlts alts = alts
 -- same.
 g2aAlt :: A.Var  -- | Scrutinee Binding
        -> StgAlt -- | GHC Alt to convert
-       -> TyST (Alt Dirty)
+       -> G2AMonad (Alt Dirty)
 g2aAlt scrtName (acon, binders, usemask, rhsExpr) =
   do
     appflRhs <- g2aExpr rhsExpr
     let conParams = map makeStgName binders
     case acon of
       -- Constructor match (Maybe a, I# i, etc.)
-      DataAlt datacon -> do
-        putDataCon datacon
-        return $ ACon Dirty (makeStgName datacon) conParams appflRhs
+      DataAlt datacon -> rethrowAtName datacon $
+        do
+          putDataCon datacon
+          return $ ACon Dirty (makeStgName datacon) conParams appflRhs
 
       -- primitive literal pattern match (3#, 1.0#, etc)
-      LitAlt lit ->
-        case g2aLit lit of
+      LitAlt lit -> do
+        l <- g2aLit lit
+        case l of
           LitI i -> return $ ACon Dirty (show i) conParams appflRhs
           _      -> unsupported "Only pattern matching on literal Int# for now"
   
       DEFAULT -> return $ ADef Dirty scrtName appflRhs
 
 
-
-mkAppflPrimop :: PrimOp -> [StgArg] -> Expr Dirty
+mkAppflPrimop :: PrimOp -> [StgArg] -> G2AMonad (Expr Dirty)
 mkAppflPrimop primop args = case lookupAppflPrimop primop of
-  Just op -> EPrimop Dirty op (map g2aArg args)
+  Just op -> liftM (EPrimop Dirty op) (mapM g2aArg args)
   Nothing ->
-    let name = fromMaybe (unsupported $ showSDocUnsafe $ ppr primop)
-               (lookupImplementedPrimop primop)
-    in EFCall Dirty name (map g2aArg args)
-    
-  
+    case lookupImplementedPrimop primop of
+                 Just name -> liftM (EFCall Dirty name) (mapM g2aArg args)
+                 Nothing   -> unsupported $ showSDocUnsafe $ ppr primop
 
-bindConInLet :: G.DataCon -> [StgArg] -> Expr Dirty
-bindConInLet dc args =
-  let
-    -- We don't want to shadow names, but maintaining an environment
-    -- to guarantee this is annoying. For such a small scope, we can
-    -- use an invalid name and rely on sanitization to fix it before
-    -- codegen.
-    bind   = "@"  -- hack
-    conObj = mkConObj dc args bind
-    inBody = EAtom Dirty (Var bind)
-  in ELet Dirty [conObj] inBody
 
-makeLetExpr :: StgBinding -> StgExpr -> TyST (Expr Dirty)
+bindConInLet :: G.DataCon -> [StgArg] -> G2AMonad (Expr Dirty)
+bindConInLet dc args = rethrowAtName dc $
+  do
+    let inBody = EAtom Dirty (Var bind)
+        -- We don't want to shadow names, but maintaining an environment
+        -- to guarantee this is annoying. For such a small scope, we can
+        -- use an invalid name and rely on sanitization to fix it before
+        -- codegen.
+        bind   = "@"  -- hack
+    conObj <- mkConObj dc args bind
+    return $ ELet Dirty [conObj] inBody
+
+
+makeLetExpr :: StgBinding -> StgExpr -> G2AMonad (Expr Dirty)
 makeLetExpr ghcBindings ghcBody =
   do
     appflObjs <- g2aObj ghcBindings
     appflBody <- g2aExpr ghcBody
     return $ ELet Dirty appflObjs appflBody
     
-  
+
+
+
+
 
 -- Custom Pretty Printer for better inspection of STG tree.
 -- This will make it easier to figure out what Haskell values
@@ -917,6 +980,7 @@ qualifyName thing = qualify idname
         modPrefix      = maybe "" makePrefix (nameModule_maybe name)
         makePrefix mod = moduleNameString (moduleName mod) ++ "."
         idname         = getOccString name
+
 
 
 -- This is roughly based on the (uglier, IMO) base62 encoding from
@@ -1074,3 +1138,10 @@ instance OutputSyn StgOp where
         -> text $ "(Foreign) " ++ nameForeignCall fcall
 
       
+
+
+------------------------------------------------------------------------
+--  Sanitizer
+------------------------------------------------------------------------
+
+sanitize (ts,os) = _TODO

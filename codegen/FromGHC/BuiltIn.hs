@@ -41,7 +41,8 @@ primopMap = Map.fromList
   , (IntEqOp    , Pieq)
   , (IntNeOp    , Pine)
   , (IntLeOp    , Pile)
-  , (IntLtOp    , Pilt) 
+  , (IntLtOp    , Pilt)
+  , (IntNegOp   , Pineg)   
   , (WordGtOp   , Piadd)
   , (WordGeOp   , Pisub)
   , (WordEqOp   , Pimul)
@@ -186,7 +187,6 @@ genTupleModule outFileName m_size =
    | OrIOp
    | XorIOp
    | NotIOp
-   | IntNegOp   
    | IntAddCOp  -- i# -> i# -> (# i#, i#  #)
                 -- add ints, result (possibly truncated) in first element
                 -- report overflow with non-zero val in second element
