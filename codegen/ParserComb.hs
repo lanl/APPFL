@@ -3,7 +3,7 @@ module ParserComb
 (
   Parsed (..),
   Parser,
-  fromParsed,
+  extractParsed,
   groupParsed,
   accept,
   reject,
@@ -56,8 +56,8 @@ data Parsed a b = Parsed a | Unparsed b deriving (Show)
 type Parser inp val = [inp] -> [(val, [inp])]
 
     
-fromParsed :: [Parsed a b] -> ([a],[b])
-fromParsed =
+extractParsed :: [Parsed a b] -> ([a],[b])
+extractParsed =
     let f x (ps, us) =
             case x of
               (Parsed p)   -> (p:ps, us)

@@ -79,8 +79,8 @@ module Parser
  Parsed(..),
  Comment,
  parse,
- fromParsed,
- parseWithComments,
+ extractParsed,
+ parseWithComments
 ) where
 
 import Tokenizer
