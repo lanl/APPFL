@@ -2,9 +2,12 @@
 
 import           Driver
 import           CMap
+import           AST (Obj)
+import           ADT (TyCon)
 import           Data.List
 import           Data.List.Split
 import           Data.Maybe
+import           Data.Char (toLower)
 import           System.Console.GetOpt
 import           System.Environment
 import           System.Exit
@@ -12,6 +15,9 @@ import           System.IO
 import           System.Process
 import           PPrint
 import           Control.Monad (when)
+import           Control.Applicative ((<|>))
+import           FromGHC.FromGHC (ghc2stg)
+-- Just a <|> Nothing == Just a <|> Just b == Just a
 
 -- build a.out from stg/mhs and run it
 _eval :: String -> Bool -> IO()
@@ -60,21 +66,68 @@ buildit input ccompile = let update x = x {optInput = Just input}
 
 -- generate c code from stg (no prelude)
 stgc :: String -> IO ()
-stgc arg = genc arg False
+stgc filename = genc filename STG
+
 -- generate c code from mhs (no prelude)
 mhsc :: String -> IO ()
-mhsc arg = genc arg True
+mhsc filename = genc filename MHS
 
-genc :: String -> Bool -> IO ()
-genc arg mhs =
+genc :: String -> Frontend -> IO ()
+genc filename fe =
   do
-    ifd <- openFile arg ReadMode
-    source <- hGetContents ifd
-    let prog = pprinter $ codegener source True mhs
+    cginp <- case fe of
+               STG -> readFile filename >>= return . StgSource
+               MHS -> readFile filename >>= return . MhsSource
+               GHC -> ghc2stg "../prelude" filename >>= return . GhcTransformed
+    let prog = pprinter $ codegener cginp True
     putStrLn prog
-    hClose ifd
     writeFile "../runtime/userprog.c" prog
 
+
+  
+getParsedSTG :: CodegenInput -> (CodegenInput, [TyCon], [Obj ()])
+getParsedSTG i = case i of
+  StgSource src -> let (ts,os) = parser src in (StgParsed (ts, os), ts, os)
+  MhsSource src -> let (ts,os,as) = mhsSTGer src in (MhsTransformed (ts,os,as), ts, os)
+  StgParsed (ts,os) -> (i, ts, os)
+  MhsTransformed (ts,os,_) -> (i, ts, os)
+  GhcTransformed (ts,os) -> (i, ts, os)
+
+  
+
+
+data Frontend = STG | MHS | GHC deriving (Show, Eq)
+
+frontends = [STG, MHS, GHC]
+frontendStrings = map (map toLower . show) frontends
+frontendAssoc = zip frontendStrings frontends
+
+parseFrontArg :: String -> Maybe Frontend
+parseFrontArg userArg = case [x | (s, x) <- frontendAssoc, arg `isPrefixOf` s] of
+                          []  -> frontendOptErr userArg
+                          x:_ -> Just x
+  where arg = map toLower userArg
+  
+inferFrontend filename = listToMaybe [fe | (s,fe) <- frontendAssoc, s `isSuffixOf` filename]
+
+
+frontendOptErr :: String -> a
+frontendOptErr s = error $ "Frontend flag given but " ++ show s ++ " is not a valid frontend"
+
+warnIfFrontendStrange Nothing Nothing =
+  putStrLn "Warning: No frontend specified or inferred from file extension, using STG"
+warnIfFrontendStrange u i
+  | Just usr <- u, Just inf <- i, usr /= inf
+  = putStrLn $ unlines
+    ["Warning: Specified frontend (" ++ show usr ++
+      ") does not match inferred (" ++ show inf ++ ").",
+      "  Using the former."]
+
+  | otherwise = return ()
+
+  
+                                                         
+                                
 data Options = Options
     { optVerbose   :: Bool
     , optHelp      :: Bool
@@ -83,6 +136,7 @@ data Options = Options
     , optNoPrelude :: Bool
     , optOutput    :: Maybe FilePath
     , optInput     :: Maybe FilePath
+    , optFrontend  :: Maybe Frontend
     } deriving Show
 
 defaultOptions       = Options
@@ -93,6 +147,7 @@ defaultOptions       = Options
     , optNoPrelude   = False
     , optInput       = Nothing
     , optOutput      = Just "a.out"
+    , optFrontend    = Nothing -- Want to know if something was passed
     }
 
 options :: [OptDescr (Options -> Options)]
@@ -115,6 +170,9 @@ options =
     , Option ['o'] ["output"]
         (ReqArg (\ f opts -> opts { optOutput = Just f }) "FILE")
         "output FILE"
+    , Option ['f'] ["frontend"]
+        (ReqArg (\s opts -> opts { optFrontend = parseFrontArg s }) "stg | mhs | ghc")
+        "frontend (stg | mhs | ghc)"
     ]
 
 header = "Usage: stgc [OPTION...] inputfile"
@@ -134,21 +192,32 @@ checkOpts (Options {optHelp}) optInputs =
                    1 -> return ()
                    _ ->  ioError (userError ("bad input\n" ++ usageInfo header options))
 
+
+
 compile :: Options -> String -> String -> String -> Bool -> IO ()
 compile  (Options {optVerbose, optDumpParse, optNoPrelude, optInput,
-           optOutput, optDumpSTG}) preludeDir rtLibDir rtIncDir ccompile =
+           optOutput, optDumpSTG, optFrontend}) preludeDir rtLibDir rtIncDir ccompile =
   do
     let input = fromJust optInput
-        minihs = ".mhs" `isSuffixOf` input
-        preludeFN = (preludeDir ++ "/Prelude" ++ (if minihs then ".mhs" else ".stg"))
+        implicitFrontend = inferFrontend input
+        frontend = fromJust $ optFrontend <|> implicitFrontend <|> Just STG
+        preludeFN = preludeDir ++ "/Prelude." ++ map toLower (show frontend)
     ifd <- openFile input ReadMode
     src <- hGetContents ifd
-    pfd <- openFile preludeFN ReadMode
-    prelude <- hGetContents pfd
-    let source = if optNoPrelude then src
-                 else prelude ++ src
-        (ts,os) = let (t,o,_) =  mhsSTGer source
-                  in if minihs then (t,o) else parser source
+    
+    warnIfFrontendStrange optFrontend implicitFrontend
+    
+    prelude <- if optNoPrelude || frontend == GHC
+               then return ""
+               else openFile preludeFN ReadMode >>= hGetContents 
+    let source = prelude ++ src
+
+    (cginp, ts, os) <- case frontend of
+                         GHC -> do
+                           (ts,os) <- ghc2stg preludeDir input
+                           return (GhcTransformed (ts,os), ts, os)
+                         MHS -> return . getParsedSTG $ MhsSource source
+                         STG -> return . getParsedSTG $ StgSource source
 
     when optDumpSTG $
       writeFile (input ++ ".dump.stg") (show $ unparse ts $+$ unparse os)
@@ -168,7 +237,7 @@ compile  (Options {optVerbose, optDumpParse, optNoPrelude, optInput,
                                ++ cflags ++ " -std=gnu99 -Wl,-rpath " ++ rtIncDir
                                ++ " -L" ++ rtLibDir ++ " -I" ++ rtIncDir
                                ++ " -lruntime"
-                 writeFile coutput (pprinter $ codegener source optVerbose minihs)
+                 writeFile coutput (pprinter $ codegener cginp optVerbose)
                  if ccompile
                    then system (cc ++ " " ++ coutput ++ " -o " ++ fromJust optOutput ++ flags)
                    else return ExitSuccess

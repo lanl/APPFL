@@ -1,9 +1,11 @@
+{-# LANGUAGE TupleSections #-}
 {-# LANGUAGE QuasiQuotes #-}
 
 {-# LANGUAGE CPP #-}
 #include "../options.h"
 
 module Driver (
+  CodegenInput (..),
   tokenizer,
   parser,
   renamer,
@@ -60,6 +62,15 @@ import           System.IO
 import Language.C.Quote.GCC
 import Language.C.Syntax (Definition)
 import qualified Text.PrettyPrint.Mainland as PP
+
+
+data CodegenInput
+  = StgSource String
+  | MhsSource String
+  | StgParsed ([TyCon], [Obj ()])
+  | MhsTransformed ([TyCon], [Obj ()], Assumptions)
+  | GhcTransformed ([TyCon], [Obj ()])
+
 
 
 tester :: (String -> a) -> (a -> String) -> [FilePath] -> IO ()
@@ -152,7 +163,7 @@ mhsNumBoxer inp = let defs = mhsExpSimpler inp
 -- simple (non-nested) case expressions.
 mhsPatSimpler :: String -> [MHS.AST.Defn]
 mhsPatSimpler inp = let defs = mhsNumBoxer inp
-                        in MHS.Transform.simplifyPats defs
+                    in MHS.Transform.simplifyPats defs
 
 mhsSTGer :: String -> ([TyCon], [Obj ()], Assumptions)
 mhsSTGer inp = let defs = mhsPatSimpler inp
@@ -253,22 +264,29 @@ tctest mhs arg =
     hmstgdebug objs
 
 
-codegener :: String -> Bool -> Bool -> [Definition]
-codegener inp v mhs = let (tycons, objs) = heapchecker mhs inp
-                          typeEnums = showTypeEnums tycons
-                          infotab = showITs objs
-                          (shoForward, shoDef) = showSHOs objs
-                          (funForwards, funDefs) = cgObjs objs stgRTSGlobals
-                          (stgStatObjCount, stgStatObj) = shos objs
-                          defs =  header : funForwards ++
-                                  typeEnums ++
-                                  infotab ++
-                                  shoForward ++
-                                  shoDef ++
-                                  [ stgStatObjCount, stgStatObj ] ++
-                                  concat funDefs ++
-                                  footer v
-                 in [cunit|$edecls:defs |]
+codegener :: CodegenInput -> Bool -> [Definition]
+codegener inp v =
+  let (tycons, objs) = case inp of
+        StgSource src         -> fromStgSource src
+        StgParsed parsed      -> fromParsed parsed
+        MhsSource src         -> fromMhsSource src
+        MhsTransformed mhsStg -> fromMhsTransform mhsStg
+        GhcTransformed ghcStg -> fromGhcTransform ghcStg
+  
+      typeEnums = showTypeEnums tycons
+      infotab = showITs objs
+      (shoForward, shoDef) = showSHOs objs
+      (funForwards, funDefs) = cgObjs objs stgRTSGlobals
+      (stgStatObjCount, stgStatObj) = shos objs
+      defs =  header : funForwards ++
+              typeEnums ++
+              infotab ++
+              shoForward ++
+              shoDef ++
+              [ stgStatObjCount, stgStatObj ] ++
+              concat funDefs ++
+              footer v
+  in [cunit|$edecls:defs |]
 
 pprinter :: [Definition] -> String
 pprinter = PP.pretty 80 . PP.ppr
@@ -278,8 +296,96 @@ pprinter = PP.pretty 80 . PP.ppr
 addSTGComment :: FilePath -> IO ()
 addSTGComment filename =
   do
-    prld <- readFile "Prelude.mhs"
+    prld <- readFile "../prelude/Prelude.mhs"
     src <- readFile filename
-    let (ts,os) = heapchecker True (src++prld)
+    let (ts,os) = heapchecker True (src ++ prld)
         stg = show $ bcomment (unparse ts $+$ unparse os)
     length src `seq` writeFile filename (src ++ stg)
+
+
+
+
+
+
+
+--------------------------------------------------------------------------------
+--  Composable versions of some of the above stages
+-- 
+--   These are handy when you want to plug in at a later stage, as is the
+--   case with the STG from GHC
+
+
+type ParsedPrgm   = ([TyCon], [Obj ()])
+type StgPrgm a    = ([TyCon], [Obj a], Assumptions)
+type TypedPrgm    = ([TyCon], [Obj InfoTab])
+type CGReadyPrgm  = ([TyCon], [Obj InfoTab])
+type FVMeta       = ([Var], [Var])                  
+
+tokC                        :: String          -> [Token]
+parseC                      :: [Token]         -> ParsedPrgm
+dupCheckC                   :: ParsedPrgm      -> StgPrgm ()
+boxC, renameC, exhaustCaseC :: StgPrgm ()      -> StgPrgm ()
+freevarC                    :: StgPrgm ()      -> StgPrgm FVMeta
+infotabC                    :: StgPrgm FVMeta  -> StgPrgm InfoTab
+conmapC                     :: StgPrgm InfoTab -> StgPrgm InfoTab
+typecheckC                  :: StgPrgm InfoTab -> TypedPrgm
+orderfvsC, knowncallC       :: TypedPrgm       -> TypedPrgm
+heapcheckC                  :: TypedPrgm       -> CGReadyPrgm
+
+tokC                      = tokenize
+parseC                    = parse
+dupCheckC                 = uncurry ( , , Set.empty) . dupCheck
+boxC         (ts, os, as) = (boxMTypes ts, os, as)
+renameC      (ts, os, as) = (ts, renameObjs os, as)
+exhaustCaseC (ts, os, as) = (ts, exhaustCases (toCMap ts) os, as)
+freevarC     (ts, os, as) = (ts, setFVsObjs stgRTSGlobals os, as)
+infotabC     (ts, os, as) = (ts, setITs os, as)
+conmapC      (ts, os, as) = uncurry ( , , as) $ setCMaps ts os
+typecheckC   (ts, os, as) = (ts, hmstgAssums os as)
+orderfvsC    (ts, os)     = (ts, orderFVsArgs os)
+knowncallC   (ts, os)     = (ts, propKnownCalls os)
+heapcheckC   (ts, os)     = (ts, setHeapAllocs os)
+
+
+-- Useful plugin points below.
+--
+--  The naming convention fromX indicates that
+--  the function should be given something equivalent to X.
+--
+--   e.g. fromGhcTransform uses fromParsed because the STG that the
+--     GHC Transform produces is equivalent to simple parsed STG
+
+
+-- Input STG should have CMaps set. Performs typecheck to heapcheck (CG ready)
+fromCMapped :: StgPrgm InfoTab -> CGReadyPrgm
+fromCMapped = heapcheckC . knowncallC . orderfvsC . typecheckC
+
+-- Input should have provided default Alts for non-exhaustive Case expressions.
+-- Performs free var enumeration to heapcheck (CG ready)
+fromCaseExhausted :: StgPrgm () -> CGReadyPrgm
+fromCaseExhausted = fromCMapped . conmapC . infotabC . freevarC 
+
+-- Input need only be parsed into the STG AST.
+-- Performs all AST passes from dup check to heapcheck
+fromParsed :: ParsedPrgm -> CGReadyPrgm
+fromParsed = fromCaseExhausted . exhaustCaseC . renameC . boxC . dupCheckC
+
+-- Input should be a String of STG source code.
+-- Performs full parse to heapcheck
+fromStgSource :: String -> CGReadyPrgm
+fromStgSource = fromParsed . parseC . tokC
+
+-- Input should be a String of MHS source code.
+-- Performs full parse to heapcheck
+fromMhsSource :: String -> CGReadyPrgm
+fromMhsSource = fromMhsTransform . mhsSTGer
+
+-- Input should come from MHS frontend.
+-- Performs free var enumeration to heapcheck
+fromMhsTransform :: StgPrgm () -> CGReadyPrgm
+fromMhsTransform = fromCaseExhausted
+
+-- Input should come from GHC frontend.
+-- Performs all AST passes from dup check to heapcheck
+fromGhcTransform :: ParsedPrgm -> CGReadyPrgm
+fromGhcTransform = fromParsed
