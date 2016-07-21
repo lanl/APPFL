@@ -62,17 +62,21 @@ Socorro, New Mexico, USA
 \setcounter{footnote}{0}
 
 \begin{abstract}
+{\color{OliveGreen} % \bf
+\emph{Draft paper notes, per the CfP:  Ringo, Anderson, and Marks are undergraduate
+students.  This is a ``project'' paper.}
+}
 
-A claimed trend is an increasing appreciation and practice of functional
-programming in scientific computing, and in particular strict (by default)
-functional programming, in various guises.  Besides making large programs
-easier to reason about, this enables automatic parallelization to various
-degrees.  A second claimed trend in both scientific computing and functional
-programming is the development of mechanisms for transparent fault tolerance.
-Our project goal is the demonstration of a light-weight, higher-order,
-polymorphic, pure functional language implementation in which we can
-experiment with automatic parallelization strategies, varying degrees of
-strictness, and mechanisms for transparent fault tolerance.
+There is an increasing appreciation and practice of functional programming in
+scientific computing, and in particular strict (by default) functional
+programming, in various guises.  Besides making large programs easier to
+reason about, this enables automatic parallelization to various degrees.  A
+second trend in both scientific computing and functional programming is the
+development of mechanisms for transparent fault tolerance.  Our project goal
+is the demonstration of a light-weight, higher-order, polymorphic, pure
+functional language implementation in which we can experiment with automatic
+parallelization strategies, varying degrees of strictness, and mechanisms for
+transparent fault tolerance.
 %
 We do not consider speculative evaluation, or semantic strictness inferred by
 program analysis, so potential parallelism is dictated by the specified degree of
@@ -89,12 +93,13 @@ these sources.
 
 \section{Background and Motivation}
 The practice of so-called high-performance scientific computing (HPC) is,
-overall, highly conservative with respect to change.  Even as the USA and
-other governments commit to a push for exascale computing ($10^{18}$ FLOPS in
+overall, highly conservative with respect to change.  Even as 
+various governments commit to a push for exascale computing ($10^{18}$ FLOPS in
 a single system) within the next
 decade~\cite{Exascale-roadmap,EUexascale,Exascale-org} a respected
 member of the HPC community recently stated publicly that ``Fortran is
-essential for exascale programming''~\cite{Heroux16}.  Existing US government
+essential for exascale programming,'' meaning that existing codes
+will be adapted, not rewritten~\cite{Heroux16}.  Existing US government
 laboratory HPC codes run to hundreds of thousands of lines of Fortran each and
 complete rewrites are infeasible.\footnote{The codes of our lab's British
   counterpart are similar.}  C++ has become more common for new code starts,
@@ -128,6 +133,9 @@ then, that of the mainstream high-performance scientific programming languages
 (Fortran, C, and C++), Fortran~95 was the first to introduce the \texttt{pure}
 function qualifier, and with enforcement by the compiler.  Otherwise it is
 entirely up to the programmer to make functions composable and thread safe.
+Here at LANL the concept of \emph{pure functional} is being used to good
+effect to clean up---restructure, modularize, reduce to composable
+components---some legacy code bases.
 %Here at LANL the use of pure functions (among other techniques for reducing
 %global data dependencies) is being used to good effect to clean up some legacy
 %code bases.
@@ -158,7 +166,7 @@ demonstrated on extremely large computing systems~\cite{Bauer14}.\footnote{We
 Twenty years ago the US Department of Energy laboratory complex was
 presented with the most highly parallel (and thereby performant)
 implementation of a pure functional language to date, to no
-effect whatsoever~\cite{Davis96}.\footnote{In 1996, on the LANL Thinking Machines
+effect whatsoever~\cite{Davis96}.\footnote{In 1996 on the LANL Thinking Machines
 CM-5, the Top 1 supercomputer in 1993~\cite{top1:1993}.}
 Today, however, there is a small number of laboratory HPC practitioners
 who are developing an appreciation for pure functional programming in Haskell.
@@ -280,9 +288,8 @@ optimization, would simply divert us from our central goals.\footnote{We
   estimate that we will have, to within an order of magnitude, one person-hour
   of total available development time for each person-year that GHC currently
   represents, or in other units, one second for each hour.}
-For another, it means that we are not undertaking significant morphing of GHC
-itself: because this is in large part an undergraduate student project it must
-be kept as simple as reasonably possible.
+For another, it means that we are not undertaking morphing of GHC
+itself: the system is huge and complex.
 %
 Our initial requirements are that
 \begin{itemize}
@@ -320,10 +327,10 @@ analysis and transformation on Core; (4) transformation of Core to the
 transformation of STG to machine code via various imperative
 representations (Cmm, LLVM, C, native code generation).
 
-In short, our plan is to use GHC as our front-end to generate one of its
+In short, we will use GHC as the front-end to generate one of its
 intermediate forms, STG or Core, then escape to our system from there.  There
 are various possible ways to accomplish the this: using GHC's option to dump
-STG or Core as text, hacking GHC itself, and, possibly, using GHC as a
+STG or Core as text, hacking GHC itself, or as we have chosen, using GHC as a
 library~\cite{ghc-as-library}.  Initially we started with our own STG.
 
 \subsection{STG Language}
@@ -447,7 +454,7 @@ Other possible variations concern the notional arity of the underlying
 function being applied.  This is readily explained in terms of the operation
 of the STG abstract machine.  Our partial description is based on that given
 in \emph{EA}.
-
+%
 In STG the arity of a function is defined as the number of formal parameters
 in the function definition, thus \texttt{id x = x} has by definition arity one
 regardless of the type of the argument it might be applied to (e.g., some
@@ -507,7 +514,6 @@ C compilers such as GCC and Clang/LLVM. The system fairly faithfully
 implements the STG machine as described in \emph{EA} and dynamically
 illustrated by Pope's Ministg~\cite{ministg} with the exception of the state
 transition rules which may be different than those for non-strict semantics.
-Sharing is preserved.
 
 \subsubsection{Proper tail calls in C.}
 Parallelism is achieved by multi-threading; our model is based on Harris et
@@ -751,22 +757,33 @@ inspired by King and Launchbury~\cite{King:1995}.
 
 An almost unbounded amount of interesting development suggests itself; one
 such path could in principle lead to the recreation of GHC\@.  However, given
-the minuscule budget (and therefore the employment of student interns) we must
-maintain sharp focus on the main goals: implementing and evaluating mechanisms
-for automatic parallelism and fault tolerance.  Currently we have
-a fully functioning serial implementation including
+the time constraints we must maintain sharp focus on the main goals:
+implementing and evaluating mechanisms for automatic parallelism and fault
+tolerance.  Currently we have a fully functioning serial implementation
+including
 \begin{itemize}
 \item STG parser,
-\item mini-Haskell parser, mini-Haskell to STG transformer,
+\item mini-Haskell parser, mini-Haskell to STG AST transformer,
+\item partial coupling with the GHC front-end,
 \item type inferencer,
 \item various analysis and transformation passes,
 \item code generator,
-\item runtime system including a garbage collector,
-\item continuous integration and testing system,
-\item extensive test suite, automated testing.
+\item runtime system including a (serial) garbage collector and instrumentation framework, and
+\item continuous integration and testing system, extensive test suite.
 \end{itemize}
+Appendixes~\ref{app:minihaskell} and~\ref{app:ghclibrary} describe the
+mini-Haskell front-end and our approach to using GHC as a front end,
+respectively.
+%
 
-The \emph{mini-Haskell} front-end is detailed in Appendix~\ref{app:minihaskell}.
+While wall-clock time can be used to simply compare the relative efficiency of
+execution under various evaluation strategies, we seek more detailed
+information.  We have in place a simple infrastructure for optionally logging
+a thorough collection of run-time statistics such as number, size, and type of
+heap and stack allocations, as well as various garbage collection statistics.
+We also measure cumulative time spent in various operations.  Future work
+includes integrating this with the testing system, processing these statistics
+in an other than ad hoc fashion.
 
 We use a continuous integration system augmented with logic to categorize
 programs in a large and growing test suite according to which degrees of
@@ -789,12 +806,8 @@ non-blocking work queue~\cite{Michael:1996}.  We are currently developing a
 more realistic parallel runtime, experimenting with using the Argobots
 user-level thread library~\cite{Seo:2015}.
 %
-Bridging the gap between GHC STG and our STG, and the corresponding
-augmentation of the runtime is showing early signs of success.
-%
-An instrumentation infrastructure, integrated with the testing framework to
-record and present time and space run-time statistics such as number of heap
-and stack allocations and maximum stack depth, is planned for the near future.
+%Bridging the gap between GHC STG and our STG, and the corresponding
+%augmentation of the runtime is showing early signs of success.
 %
 The fault-tolerance mechanisms remain future work.
 %
@@ -809,7 +822,7 @@ Parallel garbage collection is likely out of scope.
 
 %\emph{Nihil sub sole novum}---there is nothing new under the sun. % (Ecclesistes 1:9).
 %every new idea has some sort of precedent or echo from the past~\cite{nihil}.
-There is a vast body of related work; we highlight only the very most closely related.
+There is a vast body of related work; we highlight only the most similar to ours.
 
 %Previously cited papers describing some of the inner workings of GHC at
 %various points in its evolution have greatly informed our approach.
@@ -820,23 +833,28 @@ There is a vast body of related work; we highlight only the very most closely re
 The concept of strict but still pure in some sense dates back to the concept
 of applicative order reduction in the lambda calculus.  In terms of a
 notionally concrete programming language the first thorough explications may
-be Backus' FP~\cite{Backus:1978} and follow-on FL
-implementation~\cite{AikenFL,FLreport89}.
-%
+be Backus' FP~\cite{Backus:1978} (building on Landin's ``theory''~\cite{Landin64}).
+
 A notable argument for the potential merits of a strict-by-default
 pure functional language over a non-strict one is by Sheard, who also provided
 a very simple embedded implementation~\cite{Sheard:2003}.
-%
+
 A plug-in for GHC (prior to 8.0) exists that makes function bodies strict in
 their non-recursive \texttt{let} bindings using a transformation on GHC Core
 that recursively expands those \texttt{let} bindings into \texttt{case}
 bindings~\cite{Bolingbroke:2008,strict-ghc-plugin}.
-%
+
+Manticore is a derivative of Standard ML with no mutable state and both
+implicit and explicit (threaded) mechanisms for parallelism.  Threads
+communicate and synchronize via synchronous channels~\cite{Manticore}.
+Numerous other ML derivatives, e.g.\ MultiMLton~\cite{MultiMLton},
+OCaml~\cite{OCaml}, Poly/ML~\cite{PolyML}, and more distantly
+NESL~\cite{NESL}, support various forms of parallelism.
+
 The Disciplined Disciple Compiler project appears to intend implementation of
 a strict, higher order, functional language (or family of languages) compiler
 and has been underway for some time, but the emphasis appears to be on a much
-more complex type system for handling stateful computation, and the prospects
-for its eventual completion are unknown~\cite{disciplined-disciple}.
+more complex type system for handling stateful computation~\cite{disciplined-disciple}.
 
 \vspace{-0.1in}
 \subsubsection{Strict, pure, auto-parallelizing.}
@@ -846,18 +864,23 @@ NVIDIA's NOVA language, and corresponding compiler, implements a strict
 built-in parallel operators (e.g., \emph{map}, \emph{reduce}, and
 \emph{scan})~\cite{NVIDIA:2013}. Three back-ends were implemented: for
 sequential C, parallel (multi-threaded) C, and CUDA C, the lattermost
-targeting NVIDIA GPUs.
+targeting NVIDIA GPUs.  
+
+Futhark is a statically-typed, data-parallel,
+pure functional language targeting GPUs via OpenCL~\cite{Futhark}.  Notably, it
+supports regular nested data-parallelism, and a purity-preserving
+update-in-place mechanism via a uniqueness type system.
 
 \vspace{-0.1in}
 \subsubsection{GHC as a front-end.}
 %\paragraph{GHC as a front-end.}
-The Intel Labs Haskell Research Compiler (HRC) is the most closely related
-work to ours of which we are aware~\cite{Liu:2013,Petersen:2013}.  As in our
-planned approach they use GHC as the front end, but exit GHC at the final GHC
-Core stage, just before transformation to STG.  The essence of their effort is
-to target an existing, highly optimizing, Intel functional language compiler
-that is ``largely language agnostic'' and performs (among many other
-optimizations) SIMD vectorization.
+The Intel Labs Haskell Research Compiler is the most closely related work to ours
+of which we are aware~\cite{Liu:2013,Petersen:2013}.  As in our approach they
+use GHC as the front end, but exit GHC at the final GHC Core stage, just
+before transformation to STG.  The essence of their effort is to target an
+existing, highly optimizing, Intel functional language compiler that is
+``largely language agnostic'' and performs (among many other optimizations)
+SIMD vectorization.
 
 Don Stewart described an implementation wherein GHC was used as a Haskell
 compiler front-end, dumping STG code as text, parsing that text, then
@@ -897,74 +920,11 @@ Department of Energy's National Nuclear Security Administration (NNSA).
 
 \appendix
 
-\section{(Ab)Using GHC}
-
-The bridge to full Haskell is in progress, with GHC providing much of
-the structure.  We are using GHC as a library (as opposed to modifying
-its source to use our code generation and runtime system).  This
-choice was made primarily due to the size and complexity of a project
-as large as GHC.  Fully understanding and modifying even its build
-system would be a significant undertaking.
-
-We are using GHC's pipeline to translate Haskell source to GHC's
-representation of the STG language, which we then translate to our
-own.  Up to the STG generation stage, this usage is equivalent to
-GHC's \texttt{--make} behavior, which allows us to benefit from the
-module dependency analysis, typechecking, Core-level transformations
-and informative error messages for invalid programs.
-
-Though we follow the same rough idea as GHC in implementing the STG
-abstract machine, this bridging process is not entirely
-straightforward.  The challenges we've seen fit into two categories.
-
-\subsection{Producing Full STG Programs}
-
-When compiling a standard Haskell program with GHC, modules imported
-from other packages have already been compiled, and GHC simply links
-the user object code with them.  Our compiler has no facility for
-linking GHC-produced object code, so we need it to produce
-\textit{full} STG programs built up from primitive operations.  GHC
-does not offer object-to-STG translation, so this means we must
-produce our own Prelude and supporting Base libraries to be included
-with every program, and decoupling Haskell from GHC's wired-in types
-as much as possible.
-
-This is partially accomplished with extensions like
-\texttt{NoImplicitPrelude} and \texttt{RebindableSyntax} (which
-implies the former).  We cannot get a complete separation, however:
-Numeric literals are tied to GHC's \texttt{Integer} and
-\texttt{Rational} types, and guards are tied to GHC's \texttt{Bool}.
-Lists and tuples, being special syntactic forms are also tightly
-wired-in. To get around this, we provide placeholder definitions that
-parallel any that we cannot replace, and use them to crudely translate
-the exceptional cases.
-
-\subsection{Navigating GHC's Internals}
-
-One of the goals of using GHC as a library was to avoid being
-overwhelmed with the necessary complexity of such a large and mature
-tool, but this has not been entirely unavoidable.  Simply producing
-STG without incurring any (non-temporary) file creation proved not to
-be a difficult task, and can be accomplished using only the interface
-exposed via the primary API, the \texttt{GHC} module.  This abstract
-STG is even ostensibly very close to our own, but the auxiliary data
-structures (e.g. those encapsulating identifier information and types)
-are rich and deeply nested.  Determining what is strictly necessary
-for our backend and what we have no implementation of (e.g. the
-Foreign Function Interface) has taken considerable time and effort.
-
-It is a testament to the talents of the GHC contributors and
-maintainers that we have managed to come even this far.  Their
-documentation and exposed interfaces have made navigating and
-comprehending the project internals much more pleasant than expected.
-
-
-
 \section{Mini-Haskell}
 \label{app:minihaskell}
-As mentioned, a current near-term goal is to use GHC as our front-end to
-generate STG (or Core) as input to our system.  In the meantime, as a stop-gap
-measure to make the generation of test cases easier, we have implemented a
+As mentioned, we are transitioning to GHC as our front-end to
+generate STG (or Core) as input to our system.  Previously, as a stop-gap
+measure to make the generation of test cases easier, we implemented a
 \emph{mini-Haskell} front-end that supports a subset of standard Haskell
 syntax with \emph{MagicHash} enabled, with a single extension.  Recall that
 \emph{MagicHash} allows \texttt{\#} to be a suffix of an identifier, or denote
@@ -981,14 +941,14 @@ prone to errors.  Compared to Haskell, the eventual source language for the
 compiler, STG is relatively verbose, requiring explicit block and expression
 delimiters, and classification of heap objects. Though its general structure
 is similar to primitive Haskell, it lacks many of the conveniences that make
-Haskell a pleasure to program in.  The motivation for a more expressive
+Haskell convenient to program in.  The motivation for a more expressive
 language for testing our compiler and runtime system in their nascent stages
 is then clear.  This language, mini-Haskell, was progressively ``grown'' from
 the STG syntax towards a subset of Haskell itself, removing much of the
 frustrating syntactic cruft and adding some of the core features that are
 often taken for granted in Haskell (and other languages).  An alternative
 approach would translate from mini-Haskell to GHC Core, then either to STG or,
-in the case that the back end eventually take, compiling Core directly.
+in the case that the back end may eventually take, compiling Core directly.
 
 An informal specification of the mini-Haskell grammar is given in
 Figure~\ref{fig:miniHaskell}.  There is significant overlap with STG resulting
@@ -1168,7 +1128,7 @@ is transformed into STG that is structurally identical to the STG code that
 precedes it.
 
 \vspace{-0.1in}
-\subsubsection{Fancy pattern matching.}
+\subsubsection{Nested pattern matching.}
 STG supports pattern matching but only in a simple form and only in
 \texttt{case} expressions.  Mini-Haskell extends this to something approaching
 what is found in Haskell.  Functions, including lambda expressions, may match on
@@ -1202,24 +1162,23 @@ Even relatively simple functions can be painful to write, such as \texttt{unzip}
        Pair as bs -> Pair (Cons a as) (Cons b bs)
 
 \end{verbatim}}
-
-Of course, this complex pattern matching must eventually be transformed into
-the primitive, nested case expressions. Fortunately there are well-documented
-algorithms for achieving this, and Philip Wadler's chapter
+This nested pattern matching must eventually be transformed into
+primitive, nested case expressions.  There are well-documented
+algorithms for achieving this, and Wadler's description
 % in \emph{The Implementation of Functional Programming Languages}
-on the compilation of this type of pattern matching proved
+of the compilation of this type of pattern matching proved
 invaluable~\cite{Jones:1987}.
 %Trimming Mini-Haskell to fit page limit
 %\begin{comment} 
-Wadler describes the \emph{match} function
-which, in its simplest form, produces a correct, but potentially large
-translation with some redundancy.  This function was implemented with only
-minor modifications to fit the shape of mini-Haskell's abstract form.  The
-implementation is augmented by some light flow-analysis to eliminate some of
-the redundancy and make the resulting code easier to read.  There are further
-optimizations suggested by Wadler to address the size of the generated code,
-for example, when multiple branches lead to the same large expression, but the
-additional complexity outweighs the benefit for a testing language.
+Wadler describes the \emph{match} function which, in its simplest form,
+produces a correct but potentially large translation with some redundancy.
+This function was implemented with only minor modifications to fit the shape
+of mini-Haskell's abstract form.  The implementation is augmented by some
+light flow-analysis to eliminate some of the redundancy and make the resulting
+code easier to read.  Wadler suggests further optimizations to address the
+size of the generated code, for example, when multiple branches lead to the
+same large expression, but the additional complexity outweighs the benefit for
+a testing language.
 %\end{comment}
 
 
@@ -1231,10 +1190,12 @@ sections but are worth mentioning.
 \item \emph{Constructors as functions.}
   As in Haskell, constructors are first class, acting as true functions.  This
   is implemented by simply generating a function that wraps the appropriate
-  \texttt{let}-bound \texttt{CON} object in STG.  %% Any partially applied
-  %% constructor generates a call to this function.  Fully applied constructors
-  %% generate local \texttt{let}-bound objects to avoid an unnecessary function
-  %% call.
+  \texttt{let}-bound \texttt{CON} object in STG.  
+%
+  Any partially applied
+  constructor generates a call to this function.  Fully applied constructors
+  generate local \texttt{let}-bound objects to avoid an unnecessary function
+  call.
 
 \item \emph{Primitive operations as functions.}
   Similar to constructors, primitive operations are given first-class status as
@@ -1251,7 +1212,7 @@ sections but are worth mentioning.
 \item \emph{Type annotations.}  The ability to assert the type of some
   variable is often valuable as a sanity-check and provides documentation that
   the compiler can verify.  Mini-Haskell's type annotations (or signatures)
-  behave like those in Haskell, being passed to the type checker as initial
+  behave like those in Haskell, being passed to the type checker as % initial
   assumptions.
 
 % I don't think I've described this very well at all... - david
@@ -1270,6 +1231,68 @@ sections but are worth mentioning.
 \end{itemize}
 
 
+\section{Using GHC as a Library}
+\label{app:ghclibrary}
+
+The bridge to full Haskell is in progress, with GHC providing much of
+the structure.  We are using GHC as a library (as opposed to modifying
+its source to use our code generation and runtime system).  This
+choice was made primarily due to the size and complexity of a project
+as large as GHC.  Fully understanding and modifying even its build
+system would be a significant undertaking.
+
+We are using GHC's pipeline to translate Haskell source to GHC's
+representation of the STG language, which we then translate to our
+own.  Up to the STG generation stage, this usage is equivalent to
+GHC's \texttt{--make} behavior, which allows us to benefit from the
+module dependency analysis, typechecking, Core-level transformations
+and informative error messages for invalid programs.
+
+Though we follow the same rough idea as GHC in implementing the STG
+abstract machine, this bridging process is not entirely
+straightforward.  The challenges we've seen fit into two categories.
+
+%\subsection{Producing Full STG Programs}
+\subsubsection{Producing full STG programs.}
+When compiling a standard Haskell program with GHC, modules imported
+from other packages have already been compiled, and GHC simply links
+the user object code with them.  Our compiler has no facility for
+linking GHC-produced object code, so we need it to produce
+\textit{full}\/ STG programs built up from primitive operations.  GHC
+does not offer object-to-STG translation, so this means we must
+produce our own Prelude and supporting Base libraries to be included
+with every program, and decoupling Haskell from GHC's wired-in types
+as much as possible.
+
+This is partially accomplished with extensions like
+\texttt{NoImplicitPrelude} and \texttt{RebindableSyntax} (which
+implies the former).  We cannot get a complete separation, however:
+numeric literals are tied to GHC's \texttt{Integer} and
+\texttt{Rational} types, and guards are tied to GHC's \texttt{Bool}.
+Lists and tuples, being special syntactic forms, are also tightly
+wired-in. To get around this we provide placeholder definitions that
+parallel any that we cannot replace, and use them to crudely translate
+the exceptional cases.
+
+%\subsection{Navigating GHC's Internals}
+\subsubsection{Navigating GHC's internals.}
+One of the goals of using GHC as a library was to avoid
+the internal complexity of such a large and mature
+tool, but this has not been entirely unavoidable.  Simply producing
+STG without incurring any (non-temporary) file creation proved not to
+be a difficult task, and can be accomplished using only the interface
+exposed via the primary API, the \texttt{GHC} module.  This abstract
+STG is even ostensibly very close to our own, but the auxiliary data
+structures (e.g. those encapsulating identifier information and types)
+are rich and deeply nested.  Determining what is strictly necessary
+for our backend and what we have no implementation of (e.g. the
+Foreign Function Interface) has taken considerable time and effort.
+
+It is a testament to the talents of the GHC contributors and
+maintainers that we have managed to come even this far.  Their
+documentation and exposed interfaces have made navigating and
+comprehending the internals much more pleasant than expected.
+
 \section{Test suite and testing}
 \label{app:testing}
 We have developed an extensive test suite which uses the CMake CTest
@@ -1284,7 +1307,7 @@ suite, which is partitioned into a number of directories which control what
 testing is done. Given our goal of exploring various levels of strictness,
 most tests are run with all evaluation strategies (three degrees of function
 strictness by two degrees of constructor strictness).  Interesting classes of
-test programs are those that require less-strict or sharing semantics.  For
+test programs are those that require less-strict semantics.  For
 these programs we test not only that the test leads to the expected result
 with less strict semantics, but also that the program returns a
 \emph{BLACKHOLE} in the case of a stricter semantics. Students who were
@@ -1296,10 +1319,11 @@ developed extensive STG and mini-Haskell preludes of common programming
 patterns to aid in the writing of test programs.
 
 Another important class of test programs are those that should fail with a
-known error, e.g., a parsing or typing error.  For these programs the test
-suite checks the output against an expected error regular expression. This
-class of test programs has proved valuable in development and debugging of
-both the STG and mini-Haskell front-ends.
+known error, e.g., a syntax or typing error.  For these programs the test
+suite checks the output against an expected error regular expression. 
+%This
+%class of test programs has proved valuable in development and debugging of
+%both the STG and mini-Haskell front-ends.
 
 We also run each test with various levels of garbage collection enabled. This
 has exposed bugs in both the code generator and runtime system.
@@ -1310,8 +1334,8 @@ we run a quite large number of tests (currently order thousands). However,
 this is fully automated via the testing and continuous integration
 infrastructure.
 
-We have also implemented a simple logging facility which can be controlled at 
-both compile and run time which helps in determining why a test is failing.
+%We have also implemented a simple logging facility which can be controlled at 
+%both compile and run time which helps in determining why a test is failing.
 
 \bibliographystyle{splncs03}
 

@@ -44,13 +44,12 @@
 /* log level defined in log.h */
 #define LOG_LEVEL 7
 
-/* if 1 extra gc() checks */
-#define EXTRA_CHECKS_GC 1
-
-/* if 1 initiate GC with every object allocation */
-#define ALLOC_GC 1
+/* if 1 add support for performance counters */
+#define USE_PERFCOUNTERS 1
 
 /* number of threads, temporary solution */
 #define NTHREADS 2
+
+
 
 #endif

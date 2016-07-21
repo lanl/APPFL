@@ -3,17 +3,13 @@
 #include <getopt.h>
 #include <stdlib.h>
 
-float GCThreshold = 0.0;
-
-int evalStrategy = LAZY;
-
-int constStrict = 0;
-
-bool sanityChecker = false;
-
-int perfCounters = 0;
-
-int LoggingLevel = LOG_LEVEL;
+Args rtArg = { .gcThreshold = 0.0,
+               .evalStrategy = LAZY,
+               .constStrict = 0,
+               .sanityChecker = false,
+               .perfCounters = 0,
+               .loggingLevel = LOG_LEVEL
+             };
 
 
 void parseArgs (int argc, char **argv) {
@@ -21,32 +17,32 @@ void parseArgs (int argc, char **argv) {
   while ((c = getopt (argc, argv, "gt:e:c:l:sp:")) != -1)
     switch (c) {
     case 'g':
-      GCThreshold = 1.0; // never run
+      rtArg.gcThreshold = 1.0; // never run
       break;
 
     case 't':
-      GCThreshold = atof(optarg);
+      rtArg.gcThreshold = atof(optarg);
       break;
 
     case 'e':
-      evalStrategy = atoi(optarg);
+      rtArg.evalStrategy = atoi(optarg);
       break;
-      
+
     case 'c':
-      constStrict = atoi(optarg);
+      rtArg.constStrict = atoi(optarg);
       break;
 
     case 'l':
-      LoggingLevel = atoi(optarg);
+      rtArg.loggingLevel = atoi(optarg);
       break;
-      
+
     case 's':
-      sanityChecker = true;
+      rtArg.sanityChecker = true;
       break;
-      
+
     case 'p':
-      perfCounters = atoi(optarg);
+      rtArg.perfCounters = atoi(optarg);
       break;
-        
+
     }
 }
