@@ -403,5 +403,5 @@ x# `divModInt#` y#
 -- | A special argument for the 'Control.Monad.ST.ST' type constructor,
 -- indexing a state embedded in the 'Prelude.IO' monad by
 -- 'Control.Monad.ST.stToIO'.
-data RealWorld
+
 #endif

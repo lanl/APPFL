@@ -1,427 +1,289 @@
 (StgNonRec)
-  Test.$WMkStrict =
-  (FUN) Upd: r
-  [dt!EYaIzB]
-    (Case) (App) dt!EYaIzB = dt!FYaIzB
-      (AlgAlt) (DEFAULT) _ -> (ConApp) Test.MkStrict [dt!FYaIzB]
-(StgNonRec)
-  Test.twoOrThree =
-  (FUN) Upd: r
-  [b!GYaIzB]
-    (Case) (App) b!GYaIzB = wild!HYaIzB
-      (AlgAlt)
-        (DataAlt) APPFL.Types.False -> (Lit) (MachInt) 2
-        (DataAlt) APPFL.Types.True -> (Lit) (MachInt) 3
-(StgNonRec)
-  Test.f =
-  (FUN) Upd: r
-  [x!IYaIzB]
-    (App) x!IYaIzB
-(StgNonRec)
   Test.main =
-  (THUNK) Upd: u
-    (Let) let
-      (StgNonRec)
-        sat!JYaIzB =
-        (CONish) APPFL.Integer.Type.S# [(MachInt) 3]
-        Worker/Wrapper: APPFL.Integer.Type.$WS#
-    in (App) APPFL.Base.fromInteger sat!JYaIzB
-(StgNonRec)
-  Test.strictN =
-  (FUN) Upd: r
-  [eta!BAAACB]
-    (App) Test.$WMkStrict eta!BAAACB
-(StgNonRec)
-  Test.t# =
-  (FUN) Upd: r
-  [x!KYaIzB]
-    (ConApp) APPFL.Prim.(#,#) [APPFL.Types.True, x!KYaIzB]
-(StgNonRec)
-  a!YHaIyB =
-  (THUNK) Upd: u
-    (Let) let
-      (StgNonRec)
-        sat!LYaIzB =
-        (CONish) APPFL.Integer.Type.S# [(MachInt) 2]
-        Worker/Wrapper: APPFL.Integer.Type.$WS#
-    in (App) APPFL.Base.fromInteger sat!LYaIzB
-(StgNonRec)
-  Test.t1 =
-  (FUN) Upd: r
-  [eta!BAAACB]
-    (ConApp) APPFL.Tuple.(,) [a!YHaIyB, eta!BAAACB]
-(StgNonRec)
-  a1!4TaIyB =
-  (THUNK) Upd: u
-    (Let) let
-      (StgNonRec)
-        sat!MYaIzB =
-        (CONish) APPFL.Integer.Type.S# [(MachInt) 2]
-        Worker/Wrapper: APPFL.Integer.Type.$WS#
-    in (App) APPFL.Base.fromInteger sat!MYaIzB
-(StgNonRec)
-  a2!5TaIyB =
-  (THUNK) Upd: u
-    (Let) let
-      (StgNonRec)
-        sat!NYaIzB =
-        (CONish) APPFL.Integer.Type.S# [(MachInt) 3]
-        Worker/Wrapper: APPFL.Integer.Type.$WS#
-    in (App) APPFL.Base.fromInteger sat!NYaIzB
-(StgNonRec)
-  Test.t =
-  (CONish) APPFL.Tuple.(,) [a1!4TaIyB, a2!5TaIyB]
-  Worker/Wrapper: APPFL.Tuple.(,)
-(StgNonRec)
-  Test.c =
-  (FUN) Upd: r
-  [i!OYaIzB, b!PYaIzB]
-    (Let) let
-      (StgNonRec)
-        sat!VYaIzB =
-        (THUNK) Upd: u
-          (Let) let
-            (StgNonRec)
-              sat!UYaIzB =
-              (CONish) APPFL.Integer.Type.S# [(MachInt) 15]
-              Worker/Wrapper: APPFL.Integer.Type.$WS#
-          in (App) APPFL.Base.fromInteger sat!UYaIzB
-    in (Let) let
-         (StgNonRec)
-           sat!WYaIzB =
-           (CONish) Test.C [sat!VYaIzB, APPFL.Types.False]
-           Worker/Wrapper: Test.C
-       in (Let) let
-            (StgNonRec)
-              sat!TYaIzB =
-              (THUNK) Upd: u
-                (Let) let
-                  (StgNonRec)
-                    sat!RYaIzB =
-                    (THUNK) Upd: u
-                      (Let) let
-                        (StgNonRec)
-                          sat!QYaIzB =
-                          (CONish) APPFL.Integer.Type.S# [(MachInt) 2]
-                          Worker/Wrapper: APPFL.Integer.Type.$WS#
-                      in (App) APPFL.Base.fromInteger sat!QYaIzB
-                in (Case) (App) APPFL.Classes.== i!OYaIzB sat!RYaIzB = wild!SYaIzB
-                     (AlgAlt)
-                       (DataAlt) APPFL.Types.False
-                         -> (ConApp) Test.C [i!OYaIzB, APPFL.Types.False]
-                       (DataAlt) APPFL.Types.True
-                         -> (ConApp) Test.C [i!OYaIzB, APPFL.Types.True]
-          in (App) APPFL.Base.ifThenElse b!PYaIzB sat!TYaIzB sat!WYaIzB
-(StgNonRec)
-  Test.MkStrict =
-  (FUN) Upd: r
-  [eta!BAAACB]
-    (ConApp) Test.MkStrict [eta!BAAACB]
-(StgNonRec)
-  Test.C =
-  (FUN) Upd: r
-  [eta!CAAACB, eta!BAAACB]
-    (ConApp) Test.C [eta!CAAACB, eta!BAAACB]
+  (CONish) GHC.Types.True []
+  Worker/Wrapper: GHC.Types.True
 (StgNonRec)
   APPFL.Base.quotRemInt =
-  (FUN) Upd: r
-  [ds!4YaIzB, ds1!5YaIzB]
-    (Case) (App) ds!4YaIzB = wild!6YaIzB
+  (FUN)
+  [ds ,ds1B]
+    (Case) (App) ds = wildC
       (AlgAlt)
-        (DataAlt) APPFL.Types.I# x1!7YaIzB
-          -> (Case) (App) ds1!5YaIzB = wild1!8YaIzB
+        (DataAlt) APPFL.Types.I# x1D
+          -> (Case) (App) ds1B = wild1E
                (AlgAlt)
-                 (DataAlt) APPFL.Types.I# y!9YaIzB
-                   -> (Case) (App) APPFL.Prim.quotRemInt# x1!7YaIzB y!9YaIzB = ds2!-YaIzB
+                 (DataAlt) APPFL.Types.I# yF
+                   -> (Case) (App) APPFL.Prim.quotRemInt# x1D yF = ds2G
                         (UbxTupAlt2)
-                          (DataAlt) APPFL.Prim.(#,#) ipv!_YaIzB ipv1!AZaIzB
-                            -> (Case) (ConApp) APPFL.Prim.(#,#) [ipv!_YaIzB,
-                                                                 ipv1!AZaIzB] = wild2!BZaIzB
+                          (DataAlt) APPFL.Tuple.UTP2 ipvH ipv1I
+                            -> (Case) (ConApp) APPFL.Tuple.UTP2 [ipvH ,ipv1I] = wild2J
                                  (UbxTupAlt2)
-                                   (DataAlt) APPFL.Prim.(#,#) q!CZaIzB r!DZaIzB
+                                   (DataAlt) APPFL.Tuple.UTP2 qK rL
                                      -> (Let) let
                                           (StgNonRec)
-                                            sat!FZaIzB =
-                                            (CONish) APPFL.Types.I# [r!DZaIzB]
+                                            satM =
+                                            (CONish) APPFL.Types.I# [rL]
                                             Worker/Wrapper: APPFL.Types.I#
                                         in (Let) let
                                              (StgNonRec)
-                                               sat!EZaIzB =
-                                               (CONish) APPFL.Types.I# [q!CZaIzB]
+                                               satN =
+                                               (CONish) APPFL.Types.I# [qK]
                                                Worker/Wrapper: APPFL.Types.I#
-                                           in (ConApp) APPFL.Tuple.(,) [sat!EZaIzB, sat!FZaIzB]
+                                           in (ConApp) APPFL.Tuple.TP2 [satN ,satM]
 (StgNonRec)
   APPFL.Base.modInt =
-  (FUN) Upd: r
-  [ds!GZaIzB, ds1!HZaIzB]
-    (Case) (App) ds!GZaIzB = wild!IZaIzB
+  (FUN)
+  [dsO ,ds1P]
+    (Case) (App) dsO = wildQ
       (AlgAlt)
-        (DataAlt) APPFL.Types.I# x1!JZaIzB
-          -> (Case) (App) ds1!HZaIzB = wild1!KZaIzB
+        (DataAlt) APPFL.Types.I# x1R
+          -> (Case) (App) ds1P = wild1S
                (AlgAlt)
-                 (DataAlt) APPFL.Types.I# y!LZaIzB
-                   -> (Case) (App) APPFL.Classes.modInt# x1!JZaIzB y!LZaIzB = wild2!MZaIzB
-                        (PrimAlt) (DEFAULT) _ -> (ConApp) APPFL.Types.I# [wild2!MZaIzB]
+                 (DataAlt) APPFL.Types.I# yT
+                   -> (Case) (App) APPFL.Classes.modInt# x1R yT = wild2U
+                        (PrimAlt) (DEFAULT) _ -> (ConApp) APPFL.Types.I# [wild2U]
 (StgNonRec)
   APPFL.Base.divInt =
-  (FUN) Upd: r
-  [ds!NZaIzB, ds1!OZaIzB]
-    (Case) (App) ds!NZaIzB = wild!PZaIzB
+  (FUN)
+  [dsV ,ds1W]
+    (Case) (App) dsV = wildX
       (AlgAlt)
-        (DataAlt) APPFL.Types.I# x1!QZaIzB
-          -> (Case) (App) ds1!OZaIzB = wild1!RZaIzB
+        (DataAlt) APPFL.Types.I# x1Y
+          -> (Case) (App) ds1W = wild1Z
                (AlgAlt)
-                 (DataAlt) APPFL.Types.I# y!SZaIzB
-                   -> (Case) (App) APPFL.Classes.divInt# x1!QZaIzB y!SZaIzB = wild2!TZaIzB
-                        (PrimAlt) (DEFAULT) _ -> (ConApp) APPFL.Types.I# [wild2!TZaIzB]
+                 (DataAlt) APPFL.Types.I# ya
+                   -> (Case) (App) APPFL.Classes.divInt# x1Y ya = wild2b
+                        (PrimAlt) (DEFAULT) _ -> (ConApp) APPFL.Types.I# [wild2b]
 (StgNonRec)
   APPFL.Base.remInt =
-  (FUN) Upd: r
-  [eta!UZaIzB, eta1!VZaIzB]
-    (Case) (App) eta!UZaIzB = wild!WZaIzB
+  (FUN)
+  [etac ,eta1d]
+    (Case) (App) etac = wilde
       (AlgAlt)
-        (DataAlt) APPFL.Types.I# x1!XZaIzB
-          -> (Case) (App) eta1!VZaIzB = wild1!YZaIzB
+        (DataAlt) APPFL.Types.I# x1f
+          -> (Case) (App) eta1d = wild1g
                (AlgAlt)
-                 (DataAlt) APPFL.Types.I# y!ZZaIzB
-                   -> (Case) (App) APPFL.Prim.%# x1!XZaIzB y!ZZaIzB = wild2!aZaIzB
-                        (PrimAlt) (DEFAULT) _ -> (ConApp) APPFL.Types.I# [wild2!aZaIzB]
+                 (DataAlt) APPFL.Types.I# yh
+                   -> (Case) (App) APPFL.Prim.%# x1f yh = wild2i
+                        (PrimAlt) (DEFAULT) _ -> (ConApp) APPFL.Types.I# [wild2i]
 (StgNonRec)
   APPFL.Base.quotInt =
-  (FUN) Upd: r
-  [eta!bZaIzB, eta1!cZaIzB]
-    (Case) (App) eta!bZaIzB = wild!dZaIzB
+  (FUN)
+  [etaj ,eta1k]
+    (Case) (App) etaj = wildl
       (AlgAlt)
-        (DataAlt) APPFL.Types.I# x1!eZaIzB
-          -> (Case) (App) eta1!cZaIzB = wild1!fZaIzB
+        (DataAlt) APPFL.Types.I# x1m
+          -> (Case) (App) eta1k = wild1n
                (AlgAlt)
-                 (DataAlt) APPFL.Types.I# y!gZaIzB
-                   -> (Case) (App) APPFL.Prim./# x1!eZaIzB y!gZaIzB = wild2!hZaIzB
-                        (PrimAlt) (DEFAULT) _ -> (ConApp) APPFL.Types.I# [wild2!hZaIzB]
+                 (DataAlt) APPFL.Types.I# yo
+                   -> (Case) (App) APPFL.Prim./# x1m yo = wild2p
+                        (PrimAlt) (DEFAULT) _ -> (ConApp) APPFL.Types.I# [wild2p]
 (StgNonRec)
   APPFL.Base.otherwise =
-  (CONish) APPFL.Types.True []
-  Worker/Wrapper: APPFL.Types.True
+  (CONish) GHC.Types.True []
+  Worker/Wrapper: GHC.Types.True
 (StgNonRec)
   APPFL.Base.ifThenElse =
-  (FUN) Upd: r
-  [b!iZaIzB, t!jZaIzB, e!kZaIzB]
-    (Case) (App) b!iZaIzB = wild!lZaIzB
+  (FUN)
+  [bq ,tr ,es]
+    (Case) (App) bq = wildt
       (AlgAlt)
-        (DataAlt) APPFL.Types.False -> (App) e!kZaIzB
-        (DataAlt) APPFL.Types.True -> (App) t!jZaIzB
+        (DataAlt) GHC.Types.False -> (App) es
+        (DataAlt) GHC.Types.True -> (App) tr
 (StgNonRec)
   APPFL.Base.divModInt# =
-  (FUN) Upd: r
-  [x#!mZaIzB, y#!nZaIzB]
+  (FUN)
+  [x#u ,y#v]
     (Let) let
       (StgNonRec)
-        sat!rZaIzB =
-        (THUNK) Upd: u
-          (Case) (Op) (Prim) <# [y#!nZaIzB, (MachInt) 0] = sat!qZaIzB
-            (PrimAlt) (DEFAULT) _ -> (App) APPFL.Types.isTrue# sat!qZaIzB
+        satw =
+        (THUNK)
+          (Case) (Op) (Prim) <# [y#v ,(MachInt) 0] = satx
+            (PrimAlt) (DEFAULT) _ -> (App) APPFL.Types.isTrue# satx
     in (Let) let
          (StgNonRec)
-           sat!pZaIzB =
-           (THUNK) Upd: u
-             (Case) (Op) (Prim) ># [x#!mZaIzB, (MachInt) 0] = sat!oZaIzB
-               (PrimAlt) (DEFAULT) _ -> (App) APPFL.Types.isTrue# sat!oZaIzB
-       in (Case) (App) APPFL.Classes.&& sat!pZaIzB sat!rZaIzB = wild!sZaIzB
+           saty =
+           (THUNK)
+             (Case) (Op) (Prim) ># [x#u ,(MachInt) 0] = satz
+               (PrimAlt) (DEFAULT) _ -> (App) APPFL.Types.isTrue# satz
+       in (Case) (App) APPFL.Classes.&& saty satw = wild0
             (AlgAlt)
-              (DataAlt) APPFL.Types.False
+              (DataAlt) GHC.Types.False
                 -> (Let) let
                      (StgNonRec)
-                       sat!wZaIzB =
-                       (THUNK) Upd: u
-                         (Case) (Op) (Prim) ># [y#!nZaIzB, (MachInt) 0] = sat!vZaIzB
-                           (PrimAlt) (DEFAULT) _ -> (App) APPFL.Types.isTrue# sat!vZaIzB
+                       sat1 =
+                       (THUNK)
+                         (Case) (Op) (Prim) ># [y#v ,(MachInt) 0] = sat2
+                           (PrimAlt) (DEFAULT) _ -> (App) APPFL.Types.isTrue# sat2
                    in (Let) let
                         (StgNonRec)
-                          sat!uZaIzB =
-                          (THUNK) Upd: u
-                            (Case) (Op) (Prim) <# [x#!mZaIzB, (MachInt) 0] = sat!tZaIzB
-                              (PrimAlt) (DEFAULT) _ -> (App) APPFL.Types.isTrue# sat!tZaIzB
-                      in (Case) (App) APPFL.Classes.&& sat!uZaIzB sat!wZaIzB = wild1!xZaIzB
+                          sat3 =
+                          (THUNK)
+                            (Case) (Op) (Prim) <# [x#u ,(MachInt) 0] = sat4
+                              (PrimAlt) (DEFAULT) _ -> (App) APPFL.Types.isTrue# sat4
+                      in (Case) (App) APPFL.Classes.&& sat3 sat1 = wild15
                            (AlgAlt)
-                             (DataAlt) APPFL.Types.False
-                               -> (App) APPFL.Prim.quotRemInt# x#!mZaIzB y#!nZaIzB
-                             (DataAlt) APPFL.Types.True
-                               -> (Case) (Op) (Prim) +# [x#!mZaIzB, (MachInt) 1] = sat!yZaIzB
+                             (DataAlt) GHC.Types.False -> (App) APPFL.Prim.quotRemInt# x#u y#v
+                             (DataAlt) GHC.Types.True
+                               -> (Case) (Op) (Prim) +# [x#u ,(MachInt) 1] = sat6
                                     (PrimAlt)
                                       (DEFAULT) _
-                                        -> (Case) (App) APPFL.Prim.quotRemInt# sat!yZaIzB y#!nZaIzB = ds!zZaIzB
+                                        -> (Case) (App) APPFL.Prim.quotRemInt# sat6 y#v = ds7
                                              (UbxTupAlt2)
-                                               (DataAlt) APPFL.Prim.(#,#) ipv!0ZaIzB ipv1!1ZaIzB
-                                                 -> (Case) (ConApp) APPFL.Prim.(#,#) [ipv!0ZaIzB,
-                                                                                      ipv1!1ZaIzB] = wild2!2ZaIzB
+                                               (DataAlt) APPFL.Tuple.UTP2 ipv8 ipv19
+                                                 -> (Case) (ConApp) APPFL.Tuple.UTP2 [ipv8 ,ipv19] = wild2-
                                                       (UbxTupAlt2)
-                                                        (DataAlt) APPFL.Prim.(#,#) q!3ZaIzB r!4ZaIzB
-                                                          -> (Case) (Op) (Prim) +# [r!4ZaIzB,
-                                                                                    y#!nZaIzB] = sat!6ZaIzB
+                                                        (DataAlt) APPFL.Tuple.UTP2 q_ rAB
+                                                          -> (Case) (Op) (Prim) +# [rAB ,y#v] = satBB
                                                                (PrimAlt)
                                                                  (DEFAULT) _
-                                                                   -> (Case) (Op) (Prim) -# [sat!6ZaIzB,
-                                                                                             (MachInt) 1] = sat!7ZaIzB
+                                                                   -> (Case) (Op) (Prim) -# [satBB ,(MachInt) 1] = satCB
                                                                         (PrimAlt)
                                                                           (DEFAULT) _
-                                                                            -> (Case) (Op) (Prim) -# [q!3ZaIzB,
-                                                                                                      (MachInt) 1] = sat!5ZaIzB
+                                                                            -> (Case) (Op) (Prim) -# [q_ ,(MachInt) 1] = satDB
                                                                                  (PrimAlt)
                                                                                    (DEFAULT) _
-                                                                                     -> (ConApp) APPFL.Prim.(#,#) [sat!5ZaIzB,
-                                                                                                                   sat!7ZaIzB]
-              (DataAlt) APPFL.Types.True
-                -> (Case) (Op) (Prim) -# [x#!mZaIzB, (MachInt) 1] = sat!8ZaIzB
+                                                                                     -> (ConApp) APPFL.Tuple.UTP2 [satDB ,satCB]
+              (DataAlt) GHC.Types.True
+                -> (Case) (Op) (Prim) -# [x#u ,(MachInt) 1] = satEB
                      (PrimAlt)
                        (DEFAULT) _
-                         -> (Case) (App) APPFL.Prim.quotRemInt# sat!8ZaIzB y#!nZaIzB = ds!9ZaIzB
+                         -> (Case) (App) APPFL.Prim.quotRemInt# satEB y#v = dsFB
                               (UbxTupAlt2)
-                                (DataAlt) APPFL.Prim.(#,#) ipv!-ZaIzB ipv1!_ZaIzB
-                                  -> (Case) (ConApp) APPFL.Prim.(#,#) [ipv!-ZaIzB,
-                                                                       ipv1!_ZaIzB] = wild1!AaaIzB
+                                (DataAlt) APPFL.Tuple.UTP2 ipvGB ipv1HB
+                                  -> (Case) (ConApp) APPFL.Tuple.UTP2 [ipvGB ,ipv1HB] = wild1IB
                                        (UbxTupAlt2)
-                                         (DataAlt) APPFL.Prim.(#,#) q!BaaIzB r!CaaIzB
-                                           -> (Case) (Op) (Prim) +# [r!CaaIzB,
-                                                                     y#!nZaIzB] = sat!EaaIzB
+                                         (DataAlt) APPFL.Tuple.UTP2 qJB rKB
+                                           -> (Case) (Op) (Prim) +# [rKB ,y#v] = satLB
                                                 (PrimAlt)
                                                   (DEFAULT) _
-                                                    -> (Case) (Op) (Prim) +# [sat!EaaIzB,
-                                                                              (MachInt) 1] = sat!FaaIzB
+                                                    -> (Case) (Op) (Prim) +# [satLB ,(MachInt) 1] = satMB
                                                          (PrimAlt)
                                                            (DEFAULT) _
-                                                             -> (Case) (Op) (Prim) -# [q!BaaIzB,
-                                                                                       (MachInt) 1] = sat!DaaIzB
+                                                             -> (Case) (Op) (Prim) -# [qJB ,(MachInt) 1] = satNB
                                                                   (PrimAlt)
                                                                     (DEFAULT) _
-                                                                      -> (ConApp) APPFL.Prim.(#,#) [sat!DaaIzB,
-                                                                                                    sat!FaaIzB]
+                                                                      -> (ConApp) APPFL.Tuple.UTP2 [satNB ,satMB]
 (StgNonRec)
   APPFL.Base.divModInt =
-  (FUN) Upd: r
-  [ds!GaaIzB, ds1!HaaIzB]
-    (Case) (App) ds!GaaIzB = wild!IaaIzB
+  (FUN)
+  [dsOB ,ds1PB]
+    (Case) (App) dsOB = wildQB
       (AlgAlt)
-        (DataAlt) APPFL.Types.I# x1!JaaIzB
-          -> (Case) (App) ds1!HaaIzB = wild1!KaaIzB
+        (DataAlt) APPFL.Types.I# x1RB
+          -> (Case) (App) ds1PB = wild1SB
                (AlgAlt)
-                 (DataAlt) APPFL.Types.I# y!LaaIzB
-                   -> (Case) (App) APPFL.Base.divModInt# x1!JaaIzB y!LaaIzB = ds2!MaaIzB
+                 (DataAlt) APPFL.Types.I# yTB
+                   -> (Case) (App) APPFL.Base.divModInt# x1RB yTB = ds2UB
                         (UbxTupAlt2)
-                          (DataAlt) APPFL.Prim.(#,#) ipv!NaaIzB ipv1!OaaIzB
-                            -> (Case) (ConApp) APPFL.Prim.(#,#) [ipv!NaaIzB,
-                                                                 ipv1!OaaIzB] = wild2!PaaIzB
+                          (DataAlt) APPFL.Tuple.UTP2 ipvVB ipv1WB
+                            -> (Case) (ConApp) APPFL.Tuple.UTP2 [ipvVB ,ipv1WB] = wild2XB
                                  (UbxTupAlt2)
-                                   (DataAlt) APPFL.Prim.(#,#) q!QaaIzB r!RaaIzB
+                                   (DataAlt) APPFL.Tuple.UTP2 qYB rZB
                                      -> (Let) let
                                           (StgNonRec)
-                                            sat!TaaIzB =
-                                            (CONish) APPFL.Types.I# [r!RaaIzB]
+                                            sataB =
+                                            (CONish) APPFL.Types.I# [rZB]
                                             Worker/Wrapper: APPFL.Types.I#
                                         in (Let) let
                                              (StgNonRec)
-                                               sat!SaaIzB =
-                                               (CONish) APPFL.Types.I# [q!QaaIzB]
+                                               satbB =
+                                               (CONish) APPFL.Types.I# [qYB]
                                                Worker/Wrapper: APPFL.Types.I#
-                                           in (ConApp) APPFL.Tuple.(,) [sat!SaaIzB, sat!TaaIzB]
+                                           in (ConApp) APPFL.Tuple.TP2 [satbB ,sataB]
 (StgRec)
-  x!9TaIyB =
-  (THUNK) Upd: u (App) x!9TaIyB
+  xcB =
+  (THUNK) (App) xcB
 (StgNonRec)
   APPFL.Base._dummy =
-  (THUNK) Upd: u (App) x!9TaIyB
+  (THUNK) (App) xcB
 (StgNonRec)
   APPFL.Base.fromInteger =
-  (THUNK) Upd: u (App) x!9TaIyB
+  (THUNK) (App) xcB
 (StgNonRec)
   APPFL.Num.mulInt =
-  (FUN) Upd: r
-  [ds!McaIzB, ds1!NcaIzB]
-    (Case) (App) ds!McaIzB = wild!OcaIzB
+  (FUN)
+  [dsdB ,ds1eB]
+    (Case) (App) dsdB = wildfB
       (AlgAlt)
-        (DataAlt) APPFL.Types.I# a#!PcaIzB
-          -> (Case) (App) ds1!NcaIzB = wild1!QcaIzB
+        (DataAlt) APPFL.Types.I# a#gB
+          -> (Case) (App) ds1eB = wild1hB
                (AlgAlt)
-                 (DataAlt) APPFL.Types.I# b#!RcaIzB
-                   -> (Case) (Op) (Prim) *# [a#!PcaIzB, b#!RcaIzB] = sat!ScaIzB
-                        (PrimAlt) (DEFAULT) _ -> (ConApp) APPFL.Types.I# [sat!ScaIzB]
+                 (DataAlt) APPFL.Types.I# b#iB
+                   -> (Case) (Op) (Prim) *# [a#gB ,b#iB] = satjB
+                        (PrimAlt) (DEFAULT) _ -> (ConApp) APPFL.Types.I# [satjB]
 (StgNonRec)
   APPFL.Num.subInt =
-  (FUN) Upd: r
-  [ds!TcaIzB, ds1!UcaIzB]
-    (Case) (App) ds!TcaIzB = wild!VcaIzB
+  (FUN)
+  [dskB ,ds1lB]
+    (Case) (App) dskB = wildmB
       (AlgAlt)
-        (DataAlt) APPFL.Types.I# a#!WcaIzB
-          -> (Case) (App) ds1!UcaIzB = wild1!XcaIzB
+        (DataAlt) APPFL.Types.I# a#nB
+          -> (Case) (App) ds1lB = wild1oB
                (AlgAlt)
-                 (DataAlt) APPFL.Types.I# b#!YcaIzB
-                   -> (Case) (Op) (Prim) -# [a#!WcaIzB, b#!YcaIzB] = sat!ZcaIzB
-                        (PrimAlt) (DEFAULT) _ -> (ConApp) APPFL.Types.I# [sat!ZcaIzB]
+                 (DataAlt) APPFL.Types.I# b#pB
+                   -> (Case) (Op) (Prim) -# [a#nB ,b#pB] = satqB
+                        (PrimAlt) (DEFAULT) _ -> (ConApp) APPFL.Types.I# [satqB]
 (StgNonRec)
   APPFL.Num.addInt =
-  (FUN) Upd: r
-  [ds!acaIzB, ds1!bcaIzB]
-    (Case) (App) ds!acaIzB = wild!ccaIzB
+  (FUN)
+  [dsrB ,ds1sB]
+    (Case) (App) dsrB = wildtB
       (AlgAlt)
-        (DataAlt) APPFL.Types.I# a#!dcaIzB
-          -> (Case) (App) ds1!bcaIzB = wild1!ecaIzB
+        (DataAlt) APPFL.Types.I# a#uB
+          -> (Case) (App) ds1sB = wild1vB
                (AlgAlt)
-                 (DataAlt) APPFL.Types.I# b#!fcaIzB
-                   -> (Case) (Op) (Prim) +# [a#!dcaIzB, b#!fcaIzB] = sat!gcaIzB
-                        (PrimAlt) (DEFAULT) _ -> (ConApp) APPFL.Types.I# [sat!gcaIzB]
+                 (DataAlt) APPFL.Types.I# b#wB
+                   -> (Case) (Op) (Prim) +# [a#uB ,b#wB] = satxB
+                        (PrimAlt) (DEFAULT) _ -> (ConApp) APPFL.Types.I# [satxB]
 (StgNonRec)
   APPFL.Num.negate =
-  (FUN) Upd: r
-  [ds!hcaIzB]
-    (Case) (App) ds!hcaIzB = wild!icaIzB
+  (FUN)
+  [dsyB]
+    (Case) (App) dsyB = wildzB
       (AlgAlt)
-        (DataAlt) APPFL.Types.I# i#!jcaIzB
-          -> (Case) (Op) (Prim) negateInt# [i#!jcaIzB] = sat!kcaIzB
-               (PrimAlt) (DEFAULT) _ -> (ConApp) APPFL.Types.I# [sat!kcaIzB]
+        (DataAlt) APPFL.Types.I# i#0B
+          -> (Case) (Op) (Prim) negateInt# [i#0B] = sat1B
+               (PrimAlt) (DEFAULT) _ -> (ConApp) APPFL.Types.I# [sat1B]
 (StgNonRec)
   APPFL.Num.% =
-  (THUNK) Upd: u (App) APPFL.Base.remInt
+  (THUNK) (App) APPFL.Base.remInt
 (StgNonRec)
   APPFL.Num.mod =
-  (THUNK) Upd: u (App) APPFL.Base.remInt
+  (THUNK) (App) APPFL.Base.remInt
 (StgNonRec)
   APPFL.Num.* =
-  (FUN) Upd: r
-  [eta!CAAACB, eta!BAAACB]
-    (App) APPFL.Num.mulInt eta!CAAACB eta!BAAACB
+  (FUN)
+  [eta2B ,eta3B]
+    (App) APPFL.Num.mulInt eta2B eta3B
 (StgNonRec)
   APPFL.Num./ =
-  (THUNK) Upd: u (App) APPFL.Base.quotInt
+  (THUNK) (App) APPFL.Base.quotInt
 (StgNonRec)
   APPFL.Num.div =
-  (THUNK) Upd: u (App) APPFL.Base.quotInt
+  (THUNK) (App) APPFL.Base.quotInt
 (StgNonRec)
   APPFL.Num.- =
-  (FUN) Upd: r
-  [eta!CAAACB, eta!BAAACB]
-    (App) APPFL.Num.subInt eta!CAAACB eta!BAAACB
+  (FUN)
+  [eta2B ,eta3B]
+    (App) APPFL.Num.subInt eta2B eta3B
 (StgNonRec)
   APPFL.Num.+ =
-  (FUN) Upd: r
-  [eta!CAAACB, eta!BAAACB]
-    (App) APPFL.Num.addInt eta!CAAACB eta!BAAACB
+  (FUN)
+  [eta2B ,eta3B]
+    (App) APPFL.Num.addInt eta2B eta3B
 (StgNonRec)
   APPFL.Types.isTrue# =
-  (FUN) Upd: r
-  [ds!TdaIzB]
-    (Case) (App) ds!TdaIzB = ds1!UdaIzB
+  (FUN)
+  [ds4B]
+    (Case) (App) ds4B = ds15B
       (PrimAlt)
-        (DEFAULT) _ -> (ConApp) APPFL.Types.False []
-        (LitAlt) (MachInt) 1 -> (ConApp) APPFL.Types.True []
-(StgNonRec)
-  APPFL.Types.MkCoercible =
-  (FUN) Upd: r
-  [eta!BAAACB]
-    (ConApp) APPFL.Types.MkCoercible [APPFL.Prim.coercionToken#]
+        (DEFAULT) _ -> (ConApp) GHC.Types.False []
+        (LitAlt) (MachInt) 1 -> (ConApp) GHC.Types.True []
 (StgNonRec)
   APPFL.Types.Cons =
-  (FUN) Upd: r
-  [eta!CAAACB, eta!BAAACB]
-    (ConApp) APPFL.Types.Cons [eta!CAAACB, eta!BAAACB]
+  (FUN)
+  [eta2B ,eta3B]
+    (ConApp) APPFL.Types.Cons [eta2B ,eta3B]
 (StgNonRec)
   APPFL.Types.Nil =
   (CONish) APPFL.Types.Nil []
@@ -432,9 +294,9 @@
   Worker/Wrapper: APPFL.Types.Unit
 (StgNonRec)
   APPFL.Types.I# =
-  (FUN) Upd: r
-  [eta!BAAACB]
-    (ConApp) APPFL.Types.I# [eta!BAAACB]
+  (FUN)
+  [eta3B]
+    (ConApp) APPFL.Types.I# [eta3B]
 (StgNonRec)
   APPFL.Types.False =
   (CONish) APPFL.Types.False []
@@ -445,258 +307,249 @@
   Worker/Wrapper: APPFL.Types.True
 (StgRec)
   APPFL.Prim.imin# =
-  (THUNK) Upd: u (App) x!jdaIyB
-  x!jdaIyB =
-  (THUNK) Upd: u (App) APPFL.Prim.imin#
+  (THUNK) (App) x6B
+  x6B =
+  (THUNK) (App) APPFL.Prim.imin#
 (StgRec)
   APPFL.Prim.imax# =
-  (THUNK) Upd: u (App) x1!kdaIyB
-  x1!kdaIyB =
-  (THUNK) Upd: u (App) APPFL.Prim.imax#
+  (THUNK) (App) x17B
+  x17B =
+  (THUNK) (App) APPFL.Prim.imax#
 (StgNonRec)
   APPFL.Prim.ineg# =
-  (FUN) Upd: r
-  [eta!BAAACB]
-    (Op) (Prim) negateInt# [eta!BAAACB]
+  (FUN)
+  [eta3B]
+    (Op) (Prim) negateInt# [eta3B]
 (StgNonRec)
   APPFL.Prim./# =
-  (FUN) Upd: r
-  [eta!CAAACB, eta!BAAACB]
-    (Op) (Prim) quotInt# [eta!CAAACB, eta!BAAACB]
+  (FUN)
+  [eta2B ,eta3B]
+    (Op) (Prim) quotInt# [eta2B ,eta3B]
 (StgNonRec)
   APPFL.Prim.%# =
-  (FUN) Upd: r
-  [eta!CAAACB, eta!BAAACB]
-    (Op) (Prim) remInt# [eta!CAAACB, eta!BAAACB]
+  (FUN)
+  [eta2B ,eta3B]
+    (Op) (Prim) remInt# [eta2B ,eta3B]
 (StgNonRec)
   APPFL.Prim.quotRemInt# =
-  (FUN) Upd: r
-  [a!ldaIzB, b!mdaIzB]
-    (Case) (Op) (Prim) quotInt# [a!ldaIzB, b!mdaIzB] = q!ndaIzB
+  (FUN)
+  [a8B ,b9B]
+    (Case) (Op) (Prim) quotInt# [a8B ,b9B] = q-B
       (PrimAlt)
         (DEFAULT) _
-          -> (Case) (Op) (Prim) remInt# [a!ldaIzB, b!mdaIzB] = r!odaIzB
-               (PrimAlt)
-                 (DEFAULT) _ -> (ConApp) APPFL.Prim.(#,#) [q!ndaIzB, r!odaIzB]
+          -> (Case) (Op) (Prim) remInt# [a8B ,b9B] = r_B
+               (PrimAlt) (DEFAULT) _ -> (ConApp) APPFL.Tuple.UTP2 [q-B ,r_B]
 (StgNonRec)
   APPFL.Classes.not =
-  (FUN) Upd: r
-  [ds!9daIzB]
-    (Case) (App) ds!9daIzB = wild!-daIzB
+  (FUN)
+  [dsAC]
+    (Case) (App) dsAC = wildBC
       (AlgAlt)
-        (DataAlt) APPFL.Types.False -> (ConApp) APPFL.Types.True []
-        (DataAlt) APPFL.Types.True -> (ConApp) APPFL.Types.False []
+        (DataAlt) GHC.Types.False -> (ConApp) GHC.Types.True []
+        (DataAlt) GHC.Types.True -> (ConApp) GHC.Types.False []
 (StgNonRec)
   APPFL.Classes.|| =
-  (FUN) Upd: r
-  [ds!_daIzB, ds1!AeaIzB]
-    (Case) (App) ds!_daIzB = wild!BeaIzB
+  (FUN)
+  [dsCC ,ds1DC]
+    (Case) (App) dsCC = wildEC
       (AlgAlt)
-        (DataAlt) APPFL.Types.False -> (App) ds1!AeaIzB
-        (DataAlt) APPFL.Types.True -> (ConApp) APPFL.Types.True []
+        (DataAlt) GHC.Types.False -> (App) ds1DC
+        (DataAlt) GHC.Types.True -> (ConApp) GHC.Types.True []
 (StgNonRec)
   APPFL.Classes.&& =
-  (FUN) Upd: r
-  [ds!CeaIzB, x!DeaIzB]
-    (Case) (App) ds!CeaIzB = wild!EeaIzB
+  (FUN)
+  [dsFC ,xGC]
+    (Case) (App) dsFC = wildHC
       (AlgAlt)
-        (DataAlt) APPFL.Types.False -> (ConApp) APPFL.Types.False []
-        (DataAlt) APPFL.Types.True -> (App) x!DeaIzB
+        (DataAlt) GHC.Types.False -> (ConApp) GHC.Types.False []
+        (DataAlt) GHC.Types.True -> (App) xGC
 (StgNonRec)
   APPFL.Classes.divInt# =
-  (FUN) Upd: r
-  [x#!FeaIzB, y#!GeaIzB]
+  (FUN)
+  [x#IC ,y#JC]
     (LetNE) let
       (StgNonRec)
-        $j!HeaIzB =
-        (FUN) Upd: r
-        [w!IeaIzB]
-          (Case) (Op) (Prim) <# [x#!FeaIzB, (MachInt) 0] = sat!JeaIzB
+        $jKC =
+        (FUN)
+        [wLC]
+          (Case) (Op) (Prim) <# [x#IC ,(MachInt) 0] = satMC
             (PrimAlt)
               (DEFAULT) _
-                -> (Case) (App) APPFL.Types.isTrue# sat!JeaIzB = wild!KeaIzB
+                -> (Case) (App) APPFL.Types.isTrue# satMC = wildNC
                      (AlgAlt)
-                       (DataAlt) APPFL.Types.False
-                         -> (Op) (Prim) quotInt# [x#!FeaIzB, y#!GeaIzB]
-                       (DataAlt) APPFL.Types.True
-                         -> (Case) (Op) (Prim) ># [y#!GeaIzB, (MachInt) 0] = sat!LeaIzB
+                       (DataAlt) GHC.Types.False -> (Op) (Prim) quotInt# [x#IC ,y#JC]
+                       (DataAlt) GHC.Types.True
+                         -> (Case) (Op) (Prim) ># [y#JC ,(MachInt) 0] = satOC
                               (PrimAlt)
                                 (DEFAULT) _
-                                  -> (Case) (App) APPFL.Types.isTrue# sat!LeaIzB = wild1!MeaIzB
+                                  -> (Case) (App) APPFL.Types.isTrue# satOC = wild1PC
                                        (AlgAlt)
-                                         (DataAlt) APPFL.Types.False
-                                           -> (Op) (Prim) quotInt# [x#!FeaIzB, y#!GeaIzB]
-                                         (DataAlt) APPFL.Types.True
-                                           -> (Case) (Op) (Prim) +# [x#!FeaIzB,
-                                                                     (MachInt) 1] = sat!NeaIzB
+                                         (DataAlt) GHC.Types.False
+                                           -> (Op) (Prim) quotInt# [x#IC ,y#JC]
+                                         (DataAlt) GHC.Types.True
+                                           -> (Case) (Op) (Prim) +# [x#IC ,(MachInt) 1] = satQC
                                                 (PrimAlt)
                                                   (DEFAULT) _
-                                                    -> (Case) (Op) (Prim) quotInt# [sat!NeaIzB,
-                                                                                    y#!GeaIzB] = wild2!OeaIzB
+                                                    -> (Case) (Op) (Prim) quotInt# [satQC ,y#JC] = wild2RC
                                                          (PrimAlt)
                                                            (DEFAULT) _
-                                                             -> (Op) (Prim) -# [wild2!OeaIzB,
-                                                                                (MachInt) 1]
-    in (Case) (Op) (Prim) ># [x#!FeaIzB, (MachInt) 0] = sat!PeaIzB
+                                                             -> (Op) (Prim) -# [wild2RC ,(MachInt) 1]
+    in (Case) (Op) (Prim) ># [x#IC ,(MachInt) 0] = satSC
          (PrimAlt)
            (DEFAULT) _
-             -> (Case) (App) APPFL.Types.isTrue# sat!PeaIzB = wild!QeaIzB
+             -> (Case) (App) APPFL.Types.isTrue# satSC = wildTC
                   (AlgAlt)
-                    (DataAlt) APPFL.Types.False -> (App) $j!HeaIzB APPFL.Prim.void#
-                    (DataAlt) APPFL.Types.True
-                      -> (Case) (Op) (Prim) <# [y#!GeaIzB, (MachInt) 0] = sat!ReaIzB
+                    (DataAlt) GHC.Types.False -> (App) $jKC stg_case_not_exhaustive
+                    (DataAlt) GHC.Types.True
+                      -> (Case) (Op) (Prim) <# [y#JC ,(MachInt) 0] = satUC
                            (PrimAlt)
                              (DEFAULT) _
-                               -> (Case) (App) APPFL.Types.isTrue# sat!ReaIzB = wild1!SeaIzB
+                               -> (Case) (App) APPFL.Types.isTrue# satUC = wild1VC
                                     (AlgAlt)
-                                      (DataAlt) APPFL.Types.False
-                                        -> (App) $j!HeaIzB APPFL.Prim.void#
-                                      (DataAlt) APPFL.Types.True
-                                        -> (Case) (Op) (Prim) -# [x#!FeaIzB,
-                                                                  (MachInt) 1] = sat!TeaIzB
+                                      (DataAlt) GHC.Types.False
+                                        -> (App) $jKC stg_case_not_exhaustive
+                                      (DataAlt) GHC.Types.True
+                                        -> (Case) (Op) (Prim) -# [x#IC ,(MachInt) 1] = satWC
                                              (PrimAlt)
                                                (DEFAULT) _
-                                                 -> (Case) (Op) (Prim) quotInt# [sat!TeaIzB,
-                                                                                 y#!GeaIzB] = wild2!UeaIzB
+                                                 -> (Case) (Op) (Prim) quotInt# [satWC ,y#JC] = wild2XC
                                                       (PrimAlt)
                                                         (DEFAULT) _
-                                                          -> (Op) (Prim) -# [wild2!UeaIzB,
-                                                                             (MachInt) 1]
+                                                          -> (Op) (Prim) -# [wild2XC ,(MachInt) 1]
 (StgNonRec)
   APPFL.Classes.modInt# =
-  (FUN) Upd: r
-  [x#!VeaIzB, y#!WeaIzB]
-    (Case) (Op) (Prim) remInt# [x#!VeaIzB, y#!WeaIzB] = r#!XeaIzB
+  (FUN)
+  [x#YC ,y#ZC]
+    (Case) (Op) (Prim) remInt# [x#YC ,y#ZC] = r#aC
       (PrimAlt)
         (DEFAULT) _
           -> (LetNE) let
                (StgNonRec)
-                 $j!YeaIzB =
-                 (FUN) Upd: r
-                 [w!ZeaIzB]
-                   (Case) (App) r#!XeaIzB = wild!aeaIzB
+                 $jbC =
+                 (FUN)
+                 [wcC]
+                   (Case) (App) r#aC = wilddC
                      (PrimAlt)
                        (DEFAULT) _
-                         -> (Case) (App) APPFL.Types.isTrue# (MachInt) 1 = wild1!beaIzB
+                         -> (Case) (App) APPFL.Types.isTrue# (MachInt) 1 = wild1eC
                               (AlgAlt)
-                                (DataAlt) APPFL.Types.False -> (Lit) (MachInt) 0
-                                (DataAlt) APPFL.Types.True
-                                  -> (Op) (Prim) +# [wild!aeaIzB, y#!WeaIzB]
+                                (DataAlt) GHC.Types.False -> (Lit) (MachInt) 0
+                                (DataAlt) GHC.Types.True -> (Op) (Prim) +# [wilddC ,y#ZC]
                        (LitAlt) (MachInt) 0
-                         -> (Case) (App) APPFL.Types.isTrue# (MachInt) 0 = wild1!ceaIzB
+                         -> (Case) (App) APPFL.Types.isTrue# (MachInt) 0 = wild1fC
                               (AlgAlt)
-                                (DataAlt) APPFL.Types.False -> (Lit) (MachInt) 0
-                                (DataAlt) APPFL.Types.True -> (App) y#!WeaIzB
+                                (DataAlt) GHC.Types.False -> (Lit) (MachInt) 0
+                                (DataAlt) GHC.Types.True -> (App) y#ZC
              in (LetNE) let
                   (StgNonRec)
-                    $j1!deaIzB =
-                    (FUN) Upd: r
-                    [w!eeaIzB]
-                      (Case) (Op) (Prim) <# [x#!VeaIzB, (MachInt) 0] = sat!feaIzB
+                    $j1gC =
+                    (FUN)
+                    [whC]
+                      (Case) (Op) (Prim) <# [x#YC ,(MachInt) 0] = satiC
                         (PrimAlt)
                           (DEFAULT) _
-                            -> (Case) (App) APPFL.Types.isTrue# sat!feaIzB = wild!geaIzB
+                            -> (Case) (App) APPFL.Types.isTrue# satiC = wildjC
                                  (AlgAlt)
-                                   (DataAlt) APPFL.Types.False -> (App) r#!XeaIzB
-                                   (DataAlt) APPFL.Types.True
-                                     -> (Case) (Op) (Prim) ># [y#!WeaIzB, (MachInt) 0] = sat!heaIzB
+                                   (DataAlt) GHC.Types.False -> (App) r#aC
+                                   (DataAlt) GHC.Types.True
+                                     -> (Case) (Op) (Prim) ># [y#ZC ,(MachInt) 0] = satkC
                                           (PrimAlt)
                                             (DEFAULT) _
-                                              -> (Case) (App) APPFL.Types.isTrue# sat!heaIzB = wild1!ieaIzB
+                                              -> (Case) (App) APPFL.Types.isTrue# satkC = wild1lC
                                                    (AlgAlt)
-                                                     (DataAlt) APPFL.Types.False -> (App) r#!XeaIzB
-                                                     (DataAlt) APPFL.Types.True
-                                                       -> (App) $j!YeaIzB APPFL.Prim.void#
-                in (Case) (Op) (Prim) ># [x#!VeaIzB, (MachInt) 0] = sat!jeaIzB
+                                                     (DataAlt) GHC.Types.False -> (App) r#aC
+                                                     (DataAlt) GHC.Types.True
+                                                       -> (App) $jbC stg_case_not_exhaustive
+                in (Case) (Op) (Prim) ># [x#YC ,(MachInt) 0] = satmC
                      (PrimAlt)
                        (DEFAULT) _
-                         -> (Case) (App) APPFL.Types.isTrue# sat!jeaIzB = wild!keaIzB
+                         -> (Case) (App) APPFL.Types.isTrue# satmC = wildnC
                               (AlgAlt)
-                                (DataAlt) APPFL.Types.False -> (App) $j1!deaIzB APPFL.Prim.void#
-                                (DataAlt) APPFL.Types.True
-                                  -> (Case) (Op) (Prim) <# [y#!WeaIzB, (MachInt) 0] = sat!leaIzB
+                                (DataAlt) GHC.Types.False -> (App) $j1gC stg_case_not_exhaustive
+                                (DataAlt) GHC.Types.True
+                                  -> (Case) (Op) (Prim) <# [y#ZC ,(MachInt) 0] = satoC
                                        (PrimAlt)
                                          (DEFAULT) _
-                                           -> (Case) (App) APPFL.Types.isTrue# sat!leaIzB = wild1!meaIzB
+                                           -> (Case) (App) APPFL.Types.isTrue# satoC = wild1pC
                                                 (AlgAlt)
-                                                  (DataAlt) APPFL.Types.False
-                                                    -> (App) $j1!deaIzB APPFL.Prim.void#
-                                                  (DataAlt) APPFL.Types.True
-                                                    -> (App) $j!YeaIzB APPFL.Prim.void#
+                                                  (DataAlt) GHC.Types.False
+                                                    -> (App) $j1gC stg_case_not_exhaustive
+                                                  (DataAlt) GHC.Types.True
+                                                    -> (App) $jbC stg_case_not_exhaustive
 (StgNonRec)
   APPFL.Classes.leInt =
-  (FUN) Upd: r
-  [eta!neaIzB, eta1!oeaIzB]
-    (Case) (App) eta!neaIzB = wild!peaIzB
+  (FUN)
+  [etaqC ,eta1rC]
+    (Case) (App) etaqC = wildsC
       (AlgAlt)
-        (DataAlt) APPFL.Types.I# x!qeaIzB
-          -> (Case) (App) eta1!oeaIzB = wild1!reaIzB
+        (DataAlt) APPFL.Types.I# xtC
+          -> (Case) (App) eta1rC = wild1uC
                (AlgAlt)
-                 (DataAlt) APPFL.Types.I# y!seaIzB
-                   -> (Case) (Op) (Prim) <=# [x!qeaIzB, y!seaIzB] = sat!teaIzB
-                        (PrimAlt) (DEFAULT) _ -> (App) APPFL.Types.isTrue# sat!teaIzB
+                 (DataAlt) APPFL.Types.I# yvC
+                   -> (Case) (Op) (Prim) <=# [xtC ,yvC] = satwC
+                        (PrimAlt) (DEFAULT) _ -> (App) APPFL.Types.isTrue# satwC
 (StgNonRec)
   APPFL.Classes.ltInt =
-  (FUN) Upd: r
-  [eta!ueaIzB, eta1!veaIzB]
-    (Case) (App) eta!ueaIzB = wild!weaIzB
+  (FUN)
+  [etaxC ,eta1yC]
+    (Case) (App) etaxC = wildzC
       (AlgAlt)
-        (DataAlt) APPFL.Types.I# x!xeaIzB
-          -> (Case) (App) eta1!veaIzB = wild1!yeaIzB
+        (DataAlt) APPFL.Types.I# x0C
+          -> (Case) (App) eta1yC = wild11C
                (AlgAlt)
-                 (DataAlt) APPFL.Types.I# y!zeaIzB
-                   -> (Case) (Op) (Prim) <# [x!xeaIzB, y!zeaIzB] = sat!0eaIzB
-                        (PrimAlt) (DEFAULT) _ -> (App) APPFL.Types.isTrue# sat!0eaIzB
+                 (DataAlt) APPFL.Types.I# y2C
+                   -> (Case) (Op) (Prim) <# [x0C ,y2C] = sat3C
+                        (PrimAlt) (DEFAULT) _ -> (App) APPFL.Types.isTrue# sat3C
 (StgNonRec)
   APPFL.Classes.geInt =
-  (FUN) Upd: r
-  [eta!1eaIzB, eta1!2eaIzB]
-    (Case) (App) eta!1eaIzB = wild!3eaIzB
+  (FUN)
+  [eta4C ,eta15C]
+    (Case) (App) eta4C = wild6C
       (AlgAlt)
-        (DataAlt) APPFL.Types.I# x!4eaIzB
-          -> (Case) (App) eta1!2eaIzB = wild1!5eaIzB
+        (DataAlt) APPFL.Types.I# x7C
+          -> (Case) (App) eta15C = wild18C
                (AlgAlt)
-                 (DataAlt) APPFL.Types.I# y!6eaIzB
-                   -> (Case) (Op) (Prim) >=# [x!4eaIzB, y!6eaIzB] = sat!7eaIzB
-                        (PrimAlt) (DEFAULT) _ -> (App) APPFL.Types.isTrue# sat!7eaIzB
+                 (DataAlt) APPFL.Types.I# y9C
+                   -> (Case) (Op) (Prim) >=# [x7C ,y9C] = sat-C
+                        (PrimAlt) (DEFAULT) _ -> (App) APPFL.Types.isTrue# sat-C
 (StgNonRec)
   APPFL.Classes.gtInt =
-  (FUN) Upd: r
-  [eta!8eaIzB, eta1!9eaIzB]
-    (Case) (App) eta!8eaIzB = wild!-eaIzB
+  (FUN)
+  [eta_C ,eta1AD]
+    (Case) (App) eta_C = wildBD
       (AlgAlt)
-        (DataAlt) APPFL.Types.I# x!_eaIzB
-          -> (Case) (App) eta1!9eaIzB = wild1!AfaIzB
+        (DataAlt) APPFL.Types.I# xCD
+          -> (Case) (App) eta1AD = wild1DD
                (AlgAlt)
-                 (DataAlt) APPFL.Types.I# y!BfaIzB
-                   -> (Case) (Op) (Prim) ># [x!_eaIzB, y!BfaIzB] = sat!CfaIzB
-                        (PrimAlt) (DEFAULT) _ -> (App) APPFL.Types.isTrue# sat!CfaIzB
+                 (DataAlt) APPFL.Types.I# yED
+                   -> (Case) (Op) (Prim) ># [xCD ,yED] = satFD
+                        (PrimAlt) (DEFAULT) _ -> (App) APPFL.Types.isTrue# satFD
 (StgNonRec)
   APPFL.Classes.neInt =
-  (FUN) Upd: r
-  [eta!DfaIzB, eta1!EfaIzB]
-    (Case) (App) eta!DfaIzB = wild!FfaIzB
+  (FUN)
+  [etaGD ,eta1HD]
+    (Case) (App) etaGD = wildID
       (AlgAlt)
-        (DataAlt) APPFL.Types.I# x!GfaIzB
-          -> (Case) (App) eta1!EfaIzB = wild1!HfaIzB
+        (DataAlt) APPFL.Types.I# xJD
+          -> (Case) (App) eta1HD = wild1KD
                (AlgAlt)
-                 (DataAlt) APPFL.Types.I# y!IfaIzB
-                   -> (Case) (Op) (Prim) /=# [x!GfaIzB, y!IfaIzB] = sat!JfaIzB
-                        (PrimAlt) (DEFAULT) _ -> (App) APPFL.Types.isTrue# sat!JfaIzB
+                 (DataAlt) APPFL.Types.I# yLD
+                   -> (Case) (Op) (Prim) /=# [xJD ,yLD] = satMD
+                        (PrimAlt) (DEFAULT) _ -> (App) APPFL.Types.isTrue# satMD
 (StgNonRec)
   APPFL.Classes.eqInt =
-  (FUN) Upd: r
-  [eta!KfaIzB, eta1!LfaIzB]
-    (Case) (App) eta!KfaIzB = wild!MfaIzB
+  (FUN)
+  [etaND ,eta1OD]
+    (Case) (App) etaND = wildPD
       (AlgAlt)
-        (DataAlt) APPFL.Types.I# x!NfaIzB
-          -> (Case) (App) eta1!LfaIzB = wild1!OfaIzB
+        (DataAlt) APPFL.Types.I# xQD
+          -> (Case) (App) eta1OD = wild1RD
                (AlgAlt)
-                 (DataAlt) APPFL.Types.I# y!PfaIzB
-                   -> (Case) (Op) (Prim) ==# [x!NfaIzB, y!PfaIzB] = sat!QfaIzB
-                        (PrimAlt) (DEFAULT) _ -> (App) APPFL.Types.isTrue# sat!QfaIzB
+                 (DataAlt) APPFL.Types.I# ySD
+                   -> (Case) (Op) (Prim) ==# [xQD ,ySD] = satTD
+                        (PrimAlt) (DEFAULT) _ -> (App) APPFL.Types.isTrue# satTD
 (StgNonRec)
   APPFL.Classes.== =
-  (FUN) Upd: r
-  [eta!CAAACB, eta!BAAACB]
-    (App) APPFL.Classes.eqInt eta!CAAACB eta!BAAACB
+  (FUN)
+  [eta2B ,eta3B]
+    (App) APPFL.Classes.eqInt eta2B eta3B

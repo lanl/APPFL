@@ -72,7 +72,7 @@ imin# :: Int# -> Int# -> Int#
 imin# = let x = x in x
 
 
--- Implemented Primops
+-- Implemented Primops/Ids
 
 -- | Calculate quotient and remainder of a division operation.
 --   (C-style divison and modulus)
@@ -82,3 +82,7 @@ a `quotRemInt#` b =
     q -> case a %# b of
            r -> (# q, r #)
 
+-- I'm letting this fail intentionally for now. If we support a 'raise#'
+-- primitive, I might use that instead.
+void# :: a
+void# = let x = x in x

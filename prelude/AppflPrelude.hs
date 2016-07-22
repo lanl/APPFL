@@ -1,5 +1,5 @@
 {-# LANGUAGE Trustworthy #-}
-{-# LANGUAGE NoImplicitPrelude #-}
+{-# LANGUAGE NoImplicitPrelude, MagicHash #-}
 
 -----------------------------------------------------------------------------
 -- |
@@ -39,7 +39,9 @@ module AppflPrelude (
     -- fst, snd, curry, uncurry,
 
     -- -- ** Basic type classes
-    (==),
+
+    (==), (/=),  --- INT ONLY (FOR NOW)
+
     -- Eq((==), (/=)),
     -- Ord(compare, (<), (<=), (>=), (>), max, min),
     -- Enum(succ, pred, toEnum, fromEnum, enumFrom, enumFromThen,
@@ -49,7 +51,7 @@ module AppflPrelude (
     -- ** Numbers
 
     -- *** Numeric types
-    Int, (+), (-), (*), (/), mod, div, negate,
+    Int(..), (+), (-), (*), (/), mod, div, negate,
     fromInteger,
     
     -- Integer, Float, Double,
@@ -225,7 +227,8 @@ STG must then handle the substitution.
 
 -}
 
-
+-- Hack.
+-- Maybe better to autogen tuples as needed when traversing AST
 
 import APPFL.Base
 import APPFL.Num

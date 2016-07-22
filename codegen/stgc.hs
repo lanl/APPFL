@@ -16,7 +16,7 @@ import           System.Process
 import           PPrint
 import           Control.Monad (when)
 import           Control.Applicative ((<|>))
-import           FromGHC.FromGHC (ghc2stg)
+import           FromGHC.FromGHC 
 -- Just a <|> Nothing == Just a <|> Just b == Just a
 
 -- build a.out from stg/mhs and run it
@@ -108,7 +108,10 @@ parseFrontArg userArg = case [x | (s, x) <- frontendAssoc, arg `isPrefixOf` s] o
                           x:_ -> Just x
   where arg = map toLower userArg
   
-inferFrontend filename = listToMaybe [fe | (s,fe) <- frontendAssoc, s `isSuffixOf` filename]
+inferFrontend filename = listToMaybe [fe | (s,fe) <- feFileAssoc, s `isSuffixOf` filename]
+  where feFileAssoc = [("mhs", MHS)
+                      ,("stg", STG)
+                      ,("hs" , GHC)]
 
 
 frontendOptErr :: String -> a
@@ -204,8 +207,9 @@ compile  (Options {optVerbose, optDumpParse, optNoPrelude, optInput,
         preludeFN = preludeDir ++ "/Prelude." ++ map toLower (show frontend)
     ifd <- openFile input ReadMode
     src <- hGetContents ifd
+
     
-    warnIfFrontendStrange optFrontend implicitFrontend
+    when optVerbose $ warnIfFrontendStrange optFrontend implicitFrontend
     
     prelude <- if optNoPrelude || frontend == GHC
                then return ""

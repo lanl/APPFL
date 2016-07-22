@@ -56,7 +56,7 @@ isTrue# _  = GHC.False
 
 
 
--- Leaving this in for now, but not exported
+
 -- newtype IO a = IO (State# RealWorld -> (# State# RealWorld, a #))
 -- type role IO representational
 
@@ -107,7 +107,7 @@ isTrue# _  = GHC.False
 --      by Joachim Breitner, Richard A. Eisenberg, Simon Peyton Jones and Stephanie Weirich.
 --
 --      @since 4.7.0.0
-data Coercible a b = MkCoercible ((~#) a b)
+--data Coercible a b = MkCoercible ((~#) a b)
 -- It's really ~R# (representational equality), not ~#,
 -- but  * we don't yet have syntax for ~R#,
 --      * the compiled code is the same either way

@@ -1,21 +1,33 @@
 {-# LANGUAGE BangPatterns #-}
 
-module FromGHC.BuiltIn where
+module FromGHC.BuiltIn
+  ( module FromGHC.BuiltIn
+  , voidPrimId)
+where
 
 import qualified Data.Map.Strict as Map
 import Data.Function (on)
 import Data.Maybe (fromMaybe)
+import Debug.Trace
 
 import AST as A (Primop (..))
 import PrimOp as G
 
 -- GHC Wired-in things come from these modules
-import TysWiredIn as G
-import PrelNames as G
-import MkCore as G
+import TysWiredIn  as G
+import TysPrim     as G
+import PrelNames   as G
+import MkCore      as G
+import MkId        as G
 
-import Name as G (Name, NamedThing (..))
+import TypeRep (TyThing (..))
+import ConLike (ConLike (..))
+
+import Name as G ( Name, NamedThing (..), BuiltInSyntax(..)
+                 , mkWiredInName)
+import OccName (mkDataOccFS)
 import BasicTypes (TupleSort (..))
+import FastString (fsLit)
 import Constants (mAX_TUPLE_SIZE{-62-}) --  Maybe use an APPFL constant?
 
 
@@ -100,15 +112,36 @@ builtInMap =
   [ (G.consDataConName, typesDot "Cons")
   , (G.nilDataConName, typesDot "Nil")
   , (G.listTyConName, typesDot "List")
+  , (G.boolTyConName, typesDot "Bool")
+  , (getName G.trueDataCon, typesDot "True")
+  , (getName G.falseDataCon, typesDot "False")
+  , (getName G.trueDataConId, typesDot "True")
+  , (getName G.falseDataConId, typesDot "False")
+  , (G.intTyConName, typesDot "Int")
+  , (intDataConName, typesDot "I#") 
+  , (getName G.intPrimTyCon, "Int_h") -- hacky...
+
+    -- GHC generates functions that are only ever passed 'void#',
+    -- which *seem* to never use it. In theory, any argument should
+    -- work, as long as it's consistent.
+  , (getName voidPrimId, primDot "void#") 
   ]
   `Map.union` tupleMap
   `Map.union` errorCallMap
 
-tupleMap = (Map.union `on` Map.fromList)
-  [ (getName (tupleCon BoxedTuple i)   , tupleDot ("TP" ++ show i))
+-- Not exported from TysWiredIn, aggravating
+intDataConName = mkWiredInName G.gHC_TYPES
+                 (mkDataOccFS $ fsLit "I#") G.intDataConKey
+                 (AConLike (RealDataCon G.intDataCon)) UserSyntax
+
+tupleMap = Map.fromList $ concat
+  [ [ (getName (tupleCon BoxedTuple i)   , tupleDot ("TP" ++ show i))
+    , (getName (tupleCon UnboxedTuple i) , tupleDot ("UTP" ++ show i))
+    , (getName (tupleTyCon BoxedTuple i) , tupleDot ("TP" ++ show i))
+    , (getName (tupleTyCon UnboxedTuple i) , tupleDot ("UTP" ++ show i))
+    ]
    | i <- [0..mAX_TUPLE_SIZE]]
-  [ (getName (tupleCon UnboxedTuple i) , tupleDot ("TP#" ++ show i))
-   | i <- [0..mAX_TUPLE_SIZE]]
+
 
 
 errorCallMap :: Map.Map G.Name String
@@ -116,10 +149,12 @@ errorCallMap = Map.fromList $
                map (\id -> (getName id ,"stg_case_not_exhaustive"))
                patErrorIDs
 
+
 patErrorIDs =
   [ pAT_ERROR_ID
   , nON_EXHAUSTIVE_GUARDS_ERROR_ID
   , iRREFUT_PAT_ERROR_ID
+
   ]
 
 
@@ -139,7 +174,7 @@ genTupleModule outFileName m_size =
                  : "\n\n------ Boxed Tuples ------\n\n" 
                  : mkTupls "TP"
                  ++ "\n\n------ Unboxed Tuples ------\n\n" 
-                 : mkTupls "TP#"
+                 : mkTupls "UTP"
     mkTupls con = 
       [let constr = con ++ show i
            tyvars = concatMap (' ':) $ take i allNameStrings

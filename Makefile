@@ -21,6 +21,7 @@ setup: prelude/Prelude.stg prelude/Prelude.mhs options.h $(HSLIB_FILES)
 	@((test -d $(build_dir)/include) || (mkdir $(build_dir)/include))
 	@(cp -f prelude/Prelude.stg $(build_dir)/etc/)
 	@(cp -f prelude/Prelude.mhs $(build_dir)/etc/)
+	@(cp -f prelude/AppflPrelude.hs $(build_dir)/etc/)
 	@(cp -fr prelude/APPFL $(build_dir)/etc/)
 	@(cp -f options.h $(build_dir)/include/)
 

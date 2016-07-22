@@ -34,6 +34,7 @@ infixr 2  ||
 default ()              -- Double isn't available yet
 
 (==) = eqInt
+(/=) = neInt
 {-
 -- | The 'Eq' class defines equality ('==') and inequality ('/=').
 -- All the basic datatypes exported by the "Prelude" are instances of 'Eq',

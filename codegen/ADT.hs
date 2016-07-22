@@ -29,7 +29,7 @@ module ADT (
 import AST(Con,Obj)
 
 import Data.List(intercalate, (\\), find)
-import Data.Maybe (fromJust)
+import Data.Maybe (fromJust, fromMaybe)
 import Data.Char (isNumber)
 import qualified Data.Map as Map
 import PPrint
@@ -126,7 +126,10 @@ boxMTypes tycons =
       setDCtypes (DataCon c mts) = DataCon c $ map setMtypes mts
       setMtypes m = case m of
                      MCon _ c mts ->
-                       let (TyCon bxt _ _ _) = fromJust $ lookup c tmap
+                       let (TyCon bxt _ _ _) =
+                             fromMaybe
+                             (error $ "Couldn't find " ++ show c ++ " in tmap")
+                             $ lookup c tmap
                        in MCon bxt c $ map setMtypes mts
                      MFun mts1 mts2 -> MFun (setMtypes mts1) (setMtypes mts2)
                      MVar{} -> m
