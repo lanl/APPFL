@@ -944,6 +944,49 @@ g2aAlt scrtName (acon, binders, usemask, rhsExpr)
   
         DEFAULT -> return $ ADef Dirty scrtName appflRhs
 
+-- Note on failing pattern matches and void# --
+--
+-- For boxed case expressions, GHC adds Alt clauses with fail variables that
+-- serve like our stg_case_not_exhaustive.
+-- Ex.
+--   let patError = error "pat failure" in
+--     case e of
+--       ...
+--       _ -> patError
+--
+-- We try to identify them with a name-lookup in FromGHC.BuiltIn and substitute
+-- the 'defAlt' from the Analysis module (which makes the call to
+-- stg_case_not_exhaustive).  For *unboxed* case expressions, any such error
+-- identifier may be legally "case-bound" in transforms.
+-- Ex.
+--  case error "pat failure" of
+--    patError -> case e of
+--                  ...
+--                  _ -> patError
+--
+-- To prevent this, they (claim to) use a function instead:
+--   let failMe = \_ -> error "pat failure"
+--   in case e of
+--        ...
+--        _ -> failMe void#
+--
+-- BUT, what I've seen is more often is a generated function replaces nested
+-- case expressions:
+--
+-- case i# %# 3# of
+--   0# -> case i# of ..        -- replaced by call to genFunc1 void#
+--   g# -> case i# %# 2# of ..  -- replaced by call to genFunc2 void#
+--
+-- genFunc1 x = case i# of ..
+-- genFunc2 x = case i# %# 2# of ..
+--
+-- This is strange, since the Alts in all these cases are provably exhaustive.
+-- In non-strict evaluation, I'm reasonably confident we could replace void#
+-- with anything without changing semantics, but in the strict case, we'd
+-- probably like it to be safely evaluable, even though it seems to always be
+-- ignored.
+-- For now, void# is a dummy VOID (~ Unit) data type.
+
 isAltErrorExpr :: StgExpr -> Bool
 isAltErrorExpr (StgApp id args) = isErrorCall id
 isAltErrorExpr _ = False

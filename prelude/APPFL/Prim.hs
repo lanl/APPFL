@@ -19,9 +19,11 @@ module APPFL.Prim
   )
 where
 
+import APPFL.VOID (VOID(..))
+
 import GHC.Prim
   ( Char#, Int#, Word#, Float#, Double#
-  ,  (+#), (-#), (*#)
+  , (+#), (-#), (*#)
   , (>#), (<#), (>=#), (<=#)
   , (==#), (/=#)
   , quotInt#, remInt#, negateInt#
@@ -34,7 +36,6 @@ import GHC.Prim
   -- inappropriately is caught at the type checker
   , dataToTag#, tagToEnum#
   )
-
 
 
 -- Aliases
@@ -82,7 +83,7 @@ a `quotRemInt#` b =
     q -> case a %# b of
            r -> (# q, r #)
 
--- I'm letting this fail intentionally for now. If we support a 'raise#'
--- primitive, I might use that instead.
-void# :: a
-void# = let x = x in x
+-- | COMPAT: Probably never actually used as a value, but might need
+-- to be evaluated in the strict case.  See note in FromGHC.
+void# :: VOID
+void# = VOID
