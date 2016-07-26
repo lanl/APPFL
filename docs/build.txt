@@ -7,6 +7,11 @@ Haskell Platform 7.10.x (may work with 7.8.x as well but not currently used for 
 CMake > 2.8.12.2
 recent gcc/clang (gcc 4.8.x tested on linux, xcode 6 tested on mac)
 
+we require a few packages not in the haskell platform: language-c-quote and ghc-paths
+
+$ cabal install language-c-quote ghc-paths
+
+
 ------------------------------
 
 to build full compiler:
