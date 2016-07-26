@@ -35,6 +35,10 @@ default ()              -- Double isn't available yet
 
 (==) = eqInt
 (/=) = neInt
+(>) = gtInt
+(>=) = geInt
+(<) = ltInt
+(<=) = leInt
 {-
 -- | The 'Eq' class defines equality ('==') and inequality ('/=').
 -- All the basic datatypes exported by the "Prelude" are instances of 'Eq',

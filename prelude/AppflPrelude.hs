@@ -40,8 +40,8 @@ module AppflPrelude (
 
     -- -- ** Basic type classes
 
-    (==), (/=),  --- INT ONLY (FOR NOW)
-
+    (==), (/=), (<), (<=), (>=), (>), --- INT ONLY (FOR NOW)
+ 
     -- Eq((==), (/=)),
     -- Ord(compare, (<), (<=), (>=), (>), max, min),
     -- Enum(succ, pred, toEnum, fromEnum, enumFrom, enumFromThen,
