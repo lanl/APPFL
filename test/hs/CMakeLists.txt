@@ -15,10 +15,11 @@ endmacro(add_test_true)
 file(GLOB ALL_SRCS *.hs)
 
 foreach (test ${ALL_SRCS})
-    get_filename_component(tname ${test} NAME_WE) 
+    get_filename_component(fname ${test} NAME_WE) 
+    set(tname hs_${fname})
     set(build build_${tname})
     set(binary ${BIN_DIR}/${tname})
-    add_test(${build} ${STGCC} ${SRC_DIR}/${tname}.hs -o ${tname})
+    add_test(${build} ${STGCC} ${SRC_DIR}/${fname}.hs -o ${tname})
    
     foreach (strict 0 1 2)
       foreach (constr 0) 
