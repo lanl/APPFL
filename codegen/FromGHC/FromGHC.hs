@@ -1,6 +1,6 @@
 {-# LANGUAGE
 NamedFieldPuns, CPP, FlexibleInstances, ScopedTypeVariables,
-LiberalTypeSynonyms, ViewPatterns,
+LiberalTypeSynonyms, ViewPatterns, PatternGuards,
 UndecidableInstances, BangPatterns, MagicHash #-}
 
 module FromGHC.FromGHC

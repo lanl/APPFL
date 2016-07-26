@@ -1,4 +1,5 @@
 {-# LANGUAGE NamedFieldPuns #-}
+{-# LANGUAGE PatternGuards #-}
 
 import           Driver
 import           CMap
