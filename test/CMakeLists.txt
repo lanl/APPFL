@@ -11,3 +11,4 @@ project(stgc_test)
 
   add_subdirectory(stg)
   add_subdirectory(mhs)
+  add_subdirectory(hs)
