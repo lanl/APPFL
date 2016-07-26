@@ -1,0 +1,22 @@
+
+fac = FUN (n -> let {
+                  d = THUNK(let {
+                              c = THUNK(let {
+                                          b = THUNK(subInt n one)}
+                                        in fac b)}
+                            in multInt n c)}
+                in let {
+                     e = THUNK(eqInt n zero)}
+                   in ifThenElse e one d);
+
+
+ifThenElse = FUN(a b c -> case a of w {
+                              False -> c;
+                              True -> b});
+
+
+output = THUNK(fac seven);
+result = CON(I 5040);
+main = THUNK(eqInt output result);
+
+
