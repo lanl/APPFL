@@ -1,14 +1,11 @@
-{-# LANGUAGE BangPatterns #-}
-
 module FromGHC.BuiltIn
   ( module FromGHC.BuiltIn
   , voidPrimId)
 where
 
 import qualified Data.Map.Strict as Map
-import Data.Function (on)
 import Data.Maybe (fromMaybe)
-import Debug.Trace
+
 
 import AST as A (Primop (..))
 import PrimOp as G
@@ -23,6 +20,7 @@ import MkId        as G
 import TypeRep (TyThing (..))
 import ConLike (ConLike (..))
 
+import Var (Id)
 import Name as G ( Name, NamedThing (..), BuiltInSyntax(..)
                  , mkWiredInName)
 import OccName (mkDataOccFS)
@@ -74,13 +72,42 @@ primopMap = Map.fromList
 --  particularly useful. - dmr
   ]
 
-lookupImplementedPrimop :: G.PrimOp -> Maybe String
+
+-- Some PrimOps are implemented in terms of others in our Base
+-- libraries.  This may not warrant its own Map, given how few there
+-- may actually be, but at least this explicitly catalogues the ones
+-- FromGHC knows about.
+lookupImplementedPrimop :: G.PrimOp -> Maybe AppflName
 lookupImplementedPrimop = (`Map.lookup` implementedOpMap)
 
-implementedOpMap :: Map.Map G.PrimOp String
+implementedOpMap :: Map.Map G.PrimOp AppflName
 implementedOpMap = Map.fromList
   [ (IntQuotRemOp, primDot "quotRemInt#")
   ]
+
+
+type AppflName = String
+
+
+-- Names we want to recognize as special.
+isAppflBuiltIn :: String -> Bool
+isAppflBuiltIn = (`elem` appflBuiltIns)
+
+appflBuiltIns :: [String]
+appflBuiltIns = [ appflMain, appflPrimIntTy, appflNoExhaust ]
+
+
+-- | Our program entry point
+appflMain :: AppflName
+appflMain      = "main"
+
+-- | Our Int#
+appflPrimIntTy :: AppflName
+appflPrimIntTy = "Int_h"
+
+-- | Our pattern match fail function (defined in the runtime)
+appflNoExhaust :: AppflName
+appflNoExhaust = "stg_case_not_exhaustive"
 
 
 isErrorCall :: NamedThing a => a -> Bool
@@ -89,72 +116,77 @@ isErrorCall thing =
   in any ((name ==) . getName) patErrorIDs
 
 
-getAppflName :: NamedThing a => a -> Maybe String
+getAppflName :: NamedThing a => a -> Maybe AppflName
 getAppflName thing = Map.lookup (getName thing) builtInMap
 
 infixr 5 \.
 
-(\.) :: String -> String -> String
+(\.) :: AppflName -> AppflName -> AppflName
 a \. b = a ++ '.' : b
-  
-appflDot !s = "APPFL" \. s
-typesDot !s = appflDot $ "Types" \. s
-tupleDot !s = appflDot $ "Tuple" \. s
-primDot  !s = appflDot $ "Prim"  \. s
+
+appflDot, typesDot, tupleDot, primDot :: AppflName -> AppflName  
+appflDot s = "APPFL" \. s
+typesDot s = appflDot $ "Types" \. s
+tupleDot s = appflDot $ "Tuple" \. s
+primDot  s = appflDot $ "Prim"  \. s
 
 
 builtInMap :: Map.Map G.Name String
 builtInMap =
   -- It should be OK to put all kinds of Names in this map.  GHC's
-  -- disambiguation strategies seem to eliminate the chances of any
-  -- naming overlap, even between the different NameSpaces.
+  -- disambiguation strategies seem to eliminate the chances of any naming
+  -- overlap in builtins, even between the different NameSpaces.
   Map.fromList
-  [ (G.consDataConName, typesDot "Cons")
-  , (G.nilDataConName, typesDot "Nil")
-  , (G.listTyConName, typesDot "List")
-  , (G.boolTyConName, typesDot "Bool")
-  , (getName G.trueDataCon, typesDot "True")
-  , (getName G.falseDataCon, typesDot "False")
-  , (getName G.trueDataConId, typesDot "True")
-  , (getName G.falseDataConId, typesDot "False")
-  , (G.intTyConName, typesDot "Int")
-  , (intDataConName, typesDot "I#") 
-  , (getName G.intPrimTyCon, "Int_h") -- hacky...
+  [
+  --   (G.consDataConName, typesDot "Cons")
+  -- , (G.nilDataConName, typesDot "Nil")
+  -- , (G.listTyConName, typesDot "List")
+  -- , (G.boolTyConName, typesDot "Bool")
+  
+  -- , (getName G.trueDataCon, typesDot "True")
+  -- , (getName G.falseDataCon, typesDot "False")
+  -- , (getName G.trueDataConId, typesDot "True")
+  -- , (getName G.falseDataConId, typesDot "False")
+  -- , (G.intTyConName, typesDot "Int")
+  -- , (intDataConName, typesDot "I#")
+    
+      (getName G.intPrimTyCon, appflPrimIntTy) -- hacky...
 
-    -- GHC generates functions that are only ever passed 'void#',
-    -- which *seem* to never use it. In theory, any argument should
-    -- work, as long as it's consistent.
+    -- GHC generates functions that are only ever passed 'void#', which *seem*
+    -- to never use it. In theory, any argument should work, as long as it's
+    -- consistent (and not bottom, for strict evals).
   , (getName voidPrimId, primDot "void#") 
   ]
-  `Map.union` tupleMap
+  -- `Map.union` tupleMap
   `Map.union` errorCallMap
 
 -- Not exported from TysWiredIn, aggravating
+intDataConName :: Name
 intDataConName = mkWiredInName G.gHC_TYPES
                  (mkDataOccFS $ fsLit "I#") G.intDataConKey
                  (AConLike (RealDataCon G.intDataCon)) UserSyntax
 
+tupleMap :: Map.Map G.Name AppflName
 tupleMap = Map.fromList $ concat
-  [ [ (getName (tupleCon BoxedTuple i)   , tupleDot ("TP" ++ show i))
-    , (getName (tupleCon UnboxedTuple i) , tupleDot ("UTP" ++ show i))
-    , (getName (tupleTyCon BoxedTuple i) , tupleDot ("TP" ++ show i))
+  [ [ (getName (tupleCon BoxedTuple i)     , tupleDot ("TP" ++ show i))
+    , (getName (tupleCon UnboxedTuple i)   , tupleDot ("UTP" ++ show i))
+    , (getName (tupleTyCon BoxedTuple i)   , tupleDot ("TP" ++ show i))
     , (getName (tupleTyCon UnboxedTuple i) , tupleDot ("UTP" ++ show i))
     ]
    | i <- [0..mAX_TUPLE_SIZE]]
 
 
 
-errorCallMap :: Map.Map G.Name String
+errorCallMap :: Map.Map G.Name AppflName
 errorCallMap = Map.fromList $
-               map (\id -> (getName id ,"stg_case_not_exhaustive"))
+               map (\ident -> (getName ident , appflNoExhaust))
                patErrorIDs
 
-
+patErrorIDs :: [Id]
 patErrorIDs =
   [ pAT_ERROR_ID
   , nON_EXHAUSTIVE_GUARDS_ERROR_ID
   , iRREFUT_PAT_ERROR_ID
-
   ]
 
 

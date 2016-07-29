@@ -9,32 +9,36 @@
 
 module PPrint
 (
-  pprint,
-  unparse,
-  bar,
-  hash,
-  arw,
-  doubleColon,
-  lambda,
-  lcomment,
-  bcomment,
+  -- symbol Docs
+  bar, hash, arw, doubleColon, lambda, underscore,
+
+  -- put Doc in a line/block comment
+  lcomment, bcomment,
+
+  -- turn a boolean into a Doc
   boolean,
-  listText,
-  brackList,
-  prepunctuate,
-  postpunctuate,
+
+  -- List pretty printers
+  listText, brackList,
+  prepunctuate, postpunctuate,
   vertList,
+
+  -- getting the original STG names with '#' characters
   reHash,
   stgName,
-  PPrint,
-  Unparse,
+
+  -- Pretty Printer typeclasses
+  PPrint(..),
+  Unparse(..),
+
+  -- Re-export the HughesPJ lib
   module Text.PrettyPrint
 ) where
        
 
 import Text.PrettyPrint
 import qualified Data.Set as Set
-import Data.List (find, isSuffixOf)
+import Data.List (isSuffixOf)
 
 
 
@@ -46,15 +50,21 @@ class PPrint a where
 class Unparse a where
   unparse :: a -> Doc
 
+reHash :: String -> String
 reHash str | "_h" `isSuffixOf` str = reverse ('#' : drop 2 (reverse str))
            | otherwise = str
 
+stgName :: String -> Doc
 stgName = text . reHash           
 
 nLines :: (Show a) => a -> Int
 nLines = length . lines . show
 
-bar = text "|"
+bar, arw, hash, doubleColon, lambda, underscore :: Doc
+lcomment, bcomment :: Doc -> Doc
+
+underscore = char '_'
+bar = char '|'
 arw = text "->"
 hash = char '#'
 doubleColon = text "::"
@@ -63,24 +73,38 @@ lcomment d = text "--" <> d
 bcomment d | isEmpty d = empty
            | otherwise =
              -- only line break for long comments
-             let sep | nLines d == 1 = (<+>)
-                     | otherwise = ($+$)
-             in text "{-" `sep` (nest 3 d) `sep` text "-}"
+             let sepr | nLines d == 1 = (<+>)
+                      | otherwise = ($+$)
+             in text "{-" `sepr` (nest 3 d) `sepr` text "-}"
              
 
 boolean :: Bool -> Doc
 boolean = text . show
 
+brackList, braceList :: [Doc] -> Doc
 brackList = brackets . hsep . punctuate comma
 braceList = braces . hsep . punctuate comma
 
+prepunctuate, postpunctuate :: Doc -> [Doc] -> [Doc]
+prepunctuate d = map (d <>)
+postpunctuate d = map (<> d)
+
+listText :: [String] -> Doc
 listText = brackList . map text
 
-prepunctuate d = map (d<>)
-postpunctuate d = map (<>d)
 
-vertList lchr rchr sepr maxlen xs =
-  let (_,d) = vl 0 xs
+-- | PrettyPrint a list of printable things, chopping the list onto newlines
+-- if necessary.
+vertList
+  :: PPrint t
+  => Doc -- | Left list delimiter Doc
+  -> Doc -- | Right list delimiter Doc
+  -> Doc -- | Item separator Doc
+  -> Int -- | Max line length before chopping
+  -> [t] -- | Things to print
+  -> Doc
+vertList lchr rchr sepr maxlen ls =
+  let (_,d) = vl 0 ls
   in lchr <> d
   where vl _ [] = ((<>), rchr)
         vl n (x:xs) =
@@ -92,6 +116,11 @@ vertList lchr rchr sepr maxlen xs =
              then (($$), f xd xsd)
              else ((<+>), f xd xsd)
 
+
+-- () metadata = empty document
+-- empty is the identity Doc for the associative pretty printing operators
+instance Unparse () where
+  unparse () = empty
 
 instance PPrint Doc where
   pprint = id

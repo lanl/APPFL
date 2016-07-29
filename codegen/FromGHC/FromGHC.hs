@@ -3,20 +3,20 @@ NamedFieldPuns, CPP, FlexibleInstances, ScopedTypeVariables,
 LiberalTypeSynonyms, ViewPatterns, PatternGuards,
 UndecidableInstances, BangPatterns, MagicHash #-}
 
+#define _HERE ( __FILE__ ++ ":" ++ show ( __LINE__ :: Int ))
+
 module FromGHC.FromGHC
   ( ghc2stg
   , compileAndThen
   , writeGhcSyn
   , writeAppflSyn
+  , printAppflSyn
+  , printGhcSyn
   , target
   )
 where
 
--- This may be bad practice, or an indicator of bad design.
--- It is, however, more convenient than manually typing a message
--- for every non-provably exhaustive pattern match
-#define _unreachable (error ("Should not be reached: " ++ __FILE__ ++ ":" ++ show __LINE__))
-#define _TODO (error ("Definition incomplete at" ++ __FILE__ ++ ":" ++ show __LINE__))
+
 
 
 -- As much as practical, I'll be explicit about what comes from where,
@@ -24,40 +24,33 @@ where
 -- massive GHC codebase.
 
 -- Local (APPFL) imports
-import           ADT as A hiding (unfoldr)
+import           ADT as A
 import           AST as A
 import           FromGHC.BuiltIn
+import           FromGHC.Naming
+import           FromGHC.PrettySTG
 import           Analysis (defAlt)
 import           State hiding (liftM)
-import           Util (splits)
+import           Util 
 import qualified PPrint as A
 
 -- Standard library
-import           Debug.Trace
 import qualified Data.Map.Strict as Map
-import           Control.Monad
-                 ( liftM, liftM2, liftM3
-                 , mapAndUnzipM, zipWithM, when
-                 , sequence
-                 , (>=>), (<=<), (=<<)
-                 )
 import           Data.List as List
                  ( nub, nubBy, unfoldr, insertBy
-                 , isPrefixOf, intersperse)
-import           Data.Maybe (isJust, fromMaybe)
+                 , isPrefixOf, isSuffixOf, intersperse)
+import           Data.Maybe (isJust)
 import           Data.Function (on)
-import           Data.Int (Int64)
-import           Data.Char (ord, isAlphaNum)
-import           Numeric (showHex)
+import           Debug.Trace
+import           Data.Char (ord)
 import           Control.Monad.Trans
 import           Control.Monad.Trans.Except
+import           Control.Monad ( liftM, liftM2, liftM3, mapAndUnzipM, (<=<))
 
 
 -- GHC specific stuff
 import           GHC.Paths (libdir)
 import           GHC
-                 -- These categorizations are ripped directly from GHC.hs
-
                  -- Initialization
                  ( defaultErrorHandler
 
@@ -73,124 +66,106 @@ import           GHC
 
                  -- Loading/compiling
                  , load, LoadHowMuch (..)
-                 , depanal
                  , parseModule, typecheckModule, desugarModule, coreModule
 
                  -- Inspecting the module structure of the program
-                 , ModuleGraph, ModSummary(..), Module
-                 , ModLocation (..), ModuleName
+                 , ModSummary(..), Module, ModLocation (..)
                  , getModSummary, getModuleGraph
-                 , moduleName, moduleNameString
+                 , moduleName
                  )                 
 
-import           GhcMonad
-                 ( withSession, liftIO )   
 import           DynFlags
-                 ( ExtensionFlag (..), GeneralFlag (..)
+                 ( ExtensionFlag (..)
                  , defaultFatalMessager
                  , defaultFlushOut
                  , xopt_set, xopt_unset -- for LANGUAGE Extensions
-                 , gopt_set, gopt_unset -- for general flags
                  )
 
-import           HscTypes
-                 ( HscEnv (..), CgGuts (..)
-                 , isBootSummary
-                 )
+import           HscTypes ( HscEnv (..), CgGuts (..), isBootSummary)
 
-import           HscMain
-                 ( hscSimplify )
-import           TidyPgm
-                 ( tidyProgram )
-import           CorePrep
-                 ( corePrepPgm )
-import           CoreToStg
-                 ( coreToStg )
-import           CoreSyn
-                 ( CoreProgram, AltCon (..) )
-import           DataCon as G
-                 ( DataCon
-                 , isVanillaDataCon, dataConTag
-                 , dataConTyCon, dataConRepType
-                 , dataConWrapId, dataConWrapId_maybe
-                 , dataConName, isUnboxedTupleCon
-                 )
-import           TypeRep (Type (..), )
+
+-- simplifying and tidying Core
+import           HscMain   ( hscSimplify )
+import           TidyPgm   ( tidyProgram )
+import           CorePrep  ( corePrepPgm )
+
+-- Getting STG from Core
+import           CoreSyn   ( CoreProgram )
+import           CoreToStg ( coreToStg   )
+import           SimplStg  ( stg2stg     )
+
+
 
 -- Finding where (in the source file) something came from
 import           SrcLoc
-                 ( SrcSpan(..), RealSrcSpan
+                 ( SrcSpan(..)
                  , srcSpanStartLine, srcSpanEndLine
                  , srcSpanStartCol, srcSpanEndCol
                  , srcSpanFile)
 
-import           SimplStg
-                 ( stg2stg )
+
+-- Nodes of the STG AST
+import           CoreSyn ( AltCon (..) )
 
 import           StgSyn
                  ( StgBinding, GenStgBinding (..)
                  , StgExpr, GenStgExpr (..), StgOp (..)
                  , StgRhs, GenStgRhs (..)
                  , StgArg, GenStgArg (..)
-                 , StgAlt, GenStgAlt, AltType (..)
-                 , StgLiveVars, GenStgLiveVars
-                 , UpdateFlag (..), SRT (..), StgBinderInfo
-                 , pprStgBindings
+                 , StgAlt, AltType (..)
                  )
 
-import           Name
-                 ( Name, NamedThing (..)
-                 , getOccString, nameModule_maybe, nameUnique
-                 , nameModule, nameSrcSpan )
-                 
-import           OccName ( occNameString )
-
-import           FastTypes
-                 ( FastInt
-                 , shiftRLFastInt, bitAndFastInt
-                 , iBox, cBox, fastChr
+-- Some of the constructs embedded in the STG AST
+import           DataCon as G
+                 ( DataCon
+                 , isVanillaDataCon, dataConTag
+                 , dataConTyCon, dataConRepType
+                 , dataConWrapId, dataConWrapId_maybe
+                 , isUnboxedTupleCon
                  )
-
-import           FastString (mkFastString, unpackFS)
-
-import           Unique ( Unique, getKey )
-
-import           GHC.Exts
-                 ( Int(..), indexCharOffAddr# )
-
-import           Id ( Id, idName, idUnique )
-
-import           TyCon as G
-                 ( TyCon, isDataTyCon )
-
+import           TyCon as G ( TyCon, isDataTyCon )
+import           TypeRep (Type (..), ) -- Analagous to our MonoType
 import           Literal ( Literal (..) )
-import           PrimOp
-                 ( PrimOp (..), PrimCall (..)
-                 , primOpOcc )
-import           ForeignCall
-                 ( ForeignCall (..), CCallSpec (..)
-                 , CCallTarget (..) )
+import           PrimOp ( PrimOp (..))
+                 
+-- Id is an alias for Var, but it's used where you should expect the Id
+-- constructor of the Var type. Vars add metadata to identifiers (Names)
+import           Var (Var (..), Id, idDetails )
+import           IdInfo (IdDetails(..))
+                 
+-- Name is the basic identifier type. NamedThings have a Name (accessed with
+-- getName).  
+import           Name 
+                 ( Name, NamedThing (..)
+                 , getOccString, nameSrcSpan )
+
+
+
+
+-- FastStrings
+import           FastString (mkFastString, unpackFS)
 
 import           CostCentre
                  ( CollectedCCs )
 
 import qualified Outputable as G
-import           FastString ( unpackFS )
+
+
 
 
 -- For in-progress tests. Note that $PWD is appfl/codegen when loading
 -- this file in an Emacs Cabal REPL.  I have a feeling that's not true
 -- when running GHCi from the command line.
 testDir = "../test/haskell/"
+testPreludeDir = "../prelude/"
 target f = testDir ++ f
 
-testPreludeDir = "../prelude/"
-
-
 printGhcSyn file = writeGhcSyn file "/dev/stdout" >> putStrLn "" 
-writeGhcSyn infile outfile =
-  compileAndThen stgSynString testPreludeDir infile >>= writeFile outfile . snd
-  
+writeGhcSyn infile outfile = do
+  (_,stg) <- compile testPreludeDir infile
+  writeFile outfile (show (pprStgSyn stg))
+
+compile prld file = compileAndThen pure prld file
 
 printAppflSyn file = writeAppflSyn file "/dev/stdout" >> putStrLn "" 
                   
@@ -199,11 +174,6 @@ writeAppflSyn infile outfile =
     (ghc, (ts,os)) <- compileAndThen (return . g2a) testPreludeDir infile
     writeFile outfile (show $ A.unparse ts A.$+$ A.unparse os)
 
-stgSynString stg = do
-  dynflags <- getSessionDynFlags
-  let sdoc = pprStgSyn stg
-      text = G.showSDoc dynflags sdoc
-  return text
 
 ghc2stg preludeDir file = compileAndThen (return . g2a) preludeDir file >>= return . snd
 
@@ -279,10 +249,11 @@ compileAndThen stgFun preludeDir file = do
       hscEnv <- getSession
 
       -- CgGuts are a reduced form of ModGuts. They hold information necessary
-      -- for STG translation
-      -- Not sure if ModDetails are needed for anything at the moment
+      -- for STG translation. 
       (cgGuts, modDetails) <-
         mapAndUnzipM (liftIO . tidyProgram hscEnv <=< liftIO . hscSimplify hscEnv) modGuts
+        -- Simplifying and Tidying seem to be useful, but not strictly necessary
+        -- to get the Core and ship it off to STG
 
       (nestedStg, ccs) <- mapAndUnzipM gutsToSTG cgGuts
       dflags     <- getSessionDynFlags
@@ -339,11 +310,19 @@ appflExts =
     -- chance of getting full STG programs from GHC
     (Opt_ImplicitPrelude, False)
 
+    -- We don't actually need RebindableSyntax (yet!) given the name mapping we have in
+    -- FromGHC.BuiltIn.  Rebindable syntax actually introduces problems in strict
+    -- evaluation: if-then-else expressions are desugared into a call to an 'ifThenElse'
+    -- function, which loses the "short-circuiting" property of the normal case expression
+    -- generated.  Since both branches are passed to this function, if either is bottom,
+    -- strict evaluation breaks the programmers expectation of if-then-else.
+    -- The comment below is left for posterity.
+    
     -- We want to escape as much of the built-in stuff as possible,
     -- so we'll use our own "fromInteger", "ifthenelse" etc.
     -- This actually implies NoImplicitPrelude; I'm just being extra explicit 
     -- see the GHC Syntactic Extensions docs or the definitions in APPFL.Base
-  , (Opt_RebindableSyntax, True)
+    -- , (Opt_RebindableSyntax, True)
   ]
 
 
@@ -390,8 +369,6 @@ toStg mod core modLoc datacons hscEnv dflags =
     stg2stg dflags mod stg_binds
 
 
-
-
 -- | Used to indicate an unsanitized STG tree
 data Dirty = Dirty
 
@@ -415,53 +392,14 @@ type Clean = ()
 -- to break that logic.
 type TyMap = Map.Map A.Con [G.DataCon]
 
--- Need an Ord instance to do anything useful with the Map
-instance Ord A.TyCon where
-  -- Type constructors names must be unique,
-  -- so this is a reasonable instance for the Map requirement.
-  -- Further, we'll be inserting DataCons into the Tycons as we
-  -- encounter them, and we don't want the list-in-progress to change
-  -- how the TyCons are interpreted by the Set operations
-  compare (A.TyCon _ c1 _  _) (A.TyCon _ c2 _  _)
-    = compare c1 c2
 
--- Uniques are wrappers for unboxed ints, used to disambiguate names
--- in GHC.  The Int a Unique maps to corresponds to when it was
--- encountered in the AST. The second element is the running counter
--- of how many Uniques have been seen.
-type UniqueNamer = (Map.Map Unique Int, Int)
-
-
-class Monad m => UniqueNameState m where
-  putNamer :: UniqueNamer -> m ()
-  getNamer :: m UniqueNamer
-
-
-getIntFromUnique :: UniqueNameState s => Unique -> s Int
-getIntFromUnique u =
-  do
-    (nameMap, i) <- getNamer
-    let (i', v, nm') = case Map.lookup u nameMap of
-                        Just v  -> (i, v, nameMap)
-                        Nothing -> (i+1, i, Map.insert u i nameMap)
-    putNamer (nm', i')
-    return v
-
-  
-
-type TyST = State (TyMap, UniqueNamer)
+type G2AState = State (TyMap, UniqueNamer)
 -- We want a "stateful" traversal, since, once a TyCon is identified
 -- any new DataCon associated with it should be inserted into its
 -- constructor list.  If we don't linearize the traversal, we'd have
 -- to merge the TyMaps intelligently; not impossible, but extra work.
 
--- The UniqueNamer is the (hopeful) solution to GHC's non-deterministic
--- naming. The Uniques it generates are not the same between otherwise
--- identical runs, but I'm assuming the shape of the AST is, and we
--- can use that with a stateful traversal to introduce deterministic
--- naming.  This is useful for debugging when matching names from
--- a pretty-printed GHC STG program with their counterparts in a
--- pretty-printed APPFL STG program.
+
 
 
 -- Because this is likely to have all kinds of errors, and we'd like
@@ -473,9 +411,9 @@ data G2AException
     , mName   :: Maybe Name
     , msg     :: String  }
 
-type G2AMonad t = ExceptT G2AException TyST t
+type G2AMonad t = ExceptT G2AException G2AState t
 
-instance UniqueNameState (ExceptT G2AException TyST) where
+instance UniqueNameState (ExceptT G2AException G2AState) where
   getNamer = lget >>= return . snd
   putNamer n = lget >>= \(t,_) -> lput (t,n)
 
@@ -529,9 +467,13 @@ rethrowAtName nthing e = catchE e relocate
 -- use trying to recover from an Exception, so maybe that's fine.
 failHard :: G2AException -> a
 failHard Except{srcSpan, mName, msg} =
+  let cause = case mName of
+        Just n -> ["Caused by or near something named " ++ (show $ getOccString n)]
+        Nothing -> []
+  in
   error $ unlines $
-  ["Exception in G2A:", msg] ++ 
-  (maybe [] (\n -> ["Caused by or near something named " ++ (show $ getOccString n)]) mName) ++
+  ["Exception in G2A:", msg] 
+  ++ cause  ++
   ["Occurring at or near", locstr]
   
   where locstr :: String
@@ -562,31 +504,30 @@ putDataCon dc =
     (tymap, un) <- lget
     lput (Map.insertWith insertDC tcname [dc] tymap, un)      
   where
-    -- This is hacky, but should be ok.  The APPFL.Base parallels to
-    -- GHC get different Uniques than the builtins, so we can't
-    -- compare those to ensure only one 'Bool = T|F' is made. The
-    -- FromGHC.BuiltIn module handles the name mapping, which should
-    -- give us identical OccNames, if not underlying Uniques.
-    insertDC [new] dcs | any (((==) `on` getOccString) new) dcs = dcs
+    -- This is hacky, but should be ok.  The APPFL.Base parallels to GHC get
+    -- different Uniques than the builtins, so we can't compare those to ensure
+    -- only one 'Bool = T|F' is made. The FromGHC.BuiltIn module handles the
+    -- name mapping, which should give us identical OccNames, if not underlying
+    -- Uniques.
+    insertDC [new] dcs | any (== new) dcs = dcs
                        | otherwise =
                          List.insertBy (compare `on` dataConTag) new dcs
 
-    -- (Map.insertWith f key new map) Promises that, if the (key,old) pair is
+    -- (Map.insertWith f key new map) Promises that, if the (key, old) pair is
     -- present in the map, the new pair in the map will be (key, f new old). If
     -- the key is not in the map, the new val is added without calling f.  Since
     -- 'new' is always the singleton list [dc] above, the above match should
     -- never fail
-    insertDC _ _ = _unreachable
+    insertDC _ _ = unreachable _HERE
     
   
 -- | Convert a GHC DataCon to an APPFL DataCon
 g2aDataCon :: G.DataCon -> G2AMonad A.DataCon
 g2aDataCon dc = rethrowAtName dc $
   do
-    let -- The type of a GHC DataCon is a function type.  We represent
-        -- this as a list of Monotypes, rather than nested MFuns.
-        -- 'go' unfolds MFun(s) resulting from the GHC to APPFL type
-        -- conversion into the list form
+    let -- The type of a GHC DataCon is a function type.  We represent this as a
+        -- list of Monotypes, rather than nested MFuns.  'go' unfolds MFun(s)
+        -- resulting from the GHC to APPFL type conversion into the list form
         go :: A.Monotype -> [A.Monotype]
         go (MFun m1 m2) = m1 : go m2
         go m            = [m]
@@ -618,8 +559,38 @@ of 'go' above.
 -}
 
 
--- | Convert a GHC Type to an APPFL Monotype
---   for use in DataCons
+makeDCWorkers :: A.TyCon -> [Obj Dirty]
+makeDCWorkers (TyCon _ _ _ dcs) = map mkWorker dcs
+  where
+    -- stolen from GHC's prelude/PrelNames (not exported)
+    -- | all possible lowercase strings
+    allStrings = [ c:cs | cs <- "" : allStrings, c <- ['a'..'z'] ]
+
+    -- Don't need to let-ify a no-arg datacon: make a CON directly
+    mkWorker (DataCon con [])  = CON Dirty con [] con
+    -- With args, need to make a FUN
+    mkWorker (DataCon con mts) =
+          let vars = take (length mts) allStrings
+              conargs = map (EAtom Dirty . Var) vars
+              conBind = "theCon"
+              letbody = EAtom Dirty (Var conBind)
+              letExpr = ELet Dirty [CON Dirty con conargs conBind] letbody
+          in FUN Dirty vars letExpr con
+          
+
+
+-- Used to filter out the explicit Worker definitions for the non-wired data
+-- definitions.  We generate these at the end and don't want duplicates
+{-# DEPRECATED isDCWorkId "Broken, no idea why. Has unsafe IO" #-}
+isDCWorkId :: Id -> Bool
+isDCWorkId id =
+  case idDetails id of -- idDetails can fail, but no way around it :-\
+    DataConWorkId dc -> trace ("@T -> " ++ show (pprSyn id)) True
+    _                -> trace ("@F -> " ++ show (pprSyn id)) False
+  
+
+
+-- | Convert a GHC Type to an APPFL Monotype for use in DataCons
 g2aMonoType :: Type -> G2AMonad A.Monotype
 g2aMonoType t =
   case t of
@@ -642,24 +613,23 @@ g2aMonoType t =
         _             -> panicType
 
     -- e.g. List a, Maybe Int, etc.
-    TyConApp tc args -> do
+    TyConApp tc args  -> do
       mtypes <- mapM g2aMonoType args
       name   <- makeStgName tc
       return $ MCon True name mtypes
 
-    -- e.g a -> a
-    -- This assumes the right-associativity of (->) is
-    -- expressed just as in our MFun, which is probably
-    -- reasonable. Anything else would be counterintuitive
+    -- This assumes the right-associativity of (->) is expressed just as in our
+    -- MFun, which is probably reasonable. Anything else would be
+    -- counterintuitive
     FunTy t1 t2      -> liftM2 MFun (g2aMonoType t1) (g2aMonoType t2)
 
     -- If this is nested in a type (as in higher-rank types), just ignoring the
     -- universal quantifier may be a problem.  We'll see...
     ForAllTy var ty  -> g2aMonoType ty
 
-    -- Type-level Literals are definitely beyond what we support.
-    -- They *should* only appear in programs with -XDataKinds,
-    -- so they could be rejected early, in theory.
+    -- Type-level Literals are definitely beyond what we support.  They *should*
+    -- only appear in programs with -XDataKinds, so they could be rejected
+    -- early, in theory.
     LitTy _          -> panicType
 
   where panicType = unsupported $ G.showSDocUnsafe $
@@ -667,8 +637,7 @@ g2aMonoType t =
 
         debug t   = unsupported $ show $ A.unparse t
 
--- | Given the TyMap produced by the G2A functions, construct the
--- actual TyCons.
+-- | Construct the actual TyCons from the TyMap in the G2AMonad
 makeTyCons :: G2AMonad [A.TyCon]
 makeTyCons =
   do
@@ -691,7 +660,8 @@ g2a binds =
                 do -- We do want to fail hard at the moment.
                   objs <- mapM g2aObj binds
                   tycons <- makeTyCons
-                  return (objs, tycons)
+                  let dcFuns = map makeDCWorkers tycons
+                  return (dcFuns ++  objs, tycons)
                       
   in (map sanitizeTC tycons, map sanitizeObj $ concat objs)
 
@@ -701,57 +671,65 @@ g2aObj :: StgBinding -> G2AMonad [Obj Dirty]
 g2aObj bind =
   case bind of
     -- We don't distinguish between recursive bindings and otherwise at the type level, so
-    -- no need to do anything special here.  occNames passed to procRhs are probably not
-    -- what we want, but serve for now
-    StgNonRec id rhs -> procRhs rhs id >>= return . (:[])
-    StgRec pairs -> mapM (\(id, rhs) -> procRhs rhs id) pairs
+    -- no need to do anything special here.
+
+    StgNonRec id rhs -> procRhs id rhs >>= return
+                           
+    StgRec pairs -> concatMapM (uncurry procRhs) pairs
 
   where
-    procRhs :: StgRhs -> Id -> G2AMonad (Obj Dirty)
-    procRhs rhs id = rethrowAtName id $
-      case rhs of
-        -- FUN or THUNK
-        StgRhsClosure ccs bindInfo fvs updFlag srt args expr
+    procRhs :: Id -> StgRhs -> G2AMonad [Obj Dirty]
+    procRhs id rhs = rethrowAtName id $
+      case idDetails id of
+        
+        -- We don't want to do anything if the Id refers to a DataCon Worker,
+        -- since we generate them independently. For some reason, detecting this
+        -- with isDCWorkId does not work...
+        DataConWorkId{} -> pure []
+        
+        _ -> fmap pure $
+          case rhs of
+            -- FUN or THUNK
+            StgRhsClosure ccs bindInfo fvs updFlag srt args expr
 
-          -- it's a THUNK
-          | null args
-            -> liftM2 (THUNK Dirty) (g2aExpr expr) (makeStgName id)
+            -- it's a THUNK
+              | null args
+                -> liftM2 (THUNK Dirty) (g2aExpr expr) (makeStgName id)
 
-          -- it's a FUN(ish) thing.  Data constructors are functions too but they are not
-          -- given a distinguished definition as in APPFL STG or full Haskell. This is
-          -- fine; we can leave function wrappers for the CONs, and only use them when
-          -- constructors aren't fully saturated.
-          | otherwise
-            -> liftM3 (FUN Dirty) (mapM makeStgName args) (g2aExpr expr) (makeStgName id)
+            -- it's a FUN(ish) thing.  Data constructors are functions too but
+            -- they are not given a distinguished definition as in APPFL STG or
+            -- full Haskell. This is fine; we can leave function wrappers for
+            -- the CONs, and only use them when constructors aren't fully
+            -- saturated.
+              | otherwise
+                -> liftM3 (FUN Dirty) (mapM makeStgName args) (g2aExpr expr) (makeStgName id)
           
-        -- It's either a top-level empty constructor (a la Nil/Nothing) or it's being used
-        -- in a let binding. Either way, we make sure the DataCon is added to the TyMap.
-        StgRhsCon _ dataCon args
+            -- It's either a top-level empty constructor (a la Nil/Nothing) or
+            -- it's being used in a let binding. Either way, we make sure the
+            -- DataCon is added to the TyMap.
+            StgRhsCon _ dataCon args
 
-          -- DataCon does not have a "fancy" type.
-          -- "No existentials, no coercions, nothing" (basicTypes/DataCon.hs)
-          | isVanillaDataCon dataCon
-            -> do
-              name <- makeStgName id
-              putDataCon dataCon
-              if hasWrapper dataCon
-                -- If GHC generated a wrapper, let's try to use it
-                then mkWrapperCall dataCon args name
-                -- Constructors are always saturated at this point so we can safely make a
-                -- CON. See StgSyn commentary:
-                -- https://ghc.haskell.org/trac/ghc/wiki/Commentary/Compiler/StgSynType
-                else mkConObj dataCon args name
+            -- DataCon does not have a "fancy" type.
+            -- "No existentials, no coercions, nothing" (basicTypes/DataCon.hs)
+              | isVanillaDataCon dataCon
+                -> do
+                  name <- makeStgName id
+                  putDataCon dataCon
+                  if hasWrapper dataCon
+                    -- If GHC generated a wrapper, let's try to use it
+                    then mkWrapperCall dataCon args name
+                    -- Constructors are always saturated at this point so we
+                    -- can safely make a CON. See StgSyn commentary:
+                    -- https://ghc.haskell.org/trac/ghc/wiki/Commentary/Compiler/StgSynType
+                    else mkConObj dataCon args name
 
-          -- Something fancy going on with the DataCon, fail hard until we figure out how
-          -- to handle it.
-          | otherwise ->
-              unsupportedWithName dataCon (G.showSDocUnsafe $ G.ppr dataCon)
-
-
+            -- Something fancy going on with the DataCon, fail hard until we figure out how
+            -- to handle it.
+              | otherwise ->
+                unsupportedWithName dataCon (G.showSDocUnsafe $ G.ppr dataCon)
 
 hasWrapper :: G.DataCon -> Bool
 hasWrapper = isJust . dataConWrapId_maybe
-
 
 -- | Make a THUNK function call to a DataCon's wrapper function
 mkWrapperCall :: G.DataCon -> [StgArg] -> String -> G2AMonad (Obj Dirty)
@@ -770,7 +748,12 @@ mkConObj dc args bind =
 
 -- | Turn an StgArg into an APPFL Expr.  Invariant: Expr is an EAtom
 g2aArg :: StgArg -> G2AMonad (Expr Dirty)
-g2aArg (StgVarArg id)  = liftM (EAtom Dirty) (liftM Var $ makeStgName id)
+g2aArg (StgVarArg id) = do
+  case idDetails id of
+    DataConWorkId dc -> putDataCon dc
+    _ -> return ()
+  liftM (EAtom Dirty) (liftM Var $ makeStgName id)
+  
 g2aArg (StgLitArg lit) = liftM (EAtom Dirty) (g2aLit lit)
 
 g2aLit :: Literal -> G2AMonad Atom
@@ -798,24 +781,6 @@ g2aLit lit = case lit of
   MachLabel fs mi fORd       -> unsupported "Machine Labels"
 
 
--- | Maybe convert and Integer to an Int (if it's within Int bounds)
-toInt :: Integer -> Maybe Int
-toInt = safeIntegerConvert
-
--- | Is an Integer within Int64 bounds?
-toInt64 :: Integer -> Maybe Int64
-toInt64 = safeIntegerConvert
-
--- | More general implementation of safely converting an Integer to a
--- Bounded Integral type.
-safeIntegerConvert :: forall a . (Bounded a, Integral a) => Integer -> Maybe a
-safeIntegerConvert i
-  | i > maxVal || i < minVal  = Nothing 
-  | otherwise = Just $ fromInteger i
-  -- ScopedTypeVariables lets us refer to the type variable 'a' from above.
-  -- I *think* giving the *Bound variables a type is necessary here
-  where maxVal = toInteger (maxBound :: a) 
-        minVal = toInteger (minBound :: a)
 
 
 -- | Convert a GHC STG Expression to an APPFL Expression
@@ -827,13 +792,12 @@ g2aExpr e = case e of
     | null args -> liftM (EAtom Dirty) (liftM Var $ makeStgName id)
     | otherwise -> 
         do
-          args' <- mapM g2aArg args
-          name  <- makeStgName id
+          args'  <- mapM g2aArg args
+          name   <- makeStgName id
           return $ EFCall Dirty name args'
 
 
-
-  -- Literal Expr (all primitive)
+  -- Literal Expr (all literals are primitive)
   StgLit lit
     -> liftM (EAtom Dirty) $ g2aLit lit
 
@@ -860,7 +824,7 @@ g2aExpr e = case e of
     | StgPrimOp op <- stgop -> mkAppflPrimop op args
 
     -- Anything that's not a PrimOp is essentially a foreign call
-    -- Don't ask me the difference between a PrimCall and Foreign
+    -- Don't ask me the difference between a PrimCall and ForeignCall
     | otherwise -> unsupported "PrimCall/ForeignCall"
     
 
@@ -885,7 +849,8 @@ g2aExpr e = case e of
 
   -- "used *only* during CoreToStg's work". See stgSyn/StgSyn.hs
   StgLam args body 
-    -> _unreachable 
+    -> unreachable _HERE
+
 
 -- | Make an Alts object given the AltType (unused), scrutinee binder
 -- and list of StgAlts
@@ -902,12 +867,12 @@ g2aAlts altT bind alts = rethrowAtName bind $
 -- alts list. Since we're producing C switch statements, we really
 -- want any DEFAULT (ADef for us) to be the *last* one.  This should
 -- be safe, since shadowed matches seem to be excised by GHC.
--- Similarly, though we don't modify the order otherwise, the order of
--- rest of the patterns doesn't matter for the same reason. Somewhere
--- (coreSyn/CoreSyn.hs, maybe) it's stated that the DataAlts are
--- ordered by their Tag (which is based simply on the order they're
--- defined, as it is for us as well), so other than the DEFAULT, we
--- don't need to worry at all about this ordering.
+
+-- Though we don't modify the order otherwise, the order of rest of the patterns doesn't
+-- matter for the same reason. Somewhere (coreSyn/CoreSyn.hs, maybe) it's stated that the
+-- DataAlts are ordered by their Tag (which is based simply on the order they're defined,
+-- as it is for us as well), so other than the DEFAULT, we don't need to worry at all
+-- about this ordering.
 reorderAlts :: [StgAlt] -> [StgAlt]
 reorderAlts (a@(DEFAULT,_,_,_):alts) = alts ++ [a]
 reorderAlts alts = alts
@@ -980,12 +945,11 @@ g2aAlt scrtName (acon, binders, usemask, rhsExpr)
 -- genFunc1 x = case i# of ..
 -- genFunc2 x = case i# %# 2# of ..
 --
--- This is strange, since the Alts in all these cases are provably exhaustive.
--- In non-strict evaluation, I'm reasonably confident we could replace void#
--- with anything without changing semantics, but in the strict case, we'd
--- probably like it to be safely evaluable, even though it seems to always be
--- ignored.
--- For now, void# is a dummy VOID (~ Unit) data type.
+-- This is strange, since the Alts in all these cases are provably exhaustive.  In
+-- non-strict evaluation, I'm reasonably confident we could replace void# with anything
+-- without changing semantics, but in the strict case, we'd probably like it to be safely
+-- evaluable, even though it seems to always be ignored.  For now, void# is a dummy VOID
+-- (~ Unit) data type.
 
 isAltErrorExpr :: StgExpr -> Bool
 isAltErrorExpr (StgApp id args) = isErrorCall id
@@ -1006,10 +970,9 @@ bindConInLet :: G.DataCon -> [StgArg] -> G2AMonad (Expr Dirty)
 bindConInLet dc args = rethrowAtName dc $
   do
     let inBody = EAtom Dirty (Var bind)
-        -- We don't want to shadow names, but maintaining an environment
-        -- to guarantee this is annoying. For such a small scope, we can
-        -- use an invalid name and rely on sanitization to fix it before
-        -- codegen.
+        -- We don't want to shadow names, but maintaining an environment to guarantee this
+        -- is annoying. For such a small scope, we can use an invalid name and rely on
+        -- sanitization to fix it before codegen.
         bind   = "@"  -- hack
     conObj <- mkConObj dc args bind
     return $ ELet Dirty [conObj] inBody
@@ -1021,376 +984,4 @@ makeLetExpr ghcBindings ghcBody =
     appflObjs <- g2aObj ghcBindings
     appflBody <- g2aExpr ghcBody
     return $ ELet Dirty appflObjs appflBody
-    
 
-
--- | Produce a String name for a NamedThing.  Everything GHC names
--- should be converted via this function.  This is hard to enforce at
--- the Type level, given that all of our data structures only require
--- Strings as identifiers.
-makeStgName :: (NamedThing t, UniqueNameState s) => t -> s String
-makeStgName thing =
-  do
-    hackName <- liftM renameGHC (qualifyDeterministically thing)
-    let realName = getAppflName thing
-    return $ fromMaybe hackName realName
-    
-
-qualifyDeterministically
-  :: (NamedThing t, UniqueNameState s) => t -> s String  
-qualifyDeterministically (getName -> name) -- Using ViewPatterns for fun.
-  -- Syntax is (expr '->' pattern) where the expr will be applied to whatever
-  -- argument is passed.  In this case, that's NamedThing t => t -> Name
-  
-  | Just mod <- nameModule_maybe name =
-                case getOccString name of
-                  "main" -> return "main" -- hack
-                  oname ->
-                    return $
-                    moduleNameString (moduleName mod) ++ "." ++ oname
-
-  | uniq <- nameUnique name =
-      do
-        i <- getIntFromUnique uniq
-        return (getOccString name ++ showTerseInt i)
-
-
-
--- | Replace GHC prefix with APPFL.  If we structure our Prelude and Base
--- correctly, this is all that should be necessary to map inescapable GHC
--- modules.  This is a delicate hack.
-renameGHC :: String -> String
-renameGHC = id
--- renameGHC str | "GHC" `isPrefixOf` str = "APPFL" ++ drop 3 str
---               | otherwise              = str
-
-
-
-
--- | Produce a qualified name for a NamedThing as a String. (e.g. Module.Submodule.idname)
---   Does not add package information, but does add characters to express the underlying
---   Unique for Names that don't have a Module. (Internal/System names)
-qualifyName :: NamedThing a => a -> String
-qualifyName thing = qualify idname
-  where name           = getName thing
-        qualify n      = case nameModule_maybe name of
-                              Just m  -> makePrefix m ++ n
-                              Nothing -> n ++ '!':showTerseInt (getKey $ nameUnique name)
-        makePrefix mod = moduleNameString (moduleName mod) ++ "."
-        idname         = getOccString name
-
-
-
-------------------------------------------------------------------------------
--- Pretty Printing
-
-
-
--- Custom Pretty Printer for better inspection of STG tree.
--- This will make it easier to figure out what Haskell values
--- correspond to what STG code (the ddump-stg option is not fantastic)
-class OutputSyn a where
-  pprSyn :: a -> SDocS
-  
-type SDocS = State UniqueNamer G.SDoc
-
-instance UniqueNameState (State UniqueNamer) where
-  getNamer = get
-  putNamer = put
-
-
--- convenience lifted combinators
-text = return . G.text
-vcat = liftM G.vcat . sequence
-hsep = liftM G.hsep . sequence 
-hang d1 n d2 = liftM2 (\a b -> G.hang a n b) d1 d2
-punctuate _ []  = []
-punctuate _ [a] = [a]
-punctuate p (x:xs) = x: map (p <>) xs
-brackets d = pure G.lbrack <> d <> pure G.rbrack
-parens d   = pure G.lparen <> d <> pure G.rparen
-underscore = pure G.underscore
-comma = pure G.comma
-equals = pure G.equals
-empty = pure G.empty
-arrow = pure G.arrow
-  
-(<>)  = liftM2 (G.<>)
-(<+>) = liftM2 (G.<+>)
-($+$) = liftM2 (G.$+$)
-ppr = return . G.ppr
-  
-
-
-
-pprStgSyn :: [StgBinding] -> G.SDoc
-pprStgSyn binds = fst $ runState (pprBinds binds) (Map.empty,0)
-  where pprBinds = vcat . map pprSyn
-  
--- Modify this to make the printing a little less text-y
-verbosePrint = True
-
--- Add a prefix if printing verbosely
-prefix :: String -> SDocS
-prefix | verbosePrint = parens . text
-       | otherwise    = const empty
-
-pprSynList :: OutputSyn a => [a] -> SDocS
-pprSynList = brackets . hsep . punctuate comma . map pprSyn
-
-
--- This is roughly based on the (uglier, IMO) base62 encoding from
--- basicTypes/Unique.hs (not exported). Because this is a base64
--- encoding (with '-' and '_'), it needs to be sanitized for C
--- codegen.  There's other sanitization to be done on non-uniquified
--- names, so it's deferred for now.
-showTerseInt :: Int -> String
-showTerseInt i = unfoldr op i
-  where chr64 n    = cBox ( indexCharOffAddr# chars64 n)
-        !chars64   = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_"#
-        op (I# 0#) = Nothing
-        op (I# i#) = case i# `shiftRLFastInt` 6# {- 2^6 = 64 -} of
-                       shifted# ->
-                         case i# `bitAndFastInt` 63# of
-                           low5# -> Just ( chr64 low5#, iBox shifted# )                
-          
-
-
-pprStgName :: (NamedThing a) => a -> SDocS
-pprStgName t = text =<< makeStgName t
-
-
--- | Make a string representation of a foreign call
-nameForeignCall :: ForeignCall -> String
-nameForeignCall (CCall (CCallSpec target _ _))
-  = case target of
-      StaticTarget fstring _ _ -> unpackFS fstring
-      DynamicTarget            -> "Dynamic:Unnamed"
-
-
--- Default to the NamedThing instance if no specific (overlapping) instance
--- is defined
-instance {-# OVERLAPPABLE #-} NamedThing a => OutputSyn a where
-  pprSyn = pprStgName
-
-
-
-instance OutputSyn StgArg where
-  pprSyn (StgVarArg id)  = pprSyn id
-  pprSyn (StgLitArg lit) = pprSyn lit
-
-
--- Literals do not embed any Uniques, so only pprSyn is necessary
-instance OutputSyn Literal where
-
-  pprSyn lit = (<+> ppr lit) . prefix $
-    case lit of
-      LitInteger i typ
-        | Just int <- toInt i    -> "LitInteger-int"
-        | Just long <- toInt64 i -> "LitInteger-int64"
-        | otherwise              -> "LitInteger-big"
-      MachChar chr               -> "MachChar"
-      MachInt i                  -> "MachInt"
-      MachInt64 i                -> "MachInt64"
-      MachWord i                 -> "Machword"
-      MachWord64 i               -> "MachWord64"
-      MachFloat r                -> "MachFloat"
-      MachDouble r               -> "MachDouble"
-      MachStr bs                 -> "MachStr"
-      MachNullAddr               -> "MachNull"
-      MachLabel fs mi fORd       -> "MachLabel"
-
-
-instance OutputSyn StgBinding where
-  pprSyn bind = 
-    case bind of
-      StgNonRec id rhs ->
-        hang (prefix "StgNonRec") 2 (pprDef id rhs)
-              
-      StgRec pairs ->
-        hang (prefix "StgRec") 2 (vcat $ map (uncurry pprDef) pairs)
-        
-    where pprDef id rhs =
-            pprStgName id <+> equals $+$
-            pprSyn rhs
-
-
-instance OutputSyn StgRhs where
-  pprSyn rhs =
-    case rhs of
-      StgRhsClosure ccs bindInfo fvs updFlag srt args expr
-        | null args -> hangIt "THUNK" empty
-        | otherwise -> hangIt "FUN" (pprSynList args)
-               
-        where hangIt objStr argDoc =
-                hang (prefix objStr $+$ argDoc) 2
-                (pprSyn expr)
-
-      StgRhsCon ccs datacon args
-        -> prefix "CONish" <+> pprStgName datacon <+> pprSynList args $+$
-           text "Worker/Wrapper:" <+> pprStgName (dataConWrapId datacon)
-
-
-instance OutputSyn StgExpr where
-  pprSyn e =
-    case e of
-      StgApp id args
-        -> prefix "App" <+> pprStgName id <+> hsep (map pprSyn args)
-      StgLit lit
-        -> prefix "Lit" <+> pprSyn lit
-      StgConApp datacon args
-        -- Any StgConApp is a 'real' constructor. Use of the wrapper function
-        -- shows up as an StgApp.
-        -> prefix "ConApp" <+> pprStgName datacon <+> pprSynList args
-      StgOpApp op args resT 
-        -> prefix "Op" <+> pprSyn op <+> pprSynList args
-      StgLam args body 
-        -> prefix "Lam" <+> pprSynList args $+$ pprSyn body
-      StgCase scrut _ _ bind _ altT alts 
-        -> hang (prefix "Case" <+> pprSyn scrut <+> equals <+> pprSyn bind) 2
-           (hang (pprSyn altT) 2 (vcat (map pprSyn alts)))
-      StgLet bindings body 
-        -> pprSynLet "Let" bindings body
-      StgLetNoEscape _ _ bindings body 
-        -> pprSynLet "LetNE" bindings body        
-      StgTick _ realExpr 
-        -> prefix "Tick" <+> pprSyn realExpr
-
-
--- | PrettyPrint the bindings and body of the two varieties of Let
--- expressions.
-pprSynLet :: String -> StgBinding -> StgExpr -> SDocS
-pprSynLet pfxStr binds body = hang (prefix pfxStr <+> text "let") 2
-                              (pprSyn binds) $+$
-                              text "in" <+> pprSyn body
-
-
-
-instance OutputSyn StgAlt where
-  pprSyn (acon, params, useMask, rhs) =
-    case acon of
-      DataAlt datacon
-        -> makeAlt "DataAlt" (pprStgName datacon <+> hsep (map pprSyn params))
-      LitAlt lit
-        -> makeAlt "LitAlt" (pprSyn lit)
-      DEFAULT
-        -> makeAlt "DEFAULT" underscore
-
-    where makeAlt pfx pat = hang (prefix pfx <+> pat) 2 (arrow <+> pprSyn rhs)
-
-instance OutputSyn AltType where
-  pprSyn at = case at of
-    PolyAlt     -> prefix "PolyAlt"
-    UbxTupAlt i -> prefix $ "UbxTupAlt" ++ show i
-    AlgAlt _    -> prefix "AlgAlt"
-    PrimAlt _   -> prefix "PrimAlt"
-    
-
-instance OutputSyn StgOp where
-  pprSyn op =
-    case op of
-      StgPrimOp primop
-        -> text $ "(Prim) " ++ occNameString (primOpOcc primop)
-      StgPrimCallOp (PrimCall fstring _)
-        -> text $ "(PrimCall) " ++ unpackFS fstring
-      StgFCallOp fcall _
-        -> text $ "(Foreign) " ++ nameForeignCall fcall
-
-      
-
-
-------------------------------------------------------------------------
---  Sanitizing Strings for C
-------------------------------------------------------------------------
-
-appflBuiltin = (`elem` [ "stg_case_not_exhaustive"
-                       , "Int_h"
-                       , "main" -- not really builtin, but "special"
-                       ]
-               )
-
-sanitize str | appflBuiltin str = str
-             | otherwise = go str
-  where go [] = []
-        go (x:xs) | hasCSubst x = cSubst x ++ go xs
-                  | otherwise   = x : go xs
-
-hasCSubst :: Char -> Bool
-hasCSubst 'z' = True
-hasCSubst 'Z' = True
-hasCSubst  x  = not (isAlphaNum x)
-
--- Mostly stolen from utils/Encoding.hs
-cSubst '('  = "ZL"  
-cSubst ')'  = "ZR"  
-cSubst '['  = "ZM"
-cSubst ']'  = "ZN"
-cSubst ':'  = "ZC"
-cSubst 'Z'  = "ZZ"
-
-cSubst 'z'  = "zz"
-cSubst '&'  = "za"
-cSubst '|'  = "zb"
-cSubst '^'  = "zc"
-cSubst '$'  = "zd"
-cSubst '='  = "ze"
-cSubst '@'  = "zf" -- new
-cSubst '>'  = "zg"
-cSubst '#'  = "zh"
-cSubst '.'  = "zi"
-cSubst '<'  = "zl"
-cSubst '-'  = "zm"
-cSubst '!'  = "zn"
-cSubst '+'  = "zp"
-cSubst '\'' = "zq"
-cSubst '\\' = "zr"
-cSubst '/'  = "zs"
-cSubst '*'  = "zt"
-cSubst '_'  = "zu" 
-cSubst '%'  = "zv"
-cSubst c    = 'z':'X': showHex (ord c) "X"
-
-
-
-
-
-
-sanitizeTC (TyCon b c vs dcs) =
-  TyCon b (sanitize c) (map sanitize vs) (map sanitizeDC dcs)
-sanitizeDC (DataCon con mts)  =
-  DataCon (sanitize con) (map sanitizeMono mts)
-
-sanitizeMono (MVar tv)      = MVar (sanitize tv)
-sanitizeMono (MFun m1 m2)   = MFun (sanitizeMono m1) (sanitizeMono m2)
-sanitizeMono (MCon b c mts) = MCon b (sanitize c) (map sanitizeMono mts)
--- No other Monotypes should be in the program at this point
-sanitizeMono _              = _unreachable
-
-sanitizeObj o = case o of
-  THUNK {e, oname     } -> THUNK () (sanitizeExpr e) (sanitize oname)
-  FUN   {vs, e, oname } -> FUN () (map sanitize vs) (sanitizeExpr e) (sanitize oname)
-  CON   {c, as, oname } -> CON () (sanitize c) (map sanitizeExpr as) (sanitize oname)  
-
-  -- PAP and BLACKHOLE should not be in the program at this point.
-  -- This is sanity-checking as much as anything else
-  _ -> _unreachable
-
-sanitizeExpr e = case e of
-  EAtom   {ea           } -> EAtom () (sanitizeAtom ea)
-  EFCall  {ev, eas      } -> EFCall () (sanitize ev) (map sanitizeExpr eas)
-  EPrimop {eprimop, eas } -> EPrimop () eprimop (map sanitizeExpr eas)
-  ELet    {edefs, ee    } -> ELet () (map sanitizeObj edefs) (sanitizeExpr ee)
-  ECase   {ee, ealts    } -> ECase () (sanitizeExpr ee) (sanitizeAlts ealts)
-
-sanitizeAlts Alts{alts, aname, scrt} =
-  Alts () (map sanitizeAlt alts) (sanitize aname) (sanitizeExpr scrt)
-
-sanitizeAlt a = case a of
-  ACon {ac, avs, ae } -> ACon () (sanitize ac) (map sanitize avs) (sanitizeExpr ae)
-  ADef {av, ae      } -> ADef () (sanitize av) (sanitizeExpr ae)
-
-sanitizeAtom a = case a of
-  Var v  -> Var (sanitize v)
-  LitC c -> LitC (sanitize c)
-  _      -> a
-  

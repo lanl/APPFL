@@ -64,7 +64,7 @@ instance TypeFVs [Obj InfoTab] where
 
 instance TypeFVs (Obj InfoTab) where
     typeFVs m o@FUN{vs,e} =
-        let (rt, vstyps) = unfoldr $ (typ . omd) o
+        let (rt, vstyps) = unfoldMTy $ (typ . omd) o
             m' = foldr (uncurry Map.insert) m (zip vs vstyps)
         in o{e = typeFVsCommon m' e}
 
