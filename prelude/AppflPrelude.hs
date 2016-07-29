@@ -112,7 +112,8 @@ This may make it in later
 
     -- -- * List operations
     -- map, (++), filter,
-    -- head, last, tail, init, null, length, (!!),
+    head, last, tail, init, null, 
+    -- length, (!!),
     -- reverse,
     -- -- *** Special folds
     -- and, or, any, all,
@@ -232,4 +233,4 @@ STG must then handle the substitution.
 
 import APPFL.Base
 import APPFL.Num
-
+import APPFL.List

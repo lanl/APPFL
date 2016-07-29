@@ -18,6 +18,8 @@
 -----------------------------------------------------------------------------
 
 module APPFL.List (
+  head, last, tail, init, null
+#if 0
    -- [] (..),          -- built-in syntax; can't be used in export list
 
    map, (++), filter, concat,
@@ -30,16 +32,35 @@ module APPFL.List (
    concatMap,
    zip, zip3, zipWith, zipWith3, unzip, unzip3,
    errorEmptyList,
-
+#endif
  ) where
 
 import Data.Maybe
 import APPFL.Base
-import APPFL.Num (Num(..))
-import APPFL.Integer (Integer)
+--import APPFL.Num (Num(..))
+--import APPFL.Integer (Integer)
 
-infixl 9  !!
-infix  4 `elem`, `notElem`
+head                    :: [a] -> a
+head (x:_)              =  x
+
+tail                    :: [a] -> [a]
+tail (_:xs)             =  xs
+
+last                    :: [a] -> a
+last [x]                =  x
+last (_:xs)             =  last xs
+
+init                    :: [a] -> [a]
+init [x]                =  []
+init (x:xs)             =  x : init xs
+
+null                    :: [a] -> Bool
+null []                 =  True
+null (_:_)              =  False
+
+#if 0
+--infixl 9  !!
+--infix  4 `elem`, `notElem`
 
 --------------------------------------------------------------
 -- List-manipulation functions
@@ -62,7 +83,6 @@ badHead = errorEmptyList "head"
 "head/augment"  forall xs (g::forall b. (a->b->b) -> b -> b) .
                 head (augment g xs) = g (\x _ -> x) (head xs)
  #-}
-
 -- | Decompose a list into its head and tail. If the list is empty,
 -- returns 'Nothing'. If the list is non-empty, returns @'Just' (x, xs)@,
 -- where @x@ is the head of the list and @xs@ its tail.
@@ -1012,3 +1032,5 @@ errorEmptyList fun =
 
 prel_list_str :: String
 prel_list_str = "Prelude."
+
+#endif
