@@ -4,6 +4,7 @@ module State (
   runState,
   get,
   put,
+  modify,
   liftM,
   concatMapM
 ) where
@@ -36,6 +37,9 @@ get = State $ \s -> (s,s)
 
 put :: s -> State s ()
 put newState = State $ \s -> ((), newState)
+
+modify :: (s -> s) -> State s ()
+modify f = get >>= put . f
 
 liftM :: (Monad m) => (a -> r) -> m a -> m r
 liftM f m = do { x <- m; return (f x) }

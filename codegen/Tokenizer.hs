@@ -16,7 +16,7 @@ import Data.Char
 import Data.List (isPrefixOf)
 import ParserComb
 import Debug.Trace
-import PPrint hiding (space, hash)
+import PPrint hiding (space, hash, underscore)
 
 testtok file =
   do

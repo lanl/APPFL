@@ -9,7 +9,7 @@ macro(add_test_true name build command)
     add_test(${name} ${command} ${ARGN})
     set_tests_properties(${name} PROPERTIES DEPENDS ${build})
     set_tests_properties(${name} PROPERTIES PASS_REGULAR_EXPRESSION
-      "The answer is[\r\n\t ]*[a-zA-Z0-9_]* = APPFLziTypesziTrue")
+      "The answer is[\r\n\t ]*[a-zA-Z0-9_]* = GHCziTypesziTrue")
 endmacro(add_test_true)
 
 file(GLOB ALL_SRCS *.hs)

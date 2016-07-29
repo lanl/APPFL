@@ -493,7 +493,7 @@ instance BU (Obj InfoTab) where
 {- [Atom version]
   bu mtvs o@PAP{f,as} =
       let typ = getTyp o
-          (m,ms) = unfoldr typ
+          (m,ms) = unfoldMTy typ
       in (Set.fromList $ (f,typ) : [ (v, t) | (Var v, t) <- zzip as ms ],
           Set.empty,
           setTyp m o)

@@ -17,8 +17,8 @@ import           System.Process
 import           PPrint
 import           Control.Monad (when)
 import           Control.Applicative ((<|>))
-import           FromGHC.FromGHC 
 -- Just a <|> Nothing == Just a <|> Just b == Just a
+import           FromGHC.FromGHC 
 
 -- build a.out from stg/mhs and run it
 _eval :: String -> Bool -> IO()

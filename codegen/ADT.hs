@@ -22,16 +22,14 @@ module ADT (
   monoTypeVars,
   boxMTypes,
   isBoxed,
-  unfoldr
+  unfoldMTy
 ) where
 
 --import AST(Con,BuiltinType(..),Obj)
-import AST(Con,Obj)
+import AST(Con, Obj)
 
-import Data.List(intercalate, (\\), find)
-import Data.Maybe (fromJust, fromMaybe)
-import Data.Char (isNumber)
-import qualified Data.Map as Map
+import Data.List(intercalate)
+import Data.Maybe (fromMaybe)
 import PPrint
 
 {-
@@ -97,8 +95,8 @@ data Monotype = MVar TyVar
                 deriving(Eq,Ord)
 
 -- m is rightmost element
-unfoldr (MFun m1 m2) = let (m,ms) = unfoldr m2 in (m, m1:ms)
-unfoldr m = (m,[])
+unfoldMTy (MFun m1 m2) = let (m,ms) = unfoldMTy m2 in (m, m1:ms)
+unfoldMTy m = (m,[])
 
 isBoxed :: Monotype -> Bool
 isBoxed m = case m of

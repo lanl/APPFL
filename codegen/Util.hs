@@ -1,3 +1,5 @@
+{-# LANGUAGE ScopedTypeVariables #-}
+
 module Util
 (
   mapFst,
@@ -9,13 +11,17 @@ module Util
   precalate,
   partPerm,
   groupAllBy,
-  lookupOrElse,
-  splits, splitsBy
+  lookupBy, lookupOrElse,
+  splits, splitsBy,
+  toInt, toInt64, safeIntegerConvert,
+  unreachable,
+  _TODO
 )
 where
 
 import qualified Data.Map as Map
 import Data.List (nubBy, partition)
+import Data.Int (Int64)
 
 mapFst :: (a -> b) -> (a,c) -> (b,c)
 mapFst f (a,b) = (f a, b)
@@ -104,3 +110,38 @@ groupAllBy f xs =
      else reverse $ fst $ foldl ffun ([],xs) nubbed
   where ffun (groups, xs) it = let (matches, rest) = partition (f it) xs
                                in (matches:groups, rest)
+
+-- | Maybe convert and Integer to an Int (if it's within Int bounds)
+toInt :: Integer -> Maybe Int
+toInt = safeIntegerConvert
+
+-- | Is an Integer within Int64 bounds?
+toInt64 :: Integer -> Maybe Int64
+toInt64 = safeIntegerConvert
+
+-- | More general implementation of safely converting an Integer to a
+-- Bounded Integral type.
+safeIntegerConvert :: forall a . (Bounded a, Integral a) => Integer -> Maybe a
+safeIntegerConvert i
+  | i > maxVal || i < minVal  = Nothing 
+  | otherwise = Just $ fromInteger i
+  -- ScopedTypeVariables lets us refer to the type variable 'a' from above.
+  -- The type annotation *is* necessary.
+  where maxVal = toInteger (maxBound :: a)
+        minVal = toInteger (minBound :: a)
+
+
+
+-- If I knew some Template Haskell and we wanted to include the TH
+-- Haskell package, these could be cleaner.  As it is, the way they're
+-- often used is with a _HERE macro:
+-- #define _HERE ( __FILE__ ++ ":" ++ show ( __LINE__ :: Int ) )
+
+-- This may be bad practice, or an indicator of bad design.
+-- It is, however, more convenient than manually typing a message
+-- for every non-provably exhaustive pattern match
+unreachable, _TODO :: String -> error
+unreachable str = error ("Should not be reached: " ++ str)
+_TODO str = error ("Definition incomplete: " ++ str)
+
+

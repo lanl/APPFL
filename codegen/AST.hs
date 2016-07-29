@@ -21,7 +21,7 @@ module AST (
 ) where
 
 import PPrint
-import Data.List (find, (\\), isSuffixOf)
+import Data.List (find, (\\))
 import Data.Int as Int (Int64)
 
 --  See Parser.hs for grammar
@@ -261,13 +261,6 @@ instance Unparse a => Unparse (Obj a) where
 instance Unparse a => Unparse [Obj a] where
   unparse objs = vcat $ postpunctuate semi $ map unparse objs
          
-
-
--- () metadata = empty document
--- empty is the identity Doc for the associative pretty printing operators
-instance Unparse () where
-  unparse () = empty
-
 
 --instance PPrint BuiltinType where
 --  pprint b = case b of

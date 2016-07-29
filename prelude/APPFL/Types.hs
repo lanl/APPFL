@@ -13,23 +13,23 @@ similar (probably via script, like GHC)
 
 module APPFL.Types
   ( -- We're tied to GHC's Bool due to guards (I think)
-    GHC.Bool(..) 
+    Bool(..) 
   , Int (..)
-  , List (..), Unit (..)
+--  , List (..), Unit (..)
   , isTrue#
   ) where
 
-import qualified GHC.Types as GHC
+import GHC.Types as GHC
   (Int (..), Bool (..), SPEC (..), Coercible (..))
   
 import APPFL.Prim
 
--- Dummy definitions. Brought into scope to supplant the GHC equivalents
-data Bool = False | True
+-- Dummy definitions.
+-- data Bool = False | True
 
 -- data Char = C# Char#
 
-data Int = I# Int#
+-- data Int = I# Int#
 
 -- data Word = W# Word#
 
@@ -42,9 +42,9 @@ data Int = I# Int#
 -- We can't actually define the builtin List and Tuple syntax.
 -- These serve in their place. This requires an even hackier
 -- hack to resolve in the STG translation.
-data Unit = Unit
-infixr 5 `Cons`
-data List a = a `Cons` (List a) | Nil
+-- data Unit = Unit
+-- infixr 5 `Cons`
+-- data List a = a `Cons` (List a) | Nil
 
 
 isTrue# :: Int# -> GHC.Bool   
