@@ -5,6 +5,13 @@ UndecidableInstances, BangPatterns, MagicHash #-}
 
 #define _HERE ( __FILE__ ++ ":" ++ show ( __LINE__ :: Int ))
 
+-- can compile this module to make an executable that writes our unparsed STG
+-- to a specified file
+-- ghc --make -package ghc -main-is FromGHC.FromGHC.amain FromGHC.hs -o hs2appfl
+--
+-- executable usage is: hs2appfl infile outfile
+-- It assumes a prelude directory with the AppflPrelude and APPFL base
+-- in $PWD.  i.e. It's Fragile 
 module FromGHC.FromGHC
   ( ghc2stg
   , compileAndThen
@@ -13,6 +20,7 @@ module FromGHC.FromGHC
   , printAppflSyn
   , printGhcSyn
   , target
+  , amain 
   )
 where
 
@@ -23,7 +31,7 @@ where
 -- and what it's related to.  It's hard enough dealing with the
 -- massive GHC codebase.
 
--- Local (APPFL) imports
+---------------------------------------- Local (APPFL) imports
 import           ADT as A
 import           AST as A
 import           FromGHC.BuiltIn
@@ -34,7 +42,7 @@ import           State hiding (liftM)
 import           Util 
 import qualified PPrint as A
 
--- Standard library
+---------------------------------------- Standard library modules
 import qualified Data.Map.Strict as Map
 import           Data.List as List
                  ( nub, nubBy, unfoldr, insertBy
@@ -45,23 +53,32 @@ import           Debug.Trace
 import           Data.Char (ord)
 import           Control.Monad.Trans
 import           Control.Monad.Trans.Except
-import           Control.Monad ( liftM, liftM2, liftM3, mapAndUnzipM, (<=<))
+import           Control.Monad
+import           System.Exit (ExitCode (..), exitWith)
+import           System.Environment (getArgs, lookupEnv)
 
+  
+---------------------------------------- GHC specific stuff
 
--- GHC specific stuff
+-- Note: I'm Working on importing from the original modules instead of
+-- using re-exports from GHC. This is useful when I want to go see what's
+-- _really_ going on in the source.
+
+-- Where to find support libs on this system
 import           GHC.Paths (libdir)
+
+-- GHC API
 import           GHC
                  -- Initialization
-                 ( defaultErrorHandler
+                 ( defaultErrorHandler, defaultCleanupHandler
 
-                 -- GHC Monad
-                 , GhcMonad (..), runGhc
+                 -- Enter the GhcMonad with the (Ghc a) implementation
+                 , runGhc
 
-                 -- DynFlags and settings
-                 , getSessionDynFlags, setSessionDynFlags
-                 , DynFlags (..), HscTarget (..), GhcLink (..)
-
-                 -- Targets
+                 -- safely set new DynFlags (checked for consistency)
+                 , setSessionDynFlags
+                 
+                 -- Targets are source files
                  , guessTarget, addTarget
 
                  -- Loading/compiling
@@ -74,15 +91,26 @@ import           GHC
                  , moduleName
                  )                 
 
+-- The GhcMonad. The Ghc and GhcT types are defined here.
+import           GhcMonad
+                 ( GhcMonad (..), printException
+                 , getSessionDynFlags
+                 )
+
+import           ErrUtils (prettyPrintGhcErrors)
+
+-- DynFlags determine most of the run-time behavior of GHC, notably 
 import           DynFlags
-                 ( ExtensionFlag (..)
+                 ( DynFlags (..), ExtensionFlag (..)
+                 , HscTarget (..), GhcLink (..)
                  , defaultFatalMessager
                  , defaultFlushOut
                  , xopt_set, xopt_unset -- for LANGUAGE Extensions
                  )
 
-import           HscTypes ( HscEnv (..), CgGuts (..), isBootSummary)
-
+import           HscTypes
+                 ( HscEnv (..), CgGuts (..)
+                 , isBootSummary, handleSourceError)
 
 -- simplifying and tidying Core
 import           HscMain   ( hscSimplify )
@@ -94,8 +122,6 @@ import           CoreSyn   ( CoreProgram )
 import           CoreToStg ( coreToStg   )
 import           SimplStg  ( stg2stg     )
 
-
-
 -- Finding where (in the source file) something came from
 import           SrcLoc
                  ( SrcSpan(..)
@@ -106,7 +132,6 @@ import           SrcLoc
 
 -- Nodes of the STG AST
 import           CoreSyn ( AltCon (..) )
-
 import           StgSyn
                  ( StgBinding, GenStgBinding (..)
                  , StgExpr, GenStgExpr (..), StgOp (..)
@@ -139,18 +164,22 @@ import           Name
                  ( Name, NamedThing (..)
                  , getOccString, nameSrcSpan )
 
-
-
-
 -- FastStrings
 import           FastString (mkFastString, unpackFS)
 
-import           CostCentre
-                 ( CollectedCCs )
+-- Profiling.  Don't need this except for type signatures
+import           CostCentre ( CollectedCCs )
 
+-- GHC's Pretty Printing facilities
 import qualified Outputable as G
 
 
+amain = do
+  (i:o:_) <- getArgs
+  Just cwd <- lookupEnv "PWD"
+  let prld = cwd ++ "/prelude/"
+  (ghc,(ts,os)) <- compileAndThen (return . g2a) prld i
+  writeFile o (show $ A.unparse ts A.$+$ A.unparse os)
 
 
 -- For in-progress tests. Note that $PWD is appfl/codegen when loading
@@ -196,6 +225,15 @@ compileAndThen stgFun preludeDir file = do
       
       oldFlags <- getSessionDynFlags
       let dflags = makeAppflFlags preludeDir oldFlags
+
+      -- If we get source errors, exit with a message.
+      -- They're already printed out (not sure how/where that happens)
+      -- so we don't need to do anything with the exception.
+      handleSourceError
+        (\err ->
+           (liftIO $ do      -- Red                   Reset
+               putStrLn "\n  \27[31mCompilation Failed\27[0m"
+               exitWith $ ExitFailure 1 )) $ do
 
 
       setSessionDynFlags dflags

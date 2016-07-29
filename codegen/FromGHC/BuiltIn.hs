@@ -88,18 +88,31 @@ implementedOpMap = Map.fromList
 
 type AppflName = String
 
-
 -- Names we want to recognize as special.
 isAppflBuiltIn :: String -> Bool
 isAppflBuiltIn = (`elem` appflBuiltIns)
 
-appflBuiltIns :: [String]
+appflBuiltIns :: [AppflName]
 appflBuiltIns = [ appflMain, appflPrimIntTy, appflNoExhaust ]
 
 
 -- | Our program entry point
 appflMain :: AppflName
 appflMain      = "main"
+-- There's a problem here that I don't have an immediate solution to.  If some
+-- Haskell input to our program defines multiple main functions in separate
+-- modules, they will all be caught as the _special_ main and named "main",
+-- causing errors in DupCheck.
+--
+-- The potential solutions are:
+--  * keep the current behavior and accept a flag (like GHC's -main-is) to
+--    disambiguate where necessary
+--  * look for a main in the file given as an argument and map _only_ that to
+--    the real main
+--  * Combine both of the above, overriding the second if a flag is given (Ideal!)
+--  * Keep the current behavior and make "Single Main" another constraint on the
+--    input.
+
 
 -- | Our Int#
 appflPrimIntTy :: AppflName
