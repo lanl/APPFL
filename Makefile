@@ -27,7 +27,7 @@ setup: prelude/Prelude.stg prelude/Prelude.mhs options.h $(HSLIB_FILES)
 
 codegen: setup 
 	@(cd codegen && cabal configure && cabal build $(build_flags))
-	@(cp -f codegen/dist/build/stgc/stgc $(build_dir)/bin/)
+	@(cp -f codegen/dist/build/appfl/appfl $(build_dir)/bin/)
 
 runtime: setup
 	@(cd $(build_dir); cmake $(cmake_flags) ..)
@@ -57,7 +57,7 @@ multi:
 	@echo "USE_ARGTYPE=0 && USE_OBJTYPE=0"
 	$(MAKE) clean && $(MAKE) setup
 	@(cd codegen && cabal configure -f useD && cabal build $(build_flags))
-	@(cp -f codegen/dist/build/stgc/stgc $(build_dir)/bin/)
+	@(cp -f codegen/dist/build/appfl/appfl $(build_dir)/bin/)
 	@(cd $(build_dir); cmake $(cmake_flags) -DUSE_D:BOOL=ON  ..)
 	@(cd $(build_dir); $(MAKE) $(build_flags))
 	@(echo "#undef USE_ARGTYPE\n#define USE_ARGTYPE 0\n#undef USE_OBJTYPE\n#define USE_OBJTYPE 0\n" >> $(build_dir)/include/options.h)
@@ -65,7 +65,7 @@ multi:
 	@echo "USE_ARGTYPE=1 && USE_OBJTYPE=0"
 	$(MAKE) clean && $(MAKE) setup
 	@(cd codegen && cabal configure -f useD -fargType  && cabal build $(build_flags))
-	@(cp -f codegen/dist/build/stgc/stgc $(build_dir)/bin/)
+	@(cp -f codegen/dist/build/appfl/appfl $(build_dir)/bin/)
 	@(cd $(build_dir); cmake $(cmake_flags) -DUSE_D:BOOL=ON -DUSE_ARGTYPE:BOOL=ON  ..)
 	@(cd $(build_dir); $(MAKE) $(build_flags))
 	@(echo "#undef USE_ARGTYPE\n#define USE_ARGTYPE 1\n#undef USE_OBJTYPE\n#define USE_OBJTYPE 0\n" >> $(build_dir)/include/options.h)
@@ -73,7 +73,7 @@ multi:
 	@echo "USE_ARGTYPE=0 && USE_OBJTYPE=1"
 	$(MAKE) clean && $(MAKE) setup
 	@(cd codegen && cabal configure -f useD -fobjType  && cabal build $(build_flags))
-	@(cp -f codegen/dist/build/stgc/stgc $(build_dir)/bin/)
+	@(cp -f codegen/dist/build/appfl/appfl $(build_dir)/bin/)
 	@(cd $(build_dir); cmake $(cmake_flags) -DUSE_D:BOOL=ON -DUSE_OBJTYPE:BOOL=ON  ..)
 	@(cd $(build_dir); $(MAKE) $(build_flags))
 	@(echo "#undef USE_ARGTYPE\n#define USE_ARGTYPE 0\n#undef USE_OBJTYPE\n#define USE_OBJTYPE 1\n" >> $(build_dir)/include/options.h)
@@ -81,7 +81,7 @@ multi:
 	@echo "USE_ARGTYPE=1 && USE_OBJTYPE=1"
 	$(MAKE) clean && $(MAKE) setup
 	@(cd codegen && cabal configure -f useD -fargType -fobjType  && cabal build $(build_flags))
-	@(cp -f codegen/dist/build/stgc/stgc $(build_dir)/bin/)
+	@(cp -f codegen/dist/build/appfl/appfl $(build_dir)/bin/)
 	@(cd $(build_dir); cmake $(cmake_flags) -DUSE_D:BOOL=ON -DUSE_ARGTYPE:BOOL=ON -DUSE_OBJTYPE:BOOL=ON  ..)
 	@(cd $(build_dir); $(MAKE) $(build_flags))
 	@(echo "#undef USE_ARGTYPE\n#define USE_ARGTYPE 1\n#undef USE_OBJTYPE\n#define USE_OBJTYPE 1\n" >> $(build_dir)/include/options.h)

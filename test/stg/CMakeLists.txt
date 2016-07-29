@@ -1,6 +1,6 @@
 project(stgc_test_stg)
   
-set(STGCC "${CMAKE_CURRENT_BINARY_DIR}/../../bin/stgc")
+set(APPFL "${CMAKE_CURRENT_BINARY_DIR}/../../bin/appfl")
 set(SRC_DIR ${CMAKE_SOURCE_DIR}/test/stg)
 set(BIN_DIR ${BINARY_DIR}/stg)
 
@@ -18,7 +18,7 @@ foreach (test ${ALL_SRCS})
     get_filename_component(tname ${test} NAME_WE) 
     set(build build_${tname})
     set(binary ${BIN_DIR}/${tname})
-    add_test(${build} ${STGCC} ${SRC_DIR}/${tname}.stg -o ${tname})
+    add_test(${build} ${APPFL} ${SRC_DIR}/${tname}.stg -o ${tname})
    
     foreach (strict 0 1 2)
       foreach (constr 0) 
