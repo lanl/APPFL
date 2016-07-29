@@ -47,8 +47,10 @@ clean:
 	@(cd test/stg && rm -f *.stg.c 2>/dev/null)
 	@(cd test/stg/error && rm -f *.stg.c 2>/dev/null)
 	@(cd test/stg/nonstrict && rm -f *.stg.c 2>/dev/null)
+	@(cd test/stg/nonstrict/timeout && rm -f *.stg.c 2>/dev/null)
 	@(cd test/stg/nostrict2 && rm -f *.stg.c 2>/dev/null)
 	@(cd test/mhs && rm -f *.mhs.c 2>/dev/null)
+	@(cd test/hs && rm -f *.hs.c 2>/dev/null)
 	@(rm -rf $(build_dir))
 
 multi:

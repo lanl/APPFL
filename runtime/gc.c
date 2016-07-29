@@ -212,9 +212,9 @@ void gc(void) {
   }
 
   if (rtArg.sanityChecker) {
-    LOG(LOG_NONE, "before GC\n");
-    heapCheck(true, LOG_NONE);
-    stackCheck(true, LOG_NONE);
+    LOG(LOG_INFO, "before GC\n");
+    heapCheck(true, LOG_INFO);
+    stackCheck(true, LOG_INFO);
   }
 
   // check if GC should run at all
@@ -256,9 +256,9 @@ void gc(void) {
   swapPtrs();
 
   if (rtArg.sanityChecker) {
-    LOG(LOG_NONE, "after GC\n");
-    heapCheck(true, LOG_NONE);
-    stackCheck(true, LOG_NONE);
+    LOG(LOG_INFO, "after GC\n");
+    heapCheck(true, LOG_INFO);
+    stackCheck(true, LOG_INFO);
   }
 
   if(LOG_LEVEL == LOG_SPEW) {
