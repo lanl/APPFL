@@ -17,29 +17,36 @@
 --
 -----------------------------------------------------------------------------
 
-module APPFL.Classes where
+module APPFL.Classes
+  ( GHC.Eq (..), Bool (..), Int (..)
+--  , ApEq (..) 
+  , (>), (>=), (<), (<=)
+  , (&&), (||), not
+  , isTrue#, divInt#, modInt#, eqInt, neInt)
+where
 
 import APPFL.Types (Bool (..), Int (..), isTrue#)
 import APPFL.Prim
+import qualified GHC.Classes as GHC (Eq (..))
 
 -- GHC.Magic is used in some derived instances
 --import GHC.Magic
 --import GHC.Tuple
 
 
-infix  4  == --, /=, <, <=, >=, >
+--infix  4  == --, /=, <, <=, >=, >
 infixr 3  &&
 infixr 2  ||
 
 default ()              -- Double isn't available yet
 
-(==) = eqInt
-(/=) = neInt
+--(==) = eqInt
+--(/=) = neInt
 (>) = gtInt
 (>=) = geInt
 (<) = ltInt
 (<=) = leInt
-{-
+
 -- | The 'Eq' class defines equality ('==') and inequality ('/=').
 -- All the basic datatypes exported by the "Prelude" are instances of 'Eq',
 -- and 'Eq' may be derived for any datatype whose constituents are also
@@ -47,7 +54,7 @@ default ()              -- Double isn't available yet
 --
 -- Minimal complete definition: either '==' or '/='.
 --
-class  Eq a  where
+class  ApEq a  where
     (==), (/=)           :: a -> a -> Bool
 
     {-# INLINE (/=) #-}
@@ -56,6 +63,11 @@ class  Eq a  where
     x == y               = not (x /= y)
     {-# MINIMAL (==) | (/=) #-}
 
+instance ApEq Int where
+    (==) = eqInt
+    (/=) = neInt
+
+{-
 deriving instance Eq ()
 deriving instance (Eq  a, Eq  b) => Eq  (a, b)
 deriving instance (Eq  a, Eq  b, Eq  c) => Eq  (a, b, c)
@@ -111,10 +123,6 @@ instance Eq Float where
 
 instance Eq Double where
     (D# x) == (D# y) = isTrue# (x ==## y)
-
-instance Eq Int where
-    (==) = eqInt
-    (/=) = neInt
 -}
 {-# INLINE eqInt #-}
 {-# INLINE neInt #-}

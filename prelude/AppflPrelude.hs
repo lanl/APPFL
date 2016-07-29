@@ -40,7 +40,7 @@ module AppflPrelude (
 
     -- -- ** Basic type classes
 
-    (==), (/=), (<), (<=), (>=), (>), --- INT ONLY (FOR NOW)
+    {-(==), (/=),-} (<), (<=), (>=), (>), --- INT ONLY (FOR NOW)
  
     -- Eq((==), (/=)),
     -- Ord(compare, (<), (<=), (>=), (>), max, min),
@@ -53,7 +53,8 @@ module AppflPrelude (
     -- *** Numeric types
     Int(..), (+), (-), (*), (/), mod, div, negate,
     fromInteger,
-    
+
+    Eq(..),
     -- Integer, Float, Double,
     -- Rational, Word,
 
@@ -232,4 +233,3 @@ STG must then handle the substitution.
 
 import APPFL.Base
 import APPFL.Num
-

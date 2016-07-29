@@ -214,9 +214,12 @@ instance Unparse Monotype where
                             (stgName c <+> hsep (map unparse ms))
   unparse m = error $ "ADT.unparse (Monotype) m=" ++ show m
 
+unparseDCmono :: Monotype -> Doc
+unparseDCmono m@(MFun m1 m2) = parens $ unparse m
+unparseDCmono m = unparse m
   
 instance Unparse DataCon where
-  unparse (DataCon con mTypes) = stgName con <+> hsep (map unparse mTypes)
+  unparse (DataCon con mTypes) = stgName con <+> hsep (map unparseDCmono mTypes)
 
 instance PPrint DataCon where
   pprint = unparse

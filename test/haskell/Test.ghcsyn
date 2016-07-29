@@ -1,0 +1,813 @@
+(StgNonRec)
+  (ClassOpId) Test.eq =
+  (FUN)
+  [(VanillaId) tpl]
+    (Case) (App) (VanillaId) tpl = (VanillaId) tplB
+      (AlgAlt)
+        (DataAlt) Test.D:MyEq (VanillaId) tplC (VanillaId) tplD
+          -> (App) (VanillaId) tplC
+(StgNonRec)
+  (ClassOpId) Test.ne =
+  (FUN)
+  [(VanillaId) tplE]
+    (Case) (App) (VanillaId) tplE = (VanillaId) tplF
+      (AlgAlt)
+        (DataAlt) Test.D:MyEq (VanillaId) tplG (VanillaId) tplH
+          -> (App) (VanillaId) tplH
+(StgNonRec)
+  (VanillaId) Test.$dmne =
+  (FUN)
+  [(VanillaId) $dMyEqI ,(VanillaId) a1J ,(VanillaId) bK]
+    (Let) let
+      (StgNonRec)
+        (VanillaId) satL =
+        (THUNK)
+          (App) (ClassOpId) Test.eq (VarArg) (VanillaId) $dMyEqI (VarArg) (VanillaId) a1J (VarArg) (VanillaId) bK
+    in (App) (VanillaId) APPFL.Classes.not (VarArg) (VanillaId) satL
+(StgNonRec)
+  (VanillaId) Test.$dmeq =
+  (FUN)
+  [(VanillaId) $dMyEqM ,(VanillaId) a1N ,(VanillaId) bO]
+    (Let) let
+      (StgNonRec)
+        (VanillaId) satP =
+        (THUNK)
+          (App) (ClassOpId) Test.ne (VarArg) (VanillaId) $dMyEqM (VarArg) (VanillaId) a1N (VarArg) (VanillaId) bO
+    in (App) (VanillaId) APPFL.Classes.not (VarArg) (VanillaId) satP
+(StgNonRec)
+  (VanillaId) Test.tr =
+  (THUNK)
+    (App) (ClassOpId) GHC.Classes.== (VarArg) (DictFunId) GHC.Classes.$fEqBool (VarArg) (DCWorkerId) GHC.Types.True (VarArg) (DCWorkerId) GHC.Types.False
+(StgNonRec)
+  (VanillaId) satQ =
+  (CONish) GHC.Types.I# [(LitArg) (MachInt)173]
+  Worker/Wrapper: GHC.Types.I#
+(StgNonRec)
+  (VanillaId) satR =
+  (CONish) GHC.Types.: [(VarArg) (VanillaId) satQ ,(VarArg) (DCWorkerId) GHC.Types.[]]
+  Worker/Wrapper: GHC.Types.:
+(StgNonRec)
+  (VanillaId) satS =
+  (CONish) GHC.Types.I# [(LitArg) (MachInt)1295503596]
+  Worker/Wrapper: GHC.Types.I#
+(StgNonRec)
+  (VanillaId) satT =
+  (CONish) GHC.Types.: [(VarArg) (VanillaId) satS ,(VarArg) (VanillaId) satR]
+  Worker/Wrapper: GHC.Types.:
+(StgNonRec)
+  (VanillaId) satU =
+  (CONish) GHC.Types.I# [(LitArg) (MachInt)638943240]
+  Worker/Wrapper: GHC.Types.I#
+(StgNonRec)
+  (VanillaId) satV =
+  (CONish) GHC.Types.: [(VarArg) (VanillaId) satU ,(VarArg) (VanillaId) satT]
+  Worker/Wrapper: GHC.Types.:
+(StgNonRec)
+  (VanillaId) satW =
+  (CONish) GHC.Types.I# [(LitArg) (MachInt)3330054]
+  Worker/Wrapper: GHC.Types.I#
+(StgNonRec)
+  (VanillaId) satX =
+  (CONish) GHC.Types.: [(VarArg) (VanillaId) satW ,(VarArg) (VanillaId) satV]
+  Worker/Wrapper: GHC.Types.:
+(StgNonRec)
+  (VanillaId) main =
+  (THUNK)
+    (App) (VanillaId) GHC.Integer.Type.mkInteger (VarArg) (DCWorkerId) GHC.Types.True (VarArg) (VanillaId) satX
+(StgNonRec)
+  (VanillaId) Test.nineteen =
+  (CONish) GHC.Types.I# [(LitArg) (MachInt)19]
+  Worker/Wrapper: GHC.Types.I#
+(StgNonRec)
+  (VanillaId) Test.nine =
+  (CONish) GHC.Types.I# [(LitArg) (MachInt)9]
+  Worker/Wrapper: GHC.Types.I#
+(StgNonRec)
+  (VanillaId) Test.ten =
+  (CONish) GHC.Types.I# [(LitArg) (MachInt)10]
+  Worker/Wrapper: GHC.Types.I#
+(StgNonRec)
+  (VanillaId) $ceqY =
+  (FUN)
+  [(VanillaId) $dMyEqZ ,(VanillaId) dsa ,(VanillaId) ds1b]
+    (Case) (App) (VanillaId) dsa = (VanillaId) wildc
+      (AlgAlt)
+        (DataAlt) Test.T (VanillaId) a1d
+          -> (Case) (App) (VanillaId) ds1b = (VanillaId) wild1e
+               (AlgAlt)
+                 (DataAlt) Test.T (VanillaId) bf
+                   -> (App) (ClassOpId) Test.eq (VarArg) (VanillaId) $dMyEqZ (VarArg) (VanillaId) a1d (VarArg) (VanillaId) bf
+(StgRec)
+  (DictFunId) Test.$fMyEqT =
+  (FUN)
+  [(VanillaId) $dMyEqg]
+    (Let) let
+      (StgNonRec)
+        (VanillaId) sath =
+        (THUNK) (App) (VanillaId) $cnei (VarArg) (VanillaId) $dMyEqg
+    in (Let) let
+         (StgNonRec)
+           (VanillaId) satj =
+           (FUN)
+           [(VanillaId) etak ,(VanillaId) etal]
+             (App) (VanillaId) $ceqY (VarArg) (VanillaId) $dMyEqg (VarArg) (VanillaId) etak (VarArg) (VanillaId) etal
+       in (ConApp) Test.D:MyEq [(VarArg) (VanillaId) satj ,(VarArg) (VanillaId) sath]
+  (VanillaId) $cnei =
+  (FUN)
+  [(VanillaId) $dMyEqm]
+    (Let) let
+      (StgNonRec)
+        (VanillaId) $dMyEq1n =
+        (THUNK) (App) (DictFunId) Test.$fMyEqT (VarArg) (VanillaId) $dMyEqm
+    in (Let) let
+         (StgNonRec)
+           (VanillaId) sato =
+           (FUN)
+           [(VanillaId) a1p ,(VanillaId) bq]
+             (Let) let
+               (StgNonRec)
+                 (VanillaId) satr =
+                 (THUNK)
+                   (App) (ClassOpId) Test.eq (VarArg) (VanillaId) $dMyEq1n (VarArg) (VanillaId) a1p (VarArg) (VanillaId) bq
+             in (App) (VanillaId) APPFL.Classes.not (VarArg) (VanillaId) satr
+       in (App) (VanillaId) sato
+(StgNonRec)
+  (VanillaId) $c==s =
+  (FUN)
+  [(VanillaId) $dEqt ,(VanillaId) dsu ,(VanillaId) ds1v]
+    (Case) (App) (VanillaId) dsu = (VanillaId) wildw
+      (AlgAlt)
+        (DataAlt) Test.T (VanillaId) a1x
+          -> (Case) (App) (VanillaId) ds1v = (VanillaId) wild1y
+               (AlgAlt)
+                 (DataAlt) Test.T (VanillaId) b1z
+                   -> (App) (ClassOpId) GHC.Classes.== (VarArg) (VanillaId) $dEqt (VarArg) (VanillaId) a1x (VarArg) (VanillaId) b1z
+(StgRec)
+  (DictFunId) Test.$fEqT =
+  (FUN)
+  [(VanillaId) $dEq0]
+    (Let) let
+      (StgNonRec)
+        (VanillaId) sat1 =
+        (THUNK) (App) (VanillaId) $c/=2 (VarArg) (VanillaId) $dEq0
+    in (Let) let
+         (StgNonRec)
+           (VanillaId) sat3 =
+           (FUN)
+           [(VanillaId) etak ,(VanillaId) etal]
+             (App) (VanillaId) $c==s (VarArg) (VanillaId) $dEq0 (VarArg) (VanillaId) etak (VarArg) (VanillaId) etal
+       in (ConApp) GHC.Classes.D:Eq [(VarArg) (VanillaId) sat3 ,(VarArg) (VanillaId) sat1]
+  (VanillaId) $c/=2 =
+  (FUN)
+  [(VanillaId) $dEq4]
+    (Let) let
+      (StgNonRec)
+        (VanillaId) $dEq15 =
+        (THUNK) (App) (DictFunId) Test.$fEqT (VarArg) (VanillaId) $dEq4
+    in (Let) let
+         (StgNonRec)
+           (VanillaId) sat6 =
+           (FUN)
+           [(VanillaId) a17 ,(VanillaId) b8]
+             (Let) let
+               (StgNonRec)
+                 (VanillaId) sat9 =
+                 (THUNK)
+                   (App) (ClassOpId) GHC.Classes.== (VarArg) (VanillaId) $dEq15 (VarArg) (VanillaId) a17 (VarArg) (VanillaId) b8
+             in (App) (VanillaId) GHC.Classes.not (VarArg) (VanillaId) sat9
+       in (App) (VanillaId) sat6
+(StgNonRec)
+  (DCWorkerId) Test.T =
+  (FUN)
+  [(VanillaId) etal]
+    (ConApp) Test.T [(VarArg) (VanillaId) etal]
+(StgNonRec)
+  (DCWorkerId) Test.D:MyEq =
+  (FUN)
+  [(VanillaId) etak ,(VanillaId) etal]
+    (ConApp) Test.D:MyEq [(VarArg) (VanillaId) etak ,(VarArg) (VanillaId) etal]
+(StgNonRec)
+  (VanillaId) APPFL.Prim.void# =
+  (CONish) APPFL.VOID.VOID []
+  Worker/Wrapper: APPFL.VOID.VOID
+(StgRec)
+  (VanillaId) APPFL.Prim.imin# =
+  (THUNK) (App) (VanillaId) x-
+  (VanillaId) x- =
+  (THUNK) (App) (VanillaId) APPFL.Prim.imin#
+(StgRec)
+  (VanillaId) APPFL.Prim.imax# =
+  (THUNK) (App) (VanillaId) x1_
+  (VanillaId) x1_ =
+  (THUNK) (App) (VanillaId) APPFL.Prim.imax#
+(StgNonRec)
+  (VanillaId) APPFL.Prim.ineg# =
+  (FUN)
+  [(VanillaId) etal]
+    (Op) (Prim) negateInt# [(VarArg) (VanillaId) etal]
+(StgNonRec)
+  (VanillaId) APPFL.Prim./# =
+  (FUN)
+  [(VanillaId) etak ,(VanillaId) etal]
+    (Op) (Prim) quotInt# [(VarArg) (VanillaId) etak ,(VarArg) (VanillaId) etal]
+(StgNonRec)
+  (VanillaId) APPFL.Prim.%# =
+  (FUN)
+  [(VanillaId) etak ,(VanillaId) etal]
+    (Op) (Prim) remInt# [(VarArg) (VanillaId) etak ,(VarArg) (VanillaId) etal]
+(StgNonRec)
+  (VanillaId) APPFL.Prim.quotRemInt# =
+  (FUN)
+  [(VanillaId) aAB ,(VanillaId) bBB]
+    (Case) (Op) (Prim) quotInt# [(VarArg) (VanillaId) aAB ,(VarArg) (VanillaId) bBB] = (VanillaId) qCB
+      (PrimAlt)
+        (DEFAULT) _
+          -> (Case) (Op) (Prim) remInt# [(VarArg) (VanillaId) aAB ,(VarArg) (VanillaId) bBB] = (VanillaId) rDB
+               (PrimAlt)
+                 (DEFAULT) _
+                   -> (ConApp) GHC.Prim.(#,#) [(VarArg) (VanillaId) qCB ,(VarArg) (VanillaId) rDB]
+(StgNonRec)
+  (DCWorkerId) APPFL.VOID.VOID =
+  (CONish) APPFL.VOID.VOID []
+  Worker/Wrapper: APPFL.VOID.VOID
+(StgNonRec)
+  (VanillaId) APPFL.Base.quotRemInt =
+  (FUN)
+  [(VanillaId) dsEB ,(VanillaId) ds1FB]
+    (Case) (App) (VanillaId) dsEB = (VanillaId) wildGB
+      (AlgAlt)
+        (DataAlt) GHC.Types.I# (VanillaId) x1HB
+          -> (Case) (App) (VanillaId) ds1FB = (VanillaId) wild1IB
+               (AlgAlt)
+                 (DataAlt) GHC.Types.I# (VanillaId) yJB
+                   -> (Case) (App) (VanillaId) APPFL.Prim.quotRemInt# (VarArg) (VanillaId) x1HB (VarArg) (VanillaId) yJB = (VanillaId) ds2KB
+                        (UbxTupAlt2)
+                          (DataAlt) GHC.Prim.(#,#) (VanillaId) ipvLB (VanillaId) ipv1MB
+                            -> (Case) (ConApp) GHC.Prim.(#,#) [(VarArg) (VanillaId) ipvLB ,(VarArg) (VanillaId) ipv1MB] = (VanillaId) wild2NB
+                                 (UbxTupAlt2)
+                                   (DataAlt) GHC.Prim.(#,#) (VanillaId) qOB (VanillaId) rPB
+                                     -> (Let) let
+                                          (StgNonRec)
+                                            (VanillaId) satQB =
+                                            (CONish) GHC.Types.I# [(VarArg) (VanillaId) rPB]
+                                            Worker/Wrapper: GHC.Types.I#
+                                        in (Let) let
+                                             (StgNonRec)
+                                               (VanillaId) satRB =
+                                               (CONish) GHC.Types.I# [(VarArg) (VanillaId) qOB]
+                                               Worker/Wrapper: GHC.Types.I#
+                                           in (ConApp) GHC.Tuple.(,) [(VarArg) (VanillaId) satRB ,(VarArg) (VanillaId) satQB]
+(StgNonRec)
+  (VanillaId) APPFL.Base.modInt =
+  (FUN)
+  [(VanillaId) dsSB ,(VanillaId) ds1TB]
+    (Case) (App) (VanillaId) dsSB = (VanillaId) wildUB
+      (AlgAlt)
+        (DataAlt) GHC.Types.I# (VanillaId) x1VB
+          -> (Case) (App) (VanillaId) ds1TB = (VanillaId) wild1WB
+               (AlgAlt)
+                 (DataAlt) GHC.Types.I# (VanillaId) yXB
+                   -> (Case) (App) (VanillaId) APPFL.Classes.modInt# (VarArg) (VanillaId) x1VB (VarArg) (VanillaId) yXB = (VanillaId) wild2YB
+                        (PrimAlt)
+                          (DEFAULT) _ -> (ConApp) GHC.Types.I# [(VarArg) (VanillaId) wild2YB]
+(StgNonRec)
+  (VanillaId) APPFL.Base.divInt =
+  (FUN)
+  [(VanillaId) dsZB ,(VanillaId) ds1aB]
+    (Case) (App) (VanillaId) dsZB = (VanillaId) wildbB
+      (AlgAlt)
+        (DataAlt) GHC.Types.I# (VanillaId) x1cB
+          -> (Case) (App) (VanillaId) ds1aB = (VanillaId) wild1dB
+               (AlgAlt)
+                 (DataAlt) GHC.Types.I# (VanillaId) yeB
+                   -> (Case) (App) (VanillaId) APPFL.Classes.divInt# (VarArg) (VanillaId) x1cB (VarArg) (VanillaId) yeB = (VanillaId) wild2fB
+                        (PrimAlt)
+                          (DEFAULT) _ -> (ConApp) GHC.Types.I# [(VarArg) (VanillaId) wild2fB]
+(StgNonRec)
+  (VanillaId) APPFL.Base.remInt =
+  (FUN)
+  [(VanillaId) etagB ,(VanillaId) eta1hB]
+    (Case) (App) (VanillaId) etagB = (VanillaId) wildiB
+      (AlgAlt)
+        (DataAlt) GHC.Types.I# (VanillaId) x1jB
+          -> (Case) (App) (VanillaId) eta1hB = (VanillaId) wild1kB
+               (AlgAlt)
+                 (DataAlt) GHC.Types.I# (VanillaId) ylB
+                   -> (Case) (App) (VanillaId) APPFL.Prim.%# (VarArg) (VanillaId) x1jB (VarArg) (VanillaId) ylB = (VanillaId) wild2mB
+                        (PrimAlt)
+                          (DEFAULT) _ -> (ConApp) GHC.Types.I# [(VarArg) (VanillaId) wild2mB]
+(StgNonRec)
+  (VanillaId) APPFL.Base.quotInt =
+  (FUN)
+  [(VanillaId) etanB ,(VanillaId) eta1oB]
+    (Case) (App) (VanillaId) etanB = (VanillaId) wildpB
+      (AlgAlt)
+        (DataAlt) GHC.Types.I# (VanillaId) x1qB
+          -> (Case) (App) (VanillaId) eta1oB = (VanillaId) wild1rB
+               (AlgAlt)
+                 (DataAlt) GHC.Types.I# (VanillaId) ysB
+                   -> (Case) (App) (VanillaId) APPFL.Prim./# (VarArg) (VanillaId) x1qB (VarArg) (VanillaId) ysB = (VanillaId) wild2tB
+                        (PrimAlt)
+                          (DEFAULT) _ -> (ConApp) GHC.Types.I# [(VarArg) (VanillaId) wild2tB]
+(StgNonRec)
+  (VanillaId) APPFL.Base.otherwise =
+  (CONish) GHC.Types.True []
+  Worker/Wrapper: GHC.Types.True
+(StgNonRec)
+  (VanillaId) APPFL.Base.ifThenElse =
+  (FUN)
+  [(VanillaId) buB ,(VanillaId) tvB ,(VanillaId) ewB]
+    (Case) (App) (VanillaId) buB = (VanillaId) wildxB
+      (AlgAlt)
+        (DataAlt) GHC.Types.False -> (App) (VanillaId) ewB
+        (DataAlt) GHC.Types.True -> (App) (VanillaId) tvB
+(StgNonRec)
+  (VanillaId) APPFL.Base.divModInt# =
+  (FUN)
+  [(VanillaId) x#yB ,(VanillaId) y#zB]
+    (Let) let
+      (StgNonRec)
+        (VanillaId) sat0B =
+        (THUNK)
+          (Case) (Op) (Prim) <# [(VarArg) (VanillaId) y#zB ,(LitArg) (MachInt)0] = (VanillaId) sat1B
+            (PrimAlt)
+              (DEFAULT) _
+                -> (App) (VanillaId) APPFL.Types.isTrue# (VarArg) (VanillaId) sat1B
+    in (Let) let
+         (StgNonRec)
+           (VanillaId) sat2B =
+           (THUNK)
+             (Case) (Op) (Prim) ># [(VarArg) (VanillaId) x#yB ,(LitArg) (MachInt)0] = (VanillaId) sat3B
+               (PrimAlt)
+                 (DEFAULT) _
+                   -> (App) (VanillaId) APPFL.Types.isTrue# (VarArg) (VanillaId) sat3B
+       in (Case) (App) (VanillaId) APPFL.Classes.&& (VarArg) (VanillaId) sat2B (VarArg) (VanillaId) sat0B = (VanillaId) wild4B
+            (AlgAlt)
+              (DataAlt) GHC.Types.False
+                -> (Let) let
+                     (StgNonRec)
+                       (VanillaId) sat5B =
+                       (THUNK)
+                         (Case) (Op) (Prim) ># [(VarArg) (VanillaId) y#zB ,(LitArg) (MachInt)0] = (VanillaId) sat6B
+                           (PrimAlt)
+                             (DEFAULT) _
+                               -> (App) (VanillaId) APPFL.Types.isTrue# (VarArg) (VanillaId) sat6B
+                   in (Let) let
+                        (StgNonRec)
+                          (VanillaId) sat7B =
+                          (THUNK)
+                            (Case) (Op) (Prim) <# [(VarArg) (VanillaId) x#yB ,(LitArg) (MachInt)0] = (VanillaId) sat8B
+                              (PrimAlt)
+                                (DEFAULT) _
+                                  -> (App) (VanillaId) APPFL.Types.isTrue# (VarArg) (VanillaId) sat8B
+                      in (Case) (App) (VanillaId) APPFL.Classes.&& (VarArg) (VanillaId) sat7B (VarArg) (VanillaId) sat5B = (VanillaId) wild19B
+                           (AlgAlt)
+                             (DataAlt) GHC.Types.False
+                               -> (App) (VanillaId) APPFL.Prim.quotRemInt# (VarArg) (VanillaId) x#yB (VarArg) (VanillaId) y#zB
+                             (DataAlt) GHC.Types.True
+                               -> (Case) (Op) (Prim) +# [(VarArg) (VanillaId) x#yB ,(LitArg) (MachInt)1] = (VanillaId) sat-B
+                                    (PrimAlt)
+                                      (DEFAULT) _
+                                        -> (Case) (App) (VanillaId) APPFL.Prim.quotRemInt# (VarArg) (VanillaId) sat-B (VarArg) (VanillaId) y#zB = (VanillaId) ds_B
+                                             (UbxTupAlt2)
+                                               (DataAlt) GHC.Prim.(#,#) (VanillaId) ipvAC (VanillaId) ipv1BC
+                                                 -> (Case) (ConApp) GHC.Prim.(#,#) [(VarArg) (VanillaId) ipvAC ,(VarArg) (VanillaId) ipv1BC] = (VanillaId) wild2CC
+                                                      (UbxTupAlt2)
+                                                        (DataAlt) GHC.Prim.(#,#) (VanillaId) qDC (VanillaId) rEC
+                                                          -> (Case) (Op) (Prim) +# [(VarArg) (VanillaId) rEC ,(VarArg) (VanillaId) y#zB] = (VanillaId) satFC
+                                                               (PrimAlt)
+                                                                 (DEFAULT) _
+                                                                   -> (Case) (Op) (Prim) -# [(VarArg) (VanillaId) satFC ,(LitArg) (MachInt)1] = (VanillaId) satGC
+                                                                        (PrimAlt)
+                                                                          (DEFAULT) _
+                                                                            -> (Case) (Op) (Prim) -# [(VarArg) (VanillaId) qDC ,(LitArg) (MachInt)1] = (VanillaId) satHC
+                                                                                 (PrimAlt)
+                                                                                   (DEFAULT) _
+                                                                                     -> (ConApp) GHC.Prim.(#,#) [(VarArg) (VanillaId) satHC ,(VarArg) (VanillaId) satGC]
+              (DataAlt) GHC.Types.True
+                -> (Case) (Op) (Prim) -# [(VarArg) (VanillaId) x#yB ,(LitArg) (MachInt)1] = (VanillaId) satIC
+                     (PrimAlt)
+                       (DEFAULT) _
+                         -> (Case) (App) (VanillaId) APPFL.Prim.quotRemInt# (VarArg) (VanillaId) satIC (VarArg) (VanillaId) y#zB = (VanillaId) dsJC
+                              (UbxTupAlt2)
+                                (DataAlt) GHC.Prim.(#,#) (VanillaId) ipvKC (VanillaId) ipv1LC
+                                  -> (Case) (ConApp) GHC.Prim.(#,#) [(VarArg) (VanillaId) ipvKC ,(VarArg) (VanillaId) ipv1LC] = (VanillaId) wild1MC
+                                       (UbxTupAlt2)
+                                         (DataAlt) GHC.Prim.(#,#) (VanillaId) qNC (VanillaId) rOC
+                                           -> (Case) (Op) (Prim) +# [(VarArg) (VanillaId) rOC ,(VarArg) (VanillaId) y#zB] = (VanillaId) satPC
+                                                (PrimAlt)
+                                                  (DEFAULT) _
+                                                    -> (Case) (Op) (Prim) +# [(VarArg) (VanillaId) satPC ,(LitArg) (MachInt)1] = (VanillaId) satQC
+                                                         (PrimAlt)
+                                                           (DEFAULT) _
+                                                             -> (Case) (Op) (Prim) -# [(VarArg) (VanillaId) qNC ,(LitArg) (MachInt)1] = (VanillaId) satRC
+                                                                  (PrimAlt)
+                                                                    (DEFAULT) _
+                                                                      -> (ConApp) GHC.Prim.(#,#) [(VarArg) (VanillaId) satRC ,(VarArg) (VanillaId) satQC]
+(StgNonRec)
+  (VanillaId) APPFL.Base.divModInt =
+  (FUN)
+  [(VanillaId) dsSC ,(VanillaId) ds1TC]
+    (Case) (App) (VanillaId) dsSC = (VanillaId) wildUC
+      (AlgAlt)
+        (DataAlt) GHC.Types.I# (VanillaId) x1VC
+          -> (Case) (App) (VanillaId) ds1TC = (VanillaId) wild1WC
+               (AlgAlt)
+                 (DataAlt) GHC.Types.I# (VanillaId) yXC
+                   -> (Case) (App) (VanillaId) APPFL.Base.divModInt# (VarArg) (VanillaId) x1VC (VarArg) (VanillaId) yXC = (VanillaId) ds2YC
+                        (UbxTupAlt2)
+                          (DataAlt) GHC.Prim.(#,#) (VanillaId) ipvZC (VanillaId) ipv1aC
+                            -> (Case) (ConApp) GHC.Prim.(#,#) [(VarArg) (VanillaId) ipvZC ,(VarArg) (VanillaId) ipv1aC] = (VanillaId) wild2bC
+                                 (UbxTupAlt2)
+                                   (DataAlt) GHC.Prim.(#,#) (VanillaId) qcC (VanillaId) rdC
+                                     -> (Let) let
+                                          (StgNonRec)
+                                            (VanillaId) sateC =
+                                            (CONish) GHC.Types.I# [(VarArg) (VanillaId) rdC]
+                                            Worker/Wrapper: GHC.Types.I#
+                                        in (Let) let
+                                             (StgNonRec)
+                                               (VanillaId) satfC =
+                                               (CONish) GHC.Types.I# [(VarArg) (VanillaId) qcC]
+                                               Worker/Wrapper: GHC.Types.I#
+                                           in (ConApp) GHC.Tuple.(,) [(VarArg) (VanillaId) satfC ,(VarArg) (VanillaId) sateC]
+(StgRec)
+  (VanillaId) xgC =
+  (THUNK) (App) (VanillaId) xgC
+(StgNonRec)
+  (VanillaId) APPFL.Base._dummy =
+  (THUNK) (App) (VanillaId) xgC
+(StgNonRec)
+  (VanillaId) APPFL.Base.fromInteger =
+  (THUNK) (App) (VanillaId) xgC
+(StgNonRec)
+  (VanillaId) APPFL.Num.mulInt =
+  (FUN)
+  [(VanillaId) dshC ,(VanillaId) ds1iC]
+    (Case) (App) (VanillaId) dshC = (VanillaId) wildjC
+      (AlgAlt)
+        (DataAlt) GHC.Types.I# (VanillaId) a#kC
+          -> (Case) (App) (VanillaId) ds1iC = (VanillaId) wild1lC
+               (AlgAlt)
+                 (DataAlt) GHC.Types.I# (VanillaId) b#mC
+                   -> (Case) (Op) (Prim) *# [(VarArg) (VanillaId) a#kC ,(VarArg) (VanillaId) b#mC] = (VanillaId) satnC
+                        (PrimAlt)
+                          (DEFAULT) _ -> (ConApp) GHC.Types.I# [(VarArg) (VanillaId) satnC]
+(StgNonRec)
+  (VanillaId) APPFL.Num.subInt =
+  (FUN)
+  [(VanillaId) dsoC ,(VanillaId) ds1pC]
+    (Case) (App) (VanillaId) dsoC = (VanillaId) wildqC
+      (AlgAlt)
+        (DataAlt) GHC.Types.I# (VanillaId) a#rC
+          -> (Case) (App) (VanillaId) ds1pC = (VanillaId) wild1sC
+               (AlgAlt)
+                 (DataAlt) GHC.Types.I# (VanillaId) b#tC
+                   -> (Case) (Op) (Prim) -# [(VarArg) (VanillaId) a#rC ,(VarArg) (VanillaId) b#tC] = (VanillaId) satuC
+                        (PrimAlt)
+                          (DEFAULT) _ -> (ConApp) GHC.Types.I# [(VarArg) (VanillaId) satuC]
+(StgNonRec)
+  (VanillaId) APPFL.Num.addInt =
+  (FUN)
+  [(VanillaId) dsvC ,(VanillaId) ds1wC]
+    (Case) (App) (VanillaId) dsvC = (VanillaId) wildxC
+      (AlgAlt)
+        (DataAlt) GHC.Types.I# (VanillaId) a#yC
+          -> (Case) (App) (VanillaId) ds1wC = (VanillaId) wild1zC
+               (AlgAlt)
+                 (DataAlt) GHC.Types.I# (VanillaId) b#0C
+                   -> (Case) (Op) (Prim) +# [(VarArg) (VanillaId) a#yC ,(VarArg) (VanillaId) b#0C] = (VanillaId) sat1C
+                        (PrimAlt)
+                          (DEFAULT) _ -> (ConApp) GHC.Types.I# [(VarArg) (VanillaId) sat1C]
+(StgNonRec)
+  (VanillaId) APPFL.Num.negate =
+  (FUN)
+  [(VanillaId) ds2C]
+    (Case) (App) (VanillaId) ds2C = (VanillaId) wild3C
+      (AlgAlt)
+        (DataAlt) GHC.Types.I# (VanillaId) i#4C
+          -> (Case) (Op) (Prim) negateInt# [(VarArg) (VanillaId) i#4C] = (VanillaId) sat5C
+               (PrimAlt)
+                 (DEFAULT) _ -> (ConApp) GHC.Types.I# [(VarArg) (VanillaId) sat5C]
+(StgNonRec)
+  (VanillaId) APPFL.Num.% =
+  (THUNK) (App) (VanillaId) APPFL.Base.remInt
+(StgNonRec)
+  (VanillaId) APPFL.Num.mod =
+  (THUNK) (App) (VanillaId) APPFL.Base.remInt
+(StgNonRec)
+  (VanillaId) APPFL.Num.* =
+  (FUN)
+  [(VanillaId) etak ,(VanillaId) etal]
+    (App) (VanillaId) APPFL.Num.mulInt (VarArg) (VanillaId) etak (VarArg) (VanillaId) etal
+(StgNonRec)
+  (VanillaId) APPFL.Num./ =
+  (THUNK) (App) (VanillaId) APPFL.Base.quotInt
+(StgNonRec)
+  (VanillaId) APPFL.Num.div =
+  (THUNK) (App) (VanillaId) APPFL.Base.quotInt
+(StgNonRec)
+  (VanillaId) APPFL.Num.- =
+  (FUN)
+  [(VanillaId) etak ,(VanillaId) etal]
+    (App) (VanillaId) APPFL.Num.subInt (VarArg) (VanillaId) etak (VarArg) (VanillaId) etal
+(StgNonRec)
+  (VanillaId) APPFL.Num.+ =
+  (FUN)
+  [(VanillaId) etak ,(VanillaId) etal]
+    (App) (VanillaId) APPFL.Num.addInt (VarArg) (VanillaId) etak (VarArg) (VanillaId) etal
+(StgNonRec)
+  (VanillaId) APPFL.Types.isTrue# =
+  (FUN)
+  [(VanillaId) ds6C]
+    (Case) (App) (VanillaId) ds6C = (VanillaId) ds17C
+      (PrimAlt)
+        (DEFAULT) _ -> (ConApp) GHC.Types.False []
+        (LitAlt) (MachInt)1 -> (ConApp) GHC.Types.True []
+(StgNonRec)
+  (ClassOpId) APPFL.Classes.== =
+  (FUN)
+  [(VanillaId) tpl8C]
+    (Case) (App) (VanillaId) tpl8C = (VanillaId) tpl9C
+      (AlgAlt)
+        (DataAlt) APPFL.Classes.D:ApEq (VanillaId) tpl-C (VanillaId) tpl_C
+          -> (App) (VanillaId) tpl-C
+(StgNonRec)
+  (ClassOpId) APPFL.Classes./= =
+  (FUN)
+  [(VanillaId) tplAD]
+    (Case) (App) (VanillaId) tplAD = (VanillaId) tplBD
+      (AlgAlt)
+        (DataAlt) APPFL.Classes.D:ApEq (VanillaId) tplCD (VanillaId) tplDD
+          -> (App) (VanillaId) tplDD
+(StgNonRec)
+  (VanillaId) APPFL.Classes.not =
+  (FUN)
+  [(VanillaId) dsED]
+    (Case) (App) (VanillaId) dsED = (VanillaId) wildFD
+      (AlgAlt)
+        (DataAlt) GHC.Types.False -> (ConApp) GHC.Types.True []
+        (DataAlt) GHC.Types.True -> (ConApp) GHC.Types.False []
+(StgNonRec)
+  (VanillaId) APPFL.Classes.$dm== =
+  (FUN)
+  [(VanillaId) $dApEqGD ,(VanillaId) xHD ,(VanillaId) yID]
+    (Case) (App) (ClassOpId) APPFL.Classes./= (VarArg) (VanillaId) $dApEqGD (VarArg) (VanillaId) xHD (VarArg) (VanillaId) yID = (VanillaId) wildJD
+      (AlgAlt)
+        (DataAlt) GHC.Types.False -> (ConApp) GHC.Types.True []
+        (DataAlt) GHC.Types.True -> (ConApp) GHC.Types.False []
+(StgNonRec)
+  (VanillaId) APPFL.Classes.$dm/= =
+  (FUN)
+  [(VanillaId) $dApEqKD ,(VanillaId) xLD ,(VanillaId) yMD]
+    (Case) (App) (ClassOpId) APPFL.Classes.== (VarArg) (VanillaId) $dApEqKD (VarArg) (VanillaId) xLD (VarArg) (VanillaId) yMD = (VanillaId) wildND
+      (AlgAlt)
+        (DataAlt) GHC.Types.False -> (ConApp) GHC.Types.True []
+        (DataAlt) GHC.Types.True -> (ConApp) GHC.Types.False []
+(StgNonRec)
+  (VanillaId) APPFL.Classes.|| =
+  (FUN)
+  [(VanillaId) dsOD ,(VanillaId) ds1PD]
+    (Case) (App) (VanillaId) dsOD = (VanillaId) wildQD
+      (AlgAlt)
+        (DataAlt) GHC.Types.False -> (App) (VanillaId) ds1PD
+        (DataAlt) GHC.Types.True -> (ConApp) GHC.Types.True []
+(StgNonRec)
+  (VanillaId) APPFL.Classes.&& =
+  (FUN)
+  [(VanillaId) dsRD ,(VanillaId) xSD]
+    (Case) (App) (VanillaId) dsRD = (VanillaId) wildTD
+      (AlgAlt)
+        (DataAlt) GHC.Types.False -> (ConApp) GHC.Types.False []
+        (DataAlt) GHC.Types.True -> (App) (VanillaId) xSD
+(StgNonRec)
+  (VanillaId) APPFL.Classes.divInt# =
+  (FUN)
+  [(VanillaId) x#UD ,(VanillaId) y#VD]
+    (LetNE) let
+      (StgNonRec)
+        (VanillaId) $jWD =
+        (FUN)
+        [(VanillaId) wXD]
+          (Case) (Op) (Prim) <# [(VarArg) (VanillaId) x#UD ,(LitArg) (MachInt)0] = (VanillaId) satYD
+            (PrimAlt)
+              (DEFAULT) _
+                -> (Case) (App) (VanillaId) APPFL.Types.isTrue# (VarArg) (VanillaId) satYD = (VanillaId) wildZD
+                     (AlgAlt)
+                       (DataAlt) GHC.Types.False
+                         -> (Op) (Prim) quotInt# [(VarArg) (VanillaId) x#UD ,(VarArg) (VanillaId) y#VD]
+                       (DataAlt) GHC.Types.True
+                         -> (Case) (Op) (Prim) ># [(VarArg) (VanillaId) y#VD ,(LitArg) (MachInt)0] = (VanillaId) sataD
+                              (PrimAlt)
+                                (DEFAULT) _
+                                  -> (Case) (App) (VanillaId) APPFL.Types.isTrue# (VarArg) (VanillaId) sataD = (VanillaId) wild1bD
+                                       (AlgAlt)
+                                         (DataAlt) GHC.Types.False
+                                           -> (Op) (Prim) quotInt# [(VarArg) (VanillaId) x#UD ,(VarArg) (VanillaId) y#VD]
+                                         (DataAlt) GHC.Types.True
+                                           -> (Case) (Op) (Prim) +# [(VarArg) (VanillaId) x#UD ,(LitArg) (MachInt)1] = (VanillaId) satcD
+                                                (PrimAlt)
+                                                  (DEFAULT) _
+                                                    -> (Case) (Op) (Prim) quotInt# [(VarArg) (VanillaId) satcD ,(VarArg) (VanillaId) y#VD] = (VanillaId) wild2dD
+                                                         (PrimAlt)
+                                                           (DEFAULT) _
+                                                             -> (Op) (Prim) -# [(VarArg) (VanillaId) wild2dD ,(LitArg) (MachInt)1]
+    in (Case) (Op) (Prim) ># [(VarArg) (VanillaId) x#UD ,(LitArg) (MachInt)0] = (VanillaId) sateD
+         (PrimAlt)
+           (DEFAULT) _
+             -> (Case) (App) (VanillaId) APPFL.Types.isTrue# (VarArg) (VanillaId) sateD = (VanillaId) wildfD
+                  (AlgAlt)
+                    (DataAlt) GHC.Types.False
+                      -> (App) (VanillaId) $jWD (VarArg) (VanillaId) APPFL.Prim.void#
+                    (DataAlt) GHC.Types.True
+                      -> (Case) (Op) (Prim) <# [(VarArg) (VanillaId) y#VD ,(LitArg) (MachInt)0] = (VanillaId) satgD
+                           (PrimAlt)
+                             (DEFAULT) _
+                               -> (Case) (App) (VanillaId) APPFL.Types.isTrue# (VarArg) (VanillaId) satgD = (VanillaId) wild1hD
+                                    (AlgAlt)
+                                      (DataAlt) GHC.Types.False
+                                        -> (App) (VanillaId) $jWD (VarArg) (VanillaId) APPFL.Prim.void#
+                                      (DataAlt) GHC.Types.True
+                                        -> (Case) (Op) (Prim) -# [(VarArg) (VanillaId) x#UD ,(LitArg) (MachInt)1] = (VanillaId) satiD
+                                             (PrimAlt)
+                                               (DEFAULT) _
+                                                 -> (Case) (Op) (Prim) quotInt# [(VarArg) (VanillaId) satiD ,(VarArg) (VanillaId) y#VD] = (VanillaId) wild2jD
+                                                      (PrimAlt)
+                                                        (DEFAULT) _
+                                                          -> (Op) (Prim) -# [(VarArg) (VanillaId) wild2jD ,(LitArg) (MachInt)1]
+(StgNonRec)
+  (VanillaId) APPFL.Classes.modInt# =
+  (FUN)
+  [(VanillaId) x#kD ,(VanillaId) y#lD]
+    (Case) (Op) (Prim) remInt# [(VarArg) (VanillaId) x#kD ,(VarArg) (VanillaId) y#lD] = (VanillaId) r#mD
+      (PrimAlt)
+        (DEFAULT) _
+          -> (LetNE) let
+               (StgNonRec)
+                 (VanillaId) $jnD =
+                 (FUN)
+                 [(VanillaId) woD]
+                   (Case) (App) (VanillaId) r#mD = (VanillaId) wildpD
+                     (PrimAlt)
+                       (DEFAULT) _
+                         -> (Case) (App) (VanillaId) APPFL.Types.isTrue# (LitArg) (MachInt)1 = (VanillaId) wild1qD
+                              (AlgAlt)
+                                (DataAlt) GHC.Types.False -> (Lit) (MachInt)0
+                                (DataAlt) GHC.Types.True
+                                  -> (Op) (Prim) +# [(VarArg) (VanillaId) wildpD ,(VarArg) (VanillaId) y#lD]
+                       (LitAlt) (MachInt)0
+                         -> (Case) (App) (VanillaId) APPFL.Types.isTrue# (LitArg) (MachInt)0 = (VanillaId) wild1rD
+                              (AlgAlt)
+                                (DataAlt) GHC.Types.False -> (Lit) (MachInt)0
+                                (DataAlt) GHC.Types.True -> (App) (VanillaId) y#lD
+             in (LetNE) let
+                  (StgNonRec)
+                    (VanillaId) $j1sD =
+                    (FUN)
+                    [(VanillaId) wtD]
+                      (Case) (Op) (Prim) <# [(VarArg) (VanillaId) x#kD ,(LitArg) (MachInt)0] = (VanillaId) satuD
+                        (PrimAlt)
+                          (DEFAULT) _
+                            -> (Case) (App) (VanillaId) APPFL.Types.isTrue# (VarArg) (VanillaId) satuD = (VanillaId) wildvD
+                                 (AlgAlt)
+                                   (DataAlt) GHC.Types.False -> (App) (VanillaId) r#mD
+                                   (DataAlt) GHC.Types.True
+                                     -> (Case) (Op) (Prim) ># [(VarArg) (VanillaId) y#lD ,(LitArg) (MachInt)0] = (VanillaId) satwD
+                                          (PrimAlt)
+                                            (DEFAULT) _
+                                              -> (Case) (App) (VanillaId) APPFL.Types.isTrue# (VarArg) (VanillaId) satwD = (VanillaId) wild1xD
+                                                   (AlgAlt)
+                                                     (DataAlt) GHC.Types.False
+                                                       -> (App) (VanillaId) r#mD
+                                                     (DataAlt) GHC.Types.True
+                                                       -> (App) (VanillaId) $jnD (VarArg) (VanillaId) APPFL.Prim.void#
+                in (Case) (Op) (Prim) ># [(VarArg) (VanillaId) x#kD ,(LitArg) (MachInt)0] = (VanillaId) satyD
+                     (PrimAlt)
+                       (DEFAULT) _
+                         -> (Case) (App) (VanillaId) APPFL.Types.isTrue# (VarArg) (VanillaId) satyD = (VanillaId) wildzD
+                              (AlgAlt)
+                                (DataAlt) GHC.Types.False
+                                  -> (App) (VanillaId) $j1sD (VarArg) (VanillaId) APPFL.Prim.void#
+                                (DataAlt) GHC.Types.True
+                                  -> (Case) (Op) (Prim) <# [(VarArg) (VanillaId) y#lD ,(LitArg) (MachInt)0] = (VanillaId) sat0D
+                                       (PrimAlt)
+                                         (DEFAULT) _
+                                           -> (Case) (App) (VanillaId) APPFL.Types.isTrue# (VarArg) (VanillaId) sat0D = (VanillaId) wild11D
+                                                (AlgAlt)
+                                                  (DataAlt) GHC.Types.False
+                                                    -> (App) (VanillaId) $j1sD (VarArg) (VanillaId) APPFL.Prim.void#
+                                                  (DataAlt) GHC.Types.True
+                                                    -> (App) (VanillaId) $jnD (VarArg) (VanillaId) APPFL.Prim.void#
+(StgNonRec)
+  (VanillaId) APPFL.Classes.leInt =
+  (FUN)
+  [(VanillaId) eta2D ,(VanillaId) eta13D]
+    (Case) (App) (VanillaId) eta2D = (VanillaId) wild4D
+      (AlgAlt)
+        (DataAlt) GHC.Types.I# (VanillaId) x5D
+          -> (Case) (App) (VanillaId) eta13D = (VanillaId) wild16D
+               (AlgAlt)
+                 (DataAlt) GHC.Types.I# (VanillaId) y7D
+                   -> (Case) (Op) (Prim) <=# [(VarArg) (VanillaId) x5D ,(VarArg) (VanillaId) y7D] = (VanillaId) sat8D
+                        (PrimAlt)
+                          (DEFAULT) _
+                            -> (App) (VanillaId) APPFL.Types.isTrue# (VarArg) (VanillaId) sat8D
+(StgNonRec)
+  (VanillaId) APPFL.Classes.ltInt =
+  (FUN)
+  [(VanillaId) eta9D ,(VanillaId) eta1-D]
+    (Case) (App) (VanillaId) eta9D = (VanillaId) wild_D
+      (AlgAlt)
+        (DataAlt) GHC.Types.I# (VanillaId) xAE
+          -> (Case) (App) (VanillaId) eta1-D = (VanillaId) wild1BE
+               (AlgAlt)
+                 (DataAlt) GHC.Types.I# (VanillaId) yCE
+                   -> (Case) (Op) (Prim) <# [(VarArg) (VanillaId) xAE ,(VarArg) (VanillaId) yCE] = (VanillaId) satDE
+                        (PrimAlt)
+                          (DEFAULT) _
+                            -> (App) (VanillaId) APPFL.Types.isTrue# (VarArg) (VanillaId) satDE
+(StgNonRec)
+  (VanillaId) APPFL.Classes.geInt =
+  (FUN)
+  [(VanillaId) etaEE ,(VanillaId) eta1FE]
+    (Case) (App) (VanillaId) etaEE = (VanillaId) wildGE
+      (AlgAlt)
+        (DataAlt) GHC.Types.I# (VanillaId) xHE
+          -> (Case) (App) (VanillaId) eta1FE = (VanillaId) wild1IE
+               (AlgAlt)
+                 (DataAlt) GHC.Types.I# (VanillaId) yJE
+                   -> (Case) (Op) (Prim) >=# [(VarArg) (VanillaId) xHE ,(VarArg) (VanillaId) yJE] = (VanillaId) satKE
+                        (PrimAlt)
+                          (DEFAULT) _
+                            -> (App) (VanillaId) APPFL.Types.isTrue# (VarArg) (VanillaId) satKE
+(StgNonRec)
+  (VanillaId) APPFL.Classes.gtInt =
+  (FUN)
+  [(VanillaId) etaLE ,(VanillaId) eta1ME]
+    (Case) (App) (VanillaId) etaLE = (VanillaId) wildNE
+      (AlgAlt)
+        (DataAlt) GHC.Types.I# (VanillaId) xOE
+          -> (Case) (App) (VanillaId) eta1ME = (VanillaId) wild1PE
+               (AlgAlt)
+                 (DataAlt) GHC.Types.I# (VanillaId) yQE
+                   -> (Case) (Op) (Prim) ># [(VarArg) (VanillaId) xOE ,(VarArg) (VanillaId) yQE] = (VanillaId) satRE
+                        (PrimAlt)
+                          (DEFAULT) _
+                            -> (App) (VanillaId) APPFL.Types.isTrue# (VarArg) (VanillaId) satRE
+(StgNonRec)
+  (VanillaId) APPFL.Classes.neInt =
+  (FUN)
+  [(VanillaId) etaSE ,(VanillaId) eta1TE]
+    (Case) (App) (VanillaId) etaSE = (VanillaId) wildUE
+      (AlgAlt)
+        (DataAlt) GHC.Types.I# (VanillaId) xVE
+          -> (Case) (App) (VanillaId) eta1TE = (VanillaId) wild1WE
+               (AlgAlt)
+                 (DataAlt) GHC.Types.I# (VanillaId) yXE
+                   -> (Case) (Op) (Prim) /=# [(VarArg) (VanillaId) xVE ,(VarArg) (VanillaId) yXE] = (VanillaId) satYE
+                        (PrimAlt)
+                          (DEFAULT) _
+                            -> (App) (VanillaId) APPFL.Types.isTrue# (VarArg) (VanillaId) satYE
+(StgNonRec)
+  (VanillaId) APPFL.Classes.eqInt =
+  (FUN)
+  [(VanillaId) etaZE ,(VanillaId) eta1aE]
+    (Case) (App) (VanillaId) etaZE = (VanillaId) wildbE
+      (AlgAlt)
+        (DataAlt) GHC.Types.I# (VanillaId) xcE
+          -> (Case) (App) (VanillaId) eta1aE = (VanillaId) wild1dE
+               (AlgAlt)
+                 (DataAlt) GHC.Types.I# (VanillaId) yeE
+                   -> (Case) (Op) (Prim) ==# [(VarArg) (VanillaId) xcE ,(VarArg) (VanillaId) yeE] = (VanillaId) satfE
+                        (PrimAlt)
+                          (DEFAULT) _
+                            -> (App) (VanillaId) APPFL.Types.isTrue# (VarArg) (VanillaId) satfE
+(StgNonRec)
+  (VanillaId) APPFL.Classes.<= =
+  (FUN)
+  [(VanillaId) etak ,(VanillaId) etal]
+    (App) (VanillaId) APPFL.Classes.leInt (VarArg) (VanillaId) etak (VarArg) (VanillaId) etal
+(StgNonRec)
+  (VanillaId) APPFL.Classes.< =
+  (FUN)
+  [(VanillaId) etak ,(VanillaId) etal]
+    (App) (VanillaId) APPFL.Classes.ltInt (VarArg) (VanillaId) etak (VarArg) (VanillaId) etal
+(StgNonRec)
+  (VanillaId) APPFL.Classes.>= =
+  (FUN)
+  [(VanillaId) etak ,(VanillaId) etal]
+    (App) (VanillaId) APPFL.Classes.geInt (VarArg) (VanillaId) etak (VarArg) (VanillaId) etal
+(StgNonRec)
+  (VanillaId) APPFL.Classes.> =
+  (FUN)
+  [(VanillaId) etak ,(VanillaId) etal]
+    (App) (VanillaId) APPFL.Classes.gtInt (VarArg) (VanillaId) etak (VarArg) (VanillaId) etal
+(StgNonRec)
+  (DictFunId) APPFL.Classes.$fApEqInt =
+  (CONish) APPFL.Classes.D:ApEq [(VarArg) (VanillaId) APPFL.Classes.eqInt ,(VarArg) (VanillaId) APPFL.Classes.neInt]
+  Worker/Wrapper: APPFL.Classes.D:ApEq
+(StgNonRec)
+  (DCWorkerId) APPFL.Classes.D:ApEq =
+  (FUN)
+  [(VanillaId) etak ,(VanillaId) etal]
+    (ConApp) APPFL.Classes.D:ApEq [(VarArg) (VanillaId) etak ,(VarArg) (VanillaId) etal]

@@ -54,6 +54,33 @@ I# a# `subInt` I# b# = I# (a# -# b#)
 
 mulInt :: Int -> Int -> Int
 I# a# `mulInt` I# b# = I# (a# *# b#)
+-- -- | Basic numeric class.
+-- class  Num a  where
+--     {-# MINIMAL (+), (*), abs, signum, fromInteger, (negate | (-)) #-}
+
+--     (+), (-), (*)       :: a -> a -> a
+--     -- | Unary negation.
+--     negate              :: a -> a
+--     -- | Absolute value.
+--     abs                 :: a -> a
+--     -- | Sign of a number.
+--     -- The functions 'abs' and 'signum' should satisfy the law:
+--     --
+--     -- > abs x * signum x == x
+--     --
+--     -- For real numbers, the 'signum' is either @-1@ (negative), @0@ (zero)
+--     -- or @1@ (positive).
+--     signum              :: a -> a
+--     -- | Conversion from an 'Integer'.
+--     -- An integer literal represents the application of the function
+--     -- 'fromInteger' to the appropriate value of type 'Integer',
+--     -- so such literals have type @('Num' a) => a@.
+--     fromInteger         :: Integer -> a
+
+--     {-# INLINE (-) #-}
+--     {-# INLINE negate #-}
+--     x - y               = x + negate y
+--     negate x            = 0 - x
 
 -- -- | the same as @'flip' ('-')@.
 -- --

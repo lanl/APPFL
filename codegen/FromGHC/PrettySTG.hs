@@ -231,7 +231,7 @@ instance OutputSyn StgExpr where
   pprSyn e =
     case e of
       StgApp id args
-        -> prefix "App" <+> pprStgName id <+> hsep (map pprSyn args)
+        -> prefix "App" <+> pprSyn id <+> hsep (map pprSyn args)
       StgLit lit
         -> prefix "Lit" <+> pprSyn lit
       StgConApp datacon args
