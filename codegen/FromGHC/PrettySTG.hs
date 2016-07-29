@@ -1,4 +1,4 @@
-{-# LANGUAGE UndecidableInstances, FlexibleInstances #-}
+{-# LANGUAGE UndecidableInstances, FlexibleInstances, PatternGuards #-}
 
 
 

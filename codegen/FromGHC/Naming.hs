@@ -1,4 +1,4 @@
-{-# LANGUAGE CPP, NamedFieldPuns, MagicHash, BangPatterns, ViewPatterns #-}
+{-# LANGUAGE CPP, NamedFieldPuns, MagicHash, BangPatterns, ViewPatterns, PatternGuards #-}
 
 #define _HERE ( __FILE__ ++ ":" ++ show (__LINE__ :: Int) )
 
