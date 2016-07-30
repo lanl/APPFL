@@ -41,7 +41,7 @@ module AppflPrelude (
     -- -- ** Basic type classes
 
     (==), (/=), (<), (<=), (>=), (>), --- INT ONLY (FOR NOW)
- 
+
     -- Eq((==), (/=)),
     -- Ord(compare, (<), (<=), (>=), (>), max, min),
     -- Enum(succ, pred, toEnum, fromEnum, enumFrom, enumFromThen,
@@ -53,11 +53,11 @@ module AppflPrelude (
     -- *** Numeric types
     Int(..), (+), (-), (*), (/), mod, div, negate,
     fromInteger,
-    
+
     -- Integer, Float, Double,
     -- Rational, Word,
 
-    
+
     -- -- *** Numeric type classes
     -- Num((+), (-), (*), negate, abs, signum, fromInteger),
     -- Real(toRational),
@@ -111,22 +111,26 @@ This may make it in later
     -- seq, ($!),
 
     -- -- * List operations
-    -- map, (++), filter,
-    head, last, tail, init, null, 
-    -- length, (!!),
+    foldr, foldr1, foldl, foldl1,  -- for now maybe do foldable later
+    map, (++), filter,
+
+    head, last, tail, init, null, length, (!!),
     -- reverse,
     -- -- *** Special folds
     -- and, or, any, all,
-    -- concat, concatMap,
+    concat,
+    --concatMap,
     -- -- ** Building lists
     -- -- *** Scans
-    -- scanl, scanl1, scanr, scanr1,
+    scanl, scanl1, scanr, scanr1,
     -- -- *** Infinite lists
-    -- iterate, repeat, replicate, cycle,
+    iterate, repeat, replicate, cycle,
     -- -- ** Sublists
-    -- take, drop, splitAt, takeWhile, dropWhile, span, break,
+    take, drop, splitAt, takeWhile, dropWhile, span,
+    --break,
     -- -- ** Searching lists
-    -- notElem, lookup,
+    -- notElem,
+    lookup,
     -- -- ** Zipping and unzipping lists
     -- zip, zip3, zipWith, zipWith3, unzip, unzip3,
     -- -- ** Functions on strings
@@ -139,7 +143,7 @@ This may make it in later
     -- shows,
     -- showChar, showString, showParen,
 
-    
+
 {----------------------------------------------------------------------
     Read typeclass stuff. Has lots of dependencies.
 
@@ -148,7 +152,7 @@ This may make it in later
     Read(readsPrec, readList),
     reads, readParen, read, lex,
 ----------------------------------------------------------------------}
-    
+
 {----------------------------------------------------------------------
 No IO Support
 
