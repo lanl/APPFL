@@ -1,3 +1,5 @@
+{-# LANGUAGE PatternGuards #-}
+
 module FromGHC.BuiltIn
   ( module FromGHC.BuiltIn
   , voidPrimId)
@@ -20,7 +22,7 @@ import MkId        as G
 import TypeRep (TyThing (..))
 import ConLike (ConLike (..))
 
-import Var (Id, idDetails)
+import Var (Id, idDetails, isId)
 import IdInfo (IdDetails (..))
 import Name as G ( Name, NamedThing (..), BuiltInSyntax(..)
                  , mkWiredInName)
