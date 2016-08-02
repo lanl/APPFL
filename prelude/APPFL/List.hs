@@ -32,10 +32,10 @@ module APPFL.List (
    foldr, foldr1,
    scanr, scanr1, iterate, repeat, replicate, cycle,
    take, drop, sum, product,
-   --maximum, minimum,
+   maximum, minimum,
    splitAt, takeWhile, dropWhile,
    span,
-   break, 
+   break,
    reverse,
    and, or,
    any, all, elem, notElem,
@@ -53,7 +53,7 @@ import APPFL.Num
 --import APPFL.Integer (Integer)
 
 infixl 9  !!
---infix  4 `elem`, `notElem`
+infix  4 `elem`, `notElem`
 
 map :: (a -> b) -> [a] -> [b]
 map _ [] = []
@@ -437,14 +437,16 @@ scanr1 _ [x]            =  [x]
 scanr1 f (x:xs)         =  f x q : qs
                            where qs@(q:_) = scanr1 f xs
 
+max x y = if x <= y then y else x
 -- | 'maximum' returns the maximum value from a list,
 -- which must be non-empty, finite, and of an ordered type.
 -- It is a special case of 'Data.List.maximumBy', which allows the
 -- programmer to supply their own comparison function.
+
 --maximum                 :: (Ord a) => [a] -> a
 --{-# INLINE [1] maximum #-}
 --maximum []              =  errorEmptyList "maximum"
---maximum xs              =  foldl1 max xs
+maximum xs              =  foldl1 max xs
 
 #if 0
 {-# RULES
@@ -460,6 +462,7 @@ strictMaximum []        =  errorEmptyList "maximum"
 strictMaximum xs        =  foldl1' max xs
 #endif
 
+min x y = if x <= y then x else y
 -- | 'minimum' returns the minimum value from a list,
 -- which must be non-empty, finite, and of an ordered type.
 -- It is a special case of 'Data.List.minimumBy', which allows the
@@ -467,7 +470,7 @@ strictMaximum xs        =  foldl1' max xs
 --minimum                 :: (Ord a) => [a] -> a
 --{-# INLINE [1] minimum #-}
 --minimum []              =  errorEmptyList "minimum"
---minimum xs              =  foldl1 min xs
+minimum xs              =  foldl1 min xs
 
 #if 0
 {-# RULES
@@ -985,7 +988,7 @@ zip []     _bs    = []
 zip _as    []     = []
 zip (a:as) (b:bs) = (a,b) : zip as bs
 
- 
+
 {-# INLINE [0] zipFB #-}
 zipFB :: ((a, b) -> c -> d) -> a -> b -> c -> d
 zipFB c = \x y r -> (x,y) `c` r

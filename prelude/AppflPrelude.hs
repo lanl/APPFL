@@ -106,19 +106,20 @@ This may make it in later
     Traversable(traverse, sequenceA, mapM, sequence),
 ----------------------------------------------------------------------}
     -- -- ** Miscellaneous functions
-    id, const, (.), flip, ($), 
+    id, const, (.), flip, ($),
     --until,
     -- asTypeOf, error, undefined,
     -- seq, ($!),
 
     -- -- * List operations
     foldr, foldr1, foldl, foldl1,  -- for now maybe do foldable later
+    maximum, minimum,              -- int only for now...
     map, (++), filter,
 
     head, last, tail, init, null, length, (!!),
     reverse,
     -- -- *** Special folds
-    -- and, or, any, all,
+    and, or, any, all,
     concat,
     concatMap,
     -- -- ** Building lists
@@ -133,7 +134,7 @@ This may make it in later
     elem, notElem,
     lookup,
     -- -- ** Zipping and unzipping lists
-    -- zip, zip3, zipWith, 
+    -- zip, zip3, zipWith,
     zipWith3, unzip, unzip3,
     -- -- ** Functions on strings
     -- lines, words, unlines, unwords,
