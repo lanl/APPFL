@@ -20,7 +20,8 @@ import MkId        as G
 import TypeRep (TyThing (..))
 import ConLike (ConLike (..))
 
-import Var (Id)
+import Var (Id, idDetails)
+import IdInfo (IdDetails (..))
 import Name as G ( Name, NamedThing (..), BuiltInSyntax(..)
                  , mkWiredInName)
 import OccName (mkDataOccFS)
@@ -98,7 +99,7 @@ appflBuiltIns = [ appflMain, appflPrimIntTy, appflNoExhaust ]
 
 -- | Our program entry point
 appflMain :: AppflName
-appflMain      = "main"
+appflMain = "main"
 -- There's a problem here that I don't have an immediate solution to.  If some
 -- Haskell input to our program defines multiple main functions in separate
 -- modules, they will all be caught as the _special_ main and named "main",
@@ -123,14 +124,26 @@ appflNoExhaust :: AppflName
 appflNoExhaust = "stg_case_not_exhaustive"
 
 
+
 isErrorCall :: NamedThing a => a -> Bool
 isErrorCall thing =
   let name = getName thing
   in any ((name ==) . getName) patErrorIDs
 
 
-getAppflName :: NamedThing a => a -> Maybe AppflName
-getAppflName thing = Map.lookup (getName thing) builtInMap
+namedThingToAppflName :: NamedThing a => a -> Maybe AppflName
+namedThingToAppflName thing = Map.lookup (getName thing) builtInMap
+
+
+idToAppflName :: Id -> Maybe AppflName
+idToAppflName iD
+  | isId iD, ClassOpId cls <- idDetails iD =
+      namedThingToAppflName iD
+  | otherwise = namedThingToAppflName iD
+        
+
+
+
 
 infixr 5 \.
 
@@ -173,11 +186,13 @@ builtInMap =
   -- `Map.union` tupleMap
   `Map.union` errorCallMap
 
+
 -- Not exported from TysWiredIn, aggravating
 intDataConName :: Name
 intDataConName = mkWiredInName G.gHC_TYPES
                  (mkDataOccFS $ fsLit "I#") G.intDataConKey
                  (AConLike (RealDataCon G.intDataCon)) UserSyntax
+                 
 
 tupleMap :: Map.Map G.Name AppflName
 tupleMap = Map.fromList $ concat

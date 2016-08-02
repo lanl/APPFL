@@ -37,6 +37,8 @@ import           AST as A
 import           FromGHC.BuiltIn
 import           FromGHC.Naming
 import           FromGHC.PrettySTG
+import           FromGHC.PruneSTG
+
 import           Analysis (defAlt)
 import           State hiding (liftM)
 import           Util 
@@ -295,7 +297,7 @@ compileAndThen stgFun preludeDir file = do
 
       (nestedStg, ccs) <- mapAndUnzipM gutsToSTG cgGuts
       dflags     <- getSessionDynFlags
-      let stg = concat nestedStg
+      let stg = pruneGhcStg $ concat nestedStg
       res <- stgFun stg
       return $ (stg, res)
 
@@ -538,7 +540,7 @@ runG2AorElse comp = case runState (runExceptT comp) (Map.empty, (Map.empty, 0)) 
 putDataCon :: G.DataCon -> G2AMonad ()
 putDataCon dc =
   do
-    tcname <- makeStgName (dataConTyCon dc)        
+    tcname <- nameGhcThing (dataConTyCon dc)        
     (tymap, un) <- lget
     lput (Map.insertWith insertDC tcname [dc] tymap, un)      
   where
@@ -569,7 +571,7 @@ g2aDataCon dc = rethrowAtName dc $
         go :: A.Monotype -> [A.Monotype]
         go (MFun m1 m2) = m1 : go m2
         go m            = [m]
-    con <- makeStgName dc
+    con <- nameGhcThing dc
     -- See note below about why we need the init here
     mtypes <- liftM (init . go) (g2aMonoType $ dataConRepType dc)    
     return $ A.DataCon con mtypes 
@@ -633,7 +635,7 @@ g2aMonoType :: Type -> G2AMonad A.Monotype
 g2aMonoType t =
   case t of
     -- Simplest case, a type variable
-    TyVarTy v        -> liftM MVar (makeStgName v)
+    TyVarTy v        -> liftM MVar (nameGhcThing v)
 
     -- AppTy will never be an application of a TyConnApp to
     -- some other type.  The first param is always another AppTy or
@@ -653,7 +655,7 @@ g2aMonoType t =
     -- e.g. List a, Maybe Int, etc.
     TyConApp tc args  -> do
       mtypes <- mapM g2aMonoType args
-      name   <- makeStgName tc
+      name   <- nameGhcThing tc
       return $ MCon True name mtypes
 
     -- This assumes the right-associativity of (->) is expressed just as in our
@@ -732,7 +734,7 @@ g2aObj bind =
 
             -- it's a THUNK
               | null args
-                -> liftM2 (THUNK Dirty) (g2aExpr expr) (makeStgName id)
+                -> liftM2 (THUNK Dirty) (g2aExpr expr) (nameGhcThing id)
 
             -- it's a FUN(ish) thing.  Data constructors are functions too but
             -- they are not given a distinguished definition as in APPFL STG or
@@ -740,7 +742,7 @@ g2aObj bind =
             -- the CONs, and only use them when constructors aren't fully
             -- saturated.
               | otherwise
-                -> liftM3 (FUN Dirty) (mapM makeStgName args) (g2aExpr expr) (makeStgName id)
+                -> liftM3 (FUN Dirty) (mapM nameGhcThing args) (g2aExpr expr) (nameGhcThing id)
           
             -- It's either a top-level empty constructor (a la Nil/Nothing) or
             -- it's being used in a let binding. Either way, we make sure the
@@ -751,7 +753,7 @@ g2aObj bind =
             -- "No existentials, no coercions, nothing" (basicTypes/DataCon.hs)
               | isVanillaDataCon dataCon
                 -> do
-                  name <- makeStgName id
+                  name <- nameGhcThing id
                   putDataCon dataCon
                   if hasWrapper dataCon
                     -- If GHC generated a wrapper, let's try to use it
@@ -773,7 +775,7 @@ hasWrapper = isJust . dataConWrapId_maybe
 mkWrapperCall :: G.DataCon -> [StgArg] -> String -> G2AMonad (Obj Dirty)
 mkWrapperCall dc args name = 
   do
-    expr <- liftM2 (EFCall Dirty) (makeStgName $ dataConWrapId dc) (mapM g2aArg args)
+    expr <- liftM2 (EFCall Dirty) (nameGhcThing $ dataConWrapId dc) (mapM g2aArg args)
     return $ THUNK Dirty expr name
     
 -- | Make a CON Object from a DataCon and its StgArgs
@@ -781,7 +783,7 @@ mkConObj :: G.DataCon -> [StgArg] -> String -> G2AMonad (Obj Dirty)
 mkConObj dc args bind =
   do
     args' <- mapM g2aArg args
-    con  <- makeStgName dc
+    con  <- nameGhcThing dc
     return $ CON Dirty con args' bind
 
 -- | Turn an StgArg into an APPFL Expr.  Invariant: Expr is an EAtom
@@ -790,7 +792,7 @@ g2aArg (StgVarArg id) = do
   case idDetails id of
     DataConWorkId dc -> putDataCon dc
     _ -> return ()
-  liftM (EAtom Dirty) (liftM Var $ makeStgName id)
+  liftM (EAtom Dirty) (liftM Var $ nameGhcThing id)
   
 g2aArg (StgLitArg lit) = liftM (EAtom Dirty) (g2aLit lit)
 
@@ -827,11 +829,11 @@ g2aExpr e = case e of
   -- Function Application or a Var 
   StgApp id args
     -- No args ==> EAtom with a Var.  Literals are StgLit below
-    | null args -> liftM (EAtom Dirty) (liftM Var $ makeStgName id)
+    | null args -> liftM (EAtom Dirty) (liftM Var $ nameGhcThing id)
     | otherwise -> 
         do
           args'  <- mapM g2aArg args
-          name   <- makeStgName id
+          name   <- nameGhcThing id
           return $ EFCall Dirty name args'
 
 
@@ -895,7 +897,7 @@ g2aExpr e = case e of
 g2aAlts :: AltType -> Id -> [StgAlt] -> G2AMonad (Alts Dirty)
 g2aAlts altT bind alts = rethrowAtName bind $  
     do
-      scrtName <- makeStgName bind
+      scrtName <- nameGhcThing bind
       let escrt = EAtom Dirty (Var scrtName)
       altsList <- mapM (g2aAlt scrtName) (reorderAlts alts)
       return $ Alts Dirty altsList "alts" escrt
@@ -929,13 +931,13 @@ g2aAlt scrtName (acon, binders, usemask, rhsExpr)
   | otherwise =
     do
       appflRhs <- g2aExpr rhsExpr
-      conParams <- mapM makeStgName binders
+      conParams <- mapM nameGhcThing binders
       case acon of
         -- Constructor match (Maybe a, I# i, etc.)
         DataAlt datacon -> rethrowAtName datacon $
           do
             putDataCon datacon
-            conName <- makeStgName datacon
+            conName <- nameGhcThing datacon
             return $ ACon Dirty conName conParams appflRhs
 
         -- primitive literal pattern match (3#, 1.0#, etc)

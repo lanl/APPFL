@@ -6,7 +6,7 @@
 {-# LANGUAGE CPP #-}
 
 module SetFVs (
-  setFVsObjs
+  setFVsObjs, tc
 ) where
 
 import Prelude
@@ -125,6 +125,7 @@ toplevel rtgs defs =
         defs' = setfvs (Set.union tlds rtgs) defs
         (myfvls, truefvls) = unzip $ map omd defs'
         myfvl = Set.toList $ Set.unions myfvls
+        
     in case myfvl of
          [] -> deadCode defs'
          fvs -> error $

@@ -26,7 +26,7 @@ import APPFL.Base
 -- Ordinarily, the Num typeclass is defined here, but we
 -- do want to really use the normal Num class, rather than
 -- an APPFL parallel
--- import GHC.Num (Num (..))
+-- import qualified GHC.Num as G (Num (..))
 
 infixl 7  *, /, %
 infixl 6  +, -

@@ -1,4 +1,6 @@
-{-# LANGUAGE CPP, NamedFieldPuns, MagicHash, BangPatterns, ViewPatterns, PatternGuards #-}
+
+{-# LANGUAGE CPP, NamedFieldPuns, MagicHash, FlexibleInstances,
+BangPatterns, ViewPatterns, PatternGuards, UndecidableInstances #-}
 
 #define _HERE ( __FILE__ ++ ":" ++ show (__LINE__ :: Int) )
 
@@ -21,6 +23,7 @@ import Unique (Unique, getKey)
 import Module (moduleNameString, moduleName)
 import Name (NamedThing (..), nameModule_maybe, getOccString, nameUnique)
 import FastTypes (shiftRLFastInt, bitAndFastInt, iBox, cBox)
+import Var (Id)
 
 -- The UniqueNamer is the solution to GHC's non-deterministic naming. The
 -- Uniques GHC generates are not the same between otherwise identical runs, but
@@ -53,15 +56,35 @@ getIntFromUnique u =
     return v
 
 
+
+
+-- | Convenience class for things that we can provide our own name for
+class NamedThing a => AppflNameable a where
+  makeAppflName :: a -> Maybe AppflName
+
+  -- | We have a good idea for how to map anything with a Name into our domain but
+  -- any more specific instance may have a preferred instance (hence the overlap)
+
+instance {-# OVERLAPPABLE #-} NamedThing t => AppflNameable t where
+  makeAppflName = namedThingToAppflName
+
+  
+-- | Ids have extra information (IdDetails) that we sometimes need to properly
+-- rename.
+instance {-# OVERLAPPING #-} AppflNameable Id where
+  makeAppflName = idToAppflName
+  
+
 -- | Produce a String name for a NamedThing.  Everything GHC names should be
 -- converted via this function.  This is hard to enforce at the Type level,
 -- given that all of our data structures only require Strings as identifiers.
-makeStgName :: (NamedThing t, UniqueNameState s) => t -> s String
-makeStgName thing =
+nameGhcThing :: (AppflNameable t, UniqueNameState s) => t -> s String
+nameGhcThing thing =
   do
     altName <- qualifyDeterministically thing
-    let realName = getAppflName thing
+    let realName = makeAppflName thing
     return $ fromMaybe altName realName
+
     
 
 qualifyDeterministically  :: (NamedThing t, UniqueNameState s) => t -> s String 
@@ -145,7 +168,10 @@ unsubDict = Map.fromList (map swap subAList)
 subDict   = Map.fromList (map zcons subAList)
   where zcons = fmap (('z':) . pure)
 
--- Mostly stolen/modified from Z-encoding in utils/Encoding.hs  
+-- Mostly stolen/modified from Z-encoding in utils/Encoding.hs
+-- | Maps characters to their z-encoded suffix. e.g. Since '(' is paired with
+-- 'L', in the z-encoding, it becomes "zL"
+subAList :: [(Char, Char)]
 subAList  = 
   [ ('(' , 'L')
   , (')' , 'R')

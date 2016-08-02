@@ -138,8 +138,8 @@ prefix = aboveVLevel V0 . parens . text
 pprSynList :: OutputSyn a => [a] -> DocS
 pprSynList = brackets . hsep . punctuate comma . map pprSyn
 
-pprStgName :: (NamedThing a) => a -> DocS
-pprStgName t = text =<< makeStgName t
+pprStgName :: (AppflNameable a) => a -> DocS
+pprStgName t = text =<< nameGhcThing t
 
 docStoDoc :: DocS -> P.Doc
 docStoDoc docS = fst $ runState docS defaultState
@@ -157,7 +157,7 @@ nameForeignCall (CCall (CCallSpec target _ _))
 
 -- Default to the NamedThing instance if no specific (overlapping) instance
 -- is defined
-instance {-# OVERLAPPABLE #-} NamedThing a => OutputSyn a where
+instance {-# OVERLAPPABLE #-} AppflNameable a => OutputSyn a where
   pprSyn = pprStgName
 
 instance {-# OVERLAPPING #-} OutputSyn Var where
@@ -223,8 +223,8 @@ instance OutputSyn StgRhs where
                 (pprSyn expr)
 
       StgRhsCon ccs datacon args
-        -> prefix "CONish" <+> pprStgName datacon <+> pprSynList args $+$
-           text "Worker/Wrapper:" <+> pprStgName (dataConWrapId datacon)
+        -> prefix "CONish" <+> pprSyn datacon <+> pprSynList args $+$
+           text "Worker/Wrapper:" <+> pprSyn (dataConWrapId datacon)
 
 
 instance OutputSyn StgExpr where
@@ -237,7 +237,7 @@ instance OutputSyn StgExpr where
       StgConApp datacon args
         -- Any StgConApp is a 'real' constructor. Use of the wrapper function
         -- shows up as an StgApp.
-        -> prefix "ConApp" <+> pprStgName datacon <+> pprSynList args
+        -> prefix "ConApp" <+> pprSyn datacon <+> pprSynList args
       StgOpApp op args resT 
         -> prefix "Op" <+> pprSyn op <+> pprSynList args
       StgLam args body 
