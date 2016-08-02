@@ -106,7 +106,8 @@ This may make it in later
     Traversable(traverse, sequenceA, mapM, sequence),
 ----------------------------------------------------------------------}
     -- -- ** Miscellaneous functions
-    -- id, const, (.), flip, ($), until,
+    id, const, (.), flip, ($), 
+    --until,
     -- asTypeOf, error, undefined,
     -- seq, ($!),
 
@@ -115,11 +116,11 @@ This may make it in later
     map, (++), filter,
 
     head, last, tail, init, null, length, (!!),
-    -- reverse,
+    reverse,
     -- -- *** Special folds
     -- and, or, any, all,
     concat,
-    --concatMap,
+    concatMap,
     -- -- ** Building lists
     -- -- *** Scans
     scanl, scanl1, scanr, scanr1,
@@ -127,12 +128,13 @@ This may make it in later
     iterate, repeat, replicate, cycle,
     -- -- ** Sublists
     take, drop, splitAt, takeWhile, dropWhile, span,
-    --break,
+    break,
     -- -- ** Searching lists
-    -- notElem,
+    elem, notElem,
     lookup,
     -- -- ** Zipping and unzipping lists
-    -- zip, zip3, zipWith, zipWith3, unzip, unzip3,
+    -- zip, zip3, zipWith, 
+    zipWith3, unzip, unzip3,
     -- -- ** Functions on strings
     -- lines, words, unlines, unwords,
 

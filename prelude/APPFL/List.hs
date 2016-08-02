@@ -35,14 +35,15 @@ module APPFL.List (
    --maximum, minimum,
    splitAt, takeWhile, dropWhile,
    span,
-   --break, reverse,
+   break, 
+   reverse,
    and, or,
-   --any, all, elem, notElem,
+   any, all, elem, notElem,
    lookup,
-   --concatMap,
+   concatMap,
    --zip, zip3,
    --zipWith,
-   --zipWith3, unzip, unzip3,
+   zipWith3, unzip, unzip3,
    --errorEmptyList,
  ) where
 
@@ -738,9 +739,9 @@ span p xs@(x:xs')
 --
 -- 'break' @p@ is equivalent to @'span' ('not' . p)@.
 
---break                   :: (a -> Bool) -> [a] -> ([a],[a])
+break                   :: (a -> Bool) -> [a] -> ([a],[a])
 #if 1
---break p                 =  span (not . p)
+break p                 =  span (not . p)
 #else
 -- HBC version (stolen)
 break _ xs@[]           =  (xs, xs)
@@ -751,9 +752,9 @@ break p xs@(x:xs')
 
 -- | 'reverse' @xs@ returns the elements of @xs@ in reverse order.
 -- @xs@ must be finite.
---reverse                 :: [a] -> [a]
+reverse                 :: [a] -> [a]
 #if 1
---reverse                 =  foldl (flip (:)) []
+reverse                 =  foldl (flip (:)) []
 #else
 reverse l =  rev l []
   where
@@ -803,7 +804,7 @@ or (x:xs)       =  x || or xs
 --any                     :: (a -> Bool) -> [a] -> Bool
 
 #if 1
---any p                   =  or . map  p
+any p                   =  or . map  p
 #else
 any _ []        = False
 any p (x:xs)    = p x || any p xs
@@ -822,7 +823,7 @@ any p (x:xs)    = p x || any p xs
 -- value for the predicate applied to an element at a finite index of a finite or infinite list.
 --all                     :: (a -> Bool) -> [a] -> Bool
 #if 1
---all p                   =  and . map p
+all p                   =  and . map p
 #else
 all _ []        =  True
 all p (x:xs)    =  p x && all p xs
@@ -841,7 +842,7 @@ all p (x:xs)    =  p x && all p xs
 -- equal to @x@ found at a finite index of a finite or infinite list.
 --elem                    :: (Eq a) => a -> [a] -> Bool
 #if 1
---elem x                  =  any (== x)
+elem x                  =  any (== x)
 #else
 elem _ []       = False
 elem x (y:ys)   = x==y || elem x ys
@@ -855,7 +856,7 @@ elem x (y:ys)   = x==y || elem x ys
 -- | 'notElem' is the negation of 'elem'.
 --notElem                 :: (Eq a) => a -> [a] -> Bool
 #if 1
---notElem x               =  all (/= x)
+notElem x               =  all (/= x)
 #else
 notElem _ []    =  True
 notElem x (y:ys)=  x /= y && notElem x ys
@@ -874,8 +875,8 @@ lookup  key ((x,y):xys)
     | otherwise         =  lookup key xys
 
 -- | Map a function over a list and concatenate the results.
---concatMap               :: (a -> [b]) -> [a] -> [b]
---concatMap f             =  foldr ((++) . f) []
+concatMap               :: (a -> [b]) -> [a] -> [b]
+concatMap f             =  foldr ((++) . f) []
 
 #if 0
 {-# NOINLINE [1] concatMap #-}
@@ -931,15 +932,14 @@ xs !! n
 --------------------------------------------------------------
 -- The zip family
 --------------------------------------------------------------
+
 #if 0
 foldr2 :: (a -> b -> c -> c) -> c -> [a] -> [b] -> c
-foldr2 k z = go
+foldr2 k z a b = go a b
   where
         go []    _ys     = z
         go _xs   []      = z
         go (x:xs) (y:ys) = k x y (go xs ys)
-
-
 {-# INLINE [0] foldr2 #-}
 
 foldr2_left :: (a -> b -> c -> d) -> d -> a -> ([b] -> c) -> [b] -> d
@@ -985,6 +985,7 @@ zip []     _bs    = []
 zip _as    []     = []
 zip (a:as) (b:bs) = (a,b) : zip as bs
 
+ 
 {-# INLINE [0] zipFB #-}
 zipFB :: ((a, b) -> c -> d) -> a -> b -> c -> d
 zipFB c = \x y r -> (x,y) `c` r
@@ -1044,7 +1045,7 @@ zipWith3 _ _ _ _        =  []
 
 -- | 'unzip' transforms a list of pairs into a list of first components
 -- and a list of second components.
-#if 0
+
 unzip    :: [(a,b)] -> ([a],[b])
 --{-# INLINE unzip #-}
 unzip    =  foldr (\(a,b) ~(as,bs) -> (a:as,b:bs)) ([],[])
@@ -1055,7 +1056,7 @@ unzip3   :: [(a,b,c)] -> ([a],[b],[c])
 --{-# INLINE unzip3 #-}
 unzip3   =  foldr (\(a,b,c) ~(as,bs,cs) -> (a:as,b:bs,c:cs))
                   ([],[],[])
-#endif
+
 --------------------------------------------------------------
 -- Error code
 --------------------------------------------------------------
