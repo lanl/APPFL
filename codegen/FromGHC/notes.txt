@@ -1,0 +1,59 @@
+
+
+
+
+
+## Numeric Literals
+
+Wherever a (boxed) numeric literal is encountered in a program, GHC converts
+that number to an Integer or Rational appropriately and wraps it in a call to
+`fromInteger` or `fromRational`.  This is why all numeric literals initially
+type as `Num a => a` or `Fractional a => a`.  It's important to note that these
+are _GHC's_ `Num` and `Fractional`.
+
+Using the `-XRebindableSyntax` extension, these calls resolve to whatever
+functions of those names are in scope.  This extension implies the
+`-XNoImplicitPrelude` extension, so unless the Prelude is imported explicitly,
+there are no such functions in scope by default.  This is a potential solution
+for escaping GHC's numeric typeclasses, but it causes other problems, notably
+`if .. then .. else ..` expressions are desugared into a call to an `ifThenElse`
+function, which accepts the predicate and both branches of the conditional as
+arguments. Under strict evaluation, this is often non-terminating.
+
+We could re-transform that call into the appropriate `case` expression, but
+there may be other, similar problems arising from the use of this extension, so
+it seems like it may be best to avoid it and try to get the wired-in typeclasses
+working.
+
+
+## Getting wired-in Typeclasses working
+
+It looks like we will need to provide analgous implementations of the wired-in
+typeclasses to get the "expected" program behavior from our compiler.  For the
+types that already have `Num` or `Eq` instances, we would have identical
+`AppflNum` and `AppflEq` typeclasses and instances.
+
+It's easy enough to map the GHC Class to our own, since they are given
+predefined names in GHC's prelude/PrelNames.hs file, but mapping the `Eq Bool`
+instance onto the `AppflEq Bool` instance may be tricky.
+
+By default, such an instance (implemented as a dictionary passed to the `(==)`
+or `(/=)` functions in STG) would have an `OccName` like `$fEqBool` associated
+with the `GHC.Classes` module, but its `Unique` is not known to GHC, unlike the
+Class names.
+
+If all we had was the `OccName`, we would not have reliable information, since
+it's easy to have multiple `Bool` types across modules and the name generated
+for the dictionary does not include module names. For example, if I created my
+own `Bool` type and made a `Num` instance for both it and the GHC `Bool` in some
+module `M`, the qualified dictionary names would be `M.$fNumBool` and
+`M.$fNumBool0`, with no auxiliary information about which referred to which.
+
+Luckily, in that context, we _would_ have the implementation code, so the naming
+is not an issue.  In the case where we don't have the implementation (e.g. for
+pre-compiled GHC Base instances), we _do_ know which modules contain which
+instances, so we should be able to look at the suffix (`Bool`) and the module
+(`GHC.Classes`) and select the correct dictionary.
+
+This is still a bit of a hack, relying on assumptions about how GHC names the
+dictionaries, but it seems to be stable enough.
