@@ -36,7 +36,7 @@ module AppflPrelude (
     -- Char, String,
 
     -- -- *** Tuples
-    -- fst, snd, curry, uncurry,
+    fst, snd, curry, uncurry,
 
     -- -- ** Basic type classes
 
@@ -237,6 +237,8 @@ STG must then handle the substitution.
 -- Hack.
 -- Maybe better to autogen tuples as needed when traversing AST
 
+
 import APPFL.Base
 import APPFL.Num
 import APPFL.List
+import APPFL.Tuple
