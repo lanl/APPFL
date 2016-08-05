@@ -1,9 +1,12 @@
-{-# LANGUAGE MagicHash, UnboxedTuples, NoImplicitPrelude #-}
+{-# LANGUAGE UndecidableInstances #-}
+{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE MagicHash, UnboxedTuples, NoImplicitPrelude, FlexibleContexts #-}
 module Test where
 import qualified AppflPrelude as A
 import APPFL.Prim
 
---import GHC.Exts
+--import qualified Prelude as A
 
 class MyEq a where
   eq :: a -> a -> A.Bool
@@ -13,9 +16,25 @@ class MyEq a where
   eq a b = A.not (a `ne` b)
   {-# MINIMAL eq | ne #-}
 
+class Foo a b where
+  eqv :: a -> b -> A.Bool
+
+instance {-# OVERLAPPABLE #-} Foo a b => Foo b a where
+  eqv a b = eqv b a
+
+instance A.Eq a => Foo a a where
+  eqv = (A.==)
+
+instance {-# OVERLAPPING #-} Foo A.Bool Bool where
+  eqv a True = a
+  eqv a False = A.not a
+
 data T a = T a deriving (A.Eq)
 
 data Bool = True | False
+
+instance A.Eq Bool where
+  (==) = eq
 
 instance MyEq a =>  MyEq (T a) where
   eq (T a) (T b) = a `eq` b
@@ -35,4 +54,13 @@ eqtest = T A.True `eq` T A.False
 
 ghceqtest = A.True A./= A.False
 
-main = A.False
+instance Foo Bool A.Int where
+  True `eqv` (A.I# 0#) = A.True
+  False `eqv` (A.I# 0#) = A.True
+  _ `eqv` _ = A.False
+
+
+
+zero = (A.I# 0#)
+
+main = zero `eqv` False

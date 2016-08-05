@@ -5,7 +5,7 @@ where
 
 import qualified Data.Map.Strict as Map
 import Data.Maybe (fromMaybe)
-
+import Control.Applicative ((<|>), (<*>))
 
 import AST as A (Primop (..))
 import PrimOp as G
@@ -20,10 +20,10 @@ import MkId        as G
 import TypeRep (TyThing (..))
 import ConLike (ConLike (..))
 
-import Var (Id, idDetails)
+import Var (Id, idDetails, isId)
 import IdInfo (IdDetails (..))
 import Name as G ( Name, NamedThing (..), BuiltInSyntax(..)
-                 , mkWiredInName)
+                 , mkWiredInName, getOccString)
 import OccName (mkDataOccFS)
 import BasicTypes (TupleSort (..))
 import FastString (fsLit)
@@ -94,7 +94,7 @@ isAppflBuiltIn :: String -> Bool
 isAppflBuiltIn = (`elem` appflBuiltIns)
 
 appflBuiltIns :: [AppflName]
-appflBuiltIns = [ appflMain, appflPrimIntTy, appflNoExhaust ]
+appflBuiltIns = [appflMain, appflPrimIntTy, appflNoExhaust]
 
 
 -- | Our program entry point
@@ -125,8 +125,8 @@ appflNoExhaust = "stg_case_not_exhaustive"
 
 
 
-isErrorCall :: NamedThing a => a -> Bool
-isErrorCall thing =
+isErrorId :: NamedThing a => a -> Bool
+isErrorId thing =
   let name = getName thing
   in any ((name ==) . getName) patErrorIDs
 
@@ -136,25 +136,51 @@ namedThingToAppflName thing = Map.lookup (getName thing) builtInMap
 
 
 idToAppflName :: Id -> Maybe AppflName
-idToAppflName iD
-  | isId iD, ClassOpId cls <- idDetails iD =
-      namedThingToAppflName iD
-  | otherwise = namedThingToAppflName iD
+idToAppflName id
+  | isId id = case idDetails id of
+      ClassOpId clas ->
+        maybeGetAppflClass (getName clas) (getOccString id)
+        -- or just do the normal thing if the lookup fails
+        <|> namedThingToAppflName id
+
+      _ -> namedThingToAppflName id
+      
+  | otherwise = namedThingToAppflName id
         
 
+-- | For some builtin class dictionary selector (e.g. GHC.Classes.==), maybe get
+-- the APPFL equivalent.  This assumes that the equivalent class has identical
+-- method names, which we need to enforce in our APPFL Base libs.
+maybeGetAppflClass clasName selector =
+  -- Maybe get the function that prefixes the Module name
+  -- and apply it to the selector name if present
+  fmap ($ selector) (Map.lookup clasName appflClassModMap)
 
 
 
+appflClassModMap :: Map.Map Name (AppflName -> AppflName)
+appflClassModMap = Map.fromList
+  [ (eqClassName, classesDot)
+  , (ordClassName, classesDot) ]
+
+appflClassMap =
+  Map.mapWithKey makeClassName appflClassModMap
+  where
+    makeClassName clasName modPfx = modPfx (getOccString clasName)
+      
+    
+    
 infixr 5 \.
 
 (\.) :: AppflName -> AppflName -> AppflName
 a \. b = a ++ '.' : b
 
 appflDot, typesDot, tupleDot, primDot :: AppflName -> AppflName  
-appflDot s = "APPFL" \. s
-typesDot s = appflDot $ "Types" \. s
-tupleDot s = appflDot $ "Tuple" \. s
-primDot  s = appflDot $ "Prim"  \. s
+appflDot   s = "APPFL" \. s
+typesDot   s = appflDot "Types"   \. s
+tupleDot   s = appflDot "Tuple"   \. s
+primDot    s = appflDot "Prim"    \. s
+classesDot s = appflDot "Classes" \. s
 
 
 builtInMap :: Map.Map G.Name String
@@ -202,7 +228,6 @@ tupleMap = Map.fromList $ concat
     , (getName (tupleTyCon UnboxedTuple i) , tupleDot ("UTP" ++ show i))
     ]
    | i <- [0..mAX_TUPLE_SIZE]]
-
 
 
 errorCallMap :: Map.Map G.Name AppflName

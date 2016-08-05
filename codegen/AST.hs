@@ -35,15 +35,17 @@ data Atom = Var  Var
           | LitF Float
           | LitD Double
           | LitC Con
+          | LitStr String -- primitive string e.g. const char *str = "hello world";
             deriving(Eq)
 
 instance Show Atom where
-    show (Var v)  = v
-    show (LitI i) = show i
-    show (LitL l) = show l
-    show (LitF f) = show f ++ "(f)"
-    show (LitD d) = show d ++ "(d)"
-    show (LitC c) = c
+    show (Var v)    = v
+    show (LitI i)   = show i
+    show (LitL l)   = show l
+    show (LitF f)   = show f ++ "(f)"
+    show (LitD d)   = show d ++ "(d)"
+    show (LitC c)   = c
+    show (LitStr s) = s
 
 data Obj a = FUN   {omd :: a, vs :: [Var],   e :: Expr a   , oname :: String}
            | PAP   {omd :: a, f  :: Var,     as :: [Expr a], oname :: String} -- invariant the as are EAtoms
@@ -186,6 +188,7 @@ instance Unparse Atom where
   unparse (LitF f) = float f
   unparse (LitD d) = text $ show d
   unparse (LitC c) = text c
+  unparse (LitStr s) = text s
 
 instance Unparse Primop where
   unparse = stgName . primID

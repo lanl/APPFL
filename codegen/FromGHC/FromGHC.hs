@@ -5,11 +5,12 @@ UndecidableInstances, BangPatterns, MagicHash #-}
 
 #define _HERE ( __FILE__ ++ ":" ++ show ( __LINE__ :: Int ))
 
--- can compile this module to make an executable that writes our unparsed STG
--- to a specified file
+-- can compile this module to make an executable that writes our unparsed Appfl STG
+-- and GHC STG to files with .{appfl,ghc}syn suffixes
+--
 -- ghc --make -package ghc -main-is FromGHC.FromGHC.amain FromGHC.hs -o hs2appfl
 --
--- executable usage is: hs2appfl infile outfile
+-- executable usage is: hs2appfl infile
 -- It assumes a prelude directory with the AppflPrelude and APPFL base
 -- in $PWD.  i.e. It's Fragile 
 module FromGHC.FromGHC
@@ -46,6 +47,7 @@ import qualified PPrint as A
 
 ---------------------------------------- Standard library modules
 import qualified Data.Map.Strict as Map
+
 import           Data.List as List
                  ( nub, nubBy, unfoldr, insertBy
                  , isPrefixOf, isSuffixOf, intersperse)
@@ -157,7 +159,7 @@ import           PrimOp ( PrimOp (..))
                  
 -- Id is an alias for Var, but it's used where you should expect the Id
 -- constructor of the Var type. Vars add metadata to identifiers (Names)
-import           Var (Var (..), Id, idDetails )
+import           Var (Var (..), Id, idDetails, isId )
 import           IdInfo (IdDetails(..))
                  
 -- Name is the basic identifier type. NamedThings have a Name (accessed with
@@ -177,11 +179,12 @@ import qualified Outputable as G
 
 
 amain = do
-  (i:o:_) <- getArgs
+  (i:_) <- getArgs
   Just cwd <- lookupEnv "PWD"
   let prld = cwd ++ "/prelude/"
-  (ghc,(ts,os)) <- compileAndThen (return . g2a) prld i
-  writeFile o (show $ A.unparse ts A.$+$ A.unparse os)
+  (ghc, (ts,os)) <- compileAndThen (return . g2a) prld i
+  writeFile (i ++ ".appflsyn") (show $ A.unparse ts A.$+$ A.unparse os)
+  writeFile (i ++ ".ghcsyn") (show $ pprStgSyn ghc)
 
 
 -- For in-progress tests. Note that $PWD is appfl/codegen when loading
@@ -433,7 +436,9 @@ type Clean = ()
 type TyMap = Map.Map A.Con [G.DataCon]
 
 
-type G2AState = State (TyMap, UniqueNamer)
+data G2AState = G2A { tymap :: TyMap,
+                      unamer :: UniqueNamer}
+                      
 -- We want a "stateful" traversal, since, once a TyCon is identified
 -- any new DataCon associated with it should be inserted into its
 -- constructor list.  If we don't linearize the traversal, we'd have
@@ -448,14 +453,15 @@ type G2AState = State (TyMap, UniqueNamer)
 data G2AException
   = Except
     { srcSpan :: SrcSpan
-    , mName   :: Maybe Name
-    , msg     :: String  }
+    , mNames  :: Maybe (Name, AppflName)
+    , msg     :: String
+    , mCause  :: Maybe G2AException} -- Exceptions can be chained
 
-type G2AMonad t = ExceptT G2AException G2AState t
+type G2AMonad t = ExceptT G2AException (State G2AState) t
 
-instance UniqueNameState (ExceptT G2AException G2AState) where
-  getNamer = lget >>= return . snd
-  putNamer n = lget >>= \(t,_) -> lput (t,n)
+instance UniqueNameState (ExceptT G2AException (State G2AState)) where
+  getNamer = lget >>= return . unamer
+  putNamer n = lget >>= \gst -> lput gst{unamer = n}
 
 
 -- lift the State primitive operators into the G2AMonad
@@ -465,75 +471,89 @@ lget = lift get
 lput = lift . put
 
 
+-- | Put nested exceptions into a list, outermost to innermost
+exceptToList e@Except{mCause = Nothing} = [e]
+exceptToList e@Except{mCause = Just cause} = e : exceptToList cause
+
+
+exceptString Except{srcSpan, mNames, msg} =
+  unlines $ [msg] ++ blame mNames ++ ["Occurring at or near " ++ locStr]
+  where
+    blame Nothing = []
+    blame (Just (ghcName, appflName)) =
+      [ "Caused by or near something with names:"
+      , "  Source Occurrence --> " ++ (show $ getOccString ghcName)
+      , "  APPFL Qualified ----> " ++ appflName ]
+        
+    locStr = case srcSpan of
+      UnhelpfulSpan s -> unpackFS s
+      RealSrcSpan rss ->
+        let (start, end) = unpackRSS rss
+            file         = unpackFS $ srcSpanFile rss
+        in concat $ intersperse " "
+           ["file:", file, show start, "to", show end]
+
+    unpackRSS rss = ((srcSpanStartLine rss, srcSpanStartCol rss),
+                     (srcSpanEndLine rss  , srcSpanEndCol rss  ))
+           
+
+-- | Throw an exception with an optional AppflNameable thing and an optional
+-- source G2AException
+exceptG2A
+  :: AppflNameable a
+  => Maybe a            -- | Nameable thing that caused it
+  -> Maybe G2AException -- | Exception that preceeded this one
+  -> String             -- | Some helpful message  
+  -> G2AMonad b
+exceptG2A mthing mexcept msg = do
+  (loc, mNames) <-
+    case mthing of
+      Nothing    -> pure ((UnhelpfulSpan $ mkFastString "Uncertain location"),
+                          Nothing)
+      Just thing -> do
+        let ghcName = getName thing
+        appflName <- nameGhcThing thing
+        return (nameSrcSpan ghcName, Just (ghcName, appflName))
+        
+  throwE $ Except loc mNames msg mexcept
+
+
 -- | Throw an exception for an unsupported feature without any name/location
 -- information
 unsupported :: String -> G2AMonad a
-unsupported = unsupportedAt (UnhelpfulSpan $ mkFastString "Uncertain location")
+unsupported = exceptG2A (Nothing :: Maybe Id) Nothing
 
-
--- | Throw a fully parameterized exception
-exceptG2A :: SrcSpan    -- | location in source code
-          -> Maybe Name -- | Name of the thing that caused it
-          -> String     -- | Some helpful message
-          -> G2AMonad a
-exceptG2A srcSpan mName msg = throwE $ Except srcSpan mName msg
-
--- | Throw an exception with location information and a message
-unsupportedAt :: SrcSpan -> String -> G2AMonad a
-unsupportedAt srcSpan msg = exceptG2A srcSpan Nothing msg
 
 -- | Throw an exception caused by a NamedThing.  The SrcSpan is derived from the
 -- thing's Name.
-unsupportedWithName :: NamedThing t => t -> String -> G2AMonad a
-unsupportedWithName nthing = let name = getName nthing
-                                 srcSpan = (nameSrcSpan name)
-                             in exceptG2A srcSpan (Just name)
+unsupportedWithName :: AppflNameable t => t -> String -> G2AMonad a
+unsupportedWithName nthing = exceptG2A (Just nthing) Nothing
 
 -- | Given a NamedThing, if some computation produces an exception and has no
 -- useful SrcSpan and/or Name, replace the useless values with those derived
 -- from the NamedThing
-rethrowAtName :: NamedThing t => t -> G2AMonad a -> G2AMonad a
-rethrowAtName nthing e = catchE e relocate
-  where relocate (Except UnhelpfulSpan{} Nothing msg) = exceptG2A newLoc (Just name) msg
-        relocate (Except UnhelpfulSpan{} mName msg) = exceptG2A newLoc mName msg
-        relocate (Except span Nothing msg) = exceptG2A span (Just name) msg        
-        relocate e = throwE e
-        name = getName nthing
-        newLoc = nameSrcSpan name
+rethrowAtName :: AppflNameable t => t -> G2AMonad a -> G2AMonad a
+rethrowAtName nthing e = catchE e nestExcepts
+  where nestExcepts e = exceptG2A (Just nthing) (Just e) ""
+
 
 
 -- can use this as a 'catchE' handler in the G2AMonad, but, as the name
 -- suggests, it fails hard when an Exception is encountered.  There's not much
 -- use trying to recover from an Exception, so maybe that's fine.
 failHard :: G2AException -> a
-failHard Except{srcSpan, mName, msg} =
-  let cause = case mName of
-        Just n -> ["Caused by or near something named " ++ (show $ getOccString n)]
-        Nothing -> []
-  in
-  error $ unlines $
-  ["Exception in G2A:", msg] 
-  ++ cause  ++
-  ["Occurring at or near", locstr]
-  
-  where locstr :: String
-        locstr = case srcSpan of
-          UnhelpfulSpan s -> unpackFS s
-          RealSrcSpan rss ->
-            let (start, end) = unpackRSS rss
-                file         = unpackFS $ srcSpanFile rss
-            in concat $ intersperse " "
-               ["file:", file, show start, "to", show end]
+failHard e = failHard' e 5
 
-        unpackRSS rss = ((srcSpanStartLine rss, srcSpanStartCol rss),
-                         (srcSpanEndLine rss  , srcSpanEndCol rss  ))
+failHard' e depth = error $ unlines $
+  "Exception in G2A!" :
+  (map exceptString $ take depth $ exceptToList e)
   
 
 -- | Run a computation in the G2A monad, failing hard on exceptions
-runG2AorElse :: G2AMonad a -> (a, TyMap)
-runG2AorElse comp = case runState (runExceptT comp) (Map.empty, (Map.empty, 0)) of
+runG2AorElse :: G2AMonad a -> a
+runG2AorElse comp = case runState (runExceptT comp) (G2A Map.empty emptyNamer) of
   (Left e, _) -> failHard e
-  (Right r, (tm, _)) -> (r,tm) -- We don't need the UniqueNamer afterwards
+  (Right r, _) -> r -- We don't need the G2AState afterwards
 
 
 -- | Add a GHC DataCon to the TyMap
@@ -541,8 +561,8 @@ putDataCon :: G.DataCon -> G2AMonad ()
 putDataCon dc =
   do
     tcname <- nameGhcThing (dataConTyCon dc)        
-    (tymap, un) <- lget
-    lput (Map.insertWith insertDC tcname [dc] tymap, un)      
+    G2A tymap un <- lget
+    lput $ G2A (Map.insertWith insertDC tcname [dc] tymap) un
   where
     -- This is hacky, but should be ok.  The APPFL.Base parallels to GHC get
     -- different Uniques than the builtins, so we can't compare those to ensure
@@ -681,7 +701,7 @@ g2aMonoType t =
 makeTyCons :: G2AMonad [A.TyCon]
 makeTyCons =
   do
-    (tymap, _) <- lget
+    G2A{tymap} <- lget
     mapM constrTyCon (Map.toList tymap)
 
 constrTyCon :: (Con, [G.DataCon]) -> G2AMonad A.TyCon
@@ -696,12 +716,12 @@ constrTyCon (con, dcs) = do
 -- | Entry point to the GHC to APPFL STG conversion
 g2a :: [StgBinding] -> ([A.TyCon], [Obj Clean])
 g2a binds =
-  let ((objs,tycons),_) = runG2AorElse $
-                do -- We do want to fail hard at the moment.
-                  objs <- mapM g2aObj binds
-                  tycons <- makeTyCons
-                  let dcFuns = map makeDCWorkers tycons
-                  return (dcFuns ++  objs, tycons)
+  let (objs,tycons) = runG2AorElse $
+                      do -- We do want to fail hard at the moment.
+                        objs <- mapM g2aObj binds
+                        tycons <- makeTyCons
+                        let dcFuns = map makeDCWorkers tycons
+                        return (dcFuns ++  objs, tycons)
                       
   in (map sanitizeTC tycons, map sanitizeObj $ concat objs)
 
@@ -814,7 +834,6 @@ g2aLit lit = case lit of
   MachWord64 i               -> return $ LitL (fromInteger i)
   MachFloat r                -> return $ LitF (fromRational r)
   MachDouble r               -> return $ LitD (fromRational r)
-
   
   MachStr bs                 -> unsupported ("Machine Strings: " ++ show bs)
   MachNullAddr               -> unsupported "Machine (Null) Address"
@@ -822,19 +841,31 @@ g2aLit lit = case lit of
 
 
 
+g2aRealApp :: Id -> [StgArg] -> G2AMonad (Expr Dirty)
+g2aRealApp id args = case idDetails id of
+  ClassOpId clas -> _TODO _HERE
+    
+  _ -> do
+    args'  <- mapM g2aArg args
+    name   <- nameGhcThing id
+    return $ EFCall Dirty name args'
+    
+
+makeErrorCall id args = _TODO _HERE
 
 -- | Convert a GHC STG Expression to an APPFL Expression
 g2aExpr :: StgExpr -> G2AMonad (Expr Dirty)
 g2aExpr e = case e of
   -- Function Application or a Var 
-  StgApp id args
-    -- No args ==> EAtom with a Var.  Literals are StgLit below
-    | null args -> liftM (EAtom Dirty) (liftM Var $ nameGhcThing id)
-    | otherwise -> 
-        do
-          args'  <- mapM g2aArg args
-          name   <- nameGhcThing id
-          return $ EFCall Dirty name args'
+  StgApp id args -> rethrowAtName id $
+    case () of
+              
+      -- No args ==> EAtom with a Var.  Literals are StgLit below
+      _  | null args    -> liftM (EAtom Dirty) (liftM Var $ nameGhcThing id)
+         | isErrorId id -> return $ makeErrorCall id args
+         | isId id      -> g2aRealApp id args
+         | otherwise    -> unsupportedWithName id "Application of non-Id Var type?"
+
 
 
   -- Literal Expr (all literals are primitive)
@@ -992,7 +1023,7 @@ g2aAlt scrtName (acon, binders, usemask, rhsExpr)
 -- (~ Unit) data type.
 
 isAltErrorExpr :: StgExpr -> Bool
-isAltErrorExpr (StgApp id args) = isErrorCall id
+isAltErrorExpr (StgApp id args) = isErrorId id
 isAltErrorExpr _ = False
 
   

@@ -157,6 +157,7 @@ biIntMCon    = MCon False "Int_h" []
 biLongMCon   = MCon False "Long_h" []
 biFloatMCon  = MCon False "Float_h" []
 biDoubleMCon = MCon False "Double_h" []
+biStringMCon = MCon False "String_h" []
 
 conAList = [("Int_h",    "Int#"),
             ("Long_h",   "Long#"),

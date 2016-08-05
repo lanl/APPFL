@@ -152,6 +152,7 @@ instance DV (Expr InfoTab) (Expr InfoTab) where
                   LitL _ -> return $ biLongMCon
                   LitF _ -> return $ biFloatMCon
                   LitD _ -> return $ biDoubleMCon
+                  LitStr s -> return $ biStringMCon
                   LitC c -> case maybeCMap emd of
                               Nothing -> error "dv LitC maybeCMap is Nothing"
                               Just cmap -> return $

@@ -39,6 +39,10 @@ import Var (Id)
 -- encountered in the AST. The second element is the running counter of how many
 -- Uniques have been seen.
 type UniqueNamer  = (Map.Map Unique Int, Int)
+
+emptyNamer :: UniqueNamer
+emptyNamer = (Map.empty, 0)
+
 class Monad m => UniqueNameState m where
   putNamer :: UniqueNamer -> m ()
   getNamer :: m UniqueNamer

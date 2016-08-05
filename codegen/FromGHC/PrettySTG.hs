@@ -25,15 +25,17 @@ import           PrimOp ( PrimCall (..), primOpOcc )
 import           ForeignCall
                  ( ForeignCall (..), CCallSpec (..)
                  , CCallTarget (..) )
-
-import           Var (Var, idDetails)
+import           Class (Class (..), classAllSelIds)
+import           Var (Var, idDetails, isId, varType)
 import           IdInfo (IdDetails (..))
+import           TypeRep (Type(..), TyLit(..))
+
 
 -- OccName == Occurence Name (I think). How identifiers appear in code,
 -- essentially.  We only need this to name PrimOps.
 import           OccName ( occNameString )
 
-import           Name (NamedThing (..))                 
+import           Name (NamedThing (..), getOccString)                 
 import           FastString (unpackFS)
 ------------------------------------------------------------------------------
 -- Pretty Printing
@@ -70,7 +72,7 @@ defaultState = PST{ namer   = (Map.empty, 0)
 data PprOpts  = POpts { vlevel :: VLevel }
 
 defaultOpts :: PprOpts
-defaultOpts = POpts V1
+defaultOpts = POpts V2
 
 data VLevel = V0 | V1 | V2 | V3  deriving (Eq, Ord)                
   
@@ -83,6 +85,7 @@ comma      = pure P.comma
 equals     = pure P.equals
 empty      = pure P.empty
 arrow      = pure P.arw
+period     = char '.'
 
 text :: String -> DocS
 text = return . P.text
@@ -94,9 +97,10 @@ integer  = return . P.integer
 char     = return . P.char
 rational = return . P.rational
 
-vcat, hsep :: [DocS] -> DocS
+vcat, hsep, brackList :: [DocS] -> DocS
 vcat = liftM P.vcat . sequence
 hsep = liftM P.hsep . sequence
+brackList = brackets . hsep . punctuate comma
 
 hang :: DocS -> Int -> DocS -> DocS
 hang d1 n d2 = liftM2 (\a b -> P.hang a n b) d1 d2
@@ -109,6 +113,7 @@ punctuate p (x:xs) = x: map (p <>) xs
 brackets, parens :: DocS -> DocS
 brackets d = pure P.lbrack <> d <> pure P.rbrack
 parens d   = pure P.lparen <> d <> pure P.rparen
+quotes = liftM P.quotes
 
 (<>), (<+>), ($+$) :: DocS -> DocS -> DocS
 (<>)  = liftM2 (P.<>)
@@ -161,17 +166,45 @@ instance {-# OVERLAPPABLE #-} AppflNameable a => OutputSyn a where
   pprSyn = pprStgName
 
 instance {-# OVERLAPPING #-} OutputSyn Var where
-  pprSyn v = (<+> pprStgName v) . prefix $
-    case idDetails v of
-      VanillaId       -> "VanillaId"
-      RecSelId{}      -> "RecSelId"
-      DataConWorkId{} -> "DCWorkerId"
-      DataConWrapId{} -> "DCWrapperId"
-      ClassOpId{}     -> "ClassOpId"
-      PrimOpId{}      -> "PrimOpId"
-      FCallId{}       -> "FCallId"
-      TickBoxOpId{}   -> "TickId"
-      DFunId{}        -> "DictFunId"
+  pprSyn v = pfx <+> pprStgName v
+    where pfx | isId v
+            = case idDetails v of
+                  dets@DFunId{} ->
+                    case last $ unroll $ varType v of
+                     TyConApp tc typs ->
+                       pprSyn dets <+> aboveVLevel V1
+                       (text "tycon:" <+> pprSyn tc <+> text "typs:" <+>
+                        brackList (map pprSyn typs))
+                       
+                     typ -> pprStgName v $+$ pprSyn typ >>= error . show
+                       
+                  dets -> pprSyn dets
+                             
+              | otherwise = empty
+
+          unroll ty = case ty of
+            FunTy t1 t2 -> t1 : unroll t2
+            ForAllTy v t -> unroll t
+            t -> [t]
+          
+
+instance OutputSyn IdDetails where
+  pprSyn dets = case dets of
+    VanillaId       -> prefix "VanillaId"
+    RecSelId{}      -> prefix "RecSelId"
+    DataConWorkId{} -> prefix "DCWorkerId"
+    DataConWrapId{} -> prefix "DCWrapperId"
+    PrimOpId{}      -> prefix "PrimOpId"
+    FCallId{}       -> prefix "FCallId"
+    TickBoxOpId{}   -> prefix "TickId"
+    DFunId{}        -> prefix "DictFunId"
+    ClassOpId clas  -> prefix "ClassOpId" <+>
+                       aboveVLevel V1
+                       (pprSyn clas)
+
+instance OutputSyn Class where
+  pprSyn clas = text "Selectors:" <+>
+                brackList (map (text . getOccString) (classAllSelIds clas))
 
 instance OutputSyn StgArg where
   pprSyn (StgVarArg id)  = prefix "VarArg" <+> pprSyn id
@@ -226,6 +259,17 @@ instance OutputSyn StgRhs where
         -> prefix "CONish" <+> pprSyn datacon <+> pprSynList args $+$
            text "Worker/Wrapper:" <+> pprSyn (dataConWrapId datacon)
 
+
+instance OutputSyn Type where
+  pprSyn typ = case typ of
+    TyVarTy var -> pprSyn var
+    AppTy t1 t2 -> pprSyn t1 <+> pprSyn t2
+    TyConApp tc tys -> pprSyn tc <+> hsep (map pprSyn tys)
+    FunTy t1 t2 -> pprSyn t1 <+> arrow <+> pprSyn t2
+    ForAllTy v t -> text "forall" <+> text (getOccString v) <+> period <+> pprSyn t
+    LitTy (NumTyLit i)  -> integer i
+    LitTy (StrTyLit fs) -> quotes (text $ unpackFS fs)
+    
 
 instance OutputSyn StgExpr where
   pprSyn e =

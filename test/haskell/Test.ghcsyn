@@ -1,4 +1,14 @@
 (StgNonRec)
+  (VanillaId) Test.zero =
+  (CONish) GHC.Types.I# [(LitArg) (MachInt)0]
+  Worker/Wrapper: (DCWorkerId) GHC.Types.I#
+(StgNonRec)
   (VanillaId) main =
-  (CONish) GHC.Types.False []
-  Worker/Wrapper: (DCWorkerId) GHC.Types.False
+  (THUNK)
+    (Case) (App) (VanillaId) Test.zero = (VanillaId) wild
+      (AlgAlt)
+        (DataAlt) GHC.Types.I# (VanillaId) dsB
+          -> (Case) (App) (VanillaId) dsB = (VanillaId) ds1C
+               (PrimAlt)
+                 (DEFAULT) _ -> (ConApp) GHC.Types.False []
+                 (LitAlt) (MachInt)0 -> (ConApp) GHC.Types.True []
