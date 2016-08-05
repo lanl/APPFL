@@ -60,22 +60,37 @@ data PprState = PST { namer   :: UniqueNamer
                     , pprOpts :: PprOpts
                     }
 
-defaultState :: PprState
-defaultState = PST{ namer   = (Map.empty, 0)
-                  , pprOpts = defaultOpts }
-
 
 -- Taking a page from the SDoc type from GHC: They maintain an SDocContext in a
 -- stateful pretty printer and, as necessary, pull information from it to add
 -- color or unicode symbols where appropriate.  For now, the only context we might
 -- want is a verbosity level.
 data PprOpts  = POpts { vlevel :: VLevel }
+data VLevel = V0 | V1 | V2 | V3  deriving (Eq, Ord)                
+
+defaultState :: PprState
+defaultState = PST{ namer   = (Map.empty, 0)
+                  , pprOpts = defaultOpts }
 
 defaultOpts :: PprOpts
 defaultOpts = POpts V2
 
-data VLevel = V0 | V1 | V2 | V3  deriving (Eq, Ord)                
   
+pprGhcSyn :: [StgBinding] -> P.Doc
+pprGhcSyn binds = mkDocWithState binds defaultState
+
+mkDocWithNamer :: OutputSyn a => a -> UniqueNamer -> P.Doc
+mkDocWithNamer thing nmr = mkDocWithState thing defaultState{namer = nmr}
+
+mkDocWithOpts :: OutputSyn a =>  a -> PprOpts-> P.Doc
+mkDocWithOpts thing opts = mkDocWithState thing defaultState{pprOpts = opts}
+
+
+mkDocWithState :: OutputSyn a =>  a -> PprState -> P.Doc
+mkDocWithState thing st = fst (runState (pprSyn thing) st)
+
+showDocS :: DocS -> String
+showDocS doc = show $ fst $ runState doc defaultState
 
 
 -- Lifting the PrettyPrinter
@@ -124,9 +139,6 @@ quotes = liftM P.quotes
 getVLevel :: State PprState VLevel
 getVLevel = liftM (vlevel . pprOpts) get
 
-pprStgSyn :: [StgBinding] -> P.Doc
-pprStgSyn binds = docStoDoc (vcat $ map pprSyn binds)
-
 aboveVLevel :: VLevel -> DocS -> DocS
 aboveVLevel lvl doc = do
   verb <- getVLevel
@@ -146,11 +158,6 @@ pprSynList = brackets . hsep . punctuate comma . map pprSyn
 pprStgName :: (AppflNameable a) => a -> DocS
 pprStgName t = text =<< nameGhcThing t
 
-docStoDoc :: DocS -> P.Doc
-docStoDoc docS = fst $ runState docS defaultState
-
-showDocS :: DocS -> String
-showDocS = show . docStoDoc
 
 -- | Make a string representation of a foreign call
 nameForeignCall :: ForeignCall -> String
@@ -164,6 +171,9 @@ nameForeignCall (CCall (CCallSpec target _ _))
 -- is defined
 instance {-# OVERLAPPABLE #-} AppflNameable a => OutputSyn a where
   pprSyn = pprStgName
+
+instance {-# OVERLAPPABLE #-} OutputSyn a => OutputSyn [a] where
+  pprSyn ls = vcat (map pprSyn ls)
 
 instance {-# OVERLAPPING #-} OutputSyn Var where
   pprSyn v = pfx <+> pprStgName v

@@ -184,7 +184,7 @@ amain = do
   let prld = cwd ++ "/prelude/"
   (ghc, (ts,os)) <- compileAndThen (return . g2a) prld i
   writeFile (i ++ ".appflsyn") (show $ A.unparse ts A.$+$ A.unparse os)
-  writeFile (i ++ ".ghcsyn") (show $ pprStgSyn ghc)
+  writeFile (i ++ ".ghcsyn") (show $ pprGhcSyn ghc)
 
 
 -- For in-progress tests. Note that $PWD is appfl/codegen when loading
@@ -197,7 +197,7 @@ target f = testDir ++ f
 printGhcSyn file = writeGhcSyn file "/dev/stdout" >> putStrLn "" 
 writeGhcSyn infile outfile = do
   (_,stg) <- compile testPreludeDir infile
-  writeFile outfile (show (pprStgSyn stg))
+  writeFile outfile (show (pprGhcSyn stg))
 
 compile prld file = compileAndThen pure prld file
 
@@ -476,6 +476,8 @@ exceptToList e@Except{mCause = Nothing} = [e]
 exceptToList e@Except{mCause = Just cause} = e : exceptToList cause
 
 
+-- | Show a G2AException.  This does not show nested exceptions.
+exceptString :: G2AException -> String
 exceptString Except{srcSpan, mNames, msg} =
   unlines $ [msg] ++ blame mNames ++ ["Occurring at or near " ++ locStr]
   where
@@ -495,7 +497,11 @@ exceptString Except{srcSpan, mNames, msg} =
 
     unpackRSS rss = ((srcSpanStartLine rss, srcSpanStartCol rss),
                      (srcSpanEndLine rss  , srcSpanEndCol rss  ))
-           
+
+
+-- | Show a G2AException and any nested exceptions.
+exceptStrings :: G2AException -> [String]
+exceptStrings = map exceptString . exceptToList
 
 -- | Throw an exception with an optional AppflNameable thing and an optional
 -- source G2AException
@@ -545,9 +551,9 @@ failHard :: G2AException -> a
 failHard e = failHard' e 5
 
 failHard' e depth = error $ unlines $
-  "Exception in G2A!" :
-  (map exceptString $ take depth $ exceptToList e)
-  
+  "Exception in G2A!" : trimmed
+  where eStrs = exceptStrings e
+        trimmed = drop (length eStrs - depth) eStrs
 
 -- | Run a computation in the G2A monad, failing hard on exceptions
 runG2AorElse :: G2AMonad a -> a
@@ -556,7 +562,7 @@ runG2AorElse comp = case runState (runExceptT comp) (G2A Map.empty emptyNamer) o
   (Right r, _) -> r -- We don't need the G2AState afterwards
 
 
--- | Add a GHC DataCon to the TyMap
+-- | Add a GHC DataCon to the State of the G2AMonad
 putDataCon :: G.DataCon -> G2AMonad ()
 putDataCon dc =
   do
@@ -564,11 +570,9 @@ putDataCon dc =
     G2A tymap un <- lget
     lput $ G2A (Map.insertWith insertDC tcname [dc] tymap) un
   where
-    -- This is hacky, but should be ok.  The APPFL.Base parallels to GHC get
-    -- different Uniques than the builtins, so we can't compare those to ensure
-    -- only one 'Bool = T|F' is made. The FromGHC.BuiltIn module handles the
-    -- name mapping, which should give us identical OccNames, if not underlying
-    -- Uniques.
+    -- If we've already seen the datacon, we don't need to add it.  We no longer
+    -- have problems with GHC/APPFL naming overlaps, since given a GHC DataCon,
+    -- we're able to construct the appropriate data definition.
     insertDC [new] dcs | any (== new) dcs = dcs
                        | otherwise =
                          List.insertBy (compare `on` dataConTag) new dcs
@@ -581,6 +585,21 @@ putDataCon dc =
     insertDC _ _ = unreachable _HERE
     
   
+-- | Construct the actual TyCons from the TyMap in the G2AMonad
+makeTyCons :: G2AMonad [A.TyCon]
+makeTyCons =
+  do
+    G2A{tymap} <- lget
+    mapM constrTyCon (Map.toList tymap)
+
+-- | Given a (Con, GHC DataCons) pair, build the appropriate APPFL TyCon
+constrTyCon :: (Con, [G.DataCon]) -> G2AMonad A.TyCon
+constrTyCon (con, dcs) = do
+  appflDCs <- mapM g2aDataCon dcs
+  let tyvars = nub $ concatMap dataConTyVars appflDCs
+  -- Assuming boxed for now
+  return $ TyCon True con tyvars appflDCs
+
 -- | Convert a GHC DataCon to an APPFL DataCon
 g2aDataCon :: G.DataCon -> G2AMonad A.DataCon
 g2aDataCon dc = rethrowAtName dc $
@@ -619,11 +638,13 @@ of 'go' above.
 -}
 
 
+-- | Make functions or top level bindings equivalent to GHC's concept of DataCon
+-- workers: things that produce values of the datatype.
 makeDCWorkers :: A.TyCon -> [Obj Dirty]
 makeDCWorkers (TyCon _ _ _ dcs) = map mkWorker dcs
   where
     -- stolen from GHC's prelude/PrelNames (not exported)
-    -- | all possible lowercase strings
+    -- all possible lowercase strings
     allStrings = [ c:cs | cs <- "" : allStrings, c <- ['a'..'z'] ]
 
     -- Don't need to let-ify a no-arg datacon: make a CON directly
@@ -636,18 +657,6 @@ makeDCWorkers (TyCon _ _ _ dcs) = map mkWorker dcs
               letbody = EAtom Dirty (Var conBind)
               letExpr = ELet Dirty [CON Dirty con conargs conBind] letbody
           in FUN Dirty vars letExpr con
-          
-
-
--- Used to filter out the explicit Worker definitions for the non-wired data
--- definitions.  We generate these at the end and don't want duplicates
-{-# DEPRECATED isDCWorkId "Broken, no idea why. Has unsafe IO" #-}
-isDCWorkId :: Id -> Bool
-isDCWorkId id =
-  case idDetails id of -- idDetails can fail, but no way around it :-\
-    DataConWorkId dc -> trace ("@T -> " ++ show (pprSyn id)) True
-    _                -> trace ("@F -> " ++ show (pprSyn id)) False
-  
 
 
 -- | Convert a GHC Type to an APPFL Monotype for use in DataCons
@@ -670,7 +679,7 @@ g2aMonoType t =
         MVar v        -> return $ MCon True v [m2]
         MCon b c args -> return $ MCon b c (args ++ [m2])
           -- Anything else would be strange, but let's be sure
-        _             -> panicType
+        _             -> unsupportedType
 
     -- e.g. List a, Maybe Int, etc.
     TyConApp tc args  -> do
@@ -690,26 +699,14 @@ g2aMonoType t =
     -- Type-level Literals are definitely beyond what we support.  They *should*
     -- only appear in programs with -XDataKinds, so they could be rejected
     -- early, in theory.
-    LitTy _          -> panicType
+    LitTy _          -> unsupportedType
 
-  where panicType = unsupported $ G.showSDocUnsafe $
-                    G.text "Having trouble converting Type to MonoType:" G.<+> G.ppr t
+  where unsupportedType = do
+          nmr <- getNamer
+          unsupported $
+            "Having trouble converting Type to MonoType:" ++
+            show (mkDocWithNamer t nmr)
 
-        debug t   = unsupported $ show $ A.unparse t
-
--- | Construct the actual TyCons from the TyMap in the G2AMonad
-makeTyCons :: G2AMonad [A.TyCon]
-makeTyCons =
-  do
-    G2A{tymap} <- lget
-    mapM constrTyCon (Map.toList tymap)
-
-constrTyCon :: (Con, [G.DataCon]) -> G2AMonad A.TyCon
-constrTyCon (con, dcs) = do
-  appflDCs <- mapM g2aDataCon dcs
-  let tyvars = nub $ concatMap dataConTyVars appflDCs
-  -- Assuming boxed for now
-  return $ TyCon True con tyvars appflDCs
 
 
 

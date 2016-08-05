@@ -48,6 +48,7 @@ class Monad m => UniqueNameState m where
   getNamer :: m UniqueNamer
 
 
+
 getIntFromUnique :: UniqueNameState s => Unique -> s Int
 getIntFromUnique u =
   do
