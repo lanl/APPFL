@@ -1,5 +1,6 @@
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE ViewPatterns #-}
+{-# LANGUAGE PatternGuards #-}
 
 module FromGHC.PruneSTG where
 

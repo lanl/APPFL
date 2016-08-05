@@ -1,3 +1,5 @@
+{-# LANGUAGE PatternGuards #-}
+
 module FromGHC.BuiltIn
   ( module FromGHC.BuiltIn
   , voidPrimId)
