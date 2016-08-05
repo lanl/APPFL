@@ -245,8 +245,17 @@ patErrorIDs =
   ]
 
 
+isAppflCompatClass :: Class -> Bool
+isAppflCompatClass clas = 
+
+appflClassImplMap = Map.fromList
+  [ (classesDot "Eq", eqClassName) ]
 
 
+
+
+
+{-# DEPRECATED genTupleModule "We don't need a tuple module like GHC's GHC.Tuple" #-}
 -- | Generate the APPFL.Tuple module (wherever you'd like).
 genTupleModule :: FilePath  -- | Location to write the file to
                -> Maybe Int -- | Maybe you want to specify a max tuple size

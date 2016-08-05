@@ -194,6 +194,7 @@ testDir = "../test/haskell/"
 testPreludeDir = "../prelude/"
 target f = testDir ++ f
 
+
 printGhcSyn file = writeGhcSyn file "/dev/stdout" >> putStrLn "" 
 writeGhcSyn infile outfile = do
   (_,stg) <- compile testPreludeDir infile
@@ -434,10 +435,11 @@ type Clean = ()
 -- GHC (in deriving Enum instances, in particular) and we don't want
 -- to break that logic.
 type TyMap = Map.Map A.Con [G.DataCon]
-
+type Classmap = ()
 
 data G2AState = G2A { tymap :: TyMap,
-                      unamer :: UniqueNamer}
+                      unamer :: UniqueNamer,
+                      classMap :: ClassMap}
                       
 -- We want a "stateful" traversal, since, once a TyCon is identified
 -- any new DataCon associated with it should be inserted into its
@@ -458,6 +460,47 @@ data G2AException
     , mCause  :: Maybe G2AException} -- Exceptions can be chained
 
 type G2AMonad t = ExceptT G2AException (State G2AState) t
+
+
+
+-- The unsatisfying solution to matching the Appfl typeclass dictionaries with
+-- GHC dictionaries:
+--
+-- We can map from GHC Classes to Appfl Classes for known inescapable classes
+-- (Eq, Num, Ord, Enum .. maybe more) fairly easily.  At the STG level, class
+-- methods become selectors for dictionaries that contain the actual
+-- implementation for each type. So, really, we're mapping from GHC Selector to
+-- Appfl Selector.
+--
+-- But, the dictionaries are a problem.  There are already many instances of
+-- these classes that are inaccessible to us, being precompiled and archived in
+-- packages.  (This is one of the reasons for the parallel Base libraries; we
+-- need the STG that represents the Eq Bool instance.)  So, we have the Appfl Eq
+-- class and as many instances of it as we can get, but we still need to have
+-- some conversion from the GHC Eq Bool dictionary to the Appfl Eq Bool
+-- dictionary.
+--
+-- To have as little dependency on GHC's string naming conventions as possible,
+-- we can use the Class and Type (having constant, known names) whenever we
+-- encounter a dictionary to determine if it is one of these "builtins". In the
+-- Appfl case, we won't know anything except the String representation of the
+-- Class, but we'll have instances for the actual GHC Types, and therefore a
+-- consistent way of identifying the dictionaries that need to be mapped _to_.
+--
+-- So we know what to look for during traversal, but because we're in a State
+-- Monad in the whole G2A process, we can't use circular programming* to resolve
+-- these mappings "during" the traversal, so the solution is to simply return a
+-- function that accepts a complete mapping and uses it to rename dictionaries
+-- appropriately.  This is the motivation for the NeedsMap alias.
+type NeedsMap t = ClassMap -> t
+
+--- * I've tried using both a Lazy State monad and a Lazy Map together in a
+--- simple trial without success.  I assume there's some strictness that can't
+--- be escaped either in the Map or in the monad, but I don't know where it
+--- lies.
+
+
+
 
 instance UniqueNameState (ExceptT G2AException (State G2AState)) where
   getNamer = lget >>= return . unamer
@@ -556,10 +599,10 @@ failHard' e depth = error $ unlines $
         trimmed = drop (length eStrs - depth) eStrs
 
 -- | Run a computation in the G2A monad, failing hard on exceptions
-runG2AorElse :: G2AMonad a -> a
+runG2AorElse :: G2AMonad a -> (a, G2AState)
 runG2AorElse comp = case runState (runExceptT comp) (G2A Map.empty emptyNamer) of
   (Left e, _) -> failHard e
-  (Right r, _) -> r -- We don't need the G2AState afterwards
+  (Right r, st) -> (r, st)
 
 
 -- | Add a GHC DataCon to the State of the G2AMonad
@@ -708,41 +751,47 @@ g2aMonoType t =
             show (mkDocWithNamer t nmr)
 
 
+withMap :: NeedsMap t -> G2AMonad (NeedsMap a)
+withMap t = return \mp -> t mp
 
+withMapList :: [NeedsMap t] -> G2AMonad (NeedsMap [t])
+withMapList ts = return \mp -> map ($ mp) ts
 
 -- | Entry point to the GHC to APPFL STG conversion
 g2a :: [StgBinding] -> ([A.TyCon], [Obj Clean])
 g2a binds =
-  let (objs,tycons) = runG2AorElse $
-                      do -- We do want to fail hard at the moment.
-                        objs <- mapM g2aObj binds
-                        tycons <- makeTyCons
-                        let dcFuns = map makeDCWorkers tycons
-                        return (dcFuns ++  objs, tycons)
+  let ((mkobjs,tycons), st) = runG2AorElse $
+                               do -- We do want to fail hard at the moment.
+                                 mkobjs <- mapM g2aObj binds
+                                 tycons <- makeTyCons
+                                 let dcFuns = map makeDCWorkers tycons
+                                 return (\mp -> mkobjs mp ++ dcFuns, tycons)
                       
-  in (map sanitizeTC tycons, map sanitizeObj $ concat objs)
+  in (map sanitizeTC tycons, map sanitizeObj $ concat (mkobjs $ classMap st))
 
 
 -- | Translate bindings (let/letrec, including top level) into APPFL Obj types.
-g2aObj :: StgBinding -> G2AMonad [Obj Dirty]
+g2aObj :: StgBinding -> G2AMonad (NeedsMap [Obj Dirty])
 g2aObj bind =
   case bind of
     -- We don't distinguish between recursive bindings and otherwise at the type level, so
     -- no need to do anything special here.
 
-    StgNonRec id rhs -> procRhs id rhs >>= return
+    StgNonRec id rhs -> procRhs id rhs >>= withMapList
                            
-    StgRec pairs -> concatMapM (uncurry procRhs) pairs
+    StgRec pairs -> withMapList $ concatMapM (uncurry procRhs) pairs
 
   where
-    procRhs :: Id -> StgRhs -> G2AMonad [Obj Dirty]
-    procRhs id rhs = rethrowAtName id $
+    procRhs :: Id -> StgRhs -> G2AMonad [NeedsMap (Obj Dirty)]
+    procRhs id rhs =
+      rethrowAtName id $ return $ \mp ->
+      
       case idDetails id of
         
         -- We don't want to do anything if the Id refers to a DataCon Worker,
         -- since we generate them independently. For some reason, detecting this
         -- with isDCWorkId does not work...
-        DataConWorkId{} -> pure []
+        DataConWorkId dc -> putDataCon dc >> pure []
         
         _ -> fmap pure $
           case rhs of
@@ -751,7 +800,10 @@ g2aObj bind =
 
             -- it's a THUNK
               | null args
-                -> liftM2 (THUNK Dirty) (g2aExpr expr) (nameGhcThing id)
+                -> do
+                  mkExpr <- g2aExpr expr
+                  name   <- nameGhcThing id
+                  return $ THUNK Dirty (mkExpr mp) name
 
             -- it's a FUN(ish) thing.  Data constructors are functions too but
             -- they are not given a distinguished definition as in APPFL STG or
