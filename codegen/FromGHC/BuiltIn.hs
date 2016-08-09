@@ -5,6 +5,7 @@ module FromGHC.BuiltIn
   , voidPrimId)
 where
 
+import Data.Map (Map)
 import qualified Data.Map.Strict as Map
 import Data.Maybe (fromMaybe)
 import Control.Applicative ((<|>), (<*>))
@@ -26,6 +27,7 @@ import Var (Id, idDetails, isId)
 import IdInfo (IdDetails (..))
 import Name as G ( Name, NamedThing (..), BuiltInSyntax(..)
                  , mkWiredInName, getOccString)
+import Class (Class (..))       
 import OccName (mkDataOccFS)
 import BasicTypes (TupleSort (..))
 import FastString (fsLit)
@@ -36,7 +38,7 @@ lookupAppflPrimop :: G.PrimOp -> Maybe A.Primop
 lookupAppflPrimop = (`Map.lookup` primopMap)
 
 
-primopMap :: Map.Map G.PrimOp A.Primop
+primopMap :: Map G.PrimOp A.Primop
 primopMap = Map.fromList
   [ (CharGtOp   , Pigt)
   , (CharGeOp   , Pige)
@@ -83,7 +85,7 @@ primopMap = Map.fromList
 lookupImplementedPrimop :: G.PrimOp -> Maybe AppflName
 lookupImplementedPrimop = (`Map.lookup` implementedOpMap)
 
-implementedOpMap :: Map.Map G.PrimOp AppflName
+implementedOpMap :: Map G.PrimOp AppflName
 implementedOpMap = Map.fromList
   [ (IntQuotRemOp, primDot "quotRemInt#")
   ]
@@ -160,7 +162,7 @@ maybeGetAppflClass clasName selector =
 
 
 
-appflClassModMap :: Map.Map Name (AppflName -> AppflName)
+appflClassModMap :: Map Name (AppflName -> AppflName)
 appflClassModMap = Map.fromList
   [ (eqClassName, classesDot)
   , (ordClassName, classesDot) ]
@@ -170,6 +172,14 @@ appflClassMap =
   where
     makeClassName clasName modPfx = modPfx (getOccString clasName)
       
+
+getClassFromAppflEquiv :: AppflName -> Maybe Name
+getClassFromAppflEquiv name = Map.lookup name appflClassImplMap
+
+appflClassImplMap :: Map AppflName G.Name
+appflClassImplMap = Map.fromList
+  [ (classesDot "Eq", eqClassName) ]
+
     
     
 infixr 5 \.
@@ -185,7 +195,7 @@ primDot    s = appflDot "Prim"    \. s
 classesDot s = appflDot "Classes" \. s
 
 
-builtInMap :: Map.Map G.Name String
+builtInMap :: Map G.Name String
 builtInMap =
   -- It should be OK to put all kinds of Names in this map.  GHC's
   -- disambiguation strategies seem to eliminate the chances of any naming
@@ -222,7 +232,7 @@ intDataConName = mkWiredInName G.gHC_TYPES
                  (AConLike (RealDataCon G.intDataCon)) UserSyntax
                  
 
-tupleMap :: Map.Map G.Name AppflName
+tupleMap :: Map G.Name AppflName
 tupleMap = Map.fromList $ concat
   [ [ (getName (tupleCon BoxedTuple i)     , tupleDot ("TP" ++ show i))
     , (getName (tupleCon UnboxedTuple i)   , tupleDot ("UTP" ++ show i))
@@ -232,7 +242,7 @@ tupleMap = Map.fromList $ concat
    | i <- [0..mAX_TUPLE_SIZE]]
 
 
-errorCallMap :: Map.Map G.Name AppflName
+errorCallMap :: Map G.Name AppflName
 errorCallMap = Map.fromList $
                map (\ident -> (getName ident , appflNoExhaust))
                patErrorIDs
@@ -243,13 +253,6 @@ patErrorIDs =
   , nON_EXHAUSTIVE_GUARDS_ERROR_ID
   , iRREFUT_PAT_ERROR_ID
   ]
-
-
-isAppflCompatClass :: Class -> Bool
-isAppflCompatClass clas = 
-
-appflClassImplMap = Map.fromList
-  [ (classesDot "Eq", eqClassName) ]
 
 
 

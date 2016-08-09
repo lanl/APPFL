@@ -12,3 +12,4 @@
                (PrimAlt)
                  (DEFAULT) _ -> (ConApp) GHC.Types.False []
                  (LitAlt) (MachInt)0 -> (ConApp) GHC.Types.True []
+		 

@@ -21,7 +21,7 @@ import           StgSyn
 import           CoreSyn (AltCon (..))
 import           DataCon (dataConWrapId)
 import           Literal (Literal (..))
-import           PrimOp ( PrimCall (..), primOpOcc )
+import           PrimOp ( PrimCall (..), PrimOp (..), primOpOcc )
 import           ForeignCall
                  ( ForeignCall (..), CCallSpec (..)
                  , CCallTarget (..) )
@@ -88,6 +88,11 @@ mkDocWithOpts thing opts = mkDocWithState thing defaultState{pprOpts = opts}
 
 mkDocWithState :: OutputSyn a =>  a -> PprState -> P.Doc
 mkDocWithState thing st = fst (runState (pprSyn thing) st)
+
+quickPpr :: (UniqueNameState s, OutputSyn a) => a -> s String
+quickPpr it = do
+  namer <- getNamer
+  return $ show $ mkDocWithState it (PST namer (POpts V0))
 
 showDocS :: DocS -> String
 showDocS doc = show $ fst $ runState doc defaultState
@@ -177,18 +182,18 @@ instance {-# OVERLAPPABLE #-} OutputSyn a => OutputSyn [a] where
 
 instance {-# OVERLAPPING #-} OutputSyn Var where
   pprSyn v = pfx <+> pprStgName v
-    where pfx | isId v
-            = case idDetails v of
-                  dets@DFunId{} ->
-                    case last $ unroll $ varType v of
-                     TyConApp tc typs ->
-                       pprSyn dets <+> aboveVLevel V1
-                       (text "tycon:" <+> pprSyn tc <+> text "typs:" <+>
-                        brackList (map pprSyn typs))
+    where pfx | isId v =
+                  case idDetails v of
+                    dets@DFunId{} ->
+                      case last $ unroll $ varType v of
+                        TyConApp tc typs ->
+                          pprSyn dets <+> aboveVLevel V1
+                          (text "tycon:" <+> pprSyn tc <+> text "typs:" <+>
+                           brackList (map pprSyn typs))
                        
-                     typ -> pprStgName v $+$ pprSyn typ >>= error . show
+                        typ -> pprStgName v $+$ pprSyn typ >>= error . show
                        
-                  dets -> pprSyn dets
+                    dets -> pprSyn dets
                              
               | otherwise = empty
 
@@ -340,9 +345,12 @@ instance OutputSyn StgOp where
   pprSyn op =
     case op of
       StgPrimOp primop
-        -> text $ "(Prim) " ++ occNameString (primOpOcc primop)
+        -> prefix "Prim" <+> pprSyn primop
       StgPrimCallOp (PrimCall fstring _)
         -> text $ "(PrimCall) " ++ unpackFS fstring
       StgFCallOp fcall _
         -> text $ "(Foreign) " ++ nameForeignCall fcall
+
+instance OutputSyn PrimOp where
+  pprSyn p = text $ occNameString (primOpOcc p)
 
