@@ -53,7 +53,7 @@ module AppflPrelude (
     -- *** Numeric types
     Int(..), (+), (-), (*), (/), mod, div, negate,
     fromInteger,
-
+    Char (..) ,
     Eq(..),
     -- Integer, Float, Double,
     -- Rational, Word,

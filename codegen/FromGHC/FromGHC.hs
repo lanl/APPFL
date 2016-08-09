@@ -1,5 +1,5 @@
-{-# LANGUAGE KindSignatures #-}
-{-# LANGUAGE
+{-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE KindSignatures,
 NamedFieldPuns, CPP, FlexibleInstances, ScopedTypeVariables,
 LiberalTypeSynonyms, ViewPatterns, PatternGuards,
 UndecidableInstances, BangPatterns, MagicHash #-}
@@ -25,8 +25,6 @@ module FromGHC.FromGHC
   , amain 
   )
 where
-
-
 
 
 -- As much as practical, I'll be explicit about what comes from where,
@@ -157,18 +155,18 @@ import           DataCon as G
                  , isUnboxedTupleCon
                  )
 import           TyCon as G ( TyCon, TyConParent (..)
-                            , isDataTyCon, tyConParent )
+                            , isDataTyCon, tyConParent )                 
 import           TypeRep (Type (..), ) -- Analagous to our MonoType
 import           Literal ( Literal (..) )
 import           PrimOp ( PrimOp (..))
-                 
+
 -- Id is an alias for Var, but it's used where you should expect the Id
 -- constructor of the Var type. Vars add metadata to identifiers (Names)
 import           Var (Var (..), Id, idDetails, isId )
 import           IdInfo (IdDetails(..))
                  
 -- Name is the basic identifier type. NamedThings have a Name (accessed with
--- getName).  
+-- getName).
 import           Name 
                  ( Name, NamedThing (..)
                  , getOccString, nameSrcSpan )
@@ -241,10 +239,11 @@ compileAndThen stgFun preludeDir file = do
       -- They're already printed out (not sure how/where that happens)
       -- so we don't need to do anything with the exception.
       handleSourceError
-        (\err ->
-           (liftIO $ do      -- Red                   Reset
-               putStrLn "\n  \27[31mCompilation Failed\27[0m"
-               exitWith $ ExitFailure 1 )) $ do
+        (\err -> do
+            printException err
+            liftIO $ do               
+              putStrLn "\n  \27[31mCompilation Failed\27[0m"
+              exitWith $ ExitFailure 1 ) $ do
 
 
       setSessionDynFlags dflags
@@ -298,7 +297,7 @@ compileAndThen stgFun preludeDir file = do
       hscEnv <- getSession
 
       -- CgGuts are a reduced form of ModGuts. They hold information necessary
-      -- for STG translation. 
+      -- for Core to STG translation. 
       (cgGuts, modDetails) <-
         mapAndUnzipM (liftIO . tidyProgram hscEnv <=< liftIO . hscSimplify hscEnv) modGuts
         -- Simplifying and Tidying seem to be useful, but not strictly necessary
@@ -306,7 +305,7 @@ compileAndThen stgFun preludeDir file = do
 
       (nestedStg, ccs) <- mapAndUnzipM gutsToSTG cgGuts
       dflags     <- getSessionDynFlags
-      let stg = pruneGhcStg $ concat nestedStg
+      let stg = concat nestedStg
       res <- stgFun stg
       return $ (stg, res)
 
@@ -470,19 +469,9 @@ data DictInfo
     -- ^ The DFunIds that were bound in an StgBinding (i.e. we have a "real"
     -- definition for them).
     }
--- We can use the `undefs` and `haveDefs` to identify problems in source code
--- before releasing the Appfl AST.  We could compile the full list of known
--- dictionaries (essentially class + types instantiated), but it's easier to
--- simply say, "For every Dictionary we see, if there's not an accompanying
--- definition, it must have an Appfl equivalent." If we find any that don't
--- satisfy this, we can print useful information about it and add the compat
--- implementation to the Base library.
---
--- It's possible to do this without a `haveDefs` field, probably, by checking
--- for definitions in the Appfl STG during the Post-G2A stage, but it would rely
--- on unique String identifiers or an extra scoping-resolution parameter to be
--- certain.  Accumulating the `haveDefs` is more reliable thanks to GHC's
--- Unique(ish) Names
+-- `undefs` and `haveDefs` along with the PostG2A metadata help reduce the
+-- number of lookups during post-processing.  The Id from some element's
+-- IncompleteDict metadata only needs to be checked if it's also in `undefs`.
 
 emptyDictInfo :: DictInfo
 emptyDictInfo = DictInfo [] Set.empty Set.empty
@@ -560,7 +549,7 @@ g2a binds =
                                  objs0 <- concatMapM g2aObj binds
                                  tycons <- makeTyCons
                                  let dcFuns = concatMap makeDCWorkers tycons
-                                 objs1 <- return (objs0 ++ dcFuns)
+                                 objs1 <- mapM pproc (objs0 ++ dcFuns)
                                  return (objs1, tycons)
                       
   in (map sanitizeTC tycons, map sanitizeObj objs)
@@ -902,12 +891,32 @@ g2aAlt scrtName (acon, binders, usemask, rhsExpr)
 -- return a PostG2A type indicating whether the Id will need further work after
 -- G2A.
 procRhsDictId :: Id -> G2AMonad PostG2A
-procRhsDictId id =
+procRhsDictId id = procDictId id False
+
+-- | Given a LHS DFunId, (i.e. a Dictionary with a real implementation), add it
+-- to the known definitions (possibly removing it from the unknowns) in the DictInfo
+-- of the G2AMonad.
+procLhsDictId :: Id -> G2AMonad ()
+procLhsDictId id =
+  -- Don't want the PostG2A to be used by mistake
+  procDictId id True >> return () 
+  
+-- | General form of processing DFunIds, parameterized for whether the Id is found
+-- in a binding or in an expression.
+procDictId :: Id   -- | Id known to have DFunId details
+           -> Bool -- | Was it found in the Lhs of a StgBinding?
+           -> G2AMonad PostG2A
+procDictId id isImpl =
   case finalResultType $ varType id of
     TyConApp tc typs
-      -- If the TyCon is a dictionary, its parent will be a ClassTyCon
       | ClassTyCon clas <- tyConParent tc -> do
+      -- If the TyCon is a dictionary, its parent will be a ClassTyCon
+
           d@DictInfo{appflCompatAList, undefs, haveDefs} <- getDictInfo
+          
+          when isImpl $ putDictInfo d{ undefs   = Set.delete id undefs
+                                     , haveDefs = Set.insert id haveDefs }
+
           case getClassFromAppflEquiv (qualifyName clas) of
             -- If this class is a compatability class,
             -- this is the "real" class name ..
@@ -921,10 +930,11 @@ procRhsDictId id =
               return Complete
 
             -- Otherwise, it's a reference to a dictionary of some other class.
-            -- We'll add it to the undefs only if we don't know it's defined
-            -- elsewhere.
+            -- We'll add it to the undefs only if we don't know it's defined.
             Nothing
-              | id `Set.member` haveDefs -> return Complete
+              | isImpl || id `Set.member` haveDefs
+                -> return Complete
+                
               | otherwise -> do
                   putDictInfo d{undefs = Set.insert id undefs}
                   return (IncompleteDict id)
@@ -935,14 +945,6 @@ procRhsDictId id =
       -- Dictionary constructor) and its parent really should be a ClassTyCon.
       -- If I'm wrong, I'll have to do investigate GHC STG some more.    
 
--- | Given a LHS DFunId, (i.e. a Dictionary with a real implementation), add it
--- to the known definitions (possibly removing it from the unknowns) in the DictInfo
--- of the G2AMonad.
-procLhsDictId :: Id -> G2AMonad ()
-procLhsDictId id = do
-  d@DictInfo{undefs, haveDefs} <- getDictInfo
-  putDictInfo d{ undefs   = Set.delete id undefs
-               , haveDefs = Set.insert id haveDefs }
     
   
 -- | Construct the actual TyCons from the TyMap in the G2AMonad
@@ -1002,15 +1004,11 @@ of 'go' above.
 makeDCWorkers :: A.TyCon -> [Obj PostG2A]
 makeDCWorkers (TyCon _ _ _ dcs) = map mkWorker dcs
   where
-    -- stolen from GHC's prelude/PrelNames (not exported)
-    -- all possible lowercase strings
-    allStrings = [ c:cs | cs <- "" : allStrings, c <- ['a'..'z'] ]
-
     -- Don't need to let-ify a no-arg datacon: make a CON directly
     mkWorker (DataCon con [])  = CON Complete con [] con
     -- With args, need to make a FUN
     mkWorker (DataCon con mts) =
-          let vars = take (length mts) allStrings
+          let vars = take (length mts) allNameStrings
               conargs = map (EAtom Complete . Var) vars
               conBind = "theCon"
               letbody = EAtom Complete (Var conBind)
@@ -1101,6 +1099,7 @@ isAppflEquivClassTC tc =
   qualifyName tc `Map.member` appflClassImplMap
 
 
+
 -- | Given some GHC Type, get the "result" Type of function type, or simply return the
 -- Type itself.
 -- e.g.  a -> b -> T b   yields  T b
@@ -1121,7 +1120,20 @@ isAltErrorExpr :: StgExpr -> Bool
 isAltErrorExpr (StgApp id args) = isErrorId id
 isAltErrorExpr _ = False
 
-  
+dictInfoKeyComp :: (Name, [Type]) -> (Name, [Type]) -> Bool
+dictInfoKeyComp (n1, ts1) (n2, ts2) =
+  n1 == n2 && and (zipWith myTyEq ts1 ts2)
+
+-- | Type equivalence for typeclass implementations
+myTyEq :: Type -> Type -> Bool
+myTyEq (TyVarTy _) (TyVarTy _) = True -- tyvars are equivalent for my needs
+myTyEq (AppTy a1 b1) (AppTy a2 b2) =  a1 `myTyEq` a2 && b1 `myTyEq` b2
+myTyEq (TyConApp tc1 ts1) (TyConApp tc2 ts2) =
+  tc1 == tc2 && and (zipWith myTyEq ts1 ts2)
+myTyEq (FunTy a1 b1) (FunTy a2 b2) =  a1 `myTyEq` a2 && b1 `myTyEq` b2
+myTyEq (ForAllTy _ t1) (ForAllTy _ t2) =  t1 `myTyEq` t2
+myTyEq _ _ = False
+
 
 
 --------------------------------------------------------------------------------
@@ -1250,16 +1262,19 @@ instance PostProc Obj where
 instance PostProc Expr where
   pproc e = case emd e of
     Complete -> recur e
-    ------------------------------------------------------------
-    -- Incomplete --> We need to swap some names
-    ------------------------------------------------------------
+    
     IncompleteDict id -> case e of
 
-      EAtom {ea} -> undefined
+      -- Simple case: This Atom identifies a dictionary we need to find the
+      -- Appfl equivalent for.
+      EAtom {} -> makeNewExpr id e (\name -> e{ea = Var name})
 
-      -- The function being called might be a dictionary identifer in the
-      -- super/sub-class case (I think)
-      EFCall {ev, eas} -> undefined
+
+      -- The function being called might be a dictionary identifer in constrained
+      -- instances. For example, in the (Eq a => Eq [a]) instance, `[2] == [1,2]`
+      -- becomes `(==) (dEqList dEqInt) [2] [1,2]`.  The dictionary dEqList takes
+      -- a dictionary argument for its elements.
+      EFCall {} -> makeNewExpr id e (\name -> e{ev = name})
       
       -- Anything else doesn't make sense, since IncompleteDict is basically
       -- saying that "this idenfier needs to be swapped".  Let and Case
@@ -1267,30 +1282,75 @@ instance PostProc Expr where
       -- not dictionaries.  
       primop -> unreachable _HERE
         
-  -- Common logic to both Complete and Incomplete case:
-  -- traverse the rest of the tree
-  where recur e = case e of
+    where
+      recur e = case e of
+        -- Common logic to both Complete and Incomplete case: traverse the
+        -- rest of the tree
 
-      ELet {edefs, ee} -> do
-        pdefs <- mapM pproc edefs
-        pe    <- pproc ee
-        return e{ emd   = Dirty
-                , edefs = pdefs
-                , ee    = pe }
+        ELet {edefs, ee} -> do
+          pdefs <- mapM pproc edefs
+          pe    <- pproc ee
+          return e{ emd   = Dirty
+                  , edefs = pdefs
+                  , ee    = pe }
 
-      ECase {ee, ealts} -> do
-        palts <- pproc ealts
-        pe    <- pproc ee
-        return e{ emd   = Dirty
-                , ealts = palts
-                , ee    = pe }
+        ECase {ee, ealts} -> do
+          palts <- pproc ealts
+          pe    <- pproc ee
+          return e{ emd   = Dirty
+                  , ealts = palts
+                  , ee    = pe }
 
-      EAtom{} -> return e{emd = Dirty}
+        EAtom {ea} ->
+          return e{ emd = Dirty
+                  , ea} -- typecheck fails without the `ea` param. GHC bug?
+  
+        -- Even though a Primop will never be applied to a Dictionary, we still
+        -- need to change the argument metadata.  EFCalls just happen to have the
+        -- same logic.  Their args may need modification
+        fCallOrPrimop -> do
+          pas <- mapM pproc (eas e)
+          return e{ emd = Dirty
+                  , eas = pas }
 
-      -- Even though a Primop will never be applied to a Dictionary, we still
-      -- need to change the argument metadata.  EFCalls just happen to have the
-      -- same logic.  Their args may need modification
-      fCallOrPrimop -> do
-        pas <- mapM pproc (eas e)
-        return e{ emd = Dirty
-                , eas = pas }    
+      -- Called from the IncompleteDict cases
+      makeNewExpr id ex mkEx = do
+        DictInfo{appflCompatAList, undefs} <- getDictInfo
+        if (id `Set.member` undefs)
+          then
+          do
+            -- These matches should never fail, having been matched when the
+            -- Id was placed in the metadata.
+            let TyConApp tc typs = finalResultType (varType id)
+                ClassTyCon clas = tyConParent tc
+            case lookupBy dictInfoKeyComp (getName clas, typs) appflCompatAList of
+              
+              -- Found our Appfl implementation
+              Just appflName -> recur $ mkEx appflName
+            
+              -- Bad news: Undefined dictionary with no Appfl implementation
+              Nothing -> do
+                clasStr <- quickPpr clas
+                typStrs <- mapM quickPpr $ typs
+                unsupportedWithName id $
+                  unlines $
+                  "No Appfl equivalent class implementation:" : clasStr : typStrs
+
+            -- Dictionary is defined somewhere in the AST, don't do anything
+            -- special
+          else recur ex
+            
+            
+instance PostProc Alts where
+  pproc a@Alts{alts, scrt} = do
+    pscrt <- pproc scrt
+    palts <- mapM pproc alts
+    return a{ altsmd = Dirty
+            , alts   = palts
+            , scrt   = pscrt}
+
+instance PostProc Alt where
+  pproc a = do
+      pae <- pproc (ae a)
+      return a{ amd = Dirty
+              , ae  = pae }

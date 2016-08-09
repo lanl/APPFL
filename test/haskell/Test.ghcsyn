@@ -1,15 +1,1903 @@
 (StgNonRec)
-  (VanillaId) Test.zero =
-  (CONish) GHC.Types.I# [(LitArg) (MachInt)0]
+  (VanillaId) Test.fst =
+  (FUN)
+  [(VanillaId) ds]
+    (Case) (App) (VanillaId) ds = (VanillaId) wildB
+      (AlgAlt)
+        (DataAlt) GHC.Tuple.(,) (VanillaId) a4C (VanillaId) ds1D
+          -> (App) (VanillaId) a4C
+(StgNonRec)
+  (VanillaId) Test.snd =
+  (FUN)
+  [(VanillaId) dsE]
+    (Case) (App) (VanillaId) dsE = (VanillaId) wildF
+      (AlgAlt)
+        (DataAlt) GHC.Tuple.(,) (VanillaId) ds1G (VanillaId) a4H
+          -> (App) (VanillaId) a4H
+(StgNonRec)
+  (VanillaId) aI =
+  (CONish) GHC.Types.I# [(LitArg) (MachInt)4]
   Worker/Wrapper: (DCWorkerId) GHC.Types.I#
+(StgNonRec)
+  (VanillaId) a1J =
+  (CONish) GHC.Types.I# [(LitArg) (MachInt)3]
+  Worker/Wrapper: (DCWorkerId) GHC.Types.I#
+(StgNonRec)
+  (VanillaId) Test.myOtherPair =
+  (CONish) GHC.Tuple.(,) [(VarArg) (VanillaId) aI ,(VarArg) (VanillaId) a1J]
+  Worker/Wrapper: (DCWorkerId) GHC.Tuple.(,)
+(StgNonRec)
+  (VanillaId) a2K =
+  (CONish) GHC.Types.I# [(LitArg) (MachInt)2]
+  Worker/Wrapper: (DCWorkerId) GHC.Types.I#
+(StgNonRec)
+  (VanillaId) a3L =
+  (CONish) GHC.Types.I# [(LitArg) (MachInt)2]
+  Worker/Wrapper: (DCWorkerId) GHC.Types.I#
+(StgNonRec)
+  (VanillaId) Test.myPair =
+  (CONish) GHC.Tuple.(,) [(VarArg) (VanillaId) a2K ,(VarArg) (VanillaId) a3L]
+  Worker/Wrapper: (DCWorkerId) GHC.Tuple.(,)
 (StgNonRec)
   (VanillaId) main =
   (THUNK)
-    (Case) (App) (VanillaId) Test.zero = (VanillaId) wild
+    (Case) (App) (DictFunId) tycon: GHC.Classes.Eq typs: [GHC.Tuple.(,) aM bN] GHC.Classes.$fEq(,) (VarArg) (DictFunId) tycon: GHC.Classes.Eq typs: [GHC.Types.Int] GHC.Classes.$fEqInt (VarArg) (DictFunId) tycon: GHC.Classes.Eq typs: [GHC.Types.Int] GHC.Classes.$fEqInt = (VanillaId) satO
       (AlgAlt)
-        (DataAlt) GHC.Types.I# (VanillaId) dsB
-          -> (Case) (App) (VanillaId) dsB = (VanillaId) ds1C
+        (DEFAULT) _
+          -> (App) (ClassOpId) Selectors: [== ,/=] APPFL.Classes.== (VarArg) (VanillaId) satO (VarArg) (VanillaId) Test.myPair (VarArg) (VanillaId) Test.myOtherPair
+(StgNonRec)
+  (VanillaId) APPFL.Prim.void# =
+  (CONish) APPFL.VOID.VOID []
+  Worker/Wrapper: (DCWorkerId) APPFL.VOID.VOID
+(StgRec)
+  (VanillaId) APPFL.Prim.imin# =
+  (THUNK) (App) (VanillaId) xP
+  (VanillaId) xP =
+  (THUNK) (App) (VanillaId) APPFL.Prim.imin#
+(StgRec)
+  (VanillaId) APPFL.Prim.imax# =
+  (THUNK) (App) (VanillaId) x1Q
+  (VanillaId) x1Q =
+  (THUNK) (App) (VanillaId) APPFL.Prim.imax#
+(StgNonRec)
+  (VanillaId) APPFL.Prim.ineg# =
+  (FUN)
+  [(VanillaId) etaR]
+    (Op) (Prim) negateInt# [(VarArg) (VanillaId) etaR]
+(StgNonRec)
+  (VanillaId) APPFL.Prim./# =
+  (FUN)
+  [(VanillaId) etaS ,(VanillaId) etaR]
+    (Op) (Prim) quotInt# [(VarArg) (VanillaId) etaS ,(VarArg) (VanillaId) etaR]
+(StgNonRec)
+  (VanillaId) APPFL.Prim.%# =
+  (FUN)
+  [(VanillaId) etaS ,(VanillaId) etaR]
+    (Op) (Prim) remInt# [(VarArg) (VanillaId) etaS ,(VarArg) (VanillaId) etaR]
+(StgNonRec)
+  (VanillaId) APPFL.Prim.quotRemInt# =
+  (FUN)
+  [(VanillaId) aT ,(VanillaId) bU]
+    (Case) (Op) (Prim) quotInt# [(VarArg) (VanillaId) aT ,(VarArg) (VanillaId) bU] = (VanillaId) qV
+      (PrimAlt)
+        (DEFAULT) _
+          -> (Case) (Op) (Prim) remInt# [(VarArg) (VanillaId) aT ,(VarArg) (VanillaId) bU] = (VanillaId) rW
                (PrimAlt)
-                 (DEFAULT) _ -> (ConApp) GHC.Types.False []
-                 (LitAlt) (MachInt)0 -> (ConApp) GHC.Types.True []
-		 
+                 (DEFAULT) _
+                   -> (ConApp) GHC.Prim.(#,#) [(VarArg) (VanillaId) qV ,(VarArg) (VanillaId) rW]
+(StgNonRec)
+  (DCWorkerId) APPFL.VOID.VOID =
+  (CONish) APPFL.VOID.VOID []
+  Worker/Wrapper: (DCWorkerId) APPFL.VOID.VOID
+(StgNonRec)
+  (VanillaId) APPFL.Base.quotRemInt =
+  (FUN)
+  [(VanillaId) dsX ,(VanillaId) ds1Y]
+    (Case) (App) (VanillaId) dsX = (VanillaId) wildZ
+      (AlgAlt)
+        (DataAlt) GHC.Types.I# (VanillaId) x1a
+          -> (Case) (App) (VanillaId) ds1Y = (VanillaId) wild1b
+               (AlgAlt)
+                 (DataAlt) GHC.Types.I# (VanillaId) yc
+                   -> (Case) (App) (VanillaId) APPFL.Prim.quotRemInt# (VarArg) (VanillaId) x1a (VarArg) (VanillaId) yc = (VanillaId) ds2d
+                        (UbxTupAlt2)
+                          (DataAlt) GHC.Prim.(#,#) (VanillaId) ipve (VanillaId) ipv1f
+                            -> (Case) (ConApp) GHC.Prim.(#,#) [(VarArg) (VanillaId) ipve ,(VarArg) (VanillaId) ipv1f] = (VanillaId) wild2g
+                                 (UbxTupAlt2)
+                                   (DataAlt) GHC.Prim.(#,#) (VanillaId) qh (VanillaId) ri
+                                     -> (Let) let
+                                          (StgNonRec)
+                                            (VanillaId) satj =
+                                            (CONish) GHC.Types.I# [(VarArg) (VanillaId) ri]
+                                            Worker/Wrapper: (DCWorkerId) GHC.Types.I#
+                                        in (Let) let
+                                             (StgNonRec)
+                                               (VanillaId) satk =
+                                               (CONish) GHC.Types.I# [(VarArg) (VanillaId) qh]
+                                               Worker/Wrapper: (DCWorkerId) GHC.Types.I#
+                                           in (ConApp) GHC.Tuple.(,) [(VarArg) (VanillaId) satk ,(VarArg) (VanillaId) satj]
+(StgNonRec)
+  (VanillaId) APPFL.Base.modInt =
+  (FUN)
+  [(VanillaId) dsl ,(VanillaId) ds1m]
+    (Case) (App) (VanillaId) dsl = (VanillaId) wildn
+      (AlgAlt)
+        (DataAlt) GHC.Types.I# (VanillaId) x1o
+          -> (Case) (App) (VanillaId) ds1m = (VanillaId) wild1p
+               (AlgAlt)
+                 (DataAlt) GHC.Types.I# (VanillaId) yq
+                   -> (Case) (App) (VanillaId) APPFL.Classes.modInt# (VarArg) (VanillaId) x1o (VarArg) (VanillaId) yq = (VanillaId) wild2r
+                        (PrimAlt)
+                          (DEFAULT) _ -> (ConApp) GHC.Types.I# [(VarArg) (VanillaId) wild2r]
+(StgNonRec)
+  (VanillaId) APPFL.Base.divInt =
+  (FUN)
+  [(VanillaId) dss ,(VanillaId) ds1t]
+    (Case) (App) (VanillaId) dss = (VanillaId) wildu
+      (AlgAlt)
+        (DataAlt) GHC.Types.I# (VanillaId) x1v
+          -> (Case) (App) (VanillaId) ds1t = (VanillaId) wild1w
+               (AlgAlt)
+                 (DataAlt) GHC.Types.I# (VanillaId) yx
+                   -> (Case) (App) (VanillaId) APPFL.Classes.divInt# (VarArg) (VanillaId) x1v (VarArg) (VanillaId) yx = (VanillaId) wild2y
+                        (PrimAlt)
+                          (DEFAULT) _ -> (ConApp) GHC.Types.I# [(VarArg) (VanillaId) wild2y]
+(StgNonRec)
+  (VanillaId) APPFL.Base.remInt =
+  (FUN)
+  [(VanillaId) etaz ,(VanillaId) eta10]
+    (Case) (App) (VanillaId) etaz = (VanillaId) wild1
+      (AlgAlt)
+        (DataAlt) GHC.Types.I# (VanillaId) x12
+          -> (Case) (App) (VanillaId) eta10 = (VanillaId) wild13
+               (AlgAlt)
+                 (DataAlt) GHC.Types.I# (VanillaId) y4
+                   -> (Case) (App) (VanillaId) APPFL.Prim.%# (VarArg) (VanillaId) x12 (VarArg) (VanillaId) y4 = (VanillaId) wild25
+                        (PrimAlt)
+                          (DEFAULT) _ -> (ConApp) GHC.Types.I# [(VarArg) (VanillaId) wild25]
+(StgNonRec)
+  (VanillaId) APPFL.Base.quotInt =
+  (FUN)
+  [(VanillaId) eta6 ,(VanillaId) eta17]
+    (Case) (App) (VanillaId) eta6 = (VanillaId) wild8
+      (AlgAlt)
+        (DataAlt) GHC.Types.I# (VanillaId) x19
+          -> (Case) (App) (VanillaId) eta17 = (VanillaId) wild1-
+               (AlgAlt)
+                 (DataAlt) GHC.Types.I# (VanillaId) y_
+                   -> (Case) (App) (VanillaId) APPFL.Prim./# (VarArg) (VanillaId) x19 (VarArg) (VanillaId) y_ = (VanillaId) wild2AB
+                        (PrimAlt)
+                          (DEFAULT) _ -> (ConApp) GHC.Types.I# [(VarArg) (VanillaId) wild2AB]
+(StgNonRec)
+  (VanillaId) APPFL.Base.otherwise =
+  (CONish) GHC.Types.True []
+  Worker/Wrapper: (DCWorkerId) GHC.Types.True
+(StgNonRec)
+  (VanillaId) APPFL.Base.ifThenElse =
+  (FUN)
+  [(VanillaId) bBB ,(VanillaId) tCB ,(VanillaId) eDB]
+    (Case) (App) (VanillaId) bBB = (VanillaId) wildEB
+      (AlgAlt)
+        (DataAlt) GHC.Types.False -> (App) (VanillaId) eDB
+        (DataAlt) GHC.Types.True -> (App) (VanillaId) tCB
+(StgNonRec)
+  (VanillaId) APPFL.Base.divModInt# =
+  (FUN)
+  [(VanillaId) x#FB ,(VanillaId) y#GB]
+    (Let) let
+      (StgNonRec)
+        (VanillaId) satHB =
+        (THUNK)
+          (Case) (Op) (Prim) <# [(VarArg) (VanillaId) y#GB ,(LitArg) (MachInt)0] = (VanillaId) satIB
+            (PrimAlt)
+              (DEFAULT) _
+                -> (App) (VanillaId) APPFL.Types.isTrue# (VarArg) (VanillaId) satIB
+    in (Let) let
+         (StgNonRec)
+           (VanillaId) satJB =
+           (THUNK)
+             (Case) (Op) (Prim) ># [(VarArg) (VanillaId) x#FB ,(LitArg) (MachInt)0] = (VanillaId) satKB
+               (PrimAlt)
+                 (DEFAULT) _
+                   -> (App) (VanillaId) APPFL.Types.isTrue# (VarArg) (VanillaId) satKB
+       in (Case) (App) (VanillaId) APPFL.Classes.&& (VarArg) (VanillaId) satJB (VarArg) (VanillaId) satHB = (VanillaId) wildLB
+            (AlgAlt)
+              (DataAlt) GHC.Types.False
+                -> (Let) let
+                     (StgNonRec)
+                       (VanillaId) satMB =
+                       (THUNK)
+                         (Case) (Op) (Prim) ># [(VarArg) (VanillaId) y#GB ,(LitArg) (MachInt)0] = (VanillaId) satNB
+                           (PrimAlt)
+                             (DEFAULT) _
+                               -> (App) (VanillaId) APPFL.Types.isTrue# (VarArg) (VanillaId) satNB
+                   in (Let) let
+                        (StgNonRec)
+                          (VanillaId) satOB =
+                          (THUNK)
+                            (Case) (Op) (Prim) <# [(VarArg) (VanillaId) x#FB ,(LitArg) (MachInt)0] = (VanillaId) satPB
+                              (PrimAlt)
+                                (DEFAULT) _
+                                  -> (App) (VanillaId) APPFL.Types.isTrue# (VarArg) (VanillaId) satPB
+                      in (Case) (App) (VanillaId) APPFL.Classes.&& (VarArg) (VanillaId) satOB (VarArg) (VanillaId) satMB = (VanillaId) wild1QB
+                           (AlgAlt)
+                             (DataAlt) GHC.Types.False
+                               -> (App) (VanillaId) APPFL.Prim.quotRemInt# (VarArg) (VanillaId) x#FB (VarArg) (VanillaId) y#GB
+                             (DataAlt) GHC.Types.True
+                               -> (Case) (Op) (Prim) +# [(VarArg) (VanillaId) x#FB ,(LitArg) (MachInt)1] = (VanillaId) satRB
+                                    (PrimAlt)
+                                      (DEFAULT) _
+                                        -> (Case) (App) (VanillaId) APPFL.Prim.quotRemInt# (VarArg) (VanillaId) satRB (VarArg) (VanillaId) y#GB = (VanillaId) dsSB
+                                             (UbxTupAlt2)
+                                               (DataAlt) GHC.Prim.(#,#) (VanillaId) ipvTB (VanillaId) ipv1UB
+                                                 -> (Case) (ConApp) GHC.Prim.(#,#) [(VarArg) (VanillaId) ipvTB ,(VarArg) (VanillaId) ipv1UB] = (VanillaId) wild2VB
+                                                      (UbxTupAlt2)
+                                                        (DataAlt) GHC.Prim.(#,#) (VanillaId) qWB (VanillaId) rXB
+                                                          -> (Case) (Op) (Prim) +# [(VarArg) (VanillaId) rXB ,(VarArg) (VanillaId) y#GB] = (VanillaId) satYB
+                                                               (PrimAlt)
+                                                                 (DEFAULT) _
+                                                                   -> (Case) (Op) (Prim) -# [(VarArg) (VanillaId) satYB ,(LitArg) (MachInt)1] = (VanillaId) satZB
+                                                                        (PrimAlt)
+                                                                          (DEFAULT) _
+                                                                            -> (Case) (Op) (Prim) -# [(VarArg) (VanillaId) qWB ,(LitArg) (MachInt)1] = (VanillaId) sataB
+                                                                                 (PrimAlt)
+                                                                                   (DEFAULT) _
+                                                                                     -> (ConApp) GHC.Prim.(#,#) [(VarArg) (VanillaId) sataB ,(VarArg) (VanillaId) satZB]
+              (DataAlt) GHC.Types.True
+                -> (Case) (Op) (Prim) -# [(VarArg) (VanillaId) x#FB ,(LitArg) (MachInt)1] = (VanillaId) satbB
+                     (PrimAlt)
+                       (DEFAULT) _
+                         -> (Case) (App) (VanillaId) APPFL.Prim.quotRemInt# (VarArg) (VanillaId) satbB (VarArg) (VanillaId) y#GB = (VanillaId) dscB
+                              (UbxTupAlt2)
+                                (DataAlt) GHC.Prim.(#,#) (VanillaId) ipvdB (VanillaId) ipv1eB
+                                  -> (Case) (ConApp) GHC.Prim.(#,#) [(VarArg) (VanillaId) ipvdB ,(VarArg) (VanillaId) ipv1eB] = (VanillaId) wild1fB
+                                       (UbxTupAlt2)
+                                         (DataAlt) GHC.Prim.(#,#) (VanillaId) qgB (VanillaId) rhB
+                                           -> (Case) (Op) (Prim) +# [(VarArg) (VanillaId) rhB ,(VarArg) (VanillaId) y#GB] = (VanillaId) satiB
+                                                (PrimAlt)
+                                                  (DEFAULT) _
+                                                    -> (Case) (Op) (Prim) +# [(VarArg) (VanillaId) satiB ,(LitArg) (MachInt)1] = (VanillaId) satjB
+                                                         (PrimAlt)
+                                                           (DEFAULT) _
+                                                             -> (Case) (Op) (Prim) -# [(VarArg) (VanillaId) qgB ,(LitArg) (MachInt)1] = (VanillaId) satkB
+                                                                  (PrimAlt)
+                                                                    (DEFAULT) _
+                                                                      -> (ConApp) GHC.Prim.(#,#) [(VarArg) (VanillaId) satkB ,(VarArg) (VanillaId) satjB]
+(StgNonRec)
+  (VanillaId) APPFL.Base.divModInt =
+  (FUN)
+  [(VanillaId) dslB ,(VanillaId) ds1mB]
+    (Case) (App) (VanillaId) dslB = (VanillaId) wildnB
+      (AlgAlt)
+        (DataAlt) GHC.Types.I# (VanillaId) x1oB
+          -> (Case) (App) (VanillaId) ds1mB = (VanillaId) wild1pB
+               (AlgAlt)
+                 (DataAlt) GHC.Types.I# (VanillaId) yqB
+                   -> (Case) (App) (VanillaId) APPFL.Base.divModInt# (VarArg) (VanillaId) x1oB (VarArg) (VanillaId) yqB = (VanillaId) ds2rB
+                        (UbxTupAlt2)
+                          (DataAlt) GHC.Prim.(#,#) (VanillaId) ipvsB (VanillaId) ipv1tB
+                            -> (Case) (ConApp) GHC.Prim.(#,#) [(VarArg) (VanillaId) ipvsB ,(VarArg) (VanillaId) ipv1tB] = (VanillaId) wild2uB
+                                 (UbxTupAlt2)
+                                   (DataAlt) GHC.Prim.(#,#) (VanillaId) qvB (VanillaId) rwB
+                                     -> (Let) let
+                                          (StgNonRec)
+                                            (VanillaId) satxB =
+                                            (CONish) GHC.Types.I# [(VarArg) (VanillaId) rwB]
+                                            Worker/Wrapper: (DCWorkerId) GHC.Types.I#
+                                        in (Let) let
+                                             (StgNonRec)
+                                               (VanillaId) satyB =
+                                               (CONish) GHC.Types.I# [(VarArg) (VanillaId) qvB]
+                                               Worker/Wrapper: (DCWorkerId) GHC.Types.I#
+                                           in (ConApp) GHC.Tuple.(,) [(VarArg) (VanillaId) satyB ,(VarArg) (VanillaId) satxB]
+(StgRec)
+  (VanillaId) xzB =
+  (THUNK) (App) (VanillaId) xzB
+(StgNonRec)
+  (VanillaId) APPFL.Base._dummy =
+  (THUNK) (App) (VanillaId) xzB
+(StgNonRec)
+  (VanillaId) APPFL.Base.fromInteger =
+  (THUNK) (App) (VanillaId) xzB
+(StgNonRec)
+  (VanillaId) APPFL.Num.mulInt =
+  (FUN)
+  [(VanillaId) ds0B ,(VanillaId) ds11B]
+    (Case) (App) (VanillaId) ds0B = (VanillaId) wild2B
+      (AlgAlt)
+        (DataAlt) GHC.Types.I# (VanillaId) a#3B
+          -> (Case) (App) (VanillaId) ds11B = (VanillaId) wild14B
+               (AlgAlt)
+                 (DataAlt) GHC.Types.I# (VanillaId) b#5B
+                   -> (Case) (Op) (Prim) *# [(VarArg) (VanillaId) a#3B ,(VarArg) (VanillaId) b#5B] = (VanillaId) sat6B
+                        (PrimAlt)
+                          (DEFAULT) _ -> (ConApp) GHC.Types.I# [(VarArg) (VanillaId) sat6B]
+(StgNonRec)
+  (VanillaId) APPFL.Num.subInt =
+  (FUN)
+  [(VanillaId) ds7B ,(VanillaId) ds18B]
+    (Case) (App) (VanillaId) ds7B = (VanillaId) wild9B
+      (AlgAlt)
+        (DataAlt) GHC.Types.I# (VanillaId) a#-B
+          -> (Case) (App) (VanillaId) ds18B = (VanillaId) wild1_B
+               (AlgAlt)
+                 (DataAlt) GHC.Types.I# (VanillaId) b#AC
+                   -> (Case) (Op) (Prim) -# [(VarArg) (VanillaId) a#-B ,(VarArg) (VanillaId) b#AC] = (VanillaId) satBC
+                        (PrimAlt)
+                          (DEFAULT) _ -> (ConApp) GHC.Types.I# [(VarArg) (VanillaId) satBC]
+(StgNonRec)
+  (VanillaId) APPFL.Num.addInt =
+  (FUN)
+  [(VanillaId) dsCC ,(VanillaId) ds1DC]
+    (Case) (App) (VanillaId) dsCC = (VanillaId) wildEC
+      (AlgAlt)
+        (DataAlt) GHC.Types.I# (VanillaId) a#FC
+          -> (Case) (App) (VanillaId) ds1DC = (VanillaId) wild1GC
+               (AlgAlt)
+                 (DataAlt) GHC.Types.I# (VanillaId) b#HC
+                   -> (Case) (Op) (Prim) +# [(VarArg) (VanillaId) a#FC ,(VarArg) (VanillaId) b#HC] = (VanillaId) satIC
+                        (PrimAlt)
+                          (DEFAULT) _ -> (ConApp) GHC.Types.I# [(VarArg) (VanillaId) satIC]
+(StgNonRec)
+  (VanillaId) APPFL.Num.negate =
+  (FUN)
+  [(VanillaId) dsJC]
+    (Case) (App) (VanillaId) dsJC = (VanillaId) wildKC
+      (AlgAlt)
+        (DataAlt) GHC.Types.I# (VanillaId) i#LC
+          -> (Case) (Op) (Prim) negateInt# [(VarArg) (VanillaId) i#LC] = (VanillaId) satMC
+               (PrimAlt)
+                 (DEFAULT) _ -> (ConApp) GHC.Types.I# [(VarArg) (VanillaId) satMC]
+(StgNonRec)
+  (VanillaId) APPFL.Num.% =
+  (THUNK) (App) (VanillaId) APPFL.Base.remInt
+(StgNonRec)
+  (VanillaId) APPFL.Num.mod =
+  (THUNK) (App) (VanillaId) APPFL.Base.remInt
+(StgNonRec)
+  (VanillaId) APPFL.Num.* =
+  (FUN)
+  [(VanillaId) etaS ,(VanillaId) etaR]
+    (App) (VanillaId) APPFL.Num.mulInt (VarArg) (VanillaId) etaS (VarArg) (VanillaId) etaR
+(StgNonRec)
+  (VanillaId) APPFL.Num./ =
+  (THUNK) (App) (VanillaId) APPFL.Base.quotInt
+(StgNonRec)
+  (VanillaId) APPFL.Num.div =
+  (THUNK) (App) (VanillaId) APPFL.Base.quotInt
+(StgNonRec)
+  (VanillaId) APPFL.Num.- =
+  (FUN)
+  [(VanillaId) etaS ,(VanillaId) etaR]
+    (App) (VanillaId) APPFL.Num.subInt (VarArg) (VanillaId) etaS (VarArg) (VanillaId) etaR
+(StgNonRec)
+  (VanillaId) APPFL.Num.+ =
+  (FUN)
+  [(VanillaId) etaS ,(VanillaId) etaR]
+    (App) (VanillaId) APPFL.Num.addInt (VarArg) (VanillaId) etaS (VarArg) (VanillaId) etaR
+(StgNonRec)
+  (VanillaId) APPFL.Types.isTrue# =
+  (FUN)
+  [(VanillaId) dsNC]
+    (Case) (App) (VanillaId) dsNC = (VanillaId) ds1OC
+      (PrimAlt)
+        (DEFAULT) _ -> (ConApp) GHC.Types.False []
+        (LitAlt) (MachInt)1 -> (ConApp) GHC.Types.True []
+(StgNonRec)
+  (ClassOpId) Selectors: [== ,/=] APPFL.Classes.== =
+  (FUN)
+  [(VanillaId) tplPC]
+    (Case) (App) (VanillaId) tplPC = (VanillaId) tplQC
+      (AlgAlt)
+        (DataAlt) APPFL.Classes.D:Eq (VanillaId) tplRC (VanillaId) tplSC
+          -> (App) (VanillaId) tplRC
+(StgNonRec)
+  (ClassOpId) Selectors: [== ,/=] APPFL.Classes./= =
+  (FUN)
+  [(VanillaId) tplTC]
+    (Case) (App) (VanillaId) tplTC = (VanillaId) tplUC
+      (AlgAlt)
+        (DataAlt) APPFL.Classes.D:Eq (VanillaId) tplVC (VanillaId) tplWC
+          -> (App) (VanillaId) tplWC
+(StgNonRec)
+  (VanillaId) APPFL.Classes.not =
+  (FUN)
+  [(VanillaId) dsXC]
+    (Case) (App) (VanillaId) dsXC = (VanillaId) wildYC
+      (AlgAlt)
+        (DataAlt) GHC.Types.False -> (ConApp) GHC.Types.True []
+        (DataAlt) GHC.Types.True -> (ConApp) GHC.Types.False []
+(StgNonRec)
+  (VanillaId) APPFL.Classes.$dm== =
+  (FUN)
+  [(VanillaId) $dEq4ZC ,(VanillaId) xaC ,(VanillaId) ybC]
+    (Case) (App) (ClassOpId) Selectors: [== ,/=] APPFL.Classes./= (VarArg) (VanillaId) $dEq4ZC (VarArg) (VanillaId) xaC (VarArg) (VanillaId) ybC = (VanillaId) wildcC
+      (AlgAlt)
+        (DataAlt) GHC.Types.False -> (ConApp) GHC.Types.True []
+        (DataAlt) GHC.Types.True -> (ConApp) GHC.Types.False []
+(StgNonRec)
+  (VanillaId) APPFL.Classes.$dm/= =
+  (FUN)
+  [(VanillaId) $dEq4dC ,(VanillaId) xeC ,(VanillaId) yfC]
+    (Case) (App) (ClassOpId) Selectors: [== ,/=] APPFL.Classes.== (VarArg) (VanillaId) $dEq4dC (VarArg) (VanillaId) xeC (VarArg) (VanillaId) yfC = (VanillaId) wildgC
+      (AlgAlt)
+        (DataAlt) GHC.Types.False -> (ConApp) GHC.Types.True []
+        (DataAlt) GHC.Types.True -> (ConApp) GHC.Types.False []
+(StgNonRec)
+  (VanillaId) APPFL.Classes.|| =
+  (FUN)
+  [(VanillaId) dshC ,(VanillaId) ds1iC]
+    (Case) (App) (VanillaId) dshC = (VanillaId) wildjC
+      (AlgAlt)
+        (DataAlt) GHC.Types.False -> (App) (VanillaId) ds1iC
+        (DataAlt) GHC.Types.True -> (ConApp) GHC.Types.True []
+(StgNonRec)
+  (VanillaId) APPFL.Classes.&& =
+  (FUN)
+  [(VanillaId) dskC ,(VanillaId) xlC]
+    (Case) (App) (VanillaId) dskC = (VanillaId) wildmC
+      (AlgAlt)
+        (DataAlt) GHC.Types.False -> (ConApp) GHC.Types.False []
+        (DataAlt) GHC.Types.True -> (App) (VanillaId) xlC
+(StgNonRec)
+  (VanillaId) APPFL.Classes.divInt# =
+  (FUN)
+  [(VanillaId) x#nC ,(VanillaId) y#oC]
+    (LetNE) let
+      (StgNonRec)
+        (VanillaId) $jpC =
+        (FUN)
+        [(VanillaId) wqC]
+          (Case) (Op) (Prim) <# [(VarArg) (VanillaId) x#nC ,(LitArg) (MachInt)0] = (VanillaId) satrC
+            (PrimAlt)
+              (DEFAULT) _
+                -> (Case) (App) (VanillaId) APPFL.Types.isTrue# (VarArg) (VanillaId) satrC = (VanillaId) wildsC
+                     (AlgAlt)
+                       (DataAlt) GHC.Types.False
+                         -> (Op) (Prim) quotInt# [(VarArg) (VanillaId) x#nC ,(VarArg) (VanillaId) y#oC]
+                       (DataAlt) GHC.Types.True
+                         -> (Case) (Op) (Prim) ># [(VarArg) (VanillaId) y#oC ,(LitArg) (MachInt)0] = (VanillaId) sattC
+                              (PrimAlt)
+                                (DEFAULT) _
+                                  -> (Case) (App) (VanillaId) APPFL.Types.isTrue# (VarArg) (VanillaId) sattC = (VanillaId) wild1uC
+                                       (AlgAlt)
+                                         (DataAlt) GHC.Types.False
+                                           -> (Op) (Prim) quotInt# [(VarArg) (VanillaId) x#nC ,(VarArg) (VanillaId) y#oC]
+                                         (DataAlt) GHC.Types.True
+                                           -> (Case) (Op) (Prim) +# [(VarArg) (VanillaId) x#nC ,(LitArg) (MachInt)1] = (VanillaId) satvC
+                                                (PrimAlt)
+                                                  (DEFAULT) _
+                                                    -> (Case) (Op) (Prim) quotInt# [(VarArg) (VanillaId) satvC ,(VarArg) (VanillaId) y#oC] = (VanillaId) wild2wC
+                                                         (PrimAlt)
+                                                           (DEFAULT) _
+                                                             -> (Op) (Prim) -# [(VarArg) (VanillaId) wild2wC ,(LitArg) (MachInt)1]
+    in (Case) (Op) (Prim) ># [(VarArg) (VanillaId) x#nC ,(LitArg) (MachInt)0] = (VanillaId) satxC
+         (PrimAlt)
+           (DEFAULT) _
+             -> (Case) (App) (VanillaId) APPFL.Types.isTrue# (VarArg) (VanillaId) satxC = (VanillaId) wildyC
+                  (AlgAlt)
+                    (DataAlt) GHC.Types.False
+                      -> (App) (VanillaId) $jpC (VarArg) (VanillaId) APPFL.Prim.void#
+                    (DataAlt) GHC.Types.True
+                      -> (Case) (Op) (Prim) <# [(VarArg) (VanillaId) y#oC ,(LitArg) (MachInt)0] = (VanillaId) satzC
+                           (PrimAlt)
+                             (DEFAULT) _
+                               -> (Case) (App) (VanillaId) APPFL.Types.isTrue# (VarArg) (VanillaId) satzC = (VanillaId) wild10C
+                                    (AlgAlt)
+                                      (DataAlt) GHC.Types.False
+                                        -> (App) (VanillaId) $jpC (VarArg) (VanillaId) APPFL.Prim.void#
+                                      (DataAlt) GHC.Types.True
+                                        -> (Case) (Op) (Prim) -# [(VarArg) (VanillaId) x#nC ,(LitArg) (MachInt)1] = (VanillaId) sat1C
+                                             (PrimAlt)
+                                               (DEFAULT) _
+                                                 -> (Case) (Op) (Prim) quotInt# [(VarArg) (VanillaId) sat1C ,(VarArg) (VanillaId) y#oC] = (VanillaId) wild22C
+                                                      (PrimAlt)
+                                                        (DEFAULT) _
+                                                          -> (Op) (Prim) -# [(VarArg) (VanillaId) wild22C ,(LitArg) (MachInt)1]
+(StgNonRec)
+  (VanillaId) APPFL.Classes.modInt# =
+  (FUN)
+  [(VanillaId) x#3C ,(VanillaId) y#4C]
+    (Case) (Op) (Prim) remInt# [(VarArg) (VanillaId) x#3C ,(VarArg) (VanillaId) y#4C] = (VanillaId) r#5C
+      (PrimAlt)
+        (DEFAULT) _
+          -> (LetNE) let
+               (StgNonRec)
+                 (VanillaId) $j6C =
+                 (FUN)
+                 [(VanillaId) w7C]
+                   (Case) (App) (VanillaId) r#5C = (VanillaId) wild8C
+                     (PrimAlt)
+                       (DEFAULT) _
+                         -> (Case) (App) (VanillaId) APPFL.Types.isTrue# (LitArg) (MachInt)1 = (VanillaId) wild19C
+                              (AlgAlt)
+                                (DataAlt) GHC.Types.False -> (Lit) (MachInt)0
+                                (DataAlt) GHC.Types.True
+                                  -> (Op) (Prim) +# [(VarArg) (VanillaId) wild8C ,(VarArg) (VanillaId) y#4C]
+                       (LitAlt) (MachInt)0
+                         -> (Case) (App) (VanillaId) APPFL.Types.isTrue# (LitArg) (MachInt)0 = (VanillaId) wild1-C
+                              (AlgAlt)
+                                (DataAlt) GHC.Types.False -> (Lit) (MachInt)0
+                                (DataAlt) GHC.Types.True -> (App) (VanillaId) y#4C
+             in (LetNE) let
+                  (StgNonRec)
+                    (VanillaId) $j1_C =
+                    (FUN)
+                    [(VanillaId) wAD]
+                      (Case) (Op) (Prim) <# [(VarArg) (VanillaId) x#3C ,(LitArg) (MachInt)0] = (VanillaId) satBD
+                        (PrimAlt)
+                          (DEFAULT) _
+                            -> (Case) (App) (VanillaId) APPFL.Types.isTrue# (VarArg) (VanillaId) satBD = (VanillaId) wildCD
+                                 (AlgAlt)
+                                   (DataAlt) GHC.Types.False -> (App) (VanillaId) r#5C
+                                   (DataAlt) GHC.Types.True
+                                     -> (Case) (Op) (Prim) ># [(VarArg) (VanillaId) y#4C ,(LitArg) (MachInt)0] = (VanillaId) satDD
+                                          (PrimAlt)
+                                            (DEFAULT) _
+                                              -> (Case) (App) (VanillaId) APPFL.Types.isTrue# (VarArg) (VanillaId) satDD = (VanillaId) wild1ED
+                                                   (AlgAlt)
+                                                     (DataAlt) GHC.Types.False
+                                                       -> (App) (VanillaId) r#5C
+                                                     (DataAlt) GHC.Types.True
+                                                       -> (App) (VanillaId) $j6C (VarArg) (VanillaId) APPFL.Prim.void#
+                in (Case) (Op) (Prim) ># [(VarArg) (VanillaId) x#3C ,(LitArg) (MachInt)0] = (VanillaId) satFD
+                     (PrimAlt)
+                       (DEFAULT) _
+                         -> (Case) (App) (VanillaId) APPFL.Types.isTrue# (VarArg) (VanillaId) satFD = (VanillaId) wildGD
+                              (AlgAlt)
+                                (DataAlt) GHC.Types.False
+                                  -> (App) (VanillaId) $j1_C (VarArg) (VanillaId) APPFL.Prim.void#
+                                (DataAlt) GHC.Types.True
+                                  -> (Case) (Op) (Prim) <# [(VarArg) (VanillaId) y#4C ,(LitArg) (MachInt)0] = (VanillaId) satHD
+                                       (PrimAlt)
+                                         (DEFAULT) _
+                                           -> (Case) (App) (VanillaId) APPFL.Types.isTrue# (VarArg) (VanillaId) satHD = (VanillaId) wild1ID
+                                                (AlgAlt)
+                                                  (DataAlt) GHC.Types.False
+                                                    -> (App) (VanillaId) $j1_C (VarArg) (VanillaId) APPFL.Prim.void#
+                                                  (DataAlt) GHC.Types.True
+                                                    -> (App) (VanillaId) $j6C (VarArg) (VanillaId) APPFL.Prim.void#
+(StgNonRec)
+  (VanillaId) APPFL.Classes.leInt =
+  (FUN)
+  [(VanillaId) etaJD ,(VanillaId) eta1KD]
+    (Case) (App) (VanillaId) etaJD = (VanillaId) wildLD
+      (AlgAlt)
+        (DataAlt) GHC.Types.I# (VanillaId) xMD
+          -> (Case) (App) (VanillaId) eta1KD = (VanillaId) wild1ND
+               (AlgAlt)
+                 (DataAlt) GHC.Types.I# (VanillaId) yOD
+                   -> (Case) (Op) (Prim) <=# [(VarArg) (VanillaId) xMD ,(VarArg) (VanillaId) yOD] = (VanillaId) satPD
+                        (PrimAlt)
+                          (DEFAULT) _
+                            -> (App) (VanillaId) APPFL.Types.isTrue# (VarArg) (VanillaId) satPD
+(StgNonRec)
+  (VanillaId) APPFL.Classes.ltInt =
+  (FUN)
+  [(VanillaId) etaQD ,(VanillaId) eta1RD]
+    (Case) (App) (VanillaId) etaQD = (VanillaId) wildSD
+      (AlgAlt)
+        (DataAlt) GHC.Types.I# (VanillaId) xTD
+          -> (Case) (App) (VanillaId) eta1RD = (VanillaId) wild1UD
+               (AlgAlt)
+                 (DataAlt) GHC.Types.I# (VanillaId) yVD
+                   -> (Case) (Op) (Prim) <# [(VarArg) (VanillaId) xTD ,(VarArg) (VanillaId) yVD] = (VanillaId) satWD
+                        (PrimAlt)
+                          (DEFAULT) _
+                            -> (App) (VanillaId) APPFL.Types.isTrue# (VarArg) (VanillaId) satWD
+(StgNonRec)
+  (VanillaId) APPFL.Classes.geInt =
+  (FUN)
+  [(VanillaId) etaXD ,(VanillaId) eta1YD]
+    (Case) (App) (VanillaId) etaXD = (VanillaId) wildZD
+      (AlgAlt)
+        (DataAlt) GHC.Types.I# (VanillaId) xaD
+          -> (Case) (App) (VanillaId) eta1YD = (VanillaId) wild1bD
+               (AlgAlt)
+                 (DataAlt) GHC.Types.I# (VanillaId) ycD
+                   -> (Case) (Op) (Prim) >=# [(VarArg) (VanillaId) xaD ,(VarArg) (VanillaId) ycD] = (VanillaId) satdD
+                        (PrimAlt)
+                          (DEFAULT) _
+                            -> (App) (VanillaId) APPFL.Types.isTrue# (VarArg) (VanillaId) satdD
+(StgNonRec)
+  (VanillaId) APPFL.Classes.gtInt =
+  (FUN)
+  [(VanillaId) etaeD ,(VanillaId) eta1fD]
+    (Case) (App) (VanillaId) etaeD = (VanillaId) wildgD
+      (AlgAlt)
+        (DataAlt) GHC.Types.I# (VanillaId) xhD
+          -> (Case) (App) (VanillaId) eta1fD = (VanillaId) wild1iD
+               (AlgAlt)
+                 (DataAlt) GHC.Types.I# (VanillaId) yjD
+                   -> (Case) (Op) (Prim) ># [(VarArg) (VanillaId) xhD ,(VarArg) (VanillaId) yjD] = (VanillaId) satkD
+                        (PrimAlt)
+                          (DEFAULT) _
+                            -> (App) (VanillaId) APPFL.Types.isTrue# (VarArg) (VanillaId) satkD
+(StgNonRec)
+  (VanillaId) APPFL.Classes.neInt =
+  (FUN)
+  [(VanillaId) etalD ,(VanillaId) eta1mD]
+    (Case) (App) (VanillaId) etalD = (VanillaId) wildnD
+      (AlgAlt)
+        (DataAlt) GHC.Types.I# (VanillaId) xoD
+          -> (Case) (App) (VanillaId) eta1mD = (VanillaId) wild1pD
+               (AlgAlt)
+                 (DataAlt) GHC.Types.I# (VanillaId) yqD
+                   -> (Case) (Op) (Prim) /=# [(VarArg) (VanillaId) xoD ,(VarArg) (VanillaId) yqD] = (VanillaId) satrD
+                        (PrimAlt)
+                          (DEFAULT) _
+                            -> (App) (VanillaId) APPFL.Types.isTrue# (VarArg) (VanillaId) satrD
+(StgNonRec)
+  (VanillaId) APPFL.Classes.eqInt =
+  (FUN)
+  [(VanillaId) etasD ,(VanillaId) eta1tD]
+    (Case) (App) (VanillaId) etasD = (VanillaId) wilduD
+      (AlgAlt)
+        (DataAlt) GHC.Types.I# (VanillaId) xvD
+          -> (Case) (App) (VanillaId) eta1tD = (VanillaId) wild1wD
+               (AlgAlt)
+                 (DataAlt) GHC.Types.I# (VanillaId) yxD
+                   -> (Case) (Op) (Prim) ==# [(VarArg) (VanillaId) xvD ,(VarArg) (VanillaId) yxD] = (VanillaId) satyD
+                        (PrimAlt)
+                          (DEFAULT) _
+                            -> (App) (VanillaId) APPFL.Types.isTrue# (VarArg) (VanillaId) satyD
+(StgNonRec)
+  (VanillaId) APPFL.Classes.<= =
+  (FUN)
+  [(VanillaId) etaS ,(VanillaId) etaR]
+    (App) (VanillaId) APPFL.Classes.leInt (VarArg) (VanillaId) etaS (VarArg) (VanillaId) etaR
+(StgNonRec)
+  (VanillaId) APPFL.Classes.< =
+  (FUN)
+  [(VanillaId) etaS ,(VanillaId) etaR]
+    (App) (VanillaId) APPFL.Classes.ltInt (VarArg) (VanillaId) etaS (VarArg) (VanillaId) etaR
+(StgNonRec)
+  (VanillaId) APPFL.Classes.>= =
+  (FUN)
+  [(VanillaId) etaS ,(VanillaId) etaR]
+    (App) (VanillaId) APPFL.Classes.geInt (VarArg) (VanillaId) etaS (VarArg) (VanillaId) etaR
+(StgNonRec)
+  (VanillaId) APPFL.Classes.> =
+  (FUN)
+  [(VanillaId) etaS ,(VanillaId) etaR]
+    (App) (VanillaId) APPFL.Classes.gtInt (VarArg) (VanillaId) etaS (VarArg) (VanillaId) etaR
+(StgNonRec)
+  (DictFunId) tycon: APPFL.Classes.Eq typs: [GHC.Types.Int] APPFL.Classes.$fEqInt =
+  (CONish) APPFL.Classes.D:Eq [(VarArg) (VanillaId) APPFL.Classes.eqInt ,(VarArg) (VanillaId) APPFL.Classes.neInt]
+  Worker/Wrapper: (DCWorkerId) APPFL.Classes.D:Eq
+(StgNonRec)
+  (VanillaId) $c==zD =
+  (FUN)
+  [(VanillaId) ds0D ,(VanillaId) ds11D]
+    (Case) (App) (VanillaId) ds0D = (VanillaId) wild2D
+      (AlgAlt)
+        (DataAlt) GHC.Tuple.()
+          -> (Case) (App) (VanillaId) ds11D = (VanillaId) wild13D
+               (AlgAlt) (DataAlt) GHC.Tuple.() -> (ConApp) GHC.Types.True []
+(StgRec)
+  (DictFunId) tycon: APPFL.Classes.Eq typs: [GHC.Tuple.()] APPFL.Classes.$fEq() =
+  (CONish) APPFL.Classes.D:Eq [(VarArg) (VanillaId) $c==zD ,(VarArg) (VanillaId) $c/=4D]
+  Worker/Wrapper: (DCWorkerId) APPFL.Classes.D:Eq
+  (VanillaId) $c/=4D =
+  (FUN)
+  [(VanillaId) eta5D ,(VanillaId) eta16D]
+    (Case) (App) (ClassOpId) Selectors: [== ,/=] APPFL.Classes.== (VarArg) (DictFunId) tycon: APPFL.Classes.Eq typs: [GHC.Tuple.()] APPFL.Classes.$fEq() (VarArg) (VanillaId) eta5D (VarArg) (VanillaId) eta16D = (VanillaId) wild7D
+      (AlgAlt)
+        (DataAlt) GHC.Types.False -> (ConApp) GHC.Types.True []
+        (DataAlt) GHC.Types.True -> (ConApp) GHC.Types.False []
+(StgNonRec)
+  (VanillaId) $c==18D =
+  (FUN)
+  [(VanillaId) $dEq49D ,(VanillaId) $dEq5-D ,(VanillaId) ds_D ,(VanillaId) ds1AE]
+    (Case) (App) (VanillaId) ds_D = (VanillaId) wildBE
+      (AlgAlt)
+        (DataAlt) GHC.Tuple.(,) (VanillaId) a7CE (VanillaId) b1DE
+          -> (Case) (App) (VanillaId) ds1AE = (VanillaId) wild1EE
+               (AlgAlt)
+                 (DataAlt) GHC.Tuple.(,) (VanillaId) a8FE (VanillaId) b2GE
+                   -> (Case) (App) (ClassOpId) Selectors: [== ,/=] APPFL.Classes.== (VarArg) (VanillaId) $dEq49D (VarArg) (VanillaId) a7CE (VarArg) (VanillaId) a8FE = (VanillaId) wild2HE
+                        (AlgAlt)
+                          (DataAlt) GHC.Types.False -> (ConApp) GHC.Types.False []
+                          (DataAlt) GHC.Types.True
+                            -> (App) (ClassOpId) Selectors: [== ,/=] APPFL.Classes.== (VarArg) (VanillaId) $dEq5-D (VarArg) (VanillaId) b1DE (VarArg) (VanillaId) b2GE
+(StgRec)
+  (DictFunId) tycon: APPFL.Classes.Eq typs: [GHC.Tuple.(,) aIE bJE] APPFL.Classes.$fEq(,) =
+  (FUN)
+  [(VanillaId) $dEq4KE ,(VanillaId) $dEq5LE]
+    (Let) let
+      (StgNonRec)
+        (VanillaId) satME =
+        (FUN)
+        [(VanillaId) etaS ,(VanillaId) etaR]
+          (App) (VanillaId) $c/=1NE (VarArg) (VanillaId) $dEq4KE (VarArg) (VanillaId) $dEq5LE (VarArg) (VanillaId) etaS (VarArg) (VanillaId) etaR
+    in (Let) let
+         (StgNonRec)
+           (VanillaId) satOE =
+           (FUN)
+           [(VanillaId) etaS ,(VanillaId) etaR]
+             (App) (VanillaId) $c==18D (VarArg) (VanillaId) $dEq4KE (VarArg) (VanillaId) $dEq5LE (VarArg) (VanillaId) etaS (VarArg) (VanillaId) etaR
+       in (ConApp) APPFL.Classes.D:Eq [(VarArg) (VanillaId) satOE ,(VarArg) (VanillaId) satME]
+  (VanillaId) $c/=1NE =
+  (FUN)
+  [(VanillaId) $dEq4PE ,(VanillaId) $dEq5QE ,(VanillaId) etaRE ,(VanillaId) eta1SE]
+    (Case) (App) (DictFunId) tycon: APPFL.Classes.Eq typs: [GHC.Tuple.(,) aIE bJE] APPFL.Classes.$fEq(,) (VarArg) (VanillaId) $dEq4PE (VarArg) (VanillaId) $dEq5QE = (VanillaId) satTE
+      (AlgAlt)
+        (DEFAULT) _
+          -> (Case) (App) (ClassOpId) Selectors: [== ,/=] APPFL.Classes.== (VarArg) (VanillaId) satTE (VarArg) (VanillaId) etaRE (VarArg) (VanillaId) eta1SE = (VanillaId) wildUE
+               (AlgAlt)
+                 (DataAlt) GHC.Types.False -> (ConApp) GHC.Types.True []
+                 (DataAlt) GHC.Types.True -> (ConApp) GHC.Types.False []
+(StgNonRec)
+  (VanillaId) $c==2VE =
+  (FUN)
+  [(VanillaId) $dEq4WE ,(VanillaId) $dEq5XE ,(VanillaId) $dEq6YE ,(VanillaId) dsZE ,(VanillaId) ds1aE]
+    (Case) (App) (VanillaId) dsZE = (VanillaId) wildbE
+      (AlgAlt)
+        (DataAlt) GHC.Tuple.(,,) (VanillaId) a7cE (VanillaId) b1dE (VanillaId) c1eE
+          -> (Case) (App) (VanillaId) ds1aE = (VanillaId) wild1fE
+               (AlgAlt)
+                 (DataAlt) GHC.Tuple.(,,) (VanillaId) a8gE (VanillaId) b2hE (VanillaId) c2iE
+                   -> (Case) (App) (ClassOpId) Selectors: [== ,/=] APPFL.Classes.== (VarArg) (VanillaId) $dEq4WE (VarArg) (VanillaId) a7cE (VarArg) (VanillaId) a8gE = (VanillaId) wild2jE
+                        (AlgAlt)
+                          (DataAlt) GHC.Types.False -> (ConApp) GHC.Types.False []
+                          (DataAlt) GHC.Types.True
+                            -> (Case) (App) (ClassOpId) Selectors: [== ,/=] APPFL.Classes.== (VarArg) (VanillaId) $dEq5XE (VarArg) (VanillaId) b1dE (VarArg) (VanillaId) b2hE = (VanillaId) wild3kE
+                                 (AlgAlt)
+                                   (DataAlt) GHC.Types.False -> (ConApp) GHC.Types.False []
+                                   (DataAlt) GHC.Types.True
+                                     -> (App) (ClassOpId) Selectors: [== ,/=] APPFL.Classes.== (VarArg) (VanillaId) $dEq6YE (VarArg) (VanillaId) c1eE (VarArg) (VanillaId) c2iE
+(StgRec)
+  (DictFunId) tycon: APPFL.Classes.Eq typs: [GHC.Tuple.(,,) alE bmE cnE] APPFL.Classes.$fEq(,,) =
+  (FUN)
+  [(VanillaId) $dEq4oE ,(VanillaId) $dEq5pE ,(VanillaId) $dEq6qE]
+    (Let) let
+      (StgNonRec)
+        (VanillaId) satrE =
+        (FUN)
+        [(VanillaId) etaS ,(VanillaId) etaR]
+          (App) (VanillaId) $c/=2sE (VarArg) (VanillaId) $dEq4oE (VarArg) (VanillaId) $dEq5pE (VarArg) (VanillaId) $dEq6qE (VarArg) (VanillaId) etaS (VarArg) (VanillaId) etaR
+    in (Let) let
+         (StgNonRec)
+           (VanillaId) sattE =
+           (FUN)
+           [(VanillaId) etaS ,(VanillaId) etaR]
+             (App) (VanillaId) $c==2VE (VarArg) (VanillaId) $dEq4oE (VarArg) (VanillaId) $dEq5pE (VarArg) (VanillaId) $dEq6qE (VarArg) (VanillaId) etaS (VarArg) (VanillaId) etaR
+       in (ConApp) APPFL.Classes.D:Eq [(VarArg) (VanillaId) sattE ,(VarArg) (VanillaId) satrE]
+  (VanillaId) $c/=2sE =
+  (FUN)
+  [(VanillaId) $dEq4uE ,(VanillaId) $dEq5vE ,(VanillaId) $dEq6wE ,(VanillaId) etaxE ,(VanillaId) eta1yE]
+    (Case) (App) (DictFunId) tycon: APPFL.Classes.Eq typs: [GHC.Tuple.(,,) alE bmE cnE] APPFL.Classes.$fEq(,,) (VarArg) (VanillaId) $dEq4uE (VarArg) (VanillaId) $dEq5vE (VarArg) (VanillaId) $dEq6wE = (VanillaId) satzE
+      (AlgAlt)
+        (DEFAULT) _
+          -> (Case) (App) (ClassOpId) Selectors: [== ,/=] APPFL.Classes.== (VarArg) (VanillaId) satzE (VarArg) (VanillaId) etaxE (VarArg) (VanillaId) eta1yE = (VanillaId) wild0E
+               (AlgAlt)
+                 (DataAlt) GHC.Types.False -> (ConApp) GHC.Types.True []
+                 (DataAlt) GHC.Types.True -> (ConApp) GHC.Types.False []
+(StgNonRec)
+  (VanillaId) $c==31E =
+  (FUN)
+  [(VanillaId) $dEq42E ,(VanillaId) $dEq53E ,(VanillaId) $dEq64E ,(VanillaId) $dEq75E ,(VanillaId) ds6E ,(VanillaId) ds17E]
+    (Case) (App) (VanillaId) ds6E = (VanillaId) wild8E
+      (AlgAlt)
+        (DataAlt) GHC.Tuple.(,,,) (VanillaId) a79E (VanillaId) b1-E (VanillaId) c1_E (VanillaId) d1AF
+          -> (Case) (App) (VanillaId) ds17E = (VanillaId) wild1BF
+               (AlgAlt)
+                 (DataAlt) GHC.Tuple.(,,,) (VanillaId) a8CF (VanillaId) b2DF (VanillaId) c2EF (VanillaId) d2FF
+                   -> (Case) (App) (ClassOpId) Selectors: [== ,/=] APPFL.Classes.== (VarArg) (VanillaId) $dEq42E (VarArg) (VanillaId) a79E (VarArg) (VanillaId) a8CF = (VanillaId) wild2GF
+                        (AlgAlt)
+                          (DataAlt) GHC.Types.False -> (ConApp) GHC.Types.False []
+                          (DataAlt) GHC.Types.True
+                            -> (Case) (App) (ClassOpId) Selectors: [== ,/=] APPFL.Classes.== (VarArg) (VanillaId) $dEq53E (VarArg) (VanillaId) b1-E (VarArg) (VanillaId) b2DF = (VanillaId) wild3HF
+                                 (AlgAlt)
+                                   (DataAlt) GHC.Types.False -> (ConApp) GHC.Types.False []
+                                   (DataAlt) GHC.Types.True
+                                     -> (Case) (App) (ClassOpId) Selectors: [== ,/=] APPFL.Classes.== (VarArg) (VanillaId) $dEq64E (VarArg) (VanillaId) c1_E (VarArg) (VanillaId) c2EF = (VanillaId) wild4IF
+                                          (AlgAlt)
+                                            (DataAlt) GHC.Types.False -> (ConApp) GHC.Types.False []
+                                            (DataAlt) GHC.Types.True
+                                              -> (App) (ClassOpId) Selectors: [== ,/=] APPFL.Classes.== (VarArg) (VanillaId) $dEq75E (VarArg) (VanillaId) d1AF (VarArg) (VanillaId) d2FF
+(StgRec)
+  (DictFunId) tycon: APPFL.Classes.Eq typs: [GHC.Tuple.(,,,) aJF bKF cLF dMF] APPFL.Classes.$fEq(,,,) =
+  (FUN)
+  [(VanillaId) $dEq4NF ,(VanillaId) $dEq5OF ,(VanillaId) $dEq6PF ,(VanillaId) $dEq7QF]
+    (Let) let
+      (StgNonRec)
+        (VanillaId) satRF =
+        (FUN)
+        [(VanillaId) etaS ,(VanillaId) etaR]
+          (App) (VanillaId) $c/=3SF (VarArg) (VanillaId) $dEq4NF (VarArg) (VanillaId) $dEq5OF (VarArg) (VanillaId) $dEq6PF (VarArg) (VanillaId) $dEq7QF (VarArg) (VanillaId) etaS (VarArg) (VanillaId) etaR
+    in (Let) let
+         (StgNonRec)
+           (VanillaId) satTF =
+           (FUN)
+           [(VanillaId) etaS ,(VanillaId) etaR]
+             (App) (VanillaId) $c==31E (VarArg) (VanillaId) $dEq4NF (VarArg) (VanillaId) $dEq5OF (VarArg) (VanillaId) $dEq6PF (VarArg) (VanillaId) $dEq7QF (VarArg) (VanillaId) etaS (VarArg) (VanillaId) etaR
+       in (ConApp) APPFL.Classes.D:Eq [(VarArg) (VanillaId) satTF ,(VarArg) (VanillaId) satRF]
+  (VanillaId) $c/=3SF =
+  (FUN)
+  [(VanillaId) $dEq4UF ,(VanillaId) $dEq5VF ,(VanillaId) $dEq6WF ,(VanillaId) $dEq7XF ,(VanillaId) etaYF ,(VanillaId) eta1ZF]
+    (Case) (App) (DictFunId) tycon: APPFL.Classes.Eq typs: [GHC.Tuple.(,,,) aJF bKF cLF dMF] APPFL.Classes.$fEq(,,,) (VarArg) (VanillaId) $dEq4UF (VarArg) (VanillaId) $dEq5VF (VarArg) (VanillaId) $dEq6WF (VarArg) (VanillaId) $dEq7XF = (VanillaId) sataF
+      (AlgAlt)
+        (DEFAULT) _
+          -> (Case) (App) (ClassOpId) Selectors: [== ,/=] APPFL.Classes.== (VarArg) (VanillaId) sataF (VarArg) (VanillaId) etaYF (VarArg) (VanillaId) eta1ZF = (VanillaId) wildbF
+               (AlgAlt)
+                 (DataAlt) GHC.Types.False -> (ConApp) GHC.Types.True []
+                 (DataAlt) GHC.Types.True -> (ConApp) GHC.Types.False []
+(StgNonRec)
+  (VanillaId) $c==4cF =
+  (FUN)
+  [(VanillaId) $dEq4dF ,(VanillaId) $dEq5eF ,(VanillaId) $dEq6fF ,(VanillaId) $dEq7gF ,(VanillaId) $dEq8hF ,(VanillaId) dsiF ,(VanillaId) ds1jF]
+    (Case) (App) (VanillaId) dsiF = (VanillaId) wildkF
+      (AlgAlt)
+        (DataAlt) GHC.Tuple.(,,,,) (VanillaId) a7lF (VanillaId) b1mF (VanillaId) c1nF (VanillaId) d1oF (VanillaId) e1pF
+          -> (Case) (App) (VanillaId) ds1jF = (VanillaId) wild1qF
+               (AlgAlt)
+                 (DataAlt) GHC.Tuple.(,,,,) (VanillaId) a8rF (VanillaId) b2sF (VanillaId) c2tF (VanillaId) d2uF (VanillaId) e2vF
+                   -> (Case) (App) (ClassOpId) Selectors: [== ,/=] APPFL.Classes.== (VarArg) (VanillaId) $dEq4dF (VarArg) (VanillaId) a7lF (VarArg) (VanillaId) a8rF = (VanillaId) wild2wF
+                        (AlgAlt)
+                          (DataAlt) GHC.Types.False -> (ConApp) GHC.Types.False []
+                          (DataAlt) GHC.Types.True
+                            -> (Case) (App) (ClassOpId) Selectors: [== ,/=] APPFL.Classes.== (VarArg) (VanillaId) $dEq5eF (VarArg) (VanillaId) b1mF (VarArg) (VanillaId) b2sF = (VanillaId) wild3xF
+                                 (AlgAlt)
+                                   (DataAlt) GHC.Types.False -> (ConApp) GHC.Types.False []
+                                   (DataAlt) GHC.Types.True
+                                     -> (Case) (App) (ClassOpId) Selectors: [== ,/=] APPFL.Classes.== (VarArg) (VanillaId) $dEq6fF (VarArg) (VanillaId) c1nF (VarArg) (VanillaId) c2tF = (VanillaId) wild4yF
+                                          (AlgAlt)
+                                            (DataAlt) GHC.Types.False -> (ConApp) GHC.Types.False []
+                                            (DataAlt) GHC.Types.True
+                                              -> (Case) (App) (ClassOpId) Selectors: [== ,/=] APPFL.Classes.== (VarArg) (VanillaId) $dEq7gF (VarArg) (VanillaId) d1oF (VarArg) (VanillaId) d2uF = (VanillaId) wild5zF
+                                                   (AlgAlt)
+                                                     (DataAlt) GHC.Types.False
+                                                       -> (ConApp) GHC.Types.False []
+                                                     (DataAlt) GHC.Types.True
+                                                       -> (App) (ClassOpId) Selectors: [== ,/=] APPFL.Classes.== (VarArg) (VanillaId) $dEq8hF (VarArg) (VanillaId) e1pF (VarArg) (VanillaId) e2vF
+(StgRec)
+  (DictFunId) tycon: APPFL.Classes.Eq typs: [GHC.Tuple.(,,,,) a0F b1F c2F d3F e4F] APPFL.Classes.$fEq(,,,,) =
+  (FUN)
+  [(VanillaId) $dEq45F ,(VanillaId) $dEq56F ,(VanillaId) $dEq67F ,(VanillaId) $dEq78F ,(VanillaId) $dEq89F]
+    (Let) let
+      (StgNonRec)
+        (VanillaId) sat-F =
+        (FUN)
+        [(VanillaId) etaS ,(VanillaId) etaR]
+          (App) (VanillaId) $c/=4_F (VarArg) (VanillaId) $dEq45F (VarArg) (VanillaId) $dEq56F (VarArg) (VanillaId) $dEq67F (VarArg) (VanillaId) $dEq78F (VarArg) (VanillaId) $dEq89F (VarArg) (VanillaId) etaS (VarArg) (VanillaId) etaR
+    in (Let) let
+         (StgNonRec)
+           (VanillaId) satAG =
+           (FUN)
+           [(VanillaId) etaS ,(VanillaId) etaR]
+             (App) (VanillaId) $c==4cF (VarArg) (VanillaId) $dEq45F (VarArg) (VanillaId) $dEq56F (VarArg) (VanillaId) $dEq67F (VarArg) (VanillaId) $dEq78F (VarArg) (VanillaId) $dEq89F (VarArg) (VanillaId) etaS (VarArg) (VanillaId) etaR
+       in (ConApp) APPFL.Classes.D:Eq [(VarArg) (VanillaId) satAG ,(VarArg) (VanillaId) sat-F]
+  (VanillaId) $c/=4_F =
+  (FUN)
+  [(VanillaId) $dEq4BG ,(VanillaId) $dEq5CG ,(VanillaId) $dEq6DG ,(VanillaId) $dEq7EG ,(VanillaId) $dEq8FG ,(VanillaId) etaGG ,(VanillaId) eta1HG]
+    (Case) (App) (DictFunId) tycon: APPFL.Classes.Eq typs: [GHC.Tuple.(,,,,) a0F b1F c2F d3F e4F] APPFL.Classes.$fEq(,,,,) (VarArg) (VanillaId) $dEq4BG (VarArg) (VanillaId) $dEq5CG (VarArg) (VanillaId) $dEq6DG (VarArg) (VanillaId) $dEq7EG (VarArg) (VanillaId) $dEq8FG = (VanillaId) satIG
+      (AlgAlt)
+        (DEFAULT) _
+          -> (Case) (App) (ClassOpId) Selectors: [== ,/=] APPFL.Classes.== (VarArg) (VanillaId) satIG (VarArg) (VanillaId) etaGG (VarArg) (VanillaId) eta1HG = (VanillaId) wildJG
+               (AlgAlt)
+                 (DataAlt) GHC.Types.False -> (ConApp) GHC.Types.True []
+                 (DataAlt) GHC.Types.True -> (ConApp) GHC.Types.False []
+(StgNonRec)
+  (VanillaId) $c==5KG =
+  (FUN)
+  [(VanillaId) $dEq4LG ,(VanillaId) $dEq5MG ,(VanillaId) $dEq6NG ,(VanillaId) $dEq7OG ,(VanillaId) $dEq8PG ,(VanillaId) $dEq9QG ,(VanillaId) dsRG ,(VanillaId) ds1SG]
+    (Case) (App) (VanillaId) dsRG = (VanillaId) wildTG
+      (AlgAlt)
+        (DataAlt) GHC.Tuple.(,,,,,) (VanillaId) a7UG (VanillaId) b1VG (VanillaId) c1WG (VanillaId) d1XG (VanillaId) e1YG (VanillaId) f1ZG
+          -> (Case) (App) (VanillaId) ds1SG = (VanillaId) wild1aG
+               (AlgAlt)
+                 (DataAlt) GHC.Tuple.(,,,,,) (VanillaId) a8bG (VanillaId) b2cG (VanillaId) c2dG (VanillaId) d2eG (VanillaId) e2fG (VanillaId) f2gG
+                   -> (Case) (App) (ClassOpId) Selectors: [== ,/=] APPFL.Classes.== (VarArg) (VanillaId) $dEq4LG (VarArg) (VanillaId) a7UG (VarArg) (VanillaId) a8bG = (VanillaId) wild2hG
+                        (AlgAlt)
+                          (DataAlt) GHC.Types.False -> (ConApp) GHC.Types.False []
+                          (DataAlt) GHC.Types.True
+                            -> (Case) (App) (ClassOpId) Selectors: [== ,/=] APPFL.Classes.== (VarArg) (VanillaId) $dEq5MG (VarArg) (VanillaId) b1VG (VarArg) (VanillaId) b2cG = (VanillaId) wild3iG
+                                 (AlgAlt)
+                                   (DataAlt) GHC.Types.False -> (ConApp) GHC.Types.False []
+                                   (DataAlt) GHC.Types.True
+                                     -> (Case) (App) (ClassOpId) Selectors: [== ,/=] APPFL.Classes.== (VarArg) (VanillaId) $dEq6NG (VarArg) (VanillaId) c1WG (VarArg) (VanillaId) c2dG = (VanillaId) wild4jG
+                                          (AlgAlt)
+                                            (DataAlt) GHC.Types.False -> (ConApp) GHC.Types.False []
+                                            (DataAlt) GHC.Types.True
+                                              -> (Case) (App) (ClassOpId) Selectors: [== ,/=] APPFL.Classes.== (VarArg) (VanillaId) $dEq7OG (VarArg) (VanillaId) d1XG (VarArg) (VanillaId) d2eG = (VanillaId) wild5kG
+                                                   (AlgAlt)
+                                                     (DataAlt) GHC.Types.False
+                                                       -> (ConApp) GHC.Types.False []
+                                                     (DataAlt) GHC.Types.True
+                                                       -> (Case) (App) (ClassOpId) Selectors: [== ,/=] APPFL.Classes.== (VarArg) (VanillaId) $dEq8PG (VarArg) (VanillaId) e1YG (VarArg) (VanillaId) e2fG = (VanillaId) wild6lG
+                                                            (AlgAlt)
+                                                              (DataAlt) GHC.Types.False
+                                                                -> (ConApp) GHC.Types.False []
+                                                              (DataAlt) GHC.Types.True
+                                                                -> (App) (ClassOpId) Selectors: [== ,/=] APPFL.Classes.== (VarArg) (VanillaId) $dEq9QG (VarArg) (VanillaId) f1ZG (VarArg) (VanillaId) f2gG
+(StgRec)
+  (DictFunId) tycon: APPFL.Classes.Eq typs: [GHC.Tuple.(,,,,,) amG bnG coG dpG eqG frG] APPFL.Classes.$fEq(,,,,,) =
+  (FUN)
+  [(VanillaId) $dEq4sG ,(VanillaId) $dEq5tG ,(VanillaId) $dEq6uG ,(VanillaId) $dEq7vG ,(VanillaId) $dEq8wG ,(VanillaId) $dEq9xG]
+    (Let) let
+      (StgNonRec)
+        (VanillaId) satyG =
+        (FUN)
+        [(VanillaId) etaS ,(VanillaId) etaR]
+          (App) (VanillaId) $c/=5zG (VarArg) (VanillaId) $dEq4sG (VarArg) (VanillaId) $dEq5tG (VarArg) (VanillaId) $dEq6uG (VarArg) (VanillaId) $dEq7vG (VarArg) (VanillaId) $dEq8wG (VarArg) (VanillaId) $dEq9xG (VarArg) (VanillaId) etaS (VarArg) (VanillaId) etaR
+    in (Let) let
+         (StgNonRec)
+           (VanillaId) sat0G =
+           (FUN)
+           [(VanillaId) etaS ,(VanillaId) etaR]
+             (App) (VanillaId) $c==5KG (VarArg) (VanillaId) $dEq4sG (VarArg) (VanillaId) $dEq5tG (VarArg) (VanillaId) $dEq6uG (VarArg) (VanillaId) $dEq7vG (VarArg) (VanillaId) $dEq8wG (VarArg) (VanillaId) $dEq9xG (VarArg) (VanillaId) etaS (VarArg) (VanillaId) etaR
+       in (ConApp) APPFL.Classes.D:Eq [(VarArg) (VanillaId) sat0G ,(VarArg) (VanillaId) satyG]
+  (VanillaId) $c/=5zG =
+  (FUN)
+  [(VanillaId) $dEq41G ,(VanillaId) $dEq52G ,(VanillaId) $dEq63G ,(VanillaId) $dEq74G ,(VanillaId) $dEq85G ,(VanillaId) $dEq96G ,(VanillaId) eta7G ,(VanillaId) eta18G]
+    (Case) (App) (DictFunId) tycon: APPFL.Classes.Eq typs: [GHC.Tuple.(,,,,,) amG bnG coG dpG eqG frG] APPFL.Classes.$fEq(,,,,,) (VarArg) (VanillaId) $dEq41G (VarArg) (VanillaId) $dEq52G (VarArg) (VanillaId) $dEq63G (VarArg) (VanillaId) $dEq74G (VarArg) (VanillaId) $dEq85G (VarArg) (VanillaId) $dEq96G = (VanillaId) sat9G
+      (AlgAlt)
+        (DEFAULT) _
+          -> (Case) (App) (ClassOpId) Selectors: [== ,/=] APPFL.Classes.== (VarArg) (VanillaId) sat9G (VarArg) (VanillaId) eta7G (VarArg) (VanillaId) eta18G = (VanillaId) wild-G
+               (AlgAlt)
+                 (DataAlt) GHC.Types.False -> (ConApp) GHC.Types.True []
+                 (DataAlt) GHC.Types.True -> (ConApp) GHC.Types.False []
+(StgNonRec)
+  (VanillaId) $c==6_G =
+  (FUN)
+  [(VanillaId) $dEq4AH ,(VanillaId) $dEq5BH ,(VanillaId) $dEq6CH ,(VanillaId) $dEq7DH ,(VanillaId) $dEq8EH ,(VanillaId) $dEq9FH ,(VanillaId) $dEq10GH ,(VanillaId) dsHH ,(VanillaId) ds1IH]
+    (Case) (App) (VanillaId) dsHH = (VanillaId) wildJH
+      (AlgAlt)
+        (DataAlt) GHC.Tuple.(,,,,,,) (VanillaId) a7KH (VanillaId) b1LH (VanillaId) c1MH (VanillaId) d1NH (VanillaId) e1OH (VanillaId) f1PH (VanillaId) g1QH
+          -> (Case) (App) (VanillaId) ds1IH = (VanillaId) wild1RH
+               (AlgAlt)
+                 (DataAlt) GHC.Tuple.(,,,,,,) (VanillaId) a8SH (VanillaId) b2TH (VanillaId) c2UH (VanillaId) d2VH (VanillaId) e2WH (VanillaId) f2XH (VanillaId) g2YH
+                   -> (Case) (App) (ClassOpId) Selectors: [== ,/=] APPFL.Classes.== (VarArg) (VanillaId) $dEq4AH (VarArg) (VanillaId) a7KH (VarArg) (VanillaId) a8SH = (VanillaId) wild2ZH
+                        (AlgAlt)
+                          (DataAlt) GHC.Types.False -> (ConApp) GHC.Types.False []
+                          (DataAlt) GHC.Types.True
+                            -> (Case) (App) (ClassOpId) Selectors: [== ,/=] APPFL.Classes.== (VarArg) (VanillaId) $dEq5BH (VarArg) (VanillaId) b1LH (VarArg) (VanillaId) b2TH = (VanillaId) wild3aH
+                                 (AlgAlt)
+                                   (DataAlt) GHC.Types.False -> (ConApp) GHC.Types.False []
+                                   (DataAlt) GHC.Types.True
+                                     -> (Case) (App) (ClassOpId) Selectors: [== ,/=] APPFL.Classes.== (VarArg) (VanillaId) $dEq6CH (VarArg) (VanillaId) c1MH (VarArg) (VanillaId) c2UH = (VanillaId) wild4bH
+                                          (AlgAlt)
+                                            (DataAlt) GHC.Types.False -> (ConApp) GHC.Types.False []
+                                            (DataAlt) GHC.Types.True
+                                              -> (Case) (App) (ClassOpId) Selectors: [== ,/=] APPFL.Classes.== (VarArg) (VanillaId) $dEq7DH (VarArg) (VanillaId) d1NH (VarArg) (VanillaId) d2VH = (VanillaId) wild5cH
+                                                   (AlgAlt)
+                                                     (DataAlt) GHC.Types.False
+                                                       -> (ConApp) GHC.Types.False []
+                                                     (DataAlt) GHC.Types.True
+                                                       -> (Case) (App) (ClassOpId) Selectors: [== ,/=] APPFL.Classes.== (VarArg) (VanillaId) $dEq8EH (VarArg) (VanillaId) e1OH (VarArg) (VanillaId) e2WH = (VanillaId) wild6dH
+                                                            (AlgAlt)
+                                                              (DataAlt) GHC.Types.False
+                                                                -> (ConApp) GHC.Types.False []
+                                                              (DataAlt) GHC.Types.True
+                                                                -> (Case) (App) (ClassOpId) Selectors: [== ,/=] APPFL.Classes.== (VarArg) (VanillaId) $dEq9FH (VarArg) (VanillaId) f1PH (VarArg) (VanillaId) f2XH = (VanillaId) wild7eH
+                                                                     (AlgAlt)
+                                                                       (DataAlt) GHC.Types.False
+                                                                         -> (ConApp) GHC.Types.False []
+                                                                       (DataAlt) GHC.Types.True
+                                                                         -> (App) (ClassOpId) Selectors: [== ,/=] APPFL.Classes.== (VarArg) (VanillaId) $dEq10GH (VarArg) (VanillaId) g1QH (VarArg) (VanillaId) g2YH
+(StgRec)
+  (DictFunId) tycon: APPFL.Classes.Eq typs: [GHC.Tuple.(,,,,,,) afH bgH chH diH ejH fkH glH] APPFL.Classes.$fEq(,,,,,,) =
+  (FUN)
+  [(VanillaId) $dEq4mH ,(VanillaId) $dEq5nH ,(VanillaId) $dEq6oH ,(VanillaId) $dEq7pH ,(VanillaId) $dEq8qH ,(VanillaId) $dEq9rH ,(VanillaId) $dEq10sH]
+    (Let) let
+      (StgNonRec)
+        (VanillaId) sattH =
+        (FUN)
+        [(VanillaId) etaS ,(VanillaId) etaR]
+          (App) (VanillaId) $c/=6uH (VarArg) (VanillaId) $dEq4mH (VarArg) (VanillaId) $dEq5nH (VarArg) (VanillaId) $dEq6oH (VarArg) (VanillaId) $dEq7pH (VarArg) (VanillaId) $dEq8qH (VarArg) (VanillaId) $dEq9rH (VarArg) (VanillaId) $dEq10sH (VarArg) (VanillaId) etaS (VarArg) (VanillaId) etaR
+    in (Let) let
+         (StgNonRec)
+           (VanillaId) satvH =
+           (FUN)
+           [(VanillaId) etaS ,(VanillaId) etaR]
+             (App) (VanillaId) $c==6_G (VarArg) (VanillaId) $dEq4mH (VarArg) (VanillaId) $dEq5nH (VarArg) (VanillaId) $dEq6oH (VarArg) (VanillaId) $dEq7pH (VarArg) (VanillaId) $dEq8qH (VarArg) (VanillaId) $dEq9rH (VarArg) (VanillaId) $dEq10sH (VarArg) (VanillaId) etaS (VarArg) (VanillaId) etaR
+       in (ConApp) APPFL.Classes.D:Eq [(VarArg) (VanillaId) satvH ,(VarArg) (VanillaId) sattH]
+  (VanillaId) $c/=6uH =
+  (FUN)
+  [(VanillaId) $dEq4wH ,(VanillaId) $dEq5xH ,(VanillaId) $dEq6yH ,(VanillaId) $dEq7zH ,(VanillaId) $dEq80H ,(VanillaId) $dEq91H ,(VanillaId) $dEq102H ,(VanillaId) eta3H ,(VanillaId) eta14H]
+    (Case) (App) (DictFunId) tycon: APPFL.Classes.Eq typs: [GHC.Tuple.(,,,,,,) afH bgH chH diH ejH fkH glH] APPFL.Classes.$fEq(,,,,,,) (VarArg) (VanillaId) $dEq4wH (VarArg) (VanillaId) $dEq5xH (VarArg) (VanillaId) $dEq6yH (VarArg) (VanillaId) $dEq7zH (VarArg) (VanillaId) $dEq80H (VarArg) (VanillaId) $dEq91H (VarArg) (VanillaId) $dEq102H = (VanillaId) sat5H
+      (AlgAlt)
+        (DEFAULT) _
+          -> (Case) (App) (ClassOpId) Selectors: [== ,/=] APPFL.Classes.== (VarArg) (VanillaId) sat5H (VarArg) (VanillaId) eta3H (VarArg) (VanillaId) eta14H = (VanillaId) wild6H
+               (AlgAlt)
+                 (DataAlt) GHC.Types.False -> (ConApp) GHC.Types.True []
+                 (DataAlt) GHC.Types.True -> (ConApp) GHC.Types.False []
+(StgNonRec)
+  (VanillaId) $c==77H =
+  (FUN)
+  [(VanillaId) $dEq48H ,(VanillaId) $dEq59H ,(VanillaId) $dEq6-H ,(VanillaId) $dEq7_H ,(VanillaId) $dEq8AI ,(VanillaId) $dEq9BI ,(VanillaId) $dEq10CI ,(VanillaId) $dEq11DI ,(VanillaId) dsEI ,(VanillaId) ds1FI]
+    (Case) (App) (VanillaId) dsEI = (VanillaId) wildGI
+      (AlgAlt)
+        (DataAlt) GHC.Tuple.(,,,,,,,) (VanillaId) a7HI (VanillaId) b1II (VanillaId) c1JI (VanillaId) d1KI (VanillaId) e1LI (VanillaId) f1MI (VanillaId) g1NI (VanillaId) h1OI
+          -> (Case) (App) (VanillaId) ds1FI = (VanillaId) wild1PI
+               (AlgAlt)
+                 (DataAlt) GHC.Tuple.(,,,,,,,) (VanillaId) a8QI (VanillaId) b2RI (VanillaId) c2SI (VanillaId) d2TI (VanillaId) e2UI (VanillaId) f2VI (VanillaId) g2WI (VanillaId) h2XI
+                   -> (Case) (App) (ClassOpId) Selectors: [== ,/=] APPFL.Classes.== (VarArg) (VanillaId) $dEq48H (VarArg) (VanillaId) a7HI (VarArg) (VanillaId) a8QI = (VanillaId) wild2YI
+                        (AlgAlt)
+                          (DataAlt) GHC.Types.False -> (ConApp) GHC.Types.False []
+                          (DataAlt) GHC.Types.True
+                            -> (Case) (App) (ClassOpId) Selectors: [== ,/=] APPFL.Classes.== (VarArg) (VanillaId) $dEq59H (VarArg) (VanillaId) b1II (VarArg) (VanillaId) b2RI = (VanillaId) wild3ZI
+                                 (AlgAlt)
+                                   (DataAlt) GHC.Types.False -> (ConApp) GHC.Types.False []
+                                   (DataAlt) GHC.Types.True
+                                     -> (Case) (App) (ClassOpId) Selectors: [== ,/=] APPFL.Classes.== (VarArg) (VanillaId) $dEq6-H (VarArg) (VanillaId) c1JI (VarArg) (VanillaId) c2SI = (VanillaId) wild4aI
+                                          (AlgAlt)
+                                            (DataAlt) GHC.Types.False -> (ConApp) GHC.Types.False []
+                                            (DataAlt) GHC.Types.True
+                                              -> (Case) (App) (ClassOpId) Selectors: [== ,/=] APPFL.Classes.== (VarArg) (VanillaId) $dEq7_H (VarArg) (VanillaId) d1KI (VarArg) (VanillaId) d2TI = (VanillaId) wild5bI
+                                                   (AlgAlt)
+                                                     (DataAlt) GHC.Types.False
+                                                       -> (ConApp) GHC.Types.False []
+                                                     (DataAlt) GHC.Types.True
+                                                       -> (Case) (App) (ClassOpId) Selectors: [== ,/=] APPFL.Classes.== (VarArg) (VanillaId) $dEq8AI (VarArg) (VanillaId) e1LI (VarArg) (VanillaId) e2UI = (VanillaId) wild6cI
+                                                            (AlgAlt)
+                                                              (DataAlt) GHC.Types.False
+                                                                -> (ConApp) GHC.Types.False []
+                                                              (DataAlt) GHC.Types.True
+                                                                -> (Case) (App) (ClassOpId) Selectors: [== ,/=] APPFL.Classes.== (VarArg) (VanillaId) $dEq9BI (VarArg) (VanillaId) f1MI (VarArg) (VanillaId) f2VI = (VanillaId) wild7dI
+                                                                     (AlgAlt)
+                                                                       (DataAlt) GHC.Types.False
+                                                                         -> (ConApp) GHC.Types.False []
+                                                                       (DataAlt) GHC.Types.True
+                                                                         -> (Case) (App) (ClassOpId) Selectors: [== ,/=] APPFL.Classes.== (VarArg) (VanillaId) $dEq10CI (VarArg) (VanillaId) g1NI (VarArg) (VanillaId) g2WI = (VanillaId) wild8eI
+                                                                              (AlgAlt)
+                                                                                (DataAlt) GHC.Types.False
+                                                                                  -> (ConApp) GHC.Types.False []
+                                                                                (DataAlt) GHC.Types.True
+                                                                                  -> (App) (ClassOpId) Selectors: [== ,/=] APPFL.Classes.== (VarArg) (VanillaId) $dEq11DI (VarArg) (VanillaId) h1OI (VarArg) (VanillaId) h2XI
+(StgRec)
+  (DictFunId) tycon: APPFL.Classes.Eq typs: [GHC.Tuple.(,,,,,,,) afI bgI chI diI ejI fkI glI hmI] APPFL.Classes.$fEq(,,,,,,,) =
+  (FUN)
+  [(VanillaId) $dEq4nI ,(VanillaId) $dEq5oI ,(VanillaId) $dEq6pI ,(VanillaId) $dEq7qI ,(VanillaId) $dEq8rI ,(VanillaId) $dEq9sI ,(VanillaId) $dEq10tI ,(VanillaId) $dEq11uI]
+    (Let) let
+      (StgNonRec)
+        (VanillaId) satvI =
+        (FUN)
+        [(VanillaId) etaS ,(VanillaId) etaR]
+          (App) (VanillaId) $c/=7wI (VarArg) (VanillaId) $dEq4nI (VarArg) (VanillaId) $dEq5oI (VarArg) (VanillaId) $dEq6pI (VarArg) (VanillaId) $dEq7qI (VarArg) (VanillaId) $dEq8rI (VarArg) (VanillaId) $dEq9sI (VarArg) (VanillaId) $dEq10tI (VarArg) (VanillaId) $dEq11uI (VarArg) (VanillaId) etaS (VarArg) (VanillaId) etaR
+    in (Let) let
+         (StgNonRec)
+           (VanillaId) satxI =
+           (FUN)
+           [(VanillaId) etaS ,(VanillaId) etaR]
+             (App) (VanillaId) $c==77H (VarArg) (VanillaId) $dEq4nI (VarArg) (VanillaId) $dEq5oI (VarArg) (VanillaId) $dEq6pI (VarArg) (VanillaId) $dEq7qI (VarArg) (VanillaId) $dEq8rI (VarArg) (VanillaId) $dEq9sI (VarArg) (VanillaId) $dEq10tI (VarArg) (VanillaId) $dEq11uI (VarArg) (VanillaId) etaS (VarArg) (VanillaId) etaR
+       in (ConApp) APPFL.Classes.D:Eq [(VarArg) (VanillaId) satxI ,(VarArg) (VanillaId) satvI]
+  (VanillaId) $c/=7wI =
+  (FUN)
+  [(VanillaId) $dEq4yI ,(VanillaId) $dEq5zI ,(VanillaId) $dEq60I ,(VanillaId) $dEq71I ,(VanillaId) $dEq82I ,(VanillaId) $dEq93I ,(VanillaId) $dEq104I ,(VanillaId) $dEq115I ,(VanillaId) eta6I ,(VanillaId) eta17I]
+    (Case) (App) (DictFunId) tycon: APPFL.Classes.Eq typs: [GHC.Tuple.(,,,,,,,) afI bgI chI diI ejI fkI glI hmI] APPFL.Classes.$fEq(,,,,,,,) (VarArg) (VanillaId) $dEq4yI (VarArg) (VanillaId) $dEq5zI (VarArg) (VanillaId) $dEq60I (VarArg) (VanillaId) $dEq71I (VarArg) (VanillaId) $dEq82I (VarArg) (VanillaId) $dEq93I (VarArg) (VanillaId) $dEq104I (VarArg) (VanillaId) $dEq115I = (VanillaId) sat8I
+      (AlgAlt)
+        (DEFAULT) _
+          -> (Case) (App) (ClassOpId) Selectors: [== ,/=] APPFL.Classes.== (VarArg) (VanillaId) sat8I (VarArg) (VanillaId) eta6I (VarArg) (VanillaId) eta17I = (VanillaId) wild9I
+               (AlgAlt)
+                 (DataAlt) GHC.Types.False -> (ConApp) GHC.Types.True []
+                 (DataAlt) GHC.Types.True -> (ConApp) GHC.Types.False []
+(StgNonRec)
+  (VanillaId) $c==8-I =
+  (FUN)
+  [(VanillaId) $dEq4_I ,(VanillaId) $dEq5AJ ,(VanillaId) $dEq6BJ ,(VanillaId) $dEq7CJ ,(VanillaId) $dEq8DJ ,(VanillaId) $dEq9EJ ,(VanillaId) $dEq10FJ ,(VanillaId) $dEq11GJ ,(VanillaId) $dEq12HJ ,(VanillaId) dsIJ ,(VanillaId) ds1JJ]
+    (Case) (App) (VanillaId) dsIJ = (VanillaId) wildKJ
+      (AlgAlt)
+        (DataAlt) GHC.Tuple.(,,,,,,,,) (VanillaId) a7LJ (VanillaId) b1MJ (VanillaId) c1NJ (VanillaId) d1OJ (VanillaId) e1PJ (VanillaId) f1QJ (VanillaId) g1RJ (VanillaId) h1SJ (VanillaId) i1TJ
+          -> (Case) (App) (VanillaId) ds1JJ = (VanillaId) wild1UJ
+               (AlgAlt)
+                 (DataAlt) GHC.Tuple.(,,,,,,,,) (VanillaId) a8VJ (VanillaId) b2WJ (VanillaId) c2XJ (VanillaId) d2YJ (VanillaId) e2ZJ (VanillaId) f2aJ (VanillaId) g2bJ (VanillaId) h2cJ (VanillaId) i2dJ
+                   -> (Case) (App) (ClassOpId) Selectors: [== ,/=] APPFL.Classes.== (VarArg) (VanillaId) $dEq4_I (VarArg) (VanillaId) a7LJ (VarArg) (VanillaId) a8VJ = (VanillaId) wild2eJ
+                        (AlgAlt)
+                          (DataAlt) GHC.Types.False -> (ConApp) GHC.Types.False []
+                          (DataAlt) GHC.Types.True
+                            -> (Case) (App) (ClassOpId) Selectors: [== ,/=] APPFL.Classes.== (VarArg) (VanillaId) $dEq5AJ (VarArg) (VanillaId) b1MJ (VarArg) (VanillaId) b2WJ = (VanillaId) wild3fJ
+                                 (AlgAlt)
+                                   (DataAlt) GHC.Types.False -> (ConApp) GHC.Types.False []
+                                   (DataAlt) GHC.Types.True
+                                     -> (Case) (App) (ClassOpId) Selectors: [== ,/=] APPFL.Classes.== (VarArg) (VanillaId) $dEq6BJ (VarArg) (VanillaId) c1NJ (VarArg) (VanillaId) c2XJ = (VanillaId) wild4gJ
+                                          (AlgAlt)
+                                            (DataAlt) GHC.Types.False -> (ConApp) GHC.Types.False []
+                                            (DataAlt) GHC.Types.True
+                                              -> (Case) (App) (ClassOpId) Selectors: [== ,/=] APPFL.Classes.== (VarArg) (VanillaId) $dEq7CJ (VarArg) (VanillaId) d1OJ (VarArg) (VanillaId) d2YJ = (VanillaId) wild5hJ
+                                                   (AlgAlt)
+                                                     (DataAlt) GHC.Types.False
+                                                       -> (ConApp) GHC.Types.False []
+                                                     (DataAlt) GHC.Types.True
+                                                       -> (Case) (App) (ClassOpId) Selectors: [== ,/=] APPFL.Classes.== (VarArg) (VanillaId) $dEq8DJ (VarArg) (VanillaId) e1PJ (VarArg) (VanillaId) e2ZJ = (VanillaId) wild6iJ
+                                                            (AlgAlt)
+                                                              (DataAlt) GHC.Types.False
+                                                                -> (ConApp) GHC.Types.False []
+                                                              (DataAlt) GHC.Types.True
+                                                                -> (Case) (App) (ClassOpId) Selectors: [== ,/=] APPFL.Classes.== (VarArg) (VanillaId) $dEq9EJ (VarArg) (VanillaId) f1QJ (VarArg) (VanillaId) f2aJ = (VanillaId) wild7jJ
+                                                                     (AlgAlt)
+                                                                       (DataAlt) GHC.Types.False
+                                                                         -> (ConApp) GHC.Types.False []
+                                                                       (DataAlt) GHC.Types.True
+                                                                         -> (Case) (App) (ClassOpId) Selectors: [== ,/=] APPFL.Classes.== (VarArg) (VanillaId) $dEq10FJ (VarArg) (VanillaId) g1RJ (VarArg) (VanillaId) g2bJ = (VanillaId) wild8kJ
+                                                                              (AlgAlt)
+                                                                                (DataAlt) GHC.Types.False
+                                                                                  -> (ConApp) GHC.Types.False []
+                                                                                (DataAlt) GHC.Types.True
+                                                                                  -> (Case) (App) (ClassOpId) Selectors: [== ,/=] APPFL.Classes.== (VarArg) (VanillaId) $dEq11GJ (VarArg) (VanillaId) h1SJ (VarArg) (VanillaId) h2cJ = (VanillaId) wild9lJ
+                                                                                       (AlgAlt)
+                                                                                         (DataAlt) GHC.Types.False
+                                                                                           -> (ConApp) GHC.Types.False []
+                                                                                         (DataAlt) GHC.Types.True
+                                                                                           -> (App) (ClassOpId) Selectors: [== ,/=] APPFL.Classes.== (VarArg) (VanillaId) $dEq12HJ (VarArg) (VanillaId) i1TJ (VarArg) (VanillaId) i2dJ
+(StgRec)
+  (DictFunId) tycon: APPFL.Classes.Eq typs: [GHC.Tuple.(,,,,,,,,) amJ bnJ coJ dpJ eqJ frJ gsJ htJ iuJ] APPFL.Classes.$fEq(,,,,,,,,) =
+  (FUN)
+  [(VanillaId) $dEq4vJ ,(VanillaId) $dEq5wJ ,(VanillaId) $dEq6xJ ,(VanillaId) $dEq7yJ ,(VanillaId) $dEq8zJ ,(VanillaId) $dEq90J ,(VanillaId) $dEq101J ,(VanillaId) $dEq112J ,(VanillaId) $dEq123J]
+    (Let) let
+      (StgNonRec)
+        (VanillaId) sat4J =
+        (FUN)
+        [(VanillaId) etaS ,(VanillaId) etaR]
+          (App) (VanillaId) $c/=85J (VarArg) (VanillaId) $dEq4vJ (VarArg) (VanillaId) $dEq5wJ (VarArg) (VanillaId) $dEq6xJ (VarArg) (VanillaId) $dEq7yJ (VarArg) (VanillaId) $dEq8zJ (VarArg) (VanillaId) $dEq90J (VarArg) (VanillaId) $dEq101J (VarArg) (VanillaId) $dEq112J (VarArg) (VanillaId) $dEq123J (VarArg) (VanillaId) etaS (VarArg) (VanillaId) etaR
+    in (Let) let
+         (StgNonRec)
+           (VanillaId) sat6J =
+           (FUN)
+           [(VanillaId) etaS ,(VanillaId) etaR]
+             (App) (VanillaId) $c==8-I (VarArg) (VanillaId) $dEq4vJ (VarArg) (VanillaId) $dEq5wJ (VarArg) (VanillaId) $dEq6xJ (VarArg) (VanillaId) $dEq7yJ (VarArg) (VanillaId) $dEq8zJ (VarArg) (VanillaId) $dEq90J (VarArg) (VanillaId) $dEq101J (VarArg) (VanillaId) $dEq112J (VarArg) (VanillaId) $dEq123J (VarArg) (VanillaId) etaS (VarArg) (VanillaId) etaR
+       in (ConApp) APPFL.Classes.D:Eq [(VarArg) (VanillaId) sat6J ,(VarArg) (VanillaId) sat4J]
+  (VanillaId) $c/=85J =
+  (FUN)
+  [(VanillaId) $dEq47J ,(VanillaId) $dEq58J ,(VanillaId) $dEq69J ,(VanillaId) $dEq7-J ,(VanillaId) $dEq8_J ,(VanillaId) $dEq9AK ,(VanillaId) $dEq10BK ,(VanillaId) $dEq11CK ,(VanillaId) $dEq12DK ,(VanillaId) etaEK ,(VanillaId) eta1FK]
+    (Case) (App) (DictFunId) tycon: APPFL.Classes.Eq typs: [GHC.Tuple.(,,,,,,,,) amJ bnJ coJ dpJ eqJ frJ gsJ htJ iuJ] APPFL.Classes.$fEq(,,,,,,,,) (VarArg) (VanillaId) $dEq47J (VarArg) (VanillaId) $dEq58J (VarArg) (VanillaId) $dEq69J (VarArg) (VanillaId) $dEq7-J (VarArg) (VanillaId) $dEq8_J (VarArg) (VanillaId) $dEq9AK (VarArg) (VanillaId) $dEq10BK (VarArg) (VanillaId) $dEq11CK (VarArg) (VanillaId) $dEq12DK = (VanillaId) satGK
+      (AlgAlt)
+        (DEFAULT) _
+          -> (Case) (App) (ClassOpId) Selectors: [== ,/=] APPFL.Classes.== (VarArg) (VanillaId) satGK (VarArg) (VanillaId) etaEK (VarArg) (VanillaId) eta1FK = (VanillaId) wildHK
+               (AlgAlt)
+                 (DataAlt) GHC.Types.False -> (ConApp) GHC.Types.True []
+                 (DataAlt) GHC.Types.True -> (ConApp) GHC.Types.False []
+(StgNonRec)
+  (VanillaId) $c==9IK =
+  (FUN)
+  [(VanillaId) $dEq4JK ,(VanillaId) $dEq5KK ,(VanillaId) $dEq6LK ,(VanillaId) $dEq7MK ,(VanillaId) $dEq8NK ,(VanillaId) $dEq9OK ,(VanillaId) $dEq10PK ,(VanillaId) $dEq11QK ,(VanillaId) $dEq12RK ,(VanillaId) $dEq13SK ,(VanillaId) dsTK ,(VanillaId) ds1UK]
+    (Case) (App) (VanillaId) dsTK = (VanillaId) wildVK
+      (AlgAlt)
+        (DataAlt) GHC.Tuple.(,,,,,,,,,) (VanillaId) a7WK (VanillaId) b1XK (VanillaId) c1YK (VanillaId) d1ZK (VanillaId) e1aK (VanillaId) f1bK (VanillaId) g1cK (VanillaId) h1dK (VanillaId) i1eK (VanillaId) j1fK
+          -> (Case) (App) (VanillaId) ds1UK = (VanillaId) wild1gK
+               (AlgAlt)
+                 (DataAlt) GHC.Tuple.(,,,,,,,,,) (VanillaId) a8hK (VanillaId) b2iK (VanillaId) c2jK (VanillaId) d2kK (VanillaId) e2lK (VanillaId) f2mK (VanillaId) g2nK (VanillaId) h2oK (VanillaId) i2pK (VanillaId) j2qK
+                   -> (Case) (App) (ClassOpId) Selectors: [== ,/=] APPFL.Classes.== (VarArg) (VanillaId) $dEq4JK (VarArg) (VanillaId) a7WK (VarArg) (VanillaId) a8hK = (VanillaId) wild2rK
+                        (AlgAlt)
+                          (DataAlt) GHC.Types.False -> (ConApp) GHC.Types.False []
+                          (DataAlt) GHC.Types.True
+                            -> (Case) (App) (ClassOpId) Selectors: [== ,/=] APPFL.Classes.== (VarArg) (VanillaId) $dEq5KK (VarArg) (VanillaId) b1XK (VarArg) (VanillaId) b2iK = (VanillaId) wild3sK
+                                 (AlgAlt)
+                                   (DataAlt) GHC.Types.False -> (ConApp) GHC.Types.False []
+                                   (DataAlt) GHC.Types.True
+                                     -> (Case) (App) (ClassOpId) Selectors: [== ,/=] APPFL.Classes.== (VarArg) (VanillaId) $dEq6LK (VarArg) (VanillaId) c1YK (VarArg) (VanillaId) c2jK = (VanillaId) wild4tK
+                                          (AlgAlt)
+                                            (DataAlt) GHC.Types.False -> (ConApp) GHC.Types.False []
+                                            (DataAlt) GHC.Types.True
+                                              -> (Case) (App) (ClassOpId) Selectors: [== ,/=] APPFL.Classes.== (VarArg) (VanillaId) $dEq7MK (VarArg) (VanillaId) d1ZK (VarArg) (VanillaId) d2kK = (VanillaId) wild5uK
+                                                   (AlgAlt)
+                                                     (DataAlt) GHC.Types.False
+                                                       -> (ConApp) GHC.Types.False []
+                                                     (DataAlt) GHC.Types.True
+                                                       -> (Case) (App) (ClassOpId) Selectors: [== ,/=] APPFL.Classes.== (VarArg) (VanillaId) $dEq8NK (VarArg) (VanillaId) e1aK (VarArg) (VanillaId) e2lK = (VanillaId) wild6vK
+                                                            (AlgAlt)
+                                                              (DataAlt) GHC.Types.False
+                                                                -> (ConApp) GHC.Types.False []
+                                                              (DataAlt) GHC.Types.True
+                                                                -> (Case) (App) (ClassOpId) Selectors: [== ,/=] APPFL.Classes.== (VarArg) (VanillaId) $dEq9OK (VarArg) (VanillaId) f1bK (VarArg) (VanillaId) f2mK = (VanillaId) wild7wK
+                                                                     (AlgAlt)
+                                                                       (DataAlt) GHC.Types.False
+                                                                         -> (ConApp) GHC.Types.False []
+                                                                       (DataAlt) GHC.Types.True
+                                                                         -> (Case) (App) (ClassOpId) Selectors: [== ,/=] APPFL.Classes.== (VarArg) (VanillaId) $dEq10PK (VarArg) (VanillaId) g1cK (VarArg) (VanillaId) g2nK = (VanillaId) wild8xK
+                                                                              (AlgAlt)
+                                                                                (DataAlt) GHC.Types.False
+                                                                                  -> (ConApp) GHC.Types.False []
+                                                                                (DataAlt) GHC.Types.True
+                                                                                  -> (Case) (App) (ClassOpId) Selectors: [== ,/=] APPFL.Classes.== (VarArg) (VanillaId) $dEq11QK (VarArg) (VanillaId) h1dK (VarArg) (VanillaId) h2oK = (VanillaId) wild9yK
+                                                                                       (AlgAlt)
+                                                                                         (DataAlt) GHC.Types.False
+                                                                                           -> (ConApp) GHC.Types.False []
+                                                                                         (DataAlt) GHC.Types.True
+                                                                                           -> (Case) (App) (ClassOpId) Selectors: [== ,/=] APPFL.Classes.== (VarArg) (VanillaId) $dEq12RK (VarArg) (VanillaId) i1eK (VarArg) (VanillaId) i2pK = (VanillaId) wild10zK
+                                                                                                (AlgAlt)
+                                                                                                  (DataAlt) GHC.Types.False
+                                                                                                    -> (ConApp) GHC.Types.False []
+                                                                                                  (DataAlt) GHC.Types.True
+                                                                                                    -> (App) (ClassOpId) Selectors: [== ,/=] APPFL.Classes.== (VarArg) (VanillaId) $dEq13SK (VarArg) (VanillaId) j1fK (VarArg) (VanillaId) j2qK
+(StgRec)
+  (DictFunId) tycon: APPFL.Classes.Eq typs: [GHC.Tuple.(,,,,,,,,,) a0K b1K c2K d3K e4K f5K g6K h7K i8K j9K] APPFL.Classes.$fEq(,,,,,,,,,) =
+  (FUN)
+  [(VanillaId) $dEq4-K ,(VanillaId) $dEq5_K ,(VanillaId) $dEq6AL ,(VanillaId) $dEq7BL ,(VanillaId) $dEq8CL ,(VanillaId) $dEq9DL ,(VanillaId) $dEq10EL ,(VanillaId) $dEq11FL ,(VanillaId) $dEq12GL ,(VanillaId) $dEq13HL]
+    (Let) let
+      (StgNonRec)
+        (VanillaId) satIL =
+        (FUN)
+        [(VanillaId) etaS ,(VanillaId) etaR]
+          (App) (VanillaId) $c/=9JL (VarArg) (VanillaId) $dEq4-K (VarArg) (VanillaId) $dEq5_K (VarArg) (VanillaId) $dEq6AL (VarArg) (VanillaId) $dEq7BL (VarArg) (VanillaId) $dEq8CL (VarArg) (VanillaId) $dEq9DL (VarArg) (VanillaId) $dEq10EL (VarArg) (VanillaId) $dEq11FL (VarArg) (VanillaId) $dEq12GL (VarArg) (VanillaId) $dEq13HL (VarArg) (VanillaId) etaS (VarArg) (VanillaId) etaR
+    in (Let) let
+         (StgNonRec)
+           (VanillaId) satKL =
+           (FUN)
+           [(VanillaId) etaS ,(VanillaId) etaR]
+             (App) (VanillaId) $c==9IK (VarArg) (VanillaId) $dEq4-K (VarArg) (VanillaId) $dEq5_K (VarArg) (VanillaId) $dEq6AL (VarArg) (VanillaId) $dEq7BL (VarArg) (VanillaId) $dEq8CL (VarArg) (VanillaId) $dEq9DL (VarArg) (VanillaId) $dEq10EL (VarArg) (VanillaId) $dEq11FL (VarArg) (VanillaId) $dEq12GL (VarArg) (VanillaId) $dEq13HL (VarArg) (VanillaId) etaS (VarArg) (VanillaId) etaR
+       in (ConApp) APPFL.Classes.D:Eq [(VarArg) (VanillaId) satKL ,(VarArg) (VanillaId) satIL]
+  (VanillaId) $c/=9JL =
+  (FUN)
+  [(VanillaId) $dEq4LL ,(VanillaId) $dEq5ML ,(VanillaId) $dEq6NL ,(VanillaId) $dEq7OL ,(VanillaId) $dEq8PL ,(VanillaId) $dEq9QL ,(VanillaId) $dEq10RL ,(VanillaId) $dEq11SL ,(VanillaId) $dEq12TL ,(VanillaId) $dEq13UL ,(VanillaId) etaVL ,(VanillaId) eta1WL]
+    (Case) (App) (DictFunId) tycon: APPFL.Classes.Eq typs: [GHC.Tuple.(,,,,,,,,,) a0K b1K c2K d3K e4K f5K g6K h7K i8K j9K] APPFL.Classes.$fEq(,,,,,,,,,) (VarArg) (VanillaId) $dEq4LL (VarArg) (VanillaId) $dEq5ML (VarArg) (VanillaId) $dEq6NL (VarArg) (VanillaId) $dEq7OL (VarArg) (VanillaId) $dEq8PL (VarArg) (VanillaId) $dEq9QL (VarArg) (VanillaId) $dEq10RL (VarArg) (VanillaId) $dEq11SL (VarArg) (VanillaId) $dEq12TL (VarArg) (VanillaId) $dEq13UL = (VanillaId) satXL
+      (AlgAlt)
+        (DEFAULT) _
+          -> (Case) (App) (ClassOpId) Selectors: [== ,/=] APPFL.Classes.== (VarArg) (VanillaId) satXL (VarArg) (VanillaId) etaVL (VarArg) (VanillaId) eta1WL = (VanillaId) wildYL
+               (AlgAlt)
+                 (DataAlt) GHC.Types.False -> (ConApp) GHC.Types.True []
+                 (DataAlt) GHC.Types.True -> (ConApp) GHC.Types.False []
+(StgNonRec)
+  (VanillaId) $c==10ZL =
+  (FUN)
+  [(VanillaId) $dEq4aL ,(VanillaId) $dEq5bL ,(VanillaId) $dEq6cL ,(VanillaId) $dEq7dL ,(VanillaId) $dEq8eL ,(VanillaId) $dEq9fL ,(VanillaId) $dEq10gL ,(VanillaId) $dEq11hL ,(VanillaId) $dEq12iL ,(VanillaId) $dEq13jL ,(VanillaId) $dEq14kL ,(VanillaId) dslL ,(VanillaId) ds1mL]
+    (Case) (App) (VanillaId) dslL = (VanillaId) wildnL
+      (AlgAlt)
+        (DataAlt) GHC.Tuple.(,,,,,,,,,,) (VanillaId) a7oL (VanillaId) b1pL (VanillaId) c1qL (VanillaId) d1rL (VanillaId) e1sL (VanillaId) f1tL (VanillaId) g1uL (VanillaId) h1vL (VanillaId) i1wL (VanillaId) j1xL (VanillaId) k1yL
+          -> (Case) (App) (VanillaId) ds1mL = (VanillaId) wild1zL
+               (AlgAlt)
+                 (DataAlt) GHC.Tuple.(,,,,,,,,,,) (VanillaId) a80L (VanillaId) b21L (VanillaId) c22L (VanillaId) d23L (VanillaId) e24L (VanillaId) f25L (VanillaId) g26L (VanillaId) h27L (VanillaId) i28L (VanillaId) j29L (VanillaId) k2-L
+                   -> (Case) (App) (ClassOpId) Selectors: [== ,/=] APPFL.Classes.== (VarArg) (VanillaId) $dEq4aL (VarArg) (VanillaId) a7oL (VarArg) (VanillaId) a80L = (VanillaId) wild2_L
+                        (AlgAlt)
+                          (DataAlt) GHC.Types.False -> (ConApp) GHC.Types.False []
+                          (DataAlt) GHC.Types.True
+                            -> (Case) (App) (ClassOpId) Selectors: [== ,/=] APPFL.Classes.== (VarArg) (VanillaId) $dEq5bL (VarArg) (VanillaId) b1pL (VarArg) (VanillaId) b21L = (VanillaId) wild3AM
+                                 (AlgAlt)
+                                   (DataAlt) GHC.Types.False -> (ConApp) GHC.Types.False []
+                                   (DataAlt) GHC.Types.True
+                                     -> (Case) (App) (ClassOpId) Selectors: [== ,/=] APPFL.Classes.== (VarArg) (VanillaId) $dEq6cL (VarArg) (VanillaId) c1qL (VarArg) (VanillaId) c22L = (VanillaId) wild4BM
+                                          (AlgAlt)
+                                            (DataAlt) GHC.Types.False -> (ConApp) GHC.Types.False []
+                                            (DataAlt) GHC.Types.True
+                                              -> (Case) (App) (ClassOpId) Selectors: [== ,/=] APPFL.Classes.== (VarArg) (VanillaId) $dEq7dL (VarArg) (VanillaId) d1rL (VarArg) (VanillaId) d23L = (VanillaId) wild5CM
+                                                   (AlgAlt)
+                                                     (DataAlt) GHC.Types.False
+                                                       -> (ConApp) GHC.Types.False []
+                                                     (DataAlt) GHC.Types.True
+                                                       -> (Case) (App) (ClassOpId) Selectors: [== ,/=] APPFL.Classes.== (VarArg) (VanillaId) $dEq8eL (VarArg) (VanillaId) e1sL (VarArg) (VanillaId) e24L = (VanillaId) wild6DM
+                                                            (AlgAlt)
+                                                              (DataAlt) GHC.Types.False
+                                                                -> (ConApp) GHC.Types.False []
+                                                              (DataAlt) GHC.Types.True
+                                                                -> (Case) (App) (ClassOpId) Selectors: [== ,/=] APPFL.Classes.== (VarArg) (VanillaId) $dEq9fL (VarArg) (VanillaId) f1tL (VarArg) (VanillaId) f25L = (VanillaId) wild7EM
+                                                                     (AlgAlt)
+                                                                       (DataAlt) GHC.Types.False
+                                                                         -> (ConApp) GHC.Types.False []
+                                                                       (DataAlt) GHC.Types.True
+                                                                         -> (Case) (App) (ClassOpId) Selectors: [== ,/=] APPFL.Classes.== (VarArg) (VanillaId) $dEq10gL (VarArg) (VanillaId) g1uL (VarArg) (VanillaId) g26L = (VanillaId) wild8FM
+                                                                              (AlgAlt)
+                                                                                (DataAlt) GHC.Types.False
+                                                                                  -> (ConApp) GHC.Types.False []
+                                                                                (DataAlt) GHC.Types.True
+                                                                                  -> (Case) (App) (ClassOpId) Selectors: [== ,/=] APPFL.Classes.== (VarArg) (VanillaId) $dEq11hL (VarArg) (VanillaId) h1vL (VarArg) (VanillaId) h27L = (VanillaId) wild9GM
+                                                                                       (AlgAlt)
+                                                                                         (DataAlt) GHC.Types.False
+                                                                                           -> (ConApp) GHC.Types.False []
+                                                                                         (DataAlt) GHC.Types.True
+                                                                                           -> (Case) (App) (ClassOpId) Selectors: [== ,/=] APPFL.Classes.== (VarArg) (VanillaId) $dEq12iL (VarArg) (VanillaId) i1wL (VarArg) (VanillaId) i28L = (VanillaId) wild10HM
+                                                                                                (AlgAlt)
+                                                                                                  (DataAlt) GHC.Types.False
+                                                                                                    -> (ConApp) GHC.Types.False []
+                                                                                                  (DataAlt) GHC.Types.True
+                                                                                                    -> (Case) (App) (ClassOpId) Selectors: [== ,/=] APPFL.Classes.== (VarArg) (VanillaId) $dEq13jL (VarArg) (VanillaId) j1xL (VarArg) (VanillaId) j29L = (VanillaId) wild11IM
+                                                                                                         (AlgAlt)
+                                                                                                           (DataAlt) GHC.Types.False
+                                                                                                             -> (ConApp) GHC.Types.False []
+                                                                                                           (DataAlt) GHC.Types.True
+                                                                                                             -> (App) (ClassOpId) Selectors: [== ,/=] APPFL.Classes.== (VarArg) (VanillaId) $dEq14kL (VarArg) (VanillaId) k1yL (VarArg) (VanillaId) k2-L
+(StgRec)
+  (DictFunId) tycon: APPFL.Classes.Eq typs: [GHC.Tuple.(,,,,,,,,,,) aJM bKM cLM dMM eNM fOM gPM hQM iRM jSM kTM] APPFL.Classes.$fEq(,,,,,,,,,,) =
+  (FUN)
+  [(VanillaId) $dEq4UM ,(VanillaId) $dEq5VM ,(VanillaId) $dEq6WM ,(VanillaId) $dEq7XM ,(VanillaId) $dEq8YM ,(VanillaId) $dEq9ZM ,(VanillaId) $dEq10aM ,(VanillaId) $dEq11bM ,(VanillaId) $dEq12cM ,(VanillaId) $dEq13dM ,(VanillaId) $dEq14eM]
+    (Let) let
+      (StgNonRec)
+        (VanillaId) satfM =
+        (FUN)
+        [(VanillaId) etaS ,(VanillaId) etaR]
+          (App) (VanillaId) $c/=10gM (VarArg) (VanillaId) $dEq4UM (VarArg) (VanillaId) $dEq5VM (VarArg) (VanillaId) $dEq6WM (VarArg) (VanillaId) $dEq7XM (VarArg) (VanillaId) $dEq8YM (VarArg) (VanillaId) $dEq9ZM (VarArg) (VanillaId) $dEq10aM (VarArg) (VanillaId) $dEq11bM (VarArg) (VanillaId) $dEq12cM (VarArg) (VanillaId) $dEq13dM (VarArg) (VanillaId) $dEq14eM (VarArg) (VanillaId) etaS (VarArg) (VanillaId) etaR
+    in (Let) let
+         (StgNonRec)
+           (VanillaId) sathM =
+           (FUN)
+           [(VanillaId) etaS ,(VanillaId) etaR]
+             (App) (VanillaId) $c==10ZL (VarArg) (VanillaId) $dEq4UM (VarArg) (VanillaId) $dEq5VM (VarArg) (VanillaId) $dEq6WM (VarArg) (VanillaId) $dEq7XM (VarArg) (VanillaId) $dEq8YM (VarArg) (VanillaId) $dEq9ZM (VarArg) (VanillaId) $dEq10aM (VarArg) (VanillaId) $dEq11bM (VarArg) (VanillaId) $dEq12cM (VarArg) (VanillaId) $dEq13dM (VarArg) (VanillaId) $dEq14eM (VarArg) (VanillaId) etaS (VarArg) (VanillaId) etaR
+       in (ConApp) APPFL.Classes.D:Eq [(VarArg) (VanillaId) sathM ,(VarArg) (VanillaId) satfM]
+  (VanillaId) $c/=10gM =
+  (FUN)
+  [(VanillaId) $dEq4iM ,(VanillaId) $dEq5jM ,(VanillaId) $dEq6kM ,(VanillaId) $dEq7lM ,(VanillaId) $dEq8mM ,(VanillaId) $dEq9nM ,(VanillaId) $dEq10oM ,(VanillaId) $dEq11pM ,(VanillaId) $dEq12qM ,(VanillaId) $dEq13rM ,(VanillaId) $dEq14sM ,(VanillaId) etatM ,(VanillaId) eta1uM]
+    (Case) (App) (DictFunId) tycon: APPFL.Classes.Eq typs: [GHC.Tuple.(,,,,,,,,,,) aJM bKM cLM dMM eNM fOM gPM hQM iRM jSM kTM] APPFL.Classes.$fEq(,,,,,,,,,,) (VarArg) (VanillaId) $dEq4iM (VarArg) (VanillaId) $dEq5jM (VarArg) (VanillaId) $dEq6kM (VarArg) (VanillaId) $dEq7lM (VarArg) (VanillaId) $dEq8mM (VarArg) (VanillaId) $dEq9nM (VarArg) (VanillaId) $dEq10oM (VarArg) (VanillaId) $dEq11pM (VarArg) (VanillaId) $dEq12qM (VarArg) (VanillaId) $dEq13rM (VarArg) (VanillaId) $dEq14sM = (VanillaId) satvM
+      (AlgAlt)
+        (DEFAULT) _
+          -> (Case) (App) (ClassOpId) Selectors: [== ,/=] APPFL.Classes.== (VarArg) (VanillaId) satvM (VarArg) (VanillaId) etatM (VarArg) (VanillaId) eta1uM = (VanillaId) wildwM
+               (AlgAlt)
+                 (DataAlt) GHC.Types.False -> (ConApp) GHC.Types.True []
+                 (DataAlt) GHC.Types.True -> (ConApp) GHC.Types.False []
+(StgNonRec)
+  (VanillaId) $c==11xM =
+  (FUN)
+  [(VanillaId) $dEq4yM ,(VanillaId) $dEq5zM ,(VanillaId) $dEq60M ,(VanillaId) $dEq71M ,(VanillaId) $dEq82M ,(VanillaId) $dEq93M ,(VanillaId) $dEq104M ,(VanillaId) $dEq115M ,(VanillaId) $dEq126M ,(VanillaId) $dEq137M ,(VanillaId) $dEq148M ,(VanillaId) $dEq159M ,(VanillaId) ds-M ,(VanillaId) ds1_M]
+    (Case) (App) (VanillaId) ds-M = (VanillaId) wildAN
+      (AlgAlt)
+        (DataAlt) GHC.Tuple.(,,,,,,,,,,,) (VanillaId) a7BN (VanillaId) b1CN (VanillaId) c1DN (VanillaId) d1EN (VanillaId) e1FN (VanillaId) f1GN (VanillaId) g1HN (VanillaId) h1IN (VanillaId) i1JN (VanillaId) j1KN (VanillaId) k1LN (VanillaId) l1MN
+          -> (Case) (App) (VanillaId) ds1_M = (VanillaId) wild1NN
+               (AlgAlt)
+                 (DataAlt) GHC.Tuple.(,,,,,,,,,,,) (VanillaId) a8ON (VanillaId) b2PN (VanillaId) c2QN (VanillaId) d2RN (VanillaId) e2SN (VanillaId) f2TN (VanillaId) g2UN (VanillaId) h2VN (VanillaId) i2WN (VanillaId) j2XN (VanillaId) k2YN (VanillaId) l2ZN
+                   -> (Case) (App) (ClassOpId) Selectors: [== ,/=] APPFL.Classes.== (VarArg) (VanillaId) $dEq4yM (VarArg) (VanillaId) a7BN (VarArg) (VanillaId) a8ON = (VanillaId) wild2aN
+                        (AlgAlt)
+                          (DataAlt) GHC.Types.False -> (ConApp) GHC.Types.False []
+                          (DataAlt) GHC.Types.True
+                            -> (Case) (App) (ClassOpId) Selectors: [== ,/=] APPFL.Classes.== (VarArg) (VanillaId) $dEq5zM (VarArg) (VanillaId) b1CN (VarArg) (VanillaId) b2PN = (VanillaId) wild3bN
+                                 (AlgAlt)
+                                   (DataAlt) GHC.Types.False -> (ConApp) GHC.Types.False []
+                                   (DataAlt) GHC.Types.True
+                                     -> (Case) (App) (ClassOpId) Selectors: [== ,/=] APPFL.Classes.== (VarArg) (VanillaId) $dEq60M (VarArg) (VanillaId) c1DN (VarArg) (VanillaId) c2QN = (VanillaId) wild4cN
+                                          (AlgAlt)
+                                            (DataAlt) GHC.Types.False -> (ConApp) GHC.Types.False []
+                                            (DataAlt) GHC.Types.True
+                                              -> (Case) (App) (ClassOpId) Selectors: [== ,/=] APPFL.Classes.== (VarArg) (VanillaId) $dEq71M (VarArg) (VanillaId) d1EN (VarArg) (VanillaId) d2RN = (VanillaId) wild5dN
+                                                   (AlgAlt)
+                                                     (DataAlt) GHC.Types.False
+                                                       -> (ConApp) GHC.Types.False []
+                                                     (DataAlt) GHC.Types.True
+                                                       -> (Case) (App) (ClassOpId) Selectors: [== ,/=] APPFL.Classes.== (VarArg) (VanillaId) $dEq82M (VarArg) (VanillaId) e1FN (VarArg) (VanillaId) e2SN = (VanillaId) wild6eN
+                                                            (AlgAlt)
+                                                              (DataAlt) GHC.Types.False
+                                                                -> (ConApp) GHC.Types.False []
+                                                              (DataAlt) GHC.Types.True
+                                                                -> (Case) (App) (ClassOpId) Selectors: [== ,/=] APPFL.Classes.== (VarArg) (VanillaId) $dEq93M (VarArg) (VanillaId) f1GN (VarArg) (VanillaId) f2TN = (VanillaId) wild7fN
+                                                                     (AlgAlt)
+                                                                       (DataAlt) GHC.Types.False
+                                                                         -> (ConApp) GHC.Types.False []
+                                                                       (DataAlt) GHC.Types.True
+                                                                         -> (Case) (App) (ClassOpId) Selectors: [== ,/=] APPFL.Classes.== (VarArg) (VanillaId) $dEq104M (VarArg) (VanillaId) g1HN (VarArg) (VanillaId) g2UN = (VanillaId) wild8gN
+                                                                              (AlgAlt)
+                                                                                (DataAlt) GHC.Types.False
+                                                                                  -> (ConApp) GHC.Types.False []
+                                                                                (DataAlt) GHC.Types.True
+                                                                                  -> (Case) (App) (ClassOpId) Selectors: [== ,/=] APPFL.Classes.== (VarArg) (VanillaId) $dEq115M (VarArg) (VanillaId) h1IN (VarArg) (VanillaId) h2VN = (VanillaId) wild9hN
+                                                                                       (AlgAlt)
+                                                                                         (DataAlt) GHC.Types.False
+                                                                                           -> (ConApp) GHC.Types.False []
+                                                                                         (DataAlt) GHC.Types.True
+                                                                                           -> (Case) (App) (ClassOpId) Selectors: [== ,/=] APPFL.Classes.== (VarArg) (VanillaId) $dEq126M (VarArg) (VanillaId) i1JN (VarArg) (VanillaId) i2WN = (VanillaId) wild10iN
+                                                                                                (AlgAlt)
+                                                                                                  (DataAlt) GHC.Types.False
+                                                                                                    -> (ConApp) GHC.Types.False []
+                                                                                                  (DataAlt) GHC.Types.True
+                                                                                                    -> (Case) (App) (ClassOpId) Selectors: [== ,/=] APPFL.Classes.== (VarArg) (VanillaId) $dEq137M (VarArg) (VanillaId) j1KN (VarArg) (VanillaId) j2XN = (VanillaId) wild11jN
+                                                                                                         (AlgAlt)
+                                                                                                           (DataAlt) GHC.Types.False
+                                                                                                             -> (ConApp) GHC.Types.False []
+                                                                                                           (DataAlt) GHC.Types.True
+                                                                                                             -> (Case) (App) (ClassOpId) Selectors: [== ,/=] APPFL.Classes.== (VarArg) (VanillaId) $dEq148M (VarArg) (VanillaId) k1LN (VarArg) (VanillaId) k2YN = (VanillaId) wild12kN
+                                                                                                                  (AlgAlt)
+                                                                                                                    (DataAlt) GHC.Types.False
+                                                                                                                      -> (ConApp) GHC.Types.False []
+                                                                                                                    (DataAlt) GHC.Types.True
+                                                                                                                      -> (App) (ClassOpId) Selectors: [== ,/=] APPFL.Classes.== (VarArg) (VanillaId) $dEq159M (VarArg) (VanillaId) l1MN (VarArg) (VanillaId) l2ZN
+(StgRec)
+  (DictFunId) tycon: APPFL.Classes.Eq typs: [GHC.Tuple.(,,,,,,,,,,,) alN bmN cnN doN epN fqN grN hsN itN juN kvN lwN] APPFL.Classes.$fEq(,,,,,,,,,,,) =
+  (FUN)
+  [(VanillaId) $dEq4xN ,(VanillaId) $dEq5yN ,(VanillaId) $dEq6zN ,(VanillaId) $dEq70N ,(VanillaId) $dEq81N ,(VanillaId) $dEq92N ,(VanillaId) $dEq103N ,(VanillaId) $dEq114N ,(VanillaId) $dEq125N ,(VanillaId) $dEq136N ,(VanillaId) $dEq147N ,(VanillaId) $dEq158N]
+    (Let) let
+      (StgNonRec)
+        (VanillaId) sat9N =
+        (FUN)
+        [(VanillaId) etaS ,(VanillaId) etaR]
+          (App) (VanillaId) $c/=11-N (VarArg) (VanillaId) $dEq4xN (VarArg) (VanillaId) $dEq5yN (VarArg) (VanillaId) $dEq6zN (VarArg) (VanillaId) $dEq70N (VarArg) (VanillaId) $dEq81N (VarArg) (VanillaId) $dEq92N (VarArg) (VanillaId) $dEq103N (VarArg) (VanillaId) $dEq114N (VarArg) (VanillaId) $dEq125N (VarArg) (VanillaId) $dEq136N (VarArg) (VanillaId) $dEq147N (VarArg) (VanillaId) $dEq158N (VarArg) (VanillaId) etaS (VarArg) (VanillaId) etaR
+    in (Let) let
+         (StgNonRec)
+           (VanillaId) sat_N =
+           (FUN)
+           [(VanillaId) etaS ,(VanillaId) etaR]
+             (App) (VanillaId) $c==11xM (VarArg) (VanillaId) $dEq4xN (VarArg) (VanillaId) $dEq5yN (VarArg) (VanillaId) $dEq6zN (VarArg) (VanillaId) $dEq70N (VarArg) (VanillaId) $dEq81N (VarArg) (VanillaId) $dEq92N (VarArg) (VanillaId) $dEq103N (VarArg) (VanillaId) $dEq114N (VarArg) (VanillaId) $dEq125N (VarArg) (VanillaId) $dEq136N (VarArg) (VanillaId) $dEq147N (VarArg) (VanillaId) $dEq158N (VarArg) (VanillaId) etaS (VarArg) (VanillaId) etaR
+       in (ConApp) APPFL.Classes.D:Eq [(VarArg) (VanillaId) sat_N ,(VarArg) (VanillaId) sat9N]
+  (VanillaId) $c/=11-N =
+  (FUN)
+  [(VanillaId) $dEq4AO ,(VanillaId) $dEq5BO ,(VanillaId) $dEq6CO ,(VanillaId) $dEq7DO ,(VanillaId) $dEq8EO ,(VanillaId) $dEq9FO ,(VanillaId) $dEq10GO ,(VanillaId) $dEq11HO ,(VanillaId) $dEq12IO ,(VanillaId) $dEq13JO ,(VanillaId) $dEq14KO ,(VanillaId) $dEq15LO ,(VanillaId) etaMO ,(VanillaId) eta1NO]
+    (Case) (App) (DictFunId) tycon: APPFL.Classes.Eq typs: [GHC.Tuple.(,,,,,,,,,,,) alN bmN cnN doN epN fqN grN hsN itN juN kvN lwN] APPFL.Classes.$fEq(,,,,,,,,,,,) (VarArg) (VanillaId) $dEq4AO (VarArg) (VanillaId) $dEq5BO (VarArg) (VanillaId) $dEq6CO (VarArg) (VanillaId) $dEq7DO (VarArg) (VanillaId) $dEq8EO (VarArg) (VanillaId) $dEq9FO (VarArg) (VanillaId) $dEq10GO (VarArg) (VanillaId) $dEq11HO (VarArg) (VanillaId) $dEq12IO (VarArg) (VanillaId) $dEq13JO (VarArg) (VanillaId) $dEq14KO (VarArg) (VanillaId) $dEq15LO = (VanillaId) satOO
+      (AlgAlt)
+        (DEFAULT) _
+          -> (Case) (App) (ClassOpId) Selectors: [== ,/=] APPFL.Classes.== (VarArg) (VanillaId) satOO (VarArg) (VanillaId) etaMO (VarArg) (VanillaId) eta1NO = (VanillaId) wildPO
+               (AlgAlt)
+                 (DataAlt) GHC.Types.False -> (ConApp) GHC.Types.True []
+                 (DataAlt) GHC.Types.True -> (ConApp) GHC.Types.False []
+(StgNonRec)
+  (VanillaId) $c==12QO =
+  (FUN)
+  [(VanillaId) $dEq4RO ,(VanillaId) $dEq5SO ,(VanillaId) $dEq6TO ,(VanillaId) $dEq7UO ,(VanillaId) $dEq8VO ,(VanillaId) $dEq9WO ,(VanillaId) $dEq10XO ,(VanillaId) $dEq11YO ,(VanillaId) $dEq12ZO ,(VanillaId) $dEq13aO ,(VanillaId) $dEq14bO ,(VanillaId) $dEq15cO ,(VanillaId) $dEq16dO ,(VanillaId) dseO ,(VanillaId) ds1fO]
+    (Case) (App) (VanillaId) dseO = (VanillaId) wildgO
+      (AlgAlt)
+        (DataAlt) GHC.Tuple.(,,,,,,,,,,,,) (VanillaId) a7hO (VanillaId) b1iO (VanillaId) c1jO (VanillaId) d1kO (VanillaId) e1lO (VanillaId) f1mO (VanillaId) g1nO (VanillaId) h1oO (VanillaId) i1pO (VanillaId) j1qO (VanillaId) k1rO (VanillaId) l1sO (VanillaId) m1tO
+          -> (Case) (App) (VanillaId) ds1fO = (VanillaId) wild1uO
+               (AlgAlt)
+                 (DataAlt) GHC.Tuple.(,,,,,,,,,,,,) (VanillaId) a8vO (VanillaId) b2wO (VanillaId) c2xO (VanillaId) d2yO (VanillaId) e2zO (VanillaId) f20O (VanillaId) g21O (VanillaId) h22O (VanillaId) i23O (VanillaId) j24O (VanillaId) k25O (VanillaId) l26O (VanillaId) m27O
+                   -> (Case) (App) (ClassOpId) Selectors: [== ,/=] APPFL.Classes.== (VarArg) (VanillaId) $dEq4RO (VarArg) (VanillaId) a7hO (VarArg) (VanillaId) a8vO = (VanillaId) wild28O
+                        (AlgAlt)
+                          (DataAlt) GHC.Types.False -> (ConApp) GHC.Types.False []
+                          (DataAlt) GHC.Types.True
+                            -> (Case) (App) (ClassOpId) Selectors: [== ,/=] APPFL.Classes.== (VarArg) (VanillaId) $dEq5SO (VarArg) (VanillaId) b1iO (VarArg) (VanillaId) b2wO = (VanillaId) wild39O
+                                 (AlgAlt)
+                                   (DataAlt) GHC.Types.False -> (ConApp) GHC.Types.False []
+                                   (DataAlt) GHC.Types.True
+                                     -> (Case) (App) (ClassOpId) Selectors: [== ,/=] APPFL.Classes.== (VarArg) (VanillaId) $dEq6TO (VarArg) (VanillaId) c1jO (VarArg) (VanillaId) c2xO = (VanillaId) wild4-O
+                                          (AlgAlt)
+                                            (DataAlt) GHC.Types.False -> (ConApp) GHC.Types.False []
+                                            (DataAlt) GHC.Types.True
+                                              -> (Case) (App) (ClassOpId) Selectors: [== ,/=] APPFL.Classes.== (VarArg) (VanillaId) $dEq7UO (VarArg) (VanillaId) d1kO (VarArg) (VanillaId) d2yO = (VanillaId) wild5_O
+                                                   (AlgAlt)
+                                                     (DataAlt) GHC.Types.False
+                                                       -> (ConApp) GHC.Types.False []
+                                                     (DataAlt) GHC.Types.True
+                                                       -> (Case) (App) (ClassOpId) Selectors: [== ,/=] APPFL.Classes.== (VarArg) (VanillaId) $dEq8VO (VarArg) (VanillaId) e1lO (VarArg) (VanillaId) e2zO = (VanillaId) wild6AP
+                                                            (AlgAlt)
+                                                              (DataAlt) GHC.Types.False
+                                                                -> (ConApp) GHC.Types.False []
+                                                              (DataAlt) GHC.Types.True
+                                                                -> (Case) (App) (ClassOpId) Selectors: [== ,/=] APPFL.Classes.== (VarArg) (VanillaId) $dEq9WO (VarArg) (VanillaId) f1mO (VarArg) (VanillaId) f20O = (VanillaId) wild7BP
+                                                                     (AlgAlt)
+                                                                       (DataAlt) GHC.Types.False
+                                                                         -> (ConApp) GHC.Types.False []
+                                                                       (DataAlt) GHC.Types.True
+                                                                         -> (Case) (App) (ClassOpId) Selectors: [== ,/=] APPFL.Classes.== (VarArg) (VanillaId) $dEq10XO (VarArg) (VanillaId) g1nO (VarArg) (VanillaId) g21O = (VanillaId) wild8CP
+                                                                              (AlgAlt)
+                                                                                (DataAlt) GHC.Types.False
+                                                                                  -> (ConApp) GHC.Types.False []
+                                                                                (DataAlt) GHC.Types.True
+                                                                                  -> (Case) (App) (ClassOpId) Selectors: [== ,/=] APPFL.Classes.== (VarArg) (VanillaId) $dEq11YO (VarArg) (VanillaId) h1oO (VarArg) (VanillaId) h22O = (VanillaId) wild9DP
+                                                                                       (AlgAlt)
+                                                                                         (DataAlt) GHC.Types.False
+                                                                                           -> (ConApp) GHC.Types.False []
+                                                                                         (DataAlt) GHC.Types.True
+                                                                                           -> (Case) (App) (ClassOpId) Selectors: [== ,/=] APPFL.Classes.== (VarArg) (VanillaId) $dEq12ZO (VarArg) (VanillaId) i1pO (VarArg) (VanillaId) i23O = (VanillaId) wild10EP
+                                                                                                (AlgAlt)
+                                                                                                  (DataAlt) GHC.Types.False
+                                                                                                    -> (ConApp) GHC.Types.False []
+                                                                                                  (DataAlt) GHC.Types.True
+                                                                                                    -> (Case) (App) (ClassOpId) Selectors: [== ,/=] APPFL.Classes.== (VarArg) (VanillaId) $dEq13aO (VarArg) (VanillaId) j1qO (VarArg) (VanillaId) j24O = (VanillaId) wild11FP
+                                                                                                         (AlgAlt)
+                                                                                                           (DataAlt) GHC.Types.False
+                                                                                                             -> (ConApp) GHC.Types.False []
+                                                                                                           (DataAlt) GHC.Types.True
+                                                                                                             -> (Case) (App) (ClassOpId) Selectors: [== ,/=] APPFL.Classes.== (VarArg) (VanillaId) $dEq14bO (VarArg) (VanillaId) k1rO (VarArg) (VanillaId) k25O = (VanillaId) wild12GP
+                                                                                                                  (AlgAlt)
+                                                                                                                    (DataAlt) GHC.Types.False
+                                                                                                                      -> (ConApp) GHC.Types.False []
+                                                                                                                    (DataAlt) GHC.Types.True
+                                                                                                                      -> (Case) (App) (ClassOpId) Selectors: [== ,/=] APPFL.Classes.== (VarArg) (VanillaId) $dEq15cO (VarArg) (VanillaId) l1sO (VarArg) (VanillaId) l26O = (VanillaId) wild13HP
+                                                                                                                           (AlgAlt)
+                                                                                                                             (DataAlt) GHC.Types.False
+                                                                                                                               -> (ConApp) GHC.Types.False []
+                                                                                                                             (DataAlt) GHC.Types.True
+                                                                                                                               -> (App) (ClassOpId) Selectors: [== ,/=] APPFL.Classes.== (VarArg) (VanillaId) $dEq16dO (VarArg) (VanillaId) m1tO (VarArg) (VanillaId) m27O
+(StgRec)
+  (DictFunId) tycon: APPFL.Classes.Eq typs: [GHC.Tuple.(,,,,,,,,,,,,) aIP bJP cKP dLP eMP fNP gOP hPP iQP jRP kSP lTP mUP] APPFL.Classes.$fEq(,,,,,,,,,,,,) =
+  (FUN)
+  [(VanillaId) $dEq4VP ,(VanillaId) $dEq5WP ,(VanillaId) $dEq6XP ,(VanillaId) $dEq7YP ,(VanillaId) $dEq8ZP ,(VanillaId) $dEq9aP ,(VanillaId) $dEq10bP ,(VanillaId) $dEq11cP ,(VanillaId) $dEq12dP ,(VanillaId) $dEq13eP ,(VanillaId) $dEq14fP ,(VanillaId) $dEq15gP ,(VanillaId) $dEq16hP]
+    (Let) let
+      (StgNonRec)
+        (VanillaId) satiP =
+        (FUN)
+        [(VanillaId) etaS ,(VanillaId) etaR]
+          (App) (VanillaId) $c/=12jP (VarArg) (VanillaId) $dEq4VP (VarArg) (VanillaId) $dEq5WP (VarArg) (VanillaId) $dEq6XP (VarArg) (VanillaId) $dEq7YP (VarArg) (VanillaId) $dEq8ZP (VarArg) (VanillaId) $dEq9aP (VarArg) (VanillaId) $dEq10bP (VarArg) (VanillaId) $dEq11cP (VarArg) (VanillaId) $dEq12dP (VarArg) (VanillaId) $dEq13eP (VarArg) (VanillaId) $dEq14fP (VarArg) (VanillaId) $dEq15gP (VarArg) (VanillaId) $dEq16hP (VarArg) (VanillaId) etaS (VarArg) (VanillaId) etaR
+    in (Let) let
+         (StgNonRec)
+           (VanillaId) satkP =
+           (FUN)
+           [(VanillaId) etaS ,(VanillaId) etaR]
+             (App) (VanillaId) $c==12QO (VarArg) (VanillaId) $dEq4VP (VarArg) (VanillaId) $dEq5WP (VarArg) (VanillaId) $dEq6XP (VarArg) (VanillaId) $dEq7YP (VarArg) (VanillaId) $dEq8ZP (VarArg) (VanillaId) $dEq9aP (VarArg) (VanillaId) $dEq10bP (VarArg) (VanillaId) $dEq11cP (VarArg) (VanillaId) $dEq12dP (VarArg) (VanillaId) $dEq13eP (VarArg) (VanillaId) $dEq14fP (VarArg) (VanillaId) $dEq15gP (VarArg) (VanillaId) $dEq16hP (VarArg) (VanillaId) etaS (VarArg) (VanillaId) etaR
+       in (ConApp) APPFL.Classes.D:Eq [(VarArg) (VanillaId) satkP ,(VarArg) (VanillaId) satiP]
+  (VanillaId) $c/=12jP =
+  (FUN)
+  [(VanillaId) $dEq4lP ,(VanillaId) $dEq5mP ,(VanillaId) $dEq6nP ,(VanillaId) $dEq7oP ,(VanillaId) $dEq8pP ,(VanillaId) $dEq9qP ,(VanillaId) $dEq10rP ,(VanillaId) $dEq11sP ,(VanillaId) $dEq12tP ,(VanillaId) $dEq13uP ,(VanillaId) $dEq14vP ,(VanillaId) $dEq15wP ,(VanillaId) $dEq16xP ,(VanillaId) etayP ,(VanillaId) eta1zP]
+    (Case) (App) (DictFunId) tycon: APPFL.Classes.Eq typs: [GHC.Tuple.(,,,,,,,,,,,,) aIP bJP cKP dLP eMP fNP gOP hPP iQP jRP kSP lTP mUP] APPFL.Classes.$fEq(,,,,,,,,,,,,) (VarArg) (VanillaId) $dEq4lP (VarArg) (VanillaId) $dEq5mP (VarArg) (VanillaId) $dEq6nP (VarArg) (VanillaId) $dEq7oP (VarArg) (VanillaId) $dEq8pP (VarArg) (VanillaId) $dEq9qP (VarArg) (VanillaId) $dEq10rP (VarArg) (VanillaId) $dEq11sP (VarArg) (VanillaId) $dEq12tP (VarArg) (VanillaId) $dEq13uP (VarArg) (VanillaId) $dEq14vP (VarArg) (VanillaId) $dEq15wP (VarArg) (VanillaId) $dEq16xP = (VanillaId) sat0P
+      (AlgAlt)
+        (DEFAULT) _
+          -> (Case) (App) (ClassOpId) Selectors: [== ,/=] APPFL.Classes.== (VarArg) (VanillaId) sat0P (VarArg) (VanillaId) etayP (VarArg) (VanillaId) eta1zP = (VanillaId) wild1P
+               (AlgAlt)
+                 (DataAlt) GHC.Types.False -> (ConApp) GHC.Types.True []
+                 (DataAlt) GHC.Types.True -> (ConApp) GHC.Types.False []
+(StgNonRec)
+  (VanillaId) $c==132P =
+  (FUN)
+  [(VanillaId) $dEq43P ,(VanillaId) $dEq54P ,(VanillaId) $dEq65P ,(VanillaId) $dEq76P ,(VanillaId) $dEq87P ,(VanillaId) $dEq98P ,(VanillaId) $dEq109P ,(VanillaId) $dEq11-P ,(VanillaId) $dEq12_P ,(VanillaId) $dEq13AQ ,(VanillaId) $dEq14BQ ,(VanillaId) $dEq15CQ ,(VanillaId) $dEq16DQ ,(VanillaId) $dEq17EQ ,(VanillaId) dsFQ ,(VanillaId) ds1GQ]
+    (Case) (App) (VanillaId) dsFQ = (VanillaId) wildHQ
+      (AlgAlt)
+        (DataAlt) GHC.Tuple.(,,,,,,,,,,,,,) (VanillaId) a7IQ (VanillaId) b1JQ (VanillaId) c1KQ (VanillaId) d1LQ (VanillaId) e1MQ (VanillaId) f1NQ (VanillaId) g1OQ (VanillaId) h1PQ (VanillaId) i1QQ (VanillaId) j1RQ (VanillaId) k1SQ (VanillaId) l1TQ (VanillaId) m1UQ (VanillaId) n1VQ
+          -> (Case) (App) (VanillaId) ds1GQ = (VanillaId) wild1WQ
+               (AlgAlt)
+                 (DataAlt) GHC.Tuple.(,,,,,,,,,,,,,) (VanillaId) a8XQ (VanillaId) b2YQ (VanillaId) c2ZQ (VanillaId) d2aQ (VanillaId) e2bQ (VanillaId) f2cQ (VanillaId) g2dQ (VanillaId) h2eQ (VanillaId) i2fQ (VanillaId) j2gQ (VanillaId) k2hQ (VanillaId) l2iQ (VanillaId) m2jQ (VanillaId) n2kQ
+                   -> (Case) (App) (ClassOpId) Selectors: [== ,/=] APPFL.Classes.== (VarArg) (VanillaId) $dEq43P (VarArg) (VanillaId) a7IQ (VarArg) (VanillaId) a8XQ = (VanillaId) wild2lQ
+                        (AlgAlt)
+                          (DataAlt) GHC.Types.False -> (ConApp) GHC.Types.False []
+                          (DataAlt) GHC.Types.True
+                            -> (Case) (App) (ClassOpId) Selectors: [== ,/=] APPFL.Classes.== (VarArg) (VanillaId) $dEq54P (VarArg) (VanillaId) b1JQ (VarArg) (VanillaId) b2YQ = (VanillaId) wild3mQ
+                                 (AlgAlt)
+                                   (DataAlt) GHC.Types.False -> (ConApp) GHC.Types.False []
+                                   (DataAlt) GHC.Types.True
+                                     -> (Case) (App) (ClassOpId) Selectors: [== ,/=] APPFL.Classes.== (VarArg) (VanillaId) $dEq65P (VarArg) (VanillaId) c1KQ (VarArg) (VanillaId) c2ZQ = (VanillaId) wild4nQ
+                                          (AlgAlt)
+                                            (DataAlt) GHC.Types.False -> (ConApp) GHC.Types.False []
+                                            (DataAlt) GHC.Types.True
+                                              -> (Case) (App) (ClassOpId) Selectors: [== ,/=] APPFL.Classes.== (VarArg) (VanillaId) $dEq76P (VarArg) (VanillaId) d1LQ (VarArg) (VanillaId) d2aQ = (VanillaId) wild5oQ
+                                                   (AlgAlt)
+                                                     (DataAlt) GHC.Types.False
+                                                       -> (ConApp) GHC.Types.False []
+                                                     (DataAlt) GHC.Types.True
+                                                       -> (Case) (App) (ClassOpId) Selectors: [== ,/=] APPFL.Classes.== (VarArg) (VanillaId) $dEq87P (VarArg) (VanillaId) e1MQ (VarArg) (VanillaId) e2bQ = (VanillaId) wild6pQ
+                                                            (AlgAlt)
+                                                              (DataAlt) GHC.Types.False
+                                                                -> (ConApp) GHC.Types.False []
+                                                              (DataAlt) GHC.Types.True
+                                                                -> (Case) (App) (ClassOpId) Selectors: [== ,/=] APPFL.Classes.== (VarArg) (VanillaId) $dEq98P (VarArg) (VanillaId) f1NQ (VarArg) (VanillaId) f2cQ = (VanillaId) wild7qQ
+                                                                     (AlgAlt)
+                                                                       (DataAlt) GHC.Types.False
+                                                                         -> (ConApp) GHC.Types.False []
+                                                                       (DataAlt) GHC.Types.True
+                                                                         -> (Case) (App) (ClassOpId) Selectors: [== ,/=] APPFL.Classes.== (VarArg) (VanillaId) $dEq109P (VarArg) (VanillaId) g1OQ (VarArg) (VanillaId) g2dQ = (VanillaId) wild8rQ
+                                                                              (AlgAlt)
+                                                                                (DataAlt) GHC.Types.False
+                                                                                  -> (ConApp) GHC.Types.False []
+                                                                                (DataAlt) GHC.Types.True
+                                                                                  -> (Case) (App) (ClassOpId) Selectors: [== ,/=] APPFL.Classes.== (VarArg) (VanillaId) $dEq11-P (VarArg) (VanillaId) h1PQ (VarArg) (VanillaId) h2eQ = (VanillaId) wild9sQ
+                                                                                       (AlgAlt)
+                                                                                         (DataAlt) GHC.Types.False
+                                                                                           -> (ConApp) GHC.Types.False []
+                                                                                         (DataAlt) GHC.Types.True
+                                                                                           -> (Case) (App) (ClassOpId) Selectors: [== ,/=] APPFL.Classes.== (VarArg) (VanillaId) $dEq12_P (VarArg) (VanillaId) i1QQ (VarArg) (VanillaId) i2fQ = (VanillaId) wild10tQ
+                                                                                                (AlgAlt)
+                                                                                                  (DataAlt) GHC.Types.False
+                                                                                                    -> (ConApp) GHC.Types.False []
+                                                                                                  (DataAlt) GHC.Types.True
+                                                                                                    -> (Case) (App) (ClassOpId) Selectors: [== ,/=] APPFL.Classes.== (VarArg) (VanillaId) $dEq13AQ (VarArg) (VanillaId) j1RQ (VarArg) (VanillaId) j2gQ = (VanillaId) wild11uQ
+                                                                                                         (AlgAlt)
+                                                                                                           (DataAlt) GHC.Types.False
+                                                                                                             -> (ConApp) GHC.Types.False []
+                                                                                                           (DataAlt) GHC.Types.True
+                                                                                                             -> (Case) (App) (ClassOpId) Selectors: [== ,/=] APPFL.Classes.== (VarArg) (VanillaId) $dEq14BQ (VarArg) (VanillaId) k1SQ (VarArg) (VanillaId) k2hQ = (VanillaId) wild12vQ
+                                                                                                                  (AlgAlt)
+                                                                                                                    (DataAlt) GHC.Types.False
+                                                                                                                      -> (ConApp) GHC.Types.False []
+                                                                                                                    (DataAlt) GHC.Types.True
+                                                                                                                      -> (Case) (App) (ClassOpId) Selectors: [== ,/=] APPFL.Classes.== (VarArg) (VanillaId) $dEq15CQ (VarArg) (VanillaId) l1TQ (VarArg) (VanillaId) l2iQ = (VanillaId) wild13wQ
+                                                                                                                           (AlgAlt)
+                                                                                                                             (DataAlt) GHC.Types.False
+                                                                                                                               -> (ConApp) GHC.Types.False []
+                                                                                                                             (DataAlt) GHC.Types.True
+                                                                                                                               -> (Case) (App) (ClassOpId) Selectors: [== ,/=] APPFL.Classes.== (VarArg) (VanillaId) $dEq16DQ (VarArg) (VanillaId) m1UQ (VarArg) (VanillaId) m2jQ = (VanillaId) wild14xQ
+                                                                                                                                    (AlgAlt)
+                                                                                                                                      (DataAlt) GHC.Types.False
+                                                                                                                                        -> (ConApp) GHC.Types.False []
+                                                                                                                                      (DataAlt) GHC.Types.True
+                                                                                                                                        -> (App) (ClassOpId) Selectors: [== ,/=] APPFL.Classes.== (VarArg) (VanillaId) $dEq17EQ (VarArg) (VanillaId) n1VQ (VarArg) (VanillaId) n2kQ
+(StgRec)
+  (DictFunId) tycon: APPFL.Classes.Eq typs: [GHC.Tuple.(,,,,,,,,,,,,,) ayQ bzQ c0Q d1Q e2Q f3Q g4Q h5Q i6Q j7Q k8Q l9Q m-Q n_Q] APPFL.Classes.$fEq(,,,,,,,,,,,,,) =
+  (FUN)
+  [(VanillaId) $dEq4AR ,(VanillaId) $dEq5BR ,(VanillaId) $dEq6CR ,(VanillaId) $dEq7DR ,(VanillaId) $dEq8ER ,(VanillaId) $dEq9FR ,(VanillaId) $dEq10GR ,(VanillaId) $dEq11HR ,(VanillaId) $dEq12IR ,(VanillaId) $dEq13JR ,(VanillaId) $dEq14KR ,(VanillaId) $dEq15LR ,(VanillaId) $dEq16MR ,(VanillaId) $dEq17NR]
+    (Let) let
+      (StgNonRec)
+        (VanillaId) satOR =
+        (FUN)
+        [(VanillaId) etaS ,(VanillaId) etaR]
+          (App) (VanillaId) $c/=13PR (VarArg) (VanillaId) $dEq4AR (VarArg) (VanillaId) $dEq5BR (VarArg) (VanillaId) $dEq6CR (VarArg) (VanillaId) $dEq7DR (VarArg) (VanillaId) $dEq8ER (VarArg) (VanillaId) $dEq9FR (VarArg) (VanillaId) $dEq10GR (VarArg) (VanillaId) $dEq11HR (VarArg) (VanillaId) $dEq12IR (VarArg) (VanillaId) $dEq13JR (VarArg) (VanillaId) $dEq14KR (VarArg) (VanillaId) $dEq15LR (VarArg) (VanillaId) $dEq16MR (VarArg) (VanillaId) $dEq17NR (VarArg) (VanillaId) etaS (VarArg) (VanillaId) etaR
+    in (Let) let
+         (StgNonRec)
+           (VanillaId) satQR =
+           (FUN)
+           [(VanillaId) etaS ,(VanillaId) etaR]
+             (App) (VanillaId) $c==132P (VarArg) (VanillaId) $dEq4AR (VarArg) (VanillaId) $dEq5BR (VarArg) (VanillaId) $dEq6CR (VarArg) (VanillaId) $dEq7DR (VarArg) (VanillaId) $dEq8ER (VarArg) (VanillaId) $dEq9FR (VarArg) (VanillaId) $dEq10GR (VarArg) (VanillaId) $dEq11HR (VarArg) (VanillaId) $dEq12IR (VarArg) (VanillaId) $dEq13JR (VarArg) (VanillaId) $dEq14KR (VarArg) (VanillaId) $dEq15LR (VarArg) (VanillaId) $dEq16MR (VarArg) (VanillaId) $dEq17NR (VarArg) (VanillaId) etaS (VarArg) (VanillaId) etaR
+       in (ConApp) APPFL.Classes.D:Eq [(VarArg) (VanillaId) satQR ,(VarArg) (VanillaId) satOR]
+  (VanillaId) $c/=13PR =
+  (FUN)
+  [(VanillaId) $dEq4RR ,(VanillaId) $dEq5SR ,(VanillaId) $dEq6TR ,(VanillaId) $dEq7UR ,(VanillaId) $dEq8VR ,(VanillaId) $dEq9WR ,(VanillaId) $dEq10XR ,(VanillaId) $dEq11YR ,(VanillaId) $dEq12ZR ,(VanillaId) $dEq13aR ,(VanillaId) $dEq14bR ,(VanillaId) $dEq15cR ,(VanillaId) $dEq16dR ,(VanillaId) $dEq17eR ,(VanillaId) etafR ,(VanillaId) eta1gR]
+    (Case) (App) (DictFunId) tycon: APPFL.Classes.Eq typs: [GHC.Tuple.(,,,,,,,,,,,,,) ayQ bzQ c0Q d1Q e2Q f3Q g4Q h5Q i6Q j7Q k8Q l9Q m-Q n_Q] APPFL.Classes.$fEq(,,,,,,,,,,,,,) (VarArg) (VanillaId) $dEq4RR (VarArg) (VanillaId) $dEq5SR (VarArg) (VanillaId) $dEq6TR (VarArg) (VanillaId) $dEq7UR (VarArg) (VanillaId) $dEq8VR (VarArg) (VanillaId) $dEq9WR (VarArg) (VanillaId) $dEq10XR (VarArg) (VanillaId) $dEq11YR (VarArg) (VanillaId) $dEq12ZR (VarArg) (VanillaId) $dEq13aR (VarArg) (VanillaId) $dEq14bR (VarArg) (VanillaId) $dEq15cR (VarArg) (VanillaId) $dEq16dR (VarArg) (VanillaId) $dEq17eR = (VanillaId) sathR
+      (AlgAlt)
+        (DEFAULT) _
+          -> (Case) (App) (ClassOpId) Selectors: [== ,/=] APPFL.Classes.== (VarArg) (VanillaId) sathR (VarArg) (VanillaId) etafR (VarArg) (VanillaId) eta1gR = (VanillaId) wildiR
+               (AlgAlt)
+                 (DataAlt) GHC.Types.False -> (ConApp) GHC.Types.True []
+                 (DataAlt) GHC.Types.True -> (ConApp) GHC.Types.False []
+(StgNonRec)
+  (VanillaId) $c==14jR =
+  (FUN)
+  [(VanillaId) $dEq4kR ,(VanillaId) $dEq5lR ,(VanillaId) $dEq6mR ,(VanillaId) $dEq7nR ,(VanillaId) $dEq8oR ,(VanillaId) $dEq9pR ,(VanillaId) $dEq10qR ,(VanillaId) $dEq11rR ,(VanillaId) $dEq12sR ,(VanillaId) $dEq13tR ,(VanillaId) $dEq14uR ,(VanillaId) $dEq15vR ,(VanillaId) $dEq16wR ,(VanillaId) $dEq17xR ,(VanillaId) $dEq18yR ,(VanillaId) dszR ,(VanillaId) ds10R]
+    (Case) (App) (VanillaId) dszR = (VanillaId) wild1R
+      (AlgAlt)
+        (DataAlt) GHC.Tuple.(,,,,,,,,,,,,,,) (VanillaId) a72R (VanillaId) b13R (VanillaId) c14R (VanillaId) d15R (VanillaId) e16R (VanillaId) f17R (VanillaId) g18R (VanillaId) h19R (VanillaId) i1-R (VanillaId) j1_R (VanillaId) k1AS (VanillaId) l1BS (VanillaId) m1CS (VanillaId) n1DS (VanillaId) o1ES
+          -> (Case) (App) (VanillaId) ds10R = (VanillaId) wild1FS
+               (AlgAlt)
+                 (DataAlt) GHC.Tuple.(,,,,,,,,,,,,,,) (VanillaId) a8GS (VanillaId) b2HS (VanillaId) c2IS (VanillaId) d2JS (VanillaId) e2KS (VanillaId) f2LS (VanillaId) g2MS (VanillaId) h2NS (VanillaId) i2OS (VanillaId) j2PS (VanillaId) k2QS (VanillaId) l2RS (VanillaId) m2SS (VanillaId) n2TS (VanillaId) o2US
+                   -> (Case) (App) (ClassOpId) Selectors: [== ,/=] APPFL.Classes.== (VarArg) (VanillaId) $dEq4kR (VarArg) (VanillaId) a72R (VarArg) (VanillaId) a8GS = (VanillaId) wild2VS
+                        (AlgAlt)
+                          (DataAlt) GHC.Types.False -> (ConApp) GHC.Types.False []
+                          (DataAlt) GHC.Types.True
+                            -> (Case) (App) (ClassOpId) Selectors: [== ,/=] APPFL.Classes.== (VarArg) (VanillaId) $dEq5lR (VarArg) (VanillaId) b13R (VarArg) (VanillaId) b2HS = (VanillaId) wild3WS
+                                 (AlgAlt)
+                                   (DataAlt) GHC.Types.False -> (ConApp) GHC.Types.False []
+                                   (DataAlt) GHC.Types.True
+                                     -> (Case) (App) (ClassOpId) Selectors: [== ,/=] APPFL.Classes.== (VarArg) (VanillaId) $dEq6mR (VarArg) (VanillaId) c14R (VarArg) (VanillaId) c2IS = (VanillaId) wild4XS
+                                          (AlgAlt)
+                                            (DataAlt) GHC.Types.False -> (ConApp) GHC.Types.False []
+                                            (DataAlt) GHC.Types.True
+                                              -> (Case) (App) (ClassOpId) Selectors: [== ,/=] APPFL.Classes.== (VarArg) (VanillaId) $dEq7nR (VarArg) (VanillaId) d15R (VarArg) (VanillaId) d2JS = (VanillaId) wild5YS
+                                                   (AlgAlt)
+                                                     (DataAlt) GHC.Types.False
+                                                       -> (ConApp) GHC.Types.False []
+                                                     (DataAlt) GHC.Types.True
+                                                       -> (Case) (App) (ClassOpId) Selectors: [== ,/=] APPFL.Classes.== (VarArg) (VanillaId) $dEq8oR (VarArg) (VanillaId) e16R (VarArg) (VanillaId) e2KS = (VanillaId) wild6ZS
+                                                            (AlgAlt)
+                                                              (DataAlt) GHC.Types.False
+                                                                -> (ConApp) GHC.Types.False []
+                                                              (DataAlt) GHC.Types.True
+                                                                -> (Case) (App) (ClassOpId) Selectors: [== ,/=] APPFL.Classes.== (VarArg) (VanillaId) $dEq9pR (VarArg) (VanillaId) f17R (VarArg) (VanillaId) f2LS = (VanillaId) wild7aS
+                                                                     (AlgAlt)
+                                                                       (DataAlt) GHC.Types.False
+                                                                         -> (ConApp) GHC.Types.False []
+                                                                       (DataAlt) GHC.Types.True
+                                                                         -> (Case) (App) (ClassOpId) Selectors: [== ,/=] APPFL.Classes.== (VarArg) (VanillaId) $dEq10qR (VarArg) (VanillaId) g18R (VarArg) (VanillaId) g2MS = (VanillaId) wild8bS
+                                                                              (AlgAlt)
+                                                                                (DataAlt) GHC.Types.False
+                                                                                  -> (ConApp) GHC.Types.False []
+                                                                                (DataAlt) GHC.Types.True
+                                                                                  -> (Case) (App) (ClassOpId) Selectors: [== ,/=] APPFL.Classes.== (VarArg) (VanillaId) $dEq11rR (VarArg) (VanillaId) h19R (VarArg) (VanillaId) h2NS = (VanillaId) wild9cS
+                                                                                       (AlgAlt)
+                                                                                         (DataAlt) GHC.Types.False
+                                                                                           -> (ConApp) GHC.Types.False []
+                                                                                         (DataAlt) GHC.Types.True
+                                                                                           -> (Case) (App) (ClassOpId) Selectors: [== ,/=] APPFL.Classes.== (VarArg) (VanillaId) $dEq12sR (VarArg) (VanillaId) i1-R (VarArg) (VanillaId) i2OS = (VanillaId) wild10dS
+                                                                                                (AlgAlt)
+                                                                                                  (DataAlt) GHC.Types.False
+                                                                                                    -> (ConApp) GHC.Types.False []
+                                                                                                  (DataAlt) GHC.Types.True
+                                                                                                    -> (Case) (App) (ClassOpId) Selectors: [== ,/=] APPFL.Classes.== (VarArg) (VanillaId) $dEq13tR (VarArg) (VanillaId) j1_R (VarArg) (VanillaId) j2PS = (VanillaId) wild11eS
+                                                                                                         (AlgAlt)
+                                                                                                           (DataAlt) GHC.Types.False
+                                                                                                             -> (ConApp) GHC.Types.False []
+                                                                                                           (DataAlt) GHC.Types.True
+                                                                                                             -> (Case) (App) (ClassOpId) Selectors: [== ,/=] APPFL.Classes.== (VarArg) (VanillaId) $dEq14uR (VarArg) (VanillaId) k1AS (VarArg) (VanillaId) k2QS = (VanillaId) wild12fS
+                                                                                                                  (AlgAlt)
+                                                                                                                    (DataAlt) GHC.Types.False
+                                                                                                                      -> (ConApp) GHC.Types.False []
+                                                                                                                    (DataAlt) GHC.Types.True
+                                                                                                                      -> (Case) (App) (ClassOpId) Selectors: [== ,/=] APPFL.Classes.== (VarArg) (VanillaId) $dEq15vR (VarArg) (VanillaId) l1BS (VarArg) (VanillaId) l2RS = (VanillaId) wild13gS
+                                                                                                                           (AlgAlt)
+                                                                                                                             (DataAlt) GHC.Types.False
+                                                                                                                               -> (ConApp) GHC.Types.False []
+                                                                                                                             (DataAlt) GHC.Types.True
+                                                                                                                               -> (Case) (App) (ClassOpId) Selectors: [== ,/=] APPFL.Classes.== (VarArg) (VanillaId) $dEq16wR (VarArg) (VanillaId) m1CS (VarArg) (VanillaId) m2SS = (VanillaId) wild14hS
+                                                                                                                                    (AlgAlt)
+                                                                                                                                      (DataAlt) GHC.Types.False
+                                                                                                                                        -> (ConApp) GHC.Types.False []
+                                                                                                                                      (DataAlt) GHC.Types.True
+                                                                                                                                        -> (Case) (App) (ClassOpId) Selectors: [== ,/=] APPFL.Classes.== (VarArg) (VanillaId) $dEq17xR (VarArg) (VanillaId) n1DS (VarArg) (VanillaId) n2TS = (VanillaId) wild15iS
+                                                                                                                                             (AlgAlt)
+                                                                                                                                               (DataAlt) GHC.Types.False
+                                                                                                                                                 -> (ConApp) GHC.Types.False []
+                                                                                                                                               (DataAlt) GHC.Types.True
+                                                                                                                                                 -> (App) (ClassOpId) Selectors: [== ,/=] APPFL.Classes.== (VarArg) (VanillaId) $dEq18yR (VarArg) (VanillaId) o1ES (VarArg) (VanillaId) o2US
+(StgRec)
+  (DictFunId) tycon: APPFL.Classes.Eq typs: [GHC.Tuple.(,,,,,,,,,,,,,,) ajS bkS clS dmS enS foS gpS hqS irS jsS ktS luS mvS nwS oxS] APPFL.Classes.$fEq(,,,,,,,,,,,,,,) =
+  (FUN)
+  [(VanillaId) $dEq4yS ,(VanillaId) $dEq5zS ,(VanillaId) $dEq60S ,(VanillaId) $dEq71S ,(VanillaId) $dEq82S ,(VanillaId) $dEq93S ,(VanillaId) $dEq104S ,(VanillaId) $dEq115S ,(VanillaId) $dEq126S ,(VanillaId) $dEq137S ,(VanillaId) $dEq148S ,(VanillaId) $dEq159S ,(VanillaId) $dEq16-S ,(VanillaId) $dEq17_S ,(VanillaId) $dEq18AT]
+    (Let) let
+      (StgNonRec)
+        (VanillaId) satBT =
+        (FUN)
+        [(VanillaId) etaS ,(VanillaId) etaR]
+          (App) (VanillaId) $c/=14CT (VarArg) (VanillaId) $dEq4yS (VarArg) (VanillaId) $dEq5zS (VarArg) (VanillaId) $dEq60S (VarArg) (VanillaId) $dEq71S (VarArg) (VanillaId) $dEq82S (VarArg) (VanillaId) $dEq93S (VarArg) (VanillaId) $dEq104S (VarArg) (VanillaId) $dEq115S (VarArg) (VanillaId) $dEq126S (VarArg) (VanillaId) $dEq137S (VarArg) (VanillaId) $dEq148S (VarArg) (VanillaId) $dEq159S (VarArg) (VanillaId) $dEq16-S (VarArg) (VanillaId) $dEq17_S (VarArg) (VanillaId) $dEq18AT (VarArg) (VanillaId) etaS (VarArg) (VanillaId) etaR
+    in (Let) let
+         (StgNonRec)
+           (VanillaId) satDT =
+           (FUN)
+           [(VanillaId) etaS ,(VanillaId) etaR]
+             (App) (VanillaId) $c==14jR (VarArg) (VanillaId) $dEq4yS (VarArg) (VanillaId) $dEq5zS (VarArg) (VanillaId) $dEq60S (VarArg) (VanillaId) $dEq71S (VarArg) (VanillaId) $dEq82S (VarArg) (VanillaId) $dEq93S (VarArg) (VanillaId) $dEq104S (VarArg) (VanillaId) $dEq115S (VarArg) (VanillaId) $dEq126S (VarArg) (VanillaId) $dEq137S (VarArg) (VanillaId) $dEq148S (VarArg) (VanillaId) $dEq159S (VarArg) (VanillaId) $dEq16-S (VarArg) (VanillaId) $dEq17_S (VarArg) (VanillaId) $dEq18AT (VarArg) (VanillaId) etaS (VarArg) (VanillaId) etaR
+       in (ConApp) APPFL.Classes.D:Eq [(VarArg) (VanillaId) satDT ,(VarArg) (VanillaId) satBT]
+  (VanillaId) $c/=14CT =
+  (FUN)
+  [(VanillaId) $dEq4ET ,(VanillaId) $dEq5FT ,(VanillaId) $dEq6GT ,(VanillaId) $dEq7HT ,(VanillaId) $dEq8IT ,(VanillaId) $dEq9JT ,(VanillaId) $dEq10KT ,(VanillaId) $dEq11LT ,(VanillaId) $dEq12MT ,(VanillaId) $dEq13NT ,(VanillaId) $dEq14OT ,(VanillaId) $dEq15PT ,(VanillaId) $dEq16QT ,(VanillaId) $dEq17RT ,(VanillaId) $dEq18ST ,(VanillaId) etaTT ,(VanillaId) eta1UT]
+    (Case) (App) (DictFunId) tycon: APPFL.Classes.Eq typs: [GHC.Tuple.(,,,,,,,,,,,,,,) ajS bkS clS dmS enS foS gpS hqS irS jsS ktS luS mvS nwS oxS] APPFL.Classes.$fEq(,,,,,,,,,,,,,,) (VarArg) (VanillaId) $dEq4ET (VarArg) (VanillaId) $dEq5FT (VarArg) (VanillaId) $dEq6GT (VarArg) (VanillaId) $dEq7HT (VarArg) (VanillaId) $dEq8IT (VarArg) (VanillaId) $dEq9JT (VarArg) (VanillaId) $dEq10KT (VarArg) (VanillaId) $dEq11LT (VarArg) (VanillaId) $dEq12MT (VarArg) (VanillaId) $dEq13NT (VarArg) (VanillaId) $dEq14OT (VarArg) (VanillaId) $dEq15PT (VarArg) (VanillaId) $dEq16QT (VarArg) (VanillaId) $dEq17RT (VarArg) (VanillaId) $dEq18ST = (VanillaId) satVT
+      (AlgAlt)
+        (DEFAULT) _
+          -> (Case) (App) (ClassOpId) Selectors: [== ,/=] APPFL.Classes.== (VarArg) (VanillaId) satVT (VarArg) (VanillaId) etaTT (VarArg) (VanillaId) eta1UT = (VanillaId) wildWT
+               (AlgAlt)
+                 (DataAlt) GHC.Types.False -> (ConApp) GHC.Types.True []
+                 (DataAlt) GHC.Types.True -> (ConApp) GHC.Types.False []
+(StgNonRec)
+  (VanillaId) $c/=15XT =
+  (FUN)
+  [(VanillaId) dsYT ,(VanillaId) ds1ZT]
+    (Case) (App) (VanillaId) dsYT = (VanillaId) wildaT
+      (AlgAlt)
+        (DataAlt) GHC.Types.C# (VanillaId) c1bT
+          -> (Case) (App) (VanillaId) ds1ZT = (VanillaId) wild1cT
+               (AlgAlt)
+                 (DataAlt) GHC.Types.C# (VanillaId) c2dT
+                   -> (Case) (Op) (Prim) neChar# [(VarArg) (VanillaId) c1bT ,(VarArg) (VanillaId) c2dT] = (VanillaId) sateT
+                        (PrimAlt)
+                          (DEFAULT) _
+                            -> (App) (VanillaId) APPFL.Types.isTrue# (VarArg) (VanillaId) sateT
+(StgNonRec)
+  (VanillaId) $c==15fT =
+  (FUN)
+  [(VanillaId) dsgT ,(VanillaId) ds1hT]
+    (Case) (App) (VanillaId) dsgT = (VanillaId) wildiT
+      (AlgAlt)
+        (DataAlt) GHC.Types.C# (VanillaId) c1jT
+          -> (Case) (App) (VanillaId) ds1hT = (VanillaId) wild1kT
+               (AlgAlt)
+                 (DataAlt) GHC.Types.C# (VanillaId) c2lT
+                   -> (Case) (Op) (Prim) eqChar# [(VarArg) (VanillaId) c1jT ,(VarArg) (VanillaId) c2lT] = (VanillaId) satmT
+                        (PrimAlt)
+                          (DEFAULT) _
+                            -> (App) (VanillaId) APPFL.Types.isTrue# (VarArg) (VanillaId) satmT
+(StgNonRec)
+  (DictFunId) tycon: APPFL.Classes.Eq typs: [GHC.Types.Char] APPFL.Classes.$fEqChar =
+  (CONish) APPFL.Classes.D:Eq [(VarArg) (VanillaId) $c==15fT ,(VarArg) (VanillaId) $c/=15XT]
+  Worker/Wrapper: (DCWorkerId) APPFL.Classes.D:Eq
+(StgRec)
+  (DictFunId) tycon: APPFL.Classes.Eq typs: [GHC.Types.[] anT] APPFL.Classes.$fEq[] =
+  (FUN)
+  [(VanillaId) $dEq4oT]
+    (Let) let
+      (StgNonRec)
+        (VanillaId) satpT =
+        (FUN)
+        [(VanillaId) etaS ,(VanillaId) etaR]
+          (App) (VanillaId) $c/=16qT (VarArg) (VanillaId) $dEq4oT (VarArg) (VanillaId) etaS (VarArg) (VanillaId) etaR
+    in (Let) let
+         (StgNonRec)
+           (VanillaId) satrT =
+           (THUNK) (App) (VanillaId) $c==16sT (VarArg) (VanillaId) $dEq4oT
+       in (ConApp) APPFL.Classes.D:Eq [(VarArg) (VanillaId) satrT ,(VarArg) (VanillaId) satpT]
+  (VanillaId) $c/=16qT =
+  (FUN)
+  [(VanillaId) $dEq4tT ,(VanillaId) etauT ,(VanillaId) eta1vT]
+    (Case) (App) (DictFunId) tycon: APPFL.Classes.Eq typs: [GHC.Types.[] anT] APPFL.Classes.$fEq[] (VarArg) (VanillaId) $dEq4tT = (VanillaId) satwT
+      (AlgAlt)
+        (DEFAULT) _
+          -> (Case) (App) (ClassOpId) Selectors: [== ,/=] APPFL.Classes.== (VarArg) (VanillaId) satwT (VarArg) (VanillaId) etauT (VarArg) (VanillaId) eta1vT = (VanillaId) wildxT
+               (AlgAlt)
+                 (DataAlt) GHC.Types.False -> (ConApp) GHC.Types.True []
+                 (DataAlt) GHC.Types.True -> (ConApp) GHC.Types.False []
+  (VanillaId) $c==16sT =
+  (FUN)
+  [(VanillaId) $dEq4yT]
+    (Let) let
+      (StgNonRec)
+        (VanillaId) $dEq5zT =
+        (THUNK)
+          (App) (DictFunId) tycon: APPFL.Classes.Eq typs: [GHC.Types.[] anT] APPFL.Classes.$fEq[] (VarArg) (VanillaId) $dEq4yT
+    in (Let) let
+         (StgNonRec)
+           (VanillaId) sat0T =
+           (FUN)
+           [(VanillaId) ds1T ,(VanillaId) ds12T]
+             (Case) (App) (VanillaId) ds1T = (VanillaId) wild3T
+               (AlgAlt)
+                 (DataAlt) GHC.Types.[]
+                   -> (Case) (App) (VanillaId) ds12T = (VanillaId) wild14T
+                        (AlgAlt)
+                          (DataAlt) GHC.Types.[] -> (ConApp) GHC.Types.True []
+                          (DataAlt) GHC.Types.: (VanillaId) ipv5T (VanillaId) ipv16T
+                            -> (ConApp) GHC.Types.False []
+                 (DataAlt) GHC.Types.: (VanillaId) x7T (VanillaId) xs8T
+                   -> (Case) (App) (VanillaId) ds12T = (VanillaId) wild19T
+                        (AlgAlt)
+                          (DataAlt) GHC.Types.[] -> (ConApp) GHC.Types.False []
+                          (DataAlt) GHC.Types.: (VanillaId) y-T (VanillaId) ys_T
+                            -> (Case) (App) (ClassOpId) Selectors: [== ,/=] APPFL.Classes.== (VarArg) (VanillaId) $dEq4yT (VarArg) (VanillaId) x7T (VarArg) (VanillaId) y-T = (VanillaId) wild2AU
+                                 (AlgAlt)
+                                   (DataAlt) GHC.Types.False -> (ConApp) GHC.Types.False []
+                                   (DataAlt) GHC.Types.True
+                                     -> (App) (ClassOpId) Selectors: [== ,/=] APPFL.Classes.== (VarArg) (VanillaId) $dEq5zT (VarArg) (VanillaId) xs8T (VarArg) (VanillaId) ys_T
+       in (App) (VanillaId) sat0T
+  (VanillaId) $dEqBU =
+  (THUNK)
+    (App) (DictFunId) tycon: APPFL.Classes.Eq typs: [GHC.Types.[] anT] APPFL.Classes.$fEq[] (VarArg) (DictFunId) tycon: APPFL.Classes.Eq typs: [GHC.Types.Char] APPFL.Classes.$fEqChar
+  (VanillaId) $s$c==CU =
+  (FUN)
+  [(VanillaId) dsDU ,(VanillaId) ds1EU]
+    (Case) (App) (VanillaId) dsDU = (VanillaId) wildFU
+      (AlgAlt)
+        (DataAlt) GHC.Types.[]
+          -> (Case) (App) (VanillaId) ds1EU = (VanillaId) wild1GU
+               (AlgAlt)
+                 (DataAlt) GHC.Types.[] -> (ConApp) GHC.Types.True []
+                 (DataAlt) GHC.Types.: (VanillaId) ipvHU (VanillaId) ipv1IU
+                   -> (ConApp) GHC.Types.False []
+        (DataAlt) GHC.Types.: (VanillaId) xJU (VanillaId) xsKU
+          -> (Case) (App) (VanillaId) ds1EU = (VanillaId) wild1LU
+               (AlgAlt)
+                 (DataAlt) GHC.Types.[] -> (ConApp) GHC.Types.False []
+                 (DataAlt) GHC.Types.: (VanillaId) yMU (VanillaId) ysNU
+                   -> (Case) (App) (ClassOpId) Selectors: [== ,/=] APPFL.Classes.== (VarArg) (DictFunId) tycon: APPFL.Classes.Eq typs: [GHC.Types.Char] APPFL.Classes.$fEqChar (VarArg) (VanillaId) xJU (VarArg) (VanillaId) yMU = (VanillaId) wild2OU
+                        (AlgAlt)
+                          (DataAlt) GHC.Types.False -> (ConApp) GHC.Types.False []
+                          (DataAlt) GHC.Types.True
+                            -> (App) (ClassOpId) Selectors: [== ,/=] APPFL.Classes.== (VarArg) (VanillaId) $dEqBU (VarArg) (VanillaId) xsKU (VarArg) (VanillaId) ysNU
+  (VanillaId) aPU =
+  (FUN)
+  [(VanillaId) etaS ,(VanillaId) etaR]
+    (App) (VanillaId) $c/=16qT (VarArg) (DictFunId) tycon: APPFL.Classes.Eq typs: [GHC.Types.Char] APPFL.Classes.$fEqChar (VarArg) (VanillaId) etaS (VarArg) (VanillaId) etaR
+  (VanillaId) a1QU =
+  (FUN)
+  [(VanillaId) etaS ,(VanillaId) etaR]
+    (App) (VanillaId) $c/=16qT (VarArg) (DictFunId) tycon: APPFL.Classes.Eq typs: [GHC.Types.Int] APPFL.Classes.$fEqInt (VarArg) (VanillaId) etaS (VarArg) (VanillaId) etaR
+  (VanillaId) a2RU =
+  (THUNK)
+    (App) (VanillaId) $c==16sT (VarArg) (DictFunId) tycon: APPFL.Classes.Eq typs: [GHC.Types.Char] APPFL.Classes.$fEqChar
+  (VanillaId) $s$fEq[]SU =
+  (CONish) APPFL.Classes.D:Eq [(VarArg) (VanillaId) a2RU ,(VarArg) (VanillaId) aPU]
+  Worker/Wrapper: (DCWorkerId) APPFL.Classes.D:Eq
+  (VanillaId) a3TU =
+  (THUNK)
+    (App) (VanillaId) $c==16sT (VarArg) (DictFunId) tycon: APPFL.Classes.Eq typs: [GHC.Types.Int] APPFL.Classes.$fEqInt
+  (VanillaId) $s$fEq[]1UU =
+  (CONish) APPFL.Classes.D:Eq [(VarArg) (VanillaId) a3TU ,(VarArg) (VanillaId) a1QU]
+  Worker/Wrapper: (DCWorkerId) APPFL.Classes.D:Eq
+  (VanillaId) $dEq1VU =
+  (THUNK)
+    (App) (DictFunId) tycon: APPFL.Classes.Eq typs: [GHC.Types.[] anT] APPFL.Classes.$fEq[] (VarArg) (DictFunId) tycon: APPFL.Classes.Eq typs: [GHC.Types.Char] APPFL.Classes.$fEqChar
+  (VanillaId) a4WU =
+  (THUNK) (App) (VanillaId) $c==16sT (VarArg) (VanillaId) $dEq1VU
+  (VanillaId) a5XU =
+  (FUN)
+  [(VanillaId) etaS ,(VanillaId) etaR]
+    (App) (VanillaId) $c/=16qT (VarArg) (VanillaId) $dEq1VU (VarArg) (VanillaId) etaS (VarArg) (VanillaId) etaR
+  (VanillaId) $s$fEq[]2YU =
+  (CONish) APPFL.Classes.D:Eq [(VarArg) (VanillaId) a4WU ,(VarArg) (VanillaId) a5XU]
+  Worker/Wrapper: (DCWorkerId) APPFL.Classes.D:Eq
+  (VanillaId) $dEq2ZU =
+  (THUNK)
+    (App) (DictFunId) tycon: APPFL.Classes.Eq typs: [GHC.Types.[] anT] APPFL.Classes.$fEq[] (VarArg) (VanillaId) $dEq1VU
+  (VanillaId) $s$c==1aU =
+  (FUN)
+  [(VanillaId) dsbU ,(VanillaId) ds1cU]
+    (Case) (App) (VanillaId) dsbU = (VanillaId) wilddU
+      (AlgAlt)
+        (DataAlt) GHC.Types.[]
+          -> (Case) (App) (VanillaId) ds1cU = (VanillaId) wild1eU
+               (AlgAlt)
+                 (DataAlt) GHC.Types.[] -> (ConApp) GHC.Types.True []
+                 (DataAlt) GHC.Types.: (VanillaId) ipvfU (VanillaId) ipv1gU
+                   -> (ConApp) GHC.Types.False []
+        (DataAlt) GHC.Types.: (VanillaId) xhU (VanillaId) xsiU
+          -> (Case) (App) (VanillaId) ds1cU = (VanillaId) wild1jU
+               (AlgAlt)
+                 (DataAlt) GHC.Types.[] -> (ConApp) GHC.Types.False []
+                 (DataAlt) GHC.Types.: (VanillaId) ykU (VanillaId) yslU
+                   -> (Case) (App) (ClassOpId) Selectors: [== ,/=] APPFL.Classes.== (VarArg) (VanillaId) $dEq1VU (VarArg) (VanillaId) xhU (VarArg) (VanillaId) ykU = (VanillaId) wild2mU
+                        (AlgAlt)
+                          (DataAlt) GHC.Types.False -> (ConApp) GHC.Types.False []
+                          (DataAlt) GHC.Types.True
+                            -> (App) (ClassOpId) Selectors: [== ,/=] APPFL.Classes.== (VarArg) (VanillaId) $dEq2ZU (VarArg) (VanillaId) xsiU (VarArg) (VanillaId) yslU
+  (VanillaId) $dEq3nU =
+  (THUNK)
+    (App) (DictFunId) tycon: APPFL.Classes.Eq typs: [GHC.Types.[] anT] APPFL.Classes.$fEq[] (VarArg) (DictFunId) tycon: APPFL.Classes.Eq typs: [GHC.Types.Int] APPFL.Classes.$fEqInt
+  (VanillaId) $s$c==2oU =
+  (FUN)
+  [(VanillaId) dspU ,(VanillaId) ds1qU]
+    (Case) (App) (VanillaId) dspU = (VanillaId) wildrU
+      (AlgAlt)
+        (DataAlt) GHC.Types.[]
+          -> (Case) (App) (VanillaId) ds1qU = (VanillaId) wild1sU
+               (AlgAlt)
+                 (DataAlt) GHC.Types.[] -> (ConApp) GHC.Types.True []
+                 (DataAlt) GHC.Types.: (VanillaId) ipvtU (VanillaId) ipv1uU
+                   -> (ConApp) GHC.Types.False []
+        (DataAlt) GHC.Types.: (VanillaId) xvU (VanillaId) xswU
+          -> (Case) (App) (VanillaId) ds1qU = (VanillaId) wild1xU
+               (AlgAlt)
+                 (DataAlt) GHC.Types.[] -> (ConApp) GHC.Types.False []
+                 (DataAlt) GHC.Types.: (VanillaId) yyU (VanillaId) yszU
+                   -> (Case) (App) (ClassOpId) Selectors: [== ,/=] APPFL.Classes.== (VarArg) (DictFunId) tycon: APPFL.Classes.Eq typs: [GHC.Types.Int] APPFL.Classes.$fEqInt (VarArg) (VanillaId) xvU (VarArg) (VanillaId) yyU = (VanillaId) wild20U
+                        (AlgAlt)
+                          (DataAlt) GHC.Types.False -> (ConApp) GHC.Types.False []
+                          (DataAlt) GHC.Types.True
+                            -> (App) (ClassOpId) Selectors: [== ,/=] APPFL.Classes.== (VarArg) (VanillaId) $dEq3nU (VarArg) (VanillaId) xswU (VarArg) (VanillaId) yszU
+(StgNonRec)
+  (DCWorkerId) APPFL.Classes.D:Eq =
+  (FUN)
+  [(VanillaId) etaS ,(VanillaId) etaR]
+    (ConApp) APPFL.Classes.D:Eq [(VarArg) (VanillaId) etaS ,(VarArg) (VanillaId) etaR]

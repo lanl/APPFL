@@ -31,7 +31,8 @@ unrec binds = concatMap getPairs binds
   where getPairs (StgNonRec b rhs) = [(b,rhs)]
         getPairs (StgRec pairs) = pairs
 
-        
+
+{-# DEPRECATED pruneGhcStg "will probably break typeclass dictionary resolution" #-}
 pruneGhcStg :: [StgBinding] -> [StgBinding]
 pruneGhcStg bindings =
   let bndrPairs = unrec bindings

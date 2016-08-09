@@ -12,15 +12,12 @@ similar (probably via script, like GHC)
 -}
 
 module APPFL.Types
-  ( -- We're tied to GHC's Bool due to guards (I think)
-    Bool(..) 
-  , Int (..)
---  , List (..), Unit (..)
+  ( Bool(..), Int (..), Char (..)
   , isTrue#
   ) where
 
 import GHC.Types as GHC
-  (Int (..), Bool (..), SPEC (..), Coercible (..))
+  (Int (..), Bool (..), Char (..), SPEC (..), Coercible (..))
   
 import APPFL.Prim
 

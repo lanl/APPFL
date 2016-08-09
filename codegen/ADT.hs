@@ -13,6 +13,7 @@ module ADT (
   biLongMCon,
   biFloatMCon,
   biDoubleMCon,
+  biStringMCon,
   dataConName,
   tyConName,
   getDataCons,
