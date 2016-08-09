@@ -821,7 +821,17 @@ g2aAlt :: A.Var  -- | Scrutinee Binding
        -> StgAlt -- | GHC Alt to convert
        -> G2AMonad (Alt PostG2A)
 g2aAlt scrtName (acon, binders, usemask, rhsExpr)
-  | isAltErrorExpr rhsExpr = return defAlt
+  | isAltErrorExpr rhsExpr =
+    return (ADef { amd = Complete
+                 , av  = "x"
+                 , ae  = EFCall{ emd = Complete
+                               , ev  = appflNoExhaust
+                               , eas = [ EAtom{ emd = Complete
+                                              , ea  = Var "x" }
+                                       ]
+                               }
+                 }
+           )
   | otherwise =
     do
       appflRhs <- g2aExpr rhsExpr
