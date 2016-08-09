@@ -36,7 +36,7 @@ module AppflPrelude (
     -- Char, String,
 
     -- -- *** Tuples
-    -- fst, snd, curry, uncurry,
+    fst, snd, curry, uncurry,
 
     -- -- ** Basic type classes
 
@@ -58,7 +58,7 @@ module AppflPrelude (
     -- Integer, Float, Double,
     -- Rational, Word,
 
-    
+
     -- -- *** Numeric type classes
     -- Num((+), (-), (*), negate, abs, signum, fromInteger),
     -- Real(toRational),
@@ -107,28 +107,36 @@ This may make it in later
     Traversable(traverse, sequenceA, mapM, sequence),
 ----------------------------------------------------------------------}
     -- -- ** Miscellaneous functions
-    -- id, const, (.), flip, ($), until,
+    id, const, (.), flip, ($),
+    --until,
     -- asTypeOf, error, undefined,
     -- seq, ($!),
 
     -- -- * List operations
-    -- map, (++), filter,
-    -- head, last, tail, init, null, length, (!!),
-    -- reverse,
+    foldr, foldr1, foldl, foldl1,  -- for now maybe do foldable later
+    maximum, minimum,              -- int only for now...
+    map, (++), filter,
+
+    head, last, tail, init, null, length, (!!),
+    reverse,
     -- -- *** Special folds
-    -- and, or, any, all,
-    -- concat, concatMap,
+    and, or, any, all,
+    concat,
+    concatMap,
     -- -- ** Building lists
     -- -- *** Scans
-    -- scanl, scanl1, scanr, scanr1,
+    scanl, scanl1, scanr, scanr1,
     -- -- *** Infinite lists
-    -- iterate, repeat, replicate, cycle,
+    iterate, repeat, replicate, cycle,
     -- -- ** Sublists
-    -- take, drop, splitAt, takeWhile, dropWhile, span, break,
+    take, drop, splitAt, takeWhile, dropWhile, span,
+    break,
     -- -- ** Searching lists
-    -- notElem, lookup,
+    elem, notElem,
+    lookup,
     -- -- ** Zipping and unzipping lists
-    -- zip, zip3, zipWith, zipWith3, unzip, unzip3,
+    -- zip, zip3, zipWith,
+    zipWith3, unzip, unzip3,
     -- -- ** Functions on strings
     -- lines, words, unlines, unwords,
 
@@ -139,7 +147,7 @@ This may make it in later
     -- shows,
     -- showChar, showString, showParen,
 
-    
+
 {----------------------------------------------------------------------
     Read typeclass stuff. Has lots of dependencies.
 
@@ -148,7 +156,7 @@ This may make it in later
     Read(readsPrec, readList),
     reads, readParen, read, lex,
 ----------------------------------------------------------------------}
-    
+
 {----------------------------------------------------------------------
 No IO Support
 
@@ -231,5 +239,8 @@ STG must then handle the substitution.
 -- Hack.
 -- Maybe better to autogen tuples as needed when traversing AST
 
+
 import APPFL.Base
 import APPFL.Num
+import APPFL.List
+import APPFL.Tuple

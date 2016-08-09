@@ -1,4 +1,4 @@
-name:           stgc
+name:           appfl 
 version:        0.1
 cabal-version:  >= 1.2
 build-type:     Simple
@@ -16,9 +16,9 @@ Flag objtype
   Description: Use objType if useD is set
   Default:     False
 
-executable stgc
+executable appfl 
   hs-source-dirs:  .,MHS,FromGHC
-  main-is:         stgc.hs
+  main-is:         appfl.hs
   ghc-options:      -j -W -fno-warn-unused-binds -fno-warn-unused-matches -fno-warn-unused-imports 
   build-depends:   
                      base >= 4

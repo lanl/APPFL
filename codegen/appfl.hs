@@ -179,7 +179,7 @@ options =
         "frontend (stg | mhs | ghc)"
     ]
 
-header = "Usage: stgc [OPTION...] inputfile"
+header = "Usage: appfl [OPTION...] inputfile"
 
 compilerOpts :: [String] -> IO (Options, [String])
 compilerOpts argv =

@@ -8,6 +8,11 @@ project(stgc_test)
 
   # default log level result/fatal/error only.
   set(RT_LOG_LEVEL 3)
+  # run tests over these lists
+  set(strict_list "0;1;2")
+  set(constr_list "0")
+  set(gc_list "0;1")
+  set(sanity_list "0;1") 
 
   add_subdirectory(stg)
   add_subdirectory(mhs)

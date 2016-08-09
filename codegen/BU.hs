@@ -79,8 +79,8 @@ unify :: Monotype -> Monotype -> Subst
 -- unify unboxed and poly -> error
 --unify (MPVar p) (MPrim u) = let e = error $ "cannot unify unboxed type " ++ show u ++ " with polymorphic type variable" in seq e e
 --unify (MPrim u) (MPVar p) = let e = error $ "cannot unify unboxed type " ++ show u ++ " with polymorphic type variable" in seq e e
-unify (MPVar p) c@(MCon False _ _) = let e = error $ "cannot unify unboxed type " ++ show c ++ " with polymorphic type variable" in seq e e
-unify c@(MCon False _ _) (MPVar p) = let e = error $ "cannot unify unboxed type " ++ show c ++ " with polymorphic type variable"in seq e e
+unify (MPVar p) c@(MCon (Just False) _ _) = let e = error $ "cannot unify unboxed type " ++ show c ++ " with polymorphic type variable" in seq e e
+unify c@(MCon (Just False) _ _) (MPVar p) = let e = error $ "cannot unify unboxed type " ++ show c ++ " with polymorphic type variable"in seq e e
 
 -- replace least specified--uncommitted--before committed poly
 unify t (MVar v) = bind v t

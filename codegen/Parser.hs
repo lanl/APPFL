@@ -488,7 +488,7 @@ mFunP =
 -- parse a type constructor in a monotype as an MCon (e.g. 'Tree a' in Branch (Tree a) (Tree a) )
 mConP :: Parser Token Monotype
 mConP =
-  let berr = error "Boxity not set in MCon" in
+  let berr = Nothing in
    orExList [conNameP >>> \con ->
                            accept $ MCon berr con [],
              lparenP >>> \_ ->

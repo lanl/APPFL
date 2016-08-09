@@ -1,0 +1,8 @@
+module Zip where
+
+zip' :: [a] -> [b] -> [(a,b)]
+zip' []     []     = []
+zip' []     _bs    = []
+zip' _as    []     = []
+zip' (a:as) (b:bs) = (a,b) : zip' as bs
+

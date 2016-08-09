@@ -1,11 +1,11 @@
 project(stgc_test_error)
 
-set(STGCC "${CMAKE_CURRENT_BINARY_DIR}/../../../bin/stgc")
+set(APPFL "${CMAKE_CURRENT_BINARY_DIR}/../../../bin/appfl")
 set(SRC_DIR ${CMAKE_SOURCE_DIR}/test/stg/error)
 
 macro(add_test_regex_fail name regex)
     set(tname error_${name})
-    add_test(${tname} ${STGCC} ${SRC_DIR}/${name}.stg)
+    add_test(${tname} ${APPFL} ${SRC_DIR}/${name}.stg)
     set_property(TEST ${tname} PROPERTY PASS_REGULAR_EXPRESSION ${regex})
     set_property(TEST ${tname} PROPERTY WILL_FAIL) 
 endmacro(add_test_regex_fail)
