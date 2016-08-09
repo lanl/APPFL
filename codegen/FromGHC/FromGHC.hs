@@ -540,7 +540,6 @@ putDataCon dc =
     -- never fail
     insertDC _ _ = unreachable _HERE
 
-
 -- | Entry point to the GHC to APPFL STG conversion
 g2a :: [StgBinding] -> ([A.TyCon], [Obj Clean])
 g2a binds =
@@ -1043,7 +1042,7 @@ g2aMonoType t =
       m1 <- g2aMonoType t1
       m2 <- g2aMonoType t2
       case m1 of
-        MVar v        -> return $ MCon True v [m2]
+        MVar v        -> return $ MCon (Just True) v [m2]
         MCon b c args -> return $ MCon b c (args ++ [m2])
           -- Anything else would be strange, but let's be sure
         _             -> unsupportedType
@@ -1052,7 +1051,7 @@ g2aMonoType t =
     TyConApp tc args  -> do
       mtypes <- mapM g2aMonoType args
       name   <- nameGhcThing tc
-      return $ MCon True name mtypes
+      return $ MCon (Just True) name mtypes
 
     -- This assumes the right-associativity of (->) is expressed just as in our
     -- MFun, which is probably reasonable. Anything else would be

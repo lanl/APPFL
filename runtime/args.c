@@ -14,10 +14,10 @@ Args rtArg = { .gcThreshold = 0.0,
 
 void parseArgs (int argc, char **argv) {
   int c;
-  while ((c = getopt (argc, argv, "gt:e:c:l:sp:")) != -1)
+  while ((c = getopt (argc, argv, "g:t:e:c:l:s:p:")) != -1)
     switch (c) {
     case 'g':
-      rtArg.gcThreshold = 1.0; // never run
+      if (atoi(optarg) == 0) rtArg.gcThreshold = 1.0; // never run
       break;
 
     case 't':
@@ -37,7 +37,11 @@ void parseArgs (int argc, char **argv) {
       break;
 
     case 's':
-      rtArg.sanityChecker = true;
+      if (atoi(optarg) == 0) { 
+        rtArg.sanityChecker = false;
+      } else {
+        rtArg.sanityChecker = true;
+      }
       break;
 
     case 'p':

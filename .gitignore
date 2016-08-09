@@ -20,6 +20,7 @@ runtime/mymain
 #testing temp files
 test/stg/*.c
 test/mhs/*.c
+test/hs/*.c
 test/stg/error/*.c
 test/stg/nonstrict/*.c
 test/stg/nostrict2/*.c

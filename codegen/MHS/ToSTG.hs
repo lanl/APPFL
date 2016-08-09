@@ -134,7 +134,7 @@ stgTycon ddef =
    Nothing ->
      case ddef of
       DDefn{mtyp,dcons} ->
-        let (MCon b c vs) = mtyp
+        let (MCon (Just b) c vs) = mtyp
             vars = map (\(MVar v) -> v) vs
             dcs = map (\DCon{dcon, mtyps} -> DataCon dcon mtyps) dcons
         in TyCon b c vars dcs

@@ -246,23 +246,23 @@ want to use this, ask!
 ----------------------------------------------
 
 -- -- | Identity function.
--- id                      :: a -> a
--- id x                    =  x
+id                      :: a -> a
+id x                    =  x
 
 -- -- | Constant function.
--- const                   :: a -> b -> a
--- const x _               =  x
+const                   :: a -> b -> a
+const x _               =  x
 
 -- -- | Function composition.
 -- {-# INLINE (.) #-}
 -- -- Make sure it has TWO args only on the left, so that it inlines
 -- -- when applied to two functions, even if there is no final argument
--- (.)    :: (b -> c) -> (a -> b) -> a -> c
--- (.) f g = \x -> f (g x)
+(.)    :: (b -> c) -> (a -> b) -> a -> c
+(.) f g = \x -> f (g x)
 
 -- -- | @'flip' f@ takes its (first) two arguments in the reverse order of @f@.
--- flip                    :: (a -> b -> c) -> b -> a -> c
--- flip f x y              =  f y x
+flip                    :: (a -> b -> c) -> b -> a -> c
+flip f x y              =  f y x
 
 -- -- | Application operator.  This operator is redundant, since ordinary
 -- -- application @(f x)@ means the same as @(f '$' x)@. However, '$' has
@@ -274,8 +274,8 @@ want to use this, ask!
 -- -- It is also useful in higher-order situations, such as @'map' ('$' 0) xs@,
 -- -- or @'Data.List.zipWith' ('$') fs xs@.
 -- {-# INLINE ($) #-}
--- ($)                     :: (a -> b) -> a -> b
--- f $ x                   =  f x
+($)                     :: (a -> b) -> a -> b
+f $ x                   =  f x
 
 -- -- | Strict (call-by-value) application operator. It takes a function and an
 -- -- argument, evaluates the argument to weak head normal form (WHNF), then calls

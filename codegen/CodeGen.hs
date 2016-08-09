@@ -210,6 +210,8 @@ cga env (LitC c) =
             [cexp| ((typename PtrOrLiteral){.i = $id:c'}) |]
   in (e, "")
 
+cga env (LitStr s) = error "TODO"
+
 cgv :: Env -> String -> (Exp, String)
 cgv env v = (getEnvRef v env, "// " ++ v)
 
@@ -693,6 +695,7 @@ showa (LitL l) = show l
 showa (LitF f) = show f
 showa (LitD d) = show d
 showa (LitC c) = "con_" ++ c
+showa (LitStr s) = s
 -- showa at = error $ "CodeGen.showa: not expecting Atom - " ++ show at
 
 indexFrom :: Int -> [a] -> [(Int, a)]

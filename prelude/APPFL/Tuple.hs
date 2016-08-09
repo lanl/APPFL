@@ -1,10 +1,19 @@
-{-# LANGUAGE MagicHash #-}
+{-# LANGUAGE MagicHash, CPP #-}
 module APPFL.Tuple where
+
+fst (a,b) = a
+snd (a,b) = b
+
+curry :: ((a,b) -> c) -> (a->b->c)
+curry f = \x y -> f (x,y) 
+
+uncurry :: (a->b->c) -> ((a,b) -> c)
+uncurry f = \(x,y) -> f x y 
 
 
 ------ Boxed Tuples ------
 
-
+#if 0
 data TP0
    = TP0
 data TP1 a
@@ -262,3 +271,5 @@ data UTP61 a b c d e f g h i j k l m n o p q r s t u v w x y z aa ba ca da ea fa
    = UTP61 a b c d e f g h i j k l m n o p q r s t u v w x y z aa ba ca da ea fa ga ha ia ja ka la ma na oa pa qa ra sa ta ua va wa xa ya za ab bb cb db eb fb gb hb ib
 data UTP62 a b c d e f g h i j k l m n o p q r s t u v w x y z aa ba ca da ea fa ga ha ia ja ka la ma na oa pa qa ra sa ta ua va wa xa ya za ab bb cb db eb fb gb hb ib jb
    = UTP62 a b c d e f g h i j k l m n o p q r s t u v w x y z aa ba ca da ea fa ga ha ia ja ka la ma na oa pa qa ra sa ta ua va wa xa ya za ab bb cb db eb fb gb hb ib jb
+
+#endif
