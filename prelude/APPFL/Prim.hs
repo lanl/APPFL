@@ -27,7 +27,8 @@ import GHC.Prim
   , (>#), (<#), (>=#), (<=#)
   , (==#), (/=#)
   , quotInt#, remInt#, negateInt#
-  , eqChar#, neChar#
+  , eqChar#, neChar#, gtChar#, geChar#, leChar#, ltChar#
+  , eqWord#, neWord#, gtWord#, geWord#, leWord#, ltWord#
 
   -- These are used when GHC derives instances of Eq, Ord and Enum
   -- We don't *need* to support this, but the implementation of these

@@ -100,7 +100,7 @@ isAppflBuiltIn :: String -> Bool
 isAppflBuiltIn = (`elem` appflBuiltIns)
 
 appflBuiltIns :: [AppflName]
-appflBuiltIns = [appflMain, appflPrimIntTy, appflNoExhaust]
+appflBuiltIns = [appflMain, appflPrimIntTy, appflPrimLongTy, appflNoExhaust]
 
 
 -- | Our program entry point
@@ -124,6 +124,10 @@ appflMain = "main"
 -- | Our Int#
 appflPrimIntTy :: AppflName
 appflPrimIntTy = "Int_h"
+
+-- | Our Long# (or Word#)
+appflPrimLongTy :: AppflName
+appflPrimLongTy = "Long_h"
 
 -- | Our pattern match fail function (defined in the runtime)
 appflNoExhaust :: AppflName
@@ -180,7 +184,8 @@ getClassFromAppflEquiv name = Map.lookup name appflClassImplMap
 
 appflClassImplMap :: Map AppflName G.Name
 appflClassImplMap = Map.fromList
-  [ (classesDot "Eq", eqClassName) ]
+  [ (classesDot "Eq", eqClassName)
+  , (classesDot "Ord", ordClassName)]
 
     
     
@@ -216,8 +221,9 @@ builtInMap =
   -- , (G.intTyConName, typesDot "Int")
   -- , (intDataConName, typesDot "I#")
     
-    (getName G.intPrimTyCon, appflPrimIntTy) -- hacky...
+    (getName G.intPrimTyCon,  appflPrimIntTy) -- hacky...
   , (getName G.charPrimTyCon, appflPrimIntTy) -- hackier...
+  , (getName G.wordPrimTyCon, appflPrimLongTy) -- hacky
 
     -- GHC generates functions that are only ever passed 'void#', which *seem*
     -- to never use it. In theory, any argument should work, as long as it's
@@ -306,7 +312,7 @@ deriveTupleOrdStr n = show $
         compar = text "<>"
         combin = text ">|"
         deps   = vcat $ map text 
-          [ "infix 5 >|"
+          [ "infixr 5 >|"
           , "infix 6 <>"
           , "(<>) :: Ord a => a -> a -> Ordering"
           , "(<>) = compare"

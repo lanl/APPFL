@@ -6,10 +6,9 @@ import APPFL.Prim
 --import qualified Prelude as A
 
 
-myPair = (I# 2#, C# 'a'#)
+myPair = (I# 2#, C# 'b'#)
 
-myOtherPair = (I# 2#, C# 'a'#)
-snd (_,a) = a
-fst (a,_) = a
+myOtherPair = (I# 2#, C# 'b'#)
 
-main = myPair == myOtherPair
+
+main =  myPair <= myOtherPair

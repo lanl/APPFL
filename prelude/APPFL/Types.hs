@@ -12,12 +12,12 @@ similar (probably via script, like GHC)
 -}
 
 module APPFL.Types
-  ( Bool(..), Int (..), Char (..)
+  ( Bool(..), Int (..), Char (..), Word (..), Ordering (..)
   , isTrue#
   ) where
 
 import GHC.Types as GHC
-  (Int (..), Bool (..), Char (..), SPEC (..), Coercible (..))
+  (Int (..), Bool (..), Char (..), Word (..), Ordering(..), SPEC (..), Coercible (..))
   
 import APPFL.Prim
 

@@ -437,7 +437,7 @@ scanr1 _ [x]            =  [x]
 scanr1 f (x:xs)         =  f x q : qs
                            where qs@(q:_) = scanr1 f xs
 
-max x y = if x <= y then y else x
+
 -- | 'maximum' returns the maximum value from a list,
 -- which must be non-empty, finite, and of an ordered type.
 -- It is a special case of 'Data.List.maximumBy', which allows the
@@ -462,7 +462,7 @@ strictMaximum []        =  errorEmptyList "maximum"
 strictMaximum xs        =  foldl1' max xs
 #endif
 
-min x y = if x <= y then x else y
+
 -- | 'minimum' returns the minimum value from a list,
 -- which must be non-empty, finite, and of an ordered type.
 -- It is a special case of 'Data.List.minimumBy', which allows the
