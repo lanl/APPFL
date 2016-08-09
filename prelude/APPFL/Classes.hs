@@ -166,8 +166,13 @@ instance (Eq a) => Eq [a] where
     (x:xs) == (y:ys) = x == y && xs == ys
     _xs    == _ys    = False
 
+instance Eq Bool where
+  True == True = True
+  False == False = True
+  _ == _ = False  
+  x /= y = not (x == y)    
+
 {-
-deriving instance Eq Bool
 deriving instance Eq Ordering
 deriving instance Eq Word
 -}
