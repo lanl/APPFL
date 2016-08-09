@@ -160,7 +160,7 @@ instance DV (Expr InfoTab) (Expr InfoTab) where
                                            in case boxed of
                                                 True -> error $ "dv:  boxed constructor " ++
                                                                 c ++ " cannot be literal"
-                                                False -> MCon False tname []
+                                                False -> MCon (Just False) tname []
            return $ setTyp m e
 
     dv e@EFCall{eas} =
@@ -220,14 +220,14 @@ instance DV (Alt InfoTab) (Alt InfoTab) where
            let TyCon boxed tcon tvs dcs =
                  luTCon ac $ cmap amd -- NEW
            ntvs <- freshMonoVars $ length tvs
-           let m = MCon boxed tcon ntvs
+           let m = MCon (Just boxed) tcon ntvs
 
            return $ setTyp m a{ae = ae'}
 
 instance DV (Obj InfoTab) (Obj InfoTab) where
     dv o@FUN{vs,e} =
         do bs <- freshMonoVars (length vs) -- one for each arg
-           let m = MCon True "hack" bs  --hack, just hold them
+           let m = MCon (Just True) "hack" bs  --hack, just hold them
            e' <- dv e
            return $ setTyp m o{e=e'}  --what's the precedence, if it mattered?
 
@@ -242,7 +242,7 @@ instance DV (Obj InfoTab) (Obj InfoTab) where
         let TyCon boxed tcon tvs dcs = luTCon c $ cmap omd
         in do as' <- mapM dv as
               ntvs <- freshMonoVars $ length tvs
-              let m = MCon boxed tcon ntvs
+              let m = MCon (Just boxed) tcon ntvs
               return $ setTyp m o{as=as'}
 
     dv o@THUNK{e} =

@@ -76,9 +76,9 @@ setBoxity cmap def =
                                           "Double_h" -> False
                                           _ ->
                                               case Map.lookup c cmap of
-                                                Just (MCon b _ _) -> b
+                                                Just (MCon (Just b) _ _) -> b
                                                 _ -> error $ "cmap lookup failed for " ++ c
-                              in MCon bxt c ms'
+                              in MCon (Just bxt) c ms'
          mfun (MFun m1 m2) = MFun (mfun m1) (mfun m2)
          mfun m = m
      in def{dcons = dcons'}
@@ -756,10 +756,10 @@ oddFn = ODefn "odd"
 testFuns =
   let efns = map (uncurry EFn) testEQs
       fns = map (\x -> ODefn "fun" x Nothing) efns
-      lcon = DDefn (MCon True "List" [MVar "a"])
+      lcon = DDefn (MCon (Just True) "List" [MVar "a"])
               [DCon "X" [] ["X","Nil","Cons"],
                DCon "Nil" [] ["X","Nil","Cons"],
-               DCon "Cons" [MVar "a", MCon True "List" [MVar "a"]] ["X","Nil","Cons"]]
+               DCon "Cons" [MVar "a", MCon (Just True) "List" [MVar "a"]] ["X","Nil","Cons"]]
   in intCon : lcon : oddFn : fns
      
 

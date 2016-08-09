@@ -89,7 +89,7 @@ data Polytype = PPoly [TyVar] Monotype
                 
 data Monotype = MVar TyVar
               | MFun Monotype Monotype
-              | MCon Bool Con [Monotype]
+              | MCon (Maybe Bool) Con [Monotype]
               | MPVar TyVar -- should be used only in BU.hs
               | MPhony
                 deriving(Eq,Ord)
@@ -102,7 +102,8 @@ isBoxed :: Monotype -> Bool
 isBoxed m = case m of
   MVar{}     -> True -- polymorphic
   MFun{}     -> True -- expr / obj :: MFun --> PAP created --> boxed
-  MCon b _ _ -> b
+  MCon (Just b) _ _ -> b
+  MCon Nothing _ _ -> error "Boxity not set"
   MPVar{}    -> True
   m          -> error $ "ADT.isBoxed called with " ++ show m
   
@@ -128,7 +129,7 @@ boxMTypes tycons =
                              fromMaybe
                              (error $ "Couldn't find " ++ show c ++ " in tmap")
                              $ lookup c tmap
-                       in MCon bxt c $ map setMtypes mts
+                       in MCon (Just bxt) c $ map setMtypes mts
                      MFun mts1 mts2 -> MFun (setMtypes mts1) (setMtypes mts2)
                      MVar{} -> m
                      _ -> error $ "CMap.cMapTyCons matching bad Monotype: " ++ show m
@@ -153,10 +154,10 @@ makeDoubleTyCon :: Con -> TyCon
 makeDoubleTyCon c = TyCon False "Double_h" [] [DataCon c []]
 
 -- this is even more of a hack but at least it's localized
-biIntMCon    = MCon False "Int_h" []
-biLongMCon   = MCon False "Long_h" []
-biFloatMCon  = MCon False "Float_h" []
-biDoubleMCon = MCon False "Double_h" []
+biIntMCon    = MCon (Just False) "Int_h" []
+biLongMCon   = MCon (Just False) "Long_h" []
+biFloatMCon  = MCon (Just False) "Float_h" []
+biDoubleMCon = MCon (Just False) "Double_h" []
 
 conAList = [("Int_h",    "Int#"),
             ("Long_h",   "Long#"),
@@ -195,10 +196,12 @@ instance Show Monotype where
     show (MPVar v) = "p_" ++ v
     show (MFun m1@(MFun _ _) m2) = "(" ++ show m1 ++ ") -> " ++ show m2
     show (MFun m1 m2) = show m1 ++ " -> " ++ show m2
-    show (MCon bxt con ms) = con ++
+    show (MCon (Just bxt) con ms) = con ++
                              (if bxt
                               then "[B] "
                               else "[U] ") ++ unwords (map show ms)
+    show (MCon Nothing con ms) = con ++ "[?] "
+                                     ++ unwords (map show ms)
     show MPhony = "MPhony"
 
 --------------- ADT Pretty Printing -----------------------
@@ -257,8 +260,12 @@ instance PPrint Monotype where
                   (nest 2
                    (pprint m1 $+$
                     pprint m2))
-    MCon b c ms -> text "MCon" <> braces
+    MCon (Just b) c ms -> text "MCon" <> braces
                    (text (if b then "boxed" else "unboxed") <+>
+                    text c $+$
+                    nest 2 (vcat $ map pprint ms))
+    MCon Nothing c ms -> text "MCon" <> braces
+                   (text "?" <+>
                     text c $+$
                     nest 2 (vcat $ map pprint ms))
     MPVar v -> text "MPVar" <> braces (text v)

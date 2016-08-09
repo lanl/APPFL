@@ -135,11 +135,11 @@ unfoldEAp e =
 -- this allows a minihaskell program to be compiled as Haskell
 -- with creative usage of haskell blocks, the MagicHash extension
 -- and the correct imports and aliases see prelude.mhs
-intCon = DDefn { mtyp = MCon True "Int" [],
+intCon = DDefn { mtyp = MCon (Just True) "Int" [],
                dcons = [DCon {dcon = "I#",
                               mtyps = [biIntMCon], --[MPrim UBInt],
                               cons = ["I#"]}] }
-dblCon = DDefn { mtyp = MCon True "Double" [],
+dblCon = DDefn { mtyp = MCon (Just True) "Double" [],
                dcons = [DCon {dcon = "D#",
                               mtyps = [biDoubleMCon], --[MPrim UBDouble],
                               cons = ["D#"]}] }
@@ -158,7 +158,7 @@ instance Unparse (Defn) where
 
   unparse DDefn{mtyp, dcons} =
     case mtyp of
-        MCon b c ms ->
+        MCon (Just b) c ms ->
           let lh = text "data" <+>
                    (if b then empty else text "unboxed") <+>
                    text c <+>
@@ -260,7 +260,7 @@ instance PPrint Defn where
 
     DDefn{mtyp, dcons} ->
       let mdoc = case mtyp of
-                  MCon b c ms -> (if b then empty else text "unboxed") <+>
+                  MCon (Just b) c ms -> (if b then empty else text "unboxed") <+>
                                  text c <+> hsep (map mfun ms)
                   _ -> error $
                        "NewAST.pprint (Defn): DDefn holding bad Monotype: " ++

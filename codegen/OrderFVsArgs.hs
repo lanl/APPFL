@@ -36,7 +36,7 @@ repa m ats = boxedFirst [(k, f k) | (k,_) <- ats]
                   LitL{} -> biLongMCon
                   LitF{} -> biFloatMCon
                   LitD{} -> biDoubleMCon
-                  LitC c -> MCon False c []
+                  LitC c -> MCon (Just False) c []
 
 -- partition (a,Monotype) pairs into boxed and unboxed, preserving order
 -- also return  perm such that old[i] = new[perm[i]]

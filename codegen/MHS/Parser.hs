@@ -329,7 +329,7 @@ dDefP =
 --  semiP >>> \_ ->
              let boxed = maybe True (const False) b
                  mvs = map MVar vars
-                 mtyp = MCon boxed con mvs
+                 mtyp = MCon (Just boxed) con mvs
                  cs = map dcon dcs
                  dcs' = map (\d -> d{cons = cs}) dcs
                  def = DDefn mtyp dcs'
@@ -357,27 +357,25 @@ typeP =
                                    accept $ foldr1 MFun (t:ts)
 
 btypeP =
-  let err = True --error "boxity not set in MCON"
-      cAp = 
+  let cAp = 
         conNameP >>> \c -> -- only permit type applicaton for con names (e.g. List a -> Int, not m a -> Int)
         many' atypeP >>> \ms ->
         accept $ case () of 
                   _ | c == "Int#" -> biIntMCon -- MPrim UBInt -- hacky
                     | c == "Double#" -> biDoubleMCon -- MPrim UBDouble
-                    | otherwise -> MCon err c ms
+                    | otherwise -> MCon (Just True) c ms
                                    
   in orExList [cAp, atypeP]
 
 atypeP =
-  let err = True --error "boxity not set in MCON"
-      primTypP inp = case inp of
+  let primTypP inp = case inp of
         (TokCon "Int#" _:rs)    -> accept "Int_h" rs --accept UBInt rs
         (TokCon "Double#" _:rs) -> accept "Double_h" rs --UBDouble rs
         _ -> reject inp
   in
    orExList [
-     primTypP >>> \p -> accept $ MCon False p [], --MPrim p,
-     conNameP >>> \c -> accept $ MCon err c [],
+     primTypP >>> \p -> accept $ MCon (Just False) p [], --MPrim p,
+     conNameP >>> \c -> accept $ MCon (Just True) c [],
      varNameP >>> \v -> accept $ MVar v,
      inparensP typeP]
                     

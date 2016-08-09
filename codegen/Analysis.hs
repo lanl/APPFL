@@ -147,7 +147,7 @@ instance SetHA (Expr InfoTab) where
   setHA fmp e = case e of
     EAtom{emd} ->
       let nha = case typ emd of
-                 MCon b c _ -> not b
+                 MCon (Just b) c _ -> not b
                  _        -> False
           emd' = emd {noHeapAlloc = nha}
       in e { emd = emd' }
