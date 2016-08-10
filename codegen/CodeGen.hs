@@ -418,6 +418,31 @@ cge env (EPrimop it op eas) =
                    _ -> error "Eprimop"
     in return ((inline, No), [])
 
+cge env (EPrimOp it op ty eas) =
+    let as = map ea eas
+        arg0 = cgUBa env (as !! 0) "i"
+        arg1 = cgUBa env (as !! 1) "i"
+        inline = case ty of
+                   Pint -> case op of
+                     Padd -> stgCurValUArgType "INT" ++
+                            [citems| stgCurValU.i = $exp:arg0 + $exp:arg1; |]
+                     Psub -> stgCurValUArgType "INT" ++
+                            [citems| stgCurValU.i = $exp:arg0 - $exp:arg1; |]
+                     Pmul -> stgCurValUArgType "INT" ++
+                            [citems| stgCurValU.i = $exp:arg0 * $exp:arg1; |]
+                     Pdiv -> stgCurValUArgType "INT" ++
+                            [citems| stgCurValU.i = $exp:arg0 / $exp:arg1; |]
+                   Pdouble -> case op of
+                     Padd -> stgCurValUArgType "DOUBLE" ++
+                           [citems| stgCurValU.d = $exp:arg0 + $exp:arg1; |]
+                     Psub -> stgCurValUArgType "DOUBLE" ++
+                           [citems| stgCurValU.d = $exp:arg0 - $exp:arg1; |]
+                     Pmul -> stgCurValUArgType "DOUBLE" ++
+                           [citems| stgCurValU.d = $exp:arg0 * $exp:arg1; |]
+                     Pdiv -> stgCurValUArgType "DOUBLE" ++
+                           [citems| stgCurValU.d = $exp:arg0 / $exp:arg1; |]
+    in return ((inline, No), [])
+
 cge env (ELet it os e) =
   let names = map oname os
       decl1 = [ [citem|typename PtrOrLiteral *$id:name; |] | name <- names ]

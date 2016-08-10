@@ -242,6 +242,7 @@ instance Show Token where
 bracketize a b = "{" ++ a ++ " @ " ++ b ++ "}"
 showpos (l,c) = "(ln:" ++ show l ++ "," ++ "col:" ++ show c ++ ")"
 
+-- to be removed
 primopTable =
   [
     ("iplus#",   Piadd),
