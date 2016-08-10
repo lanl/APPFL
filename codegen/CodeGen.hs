@@ -420,8 +420,11 @@ cge env (EPrimop it op eas) =
 
 cge env (EPrimOp it op ty eas) =
     let as = map ea eas
-        arg0 = cgUBa env (as !! 0) "i"
-        arg1 = cgUBa env (as !! 1) "i"
+        f = case ty of
+              Pint -> "i"
+              Pdouble -> "d"
+        arg0 = cgUBa env (as !! 0) f
+        arg1 = cgUBa env (as !! 1) f
         inline = case ty of
                    Pint -> case op of
                      Padd -> stgCurValUArgType "INT" ++
