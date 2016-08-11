@@ -186,6 +186,9 @@ instance DV (Expr InfoTab) (Expr InfoTab) where
                         Pilt  -> intPrimTy
                         Pige  -> intPrimTy
                         Pigt  -> intPrimTy
+                        PiSRL -> intPrimTy
+                        PiSRA -> intPrimTy
+                        PiSLL -> intPrimTy
                         PIdxChar  -> intPrimTy
                         x -> error $ "HMStg.dv Eprimop " ++ show x
                         -- etc.
@@ -298,6 +301,9 @@ instance BU (Expr InfoTab) where
                     Pilt  -> [intPrimTy, intPrimTy]
                     Pigt  -> [intPrimTy, intPrimTy]
                     Pige  -> [intPrimTy, intPrimTy]
+                    PiSLL -> [intPrimTy, intPrimTy]
+                    PiSRL -> [intPrimTy, intPrimTy]
+                    PiSRA -> [intPrimTy, intPrimTy]
                     PIdxChar -> [stringPrimTy, intPrimTy]
                     x -> error $ "HMStg.bu EPrimop " ++ show x
             cs = Set.fromList [EqC m1 m2 | (_,m1) <- Set.toList as | m2 <- pts]

@@ -12,16 +12,26 @@ static inline int imax( int x, int y ) {
 /* Implementation of 
    PIdxChar in our land,
    indexCharOffAddr# in GHC land */
-static inline int charAtIndex (char *str, int idx) {
+static inline int64_t charAtIndex (char *str, int64_t idx) {
   return str[idx];
 }
 
 /* This might also be done with a cast to unsigned, but I'm not sure if that's
    platform/implementation dependent. */
-static inline int intLogicalRightShift (int trg, int shift) {
-  // Much thanks to the CS:APP course by CMU
-  int mask = ((1 << 31) >> shift) << 1;
-  return (trg >> shift) & (~mask);
+static inline int64_t intLogicalRightShift (int64_t trg, int64_t shift) {
+
+  asm("movb %[shift], %%cl\n\t"
+      "shrq %%cl, %[trg]"
+      : [trg] "+g" (trg)
+      : [shift] "g" (shift)
+      : "cl"
+    );
+
+  return trg;
+  /* alternative, if Clang doesn't like inline assembly */
+  /* int64_t mask = ((1 << 31) >> shift) << 1; */
+  /* return (trg >> shift) & (~mask); */
+
 }
 
 #endif

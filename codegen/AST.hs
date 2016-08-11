@@ -213,8 +213,8 @@ opInfo op = case op of
   Pige  -> binIntOpInfo  ">=" C.Ge
   Pineg -> unIntOpInfo   "-"  C.Negate
   PiSLL -> binIntOpInfo  "<<" C.Lsh
-  PiSRL -> binIntOpInfo  ">>" C.Rsh
-  PiSRA -> binIntFunInfo "intLogicalRightShift" 
+  PiSRA -> binIntOpInfo  ">>" C.Rsh
+  PiSRL -> binIntFunInfo "intLogicalRightShift" 
   POrd  -> noOpIntInfo "ord"
   PChr  -> noOpIntInfo "chr"
   PIdxChar -> idxCharOpInfo

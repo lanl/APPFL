@@ -13,7 +13,10 @@ myOtherPair = (I# 2#, C# 'b'#)
 
 str = "a string"
 
-main = case length str of
-  0 -> let x = x in x
-  n -> str
+(I# t#) `shr` (I# s#) = I# (t# `uncheckedIShiftRA#` s#)
+
+two = (I# 2#)
+twentyFive = (I# (negateInt# 25#))
+
+main = twentyFive `shr` two
          
