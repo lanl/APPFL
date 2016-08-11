@@ -152,7 +152,7 @@ data InfoTab =
       fvs :: [(Var,Monotype)],
       bfvc :: Int,  -- boxed FV count
       ufvc :: Int,  -- unboxed FV count
-      truefvs :: [Var],      
+      truefvs :: [Var],
       noHeapAlloc :: Bool,
       cmap :: CMap}
 
@@ -266,6 +266,9 @@ instance SetITs (Expr ([Var],[Var])) (Expr InfoTab) where
 
     setITs e@(EPrimop emd p eas) =
         EPrimop (makeIT e) p (map setITs eas)
+
+    setITs e@(EPrimOp emd p t eas) =
+        EPrimOp (makeIT e) p t (map setITs eas)
 
 instance SetITs (Alts ([Var],[Var])) (Alts InfoTab) where
     setITs as@(Alts altsmd alts name scrt) =
@@ -412,6 +415,15 @@ instance MakeIT (Expr ([Var],[Var])) where
                 knownCall = Nothing}
 
     makeIT EPrimop{emd = (fvs,truefvs)} =
+        ITPrimop{fvs = zip fvs $ repeat typUndef,
+                 bfvc = -1,
+                 ufvc = -1,
+                 truefvs = truefvs,
+                 typ = typUndef,
+                 ctyp = ctypUndef,
+                 noHeapAlloc = False}
+
+    makeIT EPrimOp{emd = (fvs,truefvs)} =
         ITPrimop{fvs = zip fvs $ repeat typUndef,
                  bfvc = -1,
                  ufvc = -1,
@@ -682,7 +694,11 @@ instance SetITs (CMap, (Expr InfoTab)) (Expr InfoTab) where
         e{eas = map (setITs . (cmap,)) eas}
 
     -- this could be the identity:  primops should not apply to user-defined constants
+    -- to be removed
     e@EPrimop{eas} ->
+        e{eas = map (setITs . (cmap,)) eas}
+
+    e@EPrimOp{eas} ->
         e{eas = map (setITs . (cmap,)) eas}
 
     e@ECase{ee, ealts, emd} ->

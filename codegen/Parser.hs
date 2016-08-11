@@ -91,17 +91,17 @@ import Data.List (groupBy)
 import PPrint
 import Data.Char (isNumber)
 import Options (reWriteSTG) -- controls grammar of case/alts expressions
-    
+
 type Comment = String
 
 parse :: [Token] -> ([TyCon], [Obj ()]) -- (ObjDefs, DataDefs)
-parse = splitDefs . fst . head . prog 
+parse = splitDefs . fst . head . prog
 
 parseWithComments :: [Token] -> [Either Comment (Def ())]
 parseWithComments = fst . head . progWithComments
 
 progWithComments :: Parser Token [Either Comment (Def ())]
-progWithComments = 
+progWithComments =
    (many' $ orEx commentP (defP `thenx` optP semiP))
    `thenx` tokcutP "Expected semicolon or EOF after object definition" eofP
 
@@ -135,12 +135,12 @@ groupParsed =
       f _ _                       = False
   in groupBy f
 
-    
+
 
 -- uncurried cons is used on several occasions to combine the results of
 -- ordered parsers
 cons = uncurry (:)
-      
+
 ----------------------------- Parsers for Tokens ---------------------------
 
 
@@ -151,7 +151,9 @@ tokP t1 (t2:inp) =
    (TokNum _ _   , TokNum _ _  ) -> accept t2 inp
    (TokId _ _    , TokId _ _   ) -> accept t2 inp
    (TokCon _ _   , TokCon _ _  ) -> accept t2 inp
-   (TokPrim _ _  , TokPrim _ _ ) -> accept t2 inp
+   (TokPrim _ _  , TokPrim _ _ ) -> accept t2 inp  -- to be removed
+   (TokPrimOp _ _  , TokPrimOp _ _ ) -> accept t2 inp
+   (TokPrimTy _ _  , TokPrimTy _ _ ) -> accept t2 inp
    (TokRsv x _   , TokRsv y _  ) -> if x == y then accept t2 inp else reject inp
    (TokEOF _ _   , TokEOF _ _  ) -> accept t2 inp
    (TokWht _ _ _ , TokWht _ _ _) -> accept t2 inp
@@ -188,8 +190,8 @@ intP = satisfy f `using` (read . tks)
   where f (TokNum s _) = all isNumber s
         f _ = False
 
-fltP :: Parser Token Float
-fltP = satisfy f `using` (read . tks)
+dblP :: Parser Token Double
+dblP = satisfy f `using` (read . tks)
   where f (TokNum s _) | '.' `elem` s =
                          let (w, d:ds) = break (== '.') s
                          in all isNumber w && all isNumber ds
@@ -197,11 +199,24 @@ fltP = satisfy f `using` (read . tks)
 
 
 -- Match Primop Token, accept Primop
+-- to be removed
 primP :: Parser Token Primop
 primP = tokP2 (TokPrim) `using` getPrimop
   where getPrimop (TokPrim s _) =
           snd . head $ filter ((== s).fst) primopTable
         getPrimop _ = error "Parser.primP"
+
+primOpP :: Parser Token PrimOp
+primOpP = tokP2 (TokPrimOp) `using` getPrimop
+  where getPrimop (TokPrimOp s _) =
+          snd . head $ filter ((== s).fst) primOpTable
+        getPrimop _ = error "Parser.primOpP"
+
+primTyP :: Parser Token PrimTy
+primTyP = tokP2 (TokPrimTy) `using` getPrimty
+  where getPrimty (TokPrimTy s _) =
+          snd . head $ filter ((== s).fst) primTyTable
+        getPrimty _ = error "Parser.primTyP"
 
 -- match common reserved symbols/words
 dataP = rsvP "data"
@@ -223,8 +238,8 @@ commentP :: Parser Token Comment
 commentP = satisfy f `using` tks
     where f TokWht{cmnt} = cmnt
           f _ = False
-                           
-    
+
+
 -- Given a parser, match parens surrounding what it would match
 inparensP :: Parser Token v -> Parser Token v
 inparensP p = xthenx lparenP p rparenP
@@ -240,7 +255,7 @@ tokcutP msg p inp = cutP (show $
                   text msg)
                   p inp
 
-        
+
 ---------------------------- Object Parsing -------------------------------
 
 -- Parse an Object definition (no semicolon) as Obj ()
@@ -272,7 +287,7 @@ funP = objPat "FUN" $
        some' varNameP >>> \v1 ->
        tokcutP "Expected '->' to initiate function body" $
        arrowP >>> \_ ->
-       tokcutP "Expected valid expression in function body"
+       tokcutP ("Expected valid expression in function body" ++ show v1)
        exprP >>> \v2 ->
                   accept $ FUN () v1 v2
 
@@ -315,7 +330,8 @@ thunkP = objPat "THUNK" $
 -- parse an expression, accept an Expr () object
 exprP :: Parser Token (Expr ())
 exprP = orExList
-        [eFCallP, eAtomP, ePrimopP, eLetP, eCaseP, inparensP exprP]
+        [eFCallP, eAtomP, ePrimopP, -- to be removed
+        ePrimOpP, eLetP, eCaseP, inparensP exprP]
 
 
 -- parse an expression argument to a function call or primop
@@ -326,7 +342,8 @@ exprP = orExList
 -- atoms but map EAtom across
 exprArgP :: Parser Token (Expr ())
 exprArgP = orExList
-           [eAtomP, eLetP, eCaseP, eFCallP, ePrimopP, inparensP exprP]
+           [eAtomP, eLetP, eCaseP, eFCallP, ePrimopP, -- to be removed
+            ePrimOpP, inparensP exprP]
 
 -- parse an atom expression
 eAtomP :: Parser Token (Expr ())
@@ -341,12 +358,23 @@ eFCallP =
                    accept $ EFCall () fn args
 
 -- parse a primitive operation expression (e.g. isub# 1# 2#)
+-- to be removed
 ePrimopP :: Parser Token (Expr ())
 ePrimopP =
   primP >>> \op ->
   tokcutP "Expected one or more atoms as arguments to a primop" $
   some' atomP >>> \args ->
                    accept $ EPrimop () op $ map (EAtom ()) args
+
+-- parse a primitive operation expression (e.g. sub# int# 1# 2#)
+ePrimOpP :: Parser Token (Expr ())
+ePrimOpP =
+ primOpP >>> \op ->
+ tokcutP "Expected one primTy argument to a primOp"
+ primTyP  >>> \ty ->
+ tokcutP "Expected one or more atoms as arguments to a primOp" $
+ some' atomP >>> \args ->
+                 accept $ EPrimOp () op ty $ map (EAtom ()) args
 
 -- parse a let expression
 eLetP :: Parser Token (Expr ())
@@ -370,7 +398,7 @@ eCaseP =
     rsvP "case" >>> \_ ->
     exprP >>> \exp ->
     tokcutP "Expected 'of' Token to close the scrutinee of a case expr" $
-    rsvP "of" >>> \_ ->    
+    rsvP "of" >>> \_ ->
     altsP >>> \alts -> -- scrutinee binding
                 accept $ ECase () exp $ alts
 
@@ -378,7 +406,7 @@ eCaseP =
 -- parse an Alts section in a case expression, accept an Alts object
 -- (partially applied: scrutinee binding is parsed by eCaseP
 altsP :: Parser Token (Alts ())
-altsP = 
+altsP =
   let
     name = "alts" --error "this alts not given a name!"
     scrtP | reWriteSTG = emptyP `using` const (EAtom () $ Var "parsed_rewrite_stg")
@@ -391,7 +419,7 @@ altsP =
     tokcutP "Expected one or more alts separated by semicolons" $
     sepByP' altP semiP >>> \alts ->
     tokcutP "Expected right brace to close the alt block of a case expr"
-    rbraceP >>> \_ ->                
+    rbraceP >>> \_ ->
                   accept $ Alts () alts name scrt
 
 
@@ -399,7 +427,7 @@ altsP =
 altP :: Parser Token (Alt ())
 altP =
   let aconNameP = orExList [intP `using` show,
-                           -- fltP `using` show,
+                           -- dblP `using` show,
                             conNameP]
       adefP = varNameP >>> \v ->
                              accept $ ADef () v
@@ -420,8 +448,8 @@ atomP = orExList [
   varNameP `using` Var,
   intP     `using` LitI,
   --longP  `using` LitL,
-  fltP     `using` LitF,
-  --dblP   `using` LitD,
+  --fltP     `using` LitF,
+  dblP   `using` LitD,
   conNameP `using` LitC
   ]
 
@@ -434,10 +462,10 @@ tyConP =
   rsvP "data" >>> \_ ->
 
   optP (rsvP "unboxed") >>> \b ->
-  
+
   tokcutP "Expected valid constructor name in datatype declaration" $
   conNameP >>> \con ->
-  
+
   many' varNameP >>> \tyvars ->
 
   tokcutP "Expected '=' Token to bind datatype declaration"

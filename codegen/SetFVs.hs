@@ -94,10 +94,11 @@ instance STGToList (Obj (Set.Set Var, Set.Set Var)) (Obj ([Var],[Var])) where
 instance STGToList (Expr (Set.Set Var, Set.Set Var)) (Expr ([Var],[Var])) where
     stgToList EAtom{..} = EAtom{emd = p2p emd, ..}
     stgToList EFCall{..} = EFCall{emd = p2p emd, eas = map stgToList eas, ..}
-    stgToList EPrimop{..} = EPrimop{emd = p2p emd, eas = map stgToList eas, ..}
+    stgToList EPrimop{..} = EPrimop{emd = p2p emd, eas = map stgToList eas, ..} -- to be removed
+    stgToList EPrimOp{..} = EPrimOp{emd = p2p emd, eas = map stgToList eas, ..}
     stgToList ELet{..} = ELet{emd = p2p emd, edefs = map stgToList edefs, ee = stgToList ee, ..}
     stgToList ECase{..} = ECase{emd = p2p emd, ee = stgToList ee, ealts = stgToList ealts, ..}
-        
+
 instance STGToList (Alts (Set.Set Var, Set.Set Var)) (Alts ([Var],[Var])) where
     stgToList Alts{..} = Alts{altsmd = p2p altsmd,
                               alts = map stgToList alts,
@@ -125,7 +126,7 @@ toplevel rtgs defs =
         defs' = setfvs (Set.union tlds rtgs) defs
         (myfvls, truefvls) = unzip $ map omd defs'
         myfvl = Set.toList $ Set.unions myfvls
-        
+
     in case myfvl of
          [] -> deadCode defs'
          fvs -> error $ unlines
@@ -169,11 +170,18 @@ instance SetFVs (Expr a) (Expr (Set.Set Var, Set.Set Var)) where
             truefvs            = Set.singleton f  `Set.union` astruefvs
         in EFCall (myfvs,truefvs) f as'
 
+    -- to be removed
     setfvs tlds (EPrimop _ p as) =
         let as' = map (setfvs tlds) as
             (easFVs, easTFVs) = unzip $ map emd as'
             (myfvs, truefvs) = (Set.unions easFVs, Set.unions easTFVs)
         in EPrimop (myfvs,truefvs) p as'
+
+    setfvs tlds (EPrimOp _ p t as) =
+        let as' = map (setfvs tlds) as
+            (easFVs, easTFVs) = unzip $ map emd as'
+            (myfvs, truefvs) = (Set.unions easFVs, Set.unions easTFVs)
+        in EPrimOp (myfvs,truefvs) p t as'
 
     -- let introduces scope
     setfvs tlds (ELet _ defs e) =
@@ -187,7 +195,7 @@ instance SetFVs (Expr a) (Expr (Set.Set Var, Set.Set Var)) where
             myfvs    = (defsfvs     `Set.union` efvs)     `Set.difference` names
             truefvs  = (defstruefvs `Set.union` etruefvs) `Set.difference` names
         in ELet (myfvs,truefvs) defs' e'
-    
+
     setfvs tlds (ECase _ e alts) =
         let e' = setfvs tlds e
             (efvs, etruefvs) = emd e'
@@ -196,7 +204,7 @@ instance SetFVs (Expr a) (Expr (Set.Set Var, Set.Set Var)) where
             myfvs   = Set.union efvs altsfvs
             truefvs = Set.union etruefvs altstruefvs
         in ECase (myfvs,truefvs) e' alts'
-      
+
 
 -- alts introduce scope
 instance SetFVs (Alt a) (Alt (Set.Set Var, Set.Set Var)) where

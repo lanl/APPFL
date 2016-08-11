@@ -65,13 +65,12 @@ import qualified Data.Map as Map
 
 --import Data.Loc(noLoc)
 import Language.C.Quote.GCC
-import Language.C.Syntax (Initializer(..),
+import Language.C.Syntax(Initializer(..),
                          Definition,
                          Initializer,
-                         Exp(BinOp, UnOp, Const),
+                         Exp,
                          BlockItem,
-                         InitGroup,
-                         BinOp(..)) 
+                         InitGroup)
 
 -- use a list of Definitions rather than Func
 -- this allows us to put comments before functions
@@ -333,9 +332,6 @@ stgCurValUArgType ty = if useArgType
                            then [citems| stgCurValU.argType = $id:ty; |]
                            else []
 
-
-
-
 cge :: Env
   -> Expr InfoTab
   -> State Int (([BlockItem], YPN), [(Definition, CFun)])
@@ -397,6 +393,49 @@ cge env (EPrimop it op eas) =
       PDouble -> "DOUBLE"
       PString -> "STRING"
       PVoid   -> error "No \"PVoid\" ArgType"
+
+cge env (EPrimOp it op ty eas) =
+    let as = map ea eas
+        (pay, typ) = case ty of
+              Pint -> ("i", "INT")
+              Pdouble -> ("d", "DOUBLE")
+        arg0 = cgUBa env (as !! 0) pay
+        arg1 = cgUBa env (as !! 1) pay
+        inline = case op of
+                   Padd -> stgCurValUArgType typ ++
+                           [citems| stgCurValU.$id:pay = $exp:arg0 + $exp:arg1; |]
+                   Psub -> stgCurValUArgType typ ++
+                           [citems| stgCurValU.$id:pay = $exp:arg0 - $exp:arg1; |]
+                   Pmul -> stgCurValUArgType typ ++
+                           [citems| stgCurValU.$id:pay = $exp:arg0 * $exp:arg1; |]
+                   Pdiv -> stgCurValUArgType typ ++
+                           [citems| stgCurValU.$id:pay = $exp:arg0 / $exp:arg1; |]
+                   Pmod -> stgCurValUArgType typ ++
+                           [citems| stgCurValU.$id:pay = $exp:arg0 % $exp:arg1; |]
+                   Peq ->  stgCurValUArgType "INT" ++
+                           [citems| stgCurValU.$id:pay = $exp:arg0 == $exp:arg1; |]
+                   Pne ->  stgCurValUArgType "INT" ++
+                           [citems| stgCurValU.$id:pay = $exp:arg0 != $exp:arg1; |]
+                   Plt ->  stgCurValUArgType "INT" ++
+                           [citems| stgCurValU.$id:pay = $exp:arg0 < $exp:arg1; |]
+                   Ple ->  stgCurValUArgType "INT" ++
+                           [citems| stgCurValU.$id:pay = $exp:arg0 <= $exp:arg1; |]
+                   Pgt ->  stgCurValUArgType "INT" ++
+                           [citems| stgCurValU.$id:pay = $exp:arg0 > $exp:arg1; |]
+                   Pge ->  stgCurValUArgType "INT" ++
+                           [citems| stgCurValU.$id:pay = $exp:arg0 >= $exp:arg1; |]
+                   Pneg -> stgCurValUArgType typ ++
+                           [citems| stgCurValU.$id:pay = -$exp:arg0; |]
+                   Pmin -> stgCurValUArgType typ ++
+                           case ty of
+                             Pint -> [citems| stgCurValU.$id:pay = imin($exp:arg0,$exp:arg1); |]
+                             Pdouble -> [citems| stgCurValU.$id:pay = dmin($exp:arg0,$exp:arg1); |]
+                   Pmax -> stgCurValUArgType typ ++
+                           case ty of
+                             Pint -> [citems| stgCurValU.$id:pay = imax($exp:arg0,$exp:arg1); |]
+                             Pdouble -> [citems| stgCurValU.$id:pay = dmax($exp:arg0,$exp:arg1); |]
+    in return ((inline, No), [])
+
   
 cge env (ELet it os e) =
   let names = map oname os

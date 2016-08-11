@@ -6,12 +6,14 @@
 module Tokenizer
 (
   Token(..),
-  primopTable,
+  primOpTable,
+  primTyTable,
+  primopTable, -- to be removed
   tokenize,
   tokenizeWithComments,
 ) where
 
-import MHS.AST (Primop (..))
+import MHS.AST (Primop(..), PrimOp(..), PrimTy(..))
 import Data.Char
 import Data.List (isPrefixOf)
 import ParserComb
@@ -67,7 +69,7 @@ litStr cs = case cs of
     litC c >>> \(c,p) ->
     litStr cs >>> \(cs,_) ->
                    accept (c:cs, p)
-                   
+
 anyEq' cs = satisfyFst (\c -> or $ map (== c) cs)
 
 prog = many' (whitespace `xorP` lexeme) `thenx` optP eof >>> \tks ->
@@ -117,7 +119,8 @@ ncomment =
                  accept $ TokWht (op ++ concat chars ++ cls) p True
 
 lexeme = orExList
-         [varid, conid, special, primitive, reserved, literal]
+         [varid, conid, special, primitive, -- to be removed
+         primitiveOp, primitiveTy, reserved, literal]
 
 
 upper = satisfyFst isUpper
@@ -131,15 +134,22 @@ idchar = orExList [upper, lower, digit, apost, hash, underscore]
 
 special = orExList
           (map litStr specials) >>> \(s,p) ->
-                                     accept $ TokRsv s p 
+                                     accept $ TokRsv s p
 reserved = orExList
            (map litStr reserveds) >>> \(s,p) ->
                                        accept $ TokRsv s p
 
+-- to be removed
 primitive = orExList
             (map litStr primops) >>> \(s,p) ->
                                       accept $ TokPrim s p
-                                       
+primitiveOp = orExList
+            (map litStr (fst $ unzip primOpTable)) >>> \(s,p) ->
+                                      accept $ TokPrimOp s p
+primitiveTy = orExList
+            (map litStr (fst $ unzip primTyTable)) >>> \(s,p) ->
+                                      accept $ TokPrimTy s p
+
 varid =
   orExList [lower, underscore, hash] >>> \(s,p) ->
   many idchar >>> \ss ->
@@ -147,8 +157,10 @@ varid =
                    in
                     case () of
                      _ | str `elem` reserveds -> reject
-                       | str `elem` primops -> reject
-                       | otherwise -> 
+                       | str `elem` primops -> reject  -- to be removed
+                       | str `elem` (fst $ unzip primOpTable) -> reject
+                       | str `elem` (fst $ unzip primTyTable) -> reject
+                       | otherwise ->
                            accept $ TokId str p
 
 conid =
@@ -185,10 +197,12 @@ rmWhitespace wComments =
 
 
 type Pos = (Int, Int)
-  
+
 data Token
     = TokNum  {tks::String, pos::Pos}
-    | TokPrim {tks::String, pos::Pos}
+    | TokPrim {tks::String, pos::Pos} -- to be removed
+    | TokPrimOp {tks::String, pos::Pos}
+    | TokPrimTy {tks::String, pos::Pos}
     | TokId   {tks::String, pos::Pos}
     | TokCon  {tks::String, pos::Pos}
     | TokRsv  {tks::String, pos::Pos}
@@ -204,8 +218,13 @@ instance PPrint Token where
   pprint tk = case tk of
     TokNum s p   -> text "TokNum" <> braces
                    (text s <> comma <+> pprint p)
+    -- to be removed
     TokPrim s p  -> text "TokPrim" <> braces
                    (text s <> comma <+> pprint p)
+    TokPrimOp s p  -> text "TokPrimOp" <> braces
+                   (text s <> comma <+> pprint p)
+    TokPrimTy s p  -> text "TokPrimTy" <> braces
+                  (text s <> comma <+> pprint p)
     TokId s p    -> text "TokId" <> braces
                    (text s <> comma <+> pprint p)
     TokCon s p   -> text "TokCon" <> braces
@@ -223,6 +242,7 @@ instance Show Token where
 bracketize a b = "{" ++ a ++ " @ " ++ b ++ "}"
 showpos (l,c) = "(ln:" ++ show l ++ "," ++ "col:" ++ show c ++ ")"
 
+-- to be removed
 primopTable =
   [
     ("iplus#",   Piadd),
@@ -250,7 +270,12 @@ reserveds =
     "CON", "THUNK", "FUN", "PAP", "ERROR",
     "case", "of", "let", "in", "data", "unboxed"
   ] ++ specials
-  
+
+primOps = [(minBound :: PrimOp) ..]
+primOpTable = zip (map ((++ "#") . tail . show)  primOps) primOps
+primTys = [(minBound :: PrimTy) ..]
+primTyTable = zip (map ((++ "#") . tail . show)  primTys) primTys
+
 primops = fst $ unzip primopTable
 isReserved = flip elem reserveds
 isPrimop = flip elem primops

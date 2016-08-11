@@ -15,12 +15,14 @@ module AST (
   PrimOpInfo(..),
   opInfo,
   rmPrelude,
-  primopTab,
+  primopTab, -- to be removed
+  primOpTab,
+  primTyTab,
   show,
   objListDoc,
   primArity,
   projectAtoms,
-  scrtVarName,
+  scrtVarName
 ) where
 
 import PPrint
@@ -69,15 +71,20 @@ data Expr a
     | EFCall  {emd :: a,
                ev :: Var,
                eas :: [Expr a]} -- invariant the eas are EAtoms
+    -- to be removed
     | EPrimop {emd :: a,
                eprimop :: Primop,
+               eas :: [Expr a]}    -- to be removed
+    | EPrimOp {emd :: a,
+               eprimOp :: PrimOp,
+               eprimTy :: PrimTy,
                eas :: [Expr a]} -- invariant the eas are EAtoms
     | ELet    {emd :: a,
                edefs :: [Obj a],
                ee :: Expr a}
     | ECase   {emd :: a,
                ee :: Expr a,
-               ealts :: Alts a}               
+               ealts :: Alts a}
               deriving(Eq,Show)
 
 data Alts a = Alts {altsmd :: a,
@@ -103,7 +110,27 @@ projectAtoms (a:as) = error "InfoTab.projectAtoms: non-EAtom"
 -- we initially parse EPrimops as EFCalls, then transform and check saturation
 -- here.  We only need to distinguish EPrimop from EFCall because special
 -- code is generated for them.
+data PrimTy = Pint | Pdouble deriving (Eq, Ord, Enum, Bounded, Show)
 
+data PrimOp = Padd -- a -> a -> a
+            | Psub
+            | Pmul
+            | Pdiv
+            | Pmod
+            | Pmax
+            | Pmin
+
+            | Peq -- a -> a -> Bool
+            | Pne
+            | Plt
+            | Ple
+            | Pgt
+            | Pge
+
+            | Pneg -- a -> a
+            deriving (Eq, Ord, Enum, Bounded, Show)
+
+-- to be removed
 data Primop = Piadd -- Int -> Int -> Int
             | Pisub
             | Pimul
@@ -233,13 +260,14 @@ primArity op = case op of
   _ -> 2
 
 -- these are the C names, not STG names
+-- to be removed
 primopTab =
     [("iplus_h",  Piadd),
      ("isub_h",   Pisub),
      ("imul_h",   Pimul),
      ("idiv_h",   Pidiv),
      ("imod_h",   Pimod),
-    
+
      ("ieq_h",    Pieq),
      ("ine_h",    Pine),
      ("ilt_h",    Pilt),
@@ -261,6 +289,10 @@ primopTab =
      ("chr_h", PChr)
     ]
 
+primOps = [(minBound :: PrimOp) ..]
+primOpTab = zip (map ((++ "_h") . tail . show)  primOps) primOps
+primTys = [(minBound :: PrimTy) ..]
+primTyTab = zip (map ((++ "_h") . tail . show)  primTys) primTys
 
 -- generate with
 -- awk '/^[a-z_#].*=/ {if ($1 != "data") {printf "\42%s\42, ", $1}}' \
@@ -295,12 +327,22 @@ rmPreludeLess keeps =
   let objs = preludeObjNames \\ keeps
   in filter (not . (`elem` objs) . oname)
 
+  -- to be removed
 primID p =
   case find ((==p).snd) primopTab of
     Nothing -> error $ "primop lookup failed for " ++ show p
     Just x -> fst x
 
-     
+primOpID p =
+  case find ((==p).snd) primOpTab of
+    Nothing -> error $ "primOp lookup failed for " ++ show p
+    Just x -> fst x
+
+primTyID p =
+  case find ((==p).snd) primTyTab of
+    Nothing -> error $ "primTy lookup failed for " ++ show p
+    Just x -> fst x
+
 instance Unparse Atom where
   unparse (Var v)  = stgName v
   unparse (LitI i) = int i
@@ -312,6 +354,12 @@ instance Unparse Atom where
 
 instance Unparse Primop where
   unparse = stgName . primID
+
+instance Unparse PrimOp where
+    unparse = stgName . primOpID
+
+instance Unparse PrimTy where
+    unparse = stgName . primTyID
 
 instance Unparse a => Unparse (Alt a) where
   unparse ACon{amd, ac, avs, ae} =
@@ -325,7 +373,7 @@ instance Unparse a => Unparse (Alt a) where
 instance Unparse a => Unparse (Alts a) where
   unparse Alts{altsmd, alts, scrt} = -- Note aname field is *not* in use here
     unparse scrt <+> lbrace $+$
-    nest 2 
+    nest 2
     (bcomment (unparse altsmd) $+$
      vcat (punctuate semi $ map unparse alts) <+> rbrace)
 
@@ -338,9 +386,14 @@ instance Unparse a => Unparse (Expr a) where
     bcomment (unparse emd) $+$
     stgName ev <+> hsep (map unparse eas)
 
+  -- to be removed
   unparse EPrimop{emd, eprimop, eas} =
     bcomment (unparse emd) $+$
     unparse eprimop <+> hsep (map unparse eas)
+
+  unparse EPrimOp{emd, eprimOp, eprimTy, eas} =
+      bcomment (unparse emd) $+$
+      unparse eprimOp $+$ unparse eprimTy <+> hsep (map unparse eas)
 
   unparse ELet{emd, edefs, ee} =
     bcomment (unparse emd) $+$
@@ -383,14 +436,14 @@ instance Unparse a => Unparse (Obj a) where
 
 instance Unparse a => Unparse [Obj a] where
   unparse objs = vcat $ postpunctuate semi $ map unparse objs
-         
+
 
 --instance PPrint BuiltinType where
 --  pprint b = case b of
 --    UBInt -> text "UBInt"
 --    UBDouble -> text "UBDouble"
-    
- 
+
+
 
 
 objListDoc :: (PPrint a) => [Obj a] -> Doc
@@ -467,6 +520,7 @@ instance (PPrint a) => PPrint (Expr a) where
                     nest 2 (pprint emd)
                    )
                   )
+    -- to be removed
     EPrimop{..} -> braces
                    (text "EPrimop:" $+$
                     nest 2
@@ -476,6 +530,16 @@ instance (PPrint a) => PPrint (Expr a) where
                      nest 2 (pprint emd)
                     )
                    )
+    EPrimOp{..} -> braces
+                  (text "EPrimOp:" $+$
+                   nest 2
+                   (text "primOp:" <+> pprint eprimOp $+$
+                    text "primTy:" <+> pprint eprimTy $+$
+                    text "args:" <+> brackets (vcat $ punctuate comma $ map pprint eas) $+$
+                    text "metadata" $+$
+                    nest 2 (pprint emd)
+                   )
+                  )
     ELet{..} -> braces
                 (text "ELet:" $+$
                  nest 2
@@ -535,7 +599,7 @@ instance (PPrint a) => PPrint (Alt a) where
                   nest 2 (pprint ae)
                  )
                 )
-             
+
 instance PPrint Atom where
   pprint a = case a of
     Var v -> text "Var" <> braces (text v)
@@ -545,5 +609,12 @@ instance PPrint Atom where
     LitC c -> text "LitC" <> braces (text c)
     a -> error $ "AST.pprint (Atom): not expecting Atom - " ++ show a
 
+-- to be removed
 instance PPrint Primop where
+  pprint = unparse
+
+instance PPrint PrimOp where
+  pprint = unparse
+
+instance PPrint PrimTy where
   pprint = unparse

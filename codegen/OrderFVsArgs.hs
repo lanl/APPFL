@@ -106,7 +106,11 @@ instance TypeFVs (Expr InfoTab) where
             eas' = map (typeFVsCommon m') eas
         in e{eas = eas'}
 
+    -- to be removed
     typeFVs m e@EPrimop{eas} =
+        e{eas = map (typeFVsCommon m) eas}
+
+    typeFVs m e@EPrimOp{eas} =
         e{eas = map (typeFVsCommon m) eas}
 
     typeFVs m e@ELet{edefs, ee} =
