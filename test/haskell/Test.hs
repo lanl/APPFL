@@ -11,4 +11,9 @@ myPair = (I# 2#, C# 'b'#)
 myOtherPair = (I# 2#, C# 'b'#)
 
 
-main =  myPair <= myOtherPair
+str = "a string"
+
+main = case length str of
+  0 -> let x = x in x
+  n -> str
+         

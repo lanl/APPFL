@@ -13,6 +13,7 @@ import Control.Applicative ((<|>), (<*>))
 
 import AST as A (Primop (..))
 import PrimOp as G
+import WiredIn as A
 
 -- GHC Wired-in things come from these modules
 import TysWiredIn  as G
@@ -71,6 +72,12 @@ primopMap = Map.fromList
   , (WordMulOp  , Pine) 
   , (WordQuotOp , Pile) 
   , (WordRemOp  , Pilt)
+  , (IndexOffAddrOp_Char, PIdxChar)
+  , (ISllOp     , PiSLL) -- unchecked int shift left
+  , (ISraOp     , PiSRA) -- unchecked int shift right (arithmetic)
+  , (ISrlOp     , PiSRL) -- unchecked int shift right (logical)
+  , (ChrOp      , PChr)
+  , (OrdOp      , POrd)
 --  , (RaiseOp    , Pexcept)
 --
 --  I want to figure out a way to get this in eventually, even in a
@@ -97,15 +104,8 @@ type AppflName = String
 
 -- Names we want to recognize as special.
 isAppflBuiltIn :: String -> Bool
-isAppflBuiltIn = (`elem` appflBuiltIns)
+isAppflBuiltIn = (`elem` A.builtinNames)
 
-appflBuiltIns :: [AppflName]
-appflBuiltIns = [appflMain, appflPrimIntTy, appflPrimLongTy, appflNoExhaust]
-
-
--- | Our program entry point
-appflMain :: AppflName
-appflMain = "main"
 -- There's a problem here that I don't have an immediate solution to.  If some
 -- Haskell input to our program defines multiple main functions in separate
 -- modules, they will all be caught as the _special_ main and named "main",
@@ -119,20 +119,6 @@ appflMain = "main"
 --  * Combine both of the above, overriding the second if a flag is given (Ideal!)
 --  * Keep the current behavior and make "Single Main" another constraint on the
 --    input.
-
-
--- | Our Int#
-appflPrimIntTy :: AppflName
-appflPrimIntTy = "Int_h"
-
--- | Our Long# (or Word#)
-appflPrimLongTy :: AppflName
-appflPrimLongTy = "Long_h"
-
--- | Our pattern match fail function (defined in the runtime)
-appflNoExhaust :: AppflName
-appflNoExhaust = "stg_case_not_exhaustive"
-
 
 
 isErrorId :: NamedThing a => a -> Bool
@@ -164,28 +150,38 @@ idToAppflName id
 maybeGetAppflClass clasName selector =
   -- Maybe get the function that prefixes the Module name
   -- and apply it to the selector name if present
-  fmap ($ selector) (Map.lookup clasName appflClassModMap)
+  fmap ($ selector) (Map.lookup clasName appflClassModuleMap)
 
 
 
-appflClassModMap :: Map Name (AppflName -> AppflName)
-appflClassModMap = Map.fromList
-  [ (eqClassName, classesDot)
-  , (ordClassName, classesDot) ]
-
+appflClassModuleMap :: Map Name (AppflName -> AppflName)
+appflClassModuleMap =
+  Map.fromList $ map (\(a,b,c) -> (c, a)) appflClassEquivList
+  
+appflClassMap :: Map Name AppflName
 appflClassMap =
-  Map.mapWithKey makeClassName appflClassModMap
+  Map.mapWithKey makeClassName appflClassModuleMap
   where
     makeClassName clasName modPfx = modPfx (getOccString clasName)
-      
 
 getClassFromAppflEquiv :: AppflName -> Maybe Name
 getClassFromAppflEquiv name = Map.lookup name appflClassImplMap
 
 appflClassImplMap :: Map AppflName G.Name
-appflClassImplMap = Map.fromList
-  [ (classesDot "Eq", eqClassName)
-  , (classesDot "Ord", ordClassName)]
+appflClassImplMap =
+  Map.fromList $ map (\(a,b,c) -> (a b, c)) appflClassEquivList
+
+appflClassEquivList
+  :: [ ( AppflName -> AppflName -- | Module prefixing function
+       , AppflName              -- | Class name string
+       , G.Name                 -- | Actual GHC Class Name
+       )]
+appflClassEquivList =
+  [ (classesDot , "Eq"      , eqClassName      )
+  , (classesDot , "Ord"     , ordClassName     )
+  , (enumDot    , "Bounded" , boundedClassName )
+  , (enumDot    , "Enum"    , enumClassName    )
+  ]
 
     
     
@@ -200,7 +196,8 @@ typesDot   s = appflDot "Types"   \. s
 tupleDot   s = appflDot "Tuple"   \. s
 primDot    s = appflDot "Prim"    \. s
 classesDot s = appflDot "Classes" \. s
-
+enumDot    s = appflDot "Enum"    \. s
+cstringDot s = appflDot "CString" \. s
 
 builtInMap :: Map G.Name String
 builtInMap =
@@ -209,9 +206,9 @@ builtInMap =
   -- overlap in builtins, even between the different NameSpaces.
   Map.fromList
   [
-  --   (G.consDataConName, typesDot "Cons")
-  -- , (G.nilDataConName, typesDot "Nil")
-  -- , (G.listTyConName, typesDot "List")
+    (G.consDataConName, A.consDataConName)
+  , (G.nilDataConName, A.nilDataConName)
+  , (G.listTyConName, A.listTyConName)
   -- , (G.boolTyConName, typesDot "Bool")
   
   -- , (getName G.trueDataCon, typesDot "True")
@@ -221,10 +218,17 @@ builtInMap =
   -- , (G.intTyConName, typesDot "Int")
   -- , (intDataConName, typesDot "I#")
     
-    (getName G.intPrimTyCon,  appflPrimIntTy) -- hacky...
-  , (getName G.charPrimTyCon, appflPrimIntTy) -- hackier...
-  , (getName G.wordPrimTyCon, appflPrimLongTy) -- hacky
+  , (getName G.intPrimTyCon,  A.intPrimTyName) -- hacky...
+  , (getName G.charPrimTyCon, A.intPrimTyName) -- hackier...
+  , (getName G.wordPrimTyCon, A.longPrimTyName) -- hacky
 
+  -- Some/All of these are used by GHC for dealing with string literals.
+  -- They index into Machine Strings (:: Addr#) and box up the resulting
+  -- Int#/Char# into boxed Chars
+  , (G.unpackCStringName, cstringDot "unpackCString#")
+  , (G.unpackCStringFoldrName, cstringDot "unpackFoldrCString#")
+  , (G.unpackCStringUtf8Name, cstringDot "unpackCStringUtf8#")
+  
     -- GHC generates functions that are only ever passed 'void#', which *seem*
     -- to never use it. In theory, any argument should work, as long as it's
     -- consistent (and not bottom, for strict evals).
@@ -253,7 +257,7 @@ tupleMap = Map.fromList $ concat
 
 errorCallMap :: Map G.Name AppflName
 errorCallMap = Map.fromList $
-               map (\ident -> (getName ident , appflNoExhaust))
+               map (\ident -> (getName ident , A.noExhaustName))
                patErrorIDs
 
 patErrorIDs :: [Id]
@@ -396,13 +400,10 @@ genTupleModule outFileName m_size =
    | IntSubCOp  -- i# -> i# -> (# i, i#  #)
                 -- subtract ints, result (possibly truncated) in first element
                 -- report overflow with non-zero val in second element
-   | ChrOp
+
    | Int2WordOp
    | Int2FloatOp
    | Int2DoubleOp
-   | ISllOp   -- unchecked int shift left
-   | ISraOp   -- unchecked int shift right (arithmetic)
-   | ISrlOp   -- unchecked int shift right (logical)
 
 
 -------------------- Word Ops --------------------
@@ -650,7 +651,7 @@ with Strings for a primitive error function, maybe?
    | AddrNeOp
    | AddrLtOp
    | AddrLeOp
-   | IndexOffAddrOp_Char
+
    | IndexOffAddrOp_WideChar
    | IndexOffAddrOp_Int
    | IndexOffAddrOp_Word

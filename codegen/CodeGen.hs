@@ -43,6 +43,8 @@ module CodeGen(
   shos
 ) where
 
+
+
 import ADT
 import AST
 import CMap
@@ -63,12 +65,13 @@ import qualified Data.Map as Map
 
 --import Data.Loc(noLoc)
 import Language.C.Quote.GCC
-import Language.C.Syntax(Initializer(..),
+import Language.C.Syntax (Initializer(..),
                          Definition,
                          Initializer,
-                         Exp,
+                         Exp(BinOp, UnOp, Const),
                          BlockItem,
-                         InitGroup)
+                         InitGroup,
+                         BinOp(..)) 
 
 -- use a list of Definitions rather than Func
 -- this allows us to put comments before functions
@@ -170,47 +173,21 @@ getEnvRef v kvs =
 
 -- 2nd arg is comment to attach to statement
 cga :: Env -> Atom -> (Exp, String)
-cga env (Var v) =  cgv env v
-
-cga env (LitI i) = (
-  if useArgType then
-    [cexp| ((typename PtrOrLiteral){.argType = INT, .i = $int:i}) |]
-  else
-    [cexp| ((typename PtrOrLiteral){.i = $int:i}) |], "")
-
-
-cga env (LitL l) = (
-  if useArgType then
-    [cexp| ((typename PtrOrLiteral){.argType = LONG, .l = $lint:l}) |]
-  else
-    [cexp| ((typename PtrOrLiteral){.l = $lint:l}) |], "")
-
-cga env (LitF f) =
-  let f' = toRational f
-      e = if useArgType then
-            [cexp| ((typename PtrOrLiteral){.argType = FLOAT, .f = $float:f'}) |]
-          else
-            [cexp| ((typename PtrOrLiteral){.f = $float:f'}) |]
-  in (e, "")
-
-
-cga env (LitD d) =
-  let d' = toRational d
-      e = if useArgType then
-            [cexp| ((typename PtrOrLiteral){.argType = DOUBLE, .d = $double:d'}) |]
-          else
-            [cexp| ((typename PtrOrLiteral){.d = $double:d'}) |]
-  in (e, "")
-
-cga env (LitC c) =
-  let c' = "con_" ++ c
-      e = if useArgType then
-            [cexp| ((typename PtrOrLiteral){.argType = INT, .i = $id:c'}) |]
-          else
-            [cexp| ((typename PtrOrLiteral){.i = $id:c'}) |]
-  in (e, "")
-
-cga env (LitStr s) = error "TODO"
+cga env at =
+  let cont mk =
+        case at of
+          Var v    -> cgv env v
+          LitI i   -> mk [cexp| $int:i                 |] "INT"    "i"
+          LitL l   -> mk [cexp| $lint:l                |] "LONG"   "l"
+          LitF f   -> mk [cexp| $float:(toRational f)  |] "FLOAT"  "f"
+          LitD d   -> mk [cexp| $double:(toRational d) |] "DOUBLE" "d"
+          LitC c   -> mk [cexp| $id:("con_" ++ c)      |] "INT"    "i"
+          LitStr s -> mk [cexp| $string:s              |] "STRING" "s"
+  in cont $ \litexp aty field ->
+              (if useArgType
+               then [cexp| ((typename PtrOrLiteral){.argType = $esc:aty, .$id:field = $litexp}) |]
+               else [cexp| ((typename PtrOrLiteral){.i = $litexp}) |]
+              , "")
 
 cgv :: Env -> String -> (Exp, String)
 cgv env v = (getEnvRef v env, "// " ++ v)
@@ -219,9 +196,12 @@ cgv env v = (getEnvRef v env, "// " ++ v)
 isBoxede e = isBoxed $ typ $ emd e
 
 cgUBa :: Env -> Atom -> String -> Exp
-cgUBa env (Var v)  t   = [cexp| ($exp:(fst $ cgv env v)).$id:t |]
-cgUBa env (LitI i) "i" = [cexp| $int:i |]
-cgUBa env (LitD d) "d" = [cexp| $double:(toRational d) |]
+cgUBa env (Var v)     t  = [cexp| ($exp:(fst $ cgv env v)).$id:t |]
+cgUBa env (LitI i)   "i" = [cexp| $int:i |]
+cgUBa env (LitL l)   "l" = [cexp| $lint:l |]
+cgUBa env (LitD d)   "d" = [cexp| $double:(toRational d) |]
+cgUBa env (LitF f)   "f" = [cexp| $float:(toRational f) |]
+cgUBa env (LitStr s) "s" = [cexp| $string:s |]
 cgUBa _ at _ = error $ "CodeGen.cgUBa: not expecting Atom - " ++ show at
 
 
@@ -353,6 +333,9 @@ stgCurValUArgType ty = if useArgType
                            then [citems| stgCurValU.argType = $id:ty; |]
                            else []
 
+
+
+
 cge :: Env
   -> Expr InfoTab
   -> State Int (([BlockItem], YPN), [(Definition, CFun)])
@@ -384,40 +367,37 @@ cge env e@(EFCall it f eas) =
 
 cge env (EPrimop it op eas) =
     let as = map ea eas
-        arg0 = cgUBa env (as !! 0) "i"
-        arg1 = cgUBa env (as !! 1) "i"
-        inline = case op of
-                   Piadd -> stgCurValUArgType "INT" ++
-                            [citems| stgCurValU.i = $exp:arg0 + $exp:arg1; |]
-                   Pisub -> stgCurValUArgType "INT" ++
-                            [citems| stgCurValU.i = $exp:arg0 - $exp:arg1; |]
-                   Pimul -> stgCurValUArgType "INT" ++
-                            [citems| stgCurValU.i = $exp:arg0 * $exp:arg1; |]
-                   Pidiv -> stgCurValUArgType "INT" ++
-                            [citems| stgCurValU.i = $exp:arg0 / $exp:arg1; |]
-                   Pimod -> stgCurValUArgType "INT" ++
-                            [citems| stgCurValU.i = $exp:arg0 % $exp:arg1; |]
-                   Pieq ->  stgCurValUArgType "INT" ++
-                            [citems| stgCurValU.i = $exp:arg0 == $exp:arg1; |]
-                   Pine ->  stgCurValUArgType "INT" ++
-                            [citems| stgCurValU.i = $exp:arg0 != $exp:arg1; |]
-                   Pilt ->  stgCurValUArgType "INT" ++
-                            [citems| stgCurValU.i = $exp:arg0 < $exp:arg1; |]
-                   Pile ->  stgCurValUArgType "INT" ++
-                            [citems| stgCurValU.i = $exp:arg0 <= $exp:arg1; |]
-                   Pigt ->  stgCurValUArgType "INT" ++
-                            [citems| stgCurValU.i = $exp:arg0 > $exp:arg1; |]
-                   Pige ->  stgCurValUArgType "INT" ++
-                            [citems| stgCurValU.i = $exp:arg0 >= $exp:arg1; |]
-                   Pineg -> stgCurValUArgType "INT" ++
-                            [citems| stgCurValU.i = -$exp:arg0; |]
-                   Pimin -> stgCurValUArgType "INT" ++
-                            [citems| stgCurValU.i = imin($exp:arg0,$exp:arg1); |]
-                   Pimax -> stgCurValUArgType "INT" ++
-                            [citems| stgCurValU.i = imax($exp:arg0,$exp:arg1); |]
-                   _ -> error "Eprimop"
+        POI{pArgTys, pRetTy, primCGFun} = opInfo op
+        cArgs = zipWith (cgUBa env) (map ea eas) (map primTyPoLField pArgTys)
+        pexpr = primCGFun cArgs
+        inline = case pRetTy of
+          -- Just do it? Modify stgCurVal?
+          PVoid -> [citems| $pexpr; |]
+          _     -> stgCurValUArgType (primTyArgType pRetTy) ++
+                   [citems| stgCurValU.$id:(primTyPoLField pRetTy) = $pexpr; |]          
     in return ((inline, No), [])
-
+  where
+    --  What field accessor do I use to get the correct arg from a PtrOrLiteral?
+    primTyPoLField :: PrimType -> String
+    primTyPoLField pt = case pt of
+      PInt    -> "i"
+      PInt64  -> "l"
+      PUInt64 -> "u"
+      PFloat  -> "f"
+      PDouble -> "d"
+      PString -> "s"
+      PVoid   -> error "No \"PVoid\" accessor for PtrOrLiterals"
+    --  What ArgType do I use for some PrimType
+    primTyArgType :: PrimType -> String
+    primTyArgType pt = case pt of
+      PInt    -> "INT"
+      PInt64  -> "LONG"
+      PUInt64 -> "ULONG"
+      PFloat  -> "FLOAT"
+      PDouble -> "DOUBLE"
+      PString -> "STRING"
+      PVoid   -> error "No \"PVoid\" ArgType"
+  
 cge env (ELet it os e) =
   let names = map oname os
       decl1 = [ [citem|typename PtrOrLiteral *$id:name; |] | name <- names ]

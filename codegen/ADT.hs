@@ -164,7 +164,8 @@ biStringMCon = MCon (Just False) "String_h" []
 conAList = [("Int_h",    "Int#"),
             ("Long_h",   "Long#"),
             ("Float_h",  "Float#"),
-            ("Double_h", "Double#")]
+            ("Double_h", "Double#"),
+            ("String_h", "String#")]
 
 -- helper field accessor functions --
 

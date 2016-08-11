@@ -1,3 +1,4 @@
+{-# LANGUAGE TupleSections #-}
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE KindSignatures,
 NamedFieldPuns, CPP, FlexibleInstances, ScopedTypeVariables,
@@ -38,6 +39,7 @@ import           FromGHC.BuiltIn
 import           FromGHC.Naming
 import           FromGHC.PrettySTG
 import           FromGHC.PruneSTG
+import           WiredIn (noExhaustName)
 
 import           Analysis (defAlt)
 import           State hiding (liftM)
@@ -654,11 +656,16 @@ g2aArg (StgVarArg id)
 
 g2aAtomId :: Id -> G2AMonad (Expr PostG2A)
 g2aAtomId id = do
-  post <- case idDetails id of
-            DataConWorkId dc -> putDataCon dc >> return Complete
-            DFunId _ _ -> procRhsDictId id
-            _ -> return Complete
-  liftM (EAtom post) (liftM Var $ nameGhcThing id)
+  (name, post) <- case idDetails id of
+            DataConWorkId dc ->
+              -- Important: The name we want is that of the DataCon,
+              -- _not_ the Id
+              putDataCon dc >> liftM (,Complete) (nameGhcThing dc)
+              
+            DFunId _ _ -> liftM2 (,) (nameGhcThing id) (procRhsDictId id)
+            _ -> liftM (,Complete) (nameGhcThing id)
+
+  return $ EAtom post (Var name)
   
 g2aLit :: Literal -> G2AMonad Atom
 g2aLit lit = case lit of
@@ -679,7 +686,7 @@ g2aLit lit = case lit of
   MachFloat r                -> return $ LitF (fromRational r)
   MachDouble r               -> return $ LitD (fromRational r)
   
-  MachStr bs                 -> unsupported ("Machine Strings: " ++ show bs)
+  MachStr bs                 -> return $ LitStr (show bs)
   MachNullAddr               -> unsupported "Machine (Null) Address"
   MachLabel fs mi fORd       -> unsupported "Machine Labels"
 
@@ -824,7 +831,7 @@ g2aAlt scrtName (acon, binders, usemask, rhsExpr)
     return (ADef { amd = Complete
                  , av  = "x"
                  , ae  = EFCall{ emd = Complete
-                               , ev  = appflNoExhaust
+                               , ev  = noExhaustName
                                , eas = [ EAtom{ emd = Complete
                                               , ea  = Var "x" }
                                        ]

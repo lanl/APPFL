@@ -27,7 +27,8 @@ import qualified Data.Map as Map
 import Control.Monad.State
 import Data.List (intercalate)
 import Debug.Trace
-
+import WiredIn
+  
 -- newtype State s a = State (s -> (a, s))
 
 -- Atoms have types.  Except for Var v these are manifest.  Store
@@ -67,7 +68,7 @@ hmstgdebug os = hmstgAssumsdebug os Set.empty
 
 hmstgAssumsdebug :: [Obj InfoTab] -> Assumptions -> IO ()
 hmstgAssumsdebug os0 assums =
-    let (os1,i1) = runState (dv os0) 0
+    let (os1,i1) = runState (dv os0) tyVarsUsed
         (as,cs,os2) = buNest Set.empty os1 assums :: (Set.Set Assumption,
                                                       Set.Set Constraint,
                                                       [Obj InfoTab])
@@ -148,11 +149,11 @@ instance DV (Expr InfoTab) (Expr InfoTab) where
     dv e@EAtom{emd, ea} =
         do m <- case ea of
                   Var v  -> freshMonoVar
-                  LitI _ -> return $ biIntMCon
-                  LitL _ -> return $ biLongMCon
-                  LitF _ -> return $ biFloatMCon
-                  LitD _ -> return $ biDoubleMCon
-                  LitStr s -> return $ biStringMCon
+                  LitI _ -> return $ intPrimTy
+                  LitL _ -> return $ longPrimTy
+                  LitF _ -> return $ floatPrimTy
+                  LitD _ -> return $ doublePrimTy
+                  LitStr s -> return $ stringPrimTy
                   LitC c -> case maybeCMap emd of
                               Nothing -> error "dv LitC maybeCMap is Nothing"
                               Just cmap -> return $
@@ -171,20 +172,21 @@ instance DV (Expr InfoTab) (Expr InfoTab) where
 
     dv e@EPrimop{..} =
         let retMono = case eprimop of
-                        Piadd -> biIntMCon
-                        Pisub -> biIntMCon
-                        Pimul -> biIntMCon
-                        Pidiv -> biIntMCon
-                        Pimod -> biIntMCon
-                        Pimax -> biIntMCon
-                        Pimin -> biIntMCon
-                        Pineg -> biIntMCon
-                        Pieq  -> biIntMCon
-                        Pine  -> biIntMCon
-                        Pile  -> biIntMCon
-                        Pilt  -> biIntMCon
-                        Pige  -> biIntMCon
-                        Pigt  -> biIntMCon
+                        Piadd -> intPrimTy
+                        Pisub -> intPrimTy
+                        Pimul -> intPrimTy
+                        Pidiv -> intPrimTy
+                        Pimod -> intPrimTy
+                        Pimax -> intPrimTy
+                        Pimin -> intPrimTy
+                        Pineg -> intPrimTy
+                        Pieq  -> intPrimTy
+                        Pine  -> intPrimTy
+                        Pile  -> intPrimTy
+                        Pilt  -> intPrimTy
+                        Pige  -> intPrimTy
+                        Pigt  -> intPrimTy
+                        PIdxChar  -> intPrimTy
                         x -> error $ "HMStg.dv Eprimop " ++ show x
                         -- etc.
 
@@ -218,7 +220,7 @@ instance DV (Alt InfoTab) (Alt InfoTab) where
     dv a@ACon{amd,ac,ae} =
         do ae' <- dv ae
            -- stash type constructor TC b1 .. bn, bi fresh
-           let TyCon boxed tcon tvs dcs =
+           let t@(TyCon boxed tcon tvs dcs) =
                  luTCon ac $ cmap amd -- NEW
            ntvs <- freshMonoVars $ length tvs
            let m = MCon (Just boxed) tcon ntvs
@@ -282,20 +284,21 @@ instance BU (Expr InfoTab) where
         let (ass, _, eas') = unzip3 $ map (bu mtvs) eas
             as = Set.unions ass
             pts = case eprimop of
-                    Piadd -> [biIntMCon, biIntMCon]
-                    Pisub -> [biIntMCon, biIntMCon]
-                    Pimul -> [biIntMCon, biIntMCon]
-                    Pidiv -> [biIntMCon, biIntMCon]
-                    Pimod -> [biIntMCon, biIntMCon]
-                    Pimax -> [biIntMCon, biIntMCon]
-                    Pimin -> [biIntMCon, biIntMCon]
-                    Pineg -> [biIntMCon, biIntMCon]
-                    Pine  -> [biIntMCon, biIntMCon]
-                    Pieq  -> [biIntMCon, biIntMCon]
-                    Pile  -> [biIntMCon, biIntMCon]
-                    Pilt  -> [biIntMCon, biIntMCon]
-                    Pigt  -> [biIntMCon, biIntMCon]
-                    Pige  -> [biIntMCon, biIntMCon]
+                    Piadd -> [intPrimTy, intPrimTy]
+                    Pisub -> [intPrimTy, intPrimTy]
+                    Pimul -> [intPrimTy, intPrimTy]
+                    Pidiv -> [intPrimTy, intPrimTy]
+                    Pimod -> [intPrimTy, intPrimTy]
+                    Pimax -> [intPrimTy, intPrimTy]
+                    Pimin -> [intPrimTy, intPrimTy]
+                    Pineg -> [intPrimTy, intPrimTy]
+                    Pine  -> [intPrimTy, intPrimTy]
+                    Pieq  -> [intPrimTy, intPrimTy]
+                    Pile  -> [intPrimTy, intPrimTy]
+                    Pilt  -> [intPrimTy, intPrimTy]
+                    Pigt  -> [intPrimTy, intPrimTy]
+                    Pige  -> [intPrimTy, intPrimTy]
+                    PIdxChar -> [stringPrimTy, intPrimTy]
                     x -> error $ "HMStg.bu EPrimop " ++ show x
             cs = Set.fromList [EqC m1 m2 | (_,m1) <- Set.toList as | m2 <- pts]
         in (as, cs, e) -- EPrimop monotype set in dv

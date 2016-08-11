@@ -75,6 +75,7 @@ getDConInList :: Con -> [DataCon] -> DataCon
 getDConInList name cons = fromJust $ find ((==name).dataConName) cons
 
 
+
 -- Given a list of Cons, check if they exhaust all the DataCon constructors
 -- for their associated TyCon.
 -- The head of the list is used to lookup the TyCon, but otherwise, validity

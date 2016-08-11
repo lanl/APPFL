@@ -128,9 +128,10 @@ toplevel rtgs defs =
         
     in case myfvl of
          [] -> deadCode defs'
-         fvs -> error $
-                "SetFVs.setFVsDefs:  top level free variables:  " ++
-                List.intercalate " " fvs ++ "\n\n" ++ show (objListDoc $ rmPrelude defs')
+         fvs -> error $ unlines
+                [ "SetFVs.setFVsDefs:  top level free variables:  "
+                , List.intercalate " " fvs, "" -- extra line
+                , show $ objListDoc $ filter (not . null . fst . omd) defs']
 
 -- vars introduced by EFCall f, PAP f, and EAtom Var v
 -- scope introduced by FUN vs, x ->, C xi ->

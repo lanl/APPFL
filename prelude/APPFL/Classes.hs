@@ -27,12 +27,9 @@ import APPFL.Types
 import APPFL.Prim
 import qualified GHC.Classes as GHC (Eq (..), Ord (..))
 
--- GHC.Magic is used in some derived instances
---import GHC.Magic
 --import GHC.Tuple
 
 
---infix  4  == --, /=, <, <=, >=, >
 infixr 3  &&
 infixr 2  ||
 
@@ -172,14 +169,19 @@ instance Eq Bool where
   _ == _ = False  
   x /= y = not (x == y)    
 
-{-
-deriving instance Eq Ordering
-deriving instance Eq Word
--}
+
+instance Eq Ordering where
+  a == b = case a `compare` b of
+             EQ -> True
+             _  -> False
+
+instance Eq Word where
+  (W# w1) == (W# w2) = isTrue# (w1 `eqWord#` w2)
+  (W# w1) /= (W# w2) = isTrue# (w1 `neWord#` w2)
 
 instance Eq Char where
-    (C# c1) == (C# c2) = isTrue# (c1 `eqChar#` c2)
-    (C# c1) /= (C# c2) = isTrue# (c1 `neChar#` c2)
+  (C# c1) == (C# c2) = isTrue# (c1 `eqChar#` c2)
+  (C# c1) /= (C# c2) = isTrue# (c1 `neChar#` c2)
 
 {-
 instance Eq Float where
@@ -195,7 +197,7 @@ eqInt, neInt :: Int -> Int -> Bool
 (I# x) `eqInt` (I# y) = isTrue# (x ==# y)
 (I# x) `neInt` (I# y) = isTrue# (x /=# y)
 
-{-
+
 -- | The 'Ord' class is used for totally ordered datatypes.
 --
 -- Instances of 'Ord' can be derived for any user-defined
@@ -207,7 +209,6 @@ eqInt, neInt :: Int -> Int -> Bool
 -- Minimal complete definition: either 'compare' or '<='.
 -- Using 'compare' can be more efficient for complex types.
 --
--}
 class  (Eq a) => Ord a  where
     compare              :: a -> a -> Ordering
     (<), (<=), (>), (>=) :: a -> a -> Bool
@@ -357,11 +358,11 @@ instance Ord Char where
     (C# c1) <= (C# c2) = isTrue# (c1 `leChar#` c2)
     (C# c1) <  (C# c2) = isTrue# (c1 `ltChar#` c2)
     
-{-
+
 instance Ord Bool where
-  True `compare` False = GT
-  False `compare` True = LT
-  a `compare` b = EQ
+  True  `compare` False = GT
+  False `compare` True  = LT
+  a     `compare` b     = EQ
   
 instance Ord Ordering where
   LT `compare` LT = EQ
@@ -377,9 +378,7 @@ instance Ord Word where
   (W# w1) <= (W# w2) = isTrue# (w1 `leWord#` w2)
   (W# w1) <  (W# w2) = isTrue# (w1 `ltWord#` w2)
 
--- We don't use deriving for Ord Char, because for Ord the derived
--- instance defines only compare, which takes two primops.  Then
--- '>' uses compare, and therefore takes two primops instead of one.
+{-
 instance Ord Float where
     (F# x) `compare` (F# y)
         = if      isTrue# (x `ltFloat#` y) then LT
@@ -402,6 +401,7 @@ instance Ord Double where
     (D# x) >= (D# y) = isTrue# (x >=## y)
     (D# x) >  (D# y) = isTrue# (x >##  y)
 -}
+
 instance Ord Int where
     compare = compareInt
     (<)     = ltInt

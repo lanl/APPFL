@@ -17,31 +17,10 @@ module APPFL.Types
   ) where
 
 import GHC.Types as GHC
-  (Int (..), Bool (..), Char (..), Word (..), Ordering(..), SPEC (..), Coercible (..))
+  (Int (..), Bool (..), Char (..),
+   Word (..), Ordering(..))
   
 import APPFL.Prim
-
--- Dummy definitions.
--- data Bool = False | True
-
--- data Char = C# Char#
-
--- data Int = I# Int#
-
--- data Word = W# Word#
-
--- data Float = F# Float#
-
--- data Double = D# Double#
-
--- data Ordering = LT | EQ | GT
-
--- We can't actually define the builtin List and Tuple syntax.
--- These serve in their place. This requires an even hackier
--- hack to resolve in the STG translation.
--- data Unit = Unit
--- infixr 5 `Cons`
--- data List a = a `Cons` (List a) | Nil
 
 
 isTrue# :: Int# -> GHC.Bool   
@@ -50,8 +29,6 @@ isTrue# _  = GHC.False
 -- The old (optimized for GHC codegen) version used tagToEnum#. We could do something
 -- like this if we have issues with the above definitions, but for now they're fine.
 -- See Note [Optimizing isTrue#] in GHC.Types (ghc-prim package)
-
-
 
 
 -- newtype IO a = IO (State# RealWorld -> (# State# RealWorld, a #))

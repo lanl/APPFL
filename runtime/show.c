@@ -220,6 +220,9 @@ void showStgValPretty(LogLevel priority, PtrOrLiteral v) {
     //  case FLOAT:
     //    LOG(priority,"%f", v.f);
     //    break;
+  case STRING:
+    LOG(priority, "%s", v.s);
+    break;
   case HEAPOBJ:
     showStgObjRecPretty(priority, v.op);
     break;

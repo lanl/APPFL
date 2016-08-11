@@ -11,19 +11,26 @@ module AST (
   Alts(..),
   Obj(..),
   Primop(..),
+  PrimType(..),
+  PrimOpInfo(..),
+  opInfo,
   rmPrelude,
   primopTab,
   show,
   objListDoc,
   primArity,
   projectAtoms,
-  scrtVarName
+  scrtVarName,
 ) where
 
 import PPrint
 import Data.List (find, (\\))
 import Data.Int as Int (Int64)
-
+import qualified Language.C.Syntax as C
+       ( Exp (BinOp, UnOp, Var, FnCall)
+       , BinOp (..), UnOp(..)
+       , Id (Id)
+       )
 --  See Parser.hs for grammar
 
 type Var = String
@@ -113,9 +120,114 @@ data Primop = Piadd -- Int -> Int -> Int
             | Pige
 
             | Pineg -- Int -> Int
+            
+            | PIdxChar -- LitStr -> LitI -> LitI (or char* -> int -> int)
+
+            | PiSLL -- logical left shift
+            | PiSRA -- arithmetic right shift 
+            | PiSRL -- logical right shift
+
+            | POrd | PChr 
+            -- Both are No Ops: Char and Int are equivalent for us
+            -- These could both be some kind of PNoOp or PiIdent (they're only here
+            -- to help with mapping GHC primitives) but differentiating between them
+            -- may be useful at some point.
+            
+              
             | Pinvalid
               deriving(Eq,Show, Ord)
 
+
+data PrimType
+  = PInt
+  | PInt64
+  | PUInt64
+  | PFloat
+  | PDouble
+  | PString
+  | PVoid   -- i.e. side-effecting code
+
+
+
+data PrimOpInfo = POI { pArgTys :: [PrimType]
+                      , pRetTy  :: PrimType
+                      , cname   :: String
+                      
+                      -- This makes more sense in CodeGen, but it's simpler to
+                      -- keep all the Info together here.  Functions are
+                      -- implemented directly with C AST types to avoid another
+                      -- module dependent on TemplateHaskell
+                      , primCGFun  :: [C.Exp] -> C.Exp
+                      }
+
+-- HomoOp == op with same return and argument type(s) 
+mkHomoOpInfo arity pty name cgFun =
+  POI { pArgTys   = replicate arity pty
+      , pRetTy    = pty
+      , cname     = name
+      , primCGFun = cgFun
+      }
+
+binIntOps = [ Piadd, Pisub, Pimul, Pidiv, Pimod
+            , Pimax, Pimin, Pieq, Pine
+            , Pilt, Pile, Pigt, Pige]
+
+-- Each Exp result needs a SrcLoc, which is conveniently an instance of the Monoid class
+-- `mempty` gives us a NoLoc, which should be fine for our needs
+binIntOpInfo name cBOp = mkHomoOpInfo 2 PInt name  $ \[e1,e2] -> C.BinOp cBOp e1 e2 mempty
+unIntOpInfo  name cUOp = mkHomoOpInfo 1 PInt name  $ \[e] -> C.UnOp cUOp e mempty
+binIntFunInfo name     = mkHomoOpInfo 2 PInt name (callFun name)
+
+callFun :: String -> [C.Exp] -> C.Exp
+callFun name exps = C.FnCall (C.Var (C.Id name mempty) mempty) exps mempty
+
+idxCharOpInfo = let name = "charAtIndex" in
+                  POI { pArgTys   = [PString, PInt]
+                      , pRetTy    = PInt
+                      , cname     = name
+
+                      -- This could also be made into an Index Exp, but may be
+                      -- less readable in the generated C source:
+                      -- \[str,idx] Index str idx mempty
+                      , primCGFun = callFun name
+                    }
+
+-- This will probably produce code like stgCurValU.i = stgCurValU.i, which is
+-- harmless, but maybe undesireable?
+noOpIntInfo name = mkHomoOpInfo 1 PInt name $ \[e] -> e
+              
+opInfo :: Primop -> PrimOpInfo
+opInfo op = case op of        
+  Piadd -> binIntOpInfo  "+"  C.Add
+  Pisub -> binIntOpInfo  "-"  C.Sub
+  Pimul -> binIntOpInfo  "*"  C.Mul
+  Pidiv -> binIntOpInfo  "/"  C.Div
+  Pimod -> binIntOpInfo  "%"  C.Mod 
+  Pimax -> binIntFunInfo "imax"
+  Pimin -> binIntFunInfo "imin"
+  Pieq  -> binIntOpInfo  "==" C.Eq
+  Pine  -> binIntOpInfo  "!=" C.Ne
+  Pilt  -> binIntOpInfo  "<"  C.Lt
+  Pile  -> binIntOpInfo  "<=" C.Le
+  Pigt  -> binIntOpInfo  ">"  C.Gt
+  Pige  -> binIntOpInfo  ">=" C.Ge
+  Pineg -> unIntOpInfo   "-"  C.Negate
+  PiSLL -> binIntOpInfo  "<<" C.Lsh
+  PiSRL -> binIntOpInfo  ">>" C.Rsh
+  PiSRA -> binIntFunInfo "intLogicalRightShift" 
+  POrd  -> noOpIntInfo "ord"
+  PChr  -> noOpIntInfo "chr"
+  PIdxChar -> idxCharOpInfo
+  Pinvalid -> error "opInfo called on PInvalid"
+
+maybeAtomPrimTy at = case at of
+  LitI _ -> Just PInt
+  LitL _ -> Just PInt64
+  LitF _ -> Just PFloat
+  LitD _ -> Just PDouble
+  LitC _ -> Just PInt -- Based on what I saw in CodeGen..
+  _      -> Nothing
+  
 primArity op = case op of
   Pineg -> 1
   _ -> 2
@@ -138,7 +250,15 @@ primopTab =
      ("ineg_h",   Pineg),
 
      ("imax_h",   Pimax),
-     ("imin_h",   Pimin)
+     ("imin_h",   Pimin),
+     
+     -- not really available in STG source (yet)
+     ("charAtIndex_h", PIdxChar),
+     ("ishiftll_h",    PiSLL),
+     ("ishiftrl_h",    PiSRL),
+     ("ishiftra_h",    PiSRA),
+     ("ord_h", POrd),
+     ("chr_h", PChr)
     ]
 
 

@@ -20,8 +20,8 @@ module APPFL.CString (
         unpackCStringUtf8#, unpackNBytes#
     ) where
 
-import GHC.Types
-import GHC.Prim
+import APPFL.Types
+import APPFL.Prim
 
 -----------------------------------------------------------------------------
 -- Unpacking C strings}

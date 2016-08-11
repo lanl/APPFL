@@ -291,6 +291,7 @@ codegener inp v =
 pprinter :: [Definition] -> String
 pprinter = PP.pretty 80 . PP.ppr
 
+
 -- parse minihaskell in a file, add a block comment at the end
 -- showing the unparsed STG code
 addSTGComment :: FilePath -> IO ()
