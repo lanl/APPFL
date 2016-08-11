@@ -107,7 +107,23 @@ projectAtoms (a:as) = error "InfoTab.projectAtoms: non-EAtom"
 -- code is generated for them.
 data PrimTy = Pint | Pdouble deriving (Eq, Ord, Enum, Bounded, Show)
 
-data PrimOp = Padd | Psub | Pmul | Pdiv deriving (Eq, Ord, Enum, Bounded, Show)
+data PrimOp = Padd -- a -> a -> a
+            | Psub
+            | Pmul
+            | Pdiv
+            | Pmod
+            | Pmax
+            | Pmin
+
+            | Peq -- a -> a -> Bool
+            | Pne
+            | Plt
+            | Ple
+            | Pgt
+            | Pge
+
+            | Pneg -- a -> a
+            deriving (Eq, Ord, Enum, Bounded, Show)
 
 -- to be removed
 data Primop = Piadd -- Int -> Int -> Int

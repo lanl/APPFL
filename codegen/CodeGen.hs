@@ -420,30 +420,44 @@ cge env (EPrimop it op eas) =
 
 cge env (EPrimOp it op ty eas) =
     let as = map ea eas
-        f = case ty of
-              Pint -> "i"
-              Pdouble -> "d"
-        arg0 = cgUBa env (as !! 0) f
-        arg1 = cgUBa env (as !! 1) f
-        inline = case ty of
-                   Pint -> case op of
-                     Padd -> stgCurValUArgType "INT" ++
-                            [citems| stgCurValU.i = $exp:arg0 + $exp:arg1; |]
-                     Psub -> stgCurValUArgType "INT" ++
-                            [citems| stgCurValU.i = $exp:arg0 - $exp:arg1; |]
-                     Pmul -> stgCurValUArgType "INT" ++
-                            [citems| stgCurValU.i = $exp:arg0 * $exp:arg1; |]
-                     Pdiv -> stgCurValUArgType "INT" ++
-                            [citems| stgCurValU.i = $exp:arg0 / $exp:arg1; |]
-                   Pdouble -> case op of
-                     Padd -> stgCurValUArgType "DOUBLE" ++
-                           [citems| stgCurValU.d = $exp:arg0 + $exp:arg1; |]
-                     Psub -> stgCurValUArgType "DOUBLE" ++
-                           [citems| stgCurValU.d = $exp:arg0 - $exp:arg1; |]
-                     Pmul -> stgCurValUArgType "DOUBLE" ++
-                           [citems| stgCurValU.d = $exp:arg0 * $exp:arg1; |]
-                     Pdiv -> stgCurValUArgType "DOUBLE" ++
-                           [citems| stgCurValU.d = $exp:arg0 / $exp:arg1; |]
+        (pay, typ) = case ty of
+              Pint -> ("i", "INT")
+              Pdouble -> ("d", "DOUBLE")
+        arg0 = cgUBa env (as !! 0) pay
+        arg1 = cgUBa env (as !! 1) pay
+        inline = case op of
+                   Padd -> stgCurValUArgType typ ++
+                           [citems| stgCurValU.$id:pay = $exp:arg0 + $exp:arg1; |]
+                   Psub -> stgCurValUArgType typ ++
+                           [citems| stgCurValU.$id:pay = $exp:arg0 - $exp:arg1; |]
+                   Pmul -> stgCurValUArgType typ ++
+                           [citems| stgCurValU.$id:pay = $exp:arg0 * $exp:arg1; |]
+                   Pdiv -> stgCurValUArgType typ ++
+                           [citems| stgCurValU.$id:pay = $exp:arg0 / $exp:arg1; |]
+                   Pmod -> stgCurValUArgType typ ++
+                           [citems| stgCurValU.$id:pay = $exp:arg0 % $exp:arg1; |]
+                   Peq ->  stgCurValUArgType "INT" ++
+                           [citems| stgCurValU.$id:pay = $exp:arg0 == $exp:arg1; |]
+                   Pne ->  stgCurValUArgType "INT" ++
+                           [citems| stgCurValU.$id:pay = $exp:arg0 != $exp:arg1; |]
+                   Plt ->  stgCurValUArgType "INT" ++
+                           [citems| stgCurValU.$id:pay = $exp:arg0 < $exp:arg1; |]
+                   Ple ->  stgCurValUArgType "INT" ++
+                           [citems| stgCurValU.$id:pay = $exp:arg0 <= $exp:arg1; |]
+                   Pgt ->  stgCurValUArgType "INT" ++
+                           [citems| stgCurValU.$id:pay = $exp:arg0 > $exp:arg1; |]
+                   Pge ->  stgCurValUArgType "INT" ++
+                           [citems| stgCurValU.$id:pay = $exp:arg0 >= $exp:arg1; |]
+                   Pneg -> stgCurValUArgType typ ++
+                           [citems| stgCurValU.$id:pay = -$exp:arg0; |]
+                   Pmin -> stgCurValUArgType typ ++
+                           case ty of
+                             Pint -> [citems| stgCurValU.$id:pay = imin($exp:arg0,$exp:arg1); |]
+                             Pdouble -> [citems| stgCurValU.$id:pay = dmin($exp:arg0,$exp:arg1); |]
+                   Pmax -> stgCurValUArgType typ ++
+                           case ty of
+                             Pint -> [citems| stgCurValU.$id:pay = imax($exp:arg0,$exp:arg1); |]
+                             Pdouble -> [citems| stgCurValU.$id:pay = dmax($exp:arg0,$exp:arg1); |]
     in return ((inline, No), [])
 
 cge env (ELet it os e) =

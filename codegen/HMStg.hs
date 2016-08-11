@@ -195,17 +195,24 @@ instance DV (Expr InfoTab) (Expr InfoTab) where
               return $ setTyp retMono e'
 
     dv e@EPrimOp{..} =
-        let retMono = case eprimTy of
-                        Pint ->  case eprimOp of
-                          Padd -> biIntMCon
-                          Psub -> biIntMCon
-                          Pmul -> biIntMCon
-                          Pdiv -> biIntMCon
-                        Pdouble ->  case eprimOp of
-                          Padd -> biDoubleMCon
-                          Psub -> biDoubleMCon
-                          Pmul -> biDoubleMCon
-                          Pdiv -> biDoubleMCon
+        let biMCon = case eprimTy of
+                       Pint -> biIntMCon
+                       Pdouble -> biDoubleMCon
+            retMono = case eprimOp of
+                          Padd -> biMCon
+                          Psub -> biMCon
+                          Pmul -> biMCon
+                          Pdiv -> biMCon
+                          Pmod -> biMCon
+                          Pmax -> biMCon
+                          Pmin -> biMCon
+                          Pneg -> biMCon
+                          Peq  -> biIntMCon
+                          Pne  -> biIntMCon
+                          Ple  -> biIntMCon
+                          Plt  -> biIntMCon
+                          Pge  -> biIntMCon
+                          Pgt  -> biIntMCon
                         -- etc.
 
         in do eas' <- mapM dv eas -- setTyp(s) of Primop args
@@ -323,17 +330,24 @@ instance BU (Expr InfoTab) where
     bu mtvs e@EPrimOp{emd = ITPrimop{typ}, eprimOp, eprimTy, eas} =
         let (ass, _, eas') = unzip3 $ map (bu mtvs) eas
             as = Set.unions ass
-            pts = case eprimTy of
-                    Pint -> case eprimOp of
-                      Padd -> [biIntMCon, biIntMCon]
-                      Psub -> [biIntMCon, biIntMCon]
-                      Pmul -> [biIntMCon, biIntMCon]
-                      Pdiv -> [biIntMCon, biIntMCon]
-                    Pdouble -> case eprimOp of
-                      Padd -> [biDoubleMCon, biDoubleMCon]
-                      Psub -> [biDoubleMCon, biDoubleMCon]
-                      Pmul -> [biDoubleMCon, biDoubleMCon]
-                      Pdiv -> [biDoubleMCon, biDoubleMCon]
+            biMCon = case eprimTy of
+                           Pint -> biIntMCon
+                           Pdouble -> biDoubleMCon
+            pts = case eprimOp of
+                    Padd -> [biMCon, biMCon]
+                    Psub -> [biMCon, biMCon]
+                    Pmul -> [biMCon, biMCon]
+                    Pdiv -> [biMCon, biMCon]
+                    Pmod -> [biMCon, biMCon]
+                    Pmax -> [biMCon, biMCon]
+                    Pmin -> [biMCon, biMCon]
+                    Pneg -> [biMCon, biMCon]
+                    Pne  -> [biMCon, biMCon]
+                    Peq  -> [biMCon, biMCon]
+                    Ple  -> [biMCon, biMCon]
+                    Plt  -> [biMCon, biMCon]
+                    Pgt  -> [biMCon, biMCon]
+                    Pge  -> [biMCon, biMCon]
             cs = Set.fromList [EqC m1 m2 | (_,m1) <- Set.toList as | m2 <- pts]
         in (as, cs, e) -- EPrimop monotype set in dv
 
