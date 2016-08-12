@@ -172,9 +172,11 @@ conid =
          else accept $ TokCon con p
 
 
-literal = orExList
-          [floating, integral] >>> \(s,p) ->
-                                    accept $ TokNum s p
+literal =
+  orExList [floating, integral] >>> \(s,p) ->
+  failP "Expected no more than two '#' as a suffix to a numeric literal" $
+  asManyAsP 2 hash >>> \ hs ->
+                         accept $ TokNum (s ++ map fst hs) p
 
 decimal =
   some' digit >>> \((n,p):ns) ->
@@ -200,9 +202,7 @@ type Pos = (Int, Int)
 
 data Token
     = TokNum  {tks::String, pos::Pos}
-    | TokPrim {tks::String, pos::Pos} -- to be removed
-    | TokPrimOp {tks::String, pos::Pos}
-    | TokPrimTy {tks::String, pos::Pos}
+    | TokPrim {tks::String, pos::Pos}
     | TokId   {tks::String, pos::Pos}
     | TokCon  {tks::String, pos::Pos}
     | TokRsv  {tks::String, pos::Pos}

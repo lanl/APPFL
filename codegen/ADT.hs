@@ -26,7 +26,7 @@ module ADT (
   unfoldMTy
 ) where
 
---import AST(Con,BuiltinType(..),Obj)
+
 import AST(Con, Obj)
 
 import Data.List(intercalate)
@@ -92,6 +92,7 @@ data Monotype = MVar TyVar
               | MFun Monotype Monotype
               | MCon (Maybe Bool) Con [Monotype]
               | MPVar TyVar -- should be used only in BU.hs
+              | MPrim PrimType
               | MPhony
                 deriving(Eq,Ord)
 

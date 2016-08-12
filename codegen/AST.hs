@@ -1,3 +1,4 @@
+
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE NamedFieldPuns    #-}
 {-# LANGUAGE RecordWildCards   #-}
@@ -13,6 +14,8 @@ module AST (
   Primop(..),
   PrimType(..),
   PrimOpInfo(..),
+  PrimOp(..),
+  PrimTy(..),
   opInfo,
   rmPrelude,
   primopTab, -- to be removed
@@ -28,6 +31,8 @@ module AST (
 import PPrint
 import Data.List (find, (\\))
 import Data.Int as Int (Int64)
+import {-# SOURCE #-} ADT (Monotype (..))
+
 import qualified Language.C.Syntax as C
        ( Exp (BinOp, UnOp, Var, FnCall)
        , BinOp (..), UnOp(..)
@@ -39,9 +44,7 @@ type Var = String
 type Con = String
 
 data Atom = Var  Var
-          | LitI Int
-          | LitL Int.Int64
-          | LitF Float
+          | LitI Int64
           | LitD Double
           | LitC Con
           | LitStr String -- primitive string e.g. const char *str = "hello world";
@@ -50,48 +53,65 @@ data Atom = Var  Var
 instance Show Atom where
     show (Var v)    = v
     show (LitI i)   = show i
-    show (LitL l)   = show l
-    show (LitF f)   = show f ++ "(f)"
     show (LitD d)   = show d ++ "(d)"
     show (LitC c)   = c
     show (LitStr s) = s
 
-data Obj a = FUN   {omd :: a, vs :: [Var],   e :: Expr a   , oname :: String}
-           | PAP   {omd :: a, f  :: Var,     as :: [Expr a], oname :: String} -- invariant the as are EAtoms
-           | CON   {omd :: a, c  :: Con,     as :: [Expr a], oname :: String} -- invariant the as are EAtoms
-           | THUNK {omd :: a, e  :: Expr a                 , oname :: String}
---BH           | BLACKHOLE {omd :: a                           , oname :: String}
-             deriving(Eq,Show)
+data Obj a
+  = FUN
+    { omd   :: a
+    , vs    :: [Var]
+    , e     :: Expr a
+    , oname :: String}
 
--- 7.9 EFCalls (and EPrimops, for consistency) changed to accept Expr args.
--- Parser (and other traversals) should enforce use of *only* EAtom as args
+  | PAP
+    { omd   :: a
+    , f     :: Var
+    , as    :: [Expr a] -- invariant the as are EAtoms
+    , oname :: String}
+    
+  | CON
+    { omd   :: a
+    , c     :: Con
+    , as    :: [Expr a] -- invariant the as are EAtoms
+    , oname :: String}
+    
+  | THUNK
+    { omd   :: a
+    , e     :: Expr a
+    , oname :: String}
+
+--BH | BLACKHOLE {omd :: a                           , oname :: String}
+  deriving(Eq,Show)
+
 data Expr a
-    = EAtom   {emd :: a,
-               ea :: Atom}
-    | EFCall  {emd :: a,
-               ev :: Var,
-               eas :: [Expr a]} -- invariant the eas are EAtoms
-    -- to be removed
-    | EPrimop {emd :: a,
-               eprimop :: Primop,
-               eas :: [Expr a]}    -- to be removed
-    | EPrimOp {emd :: a,
-               eprimOp :: PrimOp,
-               eprimTy :: PrimTy,
-               eas :: [Expr a]} -- invariant the eas are EAtoms
-    | ELet    {emd :: a,
-               edefs :: [Obj a],
-               ee :: Expr a}
-    | ECase   {emd :: a,
-               ee :: Expr a,
-               ealts :: Alts a}
-              deriving(Eq,Show)
+  = EAtom
+    { emd     :: a
+    , ea      :: Atom}
+  | EFCall
+    { emd     :: a
+    , ev      :: Var
+    , eas     :: [Expr a]} -- invariant the eas are EAtoms
+  | EPrimOp
+    { emd     :: a
+    , eprimOp :: PrimOp
+    , eopInfo :: PrimOpInfo
+    , eas     :: [Expr a]} -- invariant the eas are EAtoms
+  | ELet
+    { emd     :: a
+    , edefs   :: [Obj a]
+    , ee      :: Expr a}
+  | ECase
+    { emd     :: a
+    , ee      :: Expr a
+    , ealts   :: Alts a}
+  deriving(Eq,Show)
 
-data Alts a = Alts {altsmd :: a,
-                    alts :: [Alt a],
-                    aname :: String,
-                    scrt :: Expr a} -- invariant the scrt is an EAtom holding a Var
-              deriving(Eq,Show)
+data Alts a = Alts { altsmd :: a
+                   , alts   :: [Alt a]
+                   , aname  :: String
+                   , scrt   :: Expr a} -- invariant the scrt is an EAtom holding a Var
+            deriving(Eq,Show)
 
 -- Grab the variable name of the scrutinee binding, enforce the invariant above
 scrtVarName (EAtom _ (Var v)) = v
@@ -110,190 +130,147 @@ projectAtoms (a:as) = error "InfoTab.projectAtoms: non-EAtom"
 -- we initially parse EPrimops as EFCalls, then transform and check saturation
 -- here.  We only need to distinguish EPrimop from EFCall because special
 -- code is generated for them.
-data PrimTy = Pint | Pdouble deriving (Eq, Ord, Enum, Bounded, Show)
 
-data PrimOp = Padd -- a -> a -> a
-            | Psub
-            | Pmul
-            | Pdiv
-            | Pmod
-            | Pmax
-            | Pmin
+-- Note: Order matters here, since the classifications of Ops takes advantage of the
+-- generated Enum instance (polyOps, constrainedOps).  If you add new PrimOps, you'll
+-- need to take this into account.
+data PrimOp
+  =
+  -- :: (Num# a#) => a# -> a#
+    Pneg 
 
-            | Peq -- a -> a -> Bool
-            | Pne
-            | Plt
-            | Ple
-            | Pgt
-            | Pge
+  -- :: (Num# a#) => a# -> a# -> a#
+  | Padd | Psub | Pmul | Pdiv | Pmod | Pmax | Pmin
 
-            | Pneg -- a -> a
-            deriving (Eq, Ord, Enum, Bounded, Show)
 
--- to be removed
-data Primop = Piadd -- Int -> Int -> Int
-            | Pisub
-            | Pimul
-            | Pidiv
-            | Pimod
-            | Pimax
-            | Pimin
+  -- :: (Num# a#) => a# -> a# -> Int#
+  | Peq  | Pne  | Plt  | Ple  | Pgt  | Pge
 
-            | Pieq -- Int -> Int -> Bool
-            | Pine
-            | Pilt
-            | Pile
-            | Pigt
-            | Pige
+  -- :: Int -> Int -> Int
+  | Psll -- logical left shift
+  | Psra -- arithmetic right shift 
+  | Psrl -- logical right shift
 
-            | Pineg -- Int -> Int
-            
-            | PIdxChar -- LitStr -> LitI -> LitI (or char* -> int -> int)
+  -- :: String# -> Int# -> Int#
+  | PidxChr -- get char at index
 
-            | PiSLL -- logical left shift
-            | PiSRA -- arithmetic right shift 
-            | PiSRL -- logical right shift
+  -- :: Int# -> Int#
+  | Pord | Pchr
+  -- Both are No Ops: Char and Int are equivalent for us. These could both be
+  -- some kind of PNoOp or PiIdent (they're only here to help with mapping GHC
+  -- primitives) but differentiating between them may be useful at some point.
 
-            | POrd | PChr 
-            -- Both are No Ops: Char and Int are equivalent for us
-            -- These could both be some kind of PNoOp or PiIdent (they're only here
-            -- to help with mapping GHC primitives) but differentiating between them
-            -- may be useful at some point.
-            
-              
-            | Pinvalid
-              deriving(Eq,Show, Ord)
+  deriving (Eq, Ord, Enum, Bounded, Show)
+
+primOpTab =
+  let polyPrepped = map (tail . show) polyOps
+      constrPrepped = map (tail . show) constrainedOps
+      addHash = map (++ "#")
+      names = map ('i':) polyPrepped ++ map ('d':) polyPrepped ++ constrPrepped
+      ops   =            polyOps     ++            polyOps     ++ contrainedOps
+  in zip (addHash names) ops
+
+
+primTys :: [PrimType]  
+primTys = [minBound ..]
+primTyTab = zip (map ((++ "_h") . tail . show)  primTys) primTys
+
+-- The classification of PrimOps is dependent on the Enum instance. See note
+-- above the PrimOp definition.  We're faking some kind of "polymorphism" in the
+-- numeric PrimOps to keep the code clean and readable.  They can all be applied to
+-- either Int# or Double#, and the PrimOpInfo (constructed at Parse-time) provides
+-- all the necessary information for typechecking and codegen
+
+allOps, polyOps, polyUnOps, polyBiOps, polyBiHomoOps, compareOps, constrainedOps :: [PrimOp]
+allOps         = [minBound .. ]
+polyOps        = polyUnOps ++ polyBinOps
+polyUnOps      = [Pneg]
+polyBiOps      = polyBiHomoOps ++ compareOps
+polyBiHomoOps  = [Padd .. Pmin]
+compareOps     = [Peq  .. Pge]
+constrainedOps = [Psll .. Pchr]
 
 
 data PrimType
   = PInt
-  | PInt64
-  | PUInt64
-  | PFloat
   | PDouble
   | PString
   | PVoid   -- i.e. side-effecting code
+  deriving (Eq, Ord, Enum, Bounded, Show)
 
 
+primTypeStrId :: PrimType -> String
+primTypeStrId PInt    = "i"
+primTypeStrId PDouble = "d"
+primTypeStrId PString = "s"
+primTypeStrId PVoid   = ""
 
-data PrimOpInfo = POI { pArgTys :: [PrimType]
-                      , pRetTy  :: PrimType
-                      , cname   :: String
+
+data PrimOpInfo =
+  POI { opType  :: MonoType -- invariant: MFun + MPrim only (nested)
+      , pArgTys :: [PrimType]
+      , pRetTy  :: PrimType
                       
-                      -- This makes more sense in CodeGen, but it's simpler to
-                      -- keep all the Info together here.  Functions are
-                      -- implemented directly with C AST types to avoid another
-                      -- module dependent on TemplateHaskell
-                      , primCGFun  :: [C.Exp] -> C.Exp
-                      }
-
--- HomoOp == op with same return and argument type(s) 
-mkHomoOpInfo arity pty name cgFun =
-  POI { pArgTys   = replicate arity pty
-      , pRetTy    = pty
-      , cname     = name
-      , primCGFun = cgFun
+      -- This makes more sense in CodeGen, but it's simpler to keep all the Info
+      -- together here.  Functions are implemented directly with C AST types to
+      -- avoid another module dependent on TemplateHaskell
+      , primCGFun  :: [C.Exp] -> C.Exp
       }
 
-binIntOps = [ Piadd, Pisub, Pimul, Pidiv, Pimod
-            , Pimax, Pimin, Pieq, Pine
-            , Pilt, Pile, Pigt, Pige]
-
--- Each Exp result needs a SrcLoc, which is conveniently an instance of the Monoid class
--- `mempty` gives us a NoLoc, which should be fine for our needs
-binIntOpInfo name cBOp = mkHomoOpInfo 2 PInt name  $ \[e1,e2] -> C.BinOp cBOp e1 e2 mempty
-unIntOpInfo  name cUOp = mkHomoOpInfo 1 PInt name  $ \[e] -> C.UnOp cUOp e mempty
-binIntFunInfo name     = mkHomoOpInfo 2 PInt name (callFun name)
 
 callFun :: String -> [C.Exp] -> C.Exp
 callFun name exps = C.FnCall (C.Var (C.Id name mempty) mempty) exps mempty
 
-idxCharOpInfo = let name = "charAtIndex" in
-                  POI { pArgTys   = [PString, PInt]
-                      , pRetTy    = PInt
-                      , cname     = name
+mkOpInfo argTys retTy cgFun =
+  let otyp = foldr MFun (MPrim retTy) argTys
+  in POI { opType    = otyp
+         , pArgTys   = argTys
+         , pRetTy    = retTy
+         , primCGFun = cgFun
+         }
 
-                      -- This could also be made into an Index Exp, but may be
-                      -- less readable in the generated C source:
-                      -- \[str,idx] Index str idx mempty
-                      , primCGFun = callFun name
-                    }
+mkUnOpInfo ty rt cOP = mkOpInfo [ty] rt $ \[e1] -> C.UnOp cOp e1 e2 mempty
+mkBinOpInfo t1 t2 rt cOP = mkOpInfo [t1,t2] rt $ \[e1,e2] -> C.BinOp cOp e1 e2 mempty
+mkBinFunInfo t1 t2 rt funName = mkOpInfo [t1,t2] rt (callFun funName)
+mkBinHomoOpInfo ty cOP = mkBinOpInfo ty ty ty cOP
 
--- This will probably produce code like stgCurValU.i = stgCurValU.i, which is
--- harmless, but maybe undesireable?
-noOpIntInfo name = mkHomoOpInfo 1 PInt name $ \[e] -> e
-              
-opInfo :: Primop -> PrimOpInfo
-opInfo op = case op of        
-  Piadd -> binIntOpInfo  "+"  C.Add
-  Pisub -> binIntOpInfo  "-"  C.Sub
-  Pimul -> binIntOpInfo  "*"  C.Mul
-  Pidiv -> binIntOpInfo  "/"  C.Div
-  Pimod -> binIntOpInfo  "%"  C.Mod 
-  Pimax -> binIntFunInfo "imax"
-  Pimin -> binIntFunInfo "imin"
-  Pieq  -> binIntOpInfo  "==" C.Eq
-  Pine  -> binIntOpInfo  "!=" C.Ne
-  Pilt  -> binIntOpInfo  "<"  C.Lt
-  Pile  -> binIntOpInfo  "<=" C.Le
-  Pigt  -> binIntOpInfo  ">"  C.Gt
-  Pige  -> binIntOpInfo  ">=" C.Ge
-  Pineg -> unIntOpInfo   "-"  C.Negate
-  PiSLL -> binIntOpInfo  "<<" C.Lsh
-  PiSRA -> binIntOpInfo  ">>" C.Rsh
-  PiSRL -> binIntFunInfo "intLogicalRightShift" 
-  POrd  -> noOpIntInfo "ord"
-  PChr  -> noOpIntInfo "chr"
-  PIdxChar -> idxCharOpInfo
-  Pinvalid -> error "opInfo called on PInvalid"
+mkOpInfo :: Char -> Primop -> PrimOpInfo
+mkOpInfo c op =
+  let ty = case c of
+             'i' -> PInt
+             'd' -> PDouble
+             _   -> error $ "mkOpInfo given bad char: " ++ c
+  in
+    case op of
+      Padd -> mkBinHomoOpInfo ty C.Add
+      Psub -> mkBinHomoOpInfo ty C.Sub
+      Pmul -> mkBinHomoOpInfo ty C.Mul
+      Pdiv -> mkBinHomoOpInfo ty C.Div
+      Pmod -> mkBinHomoOpInfo ty C.Mod
+      Pmax -> mkCompOpInfo ty (c:"max")
+      Pmin -> mkCompOpInfo ty (c:"min")
+      Peq  -> mkBinOpInfo ty ty PInt C.Eq
+      Pne -> mkBinOpInfo ty ty PInt C.Ne
+      Plt -> mkBinOpInfo ty ty PInt C.Lt
+      Ple -> mkBinOpInfo ty ty PInt C.Le
+      Pgt -> mkBinOpInfo ty ty PInt C.Gt
+      Pge -> mkBinOpInfo ty ty PInt C.Ge
+      Pneg -> mkUnOpInfo ty ty C.Negate
+      Psll -> binIntOpInfo  "<<" C.Lsh
+      Psra -> binIntOpInfo  ">>" C.Rsh
+      Psrl -> binIntFunInfo "intLogicalRightShift" 
+      Pord -> mkOpInfo [PInt] PInt head
+      Pchr -> mkOpInfo [PInt] PInt head
+      PidxChar -> mkOpInfo [PString, PInt] PInt (callFun "charAtIndex")
+      Pinvalid -> error "opInfo called on PInvalid"
 
 maybeAtomPrimTy at = case at of
-  LitI _ -> Just PInt
-  LitL _ -> Just PInt64
-  LitF _ -> Just PFloat
-  LitD _ -> Just PDouble
-  LitC _ -> Just PInt -- Based on what I saw in CodeGen..
-  _      -> Nothing
+  LitI _   -> Just PInt
+  LitD _   -> Just PDouble
+  LitStr _ -> Just PString
+  LitC _   -> Just PInt -- Based on what I saw in CodeGen..
+  _        -> Nothing
   
-primArity op = case op of
-  Pineg -> 1
-  _ -> 2
-
--- these are the C names, not STG names
--- to be removed
-primopTab =
-    [("iplus_h",  Piadd),
-     ("isub_h",   Pisub),
-     ("imul_h",   Pimul),
-     ("idiv_h",   Pidiv),
-     ("imod_h",   Pimod),
-
-     ("ieq_h",    Pieq),
-     ("ine_h",    Pine),
-     ("ilt_h",    Pilt),
-     ("ile_h",    Pile),
-     ("igt_h",    Pigt),
-     ("ige_h",    Pige),
-
-     ("ineg_h",   Pineg),
-
-     ("imax_h",   Pimax),
-     ("imin_h",   Pimin),
-     
-     -- not really available in STG source (yet)
-     ("charAtIndex_h", PIdxChar),
-     ("ishiftll_h",    PiSLL),
-     ("ishiftrl_h",    PiSRL),
-     ("ishiftra_h",    PiSRA),
-     ("ord_h", POrd),
-     ("chr_h", PChr)
-    ]
-
-primOps = [(minBound :: PrimOp) ..]
-primOpTab = zip (map ((++ "_h") . tail . show)  primOps) primOps
-primTys = [(minBound :: PrimTy) ..]
-primTyTab = zip (map ((++ "_h") . tail . show)  primTys) primTys
-
 -- generate with
 -- awk '/^[a-z_#].*=/ {if ($1 != "data") {printf "\42%s\42, ", $1}}' \
 -- appfl/prelude/Prelude.stg | head -c-2 | fmt -w80
@@ -327,39 +304,18 @@ rmPreludeLess keeps =
   let objs = preludeObjNames \\ keeps
   in filter (not . (`elem` objs) . oname)
 
-  -- to be removed
-primID p =
-  case find ((==p).snd) primopTab of
-    Nothing -> error $ "primop lookup failed for " ++ show p
-    Just x -> fst x
 
-primOpID p =
-  case find ((==p).snd) primOpTab of
-    Nothing -> error $ "primOp lookup failed for " ++ show p
-    Just x -> fst x
-
-primTyID p =
-  case find ((==p).snd) primTyTab of
-    Nothing -> error $ "primTy lookup failed for " ++ show p
-    Just x -> fst x
 
 instance Unparse Atom where
   unparse (Var v)  = stgName v
   unparse (LitI i) = int i
-  unparse (LitL l) = text $ show l
-  unparse (LitF f) = float f
   unparse (LitD d) = text $ show d
   unparse (LitC c) = text c
   unparse (LitStr s) = text s
 
-instance Unparse Primop where
-  unparse = stgName . primID
-
-instance Unparse PrimOp where
-    unparse = stgName . primOpID
-
-instance Unparse PrimTy where
-    unparse = stgName . primTyID
+-- just the suffix. Unparse EPrimop makes the prefix
+instance Unparse PrimOp where 
+    unparse = (<> hash) . text . tail . show 
 
 instance Unparse a => Unparse (Alt a) where
   unparse ACon{amd, ac, avs, ae} =
@@ -386,14 +342,9 @@ instance Unparse a => Unparse (Expr a) where
     bcomment (unparse emd) $+$
     stgName ev <+> hsep (map unparse eas)
 
-  -- to be removed
-  unparse EPrimop{emd, eprimop, eas} =
-    bcomment (unparse emd) $+$
-    unparse eprimop <+> hsep (map unparse eas)
-
-  unparse EPrimOp{emd, eprimOp, eprimTy, eas} =
+  unparse EPrimOp{emd, eprimOp, eOpInfo, eas} =
       bcomment (unparse emd) $+$
-      unparse eprimOp $+$ unparse eprimTy <+> hsep (map unparse eas)
+      unparse eprimOp $+$ <+> hsep (map unparse eas)
 
   unparse ELet{emd, edefs, ee} =
     bcomment (unparse emd) $+$
@@ -436,14 +387,6 @@ instance Unparse a => Unparse (Obj a) where
 
 instance Unparse a => Unparse [Obj a] where
   unparse objs = vcat $ postpunctuate semi $ map unparse objs
-
-
---instance PPrint BuiltinType where
---  pprint b = case b of
---    UBInt -> text "UBInt"
---    UBDouble -> text "UBDouble"
-
-
 
 
 objListDoc :: (PPrint a) => [Obj a] -> Doc
@@ -520,21 +463,11 @@ instance (PPrint a) => PPrint (Expr a) where
                     nest 2 (pprint emd)
                    )
                   )
-    -- to be removed
-    EPrimop{..} -> braces
-                   (text "EPrimop:" $+$
-                    nest 2
-                    (text "primop:" <+> pprint eprimop $+$
-                     text "args:" <+> brackets (vcat $ punctuate comma $ map pprint eas) $+$
-                     text "metadata" $+$
-                     nest 2 (pprint emd)
-                    )
-                   )
     EPrimOp{..} -> braces
                   (text "EPrimOp:" $+$
                    nest 2
                    (text "primOp:" <+> pprint eprimOp $+$
-                    text "primTy:" <+> pprint eprimTy $+$
+                    text "primInfo:" <+> pprint eOpInfo $+$
                     text "args:" <+> brackets (vcat $ punctuate comma $ map pprint eas) $+$
                     text "metadata" $+$
                     nest 2 (pprint emd)
@@ -604,17 +537,12 @@ instance PPrint Atom where
   pprint a = case a of
     Var v -> text "Var" <> braces (text v)
     LitI i -> text "LitI" <> braces (int i)
-    LitL l -> text "LitL" <> braces (text $ show l)
     LitD d -> text "LitD" <> braces (double d)
     LitC c -> text "LitC" <> braces (text c)
-    a -> error $ "AST.pprint (Atom): not expecting Atom - " ++ show a
-
--- to be removed
-instance PPrint Primop where
-  pprint = unparse
+    LitStr s -> text "LitStr" <> braces (text s)
 
 instance PPrint PrimOp where
   pprint = unparse
 
-instance PPrint PrimTy where
-  pprint = unparse
+instance PPrint PrimOpInfo where
+  pprint = empty -- TODO: Something useful here

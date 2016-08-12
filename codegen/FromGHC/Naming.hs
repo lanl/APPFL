@@ -140,70 +140,7 @@ showIntTersely i = unfoldr op i
 
 
 sanitize :: String -> String
-sanitize str | isAppflBuiltIn str = str
-             | otherwise = go str
-  where go [] = []
-        go (x:xs) | hasCSubst x = cSubst x ++ go xs
-                  | otherwise   = x : go xs
-
-hasCSubst :: Char -> Bool
-hasCSubst 'z' = True
-hasCSubst  x  = not (isAlphaNum x)
-
--- Get the original name back from a sanitized string.
--- Ideally, sanitize . desanitize == id
--- This is untested.
-desanitize :: String -> String
-desanitize []  = []
-desanitize ('z':c:cs)
-  | c == 'X', (i, 'X':rem):_ <- readHex cs =  chr i : desanitize rem
-  | otherwise =
-      -- This really should never fail
-      fromMaybe (error "desanitize: unsub lookup failure") (Map.lookup c unsubDict)
-      : desanitize cs
-desanitize str | isAppflBuiltIn str = str
-desanitize (c:cs) = c : desanitize cs
-    
-
-cSubst c = fromMaybe ('z':'X': showHex (ord c) "X") (Map.lookup c subDict)
-
--- Use Maps for log n behavior. Better than assoc list lookup.
--- Probably worth it, given how many names there are in even trivial programs
-unsubDict = Map.fromList (map swap subAList)
-subDict   = Map.fromList (map zcons subAList)
-  where zcons = fmap (('z':) . pure)
-
--- Mostly stolen/modified from Z-encoding in utils/Encoding.hs
--- | Maps characters to their z-encoded suffix. e.g. Since '(' is paired with
--- 'L', in the z-encoding, it becomes "zL"
-subAList :: [(Char, Char)]
-subAList  = 
-  [ ('(' , 'L')
-  , (')' , 'R')
-  , ('[' , 'M')
-  , (']' , 'N')
-  , (':' , 'C')
-  , ('z' , 'z')
-  , ('&' , 'a')
-  , ('|' , 'b')
-  , ('^' , 'c')
-  , ('$' , 'd')
-  , ('=' , 'e')
-  , ('@' , 'f')
-  , ('>' , 'g')
-  , ('#' , 'h')
-  , ('.' , 'i')
-  , ('<' , 'l')
-  , ('-' , 'm')
-  , ('!' , 'n')
-  , ('+' , 'p')
-  , ('\'', 'q')
-  , ('\\', 'r')
-  , ('/' , 's')
-  , ('*' , 't')
-  , ('_' , 'u')
-  , ('%' , 'v')
-  ]
+sanitize
 
 
 sanitizeTC (TyCon b c vs dcs) =

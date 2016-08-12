@@ -1,4 +1,6 @@
 {-# LANGUAGE NamedFieldPuns #-}
+{-# LANGUAGE ViewPatterns #-}
+{-# LANGUAGE PatternGuards #-}
 
 {-
 This file contains all things related to parsing STG according to the following grammar:
@@ -53,7 +55,7 @@ prog       ::= <def>*  -- is an empty program still a valid program? I think so.
 <alt>      ::= <conName> <var>* "->" <expr>
              | <var> "->" <expr>
 
-<atom>     ::= <literal>
+<atom>     ::= <literal> ["#" ["#"]]
              | <varName>
 
 <literal>  ::= <int>
@@ -83,6 +85,7 @@ module Parser
  parseWithComments
 ) where
 
+import Debug.Trace  
 import Tokenizer
 import ParserComb
 import AST
@@ -184,39 +187,50 @@ conNameP = tokP2 (TokCon) `using` (subHash.tks)
 varNameP :: Parser Token String
 varNameP = tokP2 (TokId) `using` (subHash . tks)
 
--- Match numeric literals
-intP :: Parser Token Int
-intP = satisfy f `using` (read . tks)
-  where f (TokNum s _) = all isNumber s
-        f _ = False
 
-dblP :: Parser Token Double
-dblP = satisfy f `using` (read . tks)
-  where f (TokNum s _) | '.' `elem` s =
-                         let (w, d:ds) = break (== '.') s
-                         in all isNumber w && all isNumber ds
-        f _ = False
+partitionNum :: String -> ( String -- The whole number, less any trailing hash symbols
+                          , String -- Any fractional part of the whole
+                          , Int) -- 
+partitionNum s = let (f,hs) = break (== '#') s
+                     (l, r) = break (== '.') f
+                 in (f, drop 1 r, length hs)
+
+
+-- Parse numeric literals as Atoms:
+
+-- Recent change allows an optional '#' or '##' suffix to specify int vs long
+-- and float vs double, respectively (roughly as in MagicHash GHC extension).
+-- If none is specified, int and double are the defaults.
+-- Important invariant guaranteed by the tokenizer is that there will be 0, 1 or 2
+-- '#' symbols at the end of the TokNum string, and there will be 0 or 1 period
+-- sandwiched between two otherwise valid integer strings.
+litNumP :: Parser Token Atom
+litNumP = tokP2 TokNum >>> \(TokNum s _) ->
+  case partitionNum s of
+    (whole, frac, nHashes)
+      | null frac -> let con | nHashes <= 1 = LitI . read
+                             | otherwise    = LitL . read
+                     in accept $ con whole
+
+      | otherwise -> let con | nHashes == 1 = LitF . read
+                             | otherwise    = LitD . read
+                     in accept $ con $ whole
+
 
 
 -- Match Primop Token, accept Primop
 -- to be removed
-primP :: Parser Token Primop
-primP = tokP2 (TokPrim) `using` getPrimop
-  where getPrimop (TokPrim s _) =
-          snd . head $ filter ((== s).fst) primopTable
-        getPrimop _ = error "Parser.primP"
+primP :: Parser Token (PrimOp, PrimOpInfo)
+primP = tokP2 (TokPrim) >>> \t ->
+  mkPrimPair
+  where mkPrimPair (TokPrim opstr@(h:_) _) =
+          let
+            -- tokenization should guarantee this never fails
+            Just op = lookup opstr primOpTab
+          in (op, mkOpInfo h op)
+            
+        mkPrimPair _ = reject
 
-primOpP :: Parser Token PrimOp
-primOpP = tokP2 (TokPrimOp) `using` getPrimop
-  where getPrimop (TokPrimOp s _) =
-          snd . head $ filter ((== s).fst) primOpTable
-        getPrimop _ = error "Parser.primOpP"
-
-primTyP :: Parser Token PrimTy
-primTyP = tokP2 (TokPrimTy) `using` getPrimty
-  where getPrimty (TokPrimTy s _) =
-          snd . head $ filter ((== s).fst) primTyTable
-        getPrimty _ = error "Parser.primTyP"
 
 -- match common reserved symbols/words
 dataP = rsvP "data"
@@ -342,8 +356,7 @@ exprP = orExList
 -- atoms but map EAtom across
 exprArgP :: Parser Token (Expr ())
 exprArgP = orExList
-           [eAtomP, eLetP, eCaseP, eFCallP, ePrimopP, -- to be removed
-            ePrimOpP, inparensP exprP]
+           [eAtomP, eLetP, eCaseP, eFCallP, ePrimopP, inparensP exprP]
 
 -- parse an atom expression
 eAtomP :: Parser Token (Expr ())
@@ -361,20 +374,10 @@ eFCallP =
 -- to be removed
 ePrimopP :: Parser Token (Expr ())
 ePrimopP =
-  primP >>> \op ->
+  primP >>> \(op, info) ->
   tokcutP "Expected one or more atoms as arguments to a primop" $
   some' atomP >>> \args ->
-                   accept $ EPrimop () op $ map (EAtom ()) args
-
--- parse a primitive operation expression (e.g. sub# int# 1# 2#)
-ePrimOpP :: Parser Token (Expr ())
-ePrimOpP =
- primOpP >>> \op ->
- tokcutP "Expected one primTy argument to a primOp"
- primTyP  >>> \ty ->
- tokcutP "Expected one or more atoms as arguments to a primOp" $
- some' atomP >>> \args ->
-                 accept $ EPrimOp () op ty $ map (EAtom ()) args
+                   accept $ EPrimOp () op info $ map (EAtom ()) args
 
 -- parse a let expression
 eLetP :: Parser Token (Expr ())
@@ -426,16 +429,15 @@ altsP =
 -- parse a case expression alternative, accept an Alt object
 altP :: Parser Token (Alt ())
 altP =
-  let aconNameP = orExList [intP `using` show,
-                           -- dblP `using` show,
-                            conNameP]
+  let litConP = litNumP `using` (show . unparse) >>> \ n ->
+        accept $ ACon () n []
       adefP = varNameP >>> \v ->
-                             accept $ ADef () v
-      aconP = aconNameP >>> \con ->
-                 many' varNameP >>> \vs ->
-                                      accept $ ACon () con vs
+        accept $ ADef () v
+      aconP = conNameP >>> \con ->
+        many' varNameP >>> \vs ->
+        accept $ ACon () con vs
   in
-    orExList [adefP, aconP] >>> \alt ->
+    orExList [adefP, aconP, litConP] >>> \alt ->
     tokcutP "Expected a '->' symbol after an alt's pattern"
     arrowP >>> \_ ->
     exprP >>> \exp ->
@@ -446,11 +448,8 @@ altP =
 atomP :: Parser Token Atom
 atomP = orExList [
   varNameP `using` Var,
-  intP     `using` LitI,
-  --longP  `using` LitL,
-  --fltP     `using` LitF,
-  dblP   `using` LitD,
-  conNameP `using` LitC
+  conNameP `using` LitC,
+  litNumP  
   ]
 
 ---------------------------- DataDef parsing ---------------------------
