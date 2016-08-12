@@ -138,9 +138,8 @@ showIntTersely i = unfoldr op i
 
 
 
-
-sanitize :: String -> String
-sanitize
+sanitize :: AppflName -> String
+sanitize = id -- letting this happen when we generate InfoTab names now.
 
 
 sanitizeTC (TyCon b c vs dcs) =
@@ -166,7 +165,7 @@ sanitizeObj o = case o of
 sanitizeExpr e = case e of
   EAtom   {ea           } -> EAtom () (sanitizeAtom ea)
   EFCall  {ev, eas      } -> EFCall () (sanitize ev) (map sanitizeExpr eas)
-  EPrimop {eprimop, eas } -> EPrimop () eprimop (map sanitizeExpr eas)
+  EPrimOp {eprimOp, eas, eopInfo } -> EPrimOp () eprimOp eopInfo (map sanitizeExpr eas)
   ELet    {edefs, ee    } -> ELet () (map sanitizeObj edefs) (sanitizeExpr ee)
   ECase   {ee, ealts    } -> ECase () (sanitizeExpr ee) (sanitizeAlts ealts)
 

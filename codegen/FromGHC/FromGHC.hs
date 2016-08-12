@@ -670,20 +670,19 @@ g2aAtomId id = do
 g2aLit :: Literal -> G2AMonad Atom
 g2aLit lit = case lit of
   LitInteger i typ
-    | Just int  <- toInt i   -> return $ LitI int
-    | Just long <- toInt64 i -> return $ LitL long
+    | Just int  <- toInt64 i   -> return $ LitI int
     | otherwise              -> unsupported $ "LitInteger val too large: " ++ show i
 
   -- This may not be wise, particularly if someone is counting on
   -- 8-bit overflow
-  MachChar chr               -> return $ LitI $ ord chr
+  MachChar chr               -> return $ LitI $ to64 $ ord chr
   MachInt i                  -> return $ LitI (fromInteger i)
 
   -- Word == Int64 == Word64 == 64 bit types for APPFL
-  MachInt64 i                -> return $ LitL (fromInteger i)
-  MachWord i                 -> return $ LitL (fromInteger i)
-  MachWord64 i               -> return $ LitL (fromInteger i)
-  MachFloat r                -> return $ LitF (fromRational r)
+  MachInt64 i                -> return $ LitI (fromInteger i)
+  MachWord i                 -> return $ LitI (fromInteger i)
+  MachWord64 i               -> return $ LitI (fromInteger i)
+  MachFloat r                -> return $ LitD (fromRational r)
   MachDouble r               -> return $ LitD (fromRational r)
   
   MachStr bs                 -> return $ LitStr (show bs)
@@ -791,7 +790,7 @@ g2aAlts altT bind alts = rethrowAtName bind $
 
 mkAppflPrimop :: PrimOp.PrimOp -> [StgArg] -> G2AMonad (Expr PostG2A)
 mkAppflPrimop primop args = case lookupAppflPrimop primop of
-  Just op -> liftM (EPrimop Complete op) (mapM g2aArg args)
+  Just (op,info) -> liftM (EPrimOp Complete op info) (mapM g2aArg args)
   Nothing ->
     case lookupImplementedPrimop primop of
                  Just name -> liftM (EFCall Complete name) (mapM g2aArg args)

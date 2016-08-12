@@ -5,33 +5,31 @@
 
 module AST (
   Var,
-  Con,
   Atom(..),
   Expr(..),
   Alt(..),
   Alts(..),
   Obj(..),
-  Primop(..),
+  Def(..),
   PrimType(..),
   PrimOpInfo(..),
   PrimOp(..),
-  PrimTy(..),
-  opInfo,
-  rmPrelude,
-  primopTab, -- to be removed
+  opArity,
+  mkOpInfo,
   primOpTab,
-  primTyTab,
   show,
   objListDoc,
-  primArity,
   projectAtoms,
-  scrtVarName
+  scrtVarName,
+  maybeTypeOfAtom,
+  module ADT
 ) where
 
 import PPrint
 import Data.List (find, (\\))
 import Data.Int as Int (Int64)
-import {-# SOURCE #-} ADT (Monotype (..))
+import ADT
+import Util ((>|))
 
 import qualified Language.C.Syntax as C
        ( Exp (BinOp, UnOp, Var, FnCall)
@@ -41,7 +39,6 @@ import qualified Language.C.Syntax as C
 --  See Parser.hs for grammar
 
 type Var = String
-type Con = String
 
 data Atom = Var  Var
           | LitI Int64
@@ -56,6 +53,11 @@ instance Show Atom where
     show (LitD d)   = show d ++ "(d)"
     show (LitC c)   = c
     show (LitStr s) = s
+
+data Def a = ObjDef (Obj a)
+           | DataDef TyCon
+             deriving(Eq, Show)
+
 
 data Obj a
   = FUN
@@ -95,7 +97,7 @@ data Expr a
   | EPrimOp
     { emd     :: a
     , eprimOp :: PrimOp
-    , eopInfo :: PrimOpInfo
+    , eopInfo :: PrimOpInfo -- We know everything about an op at parse time, so we save it here
     , eas     :: [Expr a]} -- invariant the eas are EAtoms
   | ELet
     { emd     :: a
@@ -162,52 +164,37 @@ data PrimOp
 
   deriving (Eq, Ord, Enum, Bounded, Show)
 
+-- | Assoc List of primop names (in STG syntax) and primops.
+primOpTab :: [(String, PrimOp)]
 primOpTab =
   let polyPrepped = map (tail . show) polyOps
       constrPrepped = map (tail . show) constrainedOps
       addHash = map (++ "#")
       names = map ('i':) polyPrepped ++ map ('d':) polyPrepped ++ constrPrepped
-      ops   =            polyOps     ++            polyOps     ++ contrainedOps
+      ops   =            polyOps     ++            polyOps     ++ constrainedOps
   in zip (addHash names) ops
-
-
-primTys :: [PrimType]  
-primTys = [minBound ..]
-primTyTab = zip (map ((++ "_h") . tail . show)  primTys) primTys
 
 -- The classification of PrimOps is dependent on the Enum instance. See note
 -- above the PrimOp definition.  We're faking some kind of "polymorphism" in the
 -- numeric PrimOps to keep the code clean and readable.  They can all be applied to
 -- either Int# or Double#, and the PrimOpInfo (constructed at Parse-time) provides
 -- all the necessary information for typechecking and codegen
-
-allOps, polyOps, polyUnOps, polyBiOps, polyBiHomoOps, compareOps, constrainedOps :: [PrimOp]
+allOps, polyOps, polyUnEndoOps, polyBiOps, polyBiEndoOps, compareOps, constrainedOps :: [PrimOp]
+-- Poly ==> "Polymorphic" (not really)
+-- Endo ==> arguments stay in the same category (or type, in this case)
+--   Probably not the best term, but I don't know what else fits.
+-- Bi   ==> binary op
+-- Un   ==> unary op
 allOps         = [minBound .. ]
-polyOps        = polyUnOps ++ polyBinOps
-polyUnOps      = [Pneg]
-polyBiOps      = polyBiHomoOps ++ compareOps
-polyBiHomoOps  = [Padd .. Pmin]
+polyOps        = polyUnEndoOps ++ polyBiOps
+polyUnEndoOps  = [Pneg]
+polyBiOps      = polyBiEndoOps ++ compareOps
+polyBiEndoOps  = [Padd .. Pmin]
 compareOps     = [Peq  .. Pge]
 constrainedOps = [Psll .. Pchr]
 
-
-data PrimType
-  = PInt
-  | PDouble
-  | PString
-  | PVoid   -- i.e. side-effecting code
-  deriving (Eq, Ord, Enum, Bounded, Show)
-
-
-primTypeStrId :: PrimType -> String
-primTypeStrId PInt    = "i"
-primTypeStrId PDouble = "d"
-primTypeStrId PString = "s"
-primTypeStrId PVoid   = ""
-
-
 data PrimOpInfo =
-  POI { opType  :: MonoType -- invariant: MFun + MPrim only (nested)
+  POI { opType  :: Monotype -- invariant: MFun + MPrim only (nested)
       , pArgTys :: [PrimType]
       , pRetTy  :: PrimType
                       
@@ -217,103 +204,112 @@ data PrimOpInfo =
       , primCGFun  :: [C.Exp] -> C.Exp
       }
 
+instance Eq PrimOpInfo where
+  (POI mt1 args1 ret1 _ ) == (POI mt2 args2 ret2 _ )
+    = mt1 == mt2 && args1 == args2 && ret1 == ret2
 
-callFun :: String -> [C.Exp] -> C.Exp
-callFun name exps = C.FnCall (C.Var (C.Id name mempty) mempty) exps mempty
+instance Show PrimOpInfo where
+  showsPrec _ (POI ty args ret _) =
+    showString $ show ty ++ show args ++ show ret
 
-mkOpInfo argTys retTy cgFun =
-  let otyp = foldr MFun (MPrim retTy) argTys
+instance Ord PrimOpInfo where
+  (POI mt1 args1 ret1 _ ) `compare` (POI mt2 args2 ret2 _ )
+    = mt1   `compare` mt2   >|
+      args1 `compare` args2 >|
+      ret1  `compare` ret2 
+
+opArity :: PrimOpInfo -> Int
+opArity info = length (pArgTys info)
+
+-- | Make a C FnCall Exp given the name of the function and the list of
+-- arguments (Exps).  In practice, this is used to make the codegen functions
+-- for primops for which we have a runtime function/macro.
+mkFunCall :: String -- | Name of the function
+        -> ([C.Exp] -> C.Exp)
+mkFunCall name exps = C.FnCall (C.Var (C.Id name mempty) mempty) exps mempty
+
+
+-- | Make PrimOpInfo given the (properly ordered) list of PrimTypes the
+-- associated PrimOp operates on, its PrimType return and a function to generate
+-- an abstract C Expression
+mkOpInfo' :: [PrimType] -- | Argument types
+         -> PrimType   -- | Return type
+         -> ([C.Exp] -> C.Exp) -- | Codegen function
+         -> PrimOpInfo 
+mkOpInfo' argTys retTy cgFun =
+  let otyp = foldr (MFun . MPrim) (MPrim retTy) argTys
   in POI { opType    = otyp
          , pArgTys   = argTys
          , pRetTy    = retTy
          , primCGFun = cgFun
          }
 
-mkUnOpInfo ty rt cOP = mkOpInfo [ty] rt $ \[e1] -> C.UnOp cOp e1 e2 mempty
-mkBinOpInfo t1 t2 rt cOP = mkOpInfo [t1,t2] rt $ \[e1,e2] -> C.BinOp cOp e1 e2 mempty
-mkBinFunInfo t1 t2 rt funName = mkOpInfo [t1,t2] rt (callFun funName)
-mkBinHomoOpInfo ty cOP = mkBinOpInfo ty ty ty cOP
+-- | Make PrimOp info for a PrimOp that maps to a unary operator in C.
+-- This makes a codegen function that produces a C UnOp Exp.
+mkUnOpInfo :: PrimType -- | The argument type to the associated PrimOp
+           -> PrimType -- | The return type of the associated PrimOp
+           -> C.UnOp   -- | The C unary operator to use
+           -> PrimOpInfo
+mkUnOpInfo ty rt cOP = mkOpInfo' [ty] rt $ \[e] -> C.UnOp cOP e  mempty
 
-mkOpInfo :: Char -> Primop -> PrimOpInfo
+mkBinOpInfo     t1 t2 rt cOP   = mkOpInfo' [t1,t2] rt $ \[e1,e2] -> C.BinOp cOP e1 e2 mempty
+mkBinFunInfo    t1 t2 rt fname = mkOpInfo' [t1,t2] rt (mkFunCall fname)
+mkBinEndoOpInfo ty cOP         = mkBinOpInfo ty ty ty cOP
+
+mkOpInfo :: Char -> PrimOp -> PrimOpInfo
 mkOpInfo c op =
   let ty = case c of
              'i' -> PInt
              'd' -> PDouble
-             _   -> error $ "mkOpInfo given bad char: " ++ c
+             _   -> error $ "mkOpInfo given bad char: " ++ [c]
   in
     case op of
-      Padd -> mkBinHomoOpInfo ty C.Add
-      Psub -> mkBinHomoOpInfo ty C.Sub
-      Pmul -> mkBinHomoOpInfo ty C.Mul
-      Pdiv -> mkBinHomoOpInfo ty C.Div
-      Pmod -> mkBinHomoOpInfo ty C.Mod
-      Pmax -> mkCompOpInfo ty (c:"max")
-      Pmin -> mkCompOpInfo ty (c:"min")
-      Peq  -> mkBinOpInfo ty ty PInt C.Eq
-      Pne -> mkBinOpInfo ty ty PInt C.Ne
-      Plt -> mkBinOpInfo ty ty PInt C.Lt
-      Ple -> mkBinOpInfo ty ty PInt C.Le
-      Pgt -> mkBinOpInfo ty ty PInt C.Gt
-      Pge -> mkBinOpInfo ty ty PInt C.Ge
-      Pneg -> mkUnOpInfo ty ty C.Negate
-      Psll -> binIntOpInfo  "<<" C.Lsh
-      Psra -> binIntOpInfo  ">>" C.Rsh
-      Psrl -> binIntFunInfo "intLogicalRightShift" 
-      Pord -> mkOpInfo [PInt] PInt head
-      Pchr -> mkOpInfo [PInt] PInt head
-      PidxChar -> mkOpInfo [PString, PInt] PInt (callFun "charAtIndex")
-      Pinvalid -> error "opInfo called on PInvalid"
+      Padd    -> mkBinEndoOpInfo ty C.Add
+      Psub    -> mkBinEndoOpInfo ty C.Sub
+      Pmul    -> mkBinEndoOpInfo ty C.Mul
+      Pdiv    -> mkBinEndoOpInfo ty C.Div
+      Pmod    -> mkBinEndoOpInfo ty C.Mod
+      
+      Pmax    -> mkBinFunInfo ty ty ty (c:"max")
+      Pmin    -> mkBinFunInfo ty ty ty (c:"min")
 
-maybeAtomPrimTy at = case at of
-  LitI _   -> Just PInt
-  LitD _   -> Just PDouble
-  LitStr _ -> Just PString
-  LitC _   -> Just PInt -- Based on what I saw in CodeGen..
-  _        -> Nothing
-  
--- generate with
--- awk '/^[a-z_#].*=/ {if ($1 != "data") {printf "\42%s\42, ", $1}}' \
--- appfl/prelude/Prelude.stg | head -c-2 | fmt -w80
+      Peq     -> mkBinOpInfo ty ty PInt C.Eq
+      Pne     -> mkBinOpInfo ty ty PInt C.Ne
+      Plt     -> mkBinOpInfo ty ty PInt C.Lt
+      Ple     -> mkBinOpInfo ty ty PInt C.Le
+      Pgt     -> mkBinOpInfo ty ty PInt C.Gt
+      Pge     -> mkBinOpInfo ty ty PInt C.Ge
 
-preludeObjNames =
-    [
-     "error", "unit", "nil", "zero", "one", "two", "three", "four", "five", "six",
-     "seven", "eight", "nine", "ten", "false", "true", "blackhole", "_iplus",
-     "_isub", "_imul", "_idiv", "_imod", "_ieq", "_ine", "_ilt", "_ile", "_igt",
-     "_ige", "_imin", "_imax", "_ineg", "cons", "int", "tupl2", "fst", "snd",
-     "tupl3", "eqInt", "multInt", "plusInt", "subInt", "modInt", "_intPrimop",
-     "_intComp", "intLE", "minInt", "gcd#", "gcd", "append", "map", "head",
-     "tail", "foldl", "foldr", "length", "_length", "forcelist", "take", "drop",
-     "zipWith", "zip", "strictList", "null", "init", "filter", "all", "any",
-     "sum", "const", "apply", "seq", "repeat", "replicate", "odd#", "even#",
-     "odd", "even", "not", "compose", "divInt", "compareInt", "intLT", "intGE",
-     "intGT", "switch", "move", "removeAtIndex", "insertAtIndex", "index",
-     "eqList", "createNormArray", "cNArr", "createNormBackArray", "cNBArr",
-     "createArray", "cArr", "createOddBackArray", "cOBArr", "createEvenArray",
-     "cEArr", "createEvenBackArray", "cEBArr", "createOddArray", "cOArr"
-    ]
+      Pneg    -> mkUnOpInfo ty ty C.Negate
+
+      Psll    -> mkBinEndoOpInfo PInt C.Lsh
+      Psra    -> mkBinEndoOpInfo PInt C.Rsh
+      Psrl    -> mkBinFunInfo PInt PInt PInt "intLogicalRightShift"
+
+      PidxChr -> mkOpInfo' [PString, PInt] PInt (mkFunCall "charAtIndex")
+
+      -- ord and chr take one argument, so simply returning the head of the list
+      -- of C.Exps accomplishes the NOP logic for Codegen
+      Pord -> mkOpInfo' [PInt] PInt head 
+      Pchr -> mkOpInfo' [PInt] PInt head
 
 
-
--- functions for removing some or all standard Prelude objects from the
--- list of objects in a parsed STG program.  Useful for debugging.
-rmPrelude :: [Obj a] -> [Obj a]
-rmPrelude = rmPreludeLess []
-rmPreludeLess :: [Var] -> [Obj a] -> [Obj a]
-rmPreludeLess keeps =
-  let objs = preludeObjNames \\ keeps
-  in filter (not . (`elem` objs) . oname)
-
-
+maybeTypeOfAtom :: Atom -> Maybe Monotype
+maybeTypeOfAtom at = case at of
+  Var _    -> Nothing
+  LitC c   -> Just $ MCon (Just False) c []
+  LitI _   -> Just primIntType
+  LitD _   -> Just primDoubleType
+  LitStr _ -> Just primStringType
 
 instance Unparse Atom where
   unparse (Var v)  = stgName v
-  unparse (LitI i) = int i
+  unparse (LitI i) = int64 i
   unparse (LitD d) = text $ show d
   unparse (LitC c) = text c
   unparse (LitStr s) = text s
 
--- just the suffix. Unparse EPrimop makes the prefix
+-- just the suffix of the op. Unparse EPrimop makes the prefix
 instance Unparse PrimOp where 
     unparse = (<> hash) . text . tail . show 
 
@@ -342,9 +338,11 @@ instance Unparse a => Unparse (Expr a) where
     bcomment (unparse emd) $+$
     stgName ev <+> hsep (map unparse eas)
 
-  unparse EPrimOp{emd, eprimOp, eOpInfo, eas} =
-      bcomment (unparse emd) $+$
-      unparse eprimOp $+$ <+> hsep (map unparse eas)
+  unparse EPrimOp{emd, eprimOp, eopInfo, eas} =
+    let pfx | eprimOp `elem` polyOps = text (primTypeStrId (head $ pArgTys eopInfo))
+            | otherwise = empty
+        opDoc = pfx <> unparse eprimOp
+    in bcomment (unparse emd) $+$ opDoc <+> hsep (map unparse eas)
 
   unparse ELet{emd, edefs, ee} =
     bcomment (unparse emd) $+$
@@ -387,6 +385,14 @@ instance Unparse a => Unparse (Obj a) where
 
 instance Unparse a => Unparse [Obj a] where
   unparse objs = vcat $ postpunctuate semi $ map unparse objs
+
+
+instance Unparse a => Unparse (Def a) where
+  unparse (DataDef t) =  unparse t
+  unparse (ObjDef o) = unparse o
+
+instance Unparse a => Unparse [Def a] where
+  unparse defs = vcat $ postpunctuate semi $ map unparse defs
 
 
 objListDoc :: (PPrint a) => [Obj a] -> Doc
@@ -467,7 +473,7 @@ instance (PPrint a) => PPrint (Expr a) where
                   (text "EPrimOp:" $+$
                    nest 2
                    (text "primOp:" <+> pprint eprimOp $+$
-                    text "primInfo:" <+> pprint eOpInfo $+$
+                    text "primInfo:" <+> pprint eopInfo $+$
                     text "args:" <+> brackets (vcat $ punctuate comma $ map pprint eas) $+$
                     text "metadata" $+$
                     nest 2 (pprint emd)
@@ -536,7 +542,7 @@ instance (PPrint a) => PPrint (Alt a) where
 instance PPrint Atom where
   pprint a = case a of
     Var v -> text "Var" <> braces (text v)
-    LitI i -> text "LitI" <> braces (int i)
+    LitI i -> text "LitI" <> braces (int64 i)
     LitD d -> text "LitD" <> braces (double d)
     LitC c -> text "LitC" <> braces (text c)
     LitStr s -> text "LitStr" <> braces (text s)
@@ -545,4 +551,4 @@ instance PPrint PrimOp where
   pprint = unparse
 
 instance PPrint PrimOpInfo where
-  pprint = empty -- TODO: Something useful here
+  pprint info = empty -- TODO: Something useful here

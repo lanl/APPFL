@@ -2,23 +2,24 @@
 {-# LANGUAGE NamedFieldPuns    #-}
 
 module ADT (
-  Def(..),
   TyCon(..),
   DataCon(..),
   TyVar,
   Polytype(..),
   Monotype(..),
+  PrimType(..),
   Con,
-  biIntMCon,
-  biLongMCon,
-  biFloatMCon,
-  biDoubleMCon,
-  biStringMCon,
+  primIntType,
+  primDoubleType,
+  primStringType,
+  primVoidType,
+  primTypeName,
+  primTypeNames,  
   dataConName,
   tyConName,
   getDataCons,
-  makeIntTyCon,
-  makeDoubleTyCon,
+  makePrimTyCon,
+  primTypeStrId,
   dataConTyVars,
   monoTypeVars,
   boxMTypes,
@@ -26,8 +27,6 @@ module ADT (
   unfoldMTy
 ) where
 
-
-import AST(Con, Obj)
 
 import Data.List(intercalate)
 import Data.Maybe (fromMaybe)
@@ -67,9 +66,6 @@ import PPrint
 -}
 
 
-data Def a = ObjDef (Obj a)
-           | DataDef TyCon
-             deriving(Eq, Show)
 
 -- Boxed: data \Chi \alpha_1 .. \alpha_t =
 -- c_1 \tau_11 .. \tau_1a_1 | ... | c_n \tau_n1 .. \tau_na_1
@@ -83,6 +79,7 @@ data DataCon = DataCon Con [Monotype]
                deriving(Eq,Show)
 
 type TyVar = String
+type Con = String
 
 data Polytype = PPoly [TyVar] Monotype
               | PMono Monotype
@@ -95,6 +92,27 @@ data Monotype = MVar TyVar
               | MPrim PrimType
               | MPhony
                 deriving(Eq,Ord)
+
+data PrimType
+  = PInt
+  | PDouble
+  | PString
+  | PVoid   -- side-effecting code
+  deriving (Eq, Ord, Enum, Bounded, Show)
+
+
+primTypeStrId :: PrimType -> String
+primTypeStrId PInt    = "i"
+primTypeStrId PDouble = "d"
+primTypeStrId PString = "s"
+primTypeStrId PVoid   = ""
+
+
+primTypeName :: PrimType -> Con
+primTypeName = (++ "#") . tail . show
+
+primTypeNames :: [Con]
+primTypeNames = map primTypeName [minBound :: PrimType .. ]
 
 -- m is rightmost element
 unfoldMTy (MFun m1 m2) = let (m,ms) = unfoldMTy m2 in (m, m1:ms)
@@ -115,10 +133,7 @@ isBoxed m = case m of
 boxMTypes :: [TyCon] -> [TyCon]
 boxMTypes tycons =
   let -- create assoc list for TyCon names -> TyCons
-      tycons' = makeIntTyCon "0" :
-                makeLongTyCon "0" :
-                makeFloatTyCon "0" :
-                makeDoubleTyCon "0" :
+      tycons' = map makePrimTyCon [minBound ..] ++
                 tycons
       tmap = zip (map tyConName tycons') tycons'
       
@@ -141,32 +156,15 @@ boxMTypes tycons =
 -- helpers to make TyCons for built-in types
 -- this is a bit of a hack to fudge the fact that there are no explicit
 -- data declarations for the built-ins
--- The string given (e.g. "0") may be useful, depending on the application
--- of the TyCon
-makeIntTyCon :: Con -> TyCon
-makeIntTyCon c = TyCon False "Int_h" [] [DataCon c []]
+makePrimTyCon :: PrimType -> TyCon
+makePrimTyCon pt = TyCon False (primTypeName pt) [] []
 
-makeLongTyCon :: Con -> TyCon
-makeLongTyCon c = TyCon False "Long_h" [] [DataCon c []]
 
-makeFloatTyCon :: Con -> TyCon
-makeFloatTyCon c = TyCon False "Float_h" [] [DataCon c []]
-
-makeDoubleTyCon :: Con -> TyCon
-makeDoubleTyCon c = TyCon False "Double_h" [] [DataCon c []]
-
--- this is even more of a hack but at least it's localized
-biIntMCon    = MCon (Just False) "Int_h" []
-biLongMCon   = MCon (Just False) "Long_h" []
-biFloatMCon  = MCon (Just False) "Float_h" []
-biDoubleMCon = MCon (Just False) "Double_h" []
-biStringMCon = MCon (Just False) "String_h" []
-
-conAList = [("Int_h",    "Int#"),
-            ("Long_h",   "Long#"),
-            ("Float_h",  "Float#"),
-            ("Double_h", "Double#"),
-            ("String_h", "String#")]
+-- less hacky now
+primIntType    = MPrim PInt
+primDoubleType = MPrim PDouble
+primStringType = MPrim PString
+primVoidType   = MPrim PVoid
 
 -- helper field accessor functions --
 
@@ -206,6 +204,7 @@ instance Show Monotype where
                               else "[U] ") ++ unwords (map show ms)
     show (MCon Nothing con ms) = con ++ "[?] "
                                      ++ unwords (map show ms)
+    show (MPrim pt) = show pt
     show MPhony = "MPhony"
 
 --------------- ADT Pretty Printing -----------------------
@@ -253,12 +252,6 @@ instance Unparse [TyCon] where
 instance PPrint TyCon where
   pprint = unparse
 
-instance Unparse a => Unparse (Def a) where
-  unparse (DataDef t) =  unparse t
-  unparse (ObjDef o) = unparse o
-
-instance Unparse a => Unparse [Def a] where
-  unparse defs = vcat $ postpunctuate semi $ map unparse defs
 
 instance PPrint Monotype where
   pprint m = case m of
@@ -276,5 +269,6 @@ instance PPrint Monotype where
                     text c $+$
                     nest 2 (vcat $ map pprint ms))
     MPVar v -> text "MPVar" <> braces (text v)
+    MPrim pt -> text "MPrim" <> pprint pt
     MPhony -> text "MPhony"
-    
+

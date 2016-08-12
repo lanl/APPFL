@@ -1,3 +1,4 @@
+{-# LANGUAGE UndecidableInstances #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE TypeSynonymInstances #-}
 {-# LANGUAGE NamedFieldPuns #-}
@@ -18,6 +19,9 @@ module PPrint
   -- turn a boolean into a Doc
   boolean,
 
+  -- make an Int64 doc
+  int64,
+
   -- List pretty printers
   listText, brackList,
   prepunctuate, postpunctuate,
@@ -26,6 +30,7 @@ module PPrint
   -- getting the original STG names with '#' characters
   reHash,
   stgName,
+
 
   -- Pretty Printer typeclasses
   PPrint(..),
@@ -37,9 +42,10 @@ module PPrint
        
 
 import Text.PrettyPrint
+import Text.Show.Pretty (ppDoc)
 import qualified Data.Set as Set
 import Data.List (isSuffixOf)
-
+import Data.Int (Int64)
 
 
 --------------------------- Pretty Printing -------------------------
@@ -78,8 +84,13 @@ bcomment d | isEmpty d = empty
              in text "{-" `sepr` (nest 3 d) `sepr` text "-}"
              
 
+
+
 boolean :: Bool -> Doc
-boolean = text . show
+boolean = ppDoc
+
+int64 :: Int64 -> Doc
+int64 = ppDoc
 
 brackList, braceList :: [Doc] -> Doc
 brackList = brackets . hsep . punctuate comma
@@ -116,6 +127,9 @@ vertList lchr rchr sepr maxlen ls =
              then (($$), f xd xsd)
              else ((<+>), f xd xsd)
 
+
+instance {-# OVERLAPPABLE #-} (Show a) => PPrint a where
+  pprint = ppDoc
 
 -- () metadata = empty document
 -- empty is the identity Doc for the associative pretty printing operators

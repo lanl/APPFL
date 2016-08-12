@@ -105,12 +105,6 @@ uboxDblP = satisfy f `using` (read . init . tks)
                              last ds == '#'
         f _ = False
 
--- Match Primop Token, accept Primop
-primP :: Parser Token Primop
-primP = tokP2 (TokPrim) `using` getPrimop
-  where getPrimop (TokPrim s _) =
-          snd . head $ filter ((== s).fst) primopTable
-        getPrimop _ = error "Parser.primP"
 
 -- match common reserved symbols/words
 dataP = rsvP "data"
@@ -298,11 +292,21 @@ atomP :: Parser Token Atm
 atomP = orExList [
   varNameP `using` AtmVar,
   conNameP `using` AtmCon,
-  primP `using` AtmOp,
+  primP `using` uncurry AtmOp,
   boxIntP `using` LBInt,
   boxDblP `using` LBDbl,
   uboxIntP `using` LUBInt,
   uboxDblP `using` LUBDbl]
+
+primP :: Parser Token (PrimOp, PrimOpInfo)
+primP = tokP2 (TokPrim) >>> \t ->
+  mkPrimPair t
+  where mkPrimPair (TokPrim opstr _) =
+          let
+            -- tokenization should guarantee this never fails
+            Just op = lookup opstr primOpTab
+          in accept (op, mkOpInfo (head opstr) op)
+        mkPrimPair _ = reject
 
 ---------------------------- DataDef parsing ---------------------------
 
@@ -361,8 +365,8 @@ btypeP =
         conNameP >>> \c -> -- only permit type applicaton for con names (e.g. List a -> Int, not m a -> Int)
         many' atypeP >>> \ms ->
         accept $ case () of 
-                  _ | c == "Int#" -> biIntMCon -- MPrim UBInt -- hacky
-                    | c == "Double#" -> biDoubleMCon -- MPrim UBDouble
+                  _ | c == "Int#" -> primIntType
+                    | c == "Double#" -> primDoubleType
                     | otherwise -> MCon (Just True) c ms
                                    
   in orExList [cAp, atypeP]

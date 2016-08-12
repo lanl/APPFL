@@ -118,11 +118,6 @@ nameExpr e@EFCall{ev, eas} tt =
      eas' <- mapM (flip nameExpr tt) eas
      return e{ev = ev', eas = eas'}
 
--- to be removed
-nameExpr e@EPrimop{eas} tt =
-  do
-    eas' <- mapM (flip nameExpr tt) eas
-    return e{eas = eas'}
 
 nameExpr e@EPrimOp{eas} tt =
   do

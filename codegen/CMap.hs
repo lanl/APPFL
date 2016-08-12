@@ -103,7 +103,7 @@ luDCon name conmap = getDConInList name $ luDCons name conmap
 -- check boxedness of a TyCon name
 isBoxedTCon :: Con -> CMap -> Bool
 isBoxedTCon c cmap
-  | c == "Int_h" = False
+  | c `elem` primTypeNames = False
   | otherwise    =
       let tcons = map snd $ Map.toList cmap
       in
@@ -132,8 +132,8 @@ luTCon name conmap
 
 
 -- Tags are returned as Strings for switch statements in codegen
-luConTag :: Con -> CMap -> String
-luConTag c cmap | isBuiltInType c = c
+luConTag :: Con -> CMap -> CleanString
+luConTag c cmap | isBuiltInType c = cSanitize c
                 | otherwise       =
                     let tyCon = luTCon c cmap
                     in case elem c (map dataConName $ luDCons c cmap) of
@@ -169,12 +169,9 @@ instantiateDataConAt c cmap subms =
         subst = Map.fromList $ zzip tvs subms
     in apply subst ms
 
-isInt :: String -> Bool
-isInt = all isNumber
-
 -- Pending
 isBuiltInType :: Con -> Bool
-isBuiltInType = isInt -- or others?
+isBuiltInType c = all ($ c) [isInt, isDouble]
 
 getBuiltInType :: Con -> TyCon
 getBuiltInType c
@@ -184,8 +181,9 @@ getBuiltInType c
 -- (empty MonoType list is what it needs here, but it finds it
 -- by looking through the DataCons of the TyCon until it finds
 -- one whose name matches what it looked up)
-  | isInt c   = makeIntTyCon c
-  | otherwise = error "builtin TyCon not found!"
+  | isInt c    = makePrimTyCon PInt
+  | isDouble c = makePrimTyCon PDouble
+  | otherwise  = error "builtin TyCon not found!"
 
 instance PPrint CMap where
   pprint m =

@@ -1,3 +1,4 @@
+{-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards       #-}
 {-# LANGUAGE TypeSynonymInstances  #-}
 {-# LANGUAGE FlexibleInstances     #-}
@@ -36,6 +37,8 @@ import qualified Data.Map as Map
 import Data.Set (Set)
 import qualified Data.Set as Set
 
+import Util
+
 import Language.C.Quote.GCC
 import Language.C.Syntax (Definition, Initializer, Type)
 
@@ -51,26 +54,26 @@ data InfoTab =
     ITFun {
       typ :: Monotype,
       ctyp :: Polytype,
-      name :: String,
+      name :: CleanString,
       fvs :: [(Var,Monotype)],
       bfvc :: Int,  -- boxed FV count
       ufvc :: Int,  -- unboxed FV count
       truefvs :: [Var],
-      entryCode :: String,
-      trueEntryCode :: String,
+      entryCode :: CleanString,
+      trueEntryCode :: CleanString,
 
       arity :: Int}
 
   | ITPap {
       typ :: Monotype,
       ctyp :: Polytype,
-      name :: String,
+      name :: CleanString,
       fvs :: [(Var,Monotype)],
       bfvc :: Int,  -- boxed FV count
       ufvc :: Int,  -- unboxed FV count
       truefvs :: [Var],
-      entryCode :: String,
-      trueEntryCode :: String,
+      entryCode :: CleanString,
+      trueEntryCode :: CleanString,
 
       args     :: [(Atom,Monotype)],
       bargc :: Int,  -- boxed initial arg count
@@ -81,12 +84,12 @@ data InfoTab =
   | ITCon {
       typ :: Monotype,
       ctyp :: Polytype,
-      name :: String,
+      name :: CleanString,
       fvs :: [(Var,Monotype)],
       bfvc :: Int,  -- boxed FV count - not needed for Con
       ufvc :: Int,  -- unboxed FV count - not needed for Con
       truefvs :: [Var],
-      entryCode :: String,
+      entryCode :: CleanString,
 
       args :: [(Atom,Monotype)],
       bargc :: Int,  -- boxed arg count
@@ -98,22 +101,22 @@ data InfoTab =
   | ITThunk {
       typ :: Monotype,
       ctyp :: Polytype,
-      name :: String,
+      name :: CleanString,
       fvs :: [(Var,Monotype)],
       bfvc :: Int,  -- boxed FV count
       ufvc :: Int,  -- unboxed FV count
       truefvs :: [Var],
-      entryCode :: String }
+      entryCode :: CleanString }
 
 --BH   | ITBlackhole {
 --BH       typ :: Monotype,
 --BH       ctyp :: Polytype,
---BH       name :: String,
+--BH       name :: CleanString,
 --BH       fvs :: [(Var,Monotype)],  -- why is this here?
 --BH       bfvc :: Int,  -- boxed FV count
 --BH       ufvc :: Int,  -- unboxed FV count
 --BH       truefvs :: [Var],
---BH       entryCode :: String }
+--BH       entryCode :: CleanString }
 
 -- Expr
   | ITFCall {
@@ -200,8 +203,8 @@ data InfoTab =
       ufvc :: Int,          -- unboxed FV count
       truefvs :: [Var],
       scVar :: Var,         -- binding for scrutinee
-      name :: String,       -- for C infotab
-      entryCode :: String } -- for C infotab
+      name :: CleanString,       -- for C infotab
+      entryCode :: CleanString } -- for C infotab
 
   -- the following may be useful later
   -- for now case continuation is handled by Alts.ITAlts
@@ -228,7 +231,7 @@ instance ITsOf (Obj a) [a] where
 instance ITsOf (Expr a) [a] where
     itsOf ELet{emd, edefs, ee}  = emd : (itsOf edefs) ++ itsOf ee
     itsOf ECase{emd, ee, ealts} = emd : (itsOf ee) ++ itsOf ealts
-    itsOf e = [emd e] -- EAtom, EFCall, EPrimop
+    itsOf e = [emd e] -- EAtom, EFCall, EPrimOp
 
 instance ITsOf (Alt a) [a] where
     itsOf ACon{amd, ae} = amd : itsOf ae
@@ -264,11 +267,9 @@ instance SetITs (Expr ([Var],[Var])) (Expr InfoTab) where
     setITs e@(EFCall emd f eas) =
         EFCall (makeIT e) f (map setITs eas)
 
-    setITs e@(EPrimop emd p eas) =
-        EPrimop (makeIT e) p (map setITs eas)
+    setITs e@(EPrimOp emd p info eas) =
+        EPrimOp (makeIT e) p info (map setITs eas)
 
-    setITs e@(EPrimOp emd p t eas) =
-        EPrimOp (makeIT e) p t (map setITs eas)
 
 instance SetITs (Alts ([Var],[Var])) (Alts InfoTab) where
     setITs as@(Alts altsmd alts name scrt) =
@@ -305,7 +306,7 @@ class MakeIT a where
 instance MakeIT (Obj ([Var],[Var])) where
     makeIT o@(FUN (fvs,truefvs) vs e n) =
         ITFun { arity = length vs,
-              name = n,
+              name = cSanitize n,
               fvs = zip fvs $ repeat typUndef,
               bfvc = -1,
               ufvc = -1,
@@ -313,14 +314,14 @@ instance MakeIT (Obj ([Var],[Var])) where
               typ = typUndef,
               ctyp = ctypUndef,
               entryCode = "stg_funcall",
-              trueEntryCode = "fun_" ++ n
+              trueEntryCode = "fun_" `mappend` cSanitize n
             }
 
     makeIT o@(PAP (fvs,truefvs) f as n) =
         ITPap { args = zip (projectAtoms as) $ repeat typUndef,
               bargc = -1,
               uargc = -1,
-              name = n,
+              name = cSantize n,
               fvs = zip fvs $ repeat typUndef,
               bfvc = -1,
               ufvc = -1,
@@ -328,8 +329,8 @@ instance MakeIT (Obj ([Var],[Var])) where
               truefvs = truefvs,
               typ = typUndef,
               ctyp = ctypUndef,
-              entryCode = "fun_" ++ f,
-              trueEntryCode = "fun_" ++ f,
+              entryCode = "fun_" `mappend` cSanitize f,
+              trueEntryCode = "fun_" `mappend` cSantize f,
               knownCall = Nothing
             }
 
@@ -414,15 +415,6 @@ instance MakeIT (Expr ([Var],[Var])) where
                 noHeapAlloc = False,
                 knownCall = Nothing}
 
-    makeIT EPrimop{emd = (fvs,truefvs)} =
-        ITPrimop{fvs = zip fvs $ repeat typUndef,
-                 bfvc = -1,
-                 ufvc = -1,
-                 truefvs = truefvs,
-                 typ = typUndef,
-                 ctyp = ctypUndef,
-                 noHeapAlloc = False}
-
     makeIT EPrimOp{emd = (fvs,truefvs)} =
         ITPrimop{fvs = zip fvs $ repeat typUndef,
                  bfvc = -1,
@@ -431,6 +423,7 @@ instance MakeIT (Expr ([Var],[Var])) where
                  typ = typUndef,
                  ctyp = ctypUndef,
                  noHeapAlloc = False}
+
 
 instance MakeIT (Alts ([Var],[Var])) where
     makeIT Alts{altsmd = (fvs,truefvs), aname, scrt} =
@@ -473,7 +466,7 @@ showObjType ITThunk {} = "THUNK"
 --BH showObjType ITBlackhole {} = "BLACKHOLE"
 showObjType _ = error "bad ObjType"
 
-alignedDecl:: Type -> String -> Initializer -> Definition
+alignedDecl:: Type -> CleanString -> Initializer -> Definition
 alignedDecl typ name ini =
   [cedecl|$ty:typ $id:name __attribute__((aligned(OBJ_ALIGN)))
     = $init:ini;
@@ -694,12 +687,9 @@ instance SetITs (CMap, (Expr InfoTab)) (Expr InfoTab) where
         e{eas = map (setITs . (cmap,)) eas}
 
     -- this could be the identity:  primops should not apply to user-defined constants
-    -- to be removed
-    e@EPrimop{eas} ->
-        e{eas = map (setITs . (cmap,)) eas}
-
     e@EPrimOp{eas} ->
         e{eas = map (setITs . (cmap,)) eas}
+
 
     e@ECase{ee, ealts, emd} ->
       e{ ee    = setITs (cmap,ee),

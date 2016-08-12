@@ -6,14 +6,11 @@
 module Tokenizer
 (
   Token(..),
-  primOpTable,
-  primTyTable,
-  primopTable, -- to be removed
   tokenize,
   tokenizeWithComments,
 ) where
 
-import MHS.AST (Primop(..), PrimOp(..), PrimTy(..))
+import MHS.AST 
 import Data.Char
 import Data.List (isPrefixOf)
 import ParserComb
@@ -119,8 +116,7 @@ ncomment =
                  accept $ TokWht (op ++ concat chars ++ cls) p True
 
 lexeme = orExList
-         [varid, conid, special, primitive, -- to be removed
-         primitiveOp, primitiveTy, reserved, literal]
+         [varid, conid, special, primitive, reserved, literal]
 
 
 upper = satisfyFst isUpper
@@ -143,12 +139,6 @@ reserved = orExList
 primitive = orExList
             (map litStr primops) >>> \(s,p) ->
                                       accept $ TokPrim s p
-primitiveOp = orExList
-            (map litStr (fst $ unzip primOpTable)) >>> \(s,p) ->
-                                      accept $ TokPrimOp s p
-primitiveTy = orExList
-            (map litStr (fst $ unzip primTyTable)) >>> \(s,p) ->
-                                      accept $ TokPrimTy s p
 
 varid =
   orExList [lower, underscore, hash] >>> \(s,p) ->
@@ -157,9 +147,7 @@ varid =
                    in
                     case () of
                      _ | str `elem` reserveds -> reject
-                       | str `elem` primops -> reject  -- to be removed
-                       | str `elem` (fst $ unzip primOpTable) -> reject
-                       | str `elem` (fst $ unzip primTyTable) -> reject
+                       | str `elem` primops -> reject
                        | otherwise ->
                            accept $ TokId str p
 
@@ -218,13 +206,8 @@ instance PPrint Token where
   pprint tk = case tk of
     TokNum s p   -> text "TokNum" <> braces
                    (text s <> comma <+> pprint p)
-    -- to be removed
     TokPrim s p  -> text "TokPrim" <> braces
                    (text s <> comma <+> pprint p)
-    TokPrimOp s p  -> text "TokPrimOp" <> braces
-                   (text s <> comma <+> pprint p)
-    TokPrimTy s p  -> text "TokPrimTy" <> braces
-                  (text s <> comma <+> pprint p)
     TokId s p    -> text "TokId" <> braces
                    (text s <> comma <+> pprint p)
     TokCon s p   -> text "TokCon" <> braces
@@ -242,26 +225,6 @@ instance Show Token where
 bracketize a b = "{" ++ a ++ " @ " ++ b ++ "}"
 showpos (l,c) = "(ln:" ++ show l ++ "," ++ "col:" ++ show c ++ ")"
 
--- to be removed
-primopTable =
-  [
-    ("iplus#",   Piadd),
-    ("isub#",    Pisub),
-    ("imul#",    Pimul),
-    ("idiv#",    Pidiv),
-    ("imod#",    Pimod),
-    ("imax#",    Pimax),
-    ("ieq#",     Pieq),
-    ("ine#",     Pine),
-    ("ilt#",     Pilt),
-    ("ile#",     Pile),
-    ("igt#",     Pigt),
-    ("ige#",     Pige),
-    ("ineg#",    Pineg),
-    ("imin#",    Pimin),
-    ("imax#",    Pimax)
-  ]
-
 specials =
   [  "{", "}", "(", ")", ";", "|", "=", "->"]
 
@@ -271,12 +234,8 @@ reserveds =
     "case", "of", "let", "in", "data", "unboxed"
   ] ++ specials
 
-primOps = [(minBound :: PrimOp) ..]
-primOpTable = zip (map ((++ "#") . tail . show)  primOps) primOps
-primTys = [(minBound :: PrimTy) ..]
-primTyTable = zip (map ((++ "#") . tail . show)  primTys) primTys
 
-primops = fst $ unzip primopTable
+primops = fst $ unzip primOpTab
 isReserved = flip elem reserveds
 isPrimop = flip elem primops
 

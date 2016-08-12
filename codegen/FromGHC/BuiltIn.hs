@@ -11,7 +11,7 @@ import qualified Data.Map.Strict as Map
 import Data.Maybe (fromMaybe)
 import Control.Applicative ((<|>), (<*>))
 
-import AST as A (Primop (..))
+import AST as A (PrimOp (..), PrimOpInfo, mkOpInfo)
 import PrimOp as G
 import WiredIn as A
 
@@ -37,47 +37,51 @@ import Constants (mAX_TUPLE_SIZE{-62-}) --  Maybe use an APPFL constant?
 
 import PPrint
 
-lookupAppflPrimop :: G.PrimOp -> Maybe A.Primop
+lookupAppflPrimop :: G.PrimOp -> Maybe (A.PrimOp, A.PrimOpInfo)
 lookupAppflPrimop = (`Map.lookup` primopMap)
 
 
-primopMap :: Map G.PrimOp A.Primop
+mkIntOpPr op = (op, mkOpInfo 'i' op)
+mkDubOpPr op = (op, mkOpInfo 'd' op)
+mkOtherOpPr op = (op, mkOpInfo '_' op) -- mkOpInfo only cares about prefixes for some ops
+
+primopMap :: Map G.PrimOp (A.PrimOp, A.PrimOpInfo)
 primopMap = Map.fromList
-  [ (CharGtOp   , Pigt)
-  , (CharGeOp   , Pige)
-  , (CharEqOp   , Pieq)
-  , (CharNeOp   , Pine)
-  , (CharLeOp   , Pile)
-  , (CharLtOp   , Pilt)    
-  , (IntAddOp   , Piadd)
-  , (IntSubOp   , Pisub)
-  , (IntMulOp   , Pimul)
-  , (IntQuotOp  , Pidiv) -- round to zero
-  , (IntRemOp   , Pimod)
-  , (IntGtOp    , Pigt)
-  , (IntGeOp    , Pige)
-  , (IntEqOp    , Pieq)
-  , (IntNeOp    , Pine)
-  , (IntLeOp    , Pile)
-  , (IntLtOp    , Pilt)
-  , (IntNegOp   , Pineg)   
-  , (WordGtOp   , Piadd)
-  , (WordGeOp   , Pisub)
-  , (WordEqOp   , Pimul)
-  , (WordNeOp   , Pidiv)
-  , (WordLeOp   , Pimod)
-  , (WordLtOp   , Pigt) 
-  , (WordAddOp  , Pige) 
-  , (WordSubOp  , Pieq) 
-  , (WordMulOp  , Pine) 
-  , (WordQuotOp , Pile) 
-  , (WordRemOp  , Pilt)
-  , (IndexOffAddrOp_Char, PIdxChar)
-  , (ISllOp     , PiSLL) -- unchecked int shift left
-  , (ISraOp     , PiSRA) -- unchecked int shift right (arithmetic)
-  , (ISrlOp     , PiSRL) -- unchecked int shift right (logical)
-  , (ChrOp      , PChr)
-  , (OrdOp      , POrd)
+  [ (CharGtOp   , mkIntOpPr Pgt)
+  , (CharGeOp   , mkIntOpPr Pge)
+  , (CharEqOp   , mkIntOpPr Peq)
+  , (CharNeOp   , mkIntOpPr Pne)
+  , (CharLeOp   , mkIntOpPr Ple)
+  , (CharLtOp   , mkIntOpPr Plt)    
+  , (IntAddOp   , mkIntOpPr Padd)
+  , (IntSubOp   , mkIntOpPr Psub)
+  , (IntMulOp   , mkIntOpPr Pmul)
+  , (IntQuotOp  , mkIntOpPr Pdiv) -- round to zero
+  , (IntRemOp   , mkIntOpPr Pmod)
+  , (IntGtOp    , mkIntOpPr Pgt)
+  , (IntGeOp    , mkIntOpPr Pge)
+  , (IntEqOp    , mkIntOpPr Peq)
+  , (IntNeOp    , mkIntOpPr Pne)
+  , (IntLeOp    , mkIntOpPr Ple)
+  , (IntLtOp    , mkIntOpPr Plt)
+  , (IntNegOp   , mkIntOpPr Pneg)   
+  , (WordGtOp   , mkIntOpPr Padd)
+  , (WordGeOp   , mkIntOpPr Psub)
+  , (WordEqOp   , mkIntOpPr Pmul)
+  , (WordNeOp   , mkIntOpPr Pdiv)
+  , (WordLeOp   , mkIntOpPr Pmod)
+  , (WordLtOp   , mkIntOpPr Pgt) 
+  , (WordAddOp  , mkIntOpPr Pge) 
+  , (WordSubOp  , mkIntOpPr Peq) 
+  , (WordMulOp  , mkIntOpPr Pne) 
+  , (WordQuotOp , mkIntOpPr Ple) 
+  , (WordRemOp  , mkIntOpPr Plt)
+  , (IndexOffAddrOp_Char, mkOtherOpPr PidxChr)
+  , (ISllOp     , mkOtherOpPr Psll) -- unchecked int shift left
+  , (ISraOp     , mkOtherOpPr Psra) -- unchecked int shift right (arithmetic)
+  , (ISrlOp     , mkOtherOpPr Psrl) -- unchecked int shift right (logical)
+  , (ChrOp      , mkOtherOpPr Pchr)
+  , (OrdOp      , mkOtherOpPr Pord)
 --  , (RaiseOp    , Pexcept)
 --
 --  I want to figure out a way to get this in eventually, even in a

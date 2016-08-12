@@ -14,11 +14,13 @@ import           Data.Function (on)
 import           Data.List     (isPrefixOf, partition)
 import qualified Data.Map      as Map
 import qualified Data.Set      as Set
+import           Data.Int (Int64)
 import           Debug.Trace
 import           MHS.AST
 import           MHS.Transform
 import           PPrint
 import           State
+import           Util
 
 makeSTG :: [Defn] -> ([TyCon], [Obj ()], Assumptions)
 makeSTG defs =
@@ -243,12 +245,13 @@ instance STGable Pattern where
     Match{npats} -> mkErr (not $ all isDefaultPat npats)
                     (text "Non-simple pattern found:" <+> pprint p)
 
-
 class ToSTG a b where
   stgify :: DCMap -> a -> STGState b
 
 type DCMap = Map.Map Con Constr
 type STGState a = State (Int,Int,Int) (a ())
+
+
 
 incfst (a,b,c) = (succ a, b, c)
 incsnd (a,b,c) = (a, succ b, c)
@@ -288,13 +291,6 @@ conAr dcmap str =
 
 primCall = (gpfunPfx `isPrefixOf`)
 
-primAr :: Var -> Int
-primAr str =
-  let s = drop (length gpfunPfx) str
-      Just op = lookup s primopTab
-  in primArity op
-
-
 makeObj :: DCMap -> Exp -> Var -> STGState Obj
 makeObj dcmap e name =
   case e of
@@ -304,7 +300,7 @@ makeObj dcmap e name =
       in case atm of
           AtmCon c -> conit c args
           AtmVar v -> thunk
-          AtmOp p -> thunk
+          AtmOp p i -> thunk
           a -> error $ unlines
                ["attempt to apply literal as function",
                 show $ pprint e]
@@ -373,7 +369,7 @@ instance ToSTG Exp Expr where
     Nothing ->
       case e of
        EAt{atm} -> case atm of
-         LUBInt i -> return $ EAtom () $ LitI i
+         LUBInt i -> return $ EAtom () $ LitI $ to64 i
          LUBDbl d -> return $ EAtom () $ LitD d
          AtmVar v -> return $ EAtom () $ Var v
          _ -> error $ unlines
@@ -389,14 +385,6 @@ instance ToSTG Exp Expr where
                    let conName = drop (length gcfunPfx) v
                    in letCon dcmap conName args
 
-               | primCall v &&
-                 length args == primAr v ->
-                   do
-                     let v' = drop (length gpfunPfx) v
-                         Just op = lookup v' primopTab
-                     eas <- mapM (stgify dcmap) args
-                     return $ EPrimop () op eas
-
                | otherwise ->
                    do
                      eas <- mapM (stgify dcmap) args
@@ -408,11 +396,11 @@ instance ToSTG Exp Expr where
              EAt{atm = AtmCon c} -> letCon dcmap c args
 
              -- previous transforms guarantee that this is only
-             -- a result of generated functions.
-             EAt{atm = AtmOp o} ->
+             -- a result of generated functions or is a truly saturated op
+             EAt{atm = AtmOp o i} ->
                do
                  eas <- mapM (stgify dcmap) args
-                 return $ EPrimop () o eas
+                 return $ EPrimOp () o i eas
 
              _ -> error $ unlines
                   ["EAp in stgify not simplified:",

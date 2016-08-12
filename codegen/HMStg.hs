@@ -149,11 +149,9 @@ instance DV (Expr InfoTab) (Expr InfoTab) where
     dv e@EAtom{emd, ea} =
         do m <- case ea of
                   Var v  -> freshMonoVar
-                  LitI _ -> return $ intPrimTy
-                  LitL _ -> return $ longPrimTy
-                  LitF _ -> return $ floatPrimTy
-                  LitD _ -> return $ doublePrimTy
-                  LitStr s -> return $ stringPrimTy
+                  LitI _ -> pure primIntType
+                  LitD _ -> pure primDoubleType
+                  LitStr s -> pure primStringType
                   LitC c -> case maybeCMap emd of
                               Nothing -> error "dv LitC maybeCMap is Nothing"
                               Just cmap -> return $
@@ -170,56 +168,8 @@ instance DV (Expr InfoTab) (Expr InfoTab) where
            eas' <- mapM dv eas -- setTyp(s) of args
            return $ setTyp retMono e{eas = eas'}
 
-    dv e@EPrimop{..} =
-        let retMono = case eprimop of
-                        Piadd -> intPrimTy
-                        Pisub -> intPrimTy
-                        Pimul -> intPrimTy
-                        Pidiv -> intPrimTy
-                        Pimod -> intPrimTy
-                        Pimax -> intPrimTy
-                        Pimin -> intPrimTy
-                        Pineg -> intPrimTy
-                        Pieq  -> intPrimTy
-                        Pine  -> intPrimTy
-                        Pile  -> intPrimTy
-                        Pilt  -> intPrimTy
-                        Pige  -> intPrimTy
-                        Pigt  -> intPrimTy
-                        PiSRL -> intPrimTy
-                        PiSRA -> intPrimTy
-                        PiSLL -> intPrimTy
-                        PIdxChar  -> intPrimTy
-                        x -> error $ "HMStg.dv Eprimop " ++ show x
-                        -- etc.
-
-        in do eas' <- mapM dv eas -- setTyp(s) of Primop args
-              let --ms = map getTyp eas' -- use those types to make MFun
-                 -- m = foldr MFun retMono ms
-                  e' = e{eas = eas'}
-              return $ setTyp retMono e'
-
     dv e@EPrimOp{..} =
-        let biMCon = case eprimTy of
-                       Pint -> biIntMCon
-                       Pdouble -> biDoubleMCon
-            retMono = case eprimOp of
-                          Padd -> biMCon
-                          Psub -> biMCon
-                          Pmul -> biMCon
-                          Pdiv -> biMCon
-                          Pmod -> biMCon
-                          Pmax -> biMCon
-                          Pmin -> biMCon
-                          Pneg -> biMCon
-                          Peq  -> biIntMCon
-                          Pne  -> biIntMCon
-                          Ple  -> biIntMCon
-                          Plt  -> biIntMCon
-                          Pge  -> biIntMCon
-                          Pgt  -> biIntMCon
-                        -- etc.
-
+        let (retMono,_) = unfoldMTy $ opType eopInfo
         in do eas' <- mapM dv eas -- setTyp(s) of Primop args
               let --ms = map getTyp eas' -- use those types to make MFun
                  -- m = foldr MFun retMono ms
@@ -310,53 +260,10 @@ instance BU (Expr InfoTab) where
             Set.unions css,
             e{eas=eas'}) -- EFCall monotype set in dv
 
-    bu mtvs e@EPrimop{emd = ITPrimop{typ}, eprimop, eas} =
+    bu mtvs e@EPrimOp{emd = ITPrimop{typ}, eprimOp, eopInfo, eas} =
         let (ass, _, eas') = unzip3 $ map (bu mtvs) eas
             as = Set.unions ass
-            pts = case eprimop of
-                    Piadd -> [intPrimTy, intPrimTy]
-                    Pisub -> [intPrimTy, intPrimTy]
-                    Pimul -> [intPrimTy, intPrimTy]
-                    Pidiv -> [intPrimTy, intPrimTy]
-                    Pimod -> [intPrimTy, intPrimTy]
-                    Pimax -> [intPrimTy, intPrimTy]
-                    Pimin -> [intPrimTy, intPrimTy]
-                    Pineg -> [intPrimTy, intPrimTy]
-                    Pine  -> [intPrimTy, intPrimTy]
-                    Pieq  -> [intPrimTy, intPrimTy]
-                    Pile  -> [intPrimTy, intPrimTy]
-                    Pilt  -> [intPrimTy, intPrimTy]
-                    Pigt  -> [intPrimTy, intPrimTy]
-                    Pige  -> [intPrimTy, intPrimTy]
-                    PiSLL -> [intPrimTy, intPrimTy]
-                    PiSRL -> [intPrimTy, intPrimTy]
-                    PiSRA -> [intPrimTy, intPrimTy]
-                    PIdxChar -> [stringPrimTy, intPrimTy]
-                    x -> error $ "HMStg.bu EPrimop " ++ show x
-            cs = Set.fromList [EqC m1 m2 | (_,m1) <- Set.toList as | m2 <- pts]
-        in (as, cs, e) -- EPrimop monotype set in dv
-
-    bu mtvs e@EPrimOp{emd = ITPrimop{typ}, eprimOp, eprimTy, eas} =
-        let (ass, _, eas') = unzip3 $ map (bu mtvs) eas
-            as = Set.unions ass
-            biMCon = case eprimTy of
-                           Pint -> biIntMCon
-                           Pdouble -> biDoubleMCon
-            pts = case eprimOp of
-                    Padd -> [biMCon, biMCon]
-                    Psub -> [biMCon, biMCon]
-                    Pmul -> [biMCon, biMCon]
-                    Pdiv -> [biMCon, biMCon]
-                    Pmod -> [biMCon, biMCon]
-                    Pmax -> [biMCon, biMCon]
-                    Pmin -> [biMCon, biMCon]
-                    Pneg -> [biMCon, biMCon]
-                    Pne  -> [biMCon, biMCon]
-                    Peq  -> [biMCon, biMCon]
-                    Ple  -> [biMCon, biMCon]
-                    Plt  -> [biMCon, biMCon]
-                    Pgt  -> [biMCon, biMCon]
-                    Pge  -> [biMCon, biMCon]
+            (_,pts) = unfoldMTy $ opType eopInfo
             cs = Set.fromList [EqC m1 m2 | (_,m1) <- Set.toList as | m2 <- pts]
         in (as, cs, e) -- EPrimop monotype set in dv
 
@@ -606,7 +513,6 @@ instance BackSub (Expr InfoTab) where
         in case e' of
              e@ELet{edefs,ee}   -> e{edefs = backSub s edefs, ee = backSub s ee}
              e@ECase{ee, ealts} -> e{ee = backSub s ee, ealts = backSub s ealts}
-             e@EPrimop{eas}     -> e{eas = map (backSub s) eas}
              e@EPrimOp{eas}     -> e{eas = map (backSub s) eas}
              e@EFCall{eas}      -> e{eas = map (backSub s) eas}
              EAtom{}            -> e'
@@ -656,7 +562,6 @@ instance CO (Expr InfoTab) where
              e@ELet{edefs,ee}   -> e{edefs = co bvs' edefs, ee = co bvs' ee}
              -- I think this is right.
              e@ECase{ee, ealts} -> e{ee = co bvs' ee, ealts = setCTyp ptyp $ co bvs' ealts}
-             e@EPrimop{eas}     -> e{eas = map (co bvs') eas}
              e@EPrimOp{eas}     -> e{eas = map (co bvs') eas}
              e@EFCall{eas}      -> e{eas = map (co bvs') eas}
              EAtom{}            -> e'
@@ -720,11 +625,8 @@ instance Show a => Ppstg (Expr a) where
     ppstg n (EFCall emd f as) =
         indents n [show emd ++ " " ++ f ++ " " ++ showas as]
 
-    ppstg n (EPrimop emd p as) =
-        indents n [show emd ++ " PRIMOP " ++ show p ++ " " ++ showas as]
-
-    ppstg n (EPrimOp emd p t as) =
-        indents n [show emd ++ " PRIMOP " ++ show p ++ " " ++ show t ++ " " ++ showas as]
+    ppstg n (EPrimOp emd p i as) =
+        indents n [show emd ++ " PRIMOP " ++ show p ++ " " ++ show i ++ " " ++ showas as]
 
     ppstg n (ELet emd defs e) =
         let ss = [show emd ++ " let { %"] ++

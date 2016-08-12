@@ -16,7 +16,6 @@ module MHS.Transform
 
 import Debug.Trace
 import MHS.AST
-import MHS.Tokenizer (primopTable)
 import qualified Data.Map as Map
 import qualified Data.Set as Set
 import PPrint
@@ -308,8 +307,7 @@ genFunctions defs =
       defns = makefuns popLs conLs dict
   in defns ++ defs'
 
-primDict = map swap primopTab
-
+primDict = map swap primOpTab
 
 getNum = do
   i <- get
@@ -325,7 +323,7 @@ getNums n =
      return (i:is)
     
 
-makefuns :: [Primop] -> [Con] -> Map.Map Con Int -> [Defn]
+makefuns :: [(PrimOp, PrimOpInfo)] -> [Con] -> Map.Map Con Int -> [Defn]
 makefuns pops cons dict =
   
   let mfun1 c = case Map.lookup c dict of
@@ -342,18 +340,18 @@ makefuns pops cons dict =
                          oexp = EFn pats eexp
                      return $ ODefn ("gfc_" ++ c) oexp Nothing
 
-      mfun2 p = case lookup p primDict of
-                 Nothing -> error $ "Couldn't find primop in table: " ++ show (pprint p)
-                 Just op -> 
-                   do
-                     nums <- getNums (primArity p)
-                     let vars = zipWith (++) (repeat "gap_") (map show nums)
-                         pats = map Default vars
-                         fexp = EAt $ AtmOp p
-                         args = map (EAt . AtmVar) vars
-                         eexp = foldl EAp fexp args
-                         oexp = EFn pats eexp        
-                     return $ ODefn ("gfp_" ++ op) oexp Nothing
+      mfun2 (p,i) = case lookup p primDict of
+                    Nothing -> error $ "Couldn't find primop in table: " ++ show (pprint p)
+                    Just op -> 
+                      do
+                        nums <- getNums (opArity i)
+                        let vars = zipWith (++) (repeat "gap_") (map show nums)
+                            pats = map Default vars
+                            fexp = EAt $ AtmOp p i
+                            args = map (EAt . AtmVar) vars
+                            eexp = foldl EAp fexp args
+                            oexp = EFn pats eexp        
+                        return $ ODefn ("gfp_" ++ op) oexp Nothing
       (cdefs,_) = runState (mapM mfun1 cons) 0
       (pdefs,_) = runState (mapM mfun2 pops) 0
   in cdefs ++ pdefs
@@ -378,7 +376,7 @@ tryCon dict e = case e of
 -}
 
 type CGenSet = Set.Set Con
-type PGenSet = Set.Set Primop
+type PGenSet = Set.Set (PrimOp, PrimOpInfo)
 
 class GenFuns a where
   genfuns ::  a -> (CGenSet, PGenSet, a)
@@ -401,15 +399,18 @@ instance GenFuns Exp where
     EAt{atm} -> case atm of
       AtmCon c -> let v = "gfc_" ++ c
                   in (Set.singleton c, Set.empty, e{atm = AtmVar v})
-      AtmOp o -> let op = case lookup o primDict of
-                       Just n -> n
-                       Nothing -> error $ "Couldn't find primop in table: " ++ show (pprint o)
-                     v = "gfp_" ++ op
-                 in (Set.empty, Set.singleton o, e{atm = AtmVar v})      
+
+      -- Should only get here if Op is not saturated
+      AtmOp o i -> let op = case lookup o primDict of
+                         Just n -> n
+                         Nothing -> error $ "Couldn't find primop in table: " ++ show (pprint o)
+                       v = "gfp_" ++ op
+                 in (Set.empty, Set.singleton (o,i), e{atm = AtmVar v})      
       _ -> (Set.empty, Set.empty, e)
 
-    EAp{fexp, eexp} -> 
-      let (cgs1, pgs1, fexp') = genfuns fexp
+    EAp{fexp, eexp} ->
+      let (cgs1, pgs1, fexp') | saturatedPrimAp e = (Set.empty, Set.empty, fexp)
+                              | otherwise = genfuns fexp
           (cgs2, pgs2, eexp') = genfuns eexp
       in (Set.union cgs2 cgs1,
           Set.union pgs2 pgs1,
@@ -529,9 +530,9 @@ instance SimpleExp Exp where
         -- if necessary
         (f, truDefs) <-
           case fe' of
-           EAt(AtmVar _) -> return (fe',defs)
-           EAt(AtmCon _) -> return (fe',defs)
-           EAt(AtmOp _)  -> return (fe',defs)
+           EAt(AtmVar _)   -> return (fe',defs)
+           EAt(AtmCon _)   -> return (fe',defs)
+           EAt(AtmOp _ _)  -> return (fe',defs)
            EAt{} -> error $ "bad EAt in Transform.smplExp: " ++ show (pprint fe')
            _ -> do
              v <- genFunVar

@@ -94,7 +94,6 @@ instance STGToList (Obj (Set.Set Var, Set.Set Var)) (Obj ([Var],[Var])) where
 instance STGToList (Expr (Set.Set Var, Set.Set Var)) (Expr ([Var],[Var])) where
     stgToList EAtom{..} = EAtom{emd = p2p emd, ..}
     stgToList EFCall{..} = EFCall{emd = p2p emd, eas = map stgToList eas, ..}
-    stgToList EPrimop{..} = EPrimop{emd = p2p emd, eas = map stgToList eas, ..} -- to be removed
     stgToList EPrimOp{..} = EPrimOp{emd = p2p emd, eas = map stgToList eas, ..}
     stgToList ELet{..} = ELet{emd = p2p emd, edefs = map stgToList edefs, ee = stgToList ee, ..}
     stgToList ECase{..} = ECase{emd = p2p emd, ee = stgToList ee, ealts = stgToList ealts, ..}
@@ -170,18 +169,12 @@ instance SetFVs (Expr a) (Expr (Set.Set Var, Set.Set Var)) where
             truefvs            = Set.singleton f  `Set.union` astruefvs
         in EFCall (myfvs,truefvs) f as'
 
-    -- to be removed
-    setfvs tlds (EPrimop _ p as) =
-        let as' = map (setfvs tlds) as
-            (easFVs, easTFVs) = unzip $ map emd as'
-            (myfvs, truefvs) = (Set.unions easFVs, Set.unions easTFVs)
-        in EPrimop (myfvs,truefvs) p as'
 
-    setfvs tlds (EPrimOp _ p t as) =
+    setfvs tlds (EPrimOp _ p i as) =
         let as' = map (setfvs tlds) as
             (easFVs, easTFVs) = unzip $ map emd as'
             (myfvs, truefvs) = (Set.unions easFVs, Set.unions easTFVs)
-        in EPrimOp (myfvs,truefvs) p t as'
+        in EPrimOp (myfvs,truefvs) p i as'
 
     -- let introduces scope
     setfvs tlds (ELet _ defs e) =

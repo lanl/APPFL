@@ -198,13 +198,6 @@ instance SetHA (Expr InfoTab) where
         emd' = emd {noHeapAlloc = nha}
       in e { emd = emd' }
 
-    -- to be removed
-    EPrimop{emd, eas} ->
-      let eas' = map (setHA fmp) eas      -- for consistency
-          nha  = all getHA eas            -- for consistency
-          emd' = emd {noHeapAlloc = True} -- hack, typechecker not working?
-      in e { emd = emd' }
-
     EPrimOp{emd, eas} ->
       let eas' = map (setHA fmp) eas      -- for consistency
           nha  = all getHA eas            -- for consistency
@@ -301,7 +294,6 @@ exhaustExpr cmap expr =
    ECase{ealts} -> expr {ealts = exhaustAlts cmap ealts}
 
    EAtom{}   -> expr
-   EPrimop{} -> expr -- to be removed
    EPrimOp{} -> expr
    EFCall{}  -> expr
 

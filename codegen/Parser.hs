@@ -155,8 +155,6 @@ tokP t1 (t2:inp) =
    (TokId _ _    , TokId _ _   ) -> accept t2 inp
    (TokCon _ _   , TokCon _ _  ) -> accept t2 inp
    (TokPrim _ _  , TokPrim _ _ ) -> accept t2 inp  -- to be removed
-   (TokPrimOp _ _  , TokPrimOp _ _ ) -> accept t2 inp
-   (TokPrimTy _ _  , TokPrimTy _ _ ) -> accept t2 inp
    (TokRsv x _   , TokRsv y _  ) -> if x == y then accept t2 inp else reject inp
    (TokEOF _ _   , TokEOF _ _  ) -> accept t2 inp
    (TokWht _ _ _ , TokWht _ _ _) -> accept t2 inp
@@ -181,16 +179,18 @@ subHash (x:xs) = x : subHash xs
 
 -- Match constructor token, accept its String
 conNameP :: Parser Token String
-conNameP = tokP2 (TokCon) `using` (subHash.tks)
+conNameP = tokP2 (TokCon) `using` tks
 
 -- Match variable token, accept its String
 varNameP :: Parser Token String
-varNameP = tokP2 (TokId) `using` (subHash . tks)
+varNameP = tokP2 (TokId) `using` tks
 
 
+-- partitionNum "123.345#" -> ("123.345", "345", 1)
+-- partitionNum "1234##"   -> ("1234", "", 2)
 partitionNum :: String -> ( String -- The whole number, less any trailing hash symbols
                           , String -- Any fractional part of the whole
-                          , Int) -- 
+                          , Int)   -- How many hash symbols at the end of the number
 partitionNum s = let (f,hs) = break (== '#') s
                      (l, r) = break (== '.') f
                  in (f, drop 1 r, length hs)
@@ -200,35 +200,26 @@ partitionNum s = let (f,hs) = break (== '#') s
 
 -- Recent change allows an optional '#' or '##' suffix to specify int vs long
 -- and float vs double, respectively (roughly as in MagicHash GHC extension).
--- If none is specified, int and double are the defaults.
--- Important invariant guaranteed by the tokenizer is that there will be 0, 1 or 2
--- '#' symbols at the end of the TokNum string, and there will be 0 or 1 period
--- sandwiched between two otherwise valid integer strings.
+-- Since changing to using only literal Ints and Doubles, this is not particularly useful,
+-- but the partitioning logic is still used in case we want to return to that.
 litNumP :: Parser Token Atom
 litNumP = tokP2 TokNum >>> \(TokNum s _) ->
   case partitionNum s of
     (whole, frac, nHashes)
-      | null frac -> let con | nHashes <= 1 = LitI . read
-                             | otherwise    = LitL . read
-                     in accept $ con whole
-
-      | otherwise -> let con | nHashes == 1 = LitF . read
-                             | otherwise    = LitD . read
-                     in accept $ con $ whole
+      | null frac -> accept $ LitI (read whole)
+      | otherwise -> accept $ LitD (read whole)
 
 
 
 -- Match Primop Token, accept Primop
--- to be removed
 primP :: Parser Token (PrimOp, PrimOpInfo)
 primP = tokP2 (TokPrim) >>> \t ->
-  mkPrimPair
-  where mkPrimPair (TokPrim opstr@(h:_) _) =
+  mkPrimPair t
+  where mkPrimPair (TokPrim opstr _) =
           let
             -- tokenization should guarantee this never fails
             Just op = lookup opstr primOpTab
-          in (op, mkOpInfo h op)
-            
+          in accept (op, mkOpInfo (head opstr) op)
         mkPrimPair _ = reject
 
 
@@ -344,8 +335,7 @@ thunkP = objPat "THUNK" $
 -- parse an expression, accept an Expr () object
 exprP :: Parser Token (Expr ())
 exprP = orExList
-        [eFCallP, eAtomP, ePrimopP, -- to be removed
-        ePrimOpP, eLetP, eCaseP, inparensP exprP]
+        [eFCallP, eAtomP, ePrimOpP, eLetP, eCaseP, inparensP exprP]
 
 
 -- parse an expression argument to a function call or primop
@@ -356,7 +346,7 @@ exprP = orExList
 -- atoms but map EAtom across
 exprArgP :: Parser Token (Expr ())
 exprArgP = orExList
-           [eAtomP, eLetP, eCaseP, eFCallP, ePrimopP, inparensP exprP]
+           [eAtomP, eLetP, eCaseP, eFCallP, ePrimOpP, inparensP exprP]
 
 -- parse an atom expression
 eAtomP :: Parser Token (Expr ())
@@ -372,8 +362,8 @@ eFCallP =
 
 -- parse a primitive operation expression (e.g. isub# 1# 2#)
 -- to be removed
-ePrimopP :: Parser Token (Expr ())
-ePrimopP =
+ePrimOpP :: Parser Token (Expr ())
+ePrimOpP =
   primP >>> \(op, info) ->
   tokcutP "Expected one or more atoms as arguments to a primop" $
   some' atomP >>> \args ->

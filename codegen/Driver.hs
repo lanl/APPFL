@@ -105,7 +105,7 @@ stgRTSGlobals :: [String]
 stgRTSGlobals = [ "stg_case_not_exhaustive", -- before type checking
                   "stg_case_not_exhaustiveP", -- during codegen
                   "stg_case_not_exhaustiveN"  -- during codegen
-                ] ++ map fst primopTab -- from AST.hs
+                ] ++ map fst primOpTab -- from AST.hs
 
 
 -- Tokenizes input, stripping comments and handling the layout rule

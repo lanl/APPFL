@@ -77,6 +77,8 @@ import Language.C.Syntax(Initializer(..),
 -- using "esc"
 type CFun = [Definition]
 
+
+
 data RVal = SO              -- static object
           | HO String       -- Heap Obj, payload size, TO GO?
           | FP String Int   -- stack Formal Param, pointer to stack payload
@@ -177,8 +179,6 @@ cga env at =
         case at of
           Var v    -> cgv env v
           LitI i   -> mk [cexp| $int:i                 |] "INT"    "i"
-          LitL l   -> mk [cexp| $lint:l                |] "LONG"   "l"
-          LitF f   -> mk [cexp| $float:(toRational f)  |] "FLOAT"  "f"
           LitD d   -> mk [cexp| $double:(toRational d) |] "DOUBLE" "d"
           LitC c   -> mk [cexp| $id:("con_" ++ c)      |] "INT"    "i"
           LitStr s -> mk [cexp| $string:s              |] "STRING" "s"
@@ -197,9 +197,7 @@ isBoxede e = isBoxed $ typ $ emd e
 cgUBa :: Env -> Atom -> String -> Exp
 cgUBa env (Var v)     t  = [cexp| ($exp:(fst $ cgv env v)).$id:t |]
 cgUBa env (LitI i)   "i" = [cexp| $int:i |]
-cgUBa env (LitL l)   "l" = [cexp| $lint:l |]
 cgUBa env (LitD d)   "d" = [cexp| $double:(toRational d) |]
-cgUBa env (LitF f)   "f" = [cexp| $float:(toRational f) |]
 cgUBa env (LitStr s) "s" = [cexp| $string:s |]
 cgUBa _ at _ = error $ "CodeGen.cgUBa: not expecting Atom - " ++ show at
 
@@ -361,80 +359,25 @@ cge env e@(EFCall it f eas) =
                 else stgApplyGeneric env f eas False
 
 
-cge env (EPrimop it op eas) =
+cge env (EPrimOp it op info eas) =
     let as = map ea eas
-        POI{pArgTys, pRetTy, primCGFun} = opInfo op
-        cArgs = zipWith (cgUBa env) (map ea eas) (map primTyPoLField pArgTys)
+        POI{pArgTys, pRetTy, primCGFun} = info
+        cArgs = zipWith (cgUBa env) (map ea eas) (map primTypeStrId pArgTys)
         pexpr = primCGFun cArgs
         inline = case pRetTy of
           -- Just do it? Modify stgCurVal?
           PVoid -> [citems| $pexpr; |]
           _     -> stgCurValUArgType (primTyArgType pRetTy) ++
-                   [citems| stgCurValU.$id:(primTyPoLField pRetTy) = $pexpr; |]          
+                   [citems| stgCurValU.$id:(primTypeStrId pRetTy) = $pexpr; |]          
     in return ((inline, No), [])
   where
-    --  What field accessor do I use to get the correct arg from a PtrOrLiteral?
-    primTyPoLField :: PrimType -> String
-    primTyPoLField pt = case pt of
-      PInt    -> "i"
-      PInt64  -> "l"
-      PUInt64 -> "u"
-      PFloat  -> "f"
-      PDouble -> "d"
-      PString -> "s"
-      PVoid   -> error "No \"PVoid\" accessor for PtrOrLiterals"
     --  What ArgType do I use for some PrimType
     primTyArgType :: PrimType -> String
     primTyArgType pt = case pt of
       PInt    -> "INT"
-      PInt64  -> "LONG"
-      PUInt64 -> "ULONG"
-      PFloat  -> "FLOAT"
       PDouble -> "DOUBLE"
       PString -> "STRING"
       PVoid   -> error "No \"PVoid\" ArgType"
-
-cge env (EPrimOp it op ty eas) =
-    let as = map ea eas
-        (pay, typ) = case ty of
-              Pint -> ("i", "INT")
-              Pdouble -> ("d", "DOUBLE")
-        arg0 = cgUBa env (as !! 0) pay
-        arg1 = cgUBa env (as !! 1) pay
-        inline = case op of
-                   Padd -> stgCurValUArgType typ ++
-                           [citems| stgCurValU.$id:pay = $exp:arg0 + $exp:arg1; |]
-                   Psub -> stgCurValUArgType typ ++
-                           [citems| stgCurValU.$id:pay = $exp:arg0 - $exp:arg1; |]
-                   Pmul -> stgCurValUArgType typ ++
-                           [citems| stgCurValU.$id:pay = $exp:arg0 * $exp:arg1; |]
-                   Pdiv -> stgCurValUArgType typ ++
-                           [citems| stgCurValU.$id:pay = $exp:arg0 / $exp:arg1; |]
-                   Pmod -> stgCurValUArgType typ ++
-                           [citems| stgCurValU.$id:pay = $exp:arg0 % $exp:arg1; |]
-                   Peq ->  stgCurValUArgType "INT" ++
-                           [citems| stgCurValU.$id:pay = $exp:arg0 == $exp:arg1; |]
-                   Pne ->  stgCurValUArgType "INT" ++
-                           [citems| stgCurValU.$id:pay = $exp:arg0 != $exp:arg1; |]
-                   Plt ->  stgCurValUArgType "INT" ++
-                           [citems| stgCurValU.$id:pay = $exp:arg0 < $exp:arg1; |]
-                   Ple ->  stgCurValUArgType "INT" ++
-                           [citems| stgCurValU.$id:pay = $exp:arg0 <= $exp:arg1; |]
-                   Pgt ->  stgCurValUArgType "INT" ++
-                           [citems| stgCurValU.$id:pay = $exp:arg0 > $exp:arg1; |]
-                   Pge ->  stgCurValUArgType "INT" ++
-                           [citems| stgCurValU.$id:pay = $exp:arg0 >= $exp:arg1; |]
-                   Pneg -> stgCurValUArgType typ ++
-                           [citems| stgCurValU.$id:pay = -$exp:arg0; |]
-                   Pmin -> stgCurValUArgType typ ++
-                           case ty of
-                             Pint -> [citems| stgCurValU.$id:pay = imin($exp:arg0,$exp:arg1); |]
-                             Pdouble -> [citems| stgCurValU.$id:pay = dmin($exp:arg0,$exp:arg1); |]
-                   Pmax -> stgCurValUArgType typ ++
-                           case ty of
-                             Pint -> [citems| stgCurValU.$id:pay = imax($exp:arg0,$exp:arg1); |]
-                             Pdouble -> [citems| stgCurValU.$id:pay = dmax($exp:arg0,$exp:arg1); |]
-    in return ((inline, No), [])
 
   
 cge env (ELet it os e) =
@@ -693,25 +636,26 @@ bho env (THUNK it e name) =
 
 --BH bho env (BLACKHOLE it name) = []
 
-loadPayloadFVs :: Env -> [String] -> Int -> String -> [BlockItem]
+loadPayloadFVs :: Env -> [CleanString] -> Int -> String -> [BlockItem]
 loadPayloadFVs env fvs ind name =
-  [ [citem| $comment:("// " ++ v)
-            $id:name->payload[$int:i] = $exp:(fst $ cgv env v);
-          |] | (i,v) <- indexFrom ind fvs]
+    [ [citem| $comment:("// " ++ v)
+            $id:cname->payload[$int:i] = $exp:(fst $ cgv env v);
+            |] | (i,v) <- indexFrom ind fvs]
+
 
 loadPayloadAtoms :: Env -> [Atom] -> Int -> String -> [BlockItem]
 loadPayloadAtoms env as ind name =
-  [ [citem| $comment:("// " ++ showa a)
-            $id:name->payload[$int:i] = $exp:(fst $ cga env a);
-          |] | (i,a) <- indexFrom ind as]
+  let cname = santize name
+  in 
+    [ [citem| $comment:("// " ++ showa a)
+            $id:cname->payload[$int:i] = $exp:(fst $ cga env a);
+            |] | (i,a) <- indexFrom ind as]
 
 showas :: [Atom] -> String
 showas as = unwords $ map showa as
 
 showa (Var  v) = v
 showa (LitI i) = show i
-showa (LitL l) = show l
-showa (LitF f) = show f
 showa (LitD d) = show d
 showa (LitC c) = "con_" ++ c
 showa (LitStr s) = s
@@ -719,3 +663,5 @@ showa (LitStr s) = s
 
 indexFrom :: Int -> [a] -> [(Int, a)]
 indexFrom i xs = zip [i..] xs
+
+

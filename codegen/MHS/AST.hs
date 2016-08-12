@@ -17,6 +17,7 @@ module MHS.AST
   isDDefn,
   partitionDefs,
   unfoldEAp,
+  saturatedPrimAp,
   isDefaultPat,
   hidesPats,
   hidesPat,
@@ -94,7 +95,7 @@ data Atm = LBInt Int
          | LUBDbl Double
          | AtmVar Var
          | AtmCon Con
-         | AtmOp Primop
+         | AtmOp PrimOp PrimOpInfo
            deriving (Show, Eq)
 
 data Pattern = Match {str :: String, npats :: [Pattern]}
@@ -130,6 +131,16 @@ unfoldEAp e =
             _ -> (e,[]) -- NOT necessarily EAt!
 
 
+-- | Is this expression a saturated primitive application
+saturatedPrimAp :: Exp -> Bool
+saturatedPrimAp e@EAp{} =
+  let (f, args) = unfoldEAp e
+  in case f of
+    EAt (AtmOp op info) -> length args == opArity info
+    _ -> False
+saturatedPrimAp _ = False
+
+
 
 -- These datatypes conform to the usage in GHC.Prim and GHC.Exts
 -- this allows a minihaskell program to be compiled as Haskell
@@ -137,11 +148,11 @@ unfoldEAp e =
 -- and the correct imports and aliases see prelude.mhs
 intCon = DDefn { mtyp = MCon (Just True) "Int" [],
                dcons = [DCon {dcon = "I#",
-                              mtyps = [biIntMCon], --[MPrim UBInt],
+                              mtyps = [primIntType],
                               cons = ["I#"]}] }
 dblCon = DDefn { mtyp = MCon (Just True) "Double" [],
                dcons = [DCon {dcon = "D#",
-                              mtyps = [biDoubleMCon], --[MPrim UBDouble],
+                              mtyps = [primDoubleType],
                               cons = ["D#"]}] }
 
 isBoxedNum s = 
@@ -226,7 +237,7 @@ instance Unparse Atm where
   unparse atm = case atm of
     AtmVar v -> text v
     AtmCon c -> text c
-    AtmOp o  -> unparse o
+    AtmOp o _ -> unparse o 
     LBInt i  -> int i
     LBDbl d  -> double d
     LUBInt i -> int i <> hash
@@ -332,7 +343,7 @@ instance PPrint Atm where
   pprint atm = case atm of
     AtmVar v -> f "AtmVar" $ text v
     AtmCon c -> f "AtmCon" $ text c
-    AtmOp o  -> f "AtmOp" $ pprint o
+    AtmOp o i -> f "AtmOp" $ pprint o $+$ pprint i
     LBInt i  -> f "LBInt" $ int i
     LBDbl d  -> f "LBDbl" $ double d
     LUBInt i -> f "LUBInt" $ int i

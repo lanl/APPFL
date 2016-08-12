@@ -26,18 +26,14 @@ repv m vts = boxedFirst [(k, f k) | (k,_) <- vts]
 
 -- replace bogus type with correct type, sort by boxedness, Atom flavor
 repa m ats = boxedFirst [(k, f k) | (k,_) <- ats]
-    where f a = case a of
-                  Var v ->
+    where f a = case maybeTypeOfAtom a of
+                  Just t -> t
+                  Nothing ->
+                    let Var v = a in
                       case Map.lookup v m of
                         Nothing -> error $ "HMStg.repa:  unbound variable " ++
                                            show v ++ " " ++ show m
                         Just m -> m
-                  LitI{} -> biIntMCon
-                  LitL{} -> biLongMCon
-                  LitF{} -> biFloatMCon
-                  LitD{} -> biDoubleMCon
-                  LitStr{} -> biStringMCon
-                  LitC c -> MCon (Just False) c []
 
 -- partition (a,Monotype) pairs into boxed and unboxed, preserving order
 -- also return  perm such that old[i] = new[perm[i]]
@@ -105,10 +101,6 @@ instance TypeFVs (Expr InfoTab) where
             m' = Map.insert ev evtyp m
             eas' = map (typeFVsCommon m') eas
         in e{eas = eas'}
-
-    -- to be removed
-    typeFVs m e@EPrimop{eas} =
-        e{eas = map (typeFVsCommon m) eas}
 
     typeFVs m e@EPrimOp{eas} =
         e{eas = map (typeFVsCommon m) eas}
