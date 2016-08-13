@@ -33,3 +33,4 @@ foreach (test ${ALL_SRCS})
     endforeach(strict)
 endforeach(test)
 
+add_subdirectory(error)

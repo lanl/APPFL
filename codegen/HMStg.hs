@@ -185,6 +185,7 @@ instance DV (Expr InfoTab) (Expr InfoTab) where
                         Pilt  -> biIntMCon
                         Pige  -> biIntMCon
                         Pigt  -> biIntMCon
+                        Praise -> MVar ""
                         x -> error $ "HMStg.dv Eprimop " ++ show x
                         -- etc.
 
@@ -296,6 +297,7 @@ instance BU (Expr InfoTab) where
                     Pilt  -> [biIntMCon, biIntMCon]
                     Pigt  -> [biIntMCon, biIntMCon]
                     Pige  -> [biIntMCon, biIntMCon]
+                    Praise  ->  [] 
                     x -> error $ "HMStg.bu EPrimop " ++ show x
             cs = Set.fromList [EqC m1 m2 | (_,m1) <- Set.toList as | m2 <- pts]
         in (as, cs, e) -- EPrimop monotype set in dv

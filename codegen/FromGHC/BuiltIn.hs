@@ -71,7 +71,8 @@ primopMap = Map.fromList
   , (WordMulOp  , Pine) 
   , (WordQuotOp , Pile) 
   , (WordRemOp  , Pilt)
---  , (RaiseOp    , Pexcept)
+  , (RaiseOp    , Praise)
+  , (RaiseIOOp  , Praise)
 --
 --  I want to figure out a way to get this in eventually, even in a
 --  limited form that maybe only accepts String literals (as MachStr)

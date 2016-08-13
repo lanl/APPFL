@@ -239,7 +239,8 @@ primopTable =
     ("ige#",     Pige),
     ("ineg#",    Pineg),
     ("imin#",    Pimin),
-    ("imax#",    Pimax)
+    ("imax#",    Pimax),
+    ("raise#",    Praise)
   ]
 
 specials =

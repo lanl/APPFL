@@ -266,6 +266,7 @@ cgo env o@(FUN it vs e name) =
           top = [citems|
                   LOG(LOG_INFO, $string:(name ++ " here\n"));
                   typename PtrOrLiteral *$id:argp = &(stgGetStackArgp()->payload[0]);
+                  (void)$id:argp; // suppress warning
                 |]
           bot = [citems| STGRETURN0();|]
           items = if ypn /= Yes then top ++ inline ++ bot else top ++ inline
@@ -415,6 +416,7 @@ cge env (EPrimop it op eas) =
                             [citems| stgCurValU.i = imin($exp:arg0,$exp:arg1); |]
                    Pimax -> stgCurValUArgType "INT" ++
                             [citems| stgCurValU.i = imax($exp:arg0,$exp:arg1); |]
+                   Praise -> [citems| raise(); |]
                    _ -> error "Eprimop"
     in return ((inline, No), [])
 

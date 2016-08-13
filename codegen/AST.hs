@@ -113,6 +113,7 @@ data Primop = Piadd -- Int -> Int -> Int
             | Pige
 
             | Pineg -- Int -> Int
+            | Praise
             | Pinvalid
               deriving(Eq,Show, Ord)
 
@@ -138,7 +139,8 @@ primopTab =
      ("ineg_h",   Pineg),
 
      ("imax_h",   Pimax),
-     ("imin_h",   Pimin)
+     ("imin_h",   Pimin),
+     ("raise_h",  Praise)
     ]
 
 
