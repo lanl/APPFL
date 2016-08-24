@@ -216,7 +216,7 @@ data YPN = Yes | Possible | No -- could use Maybe Bool but seems obscure
 
 cgObjs :: [Obj InfoTab] -> [String] -> ([Definition], [CFun])
 cgObjs objs runtimeGlobals =
-   let tlnames = runtimeGlobals ++ map (name . omd) objs
+   let tlnames = runtimeGlobals ++ map (getString . name . omd) objs
        env = zip tlnames $ repeat SO
        (funcs, _) = runState (cgos env objs) 0
        (forwards, funs) = unzip funcs
@@ -492,11 +492,13 @@ cgeNoInline env boxed (ecode, efunc) a@(Alts italts alts aname scrt) =
             ++ (if fvs italts == [] then
                   [citems| $comment:("// no FVs");|]
                 else
-                  [citems|
-                    $comment:("// load payload with FVs"
-                      ++ intercalate " " (map fst $ fvs italts))
-                    $items:(loadPayloadFVs env (map fst $ fvs italts) 1 contName)
-                  |])
+                  let x = map cSanitize (map fst $ fvs italts) 
+                  in 
+                    [citems|
+                      $comment:("// load payload with FVs"
+                      ++ intercalate " " x)
+                      $items:(loadPayloadFVs env x 1 contName)
+                    |])
     in do (acode, afunc) <- cgalts env a boxed
 --        need YPN results from Alts
           return ((its ++ ecode ++ acode, Possible),
@@ -618,7 +620,8 @@ buildHeapObj env o =
 
 bho :: Env -> Obj InfoTab -> [BlockItem]
 bho env (FUN it vs e name) =
-  loadPayloadFVs env (map fst $ fvs it) 0 (name ++ "->op")
+  let x = map cSanitize (map fst $ fvs it)
+  in loadPayloadFVs env x 0 (name ++ "->op")
 
 bho env (PAP it f as name) = error "unsupported explicit PAP"
 
@@ -632,20 +635,23 @@ bho env (THUNK it e name) =
               if useArgType then
                 [citems| $id:name->op->payload[0].argType = HEAPOBJ; |]
               else []
-    in top ++ loadPayloadFVs env (map fst (fvs it)) 1 (name ++ "->op")
+        x = map cSanitize (map fst $ fvs it)
+    in top ++ loadPayloadFVs env x 1 (name ++ "->op")
 
 --BH bho env (BLACKHOLE it name) = []
 
 loadPayloadFVs :: Env -> [CleanString] -> Int -> String -> [BlockItem]
 loadPayloadFVs env fvs ind name =
-    [ [citem| $comment:("// " ++ v)
-            $id:cname->payload[$int:i] = $exp:(fst $ cgv env v);
+  let cname = cSanitize name
+  in
+    [ [citem| $comment:("// " ++ getString v)
+            $id:cname->payload[$int:i] = $exp:(fst $ cgv env (getString v));
             |] | (i,v) <- indexFrom ind fvs]
 
 
 loadPayloadAtoms :: Env -> [Atom] -> Int -> String -> [BlockItem]
 loadPayloadAtoms env as ind name =
-  let cname = santize name
+  let cname = cSanitize name
   in 
     [ [citem| $comment:("// " ++ showa a)
             $id:cname->payload[$int:i] = $exp:(fst $ cga env a);

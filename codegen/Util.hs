@@ -20,7 +20,7 @@ module Util
 
   isInt, isDouble, -- String -> Bool
 
-  
+
   CleanString, -- abstract, for now so you _have_ to call cSanitize
   getString,
   cSanitize,  -- z-encode a string so it's valid C
