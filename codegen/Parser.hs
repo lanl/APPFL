@@ -85,7 +85,7 @@ module Parser
  parseWithComments
 ) where
 
-import Debug.Trace  
+import Debug.Trace
 import Tokenizer
 import ParserComb
 import AST
@@ -154,7 +154,8 @@ tokP t1 (t2:inp) =
    (TokNum _ _   , TokNum _ _  ) -> accept t2 inp
    (TokId _ _    , TokId _ _   ) -> accept t2 inp
    (TokCon _ _   , TokCon _ _  ) -> accept t2 inp
-   (TokPrim _ _  , TokPrim _ _ ) -> accept t2 inp  -- to be removed
+   (TokPrim _ _  , TokPrim _ _ ) -> accept t2 inp
+   (TokPrimTy _ _  , TokPrimTy _ _ ) -> accept t2 inp
    (TokRsv x _   , TokRsv y _  ) -> if x == y then accept t2 inp else reject inp
    (TokEOF _ _   , TokEOF _ _  ) -> accept t2 inp
    (TokWht _ _ _ , TokWht _ _ _) -> accept t2 inp
@@ -209,6 +210,12 @@ litNumP = tokP2 TokNum >>> \(TokNum s _) ->
       | null frac -> accept $ LitI (read whole)
       | otherwise -> accept $ LitD (read whole)
 
+
+primTyP :: Parser Token PrimType
+primTyP = tokP2 (TokPrimTy) `using` getPrimty
+  where getPrimty (TokPrimTy s _) =
+          snd . head $ filter ((== s).fst) primTyTab
+        getPrimty _ = error "Parser.primTyP"
 
 
 -- Match Primop Token, accept Primop
@@ -439,7 +446,7 @@ atomP :: Parser Token Atom
 atomP = orExList [
   varNameP `using` Var,
   conNameP `using` LitC,
-  litNumP  
+  litNumP
   ]
 
 ---------------------------- DataDef parsing ---------------------------
@@ -483,8 +490,10 @@ dataConP =
 
 -- parse a monotype in a data constructor as a Monotype object
 monoTypP :: Parser Token Monotype
-monoTypP = orExList [mVarP, mFunP, mConP, inparensP monoTypP]
+monoTypP = orExList [mVarP, mFunP, mPrimTyP, mConP, inparensP monoTypP]
 
+mPrimTyP :: Parser Token Monotype
+mPrimTyP = primTyP `using` MPrim
 
 -- parse a variable as an MVar Monotype (e.g. 'a' in Just a)
 mVarP :: Parser Token Monotype

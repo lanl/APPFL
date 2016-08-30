@@ -10,7 +10,8 @@ module Tokenizer
   tokenizeWithComments,
 ) where
 
-import MHS.AST 
+import AST
+import MHS.AST
 import Data.Char
 import Data.List (isPrefixOf)
 import ParserComb
@@ -116,7 +117,7 @@ ncomment =
                  accept $ TokWht (op ++ concat chars ++ cls) p True
 
 lexeme = orExList
-         [varid, conid, special, primitive, reserved, literal]
+         [varid, conid, special, primitive, primitiveTy, reserved, literal]
 
 
 upper = satisfyFst isUpper
@@ -135,10 +136,14 @@ reserved = orExList
            (map litStr reserveds) >>> \(s,p) ->
                                        accept $ TokRsv s p
 
--- to be removed
+
 primitive = orExList
             (map litStr primops) >>> \(s,p) ->
                                       accept $ TokPrim s p
+
+primitiveTy = orExList
+            (map litStr primtys) >>> \(s,p) ->
+                                       accept $ TokPrimTy s p
 
 varid =
   orExList [lower, underscore, hash] >>> \(s,p) ->
@@ -148,6 +153,7 @@ varid =
                     case () of
                      _ | str `elem` reserveds -> reject
                        | str `elem` primops -> reject
+                       | str `elem` primtys -> reject
                        | otherwise ->
                            accept $ TokId str p
 
@@ -155,7 +161,7 @@ conid =
   upper >>> \(s,p) ->
   many idchar >>> \ss ->
       let con = (s:map fst ss)
-      in if con `elem` reserveds
+      in if (con `elem` reserveds || con `elem` primtys)
          then reject
          else accept $ TokCon con p
 
@@ -189,14 +195,14 @@ rmWhitespace wComments =
 type Pos = (Int, Int)
 
 data Token
-    = TokNum  {tks::String, pos::Pos}
-    | TokPrim {tks::String, pos::Pos}
-    | TokId   {tks::String, pos::Pos}
-    | TokCon  {tks::String, pos::Pos}
-    | TokRsv  {tks::String, pos::Pos}
-    | TokWht  {tks::String, pos::Pos, cmnt::Bool}
-    | TokEOF  {tks::String, pos::Pos}
-
+    = TokNum    {tks::String, pos::Pos}
+    | TokPrim   {tks::String, pos::Pos}
+    | TokPrimTy {tks::String, pos::Pos}
+    | TokId     {tks::String, pos::Pos}
+    | TokCon    {tks::String, pos::Pos}
+    | TokRsv    {tks::String, pos::Pos}
+    | TokWht    {tks::String, pos::Pos, cmnt::Bool}
+    | TokEOF    {tks::String, pos::Pos}
 
 
 instance PPrint Pos where
@@ -208,6 +214,8 @@ instance PPrint Token where
                    (text s <> comma <+> pprint p)
     TokPrim s p  -> text "TokPrim" <> braces
                    (text s <> comma <+> pprint p)
+    TokPrimTy s p  -> text "TokPrimTy" <> braces
+                    (text s <> comma <+> pprint p)
     TokId s p    -> text "TokId" <> braces
                    (text s <> comma <+> pprint p)
     TokCon s p   -> text "TokCon" <> braces
@@ -234,8 +242,9 @@ reserveds =
     "case", "of", "let", "in", "data", "unboxed"
   ] ++ specials
 
+primtys = fst $ unzip AST.primTyTab
 
-primops = fst $ unzip primOpTab
+primops = fst $ unzip AST.primOpTab
 isReserved = flip elem reserveds
 isPrimop = flip elem primops
 

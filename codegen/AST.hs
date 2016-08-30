@@ -14,7 +14,6 @@ module AST (
   PrimType(..),
   PrimOpInfo(..),
   PrimOp(..),
-  PrimTy(..),
   opArity,
   mkOpInfo,
   primOpTab,
@@ -130,8 +129,11 @@ projectAtoms (EAtom{ea}:as) = ea:projectAtoms as
 projectAtoms (a:as) = error "InfoTab.projectAtoms: non-EAtom"
 
 
-primTys = [(minBound :: PrimTy) ..]
-primTyTab = zip (map (addHash . tail . show)  primTys) primTys
+primTys :: [PrimType]
+primTys = [(minBound :: PrimType) ..]
+
+primTyTab :: [(String, PrimType)]
+primTyTab = zip (map ((++ "#") . tail . show)  primTys) primTys
 
 
 -- when calculating free variables we need an enclosing environment that
@@ -170,7 +172,6 @@ data PrimOp
   -- primitives) but differentiating between them may be useful at some point.
 
   deriving (Eq, Ord, Enum, Bounded, Show)
-
 
 
 -- | Assoc List of primop names (in STG syntax) and primops.
