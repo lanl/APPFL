@@ -150,6 +150,7 @@ boxMTypes tycons =
                        in MCon (Just bxt) c $ map setMtypes mts
                      MFun mts1 mts2 -> MFun (setMtypes mts1) (setMtypes mts2)
                      MVar{} -> m
+                     MPrim{} -> m
                      _ -> error $ "CMap.cMapTyCons matching bad Monotype: " ++ show m
 
   in map mapFunc tycons -- don't need built-ins in TyCon list (?)
@@ -219,6 +220,7 @@ instance Unparse Monotype where
   unparse (MFun m1 m2) = unparse m1 <+> arw <+> unparse m2
   unparse (MCon b c ms) = (if null ms then (empty <>) else parens)
                             (stgName c <+> hsep (map unparse ms))
+  unparse (MPrim ty) = pprint ty
   unparse m = error $ "ADT.unparse (Monotype) m=" ++ show m
 
 unparseDCmono :: Monotype -> Doc

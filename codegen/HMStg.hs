@@ -26,10 +26,8 @@ import qualified Data.Set as Set
 import qualified Data.Map as Map
 import Control.Monad.State
 import Data.List (intercalate)
-import Debug.Trace
+--import Debug.Trace
 import WiredIn
-  
--- newtype State s a = State (s -> (a, s))
 
 -- Atoms have types.  Except for Var v these are manifest.  Store
 -- fresh type variables in the parent entity (EAtom, EFCall, EPrimop, PAP, CON)
@@ -392,6 +390,7 @@ butAlt t0 mtvs e@ADef{av,ae} =
 butAlt t0 mtvs e@ACon{amd,ac,avs,ae} =
     let MCon _ _ ntvs = getTyp e --stashed by dv
         tis = instantiateDataConAt ac (cmap amd) ntvs
+        --tis = trace ("trace butAlt " ++ ac) (instantiateDataConAt ac (cmap amd) ntvs)
         xtis = zzip avs tis
         -- note ntvs == freeVars tis (as sets) so ntvs are new mtvs
         (as,cs,ae') = bu (Set.union mtvs $ Set.fromList ntvs) ae
@@ -488,7 +487,7 @@ instance BU (Obj InfoTab) where
 polyToMono m@(MVar _) = m
 polyToMono (MFun a b) = MFun (polyToMono a) (polyToMono b)
 polyToMono (MCon b c ms) = MCon b c $ map (polyToMono) ms
--- polyToMono m@MPrim{} = m
+polyToMono m@MPrim{} = m
 polyToMono (MPVar v) = MVar v
 polyToMono m = error $ "HMStg.polyToMono: " ++ show m
 

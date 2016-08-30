@@ -184,7 +184,11 @@ conNameP = tokP2 (TokCon) `using` tks
 
 -- Match variable token, accept its String
 varNameP :: Parser Token String
-varNameP = tokP2 (TokId) `using` tks
+--varNameP = tokP2 (TokId) `using` tks
+varNameP = tokP2 (TokId) `using` f
+           where f (TokId s _) = subHash s
+                 f _ = error "varNameP"
+
 
 
 -- partitionNum "123.345#" -> ("123.345", "345", 1)

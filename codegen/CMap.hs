@@ -170,9 +170,8 @@ instantiateDataConAt c cmap subms =
         subst = Map.fromList $ zzip tvs subms
     in apply subst ms
 
--- Pending
 isBuiltInType :: Con -> Bool
-isBuiltInType c = all ($ c) [isInt, isDouble]
+isBuiltInType c = any ($ c) [isInt, isDouble]
 
 getBuiltInType :: Con -> TyCon
 getBuiltInType c
