@@ -14,9 +14,11 @@ module AST (
   PrimType(..),
   PrimOpInfo(..),
   PrimOp(..),
+  PrimTy(..),
   opArity,
   mkOpInfo,
   primOpTab,
+  primTyTab,
   show,
   objListDoc,
   projectAtoms,
@@ -71,13 +73,13 @@ data Obj a
     , f     :: Var
     , as    :: [Expr a] -- invariant the as are EAtoms
     , oname :: String}
-    
+
   | CON
     { omd   :: a
     , c     :: Con
     , as    :: [Expr a] -- invariant the as are EAtoms
     , oname :: String}
-    
+
   | THUNK
     { omd   :: a
     , e     :: Expr a
@@ -127,6 +129,11 @@ projectAtoms [] = []
 projectAtoms (EAtom{ea}:as) = ea:projectAtoms as
 projectAtoms (a:as) = error "InfoTab.projectAtoms: non-EAtom"
 
+
+primTys = [(minBound :: PrimTy) ..]
+primTyTab = zip (map (addHash . tail . show)  primTys) primTys
+
+
 -- when calculating free variables we need an enclosing environment that
 -- includes the known primops.  This will allow proper scoping.  As such
 -- we initially parse EPrimops as EFCalls, then transform and check saturation
@@ -139,7 +146,7 @@ projectAtoms (a:as) = error "InfoTab.projectAtoms: non-EAtom"
 data PrimOp
   =
   -- :: (Num# a#) => a# -> a#
-    Pneg 
+    Pneg
 
   -- :: (Num# a#) => a# -> a# -> a#
   | Padd | Psub | Pmul | Pdiv | Pmod | Pmax | Pmin
@@ -150,7 +157,7 @@ data PrimOp
 
   -- :: Int -> Int -> Int
   | Psll -- logical left shift
-  | Psra -- arithmetic right shift 
+  | Psra -- arithmetic right shift
   | Psrl -- logical right shift
 
   -- :: String# -> Int# -> Int#
@@ -163,6 +170,8 @@ data PrimOp
   -- primitives) but differentiating between them may be useful at some point.
 
   deriving (Eq, Ord, Enum, Bounded, Show)
+
+
 
 -- | Assoc List of primop names (in STG syntax) and primops.
 primOpTab :: [(String, PrimOp)]
@@ -197,7 +206,7 @@ data PrimOpInfo =
   POI { opType  :: Monotype -- invariant: MFun + MPrim only (nested)
       , pArgTys :: [PrimType]
       , pRetTy  :: PrimType
-                      
+
       -- This makes more sense in CodeGen, but it's simpler to keep all the Info
       -- together here.  Functions are implemented directly with C AST types to
       -- avoid another module dependent on TemplateHaskell
@@ -216,7 +225,7 @@ instance Ord PrimOpInfo where
   (POI mt1 args1 ret1 _ ) `compare` (POI mt2 args2 ret2 _ )
     = mt1   `compare` mt2   >|
       args1 `compare` args2 >|
-      ret1  `compare` ret2 
+      ret1  `compare` ret2
 
 opArity :: PrimOpInfo -> Int
 opArity info = length (pArgTys info)
@@ -235,7 +244,7 @@ mkFunCall name exps = C.FnCall (C.Var (C.Id name mempty) mempty) exps mempty
 mkOpInfo' :: [PrimType] -- | Argument types
          -> PrimType   -- | Return type
          -> ([C.Exp] -> C.Exp) -- | Codegen function
-         -> PrimOpInfo 
+         -> PrimOpInfo
 mkOpInfo' argTys retTy cgFun =
   let otyp = foldr (MFun . MPrim) (MPrim retTy) argTys
   in POI { opType    = otyp
@@ -269,7 +278,7 @@ mkOpInfo c op =
       Pmul    -> mkBinEndoOpInfo ty C.Mul
       Pdiv    -> mkBinEndoOpInfo ty C.Div
       Pmod    -> mkBinEndoOpInfo ty C.Mod
-      
+
       Pmax    -> mkBinFunInfo ty ty ty (c:"max")
       Pmin    -> mkBinFunInfo ty ty ty (c:"min")
 
@@ -290,7 +299,7 @@ mkOpInfo c op =
 
       -- ord and chr take one argument, so simply returning the head of the list
       -- of C.Exps accomplishes the NOP logic for Codegen
-      Pord -> mkOpInfo' [PInt] PInt head 
+      Pord -> mkOpInfo' [PInt] PInt head
       Pchr -> mkOpInfo' [PInt] PInt head
 
 
@@ -310,8 +319,8 @@ instance Unparse Atom where
   unparse (LitStr s) = text s
 
 -- just the suffix of the op. Unparse EPrimop makes the prefix
-instance Unparse PrimOp where 
-    unparse = (<> hash) . text . tail . show 
+instance Unparse PrimOp where
+    unparse = (<> hash) . text . tail . show
 
 instance Unparse a => Unparse (Alt a) where
   unparse ACon{amd, ac, avs, ae} =

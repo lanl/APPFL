@@ -25,8 +25,9 @@ module Util
   getString,
   cSanitize,  -- z-encode a string so it's valid C
   desanitize, -- un-z-encode it
+  cDesanitize,
 
-  
+
   _TODO
 )
 where
@@ -72,7 +73,7 @@ mapSnd f (a,b) = (a, f b)
 
 
 deleteAll :: Ord k => [k] -> Map.Map k v -> Map.Map k v
-deleteAll vs env = foldr (Map.delete) env vs
+deleteAll vs env = foldr Map.delete env vs
 
 
 
@@ -89,7 +90,7 @@ lookupOrElse :: (Ord k) => k -> Map.Map k v -> v
 lookupOrElse k map = case Map.lookup k map of
                       Just k -> k
                       Nothing -> error "lookupOrElse failed!"
-      
+
 maxPayload :: Int
 maxPayload = 32
 
@@ -164,7 +165,7 @@ toInt64 = safeIntegerConvert
 -- Bounded Integral type.
 safeIntegerConvert :: forall a . (Bounded a, Integral a) => Integer -> Maybe a
 safeIntegerConvert i
-  | i > maxVal || i < minVal  = Nothing 
+  | i > maxVal || i < minVal  = Nothing
   | otherwise = Just $ fromInteger i
   -- ScopedTypeVariables lets us refer to the type variable 'a' from above.
   -- The type annotation *is* necessary.
@@ -207,14 +208,15 @@ instance Monoid CleanString where
   (CS a) `mappend` (CS b) = CS $ a ++ b
 
 cSanitize :: String -> CleanString
-cSanitize = CS . go 
+cSanitize = CS . go
   where go [] = []
         go (x:xs) | hasCSubst x = cSubst x ++ go xs
                   | otherwise   = x : go xs
 
 hasCSubst :: Char -> Bool
 hasCSubst 'z' = True
-hasCSubst  x  = not (isAlphaNum x)
+-- hasCSubst  x  = not (isAlphaNum x)
+hasCSubst  x  = not (isAlphaNum x || x == '_') -- not sure if we want to z-encode _
 
 -- Get the original name back from a sanitized string.
 -- Ideally, sanitize . desanitize == id
@@ -227,9 +229,18 @@ desanitize ('z':c:cs)
       -- This really should never fail
       fromMaybe (error "desanitize: unsub lookup failure") (Map.lookup c unsubDict)
       : desanitize cs
-
 desanitize (c:cs) = c : desanitize cs
-    
+
+cDesanitize :: CleanString -> String
+cDesanitize (CS [])  = []
+cDesanitize (CS ('z':c:cs))
+  | c == 'X', (i, 'X':rem):_ <- readHex cs =  chr i : cDesanitize (CS rem)
+  | otherwise =
+      -- This really should never fail
+      fromMaybe (error "desanitize: unsub lookup failure") (Map.lookup c unsubDict)
+      : cDesanitize (CS cs)
+cDesanitize (CS (c:cs)) = c : cDesanitize (CS cs)
+
 
 cSubst c = fromMaybe ('z':'X': showHex (ord c) "X") (Map.lookup c subDict)
 
@@ -243,7 +254,7 @@ subDict   = Map.fromList (map zcons subAList)
 -- | Maps characters to their z-encoded suffix. e.g. Since '(' is paired with
 -- 'L', in the z-encoding, it becomes "zL"
 subAList :: [(Char, Char)]
-subAList  = 
+subAList  =
   [ ('(' , 'L')
   , (')' , 'R')
   , ('[' , 'M')
@@ -267,6 +278,6 @@ subAList  =
   , ('\\', 'r')
   , ('/' , 's')
   , ('*' , 't')
-  , ('_' , 'u')
+--  , ('_' , 'u') -- not sure if we want to z-encode _
   , ('%' , 'v')
   ]

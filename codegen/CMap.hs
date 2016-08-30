@@ -127,7 +127,7 @@ luTCon :: Con -> CMap -> TyCon
 luTCon name conmap
   | isBuiltInType name = getBuiltInType name
   | otherwise = case Map.lookup name conmap of
-                 Nothing -> error $ "constructor " ++ name ++ " not in conmap"
+                 Nothing -> error $ "constructor " ++ name ++ " not in conmap " ++ show conmap
                  (Just t) -> t
 
 
