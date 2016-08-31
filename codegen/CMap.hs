@@ -73,7 +73,7 @@ conArity name conmap
 -- From a Con, find the DataCon it belongs to
 getDConInList :: Con -> [DataCon] -> DataCon
 getDConInList name cons =
-  if isBuiltInType name 
+  if isBuiltInType name
   then getBuiltInDataCon name
   else fromJust $ find ((==name).dataConName) cons
 

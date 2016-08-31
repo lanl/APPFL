@@ -97,7 +97,8 @@ maxPayload = 32
 -- sanity-checking zip
 zzip [] [] = []
 zzip (a:as) (b:bs) = (a,b) : zzip as bs -- changed to zzip here
-zzip _ _ = error "zzip on lists of differing lengths"
+zzip xs ys = error ("zzip on lists of differing lengths " ++
+             show (length xs) ++ " != " ++ show (length ys))
 
 -- this is probably not very efficient
 precalate s ss = concatMap (s++) ss

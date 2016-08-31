@@ -567,7 +567,7 @@ cgalt:: Env -> Bool -> String -> Alt InfoTab
 cgalt env switch fvp (ACon it c vs e) =
   let DataCon c' ms = luDCon c (cmap it)
       (_,_,perm) = partPerm isBoxed ms
-      eenv = zzip vs (map (FV fvp) perm)
+      eenv = zip vs (map (FV fvp) perm)
       env' = eenv ++ env
   in do
     ((inline, ypn), func) <- cge env' e
