@@ -136,15 +136,15 @@ luTCon name conmap
 
 
 -- Tags are returned as Strings for switch statements in codegen
-luConTag :: Con -> CMap -> CleanString
-luConTag c cmap | isBuiltInType c = cSanitize c
+luConTag :: Con -> CMap -> String
+luConTag c cmap | isBuiltInType c = c
                 | otherwise       =
                     let tyCon = luTCon c cmap
                     in case elem c (map dataConName $ luDCons c cmap) of
                          -- True -> tyConName tyCon ++ "_" ++ mhsSanitize c
-                         True -> cSanitize ("con_" ++ _mhsSanitize c)
-                         False -> cSanitize ("Tag lookup failure for " ++ c ++ " in " ++
-                                  show tyCon)
+                         True -> "con_" ++ _mhsSanitize c
+                         False -> "Tag lookup failure for " ++ c ++ " in " ++
+                                  show tyCon
 {-
                         where  -- MHS HACK FIX, see also CMap.showTypeEnum
                           mhsSanitize c | c == "D#" = "D"

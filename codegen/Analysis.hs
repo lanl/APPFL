@@ -21,7 +21,7 @@ import qualified Data.Map as Map
 import Data.List (group)
 import Data.Maybe (fromMaybe)
 import Debug.Trace
-import Util 
+import Util
 
 
 -- known function analysis identifies PAPs and EFCalls that reference
@@ -183,7 +183,7 @@ instance SetHA (Expr InfoTab) where
             arity == length eas
             -- if function is known, this lookup should always
             -- succeed, but let's be safe
-            && fromMaybe False (Map.lookup (getString (name it)) fmp)
+            && fromMaybe False (Map.lookup (name it) fmp)
 
           Nothing ->
             -- if knownCall analysis hasn't been performed, try to

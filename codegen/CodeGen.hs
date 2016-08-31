@@ -216,7 +216,7 @@ data YPN = Yes | Possible | No -- could use Maybe Bool but seems obscure
 
 cgObjs :: [Obj InfoTab] -> [String] -> ([Definition], [CFun])
 cgObjs objs runtimeGlobals =
-   let tlnames = runtimeGlobals ++ map (getString . name . omd) objs
+   let tlnames = runtimeGlobals ++ map (name . omd) objs
        env = zip tlnames $ repeat SO
        (funcs, _) = runState (cgos env objs) 0
        (forwards, funs) = unzip funcs

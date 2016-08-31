@@ -23,7 +23,7 @@ import Language.C.Syntax (Definition, Initializer)
 -- HOs come from InfoTabs
 
 shoNames :: [Obj InfoTab] -> [String]
-shoNames = map (\o -> "sho_" ++ getString ((name . omd) o))
+shoNames = map (\o -> "sho_" ++ (name . omd) o)
 
 -- return list of forwards (static declarations) and (static) definitions
 showSHOs :: [Obj InfoTab] -> ([Definition], [Definition])
@@ -33,7 +33,7 @@ showSHO :: Obj InfoTab -> (Definition, Definition)
 showSHO o =
   ([cedecl| extern typename Obj $id:n; |],
    [cedecl| typename Obj $id:n = $init:(showHO (omd o)); |])
-  where n = "sho_" ++ getString ((name . omd) o)
+  where n = "sho_" ++ (name . omd) o
 
 getIT :: InfoTab -> InfoTab
 getIT it@(ITPap {}) = case knownCall it of
@@ -47,17 +47,17 @@ showHO it =
   if useObjType then
    [cinit|
      {
-       ._infoPtr = &$id:("it_" ++ getString (name (getIT it))),
+       ._infoPtr = &$id:("it_" ++ name (getIT it)),
        .objType = $id:(showObjType it),
-       .ident = $string:(getString $ name it),
+       .ident = $string:(name it),
        .payload = $init:(showSHOspec it)
      }
    |]
   else
     [cinit|
       {
-        ._infoPtr = &$id:("it_" ++ getString (name (getIT it))),
-        .ident = $string:(getString $ name it),
+        ._infoPtr = &$id:("it_" ++ name (getIT it)),
+        .ident = $string:(name it),
         .payload = $init:(showSHOspec it)
       }
     |]
@@ -124,4 +124,3 @@ payload (LitStr s) =
     [cinit| {.argType = STRING, .s = $string:s}|]
   else
     [cinit| {.s = $string:s}|]
-

@@ -1,4 +1,4 @@
-{-# LANGUAGE ScopedTypeVariables, PatternGuards #-}
+{-# LANGUAGE ScopedTypeVariables, PatternGuards, CPP #-}
 
 module Util
 (
@@ -20,7 +20,7 @@ module Util
 
   isInt, isDouble, -- String -> Bool
 
-
+#if 0
   CleanString, -- abstract, for now so you _have_ to call cSanitize
   getString,
   cSanitize,  -- z-encode a string so it's valid C
@@ -29,6 +29,7 @@ module Util
 
 
   _TODO
+#endif
 )
 where
 
@@ -187,7 +188,7 @@ unreachable, _TODO :: String -> error
 unreachable str = error ("Should not be reached: " ++ str)
 _TODO str = error ("Definition incomplete: " ++ str)
 
-
+#if 0
 newtype CleanString = CS {getString :: String} deriving (Eq, Show)
 
 -- Make an identifier from a CleanString
@@ -282,3 +283,4 @@ subAList  =
 --  , ('_' , 'u') -- not sure if we want to z-encode _
   , ('%' , 'v')
   ]
+#endif

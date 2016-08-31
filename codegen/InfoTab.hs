@@ -54,26 +54,26 @@ data InfoTab =
     ITFun {
       typ :: Monotype,
       ctyp :: Polytype,
-      name :: CleanString,
+      name :: String,
       fvs :: [(Var,Monotype)],
       bfvc :: Int,  -- boxed FV count
       ufvc :: Int,  -- unboxed FV count
       truefvs :: [Var],
-      entryCode :: CleanString,
-      trueEntryCode :: CleanString,
+      entryCode :: String,
+      trueEntryCode :: String,
 
       arity :: Int}
 
   | ITPap {
       typ :: Monotype,
       ctyp :: Polytype,
-      name :: CleanString,
+      name :: String,
       fvs :: [(Var,Monotype)],
       bfvc :: Int,  -- boxed FV count
       ufvc :: Int,  -- unboxed FV count
       truefvs :: [Var],
-      entryCode :: CleanString,
-      trueEntryCode :: CleanString,
+      entryCode :: String,
+      trueEntryCode :: String,
 
       args     :: [(Atom,Monotype)],
       bargc :: Int,  -- boxed initial arg count
@@ -84,12 +84,12 @@ data InfoTab =
   | ITCon {
       typ :: Monotype,
       ctyp :: Polytype,
-      name :: CleanString,
+      name :: String,
       fvs :: [(Var,Monotype)],
       bfvc :: Int,  -- boxed FV count - not needed for Con
       ufvc :: Int,  -- unboxed FV count - not needed for Con
       truefvs :: [Var],
-      entryCode :: CleanString,
+      entryCode :: String,
 
       args :: [(Atom,Monotype)],
       bargc :: Int,  -- boxed arg count
@@ -101,22 +101,22 @@ data InfoTab =
   | ITThunk {
       typ :: Monotype,
       ctyp :: Polytype,
-      name :: CleanString,
+      name :: String,
       fvs :: [(Var,Monotype)],
       bfvc :: Int,  -- boxed FV count
       ufvc :: Int,  -- unboxed FV count
       truefvs :: [Var],
-      entryCode :: CleanString }
+      entryCode :: String }
 
 --BH   | ITBlackhole {
 --BH       typ :: Monotype,
 --BH       ctyp :: Polytype,
---BH       name :: CleanString,
+--BH       name :: String,
 --BH       fvs :: [(Var,Monotype)],  -- why is this here?
 --BH       bfvc :: Int,  -- boxed FV count
 --BH       ufvc :: Int,  -- unboxed FV count
 --BH       truefvs :: [Var],
---BH       entryCode :: CleanString }
+--BH       entryCode :: String }
 
 -- Expr
   | ITFCall {
@@ -203,8 +203,8 @@ data InfoTab =
       ufvc :: Int,          -- unboxed FV count
       truefvs :: [Var],
       scVar :: Var,         -- binding for scrutinee
-      name :: CleanString,       -- for C infotab
-      entryCode :: CleanString } -- for C infotab
+      name :: String,       -- for C infotab
+      entryCode :: String } -- for C infotab
 
   -- the following may be useful later
   -- for now case continuation is handled by Alts.ITAlts
@@ -306,22 +306,22 @@ class MakeIT a where
 instance MakeIT (Obj ([Var],[Var])) where
     makeIT o@(FUN (fvs,truefvs) vs e n) =
         ITFun { arity = length vs,
-              name = cSanitize n,
+              name = n,
               fvs = zip fvs $ repeat typUndef,
               bfvc = -1,
               ufvc = -1,
               truefvs = truefvs,
               typ = typUndef,
               ctyp = ctypUndef,
-              entryCode = cSanitize "stg_funcall",
-              trueEntryCode = cSanitize "fun_" `mappend` cSanitize n
+              entryCode = "stg_funcall",
+              trueEntryCode = "fun_" ++ n
             }
 
     makeIT o@(PAP (fvs,truefvs) f as n) =
         ITPap { args = zip (projectAtoms as) $ repeat typUndef,
               bargc = -1,
               uargc = -1,
-              name = cSanitize n,
+              name = n,
               fvs = zip fvs $ repeat typUndef,
               bfvc = -1,
               ufvc = -1,
@@ -329,8 +329,8 @@ instance MakeIT (Obj ([Var],[Var])) where
               truefvs = truefvs,
               typ = typUndef,
               ctyp = ctypUndef,
-              entryCode = cSanitize "fun_" `mappend` cSanitize f,
-              trueEntryCode = cSanitize "fun_" `mappend` cSanitize f,
+              entryCode = "fun_" ++ f,
+              trueEntryCode = "fun_" ++ f,
               knownCall = Nothing
             }
 
@@ -341,26 +341,26 @@ instance MakeIT (Obj ([Var],[Var])) where
               bargc = -1,
               uargc = -1,
               argPerm = [],
-              name = cSanitize n,
+              name = n,
               fvs = zip fvs $ repeat typUndef,
               bfvc = -1,
               ufvc = -1,
               truefvs = truefvs,
               typ = typUndef,
               ctyp = ctypUndef,
-              entryCode = cSanitize "stg_concall",
+              entryCode = "stg_concall",
               cmap = Map.empty
             }
 
     makeIT o@(THUNK (fvs,truefvs) e n) =
-        ITThunk { name = cSanitize n,
+        ITThunk { name = n,
                 fvs = zip fvs $ repeat typUndef,
                 bfvc = -1,
                 ufvc = -1,
                 truefvs = truefvs,
                 typ = typUndef,
                 ctyp = ctypUndef,
-                entryCode = cSanitize ("thunk_" ++ n)
+                entryCode = "thunk_" ++ n
               }
 
 --BH    makeIT o@(BLACKHOLE (fvs,truefvs) n) =
@@ -434,8 +434,8 @@ instance MakeIT (Alts ([Var],[Var])) where
                 typ = typUndef,
                 scVar = scvar,
                 ctyp = ctypUndef,
-                entryCode = cSanitize aname,
-                name = cSanitize aname}
+                entryCode = aname,
+                name = aname}
       where
         scvar = scrtVarName scrt
 
@@ -467,7 +467,7 @@ showObjType ITThunk {} = "THUNK"
 --BH showObjType ITBlackhole {} = "BLACKHOLE"
 showObjType _ = error "bad ObjType"
 
-alignedDecl:: Type -> CleanString -> Initializer -> Definition
+alignedDecl:: Type -> String -> Initializer -> Definition
 alignedDecl typ name ini =
   [cedecl|$ty:typ $id:name __attribute__((aligned(OBJ_ALIGN)))
     = $init:ini;
@@ -478,16 +478,16 @@ alignedDecl typ name ini =
 showIT :: InfoTab -> Maybe (Bool, String, Definition)
 showIT it@(ITAlts {}) =
   let init = showITinit it
-      citname = "it_" ++ getString (name it)
+      citname = "it_" ++ name it
       f x = Just $ (False, citname, )
-                     (alignedDecl [cty| typename CInfoTab|] (cSanitize citname) x)
+                     (alignedDecl [cty| typename CInfoTab|] citname x)
   in maybe Nothing f init
 
 showIT it =
   let init = showITinit it
-      itname = "it_" ++ getString (name it)
+      itname = "it_" ++ name it
       f x = Just $ (True, itname, )
-                      (alignedDecl [cty| typename InfoTab|] (cSanitize itname) x)
+                      (alignedDecl [cty| typename InfoTab|] itname x)
   in maybe Nothing f init
 
 
@@ -498,7 +498,7 @@ showITinit it@(ITFun {}) =
 #if DEBUG_INFOTAB
            .pi = PI(),
 #endif
-            .name = $string:(getString $ name it),
+            .name = $string:(name it),
             .entryCode = &$id:(entryCode it),
             .objType = FUN,
             .layoutInfo.payloadSize  = $int:(length $ fvs it),
@@ -515,7 +515,7 @@ showITinit it@(ITPap {}) =
 #if DEBUG_INFOTAB
                  .pi = PI(),
 #endif
-                 .name = $string:(getString $ name it),
+                 .name = $string:(name it),
                  .entryCode = &$id:(entryCode it),
                  .objType = PAP,
                  .layoutInfo.payloadSize = $int:(length (fvs it) +
@@ -534,7 +534,7 @@ showITinit it@(ITCon {}) =
 #if DEBUG_INFOTAB
                  .pi = PI(),
 #endif
-                 .name = $string:(getString $ name it),
+                 .name = $string:(name it),
                  .entryCode = &$id:(entryCode it),
                  .objType = CON,
                  .layoutInfo.payloadSize = $int:(arity it),
@@ -553,7 +553,7 @@ showITinit it@(ITThunk {}) =
 #if DEBUG_INFOTAB
                  .pi = PI(),
 #endif
-                 .name = $string:(getString $ name it),
+                 .name = $string:(name it),
                  .entryCode = &$id:(entryCode it),
                  .objType = THUNK,
                  .layoutInfo.payloadSize = $int:(1 + (length $ fvs it)),
@@ -580,7 +580,7 @@ showITinit it@(ITThunk {}) =
 showITinit it@(ITAlts {}) =
   Just [cinit|
                {
-                 .name = $string:(getString $ name it),
+                 .name = $string:(name it),
                  .entryCode = &$id:(entryCode it),
                  .contType = CASECONT,
                  .cLayoutInfo.payloadSize = $int:((length $ fvs it) + 1),
@@ -726,9 +726,9 @@ instance PPrint InfoTab where
               text "typ:" <+> pprint (typ it) $+$
               itExtras )
    where
-     makeName n = text "name:" <+> text (getString n)
+     makeName n = text "name:" <+> text n
      makeKCDoc kc = case kc of
-       Just it' -> text "known call to" <+> text (getString (name it'))
+       Just it' -> text "known call to" <+> text (name it')
        Nothing  -> text "unknown call"
      makeHADoc nha = text "noHeapAlloc:" <+> boolean nha
      freevsDoc vs = text "fvs:" <+> listText (map fst vs) -- should show Monotype, too
