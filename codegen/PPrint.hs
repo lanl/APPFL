@@ -28,7 +28,7 @@ module PPrint
   vertList,
 
   -- getting the original STG names with '#' characters
-  reHash,
+  --reHash,
   stgName,
 
 
@@ -39,7 +39,7 @@ module PPrint
   -- Re-export the HughesPJ lib
   module Text.PrettyPrint
 ) where
-       
+
 
 import Text.PrettyPrint
 import Text.Show.Pretty (ppDoc)
@@ -56,12 +56,14 @@ class PPrint a where
 class Unparse a where
   unparse :: a -> Doc
 
+{-
 reHash :: String -> String
 reHash str | "_h" `isSuffixOf` str = reverse ('#' : drop 2 (reverse str))
            | otherwise = str
+-}
 
 stgName :: String -> Doc
-stgName = text . reHash           
+stgName = text
 
 nLines :: (Show a) => a -> Int
 nLines = length . lines . show
@@ -82,7 +84,7 @@ bcomment d | isEmpty d = empty
              let sepr | nLines d == 1 = (<+>)
                       | otherwise = ($+$)
              in text "{-" `sepr` (nest 3 d) `sepr` text "-}"
-             
+
 
 
 

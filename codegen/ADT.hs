@@ -58,8 +58,6 @@ import PPrint
                         |   \Chi \pi_1 ... \pi_n   Parameterized boxed data type
 
   Unboxed type  \nu     ::=  Int#
-                         |   Long#
-                         |   Float#
                          |   Double#
                          |   \Chi# \pi_1 ... \pi_n   Parameterized unboxed data type
 
@@ -145,7 +143,7 @@ boxMTypes tycons =
                      MCon _ c mts ->
                        let (TyCon bxt _ _ _) =
                              fromMaybe
-                             (error $ "Couldn't find " ++ show c ++ " in tmap")
+                             (error $ "Couldn't find " ++ show c ++ " in tmap " ++ show tmap)
                              $ lookup c tmap
                        in MCon (Just bxt) c $ map setMtypes mts
                      MFun mts1 mts2 -> MFun (setMtypes mts1) (setMtypes mts2)
