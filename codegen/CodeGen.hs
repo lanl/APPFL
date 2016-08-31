@@ -492,7 +492,7 @@ cgeNoInline env boxed (ecode, efunc) a@(Alts italts alts aname scrt) =
             ++ (if fvs italts == [] then
                   [citems| $comment:("// no FVs");|]
                 else
-                  let x = map cSanitize (map fst $ fvs italts)
+                  let x = map fst $ fvs italts
                   in
                     [citems|
                       $comment:("// load payload with FVs"
@@ -620,7 +620,7 @@ buildHeapObj env o =
 
 bho :: Env -> Obj InfoTab -> [BlockItem]
 bho env (FUN it vs e name) =
-  let x = map cSanitize (map fst $ fvs it)
+  let x = map fst $ fvs it
   in loadPayloadFVs env x 0 (name ++ "->op")
 
 bho env (PAP it f as name) = error "unsupported explicit PAP"
@@ -635,26 +635,22 @@ bho env (THUNK it e name) =
               if useArgType then
                 [citems| $id:name->op->payload[0].argType = HEAPOBJ; |]
               else []
-        x = map cSanitize (map fst $ fvs it)
+        x = map fst $ fvs it
     in top ++ loadPayloadFVs env x 1 (name ++ "->op")
 
 --BH bho env (BLACKHOLE it name) = []
 
-loadPayloadFVs :: Env -> [CleanString] -> Int -> String -> [BlockItem]
+loadPayloadFVs :: Env -> [String] -> Int -> String -> [BlockItem]
 loadPayloadFVs env fvs ind name =
-  let cname = cSanitize name
-  in
-    [ [citem| $comment:("// " ++ getString v)
-            $id:cname->payload[$int:i] = $exp:(fst $ cgv env (getString v));
+    [ [citem| $comment:("// " ++ v)
+            $id:name->payload[$int:i] = $exp:(fst $ cgv env v);
             |] | (i,v) <- indexFrom ind fvs]
 
 
 loadPayloadAtoms :: Env -> [Atom] -> Int -> String -> [BlockItem]
 loadPayloadAtoms env as ind name =
-  let cname = cSanitize name
-  in
     [ [citem| $comment:("// " ++ showa a)
-            $id:cname->payload[$int:i] = $exp:(fst $ cga env a);
+            $id:name->payload[$int:i] = $exp:(fst $ cga env a);
             |] | (i,a) <- indexFrom ind as]
 
 showas :: [Atom] -> String

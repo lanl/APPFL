@@ -6,7 +6,7 @@ gtD = FUN(x y ->
                   _scrt4 {
                     D i# -> case y of
                               _scrt3 {
-                                D j# -> case gt# double# i# j# of
+                                D j# -> case dgt# i# j# of
                                           _scrt2 {
                                             0 -> false;
                                             x -> true } } });
