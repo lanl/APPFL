@@ -163,7 +163,7 @@ listLookup k ((k',v):xs) | k == k' = Just v
 getEnvRef :: String -> Env -> Exp
 getEnvRef v kvs =
   case listLookup v kvs of
-    Nothing -> error $ "getEnvRef " ++ v ++ " failed"
+    Nothing -> error $ "getEnvRef " ++ v ++ " failed" ++ "in" ++ show kvs
     Just k ->
         case k of
           SO       -> [cexp| HOTOPL(&$id:("sho_" ++ v)) |]
@@ -368,7 +368,7 @@ cge env (EPrimOp it op info eas) =
           -- Just do it? Modify stgCurVal?
           PVoid -> [citems| $pexpr; |]
           _     -> stgCurValUArgType (primTyArgType pRetTy) ++
-                   [citems| stgCurValU.$id:(primTypeStrId pRetTy) = $pexpr; |]          
+                   [citems| stgCurValU.$id:(primTypeStrId pRetTy) = $pexpr; |]
     in return ((inline, No), [])
   where
     --  What ArgType do I use for some PrimType
@@ -379,7 +379,7 @@ cge env (EPrimOp it op info eas) =
       PString -> "STRING"
       PVoid   -> error "No \"PVoid\" ArgType"
 
-  
+
 cge env (ELet it os e) =
   let names = map oname os
       decl1 = [ [citem|typename PtrOrLiteral *$id:name; |] | name <- names ]
@@ -492,8 +492,8 @@ cgeNoInline env boxed (ecode, efunc) a@(Alts italts alts aname scrt) =
             ++ (if fvs italts == [] then
                   [citems| $comment:("// no FVs");|]
                 else
-                  let x = map cSanitize (map fst $ fvs italts) 
-                  in 
+                  let x = map cSanitize (map fst $ fvs italts)
+                  in
                     [citems|
                       $comment:("// load payload with FVs"
                       ++ intercalate " " x)
@@ -652,7 +652,7 @@ loadPayloadFVs env fvs ind name =
 loadPayloadAtoms :: Env -> [Atom] -> Int -> String -> [BlockItem]
 loadPayloadAtoms env as ind name =
   let cname = cSanitize name
-  in 
+  in
     [ [citem| $comment:("// " ++ showa a)
             $id:cname->payload[$int:i] = $exp:(fst $ cga env a);
             |] | (i,a) <- indexFrom ind as]
@@ -669,5 +669,3 @@ showa (LitStr s) = s
 
 indexFrom :: Int -> [a] -> [(Int, a)]
 indexFrom i xs = zip [i..] xs
-
-

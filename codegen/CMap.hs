@@ -27,7 +27,7 @@ import ADT
 import PPrint
 import qualified Data.Map as Map
 import BU(apply)
-import Data.Maybe (fromJust)
+import Data.Maybe (fromJust, fromMaybe)
 import Data.List ((\\), find, intercalate)
 import Data.Char (isNumber)
 import Debug.Trace
@@ -72,7 +72,11 @@ conArity name conmap
 
 -- From a Con, find the DataCon it belongs to
 getDConInList :: Con -> [DataCon] -> DataCon
-getDConInList name cons = fromJust $ find ((==name).dataConName) cons
+getDConInList name cons =
+  if isBuiltInType name 
+  then getBuiltInDataCon name
+  else fromJust $ find ((==name).dataConName) cons
+
 
 
 
@@ -158,12 +162,15 @@ luConTag c cmap | isBuiltInType c = cSanitize c
 -- substituted for the arguments of the type constructor corresponding to
 -- the data constructor, return the monotype arguments of the data constructor
 -- as a result of the substitution
-instantiateDataConAt c cmap subms =
+instantiateDataConAt :: Con -> CMap -> [Monotype] -> [Monotype]
+instantiateDataConAt c cmap subms
+  | isBuiltInType c = subms -- ???
+  | otherwise =
     let TyCon _ tcon tvs dcs = luTCon c cmap
         -- get data constructor definition C [Monotype]
         ms = case [ ms | DataCon c' ms <- dcs, c == c' ] of
                [ms] -> ms
-               _ -> error $ "butAlt: not finding " ++ c ++ " in " ++ show dcs ++
+               _ -> error $ "instantiateDataConAt: not finding " ++ c ++ " in " ++ show dcs ++
                     " for TyCon: " ++ tcon ++
                     "\nCMap:\n" ++ (show . pprint) cmap
         -- instantiate the Monotypes
@@ -184,6 +191,12 @@ getBuiltInType c
   | isInt c    = makePrimTyCon PInt
   | isDouble c = makePrimTyCon PDouble
   | otherwise  = error "builtin TyCon not found!"
+
+getBuiltInDataCon :: Con -> DataCon
+getBuiltInDataCon c
+  | isInt c = DataCon "I#" [MPrim PInt]
+  | isDouble c = DataCon "D#" [MPrim PDouble]
+  | otherwise = error "builtin DataCon not found!"
 
 instance PPrint CMap where
   pprint m =

@@ -214,7 +214,7 @@ cSanitize = CS . go
                   | otherwise   = x : go xs
 
 hasCSubst :: Char -> Bool
-hasCSubst 'z' = True
+--hasCSubst 'z' = True
 -- hasCSubst  x  = not (isAlphaNum x)
 hasCSubst  x  = not (isAlphaNum x || x == '_') -- not sure if we want to z-encode _
 

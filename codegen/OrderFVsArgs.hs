@@ -12,7 +12,6 @@ import InfoTab
 import CMap(instantiateDataConAt)
 import qualified Data.Map as Map
 
-
 -- typeFVs is a poor choice of name
 orderFVsArgs :: [Obj InfoTab] -> [Obj InfoTab]
 orderFVsArgs = typeFVs Map.empty
@@ -139,9 +138,9 @@ typeFVsAlt t@(MCon b tc ms0) m a@ACon{amd, ac, avs, ae} =
         ae' = typeFVsCommon m' ae
     in a{ae = ae'}
 
---typeFVsAlt (MPrim _) m a@ACon{ac, avs, ae} =
---    let ae' = typeFVsCommon m ae
---    in a{ae = ae'}
+typeFVsAlt (MPrim _) m a@ACon{ac, avs, ae} =
+   let ae' = typeFVsCommon m ae
+   in a{ae = ae'}
 
 typeFVsAlt t0 m a@ACon{amd, ac, avs, ae} =
     error $ "HMStg.typeFVsAlt: " ++ show t0 ++ " " ++ show a
