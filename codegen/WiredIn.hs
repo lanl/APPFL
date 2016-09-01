@@ -20,19 +20,19 @@ stringPrimTyName  = "String#"
 intTyConName      = "Int"
 intTy             = MCon (Just True) intTyConName [intPrimTy]
 intTyCon          = TyCon True intTyConName [] [intDataCon]
-intDataConName    = "I#"
+intDataConName    = "I_h"
 intDataCon        = DataCon intDataConName [intPrimTy]
 
 charTyConName     = "Char"
 charTy            = MCon (Just True) charTyConName [charPrimTy]
 charTyCon         = TyCon True charTyConName [] [charDataCon]
-charDataConName   = "C#"
+charDataConName   = "C_h"
 charDataCon       = DataCon charDataConName [charPrimTy]
 
 doubleTyConName   = "Double"
 doubleTy          = MCon (Just True) doubleTyConName [doublePrimTy]
 doubleTyCon       = TyCon True doubleTyConName [] [doubleDataCon]
-doubleDataConName = "D#"
+doubleDataConName = "D_h"
 doubleDataCon     = DataCon doubleDataConName [doublePrimTy]
 
 listTyConName     = "List"

@@ -13,7 +13,7 @@ import Util
 
 import qualified Data.Map as Map
 import Data.Maybe
-import Data.Char 
+import Data.Char
 import Data.List (unfoldr)
 import Data.Tuple (swap)
 import Numeric (showHex, readHex)
@@ -73,12 +73,12 @@ class NamedThing a => AppflNameable a where
 instance {-# OVERLAPPABLE #-} NamedThing t => AppflNameable t where
   makeAppflName = namedThingToAppflName
 
-  
+
 -- | Ids have extra information (IdDetails) that we sometimes need to properly
 -- rename.
 instance {-# OVERLAPPING #-} AppflNameable Id where
   makeAppflName = idToAppflName
-  
+
 
 -- | Produce a String name for a NamedThing.  Everything GHC names should be
 -- converted via this function.  This is hard to enforce at the Type level,
@@ -90,9 +90,9 @@ nameGhcThing thing =
     let realName = makeAppflName thing
     return $ fromMaybe altName realName
 
-    
 
-qualifyDeterministically  :: (NamedThing t, UniqueNameState s) => t -> s String 
+
+qualifyDeterministically  :: (NamedThing t, UniqueNameState s) => t -> s String
 qualifyDeterministically (getName -> name) -- Using ViewPatterns for fun.
   -- Syntax is (expr '->' pattern) where the expr will be applied to whatever
   -- argument is passed.  In this case, that's NamedThing t => t -> Name
@@ -102,7 +102,7 @@ qualifyDeterministically (getName -> name) -- Using ViewPatterns for fun.
                       if isAppflBuiltIn oname
                       then oname
                       else moduleNameString (moduleName mod) ++ "." ++ oname
-               
+
           Nothing  -> do i <- getIntFromUnique (nameUnique name)
                          return (oname ++ showIntTersely i)
 
@@ -134,13 +134,83 @@ showIntTersely i = unfoldr op i
         op (I# i#) = case i# `shiftRLFastInt` 6# {- 2^6 = 64 -} of
                        shifted# ->
                          case i# `bitAndFastInt` 63# of
-                           low5# -> Just ( chr64 low5#, iBox shifted# )        
+                           low5# -> Just ( chr64 low5#, iBox shifted# )
 
 
-
+-- revert sanitize in infotab for now
+#if 0
 sanitize :: AppflName -> String
-sanitize = id -- letting this happen when we generate InfoTab names now.
+ = id -- letting this happen when we generate InfoTab names now.
 
+#else
+
+sanitize :: String -> String
+sanitize str | isAppflBuiltIn str = str
+             | otherwise = go str
+  where go [] = []
+        go (x:xs) | hasCSubst x = cSubst x ++ go xs
+                  | otherwise   = x : go xs
+
+hasCSubst :: Char -> Bool
+hasCSubst 'z' = True
+hasCSubst  x  = not (isAlphaNum x)
+
+-- Get the original name back from a sanitized string.
+-- Ideally, sanitize . desanitize == id
+-- This is untested.
+desanitize :: String -> String
+desanitize []  = []
+desanitize ('z':c:cs)
+  | c == 'X', (i, 'X':rem):_ <- readHex cs =  chr i : desanitize rem
+  | otherwise =
+      -- This really should never fail
+      fromMaybe (error "desanitize: unsub lookup failure") (Map.lookup c unsubDict)
+      : desanitize cs
+desanitize str | isAppflBuiltIn str = str
+desanitize (c:cs) = c : desanitize cs
+
+
+cSubst c = fromMaybe ('z':'X': showHex (ord c) "X") (Map.lookup c subDict)
+
+-- Use Maps for log n behavior. Better than assoc list lookup.
+-- Probably worth it, given how many names there are in even trivial programs
+unsubDict = Map.fromList (map swap subAList)
+subDict   = Map.fromList (map zcons subAList)
+  where zcons = fmap (('z':) . pure)
+
+-- Mostly stolen/modified from Z-encoding in utils/Encoding.hs
+-- | Maps characters to their z-encoded suffix. e.g. Since '(' is paired with
+-- 'L', in the z-encoding, it becomes "zL"
+subAList :: [(Char, Char)]
+subAList  =
+  [ ('(' , 'L')
+  , (')' , 'R')
+  , ('[' , 'M')
+  , (']' , 'N')
+  , (':' , 'C')
+  , ('z' , 'z')
+  , ('&' , 'a')
+  , ('|' , 'b')
+  , ('^' , 'c')
+  , ('$' , 'd')
+  , ('=' , 'e')
+  , ('@' , 'f')
+  , ('>' , 'g')
+  , ('#' , 'h')
+  , ('.' , 'i')
+  , ('<' , 'l')
+  , ('-' , 'm')
+  , ('!' , 'n')
+  , ('+' , 'p')
+  , ('\'', 'q')
+  , ('\\', 'r')
+  , ('/' , 's')
+  , ('*' , 't')
+  , ('_' , 'u')
+  , ('%' , 'v')
+  ]
+
+#endif
 
 sanitizeTC (TyCon b c vs dcs) =
   TyCon b (sanitize c) (map sanitize vs) (map sanitizeDC dcs)
@@ -156,7 +226,7 @@ sanitizeMono _              = unreachable _HERE
 sanitizeObj o = case o of
   THUNK {e, oname     } -> THUNK () (sanitizeExpr e) (sanitize oname)
   FUN   {vs, e, oname } -> FUN () (map sanitize vs) (sanitizeExpr e) (sanitize oname)
-  CON   {c, as, oname } -> CON () (sanitize c) (map sanitizeExpr as) (sanitize oname)  
+  CON   {c, as, oname } -> CON () (sanitize c) (map sanitizeExpr as) (sanitize oname)
 
   -- PAP and BLACKHOLE should not be in the program at this point.
   -- This is sanity-checking as much as anything else
@@ -180,4 +250,3 @@ sanitizeAtom a = case a of
   Var v  -> Var (sanitize v)
   LitC c -> LitC (sanitize c)
   _      -> a
-  

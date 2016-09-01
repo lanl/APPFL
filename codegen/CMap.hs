@@ -131,7 +131,8 @@ luTCon :: Con -> CMap -> TyCon
 luTCon name conmap
   | isBuiltInType name = getBuiltInType name
   | otherwise = case Map.lookup name conmap of
-                 Nothing -> error $ "constructor " ++ name ++ " not in conmap " ++ show conmap
+                 Nothing -> error $ "constructor " ++ name ++
+                   " not in conmap " ++ show conmap
                  (Just t) -> t
 
 
@@ -164,7 +165,7 @@ luConTag c cmap | isBuiltInType c = c
 -- as a result of the substitution
 instantiateDataConAt :: Con -> CMap -> [Monotype] -> [Monotype]
 instantiateDataConAt c cmap subms
-  | isBuiltInType c = subms -- ???
+  | isBuiltInType c = subms
   | otherwise =
     let TyCon _ tcon tvs dcs = luTCon c cmap
         -- get data constructor definition C [Monotype]

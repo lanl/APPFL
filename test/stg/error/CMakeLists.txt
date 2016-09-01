@@ -47,7 +47,7 @@ add_test_regex_fail(con2
     "constructor J not in conmap")
 
 add_test_regex_fail(polyUnboxed
-    "cannot unify unboxed type")
+    "THUNKs must evaluate to boxed types")
 
 add_test_regex_fail(pap2
     "unsupported explicit PAP")

@@ -54,8 +54,6 @@ EQ >| b = b
 a  >| b = a
 
 
-
-
 isInt :: String -> Bool
 isInt = all isNumber
 
@@ -75,7 +73,6 @@ mapSnd f (a,b) = (a, f b)
 
 deleteAll :: Ord k => [k] -> Map.Map k v -> Map.Map k v
 deleteAll vs env = foldr Map.delete env vs
-
 
 
 indent :: Int -> String -> String
@@ -187,6 +184,7 @@ safeIntegerConvert i
 unreachable, _TODO :: String -> error
 unreachable str = error ("Should not be reached: " ++ str)
 _TODO str = error ("Definition incomplete: " ++ str)
+
 
 #if 0
 newtype CleanString = CS {getString :: String} deriving (Eq, Show)

@@ -27,7 +27,7 @@ import GHC.Exts (Int(..), Double(..))
 
 ieq# = (==#)
 imul# = (*#)
-iplus# = (+#)
+iadd# = (+#)
 isub# = (-#)
 imod# = (remInt#)
 
@@ -65,7 +65,7 @@ modInt (I# a#) (I# b#) =
 
 addInt :: Int -> Int -> Int
 addInt (I# a#) (I# b#) =
-  case iplus# a# b# of
+  case iadd# a# b# of
    r# -> I# r#
 
 odd :: Int -> Bool

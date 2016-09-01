@@ -31,6 +31,7 @@ module ADT (
 import Data.List(intercalate)
 import Data.Maybe (fromMaybe)
 import PPrint
+import Util
 
 {-
   Algebraic Datatypes:

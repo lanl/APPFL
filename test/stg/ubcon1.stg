@@ -8,11 +8,11 @@ f = THUNK(case t1 of
                                          _scrt4 {
                                            I u7# -> case b9 of
                                                       _scrt3 {
-                                                        I u9# -> case iplus# u6# u7# of
+                                                        I u9# -> case iadd# u6# u7# of
                                                                    _scrt2 {
-                                                                     i# -> case iplus# u8# u9# of
+                                                                     i# -> case iadd# u8# u9# of
                                                                              _scrt1 {
-                                                                               j# -> case iplus# i# j# of
+                                                                               j# -> case iadd# i# j# of
                                                                                        _scrt0 {
                                                                                          k# -> let {
                                                                                                  result = CON(I k#)}

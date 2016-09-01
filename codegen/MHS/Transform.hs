@@ -45,7 +45,7 @@ definitions and builtin Int# and Double#
 -- and in constructors (Constrs) as defined by the datatype
 -- declarations in the list of Defns
 setTypeSignatures :: [Defn] -> [Defn]
-setTypeSignatures defs = 
+setTypeSignatures defs =
   let defs'= map (setBoxity cmap) defs
       (ds,os,ts) = partitionDefs defs'
       cmap = buildCMap ds
@@ -81,7 +81,7 @@ setBoxity cmap def =
          mfun (MFun m1 m2) = MFun (mfun m1) (mfun m2)
          mfun m = m
      in def{dcons = dcons'}
-          
+
 
 buildCMap defs =
   let mfun (DDefn t@(MCon b c ms) _) = (c, t)
@@ -163,7 +163,7 @@ renameIt var =
     let i = case Map.lookup var nmap of
              Just x -> x
              Nothing -> 0
-        var' = case ceeify var of    
+        var' = case ceeify var of
                 (True, v) -> dirtyPfx i v
                 (False, v) -> cleanPfx i v
           where ceeify [] = (False, [])
@@ -177,13 +177,13 @@ renameIt var =
     put $ Map.insert var (i+1) nmap
     return var'
 
-    
+
 isUserID = ("u" `isPrefixOf`)
-           
+
 getUserID c | isUserID c = tail $ dropWhile (isNumber) $ drop 2 c
             | otherwise = error $ "Transform.getUserID: c is not user ID - " ++ c
 
-                          
+
 isGenID = not . isUserID
 
 
@@ -208,18 +208,18 @@ instance Rename [Defn] where
 instance Rename Defn where
   rename env d = case d of
     DDefn{} -> return d -- don't need to mess with datatype declarations
-    
+
     TDefn{bnd} ->
       case Map.lookup bnd env of
        Just n -> return d{bnd = n}
        Nothing -> error $
                   "Transform.rename (Defn): Couldn't find TDefn bnd in env - " ++ bnd
-    
-    ODefn{bnd, oexp} -> 
-      do -- 
+
+    ODefn{bnd, oexp} ->
+      do --
         oexp' <- rename env oexp
         return d {oexp = oexp'}
-        
+
 instance Rename Exp where
   rename env e = case e of
     EFn{pats, eexp} ->
@@ -260,7 +260,8 @@ instance Rename Exp where
              Just v' -> AtmVar v'
              Nothing -> error $
                         "Transform.rename: (Exp) why isn't atm in map? " ++
-                        (show $ pprint e) ++
+                        "\n" ++ show v ++ "\n" ++
+                        (show $ pprint e) ++ "\n" ++
                         show env
       in return e {atm = atm'}
     EAt{} -> return e
@@ -290,8 +291,8 @@ makePatBindMap (Match m ms) (Match n ns) =
   let maps = zipWith makePatBindMap ms ns
   in Map.unions (Map.singleton m n : maps)
 makePatBindMap (Default m) (Default n) = Map.singleton m n
-makePatBindMap m1 m2 = error "Transform.makePatBindMap (Exp): shouldn't happen" 
-  
+makePatBindMap m1 m2 = error "Transform.makePatBindMap (Exp): shouldn't happen"
+
 
 {-------------------------------------------------------------------------
 Generate functions for data constructors (only those in use!)
@@ -321,11 +322,11 @@ getNums n =
      i <- getNum
      is <- getNums (n - 1)
      return (i:is)
-    
+
 
 makefuns :: [(PrimOp, PrimOpInfo)] -> [Con] -> Map.Map Con Int -> [Defn]
 makefuns pops cons dict =
-  
+
   let mfun1 c = case Map.lookup c dict of
                  Nothing -> error $ "could not find Con to generate function: " ++ c
                  Just 0 -> return $ ODefn ("gfc_" ++ c) (EAt $ AtmCon c) Nothing
@@ -342,7 +343,7 @@ makefuns pops cons dict =
 
       mfun2 (p,i) = case lookup p primDict of
                     Nothing -> error $ "Couldn't find primop in table: " ++ show (pprint p)
-                    Just op -> 
+                    Just op ->
                       do
                         nums <- getNums (opArity i)
                         let vars = zipWith (++) (repeat "gap_") (map show nums)
@@ -350,25 +351,25 @@ makefuns pops cons dict =
                             fexp = EAt $ AtmOp p i
                             args = map (EAt . AtmVar) vars
                             eexp = foldl EAp fexp args
-                            oexp = EFn pats eexp        
+                            oexp = EFn pats eexp
                         return $ ODefn ("gfp_" ++ op) oexp Nothing
       (cdefs,_) = runState (mapM mfun1 cons) 0
       (pdefs,_) = runState (mapM mfun2 pops) 0
   in cdefs ++ pdefs
- 
+
 {-
 tryCon :: Map.Map Con Int -> Exp -> State Int (Maybe Exp)
 tryCon dict e = case e of
-  EAp{fexp, eexp} -> 
+  EAp{fexp, eexp} ->
     let (f, args) = unfoldEAp e
     in case f of
         EAt{atm = AtmCon c} ->
           case Map.lookup c dict of
            i | i == length args ->
-                 
-           
+
+
           _
-        
+
   -- Don't want constructors with 0 arity like Nil, True or False
   -- that would create many let-bound instances of the same
   -- constructor, as opposed to one at top level
@@ -385,7 +386,7 @@ instance (GenFuns a) => GenFuns [a] where
   genfuns as =
     let (cgss, pgss, as') = unzip3 $ map genfuns as
     in (Set.unions cgss, Set.unions pgss, as')
-  
+
 instance GenFuns Defn where
   genfuns d = case d of
     DDefn{} -> (Set.empty, Set.empty, d)
@@ -405,7 +406,7 @@ instance GenFuns Exp where
                          Just n -> n
                          Nothing -> error $ "Couldn't find primop in table: " ++ show (pprint o)
                        v = "gfp_" ++ op
-                 in (Set.empty, Set.singleton (o,i), e{atm = AtmVar v})      
+                 in (Set.empty, Set.singleton (o,i), e{atm = AtmVar v})
       _ -> (Set.empty, Set.empty, e)
 
     EAp{fexp, eexp} ->
@@ -441,7 +442,7 @@ instance GenFuns Clause where
   genfuns (pat, exp) =
     let (cgs, pgs, exp') = genfuns exp
     in (cgs, pgs, (pat, exp'))
-                         
+
 
 {--------------------------------------------------------------------------
 Convert expression application to atomic function application
@@ -471,7 +472,7 @@ genArgVars i = case i of
     a <- genArgVar
     as <- genArgVars (i-1)
     return (a:as)
-     
+
 class SimpleExp a where
   smplExp :: a -> State (Int,Int) a
 
@@ -490,7 +491,7 @@ instance SimpleExp Exp where
       do
         eexp' <- smplExp eexp
         return $ e {eexp = eexp'}
-        
+
     ELt{eexp, defns} ->
       do
         eexp' <- smplExp eexp
@@ -590,7 +591,7 @@ isDouble s | '.' `elem` s = let (w,(p:ps)) = break (== '.') s
                             in isInteger w && isInteger ps
            | otherwise = False
 
-boxNumLiterals :: [Defn] -> [Defn]                
+boxNumLiterals :: [Defn] -> [Defn]
 boxNumLiterals defs =
   let ((is,ds), defs') = boxnums defs
       idefs = map makeInt $ Set.toList is
@@ -613,7 +614,7 @@ instance (BoxNums a) => BoxNums [a] where
   boxnums as =
     let (nset, as') = unzip $ map boxnums as
     in (numUnions nset, as')
-        
+
 
 instance BoxNums Defn where
   boxnums d = case d of
@@ -622,7 +623,7 @@ instance BoxNums Defn where
     ODefn{oexp} ->
       let (nset, oexp') = boxnums oexp
       in (nset, d{oexp = oexp'})
-         
+
 instance BoxNums Exp where
   boxnums e = case e of
     EAt{atm} -> case atm of
@@ -670,10 +671,10 @@ instance BoxNums Pattern where
        in case () of
            _ | isInteger str ->
                (numEmpty, Match {str = "I#", npats = [Match numstr npats']})
-             | isDouble str -> 
+             | isDouble str ->
                (numEmpty, Match {str = "D#", npats = [Match numstr npats']})
              | otherwise -> (numEmpty, pat {npats = npats'})
-        
+
 
 {---------------------------------------------------------------------
 
@@ -685,7 +686,7 @@ simplifyPats defs =
       cons = concatMap dcons ds
       (os',_) = runState (dsgpats cons os) 0
   in ts ++ ds ++ os'
-     
+
 type Equation = ([Pattern], Exp)
 
 instance Unparse Equation where
@@ -699,7 +700,7 @@ patBinds :: Pattern -> [Var]
 patBinds Default{str} = [str]
 patBinds Match{str, npats} = str : concatMap patBinds npats
 
-lookupOrID a = maybe a id . Map.lookup a    
+lookupOrID a = maybe a id . Map.lookup a
 
 caseVar =
   do
@@ -714,7 +715,7 @@ caseVars n =
      v <- caseVar
      vs <- caseVars (n-1)
      return (v:vs)
-   
+
 
 -- in a list of pattern lists, check if each list has a
 -- Default pattern at the head
@@ -728,7 +729,7 @@ allCons pats = all (not . isDefaultPat) $ map head pats
 rmHidden = id
 rmHidden' :: [Equation] -> [Equation]
 rmHidden' = foldr (\(ps1,_) pps ->
-                   filter (\(ps2,_) -> 
+                   filter (\(ps2,_) ->
                             and $ zipWith hides ps1 ps2) pps) []
   where hides Default{} _ = True
         hides _ Default{} = False
@@ -752,7 +753,7 @@ oddFn = ODefn "odd"
            [(Match "I#" [Match "1#" []], EAt $ AtmVar "true"),
             (Default "x", EAt $ AtmVar "false")]))
          Nothing
-         
+
 
 testFuns =
   let efns = map (uncurry EFn) testEQs
@@ -762,7 +763,7 @@ testFuns =
                DCon "Nil" [] ["X","Nil","Cons"],
                DCon "Cons" [MVar "a", MCon (Just True) "List" [MVar "a"]] ["X","Nil","Cons"]]
   in intCon : lcon : oddFn : fns
-     
+
 
 --Match "Cons" [Default "b", Default "c"]
 match :: [Constr] -> [Var] -> [Equation] -> Exp -> State Int Exp
@@ -806,7 +807,7 @@ match cons (v:vs) eqs dflt =
 
                   -- select all equations starting with the same constructor
                   (ms, rest) = partition ((== c) . str . head . fst) eqs
-                  
+
                   -- remove Constructor from matches, add nested patterns
                   -- to remainder in each equation
                   ms' = map (\(Match _ nps : xs, exp) -> (nps ++ xs, exp)) ms
@@ -817,18 +818,18 @@ match cons (v:vs) eqs dflt =
                       -- new *simple* pattern to match on
                       pat = Match c npats'
                   -- build remainder of clauses
-                  clss <- f rest                  
+                  clss <- f rest
                   -- build expression for Constructor
-                  exp <- match cons (nvs++vs) ms' dflt                  
+                  exp <- match cons (nvs++vs) ms' dflt
                   -- add this clause to list and return
                   return $ (pat, exp):clss
           in do
             cls <- f eqs
-            
+
 
             -- checking case exhaustion
             let cls' = exhaustClauses cons cls lst
-                                   
+
             return $ supercompact [] $ ECs (EAt $ AtmVar v) $ cls'
 
       -- Mixture rule:
@@ -853,7 +854,7 @@ exhaustClauses cons cls fallThru =
                 Nothing | not $ isBoxedNum c ->
                             error $ "unknown constructor in pattern: " ++ c
                         | otherwise -> cls ++ [fallThru]
-                                       
+
                 Just DCon{cons} ->
                   case cons \\ (c:cs) of
                    [] -> cls
@@ -885,7 +886,7 @@ supercompact env e = case e of
                     cs' = filter (\(p2,e)-> p1 `hidesPat` p2) cs
                 in if null cs' then noExhaust
                    else snd $ head cs'
-                        
+
      Nothing -> let (ECs ex cs) = compact e
                     mfun (p,e) = case () of
                       _ | isDefaultPat p -> (p, supercompact env e)
@@ -893,16 +894,16 @@ supercompact env e = case e of
                     cs' = map mfun cs
                 in ECs ex cs'
   _ -> e
-  
+
 
 noExhaust = EAt $ AtmVar "noExhaust"
-             
+
 liftClauses :: [Exp] -> Exp -> Maybe [Clause]
 liftClauses exs e = case e of
   ECs{eexp, cls} | eexp `elem` exs -> Just cls
   _ -> Nothing
 
-simpleCase :: Exp -> Bool  
+simpleCase :: Exp -> Bool
 simpleCase e = case e of
   ECs{cls} ->
     let (_,ms) = partition isDefaultPat $ map fst cls
@@ -910,10 +911,10 @@ simpleCase e = case e of
     in null ms' -- Defaults and Matches with only defaults nested are simple
   _ -> False
 
-       
+
 class DSGPats a where
   dsgpats :: [Constr] -> a -> State Int a
-  
+
 instance DSGPats [Defn] where
   dsgpats cons defs =
     let (ds, os, ts) = partitionDefs defs
@@ -935,7 +936,7 @@ instance DSGPats [Defn] where
        newFns <- mapM tripFun trips
        newOs <- mapM (dsgpats cons) (newFns ++ os')
        return (ts ++ ds ++ newOs)
-       
+
 
 instance DSGPats Defn where
   dsgpats cons d = case d of
@@ -965,7 +966,7 @@ instance DSGPats Exp where
                      cls = cls'}
       | otherwise ->
           do
-            cls' <- mapM (dsgpats cons) cls        
+            cls' <- mapM (dsgpats cons) cls
             eexp' <- dsgpats cons eexp
             v <- caseVar
             let eqs = map (\(p,e) -> ([p],e)) cls'
@@ -1000,7 +1001,7 @@ instance DSGPats Clause where
     do
       e' <- dsgpats cons e
       return (p, e)
-    
+
 
 class SubNames a where
   subnames :: ReplMap -> a -> a

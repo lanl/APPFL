@@ -42,7 +42,7 @@ prog       ::= <def>*  -- is an empty program still a valid program? I think so.
 
 <funCall>  ::= <var> <atom>+
 
-<primop>   ::= "iplus#"  -- subject to change?
+<primop>   ::= "iadd#"  -- subject to change?
              | "isub#"
              | "imul#"
              | "idiv#"
@@ -94,6 +94,7 @@ import Data.List (groupBy)
 import PPrint
 import Data.Char (isNumber)
 import Options (reWriteSTG) -- controls grammar of case/alts expressions
+import Util
 
 type Comment = String
 
@@ -138,7 +139,9 @@ groupParsed =
       f _ _                       = False
   in groupBy f
 
-
+subHash [] = []
+subHash ('#':xs) = "_h" ++ subHash xs
+subHash (x:xs) = x : subHash xs
 
 -- uncurried cons is used on several occasions to combine the results of
 -- ordered parsers
@@ -173,10 +176,6 @@ tokP3 t = tokP2 $ t undefined
 -- Match a TokRsv with string s
 rsvP :: String -> Parser Token Token
 rsvP s = tokP1 $ TokRsv s
-
-subHash [] = []
-subHash ('#':xs) = "_h" ++ subHash xs
-subHash (x:xs) = x : subHash xs
 
 -- Match constructor token, accept its String
 conNameP :: Parser Token String
@@ -431,12 +430,12 @@ altsP =
 altP :: Parser Token (Alt ())
 altP =
   let litConP = litNumP `using` (show . unparse) >>> \ n ->
-        accept $ ACon () n []
+        accept $ ACon () (subHash n) []
       adefP = varNameP >>> \v ->
         accept $ ADef () v
       aconP = conNameP >>> \con ->
         many' varNameP >>> \vs ->
-        accept $ ACon () con vs
+        accept $ ACon () (subHash con) vs
   in
     orExList [adefP, aconP, litConP] >>> \alt ->
     tokcutP "Expected a '->' symbol after an alt's pattern"
@@ -474,7 +473,7 @@ tyConP =
   tokcutP "Expected one or more data constructor definitions separated by '|'" $
   sepByP dataConP barP >>> \dcs ->
                             let boxed = maybe True (const False) b
-                            in accept $ TyCon boxed con tyvars dcs
+                            in accept $ TyCon boxed (subHash con) tyvars dcs
 
 
 -- parse a data constructor as a DataCon object
@@ -485,11 +484,11 @@ dataConP =
   isNextP (orExList [semiP, eofP, barP]) >>> \b ->
 
   -- this feels hacky and wrong, but allows for a slightly better error message
-  if b then accept $ DataCon con []
+  if b then accept $ DataCon (subHash con) []
 
   else tokcutP "Expected valid monotypes in data constructor" $
        some' monoTypP >>> \mTypes ->
-                           accept $ DataCon con mTypes
+                           accept $ DataCon (subHash con) mTypes
 
 
 -- parse a monotype in a data constructor as a Monotype object
@@ -520,9 +519,9 @@ mConP :: Parser Token Monotype
 mConP =
   let berr = Nothing in
    orExList [conNameP >>> \con ->
-                           accept $ MCon berr con [],
+                           accept $ MCon berr (subHash con) [],
              lparenP >>> \_ ->
              conNameP >>> \con ->
              many' monoTypP >>> \mts ->
              rparenP >>> \_ ->
-                          accept $ MCon berr con mts]
+                          accept $ MCon berr (subHash con) mts]

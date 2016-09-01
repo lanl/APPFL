@@ -24,6 +24,7 @@ test/hs/*.c
 test/stg/error/*.c
 test/stg/nonstrict/*.c
 test/stg/nostrict2/*.c
+test/stg/nonstrict/timeout/*.c
 #sandbox stuff
 sandbox
 appfl-sandbox
