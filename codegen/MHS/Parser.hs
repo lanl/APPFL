@@ -365,8 +365,8 @@ btypeP =
         conNameP >>> \c -> -- only permit type applicaton for con names (e.g. List a -> Int, not m a -> Int)
         many' atypeP >>> \ms ->
         accept $ case () of 
-                  _ | c == "Int#" -> primIntType
-                    | c == "Double#" -> primDoubleType
+                  _ | c == "Int#" -> MPrim PInt
+                    | c == "Double#" -> MPrim PDouble
                     | otherwise -> MCon (Just True) c ms
                                    
   in orExList [cAp, atypeP]

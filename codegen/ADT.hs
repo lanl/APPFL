@@ -9,10 +9,6 @@ module ADT (
   Monotype(..),
   PrimType(..),
   Con,
-  primIntType,
-  primDoubleType,
-  primStringType,
-  primVoidType,
   primTypeName,
   primTypeNames,
   dataConName,
@@ -160,12 +156,6 @@ boxMTypes tycons =
 makePrimTyCon :: PrimType -> TyCon
 makePrimTyCon pt = TyCon False (primTypeName pt) [] []
 
-
--- less hacky now
-primIntType    = MPrim PInt
-primDoubleType = MPrim PDouble
-primStringType = MPrim PString
-primVoidType   = MPrim PVoid
 
 -- helper field accessor functions --
 

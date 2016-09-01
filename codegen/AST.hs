@@ -308,9 +308,9 @@ maybeTypeOfAtom :: Atom -> Maybe Monotype
 maybeTypeOfAtom at = case at of
   Var _    -> Nothing
   LitC c   -> Just $ MCon (Just False) c []
-  LitI _   -> Just primIntType
-  LitD _   -> Just primDoubleType
-  LitStr _ -> Just primStringType
+  LitI _   -> Just $ MPrim PInt
+  LitD _   -> Just $ MPrim PDouble
+  LitStr _ -> Just $ MPrim PString
 
 instance Unparse Atom where
   unparse (Var v)  = stgName v

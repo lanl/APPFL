@@ -7,9 +7,10 @@ tyVarsUsed :: Int
 tyVarsUsed = 1
 mkDirtyMVar n = MVar $ 't' : show n
 
-intPrimTy         = MCon (Just False) intPrimTyName    []
-doublePrimTy      = MCon (Just False) doublePrimTyName []
-stringPrimTy      = MCon (Just False) stringPrimTyName []
+intPrimTy         = MPrim PInt    -- MCon (Just False) intPrimTyName    []
+doublePrimTy      = MPrim PDouble -- MCon (Just False) doublePrimTyName []
+stringPrimTy      = MPrim PString -- MCon (Just False) stringPrimTyName []
+voidPrimTy        = MPrim PVoid
 charPrimTy        = MCon (Just False) charPrimTyName   []
 
 charPrimTyName    = intPrimTyName

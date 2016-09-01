@@ -148,11 +148,11 @@ saturatedPrimAp _ = False
 -- and the correct imports and aliases see prelude.mhs
 intCon = DDefn { mtyp = MCon (Just True) "Int" [],
                dcons = [DCon {dcon = "I#",
-                              mtyps = [primIntType],
+                              mtyps = [MPrim PInt],
                               cons = ["I#"]}] }
 dblCon = DDefn { mtyp = MCon (Just True) "Double" [],
                dcons = [DCon {dcon = "D#",
-                              mtyps = [primDoubleType],
+                              mtyps = [MPrim PDouble],
                               cons = ["D#"]}] }
 
 isBoxedNum s = 

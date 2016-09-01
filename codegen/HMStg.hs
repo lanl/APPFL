@@ -147,9 +147,9 @@ instance DV (Expr InfoTab) (Expr InfoTab) where
     dv e@EAtom{emd, ea} =
         do m <- case ea of
                   Var v  -> freshMonoVar
-                  LitI _ -> pure primIntType
-                  LitD _ -> pure primDoubleType
-                  LitStr s -> pure primStringType
+                  LitI _ -> pure $ MPrim PInt
+                  LitD _ -> pure $ MPrim PDouble
+                  LitStr s -> pure $ MPrim PString
                   LitC c -> case maybeCMap emd of
                               Nothing -> error "dv LitC maybeCMap is Nothing"
                               Just cmap -> return $
