@@ -26,9 +26,8 @@ import qualified Data.Set as Set
 import qualified Data.Map as Map
 import Control.Monad.State
 import Data.List (intercalate)
-import Debug.Trace
-
--- newtype State s a = State (s -> (a, s))
+--import Debug.Trace
+import WiredIn
 
 -- Atoms have types.  Except for Var v these are manifest.  Store
 -- fresh type variables in the parent entity (EAtom, EFCall, EPrimop, PAP, CON)
@@ -67,7 +66,7 @@ hmstgdebug os = hmstgAssumsdebug os Set.empty
 
 hmstgAssumsdebug :: [Obj InfoTab] -> Assumptions -> IO ()
 hmstgAssumsdebug os0 assums =
-    let (os1,i1) = runState (dv os0) 0
+    let (os1,i1) = runState (dv os0) tyVarsUsed
         (as,cs,os2) = buNest Set.empty os1 assums :: (Set.Set Assumption,
                                                       Set.Set Constraint,
                                                       [Obj InfoTab])
@@ -148,11 +147,9 @@ instance DV (Expr InfoTab) (Expr InfoTab) where
     dv e@EAtom{emd, ea} =
         do m <- case ea of
                   Var v  -> freshMonoVar
-                  LitI _ -> return $ biIntMCon
-                  LitL _ -> return $ biLongMCon
-                  LitF _ -> return $ biFloatMCon
-                  LitD _ -> return $ biDoubleMCon
-                  LitStr s -> return $ biStringMCon
+                  LitI _ -> pure $ MPrim PInt
+                  LitD _ -> pure $ MPrim PDouble
+                  LitStr s -> pure $ MPrim PString
                   LitC c -> case maybeCMap emd of
                               Nothing -> error "dv LitC maybeCMap is Nothing"
                               Just cmap -> return $
@@ -169,26 +166,8 @@ instance DV (Expr InfoTab) (Expr InfoTab) where
            eas' <- mapM dv eas -- setTyp(s) of args
            return $ setTyp retMono e{eas = eas'}
 
-    dv e@EPrimop{..} =
-        let retMono = case eprimop of
-                        Piadd -> biIntMCon
-                        Pisub -> biIntMCon
-                        Pimul -> biIntMCon
-                        Pidiv -> biIntMCon
-                        Pimod -> biIntMCon
-                        Pimax -> biIntMCon
-                        Pimin -> biIntMCon
-                        Pineg -> biIntMCon
-                        Pieq  -> biIntMCon
-                        Pine  -> biIntMCon
-                        Pile  -> biIntMCon
-                        Pilt  -> biIntMCon
-                        Pige  -> biIntMCon
-                        Pigt  -> biIntMCon
-                        Praise -> MVar ""
-                        x -> error $ "HMStg.dv Eprimop " ++ show x
-                        -- etc.
-
+    dv e@EPrimOp{..} =
+        let (retMono,_) = unfoldMTy $ opType eopInfo
         in do eas' <- mapM dv eas -- setTyp(s) of Primop args
               let --ms = map getTyp eas' -- use those types to make MFun
                  -- m = foldr MFun retMono ms
@@ -215,11 +194,11 @@ instance DV (Alt InfoTab) (Alt InfoTab) where
     dv ADef{..} =
         do ae <- dv ae
            return ADef{..}
-           
+
     dv a@ACon{amd,ac,ae} =
         do ae' <- dv ae
            -- stash type constructor TC b1 .. bn, bi fresh
-           let TyCon boxed tcon tvs dcs =
+           let t@(TyCon boxed tcon tvs dcs) =
                  luTCon ac $ cmap amd -- NEW
            ntvs <- freshMonoVars $ length tvs
            let m = MCon (Just boxed) tcon ntvs
@@ -279,26 +258,10 @@ instance BU (Expr InfoTab) where
             Set.unions css,
             e{eas=eas'}) -- EFCall monotype set in dv
 
-    bu mtvs e@EPrimop{emd = ITPrimop{typ}, eprimop, eas} =
+    bu mtvs e@EPrimOp{emd = ITPrimop{typ}, eprimOp, eopInfo, eas} =
         let (ass, _, eas') = unzip3 $ map (bu mtvs) eas
             as = Set.unions ass
-            pts = case eprimop of
-                    Piadd -> [biIntMCon, biIntMCon]
-                    Pisub -> [biIntMCon, biIntMCon]
-                    Pimul -> [biIntMCon, biIntMCon]
-                    Pidiv -> [biIntMCon, biIntMCon]
-                    Pimod -> [biIntMCon, biIntMCon]
-                    Pimax -> [biIntMCon, biIntMCon]
-                    Pimin -> [biIntMCon, biIntMCon]
-                    Pineg -> [biIntMCon, biIntMCon]
-                    Pine  -> [biIntMCon, biIntMCon]
-                    Pieq  -> [biIntMCon, biIntMCon]
-                    Pile  -> [biIntMCon, biIntMCon]
-                    Pilt  -> [biIntMCon, biIntMCon]
-                    Pigt  -> [biIntMCon, biIntMCon]
-                    Pige  -> [biIntMCon, biIntMCon]
-                    Praise  ->  [] 
-                    x -> error $ "HMStg.bu EPrimop " ++ show x
+            (_,pts) = unfoldMTy $ opType eopInfo
             cs = Set.fromList [EqC m1 m2 | (_,m1) <- Set.toList as | m2 <- pts]
         in (as, cs, e) -- EPrimop monotype set in dv
 
@@ -368,7 +331,7 @@ buRec mtvs os =
 
 -- buIn takes: mtvs, an environment of x:t, and a set of assumptions as
 --    returns: as\xi, i.e. assumptions with xi discharged, set of constraints
-buIn 
+buIn
   :: Set.Set Monotype           -- ^ environment
   -> [Assumption]               -- ^ Assumptions generated from dv
   -> Assumptions                -- ^ Assumptions generated by buRec
@@ -390,7 +353,7 @@ butAlts t0 mtvs e@Alts{alts, scrt} =
       let mtvs' = Set.insert (MVar sv) mtvs
           (ass, css, alts') = unzip3 $ map (butAlt t0 $ mtvs') alts
           (a1:as) = alts'
-          
+
           -- Type of scrutinee binding must be the same as that of the scrutinee
           --   expression (passed in as t0).  Constraint only created if an
           --   Assumption about is found in the Alts. This matches behavior of
@@ -402,7 +365,7 @@ butAlts t0 mtvs e@Alts{alts, scrt} =
           sv = case scrt of
             EAtom _ (Var v) -> v
             _               -> error "HMStg.butAlts scrt not atomic var"
-                                     
+
 
           ncs = Set.fromList $ scrtCS ++ [EqC (getTyp a1) (getTyp a') | a'<-as]
       in (dropAss sv $ foldr1 Set.union ass,
@@ -415,7 +378,7 @@ butAlt
   -> Set.Set Monotype -- ^ environment
   -> Alt InfoTab     -- ^ Alt block to process
   -> (Assumptions, Constraints, Alt InfoTab)
-     
+
 butAlt t0 mtvs e@ADef{av,ae} =
     -- av monomorphic:  mtvs and EqC
     let (as, cs, ae') = bu (Set.union mtvs $ Set.singleton (MVar av)) ae
@@ -427,6 +390,7 @@ butAlt t0 mtvs e@ADef{av,ae} =
 butAlt t0 mtvs e@ACon{amd,ac,avs,ae} =
     let MCon _ _ ntvs = getTyp e --stashed by dv
         tis = instantiateDataConAt ac (cmap amd) ntvs
+        --tis = trace ("trace butAlt " ++ ac) (instantiateDataConAt ac (cmap amd) ntvs)
         xtis = zzip avs tis
         -- note ntvs == freeVars tis (as sets) so ntvs are new mtvs
         (as,cs,ae') = bu (Set.union mtvs $ Set.fromList ntvs) ae
@@ -490,7 +454,7 @@ instance BU (Obj InfoTab) where
       in (Set.insert (f,ftyp) $ Set.unions ass,
           Set.unions css,
           o{as=as'}) -- PAP monotype set in dv
-          
+
 
 
 {- [Atom version]
@@ -523,7 +487,7 @@ instance BU (Obj InfoTab) where
 polyToMono m@(MVar _) = m
 polyToMono (MFun a b) = MFun (polyToMono a) (polyToMono b)
 polyToMono (MCon b c ms) = MCon b c $ map (polyToMono) ms
--- polyToMono m@MPrim{} = m
+polyToMono m@MPrim{} = m
 polyToMono (MPVar v) = MVar v
 polyToMono m = error $ "HMStg.polyToMono: " ++ show m
 
@@ -548,7 +512,7 @@ instance BackSub (Expr InfoTab) where
         in case e' of
              e@ELet{edefs,ee}   -> e{edefs = backSub s edefs, ee = backSub s ee}
              e@ECase{ee, ealts} -> e{ee = backSub s ee, ealts = backSub s ealts}
-             e@EPrimop{eas}     -> e{eas = map (backSub s) eas}
+             e@EPrimOp{eas}     -> e{eas = map (backSub s) eas}
              e@EFCall{eas}      -> e{eas = map (backSub s) eas}
              EAtom{}            -> e'
 
@@ -597,7 +561,7 @@ instance CO (Expr InfoTab) where
              e@ELet{edefs,ee}   -> e{edefs = co bvs' edefs, ee = co bvs' ee}
              -- I think this is right.
              e@ECase{ee, ealts} -> e{ee = co bvs' ee, ealts = setCTyp ptyp $ co bvs' ealts}
-             e@EPrimop{eas}     -> e{eas = map (co bvs') eas}
+             e@EPrimOp{eas}     -> e{eas = map (co bvs') eas}
              e@EFCall{eas}      -> e{eas = map (co bvs') eas}
              EAtom{}            -> e'
 
@@ -660,8 +624,8 @@ instance Show a => Ppstg (Expr a) where
     ppstg n (EFCall emd f as) =
         indents n [show emd ++ " " ++ f ++ " " ++ showas as]
 
-    ppstg n (EPrimop emd p as) =
-        indents n [show emd ++ " PRIMOP " ++ show p ++ " " ++ showas as]
+    ppstg n (EPrimOp emd p i as) =
+        indents n [show emd ++ " PRIMOP " ++ show p ++ " " ++ show i ++ " " ++ showas as]
 
     ppstg n (ELet emd defs e) =
         let ss = [show emd ++ " let { %"] ++

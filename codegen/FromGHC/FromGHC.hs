@@ -1,3 +1,4 @@
+{-# LANGUAGE TupleSections #-}
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE KindSignatures,
 NamedFieldPuns, CPP, FlexibleInstances, ScopedTypeVariables,
@@ -13,7 +14,7 @@ UndecidableInstances, BangPatterns, MagicHash #-}
 --
 -- executable usage is: hs2appfl infile
 -- It assumes a prelude directory with the AppflPrelude and APPFL base
--- in $PWD.  i.e. It's Fragile 
+-- in $PWD.  i.e. It's Fragile
 module FromGHC.FromGHC
   ( ghc2stg
   , compileAndThen
@@ -22,7 +23,7 @@ module FromGHC.FromGHC
   , printAppflSyn
   , printGhcSyn
   , target
-  , amain 
+  , amain
   )
 where
 
@@ -38,10 +39,11 @@ import           FromGHC.BuiltIn
 import           FromGHC.Naming
 import           FromGHC.PrettySTG
 import           FromGHC.PruneSTG
+import           WiredIn (noExhaustName)
 
 import           Analysis (defAlt)
 import           State hiding (liftM)
-import           Util 
+import           Util
 import qualified PPrint as A
 
 ---------------------------------------- Standard library modules
@@ -63,7 +65,7 @@ import           Control.Monad
 import           System.Exit (ExitCode (..), exitWith)
 import           System.Environment (getArgs, lookupEnv)
 
-  
+
 ---------------------------------------- GHC specific stuff
 
 -- Note: I'm Working on importing from the original modules instead of
@@ -83,7 +85,7 @@ import           GHC
 
                  -- safely set new DynFlags (checked for consistency)
                  , setSessionDynFlags
-                 
+
                  -- Targets are source files
                  , guessTarget, addTarget
 
@@ -95,7 +97,7 @@ import           GHC
                  , ModSummary(..), Module, ModLocation (..)
                  , getModSummary, getModuleGraph
                  , moduleName
-                 )                 
+                 )
 
 -- The GhcMonad. The Ghc and GhcT types are defined here.
 import           GhcMonad
@@ -105,7 +107,7 @@ import           GhcMonad
 
 import           ErrUtils (prettyPrintGhcErrors)
 
--- DynFlags determine most of the run-time behavior of GHC, notably 
+-- DynFlags determine most of the run-time behavior of GHC, notably
 import           DynFlags
                  ( DynFlags (..), ExtensionFlag (..)
                  , HscTarget (..), GhcLink (..)
@@ -155,7 +157,7 @@ import           DataCon as G
                  , isUnboxedTupleCon
                  )
 import           TyCon as G ( TyCon, TyConParent (..)
-                            , isDataTyCon, tyConParent )                 
+                            , isDataTyCon, tyConParent )
 import           TypeRep (Type (..), ) -- Analagous to our MonoType
 import           Literal ( Literal (..) )
 import           PrimOp ( PrimOp (..))
@@ -164,10 +166,10 @@ import           PrimOp ( PrimOp (..))
 -- constructor of the Var type. Vars add metadata to identifiers (Names)
 import           Var (Var (..), Id, idDetails, isId )
 import           IdInfo (IdDetails(..))
-                 
+
 -- Name is the basic identifier type. NamedThings have a Name (accessed with
 -- getName).
-import           Name 
+import           Name
                  ( Name, NamedThing (..)
                  , getOccString, nameSrcSpan )
 
@@ -198,15 +200,15 @@ testPreludeDir = "../prelude/"
 target f = testDir ++ f
 
 
-printGhcSyn file = writeGhcSyn file "/dev/stdout" >> putStrLn "" 
+printGhcSyn file = writeGhcSyn file "/dev/stdout" >> putStrLn ""
 writeGhcSyn infile outfile = do
   (_,stg) <- compile testPreludeDir infile
   writeFile outfile (show (pprGhcSyn stg))
 
 compile prld file = compileAndThen pure prld file
 
-printAppflSyn file = writeAppflSyn file "/dev/stdout" >> putStrLn "" 
-                  
+printAppflSyn file = writeAppflSyn file "/dev/stdout" >> putStrLn ""
+
 writeAppflSyn infile outfile =
   do
     (ghc, (ts,os)) <- compileAndThen (return . g2a) testPreludeDir infile
@@ -231,7 +233,7 @@ compileAndThen stgFun preludeDir file = do
       -- compiler/main/DynFlags.hs
       -- The initialization process creates this Settings object in
       -- compiler/main/SysTools.hs:initSysTools
-      
+
       oldFlags <- getSessionDynFlags
       let dflags = makeAppflFlags preludeDir oldFlags
 
@@ -241,7 +243,7 @@ compileAndThen stgFun preludeDir file = do
       handleSourceError
         (\err -> do
             printException err
-            liftIO $ do               
+            liftIO $ do
               putStrLn "\n  \27[31mCompilation Failed\27[0m"
               exitWith $ ExitFailure 1 ) $ do
 
@@ -277,7 +279,7 @@ compileAndThen stgFun preludeDir file = do
 
       modGraph <- getModuleGraph
 
-      
+
       -- pull the ModGuts out of the parsed -> typechecked ->
       -- desugared modules. The ModGuts objects should have a
       -- CoreProgram (and other data relevant to a program's Core
@@ -297,7 +299,7 @@ compileAndThen stgFun preludeDir file = do
       hscEnv <- getSession
 
       -- CgGuts are a reduced form of ModGuts. They hold information necessary
-      -- for Core to STG translation. 
+      -- for Core to STG translation.
       (cgGuts, modDetails) <-
         mapAndUnzipM (liftIO . tidyProgram hscEnv <=< liftIO . hscSimplify hscEnv) modGuts
         -- Simplifying and Tidying seem to be useful, but not strictly necessary
@@ -320,8 +322,8 @@ makeAppflFlags preludeDir
   =
   -- fold in the requisite language extensions
   foldr xoptModify newFlags appflExts
- 
-  where    
+
+  where
     xoptModify :: (ExtensionFlag, Bool) -> DynFlags -> DynFlags
     xoptModify (xflag, turnOn) flags
       | turnOn    = xopt_set flags xflag
@@ -333,7 +335,7 @@ makeAppflFlags preludeDir
       -- LLVM, etc.)  We don't want any code generation but our own,
       -- so HscNothing is appropriate
       hscTarget      = HscNothing
-    
+
       -- When using HscNothing, Linking appears to only happen
       -- if GHC is being used as an interface to ld (e.g. if a
       -- .o file is given as an argument) or if explicitly
@@ -344,13 +346,13 @@ makeAppflFlags preludeDir
       -- Make sure our Prelude and Base libs are visible.
       -- Unfortunately, we can't implicitly import them (as far as I've found)
       , importPaths    = oldIPaths ++ [preludeDir, preludeDir ++ "/APPFL/" ]
-      
+
       -- Should parameterize this (maybe with Options.h?)
       , verbosity      = 0
       }
 
 -- | List of language extensions we want to require of APPFL-haskell
--- source files.    
+-- source files.
 appflExts :: [(ExtensionFlag, Bool)]
 appflExts =
   [
@@ -365,10 +367,10 @@ appflExts =
     -- generated.  Since both branches are passed to this function, if either is bottom,
     -- strict evaluation breaks the programmers expectation of if-then-else.
     -- The comment below is left for posterity.
-    
+
     -- We want to escape as much of the built-in stuff as possible,
     -- so we'll use our own "fromInteger", "ifthenelse" etc.
-    -- This actually implies NoImplicitPrelude; I'm just being extra explicit 
+    -- This actually implies NoImplicitPrelude; I'm just being extra explicit
     -- see the GHC Syntactic Extensions docs or the definitions in APPFL.Base
     -- , (Opt_RebindableSyntax, True)
   ]
@@ -376,7 +378,7 @@ appflExts =
 
 -- | In the GhcMonad, given a CgGuts object, pull out the
 --   CoreProgram and convert it to STG
-gutsToSTG :: GhcMonad m => CgGuts -> m ([StgBinding], CollectedCCs)      
+gutsToSTG :: GhcMonad m => CgGuts -> m ([StgBinding], CollectedCCs)
 gutsToSTG CgGuts { cg_module -- :: Module
                  , cg_binds  -- :: CoreProgram
                  , cg_tycons -- :: [TyCon]
@@ -390,13 +392,13 @@ gutsToSTG CgGuts { cg_module -- :: Module
     hscEnv <- getSession
     dflags <- getSessionDynFlags
     let datacons = filter G.isDataTyCon cg_tycons
-          
+
     liftIO $ toStg cg_module cg_binds ms_location datacons hscEnv dflags
 
 
 -- | Convert a CoreProgram to STG (includes the stg2stg pass,
 --   which is where profiling information is added and any IO
---   may occur. 
+--   may occur.
 toStg :: Module             -- this module (being compiled)
       -> CoreProgram        -- its Core bindings
       -> ModLocation        -- Where is it? (I think)
@@ -405,7 +407,7 @@ toStg :: Module             -- this module (being compiled)
       -> DynFlags           -- Dynamic flags
       -> IO ([StgBinding],  -- The STG program
               CollectedCCs) -- Cost centres (don't care about these)
-toStg mod core modLoc datacons hscEnv dflags = 
+toStg mod core modLoc datacons hscEnv dflags =
   do
     prepped   <- corePrepPgm hscEnv modLoc core datacons
 
@@ -434,7 +436,7 @@ data PostG2A
 -- | Alias to indicate a fully prepped and sanitized STG tree
 type Clean = ()
 
-                  
+
 -- g2a prefix => GHC to APPFL
 
 -- | A TyMap holds the information required to build TyCons (TyCon name
@@ -459,7 +461,7 @@ data DictInfo
     -- bound to the compat implementation. The Names are always Names of
     -- Classes. This is not a Data.Map because there's no Ord instance for
     -- Types, nor is making one simple.
-    
+
     , undefs :: Set Id
     -- ^ The DFunIds that we still need to find an Appfl equivalent for.  If
     -- there are any left after postprocessing of the (Appfl) STG, we're in
@@ -522,7 +524,7 @@ putDictInfo di = lget >>= \gst -> lput gst{dictInfo = di}
 putDataCon :: G.DataCon -> G2AMonad ()
 putDataCon dc =
   do
-    tcname <- nameGhcThing (dataConTyCon dc)        
+    tcname <- nameGhcThing (dataConTyCon dc)
     G2A tymap un classmap <- lget
     lput $ G2A (Map.insertWith insertDC tcname [dc] tymap) un classmap
   where
@@ -550,7 +552,7 @@ g2a binds =
                                  let dcFuns = concatMap makeDCWorkers tycons
                                  objs1 <- mapM pproc (objs0 ++ dcFuns)
                                  return (objs1, tycons)
-                      
+
   in (map sanitizeTC tycons, map sanitizeObj objs)
 
 
@@ -561,8 +563,8 @@ g2aObj bind =
     -- We don't distinguish between recursive bindings and otherwise at the type level, so
     -- no need to do anything special here.
 
-    StgNonRec id rhs -> liftM maybeToList $ procRhs id rhs 
-                           
+    StgNonRec id rhs -> liftM maybeToList $ procRhs id rhs
+
     StgRec pairs -> liftM catMaybes $ mapM (uncurry procRhs) pairs
 
   where
@@ -570,7 +572,7 @@ g2aObj bind =
     procRhs id rhs = rethrowAtName id $
       do
         case idDetails id of
-        
+
           -- We don't want to do anything if the Id refers to a DataCon Worker,
           -- since we generate them independently.
           DataConWorkId dc -> putDataCon dc >> return Nothing
@@ -599,7 +601,7 @@ g2aObj bind =
         -- and only use them when constructors aren't fully saturated.
         | otherwise
           -> liftM3 (FUN Complete) (mapM nameGhcThing args) (g2aExpr expr) (nameGhcThing id)
-          
+
       -- It's either a top-level empty constructor (a la Nil/Nothing) or it's
       -- being used in a let binding. Either way, we make sure the DataCon is
       -- added to the TyMap.
@@ -626,11 +628,11 @@ g2aObj bind =
 
 -- | Make a THUNK function call to a DataCon's wrapper function
 mkWrapperCall :: G.DataCon -> [StgArg] -> String -> G2AMonad (Obj PostG2A)
-mkWrapperCall dc args name = 
+mkWrapperCall dc args name =
   do
     expr <- liftM2 (EFCall Complete) (nameGhcThing $ dataConWrapId dc) (mapM g2aArg args)
     return $ THUNK Complete expr name
-    
+
 -- | Make a CON Object from a DataCon and its StgArgs
 mkConObj :: G.DataCon -> [StgArg] -> String -> G2AMonad (Obj PostG2A)
 mkConObj dc args bind =
@@ -654,32 +656,36 @@ g2aArg (StgVarArg id)
 
 g2aAtomId :: Id -> G2AMonad (Expr PostG2A)
 g2aAtomId id = do
-  post <- case idDetails id of
-            DataConWorkId dc -> putDataCon dc >> return Complete
-            DFunId _ _ -> procRhsDictId id
-            _ -> return Complete
-  liftM (EAtom post) (liftM Var $ nameGhcThing id)
+  (name, post) <- case idDetails id of
+            DataConWorkId dc ->
+              -- Important: The name we want is that of the DataCon,
+              -- _not_ the Id
+              putDataCon dc >> liftM (,Complete) (nameGhcThing dc)
+              
+            DFunId _ _ -> liftM2 (,) (nameGhcThing id) (procRhsDictId id)
+            _ -> liftM (,Complete) (nameGhcThing id)
+
+  return $ EAtom post (Var name)
   
 g2aLit :: Literal -> G2AMonad Atom
 g2aLit lit = case lit of
   LitInteger i typ
-    | Just int  <- toInt i   -> return $ LitI int
-    | Just long <- toInt64 i -> return $ LitL long
+    | Just int  <- toInt64 i   -> return $ LitI int
     | otherwise              -> unsupported $ "LitInteger val too large: " ++ show i
 
   -- This may not be wise, particularly if someone is counting on
   -- 8-bit overflow
-  MachChar chr               -> return $ LitI $ ord chr
+  MachChar chr               -> return $ LitI $ to64 $ ord chr
   MachInt i                  -> return $ LitI (fromInteger i)
 
   -- Word == Int64 == Word64 == 64 bit types for APPFL
-  MachInt64 i                -> return $ LitL (fromInteger i)
-  MachWord i                 -> return $ LitL (fromInteger i)
-  MachWord64 i               -> return $ LitL (fromInteger i)
-  MachFloat r                -> return $ LitF (fromRational r)
+  MachInt64 i                -> return $ LitI (fromInteger i)
+  MachWord i                 -> return $ LitI (fromInteger i)
+  MachWord64 i               -> return $ LitI (fromInteger i)
+  MachFloat r                -> return $ LitD (fromRational r)
   MachDouble r               -> return $ LitD (fromRational r)
   
-  MachStr bs                 -> unsupported ("Machine Strings: " ++ show bs)
+  MachStr bs                 -> return $ LitStr (show bs)
   MachNullAddr               -> unsupported "Machine (Null) Address"
   MachLabel fs mi fORd       -> unsupported "Machine Labels"
 
@@ -688,13 +694,13 @@ g2aLit lit = case lit of
 g2aRealApp :: Id -> [StgArg] -> G2AMonad (Expr PostG2A)
 g2aRealApp id args = do
     meta <- case idDetails id of
-              DFunId _ _ -> procRhsDictId id    
+              DFunId _ _ -> procRhsDictId id
               _ -> return Complete
-              
+
     args'  <- mapM g2aArg args
     name   <- nameGhcThing id
     return $ EFCall meta name args'
-    
+
 
 -- TODO : Actually implement an erroring mechanism
 makeErrorCall :: Id -> [StgArg] -> G2AMonad (Expr PostG2A)
@@ -704,10 +710,10 @@ makeErrorCall id args = g2aRealApp id args
 -- | Convert a GHC STG Expression to an APPFL Expression
 g2aExpr :: StgExpr -> G2AMonad (Expr PostG2A)
 g2aExpr e = case e of
-  -- Function Application or a Var 
+  -- Function Application or a Var
   StgApp id args -> rethrowAtName id $
     case () of
-              
+
       -- No args ==> EAtom with a Var.  Literals are StgLit below
       _  | null args    -> g2aAtomId id
          | isErrorId id -> makeErrorCall id args
@@ -745,9 +751,9 @@ g2aExpr e = case e of
     -- Anything that's not a PrimOp is essentially a foreign call
     -- Don't ask me the difference between a PrimCall and ForeignCall
     | otherwise -> unsupported "PrimCall/ForeignCall"
-    
 
-  StgCase scrut _ _ bind _ altT alts 
+
+  StgCase scrut _ _ bind _ altT alts
     -> do
     ealts <- g2aAlts altT bind alts
     escrt <- g2aExpr scrut
@@ -757,24 +763,24 @@ g2aExpr e = case e of
   -- Treat the two forms of Let as identical
   StgLet bindings body
     -> makeLetExpr bindings body
-  StgLetNoEscape _ _ bindings body 
+  StgLetNoEscape _ _ bindings body
     -> makeLetExpr bindings body
 
 
   -- Ignore the profiler tick, make the expr
-  StgTick _ realExpr 
+  StgTick _ realExpr
     -> g2aExpr realExpr
 
 
   -- "used *only* during CoreToStg's work". See stgSyn/StgSyn.hs
-  StgLam args body 
+  StgLam args body
     -> unreachable _HERE
 
 
 -- | Make an Alts object given the AltType (unused), scrutinee binder
 -- and list of StgAlts
 g2aAlts :: AltType -> Id -> [StgAlt] -> G2AMonad (Alts PostG2A)
-g2aAlts altT bind alts = rethrowAtName bind $  
+g2aAlts altT bind alts = rethrowAtName bind $
     do
       scrtName <- nameGhcThing bind
       let escrt = EAtom Complete (Var scrtName)
@@ -782,9 +788,9 @@ g2aAlts altT bind alts = rethrowAtName bind $
       return $ Alts Complete altsList "alts" escrt
 
 
-mkAppflPrimop :: PrimOp -> [StgArg] -> G2AMonad (Expr PostG2A)
+mkAppflPrimop :: PrimOp.PrimOp -> [StgArg] -> G2AMonad (Expr PostG2A)
 mkAppflPrimop primop args = case lookupAppflPrimop primop of
-  Just op -> liftM (EPrimop Complete op) (mapM g2aArg args)
+  Just (op,info) -> liftM (EPrimOp Complete op info) (mapM g2aArg args)
   Nothing ->
     case lookupImplementedPrimop primop of
                  Just name -> liftM (EFCall Complete name) (mapM g2aArg args)
@@ -824,7 +830,7 @@ g2aAlt scrtName (acon, binders, usemask, rhsExpr)
     return (ADef { amd = Complete
                  , av  = "x"
                  , ae  = EFCall{ emd = Complete
-                               , ev  = appflNoExhaust
+                               , ev  = noExhaustName
                                , eas = [ EAtom{ emd = Complete
                                               , ea  = Var "x" }
                                        ]
@@ -849,7 +855,7 @@ g2aAlt scrtName (acon, binders, usemask, rhsExpr)
           case l of
             LitI i -> return $ ACon Complete (show i) conParams appflRhs
             _      -> unsupported "Only pattern matching on literal Int# for now"
-  
+
         DEFAULT -> return $ ADef Complete scrtName appflRhs
 
 -- Note on failing pattern matches and void# --
@@ -908,8 +914,8 @@ procRhsDictId id = procDictId id False
 procLhsDictId :: Id -> G2AMonad ()
 procLhsDictId id =
   -- Don't want the PostG2A to be used by mistake
-  procDictId id True >> return () 
-  
+  procDictId id True >> return ()
+
 -- | General form of processing DFunIds, parameterized for whether the Id is found
 -- in a binding or in an expression.
 procDictId :: Id   -- | Id known to have DFunId details
@@ -922,7 +928,7 @@ procDictId id isImpl =
       -- If the TyCon is a dictionary, its parent will be a ClassTyCon
 
           d@DictInfo{appflCompatAList, undefs, haveDefs} <- getDictInfo
-          
+
           when isImpl $ putDictInfo d{ undefs   = Set.delete id undefs
                                      , haveDefs = Set.insert id haveDefs }
 
@@ -931,10 +937,10 @@ procDictId id isImpl =
             -- this is the "real" class name ..
             Just className -> do
               idname <- nameGhcThing id
-              
-              -- add it to the mappings we're accumulating               
+
+              -- add it to the mappings we're accumulating
               let newCompats = ((className, typs), idname) : appflCompatAList
-              
+
               putDictInfo d{appflCompatAList = newCompats}
               return Complete
 
@@ -943,7 +949,7 @@ procDictId id isImpl =
             Nothing
               | isImpl || id `Set.member` haveDefs
                 -> return Complete
-                
+
               | otherwise -> do
                   putDictInfo d{undefs = Set.insert id undefs}
                   return (IncompleteDict id)
@@ -952,10 +958,10 @@ procDictId id isImpl =
       -- I'm pretty sure this shouldn't happen, since any Id known to be a
       -- DFunId should have a TyConApp result type (application of the
       -- Dictionary constructor) and its parent really should be a ClassTyCon.
-      -- If I'm wrong, I'll have to do investigate GHC STG some more.    
+      -- If I'm wrong, I'll have to do investigate GHC STG some more.
 
-    
-  
+
+
 -- | Construct the actual TyCons from the TyMap in the G2AMonad
 makeTyCons :: G2AMonad [A.TyCon]
 makeTyCons =
@@ -982,8 +988,8 @@ g2aDataCon dc = rethrowAtName dc $
         go m            = [m]
     con <- nameGhcThing dc
     -- See note below about why we need the init here
-    mtypes <- liftM (init . go) (g2aMonoType $ dataConRepType dc)    
-    return $ A.DataCon con mtypes 
+    mtypes <- liftM (init . go) (g2aMonoType $ dataConRepType dc)
+    return $ A.DataCon con mtypes
 
 {- Getting data constructor definitions from GHC:
 
@@ -1171,7 +1177,7 @@ exceptString Except{srcSpan, mNames, msg} =
       [ "Caused by or near something with names:"
       , "  Source Occurrence --> " ++ (show $ getOccString ghcName)
       , "  APPFL Qualified ----> " ++ appflName ]
-        
+
     locStr = case srcSpan of
       UnhelpfulSpan s -> unpackFS s
       RealSrcSpan rss ->
@@ -1194,7 +1200,7 @@ exceptG2A
   :: AppflNameable a
   => Maybe a            -- | Nameable thing that caused it
   -> Maybe G2AException -- | Exception that preceeded this one
-  -> String             -- | Some helpful message  
+  -> String             -- | Some helpful message
   -> G2AMonad b
 exceptG2A mthing mexcept msg = do
   (loc, mNames) <-
@@ -1205,7 +1211,7 @@ exceptG2A mthing mexcept msg = do
         let ghcName = getName thing
         appflName <- nameGhcThing thing
         return (nameSrcSpan ghcName, Just (ghcName, appflName))
-        
+
   throwE $ Except loc mNames msg mexcept
 
 
@@ -1271,7 +1277,7 @@ instance PostProc Obj where
 instance PostProc Expr where
   pproc e = case emd e of
     Complete -> recur e
-    
+
     IncompleteDict id -> case e of
 
       -- Simple case: This Atom identifies a dictionary we need to find the
@@ -1284,13 +1290,13 @@ instance PostProc Expr where
       -- becomes `(==) (dEqList dEqInt) [2] [1,2]`.  The dictionary dEqList takes
       -- a dictionary argument for its elements.
       EFCall {} -> makeNewExpr id e (\name -> e{ev = name})
-      
+
       -- Anything else doesn't make sense, since IncompleteDict is basically
       -- saying that "this idenfier needs to be swapped".  Let and Case
       -- expressions do not have a single identifier, and Primops are definitely
-      -- not dictionaries.  
+      -- not dictionaries.
       primop -> unreachable _HERE
-        
+
     where
       recur e = case e of
         -- Common logic to both Complete and Incomplete case: traverse the
@@ -1313,7 +1319,7 @@ instance PostProc Expr where
         EAtom {ea} ->
           return e{ emd = Dirty
                   , ea} -- typecheck fails without the `ea` param. GHC bug?
-  
+
         -- Even though a Primop will never be applied to a Dictionary, we still
         -- need to change the argument metadata.  EFCalls just happen to have the
         -- same logic.  Their args may need modification
@@ -1333,10 +1339,10 @@ instance PostProc Expr where
             let TyConApp tc typs = finalResultType (varType id)
                 ClassTyCon clas = tyConParent tc
             case lookupBy dictInfoKeyComp (getName clas, typs) appflCompatAList of
-              
+
               -- Found our Appfl implementation
               Just appflName -> recur $ mkEx appflName
-            
+
               -- Bad news: Undefined dictionary with no Appfl implementation
               Nothing -> do
                 clasStr <- quickPpr clas
@@ -1348,8 +1354,8 @@ instance PostProc Expr where
             -- Dictionary is defined somewhere in the AST, don't do anything
             -- special
           else recur ex
-            
-            
+
+
 instance PostProc Alts where
   pproc a@Alts{alts, scrt} = do
     pscrt <- pproc scrt

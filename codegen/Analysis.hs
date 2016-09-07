@@ -21,7 +21,7 @@ import qualified Data.Map as Map
 import Data.List (group)
 import Data.Maybe (fromMaybe)
 import Debug.Trace
-import Util (deleteAll)
+import Util
 
 
 -- known function analysis identifies PAPs and EFCalls that reference
@@ -47,14 +47,14 @@ propKnownCalls objs =
     env = addDefsToKCMap objs Map.empty
   in
     map (propCallsObj env) objs
-  
+
 addDefsToKCMap defs env =
   let
     f FUN{omd, oname} env = Map.insert oname omd env
     f THUNK{e, oname} env = case knownFunExprIT env e of
                              Just it -> Map.insert oname it env
                              Nothing -> env
-                         
+
     f PAP{omd, f, oname} env = case Map.lookup f env of
                                 Just it -> Map.insert oname it env
                                 Nothing -> env
@@ -75,7 +75,7 @@ propCallsObj env o = case o of
   THUNK{omd, e} -> o { e = propCallsExpr env e }
 
   _ -> o
-    
+
 
 propCallsExpr :: KCMap -> Expr InfoTab -> Expr InfoTab
 propCallsExpr env e = case e of
@@ -95,23 +95,23 @@ propCallsExpr env e = case e of
   EFCall{emd, ev} ->
     let emd' = emd{ knownCall = Map.lookup ev env }
     in  e{ emd = emd' }
-       
+
   _ -> e
 
 
 propCallsAlt :: KCMap -> Expr InfoTab -> Alt InfoTab -> Alt InfoTab
 propCallsAlt env scrut a = case a of
-  
+
   ACon{amd, avs, ae} ->
     let env' = deleteAll avs env
     in a{ ae = propCallsExpr env' ae }
-  
+
   ADef{amd, av, ae}  ->
     let env' = case knownFunExprIT env scrut of
           Just it -> Map.insert av it env -- if scrut is known function, bind var in env
           Nothing -> Map.delete av env    -- else honor shadowing and delete it
     in a { ae = propCallsExpr env' ae}
-       
+
 
 type FunMap = Map.Map Var Bool
 
@@ -193,19 +193,19 @@ instance SetHA (Expr InfoTab) where
 
           -- be exhaustive
           Just it -> error $ "Analysis.setHA (EFCall): unexpected infotab: " ++ show (pprint it)
-             
+
         nha = fnha -- and (fnha:map getHA eas') -- ignoring args for now
         emd' = emd {noHeapAlloc = nha}
       in e { emd = emd' }
 
-    EPrimop{emd, eas} ->
+    EPrimOp{emd, eas} ->
       let eas' = map (setHA fmp) eas      -- for consistency
           nha  = all getHA eas            -- for consistency
           emd' = emd {noHeapAlloc = True} -- hack, typechecker not working?
       in e { emd = emd' }
 
   getHA = noHeapAlloc . emd
-    
+
 
 instance SetHA (Alts InfoTab) where
   setHA fmp a@Alts{alts, scrt} =
@@ -234,7 +234,7 @@ instance SetHA (Alt InfoTab) where
        a { ae = ae' }
 
   getHA = getHA . ae
-      
+
 
 addDefsToMap :: [Obj InfoTab] -> FunMap -> FunMap
 addDefsToMap defs funmap =
@@ -246,7 +246,7 @@ addDefsToMap defs funmap =
       FUN{} -> True
       PAP{} -> False -- Don't want PAPs for now
       _ -> False
-    
+
     foldfunc def fmp = case def of
 
       FUN{vs, e, oname} ->
@@ -264,7 +264,7 @@ addDefsToMap defs funmap =
         else fixDefs defs fmp'
   in
    fixDefs defs fmp'
-     
+
 
 
 -- Entry point for ensuring exhaustive Alts in case expressions
@@ -284,17 +284,17 @@ exhaustObj cmap obj =
    --BLACKHOLE{} -> obj
 
 -------------------------------------------------- Expr Level
-   
+
 exhaustExpr :: CMap -> Expr a -> Expr a
 exhaustExpr cmap expr =
   case expr of
    ELet{edefs, ee} -> expr {edefs = exhaustCases cmap edefs,
                             ee = exhaustExpr cmap ee}
-                      
+
    ECase{ealts} -> expr {ealts = exhaustAlts cmap ealts}
-   
+
    EAtom{}   -> expr
-   EPrimop{} -> expr
+   EPrimOp{} -> expr
    EFCall{}  -> expr
 
 -------------------------------------------------- Alts level
@@ -326,7 +326,7 @@ defAlt =
 
 
 
-     
+
 -- Check an expression to see if it evaluates to a known function and return
 -- that function's InfoTab in Maybe form, if so.
 -- This isn't terribly useful: expressions will rarely evaluate to known
@@ -365,7 +365,7 @@ knownFunExprIT env e =
       Nothing -> knownFunExprIT env ae
     -- must delete bindings in Con from KCMap before lookup
     checkAlt env _ ACon{avs, ae} = knownFunExprIT (deleteAll avs env) ae
-    
+
 
     -- remove let bindings from map. Add bindings for any object that
     -- evaluates to a known function f, e.g. PAP(f) or THUNK(e) where e == f
@@ -386,7 +386,7 @@ knownFunExprIT env e =
   in
    case e of
     EAtom {ea = Var v} -> Map.lookup v env
-   
+
     ECase {ee, ealts = Alts{alts}} -> checkAlts env ee alts
 
     EFCall {emd, ev, eas} -> case Map.lookup ev env of
@@ -396,5 +396,5 @@ knownFunExprIT env e =
 
 --    This will break heap allocation analysis if it depends on known calls
 --    ELet  {edefs, ee} ->  knownFunExprIT (addLetDefs env edefs) ee
-                                                     
+
     _ -> Nothing

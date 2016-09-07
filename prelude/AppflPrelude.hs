@@ -39,11 +39,8 @@ module AppflPrelude (
     fst, snd, curry, uncurry,
 
     -- -- ** Basic type classes
-
-    {-(==), (/=),-} (<), (<=), (>=), (>), --- INT ONLY (FOR NOW)
- 
-    -- Eq((==), (/=)),
-    -- Ord(compare, (<), (<=), (>=), (>), max, min),
+    Eq((==), (/=)),
+    Ord(compare, (<), (<=), (>=), (>), max, min),
     -- Enum(succ, pred, toEnum, fromEnum, enumFrom, enumFromThen,
     --      enumFromTo, enumFromThenTo),
     -- Bounded(minBound, maxBound),
@@ -53,8 +50,8 @@ module AppflPrelude (
     -- *** Numeric types
     Int(..), (+), (-), (*), (/), mod, div, negate,
     fromInteger,
-    Char (..) ,
-    Eq(..),
+    Char (..), Word (..),
+   
     -- Integer, Float, Double,
     -- Rational, Word,
 

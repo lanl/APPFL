@@ -1,3 +1,4 @@
+{-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards       #-}
 {-# LANGUAGE TypeSynonymInstances  #-}
 {-# LANGUAGE FlexibleInstances     #-}
@@ -35,6 +36,8 @@ import qualified Data.Map as Map
 
 import Data.Set (Set)
 import qualified Data.Set as Set
+
+import Util
 
 import Language.C.Quote.GCC
 import Language.C.Syntax (Definition, Initializer, Type)
@@ -152,7 +155,7 @@ data InfoTab =
       fvs :: [(Var,Monotype)],
       bfvc :: Int,  -- boxed FV count
       ufvc :: Int,  -- unboxed FV count
-      truefvs :: [Var],      
+      truefvs :: [Var],
       noHeapAlloc :: Bool,
       cmap :: CMap}
 
@@ -228,7 +231,7 @@ instance ITsOf (Obj a) [a] where
 instance ITsOf (Expr a) [a] where
     itsOf ELet{emd, edefs, ee}  = emd : (itsOf edefs) ++ itsOf ee
     itsOf ECase{emd, ee, ealts} = emd : (itsOf ee) ++ itsOf ealts
-    itsOf e = [emd e] -- EAtom, EFCall, EPrimop
+    itsOf e = [emd e] -- EAtom, EFCall, EPrimOp
 
 instance ITsOf (Alt a) [a] where
     itsOf ACon{amd, ae} = amd : itsOf ae
@@ -264,8 +267,9 @@ instance SetITs (Expr ([Var],[Var])) (Expr InfoTab) where
     setITs e@(EFCall emd f eas) =
         EFCall (makeIT e) f (map setITs eas)
 
-    setITs e@(EPrimop emd p eas) =
-        EPrimop (makeIT e) p (map setITs eas)
+    setITs e@(EPrimOp emd p info eas) =
+        EPrimOp (makeIT e) p info (map setITs eas)
+
 
 instance SetITs (Alts ([Var],[Var])) (Alts InfoTab) where
     setITs as@(Alts altsmd alts name scrt) =
@@ -411,7 +415,7 @@ instance MakeIT (Expr ([Var],[Var])) where
                 noHeapAlloc = False,
                 knownCall = Nothing}
 
-    makeIT EPrimop{emd = (fvs,truefvs)} =
+    makeIT EPrimOp{emd = (fvs,truefvs)} =
         ITPrimop{fvs = zip fvs $ repeat typUndef,
                  bfvc = -1,
                  ufvc = -1,
@@ -419,6 +423,7 @@ instance MakeIT (Expr ([Var],[Var])) where
                  typ = typUndef,
                  ctyp = ctypUndef,
                  noHeapAlloc = False}
+
 
 instance MakeIT (Alts ([Var],[Var])) where
     makeIT Alts{altsmd = (fvs,truefvs), aname, scrt} =
@@ -454,6 +459,7 @@ instance MakeIT (Alt ([Var],[Var])) where
                cmap = Map.empty}
 
 
+showObjType :: InfoTab -> String
 showObjType ITFun {} = "FUN"
 showObjType ITPap {} = "PAP"
 showObjType ITCon {} = "CON"
@@ -682,8 +688,9 @@ instance SetITs (CMap, (Expr InfoTab)) (Expr InfoTab) where
         e{eas = map (setITs . (cmap,)) eas}
 
     -- this could be the identity:  primops should not apply to user-defined constants
-    e@EPrimop{eas} ->
+    e@EPrimOp{eas} ->
         e{eas = map (setITs . (cmap,)) eas}
+
 
     e@ECase{ee, ealts, emd} ->
       e{ ee    = setITs (cmap,ee),

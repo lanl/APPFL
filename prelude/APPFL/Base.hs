@@ -98,13 +98,14 @@ module APPFL.Base
   , module APPFL.Types
   , module APPFL.Prim
   , module APPFL.Classes
+  , module APPFL.CString
   )
 where
 
 import APPFL.Prim
 import APPFL.Classes
 import APPFL.Types
-
+import APPFL.CString
 
 -- recognizable dummy definition for those things that require
 -- it for well-typedness.

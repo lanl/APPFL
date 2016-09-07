@@ -1,4 +1,4 @@
-{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE ScopedTypeVariables, PatternGuards, CPP #-}
 
 module Util
 (
@@ -15,13 +15,54 @@ module Util
   splits, splitsBy,
   toInt, toInt64, safeIntegerConvert,
   unreachable,
+  (>|),
+  to64,
+
+  isInt, isDouble, -- String -> Bool
+
+#if 0
+  CleanString, -- abstract, for now so you _have_ to call cSanitize
+  getString,
+  cSanitize,  -- z-encode a string so it's valid C
+  desanitize, -- un-z-encode it
+  cDesanitize,
+
+
   _TODO
+#endif
 )
 where
+
+
 
 import qualified Data.Map as Map
 import Data.List (nubBy, partition)
 import Data.Int (Int64)
+import Numeric (showHex, readHex)
+import Data.Char (ord, chr, isAlphaNum, isNumber)
+import Data.Tuple (swap)
+import Data.Maybe (fromMaybe)
+import Language.C.Quote (ToIdent (..), ToConst (..), ToExp(..))
+import Language.C.Syntax (Exp(..), Const(..), Id(..))
+
+infixr 5 >|
+
+-- | For left-biased implementations of Ord. Could be called "andThenCompare"
+-- (which exists in some TH library)
+(>|) :: Ordering -> Ordering -> Ordering
+EQ >| b = b
+a  >| b = a
+
+
+isInt :: String -> Bool
+isInt = all isNumber
+
+isDouble :: String -> Bool
+isDouble s = let (a,b) = break (== '.') s
+             in all isNumber a && not (null b) && all isNumber (tail b)
+
+to64 :: Int -> Int64
+to64 = fromInteger . toInteger
 
 mapFst :: (a -> b) -> (a,c) -> (b,c)
 mapFst f (a,b) = (f a, b)
@@ -31,8 +72,7 @@ mapSnd f (a,b) = (a, f b)
 
 
 deleteAll :: Ord k => [k] -> Map.Map k v -> Map.Map k v
-deleteAll vs env = foldr (Map.delete) env vs
-
+deleteAll vs env = foldr Map.delete env vs
 
 
 indent :: Int -> String -> String
@@ -48,14 +88,15 @@ lookupOrElse :: (Ord k) => k -> Map.Map k v -> v
 lookupOrElse k map = case Map.lookup k map of
                       Just k -> k
                       Nothing -> error "lookupOrElse failed!"
-      
+
 maxPayload :: Int
 maxPayload = 32
 
 -- sanity-checking zip
 zzip [] [] = []
 zzip (a:as) (b:bs) = (a,b) : zzip as bs -- changed to zzip here
-zzip _ _ = error "zzip on lists of differing lengths"
+zzip xs ys = error ("zzip on lists of differing lengths " ++
+             show (length xs) ++ " != " ++ show (length ys))
 
 -- this is probably not very efficient
 precalate s ss = concatMap (s++) ss
@@ -123,7 +164,7 @@ toInt64 = safeIntegerConvert
 -- Bounded Integral type.
 safeIntegerConvert :: forall a . (Bounded a, Integral a) => Integer -> Maybe a
 safeIntegerConvert i
-  | i > maxVal || i < minVal  = Nothing 
+  | i > maxVal || i < minVal  = Nothing
   | otherwise = Just $ fromInteger i
   -- ScopedTypeVariables lets us refer to the type variable 'a' from above.
   -- The type annotation *is* necessary.
@@ -145,3 +186,99 @@ unreachable str = error ("Should not be reached: " ++ str)
 _TODO str = error ("Definition incomplete: " ++ str)
 
 
+#if 0
+newtype CleanString = CS {getString :: String} deriving (Eq, Show)
+
+-- Make an identifier from a CleanString
+instance ToIdent CleanString where
+  toIdent (CS s) loc = Id s loc
+
+-- Note that the ToConst and ToExp instances are really only useful in places we
+-- have debugging Strings. Clean strings should only normally be found in places
+-- we need to generate C identifiers.  Literals strings (which is what ToConst
+-- and ToExp instances yield) don't need santization.
+instance ToConst CleanString where
+  toConst (CS s) loc = StringConst [s] s loc
+
+instance ToExp CleanString where
+  toExp s loc = Const (toConst s loc) loc
+
+instance Monoid CleanString where
+  mempty = CS ""
+  (CS a) `mappend` (CS b) = CS $ a ++ b
+
+cSanitize :: String -> CleanString
+cSanitize = CS . go
+  where go [] = []
+        go (x:xs) | hasCSubst x = cSubst x ++ go xs
+                  | otherwise   = x : go xs
+
+hasCSubst :: Char -> Bool
+--hasCSubst 'z' = True
+-- hasCSubst  x  = not (isAlphaNum x)
+hasCSubst  x  = not (isAlphaNum x || x == '_') -- not sure if we want to z-encode _
+
+-- Get the original name back from a sanitized string.
+-- Ideally, sanitize . desanitize == id
+-- This is untested.
+desanitize :: String -> String
+desanitize []  = []
+desanitize ('z':c:cs)
+  | c == 'X', (i, 'X':rem):_ <- readHex cs =  chr i : desanitize rem
+  | otherwise =
+      -- This really should never fail
+      fromMaybe (error "desanitize: unsub lookup failure") (Map.lookup c unsubDict)
+      : desanitize cs
+desanitize (c:cs) = c : desanitize cs
+
+cDesanitize :: CleanString -> String
+cDesanitize (CS [])  = []
+cDesanitize (CS ('z':c:cs))
+  | c == 'X', (i, 'X':rem):_ <- readHex cs =  chr i : cDesanitize (CS rem)
+  | otherwise =
+      -- This really should never fail
+      fromMaybe (error "desanitize: unsub lookup failure") (Map.lookup c unsubDict)
+      : cDesanitize (CS cs)
+cDesanitize (CS (c:cs)) = c : cDesanitize (CS cs)
+
+
+cSubst c = fromMaybe ('z':'X': showHex (ord c) "X") (Map.lookup c subDict)
+
+-- Use Maps for log n behavior. Better than assoc list lookup.
+-- Probably worth it, given how many names there are in even trivial programs
+unsubDict = Map.fromList (map swap subAList)
+subDict   = Map.fromList (map zcons subAList)
+  where zcons = fmap (('z':) . pure)
+
+-- Mostly stolen/modified from Z-encoding in GHC's compiler/utils/Encoding.hs
+-- | Maps characters to their z-encoded suffix. e.g. Since '(' is paired with
+-- 'L', in the z-encoding, it becomes "zL"
+subAList :: [(Char, Char)]
+subAList  =
+  [ ('(' , 'L')
+  , (')' , 'R')
+  , ('[' , 'M')
+  , (']' , 'N')
+  , (':' , 'C')
+  , ('z' , 'z')
+  , ('&' , 'a')
+  , ('|' , 'b')
+  , ('^' , 'c')
+  , ('$' , 'd')
+  , ('=' , 'e')
+  , ('@' , 'f')
+  , ('>' , 'g')
+  , ('#' , 'h')
+  , ('.' , 'i')
+  , ('<' , 'l')
+  , ('-' , 'm')
+  , ('!' , 'n')
+  , ('+' , 'p')
+  , ('\'', 'q')
+  , ('\\', 'r')
+  , ('/' , 's')
+  , ('*' , 't')
+--  , ('_' , 'u') -- not sure if we want to z-encode _
+  , ('%' , 'v')
+  ]
+#endif

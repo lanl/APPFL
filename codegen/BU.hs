@@ -97,8 +97,12 @@ unify m1@(MCon b1 c1 ms1) m2@(MCon b2 c2 ms2)
     | c1 /= c2 = error $ "unify constructor mismatch! " ++ show c1 ++ " " ++ show c2
     | otherwise = unifys ms1 ms2
 
---unify (MPrim UBInt) (MCon False "Int_h" []) = idSubst
---unify (MCon False "Int_h" []) (MPrim UBInt) = idSubst
+-- TODO: there must be a cleaner way.
+unify (MPrim PInt) (MCon (Just False) "Int#" []) = idSubst
+unify (MCon (Just False) "Int#" []) (MPrim PInt) = idSubst
+unify (MPrim PDouble) (MCon (Just False) "Double#" []) = idSubst
+unify (MCon (Just False) "Double#" []) (MPrim PDouble) = idSubst
+
 
 -- if they're equal there's nothing to do
 unify m1 m2 | m1 == m2 = idSubst
@@ -200,7 +204,7 @@ instance Substitutable [Constraint] where
 
 instance Substitutable (Set.Set Monotype) where
   freevars = freevars . Set.toList
-             
+
   apply = Set.map . apply
 
 class ActiveVars a where
@@ -249,7 +253,7 @@ solve1 (c@(ImpC t1 ms t2) : cs) ys progress =
        `Set.intersection` activeVars (cs ++ ys)
     then solve1 (ExpC t1 (generalize ms t2) : cs) ys True
     else solve1 cs (c:ys) progress
-      
+
 instance Substitutable (Maybe Monotype) where
     freevars _ = error "why are we doing this?"
 

@@ -19,13 +19,15 @@
 #include "MachDeps.h"
 
 module APPFL.Enum(
-        Bounded(..), Enum(..),
+        Ghc.Bounded(..), Ghc.Enum(..),
         boundedEnumFrom, boundedEnumFromThen,
         toEnumError, fromEnumError, succError, predError,
 
         -- Instances for Bounded and Enum: (), Char, Int
 
    ) where
+
+import qualified GHC.Enum as GHC (Bounded (..), Enum (..))
 
 import APPFL.Base hiding ( many )
 import APPFL.Char
@@ -44,7 +46,7 @@ default ()              -- Double isn't available yet
 -- 'Bounded' may also be derived for single-constructor datatypes whose
 -- constituent types are in 'Bounded'.
 
-class  Bounded a  where
+class Bounded a  where
     minBound, maxBound :: a
 
 -- | Class 'Enum' defines operations on sequentially ordered types.

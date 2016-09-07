@@ -47,7 +47,7 @@ dupCheckExpr :: Expr () -> [String] -> String
 dupCheckExpr expr ys = case expr of
                          EAtom{} -> []
                          EFCall{} -> []
-                         EPrimop{} -> []
+                         EPrimOp{} -> []
                          ELet{edefs,ee} -> dupCheckObjs edefs (ys ++ ["let"])
                                         ++ dupCheckExpr ee (ys ++ ["let"])
                          ECase{ee,ealts} -> dupCheckExpr ee (ys ++ ["case"])

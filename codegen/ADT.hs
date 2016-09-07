@@ -2,23 +2,20 @@
 {-# LANGUAGE NamedFieldPuns    #-}
 
 module ADT (
-  Def(..),
   TyCon(..),
   DataCon(..),
   TyVar,
   Polytype(..),
   Monotype(..),
+  PrimType(..),
   Con,
-  biIntMCon,
-  biLongMCon,
-  biFloatMCon,
-  biDoubleMCon,
-  biStringMCon,
+  primTypeName,
+  primTypeNames,
   dataConName,
   tyConName,
   getDataCons,
-  makeIntTyCon,
-  makeDoubleTyCon,
+  makePrimTyCon,
+  primTypeStrId,
   dataConTyVars,
   monoTypeVars,
   boxMTypes,
@@ -26,29 +23,28 @@ module ADT (
   unfoldMTy
 ) where
 
---import AST(Con,BuiltinType(..),Obj)
-import AST(Con, Obj)
 
 import Data.List(intercalate)
 import Data.Maybe (fromMaybe)
 import PPrint
+import Util
 
 {-
   Algebraic Datatypes:
-    
+
   Ref:  Unboxed Values as First-Class Citizens
-  
+
   data Def (pg 6):
   data \Chi \alpha_1 .. \alpha_t =
   c_1 \tau_11 .. \tau_1a_1 | ... | c_n \tau_n1 .. \tau_na_1
-  
+
   \Chi -- type constructor
   \c_x -- data constructor
-  
+
   and unboxed version on pg 26
   data unboxed \Chi# \alpha_1 .. \alpha_t =
   c_1# \tau_11 .. \tau_1a_1 | ... | c_n# \tau_n1 .. \tau_na_1
-  
+
   Polytype      \sigma ::=  \forall \alpha . \sigma
                         |   \tau
 
@@ -59,17 +55,12 @@ import PPrint
                         |   \Chi \pi_1 ... \pi_n   Parameterized boxed data type
 
   Unboxed type  \nu     ::=  Int#
-                         |   Long#
-                         |   Float#
                          |   Double#
                          |   \Chi# \pi_1 ... \pi_n   Parameterized unboxed data type
 
 -}
 
 
-data Def a = ObjDef (Obj a)
-           | DataDef TyCon
-             deriving(Eq, Show)
 
 -- Boxed: data \Chi \alpha_1 .. \alpha_t =
 -- c_1 \tau_11 .. \tau_1a_1 | ... | c_n \tau_n1 .. \tau_na_1
@@ -77,23 +68,46 @@ data Def a = ObjDef (Obj a)
 -- c_1# \tau_11 .. \tau_1a_1 | ... | c_n# \tau_n1 .. \tau_na_1
 data TyCon = TyCon Bool Con [TyVar] [DataCon]
              deriving(Eq,Show)
-             
+
 --  c_x \tau_x1 .. \tau_xa_1
 data DataCon = DataCon Con [Monotype]
                deriving(Eq,Show)
 
 type TyVar = String
+type Con = String
 
 data Polytype = PPoly [TyVar] Monotype
               | PMono Monotype
                 deriving(Eq,Ord)
-                
+
 data Monotype = MVar TyVar
               | MFun Monotype Monotype
               | MCon (Maybe Bool) Con [Monotype]
               | MPVar TyVar -- should be used only in BU.hs
+              | MPrim PrimType
               | MPhony
                 deriving(Eq,Ord)
+
+data PrimType
+  = PInt
+  | PDouble
+  | PString
+  | PVoid   -- side-effecting code
+  deriving (Eq, Ord, Enum, Bounded, Show)
+
+
+primTypeStrId :: PrimType -> String
+primTypeStrId PInt    = "i"
+primTypeStrId PDouble = "d"
+primTypeStrId PString = "s"
+primTypeStrId PVoid   = ""
+
+
+primTypeName :: PrimType -> Con
+primTypeName = (++ "#") . tail . show
+
+primTypeNames :: [Con]
+primTypeNames = map primTypeName [minBound :: PrimType .. ]
 
 -- m is rightmost element
 unfoldMTy (MFun m1 m2) = let (m,ms) = unfoldMTy m2 in (m, m1:ms)
@@ -106,21 +120,19 @@ isBoxed m = case m of
   MCon (Just b) _ _ -> b
   MCon Nothing _ _ -> error "Boxity not set"
   MPVar{}    -> True
+  MPrim{} -> False
   m          -> error $ "ADT.isBoxed called with " ++ show m
-  
+
 
 -- set Monotype boxity in TyCons (this should be done before CMaps are built
 -- for InfoTabs)
 boxMTypes :: [TyCon] -> [TyCon]
 boxMTypes tycons =
   let -- create assoc list for TyCon names -> TyCons
-      tycons' = makeIntTyCon "0" :
-                makeLongTyCon "0" :
-                makeFloatTyCon "0" :
-                makeDoubleTyCon "0" :
+      tycons' = map makePrimTyCon [minBound ..] ++
                 tycons
       tmap = zip (map tyConName tycons') tycons'
-      
+
       -- functions below set MCon boxity in TyCons
       mapFunc (TyCon b c vs dcs) = TyCon b c vs $ map setDCtypes dcs
       setDCtypes (DataCon c mts) = DataCon c $ map setMtypes mts
@@ -128,43 +140,22 @@ boxMTypes tycons =
                      MCon _ c mts ->
                        let (TyCon bxt _ _ _) =
                              fromMaybe
-                             (error $ "Couldn't find " ++ show c ++ " in tmap")
+                             (error $ "Couldn't find " ++ show c ++ " in tmap " ++ show tmap)
                              $ lookup c tmap
                        in MCon (Just bxt) c $ map setMtypes mts
                      MFun mts1 mts2 -> MFun (setMtypes mts1) (setMtypes mts2)
                      MVar{} -> m
+                     MPrim{} -> m
                      _ -> error $ "CMap.cMapTyCons matching bad Monotype: " ++ show m
-                     
+
   in map mapFunc tycons -- don't need built-ins in TyCon list (?)
 
 -- helpers to make TyCons for built-in types
 -- this is a bit of a hack to fudge the fact that there are no explicit
 -- data declarations for the built-ins
--- The string given (e.g. "0") may be useful, depending on the application
--- of the TyCon
-makeIntTyCon :: Con -> TyCon
-makeIntTyCon c = TyCon False "Int_h" [] [DataCon c []]
+makePrimTyCon :: PrimType -> TyCon
+makePrimTyCon pt = TyCon False (primTypeName pt) [] []
 
-makeLongTyCon :: Con -> TyCon
-makeLongTyCon c = TyCon False "Long_h" [] [DataCon c []]
-
-makeFloatTyCon :: Con -> TyCon
-makeFloatTyCon c = TyCon False "Float_h" [] [DataCon c []]
-
-makeDoubleTyCon :: Con -> TyCon
-makeDoubleTyCon c = TyCon False "Double_h" [] [DataCon c []]
-
--- this is even more of a hack but at least it's localized
-biIntMCon    = MCon (Just False) "Int_h" []
-biLongMCon   = MCon (Just False) "Long_h" []
-biFloatMCon  = MCon (Just False) "Float_h" []
-biDoubleMCon = MCon (Just False) "Double_h" []
-biStringMCon = MCon (Just False) "String_h" []
-
-conAList = [("Int_h",    "Int#"),
-            ("Long_h",   "Long#"),
-            ("Float_h",  "Float#"),
-            ("Double_h", "Double#")]
 
 -- helper field accessor functions --
 
@@ -198,6 +189,7 @@ instance Show Monotype where
     show (MPVar v) = "p_" ++ v
     show (MFun m1@(MFun _ _) m2) = "(" ++ show m1 ++ ") -> " ++ show m2
     show (MFun m1 m2) = show m1 ++ " -> " ++ show m2
+    show (MPrim pt) = show pt
     show (MCon (Just bxt) con ms) = con ++
                              (if bxt
                               then "[B] "
@@ -217,12 +209,13 @@ instance Unparse Monotype where
   unparse (MFun m1 m2) = unparse m1 <+> arw <+> unparse m2
   unparse (MCon b c ms) = (if null ms then (empty <>) else parens)
                             (stgName c <+> hsep (map unparse ms))
+  unparse (MPrim ty) = pprint ty
   unparse m = error $ "ADT.unparse (Monotype) m=" ++ show m
 
 unparseDCmono :: Monotype -> Doc
 unparseDCmono m@(MFun m1 m2) = parens $ unparse m
 unparseDCmono m = unparse m
-  
+
 instance Unparse DataCon where
   unparse (DataCon con mTypes) = stgName con <+> hsep (map unparseDCmono mTypes)
 
@@ -244,19 +237,13 @@ instance Unparse TyCon where
            (unparse d $$
             nest (-2) (vcat $ prepunctuate sepr $ map unparse ds))
     in lh $$ rh
-       
+
 instance Unparse [TyCon] where
   unparse tycons = vcat $ postpunctuate semi $ map unparse tycons
 
 instance PPrint TyCon where
   pprint = unparse
 
-instance Unparse a => Unparse (Def a) where
-  unparse (DataDef t) =  unparse t
-  unparse (ObjDef o) = unparse o
-
-instance Unparse a => Unparse [Def a] where
-  unparse defs = vcat $ postpunctuate semi $ map unparse defs
 
 instance PPrint Monotype where
   pprint m = case m of
@@ -274,5 +261,5 @@ instance PPrint Monotype where
                     text c $+$
                     nest 2 (vcat $ map pprint ms))
     MPVar v -> text "MPVar" <> braces (text v)
+    MPrim pt -> text "MPrim" <> pprint pt
     MPhony -> text "MPhony"
-    

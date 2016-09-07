@@ -21,9 +21,11 @@ runtime/mymain
 test/stg/*.c
 test/mhs/*.c
 test/hs/*.c
+test/hs/error/*.c
 test/stg/error/*.c
 test/stg/nonstrict/*.c
 test/stg/nostrict2/*.c
+test/stg/nonstrict/timeout/*.c
 #sandbox stuff
 sandbox
 appfl-sandbox

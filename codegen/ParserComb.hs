@@ -35,6 +35,8 @@ module ParserComb
   cutP,
   peekP,
   isNextP,
+  asManyAsP,
+  atLeastButNotMoreThanP,
   (>>>)
 ) where
 
@@ -178,7 +180,14 @@ some' :: Parser i v -> Parser i [v]
 some' p = ordP p (many' p) `using` cons
 
 
-
+asManyAsP n = atLeastButNotMoreThanP 0 n
+atLeastButNotMoreThanP lo hi p =
+  many' p >>> \res ->
+  let l = length res in
+    if l < lo || l > hi
+    then reject
+    else accept res
+                                               
 
 -- inSeq accepts a list of parsers, a function for combining their
 -- results (tuples) and a "seed" parser to define a folding operation

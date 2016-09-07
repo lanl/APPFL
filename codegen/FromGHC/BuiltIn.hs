@@ -11,8 +11,9 @@ import qualified Data.Map.Strict as Map
 import Data.Maybe (fromMaybe)
 import Control.Applicative ((<|>), (<*>))
 
-import AST as A (Primop (..))
+import AST as A (PrimOp (..), PrimOpInfo, mkOpInfo)
 import PrimOp as G
+import WiredIn as A
 
 -- GHC Wired-in things come from these modules
 import TysWiredIn  as G
@@ -28,7 +29,7 @@ import Var (Id, idDetails, isId)
 import IdInfo (IdDetails (..))
 import Name as G ( Name, NamedThing (..), BuiltInSyntax(..)
                  , mkWiredInName, getOccString)
-import Class (Class (..))       
+import Class (Class (..))
 import OccName (mkDataOccFS)
 import BasicTypes (TupleSort (..))
 import FastString (fsLit)
@@ -36,43 +37,54 @@ import Constants (mAX_TUPLE_SIZE{-62-}) --  Maybe use an APPFL constant?
 
 import PPrint
 
-lookupAppflPrimop :: G.PrimOp -> Maybe A.Primop
+lookupAppflPrimop :: G.PrimOp -> Maybe (A.PrimOp, A.PrimOpInfo)
 lookupAppflPrimop = (`Map.lookup` primopMap)
 
 
-primopMap :: Map G.PrimOp A.Primop
+mkIntOpPr op = (op, mkOpInfo 'i' op)
+mkDubOpPr op = (op, mkOpInfo 'd' op)
+mkOtherOpPr op = (op, mkOpInfo '_' op) -- mkOpInfo only cares about prefixes for some ops
+
+primopMap :: Map G.PrimOp (A.PrimOp, A.PrimOpInfo)
 primopMap = Map.fromList
-  [ (CharGtOp   , Pigt)
-  , (CharGeOp   , Pige)
-  , (CharEqOp   , Pieq)
-  , (CharNeOp   , Pine)
-  , (CharLeOp   , Pile)
-  , (CharLtOp   , Pilt)    
-  , (IntAddOp   , Piadd)
-  , (IntSubOp   , Pisub)
-  , (IntMulOp   , Pimul)
-  , (IntQuotOp  , Pidiv) -- round to zero
-  , (IntRemOp   , Pimod)
-  , (IntGtOp    , Pigt)
-  , (IntGeOp    , Pige)
-  , (IntEqOp    , Pieq)
-  , (IntNeOp    , Pine)
-  , (IntLeOp    , Pile)
-  , (IntLtOp    , Pilt)
-  , (IntNegOp   , Pineg)   
-  , (WordGtOp   , Piadd)
-  , (WordGeOp   , Pisub)
-  , (WordEqOp   , Pimul)
-  , (WordNeOp   , Pidiv)
-  , (WordLeOp   , Pimod)
-  , (WordLtOp   , Pigt) 
-  , (WordAddOp  , Pige) 
-  , (WordSubOp  , Pieq) 
-  , (WordMulOp  , Pine) 
-  , (WordQuotOp , Pile) 
-  , (WordRemOp  , Pilt)
-  , (RaiseOp    , Praise)
-  , (RaiseIOOp  , Praise)
+  [ (CharGtOp   , mkIntOpPr Pgt)
+  , (CharGeOp   , mkIntOpPr Pge)
+  , (CharEqOp   , mkIntOpPr Peq)
+  , (CharNeOp   , mkIntOpPr Pne)
+  , (CharLeOp   , mkIntOpPr Ple)
+  , (CharLtOp   , mkIntOpPr Plt)
+  , (IntAddOp   , mkIntOpPr Padd)
+  , (IntSubOp   , mkIntOpPr Psub)
+  , (IntMulOp   , mkIntOpPr Pmul)
+  , (IntQuotOp  , mkIntOpPr Pdiv) -- round to zero
+  , (IntRemOp   , mkIntOpPr Pmod)
+  , (IntGtOp    , mkIntOpPr Pgt)
+  , (IntGeOp    , mkIntOpPr Pge)
+  , (IntEqOp    , mkIntOpPr Peq)
+  , (IntNeOp    , mkIntOpPr Pne)
+  , (IntLeOp    , mkIntOpPr Ple)
+  , (IntLtOp    , mkIntOpPr Plt)
+  , (IntNegOp   , mkIntOpPr Pneg)
+  , (WordGtOp   , mkIntOpPr Padd)
+  , (WordGeOp   , mkIntOpPr Psub)
+  , (WordEqOp   , mkIntOpPr Pmul)
+  , (WordNeOp   , mkIntOpPr Pdiv)
+  , (WordLeOp   , mkIntOpPr Pmod)
+  , (WordLtOp   , mkIntOpPr Pgt)
+  , (WordAddOp  , mkIntOpPr Pge)
+  , (WordSubOp  , mkIntOpPr Peq)
+  , (WordMulOp  , mkIntOpPr Pne)
+  , (WordQuotOp , mkIntOpPr Ple)
+  , (WordRemOp  , mkIntOpPr Plt)
+  , (IndexOffAddrOp_Char, mkOtherOpPr PidxChr)
+  , (ISllOp     , mkOtherOpPr Psll) -- unchecked int shift left
+  , (ISraOp     , mkOtherOpPr Psra) -- unchecked int shift right (arithmetic)
+  , (ISrlOp     , mkOtherOpPr Psrl) -- unchecked int shift right (logical)
+  , (ChrOp      , mkOtherOpPr Pchr)
+  , (OrdOp      , mkOtherOpPr Pord)
+--  , (RaiseOp    , Pexcept)  -- TODO
+--  , (RaiseOp    , Praise)
+--  , (RaiseIOOp  , Praise)
 --
 --  I want to figure out a way to get this in eventually, even in a
 --  limited form that maybe only accepts String literals (as MachStr)
@@ -98,15 +110,8 @@ type AppflName = String
 
 -- Names we want to recognize as special.
 isAppflBuiltIn :: String -> Bool
-isAppflBuiltIn = (`elem` appflBuiltIns)
+isAppflBuiltIn = (`elem` A.builtinNames)
 
-appflBuiltIns :: [AppflName]
-appflBuiltIns = [appflMain, appflPrimIntTy, appflNoExhaust]
-
-
--- | Our program entry point
-appflMain :: AppflName
-appflMain = "main"
 -- There's a problem here that I don't have an immediate solution to.  If some
 -- Haskell input to our program defines multiple main functions in separate
 -- modules, they will all be caught as the _special_ main and named "main",
@@ -120,16 +125,6 @@ appflMain = "main"
 --  * Combine both of the above, overriding the second if a flag is given (Ideal!)
 --  * Keep the current behavior and make "Single Main" another constraint on the
 --    input.
-
-
--- | Our Int#
-appflPrimIntTy :: AppflName
-appflPrimIntTy = "Int_h"
-
--- | Our pattern match fail function (defined in the runtime)
-appflNoExhaust :: AppflName
-appflNoExhaust = "stg_case_not_exhaustive"
-
 
 
 isErrorId :: NamedThing a => a -> Bool
@@ -151,9 +146,9 @@ idToAppflName id
         <|> namedThingToAppflName id
 
       _ -> namedThingToAppflName id
-      
+
   | otherwise = namedThingToAppflName id
-        
+
 
 -- | For some builtin class dictionary selector (e.g. GHC.Classes.==), maybe get
 -- the APPFL equivalent.  This assumes that the equivalent class has identical
@@ -161,42 +156,54 @@ idToAppflName id
 maybeGetAppflClass clasName selector =
   -- Maybe get the function that prefixes the Module name
   -- and apply it to the selector name if present
-  fmap ($ selector) (Map.lookup clasName appflClassModMap)
+  fmap ($ selector) (Map.lookup clasName appflClassModuleMap)
 
 
 
-appflClassModMap :: Map Name (AppflName -> AppflName)
-appflClassModMap = Map.fromList
-  [ (eqClassName, classesDot)
-  , (ordClassName, classesDot) ]
+appflClassModuleMap :: Map Name (AppflName -> AppflName)
+appflClassModuleMap =
+  Map.fromList $ map (\(a,b,c) -> (c, a)) appflClassEquivList
 
+appflClassMap :: Map Name AppflName
 appflClassMap =
-  Map.mapWithKey makeClassName appflClassModMap
+  Map.mapWithKey makeClassName appflClassModuleMap
   where
     makeClassName clasName modPfx = modPfx (getOccString clasName)
-      
 
 getClassFromAppflEquiv :: AppflName -> Maybe Name
 getClassFromAppflEquiv name = Map.lookup name appflClassImplMap
 
 appflClassImplMap :: Map AppflName G.Name
-appflClassImplMap = Map.fromList
-  [ (classesDot "Eq", eqClassName) ]
+appflClassImplMap =
+  Map.fromList $ map (\(a,b,c) -> (a b, c)) appflClassEquivList
 
-    
-    
+appflClassEquivList
+  :: [ ( AppflName -> AppflName -- | Module prefixing function
+       , AppflName              -- | Class name string
+       , G.Name                 -- | Actual GHC Class Name
+       )]
+appflClassEquivList =
+  [ (classesDot , "Eq"      , eqClassName      )
+  , (classesDot , "Ord"     , ordClassName     )
+  , (enumDot    , "Bounded" , boundedClassName )
+  , (enumDot    , "Enum"    , enumClassName    )
+  ]
+
+
+
 infixr 5 \.
 
 (\.) :: AppflName -> AppflName -> AppflName
 a \. b = a ++ '.' : b
 
-appflDot, typesDot, tupleDot, primDot :: AppflName -> AppflName  
+appflDot, typesDot, tupleDot, primDot :: AppflName -> AppflName
 appflDot   s = "APPFL" \. s
 typesDot   s = appflDot "Types"   \. s
 tupleDot   s = appflDot "Tuple"   \. s
 primDot    s = appflDot "Prim"    \. s
 classesDot s = appflDot "Classes" \. s
-
+enumDot    s = appflDot "Enum"    \. s
+cstringDot s = appflDot "CString" \. s
 
 builtInMap :: Map G.Name String
 builtInMap =
@@ -205,25 +212,33 @@ builtInMap =
   -- overlap in builtins, even between the different NameSpaces.
   Map.fromList
   [
-  --   (G.consDataConName, typesDot "Cons")
-  -- , (G.nilDataConName, typesDot "Nil")
-  -- , (G.listTyConName, typesDot "List")
+    (G.consDataConName, A.consDataConName)
+  , (G.nilDataConName, A.nilDataConName)
+  , (G.listTyConName, A.listTyConName)
   -- , (G.boolTyConName, typesDot "Bool")
-  
+
   -- , (getName G.trueDataCon, typesDot "True")
   -- , (getName G.falseDataCon, typesDot "False")
   -- , (getName G.trueDataConId, typesDot "True")
   -- , (getName G.falseDataConId, typesDot "False")
   -- , (G.intTyConName, typesDot "Int")
   -- , (intDataConName, typesDot "I#")
-    
-    (getName G.intPrimTyCon, appflPrimIntTy) -- hacky...
-  , (getName G.charPrimTyCon, appflPrimIntTy) -- hackier...
+
+  , (getName G.intPrimTyCon,  A.intPrimTyName) -- hacky...
+  , (getName G.charPrimTyCon, A.intPrimTyName) -- hackier...
+   , (getName G.wordPrimTyCon, A.intPrimTyName) -- hacky
+
+  -- Some/All of these are used by GHC for dealing with string literals.
+  -- They index into Machine Strings (:: Addr#) and box up the resulting
+  -- Int#/Char# into boxed Chars
+  , (G.unpackCStringName, cstringDot "unpackCString#")
+  , (G.unpackCStringFoldrName, cstringDot "unpackFoldrCString#")
+  , (G.unpackCStringUtf8Name, cstringDot "unpackCStringUtf8#")
 
     -- GHC generates functions that are only ever passed 'void#', which *seem*
     -- to never use it. In theory, any argument should work, as long as it's
     -- consistent (and not bottom, for strict evals).
-  , (getName voidPrimId, primDot "void#") 
+  , (getName voidPrimId, primDot "void#")
   ]
   -- `Map.union` tupleMap
   `Map.union` errorCallMap
@@ -234,7 +249,7 @@ intDataConName :: Name
 intDataConName = mkWiredInName G.gHC_TYPES
                  (mkDataOccFS $ fsLit "I#") G.intDataConKey
                  (AConLike (RealDataCon G.intDataCon)) UserSyntax
-                 
+
 
 tupleMap :: Map G.Name AppflName
 tupleMap = Map.fromList $ concat
@@ -248,7 +263,7 @@ tupleMap = Map.fromList $ concat
 
 errorCallMap :: Map G.Name AppflName
 errorCallMap = Map.fromList $
-               map (\ident -> (getName ident , appflNoExhaust))
+               map (\ident -> (getName ident , A.noExhaustName))
                patErrorIDs
 
 patErrorIDs :: [Id]
@@ -288,26 +303,26 @@ mkTuplInst clas implF elemOp combOp unitId i =
               zipWith (\a b -> a <+> elemOp <+> b)
               (vars i (int 1)) (vars i (int 2))
 
-deriveTuplEqStr n = show $ 
-  bcomment (text "Generated by FromGHC.BuiltIn.deriveTupleEqStrs") $+$
+deriveTuplEqStr n = show $
+  bcomment (text "Generated by FromGHC.BuiltIn.deriveTupleEqStr") $+$
   (vcat . map mkInst $ 0:[2..n])
   where mkInst i = mkTuplInst eQ (parens equalTo) equalTo and unitId i
         eQ = text "Eq"
         equalTo = text "=="
         and = text "&&"
         unitId =  text "True"
-        
+
 
 deriveTupleOrdStr n = show $
-  bcomment (text "Generated by FromGHC.BuiltIn.deriveTupleEqStrs") $+$
+  bcomment (text "Generated by FromGHC.BuiltIn.deriveTupleOrdStr") $+$
   deps $+$ vcat (map mkInst (0:[2..n]))
   where mkInst i = mkTuplInst oRD (text "compare") compar combin unitId i
         unitId = text "EQ"
         oRD = text "Ord"
         compar = text "<>"
         combin = text ">|"
-        deps   = vcat $ map text 
-          [ "infix 5 >|"
+        deps   = vcat $ map text
+          [ "infixr 5 >|"
           , "infix 6 <>"
           , "(<>) :: Ord a => a -> a -> Ordering"
           , "(<>) = compare"
@@ -315,9 +330,9 @@ deriveTupleOrdStr n = show $
           , "EQ >| b = b"
           , "a  >| b = a"
           ]
-        
-        
-  
+
+
+
 
 
 
@@ -331,22 +346,22 @@ genTupleModule outFileName m_size =
   writeFile outFileName fileString
   where
     maxSize = fromMaybe mAX_TUPLE_SIZE m_size
-    fileString = unlines 
-                 $ "{-# LANGUAGE MagicHash #-}" 
-                 : "module APPFL.Tuple where" 
-                 : "\n\n------ Boxed Tuples ------\n\n" 
+    fileString = unlines
+                 $ "{-# LANGUAGE MagicHash #-}"
+                 : "module APPFL.Tuple where"
+                 : "\n\n------ Boxed Tuples ------\n\n"
                  : mkTupls "TP"
-                 ++ "\n\n------ Unboxed Tuples ------\n\n" 
+                 ++ "\n\n------ Unboxed Tuples ------\n\n"
                  : mkTupls "UTP"
-    mkTupls con = 
+    mkTupls con =
       [let constr = con ++ show i
            tyvars = concatMap (' ':) $ take i allNameStrings
        in "data " ++ constr ++  tyvars ++ "\n   = " ++  constr ++ tyvars
       | i <- 0:[2..maxSize]]
-      
-      
-     
-  
+
+
+
+
 
 
 
@@ -391,13 +406,10 @@ genTupleModule outFileName m_size =
    | IntSubCOp  -- i# -> i# -> (# i, i#  #)
                 -- subtract ints, result (possibly truncated) in first element
                 -- report overflow with non-zero val in second element
-   | ChrOp
+
    | Int2WordOp
    | Int2FloatOp
    | Int2DoubleOp
-   | ISllOp   -- unchecked int shift left
-   | ISraOp   -- unchecked int shift right (arithmetic)
-   | ISrlOp   -- unchecked int shift right (logical)
 
 
 -------------------- Word Ops --------------------
@@ -430,11 +442,11 @@ genTupleModule outFileName m_size =
    | Clz64Op     -- count leading zeros of 64 bit word
    | ClzOp       -- count leading zeros of word
 
-   | Ctz8Op      -- count trailing zeros of low 8 bits 
+   | Ctz8Op      -- count trailing zeros of low 8 bits
    | Ctz16Op     -- count trailing zeros of low 16 bits
    | Ctz32Op     -- count trailing zeros of low 32 bits
    | Ctz64Op     -- count trailing zeros of 64 bit word
-   | CtzOp       -- count trailing zeros of word       
+   | CtzOp       -- count trailing zeros of word
 
    | BSwap16Op   -- Swap two low bytes
    | BSwap32Op   -- Swap four low bytes (i.e. reverse)
@@ -510,7 +522,7 @@ genTupleModule outFileName m_size =
 ------------------------------------------------------------
 Below here are ops I doubt we'll ever add, unless to do something
 with Strings for a primitive error function, maybe?
- 
+
 
    | NewArrayOp
    | SameMutableArrayOp
@@ -645,7 +657,7 @@ with Strings for a primitive error function, maybe?
    | AddrNeOp
    | AddrLtOp
    | AddrLeOp
-   | IndexOffAddrOp_Char
+
    | IndexOffAddrOp_WideChar
    | IndexOffAddrOp_Int
    | IndexOffAddrOp_Word

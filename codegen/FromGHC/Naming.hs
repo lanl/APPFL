@@ -13,7 +13,7 @@ import Util
 
 import qualified Data.Map as Map
 import Data.Maybe
-import Data.Char 
+import Data.Char
 import Data.List (unfoldr)
 import Data.Tuple (swap)
 import Numeric (showHex, readHex)
@@ -73,12 +73,12 @@ class NamedThing a => AppflNameable a where
 instance {-# OVERLAPPABLE #-} NamedThing t => AppflNameable t where
   makeAppflName = namedThingToAppflName
 
-  
+
 -- | Ids have extra information (IdDetails) that we sometimes need to properly
 -- rename.
 instance {-# OVERLAPPING #-} AppflNameable Id where
   makeAppflName = idToAppflName
-  
+
 
 -- | Produce a String name for a NamedThing.  Everything GHC names should be
 -- converted via this function.  This is hard to enforce at the Type level,
@@ -90,9 +90,9 @@ nameGhcThing thing =
     let realName = makeAppflName thing
     return $ fromMaybe altName realName
 
-    
 
-qualifyDeterministically  :: (NamedThing t, UniqueNameState s) => t -> s String 
+
+qualifyDeterministically  :: (NamedThing t, UniqueNameState s) => t -> s String
 qualifyDeterministically (getName -> name) -- Using ViewPatterns for fun.
   -- Syntax is (expr '->' pattern) where the expr will be applied to whatever
   -- argument is passed.  In this case, that's NamedThing t => t -> Name
@@ -102,7 +102,7 @@ qualifyDeterministically (getName -> name) -- Using ViewPatterns for fun.
                       if isAppflBuiltIn oname
                       then oname
                       else moduleNameString (moduleName mod) ++ "." ++ oname
-               
+
           Nothing  -> do i <- getIntFromUnique (nameUnique name)
                          return (oname ++ showIntTersely i)
 
@@ -134,10 +134,15 @@ showIntTersely i = unfoldr op i
         op (I# i#) = case i# `shiftRLFastInt` 6# {- 2^6 = 64 -} of
                        shifted# ->
                          case i# `bitAndFastInt` 63# of
-                           low5# -> Just ( chr64 low5#, iBox shifted# )        
+                           low5# -> Just ( chr64 low5#, iBox shifted# )
 
 
+-- revert sanitize in infotab for now
+#if 0
+sanitize :: AppflName -> String
+ = id -- letting this happen when we generate InfoTab names now.
 
+#else
 
 sanitize :: String -> String
 sanitize str | isAppflBuiltIn str = str
@@ -163,7 +168,7 @@ desanitize ('z':c:cs)
       : desanitize cs
 desanitize str | isAppflBuiltIn str = str
 desanitize (c:cs) = c : desanitize cs
-    
+
 
 cSubst c = fromMaybe ('z':'X': showHex (ord c) "X") (Map.lookup c subDict)
 
@@ -177,7 +182,7 @@ subDict   = Map.fromList (map zcons subAList)
 -- | Maps characters to their z-encoded suffix. e.g. Since '(' is paired with
 -- 'L', in the z-encoding, it becomes "zL"
 subAList :: [(Char, Char)]
-subAList  = 
+subAList  =
   [ ('(' , 'L')
   , (')' , 'R')
   , ('[' , 'M')
@@ -205,6 +210,7 @@ subAList  =
   , ('%' , 'v')
   ]
 
+#endif
 
 sanitizeTC (TyCon b c vs dcs) =
   TyCon b (sanitize c) (map sanitize vs) (map sanitizeDC dcs)
@@ -220,7 +226,7 @@ sanitizeMono _              = unreachable _HERE
 sanitizeObj o = case o of
   THUNK {e, oname     } -> THUNK () (sanitizeExpr e) (sanitize oname)
   FUN   {vs, e, oname } -> FUN () (map sanitize vs) (sanitizeExpr e) (sanitize oname)
-  CON   {c, as, oname } -> CON () (sanitize c) (map sanitizeExpr as) (sanitize oname)  
+  CON   {c, as, oname } -> CON () (sanitize c) (map sanitizeExpr as) (sanitize oname)
 
   -- PAP and BLACKHOLE should not be in the program at this point.
   -- This is sanity-checking as much as anything else
@@ -229,7 +235,7 @@ sanitizeObj o = case o of
 sanitizeExpr e = case e of
   EAtom   {ea           } -> EAtom () (sanitizeAtom ea)
   EFCall  {ev, eas      } -> EFCall () (sanitize ev) (map sanitizeExpr eas)
-  EPrimop {eprimop, eas } -> EPrimop () eprimop (map sanitizeExpr eas)
+  EPrimOp {eprimOp, eas, eopInfo } -> EPrimOp () eprimOp eopInfo (map sanitizeExpr eas)
   ELet    {edefs, ee    } -> ELet () (map sanitizeObj edefs) (sanitizeExpr ee)
   ECase   {ee, ealts    } -> ECase () (sanitizeExpr ee) (sanitizeAlts ealts)
 
@@ -244,4 +250,3 @@ sanitizeAtom a = case a of
   Var v  -> Var (sanitize v)
   LitC c -> LitC (sanitize c)
   _      -> a
-  

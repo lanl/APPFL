@@ -6,12 +6,10 @@
 module MHS.Tokenizer
 (
   Token(..),
-  primopTable,
   tokenize
 ) where
 
-import Tokenizer (primopTable)
-import MHS.AST (Primop (..))
+import MHS.AST (PrimOp (..), primOpTab)
 import Data.Char
 import Data.List (isPrefixOf)
 import ParserComb
@@ -362,7 +360,7 @@ reserveds =
   ] ++ specials
 
 
-primops = fst $ unzip primopTable
+primops = fst $ unzip primOpTab
 isReserved = flip elem reserveds
 isPrimop = flip elem primops
 

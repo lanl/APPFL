@@ -73,7 +73,7 @@ showSHOspec it = error $ "showSHOspec " ++ show it
 papPayloads :: InfoTab -> Initializer
 papPayloads it =
   let as = map fst $ args it
-      n = payload $ LitI $ papArgsLayout as
+      n = payload $ LitI $ to64 $ papArgsLayout as
       ap = map payload as
   in [cinit| { $inits:(n:ap) } |]
 
@@ -105,13 +105,6 @@ payload (LitD d) =
     [cinit| {.d = $double:d'}|]
   where d' = toRational d
 
-payload (LitF f) =
-  if useArgType then
-    [cinit| {.argType = FLOAT, .f = $float:f'}|]
-  else
-    [cinit| {.f = $float:f'}|]
-  where f' = toRational f
-
 payload (LitC c) =
   if useArgType then
     [cinit| {.argType = INT, .i = $id:con}|]
@@ -126,4 +119,8 @@ payload (Var v) =
     [cinit| {.op = &$id:sho}|]
   where sho = "sho_" ++ v
 
-payload at = error $ "HeapObj.payload: not expecting Atom - " ++ show at
+payload (LitStr s) =
+  if useArgType then
+    [cinit| {.argType = STRING, .s = $string:s}|]
+  else
+    [cinit| {.s = $string:s}|]

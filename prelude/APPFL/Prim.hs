@@ -22,12 +22,15 @@ where
 import APPFL.VOID (VOID(..))
 
 import GHC.Prim
-  ( Char#, Int#, Word#, Float#, Double#
+  ( Char#, Int#, Word#, Float#, Double#, Addr#
   , (+#), (-#), (*#)
   , (>#), (<#), (>=#), (<=#)
   , (==#), (/=#)
   , quotInt#, remInt#, negateInt#
-  , eqChar#, neChar#
+  , eqChar#, neChar#, gtChar#, geChar#, leChar#, ltChar#
+  , eqWord#, neWord#, gtWord#, geWord#, leWord#, ltWord#
+  , indexCharOffAddr#, chr#, ord#
+  , uncheckedIShiftL#, uncheckedIShiftRA#, uncheckedIShiftRL#
 
   -- These are used when GHC derives instances of Eq, Ord and Enum
   -- We don't *need* to support this, but the implementation of these

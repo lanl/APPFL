@@ -50,7 +50,7 @@ blackhole = THUNK(blackhole);
 -------------- Primop Aliases  ----------------------------
 -- allows treatment of primops as functions
 _iplus = FUN(a# b# ->
-                     iplus# a# b#);
+                     iadd# a# b#);
 
 _isub = FUN(a# b# ->
                     isub# a# b#);
@@ -164,7 +164,7 @@ plusInt = FUN(x y ->
                     _scrt10 {
                       I i# -> case y of
                                 _scrt9 {
-                                  I j# -> case iplus# i# j# of
+                                  I j# -> case iadd# i# j# of
                                             _scrt8 {
                                               x# -> let {
                                                       result = CON(I x#)}
@@ -310,7 +310,7 @@ _length = FUN(xs ac# ->
                       case xs of
                         _scrt36 {
                           Nil -> ac#;
-                          Cons h t -> case iplus# ac# 1 of
+                          Cons h t -> case iadd# ac# 1 of
                                         _scrt35 {
                                           r# -> _length t r# } });
 

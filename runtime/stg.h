@@ -66,6 +66,7 @@ typedef enum {          // superfluous, for sanity checking
   FLOAT,
   DOUBLE,
   BITMAP,
+  STRING,
   HEAPOBJ
 } ArgType;
 #endif
@@ -82,6 +83,7 @@ typedef struct {
     float f;
     double d;
     Bitmap64 b;
+    char* s;    // String literals
     Obj *op;
   };
 } PtrOrLiteral;

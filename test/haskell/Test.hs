@@ -6,10 +6,17 @@ import APPFL.Prim
 --import qualified Prelude as A
 
 
-myPair = (I# 2#, C# 'a'#)
+myPair = (I# 2#, C# 'b'#)
 
-myOtherPair = (I# 2#, C# 'a'#)
-snd (_,a) = a
-fst (a,_) = a
+myOtherPair = (I# 2#, C# 'b'#)
 
-main = myPair == myOtherPair
+
+str = "a string"
+
+(I# t#) `shr` (I# s#) = I# (t# `uncheckedIShiftRA#` s#)
+
+two = (I# 2#)
+twentyFive = (I# (negateInt# 25#))
+
+main = twentyFive `shr` two
+         

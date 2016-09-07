@@ -50,7 +50,7 @@ module APPFL.List (
 import Data.Maybe
 import APPFL.Base
 import APPFL.Num
-import APPFL.Err
+--import APPFL.Err
 --import APPFL.Integer (Integer)
 
 infixl 9  !!
@@ -67,7 +67,7 @@ map f (x:xs) = f x : map f xs
 -- | Extract the first element of a list, which must be non-empty.
 head                    :: [a] -> a
 head (x:_)              =  x
-head []                 =  error ""
+--TODO head []                 =  error ""
 --head []                 =  badHead
 --{-# NOINLINE [1] head #-}
 
@@ -439,7 +439,7 @@ scanr1 _ [x]            =  [x]
 scanr1 f (x:xs)         =  f x q : qs
                            where qs@(q:_) = scanr1 f xs
 
-max x y = if x <= y then y else x
+
 -- | 'maximum' returns the maximum value from a list,
 -- which must be non-empty, finite, and of an ordered type.
 -- It is a special case of 'Data.List.maximumBy', which allows the
@@ -464,7 +464,7 @@ strictMaximum []        =  errorEmptyList "maximum"
 strictMaximum xs        =  foldl1' max xs
 #endif
 
-min x y = if x <= y then x else y
+
 -- | 'minimum' returns the minimum value from a list,
 -- which must be non-empty, finite, and of an ordered type.
 -- It is a special case of 'Data.List.minimumBy', which allows the

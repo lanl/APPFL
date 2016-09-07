@@ -1,0 +1,17 @@
+
+data Double = D Double#;
+
+gtD = FUN(x y ->
+                case x of
+                  _scrt4 {
+                    D i# -> case y of
+                              _scrt3 {
+                                D j# -> case dgt# i# j# of
+                                          _scrt2 {
+                                            0 -> false;
+                                            x -> true } } });
+
+pi = CON(D 3.14159);
+e = CON(D 2.71828);
+
+main = THUNK(gtD pi e);

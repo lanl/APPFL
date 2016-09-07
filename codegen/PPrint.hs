@@ -1,3 +1,4 @@
+{-# LANGUAGE UndecidableInstances #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE TypeSynonymInstances #-}
 {-# LANGUAGE NamedFieldPuns #-}
@@ -18,14 +19,18 @@ module PPrint
   -- turn a boolean into a Doc
   boolean,
 
+  -- make an Int64 doc
+  int64,
+
   -- List pretty printers
   listText, brackList,
   prepunctuate, postpunctuate,
   vertList,
 
   -- getting the original STG names with '#' characters
-  reHash,
+  --reHash,
   stgName,
+
 
   -- Pretty Printer typeclasses
   PPrint(..),
@@ -34,12 +39,13 @@ module PPrint
   -- Re-export the HughesPJ lib
   module Text.PrettyPrint
 ) where
-       
+
 
 import Text.PrettyPrint
+import Text.Show.Pretty (ppDoc)
 import qualified Data.Set as Set
 import Data.List (isSuffixOf)
-
+import Data.Int (Int64)
 
 
 --------------------------- Pretty Printing -------------------------
@@ -50,12 +56,14 @@ class PPrint a where
 class Unparse a where
   unparse :: a -> Doc
 
+{-
 reHash :: String -> String
 reHash str | "_h" `isSuffixOf` str = reverse ('#' : drop 2 (reverse str))
            | otherwise = str
+-}
 
 stgName :: String -> Doc
-stgName = text . reHash           
+stgName = text
 
 nLines :: (Show a) => a -> Int
 nLines = length . lines . show
@@ -76,10 +84,15 @@ bcomment d | isEmpty d = empty
              let sepr | nLines d == 1 = (<+>)
                       | otherwise = ($+$)
              in text "{-" `sepr` (nest 3 d) `sepr` text "-}"
-             
+
+
+
 
 boolean :: Bool -> Doc
-boolean = text . show
+boolean = ppDoc
+
+int64 :: Int64 -> Doc
+int64 = ppDoc
 
 brackList, braceList :: [Doc] -> Doc
 brackList = brackets . hsep . punctuate comma
@@ -116,6 +129,9 @@ vertList lchr rchr sepr maxlen ls =
              then (($$), f xd xsd)
              else ((<+>), f xd xsd)
 
+
+instance {-# OVERLAPPABLE #-} (Show a) => PPrint a where
+  pprint = ppDoc
 
 -- () metadata = empty document
 -- empty is the identity Doc for the associative pretty printing operators

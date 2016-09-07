@@ -19,7 +19,7 @@ withsuff s (x:xs) =
     if h == s && t /= [] && head t == '_' && all isDigit (tail t) then
         (h, tail t)
     else withsuff s xs
-          
+
 nextv :: String -> [String] -> String
 nextv s used =
     if not $ elem (s ++ "_0") used then s ++ "_0"
@@ -118,7 +118,8 @@ nameExpr e@EFCall{ev, eas} tt =
      eas' <- mapM (flip nameExpr tt) eas
      return e{ev = ev', eas = eas'}
 
-nameExpr e@EPrimop{eas} tt =
+
+nameExpr e@EPrimOp{eas} tt =
   do
     eas' <- mapM (flip nameExpr tt) eas
     return e{eas = eas'}
@@ -127,7 +128,7 @@ nameAlts :: Alts a -> [(Var, String)] -> State [String] (Alts a)
 nameAlts (Alts md alts name scrt) tt =
     do
       name' <- suffixname name
-      scrt' <- nameExpr scrt tt 
+      scrt' <- nameExpr scrt tt
       alts' <- mapM (flip nameAlt tt) alts
       return (Alts md alts' name' scrt')
 

@@ -27,7 +27,7 @@ import ADT
 import PPrint
 import qualified Data.Map as Map
 import BU(apply)
-import Data.Maybe (fromJust)
+import Data.Maybe (fromJust, fromMaybe)
 import Data.List ((\\), find, intercalate)
 import Data.Char (isNumber)
 import Debug.Trace
@@ -72,7 +72,12 @@ conArity name conmap
 
 -- From a Con, find the DataCon it belongs to
 getDConInList :: Con -> [DataCon] -> DataCon
-getDConInList name cons = fromJust $ find ((==name).dataConName) cons
+getDConInList name cons =
+  if isBuiltInType name
+  then getBuiltInDataCon name
+  else fromJust $ find ((==name).dataConName) cons
+
+
 
 
 -- Given a list of Cons, check if they exhaust all the DataCon constructors
@@ -102,7 +107,7 @@ luDCon name conmap = getDConInList name $ luDCons name conmap
 -- check boxedness of a TyCon name
 isBoxedTCon :: Con -> CMap -> Bool
 isBoxedTCon c cmap
-  | c == "Int_h" = False
+  | c `elem` primTypeNames = False
   | otherwise    =
       let tcons = map snd $ Map.toList cmap
       in
@@ -126,7 +131,8 @@ luTCon :: Con -> CMap -> TyCon
 luTCon name conmap
   | isBuiltInType name = getBuiltInType name
   | otherwise = case Map.lookup name conmap of
-                 Nothing -> error $ "constructor " ++ name ++ " not in conmap"
+                 Nothing -> error $ "constructor " ++ name ++
+                   " not in conmap " ++ show conmap
                  (Just t) -> t
 
 
@@ -137,14 +143,15 @@ luConTag c cmap | isBuiltInType c = c
                     let tyCon = luTCon c cmap
                     in case elem c (map dataConName $ luDCons c cmap) of
                          -- True -> tyConName tyCon ++ "_" ++ mhsSanitize c
-                         True -> "con_" ++ mhsSanitize c
+                         True -> "con_" ++ _mhsSanitize c
                          False -> "Tag lookup failure for " ++ c ++ " in " ++
                                   show tyCon
+{-
                         where  -- MHS HACK FIX, see also CMap.showTypeEnum
                           mhsSanitize c | c == "D#" = "D"
                                         | c == "I#" = "I"
                                         | otherwise = c
-
+-}
 {-
                   let tab = zip (map dataConName $ luDCons c cmap) [0..]
                   in case lookup c tab of
@@ -156,24 +163,23 @@ luConTag c cmap | isBuiltInType c = c
 -- substituted for the arguments of the type constructor corresponding to
 -- the data constructor, return the monotype arguments of the data constructor
 -- as a result of the substitution
-instantiateDataConAt c cmap subms =
+instantiateDataConAt :: Con -> CMap -> [Monotype] -> [Monotype]
+instantiateDataConAt c cmap subms
+  | isBuiltInType c = subms
+  | otherwise =
     let TyCon _ tcon tvs dcs = luTCon c cmap
         -- get data constructor definition C [Monotype]
         ms = case [ ms | DataCon c' ms <- dcs, c == c' ] of
                [ms] -> ms
-               _ -> error $ "butAlt: not finding " ++ c ++ " in " ++ show dcs ++
+               _ -> error $ "instantiateDataConAt: not finding " ++ c ++ " in " ++ show dcs ++
                     " for TyCon: " ++ tcon ++
                     "\nCMap:\n" ++ (show . pprint) cmap
         -- instantiate the Monotypes
         subst = Map.fromList $ zzip tvs subms
     in apply subst ms
 
-isInt :: String -> Bool
-isInt = all isNumber
-
--- Pending
 isBuiltInType :: Con -> Bool
-isBuiltInType = isInt -- or others?
+isBuiltInType c = any ($ c) [isInt, isDouble]
 
 getBuiltInType :: Con -> TyCon
 getBuiltInType c
@@ -183,8 +189,15 @@ getBuiltInType c
 -- (empty MonoType list is what it needs here, but it finds it
 -- by looking through the DataCons of the TyCon until it finds
 -- one whose name matches what it looked up)
-  | isInt c   = makeIntTyCon c
-  | otherwise = error "builtin TyCon not found!"
+  | isInt c    = makePrimTyCon PInt
+  | isDouble c = makePrimTyCon PDouble
+  | otherwise  = error "builtin TyCon not found!"
+
+getBuiltInDataCon :: Con -> DataCon
+getBuiltInDataCon c
+  | isInt c = DataCon "I#" [MPrim PInt]
+  | isDouble c = DataCon "D#" [MPrim PDouble]
+  | otherwise = error "builtin DataCon not found!"
 
 instance PPrint CMap where
   pprint m =

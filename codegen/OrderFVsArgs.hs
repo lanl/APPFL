@@ -12,7 +12,6 @@ import InfoTab
 import CMap(instantiateDataConAt)
 import qualified Data.Map as Map
 
-
 -- typeFVs is a poor choice of name
 orderFVsArgs :: [Obj InfoTab] -> [Obj InfoTab]
 orderFVsArgs = typeFVs Map.empty
@@ -26,18 +25,14 @@ repv m vts = boxedFirst [(k, f k) | (k,_) <- vts]
 
 -- replace bogus type with correct type, sort by boxedness, Atom flavor
 repa m ats = boxedFirst [(k, f k) | (k,_) <- ats]
-    where f a = case a of
-                  Var v ->
+    where f a = case maybeTypeOfAtom a of
+                  Just t -> t
+                  Nothing ->
+                    let Var v = a in
                       case Map.lookup v m of
                         Nothing -> error $ "HMStg.repa:  unbound variable " ++
                                            show v ++ " " ++ show m
                         Just m -> m
-                  LitI{} -> biIntMCon
-                  LitL{} -> biLongMCon
-                  LitF{} -> biFloatMCon
-                  LitD{} -> biDoubleMCon
-                  LitStr{} -> biStringMCon
-                  LitC c -> MCon (Just False) c []
 
 -- partition (a,Monotype) pairs into boxed and unboxed, preserving order
 -- also return  perm such that old[i] = new[perm[i]]
@@ -106,7 +101,7 @@ instance TypeFVs (Expr InfoTab) where
             eas' = map (typeFVsCommon m') eas
         in e{eas = eas'}
 
-    typeFVs m e@EPrimop{eas} =
+    typeFVs m e@EPrimOp{eas} =
         e{eas = map (typeFVsCommon m) eas}
 
     typeFVs m e@ELet{edefs, ee} =
@@ -143,9 +138,9 @@ typeFVsAlt t@(MCon b tc ms0) m a@ACon{amd, ac, avs, ae} =
         ae' = typeFVsCommon m' ae
     in a{ae = ae'}
 
---typeFVsAlt (MPrim _) m a@ACon{ac, avs, ae} =
---    let ae' = typeFVsCommon m ae
---    in a{ae = ae'}
+typeFVsAlt (MPrim _) m a@ACon{ac, avs, ae} =
+   let ae' = typeFVsCommon m ae
+   in a{ae = ae'}
 
 typeFVsAlt t0 m a@ACon{amd, ac, avs, ae} =
     error $ "HMStg.typeFVsAlt: " ++ show t0 ++ " " ++ show a

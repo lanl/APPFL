@@ -2,4 +2,3 @@ id = FUN(x -> x);
 
 -- should fail typechecking. Can't use unboxed arg in polymorphic FUN
 main = THUNK(id 1);
--- expecting "*** Exception: cannot unify unboxed type UBInt with polymorphic type variable"
