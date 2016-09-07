@@ -67,7 +67,7 @@ map f (x:xs) = f x : map f xs
 -- | Extract the first element of a list, which must be non-empty.
 head                    :: [a] -> a
 head (x:_)              =  x
-head []                 =  error "head"
+--head []                 =  error "head"
 --head []                 =  badHead
 --{-# NOINLINE [1] head #-}
 
