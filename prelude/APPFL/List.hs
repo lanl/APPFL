@@ -50,7 +50,7 @@ module APPFL.List (
 import Data.Maybe
 import APPFL.Base
 import APPFL.Num
---import APPFL.Err
+import APPFL.Err
 --import APPFL.Integer (Integer)
 
 infixl 9  !!
@@ -67,7 +67,7 @@ map f (x:xs) = f x : map f xs
 -- | Extract the first element of a list, which must be non-empty.
 head                    :: [a] -> a
 head (x:_)              =  x
---TODO head []                 =  error ""
+head []                 =  error "head"
 --head []                 =  badHead
 --{-# NOINLINE [1] head #-}
 

@@ -43,6 +43,7 @@ lookupAppflPrimop = (`Map.lookup` primopMap)
 
 mkIntOpPr op = (op, mkOpInfo 'i' op)
 mkDubOpPr op = (op, mkOpInfo 'd' op)
+mkStrOpPr op = (op, mkOpInfo 's' op)
 mkOtherOpPr op = (op, mkOpInfo '_' op) -- mkOpInfo only cares about prefixes for some ops
 
 primopMap :: Map G.PrimOp (A.PrimOp, A.PrimOpInfo)
@@ -82,9 +83,8 @@ primopMap = Map.fromList
   , (ISrlOp     , mkOtherOpPr Psrl) -- unchecked int shift right (logical)
   , (ChrOp      , mkOtherOpPr Pchr)
   , (OrdOp      , mkOtherOpPr Pord)
---  , (RaiseOp    , Pexcept)  -- TODO
---  , (RaiseOp    , Praise)
---  , (RaiseIOOp  , Praise)
+  , (RaiseOp    , mkStrOpPr Praise)
+  , (RaiseIOOp  , mkStrOpPr Praise)
 --
 --  I want to figure out a way to get this in eventually, even in a
 --  limited form that maybe only accepts String literals (as MachStr)

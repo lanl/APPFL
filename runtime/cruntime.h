@@ -2,7 +2,7 @@
 #define cruntime_h
 
 static inline void raise() {
-   fprintf(stderr,"raise stub\n");
+   fprintf(stderr, "ERROR\n");
    exit(1);
 }
 

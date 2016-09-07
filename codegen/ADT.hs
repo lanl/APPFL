@@ -111,6 +111,7 @@ primTypeNames = map primTypeName [minBound :: PrimType .. ]
 
 -- m is rightmost element
 unfoldMTy (MFun m1 m2) = let (m,ms) = unfoldMTy m2 in (m, m1:ms)
+unfoldMTy (MPrim PVoid) = (MVar "",[]) -- hack for raise
 unfoldMTy m = (m,[])
 
 isBoxed :: Monotype -> Bool
@@ -123,6 +124,10 @@ isBoxed m = case m of
   MPrim{} -> False
   m          -> error $ "ADT.isBoxed called with " ++ show m
 
+isVoid :: Monotype -> Bool
+isVoid m = case m of 
+  MPrim PVoid -> True
+  m -> False
 
 -- set Monotype boxity in TyCons (this should be done before CMaps are built
 -- for InfoTabs)

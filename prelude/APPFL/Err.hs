@@ -22,7 +22,7 @@
 -----------------------------------------------------------------------------
 
 --module APPFL.Err( absentErr, error, undefined ) where
-module APPFL.Err( error) where
+module APPFL.Err(error, undefined) where
 --import APPFL.CString ()
 import GHC.Types
 import GHC.Prim
@@ -33,8 +33,8 @@ import GHC.Prim
 
 
 -- | 'error' stops execution and displays an error message.
-error :: [Char] -> b
-error s = raise# s --(errorCallException s)
+error :: [Char] -> a 
+error s = raise# ""  --(errorCallException s)
 -- Might be able to support this is some way.
 -- At the very least, making this simply a primitive call makes this
 -- easier to detect and handle at the STG level
@@ -43,8 +43,8 @@ error s = raise# s --(errorCallException s)
 -- It is expected that compilers will recognize this and insert error
 -- messages which are more appropriate to the context in which 'undefined'
 -- appears.
---undefined :: a
---undefined = error "Prelude.undefined"
+undefined :: a
+undefined = error "Prelude.undefined"
 
 -- | Used for compiler-generated error message;
 -- encoding saves bytes of string junk.

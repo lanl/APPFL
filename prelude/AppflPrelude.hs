@@ -106,7 +106,8 @@ This may make it in later
     -- -- ** Miscellaneous functions
     id, const, (.), flip, ($),
     --until,
-    -- asTypeOf, error, undefined,
+    -- asTypeOf, 
+    error, undefined,
     -- seq, ($!),
 
     -- -- * List operations
@@ -241,3 +242,4 @@ import APPFL.Base
 import APPFL.Num
 import APPFL.List
 import APPFL.Tuple
+import APPFL.Err

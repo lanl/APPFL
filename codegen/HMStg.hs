@@ -167,12 +167,10 @@ instance DV (Expr InfoTab) (Expr InfoTab) where
            return $ setTyp retMono e{eas = eas'}
 
     dv e@EPrimOp{..} =
-        let (retMono,_) = unfoldMTy $ opType eopInfo
-        in do eas' <- mapM dv eas -- setTyp(s) of Primop args
-              let --ms = map getTyp eas' -- use those types to make MFun
-                 -- m = foldr MFun retMono ms
-                  e' = e{eas = eas'}
-              return $ setTyp retMono e'
+          let (retMono,_) = unfoldMTy $ opType eopInfo
+          in do eas' <- mapM dv eas -- setTyp(s) of Primop args
+                let e' = e{eas = eas'}
+                return $ setTyp retMono e'
 
     dv e@ELet{..} =
         do edefs <- mapM dv edefs

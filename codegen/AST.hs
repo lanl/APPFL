@@ -242,6 +242,7 @@ mkFunCall :: String -- | Name of the function
 mkFunCall name exps = C.FnCall (C.Var (C.Id name mempty) mempty) exps mempty
 
 
+
 -- | Make PrimOpInfo given the (properly ordered) list of PrimTypes the
 -- associated PrimOp operates on, its PrimType return and a function to generate
 -- an abstract C Expression
@@ -274,6 +275,7 @@ mkOpInfo c op =
   let ty = case c of
              'i' -> PInt
              'd' -> PDouble
+             's' -> PString
              _   -> error $ "mkOpInfo given bad char: " ++ [c]
   in
     case op of
@@ -305,8 +307,7 @@ mkOpInfo c op =
       -- of C.Exps accomplishes the NOP logic for Codegen
       Pord -> mkOpInfo' [PInt] PInt head
       Pchr -> mkOpInfo' [PInt] PInt head
-
-      Praise -> mkOpInfo' [PString] PVoid (mkFunCall (c:"raise")) 
+      Praise -> mkOpInfo' [] PVoid (mkFunCall "raise")
 
 maybeTypeOfAtom :: Atom -> Maybe Monotype
 maybeTypeOfAtom at = case at of
