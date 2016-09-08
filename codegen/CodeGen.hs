@@ -185,7 +185,7 @@ cga env at =
   in cont $ \litexp aty field ->
               (if useArgType
                then [cexp| ((typename PtrOrLiteral){.argType = $esc:aty, .$id:field = $litexp}) |]
-               else [cexp| ((typename PtrOrLiteral){.i = $litexp}) |]
+               else [cexp| ((typename PtrOrLiteral){.$id:field = $litexp}) |]
               , "")
 
 cgv :: Env -> String -> (Exp, String)
