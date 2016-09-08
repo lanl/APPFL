@@ -1,0 +1,6 @@
+{-# LANGUAGE MagicHash, UnboxedTuples #-}
+module Test where
+import AppflPrelude
+import APPFL.Prim
+
+main = undefined
