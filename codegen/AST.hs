@@ -307,7 +307,7 @@ mkOpInfo c op =
       -- of C.Exps accomplishes the NOP logic for Codegen
       Pord -> mkOpInfo' [PInt] PInt head
       Pchr -> mkOpInfo' [PInt] PInt head
-      Praise -> mkOpInfo' [] PVoid (mkFunCall "raise")
+      Praise -> mkOpInfo' [PString] PVoid (mkFunCall "raise")
 
 maybeTypeOfAtom :: Atom -> Maybe Monotype
 maybeTypeOfAtom at = case at of

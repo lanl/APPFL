@@ -33,8 +33,9 @@ import GHC.Prim
 
 
 -- | 'error' stops execution and displays an error message.
-error :: [Char] -> a 
-error s = raise# ""  --(errorCallException s)
+--error :: a -> b 
+error :: [Char] -> b
+error s = raise# s  --(errorCallException s)
 -- Might be able to support this is some way.
 -- At the very least, making this simply a primitive call makes this
 -- easier to detect and handle at the STG level

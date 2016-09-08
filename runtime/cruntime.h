@@ -1,8 +1,8 @@
 #ifndef cruntime_h
 #define cruntime_h
 
-static inline void raise() {
-   fprintf(stderr, "ERROR\n");
+static inline void raise(char *str) {
+   fprintf(stderr,"APPFL_ERROR\n");
    exit(1);
 }
 

@@ -103,6 +103,8 @@ unify (MCon (Just False) "Int#" []) (MPrim PInt) = idSubst
 unify (MPrim PDouble) (MCon (Just False) "Double#" []) = idSubst
 unify (MCon (Just False) "Double#" []) (MPrim PDouble) = idSubst
 
+unify (MPrim PString) (MCon (Just True) "List" [MCon (Just True) "Char" []]) = idSubst
+unify (MCon (Just True) "List" [MCon (Just True) "Char" []]) (MPrim PString) = idSubst
 
 -- if they're equal there's nothing to do
 unify m1 m2 | m1 == m2 = idSubst

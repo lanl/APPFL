@@ -181,7 +181,8 @@ cga env at =
           LitI i   -> mk [cexp| $int:i                 |] "INT"    "i"
           LitD d   -> mk [cexp| $double:(toRational d) |] "DOUBLE" "d"
           LitC c   -> mk [cexp| $id:("con_" ++ c)      |] "INT"    "i"
-          LitStr s -> mk [cexp| $string:s              |] "STRING" "s"
+          --LitStr s -> mk [cexp| $string:s              |] "STRING" "s"
+          LitStr s -> mk [cexp| $int:(0)              |] "STRING" "s" -- TEMP HACK until we have string support to make error work
   in cont $ \litexp aty field ->
               (if useArgType
                then [cexp| ((typename PtrOrLiteral){.argType = $esc:aty, .$id:field = $litexp}) |]
@@ -198,7 +199,8 @@ cgUBa :: Env -> Atom -> String -> Exp
 cgUBa env (Var v)     t  = [cexp| ($exp:(fst $ cgv env v)).$id:t |]
 cgUBa env (LitI i)   "i" = [cexp| $int:i |]
 cgUBa env (LitD d)   "d" = [cexp| $double:(toRational d) |]
-cgUBa env (LitStr s) "s" = [cexp| $string:s |]
+--cgUBa env (LitStr s) "s" = [cexp| $string:s |]
+cgUBa env (LitStr s) "s" = [cexp| $int:(0)|] -- TEMP HACK until we have string support to make error work
 cgUBa _ at _ = error $ "CodeGen.cgUBa: not expecting Atom - " ++ show at
 
 
