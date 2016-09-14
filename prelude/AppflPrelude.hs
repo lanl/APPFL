@@ -51,7 +51,7 @@ module AppflPrelude (
     Int(..), (+), (-), (*), (/), mod, div, negate,
     fromInteger,
     Char (..), Word (..),
-   
+
     -- Integer, Float, Double,
     -- Rational, Word,
 
@@ -106,7 +106,7 @@ This may make it in later
     -- -- ** Miscellaneous functions
     id, const, (.), flip, ($),
     --until,
-    -- asTypeOf, 
+    -- asTypeOf,
     error, undefined,
     -- seq, ($!),
 
@@ -243,3 +243,4 @@ import APPFL.Num
 import APPFL.List
 import APPFL.Tuple
 import APPFL.Err
+import APPFL.Enum

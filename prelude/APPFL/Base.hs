@@ -176,9 +176,9 @@ otherwise               =  True
 
 -- Ordinarily, these are made machine-dependent with
 -- CPP Macros, but APPFL is always 64-bit
--- maxInt, minInt :: Int
--- minInt  = I# (-0x8000000000000000#)
--- maxInt  = I# 0x7FFFFFFFFFFFFFFF#
+maxInt, minInt :: Int
+minInt  = I# (-0x7FFFFFFFFFFFFFFF#)
+maxInt  = I# 0x7FFFFFFFFFFFFFFF#
 
 
 --------------------------------------------------
@@ -199,7 +199,7 @@ fromInteger = _dummy
 {-
 Fractional literals are handed in just the same way, except
 that the translation is fromRational (3.68::Rational).
--}                           
+-}
 
 {-
 The equality test in an overloaded numeric pattern uses
@@ -225,7 +225,7 @@ ifThenElse :: Bool -> a -> a -> a
 ifThenElse b t e | b         = t
                  | otherwise = e
 
-{-                           
+{-
 “Do” notation is translated using whatever functions (>>=),
 (>>), and fail, are in scope (not the Prelude versions). List
 comprehensions, mdo (The recursive do-notation), and parallel
@@ -295,8 +295,8 @@ f $ x                   =  f x
 -- -- | 'asTypeOf' is a type-restricted version of 'const'.  It is usually
 -- -- used as an infix operator, and its typing forces its first argument
 -- -- (which is usually overloaded) to have the same type as the second.
--- asTypeOf                :: a -> a -> a
--- asTypeOf                =  const
+asTypeOf                :: a -> a -> a
+asTypeOf                =  const
 
 
 -- {- |

@@ -41,10 +41,10 @@ module APPFL.List (
    any, all, elem, notElem,
    lookup,
    concatMap,
-   --zip, zip3,
-   --zipWith,
+   zip, zip3,
+   zipWith,
    zipWith3, unzip, unzip3,
-   --errorEmptyList,
+   errorEmptyList,
  ) where
 
 import Data.Maybe
@@ -67,12 +67,11 @@ map f (x:xs) = f x : map f xs
 -- | Extract the first element of a list, which must be non-empty.
 head                    :: [a] -> a
 head (x:_)              =  x
-head []                 =  error "head"
---head []                 =  badHead
+head []                 =  badHead
 --{-# NOINLINE [1] head #-}
 
---badHead :: a
---badHead = errorEmptyList "head"
+badHead :: a
+badHead = errorEmptyList "head"
 
 -- This rule is useful in cases like
 --      head [y | (x,y) <- ps, x==t]
@@ -97,14 +96,14 @@ uncons (x:xs)           = Just (x, xs)
 -- | Extract the elements after the head of a list, which must be non-empty.
 tail                    :: [a] -> [a]
 tail (_:xs)             =  xs
---tail []                 =  errorEmptyList "tail"
+tail []                 =  errorEmptyList "tail"
 
 -- | Extract the last element of a list, which must be finite and non-empty.
 last                    :: [a] -> a
 #if 1
 last [x]                =  x
 last (_:xs)             =  last xs
---last []                 =  errorEmptyList "last"
+last []                 =  errorEmptyList "last"
 #else
 -- Use foldl to make last a good consumer.
 -- This will compile to good code for the actual GHC.List.last.
@@ -123,7 +122,7 @@ init                    :: [a] -> [a]
 #if 1
 init [x]                =  []
 init (x:xs)             =  x : init xs
---init []                 =  errorEmptyList "init"
+init []                 =  errorEmptyList "init"
 #else
 -- eliminate repeated cases
 init []                 =  errorEmptyList "init"
@@ -264,7 +263,7 @@ foldl' k z0 xs =
 -- and thus must be applied to non-empty lists.
 foldl1                  :: (a -> a -> a) -> [a] -> a
 foldl1 f (x:xs)         =  foldl f x xs
---foldl1 _ []             =  errorEmptyList "foldl1"
+foldl1 _ []             =  errorEmptyList "foldl1"
 
 #if 0
 -- | A strict version of 'foldl1'
@@ -402,7 +401,7 @@ foldr1                  :: (a -> a -> a) -> [a] -> a
 foldr1 f = go
   where go [x]            =  x
         go (x:xs)         =  f x (go xs)
---        go []             =  errorEmptyList "foldr1"
+        go []             =  errorEmptyList "foldr1"
 --{-# INLINE [0] foldr1 #-}
 
 -- | 'scanr' is the right-to-left dual of 'scanl'.
@@ -447,7 +446,7 @@ scanr1 f (x:xs)         =  f x q : qs
 
 --maximum                 :: (Ord a) => [a] -> a
 --{-# INLINE [1] maximum #-}
---maximum []              =  errorEmptyList "maximum"
+maximum []              =  errorEmptyList "maximum"
 maximum xs              =  foldl1 max xs
 
 #if 0
@@ -471,7 +470,7 @@ strictMaximum xs        =  foldl1' max xs
 -- programmer to supply their own comparison function.
 --minimum                 :: (Ord a) => [a] -> a
 --{-# INLINE [1] minimum #-}
---minimum []              =  errorEmptyList "minimum"
+minimum []              =  errorEmptyList "minimum"
 minimum xs              =  foldl1 min xs
 
 #if 0
@@ -536,7 +535,7 @@ replicate n x           =  take n (repeat x)
 -- on infinite lists.
 
 cycle                   :: [a] -> [a]
---cycle []                = errorEmptyList "cycle"
+cycle []                = errorEmptyList "cycle"
 cycle xs                = xs' where xs' = xs ++ xs'
 
 -- | 'takeWhile', applied to a predicate @p@ and a list @xs@, returns the
@@ -910,8 +909,8 @@ concat = foldr (++) []
 -- which takes an index of any integral type.
 (!!)                    :: [a] -> Int -> a
 #if 1
---xs     !! n | n < 0 =  error "Prelude.!!: negative index"
---[]     !! _         =  error "Prelude.!!: index too large"
+xs     !! n | n < 0 =  error "Prelude.!!: negative index"
+[]     !! _         =  error "Prelude.!!: index too large"
 (x:_)  !! 0         =  x
 (_:xs) !! n         =  xs !! (n-1)
 #else
@@ -984,16 +983,17 @@ foldr2_left  k _z  x  r (y:ys) = k x y (r ys)
 --
 -- > zip [] _|_ = []
 --{-# NOINLINE [1] zip #-}
-#if 0
+
 zip :: [a] -> [b] -> [(a,b)]
 zip []     _bs    = []
 zip _as    []     = []
 zip (a:as) (b:bs) = (a,b) : zip as bs
 
-
+#if 0
 {-# INLINE [0] zipFB #-}
 zipFB :: ((a, b) -> c -> d) -> a -> b -> c -> d
 zipFB c = \x y r -> (x,y) `c` r
+
 
 {-# RULES
 "zip"      [~1] forall xs ys. zip xs ys = build (\c n -> foldr2 (zipFB c) n xs ys)
@@ -1023,12 +1023,13 @@ zip3 _      _      _      = []
 --
 -- > zipWith f [] _|_ = []
 --{-# NOINLINE [1] zipWith #-}
-#if 0
+
 zipWith :: (a->b->c) -> [a]->[b]->[c]
 zipWith _f []     _bs    = []
 zipWith _f _as    []     = []
 zipWith f  (a:as) (b:bs) = f a b : zipWith f as bs
 
+#if 0
 -- zipWithFB must have arity 2 since it gets two arguments in the "zipWith"
 -- rule; it might not get inlined otherwise
 {-# INLINE [0] zipWithFB #-}
@@ -1068,12 +1069,10 @@ unzip3   =  foldr (\(a,b,c) ~(as,bs,cs) -> (a:as,b:bs,c:cs))
 
 -- Common up near identical calls to `error' to reduce the number
 -- constant strings created when compiled:
-{-
-errorEmptyList :: String -> a
+
+errorEmptyList :: [Char] -> a
 errorEmptyList fun =
   error (prel_list_str ++ fun ++ ": empty list")
 
-prel_list_str :: String
+prel_list_str :: [Char]
 prel_list_str = "Prelude."
-
--}

@@ -19,9 +19,9 @@
 #include "MachDeps.h"
 
 module APPFL.Enum(
-        Ghc.Bounded(..), Ghc.Enum(..),
+        GHC.Bounded(..), GHC.Enum(..),
         boundedEnumFrom, boundedEnumFromThen,
-        toEnumError, fromEnumError, succError, predError,
+--        toEnumError, fromEnumError, succError, predError,
 
         -- Instances for Bounded and Enum: (), Char, Int
 
@@ -30,10 +30,13 @@ module APPFL.Enum(
 import qualified GHC.Enum as GHC (Bounded (..), Enum (..))
 
 import APPFL.Base hiding ( many )
-import APPFL.Char
-import APPFL.Integer
+import APPFL.Prim
+import APPFL.List
+import APPFL.Err
+--import APPFL.Char
+--import APPFL.Integer
 import APPFL.Num
-import APPFL.Show
+--import APPFL.Show
 default ()              -- Double isn't available yet
 
 -- | The 'Bounded' class is used to name the upper and lower limits of a
@@ -78,6 +81,8 @@ class Bounded a  where
 -- >        bound | fromEnum y >= fromEnum x = maxBound
 -- >              | otherwise                = minBound
 --
+subtract a b = b - a
+
 class  Enum a   where
     -- | the successor of a value.  For numeric types, 'succ' adds 1.
     succ                :: a -> a
@@ -121,7 +126,7 @@ boundedEnumFromThen n1 n2
 ------------------------------------------------------------------------
 -- Helper functions
 ------------------------------------------------------------------------
-
+#if 0
 {-# NOINLINE toEnumError #-}
 toEnumError :: (Show a) => String -> Int -> (a,a) -> b
 toEnumError inst_ty i bnds =
@@ -147,7 +152,7 @@ succError inst_ty =
 predError :: String -> a
 predError inst_ty =
     error $ "Enum.pred{" ++ inst_ty ++ "}: tried to take `pred' of minBound"
-
+#endif
 ------------------------------------------------------------------------
 -- Tuples
 ------------------------------------------------------------------------
@@ -317,7 +322,7 @@ instance Enum Ordering where
 ------------------------------------------------------------------------
 -- Char
 ------------------------------------------------------------------------
-
+#if 0
 instance  Bounded Char  where
     minBound =  '\0'
     maxBound =  '\x10FFFF'
@@ -432,7 +437,7 @@ go_dn_char_list x0 delta lim
     go_dn x | isTrue# (x <# lim) = []
             | otherwise          = C# (chr# x) : go_dn (x +# delta)
 
-
+#endif
 ------------------------------------------------------------------------
 -- Int
 ------------------------------------------------------------------------
@@ -459,18 +464,18 @@ instance  Enum Int  where
     toEnum   x = x
     fromEnum x = x
 
-    {-# INLINE enumFrom #-}
+    -- {-# INLINE enumFrom #-}
     enumFrom (I# x) = eftInt x maxInt#
         where !(I# maxInt#) = maxInt
         -- Blarg: technically I guess enumFrom isn't strict!
 
-    {-# INLINE enumFromTo #-}
+    -- {-# INLINE enumFromTo #-}
     enumFromTo (I# x) (I# y) = eftInt x y
 
-    {-# INLINE enumFromThen #-}
+    -- {-# INLINE enumFromThen #-}
     enumFromThen (I# x1) (I# x2) = efdInt x1 x2
 
-    {-# INLINE enumFromThenTo #-}
+    -- {-# INLINE enumFromThenTo #-}
     enumFromThenTo (I# x1) (I# x2) (I# y) = efdtInt x1 x2 y
 
 
@@ -478,13 +483,14 @@ instance  Enum Int  where
 -- eftInt and eftIntFB deal with [a..b], which is the
 -- most common form, so we take a lot of care
 -- In particular, we have rules for deforestation
-
+#if 0
 {-# RULES
 "eftInt"        [~1] forall x y. eftInt x y = build (\ c n -> eftIntFB c n x y)
 "eftIntList"    [1] eftIntFB  (:) [] = eftInt
  #-}
 
 {-# NOINLINE [1] eftInt #-}
+#endif
 eftInt :: Int# -> Int# -> [Int]
 -- [x1..x2]
 eftInt x0 y | isTrue# (x0 ># y) = []
@@ -494,7 +500,7 @@ eftInt x0 y | isTrue# (x0 ># y) = []
                                then []
                                else go (x +# 1#)
 
-{-# INLINE [0] eftIntFB #-}
+-- {-# INLINE [0] eftIntFB #-}
 eftIntFB :: (Int -> r -> r) -> r -> Int# -> Int# -> r
 eftIntFB c n x0 y | isTrue# (x0 ># y) = n
                   | otherwise         = go x0
@@ -511,27 +517,27 @@ eftIntFB c n x0 y | isTrue# (x0 ># y) = n
 -----------------------------------------------------
 -- efdInt and efdtInt deal with [a,b..] and [a,b..c].
 -- The code is more complicated because of worries about Int overflow.
-
+#if 0
 {-# RULES
 "efdtInt"       [~1] forall x1 x2 y.
                      efdtInt x1 x2 y = build (\ c n -> efdtIntFB c n x1 x2 y)
 "efdtIntUpList" [1]  efdtIntFB (:) [] = efdtInt
  #-}
-
+#endif
 efdInt :: Int# -> Int# -> [Int]
 -- [x1,x2..maxInt]
 efdInt x1 x2
  | isTrue# (x2 >=# x1) = case maxInt of I# y -> efdtIntUp x1 x2 y
  | otherwise           = case minInt of I# y -> efdtIntDn x1 x2 y
 
-{-# NOINLINE [1] efdtInt #-}
+-- {-# NOINLINE [1] efdtInt #-}
 efdtInt :: Int# -> Int# -> Int# -> [Int]
 -- [x1,x2..y]
 efdtInt x1 x2 y
  | isTrue# (x2 >=# x1) = efdtIntUp x1 x2 y
  | otherwise           = efdtIntDn x1 x2 y
 
-{-# INLINE [0] efdtIntFB #-}
+-- {-# INLINE [0] efdtIntFB #-}
 efdtIntFB :: (Int -> r -> r) -> r -> Int# -> Int# -> Int# -> r
 efdtIntFB c n x1 x2 y
  | isTrue# (x2 >=# x1) = efdtIntUpFB c n x1 x2 y
@@ -601,7 +607,7 @@ efdtIntDnFB c n x1 x2 y    -- Be careful about underflow!
 ------------------------------------------------------------------------
 -- Word
 ------------------------------------------------------------------------
-
+#if 0
 instance Bounded Word where
     minBound = 0
 
@@ -651,11 +657,11 @@ integerToWordX i = W# (integerToWord i)
 
 wordToIntegerX :: Word -> Integer
 wordToIntegerX (W# x#) = wordToInteger x#
-
+#endif
 ------------------------------------------------------------------------
 -- Integer
 ------------------------------------------------------------------------
-
+#if 0
 instance  Enum Integer  where
     succ x               = x + 1
     pred x               = x - 1
@@ -733,3 +739,4 @@ dn_list x0 delta lim = go (x0 :: Integer)
                     where
                         go x | x < lim   = []
                              | otherwise = x : go (x+delta)
+#endif
