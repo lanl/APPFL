@@ -1,19 +1,17 @@
 {-# LANGUAGE MagicHash, UnboxedTuples #-}
 module Test where
 import AppflPrelude
-import APPFL.Prim
 
-one = I# 1#
-two = I# 2#
-three = I# 3#
-four = I# 4#
+q :: [Int]
+q = [5,9,1,8,2,7,3,6,4]
 
-list = [one, three, four, two]
+r :: [Int]
+r = [1,2,3,4,5,6,7,8,9]
 
 qsort [] = []
 qsort (x:xs) = qsort smaller ++ [x] ++ qsort larger
                 where 
-                        smaller = [a | a <- xs, a < x]
+                        smaller = [a | a <- xs, a <= x]
                         larger =  [b | b <- xs, b > x]
 
-main = last $ qsort list == four 
+main = r == qsort q
