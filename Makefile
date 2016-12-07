@@ -30,6 +30,9 @@ codegen: setup
 	@(cp -f codegen/dist/build/appfl/appfl $(build_dir)/bin/)
 
 runtime: setup
+	if [ ! -f runtime/argobots/configure ]; then cd runtime/argobots && libtoolize && ./autogen.sh; fi
+	if [ ! -f runtime/argobots/Makefile ]; then cd runtime/argobots ** ./configure --prefix=$(build_dir)/argobots; fi
+	@(cd runtime/argobots && make && make install)
 	@(cd $(build_dir); cmake $(cmake_flags) ..)
 	@(cd $(build_dir); $(MAKE) $(build_flags))
 
@@ -53,6 +56,7 @@ clean:
 	@(cd test/hs && rm -f *.hs.c 2>/dev/null)
 	@(cd test/hs/error && rm -f *.hs.c 2>/dev/null)
 	@(rm -rf $(build_dir))
+	@(cd runtime/argobots && make clean)
 
 multi:
 	@echo "USE_ARGTYPE=0 && USE_OBJTYPE=0"
