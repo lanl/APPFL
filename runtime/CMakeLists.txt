@@ -4,19 +4,22 @@ project(runtime)
   set(SHAREDLIB OFF)
 
   set(rt_hdrs args.h 
+              cas.h
+              cruntime.h
               cmm.h
               gc.h
               log.h
               obj.h
               heap.h
+              nodepool.h
+              nodequeue.h 
+              sanity.h
               show.h
               stack.h
               stg.h
-              stgutils.h
-              cruntime.h
-              stgc.h
               stgapply.h
-              sanity.h
+              stgc.h
+              stgutils.h
               threading.h
     )
 
@@ -24,21 +27,23 @@ project(runtime)
      )
 
   set(rt_srcs args.c 
+              cas.c
               gc.c
-              stg.c
-              stgutils.c
+              heap.c
+              #nodepool.c
+              #nodequeue.c 
+              sanity.c
               show.c
               stack.c
+              stg.c
               stgapply.c
-              heap.c
-              sanity.c
+              stgutils.c
               threading.c
     )
 
 include_directories(".."
                     "/usr/include/malloc"
                     ${PROJECT_BINARY_DIR}/../include
-                    ${PROJECT_BINARY_DIR}/../argobots/include
                    .
                    )
 
