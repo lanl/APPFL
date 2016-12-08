@@ -17,6 +17,7 @@ project(runtime)
               stgc.h
               stgapply.h
               sanity.h
+              threading.h
     )
 
   set(xrt_hdrs ../build/include/options.h
@@ -31,10 +32,13 @@ project(runtime)
               stgapply.c
               heap.c
               sanity.c
+              threading.c
     )
 
 include_directories(".."
+                    "/usr/include/malloc"
                     ${PROJECT_BINARY_DIR}/../include
+                    ${PROJECT_BINARY_DIR}/../argobots/include
                    .
                    )
 
@@ -59,9 +63,6 @@ include_directories(".."
     endif()
   endif()
 
-  include_directories(
-    "/usr/include/malloc"
-  )
 
   # put in build/lib
   if(SHAREDLIB) 

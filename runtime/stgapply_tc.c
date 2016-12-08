@@ -12,13 +12,13 @@
 Cont *stgFunContSplit(int arity1, int excess, FnPtr (*dest)()) {
   // arity1 is arity of funoid
   // cont1 is cont to split
-  Cont *cont1 = (Cont *)stgSP;
+  Cont *cont1 = (Cont *)stgSPs[myThreadID()];
   // funoid + excess, subsequent application
   int pls2 = 1 + excess;
-  Cont *cont2 = stgAllocCallOrStackCont( &it_stgStackCont, pls2 );
+  Cont *cont2 = stgAllocCallOrStackCont(myThreadID(), &it_stgStackCont, pls2 );
   // funoid + arity1
   int pls3 = arity1 + 1;
-  Cont *cont3 = stgAllocCallOrStackCont( &it_stgStackCont, pls3 );
+  Cont *cont3 = stgAllocCallOrStackCont(myThreadID(), &it_stgStackCont, pls3 );
 
   // fill in cont2
   Bitmap64 bm = cont1->layout;
@@ -49,8 +49,8 @@ Cont *stgFunContSplit(int arity1, int excess, FnPtr (*dest)()) {
   memmove((char *)cont3 + cont1Size,
 	  cont3,
 	  getContSize(cont2) + getContSize(cont3));
-  stgSP += cont1Size;
-  return (Cont *)stgSP;
+  stgSPs[myThreadID()] += cont1Size;
+  return (Cont *)stgSPs[myThreadID()];
 }
 
 Cont *stgPapContSplit(int arity,
@@ -59,11 +59,11 @@ Cont *stgPapContSplit(int arity,
 		      PtrOrLiteral *papargv, // PAP args, not whole payload
                       Bitmap64 papargmap) // of the PAPs args
 {
-  Cont *contold = (Cont *)stgSP;
-  Cont *contexcess = stgAllocCallOrStackCont( &it_stgStackCont, excess + 1);
+  Cont *contold = (Cont *)stgSPs[myThreadID()];
+  Cont *contexcess = stgAllocCallOrStackCont(myThreadID(), &it_stgStackCont, excess + 1);
   int papargc = papargmap.bitmap.size;
   int exactpls = 1 + papargc + arity;
-  Cont *contexact = stgAllocCallOrStackCont( &it_stgStackCont, exactpls);
+  Cont *contexact = stgAllocCallOrStackCont(myThreadID(), &it_stgStackCont, exactpls);
 
   // fill in contexcess
   Bitmap64 bm = contold->layout;
@@ -113,8 +113,8 @@ Cont *stgPapContSplit(int arity,
   memmove((char *)contexact + contoldsize,
 	  contexact,
 	  getContSize(contexcess) + getContSize(contexact));
-  stgSP += contoldsize;
-  return (Cont *)stgSP;
+  stgSPs[myThreadID()] += contoldsize;
+  return (Cont *)stgSPs[myThreadID()];
 }
 
 
@@ -124,7 +124,7 @@ FnPtr stgApply3();
 
 
 FnPtr stgApplyCurVal() {
-  Cont *stackframe = stgGetStackArgp();
+  Cont *stackframe = stgGetStackArgp(myThreadID());
   stackframe->payload[0] = stgCurVal;
   stackframe->entryCode = &stgApply;
   STGRETURN0();
@@ -132,7 +132,7 @@ FnPtr stgApplyCurVal() {
 
 // hack for now, should do in codegen
 FnPtr stgApply() {
-  Cont *stackframe = stgGetStackArgp();
+  Cont *stackframe = stgGetStackArgp(myThreadID());
   int argc = stackframe->layout.bitmap.size;
   // extra param to stgApply2
   stackframe = stgAdjustTopContSize(stackframe, 1);
@@ -154,14 +154,14 @@ FnPtr stgApply() {
 
 // eval the funoid first
 FnPtr stgApplyNew() {
-  Cont *stackframe = stgGetStackArgp();
+  Cont *stackframe = stgGetStackArgp(myThreadID());
   stackframe->entryCode = &stgApply2;
   stgCurVal = stackframe->payload[1];  // the funoid
   STGJUMP();  // bye bye
 }
 
 FnPtr stgApply2() {
-  Cont *stackframe = stgGetStackArgp();
+  Cont *stackframe = stgGetStackArgp(myThreadID());
   derefStgCurVal();
   // capture something just evaluated
   int argvInd = stackframe->payload[0].i;
@@ -221,7 +221,7 @@ FnPtr stgApply2() {
 FnPtr stgApply3() {
 
   // STACKCONT with actual parameters
-  Cont *stackframe = stgGetStackArgp();
+  Cont *stackframe = stgGetStackArgp(myThreadID());
   assert(getContType(stackframe) == STACKCONT);
   // back to normal
   stackframe->entryCode = &stgStackCont;

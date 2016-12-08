@@ -47,8 +47,15 @@
 /* if 1 add support for performance counters */
 #define USE_PERFCOUNTERS 1
 
-/* number of threads, temporary solution */
-#define NTHREADS 2
+#define MAX_THREADS 16
+
+/* 1 means just main thread */
+#define NTHREADS_DEFAULT 1
+
+/* which threading library? */
+/* placeholder */
+#undef USE_PTHREADS
+#define USE_ARGOBOTS 1
 
 
 

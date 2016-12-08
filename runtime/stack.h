@@ -96,12 +96,12 @@ int  getContSize(Cont *);
 void stgPopContIfPopMe();
 
 // allocate Obj on continuation stack, returning pointer to new Obj
-extern Cont *stgAllocCallOrStackCont(CInfoTab *it, int payloadSize);
-extern Cont *stgAllocCont(CInfoTab *it);
+extern Cont *stgAllocCont(int stack, CInfoTab *it);
+extern Cont *stgAllocCallOrStackCont(int stack, CInfoTab *it, int payloadSize);
 // remove Obj from top of continuation stack, returning pointer to de-alloced Obj
 void stgPopCont();
 // get top of stack pointer, must be STACKCONT
-Cont *stgGetStackArgp();
+Cont *stgGetStackArgp(int stack);
 Cont *stgJumpAdjust();
 Cont *stgAdjustTopContSize(Cont *cp, int delta);
 

@@ -234,11 +234,13 @@ void gc(void) {
     processObj(stgStatObj[i]);
   }
 
-  //Cont. stack
-  for (Cont *p = (Cont *)stgSP;
-       (char *)p < (char*) stgStack + stgStackSize;
-       p = (Cont *)((char*)p + getContSize(p))) {
-    processCont(p);
+  //Cont. stacks
+  for (int i = 0; i != rtArg.nThreads; i++) {
+    for (Cont *p = (Cont *)stgSPs[i];
+         (char *)p < (char*) stgStacks[i] + stgStackSizes[i];
+         p = (Cont *)((char*)p + getContSize(p))) {
+      processCont(p);
+    }
   }
 
   //all roots are now added.

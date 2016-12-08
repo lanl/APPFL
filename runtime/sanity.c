@@ -336,33 +336,35 @@ void heapCheck(bool display, LogLevel logLevel) {
 
 
 void stackCheck(bool display, LogLevel logLevel) {
-  if (display) LOG(logLevel, "stg STACK:\n-----------\n");
-  for (Cont *p = (Cont *)stgSP;
-       (char *)p < (char*) stgStack + stgStackSize;
-       p = (Cont *)((char*)p + getContSize(p))) {
-    int contType = getContType(p);
-    assert(contType > PHONYSTARTCONT &&
-     contType < PHONYENDCONT && "sanity: bad cont type");
-    LOG(logLevel, "check Cont %s %s\n", contTypeNames[contType], p->ident);
-    Bitmap64 bm = p->layout;
-    uint64_t mask = bm.bitmap.mask;
-    int size = bm.bitmap.size;
-    if (contType != LETCONT) {
-     for (int i = 0; i != size; i++, mask >>= 1) {
+  for (int s = 0; s != rtArg.nThreads; s++) {
+    if (display) LOG(logLevel, "stg STACKS[%d]:\n-----------\n",s);
+    for (Cont *p = (Cont *)stgSPs[s];
+         (char *)p < (char*) stgStacks[s] + stgStackSizes[s];
+         p = (Cont *)((char*)p + getContSize(p))) {
+      int contType = getContType(p);
+      assert(contType > PHONYSTARTCONT &&
+       contType < PHONYENDCONT && "sanity: bad cont type");
+      LOG(logLevel, "check Cont %s %s\n", contTypeNames[contType], p->ident);
+      Bitmap64 bm = p->layout;
+      uint64_t mask = bm.bitmap.mask;
+      int size = bm.bitmap.size;
+      if (contType != LETCONT) {
+       for (int i = 0; i != size; i++, mask >>= 1) {
      	  if (mask & 0x1UL) {
-          assert(mayBeBoxed(p->payload[i]) && "sanity: unexpected unboxed arg in CONT");
+            assert(mayBeBoxed(p->payload[i]) && "sanity: unexpected unboxed arg in CONT");
      	  } else {
-          assert(mayBeUnboxed(p->payload[i]) && "sanity: unexpected boxed arg in CONT");
-   	    }
-     }  // for
-    } else { // LETCONT
-      for (int i = 0; i != size; i++) {
-        if (p->payload[i].op != NULL) {
-          assert(mayBeBoxed(p->payload[i]) && "sanity: unexpected unboxed arg in LETCONT");
+            assert(mayBeUnboxed(p->payload[i]) && "sanity: unexpected boxed arg in CONT");
+   	  }
+       }  // for
+      } else { // LETCONT
+        for (int i = 0; i != size; i++) {
+          if (p->payload[i].op != NULL) {
+            assert(mayBeBoxed(p->payload[i]) && "sanity: unexpected unboxed arg in LETCONT");
+          }
         }
       }
+      if (display) showStgCont(logLevel, (Cont *)p);
     }
-    if (display) showStgCont(logLevel, (Cont *)p);
+    if (display) LOG(logLevel, "\n");
   }
-  if (display) LOG(logLevel, "\n");
 }

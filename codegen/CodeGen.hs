@@ -96,7 +96,7 @@ iff b x y = if b then x else y
 cgStart :: Definition
 cgStart =
   let its = [citems|
-              typename Cont *showResultCont = stgAllocCallOrStackCont(&it_stgShowResultCont, 0);
+              typename Cont *showResultCont = stgAllocCallOrStackCont(myThreadID(), &it_stgShowResultCont, 0);
               (void)showResultCont; // suppress warning
             |]
           ++ (if useArgType then [citems| stgCurVal.argType = HEAPOBJ; |] else [])
@@ -118,7 +118,7 @@ cgMain v =
               typename clock_t start_t = clock();
               startCheck();
               parseArgs(argc, argv);
-              initStg();
+              initStg(argc, argv);
               initGc();
               CALL0_0(start);
               perfCounter.totalTime = (double)(clock() - start_t) / CLOCKS_PER_SEC;
@@ -273,7 +273,7 @@ cgo env o@(THUNK it e name) =
                 LOG(LOG_INFO, $string:(name ++ " here7\n"));
                 $comment:("// access free vars through frame pointer for GC safety")
                 $comment:("// is this really necessary???");
-                typename Cont *stg_fp = stgAllocCallOrStackCont(&it_stgStackCont, 1);
+                typename Cont *stg_fp = stgAllocCallOrStackCont(myThreadID(), &it_stgStackCont, 1);
                 stg_fp->layout = (typename Bitmap64)$ulint:(npStrToBMInt "P");
                 stg_fp->payload[0] = stgCurVal;
                 typename PtrOrLiteral *$id:fvpp = &(stg_fp->payload[0]);
@@ -305,7 +305,7 @@ stgApplyGeneric env f eas direct =
         (expr0, comm0) = cga [] (LitI 0)
         (expr1, comm1) = cgv env f'
         its = [citems|
-                typename Cont *cp = stgAllocCallOrStackCont( &it_stgStackCont,
+                typename Cont *cp = stgAllocCallOrStackCont(myThreadID, &it_stgStackCont,
                 $int:(length pnstring + 2));
                 cp->layout = (typename Bitmap64)$ulint:(npStrToBMInt ('N' : 'P' : pnstring ));
                 $comment:comm0
@@ -387,7 +387,7 @@ cge env (ELet it os e) =
   let names = map oname os
       decl1 = [ [citem|typename PtrOrLiteral *$id:name; |] | name <- names ]
       decl2 = [citems|
-                typename Cont *contp = stgAllocCallOrStackCont(&it_stgLetCont, $int:(length os));
+                typename Cont *contp = stgAllocCallOrStackCont(myThreadID(), &it_stgLetCont, $int:(length os));
               |]
             ++ [ [citem| $id:name = &(contp->payload[$int:i]); |]
                   | (name, i) <- zip names [0..] ]
@@ -443,7 +443,7 @@ cgaltsInline env a@(Alts it alts name scrt) boxed =
                  | otherwise = Possible
        let its = [citems|
                    typename Cont *$id:contName =
-                     stgAllocCallOrStackCont(&it_stgStackCont, 1);
+                     stgAllocCallOrStackCont(myThreadID(), &it_stgStackCont, 1);
                    $comment:("// " ++ show (ctyp it))
                    $id:contName->layout =
                      (typename Bitmap64)$ulint:(npStrToBMInt (iff boxed "P" "N"));

@@ -8,13 +8,15 @@ Args rtArg = { .gcThreshold = 0.0,
                .constStrict = 0,
                .sanityChecker = false,
                .perfCounters = 0,
-               .loggingLevel = LOG_LEVEL
+               .loggingLevel = LOG_LEVEL,
+               .nThreads = NTHREADS_DEFAULT,
+               .nurserySize = 256*1024
              };
 
 
 void parseArgs (int argc, char **argv) {
   int c;
-  while ((c = getopt (argc, argv, "g:t:e:c:l:s:p:")) != -1)
+  while ((c = getopt (argc, argv, "g:t:e:c:l:s:p:n:h:")) != -1)
     switch (c) {
     case 'g':
       if (atoi(optarg) == 0) rtArg.gcThreshold = 1.0; // never run
@@ -46,6 +48,14 @@ void parseArgs (int argc, char **argv) {
 
     case 'p':
       rtArg.perfCounters = atoi(optarg);
+      break;
+
+    case 'n':
+      rtArg.nThreads = atoi(optarg);
+      break;
+      
+    case 'h':
+      rtArg.nurserySize = atoi(optarg);
       break;
 
     }

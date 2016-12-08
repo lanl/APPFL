@@ -239,9 +239,10 @@ compile  (Options {optVerbose, optDumpParse, optNoPrelude, optInput,
                  let cflags = fromMaybe "" cflagsenv
                  let coutput = input ++ ".c"
                  let flags = " -Wall -Werror -Wno-missing-braces "
-                               ++ cflags ++ " -std=gnu99 -Wl,-rpath " ++ rtIncDir
+                               ++ cflags ++ " -std=gnu99 "
+                               ++ " -Wl,-rpath -Wl," ++ rtLibDir
                                ++ " -L" ++ rtLibDir ++ " -I" ++ rtIncDir
-                               ++ " -lruntime"
+                               ++ " -lruntime -labt -lm -pthread"
                  writeFile coutput (pprinter $ codegener cginp optVerbose)
                  if ccompile
                    then system (cc ++ " " ++ coutput ++ " -o " ++ fromJust optOutput ++ flags)

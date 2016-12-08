@@ -10,6 +10,7 @@
 #include "cmm.h"
 #include "args.h"
 #include "log.h"
+#include "threading.h"
 
 void startCheck();
 void showPerfCounters(LogLevel priority);
@@ -109,9 +110,10 @@ extern PtrOrLiteral stgCurValU;  // current/return value
 extern void *stgHeap, *stgHP;
 extern void *toPtr, *fromPtr;
 extern const size_t stgHeapSize;
-extern const size_t stgStackSize;
 
-extern void *stgStack, *stgSP;
+extern void *stgStacks[MAX_THREADS], *stgSPs[MAX_THREADS];
+extern size_t stgStackSizes[MAX_THREADS];
+
 extern PrefCounters perfCounter;
 
 // these are defined in the generated code
@@ -122,7 +124,7 @@ extern InfoTab *const stgInfoTab[];
 extern const int stgCInfoTabCount;
 extern CInfoTab *const stgCInfoTab[];
 
-void initStg();
+void initStg(int argc, char *argv[]);
 //void showStgObj(LogLevel priority, Obj *);
 //void showStgCont(LogLevel priority, Cont *c);
 void showStgHeap(LogLevel priority);
@@ -174,7 +176,7 @@ void showIT(InfoTab *);
 #define STGRETURN0()					\
   do {							\
     stgPopContIfPopMe();				\
-    STGJUMP0(((Cont *)stgSP)->entryCode);		\
+    STGJUMP0(((Cont *)stgSPs[myThreadID()])->entryCode);		\
     RETURN0();						\
   } while(0)
 

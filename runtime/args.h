@@ -4,8 +4,6 @@
 #include <stdbool.h>
 #include "log.h"
 
-extern float GCThreshold; // fraction of total heap used before gc runs.
-
 typedef enum {
   LAZY,    // default
   STRICT1, // just function's arity args
@@ -19,6 +17,8 @@ typedef struct Args {
   bool sanityChecker;
   int perfCounters;
   LogLevel loggingLevel;
+  int nThreads;
+  int nurserySize;
 } Args;
 
 extern Args rtArg;

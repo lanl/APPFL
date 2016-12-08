@@ -30,14 +30,13 @@ Bitmap64 cLayoutInfoToBitmap64(CLayoutInfo *lip) {
 }
 */
 
-Cont *stgAllocCont(CInfoTab *citp) {
+Cont *stgAllocCont(int stack, CInfoTab *citp) {
   assert(citp->contType != CALLCONT &&
          citp->contType != STACKCONT &&
          citp->contType != POPMECONT &&
           "stgAllocCont: citp->contType == CALLCONT/STACKCONT" );
   int payloadSize = citp->cLayoutInfo.payloadSize;
   size_t contSize = sizeof(Cont) + payloadSize * sizeof(PtrOrLiteral);
-  //  contSize = ((contSize + 7)/8)*8;
   if (USE_PERFCOUNTERS && rtArg.perfCounters) {
     perfCounter.stackBytesAllocated += contSize;
     perfCounter.stackAllocations++;
@@ -46,14 +45,14 @@ Cont *stgAllocCont(CInfoTab *citp) {
   LOG(LOG_DEBUG, "allocating %s continuation with payloadSize %d\n",
 	  contTypeNames[citp->contType], payloadSize);
   showCIT(citp);
-  stgSP = (char *)stgSP - contSize;
-  assert(stgSP >= stgStack);
+  stgSPs[stack] = (char *)stgSPs[stack] - contSize;
+  assert(stgSPs[stack] >= stgStacks[stack]);
   if (USE_PERFCOUNTERS && rtArg.perfCounters > 1) {
-    size_t before = stgStack + stgStackSize - stgSP;
+    size_t before = stgStacks[stack] + stgStackSizes[stack] - stgSPs[stack];
     if (before > perfCounter.stackMaxSize) perfCounter.stackMaxSize = before;
   }
 
-  Cont *contp = (Cont *)stgSP;
+  Cont *contp = (Cont *)stgSPs[stack];
   contp->cInfoPtr = citp;
   contp->_contSize = contSize;  // to go away
 
@@ -67,14 +66,14 @@ Cont *stgAllocCont(CInfoTab *citp) {
 }
 
 // CALL/STACK CONTs DON'T have common InfoTab entries, .layoutInfo is invalid for all
-Cont *stgAllocCallOrStackCont(CInfoTab *citp, int argc) {
+Cont *stgAllocCallOrStackCont(int stack, CInfoTab *citp, int argc) {
   assert((citp->contType == LETCONT ||
 	  citp->contType == CALLCONT ||
 	  citp->contType == STACKCONT) &&
 	 "stgAllocCallOrStackCont: citp->contType != CALLCONT/STACKCONT");
   size_t contSize = sizeof(Cont) + argc * sizeof(PtrOrLiteral);
-  //  contSize = ((contSize + 7)/8)*8;
-  if (USE_PERFCOUNTERS && rtArg.perfCounters) {
+  
+ if (USE_PERFCOUNTERS && rtArg.perfCounters) {
     perfCounter.stackBytesAllocated += contSize;
     perfCounter.stackAllocations++;
     perfCounter.stackHistogram[argc]++;
@@ -82,14 +81,15 @@ Cont *stgAllocCallOrStackCont(CInfoTab *citp, int argc) {
   LOG(LOG_DEBUG,"allocating %s continuation with argc %d\n",
 	  contTypeNames[citp->contType], argc);
   showCIT(citp);
-  stgSP = (char *)stgSP - contSize;
-  assert(stgSP >= stgStack);
+  stgSPs[stack] = (char *)stgSPs[stack] - contSize;
+  assert(stgSPs[stack] >= stgStacks[stack]);
+ 
   if (USE_PERFCOUNTERS && rtArg.perfCounters > 1) {
-    size_t before = stgStack + stgStackSize - stgSP;
+    size_t before = stgStacks[stack] + stgStackSizes[stack] - stgSPs[stack];
     if (before > perfCounter.stackMaxSize) perfCounter.stackMaxSize = before;
   }
 
-  Cont *contp = (Cont *)stgSP;
+  Cont *contp = (Cont *)stgSPs[stack];
   contp->cInfoPtr = citp;
   contp->_contSize = contSize;  // to go away
 
@@ -132,7 +132,8 @@ Cont *stgAdjustTopContSize(Cont *cp, int delta) {
 
   // we're really passing in the TOSP, important when there
   // are multiple stacks
-  assert(stgGetStackArgp() == cp);
+  int tid = myThreadID();
+  assert(stgGetStackArgp(tid) == cp);
   int oldContSize = getContSize(cp);
   int oldPayloadSize = cp->layout.bitmap.size;
 
@@ -146,11 +147,11 @@ Cont *stgAdjustTopContSize(Cont *cp, int delta) {
   assert(newContSize == getContSize(cp));
 
   // move
-  char *newStgSP = (char *)stgSP - (newContSize - oldContSize);
+  char *newStgSP = (char *)cp - (newContSize - oldContSize);
   if (newContSize < oldContSize)
-    memmove(newStgSP, stgSP, newContSize); // shrinking
+    memmove(newStgSP, cp, newContSize); // shrinking
   else
-    memmove(newStgSP, stgSP, oldContSize); // growing
+    memmove(newStgSP, cp, oldContSize); // growing
   // just because
   cp = (Cont *)newStgSP;
   assert(newContSize == getContSize(cp));
@@ -162,17 +163,18 @@ Cont *stgAdjustTopContSize(Cont *cp, int delta) {
   }
 
   // adjust stgSP and return
-  stgSP = newStgSP;
+  stgSPs[tid] = newStgSP;
   if (USE_PERFCOUNTERS && rtArg.perfCounters > 1) {
-    size_t before = stgStack + stgStackSize - stgSP;
+    size_t before = stgStacks[tid] + stgStackSizes[tid] - stgSPs[tid];
     if (before > perfCounter.stackMaxSize) perfCounter.stackMaxSize = before;
   }
-  return stgSP;
+  return stgSPs[tid];
 }
 
 
 void stgPopCont() {
-  Cont *cp = (Cont *)stgSP;
+  int tid = myThreadID();
+  Cont *cp = (Cont *)stgSPs[tid];
   CInfoTab *citp = getCInfoPtr(cp);
   assert(citp->contType == getContType(cp));
   int contType = getContType(cp);
@@ -185,20 +187,21 @@ void stgPopCont() {
   size_t contSize = sizeof(Cont) + payloadSize * sizeof(PtrOrLiteral);
   //  contSize = ((contSize + 7)/8)*8;
   showCIT(getCInfoPtr(cp));
-  assert((char *)cp + contSize <= (char *)stgStack + stgStackSize);
-  stgSP = (char *)cp + contSize;
+  assert((char *)cp + contSize <= (char *)stgStacks[tid] + stgStackSizes[tid]);
+  stgSPs[tid] = (char *)cp + contSize;
 }
 
 void stgPopContIfPopMe() {
-  if (getContType(stgGetStackArgp()) == POPMECONT)
+  if (getContType(stgGetStackArgp(myThreadID())) == POPMECONT)
     stgPopCont();
 }
 
 // could return pointer to .payload but that thwarts a sanity check,
 // though could perhaps pass in expected size--TODO: change name,
 // should get args from any continuation
-Cont *stgGetStackArgp() {
-  Cont *scp = (Cont *)stgSP;
+Cont *stgGetStackArgp(int stack) {
+  assert(0 <= stack && stack < rtArg.nThreads && "stgGetStackArgp(int) bad stack");
+  Cont *scp = (Cont *)stgSPs[stack];
   CInfoTab *citp = getCInfoPtr(scp);
   assert(citp->contType == getContType(scp));
   return scp;

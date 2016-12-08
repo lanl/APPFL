@@ -19,14 +19,17 @@
 #include "obj.h"
 #include "log.h"
 #include "heap.h"
+#include "threading.h"
+
 
 void *stgHeap = NULL;
 void *stgHP = NULL;
 void *toPtr = NULL;
 void *fromPtr = NULL;
 
-void *stgStack = NULL;
-void *stgSP = NULL;
+void *stgStacks[MAX_THREADS], *stgSPs[MAX_THREADS];
+size_t stgStackSizes[MAX_THREADS];
+
 
 PrefCounters perfCounter = {0};
 
@@ -83,7 +86,9 @@ void showIT(InfoTab *itp) {
 const size_t stgHeapSize  = (size_t)(1024*1024*1024);
 const size_t stgStackSize  = (size_t)(1024*1024*1024);
 
-void initStg() {
+void initStg(int argc, char *argv[]) {
+  void *stackMem;
+
   stgHeap =
     mmap( NULL,                   // void *address, NULL => no preference
 	  stgHeapSize,           // size_t length
@@ -102,8 +107,9 @@ void initStg() {
     exit(1);
   }
   stgHP = stgHeap; // first free address
+  LOG(LOG_INFO, "STG heap at %p\n", stgHP);
 
-  stgStack =
+  stackMem =
     mmap( NULL,                   // void *address, NULL => no preference
 	  stgStackSize,           // size_t length
 	  PROT_READ | PROT_WRITE, // int protect, write may require read
@@ -111,23 +117,25 @@ void initStg() {
 	  -1,                     // int filedes
 	  0 );                    // off_t offset
 
-  if (stgStack == MAP_FAILED) {
+  if (stackMem == MAP_FAILED) {
     LOG(LOG_FATAL, "mmap stg stack failed!!\n");
     exit(1);
   }
   
-  if ((uintptr_t)stgStack % OBJ_ALIGN != 0) {
+  if ((uintptr_t)stackMem % OBJ_ALIGN != 0) {
     LOG(LOG_FATAL, "stgStack not OBJ_ALIGNed\n");
     exit(1);
   }
-  stgSP = (char *)stgStack + stgStackSize;
-  if ((uintptr_t)stgSP % OBJ_ALIGN != 0) {
-    LOG(LOG_FATAL, "stgSP not OBJ_ALIGNed\n");
-    exit(1);
+
+  // divvy up evenly for now
+  size_t subSize = (stgStackSize / rtArg.nThreads / OBJ_ALIGN) * OBJ_ALIGN;
+  for (int i = 0; i != rtArg.nThreads; i++) {
+    stgStackSizes[i] = subSize;
+    stgStacks[i] = (char *)stackMem + i * subSize;
+    stgSPs[i] = (char *)stgStacks[i] + stgStackSizes[i];
+    LOG(LOG_INFO, "STG stack %d at %p\n", i, stgStacks[i]);
   }
 
-  LOG(LOG_INFO, "Stg stack at %p and heap at %p\n", stgStack, stgHP);
-
-  //stgStatObjCount = 0;
+  threadingInit(argc, argv);
 
 }

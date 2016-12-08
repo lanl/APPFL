@@ -17,7 +17,7 @@
 
 // stg_case_not_exhaustiveP(self, x)
 FnPtr stg_case_not_exhaustiveP() {
-  Cont *stg_sc = stgGetStackArgp();
+  Cont *stg_sc = stgGetStackArgp(myThreadID());
   //  PtrOrLiteral self = stg_sc->payload[0];
   PtrOrLiteral x    = stg_sc->payload[1];
   LOG(LOG_ERROR, "stg_case_not_exhaustive_boxed: ");
@@ -50,7 +50,7 @@ Obj sho_stg_case_not_exhaustiveP = {
 
 // stg_case_not_exhaustiveN(self, x)
 FnPtr stg_case_not_exhaustiveN() {
-  Cont *stg_sc = stgGetStackArgp();
+  Cont *stg_sc = stgGetStackArgp(myThreadID());
   //  PtrOrLiteral self = stg_sc->payload[0];
   PtrOrLiteral x    = stg_sc->payload[1];
   LOG(LOG_ERROR, "stg_case_not_exhaustive_unboxed: %" PRIx64 "\n", x.u);
@@ -134,7 +134,7 @@ InfoTab it_stgIndirect __attribute__((aligned(8))) = {
 };
 
 FnPtr stgUpdateCont() {
-  Cont *contp = stgGetStackArgp();
+  Cont *contp = stgGetStackArgp(myThreadID());
   assert(getContType(contp) == UPDCONT && "I'm not an UPDCONT!");
   PtrOrLiteral p = contp->payload[0];
   assert(mayBeBoxed(p) && "not a HEAPOBJ!");
@@ -209,7 +209,7 @@ CInfoTab it_stgShowResultCont __attribute__((aligned(8))) =
 
 void stgThunk(PtrOrLiteral self) {
   assert(mayBeBoxed(self) && "stgThunk:  not HEAPOBJ\n");
-  Cont *contp = stgAllocCont(&it_stgUpdateCont);
+  Cont *contp = stgAllocCont(myThreadID(), &it_stgUpdateCont);
   contp->payload[0] = self;
   strcpy(contp->ident, self.op->ident); //override default
   // can't do this until we capture the variables in a stack frame
