@@ -8,12 +8,11 @@
 
 #include "nodequeue.h"
 #include "nodepool.h"
-#include <bool.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdint.h>
 
 Pointer head, tail;
-NodePool nodePool;
 
 void NQ_init() {
   Node *np = NP_take();
@@ -23,51 +22,54 @@ void NQ_init() {
 
 void NQ_enqueue(T value) {
   Pointer tailtmp;
-  Node *nodep = nodePool.take();
+  Node *nodep = NP_take();
   nodep->value = value;
   nodep->next.ptr = NULL;
   while (1) {
     tailtmp = tail;
     Pointer next = tailtmp.ptr->next;
-    if (tailtmp == tail) {
+    if (tailtmp.bits == tail.bits) {
       if (next.ptr == NULL) {
-	if (cas128(&tailtmp.ptr->next,
-		   next,
-		   (Pointer){nodep, next.count+1}))
-	  break;
+	    if (cas128((__int128 *)&tailtmp.ptr->next,
+		           next.bits, 
+                   ((Pointer){nodep, next.count+1}).bits))
+
+	     break;
       } else {
-	cas128(&tail, 
-	       tailtmp, 
-	       (Pointer){next.ptr, tailtmp.count+1});
+	    cas128((__int128 *)&tail, 
+	           tailtmp.bits, 
+               ((Pointer){next.ptr, tailtmp.count+1}).bits);
       }
     }
   }
-  cas128(&tail, tailtmp, (Pointer){nodep, tailtmp.count+1});
+  cas128((__int128 *)&tail, 
+         tailtmp.bits, 
+         ((Pointer){nodep, tailtmp.count+1}).bits);
 }
 
-bool NQ_dequeue(T &value) {
+bool NQ_dequeue(T *value) {
   Pointer headtmp;
   while(1) {
     headtmp = head;
     Pointer tailtmp = tail;
     Pointer next = headtmp.ptr->next;
-    if (headtmp == head) {
+    if (headtmp.bits == head.bits) {
       if (headtmp.ptr == tailtmp.ptr) {
-	if (next.ptr == NULL)
-	  return false;
-	cas128(&tail, 
-	       tailtmp, 
-	       (Pointer){next.ptr, tailtmp.count+1});
+	    if (next.ptr == NULL)
+	      return false;
+	    cas128((__int128 *)&tail, 
+	           tailtmp.bits, 
+               ((Pointer){next.ptr, tailtmp.count+1}).bits);
       } else {
-	value = next.ptr->value;
-	if (cas(&head, 
-		headtmp,
-		(Pointer){next.ptr, headtmp.count+1}))
+	*value = next.ptr->value;
+	if (cas128((__int128 *)&head, 
+		headtmp.bits,
+		((Pointer){next.ptr, headtmp.count+1}).bits))
 	  break;
       }
     }
   }
-  nodePool.release(headtmp.ptr);
+  NP_release(headtmp.ptr);
   return true;
 }
 

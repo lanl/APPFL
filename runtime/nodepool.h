@@ -6,7 +6,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <stdio.h>
-#include "cascpp.h"
+#include "cas.h"
 
 struct _Node;
 typedef struct _Node Node;
@@ -16,21 +16,24 @@ typedef uintptr_t T;
 
 // Pointer is a CAS-able value
 // here 128 bit
-typedef struct {
-  Node *ptr;
-  uint64_t count;
-} Pointer __attribute__ ((aligned (16)));  // else CAS will segfault?
+typedef union {
+  struct {
+    Node *ptr;
+    uint64_t count;
+  };
+  __int128 bits;
+} __attribute__ ((aligned (16))) Pointer;
 
 // Node is a Pointer and a payload
-typedef struct {
+struct __attribute__ ((aligned (16))) _Node {
   Pointer next;
   T value;
-} Node __attribute__ ((aligned (16)));  // is aligned transitive?
+};
 
 void NP_init(size_t _size);  // initial size
 
-Node *take();
+Node *NP_take();
 
-void release(Node *p);
+void NP_release(Node *p);
 
 #endif // ifndef nodepool_h

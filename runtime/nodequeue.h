@@ -4,10 +4,10 @@
 #define NODEQUEUE_H
 
 #include "nodepool.h"
-#include <stdint>
+#include <stdint.h>
 
 void NQ_init();
 void NQ_enqueue(T value);
-bool NQ_dequeue(T &value);
+bool NQ_dequeue(T *value);
 
 #endif // NODEQUEUE_H
