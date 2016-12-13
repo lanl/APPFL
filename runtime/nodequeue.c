@@ -61,11 +61,11 @@ bool NQ_dequeue(T *value) {
 	           tailtmp.bits, 
                ((Pointer){next.ptr, tailtmp.count+1}).bits);
       } else {
-	*value = next.ptr->value;
-	if (cas128((__int128 *)&head, 
-		headtmp.bits,
-		((Pointer){next.ptr, headtmp.count+1}).bits))
-	  break;
+	    *value = next.ptr->value;
+	    if (cas128((__int128 *)&head, 
+		    headtmp.bits,
+		    ((Pointer){next.ptr, headtmp.count+1}).bits))
+	        break;
       }
     }
   }

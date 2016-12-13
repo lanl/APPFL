@@ -38,15 +38,13 @@ Node *NP_take() {
 
 
 void NP_release(Node *node) {
-  bool success;
   do {
     fprintf(stderr, "release(%p) tosp.ptr = %p, tosp.count = %" PRIu64 "\n", 
 	    node, tosp.ptr, tosp.count);    
     node->next = tosp;
-    success = !cas128( (__int128 *)&tosp, 
-			           node->next.bits, 
-                       ((Pointer){node->next.ptr, node->next.count+1}).bits); 
-  } while( !success );
+  } while( !cas128( (__int128 *)&tosp,
+                       node->next.bits,
+                       ((Pointer){node->next.ptr, node->next.count+1}).bits));
 }
 
 
