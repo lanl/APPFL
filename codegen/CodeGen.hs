@@ -244,7 +244,7 @@ cgo env o@(FUN it vs e name) =
                            intercalate ", " vs ++ ")"  ) |]
           top = [citems|
                   LOG(LOG_INFO, $string:(name ++ " here\n"));
-                  typename PtrOrLiteral *$id:argp = &(stgGetStackArgp()->payload[0]);
+                  typename PtrOrLiteral *$id:argp = &(stgGetStackArgp(myThreadID())->payload[0]);
                   (void)$id:argp; // suppress warning
                 |]
           bot = [citems| STGRETURN0();|]
@@ -305,7 +305,7 @@ stgApplyGeneric env f eas direct =
         (expr0, comm0) = cga [] (LitI 0)
         (expr1, comm1) = cgv env f'
         its = [citems|
-                typename Cont *cp = stgAllocCallOrStackCont(myThreadID, &it_stgStackCont,
+                typename Cont *cp = stgAllocCallOrStackCont(myThreadID(), &it_stgStackCont,
                 $int:(length pnstring + 2));
                 cp->layout = (typename Bitmap64)$ulint:(npStrToBMInt ('N' : 'P' : pnstring ));
                 $comment:comm0
@@ -485,7 +485,7 @@ cgeNoInline env boxed (ecode, efunc) a@(Alts italts alts aname scrt) =
     let contName = "ccont_" ++ aname
         its = [citems|
                 $comment:("// scrutinee may STGJUMP or STGRETURN")
-                typename Cont *$id:contName = stgAllocCont(&$id:("it_" ++ aname));
+                typename Cont *$id:contName = stgAllocCont(myThreadID(),&$id:("it_" ++ aname));
                 $comment:("// dummy value for scrutinee, InfoTab initializes to unboxed")
                 $id:contName->payload[0].i = 0;
               |]
@@ -528,7 +528,7 @@ cgalts env (Alts it alts name scrt) boxed =
       let (codes, ypns) = unzip codeypns
       let its = [citems|
                   LOG(LOG_INFO, $string:(name ++ " here\n"));
-                  typename Cont *$id:contName = stgGetStackArgp();
+                  typename Cont *$id:contName = stgGetStackArgp(myThreadID());
                   $comment:("// make self-popping")
                   stgCaseToPopMe($id:contName);
                   typename PtrOrLiteral *$id:fvp = &($id:contName->payload[0]);
