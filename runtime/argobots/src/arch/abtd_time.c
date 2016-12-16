@@ -6,6 +6,8 @@
 #include "abti.h"
 
 #if defined(HAVE_MACH_ABSOLUTE_TIME)
+#include <mach/mach.h>
+#include <mach/mach_time.h>
 static double g_time_mult = 0.0;
 #endif
 void ABTD_time_init(void)
