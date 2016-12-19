@@ -4,6 +4,7 @@ build notes:
 Requirements:
 
 Haskell Platform 7.10.x (may work with 7.8.x as well but not currently used for development)
+(Haskell Platform 8.x is not supported)
 CMake > 2.8.12.2
 recent gcc/clang (gcc 4.8.x tested on linux, xcode 6 tested on mac)
 
@@ -11,6 +12,25 @@ we require a few packages not in the haskell platform: language-c-quote, ghc-pat
 
 $ cabal install language-c-quote ghc-paths pretty-show
 
+Argobots requires autotools:
+
+curl -OL http://ftpmirror.gnu.org/autoconf/autoconf-2.69.tar.gz
+tar -xzf autoconf-2.69.tar.gz 
+cd autoconf-2.69
+./configure && make && sudo make install
+ 
+curl -OL http://ftpmirror.gnu.org/automake/automake-1.14.tar.gz
+tar -xzf automake-1.14.tar.gz
+cd automake-1.14
+./configure && make && sudo make install
+ 
+curl -OL http://ftpmirror.gnu.org/libtool/libtool-2.4.2.tar.gz
+tar -xzf libtool-2.4.2.tar.gz
+cd libtool-2.4.2
+./configure && make && sudo make install
+
+cd /usr/local/bin
+ln -s libtoolize glibtoolize
 
 ------------------------------
 
