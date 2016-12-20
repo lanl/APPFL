@@ -153,19 +153,23 @@ FnPtr stgUpdateCont() {
 
   // the order of the following two operations is important for concurrency
   p.op->payload[0] = stgCurVal;  // return stgCurVal, not the indirect, for efficiency
-  p.op->_infoPtr = &it_stgIndirect;
+
+  if (rtArg.sharing) {
+    p.op->_infoPtr = &it_stgIndirect;
 #if USE_OBJTYPE
-  p.op->objType = INDIRECT;
+    p.op->objType = INDIRECT;
 #endif
-  strcpy( p.op->ident, it_stgIndirect.name );
-  int newObjSize = getObjSize(p.op);
-  assert(newObjSize <= oldObjSize);
+    strcpy( p.op->ident, it_stgIndirect.name );
+    int newObjSize = getObjSize(p.op);
+    assert(newObjSize <= oldObjSize);
 
-  // this is for displaying a fragmented heap
-  memset((char*)p.op+newObjSize, 0, oldObjSize-newObjSize);
+    // this is for displaying a fragmented heap
+    memset((char*)p.op+newObjSize, 0, oldObjSize-newObjSize);
 
-  LOG(LOG_INFO, "stgUpdateCont leaving...\n  ");
+    LOG(LOG_INFO, "stgUpdateCont leaving...\n  ");
+  } 
   stgPopCont();
+
   // this returns stgCurVal, not the indirect, for efficiency
   STGRETURN0();
 }

@@ -13,6 +13,7 @@ typedef enum {
 typedef struct Args {
   float gcThreshold;
   int evalStrategy;
+  bool sharing;
   int constStrict;
   bool sanityChecker;
   int perfCounters;

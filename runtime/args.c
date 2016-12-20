@@ -5,6 +5,7 @@
 
 Args rtArg = { .gcThreshold = 0.0,
                .evalStrategy = LAZY,
+               .sharing = true,
                .constStrict = 0,
                .sanityChecker = false,
                .perfCounters = 0,
@@ -16,7 +17,7 @@ Args rtArg = { .gcThreshold = 0.0,
 
 void parseArgs (int argc, char **argv) {
   int c;
-  while ((c = getopt (argc, argv, "g:t:e:c:l:s:p:n:h:")) != -1)
+  while ((c = getopt (argc, argv, "g:t:e:c:l:s:p:n:h:b:")) != -1)
     switch (c) {
     case 'g':
       if (atoi(optarg) == 0) rtArg.gcThreshold = 1.0; // never run
@@ -28,6 +29,14 @@ void parseArgs (int argc, char **argv) {
 
     case 'e':
       rtArg.evalStrategy = atoi(optarg);
+      break;
+
+    case 'b':
+      if (atoi(optarg) == 0) {
+        rtArg.sharing = true;
+      } else {
+        rtArg.sharing = false;
+      }
       break;
 
     case 'c':
