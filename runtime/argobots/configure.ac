@@ -363,7 +363,7 @@ fi
 if test "$enable_fast_ndebug" = "yes" ; then
     CFLAGS="$CFLAGS -DNDEBUG -DNVALGRIND"
     CXXFLAGS="$CXXFLAGS -DNDEBUG -DNVALGRIND"
-    CCASFLAGS="$CFLAGS -DNDEBUG -DNVALGRIND"
+    CCASFLAGS="$CCASFLAGS -DNDEBUG -DNVALGRIND"
 fi
 
 
@@ -391,8 +391,18 @@ fi
 # --enable-perf-opt: set CFLAGS for the performance optimization
 if test "x$enable_perf_opt" = "xyes"; then
     CFLAGS="$CFLAGS -O3 -ftls-model=initial-exec"
-    CXXFLAGS="$CFLAGS -O3 -ftls-model=initial-exec"
-    CCASFLAGS="$CFLAGS -O3 -ftls-model=initial-exec"
+    CXXFLAGS="$CXXFLAGS -O3 -ftls-model=initial-exec"
+    CCASFLAGS="$CCASFLAGS -O3 -ftls-model=initial-exec"
+    if test "$CC" = "icc"; then
+        CFLAGS="$CFLAGS -ipo"
+        CXXFLAGS="$CFLAGS -ipo"
+        CCASFLAGS="$CCASFLAGS -ipo"
+        LDFLAGS="$LDFLAGS -O3 -ipo"
+        AR="xiar"
+        LD="xild"
+    else
+        LDFLAGS="$LDFLAGS -O3"
+    fi
 fi
 
 
@@ -453,6 +463,19 @@ AS_IF([test "x$enable_pool_consumer_check" = "xno"],
 
 AM_CONDITIONAL([ABT_CONFIG_DISABLE_POOL_ACCESS_CHECK],
     [test "x$enable_pool_producer_check" = "xno" -o "x$enable_pool_consumer_check" = "xno"])
+
+if test "x$enable_error_check" = "xno" \
+     -o "x$enable_pool_producer_check" = "xno" \
+     -o "x$enable_pool_consumer_check" = "xno"; then
+    WFLAGS=""
+    case "$CC" in
+        clang) WFLAGS="-Wno-unused-label" ;;
+        gcc)   WFLAGS="-Wno-unused-label" ;;
+        icc)   WFLAGS="-wd177" ;;
+        *)     ;;
+    esac
+    CFLAGS="$CFLAGS $WFLAGS"
+fi
 
 
 # --disable-fcontext
