@@ -16,14 +16,9 @@ void threadingFinalize();
 static inline int myThreadID() {
   // need indexes [0..Nthreads), make ULT arg its thread ID
   void *ret;
-  int tid;
   assert (ABT_self_get_arg(&ret) == ABT_SUCCESS);
-  if (ret == NULL) { // I'm the primary thread
-    tid = 0;
-  } else { // created threads should be given args 1..
-    tid = (intptr_t)ret;
-    assert (tid > 0 && tid < rtArg.nThreads);
-  }
+  int tid = (intptr_t)ret;
+  assert (tid >= 0 && tid < rtArg.nThreads);
   return tid;
 }
 #elif USE_PTHREADS

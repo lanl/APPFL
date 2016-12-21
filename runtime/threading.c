@@ -6,6 +6,9 @@
 #include "abt.h"
 void threadingInit(int argc, char *argv[]) {
   assert(ABT_init(argc, argv) == ABT_SUCCESS);
+
+  intptr_t x = 0;
+  assert(ABT_self_set_arg((void *)x) == ABT_SUCCESS);
 }
 
 void threadingFinalize() {
