@@ -57,7 +57,7 @@ clean:
 	@(cd test/hs && rm -f *.hs.c 2>/dev/null)
 	@(cd test/hs/error && rm -f *.hs.c 2>/dev/null)
 	@(rm -rf $(build_dir))
-	@(cd runtime/argobots && make clean && rm -f Makefile && rm -r configure)
+	if [ -f runtime/argobots/Makefile ]; then cd runtime/argobots && make clean && rm -f Makefile && rm -r configure; fi
 
 multi:
 	@echo "USE_ARGTYPE=0 && USE_OBJTYPE=0"
