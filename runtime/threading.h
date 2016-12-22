@@ -5,8 +5,13 @@
 #include "args.h"
 #include "assert.h"
 
+typedef void (*FuncPtr)(void *);
+
 void threadingInit(int argc, char *argv[]);
 void threadingFinalize();
+void threadingPush(FuncPtr func);
+void threadingYield();
+
 
 // the preprocessor nests are expected to grow as needed
 // OS/compiler/thread library
