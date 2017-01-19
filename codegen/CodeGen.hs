@@ -270,7 +270,7 @@ cgo env o@(THUNK it e name) =
     ((inline,ypn), funcs) <- cge env' e
     let comm = [cedecl|$esc:("\n// " ++ show (ctyp it))|]
         top = [citems|
-                LOG(LOG_INFO, $string:(name ++ " here7\n"));
+                LOG(LOG_INFO, $string:(name ++ " here\n"));
                 $comment:("// access free vars through frame pointer for GC safety")
                 $comment:("// is this really necessary???");
                 typename Cont *stg_fp = stgAllocCallOrStackCont(myThreadID(), &it_stgStackCont, 1);
