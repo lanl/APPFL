@@ -6,6 +6,7 @@
 #include "stgutils.h"
 #include "stgapply.h"
 #include "sanity.h"
+#include "nodequeue.h"
 
 // this could also be done by creating just one new Cont
 // for arity args, adjusting the old Cont, and shifting both
@@ -202,8 +203,29 @@ FnPtr stgApply2() {
   if (argvInd <= argsToEval) {
     stackframe->payload[0].i = argvInd;
     stgCurVal = argv[argvInd];
+
+    derefStgCurVal();
+    switch (getObjType(stgCurVal.op)) {
+    case THUNK:
+      LOG(LOG_DEBUG, "THUNK to queue ");
+      showStgVal(LOG_DEBUG, stgCurVal);
+      LOG(LOG_DEBUG, "\n");
+      NQ_enqueue((T)(getInfoPtr(stgCurVal.op)->entryCode));
+      //TODO:  remove once queue is serviced
+      STGJUMP0(getInfoPtr(stgCurVal.op)->entryCode);
+      break;
+    case BLACKHOLE:
+      //TODO: someone else may already be eval'ing?
+      LOG(LOG_DEBUG, "stgApply BLACKHOLE\n");
+      showStgVal(LOG_DEBUG, stgCurVal);
+      break;
+    default:
+      STGJUMP0(getInfoPtr(stgCurVal.op)->entryCode);
+      break;
+    }
+
     // tail call self after evaluating arg
-    STGJUMP();
+    //STGJUMP();
   }
 
   // fix stack frame for old stgApply

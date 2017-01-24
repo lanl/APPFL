@@ -20,7 +20,7 @@
 #include "log.h"
 #include "heap.h"
 #include "threading.h"
-
+#include "nodequeue.h"
 
 void *stgHeap = NULL;
 void *stgHP = NULL;
@@ -121,7 +121,7 @@ void initStg(int argc, char *argv[]) {
     LOG(LOG_FATAL, "mmap stg stack failed!!\n");
     exit(1);
   }
-  
+
   if ((uintptr_t)stackMem % OBJ_ALIGN != 0) {
     LOG(LOG_FATAL, "stgStack not OBJ_ALIGNed\n");
     exit(1);
@@ -137,5 +137,6 @@ void initStg(int argc, char *argv[]) {
   }
 
   threadingInit(argc, argv);
+  NQ_init();
 
 }
