@@ -189,10 +189,10 @@ FnPtr stgApply2() {
     int excess = appargc - arity;
     argsToEval = excess >= 0 ? arity : 0;
     break;
+  } // STRICT1
   case STRICT2:
     argsToEval = appargc;
     break;
-  } // STRICT1
   } // switch
 
   for (argvInd++;  // next one
