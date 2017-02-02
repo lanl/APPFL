@@ -11,7 +11,7 @@ void threadingInit(int argc, char *argv[]);
 void threadingFinalize();
 void threadingPush(FuncPtr func);
 void threadingYield();
-
+void serviceQueue(void *p);
 
 // the preprocessor nests are expected to grow as needed
 // OS/compiler/thread library

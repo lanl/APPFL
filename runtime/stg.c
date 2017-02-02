@@ -137,6 +137,5 @@ void initStg(int argc, char *argv[]) {
   }
 
   threadingInit(argc, argv);
-  NQ_init();
 
 }
