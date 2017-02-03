@@ -6,6 +6,8 @@
 // https://www.research.ibm.com/people/m/michael/ieeetpds-2004.pdf
 // http://www.cs.technion.ac.il/~mad/publications/ppopp2013-x86queues.pdf
 
+#if 1 
+
 #include "nodequeue.h"
 #include "nodepool.h"
 #include <stdbool.h>
@@ -72,4 +74,41 @@ bool NQ_dequeue(T *value) {
   NP_release(headtmp.ptr);
   return true;
 }
+#else
+
+#include "lfq.h"
+#include <stdbool.h>
+#include <stdlib.h>
+#include <stdio.h>
+
+typedef uintptr_t T;
+
+Queue *queue;
+
+void NQ_init() {
+  queue = q_initialize();
+}
+
+void NQ_enqueue(T value) {
+  fprintf(stderr,"enqueue %ld\n",value);
+  qpush(queue, value);
+}
+
+bool NQ_dequeue(T *value) {
+  unsigned int* v = NULL;
+  v = qpop(queue,0);
+  if (v != NULL) {
+    *value = (unsigned long *)v;
+    fprintf(stderr,"dequeue %ld\n", *value);
+    return true;
+  } else {
+    return false;
+  }
+}
+
+
+
+#endif
+
+
 

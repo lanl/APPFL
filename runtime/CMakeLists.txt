@@ -8,6 +8,7 @@ project(runtime)
               cruntime.h
               cmm.h
               gc.h
+              lfq.h
               log.h
               obj.h
               heap.h
@@ -30,6 +31,7 @@ project(runtime)
               cas.c
               gc.c
               heap.c
+              lfq.c
               nodepool.c
               nodequeue.c 
               sanity.c
@@ -52,7 +54,8 @@ include_directories(".."
     configure_file(${header} ${PROJECT_BINARY_DIR}/../include/${header} COPYONLY)
   endforeach()
 
-  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g -std=gnu99 -Wall -Werror -Wno-missing-braces -O3 -mcx16" )
+  #set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g -std=gnu99 -Wall -Werror -Wno-missing-braces -O3 -mcx16" )
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g -std=gnu99 -Wno-missing-braces -O3 -mcx16" )
 
   # allow control of USE_ARGTYPE/USE_OBJTYPE from command line
   if(USE_D)
