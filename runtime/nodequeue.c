@@ -26,8 +26,9 @@ void NQ_init() {
   Node *np = NP_take();
   np->next.ptr = NULL;
   head.ptr = tail.ptr = np;
+#if USE_LOCK
   pthread_mutex_init(&qlock, NULL);
-
+#endif
 }
 
 void NQ_enqueue(T value) {
