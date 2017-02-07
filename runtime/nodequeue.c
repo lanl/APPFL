@@ -12,15 +12,28 @@
 #include <stdio.h>
 #include <stdint.h>
 
+#if USE_LOCK
+#include <pthread.h>
+#endif 
+
 Pointer head, tail;
+
+#if USE_LOCK
+pthread_mutex_t qlock = PTHREAD_MUTEX_INITIALIZER;
+#endif
 
 void NQ_init() {
   Node *np = NP_take();
   np->next.ptr = NULL;
   head.ptr = tail.ptr = np;
+  pthread_mutex_init(&qlock, NULL);
+
 }
 
 void NQ_enqueue(T value) {
+#if USE_LOCK
+  pthread_mutex_lock(&qlock);
+#endif
   Pointer tailtmp;
   Node *nodep = NP_take();
   nodep->value = value;
@@ -45,9 +58,15 @@ void NQ_enqueue(T value) {
   __sync_bool_compare_and_swap((__int128 *)&tail, 
          tailtmp.bits, 
          ((Pointer){nodep, tailtmp.count+1}).bits);
+#if USE_LOCK
+  pthread_mutex_unlock(&qlock);
+#endif
 }
 
 bool NQ_dequeue(T *value) {
+#if USE_LOCK
+  pthread_mutex_lock(&qlock);
+#endif
   Pointer headtmp;
   while(1) {
     headtmp = head;
@@ -55,8 +74,12 @@ bool NQ_dequeue(T *value) {
     Pointer next = headtmp.ptr->next;
     if (headtmp.bits == head.bits) {
       if (headtmp.ptr == tailtmp.ptr) {
-	    if (next.ptr == NULL)
+	    if (next.ptr == NULL) {
+#if USE_LOCK
+          pthread_mutex_unlock(&qlock); 
+#endif
 	      return false;
+        }
 	    __sync_bool_compare_and_swap((__int128 *)&tail, 
 	           tailtmp.bits, 
                ((Pointer){next.ptr, tailtmp.count+1}).bits);
@@ -70,6 +93,9 @@ bool NQ_dequeue(T *value) {
     }
   }
   NP_release(headtmp.ptr);
+#if USE_LOCK
+  pthread_mutex_unlock(&qlock);
+#endif
   return true;
 }
 

@@ -73,6 +73,9 @@ void threadingYield() {
 
 // really dumb service queue thread
 void serviceQueue(void *p) {
+  struct timespec polling;
+  polling.tv_sec = 0;
+  polling.tv_nsec = 1000;
  
   LOG(LOG_DEBUG, "in serviceQueue ID=%ld\n", nextID);
 
@@ -83,6 +86,7 @@ void serviceQueue(void *p) {
       //don't actually call function yet 
       //(((CmmFnPtr)f)());
     } 
+    nanosleep(&polling, NULL);
   }
 }
 
