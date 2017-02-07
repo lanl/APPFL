@@ -24,7 +24,7 @@ void NP_init(size_t _size) {
 Node *NP_take() {
   Pointer current = tosp;
   while (current.ptr) {
-    if ( cas128((__int128 *)&tosp, 
+    if ( __sync_bool_compare_and_swap((__int128 *)&tosp, 
 		        current.bits, 
                 ((Pointer){current.ptr->next.ptr, current.count+1}).bits) )
       return current.ptr;
@@ -44,7 +44,7 @@ void NP_release(Node *node) {
     LOG(LOG_DEBUG, "release(%p) tosp.ptr = %p, tosp.count = %" PRIu64 "\n", 
 	    node, tosp.ptr, tosp.count);    
     node->next = tosp;
-  } while( !cas128( (__int128 *)&tosp,
+  } while( !__sync_bool_compare_and_swap( (__int128 *)&tosp,
                        node->next.bits,
                        ((Pointer){node->next.ptr, node->next.count+1}).bits));
 }

@@ -74,13 +74,7 @@ void threadingYield() {
 // really dumb service queue thread
 void serviceQueue(void *p) {
  
-  //assert(ABT_self_set_arg((void *)nextID) == ABT_SUCCESS);
   LOG(LOG_DEBUG, "in serviceQueue ID=%ld\n", nextID);
-
-#if 0
-  struct timespec tim, tim2;
-  tim.tv_sec = 0;
-  tim.tv_nsec = 1000;
 
   while(1) {
     unsigned long f;
@@ -89,11 +83,7 @@ void serviceQueue(void *p) {
       //don't actually call function yet 
       //(((CmmFnPtr)f)());
     } 
-    //nanosleep(&tim, &tim2);
   }
-#else
-  while(1) {}
-#endif
 }
 
 

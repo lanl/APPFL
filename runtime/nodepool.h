@@ -6,7 +6,6 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <stdio.h>
-#include "cas.h"
 
 struct _Node;
 typedef struct _Node Node;

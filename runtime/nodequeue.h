@@ -5,6 +5,7 @@
 
 #include "nodepool.h"
 #include <stdint.h>
+#include <stdbool.h>
 
 void NQ_init();
 void NQ_enqueue(T value);
