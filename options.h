@@ -57,6 +57,6 @@
 #undef USE_PTHREADS
 #define USE_ARGOBOTS 1
 
-
+#define USE_QUEUE 0
 
 #endif

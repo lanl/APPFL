@@ -129,7 +129,7 @@ void initStg(int argc, char *argv[]) {
 
   // divvy up evenly for now
   size_t subSize = (stgStackSize / rtArg.nThreads / OBJ_ALIGN) * OBJ_ALIGN;
-  for (int i = 0; i != rtArg.nThreads; i++) {
+  for (int i = 0; i != rtArg.nThreads + 1; i++) {
     stgStackSizes[i] = subSize;
     stgStacks[i] = (char *)stackMem + i * subSize;
     stgSPs[i] = (char *)stgStacks[i] + stgStackSizes[i];

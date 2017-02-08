@@ -235,7 +235,7 @@ void gc(void) {
   }
 
   //Cont. stacks
-  for (int i = 0; i != rtArg.nThreads; i++) {
+  for (int i = 0; i != rtArg.nThreads+1; i++) {
     for (Cont *p = (Cont *)stgSPs[i];
          (char *)p < (char*) stgStacks[i] + stgStackSizes[i];
          p = (Cont *)((char*)p + getContSize(p))) {

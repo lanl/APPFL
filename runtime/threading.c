@@ -5,6 +5,7 @@
 #include "nodequeue.h"
 #include "stg.h"
 #include "log.h"
+#include "options.h"
 
 #if USE_ARGOBOTS
 
@@ -83,8 +84,9 @@ void serviceQueue(void *p) {
     unsigned long f;
     if(NQ_dequeue(&f)) {
       LOG(LOG_DEBUG,"dequeue %lu\n",f);
-      //don't actually call function yet 
-      //(((CmmFnPtr)f)());
+#if USE_QUEUE
+      (((CmmFnPtr)f)());
+#endif
     } 
     nanosleep(&polling, NULL);
   }

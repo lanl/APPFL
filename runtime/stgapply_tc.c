@@ -7,6 +7,7 @@
 #include "stgapply.h"
 #include "sanity.h"
 #include "nodequeue.h"
+#include "options.h"
 
 // this could also be done by creating just one new Cont
 // for arity args, adjusting the old Cont, and shifting both
@@ -211,8 +212,11 @@ FnPtr stgApply2() {
       showStgVal(LOG_DEBUG, stgCurVal);
       LOG(LOG_DEBUG, "\n");
       NQ_enqueue((T)(getInfoPtr(stgCurVal.op)->entryCode));
+#if USE_QUEUE
+#else
       //TODO:  remove once queue is serviced
       STGJUMP0(getInfoPtr(stgCurVal.op)->entryCode);
+#endif
       break;
     case BLACKHOLE:
       //TODO: someone else may already be eval'ing?

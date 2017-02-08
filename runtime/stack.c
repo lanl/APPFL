@@ -42,8 +42,8 @@ Cont *stgAllocCont(int stack, CInfoTab *citp) {
     perfCounter.stackAllocations++;
     perfCounter.stackHistogram[payloadSize]++;
   }
-  LOG(LOG_DEBUG, "allocating %s continuation with payloadSize %d\n",
-	  contTypeNames[citp->contType], payloadSize);
+  LOG(LOG_DEBUG, "allocating %s continuation with payloadSize %d stack=%d\n",
+	  contTypeNames[citp->contType], payloadSize, stack);
   showCIT(citp);
   stgSPs[stack] = (char *)stgSPs[stack] - contSize;
   assert(stgSPs[stack] >= stgStacks[stack]);
@@ -78,8 +78,8 @@ Cont *stgAllocCallOrStackCont(int stack, CInfoTab *citp, int argc) {
     perfCounter.stackAllocations++;
     perfCounter.stackHistogram[argc]++;
   }
-  LOG(LOG_DEBUG,"allocating %s continuation with argc %d\n",
-	  contTypeNames[citp->contType], argc);
+  LOG(LOG_DEBUG,"allocating %s continuation with argc %d stack=%d\n",
+	  contTypeNames[citp->contType], argc, stack);
   showCIT(citp);
   stgSPs[stack] = (char *)stgSPs[stack] - contSize;
   assert(stgSPs[stack] >= stgStacks[stack]);
@@ -182,8 +182,8 @@ void stgPopCont() {
 	 contType < PHONYENDCONT &&
 	 "bad cont type");
   int payloadSize = cp->layout.bitmap.size;
-  LOG(LOG_DEBUG, "popping %s continuation with payloadSize %d\n",
-	  contTypeNames[contType], payloadSize);
+  LOG(LOG_DEBUG, "popping %s continuation with payloadSize %d stack=%d\n",
+	  contTypeNames[contType], payloadSize, tid);
   size_t contSize = sizeof(Cont) + payloadSize * sizeof(PtrOrLiteral);
   //  contSize = ((contSize + 7)/8)*8;
   showCIT(getCInfoPtr(cp));
@@ -200,7 +200,7 @@ void stgPopContIfPopMe() {
 // though could perhaps pass in expected size--TODO: change name,
 // should get args from any continuation
 Cont *stgGetStackArgp(int stack) {
-  assert(0 <= stack && stack < rtArg.nThreads && "stgGetStackArgp(int) bad stack");
+  assert(0 <= stack && stack < rtArg.nThreads+1 && "stgGetStackArgp(int) bad stack");
   Cont *scp = (Cont *)stgSPs[stack];
   CInfoTab *citp = getCInfoPtr(scp);
   assert(citp->contType == getContType(scp));

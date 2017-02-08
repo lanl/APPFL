@@ -336,7 +336,7 @@ void heapCheck(bool display, LogLevel logLevel) {
 
 
 void stackCheck(bool display, LogLevel logLevel) {
-  for (int s = 0; s != rtArg.nThreads; s++) {
+  for (int s = 0; s != rtArg.nThreads+1; s++) {
     if (display) LOG(logLevel, "stg STACKS[%d]:\n-----------\n",s);
     for (Cont *p = (Cont *)stgSPs[s];
          (char *)p < (char*) stgStacks[s] + stgStackSizes[s];
