@@ -13,13 +13,13 @@
 #include <stdint.h>
 
 #if USE_LOCK
-#include <pthread.h>
+#include <abt.h>
 #endif 
 
 Pointer head, tail;
 
 #if USE_LOCK
-pthread_mutex_t qlock = PTHREAD_MUTEX_INITIALIZER;
+ABT_mutex qlock;
 #endif
 
 void NQ_init() {
@@ -27,13 +27,13 @@ void NQ_init() {
   np->next.ptr = NULL;
   head.ptr = tail.ptr = np;
 #if USE_LOCK
-  pthread_mutex_init(&qlock, NULL);
+  ABT_mutex_create(&qlock);
 #endif
 }
 
 void NQ_enqueue(T value) {
 #if USE_LOCK
-  pthread_mutex_lock(&qlock);
+  ABT_mutex_lock(qlock);
 #endif
   Pointer tailtmp;
   Node *nodep = NP_take();
@@ -60,13 +60,13 @@ void NQ_enqueue(T value) {
          tailtmp.bits, 
          ((Pointer){nodep, tailtmp.count+1}).bits);
 #if USE_LOCK
-  pthread_mutex_unlock(&qlock);
+  ABT_mutex_unlock(qlock);
 #endif
 }
 
 bool NQ_dequeue(T *value) {
 #if USE_LOCK
-  pthread_mutex_lock(&qlock);
+  ABT_mutex_lock(qlock);
 #endif
   Pointer headtmp;
   while(1) {
@@ -77,7 +77,7 @@ bool NQ_dequeue(T *value) {
       if (headtmp.ptr == tailtmp.ptr) {
 	    if (next.ptr == NULL) {
 #if USE_LOCK
-          pthread_mutex_unlock(&qlock); 
+          ABT_mutex_unlock(qlock); 
 #endif
 	      return false;
         }
@@ -95,7 +95,7 @@ bool NQ_dequeue(T *value) {
   }
   NP_release(headtmp.ptr);
 #if USE_LOCK
-  pthread_mutex_unlock(&qlock);
+  ABT_mutex_unlock(qlock);
 #endif
   return true;
 }
