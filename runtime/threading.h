@@ -23,7 +23,7 @@ static inline int myThreadID() {
   void *ret;
   assert (ABT_self_get_arg(&ret) == ABT_SUCCESS);
   int tid = (intptr_t)ret;
-  assert (tid >= 0 && tid < rtArg.nThreads);
+  assert (tid >= 0 && tid < rtArg.nThreads+1);
   return tid;
 }
 #elif USE_PTHREADS

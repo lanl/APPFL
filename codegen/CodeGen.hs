@@ -243,7 +243,7 @@ cgo env o@(FUN it vs e name) =
                            "// " ++ name ++ "(self, " ++
                            intercalate ", " vs ++ ")"  ) |]
           top = [citems|
-                  LOG(LOG_INFO, $string:(name ++ " here\n"));
+                  LOG(LOG_INFO, $string:(name ++ " here thread=%d\n"),myThreadID());
                   typename PtrOrLiteral *$id:argp = &(stgGetStackArgp(myThreadID())->payload[0]);
                   (void)$id:argp; // suppress warning
                 |]
@@ -270,7 +270,7 @@ cgo env o@(THUNK it e name) =
     ((inline,ypn), funcs) <- cge env' e
     let comm = [cedecl|$esc:("\n// " ++ show (ctyp it))|]
         top = [citems|
-                LOG(LOG_INFO, $string:(name ++ " here\n"));
+                LOG(LOG_INFO, $string:(name ++ " here thread=%d\n"),myThreadID());
                 $comment:("// access free vars through frame pointer for GC safety")
                 $comment:("// is this really necessary???");
                 typename Cont *stg_fp = stgAllocCallOrStackCont(myThreadID(), &it_stgStackCont, 1);
@@ -527,7 +527,7 @@ cgalts env (Alts it alts name scrt) boxed =
       let (codeypns, funcss) = unzip codefuncs
       let (codes, ypns) = unzip codeypns
       let its = [citems|
-                  LOG(LOG_INFO, $string:(name ++ " here\n"));
+                  LOG(LOG_INFO, $string:(name ++ " here thread=%d\n"),myThreadID());
                   typename Cont *$id:contName = stgGetStackArgp(myThreadID());
                   $comment:("// make self-popping")
                   stgCaseToPopMe($id:contName);
