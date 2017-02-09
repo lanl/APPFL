@@ -3,6 +3,7 @@
 #include <time.h>
 #include "threading.h"
 #include "nodequeue.h"
+#include "stack.h"
 #include "stg.h"
 #include "log.h"
 #include "options.h"
@@ -13,12 +14,17 @@ static ABT_xstream *xstreams;
 static ABT_pool *pools;
 static intptr_t nextID;
 
+ABT_mutex loglock;
+
 #include "abt.h"
 void threadingInit(int argc, char *argv[]) {
+
   // can only have one instance 
   assert(ABT_initialized() == ABT_ERR_UNINITIALIZED);
 
   assert(ABT_init(argc, argv) == ABT_SUCCESS);
+
+  ABT_mutex_create(&loglock);
 
   xstreams = 
       (ABT_xstream *)malloc(sizeof(ABT_xstream) * (rtArg.nThreads+1));
@@ -52,6 +58,7 @@ void threadingInit(int argc, char *argv[]) {
   LOG(LOG_DEBUG, "threadingInit start service thread\n");
   ABT_thread thread;
   ABT_thread_create(pools[nextID], serviceQueue, (void *)nextID, ABT_THREAD_ATTR_NULL, &thread);
+
 }
 
 void threadingFinalize() {
@@ -76,7 +83,7 @@ void threadingYield() {
 void serviceQueue(void *p) {
   struct timespec polling;
   polling.tv_sec = 0;
-  polling.tv_nsec = 1000;
+  polling.tv_nsec = 100;
  
   LOG(LOG_DEBUG, "in serviceQueue ID=%ld\n", nextID);
 

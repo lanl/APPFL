@@ -212,13 +212,14 @@ CInfoTab it_stgShowResultCont __attribute__((aligned(8))) =
   };
 
 void stgThunk(PtrOrLiteral self) {
+  LOG(LOG_DEBUG, "stgThunk thread=%d\n",myThreadID());
   assert(mayBeBoxed(self) && "stgThunk:  not HEAPOBJ\n");
   Cont *contp = stgAllocCont(myThreadID(), &it_stgUpdateCont);
   contp->payload[0] = self;
   strcpy(contp->ident, self.op->ident); //override default
   // can't do this until we capture the variables in a stack frame
   // self.op->infoPtr = &it_stgBlackHole;
-  LOG(LOG_INFO, "BLACKHOLING %s\n", self.op->ident);
+  LOG(LOG_INFO, "BLACKHOLING %s thread=%d\n", self.op->ident, myThreadID());
 #if USE_OBJTYPE
   self.op->objType = BLACKHOLE;
 #endif

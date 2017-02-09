@@ -87,6 +87,8 @@ const size_t stgHeapSize  = (size_t)(1024*1024*1024);
 const size_t stgStackSize  = (size_t)(1024*1024*1024);
 
 void initStg(int argc, char *argv[]) {
+  threadingInit(argc, argv);
+
   void *stackMem;
 
   stgHeap =
@@ -135,7 +137,5 @@ void initStg(int argc, char *argv[]) {
     stgSPs[i] = (char *)stgStacks[i] + stgStackSizes[i];
     LOG(LOG_INFO, "STG stack %d at %p\n", i, stgStacks[i]);
   }
-
-  threadingInit(argc, argv);
 
 }

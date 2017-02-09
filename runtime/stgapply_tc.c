@@ -261,15 +261,16 @@ FnPtr stgApply3() {
   LOG(LOG_INFO, "stgApply %s ", getInfoPtr(argv[0].op)->name);
   for (int i = 1; i != argc+1; i++) {
     showStgVal(LOG_INFO, argv[i]); LOG(LOG_INFO, " ");
-  } LOG(LOG_INFO, "\n");
+  } LOG(LOG_INFO, "thread=%d\n", myThreadID());
 
   switch (getObjType(argv[0].op)) {
 
   case FUN: {
     int arity = getInfoPtr(argv[0].op)->funFields.arity;
-    LOG(LOG_INFO, "stgapply FUN %s arity %d\n",
+    LOG(LOG_INFO, "stgapply FUN %s arity %d thread=%d\n",
            getInfoPtr(argv[0].op)->name,
-           getInfoPtr(argv[0].op)->funFields.arity);
+           getInfoPtr(argv[0].op)->funFields.arity,
+           myThreadID());
     int excess = argc - arity;  // may be negative
 
     // too many args?
