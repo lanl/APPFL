@@ -130,12 +130,13 @@ void initStg(int argc, char *argv[]) {
   }
 
   // divvy up evenly for now
-  size_t subSize = (stgStackSize / rtArg.nThreads / OBJ_ALIGN) * OBJ_ALIGN;
+  size_t subSize = (stgStackSize / (rtArg.nThreads+1) / OBJ_ALIGN) * OBJ_ALIGN;
+  LOG(LOG_INFO, "stackSizes %lx %lx\n",stgStackSize, subSize);
   for (int i = 0; i != rtArg.nThreads + 1; i++) {
     stgStackSizes[i] = subSize;
     stgStacks[i] = (char *)stackMem + i * subSize;
     stgSPs[i] = (char *)stgStacks[i] + stgStackSizes[i];
-    LOG(LOG_INFO, "STG stack %d at %p\n", i, stgStacks[i]);
+    LOG(LOG_INFO, "STG stack %d at %p-%p\n", i, stgStacks[i],stgSPs[i]);
   }
 
 }
