@@ -1,0 +1,3 @@
+#!/bin/bash
+mydir=${0%/*}
+gcc $* -std=gnu99 -Wl,-rpath -Wl,$mydir/../lib -L$mydir/../lib -I$mydir/../include  -lruntime -labt -lm -pthread 
