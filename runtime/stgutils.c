@@ -115,8 +115,9 @@ InfoTab it_stgBlackhole __attribute__((aligned(8))) = {
 
 FnPtr stgIndirect() {
   LOG(LOG_INFO, "stgIndirect, jumping through indirection\n");
-  stgCurVal = stgCurVal.op->payload[0]; // Obj takes self in stgCurVal
-  STGJUMP0(getInfoPtr(stgCurVal.op)->entryCode);
+  int id = myThreadID();
+  stgCurVal[id] = stgCurVal[id].op->payload[0]; // Obj takes self in stgCurVal
+  STGJUMP0(getInfoPtr(stgCurVal[id].op)->entryCode);
 }
 
 
@@ -134,14 +135,15 @@ InfoTab it_stgIndirect __attribute__((aligned(8))) = {
 };
 
 FnPtr stgUpdateCont() {
-  Cont *contp = stgGetStackArgp(myThreadID());
+  int id = myThreadID();
+  Cont *contp = stgGetStackArgp(id);
   assert(getContType(contp) == UPDCONT && "I'm not an UPDCONT!");
   PtrOrLiteral p = contp->payload[0];
   assert(mayBeBoxed(p) && "not a HEAPOBJ!");
   LOG(LOG_INFO, "stgUpdateCont updating\n  ");
   showStgObj(LOG_INFO, p.op);
   LOG(LOG_INFO, "with\n  ");
-  showStgObj(LOG_INFO, stgCurVal.op);
+  showStgObj(LOG_INFO, stgCurVal[id].op);
   if (getObjType(p.op) != BLACKHOLE) {
     LOG(LOG_INFO, "but updatee is %s not a BLACKHOLE!\n",
 	    objTypeNames[getObjType(p.op)]);
@@ -152,7 +154,7 @@ FnPtr stgUpdateCont() {
   int oldObjSize = getObjSize(p.op);
 
   // the order of the following two operations is important for concurrency
-  p.op->payload[0] = stgCurVal;  // return stgCurVal, not the indirect, for efficiency
+  p.op->payload[0] = stgCurVal[id];  // return stgCurVal, not the indirect, for efficiency
 
   if (rtArg.sharing) {
     p.op->_infoPtr = &it_stgIndirect;
@@ -188,13 +190,14 @@ CInfoTab it_stgUpdateCont __attribute__((aligned(8))) =
   };
 
 FnPtr fun_stgShowResultCont() {
+  int id = myThreadID();
   LOG(LOG_INFO, "done!\n");
   stgPopCont();  // clean up--normally the job of the returnee
   LOG(LOG_RESULT, "The answer is\n");
 #if USE_ARGTYPE
-  showStgVal(LOG_RESULT, stgCurVal); stgCurVal.op = NULL;
+  showStgVal(LOG_RESULT, stgCurVal[id]); stgCurVal[id].op = NULL;
 #else
-  showStgObj(LOG_RESULT, stgCurVal.op); stgCurVal.op = NULL;
+  showStgObj(LOG_RESULT, stgCurVal[id].op); stgCurVal[id].op = NULL;
 #endif
   LOG(LOG_RESULT, "\n");
   RETURN0();
