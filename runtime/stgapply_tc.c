@@ -177,6 +177,12 @@ FnPtr stgApply2() {
   PtrOrLiteral *argv = &stackframe->payload[1];
   // argvInd == 0 is funoid
   argv[argvInd] = stgCurVal[id];
+
+  LOG(LOG_DEBUG, "index %d ",argvInd);
+  showStgVal(LOG_DEBUG, stgCurVal[id]);
+  LOG(LOG_DEBUG, "\n");
+
+
   // any more?
   int argsToEval = 0;
   int appargc = stackframe->layout.bitmap.size - 2;  // skip new arg, funoid
@@ -212,15 +218,21 @@ FnPtr stgApply2() {
     stgCurVal[id] = argv[argvInd];
 
     derefStgCurVal();
+
+    //LOG(LOG_DEBUG, "stgcurval %d ",argvInd);
+    //showStgVal(LOG_DEBUG, stgCurVal[id]);
+    //LOG(LOG_DEBUG, "\n");
+
     switch (getObjType(stgCurVal[id].op)) {
     case THUNK:
       LOG(LOG_DEBUG, "THUNK to queue ");
       showStgVal(LOG_DEBUG, stgCurVal[id]);
       LOG(LOG_DEBUG, "\n");
       
-      //NQ_enqueue((T)(getInfoPtr(stgCurVal[id].op)->entryCode));
       NQ_enqueue((T)(stgCurVal[id].op));
 #if USE_QUEUE
+      //argv[argvInd].op->objType = BLACKHOLE;
+      //argv[argvInd].op->_infoPtr = setLSB2(argv[argvInd].op->_infoPtr);
       STGJUMP0(stgApplyNew);
 #else
       //TODO:  remove once queue is serviced
@@ -236,9 +248,6 @@ FnPtr stgApply2() {
       STGJUMP0(getInfoPtr(stgCurVal[id].op)->entryCode);
       break;
     }
-
-    // tail call self after evaluating arg
-    //STGJUMP();
   }
 
   // fix stack frame for old stgApply
@@ -255,6 +264,7 @@ FnPtr stgApply2() {
 
 FnPtr stgApply3() {
   int id = myThreadID();
+  LOG(LOG_DEBUG,"stgApply 3 thread=%d\n",id);
   // STACKCONT with actual parameters
   Cont *stackframe = stgGetStackArgp(id);
   assert(getContType(stackframe) == STACKCONT);

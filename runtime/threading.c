@@ -98,6 +98,9 @@ void serviceQueue(void *p) {
 #endif
       stgCurVal[nextID].op = (Obj *)(f);
       showStgVal(LOG_DEBUG, stgCurVal[nextID]);
+
+      stgAllocCallOrStackCont(nextID, &it_stgCallCont, 0);
+
       (getInfoPtr(stgCurVal[nextID].op)->entryCode)();
 #endif
     } 
