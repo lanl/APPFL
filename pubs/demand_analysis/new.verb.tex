@@ -982,21 +982,22 @@
 \sloppy
 
 \begin{abstract}
-  {\it First-order\/} projection-based strictness analysis (properly,
+  {\it First-order\/} projection-based strictness analysis (generally,
   \emph{demand analysis}) was first introduced by Wadler and Hughes in
   1987~\cite{WH87}.  This development was restricted to first-order,
   monomorphic languages and provided no proof of soundness.  Subsequent
-  developments extended the theory to other analyses, approaches to higher
-  order, and polymorphism.  Yet other developments were based on
-  generalization of projections, specifically partial equivalence relations
-  and partial projections, the latter notably simplifying a difficulty with
-  projection-based strictness dating back to Wadler and Hughes.  However, to
-  date no development has combined the desirable contributions of all of these
-  approaches.  We present the first practical higher-order, polymorphic,
+  developments extended the theory to other analyses (most notably
+  binding-time analysis), approaches to higher order, and polymorphism.  Yet
+  other developments were based on generalization of projections, specifically
+  partial equivalence relations and partial projections, the latter notably
+  simplifying a difficulty with projection-based strictness analysis dating
+  back to Wadler and Hughes.  However, to date no development has combined the
+  desirable attributes of all of these approaches.  We present the first
+  practical, higher-order, polymorphic,
   partial-projection/partial-equivalence-relation based demand analysis,
   together with a proof of satisfaction of the fundamental safety condition
   for such analyses.  Such an analysis can be used both to improve serial code
-  generation, as well as enable safe automatic parallelization, for lazy or
+  generation as well as enable safe automatic parallelization for lazy or
   non-strict functional languages.
 
   
@@ -1020,24 +1021,32 @@
 
 \section{Introduction and Background}
 
-We take as given that demand analysis is essential for good serial code
-generation, and for identifying where parallelism may be safely introduced.
-Numerous such analysis techniques have been proposed and implemented; we
-greatly narrow the field of discussion by restricting attention to those for
-which there is a formally stated notion of correctness that the technique has
-been proven to satisfy.
+We take as given that demand analysis, aka strictness analysis, is essential
+for good serial code generation, and for identifying where parallelism may be
+safely introduced.  An example of the former is the current ghc Haskell
+compiler, where strictness analysis is used to unbox values and thereby
+registerize code.  A potential application of the latter is in the context of
+the APPFL parallelizing, which assumes strict semantics by default for the
+purpose of exploring automatic parallelization techniques, but in the presence
+of non-strict semantics could use such an analysis to enable such
+parallelization.  Numerous such analysis techniques have been proposed and
+implemented; we greatly narrow the field of discussion by restricting
+attention to those for which there is a formally stated notion of correctness
+that the technique has been proven to satisfy.
 
-Analysis techniques can usually be identified as being based on either
-a non-standard denotational semantics or a non-standard typing.
-Examples in the latter category include those of Gomard \cite{Go92},
-Jensen \cite{Jen92}, the Nielsons \cite{NN88}, Schmidt \cite{Sch88},
-and Henglein and Mossin \cite{HM94}.  Our focus is on those techniques
-based on non-standard interpretation, in particular, those using
-projections or partial equivalence relations (PERs) as the basic
-abstract values.
+Analysis techniques can usually be identified as being based on either a
+non-standard denotational semantics or a non-standard typing.  Examples in the
+latter category include those of Gomard \cite{Go92}, Jensen \cite{Jen92}, the
+Nielsons \cite{NN88}, Schmidt \cite{Sch88}, and Henglein and Mossin
+\cite{HM94}.  Our focus is on those techniques based on non-standard
+interpretation, in particular, those using projections, partial projections, or
+partial equivalence relations (PERs) as the basic abstract values.
 
 A domain {\it projection\/} is a continuous idempotent function that
-approximates the identity.  Launchbury \cite{Lau88} hit upon the idea
+approximates the identity.  Wadler and Hughes first presented the idea of
+projection-based program analysis in the context of 
+
+Launchbury \cite{Lau88} hit upon the idea
 of using projections to encode degrees of staticness of data.  The
 basic idea is that a projection maps to $\bot$ that part of a data
 structure that is dynamic (possibly not determined), and acts as the
