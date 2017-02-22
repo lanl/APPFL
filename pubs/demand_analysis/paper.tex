@@ -1,0 +1,1065 @@
+\newcount\isrr          % isrr=0 submitted version, isrr=1 dep res rep isrr=3 final PEPM '94
+\def\theisrr{\the\isrr}
+\isrr=3
+
+
+\documentstyle[fleqn]{fpca93}
+\newcommand{\progsize}{\normalsize}
+\newcommand{\typescriptstyle}{\scriptscriptstyle}
+\newcommand{\subtypesize}{\scriptsize}
+%\newcommand{\sm}{$\mbox{\tt \ \ \ \ \ }\begin{array}{llllllll}}
+%\newcommand{\fm}{\end{array}$}
+\newcommand{\subtypespace}{\hspace{0.0pt}}
+\newcommand{\subtypesubstyle}{\scriptstyle}             % scriptscriptstyle/scriptstyle
+
+\newcommand{\com}{\newcommand}
+\com{\rcom}{\renewcommand}
+
+\input{../phd/commands}
+\input{../phd/special}
+
+
+% -------- A figure with a line at top and bottom, a caption and a label
+% -------- Syntax: \fig{figoptions}{caption}{label}{ ..... }
+\com{\fig}[4]{
+\begin{figure}[#1]
+\begin{center}
+\begin{minipage}{\columnwidth}
+\rule[1ex]{\textwidth}{1pt}
+%\vspace{1ex}
+#4
+\caption{#2 \label{#3}}
+\vspace{1ex}
+\rule[1ex]{\textwidth}{1pt}
+\end{minipage}
+\end{center}
+\end{figure}
+}
+
+\com{\backup}{\hspace{-0.12cm}}
+\rcom{\espace}{\vspace{4pt}}
+\com{\itt}[1]{\mbox{\it #1}}
+%\com{\Ss}{\sf{S}}
+\com{\Ps}{\sf{P}}
+
+\com{\OUTC}{\itt{OUTC}}
+\com{\SEL}{\itt{SEL}}
+\com{\SPINE}{\itt{SPINE}}
+\com{\LBR}{\itt{LBR}}
+
+\sloppy
+
+\pagestyle{empty}
+
+\begin{document}
+
+\thispagestyle{empty}
+
+\title{PERs from Projections for Binding-time Analysis}
+
+\author{Kei Davis\\Computing Science Department\\
+        University of Glasgow\\
+        Glasgow G12 8QQ, UK\\
+        kei@dcs.glasgow.ac.uk.}
+
+\date{}
+\maketitle
+
+\begin{abstract}
+
+{\it First-order\/} projection-based binding-time analysis has proven
+genuinely useful in partial evaluation \cite{Lau91a,Lau91c}.  There
+have been three notable generalisations of projection-based analysis to
+higher order.  The first lacked a formal basis \cite{Mog89}; the second
+used structures strictly more general that projections, namely {\it
+partial equivalence relations\/} (PERs) \cite{HS91}; the third involved
+a complex construction that gave rise to impractically large abstract
+domains \cite{Dav93b}.  This paper presents a technique free of
+these shortcomings:  it is simple, entirely projection-based,
+satisfies a formal correctness condition, and gives rise to reasonably
+small abstract domains.  Though the technique is cast in terms of
+projections, there is also an interpretation in terms of PERs.
+The principal limitation of the technique is the restriction to
+{\it monomorphic\/} typing.
+
+\end{abstract}
+
+
+
+\section{Introduction and Background}
+
+We take as given that binding-time analysis is essential for good
+partial evaluation, and we do not address the issue of annotating
+programs according to the results of analysis.  Numerous binding-time
+analysis techniques have been proposed and implemented; we greatly
+narrow the field of discussion by restricting attention to those for
+which there is a formally stated notion of correctness that the
+technique has been proven to satisfy.
+
+Analysis techniques can usually be identified as being based on either a
+non-standard denotational semantics or a non-standard typing.  Examples
+in the latter category include those of Gomard \cite{Go92}, Jensen
+\cite{Jen92}, the Nielsons \cite{NN88}, Schmidt \cite{Sch88}, and
+Henglein and Mossin \cite{HM94}.  Our
+focus is on those techniques based on non-standard interpretation, in
+particular, those using projections or partial equivalence relations
+(PERs) as the basic abstract values.
+
+A domain {\it projection\/} is a continuous idempotent function that
+approximates the identity.  Launchbury \cite{Lau88} hit upon the idea
+of using projections to encode degrees of staticness of data.  The
+basic idea is that a projection maps to $\bot$ that part of a data
+structure that is dynamic (possibly not determined), and acts as the
+identity on that part which is static (definitely determined).
+Examples are the identity $\ID$, the greatest projection, which
+specifies that values are entirely static; the constant $\bot$ function
+$\BOT$, the least projection, which specifies that values are entirely
+dynamic; and projections $\FST$ and $\SND$ on product domains,
+defined by
+\[
+\FST\ (x,y) = (x,\bot)\ ,\ \ \ \ \ \ \SND\ (x,y) = (\bot,y)\ ,
+\]
+specifying staticness in the first and second components of pairs, 
+respectively.  The nominal goal of analysis is,
+given function $f$ denoted by some programming-language expression, and
+projection $\D$ encoding the staticness of the argument of $f$, to
+determine $\G$ satisfying the {\it safety condition\/}
+$\G\o\f\we\f\o\D$.  For example, taking $\G$ to be $\SND$ satisfies
+$\G\o\itt{swap}\we\itt{swap}\o\FST$ for $\itt{swap}$ defined by
+$\itt{swap}~(x,y)=(y,x)$.  Taking $\G$ to be $\BOT$ always satisfies
+the safety condition but tells nothing; greater $\G$ is more
+informative.  Launchbury \cite{Lau91a} showed that this safety
+condition satisfies, and in a sense which he formalises, is equivalent
+to the correctness condition for binding-time analysis in the general
+framework of Jones \cite{Jon88}.  Using projection-based analysis,
+Launchbury implemented both monomorphic and polymorphic versions of a
+partial evaluator for a first-order language.  His work culminated in
+the first strongly-typed partial evaluator \cite{Lau91c}---strong
+evidence for the value of the projection-based approach.
+
+There have been three notable attempts to generalise Launchbury's
+techniques to higher order.  The first was Mogensen's generalisation of
+the polymorphic technique \cite{Mog89}.  Though successfully
+implemented, there is no formal statement of what it means for the
+analysis to be correct; even if such a statement were made, proving
+correctness would likely be difficult because of the highly intensional
+nature of the analysis:  the non-standard values associated with
+expressions are strongly dependent on their syntactic structure, and
+projections are encoded symbolically as {\it abstract closures\/}, with
+approximation performed algebraically `on-the-fly' according to time
+and space considerations.  Nonetheless, the experiment provided
+evidence for the {\it practicality\/} of the projection-based approach
+at higher order.
+
+The second generalisation was Hunt and Sands', of the monomorphic
+technique to higher order \cite{HS91}.  Their observation was that a
+projection, regarded as a set of domain-range pairs, is an {\it
+equivalence relation\/}:  given $\G$, values $u$ and $v$ are in the
+same equivalence class if $\G~u=\G~v$, and the canonical elements of
+the equivalence classes are the set of fixed points (range) of $\G$.
+Hunt showed that the safety condition $\G\o\f\we\f\o\D$ holds iff $f$
+is related to itself by $\D\fto\G$ where $\fto$ is the standard
+operation on binary relations, so
+\beqs
+\it &\it (\G\o\f\we\f\o\D)\\
+\it \Leftrightarrow&\it (\forall\ u,v\ .\ \D\ u=\D\ v\ \Rightarrow\ \G\ (f\ u)=\G\ (f\ v))\ .
+\eeqs
+Then, for example, $(\BOT\fto\ID)~(f,f)$ asserts that $f$ maps dynamic
+arguments to static results.  In general $\D\fto\G$ is not an
+equivalence relation, but it is always a {\it partial\/} equivalence
+relation: it is symmetric and transitive but not necessarily
+reflexive.  Unlike projections regarded as relations, PERs are closed
+under $\fto$; the result, as Hunt and Sands show, is that `scaling up'
+to higher-order analysis is reasonably straightforward.  One
+disadvantage of their method is that PER spaces are considerably larger
+than the projection spaces on the same domains, and it is not clear
+which PERs to choose for (finite) abstract domains.  Here they borrowed
+heavily from the projection world, using standard abstract projection
+domains at ground types.  Further, its practicality has not been
+demonstrated by implementation, and, because of the unfamiliar
+territory, a promising route to a polymorphic generalisation is obscure.
+
+The third generalisation was ours, to an entirely projection-based,
+monomorphic, higher-order technique \cite{Dav93b}.  One observation
+motivating the approach is that there is no meaningful abstraction of
+values to projections, only of functions $f$ to projection transformers
+$\T$ (functions from projections to projections) satisfying
+$(\T~\D)\o\f\we\f\o\D$ for all $\D$.  To make this abstraction possible
+a semantics intermediate between the standard and analysis semantics
+was introduced.  Moving from the standard to intermediate semantics
+involved a translation of each ground type \mbox{\tt T} to a function type
+\mbox{\tt E}\ \mbox{\tt ->}\ \mbox{\tt T} (for a fixed type \mbox{\tt E}), the values of which, being
+functions, could then be abstracted.  The result, while proven correct
+with respect to a formal safety condition, is probably not practicable
+because of the growth in the sizes of (usefully rich) abstract domains
+induced by the type translation.
+
+This paper presents a technique far simpler technique than our previous
+one.  No intermediate semantics is required, and the correctness
+condition and proof are much simpler.  Because the translation of
+ground types to function types is avoided the abstract domains are much
+smaller. Though entirely projection-based, we show that there is a
+reading of the results in terms of PERs, intimating a close
+relationship with the PER-based technique.
+
+\section{Language and Standard Semantics}
+The source language is a simple, strongly typed, monomorphic,
+non-strict functional language.  The grammar for the language
+of types and type definitions is given in Figure~\ref{fig:types}.
+\fig{tb}{Types and type definitions.}{fig:types}{
+\beqs
+\it \makebox{\tt T}&\it ::=&\it \ta&\it \reason{Type\ Name}\\
+\it &\it |&\it \tint&\it \reason{Integer}\\
+\it &\it |&\it \tprod&\it \reason{Product,\ $n\geq{\rm0}$}\\
+\it &\it |&\it \tsum&\it \reason{Sum,\ $n\geq{\rm1}$}\\
+\it &\it |&\it \tfun&\it \reason{Function}\ \espace\\
+\it \makebox{\tt D}&\it ::=&\it \tdefn&\it \reason{Type\ Definitions}
+\eeqs
+}
+Nullary product corresponds to the so-called {\it unit\/} type.  A unary
+product \mbox{\tt (T)} will always have the same semantics as \mbox{\tt T}.
+The types used in the examples are defined as follows.
+\begin{flushleft}
+\vspace{-0.0em}\makebox{\progsize\tt \ \ \ \ \ FunList\ =\ \ \ nil\ ()\ }\vspace{-0.0em}\\
+\makebox{\progsize\tt \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ +\ cons\ (Int\ ->\ Int,\ FunList)\ ,\ }\vspace{-0.0em}\\
+\makebox{\progsize\tt }\vspace{-0.0em}\\
+\makebox{\progsize\tt \ \ \ \ \ FunTree\ =\ \ \ leaf\ (Int\ ->\ Int)\ }\vspace{-0.0em}\\
+\makebox{\progsize\tt \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ +\ branch\ (FunTree,\ FunTree)\ .}\vspace{-0.0em}
+\end{flushleft}
+
+The grammar for expressions is given in Figure~\ref{fig:exprs}.
+Addition for integers is provided as typical of operations on flat data
+types in this setting.  A unary tuple \mbox{\tt (e)} will always have the same
+semantics as \mbox{\tt e}.  The (monomorphic) typing of expressions is entirely
+standard and is omitted.
+
+\fig{tb}{Expressions.}{fig:exprs}{
+\beqs
+\it \makebox{\tt e}&\it ::=&\it \evar&\it \reason{Variable}\\
+\it &\it |&\it \enum&\it \reason{Numeral}\\
+\it &\it |&\it \esum&\it \reason{Integer\ addition}\\
+\it &\it |&\it \eapp&\it \reason{Function\ application}\\
+\it &\it |&\it \etup&\it \reason{Tuple\ construction}\\
+\it &\it |&\it \makebox{\tt let}\ \makebox{\tt (}\xone\makebox{\tt ,}\ldots\makebox{\tt ,}\xn\makebox{\tt )}\ \makebox{\tt =}\ \enot\\
+\it &\it &\it \makebox{\tt \ \ in}\ \eone&\it \reason{Tuple\ decomposition}\\
+\it &\it |&\it \econ&\it \reason{Sum\ construction}\\
+\it &\it |&\it \makebox{\tt case}\ \enot\ \makebox{\tt of}\\
+\it &\it &\it \makebox{\tt \ \ }\{\ci\ \xxi\ \makebox{\tt ->}\ \ei\}&\it \reason{Sum\ decomposition}\\
+\it &\it |&\it \elamt&\it \reason{Lambda\ abstraction}\\
+\it &\it |&\it \eapp&\it \reason{Function\ application}\\
+\it &\it |&\it \efix&\it \reason{Fixed\ point}
+\eeqs
+}
+
+\subsection{Expression semantics}
+
+Since two different expression semantics will be given, following
+Abramsky \cite{Abr90} we define a semantics $\cE{}$ parameterised by a
+set of {\it defining constants}.  The semantics $\cE{}$ is defined in
+Figure~\ref{fig:gensem}; the defining constants are {\it
+plus}, $\itt{sel}_i$, {\it tuple}, $\itt{inc}_i$, $\itt{outc}_i$, {\it
+choose}, {\it mkfun}, {\it apply}, and {\it fix}.  The two instances of
+$\cE{}$ are distinguished by a superscript:  $\cE{\Ss}$ for the
+standard semantics and $\cE{\Ps}$ for the non-standard semantics.  The
+corresponding type semantics have the same superscripts, as do the
+defining constants.
+
+It is useful to regard the free-variable environment of each expression
+as having some tuple type $\tprod$, and environment lookup as indexing
+(as in a categorical semantics, or De~Bruijn indexing); variables are
+indexed implicitly or explicitly by their index in the free variable
+environment.  Then for both versions of the semantics and all
+expressions \mbox{\tt e} of type \mbox{\tt T} with environment of type $\tprod$,
+\beqs
+\it \Ee{}{\makebox{\tt e}}\ \in\ \Te{}{\tprod}~\fto~\Te{}{\makebox{\tt T}}\ .
+\eeqs
+Noting that $\R\br{\xxi}$ is short for $\itt{sel}_i~\R$, environment
+update $\R[\xxi\mapsto{}v]$ is defined by
+\beqqs
+\it tuple\ (&\it sel_{\rm1}\ \R,\ \ldots,\ sel_{i-{\rm1}}\ \R,\\
+\it &\it v,\\
+\it &\it sel_{i+{\rm1}}\ \R,\ \ldots,\ sel_n\ \R)\ .
+\eeqqs
+It is convenient to regard \mbox{\tt Int} as being defined as the infinite sum
+\beqs
+\it \tint\makebox{\tt \ =\ }\ldots\makebox{\tt \ +\ n}_{-{\rm1}}\makebox{\tt \ ()\ +\ n}_{{\rm0}}\makebox{\tt \ ()\ +\ n}_{{\rm1}}\makebox{\tt \ ()\ +\ }\ldots\ ,
+\eeqs
+where in practice we write $\mbox{\tt n}_i$ as short for $\mbox{\tt n}_i~\mbox{\tt ()}$.
+
+\fig{tb}{Parameterised semantics.}{fig:gensem}{
+\beqs
+\it \Ee{}{\evar_i}\ \R\ =\ \R\br{\makebox{\tt x}_i}\ =\ \itt{sel}_i\ \R\espace\espace\\
+\it %\ \Ee{}{\eunit}\ \R\ =\ \itt{mkunit}\ \R\espace\espace\\
+\it %\ \Ee{}{\enum}\ \R\ =\ \itt{mkint}_i\espace\espace\\
+\it \Ee{}{\esum}\ \R\ =\ \itt{plus}~(\Ee{}{\eone}\ \R,\ \Ee{}{\etwo}\ \R)\espace\espace\\
+\it \Ee{}{\etup}\ \R\\
+\it \ \ \ \ \ =\ \itt{tuple}~(\Ee{}{\eone}\ \R,~\ldots,~\Ee{}{\en}\ \R)\espace\espace\\
+\it \Ee{}{\esel}\ \R\\
+\it \ \ \ \ \ =\ \Ee{}{\eone}\ \R[\xxi\mapsto\itt{sel}_i\ (\Ee{}{\enot}\ \R)~|~\oin]\espace\espace\\
+\it \Ee{}{\econ}\ \R\ =\ \itt{inc}_i\ (\Ee{}{\makebox{\tt e}}\ \R)\espace\espace\\
+\it \Ee{}{\ecase}\ \R\\
+\it \ \ \ \ \ \ =\ \itt{choose}~(\ba[t]{l}\Ee{}{\enot}\ \R,\\
+\it \Ee{}{\eone}\ \R[\xone\mapsto\itt{outc}_{\rm1}\ (\Ee{}{\enot}\ \R)],\\
+\it \ \ \ ~\vdots\\
+\it \Ee{}{\en}\ \R[\xn\mapsto\itt{outc}_n\ (\Ee{}{\enot}\ \R)])\ea\espace\espace\\
+\it \Ee{}{\elam}\ \R\ =\ \itt{mkfun}\ (\L{}x.\Ee{}{\makebox{\tt e}}\ \R[\evar\mapsto{}x])\espace\espace\\
+\it \Ee{}{\eapp}\ \R\ =\ \itt{apply}\ (\Ee{}{\eone}\ \R)\ (\Ee{}{\etwo}\ \R)\espace\espace\\
+\it \Ee{}{\efix}\ \R\ =\ (\itt{fix}\o\itt{apply})\ (\Ee{}{\makebox{\tt e}}\ \R)
+\eeqs
+}
+
+\subsection{Standard semantics}
+
+The standard $\Ss$ type and expression semantics are defined in
+Figure~\ref{fig:ssem}.  Function types give rise to lifted function
+spaces as in Abramsky's lazy lambda calculus \cite{Abr89}, and the
+semantics distinguishes those expressions of function type that have
+WHNF (have value $\itt{lift}~f$ for some $f$) and those that do not (have
+value $\bot$).  Products are unlifted; a unary sum-of-products gives a
+lifted product.  Domain $\plus$ is separated sum.  Recursive type
+definitions give rise to recursive domain specifications which have the
+usual least-fixed-point solutions.
+
+
+\fig{tb}{Standard type and expression semantics.}{fig:ssem}{
+\beqs
+\it \Te{\Ss}{\tint}\ =\ \Int\ =\ \lift{\bf{Z}}\ \espace\espace\\
+\it \Te{\Ss}{\tprod}\ =\ \Te{\Ss}{\tone}\ \times\ \ldots\ \times\ \Te{\Ss}{\tn}\espace\espace\\
+\it \Te{\Ss}{\tsum}\\
+\it \ \ \ \ \ =\ \Te{\Ss}{\tone}\ \plus\ \ldots\ \plus\ \Te{\Ss}{\tn}\espace\espace\\
+\it \Te{\Ss}{\tfun}\ =\ \liftp{\Te{\Ss}{\tone}\ \fto\ \Te{\Ss}{\ttwo}}\\
+\it \\
+\it %\ \itt{mkunit}^{\Ss}\ \R\ =\ ()\espace\espace\\
+\it %\ \itt{mkint}^{\Ss}_n\ \R\ =\ \itt{lift}\ n\espace\espace\\
+\it \itt{plus}^{\Ss}\ (x,y)\ =\ x+y\espace\espace\\
+\it \itt{tuple}^{\Ss}\ (x_{\rm1},\ldots,x_n)\ =\ (x_{\rm1},\ldots,x_n)\espace\espace\\
+\it \itt{sel}_i^{\,\Ss}\ (x_{\rm1},\ldots,x_n)\ =\ x_i\espace\espace\\
+\it \itt{inc}_i^{\Ss}\ =\ \itt{in}_i\o\itt{lift}\espace\espace\\
+\it \itt{outc}_i^{\Ss}\ x\ =\ \itt{drop}\o\itt{out}_i\espace\espace\\
+\it \ba{lll}\itt{choose}^{\Ss}\ (\bot,&\it \ x_{\rm1},\ldots,x_n)\ =\ \bot\\
+\it \itt{choose}^{\Ss}\ (\itt{in}_i~v,&\it \ x_{\rm1},\ldots,x_n)\ =\ x_i\ea\espace\espace\\
+\it \itt{mkfun}^{\Ss}\ =\ \itt{lift}\espace\espace\\
+\it \itt{apply}^{\Ss}\ =\ \itt{drop}\espace\espace\\
+\it \itt{fix}^{\Ss}\ =\ \itt{lfp}\ \reason{Least\ fixed\ point}
+\eeqs
+}
+
+\section{Domain Factorisation}
+
+A key observation of \cite{Dav93b} was that since there is no concept
+of staticness of the body of a lambda expression, there is no point in
+having projections on function spaces.  Hence domains are factored into
+their evaluable or {\it data\/} parts, and their unevaluable but
+applicable {\it forward\/} parts.  For example, for
+$\liftp{T\fto{}U}=\Te{\Ss}{\mbox{\tt T}\ \mbox{\tt ->}\ \mbox{\tt U}}$ we need only distinguish two
+degrees of definedness---between $\bot$ and values of the form
+$\itt{lift}~f$.  This may be encoded by $\lone$---the data part of
+$\liftp{T\fto{}U}$---on which there are precisely two projections,
+namely $\ID$ and $\BOT$.  Here the forward part is $T\fto{}U$.
+
+The {\it data domain\/} corresponding to type \mbox{\tt T} is $\De{}{\mbox{\tt T}}$,
+where $\cD{}$ is defined exactly like $\cT{\Ss}$ except that function
+spaces are replaced by the one-point domain $\one=\{\unit\}$, that is,
+$\De{}{\tfun}=\lift{\one}$.  The function $\data$ from values in
+$\Te{\Ss}{\mbox{\tt T}}$ to their data parts in $\De{}{\mbox{\tt T}}$ is a projection:
+it is like the identity except that values from function spaces are
+mapped into $\one$.  The projection $\data$ is defined in terms of the
+structure of \mbox{\tt T} as follows.
+\beqs
+\it {\it{}data}_{\subtypespace\stint}\ =\ {\it{}id}_{\subtypespace\stint}\ ,\espace\\
+\it {\it{}data}_{\subtypespace\stprod}\ =\ {\it{}data}_{\subtypespace\stone}\ \times\ \ldots\ \times\ {\it{}data}_{\subtypespace\stn}\ ,\espace\\
+\it {\it{}data}_{\subtypespace\stsum}\ =\ {\it{}data}_{\subtypespace\stone}\ \plus\ \ldots\ \plus\ {\it{}data}_{\subtypespace\stn}\ ,\espace\\
+\it {\it{}data}_{\subtypespace\stfun}\ =\ {\liftp{\Lx.\unit}}\ .
+\eeqs
+The last definition uses function lifting, defined by $\lf~\bot=\bot$
+and $\lf~(\itt{lift}~x)=\itt{lift}~(f~x)$.  Recursive type definitions
+give rise to recursive function specifications with only one solution.
+
+In the same style as  $\De{}{\mbox{\tt T}}$ and $\data$ we define
+$\Tde{\Ss}{\mbox{\tt T}}$ to give the forward domain for \mbox{\tt T}, and $\fun$ to be
+the function mapping values in $\Te{\Ss}{\mbox{\tt T}}$ to their forward parts
+in $\Tde{\Ss}{\mbox{\tt T}}$, as follows.  Roughly, $\cTd{\Ss}$ is like
+$\cT{\Ss}$ with all lifting removed and sum replaced by product.
+\beqs
+\it \Tde{\Ss}{\tint}\ =\ \one\ ,\espace\\
+\it \Tde{\Ss}{\tprod}\ =\ \Tde{\Ss}{\tone}\ \times\ \ldots\ \times\ \Tde{\Ss}{\tn}\ ,\espace\\
+\it \Tde{\Ss}{\tsum}\\
+\it \ \ \ \ \ =\ \Tde{\Ss}{\tone}\ \times\ \ldots\ \times\ \Tde{\Ss}{\tn}\ ,\espace\\
+\it \Tde{\Ss}{\tfun}\ =\ \Te{\Ss}{\tone}\ \fto\ \Te{\Ss}{\ttwo}\ .
+\eeqs
+The mapping from standard values to their forward parts is defined by
+\beqs
+\it {\it{}fun}_{\subtypespace\stint}\ =\ \Lx.\unit\ ,\espace\\
+\it {\it{}fun}_{\subtypespace\stprod}\ =\ {\it{}fun}_{\subtypespace\stone}\ \times\ \ldots\ \times\ {\it{}fun}_{\subtypespace\stn}\ ,\espace\\
+\it \ba{lll}{\it{}fun}_{\subtypespace\stsum}\ \bot&\it =\ \bot\espace\\
+\it {\it{}fun}_{\subtypespace\stsum}\ (\itt{in}_i~v)\\
+\it \ \ \ \ \ =\ (\bot,\ldots,\bot,v,\bot_,\ldots,\bot)&\it \reason{$v$\ in\ $\ith$\ position}\ ,\ea\espace\\
+\it {\it{}fun}_{\subtypespace\stfun}\ =\ \itt{drop}\ .
+\eeqs
+We write $\fac$ for $\Lx.(\data~x,\ \fun~x)$.  Then
+$\De{}{\mbox{\tt T}}\times\Tde{\Ss}{\mbox{\tt T}}$ is a factorisation of $\Te{\Ss}{\mbox{\tt T}}$,
+and
+\beqs
+\it \fac\ \in\ \Te{\Ss}{\makebox{\tt T}}\ \fto\ (\De{}{\makebox{\tt T}}\ \times\ \Tde{\Ss}{\makebox{\tt T}})
+\eeqs
+is an embedding which {\it determines\/} the corresponding projection
+$\unfac$ (since they are related by $\unfac\o\fac=\itt{id}$ and
+$\fac\o\unfac\we\itt{id}$).  Rather than give an explicit definition of
+$\unfac$ we give some examples.  The factorisation of $\Int$ is
+$\Int\times\one$; more generally, the factorisation of any domain $D$
+corresponding to a type not containing \mbox{\tt ->} is just $D\times\one$.  If
+$T=\Te{\Ss}{\mbox{\tt T}}$ and $U=\Te{\Ss}{\mbox{\tt U}}$ then the factorisation of
+$\lift{(T\fto{}U)}=\Te{\Ss}{\mbox{\tt T}\ \mbox{\tt ->}\ \mbox{\tt U}}$ is
+$\lift{\one}\times(T\fto{}U)$---note that factorisation `stops' at
+function-space constructors.  Now
+${\it{}fac}_{\subtypespace{\makebox{\subtypesize\tt T->U}} }~\bot=(\bot,\bot)$, and
+${\it{}fac}_{\subtypespace{\makebox{\subtypesize\tt T->U}} }~(\itt{lift}~f)=(\lunit,~f)$ for all $f$.  In
+the other direction ${\it{}unfac}_{\subtypespace{\makebox{\subtypesize\tt T->U}} }~(\bot,f)=\bot$ and
+${\it{}unfac}_{\subtypespace{\makebox{\subtypesize\tt T->U}} }~(\lunit,~f)=(\itt{lift}~f)$; this must be
+since in general $\unfac\o\fac$ is the identity.
+
+\section{Projection Semantics}
+
+Standard values $v$ and $v'$ are related by nonstandard value $(\A,\K)$
+when their data parts are related by $\A$, and their forward parts are
+logically related by $\K$.  At each type \mbox{\tt T} the relation is
+$\Re{}{\mbox{\tt T}}~((\A,\K),\cdot,\cdot)$, defined by
+\beqs
+\it \lefteqn{\Re{}{\makebox{\tt T}}~((\A,\K),v,v')}\\
+\it \ \ \ \ \ =&\it \mit(\A~d=\A~d')\ \wedge\ \Rde{}{\makebox{\tt T}}~(\K,f,f')\\
+\it &\it \mbox{\rm{}where}\\
+\it &\it \ \ \ \ba[t]{lll}(d,f)&\it \:=\ \fac~v\\
+\it \mit(d',f')&\it \:=\ \fac~v'\ ,\ea
+\eeqs
+where $\Rde{}{\mbox{\tt T}}$ is defined by
+\beqs
+\it \Rde{}{\tint}~((),(),())\ =\ \itt{True}\ ,\espace\\
+\it \Rde{}{\tprod}\ =\ \Rde{}{\tone}\ \x\ \ldots\ \x\ \Rde{}{\tn}\ ,\espace\\
+\it \Rde{}{\tsum}\\
+\it \ \ \ \ \ =\ \Rde{}{\tone}\ \x\ \ldots\ \x\ \Rde{}{\tn}\ ,\espace\\
+\it \Rde{}{\tfun}\ =\ \Re{}{\tone}\ \fto\ \Re{}{\ttwo}\ .
+\eeqs
+Here $\x$ and $\fto$ are the standard operations on (ternary)
+relations:  for relations $R$ and $S$ we have
+$(R\times{}S)((x,y),(x',y'),(x'',y''))$ iff $R(x,x',x'')$ and
+$S(y,y',y'')$, and $(R\fto{}S)(f,g,h)$ iff for all $x$, $y$, and $z$
+such that $R(x,y,z)$ we have $S(f~x,\ g\ y,\ h~z)$.  Here, recursive
+type definitions give recursive relation specifications, which have
+inclusive least-fixed-point solutions. (A relation is inclusive if,
+when it holds for each element of an ascending chain, it also holds at
+the limit.  Such relations are sometimes called {\it admissible\/} or
+{\it chain complete}.  Some work is required to show inclusivity of
+these recursively-defined relations.) Thus the $\Ps$ type semantics
+$\cT{\Ps}$ must be
+\beqs
+\it \Te{\Ps}{\makebox{\tt T}}\ =\ \proj{\De{}{\makebox{\tt T}}}\ \times\ \Tde{\Ps}{\makebox{\tt T}}\ ,
+\eeqs
+where $\proj{\De{}{\mbox{\tt T}}}$ is the lattice of projections on domain
+$\De{}{\mbox{\tt T}}$, and $\cTd{\Ps}$ is defined exactly like $\cTd{\Ss}$ with
+superscript $\Ps$ everywhere replacing superscript $\Ss$.
+
+\fig{tb}{Projection semantics.}{fig:fsem}{
+\beqs
+\it %\ \itt{mkunit}^{\Ps}\ \R\ =\ ()\\
+\it %\espace\espace\\
+\it %\ \itt{mkint}^{\Ps}_n\ \R\ =\ \itt{lift}\ n\\
+\it %\espace\espace\\
+\it \itt{plus}^{\Ps}\ ((\A,()),(\B,()))\\
+\it \ \ \ =\ \left\{\ba{ll}(\ID,()),&\it \ \ \ \ \mbox{\rm\ if\ $\A=\ID$\ and\ $\B=\ID$}\\
+\it (\BOT,()),&\it \ \ \ \ \mbox{\rm\ otherwise}\ea\right.\espace\\
+\it \itt{tuple}^{\Ps}\ ((\A_{\rm1},\K_{\rm1}),\ldots,(\A_n,\K_n))\\
+\it \ \ \ =\ ((\A_{\rm1}\x\ldots\x\A_n),(\K_{\rm1},\ldots,\K_n))\espace\\
+\it \itt{sel}_i^{\,\Ps}\ ((\A_{\rm1}\x\ldots\x\A_n),(\K_{\rm1},\ldots,\K_n))\ =\ (\A_i,\K_i)\espace\\
+\it \itt{inc}_i^{\Ps}\ (\A,\K)\ =\ (C_i\ \A,\ (\top,\ldots,\top,\K,\top,\ldots,\top))\espace\\
+\it \itt{outc}_i^{\Ps}\ (\A,(\K_{\rm1},\ldots,\K_n))\ =\ (\OUTC_i\ \A,\ \K_i)\espace\\
+\it \itt{choose}^{\Ps}\ ((\A,\K),x_{\rm1},\ldots,x_n)\\
+\it \ \ \ \ \ =\ \left\{\ba{ll}\bot,&\it \ \ \ \ \mbox{\rm\ if}\ \A\not\se\glb_{\oin}\ C_i~\BOT\\
+\it x_{\rm1}\glb\ldots\glb{}x_n,&\it \ \ \ \ \mbox{\rm\ otherwise}\ea\right.\espace\\
+\it \itt{mkfun}^{\Ps}\ f\ =\ (\ID,f)\espace\\
+\it \itt{apply}^{\Ps}\ (\A,f)\ =\ \left\{\ba{lll}\bot,&\it \ \ \ \ \mbox{\rm\ if}\ \A=\BOT\\
+\it f,&\it \ \ \ \ \mbox{\rm\ if}\ \A=\ID\ \ea\right.\espace\\
+\it \itt{fix}^{\Ps}\ =\ \itt{gfp}\ \reason{Greatest\ fixed\ point}
+\eeqs
+}
+
+The defining constants for the projection semantics $\cE{\Ps}$ are
+given in Figure~\ref{fig:fsem}. The following notation is used for
+specifying projections on the data domains.  For sum type $\tsum$ with
+data domain $D_1\plus\ldots\plus D_n$ define $C_i~\A$ to be
+$\ID+\cdots+\ID+\A+\ID+\cdots+\ID$ where $\A$ is the $i^{th}$ summand,
+$\OUTC_i~(\G_1+\cdots+\G_n)$ to be $\G_i$, and $\OUTC_i~\BOT$ to be
+$\BOT$.
+
+\ \\
+\noindent {\bf The Central Result.}  For expression \mbox{\tt e} of type \mbox{\tt T} with free-variable
+environment of type \mbox{\tt E}, the functions $\Ee{\Ps}{\mbox{\tt e}}$,
+$\Ee{\Ss}{\mbox{\tt e}}$, and $\Ee{\Ss}{\mbox{\tt e}}$ are logically related by $\cR{}$,
+that is
+\beqs
+\it (\Re{}{\makebox{\tt E}}\fto\Re{}{\makebox{\tt T}})\ (\Ee{\Ps}{\makebox{\tt e}},\ \Ee{\Ss}{\makebox{\tt e}},\ \Ee{\Ss}{\makebox{\tt e}})\ .
+\eeqs
+Further, $\Re{}{\mbox{\tt T}}~((\A,\K),\cdot,\cdot)$ is a PER for all $\A$ and $\K$.\ \ $\Box$
+
+\ \\
+\noindent The bulk of proof is omitted; it consists of showing that the defining
+constants are similarly related, and a simple induction on the
+structure of expressions showing that if the defining constants are
+logically related, then so are the semantic functions.  By way of example
+we consider the expression form $\esum$, and the relevant defining constant
+$\it plus$.
+To show that $\it plus^{\Ss}$ and $\it plus^{\Ps}$ are correctly related
+we need to show that
+\beqqs
+\it ((\Re{}{\tint}\x\Re{}{\tint})\fto\Re{}{\tint})\ (&\it plus^{\Ps},\\
+\it &\it plus^{\Ss},\\
+\it &\it plus^{\Ss})\ ,
+\eeqqs
+that is, for all $\A_1$, $\A_2$, $d_1$, $d_2$, $d_1'$, and $d_2'$ that
+\beqs
+\it &\it \mit(\ID\ d_{\rm1}=\ID\ d_{\rm1}')\ \land\ (\ID\ d_{\rm2}=\ID\ d_{\rm2}')\\
+\it \limp&\it \mit\ID\ (d_{\rm1}+d_{\rm2})=\ID\ (d_{\rm1}'+d_{\rm2}')
+\eeqs
+and for $\A_1\neq\ID$ or $\A_2\neq\ID$ that
+\beqs
+\it &\it \mit(\A_{\rm1}\ d_{\rm1}=\A_{\rm1}\ d_{\rm1}')\ \land\ (\A_{\rm2}\ d_{\rm2}=\A_{\rm2}\ d_{\rm2}')\\
+\it \limp&\it \mit\BOT\ (d_{\rm1}+d_{\rm2})=\BOT\ (d_{\rm1}'+d_{\rm2}')\ .
+\eeqs
+For the inductive case $\esum$ with environment type \mbox{\tt E} we need to show that if
+\beqs
+\it (\Re{}{\makebox{\tt E}}\fto\Re{}{\tint})\ (\Ee{\Ps}{\eone},\ \Ee{\Ss}{\eone},\ \Ee{\Ss}{\eone})
+\eeqs
+and
+\beqs
+\it (\Re{}{\makebox{\tt E}}\fto\Re{}{\tint})\ (\Ee{\Ps}{\etwo},\ \Ee{\Ss}{\etwo},\ \Ee{\Ss}{\etwo})
+\eeqs
+then
+\beqqs
+\it (\Re{}{\makebox{\tt E}}\fto\Re{}{\tint})\ (&\it \Ee{\Ps}{\esum},\\
+\it &\it \Ee{\Ss}{\esum},\\
+\it &\it \Ee{\Ss}{\esum})\ .
+\eeqqs
+Suppose $\Re{}{\mbox{\tt E}}~(\R^{\Ps},\R^{\Ss},\R'^{\Ss})$.  By the induction
+hypothesis we have
+$\Re{}{\tint}~(\A_i,v_i,v'_i)$, where 
+$(\A_i,())=\Ee{\Ps}{\ei}~\R^{\Ps}$,
+$(v_i,())=\Ee{\Ps}{\ei}~\R^{\Ss}$, and
+$(v'_i,())=\Ee{\Ps}{\ei}~\R'^{\Ss}$, for $i=1,2$.
+Now
+\beqqs
+\it \Re{}{\tint}\ (&\it \Ee{\Ps}{\esum}\ \R^{\Ps},\\
+\it &\it \Ee{\Ss}{\esum}~\R^{\Ss},\\
+\it &\it \Ee{\Ss}{\esum}~\R'^{\Ss})
+\eeqqs
+iff
+\beqqs
+\it \Re{}{\tint}\ (&\it plus^{\Ps}\ ((\A_{\rm1},()),(\A_{\rm2},())),\\
+\it &\it plus^{\Ss}\ \mit((v_{\rm1},()),(v_{\rm2},())),\\
+\it &\it plus^{\Ss}\ \mit((v'_{\rm1},()),(v'_{\rm2},())))\ ,
+\eeqqs
+which holds since $\it plus^{\Ps}$ and $\it plus^{\Ps}$, and their various
+arguments, are correctly related.
+
+\section{Abstract Domains}
+
+At each type \mbox{\tt T} we require a finite abstraction of $\Te{\Ps}{\mbox{\tt T}}$.
+This abstract domain is ${\it{}FProj}_{\subtypespace\stt}\times{\it{}FFor}_{\subtypespace\stt}$,
+where ${\it{}FProj}_{\subtypespace\stt}$ is a finite abstraction of the lattice
+$\proj{\De{}{\mbox{\tt T}}}$, and ${\it{}FFor}_{\subtypespace\stt}$ is a finite abstraction
+of $\Tde{\Ps}{\mbox{\tt T}}$.  The definition of ${\it{}FProj}_{\subtypespace\stt}$ is based
+on that in \cite{Lau91a}.  A projection $\G$ is in
+${\it{}FProj}_{\subtypespace\stt}$ if $\G~\mbox{\bf proj}~\mbox{\tt T}$ can be inferred from
+the rules given in Figure~\ref{fig:infrules}.
+%
+\fig{tb}{Inference rules for finite projection domains.}{fig:infrules}{
+\beqs
+\it \begin{array}{lll}\axm{\BOT\ \ \mbox{\bf{}proj}\ \ \tint}\ \ \ \ \ \ \ \ \ \ &\it \axm{\ID\ \ \mbox{\bf{}proj}\ \ \tint}\espace\espace\\
+\it \axm{\BOT\ \ \mbox{\bf{}proj}\ \ \tfun}&\it \axm{\ID\ \ \mbox{\bf{}proj}\ \ \tfun}\end{array}\espace\espace\\
+\it \axm{\BOT\ \ \mbox{\bf{}proj}\ \ \tsum}\espace\espace\\
+\it \infero{\G_{\rm1}\ \ \mbox{\bf{}proj}\ \ \tone\ \ \cdots\ \ \G_n\ \ \mbox{\bf{}proj}\ \ \tn}{(C_{\rm1}\ \G_{\rm1})\glb\cdots\glb(C_n\ \G_n)\ \ \mbox{\bf{}proj}\ \ \tsum}\espace\espace\\
+\it \infero{\G_{\rm1}\ \ \mbox{\bf{}proj}\ \ \tone\ \ \cdots\ \ \G_n\ \ \mbox{\bf{}proj}\ \ \tn}{\G_{\rm1}\x\ldots\x\G_n\ \ \mbox{\bf{}proj}\ \ \tprod}\espace\espace\\
+\it \infer{\ba{ll}&\it \G_{\rm1}\ \ \mbox{\bf{}proj}\ \ \aone\ \ \cdots\ \ \G_n\ \ \mbox{\bf{}proj}\ \ \an\\
+\it \vdash&\it P(\G_{\rm1},\ldots ,\G_n)\ \ \mbox{\bf{}proj}\ \ \ti\makebox{\tt (}\aone\makebox{\tt ,...,}\an\makebox{\tt )}\ea}{\mu(\G_{\rm1},\ldots,\G_n).P(\G_{\rm1},\ldots,\G_n)\ \ \mbox{\bf{}proj}\ \ \ai}\espace\\
+\it \ \ \ \ \ [\mbox{\rm{}where}\ \ai\makebox{\tt =}\ti\makebox{\tt (}\aone\makebox{\tt ,...,}\an\makebox{\tt )}]
+\eeqs
+}
+For recursively-defined types the rules yield only those
+projections that act on each recursive instance of a data structure in
+the same way.  Thus ${\it{}FProj}_{\subtypespace{\makebox{\subtypesize\tt FunList}} }$ comprises $\BOT$ and
+$\SPINE~\A$ for $\A$ ranging over $\BOT$ and $\ID$, where
+\beqs
+\it \SPINE\ \A\ =\ \mu\G.(\itt{NIL}\ \ID)\ \glb\ (\itt{CONS}\ (\A\ \x\ \G))\ ,
+\eeqs
+so $\SPINE\ \BOT$ specifies static spines and dynamic elements, and
+$\SPINE\ \ID$ is the identity.  More generally, the abstract list
+constructor is isomorphic to lifting.  Similarly,
+${\it{}FProj}_{\subtypespace{\makebox{\subtypesize\tt FunTree}} }$
+comprises $\BOT$ and $\LBR\ \A$ for $\A$ ranging over $\BOT$ and $\ID$, where
+\beqs
+\it \LBR\ \A\ =\ \mu\G.(\itt{LEAF}\ \A)\ \glb\ (\itt{BRANCH}\ (\G\ \x\ \G))\ ,
+\eeqs
+so $\LBR\ \A$ specifies static branches and leaves, and $\A$ of the
+leaf nodes.  Again, the abstract tree constructor is isomorphic to
+lifting.  This compares favourably with
+BHA strictness analysis, for which the corresponding abstract
+constructors are typically {\it double\/} lifting \cite{Wad87,Sew93}.
+
+
+Value $\K$ is in ${\it{}FFor}_{\subtypespace\stt}$ if $\K~\bfabsf~\mbox{\tt T}$ can be
+inferred from the following.
+
+There is only one forward value at type $\tint$.
+\beqs
+\it \axm{()\ {}\ \bfabsf\ {}\ \tint}\ .
+\eeqs
+For products and sums,
+\beqs
+\it \infer{\K_{\rm1}\ {}\ \bfabsf\ {}\ \tone\ {\ }\ \cdots\ {\ }\ \K_n\ {}\ \bfabsf\ {}\ \tn}{(\K_{\rm1},\ldots,\K_n)\ {}\ \bfabsf\ {}\ \tprod}\ ,
+\eeqs
+%\espace\espace
+\beqs
+\it \infero{\K_{\rm1}\ {}\ \bfabsf\ {}\ \tone\ {\ }\ \cdots\ {\ }\ \K_n\ {}\ \bfabsf\ {}\ \tn}{(\K_{\rm1},\ldots,\K_n)\ {\ }\ \bfabsf\ {}\ \tsum}\ .
+\eeqs
+Function spaces consist of a set of step functions closed under lub.
+\beqs
+\it \infero{\ba{ll}\T_{\rm1}\in{\it{}FTran}_{\subtypespace\stone}\ {\ {\ }\ }\ \K_{\rm1}\ \bfabsf\ \tone\\
+\it \T_{\rm2}\in{\it{}FTran}_{\subtypespace\sttwo}\ {\ {\ }\ }\ \K_{\rm2}\ \bfabsf\ \ttwo\ea}{\it{}step\ ((\T_{\rm1},\K_{\rm1}),(\T_{\rm2},\K_{\rm2}))\ {}\ \bfabsf\ {}\ \tfunp}\ ,
+\eeqs
+where
+\beqs
+\it step\ (v_{\rm1},v_{\rm2})\ x\ =\ v_{\rm2},&\it {\rm\ if}\ v_{\rm1}\we{}x\\
+\it step\ (v_{\rm1},v_{\rm2})\ x\ =\ \bot,&\it {\rm\ otherwise}\ ,
+\eeqs
+and
+\beqs
+\it \infer{\K_{\rm1}\ {}\ \bfabsf\ {}\ \tfunp\ {\ {\ }\ }\ \K_{\rm2}\ {}\ \bfabsf\ {}\ \tfunp}{(\K_{\rm1}\lub\K_{\rm2})\ {}\ \bfabsf\ {}\ \tfunp}\ .
+\eeqs
+This gives the full space of monotonic functions on the abstract
+domains.
+
+For recursively-defined types, roughly speaking, we choose those
+forward values that represent each component of the same type by the
+same value.  Given type definitions $\tdefn$, which we will write
+$\mbox{\tt A}_i\mbox{\tt =T}_i\mbox{\tt (A}_1\mbox{\tt ,...,A}_n\mbox{\tt )},\ \oin$, if by assuming
+$\K_i~\bfabsf~\ai$ for $\oin$ we may deduce
+$P_i(\K_1,\ldots,\K_n)~\bfabsf~\ti(\aone\ldots\an)$ for $\oin$, then
+\beqs
+\it \mu(\K_{\rm1},\ldots ,\K_n).(P_{\rm1}(\K_{\rm1},\ldots ,\K_n),\ldots ,P_n(\K_{\rm1},\ldots ,\K_n))
+\eeqs
+is a tuple $(\K_1,...,\K_n)$ of values such that $\K_i\ \bfabsf\ \mbox{\tt A}_i$
+for $\oin$.
+
+For all \mbox{\tt T} the set ${\it{}FProj}_{\subtypespace\stt}\times{\it{}FFor}_{\subtypespace\stt}$ is a 
+finite lattice containing the top and bottom elements of $\Te{\Ps}{\mbox{\tt T}}$.
+
+For \mbox{\tt T} not containing \mbox{\tt ->} the domain $\Tde{\Ps}{\mbox{\tt T}}$ is isomorphic
+to $\one$, so ${\it{}FFor}_{\subtypespace\stint}$ is $\one$.  For \mbox{\tt Int}\ \mbox{\tt ->}\ \mbox{\tt Int}
+we have
+$\Tde{\Ps}{\mbox{\tt Int}\ \mbox{\tt ->}\ \mbox{\tt Int}}=(\proj{\De{}{\tint}}\x\one)\fto(\proj{\De{}{\tint}}\x\one)$,
+so ${\it{}FFor}_{\subtypespace{\makebox{\subtypesize\tt Int->Int}} }$ is
+$({\it{}FProj}_{\subtypespace\stint}\x\one)\fto({\it{}FProj}_{\subtypespace\stint}\x\one)$.  A
+data structure of recursive type \mbox{\tt A=T(A)} may be thought of as some
+(possibly infinite) number of elements of \mbox{\tt T(())}.  For example, the
+value $\itt{cons}\ (f,\ \itt{cons}\ (g,\ \itt{nil}\ ()))$ in the
+standard domain for \mbox{\tt FunList} decomposes into $\itt{cons}\ (f,())$,
+$\itt{cons}\ (g,())$, and $\itt{nil}\ ()$.  The (implicit) abstraction
+function maps such a data structure to the greatest lower bound of
+these elements, giving a safe abstraction of the nonstandard values of
+each element.  Thus
+${\it{}FFor}_{\subtypespace{\makebox{\subtypesize\tt A=T(A)}} }={\it{}FFor}_{\subtypespace{\makebox{\subtypesize\tt T(())}} }$, so
+${\it{}FFor}_{\subtypespace{\makebox{\subtypesize\tt FunList}} }\iso{\it{}FFor}_{\subtypespace{\makebox{\subtypesize\tt FunTree}} }\iso{\it{}FFor}_{\subtypespace{\makebox{\subtypesize\tt Int->Int}} }$.
+
+
+
+\section{Examples of Analysis}
+
+For all closed expressions \mbox{\tt e} the abstract value
+$\Ee{\Ps}{\mbox{\tt e}}~[\,]$ of \mbox{\tt e} is of the form $(\ID,\K)$, showing
+that closed expressions are always entirely static.  For expressions of
+function type the abstract forward value $\K$ is a function from
+abstract arguments of \mbox{\tt e} to abstract results.
+
+First we consider functions on lists.
+Let expression \mbox{\tt length} denote usual length function:
+\if 0\theisrr
+\begin{flushleft}
+\vspace{-0.0em}\makebox{\progsize\tt \ \ \ \ \ fix\ ({\char'134}length\ .\ {\char'134}xs\ .\ case\ xs\ of}\vspace{-0.0em}\\
+\makebox{\progsize\tt \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ nil\ u\ \ ->\ 0}\vspace{-0.0em}\\
+\makebox{\progsize\tt \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ cons\ p\ ->\ let\ (z,zs)\ =\ p\ in}\vspace{-0.0em}\\
+\makebox{\progsize\tt \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ 1\ +\ length\ zs)\ .}\vspace{-0.0em}
+\end{flushleft}
+\else
+\begin{flushleft}
+\vspace{-0.0em}\makebox{\progsize\tt \ \ \ \ \ fix\ ({\char'134}length\ .\ }\vspace{-0.0em}\\
+\makebox{\progsize\tt \ \ \ \ \ \ \ {\char'134}xs\ .\ case\ xs\ of}\vspace{-0.0em}\\
+\makebox{\progsize\tt \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ nil\ u\ \ ->\ 0}\vspace{-0.0em}\\
+\makebox{\progsize\tt \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ cons\ p\ ->\ let\ (z,zs)\ =\ p\ in}\vspace{-0.0em}\\
+\makebox{\progsize\tt \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ 1\ +\ length\ zs)\ .}\vspace{-0.0em}
+\end{flushleft}
+\fi
+The abstract forward value of \mbox{\tt length} is of the form
+$\L(\A,\K).(\T~\A,())$, where $\T$ maps $\SPINE~\BOT$ and $\SPINE~\ID$
+to $\ID$, and $\BOT$ to $\BOT$.  This reveals that the result of
+\mbox{\tt length} is independent of the values of list elements, and gives
+a static result when the argument has a static spine.
+
+
+Let \mbox{\tt append} stand for the expression denoting the usual function for
+appending two lists:
+\begin{flushleft}
+\vspace{-0.0em}\makebox{\progsize\tt \ \ \ \ \ fix\ ({\char'134}append\ .\ \ }\vspace{-0.0em}\\
+\makebox{\progsize\tt \ \ \ \ \ \ \ {\char'134}xs\ .\ {\char'134}ys\ .\ }\vspace{-0.0em}\\
+\makebox{\progsize\tt \ \ \ \ \ \ \ \ \ case\ xs\ of}\vspace{-0.0em}\\
+\makebox{\progsize\tt \ \ \ \ \ \ \ \ \ \ \ nil\ u\ \ ->\ ys}\vspace{-0.0em}\\
+\makebox{\progsize\tt \ \ \ \ \ \ \ \ \ \ \ cons\ p\ ->\ let\ (z,zs)\ =\ p\ in}\vspace{-0.0em}\\
+\makebox{\progsize\tt \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ cons\ (z,\ append\ zs\ ys))\ .}\vspace{-0.0em}
+\end{flushleft}
+The abstract value of \mbox{\tt append} is
+\beqs
+\it (\ID,\ \L(\A_{\subtypespace{\makebox{\subtypesize\tt xs}} },\K_{\subtypespace{\makebox{\subtypesize\tt xs}} }).\\
+\it (\ID,\ \L(\A_{\subtypespace{\makebox{\subtypesize\tt ys}} },\K_{\subtypespace{\makebox{\subtypesize\tt ys}} }).\\
+\it (\A_{\subtypespace{\makebox{\subtypesize\tt xs}} }\glb\A_{\subtypespace{\makebox{\subtypesize\tt ys}} },\ \K_{\subtypespace{\makebox{\subtypesize\tt xs}} }\glb\K_{\subtypespace{\makebox{\subtypesize\tt ys}} })))\ .
+\eeqs
+This reveals that partial applications of \mbox{\tt append} are static up to WHNF, and the
+abstract value of the result is the greatest lower bound of the two
+arguments.  In general, the abstract value of a closed expression
+of the form $\mbox{\tt {\char'134}x}_1\mbox{\tt .{\char'134}x}_2\ldots\mbox{\tt .e}$ will reveal that all partial
+applications of the expression are static up to WHNF.
+
+
+
+
+Let \mbox{\tt reverse1} stand for the expression denoting the naive reverse function:
+\begin{flushleft}
+\vspace{-0.0em}\makebox{\progsize\tt \ \ \ \ \ fix\ ({\char'134}reverse1\ .\ }\vspace{-0.0em}\\
+\makebox{\progsize\tt \ \ \ \ \ \ \ {\char'134}xs\ .\ case\ xs\ of}\vspace{-0.0em}\\
+\makebox{\progsize\tt \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ nil\ u\ ->\ }\vspace{-0.0em}\\
+\makebox{\progsize\tt \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ nil\ ()}\vspace{-0.0em}\\
+\makebox{\progsize\tt \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ cons\ p\ ->\ }\vspace{-0.0em}\\
+\makebox{\progsize\tt \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ let\ (z,zs)\ =\ p\ in}\vspace{-0.0em}\\
+\makebox{\progsize\tt \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ append\ (reverse\ zs)\ }\vspace{-0.0em}\\
+\makebox{\progsize\tt \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (cons\ (z,\ nil\ ())))\ .}\vspace{-0.0em}
+\end{flushleft}
+The abstract forward value of \mbox{\tt reverse1} is the identity, so the abstraction of
+the elements of a list doesn't change by reversing the list.
+
+Let \mbox{\tt compose} stand for \mbox{\tt {\char'134}f.{\char'134}g.{\char'134}x.f\ (g\ x)}.  The abstract value of \mbox{\tt compose} is
+\beqs
+\it (\ID,\ \L(\A_{\subtypespace{\makebox{\subtypesize\tt f}} },\K_{\subtypespace{\makebox{\subtypesize\tt f}} }).\\
+\it (\ID,\ \L(\A_{\subtypespace{\makebox{\subtypesize\tt g}} },\K_{\subtypespace{\makebox{\subtypesize\tt g}} }).\\
+\it (\ID,\ \left\{\ba{lll}\bot,&\it \mbox{\rm\ if}\ \A_{\subtypespace{\makebox{\subtypesize\tt f}} }=\BOT\mbox{\rm\ or}\ \A_{\subtypespace{\makebox{\subtypesize\tt g}} }=\BOT\\
+\it \K_{\subtypespace{\makebox{\subtypesize\tt f}} }\o\K_{\subtypespace{\makebox{\subtypesize\tt g}} },&\it \mbox{\rm\ otherwise}\ea\right\})))\ .
+\eeqs
+Thus, the
+result of the application of the composition of two functions is
+dynamic, and maps all values to dynamic values, if either function is
+dynamic; otherwise, the result is given by the application of the
+composition of the abstract forward values to the abstract argument.
+
+Let \mbox{\tt listcomp} stand for the expression denoting the function
+that composes lists of functions:
+\begin{flushleft}
+\vspace{-0.0em}\makebox{\progsize\tt \ \ \ \ \ fix\ ({\char'134}listcomp\ .\ }\vspace{-0.0em}\\
+\makebox{\progsize\tt \ \ \ \ \ \ \ {\char'134}fs\ .\ case\ fs\ of}\vspace{-0.0em}\\
+\makebox{\progsize\tt \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ nil\ u\ ->\ }\vspace{-0.0em}\\
+\makebox{\progsize\tt \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ {\char'134}x.x}\vspace{-0.0em}\\
+\makebox{\progsize\tt \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ cons\ p\ ->\ }\vspace{-0.0em}\\
+\makebox{\progsize\tt \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ let\ (g,gs)\ =\ p\ in\ }\vspace{-0.0em}\\
+\makebox{\progsize\tt \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ compose\ g\ (listcomp\ gs))\ .}\vspace{-0.0em}
+\end{flushleft}
+The abstract value of \mbox{\tt listcomp} is
+\beqs
+\it (\ID,\ \L(\A_{\subtypespace{\makebox{\subtypesize\tt fs}} },\K_{\subtypespace{\makebox{\subtypesize\tt fs}} }).\\
+\it (\ID,\ \left\{\ba{lll}\bot,&\it \mbox{\rm\ if}\ \A_{\subtypespace{\makebox{\subtypesize\tt fs}} }\neq\SPINE\ \ID\\
+\it \glb_{i\geq{\rm0}}(\K_{\subtypespace{\makebox{\subtypesize\tt fs}} })^i,&\it \mbox{\rm\ otherwise}\ea\right\}))\ .
+\eeqs
+Since the abstract values of lists contain no information about the
+length of the lists of which they are abstractions, the abstract value
+of the composition of list elements is the glb of the composition over
+all lengths.
+
+\commentout{
+Next we consider functions on trees.
+Let \mbox{\tt count} be short for
+\begin{flushleft}
+\vspace{-0.0em}\makebox{\progsize\tt \ \ \ \ \ fix\ ({\char'134}count\ .\ {\char'134}t\ .\ case\ t\ of}\vspace{-0.0em}\\
+\makebox{\progsize\tt \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ leaf\ l\ \ \ ->\ 1}\vspace{-0.0em}\\
+\makebox{\progsize\tt \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ branch\ p\ ->\ let\ (t1,t2)\ =\ p\ in}\vspace{-0.0em}\\
+\makebox{\progsize\tt \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ count\ t1\ +\ count\ t2)\ ,}\vspace{-0.0em}
+\end{flushleft}
+denoting the function that counts leaves.  The abstract forward value
+\mbox{\tt count} is of the form $\L(\A,\K).(\T~\A ())$, where $\T$ maps
+$\LBR~\BOT$ and $\LBR~\ID$ to $\ID$, and $\BOT$ to $\BOT$.  This
+reveals that the result of \mbox{\tt count} is independent of the values of leaf
+elements, and maps trees with static branch and leaf structure, but
+possibly dynamic values at the leaves, to static results.
+}
+
+Let \mbox{\tt flatten} stand for the expression denoting the function that flattens
+trees into lists:
+\begin{flushleft}
+\vspace{-0.0em}\makebox{\progsize\tt \ \ \ \ \ fix\ ({\char'134}flatten\ .\ }\vspace{-0.0em}\\
+\makebox{\progsize\tt \ \ \ \ \ \ \ {\char'134}t\ .\ case\ t\ of}\vspace{-0.0em}\\
+\makebox{\progsize\tt \ \ \ \ \ \ \ \ \ \ \ \ \ \ leaf\ l\ \ \ ->\ cons\ (l,\ nil\ ())}\vspace{-0.0em}\\
+\makebox{\progsize\tt \ \ \ \ \ \ \ \ \ \ \ \ \ \ branch\ p\ ->\ let\ (t1,t2)\ =\ p\ in}\vspace{-0.0em}\\
+\makebox{\progsize\tt \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ append\ (flatten\ t1)\ }\vspace{-0.0em}\\
+\makebox{\progsize\tt \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (flatten\ t2))\ .}\vspace{-0.0em}
+\end{flushleft}
+The abstract value of \mbox{\tt flatten} is
+\beqs
+\it (\ID,\ \L(\A_{\subtypespace{\makebox{\subtypesize\tt fs}} },\K_{\subtypespace{\makebox{\subtypesize\tt fs}} }).\\
+\it (\T\ \A,\ \left\{\ba{lll}\bot,&\it \mbox{\rm\ if}\ \T\ \A_{\subtypespace{\makebox{\subtypesize\tt fs}} }\neq\LBR\ \ID\\
+\it \K_{\subtypespace{\makebox{\subtypesize\tt fs}} },&\it \mbox{\rm\ otherwise}\ea\right\}))\ ,
+\eeqs
+where $\T$ maps $\BOT$ to $\BOT$, and $\LBR~\A$ to $\SPINE~\A$ for $\A$
+ranging over $\ID$ and $\BOT$.
+
+The function denoted by \mbox{\tt compose\ listcomp\ flatten} that composes
+trees of functions has abstract value
+\beqs
+\it (\ID,\ \L(\A_{\subtypespace{\makebox{\subtypesize\tt fs}} },\K_{\subtypespace{\makebox{\subtypesize\tt fs}} }).\\
+\it (\ID,\ \left\{\ba{lll}\bot,&\it \mbox{\rm\ if}\ \A_{\subtypespace{\makebox{\subtypesize\tt fs}} }\neq\LBR\ \ID\\
+\it \glb_{i\geq{\rm0}}(\K_{\subtypespace{\makebox{\subtypesize\tt fs}} })^i,&\it \mbox{\rm\ otherwise}\ea\right\}))\ .
+\eeqs
+Similarly to the case for lists, the abstract values of trees contain
+no information about the structure of the trees of which they are abstractions,
+so the abstract value of the composition of the values of the leaves
+is the glb of the composition over all tree structures.
+
+\commentout{
+Let \mbox{\tt treecomp} stand for the expression denote the function
+that composes trees of functions:
+\begin{flushleft}
+\vspace{-0.0em}\makebox{\progsize\tt \ \ \ \ \ fix\ ({\char'134}treecomp\ .\ {\char'134}t\ .\ case\ fs\ of}\vspace{-0.0em}\\
+\makebox{\progsize\tt \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ leaf\ f\ \ \ ->\ f}\vspace{-0.0em}\\
+\makebox{\progsize\tt \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ branch\ p\ ->\ let\ (t1,t2)\ =\ p\ in\ }\vspace{-0.0em}\\
+\makebox{\progsize\tt \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ compose\ (listcomp\ t1)\ (listcomp\ t2))\ ,}\vspace{-0.0em}
+\end{flushleft}
+The abstract value of \mbox{\tt treecomp} is simply
+\beqs
+\it (\ID,\ \L(\A_{\subtypespace{\makebox{\subtypesize\tt fs}} },\K_{\subtypespace{\makebox{\subtypesize\tt fs}} }).(\ID,\ \left\{\ba{lll}\bot&\it \ \ \ \ \ \ \mbox{\rm\ if}\ \A_{\subtypespace{\makebox{\subtypesize\tt fs}} }=\BOT\\
+\it \K_{\subtypespace{\makebox{\subtypesize\tt fs}} }&\it \ \ \ \ \ \ \mbox{\rm\ otherwise}\ \ea\ \right\}))\ .
+\eeqs
+That is ...}
+
+
+\section{More on Abstract Domains}
+
+The sizes of the abstract domains and the representations of the
+abstract values can be considerably optimised.  The nonstandard
+semantics of application---embodied by $\it apply^{\Ps}$---guarantees
+that the abstract values $(\BOT,f)$ and $(\BOT,f')$ from
+$\Te{\Ps}{\tfun}$, for all $f$ and $f'$, are effectively the same:
+$\it apply^{\Ps}~(\BOT,f)=\bot$ for all $f$.  A practical analyser
+would take advantage of this fact, identifying $(\BOT,f)$ over
+all $f$.  More generally, for function types embedded
+within data structures, e.g.\ $\mbox{\tt (}\tint\mbox{\tt ,}\tfun\mbox{\tt )}$, abstract values
+$((\A,()),(\BOT,f))$ would be identified over all $f$.
+
+In the following we restrict attention to {\it denotable\/} values:  at
+each type \mbox{\tt T} those values that can be expressed as $\Ee{}{\mbox{\tt e}}~[]$ for
+some \mbox{\tt e}.  For every value $v\in\Te{\Ss}{\mbox{\tt T}}$ there is a best
+abstraction---a greatest value $(\A,\K)\in\Te{\Ps}{\mbox{\tt T}}$ such that
+$\Re{}{\mbox{\tt T}}((\A,\K),v,v)$.  For types $\tone$ and $\ttwo$ not
+containing \mbox{\tt ->} we have
+$\Tde{\Ps}{\tfun}\iso(\proj{\De{}{\tone}}\x\one)\fto(\proj{\De{}{\ttwo}}\x\one)$,
+and if $\K\in\Tde{\Ps}{\mbox{\tt T}}$ is greatest such that
+$\Rde{}{\tfun}~(\K,f,f)$ for denotable $f$, then $\K$ maps $(\ID,())$
+to $(\ID,())$ and distributes over $\glb$.  The subset of functions
+from $\Tde{\Ps}{\tfun}$ that map $(\ID,())$ to $(\ID,())$ and
+distribute over $\glb$ forms a complete lattice, hence attention may be
+restricted to this subset.  Not only does this reduce the number of
+abstract functions, it also reduces their representation:  such
+functions are determined by their behaviour on the $\glb$-{\it basis\/}
+of the lattice $\proj{\De{}{\tone}}$---the set $B$ of values such that
+every element of $\proj{\De{}{\tone}}$ is the glb of some (possibly
+empty) subset of $B$, and no element of $B$ can be expressed as the glb
+of some subset not containing that element.  This optimisation can be
+generalised to higher order:  $\Tde{\Ps}{\tfun}$ may be restricted to
+functions that map $\top$ to $\top$ and distribute over $\glb$, for all
+function types $\tfun$.  (These results follow from those shown in
+\cite{Dav94}.)
+
+\section{Related Work}
+
+Consel \cite{Con90} describes a binding-time analysis for higher-order
+untyped languages.  As in our analysis abstract values have two parts,
+the first describing the static/dynamic properties of values, and the
+second describing how (for function types) abstract arguments are
+mapped to abstract results; there appears to be an implicit domain
+factorisation similar to ours, based on implicit type information
+collected by analysis semantics.  In this respect there are many
+superficial similarities between the two techniques.  No formal
+relation to the standard semantics is given, making a formal comparison
+with our technique problematic.
+
+\section{Conclusion}
+
+We have successfully generalised Launchbury's monomorphic
+projection-based binding-time analysis to higher-order, using
+abstract domains smaller than those typically used in BHA
+strictness analysis.
+
+The next step would be to generalise to handle Hindley-Milner
+polymorphism.  This has been done with good results at first order for
+binding-time analysis \cite{Lau91a}, and for BHA strictness analysis
+at higher order \cite{Bar91,Bar93}.  We anticipate that the combined
+use of these theories will give a reasonably straightforward generalisation
+to polymorphism.  In addition to making the analysis more widely applicable,
+this should also greatly reduce the run-time cost of analysis.
+
+Though not developed here, using the same approach it is
+possible to give a strictness analysis technique, again closely related to
+Hunt's PER-based strictness analysis technique \cite{Hun91}.
+
+\section{Acknowledgements}
+
+Thanks to the referees for their constructive comments on the first
+version of this paper.
+
+
+\begin{thebibliography}{123456}
+
+\bibitem[Abr89]{Abr89}
+S. Abramsky. 
+``The lazy lambda calculus.'' 
+{\it Research Topics in Functional Programming.}
+David Turner, ed., Addison-Wesley 1989.
+
+\bibitem[Abr90]{Abr90}
+S. Abramsky. 
+``Abstract interpretation, logical relations and Kan extensions.''
+{\it Journal of Logic and Computation}, 1, 1990.
+
+\bibitem[Bar91]{Bar91}
+G. Baraki.
+``A note on abstract interpretation of polymorphic functions.''
+In \cite{Hug91}.
+
+\bibitem[Bar93]{Bar93}
+G. Baraki.
+{\it Abstract Interpretation of Polymorphic Higher-Order Functions.}
+Ph.D. thesis, Research report FP-1993-7, 
+Department of Computing Science, University of Glasgow.
+
+\bibitem[BEJ88]{BEJ88}
+D. Bj{\odash}rner, A.P. Ershov, and N.D. Jones, eds.
+{\it Partial Evaluation and Mixed Computation,
+Proceedings IFIP TC2 Workshop, Gammel Avern{\ae}s}, Denmark, October 1987.
+North-Holland, 1988.
+
+\bibitem[Con90]{Con90}
+C. Consel. 
+``Binding Time Analysis for Higher Order Untyped Functional Languages.''
+Proceedings of the 1990 ACM Conference on LISP and 
+Functional Programming, pp264-272.
+
+\bibitem[Dav93]{Dav93b}
+K. Davis.
+``Higher-order Binding-time Analysis.'' 
+{\it Proceedings of the 1993 ACM on Partial Evaluation and
+Semantics-Based Program Manipulation (PEPM '93)},
+ACM Press, 1993.
+
+\bibitem[Dav94]{Dav94}
+K. Davis.\ \ 
+{\it Projection-based Program Analysis.}
+Thesis submitted for degree of Ph.D., Computing Science Department,
+University of Glasgow, 1994.
+
+\bibitem[Go92]{Go92}
+C.K. Gomard.
+``A self-applicable partial evaluator for the lambda calculus:  Correctness
+and pragmatics.''
+ACM TOPLAS, Vol 14, No.\ 2, April 1992.
+
+\bibitem[HM94]{HM94}
+F. Henglein and C. Mossin.
+``Polymorphic binding-time analysis.''
+European Symposium on Programming (ESOP '94).
+
+\bibitem[Hug91]{Hug91}
+J. Hughes, ed.
+{\it Proceedings of the 1991 Conference on Functional Programming Languages
+and Computer Architecture (FPCA '91)}, Cambridge, Sept 1991. LNCS 523,
+Springer Verlag, 1991.
+
+\bibitem[Hun91]{Hun91}
+S. Hunt.
+``PERs generalise projections for strictness analysis (extended abstract).''
+{\it Proceedings of the 1990 Glasgow Workshop
+on Functional Programming}.
+Simon L. Peyton Jones {\it et al.}, eds.
+Springer Workshops in Computing.
+Springer-Verlag, 1991.
+
+\bibitem[HS91]{HS91}
+S. Hunt and D. Sands.
+``Binding time analysis:  a new PERspective.''
+{\it ACM Symposium on Partial Evaluation
+and Semantics-Based Program Manipulation},
+SIGPLAN Notices Vol.\ 26, No.\ 9, 1991.
+
+\bibitem[Jen92]{Jen92}
+T. Jensen.
+{\it Abstract Interpretation in Logical Form}.
+Ph.D. thesis, Report 93/11, Department of Computer Science,
+University of Copenhagen, 1992.
+
+\bibitem[Jon88]{Jon88}
+N.D. Jones.
+``Automatic program specialization: A re-examination from
+basic principles.'' In \cite{BEJ88}.
+
+\bibitem[Lau88]{Lau88}
+J. Launchbury.
+``Projections for specialisation.''
+In \cite{BEJ88}.
+
+\bibitem[Lau91a]{Lau91a}
+J. Launchbury. 
+{\it Projection Factorisations in Partial Evaluation.} PhD
+Thesis, Glasgow University, Nov 89. Distinguished Dissertation in
+Computer Science, Vol 1, CUP, 1991.
+
+\bibitem[Lau91c]{Lau91c}
+J. Launchbury.
+``A strongly-typed, self-applicable partial evaluator.''
+In \cite{Hug91}.
+
+\bibitem[Mog89]{Mog89}
+T. Mogensen.
+``Binding-time analysis for polymorphically typed higher order languages.''
+{\it International Joint Conference on Theory and Practice of Software
+Development}. LNCS 352. Springer-Verlag 1989.
+
+\bibitem[NN88]{NN88}
+H.R. Nielson and F. Nielson.
+``Automatic binding-time analysis for a typed $\L$-calculus.''
+{\it Science of Computer Programming 10},
+North Holland, 1988.  Also in POPL '88.
+
+\bibitem[Sch88]{Sch88}
+D.A. Schmidt.
+``Static properties of partial reduction.''
+In \cite{BEJ88}.
+
+\bibitem[Sew93]{Sew93}
+J. Seward.
+``Polymorphic strictness analysis using frontiers.''
+{\it Proceedings of the 1993 ACM on Partial Evaluation and
+Semantics-Based Program Manipulation (PEPM '93)},
+ACM Press, 1993.
+
+\bibitem[Wad87]{Wad87}
+P. Wadler.
+``Strictness analysis on non-flat domains by abstract interpretation over finite domains. '' 
+S. Abramsky, C. Hankin, eds.
+{\it Abstract Interpretation of Declarative Languages.}
+Ellis-Horwood, 1987.
+
+
+\end{thebibliography}
+
+
+\end{document}
+

@@ -1,0 +1,115 @@
+From sestoft@id.dth.dk Fri Jul 22 15:49:16 1994
+Return-Path: <sestoft@id.dth.dk>
+Received: from idcad7.id.dth.dk by goggins.dcs.gla.ac.uk with SMTP (PP) 
+          id <28530-0@goggins.dcs.gla.ac.uk>; Fri, 22 Jul 1994 15:49:13 +0100
+Received: from localhost (sestoft@localhost) by idcad7.id.dth.dk (8.6.4/8.6.4) 
+          id QAA20428; Fri, 22 Jul 1994 16:49:44 +0200
+From: Peter Sestoft <sestoft@id.dth.dk>
+Message-Id: <199407221449.QAA20428@idcad7.id.dth.dk>
+Subject: PEPM special issue of Lisp and Symbolic ...
+To: clem@oak.canberra.edu.au (Clem Baker-Finch), 
+    davismk@dcs.gla.ac.uk (Kei Davis), birkedal@diku.dk (Lars Birkedal), 
+    jones-mark@cs.yale.edu (Mark P. Jones), danvy@daimi.aau.dk (Olivier Danvy), 
+    scourten@cs.ucl.ac.uk (Simon Courtenage)
+Date: Fri, 22 Jul 94 16:49:43 MET DST
+Cc: harald@cs.mu.oz.au (Harald Soendergaard)
+X-Mailer: ELM [version 2.2 PL14]
+Status: RO
+
+Dear Clem, Kei, Lars, Mark, Olivier, and Simon,
+
+As already indicated, we have an agreement with the editors (Carolyn
+Talcott and Bob Kessler) of the journal Lisp and Symbolic Computation
+(LASC) to publish a special issue based on papers from PEPM'94.
+Harald and I will be guest editors, and will organize the refereeing
+and do the selection.
+
+LASC has offered favourable conditions, which means that if we can
+revise the papers and produce the final papers in Latex form quickly,
+then we can have the special issue published with a minimal delay
+(even skipping other special issues which are in the pipeline).
+
+We hope to include six papers (listed below), but this allows only 16
+PAGES PER PAPER.  The LASC format is not nearly as dense as the ACM
+conference format, so this may be very hard to achieve, and we may
+have to include only five papers.
+
+Each paper will be reviewed by two `readers' among the other
+contributors, and by one external reviewer.  As all papers have been
+reviewed for PEPM already, we do not expect major revisions to be
+needed.
+
+Reviewers and authors should strive to achieve maximal soundness and
+clarity (and brevity) in the published papers.
+
+
+Schedule
+--------
+
+We suggest the following schedule.  Please tell us NOW if you know
+this is going to be impossible for you:
+
+Before September 15, 
+    readers send comments to authors, based on the proceedings version.
+    Meanwhile, authors should try to typeset their papers with the LASC
+    style (see below) to figure out how long they will be.
+
+Before November 1, 
+    authors revise their papers and send them to readers and to Peter and
+    Harald for a quick check.  Note: Peter is at AT&T Bell Labs in New
+    Jersey by that time; the usual e-mail address should continue to work.
+
+Before November 15, 
+    readers (and Peter and Harald) send back brief comments to authors.
+
+Before December 1, 
+    authors send final versions of their papers (in Latex source form) to
+    Peter, who forwards them to LASC with preface etc. immediately after
+    receiving the last one.
+
+The six suggested papers and the assigned readers are:
+
+Paper (first author)	Readers
+-----------------------------------------------
+Birkedal		Danvy, Jones
+Danvy			Birkedal, Jones
+Jones			Danvy, Birkedal 
+
+Baker-Finch		Davis, Courtenage
+Courtenage		Baker-Finch, Davis
+Davis			Baker-Finch, Courtenage
+
+(Authors of multi-author papers may share the reader jobs).
+
+
+LASC style file for Latex
+-------------------------
+The LASC style file smjrnl.sty can be obtained as follows:
+
+          ftp ftp.std.com 
+          Name: ftp
+          password: your e-mail address 
+
+          cd Kluwer/styles/journals 
+          get README
+	  get smjrnl.sty
+
+	  Read the README file, then get other files as necessary.
+
+Since LASC is a `small format journal', it suffices to get,
+uncompress, and untar the file
+
+	ftp.std.com:Kluwer/styles/journals/smjstyles.tar.Z
+
+It contains the style file, documentation, an article template, a
+sample article, and the README file.
+
+The faster you act, the sooner your paper will be published!
+
+Best regards,
+Harald and Peter
+-- 
+Peter Sestoft   *   sestoft@id.dtu.dk   *   Department of Computer Science
+Technical University of Denmark, Building 344      DK-2800 Lyngby, Denmark
+Tel: +45 45 93 33 32 * Direct: +45 45 93 12 22/3749 * Fax: +45 42 88 45 30
+
