@@ -180,7 +180,8 @@ void showIT(InfoTab *);
 
 // evaluate Object (not actual function) IN PLACE,
 // this should probably only happen in stgApply
-#define STGEVAL(e)					     \
+/* deprecated
+define STGEVAL(e)					     \
   do {							     \
   stgCurVal = e;					     \
   Cont *callCont = stgAllocCallOrStackCont(&it_stgCallCont, 0);     \
@@ -197,5 +198,6 @@ void showIT(InfoTab *);
     assert(false);					     \
   }							     \
 } while (0)
+*/
 
 #endif  //ifdef stg_h
