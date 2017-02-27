@@ -484,8 +484,8 @@ cgeNoInline :: Env -> Bool
 cgeNoInline env boxed (ecode, efunc) a@(Alts italts alts aname scrt) =
     let contName = "ccont_" ++ aname
         its = [citems|
-                $comment:("// scrutinee may STGJUMP or STGRETURN")
                 typename Cont *$id:contName = stgAllocCont(&$id:("it_" ++ aname));
+                $comment:("// no inline:  scrutinee may STGJUMP or STGRETURN")
                 $comment:("// dummy value for scrutinee, InfoTab initializes to unboxed")
                 $id:contName->payload[0].i = 0;
               |]
@@ -502,17 +502,17 @@ cgeNoInline env boxed (ecode, efunc) a@(Alts italts alts aname scrt) =
                       ++ intercalate " " x)
                       $items:(loadPayloadFVs env x 1 contName)
                     |])
-    in do (acode, afunc) <- cgalts env a boxed
+    in do (acode, afunc) <- cgaltsNoInline env a boxed
 --        need YPN results from Alts
           return ((its ++ ecode ++ acode, Possible),
                   efunc ++ afunc)
 
 
 -- ADef only or unary sum => no C switch
-cgalts :: Env -> Alts InfoTab -> Bool
+cgaltsNoInline :: Env -> Alts InfoTab -> Bool
   -> State Int ([BlockItem], [(Definition, CFun)])
 
-cgalts env (Alts it alts name scrt) boxed =
+cgaltsNoInline env (Alts it alts name scrt) boxed =
     let contName = "ccont_" ++ name
         fvp = "fvp"
         -- scrutinee now has a name in the environment
