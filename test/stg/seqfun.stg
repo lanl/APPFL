@@ -1,0 +1,4 @@
+
+main = THUNK(case seq odd even of scrut {
+       	       x -> true }
+	    )
