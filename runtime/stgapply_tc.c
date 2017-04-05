@@ -126,15 +126,17 @@ FnPtr stgApply3();
 
 
 FnPtr stgApplyCurVal() {
-  Cont *stackframe = stgGetStackArgp(myThreadID());
-  stackframe->payload[0] = stgCurVal;
+  int id = myThreadID();
+  Cont *stackframe = stgGetStackArgp(id);
+  stackframe->payload[0] = stgCurVal[id];
   stackframe->entryCode = &stgApply;
   STGRETURN0();
 }
 
 // hack for now, should do in codegen
 FnPtr stgApply() {
-  Cont *stackframe = stgGetStackArgp(myThreadID());
+  int id = myThreadID();
+  Cont *stackframe = stgGetStackArgp(id);
   int argc = stackframe->layout.bitmap.size;
   // extra param to stgApply2
   stackframe = stgAdjustTopContSize(stackframe, 1);
@@ -150,27 +152,37 @@ FnPtr stgApply() {
   #endif
 
   stackframe->entryCode = &stgApply2;
-  stgCurVal = stackframe->payload[1];  // the funoid
+  stgCurVal[id] = stackframe->payload[1];  // the funoid
   STGJUMP();  // bye bye
 }
 
 // eval the funoid first
 FnPtr stgApplyNew() {
-  Cont *stackframe = stgGetStackArgp(myThreadID());
+  int id = myThreadID();
+  LOG(LOG_DEBUG,"stgApplyNew thread=%d\n",id);
+  Cont *stackframe = stgGetStackArgp(id);
   stackframe->entryCode = &stgApply2;
-  stgCurVal = stackframe->payload[1];  // the funoid
+  stgCurVal[id] = stackframe->payload[1];  // the funoid
   STGJUMP();  // bye bye
 }
 
 FnPtr stgApply2() {
-  Cont *stackframe = stgGetStackArgp(myThreadID());
+  int id = myThreadID();
+  LOG(LOG_DEBUG,"stgApply 2 thread=%d\n",id);
+  Cont *stackframe = stgGetStackArgp(id);
   derefStgCurVal();
   // capture something just evaluated
   int argvInd = stackframe->payload[0].i;
   // argv is old stgApply args (including funoid)
   PtrOrLiteral *argv = &stackframe->payload[1];
   // argvInd == 0 is funoid
-  argv[argvInd] = stgCurVal;
+  argv[argvInd] = stgCurVal[id];
+
+  LOG(LOG_DEBUG, "index %d ",argvInd);
+  showStgVal(LOG_DEBUG, stgCurVal[id]);
+  LOG(LOG_DEBUG, "\n");
+
+
   // any more?
   int argsToEval = 0;
   int appargc = stackframe->layout.bitmap.size - 2;  // skip new arg, funoid
@@ -203,33 +215,39 @@ FnPtr stgApply2() {
 
   if (argvInd <= argsToEval) {
     stackframe->payload[0].i = argvInd;
-    stgCurVal = argv[argvInd];
+    stgCurVal[id] = argv[argvInd];
 
     derefStgCurVal();
-    switch (getObjType(stgCurVal.op)) {
+
+    //LOG(LOG_DEBUG, "stgcurval %d ",argvInd);
+    //showStgVal(LOG_DEBUG, stgCurVal[id]);
+    //LOG(LOG_DEBUG, "\n");
+
+    switch (getObjType(stgCurVal[id].op)) {
     case THUNK:
       LOG(LOG_DEBUG, "THUNK to queue ");
-      showStgVal(LOG_DEBUG, stgCurVal);
+      showStgVal(LOG_DEBUG, stgCurVal[id]);
       LOG(LOG_DEBUG, "\n");
-      NQ_enqueue((T)(getInfoPtr(stgCurVal.op)->entryCode));
+      
+      NQ_enqueue((T)(stgCurVal[id].op));
 #if USE_QUEUE
+      //argv[argvInd].op->objType = BLACKHOLE;
+      //argv[argvInd].op->_infoPtr = setLSB2(argv[argvInd].op->_infoPtr);
+      STGJUMP0(stgApplyNew);
 #else
       //TODO:  remove once queue is serviced
-      STGJUMP0(getInfoPtr(stgCurVal.op)->entryCode);
+      STGJUMP0(getInfoPtr(stgCurVal[id].op)->entryCode);
 #endif
       break;
     case BLACKHOLE:
       //TODO: someone else may already be eval'ing?
       LOG(LOG_DEBUG, "stgApply BLACKHOLE\n");
-      showStgVal(LOG_DEBUG, stgCurVal);
+      showStgVal(LOG_DEBUG, stgCurVal[id]);
       break;
     default:
-      STGJUMP0(getInfoPtr(stgCurVal.op)->entryCode);
+      STGJUMP0(getInfoPtr(stgCurVal[id].op)->entryCode);
       break;
     }
-
-    // tail call self after evaluating arg
-    //STGJUMP();
   }
 
   // fix stack frame for old stgApply
@@ -245,9 +263,10 @@ FnPtr stgApply2() {
 }
 
 FnPtr stgApply3() {
-
+  int id = myThreadID();
+  LOG(LOG_DEBUG,"stgApply 3 thread=%d\n",id);
   // STACKCONT with actual parameters
-  Cont *stackframe = stgGetStackArgp(myThreadID());
+  Cont *stackframe = stgGetStackArgp(id);
   assert(getContType(stackframe) == STACKCONT);
   // back to normal
   stackframe->entryCode = &stgStackCont;
@@ -317,7 +336,7 @@ FnPtr stgApply3() {
       LOG(LOG_INFO, "stgApply FUN inserting %d args into new PAP\n", argc);
       memcpy(&pap->payload[fvCount+1], &argv[1], argc * sizeof(PtrOrLiteral));
       // this is return value, don't NULLify
-      stgCurVal = HOTOPL(pap);
+      stgCurVal[id] = HOTOPL(pap);
       LOG(LOG_INFO, "new PAP:  "); showStgObj(LOG_INFO, pap);
       // pop stgApply cont - superfluous, it's self-popping
       stgPopCont();
@@ -423,7 +442,7 @@ FnPtr stgApply3() {
       LOG(LOG_INFO, "new PAP:  ");
       showStgObj(LOG_INFO, newpap);
       // this is return value
-      stgCurVal = HOTOPL(newpap);
+      stgCurVal[id] = HOTOPL(newpap);
       stgPopCont();
       STGRETURN0();
     } // if excess

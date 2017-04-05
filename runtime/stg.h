@@ -99,12 +99,13 @@ bool mayBeUnboxed(PtrOrLiteral v);
 // %rbx, %rbp, %r10, %r13, %r14, %r15 callee saved
 // TODO:  make heap, stack pointers registers, test performance
 // TODO:  distinguish stgCurVal as stgCurPtr and stgCurUbx
-#if !defined(__clang__) && !USE_ARGTYPE
+
+#if 0 //!defined(__clang__) && !USE_ARGTYPE
 register PtrOrLiteral stgCurVal asm("%r14");  // current/return value
 register PtrOrLiteral stgCurValU asm("%r13");  // current/return value
 #else
-extern PtrOrLiteral stgCurVal;  // current/return value
-extern PtrOrLiteral stgCurValU;  // current/return value
+extern PtrOrLiteral stgCurVal[MAX_THREADS];  // current/return value
+extern PtrOrLiteral stgCurValU[MAX_THREADS];  // current/return value
 #endif
 
 extern void *stgHeap, *stgHP;
@@ -162,12 +163,12 @@ void showIT(InfoTab *);
 #define STGJUMP()						     \
   do {								     \
   derefStgCurVal();						     \
-  if (getObjType(stgCurVal.op) == BLACKHOLE) {			     \
+  if (getObjType(stgCurVal[myThreadID()].op) == BLACKHOLE) {			     \
     LOG(LOG_ERROR, "STGJUMP terminating on BLACKHOLE\n");	     \
-    showStgVal(LOG_ERROR, stgCurVal);				     \
+    showStgVal(LOG_ERROR, stgCurVal[myThreadID()]);				     \
     exit(0);							     \
   }								     \
-  STGJUMP0(getInfoPtr(stgCurVal.op)->entryCode);		     \
+  STGJUMP0(getInfoPtr(stgCurVal[myThreadID()].op)->entryCode);		     \
 } while (0)
 
 // return through continuation stack
@@ -182,6 +183,7 @@ void showIT(InfoTab *);
 
 // evaluate Object (not actual function) IN PLACE,
 // this should probably only happen in stgApply
+#if 0
 #define STGEVAL(e)					     \
   do {							     \
   stgCurVal = e;					     \
@@ -199,5 +201,6 @@ void showIT(InfoTab *);
     assert(false);					     \
   }							     \
 } while (0)
+#endif
 
 #endif  //ifdef stg_h

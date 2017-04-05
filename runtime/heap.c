@@ -40,11 +40,14 @@ Obj *derefPoL(PtrOrLiteral f) {
   return derefHO(f.op);
 }
 
+
+// TODO: pass id
 void derefStgCurVal() {
-  assert(mayBeBoxed(stgCurVal)); // return stgCurVal
-  while (getObjType(stgCurVal.op) == INDIRECT) { // return stgCurVal
-    stgCurVal = stgCurVal.op->payload[0]; // return stgCurVal
-    assert(mayBeBoxed(stgCurVal)); // return stgCurVal
+  int id = myThreadID();
+  assert(mayBeBoxed(stgCurVal[id])); // return stgCurVal
+  while (getObjType(stgCurVal[id].op) == INDIRECT) { // return stgCurVal
+    stgCurVal[id] = stgCurVal[id].op->payload[0]; // return stgCurVal
+    assert(mayBeBoxed(stgCurVal[id])); // return stgCurVal
   }
 }
 

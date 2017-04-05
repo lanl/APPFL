@@ -5,6 +5,7 @@
 #include "nodequeue.h"
 #include "stack.h"
 #include "stg.h"
+#include "stgutils.h"
 #include "log.h"
 #include "options.h"
 
@@ -92,7 +93,15 @@ void serviceQueue(void *p) {
     if(NQ_dequeue(&f)) {
       LOG(LOG_DEBUG,"dequeue %lu\n",f);
 #if USE_QUEUE
-      (((CmmFnPtr)f)());
+#if USE_ARGTYPE
+      stgCurVal[nextID].argType = HEAPOBJ;
+#endif
+      stgCurVal[nextID].op = (Obj *)(f);
+      showStgVal(LOG_DEBUG, stgCurVal[nextID]);
+
+      stgAllocCallOrStackCont(nextID, &it_stgCallCont, 0);
+
+      (getInfoPtr(stgCurVal[nextID].op)->entryCode)();
 #endif
     } 
     nanosleep(&polling, NULL);

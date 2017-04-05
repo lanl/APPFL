@@ -96,13 +96,14 @@ iff b x y = if b then x else y
 cgStart :: Definition
 cgStart =
   let its = [citems|
-              typename Cont *showResultCont = stgAllocCallOrStackCont(myThreadID(), &it_stgShowResultCont, 0);
+              int id = myThreadID();
+              typename Cont *showResultCont = stgAllocCallOrStackCont(id, &it_stgShowResultCont, 0);
               (void)showResultCont; // suppress warning
             |]
-          ++ (if useArgType then [citems| stgCurVal.argType = HEAPOBJ; |] else [])
+          ++ (if useArgType then [citems| stgCurVal[id].argType = HEAPOBJ; |] else [])
           ++ [citems|
-                stgCurVal.op = &sho_main;
-                STGJUMP0(getInfoPtr(stgCurVal.op)->entryCode);
+                stgCurVal[id].op = &sho_main;
+                STGJUMP0(getInfoPtr(stgCurVal[id].op)->entryCode);
              |]
       f = [cfun|
             typename FnPtr start()
@@ -270,16 +271,17 @@ cgo env o@(THUNK it e name) =
     ((inline,ypn), funcs) <- cge env' e
     let comm = [cedecl|$esc:("\n// " ++ show (ctyp it))|]
         top = [citems|
-                LOG(LOG_INFO, $string:(name ++ " here thread=%d\n"),myThreadID());
+                int id = myThreadID();
+                LOG(LOG_INFO, $string:(name ++ " here thread=%d\n"), id);
                 $comment:("// access free vars through frame pointer for GC safety")
                 $comment:("// is this really necessary???");
-                typename Cont *stg_fp = stgAllocCallOrStackCont(myThreadID(), &it_stgStackCont, 1);
+                typename Cont *stg_fp = stgAllocCallOrStackCont(id, &it_stgStackCont, 1);
                 stg_fp->layout = (typename Bitmap64)$ulint:(npStrToBMInt "P");
-                stg_fp->payload[0] = stgCurVal;
+                stg_fp->payload[0] = stgCurVal[id];
                 typename PtrOrLiteral *$id:fvpp = &(stg_fp->payload[0]);
                 (void)$id:fvpp; // suppress warning
-                stgThunk(stgCurVal);
-                stgCurVal.op = NULL;
+                stgThunk(stgCurVal[id]);
+                stgCurVal[id].op = NULL;
               |]
         bot = [citems| STGRETURN0();|]
         items = if ypn /= Yes then top ++ inline ++ bot else top ++ inline
@@ -330,7 +332,7 @@ stgApplyGeneric env f eas direct =
 
 stgCurValUArgType :: String -> [BlockItem]
 stgCurValUArgType ty = if useArgType
-                           then [citems| stgCurValU.argType = $id:ty; |]
+                           then [citems| stgCurValU[myThreadID()].argType = $id:ty; |]
                            else []
 
 cge :: Env
@@ -342,14 +344,14 @@ cge env e@(EAtom it a) =
         if isBoxede e then
           [citems|
             $comment:comm
-            stgCurVal = $exp:expr;
+            stgCurVal[myThreadID()] = $exp:expr;
             $comment:("// boxed EAtom, stgCurVal updates itself")
             STGJUMP();
           |]
         else
           [citems|
             $comment:("// " ++ showa a)
-            stgCurValU = $exp:expr;
+            stgCurValU[myThreadID()] = $exp:expr;
             $comment:("// unboxed EAtom")
           |]
   in return ((inline, if isBoxede e then Yes else No), [])
@@ -371,7 +373,7 @@ cge env (EPrimOp it op info eas) =
           -- Just do it? Modify stgCurVal?
           PVoid  -> [citems| $pexpr; |]
           _      -> stgCurValUArgType (primTyArgType pRetTy) ++
-                     [citems| stgCurValU.$id:(primTypeStrId pRetTy) = $pexpr; |]
+                     [citems| stgCurValU[myThreadID()].$id:(primTypeStrId pRetTy) = $pexpr; |]
     in return ((inline, No), [])
   where
     --  What ArgType do I use for some PrimType
@@ -450,11 +452,11 @@ cgaltsInline env a@(Alts it alts name scrt) boxed =
                 |]
                ++ (if boxed then
                     [citems|
-                      $id:contName->payload[0] = stgCurVal;
+                      $id:contName->payload[0] = stgCurVal[myThreadID()];
                       stgCurVal.op = NULL;
                     |]
                   else
-                    [citems|$id:contName->payload[0] = stgCurValU;|])
+                    [citems|$id:contName->payload[0] = stgCurValU[myThreadID()];|])
                ++ [citems|
                     typename PtrOrLiteral *$id:scrutPtr =
                       &($id:contName->payload[0]);
@@ -469,7 +471,7 @@ cgaltsInline env a@(Alts it alts name scrt) boxed =
                        |]
                      else
                        [citems|
-                         switch(stgCurValU.i) {
+                         switch(stgCurValU[myThreadID()].i) {
                             $items:(concat codes)
                          }
                        |]
@@ -527,30 +529,31 @@ cgalts env (Alts it alts name scrt) boxed =
       let (codeypns, funcss) = unzip codefuncs
       let (codes, ypns) = unzip codeypns
       let its = [citems|
-                  LOG(LOG_INFO, $string:(name ++ " here thread=%d\n"),myThreadID());
-                  typename Cont *$id:contName = stgGetStackArgp(myThreadID());
+                  int id = myThreadID();
+                  LOG(LOG_INFO, $string:(name ++ " here thread=%d\n"), id);
+                  typename Cont *$id:contName = stgGetStackArgp(id);
                   $comment:("// make self-popping")
                   stgCaseToPopMe($id:contName);
                   typename PtrOrLiteral *$id:fvp = &($id:contName->payload[0]);
                 |]
               ++ (if boxed then
                    [citems|
-                      $id:fvp[0] = stgCurVal;
+                      $id:fvp[0] = stgCurVal[id];
                       $id:contName->layout.bitmap.mask |= 0x1;
                     |]
                   else
-                    [citems| $id:fvp[0] = stgCurValU;|])
+                    [citems| $id:fvp[0] = stgCurValU[id];|])
               ++ (if switch then
                     if boxed then
                       [citems|
-                        stgCurVal.op = NULL;
+                        stgCurVal[id].op = NULL;
                         switch(getInfoPtr($id:fvp[0].op)->conFields.tag) {
                           $items:(concat codes)
                         }
                      |]
                     else
                       [citems|
-                        switch(stgCurValU.i) {
+                        switch(stgCurValU[id].i) {
                          $items:(concat codes)
                         }
                       |]

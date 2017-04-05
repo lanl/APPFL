@@ -225,9 +225,11 @@ void gc(void) {
   if (USE_PERFCOUNTERS && rtArg.perfCounters) perfCounter.heapCollections++;
   if (USE_PERFCOUNTERS && rtArg.perfCounters > 2)  start_t = clock();
 
-  // add stgCurVal
-  if (stgCurVal.op != NULL)
-    processObj(stgCurVal.op);
+  // add stgCurVals
+  for (int i = 0; i != rtArg.nThreads+1; i++) {
+    if (stgCurVal[i].op != NULL)
+      processObj(stgCurVal[i].op);
+  }
 
   // all SHO's
   for (int i = 0; i < stgStatObjCount; i++) {
@@ -245,9 +247,11 @@ void gc(void) {
 
   //all roots are now added.
 
-  //update stgCurVal
-  if (stgCurVal.op != NULL)
-    stgCurVal = updatePtrByValue(stgCurVal);
+  //update stgCurVals
+  for (int i = 0; i != rtArg.nThreads+1; i++) {
+    if (stgCurVal[i].op != NULL)
+      stgCurVal[i] = updatePtrByValue(stgCurVal[i]);
+  }
 
   // process "to" space
   while (scanPtr < freePtr) {

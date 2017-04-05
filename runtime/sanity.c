@@ -160,11 +160,13 @@ int addObjects(Obj *objArray[]) {
     addObject(stgStatObj[i], objArray, &objCount, false);
   }
 
-  //search for / add stgCurVal
-  if (stgCurVal.op != NULL &&
-      !isInObjArray(objArray, objCount, stgCurVal.op)) {
-    assert(mayBeBoxed(stgCurVal) && "sanity: unexpected unboxed val in stgCurVal");
-    addObject(stgCurVal.op, objArray, &objCount, false);
+  //search for / add stgCurVals
+  for (int i = 0; i != rtArg.nThreads+1; i++) {
+    if (stgCurVal[i].op != NULL &&
+        !isInObjArray(objArray, objCount, stgCurVal[i].op)) {
+      assert(mayBeBoxed(stgCurVal[i]) && "sanity: unexpected unboxed val in stgCurVal");
+      addObject(stgCurVal[i].op, objArray, &objCount, false);
+    }
   }
 
   int i = 0;
@@ -215,9 +217,9 @@ int addObjects(Obj *objArray[]) {
 Obj **mallocArrayOfAllObjects() {
   //the total array size will be the number of heap objects + the number of static heap objects
   //times size the of an object pointer
-  //remember: make more space for stgCurVal
+  //remember: make more space for stgCurVals
   size_t numHeapObjs = ((char *)stgHP - (char *)stgHeap) / sizeof(Obj);
-  Obj **objArray = malloc (sizeof(Obj *) * (numHeapObjs + stgStatObjCount + 1));
+  Obj **objArray = malloc (sizeof(Obj *) * (numHeapObjs + stgStatObjCount + rtArg.nThreads +1));
 
   return objArray;
 }

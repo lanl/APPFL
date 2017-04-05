@@ -33,11 +33,11 @@ size_t stgStackSizes[MAX_THREADS];
 
 PrefCounters perfCounter = {0};
 
-#if !defined(__clang__) && !USE_ARGTYPE
+#if 0 //!defined(__clang__) && !USE_ARGTYPE
 // register PtrOrLiteral stgCurVal asm("%r15");  // current value STG register
 #else
-PtrOrLiteral stgCurVal;  // current/return value
-PtrOrLiteral stgCurValU;  // current/return value
+PtrOrLiteral stgCurVal[MAX_THREADS];  // current/return value
+PtrOrLiteral stgCurValU[MAX_THREADS];  // current/return value
 #endif
 
 const char *objTypeNames[] = {
