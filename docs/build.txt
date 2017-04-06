@@ -1,6 +1,27 @@
 build notes:
 -------------------------------
 
+Removing Haskell Platform - assumes installation from .tar.gz, not system package manager
+
+# remove user files
+rm -rf ~/.ghc ~/.cabal
+# remove system files
+sudo rm -rf /usr/local/haskell
+# remove dead symlinks
+sudo find /usr/local -xtype l -delete
+
+-----------------------------------------------------------------------------------------
+
+Installing Haskell Platform
+
+tar xf haskell-platform-7.10.3-unknown-posix-x86_64.tar.gz
+
+sudo ./install-haskell-platform.sh
+
+cabal update
+
+------------------------------
+
 Requirements:
 
 Haskell Platform 7.10.x (may work with 7.8.x as well but not currently used for development)
@@ -10,9 +31,9 @@ recent gcc/clang (gcc 4.8.x tested on linux, xcode 6 tested on mac)
 
 we require a few packages not in the haskell platform: language-c-quote, ghc-paths and pretty-show
 
-$ cabal install language-c-quote ghc-paths pretty-show
+$ cabal install language-c-quote ghc-paths pretty-show 
 
-------------------------------
+-----------------------------------------------------------------------------------------
 
 to build full compiler:
 
@@ -86,5 +107,6 @@ Runtime flags to binaries:
 
 -g         -- disable Garbage Collection
 -t <float> -- set Garbage Collection Threshold
--e <int>   -- evaluation strategy (0->non-strict 1->strict)  
+-e <int>   -- evaluation strategy (0->non-strict 1->strict)
+
 

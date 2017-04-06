@@ -52,11 +52,11 @@ import Util
 
   Boxed type    \pi    ::=  \alpha                   Type variable
                         |   \tau -> \tau             Function type
-                        |   \Chi \pi_1 ... \pi_n   Parameterized boxed data type
+                        |   \Chi \pi_1 ... \pi_n     Parameterized boxed type constructor
 
   Unboxed type  \nu     ::=  Int#
                          |   Double#
-                         |   \Chi# \pi_1 ... \pi_n   Parameterized unboxed data type
+                         |   \Chi# \pi_1 ... \pi_n   Parameterized unboxed type constructor
 
 -}
 
