@@ -181,26 +181,4 @@ void showIT(InfoTab *);
     RETURN0();						\
   } while(0)
 
-// evaluate Object (not actual function) IN PLACE,
-// this should probably only happen in stgApply
-#if 0
-#define STGEVAL(e)					     \
-  do {							     \
-  stgCurVal = e;					     \
-  Cont *callCont = stgAllocCallOrStackCont(&it_stgCallCont, 0);     \
-  callCont->layout.bits = 0x0UL;			     \
-  STGCALL0(getInfoPtr(stgCurVal.op)->entryCode);	     \
-  if (getObjType(stgCurVal.op) == BLACKHOLE) {		     \
-    LOG(LOG_ERROR, "STGEVAL terminating on BLACKHOLE\n");   \
-    showStgVal(LOG_ERROR, stgCurVal);			     \
-    exit(0);						     \
-  }							     \
-  if (getObjType(stgCurVal.op) == THUNK) {		     \
-    LOG(LOG_ERROR, "THUNK at end of STGEVAL!\n");	     \
-    showStgVal(LOG_ERROR, stgCurVal);			     \
-    assert(false);					     \
-  }							     \
-} while (0)
-#endif
-
 #endif  //ifdef stg_h

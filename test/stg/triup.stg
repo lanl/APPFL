@@ -1,0 +1,18 @@
+
+tri = FUN(x -> let
+{
+  triup = FUN(y -> case eqInt x y of _scrt {
+                     True  -> x;
+		     False -> let {
+		                s = THUNK(plusInt y one);
+				rec = THUNK(triup s)
+			      } in plusInt y rec})
+} in triup zero);
+
+--Test
+output = THUNK(tri seven);
+
+result = CON(I 28);
+
+main = THUNK(eqInt output result);
+

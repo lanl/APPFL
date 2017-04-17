@@ -1,0 +1,2017 @@
+
+%% Kluwer Small Journal Article Sample File
+%% June 20, 1994
+
+%%   Use one of these two commands: 
+\documentstyle{smjrnl} % For Computer Modern Fonts, or
+%\documentstyle[smjfonts]{smjrnl} % for PostScript fonts
+
+
+
+\begin{document}
+\begin{article}
+
+%%%%% To be entered at Kluwers: =====>>
+
+\journame{Lisp and Symbolic Computation}
+\volnumber{?}
+\issuenumber{?}
+\issuemonth{?}
+\volyear{1995}
+
+%% Do not delete either of the following two commands.
+%% Please supply facing curly brackets for the part you
+%% are not using for this article.
+%\received{May 1, 1991}\revised{}
+
+\authorrunninghead{K. Davis}
+\titlerunninghead{PERs from Projections for Binding-time Analysis}
+
+\setcounter{page}{1} %% This command is optional. 
+                       %% May set page number only for first page in
+                       %% issue, if desired.
+
+%% <<== End of commands to be entered at Kluwers 
+
+
+%%  Authors, start here ==>>
+
+\newcommand{\com}{\newcommand}
+\com{\rcom}{\renewcommand}
+
+\rcom{\ddagger}{*}
+
+% -------- A figure with a line at top and bottom, a caption and a label
+% -------- Syntax: \fig{figoptions}{caption}{label}{ ..... }
+\com{\fig}[4]{
+\begin{figure}[#1]
+\begin{center}
+\begin{minipage}{\columnwidth}
+\rule[1ex]{\textwidth}{1pt}
+%\vspace{1ex}
+#4
+\vspace{-1em}
+\caption{#2 \label{#3}}
+\rule[1ex]{\textwidth}{1pt}
+\end{minipage}
+\end{center}
+\vspace{-3ex}
+\end{figure}
+}
+
+\com{\progsize}{}                       % displayed prog
+\com{\subtypesize}{\footnotesize}       % sub type
+\com{\subsubtypesize}{\scriptsize}      % footnote-sub or sub-sub type--\sstt
+\com{\subtypesubstyle}{\scriptstyle}    % scriptscriptstyle/scriptstyle
+\com{\subtypespace}{\hspace{0.0pt}}     % initial spacing before type subscript
+
+
+%\com{\backup}{\hspace{-0.12cm}}
+\com{\espace}{\vspace{6pt}}
+\com{\itt}[1]{\mbox{\it #1}}
+%\com{\Ss}{\sf{S}}
+%\com{\Ps}{\sf{P}}
+
+\com{\OUTC}{\itt{OUTC}}
+\com{\SEL}{\itt{SEL}}
+\com{\SPINE}{\itt{SPINE}}
+\com{\LBR}{\itt{LBR}}
+
+
+\com{\newenv}{\newenvironment}
+\com{\subsubsect}[1]{\paragraph{{#1}}}
+
+\com{\leqn}[1]{\lefteqn{\it{}#1}}
+
+\com{\BSA}{BSA}
+\com{\FSA}{FSA}
+\com{\BLA}{BTA}
+\com{\FLA}{FTA}
+\com{\lba}[1]{\proj{#1}}
+\com{\gfa}[1]{\proj{#1}}
+\com{\lfa}[1]{\proj{#1}}
+
+\com{\data}{{\it data}_{\stt}}
+\com{\for}{{\it for}_{\stt}}
+\com{\fac}{{\it fac}_{\stt}}
+\com{\unfac}{{\it unfac}_{\stt}}
+
+
+\com{\xxx}{\L{}x.(x,\ldots,x)}
+
+
+\com{\proj}[1]{{|\,#1\,|}}
+\com{\projl}[1]{\proj{\lift{#1}}}
+\com{\projll}[1]{\proj{\liftt{#1}}}
+
+\com{\bG}{\mbox{\boldmath$\Gamma$}}
+\com{\ith}{i^{\it{}th}}
+\com{\im}[1]{\it{}Im(#1)}
+
+\com{\commentout}[1]{}
+\com{\comment}[2]{\typeout{DON'T FORGET: #1}}
+\com{\uncomment}[2]{#2}
+
+\com{\inftyd}{{\bf\infty}}
+\com{\iwe}{\we_i}
+\com{\dual}[1]{#1^\partial}
+
+\com{\psafety}{\G\o\f\we\f\o\D}
+\com{\pliveness}{\G\o\f\se\f\o\D}
+\com{\ptsafety}{\G\o\f\we\f\o(\T~\G)}
+
+
+% predicate stuff
+
+\com{\uF}{\u{F}}
+\com{\dF}{\d{F}}
+\com{\uphi}{\u{\phi}}
+\com{\dphi}{\d{\phi}}
+\com{\upsi}{\u{\psi}}
+\com{\dpsi}{\d{\psi}}
+\com{\uU}{\u{U}}
+\com{\dU}{\d{U}}
+\com{\uD}{\u{D}}
+\com{\dD}{\d{D}}
+\com{\uV}{\u{V}}
+\com{\dV}{\d{V}}
+\com{\udU}{\ud{U}}
+\com{\uf}{\u{f}}
+\com{\df}{\d{f}}
+\com{\udf}{\ud{f}}
+\com{\dx}{\d{x}}
+\com{\ux}{\u{x}}
+\com{\udx}{\ud{x}}
+
+\com{\OK}{\G}
+
+% semantics names
+
+%\com{\tfil}[2]{#1{\lefteqn{{}_{\rm#2}}}\raisebox{-0.3ex}{${}^{{}^{\hspace{-0.06em}\bot}}$}}
+%\com{\tfils}[3]{#1{\lefteqn{{}_{\rm#2}}}\raisebox{-0.3ex}{${}^{{}^{\hspace{-0.06em}\bot#3}}$}}
+
+%\com{\tfil}[2]{#1{\lefteqn{{}_{\rm#2}}}_{}}
+%\com{\tfils}[3]{#1{\lefteqn{{}_{\rm#2}}}\raisebox{-0.3ex}{${}^{{}^{\hspace{-0.06em}\bot#3}}$}}
+
+\com{\tfil}[2]{#1_{\ubot\rm#2}}
+\com{\tfils}[3]{#1_{{\ubot\rm#2}}^{#3}}
+
+\com{\Dl}{\tfil{\Ds}{}}
+\com{\Dlz}{\tfil{\Ds}{0}}
+\com{\Sl}{\tfil{\Ss}{}}
+\com{\Slz}{\tfil{\Ss}{0}}
+\com{\Slo}{\tfil{\Ss}{1}}
+\com{\Nl}{\tfil{\Ns}{}}
+\com{\Nlz}{\tfil{\Ns}{0}}
+\com{\Nlo}{\tfil{\Ns}{1}}
+\com{\Nlt}{\tfil{\Ns}{2}}
+\com{\Nlzs}{\tfils{\Ns}{0}{s}}
+\com{\Nlts}{\tfils{\Ns}{2}{s}}
+\com{\Nls}{\tfils{\Ns}{}{s}}
+
+
+\com{\semfont}{\rm}		% sans serif
+\com{\Ps}{\semfont P}
+\com{\Pz}{\Ps_{\rm0}}
+
+\com{\Gs}{\semfont G}
+\com{\Gz}{\Gs_{\rm0}}
+\com{\Go}{\Gs_{\rm1}}
+
+\com{\Hs}{\semfont H}
+\com{\Hz}{\Hs_{\rm0}}
+\com{\Ho}{\Hs_{\rm1}}
+
+\com{\Ds}{\semfont D}
+\com{\Dz}{\Ds_{\rm0}}
+
+\com{\Ss}{\semfont S}
+\com{\Sz}{\Ss_{\rm0}}
+\com{\So}{\Ss_{\rm1}}
+
+\com{\Ms}{\semfont M}
+
+\com{\Bs}{\semfont B}
+\com{\Bz}{\Bs_{\rm0}}
+\com{\Bo}{\Bs_{\rm1}}
+\com{\Bt}{\Bs_{\rm2}}
+\com{\Boh}{\Bs_{\rm1}^\#}
+\com{\Bzh}{\Bs_{\rm0}^\#}
+\com{\Bth}{\Bs_{\rm2}^\#}
+\com{\Bd}{\Bs_{\rm{}d}}
+\com{\Bdd}{\Bs_{\rm{}dd}}
+
+\com{\Ls}{\semfont L}
+\com{\Lz}{\Ls_{\rm0}}
+\com{\Lo}{\Ls_{\rm1}}
+\com{\Lt}{\Ls_{\rm2}}
+\com{\Loh}{\Ls_{\rm1}^\#}
+\com{\Lzh}{\Ls_{\rm0}^\#}
+\com{\Lth}{\Ls_{\rm2}^\#}
+
+\com{\Fs}{\semfont F}
+\com{\Fz}{\Fs_{\rm0}}
+\com{\Fo}{\Fs_{\rm1}}
+\com{\Ft}{\Fs_{\rm2}}
+\com{\Fzh}{\Fs_{\rm0}^\#}
+\com{\Foh}{\Fs_{\rm1}^\#}
+\com{\Fth}{\Fs_{\rm2}^\#}
+\com{\Fd}{\Fs_{\rm{}d}}
+
+\com{\Ns}{\semfont N}
+\com{\Nz}{\Ns_{\rm0}}
+\com{\No}{\Ns_{\rm1}}
+\com{\Nt}{\Ns_{\rm2}}
+
+
+\com{\Th}{\T^\#}
+
+% data proj operators
+
+\com{\up}[1]{#1\!\!\uparrow}
+\com{\dn}[1]{#1\!\!\downarrow}
+\com{\uG}{\up{\G}}
+\com{\dG}{\dn{\G}}
+
+% binary operators
+
+\com{\amp}{\:\&\:}
+\com{\lub}{\sqcup}
+\com{\Lub}{\bigsqcup}
+\com{\Amp}{\mbox{\large\&}}
+\com{\glb}{\sqcap}
+\com{\Glb}{\,{\overline{\raisebox{0ex}[1.4ex][.8ex]{\makebox[.65em]{$|\ \/|$}}}}\,}
+\com{\guard}{\rhd}
+\com{\comp}{\circ}
+
+\com{\we}{\sqsubseteq}
+\com{\se}{\sqsupseteq}
+\com{\st}{\sqsupset}
+\com{\wt}{\sqsubset}
+\com{\eq}{\ =\ }
+\com{\swe}{\sqsubseteq_{\rm{}s}} 
+\com{\spwe}{\sqsubseteq_{\rm{}s+}}
+\com{\swt}{\sqsubset_{\rm{}s}} 
+\com{\gt}{>}
+\com{\lt}{<}
+
+% boolean values
+
+\rcom{\land}{\wedge}
+\rcom{\lor}{\vee}
+\com{\liff}{\Leftrightarrow}
+\com{\limp}{\Rightarrow}
+\com{\iso}{\cong}
+\com{\True}{{\it True}}
+\com{\False}{{\it False}}
+
+\com{\itlift}{{\it lift}}
+\com{\itdrop}{{\it drop}}
+\com{\itmkunit}{{\it mkunit}}
+\com{\itmkinti}{{\it mkint_i}}
+\com{\itmkfun}{{\it mkfun}}
+\com{\itplus}{{\it plus}}
+\com{\itcon}{{\it con}}
+\com{\itseli}{{\it sel_i}}
+\com{\ittuple}{{\it tuple}}
+\com{\itchoose}{{\it choose}}
+\com{\itapply}{{\it apply}}
+\com{\itlfp}{{\it lfp}}
+\com{\itfix}{{\it fix}}
+
+% domains
+
+\com{\ints}{{\bf{}Z}}
+\com{\nullset}{\{\}}
+\com{\Int}{{\it Int}}
+\com{\Bool}{{\it Bool}}
+\com{\ubot}{{\!\bot}}
+\com{\one}{{\bf 1}}
+\com{\unit}{{\mit()}}
+\com{\two}{{\bf 2}}
+\com{\three}{{\bf 3}}
+\com{\lift}[1]{{{#1}_\ubot}}
+\com{\liftt}[1]{{#1}_{\ubot_{\scriptstyle\ubot}}}
+\com{\lifttp}[1]{({#1})_{\ubot_{\scriptstyle\ubot}}}
+\com{\liftp}[1]{({#1})_\ubot}
+\com{\llift}[1]{{{#1}_{\ubot'}}}
+\com{\lliftp}[1]{{{(#1)}_{\ubot'}}}
+\com{\slift}[1]{{{#1}_{\!\underline{\bot}}}}
+\com{\sliftp}[1]{{({#1})_{\!\underline{\bot}}}}
+\com{\lone}{\lift{\one}}
+\com{\llone}{\liftt{\one}}
+\com{\sone}{\slift{\one}}
+\com{\lbot}{{\it lift~\bot}}
+\com{\llbot}{{\it lift^{\rm2}~\bot}}
+\com{\lunit}{{\it lift}~\unit}
+\com{\llunit}{{\it lift}^{\rm2}~\unit}
+\com{\botl}{{\rm1}}
+\com{\botll}{{\rm2}}
+\com{\U}{U}
+\com{\id}{{\it id}}
+\com{\Truth}{{\it Truth}}
+\com{\lU}{\lift{U}}
+\com{\V}{V}
+\com{\lV}{\lift{V}}
+\com{\W}{W}
+\com{\ox}{\otimes}
+\com{\bo}{\o^{B}}
+\com{\fto}{\rightarrow} 
+\com{\dto}{\stackrel{\cup}{\rightarrow}}
+\com{\sto}{\stackrel{\rm s}{\rightarrow}}
+\com{\sbto}{\stackrel{\rm sb}{\rightarrow}}
+\com{\ssbto}{\stackrel{\rm ssb}{\rightarrow}}
+\com{\sbbto}{\stackrel{\rm sbb}{\rightarrow}}
+\com{\ito}{\stackrel{\rm i}{\rightarrow}}
+\com{\gto}{\stackrel{\mit B}{\rightarrow}}
+\com{\gpto}{\stackrel{\rm d}{\rightarrow}}
+\com{\gdto}{\stackrel{\mit F}{\rightarrow}}
+\com{\gtpo}{\stackrel{\rm gd}{\rightarrow}}
+\com{\sgto}{\stackrel{\rm sg}{\rightarrow}}
+\com{\rto}{\leftrightarrow}
+\com{\plus}{+}
+
+\com{\tmn}{\theta_{mn}}
+\com{\tnm}{\theta_{nm}}
+\com{\tmy}{\theta_{m\infty}}
+\com{\tyy}{\theta_{\infty\infty}}
+\com{\tiy}{\theta_{i\infty}}
+\com{\tym}{\theta_{\infty{}m}}
+\com{\tyz}{\theta_{\infty{\rm0}}}
+\com{\tyo}{\theta_{\infty{\rm1}}}
+\com{\tyi}{\theta_{\infty{}i}}
+\com{\tyip}{\theta_{\infty{}i+{\rm1}}}
+\com{\th}{\theta}
+
+
+% Greek letters
+
+\com{\T}{\tau}
+\com{\K}{\kappa}
+\com{\R}{\rho}
+\rcom{\S}{\sigma}
+\rcom{\L}{\lambda}
+\com{\Lx}{\lambda{}x}
+\com{\sLx}{\underline{\lambda}x}
+\com{\sL}{\underline{\lambda}}
+\com{\Z}{\zeta}
+
+% functions
+
+\com{\lf}{\lift{f}}
+\com{\f}{f}
+\com{\g}{g}
+\rcom{\lg}{\lift{g}}
+
+
+% projections and projection transformers
+
+\com{\A}{\alpha}
+\com{\lA}{\lift{\A}}
+\com{\sA}{\slift{\A}}
+\com{\B}{\beta}
+\com{\lB}{\lift{\B}}
+%\com{\sB}{\slift{\B}}
+\com{\G}{\gamma}
+\com{\lG}{\lift{\G}}
+%\com{\sG}{\slift{\G}}
+\com{\D}{\delta}
+\com{\lD}{\lift{\D}}
+\com{\sD}{\slift{\D}}
+\com{\BOT}{{\it BOT}}
+\com{\lBOT}{\lift{\BOT}}
+\com{\sBOT}{\slift{\BOT}}
+\com{\ID}{{\it ID}}
+\com{\LAM}{{\it LAM}}
+\com{\lID}{\lift{\ID}}
+\com{\sID}{\slift{\ID}}
+\com{\ABS}{{\it ABS}}
+\com{\STR}{{\it STR}}
+\com{\Ab}{\alpha_{@@@b@@@}}
+\com{\Ax}{\alpha_{@@@x@@@}}
+\com{\Ay}{\alpha_{@@@y@@@}}
+\com{\Az}{\alpha_{@@@z@@@}}
+\com{\Axs}{\alpha_{@@@xs@@@}}
+\com{\Ays}{\alpha_{@@@ys@@@}}
+\com{\Azs}{\alpha_{@@@zs@@@}}
+
+
+\com{\FNIL}{{\it FNIL}}
+\com{\NIL}{{\it NIL}}
+\com{\CONS}{{\it CONS}}
+\com{\FCONS}{{\it FCONS}}
+\com{\TRUE}{{\it TRUE}}
+\com{\FALSE}{{\it FALSE}}
+\com{\FAIL}{{\it FAIL}}
+\com{\HEAD}{{\it HEAD}}
+\com{\TAIL}{{\it TAIL}}
+\com{\INF}{{\it INF}}
+\com{\FINF}{{\it FINF}}
+\com{\FIN}{{\it FIN}}
+\com{\PAIR}{{\it PAIR}}
+\com{\FST}{{\it FST}}
+\com{\SND}{{\it SND}}
+\com{\II}{{\it II}}
+\com{\IF}{{\it IF}}
+\com{\FI}{{\it FI}}
+\com{\FF}{{\it FF}}
+
+\com{\LA}{\lambda\alpha}
+\com{\sLA}{\underline{\lambda}\alpha}
+\com{\gLA}{\L\slift{\A}}
+%\com{\gL}{\overline{\lambda}}
+\com{\laal}{\L\A.\A}
+\com{\laab}{\sL\A.\ABS}
+\com{\laid}{\sL\A.\ID}
+\com{\labo}{\gLA.\sBOT}
+
+% odds & ends
+
+\com{\dd}{\ddagger}
+\com{\chain}[1]{\{#1_{\rm0},#1_{\rm1},#1_{\rm2},\ldots\}}
+
+% typewriter font
+
+\com{\oy}{\overline{@y@}}
+
+\com{\xnot}{{\rm@x@_0}}
+\com{\xone}{{\rm@x@_1}}
+\com{\xtwo}{{\rm@x@_2}}
+\com{\xthree}{{\rm@x@_3}}
+\com{\xxi}{{@x@_i}}
+\com{\xn}{{@x@_n}}
+
+\com{\ee}{@e@}
+\com{\ex}{@x@}
+\com{\evar}{@x@}
+\com{\enum}{@n@_i}
+\com{\esum}{\eone\ @+@\ \etwo}
+\com{\elam}{@\x.e@}
+\com{\ehlam}{@\#x.e@}
+\com{\elamt}{@\x:T.e@}
+\com{\ehlamt}{@\#x:T.e@}
+\com{\eapp}{\eone~\etwo}
+\com{\ehapp}{@app# @\eone~\etwo}
+\com{\efapp}{@f e@}
+\com{\eunit}{@()@}
+\com{\etup}{@(@\eone@,@\ldots@,@\en@)@}
+\com{\esel}{@let (@\xone@,@\ldots@,@\xn@) =@\ \enot\ @in@\ \eone}
+\com{\econ}{@c@_i\ @e@}
+\com{\ecase}{@case@\ \enot\ @of @\cone\ \xone\ @->@\ \eone@;@\ \ldots@;@\ \cn\ \xn\ @->@\ \en}
+\com{\efix}{@fix e@}
+\com{\ehfix}{@fix# e@}
+\com{\estr}{@seq@~\eone~\etwo}
+
+\com{\enot}{{\rm@e@_0}}
+\com{\eone}{{\rm@e@_1}}
+\com{\etwo}{{\rm@e@_2}}
+\com{\ei}{{@e@_i}}
+\com{\en}{{@e@_n}}
+
+\com{\senot}{{\rm@@@e@@@_{\subtypesubstyle0}}}
+\com{\seone}{{\rm@@@e@@@_{\subtypesubstyle1}}}
+\com{\setwo}{{\rm@@@e@@@_{\subtypesubstyle2}}}
+\com{\sei}{{@@@e@@@_{\subtypesubstyle{}i}}}
+\com{\sen}{{@@@e@@@_{\subtypesubstyle{}n}}}
+\com{\setup}{{@@@(@@@\seone@@@,@@@\ldots@@@,@@@\sen@@@)@@@}}
+
+\com{\fnot}{{\rm@f@_0}}
+\com{\fone}{{\rm@f@_1}}
+\com{\ftwo}{{\rm@f@_2}}
+\com{\fii}{{@f@_i}}
+\com{\fn}{{@f@_n}}
+
+\com{\cnot}{{\rm{\tt{}c}_0}}
+\com{\cone}{{\rm{\tt{}c}_1}}
+\com{\ctwo}{{\rm{\tt{}c}_2}}
+\com{\ci}{{{\tt{}c}_i}}
+\com{\cn}{{{\tt{}c}_n}}
+\com{\anot}{{\rm@A@_0}}
+\com{\aone}{{\rm@A@_1}}
+\com{\atwo}{{\rm@A@_2}}
+\com{\ai}{{@A@_i}}
+\com{\aj}{{@A@_j}}
+\com{\an}{{@A@_n}}
+\com{\ta}{@A@}
+\com{\te}{@E@}
+\com{\tenot}{{@E@_{\it gl}}}
+\com{\teone}{{\rm@E@_1}}
+\com{\tei}{{@E@_i}}
+\com{\ten}{{@E@_n}}
+\com{\tnot}{{\rm@T@_0}}
+\com{\tone}{{\rm@T@_1}}
+\com{\ttwo}{{\rm@T@_2}}
+\com{\tthree}{{\rm@T@_3}}
+\com{\ti}{{@T@_i}}
+\com{\tj}{{@T@_j}}
+\com{\tn}{{@T@_n}}
+\com{\ttt}{@T@}
+\com{\unot}{{\rm@U@_0}}
+\com{\uone}{{\rm@U@_1}}
+\com{\utwo}{{\rm@U@_2}}
+\com{\uthree}{{\rm@U@_3}}
+\com{\ui}{{@U@_i}}
+\com{\un}{{@U@_n}}
+\com{\tunit}{@()@}
+\com{\tint}{@Int@}
+\com{\tfun}{\tone\ @->@\ \ttwo}
+\com{\tfunp}{@(@\tone\ @->@\ \ttwo@)@}
+\com{\thfun}{\tone\ \harrow\ \ttwo}
+\com{\thfunp}{@(@\tone\ \harrow\ \ttwo@)@}
+\com{\harrow}{@#>@}
+\com{\tprod}{@(@\tone@,@\ldots@,@\tn@)@}
+\com{\teprod}{@(@\teone@,@\ldots@,@\ten@)@}
+\com{\tsum}{\cone\ \tone\ @+@\ \ldots\ @+@\ \cn\ \tn}
+\com{\tdefn}{\aone\ @=@\ \tone@;@\ \ldots@;@\ \an\ @=@\ \tn}
+
+
+\com{\bproj}{{\rm\bf{}fproj}}
+\com{\bfabsf}{{\rm\bf{}fabsf}}
+
+\com{\scone}{{\rm@@@c@@@_1}}
+\com{\scn}{{@@@c@@@_n}}
+\com{\saone}{{\rm@@@A@@@_1}}
+\com{\san}{{@@@A@@@_n}}
+
+\com{\stenot}{{@@@E@@@_{\it\subtypesubstyle{}gl}}}
+\com{\sten}{{@@@E@@@_{\subtypesubstyle{}n}}}
+\com{\stnot}{{@@@T@@@_{\rm\subtypesubstyle0}}}
+\com{\stone}{{@@@T@@@_{\rm\subtypesubstyle1}}}
+\com{\sttwo}{{@@@T@@@_{\rm\subtypesubstyle2}}}
+\com{\sti}{{@@@T@@@_{\subtypesubstyle{}i}}}
+\com{\stn}{{@@@T@@@_{\subtypesubstyle{}n}}}
+
+\com{\sta}{{@@@A@@@}}
+\com{\ste}{{@@@E@@@}}
+\com{\stt}{{@@@T@@@}}
+\com{\stu}{{@@@U@@@}}
+\com{\std}{{@@@D@@@}}
+\com{\stunit}{{@@@()@@@}}
+\com{\stint}{{@@@Int@@@}}
+\com{\stbool}{{@@@Bool@@@}}
+\com{\stintlist}{{@@@IntList@@@}}
+\com{\stfun}{{\stone@@@->@@@\sttwo}}
+\com{\sthfun}{{\stone@@@#>@@@\sttwo}}
+\com{\stprod}{{@@@(@@@\stone@@@,@@@\ldots@@@,@@@\stn@@@)@@@}}
+\com{\steprod}{{@@@(@@@\steone@@@,@@@\ldots@@@,@@@\sten@@@)@@@}}
+\com{\stsum}{{\scone\ \stone\ @@@+@@@\ \ldots\ @@@+@@@\ \scn\ \stn}}
+\com{\stdefn}{{\saone\ @@@=@@@\ \stone@@@;@@@\ \ldots@@@;@@@\ \san\ @@@=@@@\ \stn}}
+
+\com{\sstt}{{\subtypespace\makebox{\subsubtypesize\tt T}}}
+
+% Proj and SProj
+
+\com{\ProjT}{{\it Proj}_{\stt}}
+\com{\ProjU}{{\it Proj}_{\stu}}
+\com{\SProjT}{{\it SProj}_{\stt}}
+\com{\SProjU}{{\it SProj}_{\stu}}
+\com{\SProjE}{{\it SProj}_{\ste}}
+\com{\SAbsT}{{\it SAbs}_{\stt}}
+\com{\FProjT}{{\it FProj}_{\stt}}
+\com{\FProjU}{{\it FProj}_{\stu}}
+\com{\FProjE}{{\it FProj}_{\ste}}
+\com{\FAbsT}{{\it FAbs}_{\stt}}
+\com{\FAbsFT}{{\it FAbsF_{\stt}}}
+\com{\FTranT}{{\it FTran}_{\stt}}
+
+
+\com{\Eprod}{@(@\Eone@,@\ldots@,@\En@)@}
+\com{\Ei}{{@E@_i}}
+\com{\Eone}{{\rm@E@_1}}
+\com{\En}{{@E@_n}}
+
+% misc symbols
+
+\com{\oin}{{\rm1}\leq{}i\leq{}n}
+\com{\ojn}{{\rm1}\leq{}j\leq{}n}
+\com{\lubio}{\lub_{i\geq\rm0}}
+\com{\glbio}{\glb_{i\geq\rm0}}
+\com{\Lubio}{\Lub_{i\geq\rm0}}
+\com{\Glbio}{\Glb_{i\geq\rm0}}
+\com{\mkint}[1]{{\it{}mkint}^{#1}_{{\cal{}N}\br{@@@n@@@}}}
+\rcom{\u}[1]{\acute{#1}}
+\rcom{\d}[1]{\grave{#1}}
+\com{\ud}[1]{\widehat{#1}}
+
+% semantic functions
+
+\com{\Epe}[2]{\mbox{${\cal E}_p^{#1}\lb#2\rb$}}
+\com{\cEp}[1]{\mbox{${\cal E}_p^{#1}$}}
+\com{\Rpe}[2]{\mbox{${\cal E}_p^{#1}\lb#2\rb$}}
+\com{\cRp}[1]{\mbox{${\cal R}_p^{#1}$}}
+\com{\Tpe}[2]{\mbox{${\cal E}_p^{#1}\lb#2\rb$}}
+\com{\cTp}[1]{\mbox{${\cal T}_p^{#1}$}}
+
+\com{\Ee}[2]{\mbox{${\cal E}^{#1}\lb#2\rb$}}
+\com{\Edefne}[2]{\mbox{${\cal E}^{#1}_{{\it{}defns}}\lb#2\rb$}}
+\com{\cE}[1]{\mbox{$\cal E$}^{#1}}
+\com{\cEdefn}[1]{\mbox{${\cal E}^{#1}_{\it{}defns}$}}
+
+\com{\cX}[2]  {\mbox{$\cal #1$}^{\it{}#2}}
+\com{\Xe}[3]  {\mbox{${\cal #1}^{\it{}#2}\br{#3}$}}
+\com{\cXd}[2] {\mbox{${\cal #1}^{\it{}#2}_{\dd}$}}
+\com{\Xde}[3] {\mbox{${\cal #1}^{\it{}#2}_{\dd}\br{#3}$}}
+\com{\cXs}[3] {\mbox{${\cal #1}^{\it{}#2}_{#3}$}}
+\com{\Xse}[4] {\mbox{${\cal #1}^{\it{}#2}_{#3}\br{#4}$}}
+\com{\cXds}[3] {\mbox{${\cal #1}^{\it{}#2}_{\dd,#3}$}}
+\com{\Xdse}[4] {\mbox{${\cal #1}^{\it{}#2}_{#3}\br{\dd,#4}$}}
+\com{\cXdefn}[2] {\mbox{${\cal #1}^{\it{}#2}_{\it{}defns}$}}
+\com{\Xdefne}[3] {\mbox{${\cal #1}^{\it{}#2}_{\it{}defns}\br{#3}$}}
+
+
+\com{\cR}[1]{\cX{R}{#1}}
+\rcom{\Re}[2]{\Xe{R}{#1}{#2}}
+\com{\cRd}[1]{\cXd{R}{#1}}
+\com{\Rde}[2]{\Xde{R}{#1}{#2}}
+\com{\cRs}[2]{\cXs{R}{#1}{#2}}
+\com{\Rse}[3]{\Xse{R}{#1}{#2}{#3}}
+\com{\cRds}[2]{\cXds{R}{#1}{#2}}
+\com{\Rdse}[3]{\Xdse{R}{#1}{#2}{#3}}
+\com{\cRdefn}[1]{\cXdefn{R}{#1}}
+\com{\Rdefne}[2]{\Xdefne{R}{#1}{#2}}
+
+\com{\cV}[1]{\cX{V}{#1}}
+\com{\Ve}[2]{\Xe{V}{#1}{#2}}
+\com{\cVd}[1]{\cXd{V}{#1}}
+\com{\Vde}[2]{\Xde{V}{#1}{#2}}
+\com{\cVs}[2]{\cXs{V}{#1}{#2}}
+\com{\Vse}[3]{\Xse{V}{#1}{#2}{#3}}
+\com{\cVds}[2]{\cXds{V}{#1}{#2}}
+\com{\Vdse}[3]{\Xdse{V}{#1}{#2}{#3}}
+\com{\cVdefn}[1]{\cXdefn{V}{#1}}
+\com{\Vdefne}[2]{\Xdefne{V}{#1}{#2}}
+
+\com{\cB}[1]{\cX{B}{#1}}
+\com{\Be}[2]{\Xe{B}{#1}{#2}}
+\com{\cBd}[1]{\cXd{B}{#1}}
+\com{\Bde}[2]{\Xde{B}{#1}{#2}}
+\com{\cBs}[2]{\cXs{B}{#1}{#2}}
+\com{\Bse}[3]{\Xse{B}{#1}{#2}{#3}}
+\com{\cBds}[2]{\cXds{B}{#1}{#2}}
+\com{\Bdse}[3]{\Xdse{B}{#1}{#2}{#3}}
+\com{\cBdefn}[1]{\cXdefn{B}{#1}}
+\com{\Bdefne}[2]{\Xdefne{B}{#1}{#2}}
+
+\com{\Te}[2]{\mbox{${\cal T}^{#1}\lb#2\rb$}}
+\com{\Tde}[2]{\mbox{${\cal T}^{#1}_{\ddagger}\lb#2\rb$}}
+\com{\Tdefne}[2]{\mbox{${\cal T}^{#1}_{{\it{}defns}}\lb#2\rb$}}
+\com{\cT}[1]{\mbox{$\cal T$}^{#1}}
+\com{\cTd}[1]{\mbox{${\cal T}^{#1}_{\ddagger}$}}
+\com{\cTdefn}[1]{\mbox{${\cal T}^{#1}_{\it{}defns}$}}
+
+\com{\Ie}[2]{\mbox{${\cal P}^{#1}\lb#2\rb$}}
+\com{\Ide}[2]{\mbox{${\cal P}^{#1}_{\ddagger}\lb#2\rb$}}
+\com{\Idefne}[2]{\mbox{${\cal P}^{#1}_{{\it{}defns}}\lb#2\rb$}}
+\com{\cI}[1]{\mbox{$\cal P$}^{#1}}
+\com{\cId}[1]{\mbox{${\cal P}^{#1}_{\ddagger}$}}
+\com{\cIdefn}[1]{\mbox{${\cal P}^{#1}_{\it{}defns}$}}
+
+\com{\cTt}[1]{\cXt{T}{#1}{\cal F}}
+\com{\Tte}[2]{\Xte{T}{#1}{\cal F}{#2}}
+
+\com{\cDATA}[1]{\mbox{$\it{}DATA$}^{#1}}
+\com{\cDATAd}[1]{\mbox{$\it{}DATA$}_{\dd}^{#1}}
+\com{\cDATAdefn}[1]{\mbox{${\it{}DATA}_{\it{}defns}^{#1}$}}
+\com{\DATAe}[2]{\mbox{${\it{}DATA}^{#1}\lb#2\rb$}}
+\com{\DATAdefne}[2]{\mbox{${\it{}DATA}_{\it{}defns}^{#1}\lb#2\rb$}}
+
+\com{\cFUN}[1]{\mbox{$\it{}FUN$}^{#1}}
+\com{\cFUNd}[1]{\mbox{${\it{}FUN}_{\dd}^{#1}$}}
+\com{\cFUNdefn}[1]{\mbox{${\it{}FUN}_{\it{}defns}^{#1}$}}
+\com{\FUNe}[2]{\mbox{${\it{}FUN}^{#1}\lb#2\rb$}}
+\com{\FUNde}[2]{\mbox{${\it{}FUN}_{\dd}^{#1}\lb#2\rb$}}
+\com{\FUNdefne}[2]{\mbox{${\it{}FUN}_{\it{}defns}^{#1}\lb#2\rb$}}
+
+\com{\cCHOOSE}[1]{\mbox{$\it{}CHOOSE$}^{#1}}
+\com{\cCHOOSEd}[1]{\mbox{${\it{}CHOOSE}_{\dd}^{#1}$}}
+\com{\cCHOOSEdefn}[1]{\mbox{${\it{}CHOOSE}_{\it{}defns}^{#1}$}}
+\com{\CHOOSEe}[2]{\mbox{${\it{}CHOOSE}^{#1}\lb#2\rb$}}
+\com{\CHOOSEde}[2]{\mbox{${\it{}CHOOSE}_{\dd}^{#1}\lb#2\rb$}}
+\com{\CHOOSEdefne}[2]{\mbox{${\it{}CHOOSE}_{\it{}defns}^{#1}\lb#2\rb$}}
+
+\com{\cSTR}[1]{\mbox{$\it{}STR$}^{#1}}
+\com{\cSTRd}[1]{\mbox{${\it{}STR}_{\dd}^{#1}$}}
+\com{\cSTRdefn}[1]{\mbox{${\it{}STR}_{\it{}defns}^{#1}$}}
+\com{\STRe}[2]{\mbox{${\it{}STR}^{#1}\lb#2\rb$}}
+\com{\STRde}[2]{\mbox{${\it{}STR}_{\dd}^{#1}\lb#2\rb$}}
+\com{\STRdefne}[2]{\mbox{${\it{}STR}_{\it{}defns}^{#1}\lb#2\rb$}}
+
+\com{\cUNFAC}[1]{\mbox{$\it{}UNFAC$}^{#1}}
+\com{\cUNFACd}[1]{\mbox{${\it{}UNFAC}_{\dd}^{#1}$}}
+\com{\cUNFACdefn}[1]{\mbox{${\it{}UNFAC}_{\it{}defns}^{#1}$}}
+\com{\UNFACe}[2]{\mbox{${\it{}UNFAC}^{#1}\lb#2\rb$}}
+\com{\UNFACde}[2]{\mbox{${\it{}UNFAC}_{\dd}^{#1}\lb#2\rb$}}
+\com{\UNFACdefne}[2]{\mbox{${\it{}UNFAC}_{\it{}defns}^{#1}\lb#2\rb$}}
+
+\com{\cFAC}[1]{\mbox{$\it{}FAC$}^{#1}}
+\com{\cFACd}[1]{\mbox{${\it{}FAC}_{\dd}^{#1}$}}
+\com{\cFACdefn}[1]{\mbox{${\it{}FAC}_{\it{}defns}^{#1}$}}
+\com{\FACe}[2]{\mbox{${\it{}FAC}^{#1}\lb#2\rb$}}
+\com{\FACde}[2]{\mbox{${\it{}FAC}_{\dd}^{#1}\lb#2\rb$}}
+\com{\FACdefne}[2]{\mbox{${\it{}FAC}_{\it{}defns}^{#1}\lb#2\rb$}}
+
+\com{\cPR}[1]{\mbox{$\it{}PR$}^{#1}}
+\com{\cPRd}[1]{\mbox{${\it{}PR_\dd}^{#1}$}}
+\com{\PRe}[2]{\mbox{${\it{}PR}^{#1}\lb#2\rb$}}
+\com{\PRde}[2]{\mbox{${\it{}PR_\dd}^{#1}\lb#2\rb$}}
+
+\com{\cEM}[1]{\mbox{$\it{}EM$}^{#1}}
+\com{\cEMd}[1]{\mbox{${\it{}EM_\dd}^{#1}$}}
+\com{\EMe}[2]{\mbox{${\it{}EM}^{#1}\lb#2\rb$}}
+\com{\EMde}[2]{\mbox{${\it{}EM_\dd}^{#1}\lb#2\rb$}}
+
+\com{\cBOT}[1]{\mbox{$\it{}BOT$}^{#1}}
+\com{\cBOTd}[1]{\mbox{${\it{}BOT}_{\dd}^{#1}$}}
+\com{\cBOTdefn}[1]{\mbox{${\it{}BOT}_{\it{}defns}^{#1}$}}
+\com{\BOTe}[2]{\mbox{${\it{}BOT}^{#1}\lb#2\rb$}}
+\com{\BOTde}[2]{\mbox{${\it{}BOT}_{\dd}^{#1}\lb#2\rb$}}
+\com{\BOTdefne}[2]{\mbox{${\it{}BOT}_{\it{}defns}^{#1}\lb#2\rb$}}
+
+\com{\ABSe}[1]{\mbox{${\it{}ABS}\lb#1\rb$}}
+
+\com{\cCON}[1]{\mbox{$\it{}CON$}^{#1}}
+\com{\cCONd}[1]{\mbox{${\it{}CON}_{\dd}^{#1}$}}
+\com{\cCONdefn}[1]{\mbox{${\it{}CON}_{\it{}defns}^{#1}$}}
+\com{\CONe}[2]{\mbox{${\it{}CON}^{#1}\lb#2\rb$}}
+\com{\CONde}[2]{\mbox{${\it{}CON}_{\dd}^{#1}\lb#2\rb$}}
+\com{\CONdefne}[2]{\mbox{${\it{}CON}_{\it{}defns}^{#1}\lb#2\rb$}}
+
+\com{\cD}[1]{\mbox{$\cal D$}^{#1}}
+\com{\cDd}[1]{\mbox{${\cal D}^{#1}_{\it{}defns}$}}
+\com{\De}[2]{\mbox{${\cal D}^{#1}\lb#2\rb$}}
+\com{\Dde}[2]{\mbox{${\cal D}^{#1}_{\it{}defns}\lb#2\rb$}}
+
+\com{\cF}[1]{\cX{F}{#1}}
+\com{\cFd}[1]{\cXd{F}{#1}}
+\com{\Fe}[2]{\Xe{F}{#1}{#2}}
+\com{\Fde}[2]{\Xde{F}{#1}{#2}}
+\com{\Fdefne}[2]{\Xdefne{F}{#1}{#2}}
+\com{\cFdefn}[1]{\cXdefn{F}{#1}}
+
+\com{\sq}[1]{[\,#1\,]}
+\com{\lb}{[\![\,}                       % semantic brackets
+\com{\rb}{\,]\!]}
+\com{\br}[1]{\lb#1\rb}
+
+
+% NEWCOMMANDS
+
+
+\com{\chapt}[1]{
+	\chapter{{#1}}
+%	\markboth{
+%	  {\bf\underline{\arabic{page}\hspace*{\fill}
+%	   Chapter \thechapter. \ {#1}}}}{}
+  	\thispagestyle{plain}}
+\com{\sect}[1]{%\clearpage
+	\section{{#1}}
+%	\markright{{\bf\underline{\thesection.
+%		    \ {#1}\hspace*{\fill}*\arabic{page}}}}
+  	}
+\com{\subsect}[1]{\subsection{{#1}}}
+\com{\preface}{
+	\chapter*{Preface}
+	\addcontentsline{toc}{chapter}{Preface}
+	\thispagestyle{plain} }
+\rcom{\ni}{} %{\noindent}
+\com{\be}{\begin{enumerate}}
+%\com{\ee}{\end{enumerate}}
+
+% math formatting
+\com{\ba}{\begin{array}}
+\com{\ea}{\end{array}}
+\com{\mc}{\multicolumn}
+\com{\zero}[1]{\lefteqn{\mbox{$#1$}}}
+
+\com{\sa}{\[\renewcommand{\arraystretch}{1.15}\setlength{\arraycolsep}{0in}\begin{array}{lllllllllll}}
+\com{\fa}{\end{array}\]\posv}
+
+\com{\posv}{\vspace{2pt}}
+
+
+\newenv{eqns}{\[\renewcommand{\arraystretch}{1.15}\setlength{\arraycolsep}{0.5ex}\begin{array}{lllllll}}{\end{array}\]\posv}
+\com{\reason}[1]{\mbox{\rm \ \ [#1]}}
+\com{\beqs}{\begin{eqns}}
+\com{\eeqs}{\end{eqns}}
+
+\newenv{eqqns}{\[\renewcommand{\arraystretch}{1.15}\setlength{\arraycolsep}{0in}\begin{array}{lllllll}}{\end{array}\]\posv}
+\com{\sreason}[1]{\mbox{\rm\ \ \ \ [#1]}}
+\com{\beqqs}{\begin{eqqns}}
+\com{\eeqqs}{\end{eqqns}}
+
+%       Theorems, Lemmata and Corollaries are numbered consecutively,
+%       Definitions and Proofs are unnumbered. All take an additional
+%       argument (often {}) to appear in the title.
+
+%\newtheorem{theorem}{Theorem}[chapter]
+%\newtheorem{lemma}[theorem]{Lemma}
+%\newtheorem{corollary}[theorem]{Corollary}
+%\newtheorem{proposition}[theorem]{Proposition}
+%\newtheorem{Fact}[theorem]{Fact}
+%\newtheorem{definition}{Definition}
+%\newtheorem{proof}{Proof}
+%\newtheorem{skproof}{Sketch Proof}
+%\newtheorem{conjecture}{Conjecture}
+%\newtheorem{exemplar}{Example.}
+%\newtheorem{acase}{Case}
+%\rcom{\thedefinition}{\mbox{}}
+%\rcom{\theproof}{\mbox{}}
+%\rcom{\theskproof}{\mbox{}}
+%\rcom{\theexemplar}{\mbox{}}
+%\rcom{\theacase}{\mbox{}}
+
+\newenv{thm}[1]{\begin{theorem} \mbox{\bf #1}\\ \rm}{\end{theorem}}
+\newenv{lem}[1]{\begin{lemma}   \mbox{\bf #1}\\ \rm}{\end{lemma}}
+\newenv{cor}[1]{\begin{corollary}   \mbox{\bf #1}\\ \rm}{\end{corollary}}
+\newenv{npcor}[1]{\begin{corollary}   \mbox{\bf #1}\\ \rm}{\ \ \mbox{$\Box$}\end{corollary}}
+\newenv{fact}[1]{\begin{Fact}   \mbox{\bf #1}\\ \rm}{\end{Fact}}
+\newenv{prop}[1]{\begin{proposition}   \mbox{\bf #1}\\ \rm}{\end{proposition}}
+\newenv{npprop}[1]{\begin{proposition}   \mbox{\bf #1}\\ \rm}{\ \ \mbox{$\Box$}\end{proposition}}
+\newenv{defn}[1]{\begin{definition} \mbox{\bf #1}\\ \rm}{\end{definition}}
+\newenv{pf}[1]{\begin{proof}\mbox{\bf#1}\\ \rm}{\ \ \mbox{$\Box$}\end{proof}}
+\newenv{sketch}[1]{\begin{skproof}    \mbox{\bf #1}\\ \rm}{\ \ \mbox{$\Box$}\end{skproof}}
+%\newenv{example}{\begin{exemplar}\rm}{\end{exemplar}}
+%\newenv{case}[1]{\begin{acase}   \mbox{\bf #1}\\ \rm}{\end{acase}}
+\newenv{conj}[1]{\begin{conjecture}\mbox{\bf #1}\\ \rm}{\ \ \mbox{$\Box$}\end{conjecture}}
+
+\com{\Case}[1]{\noindent\mbox{{\bf Case:} \ #1}\\ }
+\com{\Casep}[1]{\noindent\mbox{{\bf Case:} \ #1}}
+
+
+
+% common symbols
+
+\com{\la}{\leftarrow}
+\com{\ra}{\rightarrow}
+\com{\implies}{\Rightarrow}
+\com{\x}{\times}
+\rcom{\approx}{\sqsubseteq}
+\rcom{\o}{\circ}                % compose
+\com{\entails}{\vdash}
+\rcom{\vec}{}
+\com{\LUB}{\bigsqcup}
+\com{\bij}{\stackrel{bij}{\rightarrow}}
+
+\com{\range}[1]{(#1)}
+\com{\curly}[1]{\{#1\}}
+\com{\sqb}[1]{\lb {#1} \rb}
+\rcom{\angle}[1]{\langle{#1}\rangle}
+\com{\dangle}[1]{\dlangle{#1}\drangle}
+\com{\dlangle}{\langle\!\langle}
+\com{\drangle}{\rangle\!\rangle}
+
+\com{\inv}[1]{#1^{-\rm1}}
+\com{\shrp}{SHARP}
+\com{\flt}{FLAT}
+
+\com{\E}[3]{\mbox{${\cal E}_{#1}\lb#2\rb$}_{#3}}
+\com{\M}[1]{\mbox{${\cal M}\lb#1\rb$}}
+%\com{\D}[1]{\mbox{${\cal D}\lb#1\rb$}}
+\com{\Ep}[2]{\E{\phi}{#1}{#2}}
+\com{\Epn}[2]{\E{\phi_n}{#1}{#2}}
+\com{\Epr}[1]{\Ep{#1}{\rho}}
+
+\com{\Dpn}[1]{\D{#1}{\phi_n}}
+
+\com{\Ea}[3]{\mbox{${\cal E}^\#_{#1}\lb#2\rb$}_{#3}}
+\com{\Ma}[1]{\mbox{${\cal M}^\#\lb#1\rb$}}
+\com{\Da}[1]{\mbox{${\cal D}^\#\lb#1\rb$}}
+\com{\Pa}[3]{\mbox{${\cal P}^\#_{#1}\lb#2\rb$}_{#3}}
+
+\com{\Eap}[2]{\Ea{\phia}{#1}{#2}}
+\com{\Eapn}[2]{\Ea{\phia_n}{#1}{#2}}
+\com{\Eapr}[1]{\Eap{#1}{\rhoa}}
+
+\com{\Pap}[2]{\Pa{\phia}{#1}{#2}}
+\com{\Papr}[1]{\Pa{\phia}{#1}{\rhoa}}
+\com{\Fapd}[1]{\mbox{$\cF^\#_{\phia}\lb#1\rb$}_{\Delta}}
+
+\com{\rhoa}{\rho^\#}
+\com{\phia}{\phi^\#}
+
+\com{\envxv}{\curly{x\mapsto{}v}}
+\com{\envxg}{\curly{x\mapsto\gamma}}
+\com{\envxgv}{\curly{x\mapsto\gamma\/v}}
+\com{\envxsv}{\curly{x\mapsto\sigma_f\/v}}
+\com{\envxvy}{\curly{x\mapsto{}v,x_k\mapsto{}y_k}}
+
+\com{\lamv}{\lambda{}v}
+
+
+%\com{\V}{\mbox{$V$}}
+\com{\Vi}{\mbox{$V_i$}}
+\com{\Vis}{\mbox{$\{V_i\}$}}
+\com{\Vb}{\mbox{$V_{\!\bot}$}}
+\com{\fis}{\mbox{$\{f_i\}$}}
+\com{\fIis}{\mbox{$\{f_i\}$}}
+
+\com{\sigmap}{\sigma_{p}}
+\com{\sigmapi}{\sigma_{p_i}}
+\com{\sigmapI}{\sigma_{p_1}}
+\com{\sigmapII}{\sigma_{p_2}}
+\com{\deltap}{\delta_{p}}
+\com{\pip}{\pi_{p}}
+
+\com{\phD}{\varphi_D}
+\com{\psD}{\psi_D}
+
+\com{\ve}{\vec{@e@}}
+\com{\vx}{\vec{@x@}}
+\com{\vy}{\vec{@y@}}
+\com{\vT}{\vec{@T@}}
+\com{\vF}{\vec{F}}
+\com{\vv}{\vec{v}}
+
+\com{\X}{X}
+
+
+\com{\fxge}{\mbox{@f x = @$\cdots$@(g e)@$\cdots$}}
+\com{\C}{\mbox{$Dom$}}
+\com{\Cn}{\mbox{$\C^n$}}
+\com{\Cm}{\mbox{$\C^m$}}
+\com{\Cs}{\mbox{$\C_s$}}
+\com{\Csn}{\mbox{$\C_s^n$}}
+\com{\Csm}{\mbox{$\C_s^m$}}
+
+
+\com{\void}{\mbox{\bf 1}}
+\com{\cat}{\mbox{$\cal C$}}
+
+\com{\MIX}{\mbox{$mix$}}
+\com{\pel}{\mbox{PEL}}
+
+
+\com{\rep}[1]{\overline{\rule{0ex}{1.5ex}{#1}}}
+\com{\Rep}{\rep}
+\com{\subrep}[1]{\stackrel{\rule[-.5mm]{1.5ex}{.2mm}}{#1}}
+\com{\mix}[2]{mix\ \rep{{#1}}\ \rep{{#2}}}
+\com{\safe}[3]{#2 \o #1 = #2 \o #1 \o #3}
+\com{\safes}[3]{#2 \o #1 \approx #1 \o #3}
+\com{\division}{\mbox{$(\sigma,\delta,\pi)$}}
+\com{\control}{\mbox{$\{(V_i,\ f_i:V_i \ra V)\}$}}
+\com{\controlI}{\mbox{$\{(V_i,\ f_i:V \ra V)\}$}}
+\com{\set}[2]{\{{#1}\ |\ {#2} \}}
+
+\com{\all}[2]{\forall {#1}\ .\ {#2}}
+%\com{\case}[3]{\begin{array}[t]{lcl}\zero{case\ {#1}\ in}\\
+%			&:\\
+%			\ \ {#2} &\Rightarrow& {#3}\\
+%			&:
+%		\end{array}}
+\com{\casec}[3]{\begin{array}[c]{lcl}\zero{case\ {#1}\ in}\\
+			&:\\
+			\ \ {#2} &\Rightarrow& {#3}\\
+			&:
+		\end{array}}
+
+%\com{\proj}{\mbox{\bf proj}}
+
+
+\com{\forder}{\mbox{$1^{\rm st}$-order}}
+\com{\adhoc}{\mbox{\it ad hoc}}
+\com{\finite}{\mbox{\rm finite}}
+\com{\consistent}[1]{\mbox{$\{#1\}$ \rm consistent}}
+
+\com{\tr}[1]{\mbox{{\rm #1}}}
+\com{\tb}[1]{\mbox{{\bf #1}}}
+
+\com{\axm}[1]{\mbox{$\begin{array}{c}{#1}\end{array}$}}
+\com{\infer}[2]{\mbox{$\begin{array}{c}\underline{\raisebox{1.2ex}{$#1$}}\\{#2}\end{array}$}}
+\com{\infero}[2]{\mbox{$\begin{array}{c}\raisebox{.4ex}{$#1$}\\\overline{\rule{0ex}{2.2ex}{#2}}\end{array}$}}
+
+\com{\xv}{\mbox{\footnotesize$\{ \vec{x}\mapsto\vec{v} \}$}}
+\com{\xFv}{\mbox{\footnotesize$\{ \vec{x}\mapsto\vec{F\ \gamma\ v} \}$}}
+\com{\xiv}{\mbox{\footnotesize$\{ \vec{x}\mapsto\vec{v},\ \vec{x_i}\mapsto\vec{v_i} \}$}}
+\com{\xiFv}{\mbox{\footnotesize$\{ \vec{x}\mapsto\vec{F\ \gamma\ v},\ 
+			\vec{x_i}\mapsto\vec{v_i} \}$}}
+\com{\xiFHv}{\mbox{\footnotesize$\{ \vec{x}\mapsto\vec{F\ \gamma\ v},\ 
+			\vec{x_i}\mapsto\vec{H_i\ \gamma\ v_i} \}$}}
+\com{\xF}{\vx::\vF}
+
+
+\com{\etal}{\mbox{\it et al}}
+\com{\bslash}[1]{{#1}/x}
+
+\sloppy
+
+\title{PERs from Projections for Binding-time Analysis}
+
+\authors{Kei Davis}
+\email{kei@@crl.nmsu.edu}
+
+\affil{Center for Non-Linear Studies \\
+Mail Stop B258 \\
+Los Alamos National Laboratory \\
+Los Alamos, NM  87545, U.S.A.}
+
+%\editor{Dennis Kibler}
+
+\abstract{{\it First-order\/} projection-based binding-time analysis
+has proven genuinely useful in partial evaluation
+\cite{Lau91a}.  There have been three notable generalisations
+of projection-based analysis to higher order.  The first lacked a
+formal basis \cite{Mog89}; the second used structures strictly more
+general than projections, namely {\it partial equivalence relations\/}
+(PERs) \cite{HS91}; the third involved a complex construction that
+gave rise to impractically large abstract domains \cite{Dav93b}.  This
+paper presents a technique free of these shortcomings: it is simple,
+entirely projection-based, satisfies a formal correctness condition,
+and gives rise to reasonably small abstract domains.  Though the
+technique is cast in terms of projections, there is also an
+interpretation in terms of PERs.  The principal limitation of the
+technique is the restriction to {\it monomorphic\/} typing.}
+
+\keywords{Binding-time analysis, abstract interpretation, projections,
+PERs.}
+
+
+\section{Introduction and Background}
+
+We take as given that binding-time analysis is essential for good
+partial evaluation, and we do not address the issue of annotating
+programs according to the results of analysis.  Numerous binding-time
+analysis techniques have been proposed and implemented; we greatly
+narrow the field of discussion by restricting attention to those for
+which there is a formally stated notion of correctness that the
+technique has been proven to satisfy.
+
+Analysis techniques can usually be identified as being based on either
+a non-standard denotational semantics or a non-standard typing.
+Examples in the latter category include those of Gomard \cite{Go92},
+Jensen \cite{Jen92}, the Nielsons \cite{NN88}, Schmidt \cite{Sch88},
+and Henglein and Mossin \cite{HM94}.  Our focus is on those techniques
+based on non-standard interpretation, in particular, those using
+projections or partial equivalence relations (PERs) as the basic
+abstract values.
+
+A domain {\it projection\/} is a continuous idempotent function that
+approximates the identity.  Launchbury \cite{Lau88} hit upon the idea
+of using projections to encode degrees of staticness of data.  The
+basic idea is that a projection maps to $\bot$ that part of a data
+structure that is dynamic (possibly not determined), and acts as the
+identity on that part which is static (definitely determined).
+Examples are the identity $\ID$, the greatest projection, which
+specifies that values are entirely static; the constant $\bot$
+function $\BOT$, the least projection, which specifies that values are
+entirely dynamic; and projections $\FST$ and $\SND$ on product
+domains, defined by
+\[
+\FST\ (x,y) = (x,\bot)\ ,\hspace{1.0in} \SND\ (x,y) = (\bot,y)\ ,
+\]
+specifying staticness in the first and second components of pairs,
+respectively.  The nominal goal of analysis is, given function $f$
+denoted by some programming-language expression, and projection $\D$
+encoding the staticness of the argument of $f$, to determine $\G$
+satisfying the {\it safety condition\/} $\G\o\f\we\f\o\D$.  For
+example, taking $\G$ to be $\SND$ satisfies
+$\G\o\itt{swap}\we\itt{swap}\o\FST$ for $\itt{swap}$ defined by
+$\itt{swap}~(x,y)=(y,x)$.  Taking $\G$ to be $\BOT$ always satisfies
+the safety condition but tells nothing; greater $\G$ is more
+informative.  Launchbury \cite{Lau91a} showed that this safety
+condition, in a sense which he formalises, is equivalent
+to the correctness condition for binding-time analysis in the general
+framework of Jones \cite{Jon88}.  Using projection-based analysis,
+Launchbury implemented both monomorphic and polymorphic versions of a
+partial evaluator for a first-order language.
+
+There have been three notable attempts to generalise Launchbury's
+techniques to higher order.  The first was Mogensen's generalisation
+of the polymorphic technique \cite{Mog89}.  Though successfully
+implemented, there is no formal statement of what it means for the
+analysis to be correct; even if such a statement were made, proving
+correctness would likely be difficult because of the highly
+intensional nature of the analysis: the non-standard values associated
+with expressions are strongly dependent on their syntactic structure,
+and projections are encoded symbolically as {\it abstract closures\/},
+with approximation performed algebraically `on-the-fly' according to
+time and space considerations.  Nonetheless, the experiment provided
+evidence for the {\it practicality\/} of the projection-based approach
+at higher order.
+
+The second generalisation was Hunt and Sands', of the monomorphic
+technique to higher order \cite{HS91}.  Their observation was that a
+projection, regarded as a set of domain-range pairs, is an {\it
+equivalence relation\/}: given $\G$, values $u$ and $v$ are in the
+same equivalence class if $\G~u=\G~v$, and the canonical elements of
+the equivalence classes are the set of fixed points (range) of $\G$.
+Hunt showed that the safety condition $\G\o\f\we\f\o\D$ holds iff $f$
+is related to itself by $\D\fto\G$ where $\fto$ is the standard
+operation on binary relations, so 
+"" 
+	(\G\o\f\we\f\o\D)\
+	\Leftrightarrow\ 
+	(\forall u,v\ .\ \D\ u=\D\ v\ \Rightarrow\ \G\ (f\ u)=\G\ (f\ v))\ .  
+""
+Then, for example, $(\BOT\fto\ID)~(f,f)$ asserts
+that $f$ maps dynamic arguments to static results.  In general
+$\D\fto\G$ is not an equivalence relation, but it is always a {\it
+partial\/} equivalence relation: it is symmetric and transitive but
+not necessarily reflexive.  (Partialness is crucial: if $\D\fto\G$
+were in general reflexive then $(\D\fto\G)(f,f)$ would hold for all
+$f$, hence such assertions would tell nothing.)  Unlike projections
+regarded as relations, PERs are closed under $\fto$; the result, as
+Hunt and Sands show, is that `scaling up' to higher-order analysis is
+reasonably straightforward.  One disadvantage of their method is that
+PER spaces are considerably larger than the projection spaces on the
+same domains, and it is not clear which PERs to choose for (finite)
+abstract domains.  Here they borrowed heavily from the projection
+world, using standard abstract projection domains at ground types.
+Further, its practicality has not been demonstrated by implementation,
+and, because of the unfamiliar territory, a promising route to a
+polymorphic generalisation is obscure.
+
+The third generalisation was ours, to an entirely projection-based,
+monomorphic, higher-order technique \cite{Dav93b}.  One observation
+motivating the approach is that there is no meaningful abstraction of
+values to projections, only of functions $f$ to projection
+transformers $\T$ (functions from projections to projections)
+satisfying $(\T~\D)\o\f\we\f\o\D$ for all $\D$.  To make this
+abstraction possible a semantics intermediate between the standard and
+analysis semantics was introduced.  Moving from the standard to
+intermediate semantics involved a translation of each ground type @T@
+to a function type @E@\ @->@\ @T@ (for a fixed type @E@), the values
+of which, being functions, could then be abstracted.  The result,
+while proven correct with respect to a formal safety condition, is
+probably not practicable because of the growth in the sizes of
+(usefully rich) abstract domains induced by the type translation.
+
+This paper presents a technique far simpler than our
+previous one.  No intermediate semantics is required, and the
+correctness condition and proof are much simpler.  Because the
+translation of ground types to function types is avoided the abstract
+domains are much smaller. Though entirely projection-based, we show
+that there is a reading of the results in terms of PERs, intimating a
+close relationship with the PER-based technique.
+
+\section{Language and Standard Semantics}
+
+The source language is a simple, strongly typed, monomorphic,
+non-strict functional language.  The grammar for the language of types
+and type definitions is given in Figure~\ref{fig:types}.
+\fig{tb}{Types and type definitions.}{fig:types}{
+""
+@T@	&::=&	\ta			&\reason{Type Name}
+	&|&	\tint			&\reason{Integer}
+	&|&	\tprod			&\reason{Product, $n\geq0$}
+	&|&	\tsum			&\reason{Sum, $n\geq1$} 
+	&|&	\tfun			&\reason{Function} \espace 
+@D@	&::=&	\tdefn			&\reason{Type Definitions}
+""
+}
+Nullary product corresponds to the so-called {\it unit\/} type.  A
+unary product @(T)@ will always have the same semantics as @T@.  The
+types used in the examples are defined as follows.
+@@@
+     FunList =   nil () 
+               + cons (Int -> Int, FunList) , 
+
+     FunTree =   leaf (Int -> Int) 
+	       + branch (FunTree, FunTree) .
+@@@
+
+The grammar for expressions is given in Figure~\ref{fig:exprs}.
+Addition for integers is provided as typical of operations on flat data
+types in this setting.  A unary tuple @(e)@ will always have the same
+semantics as @e@.  The (monomorphic) typing of expressions is entirely
+standard and is omitted.
+\fig{tb}{Expressions.}{fig:exprs}{
+""
+@e@	&::=&	\evar				&\reason{Variable} 
+	&|&	\enum				&\reason{Numeral}
+	&|&	\esum				&\reason{Integer addition}
+	&|&	\eapp				&\reason{Function application}
+	&|&	\etup				&\reason{Tuple construction}
+	&|&	@let@\ @(@\xone@,@\ldots@,@\xn@)@\ @=@\ \enot\ @in@\ \eone			&\reason{Tuple decomposition}
+	&|&	\econ				&\reason{Sum construction}
+	&|&	@case@\ \enot\ @of @\{\ci\ \xxi\ @->@\ \ei\}	&\reason{Sum decomposition}
+	&|&	\elamt				&\reason{Lambda abstraction}
+	&|&	\eapp				&\reason{Function application}
+	&|&	\efix				&\reason{Fixed point}
+""
+}
+
+\subsection{Expression semantics}
+Since two different expression semantics will be given, following
+Abramsky \cite{Abr90} we define a semantics $\cE{}$ parameterised by a
+set of {\it defining constants}.  The semantics $\cE{}$ is defined in
+Figure~\ref{fig:gensem}; the defining constants are {\it plus},
+$\itt{sel}_i$, {\it tuple}, $\itt{inc}_i$, $\itt{outc}_i$, {\it
+choose}, {\it mkfun}, {\it apply}, and {\it fix}.  The two instances
+of $\cE{}$ are distinguished by a superscript: $\cE{\Ss}$ for the
+standard semantics and $\cE{\Ps}$ for the non-standard semantics.  The
+corresponding type semantics, and defining constants, have the same 
+superscripts.
+
+It is useful to regard the free-variable environment of each
+expression as having some tuple type $\tprod$, and environment lookup
+as indexing (as in a categorical semantics, or De~Bruijn indexing);
+variables are indexed implicitly or explicitly by their index in the
+free variable environment.  Then for both versions of the semantics
+and all expressions @e@ of type @T@ with environment of type $\tprod$,
+""
+	\Ee{}{@e@}\ \in\ \Te{}{\tprod}~\fto~\Te{}{@T@}\ .
+""
+Noting that $\R\br{\xxi}$ is short for $\itt{sel}_i~\R$, environment
+update $\R[\xxi\mapsto{}v]$ is defined by
+"""
+	tuple (sel_1 \R, \ldots, sel_{i-1} \R, v, sel_{i+1} \R, \ldots, sel_n \R) .
+"""
+
+
+\fig{tb}{Parameterised semantics.}{fig:gensem}{
+""
+	\Ee{}{\evar_i}\ \R = \R\br{@x@_i} = \itt{sel}_i\ \R\espace\espace
+%	\Ee{}{\eunit}\ \R = \itt{mkunit}\ \R\espace\espace
+%	\Ee{}{\enum}\ \R = \itt{mkint}_i\espace\espace
+	\Ee{}{\esum}\ \R = \itt{plus}~(\Ee{}{\eone}\ \R,\ \Ee{}{\etwo}\ \R)\espace\espace
+	\Ee{}{\etup}\ \R = \itt{tuple}~(\Ee{}{\eone}\ \R,~\ldots,~\Ee{}{\en}\ \R)\espace\espace
+	\Ee{}{\esel}\ \R
+	\ \ \ \ \ = \Ee{}{\eone}\ \R[\xxi\mapsto\itt{sel}_i\ (\Ee{}{\enot}\ \R)~|~\oin]\espace\espace
+	\Ee{}{\econ}\ \R = \itt{inc}_i\ (\Ee{}{@e@}\ \R)\espace\espace
+	\Ee{}{\ecase}\ \R
+	\ \ \ \ \  = \itt{choose}~(\ba[t]{l}\Ee{}{\enot}\ \R,
+	\Ee{}{\eone}\ \R[\xone\mapsto\itt{outc}_1\ (\Ee{}{\enot}\ \R)],
+	\ \ \ ~\vdots
+	\Ee{}{\en}\ \R[\xn\mapsto\itt{outc}_n\ (\Ee{}{\enot}\ \R)])\ea\espace\espace
+	\Ee{}{\elam}\ \R = \itt{mkfun}\ (\L{}x.\Ee{}{@e@}\ \R[\evar\mapsto{}x])\espace\espace
+	\Ee{}{\eapp}\ \R = \itt{apply}\ (\Ee{}{\eone}\ \R)\ (\Ee{}{\etwo}\ \R)\espace\espace
+	\Ee{}{\efix}\ \R = (\itt{fix}\o\itt{apply})\ (\Ee{}{@e@}\ \R)
+""
+}
+
+\subsection{Standard semantics}
+
+The standard $\Ss$ type and expression semantics are defined in
+Figure~\ref{fig:ssem}.  
+Domain $\plus$ is separated (lifted) sum.  
+For more generality, products are unlifted; a unary sum-of-products gives a
+more usual lifted product.  
+Function types give rise to lifted function
+spaces as in Abramsky's lazy lambda calculus \cite{Abr89}.
+The important feature of this approach is the modelling of the
+fact that functions are, in effect, embedded in the simplest of
+lazy data structures, which either have no WHNF---have value $\bot$---or
+have a WHNF and contain an applicable function value---have value
+$\itt{lift}~f$ for some $f$.  (This can be made even more explicit by
+introducing a unary sum type, whence "\L" becomes a constructor \cite{Dav94}.)
+Recursive type definitions give rise to recursive domain
+specifications which have the usual least-fixed-point solutions.
+
+\fig{tb}{Standard type and expression semantics.}{fig:ssem}{
+"""
+\Te{\Ss}{\tint} = \Int = \lift{\bf{Z}} \espace\espace
+\Te{\Ss}{\tprod} = \Te{\Ss}{\tone}\ \times\ \ldots\ \times\ \Te{\Ss}{\tn}\espace\espace
+\Te{\Ss}{\tsum} = \Te{\Ss}{\tone}\ \plus\ \ldots\ \plus\ \Te{\Ss}{\tn}\espace\espace
+\Te{\Ss}{\tfun} = \liftp{\Te{\Ss}{\tone} \fto \Te{\Ss}{\ttwo}}
+
+%	\itt{mkunit}^{\Ss}\ \R			 = 	()\espace\espace
+%	\itt{mkint}^{\Ss}_n\ \R			 = 	\itt{lift}\ n\espace\espace
+	\itt{plus}^{\Ss}\ (x,y) 		 = 	x+y\espace\espace
+	\itt{tuple}^{\Ss}\ (x_1,\ldots,x_n)	 = 	(x_1,\ldots,x_n)\espace\espace
+	\itt{sel}_i^{\,\Ss}\ (x_1,\ldots,x_n)	 = 	x_i\espace\espace
+	\itt{inc}_i^{\Ss} 			 = 	\itt{in}_i\o\itt{lift}\espace\espace
+	\itt{outc}_i^{\Ss}\ x			 = 	\itt{drop}\o\itt{out}_i\espace\espace
+	\ba{lll}\itt{choose}^{\Ss}\ (\bot,&\ x_1,\ldots,x_n)		 = \bot
+	\itt{choose}^{\Ss}\ (\itt{in}_i~v,&\ x_1,\ldots,x_n)	 = x_i\ea\espace\espace
+	\itt{mkfun}^{\Ss}		 = 	\itt{lift}\espace\espace
+	\itt{apply}^{\Ss}		 = 	\itt{drop}\espace\espace
+	\itt{fix}^{\Ss}  		 = 	\itt{lfp} \reason{Least fixed point}
+"""
+}
+
+\section{Domain Factorisation}
+
+A key observation of our previous work
+\cite{Dav93b} is that since there is no concept
+of staticness of the body of a lambda expression, there is no point in
+having projections on function spaces.  Hence values are factored into
+their evaluable or {\it data\/} parts, and their unevaluable but
+applicable {\it forward\/} parts.  For example, for expressions of
+function type ${@T@\ @->@\ @U@}$, with
+$\liftp{T\fto{}U}=\Te{\Ss}{@T@\ @->@\ @U@}$, we distinguish two
+degrees of definedness---between values of the form
+$\itt{lift}~f$ and $\bot$, corresponding to expressions that do and
+do not have a WHNF, respectively.  These two degrees of definedness 
+may be encoded by the two-point
+domain $\lone=\{\bot, \itt{lift}~()\}$---the {\it data domain\/} corresponding
+to type ${@T@\ @->@\ @U@}$.  There are two distinct projections on $\lone$,
+namely $\ID$ and $\BOT$: denoted functions are 
+either static or dynamic.  Here 
+the forward domain is $T\fto{}U$, and the factorisation of $\liftp{T\fto{}U}$
+is $\lone\times(T\fto{}U)$.  The factorisation function
+${\it{}fac}_{@@@T->U@@@}\in\liftp{T\fto{}U}\fto(\lone\times(T\fto{}U))$
+is an embedding defined by
+${\it{}fac}_{@@@T->U@@@}~\bot=(\bot,\bot)$, and
+${\it{}fac}_{@@@T->U@@@}~(\itt{lift}~f)=(\lunit,~f)$ for all $f$.
+Every embedding {\it determines\/} a corresponding projection; 
+this follows from the relations $g\o h\we\itt{id}$ and $h\o\g=\itt{id}$
+that hold between an embedding $g$ and its corresponding projection $h$.
+The importance of factorisation being an embedding is that no information
+is lost---values may be recovered by unfactoring.  Here the
+projection is given by
+${\it{}unfac}_{@@@T->U@@@}~(\bot,f)=\bot$ and
+${\it{}unfac}_{@@@T->U@@@}~(\lunit,~f)=\itt{lift}~f$.
+
+Generally, the data domain corresponding to type @T@ is $\De{}{@T@}$,
+where $\cD{}$ is defined exactly like $\cT{\Ss}$ except that function
+spaces are replaced by the one-point domain $\one$, that is,
+$\De{}{\tfun}=\lift{\one}$ for all $\tone$ and $\ttwo$.  
+The function $\data$ from values in
+$\Te{\Ss}{@T@}$ to their data parts in $\De{}{@T@}$ is a projection:
+it is like the identity except that values from function spaces are
+mapped into $\one$.  The projection $\data$ is defined in terms of the
+structure of @T@ as given in Figure~\ref{fig:fact}.
+\fig{tb}{Factorisation and unfactorisation functions.}{fig:fact}{
+""
+	{\it{}data}_{\stint} = {\it{}id}_{\stint}\ ,\espace
+	{\it{}data}_{\stprod} = {\it{}data}_{\stone} \times \ldots \times {\it{}data}_{\stn} ,\espace
+	{\it{}data}_{\stsum} = {\it{}data}_{\stone} \plus \ldots \plus {\it{}data}_{\stn} ,\espace
+	{\it{}data}_{\stfun} = {\liftp{\Lx.\unit}} .
+""
+
+"""
+	{\it{}for}_{\stint} = \Lx.\unit\ ,\espace
+	{\it{}for}_{\stprod} = {\it{}for}_{\stone}\ \times\ \ldots\ \times\ {\it{}for}_{\stn}\ ,\espace
+        \ba{lll}{\it{}for}_{\stsum}\ \bot	&\ = \bot
+	{\it{}for}_{\stsum}\ (\itt{in}_i~v) &\ = (\bot,\ldots,\bot,v,\bot_,\ldots,\bot)	&\ \ \reason{$v$ in $\ith$ position}\ ,\ea\espace
+	{\it{}for}_{\stfun} = \itt{drop}\ .
+"""
+
+"""
+	\itt{unfac}_{\stint} (n,()) = n ,\espace
+	\itt{unfac}_{\stprod} ((d_1,...,d_n), (f_1,...,f_n)) = (v_1,...,v_n)
+	~~~{\rm{}where} 
+	~~~~~~v_i=\itt{unfac}_{\sti} (d_i,f_i), \oin ,\espace
+	\itt{unfac}_{\stsum} ((d_1,...,d_n), (f_1,...,f_n)) = (v_1,...,v_n)
+	~~~{\rm{}where} 
+	~~~~~~v_i=\itt{unfac}_{\sti} (d_i,f_i), \oin ,\espace
+	\itt{unfac}_{\stfun} (\bot,f) = \bot,
+	\itt{unfac}_{\stfun} (\lunit, f) = \itt{lift} f . 
+"""
+}
+The definition of ${\it{}data}_{\stfun}$ uses function lifting, 
+defined by $\lf~\bot=\bot$
+and $\lf~(\itt{lift}~x)=\itt{lift}~(f~x)$.  Recursive type definitions
+give rise to recursive function specifications with exactly one solution.
+
+In the same style as  $\De{}{@T@}$ and $\data$ we define
+$\Tde{\Ss}{@T@}$ to give the forward domain for @T@, and $\for$ to be
+the function mapping values in $\Te{\Ss}{@T@}$ to their forward parts
+in $\Tde{\Ss}{@T@}$, as follows.  Roughly, $\cTd{\Ss}$ is like
+$\cT{\Ss}$ with all lifting removed and sum replaced by product, so
+""
+	\Tde{\Ss}{\tint} = \one ,\espace
+	\Tde{\Ss}{\tprod} = \Tde{\Ss}{\tone} \times \ldots \times \Tde{\Ss}{\tn} ,\espace
+	\Tde{\Ss}{\tsum} = \Tde{\Ss}{\tone} \times \ldots \times \Tde{\Ss}{\tn} ,\espace
+	\Tde{\Ss}{\tfun} = \Te{\Ss}{\tone} \fto \Te{\Ss}{\ttwo} .
+""
+The mapping from standard values to their forward parts is defined in
+Figure~\ref{fig:fact}.
+We write $\fac$ for $\Lx.(\data~x,\ \for~x)$.  Then
+$\De{}{@T@}\times\Tde{\Ss}{@T@}$ is a factorisation of
+$\Te{\Ss}{@T@}$, and
+""
+	\fac \in \Te{\Ss}{@T@} \fto (\De{}{@T@} \times \Tde{\Ss}{@T@})
+""
+is an embedding which, as mentioned, determines the corresponding projection
+$\unfac$ as defined in Figure~\ref{fig:fact}.
+
+We give some further examples.  The factorisation of
+$\Int$ is $\Int\times\one$; more generally, the factorisation of any
+domain $D$ corresponding to a type not containing @->@ is just
+$D\times\one$.  For @FunList@ the standard domain is
+"""
+	\mu{}X . \lone+(\liftp{\itt{Int}\fto\itt{Int}}\x{}X) ,
+"""
+that is, lists of functions from integers to integers. In factored form
+the domain is
+"""
+	(\mu{}X . \lone+(\lone\x{}X)) \x (\mu{}Y . (\itt{Int}\fto\itt{Int})\x{}Y) ,
+"""
+that is, pairs consisting of a list of values from $\{\bot,\ \lbot\}$, and
+an infinite tuple of functions from integers to integers.  Then the 
+standard value of the list @cons (\x.x-1, cons (\x.x-2, nil ()))@ is
+"""
+	\itt{incons} (\itt{lift} (\L{}x.x-1), \itt{incons} (\itt{lift} (\L{}x.x-2), \itt{innil} ())) ,
+"""
+the data value is
+"""
+	\itt{incons} (\lunit, \itt{incons} (\lunit, \itt{innil} ())) ,
+"""
+and the forward value is 
+$(\L x.x-1,~(\L x.x-2,~(\bot,~(\bot,~(\bot,~\ldots)))))$.
+
+\section{Projection Semantics}
+
+Standard values $v$ and $v'$ are related by nonstandard value
+$(\A,\K)$ when their data parts are related by projection $\A$, and
+their forward parts are {\it logically related\/} \cite{Abr90} by
+$\K$.  At each type @T@ the relation is
+$\Re{}{@T@}~((\A,\K),\cdot,\cdot)$, defined by
+""
+	{\Re{}{@T@}~((\A,\K),v,v')} =&\mit(\A~d=\A~d')\ \wedge\ \Rde{}{@T@}~(\K,f,f')
+		&\mbox{\rm{}where}
+		&\ \ \ \ba[t]{lll}(d,f)  &\:= \fac~v
+				\mit(d',f')	&\:= \fac~v' ,\ea
+""
+where $\Rde{}{@T@}$ is defined by
+""
+	\Rde{}{\tint}~((),(),()) = \itt{True}\ ,\espace
+	\Rde{}{\tprod} = \Rde{}{\tone}\ \x\ \ldots\ \x\ \Rde{}{\tn}\ ,\espace
+	\Rde{}{\tsum} = \Rde{}{\tone}\ \x\ \ldots\ \x\ \Rde{}{\tn}\ ,\espace
+	\Rde{}{\tfun} = \Re{}{\tone}\ \fto\ \Re{}{\ttwo}\ .
+""
+Here $\x$ and $\fto$ are the standard operations on {\it ternary\/}
+relations:  for relations $R$ and $S$ we have
+$(R\times{}S)((x,x'),(y,y'),(z,z'))$ iff $R(x,y,z)$ and
+$S(x',y',z')$, and $(R\fto{}S)(f,g,h)$ iff for all $x$, $y$, and $z$
+such that $R(x,y,z)$ we have $S(f~x,\ g\ y,\ h~z)$.  Here, recursive
+type definitions give recursive relation specifications, which have
+inclusive least-fixed-point solutions. (A relation is inclusive if,
+when it holds for each element of a directed set, and in particular
+an ascending chain, it also holds at
+the limit.  Such relations are sometimes called {\it admissible\/} or
+{\it directed complete}.  Some work is required to show inclusivity of
+these recursively-defined relations.) Thus the $\Ps$ type semantics
+$\cT{\Ps}$ must be
+""
+	\Te{\Ps}{@T@} = \proj{\De{}{@T@}}\ \times\ \Tde{\Ps}{@T@}\ ,
+""
+where $\proj{\De{}{@T@}}$ is the lattice of projections on domain
+$\De{}{@T@}$, and $\cTd{\Ps}$ is defined exactly like $\cTd{\Ss}$ with
+superscript $\Ps$ everywhere replacing superscript $\Ss$.
+
+\fig{tb}{Projection semantics.}{fig:fsem}{
+""
+%	\itt{mkunit}^{\Ps}\ \R			 = 	()
+%\espace\espace
+%	\itt{mkint}^{\Ps}_n\ \R			 = 	\itt{lift}\ n
+%\espace\espace
+	\itt{plus}^{\Ps}\ ((\A,()),(\B,())) = \left\{\ba{ll}(\ID,()),	&\ \ \ \ \mbox{\rm if $\A=\ID$ and $\B=\ID$}
+			(\BOT,()),	&\ \ \ \ \mbox{\rm otherwise}\ea\right.\espace
+	\itt{tuple}^{\Ps}\ ((\A_1,\K_1),\ldots,(\A_n,\K_n)) = ((\A_1\x\ldots\x\A_n),(\K_1,\ldots,\K_n))\espace
+	\itt{sel}_i^{\,\Ps}\ ((\A_1\x\ldots\x\A_n),(\K_1,\ldots,\K_n))  = (\A_i,\K_i)\espace
+	\itt{inc}_i^{\Ps}\ (\A,\K)	 = 	(C_i\ \A,\ (\top,\ldots,\top,\K,\top,\ldots,\top))\espace
+	\itt{outc}_i^{\Ps}\ (\A,(\K_1,\ldots,\K_n))	 = (\OUTC_i\ \A,\ \K_i)\espace
+	\itt{choose}^{\Ps}\ ((\A,\K),x_1,\ldots,x_n) = \left\{\ba{ll}\bot,		&\ \ \ \ \mbox{\rm if}\ \A\not\se\glb_{\oin} C_i~\BOT
+			x_1\glb\ldots\glb{}x_n,	&\ \ \ \ \mbox{\rm otherwise}\ea\right.\espace
+	\itt{mkfun}^{\Ps}\ f			 = 	(\ID,f)\espace
+	\itt{apply}^{\Ps}\ (\A,f) = \left\{\ba{lll}\bot,	&\ \ \ \ \mbox{\rm if}\ \A=\BOT
+						f,	&\ \ \ \ \mbox{\rm if}\ \A=\ID \ea\right.\espace
+	\itt{fix}^{\Ps} = 	\itt{gfp} \reason{Greatest fixed point}
+""
+}
+
+The defining constants for the projection semantics $\cE{\Ps}$ are
+given in Figure~\ref{fig:fsem}. The following notation is used for
+specifying projections on the data domains.  For sum type $\tsum$ with
+data domain $D_1\plus\ldots\plus D_n$, define $C_i~\A$ to be
+$\ID+\cdots+\ID+\A+\ID+\cdots+\ID$ where $\A$ is the $i^{th}$ summand,
+$\OUTC_i~(\G_1+\cdots+\G_n)$ to be $\G_i$, and $\OUTC_i~\BOT$ to be
+$\BOT$.
+
+\ \\ \noindent {\bf The Central Result.} For expression @e@ of type
+@T@ and free-variable environment type @E@, the functions
+$\Ee{\Ps}{@e@}$, $\Ee{\Ss}{@e@}$, and $\Ee{\Ss}{@e@}$ are logically
+related by $\cR{}$, that is
+""
+	(\Re{}{@E@}\fto\Re{}{@T@})\ (\Ee{\Ps}{@e@},\ \Ee{\Ss}{@e@},\ \Ee{\Ss}{@e@})\ .
+""
+Further, $\Re{}{@T@}~((\A,\K),\cdot,\cdot)$ is a PER for all $\A$ and
+$\K$.\ \ $\Box$
+
+\ \\ \noindent The bulk of proof is omitted; it consists of showing
+that the defining constants are similarly related, and a simple
+induction on the structure of expressions showing that if the defining
+constants are logically related, then so are the semantic functions
+$\cE{\Ps}$, $\cE{\Ss}$, and $\cE{\Ss}$.
+By way of example we consider the expression form $\esum$ and the
+relevant defining constant $\it plus$.  To show that $\it plus^{\Ss}$
+and $\it plus^{\Ps}$ are correctly related we need to show that
+"""
+	((\Re{}{\tint}\x\Re{}{\tint})\fto\Re{}{\tint}) (plus^{\Ps},plus^{\Ss},plus^{\Ss}) .
+"""
+By the definitions of $\fto$ and $\x$ on ternary relations, this is
+equivalent to 
+""
+	(\Re{}{\tint}\x\Re{}{\tint}) (x,y,z) \limp \Re{}{\tint}\
+		\ (plus^{\Ps} x, plus^{\Ss} y, plus^{\Ss} z) ,
+""
+for all $x$, $y$, and $z$.  In turn, this is equivalent to
+"""
+	&\ \Re{}{\tint} (x,y,z) \land \Re{}{\tint} (x',y',z')
+\limp	&\ \Re{}{\tint} (plus^{\Ps} (x,x'), plus^{\Ss} (y,y'), plus^{\Ss} (z,z'))
+"""
+for all $x$, $x'$, $y$, $y'$, $z$, and $z'$; equivalently, for
+all values $y$, $y'$, $z$, and $z'$ from the integer domain
+$\Te{\Ss}{\tint}$ we have
+""
+	\mit(\ID y=\ID z) \land (\ID y'=\ID z') \limp \mit\ID (y+y')=\ID (z+z') ,
+""
+which trivially holds, and for $\A_1\neq\ID$ or $\A_2\neq\ID$ that
+""
+	\mit(\A_1 y=\A_1 z) \land (\A_2 y'=\A_2 z') \limp \mit\BOT (y+y')=\BOT (z+z') ,
+""
+which is also trivial.  For the inductive case $\esum$ with 
+environment type @E@ we need to show that if
+""
+	(\Re{}{@E@}\fto\Re{}{\tint}) (\Ee{\Ps}{\eone}, \Ee{\Ss}{\eone}, \Ee{\Ss}{\eone}) 
+""
+and
+""
+	(\Re{}{@E@}\fto\Re{}{\tint}) (\Ee{\Ps}{\etwo}, \Ee{\Ss}{\etwo}, \Ee{\Ss}{\etwo}) 
+""
+then
+"""
+	(\Re{}{@E@}\fto\Re{}{\tint}) (\Ee{\Ps}{\esum},\Ee{\Ss}{\esum},\Ee{\Ss}{\esum}) .
+"""
+Suppose $\Re{}{@E@}~(\R^{\Ps},\R^{\Ss},\R'^{\Ss})$.  Then by 
+the induction hypothesis we have that
+$\Re{}{\tint}~(\A_i,v_i,v'_i)$, where 
+$(\A_i,())=\Ee{\Ps}{\ei}~\R^{\Ps}$,
+$(v_i,())=\Ee{\Ps}{\ei}~\R^{\Ss}$, and
+$(v'_i,())=\Ee{\Ps}{\ei}~\R'^{\Ss}$, for $i=1,2$.
+Now
+"""
+	\Re{}{\tint} (\Ee{\Ps}{\esum} \R^{\Ps}, \Ee{\Ss}{\esum}~\R^{\Ss}, \Ee{\Ss}{\esum}~\R'^{\Ss})
+"""
+iff
+"""
+	\Re{}{\tint} (&plus^{\Ps} ((\A_1,()),(\A_2,())), 
+		      &plus^{\Ss} \mit((v_1,()),(v_2,())), 
+		      &plus^{\Ss} \mit((v'_1,()),(v'_2,()))) ,
+"""
+which holds since $\it plus^{\Ps}$ and $\it plus^{\Ps}$, and their
+arguments, are correctly related.
+
+
+\section{Abstract Domains}
+
+At each type @T@ we require a finite abstraction of $\Te{\Ps}{@T@}$.
+This abstract domain is ${\it{}FProj}_{\stt}\times{\it{}FFor}_{\stt}$,
+where ${\it{}FProj}_{\stt}$ is a finite abstraction of the lattice
+$\proj{\De{}{@T@}}$, and ${\it{}FFor}_{\stt}$ is a finite abstraction
+of $\Tde{\Ps}{@T@}$.  The definition of ${\it{}FProj}_{\stt}$ is based
+on Launchbury's \cite{Lau91a}.  A projection $\G$ is in
+${\it{}FProj}_{\stt}$ if $\G~\mbox{\bf proj}~@T@$ can be inferred from
+the rules given in Figure~\ref{fig:infrules}.
+%
+\fig{tb}{Inference rules for finite projection domains.}{fig:infrules}{
+""
+\begin{array}{lll}\
+\axm{\BOT\ \ \mbox{\bf{}proj}\ \ \tint}\ \ \ \ \ \ \ \ \ \ & \axm{\ID\ \ \mbox{\bf{}proj}\ \ \tint}\
+\espace\espace
+\axm{\BOT\ \ \mbox{\bf{}proj}\ \ \tfun} & \axm{\ID\ \ \mbox{\bf{}proj}\ \ \tfun}\end{array}\
+\espace\espace
+\axm{\BOT\ \ \mbox{\bf{}proj}\ \ \tsum}\
+\espace\espace
+\infero{\G_1\ \ \mbox{\bf{}proj}\ \ \tone\ \ \cdots\ \ \G_n\ \ \mbox{\bf{}proj}\ \ \tn}{(C_1\ \G_1)\glb\cdots\glb(C_n\ \G_n)\ \ \mbox{\bf{}proj}\ \ \tsum}\
+\espace\espace
+\infero{\G_1\ \ \mbox{\bf{}proj}\ \ \tone\ \ \cdots\ \ \G_n\ \ \mbox{\bf{}proj}\ \ \tn}{\G_1\x\ldots\x\G_n\ \ \mbox{\bf{}proj}\ \ \tprod}\
+\espace\espace
+\infer{\ba{ll}&\G_1\ \ \mbox{\bf{}proj}\ \ \aone\ \ \cdots\ \ \G_n\ \ \mbox{\bf{}proj}\ \ \an
+\vdash & P(\G_1,...,\G_n)\ \ \mbox{\bf{}proj}\ \ \ti@(@\aone@,...,@\an@)@\ea}{\mu(\G_1,\ldots,\G_n).P(\G_1,\ldots,\G_n)\ \ \mbox{\bf{}proj}\ \ \ai}\
+\ \ \ \ \ [\mbox{\rm{}where}\ \ai@=@\ti@(@\aone@,...,@\an@)@]
+""
+}
+For recursively-defined types the rules yield only those projections
+that are {\it uniform}---that act on each recursive instance of a 
+data structure in the same
+way.  Thus ${\it{}FProj}_{@@@FunList@@@}$ comprises $\BOT$ and
+$\SPINE~\A$ for $\A$ ranging over $\BOT$ and $\ID$, where
+""
+	\SPINE\ \A = \mu\G.(\itt{NIL}\ \ID)\ \glb\ (\itt{CONS}\ (\A\ \x\ \G))\ ,
+""
+so $\SPINE\ \BOT$ specifies static spines and dynamic elements, and
+$\SPINE\ \ID$ is the identity, thus specifying static spines and
+static elements.  More generally, the abstract list
+constructor is isomorphic to lifting.  Similarly,
+${\it{}FProj}_{@@@FunTree@@@}$
+comprises $\BOT$ and $\LBR\ \A$ for $\A$ ranging over $\BOT$ and $\ID$, where
+""
+	\LBR\ \A = \mu\G.(\itt{LEAF}\ \A)\ \glb\ (\itt{BRANCH}\ (\G\ \x\ \G))\ ,
+""
+so $\LBR\ \A$ specifies static branches and leaves, and $\A$ of the
+values in the leaf nodes.  Again, the abstract tree constructor is
+isomorphic to lifting.  This compares favourably with BHA strictness
+analysis, for which the corresponding abstract constructors are
+typically {\it double\/} lifting \cite{Wad87,Sew93}.
+
+
+Value $\K$ is in ${\it{}FFor}_{\stt}$ if $\K~\bfabsf~@T@$ can be
+inferred from the following.
+First, there is only one forward value at type $\tint$.
+""
+	\axm{() {} \bfabsf {} \tint} .
+""
+For products and sums,
+""
+\infer{\K_1 {} \bfabsf {} \tone { } \cdots { } \K_n {} \bfabsf {} \tn}\
+{(\K_1,\ldots,\K_n) {} \bfabsf {} \tprod} ,
+""
+%\espace\espace
+""
+\infero{\K_1 {} \bfabsf {} \tone { } \cdots { } \K_n {} \bfabsf {} \tn}\
+{(\K_1,\ldots,\K_n) { } \bfabsf {} \tsum} .
+""
+Function spaces consist of a set of step functions closed under lub.
+""
+\infero{\ba{ll}\A_1\in{\it{}FProj}_{\stone} { { } } \K_1 \bfabsf \tone
+\A_2\in{\it{}FProj}_{\sttwo} { { } } \K_2 \bfabsf \ttwo\ea}\
+{\it{}step ((\A_1,\K_1),(\A_2,\K_2)) {} \bfabsf {} \tfunp} ,
+""
+where
+""
+	step (v_1,v_2) x = v_2,		&{\rm if} v_1\we{}x 
+	step (v_1,v_2) x = \bot,	&{\rm otherwise} ,
+""
+and
+""
+\infer{\K_1 {} \bfabsf {} \tfunp { { } } \K_2 {} \bfabsf {} \tfunp}\
+{(\K_1\lub\K_2) {} \bfabsf {} \tfunp} .
+""
+This gives the full space of monotonic functions on the abstract
+domains.
+
+For recursively-defined types, roughly speaking, we choose those
+forward values that represent each component of the same type by the
+same value.  Given type definitions $\tdefn$, which will be written
+$@A@_i@ = T@_i@(A@_1@,...,A@_n@)@,\ \oin$, if from assumptions
+$\K_i~\bfabsf~\ai$ for $\oin$ it may be deduced that
+$P_i(\K_1,\ldots,\K_n)~~\bfabsf~~\ti(\aone\ldots\an)$ for $\oin$, then
+""
+	\mu(\K_1,...,\K_n).(P_1(\K_1,...,\K_n),...,P_n(\K_1,...,\K_n))
+""
+is a tuple $(\K_1,...,\K_n)$ such that $\K_i\ \bfabsf\ @A@_i$
+for $\oin$.
+For all @T@ the set ${\it{}FProj}_{\stt}\times{\it{}FFor}_{\stt}$ is a 
+finite lattice containing the top and bottom elements of $\Te{\Ps}{@T@}$.
+
+For @T@ not containing @->@ the domain $\Tde{\Ps}{@T@}$ is isomorphic
+to $\one$, so ${\it{}FFor}_{\stint}$ is $\one$.  For @Int@\ @->@\ @Int@
+we have
+$\Tde{\Ps}{@Int@\ @->@\ @Int@}=(\proj{\De{}{\tint}}\x\one)\fto(\proj{\De{}{\tint}}\x\one)$,
+so ${\it{}FFor}_{@@@Int->Int@@@}$ is
+$({\it{}FProj}_{\stint}\x\one)\fto({\it{}FProj}_{\stint}\x\one)$.  A
+data structure of recursive type @A=T(A)@ may be thought of as some
+(possibly infinite) number of elements of @T(())@.  For example, the
+value $\itt{cons}\ (f,\ \itt{cons}\ (g,\ \itt{nil}\ ()))$ in the
+standard domain for @FunList@ decomposes into $\itt{cons}\ (f,())$,
+$\itt{cons}\ (g,())$, and $\itt{nil}\ ()$.  The (implicit) abstraction
+function maps such a data structure to the greatest lower bound of
+these elements, giving a safe abstraction of the nonstandard values of
+each element.  Thus
+${\it{}FFor}_{@@@A=T(A)@@@}={\it{}FFor}_{@@@T(())@@@}$, so
+${\it{}FFor}_{@@@FunList@@@}\iso{\it{}FFor}_{@@@FunTree@@@}\iso{\it{}FFor}_{@@@Int->Int@@@}$.
+
+
+
+\section{Examples of Analysis}
+
+For all closed expressions @e@ the abstract value
+$\Ee{\Ps}{@e@}~[\,]$ of @e@ is of the form $(\ID,\K)$, showing
+that closed expressions are always entirely static.  For expressions of
+function type the abstract forward value $\K$ is a function from
+abstract arguments of @e@ to abstract results.
+
+First we consider functions on lists.
+Let expression @length@ denote the usual length function:
+@@@
+     fix (\length . \xs . case xs of
+                            nil u  -> 0
+                            cons p -> let (z,zs) = p in
+                                        1 + length zs)
+@@@
+The abstract forward value of @length@ is of the form
+$\L(\A,\K).(\T~\A,())$, where $\T$ maps $\SPINE~\BOT$ and $\SPINE~\ID$
+to $\ID$, and $\BOT$ to $\BOT$.  This reveals that the result of
+@length@ is independent of the values of list elements, and gives
+a static result when the argument has a static spine.  It is worth
+pointing out that the result of @length@ is static---determined---for
+infinite-length arguments with static spines; staticness and definedness
+are independent properties.
+
+
+Let @append@ stand for the expression denoting the usual function for
+appending two lists:
+@@@
+     fix (\append . \xs . \ys . case xs of
+                                  nil u  -> ys
+                                  cons p -> let (z,zs) = p in
+		                              cons (z, 
+						    append zs ys))
+@@@
+The abstract value of @append@ is
+""
+(\ID, \L(\A_{@@@xs@@@},\K_{@@@xs@@@}).
+(\ID, \L(\A_{@@@ys@@@},\K_{@@@ys@@@}).
+(\A_{@@@xs@@@}\glb\A_{@@@ys@@@}, \K_{@@@xs@@@}\glb\K_{@@@ys@@@}))) .
+""
+This reveals that partial applications of @append@ are static up to
+WHNF, and the abstract value of the result is the greatest lower bound
+of the two arguments.  In general, the abstract value of a closed
+expression of the form $@\x@_1@.\x@_2\ldots@.e@$ will reveal that all
+partial applications of the expression are static up to WHNF.
+
+Let @reverse1@ stand for the expression denoting the naive reverse
+function:
+@@@
+     fix (\reverse1 . \xs . case xs of
+                              nil u  -> nil ()
+                              cons p -> let (z,zs) = p in
+                                          append (reverse zs) 
+			                         (cons (z, nil ())))
+@@@
+The abstract forward value of @reverse1@ is the identity, so the
+abstraction of the elements of a list doesn't change by reversing the
+list.
+
+Let @compose@ stand for @\f.\g.\x.f (g x)@.  The abstract value of @compose@ is
+""
+(\ID, \L(\A_{@@@f@@@},\K_{@@@f@@@}).
+(\ID, \L(\A_{@@@g@@@},\K_{@@@g@@@}).
+(\ID, \left\{\ba{lll}\bot, &\mbox{\rm if}\ \A_{@@@f@@@}=\BOT\mbox{\rm or} \A_{@@@g@@@}=\BOT
+	\K_{@@@f@@@}\o\K_{@@@g@@@},&\mbox{\rm otherwise}\ea\right\}))) .
+""
+Thus, the
+result of the application of the composition of two functions is
+dynamic, and maps all values to dynamic values, if either function is
+dynamic; otherwise, the result is given by the application of the
+composition of the abstract forward values to the abstract argument.
+
+Let @listcomp@ stand for the expression denoting the function
+that composes lists of functions:
+@@@
+     fix (\listcomp . \fs . case fs of
+                              nil u  -> \x.x
+                              cons p -> let (g,gs) = p in 
+                                          compose g (listcomp gs))
+@@@
+The abstract value of @listcomp@ is
+""
+	(\ID,\ \L(\A_{@@@fs@@@},\K_{@@@fs@@@}).\
+	(\ID,\ \left\{\ba{lll}\
+\bot,		&\mbox{\rm if}\ \A_{@@@fs@@@}\neq\SPINE\ \ID
+\glb_{i\geq0}(\K_{@@@fs@@@})^i,	&\mbox{\rm otherwise}\ea\right\})) .
+""
+Since the abstract values of lists contain no information about the
+length of the lists of which they are abstractions, the abstract value
+of the composition of list elements is the glb of the composition over
+all lengths.
+
+Let @flatten@ stand for the expression denoting the function that
+flattens trees into lists:
+@@@
+     fix (\flatten . \t . case t of
+	                    leaf l   -> cons (l, nil ())
+	                    branch p -> let (t1,t2) = p in
+			                  append (flatten t1) 
+					         (flatten t2))
+@@@
+The abstract value of @flatten@ is
+""
+	(\ID,\ \L(\A_{@@@fs@@@},\K_{@@@fs@@@}).\
+	(\T\ \A,\ \left\{\ba{lll}\
+\bot,		&\mbox{\rm if}\ \T\ \A_{@@@fs@@@}\neq\LBR\ \ID
+\K_{@@@fs@@@},	&\mbox{\rm otherwise}\ea\right\})) ,
+""
+where $\T$ maps $\BOT$ to $\BOT$, and $\LBR~\A$ to $\SPINE~\A$ for $\A$
+ranging over $\ID$ and $\BOT$.
+
+The function denoted by @compose listcomp flatten@ that composes
+trees of functions has abstract value
+""
+	(\ID,\ \L(\A_{@@@fs@@@},\K_{@@@fs@@@}).\
+	(\ID,\ \left\{\ba{lll}\
+\bot,		&\mbox{\rm if}\ \A_{@@@fs@@@}\neq\LBR\ \ID
+\glb_{i\geq0}(\K_{@@@fs@@@})^i,	&\mbox{\rm otherwise}\ea\right\}))\ .
+""
+Similarly to the case for lists, the abstract values of trees contain
+no information about the structure of the trees of which they are abstractions,
+so the abstract value of the composition of the values of the leaves
+is the glb of the composition over all tree structures.
+
+\section{More on Abstract Domains}
+
+The sizes of the abstract domains and the representations of the
+abstract values can be considerably optimised.  The nonstandard
+semantics of application---embodied by $\it apply^{\Ps}$---guarantees
+that the abstract values $(\BOT,f)$ and $(\BOT,f')$ from
+$\Te{\Ps}{\tfun}$, for all $f$ and $f'$, are effectively the same:
+$\it apply^{\Ps}~(\BOT,f)=\bot$ for all $f$.  A practical analyser
+would take advantage of this fact, identifying $(\BOT,f)$ over all
+$f$.  More generally, for function types embedded within data
+structures, e.g.\ $@(@\tint@,@\tfun@)@$, abstract values
+$((\A,()),(\BOT,f))$ would be identified over all $f$.
+
+In the following we restrict attention to {\it denotable\/} values: at
+each type @T@ those values that can be expressed as $\Ee{}{@e@}~[\,]$
+for some @e@.  For every value $v\in\Te{\Ss}{@T@}$ there is a best
+abstraction---a greatest value $(\A,\K)\in\Te{\Ps}{@T@}$ such that
+$\Re{}{@T@}((\A,\K),v,v)$.  For types $\tone$ and $\ttwo$ not
+containing @->@ we have
+$\Tde{\Ps}{\tfun}\iso(\proj{\De{}{\tone}}\x\one)\fto(\proj{\De{}{\ttwo}}\x\one)$,
+and if $\K\in\Tde{\Ps}{@T@}$ is greatest such that
+$\Rde{}{\tfun}~(\K,f,f)$ for denotable $f$, then $\K$ maps $(\ID,())$
+to $(\ID,())$ and distributes over $\glb$.  The subset of functions
+from $\Tde{\Ps}{\tfun}$ that map $(\ID,())$ to $(\ID,())$ and
+distribute over $\glb$ forms a complete lattice, hence attention may
+be restricted to this subset.  Not only does this reduce the number of
+abstract functions, it also reduces their representation: such
+functions are determined by their behaviour on the unique $\glb$-{\it
+basis\/} of the lattice $\proj{\De{}{\tone}}$---the set $B$ of values
+such that every element of $\proj{\De{}{\tone}}$ is the glb of some
+(possibly empty) subset of $B$, and no element of $B$ can be expressed
+as the glb of some subset not containing that element.  This
+optimisation can be generalised to higher order: $\Tde{\Ps}{\tfun}$
+may be restricted to functions that map $\top$ to $\top$ and
+distribute over $\glb$, for all function types $\tfun$.  (These
+results follow from those shown in earlier work \cite{Dav94}.)
+
+\section{Related Work}
+
+Consel \cite{Con90} describes a binding-time analysis for higher-order
+untyped languages.  As in our analysis abstract values have two parts,
+the first describing the static/dynamic properties of values, and the
+second describing how (for function types) abstract arguments are
+mapped to abstract results; there appears to be an implicit domain
+factorisation similar to ours, based on implicit type information
+collected by analysis semantics.  In this respect there are many
+superficial similarities between the two techniques.  No formal
+relation to the standard semantics is given, making a formal
+comparison with our technique problematic.
+
+Hughes \cite{Hug88} proposes a general approach to promoting related
+analysis techniques to higher order; instantiation to projection-based
+analysis yields a technique much more closely related to that of our
+previous work \cite{Dav93b} than to the one given here: transformation
+of his equations to the same general form as ours reveals that
+translation of ground types to function types (as previously mentioned)
+is implicit in the technique.
+
+\section{Conclusion}
+
+We have successfully generalised Launchbury's monomorphic
+projection-based binding-time analysis to higher-order, using abstract
+domains smaller than those typically used in BHA strictness analysis.
+
+The next step would be to generalise to handle Hindley-Milner
+polymorphism.  This has been done with good results at first order for
+binding-time analysis \cite{Lau91a}, and for BHA strictness analysis
+at higher order \cite{Bar91,Bar93}.  We anticipate that the combined
+use of these theories will give a reasonably straightforward
+generalisation to polymorphism.  In addition to making the analysis
+more widely applicable, this should also greatly reduce the run-time
+cost of analysis, as it does for BHA analysis.
+
+Though not developed here, using the same approach it is possible to
+give a strictness analysis technique, again closely related to Hunt's
+PER-based strictness analysis technique \cite{Hun91}.
+
+
+\begin{thebibliography}{123456}
+
+\bibitem[Abr89]{Abr89}
+S. Abramsky. 
+``The lazy lambda calculus.'' 
+{\it Research Topics in Functional Programming.}
+David Turner, ed., Addison-Wesley 1989.
+
+\bibitem[Abr90]{Abr90}
+S. Abramsky. 
+``Abstract interpretation, logical relations and Kan extensions.''
+{\it Journal of Logic and Computation}, 1, 1990.
+
+\bibitem[Bar91]{Bar91}
+G. Baraki.
+``A note on abstract interpretation of polymorphic functions.''
+In \cite{Hug91}.
+
+\bibitem[Bar93]{Bar93}
+G. Baraki.
+{\it Abstract Interpretation of Polymorphic Higher-Order Functions.}
+Ph.D. thesis, Research report FP-1993-7, 
+Department of Computing Science, University of Glasgow.
+
+\bibitem[BEJ88]{BEJ88}
+D. Bjorner, A.P. Ershov, and N.D. Jones, eds.
+{\it Partial Evaluation and Mixed Computation,
+Proceedings IFIP TC2 Workshop, Gammel Avern{\ae}s}, Denmark, October 1987.
+North-Holland, 1988.
+
+\bibitem[Con90]{Con90}
+C. Consel. 
+``Binding Time Analysis for Higher Order Untyped Functional Languages.''
+Proceedings of the 1990 ACM Conference on LISP and 
+Functional Programming, pp264-272.
+
+\bibitem[Dav93]{Dav93b}
+K. Davis.
+``Higher-order Binding-time Analysis.'' 
+{\it Proceedings of the 1993 ACM on Partial Evaluation and
+Semantics-Based Program Manipulation (PEPM '93)},
+ACM Press, 1993.
+
+\bibitem[Dav94]{Dav94}
+K. Davis.
+{\it Projection-based Program Analysis.}
+Ph.D. thesis, Computing Science Department,
+The University of Glasgow, 1994.
+
+\bibitem[Go92]{Go92}
+C.K. Gomard.
+``A self-applicable partial evaluator for the lambda calculus:  Correctness
+and pragmatics.''
+ACM TOPLAS, Vol 14, No.\ 2, April 1992.
+
+\bibitem[HM94]{HM94}
+F. Henglein and C. Mossin.
+``Polymorphic binding-time analysis.''
+European Symposium on Programming (ESOP '94).
+
+\bibitem[Hug88]{Hug88}
+J. Hughes.
+Backwards analysis of functional programs.
+In \cite{BEJ88}.
+
+\bibitem[Hug91]{Hug91}
+J. Hughes, ed.
+{\it Proceedings of the 1991 Conference on Functional Programming Languages
+and Computer Architecture (FPCA '91)}, Cambridge, Sept 1991. LNCS 523,
+Springer Verlag, 1991.
+
+\bibitem[Hun91]{Hun91}
+S. Hunt.
+``PERs generalise projections for strictness analysis (extended abstract).''
+{\it Proceedings of the 1990 Glasgow Workshop
+on Functional Programming}.
+Simon L. Peyton Jones {\it et al.}, eds.
+Springer Workshops in Computing.
+Springer-Verlag, 1991.
+
+\bibitem[HS91]{HS91}
+S. Hunt and D. Sands.
+``Binding time analysis:  a new PERspective.''
+{\it ACM Symposium on Partial Evaluation
+and Semantics-Based Program Manipulation},
+SIGPLAN Notices Vol.\ 26, No.\ 9, 1991.
+
+\bibitem[Jen92]{Jen92}
+T. Jensen.
+{\it Abstract Interpretation in Logical Form}.
+Ph.D. thesis, Report 93/11, Department of Computer Science,
+University of Copenhagen, 1992.
+
+\bibitem[Jon88]{Jon88}
+N.D. Jones.
+``Automatic program specialization: A re-examination from
+basic principles.'' In \cite{BEJ88}.
+
+\bibitem[Lau88]{Lau88}
+J. Launchbury.
+``Projections for specialisation.''
+In \cite{BEJ88}.
+
+\bibitem[Lau91a]{Lau91a}
+J. Launchbury. 
+{\it Projection Factorisations in Partial Evaluation.} PhD
+Thesis, Glasgow University, Nov 89. Distinguished Dissertation in
+Computer Science, Vol 1, CUP, 1991.
+
+\bibitem[Mog89]{Mog89}
+T. Mogensen.
+``Binding-time analysis for polymorphically typed higher order languages.''
+{\it International Joint Conference on Theory and Practice of Software
+Development}. LNCS 352. Springer-Verlag 1989.
+
+\bibitem[NN88]{NN88}
+H.R. Nielson and F. Nielson.
+``Automatic binding-time analysis for a typed $\L$-calculus.''
+{\it Science of Computer Programming 10},
+North Holland, 1988.  Also in POPL '88.
+
+\bibitem[Sch88]{Sch88}
+D.A. Schmidt.
+``Static properties of partial reduction.''
+In \cite{BEJ88}.
+
+\bibitem[Sew93]{Sew93}
+J. Seward.
+``Polymorphic strictness analysis using frontiers.''
+{\it Proceedings of the 1993 ACM on Partial Evaluation and
+Semantics-Based Program Manipulation (PEPM '93)},
+ACM Press, 1993.
+
+\bibitem[Wad87]{Wad87}
+P. Wadler.
+``Strictness analysis on non-flat domains by abstract interpretation over finite domains. '' 
+S. Abramsky, C. Hankin, eds.
+{\it Abstract Interpretation of Declarative Languages.}
+Ellis-Horwood, 1987.
+
+
+\end{thebibliography}
+
+\end{article}
+\end{document}
+

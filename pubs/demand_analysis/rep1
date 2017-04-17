@@ -1,0 +1,47 @@
+From simonc@dcs.kcl.ac.uk Sun Sep 25 14:52:59 1994
+Return-Path: <simonc@dcs.kcl.ac.uk>
+Received: from helium.dcs.kcl.ac.uk by crl.nmsu.edu (4.1/SMI-4.1)
+	id AA07903; Sun, 25 Sep 94 14:52:56 MDT
+Received: from helium (localhost) by helium.dcs.kcl.ac.uk (5.0/SMI-SVR4)
+	id AA04582; Sun, 25 Sep 1994 21:51:40 +0000
+Message-Id: <9409252051.AA04582@helium.dcs.kcl.ac.uk>
+To: kei@crl.nmsu.edu (Kei Davis)
+Subject: Re: PEPM '94 report 
+In-Reply-To: Your message of "Sun, 25 Sep 1994 14:09:37 MDT."
+             <199409252009.OAA11743@NMSU.Edu> 
+Date: Sun, 25 Sep 1994 21:51:40 +0100
+From: "simonc@dcs.kcl.ac.uk" <simonc@dcs.kcl.ac.uk>
+Content-Length: 1129
+Status: RO
+
+
+Kei,
+
+Thank you for your comments.
+
+On your paper, I've been trying unsuccessfully to read it , since I
+know very little about projections and nothing about PERs.  Hence,
+there is little I can say that is constructive.  I will say, however,
+that it is terse and hard to read.  I found the derivation of results
+concluded rather obscurely, particularly the realtionship between your
+work and the PER technique (this is result that the relation R is a
+PER?)  In the introduction, you don't mention that the abstract
+domains you build compare favourably with those from BHA strictness
+analysis, which is certainly one of the results of the paper.
+
+There is a typo in Figure 2: function application appears twice.
+
+On the definition of R, the first clause for integers appears to be
+parameterised by a three-tuple, but this doesn't appear in the
+subsequent clauses - perhaps this is deliberate?
+
+But generally, very hard to read.  Unfortunately, you don't have much
+space for the journal version, otherwise I would recommend a review
+section at the beginning to introduce projections for b/time analysis
+in greater depth.
+
+Simon
+
+
+
+

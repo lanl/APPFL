@@ -1,0 +1,65 @@
+From clem@lambda.canberra.edu.au Tue Sep 20 01:25:04 1994
+Return-Path: <clem@lambda.canberra.edu.au>
+Received: from csc.canberra.edu.au by crl.nmsu.edu (4.1/SMI-4.1)
+	id AA08946; Tue, 20 Sep 94 01:24:58 MDT
+Received: from lambda.canberra.edu.au by csc.canberra.edu.au (5.65/1.35)
+	id AA05500; Tue, 20 Sep 94 17:24:56 +1000
+Received: by lambda.canberra.edu.au (4.1/SMI-4.1)
+	id AA03752; Tue, 20 Sep 94 17:04:59 EST
+Date: Tue, 20 Sep 94 17:04:59 EST
+From: clem@lambda.canberra.edu.au (Clem Baker-Finch)
+Message-Id: <9409200704.AA03752@lambda.canberra.edu.au>
+To: kei@crl.nmsu.edu
+Cc: clem@lambda.canberra.edu.au
+Status: RO
+
+Kei,
+
+Attached below are some comments on your PEPM paper.
+
+Regards,
+
+Clem
+
+
+------------------------------------------------------------------------
+`PERs from projections for binding-time analysis' -- Kei Davis.
+
+
+My initial reaction was that the paper assumes quite a deep background
+knowledge of projection-based analyses and that little consideration is
+given to the more general reader.  On reflection, constraints on length
+and common sense suggest that rewriting to suit a larger target audience
+is unreasonable.  Nevertheless, I think more space could be devoted to
+the PER correspondence and its import.
+
+
+Some more particular comments and queries (If they demonstrate my lack
+of understanding, perhaps you should take them as possibly indicating
+a need for clarification):
+
+section 2.2.
+I don't understand why products are unlifted.  It apparently happens by
+subterfuge through taking separated sums -- in most cases at least.
+
+Section 4.
+This is pretty tough going, especially with the definition of R[[T]]
+left hanging for almost a page before we see the point.  All that kept
+me going was that it looked like a PER so I had some intuitions to fall
+back on.  Perhaps a hint of where you are heading at the start of this
+section.
+
+section 5.
+I don't see the comparison with BHA strictness analysis.  Isn't the
+double lifting tied up with the different kind (or amount) of
+information that is represented?  (I admit that I don't know much about
+the reversal relation between strictness and binding time analysis, so
+maybe that's my problem.)
+
+One of your rules defining fabsf refers to projection transformers (I
+presume?).  That is: \tau_1 \in FTran_T_1.
+
+Section 6.
+Thank goodness for these well-chosen and well-explained examples!
+
+

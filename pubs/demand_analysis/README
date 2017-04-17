@@ -1,0 +1,106 @@
+IMPORTANT-PLEASE READ THIS FILE BEFORE RETRIEVING ADDITIONAL FILES.
+
+The following is a list of Kluwer style files that can be used to
+format a small (16 x 24 cm) or large (19.5  x 26 cm) journal article
+("get" files the same way you did README):
+
+lgjrnl.sty	lgjrnl.doc	lgjsamp.tex	lgjtmpl.tex  lgfonts.sty
+smjrnl.sty	smjrnl.doc	smjsamp.tex	smjtmpl.tex  smjfonts.sty	
+
+******************************************************************************
+                    IMPORTANT INFORMATION
+        ***Please read this information before using files.****
+
+**For a small format (16 x 24 cm), SINGLE COLUMN journal use the files
+beginning with the prefix "smj".
+
+                      Small Format Journals
+
+AUTO. SOFTWARE ENGINEERING		JRNL. OF INTELLIGENT INFO. SYSTEMS
+COMP. OPTIMIZATION AND APPLICATIONS	JRNL. OF SYSTEMS INTEGRATION
+DIST. AND PARALLEL DATABASES		LIFETIME DATA ANALYSIS
+DESIGNS, CODES AND CRYPTOGRAPHY		LISP AND SYMBOLIC COMPUTATION
+DISCRETE EVENT DYNAMIC SYSTEMS		MACHINE LEARNING
+DYNAMICS AND CONTROL			MULT. SYSTEMS AND SIGNAL PROCESSING
+FORMAL METHODS IN SYSTEM DESIGN		MULTIMEDIA TOOLS AND APPLICATIONS
+JRNL. OF ALGEBRAIC COMBINATORICS	REAL-TIME SYSTEMS
+
+**For a large format (19.5  x 26 cm), DOUBLE COLUMN journal use the files
+beginning with the prefix "lgj".
+
+                     Large Format Journals
+
+AUTONOMOUS ROBOTS
+ANALOG INTEG. CIRCUITS AND SIG. PROC.	JRNL. OF MATH. IMAGING AND VISION
+APPLIED INTELLIGENCE			JRNL. OF SOL-GEL SCIENCE AND TECH.
+INTERFACE SCIENCE			INT'L JRNL. OF COMPUTER VISION
+JRNL. OF ELECTRONIC TESTING		JRNL. OF VLSI SIGNAL PROCESSING
+
+****************************************************************************
+
+REFEREMCES:
+
+-The .sty files contain two reference styles, i.e., numbered and
+alphabetical.  Please choose the correct reference style for your
+journal.  ARTICLES WITH INCORRECT REFERENCE STYLES WILL BE RETURNED TO THE 
+AUTHOR TO FIX.
+
+-Authors should follow the approriate journal instructions for reference
+setup, e.g., make sure year of publication and pages are in the right
+spot.
+
+***************************************************************************
+
+ACCEPTED articles can be sent electronically to KAPfiles@world.std.com
+**Please do not send an article unless it has been accepted for publication
+in a journal.
+
+For (accepted) articles submitted electronically - make sure your article 
+contains no errors or problems.  ARTICLES WITH PROBLEMS WILL BE RETURNED TO
+AUTHOR TO FIX. 
+
+When possible, please submit postscript files for figures.  For multiple
+files, please uuencode, compress and tar the file.
+
+Any questions on which files to use please contact the e-mail address below.
+
+Note, if you have a problem with the style file please 1) make sure you are
+using the current version (August 4, 1994 or later for smjrnl.sty
+and August 1, 1994 or later for lgjrnl.sty) before inquiring about a
+problem and 2) if you still have the problem send a short .tex file as 
+an example.
+
+NOTE, WE ONLY OFFER SUPPORT FOR AUTHOR PROBLEMS HAVING TO DO WITH OUR 
+STYLE FILES.  WE CAN NOT ANSWER QUESTIONS ABOUT BASIC LATEX ITEMS OR OFFER
+ASSISTANCE IN CORRECTING AN AUTHOR MACRO THAT CAUSES PROBLEMS WITH THE 
+FILES.  PLEASE CONSULT YOUR LATEX MANUAL OR A LATEX PERSON AT YOUR SITE 
+TO FURTHER ASSIST YOU FOR THESE TYPES OF PROBLEMS.
+****************************************************************************
+ 
+The files can be used as follows:
+
+1. Main style file: 	smjrnl.sty. or lgjrnl.sty
+
+2. Documentation:	smjrnl.doc. or lgjrnl.doc
+
+3. The template file, smjtmpl.tex or lgjtmpl.tex, makes it easier to enter the
+	correct commands in the correct order; we urge authors to use this
+	file.
+
+4. The sample file, smjsamp.tex or lgjsamp.tex, shows how to use the 
+	commands. (All parts of the sample file are shown in the documentation.)
+
+5.  The font file, smjfonts.sty or lgjfonts.sty, is an optional postscript
+	font file.  If you choose to use this file, please make sure
+	you change the names of the fonts at the beginning of the file
+	to match those on your system.  Note, the default fonts are 
+	computer modern.
+
+6. smjstyles.tar.Z and lgjstyles.tar.Z are compressed, tar files containing 
+	all files needed to produce a small and large format journal article.
+	"Get" this file if you do not want to retrieve files individually.
+	
+If you have questions, please contact Kluwer at prod@world.std.com and
+direct you comments to Suzanne.  If possible, send an example of your
+problem.
+

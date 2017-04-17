@@ -223,8 +223,6 @@ cgObjs objs runtimeGlobals =
        env = zip tlnames $ repeat SO
        (funcs, _) = runState (cgos env objs) 0
        (forwards, funs) = unzip funcs
---       (forward, fun) = registerSOs objs
---   in (forward:forwards, fun:funs)
    in (forwards, funs)
 
 cgos :: Env -> [Obj InfoTab] -> State Int [(Definition,  CFun)]
@@ -283,8 +281,10 @@ cgo env o@(THUNK it e name) =
                 stgThunk(stgCurVal[id]);
                 stgCurVal[id].op = NULL;
               |]
-        bot = [citems| STGRETURN0();|]
-        items = if ypn /= Yes then top ++ inline ++ bot else top ++ inline
+        stgReturn0 = [citems| STGRETURN0();|]
+        items = top ++
+                inline ++
+                (iff (ypn /= Yes) stgReturn0 [])
         f = [cfun|
               typename FnPtr $id:("thunk_" ++ name)()
               {
@@ -293,8 +293,6 @@ cgo env o@(THUNK it e name) =
             |]
         cfunc = [comm, [cedecl|$func:f|]]
     return $ (cforward, cfunc) : funcs
-
---BH cgo env (BLACKHOLE {}) = return []
 
 
 stgApplyGeneric env f eas direct =
@@ -338,10 +336,12 @@ stgCurValUArgType ty = if useArgType
 cge :: Env
   -> Expr InfoTab
   -> State Int (([BlockItem], YPN), [(Definition, CFun)])
+
 cge env e@(EAtom it a) =
   let (expr, comm) = cga env a
-      inline =
+      inlineYPN =
         if isBoxede e then
+
           [citems|
             $comment:comm
             stgCurVal[myThreadID()] = $exp:expr;
@@ -354,7 +354,23 @@ cge env e@(EAtom it a) =
             stgCurValU[myThreadID()] = $exp:expr;
             $comment:("// unboxed EAtom")
           |]
-  in return ((inline, if isBoxede e then Yes else No), [])
+  in return ((inlineYPN, if isBoxede e then Yes else No), [])
+{-
+          ([citems|
+             $comment:comm
+             stgCurVal = $exp:expr;
+             $comment:("// boxed EAtom, stgCurVal updates itself")
+             STGJUMP();
+           |], Yes)
+        else
+          ([citems|
+             $comment:("// " ++ showa a)
+             stgCurValU = $exp:expr;
+             $comment:("// unboxed EAtom")
+           |], No)
+  in return (inlineYPN, [])
+-}
+
 
 cge env e@(EFCall it f eas) =
   case (knownCall it) of
@@ -412,7 +428,7 @@ cge env ecase@(ECase _ e a) =
      (if eypn == No then
           cgeInline env (isBoxede e) (ecode, efunc) a
       else
-          cgeNoInline env (isBoxede e) (ecode, efunc) a)
+          cgeNoInline env (isBoxede e) (ecode, efunc) eypn a)
 
 
 cgeInline :: Env -> Bool
@@ -479,11 +495,13 @@ cgaltsInline env a@(Alts it alts name scrt) boxed =
                      [citems| $items:(concat codes)|])
        return ((its, myypn), (phonyforward, phonyfun) : concat funcss)
 
-cgeNoInline :: Env -> Bool
-    -> ([BlockItem], [(Definition, CFun)])
-    -> Alts InfoTab
-    -> State Int (([BlockItem], YPN), [(Definition, CFun)])
-cgeNoInline env boxed (ecode, efunc) a@(Alts italts alts aname scrt) =
+cgeNoInline :: Env ->
+               Bool ->                                             -- scrutinee boxed?
+               ([BlockItem], [(Definition, CFun)]) ->              -- code for scrutinee
+               YPN ->                                              -- YPN for scrutinee
+               Alts InfoTab ->                                     -- case alts
+               State Int (([BlockItem], YPN), [(Definition, CFun)])
+cgeNoInline env boxed (ecode, efunc) eypn a@(Alts italts alts aname scrt) =
     let contName = "ccont_" ++ aname
         its = [citems|
                 $comment:("// scrutinee may STGJUMP or STGRETURN")
@@ -504,17 +522,18 @@ cgeNoInline env boxed (ecode, efunc) a@(Alts italts alts aname scrt) =
                       ++ intercalate " " x)
                       $items:(loadPayloadFVs env x 1 contName)
                     |])
-    in do (acode, afunc) <- cgalts env a boxed
---        need YPN results from Alts
-          return ((its ++ ecode ++ acode, Possible),
+    in do (acode, afunc) <- cgaltsNoInline env a boxed
+--        need YPN results from Alts for more precise determination?
+--        YPN inherited from scrutinee is safe
+          return ((its ++ ecode ++ acode, eypn),
                   efunc ++ afunc)
 
 
 -- ADef only or unary sum => no C switch
-cgalts :: Env -> Alts InfoTab -> Bool
+cgaltsNoInline :: Env -> Alts InfoTab -> Bool
   -> State Int ([BlockItem], [(Definition, CFun)])
 
-cgalts env (Alts it alts name scrt) boxed =
+cgaltsNoInline env (Alts it alts name scrt) boxed =
     let contName = "ccont_" ++ name
         fvp = "fvp"
         -- scrutinee now has a name in the environment
