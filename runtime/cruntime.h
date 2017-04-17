@@ -23,7 +23,7 @@ static inline int64_t charAtIndex (char *str, int64_t idx) {
 }
 
 /* This might also be done with a cast to unsigned, but I'm not sure if that's
-   platform/implementation dependent. */
+   platform/implementation dependent. Ans.: cast to unsigned makes >> a logical shift */
 static inline int64_t intLogicalRightShift (int64_t trg, int64_t shift) {
 
   asm("movb %[shift], %%cl\n\t"

@@ -39,14 +39,21 @@ Node *NP_take() {
 }
 
 
-void NP_release(Node *node) {
+void NP_release(Node *nodep) {
   do {
     LOG(LOG_DEBUG, "release(%p) tosp.ptr = %p, tosp.count = %" PRIu64 "\n", 
-	    node, tosp.ptr, tosp.count);    
-    node->next = tosp;
-  } while( !__sync_bool_compare_and_swap( (__int128 *)&tosp,
-                       node->next.bits,
-                       ((Pointer){node->next.ptr, node->next.count+1}).bits));
+	    nodep, tosp.ptr, tosp.count);    
+    nodep->next = tosp;
+  } while( !__sync_bool_compare_and_swap(
+	          (__int128 *)&tosp,
+		  nodep->next.bits,
+		  ((Pointer){nodep, nodep->next.count+1}).bits));
+
+  //  This must be broken, but in such a way as to no more than create a space leak?
+  //  } while( !__sync_bool_compare_and_swap(
+  //	          (__int128 *)&tosp,
+  //		  nodep->next.bits,
+  //		  ((Pointer){nodep->next.ptr, nodep->next.count+1}).bits));
 }
 
 
