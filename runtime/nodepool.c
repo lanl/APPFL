@@ -18,6 +18,17 @@ void NP_init(size_t _size) {
 	  &tosp,
 	  tosp.ptr, 
 	  tosp.count);
+  for (size_t i = 0; i != size; i++) {
+    Node *newNodep = malloc(sizeof(Node));
+    if (newNodep == NULL) {
+      LOG(LOG_ERROR, "NP_take:  out of memory\n");
+      exit(1);
+    }
+    newNodep->next.ptr = tosp.ptr;
+    newNodep->next.count = tosp.count;
+    tosp.ptr = newNodep;
+    tosp.count++;
+  }
 }
 
 
