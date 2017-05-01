@@ -990,15 +990,16 @@
   binding-time analysis), approaches to higher order, and polymorphism.  Yet
   other developments were based on generalization of projections, specifically
   partial equivalence relations and partial projections, the latter notably
-  simplifying a difficulty with projection-based strictness analysis dating
-  back to Wadler and Hughes.  However, to date no development has combined the
-  desirable attributes of all of these approaches.  We present the first
-  practical, higher-order, polymorphic,
-  partial-projection/partial-equivalence-relation based demand analysis,
-  together with a proof of satisfaction of the fundamental safety condition
-  for such analyses.  Such an analysis can be used both to improve serial code
-  generation as well as enable safe automatic parallelization for lazy or
-  non-strict functional languages.
+  smoothing over a complicating construction in projection-based strictness
+  analysis dating back to Wadler and Hughes.  However, to date no development
+  has combined the desirable attributes of all of these approaches, or given
+  the details where unboxed types are explicit.  We present the first
+  practical, higher-order, polymorphic, forward demand analysis based on
+  partial projections, incorporating the notions of partial equivalence
+  relations and logical relations, together with a proof of satisfaction of
+  the fundamental correctness condition for such analyses.  Such an analysis
+  can be used both to improve serial code generation, as well as enable safe
+  automatic parallelization, for lazy or non-strict functional languages.
 
   
 % has proven genuinely useful in partial evaluation
