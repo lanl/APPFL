@@ -100,7 +100,7 @@ footer v  = [cgStart, cgMain v]
 --     State [[Char]] [([Char], Obj)]
 
 
--- need a better way, like reading from a .h file
+-- need a better way, such as a built-ins prelude for par
 stgRTSGlobals :: [String]
 stgRTSGlobals = [ "stg_case_not_exhaustive", -- before type checking
                   "stg_case_not_exhaustiveP", -- during codegen

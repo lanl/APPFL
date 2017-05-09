@@ -817,3 +817,7 @@ cOArr = FUN(n ->
               in a);
 
 ---------------------------------------------------------------------
+-- bogosities to be intercepted in Codegen
+-- need a better way, but this gets us through type assignment
+
+par = FUN( x y -> y );
