@@ -20,7 +20,9 @@ module ADT (
   monoTypeVars,
   boxMTypes,
   isBoxed,
-  unfoldMTy
+  unfoldMTy,
+  Assumption,
+  Assumptions,
 ) where
 
 
@@ -28,6 +30,9 @@ import Data.List(intercalate)
 import Data.Maybe (fromMaybe)
 import PPrint
 import Util
+import qualified Data.Set as Set
+-- import AST(Var) -- shouldn't depend on AST
+type Var = String
 
 {-
   Algebraic Datatypes:
@@ -94,6 +99,12 @@ data PrimType
   | PString
   | PVoid   -- side-effecting code
   deriving (Eq, Ord, Enum, Bounded, Show)
+
+type Assumption = (Var, Monotype)
+
+-- Set, not Map, because a var may have multiple assumptions
+-- alternatively, Map.Map Var (Set.Set Monotype)
+type Assumptions = Set.Set Assumption
 
 
 primTypeStrId :: PrimType -> String

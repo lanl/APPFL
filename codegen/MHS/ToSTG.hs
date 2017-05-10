@@ -9,7 +9,7 @@ module MHS.ToSTG
 ) where
 
 
-import           BU            (Assumption, Assumptions)
+import           ADT           (Assumption, Assumptions)
 import           Data.Function (on)
 import           Data.List     (isPrefixOf, partition)
 import qualified Data.Map      as Map

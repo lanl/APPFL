@@ -15,18 +15,21 @@ module DupCheck (
 --   [X] tyCons
 --   [X] constructors (globally, not just within a tyCon)
 
-import AST
-import ADT
-import Data.List
+import           AST
+import           ADT
+import           Data.List
+import qualified Data.Set as Set
+import qualified Data.MultiSet as MultiSet
 
--- -----------------------------------BEGIN RECURSIVE TRAVERSAL-----------------------------------------------------------
 -- Checks for duplicates in list of TyCons and list of Objects
-dupCheck :: ([TyCon], [Obj ()]) -> ([TyCon], [Obj ()])
-dupCheck (ts,os) = let odups = dupCheckObjs os ["toplevel"]
-                       tdups = dupCheckTyCons ts ++ dupCheckDataCons ts
-                   in case odups ++ tdups of
-                      [] -> (ts,os)
-                      ys -> error ys
+-- At the source level we only allow a single type signature per name, top-level
+dupCheck :: ([TyCon], [Obj ()], [(Var, Monotype)]) -> ([TyCon], [Obj ()], Assumptions)
+dupCheck (ts,os,ss) = let odups = dupCheckObjs os ["toplevel"]
+                          tdups = dupCheckTyCons ts ++ dupCheckDataCons ts
+                          sdups = dupCheckTypeSigs ss
+                      in case odups ++ tdups ++ sdups of
+                           [] -> (ts, os, Set.fromList ss)
+                           ys -> error ys
 
 --               --------------Begin OBJ/EXPR/ALTS/ALT Recursive Traversal------------
 -- Checks the list of Objects
@@ -66,11 +69,15 @@ dupCheckAlt a ys = case a of
                      ADef{ae} -> dupCheckExpr ae (ys ++ ["def"])
 --               --------------End OBJ/EXPR/ALTS/ALT Recursive Traversal--------------
 
--- -----------------------------------END RECURSIVE TRAVERSAL-------------------------------------------------------------
-
-
 
 -- -----------------------------------BEGIN CHECKS-------------------------------------------------------------------------
+
+dupCheckTypeSigs :: [(Var, a)] -> String
+dupCheckTypeSigs ss = let names = map fst ss
+                          msNames = MultiSet.fromList names
+                          msUniqueNames = MultiSet.fromList $ MultiSet.distinctElems msNames
+                          dupList = MultiSet.toList $ MultiSet.difference msNames msUniqueNames
+                      in "duplicate type signatures for [" ++ intercalate "," dupList ++ "]"
 
 --               --------------Begin Object Check-----------
 -- checks objects at top level

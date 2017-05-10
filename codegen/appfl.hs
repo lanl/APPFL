@@ -88,14 +88,11 @@ genc filename fe =
   
 getParsedSTG :: CodegenInput -> (CodegenInput, [TyCon], [Obj ()])
 getParsedSTG i = case i of
-  StgSource src -> let (ts,os) = parser src in (StgParsed (ts, os), ts, os)
+  StgSource src -> let (ts,os,as) = parser src in (StgParsed (ts,os,as), ts, os)
   MhsSource src -> let (ts,os,as) = mhsSTGer src in (MhsTransformed (ts,os,as), ts, os)
-  StgParsed (ts,os) -> (i, ts, os)
+  StgParsed (ts,os,as) -> (i, ts, os)
   MhsTransformed (ts,os,_) -> (i, ts, os)
   GhcTransformed (ts,os) -> (i, ts, os)
-
-  
-
 
 data Frontend = STG | MHS | GHC deriving (Show, Eq)
 

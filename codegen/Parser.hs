@@ -7,13 +7,9 @@ This file contains all things related to parsing STG according to the following 
 
 prog       ::= <def>*  -- is an empty program still a valid program? I think so.
 
-<def>      ::= (<objDef> | <dataDef>) ";" -- currently expecting ";" always.  Can modify this easily
+<def>      ::= (<objDef> | <dataDef> | <typeSigDef) ";" -- currently expecting ";" always.  Can modify this easily
 
-<objDef>   ::= "FUN" "(" <var>+ -> <expr> ")"
-             |  "PAP" "(" <var> <atom>+ ")"
-             |  "CON" "(" <con> <atom>* ")"
-             |  "THUNK" <expr>
---BH             |  "ERROR"  (aka BLACKHOLE)
+** data types
 
 <dataDef>  ::= "data" ["unboxed"] <typeCon> "=" <dataCons>
 
@@ -34,13 +30,25 @@ prog       ::= <def>*  -- is an empty program still a valid program? I think so.
 
 <qualCon>  ::= "(" <conName> (<monoType>)* ")" -- qualified Constructor (e.g. Maybe a)
 
+** type signatures
+
+typeSigDef ::= <varName> "::" <monoType>
+
+
+** objects
+
+<objDef>   ::=  "FUN" "(" <varName>+ -> <expr> ")"
+             |  "PAP" "(" <varName> <atom>+ ")"
+             |  "CON" "(" <con> <atom>* ")"
+             |  "THUNK" <expr>
+
 <expr>     ::= <atom>
              | <funCall>
              | <primop> <atom>+
              | "let" "{" <letDefs> "}" "in" <expr>
              | "case" <expr> "of" "{" <alts> "}"
 
-<funCall>  ::= <var> <atom>+
+<funCall>  ::= <varName> <atom>+
 
 <primop>   ::= "iadd#"  -- subject to change?
              | "isub#"
@@ -52,8 +60,8 @@ prog       ::= <def>*  -- is an empty program still a valid program? I think so.
 
 <alts>     ::= <alt> (";" <alt>)*
 
-<alt>      ::= <conName> <var>* "->" <expr>
-             | <var> "->" <expr>
+<alt>      ::= <conName> <varName>* "->" <expr>
+             | <varName> "->" <expr>
 
 <atom>     ::= <literal> ["#" ["#"]]
              | <varName>
@@ -98,7 +106,7 @@ import Util
 
 type Comment = String
 
-parse :: [Token] -> ([TyCon], [Obj ()]) -- (ObjDefs, DataDefs)
+parse :: [Token] -> ([TyCon], [Obj ()], [(Var, Monotype)]) -- (ObjDefs, DataDefs)
 parse = splitDefs . fst . head . prog
 
 parseWithComments :: [Token] -> [Either Comment (Def ())]
@@ -114,15 +122,19 @@ prog = sepByP' defP semiP `thenx`
        tokcutP "Expected semicolon or EOF after object definition" eofP
 
 defP :: Parser Token (Def ())
-defP = orExList [objDefP `using` ObjDef, tyConP `using` DataDef]
+defP = orExList [objDefP `using` ObjDef,
+                 tyConP `using` DataDef,
+                 typeSigDefP `using` TypeSigDef]
 
 
-splitDefs :: [Def a] -> ([TyCon], [Obj a])
+splitDefs :: [Def a] -> ([TyCon], [Obj a], [(Var, Monotype)])
 splitDefs =
-  let f x (ts, os) = case x of
-        (DataDef t) -> (t:ts, os)
-        (ObjDef o)  -> (ts, o:os)
-  in foldr f ([],[])
+  let f x (ts, os, ss) =
+          case x of
+            DataDef t ->    (t:ts, os, ss)
+            ObjDef o  ->    (ts, o:os, ss)
+            TypeSigDef s -> (ts, os, s:ss)
+  in foldr f ([],[],[])
 
 parseDBG :: String -> [Parsed [Def()] Token]
 parseDBG = fst . head . progDBG . tokenize
@@ -243,6 +255,7 @@ arrowP = rsvP "->"
 eqP = rsvP "="
 barP = rsvP "|"
 semiP = rsvP ";"
+doublecolonP = rsvP "::"
 
 -- match EOF Token
 eofP = tokP2 (TokEOF)
@@ -271,6 +284,15 @@ tokcutP msg p inp = cutP (show $
                   p inp
 
 
+---------------------------- Type Signature Parsing -----------------------
+
+typeSigDefP :: Parser Token (Var, Monotype)
+typeSigDefP =
+    varNameP >>> \name ->
+    doublecolonP >>> \_ ->
+    tokcutP "Expected type signature"
+            monoTypP >>> \mtype -> accept $ (name, mtype)
+
 ---------------------------- Object Parsing -------------------------------
 
 -- Parse an Object definition (no semicolon) as Obj ()
@@ -280,7 +302,6 @@ objDefP =
   eqP >>> \_ ->
   tokcutP "Expected object definition"
   (orExList
---BH   [funP, papP, conP, thunkP, errorP]) >>> \obj -> -- partially applied Obj constructor
    [funP, papP, conP, thunkP]) >>> \obj -> -- partially applied Obj constructor
                                           accept $ obj name -- apply name to constructor
 

@@ -9,8 +9,6 @@ module BU (
   Constraint(..),
   Constraints,
   show,
-  Assumption,
-  Assumptions,
   dropAss,
   solve
 ) where
@@ -22,8 +20,6 @@ import Data.Set (Set)
 import qualified Data.Set as Set
 import qualified Data.Map as Map
 import Control.Monad.State
--- import AST(Var) -- shouldn't depend on AST
-type Var = String
 
 type Subst = Map.Map TyVar Monotype
 idSubst = Map.empty
@@ -220,12 +216,6 @@ instance ActiveVars Constraint where
 
 instance ActiveVars [Constraint] where
     activeVars cs = foldr Set.union Set.empty $ map activeVars cs
-
-type Assumption = (Var, Monotype)
-
--- Set, not Map, because a var may have multiple assumptions
--- alternatively, Map.Map Var (Set.Set Monotype)
-type Assumptions = Set.Set Assumption
 
 dropAss x as = Set.fromList [ (x', a) | (x', a) <- Set.toList as, x /= x' ]
 

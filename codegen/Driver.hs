@@ -64,11 +64,20 @@ import Language.C.Syntax (Definition)
 import qualified Text.PrettyPrint.Mainland as PP
 
 
+
+type ParsedPrgm   = ([TyCon], [Obj ()], [(Var, Monotype)])
+type StgPrgm a    = ([TyCon], [Obj a], Assumptions)
+type TypedPrgm    = ([TyCon], [Obj InfoTab])
+type CGReadyPrgm  = ([TyCon], [Obj InfoTab])
+type FVMeta       = ([Var], [Var])                  
+
 data CodegenInput
   = StgSource String
   | MhsSource String
-  | StgParsed ([TyCon], [Obj ()])
-  | MhsTransformed ([TyCon], [Obj ()], Assumptions)
+--  | StgParsed ([TyCon], [Obj ()])
+  | StgParsed ParsedPrgm
+--  | MhsTransformed ([TyCon], [Obj ()], Assumptions)
+  | MhsTransformed (StgPrgm ())
   | GhcTransformed ([TyCon], [Obj ()])
 
 
@@ -181,16 +190,18 @@ tokenizer = tokenize
 
 -- parse tokenized input
 -- checks for valid syntax
-parser :: String -> ([TyCon], [Obj ()])
+-- parser :: String -> ([TyCon], [Obj ()], [(Var, Monotype)])
+parser :: String -> ParsedPrgm
 parser = parse . tokenizer
 
 --checks for duplicates
-dupChecker ::  String -> ([TyCon], [Obj ()])
+-- dupChecker ::  String -> ([TyCon], [Obj ()], [(Var, Monotype)])
+dupChecker ::  String -> StgPrgm ()
 dupChecker = dupCheck . parser
 
 -- set boxity in Monotypes of TyCon DataCons
 boxer :: String -> ([TyCon], [Obj ()])
-boxer inp = let (tycons, objs) = dupChecker inp
+boxer inp = let (tycons, objs, typesigs) = dupChecker inp
             in (boxMTypes tycons, objs)
 
 
@@ -271,8 +282,9 @@ codegener inp v =
         StgParsed parsed      -> fromParsed parsed
         MhsSource src         -> fromMhsSource src
         MhsTransformed mhsStg -> fromMhsTransform mhsStg
-        GhcTransformed ghcStg -> fromGhcTransform ghcStg
-  
+        -- GhcTransformed ghcStg -> fromGhcTransform ghcStg
+        GhcTransformed ghcStg -> error "Driver.hs is a clusterfuck, so is appfl.hs"
+                           
       typeEnums = showTypeEnums tycons
       infotab = showITs objs
       (shoForward, shoDef) = showSHOs objs
@@ -303,24 +315,19 @@ addSTGComment filename =
         stg = show $ bcomment (unparse ts $+$ unparse os)
     length src `seq` writeFile filename (src ++ stg)
 
-
-
-
-
-
-
 --------------------------------------------------------------------------------
 --  Composable versions of some of the above stages
 -- 
 --   These are handy when you want to plug in at a later stage, as is the
 --   case with the STG from GHC
 
-
-type ParsedPrgm   = ([TyCon], [Obj ()])
+{-
+type ParsedPrgm   = ([TyCon], [Obj ()], [(Var, Monotype)])
 type StgPrgm a    = ([TyCon], [Obj a], Assumptions)
 type TypedPrgm    = ([TyCon], [Obj InfoTab])
 type CGReadyPrgm  = ([TyCon], [Obj InfoTab])
 type FVMeta       = ([Var], [Var])                  
+-}
 
 tokC                        :: String          -> [Token]
 parseC                      :: [Token]         -> ParsedPrgm
@@ -335,7 +342,8 @@ heapcheckC                  :: TypedPrgm       -> CGReadyPrgm
 
 tokC                      = tokenize
 parseC                    = parse
-dupCheckC                 = uncurry ( , , Set.empty) . dupCheck
+-- dupCheckC                 = uncurry ( , , Set.empty) . dupCheck
+dupCheckC                 = dupCheck
 boxC         (ts, os, as) = (boxMTypes ts, os, as)
 renameC      (ts, os, as) = (ts, renameObjs os, as)
 exhaustCaseC (ts, os, as) = (ts, exhaustCases (toCMap ts) os, as)

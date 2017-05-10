@@ -57,6 +57,7 @@ instance Show Atom where
 
 data Def a = ObjDef (Obj a)
            | DataDef TyCon
+           | TypeSigDef (Var, Monotype)
              deriving(Eq, Show)
 
 
