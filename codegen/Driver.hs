@@ -282,8 +282,7 @@ codegener inp v =
         StgParsed parsed      -> fromParsed parsed
         MhsSource src         -> fromMhsSource src
         MhsTransformed mhsStg -> fromMhsTransform mhsStg
-        -- GhcTransformed ghcStg -> fromGhcTransform ghcStg
-        GhcTransformed ghcStg -> error "Driver.hs is a clusterfuck, so is appfl.hs"
+        GhcTransformed ghcStg -> let (ts,os) = ghcStg in fromGhcTransform (ts,os,[])
                            
       typeEnums = showTypeEnums tycons
       infotab = showITs objs
