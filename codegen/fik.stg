@@ -1,0 +1,44 @@
+-- classic fik
+fik = FUN(x ->
+            case x of
+              _scrt1 {
+                I i# -> case i# of
+                          _scrt0 {
+                            0 -> zero;
+                            1 -> one;
+                            y -> let {
+                                   m1 = THUNK(subInt x one);
+                                   f1 = THUNK(fik m1);
+                                   f2 = THUNK(fik m1)}
+                                 in plusInt f1 f2 } });
+
+-- Fail
+-- x1 :: List a;
+-- x2 :: List Int;
+-- x4 :: Int -> Int;
+-- x7 :: (List a -> List a);
+
+-- Succeed
+x3 :: Int;
+x5 :: (Int -> Int);
+x6 :: (List a);
+x8 :: ((List a) -> (List a));
+
+
+
+s1 :: Int;  -- fails in type check because boxity not set
+
+s1 = THUNK(fik five);
+
+s2 = THUNK(fik five);
+
+thesum = THUNK(plusInt s1 s2);
+
+inseq = THUNK(seq s2 thesum);
+
+-- inpar = THUNK(par s1 inseq);
+
+inpar = THUNK(seq s1 inseq);
+
+main = THUNK(inpar);
+

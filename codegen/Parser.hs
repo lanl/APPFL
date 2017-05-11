@@ -115,11 +115,11 @@ parseWithComments = fst . head . progWithComments
 progWithComments :: Parser Token [Either Comment (Def ())]
 progWithComments =
    (many' $ orEx commentP (defP `thenx` optP semiP))
-   `thenx` tokcutP "Expected semicolon or EOF after object definition" eofP
+   `thenx` tokcutP "progWithComments: expected semicolon or EOF after object definition" eofP
 
 prog :: Parser Token [Def ()]
 prog = sepByP' defP semiP `thenx`
-       tokcutP "Expected semicolon or EOF after object definition" eofP
+       tokcutP "prog: expected semicolon or EOF after object definition" eofP
 
 defP :: Parser Token (Def ())
 defP = orExList [objDefP `using` ObjDef,

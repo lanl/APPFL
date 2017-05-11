@@ -237,7 +237,8 @@ conmaper mhs inp = let (tycons, objs, assums) = infotaber mhs inp
 
 typechecker :: Bool -> String -> ([TyCon], [Obj InfoTab])
 typechecker mhs inp = let (tycons, objs, assums) = conmaper mhs inp
-                      in (tycons, if mhs then hmstgAssums objs assums else hmstg objs)
+                      in (tycons, if mhs then hmstgAssums objs assums else
+                                              hmstgAssums objs assums)
 
 orderfvsargser :: Bool -> String -> ([TyCon], [Obj InfoTab])
 orderfvsargser mhs inp = let (tycons, objs) = typechecker mhs inp

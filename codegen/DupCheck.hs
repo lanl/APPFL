@@ -77,7 +77,8 @@ dupCheckTypeSigs ss = let names = map fst ss
                           msNames = MultiSet.fromList names
                           msUniqueNames = MultiSet.fromList $ MultiSet.distinctElems msNames
                           dupList = MultiSet.toList $ MultiSet.difference msNames msUniqueNames
-                      in "duplicate type signatures for [" ++ intercalate "," dupList ++ "]"
+                      in if null dupList then []
+                         else "duplicate type signatures for [" ++ intercalate "," dupList ++ "]"
 
 --               --------------Begin Object Check-----------
 -- checks objects at top level
