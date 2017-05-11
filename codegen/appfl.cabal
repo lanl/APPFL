@@ -34,6 +34,7 @@ executable appfl
                  , process
                  , split
                  , transformers >= 0.4.2.0
+                 , multiset
 
   -- allow command line control of USE_ARGTYPE/USE_OBJTYPE
   if flag(useD)
