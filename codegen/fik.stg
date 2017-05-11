@@ -12,18 +12,18 @@ fik = FUN(x ->
                                    f2 = THUNK(fik m1)}
                                  in plusInt f1 f2 } });
 
--- Fail
--- x1 :: List a;
--- x2 :: List Int;
--- x4 :: Int -> Int;
--- x7 :: (List a -> List a);
 
 -- Succeed
+x1 :: List a;
+x2 :: List Int;
 x3 :: Int;
+x4 :: Int -> Int;
 x5 :: (Int -> Int);
 x6 :: (List a);
+x7 :: List a (List b) c d;
 x8 :: ((List a) -> (List a));
-
+x9 :: List List List;
+x10 :: (List a -> List a);
 
 
 s1 :: Int;  -- fails in type check because boxity not set

@@ -19,6 +19,8 @@ prog       ::= <def>*  -- is an empty program still a valid program? I think so.
 
 <dataCon>  ::= <conName> (<monoType>)*
 
+** monotype
+
 <monoType> ::= <varName>
              | <funType>
              | <conType>
@@ -29,6 +31,15 @@ prog       ::= <def>*  -- is an empty program still a valid program? I think so.
              | <qualCon>
 
 <qualCon>  ::= "(" <conName> (<monoType>)* ")" -- qualified Constructor (e.g. Maybe a)
+
+** alternative monotype with correct precedence
+
+<monoType2> ::= <monoType3> ("->" <monoType2>)*
+
+<monoType3> ::= <conName> <monoType3>*
+              | <varName>
+              | <primType>
+              | "(" <monoType2> ")"
 
 ** type signatures
 
@@ -291,7 +302,7 @@ typeSigDefP =
     varNameP >>> \name ->
     doublecolonP >>> \_ ->
     tokcutP "Expected type signature"
-            monoTypP >>> \mtype -> accept $ (name, mtype)
+            monoTypP2 >>> \mtype -> accept $ (name, mtype)
 
 ---------------------------- Object Parsing -------------------------------
 
@@ -511,10 +522,34 @@ dataConP =
        some' monoTypP >>> \mTypes ->
                            accept $ DataCon (subHash con) mTypes
 
+-- monoTypP2 -- second try
+
+monoTypP2 :: Parser Token Monotype
+monoTypP2 = 
+  monoTypP3 >>> \m ->
+--  peekP arrowP >>> \_ ->
+--  tokcutP "Expected valid monotype(s) following '->' token in data constructor" $
+  many' (arrowP `xthen` monoTypP2) >>> \ms ->
+                                         accept $ foldr1 MFun (m:ms)
+
+-- parse a monotype in a data constructor as a Monotype object
+monoTypP3 :: Parser Token Monotype
+monoTypP3 = orExList [mConP2, mVarP, mPrimTyP, inparensP monoTypP2]
+
+-- parse a type constructor in a monotype as an MCon (e.g. 'Tree a' in Branch (Tree a) (Tree a) )
+mConP2 :: Parser Token Monotype
+mConP2 =
+  let berr = Nothing in
+    conNameP >>> \con ->
+             many' monoTypP2 >>> \mts ->
+                          accept $ MCon berr (subHash con) mts
+
+-- end monoTypP2
+
 
 -- parse a monotype in a data constructor as a Monotype object
 monoTypP :: Parser Token Monotype
-monoTypP = orExList [mVarP, mFunP, mPrimTyP, mConP, inparensP monoTypP]
+monoTypP = orExList [mFunP,  mConP, mVarP, mPrimTyP, inparensP monoTypP]
 
 mPrimTyP :: Parser Token Monotype
 mPrimTyP = primTyP `using` MPrim
@@ -541,6 +576,7 @@ mConP =
   let berr = Nothing in
    orExList [conNameP >>> \con ->
                            accept $ MCon berr (subHash con) [],
+                                  
              lparenP >>> \_ ->
              conNameP >>> \con ->
              many' monoTypP >>> \mts ->
