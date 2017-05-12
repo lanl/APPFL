@@ -25,9 +25,11 @@ x8 :: ((List a) -> (List a));
 x9 :: List List List;
 x10 :: (List a -> List a);
 
+par :: a -> b -> b;
+-- seq :: Int -> Int -> Int;
+seq :: Bool -> Bool -> Bool;
 
-s1 :: Int;  -- fails in type check because boxity not set
-
+s1 :: Int;
 s1 = THUNK(fik five);
 
 s2 = THUNK(fik five);
@@ -36,9 +38,9 @@ thesum = THUNK(plusInt s1 s2);
 
 inseq = THUNK(seq s2 thesum);
 
--- inpar = THUNK(par s1 inseq);
+inpar = THUNK(par s1 inseq);
 
-inpar = THUNK(seq s1 inseq);
+-- inpar = THUNK(seq s1 inseq);
 
 main = THUNK(inpar);
 

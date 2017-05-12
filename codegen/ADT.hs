@@ -141,9 +141,9 @@ isVoid m = case m of
   m -> False
 
 -- set Monotype boxity in TyCons (this should be done before CMaps are built
--- for InfoTabs)
-boxMTypes :: [TyCon] -> [TyCon]
-boxMTypes tycons =
+-- for InfoTabs).  Is this a case where currying is gratuitous?
+boxMTypes :: ([TyCon], Assumptions) -> ([TyCon], Assumptions)
+boxMTypes (tycons, typesigs) =
   let -- create assoc list for TyCon names -> TyCons
       tycons' = map makePrimTyCon [minBound ..] ++
                 tycons
@@ -163,8 +163,10 @@ boxMTypes tycons =
                      MVar{} -> m
                      MPrim{} -> m
                      _ -> error $ "CMap.cMapTyCons matching bad Monotype: " ++ show m
+      typesigs' = Set.fromList [ (v, setMtypes m) | (v, m) <- Set.toList typesigs ]
 
-  in map mapFunc tycons -- don't need built-ins in TyCon list (?)
+  in (map mapFunc tycons, -- don't need built-ins in TyCon list (?)
+      typesigs') -- does nothing yet...
 
 -- helpers to make TyCons for built-in types
 -- this is a bit of a hack to fudge the fact that there are no explicit

@@ -200,14 +200,15 @@ dupChecker ::  String -> StgPrgm ()
 dupChecker = dupCheck . parser
 
 -- set boxity in Monotypes of TyCon DataCons
-boxer :: String -> ([TyCon], [Obj ()])
+boxer :: String -> StgPrgm ()
 boxer inp = let (tycons, objs, typesigs) = dupChecker inp
-            in (boxMTypes tycons, objs)
+                (tycons', typesigs') = boxMTypes (tycons, typesigs)
+            in (tycons', objs, typesigs')
 
 
-renamer :: String -> ([TyCon], [Obj ()])
-renamer inp = let (tycons, objs) = boxer inp
-              in (tycons, renameObjs objs)
+renamer :: String -> StgPrgm ()
+renamer inp = let (tycons, objs, typesigs) = boxer inp
+              in (tycons, renameObjs objs, typesigs)
 
 
 -- generate default cases in Alts blocks that need them
@@ -219,26 +220,26 @@ renamer inp = let (tycons, objs) = boxer inp
 defaultcaser :: Bool -> String -> ([TyCon], [Obj ()],  Assumptions)
 defaultcaser mhs inp = if mhs
                        then mhsSTGer inp
-                       else let (tycons, objs) = renamer inp
-                            in (tycons, exhaustCases (toCMap tycons) objs, Set.empty)
+                       else let (tycons, objs, typesigs) = renamer inp
+                            in (tycons, exhaustCases (toCMap tycons) objs, typesigs)
 
 freevarer :: Bool -> String -> ([TyCon], [Obj ([Var],[Var])], Assumptions)
-freevarer mhs inp = let (tycons, objs, assums) = defaultcaser mhs inp
-                in (tycons, setFVsObjs stgRTSGlobals objs, assums)
+freevarer mhs inp = let (tycons, objs, typesigs) = defaultcaser mhs inp
+                in (tycons, setFVsObjs stgRTSGlobals objs, typesigs)
 
 infotaber :: Bool -> String -> ([TyCon], [Obj InfoTab], Assumptions)
-infotaber mhs inp = let (tycons, objs, assums) = freevarer mhs inp
-                in (tycons, setITs objs :: [Obj InfoTab], assums)
+infotaber mhs inp = let (tycons, objs, typesigs) = freevarer mhs inp
+                in (tycons, setITs objs :: [Obj InfoTab], typesigs)
 
 conmaper :: Bool -> String -> ([TyCon], [Obj InfoTab], Assumptions)
-conmaper mhs inp = let (tycons, objs, assums) = infotaber mhs inp
+conmaper mhs inp = let (tycons, objs, typesigs) = infotaber mhs inp
                        (tycons', objs') = setCMaps tycons objs
-                    in (tycons', objs', assums)
+                    in (tycons', objs', typesigs)
 
 typechecker :: Bool -> String -> ([TyCon], [Obj InfoTab])
-typechecker mhs inp = let (tycons, objs, assums) = conmaper mhs inp
-                      in (tycons, if mhs then hmstgAssums objs assums else
-                                              hmstgAssums objs assums)
+typechecker mhs inp = let (tycons, objs, typesigs) = conmaper mhs inp
+                      in (tycons, if mhs then hmstgAssums objs typesigs else
+                                              hmstgAssums objs typesigs)
 
 orderfvsargser :: Bool -> String -> ([TyCon], [Obj InfoTab])
 orderfvsargser mhs inp = let (tycons, objs) = typechecker mhs inp
@@ -272,7 +273,7 @@ tctest mhs arg =
   do
     ifd <- openFile arg ReadMode
     source <- hGetContents ifd
-    let (tycons, objs, assums) = conmaper mhs source
+    let (tycons, objs, typesigs) = conmaper mhs source
     hmstgdebug objs
 
 
@@ -344,7 +345,8 @@ tokC                      = tokenize
 parseC                    = parse
 -- dupCheckC                 = uncurry ( , , Set.empty) . dupCheck
 dupCheckC                 = dupCheck
-boxC         (ts, os, as) = (boxMTypes ts, os, as)
+boxC         (ts, os, as) = let (ts', as') = boxMTypes (ts, as)
+                            in (ts', os, as')
 renameC      (ts, os, as) = (ts, renameObjs os, as)
 exhaustCaseC (ts, os, as) = (ts, exhaustCases (toCMap ts) os, as)
 freevarC     (ts, os, as) = (ts, setFVsObjs stgRTSGlobals os, as)
