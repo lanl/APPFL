@@ -221,81 +221,315 @@ cgObjs :: [Obj InfoTab] -> [String] -> ([Definition], [CFun])
 cgObjs objs runtimeGlobals =
    let tlnames = runtimeGlobals ++ map (name . omd) objs
        env = zip tlnames $ repeat SO
-       (funcs, _) = runState (cgos env objs) 0
+       funcs = cgosX env objs
        (forwards, funs) = unzip funcs
    in (forwards, funs)
 
-cgos :: Env -> [Obj InfoTab] -> State Int [(Definition,  CFun)]
-cgos env = concatMapM (cgo env)
+cgosX :: Env -> [Obj InfoTab] -> [(Definition,  CFun)]
+cgosX env = concatMap (cgoX env)
 
-cgo :: Env -> Obj InfoTab -> State Int [(Definition, CFun)]
-cgo env o@(FUN it vs e name) =
+cgoX :: Env -> Obj InfoTab -> [(Definition, CFun)]
+cgoX env o@(FUN it vs e name) =
     let cforward = [cedecl| typename FnPtr $id:("fun_" ++ name)();|]
         argp = "argp" -- also free variable pointer pointer
         fps = "self":vs
         env' = zip (map fst $ fvs it) (map (FV argp) [0..]) ++
                zip fps (map (FP argp) [0..]) ++
                env
-    in do
-      ((inline, ypn), funcs) <- cge env' e
-      let comm = [cedecl|$esc:("\n// " ++ show (ctyp it) ++ "\n" ++
-                           "// " ++ name ++ "(self, " ++
-                           intercalate ", " vs ++ ")"  ) |]
-          top = [citems|
-                  LOG(LOG_INFO, $string:(name ++ " here thread=%d\n"),myThreadID());
-                  typename PtrOrLiteral *$id:argp = &(stgGetStackArgp(myThreadID())->payload[0]);
-                  (void)$id:argp; // suppress warning
-                |]
-          bot = [citems| STGRETURN0();|]
-          items = if ypn /= Yes then top ++ inline ++ bot else top ++ inline
-          f = [cfun|
-                typename FnPtr $id:("fun_" ++ name)()
-                {
-                  $items:items
-                }
-              |]
-          cfunc = [comm, [cedecl|$func:f|]]
-      return $ (cforward, cfunc) : funcs
-
-cgo env (PAP it f as name) = return []
-
-cgo env (CON it c as name) = return []
-
-cgo env o@(THUNK it e name) =
-  let fvpp = "fvpp"
-      env' = zip (map fst $ fvs it) (map (FV fvpp) [1..]) ++ env
-      cforward = [cedecl| typename FnPtr $id:("thunk_" ++ name)();|]
-  in do
-    ((inline,ypn), funcs) <- cge env' e
-    let comm = [cedecl|$esc:("\n// " ++ show (ctyp it))|]
+        ((inline, ypn), funcs) = cgeX env' e
+        comm = [cedecl|$esc:("\n// " ++ show (ctyp it) ++ "\n" ++
+                         "// " ++ name ++ "(self, " ++
+                         intercalate ", " vs ++ ")"  ) |]
         top = [citems|
-                int id = myThreadID();
-                LOG(LOG_INFO, $string:(name ++ " here thread=%d\n"), id);
-                $comment:("// access free vars through frame pointer for GC safety")
-                $comment:("// is this really necessary???");
-                typename Cont *stg_fp = stgAllocCallOrStackCont(id, &it_stgStackCont, 1);
-                stg_fp->layout = (typename Bitmap64)$ulint:(npStrToBMInt "P");
-                stg_fp->payload[0] = stgCurVal[id];
-                typename PtrOrLiteral *$id:fvpp = &(stg_fp->payload[0]);
-                (void)$id:fvpp; // suppress warning
-                stgThunk(stgCurVal[id]);
-                stgCurVal[id].op = NULL;
+                LOG(LOG_INFO, $string:(name ++ " here thread=%d\n"),myThreadID());
+                typename PtrOrLiteral *$id:argp = &(stgGetStackArgp(myThreadID())->payload[0]);
+                (void)$id:argp; // suppress warning
               |]
-        stgReturn0 = [citems| STGRETURN0();|]
-        items = top ++
-                inline ++
-                (iff (ypn /= Yes) stgReturn0 [])
+        bot = [citems| STGRETURN0();|]
+        items = if ypn /= Yes then top ++ inline ++ bot else top ++ inline
         f = [cfun|
-              typename FnPtr $id:("thunk_" ++ name)()
+              typename FnPtr $id:("fun_" ++ name)()
               {
                 $items:items
               }
             |]
         cfunc = [comm, [cedecl|$func:f|]]
-    return $ (cforward, cfunc) : funcs
+    in (cforward, cfunc) : funcs
+
+cgoX env (PAP it f as name) = []
+
+cgoX env (CON it c as name) = []
+
+cgoX env o@(THUNK it e name) =
+  let fvpp = "fvpp"
+      env' = zip (map fst $ fvs it) (map (FV fvpp) [1..]) ++ env
+      cforward = [cedecl| typename FnPtr $id:("thunk_" ++ name)();|]
+      ((inline,ypn), funcs) = cgeX env' e
+      comm = [cedecl|$esc:("\n// " ++ show (ctyp it))|]
+      top = [citems|
+              int id = myThreadID();
+              LOG(LOG_INFO, $string:(name ++ " here thread=%d\n"), id);
+              $comment:("// access free vars through frame pointer for GC safety")
+              $comment:("// is this really necessary???");
+              typename Cont *stg_fp = stgAllocCallOrStackCont(id, &it_stgStackCont, 1);
+              stg_fp->layout = (typename Bitmap64)$ulint:(npStrToBMInt "P");
+              stg_fp->payload[0] = stgCurVal[id];
+              typename PtrOrLiteral *$id:fvpp = &(stg_fp->payload[0]);
+              (void)$id:fvpp; // suppress warning
+              stgThunk(stgCurVal[id]);
+              stgCurVal[id].op = NULL;
+            |]
+      stgReturn0 = [citems| STGRETURN0();|]
+      items = top ++
+              inline ++
+              (iff (ypn /= Yes) stgReturn0 [])
+      f = [cfun|
+            typename FnPtr $id:("thunk_" ++ name)()
+            {
+              $items:items
+            }
+          |]
+      cfunc = [comm, [cedecl|$func:f|]]
+    in (cforward, cfunc) : funcs
 
 
-stgApplyGeneric env f eas direct =
+cgeX :: Env
+     -> Expr InfoTab
+     -> (([BlockItem], YPN), [(Definition, CFun)])
+
+cgeX env e@(EAtom it a) =
+  let (expr, comm) = cga env a
+      inlineYPN =
+        if isBoxede e then
+
+          [citems|
+            $comment:comm
+            stgCurVal[myThreadID()] = $exp:expr;
+            $comment:("// boxed EAtom, stgCurVal updates itself")
+            STGJUMP();
+          |]
+        else
+          [citems|
+            $comment:("// " ++ showa a)
+            stgCurValU[myThreadID()] = $exp:expr;
+            $comment:("// unboxed EAtom")
+          |]
+  in ((inlineYPN, if isBoxede e then Yes else No), [])
+
+cgeX env e@(EFCall it f eas) =
+  case (knownCall it) of
+    Nothing -> stgApplyGenericX env f eas False
+    Just kit -> if arity kit == length eas
+                then stgApplyGenericX env f eas False  -- disabled was True
+                else stgApplyGenericX env f eas False
+
+
+cgeX env (EPrimOp it op info eas) =
+    let as = map ea eas
+        POI{pArgTys, pRetTy, primCGFun} = info
+        cArgs = zipWith (cgUBa env) (map ea eas) (map primTypeStrId pArgTys)
+        pexpr = primCGFun cArgs
+        inline = case pRetTy of
+          -- Just do it? Modify stgCurVal?
+          PVoid  -> [citems| $pexpr; |]
+          _      -> stgCurValUArgType (primTyArgType pRetTy) ++
+                     [citems| stgCurValU[myThreadID()].$id:(primTypeStrId pRetTy) = $pexpr; |]
+    in ((inline, No), [])
+  where
+    --  What ArgType do I use for some PrimType
+    primTyArgType :: PrimType -> String
+    primTyArgType pt = case pt of
+      PInt    -> "INT"
+      PDouble -> "DOUBLE"
+      PString -> "STRING"
+      PVoid   -> error "No \"PVoid\" ArgType"
+
+
+cgeX env (ELet it os e) =
+  let names = map oname os
+      decl1 = [ [citem|typename PtrOrLiteral *$id:name; |] | name <- names ]
+      decl2 = [citems|
+                typename Cont *contp = stgAllocCallOrStackCont(myThreadID(), &it_stgLetCont, $int:(length os));
+              |]
+            ++ [ [citem| $id:name = &(contp->payload[$int:i]); |]
+                  | (name, i) <- zip names [0..] ]
+            ++ [citems|
+                 contp->layout = (typename Bitmap64)$ulint:(npStrToBMInt (replicate (length os) 'P'));
+               |]
+      decl = decl1 ++ [citems| { $items:decl2 } |]
+
+      env'  = zip names (map HO names) ++ env
+      (decls, buildcodes) = unzip $ map (buildHeapObj env') os
+      ofunc = cgosX env' os
+      ((einline, ypn), efunc) = cgeX env' e
+  in ((decl ++ concat decls ++ concat buildcodes ++ einline, ypn),
+      ofunc ++ efunc)
+
+cgeX env ecase@(ECase _ e a) =
+  let ((ecode, eypn), efunc) = cgeX env e
+  in
+     -- weird:  compiler requires parens around if, ghci does not
+     (if eypn == No then
+          cgeInlineX env (isBoxede e) (ecode, efunc) a
+      else
+          cgeNoInlineX env (isBoxede e) (ecode, efunc) eypn a)
+
+cgeInlineX :: Env
+           -> Bool
+           -> ([BlockItem], [(Definition, CFun)])
+           -> Alts InfoTab
+           -> (([BlockItem], YPN), [(Definition, CFun)])
+cgeInlineX env boxed (ecode, efunc) a@(Alts{}) =
+  let pre = [citems| $comment:("// inline:  scrutinee does not STGJUMP or STGRETURN"); |]
+      ((acode, ypn), afunc) = cgaltsInlineX env a boxed
+  in ((pre ++ ecode ++ acode, ypn),
+      efunc ++ afunc)
+
+
+cgaltsInlineX :: Env -> Alts InfoTab -> Bool
+     -> (([BlockItem], YPN), [(Definition, CFun)])
+cgaltsInlineX env a@(Alts it alts name scrt) boxed =
+    let contName = "ccont_" ++ name
+        scrutPtr = "scrutPtr_" ++ name
+        phonyforward = [cedecl| typename FnPtr $id:name();|]
+        f = [cfun| typename FnPtr $id:name() {}|]
+        phonyfun = [[cedecl|$func:f|]]
+        switch = length alts > 1
+        codefuncs = map (cgaltX env switch scrutPtr) alts
+        (codeypns, funcss) = unzip codefuncs
+        (codes, ypns) = unzip codeypns
+        myypn | all (== Yes) ypns = Yes
+              | all (== No) ypns = No
+              | otherwise = Possible
+        its = [citems|
+                 typename Cont *$id:contName =
+                   stgAllocCallOrStackCont(myThreadID(), &it_stgStackCont, 1);
+                 $comment:("// " ++ show (ctyp it))
+                 $id:contName->layout =
+                   (typename Bitmap64)$ulint:(npStrToBMInt (iff boxed "P" "N"));
+              |]
+             ++ (if boxed then
+                  [citems|
+                    $id:contName->payload[0] = stgCurVal[myThreadID()];
+                    stgCurVal.op = NULL;
+                  |]
+                else
+                  [citems|$id:contName->payload[0] = stgCurValU[myThreadID()];|])
+             ++ [citems|
+                  typename PtrOrLiteral *$id:scrutPtr =
+                    &($id:contName->payload[0]);
+                  (void)$id:scrutPtr; // suppress warning
+                |]
+             ++ (if switch then
+                  if boxed then
+                     [citems|
+                       switch(getInfoPtr($id:scrutPtr[0].op)->conFields.tag) {
+                         $items:(concat codes)
+                       }
+                     |]
+                   else
+                     [citems|
+                       switch(stgCurValU[myThreadID()].i) {
+                          $items:(concat codes)
+                       }
+                     |]
+                 else
+                   [citems| $items:(concat codes)|])
+       in ((its, myypn), (phonyforward, phonyfun) : concat funcss)
+
+cgeNoInlineX :: Env ->
+                Bool ->                                             -- scrutinee boxed?
+                ([BlockItem], [(Definition, CFun)]) ->              -- code for scrutinee
+                YPN ->                                              -- YPN for scrutinee
+                Alts InfoTab ->                                     -- case alts
+                (([BlockItem], YPN), [(Definition, CFun)])
+
+cgeNoInlineX env boxed (ecode, efunc) eypn a@(Alts italts alts aname scrt) =
+    let contName = "ccont_" ++ aname
+        its = [citems|
+                $comment:("// scrutinee may STGJUMP or STGRETURN")
+                typename Cont *$id:contName = stgAllocCont(myThreadID(),&$id:("it_" ++ aname));
+                $comment:("// dummy value for scrutinee, InfoTab initializes to unboxed")
+                $id:contName->payload[0].i = 0;
+              |]
+            ++ (if useArgType then
+                  [citems|$id:contName-> payload[0].argType = INT; |]
+                else [])
+            ++ (if fvs italts == [] then
+                  [citems| $comment:("// no FVs");|]
+                else
+                  let x = map fst $ fvs italts
+                  in
+                    [citems|
+                      $comment:("// load payload with FVs"
+                      ++ intercalate " " x)
+                      $items:(loadPayloadFVs env x 1 contName)
+                    |])
+        (acode, afunc) = cgaltsNoInlineX env a boxed
+--        need YPN results from Alts for more precise determination?
+--        YPN inherited from scrutinee is safe
+    in ((its ++ ecode ++ acode, eypn),
+        efunc ++ afunc)
+
+-- ADef only or unary sum => no C switch
+cgaltsNoInlineX :: Env -> Alts InfoTab -> Bool
+                -> ([BlockItem], [(Definition, CFun)])
+
+cgaltsNoInlineX env (Alts it alts name scrt) boxed =
+    let contName = "ccont_" ++ name
+        fvp = "fvp"
+        -- scrutinee now has a name in the environment
+        -- can I do more with it?
+        -- e.g. Should fvp[0] be bound to a named PtrOrLiteral? (and used in its place)
+        altenv = zip (scrtVarName scrt : (map fst $ fvs it)) (map (FP fvp) [0..])
+        env' = altenv ++ env
+        cforward = [cedecl| typename FnPtr $id:name();|]
+        switch = length alts > 1
+        codefuncs = map (cgaltX env' switch fvp) alts
+        (codeypns, funcss) = unzip codefuncs
+        (codes, ypns) = unzip codeypns
+        its = [citems|
+                int id = myThreadID();
+                LOG(LOG_INFO, $string:(name ++ " here thread=%d\n"), id);
+                typename Cont *$id:contName = stgGetStackArgp(id);
+                $comment:("// make self-popping")
+                stgCaseToPopMe($id:contName);
+                typename PtrOrLiteral *$id:fvp = &($id:contName->payload[0]);
+              |]
+            ++ (if boxed then
+                 [citems|
+                    $id:fvp[0] = stgCurVal[id];
+                    $id:contName->layout.bitmap.mask |= 0x1;
+                  |]
+                else
+                  [citems| $id:fvp[0] = stgCurValU[id];|])
+            ++ (if switch then
+                  if boxed then
+                    [citems|
+                      stgCurVal[id].op = NULL;
+                      switch(getInfoPtr($id:fvp[0].op)->conFields.tag) {
+                        $items:(concat codes)
+                      }
+                   |]
+                  else
+                    [citems|
+                      switch(stgCurValU[id].i) {
+                       $items:(concat codes)
+                      }
+                    |]
+                else [citems| $items:(concat codes) |])
+        comm = [cedecl| $esc:("\n//" ++ show (ctyp it))|]
+        fun = [cfun|
+                 typename FnPtr $id:name()
+                 {
+                   $items:its
+                 }
+              |]
+        cfunc = [comm, [cedecl| $func:fun |]]
+    in ([], (cforward, cfunc) : concat funcss)
+
+
+stgApplyGenericX env f eas direct =
     let as = map ea eas
         pnstring = [ if b then 'P' else 'N' | b <- map (isBoxed . typ . emd) eas ]
         -- HACK
@@ -326,307 +560,55 @@ stgApplyGeneric env f eas direct =
                    $comment:("// INDIRECT TAIL CALL " ++ f' ++ " " ++ showas as)
                    STGJUMP0(stgApplyNew);
                  |])
-    in return ((its, Yes), [])
+    in ((its, Yes), [])
+
+cgaltX :: Env -> Bool -> String -> Alt InfoTab
+       -> (([BlockItem], YPN), [(Definition, CFun)])
+cgaltX env switch fvp (ACon it c vs e) =
+  let DataCon c' ms = luDCon c (cmap it)
+      (_,_,perm) = partPerm isBoxed ms
+      eenv = zip vs (map (FV fvp) perm)
+      env' = eenv ++ env
+      ((inline, ypn), func) = cgeX env' e
+      tag = luConTag c $ cmap it -- ConTags returned as Strings!
+      its = if ypn /= Yes then
+              inline ++ [citems| STGRETURN0();|]
+            else inline
+      casei = if switch then
+                [citems|
+                  case $id:tag: $comment:("// " ++ c ++ " " ++ intercalate " " vs ++ " ->")
+                  {
+                    $items:its
+                  }
+                |]
+              else
+                [citems|$items:its|]
+    in ((casei, Yes), func)
+
+cgaltX env switch fvp (ADef it v e) =
+    let env' = (v, FP fvp 0) : env
+        ((inline, ypn), func) = cgeX env' e
+        its = if ypn /= Yes then
+                inline ++ [citems| STGRETURN0();|]
+              else inline
+        casei = if switch then
+                  [citems|
+                    default: $comment:("// " ++ v ++ " ->") {
+                      $items:its
+                    }
+                  |]
+                else
+                  [citems| $items:its|]
+    in ((casei, Yes), func)
+
 
 stgCurValUArgType :: String -> [BlockItem]
 stgCurValUArgType ty = if useArgType
                            then [citems| stgCurValU[myThreadID()].argType = $id:ty; |]
                            else []
 
-cge :: Env
-  -> Expr InfoTab
-  -> State Int (([BlockItem], YPN), [(Definition, CFun)])
-
-cge env e@(EAtom it a) =
-  let (expr, comm) = cga env a
-      inlineYPN =
-        if isBoxede e then
-
-          [citems|
-            $comment:comm
-            stgCurVal[myThreadID()] = $exp:expr;
-            $comment:("// boxed EAtom, stgCurVal updates itself")
-            STGJUMP();
-          |]
-        else
-          [citems|
-            $comment:("// " ++ showa a)
-            stgCurValU[myThreadID()] = $exp:expr;
-            $comment:("// unboxed EAtom")
-          |]
-  in return ((inlineYPN, if isBoxede e then Yes else No), [])
-{-
-          ([citems|
-             $comment:comm
-             stgCurVal = $exp:expr;
-             $comment:("// boxed EAtom, stgCurVal updates itself")
-             STGJUMP();
-           |], Yes)
-        else
-          ([citems|
-             $comment:("// " ++ showa a)
-             stgCurValU = $exp:expr;
-             $comment:("// unboxed EAtom")
-           |], No)
-  in return (inlineYPN, [])
--}
 
 
-cge env e@(EFCall it f eas) =
-  case (knownCall it) of
-    Nothing -> stgApplyGeneric env f eas False
-    Just kit -> if arity kit == length eas
-                then stgApplyGeneric env f eas False  -- disabled was True
-                else stgApplyGeneric env f eas False
-
-
-cge env (EPrimOp it op info eas) =
-    let as = map ea eas
-        POI{pArgTys, pRetTy, primCGFun} = info
-        cArgs = zipWith (cgUBa env) (map ea eas) (map primTypeStrId pArgTys)
-        pexpr = primCGFun cArgs
-        inline = case pRetTy of
-          -- Just do it? Modify stgCurVal?
-          PVoid  -> [citems| $pexpr; |]
-          _      -> stgCurValUArgType (primTyArgType pRetTy) ++
-                     [citems| stgCurValU[myThreadID()].$id:(primTypeStrId pRetTy) = $pexpr; |]
-    in return ((inline, No), [])
-  where
-    --  What ArgType do I use for some PrimType
-    primTyArgType :: PrimType -> String
-    primTyArgType pt = case pt of
-      PInt    -> "INT"
-      PDouble -> "DOUBLE"
-      PString -> "STRING"
-      PVoid   -> error "No \"PVoid\" ArgType"
-
-
-cge env (ELet it os e) =
-  let names = map oname os
-      decl1 = [ [citem|typename PtrOrLiteral *$id:name; |] | name <- names ]
-      decl2 = [citems|
-                typename Cont *contp = stgAllocCallOrStackCont(myThreadID(), &it_stgLetCont, $int:(length os));
-              |]
-            ++ [ [citem| $id:name = &(contp->payload[$int:i]); |]
-                  | (name, i) <- zip names [0..] ]
-            ++ [citems|
-                 contp->layout = (typename Bitmap64)$ulint:(npStrToBMInt (replicate (length os) 'P'));
-               |]
-      decl = decl1 ++ [citems| { $items:decl2 } |]
-
-      env'  = zip names (map HO names) ++ env
-      (decls, buildcodes) = unzip $ map (buildHeapObj env') os
-  in do
-    ofunc <- cgos env' os
-    ((einline, ypn), efunc) <- cge env' e
-    return ((decl ++ concat decls ++ concat buildcodes ++ einline, ypn),
-            ofunc ++ efunc)
-
-cge env ecase@(ECase _ e a) =
-  do ((ecode, eypn), efunc) <- cge env e
-     -- weird:  compiler requires parens around if, ghci does not
-     (if eypn == No then
-          cgeInline env (isBoxede e) (ecode, efunc) a
-      else
-          cgeNoInline env (isBoxede e) (ecode, efunc) eypn a)
-
-
-cgeInline :: Env -> Bool
-     -> ([BlockItem], [(Definition, CFun)])
-     -> Alts InfoTab
-     -> State Int (([BlockItem], YPN), [(Definition, CFun)])
-cgeInline env boxed (ecode, efunc) a@(Alts{}) =
-  let pre = [citems| $comment:("// inline:  scrutinee does not STGJUMP or STGRETURN"); |]
-  in do
-    ((acode, ypn), afunc) <- cgaltsInline env a boxed
-    return ((pre ++ ecode ++ acode, ypn),
-            efunc ++ afunc)
-
-
-cgaltsInline :: Env -> Alts InfoTab -> Bool
-     -> State Int (([BlockItem], YPN), [(Definition, CFun)])
-cgaltsInline env a@(Alts it alts name scrt) boxed =
-    let contName = "ccont_" ++ name
-        scrutPtr = "scrutPtr_" ++ name
-        phonyforward = [cedecl| typename FnPtr $id:name();|]
-        f = [cfun| typename FnPtr $id:name() {}|]
-        phonyfun = [[cedecl|$func:f|]]
-        switch = length alts > 1
-     in do
-       codefuncs <- mapM (cgalt env switch scrutPtr) alts
-       let (codeypns, funcss) = unzip codefuncs
-       let (codes, ypns) = unzip codeypns
-       let myypn | all (== Yes) ypns = Yes
-                 | all (== No) ypns = No
-                 | otherwise = Possible
-       let its = [citems|
-                   typename Cont *$id:contName =
-                     stgAllocCallOrStackCont(myThreadID(), &it_stgStackCont, 1);
-                   $comment:("// " ++ show (ctyp it))
-                   $id:contName->layout =
-                     (typename Bitmap64)$ulint:(npStrToBMInt (iff boxed "P" "N"));
-                |]
-               ++ (if boxed then
-                    [citems|
-                      $id:contName->payload[0] = stgCurVal[myThreadID()];
-                      stgCurVal.op = NULL;
-                    |]
-                  else
-                    [citems|$id:contName->payload[0] = stgCurValU[myThreadID()];|])
-               ++ [citems|
-                    typename PtrOrLiteral *$id:scrutPtr =
-                      &($id:contName->payload[0]);
-                    (void)$id:scrutPtr; // suppress warning
-                  |]
-               ++ (if switch then
-                    if boxed then
-                       [citems|
-                         switch(getInfoPtr($id:scrutPtr[0].op)->conFields.tag) {
-                           $items:(concat codes)
-                         }
-                       |]
-                     else
-                       [citems|
-                         switch(stgCurValU[myThreadID()].i) {
-                            $items:(concat codes)
-                         }
-                       |]
-                   else
-                     [citems| $items:(concat codes)|])
-       return ((its, myypn), (phonyforward, phonyfun) : concat funcss)
-
-cgeNoInline :: Env ->
-               Bool ->                                             -- scrutinee boxed?
-               ([BlockItem], [(Definition, CFun)]) ->              -- code for scrutinee
-               YPN ->                                              -- YPN for scrutinee
-               Alts InfoTab ->                                     -- case alts
-               State Int (([BlockItem], YPN), [(Definition, CFun)])
-cgeNoInline env boxed (ecode, efunc) eypn a@(Alts italts alts aname scrt) =
-    let contName = "ccont_" ++ aname
-        its = [citems|
-                $comment:("// scrutinee may STGJUMP or STGRETURN")
-                typename Cont *$id:contName = stgAllocCont(myThreadID(),&$id:("it_" ++ aname));
-                $comment:("// dummy value for scrutinee, InfoTab initializes to unboxed")
-                $id:contName->payload[0].i = 0;
-              |]
-            ++ (if useArgType then
-                  [citems|$id:contName-> payload[0].argType = INT; |]
-                else [])
-            ++ (if fvs italts == [] then
-                  [citems| $comment:("// no FVs");|]
-                else
-                  let x = map fst $ fvs italts
-                  in
-                    [citems|
-                      $comment:("// load payload with FVs"
-                      ++ intercalate " " x)
-                      $items:(loadPayloadFVs env x 1 contName)
-                    |])
-    in do (acode, afunc) <- cgaltsNoInline env a boxed
---        need YPN results from Alts for more precise determination?
---        YPN inherited from scrutinee is safe
-          return ((its ++ ecode ++ acode, eypn),
-                  efunc ++ afunc)
-
-
--- ADef only or unary sum => no C switch
-cgaltsNoInline :: Env -> Alts InfoTab -> Bool
-  -> State Int ([BlockItem], [(Definition, CFun)])
-
-cgaltsNoInline env (Alts it alts name scrt) boxed =
-    let contName = "ccont_" ++ name
-        fvp = "fvp"
-        -- scrutinee now has a name in the environment
-        -- can I do more with it?
-        -- e.g. Should fvp[0] be bound to a named PtrOrLiteral? (and used in its place)
-        altenv = zip (scrtVarName scrt : (map fst $ fvs it)) (map (FP fvp) [0..])
-        env' = altenv ++ env
-        cforward = [cedecl| typename FnPtr $id:name();|]
-        switch = length alts > 1
-    in do
-      codefuncs <- mapM (cgalt env' switch fvp) alts
-      let (codeypns, funcss) = unzip codefuncs
-      let (codes, ypns) = unzip codeypns
-      let its = [citems|
-                  int id = myThreadID();
-                  LOG(LOG_INFO, $string:(name ++ " here thread=%d\n"), id);
-                  typename Cont *$id:contName = stgGetStackArgp(id);
-                  $comment:("// make self-popping")
-                  stgCaseToPopMe($id:contName);
-                  typename PtrOrLiteral *$id:fvp = &($id:contName->payload[0]);
-                |]
-              ++ (if boxed then
-                   [citems|
-                      $id:fvp[0] = stgCurVal[id];
-                      $id:contName->layout.bitmap.mask |= 0x1;
-                    |]
-                  else
-                    [citems| $id:fvp[0] = stgCurValU[id];|])
-              ++ (if switch then
-                    if boxed then
-                      [citems|
-                        stgCurVal[id].op = NULL;
-                        switch(getInfoPtr($id:fvp[0].op)->conFields.tag) {
-                          $items:(concat codes)
-                        }
-                     |]
-                    else
-                      [citems|
-                        switch(stgCurValU[id].i) {
-                         $items:(concat codes)
-                        }
-                      |]
-                  else [citems| $items:(concat codes) |])
-      let comm = [cedecl| $esc:("\n//" ++ show (ctyp it))|]
-      let fun = [cfun|
-                   typename FnPtr $id:name()
-                   {
-                     $items:its
-                   }
-                |]
-      let cfunc = [comm, [cedecl| $func:fun |]]
-      return ([], (cforward, cfunc) : concat funcss)
-
-cgalt:: Env -> Bool -> String -> Alt InfoTab
-  -> State Int (([BlockItem], YPN), [(Definition, CFun)])
-cgalt env switch fvp (ACon it c vs e) =
-  let DataCon c' ms = luDCon c (cmap it)
-      (_,_,perm) = partPerm isBoxed ms
-      eenv = zip vs (map (FV fvp) perm)
-      env' = eenv ++ env
-  in do
-    ((inline, ypn), func) <- cge env' e
-    let tag = luConTag c $ cmap it -- ConTags returned as Strings!
-    let its = if ypn /= Yes then
-                inline ++ [citems| STGRETURN0();|]
-              else inline
-    let casei = if switch then
-                  [citems|
-                    case $id:tag: $comment:("// " ++ c ++ " " ++ intercalate " " vs ++ " ->")
-                    {
-                      $items:its
-                    }
-                  |]
-                else
-                  [citems|$items:its|]
-    return ((casei, Yes), func)
-
-cgalt env switch fvp (ADef it v e) =
-    let env' = (v, FP fvp 0) : env
-    in do
-      ((inline, ypn), func) <- cge env' e
-      let its = if ypn /= Yes then
-                  inline ++ [citems| STGRETURN0();|]
-                else inline
-      let casei = if switch then
-                    [citems|
-                      default: $comment:("// " ++ v ++ " ->") {
-                        $items:its
-                      }
-                    |]
-                  else
-                    [citems| $items:its|]
-      return ((casei, Yes), func)
 
 -- ****************************************************************
 -- buildHeapObj is only invoked by ELet so TLDs not built
