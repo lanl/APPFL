@@ -71,6 +71,7 @@ import Language.C.Syntax(Initializer(..),
                          Exp,
                          BlockItem,
                          InitGroup)
+import Control.Parallel(pseq)
 
 -- use a list of Definitions rather than Func
 -- this allows us to put comments before functions
@@ -205,7 +206,7 @@ cgUBa env (LitStr s) "s" = [cexp| $int:(0)|] -- TEMP HACK until we have string s
 cgUBa _ at _ = error $ "CodeGen.cgUBa: not expecting Atom - " ++ show at
 
 
--- CG in the state monad ***************************************************
+-- ***************************************************
 -- CG of objects produces no inline code
 -- THUNK produces a function, other OBJ types have single global function
 --    (ignore explicit PAP for now)
@@ -216,27 +217,28 @@ cgUBa _ at _ = error $ "CodeGen.cgUBa: not expecting Atom - " ++ show at
 data YPN = Yes | Possible | No -- could use Maybe Bool but seems obscure
            deriving(Eq, Show)
 
-
+-- the Language.C isn't particularly convenient to pattern match on so attach a name
 cgObjs :: [Obj InfoTab] -> [String] -> ([Definition], [CFun])
 cgObjs objs runtimeGlobals =
    let tlnames = runtimeGlobals ++ map (name . omd) objs
        env = zip tlnames $ repeat SO
-       funcs = cgosX env objs
-       (forwards, funs) = unzip funcs
+       funcs = cgos env objs
+       (names, forwards, funs) = unzip3 funcs
    in (forwards, funs)
 
-cgosX :: Env -> [Obj InfoTab] -> [(Definition,  CFun)]
-cgosX env = concatMap (cgoX env)
+cgos :: Env -> [Obj InfoTab] -> [(String, Definition,  CFun)]
+cgos env = concatMap (cgo env)
 
-cgoX :: Env -> Obj InfoTab -> [(Definition, CFun)]
-cgoX env o@(FUN it vs e name) =
-    let cforward = [cedecl| typename FnPtr $id:("fun_" ++ name)();|]
+cgo :: Env -> Obj InfoTab -> [(String, Definition, CFun)]
+cgo env o@(FUN it vs e name) =
+    let fun_name = "fun_" ++ name
+        cforward = [cedecl| typename FnPtr $id:(fun_name)();|]
         argp = "argp" -- also free variable pointer pointer
         fps = "self":vs
         env' = zip (map fst $ fvs it) (map (FV argp) [0..]) ++
                zip fps (map (FP argp) [0..]) ++
                env
-        ((inline, ypn), funcs) = cgeX env' e
+        ((inline, ypn), funcs) = cge env' e
         comm = [cedecl|$esc:("\n// " ++ show (ctyp it) ++ "\n" ++
                          "// " ++ name ++ "(self, " ++
                          intercalate ", " vs ++ ")"  ) |]
@@ -254,17 +256,18 @@ cgoX env o@(FUN it vs e name) =
               }
             |]
         cfunc = [comm, [cedecl|$func:f|]]
-    in (cforward, cfunc) : funcs
+    in (fun_name, cforward, cfunc) : funcs
 
-cgoX env (PAP it f as name) = []
+cgo env (PAP it f as name) = []
 
-cgoX env (CON it c as name) = []
+cgo env (CON it c as name) = []
 
-cgoX env o@(THUNK it e name) =
+cgo env o@(THUNK it e name) =
   let fvpp = "fvpp"
       env' = zip (map fst $ fvs it) (map (FV fvpp) [1..]) ++ env
-      cforward = [cedecl| typename FnPtr $id:("thunk_" ++ name)();|]
-      ((inline,ypn), funcs) = cgeX env' e
+      thunk_name = "thunk_" ++ name
+      cforward = [cedecl| typename FnPtr $id:(thunk_name)();|]
+      ((inline,ypn), funcs) = cge env' e
       comm = [cedecl|$esc:("\n// " ++ show (ctyp it))|]
       top = [citems|
               int id = myThreadID();
@@ -290,14 +293,14 @@ cgoX env o@(THUNK it e name) =
             }
           |]
       cfunc = [comm, [cedecl|$func:f|]]
-    in (cforward, cfunc) : funcs
+    in (thunk_name, cforward, cfunc) : funcs
 
 
-cgeX :: Env
+cge :: Env
      -> Expr InfoTab
-     -> (([BlockItem], YPN), [(Definition, CFun)])
+     -> (([BlockItem], YPN), [(String, Definition, CFun)])
 
-cgeX env e@(EAtom it a) =
+cge env e@(EAtom it a) =
   let (expr, comm) = cga env a
       inlineYPN =
         if isBoxede e then
@@ -316,15 +319,15 @@ cgeX env e@(EAtom it a) =
           |]
   in ((inlineYPN, if isBoxede e then Yes else No), [])
 
-cgeX env e@(EFCall it f eas) =
+cge env e@(EFCall it f eas) =
   case (knownCall it) of
-    Nothing -> stgApplyGenericX env f eas False
+    Nothing -> stgApplyGeneric env f eas False
     Just kit -> if arity kit == length eas
-                then stgApplyGenericX env f eas False  -- disabled was True
-                else stgApplyGenericX env f eas False
+                then stgApplyGeneric env f eas False  -- disabled was True
+                else stgApplyGeneric env f eas False
 
 
-cgeX env (EPrimOp it op info eas) =
+cge env (EPrimOp it op info eas) =
     let as = map ea eas
         POI{pArgTys, pRetTy, primCGFun} = info
         cArgs = zipWith (cgUBa env) (map ea eas) (map primTypeStrId pArgTys)
@@ -345,7 +348,7 @@ cgeX env (EPrimOp it op info eas) =
       PVoid   -> error "No \"PVoid\" ArgType"
 
 
-cgeX env (ELet it os e) =
+cge env (ELet it os e) =
   let names = map oname os
       decl1 = [ [citem|typename PtrOrLiteral *$id:name; |] | name <- names ]
       decl2 = [citems|
@@ -360,42 +363,42 @@ cgeX env (ELet it os e) =
 
       env'  = zip names (map HO names) ++ env
       (decls, buildcodes) = unzip $ map (buildHeapObj env') os
-      ofunc = cgosX env' os
-      ((einline, ypn), efunc) = cgeX env' e
+      ofunc = cgos env' os
+      ((einline, ypn), efunc) = cge env' e
   in ((decl ++ concat decls ++ concat buildcodes ++ einline, ypn),
       ofunc ++ efunc)
 
-cgeX env ecase@(ECase _ e a) =
-  let ((ecode, eypn), efunc) = cgeX env e
+cge env ecase@(ECase _ e a) =
+  let ((ecode, eypn), efunc) = cge env e
   in
      -- weird:  compiler requires parens around if, ghci does not
      (if eypn == No then
-          cgeInlineX env (isBoxede e) (ecode, efunc) a
+          cgeInline env (isBoxede e) (ecode, efunc) a
       else
-          cgeNoInlineX env (isBoxede e) (ecode, efunc) eypn a)
+          cgeNoInline env (isBoxede e) (ecode, efunc) eypn a)
 
-cgeInlineX :: Env
+cgeInline :: Env
            -> Bool
-           -> ([BlockItem], [(Definition, CFun)])
+           -> ([BlockItem], [(String, Definition, CFun)])
            -> Alts InfoTab
-           -> (([BlockItem], YPN), [(Definition, CFun)])
-cgeInlineX env boxed (ecode, efunc) a@(Alts{}) =
+           -> (([BlockItem], YPN), [(String, Definition, CFun)])
+cgeInline env boxed (ecode, efunc) a@(Alts{}) =
   let pre = [citems| $comment:("// inline:  scrutinee does not STGJUMP or STGRETURN"); |]
-      ((acode, ypn), afunc) = cgaltsInlineX env a boxed
+      ((acode, ypn), afunc) = cgaltsInline env a boxed
   in ((pre ++ ecode ++ acode, ypn),
       efunc ++ afunc)
 
 
-cgaltsInlineX :: Env -> Alts InfoTab -> Bool
-     -> (([BlockItem], YPN), [(Definition, CFun)])
-cgaltsInlineX env a@(Alts it alts name scrt) boxed =
+cgaltsInline :: Env -> Alts InfoTab -> Bool
+     -> (([BlockItem], YPN), [(String, Definition, CFun)])
+cgaltsInline env a@(Alts it alts name scrt) boxed =
     let contName = "ccont_" ++ name
         scrutPtr = "scrutPtr_" ++ name
         phonyforward = [cedecl| typename FnPtr $id:name();|]
         f = [cfun| typename FnPtr $id:name() {}|]
         phonyfun = [[cedecl|$func:f|]]
         switch = length alts > 1
-        codefuncs = map (cgaltX env switch scrutPtr) alts
+        codefuncs = map (cgalt env switch scrutPtr) alts
         (codeypns, funcss) = unzip codefuncs
         (codes, ypns) = unzip codeypns
         myypn | all (== Yes) ypns = Yes
@@ -435,16 +438,16 @@ cgaltsInlineX env a@(Alts it alts name scrt) boxed =
                      |]
                  else
                    [citems| $items:(concat codes)|])
-       in ((its, myypn), (phonyforward, phonyfun) : concat funcss)
+       in ((its, myypn), (name, phonyforward, phonyfun) : concat funcss)
 
-cgeNoInlineX :: Env ->
+cgeNoInline :: Env ->
                 Bool ->                                             -- scrutinee boxed?
-                ([BlockItem], [(Definition, CFun)]) ->              -- code for scrutinee
+                ([BlockItem], [(String, Definition, CFun)]) ->      -- code for scrutinee
                 YPN ->                                              -- YPN for scrutinee
                 Alts InfoTab ->                                     -- case alts
-                (([BlockItem], YPN), [(Definition, CFun)])
+                (([BlockItem], YPN), [(String, Definition, CFun)])
 
-cgeNoInlineX env boxed (ecode, efunc) eypn a@(Alts italts alts aname scrt) =
+cgeNoInline env boxed (ecode, efunc) eypn a@(Alts italts alts aname scrt) =
     let contName = "ccont_" ++ aname
         its = [citems|
                 $comment:("// scrutinee may STGJUMP or STGRETURN")
@@ -465,17 +468,17 @@ cgeNoInlineX env boxed (ecode, efunc) eypn a@(Alts italts alts aname scrt) =
                       ++ intercalate " " x)
                       $items:(loadPayloadFVs env x 1 contName)
                     |])
-        (acode, afunc) = cgaltsNoInlineX env a boxed
+        (acode, afunc) = cgaltsNoInline env a boxed
 --        need YPN results from Alts for more precise determination?
 --        YPN inherited from scrutinee is safe
     in ((its ++ ecode ++ acode, eypn),
         efunc ++ afunc)
 
 -- ADef only or unary sum => no C switch
-cgaltsNoInlineX :: Env -> Alts InfoTab -> Bool
-                -> ([BlockItem], [(Definition, CFun)])
+cgaltsNoInline :: Env -> Alts InfoTab -> Bool
+                -> ([BlockItem], [(String, Definition, CFun)])
 
-cgaltsNoInlineX env (Alts it alts name scrt) boxed =
+cgaltsNoInline env (Alts it alts name scrt) boxed =
     let contName = "ccont_" ++ name
         fvp = "fvp"
         -- scrutinee now has a name in the environment
@@ -485,7 +488,7 @@ cgaltsNoInlineX env (Alts it alts name scrt) boxed =
         env' = altenv ++ env
         cforward = [cedecl| typename FnPtr $id:name();|]
         switch = length alts > 1
-        codefuncs = map (cgaltX env' switch fvp) alts
+        codefuncs = map (cgalt env' switch fvp) alts
         (codeypns, funcss) = unzip codefuncs
         (codes, ypns) = unzip codeypns
         its = [citems|
@@ -526,10 +529,10 @@ cgaltsNoInlineX env (Alts it alts name scrt) boxed =
                  }
               |]
         cfunc = [comm, [cedecl| $func:fun |]]
-    in ([], (cforward, cfunc) : concat funcss)
+    in ([], (name, cforward, cfunc) : concat funcss)
 
 
-stgApplyGenericX env f eas direct =
+stgApplyGeneric env f eas direct =
     let as = map ea eas
         pnstring = [ if b then 'P' else 'N' | b <- map (isBoxed . typ . emd) eas ]
         -- HACK
@@ -562,14 +565,14 @@ stgApplyGenericX env f eas direct =
                  |])
     in ((its, Yes), [])
 
-cgaltX :: Env -> Bool -> String -> Alt InfoTab
-       -> (([BlockItem], YPN), [(Definition, CFun)])
-cgaltX env switch fvp (ACon it c vs e) =
+cgalt :: Env -> Bool -> String -> Alt InfoTab
+       -> (([BlockItem], YPN), [(String, Definition, CFun)])
+cgalt env switch fvp (ACon it c vs e) =
   let DataCon c' ms = luDCon c (cmap it)
       (_,_,perm) = partPerm isBoxed ms
       eenv = zip vs (map (FV fvp) perm)
       env' = eenv ++ env
-      ((inline, ypn), func) = cgeX env' e
+      ((inline, ypn), func) = cge env' e
       tag = luConTag c $ cmap it -- ConTags returned as Strings!
       its = if ypn /= Yes then
               inline ++ [citems| STGRETURN0();|]
@@ -585,9 +588,9 @@ cgaltX env switch fvp (ACon it c vs e) =
                 [citems|$items:its|]
     in ((casei, Yes), func)
 
-cgaltX env switch fvp (ADef it v e) =
+cgalt env switch fvp (ADef it v e) =
     let env' = (v, FP fvp 0) : env
-        ((inline, ypn), func) = cgeX env' e
+        ((inline, ypn), func) = cge env' e
         its = if ypn /= Yes then
                 inline ++ [citems| STGRETURN0();|]
               else inline
