@@ -43,6 +43,10 @@ extern Obj sho_stg_case_not_exhaustiveN;
 
 void stgCaseToPopMe(Cont *contp);
 
+FnPtr fun_par();
+extern InfoTab it_par;
+
+
 #if USE_ARGTYPE
 #define HOTOPL(HO) ((PtrOrLiteral) {.argType = HEAPOBJ, .op = (HO) })
 #define INTTOPL(L) ((PtrOrLiteral) {.argType = INT,     .i = L   })

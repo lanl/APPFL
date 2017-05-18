@@ -295,3 +295,31 @@ CInfoTab it_stgCallCont __attribute__((aligned(8))) =
     .cLayoutInfo.bm.bitmap.mask = 0x0,   // shouldn't be using this
     .cLayoutInfo.bm.bitmap.size = 0,  // shouldn't be using this
   };
+
+// forall t27,t29.t27 -> t29 -> t29
+// par(self, x, y)
+FnPtr fun_par()
+{
+    LOG(LOG_INFO, "par here thread=%d\n", myThreadID());
+    
+    PtrOrLiteral *argp = &stgGetStackArgp(myThreadID())->payload[0];
+    
+    (void) argp;
+    // suppress warning
+    ;
+    // y
+    stgCurVal[myThreadID()] = argp[2];
+    // boxed EAtom, stgCurVal updates itself
+    STGJUMP();
+}
+
+InfoTab it_par __attribute__((aligned(OBJ_ALIGN))) = {.name ="par", .entryCode =
+                                                      &stg_funcall, .objType =
+                                                      FUN,
+                                                      .layoutInfo.payloadSize =
+                                                      0,
+                                                      .layoutInfo.boxedCount =0,
+                                                      .layoutInfo.unboxedCount =
+                                                      0, .funFields.arity =2,
+                                                      .funFields.trueEntryCode =
+                                                      fun_par};

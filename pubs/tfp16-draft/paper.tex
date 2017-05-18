@@ -377,7 +377,7 @@ Expression   & $e$            & ::= & $a$                                       
 Alternatives & $\mathit{alt}$ & ::= & $C\ x_1\dots x_n$ \texttt{->} $e$            & Pattern match, $n \ge 0$ \\
              &                & $|$ & \texttt{\_ ->} $e$                           & Default \\
 \\
-Heap objects & $\mathit{obj}$ & ::= &\texttt{FUN} $x_1\dots x_n$ \texttt{->} $e$   & Function definition, arity $=n\ge 1$ \\
+Heap objects & $\mathit{obj}$ & ::= &\texttt{FUN} $f\ x_1\dots x_n$ \texttt{->} $e$   & Function definition, arity $=n\ge 1$ \\
              &                & $|$ &\texttt{CON} $C\ a_1\dots a_n$                & Saturated constructor, $n \ge 0$ \\
              &                & $|$ &\texttt{THUNK} $e$                            & Thunk---explicit deferred evaluation \\
              &                & $|$ &\texttt{PAP} $f\ a_1\dots a_n$               & Partial application \\

@@ -140,6 +140,7 @@ void showStgValPretty(LogLevel priority, PtrOrLiteral v);
 void checkStgHeap();
 void showIT(InfoTab *);
 
+
 // Codegen.hs currently uses STGJUMP(), STGJUMP0(f), and STGRETURN0() to
 // exit functions
 

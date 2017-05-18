@@ -214,18 +214,29 @@ cgUBa _ at _ = error $ "CodeGen.cgUBa: not expecting Atom - " ++ show at
 --   all objects produce a (S)HO
 -- for CG, objects are heap allocated only by let
 
+culParFun :: [(String, Definition,  CFun)] -> ([Definition], [CFun])
+culParFun (("fun_par", d, f):xs) =
+    let (ss, ds, fs) = unzip3 xs
+    in  (ds, fs)
+culParFun ((_, d, f):xs) =
+    let (ds, fs) = culParFun xs
+    in (d:ds, f:fs)
+culParFun [] = ([],[])
+
 data YPN = Yes | Possible | No -- could use Maybe Bool but seems obscure
            deriving(Eq, Show)
 
--- the Language.C isn't particularly convenient to pattern match on so attach a name
 cgObjs :: [Obj InfoTab] -> [String] -> ([Definition], [CFun])
 cgObjs objs runtimeGlobals =
    let tlnames = runtimeGlobals ++ map (name . omd) objs
        env = zip tlnames $ repeat SO
        funcs = cgos env objs
-       (names, forwards, funs) = unzip3 funcs
+       -- dirty hack:  cull the funs for par
+       -- is this a general approach/should be generalized?
+       (forwards, funs) = culParFun funcs
    in (forwards, funs)
 
+-- the Language.C isn't particularly convenient to pattern match on so attach a name
 cgos :: Env -> [Obj InfoTab] -> [(String, Definition,  CFun)]
 cgos env = concatMap (cgo env)
 
