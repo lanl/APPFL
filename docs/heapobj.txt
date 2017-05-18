@@ -63,7 +63,8 @@ typedef enum {
 extern const char *objTypeNames[PHONYENDOBJ];
 
 SHOs don't have free variables in their payloads.  However, because THUNKs get
-updated (only) they must be regarded as roots for garbage collection.
+updated (only) they must be regarded as roots for garbage collection once they
+have become INDIRECTs (or have BLACKHOLE status in the parallel case).
 
 In general it must be possible to determine the size of a heap object
 dynamically, given only a pointer to it (this does not apply to (SHOs)), so
