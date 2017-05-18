@@ -231,9 +231,10 @@ void gc(void) {
 
   // all SHO's
   for (int i = 0; i < stgStatObjCount; i++) {
+    ObjType ot = getObjType(stgStatObj[i]);
     if (// getObjType(stgStatObj[i]) == THUNK ||
-	getObjType(stgStatObj[i]) == INDIRECT ||
-	getObjType(stgStatObj[i]) == BLACKHOLE) processObj(stgStatObj[i]);
+	ot == INDIRECT ||
+	ot == BLACKHOLE) processObj(stgStatObj[i]);
   }
 
   //Cont. stack
