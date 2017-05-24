@@ -130,7 +130,7 @@ static inline InfoTab *getInfoPtr(Obj *p)  {
 }
 
 static inline ObjType getObjType(Obj *p) {
-  assert(!isLSBset(p->_infoPtr) && "getObjType on forwarding node");
+  assert(!isLSBset(p->_infoPtr) && "getObjType on INDIRECT");
 
   InfoTab *ip = getInfoPtr(p);
 
@@ -139,20 +139,22 @@ static inline ObjType getObjType(Obj *p) {
   case FUN:
     iobjType = isLSB2set(p->_infoPtr) ? PAP : FUN;
     break;
-  case PAP:
-    iobjType = PAP;
-    break;
   case CON:
     iobjType = CON;
     break;
   case THUNK:
     iobjType = isLSB2set(p->_infoPtr) ? BLACKHOLE : THUNK;
     break;
-  case BLACKHOLE:
-    iobjType = BLACKHOLE;
-    break;
   case INDIRECT:
     iobjType = INDIRECT;
+    break;
+  case PAP:
+    assert(false && "PAP explicit object type should be obsolete");
+    iobjType = PAP;
+    break;
+  case BLACKHOLE:
+    assert(false && "BLACKHOLE explicit object type should be obsolete");
+    iobjType = BLACKHOLE;
     break;
   default:
     assert(false && "bad objType");
