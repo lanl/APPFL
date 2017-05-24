@@ -237,24 +237,9 @@ void showObjSpaceInfo();
 
 void showObjSpaceInfo(LogLevel priority) {
   LOG(priority, "SHO range is %p to %p\n",
-	  &stgStatObj[0],
-	  &stgStatObj[stgStatObjCount-1]);
+	  &stgStatObjTable[0],
+	  &stgStatObjTable[stgStatObjCount-1]);
   LOG(priority, "heap range is %p to %p\n", stgHeap, stgHP);
   LOG(priority, "heap toPtr is %p\n", toPtr);
 }
 
-bool isSHO(Obj *p) {
-  return (p >= stgStatObj[0] && p <= stgStatObj[stgStatObjCount-1]);
-}
-
-bool isHeap(Obj *p) {
-  return (isTo(p) || isFrom(p));
-}
-
-bool isFrom(void *p) {
-  return (p >= fromPtr && (char *) p < (char *) fromPtr + stgHeapSize / 2);
-}
-
-bool isTo(void *p) {
-  return (p >= toPtr && (char *) p < (char *) toPtr + stgHeapSize / 2);
-}

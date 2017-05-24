@@ -233,7 +233,7 @@ void gc(void) {
 
   // all SHO's
   for (int i = 0; i < stgStatObjCount; i++) {
-    processObj(stgStatObj[i]);
+    processObj(stgStatObjTable[i]);
   }
 
   //Cont. stacks

@@ -5,7 +5,7 @@
 
 module HeapObj (
   showSHOs,
-  shoNames
+--  shoNames
 ) where
 
 import AST
@@ -22,12 +22,39 @@ import Language.C.Syntax (Definition, Initializer)
 
 -- HOs come from InfoTabs
 
-shoNames :: [Obj InfoTab] -> [String]
-shoNames = map (\o -> "sho_" ++ (name . omd) o)
+-- Need a better way to do this--the predefined non-primitive functions
+-- have already had to get through the free variable check and type checker
+-- so all the information (name, type) should be available early on.
+-- See Driver.hs:stgRTSGlobals for the current kludge.
+-- See InfoTab.hs:preDefCInfoTabs
+--
+-- externs for built-ins (e.g. par) are in runtime header files, but we
+-- need entries for them somewhere for the benefit of the garbage collector
+-- unless we include logic (as in master) to exclude all but THUNK SHOs
+-- as roots, and disallow THUNK built-ins (which seems reasonable).
 
--- return list of forwards (static declarations) and (static) definitions
-showSHOs :: [Obj InfoTab] -> ([Definition], [Definition])
-showSHOs objs =  unzip $ map showSHO objs
+preDefSHOs = [ "par" ]
+           
+statObjTable :: [Obj InfoTab] -> (Definition, Definition)
+-- const int stgStatObjCount = #static objects;
+-- Obj *const stgStatObj[#static objects] = {&obj, &obj, ... } ;
+statObjTable objs =
+    let progNames = map (name . omd) objs
+        names = map ("sho_" ++ ) (preDefSHOs ++ progNames)
+        inits = [[cinit| &$id:name |] | name <- names ]
+        compoundInit = [cinit| { $inits:inits } |]
+    in ([cedecl| const int stgStatObjCount = $exp:(length names) ; |] ,
+        [cedecl| typename Obj *const stgStatObjTable [ $exp:(length names) ] =
+                   $init:compoundInit ; |])
+
+-- return list of forwards (static declarations), (static) definitions,
+-- and table of pointers and length
+-- externs for built-ins (e.g. par) are in runtime header files
+
+showSHOs :: [Obj InfoTab] -> ([Definition], [Definition], [Definition])
+showSHOs objs = let (forwards, defs) = unzip $ map showSHO objs
+                    (stgStatObjCount, stgStatObjTable) = statObjTable objs
+                in (forwards, defs, [stgStatObjCount, stgStatObjTable])
 
 showSHO :: Obj InfoTab -> (Definition, Definition)
 showSHO o =

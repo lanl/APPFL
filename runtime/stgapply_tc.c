@@ -17,10 +17,10 @@ Cont *stgFunContSplit(int arity1, int excess, FnPtr (*dest)()) {
   Cont *cont1 = (Cont *)stgSPs[myThreadID()];
   // funoid + excess, subsequent application
   int pls2 = 1 + excess;
-  Cont *cont2 = stgAllocCallOrStackCont(myThreadID(), &it_stgStackCont, pls2 );
+  Cont *cont2 = stgAllocCallOrStackCont(myThreadID(), &cit_stgStackCont, pls2 );
   // funoid + arity1
   int pls3 = arity1 + 1;
-  Cont *cont3 = stgAllocCallOrStackCont(myThreadID(), &it_stgStackCont, pls3 );
+  Cont *cont3 = stgAllocCallOrStackCont(myThreadID(), &cit_stgStackCont, pls3 );
 
   // fill in cont2
   Bitmap64 bm = cont1->layout;
@@ -62,10 +62,10 @@ Cont *stgPapContSplit(int arity,
                       Bitmap64 papargmap) // of the PAPs args
 {
   Cont *contold = (Cont *)stgSPs[myThreadID()];
-  Cont *contexcess = stgAllocCallOrStackCont(myThreadID(), &it_stgStackCont, excess + 1);
+  Cont *contexcess = stgAllocCallOrStackCont(myThreadID(), &cit_stgStackCont, excess + 1);
   int papargc = papargmap.bitmap.size;
   int exactpls = 1 + papargc + arity;
-  Cont *contexact = stgAllocCallOrStackCont(myThreadID(), &it_stgStackCont, exactpls);
+  Cont *contexact = stgAllocCallOrStackCont(myThreadID(), &cit_stgStackCont, exactpls);
 
   // fill in contexcess
   Bitmap64 bm = contold->layout;

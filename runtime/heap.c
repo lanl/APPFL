@@ -13,18 +13,46 @@ Bitmap64 layoutInfoToBitmap64(LayoutInfo *lip) {
 }
 */
 
+// This assumes that the SHOs are contiguous in memory.
+bool isSHO(Obj *p) {
+  return (p >= stgStatObjTable[0] && p <= stgStatObjTable[stgStatObjCount-1]);
+}
+
+bool isHeap(Obj *p) {
+  return (isTo(p) || isFrom(p));
+}
+
+bool isFrom(void *p) {
+  return (p >= fromPtr && (char *) p < (char *) fromPtr + stgHeapSize / 2);
+}
+
+bool isTo(void *p) {
+  return (p >= toPtr && (char *) p < (char *) toPtr + stgHeapSize / 2);
+}
+
 // we can't be certain a value is boxed or unboxed without enabling ARG_TYPE
 // but we can do some sanity checking.  mayBeBoxed(v) means that v is not
 // definitely unboxed
 bool mayBeBoxed(PtrOrLiteral f) {
-  #if USE_ARGTYPE
-  return f.argType == HEAPOBJ &&
-         (f.op == NULL || isHeap(f.op) || isSHO(f.op)) &&
-         ((f.u & (OBJ_ALIGN - 1)) == 0);
-#else
-  return (f.op == NULL || isHeap(f.op) || isSHO(f.op)) &&
-         ((f.u & (OBJ_ALIGN - 1)) == 0);
+#if USE_ARGTYPE
+  if (f.argType == HEAPOBJ) fprintf(stderr, "mayBeBoxed:  is HEAPOBJ\n");
+      else fprintf(stderr, "mayBeBoxed:  is not HEAPOBJ\n");
 #endif
+  if (f.op == NULL) fprintf(stderr, "mayBeBoxed:  f.op == NULL\n");
+  else fprintf(stderr, "mayBeBoxed:  f.op != NULL\n");
+  if (isHeap(f.op)) fprintf(stderr, "mayBeBoxed:  isHeap(f.op) is true\n");
+  else fprintf(stderr, "mayBeBoxed:  isHeap(f.op) is false\n");
+  if (isSHO(f.op)) fprintf(stderr, "mayBeBoxed:  isSHO(f.op) is true\n");
+  else fprintf(stderr, "mayBeBoxed:  isSHO(f.op) is false\n");
+  if ((f.u & (OBJ_ALIGN - 1)) == 0) fprintf(stderr, "mayBeBoxed:  (f.u & (OBJ_ALIGN - 1)) == 0 is true\n");
+  else fprintf(stderr, "mayBeBoxed:  (f.u & (OBJ_ALIGN - 1)) == 0 is false\n");
+
+  return
+#if USE_ARGTYPE
+    f.argType == HEAPOBJ &&
+#endif
+    (f.op == NULL || isHeap(f.op) || isSHO(f.op)) &&
+    ((f.u & (OBJ_ALIGN - 1)) == 0);
 }
 
 bool mayBeUnboxed(PtrOrLiteral f) {

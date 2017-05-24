@@ -176,7 +176,7 @@ FnPtr stgUpdateCont() {
   STGRETURN0();
 }
 
-CInfoTab it_stgUpdateCont __attribute__((aligned(8))) =
+CInfoTab cit_stgUpdateCont __attribute__((aligned(8))) =
   { .name = "default stgUpdateCont",
     .entryCode = &stgUpdateCont,
     .contType = UPDCONT,
@@ -203,7 +203,7 @@ FnPtr fun_stgShowResultCont() {
   RETURN0();
 }
 
-CInfoTab it_stgShowResultCont __attribute__((aligned(8))) =
+CInfoTab cit_stgShowResultCont __attribute__((aligned(8))) =
   { .name       = "fun_showResultCont",
     //    .fvCount    = 0,
     .entryCode  = &fun_stgShowResultCont,
@@ -217,7 +217,7 @@ CInfoTab it_stgShowResultCont __attribute__((aligned(8))) =
 void stgThunk(PtrOrLiteral self) {
   LOG(LOG_DEBUG, "stgThunk thread=%d\n",myThreadID());
   assert(mayBeBoxed(self) && "stgThunk:  not HEAPOBJ\n");
-  Cont *contp = stgAllocCont(myThreadID(), &it_stgUpdateCont);
+  Cont *contp = stgAllocCont(myThreadID(), &cit_stgUpdateCont);
   contp->payload[0] = self;
   strcpy(contp->ident, self.op->ident); //override default
   // can't do this until we capture the variables in a stack frame
@@ -236,7 +236,7 @@ FnPtr stgStackCont() {
   STGRETURN0();  // return through continuation stack
 }
 
-CInfoTab it_stgStackCont __attribute__((aligned(8))) =
+CInfoTab cit_stgStackCont __attribute__((aligned(8))) =
   { .name = "stgStackCont",
     .entryCode = &stgStackCont,
     .contType = STACKCONT,
@@ -246,7 +246,7 @@ CInfoTab it_stgStackCont __attribute__((aligned(8))) =
     .cLayoutInfo.bm.bitmap.size = 0,  // shouldn't be using this
   };
 
-CInfoTab it_stgLetCont __attribute__((aligned(8))) =
+CInfoTab cit_stgLetCont __attribute__((aligned(8))) =
   { .name = "stgStackCont",
     .entryCode = &stgStackCont,
     .contType = LETCONT,
@@ -262,7 +262,7 @@ FnPtr stgPopMeCont() {
   STGRETURN0();  // return through continuation stack
 }
 
-CInfoTab it_stgPopMeCont __attribute__((aligned(8))) =
+CInfoTab cit_stgPopMeCont __attribute__((aligned(8))) =
   { .name = "stgPopMeCont",
     .entryCode = &stgPopMeCont,
     .contType = POPMECONT,
@@ -274,9 +274,9 @@ CInfoTab it_stgPopMeCont __attribute__((aligned(8))) =
 
 void stgCaseToPopMe(Cont *contp) {
   assert(contp->contType == CASECONT);
-  contp->cInfoPtr = &it_stgPopMeCont;
-  contp->entryCode = it_stgPopMeCont.entryCode;
-  contp->contType = it_stgPopMeCont.contType;
+  contp->cInfoPtr = &cit_stgPopMeCont;
+  contp->entryCode = cit_stgPopMeCont.entryCode;
+  contp->contType = cit_stgPopMeCont.contType;
   // keep contp->ident unchanged
 }
 
@@ -286,7 +286,7 @@ FnPtr stgCallCont() {
   RETURN0();  // fall back to the cmm trampoline
 }
 
-CInfoTab it_stgCallCont __attribute__((aligned(8))) =
+CInfoTab cit_stgCallCont __attribute__((aligned(8))) =
   { .name = "stgCallCont",
     .entryCode = &stgCallCont,
     .contType = CALLCONT,
@@ -313,13 +313,20 @@ FnPtr fun_par()
     STGJUMP();
 }
 
-InfoTab it_par __attribute__((aligned(OBJ_ALIGN))) = {.name ="par", .entryCode =
-                                                      &stg_funcall, .objType =
-                                                      FUN,
-                                                      .layoutInfo.payloadSize =
-                                                      0,
-                                                      .layoutInfo.boxedCount =0,
-                                                      .layoutInfo.unboxedCount =
-                                                      0, .funFields.arity =2,
-                                                      .funFields.trueEntryCode =
-                                                      fun_par};
+InfoTab it_par __attribute__((aligned(OBJ_ALIGN))) = {
+  .name ="par",
+  .entryCode = &stg_funcall,
+  .objType = FUN,
+  .layoutInfo.payloadSize = 0,
+  .layoutInfo.boxedCount = 0,
+  .layoutInfo.unboxedCount = 0,
+  .funFields.arity =2,
+  .funFields.trueEntryCode = fun_par
+};
+
+Obj sho_par __attribute__((aligned(OBJ_ALIGN))) = {
+  ._infoPtr =&it_par,
+  .objType =FUN,
+  .ident ="par",
+  .payload = {{0}}
+};

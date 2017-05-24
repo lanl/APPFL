@@ -111,7 +111,8 @@ footer v  = [cgStart, cgMain v]
 
 -- need a better way, such as a built-ins prelude for par
 stgRTSGlobals :: [String]
-stgRTSGlobals = [ "stg_case_not_exhaustive", -- before type checking
+stgRTSGlobals = [ "par",                      -- source
+                  "stg_case_not_exhaustive",  -- before type checking
                   "stg_case_not_exhaustiveP", -- during codegen
                   "stg_case_not_exhaustiveN"  -- during codegen
                 ] ++ map fst primOpTab -- from AST.hs
@@ -288,15 +289,16 @@ codegener inp v =
                            
       typeEnums = showTypeEnums tycons
       infotab = showITs objs
-      (shoForward, shoDef) = showSHOs objs
+      (shoForward, shoDef, shoTable) = showSHOs objs
       (funForwards, funDefs) = cgObjs objs stgRTSGlobals
-      (stgStatObjCount, stgStatObj) = shos objs
+      -- (stgStatObjCount, stgStatObjTable) = shos objs
       defs =  header : funForwards ++
               typeEnums ++
               infotab ++
               shoForward ++
               shoDef ++
-              [ stgStatObjCount, stgStatObj ] ++
+              -- [ stgStatObjCount, stgStatObjTable ] ++
+              shoTable ++
               concat funDefs ++
               footer v
   in [cunit|$edecls:defs |]

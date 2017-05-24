@@ -49,6 +49,7 @@ typedef struct {
 
 
 // InfoTab
+// typedef struct _InfoTab InfoTab; in stg.h
 struct _InfoTab {
 #if DEBUG_INFOTAB
   double pi;
@@ -98,7 +99,7 @@ static inline bool isLSB2set(InfoTab *ptr) {
 //static inline bool isLSB3set(InfoTab *ptr) { return (bool)((uintptr_t)ptr & 4); }
 
 //--------- Obj
-
+// typedef struct _Obj Obj; in stg.h
 // with empty payload sizeof(Obj) must be multiple of 4
 struct _Obj {
   InfoTab *_infoPtr;         // canonical location of infoPtr--first word

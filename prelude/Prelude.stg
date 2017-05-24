@@ -819,4 +819,4 @@ cOArr = FUN(n ->
 ---------------------------------------------------------------------
 -- bogosities to be intercepted in Codegen
 
-par = FUN( x y -> y );
+-- par = FUN( x y -> y );

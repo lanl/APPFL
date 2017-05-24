@@ -155,9 +155,9 @@ int addObjects(Obj *objArray[]) {
   for (int i = 0; i < stgStatObjCount; i++) {
     // before adding the object, make sure that the pointer to the
     // object itself is valid
-    sanityCheckObj(stgStatObj[i]);
-    assert(isSHO(stgStatObj[i]) && "sanity: object isn't a SHO");
-    addObject(stgStatObj[i], objArray, &objCount, false);
+    sanityCheckObj(stgStatObjTable[i]);
+    assert(isSHO(stgStatObjTable[i]) && "sanity: object isn't a SHO");
+    addObject(stgStatObjTable[i], objArray, &objCount, false);
   }
 
   //search for / add stgCurVals

@@ -119,7 +119,7 @@ extern PrefCounters perfCounter;
 
 // these are defined in the generated code
 extern const int stgStatObjCount;
-extern Obj *const stgStatObj[];
+extern Obj *const stgStatObjTable[];
 extern const int stgInfoTabCount;
 extern InfoTab *const stgInfoTab[];
 extern const int stgCInfoTabCount;

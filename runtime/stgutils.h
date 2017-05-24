@@ -23,17 +23,17 @@ FnPtr stgBlackhole();
 FnPtr stgIndirect();
 
 FnPtr stgCallCont();
-extern CInfoTab it_stgCallCont;
+extern CInfoTab cit_stgCallCont;
 
 FnPtr stgStackCont();
-extern CInfoTab it_stgStackCont;
-extern CInfoTab it_stgLetCont;
+extern CInfoTab cit_stgStackCont;
+extern CInfoTab cit_stgLetCont;
 
 FnPtr stgUpdateCont();
-extern CInfoTab it_stgUpdateCont;
+extern CInfoTab cit_stgUpdateCont;
 
 FnPtr fun_stgShowResultCont();
-extern CInfoTab it_stgShowResultCont;
+extern CInfoTab cit_stgShowResultCont;
 
 // this is not a real object, should not need an sho_, TODO fix CodeGen.hs
 FnPtr stg_case_not_exhaustiveP();
@@ -45,6 +45,7 @@ void stgCaseToPopMe(Cont *contp);
 
 FnPtr fun_par();
 extern InfoTab it_par;
+extern Obj sho_par;
 
 
 #if USE_ARGTYPE

@@ -478,7 +478,7 @@ alignedDecl typ name ini =
 showIT :: InfoTab -> Maybe (Bool, String, Definition)
 showIT it@(ITAlts {}) =
   let init = showITinit it
-      citname = "it_" ++ name it
+      citname = "cit_" ++ name it
       f x = Just $ (False, citname, )
                      (alignedDecl [cty| typename CInfoTab|] citname x)
   in maybe Nothing f init
@@ -592,12 +592,12 @@ showITinit it@(ITAlts {}) =
 
 showITinit it = Nothing
 
-preDefInfoTabs =
-    [ "it_stgCallCont",
-      "it_stgStackCont",
-      "it_stgLetCont",
-      "it_stgUpdateCont",
-      "it_stgShowResultCont" ]
+preDefCInfoTabs =
+    [ "cit_stgCallCont",
+      "cit_stgStackCont",
+      "cit_stgLetCont",
+      "cit_stgUpdateCont",
+      "cit_stgShowResultCont" ]
 
 
 showITs :: ITsOf a [InfoTab] => a -> [Definition]
@@ -608,7 +608,7 @@ showITs os =
         -- quick hack
         (itnames, itdefs) =   unzip [ (name, defn) | (True, name, defn) <- ps ]
         (ucitnames, citdefs) = unzip [ (name, defn) | (False, name, defn) <- ps ]
-        citnames = preDefInfoTabs ++ ucitnames
+        citnames = preDefCInfoTabs ++ ucitnames
         itcount = length itnames
         citcount = length citnames
         -- const int stgInfoTabCount = #InfoTabs ;

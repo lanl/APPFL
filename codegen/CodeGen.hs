@@ -40,7 +40,6 @@ module CodeGen(
   cgObjs,
   cgStart,
   cgMain,
-  shos
 ) where
 
 
@@ -98,7 +97,7 @@ cgStart :: Definition
 cgStart =
   let its = [citems|
               int id = myThreadID();
-              typename Cont *showResultCont = stgAllocCallOrStackCont(id, &it_stgShowResultCont, 0);
+              typename Cont *showResultCont = stgAllocCallOrStackCont(id, &cit_stgShowResultCont, 0);
               (void)showResultCont; // suppress warning
             |]
           ++ (if useArgType then [citems| stgCurVal[id].argType = HEAPOBJ; |] else [])
@@ -139,24 +138,6 @@ cgMain v =
                }
             |]
   in [cedecl| $func:fun |]
-
-registerSOs :: [Obj InfoTab] -> (Definition, CFun)
-registerSOs objs =
-  let proto = [cedecl| void registerSOs(); |]
-      its = [ [citem|stgStatObj[stgStatObjCount++] = &$id:s; |] | s <- shoNames objs]
-      f = [cfun| void registerSOs() { $items:its } |]
-  in (proto, [[cedecl|$func:f|]])
-
-shos :: [Obj InfoTab] -> (Definition, Definition)
-shos objs =
-    let names = shoNames objs
-        inits = [[cinit| &$id:name |] | name <- names ]
-        compoundInit = [cinit| { $inits:inits } |]
-    -- const int stgStatObjCount = #static objects;
-    -- Obj *const stgStatObj[#static objects] = {&obj, &obj, ... } ;
-    in ([cedecl| const int stgStatObjCount = $exp:(length names) ; |] ,
-        [cedecl| typename Obj *const stgStatObj [ $exp:(length names) ] =
-                   $init:compoundInit ; |])
 
 listLookup k [] = Nothing
 listLookup k ((k',v):xs) | k == k' = Just v
@@ -285,7 +266,7 @@ cgo env o@(THUNK it e name) =
               LOG(LOG_INFO, $string:(name ++ " here thread=%d\n"), id);
               $comment:("// access free vars through frame pointer for GC safety")
               $comment:("// is this really necessary???");
-              typename Cont *stg_fp = stgAllocCallOrStackCont(id, &it_stgStackCont, 1);
+              typename Cont *stg_fp = stgAllocCallOrStackCont(id, &cit_stgStackCont, 1);
               stg_fp->layout = (typename Bitmap64)$ulint:(npStrToBMInt "P");
               stg_fp->payload[0] = stgCurVal[id];
               typename PtrOrLiteral *$id:fvpp = &(stg_fp->payload[0]);
@@ -363,7 +344,7 @@ cge env (ELet it os e) =
   let names = map oname os
       decl1 = [ [citem|typename PtrOrLiteral *$id:name; |] | name <- names ]
       decl2 = [citems|
-                typename Cont *contp = stgAllocCallOrStackCont(myThreadID(), &it_stgLetCont, $int:(length os));
+                typename Cont *contp = stgAllocCallOrStackCont(myThreadID(), &cit_stgLetCont, $int:(length os));
               |]
             ++ [ [citem| $id:name = &(contp->payload[$int:i]); |]
                   | (name, i) <- zip names [0..] ]
@@ -417,7 +398,7 @@ cgaltsInline env a@(Alts it alts name scrt) boxed =
               | otherwise = Possible
         its = [citems|
                  typename Cont *$id:contName =
-                   stgAllocCallOrStackCont(myThreadID(), &it_stgStackCont, 1);
+                   stgAllocCallOrStackCont(myThreadID(), &cit_stgStackCont, 1);
                  $comment:("// " ++ show (ctyp it))
                  $id:contName->layout =
                    (typename Bitmap64)$ulint:(npStrToBMInt (iff boxed "P" "N"));
@@ -462,7 +443,7 @@ cgeNoInline env boxed (ecode, efunc) eypn a@(Alts italts alts aname scrt) =
     let contName = "ccont_" ++ aname
         its = [citems|
                 $comment:("// scrutinee may STGJUMP or STGRETURN")
-                typename Cont *$id:contName = stgAllocCont(myThreadID(),&$id:("it_" ++ aname));
+                typename Cont *$id:contName = stgAllocCont(myThreadID(),&$id:("cit_" ++ aname));
                 $comment:("// dummy value for scrutinee, InfoTab initializes to unboxed")
                 $id:contName->payload[0].i = 0;
               |]
@@ -553,7 +534,7 @@ stgApplyGeneric env f eas direct =
         (expr0, comm0) = cga [] (LitI 0)
         (expr1, comm1) = cgv env f'
         its = [citems|
-                typename Cont *cp = stgAllocCallOrStackCont(myThreadID(), &it_stgStackCont,
+                typename Cont *cp = stgAllocCallOrStackCont(myThreadID(), &cit_stgStackCont,
                 $int:(length pnstring + 2));
                 cp->layout = (typename Bitmap64)$ulint:(npStrToBMInt ('N' : 'P' : pnstring ));
                 $comment:comm0
