@@ -229,7 +229,7 @@ void gc(void) {
   if (stgCurVal.op != NULL)
     processObj(stgCurVal.op);
 
-  // all SHO's
+  // only THUNK SHOs are potential roots
   for (int i = 0; i < stgStatObjCount; i++) {
     ObjType ot = getObjType(stgStatObj[i]);
     if (// getObjType(stgStatObj[i]) == THUNK ||
