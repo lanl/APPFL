@@ -212,7 +212,8 @@ compile  (Options {optVerbose, optDumpParse, optNoPrelude, optInput,
     prelude <- if optNoPrelude || frontend == GHC
                then return ""
                else openFile preludeFN ReadMode >>= hGetContents 
-    let source = prelude ++ src
+         -- prelude might not end in newline
+    let source = prelude ++ "\n" ++ src
 
     (cginp, ts, os) <- case frontend of
                          GHC -> do

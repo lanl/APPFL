@@ -15,7 +15,8 @@ Bitmap64 layoutInfoToBitmap64(LayoutInfo *lip) {
 
 // This assumes that the SHOs are contiguous in memory.
 bool isSHO(Obj *p) {
-  return (p >= stgStatObjTable[0] && p <= stgStatObjTable[stgStatObjCount-1]);
+  return ((p >= userStatObjTable[0] && p <= userStatObjTable[userStatObjCount-1]) ||
+	  (p >= stgStatObjTable[0]  && p <= stgStatObjTable[userStatObjCount-1]));
 }
 
 bool isHeap(Obj *p) {

@@ -237,8 +237,8 @@ void showObjSpaceInfo();
 
 void showObjSpaceInfo(LogLevel priority) {
   LOG(priority, "SHO range is %p to %p\n",
-	  &stgStatObjTable[0],
-	  &stgStatObjTable[stgStatObjCount-1]);
+	  &userStatObjTable[0],
+	  &userStatObjTable[userStatObjCount-1]);
   LOG(priority, "heap range is %p to %p\n", stgHeap, stgHP);
   LOG(priority, "heap toPtr is %p\n", toPtr);
 }

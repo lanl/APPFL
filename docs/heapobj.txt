@@ -218,20 +218,7 @@ Static Heap Objects
 
 Pointers to all the SHOs will be gathered up in an array like so:
 
-void initPredefs() {
-  stgStatObj[stgStatObjCount++] = &sho_unit;
-  stgStatObj[stgStatObjCount++] = &sho_one;
-  stgStatObj[stgStatObjCount++] = &sho_two;
-  stgStatObj[stgStatObjCount++] = &sho_main_thunk_unit;
-  stgStatObj[stgStatObjCount++] = &sho_main1;
-  stgStatObj[stgStatObjCount++] = &sho_main3;
-  stgStatObj[stgStatObjCount++] = &sho_main5;
-  stgStatObj[stgStatObjCount++] = &sho_main4;
-  stgStatObj[stgStatObjCount++] = &sho_id;
-  stgStatObj[stgStatObjCount++] = &sho_constf;
-  stgStatObj[stgStatObjCount++] = &sho_mainfail;
-}
-
+...
 
 Continuation Stack Objects
 

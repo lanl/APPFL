@@ -33,18 +33,18 @@ import Language.C.Syntax (Definition, Initializer)
 -- unless we include logic (as in master) to exclude all but THUNK SHOs
 -- as roots, and disallow THUNK built-ins (which seems reasonable).
 
-preDefSHOs = [ "par" ]
+preDefSHOs = [ ]
            
 statObjTable :: [Obj InfoTab] -> (Definition, Definition)
--- const int stgStatObjCount = #static objects;
--- Obj *const stgStatObj[#static objects] = {&obj, &obj, ... } ;
+-- const int userStatObjCount = #static objects;
+-- Obj *const userStatObj[#static objects] = {&obj, &obj, ... } ;
 statObjTable objs =
     let progNames = map (name . omd) objs
         names = map ("sho_" ++ ) (preDefSHOs ++ progNames)
         inits = [[cinit| &$id:name |] | name <- names ]
         compoundInit = [cinit| { $inits:inits } |]
-    in ([cedecl| const int stgStatObjCount = $exp:(length names) ; |] ,
-        [cedecl| typename Obj *const stgStatObjTable [ $exp:(length names) ] =
+    in ([cedecl| const int userStatObjCount = $exp:(length names) ; |] ,
+        [cedecl| typename Obj *const userStatObjTable [ $exp:(length names) ] =
                    $init:compoundInit ; |])
 
 -- return list of forwards (static declarations), (static) definitions,
@@ -53,8 +53,8 @@ statObjTable objs =
 
 showSHOs :: [Obj InfoTab] -> ([Definition], [Definition], [Definition])
 showSHOs objs = let (forwards, defs) = unzip $ map showSHO objs
-                    (stgStatObjCount, stgStatObjTable) = statObjTable objs
-                in (forwards, defs, [stgStatObjCount, stgStatObjTable])
+                    (userStatObjCount, userStatObjTable) = statObjTable objs
+                in (forwards, defs, [userStatObjCount, userStatObjTable])
 
 showSHO :: Obj InfoTab -> (Definition, Definition)
 showSHO o =

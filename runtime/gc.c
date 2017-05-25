@@ -231,9 +231,12 @@ void gc(void) {
       processObj(stgCurVal[i].op);
   }
 
-  // all SHO's
-  for (int i = 0; i < stgStatObjCount; i++) {
-    processObj(stgStatObjTable[i]);
+  // only THUNK SHOs are potential roots
+  for (int i = 0; i < userStatObjCount; i++) {
+    ObjType ot = getObjType(userStatObjTable[i]);
+    if (// getObjType(userStatObj[i]) == THUNK ||
+	ot == INDIRECT ||
+	ot == BLACKHOLE) processObj(userStatObjTable[i]);
   }
 
   //Cont. stacks

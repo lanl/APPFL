@@ -118,8 +118,13 @@ extern size_t stgStackSizes[MAX_THREADS];
 extern PrefCounters perfCounter;
 
 // these are defined in the generated code
+extern const int userStatObjCount;
+extern Obj *const userStatObjTable[];
+// these are built-ins
 extern const int stgStatObjCount;
 extern Obj *const stgStatObjTable[];
+
+
 extern const int stgInfoTabCount;
 extern InfoTab *const stgInfoTab[];
 extern const int stgCInfoTabCount;

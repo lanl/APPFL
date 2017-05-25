@@ -324,9 +324,14 @@ InfoTab it_par __attribute__((aligned(OBJ_ALIGN))) = {
   .funFields.trueEntryCode = fun_par
 };
 
+
+// built-in SHOs need to be contiguous in memory
 Obj sho_par __attribute__((aligned(OBJ_ALIGN))) = {
   ._infoPtr =&it_par,
   .objType =FUN,
   .ident ="par",
   .payload = {{0}}
 };
+
+const int stgStatObjCount = 1;
+Obj *const stgStatObjTable[1] = {&sho_par};

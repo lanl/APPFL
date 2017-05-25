@@ -119,6 +119,8 @@ type Comment = String
 
 parse :: [Token] -> ([TyCon], [Obj ()], [(Var, Monotype)]) -- (ObjDefs, DataDefs)
 parse = splitDefs . fst . head . prog
+-- parse inp = let (tycons, objs, typesigs) = splitDefs $ fst $ head $ prog inp
+--            in error $ show objs
 
 parseWithComments :: [Token] -> [Either Comment (Def ())]
 parseWithComments = fst . head . progWithComments

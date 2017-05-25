@@ -149,15 +149,15 @@ void addObject(Obj *obj, Obj *objArray[], int *objCount, bool heap) {
 
 // add objects to the object array
 int addObjects(Obj *objArray[]) {
-  LOG(LOG_DEBUG, "nSHO %d\n", stgStatObjCount);
+  LOG(LOG_DEBUG, "nSHO %d\n", userStatObjCount);
   int objCount = 0;
   //add static heap objects
-  for (int i = 0; i < stgStatObjCount; i++) {
+  for (int i = 0; i < userStatObjCount; i++) {
     // before adding the object, make sure that the pointer to the
     // object itself is valid
-    sanityCheckObj(stgStatObjTable[i]);
-    assert(isSHO(stgStatObjTable[i]) && "sanity: object isn't a SHO");
-    addObject(stgStatObjTable[i], objArray, &objCount, false);
+    sanityCheckObj(userStatObjTable[i]);
+    assert(isSHO(userStatObjTable[i]) && "sanity: object isn't a SHO");
+    addObject(userStatObjTable[i], objArray, &objCount, false);
   }
 
   //search for / add stgCurVals
@@ -219,7 +219,7 @@ Obj **mallocArrayOfAllObjects() {
   //times size the of an object pointer
   //remember: make more space for stgCurVals
   size_t numHeapObjs = ((char *)stgHP - (char *)stgHeap) / sizeof(Obj);
-  Obj **objArray = malloc (sizeof(Obj *) * (numHeapObjs + stgStatObjCount + rtArg.nThreads +1));
+  Obj **objArray = malloc (sizeof(Obj *) * (numHeapObjs + userStatObjCount + rtArg.nThreads +1));
 
   return objArray;
 }

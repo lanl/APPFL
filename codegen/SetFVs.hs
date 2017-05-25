@@ -6,7 +6,8 @@
 {-# LANGUAGE CPP #-}
 
 module SetFVs (
-  setFVsObjs, tc
+  setFVsObjs,
+  tc
 ) where
 
 import Prelude
@@ -77,7 +78,8 @@ setFVsObjs :: [String] -> [Obj ()] -> [Obj ([Var],[Var])] -- monomorphism restri
 
 setFVsObjs runtimeGlobals objs =
     -- use Set internally
-    map stgToList $ toplevel (Set.fromList runtimeGlobals) objs
+       map stgToList $ toplevel (Set.fromList runtimeGlobals) objs
+    -- error $ show objs
 
 class STGToList a b where
     stgToList :: a -> b

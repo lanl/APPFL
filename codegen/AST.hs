@@ -406,6 +406,7 @@ instance Unparse a => Unparse [Obj a] where
 instance Unparse a => Unparse (Def a) where
   unparse (DataDef t) =  unparse t
   unparse (ObjDef o) = unparse o
+--  unparse (TypeSigDef d) = unparse d
 
 instance Unparse a => Unparse [Def a] where
   unparse defs = vcat $ postpunctuate semi $ map unparse defs

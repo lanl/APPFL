@@ -291,13 +291,13 @@ codegener inp v =
       infotab = showITs objs
       (shoForward, shoDef, shoTable) = showSHOs objs
       (funForwards, funDefs) = cgObjs objs stgRTSGlobals
-      -- (stgStatObjCount, stgStatObjTable) = shos objs
+      -- (userStatObjCount, userStatObjTable) = shos objs
       defs =  header : funForwards ++
               typeEnums ++
               infotab ++
               shoForward ++
               shoDef ++
-              -- [ stgStatObjCount, stgStatObjTable ] ++
+              -- [ userStatObjCount, userStatObjTable ] ++
               shoTable ++
               concat funDefs ++
               footer v
