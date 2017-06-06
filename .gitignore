@@ -42,3 +42,5 @@ appfl-sandbox
 *.vrb
 *.snm
 
+# Dolphin file browser config files
+.directory
