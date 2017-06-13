@@ -100,10 +100,11 @@ Expression   & $e$            & ::= & $a$                                       
 %             &                &     & \texttt{ } $x_n$ \texttt{=} $\mathit{obj}_n$ \\
              &                &     & \texttt{in} $e$  \\
 \\
-             &                & $|$ & \texttt{case} $e$ \texttt{as} $x$ \texttt{of} & Case expression, $n \ge 1$\\
-             &                &     & \hspace{0.2in} $\mathit{alts}$ \\
+             &                & $|$ & \texttt{case} $e$ \texttt{of} $\mathit{alts}$ & Case expression (former) \\
 \\
-Alternatives & $\mathit{alts}$ & ::= & \texttt{ } $\mathit{alt}_1$ \\
+             &                & $|$ & \texttt{case} $e$ \texttt{as} $x$ \texttt{of} $\mathit{alts}$ & Case expression (current) \\
+\\
+Alternatives & $\mathit{alts}$ & ::= & \texttt{ } $\mathit{alt}_1$                  & Case alternatives, $n \ge 1$\\
              &                &     & \hspace{0.2in} $\dots$ \\
              &                &     & \texttt{ } $\mathit{alt}_n$ \\
 \\
@@ -210,19 +211,20 @@ Built-in functions are assumed to have to
 % case
 %
 \begin{prooftree}
-  \AxiomC{$\cA_i,\ \cC_i\ \vdash\ \mathit{alt}_i:\tau_0$}
+  \AxiomC{$\cA_0,\ \cC_0\ \vdash\ e_0 : \tau_0$}
+  \AxiomC{$\cA_\mathit{alts},\ \cC_\mathit{alts}\ \vdash_{\tau_0}\ \mathit{alts} : \tau_\mathit{alts}$}
   \LeftLabel{[\texttt{case}]\quad}
-  \UnaryInfC{$\cA_0 \cup (\cA_\mathit{alts}\backslash\{x_0\}),\ 
-    \cC_0 \cup \cC_\mathit{alts} \cup \{\tau_0 \equiv \tau'\ |\ x:\tau' \in \cA_\mathit{alts} \}\ \vdash\
-    \mbox{\texttt{case}}\ e_0\ \mbox{\texttt{as}}\ x_0\ \mbox{\texttt{of}}\ \mathit{alts}:\tau_\mathit{alts}$}
+  \BinaryInfC{$\cA_0 \cup \cA_\mathit{alts},\ 
+    \cC_0 \cup \cC_\mathit{alts} \vdash\
+    \mbox{\texttt{case}}\ e_0\ \mbox{\texttt{of}}\ \mathit{alts}:\tau_\mathit{alts}$}
 \end{prooftree}
 %
 % alts
 %
 \begin{prooftree}
-  \AxiomC{$\cA_i,\ \cC_i\ \vdash\ \mathit{alt}_i : \tau_i$}
+  \AxiomC{$\cA_i,\ \cC_i\ \vdash_{\tau_0}\ \mathit{alt}_i : \tau_i$}
   \LeftLabel{[\texttt{alts}]\quad}
-  \UnaryInfC{$\bigcup \cA_i,\  \bigcup \cC_i \cup \{ \tau_1 \equiv \tau'\ |\ 2 \le i \le n \}\ \vdash\
+  \UnaryInfC{$\bigcup \cA_i,\  \bigcup \cC_i \cup \{ \tau_1 \equiv \tau'\ |\ 2 \le i \le n \}\ \vdash_{\tau_0}\
     \mathit{alts} : \tau_1 $}
 \end{prooftree}
 %
@@ -275,7 +277,7 @@ Built-in functions are assumed to have to
 \begin{prooftree}
   \AxiomC{$\cA_i,\ \cC_i\ \vdash\ \mathit{alt}_i : \tau_i$}
   \LeftLabel{[\texttt{alts}]\quad}
-  \UnaryInfC{$\bigcup \cA_i,\  \bigcup \cC_i \cup \{ \tau_1 \equiv \tau'\ |\ 2 \le i \le n \}\ \vdash\
+  \UnaryInfC{$\bigcup \cA_i,\  \bigcup \cC_i \cup \{ \tau_1 \equiv \tau_i\ |\ 2 \le i \le n \}\ \vdash\
     \mathit{alts} : \tau_1 $}
 \end{prooftree}
 \caption{STG Proposed Inference Rules for \texttt{case}}
