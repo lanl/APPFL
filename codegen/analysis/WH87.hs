@@ -13,7 +13,7 @@ import Data.Map (Map)
 import qualified Data.Map as M
 import Data.Set (Set)
 import qualified Data.Set as S
-
+import Debug.Trace
 {-
 
 New construction of Strict part of List Domain projections
@@ -57,7 +57,7 @@ data Def = Def { dname  :: String
 
 instance Eq Def where
   a == b = a `compare` b == EQ
-  
+
 instance Ord Def where
   compare = comparing dname
 
@@ -92,14 +92,6 @@ instance IsString Expr where
 ($$) :: String -> [Expr] -> Expr
 ($$) = App
 
-prog :: [Def]
-prog =
-  [ ("fac", ["n"]) =: (If ("eq" $$ ["n","0"])
-                       "0"
-                       ("mul" $$ ["n",
-                                  ("fac" $$ [("sub" $$ ["n", "1"])])])
-                      )
-  ]
 
 
 
@@ -181,7 +173,7 @@ prog =
 
 data ListProj
  -- Start with four point domain of projections, each of which can be
- -- found in some form in the full list projection domain.  
+ -- found in some form in the full list projection domain.
  = FAIL
    -- ^ maps x to BOLT for all x
    -- == Gen FAIL FAIL x == Gen FAIL x FAIL
@@ -201,11 +193,11 @@ data ListProj
    -- == ABS U STR
 
  -- Extra, List-particular projections
- 
- | FinFail 
+
+ | FinFail
    -- ^ [] is the only acceptable argument
    -- == NIL ID
-   
+
  | FinStr
    -- ^ Strict in elements and tail
 
@@ -239,48 +231,53 @@ data ListProj
    -- e.g. a function that checks if a list is longer than length n
  deriving (Eq, Show, Ord)
 
--- FAIL, STR, ABS, ID, FinFail, FinStr, FinAbs, FinId, InfStr, InfAbs, InfId, FnfStr, FnfAbs
 
 
-class (Ord a) => MeetLattice a where
-  ordering :: Map a (Set a, Set a)
+type Bounds a = (Set a, Set a)
+
+
+class (Ord a) => Lattice a where
+  ordering :: Map a (Bounds a)
   elems    :: [a]
+  top, bot :: a
   elems = M.keys ordering
 
-instance MeetLattice ListProj where
+instance Lattice ListProj where
+  top = ID
+  bot = FAIL
   ordering = M.fromList $ map (fmap (\(l,g) -> (S.fromList l, S.fromList g)))
     [ (FAIL,
        ( [ FAIL]
        , [ FAIL, FinFail, InfStr, InfAbs]))
-      
+
     , (ABS,
        ( [ ABS, FAIL]
        , [ ABS, ID]))
-      
+
     , (ID,
        ( [ ID, STR, ABS]
        , [ ID]))
-      
+
     , (STR,
        ( [ STR, FinId, InfId, FnfStr, FnfAbs]
        , [ STR, ID]))
-      
+
     , (FinFail,
        ( [ FinFail, FAIL]
        , [ FinFail, FinStr, FinAbs]))
-      
+
     , (FinStr,
        ( [ FinStr, FinFail]
        , [ FinStr, FinId, FnfStr]))
-      
+
     , (FinAbs,
        ( [ FinAbs, FinFail]
        , [ FinAbs, FinId, FnfAbs]))
-      
+
     , (InfStr,
        ( [ InfStr, FAIL]
        , [ InfStr, InfId, FnfStr]))
-      
+
     , (InfAbs,
        ( [ InfAbs, FAIL]
        , [ InfAbs, InfId, FnfAbs]))
@@ -288,7 +285,7 @@ instance MeetLattice ListProj where
     , (FinId,
        ( [ FinId, FinAbs, FinStr]
        , [ FinId, STR]))
-      
+
     , (FnfStr,
        ( [ FinStr, InfStr, FnfStr]
        , [ FnfStr, STR]))
@@ -304,22 +301,34 @@ instance MeetLattice ListProj where
 
 
 
-allLTE :: MeetLattice a => a -> Set a
-allLTE a = case M.lookup a ordering of
-  Nothing -> S.singleton a
-  Just (b, _) | [e] <- S.toList b, e /= a -> error "MeetLattice reflexivity fails"
-              | otherwise -> S.union (S.singleton a) (S.unions . map allLTE . S.toList $ S.delete a b)
+allLTE :: Lattice a => a -> Set a
+allLTE = cone fst
+allGTE :: Lattice a => a -> Set a
+allGTE = cone snd
+
+-- select all elements GTE or LTE some element in a lattice.  "Cone" faces
+-- upwards or downwards in the lattice, depending on the select function used
+-- (`fst` or `snd`)
+cone :: Lattice a => (Bounds a -> Set a) -> a -> Set a
+cone select elem = maybe singl (runCone . select) $ M.lookup elem ordering
+  where
+    singl = S.singleton elem
+    runCone set | [e] <- S.toList set, e /= elem =
+                    error "Lattice reflexivity fails"
+                | otherwise = let rest = S.unions . map (cone select) .
+                                         S.toList $ S.delete elem set
+                              in S.union singl rest
 
 a `lte` b = a `S.member` allLTE b
+a `gte` b = a `S.member` allGTE b
 
-glb :: MeetLattice a => a -> a -> a
-glb a b = let lowerbounds = sortBy ordGTE . S.toList $ S.intersection (allLTE a) (allLTE b)
-          in case lowerbounds of
-               x:xs | all (`lte` x) xs -> x
-               _                       -> error "No GLB in the MeetLattice!"
+glb :: Lattice a => a -> a -> a
+glb a b = head . sortBy ordGTE . S.toList $ S.intersection (allLTE a) (allLTE b)
 
+lub :: Lattice a => a -> a -> a
+lub a b = head . sortBy ordLTE . S.toList $ S.intersection (allGTE a) (allGTE b)
 
-ordGTE, ordLTE :: MeetLattice a => a -> a -> Ordering
+ordGTE, ordLTE :: Lattice a => a -> a -> Ordering
 ordGTE = flip ordLTE
 a `ordLTE` b = lte b a `compare` lte a b
 --   (True , False) -> LT
@@ -343,7 +352,10 @@ lu_cons ABS InfId   = InfId
 
 lu_cons ABS FnfStr  = STR -- FNF ID
 lu_cons ABS FnfAbs  = FnfAbs
+
 lu_cons ABS STR     = STR -- FNF ID
+lu_cons ABS ABS     = STR
+lu_cons ABS ID      = STR -- FNF ID
 
 lu_cons STR FinFail = FinStr
 lu_cons STR FinAbs  = FinId
@@ -356,8 +368,12 @@ lu_cons STR InfId   = InfId
 
 lu_cons STR FnfStr  = FnfStr
 lu_cons STR FnfAbs  = STR
-lu_cons STR STR     = STR
 
+lu_cons STR STR     = FinStr
+lu_cons STR ABS     = FnfStr
+lu_cons STR ID      = FnfStr
+
+-- TODO: Review these.  Suspect some are not correct
 lu_cons ID FinFail  = FinId
 lu_cons ID FinAbs   = FinId
 lu_cons ID FinStr   = FinId
@@ -370,12 +386,37 @@ lu_cons ID InfId    = InfId
 lu_cons ID FnfStr   = STR
 lu_cons ID FnfAbs   = STR
 lu_cons ID STR      = STR
+lu_cons ID ABS      = undefined
+lu_cons ID ID       = undefined
 
 lu_cons a b = error $ "Strange CONS lookup? -- " ++ show a  ++ ", " ++ show b
 
+-- HEAD (Cons a b) == a if b /= FAIL
+lu_head ID  = ID  -- ABS U FNF ID :  Demand on the head can be no stronger than
+lu_head ABS = ABS -- ABS U FAIL   :  the result.
 
+lu_head STR  = ID   -- FNF ID
+lu_head FAIL = FAIL -- Cons Fail Fail
 
-guard, (&), (|.|)  :: ListProj -> ListProj -> ListProj
+lu_head FinFail = FAIL
+lu_head FinAbs  = ABS
+lu_head FinStr  = STR
+lu_head FinId   = ID
+
+lu_head InfStr  = STR
+lu_head InfAbs  = ABS
+lu_head InfId   = ID
+
+lu_head FnfStr  = STR
+lu_head FnfAbs  = ABS
+
+-- TAIL (Cons a b) = b if a /= FAIL This is simpler, since most of our List
+-- Projection domain (except Nil) is recursively defined with itself as the `b`
+-- term in Cons.  The "funny" ones (FAIL, ABS) should also not change.
+lu_tail FinFail = FAIL
+lu_tail x = x
+
+guard, (&)  :: ListProj -> ListProj -> ListProj
 ID   `guard` x = ID -- pretty sure
 ABS  `guard` x = ABS
 FAIL `guard` x = FAIL
@@ -396,12 +437,8 @@ InfAbs  & InfStr  = InfStr
 InfStr  & InfAbs  = InfStr
 InfId   & InfAbs  = InfId
 InfAbs  & InfId   = InfId
-a       & b       = a |.| b
+a       & b       = a `lub` b
 
- 
-
-
-a |.| b = undefined
 
 type DefStrMap = Map (String, ListProj) [ListProj]
 
@@ -411,7 +448,7 @@ usedIn v e = case e of
   Case sc e1 (hvar,tvar,e2) ->
     v `usedIn` e1 || v `usedIn` sc ||
     (v /= hvar && v /= tvar && v `usedIn` e2)
-    
+
   If p c a -> v `usedIn` p || v `usedIn` c || v `usedIn` a
   Var a    -> v == a
   App f es -> f == v || any (v `usedIn`) es
@@ -429,16 +466,20 @@ varStr ctx smap exp var
       Var _    -> ctx -- var must be *this* var
       LInt _   -> ABS
       LBool _  -> ABS
-      App f es ->
-        let luFail = error $ "can't find function in map?: " ++
-                     f ++ " in " ++ show ctx
-            evalApp pStrs = foldr (&) ABS $
-                            zipWith (\ctx exp -> varStr ctx smap exp var) pStrs es
-        in maybe luFail evalApp $
-           M.lookup (f, ctx) smap
 
-      If p c a -> varStr STR smap p var &
-                  (varStr ctx smap c var |.| varStr ctx smap a var)
+      -- special case for the list constructor
+      App "cons" [h,t] -> let hStr = varStr ctx smap h var
+                              cStr = varStr ctx smap h var
+                          in lu_head ctx & lu_tail ctx
+      App f es ->
+        let luFail = evalApp (repeat FAIL)
+            evalApp pStrs = foldr (&) ABS $ zipWith recur pStrs es
+            recur ctx exp = varStr ctx smap exp var
+        in maybe luFail evalApp $ M.lookup (f, ctx) smap
+
+      If p c a -> let cStr = varStr STR smap p var
+                  in (cStr & varStr ctx smap c var) `lub`
+                     (cStr & varStr ctx smap a var)
 
       Case scr nilB (hvar, tvar, consB) ->
         let scrNilStr = varStr FinFail smap scr var
@@ -449,10 +490,53 @@ varStr ctx smap exp var
                         then varStr ctx smap consB var
                         else ABS
         in
-          (scrNilStr & nilStr) |.|
+          (scrNilStr & nilStr) `lub`
           (varStr (lu_cons consHStr consTStr) smap scr var & consStrV)
-        
 
-      
-  
-  
+
+-------------------- TEST --------------------
+
+prog :: [Def]
+prog =
+  [ ("fac", ["n"]) =: (If ("eq" $$ ["n","0"])
+                       "0"
+                       ("mul" $$ ["n",
+                                  ("fac" $$ [("sub" $$ ["n", "1"])])])
+                      )
+  , ("strict", ["x"]) =: (If "True" "0" "x")
+  , ("length", ["x"]) =: (Case "x"
+                         "0" -- Nil
+                         ("a", "as", "add" $$ ["1", "length" $$ ["as"]]))
+  , ("before", ["x"]) =: (Case "x"
+                         "nil" -- Nil
+                         ("a", "as", If ("eq" $$ ["a", "0"])
+                                     "nil"
+                                     ("cons" $$ ["a", "before" $$ ["as"]])))
+  ]
+
+builtinMap :: DefStrMap
+builtinMap = M.fromList
+  [ (("eq"  , STR) , [STR , STR])
+  , (("neq" , STR) , [STR , STR])
+  , (("lt"  , STR) , [STR , STR])
+  , (("lte" , STR) , [STR , STR])
+  , (("gt"  , STR) , [STR , STR])
+  , (("gte" , STR) , [STR , STR])
+  , (("add" , STR) , [STR , STR])
+  , (("sub" , STR) , [STR , STR])
+  , (("mul" , STR) , [STR , STR])
+  , (("div" , STR) , [STR , STR])
+  , (("and" , STR) , [STR , STR])
+  , (("or"  , STR) , [STR , STR])
+  ]
+
+progStr :: [Def] -> DefStrMap
+progStr defs =
+  let initMap = builtinMap `M.union` approx
+      approx  = M.unions $ map mkApprox defs
+      mkApprox d = M.fromList $
+                   map (\s -> ((dname d, s), map (const FAIL) $ params d)) elems
+      run ctx init = foldr (oneDef ctx) init defs
+      oneDef ctx def smap = let newStrs = defStr def ctx smap
+                            in M.insert ((dname def), ctx) newStrs smap
+  in run STR (initMap `M.union` approx)
