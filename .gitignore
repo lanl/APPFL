@@ -44,4 +44,4 @@ appfl-sandbox
 
 # Dolphin file browser config files
 .directory
-/codegen/.ghci
+.ghci
