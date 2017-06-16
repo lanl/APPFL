@@ -14,6 +14,7 @@ import qualified Data.Map as M
 import Data.Set (Set)
 import qualified Data.Set as S
 import Debug.Trace
+
 {-
 
 New construction of Strict part of List Domain projections
@@ -367,7 +368,7 @@ lu_cons STR InfAbs  = InfId
 lu_cons STR InfId   = InfId
 
 lu_cons STR FnfStr  = FnfStr
-lu_cons STR FnfAbs  = STR
+lu_cons STR FnfAbs  = STR -- FNF ID
 
 lu_cons STR STR     = FinStr
 lu_cons STR ABS     = FnfStr
@@ -386,8 +387,8 @@ lu_cons ID InfId    = InfId
 lu_cons ID FnfStr   = STR
 lu_cons ID FnfAbs   = STR
 lu_cons ID STR      = STR
-lu_cons ID ABS      = undefined
-lu_cons ID ID       = undefined
+lu_cons ID ABS      = STR
+lu_cons ID ID       = STR
 
 lu_cons a b = error $ "Strange CONS lookup? -- " ++ show a  ++ ", " ++ show b
 
@@ -458,6 +459,9 @@ usedIn v e = case e of
 defStr :: Def -> ListProj -> DefStrMap -> [ListProj]
 defStr (Def name params expr) ctx smap = map (varStr ctx smap expr) params
 
+
+traceMsg msg x = traceShow (msg, x) x
+
 varStr :: ListProj -> DefStrMap -> Expr -> String -> ListProj
 varStr ctx smap exp var
   | not (var `usedIn` exp) = ABS
@@ -468,9 +472,9 @@ varStr ctx smap exp var
       LBool _  -> ABS
 
       -- special case for the list constructor
-      App "cons" [h,t] -> let hStr = varStr ctx smap h var
-                              cStr = varStr ctx smap h var
-                          in lu_head ctx & lu_tail ctx
+      App "cons" [h,t] -> let hStr = varStr (lu_head ctx) smap h var
+                              tStr = varStr (lu_tail ctx) smap t var
+                          in hStr & tStr
       App f es ->
         let luFail = evalApp (repeat FAIL)
             evalApp pStrs = foldr (&) ABS $ zipWith recur pStrs es
@@ -496,23 +500,31 @@ varStr ctx smap exp var
 
 -------------------- TEST --------------------
 
+
 prog :: [Def]
 prog =
-  [ ("fac", ["n"]) =: (If ("eq" $$ ["n","0"])
-                       "0"
-                       ("mul" $$ ["n",
-                                  ("fac" $$ [("sub" $$ ["n", "1"])])])
-                      )
-  , ("strict", ["x"]) =: (If "True" "0" "x")
-  , ("length", ["x"]) =: (Case "x"
-                         "0" -- Nil
-                         ("a", "as", "add" $$ ["1", "length" $$ ["as"]]))
-  , ("before", ["x"]) =: (Case "x"
-                         "nil" -- Nil
-                         ("a", "as", If ("eq" $$ ["a", "0"])
-                                     "nil"
-                                     ("cons" $$ ["a", "before" $$ ["as"]])))
-  ]
+  let append = ("append", ["xs", "zs"]) =:
+               (Case "xs"
+                 "zs"
+                 ("y", "ys", "cons" $$ ["y", "append" $$ ["ys", "zs"]]))
+      before = ("before", ["x"]) =:
+               (Case "x"
+                 "nil"
+                 ("a", "as", If ("eq" $$ ["a", "0"])
+                             "nil"
+                             ("cons" $$ ["a", "before" $$ ["as"]])))
+      length = ("length", ["x"]) =:
+               (Case "x"
+                 "0"
+                 ("a", "as", "add" $$ ["1", "length" $$ ["as"]]))
+      fac = ("fac", ["n"]) =:
+            (If ("eq" $$ ["n","0"])
+              "0"
+              ("mul" $$ ["n", ("fac" $$ [("sub" $$ ["n", "1"])])]))
+  in
+  [ before ]  
+
+  
 
 builtinMap :: DefStrMap
 builtinMap = M.fromList
@@ -530,13 +542,22 @@ builtinMap = M.fromList
   , (("or"  , STR) , [STR , STR])
   ]
 
-progStr :: [Def] -> DefStrMap
-progStr defs =
-  let initMap = builtinMap `M.union` approx
-      approx  = M.unions $ map mkApprox defs
-      mkApprox d = M.fromList $
-                   map (\s -> ((dname d, s), map (const FAIL) $ params d)) elems
-      run ctx init = foldr (oneDef ctx) init defs
+progStr :: [Def] -> ListProj -> DefStrMap -> DefStrMap
+progStr defs ctx initMap =
+  let run ctx init = foldr (oneDef ctx) init defs
       oneDef ctx def smap = let newStrs = defStr def ctx smap
                             in M.insert ((dname def), ctx) newStrs smap
-  in run STR (initMap `M.union` approx)
+  in run ctx initMap
+
+
+fixit f arg = case f arg of
+  arg' | arg' == arg -> arg
+       | otherwise   -> fixit f arg'
+
+
+fixProgStr defs = fixit (progStr defs STR) initial
+  where initial = builtinMap `M.union` approx
+        approx  = M.unions $ map mkApprox defs
+        mkApprox d = M.fromList $
+                     map (\s -> ((dname d, s), map (const FAIL) $ params d)) elems
+
