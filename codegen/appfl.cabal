@@ -17,7 +17,11 @@ Flag objtype
   Default:     False
 
 executable appfl 
-  hs-source-dirs:  .,MHS,FromGHC
+  hs-source-dirs:  .
+                 , MHS
+                 , FromGHC
+                 , analysis
+                 
   main-is:         appfl.hs
   ghc-options:      -j -W -fno-warn-unused-binds -fno-warn-unused-matches -fno-warn-unused-imports 
   build-depends:   
