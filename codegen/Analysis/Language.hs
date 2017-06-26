@@ -7,7 +7,7 @@
 
 
 module Analysis.Language
-
+  
 where
 
 
@@ -82,6 +82,7 @@ instance Unparse PrimType where
 
 
 newtype Prog a b = Prog { unprog :: ([ValDef' a b], [DataDef a]) }
+  deriving (Show)
 
 data ValDef' a b = VDef
   { binding :: ID
@@ -104,6 +105,7 @@ data Expr' a b
            , meta  :: b
            }
   | CaseOf { scrut :: Expr' a b
+           , bind  :: ID
            , paths :: [Clause' a b]
            , meta  :: b
            }
@@ -140,6 +142,9 @@ data Clause' a b
                -- ^ newly scoped variables matching constructor parameters
              , consq :: Expr' a b
              }
+  | Default  { consq :: Expr' a b
+             }
+    
   deriving (Show)
 
 
@@ -195,16 +200,16 @@ satFunExpr arities exp = case exp of
   Lambda parms ex meta -> Lambda parms (satFunExpr newMap ex) meta
     where newMap = foldr M.delete arities parms
           
-  CaseOf scrut paths meta -> CaseOf newScrut newPaths meta
-    where newScrut = satFunExpr arities scrut
-          newPaths = map satFunClause paths
-          satFunClause (LitMatch l e) = LitMatch l $ satFunExpr arities e
-          satFunClause (ConMatch c vs e) = ConMatch c vs $ satFunExpr newMap e
-            where newMap = foldr M.delete arities (c:vs)
+  CaseOf scrut bnd paths meta -> CaseOf newScrut bnd newPaths meta
+    where withBindMap = M.delete bnd arities
+          newScrut = satFunExpr arities scrut
+          newPaths = map satFunClause paths          
+          satFunClause c = case c of
+            Default e       -> Default       $ satFunExpr withBindMap e
+            LitMatch l e    -> LitMatch l    $ satFunExpr withBindMap e
+            ConMatch c vs e -> ConMatch c vs $ satFunExpr newMap e
+              where newMap = foldr M.delete withBindMap (c:vs)
           
-          
-
-            
   LetRec binds ex meta -> LetRec newBinds newEx meta
     where newBinds = map (satFunBind newMap) binds
           newMap = mkFunArityMap binds arities
@@ -224,8 +229,9 @@ satFunExpr arities exp = case exp of
           saturated = maybe True (== length eargs) $ M.lookup name arities
 
           
-
--- Check to make sure all constructors are fully applied
+--------------------------------------------------------------------------------
+--   Check to ensure all constructors are fully applied
+--------------------------------------------------------------------------------
 
 ensureSatCons ::  Prog a b -> Prog (a :-> SatCons) b
 ensureSatCons (Prog (vdefs, ddefs)) = Prog (newVDefs, newDDefs)
@@ -246,11 +252,13 @@ satConExpr arities exp = case exp of
   Lambda parms ex meta ->
     Lambda parms (satConExpr arities ex) meta
 
-  CaseOf scrut paths meta -> CaseOf newScrut newPaths meta
+  CaseOf scrut bnd paths meta -> CaseOf newScrut bnd newPaths meta
     where newScrut = satConExpr arities scrut
           newPaths = map satConPath paths
-          satConPath (LitMatch l e) = LitMatch l $ satConExpr arities e
-          satConPath (ConMatch c vs e) = ConMatch c vs $ satConExpr arities e
+          satConPath m = case m of
+            LitMatch l e    -> LitMatch l    $ satConExpr arities e
+            ConMatch c vs e -> ConMatch c vs $ satConExpr arities e
+            Default  e      -> Default       $ satConExpr arities e
 
   LetRec binds ex meta -> LetRec newBinds newEx meta
     where newBinds = map (satConBind arities) binds
@@ -270,14 +278,77 @@ satConExpr arities exp = case exp of
           saturated = maybe True (== length eargs) $ M.lookup name arities
     
 
+--------------------------------------------------------------------------------
+-- Assign unique integers to every variable introduced to a scope, update the
+-- identifiers in subsequent nodes with that value.
+--------------------------------------------------------------------------------
+type UniqState a = State (Map String Int, Int) a
 
 uniquify :: Prog a b -> UniqProg a b
 uniquify (Prog (vdefs, ddefs)) = Prog (newVDefs, newDDefs)
-  where initMap = M.fromList $ zip allNames [0..]
-        conNames = concatMap (map (occName . conName) . constrs) ddefs
-        valNames = map (occName . binding) vdefs
-        allNames = conNames ++ valNames
-        newVDefs = undefined
-        newDDefs = undefined
+  where (newDDefs, st) = runState (mapM uniqDDef ddefs) (M.empty, 0)
+        newVDefs = evalState (uniqVDefs vdefs) st
 
 
+-- | Ensure any new bindings resulting from a stateful Uniqification are
+-- discarded afterwards.  This is required when new bindings may shadow old.
+scoped :: UniqState a -> UniqState a
+scoped s = do
+  (umap, _) <- get
+  v <- s
+  (_ , i) <- get
+  put (umap, i)
+  pure v
+
+-- | given an 'ID', set its unique integer, if unset.  The value either comes
+-- from the map, if the name has already been given a unique value, or is given
+-- the next available.  This assumes the map holds values that appropriately
+-- represent the current scope this ID resides within.
+setUniq :: ID -> UniqState ID
+setUniq i@(ID name uniq)
+  | uniq /= -1 = pure i
+  | otherwise = do
+      (umap, cur) <- get      
+      case M.lookup name umap of
+        Nothing -> error $ show name ++  " not in scope!"
+        Just v  -> put (umap, cur) >> pure (ID name v)
+
+-- | Given an 'ID', add it to the map and assign it a new uniq value.  This is
+-- for introducing a new scope, such as in 'LetRec', or 'CaseOf' expressions
+newScope :: ID -> UniqState ID
+newScope (ID name u) = do
+  (umap, cur) <- get
+  put (M.insert name cur umap, cur + 1)
+  pure (ID name cur)
+
+
+uniqDDef :: DataDef a -> UniqState (DataDef (a :-> Uniquified))
+uniqDDef (DDef ty constrs) = DDef ty <$> mapM uniqConstr constrs
+
+uniqConstr :: Constructor a -> UniqState (Constructor (a :-> Uniquified))
+uniqConstr (DCon id ty) = DCon <$> newScope id <*> pure ty
+ 
+uniqVDefs:: [ValDef' a b] -> UniqState [ValDef' (a :-> Uniquified) b]
+uniqVDefs defs = mapM (newScope . binding) defs >> mapM oneDef defs
+ where oneDef (VDef id rhs) = VDef <$> setUniq id <*> uniqExpr rhs
+
+uniqExpr:: Expr' a b -> UniqState (Expr' (a :-> Uniquified) b)
+uniqExpr e = scoped $ case e of
+  Lit l m  -> pure $ Lit l m
+  Var id m -> Var <$> setUniq id <*> pure m
+  Lambda pms e m    ->
+    Lambda <$> mapM newScope pms <*> uniqExpr e <*> pure m
+  CaseOf scr bnd pths m ->
+    CaseOf <$> uniqExpr scr <*> newScope bnd
+             <*> mapM uniqClause pths <*> pure m
+  LetRec bnds exp m ->
+    LetRec <$> uniqVDefs bnds <*> uniqExpr exp <*> pure m
+  Apply f e m ->
+    Apply <$> uniqExpr f <*> uniqExpr e <*> pure m
+  
+uniqClause :: Clause' a b -> UniqState (Clause' (a :-> Uniquified) b)
+uniqClause c = scoped $ case c of
+  LitMatch l e -> LitMatch l <$> uniqExpr e
+  ConMatch c vs e -> ConMatch c <$> mapM newScope vs <*> uniqExpr e
+  Default e -> Default <$> uniqExpr e
+  

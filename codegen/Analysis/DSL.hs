@@ -19,10 +19,14 @@ class (IsString (a -> b)) => Definable a b | b -> a where
 infix 0 =:
 
 datatype = id
-match scrt paths = CaseOf scrt paths ()
+
+match scrt bnd paths = CaseOf scrt bnd paths ()
+as :: (ID -> [Clause ()] -> Expr ()) -> ID -> [Clause ()] -> Expr ()
+as f id cls = f id cls
+
 letrec :: [ValDef ()] -> Expr () -> () -> Expr ()
 letrec = LetRec
-  
+
 
 instance Definable [Constructor a] (DataDef a)
 instance Definable (Expr ()) (ValDef ())
@@ -47,6 +51,7 @@ instance IsString Type where
 
 instance IsString (Expr () -> Clause ()) where
   fromString s = case words s of
+    ["_"] -> Default
     [x] | (dgs, "#") <- span isNumber x
           -> LitMatch (UBInt $ read dgs)
     x:xs -> ConMatch (ID x (-1)) $ map (`ID` (-1)) xs
@@ -65,7 +70,9 @@ instance IsString (Expr ()) where
             in foldl mkApp (Var (ID x (-1)) ()) xs
 
     []   -> error "Expression syntax error"
-      
+
+instance IsString ID where
+  fromString s = ID s (-1)
 
 infixr 0 -->
 (-->) :: (Expr () -> Clause ()) -> Expr () -> Clause ()
@@ -78,7 +85,7 @@ f .$ e = Apply f e ()
 (%) :: String -> [Type] -> Constructor a
 s % tys = DCon (ID s (-1)) tys
 
-infixr 2 .>
+infixr 1 .>
 (.>) :: (Expr () -> () -> Expr ()) -> Expr () -> Expr ()
 l .> e = l e ()
 
@@ -89,10 +96,12 @@ listDef = datatype "List a" =: [ "Nil"  % []
                                , "Cons" % ["a", "List a"]
                                ]
 
-facDef :: ValDef ()
-facDef = "fac a#" =: letrec ["x" =: "y"]
-            .> match "a#"
-                 [ "0#" --> "1#"
-                 , "x#" --> letrec [] .> "fac" .$ "sub 1 x#"
-                 ]
+builtin :: String -> ValDef ()
+builtin s = fromString s =: "builtin"
 
+facDef :: ValDef ()
+facDef = "fac a#" =: letrec ["x" =: "0#"] 
+         .> match "a#" "x#" 
+         [ "0#" --> "1#"
+         , "_"  --> letrec [] .> "fac" .$ "x#"
+         ]
