@@ -144,7 +144,6 @@ data Clause' a b
              }
   | Default  { consq :: Expr' a b
              }
-    
   deriving (Show)
 
 
