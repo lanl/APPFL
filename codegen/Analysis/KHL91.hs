@@ -9,24 +9,23 @@ import Analysis.Language
 import qualified Data.Map as M
 
 data Proj
-  = Str Proj
-  | Lift Proj
-  | Bot
-  | Prod [Proj]
-  | Mu String Proj
-  | Rec String
-  | Sum [Proj]
+  = Lift Proj        -- ^ Make a projection "lazy"
+  | Bot              -- ^ Map entire domain to ABORT, like FAIL from WH87
+  | Prod [Proj]      -- ^ Strict Product
+  | Mu String [Proj] -- ^ Fixed point of a recursive Sum projection
+  | Rec String       -- ^ Recursive term in a 'Mu' projection
+  | Sum [Proj]       -- ^ Strict Sum
   deriving (Show, Eq)
 
 
-pattern One = Prod []  -- Monomorphic Identity, e.g. Nil from WH87
-pattern Ide = Prod []  -- Polymorphic Identity
-pattern Abs = Lift Bot -- Right?
+pattern One = Prod []       -- Monomorphic Identity, e.g. Nil from WH87
+pattern Ide = Lift Str      -- Polymorphic Identity
+pattern Str = Sum [Prod []] -- Polymorphic Strict
+pattern Abs = Lift Bot      -- Polymorphic Absence
 
 
 -- Head Strict List
-headStrList = Mu "List" (Sum [One, Prod [Str Ide, Rec "List"]])
-
+headStrList = Mu "List" [One, Prod [Str, Rec "List"]]
 
 (.+) :: Proj -> Proj -> Proj
 Sum a .+ Sum b = Sum $ a ++ b
@@ -45,17 +44,14 @@ a      .* b      = Prod [a, b]
 lub, (&) :: Proj -> Proj -> Proj
 lub x Bot = x
 lub Bot x = x
-lub x Ide = Ide
-lub Ide x = Ide
 lub x Abs = Lift x
 lub Abs x = Lift x
 lub (Sum xs)  (Sum ys)  = Sum $ zipWith lub xs ys
 lub (Prod xs) (Prod ys) = Prod $ zipWith lub xs ys
 lub (Lift a)  (Lift b)  = Lift $ a `lub` b
-lub (Str a)   (Lift b)  = Lift $ a `lub` b
-lub (Lift a)  (Str b)   = Lift $ a `lub` b
-lub (Str a)   (Str b)   = Str  $ a `lub` b
-lub (Mu sa a) (Mu sb b) | sa == sb = Mu sa (a `lub` b)
+lub a         (Lift b)  = Lift $ a `lub` b
+lub (Lift a)  b         = Lift $ a `lub` b
+lub (Mu sa a) (Mu sb b) | sa == sb = Mu sa $ zipWith lub a b
 lub a b | a == b = a
         | otherwise = error $
                       "lub: " ++ show a ++ ", " ++ show b
@@ -65,9 +61,8 @@ a      & Bot = Bot
 Bot    & a = Bot
 Lift a & Abs = Lift a
 Abs    & Lift a = Lift a
-Str a  & Str b  = Str $ a & b
-Str a  & Lift b = Str $ a `lub` (a & b)
-Lift a & Str b  = Str $ b `lub` (b & a)
+a      & Lift b = a `lub` (a & b)
+Lift a & b      = b `lub` (b & a)
 Lift a & Lift b = Lift $ a `lub` b
 Sum xs & Sum ys = Sum $ zipWith (&) xs ys
 Prod xs & Prod ys = Prod $ zipWith (&) xs ys
@@ -76,3 +71,5 @@ Mu sa a & Mu sb b | sa == sb =
 a & b | a == b = a
       | otherwise = error $
                     "(&): " ++ show a ++ ", " ++ show b
+
+
