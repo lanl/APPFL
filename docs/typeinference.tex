@@ -22,29 +22,35 @@
 
 % top matter
 
-\title{Bottom-up Hindley-Milner Type Inference Rules for Realistic Functional Languages}
-\author{Kei Davis}
-\date{January 2015}
+\title{Bottom-up Type Inference for Realistic Functional Languages\\ \Large{WORKING DRAFT}}
+\author{Kei Davis and David Ringo}
+%\date{January 2015}
 \maketitle
 
 % \renewcommand{\abstractname}{Executive Summary}
 \begin{abstract}
   The great majority of papers on Hindley-Milner type inference provide rules
   for only the simplest of type systems, for example lacking sum types, and
-  the simplest of language constructs, for example lacking recursive
-  definitions and sum deconstruction, leaving type inference for more
-  realistic languages as ``straightforward'' generalizations or extensions.
-  Anecdotal evidence suggests that practitioners in fact find generalization
-  or extension less than straightforward.  Indeed, prior to Heeren et al.'s
-  landmark work~\cite{HHS02}, obtaining a sound ordering in the various steps
-  (specialization, generalization, etc.) was arguably a black art.  Using the
+  the simplest of language constructs, for example lacking recursive function
+  definitions, sum deconstruction, and more generally arbitrary algebraic data
+  types, leaving type inference for more realistic languages as
+  ``straightforward'' generalizations or extensions.  Anecdotal evidence
+  suggests that practitioners in fact find generalization or extension less
+  than straightforward.  Indeed, prior to Heeren et al.'s landmark
+  work~\cite{HHS02}, which post-dates Jones' notable exception to the
+  treatment of simplistic languages and type systems~\cite{Jones2000},
+  obtaining a sound ordering in the various steps (specialization,
+  generalization, etc.)  was arguably a black art.  Using the \emph{bottom-up}
   approach of Heeren et al.\ we give type inference rules for two languages:
-  one modeled after GHC's STG intermediate language~\cite{PJ??}, the other a
-  simple, generic, higher-order polymorphic functional language designed to
-  facilitate the explication and implementation of a strictness analysis
-  technique.  Both use a common sub-language for defining algebraic data types
-  including user-defined \emph{unboxed types}, the latter for which typing
-  rules are given as suggested by Peyton Jones and Launchbury~\cite{PJL??}.
+  the APPFL compiler \cite{us} intermediate language modeled after GHC's STG
+  intermediate language~\cite{PJ??}, and a simple, generic, higher-order
+  polymorphic functional language designed to facilitate the explication and
+  implementation of a family of demand analysis techniques.  Both use a common
+  sub-language for defining algebraic data types including user-defined
+  \emph{unboxed types}, the latter for which typing rules are given as
+  suggested by Peyton Jones and Launchbury~\cite{PJL??}.  For comparison and
+  as a starting point we first present Heeren et al.'s language and inference
+  rules.
 \end{abstract}
 
 % main body
@@ -54,10 +60,14 @@ We follow the approach of Heeren et al.~\cite{HHS02}.
 
 \section{Language---Heeren, Hage, Swierstra}
 
+Variable, application, lambda abstraction, non-recursive let.
+
 \section{Language---Datatype Declarations}
 
+The language of datatypes is shared among all languages and is given in Figure~\ref{fig:typedecsyntax}.
+
 \setlength{\tabcolsep}{5pt}
-\begin{figure}
+\begin{figure}[t]
 \centering
 \footnotesize % tiny scriptsize footnotesize small
 \begin{tabular}{r r c l l}
@@ -75,6 +85,9 @@ Type               & $\tau$           & ::= & \emph{Primtype}           & Primit
 \end{figure}
 
 \section{Language---STG}
+
+Our STG language is modeled after Peyton Jones and Marlow's variant of STG as described in the ``fast curry''
+paper~\cite{PJM??}.
 
 \setlength{\tabcolsep}{5pt}
 \begin{figure}
@@ -100,25 +113,26 @@ Expression   & $e$            & ::= & $a$                                       
 %             &                &     & \texttt{ } $x_n$ \texttt{=} $\mathit{obj}_n$ \\
              &                &     & \texttt{in} $e$  \\
 \\
-             &                & $|$ & \texttt{case} $e$ \texttt{of} $\mathit{alts}$ & Case expression (former) \\
+             &                & $|$ & \texttt{case} $e$ \texttt{of} $\mathit{alts}$ & Case expression (as implemented) \\
 \\
-             &                & $|$ & \texttt{case} $e$ \texttt{as} $x$ \texttt{of} $\mathit{alts}$ & Case expression (current) \\
+             &                & $|$ & \texttt{case} $e$ \texttt{as} $x$ \texttt{of} $\mathit{alts}$ & Case expression (proposed) \\
 \\
 Alternatives & $\mathit{alts}$ & ::= & \texttt{ } $\mathit{alt}_1$                  & Case alternatives, $n \ge 1$\\
              &                &     & \hspace{0.2in} $\dots$ \\
              &                &     & \texttt{ } $\mathit{alt}_n$ \\
 \\
-Alternative  & $\mathit{alt}$ & ::= & $C\ x_1\dots x_n$ \texttt{->} $e$            & Pattern match, $n \ge 0$ \\
-             &                & $|$ & $i$                                          & Integer literal \\
-             &                & $|$ & \texttt{\_ ->} $e$                           & Default \\
+Alternative  & $\mathit{alt}$ & ::= & $C\ x_1\dots x_n$ \texttt{->} $e$             & Pattern match, $n \ge 0$ \\
+             &                & $|$ & $i$ \texttt{->} $e$                           & Integer literal \\
+             &                & $|$ & $x$ \texttt{->} $e$                           & Default (as implemented)\\
+             &                & $|$ & \texttt{\char`_\ ->} $e$                      & Default (proposed)\\
 \\
-Object       & $\mathit{obj}$ & ::= &\texttt{FUN} $f\ x_1\dots x_n$ \texttt{->} $e$   & Function definition, arity $=n\ge 1$ \\
-             &                & $|$ &\texttt{CON} $C\ a_1\dots a_n$                & Saturated constructor, $n \ge 0$ \\
-             &                & $|$ &\texttt{THUNK} $e$                            & Thunk---explicit deferred evaluation \\
+Object       & $\mathit{obj}$ & ::= &\texttt{FUN} $f\ x_1\dots x_n$ \texttt{->} $e$ & Function definition, arity $=n\ge 1$ \\
+             &                & $|$ &\texttt{CON} $C\ a_1\dots a_n$                 & Saturated constructor, $n \ge 0$ \\
+             &                & $|$ &\texttt{THUNK} $e$                             & Thunk---explicit deferred evaluation \\
 %             &                & $|$ &\texttt{PAP} $f\ a_1\dots a_n$               & Partial application \\
 %             &                & $|$ & $\mathit{BLACKHOLE}$                         & Evaluation-time black hole \\
 \\
-Object decl. & $\mathit{odecl}$ & ::=  & $x = \mathit{obj}$                           & Simple binding \\
+Object decl. & $\mathit{odecl}$ & ::=  & $x = \mathit{obj}$                         & Simple binding \\
 \\
 %%%Constructor defn. & $\mathit{con}$  & ::= & $C\ \mathit{type}_i$ & $i \ge 0$ \\
 %%%\\
@@ -129,7 +143,7 @@ Object decl. & $\mathit{odecl}$ & ::=  & $x = \mathit{obj}$                     
 %%%Program      & $\mathit{prog}$ & ::= & $\mathit{(o|d)decl}_1$ \texttt{;}            & Object and data defns, \\
 %%%             &                 &     & \texttt{ } $\dots$ \texttt{;}                & distinguished \texttt{main}\\
 %%%             &                 &     & $\mathit{(o|d)decl}_n$ & 
-Program      & $\mathit{prog}$ & ::= & $\mathit{odecl}_1$ \texttt{;}            & Object and data defns, \\
+Program      & $\mathit{prog}$ & ::= & $\mathit{odecl}_1$ \texttt{;}                & Object and data defns, \\
              &                 &     & \texttt{ } $\dots$ \texttt{;}                & distinguished \texttt{main}\\
              &                 &     & $\mathit{odecl}_n$ & 
 %Program      & $\mathit{prog}$& ::= & $f_1\ =\ \mathit{obj}_1$ \texttt{;}          & $n \ge 1$, distinguished \texttt{main}\\
@@ -143,17 +157,22 @@ Program      & $\mathit{prog}$ & ::= & $\mathit{odecl}_1$ \texttt{;}            
 
 \clearpage
 \section{Type inference rules}
-Judgements are of the form $\cA,\ \cC\ \bu\ e:\tau$.   Subscript indexes
-are implicit except where needed for clarity.\\
+Judgements are of the form $\cA,\ \cC\ \vdash_{\cdot}\ e:\tau$, where $\cdot$ may be empty (the default),
+or to facilitate the factoring
+of the rule for \texttt{case} one of $x$ (passing the name of the scrutinee-bound variable) or
+$\tau$ (passing the type of the scrutinee).   Subscript index ranges
+are implicitly universally quantified over the relevant range except where needed for to avoid ambiguity.
 
 Starting with the base cases, each leaf (Expression/Atom) variable is
 associated with a fresh type variable, and each literal is associated with its
 (unambiguous) type, e.g., $i:\mathit{Int}$ or $i:\mathit{Int\#}$, and
 Primitive operators are assumed to be monomorphic.
 For recursive \texttt{let} it is convenient to separate the \texttt{let} and \texttt{in} clauses.
-Built-in functions are assumed to have to
+
+TODO:  describe additions to Heeren et al.\ scheme for unboxed data types.
 
 \begin{figure}
+  \small
 % Variable/Atom
 %
 \begin{prooftree}
@@ -228,6 +247,18 @@ Built-in functions are assumed to have to
     \mathit{alts} : \tau_1 $}
 \end{prooftree}
 %
+% alt/constructor
+%
+%
+% alt/integer literal
+%
+%
+% alt/default var
+%
+%
+% alt/default anon
+%
+%
 % FUN
 %
 \begin{prooftree}
@@ -243,10 +274,10 @@ Built-in functions are assumed to have to
 % CON
 %
 \begin{prooftree}
-  \AxiomC{$\cA,\ \cC\ \vdash\ a_i : \tau_i$}
+  \AxiomC{$\cA_i,\ \cC_i\ (=\emptyset)\ \vdash\ a_i : \tau_i$}
   \AxiomC{$T\ \beta_1 \dots \beta_j \rightarrow C\ m_1 \dots m_n\ (\beta_i\ \mbox{fresh})$}
   \LeftLabel{[CON]\quad}
-  \BinaryInfC{$\cA,\ \cC\ \vdash\ \mbox{\texttt{THUNK}}\ e : \tau$}
+  \BinaryInfC{$\bigcup \cA_i,\ \{\tau_i \equiv m_i\}\ \vdash\ \mbox{\texttt{CON}}\ C\ a_1 \dots a_n : T\ \beta_1 \dots \beta_j$}
 \end{prooftree}
 %
 % THUNK
@@ -261,32 +292,66 @@ Built-in functions are assumed to have to
 \end{figure}
 
 \begin{figure}
+  \small
 %
 % case
 %
 \begin{prooftree}
   \AxiomC{$\cA_i,\ \cC_i\ \vdash\ \mathit{alt}_i:\tau_0$}
+  \AxiomC{$\cA_\mathit{alts},\ \cC_\mathit{alts}\ \vdash_{x}\ \mathit{alts} : \tau_\mathit{alts}$}
   \LeftLabel{[\texttt{case}]\quad}
-  \UnaryInfC{$\cA_0 \cup (\cA_\mathit{alts}\backslash\{x_0\}),\ 
+  \BinaryInfC{$\cA_0 \cup (\cA_\mathit{alts}\backslash\{x\}),\ 
     \cC_0 \cup \cC_\mathit{alts} \cup \{\tau_0 \equiv \tau'\ |\ x:\tau' \in \cA_\mathit{alts} \}\ \vdash\
-    \mbox{\texttt{case}}\ e_0\ \mbox{\texttt{as}}\ x_0\ \mbox{\texttt{of}}\ \mathit{alts}:\tau_\mathit{alts}$}
+    \mbox{\texttt{case}}\ e_0\ \mbox{\texttt{as}}\ x\ \mbox{\texttt{of}}\ \mathit{alts}:\tau_\mathit{alts}$}
 \end{prooftree}
 %
 % alts
 %
 \begin{prooftree}
-  \AxiomC{$\cA_i,\ \cC_i\ \vdash\ \mathit{alt}_i : \tau_i$}
+  \AxiomC{$\cA_i,\ \cC_i\ \vdash_{x}\ \mathit{alt}_i : \tau_i$}
   \LeftLabel{[\texttt{alts}]\quad}
   \UnaryInfC{$\bigcup \cA_i,\  \bigcup \cC_i \cup \{ \tau_1 \equiv \tau_i\ |\ 2 \le i \le n \}\ \vdash\
     \mathit{alts} : \tau_1 $}
 \end{prooftree}
+%
+% alt/constructor
+%
+\begin{prooftree}
+  \AxiomC{$\cA,\ \cC\ \vdash\ e : \tau$}
+  \AxiomC{$T\ \beta_1 \dots \beta_j \rightarrow C\ \tau_1 \dots \tau_n\ (\beta_i\ \mbox{fresh})$}
+  \LeftLabel{[\texttt{alt constructor}]\quad}
+  \BinaryInfC{$\cA\backslash\{x_i\} \cup \{ x : T\ \beta_1 \dots \beta_j \},\
+    \cC \cup \{\tau_i \equiv \tau'\ |\ x_i : \tau' \in \cA \}\ \vdash\ C\ x_1 \dots x_n\ \mbox{\texttt{->}}\ e : \tau$}
+\end{prooftree}
+%
+% alt/integer literal
+%
+\begin{prooftree}
+  \AxiomC{$\cA,\ \cC\ \vdash\ e : \tau$}
+  \LeftLabel{[\texttt{alt literal int}]\quad}
+  \UnaryInfC{$\cA \cup \{x : \mathit{Int}\},\ \cC\ \vdash\ i\ \mbox{\texttt{->}}\ e : \tau$}
+\end{prooftree}
+%
+% alt/default var
+%
+%
+% alt/default anon
+%
+\begin{prooftree}
+  \AxiomC{$\cA,\ \cC\ \vdash\ e : \tau$}
+  \LeftLabel{[\texttt{alt anon}]\quad}
+  \UnaryInfC{$\cA,\ \cC\ \vdash\ \mbox{\texttt{\char`_\ ->}}\ e : \tau$}
+\end{prooftree}
+%
 \caption{STG Proposed Inference Rules for \texttt{case}}
 \label{fig:proposed}
 \end{figure}
 
 
-\section{Language---Analysis Target}
-Minimalistic Higher-order, Polymorphic, Pure Functional Language
+\section{Language---Realistic Higher-order, Polymorphic, Pure Functional}
+
+David's stuff goes here.
+
   
 \end{document}
 
