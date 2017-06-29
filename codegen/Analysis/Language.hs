@@ -1,8 +1,10 @@
+{-# LANGUAGE StandaloneDeriving #-}
+{-# LANGUAGE UndecidableInstances #-}
+{-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE ViewPatterns #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE TypeOperators   #-}
 {-# LANGUAGE PatternSynonyms #-}
-
 
 
 
@@ -47,7 +49,8 @@ instance Ord (Constructor a) where
 
 data Type
   = TFun Type Type
-    -- ^ Function type: @t1 -> t2@. Could also be thought of as (TApp (TApp "->" t1) t2).
+    -- ^ Function type: @t1 -> t2@. Could also be thought of as (TApp (TApp "->"
+    -- t1) t2).
 
   | TVar TyVar
     -- ^ polymorphic type variable.
@@ -81,43 +84,64 @@ instance Unparse PrimType where
   unparse PInt = text "I#"
 
 
-newtype Prog a b = Prog { unprog :: ([ValDef' a b], [DataDef a]) }
-  deriving (Show)
+type SimpleProg a = Prog (a :-> Uniquify :-> SatCons :-> SatFuns)
+type UniqProg a   = Prog (a :-> Uniquify)
 
-data ValDef' a b = VDef
+data a :-> b
+data Uniquify
+data SatFuns
+data SatCons
+
+
+
+type family CMeta a where
+  CMeta a = a
+  
+type family EMeta a where
+  EMeta (a :-> b) = EMeta a
+  EMeta a = a
+
+  
+
+newtype Prog a = Prog { unprog :: ([ValDef a], [DataDef a]) }
+
+deriving instance (Show (EMeta a)) => Show (Prog a)
+
+data ValDef a = VDef
   { binding :: ID
-  , rhsval  :: Expr' a b
+  , rhsval  :: Expr a
   }
-  deriving (Show)
 
+deriving instance (Show (EMeta a)) => Show (ValDef a)
 
 pattern FunDef id parms expr meta = VDef id (Lambda parms expr meta)
 
-data Expr' a b
+data Expr a
   = Lit    { lval  :: Literal
-           , meta  :: b
+           , meta  :: EMeta a
            }
   | Var    { name  :: ID
-           , meta  :: b
+           , meta  :: EMeta a
            }
   | Lambda { parms :: [ID]
-           , expr  :: Expr' a b
-           , meta  :: b
+           , expr  :: Expr a
+           , meta  :: EMeta a
            }
-  | CaseOf { scrut :: Expr' a b
+  | CaseOf { scrut :: Expr a
            , bind  :: ID
-           , paths :: [Clause' a b]
-           , meta  :: b
+           , paths :: [Clause a] 
+           , meta  :: EMeta a 
            }
-  | LetRec { binds :: [ValDef' a b]
-           , expr  :: Expr' a b
-           , meta  :: b
+  | LetRec { binds :: [ValDef a]
+           , expr  :: Expr a 
+           , meta  :: EMeta a
            }
-  | Apply  { efun  :: Expr' a b 
-           , earg  :: Expr' a b
-           , meta  :: b
+  | Apply  { efun  :: Expr a 
+           , earg  :: Expr a
+           , meta  :: EMeta a
            }
-  deriving (Show)
+
+deriving instance (Show (EMeta a)) => Show (Expr a)
 
 
 
@@ -127,24 +151,23 @@ unfoldAp e = go e [] []
 
 data Literal = UBInt Int deriving (Show)
 
-type ValDef a = ValDef' () a
-type Expr a   = Expr' () a
-type Clause a = Clause' () a
 
-data Clause' a b
+
+data Clause a 
   = LitMatch { lpat :: Literal
                -- ^ Can match on primitive literals
-             , consq :: Expr' a b
+             , consq :: Expr a
              }
   | ConMatch { cpat :: ID
                -- ^ could refer to a var or construct, both are uniquely identified
              , args :: [ID]
                -- ^ newly scoped variables matching constructor parameters
-             , consq :: Expr' a b
+             , consq :: Expr a
              }
-  | Default  { consq :: Expr' a b
+  | Default  { consq :: Expr a
              }
-  deriving (Show)
+
+deriving instance (Show (EMeta a)) => Show (Clause a)
 
 
 data ID = ID
@@ -164,25 +187,16 @@ instance Ord ID where
   compare = comparing uniq
 
 
-
-
-type SimpleProg a = Prog (a :-> Uniquified :-> SatCons :-> SatFuns)
-type UniqProg a   = Prog (a :-> Uniquified)
-
-data a :-> b
-data Uniquified
-data SatFuns
-data SatCons
   
 
-ensureSimpleAST :: UniqProg a b -> SimpleProg a b
+ensureSimpleAST :: UniqProg a -> SimpleProg a
 ensureSimpleAST = ensureSatFuns . ensureSatCons
 
 
 
 -- Check to make sure all functions are fully applied
 
-ensureSatFuns :: Prog a b -> Prog (a :-> SatFuns) b
+ensureSatFuns :: Prog a -> Prog (a :-> SatFuns)
 ensureSatFuns (Prog (vdefs, ddefs)) = Prog (newVDefs, newDDefs)
   where newDDefs   = coerce ddefs
         funArities = mkFunArityMap vdefs M.empty
@@ -232,7 +246,7 @@ satFunExpr arities exp = case exp of
 --   Check to ensure all constructors are fully applied
 --------------------------------------------------------------------------------
 
-ensureSatCons ::  Prog a b -> Prog (a :-> SatCons) b
+ensureSatCons ::  Prog a -> Prog (a :-> SatCons)
 ensureSatCons (Prog (vdefs, ddefs)) = Prog (newVDefs, newDDefs)
   where
     conArities = M.fromList $ concatMap (map getArity . constrs) ddefs
@@ -241,10 +255,10 @@ ensureSatCons (Prog (vdefs, ddefs)) = Prog (newVDefs, newDDefs)
     newVDefs = map (satConBind conArities) vdefs
 
 
-satConBind :: Map ID Int -> ValDef' a b ->  ValDef' (a :-> SatCons) b
+satConBind :: Map ID Int -> ValDef a ->  ValDef (a :-> SatCons)
 satConBind arities (VDef b rhs) = VDef b $ satConExpr arities rhs
 
-satConExpr :: Map ID Int -> Expr' a b -> Expr' (a :-> SatCons) b
+satConExpr :: Map ID Int -> Expr a -> Expr (a :-> SatCons)
 satConExpr arities exp = case exp of
   Lit v m -> Lit v m
   Var n m -> Var n m
@@ -283,7 +297,7 @@ satConExpr arities exp = case exp of
 --------------------------------------------------------------------------------
 type UniqState a = State (Map String Int, Int) a
 
-uniquify :: Prog a b -> UniqProg a b
+uniquify :: Prog a -> UniqProg a
 uniquify (Prog (vdefs, ddefs)) = Prog (newVDefs, newDDefs)
   where (newDDefs, st) = runState (mapM uniqDDef ddefs) (M.empty, 0)
         newVDefs = evalState (uniqVDefs vdefs) st
@@ -321,17 +335,17 @@ newScope (ID name u) = do
   pure (ID name cur)
 
 
-uniqDDef :: DataDef a -> UniqState (DataDef (a :-> Uniquified))
+uniqDDef :: DataDef a -> UniqState (DataDef (a :-> Uniquify))
 uniqDDef (DDef ty constrs) = DDef ty <$> mapM uniqConstr constrs
 
-uniqConstr :: Constructor a -> UniqState (Constructor (a :-> Uniquified))
+uniqConstr :: Constructor a -> UniqState (Constructor (a :-> Uniquify))
 uniqConstr (DCon id ty) = DCon <$> newScope id <*> pure ty
  
-uniqVDefs:: [ValDef' a b] -> UniqState [ValDef' (a :-> Uniquified) b]
+uniqVDefs:: [ValDef a] -> UniqState [ValDef (a :-> Uniquify)]
 uniqVDefs defs = mapM (newScope . binding) defs >> mapM oneDef defs
  where oneDef (VDef id rhs) = VDef <$> setUniq id <*> uniqExpr rhs
 
-uniqExpr:: Expr' a b -> UniqState (Expr' (a :-> Uniquified) b)
+uniqExpr:: Expr a -> UniqState (Expr (a :-> Uniquify))
 uniqExpr e = scoped $ case e of
   Lit l m  -> pure $ Lit l m
   Var id m -> Var <$> setUniq id <*> pure m
@@ -345,7 +359,7 @@ uniqExpr e = scoped $ case e of
   Apply f e m ->
     Apply <$> uniqExpr f <*> uniqExpr e <*> pure m
   
-uniqClause :: Clause' a b -> UniqState (Clause' (a :-> Uniquified) b)
+uniqClause :: Clause a -> UniqState (Clause (a :-> Uniquify))
 uniqClause c = scoped $ case c of
   LitMatch l e -> LitMatch l <$> uniqExpr e
   ConMatch c vs e -> ConMatch c <$> mapM newScope vs <*> uniqExpr e
