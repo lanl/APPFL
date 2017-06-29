@@ -1,0 +1,71 @@
+Grammar:
+
+Type         := TPrim | TVar | TApp | TFun
+TPrim        := Int | Bool | Int#
+TApp         := T TVar*
+TFun         := Type -> Type
+TVar         := t
+
+
+Variable    v
+Constructor D
+
+
+            
+Expression e :=  i  -- Literal Int
+             |   i# -- Literal Int#
+             |   b  -- Literal Boolean
+             |   v  -- Variable
+             |   e e -- Application
+             |   let Binding* in e
+             |   case e as x of {P -> e}+
+             |   \v+ -> e –- Abstraction
+
+Pattern P    := i   -- Match literal Int
+             |  i#  -- Match literal Int#
+             |  b   -- Match literal Boolean
+             |  D v* -- Match Constructor; bind contents
+             |  _ -- Default case
+
+Typedef      := Type = D Type* (| D Type*)*
+
+Binding      := v = e
+
+Prog         := (Typedef | Binding)* main = e
+
+
+Typing Rules
+
+
+A - Assumptions (about variables)
+C - Constraints (relations on Types)
+F - Facts (about variables; generate constraints)
+
+
+Var:
+      A, C, F ⊬ ∀t.v:t
+      ----------------------------------------------------------------------
+      {v : t_v}, {}, {} ⊢ v:t_v
+
+      A, C, F={.., v:t_v, ..}
+      ----------------------------------------------------------------------
+      A, C ∪ {v : t_v}, F  ⊢ v : t_v
+      
+
+Lit:  
+      A, C, F
+      ----------------------------------------------------------------------
+      A, C, F ⊢ i : Int, b : Bool, i# : Int#
+
+
+App:
+      A₁, C₁, F₁ ⊢ e₁ : t₁ → t₂    A₂, C₂, F₂ ⊢ e₂ : t₁
+      ----------------------------------------------------------------------
+      A₂ ∪ A₂, C₂ ∪ C₂, F₂ ∪ F₂, ⊢ e₂ e₂ : t₂
+
+
+Abs:
+      Aₑ, Cₑ, Fₑ ⊢ e : tₑ            Aᵢ, Cᵢ, Fᵢ ⊢ aᵢ : tᵢ
+      ----------------------------------------------------------------------
+      ⋃Aᵢ ∪ Aₑ, ⋃Cᵢ ∪ Cₑ, ⋃Fᵢ ∪ Fₑ, ⊢ (\v₁...vₙ -> e) : t₁ → ... → tₙ → tₑ
+

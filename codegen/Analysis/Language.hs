@@ -364,4 +364,3 @@ uniqClause c = scoped $ case c of
   LitMatch l e -> LitMatch l <$> uniqExpr e
   ConMatch c vs e -> ConMatch c <$> mapM newScope vs <*> uniqExpr e
   Default e -> Default <$> uniqExpr e
-  
