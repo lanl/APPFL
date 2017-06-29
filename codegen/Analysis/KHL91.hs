@@ -42,6 +42,7 @@ a      .* b      = Prod [a, b]
 
 
 lub, (&) :: Proj -> Proj -> Proj
+lub a b | a == b = a
 lub x Bot = x
 lub Bot x = x
 lub x Abs = Lift x
@@ -52,22 +53,21 @@ lub (Lift a)  (Lift b)  = Lift $ a `lub` b
 lub a         (Lift b)  = Lift $ a `lub` b
 lub (Lift a)  b         = Lift $ a `lub` b
 lub (Mu sa a) (Mu sb b) | sa == sb = Mu sa $ zipWith lub a b
-lub a b | a == b = a
-        | otherwise = error $
-                      "lub: " ++ show a ++ ", " ++ show b
+lub a b = error $ "lub: " ++ show a ++ ", " ++ show b
 
 
+a      & b | a == b = a
 a      & Bot = Bot
 Bot    & a = Bot
-Lift a & Abs = Lift a
-Abs    & Lift a = Lift a
+Lift a & Lift b = Lift $ a `lub` b
 a      & Lift b = a `lub` (a & b)
 Lift a & b      = b `lub` (b & a)
-Lift a & Lift b = Lift $ a `lub` b
 Sum xs & Sum ys = Sum $ zipWith (&) xs ys
 Prod xs & Prod ys = Prod $ zipWith (&) xs ys
-Mu sa a & Mu sb b | sa == sb =
-                    undefined -- TODO
+Mu sa a & Mu sb b | sa == sb = Mu $ map comb zipped
+  where zipped = zip a b
+        () = foldr
+                    
 a & b | a == b = a
       | otherwise = error $
                     "(&): " ++ show a ++ ", " ++ show b
