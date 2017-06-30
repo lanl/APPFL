@@ -14,18 +14,16 @@ Constructor D
             
 Expression e :=  i  -- Literal Int
              |   i# -- Literal Int#
-             |   b  -- Literal Boolean
              |   v  -- Variable
              |   e e -- Application
              |   let Binding* in e
-             |   case e as x of {P -> e}+
+             |   case e as x of c+
              |   \v+ -> e –- Abstraction
 
-Pattern P    := i   -- Match literal Int
-             |  i#  -- Match literal Int#
-             |  b   -- Match literal Boolean
-             |  D v* -- Match Constructor; bind contents
-             |  _ -- Default case
+Clause c     := i    -> e -- Match literal Int
+             |  i#   -> e -- Match literal Int#
+             |  D v* -> e -- Match Constructor; bind contents
+             |  _    -> e -- Default case
 
 Typedef      := Type = D Type* (| D Type*)*
 
@@ -37,35 +35,154 @@ Prog         := (Typedef | Binding)* main = e
 Typing Rules
 
 
-A - Assumptions (about variables)
-C - Constraints (relations on Types)
-F - Facts (about variables; generate constraints)
+A - Assumptions : about variables, have form v : τ
+
+C - Constraints : relations on Types, have forms
+    * τ₁ ≡ τ₂  - Equality constrain, these must unify
+    * τ₁ ≼ τ₂  - τ₁ must be a generic instance of τ₂, e.g Int → Int ≼ ∀τ.τ → τ
+    * τ₁ ≤ₘ τ₂ - τ₁ must be a generic instance of generalized τ₂ w.r.t a set of
+                 monomorphic variables. The free type variables in τ₂ *not* in
+                 the monomorphic set must be given universal quantification.
+                 
+F - Facts : about variables, have form v : σ, where σ is universally quantified
+            about all the type variables that would otherwise be free,
+            e.g. ∀α₁̣…αₙ.τ
 
 
 Var:
-      A, C, F ⊬ ∀t.v:t
+      A, C, F
       ----------------------------------------------------------------------
-      {v : t_v}, {}, {} ⊢ v:t_v
-
-      A, C, F={.., v:t_v, ..}
-      ----------------------------------------------------------------------
-      A, C ∪ {v : t_v}, F  ⊢ v : t_v
+      A ∪ {v : β}, C ∪ {β ≼ σ | v : σ ∈ F}, F
+      ⊢ v : β
       
+      For all variables, an Assumption that it has type τᵥ is made (τᵥ being
+      "fresh"). Both the assumptions and constraints should be empty here, since
+      variables are leaves of the AST, and both are only added in a bottom-up
+      fashion.
+
+      If there is a Fact about the variable, an explicit constraint is generated
+      about the assumed type of of the variable.  Its type must be a generic
+      instance of whatever the type given by the Fact is.  I believe this is an
+      acceptable alternative to specifying a "fresh" instantiation of the type
+      given by the Fact here (since that should happen when implicit constraints
+      are solved).
+
 
 Lit:  
       A, C, F
       ----------------------------------------------------------------------
-      A, C, F ⊢ i : Int, b : Bool, i# : Int#
+      A, C, F
+      ⊢ i : Int, i# : Int#
 
+      Literals are straightforward, and have types that are "builtin" to the
+      language.
+      
 
 App:
-      A₁, C₁, F₁ ⊢ e₁ : t₁ → t₂    A₂, C₂, F₂ ⊢ e₂ : t₁
+      A₁, C₁, F ⊢ e₁ : τ₁    A₂, C₂, F ⊢ e₂ : τ₂ 
       ----------------------------------------------------------------------
-      A₂ ∪ A₂, C₂ ∪ C₂, F₂ ∪ F₂, ⊢ e₂ e₂ : t₂
+      A₂ ∪ A₂, C₂ ∪ C₂ ∪ {τ₁ ≡ τ₂ → τ₃}, F
+      ⊢ e₁ e₂ : τ₃
+
+      Given two expressions that we can infer types for, if one is applied to
+      the other, the former must have some function type with the latter's type
+      as its argument and some new type (τ₃) as its result.  An equality
+      constraint saying as much is introduced.
 
 
 Abs:
-      Aₑ, Cₑ, Fₑ ⊢ e : tₑ            Aᵢ, Cᵢ, Fᵢ ⊢ aᵢ : tᵢ
+      A, C, F ⊢ e : τₑ
       ----------------------------------------------------------------------
-      ⋃Aᵢ ∪ Aₑ, ⋃Cᵢ ∪ Cₑ, ⋃Fᵢ ∪ Fₑ, ⊢ (\v₁...vₙ -> e) : t₁ → ... → tₙ → tₑ
+      A \{v₁, …, vₙ}, Cₑ ∪ {τᵢ ≡ βᵢ | vᵢ : τᵢ ∈ A}, F
+      ⊢ (\v₁ … vₙ -> e) : β₁ → … → βₙ → τₑ
 
+      Lambda abstraction has a function type on a fresh set of variables for the
+      nominal arguments.  These must be unified with whatever types are assumed
+      in the body, so monomorphic constraints are generated for each argument
+      with an assumed type.
+
+
+Let:
+
+      Aₓ, Cₓ, F ⊢ eₓ : τₓ            Aᵢ, Cᵢ, F ⊢  eᵢ : τᵢ
+      ----------------------------------------------------------------------
+      ⋃Aᵢ ∪ Aₓ \{v₁, …, vₙ}, ⋃Cᵢ ∪ Cₓ ∪ {βᵢ ≤ₘ τᵢ | vᵢ : βᵢ ∈ (⋃Aᵢ ∪ Aₓ)}, F
+      ⊢ let vᵢ = eᵢ in eₓ : τₓ
+
+      Let introduces polymorphic types, e.g. id : ∀α.α → α. To that end, the
+      inferred types of the bound expressions and the assumed types of the bound
+      identifier aren't constrained with simple equality, but with the implicit
+      instance constraint where any free type variables not introduced by a
+      lambda or case expression are considered polymorphic.
+
+
+Case:
+
+      Aₓ, Cₓ, F ⊢ eₓ : τₓ            Aᵢ, Cᵢ, F ⊢  cᵢ : (δᵢ, τᵢ)
+      ----------------------------------------------------------------------
+      ⋃Aᵢ ∪ Aₓ \{v}, ⋃Cᵢ ∪ Cₓ ∪ Cₚ ∪ Cᵣ, F
+      where Cₚ = {̣τₓ ≡ τᵥ | v : τᵥ ∈ ⋃Aᵢ} ∪ {τₓ ≡ δᵢ | i ∈ 1…n}
+            Cᵣ = {τ₁ ≡ τᵢ | i ∈ 2…n}
+      ⊢ case eₓ as v of {c₁,…,cₙ} : τ₁
+
+      There's a lot happening here, broken roughly into two parts.
+
+      1. The type of scrutinee of the case expression τₓ needs to be match any
+      assumed type given to the "as" bound variable v.  This type also needs to
+      match the types of all the patterns in the case branches (δᵢ).  Because
+      the equivalence constraint is transitive, it is not necessary to state
+      equivalence between all pairs, thankfully.  This is all expressed in the
+      set of constraints Cₚ.
+
+      2. The result of each branch of the case expression has to have the same
+      type, so the first (τ₁) is arbitrarily picked as the one to which all
+      others must be equivalent.  Again, transitivity saves us from combining
+      each possible pair in a constraint.
+      
+
+
+Clauses:
+
+      Clauses consist of a pattern used as a conditional branch selector and an
+      expression result. Patterns can bind variable to monomorphic values inside
+      structures and use them in the result.  Because the two parts of a clause
+      are intrinsically linked, they are given a special product type, which
+      gives a type to both the pattern and the result.  This isn't strictly
+      necessary, but it aids the readability of the rules.
+      
+Literal Clause:
+
+      A, C, F ⊢ e : τ
+      ----------------------------------------------------------------------
+      A, C, F
+      ⊢ (i -> e)  : (Int, τ)
+      ⊢ (i# -> e) : (Int#, τ)
+
+      Literal boxed and unboxed integer patterns are treated the same as
+      literals in expressions. They add no information to the inferred type of
+      the result.
+
+Constructor Clause:
+
+      A, C, F U { D : σ } ⊢ e : τ 
+      ----------------------------------------------------------------------
+      A\{v₁,…,vₙ}, C ∪ {βᵢ → … → βₙ → δ ≼ σ} ∪ {τᵢ ≡ βᵢ | vᵢ : τᵢ ∈ A}, F
+      ⊢ D v₁…vₙ -> e : (δ, τ), v₁ : β₁, …, vₙ : βₙ
+
+      I'm not sure I've expressed this correctly.  There will always be a Fact
+      about the constructor that should be used to generate some constraints on
+      the types of the variables bound in the pattern.  Since the the type δ
+      could depend* on the types β₁ to βₙ, and the types given in Facts about
+      non-enumeration type constructors will be function types, expressing the
+      constraint as being on function types makes sense.
+
+      * e.g. a pattern Cons n l where n's type is inferred as Int, should lead
+        to a type Int → List Int → List Int that can be used as a generic
+        instance of the polymorphic type of Cons, i.e. ∀a . a → List a → List a
+
+Default Clause:
+
+      A, C, F ⊢ e : τ
+      ----------------------------------------------------------------------
+      A, C, F
+      ⊢ (_ -> e)  : (β, τ)

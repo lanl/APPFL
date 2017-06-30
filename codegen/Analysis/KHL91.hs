@@ -1,6 +1,7 @@
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE PatternSynonyms #-}
 
+
 module Analysis.KHL91 () where
 
 import Prelude hiding ((+), (*))
@@ -18,9 +19,9 @@ data Proj
   deriving (Show, Eq)
 
 
-pattern One = Prod []       -- Monomorphic Identity, e.g. Nil from WH87
+pattern One = Prod []       -- Monomorphic Strict, e.g. Nil from WH87
 pattern Ide = Lift Str      -- Polymorphic Identity
-pattern Str = Sum [Prod []] -- Polymorphic Strict
+pattern Str = Sum [Prod []] -- Polymorphic Strict, maybe should just be Sum []?
 pattern Abs = Lift Bot      -- Polymorphic Absence
 
 
@@ -64,12 +65,15 @@ a      & Lift b = a `lub` (a & b)
 Lift a & b      = b `lub` (b & a)
 Sum xs & Sum ys = Sum $ zipWith (&) xs ys
 Prod xs & Prod ys = Prod $ zipWith (&) xs ys
-Mu sa a & Mu sb b | sa == sb = Mu $ map comb zipped
+Mu sa a & Mu sb b | sa == sb = Mu sa $ map comb zipped
   where zipped = zip a b
-        () = foldr
+        comb = undefined
                     
 a & b | a == b = a
       | otherwise = error $
                     "(&): " ++ show a ++ ", " ++ show b
+
+
+
 
 

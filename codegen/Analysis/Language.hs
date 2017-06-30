@@ -61,6 +61,8 @@ data Type
   | TApp TyCon [Type]
     -- ^ Type application. Not sure if it's worth separating out a constructor
     -- for non-parameterized types or just allowing things like @TApp "Bool" []@
+
+  | TForall [TyVar] Type
     
   deriving (Show)
 
@@ -71,6 +73,7 @@ instance Unparse Type where
                   in wrap (unparse t1) <+> arw <+> unparse t2
     TVar v     -> text v
     TPrim pt   -> unparse pt
+    TForall vs t -> text "forall" <+> hsep (map text vs) <+> char '.' <+> unparse t
     TApp c ts  -> text c <+> hsep (map maybeParen ts)
       where maybeParen t = case t of
               TFun{} -> parens (unparse t)
@@ -364,3 +367,4 @@ uniqClause c = scoped $ case c of
   LitMatch l e -> LitMatch l <$> uniqExpr e
   ConMatch c vs e -> ConMatch c <$> mapM newScope vs <*> uniqExpr e
   Default e -> Default <$> uniqExpr e
+
