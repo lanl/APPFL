@@ -1,14 +1,15 @@
+{-# LANGUAGE FlexibleContexts       #-}
+{-# LANGUAGE FlexibleInstances      #-}
 {-# LANGUAGE FunctionalDependencies #-}
-{-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE FlexibleContexts #-}
-{-# LANGUAGE MultiParamTypeClasses #-}
-{-# LANGUAGE OverloadedStrings   #-}
+{-# LANGUAGE MultiParamTypeClasses  #-}
+{-# LANGUAGE OverloadedStrings      #-}
+{-# LANGUAGE TypeFamilies           #-}
 
 module Analysis.DSL where
 
-import GHC.Exts (IsString (..))
-import Analysis.Language
-import Data.Char     (isNumber, isUpper)
+import           Analysis.Language
+import           Data.Char         (isNumber, isUpper)
+import           GHC.Exts          (IsString (..))
 
 -- DSL for building programs until a parser is written:
 
@@ -28,17 +29,18 @@ letrec :: [ValDef ()] -> Expr () -> () -> Expr ()
 letrec = LetRec
 
 
-instance Definable [Constructor a] (DataDef a)
+instance Definable [DataDef a -> Constructor a] (DataDef a)
 instance Definable (Expr ()) (ValDef ())
 
-instance IsString ([Constructor a] -> DataDef a) where
-  fromString s = DDef $ fromString s
+instance IsString ([DataDef a -> Constructor a] -> DataDef a) where
+  fromString s conFs = let def = DDef (fromString s) $ map ($ def) conFs
+                       in def
 
 instance IsString (Expr () -> ValDef ()) where
   fromString s = case words s of
-    [b]  -> VDef (ID b (-1))
-    x:xs -> \e -> VDef (ID x (-1)) $
-                  Lambda (map (`ID` (-1)) xs) e ()
+    [b]  -> \e -> VDef (ID b (-1)) e ()
+    x:xs -> \e -> VDef (ID x (-1)) (lam e) ()
+      where lam e = Lambda (map (`ID` (-1)) xs) e ()
     []   -> error "VDef syntax error"
 
 instance IsString Type where
@@ -51,10 +53,10 @@ instance IsString Type where
 
 instance IsString (Expr () -> Clause ()) where
   fromString s = case words s of
-    ["_"] -> Default
+    ["_"] -> (`Default` ())
     [x] | (dgs, "#") <- span isNumber x
-          -> LitMatch (UBInt $ read dgs)
-    x:xs -> ConMatch (ID x (-1)) $ map (`ID` (-1)) xs
+          -> \e -> LitMatch (UBInt $ read dgs) e ()
+    x:xs -> \ e -> ConMatch (ID x (-1)) (map (`ID` (-1)) xs) e ()
     []   -> error "Case clause syntax error"
 
 instance IsString (Expr () -> Expr ()) where
@@ -82,8 +84,8 @@ infixr 1 .$
 (.$) :: Expr () -> Expr () -> Expr ()
 f .$ e = Apply f e ()
 
-(%) :: String -> [Type] -> Constructor a
-s % tys = DCon (ID s (-1)) tys
+(%) :: String -> [Type] -> DataDef a -> Constructor a
+s % tys = \def -> DCon (ID s (-1)) tys def
 
 infixr 1 .>
 (.>) :: (Expr () -> () -> Expr ()) -> Expr () -> Expr ()
@@ -99,13 +101,10 @@ listDef = datatype "List a" =: [ "Nil"  % []
 builtin :: String -> ValDef ()
 builtin s = fromString s =: "builtin"
 
+
 facDef :: ValDef ()
-facDef = "fac a#" =: letrec ["x" =: "0#"] 
-         .> match "a#" "x#" 
+facDef = "fac a#" =: letrec ["x" =: "0#"]
+         .> match "a#" "x#"
          [ "0#" --> "1#"
          , "_"  --> letrec [] .> "fac" .$ "x#"
          ]
-
-
-
-  

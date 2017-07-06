@@ -1,29 +1,35 @@
-{-# LANGUAGE StandaloneDeriving #-}
-{-# LANGUAGE UndecidableInstances #-}
-{-# LANGUAGE TypeFamilies #-}
-{-# LANGUAGE ViewPatterns #-}
-{-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE TypeOperators   #-}
-{-# LANGUAGE PatternSynonyms #-}
-
+{-# LANGUAGE ConstraintKinds       #-}
+{-# LANGUAGE DataKinds             #-}
+{-# LANGUAGE FlexibleContexts      #-}
+{-# LANGUAGE FlexibleInstances     #-}
+{-# LANGUAGE LiberalTypeSynonyms   #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE PatternSynonyms       #-}
+{-# LANGUAGE RankNTypes            #-}
+{-# LANGUAGE StandaloneDeriving    #-}
+{-# LANGUAGE TypeFamilies          #-}
+{-# LANGUAGE TypeOperators         #-}
+{-# LANGUAGE UndecidableInstances  #-}
+{-# LANGUAGE ViewPatterns          #-}
 
 
 module Analysis.Language
-  
+
 where
 
 
-import PPrint
-import Data.Coerce
-import Data.Ord      (comparing)
-import Data.Char     (isUpper)
-import Data.Function (on)
-import Data.Map      (Map)
-import GHC.Exts      (IsString (..))
-import Control.Monad.State 
+import           Control.Monad.State
+import           Data.Char           (isUpper)
+import           Data.Coerce
+import           Data.Function       (on)
+import           Data.List           (intercalate)
+import           Data.Map            (Map)
+import qualified Data.Map            as M
+import           Data.Ord            (comparing)
+import qualified GHC.Exts            as GHC (Constraint)
 
-import qualified
-       Data.Map as M
+import           PPrint
+
 
 type TyVar = String
 type TyCon = String
@@ -33,17 +39,33 @@ data DataDef a = DDef
   { dType   :: Type
   , constrs :: [Constructor a]
   }
-  deriving (Show)
+
+instance Show (DataDef a) where
+  showsPrec _ (DDef ty cons) =
+    showString $
+    "DDef {dType = " ++ show ty ++
+    ", constrs=[" ++ intercalate ", " conStrs ++ "]}"
+    where
+          conStrs = map mkConStr cons
+
+mkConStr :: Constructor a -> String
+mkConStr (DCon id tys _) = "DCon {conName = " ++ show id ++
+                           ", conArgs = " ++ show tys ++ "}"
 
 data Constructor a = DCon
   { conName :: ID
   , conArgs :: [Type]
+  , def     :: DataDef a -- reference to the definition which this constructor
+                         -- is a part of is circular, but awfully convenient.
   }
-  deriving (Show)
+
+instance Show (Constructor a) where
+  showsPrec _ d@(DCon id tys (DDef ty _)) = showString $ mkConStr d
+
 
 instance Eq (Constructor a) where
   (==) = (==) `on` conName
-  
+
 instance Ord (Constructor a) where
   compare = comparing conName
 
@@ -54,17 +76,17 @@ data Type
 
   | TVar TyVar
     -- ^ polymorphic type variable.
-    
+
   | TPrim PrimType
     -- ^ Primitive types.
-    
+
   | TApp TyCon [Type]
     -- ^ Type application. Not sure if it's worth separating out a constructor
     -- for non-parameterized types or just allowing things like @TApp "Bool" []@
 
   | TForall [TyVar] Type
-    
-  deriving (Show)
+
+  deriving (Show, Eq, Ord)
 
 instance Unparse Type where
   unparse t = case t of
@@ -73,7 +95,8 @@ instance Unparse Type where
                   in wrap (unparse t1) <+> arw <+> unparse t2
     TVar v     -> text v
     TPrim pt   -> unparse pt
-    TForall vs t -> text "forall" <+> hsep (map text vs) <+> char '.' <+> unparse t
+    TForall vs t -> text "forall" <+> hsep (map text vs)
+                    <+> char '.' <+> unparse t
     TApp c ts  -> text c <+> hsep (map maybeParen ts)
       where maybeParen t = case t of
               TFun{} -> parens (unparse t)
@@ -81,71 +104,79 @@ instance Unparse Type where
               _      -> unparse t
 
 -- Probably not going to expand on this, but who knows ...
-data PrimType = PInt deriving (Show)
+data PrimType = PInt deriving (Show, Eq, Ord)
 
 instance Unparse PrimType where
   unparse PInt = text "I#"
 
 
 type SimpleProg a = Prog (a :-> Uniquify :-> SatCons :-> SatFuns)
-type UniqProg a   = Prog (a :-> Uniquify)
+type TypedProg a  = Prog (a :-> InferTypes)
+
+type Saturated f a = f (a :-> SatCons :-> SatFuns)
+type Unique    f a = f (a :-> Uniquify)
+type Typed     f a = f (a :-> InferTypes)
 
 data a :-> b
 data Uniquify
+data InferTypes
 data SatFuns
 data SatCons
 
+type family Meta f a where
+  Meta f (a :-> InferTypes) = Type
+  Meta Expr (a :-> Bool) = Bool
+  Meta f (a :-> b) = Meta f a
+  Meta f a = a
 
 
-type family CMeta a where
-  CMeta a = a
-  
-type family EMeta a where
-  EMeta (a :-> b) = EMeta a
-  EMeta a = a
-
-  
+type family MetaConstr constr a :: GHC.Constraint where
+  MetaConstr constr a = ( constr (Meta Expr a)
+                        , constr (Meta ValDef a)
+                        , constr (Meta Clause a))
 
 newtype Prog a = Prog { unprog :: ([ValDef a], [DataDef a]) }
 
-deriving instance (Show (EMeta a)) => Show (Prog a)
+deriving instance (MetaConstr Show a) => Show (Prog a)
 
 data ValDef a = VDef
   { binding :: ID
   , rhsval  :: Expr a
+  , vmeta   :: Meta ValDef a
   }
 
-deriving instance (Show (EMeta a)) => Show (ValDef a)
 
-pattern FunDef id parms expr meta = VDef id (Lambda parms expr meta)
+deriving instance (MetaConstr Show a) => Show (ValDef a)
+
+pattern FunDef id parms expr emeta vmeta =
+  VDef id (Lambda parms expr emeta) vmeta
 
 data Expr a
-  = Lit    { lval  :: Literal
-           , meta  :: EMeta a
+  = Lit    { lval :: Literal
+           , meta :: Meta Expr a
            }
-  | Var    { name  :: ID
-           , meta  :: EMeta a
+  | Var    { name :: ID
+           , meta :: Meta Expr a
            }
   | Lambda { parms :: [ID]
            , expr  :: Expr a
-           , meta  :: EMeta a
+           , meta  :: Meta Expr a
            }
   | CaseOf { scrut :: Expr a
            , bind  :: ID
-           , paths :: [Clause a] 
-           , meta  :: EMeta a 
+           , paths :: [Clause a]
+           , meta  :: Meta Expr a
            }
   | LetRec { binds :: [ValDef a]
-           , expr  :: Expr a 
-           , meta  :: EMeta a
+           , expr  :: Expr a
+           , meta  :: Meta Expr a
            }
-  | Apply  { efun  :: Expr a 
-           , earg  :: Expr a
-           , meta  :: EMeta a
+  | Apply  { efun :: Expr a
+           , earg :: Expr a
+           , meta :: Meta Expr a
            }
 
-deriving instance (Show (EMeta a)) => Show (Expr a)
-
+deriving instance (MetaConstr Show a) => Show (Expr a)
 
 
 unfoldAp e = go e [] []
@@ -156,21 +187,25 @@ data Literal = UBInt Int deriving (Show)
 
 
 
-data Clause a 
-  = LitMatch { lpat :: Literal
+data Clause a
+  = LitMatch { lpat  :: Literal
                -- ^ Can match on primitive literals
              , consq :: Expr a
+             , cmeta :: Meta Clause a
              }
-  | ConMatch { cpat :: ID
-               -- ^ could refer to a var or construct, both are uniquely identified
-             , args :: [ID]
+  | ConMatch { cpat  :: ID
+               -- ^ could refer to a var or construct, both are uniquely
+               -- identified
+             , args  :: [ID]
                -- ^ newly scoped variables matching constructor parameters
              , consq :: Expr a
+             , cmeta :: Meta Clause a
              }
   | Default  { consq :: Expr a
+             , cmeta :: Meta Clause a
              }
 
-deriving instance (Show (EMeta a)) => Show (Clause a)
+deriving instance (MetaConstr Show a) => Show (Clause a)
 
 
 data ID = ID
@@ -190,9 +225,9 @@ instance Ord ID where
   compare = comparing uniq
 
 
-  
 
-ensureSimpleAST :: UniqProg a -> SimpleProg a
+
+ensureSimpleAST :: Unique Prog a -> Unique (Saturated Prog) a
 ensureSimpleAST = ensureSatFuns . ensureSatCons
 
 
@@ -206,26 +241,26 @@ ensureSatFuns (Prog (vdefs, ddefs)) = Prog (newVDefs, newDDefs)
         newVDefs   = map (satFunBind funArities) vdefs
 
 mkFunArityMap vdefs amap = foldr addLambda amap vdefs
-  where addLambda (FunDef id ps _ _) amap = M.insert id (length ps) amap
-        addLambda (VDef id _) amap = M.delete id amap
+  where addLambda (FunDef id ps _ _ _) amap = M.insert id (length ps) amap
+        addLambda (VDef id _ _) amap = M.delete id amap
 
-satFunBind arities (VDef b rhs) = VDef b $ satFunExpr arities rhs
+satFunBind arities (VDef b rhs m) = VDef b (satFunExpr arities rhs) m
 satFunExpr arities exp = case exp of
   Lit v m -> Lit v m
   Var n m -> Var n m
   Lambda parms ex meta -> Lambda parms (satFunExpr newMap ex) meta
     where newMap = foldr M.delete arities parms
-          
+
   CaseOf scrut bnd paths meta -> CaseOf newScrut bnd newPaths meta
     where withBindMap = M.delete bnd arities
           newScrut = satFunExpr arities scrut
-          newPaths = map satFunClause paths          
+          newPaths = map satFunClause paths
           satFunClause c = case c of
-            Default e       -> Default       $ satFunExpr withBindMap e
-            LitMatch l e    -> LitMatch l    $ satFunExpr withBindMap e
-            ConMatch c vs e -> ConMatch c vs $ satFunExpr newMap e
+            Default e m       -> Default       (satFunExpr withBindMap e) m
+            LitMatch l e m    -> LitMatch l    (satFunExpr withBindMap e) m
+            ConMatch c vs e m -> ConMatch c vs (satFunExpr newMap e)      m
               where newMap = foldr M.delete withBindMap (c:vs)
-          
+
   LetRec binds ex meta -> LetRec newBinds newEx meta
     where newBinds = map (satFunBind newMap) binds
           newMap = mkFunArityMap binds arities
@@ -244,7 +279,7 @@ satFunExpr arities exp = case exp of
           -- If we can't find it in the map, assume it's saturated.
           saturated = maybe True (== length eargs) $ M.lookup name arities
 
-          
+
 --------------------------------------------------------------------------------
 --   Check to ensure all constructors are fully applied
 --------------------------------------------------------------------------------
@@ -253,13 +288,13 @@ ensureSatCons ::  Prog a -> Prog (a :-> SatCons)
 ensureSatCons (Prog (vdefs, ddefs)) = Prog (newVDefs, newDDefs)
   where
     conArities = M.fromList $ concatMap (map getArity . constrs) ddefs
-    getArity (DCon name args) = (name, length args)
+    getArity (DCon name args _) = (name, length args)
     newDDefs = coerce ddefs -- don't need to do anything to datadefs
     newVDefs = map (satConBind conArities) vdefs
 
 
 satConBind :: Map ID Int -> ValDef a ->  ValDef (a :-> SatCons)
-satConBind arities (VDef b rhs) = VDef b $ satConExpr arities rhs
+satConBind arities (VDef b rhs m) = VDef b (satConExpr arities rhs) m
 
 satConExpr :: Map ID Int -> Expr a -> Expr (a :-> SatCons)
 satConExpr arities exp = case exp of
@@ -272,9 +307,9 @@ satConExpr arities exp = case exp of
     where newScrut = satConExpr arities scrut
           newPaths = map satConPath paths
           satConPath m = case m of
-            LitMatch l e    -> LitMatch l    $ satConExpr arities e
-            ConMatch c vs e -> ConMatch c vs $ satConExpr arities e
-            Default  e      -> Default       $ satConExpr arities e
+            LitMatch l e m    -> LitMatch l    (satConExpr arities e) m
+            ConMatch c vs e m -> ConMatch c vs (satConExpr arities e) m
+            Default  e m      -> Default       (satConExpr arities e) m
 
   LetRec binds ex meta -> LetRec newBinds newEx meta
     where newBinds = map (satConBind arities) binds
@@ -292,7 +327,7 @@ satConExpr arities exp = case exp of
                         " is an unsaturated constructor application"
           -- If we can't find it in the map, assume it's saturated.
           saturated = maybe True (== length eargs) $ M.lookup name arities
-    
+
 
 --------------------------------------------------------------------------------
 -- Assign unique integers to every variable introduced to a scope, update the
@@ -300,7 +335,7 @@ satConExpr arities exp = case exp of
 --------------------------------------------------------------------------------
 type UniqState a = State (Map String Int, Int) a
 
-uniquify :: Prog a -> UniqProg a
+uniquify :: Prog a -> Unique Prog a
 uniquify (Prog (vdefs, ddefs)) = Prog (newVDefs, newDDefs)
   where (newDDefs, st) = runState (mapM uniqDDef ddefs) (M.empty, 0)
         newVDefs = evalState (uniqVDefs vdefs) st
@@ -324,7 +359,7 @@ setUniq :: ID -> UniqState ID
 setUniq i@(ID name uniq)
   | uniq /= -1 = pure i
   | otherwise = do
-      (umap, cur) <- get      
+      (umap, cur) <- get
       case M.lookup name umap of
         Nothing -> error $ show name ++  " not in scope!"
         Just v  -> put (umap, cur) >> pure (ID name v)
@@ -338,15 +373,20 @@ newScope (ID name u) = do
   pure (ID name cur)
 
 
-uniqDDef :: DataDef a -> UniqState (DataDef (a :-> Uniquify))
-uniqDDef (DDef ty constrs) = DDef ty <$> mapM uniqConstr constrs
+uniqDDef :: DataDef a -> UniqState (Unique DataDef a)
+uniqDDef (DDef ty constrs) = do
+  conFs <- mapM uniqConstr constrs
+  let def = DDef ty (map ($ def) conFs)
+  return def
 
-uniqConstr :: Constructor a -> UniqState (Constructor (a :-> Uniquify))
-uniqConstr (DCon id ty) = DCon <$> newScope id <*> pure ty
- 
+uniqConstr :: Constructor a
+           -- returning a function type  to resolve circular refs
+           -> UniqState ((Unique DataDef a) ->  Unique Constructor a)
+uniqConstr (DCon id ty _) = DCon <$> newScope id <*> pure ty
+
 uniqVDefs:: [ValDef a] -> UniqState [ValDef (a :-> Uniquify)]
 uniqVDefs defs = mapM (newScope . binding) defs >> mapM oneDef defs
- where oneDef (VDef id rhs) = VDef <$> setUniq id <*> uniqExpr rhs
+ where oneDef (VDef id rhs m) = VDef <$> setUniq id <*> uniqExpr rhs <*> pure m
 
 uniqExpr:: Expr a -> UniqState (Expr (a :-> Uniquify))
 uniqExpr e = scoped $ case e of
@@ -361,10 +401,9 @@ uniqExpr e = scoped $ case e of
     LetRec <$> uniqVDefs bnds <*> uniqExpr exp <*> pure m
   Apply f e m ->
     Apply <$> uniqExpr f <*> uniqExpr e <*> pure m
-  
+
 uniqClause :: Clause a -> UniqState (Clause (a :-> Uniquify))
 uniqClause c = scoped $ case c of
-  LitMatch l e -> LitMatch l <$> uniqExpr e
-  ConMatch c vs e -> ConMatch c <$> mapM newScope vs <*> uniqExpr e
-  Default e -> Default <$> uniqExpr e
-
+  LitMatch l e m    -> LitMatch l <$> uniqExpr e                      <*> pure m
+  ConMatch c vs e m -> ConMatch c <$> mapM newScope vs <*> uniqExpr e <*> pure m
+  Default e m       -> Default    <$> uniqExpr e                      <*> pure m
