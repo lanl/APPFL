@@ -46,7 +46,7 @@ C - Constraints : relations on Types, have forms
                  
 F - Facts : about variables, have form v : σ, where σ is universally quantified
             about all the type variables that would otherwise be free,
-            e.g. ∀α₁̣…αₙ.τ
+            e.g. ∀α₁…αₙ.τ
 
 
 Var:
@@ -68,7 +68,8 @@ Var:
       are solved).
 
 
-Lit:  
+Lit:
+
       A, C, F
       ----------------------------------------------------------------------
       A, C, F
@@ -78,7 +79,8 @@ Lit:
       language.
       
 
-App:
+Application:
+
       A₁, C₁, F ⊢ e₁ : τ₁    A₂, C₂, F ⊢ e₂ : τ₂ 
       ----------------------------------------------------------------------
       A₂ ∪ A₂, C₂ ∪ C₂ ∪ {τ₁ ≡ τ₂ → τ₃}, F
@@ -90,7 +92,8 @@ App:
       constraint saying as much is introduced.
 
 
-Abs:
+Abstraction:
+
       A, C, F ⊢ e : τₑ
       ----------------------------------------------------------------------
       A \{v₁, …, vₙ}, Cₑ ∪ {τᵢ ≡ βᵢ | vᵢ : τᵢ ∈ A}, F
@@ -121,7 +124,7 @@ Case:
       Aₓ, Cₓ, F ⊢ eₓ : τₓ            Aᵢ, Cᵢ, F ⊢  cᵢ : (δᵢ, τᵢ)
       ----------------------------------------------------------------------
       ⋃Aᵢ ∪ Aₓ \{v}, ⋃Cᵢ ∪ Cₓ ∪ Cₚ ∪ Cᵣ, F
-      where Cₚ = {̣τₓ ≡ τᵥ | v : τᵥ ∈ ⋃Aᵢ} ∪ {τₓ ≡ δᵢ | i ∈ 1…n}
+      where Cₚ = {τₓ ≡ τᵥ | v : τᵥ ∈ ⋃Aᵢ} ∪ {τₓ ≡ δᵢ | i ∈ 1…n}
             Cᵣ = {τ₁ ≡ τᵢ | i ∈ 2…n}
       ⊢ case eₓ as v of {c₁,…,cₙ} : τ₁
 
@@ -186,3 +189,30 @@ Default Clause:
       ----------------------------------------------------------------------
       A, C, F
       ⊢ (_ -> e)  : (β, τ)
+
+
+      Default clauses have no constructor that can be used to infer a type, so a
+      fresh type variable, β, is used as the first of the pair of types given to
+      the clause. The type of the result expression is inferred just as in other
+      Clause rules.
+
+
+
+Typedef:
+
+      A, C, F        T α₁…αₙ = D₁ τ¹₁ … τ¹ₖ | … | Dₘ τᵐ₁ … τᵐₖ
+      ----------------------------------------------------------------------
+      A, C, F ∪ {Dᵢ : ∀α₁…αₙ . τⁱ₁→…→τⁱₖ→T α₁…αₙ | i ∈ 1…m}
+      ⊢ Dᵢ : ∀α₁…αₙ . τⁱ₁→…→τⁱₖ→T α₁…αₙ | i ∈ 1…m
+      
+      Data type definitions generate Facts that are used whenever constructors
+      are encountered, either in Clauses of Case expressions or as variables.
+      Since GADTs are not supported, every constructor is universally quantified
+      in the same way, i.e. a constructor may not "set" one of the free
+      variables of the type.
+
+      There may be a better way to express this, maybe in terms of a rule for
+      the constructor definition.  That would mean adding the forall
+      quantification here (since the free variables of the type are only known
+      here) rather than where the function type of the constructor is generated.
+      It feels unclean.
