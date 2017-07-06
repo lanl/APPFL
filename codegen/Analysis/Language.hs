@@ -153,27 +153,27 @@ pattern FunDef id parms expr emeta vmeta =
 
 data Expr a
   = Lit    { lval :: Literal
-           , meta :: Meta Expr a
+           , emeta :: Meta Expr a
            }
   | Var    { name :: ID
-           , meta :: Meta Expr a
+           , emeta :: Meta Expr a
            }
   | Lambda { parms :: [ID]
            , expr  :: Expr a
-           , meta  :: Meta Expr a
+           , emeta  :: Meta Expr a
            }
   | CaseOf { scrut :: Expr a
            , bind  :: ID
            , paths :: [Clause a]
-           , meta  :: Meta Expr a
+           , emeta  :: Meta Expr a
            }
   | LetRec { binds :: [ValDef a]
            , expr  :: Expr a
-           , meta  :: Meta Expr a
+           , emeta  :: Meta Expr a
            }
   | Apply  { efun :: Expr a
            , earg :: Expr a
-           , meta :: Meta Expr a
+           , emeta :: Meta Expr a
            }
 
 deriving instance (MetaConstr Show a) => Show (Expr a)
