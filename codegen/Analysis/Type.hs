@@ -1,3 +1,4 @@
+{-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE LambdaCase          #-}
 {-# LANGUAGE LiberalTypeSynonyms #-}
 {-# LANGUAGE NamedFieldPuns      #-}
@@ -239,3 +240,75 @@ constrainClause c = case c of
     pure $ Default newConsq (scTy, getType newConsq)
 
 
+--------------------------------------------------------------------------------
+-- Solving Constraints
+--------------------------------------------------------------------------------
+
+type Sub = Map Type Type
+
+
+class Subst a where
+  {-# MINIMAL (applyAll | applyOne) #-}
+  applyAll :: Sub -> a -> a
+  applyOne :: (Type, Type) -> a -> a
+  -- Probably hugely inefficient for most substitutions
+  applyAll subs v = foldr applyOne v $ M.toList subs
+
+  -- This is probably reasonable, though building singleton maps across many
+  -- calls will not be great.
+  applyOne (s,d) v = applyAll (M.singleton s d) v
+
+
+
+instance {-# OVERLAPPING #-}
+  (Subst a, Ord a) => Subst (Set a) where
+  applyOne s = S.map (applyOne s)
+  applyAll s = S.map (applyAll s)
+
+instance {-# OVERLAPPABLE #-}
+  (Functor f, Subst a) => Subst (f a) where
+  applyOne s = fmap (applyOne s)
+  applyAll s = fmap (applyAll s)
+
+instance Subst Type where
+  applyOne s@(old, new) t
+    | t == old = new
+    | TFun t1 t2 <- t = TFun (applyOne s t1) (applyOne s t2)
+    | TApp c ts  <- t = TApp c $ map (applyOne s) ts
+    | TForall vs ty <- t,
+      TVar v <- old,
+      not $ v `elem` vs = TForall vs $ applyOne s ty
+    | otherwise = t
+
+  -- Pretty sure this won't be needed for solving, at least.
+  applyAll s t = maybe t' (applyAll s) $ M.lookup t s
+    where t' =
+            case t of
+              TFun t1 t2 -> TFun (applyAll s t1) (applyAll s t2)
+              TApp c ts  -> TApp c $ map (applyAll s) ts
+              TForall vs ty -> TForall vs $ applyAll s' ty
+                where s' = M.filter (\case
+                                        TVar v -> not $ v `elem` vs
+                                        _ -> True
+                                    ) s
+              -- TPrim and TVar are not recursive, so should be picked up in the
+              -- initial lookup if they are to be substituted (unlikely for
+              -- TPrim)
+              _ -> t
+
+
+instance Subst Constraint where
+  applyOne s c = applyCnst applyOne s c
+  applyAll s c = applyCnst applyAll s c
+
+applyCnst :: (forall t . Subst t => s -> t -> t)
+          -> s -> Constraint -> Constraint
+applyCnst f s c = case c of
+  t1 :=: t2 -> f s t1 :=: f s t2
+  t1 :<: t2 -> f s t1 :<: f s t2
+  Impl ms t1 t2 -> Impl (f s ms) (f s t1) (f s t2)
+
+
+solve :: Constraints -> Sub
+solve c = go (S.toList c) [] M.empty
+  where go = undefined
