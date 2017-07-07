@@ -104,6 +104,8 @@ Abstraction:
       in the body, so monomorphic constraints are generated for each argument
       with an assumed type.
 
+      - Do we need fresh type variables here? I don't think so, but we'll see...
+
 
 Let:
 

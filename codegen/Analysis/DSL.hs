@@ -4,10 +4,12 @@
 {-# LANGUAGE MultiParamTypeClasses  #-}
 {-# LANGUAGE OverloadedStrings      #-}
 {-# LANGUAGE TypeFamilies           #-}
+{-# LANGUAGE LiberalTypeSynonyms           #-}
 
 module Analysis.DSL where
 
 import           Analysis.Language
+import           Analysis.Type
 import           Data.Char         (isNumber, isUpper)
 import           GHC.Exts          (IsString (..))
 
@@ -101,10 +103,29 @@ listDef = datatype "List a" =: [ "Nil"  % []
 builtin :: String -> ValDef ()
 builtin s = fromString s =: "builtin"
 
+builtins = map builtin
+  [ "builtin"
+  , "sub#"
+  , "add#"
+  , "mul#"
+  , "div#"
+  ]
 
 facDef :: ValDef ()
 facDef = "fac a#" =: letrec ["x" =: "0#"]
          .> match "a#" "x#"
          [ "0#" --> "1#"
-         , "_"  --> letrec [] .> "fac" .$ "x#"
+         , "_"  --> letrec [] .> "fac" .$ "sub# 1# x#"
          ]
+
+
+prog = Prog
+  ( builtins ++
+    [ facDef
+    ]
+  , [ listDef
+    ]
+  )
+
+uprog = uniquify prog
+tprog = typecheck uprog

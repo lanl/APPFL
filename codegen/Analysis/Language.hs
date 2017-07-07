@@ -88,6 +88,12 @@ data Type
 
   deriving (Show, Eq, Ord)
 
+finalResTy :: Type -> Type
+finalResTy t = case t of
+  TForall _ t' -> finalResTy t'
+  TFun    _ t' -> finalResTy t'
+  _            -> t
+
 instance Unparse Type where
   unparse t = case t of
     TFun t1 t2 -> let wrap | TFun{} <- t1 = parens
@@ -123,9 +129,9 @@ data InferTypes
 data SatFuns
 data SatCons
 
-type family Meta f a where
+type family Meta (f :: * -> *) a where
+  Meta Clause (a :-> InferTypes) = (Type, Type)
   Meta f (a :-> InferTypes) = Type
-  Meta Expr (a :-> Bool) = Bool
   Meta f (a :-> b) = Meta f a
   Meta f a = a
 
@@ -144,7 +150,6 @@ data ValDef a = VDef
   , rhsval  :: Expr a
   , vmeta   :: Meta ValDef a
   }
-
 
 deriving instance (MetaConstr Show a) => Show (ValDef a)
 
@@ -176,6 +181,15 @@ data Expr a
            , emeta :: Meta Expr a
            }
 
+class HasType a where
+  getType :: a -> Type
+
+instance (Type ~ Meta Expr a) => HasType (Expr a) where
+  getType = emeta
+
+instance HasType Literal where
+  getType (UBInt _) = TPrim PInt
+  
 deriving instance (MetaConstr Show a) => Show (Expr a)
 
 
@@ -183,8 +197,8 @@ unfoldAp e = go e [] []
   where go (Apply e1 e2 m) args metas = go e1 (e2:args) (m:metas)
         go ef args metas = (ef, args, metas)
 
-data Literal = UBInt Int deriving (Show)
 
+data Literal = UBInt Int deriving (Show)
 
 
 data Clause a
@@ -225,11 +239,8 @@ instance Ord ID where
   compare = comparing uniq
 
 
-
-
 ensureSimpleAST :: Unique Prog a -> Unique (Saturated Prog) a
 ensureSimpleAST = ensureSatFuns . ensureSatCons
-
 
 
 -- Check to make sure all functions are fully applied
