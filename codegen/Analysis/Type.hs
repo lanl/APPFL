@@ -10,8 +10,11 @@
 module Analysis.Type where
 
 import           Analysis.Language
+import PPrint
+
 import           Data.Coerce       (coerce)
 import           Data.Map          (Map)
+import           Data.Foldable          (fold)
 import qualified Data.Map          as M
 import           Data.Maybe        (fromMaybe)
 import           Data.Set          (Set)
@@ -19,7 +22,7 @@ import qualified Data.Set          as S
 
 import           Control.Monad.RWS
 
-
+import Debug.Trace
 
 type Fact        = (ID, Type)
 type Facts       = Map ID Type
@@ -44,7 +47,7 @@ type CGM = RWS Facts Constraints CGState
 
 
 mkType :: ID -> Type
-mkType (ID _ uniq) = TVar $ 't' : show uniq
+mkType (ID name uniq) = TVar $ 't': show uniq ++ '_' : name
 
 modifyAssums :: (Assumptions -> Assumptions) -> CGM ()
 modifyMonotys :: (Monotypes -> Monotypes) -> CGM ()
@@ -70,7 +73,7 @@ removeAssums bs = modifyAssums $ M.filterWithKey (\b _ -> not $ b `elem` bs)
 getAllAssums :: [ID] -> CGM Assumptions
 getAllAssums ids = gets $ M.filterWithKey (\k _ -> k `elem` ids) . assumps
 
-typecheck :: Unique Prog a -> (Constraints, Unique (Typed Prog) a)
+typecheck :: Unique Prog a -> (Unique (Typed Prog) a, Constraints, Sub)
 typecheck (Prog (vdefs, ddefs)) =
   if M.null $ assumps endState
   then typed
@@ -81,7 +84,7 @@ typecheck (Prog (vdefs, ddefs)) =
         initState = CGS M.empty S.empty 0
         (newVDefs, endState, constraints) =
           runRWS (constrainVDefs vdefs) facts initState
-        typed = (constraints, Prog (newVDefs, newDDefs))
+        typed = ( Prog (newVDefs, newDDefs), constraints, solve constraints)
 
 makeFacts :: Unique DataDef a -> Facts
 makeFacts (DDef t@(TApp tcon vs) cons) = M.fromList $ map mkFact cons
@@ -144,7 +147,7 @@ constrainExpr e = case e of
     in
       withMonotypes mtys $ do
       newBody <- constrainExpr body
-      assums <- getAllAssums params
+      assums  <- getAllAssums params
 
       let resTy = getType newBody -- type of body
           lamTy = foldr TFun resTy mtys -- function type for this expression
@@ -280,7 +283,6 @@ instance Subst Type where
       not $ v `elem` vs = TForall vs $ applyOne s ty
     | otherwise = t
 
-  -- Pretty sure this won't be needed for solving, at least.
   applyAll s t = maybe t' (applyAll s) $ M.lookup t s
     where t' =
             case t of
@@ -309,6 +311,84 @@ applyCnst f s c = case c of
   Impl ms t1 t2 -> Impl (f s ms) (f s t1) (f s t2)
 
 
+
+-- Get the free variables of a type.  Invariant: The returned Types are TVars
+freevars :: Type -> Set Type
+freevars t = case t of
+  TVar v -> S.singleton t
+  TPrim _ -> S.empty
+  TApp _ ts -> S.unions $ map freevars ts
+  TFun t1 t2 -> freevars t1 `S.union` freevars t2
+  TForall vs t -> freevars t S.\\ (S.fromList $ map TVar vs)
+
+
+activevars :: Constraint -> Set Type
+activevars c = case c of
+  t1 :=: t2 -> freevars t1 `S.union` freevars t2
+  t1 :<: t2 -> freevars t1 `S.union` freevars t2
+  Impl ms t1 t2 -> freevars t1 `S.union`
+                   (fold (S.map freevars ms) `S.intersection`
+                    freevars t2)
+
+-- | mgu = "Most General Unification"
+mgu :: Type -> Type -> Sub
+-- We may get some constraints like this
+mgu a b | a == b = M.empty
+        | otherwise = go a b True
+  where
+    go a@TVar{} b@_ _
+      | a `elem` freevars b = occursError a b
+      | otherwise           = M.singleton a b
+    go (TFun a1 a2) (TFun b1 b2) _ = mgu a1 a2 `compose` mgu b1 b2
+    go (TApp ac as) (TApp bc bs) _
+      | ac == bc && length as == length bs
+      = foldr compose M.empty $ zipWith mgu as bs
+    go _ _ firstTry
+      -- If this is the first attempt, swap the types and retry
+      | firstTry = go b a False
+      -- Otherwise we're trying to unify non-equal types.  Note that TForall is
+      -- not matched here, since it should never be passed as an argument.
+      | otherwise = unifyError a b
+
+unifyError a b = error $ unlines
+  [ "Can't unify!"
+  , show (unparse a) ++ " with " ++ show (unparse b)
+  ]
+occursError a b = error $ unlines
+  [ "Occurs check failed!"
+  , show (unparse a) ++ " found in " ++ show (unparse b)]
+
+compose s1 s2 = M.map (applyAll s1) s2 `M.union` s1
+
+instantiate :: Type -> Int -> (Type, Int)
+instantiate (TForall vs t) i | null vs   = (t, i)
+                             | otherwise = (ty, i + length vs)
+  where ty = applyAll (M.fromList pairs) t
+        pairs = zipWith mkPair [i..] vs
+        mkPair i v = (TVar v, TVar $ v ++ '@' : show i)
+instantiate t i = (t, i) -- shouldn't happen
+
+generalize :: Set Type -> Type -> Type
+generalize ms t = TForall vs t
+  where vs = foldr getVars [] $ freevars t S.\\ fold (S.map freevars ms)
+        getVars (TVar v) l = v : l
+        getVars _        l = l
+
 solve :: Constraints -> Sub
-solve c = go (S.toList c) [] M.empty
-  where go = undefined
+solve c = go (S.toList c) [] True 0 M.empty
+  where go [] [] _ _ sub = sub
+        go [] ds retry i sub
+          | retry = go ds [] False i sub
+          | otherwise = error $ "Can't make progress with " ++ show ds
+        go (c:cs) ds retry i sub = case traceShowId c of
+          t1 :=: t2 -> go cs ds True i $ mgu t1 t2 `compose` sub
+          t1 :<: t2 -> let (t', i') = traceShowId $ instantiate t2 i
+                           in go (t1:=:t':cs) ds True i' sub
+          Impl ms t1 t2
+            | freePoly1 <- freevars t2 S.\\ ms,
+              freePoly2 <- S.unions $ map activevars cs,
+              null $ freePoly1 `S.intersection` freePoly2
+              -> go (t1 :<: generalize ms t2 : cs) ds True i sub
+            | otherwise
+              -> go cs (c:ds) retry i sub
+

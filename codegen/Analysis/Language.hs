@@ -69,6 +69,20 @@ instance Eq (Constructor a) where
 instance Ord (Constructor a) where
   compare = comparing conName
 
+
+-- It might be fun to use GADTs here for stronger guarantees about Types:
+-- 
+-- > data Poly
+-- > data Mono
+-- > type MonoType = Type Mono
+-- > type PolyType = Type Poly
+-- > data Type a where
+-- >   TFun    :: MonoType -> MonoType   -> MonoType
+-- >   TVar    :: TyVar                  -> MonoType
+-- >   TPrim   :: PrimType               -> MonoType
+-- >   TApp    :: TyVar    -> [MonoType] -> MonoType
+-- >   TForall :: [TyVar]  -> MonoType   -> PolyType
+
 data Type
   = TFun Type Type
     -- ^ Function type: @t1 -> t2@. Could also be thought of as (TApp (TApp "->"
