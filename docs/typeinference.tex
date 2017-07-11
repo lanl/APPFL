@@ -30,27 +30,27 @@
 % \renewcommand{\abstractname}{Executive Summary}
 \begin{abstract}
   The great majority of papers on Hindley-Milner type inference provide rules
-  for only the simplest of type systems, for example lacking sum types, and
-  the simplest of language constructs, for example lacking recursive function
-  definitions, sum deconstruction, and more generally arbitrary algebraic data
-  types, leaving type inference for more realistic languages as
-  ``straightforward'' generalizations or extensions.  Anecdotal evidence
-  suggests that practitioners in fact find generalization or extension less
-  than straightforward.  Indeed, prior to Heeren et al.'s landmark
-  work~\cite{HHS02}, which post-dates Jones' notable exception to the
-  treatment of simplistic languages and type systems~\cite{Jones2000},
-  obtaining a sound ordering in the various steps (specialization,
-  generalization, etc.)  was arguably a black art.  Using the \emph{bottom-up}
-  approach of Heeren et al.\ we give type inference rules for two languages:
-  the APPFL compiler \cite{us} intermediate language modeled after GHC's STG
-  intermediate language~\cite{PJ??}, and a simple, generic, higher-order
-  polymorphic functional language designed to facilitate the explication and
-  implementation of a family of demand analysis techniques.  Both use a common
-  sub-language for defining algebraic data types including user-defined
-  \emph{unboxed types}, the latter for which typing rules are given as
-  suggested by Peyton Jones and Launchbury~\cite{PJL??}.  For comparison and
-  as a starting point we first present Heeren et al.'s language and inference
-  rules.
+  for only the simplest of type systems, for example lacking sum or product
+  types, and the simplest of language constructs, for example lacking mutually
+  recursive definitions, sum and product construction and deconstruction, and
+  more generally arbitrary algebraic data types, leaving type inference for
+  more realistic languages as ``straightforward'' generalizations or
+  extensions.  Anecdotal evidence suggests that practitioners in fact find
+  generalization or extension less than straightforward.  Indeed, prior to
+  Heeren et al.'s landmark work~\cite{HHS02}, which post-dates Jones' notable
+  exception to the treatment of simplistic languages and type
+  systems~\cite{Jones2000}, obtaining a sound ordering in the various steps
+  (specialization, generalization, etc.)  was arguably a black art.  Using the
+  \emph{bottom-up} approach of Heeren et al.\ we give type inference rules for
+  two languages: the APPFL compiler \cite{us} intermediate language modeled
+  after GHC's STG intermediate language~\cite{PJ??}, and a simple, generic,
+  higher-order polymorphic functional language designed to facilitate the
+  explication and implementation of a family of demand analysis techniques.
+  Both use a common sub-language for defining algebraic data types including
+  user-defined \emph{unboxed types}, the latter for which typing rules are
+  given as suggested by Peyton Jones and Launchbury~\cite{PJL??}.  For
+  comparison and as a starting point we first present Heeren et al.'s language
+  and inference rules.
 \end{abstract}
 
 % main body
