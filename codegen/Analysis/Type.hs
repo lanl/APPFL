@@ -159,6 +159,7 @@ constrainVDef (VDef name rhs _) = do
   pure $ VDef name newRhs (getType newRhs)
 
 
+-- | Generate constraints/assumptions from an Expr type
 constrainExpr :: Unique Expr a -> CGM (Unique (Typed Expr) a)
 constrainExpr e = case e of
   Lit v _ -> pure $ Lit v (getType v)
@@ -215,7 +216,8 @@ constrainExpr e = case e of
   Apply f e _ -> do
     newF <- constrainExpr f
     newE <- constrainExpr e
-    atyp <- freshTVar -- We want to have a type for every expression,
+    atyp <- freshTVar -- We want to have a type for every expression, so make a
+                      -- fresh one for the result of this application
     let constr = getType newF :=: TFun (getType newE) atyp
     tell $ S.singleton constr
     pure $ Apply newF newE atyp
@@ -231,6 +233,10 @@ constrainExpr e = case e of
     pure $ LetRec newBinds newRes (getType newRes)
 
 
+-- | Helper function for generating Constraints from Assumptions and a Map of
+-- types inferred for some set of variables.  The Constraints generated are on
+-- types associated only with variables that appear in both the Assumptions and
+-- the Map.
 constrainAssumsWith
   :: (Type -> Type -> Constraint) -- How to make a constraint
   -> Assumptions -- Assumptions about some variables
@@ -242,6 +248,7 @@ constrainAssumsWith comb assums tymap =
   tymap assums
 
 
+-- | Generate assumptions and constrains about a Clause.
 constrainClause :: Unique Clause a -> CGM (Unique (Typed Clause) a)
 constrainClause c = case c of
   LitMatch lit consq _ -> do
@@ -249,21 +256,23 @@ constrainClause c = case c of
     let ty = (getType lit, getType newConsq)
     pure $ LitMatch lit newConsq ty
 
-  ConMatch con args consq _ -> do
-    fact     <- asks getFact
-    newConsq <- constrainExpr consq
-    assums   <- getAllAssums args
-    argTys   <- mapM addGetAssum args
-    let
-        resTy   = finalResTy fact
+  ConMatch con args consq _ ->
+    let getFact facts = fromMaybe err $ M.lookup con facts
+        err = error $ "Why isn't there a fact for " ++ show con
+    in do
+      fact     <- asks getFact
+      newConsq <- constrainExpr consq
+      assums   <- getAllAssums args
+      argTys   <- mapM addGetAssum args
+      let
+        resTy   = finalResTy fact -- the 'T' in 'a -> b -> ... -> T'
         funTy   = foldr TFun resTy argTys
         constrs = S.insert (funTy :<: fact) $
           constrainAssumsWith (:=:) assums (M.fromList $ zip args argTys)
-    tell constrs
-    removeAssums args
-    pure $ ConMatch con args newConsq (resTy, getType newConsq)
-      where getFact facts = fromMaybe err $ M.lookup con facts
-            err = error $ "Why isn't there a fact for " ++ show con
+
+      -- Add constrants and remove assumptions about variables leaving scope
+      tell constrs >> removeAssums args
+      pure $ ConMatch con args newConsq (resTy, getType newConsq)
 
   Default consq _ -> do
     newConsq <- constrainExpr consq
@@ -272,11 +281,10 @@ constrainClause c = case c of
 
 
 --------------------------------------------------------------------------------
--- Solving Constraints
+-- Solving Constraints and generating Substitutions
 --------------------------------------------------------------------------------
 
 type Sub = Map Type Type
-
 
 class Subst a where
   {-# MINIMAL (applyAll | applyOne) #-}
@@ -288,7 +296,6 @@ class Subst a where
   -- This is probably reasonable, though building singleton maps across many
   -- calls will not be great.
   applyOne (s,d) v = applyAll (M.singleton s d) v
-
 
 
 instance {-# OVERLAPPING #-}
@@ -326,18 +333,19 @@ instance Subst Type where
               -- TPrim)
               _ -> t
 
-
+-- We need to be able to apply substitutions to the unsolved constraints
 instance Subst Constraint where
   applyOne s c = applyCnst applyOne s c
   applyAll s c = applyCnst applyAll s c
 
+-- Substitution pattern for Constraints is simple delegation, but to abstract
+-- it into a useful function requires a higher-rank type.
 applyCnst :: (forall t . Subst t => s -> t -> t)
           -> s -> Constraint -> Constraint
 applyCnst f s c = case c of
   t1 :=: t2 -> f s t1 :=: f s t2
   t1 :<: t2 -> f s t1 :<: f s t2
   Impl ms t1 t2 -> Impl (f s ms) (f s t1) (f s t2)
-
 
 
 -- Get the free variables of a type.  Invariant: The returned Types are TVars
@@ -349,7 +357,7 @@ freevars t = case t of
   TFun t1 t2 -> freevars t1 `S.union` freevars t2
   TForall vs t -> freevars t S.\\ (S.fromList $ map TVar vs)
 
-
+-- Get the active variables in a Constraint.
 activevars :: Constraint -> Set Type
 activevars c = case c of
   t1 :=: t2 -> freevars t1 `S.union` freevars t2
@@ -360,7 +368,8 @@ activevars c = case c of
 
 -- | mgu = "Most General Unification"
 mgu :: Type -> Type -> Sub
--- We may get some constraints like this
+-- We may get some constraints like this, particularly after substitutions, e.g.
+--  TPrim PInt :=: TPrim PInt
 mgu a b | a == b = M.empty
         | otherwise = go a b True
   where
@@ -437,7 +446,6 @@ fixSub s = go s (M.map (applyAll s) s)
 
 
 -- A substitution can be applied to every level of the AST:
-
 instance Subst (Typed ValDef a) where
   applyAll s (VDef id e t) = VDef id (applyAll s e) (applyAll s t)
 
