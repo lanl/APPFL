@@ -111,27 +111,43 @@ builtin s = fromString s =: "builtin"
 
 builtins = map builtin
   [ "builtin"
-  -- , "add#"
-  -- , "mul#"
-  -- , "div#"
+  , "add#"
+  , "mul#"
+  , "div#"
   ]
 
-subDef, facDef, broken :: ValDef ()
-subDef = "sub#" =: "builtin"
+appendDef, foldrDef, subDef, facDef, broken :: ValDef ()
+subDef = "sub# a b" =: "builtin a b"
 
 
 facDef = "fac a#" =: match "a#" "x#"
          [ "0#" --> "1#"
-         , "_"  --> letrec [] .> "fac" .$ "sub# 1# x#"
+         , "_"  --> letrec [] .> "mul# a#" .$ "fac" .$ "sub# 1# x#"
          ]
 
-broken = "broken" =: "fac True"
+appendDef = "append xs ys" =: match "xs" "z"
+            [ "Nil" --> "ys"
+            , "Cons h t" --> "Cons h" .$ "append t ys"
+            ]
+
+foldrDef = "foldr f s l" =: match "l" "z"
+           [ "Nil" --> "s"
+           , "Cons h t" --> "f h" .$ "foldr f s t"
+           ]
+
+broken = "broken x" =: match "x" "z"
+         [ "Nil" --> "Nil"
+         , "Cons h t" --> "Cons" .$ "broken h" .$ "broken t"
+         ]
 
 prog = Prog
   ( builtins ++
-    [ facDef
+    [
+      facDef
     , subDef
-    , broken      
+    , foldrDef
+--    , broken
+--    , appendDef
     ]
   , [ listDef
     , boolDef

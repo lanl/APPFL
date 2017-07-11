@@ -429,9 +429,10 @@ uniqExpr e = scoped $ case e of
     LetRec <$> uniqVDefs bnds <*> uniqExpr exp <*> pure m
   Apply f e m ->
     Apply <$> uniqExpr f <*> uniqExpr e <*> pure m
-p
+
 uniqClause :: Clause a -> UniqState (Clause (a :-> Uniquify))
 uniqClause c = scoped $ case c of
-  LitMatch l e m    -> LitMatch l <$> uniqExpr e                      <*> pure m
-  ConMatch c vs e m -> ConMatch c <$> mapM newScope vs <*> uniqExpr e <*> pure m
-  Default e m       -> Default    <$> uniqExpr e                      <*> pure m
+  LitMatch l e m    -> LitMatch l <$> uniqExpr e <*> pure m
+  ConMatch c vs e m -> ConMatch <$> setUniq c <*>
+                       mapM newScope vs <*> uniqExpr e <*> pure m
+  Default e m       -> Default <$> uniqExpr e <*> pure m

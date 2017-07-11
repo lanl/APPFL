@@ -24,6 +24,8 @@ import qualified Data.Set          as S
 
 import           Control.Monad.RWS
 
+import Text.Show.Pretty
+
 import Debug.Trace
 
 type Fact        = (ID, Type)
@@ -69,7 +71,7 @@ addGetAssum id@(ID name uniq) = do
   let ty = TVar $ 't': show i ++ '_' : showUniqName id
   modifyAssums $ M.insertWith (++) id [ty]
   return ty
-  
+
 withMonotypes mts act = do
   mtys <- gets monotys
   modifyMonotys (S.union (S.fromList mts))
@@ -92,11 +94,12 @@ getAllAssums ids = gets $ M.filterWithKey (\k _ -> k `elem` ids) . assumps
 type UT f a = Unique (Typed f) a
 
 typecheck :: Unique Prog a ->
-  ([UT ValDef a], Constraints, Sub, Sub)
+  ([UT ValDef a], Constraints, Sub, Sub, Bool)
 typecheck (Prog (vdefs, ddefs)) =
   if M.null $ assumps endState
   then typed
-  else typed -- error $ "Assumptions aren't empty?\n" ++ show (assumps endState) ++
+  else typed
+       -- error $ "Assumptions aren't empty?\n" ++ show (assumps endState) ++
        -- '\n':show newVDefs
   where facts = M.unions $ map makeFacts ddefs
         newDDefs = map coerceDef ddefs
@@ -104,17 +107,16 @@ typecheck (Prog (vdefs, ddefs)) =
         initState = CGS M.empty S.empty IM.empty 0
         (newVDefs, endState, constraints) =
           runRWS (constrainVDefs vdefs) facts initState
-        subst = case traceShowId newVDefs of
-                  [] -> solve constraints
-                  x -> solve constraints
+        subst = case traceWith ppShow (newVDefs, constraints) of
+                  ([], _) -> solve constraints
+                  x  -> solve constraints
         fixed = fixSub subst
         tprog = applyAll fixed newVDefs
-        typed = (newVDefs, constraints, subst, fixed)
+        typed = (newVDefs, constraints, subst, fixed, subst == fixed)
 
 makeFacts :: Unique DataDef a -> Facts
 makeFacts (DDef t@(TApp tcon vs) cons) = M.fromList $ map mkFact cons
-  where mkFact dc = (conName dc, theType)
-        theType = TForall vars t
+  where mkFact (DCon id tys _) = (id, TForall vars $ foldr TFun t tys)
         vars = map (\case
                        TVar v -> v
                        _      -> error "DataDef type should be a simple TApp")
@@ -162,7 +164,7 @@ constrainExpr e = case e of
   Lit v _ -> pure $ Lit v (getType v)
   Var n _ -> do
     ty <- addGetAssum n
-    facts <- ask   
+    facts <- ask
     mapM (\fact -> tell . S.singleton $ ty :<: fact) $ M.lookup n facts
     pure (Var n ty)
 
@@ -252,7 +254,7 @@ constrainClause c = case c of
     newConsq <- constrainExpr consq
     assums   <- getAllAssums args
     argTys   <- mapM addGetAssum args
-    let 
+    let
         resTy   = finalResTy fact
         funTy   = foldr TFun resTy argTys
         constrs = S.insert (funTy :<: fact) $
@@ -385,19 +387,8 @@ occursError a b = error $ unlines
   , show (unparse a) ++ " found in " ++ show (unparse b)]
 
 
-
-compose s1 s2 = merged
-  where subbed = M.map (applyAll s1) s2
-        -- It's possible to have two maps that express equivalence relations for
-        -- the same type, e.g.:
-        --  s1 = fromList [ ..., (T, Q), ... ]
-        --  s2 = fromList [ ..., (T, R), ... ]
-        --
-        -- In the Heeren paper, composing two substitutions like this would
-        -- produce one with an equivalence between Q and R.  
-        intersect = fold $ M.intersectionWith mgu subbed s2
-        merged = -- intersect `M.union`
-          subbed `M.union` s1
+compose :: Sub -> Sub -> Sub
+compose s1 s2 = M.map (applyAll s1) s2 `M.union` s1
 
 
 instantiate :: Type -> Int -> (Type, Int)
@@ -420,9 +411,9 @@ solve c = go (S.toList c) [] True 0 M.empty
         go [] ds retry i sub
           | retry = go ds [] False i sub
           | otherwise = error $ "Can't make progress with " ++ show ds
-        go (c:cs) ds retry i sub = case traceShowId c of
-          t1 :=: t2 -> go cs' ds' True i $ traceWith (unlines . map show . M.toList) sub'
-            where sub' = (traceShowId $ mgu t1 t2) `compose` sub
+        go (c:cs) ds retry i sub = case c of
+          t1 :=: t2 -> go cs' ds' True i sub'
+            where sub' = mgu t1 t2 `compose` sub
                   cs' = applyAll sub' cs
                   ds' = applyAll sub' ds
           t1 :<: t2 -> let (t', i') = instantiate t2 i
@@ -435,11 +426,17 @@ solve c = go (S.toList c) [] True 0 M.empty
             | otherwise
               -> go cs (c:ds) retry i sub
 
-
+-- | /fixing/ the Substitution seemed like it might be necessary at first, but I
+-- think now it can be used as a sanity check.  If the Substitution resulting
+-- from solving Constraints can be reduced with this function, something has
+-- probably gone wrong.
 fixSub :: Sub -> Sub
 fixSub s = go s (M.map (applyAll s) s)
   where go s1 s2 | s1 == s2 = s1
                  | otherwise = go s2 (M.map (applyAll s2) s2)
+
+
+-- A substitution can be applied to every level of the AST:
 
 instance Subst (Typed ValDef a) where
   applyAll s (VDef id e t) = VDef id (applyAll s e) (applyAll s t)
@@ -448,10 +445,14 @@ instance Subst (Typed Expr a) where
   applyAll s e = case e of
     Lit l t -> Lit l (applyAll s t)
     Var n t -> Var n (applyAll s t)
-    Lambda ps e t -> Lambda ps (applyAll s e) (applyAll s t)
-    CaseOf se sb cs e -> CaseOf (applyAll s se) sb (applyAll s cs) (applyAll s e)
-    LetRec ds e t -> LetRec (applyAll s ds) (applyAll s e) (applyAll s t)
-    Apply f e t -> Apply (applyAll s f) (applyAll s e) (applyAll s t)
+    Lambda ps e t
+      -> Lambda ps (applyAll s e) (applyAll s t)
+    CaseOf se sb cs e
+      -> CaseOf (applyAll s se) sb (applyAll s cs) (applyAll s e)
+    LetRec ds e t
+      -> LetRec (applyAll s ds) (applyAll s e) (applyAll s t)
+    Apply f e t
+      -> Apply (applyAll s f) (applyAll s e) (applyAll s t)
 
 instance Subst (Typed Clause a) where
   applyAll s c = case c of
