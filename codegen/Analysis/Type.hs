@@ -14,6 +14,8 @@ import PPrint
 
 import           Data.Coerce       (coerce)
 import           Data.Map          (Map)
+import           Data.IntMap       (IntMap)
+import qualified Data.IntMap       as IM
 import           Data.Foldable          (fold)
 import qualified Data.Map          as M
 import           Data.Maybe        (fromMaybe)
@@ -39,6 +41,7 @@ data Constraint
 -- Constraint Generation State
 data CGState = CGS { assumps :: Assumptions
                    , monotys :: Monotypes
+                   , uniqMap :: IntMap Int
                    , nextInt :: Int
                    }
 
@@ -46,14 +49,27 @@ data CGState = CGS { assumps :: Assumptions
 type CGM = RWS Facts Constraints CGState
 
 
-mkType :: ID -> Type
-mkType (ID name uniq) = TVar $ 't': show uniq ++ '_' : name
 
 modifyAssums :: (Assumptions -> Assumptions) -> CGM ()
 modifyMonotys :: (Monotypes -> Monotypes) -> CGM ()
 modifyAssums f = modify $ \c -> c{assumps = f $ assumps c}
 modifyMonotys f = modify $ \c -> c{monotys = f $ monotys c}
-addAssum id ty = modifyAssums $ M.insertWith (++) id [ty]
+
+nextIntFor :: Int -> CGM Int
+nextIntFor u = do
+  umap <- gets uniqMap
+  let i = fromMaybe 0 $ IM.lookup u umap
+      m' = IM.insert u (i + 1) umap
+  modify $ \c -> c{uniqMap = m'}
+  return i
+
+addGetAssum :: ID -> CGM Type
+addGetAssum id@(ID name uniq) = do
+  i <- nextIntFor uniq
+  let ty = TVar $ 't': show i ++ '_' : showUniqName id
+  modifyAssums $ M.insertWith (++) id [ty]
+  return ty
+  
 withMonotypes mts act = do
   mtys <- gets monotys
   modifyMonotys (S.union (S.fromList mts))
@@ -73,18 +89,27 @@ removeAssums bs = modifyAssums $ M.filterWithKey (\b _ -> not $ b `elem` bs)
 getAllAssums :: [ID] -> CGM Assumptions
 getAllAssums ids = gets $ M.filterWithKey (\k _ -> k `elem` ids) . assumps
 
-typecheck :: Unique Prog a -> (Unique (Typed Prog) a, Constraints, Sub)
+type UT f a = Unique (Typed f) a
+
+typecheck :: Unique Prog a ->
+  ([UT ValDef a], Constraints, Sub, Sub)
 typecheck (Prog (vdefs, ddefs)) =
   if M.null $ assumps endState
   then typed
-  else error $ "Assumptions aren't empty?\n" ++ show (assumps endState)
+  else typed -- error $ "Assumptions aren't empty?\n" ++ show (assumps endState) ++
+       -- '\n':show newVDefs
   where facts = M.unions $ map makeFacts ddefs
         newDDefs = map coerceDef ddefs
         coerceDef (DDef ty cons) = DDef ty (map coerce cons)
-        initState = CGS M.empty S.empty 0
+        initState = CGS M.empty S.empty IM.empty 0
         (newVDefs, endState, constraints) =
           runRWS (constrainVDefs vdefs) facts initState
-        typed = ( Prog (newVDefs, newDDefs), constraints, solve constraints)
+        subst = case traceShowId newVDefs of
+                  [] -> solve constraints
+                  x -> solve constraints
+        fixed = fixSub subst
+        tprog = applyAll fixed newVDefs
+        typed = (newVDefs, constraints, subst, fixed)
 
 makeFacts :: Unique DataDef a -> Facts
 makeFacts (DDef t@(TApp tcon vs) cons) = M.fromList $ map mkFact cons
@@ -135,17 +160,16 @@ constrainVDef (VDef name rhs _) = do
 constrainExpr :: Unique Expr a -> CGM (Unique (Typed Expr) a)
 constrainExpr e = case e of
   Lit v _ -> pure $ Lit v (getType v)
-  Var n _ -> addAssum n ty >> ask >>= maybeConstrain >> pure (Var n ty)
-    where ty = mkType n
-          maybeConstrain :: Facts -> CGM ()
-          maybeConstrain facts = case M.lookup n facts of
-            Nothing -> pure ()
-            Just f  -> tell . S.singleton $ ty :<: f
+  Var n _ -> do
+    ty <- addGetAssum n
+    facts <- ask   
+    mapM (\fact -> tell . S.singleton $ ty :<: fact) $ M.lookup n facts
+    pure (Var n ty)
 
-  Lambda params body _ ->
-    let mtys = (map mkType params)
-    in
-      withMonotypes mtys $ do
+
+  Lambda params body _ -> do
+    mtys <- mapM addGetAssum params
+    withMonotypes mtys $ do
       newBody <- constrainExpr body
       assums  <- getAllAssums params
 
@@ -212,8 +236,9 @@ constrainAssumsWith
   -> Constraints -- Yields a Constraint Set
 constrainAssumsWith comb assums tymap =
   S.fromList . concat . M.elems $
-  M.intersectionWith (\t ts -> map (t `comb`) ts)
+  M.intersectionWith (\t ts -> map (comb t) ts)
   tymap assums
+
 
 constrainClause :: Unique Clause a -> CGM (Unique (Typed Clause) a)
 constrainClause c = case c of
@@ -226,7 +251,8 @@ constrainClause c = case c of
     fact     <- asks getFact
     newConsq <- constrainExpr consq
     assums   <- getAllAssums args
-    let argTys  = map mkType args
+    argTys   <- mapM addGetAssum args
+    let 
         resTy   = finalResTy fact
         funTy   = foldr TFun resTy argTys
         constrs = S.insert (funTy :<: fact) $
@@ -283,7 +309,7 @@ instance Subst Type where
       not $ v `elem` vs = TForall vs $ applyOne s ty
     | otherwise = t
 
-  applyAll s t = maybe t' (applyAll s) $ M.lookup t s
+  applyAll s t = fromMaybe t' $ M.lookup t s
     where t' =
             case t of
               TFun t1 t2 -> TFun (applyAll s t1) (applyAll s t2)
@@ -339,7 +365,7 @@ mgu a b | a == b = M.empty
     go a@TVar{} b@_ _
       | a `elem` freevars b = occursError a b
       | otherwise           = M.singleton a b
-    go (TFun a1 a2) (TFun b1 b2) _ = mgu a1 a2 `compose` mgu b1 b2
+    go (TFun a1 a2) (TFun b1 b2) _ = mgu a1 b1 `compose` mgu a2 b2
     go (TApp ac as) (TApp bc bs) _
       | ac == bc && length as == length bs
       = foldr compose M.empty $ zipWith mgu as bs
@@ -358,7 +384,21 @@ occursError a b = error $ unlines
   [ "Occurs check failed!"
   , show (unparse a) ++ " found in " ++ show (unparse b)]
 
-compose s1 s2 = M.map (applyAll s1) s2 `M.union` s1
+
+
+compose s1 s2 = merged
+  where subbed = M.map (applyAll s1) s2
+        -- It's possible to have two maps that express equivalence relations for
+        -- the same type, e.g.:
+        --  s1 = fromList [ ..., (T, Q), ... ]
+        --  s2 = fromList [ ..., (T, R), ... ]
+        --
+        -- In the Heeren paper, composing two substitutions like this would
+        -- produce one with an equivalence between Q and R.  
+        intersect = fold $ M.intersectionWith mgu subbed s2
+        merged = -- intersect `M.union`
+          subbed `M.union` s1
+
 
 instantiate :: Type -> Int -> (Type, Int)
 instantiate (TForall vs t) i | null vs   = (t, i)
@@ -381,8 +421,11 @@ solve c = go (S.toList c) [] True 0 M.empty
           | retry = go ds [] False i sub
           | otherwise = error $ "Can't make progress with " ++ show ds
         go (c:cs) ds retry i sub = case traceShowId c of
-          t1 :=: t2 -> go cs ds True i $ mgu t1 t2 `compose` sub
-          t1 :<: t2 -> let (t', i') = traceShowId $ instantiate t2 i
+          t1 :=: t2 -> go cs' ds' True i $ traceWith (unlines . map show . M.toList) sub'
+            where sub' = (traceShowId $ mgu t1 t2) `compose` sub
+                  cs' = applyAll sub' cs
+                  ds' = applyAll sub' ds
+          t1 :<: t2 -> let (t', i') = instantiate t2 i
                            in go (t1:=:t':cs) ds True i' sub
           Impl ms t1 t2
             | freePoly1 <- freevars t2 S.\\ ms,
@@ -392,3 +435,33 @@ solve c = go (S.toList c) [] True 0 M.empty
             | otherwise
               -> go cs (c:ds) retry i sub
 
+
+fixSub :: Sub -> Sub
+fixSub s = go s (M.map (applyAll s) s)
+  where go s1 s2 | s1 == s2 = s1
+                 | otherwise = go s2 (M.map (applyAll s2) s2)
+
+instance Subst (Typed ValDef a) where
+  applyAll s (VDef id e t) = VDef id (applyAll s e) (applyAll s t)
+
+instance Subst (Typed Expr a) where
+  applyAll s e = case e of
+    Lit l t -> Lit l (applyAll s t)
+    Var n t -> Var n (applyAll s t)
+    Lambda ps e t -> Lambda ps (applyAll s e) (applyAll s t)
+    CaseOf se sb cs e -> CaseOf (applyAll s se) sb (applyAll s cs) (applyAll s e)
+    LetRec ds e t -> LetRec (applyAll s ds) (applyAll s e) (applyAll s t)
+    Apply f e t -> Apply (applyAll s f) (applyAll s e) (applyAll s t)
+
+instance Subst (Typed Clause a) where
+  applyAll s c = case c of
+    LitMatch p c (tp, tc)
+      -> LitMatch p (applyAll s c) (applyAll s tp, applyAll s tc)
+    ConMatch p as c (tp, tc)
+      -> ConMatch p as (applyAll s c) (applyAll s tp, applyAll s tc)
+    Default c (tp, tc)
+      -> Default (applyAll s c) (applyAll s tp, applyAll s tc)
+
+
+traceWith :: (a -> String) -> a -> a
+traceWith f b = trace (f b) b

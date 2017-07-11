@@ -38,6 +38,9 @@ instance IsString ([DataDef a -> Constructor a] -> DataDef a) where
   fromString s conFs = let def = DDef (fromString s) $ map ($ def) conFs
                        in def
 
+instance IsString (DataDef a -> Constructor a) where
+  fromString s = \def -> DCon (ID s (-1)) [] def
+
 instance IsString (Expr () -> ValDef ()) where
   fromString s = case words s of
     [b]  -> \e -> VDef (ID b (-1)) e ()
@@ -95,35 +98,43 @@ l .> e = l e ()
 
 
 
-listDef :: DataDef a
-listDef = datatype "List a" =: [ "Nil"  % []
+listDef, boolDef :: DataDef a
+listDef = datatype "List a" =: [ "Nil"
                                , "Cons" % ["a", "List a"]
                                ]
+boolDef = datatype "Bool" =: [ "True" 
+                             , "False"
+                             ]
 
 builtin :: String -> ValDef ()
 builtin s = fromString s =: "builtin"
 
 builtins = map builtin
   [ "builtin"
-  , "sub#"
-  , "add#"
-  , "mul#"
-  , "div#"
+  -- , "add#"
+  -- , "mul#"
+  -- , "div#"
   ]
 
-facDef :: ValDef ()
-facDef = "fac a#" =: letrec ["x" =: "0#"]
-         .> match "a#" "x#"
+subDef, facDef, broken :: ValDef ()
+subDef = "sub#" =: "builtin"
+
+
+facDef = "fac a#" =: match "a#" "x#"
          [ "0#" --> "1#"
          , "_"  --> letrec [] .> "fac" .$ "sub# 1# x#"
          ]
 
+broken = "broken" =: "fac True"
 
 prog = Prog
   ( builtins ++
     [ facDef
+    , subDef
+    , broken      
     ]
   , [ listDef
+    , boolDef
     ]
   )
 

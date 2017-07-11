@@ -1,3 +1,4 @@
+{-# LANGUAGE AllowAmbiguousTypes #-}
 {-# LANGUAGE ConstraintKinds       #-}
 {-# LANGUAGE DataKinds             #-}
 {-# LANGUAGE FlexibleContexts      #-}
@@ -205,8 +206,8 @@ instance HasType Literal where
   getType (UBInt _) = TPrim PInt
   
 deriving instance (MetaConstr Show a) => Show (Expr a)
-
-
+  
+  
 unfoldAp e = go e [] []
   where go (Apply e1 e2 m) args metas = go e1 (e2:args) (m:metas)
         go ef args metas = (ef, args, metas)
@@ -241,6 +242,8 @@ data ID = ID
   , uniq    :: Int    -- ^ The /real/ unique identifier for this element.
   }
   deriving (Show, Eq)
+
+showUniqName (ID n u) = n ++ '[':show u ++ "]"
 
 looksLikeCon :: ID -> Bool
 looksLikeCon (occName -> x:_) = isUpper x
@@ -426,7 +429,7 @@ uniqExpr e = scoped $ case e of
     LetRec <$> uniqVDefs bnds <*> uniqExpr exp <*> pure m
   Apply f e m ->
     Apply <$> uniqExpr f <*> uniqExpr e <*> pure m
-
+p
 uniqClause :: Clause a -> UniqState (Clause (a :-> Uniquify))
 uniqClause c = scoped $ case c of
   LitMatch l e m    -> LitMatch l <$> uniqExpr e                      <*> pure m
