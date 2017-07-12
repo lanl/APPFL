@@ -1,10 +1,10 @@
 {-# LANGUAGE FlexibleContexts       #-}
 {-# LANGUAGE FlexibleInstances      #-}
 {-# LANGUAGE FunctionalDependencies #-}
+{-# LANGUAGE LiberalTypeSynonyms    #-}
 {-# LANGUAGE MultiParamTypeClasses  #-}
 {-# LANGUAGE OverloadedStrings      #-}
 {-# LANGUAGE TypeFamilies           #-}
-{-# LANGUAGE LiberalTypeSynonyms           #-}
 
 module Analysis.DSL where
 
@@ -102,7 +102,7 @@ listDef, boolDef :: DataDef a
 listDef = datatype "List a" =: [ "Nil"
                                , "Cons" % ["a", "List a"]
                                ]
-boolDef = datatype "Bool" =: [ "True" 
+boolDef = datatype "Bool" =: [ "True"
                              , "False"
                              ]
 

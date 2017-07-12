@@ -1,32 +1,32 @@
-{-# LANGUAGE RankNTypes #-}
+{-# LANGUAGE FlexibleInstances   #-}
 {-# LANGUAGE LambdaCase          #-}
 {-# LANGUAGE LiberalTypeSynonyms #-}
 {-# LANGUAGE NamedFieldPuns      #-}
+{-# LANGUAGE RankNTypes          #-}
 {-# LANGUAGE RecordWildCards     #-}
 {-# LANGUAGE TypeOperators       #-}
-{-# LANGUAGE FlexibleInstances       #-}
 
 
 module Analysis.Type where
 
 import           Analysis.Language
-import PPrint
+import           PPrint
 
-import           Data.Coerce       (coerce)
-import           Data.Map          (Map)
-import           Data.IntMap       (IntMap)
-import qualified Data.IntMap       as IM
-import           Data.Foldable          (fold)
-import qualified Data.Map          as M
-import           Data.Maybe        (fromMaybe)
-import           Data.Set          (Set)
-import qualified Data.Set          as S
+import           Data.Coerce         (coerce)
+import           Data.Foldable       (fold)
+import           Data.IntMap         (IntMap)
+import qualified Data.IntMap         as IM
+import           Data.Map            (Map)
+import qualified Data.Map            as M
+import           Data.Maybe          (fromMaybe)
+import           Data.Set            (Set)
+import qualified Data.Set            as S
 
 import           Control.Monad.RWS
+import           Control.Monad.State
 
-import Text.Show.Pretty
-
-import Debug.Trace
+import           Text.Show.Pretty
+import           Debug.Trace
 
 type Fact        = (ID, Type)
 type Facts       = Map ID Type
@@ -47,10 +47,12 @@ data CGState = CGS { assumps :: Assumptions
                    , nextInt :: Int
                    }
 
+
 -- Constraint Generation Monad
 type CGM = RWS Facts Constraints CGState
 
 
+allNames = [c:cs | cs <- "" : allNames, c <- ['a'..'z']]
 
 modifyAssums :: (Assumptions -> Assumptions) -> CGM ()
 modifyMonotys :: (Monotypes -> Monotypes) -> CGM ()
@@ -94,25 +96,22 @@ getAllAssums ids = gets $ M.filterWithKey (\k _ -> k `elem` ids) . assumps
 type UT f a = Unique (Typed f) a
 
 typecheck :: Unique Prog a ->
-  ([UT ValDef a], Constraints, Sub, Sub, Bool)
+  ([UT ValDef a], [UT ValDef a], Sub)
 typecheck (Prog (vdefs, ddefs)) =
   if M.null $ assumps endState
   then typed
-  else typed
-       -- error $ "Assumptions aren't empty?\n" ++ show (assumps endState) ++
-       -- '\n':show newVDefs
+  else  error $ "Assumptions aren't empty?\n" ++ show (assumps endState) ++
+        '\n':show newVDefs
   where facts = M.unions $ map makeFacts ddefs
         newDDefs = map coerceDef ddefs
         coerceDef (DDef ty cons) = DDef ty (map coerce cons)
         initState = CGS M.empty S.empty IM.empty 0
         (newVDefs, endState, constraints) =
           runRWS (constrainVDefs vdefs) facts initState
-        subst = case traceWith ppShow (newVDefs, constraints) of
-                  ([], _) -> solve constraints
-                  x  -> solve constraints
-        fixed = fixSub subst
-        tprog = applyAll fixed newVDefs
-        typed = (newVDefs, constraints, subst, fixed, subst == fixed)
+        subst = solve constraints
+        tprog = applyAll subst newVDefs
+        tvars = map TVar allNames
+        typed = (newVDefs, map (coVDef M.empty tvars) tprog, subst)
 
 makeFacts :: Unique DataDef a -> Facts
 makeFacts (DDef t@(TApp tcon vs) cons) = M.fromList $ map mkFact cons
@@ -164,9 +163,9 @@ constrainExpr :: Unique Expr a -> CGM (Unique (Typed Expr) a)
 constrainExpr e = case e of
   Lit v _ -> pure $ Lit v (getType v)
   Var n _ -> do
-    ty <- addGetAssum n
     facts <- ask
-    mapM (\fact -> tell . S.singleton $ ty :<: fact) $ M.lookup n facts
+    ty <- maybe (addGetAssum n) pure $ M.lookup n facts
+    -- mapM (\fact -> tell . S.singleton $ ty :<: fact)
     pure (Var n ty)
 
 
@@ -474,3 +473,62 @@ instance Subst (Typed Clause a) where
 
 traceWith :: (a -> String) -> a -> a
 traceWith f b = trace (f b) b
+
+
+
+--------------------------------------------------------------------------------
+-- | Closing over type variables
+--
+-- As In the 'CO' typeclass from HMStg.hs, we want to make it explicit where
+-- polymorphic types lie (using 'TForAll') and use that to introduce type
+-- variable scope.  That is, there should never be a type in the AST with type
+-- variable not quantified at some higher scope.  After constraints are solved
+-- and the resulting types are assigned, this is /not/ the case: polymorphic
+-- types are implicit, hence this operation.
+--
+-- This also renames type variable for better readability.
+
+
+coVDef :: Sub -> [Type]-> Typed ValDef a -> Typed ValDef a
+coVDef bvs unused (VDef id e _) = VDef id newExp ty
+  where newExp = coExpr bvs unused e
+        ty     = getType newExp
+
+
+
+coExpr :: Sub -> [Type] -> Typed Expr a -> Typed Expr a
+coExpr bmap unused e =
+  let
+    unpack (TVar v) = v
+    unpack t = error $ "Set of freevars should only be TVars: " ++ show t
+    open = S.toList $ freevars (getType e) S.\\ M.keysSet bmap
+    (ozipped, rem) = zipRem open unused
+    tvs = map (unpack . snd) ozipped
+    newBmap = M.union bmap $ M.fromList ozipped
+    renamed = applyAll newBmap $ getType e
+    newTy = case open of
+      [] -> renamed
+      _  -> TForall tvs renamed
+
+  in case e of
+    Lit v _ -> Lit v newTy
+    Var n _ -> Var n newTy
+    Lambda ps body _ -> Lambda ps (coExpr newBmap rem body) newTy
+    CaseOf sce scb cls _ -> let scrut = coExpr newBmap rem sce
+                                clsTy  = (getType scrut, newTy)
+                            in CaseOf scrut scb (map (coClause newBmap rem clsTy) cls) newTy
+    Apply f e _ -> Apply (coExpr newBmap rem f) (coExpr newBmap rem e) newTy
+    LetRec binds res _ -> LetRec (map (coVDef newBmap rem) binds) (coExpr newBmap rem res) newTy
+
+coClause :: Sub -> [Type] -> (Type, Type) -> Typed Clause a -> Typed Clause a
+coClause bvs unused clsTy c = case c of
+  LitMatch l e _ -> LitMatch l (coExpr bvs unused e) clsTy
+  Default e _ -> Default (coExpr bvs unused e) clsTy
+  ConMatch c vs e _ -> ConMatch c vs (coExpr bvs unused e) clsTy
+
+
+zipRem :: [a] -> [b] -> ([(a,b)], [b])
+zipRem [] bs = ([], bs)
+zipRem as [] = error "zipRem: 'as' longer than 'bs'"
+zipRem (a:as) (b:bs) = let (l, rem) = zipRem as bs
+                       in ((a,b) : l, rem)
