@@ -14,7 +14,7 @@ add_test_regex_fail(comment
   "Expected end of nested comment")
 
 add_test_regex_fail(semi
-    "Expected semicolon or EOF after object definition")
+    "expected semicolon or EOF after object definition")
 
 add_test_regex_fail(adt1
     "Expected valid constructor name in datatype declaration")
