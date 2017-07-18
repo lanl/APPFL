@@ -74,9 +74,9 @@ addGetAssum id@(ID name uniq) = do
   modifyAssums $ M.insertWith (++) id [ty]
   return ty
 
-withMonotypes mts act = do
+withMonotype mt act = do
   mtys <- gets monotys
-  modifyMonotys (S.union (S.fromList mts))
+  modifyMonotys (S.insert mt)
   v <- act
   modifyMonotys (const mtys)
   pure v
@@ -169,20 +169,19 @@ constrainExpr e = case e of
     pure (Var n ty)
 
 
-  Lambda params body _ -> do
-    mtys <- mapM addGetAssum params
-    withMonotypes mtys $ do
+  Lambda parm body _ -> do
+    mty <- addGetAssum parm
+    withMonotype mty $ do
       newBody <- constrainExpr body
-      assums  <- getAllAssums params
+      assums  <- getAllAssums [parm]
 
       let resTy = getType newBody -- type of body
-          lamTy = foldr TFun resTy mtys -- function type for this expression
-          constraints = constrainAssumsWith (:=:) assums
-                        (M.fromList $ zip params mtys)
+          lamTy = TFun mty resTy  -- function type for this expression
+          constraints = constrainAssumsWith (:=:) assums (M.singleton parm mty)
 
       tell constraints
-      removeAssums params
-      pure $ Lambda params newBody lamTy
+      removeAssums [parm]
+      pure $ Lambda parm newBody lamTy
 
   CaseOf sce scb clas _ ->
     do
@@ -239,7 +238,7 @@ constrainExpr e = case e of
 constrainAssumsWith
   :: (Type -> Type -> Constraint) -- How to make a constraint
   -> Assumptions -- Assumptions about some variables
-  -> Map ID Type -- Map of variable to "set" type
+  -> Map ID Type -- Map of variable to the "set" type from bottom-up
   -> Constraints -- Yields a Constraint Set
 constrainAssumsWith comb assums tymap =
   S.fromList . concat . M.elems $
@@ -452,8 +451,8 @@ instance Subst (Typed Expr a) where
   applyAll s e = case e of
     Lit l t -> Lit l (applyAll s t)
     Var n t -> Var n (applyAll s t)
-    Lambda ps e t
-      -> Lambda ps (applyAll s e) (applyAll s t)
+    Lambda p e t
+      -> Lambda p (applyAll s e) (applyAll s t)
     CaseOf se sb cs e
       -> CaseOf (applyAll s se) sb (applyAll s cs) (applyAll s e)
     LetRec ds e t
@@ -513,7 +512,7 @@ coExpr bmap unused e =
   in case e of
     Lit v _ -> Lit v newTy
     Var n _ -> Var n newTy
-    Lambda ps body _ -> Lambda ps (coExpr newBmap rem body) newTy
+    Lambda p body _ -> Lambda p (coExpr newBmap rem body) newTy
     CaseOf sce scb cls _ -> let scrut = coExpr newBmap rem sce
                                 clsTy  = (getType scrut, newTy)
                             in CaseOf scrut scb (map (coClause newBmap rem clsTy) cls) newTy

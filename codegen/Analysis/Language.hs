@@ -168,31 +168,32 @@ data ValDef a = VDef
 
 deriving instance (MetaConstr Show a) => Show (ValDef a)
 
-pattern FunDef id parms expr emeta vmeta =
-  VDef id (Lambda parms expr emeta) vmeta
+nominalArity :: Expr a -> Int
+nominalArity (Lambda _ e _) = 1 + nominalArity e
+nominalArity _ = 0
 
 data Expr a
-  = Lit    { lval :: Literal
+  = Lit    { lval  :: Literal
            , emeta :: Meta Expr a
            }
-  | Var    { name :: ID
+  | Var    { name  :: ID
            , emeta :: Meta Expr a
            }
-  | Lambda { parms :: [ID]
+  | Lambda { parm  :: ID
            , expr  :: Expr a
-           , emeta  :: Meta Expr a
+           , emeta :: Meta Expr a
            }
   | CaseOf { scrut :: Expr a
            , bind  :: ID
            , paths :: [Clause a]
-           , emeta  :: Meta Expr a
+           , emeta :: Meta Expr a
            }
   | LetRec { binds :: [ValDef a]
            , expr  :: Expr a
-           , emeta  :: Meta Expr a
+           , emeta :: Meta Expr a
            }
-  | Apply  { efun :: Expr a
-           , earg :: Expr a
+  | Apply  { efun  :: Expr a
+           , earg  :: Expr a
            , emeta :: Meta Expr a
            }
 
@@ -268,16 +269,20 @@ ensureSatFuns (Prog (vdefs, ddefs)) = Prog (newVDefs, newDDefs)
         funArities = mkFunArityMap vdefs M.empty
         newVDefs   = map (satFunBind funArities) vdefs
 
+mkFunArityMap :: [ValDef a] -> Map ID Int -> Map ID Int
 mkFunArityMap vdefs amap = foldr addLambda amap vdefs
-  where addLambda (FunDef id ps _ _ _) amap = M.insert id (length ps) amap
+  where addLambda (VDef id e@(Lambda _ _ _) _) amap = M.insert id (nominalArity e) amap
         addLambda (VDef id _ _) amap = M.delete id amap
 
+satFunBind :: Map ID Int -> ValDef a -> ValDef (a :-> SatFuns)
 satFunBind arities (VDef b rhs m) = VDef b (satFunExpr arities rhs) m
+
+satFunExpr :: Map ID Int -> Expr a -> Expr (a :-> SatFuns)
 satFunExpr arities exp = case exp of
   Lit v m -> Lit v m
   Var n m -> Var n m
-  Lambda parms ex meta -> Lambda parms (satFunExpr newMap ex) meta
-    where newMap = foldr M.delete arities parms
+  Lambda parm ex meta -> Lambda parm (satFunExpr newMap ex) meta
+    where newMap = M.delete parm arities
 
   CaseOf scrut bnd paths meta -> CaseOf newScrut bnd newPaths meta
     where withBindMap = M.delete bnd arities
@@ -295,7 +300,10 @@ satFunExpr arities exp = case exp of
           newEx = satFunExpr newMap ex
 
   Apply _ _ _ -> result
-    where (Var name vmeta, eargs, metas) = unfoldAp exp
+    where (name, vmeta, eargs, metas) =
+            case unfoldAp exp of
+              (Var n m, eas, ms) -> (n, m, eas, ms)
+              (e, _, _) -> error $ "Higher-order (unsaturated) behavior found!"
           newArgs = map (satFunExpr arities) eargs
           zipped = zip newArgs metas
           newApp = foldl (\arg (ap, m) -> Apply ap arg m) newBaseFun zipped
@@ -303,7 +311,7 @@ satFunExpr arities exp = case exp of
           result = if not (looksLikeFun name) || saturated
                    then newApp
                    else error $ show name ++
-                        " is an unsaturated constructor application"
+                        " is an unsaturated function application"
           -- If we can't find it in the map, assume it's saturated.
           saturated = maybe True (== length eargs) $ M.lookup name arities
 
@@ -328,8 +336,8 @@ satConExpr :: Map ID Int -> Expr a -> Expr (a :-> SatCons)
 satConExpr arities exp = case exp of
   Lit v m -> Lit v m
   Var n m -> Var n m
-  Lambda parms ex meta ->
-    Lambda parms (satConExpr arities ex) meta
+  Lambda parm ex meta ->
+    Lambda parm (satConExpr arities ex) meta
 
   CaseOf scrut bnd paths meta -> CaseOf newScrut bnd newPaths meta
     where newScrut = satConExpr arities scrut
@@ -420,8 +428,8 @@ uniqExpr:: Expr a -> UniqState (Expr (a :-> Uniquify))
 uniqExpr e = scoped $ case e of
   Lit l m  -> pure $ Lit l m
   Var id m -> Var <$> setUniq id <*> pure m
-  Lambda pms e m    ->
-    Lambda <$> mapM newScope pms <*> uniqExpr e <*> pure m
+  Lambda parm e m    ->
+    Lambda <$> newScope parm <*> uniqExpr e <*> pure m
   CaseOf scr bnd pths m ->
     CaseOf <$> uniqExpr scr <*> newScope bnd
              <*> mapM uniqClause pths <*> pure m

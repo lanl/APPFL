@@ -44,8 +44,8 @@ instance IsString (DataDef a -> Constructor a) where
 instance IsString (Expr () -> ValDef ()) where
   fromString s = case words s of
     [b]  -> \e -> VDef (ID b (-1)) e ()
-    x:xs -> \e -> VDef (ID x (-1)) (lam e) ()
-      where lam e = Lambda (map (`ID` (-1)) xs) e ()
+    x:xs -> \e -> VDef (ID x (-1)) (foldr mkLam e xs) ()
+      where mkLam var e = Lambda (ID var (-1)) e ()
     []   -> error "VDef syntax error"
 
 instance IsString Type where
