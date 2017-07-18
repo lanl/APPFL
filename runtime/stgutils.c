@@ -33,7 +33,9 @@ InfoTab it_stg_case_not_exhaustiveP __attribute__((aligned(8))) = {
 #endif
   .name = "stg_case_not_exhaustiveP",
   .entryCode = &stg_case_not_exhaustiveP,
+#if USE_OBJTYPE
   .objType = FUN,
+#endif
   //  .fvCount = 0,
   .funFields.arity = 1,
   .layoutInfo.boxedCount = 0,
@@ -316,7 +318,9 @@ FnPtr fun_par()
 InfoTab it_par __attribute__((aligned(OBJ_ALIGN))) = {
   .name ="par",
   .entryCode = &stg_funcall,
+#if USE_OBJTYPE
   .objType = FUN,
+#endif
   .layoutInfo.payloadSize = 0,
   .layoutInfo.boxedCount = 0,
   .layoutInfo.unboxedCount = 0,
@@ -328,7 +332,9 @@ InfoTab it_par __attribute__((aligned(OBJ_ALIGN))) = {
 // built-in SHOs need to be contiguous in memory
 Obj sho_par __attribute__((aligned(OBJ_ALIGN))) = {
   ._infoPtr =&it_par,
+#if USE_OBJTYPE
   .objType =FUN,
+#endif
   .ident ="par",
   .payload = {{0}}
 };
