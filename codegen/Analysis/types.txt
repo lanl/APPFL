@@ -96,15 +96,13 @@ Abstraction:
 
       A, C, F ⊢ e : τₑ
       ----------------------------------------------------------------------
-      A \{v₁, …, vₙ}, Cₑ ∪ {τᵢ ≡ βᵢ | vᵢ : τᵢ ∈ A}, F
-      ⊢ (\v₁ … vₙ -> e) : β₁ → … → βₙ → τₑ
+      A \{v}, Cₑ ∪ {τ ≡ β | v : τ ∈ A}, F
+      ⊢ (\v -> e) : β → τₑ
 
-      Lambda abstraction has a function type on a fresh set of variables for the
-      nominal arguments.  These must be unified with whatever types are assumed
-      in the body, so monomorphic constraints are generated for each argument
-      with an assumed type.
-
-      - Do we need fresh type variables here? I don't think so, but we'll see...
+      Lambda abstraction has a function type on a fresh variables for the
+      nominal argument.  This must be unified with whatever types are assumed in
+      the body, so monomorphic constraints are generated for assumed type found
+      for the argument.
 
 
 Let:
