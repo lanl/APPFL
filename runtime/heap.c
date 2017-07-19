@@ -36,17 +36,17 @@ bool isTo(void *p) {
 // definitely unboxed
 bool mayBeBoxed(PtrOrLiteral f) {
 #if USE_ARGTYPE
-  if (f.argType == HEAPOBJ) fprintf(stderr, "mayBeBoxed:  is HEAPOBJ\n");
-      else fprintf(stderr, "mayBeBoxed:  is not HEAPOBJ\n");
+  if (f.argType == HEAPOBJ) LOG(LOG_DEBUG, "mayBeBoxed:  is HEAPOBJ\n");
+      else LOG(LOG_DEBUG, "mayBeBoxed:  is not HEAPOBJ\n");
 #endif
-  if (f.op == NULL) fprintf(stderr, "mayBeBoxed:  f.op == NULL\n");
-  else fprintf(stderr, "mayBeBoxed:  f.op != NULL\n");
-  if (isHeap(f.op)) fprintf(stderr, "mayBeBoxed:  isHeap(f.op) is true\n");
-  else fprintf(stderr, "mayBeBoxed:  isHeap(f.op) is false\n");
-  if (isSHO(f.op)) fprintf(stderr, "mayBeBoxed:  isSHO(f.op) is true\n");
-  else fprintf(stderr, "mayBeBoxed:  isSHO(f.op) is false\n");
-  if ((f.u & (OBJ_ALIGN - 1)) == 0) fprintf(stderr, "mayBeBoxed:  (f.u & (OBJ_ALIGN - 1)) == 0 is true\n");
-  else fprintf(stderr, "mayBeBoxed:  (f.u & (OBJ_ALIGN - 1)) == 0 is false\n");
+  if (f.op == NULL) LOG(LOG_DEBUG, "mayBeBoxed:  f.op == NULL\n");
+  else LOG(LOG_DEBUG, "mayBeBoxed:  f.op != NULL\n");
+  if (isHeap(f.op)) LOG(LOG_DEBUG, "mayBeBoxed:  isHeap(f.op) is true\n");
+  else LOG(LOG_DEBUG, "mayBeBoxed:  isHeap(f.op) is false\n");
+  if (isSHO(f.op)) LOG(LOG_DEBUG, "mayBeBoxed:  isSHO(f.op) is true\n");
+  else LOG(LOG_DEBUG, "mayBeBoxed:  isSHO(f.op) is false\n");
+  if ((f.u & (OBJ_ALIGN - 1)) == 0) LOG(LOG_DEBUG, "mayBeBoxed:  (f.u & (OBJ_ALIGN - 1)) == 0 is true\n");
+  else LOG(LOG_DEBUG, "mayBeBoxed:  (f.u & (OBJ_ALIGN - 1)) == 0 is false\n");
 
   return
 #if USE_ARGTYPE
