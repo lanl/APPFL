@@ -19,7 +19,8 @@
 Pointer head, tail;
 
 #if USE_LOCK
-ABT_mutex qlock;
+ABT_mutex hlock;
+ABT_mutex tlock;
 #endif
 
 void NQ_init() {
@@ -27,13 +28,14 @@ void NQ_init() {
   np->next.ptr = NULL;
   head.ptr = tail.ptr = np;
 #if USE_LOCK
-  ABT_mutex_create(&qlock);
+  ABT_mutex_create(&hlock);
+  ABT_mutex_create(&tlock);
 #endif
 }
 
 void NQ_enqueue(T value) {
 #if USE_LOCK
-  ABT_mutex_lock(qlock);
+  ABT_mutex_lock(tlock);
 #endif
   Pointer tailtmp;
   Node *nodep = malloc(sizeof(Node));
@@ -60,13 +62,13 @@ void NQ_enqueue(T value) {
          tailtmp.bits, 
          ((Pointer){nodep, tailtmp.count+1}).bits);
 #if USE_LOCK
-  ABT_mutex_unlock(qlock);
+  ABT_mutex_unlock(tlock);
 #endif
 }
 
 bool NQ_dequeue(T *value) {
 #if USE_LOCK
-  ABT_mutex_lock(qlock);
+  ABT_mutex_lock(hlock);
 #endif
   Pointer headtmp;
   while(1) {
@@ -95,7 +97,7 @@ bool NQ_dequeue(T *value) {
   }
   free(headtmp.ptr);
 #if USE_LOCK
-  ABT_mutex_unlock(qlock);
+  ABT_mutex_unlock(hlock);
 #endif
   return true;
 }

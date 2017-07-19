@@ -9,11 +9,11 @@
 
 // lock free queue is broken use lock...
 // use lock on queue w/ clang for now
-//#if defined(__clang__)
+#if defined(__clang__)
+#define USE_LOCK 1 
+#else
 #define USE_LOCK 0
-//#else
-//#define USE_LOCK 0
-//#endif
+#endif
 
 void NQ_init();
 void NQ_enqueue(T value);
