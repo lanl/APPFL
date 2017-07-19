@@ -10,7 +10,7 @@
 // lock free queue is broken use lock...
 // use lock on queue w/ clang for now
 //#if defined(__clang__)
-#define USE_LOCK 1
+#define USE_LOCK 0
 //#else
 //#define USE_LOCK 0
 //#endif

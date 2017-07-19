@@ -53,7 +53,7 @@ void threadingInit(int argc, char *argv[]) {
   assert(ABT_self_set_arg((void *)nextID) == ABT_SUCCESS);
   nextID = 1;
 
-  NP_init(1000);
+  //NP_init(1000);
   NQ_init();
 
   LOG(LOG_DEBUG, "threadingInit start service thread\n");

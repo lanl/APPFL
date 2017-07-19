@@ -23,7 +23,7 @@ ABT_mutex qlock;
 #endif
 
 void NQ_init() {
-  Node *np = NP_take();
+  Node *np = malloc(sizeof(Node));
   np->next.ptr = NULL;
   head.ptr = tail.ptr = np;
 #if USE_LOCK
@@ -36,7 +36,7 @@ void NQ_enqueue(T value) {
   ABT_mutex_lock(qlock);
 #endif
   Pointer tailtmp;
-  Node *nodep = NP_take();
+  Node *nodep = malloc(sizeof(Node));
   nodep->value = value;
   nodep->next.ptr = NULL;
   while (1) {
@@ -93,7 +93,7 @@ bool NQ_dequeue(T *value) {
       }
     }
   }
-  NP_release(headtmp.ptr);
+  free(headtmp.ptr);
 #if USE_LOCK
   ABT_mutex_unlock(qlock);
 #endif
