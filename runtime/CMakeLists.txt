@@ -28,7 +28,7 @@ project(runtime)
   set(rt_srcs args.c 
               gc.c
               heap.c
-              nodepool.c
+#              nodepool.c
               nodequeue.c 
               sanity.c
               show.c

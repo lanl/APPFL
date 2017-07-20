@@ -12,6 +12,51 @@
 #include <stdio.h>
 #include <stdint.h>
 
+
+#if TWOLOCKQUEUE
+
+#include <abt.h>
+ABT_mutex hlock;
+ABT_mutex tlock;
+
+Node *head, *tail;
+
+void NQ_init() {
+  Node *np = malloc(sizeof(Node));
+  np->next = NULL;
+  head = tail = np;
+  ABT_mutex_create(&hlock);
+  ABT_mutex_create(&tlock);
+}
+
+void NQ_enqueue(T value) {
+  Node *nodep = malloc(sizeof(Node));
+  nodep->value = value;
+  nodep->next = NULL;
+  ABT_mutex_lock(tlock);
+  tail->next = nodep;
+  tail = nodep;
+  ABT_mutex_unlock(tlock);
+}
+
+bool NQ_dequeue(T *value) {
+  ABT_mutex_lock(hlock);
+  Node *nodep = head;
+  Node *newhead = nodep->next;
+  if (newhead == NULL) {
+     ABT_mutex_unlock(hlock);
+     return false;
+  }
+  *value = newhead->value;
+  head = newhead;
+  ABT_mutex_unlock(hlock);
+  free(nodep);
+  return true;
+}
+
+#else 
+
+
 #if USE_LOCK
 #include <abt.h>
 #endif 
@@ -68,7 +113,7 @@ void NQ_enqueue(T value) {
 
 bool NQ_dequeue(T *value) {
 #if USE_LOCK
-  ABT_mutex_lock(hlock);
+  ABT_mutex_lock(tlock);
 #endif
   Pointer headtmp;
   while(1) {
@@ -79,7 +124,7 @@ bool NQ_dequeue(T *value) {
       if (headtmp.ptr == tailtmp.ptr) {
 	    if (next.ptr == NULL) {
 #if USE_LOCK
-          ABT_mutex_unlock(qlock); 
+          ABT_mutex_unlock(tlock); 
 #endif
 	      return false;
         }
@@ -97,8 +142,9 @@ bool NQ_dequeue(T *value) {
   }
   free(headtmp.ptr);
 #if USE_LOCK
-  ABT_mutex_unlock(hlock);
+  ABT_mutex_unlock(tlock);
 #endif
   return true;
 }
 
+#endif
