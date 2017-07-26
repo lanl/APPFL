@@ -57,7 +57,7 @@ Name           Alias       Definition
 *expr*           𝑒       →  *abstraction* | *application* | *literal* 
                         |  *varid* | *conid* | *case* | *let*
                         |  `(` *expr* `)`
-*abstraction*           →  `\` *varid* {`⎵`*varid*} `->` *expr*
+*abstraction*           →  `\` *varid* `->` *expr*
 *application*           →  *expr* `⎵` *expr*
 *case*                  →  `case` *expr* `as` *varid* `of` `{` *clauses* `}`
 *let*                   →  `let` {*valdef*} `in` *expr*
@@ -73,7 +73,7 @@ Name           Alias       Definition
 *varid*           𝑣     →  *lower* {*idchar*}
 *idchar*                →  *upper* | *lower* | *number* | *idsym*
 *upper*                 →  `A` | `B` | ⋯ | `Y` | `Z`
-*lower*                 →  `a` | `b` | ⋯ | `y` | `z`
+*lower*                 →  `a` | `b` | ⋯ | `y` | `number`
 *number*                →  `0` | `1` | ⋯ | `8` | `9`
 *idsym*                 →  `'` | `_`
 
@@ -85,7 +85,7 @@ This follows the "dynamic" semantics of [KHL91] fairly closely, though
 modifications are made to support higher-order semantics. Some of the aliases
 above are used for convenience.
 
--   Bold text indicates a vector, e.g. the **𝑣** parameters in a lambda abstraction.
+-   Bold text indicates a vector.
 -   𝐶ᴰ(**𝑥**) is overloaded, denoting the construction of some datatype for
     constructor `D` parameterized by the vector of arguments **𝑥**, and as a
     pattern match on a particular constructor of a sum-type.
@@ -95,59 +95,135 @@ above are used for convenience.
 -   The existence of a function Ɓ which maps the program syntax for literals to
     "real" values is assumed, mapping, for example, the text literal `1` to the
     "real" value 1.
--   TODO: Describe *drop* and *lift*.  Need to figure out where *lift* should be
+    
+### TODO:
+-   Describe *drop* and *lift*.  Need to figure out where *lift* should be
     introduced.  Don't want to over-lift.
+-   Literals should really be considered unboxed and treated accordingly (though I may implement some
+    kind of sytactic sugar for literal boxed Ints in the parser)
 
 <div><!-- Make the HTML output prettier -->
+
 <style type="text/css" scoped>
 table {width: 80%; border: 1px solid black;}
 td {padding: 0 0 1em 1em;}
 </style>
 
 
-----------------------------------   ----      -------------------------------------------------
-Ƥ                                     :        *Prog* → *Env*
+----------------------------------    ----      -------------------------------------------------
+__Semantic Functions__
 
-Ʋ                                     :        *ValDef* → *Env* → *Env*
+Ƥ                                      :        *Prog* → *Env*
 
-Ɗ                                     :        *DataDef* → *Env* → *Env*
+Ʋ                                      :        *ValDef* → *Env* → *Env*
 
-Ɛ                                     :        *Expr* → *Env* → *Value*
+Ɗ                                      :        *DataDef* → *Env* → *Env*
 
-Ƙ                                     :        *Clause* → *Env* → *{Pattern ⟶ Value}*
+Ɛ                                      :        *Expr* → *Env* → *Value*
 
-Ɓ                                     :        *Literal* → *Value*
+Ƙ                                      :        *Clause* → *Env* → *{Pattern ⟶ Value}*
 
-Ƥ⟦⋯𝑉ᵢ,⋯,𝐷ⱼ,⋯  ⟧                        ≝         *fix* (λρ.⋃ᵢⱼ{Ʋ⟦Vᵢ⟧ρ, Ɗ⟦𝐷ⱼ⟧ρ})
+Ɓ                                      :        *Literal* → *Value*
 
-                                               We need the fixed point both here and in the rule 
-                                               for `let` expressions because there is arbitrary 
-                                               mutual recursion in the definitions.
+__Definitions__
 
-Ʋ⟦`x =` 𝑒 ⟧ρ                           ≝         ρ[`x` ↦ Ɛ⟦𝑒⟧ρ]
+Ƥ⟦⋯,𝑉ᵢ,⋯,𝐷ⱼ,⋯  ⟧                       ≝        *fix* (λρ.⋃ᵢⱼ{Ʋ⟦Vᵢ⟧ρ, Ɗ⟦𝐷ⱼ⟧ρ})
 
-Ɗ⟦𝑇 **α** `=` ⋯ `|` `D` **τ** `|` ⋯⟧  ≝         ρ ∪ {⋯, `D` ↦ λ**𝑣**.𝐶ᵢ(*lift*(**𝑣**))⟧ρ, ⋯}
+Ʋ⟦`x =` 𝑒 ⟧ρ                           ≝        ρ[`x` ↦ Ɛ⟦𝑒⟧ρ]
 
-Ɛ⟦𝑙⟧ρ                                  ≝         Ɓ⟦𝑙⟧
+Ɗ⟦𝑇 **α** `=` …⋯ `|` `Dᵢ` **τ** `|` ⋯⟧ ≝        ρ ∪ {⋯, `Dᵢ` ↦ **λ𝑣**.(𝐶ᵢ(**𝑣**)), ⋯}
 
-Ɛ⟦`x`⟧ρ                               ≝         ρ(`x`)
+                                                **λ𝑣** is used here as shorthand to denote a (still curried)
+                                                function of the same arity as that of the data constructor
+                                                𝐶ᵢ.
+                                                
+                                                
 
-Ɛ⟦𝑒₁𝑒₂⟧ρ                                ≝         *case* Ɛ⟦𝑒₁⟧ρ *in* \
-                                               ⊥ ⟶ ⊥ \
-                                               *lift*(f) ⟶ f Ɛ⟦𝑒₂⟧ρ
+Ɛ⟦𝑙⟧ρ                                  ≝        (Ɓ⟦𝑙⟧)
 
-Ɛ⟦`\`**`x`** `->` 𝑒⟧ρ                  ≝         λ**𝑣**.Ɛ⟦𝑒⟧ρ[`xᵢ`↦𝑣ᵢ]
+Ɛ⟦`x`⟧ρ                                ≝        ρ(`x`)
 
-Ɛ⟦`case` 𝑒 `as x of` ⋯`;`𝐾ᵢ`;`⋯⟧ρ      ≝         *case* Ɛ⟦𝑒⟧ρ *in*  ⋃ᵢ(Ƙ⟦𝐾ᵢ⟧ρ[`x`↦Ɛ⟦𝑒⟧ρ]) ∪ {⊥ ⟶ ⊥}
+Ɛ⟦𝑒₁𝑒₂⟧ρ                               ≝        *case* Ɛ⟦𝑒₁⟧ρ *in* \
+                                                ⊥ ⟶ ⊥              \
+                                                (*f*) ⟶ *f* Ɛ⟦𝑒₂⟧ρ
 
-Ɛ⟦`let`⋯, 𝑉ᵢ, ⋯ `in` 𝑒⟧ρ               ≝         Ɛ⟦𝑒⟧ρ∪(*fix*(λρ.{⋯,Ʋ⟦𝑉ᵢ⟧ρ,⋯}))
+Ɛ⟦`\`**`x`** `->` 𝑒⟧ρ                  ≝        (λ𝑣.Ɛ⟦𝑒⟧ρ[`x` ↦ 𝑣])
 
-Ƙ⟦𝑙 `->` 𝑒⟧ρ                           ≝          {Ɓ⟦l⟧ ⟶ Ɛ⟦𝑒⟧ρ}
+Ɛ⟦`case` 𝑒 `as x of` ⋯`;`𝐾ᵢ`;`⋯⟧ρ      ≝        *case* Ɛ⟦𝑒⟧ρ *in*  ⋃ᵢ(Ƙ⟦𝐾ᵢ⟧ρ[`x`↦Ɛ⟦𝑒⟧ρ]) ∪ {⊥ ⟶ ⊥}
 
-Ƙ⟦`D`**`x`** `->` 𝑒⟧ρ                 ≝          {𝐶ᴰ(**𝑣**) ⟶ Ɛ⟦𝑒⟧ρ[`xᵢ`↦𝑣ᵢ]}
+Ɛ⟦`let`⋯, 𝑉ᵢ, ⋯ `in` 𝑒⟧ρ               ≝        Ɛ⟦𝑒⟧ρ∪(*fix*(λρ.{⋯,Ʋ⟦𝑉ᵢ⟧ρ,⋯}))
 
-Ƙ⟦`_ ->` 𝑒⟧ρ                          ≝          {*otherwise* ⟶ Ɛ⟦𝑒⟧ρ}
-----------------------------------   ----      -------------------------------------------------
+Ƙ⟦𝑙 `->` 𝑒⟧ρ                           ≝        {Ɓ⟦l⟧ ⟶ Ɛ⟦𝑒⟧ρ}
+
+Ƙ⟦`D`**`x`** `->` 𝑒⟧ρ                  ≝        {𝐶ᴰ(**𝑣**) ⟶ Ɛ⟦𝑒⟧ρ[`xᵢ`↦𝑣ᵢ]}
+
+Ƙ⟦`_ ->` 𝑒⟧ρ                           ≝        {*otherwise* ⟶ Ɛ⟦𝑒⟧ρ}
+
+----------------------------------    ----      ------------------------------------------------- 
 
 </div>
+
+## Abstract Semantics
+
+Combining the ideas from the High-fidelity, higher-order portion (sec. 5) of
+"Strictness Analysis in 4D" and the partial projections introduced in
+"Representing Demand by Partial Projections".
+
+In the former, Projection Transformers (functions from projections to
+projections; "PTs") are the base abstract value in the first-order case.  In
+higher order, the base abstract value is a tuple of backward and forward
+abstractions.  The backward abstraction is just a Projection Transformer: a
+function that yields a safe projection given a context. The forward abstraction
+is the necessary addition to deal with the higher-order nature of the language.
+Consider the simple higher order function `($)` possibly defined in Haskell as
+`\f v -> f v`.  Where `($)` is applied, we care about the demand on the
+arguments given to it, which is a function of its definition.  But its
+definition uses its first argument as a function, applying it to the second
+argument. This can express some demand on that second argument.  We need to know
+what kind of demand that is, which is where the forward abstraction comes into
+play: A function from abstract value to abstract value.
+
+Paraphrased from the paper: 
+
+-   𝐴 maps the type of an expression (T) to its abstract value
+
+-   |T| represent the domain of projections on T. |E|, in turn, represents
+    projections on the environment.
+
+-   𝐹 maps a type to its forward abstract value
+
+-   𝐹(K) = 𝟙
+
+-   𝐹(U → V) = A(U) → A(V)
+
+-   𝐴(T) = (|T| → |E|, 𝐹(T))
+
+
+Projections as presented in "Projections for Strictness Analysis" require
+lifting the already lifted domains one more to encode "simple" strictness
+(Launchbury's claim in the Partial Projection paper).  When values were
+unacceptable to a projection, they mapped to ABORT (here, ⇓).  Strict
+projections mapped ⊥ to ⇓.  This extra lifting makes the semantics a bit messier
+to define.  Launchbury does away with this, showing how partial projections on
+the singly-lifted domains are isomorphic to total projections on the
+doubly-lifted domains.  For this to hold, any partial projection may only be
+undefined on "some lower portion of its domain".  Strictness is then
+characterized by partial projections that are undefined on a non-empty set of
+values.  The base four-point domain of total and partial projections are here
+for comparison.
+
+-----------------------------------------------------------
+Projection Name           Total Def            Partial Def
+----------------          ----------           ------------
+Ide                       Ide x = x            Ide x = x
+
+Str                       Str ⊥ = ⇓\           Str ⊥ = \<UNDEF\>\
+                          Str x = x            Str x = x
+                          
+Abs                       Abs ⇓ = ⇓\           Abs x = ⊥ 
+                          Abs x = ⊥
+
+Fail                      Fail x = ⇓           Fail x = \<UNDEF\>
+----------------          ----------           ------------
+
 

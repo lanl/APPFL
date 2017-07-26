@@ -56,8 +56,8 @@ mkConStr (DCon id tys _) = "DCon {conName = " ++ show id ++
 data Constructor a = DCon
   { conName :: ID
   , conArgs :: [Type]
-  , def     :: DataDef a -- reference to the definition which this constructor
-                         -- is a part of is circular, but awfully convenient.
+  , def     :: DataDef a -- reference to the definition,which this constructor
+                         -- is a part of. Circular, but awfully convenient.
   }
 
 instance Show (Constructor a) where
