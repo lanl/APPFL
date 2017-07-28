@@ -16,7 +16,7 @@ Conventions follow that of the Haskell Report:
 <!--
 Unicode Symbol Input reference
 
-𝑃         \mitP 
+𝑃         \mitP
 𝐷         \mitD
 𝑇         \mitT
 𝑉         \mitV
@@ -40,7 +40,7 @@ Unicode Symbol Input reference
 ↦        \mapsto
 ≝         \eqdef
 ⃗         \vec        (combining right arrow above)
---> 
+-->
 
 --------------------------------------------------------------------------------
 
@@ -54,7 +54,7 @@ Name           Alias       Definition
 *tyvar*          α      →  *varid*
 *type*           τ      →  *tycon* {*type*} | *tyvar*
 *valdef*         𝑉      →  *varid* `=` *expr* `;`
-*expr*           𝑒       →  *abstraction* | *application* | *literal* 
+*expr*           𝑒       →  *abstraction* | *application* | *literal*
                         |  *varid* | *conid* | *case* | *let*
                         |  `(` *expr* `)`
 *abstraction*           →  `\` *varid* `->` *expr*
@@ -72,9 +72,9 @@ Name           Alias       Definition
 *conid*           δ     →  *upper* {*idchar*}
 *varid*           𝑣     →  *lower* {*idchar*}
 *idchar*                →  *upper* | *lower* | *number* | *idsym*
-*upper*                 →  `A` | `B` | ⋯ | `Y` | `Z`
-*lower*                 →  `a` | `b` | ⋯ | `y` | `number`
-*number*                →  `0` | `1` | ⋯ | `8` | `9`
+*upper*                 →  `A` | `B` | … | `Y` | `Z`
+*lower*                 →  `a` | `b` | … | `y` | `number`
+*number*                →  `0` | `1` | … | `8` | `9`
 *idsym*                 →  `'` | `_`
 
 --------------------------------------------------------------------------------
@@ -95,7 +95,7 @@ above are used for convenience.
 -   The existence of a function Ɓ which maps the program syntax for literals to
     "real" values is assumed, mapping, for example, the text literal `1` to the
     "real" value 1.
-    
+
 ### TODO:
 -   Describe *drop* and *lift*.  Need to figure out where *lift* should be
     introduced.  Don't want to over-lift.
@@ -127,17 +127,17 @@ __Semantic Functions__
 
 __Definitions__
 
-Ƥ⟦⋯,𝑉ᵢ,⋯,𝐷ⱼ,⋯  ⟧                       ≝        *fix* (λρ.⋃ᵢⱼ{Ʋ⟦Vᵢ⟧ρ, Ɗ⟦𝐷ⱼ⟧ρ})
+Ƥ⟦…,𝑉ᵢ,…,𝐷ⱼ,…  ⟧                       ≝        *fix* (λρ.⋃ᵢⱼ{Ʋ⟦Vᵢ⟧ρ, Ɗ⟦𝐷ⱼ⟧ρ})
 
 Ʋ⟦`x =` 𝑒 ⟧ρ                           ≝        ρ[`x` ↦ Ɛ⟦𝑒⟧ρ]
 
-Ɗ⟦𝑇 **α** `=` …⋯ `|` `Dᵢ` **τ** `|` ⋯⟧ ≝        ρ ∪ {⋯, `Dᵢ` ↦ **λ𝑣**.(𝐶ᵢ(**𝑣**)), ⋯}
+Ɗ⟦𝑇 **α** `=` … `|` `Dᵢ` **τ** `|` …⟧ ≝        ρ ∪ {…, `Dᵢ` ↦ **λ𝑣**.(𝐶ᵢ(**𝑣**)), …}
 
                                                 **λ𝑣** is used here as shorthand to denote a (still curried)
                                                 function of the same arity as that of the data constructor
                                                 𝐶ᵢ.
-                                                
-                                                
+
+
 
 Ɛ⟦𝑙⟧ρ                                  ≝        (Ɓ⟦𝑙⟧)
 
@@ -149,9 +149,9 @@ __Definitions__
 
 Ɛ⟦`\`**`x`** `->` 𝑒⟧ρ                  ≝        (λ𝑣.Ɛ⟦𝑒⟧ρ[`x` ↦ 𝑣])
 
-Ɛ⟦`case` 𝑒 `as x of` ⋯`;`𝐾ᵢ`;`⋯⟧ρ      ≝        *case* Ɛ⟦𝑒⟧ρ *in*  ⋃ᵢ(Ƙ⟦𝐾ᵢ⟧ρ[`x`↦Ɛ⟦𝑒⟧ρ]) ∪ {⊥ ⟶ ⊥}
+Ɛ⟦`case` 𝑒 `as x of` …`;`𝐾ᵢ`;`…⟧ρ      ≝        *case* Ɛ⟦𝑒⟧ρ *in*  ⋃ᵢ(Ƙ⟦𝐾ᵢ⟧ρ[`x`↦Ɛ⟦𝑒⟧ρ]) ∪ {⊥ ⟶ ⊥}
 
-Ɛ⟦`let`⋯, 𝑉ᵢ, ⋯ `in` 𝑒⟧ρ               ≝        Ɛ⟦𝑒⟧ρ∪(*fix*(λρ.{⋯,Ʋ⟦𝑉ᵢ⟧ρ,⋯}))
+Ɛ⟦`let`…, 𝑉ᵢ, … `in` 𝑒⟧ρ               ≝        Ɛ⟦𝑒⟧ρ∪(*fix*(λρ.{…,Ʋ⟦𝑉ᵢ⟧ρ,…}))
 
 Ƙ⟦𝑙 `->` 𝑒⟧ρ                           ≝        {Ɓ⟦l⟧ ⟶ Ɛ⟦𝑒⟧ρ}
 
@@ -159,7 +159,7 @@ __Definitions__
 
 Ƙ⟦`_ ->` 𝑒⟧ρ                           ≝        {*otherwise* ⟶ Ɛ⟦𝑒⟧ρ}
 
-----------------------------------    ----      ------------------------------------------------- 
+----------------------------------    ----      -------------------------------------------------
 
 </div>
 
@@ -183,20 +183,6 @@ argument. This can express some demand on that second argument.  We need to know
 what kind of demand that is, which is where the forward abstraction comes into
 play: A function from abstract value to abstract value.
 
-Paraphrased from the paper: 
-
--   𝐴 maps the type of an expression (T) to its abstract value
-
--   |T| represent the domain of projections on T. |E|, in turn, represents
-    projections on the environment.
-
--   𝐹 maps a type to its forward abstract value
-
--   𝐹(K) = 𝟙
-
--   𝐹(U → V) = A(U) → A(V)
-
--   𝐴(T) = (|T| → |E|, 𝐹(T))
 
 
 Projections as presented in "Projections for Strictness Analysis" require
@@ -219,11 +205,90 @@ Ide                       Ide x = x            Ide x = x
 
 Str                       Str ⊥ = ⇓\           Str ⊥ = \<UNDEF\>\
                           Str x = x            Str x = x
-                          
-Abs                       Abs ⇓ = ⇓\           Abs x = ⊥ 
+
+Abs                       Abs ⇓ = ⇓\           Abs x = ⊥
                           Abs x = ⊥
 
 Fail                      Fail x = ⇓           Fail x = \<UNDEF\>
 ----------------          ----------           ------------
 
 
+## Abstract Semantics ##
+
+
+Some thoughts for Future David:
+
+The factored domains from the 4D paper make sense, but I don't immediately see
+how to get strictness information about nested contexts.  For example,
+
+```haskell
+groups xs ns = 
+   let take n ys = case n of
+             0 -> []
+             _ -> case ys of
+                   [] -> []
+                   h:t -> h : take (n - 1) t
+       drop n ys = case n of
+             0 -> ys
+             _ -> case ys of
+                   [] -> []
+                   h:t -> drop (n - 1) t
+   in case xs of 
+       [] -> []
+       _  -> case ns of
+              [] -> [xs]
+              n:t -> take n xs : groups (drop n xs) t
+```
+
+It would be good to know here that `take` and `drop` are strict in their first
+argument in any strict context but not strict in their second.  I *think* this
+is doable without changing the 4D approach (other than to fit the language) just
+by saving information as successive fixed points are found, but I'm hesititant
+to commit to this.
+
+The alternative would be accumulating the abstract values, as in the partial
+projections paper.  I'm leaning towards this, but haven't nailed down what the
+abstract values would look like (or the rules).
+
+----------------------------------     ----      -------------------------------------------------
+__Semantic Functions__
+
+Ƥ#                                      :
+
+Ʋ#                                      :
+
+Ɗ#                                      :
+
+Ɛ#                                      :
+
+Ƙ#                                      :
+
+Ɓ#                                      :
+
+__Definitions__
+
+Ƥ#⟦…,𝑉ᵢ,…,𝐷ⱼ,…  ⟧                       ≝        *fix* (λρ.⋃ᵢⱼ{Ʋ#⟦Vᵢ⟧ρ, Ɗ#⟦𝐷ⱼ⟧ρ})
+
+Ʋ#⟦`x =` 𝑒 ⟧ρ                           ≝        ρ[`x` ↦ Ɛ#⟦𝑒⟧ρ]
+
+Ɗ#⟦𝑇 **α** `=` … `|` `Dᵢ` **τ** `|` …⟧  ≝
+
+Ɛ#⟦𝑙⟧ρ                                  ≝
+
+Ɛ#⟦`x`⟧ρ                                ≝
+
+Ɛ#⟦𝑒₁𝑒₂⟧ρ                               ≝
+
+Ɛ#⟦`\`**`x`** `->` 𝑒⟧ρ                  ≝
+
+Ɛ#⟦`case` 𝑒 `as x of` …`;`𝐾ᵢ`;`…⟧ρ      ≝
+
+Ɛ#⟦`let`…, 𝑉ᵢ, … `in` 𝑒⟧ρ               ≝
+
+Ƙ#⟦𝑙 `->` 𝑒⟧ρ                           ≝
+
+Ƙ#⟦`D`**`x`** `->` 𝑒⟧ρ                  ≝
+
+Ƙ#⟦`_ ->` 𝑒⟧ρ                           ≝
+
+----------------------------------     ----      -------------------------------------------------
