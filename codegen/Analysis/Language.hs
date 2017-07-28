@@ -200,8 +200,18 @@ data Expr a
 class HasType a where
   getType :: a -> Type
 
-instance (Type ~ Meta Expr a) => HasType (Expr a) where
-  getType = emeta
+-- instance (Type ~ Meta Expr a) => HasType (Expr a) where
+--   getType = emeta
+
+-- This is maybe a little better than above.
+instance (HasType (Meta Expr a)) => HasType (Expr a) where
+  getType = getType . emeta
+
+instance HasType Type where
+  getType = id
+
+instance HasType (a, Type) where
+  getType = snd
 
 instance HasType Literal where
   getType (UBInt _) = TPrim PInt
