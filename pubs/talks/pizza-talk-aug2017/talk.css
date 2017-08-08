@@ -1,0 +1,53 @@
+/* This CSS file is (perhaps unfortunately) not placed custom-css variable
+   because, as far as I can tell, it's not possible to keep pandoc from
+   ampersand-encoding of some of the necessary characters for CSS selectors, e.g
+   '>'.
+*/
+.reveal h1
+{
+    font-size: 2em;
+}
+
+.reveal h2
+{
+    font-size: 1.7em;
+}
+
+.reveal h3
+{
+    font-size: 1.4em;
+}
+.slide section
+{
+    max-height: 100%;
+}
+
+#learn-you-a-haskell > figure,
+#talk-to-your-intellectual-superiors > figure
+{
+    display: inline;
+}
+
+.reveal pre
+{
+    margin: 10px auto;
+}
+
+/* div.slides section */
+/* { */
+/*     flex-direction: column; */
+/*     flex-wrap: nowrap; */
+/*     align-items: center; */
+/*     justify-content: space-around; */
+/* } */
+
+/* figure */
+/* { */
+/*     overflow: unset; */
+/* } */
+
+/* section.slide section.stack */
+/* { */
+/*     width: inherit; */
+/*     height: inherit; */
+/* } */
