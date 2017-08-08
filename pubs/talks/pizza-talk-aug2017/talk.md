@@ -106,6 +106,13 @@ NPSC :
 >     - Types are not implicitly coerced
 >     - Only type-correct programs will be compiled
 
+<div class="notes">
+
+Haskell's type system is very powerful.  It constrains programmers, which can be
+frustrating at times, but is generally a good thing, eliminating large classes
+of bugs.
+
+</div>
 
 ## Interactive Demo
 
@@ -218,7 +225,7 @@ addDoublesSometimes x y = doubleIt x + doubleIt y
 ```
 
 
-### Lists, recursion and pattern-matching
+### Lists and recursion
 
 ```haskell
 λ> [1,2,3]
@@ -259,7 +266,7 @@ length (x:xs) = 1 + length xs
 </div>
 
 
-### Exceptional Behavior: "Bottom"
+### "Bottom": Exceptional Behavior and how it arises
 
 . . .
 ```haskell
@@ -296,3 +303,188 @@ Note the difference in the two "undefined" errors. Progress is made before the
 error occurs.
 
 </div>
+
+
+### Referential Transparency and Performance
+. . .
+```haskell
+-- Fib.hs
+module Fib where
+
+fib 0 = 0
+fib 1 = 1
+fib n = fib (n - 1) + fib (n - 2)
+
+add4 a b c d = a + b + c + d
+
+main1 = print result
+  where result = add4 (fib 30) (fib 30) (fib 30) (fib 30)
+```
+. . .
+
+But I'm no dummy. No need to repeat myself.
+
+. . .
+```haskell
+-- Fib.hs, cont'd
+main2 = print result
+  where f30 = fib 30
+        result = add4 f30 f30 f30 f30
+```
+
+
+### Referential Transparency and Performance
+. . .
+```
+$ ghc -o fib1 -O0 -main-is Fib.main1 Fib.hs
+$ ghc -o fib2 -O0 -main-is Fib.main2 Fib.hs
+```
+. . .
+```
+$ time ./fib1
+3328160
+./fib  0.74s user 0.00s system 99% cpu 0.751 total
+```
+. . .
+```
+$ time ./fib2
+3328160
+./fib  0.19s user 0.00s system 98% cpu 0.190 total
+```
+. . .
+
+With no knowledge of how `fib` is written, could I have made the same change in
+a C program?
+
+<div class="notes">
+
+No suprises in the timing results.
+
+Important to emphasize that Haskell does not allow arbitrary side effects in
+pure functions, so knowledge of `fib`'s implementation is not necessary.
+
+</div>
+
+## The APPFL Project - An Automatically Parallelized Pure Functional Language
+
+### Referential Transparency and Parallelism
+
+What if `result` from `Fib.hs` was instead
+
+```haskell
+result = add4 (fib 30) (fib 28) (fib 31) (fib 29)
+```
+. . .
+
+There's an obvious opportunity for parallelism here.
+
+. . .
+
+In general …
+
+![](img/parallel-apply.png)
+
+
+<div class="notes">
+
+Thanks to Haskell's semantics, we can prove that it's safe to parallelize
+without changing the program's meaning.
+
+</div>
+
+
+### APPFL Currently
+
+. . . 
+
+> - Three front-ends: STG, Mini-Haskell, GHC
+> - Serial implementation with garbage collection
+> - Extensive test-suite
+> - Rudimentary parallel runtime in active development
+>     - Using Argonne's Argobots user-level threading library 
+>     - Lock-free data structures for low overheads
+
+<div class="notes">
+
+- Argobots is similar to Sandia's qthreads
+- Lock free data structures are worth looking into
+    - They exploit low level hardware synchronization primitives (CAS, TAS)
+      rather than mutexes (muticies?) or semaphores 
+      
+</div>
+
+
+### Obstacles to Parallelism
+
+> - Determining appropriate granularity of parallelism
+>     - Heuristics are needed
+> - **Preserving program semantics**
+
+### When is it safe to evaluate?
+
+```haskell
+noMem = error "Out of Memory!" -- Pretend this really causes OOM
+firstIfZero 0 x y = x
+firstIfZero n x y = y
+val1 = firstIfZero 0 "Foo" noMem
+val2 = firstIfZero 1 noMem "Bar"
+```
+. . .
+
+> - Both `val1` and `val2` are not bottom, given Haskell's laziness
+> - Evaluation of all the arguments to `firstIfZero` *changes the program*
+
+
+<div class="notes">
+
+The OOM error is used here instead of `undefined` to emphasize that runtime errors are not
+the only Bottom value that need to be considered.  Runtime errors could conceivably be
+delayed until they were certain to be the "true" value of an expression.
+
+</div>
+
+
+### Potential solutions
+
+> - Declare your language Strict
+>     - Arguments to functions are evaluated before passed to a function
+>     - APPFL has both strict and lazy modes
+> - Perform *Strictness* or *Demand* Analysis
+>     - Determine how well "defined" arguments must be
+>     - More intuitively: \
+>       What *must* be evaluated \
+>       What *might* not be
+
+<div class="notes">
+
+- The explanation of a Strict language is a simplification, and describes operational
+  semantics for intuition
+
+</div>
+
+## Demand Analysis
+
+### Strictness and Weak Head Normal Form (WHNF)
+
+> - A function is said to be *strict* in some argument *x* iff the function returns a
+>   bottom value whenever *x* is a bottom value.
+>     - `firstIfZero` is strict in its first argument, but not its second or third
+> - Values are only evaluated as deep as necessary
+>     - `length` required that its argument be a real, defined list though the elements 
+>       could be bottom
+> - Evaluating to WHNF evaluates the outermost constructor\
+>   e.g. `(:)` ("cons") and `[]` ("nil")
+
+
+<div class="notes">
+
+
+
+</div>
+
+### 
+
+
+
+
+
