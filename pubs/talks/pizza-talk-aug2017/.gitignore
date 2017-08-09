@@ -3,4 +3,5 @@
 !talk.css
 !template.revealjs
 !.gitignore
-  
+!/img/*
+!/img

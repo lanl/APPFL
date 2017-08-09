@@ -3,19 +3,36 @@
    ampersand-encoding of some of the necessary characters for CSS selectors, e.g
    '>'.
 */
+
+.reveal /* overriding some defaults */
+{
+    font-size: 30px
+}
+
+.reveal pre
+{
+    font-size: .75em;
+    font-family: "Everson Mono"
+}
+
+.reveal code
+{
+    font-family: "Everson Mono"
+}
+
 .reveal h1
 {
-    font-size: 2em;
+    font-size: 2.3em;
 }
 
 .reveal h2
 {
-    font-size: 1.7em;
+    font-size: 2em;
 }
 
 .reveal h3
 {
-    font-size: 1.4em;
+    font-size: 1.7em;
 }
 .slide section
 {
@@ -23,7 +40,8 @@
 }
 
 #learn-you-a-haskell > figure,
-#talk-to-your-intellectual-superiors > figure
+#talk-to-your-intellectual-superiors > figure,
+#denser-domains-contd figure
 {
     display: inline;
 }
