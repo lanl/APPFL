@@ -7,6 +7,8 @@ project(runtime)
               cruntime.h
               cmm.h
               gc.h
+              lockfree_queue.h
+              lockfree_queue_c.h
               log.h
               obj.h
               heap.h
@@ -28,6 +30,7 @@ project(runtime)
   set(rt_srcs args.c 
               gc.c
               heap.c
+              lockfree_queue_c.cpp
 #              nodepool.c
               nodequeue.c 
               sanity.c
@@ -51,6 +54,7 @@ include_directories(".."
   endforeach()
 
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g -std=gnu99 -Wall -Werror -Wno-missing-braces -O3 -mcx16" )
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -std=c++11 -O3 -mcx16" )
 
   # allow control of USE_ARGTYPE/USE_OBJTYPE from command line
   if(USE_D)

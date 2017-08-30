@@ -56,6 +56,7 @@ bool NQ_dequeue(T *value) {
 
 #elif LOCKFREE_QUEUE
 
+#include "lockfree_queue_c.h"
 lockfree_queue lfq;
 
 void NQ_init() {
