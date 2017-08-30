@@ -240,7 +240,7 @@ compile  (Options {optVerbose, optDumpParse, optNoPrelude, optInput,
                                ++ cflags ++ " -std=gnu99 "
                                ++ " -Wl,-rpath -Wl," ++ rtLibDir
                                ++ " -L" ++ rtLibDir ++ " -I" ++ rtIncDir
-                               ++ " -lruntime -labt -lm -pthread"
+                               ++ " -lruntime -labt -lm -pthread -lstdc++"
                  writeFile coutput (pprinter $ codegener cginp optVerbose)
                  if ccompile
                    then system (cc ++ " " ++ coutput ++ " -o " ++ fromJust optOutput ++ flags)
