@@ -6,7 +6,8 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <stdio.h>
-#define TWOLOCKQUEUE 1
+#define TWOLOCKQUEUE 0
+#define LOCKFREE_QUEUE 1
 
 
 struct _Node;
@@ -21,6 +22,14 @@ struct __attribute__ ((aligned (16))) _Node {
   Node *next;
   T value;
 };
+
+#elif LOCKFREE_QUEUE
+
+struct __attribute__ ((aligned (16))) _Node {
+  Node *next;
+  T value;
+};
+
 #else
 // Pointer is a CAS-able value
 // here 128 bit
