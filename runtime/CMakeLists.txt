@@ -12,7 +12,6 @@ project(runtime)
               log.h
               obj.h
               heap.h
-              nodepool.h
               nodequeue.h 
               sanity.h
               show.h
@@ -31,7 +30,6 @@ project(runtime)
               gc.c
               heap.c
               lockfree_queue_c.cpp
-#              nodepool.c
               nodequeue.c 
               sanity.c
               show.c
