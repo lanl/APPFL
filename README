@@ -1,7 +1,25 @@
-NOTICE OF OSS COPYRIGHT ASSERTION:
 
-LANS has asserted copyright on the software package entitled APPFL, Version
-0.x (C15092).
+Copyright 2019. Triad National Security, LLC. All rights reserved.
+ 
+This program was produced under U.S. Government contract 89233218CNA000001 for
+Los Alamos National Laboratory (LANL), which is operated by Triad National
+Security, LLC for the U.S. Department of Energy/National Nuclear Security
+Administration.
+ 
+All rights in the program are reserved by Triad National Security, LLC, and
+the U.S. Department of Energy/National Nuclear Security Administration. The
+Government is granted for itself and others acting on its behalf a
+nonexclusive, paid-up, irrevocable worldwide license in this material to
+reproduce, prepare derivative works, distribute copies to the public, perform
+publicly and display publicly, and to permit others to do so.
+
+This is open source software; you can redistribute it and/or modify it under
+the terms of the OSI Certified BSD 3-Clause License. If software is modified
+to produce derivative works, such modified software should be clearly marked,
+so as not to confuse it with the version available from LANL. Full text of the
+OSI Certified BSD 3-Clause License can be found in the License file in the
+main development branch of the repository.
+
 
 ABSTRACT
 
@@ -16,24 +34,11 @@ this software is controlled under Department of Commerce regulations and the
 Export Control Classification Number (ECCN) EAR99. The export control review
 is attached.
 
-The developers intend to distribute this software package under the OSI
-Certified BSD 3-Clause License
-(http://www.opensource.org/licenses/BSD-3-Clause)
-
 This code was developed using funding from the LANL Laboratory-Directed
 Research Development (LDRD) Program.  Larry Kwei, LAFO Program Manager, has
 granted his concurrence to asserting copyright and then distributing the
 APPFL, Version 0.x code using an open source software license. See attached
 memo.
-
-LANS acknowledges that it will comply with the DOE OSS policy as follows:
-
-a.  submit form DOE F 241.4 to the Energy Science and Technology Software
-  Center (ESTSC),
-b.  provide the unique URL on the form for ESTSC to distribute, and
-c. maintain an OSS Record available for inspection by DOE.  
-
-Following is a table briefly summarizes information for this software package:
 
 CODE NAME:  APPFL, Version 0.x (C15092)
 Classification Review Number: LA-CC-15-092
